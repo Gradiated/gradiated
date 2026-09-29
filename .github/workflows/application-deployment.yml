@@ -40,6 +40,7 @@ jobs:
     outputs:
       source_sha: ${{ steps.source.outputs.source_sha }}
       collector_source_sha: ${{ steps.collector-source.outputs.source_sha }}
+      deploy: ${{ steps.order.outputs.deploy }}
     steps:
       - id: source
         name: Select source commit
@@ -65,8 +66,19 @@ jobs:
 
       - uses: actions/checkout@v7
         with:
+          ref: main
+          fetch-depth: 0
+      - id: order
+        name: Skip sources older than the recorded release
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
+        run: node tools/deployment/release-order.mjs "$SOURCE_SHA"
+      - uses: actions/checkout@v7
+        if: steps.order.outputs.deploy == 'true'
+        with:
           ref: ${{ steps.source.outputs.source_sha }}
       - id: collector-source
+        if: steps.order.outputs.deploy == 'true'
         env:
           SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
           WORKFLOW_SHA: ${{ github.sha }}
@@ -80,6 +92,7 @@ jobs:
   build-collector:
     name: Build collector image
     needs: resolve
+    if: needs.resolve.outputs.deploy == 'true'
     uses: ./.github/workflows/build-images.yml
     with:
       source_sha: ${{ needs.resolve.outputs.collector_source_sha }}
@@ -92,6 +105,7 @@ jobs:
   build-images:
     name: Build required application images
     needs: resolve
+    if: needs.resolve.outputs.deploy == 'true'
     uses: ./.github/workflows/build-images.yml
     with:
       source_sha: ${{ needs.resolve.outputs.source_sha }}
@@ -102,6 +116,7 @@ jobs:
   build-console:
     name: Build and stage console
     needs: resolve
+    if: needs.resolve.outputs.deploy == 'true'
     runs-on: depot-ubuntu-24.04
     environment: production
     timeout-minutes: 30
@@ -179,6 +194,7 @@ jobs:
           COLLECTOR_DIGEST: ${{ needs.build-collector.outputs.collector_digest }}
         run: |
           git pull --ff-only origin main
+          node tools/deployment/release-order.mjs "$SOURCE_SHA" --reject-stale
           node tools/deployment/update-release.mjs \
             --source-sha "${SOURCE_SHA}" \
             --product-digest "${PRODUCT_DIGEST}" \

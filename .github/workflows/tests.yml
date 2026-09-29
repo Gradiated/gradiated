@@ -38,6 +38,7 @@ on:
       - "product/turbo.json"
       - "mise.toml"
       - "tools/images/**"
+      - "tools/deployment/**"
   pull_request:
   workflow_dispatch:
 
@@ -76,6 +77,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: jdx/mise-action@v4.2.3
+      - name: Test production release ordering and manifest updates
+        run: node --test tools/deployment/*.test.mjs
       - uses: astral-sh/setup-uv@v6
       - name: Run Kev runtime CPU unit tests
         env:

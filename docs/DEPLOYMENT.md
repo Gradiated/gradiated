@@ -3,8 +3,11 @@
 ## Release contract
 
 `Product tests` is the production quality gate. A successful run for `main`
-starts `Production deployment`. A manual run can deploy an explicit 40-character
-source commit.
+starts `Application deployment`. A manual run can deploy an explicit 40-character
+source commit from `main`. Sources older than the recorded production release are
+skipped before building; ancestry is checked again before writing release state.
+Rollbacks use a new revert commit on `main`, so delayed workflows cannot undo a
+newer deployment.
 
 The deployment has one source revision and these parallel build outputs:
 

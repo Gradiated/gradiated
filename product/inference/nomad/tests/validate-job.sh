@@ -37,6 +37,10 @@ for vars in "$root/jobs"/*.vars.hcl; do
       echo "$name must warm a full replacement set and revert failed releases" >&2
       exit 1
     }
+    jq -e '.Job.Meta.gradiated_sdk_verification == "true" and all(.Job.TaskGroups[]; .Update.HealthCheck == "manual")' <<<"$job" >/dev/null || {
+      echo "$name must require production SDK verification before promotion" >&2
+      exit 1
+    }
     disabled=$(docker run --rm --network none --entrypoint nomad -v "$root/jobs:/jobs:ro" \
       hashicorp/nomad@sha256:b964829b94c5493f3b543bb409b60c335a9ca03f21d9fac8b4cdd2af18b331c9 \
       job run -output "${release[@]}" -var-file="/jobs/$name.vars.hcl" -var=replicas=0 "/jobs/$name.nomad.hcl")

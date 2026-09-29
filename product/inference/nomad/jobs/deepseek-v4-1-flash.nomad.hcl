@@ -27,8 +27,9 @@ job "deepseek-v4-1-flash" {
   datacenters = ["dc1"]
 
   meta {
-    gradiated_model_id = local.model_id
-    gradiated_release  = jsonencode(local.release)
+    gradiated_sdk_verification = "true"
+    gradiated_model_id         = local.model_id
+    gradiated_release          = jsonencode(local.release)
   }
 
   constraint {
@@ -69,6 +70,7 @@ job "deepseek-v4-1-flash" {
     }
 
     update {
+      health_check      = "manual"
       max_parallel      = 1
       canary            = var.replicas
       min_healthy_time  = "30s"

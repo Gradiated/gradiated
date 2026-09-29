@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { setTimeout as delay } from "node:timers/promises";
+import { submitJob } from "../../../../tools/nomad/submit-jobs.mjs";
 import { waitForDeployment } from "../../../../tools/nomad/wait-deployments.mjs";
 
 const execute = promisify(execFile);
@@ -215,4 +216,53 @@ await waitForDeployment(initialDeployment, {
 assert.equal(initialVerified.size, 2);
 console.log(
   "Initial deployment also required verification of both allocation identities",
+);
+
+const blockedJob = await call("/v1/job/initial-runtime");
+blockedJob.Constraints = [
+  {
+    LTarget: "${node.class}",
+    RTarget: "unavailable-test-capacity",
+    Operand: "=",
+  },
+];
+blockedJob.TaskGroups[0].Tasks[0].Env = { RELEASE: "blocked" };
+const blocked = await call("/v1/jobs", { Job: blockedJob });
+let blockedDeployment;
+await wait(async () => {
+  blockedDeployment = (await call(`/v1/evaluation/${blocked.EvalID}`))
+    .DeploymentID;
+  return blockedDeployment;
+});
+assert.equal(
+  (await call(`/v1/deployment/${blockedDeployment}`)).TaskGroups.replicas
+    .PlacedAllocs,
+  0,
+);
+blockedJob.Constraints = [];
+blockedJob.TaskGroups[0].Tasks[0].Env = { RELEASE: "current-git" };
+const replacementEvaluation = await submitJob(blockedJob, {
+  get: (path) => call(path),
+  post: call,
+  signal,
+  pause: () => delay(500, undefined, { signal }),
+});
+assert.ok(replacementEvaluation.evaluation);
+const serving = await call("/v1/job/initial-runtime/allocations");
+assert.ok(
+  [...initialVerified].every((id) =>
+    serving.some(
+      (allocation) =>
+        allocation.ID === id &&
+        allocation.ClientStatus === "running" &&
+        allocation.DesiredStatus === "run",
+    ),
+  ),
+);
+assert.equal(
+  (await call(`/v1/deployment/${blockedDeployment}`)).Status,
+  "cancelled",
+);
+console.log(
+  "A newer Git release superseded an unplaced rollout without stopping the serving release",
 );

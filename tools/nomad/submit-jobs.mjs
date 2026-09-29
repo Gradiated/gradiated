@@ -1,3 +1,4 @@
+import { waitForVerificationInfrastructure } from "./verification-infrastructure.mjs";
 import { verifyInProduction } from "./verification.mjs";
 import { readFileSync } from "node:fs";
 import { setTimeout as delay } from "node:timers/promises";
@@ -42,7 +43,16 @@ export const submitJob = async (
       throw new Error(`Unrecognized plan for ${job.ID}`);
     }
 
-    if (prior && ["pending", "running", "paused"].includes(prior.Status)) {
+    const groups = Object.values(prior?.TaskGroups ?? {});
+    const unplaced =
+      prior?.Status !== "paused" &&
+      groups.length > 0 &&
+      groups.every((group) => group.PlacedAllocs === 0);
+    if (
+      prior &&
+      ["pending", "running", "paused"].includes(prior.Status) &&
+      !unplaced
+    ) {
       if (verify)
         await waitForDeployment(prior.ID, { get, post, signal, verify, pause });
       else await pause(10_000);
@@ -96,6 +106,20 @@ const main = async () => {
   const controller = new AbortController();
   const client = createNomadClient(controller.signal);
   try {
+    if (
+      jobs.some(
+        (job) =>
+          job.Meta?.gradiated_sdk_verification === "true" &&
+          job.TaskGroups.some((group) => group.Count > 0),
+      )
+    ) {
+      console.log(
+        "Waiting for the Git-defined verification workloads and CI authorization before registering model jobs",
+      );
+      await waitForVerificationInfrastructure(
+        AbortSignal.any([controller.signal, AbortSignal.timeout(15 * 60_000)]),
+      );
+    }
     await deployJobs(jobs, async (job) => {
       console.log(
         `${job.ID}: planning without interrupting existing canaries or draining requests`,

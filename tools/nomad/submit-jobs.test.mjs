@@ -183,3 +183,51 @@ test("an unreachable stopped allocation cannot block releases on healthy hosts",
 
   assert.equal(result.evaluation, "replacement");
 });
+
+test("a newer Git release supersedes an entirely unplaced deployment", async () => {
+  const result = await submitJob(job, {
+    signal: signal(),
+    get: async (path) =>
+      path.endsWith("deployments")
+        ? [
+            {
+              ID: "unplaced",
+              Status: "running",
+              TaskGroups: { replicas: { PlacedAllocs: 0 } },
+            },
+          ]
+        : [],
+    post: async (path) =>
+      path.endsWith("plan")
+        ? { Diff: { Type: "Edited" }, JobModifyIndex: 42 }
+        : { EvalID: "replacement" },
+    pause: async () => {
+      throw new Error(
+        "Must not wait for unavailable capacity before updating queued desired state",
+      );
+    },
+  });
+  assert.deepEqual(result, { evaluation: "replacement", previous: "unplaced" });
+});
+
+for (const prior of [
+  { Status: "paused", TaskGroups: { replicas: { PlacedAllocs: 0 } } },
+  { Status: "running", TaskGroups: { replicas: { PlacedAllocs: 1 } } },
+  { Status: "running", TaskGroups: {} },
+]) {
+  test(`preserves paused, placed or unknown deployments: ${JSON.stringify(prior)}`, async () => {
+    const controller = new AbortController();
+    await assert.rejects(
+      submitJob(job, {
+        signal: controller.signal,
+        get: async () => [{ ID: "existing", ...prior }],
+        post: async (path) => {
+          assert.ok(path.endsWith("plan"));
+          return { Diff: { Type: "Edited" }, JobModifyIndex: 42 };
+        },
+        pause: async () => controller.abort(),
+      }),
+      /deadline/,
+    );
+  });
+}

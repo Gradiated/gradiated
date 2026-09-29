@@ -27,8 +27,9 @@ job "kev-9b" {
   datacenters = ["dc1"]
 
   meta {
-    gradiated_model_id = local.model_id
-    gradiated_release  = jsonencode(local.release)
+    gradiated_sdk_verification = "true"
+    gradiated_model_id         = local.model_id
+    gradiated_release          = jsonencode(local.release)
   }
 
   constraint {
@@ -54,8 +55,8 @@ job "kev-9b" {
 
     disconnect {
       lost_after = "1h"
-      replace   = true
-      reconcile = "keep_original"
+      replace    = true
+      reconcile  = "keep_original"
     }
 
     reschedule {
@@ -73,6 +74,7 @@ job "kev-9b" {
     }
 
     update {
+      health_check      = "manual"
       max_parallel      = 1
       canary            = var.replicas
       min_healthy_time  = "30s"

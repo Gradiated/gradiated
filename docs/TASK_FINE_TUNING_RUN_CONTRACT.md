@@ -2,6 +2,20 @@
 
 Status: implementation contract, not implemented. Owns `RUN-01` to `RUN-05` and `DATA-01` to `DATA-02`. The exact recipe is a separate design under RUN-03; the rest holds for any recipe.
 
+## Superseded decisions
+
+These replace the sections below where they differ. A rewrite of this contract follows with the training workflow.
+
+| Area | Now | Replaces |
+| --- | --- | --- |
+| Orchestration | Temporal workflows in the worker; one workflow per task, ID `training-<task_id>`. A failed step retries without repeating finished steps | Orchestrator leader, advisory lock and reconciliation loop |
+| Trigger | A weekly schedule trains each task in a workspace with capture on when at least 500 traces arrived since the last successful run's cutoff; the Train button needs 100 | Automation loop at 500 new eligible sessions |
+| Run history | `training_runs` and `training_run_events` in PostgreSQL; large results stay in S3 under `runs/<run_id>/` | ClickHouse `training_run_events` |
+| Stages | `queued`, `building_dataset`, `awaiting_capacity`, `training`, `verifying`, `publishing`, `evaluating`, then `succeeded`, `failed` or `cancelled`; `cancelling` in between | The RUN-02 stage list |
+| Versions | `task_versions`, private to a workspace, named `<task>-YYYYMMDD[-n]`; `tasks.production_version_id` is the production pointer | Versions as catalog models named `<task>/yyyy-mm-dd[-n]` |
+| Tasks | A `tasks` row is created when a task's trace prefix is first seen in S3 | Tasks created ahead of capture |
+| Judge | One evaluation judge per workspace | `evaluation_judge_id` on the task |
+
 ## Components
 
 ```mermaid
@@ -225,3 +239,74 @@ Validate event scope against the admitted run. Deduplicate reads by event ID bef
 S2: input cutoffs, snapshot identity and automatic trigger. T1: package selection and split correctness. S5: local deadlines, one accepted allocation per run, terminal host failure, cleanup before host reuse, and Nomad placement without a preassigned host. S6: worker killed around every transaction and effect; old leaders; disable versus first exchange; late checkpoints; capacity recovery. RUN-03 and T1: trainer qualification. A recipe is enabled only with its design, finite limits and qualification complete.
 
 S6 also checks acknowledged-write failures, duplicate and reordered events, missing checkpoint objects, stale runs, ClickHouse outages, and crashes between a completed event and run closure. Replaying the same history must preserve the terminal outcome without starting another execution.
+
+## Shared model catalog
+
+`product/packages/contracts/src/model-catalog.ts` owns model IDs and their supported
+uses. Judge validation, workspace defaults, database constraints and console
+options derive from that catalog. Update the catalog and regenerate the database
+migration and API clients when changing the allowed set. Eligibility as a judge
+does not imply support by every training executor.
+
+## Portable dataset contract
+
+`SftExampleSchema` uses conversational `prompt` and `completion` message lists,
+with optional example and group IDs. The initial contract supports text messages
+and one assistant completion. `SftDatasetManifestSchema` describes versioned JSONL
+artifacts for train, validation and test, with file URIs, SHA-256 hashes, byte sizes
+and example counts. A sampled evaluation dataset is recorded separately from the
+full test split. Builder version and split configuration describe preparation;
+trace timestamps are optional provenance. Runtime and host configuration belong
+in the execution record, outside the portable dataset manifest.
+
+`RunDatasetSummary` is the UI projection: eligible examples, duplicates removed,
+train/validation/test counts, optional trace dates and optional evaluation sample
+count. The summary does not duplicate artifact checksums.
+
+## Training measurements
+
+`trainer_progress` requires only `step`: completed optimizer updates, cumulative
+across checkpoint resumes. `total_steps`, `train_loss`, `tokens_per_second` and
+`eta_seconds` are optional typed fields used by the console. Missing measurements
+are omitted, not fabricated as zero. Loss can be signed for methods whose
+objective permits it; the recipe defines the objective and averaging interval.
+For SFT, it is cross-entropy over supervised completion tokens. Throughput counts
+non-padding input tokens across all training devices over the logging interval.
+ETA is an estimate, not a deadline.
+
+The optional `metrics` map preserves other finite numeric measurements without
+an enumerated name list (up to 64 entries, names up to 128 characters). Recommended
+names include `learning_rate`, `grad_norm` (before clipping), `epoch`,
+`input_tokens_seen` and `supervised_tokens_seen`. Other methods may report reward,
+entropy or individual loss components. Metric definitions belong to the recipe;
+consumers must not compare unlike objectives solely because the names match.
+
+`trainer_observation` records trainer logs with an arbitrary `name`, a readable
+`message`, and optional `level`, `step`, numeric `metrics`, and structured
+`details`. Validation uses an observation such as `validation_completed` with
+`metrics.validation_loss`; other method-specific measurements need no new event
+type. Observations do not replace the latest typed progress sample. The event
+envelope retains timestamp, service and attempt. The UI renders unfamiliar names
+and details generically, keeping observations with training. Chart consumers can
+plot metrics against step. Hardware utilization remains infrastructure telemetry.
+
+## Workflow events and trainer observations
+
+Lifecycle events such as `stage_entered`, `cancel_requested`, `run_finished`,
+`artifact_verified`, `published` and job status remain typed. `trainer_checkpoint`
+also stays typed because recovery consumes its step, object key, SHA-256 and byte
+size. The worker must verify the artifact before accepting it for recovery.
+`trainer_progress` retains the small optional display contract above.
+
+Startup, internal trainer phases, validation, upload diagnostics and trainer
+completion/failure messages use `trainer_observation`. Its name and details are
+informational: an observation named `finished`, `failed` or `stage_entered` must
+never drive a workflow transition, publish an artifact or select a checkpoint.
+Those decisions use typed control events and validated operation results. The
+worker must accept only the explicitly allowed trainer event types; an extensible
+observation vocabulary does not authorize the trainer to emit lifecycle events.
+
+Run listing uses `GET /api/v1/workspaces/{workspace_id}/training-runs` with an
+optional `task_id` UUID filter. Without the filter it lists all runs in the
+workspace; an unknown or foreign task ID returns an empty list. Task responses
+include their stable `id` for filtering. Other task routes continue to use names.

@@ -1,3 +1,4 @@
+import { EVALUATION_JUDGES } from "@gradiated/contracts";
 import { createHash, randomUUID } from "node:crypto";
 
 import { eq } from "drizzle-orm";
@@ -42,6 +43,14 @@ describe("workspaces and API keys", () => {
 
     return row;
   };
+
+  it.each(EVALUATION_JUDGES)("persists catalog judge %s", async (judge) => {
+    const { userId, workspaceId } = await membership("owner");
+    const updated = await service.updateWorkspace(userId, workspaceId, {
+      evaluation_judge: judge,
+    });
+    expect(updated.evaluationJudge).toBe(judge);
+  });
 
   describe("createWorkspace", () => {
     it.each<OrganizationRole>(["owner", "admin"])(

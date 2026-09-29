@@ -76,6 +76,7 @@ describe("workspace routes", () => {
           is_default: true,
           trace_capture_enabled: false,
           trace_retention_days: 30,
+          evaluation_judge: "openai/gpt-5.6-sol",
           archived_at: null,
           created_at: now.toISOString(),
           updated_at: now.toISOString(),

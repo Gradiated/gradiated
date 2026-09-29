@@ -1,0 +1,338 @@
+import { z } from "@hono/zod-openapi";
+
+import {
+  ModelIdSchema,
+  pageFields,
+  TimestampSchema,
+  UuidSchema,
+} from "./common.js";
+
+import { EVALUATION_JUDGES } from "./model-catalog.js";
+
+export const EvaluationJudgeSchema = z
+  .enum(EVALUATION_JUDGES)
+  .openapi("EvaluationJudge");
+export type EvaluationJudge = z.infer<typeof EvaluationJudgeSchema>;
+
+export const RUN_STAGES = [
+  "queued",
+  "building_dataset",
+  "awaiting_capacity",
+  "training",
+  "verifying",
+  "publishing",
+  "evaluating",
+  "cancelling",
+  "succeeded",
+  "failed",
+  "cancelled",
+] as const;
+export const TRAINING_TRIGGERS = ["automation", "manual"] as const;
+export const TASK_VERSION_STATUSES = ["available", "unavailable"] as const;
+
+export const RunStageSchema = z.enum(RUN_STAGES).openapi("RunStage");
+export type RunStage = z.infer<typeof RunStageSchema>;
+
+const TerminalStageSchema = z.enum(["succeeded", "failed", "cancelled"]);
+const Sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
+const CountSchema = z.number().int().nonnegative();
+const FractionSchema = z.number().min(0).max(1);
+
+export const RunDatasetSummarySchema = z
+  .object({
+    oldest_trace_at: TimestampSchema.optional(),
+    newest_trace_at: TimestampSchema.optional(),
+    eligible_examples: CountSchema,
+    duplicates_removed: CountSchema,
+    train: CountSchema,
+    validation: CountSchema,
+    test: CountSchema,
+    evaluation_examples: CountSchema.optional(),
+  })
+  .openapi("RunDatasetSummary");
+export type RunDatasetSummary = z.infer<typeof RunDatasetSummarySchema>;
+
+const JudgeOutcomeSchema = z.object({
+  comparator_model_id: ModelIdSchema,
+  win: FractionSchema,
+  tie: FractionSchema,
+  loss: FractionSchema,
+  unresolved: FractionSchema,
+});
+
+const PairSchema = z.object({
+  fine_tuned: z.number().nonnegative(),
+  comparison: z.number().nonnegative(),
+});
+
+export const RunEvaluationSchema = z
+  .object({
+    holdout_groups: CountSchema,
+    holdout_examples: CountSchema,
+    comparison_model_id: ModelIdSchema,
+    judge_model_id: EvaluationJudgeSchema,
+    vs_comparison: JudgeOutcomeSchema,
+    cost_per_request_nano_usd: PairSchema,
+    output_tokens_per_second: PairSchema,
+    error_rate: FractionSchema,
+  })
+  .openapi("RunEvaluation");
+export type RunEvaluation = z.infer<typeof RunEvaluationSchema>;
+
+export const TaskVersionAdapterSchema = z
+  .object({
+    format: z.literal("peft_lora"),
+    artifact_uri: z.string().startsWith("s3://"),
+    sha256: Sha256Schema,
+    size_bytes: CountSchema,
+    rank: z.number().int().positive(),
+  })
+  .openapi("TaskVersionAdapter");
+export type TaskVersionAdapter = z.infer<typeof TaskVersionAdapterSchema>;
+
+const GpuSchema = z.object({
+  type: z.string(),
+  count: z.number().int().positive(),
+});
+
+export const TrainingMetricsSchema = z
+  .record(z.string().min(1).max(128), z.number())
+  .refine(
+    (metrics) => Object.keys(metrics).length <= 64,
+    "At most 64 metrics per event",
+  )
+  .describe(
+    "Additional finite numeric measurements; metric names are extensible.",
+  );
+
+export const RunProgressSchema = z
+  .object({
+    step: CountSchema.describe(
+      "Completed optimizer updates, cumulative across checkpoint resumes.",
+    ),
+    total_steps: z.number().int().positive().optional(),
+    train_loss: z
+      .number()
+      .optional()
+      .describe(
+        "Primary training objective loss for this logging interval; its definition and aggregation belong to the training recipe.",
+      ),
+    tokens_per_second: z
+      .number()
+      .nonnegative()
+      .optional()
+      .describe(
+        "Non-padding input tokens per second across all training devices in this logging interval.",
+      ),
+    eta_seconds: z.number().nonnegative().optional(),
+    metrics: TrainingMetricsSchema.optional(),
+  })
+  .openapi("RunProgress");
+export type RunProgress = z.infer<typeof RunProgressSchema>;
+
+export const TrainerObservationSchema = z
+  .object({
+    name: z.string().min(1).max(128),
+    message: z.string().min(1),
+    level: z.enum(["debug", "info", "warning", "error"]).optional(),
+    step: CountSchema.optional(),
+    metrics: TrainingMetricsSchema.optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
+  })
+  .openapi("TrainerObservation");
+export type TrainerObservation = z.infer<typeof TrainerObservationSchema>;
+
+const event = <Type extends string, Shape extends z.ZodRawShape>(
+  type: Type,
+  shape: Shape,
+) => z.object({ type: z.literal(type), ...shape });
+
+export const TrainerEventPayloadSchema = z.discriminatedUnion("type", [
+  event("trainer_progress", RunProgressSchema.shape),
+  event("trainer_observation", TrainerObservationSchema.shape),
+  event("trainer_checkpoint", {
+    step: CountSchema,
+    key: z.string().min(1),
+    sha256: Sha256Schema,
+    size_bytes: z.number().int().positive(),
+  }),
+]);
+export type TrainerEventPayload = z.infer<typeof TrainerEventPayloadSchema>;
+
+export const TrainingRunEventPayloadSchema = z
+  .discriminatedUnion("type", [
+    event("run_created", {
+      trigger: z.enum(TRAINING_TRIGGERS),
+      requested_by: UuidSchema.nullable(),
+      base_model_id: ModelIdSchema,
+    }),
+    event("stage_entered", { stage: RunStageSchema }),
+    event("dataset_built", RunDatasetSummarySchema.shape),
+    event("capacity_granted", { host_id: z.string(), gpu: GpuSchema }),
+    event("job_submitted", {
+      runner: z.string(),
+      provider_job_id: z.string(),
+      host_id: z.string(),
+      gpu: GpuSchema,
+    }),
+    event("job_status", {
+      state: z.enum(["running", "complete", "lost", "failed"]),
+      message: z.string().optional(),
+    }),
+    event("artifact_verified", {
+      version_id: UuidSchema,
+      sha256: Sha256Schema,
+      size_bytes: CountSchema,
+    }),
+    event("adapter_loaded", { host_id: z.string() }),
+    event("evaluation_progress", {
+      completed: CountSchema,
+      total: CountSchema,
+    }),
+    event("evaluation_completed", {
+      judge: EvaluationJudgeSchema,
+      groups: CountSchema,
+      win: FractionSchema,
+      tie: FractionSchema,
+      loss: FractionSchema,
+      unresolved: FractionSchema,
+    }),
+    event("published", { version_id: UuidSchema, name: z.string() }),
+    event("cancel_requested", { requested_by: UuidSchema }),
+    event("run_finished", {
+      stage: TerminalStageSchema,
+      error_code: z.enum(["internal", "attempt_deadline"]).optional(),
+      message: z.string().optional(),
+    }),
+    event("note", {
+      level: z.enum(["info", "warning", "error"]),
+      message: z.string(),
+    }),
+    ...TrainerEventPayloadSchema.options,
+  ])
+  .openapi("TrainingRunEventPayload");
+export type TrainingRunEventPayload = z.infer<
+  typeof TrainingRunEventPayloadSchema
+>;
+
+export const TrainingRunEventSchema = z
+  .object({
+    id: z.number().int().positive(),
+    at: TimestampSchema,
+    source: z
+      .string()
+      .regex(/^[a-z][a-z0-9_-]{0,63}$/)
+      .describe(
+        "Service that emitted the event, such as api, worker or trainer.",
+      ),
+    attempt: z.number().int().positive(),
+    payload: TrainingRunEventPayloadSchema,
+  })
+  .openapi("TrainingRunEvent");
+
+export const TrainingRunSchema = z
+  .object({
+    id: UuidSchema,
+    task: z.string(),
+    trigger: z.enum(TRAINING_TRIGGERS),
+    requested_by: UuidSchema.nullable(),
+    stage: RunStageSchema,
+    base_model_id: ModelIdSchema,
+    input_cutoff: TimestampSchema,
+    dataset: RunDatasetSummarySchema.nullable(),
+    evaluation: RunEvaluationSchema.nullable(),
+    version_id: UuidSchema.nullable(),
+    cancel_requested_at: TimestampSchema.nullable(),
+    created_at: TimestampSchema,
+    finished_at: TimestampSchema.nullable(),
+  })
+  .openapi("TrainingRun");
+export type TrainingRun = z.infer<typeof TrainingRunSchema>;
+
+export const TaskVersionSchema = z
+  .object({
+    id: UuidSchema,
+    name: z.string(),
+    task: z.string(),
+    training_run_id: UuidSchema,
+    base_model_id: ModelIdSchema,
+    adapter: TaskVersionAdapterSchema,
+    status: z
+      .enum(TASK_VERSION_STATUSES)
+      .describe(
+        "Durable serving eligibility. Available versions may be called or promoted after serving validation; this does not indicate runtime health or adapter cache residency.",
+      ),
+    is_production: z.boolean(),
+    created_at: TimestampSchema,
+  })
+  .openapi("TaskVersion");
+export type TaskVersion = z.infer<typeof TaskVersionSchema>;
+
+export const TaskSchema = z
+  .object({
+    id: UuidSchema,
+    name: z.string(),
+    base_model_id: ModelIdSchema.nullable(),
+    comparison_model_id: ModelIdSchema.nullable(),
+    production_version_id: UuidSchema.nullable(),
+  })
+  .openapi("Task");
+export type Task = z.infer<typeof TaskSchema>;
+
+export const UpdateTaskSchema = z
+  .strictObject({
+    base_model_id: ModelIdSchema,
+    comparison_model_id: ModelIdSchema,
+  })
+  .partial()
+  .refine(
+    (input) => Object.keys(input).length > 0,
+    "Provide at least one task field.",
+  )
+  .openapi("UpdateTask");
+export type UpdateTask = z.infer<typeof UpdateTaskSchema>;
+
+export const PromoteVersionSchema = z
+  .strictObject({ version_id: UuidSchema })
+  .openapi("PromoteVersion");
+
+const WorkspacePathSchema = z.object({ workspace_id: UuidSchema });
+
+export const TaskNameSchema = z
+  .string()
+  .min(1)
+  .max(256)
+  .refine(
+    (name) => name !== "." && name !== "..",
+    "Task names cannot be URL dot segments.",
+  );
+export const TaskPathSchema = WorkspacePathSchema.extend({
+  task: TaskNameSchema,
+});
+export const TrainingRunPathSchema = WorkspacePathSchema.extend({
+  run_id: UuidSchema,
+});
+export const TrainingRunListQuerySchema = z.object({
+  task_id: UuidSchema.optional().describe(
+    "Filter runs by task ID within this workspace.",
+  ),
+});
+export type TrainingRunListQuery = z.infer<typeof TrainingRunListQuerySchema>;
+
+export const TrainingRunEventsQuerySchema = z.object({
+  after: z.coerce.number().int().nonnegative().optional(),
+  limit: z.coerce.number().int().min(1).max(1_000).default(500),
+});
+
+export const TaskListSchema = z
+  .object({ data: z.array(TaskSchema) })
+  .openapi("TaskList");
+export const TrainingRunListSchema = z
+  .object({ data: z.array(TrainingRunSchema) })
+  .openapi("TrainingRunList");
+export const TaskVersionListSchema = z
+  .object({ data: z.array(TaskVersionSchema) })
+  .openapi("TaskVersionList");
+export const TrainingRunEventListSchema = z
+  .object(pageFields(TrainingRunEventSchema))
+  .openapi("TrainingRunEventList");

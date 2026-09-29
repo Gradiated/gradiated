@@ -76,7 +76,7 @@ const RunListItem = ({
         </code>
       ) : null}
       {version && run.dataset ? " · " : null}
-      {run.dataset ? `${run.dataset.usable.toLocaleString()} traces` : null}
+      {run.dataset ? `${run.dataset.eligible_examples.toLocaleString()} traces` : null}
     </p>
   </button>
 );

@@ -118,3 +118,10 @@ export {
   type NomadView,
   type ReconcileResult,
 } from "./deployments/nomad.js";
+export {
+  createTrainingService,
+  type TaskRecord,
+  type TaskVersionRecord,
+  type TrainingRunRecord,
+  type TrainingService,
+} from "./training/service.js";

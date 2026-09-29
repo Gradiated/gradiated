@@ -5,6 +5,7 @@ import {
   createControlDatabase,
   createContentStore,
   createTraceService,
+  createTrainingService,
   createDeploymentStatusService,
   createOrganizationService,
   createProfilingWriter,
@@ -58,6 +59,9 @@ await valkey.connect();
 
 const catalogBilling = createCatalogBillingService(database);
 const organizations = createOrganizationService(database);
+const contents = createContentStore(
+  environment.CONTENTS_BUCKET ?? "unconfigured",
+);
 const trustedOrigins = resolveAuthTrustedOrigins(
   environment.TRUSTED_ORIGINS,
   environment.NODE_ENV,
@@ -142,10 +146,8 @@ const app = createApp({
     usage: createUsageService(database, clickhouse),
     waitlist: createWaitlistService(database),
     workspaces: createWorkspaceApiKeyService(database),
-    traces: createTraceService(
-      database,
-      createContentStore(environment.CONTENTS_BUCKET ?? "unconfigured"),
-    ),
+    traces: createTraceService(database, contents),
+    training: createTrainingService(database, contents),
   },
 });
 

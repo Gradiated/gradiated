@@ -56,6 +56,7 @@ export const workspaceRecord: WorkspaceRecord = {
   isDefault: true,
   traceCaptureEnabled: false,
   traceRetentionDays: 30,
+  evaluationJudge: "openai/gpt-5.6-sol",
   archivedAt: null,
   createdAt: now,
   updatedAt: now,
@@ -191,6 +192,7 @@ export const createTestApp = ({
       organizations: service("organizations"),
       usage: service("usage"),
       traces: service("traces"),
+      training: service("training"),
       workspaces: service("workspaces"),
     },
   });

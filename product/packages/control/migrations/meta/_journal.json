@@ -57,6 +57,13 @@
       "when": 1790334936005,
       "tag": "0007_misty_toro",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790678330150,
+      "tag": "0008_training",
+      "breakpoints": true
     }
   ]
 }

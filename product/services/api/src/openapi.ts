@@ -35,6 +35,16 @@ export const unservedDependencies = (): AppDependencies => ({
       list: unserved("traces.list"),
       content: unserved("traces.content"),
     },
+    training: {
+      listTasks: unserved("training.listTasks"),
+      getTask: unserved("training.getTask"),
+      updateTask: unserved("training.updateTask"),
+      listRuns: unserved("training.listRuns"),
+      getRun: unserved("training.getRun"),
+      listRunEvents: unserved("training.listRunEvents"),
+      listVersions: unserved("training.listVersions"),
+      promote: unserved("training.promote"),
+    },
     usage: {
       getSummary: unserved("usage.getSummary"),
       listGenerations: unserved("usage.listGenerations"),

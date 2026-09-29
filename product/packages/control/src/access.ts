@@ -108,3 +108,32 @@ export const requireWorkspaceMembership = async (
 
   return { membership, workspace };
 };
+
+export const managerRoles: ReadonlySet<OrganizationRole> = new Set([
+  "owner",
+  "admin",
+]);
+
+export const requireWorkspaceEditor = async (
+  database: ControlDatabase,
+  key: { userId: string; workspaceId: string },
+): Promise<typeof workspaces.$inferSelect> => {
+  const { membership, workspace } = await requireWorkspaceMembership(
+    database,
+    key,
+  );
+  if (!managerRoles.has(membership.role)) {
+    throw new ControlServiceError(
+      "forbidden",
+      "Only organization owners and admins can manage this workspace.",
+    );
+  }
+  if (membership.organizationStatus !== "active" || workspace.archivedAt) {
+    throw new ControlServiceError(
+      "forbidden",
+      "This workspace cannot be changed.",
+    );
+  }
+
+  return workspace;
+};

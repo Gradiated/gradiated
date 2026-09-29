@@ -23,6 +23,7 @@ import { registerUsageRoutes } from "./routes/usage.js";
 import { registerWaitlistRoutes } from "./routes/waitlist.js";
 import { registerWizardRoutes } from "./routes/wizard.js";
 import { registerGenerationRoutes } from "./routes/generations.js";
+import { registerTrainingRoutes } from "./routes/training.js";
 import { registerWorkspaceRoutes } from "./routes/workspaces.js";
 import type {
   ApiEnvironment,
@@ -135,6 +136,7 @@ export const createApp = ({
   });
   registerWorkspaceRoutes(app, services.workspaces);
   registerGenerationRoutes(app, services.usage, services.traces);
+  registerTrainingRoutes(app, services.training);
   registerGatewayContract(app);
 
   app.doc31("/api/openapi.json", openApiDocument);

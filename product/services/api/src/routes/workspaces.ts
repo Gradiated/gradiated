@@ -239,6 +239,7 @@ const workspaceResponse = (record: WorkspaceRecord): Workspace => ({
   is_default: record.isDefault,
   trace_capture_enabled: record.traceCaptureEnabled,
   trace_retention_days: record.traceRetentionDays as 30 | 90 | 180,
+  evaluation_judge: record.evaluationJudge,
   archived_at: record.archivedAt?.toISOString() ?? null,
   created_at: record.createdAt.toISOString(),
   updated_at: record.updatedAt.toISOString(),

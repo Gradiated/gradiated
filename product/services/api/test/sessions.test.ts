@@ -47,6 +47,8 @@ const pathParameters: Record<string, string> = {
   workspace_id: workspaceId,
   api_key_id: apiKeyId,
   generation_id: "0198ae70-0e61-7a51-9d5c-2f4b5e6a7b8c",
+  run_id: "0198ae70-0e61-7a51-9d5c-2f4b5e6a7b8d",
+  task: "support-triage",
 };
 
 const sessionRoutes = [

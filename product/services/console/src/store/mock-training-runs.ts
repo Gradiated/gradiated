@@ -1,3 +1,4 @@
+import type { RunDatasetSummary } from "@gradiated/contracts";
 import { runProgress } from "@/store/fine-tuning-run-log";
 import {
   isTerminalStage,
@@ -5,7 +6,6 @@ import {
   type EvaluationJudge,
   type EvaluationSummary,
   type FineTunedModel,
-  type RunDataset,
   type RunProgress,
   type RunStage,
   type TaskRow,
@@ -44,17 +44,16 @@ const INELIGIBLE_TRACES = 41;
 const INITIAL_PROGRESS: RunProgress = {
   step: 0,
   total_steps: TOTAL_STEPS,
-  loss: 0.9,
-  mean_reward: 0.41,
+  train_loss: 0.9,
   tokens_per_second: 1312,
   eta_seconds: 620,
 };
 
 const TRAINER_STARTED: TrainingRunEventPayload = {
-  type: "trainer_started",
-  gpu: TRAINING_GPU,
-  image_digest: TRAINER_IMAGE,
-  recipe: RECIPE,
+  type: "trainer_observation",
+  name: "started",
+  message: "Trainer started",
+  details: { recipe: "sft" },
 };
 
 const capacityGranted = (hostId: string): TrainingRunEventPayload => ({
@@ -94,20 +93,18 @@ const buildDataset = (
   runId: string,
   usable: number,
   newestTraceAt: number,
-): RunDataset => {
+): RunDatasetSummary => {
   const holdout = Math.round(usable * 0.1);
   const validation = Math.round((usable - holdout) * 0.05);
 
   return {
     oldest_trace_at: isoAt(newestTraceAt - 30 * DAY_MS),
     newest_trace_at: isoAt(newestTraceAt),
-    usable,
-    deduplicated: usable,
+    eligible_examples: usable,
+    duplicates_removed: 0,
     train: usable - holdout - validation,
     validation,
-    holdout,
-    train_sha256: fakeDigest(`${runId}-train`),
-    holdout_sha256: fakeDigest(`${runId}-holdout`),
+    test: holdout,
   };
 };
 
@@ -177,7 +174,7 @@ const runLogWriter = (log: readonly TrainingRunEvent[]) => {
 
   return {
     events,
-    controlPlane: writer("control_plane"),
+    controlPlane: writer("worker"),
     trainer: writer("trainer"),
     retry: () => {
       attempt += 1;
@@ -298,7 +295,7 @@ export const advanceRun = (
       controlPlane({
         type: "note",
         level: "info",
-        message: `scanned ${dataset.usable + INELIGIBLE_TRACES} captured requests since the last run, ${dataset.usable} eligible (${INELIGIBLE_TRACES} dropped: truncated or outcome unknown)`,
+        message: `scanned ${dataset.eligible_examples + INELIGIBLE_TRACES} captured requests since the last run, ${dataset.eligible_examples} eligible (${INELIGIBLE_TRACES} dropped: truncated or outcome unknown)`,
       });
       controlPlane({ type: "dataset_built", ...dataset });
       enter("awaiting_capacity");
@@ -317,8 +314,16 @@ export const advanceRun = (
       });
       controlPlane(jobSubmitted(providerJobId, PRIMARY_HOST));
       trainer(TRAINER_STARTED);
-      trainer({ type: "trainer_stage", stage: "preparing_data" });
-      trainer({ type: "trainer_stage", stage: "training" });
+      trainer({
+        type: "trainer_observation",
+        name: "preparing_data",
+        message: "Trainer: preparing_data",
+      });
+      trainer({
+        type: "trainer_observation",
+        name: "training",
+        message: "Trainer: training",
+      });
       trainer({ type: "trainer_progress", ...INITIAL_PROGRESS });
 
       return advance({ stage: "training", provider_job_id: providerJobId });
@@ -327,46 +332,77 @@ export const advanceRun = (
     case "training": {
       const previous = runProgress(log) ?? INITIAL_PROGRESS;
       const step = Math.min(
-        previous.total_steps,
-        previous.step + Math.round(previous.total_steps * STEP_SHARE_PER_TICK),
+        previous.total_steps ?? 100,
+        previous.step +
+          Math.round((previous.total_steps ?? 100) * STEP_SHARE_PER_TICK),
       );
       const reports = log.filter((event) => event.type === "trainer_progress");
 
       trainer({
         type: "trainer_progress",
         step,
-        total_steps: previous.total_steps,
-        loss: Math.max(0.16, round3(previous.loss * 0.82)),
-        mean_reward: Math.min(0.86, round3(previous.mean_reward + 0.09)),
+        total_steps: previous.total_steps ?? 100,
+        train_loss: Math.max(0.16, round3((previous.train_loss ?? 1) * 0.82)),
         tokens_per_second: previous.tokens_per_second,
-        eta_seconds: Math.max(0, Math.round(previous.eta_seconds * 0.55)),
+        eta_seconds: Math.max(
+          0,
+          Math.round((previous.eta_seconds ?? 0) * 0.55),
+        ),
       });
       if (reports.length % 2 === 0) {
         trainer({
+          type: "trainer_observation",
+          name: "validation_completed",
+          message: "Validation completed",
+          step,
+          metrics: {
+            validation_loss: Math.max(
+              0.2,
+              round3((previous.train_loss ?? 1) * 0.9),
+            ),
+          },
+        });
+        trainer({
           type: "trainer_checkpoint",
           step,
+          key: `runs/${run.id}/checkpoint-${step}.tar.gz`,
+          size_bytes: ADAPTER_SIZE_BYTES,
           sha256: fakeDigest(`${run.id}-checkpoint-${step}`),
         });
       }
 
-      if (step < previous.total_steps) return advance({});
+      if (step < (previous.total_steps ?? 100)) return advance({});
 
-      trainer({ type: "trainer_stage", stage: "uploading" });
       trainer({
-        type: "trainer_artifact_uploaded",
-        name: "adapter.tar.gz",
-        sha256: fakeDigest(`${run.id}-adapter`),
-        size_bytes: ADAPTER_SIZE_BYTES,
+        type: "trainer_observation",
+        name: "uploading",
+        message: "Trainer: uploading",
       });
       trainer({
-        type: "trainer_artifact_uploaded",
-        name: "manifest.json",
-        sha256: fakeDigest(`${run.id}-manifest`),
-        size_bytes: MANIFEST_SIZE_BYTES,
+        type: "trainer_observation",
+        name: "artifact_uploaded",
+        message: "Artifact uploaded",
+        details: {
+          name: "adapter.tar.gz",
+          sha256: fakeDigest(`${run.id}-adapter`),
+          size_bytes: ADAPTER_SIZE_BYTES,
+        },
       });
       trainer({
-        type: "trainer_finished",
-        manifest_sha256: fakeDigest(`${run.id}-manifest`),
+        type: "trainer_observation",
+        name: "artifact_uploaded",
+        message: "Artifact uploaded",
+        details: {
+          name: "manifest.json",
+          sha256: fakeDigest(`${run.id}-manifest`),
+          size_bytes: MANIFEST_SIZE_BYTES,
+        },
+      });
+      trainer({
+        type: "trainer_observation",
+        name: "finished",
+        message: "Trainer finished",
+        details: { manifest_sha256: fakeDigest(`${run.id}-manifest`) },
       });
       controlPlane({ type: "job_status", state: "complete" });
       enter("verifying");
@@ -418,7 +454,7 @@ export const advanceRun = (
     case "evaluating": {
       if (!run.dataset) return fail();
 
-      const summary = buildEvaluation(run, run.dataset.holdout, context);
+      const summary = buildEvaluation(run, run.dataset.test, context);
       const { win, tie, loss, unresolved } = summary.vs_comparison;
 
       controlPlane({
@@ -504,8 +540,7 @@ export const replayFailedRun = (
     type: "trainer_progress",
     step: Math.round((TOTAL_STEPS * (report + 1)) / 10),
     total_steps: TOTAL_STEPS,
-    loss: round3(0.9 * 0.84 ** (report + 1)),
-    mean_reward: round3(0.41 + 0.045 * (report + 1)),
+    train_loss: round3(0.9 * 0.84 ** (report + 1)),
     tokens_per_second: INITIAL_PROGRESS.tokens_per_second,
     eta_seconds: (9 - report) * 360,
   });
@@ -517,12 +552,18 @@ export const replayFailedRun = (
   controlPlane(24, { type: "stage_entered", stage: "training" });
   controlPlane(24.1, jobSubmitted(firstJob, SECONDARY_HOST));
   trainer(25, TRAINER_STARTED);
-  trainer(25.5, { type: "trainer_stage", stage: "training" });
+  trainer(25.5, {
+    type: "trainer_observation",
+    name: "training",
+    message: "Trainer: training",
+  });
   trainer(26, progress(0));
   trainer(32, progress(1));
   trainer(32.1, {
     type: "trainer_checkpoint",
     step: 128,
+    key: `runs/${runId}/checkpoint-128.tar.gz`,
+    size_bytes: ADAPTER_SIZE_BYTES,
     sha256: fakeDigest(`${runId}-checkpoint-128`),
   });
   controlPlane(35, { type: "job_status", state: "lost" });
@@ -536,12 +577,18 @@ export const replayFailedRun = (
   controlPlane(36, capacityGranted(PRIMARY_HOST));
   controlPlane(36.1, jobSubmitted(retryJob, PRIMARY_HOST));
   trainer(37, TRAINER_STARTED);
-  trainer(38, { type: "trainer_stage", stage: "training" });
+  trainer(38, {
+    type: "trainer_observation",
+    name: "training",
+    message: "Trainer: training",
+  });
   trainer(44, progress(2));
   trainer(50, progress(3));
   trainer(55, {
-    type: "trainer_failed",
-    error_code: "deadline",
+    type: "trainer_observation",
+    name: "failed",
+    level: "error",
+    details: { error_code: "deadline" },
     message: "attempt deadline reached at step 256 of 640",
   });
   controlPlane(55.1, { type: "job_status", state: "failed" });

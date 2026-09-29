@@ -1,18 +1,19 @@
-import type { UpdateWorkspace } from "@gradiated/contracts";
+import {
+  DEFAULT_EVALUATION_JUDGE,
+  type UpdateWorkspace,
+} from "@gradiated/contracts";
 import { and, asc, eq, getTableColumns, isNull } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 
 import {
   findMembership,
+  managerRoles,
   requireMembership,
+  requireWorkspaceEditor,
   requireWorkspaceMembership,
 } from "../access.js";
 import type { ControlDatabase } from "../db/client.js";
-import {
-  apiKeys,
-  workspaces,
-  type OrganizationRole,
-} from "../db/schema/index.js";
+import { apiKeys, workspaces } from "../db/schema/index.js";
 import { ControlServiceError } from "../errors.js";
 import { apiKeyDigest, generateApiKeySecret } from "./api-key-secret.js";
 
@@ -55,11 +56,6 @@ export interface WorkspaceApiKeyService {
   ): Promise<void>;
 }
 
-const keyManagerRoles: ReadonlySet<OrganizationRole> = new Set([
-  "owner",
-  "admin",
-]);
-
 const { digest: _digest, ...apiKeyColumns } = getTableColumns(apiKeys);
 
 export const createWorkspaceApiKeyService = (
@@ -75,37 +71,13 @@ export const createWorkspaceApiKeyService = (
     });
     if (
       membership.organizationStatus !== "active" ||
-      !keyManagerRoles.has(membership.role)
+      !managerRoles.has(membership.role)
     ) {
       throw new ControlServiceError(
         "forbidden",
         "Only active organization owners and admins can create workspaces.",
       );
     }
-  };
-
-  const requireWorkspaceEditor = async (
-    userId: string,
-    workspaceId: string,
-  ): Promise<WorkspaceRecord> => {
-    const { membership, workspace } = await requireWorkspaceMembership(
-      database,
-      { userId, workspaceId },
-    );
-    if (!keyManagerRoles.has(membership.role)) {
-      throw new ControlServiceError(
-        "forbidden",
-        "Only organization owners and admins can manage this workspace.",
-      );
-    }
-    if (membership.organizationStatus !== "active" || workspace.archivedAt) {
-      throw new ControlServiceError(
-        "forbidden",
-        "This workspace cannot be changed.",
-      );
-    }
-
-    return workspace;
   };
 
   return {
@@ -139,6 +111,7 @@ export const createWorkspaceApiKeyService = (
         isDefault: false,
         traceCaptureEnabled: false,
         traceRetentionDays: 30,
+        evaluationJudge: DEFAULT_EVALUATION_JUDGE,
         archivedAt: null,
         createdAt: now,
         updatedAt: now,
@@ -150,13 +123,14 @@ export const createWorkspaceApiKeyService = (
     },
 
     async updateWorkspace(userId, workspaceId, input) {
-      await requireWorkspaceEditor(userId, workspaceId);
+      await requireWorkspaceEditor(database, { userId, workspaceId });
 
       const [workspace] = await database
         .update(workspaces)
         .set({
           traceCaptureEnabled: input.trace_capture_enabled,
           traceRetentionDays: input.trace_retention_days,
+          evaluationJudge: input.evaluation_judge,
           updatedAt: new Date(),
         })
         .where(eq(workspaces.id, workspaceId))
@@ -165,7 +139,10 @@ export const createWorkspaceApiKeyService = (
       return workspace!;
     },
     async archiveWorkspace(userId, workspaceId) {
-      const workspace = await requireWorkspaceEditor(userId, workspaceId);
+      const workspace = await requireWorkspaceEditor(database, {
+        userId,
+        workspaceId,
+      });
       if (workspace.isDefault)
         throw new ControlServiceError(
           "forbidden",
@@ -196,7 +173,10 @@ export const createWorkspaceApiKeyService = (
     },
 
     async createApiKey(userId, workspaceId, input) {
-      const workspace = await requireWorkspaceEditor(userId, workspaceId);
+      const workspace = await requireWorkspaceEditor(database, {
+        userId,
+        workspaceId,
+      });
 
       const now = new Date();
       if (input.expiresAt && input.expiresAt <= now) {
@@ -227,7 +207,7 @@ export const createWorkspaceApiKeyService = (
     },
 
     async revokeApiKey(userId, workspaceId, apiKeyId) {
-      await requireWorkspaceEditor(userId, workspaceId);
+      await requireWorkspaceEditor(database, { userId, workspaceId });
 
       const [apiKey] = await database
         .select()

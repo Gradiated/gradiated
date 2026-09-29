@@ -48,7 +48,7 @@ const VersionMeta = ({ version }: { version: VersionView }) => (
     {new Date(version.model.created_at).toLocaleDateString(undefined, {
       dateStyle: "medium",
     })}{" "}
-    · {version.run.dataset?.usable.toLocaleString() ?? "—"} traces
+    · {version.run.dataset?.eligible_examples.toLocaleString() ?? "—"} traces
   </>
 );
 

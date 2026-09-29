@@ -212,6 +212,118 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace_id}/tasks": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations["listTasks"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace_id}/tasks/{task}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations["getTask"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations["updateTask"];
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace_id}/training-runs": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations["listTrainingRuns"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace_id}/training-runs/{run_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations["getTrainingRun"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace_id}/training-runs/{run_id}/events": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations["listTrainingRunEvents"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations["listTaskVersions"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace_id}/tasks/{task}/production": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put: operations["promoteTaskVersion"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/v1/systemone": {
     parameters: {
       query?: never;
@@ -678,6 +790,7 @@ export interface components {
       /** @description Whether task-labelled requests are captured. */
       trace_capture_enabled: boolean;
       trace_retention_days: 30 | 90 | 180;
+      evaluation_judge: components["schemas"]["EvaluationJudge"];
       /**
        * Format: date-time
        * @example 2026-08-16T12:00:00.000Z
@@ -694,10 +807,24 @@ export interface components {
        */
       updated_at: string;
     };
+    /** @enum {string} */
+    EvaluationJudge:
+      | "Qwen/Qwen3-0.6B"
+      | "openai/gpt-6-astra"
+      | "openai/gpt-6-sol"
+      | "openai/gpt-6-luna"
+      | "openai/gpt-5.6-sol"
+      | "openai/gpt-5"
+      | "anthropic/claude-fable-5-1"
+      | "anthropic/claude-opus-5-5"
+      | "anthropic/claude-sonnet-5-5"
+      | "anthropic/claude-opus-5"
+      | "anthropic/claude-sonnet-5";
     UpdateWorkspace: {
       /** @description Whether task-labelled requests are captured. */
       trace_capture_enabled?: boolean;
       trace_retention_days?: 30 | 90 | 180;
+      evaluation_judge?: components["schemas"]["EvaluationJudge"];
     };
     WorkspaceList: {
       data: components["schemas"]["Workspace"][];
@@ -809,6 +936,361 @@ export interface components {
         [key: string]: unknown;
       } | null;
       canonical?: unknown;
+    };
+    TaskList: {
+      data: components["schemas"]["Task"][];
+    };
+    Task: {
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      id: string;
+      name: string;
+      base_model_id: string | null;
+      comparison_model_id: string | null;
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      production_version_id: string | null;
+    };
+    UpdateTask: {
+      base_model_id?: string;
+      comparison_model_id?: string;
+    };
+    TrainingRunList: {
+      data: components["schemas"]["TrainingRun"][];
+    };
+    TrainingRun: {
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      id: string;
+      task: string;
+      /** @enum {string} */
+      trigger: "automation" | "manual";
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      requested_by: string | null;
+      stage: components["schemas"]["RunStage"];
+      base_model_id: string;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      input_cutoff: string;
+      dataset: components["schemas"]["RunDatasetSummary"];
+      evaluation: components["schemas"]["RunEvaluation"];
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      version_id: string | null;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      cancel_requested_at: string | null;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      created_at: string;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      finished_at: string | null;
+    };
+    /** @enum {string} */
+    RunStage:
+      | "queued"
+      | "building_dataset"
+      | "awaiting_capacity"
+      | "training"
+      | "verifying"
+      | "publishing"
+      | "evaluating"
+      | "cancelling"
+      | "succeeded"
+      | "failed"
+      | "cancelled";
+    RunDatasetSummary: {
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      oldest_trace_at?: string;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      newest_trace_at?: string;
+      eligible_examples: number;
+      duplicates_removed: number;
+      train: number;
+      validation: number;
+      test: number;
+      evaluation_examples?: number;
+    } | null;
+    RunEvaluation: {
+      holdout_groups: number;
+      holdout_examples: number;
+      comparison_model_id: string;
+      judge_model_id: components["schemas"]["EvaluationJudge"];
+      vs_comparison: {
+        comparator_model_id: string;
+        win: number;
+        tie: number;
+        loss: number;
+        unresolved: number;
+      };
+      cost_per_request_nano_usd: {
+        fine_tuned: number;
+        comparison: number;
+      };
+      output_tokens_per_second: {
+        fine_tuned: number;
+        comparison: number;
+      };
+      error_rate: number;
+    } | null;
+    TrainingRunEventList: {
+      data: components["schemas"]["TrainingRunEvent"][];
+      next_cursor: string | null;
+    };
+    TrainingRunEvent: {
+      id: number;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      at: string;
+      /** @description Service that emitted the event, such as api, worker or trainer. */
+      source: string;
+      attempt: number;
+      payload: components["schemas"]["TrainingRunEventPayload"];
+    };
+    TrainingRunEventPayload:
+      | {
+          /** @enum {string} */
+          type: "run_created";
+          /** @enum {string} */
+          trigger: "automation" | "manual";
+          /**
+           * Format: uuid
+           * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+           */
+          requested_by: string | null;
+          base_model_id: string;
+        }
+      | {
+          /** @enum {string} */
+          type: "stage_entered";
+          stage: components["schemas"]["RunStage"];
+        }
+      | {
+          /** @enum {string} */
+          type: "dataset_built";
+          /**
+           * Format: date-time
+           * @example 2026-08-16T12:00:00.000Z
+           */
+          oldest_trace_at?: string;
+          /**
+           * Format: date-time
+           * @example 2026-08-16T12:00:00.000Z
+           */
+          newest_trace_at?: string;
+          eligible_examples: number;
+          duplicates_removed: number;
+          train: number;
+          validation: number;
+          test: number;
+          evaluation_examples?: number;
+        }
+      | {
+          /** @enum {string} */
+          type: "capacity_granted";
+          host_id: string;
+          gpu: {
+            type: string;
+            count: number;
+          };
+        }
+      | {
+          /** @enum {string} */
+          type: "job_submitted";
+          runner: string;
+          provider_job_id: string;
+          host_id: string;
+          gpu: {
+            type: string;
+            count: number;
+          };
+        }
+      | {
+          /** @enum {string} */
+          type: "job_status";
+          /** @enum {string} */
+          state: "running" | "complete" | "lost" | "failed";
+          message?: string;
+        }
+      | {
+          /** @enum {string} */
+          type: "artifact_verified";
+          /**
+           * Format: uuid
+           * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+           */
+          version_id: string;
+          sha256: string;
+          size_bytes: number;
+        }
+      | {
+          /** @enum {string} */
+          type: "adapter_loaded";
+          host_id: string;
+        }
+      | {
+          /** @enum {string} */
+          type: "evaluation_progress";
+          completed: number;
+          total: number;
+        }
+      | {
+          /** @enum {string} */
+          type: "evaluation_completed";
+          judge: components["schemas"]["EvaluationJudge"];
+          groups: number;
+          win: number;
+          tie: number;
+          loss: number;
+          unresolved: number;
+        }
+      | {
+          /** @enum {string} */
+          type: "published";
+          /**
+           * Format: uuid
+           * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+           */
+          version_id: string;
+          name: string;
+        }
+      | {
+          /** @enum {string} */
+          type: "cancel_requested";
+          /**
+           * Format: uuid
+           * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+           */
+          requested_by: string;
+        }
+      | {
+          /** @enum {string} */
+          type: "run_finished";
+          /** @enum {string} */
+          stage: "succeeded" | "failed" | "cancelled";
+          /** @enum {string} */
+          error_code?: "internal" | "attempt_deadline";
+          message?: string;
+        }
+      | {
+          /** @enum {string} */
+          type: "note";
+          /** @enum {string} */
+          level: "info" | "warning" | "error";
+          message: string;
+        }
+      | {
+          /** @enum {string} */
+          type: "trainer_progress";
+          /** @description Completed optimizer updates, cumulative across checkpoint resumes. */
+          step: number;
+          total_steps?: number;
+          /** @description Primary training objective loss for this logging interval; its definition and aggregation belong to the training recipe. */
+          train_loss?: number;
+          /** @description Non-padding input tokens per second across all training devices in this logging interval. */
+          tokens_per_second?: number;
+          eta_seconds?: number;
+          /** @description Additional finite numeric measurements; metric names are extensible. */
+          metrics?: {
+            [key: string]: number;
+          };
+        }
+      | {
+          /** @enum {string} */
+          type: "trainer_observation";
+          name: string;
+          message: string;
+          /** @enum {string} */
+          level?: "debug" | "info" | "warning" | "error";
+          step?: number;
+          /** @description Additional finite numeric measurements; metric names are extensible. */
+          metrics?: {
+            [key: string]: number;
+          };
+          details?: {
+            [key: string]: unknown;
+          };
+        }
+      | {
+          /** @enum {string} */
+          type: "trainer_checkpoint";
+          step: number;
+          key: string;
+          sha256: string;
+          size_bytes: number;
+        };
+    TaskVersionList: {
+      data: components["schemas"]["TaskVersion"][];
+    };
+    TaskVersion: {
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      id: string;
+      name: string;
+      task: string;
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      training_run_id: string;
+      base_model_id: string;
+      adapter: components["schemas"]["TaskVersionAdapter"];
+      /**
+       * @description Durable serving eligibility. Available versions may be called or promoted after serving validation; this does not indicate runtime health or adapter cache residency.
+       * @enum {string}
+       */
+      status: "available" | "unavailable";
+      is_production: boolean;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      created_at: string;
+    };
+    TaskVersionAdapter: {
+      /** @enum {string} */
+      format: "peft_lora";
+      artifact_uri: string;
+      sha256: string;
+      size_bytes: number;
+      rank: number;
+    };
+    PromoteVersion: {
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      version_id: string;
     };
     /** @description Completed native SystemOne inference response. */
     SystemOneResponse: {
@@ -2395,6 +2877,562 @@ export interface operations {
         };
       };
       /** @description Generation content unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  listTasks: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Tasks with captured traces. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TaskList"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not allowed. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Trace storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  getTask: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+        task: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The task. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Task"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not allowed. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Trace storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  updateTask: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+        task: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        "application/json": components["schemas"]["UpdateTask"];
+      };
+    };
+    responses: {
+      /** @description The updated task. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Task"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not allowed. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Trace storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  listTrainingRuns: {
+    parameters: {
+      query?: {
+        /** @description Filter runs by task ID within this workspace. */
+        task_id?: string;
+      };
+      header?: never;
+      path: {
+        workspace_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Runs, newest first. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TrainingRunList"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not allowed. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Trace storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  getTrainingRun: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+        run_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The run. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TrainingRun"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not allowed. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Trace storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  listTrainingRunEvents: {
+    parameters: {
+      query?: {
+        after?: number | null;
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        workspace_id: string;
+        run_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Events in order, after the cursor. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TrainingRunEventList"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not allowed. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Trace storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  listTaskVersions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+        task: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Versions, newest first. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TaskVersionList"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not allowed. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Trace storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  promoteTaskVersion: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+        task: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        "application/json": components["schemas"]["PromoteVersion"];
+      };
+    };
+    responses: {
+      /** @description The task with its new production version. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Task"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not allowed. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Trace storage unavailable. */
       503: {
         headers: {
           [name: string]: unknown;

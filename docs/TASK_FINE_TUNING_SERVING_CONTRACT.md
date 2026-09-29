@@ -2,6 +2,37 @@
 
 Status: implementation contract, not implemented. Owns `ART-01` and `SERV-01` to `SERV-04`. S3 and S4 qualify it before enablement.
 
+## Version eligibility and runtime residency
+
+`task_versions.status` is durable serving eligibility, not a report of whether an
+adapter is loaded. `available` permits exact-version use and promotion once the
+serving integration is qualified; `unavailable` disables them. Training success
+and evaluation quality are separate. Do not flip this field on cache eviction,
+a replica restart, temporary capacity loss or a cold-load timeout.
+
+The current SFT worker publishes versions as `unavailable`. It verifies training
+artifacts, but does not yet qualify them through the inference loader or project
+private versions into gateway routing. Current promotion only updates
+`tasks.production_version_id`; loader preparation, revision checks and routing
+projection described below remain unimplemented. Setting a row to `available`
+alone cannot make an adapter callable.
+
+The serving implementation must:
+
+1. Bind validated immutable adapter bytes to the exact compatible base weights,
+   tokenizer and template, and verify load/use through the production loader.
+2. Publish an authorized private model descriptor for gateway routing and mark
+   the version available. A failed qualification leaves it unavailable.
+3. Route each authorized request to a healthy compatible base allocation. Its
+   runtime loads the exact adapter from its local cache or immutable S3 storage,
+   coalesces concurrent loads and retains it while requests use it.
+4. Prepare and validate a promotion before changing the task production pointer.
+
+There is one serving Nomad job per base release, not per adapter. Residency is
+local to each allocation, so a global `loading` or `loaded` version status would
+be misleading. Serving eligibility, healthy base capacity and per-allocation
+cache residency are separate facts. The trainer does not manage any of them.
+
 ## Components
 
 ```mermaid
@@ -87,7 +118,7 @@ Base serving jobs and scaling policies remain in Git, referencing PostgreSQL bas
 
 ## SERV-03 Promotion
 
-Promotion sets `tasks.production_model_id`. There is no promotion table, background promotion workflow or per-model production boolean. The task's production revision detects concurrent changes. The audit log records actor, previous model, target model and time.
+Promotion sets `tasks.production_version_id`. There is no promotion table, background promotion workflow or per-model production boolean. The task's production revision detects concurrent changes. The audit log records actor, previous model, target model and time.
 
 1. Check membership and that the target is an available version of the same task.
 2. Prepare the target through the normal private adapter loader within a bounded request deadline. Preparation checks exact-adapter execution on a compatible host while at least two base replicas are ready. It does not pin the adapter across replicas.

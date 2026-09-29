@@ -51,6 +51,10 @@ This repository is the complete project state for the research and product-build
 - `$product-build`: repository-first product implementation, verification, and handoff.
 - `$experiment-run`: bounded, reproducible experiments with cleanup; routine output stays untracked.
 
+## Pull request reviews
+
+When addressing a review comment, resolve its thread after the fix is pushed. When deliberately ignoring or declining a comment, briefly explain why in the thread and resolve it. Do not leave addressed or intentionally declined comments unresolved.
+
 ## Verification
 
 Run `python3 tools/devex/check.py` first (`make devex-check` is an optional shorthand), then the narrowest relevant checks and workstream checks. GitHub Actions runs the same DevEx checks plus Rust formatting and tests for the current research workspace after pushes. For research changes, the required checks are documented in `research/lab/AGENTS.md`.

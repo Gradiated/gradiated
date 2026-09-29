@@ -17,9 +17,12 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import type {
-  ModelDeploymentRelease,
-  ModelProperties,
+import {
+  EVALUATION_JUDGES,
+  DEFAULT_EVALUATION_JUDGE,
+  type EvaluationJudge,
+  type ModelDeploymentRelease,
+  type ModelProperties,
 } from "@gradiated/contracts";
 
 import { users } from "./auth.js";
@@ -141,6 +144,10 @@ export const workspaces = pgTable(
       .notNull()
       .default(false),
     traceRetentionDays: smallint("trace_retention_days").notNull().default(30),
+    evaluationJudge: text("evaluation_judge")
+      .$type<EvaluationJudge>()
+      .notNull()
+      .default(DEFAULT_EVALUATION_JUDGE),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
       .defaultNow()
       .notNull(),
@@ -149,6 +156,10 @@ export const workspaces = pgTable(
       .notNull(),
   },
   (table) => [
+    check(
+      "workspaces_evaluation_judge_check",
+      sql`${table.evaluationJudge} in (${sql.raw(EVALUATION_JUDGES.map((judge) => `'${judge}'`).join(", "))})`,
+    ),
     check(
       "workspaces_trace_retention_days_check",
       sql`${table.traceRetentionDays} in (30, 90, 180)`,

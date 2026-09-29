@@ -742,3 +742,34 @@ The optional `model_deployments.instance_id` foreign key preserves manual deploy
 compatibility. It does not assign jobs to hosts. The control service can register
 inventory and set or clear a Nomad node link. Authentication and verification of
 that link remain pending. The application database migration remains pending.
+
+## Task training
+
+Migration 0008 adds workspace-owned `tasks`, named uniquely within a workspace.
+Task names cannot be `.` or `..`, because task routes use the name as a URL path
+segment. This PR discovers task names from retained trace storage; moving task
+registration to the collector is a later implementation change.
+
+`training_runs` belong to a task and record the trigger, requester, base model,
+input cutoff, stage, dataset summary and evaluation summary. A partial unique
+index permits only one unfinished run per task. Training reads reject archived
+workspaces immediately, before reading traces or discovering tasks.
+
+`training_run_events` belong to a run and have monotonically increasing IDs for
+pagination. Their source names the emitting service. Workflow lifecycle events
+and recovery checkpoints have typed payloads; trainer observations carry an
+extensible name, message, metrics and details. Observations cannot authorize
+workflow transitions. See [the run contract](TASK_FINE_TUNING_RUN_CONTRACT.md).
+
+`task_versions` reference their workspace, task and training run. Composite
+foreign keys require that the workspace owns the task and that the run belongs
+to that same task. Each run produces at most one version; version names are
+workspace-unique. Adapter metadata records an immutable URI, digest, byte size,
+format and rank. Large artifacts and datasets remain in object storage.
+
+The task's production-version pointer is changed explicitly by an editor, only
+to an available version of the same task. Promotion uses last-write-wins semantics
+for concurrent authorized requests. Availability means durable serving eligibility,
+not residency in an inference runtime's adapter cache. Comparison model IDs may
+name external providers; they are not restricted to the hosted-model table.
+Executor-specific support is checked when admitting a run.

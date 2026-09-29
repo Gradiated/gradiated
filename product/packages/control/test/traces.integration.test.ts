@@ -17,6 +17,7 @@ import { traceTaskKey } from "../src/traces/content.js";
 import { createTraceCleanup } from "../src/traces/cleanup.js";
 import type { ContentStore } from "../src/traces/storage.js";
 import { workspaces } from "../src/db/schema/index.js";
+import { createMemoryContentStore } from "./support/content-store.js";
 import { seedMember } from "./support/fixtures.js";
 import { createTestDatabase, type TestDatabase } from "./support/postgres.js";
 
@@ -33,42 +34,7 @@ describe("generation content", () => {
   afterAll(() => db.dispose());
   beforeEach(() => {
     objects = new Map();
-    store = {
-      list: vi.fn(async (prefix, options = {}) => {
-        const keys = [...objects.keys()]
-          .filter((k) => k.startsWith(prefix))
-          .sort();
-        if (options.delimiter)
-          return {
-            keys: [],
-            prefixes: [
-              ...new Set(
-                keys.map(
-                  (k) => prefix + k.slice(prefix.length).split("/")[0] + "/",
-                ),
-              ),
-            ],
-          };
-        const start = options.cursor ? Number(options.cursor) : 0;
-        const limit = options.limit ?? 100;
-        return {
-          keys: keys.slice(start, start + limit),
-          prefixes: [],
-          cursor:
-            keys.length > start + limit ? String(start + limit) : undefined,
-        };
-      }),
-      read: vi.fn(async (key, range) => {
-        const bytes = objects.get(key);
-        if (!bytes) throw new Error("missing");
-        return range
-          ? bytes.subarray(range.offset, range.offset + range.length)
-          : bytes;
-      }),
-      delete: vi.fn(async (keys) => {
-        for (const key of keys) objects.delete(key);
-      }),
-    };
+    store = createMemoryContentStore(objects);
   });
   const fixture = async (role: "owner" | "member" = "owner", daysAgo = 0) => {
     const scope = await seedMember(db.database, { role });

@@ -1,14 +1,13 @@
 export const TRAINING_TRACE_THRESHOLD = 500;
 
-export const EVALUATION_JUDGE_ALLOWLIST = [
-  "openai/gpt-5.6-sol",
-  "openai/gpt-5",
-  "anthropic/claude-fable-5-1",
-  "anthropic/claude-opus-5",
-  "anthropic/claude-sonnet-5",
-] as const;
-
-export type EvaluationJudge = (typeof EVALUATION_JUDGE_ALLOWLIST)[number];
+export { EVALUATION_JUDGES as EVALUATION_JUDGE_ALLOWLIST } from "@gradiated/contracts/model-catalog";
+export type { EvaluationJudgeId as EvaluationJudge } from "@gradiated/contracts/model-catalog";
+import type { EvaluationJudgeId as EvaluationJudge } from "@gradiated/contracts/model-catalog";
+import type {
+  RunDatasetSummary,
+  RunProgress,
+  TrainerObservation,
+} from "@gradiated/contracts";
 
 export type WorkspaceRow = Readonly<{
   id: string;
@@ -99,18 +98,6 @@ export const STAGE_LABEL: Record<RunStage, string> = {
   cancelled: "Cancelled",
 };
 
-export type RunDataset = Readonly<{
-  oldest_trace_at: string;
-  newest_trace_at: string;
-  usable: number;
-  deduplicated: number;
-  train: number;
-  validation: number;
-  holdout: number;
-  train_sha256: string;
-  holdout_sha256: string;
-}>;
-
 /** Fractions sum to 1; `unresolved` verdicts are shown but never counted as losses. */
 export type JudgeOutcome = Readonly<{
   comparator_model_id: string;
@@ -144,7 +131,7 @@ export type TrainingRunRow = Readonly<{
   trigger: "automation" | "manual";
   base_model_id: string;
   stage: RunStage;
-  dataset: RunDataset | null;
+  dataset: RunDatasetSummary | null;
   evaluation: EvaluationSummary | null;
   provider_job_id: string | null;
   created_at: string;
@@ -155,7 +142,7 @@ type EventEnvelope = Readonly<{
   attempt: number;
   seq: number;
   at: string;
-  source: "control_plane" | "trainer";
+  source: string;
 }>;
 
 export type Gpu = Readonly<{ type: string; count: number }>;
@@ -173,7 +160,7 @@ type RunCreated = Readonly<{
 export type TrainingRunEventPayload =
   | RunCreated
   | Readonly<{ type: "stage_entered"; stage: RunStage }>
-  | Readonly<{ type: "dataset_built" } & RunDataset>
+  | Readonly<{ type: "dataset_built" } & RunDatasetSummary>
   | Readonly<{ type: "capacity_granted"; host_id: string; gpu: Gpu }>
   | Readonly<{
       type: "job_submitted";
@@ -218,52 +205,19 @@ export type TrainingRunEventPayload =
       level: "info" | "warning" | "error";
       message: string;
     }>
-  | Readonly<{
-      type: "trainer_started";
-      gpu: Gpu;
-      image_digest: string;
-      recipe: string;
-    }>
-  | Readonly<{
-      type: "trainer_stage";
-      stage:
-        | "starting"
-        | "preparing_data"
-        | "training"
-        | "checkpointing"
-        | "uploading";
-    }>
   | Readonly<{ type: "trainer_progress" } & RunProgress>
-  | Readonly<{ type: "trainer_checkpoint"; step: number; sha256: string }>
+  | Readonly<{ type: "trainer_observation" } & TrainerObservation>
   | Readonly<{
-      type: "trainer_artifact_uploaded";
-      name: string;
+      type: "trainer_checkpoint";
+      step: number;
+      key: string;
       sha256: string;
       size_bytes: number;
-    }>
-  | Readonly<{ type: "trainer_finished"; manifest_sha256: string }>
-  | Readonly<{
-      type: "trainer_failed";
-      error_code:
-        | "dataset_invalid"
-        | "oom"
-        | "judge_unavailable"
-        | "upload_failed"
-        | "deadline"
-        | "internal";
-      message: string;
     }>;
 
 export type TrainingRunEvent = EventEnvelope & TrainingRunEventPayload;
 
-export type RunProgress = Readonly<{
-  step: number;
-  total_steps: number;
-  loss: number;
-  mean_reward: number;
-  tokens_per_second: number;
-  eta_seconds: number;
-}>;
+export type { RunProgress } from "@gradiated/contracts";
 
 export type TraceGenerationRow = Readonly<{
   id: string;

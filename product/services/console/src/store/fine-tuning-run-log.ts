@@ -25,19 +25,18 @@ export const runProgress = (
   const {
     step,
     total_steps,
-    loss,
-    mean_reward,
+    train_loss,
     tokens_per_second,
     eta_seconds,
+    metrics,
   } = latest;
-
   return {
     step,
     total_steps,
-    loss,
-    mean_reward,
+    train_loss,
     tokens_per_second,
     eta_seconds,
+    metrics,
   };
 };
 
@@ -50,8 +49,13 @@ export const runLogByStage = (
   for (const event of events) {
     if (event.type === "stage_entered") current = event.stage;
 
-    // Trainer events always go in `training`: their merge can lag the control plane's transitions.
-    const bucket = event.source === "trainer" ? "training" : current;
+    // Training progress can arrive after the workflow has entered a later stage.
+    const bucket = event.type.startsWith("trainer_")
+      ? "training"
+      : event.type === "evaluation_progress" ||
+          event.type === "evaluation_completed"
+        ? "evaluating"
+        : current;
     (byStage[bucket] ??= []).push(event);
   }
 
@@ -64,6 +68,11 @@ const shortDigest = (sha256: string) => `${sha256.slice(0, 8)}…`;
 
 const gpuLabel = ({ count, type }: Gpu) => `${count}× ${type}`;
 
+const formatMetrics = (metrics: Record<string, number> | undefined) =>
+  Object.entries(metrics ?? {})
+    .map(([name, value]) => ` ${name}=${value}`)
+    .join("");
+
 const percent = (fraction: number) => Math.round(fraction * 100);
 
 export const describeEvent = (event: TrainingRunEvent): string => {
@@ -73,7 +82,7 @@ export const describeEvent = (event: TrainingRunEvent): string => {
     case "stage_entered":
       return `→ ${event.stage}`;
     case "dataset_built":
-      return `dataset: ${event.usable} eligible, ${event.deduplicated} after dedupe, train ${event.train} / validation ${event.validation} / holdout ${event.holdout} (${event.oldest_trace_at.slice(0, 10)} → ${event.newest_trace_at.slice(0, 10)})`;
+      return `dataset: ${event.eligible_examples} eligible, ${event.duplicates_removed} duplicates removed, train ${event.train} / validation ${event.validation} / test ${event.test}${event.evaluation_examples === undefined ? "" : ` / evaluation sample ${event.evaluation_examples}`}${event.oldest_trace_at && event.newest_trace_at ? ` (${event.oldest_trace_at.slice(0, 10)} → ${event.newest_trace_at.slice(0, 10)})` : ""}`;
     case "capacity_granted":
       return `host ${event.host_id} granted (${gpuLabel(event.gpu)})`;
     case "job_submitted":
@@ -98,19 +107,11 @@ export const describeEvent = (event: TrainingRunEvent): string => {
       return `run ${event.stage}${event.error_code ? ` (${event.error_code})` : ""}${event.message ? `: ${event.message}` : ""}`;
     case "note":
       return `${event.level}: ${event.message}`;
-    case "trainer_started":
-      return `trainer started on ${gpuLabel(event.gpu)} · recipe ${event.recipe} · image ${event.image_digest}`;
-    case "trainer_stage":
-      return `trainer: ${event.stage}`;
     case "trainer_progress":
-      return `step ${event.step}/${event.total_steps} reward=${event.mean_reward.toFixed(3)} loss=${event.loss.toFixed(3)} tok/s=${event.tokens_per_second} eta=${event.eta_seconds}s`;
+      return `step ${event.step}${event.total_steps === undefined ? "" : `/${event.total_steps}`}${event.train_loss === undefined ? "" : ` loss=${event.train_loss.toFixed(3)}`}${event.tokens_per_second === undefined ? "" : ` tok/s=${event.tokens_per_second}`}${event.eta_seconds === undefined ? "" : ` eta=${event.eta_seconds}s`}${formatMetrics(event.metrics)}`;
+    case "trainer_observation":
+      return `${event.level ? `${event.level}: ` : ""}${event.message}${event.step === undefined ? "" : ` (step ${event.step})`}${formatMetrics(event.metrics)}${event.details ? ` ${JSON.stringify(event.details)}` : ""}`;
     case "trainer_checkpoint":
       return `checkpoint at step ${event.step} sha256=${shortDigest(event.sha256)}`;
-    case "trainer_artifact_uploaded":
-      return `uploaded ${event.name} (${megabytes(event.size_bytes)} MB) sha256=${shortDigest(event.sha256)}`;
-    case "trainer_finished":
-      return `trainer finished, manifest ${shortDigest(event.manifest_sha256)}`;
-    case "trainer_failed":
-      return `trainer failed (${event.error_code}): ${event.message}`;
   }
 };

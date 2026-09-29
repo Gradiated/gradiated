@@ -71,7 +71,7 @@ const clock = (iso: string) => iso.slice(11, 19);
 const formatStageLog = (lines: TrainingRunEvent[]) =>
   lines
     .map((event, index) => {
-      const line = `${clock(event.at)} ${event.source === "trainer" ? "[trainer] " : ""}${describeEvent(event)}`;
+      const line = `${clock(event.at)} [${event.source}] ${describeEvent(event)}`;
       const previous = lines[index - 1];
 
       return previous && previous.attempt !== event.attempt
@@ -162,8 +162,13 @@ export const StageTimeline = ({
                 </span>
                 {stage === "training" && isCurrent && progress ? (
                   <span className="text-xs text-muted-foreground tabular-nums">
-                    step {progress.step}/{progress.total_steps} · reward{" "}
-                    {progress.mean_reward.toFixed(2)}
+                    step {progress.step}
+                    {progress.total_steps === undefined
+                      ? ""
+                      : `/${progress.total_steps}`}
+                    {progress.train_loss === undefined
+                      ? ""
+                      : ` · loss ${progress.train_loss.toFixed(3)}`}
                   </span>
                 ) : null}
                 <span className="w-16 text-right text-xs text-muted-foreground tabular-nums">

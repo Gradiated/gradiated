@@ -1,5 +1,6 @@
 import { z } from "@hono/zod-openapi";
 
+import { EvaluationJudgeSchema } from "./training.js";
 import {
   ApiKeySecretSchema,
   NameInputSchema,
@@ -23,6 +24,7 @@ export const WorkspaceSchema = z
       z.literal(90),
       z.literal(180),
     ]),
+    evaluation_judge: EvaluationJudgeSchema,
     archived_at: TimestampSchema.nullable(),
     created_at: TimestampSchema,
     updated_at: TimestampSchema,
@@ -38,6 +40,7 @@ export const CreateWorkspaceSchema = z
 export const UpdateWorkspaceSchema = WorkspaceSchema.pick({
   trace_capture_enabled: true,
   trace_retention_days: true,
+  evaluation_judge: true,
 })
   .partial()
   .strict()

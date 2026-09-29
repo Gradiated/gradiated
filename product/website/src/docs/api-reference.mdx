@@ -1,23 +1,26 @@
 # API reference
 
-<DocsLead>Gradiated accepts OpenAI and Anthropic compatible inference requests.</DocsLead>
+<DocsLead>Gradiated accepts OpenAI and Anthropic compatible inference requests, and native SystemOne decision requests.</DocsLead>
 
 ## Inference endpoints
 
 You can use `https://api.gradiated.com` as the base URL in all SDKs.
 
-| Method | Path                   | Purpose                                  |
-| ------ | ---------------------- | ---------------------------------------- |
-| `GET`  | `/models`              | List accessible models.                  |
-| `POST` | `/v1/chat/completions` | Send an OpenAI Chat Completions request. |
-| `POST` | `/v1/responses`        | Send an OpenAI Responses request.        |
-| `POST` | `/v1/messages`         | Send an Anthropic Messages request.      |
+| Method | Path                   | Purpose                                         |
+| ------ | ---------------------- | ----------------------------------------------- |
+| `GET`  | `/models`              | List accessible models.                         |
+| `POST` | `/v1/chat/completions` | Send an OpenAI Chat Completions request.        |
+| `POST` | `/v1/responses`        | Send an OpenAI Responses request.               |
+| `POST` | `/v1/messages`         | Send an Anthropic Messages request.             |
+| `POST` | `/v1/systemone`        | Ask Kev for choices, probabilities, and scores. |
 
 For direct HTTP requests, send the API key as a bearer token:
 
 ```http
 Authorization: Bearer grad_...
 ```
+
+See the [SystemOne SDK guide](/docs/systemone-sdk/) for Kev examples and supported parameters.
 
 ## Management API
 

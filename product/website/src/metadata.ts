@@ -92,6 +92,11 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     title: "Anthropic SDK",
     description: "Use the Anthropic SDK with the Gradiated API.",
   },
+  "/docs/systemone-sdk/": {
+    title: "SystemOne SDK",
+    description:
+      "Use Kev with the TypeSafe SystemOne SDK on Gradiated. Copy Python, Node, and cURL examples for choices, probabilities, and scores.",
+  },
   "/docs/service-tiers/": {
     title: "Service tiers",
     description:

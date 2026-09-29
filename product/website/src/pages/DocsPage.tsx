@@ -32,6 +32,7 @@ import DocsOpenAiSdk from "../docs/openai-sdk.mdx";
 import DocsOpenCode from "../docs/opencode.mdx";
 import DocsQuickstart from "../docs/quickstart.mdx";
 import DocsServiceTiers from "../docs/service-tiers.mdx";
+import DocsSystemOneSdk from "../docs/systemone-sdk.mdx";
 
 type DocsDocument = {
   title: string;
@@ -64,6 +65,11 @@ export const documents = {
     title: "Anthropic SDK",
     path: "/docs/anthropic-sdk/",
     Component: DocsAnthropicSdk,
+  },
+  "systemone-sdk": {
+    title: "SystemOne SDK",
+    path: "/docs/systemone-sdk/",
+    Component: DocsSystemOneSdk,
   },
   "service-tiers": {
     title: "Service tiers",
@@ -106,7 +112,13 @@ export const navigation: Array<{ heading: string; items: DocsPageKey[] }> = [
   },
   {
     heading: "Inference",
-    items: ["openai-sdk", "anthropic-sdk", "service-tiers", "errors"],
+    items: [
+      "openai-sdk",
+      "anthropic-sdk",
+      "systemone-sdk",
+      "service-tiers",
+      "errors",
+    ],
   },
   { heading: "Integrations", items: ["opencode", "codex", "claude-code"] },
   { heading: "Reference", items: ["api-reference"] },

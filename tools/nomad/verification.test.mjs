@@ -71,10 +71,14 @@ const fixture = async (overrides = {}) => {
 test("only SDK-verified allocation identities become manually healthy", async () => {
   const { gate, state } = await fixture();
   await gate.qualify();
-  assert.deepEqual(
-    state.verified.map((item) => item.deploymentId),
-    ["one", "two"],
-  );
+  assert.deepEqual(state.verified, [
+    {
+      modelId: "model",
+      runtimeRevision: "v2",
+      stage: "canary",
+      deploymentIds: ["one", "two"],
+    },
+  ]);
   assert.deepEqual(state.posts, [
     {
       path: "/v1/deployment/allocation-health/rollout",
@@ -82,7 +86,16 @@ test("only SDK-verified allocation identities become manually healthy", async ()
     },
   ]);
   await gate.finish();
-  assert.equal(state.verified[2].deploymentId, undefined);
+  assert.equal(state.verified[1].stage, "serving");
+  assert.deepEqual(state.verified[1].deploymentIds, ["one", "two"]);
+});
+
+test("resuming a rollout verifies only allocations still awaiting qualification", async () => {
+  const { gate, state } = await fixture();
+  state.allocations[0].DeploymentStatus = { Healthy: true };
+  await gate.qualify();
+  assert.deepEqual(state.verified[0].deploymentIds, ["two"]);
+  assert.deepEqual(state.posts[0].body.HealthyAllocationIDs, ["two"]);
 });
 
 test("a replacement during verification cannot inherit health", async () => {
@@ -93,7 +106,9 @@ test("a replacement during verification cannot inherit health", async () => {
   await gate.qualify();
   assert.deepEqual(state.posts[0].body.HealthyAllocationIDs, ["two"]);
   await gate.qualify();
-  assert.ok(state.verified.some((item) => item.deploymentId === "replacement"));
+  assert.ok(
+    state.verified.some((item) => item.deploymentIds.includes("replacement")),
+  );
 });
 
 for (const checks of [
@@ -162,7 +177,7 @@ test("requires continuous observed health for the configured minimum", async () 
   assert.equal(state.verified.length, 0);
   state.time += 1000;
   await gate.qualify();
-  assert.equal(state.verified.length, 2);
+  assert.equal(state.verified.length, 1);
 });
 
 test("health lost during SDK verification prevents promotion", async () => {

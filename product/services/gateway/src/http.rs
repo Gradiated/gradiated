@@ -218,10 +218,22 @@ async fn serve(
             .coordinator
             .qualify(metadata, headers, hosted, &translated, endpoint.kind)?;
 
-    match endpoint.operation {
+    let verification_deployment = headers
+        .contains_key("x-gradiated-verification-deployment")
+        .then_some(qualified.deployment.id);
+    let mut response = match endpoint.operation {
         Operation::Complete => complete(state, endpoint.protocol, qualified).await,
         Operation::CountTokens => count_tokens(state, &qualified).await,
+    }?;
+
+    if let Some(id) = verification_deployment {
+        response.headers_mut().insert(
+            "x-gradiated-verification-deployment",
+            generation_id_header(id),
+        );
     }
+
+    Ok(response)
 }
 
 fn finish(

@@ -1,87 +1,31 @@
-import { execFile } from "node:child_process";
+import { spawn } from "node:child_process";
 
-const execute = (args, input, signal) =>
+export const verifyInProduction = (input, signal) =>
   new Promise((resolve, reject) => {
-    const child = execFile(
+    const child = spawn(
       "kubectl",
-      args,
-      { signal, timeout: 8 * 60_000, maxBuffer: 1024 * 1024 },
-      (error, stdout, stderr) => {
-        if (error) {
-          const details = stderr.split("\n").flatMap((line) => {
-            try {
-              const record = JSON.parse(line);
-              if (record.event !== "model_sdk_verification_failed") return [];
-              const stage = [
-                "reconciliation",
-                "key_issue",
-                "inference",
-              ].includes(record.stage)
-                ? record.stage
-                : "unknown";
-              return [
-                `${stage}${Number.isInteger(record.status) ? ` HTTP ${record.status}` : ""}`,
-              ];
-            } catch {
-              return [];
-            }
-          });
-          reject(
-            new Error(
-              `Production SDK verification command failed${details.length ? `: ${details.join(", ")}` : ""}`,
-            ),
-          );
-        } else resolve(stdout);
-      },
-    );
-    child.stdin.end(input);
-  });
-
-export const verifyInProduction = async (input, signal) => {
-  const pods = JSON.parse(
-    await execute(
       [
         "-n",
         "gradiated",
-        "get",
-        "pods",
-        "-l",
-        "app.kubernetes.io/name=worker",
-        "-o",
-        "json",
+        "exec",
+        "-i",
+        "-c",
+        "worker",
+        "deployment/worker",
+        "--",
+        "node",
+        "services/worker/dist/verify-model.js",
       ],
-      undefined,
-      signal,
-    ),
-  );
-  const pod = pods.items.find(
-    (item) =>
-      !item.metadata.deletionTimestamp &&
-      item.status.conditions?.some(
-        (condition) =>
-          condition.type === "Ready" && condition.status === "True",
-      ),
-  );
-  if (!pod) throw new Error("No ready worker for production SDK verification");
-
-  await execute(
-    [
-      "-n",
-      "gradiated",
-      "exec",
-      "-i",
-      pod.metadata.name,
-      "--",
-      "node",
-      "services/worker/dist/verify-model.js",
-    ],
-    JSON.stringify(input),
-    signal,
-  );
-  console.log(
-    `${input.modelId}: production SDK passed (${input.deploymentId ?? "promoted routing"})`,
-  );
-};
+      { signal, timeout: 8 * 60_000, stdio: ["pipe", "inherit", "inherit"] },
+    );
+    child.on("error", reject);
+    child.stdin.on("error", reject);
+    child.on("close", (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`Production SDK verification exited with ${code}`));
+    });
+    child.stdin.end(JSON.stringify(input));
+  });
 
 export const createVerificationGate = async (
   deployment,
@@ -180,17 +124,13 @@ export const createVerificationGate = async (
       if (!stable) return;
 
       try {
-        await Promise.all(
-          pending.map((allocation) =>
-            verify(
-              {
-                ...input,
-                deploymentId: allocation.ID,
-                deploymentIds: candidates.map((item) => item.ID),
-              },
-              signal,
-            ),
-          ),
+        await verify(
+          {
+            ...input,
+            stage: "canary",
+            deploymentIds: pending.map((allocation) => allocation.ID),
+          },
+          signal,
         );
       } catch (error) {
         if (!signal.aborted)
@@ -219,6 +159,7 @@ export const createVerificationGate = async (
       await verify(
         {
           ...input,
+          stage: "serving",
           deploymentIds: promoted.map((allocation) => allocation.ID),
         },
         signal,

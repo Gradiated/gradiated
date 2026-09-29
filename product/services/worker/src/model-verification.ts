@@ -25,6 +25,12 @@ export const verifyModel = async (options: ModelVerification) => {
       signal: AbortSignal.any([request.signal, options.signal]),
     });
     if (response.ok) {
+      if (
+        options.deploymentId &&
+        response.headers.get("x-gradiated-verification-deployment") !==
+          options.deploymentId
+      )
+        throw new Error("Gateway did not acknowledge the target allocation");
       const id = response.headers.get("x-gradiated-generation-id");
       if (
         !id ||

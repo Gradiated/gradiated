@@ -10,7 +10,7 @@ import { verifyModel } from "./model-verification.js";
 const input = z
   .object({
     modelId: z.string().min(1).max(300),
-    deploymentId: z.uuid().optional(),
+    stage: z.enum(["canary", "serving"]),
     deploymentIds: z.array(z.uuid()).min(1),
     protocol: z.literal("system_one").optional(),
     runtimeRevision: z.string().min(1).max(300),
@@ -52,11 +52,12 @@ try {
         (row) =>
           row.id === id &&
           row.revision === input.runtimeRevision &&
-          row.status === (input.deploymentId ? "unavailable" : "available"),
+          row.status ===
+            (input.stage === "canary" ? "unavailable" : "available"),
       ),
     );
     const promoted =
-      input.deploymentId ||
+      input.stage === "canary" ||
       rows.every(
         (row) =>
           row.status !== "available" || input.deploymentIds.includes(row.id),
@@ -77,21 +78,29 @@ try {
     },
   );
   stage = "inference";
-  const result = await verifyModel({
-    ...input,
-    apiKey: issued.secret,
-    baseURL: "https://api.gradiated.com",
-    signal,
-  });
-  console.log(
-    JSON.stringify({ event: "model_sdk_verification_passed", ...result }),
-  );
+  const targets = input.stage === "canary" ? input.deploymentIds : [undefined];
+  for (const deploymentId of targets) {
+    const result = await verifyModel({
+      modelId: input.modelId,
+      protocol: input.protocol,
+      deploymentId,
+      apiKey: issued.secret,
+      baseURL: "https://api.gradiated.com",
+      signal,
+    });
+    console.log(
+      JSON.stringify({
+        event: "model_sdk_verification_passed",
+        ...result,
+      }),
+    );
+  }
 } catch (error) {
   console.error(
     JSON.stringify({
       event: "model_sdk_verification_failed",
       modelId: input.modelId,
-      deploymentId: input.deploymentId,
+      deploymentIds: input.deploymentIds,
       stage,
       status:
         typeof (error as { status?: unknown })?.status === "number"

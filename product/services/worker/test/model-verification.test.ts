@@ -30,11 +30,35 @@ describe("production SDK verification", () => {
           id,
         );
         expect((await request.json()).model).toBe("test/model");
-        return response(decision);
+        const result = response(decision);
+        result.headers.set("x-gradiated-verification-deployment", id);
+        return result;
       },
     });
     expect(result.generations).toHaveLength(1);
   });
+
+  it.each([undefined, "00000000-0000-4000-8000-000000000001"])(
+    "rejects an unacknowledged target (%s)",
+    async (acknowledged) => {
+      await expect(
+        verifyModel({
+          ...options(),
+          protocol: "system_one",
+          deploymentId: randomUUID(),
+          fetch: async () => {
+            const result = response(decision);
+            if (acknowledged)
+              result.headers.set(
+                "x-gradiated-verification-deployment",
+                acknowledged,
+              );
+            return result;
+          },
+        }),
+      ).rejects.toThrow();
+    },
+  );
 
   it.each(["wrong-answer", "missing-generation", "wrong-usage", "http-error"])(
     "rejects %s",

@@ -113,10 +113,11 @@ await waitForDeployment(deployment, {
   signal,
   pause: () => delay(500, undefined, { signal }),
   verify: async (input) => {
-    if (input.deploymentId) {
-      await verifyRoute(input.deploymentId);
-      verified.push(input.deploymentId);
-    }
+    if (input.stage === "canary")
+      for (const id of input.deploymentIds) {
+        await verifyRoute(id);
+        verified.push(id);
+      }
   },
 });
 assert.equal(new Set(verified).size, 2);
@@ -204,10 +205,11 @@ await waitForDeployment(initialDeployment, {
   signal,
   pause: () => delay(500, undefined, { signal }),
   verify: async (input) => {
-    if (input.deploymentId) {
-      await verifyRoute(input.deploymentId);
-      initialVerified.add(input.deploymentId);
-    }
+    if (input.stage === "canary")
+      for (const id of input.deploymentIds) {
+        await verifyRoute(id);
+        initialVerified.add(id);
+      }
   },
 });
 assert.equal(initialVerified.size, 2);

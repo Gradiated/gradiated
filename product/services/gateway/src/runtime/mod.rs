@@ -209,6 +209,9 @@ enum TransportError {
     ConnectionClosed,
     ConnectionReset,
     Canceled,
+    Http2GoAway,
+    Http2Reset,
+    Http2,
     Other,
 }
 
@@ -216,17 +219,25 @@ impl TransportError {
     // Never retain the error: its display/debug representation may include a private URL.
     fn classify(error: &reqwest::Error) -> Self {
         if error.is_timeout() {
-            Self::Timeout
-        } else if error.is_connect() {
-            Self::Connect
-        } else if error.is_body() {
+            return Self::Timeout;
+        }
+        if error.is_connect() {
+            return Self::Connect;
+        }
+
+        let fallback = if error.is_body() {
             Self::Body
         } else if error.is_decode() {
             Self::Decode
         } else if error.is_builder() {
             Self::Builder
         } else {
-            Self::classify_source(error)
+            Self::Other
+        };
+
+        match Self::classify_source(error) {
+            Self::Other => fallback,
+            cause => cause,
         }
     }
 
@@ -256,6 +267,17 @@ impl TransportError {
                     _ => {}
                 }
             }
+            if let Some(error) = error.downcast_ref::<h2::Error>() {
+                if error.is_go_away() {
+                    return Self::Http2GoAway;
+                }
+                if error.is_reset() {
+                    return Self::Http2Reset;
+                }
+                if !error.is_io() {
+                    return Self::Http2;
+                }
+            }
 
             source = error.source();
         }
@@ -275,6 +297,9 @@ impl TransportError {
             Self::ConnectionClosed => "connection_closed",
             Self::ConnectionReset => "connection_reset",
             Self::Canceled => "transport_canceled",
+            Self::Http2GoAway => "http2_goaway",
+            Self::Http2Reset => "http2_reset",
+            Self::Http2 => "http2",
             Self::Other => "transport",
         }
     }

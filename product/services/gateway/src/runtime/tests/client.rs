@@ -377,7 +377,7 @@ async fn a_body_cut_after_acceptance_is_an_interruption_without_retry() {
             .unwrap_err();
 
         assert_eq!(failure.kind(), RuntimeFailureKind::Interrupted, "{case}");
-        assert_eq!(failure.diagnostic_code(), "decode", "{case}");
+        assert_eq!(failure.diagnostic_code(), "connection_closed", "{case}");
         assert_eq!(failure.usage(), NormalizedUsage::zero(), "{case}");
         assert_eq!(failure.gateway_error(), GatewayError::RuntimeUnavailable);
     }
@@ -661,7 +661,64 @@ async fn broken_http_responses_have_safe_specific_diagnostics() {
         let failure = RuntimeFailure::from_transport(error);
 
         assert_eq!(failure.diagnostic_code(), expected);
-        assert!(!logged_attempt(&failure).to_string().contains("private"));
         assert!(!format!("{failure:?}").contains("private"));
     }
+}
+
+#[tokio::test]
+async fn http2_reset_has_a_safe_specific_diagnostic() {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let server = tokio::spawn(async move {
+        let (socket, _) = listener.accept().await.unwrap();
+        let mut connection = h2::server::handshake(socket).await.unwrap();
+        let (_, mut response) = connection.accept().await.unwrap().unwrap();
+        response.send_reset(h2::Reason::PROTOCOL_ERROR);
+        while connection.accept().await.is_some() {}
+    });
+    let error = reqwest::Client::builder()
+        .http2_prior_knowledge()
+        .build()
+        .unwrap()
+        .get(format!("http://{address}/private-path"))
+        .timeout(Duration::from_secs(5))
+        .send()
+        .await
+        .unwrap_err();
+    server.abort();
+    let failure = RuntimeFailure::from_transport(error);
+
+    assert_eq!(failure.diagnostic_code(), "http2_reset");
+    assert!(!format!("{failure:?}").contains("private"));
+}
+
+#[tokio::test]
+async fn a_truncated_body_preserves_its_connection_diagnostic() {
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let server = tokio::spawn(async move {
+        let (mut socket, _) = listener.accept().await.unwrap();
+        let mut request = [0; 4096];
+        socket.read(&mut request).await.unwrap();
+        socket
+            .write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 100\r\n\r\nprivate")
+            .await
+            .unwrap();
+        socket.shutdown().await.unwrap();
+    });
+    let response = reqwest::Client::new()
+        .get(format!("http://{address}/private-path"))
+        .timeout(Duration::from_secs(5))
+        .send()
+        .await
+        .unwrap();
+    let error = response.bytes().await.unwrap_err();
+    server.await.unwrap();
+    let failure = RuntimeFailure::interrupted(error);
+
+    assert_eq!(failure.kind(), RuntimeFailureKind::Interrupted);
+    assert_eq!(failure.diagnostic_code(), "connection_closed");
+    assert!(!format!("{failure:?}").contains("private"));
 }

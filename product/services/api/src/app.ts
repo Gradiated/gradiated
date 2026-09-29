@@ -14,11 +14,11 @@ import { requestLogFields, serviceLog } from "./logging.js";
 import { routeLabel, type ApiMetrics } from "./metrics.js";
 import type { DependencyCheck } from "./readiness.js";
 import { registerBillingRoutes } from "./routes/billing.js";
+import { registerGatewayContract } from "./routes/gateway-contract.js";
 import { registerHealthRoutes } from "./routes/health.js";
 import { registerMeRoutes } from "./routes/me.js";
 import { registerModelRoutes } from "./routes/models.js";
 import { registerOrganizationRoutes } from "./routes/organizations.js";
-import { registerSystemOneContract } from "./routes/systemone-contract.js";
 import { registerUsageRoutes } from "./routes/usage.js";
 import { registerWaitlistRoutes } from "./routes/waitlist.js";
 import { registerWizardRoutes } from "./routes/wizard.js";
@@ -135,14 +135,14 @@ export const createApp = ({
   });
   registerWorkspaceRoutes(app, services.workspaces);
   registerGenerationRoutes(app, services.usage, services.traces);
-  registerSystemOneContract(app);
+  registerGatewayContract(app);
 
   app.doc31("/api/openapi.json", openApiDocument);
   app.get(
     "/docs",
     apiReference({
-      pageTitle: "Gradiated Management API",
-      sources: [{ title: "Management API", url: "/api/openapi.json" }],
+      pageTitle: "Gradiated API",
+      sources: [{ title: "Gradiated API", url: "/api/openapi.json" }],
     }),
   );
 
@@ -182,13 +182,18 @@ export const createApp = ({
 export const openApiDocument = {
   openapi: "3.1.0" as const,
   info: {
-    title: "Gradiated Management API",
+    title: "Gradiated API",
     version: "0.1.0",
     description:
-      "Use the Management API to manage workspaces, billing limits, workspace members and model availability. Request bodies are limited to 1 MiB (413 if exceeded). Per-IP limits are 300 requests/minute, or 10/minute for waitlist signups, per API process. Rate-limited requests return 429 with Retry-After. Stripe webhooks are excluded from the IP rate limits.",
+      "The Gradiated API covers inference, model discovery, workspaces, billing, API keys and usage. Inference endpoints use workspace API keys (Authorization: Bearer or x-api-key). These keys do not authorize workspace administration. Protected management endpoints require a signed-in user session and the appropriate organization role; management API keys are not currently supported. Management request bodies are limited to 1 MiB (413 if exceeded). Management per-IP limits are 300 requests/minute, or 10/minute for waitlist signups, per API process. Rate-limited requests return 429 with Retry-After. Stripe webhooks are excluded from the IP rate limits.",
   },
   servers: [{ url: "/", description: "Current origin" }],
   tags: [
+    {
+      name: "Inference",
+      description:
+        "OpenAI, Anthropic and native SystemOne inference served by the gateway.",
+    },
     { name: "Session", description: "Current human session context." },
     { name: "Organizations", description: "Customer organization lifecycle." },
     { name: "Workspaces", description: "Usage and policy boundaries." },

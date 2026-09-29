@@ -158,6 +158,11 @@ select a specific model or `GRADIATED_BASE_URL` to test another gateway.
 The console listens on port 3000 and proxies `/api` and `/health`
 to the API process on port 3001. The generated OpenAPI schema is available at
 `http://localhost:3000/api/openapi.json`; interactive reference is at `/docs`.
+The Gradiated API reference combines management routes with documentation-only
+registrations for the Rust gateway in `services/api/src/routes/gateway-contract.ts`
+and `systemone-contract.ts`, with inference schemas in `gateway-schemas.ts`.
+Keep these aligned with gateway behavior; contract tests check route coverage
+and field descriptions. Gateway requests still run through the Rust service.
 
 The management API uses `hono-rate-limiter` with in-memory, per-process limits:
 300 requests/minute per IP, with 10/minute for waitlist signups. Excess requests

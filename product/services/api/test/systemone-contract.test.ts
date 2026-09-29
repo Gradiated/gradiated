@@ -15,7 +15,10 @@ describe("SystemOne documentation and Rust parity fixtures", () => {
   it("registers a bearer-secured OpenAPI operation without a TypeScript handler", async () => {
     const document = createOpenApiDocument();
     const operation = document.paths?.["/v1/systemone"]?.post;
-    expect(operation?.security).toEqual([{ InferenceBearer: [] }]);
+    expect(operation?.security).toEqual([
+      { InferenceBearer: [] },
+      { InferenceApiKey: [] },
+    ]);
     expect(document.components?.securitySchemes?.InferenceBearer).toMatchObject(
       { type: "http", scheme: "bearer" },
     );

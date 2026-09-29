@@ -34,7 +34,7 @@ describe("API contract", () => {
     const document = createOpenApiDocument();
 
     expect(document.openapi).toBe("3.1.0");
-    expect(document.info.title).toBe("Gradiated Management API");
+    expect(document.info.title).toBe("Gradiated API");
     expect(document.paths).not.toHaveProperty("/health/live");
     expect(document.paths).not.toHaveProperty("/health/ready");
     expect(document.paths).not.toHaveProperty("/api/v1/wizard/key");

@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Gradiated Management API",
+    "title": "Gradiated API",
     "version": "0.1.0",
-    "description": "Use the Management API to manage workspaces, billing limits, workspace members and model availability. Request bodies are limited to 1 MiB (413 if exceeded). Per-IP limits are 300 requests/minute, or 10/minute for waitlist signups, per API process. Rate-limited requests return 429 with Retry-After. Stripe webhooks are excluded from the IP rate limits."
+    "description": "The Gradiated API covers inference, model discovery, workspaces, billing, API keys and usage. Inference endpoints use workspace API keys (Authorization: Bearer or x-api-key). These keys do not authorize workspace administration. Protected management endpoints require a signed-in user session and the appropriate organization role; management API keys are not currently supported. Management request bodies are limited to 1 MiB (413 if exceeded). Management per-IP limits are 300 requests/minute, or 10/minute for waitlist signups, per API process. Rate-limited requests return 429 with Retry-After. Stripe webhooks are excluded from the IP rate limits."
   },
   "servers": [
     {
@@ -12,6 +12,10 @@
     }
   ],
   "tags": [
+    {
+      "name": "Inference",
+      "description": "OpenAI, Anthropic and native SystemOne inference served by the gateway."
+    },
     {
       "name": "Session",
       "description": "Current human session context."
@@ -47,6 +51,12 @@
         "type": "http",
         "scheme": "bearer",
         "description": "Workspace API key for the Rust inference gateway."
+      },
+      "InferenceApiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key",
+        "description": "Workspace API key; alternatively use Authorization: Bearer. Authorization takes precedence when both are supplied."
       }
     },
     "schemas": {
@@ -1412,7 +1422,8 @@
                 "type": "string",
                 "enum": [
                   "choice"
-                ]
+                ],
+                "description": "Answer selecting one of the named options."
               },
               "choice": {
                 "type": "string",
@@ -1452,7 +1463,8 @@
                 "type": "string",
                 "enum": [
                   "noul"
-                ]
+                ],
+                "description": "Answer reporting the probability of true."
               },
               "noul": {
                 "type": "number",
@@ -1474,7 +1486,8 @@
                 "type": "string",
                 "enum": [
                   "score"
-                ]
+                ],
+                "description": "Answer scoring the state against the ordered rubric."
               },
               "score": {
                 "type": "number",
@@ -1760,6 +1773,1241 @@
           }
         ],
         "description": "A native Kev choice, noul or score question."
+      },
+      "ChatCompletionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifier for this completion."
+          },
+          "object": {
+            "type": "string",
+            "enum": [
+              "chat.completion"
+            ],
+            "description": "Object discriminator for a non-streaming chat completion."
+          },
+          "created": {
+            "type": "integer",
+            "description": "Completion creation time as Unix seconds."
+          },
+          "model": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Exact model that served the completion."
+          },
+          "choices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "integer",
+                  "description": "Zero-based position of this completion choice."
+                },
+                "message": {
+                  "type": "object",
+                  "properties": {
+                    "role": {
+                      "type": "string",
+                      "description": "Speaker role, such as user or assistant; Chat Completions also supports system, developer and tool where the model accepts them."
+                    },
+                    "content": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": {},
+                            "description": "Protocol-specific content block, such as {type: 'text', text: 'Hello'}. Tool and multimodal blocks require support from the selected model and protocol translator."
+                          }
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Message text or typed content blocks. Assistant tool-call messages may have null content."
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Optional participant name in Chat Completions messages."
+                    },
+                    "tool_call_id": {
+                      "type": "string",
+                      "description": "For a Chat Completions tool result, the ID of the assistant tool call being answered."
+                    },
+                    "tool_calls": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": {}
+                      },
+                      "description": "Assistant tool calls in Chat Completions format, each with an ID and function name/arguments. Supply corresponding tool results on the next request."
+                    }
+                  },
+                  "required": [
+                    "role"
+                  ],
+                  "additionalProperties": {},
+                  "description": "Generated assistant message, including any tool calls."
+                },
+                "finish_reason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Why generation ended, such as stop, length or tool_calls; null if not yet known."
+                }
+              },
+              "required": [
+                "index",
+                "message",
+                "finish_reason"
+              ],
+              "additionalProperties": {}
+            },
+            "description": "Generated completion choices."
+          },
+          "usage": {
+            "type": "object",
+            "properties": {
+              "prompt_tokens": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Tokens in the prompt, including any cached subset."
+              },
+              "completion_tokens": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Tokens generated by the model."
+              },
+              "total_tokens": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Sum of prompt and completion tokens."
+              }
+            },
+            "required": [
+              "prompt_tokens",
+              "completion_tokens",
+              "total_tokens"
+            ],
+            "additionalProperties": {},
+            "description": "Token usage in Chat Completions format; model-specific cache and reasoning details may also be present."
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "created",
+          "model",
+          "choices"
+        ],
+        "additionalProperties": {}
+      },
+      "ChatCompletionRequest": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Exact hosted model ID from GET /v1/models; no aliases or fallback."
+          },
+          "stream": {
+            "type": "boolean",
+            "default": false,
+            "description": "When true, receive incremental server-sent events in this endpoint's protocol instead of one JSON result."
+          },
+          "service_tier": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ServiceTier"
+              },
+              {
+                "description": "Gradiated priority and price: flex uses 0.7x base pricing, default 1x, and fast 1.5x. fast has the highest scheduling priority."
+              }
+            ]
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "role": {
+                  "type": "string",
+                  "description": "Speaker role, such as user or assistant; Chat Completions also supports system, developer and tool where the model accepts them."
+                },
+                "content": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": {},
+                        "description": "Protocol-specific content block, such as {type: 'text', text: 'Hello'}. Tool and multimodal blocks require support from the selected model and protocol translator."
+                      }
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Message text or typed content blocks. Assistant tool-call messages may have null content."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Optional participant name in Chat Completions messages."
+                },
+                "tool_call_id": {
+                  "type": "string",
+                  "description": "For a Chat Completions tool result, the ID of the assistant tool call being answered."
+                },
+                "tool_calls": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {}
+                  },
+                  "description": "Assistant tool calls in Chat Completions format, each with an ID and function name/arguments. Supply corresponding tool results on the next request."
+                }
+              },
+              "required": [
+                "role"
+              ],
+              "additionalProperties": {}
+            },
+            "minItems": 1,
+            "description": "Ordered conversation history to continue, including instructions and any previous tool results."
+          },
+          "session_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "Optional session affinity identifier. It is a routing hint, not stored conversation history; resend the required context."
+          },
+          "max_completion_tokens": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "Maximum generated tokens. Cannot be combined with max_tokens; model output and context limits still apply."
+          },
+          "max_tokens": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "Alternative output-token limit. Cannot be combined with max_completion_tokens."
+          },
+          "temperature": {
+            "type": "number",
+            "description": "Sampling randomness: lower values favor likely tokens; higher values increase variation. Supported range and default depend on the model."
+          },
+          "top_p": {
+            "type": "number",
+            "description": "Cumulative probability cutoff for nucleus sampling. Lower values narrow the candidate tokens; support and bounds depend on the model."
+          },
+          "seed": {
+            "type": "integer",
+            "description": "Sampling seed for repeatable requests; identical output is not guaranteed."
+          },
+          "frequency_penalty": {
+            "type": "number",
+            "description": "Penalty based on how often a token already appears. Positive values reduce repetition; model bounds apply."
+          },
+          "presence_penalty": {
+            "type": "number",
+            "description": "Penalty for tokens already present in the output. Positive values favor new topics; model bounds apply."
+          },
+          "parallel_tool_calls": {
+            "type": "boolean",
+            "description": "Allow the model to request multiple tool calls in one turn, when supported."
+          },
+          "reasoning_effort": {
+            "type": "string",
+            "description": "Model-specific reasoning effort. Accepted values and effects depend on the hosted model."
+          },
+          "chat_template_kwargs": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": {},
+            "description": "Model-specific chat-template options, such as reasoning configuration. Accepted keys depend on the runtime."
+          },
+          "stop": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "Text sequence or sequences that stop generation when encountered; supported limits depend on the model."
+          },
+          "tools": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": {}
+            },
+            "description": "Function definitions available to the model, with names, descriptions and JSON Schemas for arguments. Uses this endpoint's OpenAI wire format; provider-hosted tools are not implied."
+          },
+          "tool_choice": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": {}
+              }
+            ],
+            "description": "Tool-selection policy (none, auto or required) or a named function selection in this endpoint's format. Requires model support."
+          },
+          "response_format": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": {},
+            "description": "Requested output format, such as text, json_object or json_schema. Structured-output support depends on the model."
+          },
+          "stream_options": {
+            "type": "object",
+            "properties": {
+              "include_usage": {
+                "type": "boolean",
+                "description": "Request aggregate token usage in a final streaming chunk when supported. An interrupted stream may not deliver it."
+              }
+            },
+            "additionalProperties": {},
+            "description": "Options for streaming responses; use with stream=true."
+          }
+        },
+        "required": [
+          "model",
+          "messages"
+        ],
+        "additionalProperties": {}
+      },
+      "MessagesResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifier for the generated message."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "message"
+            ],
+            "description": "Object discriminator for an Anthropic-format message."
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "assistant"
+            ],
+            "description": "The generated message is spoken by the assistant."
+          },
+          "model": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Exact model that served the message."
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": {},
+              "description": "Protocol-specific content block, such as {type: 'text', text: 'Hello'}. Tool and multimodal blocks require support from the selected model and protocol translator."
+            },
+            "description": "Ordered output blocks, such as text and tool-use requests."
+          },
+          "stop_reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why the message ended, such as end_turn, max_tokens, stop_sequence or tool_use."
+          },
+          "stop_sequence": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The custom stop sequence that matched, or null if none matched."
+          },
+          "usage": {
+            "type": "object",
+            "properties": {
+              "input_tokens": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Input-token count reported in Anthropic format."
+              },
+              "output_tokens": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Output-token count reported in Anthropic format."
+              }
+            },
+            "required": [
+              "input_tokens",
+              "output_tokens"
+            ],
+            "additionalProperties": {},
+            "description": "Token usage translated to Anthropic format; optional cache details depend on runtime reporting."
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "role",
+          "model",
+          "content",
+          "stop_reason",
+          "usage"
+        ],
+        "additionalProperties": {}
+      },
+      "MessagesRequest": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Exact hosted model ID from GET /v1/models; no aliases or fallback."
+          },
+          "stream": {
+            "type": "boolean",
+            "default": false,
+            "description": "When true, receive incremental server-sent events in this endpoint's protocol instead of one JSON result."
+          },
+          "service_tier": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ServiceTier"
+              },
+              {
+                "description": "Gradiated priority and price: flex uses 0.7x base pricing, default 1x, and fast 1.5x. fast has the highest scheduling priority."
+              }
+            ]
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "user",
+                    "assistant"
+                  ],
+                  "description": "Conversation speaker. Send system instructions in the top-level system field."
+                },
+                "content": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": {},
+                        "description": "Protocol-specific content block, such as {type: 'text', text: 'Hello'}. Tool and multimodal blocks require support from the selected model and protocol translator."
+                      }
+                    }
+                  ],
+                  "description": "Message text or Anthropic content blocks, including tool_use/tool_result blocks when supported."
+                }
+              },
+              "required": [
+                "role",
+                "content"
+              ],
+              "additionalProperties": {}
+            },
+            "minItems": 1,
+            "description": "Ordered user and assistant turns in Anthropic Messages format."
+          },
+          "max_tokens": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "Maximum tokens to generate; the model may finish earlier."
+          },
+          "system": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": {},
+                  "description": "Protocol-specific content block, such as {type: 'text', text: 'Hello'}. Tool and multimodal blocks require support from the selected model and protocol translator."
+                }
+              }
+            ],
+            "description": "Instructions that apply to the conversation, supplied separately from user and assistant turns."
+          },
+          "tools": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": {}
+            },
+            "description": "Callable tools in Anthropic format: name, optional description and input_schema describing arguments. The caller executes tool-use results."
+          },
+          "tool_choice": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": {},
+            "description": "Anthropic tool policy: type auto, any, tool (with name), or none, subject to model and translator support."
+          },
+          "temperature": {
+            "type": "number",
+            "description": "Sampling randomness: lower values favor likely tokens; higher values increase variation. Supported range and default depend on the model."
+          },
+          "top_p": {
+            "type": "number",
+            "description": "Cumulative probability cutoff for nucleus sampling. Lower values narrow the candidate tokens; support and bounds depend on the model."
+          },
+          "stop_sequences": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Custom text sequences that end generation; returned as stop_sequence when one matches."
+          }
+        },
+        "required": [
+          "model",
+          "messages",
+          "max_tokens"
+        ],
+        "additionalProperties": {}
+      },
+      "ResponsesResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifier for the response; Gradiated does not expose stored-response retrieval."
+          },
+          "object": {
+            "type": "string",
+            "enum": [
+              "response"
+            ],
+            "description": "Object discriminator for a Responses result."
+          },
+          "model": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Exact model that served the response."
+          },
+          "status": {
+            "type": "string",
+            "description": "Response lifecycle state, such as completed or incomplete."
+          },
+          "output": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": {}
+            },
+            "description": "Ordered Responses output items, such as assistant messages and function calls."
+          },
+          "usage": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "input_tokens": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Tokens used for the response input."
+              },
+              "output_tokens": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Tokens generated for the response."
+              },
+              "total_tokens": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Total input and output tokens."
+              }
+            },
+            "required": [
+              "input_tokens",
+              "output_tokens",
+              "total_tokens"
+            ],
+            "additionalProperties": {},
+            "description": "Token usage translated to Responses format; model-specific details may also be present."
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "model",
+          "status",
+          "output"
+        ],
+        "additionalProperties": {}
+      },
+      "ResponsesRequest": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Exact hosted model ID from GET /v1/models; no aliases or fallback."
+          },
+          "stream": {
+            "type": "boolean",
+            "default": false,
+            "description": "When true, receive incremental server-sent events in this endpoint's protocol instead of one JSON result."
+          },
+          "service_tier": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ServiceTier"
+              },
+              {
+                "description": "Gradiated priority and price: flex uses 0.7x base pricing, default 1x, and fast 1.5x. fast has the highest scheduling priority."
+              }
+            ]
+          },
+          "input": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": {}
+                }
+              }
+            ],
+            "description": "Prompt text or ordered Responses input items, including messages and function-call results. Resend context for each stateless request."
+          },
+          "instructions": {
+            "type": "string",
+            "description": "System or developer instructions inserted into the model context."
+          },
+          "background": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "enum": [
+              false
+            ],
+            "description": "Use false or omit this field. Background execution is not supported."
+          },
+          "max_output_tokens": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "Maximum generated tokens, including reasoning tokens when produced by the model."
+          },
+          "tools": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": {}
+            },
+            "description": "Function definitions available to the model, with names, descriptions and JSON Schemas for arguments. Uses this endpoint's OpenAI wire format; provider-hosted tools are not implied."
+          },
+          "tool_choice": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": {}
+              }
+            ],
+            "description": "Tool-selection policy (none, auto or required) or a named function selection in this endpoint's format. Requires model support."
+          },
+          "temperature": {
+            "type": "number",
+            "description": "Sampling randomness: lower values favor likely tokens; higher values increase variation. Supported range and default depend on the model."
+          },
+          "top_p": {
+            "type": "number",
+            "description": "Cumulative probability cutoff for nucleus sampling. Lower values narrow the candidate tokens; support and bounds depend on the model."
+          },
+          "store": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "enum": [
+              false
+            ],
+            "description": "Use false or omit this field. The gateway does not store responses or accept previous_response_id, conversation or prompt references."
+          }
+        },
+        "required": [
+          "model",
+          "input"
+        ],
+        "additionalProperties": {}
+      },
+      "MessageTokenCount": {
+        "type": "object",
+        "properties": {
+          "input_tokens": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of input tokens after protocol translation and model-specific tokenization; no output is generated."
+          }
+        },
+        "required": [
+          "input_tokens"
+        ]
+      },
+      "CountMessageTokensRequest": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Exact hosted model ID from GET /v1/models; no aliases or fallback."
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "user",
+                    "assistant"
+                  ],
+                  "description": "Conversation speaker. Send system instructions in the top-level system field."
+                },
+                "content": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": {},
+                        "description": "Protocol-specific content block, such as {type: 'text', text: 'Hello'}. Tool and multimodal blocks require support from the selected model and protocol translator."
+                      }
+                    }
+                  ],
+                  "description": "Message text or Anthropic content blocks, including tool_use/tool_result blocks when supported."
+                }
+              },
+              "required": [
+                "role",
+                "content"
+              ],
+              "additionalProperties": {}
+            },
+            "minItems": 1,
+            "description": "Ordered user and assistant turns in Anthropic Messages format."
+          },
+          "system": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": {},
+                  "description": "Protocol-specific content block, such as {type: 'text', text: 'Hello'}. Tool and multimodal blocks require support from the selected model and protocol translator."
+                }
+              }
+            ],
+            "description": "Instructions that apply to the conversation, supplied separately from user and assistant turns."
+          },
+          "tools": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": {}
+            },
+            "description": "Callable tools in Anthropic format: name, optional description and input_schema describing arguments. The caller executes tool-use results."
+          },
+          "tool_choice": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": {},
+            "description": "Anthropic tool policy: type auto, any, tool (with name), or none, subject to model and translator support."
+          },
+          "temperature": {
+            "type": "number",
+            "description": "Sampling randomness: lower values favor likely tokens; higher values increase variation. Supported range and default depend on the model."
+          },
+          "top_p": {
+            "type": "number",
+            "description": "Cumulative probability cutoff for nucleus sampling. Lower values narrow the candidate tokens; support and bounds depend on the model."
+          },
+          "stop_sequences": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Custom text sequences that end generation; returned as stop_sequence when one matches."
+          }
+        },
+        "required": [
+          "model",
+          "messages"
+        ],
+        "additionalProperties": {}
+      },
+      "InferenceModelList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "schema_version": {
+                  "type": "string",
+                  "description": "Version of the gateway's provider model-catalog format."
+                },
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "description": "Exact hosted model ID from GET /v1/models; no aliases or fallback."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Human-readable model name; use id in inference requests."
+                },
+                "created": {
+                  "type": "integer",
+                  "description": "Model release time as Unix seconds."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Human-readable model description."
+                },
+                "is_ready": {
+                  "type": "boolean",
+                  "description": "Whether a healthy deployment can currently accept inference requests."
+                },
+                "hugging_face_id": {
+                  "type": "string",
+                  "description": "Upstream Hugging Face model identifier, when published."
+                },
+                "tokenizer": {
+                  "type": "string",
+                  "description": "Tokenizer identifier advertised for this model."
+                },
+                "quantization": {
+                  "type": "string",
+                  "description": "Weight quantization format used by the served model, when specified."
+                },
+                "deprecation_date": {
+                  "type": "string",
+                  "description": "Scheduled model deprecation timestamp, when specified."
+                },
+                "input_modalities": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "text"
+                        ],
+                        "description": "Input modality; currently text."
+                      },
+                      "supported_inputs": {
+                        "type": "object",
+                        "properties": {
+                          "max_context_length": {
+                            "type": "object",
+                            "properties": {
+                              "value": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "description": "Number of tokens."
+                              },
+                              "unit": {
+                                "type": "string",
+                                "enum": [
+                                  "token"
+                                ],
+                                "description": "Unit for the limit; always token."
+                              }
+                            },
+                            "required": [
+                              "value",
+                              "unit"
+                            ],
+                            "description": "Maximum combined input and output token count."
+                          },
+                          "max_prompt_length": {
+                            "type": "object",
+                            "properties": {
+                              "value": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "description": "Number of tokens."
+                              },
+                              "unit": {
+                                "type": "string",
+                                "enum": [
+                                  "token"
+                                ],
+                                "description": "Unit for the limit; always token."
+                              }
+                            },
+                            "required": [
+                              "value",
+                              "unit"
+                            ],
+                            "description": "Maximum input token count."
+                          }
+                        },
+                        "required": [
+                          "max_context_length",
+                          "max_prompt_length"
+                        ],
+                        "description": "Model input and context limits."
+                      },
+                      "pricing": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "description": "Billable token category: prompt, cached_prompt, cache_write, completion or internal_reasoning."
+                            },
+                            "unit": {
+                              "type": "string",
+                              "enum": [
+                                "token"
+                              ],
+                              "description": "Billing unit; each price applies to one token."
+                            },
+                            "cost_usd": {
+                              "type": "string",
+                              "description": "USD price per token as a decimal string, before any service-tier multiplier."
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "unit",
+                            "cost_usd"
+                          ]
+                        },
+                        "description": "Prices for prompt, cached prompt and optional cache-write tokens."
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "supported_inputs",
+                      "pricing"
+                    ]
+                  },
+                  "description": "Accepted input types and input/cache pricing. Each entry has type, supported_inputs and pricing with USD costs."
+                },
+                "output_modalities": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "text"
+                        ],
+                        "description": "Output modality; currently text."
+                      },
+                      "max_length": {
+                        "type": "object",
+                        "properties": {
+                          "value": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "description": "Number of tokens."
+                          },
+                          "unit": {
+                            "type": "string",
+                            "enum": [
+                              "token"
+                            ],
+                            "description": "Unit for the limit; always token."
+                          }
+                        },
+                        "required": [
+                          "value",
+                          "unit"
+                        ],
+                        "description": "Maximum generated token count."
+                      },
+                      "streaming": {
+                        "type": "boolean",
+                        "description": "Whether the model supports incremental output."
+                      },
+                      "supported_parameters": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "range",
+                                "integer",
+                                "boolean",
+                                "enum",
+                                "unknown"
+                              ],
+                              "description": "Accepted value kind. unknown means the catalog does not define a narrower shape."
+                            },
+                            "min": {
+                              "type": "number",
+                              "description": "Inclusive lower bound for range or integer parameters."
+                            },
+                            "max": {
+                              "type": "number",
+                              "description": "Inclusive upper bound for range or integer parameters."
+                            },
+                            "unit": {
+                              "type": "string",
+                              "enum": [
+                                "token"
+                              ],
+                              "description": "Unit for a token-count parameter."
+                            },
+                            "values": {
+                              "type": "array",
+                              "items": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  },
+                                  {
+                                    "type": "boolean"
+                                  }
+                                ]
+                              },
+                              "description": "Allowed values for an enum parameter."
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ]
+                        },
+                        "description": "Inference parameters accepted by this model, with their value types and limits."
+                      },
+                      "pricing": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "description": "Billable token category: prompt, cached_prompt, cache_write, completion or internal_reasoning."
+                            },
+                            "unit": {
+                              "type": "string",
+                              "enum": [
+                                "token"
+                              ],
+                              "description": "Billing unit; each price applies to one token."
+                            },
+                            "cost_usd": {
+                              "type": "string",
+                              "description": "USD price per token as a decimal string, before any service-tier multiplier."
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "unit",
+                            "cost_usd"
+                          ]
+                        },
+                        "description": "Prices for completion and optional internal-reasoning tokens."
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "max_length",
+                      "streaming",
+                      "supported_parameters",
+                      "pricing"
+                    ]
+                  },
+                  "description": "Output types, token limits, streaming support, supported parameters and USD output pricing."
+                },
+                "passthrough_parameters": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "range",
+                          "integer",
+                          "boolean",
+                          "enum",
+                          "unknown"
+                        ],
+                        "description": "Accepted value kind. unknown means the catalog does not define a narrower shape."
+                      },
+                      "min": {
+                        "type": "number",
+                        "description": "Inclusive lower bound for range or integer parameters."
+                      },
+                      "max": {
+                        "type": "number",
+                        "description": "Inclusive upper bound for range or integer parameters."
+                      },
+                      "unit": {
+                        "type": "string",
+                        "enum": [
+                          "token"
+                        ],
+                        "description": "Unit for a token-count parameter."
+                      },
+                      "values": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "boolean"
+                            }
+                          ]
+                        },
+                        "description": "Allowed values for an enum parameter."
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ]
+                  },
+                  "description": "Additional model-specific parameters keyed by name, with type, bounds or allowed values."
+                },
+                "datacenters": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "country_code": {
+                        "type": "string",
+                        "description": "ISO 3166-1 alpha-2 country code; omitted when the deployment region is unknown."
+                      },
+                      "region": {
+                        "type": "string",
+                        "description": "Region identifier for an available deployment."
+                      }
+                    },
+                    "required": [
+                      "region"
+                    ]
+                  },
+                  "description": "Regions containing available model deployments."
+                },
+                "deployment_region": {
+                  "type": "string",
+                  "description": "Country shared by all advertised datacenters; omitted if the country is unknown or deployments span countries."
+                },
+                "compliance": {
+                  "type": "object",
+                  "properties": {
+                    "zdr": {
+                      "type": "boolean",
+                      "description": "Whether the provider catalog advertises zero data retention."
+                    },
+                    "hipaa": {
+                      "type": "boolean",
+                      "description": "Whether the provider catalog advertises HIPAA compliance."
+                    }
+                  },
+                  "required": [
+                    "zdr",
+                    "hipaa"
+                  ],
+                  "description": "Compliance flags advertised by the gateway."
+                }
+              },
+              "required": [
+                "schema_version",
+                "id",
+                "name",
+                "created",
+                "description",
+                "is_ready",
+                "input_modalities",
+                "output_modalities",
+                "datacenters",
+                "compliance"
+              ]
+            },
+            "description": "Model catalog entries visible through the authenticated gateway."
+          }
+        },
+        "required": [
+          "data"
+        ]
       }
     },
     "parameters": {}
@@ -3259,10 +4507,13 @@
           "Inference"
         ],
         "summary": "Answer named questions with native SystemOne inference",
-        "description": "Served by the Rust gateway. Requires an exact hosted model and a workspace API key. Supports choice, noul and score questions over text or structured state. No streaming or generated output tokens; only the default service tier is implemented.",
+        "description": "Served by the Rust gateway at /v1/systemone (also /systemone). Requires an exact hosted model and a workspace API key. Supports choice, noul and score questions over text or structured state. No streaming or generated output tokens; only the default service tier is implemented.",
         "security": [
           {
             "InferenceBearer": []
+          },
+          {
+            "InferenceApiKey": []
           }
         ],
         "requestBody": {
@@ -3306,6 +4557,356 @@
           },
           "503": {
             "description": "Runtime failure, invalid native response, no healthy deployment, or an unavailable gateway dependency."
+          }
+        }
+      }
+    },
+    "/v1/chat/completions": {
+      "post": {
+        "operationId": "chatCompletions",
+        "tags": [
+          "Inference"
+        ],
+        "summary": "Create a chat completion",
+        "externalDocs": {
+          "description": "Upstream protocol reference. Gradiated supports the fields and model capabilities documented here, not every upstream feature.",
+          "url": "https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create"
+        },
+        "security": [
+          {
+            "InferenceBearer": []
+          },
+          {
+            "InferenceApiKey": []
+          }
+        ],
+        "description": "OpenAI Chat Completions compatible inference. max_tokens and max_completion_tokens are mutually exclusive. Requires an exact hosted model and a workspace API key. Supported parameters depend on the model catalog. Also available at /chat/completions.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatCompletionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Protocol-compatible JSON, or server-sent events when stream=true.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatCompletionResponse"
+                }
+              },
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "Incremental events in the endpoint's wire protocol; Chat Completions terminates with data: [DONE]."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request, unsupported parameter, or context length exceeded. Errors use the endpoint's wire protocol."
+          },
+          "401": {
+            "description": "Missing or invalid workspace API key."
+          },
+          "402": {
+            "description": "Insufficient prepaid balance."
+          },
+          "404": {
+            "description": "Unknown or unavailable exact model."
+          },
+          "413": {
+            "description": "Request exceeds the gateway body limit."
+          },
+          "429": {
+            "description": "Admission or inference capacity exhausted."
+          },
+          "503": {
+            "description": "Runtime, deployment, or gateway dependency unavailable."
+          }
+        }
+      }
+    },
+    "/v1/messages": {
+      "post": {
+        "operationId": "createMessage",
+        "tags": [
+          "Inference"
+        ],
+        "summary": "Create a message",
+        "externalDocs": {
+          "description": "Upstream protocol reference. Gradiated supports the fields and model capabilities documented here, not every upstream feature.",
+          "url": "https://platform.claude.com/docs/en/api/messages/create"
+        },
+        "security": [
+          {
+            "InferenceBearer": []
+          },
+          {
+            "InferenceApiKey": []
+          }
+        ],
+        "description": "Anthropic Messages compatible inference, translated by the gateway. Requires an exact hosted model and a workspace API key. Supported parameters depend on the model catalog. Also available at /messages.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessagesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Protocol-compatible JSON, or server-sent events when stream=true.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessagesResponse"
+                }
+              },
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "Incremental events in the endpoint's wire protocol; Chat Completions terminates with data: [DONE]."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request, unsupported parameter, or context length exceeded. Errors use the endpoint's wire protocol."
+          },
+          "401": {
+            "description": "Missing or invalid workspace API key."
+          },
+          "402": {
+            "description": "Insufficient prepaid balance."
+          },
+          "404": {
+            "description": "Unknown or unavailable exact model."
+          },
+          "413": {
+            "description": "Request exceeds the gateway body limit."
+          },
+          "429": {
+            "description": "Admission or inference capacity exhausted."
+          },
+          "503": {
+            "description": "Runtime, deployment, or gateway dependency unavailable."
+          }
+        }
+      }
+    },
+    "/v1/responses": {
+      "post": {
+        "operationId": "createResponse",
+        "tags": [
+          "Inference"
+        ],
+        "summary": "Create a response",
+        "externalDocs": {
+          "description": "Upstream protocol reference. Gradiated supports the fields and model capabilities documented here, not every upstream feature.",
+          "url": "https://developers.openai.com/api/reference/resources/responses/methods/create"
+        },
+        "security": [
+          {
+            "InferenceBearer": []
+          },
+          {
+            "InferenceApiKey": []
+          }
+        ],
+        "description": "OpenAI Responses compatible inference. Stateless requests only: store=true, background=true, previous_response_id, conversation and prompt references are unsupported. Requires an exact hosted model and a workspace API key. Supported parameters depend on the model catalog. Also available at /responses.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResponsesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Protocol-compatible JSON, or server-sent events when stream=true.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsesResponse"
+                }
+              },
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "Incremental events in the endpoint's wire protocol; Chat Completions terminates with data: [DONE]."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request, unsupported parameter, or context length exceeded. Errors use the endpoint's wire protocol."
+          },
+          "401": {
+            "description": "Missing or invalid workspace API key."
+          },
+          "402": {
+            "description": "Insufficient prepaid balance."
+          },
+          "404": {
+            "description": "Unknown or unavailable exact model."
+          },
+          "413": {
+            "description": "Request exceeds the gateway body limit."
+          },
+          "429": {
+            "description": "Admission or inference capacity exhausted."
+          },
+          "503": {
+            "description": "Runtime, deployment, or gateway dependency unavailable."
+          }
+        }
+      }
+    },
+    "/v1/messages/count_tokens": {
+      "post": {
+        "operationId": "countMessageTokens",
+        "tags": [
+          "Inference"
+        ],
+        "summary": "Count message input tokens",
+        "externalDocs": {
+          "description": "Upstream protocol reference. Gradiated supports the fields and model capabilities documented here, not every upstream feature.",
+          "url": "https://platform.claude.com/docs/en/api/messages/count_tokens"
+        },
+        "security": [
+          {
+            "InferenceBearer": []
+          },
+          {
+            "InferenceApiKey": []
+          }
+        ],
+        "description": "Count tokens using the selected model's tokenizer without generating a completion. Requires an exact hosted model and a workspace API key. Supported parameters depend on the model catalog. Also available at /messages/count_tokens.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CountMessageTokensRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Input token count.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageTokenCount"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request, unsupported parameter, or context length exceeded. Errors use the endpoint's wire protocol."
+          },
+          "401": {
+            "description": "Missing or invalid workspace API key."
+          },
+          "402": {
+            "description": "Insufficient prepaid balance."
+          },
+          "404": {
+            "description": "Unknown or unavailable exact model."
+          },
+          "413": {
+            "description": "Request exceeds the gateway body limit."
+          },
+          "429": {
+            "description": "Admission or inference capacity exhausted."
+          },
+          "503": {
+            "description": "Runtime, deployment, or gateway dependency unavailable."
+          }
+        }
+      }
+    },
+    "/v1/models": {
+      "get": {
+        "operationId": "listInferenceModels",
+        "tags": [
+          "Models"
+        ],
+        "summary": "List inference models",
+        "security": [
+          {
+            "InferenceBearer": []
+          },
+          {
+            "InferenceApiKey": []
+          }
+        ],
+        "description": "Authenticated gateway catalog with exact model IDs, readiness, capabilities and pricing. /models and /v1/models are aliases. This differs from the management catalog at /api/v1/models.",
+        "responses": {
+          "200": {
+            "description": "Inference model catalog.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InferenceModelList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid workspace API key."
+          },
+          "503": {
+            "description": "Runtime, deployment, or gateway dependency unavailable."
+          }
+        }
+      }
+    },
+    "/models": {
+      "get": {
+        "operationId": "listInferenceModelsAlias",
+        "tags": [
+          "Models"
+        ],
+        "summary": "List inference models",
+        "security": [
+          {
+            "InferenceBearer": []
+          },
+          {
+            "InferenceApiKey": []
+          }
+        ],
+        "description": "Authenticated gateway catalog with exact model IDs, readiness, capabilities and pricing. /models and /v1/models are aliases. This differs from the management catalog at /api/v1/models.",
+        "responses": {
+          "200": {
+            "description": "Inference model catalog.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InferenceModelList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid workspace API key."
+          },
+          "503": {
+            "description": "Runtime, deployment, or gateway dependency unavailable."
           }
         }
       }

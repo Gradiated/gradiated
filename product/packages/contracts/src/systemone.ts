@@ -135,17 +135,23 @@ const ProbabilitiesSchema = boundedMap(z.string(), ProbabilitySchema, {
 export const SystemOneAnswerSchema = z
   .discriminatedUnion("type", [
     z.strictObject({
-      type: z.literal("choice"),
+      type: z
+        .literal("choice")
+        .describe("Answer selecting one of the named options."),
       choice: z.string().describe("Selected option name."),
       confidence: ProbabilitySchema,
       probabilities: ProbabilitiesSchema,
     }),
     z.strictObject({
-      type: z.literal("noul"),
+      type: z
+        .literal("noul")
+        .describe("Answer reporting the probability of true."),
       noul: ProbabilitySchema.describe("Probability that the answer is true."),
     }),
     z.strictObject({
-      type: z.literal("score"),
+      type: z
+        .literal("score")
+        .describe("Answer scoring the state against the ordered rubric."),
       score: z
         .number()
         .min(0)

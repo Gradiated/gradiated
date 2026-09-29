@@ -223,9 +223,129 @@ export interface paths {
     put?: never;
     /**
      * Answer named questions with native SystemOne inference
-     * @description Served by the Rust gateway. Requires an exact hosted model and a workspace API key. Supports choice, noul and score questions over text or structured state. No streaming or generated output tokens; only the default service tier is implemented.
+     * @description Served by the Rust gateway at /v1/systemone (also /systemone). Requires an exact hosted model and a workspace API key. Supports choice, noul and score questions over text or structured state. No streaming or generated output tokens; only the default service tier is implemented.
      */
     post: operations["systemOne"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/v1/chat/completions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create a chat completion
+     * @description OpenAI Chat Completions compatible inference. max_tokens and max_completion_tokens are mutually exclusive. Requires an exact hosted model and a workspace API key. Supported parameters depend on the model catalog. Also available at /chat/completions.
+     */
+    post: operations["chatCompletions"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/v1/messages": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create a message
+     * @description Anthropic Messages compatible inference, translated by the gateway. Requires an exact hosted model and a workspace API key. Supported parameters depend on the model catalog. Also available at /messages.
+     */
+    post: operations["createMessage"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/v1/responses": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create a response
+     * @description OpenAI Responses compatible inference. Stateless requests only: store=true, background=true, previous_response_id, conversation and prompt references are unsupported. Requires an exact hosted model and a workspace API key. Supported parameters depend on the model catalog. Also available at /responses.
+     */
+    post: operations["createResponse"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/v1/messages/count_tokens": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Count message input tokens
+     * @description Count tokens using the selected model's tokenizer without generating a completion. Requires an exact hosted model and a workspace API key. Supported parameters depend on the model catalog. Also available at /messages/count_tokens.
+     */
+    post: operations["countMessageTokens"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/v1/models": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List inference models
+     * @description Authenticated gateway catalog with exact model IDs, readiness, capabilities and pricing. /models and /v1/models are aliases. This differs from the management catalog at /api/v1/models.
+     */
+    get: operations["listInferenceModels"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/models": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List inference models
+     * @description Authenticated gateway catalog with exact model IDs, readiness, capabilities and pricing. /models and /v1/models are aliases. This differs from the management catalog at /api/v1/models.
+     */
+    get: operations["listInferenceModelsAlias"];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -705,7 +825,10 @@ export interface components {
     /** @description Native inference answer, keyed by the original question name. */
     SystemOneAnswer:
       | {
-          /** @enum {string} */
+          /**
+           * @description Answer selecting one of the named options.
+           * @enum {string}
+           */
           type: "choice";
           /** @description Selected option name. */
           choice: string;
@@ -717,13 +840,19 @@ export interface components {
           };
         }
       | {
-          /** @enum {string} */
+          /**
+           * @description Answer reporting the probability of true.
+           * @enum {string}
+           */
           type: "noul";
           /** @description Probability that the answer is true. */
           noul: number;
         }
       | {
-          /** @enum {string} */
+          /**
+           * @description Answer scoring the state against the ordered rubric.
+           * @enum {string}
+           */
           type: "score";
           /** @description Expected zero-based rubric level, potentially fractional. */
           score: number;
@@ -821,6 +950,511 @@ export interface components {
           /** @description Two to 255 ordered JSON level descriptions, indexed from zero. */
           criteria: components["schemas"]["SystemOneJson"][];
         };
+    ChatCompletionResponse: {
+      /** @description Identifier for this completion. */
+      id: string;
+      /**
+       * @description Object discriminator for a non-streaming chat completion.
+       * @enum {string}
+       */
+      object: "chat.completion";
+      /** @description Completion creation time as Unix seconds. */
+      created: number;
+      /** @description Exact model that served the completion. */
+      model: string;
+      /** @description Generated completion choices. */
+      choices: ({
+        /** @description Zero-based position of this completion choice. */
+        index: number;
+        /** @description Generated assistant message, including any tool calls. */
+        message: {
+          /** @description Speaker role, such as user or assistant; Chat Completions also supports system, developer and tool where the model accepts them. */
+          role: string;
+          /** @description Message text or typed content blocks. Assistant tool-call messages may have null content. */
+          content?:
+            | string
+            | {
+                [key: string]: unknown;
+              }[]
+            | null;
+          /** @description Optional participant name in Chat Completions messages. */
+          name?: string;
+          /** @description For a Chat Completions tool result, the ID of the assistant tool call being answered. */
+          tool_call_id?: string;
+          /** @description Assistant tool calls in Chat Completions format, each with an ID and function name/arguments. Supply corresponding tool results on the next request. */
+          tool_calls?: {
+            [key: string]: unknown;
+          }[];
+        } & {
+          [key: string]: unknown;
+        };
+        /** @description Why generation ended, such as stop, length or tool_calls; null if not yet known. */
+        finish_reason: string | null;
+      } & {
+        [key: string]: unknown;
+      })[];
+      /** @description Token usage in Chat Completions format; model-specific cache and reasoning details may also be present. */
+      usage?: {
+        /** @description Tokens in the prompt, including any cached subset. */
+        prompt_tokens: number;
+        /** @description Tokens generated by the model. */
+        completion_tokens: number;
+        /** @description Sum of prompt and completion tokens. */
+        total_tokens: number;
+      } & {
+        [key: string]: unknown;
+      };
+    } & {
+      [key: string]: unknown;
+    };
+    ChatCompletionRequest: {
+      /** @description Exact hosted model ID from GET /v1/models; no aliases or fallback. */
+      model: string;
+      /**
+       * @description When true, receive incremental server-sent events in this endpoint's protocol instead of one JSON result.
+       * @default false
+       */
+      stream: boolean;
+      service_tier?: components["schemas"]["ServiceTier"] & unknown;
+      /** @description Ordered conversation history to continue, including instructions and any previous tool results. */
+      messages: ({
+        /** @description Speaker role, such as user or assistant; Chat Completions also supports system, developer and tool where the model accepts them. */
+        role: string;
+        /** @description Message text or typed content blocks. Assistant tool-call messages may have null content. */
+        content?:
+          | string
+          | {
+              [key: string]: unknown;
+            }[]
+          | null;
+        /** @description Optional participant name in Chat Completions messages. */
+        name?: string;
+        /** @description For a Chat Completions tool result, the ID of the assistant tool call being answered. */
+        tool_call_id?: string;
+        /** @description Assistant tool calls in Chat Completions format, each with an ID and function name/arguments. Supply corresponding tool results on the next request. */
+        tool_calls?: {
+          [key: string]: unknown;
+        }[];
+      } & {
+        [key: string]: unknown;
+      })[];
+      /** @description Optional session affinity identifier. It is a routing hint, not stored conversation history; resend the required context. */
+      session_id?: string;
+      /** @description Maximum generated tokens. Cannot be combined with max_tokens; model output and context limits still apply. */
+      max_completion_tokens?: number;
+      /** @description Alternative output-token limit. Cannot be combined with max_completion_tokens. */
+      max_tokens?: number;
+      /** @description Sampling randomness: lower values favor likely tokens; higher values increase variation. Supported range and default depend on the model. */
+      temperature?: number;
+      /** @description Cumulative probability cutoff for nucleus sampling. Lower values narrow the candidate tokens; support and bounds depend on the model. */
+      top_p?: number;
+      /** @description Sampling seed for repeatable requests; identical output is not guaranteed. */
+      seed?: number;
+      /** @description Penalty based on how often a token already appears. Positive values reduce repetition; model bounds apply. */
+      frequency_penalty?: number;
+      /** @description Penalty for tokens already present in the output. Positive values favor new topics; model bounds apply. */
+      presence_penalty?: number;
+      /** @description Allow the model to request multiple tool calls in one turn, when supported. */
+      parallel_tool_calls?: boolean;
+      /** @description Model-specific reasoning effort. Accepted values and effects depend on the hosted model. */
+      reasoning_effort?: string;
+      /** @description Model-specific chat-template options, such as reasoning configuration. Accepted keys depend on the runtime. */
+      chat_template_kwargs?: {
+        [key: string]: unknown;
+      };
+      /** @description Text sequence or sequences that stop generation when encountered; supported limits depend on the model. */
+      stop?: string | string[];
+      /** @description Function definitions available to the model, with names, descriptions and JSON Schemas for arguments. Uses this endpoint's OpenAI wire format; provider-hosted tools are not implied. */
+      tools?: {
+        [key: string]: unknown;
+      }[];
+      /** @description Tool-selection policy (none, auto or required) or a named function selection in this endpoint's format. Requires model support. */
+      tool_choice?:
+        | string
+        | {
+            [key: string]: unknown;
+          };
+      /** @description Requested output format, such as text, json_object or json_schema. Structured-output support depends on the model. */
+      response_format?: {
+        [key: string]: unknown;
+      };
+      /** @description Options for streaming responses; use with stream=true. */
+      stream_options?: {
+        /** @description Request aggregate token usage in a final streaming chunk when supported. An interrupted stream may not deliver it. */
+        include_usage?: boolean;
+      } & {
+        [key: string]: unknown;
+      };
+    } & {
+      [key: string]: unknown;
+    };
+    MessagesResponse: {
+      /** @description Identifier for the generated message. */
+      id: string;
+      /**
+       * @description Object discriminator for an Anthropic-format message.
+       * @enum {string}
+       */
+      type: "message";
+      /**
+       * @description The generated message is spoken by the assistant.
+       * @enum {string}
+       */
+      role: "assistant";
+      /** @description Exact model that served the message. */
+      model: string;
+      /** @description Ordered output blocks, such as text and tool-use requests. */
+      content: {
+        [key: string]: unknown;
+      }[];
+      /** @description Why the message ended, such as end_turn, max_tokens, stop_sequence or tool_use. */
+      stop_reason: string | null;
+      /** @description The custom stop sequence that matched, or null if none matched. */
+      stop_sequence?: string | null;
+      /** @description Token usage translated to Anthropic format; optional cache details depend on runtime reporting. */
+      usage: {
+        /** @description Input-token count reported in Anthropic format. */
+        input_tokens: number;
+        /** @description Output-token count reported in Anthropic format. */
+        output_tokens: number;
+      } & {
+        [key: string]: unknown;
+      };
+    } & {
+      [key: string]: unknown;
+    };
+    MessagesRequest: {
+      /** @description Exact hosted model ID from GET /v1/models; no aliases or fallback. */
+      model: string;
+      /**
+       * @description When true, receive incremental server-sent events in this endpoint's protocol instead of one JSON result.
+       * @default false
+       */
+      stream: boolean;
+      service_tier?: components["schemas"]["ServiceTier"] & unknown;
+      /** @description Ordered user and assistant turns in Anthropic Messages format. */
+      messages: ({
+        /**
+         * @description Conversation speaker. Send system instructions in the top-level system field.
+         * @enum {string}
+         */
+        role: "user" | "assistant";
+        /** @description Message text or Anthropic content blocks, including tool_use/tool_result blocks when supported. */
+        content:
+          | string
+          | {
+              [key: string]: unknown;
+            }[];
+      } & {
+        [key: string]: unknown;
+      })[];
+      /** @description Maximum tokens to generate; the model may finish earlier. */
+      max_tokens: number;
+      /** @description Instructions that apply to the conversation, supplied separately from user and assistant turns. */
+      system?:
+        | string
+        | {
+            [key: string]: unknown;
+          }[];
+      /** @description Callable tools in Anthropic format: name, optional description and input_schema describing arguments. The caller executes tool-use results. */
+      tools?: {
+        [key: string]: unknown;
+      }[];
+      /** @description Anthropic tool policy: type auto, any, tool (with name), or none, subject to model and translator support. */
+      tool_choice?: {
+        [key: string]: unknown;
+      };
+      /** @description Sampling randomness: lower values favor likely tokens; higher values increase variation. Supported range and default depend on the model. */
+      temperature?: number;
+      /** @description Cumulative probability cutoff for nucleus sampling. Lower values narrow the candidate tokens; support and bounds depend on the model. */
+      top_p?: number;
+      /** @description Custom text sequences that end generation; returned as stop_sequence when one matches. */
+      stop_sequences?: string[];
+    } & {
+      [key: string]: unknown;
+    };
+    ResponsesResponse: {
+      /** @description Identifier for the response; Gradiated does not expose stored-response retrieval. */
+      id: string;
+      /**
+       * @description Object discriminator for a Responses result.
+       * @enum {string}
+       */
+      object: "response";
+      /** @description Exact model that served the response. */
+      model: string;
+      /** @description Response lifecycle state, such as completed or incomplete. */
+      status: string;
+      /** @description Ordered Responses output items, such as assistant messages and function calls. */
+      output: {
+        [key: string]: unknown;
+      }[];
+      /** @description Token usage translated to Responses format; model-specific details may also be present. */
+      usage?:
+        | ({
+            /** @description Tokens used for the response input. */
+            input_tokens: number;
+            /** @description Tokens generated for the response. */
+            output_tokens: number;
+            /** @description Total input and output tokens. */
+            total_tokens: number;
+          } & {
+            [key: string]: unknown;
+          })
+        | null;
+    } & {
+      [key: string]: unknown;
+    };
+    ResponsesRequest: {
+      /** @description Exact hosted model ID from GET /v1/models; no aliases or fallback. */
+      model: string;
+      /**
+       * @description When true, receive incremental server-sent events in this endpoint's protocol instead of one JSON result.
+       * @default false
+       */
+      stream: boolean;
+      service_tier?: components["schemas"]["ServiceTier"] & unknown;
+      /** @description Prompt text or ordered Responses input items, including messages and function-call results. Resend context for each stateless request. */
+      input:
+        | string
+        | {
+            [key: string]: unknown;
+          }[];
+      /** @description System or developer instructions inserted into the model context. */
+      instructions?: string;
+      /**
+       * @description Use false or omit this field. Background execution is not supported.
+       * @enum {boolean|null}
+       */
+      background?: false | null;
+      /** @description Maximum generated tokens, including reasoning tokens when produced by the model. */
+      max_output_tokens?: number;
+      /** @description Function definitions available to the model, with names, descriptions and JSON Schemas for arguments. Uses this endpoint's OpenAI wire format; provider-hosted tools are not implied. */
+      tools?: {
+        [key: string]: unknown;
+      }[];
+      /** @description Tool-selection policy (none, auto or required) or a named function selection in this endpoint's format. Requires model support. */
+      tool_choice?:
+        | string
+        | {
+            [key: string]: unknown;
+          };
+      /** @description Sampling randomness: lower values favor likely tokens; higher values increase variation. Supported range and default depend on the model. */
+      temperature?: number;
+      /** @description Cumulative probability cutoff for nucleus sampling. Lower values narrow the candidate tokens; support and bounds depend on the model. */
+      top_p?: number;
+      /**
+       * @description Use false or omit this field. The gateway does not store responses or accept previous_response_id, conversation or prompt references.
+       * @enum {boolean|null}
+       */
+      store?: false | null;
+    } & {
+      [key: string]: unknown;
+    };
+    MessageTokenCount: {
+      /** @description Number of input tokens after protocol translation and model-specific tokenization; no output is generated. */
+      input_tokens: number;
+    };
+    CountMessageTokensRequest: {
+      /** @description Exact hosted model ID from GET /v1/models; no aliases or fallback. */
+      model: string;
+      /** @description Ordered user and assistant turns in Anthropic Messages format. */
+      messages: ({
+        /**
+         * @description Conversation speaker. Send system instructions in the top-level system field.
+         * @enum {string}
+         */
+        role: "user" | "assistant";
+        /** @description Message text or Anthropic content blocks, including tool_use/tool_result blocks when supported. */
+        content:
+          | string
+          | {
+              [key: string]: unknown;
+            }[];
+      } & {
+        [key: string]: unknown;
+      })[];
+      /** @description Instructions that apply to the conversation, supplied separately from user and assistant turns. */
+      system?:
+        | string
+        | {
+            [key: string]: unknown;
+          }[];
+      /** @description Callable tools in Anthropic format: name, optional description and input_schema describing arguments. The caller executes tool-use results. */
+      tools?: {
+        [key: string]: unknown;
+      }[];
+      /** @description Anthropic tool policy: type auto, any, tool (with name), or none, subject to model and translator support. */
+      tool_choice?: {
+        [key: string]: unknown;
+      };
+      /** @description Sampling randomness: lower values favor likely tokens; higher values increase variation. Supported range and default depend on the model. */
+      temperature?: number;
+      /** @description Cumulative probability cutoff for nucleus sampling. Lower values narrow the candidate tokens; support and bounds depend on the model. */
+      top_p?: number;
+      /** @description Custom text sequences that end generation; returned as stop_sequence when one matches. */
+      stop_sequences?: string[];
+    } & {
+      [key: string]: unknown;
+    };
+    InferenceModelList: {
+      /** @description Model catalog entries visible through the authenticated gateway. */
+      data: {
+        /** @description Version of the gateway's provider model-catalog format. */
+        schema_version: string;
+        /** @description Exact hosted model ID from GET /v1/models; no aliases or fallback. */
+        id: string;
+        /** @description Human-readable model name; use id in inference requests. */
+        name: string;
+        /** @description Model release time as Unix seconds. */
+        created: number;
+        /** @description Human-readable model description. */
+        description: string;
+        /** @description Whether a healthy deployment can currently accept inference requests. */
+        is_ready: boolean;
+        /** @description Upstream Hugging Face model identifier, when published. */
+        hugging_face_id?: string;
+        /** @description Tokenizer identifier advertised for this model. */
+        tokenizer?: string;
+        /** @description Weight quantization format used by the served model, when specified. */
+        quantization?: string;
+        /** @description Scheduled model deprecation timestamp, when specified. */
+        deprecation_date?: string;
+        /** @description Accepted input types and input/cache pricing. Each entry has type, supported_inputs and pricing with USD costs. */
+        input_modalities: {
+          /**
+           * @description Input modality; currently text.
+           * @enum {string}
+           */
+          type: "text";
+          /** @description Model input and context limits. */
+          supported_inputs: {
+            /** @description Maximum combined input and output token count. */
+            max_context_length: {
+              /** @description Number of tokens. */
+              value: number;
+              /**
+               * @description Unit for the limit; always token.
+               * @enum {string}
+               */
+              unit: "token";
+            };
+            /** @description Maximum input token count. */
+            max_prompt_length: {
+              /** @description Number of tokens. */
+              value: number;
+              /**
+               * @description Unit for the limit; always token.
+               * @enum {string}
+               */
+              unit: "token";
+            };
+          };
+          /** @description Prices for prompt, cached prompt and optional cache-write tokens. */
+          pricing: {
+            /** @description Billable token category: prompt, cached_prompt, cache_write, completion or internal_reasoning. */
+            type: string;
+            /**
+             * @description Billing unit; each price applies to one token.
+             * @enum {string}
+             */
+            unit: "token";
+            /** @description USD price per token as a decimal string, before any service-tier multiplier. */
+            cost_usd: string;
+          }[];
+        }[];
+        /** @description Output types, token limits, streaming support, supported parameters and USD output pricing. */
+        output_modalities: {
+          /**
+           * @description Output modality; currently text.
+           * @enum {string}
+           */
+          type: "text";
+          /** @description Maximum generated token count. */
+          max_length: {
+            /** @description Number of tokens. */
+            value: number;
+            /**
+             * @description Unit for the limit; always token.
+             * @enum {string}
+             */
+            unit: "token";
+          };
+          /** @description Whether the model supports incremental output. */
+          streaming: boolean;
+          /** @description Inference parameters accepted by this model, with their value types and limits. */
+          supported_parameters: {
+            [key: string]: {
+              /**
+               * @description Accepted value kind. unknown means the catalog does not define a narrower shape.
+               * @enum {string}
+               */
+              type: "range" | "integer" | "boolean" | "enum" | "unknown";
+              /** @description Inclusive lower bound for range or integer parameters. */
+              min?: number;
+              /** @description Inclusive upper bound for range or integer parameters. */
+              max?: number;
+              /**
+               * @description Unit for a token-count parameter.
+               * @enum {string}
+               */
+              unit?: "token";
+              /** @description Allowed values for an enum parameter. */
+              values?: (string | number | boolean)[];
+            };
+          };
+          /** @description Prices for completion and optional internal-reasoning tokens. */
+          pricing: {
+            /** @description Billable token category: prompt, cached_prompt, cache_write, completion or internal_reasoning. */
+            type: string;
+            /**
+             * @description Billing unit; each price applies to one token.
+             * @enum {string}
+             */
+            unit: "token";
+            /** @description USD price per token as a decimal string, before any service-tier multiplier. */
+            cost_usd: string;
+          }[];
+        }[];
+        /** @description Additional model-specific parameters keyed by name, with type, bounds or allowed values. */
+        passthrough_parameters?: {
+          [key: string]: {
+            /**
+             * @description Accepted value kind. unknown means the catalog does not define a narrower shape.
+             * @enum {string}
+             */
+            type: "range" | "integer" | "boolean" | "enum" | "unknown";
+            /** @description Inclusive lower bound for range or integer parameters. */
+            min?: number;
+            /** @description Inclusive upper bound for range or integer parameters. */
+            max?: number;
+            /**
+             * @description Unit for a token-count parameter.
+             * @enum {string}
+             */
+            unit?: "token";
+            /** @description Allowed values for an enum parameter. */
+            values?: (string | number | boolean)[];
+          };
+        };
+        /** @description Regions containing available model deployments. */
+        datacenters: {
+          /** @description ISO 3166-1 alpha-2 country code; omitted when the deployment region is unknown. */
+          country_code?: string;
+          /** @description Region identifier for an available deployment. */
+          region: string;
+        }[];
+        /** @description Country shared by all advertised datacenters; omitted if the country is unknown or deployments span countries. */
+        deployment_region?: string;
+        /** @description Compliance flags advertised by the gateway. */
+        compliance: {
+          /** @description Whether the provider catalog advertises zero data retention. */
+          zdr: boolean;
+          /** @description Whether the provider catalog advertises HIPAA compliance. */
+          hipaa: boolean;
+        };
+      }[];
+    };
   };
   responses: never;
   parameters: never;
@@ -1836,6 +2470,369 @@ export interface operations {
         content?: never;
       };
       /** @description Runtime failure, invalid native response, no healthy deployment, or an unavailable gateway dependency. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  chatCompletions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ChatCompletionRequest"];
+      };
+    };
+    responses: {
+      /** @description Protocol-compatible JSON, or server-sent events when stream=true. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ChatCompletionResponse"];
+          "text/event-stream": string;
+        };
+      };
+      /** @description Invalid request, unsupported parameter, or context length exceeded. Errors use the endpoint's wire protocol. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Missing or invalid workspace API key. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Insufficient prepaid balance. */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Unknown or unavailable exact model. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Request exceeds the gateway body limit. */
+      413: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Admission or inference capacity exhausted. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Runtime, deployment, or gateway dependency unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  createMessage: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["MessagesRequest"];
+      };
+    };
+    responses: {
+      /** @description Protocol-compatible JSON, or server-sent events when stream=true. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MessagesResponse"];
+          "text/event-stream": string;
+        };
+      };
+      /** @description Invalid request, unsupported parameter, or context length exceeded. Errors use the endpoint's wire protocol. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Missing or invalid workspace API key. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Insufficient prepaid balance. */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Unknown or unavailable exact model. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Request exceeds the gateway body limit. */
+      413: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Admission or inference capacity exhausted. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Runtime, deployment, or gateway dependency unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  createResponse: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ResponsesRequest"];
+      };
+    };
+    responses: {
+      /** @description Protocol-compatible JSON, or server-sent events when stream=true. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ResponsesResponse"];
+          "text/event-stream": string;
+        };
+      };
+      /** @description Invalid request, unsupported parameter, or context length exceeded. Errors use the endpoint's wire protocol. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Missing or invalid workspace API key. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Insufficient prepaid balance. */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Unknown or unavailable exact model. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Request exceeds the gateway body limit. */
+      413: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Admission or inference capacity exhausted. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Runtime, deployment, or gateway dependency unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  countMessageTokens: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CountMessageTokensRequest"];
+      };
+    };
+    responses: {
+      /** @description Input token count. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MessageTokenCount"];
+        };
+      };
+      /** @description Invalid request, unsupported parameter, or context length exceeded. Errors use the endpoint's wire protocol. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Missing or invalid workspace API key. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Insufficient prepaid balance. */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Unknown or unavailable exact model. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Request exceeds the gateway body limit. */
+      413: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Admission or inference capacity exhausted. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Runtime, deployment, or gateway dependency unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  listInferenceModels: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Inference model catalog. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InferenceModelList"];
+        };
+      };
+      /** @description Missing or invalid workspace API key. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Runtime, deployment, or gateway dependency unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  listInferenceModelsAlias: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Inference model catalog. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InferenceModelList"];
+        };
+      };
+      /** @description Missing or invalid workspace API key. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Runtime, deployment, or gateway dependency unavailable. */
       503: {
         headers: {
           [name: string]: unknown;

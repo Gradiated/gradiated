@@ -143,6 +143,35 @@ for alloc in "${allocs[@]}"; do
 done
 [[ $(request "/alloc/00000000-0000-4000-8000-000000000000/v1/models" "$token") == *" 404" ]] || fail "an unknown allocation was not rejected"
 
+if [[ ${1:-} == --proxy-drain ]]; then
+  in_container dd if=/dev/zero of=/tmp/slow-response bs=1024 count=320 status=none
+  in_container curl --fail --silent --show-error --max-time 120 \
+    -H "Authorization: Bearer $token" \
+    "http://127.0.0.1:8888/alloc/${allocs[0]}/slow" -o /tmp/proxy-drain-response &
+  slow_request=$!
+  for _ in {1..10}; do
+    in_container test -s /tmp/proxy-drain-response && break
+    sleep 1
+  done
+  in_container test -s /tmp/proxy-drain-response || fail "slow response did not start"
+
+  in_container nomad job stop -detach host-proxy >/dev/null
+  withdrawn=false
+  for _ in {1..20}; do
+    if [[ $(request "/alloc/${allocs[0]}/health" "$token") == *" 503" ]]; then
+      withdrawn=true
+      break
+    fi
+    sleep 1
+  done
+  $withdrawn || fail "proxy readiness did not withdraw before the drain budget"
+  wait "$slow_request" || fail "proxy shutdown interrupted an in-flight response"
+  bytes=$(in_container wc -c /tmp/proxy-drain-response | awk '{print $1}')
+  [[ $bytes == 327680 ]] || fail "proxy shutdown truncated the response: $bytes bytes"
+  echo 'Proxy readiness withdrew and an 80-second response survived shutdown'
+  exit 0
+fi
+
 if [[ ${1:-} == --recovery ]]; then
   proxy_alloc=$(in_container nomad job allocs -json host-proxy | jq -r '.[] | select(.ClientStatus == "running") | .ID')
   for fault in crash hang crash crash crash; do

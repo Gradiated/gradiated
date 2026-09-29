@@ -6,7 +6,7 @@ job "host-proxy" {
   type = "system"
 
   # Hosts enrolled before the proxy run their own ingress on the same port; this
-# constraint goes once they are migrated.
+  # constraint goes once they are migrated.
   constraint {
     attribute = "${meta.serving_ingress}"
     value     = "host-proxy"
@@ -44,10 +44,11 @@ job "host-proxy" {
     }
 
     task "nginx" {
-      driver       = "raw_exec"
-      user         = "desmond"
-      kill_signal  = "SIGQUIT"
-      kill_timeout = "60s"
+      driver         = "raw_exec"
+      user           = "desmond"
+      kill_signal    = "SIGQUIT"
+      kill_timeout   = "60s"
+      shutdown_delay = "11m"
 
       config {
         command = "/usr/bin/setpriv"
@@ -63,6 +64,9 @@ job "host-proxy" {
         change_mode   = "signal"
         change_signal = "SIGHUP"
         data          = <<-EOF
+          {{- $allocation := env "NOMAD_ALLOC_ID" }}
+          {{- $registered := false }}
+          {{- range nomadService "host-proxy" }}{{ if eq .AllocID $allocation }}{{ $registered = true }}{{ end }}{{ end }}
           worker_processes 1;
           worker_rlimit_nofile 8192;
           pid {{ env "NOMAD_TASK_DIR" }}/nginx.pid;
@@ -81,6 +85,12 @@ job "host-proxy" {
                   default 0;
                   /healthz 1;
               }
+              map $uri $withdrawn_readiness {
+                  default 0;
+          {{- if not $registered }}
+                  ~^/alloc/[0-9a-f-]+/health$ 1;
+          {{- end }}
+              }
               map $http_authorization $authorized {
                   default 0;
                   include /etc/gradiated/runtime-proxy-auth.conf;
@@ -89,6 +99,7 @@ job "host-proxy" {
                   listen {{ env "NOMAD_PORT_inference" }};
                   if ($health_check) { return 200 "ok\n"; }
                   if ($authorized = 0) { return 401; }
+                  if ($withdrawn_readiness) { return 503; }
                   proxy_http_version 1.1;
                   proxy_set_header Connection "";
                   proxy_set_header Authorization "";

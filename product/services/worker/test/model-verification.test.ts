@@ -1,6 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { verifyModel } from "../src/model-verification.js";
+import {
+  ModelVerificationInputSchema,
+  verifyModel,
+} from "../src/model-verification.js";
 
 const options = () => ({
   apiKey: "synthetic-test-key",
@@ -17,6 +20,35 @@ const decision = {
 };
 
 describe("production SDK verification", () => {
+  const rollout = {
+    modelId: "test/model",
+    stage: "canary",
+    runtimeRevision: "test-release",
+  };
+
+  it("accepts Nomad allocation IDs without RFC UUID version or variant bits", () => {
+    for (const id of [
+      "4a7fca4c-20c8-1ac4-6535-051217442d22",
+      "eeb45cf5-037b-b48c-0a90-855453cf3572",
+    ]) {
+      expect(
+        ModelVerificationInputSchema.parse({ ...rollout, deploymentIds: [id] })
+          .deploymentIds,
+      ).toEqual([id]);
+    }
+  });
+
+  it.each([
+    "",
+    "not-an-id",
+    "../../another-allocation",
+    "eeb45cf5-037b-b48c-0a90-855453cf357Z",
+  ])("rejects malformed allocation ID %s", (id) => {
+    expect(() =>
+      ModelVerificationInputSchema.parse({ ...rollout, deploymentIds: [id] }),
+    ).toThrow();
+  });
+
   it("uses the actual TypeSafe SDK and targets the requested allocation", async () => {
     const id = randomUUID();
     const result = await verifyModel({

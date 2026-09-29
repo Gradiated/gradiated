@@ -5,18 +5,14 @@ import {
   createWorkspaceApiKeyService,
 } from "@gradiated/control";
 import { z } from "zod";
-import { verifyModel } from "./model-verification.js";
+import {
+  ModelVerificationInputSchema,
+  verifyModel,
+} from "./model-verification.js";
 
-const input = z
-  .object({
-    modelId: z.string().min(1).max(300),
-    stage: z.enum(["canary", "serving"]),
-    deploymentIds: z.array(z.uuid()).min(1),
-    protocol: z.literal("system_one").optional(),
-    runtimeRevision: z.string().min(1).max(300),
-  })
-  .strict()
-  .parse(JSON.parse(readFileSync(0, "utf8")));
+const input = ModelVerificationInputSchema.parse(
+  JSON.parse(readFileSync(0, "utf8")),
+);
 const environment = z
   .object({
     DATABASE_URL: z.string().min(1),

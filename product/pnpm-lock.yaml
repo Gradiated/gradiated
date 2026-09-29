@@ -111,6 +111,15 @@ importers:
         specifier: 4.6.5
         version: 4.6.5
 
+  packages/temporal:
+    dependencies:
+      '@temporalio/common':
+        specifier: 1.24.0
+        version: 1.24.0
+      '@temporalio/proto':
+        specifier: 1.24.0
+        version: 1.24.0
+
   packages/valkey:
     dependencies:
       '@aws-sdk/credential-provider-node':
@@ -2396,6 +2405,14 @@ packages:
   '@tanstack/store@0.11.1':
     resolution: {integrity: sha512-mzTOBhypOuDJAy/D8n2MfUZ1HFkXnmSETviRyhqEC8LUE7/IZQExOTxMANj3KjTofYTkFNpBY67qaVrT41YccA==}
 
+  '@temporalio/common@1.24.0':
+    resolution: {integrity: sha512-jXp77fXwynBcVNc/CaGMT33TVYnhcN26S959HDv7Q71oc0rN6d8RHWR5z0nRCDAu5CQwZQRRhVK0TRdyAiEg7Q==}
+    engines: {node: '>= 20.3.0'}
+
+  '@temporalio/proto@1.24.0':
+    resolution: {integrity: sha512-vhlhB9GpoyJx+78r3lDahHywpdri6LKx7kt7djLIw6XzHyb8FQTIi4lX8DSJBqKp3+HVfL1CLwiqO26KFRzg/g==}
+    engines: {node: '>= 20.3.0'}
+
   '@turbo/darwin-64@2.10.10':
     resolution: {integrity: sha512-gFDD+wRP5hWxBRghGyEbjpbLOY7aIU/wvsnKdMM7odQcp/wHMrnI83p0FyxxMRZnFH9ZD+S59MvcpOC5b+nrCA==}
     cpu: [x64]
@@ -3509,6 +3526,9 @@ packages:
     resolution: {integrity: sha512-WkUDrojuJs0xkgGf2udWxa3yGBRxPtxUkB79i6aCZLRgc7PM8fZe9TosfPDcvEpQZbuFASnHYmRLBLUbmLOIIA==}
     engines: {node: '>= 12.0.0'}
 
+  long@5.3.2:
+    resolution: {integrity: sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA==}
+
   longest-streak@3.1.0:
     resolution: {integrity: sha512-9Ri+o0JYgehTaVBBDoMqIl8GXtbWg711O3srftcHhZ0dqnETqLaoIK0x17fUw9rFSlK/0NlsKe0Ahhyl5pXE2g==}
 
@@ -3730,6 +3750,10 @@ packages:
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
 
+  ms@3.0.0-canary.1:
+    resolution: {integrity: sha512-kh8ARjh8rMN7Du2igDRO9QJnqCb2xYTJxyQYK7vJJS4TvLLmsbyhiKpSW+t+y26gyOyMd0riphX0GeWKU3ky5g==}
+    engines: {node: '>=12.13'}
+
   nanoid@3.3.18:
     resolution: {integrity: sha512-DTg4MJbGMWkfi6VZFdNt2/caMbQy4Ou+Op/hJQvGEWcnVfoA1QA+xzRKAzw9jD6+GVOOeYr/mIcuDSdug6F6+w==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
@@ -3747,6 +3771,10 @@ packages:
   negotiator@1.1.0:
     resolution: {integrity: sha512-NMPBRMJgiQHjbd8phG3Vebdx4kZ1H121rbl5IkMqeOsahptB9BKo/d7oJ3zTXqTgagn2bWlNSXkh0QUGM31RYg==}
     engines: {node: '>=18'}
+
+  nexus-rpc@0.0.3:
+    resolution: {integrity: sha512-ksIBeYHDv6FHAR1h3Vwk0kQ6REhdo1STqDHXMzu/yn/VN/XzgOor2IUjewG6paoA7IgxlIPZoOU/PD78PC6HTg==}
+    engines: {node: '>= 20.0.0'}
 
   object-assign@4.1.1:
     resolution: {integrity: sha512-rJgTQnkUnH1sFw8yT6VSU3zD3sWmu6sZhIseY8VX+GRu3P6F7Fu+JNDoXfklElbLJSnc3FUQHVe4cU5hj+BcUg==}
@@ -3942,6 +3970,10 @@ packages:
 
   property-information@7.2.0:
     resolution: {integrity: sha512-IAtzIB6sUiWaJYrX9smp3V46pBGbBeLFRGdh25kg1334VcBlD8HzhPeNIWQH9zhGmo2itIe25EHt9dQP7G5hmg==}
+
+  protobufjs@8.8.0:
+    resolution: {integrity: sha512-N3xhQ5yyBx3vQq4gubBfASzYhJGNzeDbjqBpu61g7UVylsN/qyffU96TKWD3GbbLOKF82VGNRNvv1+BFgE31Eg==}
+    engines: {node: '>=12.0.0'}
 
   proxy-addr@2.0.8:
     resolution: {integrity: sha512-5nnx0yGyVUcY6t9RnWcARWtwT9F1D8O9rt08htPvnd49W1IgZtmLkhu9WfMzQj1cFxjHIO6connUNVW5k7AVyQ==}
@@ -6292,6 +6324,19 @@ snapshots:
 
   '@tanstack/store@0.11.1': {}
 
+  '@temporalio/common@1.24.0':
+    dependencies:
+      '@temporalio/proto': 1.24.0
+      long: 5.3.2
+      ms: 3.0.0-canary.1
+      nexus-rpc: 0.0.3
+      protobufjs: 8.8.0
+
+  '@temporalio/proto@1.24.0':
+    dependencies:
+      long: 5.3.2
+      protobufjs: 8.8.0
+
   '@turbo/darwin-64@2.10.10':
     optional: true
 
@@ -7330,6 +7375,8 @@ snapshots:
       lightningcss-win32-arm64-msvc: 1.33.0
       lightningcss-win32-x64-msvc: 1.33.0
 
+  long@5.3.2: {}
+
   longest-streak@3.1.0: {}
 
   lowlight@3.3.0:
@@ -7821,6 +7868,8 @@ snapshots:
 
   ms@2.1.3: {}
 
+  ms@3.0.0-canary.1: {}
+
   nanoid@3.3.18: {}
 
   nanoid@5.1.16: {}
@@ -7830,6 +7879,8 @@ snapshots:
   negotiator@1.1.0:
     dependencies:
       content-type: 2.1.0
+
+  nexus-rpc@0.0.3: {}
 
   object-assign@4.1.1: {}
 
@@ -7997,6 +8048,10 @@ snapshots:
       tdigest: 0.1.2
 
   property-information@7.2.0: {}
+
+  protobufjs@8.8.0:
+    dependencies:
+      long: 5.3.2
 
   proxy-addr@2.0.8:
     dependencies:

@@ -99,7 +99,15 @@ export const waitForVerificationInfrastructure = async (signal) => {
           signal,
         ),
         run(
-          ["auth", "can-i", "create", "pods/exec", "-n", "gradiated"],
+          [
+            "auth",
+            "can-i",
+            "create",
+            "pods",
+            "--subresource=exec",
+            "-n",
+            "gradiated",
+          ],
           signal,
         ),
       ]);

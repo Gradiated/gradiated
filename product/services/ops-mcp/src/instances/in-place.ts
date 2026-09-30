@@ -57,6 +57,8 @@ write("/etc/nomad/node.hcl", config.encode(), "nomad")
 identity = {name: env[name] for name in ("GRADIATED_INSTANCE_ID", "GRADIATED_NOMAD_NODE_ID", "GRADIATED_NOMAD_NODE_SECRET")}
 write("/etc/gradiated/in-place-enrollment.json", json.dumps(identity).encode(), "root")
 with open("/var/log/gradiated-nomad-client.log", "ab", buffering=0) as log:
+    # Task users must be able to traverse allocation directories created by Nomad.
+    os.umask(0o022)
     process = subprocess.Popen(["bash", "/opt/gradiated/bin/start-client"], stdin=subprocess.DEVNULL, stdout=log, stderr=log, start_new_session=True)
 time.sleep(2)
 if process.poll() is not None:

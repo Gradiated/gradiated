@@ -4,6 +4,7 @@ import {
   mkdirSync,
   readFileSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -43,7 +44,7 @@ const setup = () => {
   );
   file(
     "opt/gradiated/bin/start-client",
-    `#!/bin/sh\necho $$ > '${root}/client-pid'\nexec sleep 60\n`,
+    `#!/bin/sh\necho $$ > '${root}/client-pid'\nmkdir '${root}/allocation'\nexec sleep 60\n`,
   );
   const script = bootstrapScript
     .replaceAll('"/etc/', `"${root}/etc/`)
@@ -117,6 +118,16 @@ describe("in-place host bootstrap", () => {
       GRADIATED_NOMAD_NODE_SECRET: test.environment.GRADIATED_NOMAD_NODE_SECRET,
     });
     expect(process.kill(pid, 0)).toBe(true);
+    expect(statSync(path.join(test.root, "allocation")).mode & 0o777).toBe(
+      0o755,
+    );
+    for (const name of [
+      "etc/nomad/tls/client-key.pem",
+      "etc/gradiated/artifact.env",
+      "etc/gradiated/in-place-enrollment.json",
+    ]) {
+      expect(statSync(path.join(test.root, name)).mode & 0o777).toBe(0o600);
+    }
   });
 
   it("refuses to overwrite a configured client", () => {

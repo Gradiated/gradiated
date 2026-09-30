@@ -93,8 +93,13 @@ existing ops MCP secret; authorize the dedicated key inside the container over
 an existing trusted SSH connection. The host-key map contains pod IDs and
 lowercase hex SHA-256 host-key fingerprints. The pod must already expose direct
 SSH and 8888/HTTP. Enrollment writes its trust files and starts only the Nomad
-client. It does not PATCH the provider, update its image/environment/ports, or
-stop/restart the pod. Nomad then schedules the queued model jobs. DeepSeek
+client. The SSH bootstrap requires `python3` on the host; the current base does
+not include it. Check `command -v python3` over the existing trusted SSH connection
+and, if missing, install just this helper inside the running container with
+`DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends --no-upgrade python3`
+(after refreshing the package index). This does not change provider configuration
+or deploy a model. The bootstrap does not PATCH the provider, update its
+image/environment/ports, or stop/restart the pod. Nomad then schedules the queued model jobs. DeepSeek
 requests four B200 or B300 devices.
 
 In-place identity is stored privately at `/etc/gradiated/in-place-enrollment.json`

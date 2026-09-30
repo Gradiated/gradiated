@@ -1,0 +1,14 @@
+host: 127.0.0.1
+port: 8233
+temporalGrpcAddress: 127.0.0.1:7233
+defaultNamespace: default
+enableUi: true
+disableNewsFetch: true
+notifyOnNewVersion: false
+auth:
+  enabled: false
+cors:
+  cookieInsecure: true
+  allowOrigins:
+    - http://localhost:8233
+    - http://127.0.0.1:8233

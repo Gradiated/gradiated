@@ -18,7 +18,7 @@
     "build": "turbo run build",
     "check": "turbo run check && pnpm check:scripts && pnpm format:check",
     "check:scripts": "tsc --noEmit -p tsconfig.scripts.json",
-    "dev": "node scripts/free-dev-ports.mjs 3000 3001 3002 3003 3004 9003 9004 9464 9465 30000 && mprocs",
+    "dev": "node scripts/free-dev-ports.mjs 3000 3001 3002 3003 3004 8233 9003 9004 9464 9465 30000 && mprocs",
     "dev:forward": "node scripts/dev-forward.mjs",
     "dev:services": "turbo run dev",
     "e2e:kev": "node scripts/run-kev-gateway-e2e.mjs",

@@ -45,6 +45,10 @@ procs:
       METRICS_PORT: "9465"
       VALKEY_URL: *valkey_url
       WORKER_CONSUMER_NAME: local-worker-1
+  temporal-ui:
+    shell: "./scripts/run-temporal-ui-local.sh"
+    autostart: false
+    stop: SIGTERM
   temporal-worker:
     shell: "mise exec -- env -u AWS_PROFILE -u AWS_DEFAULT_PROFILE pnpm --filter @gradiated/temporal-worker dev"
     autostart: false

@@ -61,7 +61,7 @@ pnpm dev
 ```
 
 `pnpm dev` first stops stale application listeners (3000–3004, 9003–9004,
-9464–9465, and 30000), then launches mprocs. It leaves datastore ports alone. Prefer it over
+8233, 9464–9465, and 30000), then launches mprocs. It leaves datastore ports alone. Prefer it over
 invoking `mprocs` directly so a process left behind by an earlier crash cannot
 block startup.
 
@@ -314,6 +314,18 @@ documented in the run contract. The production deployment remains at zero
 replicas until a real executor is configured. Its SDK Prometheus endpoint exports
 queue wait (schedule-to-start), execution latency and failure metrics independently
 of the existing worker. The ordinary worker needs no Temporal credentials.
+
+The dev server runs headless. Start the **temporal-ui** pane manually in mprocs
+(or run `./scripts/run-temporal-ui-local.sh`) to open
+[Temporal UI](http://localhost:8233). It is off by default and binds only to
+loopback. The launcher downloads the pinned UI Server 2.54.1 native release,
+checks its SHA-256 and caches it under `.agents/runtime/temporal-ui`; macOS and
+Linux on arm64/x86_64 are supported. Docker Compose still owns the Temporal
+server and its persisted state, while stopping the UI leaves that server running.
+Local UI connects only to `127.0.0.1:7233` / namespace `default`, uses no Cloud
+credentials and permits local workflow actions. Start the datastore pane first.
+An existing Compose dev server must be recreated once to pick up `--headless`
+and release port 8233; preserve the `temporal-data` volume.
 
 Training schedules are stored on tasks in PostgreSQL (`training_schedule`: a
 five-field UTC cron expression, or null to disable automatic training). Defaults

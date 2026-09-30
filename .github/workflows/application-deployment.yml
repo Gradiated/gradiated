@@ -238,6 +238,9 @@ jobs:
     environment: production
     timeout-minutes: 25
     steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
       - uses: jdx/mise-action@v4.2.3
       - uses: aws-actions/configure-aws-credentials@v6.2.3
         with:
@@ -290,6 +293,7 @@ jobs:
           kubectl -n gradiated rollout status deployment/gateway --timeout=10m
           kubectl -n gradiated rollout status deployment/proxy --timeout=10m
           kubectl -n gradiated rollout status deployment/collector --timeout=10m
+          PRODUCT_IMAGE="${product_image}" node tools/deployment/training-readiness.mjs
 
   publish-console:
     name: Publish console and verify production

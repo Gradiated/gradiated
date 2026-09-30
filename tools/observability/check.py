@@ -74,6 +74,82 @@ def main():
         tests.append({'name': name, 'interval': '30s', 'input_series': inputs,
                       'alert_rule_test': cases})
 
+    # Temporal service alerts are disabled during bootstrap (replicas=0), tolerate
+    # startup/drain windows and do not let another workload mask missing metrics.
+    temporal_alerts = ['TemporalWorkerUnavailable', 'TemporalWorkerAvailabilityDegraded',
+                       'TemporalWorkerTelemetryMissing', 'TemporalWorkerRpcFailures',
+                       'TemporalWorkerWorkflowTaskFailures', 'TemporalWorkerActivityFailures',
+                       'TemporalWorkerWorkflowQueueWait']
+    def temporal_series(metric, values, selector='namespace="gradiated",pod="temporal-worker-a"'):
+        return {'series': metric + '{' + selector + '}', 'values': values}
+
+    def temporal_deployment(desired, available):
+        return [temporal_series(metric, f'{value}+0x40',
+                                'namespace="gradiated",deployment="temporal-worker"')
+                for metric, value in [('kube_deployment_spec_replicas', desired),
+                                      ('kube_deployment_status_replicas_available', available)]]
+
+    for name, desired, available, up, expected, duration in [
+        ('disabled', 0, 0, None, None, '16m'),
+        ('healthy', 2, 2, 2, None, '16m'),
+        ('starting within budget', 2, 0, None, None, '4m'),
+        ('unavailable', 2, 0, None, 'TemporalWorkerUnavailable', '6m'),
+        ('normal rollout', 2, 1, 1, None, '8m'),
+        ('degraded redundancy', 2, 1, 1, 'TemporalWorkerAvailabilityDegraded', '11m'),
+        ('metrics absent', 2, 2, None, 'TemporalWorkerTelemetryMissing', '6m'),
+        ('all scrapes fail', 2, 2, 0, 'TemporalWorkerTelemetryMissing', '6m'),
+        ('one scrape fails', 2, 2, 1, 'TemporalWorkerTelemetryMissing', '6m'),
+        ('surge scrape', 2, 2, 3, None, '16m'),
+    ]:
+        inputs = temporal_deployment(desired, available)
+        if up is not None:
+            inputs += [temporal_series('up', '1+0x40',
+                       f'namespace="gradiated",pod="temporal-worker-{i}"') for i in range(up)]
+            if up == 0:
+                inputs.append(temporal_series('up', '0+0x40'))
+        inputs.append(temporal_series('up', '1+0x40', 'namespace="gradiated",pod="worker-other"'))
+        scenario('Temporal ' + name, inputs, expected, temporal_alerts, eval_time=duration)
+
+    for metric, alert, duration in [
+        ('temporal_request_failure_total', 'TemporalWorkerRpcFailures', '11m'),
+        ('temporal_long_request_failure_total', 'TemporalWorkerRpcFailures', '11m'),
+        ('temporal_workflow_task_execution_failed_total', 'TemporalWorkerWorkflowTaskFailures', '11m'),
+        ('temporal_activity_execution_failed_total', 'TemporalWorkerActivityFailures', '16m'),
+    ]:
+        for case, desired, values, selector, fires in [
+            ('sustained', 2, '0+2x40', 'namespace="gradiated",pod="temporal-worker-a"', True),
+            ('idle', 2, '0+0x40', 'namespace="gradiated",pod="temporal-worker-a"', False),
+            ('isolated errors recovered', 2, '0+2x4 8+0x36', 'namespace="gradiated",pod="temporal-worker-a"', False),
+            ('disabled', 0, '0+2x40', 'namespace="gradiated",pod="temporal-worker-a"', False),
+            ('other workload', 2, '0+2x40', 'namespace="gradiated",pod="worker-other"', False),
+        ]:
+            inputs = temporal_deployment(desired, desired) + [
+                temporal_series('up', '1+0x40', f'namespace="gradiated",pod="temporal-worker-{i}"')
+                for i in range(desired)] + [temporal_series(metric, values, selector)]
+            scenario('Temporal ' + metric + ' ' + case, inputs, alert if fires else None,
+                     temporal_alerts, eval_time=duration)
+    scenario('Temporal cancelled polls during shutdown', temporal_deployment(2, 2) + [
+        temporal_series('up', '1+0x40', f'namespace="gradiated",pod="temporal-worker-{i}"') for i in range(2)
+    ] + [temporal_series('temporal_long_request_failure_total', '0+2x40',
+                       'namespace="gradiated",pod="temporal-worker-a",status_code="CANCELLED"')],
+             None, temporal_alerts, eval_time='16m')
+
+    for name, desired, samples, fast, fires in [('slow busy', 2, 2, 0, True),
+                                              ('healthy busy', 2, 2, 2, False),
+                                              ('slow sparse', 2, 0.1, 0, False),
+                                              ('disabled', 0, 2, 0, False)]:
+        selector = 'namespace="gradiated",pod="temporal-worker-a",task_queue="general"'
+        metric = 'temporal_workflow_task_schedule_to_start_latency_seconds'
+        inputs = temporal_deployment(desired, desired) + [
+            temporal_series('up', '1+0x40', f'namespace="gradiated",pod="temporal-worker-{i}"') for i in range(desired)
+        ] + [temporal_series(metric + '_bucket', f'0+{fast}x40', selector + ',le="30"'),
+             temporal_series(metric + '_bucket', f'0+{samples}x40', selector + ',le="60"'),
+             temporal_series(metric + '_bucket', f'0+{samples}x40', selector + ',le="+Inf"'),
+             temporal_series(metric + '_count', f'0+{samples}x40', selector)]
+        scenario('Temporal queue ' + name, inputs,
+                 'TemporalWorkerWorkflowQueueWait' if fires else None, temporal_alerts,
+                 {'task_queue': 'general'}, '16m')
+
     for name, available, desired, fires, duration in [
         ('full', 3, 3, False, '10m'),
         ('refilling', 1, 3, False, '5m'),

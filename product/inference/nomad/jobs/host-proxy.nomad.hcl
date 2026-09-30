@@ -4,6 +4,7 @@
 # jobs register their runtime as the shared service "gradiated-runtime".
 job "host-proxy" {
   type = "system"
+  node_pool = "all"
 
   # Hosts enrolled before the proxy run their own ingress on the same port; this
   # constraint goes once they are migrated.

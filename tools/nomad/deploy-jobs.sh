@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 # Git is the desired state: every job with a committed <job>.vars.hcl runs and every
-# other job is stopped, so a job without one, such as a qualification-only job, never
-# runs. A job named after a runtime bundle gets that bundle's release for this commit;
+# other non-serving job is stopped. Serving model retirement requires a separate
+# explicitly authorized operation. A bundle job gets its release for this commit;
 # until it is published the job is left as it is, and the deploy that follows
 # publication rolls it out.
 #
@@ -66,11 +66,20 @@ for vars in "${deployable[@]}"; do
 done
 
 running=$(nomad operator api /v1/jobs | jq -r '.[] | select(.Stop | not) | .ID')
+removed=()
 for name in $running; do
   if [[ ! -f "$repo/$jobs/$name.vars.hcl" ]]; then
-    echo "Stopping $name, which Git no longer defines"
-    nomad job stop -detach "$name"
+    spec=$(nomad operator api "/v1/job/$name")
+    # Buffers belong to the rolling controller, including interrupted rollouts.
+    if jq -e '.Meta.gradiated_buffer_for' <<<"$spec" >/dev/null; then continue; fi
+    node "$repo/tools/nomad/cleanup-jobs.mjs" <<<"$spec"
+    removed+=("$name")
   fi
+done
+
+for name in "${removed[@]}"; do
+  echo "Stopping $name, which Git no longer defines"
+  nomad job stop -detach "$name"
 done
 
 rendered=$(jq -s . "$waiting")

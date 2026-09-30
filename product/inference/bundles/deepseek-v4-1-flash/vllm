@@ -1,3 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-exec "${GRADIATED_RUNTIME_ROOT:?}/python/bin/python3" -m vllm.entrypoints.cli.main "$@"
+exec "${GRADIATED_RUNTIME_ROOT:?}/python/bin/python3" -c '
+import os, runpy, site
+site.addsitedir(os.path.join(os.environ["GRADIATED_RUNTIME_ROOT"], "python/lib/python3.12/site-packages"))
+runpy.run_module("vllm.entrypoints.cli.main", run_name="__main__", alter_sys=True)
+' "$@"

@@ -249,6 +249,11 @@ published address plus `/alloc/<allocation id>`; each provider supplies how that
 port is reached (RunPod's HTTPS proxy, or TLS on a public or private IP).
 
 Hosts enrolled by `register_instance` carry `serving_ingress = "host-proxy"`.
+For capacity reserved for the four-GPU DeepSeek job, set `node_class = "deepseek"`
+in the host's `/etc/nomad/node.hcl` client block and restart only the Nomad agent.
+GLM excludes that class, so a two-GPU canary cannot consume its reserved capacity.
+The host proxy remains eligible. This setting survives in-place registration
+resumes; changing it does not require a provider reset.
 Hosts enrolled by hand before the proxy keep their own ingress on 8888 until
 migrated.
 

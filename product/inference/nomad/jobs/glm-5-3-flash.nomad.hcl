@@ -42,6 +42,12 @@ job "glm-5-3-flash" {
     value     = "host-proxy"
   }
 
+  constraint {
+    attribute = "${node.class}"
+    operator  = "!="
+    value     = "deepseek"
+  }
+
   group "replicas" {
     count = var.replicas
 

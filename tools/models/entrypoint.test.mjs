@@ -39,11 +39,10 @@ console.log(JSON.stringify({ args: process.argv.slice(2), gpus: process.env.CUDA
     }),
   );
   assert.equal(result.gpus, assigned);
-  assert.deepEqual(result.args.slice(0, 3), [
-    "-m",
-    "vllm.entrypoints.cli.main",
-    "serve",
-  ]);
+  assert.equal(result.args[0], "-c");
+  assert.match(result.args[1], /site\.addsitedir/);
+  assert.match(result.args[1], /vllm\.entrypoints\.cli\.main/);
+  assert.equal(result.args[2], "serve");
   assert.equal(
     result.args[result.args.indexOf("--tensor-parallel-size") + 1],
     "4",

@@ -1,9 +1,146 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { createRunPodProvider } from "../../src/instances/runpod.js";
+import type { RunSsh } from "../../src/instances/ssh.js";
 import { fakeRunPod, rtxPod } from "../support/runpod.js";
 
 describe("RunPod provider", () => {
+  const image = "registry.example/nomad-base:inputs-abc";
+  const runningPod = {
+    ...rtxPod,
+    desiredStatus: "RUNNING",
+    imageName: image,
+    publicIp: "157.157.221.177",
+    portMappings: { "22": 38187 },
+    ports: ["22/tcp", "8888/http"],
+  };
+  const hostKeys = { pod1: "a".repeat(64) };
+
+  it("enrolls a qualified running pod over SSH without any provider mutation", async () => {
+    const runpod = fakeRunPod(runningPod);
+    const run = vi.fn<RunSsh>(async () => "");
+    const provider = createRunPodProvider({
+      apiKey: "key",
+      fetch: runpod.fetch,
+      inPlace: { run, hostKeys },
+    });
+    const environment = { GRADIATED_NOMAD_KEY: "private-bootstrap-material" };
+
+    await expect(provider.supportsInPlace!("pod1", image)).resolves.toBe(true);
+    await provider.bootstrap(
+      await provider.describe("pod1"),
+      image,
+      environment,
+    );
+
+    expect(run).toHaveBeenCalledWith(
+      { host: runningPod.publicIp, port: 38187, hostKeySha256: hostKeys.pod1 },
+      expect.stringContaining("python3 -c"),
+      JSON.stringify({ environment }),
+    );
+    expect(run.mock.calls[0]![1]).not.toContain(
+      environment.GRADIATED_NOMAD_KEY,
+    );
+    expect(runpod.calls.every((call) => call.method === "GET")).toBe(true);
+  });
+
+  it.each([
+    { imageName: "unqualified:image" },
+    { desiredStatus: "CREATED" },
+    { ports: ["22/tcp"] },
+    { publicIp: null },
+    { portMappings: {} },
+  ])(
+    "refuses in-place enrollment without changing provider configuration: %o",
+    async (changes) => {
+      const runpod = fakeRunPod({ ...runningPod, ...changes });
+      const run = vi.fn(async () => "");
+      const provider = createRunPodProvider({
+        apiKey: "key",
+        fetch: runpod.fetch,
+        inPlace: { run, hostKeys },
+      });
+
+      await expect(
+        provider.bootstrap(await provider.describe("pod1"), image, {}),
+      ).rejects.toThrow();
+
+      expect(run).not.toHaveBeenCalled();
+      expect(runpod.calls.every((call) => call.method === "GET")).toBe(true);
+    },
+  );
+
+  it("does not enroll an unpinned host even with SSH configured", async () => {
+    const runpod = fakeRunPod(runningPod);
+    const run = vi.fn(async () => "");
+    const provider = createRunPodProvider({
+      apiKey: "key",
+      fetch: runpod.fetch,
+      inPlace: { run, hostKeys: {} },
+    });
+
+    await expect(
+      provider.bootstrap(await provider.describe("pod1"), image, {}),
+    ).rejects.toThrow("Refusing to reset");
+    expect(run).not.toHaveBeenCalled();
+    expect(runpod.calls.every((call) => call.method === "GET")).toBe(true);
+  });
+
+  it("keeps the stopped-pod provider bootstrap when SSH is configured", async () => {
+    const runpod = fakeRunPod({ ...runningPod, desiredStatus: "EXITED" });
+    const run = vi.fn(async () => "");
+    const provider = createRunPodProvider({
+      apiKey: "key",
+      fetch: runpod.fetch,
+      inPlace: { run, hostKeys },
+    });
+
+    await provider.bootstrap(await provider.describe("pod1"), image, {});
+
+    expect(run).not.toHaveBeenCalled();
+    expect(runpod.calls.some((call) => call.method === "PATCH")).toBe(true);
+    expect(runpod.calls.some((call) => call.url.endsWith("/start"))).toBe(true);
+  });
+
+  it("reads an interrupted in-place identity over pinned SSH for resumption", async () => {
+    const carried = {
+      GRADIATED_INSTANCE_ID: "instance",
+      GRADIATED_NOMAD_NODE_ID: "node",
+      GRADIATED_NOMAD_NODE_SECRET: "secret",
+    };
+    const run = vi.fn(async () => JSON.stringify(carried));
+    const provider = createRunPodProvider({
+      apiKey: "key",
+      fetch: fakeRunPod(runningPod).fetch,
+      inPlace: { run, hostKeys },
+    });
+
+    await expect(provider.environment("pod1")).resolves.toEqual({
+      ...rtxPod.env,
+      ...carried,
+    });
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+
+  it("reads only provider identity for reset recovery when pinned SSH is unavailable", async () => {
+    const run = vi.fn(async () => {
+      throw new Error("SSH unavailable");
+    });
+    const provider = createRunPodProvider({
+      apiKey: "key",
+      fetch: fakeRunPod(runningPod).fetch,
+      inPlace: { run, hostKeys },
+    });
+
+    await expect(
+      provider.environment("pod1", { providerOnly: true }),
+    ).resolves.toEqual(rtxPod.env);
+    expect(run).not.toHaveBeenCalled();
+    await expect(provider.environment("pod1")).rejects.toThrow(
+      "SSH unavailable",
+    );
+  });
+
   it.each(["RUNNING", "CREATED", undefined])(
     "refuses reset at status %s before any provider mutation",
     async (desiredStatus) => {

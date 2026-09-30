@@ -25,9 +25,10 @@ export const registerRegistrationTools = (
     {
       title: "register instance",
       description: [
-        "Enrol a GPU machine into Nomad. This changes production: it records the instance, issues a Nomad client certificate, and replaces the machine's image and environment with nomad-base, which resets the machine.",
-        "A running machine is refused unless reset_running_pod is true and confirm_instance_id repeats instance_id. Only do that when a person has explicitly authorized resetting that exact machine: a reset stops everything on it and can release scarce GPU capacity.",
-        "A running machine whose registration was interrupted (it carries this instance's bootstrap but its node is not yet bound) is resumed without a reset: registration waits for its node and binds it. A machine that is already registered is refused; renewing its certificate or image needs reset_running_pod.",
+        "Enrol a GPU machine into Nomad: record the instance, issue a client certificate, and bind its ready node. Nomad deploys model jobs automatically after the node joins.",
+        "A running pod on the exact configured nomad-base image with SSH credentials, a pinned host key, and existing SSH and serving ports is bootstrapped over SSH without resetting it or changing provider image, environment, ports, or capacity. The bootstrap starts only the Nomad client, never model jobs. In-place files survive process restarts, but are lost if the provider resets the container.",
+        "Other running machines are refused unless reset_running_pod is true and confirm_instance_id repeats instance_id. Only do that when a person explicitly authorizes resetting that exact machine; a reset stops everything and can release scarce GPU capacity. Stopped machines use the provider bootstrap and are started.",
+        "Interrupted registrations carrying this instance's bootstrap resume without reset. An already bound node is refused.",
         "Returns a registration id at once; registration then takes up to 30 minutes. Follow it with instance_registration_status.",
       ].join(" "),
       inputSchema: schema,

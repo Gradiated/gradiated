@@ -31,8 +31,12 @@ interface InstanceProvider {
   // Whether a bootstrap can proceed without resetting a running machine.
   isStopped(providerInstanceId: string): Promise<boolean>;
   // Point it at the host image and hand it its bootstrap.
-  bootstrap(instance: ProviderInstance, image: HostImage, environment: Record<string, string>,
-            options?: { allowReset?: boolean }): Promise<void>;
+  bootstrap(
+    instance: ProviderInstance,
+    image: HostImage,
+    environment: Record<string, string>,
+    options?: { allowReset?: boolean },
+  ): Promise<void>;
 }
 ```
 
@@ -50,8 +54,9 @@ Nomad. Everything after that is Nomad's job. Registration:
    so a renewed machine returns to Nomad as the same node, or generates new ones.
    It then calls `bootstrap`, which sets the
    machine's image to a pinned `nomad-base` and passes that node identity, certificate, key and the runtime bundle read key
-   through the provider's own configuration. Nothing is uploaded and nothing is
-   copied over SSH.
+   through the provider's own configuration for stopped machines or explicitly
+   authorized resets. A qualified running host instead receives only the trust
+   bootstrap over pinned SSH; its provider configuration and reservation stay intact.
 4. Waits for the node to report ready carrying this instance's id in its metadata,
    and only then binds `nomad_node_id` to it. A failed or re-run registration
    leaves the current binding in place.
@@ -82,8 +87,24 @@ instance_registration_status(registration_id: "<id>")
 The first call checks the machine, starts registration and returns an id at once;
 joining Nomad can take up to 30 minutes. Status moves through `recording`,
 `issuing_certificate`, `updating_provider`, `waiting_for_node` and `bound`, or
-`failed` with the reason. A running machine is refused: setting its image resets
-it and can release scarce GPU capacity. Only when that reset is explicitly
+`failed` with the reason. A running RunPod pod on the exact configured `nomad-base` can instead enroll
+in place over SSH. Configure `runpod-ssh-key` and `runpod-ssh-host-keys` in the
+existing ops MCP secret; authorize the dedicated key inside the container over
+an existing trusted SSH connection. The host-key map contains pod IDs and
+lowercase hex SHA-256 host-key fingerprints. The pod must already expose direct
+SSH and 8888/HTTP. Enrollment writes its trust files and starts only the Nomad
+client. It does not PATCH the provider, update its image/environment/ports, or
+stop/restart the pod. Nomad then schedules the queued model jobs. DeepSeek
+requests four B200 or B300 devices.
+
+In-place identity is stored privately at `/etc/gradiated/in-place-enrollment.json`
+for retries; an interrupted enrollment reuses that identity and starts the client
+if needed before binding. These files survive process restarts, but a provider
+reset wipes the container disk; in-place enrollment deliberately does not make
+provider configuration changes to persist across resets.
+
+A running machine without those prerequisites is refused: setting its image
+resets it and can release scarce GPU capacity. Only when that reset is explicitly
 authorized for that machine, call again with `reset_running_pod: true` and the
 same id in `confirm_instance_id`. Every phase is audit-logged with the requesting
 employee, provider, machine and reset flag.

@@ -34,14 +34,20 @@ API using the existing product image.
 
 Every tool except `register_instance` has `readOnlyHint: true`,
 `destructiveHint: false` and `idempotentHint: true`; client administrators may run
-those automatically. `register_instance` is `destructiveHint: true`. It resets
-the machine it enrols, refuses a running machine unless `reset_running_pod` is true
-and `confirm_instance_id` repeats the id, and audit-logs each phase with the
-requesting employee. See `docs/INSTANCE_SETUP_PLAN.md`, "Running it". OAuth consent is
+those automatically. `register_instance` is `destructiveHint: true`. For a running pod on the exact configured `nomad-base`, it installs the
+bootstrap over pinned SSH and starts Nomad without changing RunPod configuration.
+The secret properties `runpod-ssh-key` and `runpod-ssh-host-keys` enable this path;
+the latter maps pod IDs to lowercase hex SHA-256 SSH host-key fingerprints. The
+SSH key must already be authorized inside the container and ports 22/TCP and
+8888/HTTP must already be exposed. Missing prerequisites fail without changing
+the provider. Other running pods require an explicitly authorized
+`reset_running_pod` and matching `confirm_instance_id`. Each phase is audit-logged
+with the requesting employee. See `docs/INSTANCE_SETUP_PLAN.md`, "Running it". OAuth consent is
 still required when connecting or renewing the 30-day authorization.
 
-There is no shell, SSH, Kubernetes exec, secret reader, arbitrary HTTP fetch
-or general database access. Registration is the only mutation; its credentials
+There is no general shell, SSH, Kubernetes exec, secret reader, arbitrary HTTP
+fetch or database tool. Registration alone uses a fixed SSH bootstrap on hosts
+with operator-pinned keys; command text and credentials are never caller inputs. Registration is the only mutation; its credentials
 reach no other tool. The service account may list nodes, and pods
 and apps workloads in selected namespaces, and read Argo CD Applications; it may
 not read Secrets or create exec sessions. Pod output omits specs, environment,

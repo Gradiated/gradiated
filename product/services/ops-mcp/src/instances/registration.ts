@@ -142,6 +142,7 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
         nomadNodeId: carried.nomadNodeId,
         nodeName: name,
       });
+      await provider.resume?.(instance.providerInstanceId);
       await waitAndBind(record.id, carried.nomadNodeId);
       advance(registration, "bound");
 
@@ -194,17 +195,28 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
     const provider = await createProvider();
     const instance = await provider.describe(request.providerInstanceId);
     const stopped = await provider.isStopped(request.providerInstanceId);
-    const environment = await provider.environment(request.providerInstanceId);
+    const environment = await provider.environment(request.providerInstanceId, {
+      providerOnly: request.resetRunningPod,
+    });
     const resuming =
       !stopped &&
       !request.resetRunningPod &&
       carriedBootstrap(environment) !== null;
 
-    if (!stopped && !request.resetRunningPod && !resuming) {
+    const inPlace =
+      !stopped &&
+      !request.resetRunningPod &&
+      !resuming &&
+      (await provider.supportsInPlace?.(
+        request.providerInstanceId,
+        dependencies.hostImage,
+      ));
+
+    if (!stopped && !request.resetRunningPod && !resuming && !inPlace) {
       throw new Error(
         `${instance.sku} ${request.providerInstanceId} is running or has an unknown status. ` +
           "Registering it resets the machine, which can release scarce GPU capacity. " +
-          "Only when that reset is explicitly authorized, call again with " +
+          "Configure in-place SSH enrollment to preserve its reservation, or only when that reset is explicitly authorized, call again with " +
           "reset_running_pod true and the same id in confirm_instance_id.",
       );
     }

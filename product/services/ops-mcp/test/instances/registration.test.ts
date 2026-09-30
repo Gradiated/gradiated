@@ -27,6 +27,8 @@ const setup = ({
   machineEnvironment = {} as Record<string, string>,
   nodeAlreadyJoined = false,
   nodeStatus = "ready",
+  supportsInPlace = false,
+  sshUnavailable = false,
 } = {}) => {
   const bootstraps: {
     environment: Readonly<Record<string, string>>;
@@ -41,8 +43,14 @@ const setup = ({
       faultDomain: "runpod:machine1",
       sku: "2x NVIDIA RTX PRO 6000",
     }),
-    environment: async () => machineEnvironment,
+    environment: async (_id, options) => {
+      if (sshUnavailable && !options?.providerOnly)
+        throw new Error("SSH unavailable");
+
+      return machineEnvironment;
+    },
     isStopped: async () => stopped,
+    supportsInPlace: async () => supportsInPlace,
     bootstrap: async (_instance, _image, environment, options) => {
       bootstraps.push({ environment, options });
     },
@@ -114,6 +122,39 @@ const settled = async (
 };
 
 describe("instance registration", () => {
+  it("allows an explicitly authorized reset even when the in-place SSH identity is unavailable", async () => {
+    const test = setup({
+      stopped: false,
+      supportsInPlace: true,
+      sshUnavailable: true,
+    });
+
+    const finished = await settled(
+      test.registrations,
+      (await test.registrations.start({ ...request, resetRunningPod: true }))
+        .id,
+    );
+
+    expect(finished).toMatchObject({ phase: "bound", resetRunningPod: true });
+    expect(test.bootstraps[0]?.options).toEqual({ allowReset: true });
+  });
+
+  it("records, certifies and binds a running pod using in-place bootstrap without allowing reset", async () => {
+    const test = setup({ stopped: false, supportsInPlace: true });
+
+    const finished = await settled(
+      test.registrations,
+      (await test.registrations.start(request)).id,
+    );
+
+    expect(finished).toMatchObject({ phase: "bound", resetRunningPod: false });
+    expect(test.bootstraps[0]?.options).toEqual({ allowReset: false });
+    expect(test.bindNomadNode).toHaveBeenCalledWith(
+      INSTANCE_ID,
+      finished.nomadNodeId,
+    );
+  });
+
   it("records, certifies, boots and binds a stopped machine in order", async () => {
     const test = setup();
 

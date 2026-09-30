@@ -214,7 +214,7 @@ job "deepseek-v4-1-flash" {
           constraint {
             attribute = "${device.model}"
             operator  = "regexp"
-            value     = "(^| )B200( |$)"
+            value     = "(^| )B(200|300)( |$)"
           }
         }
       }

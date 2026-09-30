@@ -13,6 +13,7 @@ import { readSecret } from "./aws.js";
 import { nomadNodeReader } from "./nomad-node.js";
 import { createRegistrations } from "./registration.js";
 import { createRunPodProvider } from "./runpod.js";
+import { sshRunner } from "./ssh.js";
 
 const RUNTIME_READER_SECRET = "gradiated/prod/nomad/host-runtime-reader";
 
@@ -50,8 +51,41 @@ export const productionRegistrations = (
 
   return createRegistrations({
     providers: {
-      runpod: async () =>
-        createRunPodProvider({ apiKey: await credential("runpod-api-key") }),
+      runpod: async () => {
+        const optional = async (name: string) =>
+          readFile(
+            path.join(settings.credentialsDirectory, name),
+            "utf8",
+          ).catch((error: NodeJS.ErrnoException) => {
+            if (error.code === "ENOENT") return null;
+
+            throw new Error(
+              `Cannot read in-place enrollment credential ${name}`,
+            );
+          });
+        const [privateKey, pinnedKeys] = await Promise.all([
+          optional("runpod-ssh-key"),
+          optional("runpod-ssh-host-keys"),
+        ]);
+        let inPlace;
+        if (privateKey && pinnedKeys) {
+          let parsed: unknown;
+          try {
+            parsed = JSON.parse(pinnedKeys);
+          } catch {
+            throw new Error("runpod-ssh-host-keys is not valid JSON");
+          }
+          const hostKeys = z
+            .record(z.string(), z.string().regex(/^[a-f0-9]{64}$/))
+            .parse(parsed);
+          inPlace = { run: sshRunner(privateKey), hostKeys };
+        }
+
+        return createRunPodProvider({
+          apiKey: await credential("runpod-api-key"),
+          inPlace,
+        });
+      },
     },
     instances: async () =>
       (instances ??= createInstanceService(

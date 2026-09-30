@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { installInPlace, readEnrollment } from "./in-place.js";
+import type { RunSsh, SshTarget } from "./ssh.js";
 import type { InstanceProvider, ProviderInstance } from "./provider.js";
 
 const API = "https://rest.runpod.io/v1";
@@ -14,6 +16,11 @@ const podSchema = z.object({
   gpuCount: z.number().int().nonnegative(),
   vcpuCount: z.number().int().positive(),
   desiredStatus: z.string().optional(),
+  imageName: z.string().optional(),
+  publicIp: z.ipv4().nullish(),
+  portMappings: z
+    .record(z.string(), z.number().int().min(1).max(65535))
+    .nullish(),
   ports: z.array(z.string()).nullish(),
   env: z.record(z.string(), z.string()).nullish(),
   machine: z.object({
@@ -25,11 +32,16 @@ const podSchema = z.object({
 export interface RunPodOptions {
   readonly apiKey: string;
   readonly fetch?: typeof fetch;
+  readonly inPlace?: {
+    readonly run: RunSsh;
+    readonly hostKeys: Readonly<Record<string, string>>;
+  };
 }
 
 export const createRunPodProvider = ({
   apiKey,
   fetch: request = fetch,
+  inPlace,
 }: RunPodOptions): InstanceProvider => {
   const call = async (
     method: string,
@@ -65,6 +77,36 @@ export const createRunPodProvider = ({
       ),
     );
 
+  const target = (current: z.infer<typeof podSchema>): SshTarget => {
+    const hostKeySha256 = inPlace?.hostKeys[current.id];
+    if (!inPlace || !hostKeySha256 || !/^[a-f0-9]{64}$/.test(hostKeySha256)) {
+      throw new Error(
+        `In-place enrollment needs a pinned SSH host key for ${current.id}`,
+      );
+    }
+    const host = current.publicIp;
+    const port = current.portMappings?.["22"];
+    if (!host || !port || !current.ports?.includes("22/tcp")) {
+      throw new Error(
+        "In-place enrollment requires an existing direct SSH port; provider ports will not be changed",
+      );
+    }
+
+    return { host, port, hostKeySha256 };
+  };
+
+  const enrollment = async (current: z.infer<typeof podSchema>) => {
+    if (!inPlace?.hostKeys[current.id] || current.desiredStatus !== "RUNNING")
+      return {};
+
+    const result = await inPlace.run(target(current), readEnrollment);
+    try {
+      return z.record(z.string(), z.string()).parse(JSON.parse(result));
+    } catch {
+      throw new Error("The in-place enrollment identity is invalid");
+    }
+  };
+
   return {
     async describe(podId) {
       const found = await pod(podId);
@@ -83,8 +125,42 @@ export const createRunPodProvider = ({
       } satisfies ProviderInstance;
     },
 
-    async environment(podId) {
-      return (await pod(podId)).env ?? {};
+    async environment(podId, options) {
+      const current = await pod(podId);
+
+      return {
+        ...(current.env ?? {}),
+        ...(!options?.providerOnly && (await enrollment(current))),
+      };
+    },
+
+    async supportsInPlace(podId, image) {
+      if (!inPlace?.hostKeys[podId]) return false;
+
+      const current = await pod(podId);
+      if (current.desiredStatus !== "RUNNING" || current.imageName !== image) {
+        throw new Error(
+          "In-place enrollment requires a running pod on the exact configured nomad-base image; no provider changes were made",
+        );
+      }
+      if (!current.ports?.includes(SERVING_PORT)) {
+        throw new Error(
+          "In-place enrollment requires the host proxy port to be exposed already; provider ports will not be changed",
+        );
+      }
+      target(current);
+
+      return true;
+    },
+
+    async resume(podId) {
+      if (!inPlace?.hostKeys[podId]) return;
+
+      const current = await pod(podId);
+      await inPlace.run(
+        target(current),
+        "if test -f /etc/gradiated/in-place-enrollment.json; then test -f /etc/nomad/node.hcl && if ! pgrep -x nomad >/dev/null; then nohup bash /opt/gradiated/bin/start-client </dev/null >>/var/log/gradiated-nomad-client.log 2>&1 & sleep 2; pgrep -x nomad >/dev/null; fi; fi",
+      );
     },
 
     async isStopped(podId) {
@@ -93,6 +169,15 @@ export const createRunPodProvider = ({
 
     async bootstrap(instance, image, environment, options) {
       const current = await pod(instance.providerInstanceId);
+      if (
+        !options?.allowReset &&
+        current.desiredStatus !== "EXITED" &&
+        (await this.supportsInPlace?.(current.id, image))
+      ) {
+        await installInPlace(inPlace!.run, target(current), environment);
+
+        return;
+      }
       if (current.desiredStatus !== "EXITED" && !options?.allowReset) {
         throw new Error(
           "Refusing to reset a RunPod pod that is running or has unknown status: " +

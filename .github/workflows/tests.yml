@@ -23,6 +23,7 @@ on:
       - "infra/environments/prod/us-east-1/kubernetes/workloads/public-api.yaml"
       - "product/services/rust-service.Dockerfile"
       - "product/services/worker/**"
+      - "product/services/temporal-worker/**"
       - "product/services/ops-mcp/**"
       - "product/.dockerignore"
       - "product/.nvmrc"

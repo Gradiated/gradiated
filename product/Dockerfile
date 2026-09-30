@@ -13,11 +13,13 @@ COPY packages/config/package.json ./packages/config/package.json
 COPY packages/contracts/package.json ./packages/contracts/package.json
 COPY packages/control/package.json ./packages/control/package.json
 COPY packages/nomad-pki/package.json ./packages/nomad-pki/package.json
+COPY packages/temporal/package.json ./packages/temporal/package.json
 COPY packages/valkey/package.json ./packages/valkey/package.json
 COPY services/api/package.json ./services/api/package.json
 COPY services/console/package.json ./services/console/package.json
 COPY services/gateway/package.json ./services/gateway/package.json
 COPY services/worker/package.json ./services/worker/package.json
+COPY services/temporal-worker/package.json ./services/temporal-worker/package.json
 COPY services/ops-mcp/package.json ./services/ops-mcp/package.json
 
 RUN pnpm install --frozen-lockfile
@@ -26,10 +28,10 @@ COPY packages ./packages
 COPY services ./services
 
 RUN mkdir -p packages/*/.turbo services/*/.turbo \
-  && pnpm turbo run build --filter=@gradiated/api... --filter=@gradiated/worker... --filter=@gradiated/ops-mcp...
+  && pnpm turbo run build --filter=@gradiated/api... --filter=@gradiated/worker... --filter=@gradiated/temporal-worker... --filter=@gradiated/ops-mcp...
 RUN pnpm install --prod --offline --force --frozen-lockfile \
   --filter=@gradiated/api... \
-  --filter=@gradiated/worker... --filter=@gradiated/ops-mcp...
+  --filter=@gradiated/worker... --filter=@gradiated/temporal-worker... --filter=@gradiated/ops-mcp...
 
 FROM node:22.23.2-bookworm-slim
 

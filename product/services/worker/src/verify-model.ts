@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { setTimeout as delay } from "node:timers/promises";
 import {
   createControlDatabase,
+  createNomadDeploymentStore,
   createWorkspaceApiKeyService,
 } from "@gradiated/control";
 import { z } from "zod";
@@ -22,6 +23,7 @@ const environment = z
   .parse(process.env);
 const { database, pool } = createControlDatabase(environment.DATABASE_URL, 1);
 const keys = createWorkspaceApiKeyService(database);
+const deployments = createNomadDeploymentStore(database);
 const abort = new AbortController();
 process.once("SIGTERM", () => abort.abort());
 process.once("SIGINT", () => abort.abort());
@@ -35,19 +37,15 @@ let stage = "reconciliation";
 try {
   const deadline = Date.now() + 90_000;
   for (;;) {
-    const { rows } = await pool.query<{
-      id: string;
-      status: string;
-      revision: string;
-    }>(
-      "select id,status,release->>'runtime_revision' as revision from model_deployments where model_id=$1 and (id=any($2::uuid[]) or status='available')",
-      [input.modelId, input.deploymentIds],
+    const rows = await deployments.verificationReplicas(
+      input.modelId,
+      input.deploymentIds,
     );
     const visible = input.deploymentIds.every((id) =>
       rows.some(
         (row) =>
           row.id === id &&
-          row.revision === input.runtimeRevision &&
+          row.release.runtime_revision === input.runtimeRevision &&
           (row.status === "available" ||
             (input.stage === "canary" && row.status === "unavailable")),
       ),

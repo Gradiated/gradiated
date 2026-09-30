@@ -152,6 +152,11 @@ HTTP from the proxy, the gateway and the API.
   collector uploads the batch, then its manifest, then deletes the local
   file. A manifest therefore always means its batch is complete. Uploads retry
   with backoff from 1 s to 60 s.
+- **Task registration**: intake queues workspace/task names on disk. Background
+  PostgreSQL inserts are idempotent and preserve existing settings. PostgreSQL
+  outages never block intake or uploads; pending registrations retry and recover
+  after a process restart. A bounded one-hour cache avoids repeated writes.
+  Task listing reads PostgreSQL directly rather than discovering S3 prefixes.
 - **Recovery**: at startup the collector cuts a torn final frame and uploads
   every batch left on disk. On SIGTERM it seals every open batch and
   uploads for up to 60 s; what remains uploads at the next start.

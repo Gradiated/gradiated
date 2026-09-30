@@ -18,7 +18,11 @@ import {
   type TrainingRunRow,
   type VersionView,
 } from "@/store/fine-tuning-types";
-import { useTaskHistory, useRunEvents } from "@/hooks/use-training";
+import {
+  useTaskHistory,
+  useRunEvents,
+  useTrainingMutation,
+} from "@/hooks/use-training";
 import { QueryState } from "./query-state";
 import { Button } from "@/components/ui/button";
 
@@ -86,6 +90,7 @@ export const TaskRunsTab = ({
   onVersionAction: (action: VersionAction) => void;
 }) => {
   const query = useTaskHistory(task);
+  const { cancel, canEdit } = useTrainingMutation(task.name);
   const runs = query.data?.runs ?? [];
   const versions = query.data?.versions ?? [];
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
@@ -141,6 +146,11 @@ export const TaskRunsTab = ({
               <VersionEvaluation version={selectedVersion} />
             </div>
           ) : null}
+          {cancel.error ? (
+            <p role="alert" className="text-sm text-destructive">
+              {cancel.error.message}
+            </p>
+          ) : null}
           <QueryState query={events} />
           {events.hasNextPage ? (
             <p className="mb-2 text-xs text-muted-foreground">
@@ -159,6 +169,9 @@ export const TaskRunsTab = ({
           {!events.isPending && !events.error ? (
             <StageTimeline
               run={selectedRun}
+              {...(canEdit && !cancel.isPending
+                ? { onCancel: () => cancel.mutate(selectedRun.id) }
+                : {})}
               events={events.data?.pages.flatMap((page) => page.data) ?? []}
             />
           ) : null}

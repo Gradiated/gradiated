@@ -77,6 +77,8 @@ pub fn start_in(data_dir: TempDir, limits: Limits) -> Running {
 
 pub fn start_with(data_dir: &TempDir, limits: Limits, store: Arc<dyn ObjectStore>) -> Collector {
     let config = CollectorConfig {
+        database_url: None,
+        database_ca_bundle_path: None,
         bind_address: "127.0.0.1:0".parse().unwrap(),
         admin_address: "127.0.0.1:0".parse().unwrap(),
         data_dir: data_dir.path().to_owned(),

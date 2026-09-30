@@ -22,6 +22,9 @@ const publicRoutes = new Set([
 ]);
 
 const validInputs: Record<string, { query?: string; body?: unknown }> = {
+  "POST /api/v1/workspaces/:workspace_id/training-runs": {
+    body: { task_id: "0198ae70-0e61-7a51-9d5c-2f4b5e6a7b8c" },
+  },
   "POST /api/v1/organizations": { body: { name: "Acme" } },
   "POST /api/v1/organizations/:organization_id/workspaces": {
     body: { name: "Research" },

@@ -19,6 +19,7 @@ browser ---> api (TypeScript/Node; also serves built Vite assets)
          PostgreSQL  Valkey  ClickHouse
 
 worker (TypeScript/Node) ---> PostgreSQL / Valkey / ClickHouse
+temporal-worker (TypeScript/Node) ---> Temporal Cloud / PostgreSQL / S3
 
 direct API key or OpenRouter key (`api.gradiated.com`)
   |
@@ -48,12 +49,14 @@ rollout moves the public inference paths from the gateway to the proxy.
 | `console`        | Static Vite/React deployment at `console.gradiated.com`                                 | `api.gradiated.com`                                                                        | customer product UI and generated API client                                                                                                               | access datastores, hold server secrets, proxy inference                                                                 |
 | `api`            | TypeScript/Node Kubernetes Deployment on EKS CPU nodes                                  | RDS PostgreSQL; Valkey for serving-relevant mutations; ClickHouse for usage views; Stripe  | human sessions, organizations, workspaces, invitations, API keys, model catalog, billing operations, usage views and generated API/docs                    | serve inference, serve console assets, run asynchronous settlement loops, authenticate hot-path keys, own Rust behavior |
 | `worker`         | TypeScript/Node Kubernetes Deployment using the same image as `api`                     | RDS PostgreSQL; Valkey; ClickHouse Cloud                                                   | periodic PostgreSQL-to-Valkey reconciliation/rebuild, `GenerationSettled` ingestion into ClickHouse and global-slot settlement into PostgreSQL             | expose a public/application API, write PostgreSQL per generation, retain prompts or completions                         |
+| `temporal-worker` | Separate TypeScript/Node Kubernetes Deployment using the product image | Temporal Cloud; RDS PostgreSQL; S3/KMS | encrypted training workflows and activities | run ingestion or settlement loops, connect to Valkey or ClickHouse |
+| `collector` | Rust deployment on EKS CPU nodes | S3; local spool; RDS PostgreSQL for task registration | generation-content batches and manifests, idempotent task registration with background retry | wait for PostgreSQL before accepting traces, create Temporal schedules |
 | `proxy`          | Rust deployment on EKS CPU nodes; not yet deployed                                      | read-only PostgreSQL; the gateway; Anthropic and OpenAI                                    | relay with customer provider keys, Gradiated key checks for relays, forwarding hosted requests to the gateway, draining and health/metrics                 | charge balances, translate or parse payloads, store provider keys, hold Valkey or ClickHouse clients                    |
 | `gateway`        | Rust deployment on EKS CPU nodes, exposed through the public ALB                        | Valkey; the selected SGLang endpoint; generated contract fixtures                          | API-key authentication, exact model lookup, bounds/admission, streaming proxy, cancellation, usage normalization, terminal finalization and health/metrics | query PostgreSQL/ClickHouse, run product CRUD, process Stripe, select providers, provision GPUs, persist prompts        |
 | `metabase`       | One Metabase Open Source pod on EKS at `metabase.gradiated.com`                         | dedicated RDS PostgreSQL state database; read-only product PostgreSQL and ClickHouse users | internal analytics, saved questions, dashboards, and Google Sign-In for `gradiated.com`                                                                    | write product data, serve public shares, or become a product data authority                                             |
 | `sglang-runtime` | SGLang runtime on the external provider's GPU Kubernetes cluster; never an EKS workload | pinned model/tokenizer artifacts, pinned runtime image, GPU node and provider networking   | execute one exact released model and expose a private OpenAI-compatible runtime endpoint to `gateway`                                                      | authenticate customers, charge balances, expose a public endpoint, choose another model/provider                        |
 
-`api` and `worker` are two commands from one TypeScript application and image,
+`api`, `worker` and `temporal-worker` are separate TypeScript applications packaged in one image,
 not independently versioned domain services. Keeping them in separate EKS
 Deployments prevents a ClickHouse outage or settlement query from affecting the
 public API. `worker` runs one replica at launch and supervises each loop with an
@@ -61,6 +64,18 @@ independent timeout, backoff and health state. Its protocols remain safe to
 split or scale later: Valkey consumer groups divide ingestion, PostgreSQL
 advisory locking elects settlement, and projection is level-triggered and
 idempotent. Do not create separate projection, ingestion or billing services.
+
+The separate `temporal-worker` application hosts encrypted Temporal training
+workflows and activities. The API starts and cancels workflows and directly
+updates per-task schedules after saving task settings. Schedule update failures
+are logged; users can retry by resubmitting settings. Scheduled workflows check
+workspace and organization eligibility before starting training. PostgreSQL owns tasks,
+runs, stage events and versions. S3 owns captured traces and large artifacts.
+The current executor is opt-in (`TRAINING_EXECUTOR=mock`) and publishes only
+unavailable synthetic versions. The [training run contract](TASK_FINE_TUNING_RUN_CONTRACT.md)
+defines admission, cancellation, retries and workflow compatibility. Temporal
+Cloud receives encrypted payloads and failures, and only internal IDs in workflow
+metadata. GPU hosts never receive Temporal credentials.
 
 ## Agent access to production
 
@@ -512,7 +527,7 @@ protocol integration, not production model equivalence.
 ## Implementation rules and complexity gates
 
 - Use one TypeScript application codebase and one Rust hot-path codebase.
-- Keep all asynchronous roles in one `worker` process from the `api` codebase
+- Keep ingestion, settlement and reconciliation in one `worker` process from the `api` codebase
   and image. Split a role into another Deployment only after measured scaling
   or isolation requirements.
 - Keep exact model dispatch finite and explicit. Use fresh status, one shared
@@ -523,9 +538,9 @@ protocol integration, not production model equivalence.
   cross-store source of truth.
 - Do not add Kafka, CDC, an outbox, a service mesh, Karpenter, RDS Proxy or a
   custom operator at launch.
-- Run multi-step training as Temporal Cloud workflows in the worker, so a failed
+- Run multi-step training as Temporal Cloud workflows in `temporal-worker`, so a failed
   step retries without repeating completed steps. Encrypt every payload and
-  failure in the worker before it reaches Temporal Cloud.
+  failure in `temporal-worker` before it reaches Temporal Cloud.
 - Add a second model through model and deployment rows, an SGLang deployment,
   capacity measurement and conformance fixtures.
 - Keep provider deployments simple. Put global placement and retry logic in the

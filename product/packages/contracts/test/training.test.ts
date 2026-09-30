@@ -7,6 +7,7 @@ import {
 import { UpdateWorkspaceSchema } from "../src/workspaces.js";
 import {
   EvaluationJudgeSchema,
+  UpdateTaskSchema,
   TrainingRunEventSchema,
   TrainerEventPayloadSchema,
 } from "../src/training.js";
@@ -223,4 +224,34 @@ it("rejects URL dot-segment task names while accepting long captured labels", as
     expect(TaskNameSchema.safeParse(name).success).toBe(false);
   for (const name of ["Billing Questions", "a".repeat(256), "a.b"])
     expect(TaskNameSchema.parse(name)).toBe(name);
+});
+
+describe("task training cron", () => {
+  it.each([
+    "0 3 * * MON",
+    "*/15 9-17 * * MON-FRI",
+    "0 0 1 JAN,APR,JUL,OCT *",
+    null,
+  ])("accepts schedule %s", (training_schedule) => {
+    expect(UpdateTaskSchema.parse({ training_schedule })).toEqual({
+      training_schedule,
+    });
+  });
+
+  it.each([
+    "",
+    "not a cron",
+    "60 3 * * MON",
+    "0 24 * * *",
+    "0 0 32 * *",
+    "0 0 * 13 *",
+    "0 0 * * 8",
+    "0 0 0 * * *",
+    "0 0 L * *",
+    "0 0 * * MON#2",
+  ])("rejects invalid or unsupported schedule %s", (training_schedule) => {
+    expect(UpdateTaskSchema.safeParse({ training_schedule }).success).toBe(
+      false,
+    );
+  });
 });

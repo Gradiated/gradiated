@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   bigint,
+  boolean,
   check,
   foreignKey,
   index,
@@ -48,6 +49,9 @@ export const tasks = pgTable(
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
+    trainingSchedule: text("training_schedule").default(
+      sql`floor(random() * 60)::integer::text || ' ' || floor(random() * 24)::integer::text || ' * * ' || floor(random() * 7)::integer::text`,
+    ),
     baseModelId: text("base_model_id").references(() => models.id, {
       onDelete: "restrict",
     }),

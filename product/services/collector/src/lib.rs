@@ -2,10 +2,12 @@ mod batch;
 mod config;
 mod http;
 mod metrics;
+mod postgres;
 mod record;
 mod relay;
 mod relay_stream;
 mod spool;
+mod tasks;
 mod upload;
 
 #[cfg(test)]
@@ -25,7 +27,9 @@ pub use http::{admin_router, public_router, AppState};
 pub use metrics::Metrics;
 
 use crate::{
+    postgres::PostgresService,
     spool::{Backlog, Spool},
+    tasks::TaskService,
     upload::Uploader,
 };
 
@@ -33,6 +37,7 @@ pub struct Collector {
     pub state: AppState,
     expiry: JoinHandle<()>,
     uploader: JoinHandle<()>,
+    task_worker: Option<JoinHandle<()>>,
 }
 
 impl Collector {
@@ -53,9 +58,28 @@ impl Collector {
         }
         drop(sealed);
 
+        let postgres = config
+            .database_url
+            .as_deref()
+            .map(|url| PostgresService::new(url, config.database_ca_bundle_path.as_deref()))
+            .transpose()?;
+        let tasks = postgres
+            .map(|postgres| TaskService::new(&config.data_dir, postgres, metrics.clone()))
+            .transpose()?;
+        let task_worker = tasks
+            .as_ref()
+            .map(|tasks| tokio::spawn(tasks.clone().run()));
+
         let spool = Arc::new(spool);
         let uploader = tokio::spawn(
-            Uploader::new(store, &config.replica, backlog, metrics.clone()).run(pending),
+            Uploader::new(
+                store,
+                &config.replica,
+                backlog,
+                metrics.clone(),
+                tasks.clone(),
+            )
+            .run(pending),
         );
         let expiry = tokio::spawn({
             let spool = spool.clone();
@@ -72,6 +96,7 @@ impl Collector {
         Ok(Self {
             state: AppState {
                 spool,
+                tasks,
                 token: Arc::from(config.token.as_str()),
                 metrics,
                 max_record_bytes: config.max_record_bytes,
@@ -79,6 +104,7 @@ impl Collector {
             },
             expiry,
             uploader,
+            task_worker,
         })
     }
 
@@ -88,6 +114,11 @@ impl Collector {
 
         if tokio::time::timeout(drain, self.uploader).await.is_err() {
             tracing::warn!("uploads did not finish before the drain deadline");
+        }
+
+        if let Some(task_worker) = self.task_worker {
+            task_worker.abort();
+            let _ = task_worker.await;
         }
     }
 }

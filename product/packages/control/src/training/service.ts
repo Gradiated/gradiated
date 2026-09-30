@@ -1,33 +1,24 @@
-import { v7 as uuidv7 } from "uuid";
-import { traceTaskKey } from "../traces/content.js";
-import { discoverTraceTasks } from "../traces/tasks.js";
 import type { UpdateTask, TrainingRunListQuery } from "@gradiated/contracts";
-import { and, asc, desc, eq, gt } from "drizzle-orm";
-
 import {
   requireWorkspaceEditor,
   requireWorkspaceMembership,
 } from "../access.js";
 import type { ControlDatabase } from "../db/client.js";
-import {
-  models,
-  tasks,
-  taskVersions,
-  trainingRunEvents,
-  trainingRuns,
-} from "../db/schema/index.js";
 import { ControlServiceError } from "../errors.js";
 import type { ContentStore } from "../traces/storage.js";
-
+import { prepareTraining } from "./admission.js";
 import type { AdapterDownloads } from "./downloads.js";
+import { createTrainingRunStore } from "./run-store.js";
+import { createTrainingStore } from "./store.js";
+import type { TrainingEngine } from "./types.js";
+
+export type {
+  TaskRecord,
+  TaskVersionRecord,
+  TrainingRunRecord,
+} from "./records.js";
 
 export type TrainingService = ReturnType<typeof createTrainingService>;
-export type TaskRecord = typeof tasks.$inferSelect;
-export type TaskVersionRecord = typeof taskVersions.$inferSelect;
-export type TrainingRunRecord = typeof trainingRuns.$inferSelect & {
-  task: string;
-  versionId: string | null;
-};
 
 const notFound = (thing: string) =>
   new ControlServiceError("not_found", `The ${thing} was not found.`);
@@ -36,7 +27,10 @@ export const createTrainingService = (
   database: ControlDatabase,
   store: ContentStore,
   downloads?: AdapterDownloads,
+  engine?: TrainingEngine,
 ) => {
+  const records = createTrainingStore(database);
+
   const member = async (userId: string, workspaceId: string) => {
     const result = await requireWorkspaceMembership(database, {
       userId,
@@ -47,99 +41,60 @@ export const createTrainingService = (
   };
 
   const findTask = async (workspaceId: string, name: string) => {
-    const [task] = await database
-      .select()
-      .from(tasks)
-      .where(and(eq(tasks.workspaceId, workspaceId), eq(tasks.name, name)));
+    const task = await records.getTask(workspaceId, name);
     if (!task) throw notFound("task");
 
     return task;
   };
 
-  const selectRuns = () =>
-    database
-      .select({
-        run: trainingRuns,
-        task: tasks.name,
-        versionId: taskVersions.id,
-      })
-      .from(trainingRuns)
-      .innerJoin(tasks, eq(tasks.id, trainingRuns.taskId))
-      .leftJoin(taskVersions, eq(taskVersions.trainingRunId, trainingRuns.id));
-
-  const flattenRun = ({
-    run,
-    task,
-    versionId,
-  }: {
-    run: typeof trainingRuns.$inferSelect;
-    task: string;
-    versionId: string | null;
-  }): TrainingRunRecord => ({ ...run, task, versionId });
-
   const findRun = async (workspaceId: string, runId: string) => {
-    const [row] = await selectRuns().where(
-      and(eq(trainingRuns.id, runId), eq(tasks.workspaceId, workspaceId)),
-    );
+    const row = await records.getRun(workspaceId, runId);
     if (!row) throw notFound("training run");
 
-    return flattenRun(row);
+    return row;
+  };
+
+  const requireEngine = () => {
+    if (!engine)
+      throw new ControlServiceError("unavailable", "Training is unavailable.");
+
+    return engine;
   };
 
   return {
+    async startRun(userId: string, workspaceId: string, taskId: string) {
+      await requireWorkspaceEditor(database, { userId, workspaceId });
+      const task = await records.getTaskById(workspaceId, taskId);
+      if (!task) throw notFound("task");
+
+      const executor = requireEngine();
+      const input = await prepareTraining(
+        database,
+        store,
+        task.id,
+        "manual",
+        userId,
+      );
+
+      const id = await executor.start(input);
+      await createTrainingRunStore(database).create(id, input);
+
+      return { id };
+    },
+
+    async cancelRun(userId: string, workspaceId: string, runId: string) {
+      await requireWorkspaceEditor(database, { userId, workspaceId });
+      const run = await findRun(workspaceId, runId);
+      if (run.finishedAt) return;
+
+      await requireEngine().cancel(run.taskId, runId);
+      await createTrainingRunStore(database).requestCancellation(runId, userId);
+    },
+
     async listTasks(userId: string, workspaceId: string) {
       await member(userId, workspaceId);
-      const known = await database
-        .select({ name: tasks.name })
-        .from(tasks)
-        .where(eq(tasks.workspaceId, workspaceId));
-      const discovered = await discoverTraceTasks(
-        store,
-        workspaceId,
-        new Set(known.map(({ name }) => traceTaskKey(name))),
-      );
-      for (let offset = 0; offset < discovered.length; offset += 1000)
-        await database
-          .insert(tasks)
-          .values(
-            discovered
-              .slice(offset, offset + 1000)
-              .map((name) => ({ id: uuidv7(), workspaceId, name })),
-          )
-          .onConflictDoNothing();
 
-      const rows = await database
-        .select()
-        .from(tasks)
-        .where(eq(tasks.workspaceId, workspaceId))
-        .orderBy(asc(tasks.name));
-      const latest = await database
-        .selectDistinctOn([trainingRuns.taskId], {
-          run: trainingRuns,
-          task: tasks.name,
-          versionId: taskVersions.id,
-          versionName: taskVersions.name,
-        })
-        .from(trainingRuns)
-        .innerJoin(tasks, eq(tasks.id, trainingRuns.taskId))
-        .leftJoin(taskVersions, eq(taskVersions.trainingRunId, trainingRuns.id))
-        .where(eq(tasks.workspaceId, workspaceId))
-        .orderBy(
-          asc(trainingRuns.taskId),
-          desc(trainingRuns.createdAt),
-          desc(trainingRuns.id),
-        );
-      const byTask = new Map(
-        latest.map((row) => [
-          row.run.taskId,
-          { ...flattenRun(row), versionName: row.versionName },
-        ]),
-      );
-
-      return rows.map((task) => ({
-        ...task,
-        latestRun: byTask.get(task.id) ?? null,
-      }));
+      return records.listTasks(workspaceId);
     },
 
     async getTask(userId: string, workspaceId: string, name: string) {
@@ -157,10 +112,7 @@ export const createTrainingService = (
       await requireWorkspaceEditor(database, { userId, workspaceId });
       const task = await findTask(workspaceId, name);
       if (input.base_model_id !== undefined) {
-        const [model] = await database
-          .select({ id: models.id, status: models.status })
-          .from(models)
-          .where(eq(models.id, input.base_model_id));
+        const model = await records.getModel(input.base_model_id);
         if (!model) throw notFound("base model");
         if (model.status !== "available")
           throw new ControlServiceError(
@@ -169,17 +121,20 @@ export const createTrainingService = (
           );
       }
 
-      const [updated] = await database
-        .update(tasks)
-        .set({
-          baseModelId: input.base_model_id,
-          comparisonModelId: input.comparison_model_id,
-          updatedAt: new Date(),
-        })
-        .where(eq(tasks.id, task.id))
-        .returning();
+      const updated = await records.updateTask(task.id, input);
+      try {
+        await engine?.updateSchedule(updated.id, updated.trainingSchedule);
+      } catch (error) {
+        console.warn(
+          JSON.stringify({
+            event: "training_schedule_update_failed",
+            task_id: updated.id,
+            error_name: error instanceof Error ? error.name : "UnknownError",
+          }),
+        );
+      }
 
-      return updated!;
+      return updated;
     },
 
     async listRuns(
@@ -188,18 +143,7 @@ export const createTrainingService = (
       filters: TrainingRunListQuery = {},
     ) {
       await member(userId, workspaceId);
-      const rows = await selectRuns()
-        .where(
-          and(
-            eq(tasks.workspaceId, workspaceId),
-            filters.task_id === undefined
-              ? undefined
-              : eq(trainingRuns.taskId, filters.task_id),
-          ),
-        )
-        .orderBy(desc(trainingRuns.createdAt));
-
-      return rows.map(flattenRun);
+      return records.listRuns(workspaceId, filters);
     },
 
     async getRun(userId: string, workspaceId: string, runId: string) {
@@ -217,29 +161,13 @@ export const createTrainingService = (
       await member(userId, workspaceId);
       await findRun(workspaceId, runId);
 
-      return database
-        .select()
-        .from(trainingRunEvents)
-        .where(
-          and(
-            eq(trainingRunEvents.runId, runId),
-            page.after === undefined
-              ? undefined
-              : gt(trainingRunEvents.id, page.after),
-          ),
-        )
-        .orderBy(asc(trainingRunEvents.id))
-        .limit(page.limit);
+      return records.listRunEvents(runId, page);
     },
 
     async listVersions(userId: string, workspaceId: string, name: string) {
       await member(userId, workspaceId);
       const task = await findTask(workspaceId, name);
-      const versions = await database
-        .select()
-        .from(taskVersions)
-        .where(eq(taskVersions.taskId, task.id))
-        .orderBy(desc(taskVersions.createdAt));
+      const versions = await records.listVersions(task.id);
 
       return { task, versions };
     },
@@ -252,12 +180,7 @@ export const createTrainingService = (
     ) {
       await member(userId, workspaceId);
       const task = await findTask(workspaceId, name);
-      const [version] = await database
-        .select()
-        .from(taskVersions)
-        .where(
-          and(eq(taskVersions.id, versionId), eq(taskVersions.taskId, task.id)),
-        );
+      const version = await records.getVersion(task.id, versionId);
       if (!version) throw notFound("version");
       if (!downloads)
         throw new ControlServiceError(
@@ -281,12 +204,7 @@ export const createTrainingService = (
     ) {
       await requireWorkspaceEditor(database, { userId, workspaceId });
       const task = await findTask(workspaceId, name);
-      const [version] = await database
-        .select({ id: taskVersions.id, status: taskVersions.status })
-        .from(taskVersions)
-        .where(
-          and(eq(taskVersions.id, versionId), eq(taskVersions.taskId, task.id)),
-        );
+      const version = await records.getVersion(task.id, versionId);
       if (!version) throw notFound("version");
       if (version.status !== "available")
         throw new ControlServiceError(
@@ -294,13 +212,7 @@ export const createTrainingService = (
           "Serving is not enabled for this version.",
         );
 
-      const [updated] = await database
-        .update(tasks)
-        .set({ productionVersionId: version.id, updatedAt: new Date() })
-        .where(eq(tasks.id, task.id))
-        .returning();
-
-      return updated!;
+      return records.setProductionVersion(task.id, version.id);
     },
   };
 };

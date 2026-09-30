@@ -1,7 +1,4 @@
-import { ne } from "drizzle-orm";
-
 import type { ControlDatabase } from "../db/client.js";
-import { models } from "../db/schema/index.js";
 import { catalogModels } from "./models/index.js";
 import { createCatalogService, type CatalogModelInput } from "./service.js";
 
@@ -17,10 +14,7 @@ export const applyCatalog = async (
   }
 
   const defined = new Set(definitions.map((definition) => definition.id));
-  const stored = await database
-    .select({ id: models.id })
-    .from(models)
-    .where(ne(models.status, "retired"));
+  const stored = await catalog.listModels();
 
   return {
     applied: definitions.length,

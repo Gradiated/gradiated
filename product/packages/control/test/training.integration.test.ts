@@ -263,54 +263,34 @@ describe("training service", () => {
       ).rejects.toMatchObject({ cause: { code: "23503" } });
   });
 
-  it("skips dot-segment labels and prevents direct persistence", async () => {
+  it("prevents direct persistence of dot-segment labels", async () => {
     const owner = await seedMember(db.database, { role: "owner" });
-    for (const name of [".", "..", "normal-task"])
-      captureTrace(owner.workspaceId, name);
-    expect(
-      (await service().listTasks(owner.userId, owner.workspaceId)).map(
-        (task) => task.name,
-      ),
-    ).toEqual(["normal-task"]);
     for (const name of [".", ".."])
       await expect(seedTask(owner.workspaceId, name)).rejects.toMatchObject({
         cause: { code: "23514" },
       });
   });
 
-  it("inserts discovered task names in batches below the PostgreSQL parameter limit", async () => {
-    const owner = await seedMember(db.database, { role: "owner" });
-    const count = 22000;
-    store.list.mockResolvedValueOnce({
-      keys: [],
-      prefixes: Array.from(
-        { length: count },
-        (_, i) => `v1/ws=${owner.workspaceId}/task=task-${i}/`,
-      ),
-    });
-    const found = await service().listTasks(owner.userId, owner.workspaceId);
-    expect(found).toHaveLength(count);
-    expect(new Set(found.map((task) => task.name)).size).toBe(count);
-  }, 20000);
-
   describe("listTasks", () => {
-    it("discovers slug and hashed task names from trace storage once", async () => {
+    it("reads persisted tasks without consulting or mutating trace storage", async () => {
       const owner = await seedMember(db.database, { role: "member" });
       const other = await seedMember(db.database, { role: "member" });
-      captureTrace(owner.workspaceId, "support-triage");
-      captureTrace(owner.workspaceId, "Billing Questions");
-      captureTrace(other.workspaceId, "elsewhere");
+      await seedTask(owner.workspaceId, "support-triage");
+      await seedTask(owner.workspaceId, "Billing Questions");
+      await seedTask(other.workspaceId, "elsewhere");
+      captureTrace(owner.workspaceId, "unregistered-trace-only-task");
+      store.list.mockRejectedValue(new Error("storage unavailable"));
+      store.read.mockRejectedValue(new Error("storage unavailable"));
 
       const first = await service().listTasks(owner.userId, owner.workspaceId);
-      const reads = store.read.mock.calls.length;
       const second = await service().listTasks(owner.userId, owner.workspaceId);
-
       expect(first.map((task) => task.name)).toEqual([
         "Billing Questions",
         "support-triage",
       ]);
       expect(second).toEqual(first);
-      expect(store.read.mock.calls.length).toBe(reads);
+      expect(store.list).not.toHaveBeenCalled();
+      expect(store.read).not.toHaveBeenCalled();
     });
 
     it("hides workspaces the user is not a member of", async () => {

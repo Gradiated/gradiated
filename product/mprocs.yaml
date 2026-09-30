@@ -5,7 +5,7 @@ procs:
       send-keys: ["<C-c>"]
   api:
     # The repository .env may carry deployed auth origins; local sign-in keeps these.
-    shell: "scripts/with-root-env.sh BETTER_AUTH_URL TRUSTED_ORIGINS DATABASE_URL VALKEY_URL CONTENTS_BUCKET AWS_ENDPOINT_URL_S3 AWS_REGION AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN -- mise exec -- env -u AWS_PROFILE -u AWS_DEFAULT_PROFILE pnpm --filter @gradiated/api dev"
+    shell: "scripts/with-root-env.sh BETTER_AUTH_URL TRUSTED_ORIGINS DATABASE_URL VALKEY_URL TRAINING_EXECUTOR TEMPORAL_ADDRESS TEMPORAL_NAMESPACE CONTENTS_BUCKET AWS_ENDPOINT_URL_S3 AWS_REGION AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN -- mise exec -- env -u AWS_PROFILE -u AWS_DEFAULT_PROFILE pnpm --filter @gradiated/api dev"
     env:
       <<: &contents_env
         CONTENTS_BUCKET: gradiated-local-contents
@@ -21,6 +21,9 @@ procs:
       TRUSTED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173
       NODE_ENV: development
       PORT: "3001"
+      TRAINING_EXECUTOR: mock
+      TEMPORAL_ADDRESS: localhost:7233
+      TEMPORAL_NAMESPACE: default
       VALKEY_URL: &valkey_url redis://127.0.0.1:6379
       CLICKHOUSE_DATABASE: &clickhouse_database gradiated
       CLICKHOUSE_HOST: &clickhouse_host 127.0.0.1
@@ -42,6 +45,16 @@ procs:
       METRICS_PORT: "9465"
       VALKEY_URL: *valkey_url
       WORKER_CONSUMER_NAME: local-worker-1
+  temporal-worker:
+    shell: "mise exec -- env -u AWS_PROFILE -u AWS_DEFAULT_PROFILE pnpm --filter @gradiated/temporal-worker dev"
+    autostart: false
+    env:
+      <<: *contents_env
+      DATABASE_URL: *database_url
+      TRAINING_EXECUTOR: mock
+      TEMPORAL_ADDRESS: localhost:7233
+      TEMPORAL_NAMESPACE: default
+      METRICS_PORT: "9466"
   gateway:
     shell: "mise exec -- cargo run --manifest-path services/gateway/Cargo.toml --locked"
     env:
@@ -64,6 +77,7 @@ procs:
     shell: "mise exec -- env -u AWS_PROFILE -u AWS_DEFAULT_PROFILE cargo run --manifest-path services/collector/Cargo.toml --locked"
     env:
       <<: *contents_env
+      DATABASE_URL: *database_url
       COLLECTOR_BIND_ADDRESS: 127.0.0.1:3004
       COLLECTOR_ADMIN_ADDRESS: 127.0.0.1:9004
       COLLECTOR_BUCKET: gradiated-local-contents

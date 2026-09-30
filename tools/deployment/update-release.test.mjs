@@ -49,6 +49,10 @@ async function fixture() {
     `image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/product:old\n`,
   );
   await writeFile(
+    path.join(workloads, "temporal-worker.yaml"),
+    `image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/product:old\n`,
+  );
+  await writeFile(
     path.join(workloads, "gateway.yaml"),
     `image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/gateway:old\n`,
   );
@@ -93,6 +97,8 @@ test("updates one complete production release", async () => {
   assert.match(api, new RegExp(`product@${PRODUCT_DIGEST}`));
   assert.match(clickhouseMigrate, new RegExp(`product@${PRODUCT_DIGEST}`));
   assert.match(worker, new RegExp(`product@${PRODUCT_DIGEST}`));
+  const temporalWorker = await readFile(path.join(workloads, "temporal-worker.yaml"), "utf8");
+  assert.match(temporalWorker, new RegExp(`product@${PRODUCT_DIGEST}`));
   const ops = await readFile(path.join(workloads, "../operations/ops-mcp/workload.yaml"), "utf8");
   assert.match(ops, new RegExp(`product@${PRODUCT_DIGEST}`));
   assert.match(gateway, new RegExp(`gateway@${GATEWAY_DIGEST}`));

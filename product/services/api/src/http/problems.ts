@@ -1,5 +1,8 @@
 import type { Problem } from "@gradiated/contracts";
-import { ControlServiceError } from "@gradiated/control";
+import {
+  ControlServiceError,
+  TrainingAdmissionError,
+} from "@gradiated/control";
 import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 
@@ -147,6 +150,14 @@ const billingProblem = (error: BillingPaymentsError): ApiProblem => {
 
 export const toApiProblem = (error: unknown): ApiProblem | undefined => {
   if (error instanceof ApiProblem) return error;
+  if (error instanceof TrainingAdmissionError)
+    return new ApiProblem({
+      type: problemType(error.code),
+      title: "Training cannot start",
+      status: error.code === "already_training" ? 409 : 422,
+      code: error.code,
+      detail: error.message,
+    });
   if (error instanceof ControlServiceError) return controlProblem(error);
   if (error instanceof BillingPaymentsError) return billingProblem(error);
   if (error instanceof HTTPException && error.status === 400) {

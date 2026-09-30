@@ -17,6 +17,7 @@
     "@gradiated/config": "workspace:*",
     "@gradiated/contracts": "workspace:*",
     "@gradiated/control": "workspace:*",
+    "@gradiated/temporal": "workspace:*",
     "@gradiated/valkey": "workspace:*",
     "@hono/node-server": "2.1.1",
     "@hono/zod-openapi": "1.6.0",

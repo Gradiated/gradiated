@@ -83,6 +83,13 @@ impl Spool {
         let mut recovered = Vec::new();
         for entry in fs::read_dir(directory)? {
             let path = entry?.path();
+            if path
+                .file_name()
+                .is_some_and(|name| name == "task-registrations")
+                && path.is_dir()
+            {
+                continue;
+            }
             let complete = batch::truncate_torn_tail(&path)?;
 
             if complete == 0 {

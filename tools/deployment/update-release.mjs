@@ -16,6 +16,7 @@ const IMAGES = [
       "api.yaml",
       "clickhouse-migrate.yaml",
       "worker.yaml",
+      "temporal-worker.yaml",
       "../operations/ops-mcp/workload.yaml",
     ],
   },

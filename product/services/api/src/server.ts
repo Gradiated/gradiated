@@ -1,3 +1,4 @@
+import { createTrainingEngine } from "./training/engine.js";
 import { serve } from "@hono/node-server";
 import {
   createCatalogBillingService,
@@ -123,6 +124,8 @@ const auth = createAuthService(database, {
 });
 const metrics = new ApiMetrics();
 
+const trainingEngine = createTrainingEngine(process.env);
+
 const app = createApp({
   allowedOrigins: trustedOrigins,
   auth,
@@ -152,6 +155,7 @@ const app = createApp({
       database,
       contents,
       createAdapterDownloads(environment.TRAINING_ARTIFACTS_BUCKET),
+      trainingEngine.engine,
     ),
   },
 });
@@ -223,6 +227,7 @@ const shutdown = async (signal: NodeJS.Signals) => {
     if (valkey.isOpen) await valkey.quit();
   });
   await release("clickhouse", () => clickhouse.close());
+  await release("temporal", trainingEngine.close);
   await release("postgres", () => pool.end());
 };
 

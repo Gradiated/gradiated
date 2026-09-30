@@ -84,6 +84,16 @@ describe("Nomad deployment reconciliation", () => {
     const result = await store.reconcile(nomad([running]));
 
     expect(result).toEqual({ written: 1, removed: 0, unplaced: [] });
+    expect(
+      await store.verificationReplicas(modelId, [running.allocationId]),
+    ).toEqual([
+      {
+        id: running.allocationId,
+        modelId,
+        status: "available",
+        release: running.release,
+      },
+    ]);
     expect(await deploymentsOf(running.allocationId)).toMatchObject([
       {
         modelId,
@@ -299,5 +309,33 @@ describe("Nomad deployment reconciliation", () => {
 
     expect(second).toBeNull();
     await expect(first).resolves.toMatchObject({ written: 0 });
+  });
+  it("rejects invalid release JSON before committing a reconciliation pass", async () => {
+    const valid = allocation();
+    const invalid = allocation({
+      release: { ...deploymentRelease(), schema_version: 2 as 1 },
+    });
+
+    await expect(
+      store.reconcile(nomad([valid, invalid])),
+    ).rejects.toMatchObject({ name: "ZodError" });
+    expect(await deploymentsOf(valid.allocationId)).toEqual([]);
+    expect(await deploymentsOf(invalid.allocationId)).toEqual([]);
+  });
+
+  it("rejects corrupt stored release JSON before returning replicas", async () => {
+    const running = allocation();
+    await store.reconcile(nomad([running]));
+    await testDatabase.database
+      .update(modelDeployments)
+      .set({
+        release: { ...running.release, schema_version: 2 as 1 },
+      })
+      .where(eq(modelDeployments.id, running.allocationId));
+
+    await expect(store.replicas()).rejects.toMatchObject({ name: "ZodError" });
+    await expect(
+      store.verificationReplicas(modelId, [running.allocationId]),
+    ).rejects.toMatchObject({ name: "ZodError" });
   });
 });

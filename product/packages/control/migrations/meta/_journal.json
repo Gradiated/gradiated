@@ -64,6 +64,13 @@
       "when": 1790678330150,
       "tag": "0008_training",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790758012821,
+      "tag": "0009_task_training_schedules",
+      "breakpoints": true
     }
   ]
 }

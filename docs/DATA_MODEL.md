@@ -747,13 +747,26 @@ that link remain pending. The application database migration remains pending.
 
 Migration 0008 adds workspace-owned `tasks`, named uniquely within a workspace.
 Task names cannot be `.` or `..`, because task routes use the name as a URL path
-segment. This PR discovers task names from retained trace storage; moving task
-registration to the collector is a later implementation change.
+segment. The collector registers a task when it accepts its first captured trace,
+using an idempotent insert keyed by workspace and task name. PostgreSQL outages
+do not block capture or uploads: pending registrations remain on local disk and
+retry in the background, including after process restart. A bounded one-hour
+in-memory cache avoids repeated writes for known tasks. Task listing reads
+PostgreSQL directly and never discovers or creates tasks from trace storage.
+
+Migration 0009 adds a nullable `training_schedule` cron expression to each task.
+Expressions have five fields and use UTC; null disables automatic training.
+Defaults are weekly, with minute, hour and weekday sampled once at insertion
+and stored durably. Task updates save the PostgreSQL configuration and directly
+attempt to create, update or delete the per-task Temporal Schedule. Temporal
+failures are logged without rolling back PostgreSQL; resubmitting task settings
+retries the schedule update. Workspace and organization eligibility is checked
+when the scheduled workflow runs.
 
 `training_runs` belong to a task and record the trigger, requester, base model,
 input cutoff, stage, dataset summary and evaluation summary. A partial unique
 index permits only one unfinished run per task. Training reads reject archived
-workspaces immediately, before reading traces or discovering tasks.
+workspaces immediately, before reading traces or tasks.
 
 `training_run_events` belong to a run and have monotonically increasing IDs for
 pagination. Their source names the emitting service. Workflow lifecycle events

@@ -1,6 +1,7 @@
 import {
   ControlServiceError,
   type TrainingRunRecord,
+  TrainingAdmissionError,
 } from "@gradiated/control";
 import { describe, expect, it, vi } from "vitest";
 import { authenticated, createTestApp, workspaceId } from "./support.js";
@@ -16,6 +17,7 @@ const task = {
   baseModelId: "gradiated/base",
   comparisonModelId: "openai/gpt-5",
   productionVersionId: runId,
+  trainingSchedule: "0 3 * * MON",
   createdAt: at,
   updatedAt: at,
 };
@@ -132,6 +134,7 @@ describe("training routes", () => {
         base_model_id: "gradiated/base",
         comparison_model_id: "openai/gpt-5",
         production_version_id: runId,
+        training_schedule: "0 3 * * MON",
       });
       expect(getTask).toHaveBeenCalledWith(
         expect.any(String),
@@ -140,6 +143,50 @@ describe("training routes", () => {
       );
     },
   );
+
+  it.each(["0 3 1 * *", null])(
+    "updates automatic training cron %s",
+    async (training_schedule) => {
+      const updateTask = vi.fn(async () => ({
+        ...task,
+        trainingSchedule: training_schedule,
+      }));
+      const app = createTestApp({
+        auth: authenticated,
+        services: { training: { updateTask } },
+      });
+      const response = await app.request(`${path}/tasks/task`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ training_schedule }),
+      });
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toMatchObject({ training_schedule });
+      expect(updateTask).toHaveBeenCalledWith(
+        expect.any(String),
+        workspaceId,
+        "task",
+        { training_schedule },
+      );
+    },
+  );
+
+  it("rejects invalid automatic training cron before updating the task", async () => {
+    const updateTask = vi.fn();
+    const app = createTestApp({
+      auth: authenticated,
+      services: { training: { updateTask } },
+    });
+    const response = await app.request(`${path}/tasks/task`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ training_schedule: "0 25 * * *" }),
+    });
+
+    expect(response.status).toBe(422);
+    expect(updateTask).not.toHaveBeenCalled();
+  });
 
   it.each([undefined, runId])(
     "lists training runs with task filter %s",
@@ -277,3 +324,78 @@ describe("training routes", () => {
     ).toEqual([true, false]);
   });
 });
+
+it("accepts a manual run and returns the workflow execution ID", async () => {
+  const startRun = vi.fn(async () => ({ id: runId }));
+  const app = createTestApp({
+    auth: authenticated,
+    services: { training: { startRun } },
+  });
+  const response = await app.request(`${path}/training-runs`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ task_id: runId }),
+  });
+  expect(response.status).toBe(202);
+  expect(await response.json()).toEqual({ id: runId });
+  expect(startRun).toHaveBeenCalledWith(expect.any(String), workspaceId, runId);
+});
+
+it("requests cancellation of the exact run", async () => {
+  const cancelRun = vi.fn(async () => {});
+  const app = createTestApp({
+    auth: authenticated,
+    services: { training: { cancelRun } },
+  });
+  const response = await app.request(`${path}/training-runs/${runId}`, {
+    method: "DELETE",
+  });
+  expect(response.status).toBe(202);
+  expect(cancelRun).toHaveBeenCalledWith(
+    expect.any(String),
+    workspaceId,
+    runId,
+  );
+});
+
+it.each([
+  ["already_training", 409],
+  ["insufficient_traces", 422],
+  ["training_not_configured", 422],
+] as const)("returns %i for %s admission", async (code, status) => {
+  const startRun = vi.fn(async () => {
+    throw new TrainingAdmissionError(code, "Training prerequisite failed.");
+  });
+  const app = createTestApp({
+    auth: authenticated,
+    services: { training: { startRun } },
+  });
+  const response = await app.request(`${path}/training-runs`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ task_id: runId }),
+  });
+  expect(response.status).toBe(status);
+  expect(await response.json()).toMatchObject({
+    code,
+    detail: "Training prerequisite failed.",
+  });
+});
+
+it.each([{}, { task_id: "not-a-uuid" }, { run_id: runId }])(
+  "rejects creation without a valid task ID: %j",
+  async (body) => {
+    const startRun = vi.fn();
+    const app = createTestApp({
+      auth: authenticated,
+      services: { training: { startRun } },
+    });
+    const response = await app.request(`${path}/training-runs`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    expect(response.status).toBe(422);
+    expect(startRun).not.toHaveBeenCalled();
+  },
+);

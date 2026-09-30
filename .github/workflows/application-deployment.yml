@@ -217,6 +217,7 @@ jobs:
             infra/environments/prod/us-east-1/kubernetes/workloads/proxy.yaml
             infra/environments/prod/us-east-1/kubernetes/workloads/collector.yaml
             infra/environments/prod/us-east-1/kubernetes/workloads/worker.yaml
+            infra/environments/prod/us-east-1/kubernetes/workloads/temporal-worker.yaml
             infra/environments/prod/us-east-1/kubernetes/operations/ops-mcp/workload.yaml
           )
           if git diff --quiet -- "${release_paths[@]}"; then
@@ -269,11 +270,12 @@ jobs:
           while (( SECONDS < deadline )); do
             api_image="$(kubectl -n gradiated get deployment api -o jsonpath='{.spec.template.spec.containers[?(@.name=="api")].image}' 2>/dev/null || true)"
             worker_image="$(kubectl -n gradiated get deployment worker -o jsonpath='{.spec.template.spec.containers[?(@.name=="worker")].image}' 2>/dev/null || true)"
+            temporal_worker_image="$(kubectl -n gradiated get deployment temporal-worker -o jsonpath='{.spec.template.spec.containers[?(@.name=="temporal-worker")].image}' 2>/dev/null || true)"
             gateway_image_actual="$(kubectl -n gradiated get deployment gateway -o jsonpath='{.spec.template.spec.containers[?(@.name=="gateway")].image}' 2>/dev/null || true)"
             proxy_image_actual="$(kubectl -n gradiated get deployment proxy -o jsonpath='{.spec.template.spec.containers[?(@.name=="proxy")].image}' 2>/dev/null || true)"
             collector_image_actual="$(kubectl -n gradiated get deployment collector -o jsonpath='{.spec.template.spec.containers[?(@.name=="collector")].image}' 2>/dev/null || true)"
             source_revision="$(kubectl -n gradiated get configmap gradiated-release -o jsonpath='{.data.sourceRevision}' 2>/dev/null || true)"
-            if [[ "${api_image}" == "${product_image}" && "${worker_image}" == "${product_image}" && "${gateway_image_actual}" == "${gateway_image}" && "${proxy_image_actual}" == "${proxy_image}" && "${collector_image_actual}" == "${collector_image}" && "${source_revision}" == "${SOURCE_SHA}" ]]; then
+            if [[ "${api_image}" == "${product_image}" && "${worker_image}" == "${product_image}" && "${temporal_worker_image}" == "${product_image}" && "${gateway_image_actual}" == "${gateway_image}" && "${proxy_image_actual}" == "${proxy_image}" && "${collector_image_actual}" == "${collector_image}" && "${source_revision}" == "${SOURCE_SHA}" ]]; then
               break
             fi
             sleep 10
@@ -284,6 +286,7 @@ jobs:
           fi
           kubectl -n gradiated rollout status deployment/api --timeout=10m
           kubectl -n gradiated rollout status deployment/worker --timeout=10m
+          kubectl -n gradiated rollout status deployment/temporal-worker --timeout=10m
           kubectl -n gradiated rollout status deployment/gateway --timeout=10m
           kubectl -n gradiated rollout status deployment/proxy --timeout=10m
           kubectl -n gradiated rollout status deployment/collector --timeout=10m

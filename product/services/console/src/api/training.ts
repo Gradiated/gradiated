@@ -1,4 +1,4 @@
-import { api, requireData } from "./client";
+import { api, requireData, requireOk } from "./client";
 import type { components } from "./schema";
 
 export const listTasks = (workspace_id: string, signal?: AbortSignal) =>
@@ -97,4 +97,19 @@ export const getAdapterDownload = (
         params: { path: { workspace_id, task, version_id } },
       },
     ),
+  );
+
+export const startTrainingRun = (workspace_id: string, task_id: string) =>
+  requireData(
+    api.POST("/api/v1/workspaces/{workspace_id}/training-runs", {
+      params: { path: { workspace_id } },
+      body: { task_id },
+    }),
+  );
+
+export const cancelTrainingRun = (workspace_id: string, run_id: string) =>
+  requireOk(
+    api.DELETE("/api/v1/workspaces/{workspace_id}/training-runs/{run_id}", {
+      params: { path: { workspace_id, run_id } },
+    }),
   );

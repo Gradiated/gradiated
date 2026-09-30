@@ -1,0 +1,1 @@
+ALTER TABLE "tasks" ADD COLUMN "training_schedule" text DEFAULT floor(random() * 60)::integer::text || ' ' || floor(random() * 24)::integer::text || ' * * ' || floor(random() * 7)::integer::text;

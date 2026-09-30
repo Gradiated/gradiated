@@ -4,10 +4,9 @@ import type {
   DeploymentStatusReport,
   ModelDeploymentRelease,
 } from "@gradiated/contracts";
-import { eq } from "drizzle-orm";
 
 import type { ControlDatabase } from "../db/client.js";
-import { modelDeployments } from "../db/schema/index.js";
+import { createDeploymentStatusStore } from "./store.js";
 
 interface DeploymentStatusValkey {
   expire(key: string, seconds: number): Promise<unknown>;
@@ -62,15 +61,10 @@ export const createDeploymentStatusService = (
   valkey: DeploymentStatusValkey,
 ): DeploymentStatusService => ({
   async report(provider, report) {
-    const [deployment] = await database
-      .select({
-        id: modelDeployments.id,
-        provider: modelDeployments.provider,
-        release: modelDeployments.release,
-      })
-      .from(modelDeployments)
-      .where(eq(modelDeployments.id, report.deployment_id))
-      .limit(1);
+    const deployment = await createDeploymentStatusStore(
+      database,
+    ).getDeployment(report.deployment_id);
+
     if (!deployment) {
       throw new DeploymentStatusError("deployment_not_found");
     }

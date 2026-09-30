@@ -1,8 +1,11 @@
 import { randomUUID } from "node:crypto";
 
+import { eq } from "drizzle-orm";
+
 import type { DeploymentStatusReport } from "@gradiated/contracts";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
+import { modelDeployments } from "../src/db/schema/index.js";
 import { createCatalogService } from "../src/catalog/service.js";
 import {
   createDeploymentStatusService,
@@ -111,5 +114,23 @@ describe("deployment status reports", () => {
       },
       { command: "expire", key, seconds: 30 },
     ]);
+  });
+  it("rejects corrupt stored release JSON before recording a heartbeat", async () => {
+    const catalog = createCatalogService(testDatabase.database);
+    const model = await catalog.upsertModel(modelInput());
+    const deployment = await catalog.upsertModelDeployment(
+      deploymentInput(model.id),
+    );
+    await testDatabase.database
+      .update(modelDeployments)
+      .set({
+        release: { ...deployment.release, schema_version: 2 as 1 },
+      })
+      .where(eq(modelDeployments.id, deployment.id));
+
+    await expect(
+      service.report("runpod", report({ deployment_id: deployment.id })),
+    ).rejects.toMatchObject({ name: "ZodError" });
+    expect(valkey.calls).toEqual([]);
   });
 });

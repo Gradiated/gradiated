@@ -7,6 +7,8 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import {
+  startTrainingRun,
+  cancelTrainingRun,
   getTask,
   listTasks,
   listTaskRuns,
@@ -126,9 +128,17 @@ export const useTrainingMutation = (task: string) => {
       promoteVersion(workspaceId, task, versionId),
     onSuccess: invalidate,
   });
+  const start = useMutation({
+    mutationFn: (taskId: string) => startTrainingRun(workspaceId, taskId),
+    onSuccess: invalidate,
+  });
+  const cancel = useMutation({
+    mutationFn: (runId: string) => cancelTrainingRun(workspaceId, runId),
+    onSuccess: invalidate,
+  });
   const canEdit =
     selectedOrganization?.status === "active" &&
     ["owner", "admin"].includes(selectedOrganization.role);
 
-  return { update, promote, canEdit };
+  return { update, promote, start, cancel, canEdit };
 };

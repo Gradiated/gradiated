@@ -24,6 +24,8 @@ pub enum Store {
 
 #[derive(Clone, Debug)]
 pub struct CollectorConfig {
+    pub database_url: Option<String>,
+    pub database_ca_bundle_path: Option<String>,
     pub bind_address: SocketAddr,
     pub admin_address: SocketAddr,
     pub data_dir: PathBuf,
@@ -38,6 +40,8 @@ pub struct CollectorConfig {
 
 #[derive(Deserialize)]
 struct Environment {
+    database_url: Option<String>,
+    database_ca_bundle_path: Option<String>,
     #[serde(default = "default_bind_address")]
     collector_bind_address: SocketAddr,
     #[serde(default = "default_admin_address")]
@@ -126,6 +130,8 @@ impl CollectorConfig {
         }
 
         Ok(Self {
+            database_url: environment.database_url,
+            database_ca_bundle_path: environment.database_ca_bundle_path,
             bind_address: environment.collector_bind_address,
             admin_address: environment.collector_admin_address,
             data_dir: environment.collector_data_dir,

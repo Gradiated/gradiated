@@ -11,6 +11,10 @@
     "./model-catalog": {
       "types": "./dist/model-catalog.d.ts",
       "default": "./dist/model-catalog.js"
+    },
+    "./training-stages": {
+      "types": "./dist/training-stages.d.ts",
+      "default": "./dist/training-stages.js"
     }
   },
   "scripts": {
@@ -19,6 +23,7 @@
   },
   "dependencies": {
     "@hono/zod-openapi": "1.6.0",
+    "cron-parser": "5.4.0",
     "zod": "4.6.5"
   }
 }

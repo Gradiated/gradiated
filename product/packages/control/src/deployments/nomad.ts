@@ -1,6 +1,10 @@
 import type { ModelDeploymentRelease } from "@gradiated/contracts";
-import { and, eq, inArray, isNull, notInArray, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, notInArray, or, sql } from "drizzle-orm";
 
+import {
+  ModelDeploymentRecordSchema,
+  ModelDeploymentInsertSchema,
+} from "../catalog/records.js";
 import type { ControlDatabase } from "../db/client.js";
 import { instances, modelDeployments, models } from "../db/schema/index.js";
 
@@ -43,6 +47,14 @@ export interface NomadDeploymentStore {
   /** Returns null when another worker is running the pass. */
   reconcile(nomad: NomadView): Promise<ReconcileResult | null>;
   replicas(): Promise<NomadReplica[]>;
+  verificationReplicas(
+    modelId: string,
+    deploymentIds: readonly string[],
+  ): Promise<
+    (NomadReplica & {
+      status: "available" | "unavailable" | "draining";
+    })[]
+  >;
 }
 
 const PASS_LOCK = "gradiated-nomad-deployments-v1";
@@ -63,15 +75,58 @@ const hostProxyUrl = (instance: Instance): string | null => {
 export const createNomadDeploymentStore = (
   database: ControlDatabase,
 ): NomadDeploymentStore => ({
-  replicas: () =>
-    database
+  replicas: async () => {
+    const rows = await database
       .select({
         id: modelDeployments.id,
         modelId: modelDeployments.modelId,
         release: modelDeployments.release,
       })
       .from(modelDeployments)
-      .where(eq(modelDeployments.status, "available")),
+      .where(eq(modelDeployments.status, "available"));
+
+    return ModelDeploymentRecordSchema.pick({
+      id: true,
+      modelId: true,
+      release: true,
+    })
+      .array()
+      .parse(rows);
+  },
+
+  async verificationReplicas(modelId, deploymentIds) {
+    modelId = ModelDeploymentRecordSchema.shape.modelId.parse(modelId);
+    const ids = ModelDeploymentRecordSchema.shape.id
+      .array()
+      .parse(deploymentIds);
+
+    const rows = await database
+      .select({
+        id: modelDeployments.id,
+        modelId: modelDeployments.modelId,
+        status: modelDeployments.status,
+        release: modelDeployments.release,
+      })
+      .from(modelDeployments)
+      .where(
+        and(
+          eq(modelDeployments.modelId, modelId),
+          or(
+            ids.length ? inArray(modelDeployments.id, ids) : undefined,
+            eq(modelDeployments.status, "available"),
+          ),
+        ),
+      );
+
+    return ModelDeploymentRecordSchema.pick({
+      id: true,
+      modelId: true,
+      status: true,
+      release: true,
+    })
+      .array()
+      .parse(rows);
+  },
 
   reconcile: (nomad) =>
     database.transaction(async (tx) => {
@@ -152,7 +207,9 @@ export const createNomadDeploymentStore = (
         }
       }
 
-      for (const row of rows) {
+      for (const value of rows) {
+        const row = ModelDeploymentInsertSchema.parse(value);
+
         await tx
           .insert(modelDeployments)
           .values(row)

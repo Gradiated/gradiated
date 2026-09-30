@@ -175,4 +175,46 @@ describe("model catalog", () => {
     });
     expect(await storedDeployment(input.id)).toBeUndefined();
   });
+  it("rejects invalid properties before writing and corrupt properties on reads", async () => {
+    const input = modelInput();
+    await expect(
+      catalog.upsertModel({
+        ...input,
+        properties: {
+          ...input.properties,
+          description: 123 as unknown as string,
+        },
+      }),
+    ).rejects.toBeInstanceOf(ZodError);
+    expect(await storedModel(input.id)).toBeUndefined();
+
+    const model = await catalog.upsertModel(input);
+    await testDatabase.database
+      .update(models)
+      .set({
+        properties: { ...model.properties, schema_version: 2 as 1 },
+      })
+      .where(eq(models.id, model.id));
+
+    try {
+      await expect(catalog.listModels()).rejects.toBeInstanceOf(ZodError);
+    } finally {
+      await testDatabase.database
+        .update(models)
+        .set({ properties: model.properties })
+        .where(eq(models.id, model.id));
+    }
+  });
+
+  it("rejects invalid deployment release JSON before writing", async () => {
+    const model = await catalog.upsertModel(modelInput());
+    const input = deploymentInput(model.id);
+    await expect(
+      catalog.upsertModelDeployment({
+        ...input,
+        release: { ...input.release, schema_version: 2 as 1 },
+      }),
+    ).rejects.toBeInstanceOf(ZodError);
+    expect(await storedDeployment(input.id)).toBeUndefined();
+  });
 });

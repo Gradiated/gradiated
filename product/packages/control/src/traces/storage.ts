@@ -17,6 +17,7 @@ export interface ContentStore {
   ): Promise<{
     keys: string[];
     prefixes: string[];
+    modifiedAt?: Record<string, string>;
     cursor?: string | undefined;
   }>;
   read(
@@ -54,6 +55,13 @@ export const createContentStore = (bucket: string): ContentStore => {
         ),
         prefixes: (page.CommonPrefixes ?? []).flatMap((row) =>
           row.Prefix ? [row.Prefix] : [],
+        ),
+        modifiedAt: Object.fromEntries(
+          (page.Contents ?? []).flatMap((row) =>
+            row.Key && row.LastModified
+              ? [[row.Key, row.LastModified.toISOString()]]
+              : [],
+          ),
         ),
         cursor: page.NextContinuationToken,
       };

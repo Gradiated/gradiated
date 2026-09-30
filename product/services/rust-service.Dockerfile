@@ -46,7 +46,7 @@ COPY --from=build /app/target/release/gradiated-proxy /usr/local/bin/gradiated-p
 
 ENTRYPOINT ["/usr/local/bin/gradiated-proxy"]
 
-FROM runtime AS collector
+FROM database-client AS collector
 
 COPY --from=build /app/target/release/gradiated-collector /usr/local/bin/gradiated-collector
 

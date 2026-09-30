@@ -1,7 +1,10 @@
 import { vi } from "vitest";
 import type { ContentStore } from "../../src/traces/storage.js";
 
-export const createMemoryContentStore = (objects: Map<string, Buffer>) =>
+export const createMemoryContentStore = (
+  objects: Map<string, Buffer>,
+  modifiedAt = new Date().toISOString(),
+) =>
   ({
     list: vi.fn(async (prefix, options = {}) => {
       const keys = [...objects.keys()]
@@ -25,6 +28,9 @@ export const createMemoryContentStore = (objects: Map<string, Buffer>) =>
       const limit = options.limit ?? 100;
       return {
         keys: keys.slice(start, start + limit),
+        modifiedAt: Object.fromEntries(
+          keys.slice(start, start + limit).map((key) => [key, modifiedAt]),
+        ),
         prefixes: [],
         cursor: keys.length > start + limit ? String(start + limit) : undefined,
       };

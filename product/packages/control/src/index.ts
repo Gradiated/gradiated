@@ -130,3 +130,13 @@ export {
   createAdapterDownloads,
   type AdapterDownloads,
 } from "./training/downloads.js";
+export {
+  TrainingAdmissionError,
+  type TrainingEngine,
+  type TrainingInput,
+} from "./training/types.js";
+export { prepareTraining } from "./training/admission.js";
+export { countTrainingTraces } from "./training/traces.js";
+export { createTrainingRunStore } from "./training/run-store.js";
+export { createTemporalTrainingEngine } from "./training/engine.js";
+export { trainingScheduleId } from "./training/schedules.js";

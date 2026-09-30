@@ -150,7 +150,7 @@ for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
       ).toBeVisible();
       await expect(
         page.getByRole("button", { name: "Re-train", exact: true }),
-      ).toBeDisabled();
+      ).toBeEnabled();
       await page.getByRole("tab", { name: "Settings", exact: true }).click();
       await page
         .getByRole("textbox", { name: "Comparison model" })
@@ -363,4 +363,91 @@ test("the task list does not request per-task histories", async ({ page }) => {
     page.getByRole("link", { name: "task-99", exact: true }),
   ).toBeVisible();
   expect(historyRequests).toBe(0);
+});
+
+test("Train shows admission errors and Cancel uses the selected run", async ({
+  page,
+}) => {
+  const runId = randomUUID();
+  let attempted = false;
+  let started = false;
+  let cancelled = false;
+  const task = {
+    id: randomUUID(),
+    name: "task",
+    base_model_id: "base",
+    comparison_model_id: "comparison",
+    production_version_id: null,
+  };
+  await page.route(apiPathEndsWith("/tasks/task"), (route) =>
+    fulfillJson(route, task),
+  );
+  await page.route(apiPathEndsWith("/tasks/task/versions"), (route) =>
+    fulfillJson(route, { data: [] }),
+  );
+  await page.route(apiPathEndsWith("/training-runs"), (route) => {
+    if (route.request().method() === "POST") {
+      expect(route.request().postDataJSON()).toEqual({ task_id: task.id });
+      if (!attempted) {
+        attempted = true;
+        return fulfillProblem(
+          route,
+          422,
+          "Training needs at least 100 new traces; found 99.",
+        );
+      }
+      started = true;
+      return fulfillJson(route, { id: runId });
+    }
+    expect(new URL(route.request().url()).searchParams.get("task_id")).toBe(
+      task.id,
+    );
+    return fulfillJson(route, {
+      data: started
+        ? [
+            {
+              id: runId,
+              task: "task",
+              trigger: "manual",
+              requested_by: null,
+              stage: cancelled ? "cancelling" : "training",
+              base_model_id: "base",
+              input_cutoff: new Date().toISOString(),
+              dataset: null,
+              evaluation: null,
+              version_id: null,
+              cancel_requested_at: null,
+              created_at: new Date().toISOString(),
+              finished_at: null,
+            },
+          ]
+        : [],
+    });
+  });
+  await page.route(apiPathEndsWith(`/training-runs/${runId}/events`), (route) =>
+    fulfillJson(route, { data: [], next_cursor: null }),
+  );
+  await page.route(
+    apiPathEndsWith(`/training-runs/${runId}`),
+    async (route) => {
+      expect(route.request().method()).toBe("DELETE");
+      cancelled = true;
+      await route.fulfill({ status: 202 });
+    },
+  );
+  await page.goto("/tasks/task");
+  await page.getByRole("button", { name: "Train now", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText(
+    "at least 100 new traces",
+  );
+  await page.getByRole("button", { name: "Train now", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Re-training…", exact: true }),
+  ).toBeDisabled();
+  await page.getByRole("tab", { name: "Training runs", exact: true }).click();
+  await page.getByRole("button", { name: "Cancel run", exact: true }).click();
+  await expect.poll(() => cancelled).toBe(true);
+  await expect(
+    page.getByRole("button", { name: "Cancel run", exact: true }),
+  ).toHaveCount(0);
 });

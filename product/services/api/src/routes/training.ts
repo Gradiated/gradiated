@@ -1,5 +1,7 @@
 import { createRoute, type OpenAPIHono } from "@hono/zod-openapi";
 import {
+  StartTrainingRunResponseSchema,
+  StartTrainingRunSchema,
   PromoteVersionSchema,
   TaskVersionPathSchema,
   AdapterDownloadSchema,
@@ -86,6 +88,36 @@ const listRuns = createRoute({
     ...errors,
   },
 });
+const startRun = createRoute({
+  method: "post",
+  path: `${base}/training-runs`,
+  operationId: "startTrainingRun",
+  tags: ["Training"],
+  request: {
+    params: WorkspacePathSchema,
+    body: {
+      required: true,
+      content: { "application/json": { schema: StartTrainingRunSchema } },
+    },
+  },
+  responses: {
+    ...errors,
+    202: json(StartTrainingRunResponseSchema, "Training accepted."),
+    409: { description: "Already training.", content: problemContent },
+    422: {
+      description: "Training prerequisites are not met.",
+      content: problemContent,
+    },
+  },
+});
+const cancelRun = createRoute({
+  method: "delete",
+  path: `${base}/training-runs/{run_id}`,
+  operationId: "cancelTrainingRun",
+  tags: ["Training"],
+  request: { params: TrainingRunPathSchema },
+  responses: { 202: { description: "Cancellation requested." }, ...errors },
+});
 const getRun = createRoute({
   method: "get",
   path: `${base}/training-runs/{run_id}`,
@@ -154,6 +186,7 @@ const taskResponse = (task: TaskRecord): Task => ({
   base_model_id: task.baseModelId,
   comparison_model_id: task.comparisonModelId,
   production_version_id: task.productionVersionId,
+  training_schedule: task.trainingSchedule,
 });
 
 const runResponse = (run: TrainingRunRecord): TrainingRun => ({
@@ -191,6 +224,26 @@ export const registerTrainingRoutes = (
   app: OpenAPIHono<ApiEnvironment>,
   training: TrainingService,
 ) => {
+  app.openapi(startRun, async (c) => {
+    const user = await requireUser(c);
+    const p = c.req.valid("param");
+
+    return c.json(
+      await training.startRun(
+        user.id,
+        p.workspace_id,
+        c.req.valid("json").task_id,
+      ),
+      202,
+    );
+  });
+  app.openapi(cancelRun, async (c) => {
+    const user = await requireUser(c);
+    const p = c.req.valid("param");
+    await training.cancelRun(user.id, p.workspace_id, p.run_id);
+
+    return c.body(null, 202);
+  });
   app.openapi(listTasks, async (c) => {
     const user = await requireUser(c);
     const { workspace_id } = c.req.valid("param");

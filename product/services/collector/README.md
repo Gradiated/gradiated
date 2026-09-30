@@ -50,10 +50,33 @@ v1/ws=<workspace>/task=<task>/dt=<YYYY-MM-DD>/hr=<HH>/<replica>-<batch>.manifest
 `zstd -d` on a batch gives JSON Lines. Each manifest row has the byte `offset`
 and `length` of its frame, so one generation can be read with a range request.
 
+## Task registration
+
+With `DATABASE_URL` configured, intake queues one registration per workspace and
+task name on local disk. A background worker inserts tasks idempotently and uses
+PostgreSQL's default training cron. Conflicts preserve the existing task ID,
+models and schedule. A cache of up to 10,000 recently seen registrations expires
+after one hour to avoid writes on every trace.
+
+PostgreSQL availability does not affect intake, readiness or S3 uploads. Failed
+registrations retry every minute; the local queue survives process restarts.
+Recovered trace batches also enqueue their tasks before being deleted. The queue
+shares the collector spool's local-volume lifetime: losing that volume can lose
+pending registrations as well as captured traces. Empty and dot-segment names
+are not registered. Historical S3-only tasks are not automatically backfilled.
+
+Production currently uses the database-only worker Secret and its existing login.
+Remote PostgreSQL connections require verified TLS with `DATABASE_CA_BUNDLE_PATH`.
+Without `DATABASE_URL`, standalone capture still works but registers no tasks.
+Metrics expose `gradiated_collector_tasks_registered_total` and
+`gradiated_collector_task_registration_failures_total`.
+
 ## Configuration
 
 | Variable                            | Default        | Purpose                                                                       |
 | ----------------------------------- | -------------- | ----------------------------------------------------------------------------- |
+| `DATABASE_URL`                      | none           | PostgreSQL task registration; set in local and production deployments         |
+| `DATABASE_CA_BUNDLE_PATH`           | none           | RDS CA bundle for a remote PostgreSQL connection                              |
 | `COLLECTOR_DATA_DIR`                | required       | Directory for batch files                                                     |
 | `COLLECTOR_BUCKET`                  | none           | S3 bucket; region and credentials come from the AWS environment               |
 | `COLLECTOR_LOCAL_STORE_DIR`         | none           | Local directory instead of S3, for development                                |

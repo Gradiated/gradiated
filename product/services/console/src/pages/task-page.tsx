@@ -1,6 +1,3 @@
-import { Button } from "@/components/ui/button";
-import { useTaskHistory } from "@/hooks/use-training";
-import { isTerminalStage, type TaskRow } from "@/store/fine-tuning-types";
 import { Link, useParams } from "@tanstack/react-router";
 import { ArrowLeft, RotateCw } from "lucide-react";
 import { useState } from "react";
@@ -17,7 +14,13 @@ import {
 import { TabsContent } from "@/components/ui/tabs";
 import { ConsolePage } from "@/pages/console-page";
 import { OptionTabs, type Option } from "@/pages/option-select";
-import { useTask } from "@/hooks/use-training";
+import {
+  useTask,
+  useTaskHistory,
+  useTrainingMutation,
+} from "@/hooks/use-training";
+import { isTerminalStage, type TaskRow } from "@/store/fine-tuning-types";
+import { Button } from "@/components/ui/button";
 import { QueryState } from "@/components/fine-tuning/query-state";
 import { useProductContext } from "@/hooks/use-product-context";
 
@@ -117,15 +120,43 @@ const TaskPageBody = () => {
 
 const TrainButton = ({ task }: { task: TaskRow }) => {
   const history = useTaskHistory(task);
+  const { start, canEdit } = useTrainingMutation(task.name);
+  const [acceptedId, setAcceptedId] = useState<string | null>(null);
   const runs = history.data?.runs ?? [];
   const training = runs.some((run) => !isTerminalStage(run.stage));
+  const starting =
+    acceptedId !== null && !runs.some((run) => run.id === acceptedId);
+
   return (
-    <Button
-      disabled
-      variant={history.data?.versions.length ? "outline" : "default"}
-    >
-      <RotateCw className={`size-4 ${training ? "animate-spin" : ""}`} />
-      {training ? "Re-training…" : runs.length ? "Re-train" : "Train now"}
-    </Button>
+    <div className="space-y-2 text-right">
+      <Button
+        variant={history.data?.versions.length ? "outline" : "default"}
+        disabled={
+          !canEdit ||
+          history.isPending ||
+          Boolean(history.error) ||
+          start.isPending ||
+          starting ||
+          training
+        }
+        onClick={() =>
+          start.mutate(task.id, { onSuccess: ({ id }) => setAcceptedId(id) })
+        }
+      >
+        <RotateCw className={`size-4 ${training ? "animate-spin" : ""}`} />
+        {start.isPending || starting
+          ? "Starting…"
+          : training
+            ? "Re-training…"
+            : runs.length
+              ? "Re-train"
+              : "Train now"}
+      </Button>
+      {start.error ? (
+        <p role="alert" className="max-w-md text-sm text-destructive">
+          {start.error.message}
+        </p>
+      ) : null}
+    </div>
   );
 };

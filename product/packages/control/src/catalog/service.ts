@@ -1,27 +1,13 @@
-import { getTableColumns, ne } from "drizzle-orm";
-
-import {
-  GatewayModelDeploymentSchema,
-  ModelPropertiesInputSchema,
-  type ModelDeploymentRelease,
-  type ModelPropertiesInput,
+import type {
+  ModelDeploymentRelease,
+  ModelPropertiesInput,
 } from "@gradiated/contracts";
-
 import type { ControlDatabase } from "../db/client.js";
-import { modelDeployments, models } from "../db/schema/index.js";
-import { requireRow } from "../require-row.js";
+import type { ModelRecord, ModelDeploymentRecord } from "./records.js";
+import { createCatalogStore } from "./store.js";
 
-export type ModelRecord = typeof models.$inferSelect;
-
+export type { ModelRecord, ModelDeploymentRecord } from "./records.js";
 export type CatalogModelInput = Parameters<CatalogService["upsertModel"]>[0];
-
-const { instanceId: _instanceId, ...deploymentColumns } =
-  getTableColumns(modelDeployments);
-
-export type ModelDeploymentRecord = Omit<
-  typeof modelDeployments.$inferSelect,
-  "instanceId"
->;
 
 export interface CatalogService {
   listModels(): Promise<ModelRecord[]>;
@@ -45,68 +31,4 @@ export interface CatalogService {
 
 export const createCatalogService = (
   database: ControlDatabase,
-): CatalogService => ({
-  async listModels() {
-    return database
-      .select()
-      .from(models)
-      .where(ne(models.status, "retired"))
-      .orderBy(models.createdAt, models.id);
-  },
-
-  async upsertModel(input) {
-    const now = new Date();
-    const properties = ModelPropertiesInputSchema.parse(input.properties);
-
-    const rows = await database
-      .insert(models)
-      .values({ ...input, properties, createdAt: now, updatedAt: now })
-      .onConflictDoUpdate({
-        target: models.id,
-        set: {
-          name: input.name,
-          status: input.status,
-          properties,
-          updatedAt: now,
-        },
-      })
-      .returning();
-
-    return requireRow(rows, "The model upsert returned no row.");
-  },
-
-  async upsertModelDeployment(input) {
-    const validated = GatewayModelDeploymentSchema.parse({
-      id: input.id,
-      status: input.status,
-      provider: input.provider,
-      region: input.region,
-      fault_domain: input.faultDomain,
-      service_url: input.serviceUrl,
-      release: input.release,
-    });
-    const now = new Date();
-    const values = {
-      status: validated.status,
-      provider: validated.provider,
-      region: validated.region,
-      faultDomain: validated.fault_domain,
-      serviceUrl: validated.service_url,
-      release: validated.release,
-      updatedAt: now,
-    };
-
-    const rows = await database
-      .insert(modelDeployments)
-      .values({
-        ...values,
-        id: validated.id,
-        modelId: input.modelId,
-        createdAt: now,
-      })
-      .onConflictDoUpdate({ target: modelDeployments.id, set: values })
-      .returning(deploymentColumns);
-
-    return requireRow(rows, "The model deployment upsert returned no row.");
-  },
-});
+): CatalogService => createCatalogStore(database);

@@ -20,11 +20,13 @@ use crate::{
     metrics::Metrics,
     record::GenerationContent,
     spool::{Spool, WriteError},
+    tasks::TaskService,
 };
 
 #[derive(Clone)]
 pub struct AppState {
     pub spool: Arc<Spool>,
+    pub(crate) tasks: Option<Arc<TaskService>>,
     pub token: Arc<str>,
     pub metrics: Metrics,
     pub max_record_bytes: usize,
@@ -144,6 +146,18 @@ fn write(state: &AppState, body: &[u8]) -> Result<StatusCode, WriteError> {
     };
     let frame = batch::compress(body).map_err(|error| WriteError::Io(error.to_string()))?;
     state.spool.append(&key, &frame, content.manifest_bytes())?;
+    if let Some(task_service) = &state.tasks {
+        if task_service
+            .enqueue(
+                content.workspace_id,
+                content.task.as_deref().expect("task has a stream"),
+            )
+            .is_err()
+        {
+            state.metrics.task_registration_failed();
+            tracing::warn!("task registration could not be queued; the uploader will retry");
+        }
+    }
     state.metrics.accepted();
 
     Ok(StatusCode::ACCEPTED)

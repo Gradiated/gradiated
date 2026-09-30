@@ -23,6 +23,16 @@ Read the root [AGENTS.md](../AGENTS.md), [ARCHITECTURE.md](../docs/ARCHITECTURE.
   components. Generated or directly imported shadcn primitives may retain their
   upstream syntax.
 
+## Database boundaries
+
+- In TypeScript, domain stores own database queries, mutations and transactions.
+  Services own authorization and orchestration; they call stores instead of accessing tables.
+- In TypeScript stores, parse inserted records and update patches with their Zod
+  schemas before writing. Parse selected and returned records before returning or using them. Use the
+  parsed values so defaults, transformations and refinements take effect.
+- Reuse contract schemas for JSON columns and shared domain fields. TypeScript
+  types and Drizzle `$type` declarations do not provide runtime validation.
+
 ## Code readability
 
 - Separate logical steps inside functions with one blank line. Apply this to

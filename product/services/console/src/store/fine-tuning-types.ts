@@ -1,3 +1,4 @@
+import { RUN_STAGE_ORDER } from "@gradiated/contracts/training-stages";
 import type { components } from "@/api/schema";
 
 type Schemas = components["schemas"];
@@ -24,23 +25,13 @@ export type VersionView = Schemas["TaskVersion"] & {
 
 export { EVALUATION_JUDGES as EVALUATION_JUDGE_ALLOWLIST } from "@gradiated/contracts/model-catalog";
 
-export const STAGE_ORDER = [
-  "queued",
-  "building_dataset",
-  "awaiting_capacity",
-  "training",
-  "verifying",
-  "publishing",
-  "evaluating",
-  "succeeded",
-] as const;
+export const STAGE_ORDER = [...RUN_STAGE_ORDER, "succeeded"] as const;
 
-export const TERMINAL_STAGES = ["succeeded", "failed", "cancelled"] as const;
-
-export type TerminalStage = (typeof TERMINAL_STAGES)[number];
-
-export const isTerminalStage = (stage: RunStage): stage is TerminalStage =>
-  TERMINAL_STAGES.some((terminal) => terminal === stage);
+export {
+  TERMINAL_RUN_STAGES as TERMINAL_STAGES,
+  isTerminalRunStage as isTerminalStage,
+  type TerminalRunStage as TerminalStage,
+} from "@gradiated/contracts/training-stages";
 
 export const STAGE_LABEL: Record<RunStage, string> = {
   queued: "Queued",

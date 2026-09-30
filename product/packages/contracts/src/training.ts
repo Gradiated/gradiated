@@ -1,3 +1,4 @@
+import { CronExpressionParser } from "cron-parser";
 import { z } from "@hono/zod-openapi";
 
 import {
@@ -8,32 +9,21 @@ import {
 } from "./common.js";
 
 import { EVALUATION_JUDGES } from "./model-catalog.js";
+import { RUN_STAGES, TERMINAL_RUN_STAGES } from "./training-stages.js";
+
+export * from "./training-stages.js";
 
 export const EvaluationJudgeSchema = z
   .enum(EVALUATION_JUDGES)
   .openapi("EvaluationJudge");
 export type EvaluationJudge = z.infer<typeof EvaluationJudgeSchema>;
 
-export const RUN_STAGES = [
-  "queued",
-  "building_dataset",
-  "awaiting_capacity",
-  "training",
-  "verifying",
-  "publishing",
-  "evaluating",
-  "cancelling",
-  "succeeded",
-  "failed",
-  "cancelled",
-] as const;
 export const TRAINING_TRIGGERS = ["automation", "manual"] as const;
 export const TASK_VERSION_STATUSES = ["available", "unavailable"] as const;
 
 export const RunStageSchema = z.enum(RUN_STAGES).openapi("RunStage");
-export type RunStage = z.infer<typeof RunStageSchema>;
 
-const TerminalStageSchema = z.enum(["succeeded", "failed", "cancelled"]);
+const TerminalStageSchema = z.enum(TERMINAL_RUN_STAGES);
 const Sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
 const CountSchema = z.number().int().nonnegative();
 const FractionSchema = z.number().min(0).max(1);
@@ -268,6 +258,35 @@ export const TaskVersionSchema = z
   .openapi("TaskVersion");
 export type TaskVersion = z.infer<typeof TaskVersionSchema>;
 
+export const TaskTrainingScheduleSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(256)
+  .refine((expression) => {
+    const fields = expression.split(/\s+/);
+    const numeric = expression
+      .toUpperCase()
+      .replace(
+        /JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC|SUN|MON|TUE|WED|THU|FRI|SAT/g,
+        "1",
+      );
+    if (fields.length !== 5 || !/^[\d*,/\-\s]+$/.test(numeric)) return false;
+
+    try {
+      CronExpressionParser.parse(expression, { tz: "UTC" });
+      return true;
+    } catch {
+      return false;
+    }
+  }, "Provide a valid five-field cron expression.")
+  .nullable()
+  .describe(
+    "Automatic training cron in UTC (minute, hour, day of month, month, day of week). Supports lists, ranges, steps and month/day names. Day of month and day of week must both match when restricted. Null disables automatic training.",
+  )
+  .openapi("TaskTrainingSchedule");
+export type TaskTrainingSchedule = z.infer<typeof TaskTrainingScheduleSchema>;
+
 export const TaskSchema = z
   .object({
     id: UuidSchema,
@@ -275,6 +294,7 @@ export const TaskSchema = z
     base_model_id: ModelIdSchema.nullable(),
     comparison_model_id: ModelIdSchema.nullable(),
     production_version_id: UuidSchema.nullable(),
+    training_schedule: TaskTrainingScheduleSchema,
   })
   .openapi("Task");
 export type Task = z.infer<typeof TaskSchema>;
@@ -283,6 +303,7 @@ export const UpdateTaskSchema = z
   .strictObject({
     base_model_id: ModelIdSchema,
     comparison_model_id: ModelIdSchema,
+    training_schedule: TaskTrainingScheduleSchema,
   })
   .partial()
   .refine(
@@ -355,3 +376,12 @@ export const AdapterDownloadSchema = z
     ),
   })
   .openapi("AdapterDownload");
+export const StartTrainingRunSchema = z
+  .object({
+    task_id: UuidSchema.describe("Task to train within this workspace."),
+  })
+  .openapi("StartTrainingRun");
+
+export const StartTrainingRunResponseSchema = z
+  .object({ id: UuidSchema })
+  .openapi("StartTrainingRunResponse");

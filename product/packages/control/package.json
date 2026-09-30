@@ -25,6 +25,7 @@
     "@aws-sdk/s3-request-presigner": "3.1135.0",
     "@clickhouse/client": "1.23.1",
     "@gradiated/contracts": "workspace:*",
+    "@gradiated/temporal": "workspace:*",
     "drizzle-orm": "0.45.2",
     "pg": "8.23.0",
     "uuid": "14.0.1",

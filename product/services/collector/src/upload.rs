@@ -17,6 +17,7 @@ use crate::{
     metrics::Metrics,
     record::{GenerationContent, StreamKey},
     spool::Backlog,
+    tasks::TaskService,
 };
 
 const CONCURRENT_UPLOADS: usize = 4;
@@ -55,6 +56,7 @@ pub struct Uploader {
     replica: Arc<str>,
     backlog: Arc<Backlog>,
     metrics: Metrics,
+    tasks: Option<Arc<TaskService>>,
 }
 
 impl Uploader {
@@ -63,12 +65,14 @@ impl Uploader {
         replica: &str,
         backlog: Arc<Backlog>,
         metrics: Metrics,
+        tasks: Option<Arc<TaskService>>,
     ) -> Arc<Self> {
         Arc::new(Self {
             store,
             replica: Arc::from(replica),
             backlog,
             metrics,
+            tasks,
         })
     }
 
@@ -134,6 +138,14 @@ impl Uploader {
         .await
         .expect("manifest building does not panic");
         let manifest = manifest?;
+
+        if let Some(task_service) = &self.tasks {
+            for row in &manifest.generations {
+                if let Some(name) = &row.content.task {
+                    task_service.enqueue(row.content.workspace_id, name)?;
+                }
+            }
+        }
 
         if !manifest.generations.is_empty() {
             let base = object_base(&key, &self.replica, batch_id);

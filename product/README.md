@@ -8,7 +8,7 @@ and the executable API schemas in `services/api`.
 The product side is deliberately small:
 
 - Vite/React/shadcn console;
-- TypeScript/Node API plus one background worker from the same image;
+- TypeScript/Node API, background worker and separate Temporal worker from the shared product image;
 - PostgreSQL for product and financial authority;
 - generated OpenAPI 3.1 contracts and clients;
 - customer-key provider relay through the Rust proxy;
@@ -22,7 +22,8 @@ The customer product still includes users, organizations, workspaces, membership
 Turborepo orchestrates the deployable `services/` and shared `packages/`:
 
 - `services/api`: TypeScript/Hono Management API;
-- `services/worker`: TypeScript background loops;
+- `services/worker`: TypeScript ingestion, settlement and reconciliation loops;
+- `services/temporal-worker`: dedicated Temporal workflows and activities, with SDK metrics and independent deployment;
 - `services/console`: Vite/React/shadcn customer console;
 - `services/gateway`: Rust inference data plane;
 - `services/proxy`: public inference front door and customer-key relay;
@@ -301,3 +302,27 @@ Apply the Terraform transactional-email module and verify `mail.gradiated.com`
 in Resend before deploying the sender change. Sending requests time out after
 10 seconds. Provider errors do not include email bodies, codes, or API keys.
 Test mode keeps its in-memory transport and does not call Resend.
+
+### Temporal worker
+
+Run `pnpm --filter @gradiated/temporal-worker dev` with `DATABASE_URL`,
+`CONTENTS_BUCKET` and explicit `TRAINING_EXECUTOR=mock` for local orchestration
+tests. The optional mprocs process supplies those local settings. Temporal runs
+in Docker Compose on port 7233; the API also needs `TRAINING_EXECUTOR=mock` to
+accept starts. Production requires the Temporal connection/encryption variables
+documented in the run contract. The production deployment remains at zero
+replicas until a real executor is configured. Its SDK Prometheus endpoint exports
+queue wait (schedule-to-start), execution latency and failure metrics independently
+of the existing worker. The ordinary worker needs no Temporal credentials.
+
+Training schedules are stored on tasks in PostgreSQL (`training_schedule`: a
+five-field UTC cron expression, or null to disable automatic training). Defaults
+are weekly with persisted random minutes, hours and weekdays. Task PATCH requests
+save settings and then create or update `training-task-<task_id>` directly;
+clearing the cron deletes the schedule. Temporal failures are logged and leave
+the saved settings intact. Resubmitting those settings retries the schedule
+update. Scheduled workflows check task, workspace and organization eligibility
+before admission; workspace changes do not require schedule updates.
+The collector registers task rows at
+capture time and retries PostgreSQL outages from a local queue; it never contacts
+Temporal. Task listing reads PostgreSQL without scanning trace storage.

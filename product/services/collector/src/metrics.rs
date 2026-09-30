@@ -23,6 +23,8 @@ pub struct Metrics {
     bytes_uploaded: Counter,
     upload_failures: Counter,
     batches_recovered: Counter,
+    tasks_registered: Counter,
+    task_registration_failures: Counter,
     open_streams: Gauge,
     disk_bytes: Gauge,
     backlog: Arc<Backlog>,
@@ -38,6 +40,8 @@ impl Metrics {
         let bytes_uploaded = Counter::default();
         let upload_failures = Counter::default();
         let batches_recovered = Counter::default();
+        let tasks_registered = Counter::default();
+        let task_registration_failures = Counter::default();
         let open_streams = Gauge::default();
         let disk_bytes = Gauge::default();
         let service_info = Gauge::<i64>::default();
@@ -79,6 +83,16 @@ impl Metrics {
             batches_recovered.clone(),
         );
         registry.register(
+            "tasks_registered",
+            "Task registrations completed, including existing tasks",
+            tasks_registered.clone(),
+        );
+        registry.register(
+            "task_registration_failures",
+            "Task registration attempts deferred for retry",
+            task_registration_failures.clone(),
+        );
+        registry.register(
             "open_streams",
             "Batches currently open",
             open_streams.clone(),
@@ -103,6 +117,8 @@ impl Metrics {
             bytes_uploaded,
             upload_failures,
             batches_recovered,
+            tasks_registered,
+            task_registration_failures,
             open_streams,
             disk_bytes,
             backlog,
@@ -128,6 +144,14 @@ impl Metrics {
 
     pub fn upload_failed(&self) {
         self.upload_failures.inc();
+    }
+
+    pub fn task_registered(&self) {
+        self.tasks_registered.inc();
+    }
+
+    pub fn task_registration_failed(&self) {
+        self.task_registration_failures.inc();
     }
 
     pub fn recovered(&self, batches: usize) {

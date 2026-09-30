@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Validate the pinned UI and OAuth proxy offline, using only fixture credentials."""
 import base64
+import argparse
 import json
 import os
 from pathlib import Path
@@ -17,9 +18,14 @@ CONFIG = ROOT / 'infra/environments/prod/us-east-1/kubernetes/workloads/temporal
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--ui-image', help='Locally built Cloud UI image for CI validation')
+    args = parser.parse_args()
     documents = list(yaml.safe_load_all((CONFIG / 'workload.yaml').read_text()))
     deployment = next(d for d in documents if d['kind'] == 'Deployment')
     images = {c['name']: c['image'] for c in deployment['spec']['template']['spec']['containers']}
+    if args.ui_image:
+        images['ui'] = args.ui_image
     host = os.environ.get('DOCKER_HOST') or subprocess.check_output(
         ['docker', 'context', 'inspect', '--format', '{{.Endpoints.docker.Host}}'], text=True).strip()
     if not host.startswith('unix://'):

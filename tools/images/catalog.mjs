@@ -1,5 +1,11 @@
 // Paths must include every tracked file that can enter the Docker build context.
 export const catalog = {
+  "temporal-ui": {
+    context: "infra/images/temporal-ui",
+    repository: "gradiated/prod/product",
+    target: "",
+    paths: ["infra/images/temporal-ui/"],
+  },
   product: {
     context: "product",
     repository: "gradiated/prod/product",

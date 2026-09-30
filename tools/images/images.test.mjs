@@ -72,6 +72,19 @@ test("unqualified GLM image and unknown image fail explicitly", () => {
   assert.throws(() => fingerprint("typo", []), /Unknown image/);
 });
 
+test("Cloud UI reuses the product repository with independent build inputs", () => {
+  assert.equal(catalog["temporal-ui"].repository, catalog.product.repository);
+  const inputs = [entry("infra/images/temporal-ui/Dockerfile")];
+  assert.equal(
+    fingerprint("temporal-ui", inputs),
+    fingerprint("temporal-ui", [...inputs, entry("product/services/api/src/server.ts")]),
+  );
+  assert.notEqual(
+    fingerprint("temporal-ui", inputs),
+    fingerprint("temporal-ui", [...inputs, entry("infra/images/temporal-ui/configure-cloud.cjs")]),
+  );
+});
+
 test("plans all enabled images against the actual repository tree", () => {
   const revision = execFileSync("git", ["rev-parse", "HEAD"], {
     encoding: "utf8",

@@ -2,8 +2,8 @@ import { z } from "zod";
 import type { NomadRequest } from "@gradiated/nomad-pki";
 
 const allocation = z.object({
-  ID: z.uuid(),
-  NodeID: z.uuid(),
+  ID: z.guid(),
+  NodeID: z.guid(),
   ClientStatus: z.string(),
 });
 export type TrainingHost = { allocationId: string; jobId: string; url: string };
@@ -24,7 +24,7 @@ export const trainingHostJob = (
   z.uuid().parse(runId);
   z.number().int().min(1).parse(ordinal);
   z.array(
-    z.object({ nodeId: z.uuid(), podId: z.string().regex(/^[a-z0-9]+$/) }),
+    z.object({ nodeId: z.guid(), podId: z.string().regex(/^[a-z0-9]+$/) }),
   )
     .min(1)
     .max(4)

@@ -6,8 +6,9 @@ import {
 } from "../src/training/nomad-host.js";
 
 const runId = randomUUID();
-const nodeId = randomUUID();
-const allocationId = randomUUID();
+// Nomad uses random 128-bit IDs without RFC UUID version or variant bits.
+const nodeId = "b5daa9aa-e0c4-ffc6-0da1-a8f7c5fe3845";
+const allocationId = "c82fdc17-e7c1-92a0-3a8b-21565de83dd1";
 const config = {
   bundleUrl: `s3::https://test.s3.us-east-1.amazonaws.com/bundles/sha256/${"a".repeat(64)}.tar.gz`,
   bundleSha256: "a".repeat(64),
@@ -92,6 +93,27 @@ it("returns pending capacity without occupying an activity slot", async () => {
   });
   expect(await hosts.allocate(runId, 1)).toBeNull();
   expect(request).toHaveBeenCalledTimes(2);
+});
+
+it("allocates a host with Nomad IDs outside RFC UUID versions and variants", async () => {
+  const request = vi.fn(async (path: string): Promise<unknown> =>
+    path.endsWith("allocations?all=true")
+      ? [{ ID: allocationId, NodeID: nodeId, ClientStatus: "running" }]
+      : {},
+  );
+  const hosts = createTrainingHosts({
+    request,
+    nodes: async () => [{ nodeId, podId: "pod1" }],
+    config,
+    token: "test",
+    fetch: async () => Response.json({ renewed: true }),
+  });
+
+  expect(await hosts.allocate(runId, 1)).toEqual({
+    allocationId,
+    jobId: `training-${runId}-1`,
+    url: `https://pod1-8888.proxy.runpod.net/alloc/${allocationId}`,
+  });
 });
 
 it.each(["running", "lost"])(

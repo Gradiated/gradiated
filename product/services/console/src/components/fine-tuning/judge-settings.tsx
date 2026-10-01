@@ -2,10 +2,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateWorkspace } from "@/api/queries";
 import { useProductContext } from "@/hooks/use-product-context";
 import { queryKeys } from "@/lib/query-keys";
-import {
-  EVALUATION_JUDGE_ALLOWLIST,
-  type EvaluationJudge,
-} from "@/store/fine-tuning-types";
+import { JUDGE_MODELS } from "@gradiated/contracts/model-catalog";
+import type { EvaluationJudge } from "@/store/fine-tuning-types";
 import { SettingRow } from "./settings-card";
 
 export const JudgeSettings = () => {
@@ -42,7 +40,7 @@ export const JudgeSettings = () => {
             save.mutate(event.target.value as EvaluationJudge)
           }
         >
-          {EVALUATION_JUDGE_ALLOWLIST.map((judge) => (
+          {JUDGE_MODELS.map(({ id: judge }) => (
             <option key={judge} value={judge}>
               {judge}
             </option>

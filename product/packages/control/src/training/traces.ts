@@ -23,20 +23,18 @@ const prefixes = async (store: ContentStore, prefix: string) => {
   return values.sort().reverse();
 };
 
-export const countTrainingTraces = async (
+export const trainingTraceRows = async function* (
   store: ContentStore,
   input: {
     workspaceId: string;
     task: string;
     since: Date | null;
     cutoff: Date;
-    threshold: number;
   },
-) => {
+) {
   const prefix = `${workspacePrefix(input.workspaceId)}task=${traceTaskKey(input.task)}/`;
   const retentionFloor = input.cutoff.getTime() - 180 * 86_400_000;
   const floor = input.since?.getTime() ?? 0;
-  const seen = new Set<string>();
   const dates = await prefixes(store, prefix);
 
   for (const date of dates) {
@@ -75,14 +73,23 @@ export const countTrainingTraces = async (
               !isRetained(row, input.cutoff.getTime())
             )
               continue;
-            seen.add(row.trace_id ?? row.generation_id);
-            if (seen.size >= input.threshold) return seen.size;
+            yield { key, row };
           }
         }
         cursor = page.cursor;
       } while (cursor);
     }
   }
+};
 
+export const countTrainingTraces = async (
+  store: ContentStore,
+  input: Parameters<typeof trainingTraceRows>[1] & { threshold: number },
+) => {
+  const seen = new Set<string>();
+  for await (const { row } of trainingTraceRows(store, input)) {
+    seen.add(row.trace_id ?? row.generation_id);
+    if (seen.size >= input.threshold) break;
+  }
   return seen.size;
 };

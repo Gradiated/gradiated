@@ -59,11 +59,11 @@ for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
         ],
       );
       await pool.query(
-        "INSERT INTO training_run_events (run_id, at, source, attempt, payload) VALUES ($1, now(), 'control_plane', 1, $2)",
+        "INSERT INTO training_run_events (run_id, at, source, attempt, payload) VALUES ($1, now(), 'worker', 1, $2)",
         [runId, JSON.stringify({ type: "stage_entered", stage: "queued" })],
       );
       await pool.query(
-        "INSERT INTO training_run_events (run_id, at, source, attempt, payload) SELECT $1, now(), 'control_plane', 1, jsonb_build_object('type', 'note', 'level', 'info', 'message', 'event-' || n) FROM generate_series(1, 1001) n",
+        "INSERT INTO training_run_events (run_id, at, source, attempt, payload) SELECT $1, now(), 'worker', 1, jsonb_build_object('type', 'note', 'level', 'info', 'message', 'event-' || n) FROM generate_series(1, 1001) n",
         [runId],
       );
 

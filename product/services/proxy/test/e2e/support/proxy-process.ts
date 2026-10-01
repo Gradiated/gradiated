@@ -156,10 +156,12 @@ export class ProxyProcess {
   async catalogRefreshedAfter(since: number): Promise<void> {
     await eventually(
       async () => {
+        const requestedAt = Date.now();
         const age = (await this.metrics()).get(
           "gradiated_proxy_catalog_age_seconds",
         );
-        return age !== undefined && Date.now() - age * 1000 > since;
+        // Response latency must not make an old snapshot appear fresh.
+        return age !== undefined && requestedAt - age * 1000 > since;
       },
       CATALOG_REFRESH_SECONDS * 1000 + 5000,
       "the hosted catalog did not refresh",

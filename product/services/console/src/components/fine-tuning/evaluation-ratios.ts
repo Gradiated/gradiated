@@ -4,6 +4,8 @@ import type { EvaluationSummary } from "@/store/fine-tuning-types";
 const REQUESTS_PER_COST_UNIT = 1_000;
 
 export const costAdvantage = (summary: EvaluationSummary): Ratio => {
+  if (!summary.cost_per_request_nano_usd)
+    return formatRatio(NaN, "cheaper", "more expensive");
   const { comparison, fine_tuned } = summary.cost_per_request_nano_usd;
 
   return formatRatio(comparison / fine_tuned, "cheaper", "more expensive");
@@ -16,6 +18,7 @@ export const speedAdvantage = (summary: EvaluationSummary): Ratio => {
 };
 
 export const costPer1kRequests = (summary: EvaluationSummary): string => {
+  if (!summary.cost_per_request_nano_usd) return "Not measured";
   const { comparison, fine_tuned } = summary.cost_per_request_nano_usd;
 
   return `${formatNanoUsd(fine_tuned * REQUESTS_PER_COST_UNIT)} vs ${formatNanoUsd(comparison * REQUESTS_PER_COST_UNIT)} per 1k requests`;

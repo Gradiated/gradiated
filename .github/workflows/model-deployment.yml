@@ -10,7 +10,12 @@ on:
       - product/inference/engine/**
       - product/inference/.dockerignore
       - product/inference/nomad/client.hcl
+      - product/inference/nomad/jobs/claim-gpus.sh
       - product/inference/bundles/**
+      - product/inference/training/**
+      - product/packages/autotrain
+      - product/packages/autotrain/**
+      - product/packages/contracts/src/training-recipe.json
       - product/inference/runtimes/kev/adapter.py
       - product/inference/runtimes/glm/**
       - product/inference/runtime-launcher/**
@@ -58,6 +63,17 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      - name: Read pinned autotrain revision
+        id: autotrain
+        run: echo "revision=$(git rev-parse HEAD:product/packages/autotrain)" >> "$GITHUB_OUTPUT"
+      - name: Check out private training library
+        uses: actions/checkout@v7
+        with:
+          repository: Gradiated/autotrain
+          ref: ${{ steps.autotrain.outputs.revision }}
+          path: product/packages/autotrain
+          ssh-key: ${{ secrets.AUTOTRAIN_DEPLOY_KEY }}
+          persist-credentials: false
       - id: verification
         if: github.event_name == 'pull_request'
         env:
@@ -106,6 +122,17 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      - name: Read pinned autotrain revision
+        id: autotrain
+        run: echo "revision=$(git rev-parse HEAD:product/packages/autotrain)" >> "$GITHUB_OUTPUT"
+      - name: Check out private training library
+        uses: actions/checkout@v7
+        with:
+          repository: Gradiated/autotrain
+          ref: ${{ steps.autotrain.outputs.revision }}
+          path: product/packages/autotrain
+          ssh-key: ${{ secrets.AUTOTRAIN_DEPLOY_KEY }}
+          persist-credentials: false
       - name: Wait for the source infrastructure prerequisite
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -126,8 +153,8 @@ jobs:
         uses: depot/build-push-action@v1
         with:
           project: ${{ vars.DEPOT_PROJECT_ID }}
-          context: product/inference
-          file: product/inference/bundles/${{ matrix.bundle }}/Dockerfile
+          context: ${{ matrix.bundle == 'training' && 'product' || 'product/inference' }}
+          file: ${{ matrix.bundle == 'training' && 'product/inference/training/Dockerfile' || format('product/inference/bundles/{0}/Dockerfile', matrix.bundle) }}
           platforms: linux/amd64
           build-contexts: runtime-base=docker-image://${{ env.BASE_IMAGE }}
           target: artifact

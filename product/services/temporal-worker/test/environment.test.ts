@@ -11,6 +11,14 @@ describe("Temporal worker configuration", () => {
   it("starts without ingestion, ClickHouse or Valkey configuration", () => {
     expect(parseTemporalWorkerEnvironment(environment).PORT).toBe(3005);
   });
+  it("accepts the real executor without ingestion configuration", () => {
+    expect(
+      parseTemporalWorkerEnvironment({
+        ...environment,
+        TRAINING_EXECUTOR: "qwen-sft",
+      }).TRAINING_EXECUTOR,
+    ).toBe("qwen-sft");
+  });
   it("requires an explicitly enabled executor", () => {
     expect(() =>
       parseTemporalWorkerEnvironment({

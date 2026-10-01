@@ -764,8 +764,11 @@ retries the schedule update. Workspace and organization eligibility is checked
 when the scheduled workflow runs.
 
 `training_runs` belong to a task and record the trigger, requester, base model,
-input cutoff, stage, dataset summary and evaluation summary. A partial unique
-index permits only one unfinished run per task. Training reads reject archived
+input cutoff, stage, dataset summary and evaluation summary. The internal
+`workflow_id` records the exact Temporal execution identity for cancellation;
+older records use the per-task workflow ID fallback. A partial unique index
+permits only one unfinished run per task and arbitrates concurrent manual and
+scheduled admission. Training reads reject archived
 workspaces immediately, before reading traces or tasks.
 
 `training_run_events` belong to a run and have monotonically increasing IDs for

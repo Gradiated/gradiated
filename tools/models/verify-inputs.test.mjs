@@ -50,3 +50,7 @@ test("every bundle has a verification target", () => {
   for (const bundle of every)
     assert.match(build, new RegExp(`target "verify-${bundle}"`), bundle);
 });
+
+test("a pinned autotrain package change verifies the training bundle", () => {
+  assert.deepEqual(bundlesToVerify(["product/packages/autotrain"]), ["training"]);
+});

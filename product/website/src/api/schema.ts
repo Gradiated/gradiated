@@ -1026,7 +1026,7 @@ export interface components {
       cost_per_request_nano_usd: {
         fine_tuned: number;
         comparison: number;
-      };
+      } | null;
       output_tokens_per_second: {
         fine_tuned: number;
         comparison: number;

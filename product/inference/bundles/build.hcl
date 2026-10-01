@@ -32,3 +32,9 @@ target "verify-glm-5-3-flash" {
   inherits = ["bundle"]
   dockerfile = "bundles/glm-5-3-flash/Dockerfile"
 }
+
+target "verify-training" {
+  inherits   = ["bundle"]
+  context    = "product"
+  dockerfile = "inference/training/Dockerfile"
+}

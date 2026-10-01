@@ -96,12 +96,10 @@ impl IdentityCache {
         match self.load(digest).await {
             Ok(Some(record)) => {
                 self.metrics.record_identity(IdentityResult::Loaded);
-                self.store(digest, record.clone());
                 evaluate(record, now)
             }
             Ok(None) => {
                 self.metrics.record_identity(IdentityResult::NotFound);
-                locked(&self.entries).remove(&digest);
                 Err(Denial::InvalidApiKey)
             }
             Err(DirectoryUnavailable) => {
@@ -124,33 +122,47 @@ impl IdentityCache {
     }
 
     async fn load(&self, digest: Digest) -> Result<Option<IdentityRecord>, DirectoryUnavailable> {
-        let load = locked(&self.loads)
-            .entry(digest)
-            .or_insert_with(|| {
-                let directory = self.directory.clone();
-                let permits = self.load_permits.clone();
-                let metrics = self.metrics.clone();
-                let loads = self.loads.clone();
+        let load = {
+            let mut loads = locked(&self.loads);
+            if let Some(record) = self.cached(&digest, self.settings.fresh_for) {
+                return Ok(Some(record));
+            }
 
-                // Spawned so an abandoned load still finishes and releases its permit.
-                let task = tokio::spawn(async move {
-                    let result = match permits.try_acquire_owned() {
-                        Ok(_permit) => {
-                            metrics.record_identity_query();
-                            directory.identity(digest).await
+            loads
+                .entry(digest)
+                .or_insert_with(|| {
+                    let directory = self.directory.clone();
+                    let permits = self.load_permits.clone();
+                    let metrics = self.metrics.clone();
+                    let cache = self.clone();
+
+                    // Spawned so an abandoned load still finishes and releases its permit.
+                    let task = tokio::spawn(async move {
+                        let result = match permits.try_acquire_owned() {
+                            Ok(_permit) => {
+                                metrics.record_identity_query();
+                                directory.identity(digest).await
+                            }
+                            Err(_) => Err(DirectoryUnavailable),
+                        };
+
+                        match &result {
+                            Ok(Some(record)) => cache.store(digest, record.clone()),
+                            Ok(None) => {
+                                locked(&cache.entries).remove(&digest);
+                            }
+                            Err(_) => {}
                         }
-                        Err(_) => Err(DirectoryUnavailable),
-                    };
+                        locked(&cache.loads).remove(&digest);
+                        result
+                    });
 
-                    locked(&loads).remove(&digest);
-                    result
-                });
-
-                async move { task.await.unwrap_or(Err(DirectoryUnavailable)) }
-                    .boxed()
-                    .shared()
-            })
-            .clone();
+                    async move { task.await.unwrap_or(Err(DirectoryUnavailable)) }
+                        .boxed()
+                        .shared()
+                })
+                .clone()
+        };
 
         load.await
     }
@@ -310,6 +322,26 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn a_request_that_missed_before_a_completed_load_reuses_its_result() {
+        let directory = with_record(record());
+        let cache = cache(
+            &directory,
+            settings(Duration::from_secs(60), Duration::from_secs(60)),
+        );
+        let mut headers = HeaderMap::new();
+        headers.insert("x-gradiated-api-key", "grad_a".parse().unwrap());
+        let credentials = credentials::extract(&headers).unwrap();
+        let digest = credentials.api_key.as_ref().unwrap().digest();
+
+        assert!(cache.cached(&digest, cache.settings.fresh_for).is_none());
+        assert!(authorize(&cache, "grad_a").await.is_ok());
+
+        // This request missed the cache before the other request's load completed.
+        assert!(cache.load(digest).await.unwrap().is_some());
+        assert_eq!(directory.queries.load(Ordering::SeqCst), 1);
+    }
+
+    #[tokio::test]
     async fn an_abandoned_load_still_releases_its_permit() {
         let mut slow = TestDirectory {
             delay: Some(Duration::from_millis(200)),
@@ -329,6 +361,8 @@ mod tests {
         abandoned.abort();
 
         tokio::time::sleep(Duration::from_millis(300)).await;
+        assert!(authorize(&cache, "grad_abandoned").await.is_ok());
+        assert_eq!(directory.queries.load(Ordering::SeqCst), 1);
         assert!(authorize(&cache, "grad_next").await.is_ok());
         assert!(locked(&cache.loads).is_empty());
     }

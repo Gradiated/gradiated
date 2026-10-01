@@ -21,7 +21,11 @@ export type TrainingInput = z.infer<typeof TrainingInputSchema>;
 
 export interface TrainingEngine {
   start(input: TrainingInput): Promise<string>;
-  cancel(taskId: string, runId: string): Promise<void>;
+  status(
+    workflowId: string,
+    runId: string,
+  ): Promise<"running" | "succeeded" | "failed" | "cancelled">;
+  cancel(taskId: string, runId: string, workflowId?: string): Promise<void>;
   updateSchedule(taskId: string, cron: string | null): Promise<void>;
 }
 

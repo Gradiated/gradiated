@@ -172,11 +172,13 @@ export const EvaluationPanel = ({
       </p>
 
       <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-foreground tabular-nums">
-        <Comparison
-          name="Cost"
-          ratio={costAdvantage(summary)}
-          numbers={costPer1kRequests(summary)}
-        />
+        {summary.cost_per_request_nano_usd && (
+          <Comparison
+            name="Cost"
+            ratio={costAdvantage(summary)}
+            numbers={costPer1kRequests(summary)}
+          />
+        )}
         <Comparison
           name="Speed"
           ratio={speedAdvantage(summary)}

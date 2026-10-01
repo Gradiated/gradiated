@@ -41,6 +41,11 @@ export const PromoteDialog = ({
             ) : null}
           </DialogDescription>
         </DialogHeader>
+        {version.status !== "available" ? (
+          <p className="text-sm text-muted-foreground">
+            Serving is not enabled for this version.
+          </p>
+        ) : null}
         {promote.error ? (
           <p role="alert" className="text-sm text-destructive">
             {promote.error.message}

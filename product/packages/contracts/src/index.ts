@@ -128,6 +128,9 @@ export {
   EVALUATION_JUDGES,
   DEFAULT_EVALUATION_JUDGE,
   modelsForUseCase,
+  TRAINING_BASE_MODELS,
   type ModelUseCase,
 } from "./model-catalog.js";
 export * from "./training-dataset.js";
+
+export * from "./training-recipe.js";

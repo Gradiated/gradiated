@@ -70,6 +70,7 @@ describe("training routes", () => {
 
   it("serializes task collection run summaries without additional history reads", async () => {
     const latestRun: TrainingRunRecord & { versionName: string } = {
+      workflowId: null,
       id: runId,
       task: task.name,
       taskId: task.id,

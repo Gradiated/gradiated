@@ -21,6 +21,7 @@ export const TaskRecordSchema = z.object({
 });
 
 export const RunRecordSchema = z.object({
+  workflowId: z.string().min(1).nullable().default(null),
   id: TrainingRunSchema.shape.id,
   taskId: UuidSchema,
   trigger: TrainingRunSchema.shape.trigger,
@@ -57,6 +58,7 @@ export const EventRecordSchema = z.object({
 });
 
 export const RunInsertSchema = RunRecordSchema.pick({
+  workflowId: true,
   id: true,
   taskId: true,
   trigger: true,

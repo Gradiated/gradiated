@@ -8,6 +8,7 @@ import {
   createTraceService,
   createTrainingService,
   createAdapterDownloads,
+  ObjectStorage,
   createDeploymentStatusService,
   createOrganizationService,
   createProfilingWriter,
@@ -154,7 +155,11 @@ const app = createApp({
     training: createTrainingService(
       database,
       contents,
-      createAdapterDownloads(environment.TRAINING_ARTIFACTS_BUCKET),
+      createAdapterDownloads(
+        environment.TRAINING_ARTIFACTS_BUCKET
+          ? new ObjectStorage(environment.TRAINING_ARTIFACTS_BUCKET)
+          : undefined,
+      ),
       trainingEngine.engine,
     ),
   },

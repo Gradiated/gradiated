@@ -1,12 +1,16 @@
 import { randomUUID } from "node:crypto";
 import type { RunDatasetSummary, RunEvaluation } from "@gradiated/contracts";
 import { eq } from "drizzle-orm";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   trainingRuns,
   trainingRunEvents,
   taskVersions,
 } from "../src/db/schema/index.js";
+import { createQwenSftModelConfiguration } from "../src/catalog/models/qwen3-0-6b.js";
+import { createCatalogService } from "../src/catalog/service.js";
+import { createTrainingService } from "../src/training/service.js";
+import { createMemoryContentStore } from "./support/content-store.js";
 import { createTrainingRunStore } from "../src/training/run-store.js";
 import { createTrainingStore } from "../src/training/store.js";
 import { createTestDatabase, type TestDatabase } from "./support/postgres.js";
@@ -26,6 +30,60 @@ describe("transactional training run store", () => {
     db = await createTestDatabase();
   });
   afterAll(() => db.dispose());
+
+  it("allows a persisted training-only base while keeping it unavailable for inference", async () => {
+    const own = await seedTrainingTask(db.database);
+    const qwen = createQwenSftModelConfiguration();
+    const model = await createCatalogService(db.database).upsertModel(qwen);
+    expect(model.status).toBe("unavailable");
+    const service = createTrainingService(
+      db.database,
+      createMemoryContentStore(new Map()),
+    );
+    await expect(
+      service.updateTask(own.userId, own.workspaceId, own.task.name, {
+        base_model_id: qwen.id,
+      }),
+    ).resolves.toMatchObject({ baseModelId: qwen.id });
+  });
+
+  it("validates and deduplicates trainer observations while rejecting lifecycle events", async () => {
+    const own = await seedTrainingTask(db.database);
+    const writes = createTrainingRunStore(db.database);
+    const reads = createTrainingStore(db.database);
+    const id = randomUUID();
+    await writes.create(id, own.input);
+    const observation = {
+      type: "trainer_observation" as const,
+      name: "validation",
+      message: "Validation complete",
+      metrics: { validation_loss: 0.5 },
+      details: { method: "sft" },
+    };
+    await Promise.all([
+      writes.appendTrainerEvents(id, 1, [observation]),
+      writes.appendTrainerEvents(id, 1, [observation]),
+    ]);
+    const events = await reads.listRunEvents(id, {});
+    expect(events.filter((event) => event.source === "trainer")).toMatchObject([
+      { attempt: 1, payload: observation },
+    ]);
+    await expect(
+      writes.appendTrainerEvents(id, 1, [
+        { type: "stage_entered", stage: "succeeded" },
+      ]),
+    ).rejects.toThrow("lifecycle");
+    await expect(
+      writes.appendTrainerEvents(id, 0, [observation]),
+    ).rejects.toMatchObject({ name: "ZodError" });
+    await writes.transition(id, "cancelled");
+    await writes.appendTrainerEvents(id, 2, [observation]);
+    expect(
+      (await reads.listRunEvents(id, {})).filter(
+        (event) => event.source === "trainer",
+      ),
+    ).toHaveLength(1);
+  });
 
   it("creates one run and one initial event pair under concurrent workflow retries", async () => {
     const own = await seedTrainingTask(db.database);
@@ -51,6 +109,89 @@ describe("transactional training run store", () => {
       },
       { type: "stage_entered", stage: "queued" },
     ]);
+  });
+
+  it("admits only one concurrent manual or scheduled run and retains its workflow identity", async () => {
+    const own = await seedTrainingTask(db.database);
+    const writes = createTrainingRunStore(db.database);
+    const ids = [randomUUID(), randomUUID()];
+    const workflowIds = [
+      `training-${own.input.taskId}`,
+      "scheduled-training-2026-10-01",
+    ];
+    const inputs = [
+      own.input,
+      { ...own.input, trigger: "automation" as const, requestedBy: null },
+    ];
+    const admitted = await Promise.all(
+      ids.map((id, index) =>
+        writes.create(id, inputs[index]!, workflowIds[index]),
+      ),
+    );
+    expect(admitted.filter(Boolean)).toHaveLength(1);
+    const winner = admitted.indexOf(true);
+    const reads = createTrainingStore(db.database);
+    const run = await reads.getRun(own.workspaceId, ids[winner]!);
+    expect(run?.workflowId).toBe(workflowIds[winner]);
+    expect(await writes.create(ids[winner]!, inputs[winner]!)).toBe(true);
+    expect(
+      (await reads.getRun(own.workspaceId, ids[winner]!))?.workflowId,
+    ).toBe(workflowIds[winner]);
+    expect(await reads.listRunEvents(ids[1 - winner]!, {})).toEqual([]);
+  });
+
+  it("cancels a scheduled run using its stored execution identity", async () => {
+    const own = await seedTrainingTask(db.database);
+    const id = randomUUID();
+    const workflowId = "scheduled-training-2026-10-01";
+    await createTrainingRunStore(db.database).create(id, own.input, workflowId);
+    let cancelled: unknown;
+    const service = createTrainingService(
+      db.database,
+      createMemoryContentStore(new Map()),
+      undefined,
+      {
+        start: async () => id,
+        status: async () => "running" as const,
+        updateSchedule: async () => {},
+        cancel: async (...args) => {
+          cancelled = args;
+        },
+      },
+    );
+    await service.cancelRun(own.userId, own.workspaceId, id);
+    expect(cancelled).toEqual([own.input.taskId, id, workflowId]);
+  });
+
+  it("preserves an active run and readable pages when Temporal status is unavailable", async () => {
+    const own = await seedTrainingTask(db.database);
+    const writes = createTrainingRunStore(db.database);
+    const reads = createTrainingStore(db.database);
+    const id = randomUUID();
+    await writes.create(id, own.input);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const service = createTrainingService(
+      db.database,
+      createMemoryContentStore(new Map()),
+      undefined,
+      {
+        start: async () => id,
+        cancel: async () => {},
+        updateSchedule: async () => {},
+        status: async () => {
+          throw new Error("Temporal unavailable");
+        },
+      },
+    );
+    try {
+      expect(
+        await service.getRun(own.userId, own.workspaceId, id),
+      ).toMatchObject({ stage: "queued", finishedAt: null });
+      expect(await reads.activeRun(own.input.taskId)).toMatchObject({ id });
+      expect(await writes.create(randomUUID(), own.input)).toBe(false);
+    } finally {
+      warn.mockRestore();
+    }
   });
 
   it("records cancellation once under concurrent retries without changing the current stage", async () => {

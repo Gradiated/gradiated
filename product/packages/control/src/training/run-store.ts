@@ -72,16 +72,17 @@ const canTransition = (current: RunStage, next: RunStage) => {
 };
 
 export const createTrainingRunStore = (database: ControlDatabase) => ({
-  async create(runId: string, input: TrainingInput) {
+  async create(runId: string, input: TrainingInput, workflowId?: string) {
     runId = UuidSchema.parse(runId);
     input = TrainingInputSchema.parse(input);
 
-    await database.transaction(async (tx) => {
+    return database.transaction(async (tx) => {
       const [created] = await tx
         .insert(trainingRuns)
         .values(
           RunInsertSchema.parse({
             id: runId,
+            workflowId: workflowId ?? `training-${input.taskId}`,
             taskId: input.taskId,
             trigger: input.trigger,
             requestedBy: input.requestedBy,
@@ -90,9 +91,9 @@ export const createTrainingRunStore = (database: ControlDatabase) => ({
             inputCutoff: new Date(input.inputCutoff),
           }),
         )
-        .onConflictDoNothing({ target: trainingRuns.id })
+        .onConflictDoNothing()
         .returning();
-      if (!created) return;
+      if (!created) return Boolean(await lockRun(tx, runId));
 
       RunRecordSchema.parse(created);
 
@@ -105,6 +106,8 @@ export const createTrainingRunStore = (database: ControlDatabase) => ({
         },
         { type: "stage_entered", stage: "queued" },
       ]);
+
+      return true;
     });
   },
 
@@ -288,6 +291,59 @@ export const createTrainingRunStore = (database: ControlDatabase) => ({
       ]);
 
       return id;
+    });
+  },
+  async appendTrainerEvents(
+    runId: string,
+    attempt: number,
+    payloads: TrainingRunEventPayload[],
+  ) {
+    runId = UuidSchema.parse(runId);
+    attempt = TrainingRunEventSchema.shape.attempt.parse(attempt);
+    payloads = TrainingRunEventPayloadSchema.array().parse(payloads);
+    if (
+      payloads.some(
+        (payload) =>
+          ![
+            "trainer_progress",
+            "trainer_observation",
+            "trainer_checkpoint",
+            "note",
+            "evaluation_progress",
+          ].includes(payload.type),
+      )
+    )
+      throw new Error(
+        "Trainer events cannot author workflow lifecycle events.",
+      );
+
+    await database.transaction(async (tx) => {
+      const run = await lockRun(tx, runId);
+      if (!run || isTerminalRunStage(run.stage) || run.stage === "cancelling")
+        return;
+
+      for (const payload of payloads) {
+        const rows = await tx
+          .select({ id: trainingRunEvents.id })
+          .from(trainingRunEvents)
+          .where(
+            and(
+              eq(trainingRunEvents.runId, runId),
+              eq(trainingRunEvents.attempt, attempt),
+              eq(trainingRunEvents.source, "trainer"),
+              eq(trainingRunEvents.payload, payload),
+            ),
+          )
+          .limit(1);
+        const existing = TrainingRunEventSchema.pick({ id: true })
+          .array()
+          .parse(rows);
+        if (!existing.length)
+          await insertEvents(tx, runId, [payload], {
+            source: "trainer",
+            attempt,
+          });
+      }
     });
   },
 });

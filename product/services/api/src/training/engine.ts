@@ -1,5 +1,6 @@
 import {
   ControlServiceError,
+  validateSftInput,
   TrainingAdmissionError,
   createTemporalTrainingEngine,
   type TrainingEngine,
@@ -18,20 +19,32 @@ export const createTrainingEngine = (environment: NodeJS.ProcessEnv) => {
       );
     });
 
-    return createTemporalTrainingEngine((await connection).client);
+    return createTemporalTrainingEngine(
+      (await connection).client,
+      environment.TRAINING_EXECUTOR === "qwen-sft"
+        ? "trainingRunV2"
+        : "trainingRunV1",
+      environment.TRAINING_EXECUTOR === "qwen-sft"
+        ? "trainingRunV2"
+        : "trainingTaskV1",
+    );
   };
   const engine: TrainingEngine = {
     updateSchedule: async (taskId, cron) =>
       (await get()).updateSchedule(taskId, cron),
     start: async (input) => {
-      if (environment.TRAINING_EXECUTOR !== "mock")
+      if (!["mock", "qwen-sft"].includes(environment.TRAINING_EXECUTOR ?? ""))
         throw new TrainingAdmissionError(
           "training_not_configured",
           "Training execution is not enabled.",
         );
+      if (environment.TRAINING_EXECUTOR === "qwen-sft") validateSftInput(input);
       return (await get()).start(input);
     },
-    cancel: async (taskId, runId) => (await get()).cancel(taskId, runId),
+    status: async (workflowId, runId) =>
+      (await get()).status(workflowId, runId),
+    cancel: async (taskId, runId, workflowId) =>
+      (await get()).cancel(taskId, runId, workflowId),
   };
 
   return {

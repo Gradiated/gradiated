@@ -16,9 +16,11 @@ import {
   createCatalogService,
   createTemporalTrainingEngine,
   createTrainingService,
+  createTrainingRunStore,
   trainingScheduleId,
 } from "@gradiated/control";
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
+import { seedTrainingTask } from "../../../packages/control/test/support/training.js";
 import { ScheduleOverlapPolicy } from "@temporalio/client";
 import { TestWorkflowEnvironment } from "@temporalio/testing";
 import { createDataConverter } from "@gradiated/temporal";
@@ -290,3 +292,101 @@ it("starts and shuts down the worker with encrypted clients and PostgreSQL run s
     await db.dispose();
   }
 }, 60_000);
+
+it("stores the SFT run workflow on a per-task cron schedule", async () => {
+  const taskId = randomUUID();
+  const engine = createTemporalTrainingEngine(
+    environment.client,
+    "trainingRunV2",
+    "trainingRunV2",
+  );
+  await engine.updateSchedule(taskId, "15 3 * * 2");
+  const handle = environment.client.schedule.getHandle(
+    `training-task-${taskId}`,
+  );
+  const schedule = await handle.describe();
+  expect(schedule.action).toMatchObject({
+    type: "startWorkflow",
+    workflowType: "trainingRunV2",
+    args: [taskId],
+  });
+  await engine.updateSchedule(taskId, null);
+  await expect(handle.describe()).rejects.toThrow();
+});
+
+it("cancels the exact scheduled execution using its generated workflow ID", async () => {
+  const taskId = randomUUID();
+  const handle = await environment.client.workflow.start("trainingRunV2", {
+    workflowId: `scheduled-${taskId}-${randomUUID()}`,
+    taskQueue: randomUUID(),
+    args: [taskId],
+  });
+  try {
+    const engine = createTemporalTrainingEngine(environment.client);
+    await engine.cancel(taskId, handle.firstExecutionRunId, handle.workflowId);
+    const history = await handle.fetchHistory();
+    expect(
+      history.events?.some(
+        (event) => event.workflowExecutionCancelRequestedEventAttributes,
+      ),
+    ).toBe(true);
+  } finally {
+    await handle.terminate();
+  }
+});
+
+it.each(["timeout", "termination"] as const)(
+  "reconciles a hard workflow %s outside workflow cleanup and admits the next run",
+  async (ending) => {
+    const db = await createTestDatabase();
+    try {
+      const own = await seedTrainingTask(db.database);
+      const writes = createTrainingRunStore(db.database);
+      const handle = await environment.client.workflow.start("trainingRunV2", {
+        workflowId: `scheduled-${randomUUID()}`,
+        taskQueue: randomUUID(),
+        args: [own.input],
+        workflowExecutionTimeout: "1 second",
+      });
+      await writes.create(
+        handle.firstExecutionRunId,
+        own.input,
+        handle.workflowId,
+      );
+      if (ending === "termination") await handle.terminate();
+      await expect(handle.result()).rejects.toThrow();
+
+      const service = createTrainingService(
+        db.database,
+        createMemoryContentStore(new Map()),
+        undefined,
+        createTemporalTrainingEngine(environment.client),
+      );
+      const [tasks, runs] = await Promise.all([
+        service.listTasks(own.userId, own.workspaceId),
+        service.listRuns(own.userId, own.workspaceId),
+      ]);
+      expect(tasks[0]?.latestRun).toMatchObject({
+        stage: "failed",
+        finishedAt: expect.any(Date),
+      });
+      expect(runs[0]).toMatchObject({
+        stage: "failed",
+        finishedAt: expect.any(Date),
+      });
+      const events = await service.listRunEvents(
+        own.userId,
+        own.workspaceId,
+        handle.firstExecutionRunId,
+        { limit: 100 },
+      );
+      expect(
+        events.filter(({ payload }) => payload.type === "run_finished"),
+      ).toHaveLength(1);
+      expect(await writes.create(randomUUID(), own.input)).toBe(true);
+    } finally {
+      await db.dispose();
+    }
+  },
+  30_000,
+);

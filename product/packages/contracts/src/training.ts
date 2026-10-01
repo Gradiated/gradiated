@@ -62,7 +62,7 @@ export const RunEvaluationSchema = z
     comparison_model_id: ModelIdSchema,
     judge_model_id: EvaluationJudgeSchema,
     vs_comparison: JudgeOutcomeSchema,
-    cost_per_request_nano_usd: PairSchema,
+    cost_per_request_nano_usd: PairSchema.nullable(),
     output_tokens_per_second: PairSchema,
     error_rate: FractionSchema,
   })

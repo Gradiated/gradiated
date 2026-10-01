@@ -1,5 +1,11 @@
 import { createServer } from "node:http";
-import { createContentStore, createControlDatabase } from "@gradiated/control";
+import { Registry } from "prom-client";
+import { TrainingMetrics } from "./training/metrics.js";
+import {
+  createContentStore,
+  createControlDatabase,
+  readTrainingMetrics,
+} from "@gradiated/control";
 import { Runtime } from "@temporalio/worker";
 import { parseTemporalWorkerEnvironment } from "./environment.js";
 import { runTrainingWorker } from "./training/worker.js";
@@ -27,7 +33,30 @@ const shutdown = () => {
 for (const signal of ["SIGINT", "SIGTERM"] as const)
   process.once(signal, shutdown);
 
-const health = createServer((request, response) => {
+const { database, pool } = createControlDatabase(environment.DATABASE_URL, 5);
+pool.on("error", () => {
+  console.error(
+    JSON.stringify({
+      service: "temporal-worker",
+      event: "postgres_connection_failed",
+    }),
+  );
+  process.exitCode = 1;
+  shutdown();
+});
+
+const registry = new Registry();
+const trainingMetrics = new TrainingMetrics(registry, () =>
+  readTrainingMetrics(database),
+);
+
+const health = createServer(async (request, response) => {
+  if (request.url === "/metrics") {
+    void trainingMetrics.collect();
+    response.writeHead(200, { "content-type": registry.contentType });
+    response.end(await registry.metrics());
+    return;
+  }
   if (request.url === "/healthz" || request.url === "/readyz") {
     response.writeHead(request.url === "/healthz" || ready ? 200 : 503);
     response.end();
@@ -40,18 +69,6 @@ health.on("error", () => {
   shutdown();
 });
 health.listen(environment.PORT, "0.0.0.0");
-
-const { database, pool } = createControlDatabase(environment.DATABASE_URL, 5);
-pool.on("error", () => {
-  console.error(
-    JSON.stringify({
-      service: "temporal-worker",
-      event: "postgres_connection_failed",
-    }),
-  );
-  process.exitCode = 1;
-  shutdown();
-});
 
 try {
   await runTrainingWorker({

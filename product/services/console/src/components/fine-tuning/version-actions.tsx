@@ -29,6 +29,11 @@ export const VersionActionButtons = ({
     <Button
       size="sm"
       disabled={version.status !== "available"}
+      title={
+        version.status !== "available"
+          ? "Serving is not enabled for this version."
+          : undefined
+      }
       onClick={() => onAction({ kind: "use", versionId: version.id })}
     >
       Use

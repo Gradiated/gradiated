@@ -2,8 +2,13 @@ import type { ControlDatabase } from "../db/client.js";
 import { createTrainingStore } from "./store.js";
 import { ControlServiceError } from "../errors.js";
 import type { ContentStore } from "../traces/storage.js";
+import { reconcileTrainingRun } from "./engine.js";
 import { countTrainingTraces } from "./traces.js";
-import { TrainingAdmissionError, type TrainingInput } from "./types.js";
+import {
+  TrainingAdmissionError,
+  type TrainingInput,
+  type TrainingEngine,
+} from "./types.js";
 
 export const prepareTraining = async (
   database: ControlDatabase,
@@ -11,6 +16,7 @@ export const prepareTraining = async (
   target: string | { workspaceId: string; name: string },
   trigger: TrainingInput["trigger"],
   requestedBy: string | null,
+  engine?: TrainingEngine,
 ): Promise<TrainingInput> => {
   const records = createTrainingStore(database);
   const row = await records.admissionContext(target);
@@ -23,8 +29,11 @@ export const prepareTraining = async (
 
   const active = await records.activeRun(taskId);
 
-  if (active)
-    throw new TrainingAdmissionError("already_training", "Already training.");
+  if (active) {
+    const reconciled = await reconcileTrainingRun(database, engine, active);
+    if (!reconciled || (await records.activeRun(taskId)))
+      throw new TrainingAdmissionError("already_training", "Already training.");
+  }
 
   if (!task.baseModelId || !task.comparisonModelId)
     throw new TrainingAdmissionError(

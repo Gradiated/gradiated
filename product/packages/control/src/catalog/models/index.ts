@@ -7,3 +7,5 @@ export const catalogModels = [
   createGlm53FlashModelConfiguration(),
   createKev9bModelConfiguration(),
 ];
+
+export { createQwenSftModelConfiguration } from "./qwen3-0-6b.js";

@@ -15,3 +15,10 @@ export {
   type IssuedCertificate,
   type Renewal,
 } from "./renewal.js";
+
+export {
+  createNomadRequest,
+  parseNomadEnvironment,
+  type NomadRequest,
+  type NomadEnvironment,
+} from "./client.js";

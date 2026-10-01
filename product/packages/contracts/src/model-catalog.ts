@@ -1,4 +1,4 @@
-export type ModelUseCase = "judge";
+export type ModelUseCase = "judge" | "training";
 
 type CatalogEntry = {
   id: string;
@@ -6,7 +6,7 @@ type CatalogEntry = {
 };
 
 export const MODEL_CATALOG = [
-  { id: "Qwen/Qwen3-0.6B", supportedUses: ["judge"] },
+  { id: "Qwen/Qwen3-0.6B", supportedUses: ["judge", "training"] },
   { id: "openai/gpt-6-astra", supportedUses: ["judge"] },
   { id: "openai/gpt-6-sol", supportedUses: ["judge"] },
   { id: "openai/gpt-6-luna", supportedUses: ["judge"] },
@@ -29,3 +29,5 @@ export const EVALUATION_JUDGES = JUDGE_MODELS.map((model) => model.id);
 export type EvaluationJudgeId = (typeof EVALUATION_JUDGES)[number];
 export const DEFAULT_EVALUATION_JUDGE =
   "openai/gpt-5.6-sol" satisfies EvaluationJudgeId;
+
+export const TRAINING_BASE_MODELS = modelsForUseCase("training");

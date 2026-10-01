@@ -1,4 +1,8 @@
-import type { UpdateTask, TrainingRunListQuery } from "@gradiated/contracts";
+import {
+  TRAINING_BASE_MODELS,
+  type UpdateTask,
+  type TrainingRunListQuery,
+} from "@gradiated/contracts";
 import {
   requireWorkspaceEditor,
   requireWorkspaceMembership,
@@ -6,11 +10,12 @@ import {
 import type { ControlDatabase } from "../db/client.js";
 import { ControlServiceError } from "../errors.js";
 import type { ContentStore } from "../traces/storage.js";
+import { reconcileTrainingRun } from "./engine.js";
 import { prepareTraining } from "./admission.js";
 import type { AdapterDownloads } from "./downloads.js";
 import { createTrainingRunStore } from "./run-store.js";
 import { createTrainingStore } from "./store.js";
-import type { TrainingEngine } from "./types.js";
+import { TrainingAdmissionError, type TrainingEngine } from "./types.js";
 
 export type {
   TaskRecord,
@@ -51,6 +56,13 @@ export const createTrainingService = (
     const row = await records.getRun(workspaceId, runId);
     if (!row) throw notFound("training run");
 
+    if (await reconcileTrainingRun(database, engine, row)) {
+      const refreshed = await records.getRun(workspaceId, runId);
+      if (!refreshed) throw notFound("training run");
+
+      return refreshed;
+    }
+
     return row;
   };
 
@@ -74,10 +86,16 @@ export const createTrainingService = (
         task.id,
         "manual",
         userId,
+        executor,
       );
 
       const id = await executor.start(input);
-      await createTrainingRunStore(database).create(id, input);
+      const created = await createTrainingRunStore(database).create(id, input);
+      if (!created)
+        throw new TrainingAdmissionError(
+          "already_training",
+          "Already training.",
+        );
 
       return { id };
     },
@@ -87,14 +105,24 @@ export const createTrainingService = (
       const run = await findRun(workspaceId, runId);
       if (run.finishedAt) return;
 
-      await requireEngine().cancel(run.taskId, runId);
+      await requireEngine().cancel(
+        run.taskId,
+        runId,
+        run.workflowId ?? undefined,
+      );
       await createTrainingRunStore(database).requestCancellation(runId, userId);
     },
 
     async listTasks(userId: string, workspaceId: string) {
       await member(userId, workspaceId);
 
-      return records.listTasks(workspaceId);
+      const tasks = await records.listTasks(workspaceId);
+      const changed = await Promise.all(
+        tasks.map(({ latestRun }) =>
+          latestRun ? reconcileTrainingRun(database, engine, latestRun) : false,
+        ),
+      );
+      return changed.some(Boolean) ? records.listTasks(workspaceId) : tasks;
     },
 
     async getTask(userId: string, workspaceId: string, name: string) {
@@ -114,7 +142,10 @@ export const createTrainingService = (
       if (input.base_model_id !== undefined) {
         const model = await records.getModel(input.base_model_id);
         if (!model) throw notFound("base model");
-        if (model.status !== "available")
+        if (
+          model.status !== "available" &&
+          !TRAINING_BASE_MODELS.some((base) => base.id === model.id)
+        )
           throw new ControlServiceError(
             "unavailable",
             "The base model is unavailable.",
@@ -143,7 +174,13 @@ export const createTrainingService = (
       filters: TrainingRunListQuery = {},
     ) {
       await member(userId, workspaceId);
-      return records.listRuns(workspaceId, filters);
+      const runs = await records.listRuns(workspaceId, filters);
+      const changed = await Promise.all(
+        runs.map((run) => reconcileTrainingRun(database, engine, run)),
+      );
+      return changed.some(Boolean)
+        ? records.listRuns(workspaceId, filters)
+        : runs;
     },
 
     async getRun(userId: string, workspaceId: string, runId: string) {

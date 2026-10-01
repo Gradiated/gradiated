@@ -71,8 +71,9 @@ updates per-task schedules after saving task settings. Schedule update failures
 are logged; users can retry by resubmitting settings. Scheduled workflows check
 workspace and organization eligibility before starting training. PostgreSQL owns tasks,
 runs, stage events and versions. S3 owns captured traces and large artifacts.
-The current executor is opt-in (`TRAINING_EXECUTOR=mock`) and publishes only
-unavailable synthetic versions. The [training run contract](TASK_FINE_TUNING_RUN_CONTRACT.md)
+The opt-in `qwen-sft` executor runs a pinned Qwen3-0.6B LoRA recipe on dedicated
+RunPod H100s through Nomad. It retains the mock executor for local tests and old
+histories. Published adapters remain unavailable until serving qualification. The [training run contract](TASK_FINE_TUNING_RUN_CONTRACT.md)
 defines admission, cancellation, retries and workflow compatibility. Temporal
 Cloud receives encrypted payloads and failures, and only internal IDs in workflow
 metadata. GPU hosts never receive Temporal credentials.

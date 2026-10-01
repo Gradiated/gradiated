@@ -27,7 +27,8 @@ const rowSchema = z.object({
     .max(32 * 1024 * 1024),
 });
 
-type Row = z.infer<typeof rowSchema>;
+export type TraceManifestRow = z.infer<typeof rowSchema>;
+type Row = TraceManifestRow;
 const manifestSchema = z.object({
   schema: z.literal("gradiated.generation-content-manifest/1"),
   generations: z.array(rowSchema).max(100_000),
@@ -89,6 +90,16 @@ export const readTraceContent = async (
   );
   if (!row || !isRetained(row, Date.now())) throw contentNotFound();
 
+  return readTraceRecord(store, key, row);
+};
+
+export const readTraceRecord = async (
+  store: ContentStore,
+  key: string,
+  row: Row,
+) => {
+  const generation = row.generation_id;
+  const workspace = row.workspace_id;
   const bytes = await store.read(
     key.replace(/\.manifest\.json$/, ".jsonl.zst"),
     row,

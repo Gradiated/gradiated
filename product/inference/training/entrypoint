@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root="${GRADIATED_RUNTIME_ROOT:?}"
+export HF_HOME=/workspace/gradiated/model-cache
+export CUDA_VISIBLE_DEVICES="${NVIDIA_VISIBLE_DEVICES:?}"
+unset PYTHONPATH
+exec "$root/python/bin/python3" "$root/server.py"

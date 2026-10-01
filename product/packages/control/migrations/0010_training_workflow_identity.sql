@@ -1,0 +1,1 @@
+ALTER TABLE "training_runs" ADD COLUMN "workflow_id" text;

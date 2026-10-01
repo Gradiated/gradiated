@@ -14,3 +14,15 @@ it.each([undefined, "", "unknown"])(
     await training.close();
   },
 );
+
+it("rejects an incompatible Qwen recipe before connecting to Temporal", async () => {
+  const training = createTrainingEngine({ TRAINING_EXECUTOR: "qwen-sft" });
+  await expect(
+    training.engine.start({
+      baseModelId: "other",
+      comparisonModelId: "other",
+      judgeModelId: "openai/gpt-5",
+    } as TrainingInput),
+  ).rejects.toMatchObject({ code: "training_not_configured" });
+  await training.close();
+});

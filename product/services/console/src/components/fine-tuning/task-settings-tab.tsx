@@ -1,3 +1,4 @@
+import { TRAINING_BASE_MODELS } from "@gradiated/contracts/model-catalog";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { modelsQuery } from "@/api/queries";
@@ -65,17 +66,24 @@ export const TaskSettingsTab = ({ task }: { task: TaskRow }) => {
             {task.base_model_id &&
             !models.data?.data.some(
               (model) =>
-                model.id === task.base_model_id && model.status === "available",
+                model.id === task.base_model_id &&
+                (model.status === "available" ||
+                  TRAINING_BASE_MODELS.some((base) => base.id === model.id)),
             ) ? (
               <option value={task.base_model_id} disabled>
                 {task.base_model_id} (unavailable)
               </option>
             ) : null}
             {models.data?.data
-              .filter((model) => model.status === "available")
+              .filter(
+                (model) =>
+                  model.status === "available" ||
+                  TRAINING_BASE_MODELS.some((base) => base.id === model.id),
+              )
               .map((model) => (
                 <option key={model.id} value={model.id}>
                   {model.id}
+                  {model.status === "unavailable" ? " (training only)" : ""}
                 </option>
               ))}
           </select>

@@ -2,7 +2,10 @@ import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { applyCatalog } from "../src/catalog/apply.js";
-import { catalogModels } from "../src/catalog/models/index.js";
+import {
+  catalogModels,
+  createQwenSftModelConfiguration,
+} from "../src/catalog/models/index.js";
 import { createCatalogService } from "../src/catalog/service.js";
 import { models } from "../src/db/schema/index.js";
 import { modelInput } from "./support/fixtures.js";
@@ -24,7 +27,10 @@ describe("catalog apply", () => {
       .select({ id: models.id })
       .from(models);
     expect(stored.map((model) => model.id)).toEqual(
-      expect.arrayContaining(catalogModels.map((model) => model.id)),
+      expect.arrayContaining([
+        ...catalogModels.map((model) => model.id),
+        createQwenSftModelConfiguration().id,
+      ]),
     );
   });
 

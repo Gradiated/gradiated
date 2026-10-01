@@ -90,3 +90,5 @@ export const trainingTaskV1 = async (taskId: string): Promise<void> => {
   }
   await child.result();
 };
+
+export { trainingRunV2 } from "./run-workflow.js";

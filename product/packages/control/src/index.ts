@@ -138,5 +138,31 @@ export {
 export { prepareTraining } from "./training/admission.js";
 export { countTrainingTraces } from "./training/traces.js";
 export { createTrainingRunStore } from "./training/run-store.js";
-export { createTemporalTrainingEngine } from "./training/engine.js";
+export {
+  createTemporalTrainingEngine,
+  reconcileTrainingRun,
+} from "./training/engine.js";
 export { trainingScheduleId } from "./training/schedules.js";
+
+export {
+  buildSftDataset,
+  sha256,
+  type SftExample,
+} from "./training/dataset.js";
+export {
+  createTrainingArtifacts,
+  type TrainingArtifacts,
+  type TrainingArtifact,
+} from "./training/artifacts.js";
+export { trainingNodes } from "./training/hosts.js";
+export { QWEN_SFT_MODEL, validateSftInput } from "./training/recipe.js";
+export {
+  readTrainingMetrics,
+  type TrainingMetric,
+} from "./training/metrics.js";
+
+export {
+  ObjectStorage,
+  type ObjectReadOptions,
+  type ObjectDownloadOptions,
+} from "./storage/object-storage.js";

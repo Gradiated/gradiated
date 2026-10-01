@@ -1616,7 +1616,10 @@
             ]
           },
           "cost_per_request_nano_usd": {
-            "type": "object",
+            "type": [
+              "object",
+              "null"
+            ],
             "properties": {
               "fine_tuned": {
                 "type": "number",

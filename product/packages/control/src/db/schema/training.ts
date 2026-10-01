@@ -76,6 +76,7 @@ export const trainingRuns = pgTable(
     taskId: uuid("task_id")
       .notNull()
       .references(() => tasks.id, { onDelete: "cascade" }),
+    workflowId: text("workflow_id"),
     trigger: text("trigger", { enum: TRAINING_TRIGGERS }).notNull(),
     requestedBy: uuid("requested_by").references(() => users.id, {
       onDelete: "set null",

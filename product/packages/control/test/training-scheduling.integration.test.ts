@@ -19,6 +19,7 @@ describe("task-owned schedule updates", () => {
     const engine = {
       start: vi.fn(),
       cancel: vi.fn(),
+      status: async () => "running" as const,
       updateSchedule: vi.fn().mockResolvedValue(undefined),
     };
     const service = createTrainingService(

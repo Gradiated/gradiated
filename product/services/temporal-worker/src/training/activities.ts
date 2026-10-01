@@ -29,6 +29,7 @@ const withHeartbeat = async <T>(operation: () => Promise<T>): Promise<T> => {
 export const createMockTrainingActivities = (
   database: ControlDatabase,
   contents: ContentStore,
+  allowScheduledRuns = true,
 ) => {
   const store = createTrainingRunStore(database);
   const digest = createHash("sha256")
@@ -36,8 +37,8 @@ export const createMockTrainingActivities = (
     .digest("hex");
 
   return {
-    createRun: (runId: string, input: TrainingInput) =>
-      store.create(runId, input),
+    createRun: (runId: string, input: TrainingInput, workflowId?: string) =>
+      store.create(runId, input, workflowId),
     enterStage: (runId: string, stage: RunStage) =>
       store.transition(runId, stage, Context.current().info.attempt),
     finishRun: (runId: string, stage: "succeeded" | "failed" | "cancelled") =>
@@ -109,8 +110,10 @@ export const createMockTrainingActivities = (
     async releaseHost(_runId: string) {
       Context.current().heartbeat();
     },
-    prepareRun: (taskId: string) =>
-      withHeartbeat(async () => {
+    prepareRun: async (taskId: string) => {
+      if (!allowScheduledRuns) return null;
+
+      return withHeartbeat(async () => {
         try {
           return await prepareTraining(
             database,
@@ -127,7 +130,8 @@ export const createMockTrainingActivities = (
             return null;
           throw error;
         }
-      }),
+      });
+    },
   };
 };
 

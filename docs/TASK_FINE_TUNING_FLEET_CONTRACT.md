@@ -57,7 +57,7 @@ Nomad events wake reconciliation; current node, job and allocation queries estab
 Minimum replicas, GPU requirements, workload eligibility and job priorities are explicit configuration. The initial pilot uses one DeepSeek serving replica. Expansion may configure two
 serving replicas per offered base. They may share a host when the selected GPU packing requires it; report the resulting host-failure exposure. A configured minimum is desired capacity, not proof that resources exist.
 
-If compatible GPUs are unavailable, Nomad leaves allocations pending. Alert on pending allocations, insufficient ready replicas and capacity shortfalls; operators add capacity or change policies. Do not build a custom reserve activation system, training-floor ledger or fair-share allocator. Operators may use static workload constraints where serving capacity needs protection from training.
+If compatible GPUs are unavailable, Nomad leaves allocations pending. Alert on pending allocations, insufficient ready replicas and capacity shortfalls; operators add capacity or change policies. Do not build a custom reserve activation system, training-floor ledger or fair-share allocator. Training and inference use separate operator-assigned node pools with explicit placement constraints. Operators monitor queue age, capacity wait, running jobs and outcomes in Grafana, then manually resize or reassign nodes. There is no automatic borrowing or transfer of nodes between pools. Training jobs are restricted to `TRAINING_POD_IDS`; inference placement must exclude those nodes.
 
 Preemption is disabled at launch. Started training is not interrupted for priority. Pending-job priority does not reclaim GPUs from running workloads, and independent model autoscalers do not promise global fairness. Cross-model redistribution and adapter sharding require a later explicit policy; no custom coordinator is assumed now.
 
@@ -67,7 +67,7 @@ Use Nomad Autoscaler with Prometheus. Each policy defines minimum and maximum re
 
 Policies and thresholds are versioned in Git. No custom worker loop computes accepted counts or reallocates hosts. The autoscaler requests counts; Nomad places feasible allocations. Metrics unavailable or stale must not cause unsafe shrink; test the selected policy and plugin behavior. Monitor requested, allocated and ready counts separately.
 
-Application scaling works with a fixed node pool. Scaling a job does not guarantee that a new host can be placed. Cluster autoscaling and automatic provider provisioning are outside launch scope.
+Application scaling works within the operator-assigned inference pool and never takes nodes from training. Training pool size and node reassignment are manual. Scaling a job does not guarantee that a new host can be placed. Cluster autoscaling and automatic provider provisioning are outside launch scope.
 
 References: [Nomad Autoscaler](https://developer.hashicorp.com/nomad/tools/autoscaling), [scaling policies](https://developer.hashicorp.com/nomad/tools/autoscaling/policy), [placement](https://developer.hashicorp.com/nomad/docs/concepts/scheduling/placement).
 

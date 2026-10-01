@@ -9,6 +9,7 @@ vi.mock("@aws-sdk/client-s3", async (importOriginal) => ({
   },
 }));
 vi.mock("@aws-sdk/s3-request-presigner", () => ({ getSignedUrl: sign }));
+import { ObjectStorage } from "../src/storage/object-storage.js";
 import { createAdapterDownloads } from "../src/training/downloads.js";
 
 const run = "0198ae50-94d8-7d4d-a8be-9f9b44b8c774";
@@ -26,12 +27,9 @@ beforeEach(() => {
   sign.mockResolvedValue("https://storage.example/archive?signature=test");
 });
 it("signs a bounded attachment link for the verified archive", async () => {
-  const result = await createAdapterDownloads("artifacts").sign(
-    uri,
-    run,
-    123,
-    sha,
-  );
+  const result = await createAdapterDownloads(
+    new ObjectStorage("artifacts"),
+  ).sign(uri, run, 123, sha);
   expect(send.mock.calls[0]![0].input).toEqual({
     ChecksumMode: "ENABLED",
     Bucket: "artifacts",
@@ -56,7 +54,12 @@ it.each([
   uri.replace("adapter.tar.gz", "adapter/"),
 ])("rejects an archive outside the configured run: %s", async (candidate) => {
   await expect(
-    createAdapterDownloads("artifacts").sign(candidate, run, 123, sha),
+    createAdapterDownloads(new ObjectStorage("artifacts")).sign(
+      candidate,
+      run,
+      123,
+      sha,
+    ),
   ).rejects.toThrow("unavailable");
   expect(send).not.toHaveBeenCalled();
   expect(sign).not.toHaveBeenCalled();
@@ -64,11 +67,21 @@ it.each([
 it("does not sign missing or truncated objects", async () => {
   send.mockRejectedValueOnce(new Error("NoSuchKey"));
   await expect(
-    createAdapterDownloads("artifacts").sign(uri, run, 123, sha),
+    createAdapterDownloads(new ObjectStorage("artifacts")).sign(
+      uri,
+      run,
+      123,
+      sha,
+    ),
   ).rejects.toThrow("could not be downloaded");
   send.mockResolvedValueOnce({ ContentLength: 12 });
   await expect(
-    createAdapterDownloads("artifacts").sign(uri, run, 123, sha),
+    createAdapterDownloads(new ObjectStorage("artifacts")).sign(
+      uri,
+      run,
+      123,
+      sha,
+    ),
   ).rejects.toThrow("could not be downloaded");
   expect(sign).not.toHaveBeenCalled();
 });
@@ -81,11 +94,21 @@ it("rejects equal-sized replacement bytes and unversioned storage", async () => 
     ChecksumType: "FULL_OBJECT",
   });
   await expect(
-    createAdapterDownloads("artifacts").sign(uri, run, 123, sha),
+    createAdapterDownloads(new ObjectStorage("artifacts")).sign(
+      uri,
+      run,
+      123,
+      sha,
+    ),
   ).rejects.toThrow("could not be downloaded");
   send.mockResolvedValueOnce({ ContentLength: 123 });
   await expect(
-    createAdapterDownloads("artifacts").sign(uri, run, 123, sha),
+    createAdapterDownloads(new ObjectStorage("artifacts")).sign(
+      uri,
+      run,
+      123,
+      sha,
+    ),
   ).rejects.toThrow("could not be downloaded");
   expect(sign).not.toHaveBeenCalled();
 });
@@ -108,7 +131,7 @@ it("hashes archives without an S3 SHA256 and signs the verified version", async 
         }),
     },
   });
-  await createAdapterDownloads("artifacts").sign(
+  await createAdapterDownloads(new ObjectStorage("artifacts")).sign(
     uri,
     run,
     bytes.length,

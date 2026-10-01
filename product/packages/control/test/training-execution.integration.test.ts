@@ -122,6 +122,35 @@ describe("training execution", () => {
     },
   );
 
+  it.each(["manual", "automation"] as const)(
+    "reconciles a closed execution before %s admission",
+    async (trigger) => {
+      const f = await fixture(500);
+      const writes = createTrainingRunStore(db.database);
+      const reads = createTrainingStore(db.database);
+      const oldId = randomUUID();
+      await writes.create(oldId, f.input, "generated-schedule-id");
+      const engine = {
+        start: async () => randomUUID(),
+        cancel: async () => {},
+        updateSchedule: async () => {},
+        status: async (workflowId: string, runId: string) => {
+          expect([workflowId, runId]).toEqual(["generated-schedule-id", oldId]);
+          return "failed" as const;
+        },
+      };
+      await expect(
+        prepareTraining(db.database, f.store, f.taskId, trigger, null, engine),
+      ).resolves.toMatchObject({ taskId: f.taskId, trigger });
+      expect(await reads.activeRun(f.taskId)).toBeUndefined();
+      expect(await reads.getRun(f.workspaceId, oldId)).toMatchObject({
+        stage: "failed",
+        finishedAt: expect.any(Date),
+      });
+      expect(await writes.create(randomUUID(), f.input)).toBe(true);
+    },
+  );
+
   it.each(["failed", "cancelled", "succeeded"] as const)(
     "uses only successful cutoffs after %s",
     async (stage) => {
@@ -399,6 +428,7 @@ describe("training execution", () => {
         started.push(input);
         return runId;
       },
+      status: async () => "running" as const,
       updateSchedule: async () => {},
       cancel: async () => {},
     });
@@ -423,6 +453,7 @@ describe("training execution", () => {
     const cancelled: string[] = [];
     const service = createTrainingService(db.database, f.store, undefined, {
       start: async () => id,
+      status: async () => "running" as const,
       updateSchedule: async () => {},
       cancel: async (taskId, runId) => {
         expect(taskId).toBe(f.taskId);
@@ -472,6 +503,7 @@ describe("training execution", () => {
         await runs.transition(id, "building_dataset");
         return id;
       },
+      status: async () => "running" as const,
       updateSchedule: async () => {},
       cancel: async () => {},
     });
@@ -526,6 +558,7 @@ describe("training execution", () => {
     const cancelled: string[] = [];
     const service = createTrainingService(db.database, f.store, undefined, {
       start: async () => id,
+      status: async () => "running" as const,
       updateSchedule: async () => {},
       cancel: async (_taskId, runId) => {
         cancelled.push(runId);

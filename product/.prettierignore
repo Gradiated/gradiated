@@ -7,3 +7,4 @@ services/api/generated/openapi.json
 inference/build/
 **/test-results/
 **/playwright-report/
+packages/autotrain/

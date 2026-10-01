@@ -29,7 +29,7 @@ Temporal Schedule. Clearing the cron deletes the schedule. Temporal failures are
 logged and do not roll back the task update; resubmitting the task settings
 retries synchronization. There is no periodic reconciliation or pending-update
 queue. Scheduled executions recheck task, workspace and organization eligibility
-before starting training and require 500 arrivals per task.
+before starting training and require 500 trainable arrivals per task.
 It reads manifests newest hour first, stops at the threshold and uses manifest
 modification times to include late uploads. There is no training counter or
 ClickHouse dependency. Manual admission does not require capture to remain on.
@@ -53,8 +53,8 @@ Rolling deployments must not strand hours-long runs on a removed worker build.
 
 ## Next increment: Qwen SFT and GPU hosts
 
-Use a small, explicitly pinned Qwen model and a pinned trainer image. Python stays
-inside that image; TypeScript owns admission, dataset orchestration, run state,
+Use a small, explicitly pinned Qwen model and a pinned Python training package.
+The private runtime bundle installs that package; TypeScript owns admission, dataset orchestration, run state,
 Nomad operations and artifact validation. Start with basic supervised fine-tuning,
 with separate training and held-out data. Provider outputs are not training
 labels. Captured hosted outputs and explicitly permitted imported examples need
@@ -93,3 +93,23 @@ The real trainer increment adds dataset provenance and split tests, trainer even
 and artifact validation, Nomad host lifecycle tests, checkpoint recovery and a
 bounded H100 smoke run. Synthetic orchestration results do not establish training
 correctness or quality.
+
+## Qwen executor
+
+The `qwen-sft` workflow is orchestrated by `product/services/temporal-worker`.
+Training runs as a separate Python process on exact enrolled H100 nodes, using
+pinned Qwen3-0.6B, rank-two LoRA and fifty optimizer steps. The training library
+lives in the private [Gradiated/autotrain](https://github.com/Gradiated/autotrain)
+repository, pinned as the `product/packages/autotrain` submodule. It accepts local
+files and an explicit recipe; progress and checkpoint callbacks connect it to the
+private runtime adapter. Docker packaging, HTTP, signed S3 transfers, Nomad and
+host lifecycle remain in this repository. Only the Python library is intended
+for future open sourcing.
+
+The worker publishes conversational prompt/completion JSONL train/validation/test
+artifacts and a portable dataset manifest, then coordinates training, verification
+and infrastructure evaluation. Host replacement requires confirmed process death
+and resumes verified optimizer checkpoints. See the run contract and
+`infra/environments/prod/runpod/training/README.md` for deployment order and manual
+pool assignment. Live H100 training and rolling-deployment recovery still require
+production qualification.

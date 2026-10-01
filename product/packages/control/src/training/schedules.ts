@@ -14,6 +14,7 @@ export const updateTrainingSchedule = async (
   client: Client,
   taskId: string,
   cron: string | null,
+  workflowType = TRAINING_TASK_WORKFLOW,
 ) => {
   const handle = client.schedule.getHandle(trainingScheduleId(taskId));
   if (!cron) {
@@ -29,9 +30,10 @@ export const updateTrainingSchedule = async (
     spec: { cronExpressions: [cron], timezone: "UTC" },
     action: {
       type: "startWorkflow",
-      workflowType: TRAINING_TASK_WORKFLOW,
+      workflowType,
       taskQueue: TRAINING_TASK_QUEUE,
       args: [taskId],
+      workflowExecutionTimeout: "24 hours",
     },
     policies: { overlap: ScheduleOverlapPolicy.SKIP, catchupWindow: "1 hour" },
     state: { paused: false },

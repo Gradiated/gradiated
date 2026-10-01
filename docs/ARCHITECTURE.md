@@ -77,6 +77,9 @@ histories. Published adapters remain unavailable until serving qualification. Th
 defines admission, cancellation, retries and workflow compatibility. Temporal
 Cloud receives encrypted payloads and failures, and only internal IDs in workflow
 metadata. GPU hosts never receive Temporal credentials.
+The worker checks pending and running training jobs once per minute and requests
+Nomad shutdown when their exact Temporal execution has closed. This also cleans
+up queued jobs after workflow timeout or termination, when workflow cleanup cannot run.
 
 ## Agent access to production
 

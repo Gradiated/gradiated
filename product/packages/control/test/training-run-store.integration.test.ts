@@ -145,6 +145,23 @@ describe("transactional training run store", () => {
     const id = randomUUID();
     const workflowId = "scheduled-training-2026-10-01";
     await createTrainingRunStore(db.database).create(id, own.input, workflowId);
+    expect(await createTrainingRunStore(db.database).get(id)).toMatchObject({
+      id,
+      taskId: own.input.taskId,
+      workflowId,
+    });
+    expect(
+      await createTrainingRunStore(db.database).get(randomUUID()),
+    ).toBeUndefined();
+
+    await createTrainingRunStore(db.database).transition(
+      id,
+      "building_dataset",
+    );
+    expect(
+      (await createTrainingRunStore(db.database).get(id))?.workflowId,
+    ).toBe(workflowId);
+
     let cancelled: unknown;
     const service = createTrainingService(
       db.database,

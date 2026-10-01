@@ -1,4 +1,5 @@
 import { once } from "node:events";
+import { setTimeout } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { NativeConnection, Worker } from "@temporalio/worker";
 import {
@@ -8,6 +9,7 @@ import {
 } from "@gradiated/temporal";
 import {
   createTrainingArtifacts,
+  createTrainingRunStore,
   createTemporalTrainingEngine,
   type TrainingEngine,
   ObjectStorage,
@@ -21,6 +23,7 @@ import {
 import { createTrainingExecutorActivities } from "./executor-activities.js";
 import { trainingConfiguration } from "./configuration.js";
 import { createMockTrainingActivities } from "./activities.js";
+import { stopClosedTrainingJobs } from "./cleanup.js";
 
 export const runTrainingWorker = async (input: {
   database: ControlDatabase;
@@ -39,10 +42,19 @@ export const runTrainingWorker = async (input: {
     input.contents,
     !useTrainingExecutor,
   );
+  let cleanUpJobs: (() => Promise<void>) | undefined;
   const configureTrainingExecutor = (engine: TrainingEngine) => {
     const config = trainingConfiguration(input.environment);
     const nomad = parseNomadEnvironment(input.environment);
     if (!nomad) throw new Error("Training requires Nomad credentials.");
+
+    const request = createNomadRequest(nomad);
+    cleanUpJobs = () =>
+      stopClosedTrainingJobs({
+        request,
+        engine,
+        readRun: createTrainingRunStore(input.database).get,
+      });
 
     return createTrainingExecutorActivities({
       database: input.database,
@@ -51,7 +63,7 @@ export const runTrainingWorker = async (input: {
       artifacts: createTrainingArtifacts(
         new ObjectStorage(config.TRAINING_ARTIFACTS_BUCKET),
       ),
-      nomad: createNomadRequest(nomad),
+      nomad: request,
       podIds: config.TRAINING_POD_IDS,
       token: config.TRAINING_HOST_TOKEN,
       host: {
@@ -98,6 +110,23 @@ export const runTrainingWorker = async (input: {
       if (input.signal.aborted) return;
 
       await input.onReady();
+      if (cleanUpJobs) {
+        while (!input.signal.aborted) {
+          try {
+            await cleanUpJobs();
+          } catch {
+            console.warn("Could not list training jobs for cleanup.");
+          }
+
+          try {
+            await setTimeout(60_000, undefined, { signal: input.signal });
+          } catch (error) {
+            if (!input.signal.aborted) throw error;
+          }
+        }
+        return;
+      }
+
       if (!input.signal.aborted)
         await once(input.signal, "abort", { signal: listenerCleanup.signal });
     });

@@ -72,6 +72,15 @@ const canTransition = (current: RunStage, next: RunStage) => {
 };
 
 export const createTrainingRunStore = (database: ControlDatabase) => ({
+  async get(runId: string) {
+    const [row] = await database
+      .select()
+      .from(trainingRuns)
+      .where(eq(trainingRuns.id, UuidSchema.parse(runId)));
+
+    return row && RunRecordSchema.parse(row);
+  },
+
   async create(runId: string, input: TrainingInput, workflowId?: string) {
     runId = UuidSchema.parse(runId);
     input = TrainingInputSchema.parse(input);

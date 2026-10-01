@@ -68,6 +68,7 @@ export const RunInsertSchema = RunRecordSchema.pick({
   inputCutoff: true,
 });
 export const RunUpdateSchema = RunRecordSchema.omit({
+  workflowId: true,
   id: true,
   taskId: true,
   createdAt: true,

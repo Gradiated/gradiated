@@ -17,6 +17,7 @@ runs:
         GH_TOKEN: ${{ github.token }}
         EVENT: ${{ github.event_name }}
         PULL_REQUEST: ${{ github.event.pull_request.number }}
+        BRANCH: ${{ github.ref_name }}
         REPOSITORY: ${{ github.repository }}
         WORKFLOW: ${{ inputs.workflow }}
       run: bash "$GITHUB_ACTION_PATH/relevant.sh"

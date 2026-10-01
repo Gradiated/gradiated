@@ -175,11 +175,16 @@ jobs:
 
   record-release:
     name: Record immutable release
+    permissions:
+      actions: write
+      contents: write
+      pull-requests: write
     needs: [resolve, build-images, build-collector, build-console]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
       release_commit: ${{ steps.commit.outputs.release_commit }}
+      pull_request: ${{ steps.commit.outputs.pull_request }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -203,9 +208,10 @@ jobs:
             --collector-digest "${COLLECTOR_DIGEST}"
           kubectl kustomize infra/environments/prod/us-east-1/kubernetes/workloads >/dev/null
       - id: commit
-        name: Commit one production release record
+        name: Open production release pull request
         env:
           SOURCE_SHA: ${{ needs.resolve.outputs.source_sha }}
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           release_paths=(
@@ -226,17 +232,80 @@ jobs:
             git config user.name github-actions[bot]
             git config user.email 41898282+github-actions[bot]@users.noreply.github.com
             git add -- "${release_paths[@]}"
-            git commit -m "deploy(prod): release ${SOURCE_SHA:0:12} [skip ci]"
-            git push origin HEAD:main
+            branch="deploy/release-${SOURCE_SHA:0:12}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+            git switch -c "$branch"
+            git commit -m "deploy(prod): release ${SOURCE_SHA:0:12}"
+            git push origin "HEAD:$branch"
+            pull_request=$(gh pr create --base main --head "$branch" \
+              --title "deploy(prod): release ${SOURCE_SHA:0:12}" \
+              --body "Deploy the verified images and console built from ${SOURCE_SHA}. Argo applies this release after the required checks pass and the pull request merges.")
+            echo "pull_request=$(gh pr view "$pull_request" --json number --jq .number)" >> "$GITHUB_OUTPUT"
+            # GITHUB_TOKEN does not trigger PR checks; explicit dispatches do.
+            for workflow in .github/workflows/*.yml; do
+              if [[ $(yq '.on | has("workflow_dispatch")' "$workflow") == true && $(yq '.jobs | has("passed")' "$workflow") == true ]]; then
+                gh workflow run "$(basename "$workflow")" --ref "$branch"
+              fi
+            done
+            gh pr merge "$pull_request" --squash --auto
           fi
           echo "release_commit=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
 
+
+      - name: Close release if checks could not be started
+        if: failure() && steps.commit.outputs.pull_request != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PULL_REQUEST: ${{ steps.commit.outputs.pull_request }}
+        run: gh pr close "$PULL_REQUEST" --comment "Release checks could not be started; closing this release to avoid a late deployment."
+
+  wait-for-release:
+    name: Wait for release PR to merge
+    needs: record-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Wait for required checks and auto-merge
+        if: needs.record-release.outputs.pull_request != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PULL_REQUEST: ${{ needs.record-release.outputs.pull_request }}
+        run: |
+          deadline=$((SECONDS + 3600))
+          while (( SECONDS < deadline )); do
+            state=$(gh pr view "$PULL_REQUEST" --json state --jq .state)
+            case "$state" in
+              MERGED) exit 0 ;;
+              CLOSED) echo "Release PR was closed without merging." >&2; exit 1 ;;
+            esac
+            sleep 15
+          done
+          echo "Release PR did not merge within one hour." >&2
+          exit 1
+      - name: Close an unmerged release after merge wait failure
+        if: (failure() || cancelled()) && needs.record-release.outputs.pull_request != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PULL_REQUEST: ${{ needs.record-release.outputs.pull_request }}
+        run: |
+          if [[ $(gh pr view "$PULL_REQUEST" --json state --jq .state) == OPEN ]]; then
+            gh pr close "$PULL_REQUEST" --comment "The release did not merge within its check budget; closing it to avoid a late deployment."
+          fi
+
   wait-for-argo:
     name: Wait for Argo rollout
-    needs: [resolve, build-images, build-collector, record-release]
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    needs: [resolve, build-images, build-collector, record-release, wait-for-release]
     runs-on: ubuntu-latest
     environment: production
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v7
         with:
@@ -269,7 +338,17 @@ jobs:
           gateway_image="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${GATEWAY_REPOSITORY}@${GATEWAY_DIGEST}"
           proxy_image="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${PROXY_REPOSITORY}@${PROXY_DIGEST}"
           collector_image="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${COLLECTOR_REPOSITORY}@${COLLECTOR_DIGEST}"
-          deadline=$((SECONDS + 900))
+          # Research may explicitly pin the gateway image through Argo's ignore policy.
+          if kubectl -n argocd get application gateway -o json | jq -e '
+            any(.spec.ignoreDifferences[]?;
+              .group == "apps" and .kind == "Deployment" and
+              .name == "gateway" and .namespace == "gradiated" and
+              any(.jsonPointers[]?; . == "/spec/template/spec/containers/0/image"))
+          ' >/dev/null; then
+            gateway_image=$(kubectl -n gradiated get deployment gateway -o jsonpath='{.spec.template.spec.containers[0].image}')
+            echo "Verifying the gateway's explicitly pinned image: ${gateway_image}"
+          fi
+          deadline=$((SECONDS + 1200))
           while (( SECONDS < deadline )); do
             api_image="$(kubectl -n gradiated get deployment api -o jsonpath='{.spec.template.spec.containers[?(@.name=="api")].image}' 2>/dev/null || true)"
             worker_image="$(kubectl -n gradiated get deployment worker -o jsonpath='{.spec.template.spec.containers[?(@.name=="worker")].image}' 2>/dev/null || true)"
@@ -284,7 +363,7 @@ jobs:
             sleep 10
           done
           if (( SECONDS >= deadline )); then
-            echo "Argo did not apply the expected release within 15 minutes." >&2
+            echo "Argo did not apply the expected release within 20 minutes." >&2
             exit 1
           fi
           kubectl -n gradiated rollout status deployment/api --timeout=10m
@@ -294,6 +373,7 @@ jobs:
           kubectl -n gradiated rollout status deployment/proxy --timeout=10m
           kubectl -n gradiated rollout status deployment/collector --timeout=10m
           PRODUCT_IMAGE="${product_image}" node tools/deployment/training-readiness.mjs
+
 
   publish-console:
     name: Publish console and verify production

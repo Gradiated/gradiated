@@ -27,17 +27,21 @@ the build idempotent. Kubernetes uses only resolved `sha256` image digests.
 2. Push the images to ECR.
 3. Upload hashed console assets to the private S3 bucket. Do not upload the live
    `index.html` file.
-4. Create one automated release commit on `main`. This commit records the source
-   revision, both image digests, and the console revision.
+4. Open a release PR recording the source revision, image digests and console
+   revision. Required checks must pass before auto-merge applies it to `main`.
 5. Wait for Argo CD to apply the release and for the API and worker Deployments
    to become available.
+   An explicit Argo gateway image override is preserved and checked for readiness.
 6. Upload `index.html` with revalidation headers.
 7. Invalidate the console CloudFront distribution.
 8. Compare the live root and SPA fallback with the built entry point. Check API
    readiness.
 
-The release commit uses the repository `GITHUB_TOKEN`. GitHub does not start a
-new push workflow for that commit. The workflow updates `kustomization.yaml`,
+The release PR uses the repository `GITHUB_TOKEN`. Its branch push and PR
+creation do not trigger checks automatically, so the deployment explicitly
+dispatches every required workflow on that branch. The relevance helper finds
+the open PR and retains normal path filtering. A release still open after the
+one-hour merge timeout is closed to prevent a late deployment. The workflow updates `kustomization.yaml`,
 `release-metadata.yaml` and the image digest in each workload manifest that runs a
 released image.
 
@@ -59,13 +63,15 @@ healthy. S3 versioning keeps previous entry points for recovery.
 - The `production` environment must permit the deployment workflow.
 - Workflow permissions must allow the repository `GITHUB_TOKEN` to write
   contents.
-- Branch rules must allow `github-actions[bot]` to push the two generated release
-  files, or provide an equivalent narrowly scoped ruleset bypass.
+- Organization policy and repository settings must allow GitHub Actions to
+  create pull requests. Enable repository auto-merge. The release job gets
+  contents, pull-request and workflow-dispatch write permissions; other jobs
+  retain their existing permissions. It does not approve reviews.
 - The `main` ruleset requires one gate per workflow: `Product tests passed`,
   `Kubernetes passed`, `Nomad deployment passed`, `Terraform passed`,
   `Model deployment passed`, `Wizard publish passed`, `Agent quality passed`,
-  `Dependency age passed` and `Research lab passed`. The GitHub Actions app
-  bypasses it so release commits can still be pushed.
+  `Dependency age passed` and `Research lab passed`. Release PRs satisfy these
+  checks and resolved review threads without a branch-rules bypass.
 
 Every workflow runs on every pull request. Its `changes` job
 (`.github/actions/relevant`) compares the pull request's files with the

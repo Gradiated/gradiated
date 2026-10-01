@@ -24,6 +24,7 @@ on:
       - .github/workflows/model-deployment.yml
       - .github/workflows/build-images.yml
   pull_request:
+  workflow_dispatch:
 
 permissions:
   actions: read

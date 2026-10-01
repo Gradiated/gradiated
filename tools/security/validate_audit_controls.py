@@ -49,7 +49,12 @@ def main():
         ("control_changes", "aws.iam", "AWS API Call via CloudTrail", {"eventName": "GetRole"}, False),
         ("root_activity", "aws.signin", "AWS Console Sign In via CloudTrail", {"userIdentity": {"type": "Root"}}, True),
         ("root_activity", "aws.iam", "AWS API Call via CloudTrail", {"userIdentity": {"type": "AssumedRole"}}, False),
-        ("root_activity", "aws.iam", "AWS API Call via CloudTrail", {"userIdentity": {"type": "Root"}, "eventName": "GetRole", "readOnly": True}, True),
+        ("root_activity", "aws.iam", "AWS API Call via CloudTrail", {"userIdentity": {"type": "Root"}, "eventName": "GetRole", "readOnly": True}, False),
+        ("root_console_noise", "aws.notifications", "AWS API Call via CloudTrail", {"userIdentity": {"type": "Root"}, "eventName": "ListManagedNotificationEvents", "readOnly": True}, False),
+        ("root_write", "aws.iam", "AWS API Call via CloudTrail", {"userIdentity": {"type": "Root"}, "eventName": "CreateRole", "readOnly": False}, True),
+        ("root_failed_read", "aws.iam", "AWS API Call via CloudTrail", {"userIdentity": {"type": "Root"}, "eventName": "GetRole", "readOnly": True, "errorCode": "AccessDenied"}, True),
+        ("root_login", "aws.signin", "AWS Console Sign In via CloudTrail", {"userIdentity": {"type": "Root"}, "eventName": "ConsoleLogin", "readOnly": True}, True),
+        ("root_missing_read_only", "aws.iam", "AWS API Call via CloudTrail", {"userIdentity": {"type": "Root"}, "eventName": "CreateRole"}, True),
     ]
     assert len(set(patterns.values())) == 1, "Every region must use the same combined alert pattern"
     pattern = next(iter(patterns.values()))

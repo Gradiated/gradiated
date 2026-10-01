@@ -69,7 +69,17 @@ const setup = () => {
   };
   const run = (values = environment) =>
     spawnSync("python3", ["-c", script], {
-      input: JSON.stringify({ environment: values }),
+      input: JSON.stringify({
+        environment: values,
+        renewalScripts: {
+          agent: "# renewal agent fixture",
+          supervisor: "# supervisor fixture",
+          startClient: readFileSync(
+            path.join(root, "opt/gradiated/bin/start-client"),
+            "utf8",
+          ),
+        },
+      }),
       encoding: "utf8",
       env: { ...process.env, PATH: `${root}/bin:${process.env.PATH}` },
       timeout: 10_000,
@@ -128,6 +138,38 @@ describe("in-place host bootstrap", () => {
     ]) {
       expect(statSync(path.join(test.root, name)).mode & 0o777).toBe(0o600);
     }
+  });
+
+  it("installs renewal during registration on a retained base without an agent", () => {
+    const test = setup();
+    const result = test.run({
+      ...test.environment,
+      GRADIATED_NOMAD_RENEWAL_TOKEN: "r".repeat(43),
+    } as typeof test.environment);
+    expect(result.status).toBe(0);
+    processes.push(
+      Number(readFileSync(path.join(test.root, "client-pid"), "utf8")),
+    );
+    for (const name of ["renew-certificate", "run-renewer", "start-client"]) {
+      expect(
+        statSync(path.join(test.root, "opt/gradiated/bin", name)).mode & 0o777,
+      ).toBe(0o755);
+    }
+    expect(
+      JSON.parse(
+        readFileSync(
+          path.join(test.root, "etc/nomad/tls/renewal.json"),
+          "utf8",
+        ),
+      ),
+    ).toEqual({
+      instance_id: test.environment.GRADIATED_INSTANCE_ID,
+      nomad_node_id: test.environment.GRADIATED_NOMAD_NODE_ID,
+      token: "r".repeat(43),
+    });
+    expect(
+      statSync(path.join(test.root, "etc/nomad/tls/renewal.json")).mode & 0o777,
+    ).toBe(0o600);
   });
 
   it("refuses to overwrite a configured client", () => {

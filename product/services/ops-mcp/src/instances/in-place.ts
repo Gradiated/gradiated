@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import type { RunSsh, SshTarget } from "./ssh.js";
 
 const shellQuote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
@@ -59,6 +60,14 @@ if env.get("GRADIATED_NOMAD_RENEWAL_TOKEN"):
     if not re.fullmatch(r"[A-Za-z0-9_-]{43}", token):
         sys.exit(64)
     renewal = {"instance_id": env["GRADIATED_INSTANCE_ID"], "nomad_node_id": env["GRADIATED_NOMAD_NODE_ID"], "token": token}
+    scripts = payload["renewalScripts"]
+    for name, path in (
+        ("agent", "/opt/gradiated/bin/renew-certificate"),
+        ("supervisor", "/opt/gradiated/bin/run-renewer"),
+        ("startClient", "/opt/gradiated/bin/start-client"),
+    ):
+        write(path, scripts[name].encode(), "root")
+        os.chmod(path, 0o755)
     write("/etc/nomad/tls/renewal.json", json.dumps(renewal).encode(), "nomad")
 identity = {name: env[name] for name in ("GRADIATED_INSTANCE_ID", "GRADIATED_NOMAD_NODE_ID", "GRADIATED_NOMAD_NODE_SECRET")}
 write("/etc/gradiated/in-place-enrollment.json", json.dumps(identity).encode(), "root")
@@ -76,9 +85,36 @@ export const installInPlace = async (
   target: SshTarget,
   environment: Readonly<Record<string, string>>,
 ) => {
+  const [agent, supervisor, startClient] = await Promise.all([
+    readFile(
+      new URL(
+        "../../../../inference/images/nomad-base/renew-certificate.py",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+    readFile(
+      new URL(
+        "../../../../inference/images/nomad-base/run-renewer.sh",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+    readFile(
+      new URL(
+        "../../../../inference/images/nomad-base/start-client.sh",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  ]);
+
   await run(
     target,
     `python3 -c ${shellQuote(bootstrapScript)}`,
-    JSON.stringify({ environment }),
+    JSON.stringify({
+      environment,
+      renewalScripts: { agent, supervisor, startClient },
+    }),
   );
 };

@@ -196,11 +196,13 @@ describe("instance registration", () => {
     const environment = test.bootstraps[0]!.environment;
     const decode = (name: string) =>
       Buffer.from(environment[name] ?? "", "base64").toString();
+    const certificate = new X509Certificate(decode("GRADIATED_NOMAD_CERT"));
     expect(
-      new X509Certificate(decode("GRADIATED_NOMAD_CERT")).verify(
-        new X509Certificate(testCa.certificate).publicKey,
-      ),
+      certificate.verify(new X509Certificate(testCa.certificate).publicKey),
     ).toBe(true);
+    expect(
+      Date.parse(certificate.validTo) - Date.parse(certificate.validFrom),
+    ).toBe((30 * 86400 + 300) * 1000);
     expect(decode("GRADIATED_NOMAD_CA")).toBe(testCa.certificate);
     expect(environment).toMatchObject({
       GRADIATED_INSTANCE_ID: INSTANCE_ID,

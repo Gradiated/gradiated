@@ -6,7 +6,7 @@ import type {
 } from "@gradiated/control";
 
 import {
-  hostProfile,
+  renewableHostProfile,
   issueCertificate,
   type CertificateSigner,
 } from "@gradiated/nomad-pki";
@@ -165,7 +165,11 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
       nodeName: name,
     });
 
-    const tls = await issueCertificate(ca, dependencies.signer, hostProfile);
+    const tls = await issueCertificate(
+      ca,
+      dependencies.signer,
+      renewableHostProfile,
+    );
     const renewalToken = await (
       await dependencies.certificateCredentials()
     ).enroll(record.id, identity.nomadNodeId);

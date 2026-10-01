@@ -36,8 +36,15 @@ describe("RunPod provider", () => {
     expect(run).toHaveBeenCalledWith(
       { host: runningPod.publicIp, port: 38187, hostKeySha256: hostKeys.pod1 },
       expect.stringContaining("python3 -c"),
-      JSON.stringify({ environment }),
+      expect.any(String),
     );
+    const payload = JSON.parse(run.mock.calls[0]![2]!);
+    expect(payload.environment).toEqual(environment);
+    expect(payload.renewalScripts).toEqual({
+      agent: expect.stringContaining("def renew_once"),
+      supervisor: expect.stringContaining("renew-certificate"),
+      startClient: expect.stringContaining("run-renewer"),
+    });
     expect(run.mock.calls[0]![1]).not.toContain(
       environment.GRADIATED_NOMAD_KEY,
     );

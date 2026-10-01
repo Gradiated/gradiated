@@ -67,6 +67,22 @@ test("shared product packages invalidate the application image", () => {
     ]),
   );
 });
+test("host renewal scripts invalidate the application image", () => {
+  const base = [entry("product/Dockerfile")];
+  for (const name of [
+    "renew-certificate.py",
+    "run-renewer.sh",
+    "start-client.sh",
+  ]) {
+    assert.notEqual(
+      fingerprint("product", base),
+      fingerprint("product", [
+        ...base,
+        entry(`product/inference/images/nomad-base/${name}`),
+      ]),
+    );
+  }
+});
 test("unqualified GLM image and unknown image fail explicitly", () => {
   assert.throws(() => fingerprint("glm-5-3-flash", []), /qualified GLM/);
   assert.throws(() => fingerprint("typo", []), /Unknown image/);

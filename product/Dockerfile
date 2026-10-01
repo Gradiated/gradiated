@@ -26,6 +26,7 @@ RUN pnpm install --frozen-lockfile
 
 COPY packages ./packages
 COPY services ./services
+COPY inference/images/nomad-base/renew-certificate.py inference/images/nomad-base/run-renewer.sh inference/images/nomad-base/start-client.sh ./inference/images/nomad-base/
 
 RUN mkdir -p packages/*/.turbo services/*/.turbo \
   && pnpm turbo run build --filter=@gradiated/api... --filter=@gradiated/worker... --filter=@gradiated/temporal-worker... --filter=@gradiated/ops-mcp...

@@ -86,7 +86,7 @@ const backend = createBackend({
     clientCertificate: nomadCertificate.get,
   },
 });
-const { server, metrics } = createHttp({
+const { server, privateServer, metrics } = createHttp({
   host: config.MCP_HOST,
   authenticate: auth.authenticate,
   authRouter: auth.router,
@@ -104,9 +104,11 @@ const { server, metrics } = createHttp({
   audit,
 });
 server.listen(3003, "0.0.0.0");
+privateServer.listen(3006, "127.0.0.1");
 metrics.listen(9090, "0.0.0.0");
 const shutdown = () => {
   server.close();
+  privateServer.close();
   metrics.close();
   setTimeout(() => process.exit(0), 15_000).unref();
 };

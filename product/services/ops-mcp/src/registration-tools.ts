@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import type { Registrations } from "./instances/registration.js";
+import { requirePrivateToolAccess, type ToolAccess } from "./tool-access.js";
 
 const text = (value: unknown) => ({
   content: [{ type: "text" as const, text: JSON.stringify(value) }],
@@ -12,6 +13,7 @@ export const registerRegistrationTools = (
   registrations: Registrations,
   caller: string,
   audit: (tool: string, success: boolean, elapsed: number) => void,
+  access: ToolAccess,
 ) => {
   const schema = {
     provider: z.enum(["runpod"]),
@@ -25,6 +27,7 @@ export const registerRegistrationTools = (
     {
       title: "register instance",
       description: [
+        "Requires the private administrative MCP connection through Tailscale and Kubernetes port-forward, in addition to MCP OAuth.",
         "Enrol a GPU machine into Nomad: record the instance, issue a client certificate, and bind its ready node. Nomad deploys model jobs automatically after the node joins.",
         "A running pod on the exact configured nomad-base image with SSH credentials, a pinned host key, and existing SSH and serving ports is bootstrapped over SSH without resetting it or changing provider image, environment, ports, or capacity. The bootstrap starts only the Nomad client, never model jobs. In-place files survive process restarts, but are lost if the provider resets the container.",
         "Other running machines are refused unless reset_running_pod is true and confirm_instance_id repeats instance_id. Only do that when a person explicitly authorizes resetting that exact machine; a reset stops everything and can release scarce GPU capacity. Stopped machines use the provider bootstrap and are started.",
@@ -43,6 +46,7 @@ export const registerRegistrationTools = (
       const start = Date.now();
 
       try {
+        requirePrivateToolAccess(access);
         const request = z.object(schema).parse(input);
         if (
           request.reset_running_pod &&

@@ -10,6 +10,7 @@ import { registerNomadTools } from "./nomad-tools.js";
 import { registerPrometheusTools } from "./prometheus-tools.js";
 import type { Registrations } from "./instances/registration.js";
 import { registerRegistrationTools } from "./registration-tools.js";
+import type { ToolAccess } from "./tool-access.js";
 
 export type RegisterReadTool = <T extends z.ZodRawShape>(
   name: string,
@@ -31,6 +32,7 @@ export const createTools = (
   operations?: {
     readonly registrations: Registrations;
     readonly caller: string;
+    readonly access: ToolAccess;
   },
 ) => {
   const server = new McpServer(
@@ -96,6 +98,7 @@ export const createTools = (
       operations.registrations,
       operations.caller,
       audit,
+      operations.access,
     );
   }
   registerReadTool(

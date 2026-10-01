@@ -25,8 +25,10 @@ const open: ReturnType<typeof createHttp>[] = [];
 
 export const closeServers = async () => {
   for (const app of open.splice(0)) {
-    app.server.closeAllConnections();
-    await new Promise<void>((resolve) => app.server.close(() => resolve()));
+    for (const server of [app.server, app.privateServer]) {
+      server.closeAllConnections();
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
   }
 };
 
@@ -34,6 +36,7 @@ export const setup = async (
   extra: {
     registrations?: Registrations;
     nomadCertificateExpiry?: () => number | undefined;
+    privateConnection?: boolean;
   } = {},
 ) => {
   const backend = vi.fn(async (): Promise<unknown> => ({
@@ -53,12 +56,11 @@ export const setup = async (
   };
   const app = createHttp(options);
   open.push(app);
-  await new Promise<void>((resolve) =>
-    app.server.listen(0, "127.0.0.1", resolve),
-  );
+  const server = extra.privateConnection ? app.privateServer : app.server;
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
 
   const url = new URL(
-    `http://127.0.0.1:${(app.server.address() as AddressInfo).port}/mcp`,
+    `http://127.0.0.1:${(server.address() as AddressInfo).port}/mcp`,
   );
   options.host = url.host;
   const headers = {
@@ -75,7 +77,7 @@ export const callTool = async (
   name: string,
   args: Record<string, unknown>,
   response: unknown = { status: "success", data: [] },
-  extra: { registrations?: Registrations } = {},
+  extra: { registrations?: Registrations; privateConnection?: boolean } = {},
 ) => {
   const { url, headers, backend, audit } = await setup(extra);
   backend.mockResolvedValue(response);

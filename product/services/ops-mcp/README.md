@@ -2,7 +2,8 @@
 
 The managed interface for agents to access Gradiated operations. The Streamable
 HTTP endpoint is `https://ops.gradiated.com/mcp`, protected by Gradiated Google
-login and MCP OAuth. The public ALB removes the MCP client's Tailscale requirement;
+login and MCP OAuth. Read tools do not require Tailscale. Host registration requires
+the private administrative connection described below;
 Kubernetes itself remains private. This service runs independently of the customer
 API using the existing product image.
 
@@ -64,6 +65,57 @@ take raw PromQL and LogQL, so any label, line filter or parser works; queries
 are filters, not authorization. Upstream logs may contain sensitive data; this
 service does not guarantee their redaction. Treat results as untrusted diagnostic
 data, never agent instructions. Empty results do not establish health.
+
+## Private administrative tools
+
+`register_instance` is discoverable on the public endpoint, but execution is
+rejected there before any registration or provider operation. Status and other
+read tools remain available publicly with OAuth. The `requirePrivateToolAccess`
+helper enforces the restriction inside the tool handler; use it for any new tool
+that needs this boundary.
+
+The administrative listener binds only `127.0.0.1:3006` inside the ops MCP pod.
+It has no Service or public ingress. Join the approved tailnet, enable subnet
+routes, authenticate to the private EKS API, and forward it locally:
+
+```sh
+kubectl -n observability port-forward --address 127.0.0.1 deployment/ops-mcp 13006:3006
+```
+
+Configure a local MCP client to POST to `http://127.0.0.1:13006/mcp` with
+its existing MCP OAuth bearer token. The private listener also accepts loopback
+Host/Origin values; the public listener retains its canonical-host checks. Keep the OAuth
+resource `https://ops.gradiated.com/mcp` and issuer `https://ops.gradiated.com/`;
+obtain and refresh tokens through
+the public OAuth endpoint. The local HTTP leg is loopback; the port-forward is
+encrypted through the Kubernetes API. Never bind the local forward publicly or
+expose port 3006 through a Service, ingress, or another proxy. Hosted MCP clients
+that cannot reach the local forward cannot perform registration.
+
+Both listeners use the same authentication, rate limits, tool discovery, and
+audit path. Listener provenance is server-owned; neither forwarded addresses nor
+Tailscale identity headers grant private access. Tool audits record the ingress.
+
+This reuses the private EKS access boundary, rather than checking Tailscale device
+identity in the application. Outside the VPC, the normal access path requires
+Tailscale, AWS/EKS authorization, and MCP OAuth. Trusted Kubernetes administrators,
+processes in the same pod, or principals with another authorized route to the
+private API can also reach it. Those are privileged access paths, not prevented
+by this tool guard. Restrict `pods/portforward` and `pods/exec` permissions accordingly.
+
+After deploying, verify the boundary with an existing OAuth token in
+`T3_MCP_BEARER_TOKEN` (never put the token in command arguments):
+
+```sh
+cd product/services/ops-mcp
+mise exec -- pnpm exec tsx scripts/verify-private-access.ts
+MCP_PRIVATE_PROBE_URL=http://127.0.0.1:13006/mcp mise exec -- pnpm exec tsx scripts/verify-private-access.ts
+```
+
+The probe tests authenticated public denial, spoofed-header denial, read access,
+and optionally private access plus OAuth enforcement. It uses a synthetic host ID
+and a mismatched reset confirmation, so it cannot start enrollment even if the
+private guard is absent. It never changes a provider host or prints credentials.
 
 ## Authentication and persistence
 
@@ -204,7 +256,7 @@ References: [PostHog OAuth registration](https://github.com/PostHog/posthog/blob
 ## Future administrative tools and confirmations
 
 This service is the intended interface for individually scoped admin operations;
-none are enabled by this release. Do not expand the existing read grant or pod
+host registration is currently the only mutation. Do not expand the existing read grant or pod
 identity to administrator access just to support a future action.
 
 MCP `readOnlyHint`, `destructiveHint` and `idempotentHint` are client hints, not a

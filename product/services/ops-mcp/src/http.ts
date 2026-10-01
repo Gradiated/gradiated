@@ -1,4 +1,4 @@
-import { createServer } from "node:http";
+import { createServer, type IncomingMessage } from "node:http";
 import { randomUUID } from "node:crypto";
 import express, {
   type RequestHandler,
@@ -59,6 +59,7 @@ export const createHttp = (options: {
   const budgets = new Map<string, { window: number; count: number }>();
 
   const app = express();
+  const privateRequests = new WeakSet<IncomingMessage>();
   app.disable("x-powered-by");
   // The only ingress hop is the ALB, which appends the actual caller to XFF.
   // Trust only that last hop, never the caller-supplied leftmost address.
@@ -74,10 +75,16 @@ export const createHttp = (options: {
       next();
       return;
     }
+    const localHost =
+      privateRequests.has(request) &&
+      /^(127\.0\.0\.1|localhost):[0-9]{1,5}$/.test(request.headers.host ?? "");
+    const allowedOrigin =
+      request.headers.origin === `https://${options.host}` ||
+      (localHost &&
+        request.headers.origin === `http://${request.headers.host}`);
     if (
-      request.headers.host !== options.host ||
-      (request.headers.origin &&
-        request.headers.origin !== `https://${options.host}`)
+      (request.headers.host !== options.host && !localHost) ||
+      (request.headers.origin && !allowedOrigin)
     ) {
       response.status(403).end();
       return;
@@ -161,7 +168,15 @@ export const createHttp = (options: {
 
       const operations =
         options.registrations && identity
-          ? { registrations: options.registrations, caller: identity.email }
+          ? {
+              registrations: options.registrations,
+              caller: identity.email,
+              access: {
+                ingress: privateRequests.has(request)
+                  ? ("private" as const)
+                  : ("public" as const),
+              },
+            }
           : undefined;
       mcp = createTools(
         options.backend,
@@ -175,6 +190,7 @@ export const createHttp = (options: {
             email: identity?.email,
             request_id: requestId,
             tool,
+            ingress: privateRequests.has(request) ? "private" : "public",
             outcome: success ? "success" : "error",
             duration_ms: elapsed,
           });
@@ -206,8 +222,15 @@ export const createHttp = (options: {
   };
   app.use(handleError);
   const server = createServer(app);
+  // Listener provenance is server-owned; forwarded headers cannot grant access.
+  const privateServer = createServer((request, response) => {
+    privateRequests.add(request);
+    app(request, response);
+  });
   server.requestTimeout = 15_000;
   server.headersTimeout = 10_000;
+  privateServer.requestTimeout = 15_000;
+  privateServer.headersTimeout = 10_000;
   const metrics = createServer(async (request, response) => {
     if (request.url !== "/metrics" || request.method !== "GET") {
       response.writeHead(404).end();
@@ -217,5 +240,5 @@ export const createHttp = (options: {
     response.end(await registry.metrics());
   });
 
-  return { server, metrics };
+  return { server, privateServer, metrics };
 };

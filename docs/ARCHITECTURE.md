@@ -83,14 +83,18 @@ metadata. GPU hosts never receive Temporal credentials.
 `product/services/ops-mcp` is the managed MCP interface for agents accessing
 Gradiated operations. Its HTTPS endpoint, `https://ops.gradiated.com/mcp`,
 requires Gradiated Google login through Dex and scoped MCP OAuth tokens. The
-public HTTPS ingress removes Tailscale as an MCP client requirement; the
-Kubernetes API remains private. Claude Tag,
+public HTTPS ingress removes Tailscale as a requirement for MCP read tools. Host
+registration requires the separate localhost administrative listener, reached
+through an authorized port-forward to the private Kubernetes API over Tailscale,
+as well as MCP OAuth. The application trusts listener provenance, not caller
+headers; Kubernetes administrators retain privileged access. Claude Tag,
 Cursor and OpenAI clients share the same Streamable HTTP transport and OAuth
 boundary, with exact hosted callback allowlists and loopback support for local agents.
 
 Current tools read alerts, metrics, bounded service logs, dashboard links and EKS
-status across tenants. They expose no shell, exec, arbitrary HTTP, database access
-or production mutations. Kubernetes permissions remain limited to pod/node listing.
+status across tenants. The sole mutation, `register_instance`, enrolls a GPU host
+and requires private administrative ingress. Tools expose no general shell, exec,
+arbitrary HTTP or database access. Kubernetes permissions remain limited to pod/node listing.
 OAuth registration is stateless; hashed token families persist on a single-writer
 PVC with refresh rotation, revocation and a fixed 30-day authorization lifetime.
 Argo reconciles the service under `operations/` through `platform/ops-mcp.yaml`.

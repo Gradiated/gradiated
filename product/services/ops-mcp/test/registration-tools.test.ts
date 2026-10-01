@@ -1,6 +1,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { AddressInfo } from "node:net";
 
 import type {
   Registration,
@@ -51,6 +52,113 @@ const listTools = async (registrations?: Registrations) => {
 };
 
 describe("registration tools", () => {
+  it("keeps private authorization scoped to the listener for each request", async () => {
+    const fake = fakeRegistrations();
+    const { app, url, headers, audit } = await setup({
+      registrations: fake.registrations,
+    });
+    await new Promise<void>((resolve) =>
+      app.privateServer.listen(0, "127.0.0.1", resolve),
+    );
+    const privateUrl = new URL(
+      `http://127.0.0.1:${(app.privateServer.address() as AddressInfo).port}/mcp`,
+    );
+
+    for (const endpoint of [privateUrl, url]) {
+      const client = new Client({ name: "test", version: "1" });
+      await client.connect(
+        new StreamableHTTPClientTransport(endpoint, {
+          requestInit: { headers },
+        }),
+      );
+      const result = await client.callTool({
+        name: "register_instance",
+        arguments: { provider: "runpod", instance_id: "rldmcif788b98e" },
+      });
+
+      expect(Boolean(result.isError)).toBe(endpoint === url);
+      await client.close();
+    }
+
+    expect(fake.start).toHaveBeenCalledTimes(1);
+    expect(audit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tool: "register_instance",
+        outcome: "success",
+        ingress: "private",
+      }),
+    );
+  });
+
+  it("rejects public enrollment even with forged private-network headers", async () => {
+    const fake = fakeRegistrations();
+    const { url, headers, audit } = await setup({
+      registrations: fake.registrations,
+    });
+    const client = new Client({ name: "test", version: "1" });
+    await client.connect(
+      new StreamableHTTPClientTransport(url, {
+        requestInit: {
+          headers: {
+            ...headers,
+            "x-forwarded-for": "100.64.0.1, 127.0.0.1",
+            "tailscale-user-login": "tester@gradiated.com",
+            "x-mcp-ingress": "private",
+          },
+        },
+      }),
+    );
+
+    const result = await client.callTool({
+      name: "register_instance",
+      arguments: { provider: "runpod", instance_id: "rldmcif788b98e" },
+    });
+
+    expect(result.isError).toBe(true);
+    expect(JSON.stringify(result.content)).toContain(
+      "private administrative MCP connection",
+    );
+    expect(fake.start).not.toHaveBeenCalled();
+    expect(audit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tool: "register_instance",
+        outcome: "error",
+        ingress: "public",
+      }),
+    );
+
+    const status = await client.callTool({
+      name: "instance_registration_status",
+      arguments: {},
+    });
+    expect(status.isError).not.toBe(true);
+    await client.close();
+  });
+
+  it("requires OAuth on the private listener too", async () => {
+    const fake = fakeRegistrations();
+    const { url, headers } = await setup({
+      registrations: fake.registrations,
+      privateConnection: true,
+    });
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { ...headers, authorization: "Bearer invalid" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "register_instance",
+          arguments: { provider: "runpod", instance_id: "rldmcif788b98e" },
+        },
+      }),
+    });
+
+    expect(response.status).toBe(401);
+    expect(fake.start).not.toHaveBeenCalled();
+  });
+
   it("marks registration as the one destructive tool and its status as read-only", async () => {
     const tools = await listTools(fakeRegistrations().registrations);
     const annotations = (name: string) =>
@@ -82,7 +190,7 @@ describe("registration tools", () => {
       "register_instance",
       { provider: "runpod", instance_id: "rldmcif788b98e" },
       undefined,
-      { registrations: fake.registrations },
+      { registrations: fake.registrations, privateConnection: true },
     );
 
     expect(isError).toBe(false);
@@ -107,7 +215,7 @@ describe("registration tools", () => {
         confirm_instance_id: "rldmcif788b98e",
       },
       undefined,
-      { registrations: fake.registrations },
+      { registrations: fake.registrations, privateConnection: true },
     );
 
     expect(fake.start).toHaveBeenCalledWith(
@@ -128,7 +236,7 @@ describe("registration tools", () => {
       "register_instance",
       { provider: "runpod", instance_id: "rldmcif788b98e", ...reset },
       undefined,
-      { registrations: fake.registrations },
+      { registrations: fake.registrations, privateConnection: true },
     );
 
     expect(isError).toBe(true);
@@ -147,6 +255,7 @@ describe("registration tools", () => {
 
     const { isError } = await callTool("register_instance", args, undefined, {
       registrations: fake.registrations,
+      privateConnection: true,
     });
 
     expect(isError).toBe(true);
@@ -163,7 +272,7 @@ describe("registration tools", () => {
       "register_instance",
       { provider: "runpod", instance_id: "pod1" },
       undefined,
-      { registrations: fake.registrations },
+      { registrations: fake.registrations, privateConnection: true },
     );
 
     expect(isError).toBe(true);

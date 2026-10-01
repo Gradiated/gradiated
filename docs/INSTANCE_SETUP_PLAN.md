@@ -77,7 +77,10 @@ runtime code, not weights or customer data.
 
 ### Running it
 
-Ask for it through the ops MCP as a signed-in employee:
+Ask for it through the private ops MCP connection as a signed-in employee. Join
+Tailscale and use the private Kubernetes port-forward documented in
+[`product/services/ops-mcp/README.md`](../product/services/ops-mcp/README.md#private-administrative-tools).
+Public MCP connections can read registration status but cannot execute enrollment:
 
 ```
 register_instance(provider: "runpod", instance_id: "<pod-id>")

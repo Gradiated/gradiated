@@ -35,6 +35,9 @@ RUN pnpm install --prod --offline --force --frozen-lockfile \
 
 FROM node:22.23.2-bookworm-slim
 
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
 ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/aws-rds-us-east-1-bundle.pem
 
 RUN mkdir -p /etc/ssl/certs \

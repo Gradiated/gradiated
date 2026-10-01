@@ -78,6 +78,13 @@
       "when": 1790851881777,
       "tag": "0010_training_workflow_identity",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1790875001526,
+      "tag": "0011_instance_certificate",
+      "breakpoints": true
     }
   ]
 }

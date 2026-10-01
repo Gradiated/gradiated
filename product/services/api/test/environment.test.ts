@@ -23,6 +23,28 @@ describe("API environment", () => {
     });
   });
 
+  it("requires the Nomad issuer configuration as a pair", () => {
+    expect(() =>
+      parseApiEnvironment({
+        ...baseEnvironment,
+        NOMAD_CA_KMS_KEY: "alias/test",
+      }),
+    ).toThrow("must be configured together");
+    expect(() =>
+      parseApiEnvironment({ ...baseEnvironment, NOMAD_CA_PEM: "public-ca" }),
+    ).toThrow("must be configured together");
+    expect(
+      parseApiEnvironment({
+        ...baseEnvironment,
+        NOMAD_CA_KMS_KEY: "alias/test",
+        NOMAD_CA_PEM: "public-ca",
+      }),
+    ).toMatchObject({
+      NOMAD_CA_KMS_KEY: "alias/test",
+      NOMAD_CA_PEM: "public-ca",
+    });
+  });
+
   it("rejects a profiling token shorter than 32 characters", () => {
     expect(() =>
       parseApiEnvironment({

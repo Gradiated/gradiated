@@ -1,7 +1,9 @@
 export {
   cliProfile,
   hostProfile,
+  renewableHostProfile,
   issueCertificate,
+  issueCertificateForPublicKey,
   kmsSigner,
   serverProfile,
   type CertificateProfile,

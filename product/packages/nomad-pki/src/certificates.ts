@@ -1,5 +1,6 @@
 import {
   createHash,
+  createPublicKey,
   generateKeyPairSync,
   randomBytes,
   X509Certificate,
@@ -64,6 +65,11 @@ export const hostProfile: CertificateProfile = {
   days: 365,
 };
 
+export const renewableHostProfile: CertificateProfile = {
+  ...hostProfile,
+  days: 30,
+};
+
 export const cliProfile: CertificateProfile = {
   commonName: "cli.global.nomad",
   dnsNames: ["cli.global.nomad"],
@@ -120,14 +126,44 @@ export const issueCertificate = async (
   profile: CertificateProfile,
   now = new Date(),
 ): Promise<{ certificate: string; privateKey: string }> => {
+  const keys = generateKeyPairSync("ec", { namedCurve: "P-256" });
+  const certificate = await issueCertificateForPublicKey(
+    caCertificate,
+    sign,
+    profile,
+    keys.publicKey.export({ type: "spki", format: "pem" }).toString(),
+    now,
+  );
+
+  return {
+    certificate,
+    privateKey: keys.privateKey
+      .export({ type: "pkcs8", format: "pem" })
+      .toString(),
+  };
+};
+
+export const issueCertificateForPublicKey = async (
+  caCertificate: string,
+  sign: CertificateSigner,
+  profile: CertificateProfile,
+  publicKey: string,
+  now = new Date(),
+): Promise<string> => {
   const ca = AsnConvert.parse(
     new X509Certificate(caCertificate).raw,
     Certificate,
   ).tbsCertificate;
-  // Nomad rejects Ed25519 client keys.
-  const keys = generateKeyPairSync("ec", { namedCurve: "P-256" });
+  const key = createPublicKey(publicKey);
+  if (
+    key.asymmetricKeyType !== "ec" ||
+    key.asymmetricKeyDetails?.namedCurve !== "prime256v1"
+  ) {
+    throw new Error("Nomad host public keys must use P-256");
+  }
+
   const publicKeyInfo = AsnConvert.parse(
-    keys.publicKey.export({ type: "spki", format: "der" }),
+    key.export({ type: "spki", format: "der" }),
     SubjectPublicKeyInfo,
   );
   const caExpiry = ca.validity.notAfter.getTime().getTime();
@@ -199,18 +235,19 @@ export const issueCertificate = async (
     signatureValue: signature.slice().buffer,
   });
 
-  return {
-    certificate: new X509Certificate(
-      Buffer.from(AsnConvert.serialize(certificate)),
-    ).toString(),
-    privateKey: keys.privateKey
-      .export({ type: "pkcs8", format: "pem" })
-      .toString(),
-  };
+  return new X509Certificate(
+    Buffer.from(AsnConvert.serialize(certificate)),
+  ).toString();
 };
 
 export const kmsSigner =
-  (keyId: string, client = new KMSClient({})): CertificateSigner =>
+  (
+    keyId: string,
+    client = new KMSClient({
+      maxAttempts: 2,
+      requestHandler: { connectionTimeout: 2000, requestTimeout: 5000 },
+    }),
+  ): CertificateSigner =>
   async (message) => {
     const { Signature } = await client.send(
       new SignCommand({

@@ -11,6 +11,7 @@ import {
 
 describe("host bootstrap environment", () => {
   const host: HostBootstrap = {
+    renewalToken: "r".repeat(43),
     instanceId: "019d5a4a-0000-7000-8000-000000000001",
     nodeName: "runpod-abc123",
     nomadNodeId: "3f1e5a52-8d4b-4c1e-9a55-111111111111",

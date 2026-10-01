@@ -65,6 +65,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y cmake g++ libcurl4-openssl-dev python3 openssl
           bash .mise/tasks/desmond/test
+      - name: Test GPU certificate renewal and actual Nomad TLS reload
+        run: bash product/inference/images/nomad-base/tests/test-renewal.sh
       - name: Test GLM startup qualification
         run: python3 -m unittest discover -s product/inference/runtimes/glm -p 'test_warmup*.py'
       - run: |

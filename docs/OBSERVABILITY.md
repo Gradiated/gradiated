@@ -239,3 +239,13 @@ Prometheus rule, Alertmanager, and DevEx checks that apply to the change.
 Verify scrape targets, dashboard data, blackbox probes, and notification
 delivery after Argo CD reconciliation. SGLang visibility is derived from the
 gateway because the runtime is external to this cluster.
+
+GPU Nomad certificate renewal adds four routed rules and four panels to the
+Controllers dashboard: renewal overdue for one hour (warning), heartbeat over
+one hour old for 15 minutes or never received (warning), less than 24 hours
+validity for five minutes (critical), and missing metrics or failed inventory
+queries for five minutes (warning). The production API exports these metrics
+and serves renewal independently of MCP. Active bound hosts without credentials are
+included. These metrics describe host-reported installation; they do not prove
+host integrity. The rules and panels are repository configuration until deployed;
+verify notification delivery during rollout. See the [Nomad rollout guide](../infra/environments/prod/us-east-1/kubernetes/nomad/README.md).

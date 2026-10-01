@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   check,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -8,7 +9,9 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-// Provider inventory only. Nomad owns device discovery and scheduling state.
+import type { InstanceCertificate } from "../../instances/certificate-schema.js";
+
+// Nomad owns device discovery and scheduling state.
 export const instances = pgTable(
   "instances",
   {
@@ -20,6 +23,7 @@ export const instances = pgTable(
     faultDomain: text("fault_domain"),
     sku: text("sku").notNull(),
     nomadNodeId: uuid("nomad_node_id"),
+    certificate: jsonb("certificate").$type<InstanceCertificate>(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
       .defaultNow()
       .notNull(),

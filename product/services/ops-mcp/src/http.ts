@@ -236,8 +236,12 @@ export const createHttp = (options: {
       response.writeHead(404).end();
       return;
     }
-    response.setHeader("Content-Type", registry.contentType);
-    response.end(await registry.metrics());
+    try {
+      response.setHeader("Content-Type", registry.contentType);
+      response.end(await registry.metrics());
+    } catch {
+      response.writeHead(503).end();
+    }
   });
 
   return { server, privateServer, metrics };

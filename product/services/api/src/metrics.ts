@@ -1,3 +1,4 @@
+import type { InstanceCertificateService } from "@gradiated/control";
 import type { MiddlewareHandler } from "hono";
 import { createServer, type Server } from "node:http";
 import {
@@ -41,8 +42,74 @@ export class ApiMetrics {
   private readonly httpRequests: Counter<"method" | "route" | "status">;
   private readonly httpResponseSize: Histogram<"method" | "route">;
 
-  constructor(options: { collectProcessMetrics?: boolean } = {}) {
+  private readonly collectHostCertificates: (() => Promise<void>) | undefined;
+
+  constructor(
+    options: {
+      collectProcessMetrics?: boolean;
+      hostCertificateCredentials?:
+        (() => Promise<InstanceCertificateService>) | undefined;
+    } = {},
+  ) {
     this.registry.setDefaultLabels({ service: "api" });
+    let collectHostCertificates: (() => Promise<void>) | undefined;
+    if (options.hostCertificateCredentials) {
+      const metrics = (
+        [
+          [
+            "nomad_gpu_certificate_expiry_timestamp_seconds",
+            "Last host-reported installed Nomad certificate expiry",
+            "observedExpiresAt",
+          ],
+          [
+            "nomad_gpu_certificate_last_seen_timestamp_seconds",
+            "Last authenticated GPU renewal-agent heartbeat",
+            "observedAt",
+          ],
+          [
+            "nomad_gpu_certificate_renewal_due_timestamp_seconds",
+            "When the installed GPU certificate should be renewed",
+            "observedRenewalDueAt",
+          ],
+        ] as const
+      ).map(([name, help, field]) => ({
+        field,
+        gauge: new Gauge({
+          name,
+          help,
+          labelNames: ["instance_id"],
+          registers: [this.registry],
+        }),
+      }));
+      const healthy = new Gauge({
+        name: "nomad_gpu_certificate_observation_up",
+        help: "Whether the issuer can collect GPU certificate inventory",
+        registers: [this.registry],
+      });
+      collectHostCertificates = async () => {
+        try {
+          const rows = await (
+            await options.hostCertificateCredentials!()
+          ).observations();
+          for (const { gauge, field } of metrics) {
+            gauge.reset();
+            for (const row of rows) {
+              const value = row[field];
+              gauge.set(
+                { instance_id: row.instanceId },
+                value ? value.getTime() / 1000 : 0,
+              );
+            }
+          }
+          healthy.set(1);
+        } catch {
+          for (const { gauge } of metrics) gauge.reset();
+          healthy.set(0);
+        }
+      };
+    }
+
+    this.collectHostCertificates = collectHostCertificates;
     new Gauge({
       name: "gradiated_api_service_info",
       help: "Constant service identity metric used to detect missing API telemetry.",
@@ -183,6 +250,7 @@ export class ApiMetrics {
   };
 
   async render(): Promise<string> {
+    await this.collectHostCertificates?.();
     return this.registry.metrics();
   }
 }

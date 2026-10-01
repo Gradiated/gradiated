@@ -1,3 +1,7 @@
+import {
+  createHostCertificateRouter,
+  type HostCertificateDependencies,
+} from "./routes/instance-certificates.js";
 import { apiReference } from "@scalar/hono-api-reference";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { bodyLimit } from "hono/body-limit";
@@ -34,6 +38,7 @@ import type {
 import type { WaitlistWelcomeSender } from "./email/waitlist-welcome.js";
 
 export interface AppDependencies {
+  hostCertificates?: HostCertificateDependencies;
   allowedOrigins: string[];
   auth: AuthService;
   authTestMailbox?: AuthTestMailbox | undefined;
@@ -44,6 +49,7 @@ export interface AppDependencies {
 }
 
 export const createApp = ({
+  hostCertificates,
   allowedOrigins,
   auth,
   authTestMailbox,
@@ -108,6 +114,9 @@ export const createApp = ({
     await next();
   });
 
+  if (hostCertificates)
+    app.route("/", createHostCertificateRouter(hostCertificates));
+
   if (authTestMailbox) registerAuthTestRoutes(app, authTestMailbox);
   app.on(["GET", "POST"], "/api/auth/*", (context) =>
     auth.handler(context.req.raw),
@@ -139,7 +148,9 @@ export const createApp = ({
   registerTrainingRoutes(app, services.training);
   registerGatewayContract(app);
 
-  app.doc31("/api/openapi.json", openApiDocument);
+  app.get("/api/openapi.json", (context) =>
+    context.json(publicOpenApiDocument(app)),
+  );
   app.get(
     "/docs",
     apiReference({
@@ -207,4 +218,18 @@ export const openApiDocument = {
       description: "Inference activity and generation history.",
     },
   ],
+};
+
+export const publicOpenApiDocument = (
+  app: OpenAPIHono<ApiEnvironment>,
+): ReturnType<OpenAPIHono<ApiEnvironment>["getOpenAPI31Document"]> => {
+  const document = app.getOpenAPI31Document(openApiDocument);
+  document.paths = Object.fromEntries(
+    Object.entries(document.paths ?? {}).filter(
+      ([path]) =>
+        path !== "/api/internal" && !path.startsWith("/api/internal/"),
+    ),
+  );
+
+  return document;
 };

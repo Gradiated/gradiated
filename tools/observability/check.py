@@ -283,6 +283,48 @@ def main():
     scenario('server renewer holds a certificate', [certificate, sidecar, issued],
              None, [renewer], eval_time='70m')
 
+    host_labels = {'instance_id': 'gpu-test'}
+    def host_series(metric, values):
+        return {'series': metric + '{instance_id="gpu-test"}', 'values': values}
+
+    for name, due, fires, duration in [
+        ('not due', '2000000+0x200', False, '70m'),
+        ('failed bootstrap migration', '1+0x200', True, '70m'),
+        ('freshly overdue', '1+0x200', False, '30m'),
+        ('renewed', '1+0x60 2000000+0x140', False, '70m'),
+    ]:
+        alert = 'NomadGpuCertificateRenewalStalled'
+        scenario('GPU renewal ' + name, [host_series('nomad_gpu_certificate_renewal_due_timestamp_seconds', due)],
+                 alert if fires else None, [alert], host_labels, duration)
+
+    for name, seen, fires, duration in [
+        ('healthy', '0+30x200', False, '80m'),
+        ('never installed', '0+0x200', True, '80m'),
+        ('stopped recently', '1+0x200', False, '65m'),
+        ('recovered', '0+0x150 4500+30x50', False, '80m'),
+    ]:
+        alert = 'NomadGpuCertificateRenewerMissing'
+        scenario('GPU heartbeat ' + name, [host_series('nomad_gpu_certificate_last_seen_timestamp_seconds', seen)],
+                 alert if fires else None, [alert], host_labels, duration)
+
+    for name, expires, fires in [('comfortable margin', 172800, False), ('urgent', 36000, True),
+                                  ('expired', 1, True), ('not observed', 0, False)]:
+        alert = 'NomadGpuCertificateExpiryImminent'
+        scenario('GPU expiry ' + name, [host_series('nomad_gpu_certificate_expiry_timestamp_seconds', f'{expires}+0x30')],
+                 alert if fires else None, [alert], host_labels, '8m')
+
+    for name, scrape, collection, fires in [('healthy', 1, 1, False), ('scrape down', 0, None, True),
+                                            ('scrape missing', None, None, True), ('database down', 1, 0, True),
+                                            ('collector absent', 1, None, True)]:
+        alert = 'NomadGpuCertificateMonitoringUnavailable'
+        inputs = []
+        if scrape is not None:
+            inputs.append({'series': 'up{service="api"}', 'values': f'{scrape}+0x30'})
+        if collection is not None:
+            inputs.append({'series': 'nomad_gpu_certificate_observation_up', 'values': f'{collection}+0x30'})
+        scenario('GPU monitoring ' + name, inputs, alert if fires else None, [alert],
+                 {'service': 'nomad'}, '8m')
+
     replica_alert = 'DeploymentUnavailable'
     for name, available, desired, fires in [
         ('complete service outage', 0, 2, True),

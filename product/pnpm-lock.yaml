@@ -164,6 +164,9 @@ importers:
       '@gradiated/control':
         specifier: workspace:*
         version: link:../../packages/control
+      '@gradiated/nomad-pki':
+        specifier: workspace:*
+        version: link:../../packages/nomad-pki
       '@gradiated/temporal':
         specifier: workspace:*
         version: link:../../packages/temporal

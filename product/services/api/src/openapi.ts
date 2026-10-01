@@ -1,4 +1,8 @@
-import { createApp, openApiDocument, type AppDependencies } from "./app.js";
+import {
+  createApp,
+  publicOpenApiDocument,
+  type AppDependencies,
+} from "./app.js";
 import { ApiMetrics } from "./metrics.js";
 
 const unserved = (name: string) => (): never => {
@@ -69,4 +73,4 @@ type OpenApiDocument = ReturnType<
 >;
 
 export const createOpenApiDocument = (): OpenApiDocument =>
-  createApp(unservedDependencies()).getOpenAPI31Document(openApiDocument);
+  publicOpenApiDocument(createApp(unservedDependencies()));

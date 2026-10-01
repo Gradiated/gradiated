@@ -5,7 +5,7 @@ set -euo pipefail
 bootstrap=(
   GRADIATED_INSTANCE_ID GRADIATED_NODE_NAME GRADIATED_NOMAD_NODE_ID
   GRADIATED_NOMAD_NODE_SECRET GRADIATED_NOMAD_CA GRADIATED_NOMAD_CERT
-  GRADIATED_NOMAD_KEY GRADIATED_ARTIFACT_ENV
+  GRADIATED_NOMAD_KEY GRADIATED_ARTIFACT_ENV GRADIATED_NOMAD_RENEWAL_TOKEN
 )
 uuid='^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
 
@@ -17,6 +17,7 @@ private_file() {
 write_bootstrap() {
   local name
   for name in "${bootstrap[@]}"; do
+    [[ "$name" == GRADIATED_NOMAD_RENEWAL_TOKEN ]] && continue
     [[ -n "${!name:-}" ]] || {
       echo "Host bootstrap is missing $name" >&2
       exit 1
@@ -33,10 +34,23 @@ write_bootstrap() {
     exit 1
   }
 
+  # Provider bootstrap replaces both files before starting any agent.
+  rm -f /etc/nomad/tls/client.pem /etc/nomad/tls/client-key.pem
+  rm -rf /etc/nomad/tls/renewal
   base64 -d <<<"$GRADIATED_NOMAD_CA" | private_file nomad /etc/nomad/tls/ca.pem
   base64 -d <<<"$GRADIATED_NOMAD_CERT" | private_file nomad /etc/nomad/tls/client.pem
   base64 -d <<<"$GRADIATED_NOMAD_KEY" | private_file nomad /etc/nomad/tls/client-key.pem
   base64 -d <<<"$GRADIATED_ARTIFACT_ENV" | private_file downloader /etc/gradiated/artifact.env
+
+  if [[ -n "${GRADIATED_NOMAD_RENEWAL_TOKEN:-}" ]]; then
+    python3 - <<'PYCONFIG' | private_file nomad /etc/nomad/tls/renewal.json
+import json, os, re
+value = os.environ["GRADIATED_NOMAD_RENEWAL_TOKEN"]
+if not re.fullmatch(r"[A-Za-z0-9_-]{43}", value):
+    raise SystemExit("Invalid certificate renewal token")
+print(json.dumps({"instance_id": os.environ["GRADIATED_INSTANCE_ID"], "nomad_node_id": os.environ["GRADIATED_NOMAD_NODE_ID"], "token": value}))
+PYCONFIG
+  fi
 
   # Nomad adopts this identity; it rejects a trailing newline.
   install -d -m 700 -o nomad -g nomad /var/lib/nomad/client

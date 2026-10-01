@@ -218,6 +218,12 @@ inference requests through the API service. The static host must return
 `index.html` for console routes so browser refreshes preserve client-side
 routing.
 
+Infrastructure endpoints use `/api/internal/` and authenticate independently
+of customer sessions. Both the served and generated public OpenAPI documents
+exclude this namespace centrally, so the API reference cannot advertise these
+routes even if an individual route omits `hide` metadata. The prefix controls
+documentation visibility; it does not replace authentication.
+
 ### `website` and developer docs
 
 The public Vite website runs at `gradiated.com`. Its docs use the generated

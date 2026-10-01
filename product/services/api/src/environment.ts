@@ -36,15 +36,24 @@ const DeploymentStatusTokensSchema = z
     (tokens): ReadonlyMap<string, string> => new Map(Object.entries(tokens)),
   );
 
-const ApiOnlyEnvironmentSchema = z.object({
-  TRAINING_ARTIFACTS_BUCKET: z.string().min(1).optional(),
-  CONTENTS_BUCKET: z.string().min(1).optional(),
-  METRICS_PORT: PortSchema.default(9_464),
-  PROFILING_INGEST_TOKEN: z.string().min(32).optional(),
-  PROFILING_HOST: z.string().min(1).default("0.0.0.0"),
-  PROFILING_PORT: PortSchema.default(3_003),
-  DEPLOYMENT_STATUS_INGEST_TOKENS: DeploymentStatusTokensSchema,
-});
+const ApiOnlyEnvironmentSchema = z
+  .object({
+    NOMAD_CA_KMS_KEY: z.string().min(1).optional(),
+    NOMAD_CA_PEM: z.string().min(1).optional(),
+    TRAINING_ARTIFACTS_BUCKET: z.string().min(1).optional(),
+    CONTENTS_BUCKET: z.string().min(1).optional(),
+    METRICS_PORT: PortSchema.default(9_464),
+    PROFILING_INGEST_TOKEN: z.string().min(32).optional(),
+    PROFILING_HOST: z.string().min(1).default("0.0.0.0"),
+    PROFILING_PORT: PortSchema.default(3_003),
+    DEPLOYMENT_STATUS_INGEST_TOKENS: DeploymentStatusTokensSchema,
+  })
+  .refine(
+    (value) => Boolean(value.NOMAD_CA_KMS_KEY) === Boolean(value.NOMAD_CA_PEM),
+    {
+      message: "NOMAD_CA_KMS_KEY and NOMAD_CA_PEM must be configured together",
+    },
+  );
 
 export type AuthEmailTransport =
   { kind: "test" } | { kind: "resend"; from: string; apiKey: string };

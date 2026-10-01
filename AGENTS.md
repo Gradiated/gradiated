@@ -59,4 +59,4 @@ When addressing a review comment, resolve its thread after the fix is pushed. Wh
 
 Run `python3 tools/devex/check.py` first (`make devex-check` is an optional shorthand), then the narrowest relevant checks and workstream checks. GitHub Actions runs the same DevEx checks plus Rust formatting and tests for the current research workspace after pushes. For research changes, the required checks are documented in `research/lab/AGENTS.md`.
 
-Never stage or publish unrelated worktree changes, and always summarize the exact paths included. Commit, branch, pull-request, and push behavior follows the user's requested workflow; do not publish changes unless requested.
+Never stage or publish unrelated worktree changes, and always summarize the exact paths included. By default, create a scoped branch, commit the changes, push it, and open a pull request without asking for confirmation. Follow any different workflow requested by the user. Merging and production deployment require separate authorization unless already requested.

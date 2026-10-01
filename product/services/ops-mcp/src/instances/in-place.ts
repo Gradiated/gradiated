@@ -54,6 +54,12 @@ subprocess.run(["bash", "/opt/gradiated/bin/configure-serving"], env=serving_env
 name, instance = env["GRADIATED_NODE_NAME"], env["GRADIATED_INSTANCE_ID"]
 config = f'name = "{name}"\nclient {{\n meta {{\n gradiated_instance_id = "{instance}"\n serving_ingress = "host-proxy"\n runtime_base_id = "{base}"\n }}\n}}\n'
 write("/etc/nomad/node.hcl", config.encode(), "nomad")
+if env.get("GRADIATED_NOMAD_RENEWAL_TOKEN"):
+    token = env["GRADIATED_NOMAD_RENEWAL_TOKEN"]
+    if not re.fullmatch(r"[A-Za-z0-9_-]{43}", token):
+        sys.exit(64)
+    renewal = {"instance_id": env["GRADIATED_INSTANCE_ID"], "nomad_node_id": env["GRADIATED_NOMAD_NODE_ID"], "token": token}
+    write("/etc/nomad/tls/renewal.json", json.dumps(renewal).encode(), "nomad")
 identity = {name: env[name] for name in ("GRADIATED_INSTANCE_ID", "GRADIATED_NOMAD_NODE_ID", "GRADIATED_NOMAD_NODE_SECRET")}
 write("/etc/gradiated/in-place-enrollment.json", json.dumps(identity).encode(), "root")
 with open("/var/log/gradiated-nomad-client.log", "ab", buffering=0) as log:

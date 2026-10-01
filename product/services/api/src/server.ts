@@ -1,9 +1,11 @@
+import { kmsSigner } from "@gradiated/nomad-pki";
 import { createTrainingEngine } from "./training/engine.js";
 import { serve } from "@hono/node-server";
 import {
   createCatalogBillingService,
   createClickHouseRuntimeClient,
   createControlDatabase,
+  createInstanceCertificateService,
   createContentStore,
   createTraceService,
   createTrainingService,
@@ -123,11 +125,30 @@ const auth = createAuthService(database, {
   secret: environment.BETTER_AUTH_SECRET,
   trustedOrigins,
 });
-const metrics = new ApiMetrics();
+const hostCertificates =
+  environment.NOMAD_CA_KMS_KEY && environment.NOMAD_CA_PEM
+    ? {
+        credentials: async () => createInstanceCertificateService(database),
+        caCertificate: async () => environment.NOMAD_CA_PEM!,
+        signer: kmsSigner(environment.NOMAD_CA_KMS_KEY),
+        audit: (event: Record<string, unknown>) => {
+          const { event: name, level, ...fields } = event;
+          serviceLog(
+            level === "error" ? "error" : level === "warn" ? "warn" : "info",
+            String(name),
+            fields,
+          );
+        },
+      }
+    : undefined;
+const metrics = new ApiMetrics({
+  hostCertificateCredentials: hostCertificates?.credentials,
+});
 
 const trainingEngine = createTrainingEngine(process.env);
 
 const app = createApp({
+  ...(hostCertificates ? { hostCertificates } : {}),
   allowedOrigins: trustedOrigins,
   auth,
   authTestMailbox,

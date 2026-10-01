@@ -14,6 +14,7 @@ export interface HostBootstrap {
   readonly certificate: string;
   readonly privateKey: string;
   readonly artifact: ArtifactCredentials;
+  readonly renewalToken: string;
 }
 
 export const nodeName = (provider: string, providerInstanceId: string) => {
@@ -68,6 +69,8 @@ export const hostBootstrapEnvironment = (
   host: HostBootstrap,
 ): Record<string, string> => {
   const { accessKeyId, secretAccessKey } = host.artifact;
+  if (!/^[A-Za-z0-9_-]{43}$/.test(host.renewalToken))
+    throw new Error("Invalid host renewal token");
   // The host sources this file, so accept only what AWS issues.
   if (!/^[A-Z0-9]{16,128}$/.test(accessKeyId)) {
     throw new Error("Artifact access key id has an unexpected format");
@@ -78,6 +81,7 @@ export const hostBootstrapEnvironment = (
 
   return {
     GRADIATED_INSTANCE_ID: host.instanceId,
+    GRADIATED_NOMAD_RENEWAL_TOKEN: host.renewalToken,
     GRADIATED_NODE_NAME: host.nodeName,
     GRADIATED_NOMAD_NODE_ID: host.nomadNodeId,
     GRADIATED_NOMAD_NODE_SECRET: host.nomadNodeSecret,

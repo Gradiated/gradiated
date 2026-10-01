@@ -3,6 +3,12 @@ set -euo pipefail
 # Runpod has no delegated cgroups. These capabilities permit user switching,
 # allocation ownership, process cleanup, and garbage collection of runtime-owned
 # directories without running the agent as root. Model tasks explicitly drop all capabilities.
+printf '%s\n' "$$" | runuser -u nomad -- tee /var/lib/nomad/client/agent.pid >/dev/null
+if [[ -f /etc/nomad/tls/renewal.json ]]; then
+  setpriv --reuid=nomad --regid=nomad --clear-groups \
+    --inh-caps=-all --ambient-caps=-all --no-new-privs \
+    bash /opt/gradiated/bin/run-renewer &
+fi
 exec setpriv --reuid=nomad --regid=nomad --init-groups \
   --inh-caps=+setuid,+setgid,+chown,+kill,+dac_override \
   --ambient-caps=+setuid,+setgid,+chown,+kill,+dac_override \

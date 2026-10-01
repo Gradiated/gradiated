@@ -1,6 +1,9 @@
 import { randomUUID } from "node:crypto";
 
-import type { InstanceService } from "@gradiated/control";
+import type {
+  InstanceService,
+  InstanceCertificateService,
+} from "@gradiated/control";
 
 import {
   hostProfile,
@@ -56,6 +59,7 @@ export type RegistrationRequest = {
 export type RegistrationDependencies = {
   readonly providers: Readonly<Record<string, () => Promise<InstanceProvider>>>;
   readonly instances: () => Promise<InstanceService>;
+  readonly certificateCredentials: () => Promise<InstanceCertificateService>;
   readonly hostImage: string;
   readonly caCertificate: () => Promise<string>;
   readonly signer: CertificateSigner;
@@ -133,7 +137,7 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
       if (record.nomadNodeId === carried.nomadNodeId) {
         throw new Error(
           `${registration.providerInstanceId} is already registered as node ${carried.nomadNodeId}; ` +
-            "renewing its certificate or image needs reset_running_pod",
+            "renew its certificate in place; replacing the provider image needs an explicitly authorized reset",
         );
       }
 
@@ -162,6 +166,9 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
     });
 
     const tls = await issueCertificate(ca, dependencies.signer, hostProfile);
+    const renewalToken = await (
+      await dependencies.certificateCredentials()
+    ).enroll(record.id, identity.nomadNodeId);
     advance(registration, "updating_provider");
 
     await provider.bootstrap(
@@ -175,6 +182,7 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
           ca,
           ...tls,
           artifact,
+          renewalToken,
         }),
         ...servingEnvironment(tokens),
       },

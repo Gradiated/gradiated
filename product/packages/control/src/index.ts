@@ -166,3 +166,10 @@ export {
   type ObjectReadOptions,
   type ObjectDownloadOptions,
 } from "./storage/object-storage.js";
+
+export {
+  createInstanceCertificateService,
+  CertificateAuthorizationError,
+  CertificateRateLimitError,
+  type InstanceCertificateService,
+} from "./instances/certificates.js";

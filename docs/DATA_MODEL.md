@@ -734,14 +734,30 @@ unique provider identity. Region and fault domain can be unknown. `sku` identifi
 the hardware offering, such as `4xb300` or `cpu-32vcpu`.
 
 The nullable, unique `nomad_node_id` links the inventory record to Nomad.
-Creation, update, and retirement timestamps describe the record. They do not
-control access. Credential issuance and revocation remain separate. Nomad owns
+Creation and update timestamps describe the record. Retirement additionally
+blocks GPU certificate renewal. Credential issuance and revocation are stored
+separately. Nomad owns
 device discovery, scheduling eligibility, resource availability, and allocations.
 
 The optional `model_deployments.instance_id` foreign key preserves manual deployment
 compatibility. It does not assign jobs to hosts. The control service can register
 inventory and set or clear a Nomad node link. Authentication and verification of
 that link remain pending. The application database migration remains pending.
+
+Migration 0011 adds nullable `instances.certificate` JSONB state.
+It holds `tokenHash` (the separately enrolled renewal-token SHA-256 digest), authorized
+Nomad node ID, revocation time, last successful issuance time, and last
+host-reported installed certificate expiry (`expiresAt`), renewal due time
+(`renewalDueAt`), and heartbeat (`observedAt`). JSON dates are ISO-8601 strings
+validated with the shared certificate schema. Inventory responses omit this field. No private key or raw
+renewal token is stored. Renewal requires a non-retired instance, the current
+node binding, and a matching unrevoked credential. Re-enrollment replaces the
+credential. The instance row is locked through signing, so revocation and
+retirement serialize with issuance; failed signing rolls back the issuance
+limit. Monitoring includes active bound hosts without credentials so unenrolled agents
+cannot disappear from alerts. Host reports support overdue-renewal, expiry, and
+missing-agent alerts, and do not attest
+to host integrity. See the Nomad README for rollout and compromise limits.
 
 ## Task training
 

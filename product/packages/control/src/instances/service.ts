@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, getTableColumns } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
 
@@ -18,7 +18,9 @@ export const instanceRegistrationSchema = z.strictObject({
 
 export type InstanceRegistration = z.infer<typeof instanceRegistrationSchema>;
 
-export type InstanceRecord = typeof instances.$inferSelect;
+export type InstanceRecord = Omit<typeof instances.$inferSelect, "certificate">;
+const { certificate: _certificate, ...inventoryColumns } =
+  getTableColumns(instances);
 
 export interface InstanceService {
   register(value: InstanceRegistration): Promise<InstanceRecord>;
@@ -51,7 +53,7 @@ export const createInstanceService = (
           updatedAt: sql`now()`,
         },
       })
-      .returning();
+      .returning(inventoryColumns);
 
     return record!;
   },
@@ -61,7 +63,7 @@ export const createInstanceService = (
       .update(instances)
       .set({ nomadNodeId: z.uuid().parse(nomadNodeId), updatedAt: sql`now()` })
       .where(eq(instances.id, z.uuid().parse(instanceId)))
-      .returning();
+      .returning(inventoryColumns);
     if (!record) throw new Error("Instance not found");
 
     return record;

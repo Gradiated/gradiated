@@ -4,6 +4,7 @@ import path from "node:path";
 import {
   createControlDatabase,
   createInstanceService,
+  createInstanceCertificateService,
 } from "@gradiated/control";
 import { z } from "zod";
 
@@ -48,6 +49,8 @@ export const productionRegistrations = (
   };
 
   let instances: ReturnType<typeof createInstanceService> | undefined;
+  let certificateCredentials:
+    ReturnType<typeof createInstanceCertificateService> | undefined;
 
   return createRegistrations({
     providers: {
@@ -89,6 +92,10 @@ export const productionRegistrations = (
     },
     instances: async () =>
       (instances ??= createInstanceService(
+        createControlDatabase(await credential("database-url"), 2).database,
+      )),
+    certificateCredentials: async () =>
+      (certificateCredentials ??= createInstanceCertificateService(
         createControlDatabase(await credential("database-url"), 2).database,
       )),
     hostImage: settings.hostImage,

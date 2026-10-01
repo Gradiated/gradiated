@@ -216,3 +216,215 @@ fn a_verify_full_connection_string_is_accepted() {
         );
     }
 }
+
+async fn insert_ledger_entry(
+    client: &tokio_postgres::Client,
+    organization: Uuid,
+    id: Uuid,
+    at: DateTime<Utc>,
+    source_type: &str,
+) {
+    client
+        .execute(
+            "insert into balance_transactions
+             (id, organization_id, type, amount, balance_after, source_type, source_id, created_at)
+             values ($1, $2, 'credit', 20, 1020, $3, $4, $5)",
+            &[&id, &organization, &source_type, &id.to_string(), &at],
+        )
+        .await
+        .unwrap();
+}
+
+#[tokio::test]
+#[ignore = "requires the local Compose PostgreSQL with migrations applied"]
+async fn ledger_pages_keep_equal_timestamps_and_exclude_other_tenants_and_settlements() {
+    let reader = local_reader();
+    let tenant = Tenant::insert(&reader).await;
+    let other = Tenant::insert(&reader).await;
+    let at = Utc.timestamp_opt(1_786_800_000, 123_456_000).unwrap();
+    let mut ids = [Uuid::now_v7(), Uuid::now_v7(), Uuid::now_v7()];
+    ids.sort();
+    let client = reader.client().await.unwrap();
+
+    for id in ids.into_iter().rev() {
+        insert_ledger_entry(&client, tenant.organization_id, id, at, "operator").await;
+    }
+    insert_ledger_entry(
+        &client,
+        other.organization_id,
+        Uuid::now_v7(),
+        at,
+        "operator",
+    )
+    .await;
+    insert_ledger_entry(
+        &client,
+        tenant.organization_id,
+        Uuid::now_v7(),
+        at,
+        "generation_settlement_batch",
+    )
+    .await;
+
+    let first = reader
+        .balance_transactions_after(
+            tenant.organization_id,
+            LedgerPosition {
+                created_at: at,
+                id: Uuid::nil(),
+            },
+            2,
+        )
+        .await
+        .unwrap();
+    assert_eq!(
+        first.iter().map(|entry| entry.id).collect::<Vec<_>>(),
+        ids[..2]
+    );
+    assert!(first
+        .iter()
+        .all(|entry| entry.amount == 20 && entry.created_at == at));
+
+    let second = reader
+        .balance_transactions_after(tenant.organization_id, first[1].position(), 2)
+        .await
+        .unwrap();
+    assert_eq!(
+        second.iter().map(|entry| entry.id).collect::<Vec<_>>(),
+        ids[2..]
+    );
+    assert!(reader
+        .balance_transactions_after(tenant.organization_id, second[0].position(), 2,)
+        .await
+        .unwrap()
+        .is_empty());
+
+    drop(client);
+    tenant.remove(&reader).await;
+    other.remove(&reader).await;
+}
+
+#[tokio::test]
+#[ignore = "requires the local Compose PostgreSQL with migrations applied"]
+async fn account_seed_includes_only_replayable_entries_in_its_window() {
+    let reader = local_reader();
+    let tenant = Tenant::insert(&reader).await;
+    let empty = reader
+        .account(tenant.organization_id)
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(empty.seed.balance, 1000);
+    assert_eq!(
+        empty.seed.ledger_head,
+        LedgerPosition {
+            created_at: DateTime::UNIX_EPOCH,
+            id: Uuid::nil()
+        }
+    );
+    assert!(empty.seed.replay_window_entries.is_empty());
+
+    let at = Utc.timestamp_opt(1_786_800_000, 123_456_000).unwrap();
+    let included = Uuid::now_v7();
+    let head = Uuid::now_v7();
+    let client = reader.client().await.unwrap();
+    insert_ledger_entry(
+        &client,
+        tenant.organization_id,
+        Uuid::now_v7(),
+        at - TimeDelta::seconds(31),
+        "operator",
+    )
+    .await;
+    insert_ledger_entry(
+        &client,
+        tenant.organization_id,
+        included,
+        at - TimeDelta::seconds(29),
+        "operator",
+    )
+    .await;
+    insert_ledger_entry(
+        &client,
+        tenant.organization_id,
+        head,
+        at,
+        "generation_settlement_batch",
+    )
+    .await;
+    client
+        .execute(
+            "update billing_accounts set balance = 1060 where organization_id = $1",
+            &[&tenant.organization_id],
+        )
+        .await
+        .unwrap();
+
+    let account = reader
+        .account(tenant.organization_id)
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(account.seed.balance, 1060);
+    assert_eq!(
+        account.seed.ledger_head,
+        LedgerPosition {
+            created_at: at,
+            id: head
+        }
+    );
+    assert_eq!(account.seed.replay_window_entries, vec![included]);
+    assert_eq!(account.organization_kind, "customer");
+    assert_eq!(account.billing_mode, "prepaid");
+
+    drop(client);
+    tenant.remove(&reader).await;
+}
+
+#[tokio::test]
+#[ignore = "requires the local Compose PostgreSQL with migrations applied"]
+async fn account_reads_never_expose_a_partially_committed_billing_transaction() {
+    let reader = local_reader();
+    let tenant = Tenant::insert(&reader).await;
+    let mut client = reader.client().await.unwrap();
+    let transaction = client.transaction().await.unwrap();
+    let id = Uuid::now_v7();
+    let at = Utc::now();
+    transaction
+        .execute(
+            "insert into balance_transactions
+         (id, organization_id, type, amount, balance_after, source_type, source_id, created_at)
+         values ($1, $2, 'credit', 20, 1020, 'operator', $3, $4)",
+            &[&id, &tenant.organization_id, &id.to_string(), &at],
+        )
+        .await
+        .unwrap();
+    transaction
+        .execute(
+            "update billing_accounts set balance = 1020 where organization_id = $1",
+            &[&tenant.organization_id],
+        )
+        .await
+        .unwrap();
+
+    let before = reader
+        .account(tenant.organization_id)
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(before.seed.balance, 1000);
+    assert_eq!(before.seed.ledger_head.id, Uuid::nil());
+    transaction.commit().await.unwrap();
+
+    let after = reader
+        .account(tenant.organization_id)
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(after.seed.balance, 1020);
+    assert_eq!(after.seed.ledger_head.id, id);
+    assert_eq!(after.seed.replay_window_entries, vec![id]);
+
+    drop(client);
+    tenant.remove(&reader).await;
+}

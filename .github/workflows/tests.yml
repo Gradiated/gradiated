@@ -274,6 +274,41 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+  backend-storage:
+    name: Backend storage integration
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true'
+    runs-on: depot-ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v4.2.3
+      - name: Restore Rust build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            product/services/gateway/target
+            product/services/proxy/target
+            product/services/collector/target
+          key: ${{ runner.os }}-backend-storage-${{ hashFiles('product/services/gateway/Cargo.lock', 'product/services/proxy/Cargo.lock', 'product/services/collector/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-backend-storage-
+            ${{ runner.os }}-proxy-e2e-
+            ${{ runner.os }}-gateway-unit-
+      - run: pnpm install --frozen-lockfile
+        working-directory: product
+      - name: Build backend dependencies
+        working-directory: product
+        run: pnpm turbo run build --filter='@gradiated/worker^...'
+      - name: Run worker ingestion and settlement against real Valkey and ClickHouse
+        working-directory: product
+        run: pnpm --filter @gradiated/worker test:integration
+      - name: Run proxy capture through the collector and S3-compatible storage
+        working-directory: product
+        run: pnpm --filter @gradiated/collector test:integration
+
   inference-e2e:
     name: Inference E2E Tests
     needs: changes
@@ -410,7 +445,7 @@ jobs:
   passed:
     name: Product tests passed
     if: always()
-    needs: [changes, unit, integration, inference-native, gateway-contract, proxy-e2e, inference-e2e, playwright]
+    needs: [changes, unit, integration, inference-native, gateway-contract, proxy-e2e, backend-storage, inference-e2e, playwright]
     runs-on: ubuntu-latest
     steps:
       - name: Fail when a required job failed

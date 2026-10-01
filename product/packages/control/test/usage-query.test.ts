@@ -38,6 +38,38 @@ describe("usage cursor", () => {
     },
   );
 
+  it("preserves exact charge and timestamp precision in a client-supplied cursor", () => {
+    const cursor = {
+      sort: "highest_cost" as const,
+      charge: "18446744073709551615",
+      completedAt: "2026-08-15T12:00:00.123456Z",
+      id: row.id,
+    };
+    expect(decodeCursor(encoded(cursor), "highest_cost")).toEqual(cursor);
+  });
+
+  it.each([
+    [
+      "a numeric charge that has already lost precision",
+      { charge: 9_007_199_254_740_992 },
+    ],
+    ["a signed charge", { charge: "-1" }],
+    ["a fractional charge", { charge: "1.5" }],
+    ["an invalid timestamp", { completedAt: "not-a-timestamp" }],
+    ["an invalid generation ID", { id: "not-a-uuid" }],
+  ] as const)("rejects a client cursor with %s", (_name, overrides) => {
+    const cursor = encoded({
+      sort: "highest_cost",
+      charge: "250",
+      completedAt: row.completed_at,
+      id: row.id,
+      ...overrides,
+    });
+    expect(() => decodeCursor(cursor, "highest_cost")).toThrow(
+      expect.objectContaining({ code: "not_found" }),
+    );
+  });
+
   it.each([
     ["a cursor for another sort", encodeCursor(row, "newest"), "highest_cost"],
     ["a cursor that is not JSON", "not-a-cursor", "newest"],

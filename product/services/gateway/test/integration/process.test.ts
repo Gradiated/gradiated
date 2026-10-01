@@ -189,6 +189,109 @@ describe("gateway process", () => {
     await refused.expectNotDispatched();
   });
 
+  it("enforces one organization concurrency cap across two gateway processes", async () => {
+    const first = await GatewayProcess.start({
+      ...(await gatewayOptions()),
+      generationTimeoutSeconds: 10,
+    });
+    const second = await GatewayProcess.start({
+      ...(await gatewayOptions()),
+      generationTimeoutSeconds: 10,
+    });
+    started.push(first, second);
+    const instance = await makeCase("vllm", { gatewayUrl: first.url });
+    const gates = [deferred(), deferred()];
+    const plans = gates.map((gate) => instance.runtimes[0]!.enqueue({ gate }));
+    const send = (url: string) =>
+      new Client(url).post(instance.path, {
+        headers: instance.headers,
+        json: instance.body(),
+      });
+    const held = [send(first.url), send(second.url)];
+
+    try {
+      await Promise.all(plans.map(entered));
+      expect(await instance.redis.zCard(instance.inflightKey)).toBe(2);
+      const refused = await Promise.all(
+        Array.from({ length: 6 }, (_, index) =>
+          send(index % 2 ? first.url : second.url),
+        ),
+      );
+      for (const response of refused)
+        expectRejected(response, { code: "concurrency_exceeded" });
+      expect(instance.totalCalls()).toBe(2);
+    } finally {
+      for (const gate of gates) gate.resolve();
+    }
+
+    for (const response of await Promise.all(held)) {
+      expect(response.status).toBe(200);
+      await instance.settled(response);
+    }
+    expect(await instance.settlements()).toHaveLength(2);
+  });
+
+  it("recovers capacity from a crashed gateway after its leases expire without inventing charges", async () => {
+    const settings = {
+      leaseFinalizationMarginSeconds: 1,
+      expiredLeaseCleanupGraceSeconds: 1,
+    };
+    const crashed = await GatewayProcess.start({
+      ...(await gatewayOptions()),
+      ...settings,
+    });
+    const survivor = await GatewayProcess.start({
+      ...(await gatewayOptions()),
+      ...settings,
+    });
+    started.push(crashed, survivor);
+    const instance = await makeCase("vllm", { gatewayUrl: crashed.url });
+    const gates = [deferred(), deferred()];
+    const plans = gates.map((gate) => instance.runtimes[0]!.enqueue({ gate }));
+    const held = plans.map(() =>
+      instance.post().catch((error: unknown) => error),
+    );
+    const send = () =>
+      new Client(survivor.url).post(instance.path, {
+        headers: instance.headers,
+        json: instance.body(),
+      });
+
+    try {
+      await Promise.all(plans.map(entered));
+      const leases = await instance.redis.zRangeWithScores(
+        instance.inflightKey,
+        0,
+        -1,
+      );
+      expect(leases).toHaveLength(2);
+      const balance = await instance.operationalBalance();
+      crashed.child.kill("SIGKILL");
+      await crashed.exited;
+      expectRejected(await send(), { code: "concurrency_exceeded" });
+      expect(await instance.operationalBalance()).toBe(balance);
+      expect(await instance.settlements()).toEqual([]);
+
+      const expires = Math.max(...leases.map((lease) => lease.score));
+      await eventually(
+        () => Date.now() > expires + 1_000,
+        7_000,
+        "abandoned lease expiry and cleanup grace",
+      );
+      for (const gate of gates) gate.resolve();
+      const response = await send();
+      expect(response.status).toBe(200);
+      await instance.settled(response);
+      expect(await instance.redis.zCard(instance.inflightKey)).toBe(0);
+      expect(await instance.settlements()).toHaveLength(1);
+      for (const result of await Promise.all(held))
+        expect(result).toBeInstanceOf(Error);
+    } finally {
+      for (const gate of gates) gate.resolve();
+      await Promise.all(held);
+    }
+  });
+
   it("fails closed when PostgreSQL rejects a read-through after startup", async () => {
     const options = await gatewayOptions();
     const role = new ReaderRole(admin);

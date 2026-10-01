@@ -2,7 +2,10 @@ import { randomUUID } from "node:crypto";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { BalanceSourceConflictError } from "../src/billing/ledger.js";
+import {
+  postBalanceTransaction,
+  BalanceSourceConflictError,
+} from "../src/billing/ledger.js";
 import {
   createGenerationSettlementStore,
   type SettlementLeadership,
@@ -127,6 +130,96 @@ describe("generation settlement store", () => {
 
     expect(await ledger(organizationId)).toEqual([]);
     expect(await leadership.postSettlement(posting(billed))).toBe(true);
+  });
+
+  it("rolls back a debit when the billing account update fails and can retry on the same leader", async () => {
+    const organizationId = await billedOrganization();
+    const before = await billingAccountRow(
+      testDatabase.database,
+      organizationId,
+    );
+    // A database trigger fails after the ledger row has been inserted.
+    await testDatabase.pool.query(`
+      create function reject_balance_update() returns trigger language plpgsql as $$
+      begin
+        raise exception 'Injected balance update failure';
+      end;
+      $$;
+      create trigger reject_balance_update before update on billing_accounts
+        for each row execute function reject_balance_update();
+    `);
+    try {
+      await expect(
+        leadership.postSettlement(posting(organizationId)),
+      ).rejects.toMatchObject({ cause: { code: "P0001" } });
+      expect(await ledger(organizationId)).toEqual([]);
+      expect(
+        await billingAccountRow(testDatabase.database, organizationId),
+      ).toEqual(before);
+      expect(await leadership.getLatestSettlementPeriodStart()).toBeNull();
+    } finally {
+      await testDatabase.pool.query(
+        "drop trigger reject_balance_update on billing_accounts; drop function reject_balance_update()",
+      );
+    }
+
+    expect(await leadership.postSettlement(posting(organizationId))).toBe(true);
+    expect(await balance(organizationId)).toBe(750n);
+    expect(await ledger(organizationId)).toHaveLength(1);
+  });
+
+  it("rolls back an invalid settlement period and leaves leadership usable", async () => {
+    const organizationId = await billedOrganization();
+    await expect(
+      leadership.postSettlement(
+        posting(organizationId, { periodEnd: periodStart }),
+      ),
+    ).rejects.toMatchObject({ cause: { code: "23514" } });
+    expect(await balance(organizationId)).toBe(1_000n);
+    expect(await ledger(organizationId)).toEqual([]);
+    expect(await leadership.postSettlement(posting(organizationId))).toBe(true);
+  });
+
+  it("selects the latest settlement period regardless of posting order and ignores other source types", async () => {
+    const organizationId = await billedOrganization();
+    const later = new Date("2026-08-15T13:00:00.000Z");
+    const sourceId = "operator-only";
+    await testDatabase.database.transaction((tx) =>
+      postBalanceTransaction(tx, {
+        organizationId,
+        type: "credit",
+        amount: 100n,
+        sourceType: "operator",
+        sourceId,
+        createdBy: null,
+      }),
+    );
+    expect(await leadership.getExistingSourceIds([sourceId])).toEqual(
+      new Set(),
+    );
+    expect(await leadership.getLatestSettlementPeriodStart()).toBeNull();
+
+    await leadership.postSettlement(
+      posting(organizationId, {
+        slotId: "20260815T130000Z-300s-v1",
+        periodStart: later,
+        periodEnd: new Date("2026-08-15T13:05:00.000Z"),
+      }),
+    );
+    await leadership.postSettlement(posting(organizationId));
+    expect(await leadership.getLatestSettlementPeriodStart()).toEqual(later);
+    expect(
+      await leadership.getExistingSourceIds([
+        sourceId,
+        `${slotId}:${organizationId}`,
+        `20260815T130000Z-300s-v1:${organizationId}`,
+      ]),
+    ).toEqual(
+      new Set([
+        `${slotId}:${organizationId}`,
+        `20260815T130000Z-300s-v1:${organizationId}`,
+      ]),
+    );
   });
 
   it("reads billing accounts, posted sources and the latest period", async () => {

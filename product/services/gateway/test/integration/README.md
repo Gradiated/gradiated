@@ -31,6 +31,9 @@ with the run's owner name. Teardown removes only the containers whose label
 matches. If a run is killed, a container named `gateway-contract-*` can stay.
 Examine its label before you remove it.
 
+Process tests also run two gateways against the same tenant to check their shared
+admission cap and recovery of leases abandoned by a crashed process.
+
 The shared gateway has a three-second generation deadline, a concurrency cap
 of two for each organization and a one-second record cache.
 `gateway-process.ts` exports these settings. Tests derive their limits from
@@ -158,7 +161,7 @@ When a real runtime is enabled, global setup also starts a second gateway with a
 ## What a green run does not prove
 
 A green run does not test production registration, health publishing, TLS,
-ingress, IAM, settlement workers, Valkey failover, races between gateways,
+ingress, IAM, settlement workers, Valkey failover,
 kernel correctness, tokenizer templates, long contexts or sustained load. The
 Rust unit tests and the ignored Valkey tests are also necessary. A green run
 does not certify a vLLM version or GPU type.

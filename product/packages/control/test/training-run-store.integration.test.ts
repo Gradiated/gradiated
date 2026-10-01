@@ -443,6 +443,77 @@ describe("transactional training run store", () => {
     }
   });
 
+  it.each(["completion", "publication"] as const)(
+    "rolls back %s when its event insert fails and allows a retry",
+    async (operation) => {
+      const own = await seedTrainingTask(db.database);
+      const writes = createTrainingRunStore(db.database);
+      const reads = createTrainingStore(db.database);
+      const id = randomUUID();
+      await writes.create(id, own.input);
+      await writes.transition(id, "publishing");
+      const beforeRun = await reads.getRun(own.workspaceId, id);
+      const beforeEvents = await reads.listRunEvents(id, {});
+      const perform = () =>
+        operation === "completion"
+          ? writes.transition(id, "succeeded")
+          : writes.publish(id, own.input, trainingAdapter, "available");
+
+      await db.pool.query(`
+        create function reject_final_event() returns trigger language plpgsql as $$
+        begin
+          if new.payload->>'type' in ('run_finished', 'published') then
+            raise exception 'Injected final event failure';
+          end if;
+          return new;
+        end;
+        $$;
+        create trigger reject_final_event before insert on training_run_events
+          for each row execute function reject_final_event();
+      `);
+      try {
+        await expect(perform()).rejects.toMatchObject({
+          cause: { code: "P0001" },
+        });
+        expect(await reads.getRun(own.workspaceId, id)).toEqual(beforeRun);
+        expect(await reads.listRunEvents(id, {})).toEqual(beforeEvents);
+        expect(await reads.listVersions(own.task.id)).toEqual([]);
+      } finally {
+        await db.pool.query(
+          "drop trigger reject_final_event on training_run_events; drop function reject_final_event()",
+        );
+      }
+
+      await perform();
+      const events = await reads.listRunEvents(id, {});
+      if (operation === "completion") {
+        const run = await reads.getRun(own.workspaceId, id);
+        expect(run).toMatchObject({
+          stage: "succeeded",
+          finishedAt: expect.any(Date),
+        });
+        expect(
+          events.slice(beforeEvents.length).map((event) => event.payload),
+        ).toEqual([
+          { type: "stage_entered", stage: "succeeded" },
+          { type: "run_finished", stage: "succeeded" },
+        ]);
+      } else {
+        const versions = await reads.listVersions(own.task.id);
+        expect(versions).toHaveLength(1);
+        expect(
+          events.slice(beforeEvents.length).map((event) => event.payload),
+        ).toEqual([
+          {
+            type: "published",
+            version_id: versions[0]!.id,
+            name: versions[0]!.name,
+          },
+        ]);
+      }
+    },
+  );
+
   it("persists evaluation independently of dataset results and ignores evaluation retries", async () => {
     const own = await seedTrainingTask(db.database);
     const writes = createTrainingRunStore(db.database);

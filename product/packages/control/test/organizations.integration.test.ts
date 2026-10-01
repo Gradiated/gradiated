@@ -1,7 +1,13 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { organizationMembers, workspaces } from "../src/db/schema/index.js";
+import {
+  organizationMembers,
+  organizations as organizationTable,
+  billingAccounts,
+  balanceTransactions,
+  workspaces,
+} from "../src/db/schema/index.js";
 import {
   createOrganizationService,
   SIGNUP_CREDIT_NANO_USD,
@@ -86,6 +92,51 @@ describe("organization bootstrap", () => {
 
     expect(second.id).toBe(first.id);
     expect((await rowsFor(first.id)).credits).toHaveLength(1);
+  });
+
+  it("rolls back the entire bootstrap when its final signup credit insert fails", async () => {
+    const userId = await seedUser(testDatabase.database);
+    const snapshot = async () =>
+      Promise.all([
+        testDatabase.database.select().from(organizationTable),
+        testDatabase.database.select().from(organizationMembers),
+        testDatabase.database.select().from(workspaces),
+        testDatabase.database.select().from(billingAccounts),
+        testDatabase.database.select().from(balanceTransactions),
+      ]);
+    const before = await snapshot();
+    await testDatabase.pool.query(`
+      create function reject_signup_credit() returns trigger language plpgsql as $$
+      begin
+        if new.source_id like 'signup-grant:%' then
+          raise exception 'Injected signup credit failure';
+        end if;
+        return new;
+      end;
+      $$;
+      create trigger reject_signup_credit before insert on balance_transactions
+        for each row execute function reject_signup_credit();
+    `);
+    try {
+      await expect(
+        organizations.ensurePersonalForUser(userId),
+      ).rejects.toMatchObject({
+        cause: { code: "P0001" },
+      });
+      expect(await snapshot()).toEqual(before);
+      expect(await organizations.listForUser(userId)).toEqual([]);
+    } finally {
+      await testDatabase.pool.query(
+        "drop trigger reject_signup_credit on balance_transactions; drop function reject_signup_credit()",
+      );
+    }
+
+    const retried = await organizations.ensurePersonalForUser(userId);
+    const rows = await rowsFor(retried.id);
+    expect(rows.members).toHaveLength(1);
+    expect(rows.workspaces).toHaveLength(1);
+    expect(rows.account?.balance).toBe(SIGNUP_CREDIT_NANO_USD);
+    expect(rows.credits).toHaveLength(1);
   });
 
   it("creates an additional organization without a credit", async () => {

@@ -646,3 +646,81 @@ async fn oversized_metadata_is_rejected_without_spooling() {
     );
     assert_eq!(post(&running, TOKEN, body).await, StatusCode::BAD_REQUEST);
 }
+
+#[tokio::test]
+async fn a_manifest_upload_failure_preserves_the_spool_for_restart_and_reuses_the_object_keys() {
+    let data_dir = tempfile::tempdir().unwrap();
+    let store_dir = tempfile::tempdir().unwrap();
+    let body = record(Uuid::now_v7(), "partial-upload");
+    let key = GenerationContent::parse(&body)
+        .unwrap()
+        .stream_key()
+        .unwrap();
+    let mut batch = Batch::create(data_dir.path(), &key).unwrap();
+    batch.append(&batch::compress(&body).unwrap()).unwrap();
+    let spool_path = batch.path.clone();
+    let (_, batch_id) =
+        batch::parse_file_name(spool_path.file_name().unwrap().to_str().unwrap()).unwrap();
+    let base = crate::upload::object_base(&key, "collector-0", batch_id);
+    drop(batch);
+
+    let manifest_path = store_dir.path().join(format!("{base}.manifest.json"));
+    fs::create_dir_all(&manifest_path).unwrap();
+    let store =
+        Arc::new(object_store::local::LocalFileSystem::new_with_prefix(store_dir.path()).unwrap());
+    let collector = start_with(&data_dir, limits(), store.clone());
+    let data_key = ObjectPath::from(format!("{base}.jsonl.zst"));
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
+
+    while store.head(&data_key).await.is_err() {
+        assert!(tokio::time::Instant::now() < deadline);
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+    assert!(spool_path.exists());
+    assert!(store
+        .get(&ObjectPath::from(format!("{base}.manifest.json")))
+        .await
+        .is_err());
+    collector.shutdown(Duration::from_millis(20)).await;
+    assert!(spool_path.exists());
+    fs::remove_dir(&manifest_path).unwrap();
+    tokio::time::sleep(Duration::from_millis(1_100)).await;
+    assert!(
+        spool_path.exists(),
+        "a stopped uploader must not resume after drain expiry"
+    );
+
+    let restarted = start_with(&data_dir, limits(), store.clone());
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
+    while spool_path.exists() {
+        assert!(tokio::time::Instant::now() < deadline);
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+    let objects = store.list(None).try_collect::<Vec<_>>().await.unwrap();
+    assert_eq!(objects.len(), 2);
+    let manifest = store
+        .get(&ObjectPath::from(format!("{base}.manifest.json")))
+        .await
+        .unwrap()
+        .bytes()
+        .await
+        .unwrap();
+    let manifest: Value = serde_json::from_slice(&manifest).unwrap();
+    let rows = manifest["generations"].as_array().unwrap();
+    assert_eq!(rows.len(), 1);
+    assert_eq!(
+        rows[0]["generation_id"],
+        GenerationContent::parse(&body)
+            .unwrap()
+            .generation_id
+            .to_string()
+    );
+    let offset = rows[0]["offset"].as_u64().unwrap();
+    let length = rows[0]["length"].as_u64().unwrap();
+    let frame = store
+        .get_range(&data_key, offset..offset + length)
+        .await
+        .unwrap();
+    assert_eq!(batch::frames(&frame).next().unwrap().record, body);
+    restarted.shutdown(Duration::from_secs(5)).await;
+}

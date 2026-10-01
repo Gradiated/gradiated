@@ -243,6 +243,20 @@ datastore stack, applies migrations, and starts the API and Vite. Every browser
 test receives a unique funded user, organization, and workspace through the
 shared fixture, so the spec files remain safe to run in parallel.
 
+For backend storage integration, run these commands from `product/`:
+
+```sh
+pnpm turbo run build --filter='@gradiated/worker^...'
+pnpm --filter @gradiated/worker test:integration
+pnpm --filter @gradiated/collector test:integration
+```
+
+These suites use disposable local datastores. Worker tests exercise actual
+Valkey acknowledgement, ClickHouse storage and aggregation, and PostgreSQL
+settlement retries. Collector integration runs proxy captures through the real
+collector into S3-compatible storage. CI runs them in its backend storage job,
+in addition to the unit checks and gateway/proxy integration suites.
+
 GitHub's product-only `tests.yml` workflow runs only for `product/**` changes.
 Its unit, real-datastore integration, and browser E2E jobs have no dependencies
 on one another and therefore run in parallel.

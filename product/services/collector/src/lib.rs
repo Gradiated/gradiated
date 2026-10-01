@@ -112,8 +112,12 @@ impl Collector {
         self.expiry.abort();
         self.state.spool.close();
 
-        if tokio::time::timeout(drain, self.uploader).await.is_err() {
+        let mut uploader = self.uploader;
+
+        if tokio::time::timeout(drain, &mut uploader).await.is_err() {
             tracing::warn!("uploads did not finish before the drain deadline");
+            uploader.abort();
+            let _ = uploader.await;
         }
 
         if let Some(task_worker) = self.task_worker {

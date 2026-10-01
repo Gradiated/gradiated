@@ -205,7 +205,11 @@ importers:
         specifier: 2.9.0
         version: 2.9.0
 
-  services/collector: {}
+  services/collector:
+    devDependencies:
+      '@aws-sdk/client-s3':
+        specifier: 3.1135.0
+        version: 3.1135.0
 
   services/console:
     dependencies:
@@ -490,6 +494,9 @@ importers:
         specifier: 4.6.5
         version: 4.6.5
     devDependencies:
+      '@clickhouse/client':
+        specifier: 1.23.1
+        version: 1.23.1
       '@types/luxon':
         specifier: ^3.7.4
         version: 3.7.4
@@ -5419,7 +5426,7 @@ snapshots:
       '@smithy/core': 3.34.1
       '@smithy/fetch-http-handler': 5.7.2
       '@smithy/node-http-handler': 4.12.1
-      '@smithy/types': 4.17.2
+      '@smithy/types': 4.18.0
       tslib: 2.8.1
 
   '@aws-sdk/client-secrets-manager@3.1135.0':

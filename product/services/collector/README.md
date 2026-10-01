@@ -114,3 +114,18 @@ a spool write refusal returns 503, so retrying senders may duplicate earlier
 lines. Readers deduplicate by generation ID. Relay parsing and SSE reconstruction
 live here; the proxy sends raw text. See the relay wire contract in
 [TRACES_PLAN.md](../../../docs/TRACES_PLAN.md).
+
+## Tests
+
+From `product/`, run `pnpm --filter @gradiated/collector check` for Rust component
+tests and TypeScript checks. `pnpm --filter @gradiated/collector test:integration`
+builds the collector, proxy and gateway, then starts disposable PostgreSQL,
+Valkey and SeaweedFS containers on local ports. It checks JSON and streamed relay
+capture, cancellation, error records, object tags, range reads and task registration.
+No provider credentials or production endpoints are used.
+
+The Rust partial-upload test checks that a failed manifest upload preserves the
+spool, shutdown stops retries at its deadline, and restart reuses the data and
+manifest keys. Permission-failure tests must run without root's DAC bypass.
+Both suites run in the product CI workflow; storage integration is a required
+dependency of `Product tests passed`.

@@ -229,13 +229,18 @@ const waitForSessionsToClose = async (adminUrl: string, database: string) => {
   }
 };
 
-export const createTestDatabase = async (): Promise<TestDatabase> => {
+export const createTestDatabase = async (
+  maxConnections = 10,
+): Promise<TestDatabase> => {
   const { adminUrl, template } = inject("controlPostgres");
   const name = `control_test_${randomUUID().replaceAll("-", "")}`;
 
   await runAdmin(adminUrl, `CREATE DATABASE "${name}" TEMPLATE "${template}"`);
 
-  const client = createControlDatabase(withDatabase(adminUrl, name));
+  const client = createControlDatabase(
+    withDatabase(adminUrl, name),
+    maxConnections,
+  );
 
   return {
     ...client,

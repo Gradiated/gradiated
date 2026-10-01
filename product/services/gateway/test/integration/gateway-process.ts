@@ -29,6 +29,8 @@ export interface GatewayOptions {
   readonly generationTimeoutSeconds: number;
   readonly logName: string;
   readonly settlementBacklogLimit?: number;
+  readonly leaseFinalizationMarginSeconds?: number;
+  readonly expiredLeaseCleanupGraceSeconds?: number;
 }
 
 export interface Exit {
@@ -72,6 +74,12 @@ export class GatewayProcess {
         ),
         GATEWAY_ORGANIZATION_CONCURRENCY_CAP: String(
           ORGANIZATION_CONCURRENCY_CAP,
+        ),
+        GATEWAY_LEASE_FINALIZATION_MARGIN_SECONDS: String(
+          options.leaseFinalizationMarginSeconds ?? 60,
+        ),
+        GATEWAY_EXPIRED_LEASE_CLEANUP_GRACE_SECONDS: String(
+          options.expiredLeaseCleanupGraceSeconds ?? 300,
         ),
         GATEWAY_BROWSER_ORIGINS: BROWSER_ORIGIN,
         SGLANG_API_KEY: options.runtimeToken,

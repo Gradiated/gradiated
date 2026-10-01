@@ -142,6 +142,110 @@ describe("billing", () => {
     expect((await account(organizationId))?.balance).toBe(total);
   });
 
+  it("applies concurrent deliveries of the same Stripe event exactly once", async () => {
+    const organizationId = await prepaidOrganization();
+    const sourceId = randomUUID();
+
+    const deliveries = await Promise.all(
+      Array.from({ length: 8 }, () => topUp(organizationId, 700n, sourceId)),
+    );
+
+    expect(new Set(deliveries.map((row) => row.id)).size).toBe(1);
+    expect(await ledger(organizationId)).toEqual([deliveries[0]]);
+    expect((await account(organizationId))?.balance).toBe(700n);
+  });
+
+  it("commits one winner when concurrent deliveries disagree on the amount", async () => {
+    const organizationId = await prepaidOrganization();
+    const sourceId = randomUUID();
+    const results = await Promise.allSettled([
+      topUp(organizationId, 700n, sourceId),
+      topUp(organizationId, 900n, sourceId),
+    ]);
+    const successes = results.filter((result) => result.status === "fulfilled");
+    const failures = results.filter((result) => result.status === "rejected");
+
+    expect(successes).toHaveLength(1);
+    expect(failures).toHaveLength(1);
+    expect(failures[0]?.reason).toBeInstanceOf(BalanceSourceConflictError);
+    const winner = successes[0]!.value;
+    expect(await ledger(organizationId)).toEqual([winner]);
+    expect((await account(organizationId))?.balance).toBe(winner.amount);
+  });
+
+  it("rejects a source replay with a different transaction type", async () => {
+    const organizationId = await prepaidOrganization();
+    const sourceId = randomUUID();
+    const first = await topUp(organizationId, 700n, sourceId);
+
+    await expect(
+      billing.applyBalanceTransaction({
+        organizationId,
+        amount: 700n,
+        type: "credit",
+        sourceType: "stripe_checkout_session",
+        sourceId,
+        createdBy: null,
+      }),
+    ).rejects.toBeInstanceOf(BalanceSourceConflictError);
+
+    expect(await ledger(organizationId)).toEqual([first]);
+    expect((await account(organizationId))?.balance).toBe(700n);
+  });
+
+  it("keeps source IDs independent across source types", async () => {
+    const organizationId = await prepaidOrganization();
+    const sourceId = randomUUID();
+    await topUp(organizationId, 700n, sourceId);
+    const refund = await billing.applyBalanceTransaction({
+      organizationId,
+      amount: -200n,
+      type: "refund",
+      sourceType: "stripe_refund",
+      sourceId,
+      createdBy: null,
+    });
+
+    expect(refund).toMatchObject({ amount: -200n, balanceAfter: 500n });
+    expect(await ledger(organizationId)).toHaveLength(2);
+    expect((await account(organizationId))?.balance).toBe(500n);
+  });
+
+  it("preserves nanodollar amounts beyond JavaScript's safe integer range", async () => {
+    const organizationId = await prepaidOrganization();
+    const amount = 9_007_199_254_740_993n;
+    await topUp(organizationId, amount);
+    await topUp(organizationId, 1n);
+
+    expect(
+      (await ledger(organizationId)).map((row) => row.balanceAfter),
+    ).toEqual([amount, amount + 1n]);
+    expect((await account(organizationId))?.balance).toBe(amount + 1n);
+  });
+
+  it("rolls back the ledger and balance when linking a Stripe customer fails, then permits a retry", async () => {
+    const owner = await prepaidOrganization();
+    const other = await prepaidOrganization();
+    const customerId = `cus_${randomUUID()}`;
+    await topUp(owner, 100n, randomUUID(), customerId);
+    const sourceId = randomUUID();
+    const before = await account(other);
+
+    // The real unique constraint fails after the ledger insert and balance update.
+    await expect(
+      topUp(other, 700n, sourceId, customerId),
+    ).rejects.toMatchObject({
+      cause: { code: "23505" },
+    });
+    expect(await ledger(other)).toEqual([]);
+    expect(await account(other)).toEqual(before);
+    expect((await account(owner))?.balance).toBe(100n);
+
+    const retried = await topUp(other, 700n, sourceId, `cus_${randomUUID()}`);
+    expect(await ledger(other)).toEqual([retried]);
+    expect((await account(other))?.balance).toBe(700n);
+  });
+
   describe("reads", () => {
     const billedOrganizationWith = (
       role: OrganizationRole,

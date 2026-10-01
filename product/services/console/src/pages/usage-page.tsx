@@ -40,7 +40,7 @@ import { formatNanoUsd, formatUsd } from "@/lib/format";
 import { NANO_USD_PER_USD } from "@/lib/money";
 import { ConsolePage, LoadFailed } from "@/pages/console-page";
 import { compactNumber, utcDayLabel } from "@/pages/chart-format";
-import { OptionSelect } from "@/pages/option-select";
+import { OptionSelect } from "@/components/option-select";
 import { SegmentedControl } from "@/pages/segmented-control";
 import {
   RANGE_OPTIONS,
@@ -97,6 +97,7 @@ export const UsagePage = () => {
       actions={
         <>
           <OptionSelect
+            label="Usage time range"
             value={rangeKey}
             options={RANGE_OPTIONS}
             onValueChange={setRangeKey}

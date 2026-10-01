@@ -1,3 +1,4 @@
+import { OptionSelect } from "@/components/option-select";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
@@ -193,21 +194,19 @@ const StoredContent = ({
   });
   return (
     <div className="space-y-4 p-4">
-      <label className="flex flex-col gap-2 text-sm">
+      <div className="flex flex-col gap-2 text-sm">
         Generation
-        <select
-          className="rounded-md border bg-background p-2"
-          aria-label="Generation"
+        <OptionSelect
+          className="w-full"
+          label="Generation"
           value={row.generation_id}
-          onChange={(event) => setSelected(event.target.value)}
-        >
-          {rows.map((row) => (
-            <option key={row.generation_id} value={row.generation_id}>
-              {new Date(row.started_at).toLocaleString()} · {row.model}
-            </option>
-          ))}
-        </select>
-      </label>
+          onValueChange={setSelected}
+          options={rows.map((row) => ({
+            value: row.generation_id,
+            label: `${new Date(row.started_at).toLocaleString()} · ${row.model}`,
+          }))}
+        />
+      </div>
       <section className="space-y-2 rounded-lg border p-4">
         <h3 className="font-medium">{row.model}</h3>
         <p className="text-xs text-muted-foreground">

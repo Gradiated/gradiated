@@ -1,3 +1,4 @@
+import { useOptimisticPatch } from "./use-optimistic-patch";
 import { useEffect } from "react";
 import {
   useInfiniteQuery,
@@ -113,15 +114,32 @@ export const useRunEvents = (runId: string | undefined) => {
   return { ...history, error: history.error ?? tail.error };
 };
 
+export const taskSettingsKey = (workspace: string, task: string) =>
+  [...trainingKey(workspace), "settings", task] as const;
+
 export const useTrainingMutation = (task: string) => {
   const { workspaceId, selectedOrganization } = useProductContext();
   const client = useQueryClient();
   const invalidate = () =>
     client.invalidateQueries({ queryKey: trainingKey(workspaceId) });
-  const update = useMutation({
+  const update = useOptimisticPatch({
+    mutationKey: taskSettingsKey(workspaceId, task),
+    queryKey: trainingKey(workspaceId),
     mutationFn: (body: components["schemas"]["UpdateTask"]) =>
       updateTask(workspaceId, task, body),
-    onSuccess: invalidate,
+    commit: (updated) => {
+      client.setQueryData([...trainingKey(workspaceId), "task", task], updated);
+      client.setQueryData<components["schemas"]["TaskList"]>(
+        [...trainingKey(workspaceId), "tasks"],
+        (current) =>
+          current && {
+            ...current,
+            data: current.data.map((row) =>
+              row.name === task ? { ...row, ...updated } : row,
+            ),
+          },
+      );
+    },
   });
   const promote = useMutation({
     mutationFn: (versionId: string) =>

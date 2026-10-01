@@ -1,6 +1,6 @@
 import type { UsageRange, UsageSummary } from "@/api/queries";
 import { NANO_USD_PER_USD } from "@/lib/money";
-import type { Option } from "@/pages/option-select";
+import type { Option } from "@/components/option-select";
 
 export const RANGE_OPTIONS = [
   { value: "7d", label: "Last 7 days" },

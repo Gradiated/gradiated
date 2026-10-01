@@ -1,27 +1,10 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateWorkspace } from "@/api/queries";
-import { useProductContext } from "@/hooks/use-product-context";
-import { queryKeys } from "@/lib/query-keys";
+import { useWorkspaceSettings } from "@/hooks/use-workspace-settings";
+import { OptionSelect } from "@/components/option-select";
 import { JUDGE_MODELS } from "@gradiated/contracts/model-catalog";
-import type { EvaluationJudge } from "@/store/fine-tuning-types";
 import { SettingRow } from "./settings-card";
 
 export const JudgeSettings = () => {
-  const { organizationId, workspaceId, workspaces, selectedOrganization } =
-    useProductContext();
-  const workspace = workspaces.find((row) => row.id === workspaceId);
-  const client = useQueryClient();
-  const save = useMutation({
-    mutationFn: (evaluation_judge: EvaluationJudge) =>
-      updateWorkspace(organizationId, workspaceId, { evaluation_judge }),
-    onSuccess: () =>
-      client.invalidateQueries({
-        queryKey: queryKeys.workspaces(organizationId),
-      }),
-  });
-  const canEdit =
-    selectedOrganization?.status === "active" &&
-    ["owner", "admin"].includes(selectedOrganization.role);
+  const { workspace, save, canEdit } = useWorkspaceSettings();
 
   if (!workspace) return null;
 
@@ -31,21 +14,16 @@ export const JudgeSettings = () => {
         title="Judge model"
         description="This is the model used to compare fine-tuned models vs existing models to decide which is better."
       >
-        <select
-          aria-label="Judge model"
-          className="w-64 rounded-md border bg-background p-2 font-mono text-xs"
+        <OptionSelect
+          label="Judge model"
+          className="w-64 font-mono text-xs"
           value={workspace.evaluation_judge}
-          disabled={!canEdit || save.isPending}
-          onChange={(event) =>
-            save.mutate(event.target.value as EvaluationJudge)
+          disabled={!canEdit}
+          onValueChange={(evaluation_judge) =>
+            save.mutate({ evaluation_judge })
           }
-        >
-          {JUDGE_MODELS.map(({ id: judge }) => (
-            <option key={judge} value={judge}>
-              {judge}
-            </option>
-          ))}
-        </select>
+          options={JUDGE_MODELS.map(({ id }) => ({ value: id, label: id }))}
+        />
       </SettingRow>
       {save.error ? (
         <p role="alert" className="p-4 text-sm text-destructive">

@@ -12,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export interface Option<Value extends string> {
   value: Value;
   label: string;
+  disabled?: boolean;
 }
 
 const findOption = <Value extends string>(
@@ -36,23 +37,32 @@ export const OptionSelect = <Value extends string>({
   label,
   className,
   itemClassName,
+  disabled,
+  placeholder,
 }: {
   value: Value;
   options: readonly Option<Value>[];
   onValueChange: (value: Value) => void;
-  label?: string;
+  label: string;
   className?: string;
   itemClassName?: string;
+  disabled?: boolean;
+  placeholder?: string;
 }) => (
-  <Select value={value} onValueChange={optionHandler(options, onValueChange)}>
+  <Select
+    disabled={disabled ?? false}
+    value={value}
+    onValueChange={optionHandler(options, onValueChange)}
+  >
     <SelectTrigger className={className} aria-label={label}>
-      <SelectValue />
+      <SelectValue placeholder={placeholder} />
     </SelectTrigger>
     <SelectContent>
       {options.map((option) => (
         <SelectItem
           key={option.value}
           value={option.value}
+          disabled={option.disabled ?? false}
           className={itemClassName}
         >
           {option.label}

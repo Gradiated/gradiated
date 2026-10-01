@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/table";
 import { TabsContent } from "@/components/ui/tabs";
 import { ConsolePage } from "@/pages/console-page";
-import { OptionTabs, type Option } from "@/pages/option-select";
+import { OptionTabs, type Option } from "@/components/option-select";
 import { useProductContext } from "@/hooks/use-product-context";
 import { useTasks } from "@/hooks/use-training";
 import { QueryState } from "@/components/fine-tuning/query-state";

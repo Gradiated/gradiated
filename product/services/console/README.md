@@ -1,4 +1,24 @@
-# Console brand assets
+# Console
+
+## Settings state
+
+TanStack Query owns server state; Zustand owns workspace selection and local
+flows. React Hook Form handles forms with explicit submission.
+
+For immediate settings edits, use `useOptimisticPatch` with a stable mutation
+key and query prefix. Its scope serializes writes sharing that key. Commit each
+server response to the query cache, then invalidate after the final queued save.
+Read settings through `useOptimisticValue` with the same mutation key and a pure
+patch reducer: pending edits overlay confirmed query data, and failed edits drop
+out without undoing newer edits. Keep controls enabled while saving and show the
+hook's error. Errors are scoped to the mutation key when the resource changes.
+`useWorkspaceSettings` composes this for workspace policies.
+
+Use `OptionSelect` from `src/components/option-select.tsx` for finite option lists. It wraps the shared shadcn/Radix
+select with typed values, disabled options, placeholders, and a required
+accessible label.
+
+## Brand assets
 
 The console uses the Gradiated logo supplied on 2026-09-11.
 

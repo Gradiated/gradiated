@@ -125,15 +125,58 @@ test("capture settings send the real workspace policy", async ({ page }) => {
     return fulfillJson(route, route.request().postDataJSON());
   });
   await page.goto("/tasks");
+  await expect(
+    page.getByRole("link", { name: "support-triage", exact: true }),
+  ).toBeVisible();
   await page.getByRole("tab", { name: "Settings", exact: true }).click();
   await page.getByRole("switch", { name: "Trace capture" }).click();
   await expect.poll(() => updates.length).toBe(1);
   expect(updates[0]).toEqual({
     trace_capture_enabled: true,
   });
-  await page
-    .getByRole("combobox", { name: "Content retention" })
-    .selectOption("90");
+  await page.getByRole("combobox", { name: "Content retention" }).click();
+  await page.getByRole("option", { name: "90 days", exact: true }).click();
   await expect.poll(() => updates.length).toBe(2);
   expect(updates[1]).toMatchObject({ trace_retention_days: 90 });
+});
+
+test("settings stay responsive during a save and roll back failed edits", async ({
+  page,
+}) => {
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const updates: unknown[] = [];
+  await page.route(/\/workspaces\/[^/]+$/, async (route) => {
+    if (route.request().method() !== "PATCH") return route.fallback();
+
+    updates.push(route.request().postDataJSON());
+    if (updates.length === 1) {
+      await held;
+      return fulfillProblem(route, 503, "Settings unavailable");
+    }
+
+    return fulfillJson(route, route.request().postDataJSON());
+  });
+  await page.goto("/tasks");
+  await expect(
+    page.getByRole("link", { name: "support-triage", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("tab", { name: "Settings", exact: true }).click();
+  const capture = page.getByRole("switch", { name: "Trace capture" });
+  await capture.click();
+  await expect(capture).toBeChecked();
+  await expect(capture).toBeEnabled();
+  await expect.poll(() => updates.length).toBe(1);
+  await page.getByRole("combobox", { name: "Content retention" }).click();
+  await page.getByRole("option", { name: "90 days", exact: true }).click();
+  await expect(
+    page.getByRole("combobox", { name: "Content retention" }),
+  ).toHaveText("90 days");
+  expect(updates).toHaveLength(1);
+  release();
+  await expect(capture).not.toBeChecked();
+  await expect.poll(() => updates.length).toBe(2);
+  await expect(page.getByRole("alert")).toContainText("Settings unavailable");
 });

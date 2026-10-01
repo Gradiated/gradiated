@@ -51,7 +51,7 @@ import {
   type LogFilters,
   type RangeKey,
 } from "@/pages/logs-filters";
-import { OptionSelect, type Option } from "@/pages/option-select";
+import { OptionSelect, type Option } from "@/components/option-select";
 
 const completedTime = new Intl.DateTimeFormat(undefined, {
   hour: "numeric",
@@ -146,18 +146,21 @@ export const LogsPage = () => {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <OptionSelect
+            label="Log time range"
             value={rangeKey}
             options={RANGE_OPTIONS}
             onValueChange={selectRange}
             className="min-w-32"
           />
           <OptionSelect
+            label="Request status"
             value={status}
             options={STATUS_OPTIONS}
             onValueChange={setStatus}
             className="min-w-32"
           />
           <OptionSelect
+            label="Model"
             value={model}
             options={[
               { value: ALL, label: "All models" },
@@ -177,6 +180,7 @@ export const LogsPage = () => {
             className="min-w-40"
           />
           <OptionSelect
+            label="Sort logs"
             value={sort}
             options={SORT_OPTIONS}
             onValueChange={setSort}

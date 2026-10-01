@@ -63,7 +63,7 @@ import {
   type ApiKeyStatus,
 } from "@/pages/api-key-status";
 import { ConsolePage, LoadFailed } from "@/pages/console-page";
-import { OptionSelect } from "@/pages/option-select";
+import { OptionSelect } from "@/components/option-select";
 
 const STATUS_BADGE: Record<
   ApiKeyStatus,

@@ -1,5 +1,5 @@
 import type { GenerationLogQuery } from "@/api/queries";
-import type { Option } from "@/pages/option-select";
+import type { Option } from "@/components/option-select";
 
 export const LOG_PAGE_SIZE = 25;
 

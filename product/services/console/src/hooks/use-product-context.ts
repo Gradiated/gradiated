@@ -7,6 +7,11 @@ import {
   type Organization,
   type Workspace,
 } from "@/api/queries";
+import { useOptimisticValue } from "./use-optimistic-patch";
+import {
+  workspaceSettingsKey,
+  type WorkspaceSettingsPatch,
+} from "@/lib/workspace-settings";
 import { useSession } from "@/hooks/use-session";
 import { queryKeys } from "@/lib/query-keys";
 import { useWorkspaceSelection } from "@/store/workspace-selection";
@@ -33,7 +38,12 @@ export const useProductContext = () => {
   const organizationId = selectedOrganization?.id ?? "";
 
   const workspaceList = useWorkspaceList(organizationId);
-  const workspaces = workspaceList.data?.data ?? [];
+  const workspaces = useOptimisticValue<Workspace[], WorkspaceSettingsPatch>(
+    workspaceSettingsKey(organizationId),
+    workspaceList.data?.data ?? [],
+    (rows, { id, patch }) =>
+      rows.map((row) => (row.id === id ? { ...row, ...patch } : row)),
+  );
   const selectedWorkspace =
     workspaces.find((workspace) => workspace.id === savedWorkspaceId) ??
     workspaces.find((workspace) => workspace.is_default) ??

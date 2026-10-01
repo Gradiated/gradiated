@@ -13,7 +13,7 @@ import {
 } from "@/components/fine-tuning/version-actions";
 import { TabsContent } from "@/components/ui/tabs";
 import { ConsolePage } from "@/pages/console-page";
-import { OptionTabs, type Option } from "@/pages/option-select";
+import { OptionTabs, type Option } from "@/components/option-select";
 import {
   useTask,
   useTaskHistory,

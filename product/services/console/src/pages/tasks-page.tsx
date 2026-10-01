@@ -178,11 +178,6 @@ const TaskRowView = ({
             <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
               {version}
             </code>
-            {run?.version_id !== task.production_version_id ? (
-              <span className="text-xs text-muted-foreground">
-                not promoted
-              </span>
-            ) : null}
           </span>
         ) : (
           <span className="text-muted-foreground">

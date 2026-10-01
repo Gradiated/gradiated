@@ -180,3 +180,122 @@ test("settings stay responsive during a save and roll back failed edits", async 
   await expect.poll(() => updates.length).toBe(2);
   await expect(page.getByRole("alert")).toContainText("Settings unavailable");
 });
+
+test("trace generations render chronologically without a selector, with a loading skeleton", async ({
+  page,
+}) => {
+  let release!: () => void;
+  const loading = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const earlier = {
+    ...generation,
+    generation_id: "0198ae50-94d8-7d4d-a8be-000000000002",
+    started_at: "2026-09-25T11:00:00.000Z",
+  };
+  await page.route(apiPathEndsWith("/generations"), async (route) => {
+    await loading;
+    return fulfillJson(route, {
+      data: [generation, earlier],
+      next_cursor: null,
+    });
+  });
+  for (const row of [generation, earlier]) {
+    await page.route(
+      apiPathEndsWith(`/generations/${row.generation_id}`),
+      (route) =>
+        fulfillJson(route, {
+          generation_id: row.generation_id,
+          raw: { request: { prompt: row.generation_id }, response: {} },
+          canonical: null,
+        }),
+    );
+  }
+  await page.goto("/tasks/support-triage");
+  await page.getByRole("tab", { name: "Data", exact: true }).click();
+  await expect(page.getByRole("region", { name: "Traces" })).toHaveAttribute(
+    "aria-busy",
+    "true",
+  );
+  await expect(page.getByText("Loading traces…")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Refresh", exact: true }),
+  ).toHaveCount(0);
+  release();
+  await page
+    .getByRole("button", { name: "synthetic-live-trace", exact: true })
+    .click();
+  const timeline = page.getByRole("list", { name: "Trace timeline" });
+  await expect(timeline.getByRole("listitem")).toHaveCount(2);
+  await expect(timeline.getByRole("listitem").nth(0)).toContainText(
+    earlier.generation_id,
+  );
+  await expect(timeline.getByRole("listitem").nth(1)).toContainText(
+    generation.generation_id,
+  );
+  await expect(page.getByRole("combobox", { name: "Generation" })).toHaveCount(
+    0,
+  );
+});
+
+test("model selectors use supported roles and save comparison selections", async ({
+  page,
+}) => {
+  const task = {
+    id: "0198ae50-94d8-7d4d-a8be-000000000003",
+    name: "support-triage",
+    base_model_id: "Qwen/Qwen3-0.6B",
+    comparison_model_id: "Qwen/Qwen3-0.6B",
+    production_version_id: null,
+    training_schedule: null,
+  };
+  let saved: unknown;
+  await page.route(apiPathEndsWith("/tasks/support-triage"), (route) => {
+    if (route.request().method() === "PATCH") {
+      saved = route.request().postDataJSON();
+      Object.assign(task, saved);
+      return fulfillJson(route, task);
+    }
+    return fulfillJson(route, task);
+  });
+  await page.route(apiPathEndsWith("/training-runs"), (route) =>
+    fulfillJson(route, { data: [] }),
+  );
+  await page.route(apiPathEndsWith("/models"), async (route) => {
+    const response = await route.fetch();
+    const catalog = await response.json();
+    const model = catalog.data[0];
+    return fulfillJson(route, {
+      ...catalog,
+      data: [
+        { ...model, id: "Qwen/Qwen3-0.6B", status: "unavailable" },
+        { ...model, id: "jaredpalmer/kev-9b", status: "available" },
+      ],
+    });
+  });
+  await page.goto("/tasks/support-triage");
+  await page.getByRole("tab", { name: "Settings", exact: true }).click();
+  await page.getByRole("combobox", { name: "Base model" }).click();
+  await expect(page.getByRole("option", { name: /Qwen/ })).toBeVisible();
+  await expect(page.getByRole("option", { name: /kev/ })).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await page.getByRole("combobox", { name: "Comparison model" }).click();
+  await expect(
+    page.getByRole("option", { name: "jaredpalmer/kev-9b", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("option", {
+      name: "anthropic/claude-opus-5-5",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await page
+    .getByRole("option", { name: "openai/gpt-6-astra", exact: true })
+    .click();
+  await expect
+    .poll(() => saved)
+    .toEqual({ comparison_model_id: "openai/gpt-6-astra" });
+  await expect(
+    page.getByRole("combobox", { name: "Comparison model" }),
+  ).toContainText("openai/gpt-6-astra");
+});

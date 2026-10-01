@@ -21,6 +21,15 @@ export const stepState = (
     if (!isTerminalStage(stage)) return "current";
   }
 
+  const lastActiveStage = visited.findLast(
+    (entry) => !isTerminalStage(entry) && entry !== "cancelling",
+  );
+  if (
+    stage === lastActiveStage &&
+    (runStage === "failed" || runStage === "cancelled")
+  )
+    return runStage;
+
   if (visited.includes(stage)) return "done";
 
   return isStopped(runStage) ? "skipped" : "pending";

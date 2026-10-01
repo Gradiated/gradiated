@@ -69,9 +69,9 @@ export const describeEvent = ({ payload: event }: TrainingRunEvent): string => {
     case "run_created":
       return `run created (${event.trigger}) on ${event.base_model_id}`;
     case "stage_entered":
-      return `→ ${event.stage}`;
+      return event.stage.replaceAll("_", " ");
     case "dataset_built":
-      return `dataset: ${event.eligible_examples} eligible, ${event.duplicates_removed} duplicates removed, train ${event.train} / validation ${event.validation} / test ${event.test}${event.evaluation_examples === undefined ? "" : ` / evaluation sample ${event.evaluation_examples}`}${event.oldest_trace_at && event.newest_trace_at ? ` (${event.oldest_trace_at.slice(0, 10)} → ${event.newest_trace_at.slice(0, 10)})` : ""}`;
+      return `dataset: ${event.eligible_examples} eligible, ${event.duplicates_removed} duplicates removed, train ${event.train} / validation ${event.validation} / test ${event.test}${event.evaluation_examples === undefined ? "" : ` / evaluation sample ${event.evaluation_examples}`}${event.oldest_trace_at && event.newest_trace_at ? ` (${event.oldest_trace_at.slice(0, 10)} to ${event.newest_trace_at.slice(0, 10)})` : ""}`;
     case "capacity_granted":
       return `host ${event.host_id} granted (${gpuLabel(event.gpu)})`;
     case "job_submitted":
@@ -85,7 +85,7 @@ export const describeEvent = ({ payload: event }: TrainingRunEvent): string => {
     case "evaluation_progress":
       return `evaluation ${event.completed}/${event.total}`;
     case "evaluation_completed":
-      return `evaluation over ${event.groups} sessions: win ${percent(event.win)}% · tie ${percent(event.tie)}% · loss ${percent(event.loss)}% · unresolved ${percent(event.unresolved)}% (judge ${event.judge})`;
+      return `evaluation over ${event.groups} groups: win ${percent(event.win)}% · tie ${percent(event.tie)}% · loss ${percent(event.loss)}% · unresolved ${percent(event.unresolved)}% (judge ${event.judge})`;
     case "published":
       return `published ${event.name}`;
     case "cancel_requested":

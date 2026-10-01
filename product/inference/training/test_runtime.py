@@ -1,3 +1,4 @@
+import json
 import shutil
 import tempfile
 import unittest
@@ -93,3 +94,57 @@ class RuntimeTests(unittest.TestCase):
                         {"url": "https://example.com/artifact", "sha256": "0" * 64},
                         "artifact",
                     )
+
+    def test_evaluation_judges_each_pair_once_and_preserves_randomized_order(self):
+        with tempfile.TemporaryDirectory() as temp:
+            runtime = TrainingRuntime(temp, recipe={})
+            examples = [
+                {
+                    "id": str(i),
+                    "group": str(i),
+                    "prompt": [{"role": "user", "content": "test"}],
+                }
+                for i in range(16)
+            ]
+            calls = []
+
+            def generate(prompt, *, adapted, **options):
+                calls.append((adapted, options))
+                if options:
+                    return {"text": "A"}
+                return {
+                    "text": "fine" if adapted else "base",
+                    "tokens": 1,
+                    "seconds": 1,
+                }
+
+            command = {
+                "operation": "generate",
+                "adapter": {},
+                "dataset": {},
+                "output": {},
+            }
+            with (
+                patch.object(runtime, "load"),
+                patch.object(runtime, "load_adapter"),
+                patch.object(runtime, "download", return_value=Path(temp)),
+                patch("runtime.read_examples", return_value=examples),
+                patch.object(runtime, "generate", side_effect=generate),
+                patch.object(
+                    runtime,
+                    "upload",
+                    side_effect=lambda path, grant: json.loads(path.read_text()),
+                ),
+            ):
+                result = runtime.run(command, lambda event: None)
+                repeat = runtime.run(command, lambda event: None)
+
+            self.assertEqual(result, repeat)
+            self.assertEqual(len(calls), len(examples) * 3 * 2)
+            self.assertEqual({row["fine_tuned_first"] for row in result}, {True, False})
+            for index, row in enumerate(result):
+                self.assertEqual(row["judgment"], "A")
+                self.assertEqual(calls[index * 3][0], row["fine_tuned_first"])
+                self.assertEqual(calls[index * 3 + 1][0], not row["fine_tuned_first"])
+                self.assertEqual(row["fine_tuned"]["text"], "fine")
+                self.assertEqual(row["comparison"]["text"], "base")

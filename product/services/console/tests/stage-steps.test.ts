@@ -15,6 +15,24 @@ describe("stepState", () => {
     ["failed", "failed", ["queued"], "failed"],
     ["cancelled", "cancelled", ["queued"], "cancelled"],
     ["training", "failed", ["queued"], "skipped"],
+    [
+      "verifying",
+      "failed",
+      ["queued", "training", "verifying", "failed"],
+      "failed",
+    ],
+    [
+      "training",
+      "failed",
+      ["queued", "training", "verifying", "failed"],
+      "done",
+    ],
+    [
+      "verifying",
+      "cancelled",
+      ["queued", "verifying", "cancelling", "cancelled"],
+      "cancelled",
+    ],
     ["succeeded", "succeeded", ["queued", "succeeded"], "done"],
   ] as const)(
     "marks %s during %s after %j as %s",

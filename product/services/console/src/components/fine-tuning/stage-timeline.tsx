@@ -66,12 +66,22 @@ const STEP_STYLE: Record<
   },
 };
 
+const COMPLETED_STAGE_LABEL: Partial<Record<RunStage, string>> = {
+  queued: "Run admitted",
+  building_dataset: "Dataset built",
+  awaiting_capacity: "Capacity allocated",
+  training: "Training completed",
+  verifying: "Adapter verified",
+  publishing: "Adapter published",
+  evaluating: "Evaluation completed",
+};
+
 const clock = (iso: string) => iso.slice(11, 19);
 
 const formatStageLog = (lines: TrainingRunEvent[]) =>
   lines
     .map((event, index) => {
-      const line = `${clock(event.at)} [${event.source}] ${describeEvent(event)}`;
+      const line = `${clock(event.at)} [${event.source === "temporal-worker" ? "orchestrator" : event.source}] ${describeEvent(event)}`;
       const previous = lines[index - 1];
 
       return previous && previous.attempt !== event.attempt
@@ -189,6 +199,13 @@ export const StageTimeline = ({
                   className={`max-h-64 overflow-auto border-t bg-muted/50 px-4 py-3 font-mono text-[11px] leading-5 text-foreground ${isLast ? "rounded-b-lg" : ""}`}
                 >
                   {formatStageLog(lines)}
+                  {nextAt && state === "done"
+                    ? `\n${clock(nextAt)} [orchestrator] ${COMPLETED_STAGE_LABEL[stage] ?? `${STAGE_LABEL[stage]} completed`}`
+                    : ""}
+                  {(state === "failed" || state === "cancelled") &&
+                  run.finished_at
+                    ? `\n${clock(run.finished_at)} [orchestrator] ${STAGE_LABEL[stage]} ${state}`
+                    : ""}
                   {isCurrent ? "\n▌" : ""}
                 </pre>
               ) : null}

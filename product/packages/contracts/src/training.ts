@@ -57,6 +57,7 @@ const PairSchema = z.object({
 
 export const RunEvaluationSchema = z
   .object({
+    judging_method: z.enum(["randomized_single", "both_orders"]).optional(),
     holdout_groups: CountSchema,
     holdout_examples: CountSchema,
     comparison_model_id: ModelIdSchema,

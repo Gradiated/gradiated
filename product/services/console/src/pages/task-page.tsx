@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { Link, useParams } from "@tanstack/react-router";
 import { ArrowLeft, RotateCw } from "lucide-react";
 import { useState } from "react";
@@ -140,7 +141,13 @@ const TrainButton = ({ task }: { task: TaskRow }) => {
           training
         }
         onClick={() =>
-          start.mutate(task.id, { onSuccess: ({ id }) => setAcceptedId(id) })
+          start.mutate(task.id, {
+            onSuccess: ({ id }) => setAcceptedId(id),
+            onError: (error) =>
+              toast.error("Could not start training", {
+                description: error.message,
+              }),
+          })
         }
       >
         <RotateCw className={`size-4 ${training ? "animate-spin" : ""}`} />
@@ -152,11 +159,6 @@ const TrainButton = ({ task }: { task: TaskRow }) => {
               ? "Re-train"
               : "Train now"}
       </Button>
-      {start.error ? (
-        <p role="alert" className="max-w-md text-sm text-destructive">
-          {start.error.message}
-        </p>
-      ) : null}
     </div>
   );
 };

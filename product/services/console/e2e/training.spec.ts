@@ -152,10 +152,10 @@ for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
         page.getByRole("button", { name: "Re-train", exact: true }),
       ).toBeEnabled();
       await page.getByRole("tab", { name: "Settings", exact: true }).click();
+      await page.getByRole("combobox", { name: "Comparison model" }).click();
       await page
-        .getByRole("textbox", { name: "Comparison model" })
-        .fill("openai/gpt-5");
-      await page.getByRole("button", { name: "Save", exact: true }).click();
+        .getByRole("option", { name: "openai/gpt-5", exact: true })
+        .click();
       await expect
         .poll(
           async () =>
@@ -170,12 +170,10 @@ for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
       await page.reload();
       await page.getByRole("tab", { name: "Settings", exact: true }).click();
       await expect(
-        page.getByRole("textbox", { name: "Comparison model" }),
-      ).toHaveValue("openai/gpt-5");
+        page.getByRole("combobox", { name: "Comparison model" }),
+      ).toContainText("openai/gpt-5");
       await page.getByRole("tab", { name: "Model", exact: true }).click();
-      await page
-        .getByRole("button", { name: "Promote to production", exact: true })
-        .click();
+      await page.getByRole("button", { name: "Promote", exact: true }).click();
       await page.route(
         apiPathEndsWith("/production"),
         (route) =>
@@ -300,7 +298,7 @@ for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
       ).toBeDisabled();
       await expect(
         page.getByRole("menuitem", {
-          name: "Promote to production",
+          name: "Promote",
           exact: true,
         }),
       ).toBeDisabled();
@@ -437,7 +435,7 @@ test("Train shows admission errors and Cancel uses the selected run", async ({
   );
   await page.goto("/tasks/task");
   await page.getByRole("button", { name: "Train now", exact: true }).click();
-  await expect(page.getByRole("alert")).toContainText(
+  await expect(page.locator("[data-sonner-toast]")).toContainText(
     "at least 100 new traces",
   );
   await page.getByRole("button", { name: "Train now", exact: true }).click();
@@ -451,3 +449,77 @@ test("Train shows admission errors and Cancel uses the selected run", async ({
     page.getByRole("button", { name: "Cancel run", exact: true }),
   ).toHaveCount(0);
 });
+
+for (const failed of [false, true]) {
+  test(`stage logs show orchestrator and verification ${failed ? "failure" : "completion"}`, async ({
+    page,
+  }) => {
+    const task = {
+      id: randomUUID(),
+      name: "log-test",
+      base_model_id: "Qwen/Qwen3-0.6B",
+      comparison_model_id: "Qwen/Qwen3-0.6B",
+      production_version_id: null,
+      training_schedule: null,
+    };
+    const runId = randomUUID();
+    const stages = failed
+      ? ["queued", "verifying", "failed"]
+      : ["queued", "verifying", "publishing", "succeeded"];
+    const events = stages.map((stage, index) => ({
+      id: index + 1,
+      at: `2026-10-01T12:00:0${index}.000Z`,
+      source: "temporal-worker",
+      attempt: 1,
+      payload: { type: "stage_entered", stage },
+    }));
+    await page.route(apiPathEndsWith("/tasks/log-test"), (route) =>
+      fulfillJson(route, task),
+    );
+    await page.route(apiPathEndsWith("/tasks/log-test/versions"), (route) =>
+      fulfillJson(route, { data: [] }),
+    );
+    await page.route(apiPathEndsWith("/training-runs"), (route) =>
+      fulfillJson(route, {
+        data: [
+          {
+            id: runId,
+            task: task.name,
+            trigger: "manual",
+            requested_by: null,
+            stage: failed ? "failed" : "succeeded",
+            base_model_id: task.base_model_id,
+            input_cutoff: events[0]!.at,
+            dataset: null,
+            evaluation: null,
+            version_id: null,
+            cancel_requested_at: null,
+            created_at: events[0]!.at,
+            finished_at: events.at(-1)!.at,
+          },
+        ],
+      }),
+    );
+    await page.route(
+      apiPathEndsWith(`/training-runs/${runId}/events`),
+      (route) =>
+        fulfillJson(route, {
+          data: new URL(route.request().url()).searchParams.has("after")
+            ? []
+            : events,
+          next_cursor: null,
+        }),
+    );
+    await page.goto("/tasks/log-test");
+    await page.getByRole("tab", { name: "Training runs", exact: true }).click();
+    await page.getByRole("button", { name: /^Verifying/ }).click();
+    const log = page.locator("pre");
+    await expect(log).toContainText("[orchestrator] verifying");
+    await expect(log).not.toContainText("temporal-worker");
+    await expect(log).not.toContainText("→");
+    await expect(log).toContainText(
+      failed ? "Verifying failed" : "Adapter verified",
+    );
+    if (failed) await expect(log).not.toContainText("Adapter verified");
+  });
+}

@@ -1,3 +1,4 @@
+import { TRAINING_ONLY_MODELS } from "@gradiated/contracts/model-catalog";
 import { useQuery } from "@tanstack/react-query";
 import { Boxes, CircleCheck, LoaderCircle } from "lucide-react";
 
@@ -30,6 +31,9 @@ const tierLabel = (policy: ServiceTierPricingPolicy): string => {
 
 export const ModelsPage = () => {
   const models = useQuery(modelsQuery());
+  const servingModels = (models.data?.data ?? []).filter(
+    (model) => !TRAINING_ONLY_MODELS.some((base) => base.id === model.id),
+  );
 
   return (
     <ConsolePage
@@ -48,9 +52,9 @@ export const ModelsPage = () => {
           onRetry={() => void models.refetch()}
           className="min-h-64 rounded-xl border bg-card"
         />
-      ) : models.data?.data.length ? (
+      ) : servingModels.length ? (
         <div className="grid gap-5">
-          {models.data.data.map((model) => (
+          {servingModels.map((model) => (
             <article
               key={model.id}
               className="overflow-hidden rounded-xl border bg-card shadow-sm"
@@ -110,7 +114,7 @@ export const ModelsPage = () => {
                 </p>
                 <TierPricingTable
                   model={model}
-                  policies={models.data.service_tiers}
+                  policies={models.data?.service_tiers ?? []}
                 />
               </div>
             </article>

@@ -28,6 +28,8 @@ import {
   type TrainingHostConfig,
 } from "./nomad-host.js";
 
+import { predictionsSchema, summarizePredictions } from "./evaluation.js";
+
 import { persistTrainingDataset } from "./dataset.js";
 
 const artifactSchema = z.object({
@@ -65,24 +67,6 @@ const pollSchema = z.object({
   total: z.number().int(),
   result: z.unknown(),
 });
-const prediction = z.object({
-  text: z.string(),
-  tokens: z.number().int().nonnegative(),
-  seconds: z.number().positive(),
-});
-const predictionsSchema = z
-  .array(
-    z.object({
-      id: z.string(),
-      group: z.string(),
-      fine_tuned: prediction,
-      comparison: prediction,
-      judgments: z.array(z.string()).length(2),
-    }),
-  )
-  .min(1)
-  .max(64);
-
 const heartbeat = async <T>(operation: () => Promise<T>) => {
   const context = Context.current();
   const timer = setInterval(() => context.heartbeat(), 5000);
@@ -345,63 +329,19 @@ export const createTrainingExecutorActivities = (options: {
           await putJson(resultKey, artifact);
         }
         const predictions = predictionsSchema.parse(await json(artifact.key));
-        const groups = new Map<
-          string,
-          {
-            win: number;
-            tie: number;
-            loss: number;
-            unresolved: number;
-            count: number;
-          }
-        >();
-        let fineTokens = 0,
-          fineSeconds = 0,
-          comparisonTokens = 0,
-          comparisonSeconds = 0;
-        for (const row of predictions) {
-          const counts = groups.get(row.group) ?? {
-            win: 0,
-            tie: 0,
-            loss: 0,
-            unresolved: 0,
-            count: 0,
-          };
-          const [first, second] = row.judgments;
-          if (first === "A" && second === "B") counts.win++;
-          else if (first === "B" && second === "A") counts.loss++;
-          else if (first === "TIE" && second === "TIE") counts.tie++;
-          else counts.unresolved++;
-          counts.count++;
-          groups.set(row.group, counts);
-          fineTokens += row.fine_tuned.tokens;
-          fineSeconds += row.fine_tuned.seconds;
-          comparisonTokens += row.comparison.tokens;
-          comparisonSeconds += row.comparison.seconds;
-        }
-        const fractions = { win: 0, tie: 0, loss: 0, unresolved: 0 };
-        for (const group of groups.values())
-          for (const key of ["win", "tie", "loss", "unresolved"] as const)
-            fractions[key] += group[key] / group.count / groups.size;
-        const resolved = fractions.win + fractions.tie + fractions.loss;
-        fractions.unresolved = Math.min(1, Math.max(0, fractions.unresolved));
+        const metrics = summarizePredictions(predictions);
         const summary: RunEvaluation = {
-          holdout_groups: groups.size,
-          holdout_examples: predictions.length,
+          judging_method: metrics.judging_method,
+          holdout_groups: metrics.holdout_groups,
+          holdout_examples: metrics.holdout_examples,
           comparison_model_id: input.comparisonModelId,
           judge_model_id: input.judgeModelId,
           vs_comparison: {
             comparator_model_id: input.comparisonModelId,
-            ...fractions,
-            win: resolved ? fractions.win / resolved : 0,
-            tie: resolved ? fractions.tie / resolved : 0,
-            loss: resolved ? fractions.loss / resolved : 0,
+            ...metrics.fractions,
           },
           cost_per_request_nano_usd: null,
-          output_tokens_per_second: {
-            fine_tuned: fineTokens / fineSeconds,
-            comparison: comparisonTokens / comparisonSeconds,
-          },
+          output_tokens_per_second: metrics.output_tokens_per_second,
           error_rate: 0,
         };
         await store.result(
@@ -411,7 +351,7 @@ export const createTrainingExecutorActivities = (options: {
           {
             type: "evaluation_completed",
             judge: input.judgeModelId,
-            groups: groups.size,
+            groups: metrics.holdout_groups,
             ...summary.vs_comparison,
           },
           Context.current().info.attempt,

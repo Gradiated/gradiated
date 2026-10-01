@@ -1,3 +1,4 @@
+import { Toaster } from "@/components/ui/sonner";
 import NiceModal from "@ebay/nice-modal-react";
 import {
   MutationCache,
@@ -154,6 +155,7 @@ createRoot(rootElement).render(
     <QueryClientProvider client={queryClient}>
       <NiceModal.Provider>
         <RouterProvider router={router} />
+        <Toaster />
       </NiceModal.Provider>
     </QueryClientProvider>
   </StrictMode>,

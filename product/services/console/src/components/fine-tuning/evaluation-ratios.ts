@@ -27,5 +27,5 @@ export const costPer1kRequests = (summary: EvaluationSummary): string => {
 export const outputSpeed = (summary: EvaluationSummary): string => {
   const { comparison, fine_tuned } = summary.output_tokens_per_second;
 
-  return `${fine_tuned} vs ${comparison} output tokens/s`;
+  return `${fine_tuned.toFixed(1)} vs ${comparison.toFixed(1)} output tokens/s`;
 };

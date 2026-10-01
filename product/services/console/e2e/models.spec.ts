@@ -1,3 +1,4 @@
+import { apiPathEndsWith, fulfillJson } from "./routes";
 import { expect, test } from "./fixtures";
 
 test("models page shows the available model and pricing", async ({ page }) => {
@@ -45,4 +46,30 @@ test("models page shows the available model and pricing", async ({ page }) => {
   expect(
     Math.max(...layout.columnWidths) - Math.min(...layout.columnWidths),
   ).toBeLessThan(2);
+});
+
+test("models page keeps unavailable hosted models and hides training-only bases", async ({
+  page,
+}) => {
+  await page.route(apiPathEndsWith("/models"), async (route) => {
+    const response = await route.fetch();
+    const catalog = await response.json();
+    const model = catalog.data[0];
+    return fulfillJson(route, {
+      ...catalog,
+      data: [
+        { ...model, status: "unavailable" },
+        {
+          ...model,
+          id: "Qwen/Qwen3-0.6B",
+          name: "Qwen training only",
+          status: "unavailable",
+        },
+      ],
+    });
+  });
+  await page.goto("/models");
+  await expect(page.locator("article")).toHaveCount(1);
+  await expect(page.locator("article")).toContainText("Unavailable");
+  await expect(page.getByText("Qwen training only")).toHaveCount(0);
 });

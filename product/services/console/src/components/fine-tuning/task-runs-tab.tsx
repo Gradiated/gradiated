@@ -1,4 +1,4 @@
-import { ThresholdProgress } from "./threshold-progress";
+import { NextTraining } from "./next-training";
 import { useState } from "react";
 
 import { StageTimeline } from "@/components/fine-tuning/stage-timeline";
@@ -68,16 +68,17 @@ const RunListItem = ({
         {STAGE_LABEL[run.stage]}
       </Badge>
     </div>
-    <p className="mt-1 text-xs text-muted-foreground">
+    <p className="mt-2 space-y-1 text-xs text-muted-foreground">
       {version ? (
-        <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em] text-foreground">
+        <code className="block truncate rounded bg-muted px-1 py-0.5 font-mono text-[0.9em] text-foreground">
           {version.name}
         </code>
       ) : null}
-      {version && run.dataset ? " · " : null}
-      {run.dataset
-        ? `${run.dataset.train.toLocaleString()} training examples`
-        : null}
+      {run.dataset ? (
+        <span className="block">
+          {run.dataset.train.toLocaleString()} training examples
+        </span>
+      ) : null}
     </p>
   </button>
 );
@@ -107,7 +108,16 @@ export const TaskRunsTab = ({
   if (query.isPending || query.error) return <QueryState query={query} />;
 
   if (!selectedRun) {
-    return <UntrainedTaskState title="No training runs yet" />;
+    return (
+      <UntrainedTaskState
+        title="No training runs yet"
+        action={
+          <div className="mt-3">
+            <NextTraining schedule={task.training_schedule} />
+          </div>
+        }
+      />
+    );
   }
 
   return (
@@ -115,7 +125,7 @@ export const TaskRunsTab = ({
       <section className="self-start overflow-hidden rounded-lg border bg-card">
         {!activeRun ? (
           <div className="border-b border-dashed p-4">
-            <ThresholdProgress label="Next re-train" compact />
+            <NextTraining schedule={task.training_schedule} />
           </div>
         ) : null}
         {runs.map((run) => (

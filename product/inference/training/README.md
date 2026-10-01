@@ -50,7 +50,8 @@ block terminal recording on host availability. Training uses the existing fixed
 pool; provider provisioning and spot capacity are not part of this executor.
 
 The initial evaluation uses the same small base model as comparison and judge,
-with reversed answer order and group-weighted results. This validates execution;
+with one judgment per pair, reproducibly randomized answer and generation order,
+and group-weighted results. This validates execution;
 it is not a production quality benchmark. Published adapters remain unavailable
 for promotion until serving qualification is implemented.
 

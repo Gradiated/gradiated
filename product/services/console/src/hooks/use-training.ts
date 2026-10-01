@@ -1,4 +1,5 @@
 import { useOptimisticPatch } from "./use-optimistic-patch";
+import { isTerminalRunStage } from "@gradiated/contracts/training-stages";
 import { useEffect } from "react";
 import {
   useInfiniteQuery,
@@ -32,7 +33,9 @@ export const useTasks = () => {
     queryKey: [...trainingKey(workspaceId), "tasks"],
     queryFn: ({ signal }) => listTasks(workspaceId, signal),
     enabled: Boolean(workspaceId),
-    refetchInterval: 30_000,
+    staleTime: 300_000,
+    refetchInterval: 300_000,
+    refetchOnWindowFocus: "always",
   });
 };
 
@@ -43,6 +46,9 @@ export const useTask = (task: string) => {
     queryKey: [...trainingKey(workspaceId), "task", task],
     queryFn: ({ signal }) => getTask(workspaceId, task, signal),
     enabled: Boolean(workspaceId && task),
+    staleTime: 300_000,
+    refetchInterval: 300_000,
+    refetchOnWindowFocus: "always",
   });
 };
 
@@ -65,8 +71,12 @@ export const useTaskHistory = (
       };
     },
     enabled: Boolean(workspaceId && task.id),
-    staleTime: 5_000,
-    refetchInterval: 10_000,
+    staleTime: 300_000,
+    refetchOnWindowFocus: "always",
+    refetchInterval: (query) =>
+      query.state.data?.runs.some((run) => !isTerminalRunStage(run.stage))
+        ? 10_000
+        : 300_000,
   });
 };
 

@@ -151,14 +151,21 @@ export const EvaluationPanel = ({
           </TooltipTrigger>
           <TooltipContent side="left" className="max-w-sm text-xs leading-5">
             <p className="mb-2">
-              {summary.holdout_examples} requests from {summary.holdout_groups}{" "}
-              sessions were kept out of training. Each session counts once.
+              {summary.holdout_examples} held-out examples from{" "}
+              {summary.holdout_groups} independent groups were evaluated. Groups
+              connect examples sharing a session or prompt and are weighted
+              equally. This is the evaluation sample, not the full dataset.
             </p>
             <p className="mb-2">
               For each request, {summary.judge_model_id} saw this model's answer
-              and a fresh {summary.comparison_model_id} answer, unlabelled, in
-              both orders, and picked the better one. Unresolved means the two
-              orders disagreed.
+              and a fresh {summary.comparison_model_id} answer, unlabelled.{" "}
+              {summary.judging_method === "randomized_single"
+                ? "Each pair was judged once, with randomized answer order. Unresolved means the judge did not return a valid decision."
+                : "Each pair was judged in both orders. Unresolved means the orders disagreed or the judge did not return a valid decision."}
+            </p>
+            <p className="mb-2">
+              Speed is measured during evaluation on the training GPU, including
+              prompt processing; it is not a serving benchmark.
             </p>
             <p>Nothing here blocks promotion. You decide.</p>
           </TooltipContent>
@@ -167,8 +174,8 @@ export const EvaluationPanel = ({
 
       <OutcomeBar outcome={summary.vs_comparison} />
       <p className="mt-1.5 text-xs text-muted-foreground">
-        Resolved comparisons · {formatPercent(summary.vs_comparison.unresolved)}{" "}
-        unresolved overall
+        Resolved {formatPercent(1 - summary.vs_comparison.unresolved)} ·
+        Unresolved {formatPercent(summary.vs_comparison.unresolved)}
       </p>
 
       <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-foreground tabular-nums">
@@ -194,7 +201,7 @@ export const EvaluationPanel = ({
         <Button
           variant="link"
           size="sm"
-          className="ml-auto h-auto p-0 text-xs"
+          className="h-auto shrink-0 p-0 text-xs"
           onClick={onViewResults}
           disabled={!onViewResults}
         >

@@ -33,6 +33,7 @@ export default defineConfig({
         CLICKHOUSE_SECURE: "false",
         CLICKHOUSE_USERNAME: "gradiated",
         DATABASE_URL:
+          process.env.DATABASE_URL ??
           "postgresql://gradiated:gradiated@127.0.0.1:5432/gradiated",
         VALKEY_URL: "redis://127.0.0.1:6379",
         AUTH_TEST_MODE: "true",

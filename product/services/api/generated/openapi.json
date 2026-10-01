@@ -1562,6 +1562,13 @@
           "null"
         ],
         "properties": {
+          "judging_method": {
+            "type": "string",
+            "enum": [
+              "randomized_single",
+              "both_orders"
+            ]
+          },
           "holdout_groups": {
             "type": "integer",
             "minimum": 0

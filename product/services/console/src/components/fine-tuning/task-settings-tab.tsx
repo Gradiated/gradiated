@@ -2,13 +2,13 @@ import { useProductContext } from "@/hooks/use-product-context";
 import { useOptimisticValue } from "@/hooks/use-optimistic-patch";
 import type { components } from "@/api/schema";
 import { OptionSelect } from "@/components/option-select";
-import { TRAINING_BASE_MODELS } from "@gradiated/contracts/model-catalog";
+import {
+  COMPARISON_MODELS,
+  TRAINING_BASE_MODELS,
+} from "@gradiated/contracts/model-catalog";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 import { modelsQuery } from "@/api/queries";
 import { taskSettingsKey, useTrainingMutation } from "@/hooks/use-training";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { SettingRow, SettingsCard } from "./settings-card";
 import { QueryState } from "./query-state";
 import type { TaskRow } from "@/store/fine-tuning-types";
@@ -22,11 +22,8 @@ export const TaskSettingsTab = ({ task: savedTask }: { task: TaskRow }) => {
   );
   const models = useQuery(modelsQuery());
   const { update, canEdit } = useTrainingMutation(task.name);
-  const [comparison, setComparison] = useState(task.comparison_model_id ?? "");
-  const availableModels = (models.data?.data ?? []).filter(
-    (model) =>
-      model.status === "available" ||
-      TRAINING_BASE_MODELS.some((base) => base.id === model.id),
+  const availableModels = (models.data?.data ?? []).filter((model) =>
+    TRAINING_BASE_MODELS.some((base) => base.id === model.id),
   );
   const baseModelOptions = availableModels.map((model) => ({
     value: model.id,
@@ -45,37 +42,48 @@ export const TaskSettingsTab = ({ task: savedTask }: { task: TaskRow }) => {
     });
   }
 
+  const comparisonOptions: {
+    value: string;
+    label: string;
+    disabled: boolean;
+  }[] = COMPARISON_MODELS.filter(
+    (model) =>
+      model.id.startsWith("openai/") ||
+      model.id.startsWith("anthropic/") ||
+      model.id === "Qwen/Qwen3-0.6B" ||
+      models.data?.data.some(
+        (hosted) => hosted.id === model.id && hosted.status === "available",
+      ),
+  ).map((model) => ({ value: model.id, label: model.id, disabled: false }));
+
+  if (
+    task.comparison_model_id &&
+    !comparisonOptions.some((model) => model.value === task.comparison_model_id)
+  ) {
+    comparisonOptions.unshift({
+      value: task.comparison_model_id,
+      label: `${task.comparison_model_id} (unavailable)`,
+      disabled: true,
+    });
+  }
+
   return (
     <SettingsCard>
       <SettingRow
         title="Comparison model"
         description="New versions are judged, costed and timed against this."
       >
-        <form
-          className="flex gap-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            update.mutate({ comparison_model_id: comparison.trim() });
-          }}
-        >
-          <Input
-            aria-label="Comparison model"
-            value={comparison}
-            onChange={(event) => setComparison(event.target.value)}
-            disabled={!canEdit || update.isPending}
-            required
-          />
-          <Button
-            disabled={
-              !canEdit ||
-              update.isPending ||
-              !comparison.trim() ||
-              comparison.trim() === task.comparison_model_id
-            }
-          >
-            Save
-          </Button>
-        </form>
+        <OptionSelect
+          label="Comparison model"
+          className="w-80 font-mono text-xs"
+          value={task.comparison_model_id ?? ""}
+          placeholder="Select a comparison model"
+          disabled={!canEdit || !models.data}
+          onValueChange={(comparison_model_id) =>
+            update.mutate({ comparison_model_id })
+          }
+          options={comparisonOptions}
+        />
       </SettingRow>
       <SettingRow
         title="Base model"

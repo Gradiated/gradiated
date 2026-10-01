@@ -1012,6 +1012,8 @@ export interface components {
       evaluation_examples?: number;
     } | null;
     RunEvaluation: {
+      /** @enum {string} */
+      judging_method?: "randomized_single" | "both_orders";
       holdout_groups: number;
       holdout_examples: number;
       comparison_model_id: string;

@@ -15,6 +15,10 @@
     "./training-stages": {
       "types": "./dist/training-stages.d.ts",
       "default": "./dist/training-stages.js"
+    },
+    "./training-schedule": {
+      "types": "./dist/training-schedule.d.ts",
+      "default": "./dist/training-schedule.js"
     }
   },
   "scripts": {

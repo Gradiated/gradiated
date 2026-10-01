@@ -29,7 +29,7 @@ import { currentVersion } from "@/store/fine-tuning-views";
 const VERSIONS_PAGE = 5;
 
 const VERSION_MENU = [
-  { kind: "promote", label: "Promote to production" },
+  { kind: "promote", label: "Promote" },
   { kind: "use", label: "Use this version" },
   { kind: "download", label: "Download adapter" },
 ] as const satisfies readonly { kind: VersionAction["kind"]; label: string }[];
@@ -161,7 +161,7 @@ const CurrentVersion = ({
             disabled={version.status !== "available"}
             onClick={() => onAction({ kind: "promote", versionId: version.id })}
           >
-            Promote to production
+            Promote
           </Button>
         ) : null}
         <VersionActionButtons version={version} onAction={onAction} />

@@ -53,6 +53,18 @@ describe("costAdvantage", () => {
 });
 
 describe("speedAdvantage", () => {
+  it("rounds the measured production example to 1.4 times slower", () => {
+    const value = summary(
+      { fine_tuned: 1, comparison: 1 },
+      { fine_tuned: 35.19353687545304, comparison: 50.6595658693694 },
+    );
+    expect(speedAdvantage(value)).toEqual({
+      tone: "bad",
+      label: "1.4× slower",
+    });
+    expect(outputSpeed(value)).toBe("35.2 vs 50.7 output tokens/s");
+  });
+
   it("reads a slower fine-tuned model as bad", () => {
     expect(
       speedAdvantage(
@@ -98,6 +110,6 @@ describe("outputSpeed", () => {
           { fine_tuned: 112, comparison: 58 },
         ),
       ),
-    ).toBe("112 vs 58 output tokens/s");
+    ).toBe("112.0 vs 58.0 output tokens/s");
   });
 });

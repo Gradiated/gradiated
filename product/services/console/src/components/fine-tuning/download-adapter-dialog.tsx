@@ -56,7 +56,7 @@ export const DownloadAdapterDialog = ({
           <dd className="font-mono">{version.base_model_id}</dd>
           <dt className="text-muted-foreground">Size</dt>
           <dd>
-            {(adapter.size_bytes / MEBIBYTE).toFixed(0)} MB (rank {adapter.rank}
+            {(adapter.size_bytes / MEBIBYTE).toFixed(1)} MB (rank {adapter.rank}
             )
           </dd>
         </dl>

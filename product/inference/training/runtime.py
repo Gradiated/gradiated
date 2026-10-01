@@ -1,4 +1,6 @@
+import hashlib
 import json
+import random
 import urllib.request
 
 from autotrain import Trainer
@@ -77,35 +79,42 @@ class TrainingRuntime(Trainer):
             results = []
             for index, example in enumerate(examples):
                 self.check()
-                fine = self.generate(example["prompt"], adapted=True)
-                comparison = self.generate(example["prompt"], adapted=False)
-                judgments = []
-                for first, second in ((fine, comparison), (comparison, fine)):
-                    prompt = (
-                        "Compare the two answers to the user's request. Reply with exactly A, B, or TIE.\nRequest:\n"
-                        + json.dumps(example["prompt"])
-                        + "\nAnswer A:\n"
-                        + first["text"]
-                        + "\nAnswer B:\n"
-                        + second["text"]
-                    )
-                    judgments.append(
-                        self.generate(
-                            [{"role": "user", "content": prompt}],
-                            adapted=False,
-                            max_tokens=8,
-                            max_prompt_tokens=4096,
-                        )["text"]
-                        .strip()
-                        .upper()
-                    )
+                fine_first = random.Random(
+                    hashlib.sha256(example["id"].encode()).digest()
+                ).choice((True, False))
+                if fine_first:
+                    fine = self.generate(example["prompt"], adapted=True)
+                    comparison = self.generate(example["prompt"], adapted=False)
+                else:
+                    comparison = self.generate(example["prompt"], adapted=False)
+                    fine = self.generate(example["prompt"], adapted=True)
+                first, second = (fine, comparison) if fine_first else (comparison, fine)
+                prompt = (
+                    "Compare the two answers to the user's request. Reply with exactly A, B, or TIE.\nRequest:\n"
+                    + json.dumps(example["prompt"])
+                    + "\nAnswer A:\n"
+                    + first["text"]
+                    + "\nAnswer B:\n"
+                    + second["text"]
+                )
+                judgment = (
+                    self.generate(
+                        [{"role": "user", "content": prompt}],
+                        adapted=False,
+                        max_tokens=8,
+                        max_prompt_tokens=4096,
+                    )["text"]
+                    .strip()
+                    .upper()
+                )
                 results.append(
                     {
                         "id": example["id"],
                         "group": example["group"],
                         "fine_tuned": fine,
                         "comparison": comparison,
-                        "judgments": judgments,
+                        "judgment": judgment,
+                        "fine_tuned_first": fine_first,
                     }
                 )
                 emit(

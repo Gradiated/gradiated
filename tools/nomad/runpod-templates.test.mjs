@@ -56,7 +56,7 @@ test("check is read-only and apply only creates missing templates", async () => 
 
   const applied = await reconcileTemplates(requests, call, true);
   assert.ok(applied.every((item) => item.status === "created" && item.id));
-  assert.equal(calls.filter((item) => item.method === "POST").length, 3);
+  assert.equal(calls.filter((item) => item.method === "POST").length, requests.length);
 });
 
 test("finds existing templates across pages without mutating them", async () => {

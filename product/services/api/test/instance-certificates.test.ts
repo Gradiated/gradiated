@@ -55,6 +55,7 @@ const setup = async () => {
     return { status: response.status, body: await response.text() };
   };
   return {
+    app,
     call,
     body: {
       nomad_node_id: node,
@@ -68,6 +69,15 @@ const setup = async () => {
   };
 };
 describe("GPU certificate endpoint", () => {
+  it("leaves health, documentation, and unrelated routes accessible when enabled", async () => {
+    const h = await setup();
+    for (const path of ["/health/live", "/api/openapi.json", "/docs"]) {
+      expect((await h.app.request(path)).status).toBe(200);
+    }
+    expect((await h.app.request("/missing")).status).toBe(404);
+    expect(h.issue).not.toHaveBeenCalled();
+    expect(h.observe).not.toHaveBeenCalled();
+  });
   it("signs only the host public key with a fixed role and 30-day lifetime", async () => {
     const h = await setup();
     const result = await h.call(h.body);

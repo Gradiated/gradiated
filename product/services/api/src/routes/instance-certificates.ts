@@ -73,8 +73,8 @@ export const createHostCertificateRouter = (
 ) => {
   const router = new OpenAPIHono<ApiEnvironment>();
   let active = 0;
-  router.use("*", apiRateLimit(60));
-  router.use("*", async (context, next) => {
+  router.use(route.getRoutingPath(), apiRateLimit(60));
+  router.use(route.getRoutingPath(), async (context, next) => {
     context.header("Cache-Control", "no-store");
     if (
       !/^Bearer [A-Za-z0-9_-]{43}$/.test(
@@ -86,7 +86,7 @@ export const createHostCertificateRouter = (
     await next();
   });
   router.use(
-    "*",
+    route.getRoutingPath(),
     bodyLimit({ maxSize: 8192, onError: (context) => context.body(null, 413) }),
   );
   router.openapi(

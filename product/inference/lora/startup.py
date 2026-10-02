@@ -11,7 +11,7 @@ def start_preload(loader, targets, seconds=600):
     try:
         deadline = time.monotonic() + seconds
         loaded = 0
-        for target in targets():
+        for target in loader.operation("production_list", targets):
             if (
                 time.monotonic() >= deadline
                 or loaded >= loader.config["cpu_adapter_slots"]

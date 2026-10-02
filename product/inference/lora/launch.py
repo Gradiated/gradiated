@@ -1,5 +1,6 @@
 import argparse
 import json
+import logging
 import os
 import signal
 import subprocess
@@ -73,6 +74,7 @@ def resolver_environment(environment):
 def main():
     from huggingface_hub import hf_hub_download
 
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     command = sys.argv[1:]
     _settings, model, revision = engine_settings(command, os.environ, {})
     identity = host_identity(os.environ["HOST_IDENTITY_FILE"])

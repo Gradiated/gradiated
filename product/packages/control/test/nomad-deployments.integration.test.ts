@@ -257,6 +257,32 @@ describe("Nomad deployment reconciliation", () => {
     ]);
   });
 
+  it("discovers enabled available/canary loaders and excludes disabled or draining allocations", async () => {
+    const enabled = { ...deploymentRelease(), lora_enabled: true };
+    const running = allocation({ release: enabled });
+    const canary = allocation({ release: enabled, verificationPending: true });
+    const stopping = allocation({ release: enabled, draining: true });
+    await store.reconcile(nomad([running, canary, stopping, allocation()]));
+    const targets = await store.adapterMetricsTargets();
+    expect(targets.map((target) => target.id).sort()).toEqual(
+      [running.allocationId, canary.allocationId].sort(),
+    );
+    await testDatabase.database
+      .update(modelDeployments)
+      .set({ serviceUrl: "https://untrusted.example/metrics" })
+      .where(eq(modelDeployments.id, running.allocationId));
+    expect(
+      (await store.adapterMetricsTargets()).map((target) => target.id),
+    ).toEqual([canary.allocationId]);
+
+    for (const target of targets) {
+      expect(target.modelId).toBe(modelId);
+      expect(target.serviceUrl).toBe(
+        `https://${host.providerInstanceId}-8888.proxy.runpod.net/alloc/${target.id}`,
+      );
+    }
+  });
+
   it("reports allocations it cannot route instead of failing the pass", async () => {
     const unregistered = allocation({ nodeId: randomUUID() });
     const uncatalogued = allocation({ modelId: `test/${randomUUID()}` });

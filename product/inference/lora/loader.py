@@ -41,6 +41,9 @@ class Loader:
         )
         self.preparation_seconds = 0.0
         self.preparations = 0
+        self.operations = {}
+        self.last_failure = 0
+        self.last_capacity_rejection = 0
         for path in self.root.iterdir():
             if path.is_symlink() or not path.is_dir():
                 continue
@@ -171,10 +174,50 @@ class Loader:
         return self.register_metadata(spec)
 
     def resolve_version(self, name, workspace_id):
-        return self.resolve_files(self.version_key(name, workspace_id), workspace_id)
+        return self.operation(
+            "resolve",
+            lambda: self.resolve_files(
+                self.version_key(name, workspace_id), workspace_id
+            ),
+        )
 
     def prepare_version(self, name, workspace_id):
-        self.prepare(self.version_key(name, workspace_id), workspace_id)
+        return self.operation(
+            "prepare",
+            lambda: self.prepare(self.version_key(name, workspace_id), workspace_id),
+        )
+
+    def operation(self, action, call):
+        started = time.monotonic()
+        outcome = "success"
+        try:
+            return call()
+        except CapacityError:
+            outcome = "capacity"
+            raise
+        except Exception:
+            outcome = "failed"
+            raise
+        finally:
+            elapsed = time.monotonic() - started
+            with self.lock:
+                key = (action, outcome)
+                self.operations[key] = self.operations.get(key, 0) + 1
+                if outcome == "failed":
+                    self.last_failure = time.time()
+                if outcome == "capacity":
+                    self.last_capacity_rejection = time.time()
+            logger.log(
+                logging.INFO if outcome == "success" else logging.WARNING,
+                json.dumps(
+                    {
+                        "event": "lora_operation",
+                        "action": action,
+                        "outcome": outcome,
+                        "elapsed_seconds": round(elapsed, 3),
+                    }
+                ),
+            )
 
     def local_files(self, name):
         path = self.root / name
@@ -338,7 +381,18 @@ class Loader:
                 "preparation_seconds_sum": self.preparation_seconds,
                 "preparation_seconds_count": self.preparations,
                 "disk_cache_bytes": self.disk_bytes(),
+                "disk_cache_limit_bytes": self.config["disk_cache_bytes"],
+                "pinned_disk_bytes": sum(
+                    entry["disk"] for entry in self.entries.values() if entry["pinned"]
+                ),
+                "last_failure_timestamp_seconds": self.last_failure,
+                "last_capacity_rejection_timestamp_seconds": self.last_capacity_rejection,
             }
-            return "".join(
+            gauges = "".join(
                 f"gradiated_lora_{key} {value}\n" for key, value in values.items()
-            ).encode()
+            )
+            operations = "".join(
+                f'gradiated_lora_operations_total{{action="{action}",outcome="{outcome}"}} {count}\n'
+                for (action, outcome), count in sorted(self.operations.items())
+            )
+            return (gauges + operations).encode()

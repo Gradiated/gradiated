@@ -47,6 +47,9 @@ export interface NomadDeploymentStore {
   /** Returns null when another worker is running the pass. */
   reconcile(nomad: NomadView): Promise<ReconcileResult | null>;
   replicas(): Promise<NomadReplica[]>;
+  adapterMetricsTargets(): Promise<
+    { id: string; modelId: string; serviceUrl: string }[]
+  >;
   verificationReplicas(
     modelId: string,
     deploymentIds: readonly string[],
@@ -75,6 +78,40 @@ const hostProxyUrl = (instance: Instance): string | null => {
 export const createNomadDeploymentStore = (
   database: ControlDatabase,
 ): NomadDeploymentStore => ({
+  adapterMetricsTargets: async () => {
+    const rows = await database
+      .select({
+        id: modelDeployments.id,
+        modelId: modelDeployments.modelId,
+        serviceUrl: modelDeployments.serviceUrl,
+        instance: instances,
+      })
+      .from(modelDeployments)
+      .innerJoin(instances, eq(modelDeployments.instanceId, instances.id))
+      .where(
+        and(
+          sql`${modelDeployments.release}->>'lora_enabled' = 'true'`,
+          sql`${modelDeployments.status} <> 'draining'`,
+          isNull(instances.retiredAt),
+        ),
+      );
+
+    return ModelDeploymentRecordSchema.pick({
+      id: true,
+      modelId: true,
+      serviceUrl: true,
+    })
+      .array()
+      .parse(
+        rows.filter((row) => {
+          const proxy = hostProxyUrl(row.instance);
+          return (
+            proxy !== null && row.serviceUrl === `${proxy}/alloc/${row.id}`
+          );
+        }),
+      );
+  },
+
   replicas: async () => {
     const rows = await database
       .select({

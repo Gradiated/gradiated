@@ -107,6 +107,33 @@ class ServerTests(unittest.TestCase):
             )
         self.assertEqual(status, 503)
         self.assertEqual(self.request("GET", "/health")[0], 200)
+        _, metrics = self.request("GET", "/internal/adapters/metrics")
+        self.assertIn(
+            b'gradiated_lora_operations_total{action="prepare",outcome="capacity"} 1',
+            metrics,
+        )
+        self.assertGreater(self.loader.last_capacity_rejection, 0)
+
+    def test_grant_failure_is_observable_without_exposing_credentials(self):
+        self.loader.resolve = mock.Mock(side_effect=OSError("secret-signed-url"))
+        with self.assertLogs(level="WARNING") as logs:
+            status, _ = self.request(
+                "POST",
+                "/internal/adapters/resolve",
+                {
+                    "name": self.spec["version"]["name"],
+                    "workspace_id": self.spec["workspace_id"],
+                },
+            )
+        self.assertEqual(status, 503)
+        self.assertNotIn("secret-signed-url", "".join(logs.output))
+        _, metrics = self.request("GET", "/internal/adapters/metrics")
+        self.assertIn(
+            b'gradiated_lora_operations_total{action="resolve",outcome="failed"} 1',
+            metrics,
+        )
+        self.assertGreater(self.loader.last_failure, 0)
+        self.assertNotIn(self.spec["workspace_id"].encode(), metrics)
 
     def test_invalid_workspace_and_body_are_rejected_before_native_loading(self):
         for body in (

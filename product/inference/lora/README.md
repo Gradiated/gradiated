@@ -137,7 +137,27 @@ version slug. Probe checks a bounded generation's
 returned identity and usage.
 Metrics live at `/internal/adapters/metrics`; they report file hits, downloads,
 startup registrations, failures, disk evictions and preparation duration with no adapter or
-workspace labels. Failure logs omit exception text, prompts, signed URLs and tokens.
+workspace labels. Prometheus discovers enabled allocations from the worker's internal
+`GET /metrics/targets/lora` endpoint and scrapes the existing authenticated host
+`/alloc/<id>/internal/adapters/metrics` route. Discovery reads the deployment
+inventory every thirty seconds; it is not part of inference or placement. The
+scrape uses the same runtime bearer credential as the gateway. Disabled and
+draining allocations are excluded. Discovery failures return 503, preserving
+Prometheus's last successful target list rather than silently returning no targets.
+
+Operation counters cover grant, file and native startup-registration failures;
+timestamps detect failures before the first scrape. Disk gauges expose the limit
+and bytes pinned for native reloads. Alerts cover failed/missing loader scrapes,
+recent operation/capacity failures and sustained pinned disk pressure. The
+[LoRA dashboard](https://grafana.gradiated.com/d/gradiated-lora) links to Nomad
+allocation logs. Gateway failures remain in the central Loki diagnostics.
+
+`lora_operation` JSON logs report action, outcome and elapsed seconds. Successes
+are informational and failures are warnings. Failure logs omit exception text,
+prompts, adapter/workspace identifiers, signed URLs and tokens. Inspect the
+allocation's `vllm` task logs alongside gateway/runtime errors. Native inference
+failures remain covered by the existing gateway alerts; loader metrics do not
+claim to measure native CPU/GPU residency.
 
 PEFT archives may be flat or under `adapter/`, with `adapter_config.json`,
 `adapter_model.safetensors` and optional `README.md`. BF16/F16/F32 and complete

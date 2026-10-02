@@ -27,6 +27,7 @@ import {
 import { createCatalogApply } from "./catalog-apply.js";
 import { createNomadGet } from "./nomad-allocations.js";
 import { serviceLog } from "./logging.js";
+import { loraMetricsTargets } from "./lora-metrics-targets.js";
 import { startWorkerMetricsServer, WorkerMetrics } from "./metrics.js";
 import { runGenerationSettlementLoop } from "./settlement-loop.js";
 import { sleep } from "./sleep.js";
@@ -40,6 +41,10 @@ const metricsServer = startWorkerMetricsServer(
   metrics,
   "0.0.0.0",
   environment.METRICS_PORT,
+  async () =>
+    loraMetricsTargets(
+      await createNomadDeploymentStore(database).adapterMetricsTargets(),
+    ),
 );
 
 metricsServer.once("error", (error) => {

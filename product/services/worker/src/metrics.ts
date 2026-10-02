@@ -292,8 +292,32 @@ export const startWorkerMetricsServer = (
   metrics: WorkerMetrics,
   hostname: string,
   port: number,
+  targets?: () => Promise<unknown>,
 ): Server => {
   const server = createServer((request, response) => {
+    if (
+      request.method === "GET" &&
+      request.url === "/metrics/targets/lora" &&
+      targets
+    ) {
+      void targets().then(
+        (groups) => {
+          const body = JSON.stringify(groups);
+          response
+            .writeHead(200, {
+              "Content-Type": "application/json",
+              "Content-Length": Buffer.byteLength(body),
+            })
+            .end(body);
+        },
+        (error: unknown) => {
+          serviceLog("error", "lora_metrics_discovery_failed", { error });
+          response.writeHead(503).end();
+        },
+      );
+      return;
+    }
+
     if (request.method !== "GET" || request.url !== "/metrics") {
       response.writeHead(404).end();
       return;

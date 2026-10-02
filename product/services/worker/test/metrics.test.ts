@@ -231,8 +231,11 @@ describe("worker metrics server", () => {
     if (stopping) await new Promise((resolve) => stopping.close(resolve));
   });
 
-  const listen = async (metrics: WorkerMetrics): Promise<string> => {
-    const started = startWorkerMetricsServer(metrics, "127.0.0.1", 0);
+  const listen = async (
+    metrics: WorkerMetrics,
+    targets?: () => Promise<unknown>,
+  ): Promise<string> => {
+    const started = startWorkerMetricsServer(metrics, "127.0.0.1", 0, targets);
     server = started;
     await new Promise((resolve) => started.once("listening", resolve));
 
@@ -243,6 +246,24 @@ describe("worker metrics server", () => {
 
     return `http://127.0.0.1:${address.port}`;
   };
+
+  it("serves discovery and fails closed when inventory cannot be read", async () => {
+    const groups = [
+      { targets: ["host.example"], labels: { deployment: "test" } },
+    ];
+    const targets = vi
+      .fn()
+      .mockResolvedValueOnce(groups)
+      .mockRejectedValueOnce(new Error("database unavailable"));
+    const origin = await listen(createMetrics(), targets);
+    const success = await fetch(`${origin}/metrics/targets/lora`);
+    expect(success.status).toBe(200);
+    expect(await success.json()).toEqual(groups);
+    const failed = await fetch(`${origin}/metrics/targets/lora`);
+    expect(failed.status).toBe(503);
+    expect(await failed.text()).toBe("");
+    expect((await fetch(`${origin}/metrics`)).status).toBe(200);
+  });
 
   it("serves the registry on GET /metrics", async () => {
     const metrics = createMetrics();

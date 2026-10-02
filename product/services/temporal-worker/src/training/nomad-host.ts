@@ -13,6 +13,7 @@ export type TrainingHostConfig = {
   bundleSha256: string;
   baseId: string;
   gpuType: string;
+  nodePool?: string | undefined;
 };
 
 export const trainingHostJob = (
@@ -37,6 +38,7 @@ export const trainingHostJob = (
     ID: id,
     Name: id,
     Type: "batch",
+    NodePool: config.nodePool ?? "default",
     Datacenters: ["dc1"],
     Constraints: [
       {

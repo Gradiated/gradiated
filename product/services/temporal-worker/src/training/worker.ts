@@ -71,6 +71,7 @@ export const runTrainingWorker = async (input: {
         bundleSha256: config.TRAINING_BUNDLE_SHA256,
         baseId: config.TRAINING_BASE_ID,
         gpuType: config.TRAINING_GPU_MODEL,
+        nodePool: config.TRAINING_NODE_POOL,
       },
     });
   };

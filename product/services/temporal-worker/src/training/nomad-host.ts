@@ -1,3 +1,4 @@
+import { setTimeout as delay } from "node:timers/promises";
 import { z } from "zod";
 import type { NomadRequest } from "@gradiated/nomad-pki";
 
@@ -189,21 +190,29 @@ export const createTrainingHosts = (input: {
         )) ?? [],
       );
   const call = async (host: TrainingHost, path: string, command?: unknown) => {
-    const response = await http(`${host.url}${path}`, {
-      method: command === undefined ? "GET" : "POST",
-      headers: {
-        authorization: `Bearer ${input.token}`,
-        "content-type": "application/json",
-      },
-      ...(command === undefined ? {} : { body: JSON.stringify(command) }),
-      signal: AbortSignal.any([
-        AbortSignal.timeout(30_000),
-        ...(input.signal ? [input.signal()] : []),
-      ]),
-    });
-    if (!response.ok)
-      throw new Error(`Trainer request failed (${response.status}).`);
-    return response.json() as Promise<unknown>;
+    const signal = AbortSignal.any([
+      AbortSignal.timeout(30_000),
+      ...(input.signal ? [input.signal()] : []),
+    ]);
+
+    for (let attempt = 0; ; attempt++) {
+      const response = await http(`${host.url}${path}`, {
+        method: command === undefined ? "GET" : "POST",
+        headers: {
+          authorization: `Bearer ${input.token}`,
+          "content-type": "application/json",
+        },
+        ...(command === undefined ? {} : { body: JSON.stringify(command) }),
+        signal,
+      });
+      if (response.ok) return response.json() as Promise<unknown>;
+
+      await response.body?.cancel();
+      if (response.status < 500 || attempt === 2)
+        throw new Error(`Trainer request failed (${response.status}).`);
+
+      await delay(1000 * (attempt + 1), undefined, { signal });
+    }
   };
   const renew = async (host: TrainingHost) => {
     const found = await allocations(host.jobId);

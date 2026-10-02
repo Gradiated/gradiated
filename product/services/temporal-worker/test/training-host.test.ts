@@ -192,3 +192,66 @@ it("reserves the recipe's GPU count within one training node", () => {
     }),
   ).toThrow();
 });
+
+const retryHost = {
+  allocationId,
+  jobId: `training-${runId}-1`,
+  url: "https://trainer.test",
+};
+const hostsWithHttp = (http: typeof fetch, signal?: AbortSignal) =>
+  createTrainingHosts({
+    request: async () => ({}),
+    nodes: async () => [],
+    config,
+    token: "test",
+    fetch: http,
+    ...(signal ? { signal: () => signal } : {}),
+  });
+
+it.each([undefined, { id: "train-1", operation: "train" }])(
+  "retries transient HTTP errors with the same request: %j",
+  async (command) => {
+    const http = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(null, { status: 502 }))
+      .mockResolvedValueOnce(Response.json({ ready: true }));
+    const hosts = hostsWithHttp(http);
+    await expect(
+      hosts.call(retryHost, "/operations", command),
+    ).resolves.toEqual({ ready: true });
+    expect(http).toHaveBeenCalledTimes(2);
+    expect(http.mock.calls[0]).toEqual(http.mock.calls[1]);
+  },
+);
+
+it("stops retrying after three server errors", async () => {
+  const http = vi
+    .fn<typeof fetch>()
+    .mockImplementation(async () => new Response(null, { status: 503 }));
+  await expect(hostsWithHttp(http).call(retryHost, "/health")).rejects.toThrow(
+    "Trainer request failed (503).",
+  );
+  expect(http).toHaveBeenCalledTimes(3);
+});
+
+it("does not retry rejected commands", async () => {
+  const http = vi
+    .fn<typeof fetch>()
+    .mockResolvedValue(new Response(null, { status: 409 }));
+  await expect(
+    hostsWithHttp(http).call(retryHost, "/operations", { id: "train-2" }),
+  ).rejects.toThrow("Trainer request failed (409).");
+  expect(http).toHaveBeenCalledTimes(1);
+});
+
+it("cancels retry backoff when the activity is cancelled", async () => {
+  const controller = new AbortController();
+  const http = vi.fn<typeof fetch>().mockImplementation(async () => {
+    controller.abort();
+    return new Response(null, { status: 502 });
+  });
+  await expect(
+    hostsWithHttp(http, controller.signal).call(retryHost, "/health"),
+  ).rejects.toMatchObject({ name: "AbortError" });
+  expect(http).toHaveBeenCalledTimes(1);
+});

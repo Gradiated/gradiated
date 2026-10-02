@@ -13,11 +13,13 @@ const config = {
   bundleUrl: `s3::https://test.s3.us-east-1.amazonaws.com/bundles/sha256/${"a".repeat(64)}.tar.gz`,
   bundleSha256: "a".repeat(64),
   baseId: "base-test",
-  gpuType: "H100",
+  gpuType: "B300",
+  nodePool: "training",
 };
 
 it("keeps placement within the registered pool and disables scheduler replacement", () => {
   const job = trainingHostJob(runId, 1, [{ nodeId, podId: "pod1" }], config);
+  expect(job.NodePool).toBe("training");
   expect(job.Constraints).toContainEqual({
     LTarget: "${node.unique.id}",
     Operand: "regexp",
@@ -162,4 +164,11 @@ it("waits when every training node is absent", async () => {
   });
   expect(await hosts.allocate(runId, 1)).toBeNull();
   expect(request).not.toHaveBeenCalled();
+});
+
+it("keeps legacy frozen host configurations in the default pool", () => {
+  const { nodePool, ...legacy } = config;
+  expect(
+    trainingHostJob(runId, 1, [{ nodeId, podId: "pod1" }], legacy).NodePool,
+  ).toBe("default");
 });

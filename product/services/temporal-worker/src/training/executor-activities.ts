@@ -54,6 +54,7 @@ const datasetSchema = z.object({
     bundleSha256: z.string(),
     baseId: z.string(),
     gpuType: z.string(),
+    nodePool: z.string().optional(),
   }),
   recipe: z.looseObject({
     id: z.string(),

@@ -28,6 +28,15 @@ The training gate starts session identification before waiting for feature flags
 so direct task URLs and reloads do not depend on visiting another console page.
 Loading training data and trace content uses skeletons.
 
+The Data table loads older pages automatically at the bottom. Empty hour windows
+wait for further scrolling to avoid scanning sparse history on opening the tab.
+Opening a trace adds `traceId` to the task URL; shared links and
+reloads open Data and find the trace across older pages. Scroll to the bottom
+of an open trace to load earlier generations across pages. Failed page loads
+keep the loaded rows and offer Retry. Billing balance history also loads automatically
+at the bottom, in pages of 100 transactions. Both tables show skeleton rows
+while loading the next page.
+
 “View test results” opens the stored held-out answers and judge decisions through
 the workspace-authorized version evaluation API. Qwen pricing is a temporary
 placeholder; new evaluations label output-only cost estimates, while historical

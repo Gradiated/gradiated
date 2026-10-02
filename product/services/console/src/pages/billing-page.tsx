@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -12,7 +12,8 @@ import {
   billingAccountQuery,
   type BalanceTransaction,
 } from "@/api/queries";
-import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { TopUpBalance } from "@/components/top-up-balance";
 import { useProductContext } from "@/hooks/use-product-context";
@@ -128,11 +129,18 @@ const BalanceHistory = ({
   organizationId: string;
   refetchInterval: number | false;
 }) => {
-  const [cursors, setCursors] = useState<string[]>([]);
-  const transactions = useQuery({
-    ...balanceTransactionsQuery(organizationId, cursors.at(-1)),
+  const transactions = useInfiniteQuery({
+    ...balanceTransactionsQuery(organizationId),
     refetchInterval,
   });
+  const loadMoreRef = useInfiniteScroll(transactions);
+  const rows = [
+    ...new Map(
+      transactions.data?.pages
+        .flatMap((page) => page.data)
+        .map((row) => [row.id, row]),
+    ).values(),
+  ];
 
   return (
     <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
@@ -146,16 +154,10 @@ const BalanceHistory = ({
         <div className="grid min-h-48 place-items-center">
           <LoaderCircle className="size-5 animate-spin text-muted-foreground" />
         </div>
-      ) : transactions.isError ? (
-        <LoadFailed
-          subject="balance history"
-          retrying={transactions.isFetching}
-          onRetry={() => void transactions.refetch()}
-        />
-      ) : transactions.data?.data.length ? (
+      ) : rows.length || transactions.isFetchingNextPage ? (
         <Table aria-label="Balance history" className="text-base">
           <TableBody>
-            {transactions.data.data.map((transaction) => {
+            {rows.map((transaction) => {
               const positive = BigInt(transaction.amount) > 0n;
 
               return (
@@ -197,39 +199,57 @@ const BalanceHistory = ({
                 </TableRow>
               );
             })}
+            {transactions.isFetchingNextPage
+              ? Array.from({ length: 3 }, (_, index) => (
+                  <TableRow key={`loading-${index}`} aria-hidden="true">
+                    <TableCell className="py-4 pl-5">
+                      <div className="flex items-center gap-3">
+                        <Skeleton className="size-9 rounded-lg" />
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-24" />
+                          <Skeleton className="h-3 w-36" />
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-4 pr-5">
+                      <Skeleton className="ml-auto h-4 w-20" />
+                      <Skeleton className="ml-auto mt-2 h-3 w-28" />
+                    </TableCell>
+                  </TableRow>
+                ))
+              : null}
           </TableBody>
         </Table>
-      ) : (
+      ) : transactions.isError ? null : (
         <div className="grid min-h-48 place-items-center px-6 text-center text-sm text-muted-foreground">
           No balance transactions yet.
         </div>
       )}
-      {cursors.length > 0 || transactions.data?.next_cursor ? (
-        <div className="flex justify-end gap-2 border-t px-5 py-3">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={cursors.length === 0 || transactions.isFetching}
-            onClick={() => setCursors((previous) => previous.slice(0, -1))}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={
-              !transactions.data?.next_cursor ||
-              transactions.isFetching ||
-              transactions.isError
-            }
-            onClick={() => {
-              const cursor = transactions.data?.next_cursor;
-
-              if (cursor) setCursors((previous) => [...previous, cursor]);
-            }}
-          >
-            Next
-          </Button>
+      {transactions.isError ? (
+        <LoadFailed
+          subject="balance history"
+          retrying={transactions.isFetching}
+          onRetry={() =>
+            void (transactions.isFetchNextPageError
+              ? transactions.fetchNextPage()
+              : transactions.refetch())
+          }
+        />
+      ) : null}
+      {transactions.hasNextPage ? (
+        <div
+          ref={loadMoreRef}
+          className="h-4"
+          role={transactions.isFetchingNextPage ? "status" : undefined}
+          aria-label={
+            transactions.isFetchingNextPage
+              ? "Loading older transactions"
+              : undefined
+          }
+        >
+          {transactions.isFetchingNextPage ? (
+            <span className="sr-only">Loading older transactions</span>
+          ) : null}
         </div>
       ) : null}
     </section>

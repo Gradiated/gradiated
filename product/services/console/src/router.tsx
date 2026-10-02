@@ -53,6 +53,11 @@ const tasksRoute = createRoute({
 const taskRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/tasks/$taskId",
+  validateSearch: (search: Record<string, unknown>) => ({
+    ...(typeof search.traceId === "string" && search.traceId
+      ? { traceId: search.traceId }
+      : {}),
+  }),
   component: lazyRouteComponent(() => import("@/pages/task-page"), "TaskPage"),
 });
 

@@ -1,6 +1,11 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Link, useParams } from "@tanstack/react-router";
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearch,
+} from "@tanstack/react-router";
 import { ArrowLeft, RotateCw } from "lucide-react";
 import { useState } from "react";
 
@@ -73,9 +78,11 @@ const ScopedTaskPage = () => {
 
 const TaskPageBody = () => {
   const { taskId } = useParams({ from: "/tasks/$taskId" });
+  const { traceId } = useSearch({ from: "/tasks/$taskId" });
+  const navigate = useNavigate({ from: "/tasks/$taskId" });
   const query = useTask(taskId);
   const task = query.data;
-  const [tab, setTab] = useState<TabKey>("model");
+  const [tab, setTab] = useState<TabKey>(traceId ? "traces" : "model");
   const [versionAction, setVersionAction] = useState<VersionAction | null>(
     null,
   );
@@ -115,7 +122,14 @@ const TaskPageBody = () => {
         </Link>
       }
     >
-      <OptionTabs value={tab} options={TABS} onValueChange={setTab}>
+      <OptionTabs
+        value={traceId ? "traces" : tab}
+        options={TABS}
+        onValueChange={(value) => {
+          setTab(value);
+          if (traceId) void navigate({ search: {}, resetScroll: false });
+        }}
+      >
         <TabsContent value="model">
           <TaskModelTab
             task={task}

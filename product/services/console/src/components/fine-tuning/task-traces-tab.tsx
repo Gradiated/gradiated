@@ -3,18 +3,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { ChevronRight, GitBranch } from "lucide-react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import {
   getTraceGeneration,
   listTraceGenerations,
   type StoredGeneration,
 } from "@/api/traces";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { useProductContext } from "@/hooks/use-product-context";
-import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
@@ -29,12 +29,22 @@ import {
 
 export const TaskTracesTab = ({ task }: { task: { name: string } }) => {
   const { organizationId, workspaceId } = useProductContext();
+  const { traceId } = useSearch({ from: "/tasks/$taskId" });
+  const navigate = useNavigate({ from: "/tasks/$taskId" });
+
   return (
     <StoredTraces
       key={`${organizationId}:${workspaceId}:${task.name}`}
       organization={organizationId}
       workspace={workspaceId}
       task={task.name}
+      selectedTrace={traceId ?? null}
+      onSelectTrace={(id) =>
+        void navigate({
+          search: id ? { traceId: id } : {},
+          resetScroll: false,
+        })
+      }
     />
   );
 };
@@ -42,12 +52,15 @@ const StoredTraces = ({
   organization,
   workspace,
   task,
+  selectedTrace,
+  onSelectTrace,
 }: {
   organization: string;
   workspace: string;
   task: string;
+  selectedTrace: string | null;
+  onSelectTrace: (id: string | null) => void;
 }) => {
-  const [selectedTrace, setSelectedTrace] = useState<string | null>(null);
   const query = useInfiniteQuery({
     queryKey: ["trace-generations", organization, workspace, task],
     queryFn: ({ pageParam }) =>
@@ -60,6 +73,8 @@ const StoredTraces = ({
     refetchInterval: 300_000,
     refetchOnWindowFocus: "always",
   });
+  const { fetchNextPage, hasNextPage, isFetching, isError } = query;
+
   const traces = useMemo(() => {
     const generations = new Map<string, StoredGeneration>();
     for (const page of query.data?.pages ?? [])
@@ -77,17 +92,51 @@ const StoredTraces = ({
       );
   }, [query.data]);
   const selected = traces.find((trace) => trace.id === selectedTrace);
+
+  const loadMoreRef = useInfiniteScroll({
+    ...query,
+    enabled: !selectedTrace,
+    autoLoad: Boolean(query.data?.pages.at(-1)?.data.length),
+  });
+  const traceLoadMoreRef = useInfiniteScroll({
+    ...query,
+    enabled: Boolean(selected),
+    autoLoad: Boolean(
+      query.data?.pages
+        .at(-1)
+        ?.data.some((row) => row.trace_id === selectedTrace),
+    ),
+  });
+
+  useEffect(() => {
+    if (selectedTrace && !selected && hasNextPage && !isFetching && !isError)
+      void fetchNextPage({ cancelRefetch: false });
+  }, [
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    isError,
+    selectedTrace,
+    selected,
+  ]);
+
   return (
     <>
       <p className="mb-3 text-sm text-muted-foreground">
-        Captured requests and responses for this workspace. New content usually
-        appears within a minute. Relayed content is not used for automatic
-        training.
+        Captured requests and responses for this task.
       </p>
       {query.error ? (
         <p role="alert" className="mb-3 text-sm text-destructive">
           Could not load traces. {query.error.message}{" "}
-          <button onClick={() => void query.refetch()}>Retry</button>
+          <button
+            onClick={() =>
+              void (query.isFetchNextPageError
+                ? query.fetchNextPage()
+                : query.refetch())
+            }
+          >
+            Retry
+          </button>
         </p>
       ) : null}
       <section
@@ -132,17 +181,14 @@ const StoredTraces = ({
             {traces.map((trace) => (
               <TableRow
                 key={trace.id}
-                onClick={() => setSelectedTrace(trace.id)}
+                onClick={() => onSelectTrace(trace.id)}
                 className="group cursor-pointer transition-colors hover:bg-muted/40 data-[state=selected]:bg-muted/60"
                 data-state={selectedTrace === trace.id ? "selected" : undefined}
               >
                 <TableCell className="py-3">
                   <div className="flex items-center gap-3">
                     <GitBranch className="size-4 shrink-0 text-muted-foreground" />
-                    <button
-                      className="max-w-80 truncate text-sm font-medium group-hover:underline focus-visible:underline"
-                      onClick={() => setSelectedTrace(trace.id)}
-                    >
+                    <button className="max-w-80 truncate text-sm font-medium group-hover:underline focus-visible:underline">
                       {trace.id}
                     </button>
                   </div>
@@ -165,7 +211,7 @@ const StoredTraces = ({
                         <Badge
                           key={source}
                           variant="outline"
-                          className="text-xs font-normal"
+                          className="text-xs font-normal capitalize"
                         >
                           {source}
                         </Badge>
@@ -178,51 +224,104 @@ const StoredTraces = ({
                 </TableCell>
               </TableRow>
             ))}
+            {query.isFetchingNextPage ? (
+              <TableRow aria-hidden="true">
+                {["w-48", "w-36", "w-8", "w-16", "w-4"].map((width, index) => (
+                  <TableCell key={index} className="py-3">
+                    <Skeleton className={`h-4 ${width}`} />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ) : null}
           </TableBody>
         </Table>
         {!traces.length && !query.isPending ? (
           <div className="p-8 text-center text-sm text-muted-foreground">
             {!task
               ? "Choose a task to view its traces."
-              : "No traces in the loaded hours. Load older content, or enable capture in Settings and send a request with this task."}
+              : query.hasNextPage
+                ? "No traces in the loaded hours. Scroll to check earlier hours."
+                : "No traces found. Enable capture in Settings and send a request with this task."}
           </div>
         ) : null}
       </section>
       {query.hasNextPage ? (
-        <Button
-          variant="ghost"
-          className="mt-3"
-          disabled={query.isFetchingNextPage}
-          onClick={() => void query.fetchNextPage()}
+        <div
+          ref={loadMoreRef}
+          className="mt-3 h-4"
+          role={query.isFetchingNextPage ? "status" : undefined}
+          aria-label={
+            query.isFetchingNextPage ? "Loading older content" : undefined
+          }
         >
           {query.isFetchingNextPage ? (
-            <Skeleton aria-label="Loading older content" className="h-4 w-28" />
-          ) : (
-            "Load older content"
-          )}
-        </Button>
+            <span className="sr-only">Loading older content</span>
+          ) : null}
+        </div>
       ) : null}
       <Sheet
-        open={Boolean(selected)}
+        open={Boolean(selectedTrace)}
         onOpenChange={(open) => {
-          if (!open) setSelectedTrace(null);
+          if (!open) onSelectTrace(null);
         }}
       >
-        <SheetContent className="overflow-y-auto sm:max-w-3xl">
+        <SheetContent
+          aria-describedby={undefined}
+          className="overflow-y-auto sm:max-w-3xl"
+        >
           <SheetHeader>
             <SheetTitle>Trace</SheetTitle>
-            <SheetDescription className="break-all">
-              {selected?.id}. Generations from the loaded pages; load older
-              content to include earlier hours.
-            </SheetDescription>
           </SheetHeader>
           {selected ? (
-            <StoredContent
-              organization={organization}
-              workspace={workspace}
-              rows={selected.rows}
-            />
-          ) : null}
+            <>
+              <StoredContent
+                organization={organization}
+                workspace={workspace}
+                rows={selected.rows}
+              />
+              {query.isFetchingNextPage ? (
+                <div
+                  role="status"
+                  aria-label="Loading earlier generations"
+                  className="px-4 pb-4"
+                >
+                  <Skeleton className="h-48 w-full" />
+                </div>
+              ) : null}
+              {query.isFetchNextPageError ? (
+                <p role="alert" className="p-4 text-sm text-destructive">
+                  Could not load earlier generations. {query.error?.message}{" "}
+                  <button onClick={() => void query.fetchNextPage()}>
+                    Retry
+                  </button>
+                </p>
+              ) : null}
+              {query.hasNextPage ? (
+                <div ref={traceLoadMoreRef} className="h-4" />
+              ) : null}
+            </>
+          ) : query.error ? (
+            <p role="alert" className="p-4 text-sm text-destructive">
+              Could not load traces. {query.error.message}{" "}
+              <button
+                onClick={() =>
+                  void (query.isFetchNextPageError
+                    ? query.fetchNextPage()
+                    : query.refetch())
+                }
+              >
+                Retry
+              </button>
+            </p>
+          ) : query.isPending || query.hasNextPage ? (
+            <div role="status" aria-label="Loading trace" className="p-4">
+              <Skeleton className="h-48 w-full" />
+            </div>
+          ) : (
+            <p role="status" className="p-4 text-sm text-muted-foreground">
+              Trace not found in this task’s captured content.
+            </p>
+          )}
         </SheetContent>
       </Sheet>
     </>
@@ -286,11 +385,6 @@ const GenerationContent = ({
         <h3 className="font-medium">
           <ModelLabel id={row.model} />
         </h3>
-        <p className="text-xs text-muted-foreground">
-          {row.source} · {row.outcome ?? "Unknown outcome"} · HTTP{" "}
-          {row.status ?? "—"}
-        </p>
-        <p className="break-all font-mono text-xs">{row.generation_id}</p>
         {row.usage ? (
           <p className="text-xs">Usage: {JSON.stringify(row.usage)}</p>
         ) : null}

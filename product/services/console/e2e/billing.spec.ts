@@ -1,9 +1,4 @@
-import {
-  createCatalogBillingService,
-  createControlDatabase,
-} from "@gradiated/control";
-
-import { consoleUrl, databaseUrl } from "./env";
+import { consoleUrl } from "./env";
 import { expect, test } from "./fixtures";
 
 test("billing page shows the organization balance and ledger", async ({
@@ -84,80 +79,67 @@ test("billing page shows the organization balance and ledger", async ({
   await expect(page.getByText(/Checkout was cancelled/)).toBeVisible();
 });
 
-test("balance history paginates the full ledger and recovers from page errors", async ({
+test("balance history loads older rows automatically and recovers from page errors", async ({
   page,
-  account,
 }) => {
-  const { database, pool } = createControlDatabase(databaseUrl);
-  try {
-    const billing = createCatalogBillingService(database);
-    for (let amount = 1; amount <= 23; amount += 1) {
-      await billing.applyBalanceTransaction({
-        organizationId: account.organizationId,
-        type: "credit",
-        amount: BigInt(amount) * 1_000_000_000n,
-        sourceType: "operator",
-        sourceId: `pagination:${account.organizationId}:${amount}`,
-        createdBy: null,
-      });
-    }
-  } finally {
-    await pool.end();
-  }
-
-  await page.goto("/billing");
-  const history = page.getByRole("table", { name: "Balance history" });
-  const previous = page.getByRole("button", { name: "Previous", exact: true });
-  const next = page.getByRole("button", { name: "Next", exact: true });
-
-  await expect(history.getByRole("row")).toHaveCount(10);
-  await expect(history.getByText("+$23.00", { exact: true })).toBeVisible();
-  await expect(previous).toBeDisabled();
-  await next.click();
-  await expect(history.getByText("+$13.00", { exact: true })).toBeVisible();
-  await expect(history.getByRole("row")).toHaveCount(10);
-  await next.click();
-  await expect(history.getByText("+$3.00", { exact: true })).toBeVisible();
-  await expect(history.getByRole("row")).toHaveCount(5);
-  await expect(next).toBeDisabled();
-  await previous.click();
-  await expect(history.getByText("+$13.00", { exact: true })).toBeVisible();
-  await previous.click();
-  await expect(history.getByText("+$23.00", { exact: true })).toBeVisible();
-  await expect(previous).toBeDisabled();
-
-  await page.reload();
-  await expect(history.getByText("+$23.00", { exact: true })).toBeVisible();
-
   let fail = true;
-  let releasePage: (() => void) | undefined;
+  let releasePage!: () => void;
   const held = new Promise<void>((resolve) => {
     releasePage = resolve;
   });
+  const requests: (string | null)[] = [];
   await page.route("**/balance-transactions?*", async (route) => {
-    if (!new URL(route.request().url()).searchParams.has("cursor"))
-      return route.continue();
-    await held;
-    if (fail)
-      return route.fulfill({
-        status: 503,
-        contentType: "application/json",
-        body: JSON.stringify({ detail: "Unavailable" }),
-      });
-
-    return route.continue();
+    const url = new URL(route.request().url());
+    expect(url.searchParams.get("limit")).toBe("100");
+    const cursor = url.searchParams.get("cursor");
+    requests.push(cursor);
+    if (cursor) {
+      await held;
+      if (fail)
+        return route.fulfill({ status: 503, json: { detail: "Unavailable" } });
+    }
+    return route.fulfill({
+      json: {
+        data: Array.from({ length: cursor ? 3 : 100 }, (_, index) => ({
+          id: `transaction-${cursor ? 100 + index : index}`,
+          type: "credit",
+          amount: "1000000000",
+          balance_after: "100000000000",
+          created_at: "2026-10-01T12:00:00Z",
+        })),
+        next_cursor: cursor ? null : "older",
+      },
+    });
   });
-  await next.click();
-  await expect(history).toHaveCount(0);
-  await expect(previous).toBeDisabled();
-  releasePage?.();
+  await page.goto("/billing");
+  const history = page.getByRole("table", { name: "Balance history" });
+  await expect(history.getByRole("row")).toHaveCount(100);
+  expect(requests).toEqual([null]);
+  await history.getByRole("row").last().scrollIntoViewIfNeeded();
+  await expect(
+    page.getByRole("status", { name: "Loading older transactions" }),
+  ).toBeVisible();
+  await expect(history.getByRole("row", { includeHidden: true })).toHaveCount(
+    103,
+  );
+  expect(requests).toEqual([null, "older"]);
+  releasePage();
   await expect(
     page
       .getByRole("alert")
       .filter({ hasText: "Could not load balance history." }),
   ).toBeVisible({ timeout: 15_000 });
-  await expect(next).toBeDisabled();
+  await expect(history.getByRole("row")).toHaveCount(100);
   fail = false;
   await page.getByRole("button", { name: "Retry", exact: true }).click();
-  await expect(history.getByText("+$13.00", { exact: true })).toBeVisible();
+  await expect(history.getByRole("row")).toHaveCount(103);
+  await expect(
+    page.getByRole("status", { name: "Loading older transactions" }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Next", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Previous", exact: true }),
+  ).toHaveCount(0);
 });

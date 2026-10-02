@@ -79,7 +79,7 @@ test("Data reads scoped API pages, deduplicates retries, and loads content only 
     page.getByRole("button", { name: "synthetic-live-trace", exact: true }),
   ).toHaveCount(1);
   expect(opened).toBe(0);
-  await page.getByRole("button", { name: "Load older content" }).click();
+  await expect.poll(() => requests.length).toBe(2);
   await expect(
     page.getByRole("button", { name: "Load older content" }),
   ).toHaveCount(0);

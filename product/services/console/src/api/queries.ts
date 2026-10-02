@@ -1,4 +1,5 @@
 import {
+  infiniteQueryOptions,
   queryOptions,
   useMutation,
   useQueryClient,
@@ -139,24 +140,23 @@ export const billingAccountQuery = (organizationId: string) =>
     enabled: Boolean(organizationId),
   });
 
-export const balanceTransactionsQuery = (
-  organizationId: string,
-  cursor?: string,
-) =>
-  queryOptions({
-    queryKey: ["balance-transactions", organizationId, cursor],
-    queryFn: () =>
+export const balanceTransactionsQuery = (organizationId: string) =>
+  infiniteQueryOptions({
+    queryKey: ["balance-transactions", organizationId],
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam: cursor }) =>
       requireData(
         api.GET(
           "/api/v1/organizations/{organization_id}/balance-transactions",
           {
             params: {
               path: { organization_id: organizationId },
-              query: { limit: 10, ...(cursor ? { cursor } : {}) },
+              query: { limit: 100, ...(cursor ? { cursor } : {}) },
             },
           },
         ),
       ),
+    getNextPageParam: (page) => page.next_cursor ?? undefined,
     enabled: Boolean(organizationId),
   });
 

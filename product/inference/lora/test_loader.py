@@ -4,6 +4,7 @@ import json
 import tempfile
 import threading
 import unittest
+import urllib.error
 import uuid
 from pathlib import Path
 from unittest import mock
@@ -41,6 +42,42 @@ class LoaderTests(unittest.TestCase):
     def register(self):
         spec = grant(self.payload)
         return self.loader.register_metadata(spec), spec
+
+    def test_grant_failure_is_counted_and_logs_only_safe_error_fields(self):
+        error = urllib.error.HTTPError(
+            "https://api.example?credential=private-secret",
+            401,
+            "private-secret",
+            {},
+            None,
+        )
+        self.loader.resolve = mock.Mock(side_effect=error)
+        with self.assertLogs("loader", level="WARNING") as captured:
+            with self.assertRaises(urllib.error.HTTPError):
+                self.loader.resolve_version("version", str(uuid.uuid4()))
+        event = json.loads(captured.records[-1].getMessage())
+        self.assertEqual(event["error_type"], "HTTPError")
+        self.assertEqual(event["upstream_status"], 401)
+        self.assertNotIn("private-secret", json.dumps(event))
+        self.assertEqual(self.loader.counters["failures"], 1)
+        self.assertGreater(self.loader.last_failure, 0)
+
+    def test_file_failure_is_counted_once_and_capacity_is_separate(self):
+        spec = grant(self.payload)
+        self.loader.resolve = lambda *_: spec
+        self.loader.fetch = mock.Mock(side_effect=ValueError("private-secret"))
+        with self.assertLogs("loader", level="WARNING") as captured:
+            with self.assertRaises(ValueError):
+                self.loader.resolve_version(
+                    spec["version"]["name"], spec["workspace_id"]
+                )
+        self.assertEqual(self.loader.counters["failures"], 1)
+        self.assertNotIn("private-secret", "".join(captured.output))
+        self.loader.ready = False
+        with self.assertRaises(CapacityError):
+            self.loader.resolve_version(spec["version"]["name"], spec["workspace_id"])
+        self.assertEqual(self.loader.counters["failures"], 1)
+        self.assertGreater(self.loader.last_capacity_rejection, 0)
 
     def test_preparation_is_coalesced_and_registered_paths_remain_available(self):
         name, spec = self.register()
@@ -176,8 +213,9 @@ class LoaderTests(unittest.TestCase):
         self.loader.prepare(first, spec["workspace_id"])
         second, spec = self.register()
         self.loader.fetch = mock.Mock(side_effect=OSError("secret-url"))
+        self.loader.resolve = lambda *_: spec
         with self.assertLogs(level="WARNING") as logs, self.assertRaises(OSError):
-            self.loader.prepare(second, spec["workspace_id"])
+            self.loader.prepare_version(spec["version"]["name"], spec["workspace_id"])
         self.assertNotIn("secret-url", "".join(logs.output))
         self.assertTrue(self.loader.entries[first]["registered"])
         self.assertIn(b"gradiated_lora_failures_total 1", self.loader.metrics())

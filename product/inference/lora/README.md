@@ -153,8 +153,10 @@ scrape uses the same runtime bearer credential as the gateway. Disabled and
 draining allocations are excluded. Discovery failures return 503, preserving
 Prometheus's last successful target list rather than silently returning no targets.
 
-Operation counters cover grant, file and native startup-registration failures;
-timestamps detect failures before the first scrape. Disk gauges expose the limit
+Operation counters and the general failure counter cover grant, file and native
+startup-registration failures; timestamps detect failures before the first scrape.
+Failure logs include the exception type and upstream HTTP status when available,
+without exception messages, response bodies or URLs. Disk gauges expose the limit
 and bytes pinned for native reloads. Alerts cover failed/missing loader scrapes,
 recent operation/capacity failures and sustained pinned disk pressure. The
 [LoRA dashboard](https://grafana.gradiated.com/d/gradiated-lora) links to Nomad

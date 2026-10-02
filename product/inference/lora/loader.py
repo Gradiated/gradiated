@@ -7,6 +7,7 @@ import shutil
 import threading
 import time
 import uuid
+import urllib.error
 from pathlib import Path
 
 from artifacts import cache_key, download, has_fused_experts, materialize
@@ -190,13 +191,17 @@ class Loader:
     def operation(self, action, call):
         started = time.monotonic()
         outcome = "success"
+        failure = {}
         try:
             return call()
         except CapacityError:
             outcome = "capacity"
             raise
-        except Exception:
+        except Exception as error:
             outcome = "failed"
+            failure["error_type"] = type(error).__name__
+            if isinstance(error, urllib.error.HTTPError):
+                failure["upstream_status"] = error.code
             raise
         finally:
             elapsed = time.monotonic() - started
@@ -204,6 +209,7 @@ class Loader:
                 key = (action, outcome)
                 self.operations[key] = self.operations.get(key, 0) + 1
                 if outcome == "failed":
+                    self.counters["failures"] += 1
                     self.last_failure = time.time()
                 if outcome == "capacity":
                     self.last_capacity_rejection = time.time()
@@ -215,6 +221,7 @@ class Loader:
                         "action": action,
                         "outcome": outcome,
                         "elapsed_seconds": round(elapsed, 3),
+                        **failure,
                     }
                 ),
             )
@@ -247,8 +254,6 @@ class Loader:
         except CapacityError:
             raise
         except Exception as error:
-            with self.lock:
-                self.counters["failures"] += 1
             logger.warning("Adapter preparation failed (%s)", type(error).__name__)
             raise
         finally:

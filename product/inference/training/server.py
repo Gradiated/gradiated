@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 import signal
@@ -84,11 +85,17 @@ class Host:
             with self.lock:
                 self.job.update(status="complete", result=result)
         except Exception as error:
+            logging.exception("Training operation failed")
             code = (
                 "cancelled" if isinstance(error, InterruptedError) else "trainer_failed"
             )
             self.emit(
-                {"type": "trainer_failed", "error_code": "internal", "message": code}
+                {
+                    "type": "trainer_failed",
+                    "error_code": "internal",
+                    "error_type": type(error).__name__,
+                    "message": code,
+                }
             )
             with self.lock:
                 self.job.update(status="failed", result=None)

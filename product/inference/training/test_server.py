@@ -55,6 +55,19 @@ class TrainerEventTests(unittest.TestCase):
         self.assertEqual(failure["level"], "error")
         self.assertEqual(failure["details"]["error_code"], "internal")
 
+    def test_failed_operation_preserves_exception_type_and_logs_traceback(self):
+        host = self.host()
+        host.job.update(id="train-1", status="running", result=None)
+        host.trainer = SimpleNamespace(
+            run=lambda command, emit: (_ for _ in ()).throw(RuntimeError("test"))
+        )
+        with patch("server.logging.exception") as log:
+            host.run({"operation": "train"})
+        log.assert_called_once_with("Training operation failed")
+        self.assertEqual(host.job["status"], "failed")
+        self.assertEqual(host.job["events"][0]["details"]["error_type"], "RuntimeError")
+        self.assertEqual(host.job["events"][0]["message"], "trainer_failed")
+
     def test_progress_and_checkpoint_events_retain_their_core_fields(self):
         host = self.host()
         progress = {"type": "trainer_progress", "step": 10, "train_loss": 0.5}

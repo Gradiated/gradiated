@@ -49,6 +49,15 @@ for vars in "$root/jobs"/*.vars.hcl; do
       exit 1
     }
   fi
+  if [[ $name == host-proxy ]]; then
+    jq -e 'all(.Job.TaskGroups[];
+      ([.Tasks[].ShutdownDelay] | max) as $drain |
+      .Update.HealthyDeadline > $drain and
+      .Update.ProgressDeadline > .Update.HealthyDeadline)' <<<"$job" >/dev/null || {
+      echo "host-proxy rollout deadlines must exceed its connection drain" >&2
+      exit 1
+    }
+  fi
   if [[ $name == glm-5-3-flash ]]; then
     jq -e '(.Job.Meta.gradiated_release | fromjson | has("lora_enabled") | not)' <<<"$job" >/dev/null
     for tp in 2 4; do

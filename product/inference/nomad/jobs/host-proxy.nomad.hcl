@@ -14,6 +14,12 @@ job "host-proxy" {
   }
 
   group "proxy" {
+    update {
+      max_parallel      = 1
+      healthy_deadline  = "15m"
+      progress_deadline = "30m"
+    }
+
     restart {
       attempts = 3
       interval = "1m"

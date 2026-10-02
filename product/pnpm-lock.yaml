@@ -102,6 +102,12 @@ importers:
         specifier: 4.6.5
         version: 4.6.5
 
+  packages/credentials:
+    dependencies:
+      '@aws-sdk/client-secrets-manager':
+        specifier: 3.1135.0
+        version: 3.1135.0
+
   packages/nomad-pki:
     dependencies:
       '@aws-sdk/client-kms':

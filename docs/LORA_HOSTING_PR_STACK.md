@@ -7,7 +7,7 @@ Production enabling and live GPU qualification require separate authorization.
 | PR | Branch | Scope |
 | --- | --- | --- |
 | 1 | `feat/lora-hosting-contracts` | Base revision metadata on existing task versions and derived immutable runtime names |
-| 2 | `feat/lora-vllm-runtime` | Verified PEFT loading, bounded caches, preparation, per-allocation admission and streaming |
+| 2 | `feat/lora-vllm-runtime` | Verified artifacts, local disk files, preparation and native vLLM cache integration |
 | 3 | `feat/lora-hosting-control` | Private artifact grants, candidate validation and the existing production pointer |
 | 4 | `feat/lora-private-inference` | Scoped gateway resolution, exact dispatch, release identity and console actions |
 
@@ -26,28 +26,23 @@ or promotion tables, hosting workflow, reconciliation loop or fleet service.
 At startup, each allocation preloads compatible current task production versions
 up to its cache limits and a bounded startup deadline. Each allocation does this
 independently; there is no adapter placement or spreading across hosts. During
-its lifetime, adapters load on demand and idle entries are evicted by LRU. Active
-requests protect their adapters from eviction. Startup warming is best effort;
-an adapter that was not preloaded can still load on its first request.
+its lifetime, adapters load on demand; vLLM owns CPU/GPU LRU and request lifetimes.
 Base readiness opens after base warmup and preloading continues in the background.
-An empty production list leaves the adapter cache empty. Cold request admission
-is separate from inference admission so downloads cannot occupy inference slots.
+An empty production list loads no adapters. The loader is a control service;
+inference and streams go directly through the existing ingress to vLLM.
 
-The cache hierarchy is immutable S3 artifacts, verified local disk files,
-vLLM CPU tensors, then GPU adapter slots. CPU and disk have separate byte budgets;
-CPU adapter count and GPU slots are also bounded. GPU eviction retains the CPU
-copy, CPU eviction retains disk files, and disk eviction retains the S3 artifact.
-Verified disk files can be reused after restart; CPU/GPU residency is rebuilt.
-Concurrent cold requests for the same adapter share one materialization/load.
-Startup preloading can fill the CPU cache beyond the GPU slot count; only the
-GPU working set is GPU-resident.
+The hierarchy is immutable S3 artifacts, verified allocation-local files, native
+vLLM CPU tensors and native GPU slots. CPU adapter count and GPU slots are engine
+settings; there is no custom CPU byte budget, CPU eviction or active-stream tracking.
+Registered disk paths remain available for the engine lifetime so vLLM can reload
+CPU-evicted adapters. Disk LRU only removes unregistered files. Registered files
+filling the disk budget reject new preparations without disrupting existing serving.
+After restart, recovered disk files can be revalidated/reused and registrations
+are rebuilt. Concurrent preparations share one materialization/registration.
 
-Each runtime controller enforces a single allocation-wide capacity limit across
-base and adapter requests. Existing gateway organization billing/concurrency
-admission remains intact.
-
-vLLM owns CPU tensors and GPU scheduling. The controller owns verified local
-materialization, coalesced loading and active references for safe eviction.
+Existing gateway billing/concurrency and vLLM scheduling remain authoritative.
+The loader owns authorized metadata, verification, local materialization and native
+registration, never completion forwarding or runtime cache eviction.
 Immutable names contain a version UUID and full artifact checksum. Runtime
 configuration pins base/tokenizer/runtime compatibility, TP geometry,
 module/layer coverage, rank and cache limits. Inference uses the existing base
@@ -80,7 +75,7 @@ tmpfs and restart overlap.
 
 Run DevEx first, then narrow contracts, PostgreSQL, runtime, API/worker, Rust and
 console checks. Cover corrupted/hostile archives, coalesced loads, cache pressure,
-active eviction, restart, workspace isolation, concurrent promotion and streaming
+registered-file retention, restart, workspace isolation, concurrent promotion and streaming
 cancellation. Before enabling production, execute separately
 bounded real-artifact reference, KV isolation, TP2/TP4 co-location, latency under
 contention and fault-domain recovery checks. CPU doubles establish control

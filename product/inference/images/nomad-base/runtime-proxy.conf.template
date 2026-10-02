@@ -19,6 +19,8 @@ http {
     server {
         listen 8888;
         if ($authorized = 0) { return 401; }
+        location = /v1/load_lora_adapter { return 404; }
+        location = /v1/unload_lora_adapter { return 404; }
         location / {
             proxy_pass http://127.0.0.1:8000;
             proxy_http_version 1.1;

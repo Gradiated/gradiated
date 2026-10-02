@@ -78,7 +78,5 @@ def settings():
         "tensor_parallel_size": 2,
         "max_rank": 8,
         "cpu_adapter_slots": 1,
-        "cpu_cache_bytes": 1024 * 1024,
         "disk_cache_bytes": 1024 * 1024,
-        "max_concurrency": 2,
     }

@@ -29,10 +29,10 @@ proxy=$!
 trap 'kill -TERM "$proxy" 2>/dev/null || true; wait "$proxy" 2>/dev/null || true; rm -f /etc/gradiated/adapter-control.token' EXIT
 
 request() {
-  TOKEN="$1" timeout 5 bash -c '
+  TOKEN="$1" REQUEST_PATH="${2:-/health}" timeout 5 bash -c '
     set -e
     exec 3<>/dev/tcp/127.0.0.1/8888
-    printf "GET /health HTTP/1.1\r\nHost: localhost\r\nAuthorization: Bearer %s\r\nConnection: close\r\n\r\n" "$TOKEN" >&3
+    printf "GET %s HTTP/1.1\r\nHost: localhost\r\nAuthorization: Bearer %s\r\nConnection: close\r\n\r\n" "$REQUEST_PATH" "$TOKEN" >&3
     IFS= read -r line <&3
     printf "%s" "$line"
   '
@@ -45,6 +45,9 @@ done
 [[ $(request wrong-token) == *' 401 '* ]]
 # No model runs in this test: an authenticated request must reach the absent upstream.
 [[ $(request "$GRADIATED_RUNTIME_ACCESS_TOKEN") == *' 502 '* ]]
+for operation in load unload; do
+  [[ $(request "$GRADIATED_RUNTIME_ACCESS_TOKEN" "/v1/${operation}_lora_adapter") == *' 404 '* ]]
+done
 master=$(cat /tmp/gradiated-runtime-proxy.pid)
 workers=$(cat "/proc/$master/task/$master/children")
 [[ -n "$workers" ]]

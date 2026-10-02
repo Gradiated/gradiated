@@ -1,141 +1,108 @@
 # vLLM adapter loading
 
-This is an opt-in, allocation-local wrapper around the existing vLLM engine.
-The GLM bundle includes it; `lora_enabled` defaults to `false`. This PR adds the
-runtime side. The private metadata/grant API and gateway selection follow in the
-remaining stack, so leave the feature disabled until those and GPU qualification
-are complete.
+The GLM bundle includes an opt-in adapter loader. It is a control service, not an
+inference proxy. Completion requests, streaming, cancellation, batching and CPU/GPU
+adapter caching remain with vLLM. `lora_enabled` defaults to false while the private
+metadata API and gateway integration are completed in PRs 3 and 4.
 
-`manager.py` owns cold preparation, CPU admission and disk LRU. `artifacts.py`
-verifies and materializes archives. `server.py` protects CPU entries for the
-lifetime of each proxied request and enforces one allocation-wide concurrency
-limit for dispatched inference. Cold requests have a separate two-request admission
-limit and do not hold inference slots while preparing. vLLM owns GPU slots, batching and GPU LRU; there is no second GPU cache or
-adapter placement service.
+## Request path
 
-## Request and startup paths
+The gateway authorizes an exact task version in its workspace and derives
+`ft-<version UUID>-<full SHA256>`. Before dispatching it calls the allocation's
+`POST /internal/adapters/prepare` with `{name, workspace_id}` and the private
+`X-Gradiated-Adapter-Control` header. The loader:
 
-A request identifies an immutable adapter as `ft-<version UUID>-<full SHA256>`.
-The gateway provides the authenticated workspace in `X-Gradiated-Workspace`.
-On a CPU hit the request goes straight to vLLM. Otherwise one preparation at a
-time per allocation performs these steps; concurrent requests recheck the cache
-after acquiring the preparation lock:
+1. Obtains existing task-version metadata and a short-lived download grant.
+2. Reuses verified local files or downloads the S3 archive into a staging directory.
+3. Verifies size/checksum, safe archive contents, base revision, rank, layer coverage
+   and expert completeness.
+4. Calls vLLM's loopback-only `/v1/load_lora_adapter` with the immutable name and
+   local path. Subsequent preparations reuse the acknowledged registration.
 
-1. Obtain authorized version metadata and a short-lived download grant if needed.
-2. Reuse verified disk files, or stream the S3 archive into a staging directory.
-3. Verify archive size/checksum, safe file names and safetensors structure.
-4. Check base model/revision, rank, decoder layer coverage and expert completeness.
-5. Evict idle CPU entries until slot/byte limits permit the adapter, then load it
-   through vLLM's loopback-only adapter API.
+The gateway then dispatches directly to the allocation's vLLM runtime port using
+that name. The loader never forwards completions, reads token streams, holds
+inference slots, tracks active requests, unloads adapters or restarts the engine.
+The existing host ingress blocks vLLM's administrative load/unload endpoints and
+routes only the loader's private control paths to its separate loopback port.
 
-The metadata source is the existing task version, not a separate hosting record.
-The private grant request is `{workspace_id, version_id, sha256}`; its response
-composes `{workspace_id, version: TaskVersion, download: AdapterDownload}`. URLs
-are temporary and never stored in task versions. A cold load refreshes its grant;
-a valid disk hit after restart still needs version/ownership metadata, but does
-not download the archive again. The production list is `{data: [{workspace_id,
-version_id, sha256}]}`, filtered by the requested base model. PR 3 will author
-these private routes using the existing contract schemas and signing service.
-
-After the existing base-engine warmup qualifies, each allocation independently
-preloads compatible current production versions until CPU capacity or the
-startup deadline is reached. Preload does not evict earlier CPU entries to cycle
-through the list. Unloaded versions remain eligible for on-demand preparation.
-`LORA_PRELOAD_SECONDS` defaults to 600; the deadline is checked between bounded
-loads, so one in-progress load can finish after it. Base readiness opens immediately
-after base warmup; preloading runs in the background. An empty production list
-loads no adapters and continues base serving. A production-list outage still permits base serving and
-on-demand loads; an uncertain vLLM load/unload failure closes readiness and exits
-the wrapper so Nomad's existing task restart policy can recover it. Invalid archives,
-incompatible metadata and definite runtime rejections do not mark the engine
-uncertain. CPU eviction starts only after artifact validation. Restarting the
-allocation on an uncertain engine operation intentionally interrupts base traffic
-too; continuing with untracked engine state would defeat memory admission.
+The metadata source is `TaskVersion`, not a separate hosting record. The private
+grant request is `{workspace_id, version_id, sha256}`; its response composes
+`{workspace_id, version: TaskVersion, download: AdapterDownload}`. Signed URLs are
+not persisted on task versions. The production list is
+`{data: [{workspace_id, version_id, sha256}]}`, filtered by base model. These private
+routes follow in PR 3; workspace authorization at the gateway follows in PR 4.
 
 ## Cache ownership
 
-| Tier            | Owner                                      | Eviction behavior                                            |
-| --------------- | ------------------------------------------ | ------------------------------------------------------------ |
-| S3 archive      | Existing training artifact storage         | Durable source of truth                                      |
-| Allocation disk | Wrapper, byte-bounded LRU                  | Removes files; CPU-resident tensors can remain usable        |
-| CPU tensors     | vLLM, admitted by wrapper slot/byte limits | Unregisters an idle adapter; retains disk files when present |
-| GPU slots       | vLLM                                       | Reuses CPU tensors without an S3/disk fetch                  |
+| Tier            | Owner                     | Behavior                                        |
+| --------------- | ------------------------- | ----------------------------------------------- |
+| S3 archive      | Training artifact storage | Durable source                                  |
+| Allocation disk | Loader                    | Verified files retained for registered adapters |
+| CPU tensors     | vLLM                      | Native LRU, bounded by `--max-cpu-loras`        |
+| GPU slots       | vLLM                      | Native LRU, bounded by `--max-loras`            |
 
-Active requests protect their entries from wrapper eviction. Streaming flushes
-upstream chunks as they arrive; disconnect/error cleanup closes the upstream
-connection before releasing the reference. A restart recovers and revalidates
-own disk directories, removes incomplete staging directories, and starts with
-empty CPU residency. `cpu_resident` in the private status response describes
-registered CPU entries, not GPU residency. GPU residency is not durable state.
+There is no loader CPU byte budget or CPU/GPU residency bookkeeping. Host RAM and
+GPU memory still need qualification for the chosen native counts, ranks and TP.
 
-Disk reservations include the compressed archive, declared extracted bytes and
-manifest space, and are made before each file is written. CPU admission charges
-raw tensor bytes times `2 * TP`, conservatively allowing for worker replication
-and loading/conversion overlap. This is an accounting limit for adapter tensors,
-not a measurement or limit of whole-process RSS. Provision headroom for the base
-engine, Hugging Face tmpfs, KV cache, request buffers and all colocated allocations;
-actual TP2/TP4 peak memory must be qualified before enabling production.
+Registered paths stay available for the allocation's entire engine lifetime:
+vLLM may reload a CPU-evicted adapter directly from its retained path without
+calling our loader. Disk LRU therefore evicts only unregistered files, including
+recovered files after a task restart. If registered files fill the disk budget,
+new preparations return a capacity error; base and registered-adapter serving
+continue. There is no attempt to unload adapters to free disk. Size disk storage
+for the expected lifetime working set rather than just the CPU working set.
 
-## Configuration and isolation
+Materialization is serialized per allocation, with at most two preparation callers
+waiting/loading. Reservations include the archive, extracted files and manifest.
+Writes use a staging directory and atomic rename. Restart removes incomplete
+staging directories, revalidates recovered files when used and starts with no
+acknowledged registrations. An uncertain registration keeps files pinned; retries
+check vLLM's registered model list before attempting another load. Adapter failures
+leave base readiness available; engine health/restarts remain with the existing
+warmup supervisor, Desmond and Nomad.
 
-TP, model revision, served name and concurrency come from the existing vLLM
-command. Layer/expert geometry comes from the pinned model's `config.json`,
-including nested `text_config`; the adapter does not choose host settings.
-`tensor_parallel_size` in the Nomad job controls both GPU allocation and the base
-engine command. The wrapper verifies the assigned GPU UUID count matches it.
-The same artifact identity can serve on separately qualified TP2 and TP4 engines.
+After base warmup qualifies, each allocation independently preloads production
+versions in the background, up to its native CPU adapter count or startup deadline.
+An empty list loads nothing. A metadata outage logs a bounded error and permits
+on-demand preparation. `LORA_PRELOAD_SECONDS` defaults to 600 and is checked between
+bounded preparations. There is no placement or spreading across allocations.
 
-| Setting                                   | Source/default                                                          |
-| ----------------------------------------- | ----------------------------------------------------------------------- |
-| `LORA_ENABLED`                            | Nomad `lora_enabled`, false                                             |
-| `MODEL_ID`                                | Existing deployment's public base model ID                              |
-| `LORA_GPU_SLOTS`                          | Nomad `lora_gpu_slots`, 8                                               |
-| `LORA_CPU_SLOTS`                          | Nomad `lora_cpu_slots`, 64; must cover GPU slots                        |
-| `LORA_MAX_RANK`                           | Nomad `lora_max_rank`, 8; actual adapter rank may be 2                  |
-| `LORA_CPU_CACHE_BYTES`                    | Explicit allocation budget; zero defaults fail startup when enabled     |
-| `LORA_DISK_CACHE_BYTES`                   | Explicit allocation budget; zero defaults fail startup when enabled     |
-| `LORA_DOWNLOAD_HOSTS`                     | Comma-separated exact S3 HTTPS host allowlist                           |
-| `LORA_GRANTS_URL` / `LORA_PRODUCTION_URL` | Private HTTPS metadata API endpoints                                    |
-| `LORA_CONTROL_TOKEN_FILE`                 | Host-provisioned `/etc/gradiated/adapter-control.token`                 |
-| `LORA_CACHE_DIR`                          | Entrypoint sets `${NOMAD_ALLOC_DIR}/lora`, separate for each allocation |
+## Configuration
 
-The wrapper and engine bind to different loopback ports. Existing authenticated
-host ingress reaches the wrapper; the raw vLLM load/unload APIs are not exposed.
-`POST /internal/adapters/prepare` accepts only a name and workspace, not file
-paths or URLs. Prepare/probe/status require the additional private control header.
-Prepare shares the bounded cold-request admission limit.
-`/health`, `/metrics`, `/v1/models` and completion routes remain available.
-The existing deployment release advertises `lora_enabled: true` when opted in,
-allowing later selection to distinguish capable allocations during rollout.
-Existing releases without this field keep their original heartbeat digest.
+TP and base revision come from the existing vLLM command; layer/expert geometry
+comes from the pinned model configuration, including nested `text_config`.
+Nomad's `tensor_parallel_size` controls both GPU allocation and the engine flag;
+the assigned GPU UUID count must match. These are host decisions, not adapter fields.
 
-The existing host bootstrap accepts optional `GRADIATED_ADAPTER_CONTROL_TOKEN`
-(32–256 base64url characters) and writes it to the configured token file with
-mode 0600, owned by `runtime`. Proxy/reporting tokens remain readable only by
-`desmond`. Provision this separate secret and the private API endpoints before
-opting in; this PR does not change running hosts or their provider settings.
+| Setting                                   | Source/default                                                   |
+| ----------------------------------------- | ---------------------------------------------------------------- |
+| `LORA_ENABLED`                            | Nomad `lora_enabled`, false                                      |
+| `MODEL_ID`                                | Existing public base model ID                                    |
+| `LORA_GPU_SLOTS`                          | Native `max_loras`, 8                                            |
+| `LORA_CPU_SLOTS`                          | Native `max_cpu_loras`, 64; at least GPU slots                   |
+| `LORA_MAX_RANK`                           | Native `max_lora_rank`, 8                                        |
+| `LORA_DISK_CACHE_BYTES`                   | Explicit allocation disk budget; zero fails startup when enabled |
+| `LORA_DOWNLOAD_HOSTS`                     | Exact S3 HTTPS host allowlist                                    |
+| `LORA_GRANTS_URL` / `LORA_PRODUCTION_URL` | Private HTTPS metadata endpoints                                 |
+| `LORA_CONTROL_TOKEN_FILE`                 | `/etc/gradiated/adapter-control.token`                           |
+| `LORA_CACHE_DIR`                          | `${NOMAD_ALLOC_DIR}/lora`                                        |
+| `ADAPTER_PORT`                            | Allocation-local control port; inference stays on `RUNTIME_PORT` |
 
-The proxy allows up to 630 seconds across preparation and generation. Waiting for
-response headers and non-streaming output uses the remaining request deadline;
-streaming additionally has a 30-second upstream idle limit. Upstream closure
-precedes release of active references on timeout or disconnect.
+Host bootstrap accepts optional `GRADIATED_ADAPTER_CONTROL_TOKEN` (32–256 base64url
+characters), writes it as runtime-owned mode 0600, and removes the secret variable
+before services start. Proxy/reporting tokens remain isolated to `desmond`.
+Prepare/probe/status/metrics require the private control header. Probe also takes
+`{name, workspace_id}` and checks a bounded generation's returned identity and usage.
+Metrics live at `/internal/adapters/metrics`; they report file hits, downloads,
+registrations, failures, disk evictions and preparation duration with no adapter or
+workspace labels. Failure logs omit exception text, prompts, signed URLs and tokens.
 
-`/metrics` preserves engine metrics and appends `gradiated_lora_*` counters for
-CPU/disk cache hits, downloads, loads, failures, capacity rejections and evictions;
-gauges report cache bytes, CPU adapter count, active adapter references and
-uncertain engine state. Preparation duration exposes sum/count. Metrics have no
-workspace or adapter labels. Failure logs contain exception classes and engine
-certainty, never exception text, prompts or signed URLs.
-
-The loader accepts PEFT decoder LoRA archives containing `adapter_config.json`,
-`adapter_model.safetensors` and optionally `README.md`, flat or under `adapter/`.
-BF16, F16 and F32 weights are accepted; per-expert 2D and fused 3D MoE layouts are
-checked, and the vLLM format flag is derived from the tensors. Unsupported PEFT
-features, links, traversal, executable files, incomplete tensors and checksum
-mismatches fail before loading. vLLM performs model-specific module compatibility
-checks. This does not qualify vision-tower adapters or prove numeric correctness
-on GLM; real-artifact/reference, cold/hot latency, cancellation/KV isolation and
-colocated TP2/TP4 tests remain production gates.
+PEFT archives may be flat or under `adapter/`, with `adapter_config.json`,
+`adapter_model.safetensors` and optional `README.md`. BF16/F16/F32 and complete
+per-expert 2D or fused 3D layouts are accepted; vLLM's format flag comes from tensors.
+Links, traversal, executable files and unsupported PEFT features are rejected.
+vLLM owns model-specific module compatibility. This does not qualify vision-tower
+adapters or GLM numeric correctness.
 
 ## Verification
 
@@ -145,5 +112,10 @@ uv tool run ruff check product/inference/lora
 uv tool run ruff format --check product/inference/lora
 ```
 
-Tests use synthetic weights and local HTTP engines. CI also runs them in the
-pinned GLM bundle's Python environment; no GPU qualification is implied.
+Synthetic/local HTTP tests cover registration, coalescing, archive integrity,
+workspace checks, pinned-file safety, disk admission, recovery, startup and the
+absence of inference proxy routes. The real Nomad/NGINX fixture checks direct
+completion routing, private control routing and blocked admin endpoints. CI also
+runs loader tests inside the pinned GLM bundle. Real-artifact/reference, native
+CPU/GPU eviction and reload, KV/cancellation isolation, latency and colocated
+TP2/TP4 memory checks remain gates before enabling production.

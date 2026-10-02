@@ -10,7 +10,7 @@ import urllib.request
 from pathlib import Path
 
 from grants import production_targets, resolver, validate_endpoint
-from manager import Manager
+from loader import Loader
 from server import create_server
 from startup import start_preload
 
@@ -29,11 +29,9 @@ def engine_settings(command, environment, model_config):
         "base_model_revision": parsed.revision,
         "runtime_model_name": parsed.served_model_name or parsed.model,
         "tensor_parallel_size": parsed.tensor_parallel_size,
-        "max_concurrency": parsed.max_num_seqs,
         "gpu_slots": int(environment["LORA_GPU_SLOTS"]),
         "cpu_adapter_slots": int(environment["LORA_CPU_SLOTS"]),
         "max_rank": int(environment["LORA_MAX_RANK"]),
-        "cpu_cache_bytes": int(environment["LORA_CPU_CACHE_BYTES"]),
         "disk_cache_bytes": int(environment["LORA_DISK_CACHE_BYTES"]),
         "model_config": model_config,
     }
@@ -63,14 +61,14 @@ def main():
         os.environ["LORA_PRODUCTION_URL"], os.environ["LORA_CONTROL_TOKEN"]
     )
     ports = [
-        int(os.environ[key]) for key in ("ENGINE_PORT", "RUNTIME_PORT", "WARMUP_PORT")
+        int(os.environ[key]) for key in ("ADAPTER_PORT", "RUNTIME_PORT", "WARMUP_PORT")
     ]
     if len(set(ports)) != 3 or any(not 0 < port < 65536 for port in ports):
         raise ValueError("Runtime ports must be distinct and valid")
-    manager = Manager(
+    loader = Loader(
         settings,
         os.environ["LORA_CACHE_DIR"],
-        int(os.environ["ENGINE_PORT"]),
+        int(os.environ["RUNTIME_PORT"]),
         {
             host.strip()
             for host in os.environ["LORA_DOWNLOAD_HOSTS"].split(",")
@@ -80,8 +78,7 @@ def main():
             os.environ["LORA_GRANTS_URL"], os.environ["LORA_CONTROL_TOKEN"]
         ),
     )
-    manager.engine_ready = False
-    manager.ready = False
+    loader.ready = False
     command += [
         "--enable-lora",
         "--max-loras",
@@ -93,7 +90,7 @@ def main():
         "--enable-mixed-moe-lora-format",
     ]
     server = create_server(
-        manager, int(os.environ["RUNTIME_PORT"]), os.environ["LORA_CONTROL_TOKEN"]
+        loader, int(os.environ["ADAPTER_PORT"]), os.environ["LORA_CONTROL_TOKEN"]
     )
     try:
         child = subprocess.Popen(
@@ -109,9 +106,6 @@ def main():
 
     def monitor():
         while child.poll() is None:
-            if manager.failed:
-                child.terminate()
-                break
             time.sleep(0.5)
         server.shutdown()
 
@@ -131,7 +125,7 @@ def main():
             if child.poll() is not None:
                 return
             start_preload(
-                manager,
+                loader,
                 lambda: production_targets(
                     os.environ["LORA_PRODUCTION_URL"],
                     os.environ["LORA_CONTROL_TOKEN"],
@@ -144,8 +138,6 @@ def main():
                 "Adapter startup preload incomplete; on-demand loading remains available",
                 file=sys.stderr,
             )
-        finally:
-            manager.ready = manager.engine_ready
 
     signal.signal(signal.SIGTERM, shutdown)
     signal.signal(signal.SIGINT, shutdown)
@@ -161,7 +153,7 @@ def main():
         except subprocess.TimeoutExpired:
             child.kill()
             child.wait()
-    return 1 if manager.failed else child.returncode
+    return child.returncode
 
 
 if __name__ == "__main__":

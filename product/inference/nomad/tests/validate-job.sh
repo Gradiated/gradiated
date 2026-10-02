@@ -56,15 +56,17 @@ for vars in "$root/jobs"/*.vars.hcl; do
         hashicorp/nomad@sha256:b964829b94c5493f3b543bb409b60c335a9ca03f21d9fac8b4cdd2af18b331c9 \
         job run -output "${release[@]}" -var-file="/jobs/$name.vars.hcl" \
         -var=lora_enabled=true -var=tensor_parallel_size="$tp" \
-        -var=lora_cpu_cache_bytes=1073741824 -var=lora_disk_cache_bytes=2147483648 "/jobs/$name.nomad.hcl")
+        -var=lora_disk_cache_bytes=2147483648 "/jobs/$name.nomad.hcl")
       jq -e --arg tp "$tp" '
         (.Job.Meta.gradiated_release | fromjson | .lora_enabled == true) and
         all(.Job.TaskGroups[];
           (.Tasks[] | select(.Name == "vllm") |
             .Resources.Devices[0].Count == ($tp | tonumber) and
-            .Env.TENSOR_PARALLEL_SIZE == $tp and .Env.LORA_ENABLED == "true") and
+            .Env.TENSOR_PARALLEL_SIZE == $tp and .Env.LORA_ENABLED == "true" and
+            .Env.RUNTIME_PORT == "${NOMAD_PORT_runtime}" and .Env.ADAPTER_PORT == "${NOMAD_PORT_adapter}" and
+            (.Env | has("LORA_CPU_CACHE_BYTES") | not)) and
           (.Tasks[] | select(.Name == "desmond") |
-            .Env.DESMOND_RUNTIME_PORT == "${NOMAD_PORT_runtime}"))
+            .Env.DESMOND_RUNTIME_PORT == "${NOMAD_PORT_warmup}"))
       ' <<<"$enabled" >/dev/null
     done
   fi

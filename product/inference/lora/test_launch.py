@@ -17,7 +17,6 @@ class LaunchTests(unittest.TestCase):
             "LORA_GPU_SLOTS": "2",
             "LORA_CPU_SLOTS": "8",
             "LORA_MAX_RANK": "8",
-            "LORA_CPU_CACHE_BYTES": "1048576",
             "LORA_DISK_CACHE_BYTES": "2097152",
         }
 
@@ -38,20 +37,19 @@ class LaunchTests(unittest.TestCase):
             "16",
         ]
 
-    def test_tp_and_concurrency_come_from_the_existing_engine_command(self):
+    def test_tp_and_revision_come_from_the_existing_engine_command(self):
         for tp in (2, 4):
             settings, model, revision = engine_settings(
                 self.command(tp), self.environment(tp), {"num_hidden_layers": 45}
             )
             self.assertEqual(settings["tensor_parallel_size"], tp)
-            self.assertEqual(settings["max_concurrency"], 16)
             self.assertEqual(settings["model_config"]["num_hidden_layers"], 45)
             self.assertEqual((model, revision), ("base-repository", "base-revision"))
 
     def test_gpu_assignment_and_cache_budgets_are_checked_before_engine_start(self):
         for overrides in (
             {"NVIDIA_VISIBLE_DEVICES": "GPU-0"},
-            {"LORA_CPU_CACHE_BYTES": "0"},
+            {"LORA_DISK_CACHE_BYTES": "0"},
             {"LORA_GPU_SLOTS": "9"},
             {"LORA_CPU_SLOTS": "-1"},
         ):
@@ -69,7 +67,7 @@ class LaunchTests(unittest.TestCase):
             binary.parent.mkdir(parents=True)
             binary.write_text(
                 f"#!{sys.executable}\n"
-                + 'import json,os,sys\nfrom pathlib import Path\nPath(os.environ["CAPTURE_FILE"]).write_text(json.dumps({"args":sys.argv[1:],"cache":os.environ.get("LORA_CACHE_DIR"),"mask":os.environ["CUDA_VISIBLE_DEVICES"]}))\n'
+                + 'import json,os,sys\nfrom pathlib import Path\nPath(os.environ["CAPTURE_FILE"]).write_text(json.dumps({"args":sys.argv[1:],"cache":os.environ.get("LORA_CACHE_DIR"),"mask":os.environ["CUDA_VISIBLE_DEVICES"],"runtime_url":os.environ["RUNTIME_URL"]}))\n'
             )
             binary.chmod(0o755)
             capture = root / "capture.json"
@@ -82,7 +80,7 @@ class LaunchTests(unittest.TestCase):
                 "NVIDIA_VISIBLE_DEVICES": "GPU-2,GPU-3,GPU-4,GPU-5",
                 "TENSOR_PARALLEL_SIZE": "4",
                 "RUNTIME_PORT": "8000",
-                "ENGINE_PORT": "8001",
+                "ADAPTER_PORT": "8001",
                 "WARMUP_PORT": "8002",
                 "NOMAD_ALLOC_DIR": str(root / "allocation"),
                 "LORA_CONTROL_TOKEN_FILE": str(token),
@@ -106,6 +104,10 @@ class LaunchTests(unittest.TestCase):
                 )
                 self.assertEqual(result["mask"], environment["NVIDIA_VISIBLE_DEVICES"])
                 self.assertIn("4", result["args"])
+                self.assertEqual(result["runtime_url"], "http://127.0.0.1:8000")
+                self.assertEqual(
+                    result["args"][result["args"].index("--port") + 1], "8000"
+                )
 
 
 if __name__ == "__main__":

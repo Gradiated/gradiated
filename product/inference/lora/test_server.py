@@ -2,13 +2,11 @@ import http.client
 import json
 import tempfile
 import threading
-import time
 import unittest
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from unittest import mock
 
 from fixtures import archive, grant, settings
-from manager import CapacityError, Manager
+from loader import Loader
 from server import create_server
 
 
@@ -18,227 +16,123 @@ class ServerTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.payload = archive()
         self.spec = grant(self.payload)
-        self.name = f"ft-{self.spec['version']['id']}-{self.spec['version']['adapter']['sha256']}"
-        self.manager = Manager(
+        self.loader = Loader(
             settings(),
             self.temp.name,
             1,
             set(),
             fetch=lambda spec, path, hosts: path.write_bytes(self.payload),
         )
-        self.manager.engine = lambda *_args: None
-        self.manager.register(self.spec)
-        self.manager.prepare(self.name)
-        self.emitting = threading.Event()
-        self.release = threading.Event()
-        self.header_delay = 0
-        self.nonstream_delay = 0
-        owner = self
+        self.name = self.loader.register_metadata(self.spec)
+        self.loader.ready = True
+        self.loader.engine = mock.Mock(return_value=b"ok")
+        self.front = create_server(self.loader, 0, "synthetic-control-token")
+        threading.Thread(target=self.front.serve_forever, daemon=True).start()
+        self.addCleanup(self.front.server_close)
+        self.addCleanup(self.front.shutdown)
 
-        class Upstream(BaseHTTPRequestHandler):
-            def log_message(self, *_args):
-                pass
-
-            def do_GET(self):
-                self.send_response(200)
-                self.end_headers()
-                self.wfile.write(b"upstream")
-
-            def do_POST(self):
-                body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
-                time.sleep(owner.header_delay)
-                self.send_response(200)
-                if not body.get("stream"):
-                    self.send_header("Content-Type", "application/json")
-                    self.end_headers()
-                    time.sleep(owner.nonstream_delay)
-                    try:
-                        self.wfile.write(b'{"result":"done"}')
-                    except OSError:
-                        pass
-                    return
-                self.send_header("Content-Type", "text/event-stream")
-                self.end_headers()
-                self.wfile.write(b'data: {"delta":"first"}\n\n')
-                self.wfile.flush()
-                owner.emitting.set()
-                owner.release.wait(5)
-                try:
-                    self.wfile.write(b"data: " + b"x" * (4 * 1024 * 1024) + b"\n\n")
-                    self.wfile.flush()
-                except OSError:
-                    pass
-
-        self.upstream = ThreadingHTTPServer(("127.0.0.1", 0), Upstream)
-        self.upstream.daemon_threads = True
-        self.manager.engine_port = self.upstream.server_port
-        self.front = create_server(self.manager, 0, "synthetic-control-token")
-        for server in (self.upstream, self.front):
-            threading.Thread(target=server.serve_forever, daemon=True).start()
-            self.addCleanup(server.server_close)
-            self.addCleanup(server.shutdown)
-        self.addCleanup(self.release.set)
-
-    def connect(self):
+    def request(self, method, path, body=None, authenticated=True):
         connection = http.client.HTTPConnection(
             "127.0.0.1", self.front.server_port, timeout=5
         )
         self.addCleanup(connection.close)
-        return connection
-
-    def test_stream_flushes_before_completion_and_cancel_releases_reference(self):
-        connection = self.connect()
+        headers = (
+            {"X-Gradiated-Adapter-Control": "synthetic-control-token"}
+            if authenticated
+            else {}
+        )
         connection.request(
-            "POST",
-            "/v1/chat/completions",
-            json.dumps({"model": self.name, "messages": [], "stream": True}),
-            {
-                "Content-Type": "application/json",
-                "X-Gradiated-Workspace": self.spec["workspace_id"],
-            },
+            method, path, json.dumps(body) if body is not None else None, headers
         )
         response = connection.getresponse()
-        self.assertEqual(response.status, 200)
-        self.assertEqual(response.readline(), b'data: {"delta":"first"}\n')
-        self.assertTrue(self.emitting.wait(2))
-        self.assertEqual(self.manager.entries[self.name]["active"], 1)
-        with self.assertRaises(CapacityError):
-            self.manager.remove(self.name)
-        response.close()
-        connection.close()
-        self.release.set()
-        deadline = time.monotonic() + 5
-        while self.manager.entries[self.name]["active"] and time.monotonic() < deadline:
-            time.sleep(0.01)
-        self.assertEqual(self.manager.entries[self.name]["active"], 0)
-        with self.manager.request("base"):
-            pass
+        return response.status, response.read()
 
-    def test_cached_adapter_still_requires_workspace_identity(self):
-        for workspace in (None, "01980000-0000-7000-8000-000000000002"):
-            connection = self.connect()
-            headers = {"Content-Type": "application/json"}
-            if workspace:
-                headers["X-Gradiated-Workspace"] = workspace
-            connection.request(
-                "POST",
-                "/v1/chat/completions",
-                json.dumps({"model": self.name}),
-                headers,
-            )
-            response = connection.getresponse()
-            self.assertIn(response.status, (400, 503))
-            response.read()
-            self.assertFalse(self.emitting.is_set())
-
-    def test_health_is_not_ready_during_startup_or_uncertain_engine_state(self):
-        for ready, failed, expected in (
-            (False, False, 503),
-            (True, False, 200),
-            (True, True, 503),
+    def test_control_service_never_forwards_inference_or_admin_routes(self):
+        for method, path in (
+            ("POST", "/v1/chat/completions"),
+            ("POST", "/v1/completions"),
+            ("POST", "/v1/load_lora_adapter"),
+            ("POST", "/v1/unload_lora_adapter"),
+            ("GET", "/v1/models"),
+            ("GET", "/metrics"),
         ):
-            self.manager.ready, self.manager.failed = ready, failed
-            connection = self.connect()
-            connection.request("GET", "/health")
-            response = connection.getresponse()
-            self.assertEqual(response.status, expected)
-            response.read()
+            status, _ = self.request(
+                method, path, {"model": "base"} if method == "POST" else None
+            )
+            self.assertEqual(status, 404)
+        self.loader.engine.assert_not_called()
 
-    def test_metrics_and_model_discovery_still_reach_the_base_engine(self):
-        for path in ("/metrics", "/v1/models"):
-            connection = self.connect()
-            connection.request("GET", path)
-            response = connection.getresponse()
-            body = response.read()
-            if path == "/metrics":
-                self.assertTrue(body.startswith(b"upstream\n"))
-                self.assertIn(b"gradiated_lora_loads_total 1\n", body)
-                self.assertNotIn(self.name.encode(), body)
-            else:
-                self.assertEqual(body, b"upstream")
+    def test_private_routes_require_control_token(self):
+        for method, path in (
+            ("POST", "/internal/adapters/prepare"),
+            ("POST", "/internal/adapters/probe"),
+            ("GET", "/internal/adapters"),
+            ("GET", "/internal/adapters/metrics"),
+        ):
+            status, _ = self.request(
+                method,
+                path,
+                {"name": self.name, "workspace_id": self.spec["workspace_id"]}
+                if method == "POST"
+                else None,
+                authenticated=False,
+            )
+            self.assertEqual(status, 403)
+        self.loader.engine.assert_not_called()
 
-    def test_first_response_and_nonstream_body_allow_more_than_stream_idle_timeout(
+    def test_prepare_registers_adapter_through_native_api_and_returns_boot_identity(
         self,
     ):
-        self.header_delay = self.nonstream_delay = 0.1
-        with (
-            mock.patch("server.STREAM_IDLE_TIMEOUT_SECONDS", 0.02),
-            mock.patch("server.REQUEST_TIMEOUT_SECONDS", 1),
-        ):
-            connection = self.connect()
-            connection.request(
+        status, body = self.request(
+            "POST",
+            "/internal/adapters/prepare",
+            {"name": self.name, "workspace_id": self.spec["workspace_id"]},
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(json.loads(body)["boot_id"], self.loader.boot_id)
+        self.assertEqual(
+            self.loader.engine.call_args.args[:2], ("POST", "/v1/load_lora_adapter")
+        )
+        _, metrics = self.request("GET", "/internal/adapters/metrics")
+        self.assertIn(b"gradiated_lora_registrations_total 1", metrics)
+        self.assertNotIn(self.name.encode(), metrics)
+
+    def test_capacity_rejection_does_not_change_readiness(self):
+        with self.loader.admission, self.loader.admission:
+            status, _ = self.request(
                 "POST",
-                "/v1/chat/completions",
-                json.dumps({"model": "base", "stream": False}),
+                "/internal/adapters/prepare",
+                {"name": self.name, "workspace_id": self.spec["workspace_id"]},
             )
-            response = connection.getresponse()
-            self.assertEqual(response.status, 200)
-            self.assertEqual(response.read(), b'{"result":"done"}')
+        self.assertEqual(status, 503)
+        self.assertEqual(self.request("GET", "/health")[0], 200)
 
-    def test_header_wait_is_still_bounded_by_request_deadline(self):
-        self.header_delay = 0.2
-        with mock.patch("server.REQUEST_TIMEOUT_SECONDS", 0.05):
-            connection = self.connect()
-            connection.request(
-                "POST", "/v1/chat/completions", json.dumps({"model": "base"})
-            )
-            response = connection.getresponse()
-            self.assertEqual(response.status, 503)
-            response.read()
-        with self.manager.request("base"):
-            pass
-
-    def test_stalled_stream_closes_upstream_and_releases_active_reference(self):
-        with mock.patch("server.STREAM_IDLE_TIMEOUT_SECONDS", 0.05):
-            connection = self.connect()
-            connection.request(
-                "POST",
-                "/v1/chat/completions",
-                json.dumps({"model": self.name, "stream": True}),
-                {"X-Gradiated-Workspace": self.spec["workspace_id"]},
-            )
-            response = connection.getresponse()
-            self.assertEqual(response.status, 200)
-            self.assertEqual(response.readline(), b'data: {"delta":"first"}\n')
-            response.read()
-        deadline = time.monotonic() + 1
-        while self.manager.entries[self.name]["active"] and time.monotonic() < deadline:
-            time.sleep(0.01)
-        self.assertEqual(self.manager.entries[self.name]["active"], 0)
-        with self.manager.request("base"):
-            pass
-
-    def test_internal_prepare_requires_control_token_and_bounded_cold_admission(self):
-        for authenticated, full, expected in (
-            (False, False, 403),
-            (True, False, 200),
-            (True, True, 503),
+    def test_invalid_workspace_and_body_are_rejected_before_native_loading(self):
+        for body in (
+            {"name": self.name},
+            {"name": self.name, "workspace_id": ""},
+            {"name": self.name, "workspace_id": "01980000-0000-7000-8000-000000000002"},
         ):
-            if full:
-                self.manager.cold_requests.acquire()
-                self.manager.cold_requests.acquire()
-            try:
-                headers = (
-                    {"X-Gradiated-Adapter-Control": "synthetic-control-token"}
-                    if authenticated
-                    else {}
-                )
-                connection = self.connect()
-                connection.request(
-                    "POST",
-                    "/internal/adapters/prepare",
-                    json.dumps(
-                        {"name": self.name, "workspace_id": self.spec["workspace_id"]}
-                    ),
-                    headers,
-                )
-                response = connection.getresponse()
-                self.assertEqual(response.status, expected)
-                response.read()
-            finally:
-                if full:
-                    self.manager.cold_requests.release()
-                    self.manager.cold_requests.release()
+            status, _ = self.request("POST", "/internal/adapters/prepare", body)
+            self.assertIn(status, (422, 503))
+        self.loader.engine.assert_not_called()
+
+    def test_probe_checks_served_identity_and_usage(self):
+        self.loader.engine.side_effect = [
+            b"ok",
+            json.dumps(
+                {"model": self.name, "choices": [{}], "usage": {"completion_tokens": 1}}
+            ).encode(),
+        ]
+        status, _ = self.request(
+            "POST",
+            "/internal/adapters/probe",
+            {"name": self.name, "workspace_id": self.spec["workspace_id"]},
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(
+            self.loader.engine.call_args.args[:2], ("POST", "/v1/chat/completions")
+        )
 
 
 if __name__ == "__main__":

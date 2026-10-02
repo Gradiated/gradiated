@@ -68,6 +68,17 @@ const datasetSchema = z.object({
     max_steps: z.number().int().positive(),
     checkpoint_steps: z.number().int().positive(),
     rank: z.number().int().positive(),
+    early_stopping: z
+      .object({
+        patience: z.number().int().positive(),
+        threshold: z.number().nonnegative(),
+        min_steps: z.number().int().nonnegative(),
+      })
+      .optional(),
+    validation_examples: z.number().int().positive().optional(),
+    shuffle: z.boolean().optional(),
+    lr_scheduler_type: z.enum(["cosine", "linear", "constant"]).optional(),
+    warmup_steps: z.number().int().nonnegative().optional(),
   }),
 });
 const pollSchema = z.object({

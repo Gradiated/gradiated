@@ -52,7 +52,6 @@ describe("RunPod provider", () => {
   });
 
   it.each([
-    { imageName: "unqualified:image" },
     { desiredStatus: "CREATED" },
     { ports: ["22/tcp"] },
     { publicIp: null },
@@ -76,6 +75,43 @@ describe("RunPod provider", () => {
       expect(runpod.calls.every((call) => call.method === "GET")).toBe(true);
     },
   );
+
+  it("accepts a pinned host with separately installed, qualified base tools", async () => {
+    const runpod = fakeRunPod({
+      ...runningPod,
+      imageName: "runpod/pytorch:original",
+    });
+    const run = vi.fn<RunSsh>(async () => "qualified");
+    const provider = createRunPodProvider({
+      apiKey: "key",
+      fetch: runpod.fetch,
+      inPlace: { run, hostKeys },
+    });
+
+    await expect(provider.supportsInPlace!("pod1", image)).resolves.toBe(true);
+    expect(JSON.parse(run.mock.calls[0]![2]!)).toEqual({ image });
+    expect(runpod.calls.every((call) => call.method === "GET")).toBe(true);
+  });
+
+  it("refuses a different provider image when installed base verification fails", async () => {
+    const runpod = fakeRunPod({
+      ...runningPod,
+      imageName: "unqualified:image",
+    });
+    const run = vi.fn<RunSsh>(async () => {
+      throw new Error("Unqualified installed base");
+    });
+    const provider = createRunPodProvider({
+      apiKey: "key",
+      fetch: runpod.fetch,
+      inPlace: { run, hostKeys },
+    });
+
+    await expect(
+      provider.bootstrap(await provider.describe("pod1"), image, {}),
+    ).rejects.toThrow("Unqualified installed base");
+    expect(runpod.calls.every((call) => call.method === "GET")).toBe(true);
+  });
 
   it("does not enroll an unpinned host even with SSH configured", async () => {
     const runpod = fakeRunPod(runningPod);

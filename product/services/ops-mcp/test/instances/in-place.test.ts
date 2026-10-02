@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import {
   mkdtempSync,
@@ -11,7 +12,10 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { bootstrapScript } from "../../src/instances/in-place.js";
+import {
+  bootstrapScript,
+  verifyInstalledBase,
+} from "../../src/instances/in-place.js";
 
 const roots: string[] = [];
 const processes: number[] = [];
@@ -194,5 +198,49 @@ describe("in-place host bootstrap", () => {
     expect(() =>
       readFileSync(path.join(test.root, "etc/nomad/tls/client-key.pem")),
     ).toThrow();
+  });
+});
+
+describe("installed base qualification", () => {
+  it("rejects missing manifests, wrong source images and altered binaries", () => {
+    const test = setup();
+    const script = verifyInstalledBase
+      .replaceAll('"/etc/', `"${test.root}/etc/`)
+      .replaceAll('"/usr/', `"${test.root}/usr/`)
+      .replaceAll('"/opt/', `"${test.root}/opt/`);
+    const run = () =>
+      spawnSync("python3", ["-c", script], {
+        input: JSON.stringify({ image: "base:inputs-pinned" }),
+        encoding: "utf8",
+      });
+
+    expect(run().status).not.toBe(0);
+    const files: Record<string, string> = {};
+    for (const name of [
+      "etc/gradiated/base-id",
+      "etc/nomad/client.hcl",
+      "usr/local/bin/nomad",
+      "opt/nomad/plugins/nomad-device-nvidia",
+      "opt/gradiated/bin/start-client",
+      "opt/gradiated/bin/configure-serving",
+      "opt/gradiated/bin/runtime-launch",
+      "opt/gradiated/bin/desmondd",
+    ]) {
+      test.file(name, "pinned bytes");
+      files[path.join(test.root, name)] = createHash("sha256")
+        .update("pinned bytes")
+        .digest("hex");
+    }
+    const manifest = (image: string) =>
+      test.file(
+        "etc/gradiated/installed-base.json",
+        JSON.stringify({ image, files }),
+      );
+    manifest("base:inputs-other");
+    expect(run().status).not.toBe(0);
+    manifest("base:inputs-pinned");
+    expect(run().status).toBe(0);
+    test.file("usr/local/bin/nomad", "altered bytes");
+    expect(run().status).not.toBe(0);
   });
 });

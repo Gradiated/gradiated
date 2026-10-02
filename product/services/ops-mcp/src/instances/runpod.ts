@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-import { installInPlace, readEnrollment } from "./in-place.js";
+import {
+  installInPlace,
+  readEnrollment,
+  verifyInPlaceBase,
+} from "./in-place.js";
 import type { RunSsh, SshTarget } from "./ssh.js";
 import type { InstanceProvider, ProviderInstance } from "./provider.js";
 
@@ -138,9 +142,9 @@ export const createRunPodProvider = ({
       if (!inPlace?.hostKeys[podId]) return false;
 
       const current = await pod(podId);
-      if (current.desiredStatus !== "RUNNING" || current.imageName !== image) {
+      if (current.desiredStatus !== "RUNNING") {
         throw new Error(
-          "In-place enrollment requires a running pod on the exact configured nomad-base image; no provider changes were made",
+          "In-place enrollment requires a running pod; no provider changes were made",
         );
       }
       if (!current.ports?.includes(SERVING_PORT)) {
@@ -148,7 +152,10 @@ export const createRunPodProvider = ({
           "In-place enrollment requires the host proxy port to be exposed already; provider ports will not be changed",
         );
       }
-      target(current);
+      const sshTarget = target(current);
+      if (current.imageName !== image) {
+        await verifyInPlaceBase(inPlace.run, sshTarget, image);
+      }
 
       return true;
     },

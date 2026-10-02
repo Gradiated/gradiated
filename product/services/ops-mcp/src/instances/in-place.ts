@@ -6,6 +6,33 @@ const shellQuote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
 export const readEnrollment =
   "if test -f /etc/gradiated/in-place-enrollment.json; then cat /etc/gradiated/in-place-enrollment.json; else printf '{}'; fi";
 
+export const verifyInstalledBase = String.raw`
+import hashlib, json, pathlib, sys
+expected = json.load(sys.stdin)["image"]
+manifest = json.loads(pathlib.Path("/etc/gradiated/installed-base.json").read_text())
+if manifest["image"] != expected:
+    sys.exit(65)
+required = {"/etc/gradiated/base-id", "/etc/nomad/client.hcl", "/usr/local/bin/nomad", "/opt/nomad/plugins/nomad-device-nvidia", "/opt/gradiated/bin/start-client", "/opt/gradiated/bin/configure-serving", "/opt/gradiated/bin/runtime-launch", "/opt/gradiated/bin/desmondd"}
+if not required.issubset(manifest["files"]):
+    sys.exit(65)
+for name, digest in manifest["files"].items():
+    if hashlib.sha256(pathlib.Path(name).read_bytes()).hexdigest() != digest:
+        sys.exit(65)
+print("qualified")
+`;
+
+export const verifyInPlaceBase = async (
+  run: RunSsh,
+  target: SshTarget,
+  image: string,
+) => {
+  await run(
+    target,
+    `python3 -c ${shellQuote(verifyInstalledBase)}`,
+    JSON.stringify({ image }),
+  );
+};
+
 export const bootstrapScript = String.raw`
 import base64, json, os, pathlib, pwd, re, subprocess, sys, time
 payload = json.load(sys.stdin)

@@ -28,6 +28,7 @@ export interface InstanceService {
     instanceId: string,
     nomadNodeId: string,
   ): Promise<InstanceRecord>;
+  retire(instanceId: string): Promise<InstanceRecord>;
 }
 
 export const createInstanceService = (
@@ -62,6 +63,20 @@ export const createInstanceService = (
     const [record] = await database
       .update(instances)
       .set({ nomadNodeId: z.uuid().parse(nomadNodeId), updatedAt: sql`now()` })
+      .where(eq(instances.id, z.uuid().parse(instanceId)))
+      .returning(inventoryColumns);
+    if (!record) throw new Error("Instance not found");
+
+    return record;
+  },
+
+  async retire(instanceId) {
+    const [record] = await database
+      .update(instances)
+      .set({
+        retiredAt: sql`coalesce(${instances.retiredAt}, now())`,
+        updatedAt: sql`now()`,
+      })
       .where(eq(instances.id, z.uuid().parse(instanceId)))
       .returning(inventoryColumns);
     if (!record) throw new Error("Instance not found");

@@ -7,6 +7,7 @@ import {
   type InstanceService,
 } from "../src/instances/service.js";
 import { createTestDatabase, type TestDatabase } from "./support/postgres.js";
+import { createInstanceCertificateStore } from "../src/instances/certificate-store.js";
 
 describe("instances", () => {
   let testDatabase: TestDatabase;
@@ -32,6 +33,36 @@ describe("instances", () => {
     const record = await instances.register(machine());
 
     expect(record).toMatchObject({ nomadNodeId: null, retiredAt: null });
+  });
+
+  it("retires an instance without losing its identity or allowing certificate enrollment", async () => {
+    const input = machine();
+    const record = await instances.register(input);
+    const nomadNodeId = randomUUID();
+    await instances.bindNomadNode(record.id, nomadNodeId);
+
+    const retired = await instances.retire(record.id);
+    expect(retired).toMatchObject({ id: record.id, nomadNodeId });
+    expect(retired.retiredAt).toBeInstanceOf(Date);
+    expect((await instances.retire(record.id)).retiredAt).toEqual(
+      retired.retiredAt,
+    );
+
+    const certificates = createInstanceCertificateStore(testDatabase.database);
+    await expect(
+      certificates.enroll({
+        instanceId: record.id,
+        nomadNodeId,
+        tokenHash: "a".repeat(64),
+      }),
+    ).rejects.toThrow("Unauthorized host");
+    expect(await certificates.observations()).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ instanceId: record.id }),
+      ]),
+    );
+
+    expect((await instances.register(input)).retiredAt).toBeNull();
   });
 
   it("keeps the instance and its current node when a machine registers again", async () => {

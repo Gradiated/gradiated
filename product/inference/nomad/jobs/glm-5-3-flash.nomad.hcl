@@ -54,10 +54,11 @@ locals {
     runtime_model_name = "zai-org/GLM-5.3-Flash"
     tokenizer_path     = "zai-org/GLM-5.3-Flash"
     tokenizer_revision = local.model_revision
-    }, var.lora_enabled ? merge(
-    { lora_enabled = true },
-    var.lora_base_model_revision != "" ? { lora_base_model_revision = var.lora_base_model_revision } : {},
-  ) : {})
+    }, var.lora_enabled ? { lora_enabled = true } : {},
+    var.lora_enabled && var.lora_base_model_revision != "" ? {
+      lora_base_model_revision = var.lora_base_model_revision
+    } : {},
+  )
 }
 
 job "glm-5-3-flash" {

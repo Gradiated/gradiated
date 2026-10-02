@@ -1,7 +1,8 @@
+import { createHash } from "node:crypto";
 import { Context } from "@temporalio/activity";
 import { z } from "zod";
 import {
-  TRAINING_RECIPE,
+  trainingRecipeForModel,
   RunDatasetSummarySchema,
   TrainingRunEventPayloadSchema,
   type RunEvaluation,
@@ -34,6 +35,9 @@ import {
   summarizePredictions,
 } from "./evaluation.js";
 
+import { evaluatePairs } from "./evaluate-pairs.js";
+import { predictionSchema, type EvaluationModel } from "./evaluation-models.js";
+
 import { persistTrainingDataset } from "./dataset.js";
 
 const artifactSchema = z.object({
@@ -55,6 +59,7 @@ const datasetSchema = z.object({
     baseId: z.string(),
     gpuType: z.string(),
     nodePool: z.string().optional(),
+    recipe: z.record(z.string(), z.unknown()).optional(),
   }),
   recipe: z.looseObject({
     id: z.string(),
@@ -95,6 +100,7 @@ export const createTrainingExecutorActivities = (options: {
   podIds: string[];
   host: TrainingHostConfig;
   token: string;
+  evaluationModels?: EvaluationModel;
 }) => {
   const { database, artifacts } = options;
   const store = createTrainingRunStore(database);
@@ -121,7 +127,10 @@ export const createTrainingExecutorActivities = (options: {
     host: TrainingHost,
     command: Record<string, unknown>,
   ) => {
-    const id = `${String(command.operation)}-${ordinal}`;
+    const id =
+      typeof command.id === "string"
+        ? command.id
+        : `${String(command.operation)}-${ordinal}`;
     await hosts.call(host, "/operations", { ...command, id });
     let after = 0;
     for (;;) {
@@ -177,6 +186,18 @@ export const createTrainingExecutorActivities = (options: {
       }),
     buildTrainingDataset: (runId: string, input: TrainingInput) =>
       heartbeat(async () => {
+        const externalEvaluation =
+          input.comparisonModelId !== input.baseModelId ||
+          input.judgeModelId !== input.baseModelId;
+        if (externalEvaluation) {
+          if (!options.evaluationModels)
+            throw new Error("Evaluation models are not configured.");
+          for (const modelId of [input.comparisonModelId, input.judgeModelId]) {
+            if (modelId !== input.baseModelId)
+              options.evaluationModels.check(modelId);
+          }
+        }
+
         const manifestKey = `runs/${runId}/run-manifest.json`;
         const exists = await artifacts.exists(manifestKey);
         let manifest: unknown;
@@ -191,10 +212,12 @@ export const createTrainingExecutorActivities = (options: {
             dataset,
             input.inputCutoff,
           );
+          const recipe = trainingRecipeForModel(input.baseModelId);
+          if (!recipe) throw new Error("Training recipe is unavailable.");
           manifest = {
             ...saved,
-            host: options.host,
-            recipe: TRAINING_RECIPE,
+            host: { ...options.host, recipe },
+            recipe,
           };
         }
 
@@ -323,6 +346,9 @@ export const createTrainingExecutorActivities = (options: {
             runId,
             await execute(runId, ordinal, host, {
               operation: "generate",
+              external_evaluation:
+                input.comparisonModelId !== input.baseModelId ||
+                input.judgeModelId !== input.baseModelId,
               adapter: await artifacts.download(adapter),
               dataset: await artifacts.download(dataset.evaluation),
               output: await artifacts.upload(
@@ -331,6 +357,42 @@ export const createTrainingExecutorActivities = (options: {
             }),
           );
           await artifacts.verify(artifact);
+          if (
+            input.comparisonModelId !== input.baseModelId ||
+            input.judgeModelId !== input.baseModelId
+          ) {
+            if (!options.evaluationModels)
+              throw new Error("Evaluation models are not configured.");
+            const models: EvaluationModel = {
+              check: options.evaluationModels.check,
+              generate: (modelId, messages, signal) =>
+                modelId === input.baseModelId
+                  ? execute(runId, ordinal, host, {
+                      operation: "predict",
+                      id: `predict-${ordinal}-${createHash("sha256").update(JSON.stringify(messages)).digest("hex")}`,
+                      messages,
+                    }).then((value) => predictionSchema.parse(value))
+                  : options.evaluationModels!.generate(
+                      modelId,
+                      messages,
+                      signal,
+                    ),
+            };
+            const rows = await evaluatePairs({
+              runId,
+              generated: await json(artifact.key),
+              dataset: await artifacts.read(dataset.evaluation.key),
+              comparisonModelId: input.comparisonModelId,
+              judgeModelId: input.judgeModelId,
+              models,
+              artifacts,
+              signal: Context.current().cancellationSignal,
+            });
+            artifact = await putJson(
+              `runs/${runId}/evaluation/predictions.json`,
+              rows,
+            );
+          }
           await putJson(resultKey, artifact);
         }
         const predictions = predictionsSchema.parse(await json(artifact.key));

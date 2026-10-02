@@ -1,6 +1,4 @@
-import { useState } from "react";
 import { OptionSelect } from "@/components/option-select";
-import { Input } from "@/components/ui/input";
 
 const weekdays = [
   { value: "SUN", label: "Sunday" },
@@ -45,18 +43,15 @@ export const TrainingScheduleEditor = ({
   onChange: (value: string) => void;
   disabled: boolean;
 }) => {
-  const [custom, setCustom] = useState(false);
   const parsed = readSchedule(value);
-  const mode = custom
-    ? "custom"
-    : !value
-      ? "manual"
-      : parsed
-        ? "scheduled"
-        : "custom";
-  const fields = parsed ?? { minute: "0", hour: "3", day: "*" };
+  const mode = value ? "scheduled" : "manual";
+  const fields = parsed ?? { minute: "0", hour: "3", day: "" };
   const changeField = (patch: Partial<typeof fields>) => {
-    const next = { ...fields, ...patch };
+    const next = {
+      ...fields,
+      day: fields.day === "*" ? "MON" : fields.day || "MON",
+      ...patch,
+    };
     onChange(`${next.minute} ${next.hour} * * ${next.day}`);
   };
   const dayName = weekdays.find((day) => day.value === fields.day)?.label;
@@ -72,14 +67,13 @@ export const TrainingScheduleEditor = ({
             value={mode}
             disabled={disabled}
             onValueChange={(next) => {
-              setCustom(next === "custom");
               if (next === "manual") onChange("");
-              if (next === "scheduled" && !parsed) onChange("0 3 * * *");
+              if (next === "scheduled" && (!parsed || parsed.day === "*"))
+                onChange("0 3 * * MON");
             }}
             options={[
               { value: "manual", label: "Manual only" },
               { value: "scheduled", label: "Scheduled" },
-              { value: "custom", label: "Custom cron" },
             ]}
           />
         </div>
@@ -112,36 +106,23 @@ export const TrainingScheduleEditor = ({
               <OptionSelect
                 label="Training day"
                 className="w-36"
-                value={fields.day}
+                value={dayName ? fields.day : ""}
+                placeholder="Choose day"
                 disabled={disabled}
-                options={[{ value: "*", label: "Every day" }, ...weekdays]}
+                options={weekdays}
                 onValueChange={(day) => changeField({ day })}
               />
             </div>
           </>
         ) : null}
       </div>
-      {mode === "custom" ? (
-        <div className="space-y-1.5">
-          <Input
-            aria-label="Cron schedule"
-            className="font-mono text-sm"
-            placeholder="0 3 * * MON"
-            value={value}
-            disabled={disabled}
-            onChange={(event) => onChange(event.target.value)}
-          />
-          <p className="text-xs text-muted-foreground">
-            Minute, hour, day of month, month, day of week. Times are in UTC.
-          </p>
-        </div>
-      ) : (
-        <p className="text-xs text-muted-foreground" aria-live="polite">
-          {mode === "manual"
-            ? "Training runs only when you start it."
-            : `Every ${dayName ?? "day"} at ${fields.hour.padStart(2, "0")}:${fields.minute.padStart(2, "0")} UTC.`}
-        </p>
-      )}
+      <p className="text-xs text-muted-foreground" aria-live="polite">
+        {mode === "manual"
+          ? "Training runs only when you start it."
+          : dayName
+            ? `Every ${dayName} at ${fields.hour.padStart(2, "0")}:${fields.minute.padStart(2, "0")} UTC.`
+            : "Choose a weekday to replace the current schedule."}
+      </p>
     </div>
   );
 };

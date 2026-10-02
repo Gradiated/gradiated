@@ -1,3 +1,4 @@
+import { modelDisplayName } from "@gradiated/contracts/model-catalog";
 import type { CatalogModelInput } from "../service.js";
 
 export const deepseekV41FlashModelId = "deepseek/deepseek-v4.1-flash";
@@ -8,7 +9,7 @@ export const deepseekV41FlashArtifactModelPath =
 export const createDeepseekV41FlashModelConfiguration = () =>
   ({
     id: deepseekV41FlashModelId,
-    name: "DeepSeek V4.1 Flash",
+    name: modelDisplayName(deepseekV41FlashModelId),
     status: "available",
     properties: {
       description:

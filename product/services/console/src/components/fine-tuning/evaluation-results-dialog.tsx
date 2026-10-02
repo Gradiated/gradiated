@@ -1,3 +1,4 @@
+import { modelDisplayName } from "@gradiated/contracts/model-catalog";
 import { useQuery } from "@tanstack/react-query";
 import { getEvaluationResults } from "@/api/training";
 import { useProductContext } from "@/hooks/use-product-context";
@@ -33,8 +34,10 @@ export const EvaluationResultsDialog = ({
         <DialogHeader>
           <DialogTitle>Test results</DialogTitle>
           <DialogDescription>
-            {version.name} compared with {version.summary?.comparison_model_id}.
-            Held-out responses judged by {version.summary?.judge_model_id}.
+            {version.name} compared with{" "}
+            {modelDisplayName(version.summary?.comparison_model_id)}. Held-out
+            responses judged by{" "}
+            {modelDisplayName(version.summary?.judge_model_id)}.
           </DialogDescription>
         </DialogHeader>
         <QueryState query={query} />
@@ -72,7 +75,9 @@ export const EvaluationResultsDialog = ({
                     <h4 className="text-sm font-medium">
                       {arm === "fine_tuned"
                         ? version.name
-                        : version.summary?.comparison_model_id}
+                        : modelDisplayName(
+                            version.summary?.comparison_model_id,
+                          )}
                     </h4>
                     <pre className="max-h-64 overflow-auto rounded-md bg-muted p-3 text-xs whitespace-pre-wrap break-words">
                       {row[arm].text}

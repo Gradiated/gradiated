@@ -238,14 +238,12 @@ test("direct task reload initializes flags, edits schedules and opens held-out r
   ).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(page.getByRole("combobox", { name: "Base model" })).toHaveText(
-    "Qwen/Qwen3-0.6B",
+    "Qwen3 0.6B",
   );
   await page
     .getByRole("combobox", { name: "Judge model", exact: true })
     .click();
-  await page
-    .getByRole("option", { name: "openai/gpt-6-sol", exact: true })
-    .click();
+  await page.getByRole("option", { name: "GPT-6 Sol", exact: true }).click();
   await expect.poll(() => judge).toBe("openai/gpt-6-sol");
   await page.getByRole("combobox", { name: "Training schedule" }).click();
   await expect(
@@ -296,7 +294,7 @@ test("direct task reload initializes flags, edits schedules and opens held-out r
   await page.getByRole("tab", { name: "Settings", exact: true }).click();
   await expect(
     page.getByRole("combobox", { name: "Judge model", exact: true }),
-  ).toHaveText("openai/gpt-6-sol");
+  ).toHaveText("GPT-6 Sol");
   await expect(page.getByRole("combobox", { name: "Training day" })).toHaveText(
     "Monday",
   );

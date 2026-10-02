@@ -1,3 +1,4 @@
+import { modelDisplayName } from "@gradiated/contracts/model-catalog";
 import { useMutation } from "@tanstack/react-query";
 import { getAdapterDownload } from "@/api/training";
 import { useProductContext } from "@/hooks/use-product-context";
@@ -42,8 +43,10 @@ export const DownloadAdapterDialog = ({
           <DialogTitle>Download adapter</DialogTitle>
           <DialogDescription>
             The adapter is yours. It is a standard PEFT LoRA adapter for{" "}
-            <span className="font-mono">{version.base_model_id}</span> and runs
-            anywhere that base runs: PEFT, vLLM with{" "}
+            <span className="font-mono">
+              {modelDisplayName(version.base_model_id)}
+            </span>{" "}
+            and runs anywhere that base runs: PEFT, vLLM with{" "}
             <span className="font-mono">--enable-lora</span>, or SGLang.
           </DialogDescription>
         </DialogHeader>
@@ -53,7 +56,9 @@ export const DownloadAdapterDialog = ({
             {adapter.format} · adapter_config.json + adapter_model.safetensors
           </dd>
           <dt className="text-muted-foreground">Base model</dt>
-          <dd className="font-mono">{version.base_model_id}</dd>
+          <dd className="font-mono">
+            {modelDisplayName(version.base_model_id)}
+          </dd>
           <dt className="text-muted-foreground">Size</dt>
           <dd>
             {(adapter.size_bytes / MEBIBYTE).toFixed(1)} MB (rank {adapter.rank}

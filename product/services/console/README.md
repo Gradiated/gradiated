@@ -104,7 +104,7 @@ history. MSW serves synthetic fixtures; authentication and unimplemented API
 mutations cannot reach the real backend. Training is enabled and analytics are
 disabled only for Storybook. Page stories cover sign-in, API keys, models,
 usage, logs, billing, training, and every task-detail tab: Model, Training runs,
-Data, and Settings, plus trace content and test results. Tab and detail stories
+Data, and Settings, plus trace content, test results, and the judge selector. Tab and detail stories
 select the actual tab and open the panel through a play function.
 Add stories under `src/`; screenshot capture discovers every page story automatically.
 
@@ -136,3 +136,5 @@ can finish before publication. The `public-ingress` module owns the bucket,
 certificate, distribution, and DNS; `deployment-iam` grants the existing
 production deployment role access. GitHub's production environment applies to
 hosting deployment.
+
+Model display names and provider icon paths live in the shared `@gradiated/contracts/model-catalog`. Selectors and model labels use that metadata, falling back to the exact ID for uncataloged models. Provider SVGs are served locally from `public/model-providers/`; exact IDs remain in API snippets and raw request data.

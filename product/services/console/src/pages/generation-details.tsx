@@ -1,3 +1,4 @@
+import { modelDisplayName } from "@gradiated/contracts/model-catalog";
 import { Check } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -92,7 +93,10 @@ export const GenerationDetails = ({
       <div className="space-y-7 p-6">
         <DetailSection title="Overview">
           <DetailGrid>
-            <Detail label="Model" value={generation.model_id} />
+            <Detail
+              label="Model"
+              value={modelDisplayName(generation.model_id)}
+            />
             <Detail label="Cost" value={formatNanoUsd(generation.charge)} />
             <Detail
               label="Latency"

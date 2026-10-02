@@ -1,3 +1,4 @@
+import { modelDisplayName } from "@gradiated/contracts/model-catalog";
 import { Info } from "lucide-react";
 
 import {
@@ -132,7 +133,7 @@ export const EvaluationPanel = ({
         <p>
           Compared with{" "}
           <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em]">
-            {summary.comparison_model_id}
+            {modelDisplayName(summary.comparison_model_id)}
           </code>
         </p>
         <Tooltip>
@@ -144,7 +145,7 @@ export const EvaluationPanel = ({
             >
               judged by{" "}
               <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em]">
-                {summary.judge_model_id}
+                {modelDisplayName(summary.judge_model_id)}
               </code>
               <Info className="size-3.5" />
             </button>
@@ -155,9 +156,10 @@ export const EvaluationPanel = ({
               data were evaluated.
             </p>
             <p className="mb-2">
-              For each request, the judge ({summary.judge_model_id}) saw this
-              model's answer and a fresh answer from the comparison model (
-              {summary.comparison_model_id}), unlabelled.
+              For each request, the judge (
+              {modelDisplayName(summary.judge_model_id)}) saw this model's
+              answer and a fresh answer from the comparison model (
+              {modelDisplayName(summary.comparison_model_id)}), unlabelled.
             </p>
             <p>
               {summary.judging_method === "randomized_single"

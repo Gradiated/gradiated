@@ -39,6 +39,7 @@ export const OptionSelect = <Value extends string>({
   itemClassName,
   disabled,
   placeholder,
+  renderOption,
 }: {
   value: Value;
   options: readonly Option<Value>[];
@@ -48,6 +49,7 @@ export const OptionSelect = <Value extends string>({
   itemClassName?: string;
   disabled?: boolean;
   placeholder?: string;
+  renderOption?: (option: Option<Value>) => ReactNode;
 }) => (
   <Select
     disabled={disabled ?? false}
@@ -64,8 +66,9 @@ export const OptionSelect = <Value extends string>({
           value={option.value}
           disabled={option.disabled ?? false}
           className={itemClassName}
+          textValue={option.label}
         >
-          {option.label}
+          {renderOption ? renderOption(option) : option.label}
         </SelectItem>
       ))}
     </SelectContent>

@@ -1,3 +1,4 @@
+import { ModelOption, modelOption } from "@/components/model-label";
 import { useState } from "react";
 import { TaskTrainingScheduleSchema } from "@gradiated/contracts";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { useOptimisticValue } from "@/hooks/use-optimistic-patch";
 import type { components } from "@/api/schema";
 import { OptionSelect } from "@/components/option-select";
 import {
+  modelDisplayName,
   COMPARISON_MODELS,
   JUDGE_MODELS,
   TRAINING_BASE_MODELS,
@@ -37,8 +39,7 @@ export const TaskSettingsTab = ({ task: savedTask }: { task: TaskRow }) => {
     TRAINING_BASE_MODELS.some((base) => base.id === model.id),
   );
   const baseModelOptions = availableModels.map((model) => ({
-    value: model.id,
-    label: model.id,
+    ...modelOption(model.id),
     disabled: false,
   }));
 
@@ -48,7 +49,7 @@ export const TaskSettingsTab = ({ task: savedTask }: { task: TaskRow }) => {
   ) {
     baseModelOptions.unshift({
       value: task.base_model_id,
-      label: `${task.base_model_id} (unavailable)`,
+      label: `${modelDisplayName(task.base_model_id)} (unavailable)`,
       disabled: true,
     });
   }
@@ -65,7 +66,7 @@ export const TaskSettingsTab = ({ task: savedTask }: { task: TaskRow }) => {
       models.data?.data.some(
         (hosted) => hosted.id === model.id && hosted.status === "available",
       ),
-  ).map((model) => ({ value: model.id, label: model.id, disabled: false }));
+  ).map((model) => ({ ...modelOption(model.id), disabled: false }));
 
   if (
     task.comparison_model_id &&
@@ -73,7 +74,7 @@ export const TaskSettingsTab = ({ task: savedTask }: { task: TaskRow }) => {
   ) {
     comparisonOptions.unshift({
       value: task.comparison_model_id,
-      label: `${task.comparison_model_id} (unavailable)`,
+      label: `${modelDisplayName(task.comparison_model_id)} (unavailable)`,
       disabled: true,
     });
   }
@@ -85,8 +86,9 @@ export const TaskSettingsTab = ({ task: savedTask }: { task: TaskRow }) => {
         description="New versions are judged, costed and timed against this."
       >
         <OptionSelect
+          renderOption={ModelOption}
           label="Comparison model"
-          className="w-80 font-mono text-xs"
+          className="w-64"
           value={task.comparison_model_id ?? ""}
           placeholder="Select a comparison model"
           disabled={!canEdit || !models.data}
@@ -102,8 +104,9 @@ export const TaskSettingsTab = ({ task: savedTask }: { task: TaskRow }) => {
       >
         <div>
           <OptionSelect
+            renderOption={ModelOption}
             label="Base model"
-            className="w-64 font-mono text-xs"
+            className="w-64"
             value={task.base_model_id ?? ""}
             placeholder="Select a base model"
             disabled={!canEdit || !models.data}
@@ -118,12 +121,13 @@ export const TaskSettingsTab = ({ task: savedTask }: { task: TaskRow }) => {
         description="Judges comparisons for the next training run. Existing results are unaffected."
       >
         <OptionSelect
+          renderOption={ModelOption}
           label="Judge model"
-          className="w-64 font-mono text-xs"
+          className="w-64"
           value={task.judge_model_id}
           disabled={!canEdit}
           onValueChange={(judge_model_id) => update.mutate({ judge_model_id })}
-          options={JUDGE_MODELS.map(({ id }) => ({ value: id, label: id }))}
+          options={JUDGE_MODELS.map(({ id }) => modelOption(id))}
         />
       </SettingRow>
       <div className="p-5">

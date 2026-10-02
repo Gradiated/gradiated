@@ -1,3 +1,4 @@
+import { ModelOption, modelOption } from "@/components/model-label";
 import { useWorkspaceSettings } from "@/hooks/use-workspace-settings";
 import { OptionSelect } from "@/components/option-select";
 import { JUDGE_MODELS } from "@gradiated/contracts/model-catalog";
@@ -15,14 +16,15 @@ export const JudgeSettings = () => {
         description="New tasks start with this judge. Change an individual task’s judge in its settings."
       >
         <OptionSelect
+          renderOption={ModelOption}
           label="Default judge model"
-          className="w-64 font-mono text-xs"
+          className="w-64"
           value={workspace.default_judge_model}
           disabled={!canEdit}
           onValueChange={(default_judge_model) =>
             save.mutate({ default_judge_model })
           }
-          options={JUDGE_MODELS.map(({ id }) => ({ value: id, label: id }))}
+          options={JUDGE_MODELS.map(({ id }) => modelOption(id))}
         />
       </SettingRow>
       {save.error ? (

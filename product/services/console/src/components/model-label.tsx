@@ -28,14 +28,33 @@ export const ModelIcon = ({
   );
 };
 
+export const ModelLabel = ({
+  id,
+  label = modelDisplayName(id),
+  className,
+  iconClassName,
+}: {
+  id: string | null | undefined;
+  label?: string;
+  className?: string;
+  iconClassName?: string;
+}) => (
+  <span
+    className={cn(
+      "inline-flex min-w-0 items-center gap-2 align-middle",
+      className,
+    )}
+  >
+    {id ? <ModelIcon id={id} className={cn(iconClassName)} /> : null}
+    <span className="truncate">{label}</span>
+  </span>
+);
+
 export const modelOption = <Id extends string>(id: Id) => ({
   value: id,
   label: modelDisplayName(id),
 });
 
 export const ModelOption = ({ value, label }: Option<string>) => (
-  <span className="inline-flex min-w-0 items-center gap-2">
-    <ModelIcon id={value} />
-    <span className="truncate">{label}</span>
-  </span>
+  <ModelLabel id={value} label={label} />
 );

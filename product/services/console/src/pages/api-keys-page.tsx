@@ -379,6 +379,8 @@ const CreateKeyDialog = ({
             <Label htmlFor="key-name">Name</Label>
             <Input
               id="key-name"
+              autoComplete="off"
+              data-1p-ignore="true"
               placeholder="Production"
               maxLength={200}
               autoFocus

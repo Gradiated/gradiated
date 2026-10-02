@@ -1,4 +1,4 @@
-import { modelDisplayName } from "@gradiated/contracts/model-catalog";
+import { ModelLabel } from "@/components/model-label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { ChevronRight, GitBranch } from "lucide-react";
@@ -283,7 +283,9 @@ const GenerationContent = ({
         </time>
       </div>
       <section className="space-y-2 rounded-lg border bg-card p-4">
-        <h3 className="font-medium">{modelDisplayName(row.model)}</h3>
+        <h3 className="font-medium">
+          <ModelLabel id={row.model} />
+        </h3>
         <p className="text-xs text-muted-foreground">
           {row.source} · {row.outcome ?? "Unknown outcome"} · HTTP{" "}
           {row.status ?? "—"}

@@ -252,7 +252,7 @@ const events = [
 const generation = {
   id: "storybook-generation",
   external_id: null,
-  model_id: modelId,
+  model_id: "z-ai/glm-5.3-flash",
   status: "succeeded",
   streamed: true,
   charge: "720000",

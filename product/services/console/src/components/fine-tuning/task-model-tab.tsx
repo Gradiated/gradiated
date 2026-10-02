@@ -1,4 +1,4 @@
-import { modelDisplayName } from "@gradiated/contracts/model-catalog";
+import { ModelLabel } from "@/components/model-label";
 import { TrafficChart } from "./traffic-chart";
 import { ChevronDown, FlaskConical, MoreHorizontal } from "lucide-react";
 import { useState } from "react";
@@ -37,10 +37,7 @@ const VERSION_MENU = [
 
 const VersionMeta = ({ version }: { version: VersionView }) => (
   <>
-    based on{" "}
-    <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em]">
-      {modelDisplayName(version.base_model_id)}
-    </code>{" "}
+    based on <ModelLabel id={version.base_model_id} iconClassName="size-3.5" />{" "}
     ·{" "}
     {new Date(version.created_at).toLocaleDateString(undefined, {
       dateStyle: "medium",

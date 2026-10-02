@@ -58,6 +58,29 @@ const meta = {
 
     const body = within(canvasElement.ownerDocument.body);
 
+    if (parameters.createApiKey) {
+      const create = await canvas.findByRole("button", {
+        name: "Create API key",
+      });
+      await waitFor(() => expect(create).toBeEnabled());
+      await userEvent.click(create);
+      const name = await body.findByRole("textbox", { name: "Name" });
+      await expect(name).toHaveAttribute("data-1p-ignore", "true");
+      await userEvent.type(name, "Production");
+    }
+
+    if (parameters.logDetail) {
+      await userEvent.click(
+        await canvas.findByRole("button", { name: /^storyboo/ }),
+      );
+      await body.findByRole("heading", { name: "storybook-generation" });
+      const model = body.getAllByText("GLM-5.3 Flash", { exact: true }).at(-1);
+      await waitFor(() => {
+        const icon = model?.parentElement?.querySelector("img");
+        expect(icon?.complete && icon.naturalWidth > 0).toBe(true);
+      });
+    }
+
     if (parameters.taskDetail === "trace") {
       await userEvent.click(
         await canvas.findByRole("button", { name: "storybook-trace" }),
@@ -109,9 +132,17 @@ type Story = StoryObj<typeof meta>;
 
 export const Login: Story = { args: { path: "/login" } };
 export const ApiKeys: Story = { args: { path: "/api-keys" } };
+export const CreateApiKey: Story = {
+  args: { path: "/api-keys" },
+  parameters: { createApiKey: true },
+};
 export const Models: Story = { args: { path: "/models" } };
 export const Usage: Story = { args: { path: "/usage" } };
 export const Logs: Story = { args: { path: "/logs" } };
+export const LogDetails: Story = {
+  args: { path: "/logs" },
+  parameters: { logDetail: true },
+};
 export const Billing: Story = { args: { path: "/billing" } };
 export const Training: Story = { args: { path: "/tasks" } };
 export const TaskModel: Story = {

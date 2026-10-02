@@ -28,7 +28,7 @@ export const ModelIcon = ({
   );
 };
 
-export const modelOption = <Id extends string,>(id: Id) => ({
+export const modelOption = <Id extends string>(id: Id) => ({
   value: id,
   label: modelDisplayName(id),
 });

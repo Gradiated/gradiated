@@ -2200,7 +2200,12 @@ export interface operations {
   };
   listBalanceTransactions: {
     parameters: {
-      query?: never;
+      query?: {
+        /** @description Maximum number of balance transactions to return. */
+        limit?: number;
+        /** @description Return transactions older than this transaction ID. */
+        cursor?: string;
+      };
       header?: never;
       path: {
         organization_id: string;
@@ -2209,7 +2214,7 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
-      /** @description The organization's latest durable balance movements. */
+      /** @description The organization's durable balance movements, newest first. */
       200: {
         headers: {
           [name: string]: unknown;
@@ -2238,6 +2243,15 @@ export interface operations {
       };
       /** @description The organization was not found. */
       404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The pagination parameters are invalid. */
+      422: {
         headers: {
           [name: string]: unknown;
         };

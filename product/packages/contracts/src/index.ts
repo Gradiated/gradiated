@@ -32,6 +32,8 @@ export {
 } from "./models.js";
 export {
   BalanceTransactionListSchema,
+  BalanceTransactionQuerySchema,
+  type BalanceTransactionQuery,
   BalanceTransactionSchema,
   BillingAccountSchema,
   CreateTopUpCheckoutSchema,

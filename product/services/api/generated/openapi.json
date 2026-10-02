@@ -4735,11 +4735,36 @@
             "required": true,
             "name": "organization_id",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50,
+              "description": "Maximum number of balance transactions to return."
+            },
+            "required": false,
+            "description": "Maximum number of balance transactions to return.",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774",
+              "description": "Return transactions older than this transaction ID."
+            },
+            "required": false,
+            "description": "Return transactions older than this transaction ID.",
+            "name": "cursor",
+            "in": "query"
           }
         ],
         "responses": {
           "200": {
-            "description": "The organization's latest durable balance movements.",
+            "description": "The organization's durable balance movements, newest first.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4770,6 +4795,16 @@
           },
           "404": {
             "description": "The organization was not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The pagination parameters are invalid.",
             "content": {
               "application/problem+json": {
                 "schema": {

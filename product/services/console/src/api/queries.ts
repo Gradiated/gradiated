@@ -139,14 +139,22 @@ export const billingAccountQuery = (organizationId: string) =>
     enabled: Boolean(organizationId),
   });
 
-export const balanceTransactionsQuery = (organizationId: string) =>
+export const balanceTransactionsQuery = (
+  organizationId: string,
+  cursor?: string,
+) =>
   queryOptions({
-    queryKey: ["balance-transactions", organizationId],
+    queryKey: ["balance-transactions", organizationId, cursor],
     queryFn: () =>
       requireData(
         api.GET(
           "/api/v1/organizations/{organization_id}/balance-transactions",
-          { params: { path: { organization_id: organizationId } } },
+          {
+            params: {
+              path: { organization_id: organizationId },
+              query: { limit: 10, ...(cursor ? { cursor } : {}) },
+            },
+          },
         ),
       ),
     enabled: Boolean(organizationId),

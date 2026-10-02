@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 
+import { eq, sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { BalanceSourceConflictError } from "../src/billing/ledger.js";
@@ -7,7 +8,10 @@ import {
   createBillingService,
   type BillingService,
 } from "../src/billing/service.js";
-import { type OrganizationRole } from "../src/db/schema/index.js";
+import {
+  balanceTransactions,
+  type OrganizationRole,
+} from "../src/db/schema/index.js";
 import { ControlServiceError } from "../src/errors.js";
 import {
   billingAccountRow,
@@ -272,7 +276,10 @@ describe("billing", () => {
         ).toMatchObject({ organizationId, balance: 700n });
         expect(
           await billing.listBalanceTransactions(userId, organizationId),
-        ).toMatchObject([{ organizationId, amount: 700n }]);
+        ).toMatchObject({
+          data: [{ organizationId, amount: 700n }],
+          nextCursor: null,
+        });
       },
     );
 
@@ -313,6 +320,51 @@ describe("billing", () => {
       });
     });
 
+    it("paginates identical timestamps without skipping or repeating rows", async () => {
+      const { userId, organizationId } = await billedOrganizationWith("owner");
+      for (let amount = 1n; amount <= 7n; amount += 1n) {
+        await topUp(organizationId, amount);
+      }
+      await testDatabase.database
+        .update(balanceTransactions)
+        .set({ createdAt: sql`'2026-08-16T12:00:00.123456Z'::timestamptz` })
+        .where(eq(balanceTransactions.organizationId, organizationId));
+
+      const ids: string[] = [];
+      let cursor: string | null = null;
+      do {
+        const page = await billing.listBalanceTransactions(
+          userId,
+          organizationId,
+          { limit: 3, ...(cursor ? { cursor } : {}) },
+        );
+        ids.push(...page.data.map((row) => row.id));
+        cursor = page.nextCursor;
+      } while (cursor);
+
+      const expected = await ledger(organizationId);
+      expect(ids).toEqual(
+        expected
+          .map((row) => row.id)
+          .sort()
+          .reverse(),
+      );
+      expect(new Set(ids).size).toBe(7);
+    });
+
+    it("does not accept another organization's transaction as a cursor", async () => {
+      const { userId, organizationId } = await billedOrganizationWith("owner");
+      const other = await prepaidOrganization();
+      await topUp(organizationId, 1n);
+      const foreign = await topUp(other, 1n);
+
+      expect(
+        await billing.listBalanceTransactions(userId, organizationId, {
+          cursor: foreign.id,
+        }),
+      ).toEqual({ data: [], nextCursor: null });
+    });
+
     it("lists the newest 50 transactions first", async () => {
       const { userId, organizationId } = await billedOrganizationWith("owner");
 
@@ -325,9 +377,20 @@ describe("billing", () => {
         organizationId,
       );
 
-      expect(listed).toHaveLength(50);
-      expect(listed[0]?.amount).toBe(51n);
-      expect(listed.at(-1)?.amount).toBe(2n);
+      expect(listed.data).toHaveLength(50);
+      expect(listed.data[0]?.amount).toBe(51n);
+      expect(listed.data.at(-1)?.amount).toBe(2n);
+      expect(listed.nextCursor).toBe(listed.data.at(-1)?.id);
+
+      await topUp(organizationId, 52n);
+      const next = await billing.listBalanceTransactions(
+        userId,
+        organizationId,
+        { cursor: listed.nextCursor!, limit: 50 },
+      );
+
+      expect(next.data.map((row) => row.amount)).toEqual([1n]);
+      expect(next.nextCursor).toBeNull();
     });
   });
 });

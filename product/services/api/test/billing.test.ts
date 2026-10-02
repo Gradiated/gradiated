@@ -1,5 +1,5 @@
 import { ControlServiceError } from "@gradiated/control";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { BillingPaymentsError } from "../src/billing/top-ups.js";
 import {
@@ -46,7 +46,10 @@ describe("billing routes", () => {
       services: {
         catalogBilling: {
           getBillingAccount: async () => billingAccountRecord,
-          listBalanceTransactions: async () => [balanceTransactionRecord],
+          listBalanceTransactions: async () => ({
+            data: [balanceTransactionRecord],
+            nextCursor: null,
+          }),
         },
       },
     });
@@ -64,6 +67,48 @@ describe("billing routes", () => {
       data: [{ amount: "100000000000", balance_after: "100000000000" }],
     });
   });
+
+  it("passes pagination parameters and returns the next cursor", async () => {
+    const listBalanceTransactions = vi.fn().mockResolvedValue({
+      data: [balanceTransactionRecord],
+      nextCursor: balanceTransactionRecord.id,
+    });
+    const app = createTestApp({
+      auth: authenticated,
+      services: { catalogBilling: { listBalanceTransactions } },
+    });
+
+    const response = await app.request(
+      `${balanceTransactionsPath}?limit=10&cursor=${balanceTransactionRecord.id}`,
+    );
+
+    expect(response.status).toBe(200);
+    expect(listBalanceTransactions).toHaveBeenCalledWith(
+      user.id,
+      organizationId,
+      { limit: 10, cursor: balanceTransactionRecord.id },
+    );
+    expect(await response.json()).toMatchObject({
+      next_cursor: balanceTransactionRecord.id,
+    });
+  });
+
+  it.each(["limit=0", "limit=101", "limit=1.5", "limit=abc", "cursor=invalid"])(
+    "rejects invalid pagination: %s",
+    async (query) => {
+      const listBalanceTransactions = vi.fn();
+      const app = createTestApp({
+        auth: authenticated,
+        services: { catalogBilling: { listBalanceTransactions } },
+      });
+
+      await expectProblem(
+        await app.request(`${balanceTransactionsPath}?${query}`),
+        validationProblem,
+      );
+      expect(listBalanceTransactions).not.toHaveBeenCalled();
+    },
+  );
 
   it("creates a top-up Checkout Session for the selected organization", async () => {
     const received: unknown[] = [];

@@ -1,3 +1,9 @@
+import {
+  createCatalogBillingService,
+  createControlDatabase,
+} from "@gradiated/control";
+
+import { consoleUrl, databaseUrl } from "./env";
 import { expect, test } from "./fixtures";
 
 test("billing page shows the organization balance and ledger", async ({
@@ -15,6 +21,15 @@ test("billing page shows the organization balance and ledger", async ({
   await expect(
     page.getByText(account.creditUsd, { exact: true }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("table", { name: "Balance history" }).getByRole("row"),
+  ).toHaveCount(2);
+  await expect(
+    page.getByRole("button", { name: "Previous", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Next", exact: true }),
+  ).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Add funds" })).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Continue to Stripe" }),
@@ -61,10 +76,88 @@ test("billing page shows the organization balance and ledger", async ({
     await route.fulfill({
       contentType: "application/json",
       body: JSON.stringify({
-        checkout_url: "http://127.0.0.1:3000/billing?topup=cancelled",
+        checkout_url: `${consoleUrl}/billing?topup=cancelled`,
       }),
     });
   });
   await continueToStripe.click();
   await expect(page.getByText(/Checkout was cancelled/)).toBeVisible();
+});
+
+test("balance history paginates the full ledger and recovers from page errors", async ({
+  page,
+  account,
+}) => {
+  const { database, pool } = createControlDatabase(databaseUrl);
+  try {
+    const billing = createCatalogBillingService(database);
+    for (let amount = 1; amount <= 23; amount += 1) {
+      await billing.applyBalanceTransaction({
+        organizationId: account.organizationId,
+        type: "credit",
+        amount: BigInt(amount) * 1_000_000_000n,
+        sourceType: "operator",
+        sourceId: `pagination:${account.organizationId}:${amount}`,
+        createdBy: null,
+      });
+    }
+  } finally {
+    await pool.end();
+  }
+
+  await page.goto("/billing");
+  const history = page.getByRole("table", { name: "Balance history" });
+  const previous = page.getByRole("button", { name: "Previous", exact: true });
+  const next = page.getByRole("button", { name: "Next", exact: true });
+
+  await expect(history.getByRole("row")).toHaveCount(10);
+  await expect(history.getByText("+$23.00", { exact: true })).toBeVisible();
+  await expect(previous).toBeDisabled();
+  await next.click();
+  await expect(history.getByText("+$13.00", { exact: true })).toBeVisible();
+  await expect(history.getByRole("row")).toHaveCount(10);
+  await next.click();
+  await expect(history.getByText("+$3.00", { exact: true })).toBeVisible();
+  await expect(history.getByRole("row")).toHaveCount(5);
+  await expect(next).toBeDisabled();
+  await previous.click();
+  await expect(history.getByText("+$13.00", { exact: true })).toBeVisible();
+  await previous.click();
+  await expect(history.getByText("+$23.00", { exact: true })).toBeVisible();
+  await expect(previous).toBeDisabled();
+
+  await page.reload();
+  await expect(history.getByText("+$23.00", { exact: true })).toBeVisible();
+
+  let fail = true;
+  let releasePage: (() => void) | undefined;
+  const held = new Promise<void>((resolve) => {
+    releasePage = resolve;
+  });
+  await page.route("**/balance-transactions?*", async (route) => {
+    if (!new URL(route.request().url()).searchParams.has("cursor"))
+      return route.continue();
+    await held;
+    if (fail)
+      return route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "Unavailable" }),
+      });
+
+    return route.continue();
+  });
+  await next.click();
+  await expect(history).toHaveCount(0);
+  await expect(previous).toBeDisabled();
+  releasePage?.();
+  await expect(
+    page
+      .getByRole("alert")
+      .filter({ hasText: "Could not load balance history." }),
+  ).toBeVisible({ timeout: 15_000 });
+  await expect(next).toBeDisabled();
+  fail = false;
+  await page.getByRole("button", { name: "Retry", exact: true }).click();
+  await expect(history.getByText("+$13.00", { exact: true })).toBeVisible();
 });

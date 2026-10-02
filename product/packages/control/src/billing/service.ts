@@ -1,12 +1,9 @@
-import { and, desc, eq, isNull } from "drizzle-orm";
+import type { BalanceTransactionQuery } from "@gradiated/contracts";
+import { and, eq, isNull } from "drizzle-orm";
 
 import { requireMembership } from "../access.js";
 import type { ControlDatabase } from "../db/client.js";
-import {
-  balanceTransactions,
-  billingAccounts,
-  type OrganizationRole,
-} from "../db/schema/index.js";
+import { billingAccounts, type OrganizationRole } from "../db/schema/index.js";
 import { ControlServiceError } from "../errors.js";
 import {
   billingAccountNotFound,
@@ -14,6 +11,7 @@ import {
   type DirectBalanceEntry,
   type BalanceTransactionRecord,
 } from "./ledger.js";
+import { listBalanceTransactionPage } from "./store.js";
 
 export type BillingAccountRecord = typeof billingAccounts.$inferSelect;
 
@@ -25,7 +23,8 @@ export interface BillingService {
   listBalanceTransactions(
     userId: string,
     organizationId: string,
-  ): Promise<BalanceTransactionRecord[]>;
+    query?: Partial<BalanceTransactionQuery>,
+  ): Promise<{ data: BalanceTransactionRecord[]; nextCursor: string | null }>;
   applyBalanceTransaction(
     input: DirectBalanceEntry & {
       stripeCustomerId?: string | null;
@@ -75,18 +74,10 @@ export const createBillingService = (
       return account;
     },
 
-    async listBalanceTransactions(userId, organizationId) {
+    async listBalanceTransactions(userId, organizationId, query = {}) {
       await requireBillingAccess(userId, organizationId);
 
-      return database
-        .select()
-        .from(balanceTransactions)
-        .where(eq(balanceTransactions.organizationId, organizationId))
-        .orderBy(
-          desc(balanceTransactions.createdAt),
-          desc(balanceTransactions.id),
-        )
-        .limit(50);
+      return listBalanceTransactionPage(database, organizationId, query);
     },
 
     async applyBalanceTransaction({ stripeCustomerId, ...entry }) {

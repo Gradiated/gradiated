@@ -74,15 +74,16 @@ def main():
         tests.append({'name': name, 'interval': '30s', 'input_series': inputs,
                       'alert_rule_test': cases})
 
-    lora_labels = {'job': 'lora-loaders', 'instance': 'test:1'}
-    def lora_series(metric, values, job='lora-loaders'):
-        return {'series': metric + '{job="' + job + '",instance="test:1"}', 'values': values}
+    lora_labels = {'job': 'lora-loaders', 'instance': 'test:1', 'deployment': 'test-a'}
+    def lora_series(metric, values, job='lora-loaders', deployment='test-a'):
+        return {'series': metric + '{job="' + job + '",instance="test:1",deployment="' + deployment + '"}', 'values': values}
 
     for name, up, limit, expected in [('healthy', 1, 100, None), ('unreachable', 0, None, 'LoraLoaderUnavailable'), ('missing payload', 1, None, 'LoraLoaderUnavailable')]:
         inputs = [lora_series('up', f'{up}+0x40')]
         if limit is not None:
             inputs.append(lora_series('gradiated_lora_disk_cache_limit_bytes', f'{limit}+0x40'))
         scenario('lora ' + name, inputs, expected, ['LoraLoaderUnavailable'], lora_labels)
+    scenario('lora healthy neighbor cannot mask missing telemetry', [lora_series('up', '1+0x40'), lora_series('gradiated_lora_disk_cache_limit_bytes', '100+0x40'), lora_series('up', '1+0x40', deployment='test-b')], 'LoraLoaderUnavailable', ['LoraLoaderUnavailable'], {**lora_labels, 'deployment': 'test-b'})
     scenario('lora disabled', [lora_series('up', '0+0x40', 'other')], None, ['LoraLoaderUnavailable'])
     for alert, metric in [('LoraPreparationFailures', 'last_failure_timestamp_seconds'), ('LoraCapacityRejected', 'last_capacity_rejection_timestamp_seconds')]:
         values = [lora_series('gradiated_lora_' + metric, '0+0x7 240+0x33')]

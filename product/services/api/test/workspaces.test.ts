@@ -56,6 +56,32 @@ describe("workspace routes", () => {
     ).toBe(404);
   });
 
+  it("returns a readable conflict when renaming to a duplicate workspace name", async () => {
+    const app = createTestApp({
+      auth: authenticated,
+      services: {
+        workspaces: {
+          updateWorkspace: failWith(
+            new ControlServiceError(
+              "conflict",
+              "A workspace with this name already exists.",
+            ),
+          ),
+        },
+      },
+    });
+    const response = await app.request(`/api/v1/workspaces/${workspaceId}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "Research" }),
+    });
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({
+      code: "conflict",
+      detail: "A workspace with this name already exists.",
+    });
+  });
+
   it("lists workspaces explicitly for the selected organization", async () => {
     const app = createTestApp({
       auth: authenticated,

@@ -35,6 +35,17 @@ export const createOrganization = (
   body: components["schemas"]["CreateOrganization"],
 ) => requireData(api.POST("/api/v1/organizations", { body }));
 
+export const updateOrganization = (
+  organizationId: string,
+  body: components["schemas"]["UpdateOrganization"],
+) =>
+  requireData(
+    api.PATCH("/api/v1/organizations/{organization_id}", {
+      params: { path: { organization_id: organizationId } },
+      body,
+    }),
+  );
+
 export const listWorkspaces = (organizationId: string) =>
   requireData(
     api.GET("/api/v1/organizations/{organization_id}/workspaces", {

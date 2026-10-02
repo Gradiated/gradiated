@@ -39,7 +39,7 @@ const updateWorkspaceRoute = createRoute({
   responses: {
     200: {
       description:
-        "Updated workspace capture settings. Retention applies to new captures.",
+        "Updated workspace settings. Retention applies to new captures.",
       content: { "application/json": { schema: WorkspaceSchema } },
     },
     401: { description: "Authentication required.", content: problemContent },
@@ -48,6 +48,10 @@ const updateWorkspaceRoute = createRoute({
       content: problemContent,
     },
     404: { description: "Workspace not found.", content: problemContent },
+    409: {
+      description: "A workspace with this name already exists.",
+      content: problemContent,
+    },
     422: { description: "Invalid workspace update.", content: problemContent },
   },
 });
@@ -68,6 +72,10 @@ const archiveWorkspaceRoute = createRoute({
       content: problemContent,
     },
     404: { description: "Workspace not found.", content: problemContent },
+    409: {
+      description: "A workspace with this name already exists.",
+      content: problemContent,
+    },
     422: { description: "Invalid workspace update.", content: problemContent },
   },
 });

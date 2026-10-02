@@ -52,6 +52,65 @@ describe("workspaces and API keys", () => {
     expect(updated.defaultJudgeModel).toBe(judge);
   });
 
+  it("renames the selected workspace without changing its capture or judge settings", async () => {
+    const { userId, workspaceId, organizationId } = await membership("owner");
+    const before = (
+      await service.listWorkspaces(userId, organizationId, false)
+    ).find((row) => row.id === workspaceId)!;
+    const updated = await service.updateWorkspace(userId, workspaceId, {
+      name: "  Production  ",
+    });
+    expect(updated.name).toBe("Production");
+    expect(updated.traceCaptureEnabled).toBe(before.traceCaptureEnabled);
+    expect(updated.traceRetentionDays).toBe(before.traceRetentionDays);
+    expect(updated.defaultJudgeModel).toBe(before.defaultJudgeModel);
+    expect(
+      (await service.listWorkspaces(userId, organizationId, false)).find(
+        (row) => row.id === workspaceId,
+      )?.name,
+    ).toBe("Production");
+  });
+  it.each([false, true])(
+    "rejects duplicate workspace names even when archived=%s",
+    async (archived) => {
+      const { userId, workspaceId, organizationId } = await membership("owner");
+      const original = (
+        await service.listWorkspaces(userId, organizationId, false)
+      ).find((row) => row.id === workspaceId)!;
+      const duplicate = await service.createWorkspace(userId, organizationId, {
+        name: "Research",
+      });
+      if (archived) await archive(duplicate.id);
+      await expect(
+        service.updateWorkspace(userId, workspaceId, { name: "rESEARCH" }),
+      ).rejects.toMatchObject({
+        code: "conflict",
+        message: "A workspace with this name already exists.",
+      });
+      expect(
+        (await service.listWorkspaces(userId, organizationId, false)).find(
+          (row) => row.id === workspaceId,
+        )?.name,
+      ).toBe(original.name);
+    },
+  );
+  it("allows changing only the case of the current workspace name", async () => {
+    const { userId, workspaceId, organizationId } = await membership("owner");
+    const original = (
+      await service.listWorkspaces(userId, organizationId, false)
+    ).find((row) => row.id === workspaceId)!;
+    const updated = await service.updateWorkspace(userId, workspaceId, {
+      name: original.name.toUpperCase(),
+    });
+    expect(updated.name).toBe(original.name.toUpperCase());
+  });
+  it("prevents ordinary members from renaming a workspace", async () => {
+    const { userId, workspaceId } = await membership("member");
+    await expect(
+      service.updateWorkspace(userId, workspaceId, { name: "Denied" }),
+    ).rejects.toMatchObject({ code: "forbidden" });
+  });
+
   describe("createWorkspace", () => {
     it.each<OrganizationRole>(["owner", "admin"])(
       "lets an %s create a workspace",

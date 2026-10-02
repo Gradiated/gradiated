@@ -322,6 +322,16 @@ const usage = (from: string): UsageSummary => ({
 
 export const handlers = [
   http.get("/api/v1/me", () => HttpResponse.json(user)),
+  http.patch("/api/v1/organizations/:organizationId", async ({ request }) => {
+    const { name } = (await request.json()) as { name: string };
+    return HttpResponse.json({ ...user.organizations[0], name });
+  }),
+  http.patch("/api/v1/workspaces/:workspaceId", async ({ request }) => {
+    const patch = (await request.json()) as Partial<
+      components["schemas"]["Workspace"]
+    >;
+    return HttpResponse.json({ ...workspace, ...patch });
+  }),
   http.get("/api/v1/organizations/:organizationId/workspaces", () =>
     HttpResponse.json(list(workspace)),
   ),

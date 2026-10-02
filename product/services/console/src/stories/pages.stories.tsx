@@ -58,6 +58,41 @@ const meta = {
 
     const body = within(canvasElement.ownerDocument.body);
 
+    if (parameters.settingsTab) {
+      await userEvent.click(
+        await canvas.findByRole("tab", { name: parameters.settingsTab }),
+      );
+      const input = await canvas.findByRole("textbox", {
+        name: `${parameters.settingsTab} name`,
+      });
+      await expect(input).toHaveAttribute("data-1p-ignore", "true");
+      await expect(input).toHaveAttribute("autocomplete", "off");
+    }
+
+    if (parameters.createScope) {
+      const workspace = parameters.createScope === "workspace";
+      await userEvent.click(
+        await canvas.findByRole("button", {
+          name: workspace ? "Workspace menu" : "Account menu",
+        }),
+      );
+      if (!workspace)
+        await userEvent.hover(
+          await body.findByRole("menuitem", { name: "Change organization" }),
+        );
+      await userEvent.click(
+        await body.findByRole("menuitem", {
+          name: workspace ? "Add workspace" : "Add organization",
+        }),
+      );
+      const input = await body.findByRole("textbox", {
+        name: workspace ? "Workspace name" : "Organization name",
+      });
+      await expect(input).toHaveAttribute("data-1p-ignore", "true");
+      await expect(input).toHaveAttribute("name", "scopeLabel");
+      await userEvent.type(input, workspace ? "Production" : "Acme Inc");
+    }
+
     if (parameters.createApiKey) {
       const create = await canvas.findByRole("button", {
         name: "Create API key",
@@ -177,4 +212,21 @@ export const TaskTrace: Story = {
 export const TaskTestResults: Story = {
   args: { path: "/tasks/support-assistant" },
   parameters: { taskTab: "Model", taskDetail: "results" },
+};
+
+export const SettingsWorkspace: Story = {
+  args: { path: "/settings" },
+  parameters: { settingsTab: "Workspace" },
+};
+export const SettingsOrganization: Story = {
+  args: { path: "/settings" },
+  parameters: { settingsTab: "Organization" },
+};
+export const CreateWorkspace: Story = {
+  args: { path: "/api-keys" },
+  parameters: { createScope: "workspace" },
+};
+export const CreateOrganization: Story = {
+  args: { path: "/api-keys" },
+  parameters: { createScope: "organization" },
 };

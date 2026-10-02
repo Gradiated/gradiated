@@ -1,3 +1,4 @@
+import { createWorkspaceStore } from "./store.js";
 import {
   DEFAULT_EVALUATION_JUDGE,
   type UpdateWorkspace,
@@ -61,6 +62,7 @@ const { digest: _digest, ...apiKeyColumns } = getTableColumns(apiKeys);
 export const createWorkspaceApiKeyService = (
   database: ControlDatabase,
 ): WorkspaceApiKeyService => {
+  const records = createWorkspaceStore(database);
   const requireWorkspaceManager = async (
     userId: string,
     organizationId: string,
@@ -125,18 +127,7 @@ export const createWorkspaceApiKeyService = (
     async updateWorkspace(userId, workspaceId, input) {
       await requireWorkspaceEditor(database, { userId, workspaceId });
 
-      const [workspace] = await database
-        .update(workspaces)
-        .set({
-          traceCaptureEnabled: input.trace_capture_enabled,
-          traceRetentionDays: input.trace_retention_days,
-          defaultJudgeModel: input.default_judge_model,
-          updatedAt: new Date(),
-        })
-        .where(eq(workspaces.id, workspaceId))
-        .returning();
-
-      return workspace!;
+      return records.update(workspaceId, input);
     },
     async archiveWorkspace(userId, workspaceId) {
       const workspace = await requireWorkspaceEditor(database, {

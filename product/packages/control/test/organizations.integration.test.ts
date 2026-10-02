@@ -17,6 +17,7 @@ import {
   billingAccountRow,
   ledgerRows,
   seedOrganization,
+  seedMember,
   seedUser,
   seedWorkspace,
 } from "./support/fixtures.js";
@@ -184,5 +185,79 @@ describe("organization bootstrap", () => {
     expect(await organizations.listForUser(userId)).toMatchObject([
       { id: visible, role: "billing", status: "active" },
     ]);
+  });
+});
+
+describe("organization settings", () => {
+  let db: TestDatabase;
+  let service: OrganizationService;
+  beforeAll(async () => {
+    db = await createTestDatabase();
+    service = createOrganizationService(db.database);
+  });
+  afterAll(() => db.dispose());
+
+  it.each(["owner", "admin"] as const)(
+    "lets %s rename an organization and returns its current role",
+    async (role) => {
+      const { userId, organizationId } = await seedMember(db.database, {
+        role,
+      });
+      await seedWorkspace(db.database, { organizationId, isDefault: true });
+
+      const updated = await service.updateForUser(userId, organizationId, {
+        name: "  Research team  ",
+      });
+      expect(updated).toMatchObject({
+        id: organizationId,
+        name: "Research team",
+        role,
+      });
+      expect(
+        (await service.listForUser(userId)).find(
+          (row) => row.id === organizationId,
+        )?.name,
+      ).toBe("Research team");
+    },
+  );
+  it.each(["member", "billing"] as const)(
+    "prevents %s from renaming",
+    async (role) => {
+      const { userId, organizationId } = await seedMember(db.database, {
+        role,
+      });
+      await seedWorkspace(db.database, { organizationId, isDefault: true });
+
+      const before = await service.listForUser(userId);
+      await expect(
+        service.updateForUser(userId, organizationId, { name: "Denied" }),
+      ).rejects.toMatchObject({ code: "forbidden" });
+      expect(await service.listForUser(userId)).toEqual(before);
+    },
+  );
+  it("hides organizations from outsiders and rejects suspended organizations", async () => {
+    const { userId, organizationId } = await seedMember(db.database, {
+      role: "owner",
+      organization: { status: "suspended" },
+    });
+    const outsider = await seedUser(db.database);
+    await expect(
+      service.updateForUser(outsider, organizationId, { name: "Denied" }),
+    ).rejects.toMatchObject({ code: "not_found" });
+    await expect(
+      service.updateForUser(userId, organizationId, { name: "Denied" }),
+    ).rejects.toMatchObject({ code: "forbidden" });
+  });
+  it("rejects blank names without persisting them", async () => {
+    const { userId, organizationId } = await seedMember(db.database, {
+      role: "owner",
+    });
+    await seedWorkspace(db.database, { organizationId, isDefault: true });
+
+    const before = await service.listForUser(userId);
+    await expect(
+      service.updateForUser(userId, organizationId, { name: "   " }),
+    ).rejects.toThrow();
+    expect(await service.listForUser(userId)).toEqual(before);
   });
 });

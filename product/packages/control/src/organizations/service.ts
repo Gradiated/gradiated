@@ -1,7 +1,14 @@
 import { and, asc, eq } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 
-import { activeCustomerMember } from "../access.js";
+import type { UpdateOrganization } from "@gradiated/contracts";
+import { createOrganizationStore } from "./store.js";
+import { ControlServiceError } from "../errors.js";
+import {
+  managerRoles,
+  requireMembership,
+  activeCustomerMember,
+} from "../access.js";
 import { postBalanceTransaction } from "../billing/ledger.js";
 import type { ControlDatabase } from "../db/client.js";
 import {
@@ -46,6 +53,11 @@ export const defaultWorkspaceValues = (organizationId: string, now: Date) => ({
 });
 
 export interface OrganizationService {
+  updateForUser(
+    userId: string,
+    organizationId: string,
+    input: UpdateOrganization,
+  ): Promise<UserOrganization>;
   listForUser(userId: string): Promise<UserOrganization[]>;
   createForUser(userId: string, name: string): Promise<CreatedOrganization>;
   ensurePersonalForUser(
@@ -57,6 +69,7 @@ export interface OrganizationService {
 export const createOrganizationService = (
   database: ControlDatabase,
 ): OrganizationService => {
+  const records = createOrganizationStore(database);
   const createOrganization = async (input: {
     signupCredit: boolean;
     userId: string;
@@ -142,6 +155,33 @@ export const createOrganizationService = (
 
   return {
     listForUser,
+    async updateForUser(userId, organizationId, input) {
+      const membership = await requireMembership(database, {
+        userId,
+        organizationId,
+      });
+      if (
+        !managerRoles.has(membership.role) ||
+        membership.organizationStatus !== "active"
+      )
+        throw new ControlServiceError(
+          "forbidden",
+          "Only owners and admins of active organizations can change their settings.",
+        );
+
+      const organization = await records.updateName(
+        userId,
+        organizationId,
+        input,
+      );
+      if (!organization)
+        throw new ControlServiceError(
+          "not_found",
+          "The organization was not found.",
+        );
+
+      return organization;
+    },
 
     async createForUser(userId, name) {
       return createOrganization({ signupCredit: false, userId, name });

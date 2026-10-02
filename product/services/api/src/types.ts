@@ -43,7 +43,10 @@ export interface ApiServices {
     CatalogBillingService,
     "listModels" | "getBillingAccount" | "listBalanceTransactions"
   >;
-  organizations: Pick<OrganizationService, "listForUser" | "createForUser">;
+  organizations: Pick<
+    OrganizationService,
+    "listForUser" | "createForUser" | "updateForUser"
+  >;
   usage: UsageService;
   traces: TraceService;
   training: TrainingService;

@@ -87,6 +87,15 @@ const logsRoute = createRoute({
   component: lazyRouteComponent(() => import("@/pages/logs-page"), "LogsPage"),
 });
 
+const settingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/settings",
+  component: lazyRouteComponent(
+    () => import("@/pages/settings-page"),
+    "SettingsPage",
+  ),
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
@@ -97,6 +106,7 @@ const routeTree = rootRoute.addChildren([
   billingRoute,
   usageRoute,
   logsRoute,
+  settingsRoute,
 ]);
 
 export const createConsoleRouter = (history?: RouterHistory) =>

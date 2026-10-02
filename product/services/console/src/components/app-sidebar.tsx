@@ -12,6 +12,7 @@ import {
   PackageOpen,
   Plus,
   WalletCards,
+  Settings,
   type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
@@ -100,6 +101,7 @@ export const AppSidebar = ({
   onSignOut: () => Promise<SignOutResult>;
 }) => {
   const { isMobile } = useSidebar();
+  const matchRoute = useMatchRoute();
   const [signOutFailed, setSignOutFailed] = useState(false);
   const { organizationCreated, workspaceCreated } = useScopeCreation();
   const selectedWorkspace = workspaces.find(
@@ -200,6 +202,18 @@ export const AppSidebar = ({
 
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              tooltip="Settings"
+              isActive={Boolean(matchRoute({ to: "/settings" }))}
+            >
+              <Link to="/settings">
+                <Settings />
+                <span>Settings</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

@@ -1,5 +1,8 @@
 import {
   CreateOrganizationSchema,
+  CurrentOrganizationSchema,
+  UpdateOrganizationSchema,
+  OrganizationIdParamsSchema,
   OrganizationSchema,
   problemContent,
   type Organization,
@@ -42,10 +45,61 @@ const createOrganizationRoute = createRoute({
   },
 });
 
+const updateOrganizationRoute = createRoute({
+  method: "patch",
+  path: "/api/v1/organizations/{organization_id}",
+  operationId: "updateOrganization",
+  tags: ["Organizations"],
+  request: {
+    params: OrganizationIdParamsSchema,
+    body: {
+      required: true,
+      content: { "application/json": { schema: UpdateOrganizationSchema } },
+    },
+  },
+  responses: {
+    200: {
+      description: "Updated organization settings.",
+      content: { "application/json": { schema: CurrentOrganizationSchema } },
+    },
+    401: { description: "Authentication required.", content: problemContent },
+    403: {
+      description: "Organization management denied.",
+      content: problemContent,
+    },
+    404: { description: "Organization not found.", content: problemContent },
+    422: {
+      description: "Invalid organization update.",
+      content: problemContent,
+    },
+  },
+});
+
 export const registerOrganizationRoutes = (
   app: OpenAPIHono<ApiEnvironment>,
-  organizations: Pick<OrganizationService, "createForUser">,
+  organizations: Pick<OrganizationService, "createForUser" | "updateForUser">,
 ): void => {
+  app.openapi(updateOrganizationRoute, async (context) => {
+    const user = await requireUser(context);
+    const { organization_id } = context.req.valid("param");
+    const updated = await organizations.updateForUser(
+      user.id,
+      organization_id,
+      context.req.valid("json"),
+    );
+
+    return context.json(
+      CurrentOrganizationSchema.parse({
+        id: updated.id,
+        name: updated.name,
+        status: updated.status,
+        role: updated.role,
+        default_workspace_id: updated.defaultWorkspaceId,
+      }),
+      200,
+    );
+  });
+
   app.openapi(createOrganizationRoute, async (context) => {
     const user = await requireUser(context);
     const input = context.req.valid("json");

@@ -21,6 +21,14 @@ test("account menus create and select organizations and workspaces", async ({
   ).toBeVisible();
   await page.getByRole("button", { name: "Create organization" }).click();
   await expect(page.getByText("Enter an organization name.")).toBeVisible();
+  await expect(page.getByLabel("Organization name")).toHaveAttribute(
+    "data-1p-ignore",
+    "true",
+  );
+  await expect(page.getByLabel("Organization name")).toHaveAttribute(
+    "name",
+    "scopeLabel",
+  );
   await page.getByLabel("Organization name").fill(organizationName);
   await page.getByRole("button", { name: "Create organization" }).click();
 
@@ -39,6 +47,14 @@ test("account menus create and select organizations and workspaces", async ({
   await expect(
     page.getByRole("heading", { name: "Create a workspace" }),
   ).toBeVisible();
+  await expect(page.getByLabel("Workspace name")).toHaveAttribute(
+    "data-1p-ignore",
+    "true",
+  );
+  await expect(page.getByLabel("Workspace name")).toHaveAttribute(
+    "name",
+    "scopeLabel",
+  );
   await page.getByLabel("Workspace name").fill(workspaceName);
 
   const workspacesRoute = "**/api/v1/organizations/*/workspaces";
@@ -87,4 +103,44 @@ test("adding a workspace waits for the organization to load", async ({
   await expect(
     page.getByRole("menuitem", { name: "Add workspace" }),
   ).toHaveAttribute("aria-disabled", "true");
+});
+
+test("settings save organization and workspace names across reloads", async ({
+  account,
+  page,
+}) => {
+  await page.goto("/api-keys");
+  await page.getByRole("link", { name: "Settings", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Settings", exact: true }),
+  ).toBeVisible();
+  const workspaceName = `Production ${Date.now()}`;
+  await page
+    .getByRole("textbox", { name: "Workspace name" })
+    .fill(workspaceName);
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(
+    page.getByRole("button", { name: "Workspace menu" }),
+  ).toContainText(workspaceName);
+  await page.reload();
+  await expect(
+    page.getByRole("textbox", { name: "Workspace name" }),
+  ).toHaveValue(workspaceName);
+  await page.getByRole("tab", { name: "Organization", exact: true }).click();
+  await expect(
+    page.getByRole("textbox", { name: "Organization name" }),
+  ).toHaveValue(account.organizationName);
+  const organizationName = `Research ${Date.now()}`;
+  await page
+    .getByRole("textbox", { name: "Organization name" })
+    .fill(organizationName);
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(
+    page.getByText("Organization renamed.", { exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await page.getByRole("tab", { name: "Organization", exact: true }).click();
+  await expect(
+    page.getByRole("textbox", { name: "Organization name" }),
+  ).toHaveValue(organizationName);
 });

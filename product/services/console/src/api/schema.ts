@@ -84,6 +84,22 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/organizations/{organization_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations["updateOrganization"];
+    trace?: never;
+  };
   "/api/v1/organizations": {
     parameters: {
       query?: never;
@@ -808,6 +824,9 @@ export interface components {
        */
       default_workspace_id: string;
     };
+    UpdateOrganization: {
+      name: string;
+    };
     Organization: {
       /**
        * Format: uuid
@@ -892,6 +911,7 @@ export interface components {
       trace_capture_enabled?: boolean;
       trace_retention_days?: 30 | 90 | 180;
       default_judge_model?: components["schemas"]["EvaluationJudge"];
+      name?: string;
     };
     WorkspaceList: {
       data: components["schemas"]["Workspace"][];
@@ -2371,6 +2391,68 @@ export interface operations {
       };
     };
   };
+  updateOrganization: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        organization_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateOrganization"];
+      };
+    };
+    responses: {
+      /** @description Updated organization settings. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CurrentOrganization"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Organization management denied. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Organization not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid organization update. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
   createOrganization: {
     parameters: {
       query?: never;
@@ -2549,6 +2631,15 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
+      /** @description A workspace with this name already exists. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
       /** @description Invalid workspace update. */
       422: {
         headers: {
@@ -2575,7 +2666,7 @@ export interface operations {
       };
     };
     responses: {
-      /** @description Updated workspace capture settings. Retention applies to new captures. */
+      /** @description Updated workspace settings. Retention applies to new captures. */
       200: {
         headers: {
           [name: string]: unknown;
@@ -2604,6 +2695,15 @@ export interface operations {
       };
       /** @description Workspace not found. */
       404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description A workspace with this name already exists. */
+      409: {
         headers: {
           [name: string]: unknown;
         };

@@ -84,3 +84,72 @@ describe("organization routes", () => {
     await expectProblem(response, problem);
   });
 });
+
+it("PATCH validates and returns an organization name with the caller's admin role", async () => {
+  const received: unknown[] = [];
+  const app = createTestApp({
+    auth: authenticated,
+    services: {
+      organizations: {
+        updateForUser: async (userId, organizationId, input) => {
+          received.push({ userId, organizationId, input });
+          return {
+            id: createdOrganization.id,
+            name: input.name,
+            role: "admin",
+            status: "active",
+            defaultWorkspaceId: workspaceId,
+          };
+        },
+      },
+    },
+  });
+  const response = await app.request(
+    `/api/v1/organizations/${createdOrganization.id}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "  Research  " }),
+    },
+  );
+  expect(response.status).toBe(200);
+  expect(received).toEqual([
+    {
+      userId: user.id,
+      organizationId: createdOrganization.id,
+      input: { name: "Research" },
+    },
+  ]);
+  await expect(response.json()).resolves.toMatchObject({
+    id: createdOrganization.id,
+    name: "Research",
+    role: "admin",
+  });
+});
+it.each([
+  {},
+  { name: "   " },
+  { name: "x".repeat(201) },
+  { name: "Research", status: "suspended" },
+])("rejects invalid organization settings %j", async (body) => {
+  const response = await createTestApp({ auth: authenticated }).request(
+    `/api/v1/organizations/${createdOrganization.id}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    },
+  );
+  await expectProblem(response, validationProblem);
+});
+it("requires authentication to rename an organization", async () => {
+  const response = await createTestApp({ auth: anonymous }).request(
+    `/api/v1/organizations/${createdOrganization.id}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "Research" }),
+    },
+  );
+  await expectProblem(response, unauthenticatedProblem);
+});

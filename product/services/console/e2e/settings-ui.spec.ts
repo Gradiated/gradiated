@@ -1,0 +1,109 @@
+import { expect, test, type Page } from "@playwright/test";
+
+const setup = async (page: Page, role = "owner") => {
+  const organization = {
+    id: "00000000-0000-4000-8000-000000000001",
+    name: "Example organization",
+    role,
+    status: "active",
+    default_workspace_id: "00000000-0000-4000-8000-000000000002",
+  };
+  const workspace = {
+    id: organization.default_workspace_id,
+    organization_id: organization.id,
+    name: "Default",
+    is_default: true,
+    trace_capture_enabled: true,
+    trace_retention_days: 90,
+    default_judge_model: "Qwen/Qwen3-0.6B",
+    archived_at: null,
+    created_at: "2026-10-02T12:00:00Z",
+    updated_at: "2026-10-02T12:00:00Z",
+  };
+  let rejectOrganization = true;
+  await page.route("**/*", async (route) => {
+    const url = new URL(route.request().url());
+    if (url.hostname !== "127.0.0.1") return route.abort();
+    if (url.pathname.startsWith("/flags") || url.pathname.startsWith("/decide"))
+      return route.fulfill({ json: { featureFlags: {}, flags: {} } });
+    if (url.pathname === "/api/v1/me")
+      return route.fulfill({
+        json: {
+          id: "test-user",
+          name: "Test User",
+          email: "test@example.invalid",
+          organizations: [organization],
+        },
+      });
+    if (url.pathname.endsWith("/workspaces"))
+      return route.fulfill({ json: { data: [workspace], next_cursor: null } });
+    if (route.request().method() === "PATCH") {
+      const { name } = route.request().postDataJSON();
+      if (url.pathname === `/api/v1/workspaces/${workspace.id}`) {
+        workspace.name = name;
+        return route.fulfill({ json: workspace });
+      }
+      if (url.pathname === `/api/v1/organizations/${organization.id}`) {
+        if (rejectOrganization) {
+          rejectOrganization = false;
+          return route.fulfill({ status: 503, json: { detail: "Try again" } });
+        }
+        organization.name = name;
+        return route.fulfill({ json: organization });
+      }
+    }
+    if (url.pathname.startsWith("/api/"))
+      return route.fulfill({ json: { data: [], next_cursor: null } });
+    return route.continue();
+  });
+  return { organization, workspace };
+};
+
+test("settings rename the selected scopes, persist on reload, and preserve input after a failed save", async ({
+  page,
+}) => {
+  const { organization, workspace } = await setup(page);
+  await page.goto("/settings");
+  const input = page.getByRole("textbox", { name: "Workspace name" });
+  await expect(input).toHaveAttribute("data-1p-ignore", "true");
+  await expect(input).toHaveAttribute("autocomplete", "off");
+  await input.fill("  Production  ");
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect.poll(() => workspace.name).toBe("Production");
+  await expect(
+    page.getByRole("button", { name: "Workspace menu" }),
+  ).toContainText("Production");
+  await page.reload();
+  await expect(input).toHaveValue("Production");
+  await page.getByRole("tab", { name: "Organization", exact: true }).click();
+  const organizationInput = page.getByRole("textbox", {
+    name: "Organization name",
+  });
+  await organizationInput.fill("Research");
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(page.getByRole("alert")).toContainText("Try again");
+  await expect(organizationInput).toHaveValue("Research");
+  expect(organization.name).toBe("Example organization");
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect.poll(() => organization.name).toBe("Research");
+  await page.reload();
+  await page.getByRole("tab", { name: "Organization", exact: true }).click();
+  await expect(organizationInput).toHaveValue("Research");
+});
+
+test("ordinary members can view names but cannot edit them", async ({
+  page,
+}) => {
+  await setup(page, "member");
+  await page.goto("/settings");
+  await expect(
+    page.getByRole("textbox", { name: "Workspace name" }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Save changes" }),
+  ).toBeDisabled();
+  await page.getByRole("tab", { name: "Organization", exact: true }).click();
+  await expect(
+    page.getByRole("textbox", { name: "Organization name" }),
+  ).toBeDisabled();
+});

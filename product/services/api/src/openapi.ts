@@ -33,6 +33,7 @@ export const unservedDependencies = (): AppDependencies => ({
     },
     organizations: {
       listForUser: unserved("organizations.listForUser"),
+      updateForUser: unserved("organizations.updateForUser"),
       createForUser: unserved("organizations.createForUser"),
     },
     traces: {

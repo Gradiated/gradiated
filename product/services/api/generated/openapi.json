@@ -1014,6 +1014,20 @@
           "default_workspace_id"
         ]
       },
+      "UpdateOrganization": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
       "Organization": {
         "type": "object",
         "properties": {
@@ -1216,6 +1230,11 @@
           },
           "default_judge_model": {
             "$ref": "#/components/schemas/EvaluationJudge"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
           }
         },
         "additionalProperties": false
@@ -4964,6 +4983,88 @@
         }
       }
     },
+    "/api/v1/organizations/{organization_id}": {
+      "patch": {
+        "operationId": "updateOrganization",
+        "tags": [
+          "Organizations"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "organization_id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOrganization"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated organization settings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentOrganization"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Organization management denied.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Organization not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid organization update.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/organizations": {
       "post": {
         "operationId": "createOrganization",
@@ -5248,7 +5349,7 @@
         },
         "responses": {
           "200": {
-            "description": "Updated workspace capture settings. Retention applies to new captures.",
+            "description": "Updated workspace settings. Retention applies to new captures.",
             "content": {
               "application/json": {
                 "schema": {
@@ -5279,6 +5380,16 @@
           },
           "404": {
             "description": "Workspace not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A workspace with this name already exists.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5342,6 +5453,16 @@
           },
           "404": {
             "description": "Workspace not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A workspace with this name already exists.",
             "content": {
               "application/problem+json": {
                 "schema": {

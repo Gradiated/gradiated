@@ -39,10 +39,14 @@ export const CreateNameDialog: FC<CreateNameDialogProps & NiceModalHocProps> =
       const form = useForm({
         resolver: zodResolver(
           z.object({
-            name: z.string().trim().min(1, emptyMessage).max(MAX_NAME_LENGTH),
+            scopeLabel: z
+              .string()
+              .trim()
+              .min(1, emptyMessage)
+              .max(MAX_NAME_LENGTH),
           }),
         ),
-        defaultValues: { name: "" },
+        defaultValues: { scopeLabel: "" },
       });
 
       const close = () => {
@@ -50,9 +54,9 @@ export const CreateNameDialog: FC<CreateNameDialogProps & NiceModalHocProps> =
         void modal.hide();
       };
 
-      const create = async ({ name }: { name: string }) => {
+      const create = async ({ scopeLabel }: { scopeLabel: string }) => {
         try {
-          await submit(name);
+          await submit(scopeLabel);
         } catch (error) {
           form.setError("root", {
             message: errorMessage(error, "The request failed."),
@@ -78,17 +82,19 @@ export const CreateNameDialog: FC<CreateNameDialogProps & NiceModalHocProps> =
               <DialogHeader>
                 <DialogTitle>{title}</DialogTitle>
               </DialogHeader>
-              <Field data-invalid={Boolean(form.formState.errors.name)}>
+              <Field data-invalid={Boolean(form.formState.errors.scopeLabel)}>
                 <FieldLabel htmlFor={inputId}>{label}</FieldLabel>
                 <Input
                   id={inputId}
+                  autoComplete="off"
+                  data-1p-ignore="true"
                   autoFocus
                   maxLength={MAX_NAME_LENGTH}
                   placeholder={placeholder}
-                  {...form.register("name")}
+                  {...form.register("scopeLabel")}
                 />
-                {form.formState.errors.name ? (
-                  <FieldError errors={[form.formState.errors.name]} />
+                {form.formState.errors.scopeLabel ? (
+                  <FieldError errors={[form.formState.errors.scopeLabel]} />
                 ) : null}
               </Field>
               {form.formState.errors.root?.message ? (

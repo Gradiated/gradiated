@@ -11,6 +11,8 @@ export {
 } from "./me.js";
 export {
   CreateOrganizationSchema,
+  UpdateOrganizationSchema,
+  type UpdateOrganization,
   OrganizationSchema,
   type CreateOrganization,
   type Organization,

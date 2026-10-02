@@ -53,6 +53,13 @@ export const problems = {
     detail,
     code: "not_found",
   }),
+  conflict: (detail: string): ProblemBody => ({
+    type: problemType("conflict"),
+    title: "Conflict",
+    status: 409,
+    detail,
+    code: "conflict",
+  }),
   unavailable: (detail: string): ProblemBody => ({
     type: problemType("unavailable"),
     title: "Service unavailable",
@@ -125,6 +132,8 @@ const controlProblem = (error: ControlServiceError): ApiProblem => {
       return new ApiProblem(problems.forbidden(error.message), error.cause);
     case "not_found":
       return new ApiProblem(problems.notFound(error.message), error.cause);
+    case "conflict":
+      return new ApiProblem(problems.conflict(error.message), error.cause);
     case "unavailable":
       return new ApiProblem(problems.unavailable(error.message), error.cause);
   }

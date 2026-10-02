@@ -13,6 +13,11 @@ export const CreateOrganizationSchema = z
   })
   .openapi("CreateOrganization");
 
+export const UpdateOrganizationSchema = z
+  .strictObject({ name: NameInputSchema })
+  .openapi("UpdateOrganization");
+export type UpdateOrganization = z.infer<typeof UpdateOrganizationSchema>;
+
 export const OrganizationSchema = z
   .object({
     id: UuidSchema,

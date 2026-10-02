@@ -42,6 +42,7 @@ export const UpdateWorkspaceSchema = WorkspaceSchema.pick({
   trace_retention_days: true,
   default_judge_model: true,
 })
+  .extend({ name: NameInputSchema })
   .partial()
   .strict()
   .refine(

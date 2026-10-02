@@ -167,7 +167,10 @@ impl CompletionService {
         let generation_identity = GenerationIdentity::authenticated(
             &request.identity,
             request.request.model.clone(),
-            request.served_release_digest.clone(),
+            request.adapter.as_ref().map_or_else(
+                || request.served_release_digest.clone(),
+                |adapter| adapter.served_digest(&request.served_release_digest),
+            ),
         )
         .map_err(|error| {
             crate::diagnostics::limited_error!(generation_id = %request.metadata.generation_id,
@@ -189,7 +192,12 @@ impl CompletionService {
             .await;
 
         let scope = GenerationScope {
-            model: &request.request.model,
+            model: request
+                .adapter
+                .as_ref()
+                .map_or(request.request.model.as_str(), |adapter| {
+                    adapter.base_model_id.as_str()
+                }),
             deployment: route.primary.id,
             protocol: route.primary.release.protocol_label(),
             stream: request.request.stream,

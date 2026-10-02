@@ -10,6 +10,7 @@ export interface Release {
   readonly runtime_model_name: string;
   readonly tokenizer_path: string;
   readonly tokenizer_revision: string;
+  readonly lora_enabled?: boolean;
 }
 
 export interface Deployment {

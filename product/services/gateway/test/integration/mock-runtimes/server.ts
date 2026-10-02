@@ -144,6 +144,7 @@ interface Accepted {
 
 export class Runtime {
   readonly calls: JsonObject[] = [];
+  resolutionStatus = 200;
   readonly headers: IncomingHttpHeaders[] = [];
   readonly errors: string[] = [];
   readonly url: string;
@@ -257,9 +258,22 @@ export class Runtime {
     }
 
     const body = object(JSON.parse(await readBody(request)));
-    this.#profile.validate(body, this.#model);
+    const privateModel =
+      typeof body.model === "string" && /^[a-f0-9-]{36}\/.+$/.test(body.model);
+    this.#profile.validate(
+      body,
+      privateModel ? (body.model as string) : this.#model,
+    );
     this.calls.push(body);
     this.headers.push(request.headers);
+    if (privateModel && this.resolutionStatus !== 200) {
+      reply(
+        response,
+        this.resolutionStatus,
+        Buffer.from('{"error":{"message":"adapter resolution unavailable"}}'),
+      );
+      return undefined;
+    }
 
     const current = this.#plans.shift() ?? plan();
     current.entered.resolve();

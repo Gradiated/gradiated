@@ -5222,7 +5222,7 @@
                           "model_id": {
                             "type": "string",
                             "minLength": 1,
-                            "maxLength": 200
+                            "maxLength": 300
                           },
                           "charge": {
                             "type": "string",
@@ -5932,7 +5932,7 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 200
+              "maxLength": 300
             },
             "required": false,
             "name": "model",
@@ -6019,7 +6019,7 @@
                               "model_id": {
                                 "type": "string",
                                 "minLength": 1,
-                                "maxLength": 200
+                                "maxLength": 300
                               },
                               "status": {
                                 "type": "string",

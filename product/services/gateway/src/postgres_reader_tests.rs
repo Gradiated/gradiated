@@ -14,8 +14,11 @@ use crate::domain::{GatewayCredential, GatewayModel, GatewayWorkspace};
 const LOCAL_URL: &str = "postgres://gradiated:gradiated@127.0.0.1:5432/gradiated?sslmode=disable";
 
 fn local_reader() -> PostgresReader {
-    PostgresReader::connect(LOCAL_URL, None)
-        .expect("the local connection string should build a pool")
+    PostgresReader::connect(
+        &std::env::var("GATEWAY_TEST_DATABASE_URL").unwrap_or_else(|_| LOCAL_URL.to_owned()),
+        None,
+    )
+    .expect("the local connection string should build a pool")
 }
 
 #[tokio::test]
@@ -29,6 +32,14 @@ async fn every_query_runs_against_the_local_schema() {
     assert_eq!(reader.credential_json(&[0u8; 32]).await.unwrap(), None);
     assert_eq!(reader.workspace_json(Uuid::nil()).await.unwrap(), None);
     assert_eq!(reader.model_json("absent/model").await.unwrap(), None);
+    reader.model_ids().await.unwrap();
+    assert_eq!(
+        reader
+            .private_adapter_json(Uuid::nil(), "absent/version")
+            .await
+            .unwrap(),
+        None
+    );
     assert_eq!(reader.account(Uuid::nil()).await.unwrap(), None);
     assert!(reader
         .balance_transactions_after(
@@ -112,9 +123,39 @@ impl Tenant {
         }
     }
 
+    async fn adapter(
+        &self,
+        reader: &PostgresReader,
+        task_name: &str,
+        version_name: &str,
+    ) -> (Uuid, Uuid) {
+        let client = reader.client().await.unwrap();
+        let task = Uuid::now_v7();
+        let run = Uuid::now_v7();
+        let version = Uuid::now_v7();
+        client
+            .execute(
+                "insert into tasks (id, workspace_id, name, base_model_id) values ($1, $2, $3, $4)",
+                &[&task, &self.workspace_id, &task_name, &self.model_id],
+            )
+            .await
+            .unwrap();
+        client.execute("insert into training_runs (id, task_id, trigger, stage, base_model_id, input_cutoff, finished_at) values ($1, $2, 'manual', 'succeeded', $3, now(), now())", &[&run, &task, &self.model_id]).await.unwrap();
+        let artifact = serde_json::json!({"format": "peft_lora", "artifact_uri": "s3://synthetic/adapter.tar.gz", "sha256": "a".repeat(64), "size_bytes": 1024, "rank": 2, "base_model_revision": "frozen-revision"}).to_string();
+        client.execute("insert into task_versions (id, workspace_id, task_id, training_run_id, name, base_model_id, status, adapter) values ($1, $2, $3, $4, $5, $6, 'available', $7::text::jsonb)", &[&version, &self.workspace_id, &task, &run, &version_name, &self.model_id, &artifact]).await.unwrap();
+        (task, version)
+    }
+
     async fn remove(self, reader: &PostgresReader) {
         let client = reader.client().await.unwrap();
 
+        client
+            .execute(
+                "delete from tasks where workspace_id = $1",
+                &[&self.workspace_id],
+            )
+            .await
+            .unwrap();
         client
             .execute(
                 "delete from model_deployments where model_id = $1",
@@ -427,4 +468,199 @@ async fn account_reads_never_expose_a_partially_committed_billing_transaction() 
 
     drop(client);
     tenant.remove(&reader).await;
+}
+
+async fn production(reader: &PostgresReader, task: Uuid, version: Option<Uuid>) {
+    reader
+        .client()
+        .await
+        .unwrap()
+        .execute(
+            "update tasks set production_version_id = $2 where id = $1",
+            &[&task, &version],
+        )
+        .await
+        .unwrap();
+}
+
+#[tokio::test]
+#[ignore = "requires migrated PostgreSQL; GATEWAY_TEST_DATABASE_URL selects a disposable database"]
+async fn adapter_query_reads_exact_versions_and_production_with_workspace_isolation() {
+    let reader = local_reader();
+    let owner = Tenant::insert(&reader).await;
+    let other = Tenant::insert(&reader).await;
+    let (task, version) = owner
+        .adapter(&reader, "support", "support/triage-日本語-v1")
+        .await;
+    let (_, other_version) = other
+        .adapter(&reader, "support", "support/triage-日本語-v1")
+        .await;
+    production(&reader, task, Some(version)).await;
+
+    let exact = reader
+        .private_adapter_json(owner.workspace_id, "support/triage-日本語-v1")
+        .await
+        .unwrap()
+        .unwrap();
+    let adapter: crate::PrivateAdapter = serde_json::from_str(&exact).unwrap();
+    assert!(adapter.is_valid());
+    assert_eq!(adapter.workspace_id, owner.workspace_id);
+    assert_eq!(adapter.version_id, version);
+    assert_eq!(adapter.base_model_id, owner.model_id);
+    assert_eq!(adapter.base_model_revision, "frozen-revision");
+    assert_eq!(adapter.size_bytes, 1024);
+    assert_eq!(adapter.sha256, "a".repeat(64));
+    assert_eq!(
+        reader
+            .private_adapter_json(owner.workspace_id, "support")
+            .await
+            .unwrap(),
+        Some(exact)
+    );
+    let other_record = reader
+        .private_adapter_json(other.workspace_id, "support/triage-日本語-v1")
+        .await
+        .unwrap()
+        .unwrap();
+    let other_adapter: crate::PrivateAdapter = serde_json::from_str(&other_record).unwrap();
+    assert_eq!(other_adapter.version_id, other_version);
+    assert_eq!(
+        reader
+            .private_adapter_json(Uuid::nil(), "support/triage-日本語-v1")
+            .await
+            .unwrap(),
+        None
+    );
+    assert_eq!(
+        reader
+            .private_adapter_json(owner.workspace_id, "missing")
+            .await
+            .unwrap(),
+        None
+    );
+
+    owner.remove(&reader).await;
+    other.remove(&reader).await;
+}
+
+#[tokio::test]
+#[ignore = "requires migrated PostgreSQL; GATEWAY_TEST_DATABASE_URL selects a disposable database"]
+async fn adapter_query_deduplicates_the_same_version_and_rejects_ambiguous_names() {
+    let reader = local_reader();
+    let owner = Tenant::insert(&reader).await;
+    let (same_task, same_version) = owner.adapter(&reader, "same", "same").await;
+    production(&reader, same_task, Some(same_version)).await;
+    assert!(reader
+        .private_adapter_json(owner.workspace_id, "same")
+        .await
+        .unwrap()
+        .is_some());
+    let (collision, first) = owner
+        .adapter(&reader, "second-version", "first-version")
+        .await;
+    owner
+        .adapter(&reader, "second-task", "second-version")
+        .await;
+    production(&reader, collision, Some(first)).await;
+    assert!(matches!(
+        reader
+            .private_adapter_json(owner.workspace_id, "second-version")
+            .await,
+        Err(PostgresError::Query(_))
+    ));
+    production(&reader, collision, None).await;
+    assert!(matches!(
+        reader
+            .private_adapter_json(owner.workspace_id, "second-version")
+            .await,
+        Err(PostgresError::Query(_))
+    ));
+    owner.remove(&reader).await;
+}
+
+#[tokio::test]
+#[ignore = "requires migrated PostgreSQL; GATEWAY_TEST_DATABASE_URL selects a disposable database"]
+async fn adapter_query_distinguishes_missing_pointers_and_projects_legacy_metadata() {
+    let reader = local_reader();
+    let owner = Tenant::insert(&reader).await;
+    let (task, version) = owner.adapter(&reader, "task", "version").await;
+    assert_eq!(
+        reader
+            .private_adapter_json(owner.workspace_id, "task")
+            .await
+            .unwrap(),
+        Some("null".to_owned())
+    );
+    let (other_task, other_version) = owner.adapter(&reader, "other-task", "other-version").await;
+    production(&reader, task, Some(other_version)).await;
+    assert_eq!(
+        reader
+            .private_adapter_json(owner.workspace_id, "task")
+            .await
+            .unwrap(),
+        Some("null".to_owned())
+    );
+    production(&reader, other_task, None).await;
+    reader.client().await.unwrap().execute("update task_versions set adapter = adapter - 'base_model_revision', status = 'unavailable' where id = $1", &[&version]).await.unwrap();
+    let record = reader
+        .private_adapter_json(owner.workspace_id, "version")
+        .await
+        .unwrap()
+        .unwrap();
+    let adapter: crate::PrivateAdapter = serde_json::from_str(&record).unwrap();
+    assert_eq!(adapter.base_model_revision, "");
+    assert_eq!(adapter.status, "unavailable");
+    assert!(!adapter.is_valid());
+    owner.remove(&reader).await;
+}
+
+#[tokio::test]
+#[ignore = "requires migrated PostgreSQL; GATEWAY_TEST_DATABASE_URL selects a disposable database"]
+async fn adapter_query_excludes_archived_workspaces_and_suspended_organizations() {
+    let reader = local_reader();
+    let owner = Tenant::insert(&reader).await;
+    let (task, version) = owner.adapter(&reader, "task", "version").await;
+    production(&reader, task, Some(version)).await;
+    let client = reader.client().await.unwrap();
+    client
+        .execute(
+            "update workspaces set is_default = false, archived_at = now() where id = $1",
+            &[&owner.workspace_id],
+        )
+        .await
+        .unwrap();
+    for name in ["task", "version"] {
+        assert_eq!(
+            reader
+                .private_adapter_json(owner.workspace_id, name)
+                .await
+                .unwrap(),
+            None
+        );
+    }
+    client
+        .execute(
+            "update workspaces set archived_at = null where id = $1",
+            &[&owner.workspace_id],
+        )
+        .await
+        .unwrap();
+    client
+        .execute(
+            "update organizations set status = 'suspended' where id = $1",
+            &[&owner.organization_id],
+        )
+        .await
+        .unwrap();
+    for name in ["task", "version"] {
+        assert_eq!(
+            reader
+                .private_adapter_json(owner.workspace_id, name)
+                .await
+                .unwrap(),
+            None
+        );
+    }
+    drop(client);
+    owner.remove(&reader).await;
 }

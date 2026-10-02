@@ -172,6 +172,11 @@ for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
         page.getByRole("combobox", { name: "Comparison model" }),
       ).toContainText("GPT-5");
       await page.getByRole("tab", { name: "Model", exact: true }).click();
+      await page.getByRole("button", { name: "Use", exact: true }).click();
+      await expect(page.getByRole("dialog").getByRole("heading")).toHaveText(
+        versionName,
+      );
+      await page.keyboard.press("Escape");
       await page.getByRole("button", { name: "Promote", exact: true }).click();
       await page.route(
         apiPathEndsWith("/production"),
@@ -185,6 +190,11 @@ for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
       );
       await page.getByRole("button", { name: "Promote", exact: true }).click();
       await expect(page.getByText("Production", { exact: true })).toBeVisible();
+      await page.getByRole("button", { name: "Use", exact: true }).click();
+      await expect(page.getByRole("dialog").getByRole("heading")).toHaveText(
+        taskName,
+      );
+      await page.keyboard.press("Escape");
       expect(
         (
           await pool.query(

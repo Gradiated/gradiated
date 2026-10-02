@@ -1,30 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { expect, it } from "vitest";
 
-import { adapterRuntimeName } from "../src/hosting.js";
 import { TaskVersionAdapterSchema } from "../src/training.js";
 
-const versionId = "01980000-0000-7000-8000-000000000001";
 const hash = "a".repeat(64);
-
-describe("immutable runtime adapter identity", () => {
-  it("keeps different weights and versions in separate runtime namespaces", () => {
-    expect(adapterRuntimeName(versionId, hash)).toBe(`ft-${versionId}-${hash}`);
-    expect(adapterRuntimeName(versionId, hash)).not.toEqual(
-      adapterRuntimeName(versionId, "b".repeat(64)),
-    );
-    expect(adapterRuntimeName(versionId, hash)).not.toEqual(
-      adapterRuntimeName("01980000-0000-7000-8000-000000000002", hash),
-    );
-  });
-
-  it.each([
-    ["../../adapter", hash],
-    [versionId, "../../adapter"],
-    [versionId, "a".repeat(63)],
-  ])("rejects invalid task-version identity %s / %s", (id, checksum) => {
-    expect(() => adapterRuntimeName(id, checksum)).toThrow();
-  });
-});
 
 it("keeps existing training artifacts readable without a recorded base revision", () => {
   const artifact = {

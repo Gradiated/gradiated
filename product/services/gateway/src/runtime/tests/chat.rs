@@ -382,3 +382,99 @@ fn normalized_wire_json_is_stable() {
         r#"{"id":"chatcmpl-1","object":"chat.completion","created":1777000000,"model":"model-a","choices":[{"index":0,"message":{"role":"assistant","content":"hello","reasoning_content":null,"tool_calls":null},"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":10,"completion_tokens":5,"total_tokens":15,"prompt_tokens_details":{"cached_tokens":4},"completion_tokens_details":{"reasoning_tokens":2}}}"#
     );
 }
+
+fn private_model_request(stream: bool) -> crate::InferenceRequest {
+    let mut request = if stream {
+        streaming_request()
+    } else {
+        chat_request()
+    };
+    request.model = "task-a-v1".to_owned();
+    request.runtime_model_name = Some("workspace/immutable-version".to_owned());
+    request
+}
+
+#[tokio::test]
+async fn sends_one_normal_completion_request_for_a_private_model() {
+    let request = private_model_request(false);
+    let mut response = completion();
+    response["model"] = request.runtime_model_name.clone().unwrap().into();
+    let runtime = MockRuntime::builder()
+        .json(CHAT, StatusCode::OK, response)
+        .start()
+        .await;
+    for _ in 0..2 {
+        let result = client()
+            .complete(
+                &runtime.renamed_deployment(),
+                request.clone(),
+                16,
+                deadline(5),
+            )
+            .await
+            .unwrap();
+        assert_eq!(result.into_response()["model"], request.model);
+    }
+    let requests = runtime.requests();
+    assert_eq!(requests.len(), 2);
+    for sent in requests {
+        assert_eq!(sent.path, CHAT);
+        assert_eq!(
+            sent.body["model"],
+            request.runtime_model_name.as_ref().unwrap().as_str()
+        );
+    }
+}
+
+#[tokio::test]
+async fn host_resolution_failure_has_zero_usage() {
+    let runtime = MockRuntime::builder()
+        .json(
+            CHAT,
+            StatusCode::INTERNAL_SERVER_ERROR,
+            json!({"error": "resolution_failed"}),
+        )
+        .start()
+        .await;
+    let error = client()
+        .complete(
+            &runtime.deployment(),
+            private_model_request(false),
+            16,
+            deadline(5),
+        )
+        .await
+        .unwrap_err();
+    assert_eq!(error.kind(), RuntimeFailureKind::Unavailable);
+    assert_eq!(error.usage(), crate::NormalizedUsage::zero());
+    assert_eq!(runtime.requests().len(), 1);
+    assert_eq!(runtime.requests()[0].path, CHAT);
+}
+
+#[tokio::test]
+async fn sends_one_normal_streaming_request_for_a_private_model() {
+    let request = private_model_request(true);
+    let mut event = chunk(json!({"content": "hello"}), Some("stop"));
+    event["model"] = request.runtime_model_name.clone().unwrap().into();
+    event["usage"] = json!({"prompt_tokens": 10, "completion_tokens": 1, "total_tokens": 11});
+    let runtime = MockRuntime::builder()
+        .sse(CHAT, &[data(&event), DONE.to_owned()])
+        .start()
+        .await;
+    let mut stream = client()
+        .stream(&runtime.deployment(), request.clone(), 16, deadline(5))
+        .await
+        .unwrap();
+    match stream.next_event().await.unwrap().unwrap() {
+        RuntimeStreamEvent::Chunk(chunk) => {
+            assert_eq!(chunk.into_response()["model"], request.model)
+        }
+        _ => panic!("expected chunk"),
+    }
+    assert_eq!(runtime.requests().len(), 1);
+    assert_eq!(runtime.requests()[0].path, CHAT);
+    assert_eq!(
+        runtime.requests()[0].body["model"],
+        request.runtime_model_name.as_ref().unwrap().as_str()
+    );
+}

@@ -60,6 +60,16 @@ def engine_settings(command, environment, model_config):
     return settings, parsed.model, parsed.revision
 
 
+def resolver_environment(environment):
+    plugins = [item for item in environment.get("VLLM_PLUGINS", "").split(",") if item]
+    plugins.append("gradiated_lora")
+    return {
+        **environment,
+        "VLLM_ALLOW_RUNTIME_LORA_UPDATING": "True",
+        "VLLM_PLUGINS": ",".join(dict.fromkeys(plugins)),
+    }
+
+
 def main():
     from huggingface_hub import hf_hub_download
 
@@ -97,9 +107,7 @@ def main():
     ]
     server = create_server(loader, int(os.environ["ADAPTER_PORT"]))
     try:
-        child = subprocess.Popen(
-            command, env={**os.environ, "VLLM_ALLOW_RUNTIME_LORA_UPDATING": "True"}
-        )
+        child = subprocess.Popen(command, env=resolver_environment(os.environ))
     except Exception:
         server.server_close()
         raise

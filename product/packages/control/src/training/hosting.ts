@@ -19,9 +19,9 @@ export const createAdapterHostingService = (
   const records = createTrainingStore(database);
 
   return {
-    async grant(workspaceId: string, versionId: string, sha256: string) {
-      const row = await records.getHostingVersion(workspaceId, versionId);
-      if (!row || row.version.adapter.sha256 !== sha256)
+    async grant(workspaceId: string, versionName: string) {
+      const row = await records.getHostingVersion(workspaceId, versionName);
+      if (!row)
         throw new ControlServiceError(
           "not_found",
           "The version was not found.",
@@ -44,8 +44,7 @@ export const createAdapterHostingService = (
 
       return versions.map((version) => ({
         workspace_id: version.workspaceId,
-        version_id: version.id,
-        sha256: version.adapter.sha256,
+        version_name: version.name,
       }));
     },
   };

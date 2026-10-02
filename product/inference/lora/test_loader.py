@@ -130,7 +130,7 @@ class LoaderTests(unittest.TestCase):
         self.assertTrue(self.loader.entries[name]["pinned"])
         self.assertFalse(self.loader.entries[name]["registered"])
         self.assertTrue(self.loader.ready)
-        self.models.add(name)
+        self.models.add(f"{spec['workspace_id']}/{spec['version']['name']}")
         self.loader.engine = self.engine
         self.loader.prepare(name, spec["workspace_id"])
         self.assertTrue(self.loader.entries[name]["registered"])
@@ -146,7 +146,7 @@ class LoaderTests(unittest.TestCase):
                 attempts += 1
                 if attempts == 1:
                     raise TimeoutError
-                self.models.add(name)
+                self.models.add(f"{spec['workspace_id']}/{spec['version']['name']}")
                 raise ValueError("Already registered")
             return self.engine(method, path, body)
 
@@ -157,7 +157,7 @@ class LoaderTests(unittest.TestCase):
         self.assertTrue(self.loader.entries[name]["registered"])
         self.assertTrue(self.loader.entries[name]["pinned"])
 
-    def test_definite_runtime_rejection_keeps_files_evictable(self):
+    def test_runtime_rejection_keeps_exposed_files_pinned(self):
         name, spec = self.register()
 
         def engine(method, path, body=None):
@@ -168,7 +168,7 @@ class LoaderTests(unittest.TestCase):
         self.loader.engine = engine
         with self.assertRaises(ValueError):
             self.loader.prepare(name, spec["workspace_id"])
-        self.assertFalse(self.loader.entries[name]["pinned"])
+        self.assertTrue(self.loader.entries[name]["pinned"])
         self.assertTrue(self.loader.ready)
 
     def test_bad_artifact_preserves_registered_paths_and_redacts_failure_logs(self):
@@ -217,17 +217,13 @@ class LoaderTests(unittest.TestCase):
 
     def test_startup_preloads_only_up_to_native_cpu_count(self):
         specs = [grant(self.payload) for _ in range(3)]
-        names = {
-            f"ft-{spec['version']['id']}-{spec['version']['adapter']['sha256']}": spec
-            for spec in specs
-        }
+        names = {spec["version"]["name"]: spec for spec in specs}
         self.loader.resolve = lambda name, workspace: names[name]
         start_preload(
             self.loader,
             lambda: [
                 {
-                    "version_id": spec["version"]["id"],
-                    "sha256": spec["version"]["adapter"]["sha256"],
+                    "version_name": spec["version"]["name"],
                     "workspace_id": spec["workspace_id"],
                 }
                 for spec in specs

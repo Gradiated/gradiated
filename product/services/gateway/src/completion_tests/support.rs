@@ -307,6 +307,22 @@ impl ServingState for RecordingServingState {
         Ok(None)
     }
 
+    async fn private_model_exists(
+        &self,
+        _workspace_id: Uuid,
+        _name: &str,
+    ) -> Result<bool, ServingStateError> {
+        Ok(false)
+    }
+
+    async fn private_adapter(
+        &self,
+        _workspace_id: Uuid,
+        _name: &str,
+    ) -> Result<Option<crate::PrivateAdapter>, ServingStateError> {
+        Ok(None)
+    }
+
     async fn models(&self) -> Result<Vec<GatewayModel>, ServingStateError> {
         Ok(Vec::new())
     }
@@ -370,6 +386,7 @@ pub(super) fn qualified_request(deployment_count: u128) -> QualifiedRequest {
     let model_deployments = (1..=deployment_count).map(deployment).collect();
 
     QualifiedRequest {
+        adapter: None,
         metadata: RequestMetadata {
             generation_id: Uuid::now_v7(),
             received_at: Utc::now(),

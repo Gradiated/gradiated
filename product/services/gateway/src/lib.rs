@@ -1,3 +1,4 @@
+mod adapter;
 mod admission;
 pub mod auth;
 mod cache;
@@ -29,6 +30,7 @@ mod test_support;
 mod tokenizer;
 mod valkey_auth;
 
+pub use adapter::PrivateAdapter;
 pub use completion::CompletionService;
 pub use config::GatewayConfig;
 pub use coordinator::RequestCoordinator;

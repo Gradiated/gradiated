@@ -74,6 +74,18 @@ pub trait ServingState: Send + Sync {
 
     async fn models(&self) -> Result<Vec<GatewayModel>, ServingStateError>;
 
+    async fn private_model_exists(
+        &self,
+        workspace_id: Uuid,
+        name: &str,
+    ) -> Result<bool, ServingStateError>;
+
+    async fn private_adapter(
+        &self,
+        workspace_id: Uuid,
+        name: &str,
+    ) -> Result<Option<crate::PrivateAdapter>, ServingStateError>;
+
     async fn deployment_statuses(
         &self,
         release_digest: &str,
@@ -550,6 +562,34 @@ impl ServingState for ValkeyServingState {
         }
 
         Ok(Some(model))
+    }
+
+    async fn private_model_exists(
+        &self,
+        workspace_id: Uuid,
+        name: &str,
+    ) -> Result<bool, ServingStateError> {
+        Ok(self
+            .database
+            .private_adapter_json(workspace_id, name)
+            .await?
+            .is_some())
+    }
+
+    async fn private_adapter(
+        &self,
+        workspace_id: Uuid,
+        name: &str,
+    ) -> Result<Option<crate::PrivateAdapter>, ServingStateError> {
+        let record = self
+            .database
+            .private_adapter_json(workspace_id, name)
+            .await?;
+        let adapter = record
+            .map(|record| parse_record::<Option<crate::PrivateAdapter>>("PrivateAdapter", &record))
+            .transpose()?
+            .flatten();
+        Ok(adapter.filter(|adapter| adapter.is_valid()))
     }
 
     /// Every model that can be served. A model whose record is unusable is left

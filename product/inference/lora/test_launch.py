@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from launch import engine_settings
+from launch import engine_settings, resolver_environment
 
 
 class LaunchTests(unittest.TestCase):
@@ -37,6 +37,11 @@ class LaunchTests(unittest.TestCase):
             "--max-num-seqs",
             "16",
         ]
+
+    def test_native_resolver_is_enabled_without_overriding_existing_plugins(self):
+        result = resolver_environment({"VLLM_PLUGINS": "other,gradiated_lora"})
+        self.assertEqual(result["VLLM_PLUGINS"], "other,gradiated_lora")
+        self.assertEqual(result["VLLM_ALLOW_RUNTIME_LORA_UPDATING"], "True")
 
     def test_tp_and_revision_come_from_the_existing_engine_command(self):
         for tp in (2, 4):

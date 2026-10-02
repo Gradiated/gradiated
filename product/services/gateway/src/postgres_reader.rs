@@ -99,6 +99,29 @@ select json_build_object(
 from api_keys
 where digest = $1";
 
+const ADAPTER_QUERY: &str = "\
+select case when task_versions.id is null then 'null' else json_build_object(
+    'workspace_id', tasks.workspace_id,
+    'version_id', task_versions.id,
+    'name', task_versions.name,
+    'status', task_versions.status,
+    'size_bytes', task_versions.adapter->'size_bytes',
+    'base_model_id', task_versions.base_model_id,
+    'base_model_revision', coalesce(task_versions.adapter->>'base_model_revision', ''),
+    'sha256', task_versions.adapter->>'sha256'
+)::text end
+from (
+    select task_id, id as version_id from task_versions where workspace_id = $1 and name = $2
+    union
+    select id as task_id, production_version_id as version_id from tasks where workspace_id = $1 and name = $2
+) matched
+join tasks on tasks.id = matched.task_id and tasks.workspace_id = $1
+left join task_versions on task_versions.id = matched.version_id
+    and task_versions.task_id = tasks.id and task_versions.workspace_id = tasks.workspace_id
+join workspaces on workspaces.id = tasks.workspace_id
+join organizations on organizations.id = workspaces.organization_id
+where workspaces.archived_at is null and organizations.status = 'active'";
+
 const WORKSPACE_QUERY: &str = "\
 select json_build_object(
     'organization_id', organization_id,
@@ -228,6 +251,14 @@ impl PostgresReader {
 
     pub async fn model_json(&self, model_id: &str) -> Result<Option<String>, PostgresError> {
         self.record(MODEL_QUERY, &[&model_id]).await
+    }
+
+    pub async fn private_adapter_json(
+        &self,
+        workspace_id: Uuid,
+        name: &str,
+    ) -> Result<Option<String>, PostgresError> {
+        self.record(ADAPTER_QUERY, &[&workspace_id, &name]).await
     }
 
     pub async fn model_ids(&self) -> Result<Vec<String>, PostgresError> {

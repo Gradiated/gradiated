@@ -131,6 +131,22 @@ impl ServingState for FailingState {
         self.inner.model(model_id).await
     }
 
+    async fn private_model_exists(
+        &self,
+        workspace_id: Uuid,
+        name: &str,
+    ) -> Result<bool, ServingStateError> {
+        self.inner.private_model_exists(workspace_id, name).await
+    }
+
+    async fn private_adapter(
+        &self,
+        workspace_id: Uuid,
+        name: &str,
+    ) -> Result<Option<crate::PrivateAdapter>, ServingStateError> {
+        self.inner.private_adapter(workspace_id, name).await
+    }
+
     async fn models(&self) -> Result<Vec<GatewayModel>, ServingStateError> {
         self.read(StateRead::Models)?;
         self.inner.models().await

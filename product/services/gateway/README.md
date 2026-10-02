@@ -27,6 +27,37 @@ admission, runtime dispatch and terminal settlement. Chat Completions support
 streaming; native SystemOne uses the same lifecycle without streaming. No fake
 inference endpoint is used.
 
+## Private LoRA adapters
+
+Chat inference accepts the existing version slug or task production slug as `model`.
+After authenticating the API key, the gateway resolves the selector within its
+workspace using the existing PostgreSQL task/version records. Only available,
+loadable versions are eligible. Each request resolves once; promotions affect
+subsequent requests, while streams and retries keep the same immutable version.
+Ambiguous task/version names and collisions with public catalog names fail closed.
+Inference and generation records accept selectors up to 300 characters, including
+the date/ordinal suffix on a 256-character task name. There is no selector cache or adapter
+residency state in the gateway.
+
+The base catalog supplies capabilities, tokenization and prices. Routing considers
+only LoRA-enabled chat deployments that match the recorded base revision. Each
+attempt sends a normal completion request through the existing authenticated ingress,
+using the immutable internal model name `<workspace_uuid>/<resolved_version_slug>`.
+The runtime client has no adapter preparation call or cache state. vLLM's native
+resolver asks the allocation-local loader for verified files on first use; vLLM
+owns registration, CPU/GPU caching and streaming. Cold loading counts against the
+existing generation deadline. Host failures use the existing inference retry rules.
+
+Responses and settlement name the resolved version slug. Settlement's served
+identity hashes the base release digest, version UUID and checksum. Base health
+continues to use the base release digest, and metric labels use the base model.
+Private versions are not added to the public catalog. The task capture header
+continues to label traces independently of adapter selection.
+
+Hosting remains opt-in. Existing hosts need the runtime-readable renewal identity
+installed before enabling LoRA; real-artifact and TP2/TP4 co-location qualification
+are required. See the [loader configuration](../../inference/lora/README.md).
+
 ## Native SystemOne
 
 `POST /v1/systemone` accepts an exact model, text/object/array `state`, and
@@ -142,6 +173,13 @@ docker compose -f ../../docker-compose.yml up -d
 mise exec -- cargo test --locked serving_state::tests -- --ignored
 ```
 
-CI runs the same ignored `serving_state` suite against the complete product
+CI runs the ignored `serving_state` and `postgres_reader` suites against the complete product
 Docker Compose dependency stack. It waits for the one-node Valkey cluster to
 own all 16,384 slots before executing the tests.
+
+The PostgreSQL reader suite executes every query against the migrated schema and
+checks returned records, deployment discovery, ledger paging/seed behavior and
+adapter selectors. Adapter cases cover exact/production names, workspace isolation,
+ambiguous names, missing/cross-task pointers, legacy metadata and inactive ownership.
+`GATEWAY_TEST_DATABASE_URL` can select a disposable database for the direct reader
+tests; otherwise they use the local Compose database.

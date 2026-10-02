@@ -125,7 +125,6 @@ export {
   GenerationsListSchema,
 } from "./generations.js";
 export * from "./training.js";
-export * from "./hosting.js";
 
 export {
   MODEL_CATALOG,

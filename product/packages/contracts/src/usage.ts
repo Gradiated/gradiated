@@ -3,7 +3,7 @@ import { z } from "@hono/zod-openapi";
 import {
   CancellationOwnerSchema,
   GenerationStatusSchema,
-  ModelIdSchema,
+  BoundedIdentifierSchema,
   pageFields,
   TimestampSchema,
   TokenCountSchema,
@@ -57,7 +57,7 @@ export const UsagePointSchema = z.object({
 });
 
 export const UsageModelBreakdownSchema = z.object({
-  model_id: ModelIdSchema,
+  model_id: BoundedIdentifierSchema,
   ...UsageTotalsFields,
 });
 
@@ -74,7 +74,7 @@ export const GenerationListQuerySchema = z
     cursor: z.string().min(1).max(1_000).optional(),
     limit: z.coerce.number().int().min(1).max(100).default(25),
     api_key_id: UuidSchema.optional(),
-    model: ModelIdSchema.optional(),
+    model: BoundedIdentifierSchema.optional(),
     search: z.string().trim().min(1).max(300).optional(),
     sort: z.enum(["newest", "highest_cost"]).default("newest"),
     status: GenerationStatusSchema.optional(),
@@ -85,7 +85,7 @@ export const GenerationListQuerySchema = z
 export const GenerationLogSchema = z.object({
   id: UuidSchema,
   external_id: z.string().nullable(),
-  model_id: ModelIdSchema,
+  model_id: BoundedIdentifierSchema,
   status: GenerationStatusSchema,
   streamed: z.boolean(),
   charge: UnsignedIntegerStringSchema,

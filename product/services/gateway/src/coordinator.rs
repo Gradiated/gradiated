@@ -41,6 +41,7 @@ pub struct QualifiedRequest {
     pub effective_output_tokens: u64,
     pub pricing: CapturedPricing,
     pub request: InferenceRequest,
+    pub adapter: Option<crate::PrivateAdapter>,
 }
 
 pub struct ClassifiedRequest {
@@ -51,6 +52,7 @@ pub struct ClassifiedRequest {
 pub struct HostedRequest {
     identity: AuthenticatedIdentity,
     model: GatewayModel,
+    adapter: Option<crate::PrivateAdapter>,
 }
 
 impl HostedRequest {
@@ -61,10 +63,17 @@ impl HostedRequest {
         body: &[u8],
         kind: RequestKind,
     ) -> Result<QualifiedRequest, GatewayError> {
-        let Self { identity, model } = self;
+        let Self {
+            identity,
+            model,
+            adapter,
+        } = self;
 
         let mut request = InferenceRequest::parse_kind(body, kind)?;
-        request.model.clone_from(&model.id);
+        request.model = adapter
+            .as_ref()
+            .map_or_else(|| model.id.clone(), |adapter| adapter.model_id());
+        request.runtime_model_name = adapter.as_ref().map(|adapter| adapter.runtime_name());
         if let Some(decision) = &mut request.decision {
             decision.model.clone_from(&model.id);
         }
@@ -116,6 +125,7 @@ impl HostedRequest {
         Ok(QualifiedRequest {
             metadata,
             identity,
+            adapter,
             deployment,
             served_release_digest: release_digest,
             max_context_tokens: input.supported_inputs.max_context_length.value,
@@ -292,15 +302,54 @@ impl RequestCoordinator {
 
         let authorization = self.authorize(headers, received_at).await?;
 
-        let mut model_id = target.model;
+        let mut model_id = target.model.clone();
         model_id.make_ascii_lowercase();
+        let mut adapter = None;
         let mut model = self
             .serving_state
             .model(&model_id)
             .await
-            .map_err(state_unavailable("model_read"))?
-            .ok_or(GatewayError::ModelNotFound)?;
+            .map_err(state_unavailable("model_read"))?;
+        if model.is_some()
+            && self
+                .serving_state
+                .private_model_exists(authorization.identity.workspace_id, &target.model)
+                .await
+                .map_err(state_unavailable("private_adapter_read"))?
+        {
+            return Err(inconsistent_state("ambiguous_model_name"));
+        }
+        if model.is_none() {
+            let resolved = self
+                .serving_state
+                .private_adapter(authorization.identity.workspace_id, &target.model)
+                .await
+                .map_err(state_unavailable("private_adapter_read"))?
+                .ok_or(GatewayError::ModelNotFound)?;
+            if resolved.workspace_id != authorization.identity.workspace_id || !resolved.is_valid()
+            {
+                return Err(inconsistent_state("invalid_private_adapter"));
+            }
+            model = self
+                .serving_state
+                .model(&resolved.base_model_id)
+                .await
+                .map_err(state_unavailable("model_read"))?;
+            adapter = Some(resolved);
+        }
+        let mut model = model.ok_or(GatewayError::ModelNotFound)?;
         let identity = authorization.into_hosted_identity()?;
+        if let Some(adapter) = &adapter {
+            model.deployments.retain(|deployment| {
+                deployment.release.lora_enabled == Some(true)
+                    && deployment.release.model_revision == adapter.base_model_revision
+                    && !deployment.release.is_system_one()
+                    && !deployment.release.sends_token_ids()
+            });
+            if model.deployments.is_empty() {
+                return Err(GatewayError::ModelUnavailable);
+            }
+        }
 
         if model.status != ModelStatus::Available {
             return Err(GatewayError::ModelUnavailable);
@@ -331,7 +380,11 @@ impl RequestCoordinator {
         let model = self.prefer_ready_release(model, received_at).await?;
 
         Ok(ClassifiedRequest {
-            hosted: HostedRequest { identity, model },
+            hosted: HostedRequest {
+                identity,
+                model,
+                adapter,
+            },
             request: target.request,
         })
     }
@@ -490,3 +543,7 @@ mod route_tests;
 #[cfg(test)]
 #[path = "coordinator_verification_tests.rs"]
 mod verification_tests;
+
+#[cfg(test)]
+#[path = "coordinator_adapter_tests.rs"]
+mod adapter_tests;

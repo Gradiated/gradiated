@@ -24,6 +24,7 @@ class ServerTests(unittest.TestCase):
             fetch=lambda spec, path, hosts: path.write_bytes(self.payload),
         )
         self.name = self.loader.register_metadata(self.spec)
+        self.loader.resolve = lambda name, workspace: self.spec
         self.loader.ready = True
         self.loader.engine = mock.Mock(return_value=b"ok")
         self.front = create_server(self.loader, 0)
@@ -66,7 +67,10 @@ class ServerTests(unittest.TestCase):
         status, body = self.request(
             "POST",
             "/internal/adapters/prepare",
-            {"name": self.name, "workspace_id": self.spec["workspace_id"]},
+            {
+                "name": self.spec["version"]["name"],
+                "workspace_id": self.spec["workspace_id"],
+            },
         )
         self.assertEqual(status, 200)
         self.assertEqual(json.loads(body)["boot_id"], self.loader.boot_id)
@@ -77,21 +81,41 @@ class ServerTests(unittest.TestCase):
         self.assertIn(b"gradiated_lora_registrations_total 1", metrics)
         self.assertNotIn(self.name.encode(), metrics)
 
+    def test_resolve_returns_verified_files_without_calling_vllm(self):
+        status, body = self.request(
+            "POST",
+            "/internal/adapters/resolve",
+            {
+                "name": self.spec["version"]["name"],
+                "workspace_id": self.spec["workspace_id"],
+            },
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(json.loads(body)["path"], str(self.loader.root / self.name))
+        self.loader.engine.assert_not_called()
+        self.assertTrue(self.loader.entries[self.name]["pinned"])
+
     def test_capacity_rejection_does_not_change_readiness(self):
         with self.loader.admission, self.loader.admission:
             status, _ = self.request(
                 "POST",
                 "/internal/adapters/prepare",
-                {"name": self.name, "workspace_id": self.spec["workspace_id"]},
+                {
+                    "name": self.spec["version"]["name"],
+                    "workspace_id": self.spec["workspace_id"],
+                },
             )
         self.assertEqual(status, 503)
         self.assertEqual(self.request("GET", "/health")[0], 200)
 
     def test_invalid_workspace_and_body_are_rejected_before_native_loading(self):
         for body in (
-            {"name": self.name},
-            {"name": self.name, "workspace_id": ""},
-            {"name": self.name, "workspace_id": "01980000-0000-7000-8000-000000000002"},
+            {"name": self.spec["version"]["name"]},
+            {"name": self.spec["version"]["name"], "workspace_id": ""},
+            {
+                "name": self.spec["version"]["name"],
+                "workspace_id": "01980000-0000-7000-8000-000000000002",
+            },
         ):
             status, _ = self.request("POST", "/internal/adapters/prepare", body)
             self.assertIn(status, (422, 503))
@@ -101,13 +125,20 @@ class ServerTests(unittest.TestCase):
         self.loader.engine.side_effect = [
             b"ok",
             json.dumps(
-                {"model": self.name, "choices": [{}], "usage": {"completion_tokens": 1}}
+                {
+                    "model": f"{self.spec['workspace_id']}/{self.spec['version']['name']}",
+                    "choices": [{}],
+                    "usage": {"completion_tokens": 1},
+                }
             ).encode(),
         ]
         status, _ = self.request(
             "POST",
             "/internal/adapters/probe",
-            {"name": self.name, "workspace_id": self.spec["workspace_id"]},
+            {
+                "name": self.spec["version"]["name"],
+                "workspace_id": self.spec["workspace_id"],
+            },
         )
         self.assertEqual(status, 200)
         self.assertEqual(

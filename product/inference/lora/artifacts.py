@@ -247,11 +247,15 @@ def has_fused_experts(directory):
     )
 
 
+def cache_key(version):
+    return f"{version['id']}-{version['adapter']['sha256']}"
+
+
 def materialize(
     spec, root, max_bytes, allowed_hosts, model_config, fetch=download, reserve=None
 ):
     version = spec["version"]
-    name = f"ft-{version['id']}-{version['adapter']['sha256']}"
+    name = cache_key(version)
     destination = root / name
     verification = destination / ".verified.json"
     if verification.is_file():

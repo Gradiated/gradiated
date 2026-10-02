@@ -43,7 +43,7 @@ pub enum RequestKind {
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Validate)]
 pub struct InferenceRequest {
-    #[validate(length(min = 1, max = 200))]
+    #[validate(length(min = 1, max = 300))]
     pub model: String,
     #[validate(length(min = 1))]
     pub messages: Vec<Value>,
@@ -61,6 +61,8 @@ pub struct InferenceRequest {
     pub parameters: Map<String, Value>,
     #[serde(skip)]
     pub(crate) encoded_input_ids: Option<Vec<u32>>,
+    #[serde(skip)]
+    pub(crate) runtime_model_name: Option<String>,
     #[serde(skip)]
     pub(crate) decision: Option<crate::systemone::SystemOneRequest>,
 }
@@ -86,6 +88,7 @@ impl InferenceRequest {
             max_tokens: None,
             parameters: Map::new(),
             encoded_input_ids: None,
+            runtime_model_name: None,
             decision: Some(decision),
         })
     }
@@ -123,6 +126,7 @@ impl InferenceRequest {
             max_tokens: _,
             mut parameters,
             encoded_input_ids: _,
+            runtime_model_name: _,
             decision: _,
         } = self;
 

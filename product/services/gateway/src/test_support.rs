@@ -25,6 +25,7 @@ pub(crate) struct TestServingState {
     pub(crate) account: Option<GatewayAccount>,
     pub(crate) model: Option<GatewayModel>,
     pub(crate) statuses: Option<Vec<DeploymentRuntimeStatus>>,
+    pub(crate) adapter: Option<crate::PrivateAdapter>,
     pub(crate) calls: Mutex<Vec<&'static str>>,
     pub(crate) requested_models: Mutex<Vec<String>>,
     pub(crate) requested_digests: Mutex<Vec<String>>,
@@ -54,6 +55,7 @@ impl TestServingState {
             }),
             model: Some(model(true)),
             statuses: None,
+            adapter: None,
             calls: Mutex::new(Vec::new()),
             requested_models: Mutex::new(Vec::new()),
             requested_digests: Mutex::new(Vec::new()),
@@ -124,7 +126,30 @@ impl ServingState for TestServingState {
             .lock()
             .unwrap()
             .push(model_id.to_owned());
-        Ok(self.model.clone())
+        Ok(self.model.clone().filter(|model| model.id == model_id))
+    }
+
+    async fn private_model_exists(
+        &self,
+        workspace_id: Uuid,
+        name: &str,
+    ) -> Result<bool, ServingStateError> {
+        Ok(self.adapter.as_ref().is_some_and(|adapter| {
+            adapter.workspace_id == workspace_id && (adapter.name == name || name == "task-a")
+        }))
+    }
+
+    async fn private_adapter(
+        &self,
+        workspace_id: Uuid,
+        name: &str,
+    ) -> Result<Option<crate::PrivateAdapter>, ServingStateError> {
+        self.record("private_adapter");
+        Ok(self.adapter.clone().filter(|adapter| {
+            adapter.workspace_id == workspace_id
+                && adapter.is_valid()
+                && (adapter.name == name || name == "task-a")
+        }))
     }
 
     async fn models(&self) -> Result<Vec<GatewayModel>, ServingStateError> {

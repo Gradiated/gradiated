@@ -24,7 +24,7 @@ const taskId = "0198ae50-94d8-7d4d-a8be-9f9b44b8c775";
 const sha256 = "a".repeat(64);
 const grantsPath = "/api/internal/v1/adapter-downloads";
 const listPath = "/api/internal/v1/task-versions/production";
-const target = { workspace_id: workspaceId, version_id: versionId, sha256 };
+const target = { workspace_id: workspaceId, version_name: "triage-v1" };
 const at = new Date("2026-10-02T00:00:00Z");
 const row = {
   task: {
@@ -141,7 +141,7 @@ describe("private adapter routes", () => {
       },
       download: row.download,
     });
-    expect(service.grant).toHaveBeenCalledWith(workspaceId, versionId, sha256);
+    expect(service.grant).toHaveBeenCalledWith(workspaceId, "triage-v1");
   });
 
   it("returns bounded production identities and empty lists", async () => {
@@ -162,8 +162,9 @@ describe("private adapter routes", () => {
   it("validates exact identity input and required base model", async () => {
     const { app, service } = fixture();
     for (const body of [
-      { ...target, sha256: "bad" },
-      { ...target, version_id: "bad" },
+      { ...target, version_name: "" },
+      { ...target, version_name: "a".repeat(301) },
+      { ...target, workspace_id: "bad" },
       { ...target, url: "https://arbitrary.example" },
     ]) {
       expect((await postJson(app, grantsPath, body, hostHeaders)).status).toBe(

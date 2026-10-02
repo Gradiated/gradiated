@@ -54,6 +54,7 @@ pub(super) fn tool_continuation_tokenizer() -> CompiledTokenizer {
 
 pub(super) fn qualified(max_tokens: Option<u64>) -> QualifiedRequest {
     QualifiedRequest {
+        adapter: None,
         metadata: test_support::metadata(),
         identity: AuthenticatedIdentity {
             api_key_id: test_support::API_KEY_ID,

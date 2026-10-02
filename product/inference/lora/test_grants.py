@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from grants import api_url, host_identity, read_private
+from grants import api_url, host_identity, read_private, resolver
 
 
 class HostCredentialTests(unittest.TestCase):
@@ -76,3 +76,25 @@ class ApiUrlTests(unittest.TestCase):
         ):
             with self.assertRaises(ValueError):
                 api_url(base, "adapter-downloads")
+
+
+class VersionGrantTests(unittest.TestCase):
+    def test_requests_exact_workspace_and_slug_and_rejects_mismatched_grants(self):
+        name = "support/triage-日本語-20261002"
+        grant = {"workspace_id": "workspace", "version": {"name": name}}
+        resolve = resolver("https://api.example", {})
+        with mock.patch("grants.read_private", return_value=grant) as read:
+            self.assertEqual(resolve(name, "workspace"), grant)
+            self.assertEqual(
+                read.call_args.args[2],
+                {"workspace_id": "workspace", "version_name": name},
+            )
+        for bad in (
+            {**grant, "workspace_id": "other"},
+            {**grant, "version": {"name": "other"}},
+        ):
+            with (
+                mock.patch("grants.read_private", return_value=bad),
+                self.assertRaises(ValueError),
+            ):
+                resolve(name, "workspace")

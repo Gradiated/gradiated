@@ -37,6 +37,7 @@ def create_server(loader, port):
         def do_POST(self):
             if self.path not in (
                 "/internal/adapters/prepare",
+                "/internal/adapters/resolve",
                 "/internal/adapters/probe",
             ):
                 self.respond(404, {"error": "not_found"})
@@ -55,8 +56,14 @@ def create_server(loader, port):
                     or not body["workspace_id"]
                 ):
                     raise ValueError("Invalid adapter identity")
+                if self.path.endswith("/resolve"):
+                    files = loader.resolve_version(body["name"], body["workspace_id"])
+                    self.respond(200, files)
+                    return
                 action = (
-                    loader.prepare if self.path.endswith("/prepare") else loader.probe
+                    loader.prepare_version
+                    if self.path.endswith("/prepare")
+                    else loader.probe
                 )
                 action(body["name"], body["workspace_id"])
                 self.respond(200, {"boot_id": loader.boot_id, "ready": True})

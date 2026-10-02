@@ -9,7 +9,7 @@ import time
 import uuid
 from pathlib import Path
 
-from artifacts import download, has_fused_experts, materialize
+from artifacts import cache_key, download, has_fused_experts, materialize
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +32,7 @@ class Loader:
         self.boot_id = str(uuid.uuid4())
         self.lock = threading.Lock()
         self.loading = threading.Lock()
+        self.registration = threading.Lock()
         self.admission = threading.BoundedSemaphore(2)
         self.entries = {}
         self.ready = False
@@ -43,9 +44,9 @@ class Loader:
         for path in self.root.iterdir():
             if path.is_symlink() or not path.is_dir():
                 continue
-            if re.fullmatch(r"ft-[a-f0-9-]{36}-[a-f0-9]{64}\.partial", path.name):
+            if re.fullmatch(r"[a-f0-9-]{36}-[a-f0-9]{64}\.partial", path.name):
                 shutil.rmtree(path)
-            elif re.fullmatch(r"ft-[a-f0-9-]{36}-[a-f0-9]{64}", path.name):
+            elif re.fullmatch(r"[a-f0-9-]{36}-[a-f0-9]{64}", path.name):
                 self.entries[path.name] = self.entry(
                     disk=sum(
                         item.stat().st_size for item in path.iterdir() if item.is_file()
@@ -62,6 +63,7 @@ class Loader:
             "used": time.time() if used is None else used,
             "pinned": False,
             "registered": False,
+            "registration_attempted": False,
         }
 
     def disk_bytes(self):
@@ -97,6 +99,8 @@ class Loader:
             or not re.fullmatch(r"[a-f0-9]{64}", adapter["sha256"])
             or str(uuid.UUID(version["id"])) != version["id"]
             or str(uuid.UUID(workspace)) != workspace
+            or not isinstance(version["name"], str)
+            or not 0 < len(version["name"]) <= 300
             or type(adapter["rank"]) is not int
             or not 0 < adapter["rank"] <= self.config["max_rank"]
             or type(adapter["size_bytes"]) is not int
@@ -105,10 +109,11 @@ class Loader:
             raise ValueError("Incompatible task version")
         spec["version"] = {
             "id": version["id"],
+            "name": version["name"],
             "base_model_id": version["base_model_id"],
             "adapter": adapter,
         }
-        name = f"ft-{version['id']}-{adapter['sha256']}"
+        name = cache_key(version)
         with self.lock:
             entry = self.entries.get(name)
             if (
@@ -157,20 +162,35 @@ class Loader:
         finally:
             connection.close()
 
-    def prepare(self, name, workspace_id):
+    def version_key(self, name, workspace_id):
+        if self.resolve is None:
+            raise LookupError("Version unavailable")
+        spec = self.resolve(name, workspace_id)
+        if spec["workspace_id"] != workspace_id or spec["version"]["name"] != name:
+            raise ValueError("Version grant identity mismatch")
+        return self.register_metadata(spec)
+
+    def resolve_version(self, name, workspace_id):
+        return self.resolve_files(self.version_key(name, workspace_id), workspace_id)
+
+    def prepare_version(self, name, workspace_id):
+        self.prepare(self.version_key(name, workspace_id), workspace_id)
+
+    def local_files(self, name):
+        path = self.root / name
+        return {"path": str(path), "is_3d_lora_weight": has_fused_experts(path)}
+
+    def resolve_files(self, name, workspace_id):
         if not self.ready:
             raise CapacityError("Base engine warming")
         with self.lock:
             entry = self.entries.get(name)
-            if (
-                entry
-                and entry["spec"]
-                and entry["spec"]["workspace_id"] != workspace_id
-            ):
-                raise LookupError("Adapter unavailable")
-            if entry and entry["registered"]:
-                entry["used"] = time.time()
-                return
+            if entry and entry["spec"]:
+                if entry["spec"]["workspace_id"] != workspace_id:
+                    raise LookupError("Adapter unavailable")
+                if entry["pinned"]:
+                    entry["used"] = time.time()
+                    return self.local_files(name)
         if not self.admission.acquire(blocking=False):
             raise CapacityError("Preparation at capacity")
         started = time.monotonic()
@@ -178,7 +198,7 @@ class Loader:
             if not self.loading.acquire(timeout=60):
                 raise CapacityError("Preparation busy")
             try:
-                self._prepare(name, workspace_id)
+                return self._prepare(name, workspace_id)
             finally:
                 self.loading.release()
         except CapacityError:
@@ -194,6 +214,40 @@ class Loader:
                 self.preparations += 1
             self.admission.release()
 
+    def prepare(self, name, workspace_id):
+        files = self.resolve_files(name, workspace_id)
+        runtime_name = f"{workspace_id}/{self.entries[name]['spec']['version']['name']}"
+        # Native resolution can call the loader while holding vLLM's model lock.
+        # Do not hold the materialization lock across calls back into vLLM.
+        with self.registration:
+            entry = self.entries[name]
+            if entry["registered"]:
+                return
+            if entry["registration_attempted"]:
+                models = json.loads(self.engine("GET", "/v1/models"))["data"]
+                if any(model["id"] == runtime_name for model in models):
+                    with self.lock:
+                        entry["registered"] = True
+                    return
+            entry["registration_attempted"] = True
+            try:
+                self.engine(
+                    "POST",
+                    "/v1/load_lora_adapter",
+                    {
+                        "lora_name": runtime_name,
+                        "lora_path": files["path"],
+                        "is_3d_lora_weight": files["is_3d_lora_weight"],
+                    },
+                )
+            except ValueError:
+                models = json.loads(self.engine("GET", "/v1/models"))["data"]
+                if not any(model["id"] == runtime_name for model in models):
+                    raise
+            with self.lock:
+                entry["registered"] = True
+                self.counters["registrations"] += 1
+
     def _prepare(self, name, workspace_id):
         with self.lock:
             entry = self.entries.get(name)
@@ -203,24 +257,11 @@ class Loader:
                 and entry["spec"]["workspace_id"] != workspace_id
             ):
                 raise LookupError("Adapter unavailable")
-            if entry and entry["registered"]:
-                return
-            needs_grant = not entry or not entry["spec"] or not entry["disk"]
-        if (
-            needs_grant
-            and self.resolve
-            and self.register_metadata(self.resolve(name, workspace_id)) != name
-        ):
-            raise ValueError("Adapter identity mismatch")
+            if entry and entry["pinned"]:
+                return self.local_files(name)
         if name not in self.entries or not self.entries[name]["spec"]:
             raise LookupError("Adapter unavailable")
         entry = self.entries[name]
-        if entry["pinned"]:
-            models = json.loads(self.engine("GET", "/v1/models"))["data"]
-            if any(model["id"] == name for model in models):
-                with self.lock:
-                    entry["registered"] = True
-                return
         fetched = False
 
         def fetch(spec, path, hosts):
@@ -235,7 +276,7 @@ class Loader:
                 self.reserve_disk(name, required)
 
         try:
-            path, disk, _tensor_bytes = materialize(
+            _path, disk, _tensor_bytes = materialize(
                 entry["spec"],
                 self.root,
                 self.config["disk_cache_bytes"],
@@ -254,39 +295,18 @@ class Loader:
                 )
         with self.lock:
             self.counters["disk_hits"] += int(not fetched)
-            # A timed-out registration may finish later and need this reload path.
+            # vLLM retains returned paths for native CPU-cache reloads.
             entry.update(disk=disk, pinned=True, used=time.time())
-        try:
-            self.engine(
-                "POST",
-                "/v1/load_lora_adapter",
-                {
-                    "lora_name": name,
-                    "lora_path": str(path),
-                    "is_3d_lora_weight": has_fused_experts(path),
-                },
-            )
-        except ValueError:
-            models = json.loads(self.engine("GET", "/v1/models"))["data"]
-            if any(model["id"] == name for model in models):
-                with self.lock:
-                    entry["registered"] = True
-                return
-            with self.lock:
-                entry["pinned"] = False
-            raise
-        with self.lock:
-            entry["registered"] = True
-            self.counters["registrations"] += 1
+        return self.local_files(name)
 
     def probe(self, name, workspace_id):
-        self.prepare(name, workspace_id)
+        self.prepare_version(name, workspace_id)
         result = json.loads(
             self.engine(
                 "POST",
                 "/v1/chat/completions",
                 {
-                    "model": name,
+                    "model": f"{workspace_id}/{name}",
                     "messages": [{"role": "user", "content": "Reply with READY."}],
                     "max_tokens": 8,
                     "temperature": 0,
@@ -294,7 +314,7 @@ class Loader:
             )
         )
         if (
-            result.get("model") != name
+            result.get("model") != f"{workspace_id}/{name}"
             or not result.get("choices")
             or not result.get("usage", {}).get("completion_tokens", 0)
         ):

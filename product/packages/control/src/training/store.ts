@@ -259,7 +259,7 @@ export const createTrainingStore = (database: ControlDatabase) => {
       return row && VersionRecordSchema.parse(row);
     },
 
-    async getHostingVersion(workspaceId: string, versionId: string) {
+    async getHostingVersion(workspaceId: string, versionName: string) {
       const [row] = await database
         .select({ task: tasks, version: taskVersions })
         .from(taskVersions)
@@ -271,7 +271,10 @@ export const createTrainingStore = (database: ControlDatabase) => {
         )
         .where(
           and(
-            eq(taskVersions.id, UuidSchema.parse(versionId)),
+            eq(
+              taskVersions.name,
+              VersionRecordSchema.shape.name.parse(versionName),
+            ),
             eq(tasks.workspaceId, UuidSchema.parse(workspaceId)),
             isNull(workspaces.archivedAt),
             eq(organizations.status, "active"),

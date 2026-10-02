@@ -425,7 +425,7 @@ impl GenerationIdentity {
         model_id: String,
         served_release_digest: String,
     ) -> Result<Self, GenerationIdentityError> {
-        if model_id.is_empty() || model_id.chars().count() > 200 {
+        if model_id.is_empty() || model_id.chars().count() > 300 {
             return Err(GenerationIdentityError::InvalidModelId);
         }
 
@@ -464,7 +464,7 @@ impl GenerationIdentity {
 
 #[derive(Debug, Error)]
 pub enum GenerationIdentityError {
-    #[error("model ID must contain between 1 and 200 characters")]
+    #[error("model ID must contain between 1 and 300 characters")]
     InvalidModelId,
     #[error("served release digest must be a lowercase SHA-256 digest")]
     InvalidReleaseDigest,
@@ -1055,7 +1055,7 @@ mod tests {
             Err(GenerationIdentityError::InvalidModelId)
         ));
         assert!(matches!(
-            GenerationIdentity::authenticated(&caller(), "x".repeat(201), digest),
+            GenerationIdentity::authenticated(&caller(), "x".repeat(301), digest),
             Err(GenerationIdentityError::InvalidModelId)
         ));
         assert!(matches!(

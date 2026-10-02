@@ -41,6 +41,22 @@ const generationSettled = (
 });
 
 describe("GenerationSettledSchema", () => {
+  it("accepts task version slugs longer than catalog model IDs", () => {
+    const name = `${"a".repeat(256)}-20261002-2`;
+    expect(
+      GenerationSettledSchema.safeParse(
+        generationSettled({ event_schema_version: 1, model_id: name }),
+      ).success,
+    ).toBe(true);
+    expect(
+      GenerationSettledSchema.safeParse(
+        generationSettled({
+          event_schema_version: 1,
+          model_id: "a".repeat(301),
+        }),
+      ).success,
+    ).toBe(false);
+  });
   it.each([
     ["version 1 without a service tier", { event_schema_version: 1 }],
     [

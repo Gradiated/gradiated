@@ -16,8 +16,7 @@ import { versionResponse } from "./training.js";
 
 const target = z.strictObject({
   workspace_id: UuidSchema,
-  version_id: UuidSchema,
-  sha256: TaskVersionSchema.shape.adapter.shape.sha256,
+  version_name: TaskVersionSchema.shape.name.min(1).max(300),
 });
 const errors = {
   401: { description: "Missing or invalid enrolled host credential." },
@@ -31,7 +30,7 @@ const grant = createRoute({
   path: "/api/internal/v1/adapter-downloads",
   operationId: "createPrivateAdapterDownload",
   description:
-    "Issue a versioned download grant for an exact workspace, version and checksum. Candidates may be unavailable for serving; this route does not promote them.",
+    "Issue a versioned download grant for an exact workspace and immutable version slug. Candidates may be unavailable for serving; this route does not promote them.",
   request: {
     body: {
       required: true,
@@ -120,11 +119,7 @@ export const registerAdapterHostingRoutes = (
 
   app.openapi(grant, async (context) => {
     const body = context.req.valid("json");
-    const row = await service.grant(
-      body.workspace_id,
-      body.version_id,
-      body.sha256,
-    );
+    const row = await service.grant(body.workspace_id, body.version_name);
 
     return context.json(
       {

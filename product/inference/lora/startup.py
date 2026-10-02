@@ -18,8 +18,8 @@ def start_preload(loader, targets, seconds=600):
             ):
                 break
             try:
-                loader.prepare(
-                    f"ft-{target['version_id']}-{target['sha256']}",
+                loader.prepare_version(
+                    target["version_name"],
                     target["workspace_id"],
                 )
                 loaded += 1

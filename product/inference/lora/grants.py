@@ -80,21 +80,12 @@ def resolver(base_url, identity):
     url = api_url(base_url, "adapter-downloads")
 
     def resolve(name, workspace_id):
-        match = re.fullmatch(r"ft-([a-f0-9-]{36})-([a-f0-9]{64})", name)
-        if not match:
-            raise ValueError("Invalid adapter identity")
-        target = {
-            "workspace_id": workspace_id,
-            "version_id": match[1],
-            "sha256": match[2],
-        }
+        if not isinstance(name, str) or not 0 < len(name) <= 300:
+            raise ValueError("Invalid version name")
+        target = {"workspace_id": workspace_id, "version_name": name}
         grant = read_private(url, identity, target)
         version = grant["version"]
-        if (
-            grant["workspace_id"] != workspace_id
-            or version["id"] != match[1]
-            or version["adapter"]["sha256"] != match[2]
-        ):
+        if grant["workspace_id"] != workspace_id or version["name"] != name:
             raise ValueError("Artifact grant identity mismatch")
         return grant
 

@@ -9,7 +9,7 @@ import { z } from "@hono/zod-openapi";
 import {
   CancellationOwnerSchema,
   GenerationStatusSchema,
-  ModelIdSchema,
+  BoundedIdentifierSchema,
   TimestampSchema,
   TokenCountSchema,
   UuidSchema,
@@ -35,7 +35,7 @@ const generationPropertyFields = {
   organization_id: UuidSchema,
   workspace_id: UuidSchema,
   api_key_id: UuidSchema,
-  model_id: ModelIdSchema,
+  model_id: BoundedIdentifierSchema,
   served_release_digest: z.string().regex(/^sha256:[a-f0-9]{64}$/),
   status: GenerationStatusSchema,
   streamed: z.boolean(),

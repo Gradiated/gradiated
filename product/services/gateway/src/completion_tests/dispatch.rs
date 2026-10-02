@@ -342,7 +342,7 @@ async fn a_rejected_generation_identity_is_logged_before_admission() {
     let logs = Logs::default();
     let _guard = logs.start();
     let mut request = qualified_request(1);
-    request.request.model = "m".repeat(201);
+    request.request.model = "m".repeat(301);
     let harness = Harness::new(request, []);
 
     assert_eq!(

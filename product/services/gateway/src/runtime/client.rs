@@ -189,10 +189,10 @@ impl ModelNames {
     pub(super) fn new(call: &Call<'_>) -> Self {
         let requested = call.request.model.clone();
         let runtime = call
-            .deployment
-            .release
+            .request
             .runtime_model_name
             .clone()
+            .or_else(|| call.deployment.release.runtime_model_name.clone())
             .unwrap_or_else(|| requested.clone());
 
         Self { requested, runtime }

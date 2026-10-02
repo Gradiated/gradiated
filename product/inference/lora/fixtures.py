@@ -47,10 +47,12 @@ def archive(rank=2, hostile=None):
 
 
 def grant(payload):
+    version_id = str(uuid.uuid4())
     return {
         "workspace_id": "01980000-0000-7000-8000-000000000001",
         "version": {
-            "id": str(uuid.uuid4()),
+            "id": version_id,
+            "name": f"version-{version_id}",
             "base_model_id": "base",
             "adapter": {
                 "format": "peft_lora",

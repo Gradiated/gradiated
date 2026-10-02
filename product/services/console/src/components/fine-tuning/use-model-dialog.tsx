@@ -16,7 +16,7 @@ const modelToReplace = (
   version: VersionView,
   production: VersionView | undefined,
 ) =>
-  production && production.name !== version.name
+  production && production.id !== version.id
     ? production.name
     : task.comparison_model_id;
 
@@ -52,8 +52,8 @@ export const UseModelDialog = ({
             ) : (
               <>
                 {" "}
-                Versions that are not in production load on first request; allow
-                up to a minute.
+                Adapters may load on first request, which can take longer than a
+                warm request.
               </>
             )}
           </DialogDescription>

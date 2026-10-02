@@ -60,3 +60,14 @@ test("ordinary Git-owned jobs remain eligible even with a training prefix", () =
     assert.doesNotThrow(() => assertCanStopJob(job));
   }
 });
+
+// Qualification jobs have a bounded owner and must survive unrelated production releases.
+test("an active qualification job cannot be removed by routine cleanup", () => {
+  const job = {
+      ID: "lora-qualification",
+      Meta: { gradiated_qualification: "lora" },
+      TaskGroups: [{ Count: 1 }],
+  };
+  assert.equal(isRuntimeOwnedJob(job), true);
+  assert.throws(() => assertCanStopJob(job), /qualification job/);
+});

@@ -3,6 +3,7 @@ import { pathToFileURL } from "node:url";
 
 export const isRuntimeOwnedJob = (job) =>
   Boolean(job.Meta?.gradiated_buffer_for) ||
+  Boolean(job.Meta?.gradiated_qualification) ||
   (job.Type === "batch" &&
     /^training-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-[1-9]\d*$/.test(
       job.ID,
@@ -15,7 +16,7 @@ export const assertCanStopJob = (job) => {
       (job.TaskGroups ?? []).some((group) => group.Count > 0))
   )
     throw new Error(
-      `${job.ID}: routine cleanup cannot stop a model, training job or controller-owned buffer`,
+      `${job.ID}: routine cleanup cannot stop a model, training job, controller-owned buffer or qualification job`,
     );
 };
 

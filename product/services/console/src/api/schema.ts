@@ -1348,6 +1348,8 @@ export interface components {
       sha256: string;
       size_bytes: number;
       rank: number;
+      /** @description Immutable base checkpoint revision used to train this adapter. */
+      base_model_revision?: string;
     };
     EvaluationResults: (
       | {

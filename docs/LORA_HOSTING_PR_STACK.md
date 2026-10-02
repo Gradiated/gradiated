@@ -6,7 +6,7 @@ Production enabling and live GPU qualification require separate authorization.
 
 | PR | Branch | Scope |
 | --- | --- | --- |
-| 1 | `feat/lora-hosting-contracts` | Immutable adapter identity and runtime compatibility/cache configuration |
+| 1 | `feat/lora-hosting-contracts` | Base revision metadata on existing task versions and derived immutable runtime names |
 | 2 | `feat/lora-vllm-runtime` | Verified PEFT loading, bounded caches, preparation, per-allocation admission and streaming |
 | 3 | `feat/lora-hosting-control` | Private artifact grants, candidate validation and the existing production pointer |
 | 4 | `feat/lora-private-inference` | Scoped gateway resolution, exact dispatch, release identity and console actions |
@@ -44,15 +44,17 @@ configuration pins base/tokenizer/runtime compatibility, TP geometry,
 module/layer coverage, rank and cache limits. Inference uses the existing base
 catalog capabilities and prices. Configuration may only enable qualified runtimes.
 
-Host configuration is installed with the base-model deployment. Its
-`tensor_parallel_size` configures the base engine and adapter tensor distribution;
-it is not an adapter attribute. Adapter preparation carries workspace ownership,
-immutable identity, base model/revision, rank, size and a download grant. It cannot
-override host configuration or select a different serving profile. The loader
-checks compatibility against its local configuration before loading. Existing
-training artifacts without a recorded base revision remain readable, but serving
-requires a verified base revision. Architecture-specific module/layer geometry is
-qualified against real artifacts, rather than limited by arbitrary schema caps.
+Reuse existing base-model deployment configuration for TP and runtime settings;
+add cache settings locally where consumed. These are not adapter attributes or a
+new shared host-profile schema. Artifact metadata comes from `TaskVersionSchema`
+and `TaskVersionAdapterSchema`, rather than a separate preparation model. Workspace
+ownership comes from the task. Runtime names are derived from the version ID and
+artifact checksum, not stored separately. Private artifact access will reuse the
+existing signing path and `AdapterDownloadSchema` for temporary download grants;
+signed URLs are not persisted on versions. The loader checks version metadata against its local runtime before
+loading. Existing artifacts without a recorded base revision remain readable,
+but serving requires a verified base revision. Architecture-specific module/layer
+geometry is qualified against real artifacts.
 
 Private selectors are `ft/<version_uuid>` and `tasks/<task_uuid>/production`,
 authorized and cached by workspace. Resolve production once; ongoing streams and

@@ -821,6 +821,7 @@ Verified disk files survive process restarts; CPU/GPU residency is rebuilt.
 
 Qualified runtime configuration pins the base/runtime/tokenizer release, TP
 geometry, supported target modules and cache/admission limits. These are host
-configuration, not stored adapter properties. Adapter preparation carries artifact
-metadata; the loader checks it against the host's local configuration. See
+configuration, not stored adapter properties. The loader reuses existing task
+version metadata and checks it against the host's local configuration. Signed
+download URLs are temporary grants and are not persisted on versions. See
 [the implementation stack](LORA_HOSTING_PR_STACK.md).

@@ -8,4 +8,7 @@ export const catalogModels = [
   createKev9bModelConfiguration(),
 ];
 
-export { createQwenSftModelConfiguration } from "./qwen3-0-6b.js";
+export {
+  createQwenSftModelConfiguration,
+  trainingOnlyModels,
+} from "./training.js";

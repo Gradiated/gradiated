@@ -20,6 +20,7 @@ import {
   RUN_STAGES,
   EVALUATION_JUDGES,
   DEFAULT_EVALUATION_JUDGE,
+  DEFAULT_COMPARISON_MODEL,
   type EvaluationJudge,
   TASK_VERSION_STATUSES,
   TRAINING_TRIGGERS,
@@ -58,7 +59,9 @@ export const tasks = pgTable(
     baseModelId: text("base_model_id").references(() => models.id, {
       onDelete: "restrict",
     }),
-    comparisonModelId: text("comparison_model_id"),
+    comparisonModelId: text("comparison_model_id").default(
+      DEFAULT_COMPARISON_MODEL,
+    ),
     judgeModelId: text("judge_model_id")
       .$type<EvaluationJudge>()
       .notNull()

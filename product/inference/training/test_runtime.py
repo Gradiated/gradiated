@@ -80,6 +80,42 @@ class RuntimeTests(unittest.TestCase):
             )
             self.assertEqual(events[1]["type"], "trainer_progress")
 
+    def test_external_evaluation_generates_only_adapter_answers(self):
+        with tempfile.TemporaryDirectory() as temp:
+            runtime = TrainingRuntime(temp, recipe={})
+            example = {
+                "id": "example",
+                "group": "session",
+                "prompt": [{"role": "user", "content": "request"}],
+            }
+            with (
+                patch.object(runtime, "load"),
+                patch.object(runtime, "download", return_value=Path(temp) / "input"),
+                patch.object(runtime, "load_adapter"),
+                patch("runtime.read_examples", return_value=[example]),
+                patch.object(
+                    runtime,
+                    "generate",
+                    return_value={"text": "answer", "tokens": 1, "seconds": 1},
+                ) as generate,
+                patch.object(runtime, "upload", return_value={"key": "result"}),
+            ):
+                runtime.run(
+                    {
+                        "operation": "generate",
+                        "external_evaluation": True,
+                        "adapter": {},
+                        "dataset": {},
+                        "output": {},
+                    },
+                    lambda event: None,
+                )
+                generate.assert_called_once_with(example["prompt"], adapted=True)
+                saved = json.loads((Path(temp) / "predictions.json").read_text())
+                self.assertEqual(saved[0]["id"], "example")
+                self.assertNotIn("comparison", saved[0])
+                self.assertNotIn("judgment", saved[0])
+
     def test_rejects_download_with_wrong_digest(self):
         with tempfile.TemporaryDirectory() as temp:
             runtime = TrainingRuntime(temp, recipe={})

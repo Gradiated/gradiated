@@ -36,7 +36,15 @@ it("handles disabled, invalid and impossible schedules", () => {
 });
 
 it("separates training bases from comparison-only hosted and frontier models", () => {
-  expect(TRAINING_BASE_MODELS.map(({ id }) => id)).toEqual(["Qwen/Qwen3-0.6B"]);
+  expect(TRAINING_BASE_MODELS.map(({ id }) => id)).toEqual([
+    "z-ai/glm-5.3-flash",
+    "Qwen/Qwen3-0.6B",
+    "Qwen/Qwen3-1.7B",
+    "Qwen/Qwen3-4B",
+    "Qwen/Qwen3-8B",
+    "Qwen/Qwen3-14B",
+    "Qwen/Qwen3-32B",
+  ]);
   const ids = COMPARISON_MODELS.map(({ id }) => id);
   expect(ids).toContain("openai/gpt-6-astra");
   expect(ids).toContain("anthropic/claude-opus-5-5");

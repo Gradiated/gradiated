@@ -172,3 +172,23 @@ it("keeps legacy frozen host configurations in the default pool", () => {
     trainingHostJob(runId, 1, [{ nodeId, podId: "pod1" }], legacy).NodePool,
   ).toBe("default");
 });
+
+it("reserves the recipe's GPU count within one training node", () => {
+  const job = trainingHostJob(runId, 1, [{ nodeId, podId: "pod1" }], {
+    ...config,
+    recipe: { model: "zai-org/GLM-5.3-Flash-BF16", gpu_count: 4 },
+  });
+  const trainer = job.TaskGroups[0]!.Tasks.find(
+    (task) => task.Name === "trainer",
+  )!;
+  expect(trainer.Resources.Devices).toMatchObject([{ Count: 4 }]);
+  expect(JSON.parse(trainer.Env!.TRAINING_RECIPE_JSON!)).toMatchObject({
+    gpu_count: 4,
+  });
+  expect(() =>
+    trainingHostJob(runId, 1, [{ nodeId, podId: "pod1" }], {
+      ...config,
+      recipe: { gpu_count: 0 },
+    }),
+  ).toThrow();
+});

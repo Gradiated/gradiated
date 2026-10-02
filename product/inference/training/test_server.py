@@ -1,9 +1,32 @@
+import json
 import threading
 import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
 
 from server import Host
+
+
+class StartupTests(unittest.TestCase):
+    def test_accepts_lease_heartbeats_before_loading_large_models(self):
+        recipe = {"model": "test/glm", "gpu_count": 4}
+        with (
+            patch.dict(
+                "os.environ",
+                {
+                    "NOMAD_ALLOC_DIR": "/tmp/allocation",
+                    "NOMAD_ALLOC_ID": "allocation-1",
+                    "TRAINING_RECIPE_JSON": json.dumps(recipe),
+                },
+            ),
+            patch("server.TrainingRuntime") as trainer,
+            patch("server.threading.Thread"),
+        ):
+            host = Host()
+            trainer.assert_called_once_with("/tmp/allocation/training", recipe)
+            trainer.return_value.load.assert_not_called()
+            trainer.return_value.stop.is_set.return_value = False
+            host.renew("allocation-1")
 
 
 class TrainerEventTests(unittest.TestCase):

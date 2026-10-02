@@ -1,0 +1,7 @@
+ALTER TABLE "workspaces" DROP CONSTRAINT "workspaces_default_judge_model_check";--> statement-breakpoint
+ALTER TABLE "tasks" DROP CONSTRAINT "tasks_judge_model_check";--> statement-breakpoint
+ALTER TABLE "workspaces" ALTER COLUMN "default_judge_model" SET DEFAULT 'openai/gpt-6.1-sol';--> statement-breakpoint
+ALTER TABLE "tasks" ALTER COLUMN "comparison_model_id" SET DEFAULT 'openai/gpt-6.1-sol';--> statement-breakpoint
+ALTER TABLE "tasks" ALTER COLUMN "judge_model_id" SET DEFAULT 'openai/gpt-6.1-sol';--> statement-breakpoint
+ALTER TABLE "workspaces" ADD CONSTRAINT "workspaces_default_judge_model_check" CHECK ("workspaces"."default_judge_model" in ('Qwen/Qwen3-0.6B', 'openai/gpt-6.1-sol', 'openai/gpt-6-astra', 'openai/gpt-6-sol', 'openai/gpt-6-luna', 'openai/gpt-5.6-sol', 'openai/gpt-5', 'anthropic/claude-fable-5-1', 'anthropic/claude-opus-5-5', 'anthropic/claude-sonnet-5-5', 'anthropic/claude-opus-5', 'anthropic/claude-sonnet-5'));--> statement-breakpoint
+ALTER TABLE "tasks" ADD CONSTRAINT "tasks_judge_model_check" CHECK ("tasks"."judge_model_id" in ('Qwen/Qwen3-0.6B', 'openai/gpt-6.1-sol', 'openai/gpt-6-astra', 'openai/gpt-6-sol', 'openai/gpt-6-luna', 'openai/gpt-5.6-sol', 'openai/gpt-5', 'anthropic/claude-fable-5-1', 'anthropic/claude-opus-5-5', 'anthropic/claude-sonnet-5-5', 'anthropic/claude-opus-5', 'anthropic/claude-sonnet-5'));

@@ -14,6 +14,7 @@ export type TrainingHostConfig = {
   baseId: string;
   gpuType: string;
   nodePool?: string | undefined;
+  recipe?: Record<string, unknown> | undefined;
 };
 
 export const trainingHostJob = (
@@ -33,6 +34,12 @@ export const trainingHostJob = (
   z.string()
     .regex(/^[0-9a-f]{64}$/)
     .parse(config.bundleSha256);
+  const gpuCount = z
+    .number()
+    .int()
+    .min(1)
+    .max(8)
+    .parse(config.recipe?.gpu_count ?? 1);
   const id = `training-${runId}-${ordinal}`;
   return {
     ID: id,
@@ -118,14 +125,17 @@ export const trainingHostJob = (
               HOME: "/home/runtime",
               GRADIATED_RUNTIME_ROOT: "${NOMAD_ALLOC_DIR}/runtime",
               TRAINER_IMAGE_DIGEST: config.bundleSha256,
+              ...(config.recipe
+                ? { TRAINING_RECIPE_JSON: JSON.stringify(config.recipe) }
+                : {}),
             },
             Resources: {
-              CPU: 4000,
-              MemoryMB: 16000,
+              CPU: 4000 * gpuCount,
+              MemoryMB: 16000 * gpuCount,
               Devices: [
                 {
                   Name: "nvidia/gpu",
-                  Count: 1,
+                  Count: gpuCount,
                   Constraints: [
                     {
                       LTarget: "${device.model}",

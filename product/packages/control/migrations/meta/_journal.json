@@ -99,6 +99,13 @@
       "when": 1790933359926,
       "tag": "0013_task_judge_model",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1790943865191,
+      "tag": "0014_training_model_defaults",
+      "breakpoints": true
     }
   ]
 }

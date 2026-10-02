@@ -23,6 +23,7 @@ import {
 import { createTrainingExecutorActivities } from "./executor-activities.js";
 import { trainingConfiguration } from "./configuration.js";
 import { createMockTrainingActivities } from "./activities.js";
+import { createEvaluationModels } from "./evaluation-models.js";
 import { stopClosedTrainingJobs } from "./cleanup.js";
 
 export const runTrainingWorker = async (input: {
@@ -58,6 +59,7 @@ export const runTrainingWorker = async (input: {
 
     return createTrainingExecutorActivities({
       database: input.database,
+      evaluationModels: createEvaluationModels(input.environment),
       engine,
       contents: input.contents,
       artifacts: createTrainingArtifacts(

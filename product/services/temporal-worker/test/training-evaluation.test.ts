@@ -78,3 +78,37 @@ it("rejects a single A/B judgment without an answer order", () => {
     predictionsSchema.safeParse([{ ...pair, judgment: "A" }]).success,
   ).toBe(false);
 });
+
+it("estimates Qwen output cost without transferring the rate to another base", async () => {
+  const { estimateOutputCost } = await import("../src/training/evaluation.js");
+  const rows = predictionsSchema.parse([
+    { ...pair, judgment: "TIE", fine_tuned_first: true },
+  ]);
+  expect(
+    estimateOutputCost(rows, "Qwen/Qwen3-0.6B", "Qwen/Qwen3-0.6B"),
+  ).toEqual({ fine_tuned: 1000, comparison: 2000 });
+  expect(
+    estimateOutputCost(rows, "another/base", "Qwen/Qwen3-0.6B"),
+  ).toBeNull();
+});
+
+it("rounds mean output costs to integer nano-USD and handles empty results", async () => {
+  const { estimateOutputCost } = await import("../src/training/evaluation.js");
+  const rows = predictionsSchema.parse(
+    [0, 0, 1].map((tokens, i) => ({
+      ...pair,
+      id: String(i),
+      judgment: "TIE",
+      fine_tuned_first: true,
+      fine_tuned: { ...pair.fine_tuned, tokens },
+      comparison: { ...pair.comparison, tokens: 1 - tokens },
+    })),
+  );
+
+  expect(
+    estimateOutputCost(rows, "Qwen/Qwen3-0.6B", "Qwen/Qwen3-0.6B"),
+  ).toEqual({ fine_tuned: 33, comparison: 67 });
+  expect(
+    estimateOutputCost([], "Qwen/Qwen3-0.6B", "Qwen/Qwen3-0.6B"),
+  ).toBeNull();
+});

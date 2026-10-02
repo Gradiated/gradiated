@@ -11,7 +11,7 @@ export const MODEL_CATALOG = [
     supportedUses: ["comparison", "serving"],
   },
   { id: "z-ai/glm-5.3-flash", supportedUses: ["comparison", "serving"] },
-  { id: "jaredpalmer/kev-9b", supportedUses: ["comparison", "serving"] },
+  { id: "jaredpalmer/kev-9b", supportedUses: ["serving"] },
   { id: "Qwen/Qwen3-0.6B", supportedUses: ["judge", "training", "comparison"] },
   { id: "openai/gpt-6-astra", supportedUses: ["judge", "comparison"] },
   { id: "openai/gpt-6-sol", supportedUses: ["judge", "comparison"] },
@@ -53,3 +53,10 @@ export const TRAINING_ONLY_MODELS = TRAINING_BASE_MODELS.filter(
   (model) =>
     !(model.supportedUses as readonly ModelUseCase[]).includes("serving"),
 );
+
+// Temporary user-authorized reference rates, not provider or GPU charges.
+export const QWEN_PLACEHOLDER_PRICING = {
+  model_id: "Qwen/Qwen3-0.6B",
+  input_nano_usd_per_token: 50,
+  output_nano_usd_per_token: 100,
+} as const;

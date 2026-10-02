@@ -28,7 +28,11 @@ import {
   type TrainingHostConfig,
 } from "./nomad-host.js";
 
-import { predictionsSchema, summarizePredictions } from "./evaluation.js";
+import {
+  estimateOutputCost,
+  predictionsSchema,
+  summarizePredictions,
+} from "./evaluation.js";
 
 import { persistTrainingDataset } from "./dataset.js";
 
@@ -330,6 +334,11 @@ export const createTrainingExecutorActivities = (options: {
         }
         const predictions = predictionsSchema.parse(await json(artifact.key));
         const metrics = summarizePredictions(predictions);
+        const cost = estimateOutputCost(
+          predictions,
+          input.baseModelId,
+          input.comparisonModelId,
+        );
         const summary: RunEvaluation = {
           judging_method: metrics.judging_method,
           holdout_groups: metrics.holdout_groups,
@@ -340,7 +349,8 @@ export const createTrainingExecutorActivities = (options: {
             comparator_model_id: input.comparisonModelId,
             ...metrics.fractions,
           },
-          cost_per_request_nano_usd: null,
+          cost_per_request_nano_usd: cost,
+          ...(cost ? { cost_basis: "placeholder_output_only" as const } : {}),
           output_tokens_per_second: metrics.output_tokens_per_second,
           error_rate: 0,
         };

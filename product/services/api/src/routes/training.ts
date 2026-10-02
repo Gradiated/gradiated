@@ -5,6 +5,7 @@ import {
   PromoteVersionSchema,
   TaskVersionPathSchema,
   AdapterDownloadSchema,
+  EvaluationResultsSchema,
   TaskListSchema,
   TaskPathSchema,
   TaskSchema,
@@ -151,6 +152,20 @@ const listVersions = createRoute({
     ...errors,
   },
 });
+const evaluationResults = createRoute({
+  method: "get",
+  path: `${base}/tasks/{task}/versions/{version_id}/evaluation`,
+  operationId: "getEvaluationResults",
+  tags: ["Training"],
+  request: { params: TaskVersionPathSchema },
+  responses: {
+    200: json(
+      EvaluationResultsSchema,
+      "Held-out responses and judge decisions.",
+    ),
+    ...errors,
+  },
+});
 const downloadAdapter = createRoute({
   method: "get",
   path: `${base}/tasks/{task}/versions/{version_id}/adapter`,
@@ -185,6 +200,7 @@ const taskResponse = (task: TaskRecord): Task => ({
   name: task.name,
   base_model_id: task.baseModelId,
   comparison_model_id: task.comparisonModelId,
+  judge_model_id: task.judgeModelId,
   production_version_id: task.productionVersionId,
   training_schedule: task.trainingSchedule,
 });
@@ -337,6 +353,18 @@ export const registerTrainingRoutes = (
       { data: versions.map((version) => versionResponse(task, version)) },
       200,
     );
+  });
+  app.openapi(evaluationResults, async (c) => {
+    const user = await requireUser(c);
+    const p = c.req.valid("param");
+    const results = await training.evaluationResults(
+      user.id,
+      p.workspace_id,
+      p.task,
+      p.version_id,
+    );
+    c.header("Cache-Control", "no-store");
+    return c.json(results, 200);
   });
   app.openapi(downloadAdapter, async (c) => {
     const user = await requireUser(c);

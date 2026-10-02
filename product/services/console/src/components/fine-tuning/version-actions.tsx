@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { EvaluationResultsDialog } from "./evaluation-results-dialog";
 import { EvaluationPanel } from "@/components/fine-tuning/evaluation-panel";
 import { DownloadAdapterDialog } from "@/components/fine-tuning/download-adapter-dialog";
 import { PromoteDialog } from "@/components/fine-tuning/promote-dialog";
@@ -7,7 +9,7 @@ import type { TaskRow, VersionView } from "@/store/fine-tuning-types";
 import { useTaskHistory } from "@/hooks/use-training";
 
 export type VersionAction = Readonly<{
-  kind: "use" | "download" | "promote";
+  kind: "use" | "download" | "promote" | "results";
   versionId: string;
 }>;
 
@@ -41,14 +43,28 @@ export const VersionActionButtons = ({
   </>
 );
 
-export const VersionEvaluation = ({ version }: { version: VersionView }) =>
-  version.summary ? (
-    <EvaluationPanel summary={version.summary} />
+export const VersionEvaluation = ({ version }: { version: VersionView }) => {
+  const [showResults, setShowResults] = useState(false);
+
+  return version.summary ? (
+    <>
+      <EvaluationPanel
+        summary={version.summary}
+        onViewResults={() => setShowResults(true)}
+      />
+      {showResults ? (
+        <EvaluationResultsDialog
+          version={version}
+          onClose={() => setShowResults(false)}
+        />
+      ) : null}
+    </>
   ) : (
     <p className="text-sm text-muted-foreground">
       Evaluation not available yet.
     </p>
   );
+};
 
 export const VersionActionDialog = ({
   task,
@@ -69,6 +85,8 @@ export const VersionActionDialog = ({
     return null;
 
   switch (action.kind) {
+    case "results":
+      return <EvaluationResultsDialog version={version} onClose={onClose} />;
     case "use":
       return (
         <UseModelDialog

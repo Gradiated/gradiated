@@ -1,3 +1,5 @@
+import { Skeleton } from "@/components/ui/skeleton";
+
 export const QueryState = ({
   query,
 }: {
@@ -17,7 +19,13 @@ export const QueryState = ({
       </button>
     </p>
   ) : query.isPending ? (
-    <p role="status" className="p-4 text-sm text-muted-foreground">
-      Loading training data…
-    </p>
+    <div
+      role="status"
+      aria-label="Loading training data"
+      className="space-y-3 p-4"
+    >
+      <Skeleton className="h-6 w-48" />
+      <Skeleton className="h-36 w-full" />
+      <Skeleton className="h-36 w-full" />
+    </div>
   ) : null;

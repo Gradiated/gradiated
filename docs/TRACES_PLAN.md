@@ -55,7 +55,7 @@ name in every direction.
 | Setting | Values | Default |
 | --- | --- | --- |
 | `trace_capture_enabled` | `true`, `false` | `false` |
-| `trace_retention_days` | 30, 90, 180 | 30 |
+| `trace_retention_days` | 30, 90, 180 | 90 |
 
 Migration `0007` adds both workspace settings. The proxy reads them with its
 identity query and caches them for 15 seconds. Capture requires both

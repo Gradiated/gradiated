@@ -23,7 +23,7 @@ research, alias and third-party-provider concepts.
   durable model-deployment registry. Git owns the infrastructure declarations
   that create the corresponding SGLang workloads, not a second routing record.
 - Prompts and responses are kept only when a workspace enables trace capture,
-  as generation contents in regional S3 batches with 30-day retention. No
+  as generation contents in regional S3 batches with 90-day default retention. No
   database table holds them. See [TRACES_PLAN.md](TRACES_PLAN.md).
 - Organization membership is the human authorization boundary. Workspaces are
   policy and cost-attribution boundaries available to all active members.
@@ -173,7 +173,7 @@ There is at most one pending invitation per organization and normalized email.
 | `is_default`      | boolean     | no   | Exactly one default workspace per organization          |
 | `archived_at`     | timestamptz | yes  | Null while usable; archived workspaces cannot serve API |
 | `trace_capture_enabled` | boolean | no | Opt-in content capture; defaults to false |
-| `trace_retention_days` | smallint | no | 30, 90 or 180; defaults to 30 |
+| `trace_retention_days` | smallint | no | 30, 90 or 180; defaults to 90 |
 | `created_at`      | timestamptz | no   | Creation time                                           |
 | `updated_at`      | timestamptz | no   | Last mutation time                                      |
 
@@ -805,3 +805,5 @@ for concurrent authorized requests. Availability means durable serving eligibili
 not residency in an inference runtime's adapter cache. Comparison model IDs may
 name external providers; they are not restricted to the hosted-model table.
 Executor-specific support is checked when admitting a run.
+
+Workspace `default_judge_model` seeds `tasks.judge_model_id` when a task is first captured. Each task can override its judge independently; changing the workspace default never rewrites existing tasks. Migration 0013 renames the workspace field and backfills existing tasks from their workspace’s current default. Training admission snapshots the saved task judge.

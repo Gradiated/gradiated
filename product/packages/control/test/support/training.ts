@@ -31,6 +31,7 @@ export const seedTrainingTask = async (database: ControlDatabase) => {
       name: "triage",
       baseModelId: model.id,
       comparisonModelId: "openai/gpt-5",
+      judgeModelId: "openai/gpt-5",
       trainingSchedule: "0 3 * * 1",
     })
     .returning();

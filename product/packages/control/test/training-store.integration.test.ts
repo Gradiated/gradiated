@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   tasks,
+  workspaces,
   trainingRuns,
   trainingRunEvents,
 } from "../src/db/schema/index.js";
@@ -41,6 +42,24 @@ describe("training record store", () => {
       .returning();
     return run!;
   };
+
+  it("persists the task judge independently of later workspace default changes", async () => {
+    const own = await seedTrainingTask(db.database);
+    const store = createTrainingStore(db.database);
+    await store.updateTask(own.task.id, {
+      judge_model_id: "Qwen/Qwen3-0.6B",
+    });
+    await db.database
+      .update(workspaces)
+      .set({ defaultJudgeModel: "openai/gpt-6-sol" })
+      .where(eq(workspaces.id, own.workspaceId));
+    expect(await store.getTask(own.workspaceId, own.task.name)).toMatchObject({
+      judgeModelId: "Qwen/Qwen3-0.6B",
+    });
+    expect(await store.admissionContext(own.task.id)).toMatchObject({
+      task: { judgeModelId: "Qwen/Qwen3-0.6B" },
+    });
+  });
 
   it("scopes task, run and admission lookups to the workspace and task filter", async () => {
     const own = await seedTrainingTask(db.database);

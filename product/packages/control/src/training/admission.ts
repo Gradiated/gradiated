@@ -76,7 +76,7 @@ export const prepareTraining = async (
     name: task.name,
     baseModelId: task.baseModelId,
     comparisonModelId: task.comparisonModelId,
-    judgeModelId: workspace.evaluationJudge,
+    judgeModelId: task.judgeModelId,
     inputCutoff: cutoff.toISOString(),
     trigger,
     requestedBy,

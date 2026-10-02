@@ -110,8 +110,8 @@ export const createWorkspaceApiKeyService = (
         name: input.name,
         isDefault: false,
         traceCaptureEnabled: false,
-        traceRetentionDays: 30,
-        evaluationJudge: DEFAULT_EVALUATION_JUDGE,
+        traceRetentionDays: 90,
+        defaultJudgeModel: DEFAULT_EVALUATION_JUDGE,
         archivedAt: null,
         createdAt: now,
         updatedAt: now,
@@ -130,7 +130,7 @@ export const createWorkspaceApiKeyService = (
         .set({
           traceCaptureEnabled: input.trace_capture_enabled,
           traceRetentionDays: input.trace_retention_days,
-          evaluationJudge: input.evaluation_judge,
+          defaultJudgeModel: input.default_judge_model,
           updatedAt: new Date(),
         })
         .where(eq(workspaces.id, workspaceId))

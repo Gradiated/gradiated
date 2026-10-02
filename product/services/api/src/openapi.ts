@@ -49,6 +49,7 @@ export const unservedDependencies = (): AppDependencies => ({
       getRun: unserved("training.getRun"),
       listRunEvents: unserved("training.listRunEvents"),
       listVersions: unserved("training.listVersions"),
+      evaluationResults: unserved("training.evaluationResults"),
       downloadAdapter: unserved("training.downloadAdapter"),
       promote: unserved("training.promote"),
     },

@@ -143,8 +143,8 @@ export const workspaces = pgTable(
     traceCaptureEnabled: boolean("trace_capture_enabled")
       .notNull()
       .default(false),
-    traceRetentionDays: smallint("trace_retention_days").notNull().default(30),
-    evaluationJudge: text("evaluation_judge")
+    traceRetentionDays: smallint("trace_retention_days").notNull().default(90),
+    defaultJudgeModel: text("default_judge_model")
       .$type<EvaluationJudge>()
       .notNull()
       .default(DEFAULT_EVALUATION_JUDGE),
@@ -157,8 +157,8 @@ export const workspaces = pgTable(
   },
   (table) => [
     check(
-      "workspaces_evaluation_judge_check",
-      sql`${table.evaluationJudge} in (${sql.raw(EVALUATION_JUDGES.map((judge) => `'${judge}'`).join(", "))})`,
+      "workspaces_default_judge_model_check",
+      sql`${table.defaultJudgeModel} in (${sql.raw(EVALUATION_JUDGES.map((judge) => `'${judge}'`).join(", "))})`,
     ),
     check(
       "workspaces_trace_retention_days_check",

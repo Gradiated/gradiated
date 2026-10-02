@@ -18,6 +18,9 @@ import {
 
 import {
   RUN_STAGES,
+  EVALUATION_JUDGES,
+  DEFAULT_EVALUATION_JUDGE,
+  type EvaluationJudge,
   TASK_VERSION_STATUSES,
   TRAINING_TRIGGERS,
   type RunDatasetSummary,
@@ -56,6 +59,10 @@ export const tasks = pgTable(
       onDelete: "restrict",
     }),
     comparisonModelId: text("comparison_model_id"),
+    judgeModelId: text("judge_model_id")
+      .$type<EvaluationJudge>()
+      .notNull()
+      .default(DEFAULT_EVALUATION_JUDGE),
     productionVersionId: uuid("production_version_id").references(
       (): AnyPgColumn => taskVersions.id,
       { onDelete: "set null" },
@@ -65,6 +72,10 @@ export const tasks = pgTable(
   (table) => [
     unique("tasks_workspace_name_unique").on(table.workspaceId, table.name),
     unique("tasks_id_workspace_unique").on(table.id, table.workspaceId),
+    check(
+      "tasks_judge_model_check",
+      sql`${table.judgeModelId} in (${inList(EVALUATION_JUDGES)})`,
+    ),
     check("tasks_name_routable_check", sql`${table.name} not in ('.', '..')`),
   ],
 );

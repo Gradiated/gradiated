@@ -2,6 +2,8 @@ import { Info } from "lucide-react";
 
 import {
   costAdvantage,
+  hasEvaluationCost,
+  usesQwenPlaceholderPrice,
   costPer1kRequests,
   outputSpeed,
   speedAdvantage,
@@ -173,24 +175,34 @@ export const EvaluationPanel = ({
       </div>
 
       <OutcomeBar outcome={summary.vs_comparison} />
-      <p className="mt-1.5 text-xs text-muted-foreground">
-        Resolved {formatPercent(1 - summary.vs_comparison.unresolved)} ·
-        Unresolved {formatPercent(summary.vs_comparison.unresolved)}
-      </p>
 
       <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-foreground tabular-nums">
-        {summary.cost_per_request_nano_usd && (
+        {usesQwenPlaceholderPrice(summary) ? (
+          <span>
+            Temporary token pricing{" "}
+            <RatioLabel
+              ratio={costAdvantage(summary)}
+              detail={costPer1kRequests(summary)}
+            />
+          </span>
+        ) : hasEvaluationCost(summary) ? (
           <Comparison
-            name="Cost"
+            name={summary.cost_basis ? "Estimated output cost" : "Cost"}
             ratio={costAdvantage(summary)}
             numbers={costPer1kRequests(summary)}
           />
-        )}
+        ) : null}
         <Comparison
           name="Speed"
           ratio={speedAdvantage(summary)}
           numbers={outputSpeed(summary)}
         />
+        <span>
+          Resolved{" "}
+          <span className="font-medium">
+            {formatPercent(1 - summary.vs_comparison.unresolved)}
+          </span>
+        </span>
         <span>
           Errors{" "}
           <span className="font-medium">

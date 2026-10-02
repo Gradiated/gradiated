@@ -11,16 +11,16 @@ export const JudgeSettings = () => {
   return (
     <>
       <SettingRow
-        title="Judge model"
-        description="This is the model used to compare fine-tuned models vs existing models to decide which is better."
+        title="Default judge model"
+        description="New tasks start with this judge. Change an individual task’s judge in its settings."
       >
         <OptionSelect
-          label="Judge model"
+          label="Default judge model"
           className="w-64 font-mono text-xs"
-          value={workspace.evaluation_judge}
+          value={workspace.default_judge_model}
           disabled={!canEdit}
-          onValueChange={(evaluation_judge) =>
-            save.mutate({ evaluation_judge })
+          onValueChange={(default_judge_model) =>
+            save.mutate({ default_judge_model })
           }
           options={JUDGE_MODELS.map(({ id }) => ({ value: id, label: id }))}
         />

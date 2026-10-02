@@ -51,14 +51,15 @@ describe("shared model catalog", () => {
     for (const id of judgeIds) {
       expect(EvaluationJudgeSchema.parse(id)).toBe(id);
       expect(
-        UpdateWorkspaceSchema.parse({ evaluation_judge: id }).evaluation_judge,
+        UpdateWorkspaceSchema.parse({ default_judge_model: id })
+          .default_judge_model,
       ).toBe(id);
     }
     expect(
       EvaluationJudgeSchema.safeParse(DEFAULT_EVALUATION_JUDGE).success,
     ).toBe(true);
     expect(
-      UpdateWorkspaceSchema.safeParse({ evaluation_judge: "unknown/model" })
+      UpdateWorkspaceSchema.safeParse({ default_judge_model: "unknown/model" })
         .success,
     ).toBe(false);
   });

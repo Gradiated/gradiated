@@ -43,7 +43,7 @@ export const DownloadAdapterDialog = ({
           <DialogDescription>
             The adapter is yours. It is a standard PEFT LoRA adapter for{" "}
             <span className="font-mono">{version.base_model_id}</span> and runs
-            anywhere that base runs — PEFT, vLLM with{" "}
+            anywhere that base runs: PEFT, vLLM with{" "}
             <span className="font-mono">--enable-lora</span>, or SGLang.
           </DialogDescription>
         </DialogHeader>

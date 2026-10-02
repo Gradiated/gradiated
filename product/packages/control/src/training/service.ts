@@ -153,16 +153,17 @@ export const createTrainingService = (
       }
 
       const updated = await records.updateTask(task.id, input);
-      try {
-        await engine?.updateSchedule(updated.id, updated.trainingSchedule);
-      } catch (error) {
-        console.warn(
-          JSON.stringify({
-            event: "training_schedule_update_failed",
-            task_id: updated.id,
-            error_name: error instanceof Error ? error.name : "UnknownError",
-          }),
-        );
+      if (engine || input.training_schedule !== undefined) {
+        try {
+          if (!engine) throw new Error("Training engine unavailable");
+
+          await engine.updateSchedule(updated.id, updated.trainingSchedule);
+        } catch {
+          throw new ControlServiceError(
+            "unavailable",
+            "The schedule was saved, but automatic training could not be updated. Retry saving the schedule.",
+          );
+        }
       }
 
       return updated;
@@ -207,6 +208,25 @@ export const createTrainingService = (
       const versions = await records.listVersions(task.id);
 
       return { task, versions };
+    },
+
+    async evaluationResults(
+      userId: string,
+      workspaceId: string,
+      name: string,
+      versionId: string,
+    ) {
+      await member(userId, workspaceId);
+      const task = await findTask(workspaceId, name);
+      const version = await records.getVersion(task.id, versionId);
+      if (!version) throw notFound("version");
+      if (!downloads?.results)
+        throw new ControlServiceError(
+          "unavailable",
+          "Evaluation storage is not configured.",
+        );
+
+      return downloads.results(version.trainingRunId);
     },
 
     async downloadAdapter(

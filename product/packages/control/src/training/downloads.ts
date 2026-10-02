@@ -1,7 +1,11 @@
+import { createHash } from "node:crypto";
+import { z } from "zod";
+import { EvaluationResultsSchema } from "@gradiated/contracts";
 import type { ObjectStorage } from "../storage/object-storage.js";
 import { ControlServiceError } from "../errors.js";
 
 export type AdapterDownloads = {
+  results?: (runId: string) => Promise<z.infer<typeof EvaluationResultsSchema>>;
   sign(
     uri: string,
     runId: string,
@@ -12,10 +16,68 @@ export type AdapterDownloads = {
 
 export const createAdapterDownloads = (
   storage:
-    | Pick<ObjectStorage, "bucket" | "head" | "checksum" | "signDownload">
+    | Pick<
+        ObjectStorage,
+        "bucket" | "head" | "checksum" | "signDownload" | "read"
+      >
     | undefined,
 ): AdapterDownloads => {
   return {
+    async results(runId) {
+      if (!storage)
+        throw new ControlServiceError(
+          "unavailable",
+          "Evaluation storage is not configured.",
+        );
+
+      try {
+        const prefix = `runs/${runId}/evaluation/`;
+        const manifest = z
+          .object({
+            key: z.string(),
+            size_bytes: z
+              .number()
+              .int()
+              .positive()
+              .max(8 * 1024 * 1024),
+            sha256: z.string().regex(/^[0-9a-f]{64}$/),
+          })
+          .parse(
+            JSON.parse(
+              Buffer.from(
+                await storage.read(`${prefix}result.json`, {
+                  maxBytes: 4096,
+                  timeoutMs: 10_000,
+                }),
+              ).toString("utf8"),
+            ),
+          );
+        if (
+          !manifest.key.startsWith(prefix) ||
+          manifest.key.split("/").some((part) => part === ".." || part === ".")
+        )
+          throw new Error("Invalid evaluation artifact.");
+
+        const bytes = await storage.read(manifest.key, {
+          maxBytes: manifest.size_bytes,
+          timeoutMs: 10_000,
+        });
+        if (
+          bytes.length !== manifest.size_bytes ||
+          createHash("sha256").update(bytes).digest("hex") !== manifest.sha256
+        )
+          throw new Error("Evaluation integrity check failed.");
+
+        return EvaluationResultsSchema.parse(
+          JSON.parse(Buffer.from(bytes).toString("utf8")),
+        );
+      } catch {
+        throw new ControlServiceError(
+          "unavailable",
+          "Evaluation results could not be loaded. Please try again.",
+        );
+      }
+    },
     async sign(uri, runId, sizeBytes, sha256) {
       const bucket = storage?.bucket;
       const prefix = `s3://${bucket}/runs/${runId}/`;

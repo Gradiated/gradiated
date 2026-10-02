@@ -8,7 +8,7 @@ import {
   UuidSchema,
 } from "./common.js";
 
-import { EVALUATION_JUDGES } from "./model-catalog.js";
+import { COMPARISON_MODELS, EVALUATION_JUDGES } from "./model-catalog.js";
 import { RUN_STAGES, TERMINAL_RUN_STAGES } from "./training-stages.js";
 
 export * from "./training-stages.js";
@@ -64,6 +64,7 @@ export const RunEvaluationSchema = z
     judge_model_id: EvaluationJudgeSchema,
     vs_comparison: JudgeOutcomeSchema,
     cost_per_request_nano_usd: PairSchema.nullable(),
+    cost_basis: z.literal("placeholder_output_only").optional(),
     output_tokens_per_second: PairSchema,
     error_rate: FractionSchema,
   })
@@ -295,6 +296,7 @@ export const TaskSchema = z
     base_model_id: ModelIdSchema.nullable(),
     comparison_model_id: ModelIdSchema.nullable(),
     production_version_id: UuidSchema.nullable(),
+    judge_model_id: EvaluationJudgeSchema,
     training_schedule: TaskTrainingScheduleSchema,
   })
   .openapi("Task");
@@ -303,7 +305,11 @@ export type Task = z.infer<typeof TaskSchema>;
 export const UpdateTaskSchema = z
   .strictObject({
     base_model_id: ModelIdSchema,
-    comparison_model_id: ModelIdSchema,
+    comparison_model_id: ModelIdSchema.refine(
+      (id) => COMPARISON_MODELS.some((model) => model.id === id),
+      "Choose a supported comparison model.",
+    ),
+    judge_model_id: EvaluationJudgeSchema,
     training_schedule: TaskTrainingScheduleSchema,
   })
   .partial()
@@ -386,3 +392,28 @@ export const StartTrainingRunSchema = z
 export const StartTrainingRunResponseSchema = z
   .object({ id: UuidSchema })
   .openapi("StartTrainingRunResponse");
+
+const EvaluationPredictionSchema = z.object({
+  text: z.string(),
+  tokens: z.number().int().nonnegative(),
+  seconds: z.number().positive(),
+});
+const EvaluationPairSchema = z.object({
+  id: z.string(),
+  group: z.string(),
+  fine_tuned: EvaluationPredictionSchema,
+  comparison: EvaluationPredictionSchema,
+});
+export const EvaluationResultsSchema = z
+  .array(
+    z.union([
+      EvaluationPairSchema.extend({
+        judgment: z.string(),
+        fine_tuned_first: z.boolean(),
+      }),
+      EvaluationPairSchema.extend({ judgments: z.array(z.string()).length(2) }),
+    ]),
+  )
+  .min(1)
+  .max(64)
+  .openapi("EvaluationResults");

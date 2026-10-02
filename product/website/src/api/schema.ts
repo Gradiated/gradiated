@@ -308,6 +308,22 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/evaluation": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations["getEvaluationResults"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/adapter": {
     parameters: {
       query?: never;
@@ -806,7 +822,7 @@ export interface components {
       /** @description Whether task-labelled requests are captured. */
       trace_capture_enabled: boolean;
       trace_retention_days: 30 | 90 | 180;
-      evaluation_judge: components["schemas"]["EvaluationJudge"];
+      default_judge_model: components["schemas"]["EvaluationJudge"];
       /**
        * Format: date-time
        * @example 2026-08-16T12:00:00.000Z
@@ -840,7 +856,7 @@ export interface components {
       /** @description Whether task-labelled requests are captured. */
       trace_capture_enabled?: boolean;
       trace_retention_days?: 30 | 90 | 180;
-      evaluation_judge?: components["schemas"]["EvaluationJudge"];
+      default_judge_model?: components["schemas"]["EvaluationJudge"];
     };
     WorkspaceList: {
       data: components["schemas"]["Workspace"][];
@@ -1012,6 +1028,8 @@ export interface components {
       evaluation_examples?: number;
     } | null;
     RunEvaluation: {
+      /** @enum {string} */
+      judging_method?: "randomized_single" | "both_orders";
       holdout_groups: number;
       holdout_examples: number;
       comparison_model_id: string;
@@ -1027,6 +1045,8 @@ export interface components {
         fine_tuned: number;
         comparison: number;
       } | null;
+      /** @enum {string} */
+      cost_basis?: "placeholder_output_only";
       output_tokens_per_second: {
         fine_tuned: number;
         comparison: number;
@@ -1091,11 +1111,13 @@ export interface components {
        * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
        */
       production_version_id: string | null;
+      judge_model_id: components["schemas"]["EvaluationJudge"];
       training_schedule: components["schemas"]["TaskTrainingSchedule"];
     };
     UpdateTask: {
       base_model_id?: string;
       comparison_model_id?: string;
+      judge_model_id?: components["schemas"]["EvaluationJudge"];
       training_schedule?: components["schemas"]["TaskTrainingSchedule"];
     };
     TrainingRunList: {
@@ -1327,6 +1349,39 @@ export interface components {
       size_bytes: number;
       rank: number;
     };
+    EvaluationResults: (
+      | {
+          id: string;
+          group: string;
+          fine_tuned: {
+            text: string;
+            tokens: number;
+            seconds: number;
+          };
+          comparison: {
+            text: string;
+            tokens: number;
+            seconds: number;
+          };
+          judgment: string;
+          fine_tuned_first: boolean;
+        }
+      | {
+          id: string;
+          group: string;
+          fine_tuned: {
+            text: string;
+            tokens: number;
+            seconds: number;
+          };
+          comparison: {
+            text: string;
+            tokens: number;
+            seconds: number;
+          };
+          judgments: string[];
+        }
+    )[];
     AdapterDownload: {
       /**
        * Format: uri
@@ -3523,6 +3578,75 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["TaskVersionList"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not allowed. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  getEvaluationResults: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+        task: string;
+        version_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Held-out responses and judge decisions. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["EvaluationResults"];
         };
       };
       /** @description Authentication required. */

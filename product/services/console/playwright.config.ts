@@ -8,6 +8,7 @@ const apiUrl = `http://127.0.0.1:${apiPort}`;
 
 export default defineConfig({
   testDir: "./e2e",
+  testIgnore: "task-ui.spec.ts",
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,

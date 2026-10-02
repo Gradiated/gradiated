@@ -18,6 +18,32 @@ Use `OptionSelect` from `src/components/option-select.tsx` for finite option lis
 select with typed values, disabled options, placeholders, and a required
 accessible label.
 
+## Task training
+
+Task settings offer manual-only, daily, weekly and custom five-field UTC cron
+schedules. Saving an empty schedule disables automatic training. The next-run
+preview uses the same Temporal-compatible calendar rules as the backend.
+
+The training gate starts session identification before waiting for feature flags,
+so direct task URLs and reloads do not depend on visiting another console page.
+Loading training data and trace content uses skeletons.
+
+“View test results” opens the stored held-out answers and judge decisions through
+the workspace-authorized version evaluation API. Qwen pricing is a temporary
+placeholder; new evaluations label output-only cost estimates, while historical
+runs without cost show the input/output rates.
+
+Run the isolated synthetic-data browser regression without a database or login:
+
+```sh
+pnpm --filter @gradiated/console exec playwright test --config playwright.task-ui.config.ts
+```
+
+It starts a dedicated local Vite server, mocks session/API/flag responses, blocks
+external domains, and verifies direct reload, comparison choices, schedule
+persistence, held-out results and trace-content skeletons. Browser output stays
+under ignored `.agents/runtime/`.
+
 ## Brand assets
 
 The console uses the Gradiated logo supplied on 2026-09-11.
@@ -59,3 +85,5 @@ The browser icons passed file size and source artwork checks.
 The local server and production build contain the new assets.
 The authenticated sidebar logo was inspected and measured at 24 pixels.
 Dark mode was not inspected in the browser.
+
+Workspace settings expose `default_judge_model` as **Default judge model**. Capture copies it once into a new task’s `judge_model_id`; task settings expose **Judge model** as an independent override. Changing the workspace default affects only subsequently seeded tasks. Existing tasks retain their previous workspace judge during migration. Runs snapshot the task judge at admission.

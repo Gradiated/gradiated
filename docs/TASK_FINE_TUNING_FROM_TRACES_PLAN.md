@@ -16,8 +16,8 @@ Published adapter downloads use `GET /api/v1/workspaces/{workspace_id}/tasks/{ta
 The console's `training` feature flag exposes workspace-scoped tasks, model
 settings, runs, paged events, versions and manual promotion through the generated
 Management API client. The collector creates tasks idempotently at capture time;
-task listing reads PostgreSQL directly. The workspace owns
-its evaluation judge. The Data tab reads captured traces; no traffic chart,
+task listing reads PostgreSQL directly. The workspace default judge seeds each new task’s saved judge.
+Tasks can override that judge independently. The Data tab reads captured traces; no traffic chart,
 request/token statistics or trace progress counter is maintained for training.
 
 Manual training requires 100 distinct trace arrivals since the last successful
@@ -25,9 +25,8 @@ run's input cutoff. Each task has a PostgreSQL schedule setting and its own
 Temporal Schedule, configured with a nullable UTC cron expression and defaulting
 to a weekly cron with a persisted staggered minute, hour and weekday. Updating a
 task saves its settings in PostgreSQL and then directly creates or updates its
-Temporal Schedule. Clearing the cron deletes the schedule. Temporal failures are
-logged and do not roll back the task update; resubmitting the task settings
-retries synchronization. There is no periodic reconciliation or pending-update
+Temporal Schedule. Clearing the cron deletes the schedule. Temporal failures return 503 without confirming the save or rolling back the
+task configuration; resubmitting the same task settings retries synchronization. There is no periodic reconciliation or pending-update
 queue. Scheduled executions recheck task, workspace and organization eligibility
 before starting training and require 500 trainable arrivals per task.
 It reads manifests newest hour first, stops at the threshold and uses manifest

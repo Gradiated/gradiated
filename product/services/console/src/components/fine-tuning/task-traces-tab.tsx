@@ -194,7 +194,11 @@ const StoredTraces = ({
           disabled={query.isFetchingNextPage}
           onClick={() => void query.fetchNextPage()}
         >
-          {query.isFetchingNextPage ? "Loading…" : "Load older content"}
+          {query.isFetchingNextPage ? (
+            <Skeleton aria-label="Loading older content" className="h-4 w-28" />
+          ) : (
+            "Load older content"
+          )}
         </Button>
       ) : null}
       <Sheet
@@ -288,7 +292,18 @@ const GenerationContent = ({
           <p className="text-xs">Usage: {JSON.stringify(row.usage)}</p>
         ) : null}
         {content.isPending ? (
-          <p>Loading content…</p>
+          <div
+            role="status"
+            aria-label="Loading trace content"
+            className="space-y-3"
+          >
+            {[0, 1].map((key) => (
+              <div key={key} className="space-y-2">
+                <Skeleton className="h-5 w-24" />
+                <Skeleton className="h-48 w-full" />
+              </div>
+            ))}
+          </div>
         ) : content.error ? (
           <p role="alert">
             Content unavailable.{" "}

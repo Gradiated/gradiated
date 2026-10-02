@@ -10,7 +10,7 @@ import { eq } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 import { afterAll, beforeAll, expect, it } from "vitest";
 
-import { tasks } from "../src/db/schema/index.js";
+import { tasks, workspaces } from "../src/db/schema/index.js";
 import { seedMember } from "./support/fixtures.js";
 import { createTestDatabase, type TestDatabase } from "./support/postgres.js";
 
@@ -126,6 +126,10 @@ const send = async (port: number, workspaceId: string, task: string) =>
 
 it("registers tasks once at capture, preserving existing IDs and training settings", async () => {
   const member = await seedMember(db.database, { role: "owner" });
+  await db.database
+    .update(workspaces)
+    .set({ defaultJudgeModel: "Qwen/Qwen3-0.6B" })
+    .where(eq(workspaces.id, member.workspaceId));
   const directory = await mkdtemp(join(tmpdir(), "collector-tasks-"));
   let service = await start(directory, db.pool.options.connectionString!);
   try {
@@ -151,13 +155,19 @@ it("registers tasks once at capture, preserving existing IDs and training settin
       "Billing Questions",
       "support-triage",
     ]);
-    for (const task of before)
+    for (const task of before) {
       expect(task.trainingSchedule).toMatch(/^\d+ \d+ \* \* [0-6]$/);
+      expect(task.judgeModelId).toBe("Qwen/Qwen3-0.6B");
+    }
     await db.database
       .update(tasks)
-      .set({ trainingSchedule: null })
+      .set({ trainingSchedule: null, judgeModelId: "openai/gpt-5" })
       .where(eq(tasks.id, before[0]!.id));
 
+    await db.database
+      .update(workspaces)
+      .set({ defaultJudgeModel: "openai/gpt-6-sol" })
+      .where(eq(workspaces.id, member.workspaceId));
     for (let i = 0; i < 10; i++)
       expect(
         (await send(service.port, member.workspaceId, before[0]!.name)).status,
@@ -196,6 +206,21 @@ it("registers tasks once at capture, preserving existing IDs and training settin
     expect(replayed[0]).toMatchObject({
       name: before[0]!.name,
       trainingSchedule: null,
+      judgeModelId: "openai/gpt-5",
+    });
+    expect(
+      (await send(service.port, member.workspaceId, "new-default-task")).status,
+    ).toBe(202);
+    await waitFor(async () => {
+      const rows = await db.database
+        .select()
+        .from(tasks)
+        .where(eq(tasks.workspaceId, member.workspaceId));
+      return rows.some(
+        (task) =>
+          task.name === "new-default-task" &&
+          task.judgeModelId === "openai/gpt-6-sol",
+      );
     });
   } finally {
     await service.stop();

@@ -13,7 +13,7 @@ export const SettingRow = ({
   description: ReactNode;
   children: ReactNode;
 }) => (
-  <div className="flex items-start justify-between gap-6 p-5">
+  <div className="flex flex-col items-start justify-between gap-6 sm:flex-row p-5">
     <div>
       <p className="text-sm font-medium">{title}</p>
       <p className="mt-1 text-xs leading-5 text-muted-foreground">

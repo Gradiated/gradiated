@@ -39,7 +39,6 @@ const WorkspaceTrainingSchema = z.object({
   id: UuidSchema,
   archivedAt: z.date().nullable(),
   traceCaptureEnabled: WorkspaceSchema.shape.trace_capture_enabled,
-  evaluationJudge: WorkspaceSchema.shape.evaluation_judge,
 });
 const OrganizationTrainingSchema = z.object({
   status: z.enum(ORGANIZATION_STATUSES),
@@ -115,6 +114,7 @@ export const createTrainingStore = (database: ControlDatabase) => {
           TaskUpdateSchema.parse({
             baseModelId: input.base_model_id,
             comparisonModelId: input.comparison_model_id,
+            judgeModelId: input.judge_model_id,
             trainingSchedule: input.training_schedule,
             updatedAt: new Date(),
           }),
@@ -269,7 +269,6 @@ export const createTrainingStore = (database: ControlDatabase) => {
             id: workspaces.id,
             archivedAt: workspaces.archivedAt,
             traceCaptureEnabled: workspaces.traceCaptureEnabled,
-            evaluationJudge: workspaces.evaluationJudge,
           },
           organization: { status: organizations.status },
         })

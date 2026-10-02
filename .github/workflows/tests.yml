@@ -433,6 +433,9 @@ jobs:
         env:
           VITE_FEATURE_FLAGS: training
         run: pnpm --filter @gradiated/console exec playwright test traces.spec.ts training.spec.ts
+      - name: Verify task reloads, skeletons, settings and held-out results
+        working-directory: product
+        run: pnpm --filter @gradiated/console exec playwright test --config playwright.task-ui.config.ts
       - name: Show dependency logs on failure
         if: failure()
         working-directory: product

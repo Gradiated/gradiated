@@ -1,25 +1,9 @@
 import { z } from "zod";
 
-const prediction = z.object({
-  text: z.string(),
-  tokens: z.number().int().nonnegative(),
-  seconds: z.number().positive(),
-});
-const pair = z.object({
-  id: z.string(),
-  group: z.string(),
-  fine_tuned: prediction,
-  comparison: prediction,
-});
-export const predictionsSchema = z
-  .array(
-    z.union([
-      pair.extend({ judgment: z.string(), fine_tuned_first: z.boolean() }),
-      pair.extend({ judgments: z.array(z.string()).length(2) }),
-    ]),
-  )
-  .min(1)
-  .max(64);
+import { QWEN_PLACEHOLDER_PRICING } from "@gradiated/contracts/model-catalog";
+import { EvaluationResultsSchema } from "@gradiated/contracts";
+
+export const predictionsSchema = EvaluationResultsSchema;
 
 type Pair = z.infer<typeof predictionsSchema>[number];
 const outcome = (row: Pair) => {
@@ -97,4 +81,28 @@ export const summarizePredictions = (
       comparison: comparisonTokens / comparisonSeconds,
     },
   };
+};
+
+export const estimateOutputCost = (
+  rows: z.infer<typeof predictionsSchema>,
+  baseModelId: string,
+  comparisonModelId: string,
+) => {
+  if (
+    rows.length === 0 ||
+    baseModelId !== QWEN_PLACEHOLDER_PRICING.model_id ||
+    comparisonModelId !== QWEN_PLACEHOLDER_PRICING.model_id
+  )
+    return null;
+
+  const cost = (arm: "fine_tuned" | "comparison") => {
+    const total =
+      rows.reduce((sum, row) => sum + BigInt(row[arm].tokens), 0n) *
+      BigInt(QWEN_PLACEHOLDER_PRICING.output_nano_usd_per_token);
+    const count = BigInt(rows.length);
+
+    return Number((total + count / 2n) / count);
+  };
+
+  return { fine_tuned: cost("fine_tuned"), comparison: cost("comparison") };
 };

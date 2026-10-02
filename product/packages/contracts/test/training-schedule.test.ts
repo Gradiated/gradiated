@@ -41,5 +41,17 @@ it("separates training bases from comparison-only hosted and frontier models", (
   expect(ids).toContain("openai/gpt-6-astra");
   expect(ids).toContain("anthropic/claude-opus-5-5");
   expect(ids).toContain("deepseek/deepseek-v4.1-flash");
-  expect(ids).toContain("jaredpalmer/kev-9b");
+  expect(ids).not.toContain("jaredpalmer/kev-9b");
+});
+
+it("rejects Kev as a comparison model in task updates", async () => {
+  const { UpdateTaskSchema } = await import("../src/training.js");
+  expect(
+    UpdateTaskSchema.safeParse({ comparison_model_id: "jaredpalmer/kev-9b" })
+      .success,
+  ).toBe(false);
+  expect(
+    UpdateTaskSchema.safeParse({ comparison_model_id: "Qwen/Qwen3-0.6B" })
+      .success,
+  ).toBe(true);
 });

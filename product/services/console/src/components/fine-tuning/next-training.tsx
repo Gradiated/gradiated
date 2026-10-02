@@ -12,7 +12,7 @@ export const NextTraining = ({ schedule }: { schedule: string | null }) => {
 
   return (
     <div className="space-y-1 text-xs">
-      <p className="text-muted-foreground">Next re-train</p>
+      <p className="text-muted-foreground">Next training run</p>
       {next ? (
         <time
           dateTime={next.toISOString()}
@@ -26,9 +26,14 @@ export const NextTraining = ({ schedule }: { schedule: string | null }) => {
         </time>
       ) : (
         <p className="text-muted-foreground">
-          {schedule ? "No upcoming scheduled run" : "Automatic training is off"}
+          {schedule ? "No upcoming scheduled run" : "Manual training"}
         </p>
       )}
+      {!schedule ? (
+        <p className="text-muted-foreground">
+          Set a schedule in task settings to train automatically.
+        </p>
+      ) : null}
     </div>
   );
 };

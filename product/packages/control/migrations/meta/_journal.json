@@ -85,6 +85,20 @@
       "when": 1790875001526,
       "tag": "0011_instance_certificate",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1790932753558,
+      "tag": "0012_default_content_retention_90_days",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1790933359926,
+      "tag": "0013_task_judge_model",
+      "breakpoints": true
     }
   ]
 }

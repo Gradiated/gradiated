@@ -12,7 +12,7 @@ export const TraceCaptureSettings = () => {
     <>
       <SettingRow
         title="Trace capture"
-        description="Store requests with a task header. Relayed content is not used for automatic training. Changes take effect within 15 seconds."
+        description="Disable this to prevent capturing traces for training, this will disable all training functionality"
       >
         <Switch
           checked={workspace.trace_capture_enabled}

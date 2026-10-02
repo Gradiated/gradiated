@@ -11,7 +11,7 @@ export const validateSftInput = (input: TrainingInput) => {
   )
     throw new TrainingAdmissionError(
       "training_not_configured",
-      `The initial SFT recipe requires ${QWEN_SFT_MODEL} as the base, comparison and workspace judge model.`,
+      `The initial SFT recipe requires ${QWEN_SFT_MODEL} as the base, comparison and task judge model.`,
     );
   return input;
 };

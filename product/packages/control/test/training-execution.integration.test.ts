@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { v7 as uuidv7 } from "uuid";
 import { eq } from "drizzle-orm";
-import { beforeAll, afterAll, describe, expect, it } from "vitest";
+import { beforeAll, afterAll, describe, expect, it, vi } from "vitest";
 import { createTestDatabase, type TestDatabase } from "./support/postgres.js";
 import { seedMember, modelInput } from "./support/fixtures.js";
 import { createMemoryContentStore } from "./support/content-store.js";
@@ -524,7 +524,12 @@ describe("training execution", () => {
 
   it("persists staggered defaults and rechecks disabled automation at execution time", async () => {
     const f = await fixture(500);
-    const service = createTrainingService(db.database, f.store);
+    const service = createTrainingService(db.database, f.store, undefined, {
+      start: vi.fn(),
+      cancel: vi.fn(),
+      status: async () => "running" as const,
+      updateSchedule: vi.fn().mockResolvedValue(undefined),
+    });
     const before = await service.getTask(f.userId, f.workspaceId, "task");
     expect(before.trainingSchedule).toMatch(/^\d+ \d+ \* \* [0-6]$/);
     await service.updateTask(f.userId, f.workspaceId, "task", {

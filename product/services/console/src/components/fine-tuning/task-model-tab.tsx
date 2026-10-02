@@ -103,7 +103,14 @@ const VersionRow = ({
               {item.label}
             </DropdownMenuItem>
           ))}
-          <DropdownMenuItem disabled>View test results</DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={!version.summary}
+            onSelect={() =>
+              onAction({ kind: "results", versionId: version.id })
+            }
+          >
+            View test results
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

@@ -63,7 +63,7 @@ Per group: weighted win, tie, loss and unresolved fractions over all selected ex
 | Missing-evidence range | `[W + 0.5·T, W + 0.5·T + U]` |
 | Win, tie, loss, unknown | Weighted values with raw counts |
 
-The console bar shows resolved comparisons only: widths and labels use `W / (W + T + L)`, `T / (W + T + L)` and `L / (W + T + L)`. The three segments fill the bar; widths use unrounded proportions. Show `U` separately as the unresolved share of all comparisons. With no resolved results, show "No resolved comparisons". Detailed results keep the original four fractions and counts.
+The console bar shows resolved comparisons only: widths and labels use `W / (W + T + L)`, `T / (W + T + L)` and `L / (W + T + L)`. The three segments fill the bar; widths use unrounded proportions. The compact evaluation panel shows the resolved share alongside speed and errors. Keep unresolved outcomes in individual test results. The task-list tooltip shows only better, equivalent and worse percentages. With no resolved results, show "No resolved comparisons". Detailed results keep the original four fractions and counts.
 
 The range is not a confidence interval. The conditional score is labelled conditional. A deterministic format failure is shown separately and may be judge evidence; it is never rewritten as a loss or a success.
 
@@ -84,6 +84,10 @@ Worker takeover waits out outstanding call bounds before redispatch. These rules
 External calls follow RUN-04 (run tokens, provider slots), use company credentials, and cost the customer nothing. No price lookup, Grafana query or ledger gates execution. An uncertain provider request waits out its bound before retry; duplicate cost is recorded; exactly-once is never claimed. A failed evaluation never retrains, unpublishes or promotes.
 
 **Cost.** A price registry for the actual direct provider, model, tier and time; an OpenRouter price is not a direct price. Stored: usage category, currency, pricing revision, estimate status, cached and reasoning token categories where supported. Refresh every five minutes; older than 24 hours is stale. Missing usage or price is unknown, never zero. Coverage and possible duplicates are shown. Registry failure leaves the result valid with cost incomplete.
+
+For the Qwen3-0.6B recipe, temporary user-authorized rates are $0.05 input and $0.10 output per million tokens, centralized in the model catalog. These are placeholders, not OpenRouter or GPU charges. New evaluations estimate output-token cost from recorded output usage and mark `cost_basis=placeholder_output_only`; input usage is unavailable and excluded explicitly. Other model combinations stay unknown. Historical runs with null cost show the placeholder token rates rather than inventing per-request usage or rewriting their stored results.
+
+The console fetches individual held-out responses and judgments through the workspace-authorized version evaluation resource. The API reads the run's evaluation result manifest from artifact storage, validates its run-scoped key and checksum, and returns validated prediction pairs without caching their contents.
 
 **Latency.** Compared only with its context: vantage point, queue and admission delay, cold load, first token, total time, streaming mode, completion. Customer-observed and worker-only durations are never compared as like for like. Fixed fleet cost is reported separately from busy GPU time.
 

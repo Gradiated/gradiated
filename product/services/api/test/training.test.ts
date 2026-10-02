@@ -4,7 +4,7 @@ import {
   TrainingAdmissionError,
 } from "@gradiated/control";
 import { describe, expect, it, vi } from "vitest";
-import { authenticated, createTestApp, workspaceId } from "./support.js";
+import { authenticated, createTestApp, user, workspaceId } from "./support.js";
 
 const path = `/api/v1/workspaces/${workspaceId}`;
 const runId = "0198ae50-94d8-7d4d-a8be-9f9b44b8c774";
@@ -16,6 +16,7 @@ const task = {
   name: "Billing Questions",
   baseModelId: "gradiated/base",
   comparisonModelId: "openai/gpt-5",
+  judgeModelId: "openai/gpt-5" as const,
   productionVersionId: runId,
   trainingSchedule: "0 3 * * MON",
   createdAt: at,
@@ -40,6 +41,40 @@ const request = (
   );
 
 describe("training routes", () => {
+  it("returns uncached held-out comparisons only after authentication", async () => {
+    const rows = [
+      {
+        id: "example",
+        group: "group",
+        judgment: "TIE",
+        fine_tuned_first: true,
+        fine_tuned: { text: "144", tokens: 3, seconds: 1 },
+        comparison: { text: "144", tokens: 3, seconds: 1 },
+      },
+    ];
+    const evaluationResults = vi.fn(async () => rows);
+    const url = `${path}/tasks/Billing%20Questions/versions/${runId}/evaluation`;
+    const anonymous = createTestApp({
+      services: { training: { evaluationResults } },
+    });
+    expect((await anonymous.request(url)).status).toBe(401);
+    expect(evaluationResults).not.toHaveBeenCalled();
+    const app = createTestApp({
+      auth: authenticated,
+      services: { training: { evaluationResults } },
+    });
+    const response = await app.request(url);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(await response.json()).toEqual(rows);
+    expect(evaluationResults).toHaveBeenCalledWith(
+      user.id,
+      workspaceId,
+      "Billing Questions",
+      runId,
+    );
+  });
+
   it("returns uncached adapter links only to authenticated requests", async () => {
     const result = {
       url: "https://storage.example/adapter.tar.gz",
@@ -134,6 +169,7 @@ describe("training routes", () => {
         name,
         base_model_id: "gradiated/base",
         comparison_model_id: "openai/gpt-5",
+        judge_model_id: "openai/gpt-5",
         production_version_id: runId,
         training_schedule: "0 3 * * MON",
       });

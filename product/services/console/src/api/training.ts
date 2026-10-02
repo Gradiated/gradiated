@@ -113,3 +113,19 @@ export const cancelTrainingRun = (workspace_id: string, run_id: string) =>
       params: { path: { workspace_id, run_id } },
     }),
   );
+
+export const getEvaluationResults = (
+  workspace_id: string,
+  task: string,
+  version_id: string,
+  signal?: AbortSignal,
+) =>
+  requireData(
+    api.GET(
+      "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/evaluation",
+      {
+        params: { path: { workspace_id, task, version_id } },
+        signal: signal ?? null,
+      },
+    ),
+  );

@@ -11,6 +11,7 @@ test.beforeEach(async ({ page }) => {
     base_model_id: null,
     comparison_model_id: null,
     production_version_id: null,
+    judge_model_id: "Qwen/Qwen3-0.6B",
   };
   await page.route(apiPathEndsWith("/tasks"), (route) =>
     fulfillJson(route, { data: [task] }),
@@ -134,10 +135,13 @@ test("capture settings send the real workspace policy", async ({ page }) => {
   expect(updates[0]).toEqual({
     trace_capture_enabled: true,
   });
+  await expect(
+    page.getByRole("combobox", { name: "Content retention" }),
+  ).toHaveText("90 days");
   await page.getByRole("combobox", { name: "Content retention" }).click();
-  await page.getByRole("option", { name: "90 days", exact: true }).click();
+  await page.getByRole("option", { name: "180 days", exact: true }).click();
   await expect.poll(() => updates.length).toBe(2);
-  expect(updates[1]).toMatchObject({ trace_retention_days: 90 });
+  expect(updates[1]).toMatchObject({ trace_retention_days: 180 });
 });
 
 test("settings stay responsive during a save and roll back failed edits", async ({
@@ -169,11 +173,14 @@ test("settings stay responsive during a save and roll back failed edits", async 
   await expect(capture).toBeChecked();
   await expect(capture).toBeEnabled();
   await expect.poll(() => updates.length).toBe(1);
-  await page.getByRole("combobox", { name: "Content retention" }).click();
-  await page.getByRole("option", { name: "90 days", exact: true }).click();
   await expect(
     page.getByRole("combobox", { name: "Content retention" }),
   ).toHaveText("90 days");
+  await page.getByRole("combobox", { name: "Content retention" }).click();
+  await page.getByRole("option", { name: "180 days", exact: true }).click();
+  await expect(
+    page.getByRole("combobox", { name: "Content retention" }),
+  ).toHaveText("180 days");
   expect(updates).toHaveLength(1);
   release();
   await expect(capture).not.toBeChecked();
@@ -247,6 +254,7 @@ test("model selectors use supported roles and save comparison selections", async
     base_model_id: "Qwen/Qwen3-0.6B",
     comparison_model_id: "Qwen/Qwen3-0.6B",
     production_version_id: null,
+    judge_model_id: "Qwen/Qwen3-0.6B",
     training_schedule: null,
   };
   let saved: unknown;
@@ -282,7 +290,7 @@ test("model selectors use supported roles and save comparison selections", async
   await page.getByRole("combobox", { name: "Comparison model" }).click();
   await expect(
     page.getByRole("option", { name: "jaredpalmer/kev-9b", exact: true }),
-  ).toBeVisible();
+  ).toHaveCount(0);
   await expect(
     page.getByRole("option", {
       name: "anthropic/claude-opus-5-5",

@@ -47,9 +47,9 @@ describe("workspaces and API keys", () => {
   it.each(EVALUATION_JUDGES)("persists catalog judge %s", async (judge) => {
     const { userId, workspaceId } = await membership("owner");
     const updated = await service.updateWorkspace(userId, workspaceId, {
-      evaluation_judge: judge,
+      default_judge_model: judge,
     });
-    expect(updated.evaluationJudge).toBe(judge);
+    expect(updated.defaultJudgeModel).toBe(judge);
   });
 
   describe("createWorkspace", () => {
@@ -67,6 +67,7 @@ describe("workspaces and API keys", () => {
         expect(workspace).toMatchObject({
           organizationId,
           name: "Research",
+          traceRetentionDays: 90,
           isDefault: false,
           archivedAt: null,
         });

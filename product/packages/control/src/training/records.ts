@@ -15,6 +15,7 @@ export const TaskRecordSchema = z.object({
   name: TaskSchema.shape.name,
   baseModelId: TaskSchema.shape.base_model_id,
   comparisonModelId: TaskSchema.shape.comparison_model_id,
+  judgeModelId: TaskSchema.shape.judge_model_id,
   productionVersionId: TaskSchema.shape.production_version_id,
   trainingSchedule: TaskSchema.shape.training_schedule,
   ...timestamps,
@@ -85,6 +86,7 @@ export const EventInsertSchema = EventRecordSchema.omit({ id: true });
 export const TaskUpdateSchema = TaskRecordSchema.pick({
   baseModelId: true,
   comparisonModelId: true,
+  judgeModelId: true,
   productionVersionId: true,
   trainingSchedule: true,
   updatedAt: true,

@@ -1,3 +1,4 @@
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Link, useParams } from "@tanstack/react-router";
 import { ArrowLeft, RotateCw } from "lucide-react";
@@ -34,10 +35,33 @@ const TABS = [
 
 type TabKey = (typeof TABS)[number]["value"];
 
-export const TaskPage = () => (
-  <TrainingGate>
-    <ScopedTaskPage />
-  </TrainingGate>
+export const TaskPage = () => {
+  const { taskId } = useParams({ from: "/tasks/$taskId" });
+
+  return (
+    <TrainingGate loadingContent={<TaskLoadingState name={taskId} />}>
+      <ScopedTaskPage />
+    </TrainingGate>
+  );
+};
+
+const TaskLoadingState = ({ name }: { name: string }) => (
+  <ConsolePage page="tasks" title={name}>
+    <div role="status" aria-label="Loading task" className="space-y-6">
+      <div className="flex gap-4 border-b pb-2">
+        {TABS.map(({ value }) => (
+          <Skeleton key={value} className="h-10 w-28" />
+        ))}
+      </div>
+      <div className="space-y-4 rounded-xl border bg-card p-5">
+        <Skeleton className="h-8 w-64 max-w-full" />
+        <Skeleton className="h-4 w-80 max-w-full" />
+        <Skeleton className="h-9 w-full" />
+        <Skeleton className="h-4 w-48" />
+      </div>
+      <Skeleton className="h-72 w-full" />
+    </div>
+  </ConsolePage>
 );
 
 const ScopedTaskPage = () => {
@@ -56,7 +80,9 @@ const TaskPageBody = () => {
     null,
   );
 
-  if (query.isPending || query.error) {
+  if (query.isPending) return <TaskLoadingState name={taskId} />;
+
+  if (query.error) {
     return (
       <ConsolePage page="tasks" title="Training">
         <QueryState query={query} />

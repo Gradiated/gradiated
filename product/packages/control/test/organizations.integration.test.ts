@@ -66,7 +66,11 @@ describe("organization bootstrap", () => {
       { userId, role: "owner", status: "active" },
     ]);
     expect(rows.workspaces).toMatchObject([
-      { id: organization.defaultWorkspaceId, isDefault: true },
+      {
+        id: organization.defaultWorkspaceId,
+        isDefault: true,
+        traceRetentionDays: 90,
+      },
     ]);
     expect(rows.account).toMatchObject({
       mode: "prepaid",

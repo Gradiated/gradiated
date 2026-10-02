@@ -1,3 +1,4 @@
+import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
 import {
   OutcomeBar,
@@ -18,7 +19,7 @@ import { formatPercent } from "@/lib/format";
 import type { components } from "@/api/schema";
 import { STAGE_LABEL, type JudgeOutcome } from "@/store/fine-tuning-types";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import { TrainingGate } from "@/components/fine-tuning/training-gate";
 import { ConnectDialog } from "@/components/fine-tuning/connect-dialog";
@@ -48,7 +49,13 @@ const TABS = [
 ] as const satisfies readonly Option<string>[];
 
 export const TasksPage = () => (
-  <TrainingGate>
+  <TrainingGate
+    loadingContent={
+      <ConsolePage page="tasks" title="Training">
+        <TasksTable loading />
+      </ConsolePage>
+    }
+  >
     <ScopedTasksPage />
   </TrainingGate>
 );
@@ -80,38 +87,23 @@ const TasksPageBody = () => {
     >
       <OptionTabs value={tab} options={TABS} onValueChange={setTab}>
         <TabsContent value="tasks">
-          {query.isPending || query.error ? (
+          {query.error ? (
             <QueryState query={query} />
-          ) : tasks.length ? (
-            <section className="overflow-hidden rounded-lg border bg-card">
-              <Table>
-                <TableHeader className="bg-muted/40">
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="h-11 pl-5">Task</TableHead>
-                    <TableHead className="h-11 px-4">Model</TableHead>
-                    <TableHead className="h-11 px-4">Replaces</TableHead>
-                    <TableHead className="h-11 px-4">Cost</TableHead>
-                    <TableHead className="h-11 px-4">Speed</TableHead>
-                    <TableHead className="h-11 px-4">Quality</TableHead>
-                    <TableHead className="h-11 pr-5">Trained</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {tasks.map((task) => (
-                    <TaskRowView
-                      key={task.name}
-                      task={task}
-                      onOpen={() =>
-                        void navigate({
-                          to: "/tasks/$taskId",
-                          params: { taskId: task.name },
-                        })
-                      }
-                    />
-                  ))}
-                </TableBody>
-              </Table>
-            </section>
+          ) : query.isPending || tasks.length ? (
+            <TasksTable loading={query.isPending}>
+              {tasks.map((task) => (
+                <TaskRowView
+                  key={task.name}
+                  task={task}
+                  onOpen={() =>
+                    void navigate({
+                      to: "/tasks/$taskId",
+                      params: { taskId: task.name },
+                    })
+                  }
+                />
+              ))}
+            </TasksTable>
           ) : (
             <div className="rounded-xl border bg-card p-6 shadow-sm">
               <h3 className="text-base font-semibold">No tasks yet</h3>
@@ -143,6 +135,59 @@ const TasksPageBody = () => {
     </ConsolePage>
   );
 };
+
+const TasksTable = ({
+  loading = false,
+  children,
+}: {
+  loading?: boolean;
+  children?: ReactNode;
+}) => (
+  <section
+    aria-label="Tasks"
+    aria-busy={loading}
+    className="overflow-hidden rounded-lg border bg-card"
+  >
+    <Table>
+      <TableHeader className="bg-muted/40">
+        <TableRow className="hover:bg-transparent">
+          <TableHead className="h-11 pl-5">Task</TableHead>
+          <TableHead className="h-11 px-4">Model</TableHead>
+          <TableHead className="h-11 px-4">Replaces</TableHead>
+          <TableHead className="h-11 px-4">Cost</TableHead>
+          <TableHead className="h-11 px-4">Speed</TableHead>
+          <TableHead className="h-11 px-4">Quality</TableHead>
+          <TableHead className="h-11 pr-5">Last trained</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {loading
+          ? Array.from({ length: 5 }, (_, index) => (
+              <TableRow key={index} aria-hidden="true">
+                {["w-32", "w-40", "w-32", "w-16", "w-20", "w-40", "w-20"].map(
+                  (width, column) => (
+                    <TableCell
+                      key={column}
+                      className={
+                        column === 0
+                          ? "h-14 pl-5"
+                          : column === 6
+                            ? "pr-5"
+                            : "px-4"
+                      }
+                    >
+                      <Skeleton className={`h-4 ${width}`} />
+                    </TableCell>
+                  ),
+                )}
+              </TableRow>
+            ))
+          : null}
+        {children}
+      </TableBody>
+    </Table>
+  </section>
+);
 
 const trainedDate = new Intl.DateTimeFormat(undefined, {
   day: "numeric",
@@ -236,9 +281,7 @@ const QualityBar = ({ result }: { result: JudgeOutcome }) => (
     <TooltipContent side="top" className="text-xs">
       vs {result.comparator_model_id}: better {formatPercent(result.win)} ·
       equivalent {formatPercent(result.tie)} · worse{" "}
-      {formatPercent(result.loss)} · unresolved{" "}
-      {formatPercent(result.unresolved)} overall. The bar shows resolved
-      comparisons only.
+      {formatPercent(result.loss)}
     </TooltipContent>
   </Tooltip>
 );

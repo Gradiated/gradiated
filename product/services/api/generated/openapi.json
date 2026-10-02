@@ -1028,7 +1028,7 @@
               }
             ]
           },
-          "evaluation_judge": {
+          "default_judge_model": {
             "$ref": "#/components/schemas/EvaluationJudge"
           },
           "archived_at": {
@@ -1057,7 +1057,7 @@
           "is_default",
           "trace_capture_enabled",
           "trace_retention_days",
-          "evaluation_judge",
+          "default_judge_model",
           "archived_at",
           "created_at",
           "updated_at"
@@ -1108,7 +1108,7 @@
               }
             ]
           },
-          "evaluation_judge": {
+          "default_judge_model": {
             "$ref": "#/components/schemas/EvaluationJudge"
           }
         },
@@ -1642,6 +1642,12 @@
               "comparison"
             ]
           },
+          "cost_basis": {
+            "type": "string",
+            "enum": [
+              "placeholder_output_only"
+            ]
+          },
           "output_tokens_per_second": {
             "type": "object",
             "properties": {
@@ -1802,6 +1808,9 @@
             "format": "uuid",
             "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
           },
+          "judge_model_id": {
+            "$ref": "#/components/schemas/EvaluationJudge"
+          },
           "training_schedule": {
             "$ref": "#/components/schemas/TaskTrainingSchedule"
           }
@@ -1812,6 +1821,7 @@
           "base_model_id",
           "comparison_model_id",
           "production_version_id",
+          "judge_model_id",
           "training_schedule"
         ]
       },
@@ -1827,6 +1837,9 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 200
+          },
+          "judge_model_id": {
+            "$ref": "#/components/schemas/EvaluationJudge"
           },
           "training_schedule": {
             "$ref": "#/components/schemas/TaskTrainingSchedule"
@@ -2571,6 +2584,148 @@
           "size_bytes",
           "rank"
         ]
+      },
+      "EvaluationResults": {
+        "type": "array",
+        "items": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "group": {
+                  "type": "string"
+                },
+                "fine_tuned": {
+                  "type": "object",
+                  "properties": {
+                    "text": {
+                      "type": "string"
+                    },
+                    "tokens": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "seconds": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  },
+                  "required": [
+                    "text",
+                    "tokens",
+                    "seconds"
+                  ]
+                },
+                "comparison": {
+                  "type": "object",
+                  "properties": {
+                    "text": {
+                      "type": "string"
+                    },
+                    "tokens": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "seconds": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  },
+                  "required": [
+                    "text",
+                    "tokens",
+                    "seconds"
+                  ]
+                },
+                "judgment": {
+                  "type": "string"
+                },
+                "fine_tuned_first": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "group",
+                "fine_tuned",
+                "comparison",
+                "judgment",
+                "fine_tuned_first"
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "group": {
+                  "type": "string"
+                },
+                "fine_tuned": {
+                  "type": "object",
+                  "properties": {
+                    "text": {
+                      "type": "string"
+                    },
+                    "tokens": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "seconds": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  },
+                  "required": [
+                    "text",
+                    "tokens",
+                    "seconds"
+                  ]
+                },
+                "comparison": {
+                  "type": "object",
+                  "properties": {
+                    "text": {
+                      "type": "string"
+                    },
+                    "tokens": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "seconds": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  },
+                  "required": [
+                    "text",
+                    "tokens",
+                    "seconds"
+                  ]
+                },
+                "judgments": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "group",
+                "fine_tuned",
+                "comparison",
+                "judgments"
+              ]
+            }
+          ]
+        },
+        "minItems": 1,
+        "maxItems": 64
       },
       "AdapterDownload": {
         "type": "object",
@@ -6520,6 +6675,108 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TaskVersionList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters or body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/evaluation": {
+      "get": {
+        "operationId": "getEvaluationResults",
+        "tags": [
+          "Training"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "required": true,
+            "name": "task",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "version_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Held-out responses and judge decisions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationResults"
                 }
               }
             }

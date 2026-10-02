@@ -17,8 +17,8 @@ const CACHE_SIZE: usize = 10_000;
 const CACHE_TTL: Duration = Duration::from_secs(3600);
 const DATABASE_TIMEOUT: Duration = Duration::from_secs(2);
 const RETRY: Duration = Duration::from_secs(60);
-const INSERT_TASK: &str = "INSERT INTO tasks (id, workspace_id, name) \
-    SELECT $1, id, $3 FROM workspaces WHERE id = $2 \
+const INSERT_TASK: &str = "INSERT INTO tasks (id, workspace_id, name, judge_model_id) \
+    SELECT $1, id, $3, default_judge_model FROM workspaces WHERE id = $2 \
     ON CONFLICT (workspace_id, name) DO NOTHING";
 
 #[derive(Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]

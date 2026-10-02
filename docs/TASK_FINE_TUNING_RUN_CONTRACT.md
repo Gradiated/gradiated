@@ -12,8 +12,9 @@ Each task stores `training_schedule` as a nullable five-field cron expression in
 
 Task PATCH requests save the configuration in PostgreSQL and then directly create
 or update `training-task-<task_id>` in Temporal. Clearing the cron deletes the
-schedule. A Temporal failure is logged and does not roll back the task update;
-users can resubmit settings to retry. There is no periodic sweep or pending-sync
+schedule. A Temporal failure returns 503 and does not roll back the saved task configuration;
+the console retains the draft and shows an explicit retry error instead of confirming
+the schedule is active. Users can resubmit the same settings to retry. There is no periodic sweep or pending-sync
 queue. Workspace capture, archival and organization changes do not update
 schedules: the scheduled workflow checks current eligibility before starting
 training and skips missing, disabled or ineligible tasks.
@@ -34,7 +35,7 @@ Each step is a separate Temporal activity. A step failure retries only that acti
 
 The worker writes small summaries to `training_runs`, structured events to `training_run_events`, and version metadata to `task_versions`. Events are paginated by monotonically increasing ID. Datasets, complete checkpoints, adapters and detailed evaluation results belong under `runs/<run_id>/` in S3, referenced by key and SHA-256, never in workflow arguments or event bodies. No credentials, signed URLs, prompts or generated customer text belong in run logs.
 
-Versions are named `<task>-YYYYMMDD[-n]` with a workspace-unique name and one version per run. Publication never changes `tasks.production_version_id`. Promotion uses the existing PUT production endpoint and is always manual. A published version remains visible while evaluation is pending. The evaluation judge is a workspace setting frozen into the workflow input together with the task's base and comparison models.
+Versions are named `<task>-YYYYMMDD[-n]` with a workspace-unique name and one version per run. Publication never changes `tasks.production_version_id`. Promotion uses the existing PUT production endpoint and is always manual. A published version remains visible while evaluation is pending. The workspace `default_judge_model` is copied into each task's `judge_model_id` when capture first seeds it. Task settings can override that saved judge. Later workspace default changes affect only new tasks. Admission freezes the task judge into the workflow input together with its base and comparison models.
 
 ## Cancellation and retries
 
@@ -153,7 +154,7 @@ The mock exercises the orchestration boundary without allocating GPUs. Its zero-
 
 ## Dataset, SFT and evaluation
 
-The frozen recipe is `product/packages/contracts/src/training-recipe.json`: Qwen3-0.6B at a pinned Hugging Face revision, rank-two LoRA, fifty optimizer steps, gradient accumulation four and sequence length 2048. The base, comparison and workspace judge must all be this model for the initial executor; incompatible settings return a clear admission error. The infrastructure-independent Python library lives in `Gradiated/autotrain`, pinned as the `product/packages/autotrain` submodule. Its API accepts local dataset/checkpoint paths and an explicit recipe, reports progress/checkpoints through callbacks, and returns a local adapter archive. It knows nothing about Temporal, Nomad, RunPod, HTTP, or S3. The private runtime adapter in `product/inference/training` handles signed transfers and command dispatch; its container build installs the pinned package into the trainer bundle. The package repository remains private until it is ready to open source; infrastructure stays in this repository.
+The frozen recipe is `product/packages/contracts/src/training-recipe.json`: Qwen3-0.6B at a pinned Hugging Face revision, rank-two LoRA, fifty optimizer steps, gradient accumulation four and sequence length 2048. The base, comparison and task judge must all be this model for the initial executor; incompatible settings return a clear admission error. The infrastructure-independent Python library lives in `Gradiated/autotrain`, pinned as the `product/packages/autotrain` submodule. Its API accepts local dataset/checkpoint paths and an explicit recipe, reports progress/checkpoints through callbacks, and returns a local adapter archive. It knows nothing about Temporal, Nomad, RunPod, HTTP, or S3. The private runtime adapter in `product/inference/training` handles signed transfers and command dispatch; its container build installs the pinned package into the trainer bundle. The package repository remains private until it is ready to open source; infrastructure stays in this repository.
 
 Dataset construction reads retained traces up to the frozen cutoff. It accepts trainable hosted/imported text conversations ending in a user message and complete, successful assistant text; relay outputs, tool calls and incomplete captures are excluded. Exact examples are deduplicated. Session groups and identical prompts are joined before deterministic 80/10/10 train/validation/test assignment, preventing cross-split prompt leakage. Collection is bounded at 10,000 examples or 64 MiB of example content. Training needs ten examples and nonempty validation and test groups. Oversized token sequences are excluded from training rather than truncated.
 
@@ -181,4 +182,4 @@ Dataset activities allow three total attempts with a 24-hour queue/retry budget.
 
 The Temporal worker exposes database-derived training metrics on its health port at `/metrics`, separately from the SDK metrics port. Its PodMonitor scrapes both. Grafana shows active runs, oldest capacity/queue waits, stage durations, completion outcomes and observation freshness. Metrics failures do not block health checks.
 
-The persisted catalog includes the Qwen recipe base with inference status `unavailable`. The shared model catalog marks it for training, so task configuration accepts it without advertising a hosted inference deployment. Its required pricing fields are structural placeholders while unavailable, not a serving price quote. The initial executor still requires the Qwen model as base, comparison and workspace judge.
+The persisted catalog includes the Qwen recipe base with inference status `unavailable`. The shared model catalog marks it for training, so task configuration accepts it without advertising a hosted inference deployment. Its required pricing fields are structural placeholders while unavailable, not a serving price quote. The initial executor still requires the Qwen model as base, comparison and task judge.

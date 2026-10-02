@@ -56,7 +56,7 @@ export const workspaceRecord: WorkspaceRecord = {
   isDefault: true,
   traceCaptureEnabled: false,
   traceRetentionDays: 30,
-  evaluationJudge: "openai/gpt-5.6-sol",
+  defaultJudgeModel: "openai/gpt-5.6-sol",
   archivedAt: null,
   createdAt: now,
   updatedAt: now,

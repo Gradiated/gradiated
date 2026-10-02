@@ -1,0 +1,1 @@
+ALTER TABLE "workspaces" ALTER COLUMN "trace_retention_days" SET DEFAULT 90;

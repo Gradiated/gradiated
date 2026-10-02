@@ -70,38 +70,41 @@ describe("task-owned schedule updates", () => {
     );
   });
 
-  it("saves settings during a Temporal outage and retries when the user resubmits them", async () => {
+  it("surfaces a Temporal outage and retries when the user resubmits the saved cron", async () => {
     const own = await fixture();
-    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
     own.engine.updateSchedule.mockRejectedValueOnce(
       new Error("Temporal unavailable"),
     );
+    const input = { training_schedule: "0 4 * * 1" };
 
-    try {
-      const input = { training_schedule: "0 3 * * 1" };
-      await expect(
-        own.service.updateTask(
-          own.userId,
-          own.workspaceId,
-          own.task.name,
-          input,
-        ),
-      ).resolves.toMatchObject({ trainingSchedule: input.training_schedule });
-      expect(
-        (await own.service.getTask(own.userId, own.workspaceId, own.task.name))
-          .trainingSchedule,
-      ).toBe(input.training_schedule);
-      expect(warning).toHaveBeenCalledOnce();
-      await own.service.updateTask(
-        own.userId,
-        own.workspaceId,
-        own.task.name,
-        input,
-      );
-      expect(own.engine.updateSchedule).toHaveBeenCalledTimes(2);
-    } finally {
-      warning.mockRestore();
-    }
+    await expect(
+      own.service.updateTask(own.userId, own.workspaceId, own.task.name, input),
+    ).rejects.toMatchObject({
+      code: "unavailable",
+      message: expect.stringContaining("Retry saving"),
+    });
+    expect(
+      (await own.service.getTask(own.userId, own.workspaceId, own.task.name))
+        .trainingSchedule,
+    ).toBe(input.training_schedule);
+    await expect(
+      own.service.updateTask(own.userId, own.workspaceId, own.task.name, input),
+    ).resolves.toMatchObject({ trainingSchedule: input.training_schedule });
+    expect(own.engine.updateSchedule).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not confirm a schedule update without a training engine", async () => {
+    const own = await fixture();
+    const service = createTrainingService(
+      db.database,
+      createMemoryContentStore(new Map()),
+    );
+
+    await expect(
+      service.updateTask(own.userId, own.workspaceId, own.task.name, {
+        training_schedule: null,
+      }),
+    ).rejects.toMatchObject({ code: "unavailable" });
   });
 
   it("does not touch Temporal when the task update fails validation", async () => {

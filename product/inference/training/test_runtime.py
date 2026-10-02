@@ -3,13 +3,26 @@ import shutil
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from autotrain.data import digest
 from runtime import TrainingRuntime
 
 
 class RuntimeTests(unittest.TestCase):
+    def test_retains_exact_input_and_output_usage_for_cost_estimates(self):
+        runtime = TrainingRuntime.__new__(TrainingRuntime)
+        runtime.tokenizer = Mock(return_value={"input_ids": [1, 2, 3]})
+        runtime.tokenizer.apply_chat_template.return_value = "formatted prompt"
+        messages = [{"role": "user", "content": "hello"}]
+        with patch("autotrain.Trainer.generate", return_value={"text": "answer", "tokens": 2, "seconds": 1}) as generate:
+            result = runtime.generate(messages, adapted=True)
+        self.assertEqual(result["usage"], {"input_tokens": 3, "output_tokens": 2})
+        generate.assert_called_once_with(messages, True, 256, None)
+        runtime.tokenizer.apply_chat_template.assert_called_once_with(
+            messages, tokenize=False, add_generation_prompt=True, enable_thinking=False
+        )
+
     def test_adapts_signed_artifacts_to_local_library_inputs_and_checkpoint_callback(
         self,
     ):

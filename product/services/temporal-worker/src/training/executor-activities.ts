@@ -31,12 +31,18 @@ import {
 
 import {
   estimateOutputCost,
+  estimateTokenCost,
   predictionsSchema,
   summarizePredictions,
 } from "./evaluation.js";
 
 import { evaluatePairs } from "./evaluate-pairs.js";
 import { predictionSchema, type EvaluationModel } from "./evaluation-models.js";
+import {
+  evaluationPricingSchema,
+  type EvaluationPricing,
+  type createEvaluationPricing,
+} from "./evaluation-pricing.js";
 
 import { persistTrainingDataset } from "./dataset.js";
 
@@ -112,6 +118,7 @@ export const createTrainingExecutorActivities = (options: {
   host: TrainingHostConfig;
   token: string;
   evaluationModels?: EvaluationModel;
+  evaluationPricing?: ReturnType<typeof createEvaluationPricing>;
 }) => {
   const { database, artifacts } = options;
   const store = createTrainingRunStore(database);
@@ -408,11 +415,32 @@ export const createTrainingExecutorActivities = (options: {
         }
         const predictions = predictionsSchema.parse(await json(artifact.key));
         const metrics = summarizePredictions(predictions);
-        const cost = estimateOutputCost(
+        const placeholderCost = estimateOutputCost(
           predictions,
           input.baseModelId,
           input.comparisonModelId,
         );
+        let pricing: EvaluationPricing | undefined;
+        if (!placeholderCost && options.evaluationPricing) {
+          const pricingKey = `runs/${runId}/evaluation/pricing.json`;
+          try {
+            if (await artifacts.exists(pricingKey)) {
+              pricing = evaluationPricingSchema.parse(await json(pricingKey));
+            } else {
+              pricing = await options.evaluationPricing(
+                input.baseModelId,
+                input.comparisonModelId,
+                Context.current().cancellationSignal,
+              );
+              await putJson(pricingKey, pricing);
+            }
+          } catch {
+            Context.current().cancellationSignal.throwIfAborted();
+          }
+        }
+        const cost =
+          placeholderCost ??
+          (pricing ? estimateTokenCost(predictions, pricing) : null);
         const summary: RunEvaluation = {
           judging_method: metrics.judging_method,
           holdout_groups: metrics.holdout_groups,
@@ -424,7 +452,13 @@ export const createTrainingExecutorActivities = (options: {
             ...metrics.fractions,
           },
           cost_per_request_nano_usd: cost,
-          ...(cost ? { cost_basis: "placeholder_output_only" as const } : {}),
+          ...(cost
+            ? {
+                cost_basis: placeholderCost
+                  ? ("placeholder_output_only" as const)
+                  : ("catalog_token_estimate" as const),
+              }
+            : {}),
           output_tokens_per_second: metrics.output_tokens_per_second,
           error_rate: 0,
         };

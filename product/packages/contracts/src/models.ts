@@ -253,6 +253,30 @@ export const ModelPropertiesSchema = z
     output_modalities: z.array(TextOutputModalitySchema).length(1),
     passthrough_parameters: ParameterMapSchema,
     deprecation_date: TimestampSchema.nullable(),
+    pricing_overrides: z
+      .array(
+        z.strictObject({
+          min_prompt_tokens: z
+            .number()
+            .int()
+            .nonnegative()
+            .describe("Minimum total input tokens for this price tier."),
+          input_pricing: z
+            .array(InputTokenPricingEntrySchema)
+            .describe(
+              "Input rates overriding the base tier, in nano-USD per token.",
+            ),
+          output_pricing: z
+            .array(OutputTokenPricingEntrySchema)
+            .describe(
+              "Output rates overriding the base tier, in nano-USD per token.",
+            ),
+        }),
+      )
+      .optional()
+      .describe(
+        "Published long-context price overrides; unspecified token types inherit base rates.",
+      ),
   })
   .openapi("ModelProperties");
 
@@ -277,6 +301,11 @@ export const ModelSchema = z
     name: NameSchema,
     status: z.enum(["available", "unavailable"]),
     properties: ModelPropertiesSchema,
+    icon: z
+      .string()
+      .nullable()
+      .optional()
+      .describe("Provider icon path in the console's local assets."),
     created_at: TimestampSchema,
     updated_at: TimestampSchema,
   })
@@ -288,6 +317,15 @@ export const ModelListSchema = z
     service_tiers: z
       .array(ServiceTierPricingPolicySchema)
       .length(ServiceTierSchema.options.length),
+    pricing_source: z
+      .literal("openrouter")
+      .optional()
+      .describe(
+        "External pricing source; rates are catalog estimates, not billing charges.",
+      ),
+    pricing_updated_at: TimestampSchema.optional().describe(
+      "Time this API instance fetched the external catalog.",
+    ),
   })
   .openapi("ModelList");
 

@@ -2,6 +2,10 @@ import { z } from "zod";
 
 import { QWEN_PLACEHOLDER_PRICING } from "@gradiated/contracts/model-catalog";
 import { EvaluationResultsSchema } from "@gradiated/contracts";
+import type {
+  EvaluationPrice,
+  EvaluationPricing,
+} from "./evaluation-pricing.js";
 
 export const predictionsSchema = EvaluationResultsSchema;
 
@@ -105,4 +109,55 @@ export const estimateOutputCost = (
   };
 
   return { fine_tuned: cost("fine_tuned"), comparison: cost("comparison") };
+};
+
+export const estimateTokenCost = (
+  rows: z.infer<typeof predictionsSchema>,
+  pricing: EvaluationPricing,
+) => {
+  if (!rows.length || !pricing.fine_tuned || !pricing.comparison) return null;
+
+  const cost = (arm: "fine_tuned" | "comparison", price: EvaluationPrice) => {
+    let total = 0;
+    for (const row of rows) {
+      const usage = row[arm].usage;
+      if (!usage) return null;
+
+      const tier = price.rates.overrides
+        ?.filter((tier) => usage.input_tokens >= tier.min_prompt_tokens)
+        .sort((a, b) => b.min_prompt_tokens - a.min_prompt_tokens)[0];
+      const rates = {
+        ...price.rates,
+        ...tier,
+        prompt: tier?.prompt ?? price.rates.prompt,
+        completion: tier?.completion ?? price.rates.completion,
+      };
+      const read = usage.cached_input_tokens ?? 0;
+      const write = usage.cache_write_tokens ?? 0;
+      const prompt = usage.input_tokens - read - write;
+      if (
+        prompt < 0 ||
+        (read > 0 && rates.input_cache_read === undefined) ||
+        (write > 0 && rates.input_cache_write === undefined)
+      )
+        return null;
+
+      total +=
+        (prompt * rates.prompt +
+          usage.output_tokens * rates.completion +
+          read * (rates.input_cache_read ?? 0) +
+          write * (rates.input_cache_write ?? 0)) *
+        1e9;
+    }
+
+    const mean = Math.round(total / rows.length);
+
+    return Number.isSafeInteger(mean) ? mean : null;
+  };
+  const fine_tuned = cost("fine_tuned", pricing.fine_tuned);
+  const comparison = cost("comparison", pricing.comparison);
+
+  return fine_tuned === null || comparison === null
+    ? null
+    : { fine_tuned, comparison };
 };

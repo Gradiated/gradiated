@@ -29,6 +29,17 @@ def transfer(url, destination=None, upload=None):
 
 
 class TrainingRuntime(Trainer):
+    def generate(self, messages, adapted, max_tokens=256, max_prompt_tokens=None):
+        result = super().generate(messages, adapted, max_tokens, max_prompt_tokens)
+        prompt = self.tokenizer.apply_chat_template(
+            messages, tokenize=False, add_generation_prompt=True, enable_thinking=False
+        )
+        result["usage"] = {
+            "input_tokens": len(self.tokenizer(prompt)["input_ids"]),
+            "output_tokens": result["tokens"],
+        }
+        return result
+
     def download(self, reference, name):
         path = self.root / name
         transfer(reference["url"], destination=path)

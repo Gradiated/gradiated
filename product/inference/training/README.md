@@ -72,6 +72,18 @@ stable randomized order. Completed pairs are stored in S3 for activity retries.
 Legacy all-base evaluations remain supported. Provider errors and truncated
 responses fail the run; they are not counted as successful evaluations.
 
+Evaluation token-cost estimates use hosted catalog prices for the training base
+and `GET /api/v1/models?external=true` for external comparisons. The API owns the
+OpenRouter loader and its five-minute process-memory cache; plain `/models` only
+reads the hosted catalog. Each evaluation saves its price snapshot in S3 at
+`runs/{run_id}/evaluation/pricing.json`, so retries use the same rates. Input,
+output (including reasoning), cache reads/writes and long-context price tiers
+are counted from generation usage. The estimates exclude GPU and judge costs
+and do not affect billing. The console reads the saved evaluation summary;
+the proxy and collector do not load this catalog. Missing rates or token usage
+leave cost unavailable without failing evaluation; legacy results are not
+backfilled. The existing Qwen-only placeholder estimate remains supported.
+
 Set `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` and/or `TRAINING_INFERENCE_API_KEY` on the
 worker through managed secrets for the corresponding selections. Credentials
 never go to GPU hosts. Missing credentials are rejected before building the

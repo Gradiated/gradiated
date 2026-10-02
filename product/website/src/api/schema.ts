@@ -504,6 +504,17 @@ export interface components {
       data: components["schemas"]["Model"][];
       next_cursor: string | null;
       service_tiers: components["schemas"]["ServiceTierPricingPolicy"][];
+      /**
+       * @description External pricing source; rates are catalog estimates, not billing charges.
+       * @enum {string}
+       */
+      pricing_source?: "openrouter";
+      /**
+       * Format: date-time
+       * @description Time this API instance fetched the external catalog.
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      pricing_updated_at?: string;
     };
     Model: {
       id: string;
@@ -511,6 +522,8 @@ export interface components {
       /** @enum {string} */
       status: "available" | "unavailable";
       properties: components["schemas"]["ModelProperties"];
+      /** @description Provider icon path in the console's local assets. */
+      icon?: string | null;
       /**
        * Format: date-time
        * @example 2026-08-16T12:00:00.000Z
@@ -603,6 +616,27 @@ export interface components {
        * @example 2026-08-16T12:00:00.000Z
        */
       deprecation_date: string | null;
+      /** @description Published long-context price overrides; unspecified token types inherit base rates. */
+      pricing_overrides?: {
+        /** @description Minimum total input tokens for this price tier. */
+        min_prompt_tokens: number;
+        /** @description Input rates overriding the base tier, in nano-USD per token. */
+        input_pricing: {
+          /** @enum {string} */
+          type: "prompt" | "cached_prompt" | "cache_write";
+          /** @enum {string} */
+          unit: "token";
+          cost: number;
+        }[];
+        /** @description Output rates overriding the base tier, in nano-USD per token. */
+        output_pricing: {
+          /** @enum {string} */
+          type: "completion" | "internal_reasoning";
+          /** @enum {string} */
+          unit: "token";
+          cost: number;
+        }[];
+      }[];
     };
     ModelParameterDescriptor:
       | {
@@ -640,6 +674,22 @@ export interface components {
     };
     /** @enum {string} */
     ServiceTier: "flex" | "default" | "fast";
+    Problem: {
+      /**
+       * Format: uri
+       * @example https://gradiated.com/problems/validation
+       */
+      type: string;
+      title: string;
+      status: number;
+      detail: string;
+      code: string;
+      request_id: string;
+      errors?: {
+        path: string;
+        message: string;
+      }[];
+    };
     BillingAccount: {
       /**
        * Format: uuid
@@ -659,22 +709,6 @@ export interface components {
        * @example 2026-08-16T12:00:00.000Z
        */
       updated_at: string;
-    };
-    Problem: {
-      /**
-       * Format: uri
-       * @example https://gradiated.com/problems/validation
-       */
-      type: string;
-      title: string;
-      status: number;
-      detail: string;
-      code: string;
-      request_id: string;
-      errors?: {
-        path: string;
-        message: string;
-      }[];
     };
     BalanceTransactionList: {
       data: components["schemas"]["BalanceTransaction"][];
@@ -1047,7 +1081,7 @@ export interface components {
         comparison: number;
       } | null;
       /** @enum {string} */
-      cost_basis?: "placeholder_output_only";
+      cost_basis?: "placeholder_output_only" | "catalog_token_estimate";
       output_tokens_per_second: {
         fine_tuned: number;
         comparison: number;
@@ -1358,11 +1392,23 @@ export interface components {
             text: string;
             tokens: number;
             seconds: number;
+            usage?: {
+              input_tokens: number;
+              output_tokens: number;
+              cached_input_tokens?: number;
+              cache_write_tokens?: number;
+            };
           };
           comparison: {
             text: string;
             tokens: number;
             seconds: number;
+            usage?: {
+              input_tokens: number;
+              output_tokens: number;
+              cached_input_tokens?: number;
+              cache_write_tokens?: number;
+            };
           };
           judgment: string;
           fine_tuned_first: boolean;
@@ -1374,11 +1420,23 @@ export interface components {
             text: string;
             tokens: number;
             seconds: number;
+            usage?: {
+              input_tokens: number;
+              output_tokens: number;
+              cached_input_tokens?: number;
+              cache_write_tokens?: number;
+            };
           };
           comparison: {
             text: string;
             tokens: number;
             seconds: number;
+            usage?: {
+              input_tokens: number;
+              output_tokens: number;
+              cached_input_tokens?: number;
+              cache_write_tokens?: number;
+            };
           };
           judgments: string[];
         }
@@ -2059,7 +2117,10 @@ export type $defs = Record<string, never>;
 export interface operations {
   listModels: {
     parameters: {
-      query?: never;
+      query?: {
+        /** @description Return the supported external provider catalog instead of hosted models. External prices are estimates and cached in API memory for five minutes. */
+        external?: "true" | "false";
+      };
       header?: never;
       path?: never;
       cookie?: never;
@@ -2069,12 +2130,21 @@ export interface operations {
       /** @description The public catalog of supported exact models and prices. */
       200: {
         headers: {
-          /** @description Caches the public model catalog for 15 seconds and permits stale responses while the cache refreshes. */
+          /** @description Caches hosted models for 15 seconds with stale-while-revalidate, or external models for 60 seconds. */
           "Cache-Control"?: string;
           [name: string]: unknown;
         };
         content: {
           "application/json": components["schemas"]["ModelList"];
+        };
+      };
+      /** @description The requested model catalog is unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
         };
       };
     };

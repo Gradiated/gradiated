@@ -126,3 +126,63 @@ it("preflights managed credentials without sending prompts", async () => {
   expect(credentials.load.mock.calls).toEqual([["openai"], ["anthropic"]]);
   expect(send).not.toHaveBeenCalled();
 });
+it("retains billable OpenAI output including reasoning and cached-input usage", async () => {
+  const send = vi.fn<typeof fetch>().mockResolvedValue(
+    new Response(
+      JSON.stringify({
+        choices: [{ message: { content: "answer" }, finish_reason: "stop" }],
+        usage: {
+          prompt_tokens: 100,
+          prompt_tokens_details: { cached_tokens: 30 },
+          completion_tokens: 50,
+          completion_tokens_details: { reasoning_tokens: 40 },
+        },
+      }),
+    ),
+  );
+  const result = await createEvaluationModels(
+    { OPENAI_API_KEY: "test" },
+    send,
+  ).generate(
+    "openai/gpt-6.1-sol",
+    [{ role: "user", content: "test" }],
+    new AbortController().signal,
+  );
+  expect(result.tokens).toBe(10);
+  expect(result.usage).toEqual({
+    input_tokens: 100,
+    output_tokens: 50,
+    cached_input_tokens: 30,
+  });
+});
+
+it("normalizes Anthropic input usage including cache reads and writes", async () => {
+  const send = vi.fn<typeof fetch>().mockResolvedValue(
+    new Response(
+      JSON.stringify({
+        content: [{ type: "text", text: "answer" }],
+        stop_reason: "end_turn",
+        usage: {
+          input_tokens: 10,
+          output_tokens: 5,
+          cache_read_input_tokens: 20,
+          cache_creation_input_tokens: 30,
+        },
+      }),
+    ),
+  );
+  const result = await createEvaluationModels(
+    { ANTHROPIC_API_KEY: "test" },
+    send,
+  ).generate(
+    "anthropic/claude-sonnet-5-5",
+    [{ role: "user", content: "test" }],
+    new AbortController().signal,
+  );
+  expect(result.usage).toEqual({
+    input_tokens: 60,
+    output_tokens: 5,
+    cached_input_tokens: 20,
+    cache_write_tokens: 30,
+  });
+});

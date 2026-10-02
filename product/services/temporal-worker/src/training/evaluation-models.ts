@@ -10,6 +10,14 @@ export const predictionSchema = z.object({
   text: z.string().min(1),
   tokens: z.number().int().nonnegative(),
   seconds: z.number().positive(),
+  usage: z
+    .object({
+      input_tokens: z.number().int().nonnegative(),
+      output_tokens: z.number().int().nonnegative(),
+      cached_input_tokens: z.number().int().nonnegative().optional(),
+      cache_write_tokens: z.number().int().nonnegative().optional(),
+    })
+    .optional(),
 });
 export type EvaluationModel = {
   check(modelId: string): void | Promise<void>;
@@ -30,6 +38,10 @@ const chatResponse = z.object({
     )
     .min(1),
   usage: z.object({
+    prompt_tokens: z.number().int().nonnegative().optional(),
+    prompt_tokens_details: z
+      .object({ cached_tokens: z.number().int().nonnegative().optional() })
+      .optional(),
     completion_tokens: z.number().int().nonnegative(),
     completion_tokens_details: z
       .object({ reasoning_tokens: z.number().int().nonnegative() })
@@ -39,7 +51,12 @@ const chatResponse = z.object({
 const claudeResponse = z.object({
   content: z.array(z.object({ type: z.string(), text: z.string().optional() })),
   stop_reason: z.literal("end_turn"),
-  usage: z.object({ output_tokens: z.number().int().nonnegative() }),
+  usage: z.object({
+    output_tokens: z.number().int().nonnegative(),
+    input_tokens: z.number().int().nonnegative().optional(),
+    cache_read_input_tokens: z.number().int().nonnegative().optional(),
+    cache_creation_input_tokens: z.number().int().nonnegative().optional(),
+  }),
 });
 
 export const createEvaluationModels = (
@@ -139,6 +156,21 @@ export const createEvaluationModels = (
             .join(""),
           tokens: parsed.usage.output_tokens,
           seconds,
+          ...(parsed.usage.input_tokens === undefined
+            ? {}
+            : {
+                usage: {
+                  input_tokens:
+                    parsed.usage.input_tokens +
+                    (parsed.usage.cache_read_input_tokens ?? 0) +
+                    (parsed.usage.cache_creation_input_tokens ?? 0),
+                  output_tokens: parsed.usage.output_tokens,
+                  cached_input_tokens:
+                    parsed.usage.cache_read_input_tokens ?? 0,
+                  cache_write_tokens:
+                    parsed.usage.cache_creation_input_tokens ?? 0,
+                },
+              }),
         });
       }
       const parsed = chatResponse.parse(value);
@@ -148,6 +180,16 @@ export const createEvaluationModels = (
           parsed.usage.completion_tokens -
           (parsed.usage.completion_tokens_details?.reasoning_tokens ?? 0),
         seconds,
+        ...(parsed.usage.prompt_tokens === undefined
+          ? {}
+          : {
+              usage: {
+                input_tokens: parsed.usage.prompt_tokens,
+                output_tokens: parsed.usage.completion_tokens,
+                cached_input_tokens:
+                  parsed.usage.prompt_tokens_details?.cached_tokens ?? 0,
+              },
+            }),
       });
     },
   };

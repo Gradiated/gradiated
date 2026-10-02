@@ -814,7 +814,10 @@ Private LoRA inference reuses `task_versions` for workspace ownership, immutable
 artifact URI/checksum/rank and durable serving eligibility. The existing
 `tasks.production_version_id` is the production selector. There are no additional
 hosting-intent or promotion-audit tables. Cache residency belongs to each serving
-allocation and is recovered lazily after a process restart.
+allocation. On startup, each allocation preloads compatible production versions
+within its budgets, then uses LRU during its lifetime. S3 artifacts back bounded
+disk and CPU caches and GPU adapter slots; eviction retains lower-tier copies.
+Verified disk files survive process restarts; CPU/GPU residency is rebuilt.
 
 Qualified runtime configuration pins the base/runtime/tokenizer release, TP
 geometry, supported target modules and cache/admission limits. See

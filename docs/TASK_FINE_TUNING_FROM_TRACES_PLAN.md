@@ -7,9 +7,9 @@ The hosting baseline here is inspected repository code; live serving qualificati
 is a separate implementation gate.
 
 The [current implementation stack](LORA_HOSTING_PR_STACK.md) simplifies this
-proposal to demand-loaded per-allocation LRU caches using existing version/task
-records, with no new hosting or promotion tables. The earlier hosting-resource,
-workflow and audit proposals below are deferred.
+proposal to startup preloading and demand-loaded per-allocation LRU caches using
+existing version/task records, with no new hosting or promotion tables. The
+earlier hosting-resource, workflow and audit proposals below are deferred.
 
 The hosting design below is proposed functionality, not deployed behavior or
 authorization to provision GPUs or change production.

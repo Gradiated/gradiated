@@ -176,19 +176,18 @@ jobs:
   record-release:
     name: Record immutable release
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
     needs: [resolve, build-images, build-collector, build-console]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
       release_commit: ${{ steps.commit.outputs.release_commit }}
-      pull_request: ${{ steps.commit.outputs.pull_request }}
     steps:
       - uses: actions/checkout@v7
         with:
           ref: main
           fetch-depth: 0
+          ssh-key: ${{ secrets.DEPLOY_RELEASE_SSH_KEY }}
       - name: Update release state
         env:
           SOURCE_SHA: ${{ needs.resolve.outputs.source_sha }}
@@ -207,95 +206,17 @@ jobs:
             --collector-digest "${COLLECTOR_DIGEST}"
           kubectl kustomize infra/environments/prod/us-east-1/kubernetes/workloads >/dev/null
       - id: commit
-        name: Open production release pull request
+        name: Commit production release to main
         env:
           SOURCE_SHA: ${{ needs.resolve.outputs.source_sha }}
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          release_paths=(
-            infra/environments/prod/us-east-1/kubernetes/workloads/kustomization.yaml
-            infra/environments/prod/us-east-1/kubernetes/workloads/release-metadata.yaml
-            infra/environments/prod/us-east-1/kubernetes/workloads/api.yaml
-            infra/environments/prod/us-east-1/kubernetes/workloads/clickhouse-migrate.yaml
-            infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml
-            infra/environments/prod/us-east-1/kubernetes/workloads/proxy.yaml
-            infra/environments/prod/us-east-1/kubernetes/workloads/collector.yaml
-            infra/environments/prod/us-east-1/kubernetes/workloads/worker.yaml
-            infra/environments/prod/us-east-1/kubernetes/workloads/temporal-worker.yaml
-            infra/environments/prod/us-east-1/kubernetes/operations/ops-mcp/workload.yaml
-          )
-          if git diff --quiet -- "${release_paths[@]}"; then
-            echo "Release state already matches ${SOURCE_SHA}."
-          else
-            git config user.name github-actions[bot]
-            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-            git add -- "${release_paths[@]}"
-            branch="deploy/release-${SOURCE_SHA:0:12}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-            git switch -c "$branch"
-            git commit -m "deploy(prod): release ${SOURCE_SHA:0:12}"
-            git push origin "HEAD:$branch"
-            pull_request=$(gh pr create --base main --head "$branch" \
-              --title "deploy(prod): release ${SOURCE_SHA:0:12}" \
-              --body "Deploy the verified images and console built from ${SOURCE_SHA}. Argo applies this release after the required checks pass and the pull request merges.")
-            echo "pull_request=$(gh pr view "$pull_request" --json number --jq .number)" >> "$GITHUB_OUTPUT"
-            gh pr merge "$pull_request" --squash --auto
-          fi
-          echo "release_commit=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
-
-
-      - name: Close release if auto-merge could not be enabled
-        if: failure() && steps.commit.outputs.pull_request != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PULL_REQUEST: ${{ steps.commit.outputs.pull_request }}
-        run: gh pr close "$PULL_REQUEST" --comment "Auto-merge could not be enabled; closing this release to avoid a late deployment."
-
-  wait-for-release:
-    name: Wait for release PR to merge
-    needs: record-release
-    runs-on: ubuntu-latest
-    timeout-minutes: 65
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - name: Wait for required checks and auto-merge
-        if: needs.record-release.outputs.pull_request != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          PULL_REQUEST: ${{ needs.record-release.outputs.pull_request }}
-        run: |
-          deadline=$((SECONDS + 3600))
-          while (( SECONDS < deadline )); do
-            state=$(gh pr view "$PULL_REQUEST" --json state --jq .state)
-            case "$state" in
-              MERGED) exit 0 ;;
-              CLOSED) echo "Release PR was closed without merging." >&2; exit 1 ;;
-            esac
-            sleep 15
-          done
-          echo "Release PR did not merge within one hour." >&2
-          exit 1
-      - name: Close an unmerged release after merge wait failure
-        if: (failure() || cancelled()) && needs.record-release.outputs.pull_request != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          PULL_REQUEST: ${{ needs.record-release.outputs.pull_request }}
-        run: |
-          if [[ $(gh pr view "$PULL_REQUEST" --json state --jq .state) == OPEN ]]; then
-            gh pr close "$PULL_REQUEST" --comment "The release did not merge within its check budget; closing it to avoid a late deployment."
-          fi
+        run: bash tools/deployment/commit-release.sh
 
   wait-for-argo:
     name: Wait for Argo rollout
     permissions:
       contents: read
       id-token: write
-      pull-requests: write
-    needs: [resolve, build-images, build-collector, record-release, wait-for-release]
+    needs: [resolve, build-images, build-collector, record-release]
     runs-on: ubuntu-latest
     environment: production
     timeout-minutes: 35

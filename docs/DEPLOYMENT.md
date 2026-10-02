@@ -27,8 +27,10 @@ the build idempotent. Kubernetes uses only resolved `sha256` image digests.
 2. Push the images to ECR.
 3. Upload hashed console assets to the private S3 bucket. Do not upload the live
    `index.html` file.
-4. Open a release PR recording the source revision, image digests and console
-   revision. Required checks must pass before auto-merge applies it to `main`.
+4. Commit the source revision, image digests and console revision directly to
+   `main`, using the repository-specific release deploy key. The source has
+   already passed `Product tests`; the generated commit carries `[skip ci]`
+   to avoid starting another build and deployment cycle.
 5. Wait for Argo CD to apply the release and for the API and worker Deployments
    to become available.
    An explicit Argo gateway image override is preserved and checked for readiness.
@@ -37,16 +39,15 @@ the build idempotent. Kubernetes uses only resolved `sha256` image digests.
 8. Compare the live root and SPA fallback with the built entry point. Check API
    readiness.
 
-The release PR uses the repository `GITHUB_TOKEN`. GitHub requires a user with
-write access to select **Approve workflows to run** on each bot-created PR.
-Required PR checks then run with normal path filtering, and auto-merge waits
-for them. The deployment waits up to one hour for the merge before starting the
-Argo rollout timer; an open PR is closed on timeout to prevent a late deployment.
-Fully automatic PR checks require a dedicated GitHub App installation token;
-the Actions token cannot approve its own workflow runs. The workflow updates
-`kustomization.yaml`,
-`release-metadata.yaml` and the image digest in each workload manifest that runs a
-released image.
+The release job uses `DEPLOY_RELEASE_SSH_KEY` for its checkout and push. This
+write deploy key bypasses the PR and status-check rules for `main`; a separate
+ruleset still forbids branch deletion and force pushes. GitHub applies deploy-key
+bypass to repository deploy keys as a class, so existing write deploy keys share
+that exception. Ordinary user and app pushes retain their PR and CI requirements.
+The release helper stages only the generated manifest paths, rejects pre-staged
+changes, rechecks release ancestry before each push, and retries fast-forward
+races by rebasing onto the latest `main`. Conflicts or stale sources stop the
+release. No release PR or workflow approval is required.
 
 The proxy manifest carries an all-zero placeholder digest until the first release
 after its merge records a real one. Until then its pods cannot pull an image; the
@@ -64,17 +65,15 @@ healthy. S3 versioning keeps previous entry points for recovery.
 - Repository variable `AWS_ACCOUNT_ID` must contain the production AWS account
   ID.
 - The `production` environment must permit the deployment workflow.
-- Workflow permissions must allow the repository `GITHUB_TOKEN` to write
-  contents.
-- Organization policy and repository settings must allow GitHub Actions to
-  create pull requests. Enable repository auto-merge. The release job gets
-  contents and pull-request write permissions; other jobs
-  retain their existing permissions. It does not approve reviews.
+- Repository secret `DEPLOY_RELEASE_SSH_KEY` contains the private SSH key for
+  the repository write deploy key used by the release job. Keep the key outside
+  version control; the job needs only read access through `GITHUB_TOKEN`.
 - The `main` ruleset requires one gate per workflow: `Product tests passed`,
   `Kubernetes passed`, `Nomad deployment passed`, `Terraform passed`,
   `Model deployment passed`, `Wizard publish passed`, `Agent quality passed`,
-  `Dependency age passed` and `Research lab passed`. Release PRs satisfy these
-  checks and resolved review threads without a branch-rules bypass.
+  `Dependency age passed` and `Research lab passed`. Ordinary PRs satisfy these
+  checks and resolved review threads. Deploy keys bypass this ruleset; the
+  separate `main integrity` ruleset retains deletion and force-push protections.
 
 Every workflow runs on every pull request. Its `changes` job
 (`.github/actions/relevant`) compares the pull request's files with the

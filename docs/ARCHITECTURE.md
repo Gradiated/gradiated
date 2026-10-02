@@ -433,7 +433,7 @@ are independent candidates for the exact model.
 Production delivery follows [DEPLOYMENT.md](DEPLOYMENT.md). GitHub Actions
 builds the product image, gateway image and console from one source revision.
 It stages hashed console assets, records immutable image digests in one
-release PR, waits for required checks and auto-merge, then waits for Argo CD. It publishes the console entry
+release commit directly to `main` after source CI passes, then waits for Argo CD. It publishes the console entry
 point only after the backend is healthy. Argo CD does not build images or write
 console files.
 | CloudWatch / AWS Budgets | platform | AWS control-plane logs, alarms and cost limits | infrastructure and billing signals remain in AWS |

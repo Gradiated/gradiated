@@ -808,15 +808,14 @@ Executor-specific support is checked when admitting a run.
 
 Workspace `default_judge_model` seeds `tasks.judge_model_id` when a task is first captured. Each task can override its judge independently; changing the workspace default never rewrites existing tasks. Migration 0013 renames the workspace field and backfills existing tasks from their workspace’s current default. Training admission snapshots the saved task judge.
 
-## Private LoRA hosting
+## Private LoRA serving
 
-`version_hostings` stores one desired hosting intent per immutable task version,
-with a monotonic revision, qualified serving profile, actor, progress and bounded
-failure code. Workspace ownership derives from the referenced version; runtime
-health and cache residency are not durable eligibility. Qualified profiles pin
-base/runtime/tokenizer identity, capabilities and prices, TP geometry, target
-modules/layers, rank and controller cache/admission limits.
+Private LoRA inference reuses `task_versions` for workspace ownership, immutable
+artifact URI/checksum/rank and durable serving eligibility. The existing
+`tasks.production_version_id` is the production selector. There are no additional
+hosting-intent or promotion-audit tables. Cache residency belongs to each serving
+allocation and is recovered lazily after a process restart.
 
-`task_promotions` stores the actor and previous/new version in the same transaction
-as a production pointer change. Composite foreign keys keep audit entries in the
-owning workspace/task. See [the implementation stack](LORA_HOSTING_PR_STACK.md).
+Qualified runtime configuration pins the base/runtime/tokenizer release, TP
+geometry, supported target modules and cache/admission limits. See
+[the implementation stack](LORA_HOSTING_PR_STACK.md).

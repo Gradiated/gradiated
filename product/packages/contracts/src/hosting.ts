@@ -1,14 +1,12 @@
 import { z } from "@hono/zod-openapi";
 import { ModelDeploymentReleaseSchema } from "./deployments.js";
-import { ModelPropertiesSchema } from "./models.js";
-import { ModelIdSchema, TimestampSchema, UuidSchema } from "./common.js";
+import { ModelIdSchema, UuidSchema } from "./common.js";
 
 export const LoraProfileSchema = z
   .strictObject({
     id: z.string().regex(/^[a-z0-9-]{1,64}$/),
     base_model_id: ModelIdSchema,
     release: ModelDeploymentReleaseSchema,
-    properties: ModelPropertiesSchema,
     tensor_parallel_size: z.number().int().min(1).max(8),
     max_rank: z.union([
       z.literal(8),
@@ -27,26 +25,6 @@ export const LoraProfileSchema = z
   })
   .openapi("LoraProfile");
 export type LoraProfile = z.infer<typeof LoraProfileSchema>;
-
-export const HostVersionSchema = z
-  .strictObject({
-    profile_id: LoraProfileSchema.shape.id,
-  })
-  .openapi("HostVersion");
-
-export const VersionHostingSchema = z
-  .strictObject({
-    version_id: UuidSchema,
-    desired: z.enum(["hosted", "unhosted"]),
-    revision: z.number().int().positive(),
-    profile_id: LoraProfileSchema.shape.id,
-    stage: z.enum(["pending", "ready", "failed", "draining", "unhosted"]),
-    error_code: z
-      .enum(["preparation_failed", "capacity_unavailable"])
-      .nullable(),
-    updated_at: TimestampSchema,
-  })
-  .openapi("VersionHosting");
 
 export const RuntimeAdapterSchema = z
   .strictObject({

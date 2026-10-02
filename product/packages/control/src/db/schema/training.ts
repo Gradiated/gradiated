@@ -176,11 +176,6 @@ export const taskVersions = pgTable(
       "task_versions_status_check",
       sql`${table.status} in (${inList(TASK_VERSION_STATUSES)})`,
     ),
-    unique("task_versions_id_task_workspace_unique").on(
-      table.id,
-      table.taskId,
-      table.workspaceId,
-    ),
     foreignKey({
       name: "task_versions_task_workspace_fk",
       columns: [table.taskId, table.workspaceId],

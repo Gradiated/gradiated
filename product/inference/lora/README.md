@@ -9,7 +9,8 @@ are complete.
 `manager.py` owns cold preparation, CPU admission and disk LRU. `artifacts.py`
 verifies and materializes archives. `server.py` protects CPU entries for the
 lifetime of each proxied request and enforces one allocation-wide concurrency
-limit. vLLM owns GPU slots, batching and GPU LRU; there is no second GPU cache or
+limit for dispatched inference. Cold requests have a separate two-request admission
+limit and do not hold inference slots while preparing. vLLM owns GPU slots, batching and GPU LRU; there is no second GPU cache or
 adapter placement service.
 
 ## Request and startup paths
@@ -41,10 +42,15 @@ preloads compatible current production versions until CPU capacity or the
 startup deadline is reached. Preload does not evict earlier CPU entries to cycle
 through the list. Unloaded versions remain eligible for on-demand preparation.
 `LORA_PRELOAD_SECONDS` defaults to 600; the deadline is checked between bounded
-loads, so one in-progress load can finish after it. Readiness opens after this
-best-effort preload. A production-list outage still permits base serving and
+loads, so one in-progress load can finish after it. Base readiness opens immediately
+after base warmup; preloading runs in the background. An empty production list
+loads no adapters and continues base serving. A production-list outage still permits base serving and
 on-demand loads; an uncertain vLLM load/unload failure closes readiness and exits
-the wrapper so Nomad's existing task restart policy can recover it.
+the wrapper so Nomad's existing task restart policy can recover it. Invalid archives,
+incompatible metadata and definite runtime rejections do not mark the engine
+uncertain. CPU eviction starts only after artifact validation. Restarting the
+allocation on an uncertain engine operation intentionally interrupts base traffic
+too; continuing with untracked engine state would defeat memory admission.
 
 ## Cache ownership
 
@@ -96,11 +102,30 @@ The same artifact identity can serve on separately qualified TP2 and TP4 engines
 The wrapper and engine bind to different loopback ports. Existing authenticated
 host ingress reaches the wrapper; the raw vLLM load/unload APIs are not exposed.
 `POST /internal/adapters/prepare` accepts only a name and workspace, not file
-paths or URLs. Probe/status require the additional private control header.
+paths or URLs. Prepare/probe/status require the additional private control header.
+Prepare shares the bounded cold-request admission limit.
 `/health`, `/metrics`, `/v1/models` and completion routes remain available.
 The existing deployment release advertises `lora_enabled: true` when opted in,
 allowing later selection to distinguish capable allocations during rollout.
 Existing releases without this field keep their original heartbeat digest.
+
+The existing host bootstrap accepts optional `GRADIATED_ADAPTER_CONTROL_TOKEN`
+(32–256 base64url characters) and writes it to the configured token file with
+mode 0600, owned by `runtime`. Proxy/reporting tokens remain readable only by
+`desmond`. Provision this separate secret and the private API endpoints before
+opting in; this PR does not change running hosts or their provider settings.
+
+The proxy allows up to 630 seconds across preparation and generation. Waiting for
+response headers and non-streaming output uses the remaining request deadline;
+streaming additionally has a 30-second upstream idle limit. Upstream closure
+precedes release of active references on timeout or disconnect.
+
+`/metrics` preserves engine metrics and appends `gradiated_lora_*` counters for
+CPU/disk cache hits, downloads, loads, failures, capacity rejections and evictions;
+gauges report cache bytes, CPU adapter count, active adapter references and
+uncertain engine state. Preparation duration exposes sum/count. Metrics have no
+workspace or adapter labels. Failure logs contain exception classes and engine
+certainty, never exception text, prompts or signed URLs.
 
 The loader accepts PEFT decoder LoRA archives containing `adapter_config.json`,
 `adapter_model.safetensors` and optionally `README.md`, flat or under `adapter/`.

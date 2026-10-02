@@ -2,6 +2,7 @@ import contextlib
 import copy
 import http.client
 import json
+import logging
 import re
 import shutil
 import threading
@@ -9,7 +10,9 @@ import time
 import uuid
 from pathlib import Path
 
-from artifacts import has_fused_experts, materialize
+from artifacts import download, has_fused_experts, materialize
+
+logger = logging.getLogger(__name__)
 
 
 class CapacityError(RuntimeError):
@@ -31,6 +34,22 @@ class Manager:
         self.lock = threading.Lock()
         self.loading = threading.Lock()
         self.capacity = threading.BoundedSemaphore(config["max_concurrency"])
+        self.cold_requests = threading.BoundedSemaphore(2)
+        self.counters = dict.fromkeys(
+            (
+                "cpu_hits",
+                "disk_hits",
+                "downloads",
+                "loads",
+                "failures",
+                "capacity_rejections",
+                "cpu_evictions",
+                "disk_evictions",
+            ),
+            0,
+        )
+        self.load_seconds = 0.0
+        self.load_attempts = 0
         self.entries = {}
         self.failed = False
         self.engine_ready = True
@@ -161,12 +180,15 @@ class Manager:
                 raise
             entry["cpu_resident"] = False
             entry["cpu"] = 0
+            self.counters["cpu_evictions"] += 1
         if disk:
+            present = bool(entry["disk"])
             try:
                 shutil.rmtree(self.root / name)
             except FileNotFoundError:
                 pass
             entry["disk"] = 0
+            self.counters["disk_evictions"] += int(present)
 
     def probe(self, name):
         with self.request(name):
@@ -204,6 +226,28 @@ class Manager:
                 connection.close()
 
     def prepare(self, name, workspace_id=None, preload=False):
+        started = time.monotonic()
+        try:
+            return self._prepare(name, workspace_id, preload)
+        except CapacityError:
+            with self.lock:
+                self.counters["capacity_rejections"] += 1
+            raise
+        except Exception as error:
+            with self.lock:
+                self.counters["failures"] += 1
+            logger.warning(
+                "Adapter preparation failed (%s); engine_uncertain=%s",
+                type(error).__name__,
+                self.failed,
+            )
+            raise
+        finally:
+            with self.lock:
+                self.load_seconds += time.monotonic() - started
+                self.load_attempts += 1
+
+    def _prepare(self, name, workspace_id=None, preload=False):
         if not self.engine_ready:
             raise CapacityError("Base engine warming")
         with self.lock:
@@ -218,6 +262,7 @@ class Manager:
             ):
                 raise LookupError("Adapter unavailable")
             if entry and entry["cpu_resident"]:
+                self.counters["cpu_hits"] += 1
                 entry["used"] = time.monotonic()
                 return
         if not self.loading.acquire(timeout=60):
@@ -248,21 +293,6 @@ class Manager:
                     ),
                     key=lambda pair: pair[1]["used"],
                 )
-                for key, item in idle:
-                    if (
-                        sum(item["cpu_resident"] for item in self.entries.values())
-                        < self.config["cpu_adapter_slots"]
-                    ):
-                        break
-                    if item["cpu_resident"]:
-                        if preload:
-                            raise CapacityError("Preload CPU slots full")
-                        self.evict(key)
-                if (
-                    sum(item["cpu_resident"] for item in self.entries.values())
-                    >= self.config["cpu_adapter_slots"]
-                ):
-                    raise CapacityError("All adapter slots active")
                 max_disk = min(
                     self.config["disk_cache_bytes"],
                     self.config["cpu_cache_bytes"] // factor
@@ -288,6 +318,8 @@ class Manager:
                         raise CapacityError("Adapter disk budget exhausted")
 
             if entry["disk"] and entry["tensor_bytes"]:
+                with self.lock:
+                    self.counters["disk_hits"] += 1
                 path, disk_bytes, tensor_bytes = (
                     self.root / name,
                     entry["disk"],
@@ -295,6 +327,15 @@ class Manager:
                 )
             else:
                 try:
+                    fetched = False
+
+                    def fetch(spec, destination, hosts):
+                        nonlocal fetched
+                        fetched = True
+                        with self.lock:
+                            self.counters["downloads"] += 1
+                        (self.fetch or download)(spec, destination, hosts)
+
                     path, disk_bytes, tensor_bytes = materialize(
                         spec,
                         self.root,
@@ -302,8 +343,10 @@ class Manager:
                         self.allowed_hosts,
                         self.config["model_config"],
                         reserve=reserve_disk,
-                        **({"fetch": self.fetch} if self.fetch else {}),
+                        fetch=fetch,
                     )
+                    with self.lock:
+                        self.counters["disk_hits"] += int(not fetched)
                 except Exception:
                     with self.lock:
                         directory = self.root / name
@@ -323,13 +366,21 @@ class Manager:
                     if (
                         self.used_bytes("cpu") + required
                         <= self.config["cpu_cache_bytes"]
+                        and sum(
+                            value["cpu_resident"] for value in self.entries.values()
+                        )
+                        < self.config["cpu_adapter_slots"]
                     ):
                         break
-                    if item["cpu_resident"]:
+                    if item["cpu_resident"] and not item["active"]:
                         if preload:
                             raise CapacityError("Preload CPU bytes full")
                         self.evict(key)
-                if self.used_bytes("cpu") + required > self.config["cpu_cache_bytes"]:
+                if (
+                    self.used_bytes("cpu") + required > self.config["cpu_cache_bytes"]
+                    or sum(value["cpu_resident"] for value in self.entries.values())
+                    >= self.config["cpu_adapter_slots"]
+                ):
                     raise CapacityError("All CPU cache capacity active")
             try:
                 self.engine(
@@ -347,6 +398,7 @@ class Manager:
                     self.failed = True
                 raise
             with self.lock:
+                self.counters["loads"] += 1
                 entry.update(
                     cpu_resident=True,
                     disk=disk_bytes,
@@ -360,29 +412,73 @@ class Manager:
     def request(self, model, workspace_id=None):
         if not self.engine_ready:
             raise CapacityError("Base engine warming")
-        if not self.capacity.acquire(blocking=False):
-            raise CapacityError("Allocation at capacity")
         entry = None
+        admitted = False
+        cold = False
         try:
             if model.startswith("ft-"):
                 while True:
-                    self.prepare(model, workspace_id)
                     with self.lock:
-                        entry = self.entries.get(model)
-                        if entry and entry["cpu_resident"]:
+                        candidate = self.entries.get(model)
+                        if candidate and candidate["cpu_resident"]:
+                            if (
+                                workspace_id
+                                and candidate["spec"]["workspace_id"] != workspace_id
+                            ):
+                                raise LookupError("Adapter unavailable")
+                            entry = candidate
                             entry["active"] += 1
+                            self.counters["cpu_hits"] += int(not cold)
                             break
+                    if not cold:
+                        if not self.cold_requests.acquire(blocking=False):
+                            raise CapacityError("Cold preparation at capacity")
+                        cold = True
+                    self.prepare(model, workspace_id)
             elif model != self.config["runtime_model_name"]:
                 raise LookupError("Unknown runtime model")
             if self.failed:
                 raise CapacityError("Runtime state uncertain")
+            if cold:
+                self.cold_requests.release()
+                cold = False
+            admitted = self.capacity.acquire(blocking=False)
+            if not admitted:
+                raise CapacityError("Allocation at capacity")
             yield
+        except CapacityError:
+            with self.lock:
+                self.counters["capacity_rejections"] += 1
+            raise
         finally:
             with self.lock:
                 if entry:
                     entry["active"] -= 1
                     entry["used"] = time.monotonic()
-            self.capacity.release()
+            if cold:
+                self.cold_requests.release()
+            if admitted:
+                self.capacity.release()
+
+    def metrics(self):
+        with self.lock:
+            values = {
+                **{f"{key}_total": value for key, value in self.counters.items()},
+                "preparation_seconds_sum": self.load_seconds,
+                "preparation_seconds_count": self.load_attempts,
+                "cpu_cache_bytes": self.used_bytes("cpu"),
+                "disk_cache_bytes": self.used_bytes("disk"),
+                "cpu_adapters": sum(
+                    entry["cpu_resident"] for entry in self.entries.values()
+                ),
+                "active_adapter_requests": sum(
+                    entry["active"] for entry in self.entries.values()
+                ),
+                "engine_uncertain": int(self.failed),
+            }
+            return "".join(
+                f"gradiated_lora_{key} {value}\n" for key, value in values.items()
+            ).encode()
 
     def remove(self, name):
         if not self.loading.acquire(timeout=1):

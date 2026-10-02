@@ -12,7 +12,7 @@ from pathlib import Path
 from grants import production_targets, resolver, validate_endpoint
 from manager import Manager
 from server import create_server
-from startup import preload_production
+from startup import start_preload
 
 
 def engine_settings(command, environment, model_config):
@@ -130,10 +130,9 @@ def main():
                 time.sleep(1)
             if child.poll() is not None:
                 return
-            manager.engine_ready = True
-            preload_production(
+            start_preload(
                 manager,
-                production_targets(
+                lambda: production_targets(
                     os.environ["LORA_PRODUCTION_URL"],
                     os.environ["LORA_CONTROL_TOKEN"],
                     settings["base_model_id"],

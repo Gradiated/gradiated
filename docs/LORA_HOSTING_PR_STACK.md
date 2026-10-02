@@ -29,6 +29,9 @@ independently; there is no adapter placement or spreading across hosts. During
 its lifetime, adapters load on demand and idle entries are evicted by LRU. Active
 requests protect their adapters from eviction. Startup warming is best effort;
 an adapter that was not preloaded can still load on its first request.
+Base readiness opens after base warmup and preloading continues in the background.
+An empty production list leaves the adapter cache empty. Cold request admission
+is separate from inference admission so downloads cannot occupy inference slots.
 
 The cache hierarchy is immutable S3 artifacts, verified local disk files,
 vLLM CPU tensors, then GPU adapter slots. CPU and disk have separate byte budgets;

@@ -8,6 +8,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from artifacts import strict_json
 from manager import CapacityError
 
+REQUEST_TIMEOUT_SECONDS = 630
+STREAM_IDLE_TIMEOUT_SECONDS = 30
+
 
 def create_server(manager, port, control_token):
     if not control_token:
@@ -64,6 +67,8 @@ def create_server(manager, port, control_token):
                     body = response.read(8 * 1024 * 1024 + 1)
                     if len(body) > 8 * 1024 * 1024:
                         raise ValueError("Oversized runtime response")
+                    if self.path == "/metrics" and response.status == 200:
+                        body += b"\n" + manager.metrics()
                     self.send_response(response.status)
                     self.send_header(
                         "Content-Type",
@@ -120,9 +125,17 @@ def create_server(manager, port, control_token):
                     self.operation(lambda body: manager.probe(body["name"]))
                 return
             if self.path == "/internal/adapters/prepare":
-                self.operation(
-                    lambda body: manager.prepare(body["name"], body["workspace_id"])
-                )
+                if self.control():
+
+                    def prepare(body):
+                        if not manager.cold_requests.acquire(blocking=False):
+                            raise CapacityError("Cold preparation at capacity")
+                        try:
+                            manager.prepare(body["name"], body["workspace_id"])
+                        finally:
+                            manager.cold_requests.release()
+
+                    self.operation(prepare)
                 return
             if self.path not in ("/v1/chat/completions", "/v1/completions"):
                 self.respond(404, {"error": "not_found"})
@@ -131,14 +144,21 @@ def create_server(manager, port, control_token):
             started = False
             try:
                 body = self.body()
+                deadline = time.monotonic() + REQUEST_TIMEOUT_SECONDS
                 workspace_id = self.headers.get("X-Gradiated-Workspace")
                 if body["model"].startswith("ft-") and not workspace_id:
                     raise ValueError("Missing workspace identity")
                 with manager.request(body["model"], workspace_id):
                     connection = http.client.HTTPConnection(
-                        "127.0.0.1", manager.engine_port, timeout=30
+                        "127.0.0.1", manager.engine_port, timeout=5
                     )
                     try:
+                        connection.connect()
+                        upstream_socket = connection.sock
+                        remaining = deadline - time.monotonic()
+                        if remaining <= 0:
+                            raise TimeoutError("Generation deadline exceeded")
+                        upstream_socket.settimeout(remaining)
                         connection.request(
                             "POST",
                             self.path,
@@ -153,10 +173,19 @@ def create_server(manager, port, control_token):
                         )
                         self.end_headers()
                         started = True
-                        deadline = time.monotonic() + 630
-                        while chunk := upstream.read1(65536):
-                            if time.monotonic() > deadline:
+                        streaming = body.get("stream") is True
+                        while True:
+                            remaining = deadline - time.monotonic()
+                            if remaining <= 0:
                                 raise TimeoutError("Generation deadline exceeded")
+                            upstream_socket.settimeout(
+                                min(STREAM_IDLE_TIMEOUT_SECONDS, remaining)
+                                if streaming
+                                else remaining
+                            )
+                            chunk = upstream.read1(65536)
+                            if not chunk:
+                                break
                             self.wfile.write(chunk)
                             self.wfile.flush()
                     finally:

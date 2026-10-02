@@ -5,6 +5,7 @@ import threading
 import time
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from unittest import mock
 
 from fixtures import archive, grant, settings
 from manager import CapacityError, Manager
@@ -30,6 +31,8 @@ class ServerTests(unittest.TestCase):
         self.manager.prepare(self.name)
         self.emitting = threading.Event()
         self.release = threading.Event()
+        self.header_delay = 0
+        self.nonstream_delay = 0
         owner = self
 
         class Upstream(BaseHTTPRequestHandler):
@@ -42,8 +45,18 @@ class ServerTests(unittest.TestCase):
                 self.wfile.write(b"upstream")
 
             def do_POST(self):
-                self.rfile.read(int(self.headers["Content-Length"]))
+                body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+                time.sleep(owner.header_delay)
                 self.send_response(200)
+                if not body.get("stream"):
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    time.sleep(owner.nonstream_delay)
+                    try:
+                        self.wfile.write(b'{"result":"done"}')
+                    except OSError:
+                        pass
+                    return
                 self.send_header("Content-Type", "text/event-stream")
                 self.end_headers()
                 self.wfile.write(b'data: {"delta":"first"}\n\n')
@@ -136,7 +149,96 @@ class ServerTests(unittest.TestCase):
             connection = self.connect()
             connection.request("GET", path)
             response = connection.getresponse()
-            self.assertEqual(response.read(), b"upstream")
+            body = response.read()
+            if path == "/metrics":
+                self.assertTrue(body.startswith(b"upstream\n"))
+                self.assertIn(b"gradiated_lora_loads_total 1\n", body)
+                self.assertNotIn(self.name.encode(), body)
+            else:
+                self.assertEqual(body, b"upstream")
+
+    def test_first_response_and_nonstream_body_allow_more_than_stream_idle_timeout(
+        self,
+    ):
+        self.header_delay = self.nonstream_delay = 0.1
+        with (
+            mock.patch("server.STREAM_IDLE_TIMEOUT_SECONDS", 0.02),
+            mock.patch("server.REQUEST_TIMEOUT_SECONDS", 1),
+        ):
+            connection = self.connect()
+            connection.request(
+                "POST",
+                "/v1/chat/completions",
+                json.dumps({"model": "base", "stream": False}),
+            )
+            response = connection.getresponse()
+            self.assertEqual(response.status, 200)
+            self.assertEqual(response.read(), b'{"result":"done"}')
+
+    def test_header_wait_is_still_bounded_by_request_deadline(self):
+        self.header_delay = 0.2
+        with mock.patch("server.REQUEST_TIMEOUT_SECONDS", 0.05):
+            connection = self.connect()
+            connection.request(
+                "POST", "/v1/chat/completions", json.dumps({"model": "base"})
+            )
+            response = connection.getresponse()
+            self.assertEqual(response.status, 503)
+            response.read()
+        with self.manager.request("base"):
+            pass
+
+    def test_stalled_stream_closes_upstream_and_releases_active_reference(self):
+        with mock.patch("server.STREAM_IDLE_TIMEOUT_SECONDS", 0.05):
+            connection = self.connect()
+            connection.request(
+                "POST",
+                "/v1/chat/completions",
+                json.dumps({"model": self.name, "stream": True}),
+                {"X-Gradiated-Workspace": self.spec["workspace_id"]},
+            )
+            response = connection.getresponse()
+            self.assertEqual(response.status, 200)
+            self.assertEqual(response.readline(), b'data: {"delta":"first"}\n')
+            response.read()
+        deadline = time.monotonic() + 1
+        while self.manager.entries[self.name]["active"] and time.monotonic() < deadline:
+            time.sleep(0.01)
+        self.assertEqual(self.manager.entries[self.name]["active"], 0)
+        with self.manager.request("base"):
+            pass
+
+    def test_internal_prepare_requires_control_token_and_bounded_cold_admission(self):
+        for authenticated, full, expected in (
+            (False, False, 403),
+            (True, False, 200),
+            (True, True, 503),
+        ):
+            if full:
+                self.manager.cold_requests.acquire()
+                self.manager.cold_requests.acquire()
+            try:
+                headers = (
+                    {"X-Gradiated-Adapter-Control": "synthetic-control-token"}
+                    if authenticated
+                    else {}
+                )
+                connection = self.connect()
+                connection.request(
+                    "POST",
+                    "/internal/adapters/prepare",
+                    json.dumps(
+                        {"name": self.name, "workspace_id": self.spec["workspace_id"]}
+                    ),
+                    headers,
+                )
+                response = connection.getresponse()
+                self.assertEqual(response.status, expected)
+                response.read()
+            finally:
+                if full:
+                    self.manager.cold_requests.release()
+                    self.manager.cold_requests.release()
 
 
 if __name__ == "__main__":

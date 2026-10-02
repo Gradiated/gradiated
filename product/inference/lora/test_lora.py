@@ -82,6 +82,76 @@ class LoraTests(unittest.TestCase):
             self.manager.evict(name, disk=True)
         self.assertEqual(self.manager.status()["disk_cache_bytes"], before)
 
+    def test_invalid_cold_artifact_does_not_evict_a_healthy_cpu_entry(self):
+        first = self.register()
+        self.manager.prepare(first)
+        second = self.register()
+        self.manager.fetch = lambda spec, path, hosts: path.write_bytes(b"bad")
+        with self.assertRaises(ValueError):
+            self.manager.prepare(second)
+        self.assertTrue(self.manager.entries[first]["cpu_resident"])
+        self.assertFalse(self.manager.failed)
+        self.assertEqual(len(self.commands), 1)
+
+    def test_cold_waiters_do_not_consume_base_or_hot_inference_capacity(self):
+        self.config["max_concurrency"] = 1
+        self.manager.capacity = threading.BoundedSemaphore(1)
+        self.config["cpu_adapter_slots"] = 2
+        hot = self.register()
+        self.manager.prepare(hot)
+        cold = self.register()
+        started, release = threading.Event(), threading.Event()
+
+        def fetch(spec, path, hosts):
+            started.set()
+            if not release.wait(5):
+                raise TimeoutError("Synthetic download timed out")
+            path.write_bytes(self.bytes)
+
+        self.manager.fetch = fetch
+        self.addCleanup(release.set)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+
+            def request():
+                with self.manager.request(cold):
+                    pass
+
+            future = executor.submit(request)
+            self.assertTrue(started.wait(2))
+            with (
+                self.manager.request("base"),
+                self.assertRaises(CapacityError),
+                self.manager.request(hot),
+            ):
+                pass
+            with self.manager.request(hot):
+                pass
+            release.set()
+            future.result(timeout=5)
+        self.assertEqual(self.manager.entries[hot]["active"], 0)
+
+    def test_cold_queue_is_bounded_and_hot_requests_bypass_it(self):
+        hot = self.register()
+        self.manager.prepare(hot)
+        cold = self.register()
+        with self.manager.cold_requests, self.manager.cold_requests:
+            with self.assertRaises(CapacityError), self.manager.request(cold):
+                pass
+            with self.manager.request("base"):
+                pass
+            with self.manager.request(hot):
+                pass
+
+    def test_failure_logs_do_not_include_exception_secrets(self):
+        cold = self.register()
+        self.manager.fetch = mock.Mock(side_effect=OSError("secret-download-url"))
+        with self.assertLogs(level="WARNING") as logs, self.assertRaises(OSError):
+            self.manager.prepare(cold)
+        self.assertNotIn("secret-download-url", "".join(logs.output))
+        self.assertIn(
+            "gradiated_lora_failures_total 1", self.manager.metrics().decode()
+        )
+
     def test_base_and_adapter_share_one_allocation_limit(self):
         name = self.register()
         with (

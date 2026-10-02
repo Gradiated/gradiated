@@ -186,3 +186,71 @@ it("normalizes Anthropic input usage including cache reads and writes", async ()
     cache_write_tokens: 30,
   });
 });
+
+it.each(["openai/gpt-5.1-codex", "openai/o3-pro"])(
+  "uses Responses for %s and retains billing usage",
+  async (model) => {
+    const send = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          status: "completed",
+          output: [
+            { type: "reasoning" },
+            {
+              type: "message",
+              content: [{ type: "output_text", text: "answer" }],
+            },
+          ],
+          usage: {
+            input_tokens: 100,
+            output_tokens: 50,
+            input_tokens_details: { cached_tokens: 30 },
+            output_tokens_details: { reasoning_tokens: 40 },
+          },
+        }),
+      ),
+    );
+    const result = await createEvaluationModels(
+      { OPENAI_API_KEY: "test" },
+      send,
+    ).generate(
+      model,
+      [{ role: "user", content: "test" }],
+      new AbortController().signal,
+    );
+    expect(send.mock.calls[0]?.[0]).toBe("https://api.openai.com/v1/responses");
+    expect(JSON.parse(String(send.mock.calls[0]?.[1]?.body))).toMatchObject({
+      model: model.slice(7),
+      input: [{ role: "user", content: "test" }],
+      store: false,
+    });
+    expect(result).toMatchObject({
+      text: "answer",
+      tokens: 10,
+      usage: { input_tokens: 100, output_tokens: 50, cached_input_tokens: 30 },
+    });
+  },
+);
+it("uses Completions for instruct models", async () => {
+  const send = vi.fn<typeof fetch>().mockResolvedValue(
+    new Response(
+      JSON.stringify({
+        choices: [{ text: "answer", finish_reason: "stop" }],
+        usage: { prompt_tokens: 10, completion_tokens: 2 },
+      }),
+    ),
+  );
+  const result = await createEvaluationModels(
+    { OPENAI_API_KEY: "test" },
+    send,
+  ).generate(
+    "openai/gpt-3.5-turbo-instruct",
+    [{ role: "user", content: "test" }],
+    new AbortController().signal,
+  );
+  expect(send.mock.calls[0]?.[0]).toBe("https://api.openai.com/v1/completions");
+  expect(result).toMatchObject({
+    text: "answer",
+    usage: { input_tokens: 10, output_tokens: 2 },
+  });
+});

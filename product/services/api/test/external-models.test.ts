@@ -5,6 +5,8 @@ import { createTestApp, modelRecord, sessionStoreDown } from "./support.js";
 
 const provider = {
   id: "openai/gpt-6.1-sol",
+  name: "OpenAI: GPT-6.1 Sol",
+  architecture: { input_modalities: ["text"], output_modalities: ["text"] },
   description: "Synthetic provider model.",
   created: 1750000000,
   context_length: 1000000,
@@ -141,11 +143,11 @@ it.each([null, "", "-0.01", "not-a-price"])(
   },
 );
 
-it("allows published free rates and omits models outside the supported external catalog", async () => {
+it("allows published free rates and omits models outside the supported providers", async () => {
   const send = vi.fn<typeof fetch>().mockImplementation(async () =>
     feed([
       { ...provider, pricing: { prompt: "0", completion: "0" } },
-      { ...provider, id: "openai/unknown" },
+      { ...provider, id: "google/gemini" },
     ]),
   );
   const catalog = await createExternalModelCatalog(send)();
@@ -167,4 +169,40 @@ it("returns 503 for a feed outage and suppresses repeat fetches for 30 seconds",
   now += 30000;
   expect((await app.request("/api/v1/models?external=true")).status).toBe(503);
   expect(send).toHaveBeenCalledTimes(2);
+});
+
+it("discovers new text models and excludes expired, non-text, and routing variants", async () => {
+  const send = vi.fn<typeof fetch>().mockImplementation(async () =>
+    feed([
+      { ...provider, id: "openai/gpt-4.1-mini", name: "OpenAI: GPT-4.1 Mini" },
+      { ...provider, id: "openai/expired", expiration_date: "2020-01-01" },
+      {
+        ...provider,
+        id: "openai/image",
+        architecture: {
+          input_modalities: ["text"],
+          output_modalities: ["image"],
+        },
+      },
+      { ...provider, id: "openai/gpt-4.1:batch" },
+      { ...provider, id: "openai/o4-mini-high" },
+    ]),
+  );
+  const result = await createExternalModelCatalog(send)();
+  expect(
+    result.data.map((model) => ({
+      id: model.id,
+      name: model.name,
+      icon: model.icon,
+    })),
+  ).toEqual([
+    {
+      id: "openai/gpt-4.1-mini",
+      name: "GPT-4.1 Mini",
+      icon: "/model-providers/openai.svg",
+    },
+  ]);
+  expect(send.mock.calls[0]?.[0]).toBe(
+    "https://openrouter.ai/api/v1/models?providers=OpenAI,Anthropic",
+  );
 });

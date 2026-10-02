@@ -22,13 +22,13 @@ export const MODEL_CATALOG = [
     id: "deepseek/deepseek-v4.1-flash",
     displayName: "DeepSeek V4.1 Flash",
     icon: "/model-providers/deepseek.svg",
-    supportedUses: ["comparison", "serving"],
+    supportedUses: ["judge", "comparison", "serving"],
   },
   {
     id: "z-ai/glm-5.3-flash",
     displayName: "GLM-5.3 Flash",
     icon: "/model-providers/zai.svg",
-    supportedUses: ["training", "comparison", "serving"],
+    supportedUses: ["judge", "training", "comparison", "serving"],
     training: {
       model: "zai-org/GLM-5.3-Flash-BF16",
       revision: "a5b45eb41df6402735dedc900be14a42e8d5e538",
@@ -179,7 +179,7 @@ export const modelsForUseCase = <Use extends ModelUseCase>(useCase: Use) =>
     (model.supportedUses as readonly ModelUseCase[]).includes(useCase),
   );
 
-export const JUDGE_MODELS = modelsForUseCase("judge");
+export const JUDGE_MODELS = modelsForUseCase("comparison");
 export const EVALUATION_JUDGES = JUDGE_MODELS.map((model) => model.id);
 export type EvaluationJudgeId = (typeof EVALUATION_JUDGES)[number];
 export const DEFAULT_EVALUATION_JUDGE =
@@ -210,3 +210,17 @@ export const catalogModel = (id: string) =>
 
 export const modelDisplayName = (id: string | null | undefined) =>
   id ? (catalogModel(id)?.displayName ?? id) : "—";
+
+export const isExternalModelId = (id: string) =>
+  /^(openai|anthropic)\/[a-zA-Z0-9._-]+$/.test(id);
+
+export const isEvaluationModelId = (id: string) =>
+  isExternalModelId(id) || COMPARISON_MODELS.some((model) => model.id === id);
+
+export const modelProviderIcon = (id: string) =>
+  catalogModel(id)?.icon ??
+  (id.startsWith("openai/")
+    ? "/model-providers/openai.svg"
+    : id.startsWith("anthropic/")
+      ? "/model-providers/anthropic.svg"
+      : null);

@@ -61,6 +61,7 @@ const { digest: _digest, ...apiKeyColumns } = getTableColumns(apiKeys);
 
 export const createWorkspaceApiKeyService = (
   database: ControlDatabase,
+  validateEvaluationModel?: (id: string) => Promise<void>,
 ): WorkspaceApiKeyService => {
   const records = createWorkspaceStore(database);
   const requireWorkspaceManager = async (
@@ -126,6 +127,8 @@ export const createWorkspaceApiKeyService = (
 
     async updateWorkspace(userId, workspaceId, input) {
       await requireWorkspaceEditor(database, { userId, workspaceId });
+      if (input.default_judge_model !== undefined)
+        await validateEvaluationModel?.(input.default_judge_model);
 
       return records.update(workspaceId, input);
     },

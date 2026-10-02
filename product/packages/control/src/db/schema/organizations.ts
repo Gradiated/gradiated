@@ -18,7 +18,6 @@ import {
 } from "drizzle-orm/pg-core";
 
 import {
-  EVALUATION_JUDGES,
   DEFAULT_EVALUATION_JUDGE,
   type EvaluationJudge,
   type ModelDeploymentRelease,
@@ -156,10 +155,6 @@ export const workspaces = pgTable(
       .notNull(),
   },
   (table) => [
-    check(
-      "workspaces_default_judge_model_check",
-      sql`${table.defaultJudgeModel} in (${sql.raw(EVALUATION_JUDGES.map((judge) => `'${judge}'`).join(", "))})`,
-    ),
     check(
       "workspaces_trace_retention_days_check",
       sql`${table.traceRetentionDays} in (30, 90, 180)`,

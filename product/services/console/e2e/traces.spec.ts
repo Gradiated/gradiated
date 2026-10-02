@@ -1,3 +1,4 @@
+import { MODEL_CATALOG } from "@gradiated/contracts/model-catalog";
 import { expect, test } from "./fixtures";
 import { apiPathEndsWith, fulfillJson, fulfillProblem } from "./routes";
 
@@ -270,15 +271,29 @@ test("model selectors use supported roles and save comparison selections", async
     fulfillJson(route, { data: [] }),
   );
   await page.route(apiPathEndsWith("/models"), async (route) => {
-    const response = await route.fetch();
+    const url = new URL(route.request().url());
+    const external = url.searchParams.get("external") === "true";
+    const response = await route.fetch({
+      url: new URL(url.pathname, url.origin).toString(),
+    });
     const catalog = await response.json();
     const model = catalog.data[0];
     return fulfillJson(route, {
       ...catalog,
-      data: [
-        { ...model, id: "Qwen/Qwen3-0.6B", status: "unavailable" },
-        { ...model, id: "jaredpalmer/kev-9b", status: "available" },
-      ],
+      data: external
+        ? MODEL_CATALOG.filter((entry) =>
+            /^(openai|anthropic)\//.test(entry.id),
+          ).map((entry) => ({
+            ...model,
+            id: entry.id,
+            name: entry.displayName,
+            icon: entry.icon,
+            status: "available",
+          }))
+        : [
+            { ...model, id: "Qwen/Qwen3-0.6B", status: "unavailable" },
+            { ...model, id: "jaredpalmer/kev-9b", status: "available" },
+          ],
     });
   });
   await page.goto("/tasks/support-triage");

@@ -1,5 +1,5 @@
 import {
-  catalogModel,
+  modelProviderIcon,
   modelDisplayName,
 } from "@gradiated/contracts/model-catalog";
 import { Boxes } from "lucide-react";
@@ -14,7 +14,7 @@ export const ModelIcon = ({
   id: string;
   className?: string;
 }) => {
-  const icon = catalogModel(id)?.icon;
+  const icon = modelProviderIcon(id);
 
   return icon ? (
     <img

@@ -7,11 +7,10 @@ import { TrainingScheduleEditor } from "./training-schedule-editor";
 import { useProductContext } from "@/hooks/use-product-context";
 import { useOptimisticValue } from "@/hooks/use-optimistic-patch";
 import type { components } from "@/api/schema";
-import { OptionSelect } from "@/components/option-select";
+import { OptionCombobox } from "@/components/option-combobox";
+import { useEvaluationModels } from "@/hooks/use-evaluation-models";
 import {
   modelDisplayName,
-  COMPARISON_MODELS,
-  JUDGE_MODELS,
   TRAINING_BASE_MODELS,
 } from "@gradiated/contracts/model-catalog";
 import { useQuery } from "@tanstack/react-query";
@@ -54,30 +53,8 @@ export const TaskSettingsTab = ({ task: savedTask }: { task: TaskRow }) => {
     });
   }
 
-  const comparisonOptions: {
-    value: string;
-    label: string;
-    disabled: boolean;
-  }[] = COMPARISON_MODELS.filter(
-    (model) =>
-      model.id.startsWith("openai/") ||
-      model.id.startsWith("anthropic/") ||
-      model.id === "Qwen/Qwen3-0.6B" ||
-      models.data?.data.some(
-        (hosted) => hosted.id === model.id && hosted.status === "available",
-      ),
-  ).map((model) => ({ ...modelOption(model.id), disabled: false }));
-
-  if (
-    task.comparison_model_id &&
-    !comparisonOptions.some((model) => model.value === task.comparison_model_id)
-  ) {
-    comparisonOptions.unshift({
-      value: task.comparison_model_id,
-      label: `${modelDisplayName(task.comparison_model_id)} (unavailable)`,
-      disabled: true,
-    });
-  }
+  const comparison = useEvaluationModels(task.comparison_model_id);
+  const judge = useEvaluationModels(task.judge_model_id);
 
   return (
     <SettingsCard>
@@ -85,7 +62,7 @@ export const TaskSettingsTab = ({ task: savedTask }: { task: TaskRow }) => {
         title="Comparison model"
         description="New versions are judged, costed and timed against this."
       >
-        <OptionSelect
+        <OptionCombobox
           renderOption={ModelOption}
           label="Comparison model"
           className="w-64"
@@ -95,15 +72,16 @@ export const TaskSettingsTab = ({ task: savedTask }: { task: TaskRow }) => {
           onValueChange={(comparison_model_id) =>
             update.mutate({ comparison_model_id })
           }
-          options={comparisonOptions}
+          options={comparison.options}
         />
+        <QueryState query={comparison.external} />
       </SettingRow>
       <SettingRow
         title="Base model"
         description="The next version trains on this. Existing versions are unaffected."
       >
         <div>
-          <OptionSelect
+          <OptionCombobox
             renderOption={ModelOption}
             label="Base model"
             className="w-64"
@@ -120,14 +98,14 @@ export const TaskSettingsTab = ({ task: savedTask }: { task: TaskRow }) => {
         title="Judge model"
         description="Judges comparisons for the next training run. Existing results are unaffected."
       >
-        <OptionSelect
+        <OptionCombobox
           renderOption={ModelOption}
           label="Judge model"
           className="w-64"
           value={task.judge_model_id}
           disabled={!canEdit}
           onValueChange={(judge_model_id) => update.mutate({ judge_model_id })}
-          options={JUDGE_MODELS.map(({ id }) => modelOption(id))}
+          options={judge.options}
         />
       </SettingRow>
       <div className="p-5">

@@ -256,3 +256,17 @@ describe("task training cron", () => {
     );
   });
 });
+
+it.each([
+  "openai/gpt-4.1-mini",
+  "anthropic/claude-haiku-4-5",
+  "z-ai/glm-5.3-flash",
+])("allows %s for both comparison and judge", (id) => {
+  expect(
+    UpdateTaskSchema.parse({ comparison_model_id: id, judge_model_id: id }),
+  ).toMatchObject({ comparison_model_id: id, judge_model_id: id });
+  expect(
+    UpdateWorkspaceSchema.parse({ default_judge_model: id })
+      .default_judge_model,
+  ).toBe(id);
+});

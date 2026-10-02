@@ -8,14 +8,15 @@ import {
   UuidSchema,
 } from "./common.js";
 
-import { COMPARISON_MODELS, EVALUATION_JUDGES } from "./model-catalog.js";
+import { isEvaluationModelId } from "./model-catalog.js";
 import { RUN_STAGES, TERMINAL_RUN_STAGES } from "./training-stages.js";
 
 export * from "./training-stages.js";
 
-export const EvaluationJudgeSchema = z
-  .enum(EVALUATION_JUDGES)
-  .openapi("EvaluationJudge");
+export const EvaluationJudgeSchema = ModelIdSchema.refine(
+  isEvaluationModelId,
+  "Choose a supported evaluation model.",
+).openapi("EvaluationJudge");
 export type EvaluationJudge = z.infer<typeof EvaluationJudgeSchema>;
 
 export const TRAINING_TRIGGERS = ["automation", "manual"] as const;
@@ -316,7 +317,7 @@ export const UpdateTaskSchema = z
   .strictObject({
     base_model_id: ModelIdSchema,
     comparison_model_id: ModelIdSchema.refine(
-      (id) => COMPARISON_MODELS.some((model) => model.id === id),
+      isEvaluationModelId,
       "Choose a supported comparison model.",
     ),
     judge_model_id: EvaluationJudgeSchema,

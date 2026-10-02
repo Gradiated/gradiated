@@ -33,6 +33,7 @@ test("direct task reload initializes flags, edits schedules and opens held-out r
 }) => {
   let schedule: string | null = null;
   let judge = task.judge_model_id;
+  let comparison = task.comparison_model_id;
   let rejectSchedule = true;
   let scheduleAttempts = 0;
   let releaseTask: (() => void) | undefined;
@@ -85,10 +86,29 @@ test("direct task reload initializes flags, edits schedules and opens held-out r
       });
     if (path === "/api/v1/models")
       return json({
-        data: [
-          { id: "Qwen/Qwen3-0.6B", status: "unavailable" },
-          { id: "jaredpalmer/kev-9b", status: "available" },
-        ],
+        data:
+          new URL(route.request().url()).searchParams.get("external") === "true"
+            ? [
+                {
+                  id: "openai/gpt-6.1-sol",
+                  name: "GPT-6.1 Sol",
+                  status: "available",
+                },
+                {
+                  id: "openai/gpt-6-sol",
+                  name: "GPT-6 Sol",
+                  status: "available",
+                },
+                {
+                  id: "openai/gpt-4.1-mini",
+                  name: "GPT-4.1 Mini",
+                  status: "available",
+                },
+              ]
+            : [
+                { id: "Qwen/Qwen3-0.6B", status: "unavailable" },
+                { id: "jaredpalmer/kev-9b", status: "available" },
+              ],
         next_cursor: null,
       });
     if (path.startsWith("/api/") && path.endsWith("/tasks/test-task")) {
@@ -116,11 +136,14 @@ test("direct task reload initializes flags, edits schedules and opens held-out r
           }
         }
         if ("judge_model_id" in patch) judge = patch.judge_model_id;
+        if ("comparison_model_id" in patch)
+          comparison = patch.comparison_model_id;
       }
       return json({
         ...task,
         training_schedule: schedule,
         judge_model_id: judge,
+        comparison_model_id: comparison,
       });
     }
     if (path.endsWith("/training-runs"))
@@ -234,13 +257,27 @@ test("direct task reload initializes flags, edits schedules and opens held-out r
   await page.getByRole("tab", { name: "Settings", exact: true }).click();
   await page.getByRole("combobox", { name: "Comparison model" }).click();
   await expect(page.getByRole("option", { name: "Kev 9B" })).toHaveCount(0);
-  await page.keyboard.press("Escape");
+  await page
+    .getByRole("combobox", { name: "Search comparison model" })
+    .fill("4.1");
+  await expect(page.getByRole("option", { name: "GPT-6.1 Sol" })).toHaveCount(
+    0,
+  );
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  await expect.poll(() => comparison).toBe("openai/gpt-4.1-mini");
   await expect(page.getByRole("combobox", { name: "Base model" })).toHaveText(
     "Qwen3 0.6B",
   );
   await page
     .getByRole("combobox", { name: "Judge model", exact: true })
     .click();
+  await expect(
+    page.getByRole("option", { name: "GPT-4.1 Mini", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("combobox", { name: "Search judge model" })
+    .fill("GPT-6 Sol");
   await page.getByRole("option", { name: "GPT-6 Sol", exact: true }).click();
   await expect.poll(() => judge).toBe("openai/gpt-6-sol");
   await page.getByRole("combobox", { name: "Training schedule" }).click();

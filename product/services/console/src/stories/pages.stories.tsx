@@ -154,7 +154,22 @@ const meta = {
       await userEvent.click(
         await canvas.findByRole("combobox", { name: parameters.modelSelect }),
       );
-      const option = await body.findByRole("option", { name: "GPT-6.1 Sol" });
+      if (parameters.modelSearch) {
+        await userEvent.type(
+          await body.findByRole("combobox", {
+            name: `Search ${parameters.modelSelect.toLowerCase()}`,
+          }),
+          parameters.modelSearch,
+        );
+        await waitFor(() =>
+          expect(
+            body.queryByRole("option", { name: "GPT-6.1 Sol" }),
+          ).toBeNull(),
+        );
+      }
+      const option = await body.findByRole("option", {
+        name: parameters.modelSearch ? "GPT-4.1 Mini" : "GPT-6.1 Sol",
+      });
       await waitFor(() => {
         const icon = option.querySelector("img");
         expect(icon?.complete && icon.naturalWidth > 0).toBe(true);
@@ -229,4 +244,12 @@ export const CreateWorkspace: Story = {
 export const CreateOrganization: Story = {
   args: { path: "/api-keys" },
   parameters: { createScope: "organization" },
+};
+export const TaskComparisonSelector: Story = {
+  args: { path: "/tasks/support-assistant" },
+  parameters: {
+    taskTab: "Settings",
+    modelSelect: "Comparison model",
+    modelSearch: "4.1",
+  },
 };

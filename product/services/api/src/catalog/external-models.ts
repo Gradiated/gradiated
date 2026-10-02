@@ -6,7 +6,11 @@ import {
   type Model,
   type ModelPricingEntry,
 } from "@gradiated/contracts";
-import { MODEL_CATALOG } from "@gradiated/contracts/model-catalog";
+import {
+  catalogModel,
+  isExternalModelId,
+  modelProviderIcon,
+} from "@gradiated/contracts/model-catalog";
 import { ControlServiceError } from "@gradiated/control";
 
 const nanoRate = z
@@ -28,6 +32,8 @@ const rates = z.object({
 });
 const providerModel = z.object({
   id: z.string(),
+  name: z.string().optional(),
+  expiration_date: z.string().nullable().optional(),
   description: z.string(),
   created: z.number().int().nonnegative(),
   context_length: z.number().int().positive(),
@@ -36,7 +42,11 @@ const providerModel = z.object({
   }),
   supported_parameters: z.array(z.string()).default([]),
   architecture: z
-    .object({ tokenizer: z.string().nullable().optional() })
+    .object({
+      tokenizer: z.string().nullable().optional(),
+      input_modalities: z.array(z.string()).default(["text"]),
+      output_modalities: z.array(z.string()).default(["text"]),
+    })
     .optional(),
   pricing: rates.extend({
     overrides: z
@@ -105,10 +115,13 @@ export const createExternalModelCatalog = (
 
   const refresh = async (): Promise<Model[]> => {
     try {
-      const response = await send("https://openrouter.ai/api/v1/models", {
-        signal: AbortSignal.timeout(10000),
-        redirect: "error",
-      });
+      const response = await send(
+        "https://openrouter.ai/api/v1/models?providers=OpenAI,Anthropic",
+        {
+          signal: AbortSignal.timeout(10000),
+          redirect: "error",
+        },
+      );
       if (!response.ok) throw unavailable();
 
       const body = z
@@ -124,14 +137,18 @@ export const createExternalModelCatalog = (
         const modelId = model.id.startsWith("anthropic/")
           ? model.id.replaceAll(".", "-")
           : model.id;
-        const metadata = MODEL_CATALOG.find(
-          (entry) =>
-            entry.id === modelId &&
-            (entry.id.startsWith("openai/") ||
-              entry.id.startsWith("anthropic/")),
-        );
-        if (!metadata) continue;
+        if (
+          !isExternalModelId(modelId) ||
+          modelId.endsWith("-high") ||
+          (model.expiration_date &&
+            Date.parse(model.expiration_date) <= now()) ||
+          !model.architecture?.input_modalities.includes("text") ||
+          model.architecture.output_modalities.length !== 1 ||
+          !model.architecture.output_modalities.includes("text")
+        )
+          continue;
 
+        const metadata = catalogModel(modelId);
         const reasoning = model.supported_parameters.includes("reasoning");
         const properties = ModelPropertiesInputSchema.parse({
           description: model.description.slice(0, 2000),
@@ -168,9 +185,12 @@ export const createExternalModelCatalog = (
           ],
         });
         const result = ModelSchema.safeParse({
-          id: metadata.id,
-          name: metadata.displayName,
-          icon: metadata.icon,
+          id: modelId,
+          name:
+            metadata?.displayName ??
+            model.name?.replace(/^(OpenAI|Anthropic):\s*/, "") ??
+            modelId,
+          icon: modelProviderIcon(modelId),
           status: "available",
           properties: {
             ...properties,

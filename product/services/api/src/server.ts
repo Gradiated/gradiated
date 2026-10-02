@@ -1,3 +1,5 @@
+import { createExternalModelCatalog } from "./catalog/external-models.js";
+import { createEvaluationModelValidator } from "./catalog/evaluation-models.js";
 import { kmsSigner } from "@gradiated/nomad-pki";
 import { createTrainingEngine } from "./training/engine.js";
 import { serve } from "@hono/node-server";
@@ -153,6 +155,12 @@ const adapterDownloads = createAdapterDownloads(
     : undefined,
 );
 
+const externalModels = createExternalModelCatalog();
+const validateEvaluationModel = createEvaluationModelValidator(
+  externalModels,
+  catalogBilling,
+);
+
 const app = createApp({
   ...(hostCertificates
     ? {
@@ -162,6 +170,7 @@ const app = createApp({
         },
       }
     : {}),
+  externalModels,
   ...(hostCertificates ? { hostCertificates } : {}),
   allowedOrigins: trustedOrigins,
   auth,
@@ -185,13 +194,14 @@ const app = createApp({
     organizations,
     usage: createUsageService(database, clickhouse),
     waitlist: createWaitlistService(database),
-    workspaces: createWorkspaceApiKeyService(database),
+    workspaces: createWorkspaceApiKeyService(database, validateEvaluationModel),
     traces: createTraceService(database, contents),
     training: createTrainingService(
       database,
       contents,
       adapterDownloads,
       trainingEngine.engine,
+      validateEvaluationModel,
     ),
   },
 });

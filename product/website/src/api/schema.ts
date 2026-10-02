@@ -892,20 +892,7 @@ export interface components {
        */
       updated_at: string;
     };
-    /** @enum {string} */
-    EvaluationJudge:
-      | "Qwen/Qwen3-0.6B"
-      | "openai/gpt-6.1-sol"
-      | "openai/gpt-6-astra"
-      | "openai/gpt-6-sol"
-      | "openai/gpt-6-luna"
-      | "openai/gpt-5.6-sol"
-      | "openai/gpt-5"
-      | "anthropic/claude-fable-5-1"
-      | "anthropic/claude-opus-5-5"
-      | "anthropic/claude-sonnet-5-5"
-      | "anthropic/claude-opus-5"
-      | "anthropic/claude-sonnet-5";
+    EvaluationJudge: string;
     UpdateWorkspace: {
       /** @description Whether task-labelled requests are captured. */
       trace_capture_enabled?: boolean;

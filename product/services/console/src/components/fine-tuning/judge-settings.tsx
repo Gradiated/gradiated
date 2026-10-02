@@ -1,11 +1,14 @@
-import { ModelOption, modelOption } from "@/components/model-label";
+import { ModelOption } from "@/components/model-label";
 import { useWorkspaceSettings } from "@/hooks/use-workspace-settings";
-import { OptionSelect } from "@/components/option-select";
-import { JUDGE_MODELS } from "@gradiated/contracts/model-catalog";
+import { OptionCombobox } from "@/components/option-combobox";
+import { useEvaluationModels } from "@/hooks/use-evaluation-models";
+import { QueryState } from "./query-state";
 import { SettingRow } from "./settings-card";
 
 export const JudgeSettings = () => {
   const { workspace, save, canEdit } = useWorkspaceSettings();
+
+  const models = useEvaluationModels(workspace?.default_judge_model ?? null);
 
   if (!workspace) return null;
 
@@ -15,7 +18,7 @@ export const JudgeSettings = () => {
         title="Default judge model"
         description="New tasks start with this judge. Change an individual task’s judge in its settings."
       >
-        <OptionSelect
+        <OptionCombobox
           renderOption={ModelOption}
           label="Default judge model"
           className="w-64"
@@ -24,9 +27,10 @@ export const JudgeSettings = () => {
           onValueChange={(default_judge_model) =>
             save.mutate({ default_judge_model })
           }
-          options={JUDGE_MODELS.map(({ id }) => modelOption(id))}
+          options={models.options}
         />
       </SettingRow>
+      <QueryState query={models.external} />
       {save.error ? (
         <p role="alert" className="p-4 text-sm text-destructive">
           {save.error.message}

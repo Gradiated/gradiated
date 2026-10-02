@@ -84,6 +84,44 @@ describe("training service", () => {
     return task!;
   };
 
+  it("validates and persists dynamic comparison and judge models", async () => {
+    const { userId, workspaceId } = await seedMember(db.database, {
+      role: "owner",
+    });
+    const task = await seedTask(workspaceId);
+    const validate = vi.fn().mockResolvedValue(undefined);
+    const training = createTrainingService(
+      db.database,
+      store,
+      undefined,
+      undefined,
+      validate,
+    );
+    const updated = await training.updateTask(userId, workspaceId, task.name, {
+      comparison_model_id: "openai/gpt-4.1-mini",
+      judge_model_id: "openai/gpt-4.1-mini",
+    });
+    expect(updated).toMatchObject({
+      comparisonModelId: "openai/gpt-4.1-mini",
+      judgeModelId: "openai/gpt-4.1-mini",
+    });
+    expect(validate.mock.calls).toEqual([
+      ["openai/gpt-4.1-mini"],
+      ["openai/gpt-4.1-mini"],
+    ]);
+    validate.mockRejectedValue(new Error("unavailable"));
+    await expect(
+      training.updateTask(userId, workspaceId, task.name, {
+        judge_model_id: "openai/unavailable",
+      }),
+    ).rejects.toThrow("unavailable");
+    const [stored] = await db.database
+      .select()
+      .from(tasks)
+      .where(eq(tasks.id, task.id));
+    expect(stored?.judgeModelId).toBe("openai/gpt-4.1-mini");
+  });
+
   const seedRun = async (taskId: string, finished = true) => {
     const [run] = await db.database
       .insert(trainingRuns)

@@ -34,6 +34,7 @@ export const createTrainingService = (
   store: ContentStore,
   downloads?: AdapterDownloads,
   engine?: TrainingEngine,
+  validateEvaluationModel?: (id: string) => Promise<void>,
 ) => {
   const records = createTrainingStore(database);
 
@@ -140,6 +141,11 @@ export const createTrainingService = (
     ) {
       await requireWorkspaceEditor(database, { userId, workspaceId });
       const task = await findTask(workspaceId, name);
+
+      for (const id of [input.comparison_model_id, input.judge_model_id]) {
+        if (id !== undefined) await validateEvaluationModel?.(id);
+      }
+
       if (input.base_model_id !== undefined) {
         const model = await records.getModel(input.base_model_id);
         if (!model) throw notFound("base model");

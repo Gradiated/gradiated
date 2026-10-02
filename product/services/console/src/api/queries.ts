@@ -236,3 +236,13 @@ export const useCreateApiKey = (
     },
   });
 };
+
+export const externalModelsQuery = () =>
+  queryOptions({
+    queryKey: ["models", "external"],
+    queryFn: () =>
+      requireData(
+        api.GET("/api/v1/models", { params: { query: { external: "true" } } }),
+      ),
+    staleTime: 5 * 60 * 1000,
+  });

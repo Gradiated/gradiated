@@ -102,3 +102,5 @@ Final evaluation events and evidence are retained indefinitely (OPS-02). Trainin
 S1: replay controls. S8: the judge on known outcomes, swaps, adversarial text, correlated sessions, unavailable arms, selective timeouts; estimators against independent fixtures. Nothing here grants provider permission or proves training worked.
 
 S6 checks worker loss before and after intent and result writes, duplicate events, uncertain provider calls, stale workers, cancellation and missing evidence objects. Replaying a run must preserve its frozen sample and completed results.
+
+The comparison and judge selectors share the same model choices. External choices are discovered from OpenRouter’s OpenAI/Anthropic provider filter, restricted to unexpired text-output models with direct provider IDs. The API validates new selections against that cached catalog; plain `/models` remains independent of OpenRouter. The console searches display names and model IDs. OpenAI evaluation requests use Responses for Codex and Pro families, Completions for instruct models, and Chat Completions otherwise.

@@ -44,7 +44,11 @@ describe("workspaces and API keys", () => {
     return row;
   };
 
-  it.each(EVALUATION_JUDGES)("persists catalog judge %s", async (judge) => {
+  it.each([
+    ...EVALUATION_JUDGES,
+    "openai/gpt-4.1-mini",
+    "anthropic/claude-haiku-4-5",
+  ])("persists catalog judge %s", async (judge) => {
     const { userId, workspaceId } = await membership("owner");
     const updated = await service.updateWorkspace(userId, workspaceId, {
       default_judge_model: judge,

@@ -48,6 +48,35 @@ const chatResponse = z.object({
       .optional(),
   }),
 });
+const completionResponse = chatResponse.extend({
+  choices: z
+    .array(
+      z.object({ text: z.string().min(1), finish_reason: z.literal("stop") }),
+    )
+    .min(1),
+});
+const responsesResponse = z.object({
+  status: z.literal("completed"),
+  output: z.array(
+    z.object({
+      type: z.string(),
+      content: z
+        .array(z.object({ type: z.string(), text: z.string().optional() }))
+        .optional(),
+    }),
+  ),
+  usage: z.object({
+    input_tokens: z.number().int().nonnegative(),
+    output_tokens: z.number().int().nonnegative(),
+    input_tokens_details: z
+      .object({ cached_tokens: z.number().int().nonnegative().optional() })
+      .optional(),
+    output_tokens_details: z
+      .object({ reasoning_tokens: z.number().int().nonnegative().optional() })
+      .optional(),
+  }),
+});
+
 const claudeResponse = z.object({
   content: z.array(z.object({ type: z.string(), text: z.string().optional() })),
   stop_reason: z.literal("end_turn"),
@@ -107,28 +136,49 @@ export const createEvaluationModels = (
     check,
     async generate(modelId, messages, signal) {
       const key = await credential(modelId);
-      const { url, kind } = provider(modelId);
+      let { url } = provider(modelId);
+      const { kind } = provider(modelId);
       const model =
         kind === "hosted" ? modelId : modelId.slice(modelId.indexOf("/") + 1);
-      const body =
-        kind === "anthropic"
+      const responses =
+        kind === "openai" &&
+        (model.includes("codex") || model.endsWith("-pro"));
+      const completion = kind === "openai" && model.endsWith("-instruct");
+      if (responses) url = "https://api.openai.com/v1/responses";
+      if (completion) url = "https://api.openai.com/v1/completions";
+
+      const body = responses
+        ? { model, input: messages, max_output_tokens: 4096, store: false }
+        : completion
           ? {
               model,
+              prompt:
+                messages
+                  .map((message) => `${message.role}: ${message.content}`)
+                  .join("\n\n") + "\n\nassistant:",
               max_tokens: 4096,
-              system: messages
-                .filter((message) => message.role === "system")
-                .map((message) => message.content)
-                .join("\n"),
-              messages: messages.filter((message) => message.role !== "system"),
-            }
-          : {
-              model,
-              messages,
-              ...(kind === "openai"
-                ? { max_completion_tokens: 4096 }
-                : { max_tokens: 256 }),
               stream: false,
-            };
+            }
+          : kind === "anthropic"
+            ? {
+                model,
+                max_tokens: 4096,
+                system: messages
+                  .filter((message) => message.role === "system")
+                  .map((message) => message.content)
+                  .join("\n"),
+                messages: messages.filter(
+                  (message) => message.role !== "system",
+                ),
+              }
+            : {
+                model,
+                messages,
+                ...(kind === "openai"
+                  ? { max_completion_tokens: 4096 }
+                  : { max_tokens: 256 }),
+                stream: false,
+              };
       const headers =
         kind === "anthropic"
           ? { "x-api-key": key!, "anthropic-version": "2023-06-01" }
@@ -173,9 +223,35 @@ export const createEvaluationModels = (
               }),
         });
       }
-      const parsed = chatResponse.parse(value);
+      if (responses) {
+        const parsed = responsesResponse.parse(value);
+        return predictionSchema.parse({
+          text: parsed.output
+            .filter((item) => item.type === "message")
+            .flatMap((item) => item.content ?? [])
+            .filter((item) => item.type === "output_text")
+            .map((item) => item.text ?? "")
+            .join(""),
+          tokens:
+            parsed.usage.output_tokens -
+            (parsed.usage.output_tokens_details?.reasoning_tokens ?? 0),
+          seconds,
+          usage: {
+            input_tokens: parsed.usage.input_tokens,
+            output_tokens: parsed.usage.output_tokens,
+            cached_input_tokens:
+              parsed.usage.input_tokens_details?.cached_tokens ?? 0,
+          },
+        });
+      }
+      const parsed = completion
+        ? completionResponse.parse(value)
+        : chatResponse.parse(value);
       return predictionSchema.parse({
-        text: parsed.choices[0]!.message.content,
+        text:
+          "text" in parsed.choices[0]!
+            ? parsed.choices[0]!.text
+            : parsed.choices[0]!.message.content,
         tokens:
           parsed.usage.completion_tokens -
           (parsed.usage.completion_tokens_details?.reasoning_tokens ?? 0),

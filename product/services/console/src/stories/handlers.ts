@@ -1,3 +1,4 @@
+import { MODEL_CATALOG } from "@gradiated/contracts/model-catalog";
 import { http, HttpResponse } from "msw";
 
 import type { components } from "@/api/schema";
@@ -335,13 +336,35 @@ export const handlers = [
   http.get("/api/v1/organizations/:organizationId/workspaces", () =>
     HttpResponse.json(list(workspace)),
   ),
-  http.get("/api/v1/models", () =>
+  http.get("/api/v1/models", ({ request }) =>
     HttpResponse.json<components["schemas"]["ModelList"]>({
-      ...list(model, {
-        ...model,
-        id: task.base_model_id,
-        name: "Example training model",
-      }),
+      ...list(
+        ...(new URL(request.url).searchParams.get("external") === "true"
+          ? [
+              ...MODEL_CATALOG.filter((entry) =>
+                /^(openai|anthropic)\//.test(entry.id),
+              ).map((entry) => ({
+                ...model,
+                id: entry.id,
+                name: entry.displayName,
+                icon: entry.icon,
+              })),
+              {
+                ...model,
+                id: "openai/gpt-4.1-mini",
+                name: "GPT-4.1 Mini",
+                icon: "/model-providers/openai.svg",
+              },
+            ]
+          : [
+              model,
+              {
+                ...model,
+                id: task.base_model_id,
+                name: "Example training model",
+              },
+            ]),
+      ),
       service_tiers: [
         {
           service_tier: "default",

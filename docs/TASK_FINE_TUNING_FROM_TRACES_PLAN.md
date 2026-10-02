@@ -6,6 +6,11 @@ Hosting those adapters and connecting promotion to inference remain to be built.
 The hosting baseline here is inspected repository code; live serving qualification
 is a separate implementation gate.
 
+The [current implementation stack](LORA_HOSTING_PR_STACK.md) simplifies this
+proposal to startup preloading and demand-loaded per-allocation LRU caches using
+existing version/task records, with no new hosting or promotion tables. The
+earlier hosting-resource, workflow and audit proposals below are deferred.
+
 The hosting design below is proposed functionality, not deployed behavior or
 authorization to provision GPUs or change production.
 
@@ -418,6 +423,10 @@ Prometheus labels; use existing usage views for per-version analysis. Never log
 prompts, weights, signed URLs or secrets. Record hosting and promotion actors.
 
 ### Implementation sequence and acceptance
+
+The [LoRA hosting PR stack](LORA_HOSTING_PR_STACK.md) expands these increments
+into four reviewable changes with code scope, dependencies, interface boundaries
+and acceptance checks, based on the existing pinned vLLM stack.
 
 | Increment | Deliverable | Acceptance |
 | --- | --- | --- |

@@ -807,3 +807,21 @@ name external providers; they are not restricted to the hosted-model table.
 Executor-specific support is checked when admitting a run.
 
 Workspace `default_judge_model` seeds `tasks.judge_model_id` when a task is first captured. Each task can override its judge independently; changing the workspace default never rewrites existing tasks. Migration 0013 renames the workspace field and backfills existing tasks from their workspace’s current default. Training admission snapshots the saved task judge.
+
+## Private LoRA serving
+
+Private LoRA inference reuses `task_versions` for workspace ownership, immutable
+artifact URI/checksum/rank and durable serving eligibility. The existing
+`tasks.production_version_id` is the production selector. There are no additional
+hosting-intent or promotion-audit tables. Cache residency belongs to each serving
+allocation. On startup, each allocation preloads compatible production versions
+within its budgets, then uses LRU during its lifetime. S3 artifacts back bounded
+disk and CPU caches and GPU adapter slots; eviction retains lower-tier copies.
+Verified disk files survive process restarts; CPU/GPU residency is rebuilt.
+
+Qualified runtime configuration pins the base/runtime/tokenizer release, TP
+geometry, supported target modules and cache/admission limits. These are host
+configuration, not stored adapter properties. The loader reuses existing task
+version metadata and checks it against the host's local configuration. Signed
+download URLs are temporary grants and are not persisted on versions. See
+[the implementation stack](LORA_HOSTING_PR_STACK.md).

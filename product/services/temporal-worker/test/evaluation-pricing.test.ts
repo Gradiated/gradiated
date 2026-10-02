@@ -12,6 +12,7 @@ import {
 import {
   estimateTokenCost,
   predictionsSchema,
+  pricePredictions,
 } from "../src/training/evaluation.js";
 
 const signal = new AbortController().signal;
@@ -182,4 +183,35 @@ it("keeps legacy or incompletely priced usage unknown and allows explicitly free
       },
     )?.fine_tuned,
   ).toBe(0);
+});
+
+it("saves each arm's cost while keeping legacy and missing rates unknown", () => {
+  const priced = predictionsSchema.parse(
+    pricePredictions(rows(), pricing, false),
+  );
+  expect(priced[0]!.fine_tuned.cost_nano_usd).toBe(10000);
+  expect(priced[0]!.comparison.cost_nano_usd).toBe(562000);
+  expect(rows()[0]!.fine_tuned).not.toHaveProperty("cost_nano_usd");
+
+  const legacy = rows();
+  delete legacy[0]!.fine_tuned.usage;
+  const partial = pricePredictions(legacy, pricing, false);
+  expect(partial[0]!.fine_tuned).not.toHaveProperty("cost_nano_usd");
+  expect(partial[0]!.comparison.cost_nano_usd).toBe(562000);
+  expect(
+    pricePredictions(rows(), undefined, false)[0]!.comparison,
+  ).not.toHaveProperty("cost_nano_usd");
+});
+
+it("saves zero and placeholder costs rather than treating them as missing", () => {
+  const free = {
+    ...pricing,
+    fine_tuned: { ...pricing.fine_tuned!, rates: { prompt: 0, completion: 0 } },
+  };
+  expect(
+    pricePredictions(rows(), free, false)[0]!.fine_tuned.cost_nano_usd,
+  ).toBe(0);
+  const placeholder = pricePredictions(rows(), undefined, true);
+  expect(placeholder[0]!.fine_tuned.cost_nano_usd).toBe(1000);
+  expect(placeholder[0]!.comparison.cost_nano_usd).toBe(2000);
 });

@@ -204,11 +204,13 @@ const evaluationResults = [
       text: "Select Forgot password on the sign-in page. We will email you a link to reset it.",
       tokens: 22,
       seconds: 0.28,
+      cost_nano_usd: 300000,
     },
     comparison: {
       text: "Contact support for help resetting your password.",
       tokens: 9,
       seconds: 0.2,
+      cost_nano_usd: 600000,
     },
     judgment: "A",
     fine_tuned_first: true,

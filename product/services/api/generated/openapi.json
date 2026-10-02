@@ -2708,6 +2708,11 @@
                 "fine_tuned": {
                   "type": "object",
                   "properties": {
+                    "cost_nano_usd": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Saved token cost estimate in nano-USD."
+                    },
                     "text": {
                       "type": "string"
                     },
@@ -2754,6 +2759,11 @@
                 "comparison": {
                   "type": "object",
                   "properties": {
+                    "cost_nano_usd": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Saved token cost estimate in nano-USD."
+                    },
                     "text": {
                       "type": "string"
                     },
@@ -2825,6 +2835,11 @@
                 "fine_tuned": {
                   "type": "object",
                   "properties": {
+                    "cost_nano_usd": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Saved token cost estimate in nano-USD."
+                    },
                     "text": {
                       "type": "string"
                     },
@@ -2871,6 +2886,11 @@
                 "comparison": {
                   "type": "object",
                   "properties": {
+                    "cost_nano_usd": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Saved token cost estimate in nano-USD."
+                    },
                     "text": {
                       "type": "string"
                     },

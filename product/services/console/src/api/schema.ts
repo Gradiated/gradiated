@@ -1389,6 +1389,8 @@ export interface components {
           id: string;
           group: string;
           fine_tuned: {
+            /** @description Saved token cost estimate in nano-USD. */
+            cost_nano_usd?: number;
             text: string;
             tokens: number;
             seconds: number;
@@ -1400,6 +1402,8 @@ export interface components {
             };
           };
           comparison: {
+            /** @description Saved token cost estimate in nano-USD. */
+            cost_nano_usd?: number;
             text: string;
             tokens: number;
             seconds: number;
@@ -1417,6 +1421,8 @@ export interface components {
           id: string;
           group: string;
           fine_tuned: {
+            /** @description Saved token cost estimate in nano-USD. */
+            cost_nano_usd?: number;
             text: string;
             tokens: number;
             seconds: number;
@@ -1428,6 +1434,8 @@ export interface components {
             };
           };
           comparison: {
+            /** @description Saved token cost estimate in nano-USD. */
+            cost_nano_usd?: number;
             text: string;
             tokens: number;
             seconds: number;

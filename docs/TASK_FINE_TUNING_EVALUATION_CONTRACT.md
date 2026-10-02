@@ -89,6 +89,8 @@ Estimates count input, cached reads/writes and billable output including reasoni
 
 The existing Qwen3-0.6B-only output estimate remains compatible with legacy runs. Its user-authorized placeholder output rate is $0.10 per million tokens, centralized in the model catalog, and the summary retains `cost_basis=placeholder_output_only`. It excludes input and GPU costs. Other combinations use the catalog estimate when complete usage and prices are available.
 
+The worker also saves each answer's optional `cost_nano_usd` in `runs/<run_id>/evaluation/priced-predictions.json` and updates the evaluation result manifest. Each arm can retain its own cost when the other lacks usage or pricing; the paired summary remains unknown unless both are complete. Legacy result manifests remain readable. The console shows saved per-answer costs beside output tokens and duration.
+
 The console fetches individual held-out responses and judgments through the workspace-authorized version evaluation resource. The API reads the run's evaluation result manifest from artifact storage, validates its run-scoped key and checksum, and returns validated prediction pairs without caching their contents.
 
 **Latency.** Compared only with its context: vantage point, queue and admission delay, cold load, first token, total time, streaming mode, completion. Customer-observed and worker-only durations are never compared as like for like. Fixed fleet cost is reported separately from busy GPU time.

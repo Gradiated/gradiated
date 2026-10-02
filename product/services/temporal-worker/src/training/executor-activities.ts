@@ -33,6 +33,7 @@ import {
   estimateOutputCost,
   estimateTokenCost,
   predictionsSchema,
+  pricePredictions,
   summarizePredictions,
 } from "./evaluation.js";
 
@@ -437,6 +438,24 @@ export const createTrainingExecutorActivities = (options: {
           } catch {
             Context.current().cancellationSignal.throwIfAborted();
           }
+        }
+        const priced = pricePredictions(
+          predictions,
+          pricing,
+          placeholderCost !== null,
+        );
+        if (
+          priced.some(
+            (row) =>
+              row.fine_tuned.cost_nano_usd !== undefined ||
+              row.comparison.cost_nano_usd !== undefined,
+          )
+        ) {
+          const pricedArtifact = await putJson(
+            `runs/${runId}/evaluation/priced-predictions.json`,
+            priced,
+          );
+          await putJson(resultKey, pricedArtifact);
         }
         const cost =
           placeholderCost ??

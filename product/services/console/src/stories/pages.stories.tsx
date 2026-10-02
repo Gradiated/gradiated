@@ -97,6 +97,9 @@ const meta = {
       await body.findByRole("heading", { name: "Test results" });
       await body.findByRole("heading", { name: "Example 1" });
       await body.findByText("Better", { exact: true });
+      await body.findByText(/22 output tokens · 0.28s · \$0.000300/);
+      await expect(body.queryByText(/^Group:/)).toBeNull();
+      await expect(body.queryByText(/answer first\)/)).toBeNull();
     }
 
     await waitFor(

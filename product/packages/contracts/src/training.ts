@@ -396,6 +396,9 @@ export const StartTrainingRunResponseSchema = z
   .openapi("StartTrainingRunResponse");
 
 const EvaluationPredictionSchema = z.object({
+  cost_nano_usd: CountSchema.optional().describe(
+    "Saved token cost estimate in nano-USD.",
+  ),
   text: z.string(),
   tokens: z.number().int().nonnegative(),
   seconds: z.number().positive(),

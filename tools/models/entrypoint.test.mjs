@@ -9,7 +9,7 @@ test("bundle entrypoint uses its own Python and only the assigned GPUs", (t) => 
   const root = mkdtempSync(join(tmpdir(), "runtime-entrypoint-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   mkdirSync(join(root, "python/bin"), { recursive: true });
-  const cuda = join(root, "python/lib/python3.12/site-packages/nvidia/cu13");
+  const cuda = join(root, "cuda/nvidia/cu13");
   mkdirSync(join(cuda, "bin"), { recursive: true });
   writeFileSync(join(cuda, "bin/nvcc"), "#!/bin/sh\necho bundled-CUDA-13\n", {
     mode: 0o755,
@@ -59,6 +59,10 @@ console.log(JSON.stringify({ args: process.argv.slice(2), gpus: process.env.CUDA
   assert.match(result.args[1], /site\.addsitedir/);
   assert.match(result.args[1], /vllm\.entrypoints\.cli\.main/);
   assert.equal(result.args[2], "serve");
+  assert.equal(
+    result.args[result.args.indexOf("--safetensors-load-strategy") + 1],
+    "eager",
+  );
   assert.equal(
     result.args[result.args.indexOf("--tensor-parallel-size") + 1],
     "4",

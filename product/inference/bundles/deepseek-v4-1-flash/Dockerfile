@@ -6,6 +6,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
     && tar -xzf /tmp/crane.tar.gz -C /usr/local/bin crane && rm /tmp/crane.tar.gz
 COPY bundles/deepseek-v4-1-flash/extract-dependencies.sh /extract-dependencies.sh
 RUN bash /extract-dependencies.sh
+COPY --from=ghcr.io/astral-sh/uv:0.12.0@sha256:606e70c71c852d03f611b1e56a195d08648507018a7057fab82c4974c4eae105 /uv /usr/local/bin/uv
+COPY bundles/deepseek-v4-1-flash/cuda-requirements.txt /tmp/cuda-requirements.txt
+# Keep the compiler and its headers together, independent of upstream Python packages.
+RUN uv python install 3.12.13 \
+    && uv pip install --python "$(uv python find 3.12.13)" --target /bundle/cuda \
+       --require-hashes -r /tmp/cuda-requirements.txt \
+    && cd /bundle/cuda/nvidia/cu13 && ln -sfn lib lib64 \
+    && ln -sfn libcudart.so.13 lib/libcudart.so
 
 FROM dependencies AS package
 COPY --from=runtime-base /opt/gradiated/bin/runtime-launch /bundle/runtime-launch
@@ -20,6 +28,7 @@ RUN bash /package.sh
 # The caller supplies the exact base digest as a named build context.
 FROM runtime-base AS verify
 COPY images/nomad-base/tests/test-serving.sh /tmp/test-serving.sh
+COPY bundles/deepseek-v4-1-flash/cuda-compile.cu /tmp/cuda-compile.cu
 RUN bash /tmp/test-serving.sh \
     && rm /tmp/test-serving.sh /etc/gradiated/runtime-access.token \
        /etc/gradiated/deployment-status.token /etc/gradiated/runtime-proxy.conf
@@ -30,7 +39,9 @@ RUN --mount=from=package,source=/runtime.tar.gz,target=/tmp/runtime.tar.gz \
     && /bundle/python/bin/python3 -c 'import bz2, ctypes, lzma, readline, sqlite3, ssl, uuid, xml.parsers.expat' \
     && /bundle/python/bin/python3 -c 'import site; site.addsitedir("/bundle/python/lib/python3.12/site-packages"); import torch, vllm, cutlass.cute; print(torch.__version__, vllm.__version__)' \
     && /bundle/python/bin/python3 -c 'import vllm.entrypoints.cli.main' \
-    && /bundle/python/lib/python3.12/site-packages/nvidia/cu13/bin/nvcc --version \
+    && timeout 60 /bundle/cuda/nvidia/cu13/bin/nvcc -arch=sm_103 \
+        -I/bundle/cuda/nvidia/cu13/include/cccl \
+        --cubin /tmp/cuda-compile.cu -o /tmp/cuda-compile.cubin \
     && timeout 60 cc -O3 -fPIC -c \
         /bundle/python/lib/python3.12/site-packages/triton/backends/nvidia/driver.c \
         -I/bundle/python/include/python3.12 \

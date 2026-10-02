@@ -15,6 +15,7 @@ args=("${VLLM_BIN:-vllm}" serve "$MODEL" --revision "$REVISION" --tokenizer-revi
   --tokenizer-mode deepseek_v41 --tool-call-parser deepseek_v41
   --enable-auto-tool-choice --reasoning-parser deepseek_v41
   --max-model-len 1048576 --max-num-seqs 32 --max-num-batched-tokens 8192
+  --safetensors-load-strategy eager
   --gpu-memory-utilization 0.90 --scheduling-policy priority
   --enable-prompt-tokens-details --disable-uvicorn-access-log)
 # Engine-side admission. These flags exist from vLLM v0.29.0.

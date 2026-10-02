@@ -55,10 +55,8 @@ export const DownloadAdapterDialog = ({
           <dd className="font-mono">
             {adapter.format} · adapter_config.json + adapter_model.safetensors
           </dd>
-          <dt className="text-muted-foreground">Base model</dt>
-          <dd className="font-mono">
-            {modelDisplayName(version.base_model_id)}
-          </dd>
+          <dt className="text-muted-foreground">Base model ID</dt>
+          <dd className="font-mono">{version.base_model_id}</dd>
           <dt className="text-muted-foreground">Size</dt>
           <dd>
             {(adapter.size_bytes / MEBIBYTE).toFixed(1)} MB (rank {adapter.rank}

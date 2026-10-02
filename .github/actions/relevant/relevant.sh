@@ -12,13 +12,7 @@ if [[ "$jobs" != "$gated" ]]; then
   exit 1
 fi
 
-if [[ "$EVENT" == workflow_dispatch && -z "${PULL_REQUEST:-}" ]]; then
-  PULL_REQUEST=$(gh api --method GET "repos/$REPOSITORY/pulls" \
-    -f "head=${REPOSITORY%%/*}:$BRANCH" -f state=open \
-    --jq '.[0].number // empty')
-fi
-
-if [[ "$EVENT" != pull_request && -z "${PULL_REQUEST:-}" ]]; then
+if [[ "$EVENT" != pull_request ]]; then
   echo relevant=true >>"$GITHUB_OUTPUT"
   exit 0
 fi

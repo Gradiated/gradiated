@@ -176,7 +176,6 @@ jobs:
   record-release:
     name: Record immutable release
     permissions:
-      actions: write
       contents: write
       pull-requests: write
     needs: [resolve, build-images, build-collector, build-console]
@@ -240,23 +239,17 @@ jobs:
               --title "deploy(prod): release ${SOURCE_SHA:0:12}" \
               --body "Deploy the verified images and console built from ${SOURCE_SHA}. Argo applies this release after the required checks pass and the pull request merges.")
             echo "pull_request=$(gh pr view "$pull_request" --json number --jq .number)" >> "$GITHUB_OUTPUT"
-            # GITHUB_TOKEN does not trigger PR checks; explicit dispatches do.
-            for workflow in .github/workflows/*.yml; do
-              if [[ $(yq '.on | has("workflow_dispatch")' "$workflow") == true && $(yq '.jobs | has("passed")' "$workflow") == true ]]; then
-                gh workflow run "$(basename "$workflow")" --ref "$branch"
-              fi
-            done
             gh pr merge "$pull_request" --squash --auto
           fi
           echo "release_commit=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
 
 
-      - name: Close release if checks could not be started
+      - name: Close release if auto-merge could not be enabled
         if: failure() && steps.commit.outputs.pull_request != ''
         env:
           GH_TOKEN: ${{ github.token }}
           PULL_REQUEST: ${{ steps.commit.outputs.pull_request }}
-        run: gh pr close "$PULL_REQUEST" --comment "Release checks could not be started; closing this release to avoid a late deployment."
+        run: gh pr close "$PULL_REQUEST" --comment "Auto-merge could not be enabled; closing this release to avoid a late deployment."
 
   wait-for-release:
     name: Wait for release PR to merge

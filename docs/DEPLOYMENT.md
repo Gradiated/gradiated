@@ -37,11 +37,14 @@ the build idempotent. Kubernetes uses only resolved `sha256` image digests.
 8. Compare the live root and SPA fallback with the built entry point. Check API
    readiness.
 
-The release PR uses the repository `GITHUB_TOKEN`. Its branch push and PR
-creation do not trigger checks automatically, so the deployment explicitly
-dispatches every required workflow on that branch. The relevance helper finds
-the open PR and retains normal path filtering. A release still open after the
-one-hour merge timeout is closed to prevent a late deployment. The workflow updates `kustomization.yaml`,
+The release PR uses the repository `GITHUB_TOKEN`. GitHub requires a user with
+write access to select **Approve workflows to run** on each bot-created PR.
+Required PR checks then run with normal path filtering, and auto-merge waits
+for them. The deployment waits up to one hour for the merge before starting the
+Argo rollout timer; an open PR is closed on timeout to prevent a late deployment.
+Fully automatic PR checks require a dedicated GitHub App installation token;
+the Actions token cannot approve its own workflow runs. The workflow updates
+`kustomization.yaml`,
 `release-metadata.yaml` and the image digest in each workload manifest that runs a
 released image.
 
@@ -65,7 +68,7 @@ healthy. S3 versioning keeps previous entry points for recovery.
   contents.
 - Organization policy and repository settings must allow GitHub Actions to
   create pull requests. Enable repository auto-merge. The release job gets
-  contents, pull-request and workflow-dispatch write permissions; other jobs
+  contents and pull-request write permissions; other jobs
   retain their existing permissions. It does not approve reviews.
 - The `main` ruleset requires one gate per workflow: `Product tests passed`,
   `Kubernetes passed`, `Nomad deployment passed`, `Terraform passed`,

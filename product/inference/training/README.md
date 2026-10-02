@@ -3,7 +3,14 @@
 Training recipes are selected from the canonical model catalog and frozen per run.
 Qwen3 supports 0.6B, 1.7B, 4B, 8B, 14B and 32B bases on one GPU. GLM-5.3-Flash
 uses the pinned BF16 checkpoint on four GPUs, eager attention and activation
-checkpointing. Both use rank-two LoRA for fifty steps. The GLM path has a tiny
+checkpointing. Both use rank-two LoRA with a fifty-step qualification cap. Future runs validate
+every five steps, stop after three checks without an absolute loss improvement
+greater than 0.0001 (minimum ten steps), and publish the lowest-validation-loss
+adapter. The recipe uses seeded epoch shuffling, five warmup steps and cosine
+learning-rate decay through Transformers. Validation loss is weighted by completion
+tokens on a fixed seeded sample of up to 256 examples; the test split remains
+reserved for final evaluation. These are configurable starting defaults, not tuned
+hyperparameters or a general production training budget. The GLM path has a tiny
 model CPU gradient test; full-size training and multi-GPU checkpoint recovery
 still require GPU qualification. DeepSeek V4.1 training is not supported by this
 Transformers runtime.
@@ -33,7 +40,9 @@ To upgrade, commit a new submodule revision here and verify the runtime again.
 
 The image runs package and runtime CPU tests, including exact adapter-weight
 comparison between uninterrupted training and optimizer-checkpoint resume using
-a tiny Qwen model.
+a tiny Qwen model. Checkpoints also preserve the best adapter, early-stopping
+state and learning-rate scheduler; a resumed run cannot reset its patience.
+Existing frozen run manifests and runtime bundles retain their original behavior.
 The model deployment workflow publishes the runtime archive by SHA-256 alongside
 existing inference bundles. The Nomad host image must match the bundle base ID.
 

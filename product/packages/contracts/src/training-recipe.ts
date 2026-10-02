@@ -11,7 +11,7 @@ export const trainingRecipeForModel = (modelId: string) => {
   return {
     ...recipe,
     ...training,
-    id: `${model.id.toLowerCase().replaceAll("/", "-")}-sft-v1`,
+    id: `${model.id.toLowerCase().replaceAll("/", "-")}-sft-v2`,
     model: training.model ?? model.id,
     revision: training.revision,
   };

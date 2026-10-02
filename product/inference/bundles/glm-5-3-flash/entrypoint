@@ -10,8 +10,6 @@ export VLLM_DEEP_GEMM_WARMUP=relax
 unset PYTHONPATH VLLM_ALLOW_INSECURE_SERIALIZATION VLLM_SERVER_DEV_MODE
 wrapper=()
 if [[ "${LORA_ENABLED:-false}" == "true" ]]; then
-  export LORA_CONTROL_TOKEN
-  LORA_CONTROL_TOKEN=$(cat "${LORA_CONTROL_TOKEN_FILE:?}")
   export LORA_CACHE_DIR="${NOMAD_ALLOC_DIR:?}/lora"
   wrapper=("$root/python/bin/python3" "$root/lora/launch.py")
 fi

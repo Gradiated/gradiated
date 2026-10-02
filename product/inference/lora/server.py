@@ -1,4 +1,3 @@
-import hmac
 import http.client
 import json
 import threading
@@ -8,10 +7,7 @@ from artifacts import strict_json
 from loader import CapacityError
 
 
-def create_server(loader, port, control_token):
-    if not control_token:
-        raise ValueError("Missing adapter control token")
-
+def create_server(loader, port):
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *_args):
             pass
@@ -28,20 +24,12 @@ def create_server(loader, port, control_token):
             self.end_headers()
             self.wfile.write(body)
 
-        def control(self):
-            if not hmac.compare_digest(
-                self.headers.get("X-Gradiated-Adapter-Control", ""), control_token
-            ):
-                self.respond(403, {"error": "forbidden"})
-                return False
-            return True
-
         def do_GET(self):
             if self.path == "/health":
                 self.respond(200 if loader.ready else 503, {"ready": loader.ready})
-            elif self.path == "/internal/adapters" and self.control():
+            elif self.path == "/internal/adapters":
                 self.respond(200, loader.status())
-            elif self.path == "/internal/adapters/metrics" and self.control():
+            elif self.path == "/internal/adapters/metrics":
                 self.respond(200, loader.metrics(), "text/plain; version=0.0.4")
             elif self.path not in ("/internal/adapters", "/internal/adapters/metrics"):
                 self.respond(404, {"error": "not_found"})
@@ -52,8 +40,6 @@ def create_server(loader, port, control_token):
                 "/internal/adapters/probe",
             ):
                 self.respond(404, {"error": "not_found"})
-                return
-            if not self.control():
                 return
             try:
                 size = int(self.headers.get("Content-Length", "0"))

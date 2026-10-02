@@ -71,7 +71,7 @@ const setup = () => {
     GRADIATED_RUNTIME_ACCESS_TOKEN: "t".repeat(40),
     GRADIATED_DEPLOYMENT_STATUS_TOKEN: "s".repeat(40),
   };
-  const run = (values = environment) =>
+  const run = (values: Record<string, string> = environment) =>
     spawnSync("python3", ["-c", script], {
       input: JSON.stringify({
         environment: values,
@@ -93,6 +93,29 @@ const setup = () => {
 };
 
 describe("in-place host bootstrap", () => {
+  it("makes the existing renewal identity available to the runtime without issuing another token", () => {
+    const test = setup();
+    const renewalToken = "r".repeat(43);
+    const result = test.run({
+      ...test.environment,
+      GRADIATED_NOMAD_RENEWAL_TOKEN: renewalToken,
+    });
+    processes.push(
+      Number(readFileSync(path.join(test.root, "client-pid"), "utf8")),
+    );
+    expect(result.status).toBe(0);
+    const file = path.join(test.root, "etc/gradiated/host-identity.json");
+    expect(readFileSync(file, "utf8")).toBe(
+      readFileSync(path.join(test.root, "etc/nomad/tls/renewal.json"), "utf8"),
+    );
+    expect(JSON.parse(readFileSync(file, "utf8"))).toEqual({
+      instance_id: test.environment.GRADIATED_INSTANCE_ID,
+      nomad_node_id: test.environment.GRADIATED_NOMAD_NODE_ID,
+      token: renewalToken,
+    });
+    expect(statSync(file).mode & 0o777).toBe(0o600);
+  });
+
   it("installs identity and metadata and starts only the Nomad client", () => {
     const test = setup();
     const result = test.run();

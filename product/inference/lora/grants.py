@@ -2,30 +2,49 @@ import json
 import re
 import urllib.parse
 import urllib.request
+import uuid
+from pathlib import Path
 
 from artifacts import NoRedirect, strict_json
 
 
-def validate_endpoint(url, token):
+def host_identity(path):
+    identity = strict_json(Path(path).read_bytes())
+    for key in ("instance_id", "nomad_node_id"):
+        if str(uuid.UUID(identity[key])) != identity[key]:
+            raise ValueError("Invalid host identity")
+    if not re.fullmatch(r"[A-Za-z0-9_-]{43}", identity["token"]):
+        raise ValueError("Invalid host credential")
+    return identity
+
+
+def validate_endpoint(url):
     parsed = urllib.parse.urlsplit(url)
     if (
-        parsed.scheme != "https"
+        not (
+            parsed.scheme == "https"
+            or (
+                parsed.scheme == "http"
+                and parsed.hostname in ("localhost", "127.0.0.1", "::1")
+            )
+        )
         or not parsed.hostname
         or parsed.username
         or parsed.password
-        or not token
     ):
         raise ValueError("Invalid private artifact endpoint")
 
 
-def read_private(url, token, body=None, limit=65536):
-    validate_endpoint(url, token)
+def read_private(url, identity, body=None, limit=65536):
+    validate_endpoint(url)
     request = urllib.request.Request(
         url,
         data=json.dumps(body).encode() if body is not None else None,
         headers={
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {token}",
+            "X-Gradiated-Instance-Id": identity["instance_id"],
+            "X-Gradiated-Nomad-Node-Id": identity["nomad_node_id"],
+            "Authorization": f"Bearer {identity['token']}",
         },
     )
     with urllib.request.build_opener(NoRedirect()).open(
@@ -37,11 +56,19 @@ def read_private(url, token, body=None, limit=65536):
         return strict_json(data)
 
 
-def production_targets(url, token, base_model_id):
-    separator = "&" if "?" in url else "?"
+def api_url(base_url, path):
+    validate_endpoint(base_url)
+    parsed = urllib.parse.urlsplit(base_url)
+    if parsed.query or parsed.fragment:
+        raise ValueError("API base URL cannot contain a query or fragment")
+    return base_url.rstrip("/") + "/api/internal/v1/" + path
+
+
+def production_targets(base_url, identity, base_model_id):
+    url = api_url(base_url, "task-versions/production")
     result = read_private(
-        url + separator + urllib.parse.urlencode({"base_model_id": base_model_id}),
-        token,
+        url + "?" + urllib.parse.urlencode({"base_model_id": base_model_id}),
+        identity,
         limit=1024 * 1024,
     )["data"]
     if not isinstance(result, list):
@@ -49,8 +76,8 @@ def production_targets(url, token, base_model_id):
     return result
 
 
-def resolver(url, token):
-    validate_endpoint(url, token)
+def resolver(base_url, identity):
+    url = api_url(base_url, "adapter-downloads")
 
     def resolve(name, workspace_id):
         match = re.fullmatch(r"ft-([a-f0-9-]{36})-([a-f0-9]{64})", name)
@@ -61,7 +88,7 @@ def resolver(url, token):
             "version_id": match[1],
             "sha256": match[2],
         }
-        grant = read_private(url, token, target)
+        grant = read_private(url, identity, target)
         version = grant["version"]
         if (
             grant["workspace_id"] != workspace_id

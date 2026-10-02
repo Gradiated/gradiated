@@ -13,6 +13,7 @@ import type { ContentStore } from "../traces/storage.js";
 import { reconcileTrainingRun } from "./engine.js";
 import { prepareTraining } from "./admission.js";
 import type { AdapterDownloads } from "./downloads.js";
+import { requireLoadableAdapter } from "./hosting.js";
 import { createTrainingRunStore } from "./run-store.js";
 import { createTrainingStore } from "./store.js";
 import { TrainingAdmissionError, type TrainingEngine } from "./types.js";
@@ -268,6 +269,8 @@ export const createTrainingService = (
           "unavailable",
           "Serving is not enabled for this version.",
         );
+
+      requireLoadableAdapter(version);
 
       return records.setProductionVersion(task.id, version.id);
     },

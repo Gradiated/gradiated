@@ -32,6 +32,23 @@ describe("GPU certificate authorization", () => {
     const token = await credentials.enroll(record.id, node);
     return { id: record.id, node, credentials, token, inventory };
   };
+  it("authorizes the same enrolled host credential for internal API reads without changing certificate state", async () => {
+    const host = await enroll();
+    await expect(
+      host.credentials.authorize(host.id, host.node, host.token),
+    ).resolves.toBeUndefined();
+    await expect(
+      host.credentials.authorize(host.id, randomUUID(), host.token),
+    ).rejects.toBeInstanceOf(CertificateAuthorizationError);
+    await expect(
+      host.credentials.authorize(host.id, host.node, "a".repeat(43)),
+    ).rejects.toBeInstanceOf(CertificateAuthorizationError);
+    await host.credentials.revoke(host.id);
+    await expect(
+      host.credentials.authorize(host.id, host.node, host.token),
+    ).rejects.toBeInstanceOf(CertificateAuthorizationError);
+  });
+
   it("enrolls bootstrap credentials before binding while denying issuance until binding", async () => {
     const inventory = createInstanceService(database.database);
     const record = await inventory.register({

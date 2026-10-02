@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, gt, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
   ModelSchema,
@@ -257,6 +257,68 @@ export const createTrainingStore = (database: ControlDatabase) => {
         );
 
       return row && VersionRecordSchema.parse(row);
+    },
+
+    async getHostingVersion(workspaceId: string, versionId: string) {
+      const [row] = await database
+        .select({ task: tasks, version: taskVersions })
+        .from(taskVersions)
+        .innerJoin(tasks, eq(tasks.id, taskVersions.taskId))
+        .innerJoin(workspaces, eq(workspaces.id, tasks.workspaceId))
+        .innerJoin(
+          organizations,
+          eq(organizations.id, workspaces.organizationId),
+        )
+        .where(
+          and(
+            eq(taskVersions.id, UuidSchema.parse(versionId)),
+            eq(tasks.workspaceId, UuidSchema.parse(workspaceId)),
+            isNull(workspaces.archivedAt),
+            eq(organizations.status, "active"),
+          ),
+        );
+
+      return (
+        row && {
+          task: TaskRecordSchema.parse(row.task),
+          version: VersionRecordSchema.parse(row.version),
+        }
+      );
+    },
+
+    async listProductionVersions(baseModelId: string) {
+      const rows = await database
+        .select({ version: taskVersions })
+        .from(tasks)
+        .innerJoin(
+          taskVersions,
+          and(
+            eq(taskVersions.id, tasks.productionVersionId),
+            eq(taskVersions.taskId, tasks.id),
+          ),
+        )
+        .innerJoin(workspaces, eq(workspaces.id, tasks.workspaceId))
+        .innerJoin(
+          organizations,
+          eq(organizations.id, workspaces.organizationId),
+        )
+        .where(
+          and(
+            eq(
+              taskVersions.baseModelId,
+              ModelSchema.shape.id.parse(baseModelId),
+            ),
+            eq(taskVersions.status, "available"),
+            sql`coalesce(${taskVersions.adapter}->>'base_model_revision', '') <> ''`,
+            sql`(${taskVersions.adapter}->>'size_bytes')::bigint > 0`,
+            isNull(workspaces.archivedAt),
+            eq(organizations.status, "active"),
+          ),
+        )
+        .orderBy(desc(tasks.updatedAt), desc(tasks.id))
+        .limit(4096);
+
+      return rows.map((row) => VersionRecordSchema.parse(row.version));
     },
 
     async admissionContext(

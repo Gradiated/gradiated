@@ -9,7 +9,7 @@ import time
 import urllib.request
 from pathlib import Path
 
-from grants import production_targets, resolver, validate_endpoint
+from grants import host_identity, production_targets, resolver, validate_endpoint
 from loader import Loader
 from server import create_server
 from startup import start_preload
@@ -65,13 +65,13 @@ def main():
 
     command = sys.argv[1:]
     _settings, model, revision = engine_settings(command, os.environ, {})
+    identity = host_identity(os.environ["HOST_IDENTITY_FILE"])
     model_config = json.loads(
         Path(hf_hub_download(model, "config.json", revision=revision)).read_text()
     )
     settings, _model, _revision = engine_settings(command, os.environ, model_config)
-    validate_endpoint(
-        os.environ["LORA_PRODUCTION_URL"], os.environ["LORA_CONTROL_TOKEN"]
-    )
+    api_base_url = os.environ["GRADIATED_API_BASE_URL"]
+    validate_endpoint(api_base_url)
     ports = [
         int(os.environ[key]) for key in ("ADAPTER_PORT", "RUNTIME_PORT", "WARMUP_PORT")
     ]
@@ -82,9 +82,7 @@ def main():
         os.environ["LORA_CACHE_DIR"],
         int(os.environ["RUNTIME_PORT"]),
         download_hosts(os.environ),
-        resolve=resolver(
-            os.environ["LORA_GRANTS_URL"], os.environ["LORA_CONTROL_TOKEN"]
-        ),
+        resolve=resolver(api_base_url, identity),
     )
     loader.ready = False
     command += [
@@ -97,9 +95,7 @@ def main():
         str(settings["max_rank"]),
         "--enable-mixed-moe-lora-format",
     ]
-    server = create_server(
-        loader, int(os.environ["ADAPTER_PORT"]), os.environ["LORA_CONTROL_TOKEN"]
-    )
+    server = create_server(loader, int(os.environ["ADAPTER_PORT"]))
     try:
         child = subprocess.Popen(
             command, env={**os.environ, "VLLM_ALLOW_RUNTIME_LORA_UPDATING": "True"}
@@ -135,8 +131,8 @@ def main():
             start_preload(
                 loader,
                 lambda: production_targets(
-                    os.environ["LORA_PRODUCTION_URL"],
-                    os.environ["LORA_CONTROL_TOKEN"],
+                    api_base_url,
+                    identity,
                     settings["base_model_id"],
                 ),
                 int(os.environ.get("LORA_PRELOAD_SECONDS", "600")),

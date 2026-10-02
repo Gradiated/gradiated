@@ -336,6 +336,14 @@ export const createTrainingExecutorActivities = (options: {
     ) =>
       heartbeat(async () => {
         await artifacts.verify(artifact);
+        const manifest = datasetSchema.parse(
+          await json(`runs/${runId}/run-manifest.json`),
+        );
+        if (rank !== manifest.recipe.rank)
+          throw new Error(
+            "Adapter rank differs from the frozen training recipe.",
+          );
+
         return store.publish(
           runId,
           input,
@@ -345,6 +353,7 @@ export const createTrainingExecutorActivities = (options: {
             sha256: artifact.sha256,
             size_bytes: artifact.size_bytes,
             rank,
+            base_model_revision: manifest.recipe.revision,
           },
           "unavailable",
         );

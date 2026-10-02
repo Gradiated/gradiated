@@ -22,6 +22,8 @@ export const createInstanceCertificateService = (database: ControlDatabase) => {
 
       return token;
     },
+    authorize: (instanceId: string, nomadNodeId: string, token: string) =>
+      store.authorize({ instanceId, nomadNodeId, tokenHash: tokenHash(token) }),
     revoke: store.revoke,
     observations: store.observations,
     observe: (

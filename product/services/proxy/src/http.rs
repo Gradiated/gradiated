@@ -251,7 +251,19 @@ async fn forward(
     let mut headers = gateway_headers(&parts.headers);
     headers.insert(GENERATION_ID_HEADER, id_header(generation_id));
 
-    state
+    let capture = if state.capture.is_enabled() && parts.headers.contains_key(&TASK_HEADER) {
+        let state = state.clone();
+        let headers = parts.headers.clone();
+        let body = body.clone();
+        let path = path_and_query.to_owned();
+        Some(tokio::spawn(async move {
+            capture_hosted(&state, &headers, generation_id, &path, &body).await
+        }))
+    } else {
+        None
+    };
+
+    let mut response = state
         .upstreams
         .to_gateway(
             parts.method.clone(),
@@ -261,7 +273,58 @@ async fn forward(
             admission,
         )
         .await
-        .map_err(|error| ProxyError::from_upstream(error, true))
+        .map_err(|error| ProxyError::from_upstream(error, true))?;
+
+    // Pending lookups can warm the cache, but never delay the response.
+    let request = match capture {
+        Some(lookup) if lookup.is_finished() => lookup.await.ok().flatten(),
+        _ => None,
+    };
+    if let Some(mut request) = request {
+        request.hosted = true;
+        if let Some(recording) =
+            state
+                .capture
+                .record(request, response.status.as_u16(), &response.headers)
+        {
+            response.body.record(recording);
+        }
+    }
+
+    Ok(response)
+}
+
+async fn capture_hosted(
+    state: &AppState,
+    headers: &axum::http::HeaderMap,
+    generation_id: Uuid,
+    path: &str,
+    body: &Bytes,
+) -> Option<Relay> {
+    let provider = match path.split('?').next()? {
+        "/v1/messages" | "/messages" => Provider::Anthropic,
+        "/v1/chat/completions" | "/chat/completions" | "/v1/responses" | "/responses" => {
+            Provider::OpenAi
+        }
+        _ => return None,
+    };
+    let key = credentials::extract(headers).ok()?.api_key?;
+    let identity = tokio::time::timeout(
+        std::time::Duration::from_secs(1),
+        state.identity.authorize(&key, Utc::now()),
+    )
+    .await
+    .ok()?
+    .ok()?;
+
+    captured(
+        &identity,
+        headers,
+        generation_id,
+        provider,
+        path.to_owned(),
+        body.clone(),
+    )
 }
 
 async fn relay(
@@ -297,7 +360,7 @@ async fn relay(
 
     if let Some(relay) = captured(
         &identity,
-        parts,
+        &parts.headers,
         generation_id,
         provider_key.provider,
         path,
@@ -328,7 +391,7 @@ async fn relay(
 
 fn captured(
     identity: &Identity,
-    parts: &Parts,
+    headers: &axum::http::HeaderMap,
     generation_id: Uuid,
     provider: Provider,
     path: String,
@@ -339,8 +402,7 @@ fn captured(
     }
 
     let header = |name: &HeaderName| {
-        parts
-            .headers
+        headers
             .get(name)
             .and_then(|value| value.to_str().ok())
             .filter(|value| !value.is_empty())
@@ -348,6 +410,7 @@ fn captured(
     };
 
     Some(Relay {
+        hosted: false,
         generation_id,
         workspace_id: identity.workspace_id,
         task: header(&TASK_HEADER)?,

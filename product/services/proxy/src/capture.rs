@@ -50,6 +50,7 @@ struct Inner {
 }
 
 pub struct Relay {
+    pub hosted: bool,
     pub generation_id: Uuid,
     pub workspace_id: Uuid,
     pub task: String,
@@ -89,6 +90,10 @@ pub struct Recording {
 }
 
 impl Capture {
+    pub fn is_enabled(&self) -> bool {
+        self.inner.is_some()
+    }
+
     pub fn start(
         settings: CaptureSettings,
         metrics: Metrics,
@@ -323,7 +328,11 @@ impl Collector {
         };
 
         let line = Line {
-            schema: SCHEMA,
+            schema: if relay.hosted {
+                "gradiated.hosted/1"
+            } else {
+                SCHEMA
+            },
             generation_id: relay.generation_id,
             workspace_id: relay.workspace_id,
             task: &relay.task,

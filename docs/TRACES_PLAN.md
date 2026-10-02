@@ -60,8 +60,8 @@ name in every direction.
 Migration `0007` adds both workspace settings. The proxy reads them with its
 identity query and caches them for 15 seconds. Capture requires both
 `trace_capture_enabled=true` and a non-empty `x-gradiated-task`. Enabling capture
-does not enable automatic training. The gateway will read these settings when
-hosted capture is implemented. Writers put `retention_days` in each record. Retention changes apply to new captures only. Existing content keeps the retention
+does not enable automatic training. The proxy applies the same settings to
+hosted and relayed captures. Writers put `retention_days` in each record. Retention changes apply to new captures only. Existing content keeps the retention
 recorded when it was captured. Reads enforce each record's retention; S3 lifecycle
 expires batches using their retention tags. The existing worker deletes archived
 or deleted workspace prefixes, retries failures and revisits prefixes to catch
@@ -107,8 +107,9 @@ One JSON object per generation. Keys are sorted. Strings keep their bytes.
   streamed response is reassembled into its non-streamed form; SSE bytes are
   not kept.
 - `canonical` uses OpenAI Chat message and tool shapes, which RL frameworks and
-  chat templates accept. For hosted generations it is the exact request the
-  gateway sent to the runtime, with reasoning. It can be rebuilt from `raw`
+  chat templates accept. For hosted Chat Completions it contains the client
+  messages, tools and first assistant answer. Reasoning remains in `raw.response`.
+  It can be rebuilt from `raw`
   when the normaliser changes; `version` records the normaliser. It can be
   `null` until the normaliser for a protocol exists.
 - `trainable` must be `true` for `hosted` and `false` for `relay`; the
@@ -122,7 +123,7 @@ One JSON object per generation. Keys are sorted. Strings keep their bytes.
 
 | Source | Writer | Why |
 | --- | --- | --- |
-| Hosted | Gateway | It has the runtime request and the reasoning that Messages and Responses clients do not receive. |
+| Hosted | Proxy | It sees the public request and gateway response. The collector normalizes Chat Completions; other protocols retain raw content. |
 | Relay | Proxy | It is the only component that sees the provider exchange. It sends raw bodies; the collector builds `canonical`. |
 | Import | API | Customers upload files. |
 
@@ -130,7 +131,8 @@ Capture happens only when the workspace enables it and the request has a task.
 Senders do not send generations without a task; if one arrives, the collector
 drops it with 204 and counts it as skipped. Each writer copies bytes
 into a bounded, non-blocking queue after the response finishes. A full queue or
-a refusal from the collector drops the item and counts it. Capture never delays
+a refusal from the collector drops the item and counts it. Hosted capture identity
+lookup runs alongside forwarding and is skipped if still pending when the gateway responds. Queueing never delays
 or fails a customer request. On SIGTERM each writer drains its queue within its
 drain window.
 
@@ -207,7 +209,10 @@ contains no credentials or header collections. `outcome` is `complete`, `error`,
 `cancelled` or `truncated`. The collector derives `started_at` from UUIDv7,
 `model` from the request, and `protocol` from provider and path. A missing trace
 identifier defaults to the generation identifier. Relay records always have
-`source=relay`, `trainable=false` and `canonical=null`.
+`source=relay`, `trainable=false` and `canonical=null`. Hosted envelopes use
+`gradiated.hosted/1`, producing `source=hosted`, `trainable=true` and a Chat
+Completions canonical record. The text SFT builder rejects tool-bearing
+generations and truncated outputs.
 
 For JSON responses, `raw.request` and `raw.response` contain parsed JSON. For
 SSE, the collector rebuilds Anthropic Messages, OpenAI Chat and OpenAI Responses
@@ -330,7 +335,9 @@ dropped-capture counter and a simple threshold alert for sustained drops.
 2. **Proxy capture**: the workspace settings, the capture queue for relays, raw
    bodies to the collector, and raw response reconstruction for Chat, Responses
    and Messages. Canonical normalization follows separately.
-3. **Gateway capture**: hosted content with the runtime request and reasoning.
+3. **Hosted capture**: proxy response capture and collector Chat Completions
+   normalization are implemented. Canonical normalization of other hosted
+   protocols remains separate.
 4. **Read API and console**: traces list, trace detail and generation lookup
    from manifests.
 5. **Import and export**.

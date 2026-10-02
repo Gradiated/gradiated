@@ -99,6 +99,7 @@ async fn harness(collector: FakeCollector, buffer_bytes: usize) -> Harness {
 
 fn relay(request: &'static [u8]) -> Relay {
     Relay {
+        hosted: false,
         generation_id: Uuid::now_v7(),
         workspace_id: Uuid::now_v7(),
         task: "support-triage".to_owned(),

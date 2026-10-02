@@ -88,8 +88,11 @@ Set `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` and/or `TRAINING_INFERENCE_API_KEY` on
 worker through managed secrets for the corresponding selections. Credentials
 never go to GPU hosts. Missing credentials are rejected before building the
 dataset or allocating GPUs. GPT-6.1 Sol is the default comparison and judge;
-existing task selections are preserved. Published adapters remain unavailable
-for promotion until serving qualification is implemented.
+existing task selections are preserved. A successfully verified run publishes an
+available task version with its immutable adapter checksum and training base
+revision. Users can promote that version; inference requires a compatible host
+with LoRA enabled. Hosts download adapters on demand, while vLLM owns the CPU and
+GPU adapter caches.
 
 Datasets use JSONL with TRL-compatible conversational `prompt` and `completion`
 columns. The current recipe accepts text messages and one assistant completion,

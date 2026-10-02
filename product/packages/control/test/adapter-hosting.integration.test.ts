@@ -206,45 +206,39 @@ describe("private adapter hosting", () => {
       version: uuidv7(),
       name: "legacy-" + index,
     }));
-    await db.database
-      .insert(tasks)
-      .values(
-        legacy.map((item) => ({
-          id: item.task,
-          workspaceId: selected.owner.workspaceId,
-          name: item.name,
-        })),
-      );
-    await db.database
-      .insert(trainingRuns)
-      .values(
-        legacy.map((item) => ({
-          id: item.run,
-          taskId: item.task,
-          trigger: "manual" as const,
-          stage: "succeeded" as const,
-          baseModelId,
-          inputCutoff: new Date(),
-          finishedAt: new Date(),
-        })),
-      );
-    await db.database
-      .insert(taskVersions)
-      .values(
-        legacy.map((item) => ({
-          id: item.version,
-          taskId: item.task,
-          workspaceId: selected.owner.workspaceId,
-          trainingRunId: item.run,
-          name: item.name,
-          baseModelId,
-          status: "available" as const,
-          adapter: {
-            ...selected.version.adapter,
-            base_model_revision: undefined,
-          },
-        })),
-      );
+    await db.database.insert(tasks).values(
+      legacy.map((item) => ({
+        id: item.task,
+        workspaceId: selected.owner.workspaceId,
+        name: item.name,
+      })),
+    );
+    await db.database.insert(trainingRuns).values(
+      legacy.map((item) => ({
+        id: item.run,
+        taskId: item.task,
+        trigger: "manual" as const,
+        stage: "succeeded" as const,
+        baseModelId,
+        inputCutoff: new Date(),
+        finishedAt: new Date(),
+      })),
+    );
+    await db.database.insert(taskVersions).values(
+      legacy.map((item) => ({
+        id: item.version,
+        taskId: item.task,
+        workspaceId: selected.owner.workspaceId,
+        trainingRunId: item.run,
+        name: item.name,
+        baseModelId,
+        status: "available" as const,
+        adapter: {
+          ...selected.version.adapter,
+          base_model_revision: undefined,
+        },
+      })),
+    );
     await db.database.execute(
       sql`update ${tasks} set production_version_id = ${taskVersions.id} from ${taskVersions} where ${tasks.id} = ${taskVersions.taskId} and ${tasks.workspaceId} = ${selected.owner.workspaceId}`,
     );

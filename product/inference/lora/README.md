@@ -31,9 +31,10 @@ not persisted on task versions. The production list is
 `{data: [{workspace_id, version_id, sha256}]}`, filtered by base model. These private
 routes are provided by the API; workspace authorization at the gateway follows in PR 4.
 
-Set `LORA_GRANTS_URL` to `https://<api>/api/internal/v1/adapter-downloads`
-and `LORA_PRODUCTION_URL` to
-`https://<api>/api/internal/v1/task-versions/production`. Hosts reuse their existing per-host certificate-renewal bearer credential and send
+Set `GRADIATED_API_BASE_URL` to the API origin, for example
+`https://api.gradiated.com` in production or `http://127.0.0.1:3001` locally.
+The loader derives both private endpoint paths. HTTP is accepted only for loopback
+hosts; other destinations require HTTPS. Hosts reuse their existing per-host certificate-renewal bearer credential and send
 `X-Gradiated-Instance-Id` and `X-Gradiated-Nomad-Node-Id` identity headers. The API
 checks the enrolled node and revocation/retirement state using the existing host
 credential store. There is no LoRA-specific shared secret. Private routes are
@@ -90,19 +91,19 @@ comes from the pinned model configuration, including nested `text_config`.
 Nomad's `tensor_parallel_size` controls both GPU allocation and the engine flag;
 the assigned GPU UUID count must match. These are host decisions, not adapter fields.
 
-| Setting                                   | Source/default                                                   |
-| ----------------------------------------- | ---------------------------------------------------------------- |
-| `LORA_ENABLED`                            | Nomad `lora_enabled`, false                                      |
-| `MODEL_ID`                                | Existing public base model ID                                    |
-| `LORA_GPU_SLOTS`                          | Native `max_loras`, 8                                            |
-| `LORA_CPU_SLOTS`                          | Native `max_cpu_loras`, 64; at least GPU slots                   |
-| `LORA_MAX_RANK`                           | Native `max_lora_rank`, 8                                        |
-| `LORA_DISK_CACHE_BYTES`                   | Explicit allocation disk budget; zero fails startup when enabled |
-| `LORA_DOWNLOAD_HOSTS`                     | Exact S3 HTTPS host allowlist                                    |
-| `LORA_GRANTS_URL` / `LORA_PRODUCTION_URL` | Private HTTPS metadata endpoints                                 |
-| `HOST_IDENTITY_FILE`                      | `/etc/gradiated/host-identity.json`                              |
-| `LORA_CACHE_DIR`                          | `${NOMAD_ALLOC_DIR}/lora`                                        |
-| `ADAPTER_PORT`                            | Allocation-local control port; inference stays on `RUNTIME_PORT` |
+| Setting                  | Source/default                                                   |
+| ------------------------ | ---------------------------------------------------------------- |
+| `LORA_ENABLED`           | Nomad `lora_enabled`, false                                      |
+| `MODEL_ID`               | Existing public base model ID                                    |
+| `LORA_GPU_SLOTS`         | Native `max_loras`, 8                                            |
+| `LORA_CPU_SLOTS`         | Native `max_cpu_loras`, 64; at least GPU slots                   |
+| `LORA_MAX_RANK`          | Native `max_lora_rank`, 8                                        |
+| `LORA_DISK_CACHE_BYTES`  | Explicit allocation disk budget; zero fails startup when enabled |
+| `LORA_DOWNLOAD_HOSTS`    | Exact S3 HTTPS host allowlist                                    |
+| `GRADIATED_API_BASE_URL` | API origin; HTTPS or local loopback HTTP                         |
+| `HOST_IDENTITY_FILE`     | `/etc/gradiated/host-identity.json`                              |
+| `LORA_CACHE_DIR`         | `${NOMAD_ALLOC_DIR}/lora`                                        |
+| `ADAPTER_PORT`           | Allocation-local control port; inference stays on `RUNTIME_PORT` |
 
 Host bootstrap copies the existing certificate-renewal identity into
 `/etc/gradiated/host-identity.json`, owned by `runtime` with mode 0600; it contains

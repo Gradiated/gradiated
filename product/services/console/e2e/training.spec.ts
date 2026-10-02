@@ -55,6 +55,7 @@ for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
             sha256: "a".repeat(64),
             size_bytes: 10,
             rank: 8,
+            base_model_revision: "test-base-revision",
           }),
         ],
       );

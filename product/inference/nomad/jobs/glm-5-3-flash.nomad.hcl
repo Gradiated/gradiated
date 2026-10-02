@@ -34,11 +34,7 @@ variable "lora_download_hosts" {
   type    = string
   default = ""
 }
-variable "lora_grants_url" {
-  type    = string
-  default = ""
-}
-variable "lora_production_url" {
+variable "gradiated_api_base_url" {
   type    = string
   default = ""
 }
@@ -260,8 +256,7 @@ job "glm-5-3-flash" {
         LORA_MAX_RANK           = var.lora_max_rank
         LORA_DISK_CACHE_BYTES   = var.lora_disk_cache_bytes
         LORA_DOWNLOAD_HOSTS     = var.lora_download_hosts
-        LORA_GRANTS_URL         = var.lora_grants_url
-        LORA_PRODUCTION_URL     = var.lora_production_url
+        GRADIATED_API_BASE_URL  = var.gradiated_api_base_url
         HOST_IDENTITY_FILE      = "/etc/gradiated/host-identity.json"
         WARMUP_PORT             = "${NOMAD_PORT_warmup}"
       }

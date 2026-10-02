@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from grants import host_identity, read_private
+from grants import api_url, host_identity, read_private
 
 
 class HostCredentialTests(unittest.TestCase):
@@ -50,3 +50,29 @@ class HostCredentialTests(unittest.TestCase):
             request.get_header("X-gradiated-nomad-node-id"),
             self.identity()["nomad_node_id"],
         )
+
+
+class ApiUrlTests(unittest.TestCase):
+    def test_derives_paths_for_production_and_local_api(self):
+        for base in (
+            "https://api.example",
+            "http://localhost:3001",
+            "http://127.0.0.1:3001",
+            "http://[::1]:3001",
+        ):
+            for path in ("adapter-downloads", "task-versions/production"):
+                self.assertEqual(
+                    api_url(base + "/", path), base + "/api/internal/v1/" + path
+                )
+
+    def test_rejects_remote_http_and_ambiguous_bases(self):
+        for base in (
+            "http://api.example",
+            "https://user:password@api.example",
+            "https://api.example?query=yes",
+            "https://api.example#fragment",
+            "file:///tmp/api",
+            "",
+        ):
+            with self.assertRaises(ValueError):
+                api_url(base, "adapter-downloads")

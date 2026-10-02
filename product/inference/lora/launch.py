@@ -70,7 +70,8 @@ def main():
         Path(hf_hub_download(model, "config.json", revision=revision)).read_text()
     )
     settings, _model, _revision = engine_settings(command, os.environ, model_config)
-    validate_endpoint(os.environ["LORA_PRODUCTION_URL"])
+    api_base_url = os.environ["GRADIATED_API_BASE_URL"]
+    validate_endpoint(api_base_url)
     ports = [
         int(os.environ[key]) for key in ("ADAPTER_PORT", "RUNTIME_PORT", "WARMUP_PORT")
     ]
@@ -81,7 +82,7 @@ def main():
         os.environ["LORA_CACHE_DIR"],
         int(os.environ["RUNTIME_PORT"]),
         download_hosts(os.environ),
-        resolve=resolver(os.environ["LORA_GRANTS_URL"], identity),
+        resolve=resolver(api_base_url, identity),
     )
     loader.ready = False
     command += [
@@ -130,7 +131,7 @@ def main():
             start_preload(
                 loader,
                 lambda: production_targets(
-                    os.environ["LORA_PRODUCTION_URL"],
+                    api_base_url,
                     identity,
                     settings["base_model_id"],
                 ),

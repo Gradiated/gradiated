@@ -21,7 +21,13 @@ def host_identity(path):
 def validate_endpoint(url):
     parsed = urllib.parse.urlsplit(url)
     if (
-        parsed.scheme != "https"
+        not (
+            parsed.scheme == "https"
+            or (
+                parsed.scheme == "http"
+                and parsed.hostname in ("localhost", "127.0.0.1", "::1")
+            )
+        )
         or not parsed.hostname
         or parsed.username
         or parsed.password
@@ -50,10 +56,18 @@ def read_private(url, identity, body=None, limit=65536):
         return strict_json(data)
 
 
-def production_targets(url, identity, base_model_id):
-    separator = "&" if "?" in url else "?"
+def api_url(base_url, path):
+    validate_endpoint(base_url)
+    parsed = urllib.parse.urlsplit(base_url)
+    if parsed.query or parsed.fragment:
+        raise ValueError("API base URL cannot contain a query or fragment")
+    return base_url.rstrip("/") + "/api/internal/v1/" + path
+
+
+def production_targets(base_url, identity, base_model_id):
+    url = api_url(base_url, "task-versions/production")
     result = read_private(
-        url + separator + urllib.parse.urlencode({"base_model_id": base_model_id}),
+        url + "?" + urllib.parse.urlencode({"base_model_id": base_model_id}),
         identity,
         limit=1024 * 1024,
     )["data"]
@@ -62,8 +76,8 @@ def production_targets(url, identity, base_model_id):
     return result
 
 
-def resolver(url, identity):
-    validate_endpoint(url)
+def resolver(base_url, identity):
+    url = api_url(base_url, "adapter-downloads")
 
     def resolve(name, workspace_id):
         match = re.fullmatch(r"ft-([a-f0-9-]{36})-([a-f0-9]{64})", name)

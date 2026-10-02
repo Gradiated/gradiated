@@ -137,3 +137,17 @@ it("shows unknown historical cost without substituting model token rates", () =>
     costAdvantage({ ...value, comparison_model_id: "another/model" }).label,
   ).toBe("n/a");
 });
+
+it("labels the production token cost estimate and preserves its per-1k conversion", () => {
+  const value = {
+    ...summary(
+      { fine_tuned: 34_400, comparison: 3_549_565 },
+      { fine_tuned: 1, comparison: 1 },
+    ),
+    cost_basis: "catalog_token_estimate" as const,
+  };
+  expect(costAdvantage(value).label).toBe("103× cheaper");
+  expect(costPer1kRequests(value)).toBe(
+    "$0.0344 vs $3.55 per 1k requests (estimated)",
+  );
+});

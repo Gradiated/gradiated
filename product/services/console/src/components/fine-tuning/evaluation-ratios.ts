@@ -20,7 +20,9 @@ export const costPer1kRequests = (summary: EvaluationSummary): string => {
   if (!summary.cost_per_request_nano_usd) return "Not measured";
   const { comparison, fine_tuned } = summary.cost_per_request_nano_usd;
 
-  return `${formatNanoUsd(fine_tuned * REQUESTS_PER_COST_UNIT)} vs ${formatNanoUsd(comparison * REQUESTS_PER_COST_UNIT)} per 1k requests`;
+  const estimate = summary.cost_basis ? " (estimated)" : "";
+
+  return `${formatNanoUsd(fine_tuned * REQUESTS_PER_COST_UNIT)} vs ${formatNanoUsd(comparison * REQUESTS_PER_COST_UNIT)} per 1k requests${estimate}`;
 };
 
 export const outputSpeed = (summary: EvaluationSummary): string => {

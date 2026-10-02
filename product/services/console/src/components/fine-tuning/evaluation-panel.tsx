@@ -175,7 +175,7 @@ export const EvaluationPanel = ({
       <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-foreground tabular-nums">
         {summary.cost_per_request_nano_usd ? (
           <Comparison
-            name="Cost"
+            name={summary.cost_basis ? "Estimated cost" : "Cost"}
             ratio={costAdvantage(summary)}
             numbers={costPer1kRequests(summary)}
           />

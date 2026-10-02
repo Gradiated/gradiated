@@ -22,8 +22,11 @@ grant/list routes are implemented in PR 3 and gateway dispatch follows in PR 4; 
 hosting disabled until those and real GPU qualification are complete.
 
 PR 3 adds authenticated private metadata/download grants and a bounded startup
-list using the existing S3 signer and task production pointer. Archived workspaces
-and suspended organizations are excluded. The list includes at most 4096 available
+list using the existing S3 signer and task production pointer. Hosts authenticate
+with their existing certificate-renewal bearer credential and enrollment/revocation
+checks; there is no separate LoRA credential. Loader calls use the existing
+authenticated host ingress. Archived workspaces
+and suspended organizations are excluded. The list filters loadable versions before selecting at most 4096 available
 current versions per base, ordered by the task's last update. Grant requests bind
 workspace, version and full artifact checksum; candidates can be prepared before
 they are available for production. Grants do not change eligibility or promotion.

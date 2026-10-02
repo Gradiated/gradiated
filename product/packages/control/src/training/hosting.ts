@@ -42,17 +42,11 @@ export const createAdapterHostingService = (
     async productionVersions(baseModelId: string) {
       const versions = await records.listProductionVersions(baseModelId);
 
-      return versions
-        .filter(
-          (version) =>
-            version.adapter.base_model_revision &&
-            version.adapter.size_bytes > 0,
-        )
-        .map((version) => ({
-          workspace_id: version.workspaceId,
-          version_id: version.id,
-          sha256: version.adapter.sha256,
-        }));
+      return versions.map((version) => ({
+        workspace_id: version.workspaceId,
+        version_id: version.id,
+        sha256: version.adapter.sha256,
+      }));
     },
   };
 };

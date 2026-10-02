@@ -96,6 +96,7 @@ if env.get("GRADIATED_NOMAD_RENEWAL_TOKEN"):
         write(path, scripts[name].encode(), "root")
         os.chmod(path, 0o755)
     write("/etc/nomad/tls/renewal.json", json.dumps(renewal).encode(), "nomad")
+    write("/etc/gradiated/host-identity.json", json.dumps(renewal).encode(), "runtime")
 identity = {name: env[name] for name in ("GRADIATED_INSTANCE_ID", "GRADIATED_NOMAD_NODE_ID", "GRADIATED_NOMAD_NODE_SECRET")}
 write("/etc/gradiated/in-place-enrollment.json", json.dumps(identity).encode(), "root")
 with open("/var/log/gradiated-nomad-client.log", "ab", buffering=0) as log:

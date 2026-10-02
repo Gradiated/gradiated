@@ -50,6 +50,7 @@ if not re.fullmatch(r"[A-Za-z0-9_-]{43}", value):
     raise SystemExit("Invalid certificate renewal token")
 print(json.dumps({"instance_id": os.environ["GRADIATED_INSTANCE_ID"], "nomad_node_id": os.environ["GRADIATED_NOMAD_NODE_ID"], "token": value}))
 PYCONFIG
+    install -m 600 -o runtime -g runtime /etc/nomad/tls/renewal.json /etc/gradiated/host-identity.json
   fi
 
   # Nomad adopts this identity; it rejects a trailing newline.
@@ -78,10 +79,10 @@ if [[ -n "${GRADIATED_NOMAD_NODE_ID:-}" ]]; then
 fi
 unset "${bootstrap[@]}"
 
-if [[ -n "${GRADIATED_RUNTIME_ACCESS_TOKEN:-}${GRADIATED_DEPLOYMENT_STATUS_TOKEN:-}${GRADIATED_ADAPTER_CONTROL_TOKEN:-}" ]]; then
+if [[ -n "${GRADIATED_RUNTIME_ACCESS_TOKEN:-}${GRADIATED_DEPLOYMENT_STATUS_TOKEN:-}" ]]; then
   bash /opt/gradiated/bin/configure-serving
 fi
-unset GRADIATED_RUNTIME_ACCESS_TOKEN GRADIATED_DEPLOYMENT_STATUS_TOKEN GRADIATED_ADAPTER_CONTROL_TOKEN
+unset GRADIATED_RUNTIME_ACCESS_TOKEN GRADIATED_DEPLOYMENT_STATUS_TOKEN
 
 if [[ -n "${PUBLIC_KEY:-}" ]]; then
   install -d -m 700 /root/.ssh

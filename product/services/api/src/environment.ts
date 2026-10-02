@@ -41,10 +41,6 @@ const ApiOnlyEnvironmentSchema = z
     NOMAD_CA_KMS_KEY: z.string().min(1).optional(),
     NOMAD_CA_PEM: z.string().min(1).optional(),
     TRAINING_ARTIFACTS_BUCKET: z.string().min(1).optional(),
-    LORA_CONTROL_TOKEN: z
-      .string()
-      .regex(/^[A-Za-z0-9_-]{32,256}$/)
-      .optional(),
     CONTENTS_BUCKET: z.string().min(1).optional(),
     METRICS_PORT: PortSchema.default(9_464),
     PROFILING_INGEST_TOKEN: z.string().min(32).optional(),

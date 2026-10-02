@@ -154,10 +154,10 @@ const adapterDownloads = createAdapterDownloads(
 );
 
 const app = createApp({
-  ...(environment.LORA_CONTROL_TOKEN
+  ...(hostCertificates
     ? {
         adapterHosting: {
-          token: environment.LORA_CONTROL_TOKEN,
+          credentials: hostCertificates.credentials,
           service: createAdapterHostingService(database, adapterDownloads),
         },
       }

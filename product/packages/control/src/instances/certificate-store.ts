@@ -27,15 +27,18 @@ const columns = {
 export class CertificateAuthorizationError extends Error {}
 export class CertificateRateLimitError extends Error {}
 
-const lockedCredential = async (
+const readCredential = async (
   transaction: Pick<ControlDatabase, "select">,
   input: z.infer<typeof identitySchema>,
+  lock = false,
 ) => {
-  const [record] = await transaction
+  const query = transaction
     .select(columns)
     .from(instances)
-    .where(and(eq(instances.id, input.instanceId), isNull(instances.retiredAt)))
-    .for("update");
+    .where(
+      and(eq(instances.id, input.instanceId), isNull(instances.retiredAt)),
+    );
+  const [record] = lock ? await query.for("update") : await query;
   if (!record) throw new CertificateAuthorizationError("Unauthorized host");
 
   const parsed = recordSchema.parse(record);
@@ -66,6 +69,10 @@ const writeCertificate = async (
 };
 
 export const createInstanceCertificateStore = (database: ControlDatabase) => ({
+  async authorize(value: z.infer<typeof identitySchema>) {
+    await readCredential(database, identitySchema.parse(value));
+  },
+
   async enroll(value: z.infer<typeof identitySchema>) {
     const { instanceId, ...identity } = identitySchema.parse(value);
     const certificate = instanceCertificateSchema.parse({
@@ -114,7 +121,7 @@ export const createInstanceCertificateStore = (database: ControlDatabase) => ({
     const expiry = z.date().parse(expiresAt).toISOString();
     const due = z.date().parse(renewalDueAt).toISOString();
     await database.transaction(async (transaction) => {
-      const certificate = await lockedCredential(transaction, input);
+      const certificate = await readCredential(transaction, input, true);
       await writeCertificate(transaction, input.instanceId, {
         ...certificate,
         observedAt: new Date().toISOString(),
@@ -163,7 +170,7 @@ export const createInstanceCertificateStore = (database: ControlDatabase) => ({
   ): Promise<T> {
     const input = identitySchema.parse(value);
     return database.transaction(async (transaction) => {
-      const certificate = await lockedCredential(transaction, input);
+      const certificate = await readCredential(transaction, input, true);
       if (
         certificate.issuedAt &&
         Date.now() - Date.parse(certificate.issuedAt) < 60_000

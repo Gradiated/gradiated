@@ -26,23 +26,18 @@ class ServerTests(unittest.TestCase):
         self.name = self.loader.register_metadata(self.spec)
         self.loader.ready = True
         self.loader.engine = mock.Mock(return_value=b"ok")
-        self.front = create_server(self.loader, 0, "synthetic-control-token")
+        self.front = create_server(self.loader, 0)
         threading.Thread(target=self.front.serve_forever, daemon=True).start()
         self.addCleanup(self.front.server_close)
         self.addCleanup(self.front.shutdown)
 
-    def request(self, method, path, body=None, authenticated=True):
+    def request(self, method, path, body=None):
         connection = http.client.HTTPConnection(
             "127.0.0.1", self.front.server_port, timeout=5
         )
         self.addCleanup(connection.close)
-        headers = (
-            {"X-Gradiated-Adapter-Control": "synthetic-control-token"}
-            if authenticated
-            else {}
-        )
         connection.request(
-            method, path, json.dumps(body) if body is not None else None, headers
+            method, path, json.dumps(body) if body is not None else None, {}
         )
         response = connection.getresponse()
         return response.status, response.read()
@@ -62,23 +57,8 @@ class ServerTests(unittest.TestCase):
             self.assertEqual(status, 404)
         self.loader.engine.assert_not_called()
 
-    def test_private_routes_require_control_token(self):
-        for method, path in (
-            ("POST", "/internal/adapters/prepare"),
-            ("POST", "/internal/adapters/probe"),
-            ("GET", "/internal/adapters"),
-            ("GET", "/internal/adapters/metrics"),
-        ):
-            status, _ = self.request(
-                method,
-                path,
-                {"name": self.name, "workspace_id": self.spec["workspace_id"]}
-                if method == "POST"
-                else None,
-                authenticated=False,
-            )
-            self.assertEqual(status, 403)
-        self.loader.engine.assert_not_called()
+    def test_control_listener_is_loopback_only(self):
+        self.assertEqual(self.front.server_address[0], "127.0.0.1")
 
     def test_prepare_registers_adapter_through_native_api_and_returns_boot_identity(
         self,

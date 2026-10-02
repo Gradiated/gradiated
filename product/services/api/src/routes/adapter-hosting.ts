@@ -5,8 +5,12 @@ import {
   UuidSchema,
   problemContent,
 } from "@gradiated/contracts";
-import type { AdapterHostingService } from "@gradiated/control";
-import { bearerToken, tokenMatches } from "../ingest/http.js";
+import {
+  CertificateAuthorizationError,
+  type InstanceCertificateService,
+  type AdapterHostingService,
+} from "@gradiated/control";
+import { bearerToken } from "../ingest/http.js";
 import type { ApiEnvironment } from "../types.js";
 import { versionResponse } from "./training.js";
 
@@ -16,7 +20,7 @@ const target = z.strictObject({
   sha256: TaskVersionSchema.shape.adapter.shape.sha256,
 });
 const errors = {
-  401: { description: "Missing or invalid adapter control token." },
+  401: { description: "Missing or invalid enrolled host credential." },
   404: { description: "Version not found.", content: problemContent },
   422: { description: "Invalid request.", content: problemContent },
   503: { description: "Adapter unavailable.", content: problemContent },
@@ -73,20 +77,42 @@ const production = createRoute({
 });
 
 export interface AdapterHostingDependencies {
-  token: string;
+  credentials: () => Promise<Pick<InstanceCertificateService, "authorize">>;
   service: AdapterHostingService;
 }
 
 export const registerAdapterHostingRoutes = (
   app: OpenAPIHono<ApiEnvironment>,
-  { token, service }: AdapterHostingDependencies,
+  { credentials, service }: AdapterHostingDependencies,
 ) => {
   for (const route of [grant, production]) {
     app.use(route.getRoutingPath(), async (context, next) => {
       context.header("Cache-Control", "no-store");
       const supplied = bearerToken(context.req.header("authorization"));
-      if (!supplied || !tokenMatches(supplied, token))
+      const instance = UuidSchema.safeParse(
+        context.req.header("X-Gradiated-Instance-Id"),
+      );
+      const node = UuidSchema.safeParse(
+        context.req.header("X-Gradiated-Nomad-Node-Id"),
+      );
+      if (
+        !supplied ||
+        !/^[A-Za-z0-9_-]{43}$/.test(supplied) ||
+        !instance.success ||
+        !node.success
+      )
         return context.body(null, 401);
+
+      try {
+        await (
+          await credentials()
+        ).authorize(instance.data, node.data, supplied);
+      } catch (error) {
+        if (error instanceof CertificateAuthorizationError)
+          return context.body(null, 401);
+
+        throw error;
+      }
 
       await next();
     });

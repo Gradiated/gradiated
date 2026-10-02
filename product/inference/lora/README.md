@@ -9,8 +9,7 @@ metadata API and gateway integration are completed in PRs 3 and 4.
 
 The gateway authorizes an exact task version in its workspace and derives
 `ft-<version UUID>-<full SHA256>`. Before dispatching it calls the allocation's
-`POST /internal/adapters/prepare` with `{name, workspace_id}` and the private
-`X-Gradiated-Adapter-Control` header. The loader:
+`POST /internal/adapters/prepare` with `{name, workspace_id}` through the existing authenticated host ingress. The loader:
 
 1. Obtains existing task-version metadata and a short-lived download grant.
 2. Reuses verified local files or downloads the S3 archive into a staging directory.
@@ -34,10 +33,12 @@ routes are provided by the API; workspace authorization at the gateway follows i
 
 Set `LORA_GRANTS_URL` to `https://<api>/api/internal/v1/adapter-downloads`
 and `LORA_PRODUCTION_URL` to
-`https://<api>/api/internal/v1/task-versions/production`. Configure the API's
-`LORA_CONTROL_TOKEN` through its existing secret environment and provision the
-same isolated credential on hosts as `GRADIATED_ADAPTER_CONTROL_TOKEN`. Without
-the API token these private routes are disabled. Grant responses use `no-store`
+`https://<api>/api/internal/v1/task-versions/production`. Hosts reuse their existing per-host certificate-renewal bearer credential and send
+`X-Gradiated-Instance-Id` and `X-Gradiated-Nomad-Node-Id` identity headers. The API
+checks the enrolled node and revocation/retirement state using the existing host
+credential store. There is no LoRA-specific shared secret. Private routes are
+registered when the existing host authentication dependencies are configured.
+Grant responses use `no-store`
 and reuse the existing five-minute, versioned S3 signing path. Hosts still enforce
 their exact download hostname allowlist.
 
@@ -99,15 +100,21 @@ the assigned GPU UUID count must match. These are host decisions, not adapter fi
 | `LORA_DISK_CACHE_BYTES`                   | Explicit allocation disk budget; zero fails startup when enabled |
 | `LORA_DOWNLOAD_HOSTS`                     | Exact S3 HTTPS host allowlist                                    |
 | `LORA_GRANTS_URL` / `LORA_PRODUCTION_URL` | Private HTTPS metadata endpoints                                 |
-| `LORA_CONTROL_TOKEN_FILE`                 | `/etc/gradiated/adapter-control.token`                           |
+| `HOST_IDENTITY_FILE`                      | `/etc/gradiated/host-identity.json`                              |
 | `LORA_CACHE_DIR`                          | `${NOMAD_ALLOC_DIR}/lora`                                        |
 | `ADAPTER_PORT`                            | Allocation-local control port; inference stays on `RUNTIME_PORT` |
 
-Host bootstrap accepts optional `GRADIATED_ADAPTER_CONTROL_TOKEN` (32–256 base64url
-characters), writes it as runtime-owned mode 0600, and removes the secret variable
-before services start. Proxy/reporting tokens remain isolated to `desmond`.
-Prepare/probe/status/metrics require the private control header. Probe also takes
-`{name, workspace_id}` and checks a bounded generation's returned identity and usage.
+Host bootstrap copies the existing certificate-renewal identity into
+`/etc/gradiated/host-identity.json`, owned by `runtime` with mode 0600; it contains
+only instance/node identity and the existing bearer credential, not a TLS private
+key. Existing enrolled hosts need the same copy installed before enabling LoRA;
+this does not require reenrollment or restarting provider pods. Revoking the host
+credential also denies subsequent adapter grants and startup lists.
+
+Prepare/probe/status/metrics bind only to loopback and use the existing
+bearer-authenticated host ingress for external access, like the native vLLM
+runtime. Probe takes `{name, workspace_id}` and checks a bounded generation's
+returned identity and usage.
 Metrics live at `/internal/adapters/metrics`; they report file hits, downloads,
 registrations, failures, disk evictions and preparation duration with no adapter or
 workspace labels. Failure logs omit exception text, prompts, signed URLs and tokens.

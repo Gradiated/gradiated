@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, gt, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
   ModelSchema,
@@ -309,6 +309,8 @@ export const createTrainingStore = (database: ControlDatabase) => {
               ModelSchema.shape.id.parse(baseModelId),
             ),
             eq(taskVersions.status, "available"),
+            sql`coalesce(${taskVersions.adapter}->>'base_model_revision', '') <> ''`,
+            sql`(${taskVersions.adapter}->>'size_bytes')::bigint > 0`,
             isNull(workspaces.archivedAt),
             eq(organizations.status, "active"),
           ),

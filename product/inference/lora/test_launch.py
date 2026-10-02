@@ -84,8 +84,6 @@ class LaunchTests(unittest.TestCase):
             )
             binary.chmod(0o755)
             capture = root / "capture.json"
-            token = root / "control-token"
-            token.write_text("synthetic-control-token")
             environment = {
                 **os.environ,
                 "GRADIATED_RUNTIME_ROOT": str(root),
@@ -96,7 +94,6 @@ class LaunchTests(unittest.TestCase):
                 "ADAPTER_PORT": "8001",
                 "WARMUP_PORT": "8002",
                 "NOMAD_ALLOC_DIR": str(root / "allocation"),
-                "LORA_CONTROL_TOKEN_FILE": str(token),
             }
             entrypoint = (
                 Path(__file__).resolve().parents[1] / "bundles/glm-5-3-flash/entrypoint"

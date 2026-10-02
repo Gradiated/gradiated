@@ -262,7 +262,7 @@ job "glm-5-3-flash" {
         LORA_DOWNLOAD_HOSTS     = var.lora_download_hosts
         LORA_GRANTS_URL         = var.lora_grants_url
         LORA_PRODUCTION_URL     = var.lora_production_url
-        LORA_CONTROL_TOKEN_FILE = "/etc/gradiated/adapter-control.token"
+        HOST_IDENTITY_FILE      = "/etc/gradiated/host-identity.json"
         WARMUP_PORT             = "${NOMAD_PORT_warmup}"
       }
 

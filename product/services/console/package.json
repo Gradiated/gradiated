@@ -8,7 +8,10 @@
     "build": "tsc -b && vite build",
     "check": "tsc --noEmit && tsc -p tsconfig.node.json --noEmit && tsc -p tests/tsconfig.json --noEmit && vitest run --config tests/vitest.config.ts",
     "dev": "vite --host 127.0.0.1",
-    "test:e2e": "pnpm --workspace-root turbo run build --filter=@gradiated/api --env-mode=loose && docker compose -f ../../docker-compose.yml up -d && docker compose -f ../../docker-compose.yml wait valkey-cluster-init && docker compose -f ../../docker-compose.yml up -d --wait postgres valkey clickhouse && DATABASE_URL=postgresql://gradiated:gradiated@127.0.0.1:5432/gradiated pnpm --filter @gradiated/control db:migrate && playwright test"
+    "test:e2e": "pnpm --workspace-root turbo run build --filter=@gradiated/api --env-mode=loose && docker compose -f ../../docker-compose.yml up -d && docker compose -f ../../docker-compose.yml wait valkey-cluster-init && docker compose -f ../../docker-compose.yml up -d --wait postgres valkey clickhouse && DATABASE_URL=postgresql://gradiated:gradiated@127.0.0.1:5432/gradiated pnpm --filter @gradiated/control db:migrate && playwright test",
+    "storybook": "storybook dev -p 6006 --host 127.0.0.1 --disable-telemetry",
+    "build-storybook": "storybook build --disable-telemetry",
+    "screenshots": "pnpm build-storybook && uv run --locked --project ../../../tools/browser python ../../../tools/browser/storybook_screenshots.py"
   },
   "dependencies": {
     "@ebay/nice-modal-react": "^1.2.13",
@@ -48,11 +51,15 @@
     "@gradiated/control": "workspace:*",
     "@gradiated/valkey": "workspace:*",
     "@playwright/test": "1.63.0",
+    "@storybook/react-vite": "10.6.0",
     "@tailwindcss/vite": "4.3.3",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.1",
+    "msw": "2.15.0",
+    "msw-storybook-addon": "3.0.3",
     "openapi-typescript": "7.13.0",
+    "storybook": "10.6.0",
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3",
     "vite": "8.3.0"

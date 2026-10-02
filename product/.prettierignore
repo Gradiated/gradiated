@@ -8,3 +8,7 @@ inference/build/
 **/test-results/
 **/playwright-report/
 packages/autotrain/
+
+# MSW-generated service worker.
+services/console/.storybook/public/mockServiceWorker.js
+services/console/storybook-static/

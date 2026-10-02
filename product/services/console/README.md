@@ -87,3 +87,51 @@ The authenticated sidebar logo was inspected and measured at 24 pixels.
 Dark mode was not inspected in the browser.
 
 Workspace settings expose `default_judge_model` as **Default judge model**. Capture copies it once into a new task’s `judge_model_id`; task settings expose **Judge model** as an independent override. Changing the workspace default affects only subsequently seeded tasks. Existing tasks retain their previous workspace judge during migration. Runs snapshot the task judge at admission.
+
+## Storybook and PR screenshots
+
+Browse the main-branch build at https://storybook.gradiated.com. Run locally from
+`product/`:
+
+```sh
+pnpm install --frozen-lockfile
+pnpm exec turbo run build --filter=@gradiated/contracts
+pnpm --filter @gradiated/console storybook
+```
+
+Stories render the real console routes with a fresh query client and memory
+history. MSW serves synthetic fixtures; authentication and unimplemented API
+mutations cannot reach the real backend. Training is enabled and analytics are
+disabled only for Storybook. Page stories cover sign-in, API keys, models,
+usage, logs, billing, training, and every task-detail tab: Model, Training runs,
+Data, and Settings. Tab stories select the actual tab through a play function.
+Add stories under `src/`; screenshot capture discovers every page story automatically.
+
+Capture PNGs locally from the repository root with the pinned browser runtime:
+
+```sh
+uv run --locked --project tools/browser playwright install chromium
+cd product
+pnpm --filter @gradiated/console screenshots
+```
+
+Capture uses Chromium at 1440×1000, UTC, en-US, light theme, reduced motion, and
+a fixed date. Each story has an isolated browser context and external requests
+are blocked. Screenshots replace the committed `screenshots/*.png` only after
+all stories render successfully. GitHub's image diff shows changed pages in PRs.
+
+The Storybook workflow builds and captures relevant PRs, uploads artifacts, then
+commits changed PNGs to same-repository PR branches and adds a before/after
+comment. Forks receive downloadable artifacts. Capture and publication jobs are
+informative and never block merging; there is no pixel comparison or approval
+threshold. A separate publication job handles the write key without executing
+PR code. Its bot commits trigger the usual source checks and skip another Storybook
+capture, avoiding a screenshot update loop. PNG-only PRs and main-branch
+PNG-only pushes also skip capture.
+
+Main-branch builds publish to a private S3 bucket through CloudFront. A successful
+Terraform run also republishes Storybook, so the initial hosting provisioning
+can finish before publication. The `public-ingress` module owns the bucket,
+certificate, distribution, and DNS; `deployment-iam` grants the existing
+production deployment role access. GitHub's production environment applies to
+hosting deployment.

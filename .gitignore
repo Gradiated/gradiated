@@ -118,3 +118,5 @@ product/inference/build/
 !.coherence/journal/
 !.coherence/runs/
 !.coherence/work/
+
+**/storybook-static/

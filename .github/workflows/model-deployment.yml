@@ -18,6 +18,7 @@ on:
       - product/packages/contracts/src/training-recipe.json
       - product/inference/runtimes/kev/adapter.py
       - product/inference/runtimes/glm/**
+      - product/inference/lora/**
       - product/inference/runtime-launcher/**
       - tools/images/**
       - tools/models/**

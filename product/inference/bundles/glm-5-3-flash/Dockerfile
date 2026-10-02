@@ -24,6 +24,7 @@ COPY --from=runtime-base /opt/gradiated/bin/desmondd /bundle/desmondd
 COPY bundles/package.sh /package.sh
 COPY --chmod=755 bundles/glm-5-3-flash/entrypoint /bundle/entrypoint
 COPY runtimes/glm/warmup-supervisor.py /bundle/warmup-supervisor.py
+COPY lora/*.py /bundle/lora/
 COPY images/nomad-base/base-id /bundle/base-id
 RUN bash /package.sh
 
@@ -31,6 +32,7 @@ FROM runtime-base AS verify
 RUN --mount=from=package,source=/runtime.tar.gz,target=/tmp/runtime.tar.gz \
     mkdir /bundle && tar -xzf /tmp/runtime.tar.gz -C /bundle \
     && /bundle/python/bin/python3 -c 'import importlib.metadata as m; assert m.version("vllm") == "0.28.1rc1.dev580+g385dce36b"; from vllm.model_executor.models import ModelRegistry; assert "Glm5NextForConditionalGeneration" in ModelRegistry.get_supported_archs()' \
+    && /bundle/python/bin/python3 -m unittest discover -s /bundle/lora -p 'test_*.py' \
     && rm -rf /bundle && touch /verified
 
 FROM scratch AS artifact

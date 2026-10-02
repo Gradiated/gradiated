@@ -49,6 +49,9 @@ export const servedReleaseDigest = (
     ...(release.tokenizer_mode === undefined
       ? {}
       : { tokenizer_mode: release.tokenizer_mode }),
+    ...(release.lora_enabled === undefined
+      ? {}
+      : { lora_enabled: release.lora_enabled }),
   };
 
   return `sha256:${createHash("sha256")

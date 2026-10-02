@@ -82,6 +82,8 @@ pub struct ModelDeploymentRelease {
     pub tokenizer_revision: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tokenizer_mode: Option<TokenizerMode>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lora_enabled: Option<bool>,
 }
 
 /// The wire protocol a deployment's runtime speaks. Absent means the OpenAI chat
@@ -277,7 +279,7 @@ mod tests {
             serde_json::from_str(include_str!("../test/fixtures/release-digests.json"))
                 .expect("the fixture parses");
         let cases = fixture["cases"].as_array().expect("cases is an array");
-        assert_eq!(cases.len(), 8, "every optional combination is covered");
+        assert_eq!(cases.len(), 24, "every optional combination is covered");
 
         for case in cases {
             let release: ModelDeploymentRelease =

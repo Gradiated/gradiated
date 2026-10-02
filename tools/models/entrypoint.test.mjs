@@ -61,7 +61,7 @@ console.log(JSON.stringify({ args: process.argv.slice(2), gpus: process.env.CUDA
   assert.equal(result.args[2], "serve");
   assert.equal(
     result.args[result.args.indexOf("--safetensors-load-strategy") + 1],
-    "eager",
+    "prefetch",
   );
   assert.equal(
     result.args[result.args.indexOf("--tensor-parallel-size") + 1],

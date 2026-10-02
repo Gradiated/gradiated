@@ -29,6 +29,7 @@ RUN bash /package.sh
 FROM runtime-base AS verify
 COPY images/nomad-base/tests/test-serving.sh /tmp/test-serving.sh
 COPY bundles/deepseek-v4-1-flash/cuda-compile.cu /tmp/cuda-compile.cu
+COPY bundles/deepseek-v4-1-flash/checkpoint-loader.py /tmp/checkpoint-loader.py
 RUN bash /tmp/test-serving.sh \
     && rm /tmp/test-serving.sh /etc/gradiated/runtime-access.token \
        /etc/gradiated/deployment-status.token /etc/gradiated/runtime-proxy.conf
@@ -39,6 +40,7 @@ RUN --mount=from=package,source=/runtime.tar.gz,target=/tmp/runtime.tar.gz \
     && /bundle/python/bin/python3 -c 'import bz2, ctypes, lzma, readline, sqlite3, ssl, uuid, xml.parsers.expat' \
     && /bundle/python/bin/python3 -c 'import site; site.addsitedir("/bundle/python/lib/python3.12/site-packages"); import torch, vllm, cutlass.cute; print(torch.__version__, vllm.__version__)' \
     && /bundle/python/bin/python3 -c 'import vllm.entrypoints.cli.main' \
+    && /bundle/python/bin/python3 /tmp/checkpoint-loader.py \
     && timeout 60 /bundle/cuda/nvidia/cu13/bin/nvcc -arch=sm_103 \
         -I/bundle/cuda/nvidia/cu13/include/cccl \
         --cubin /tmp/cuda-compile.cu -o /tmp/cuda-compile.cubin \

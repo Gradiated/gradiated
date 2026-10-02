@@ -28,7 +28,7 @@ try {
   if (typeof secret.SecretID !== "string" || !secret.SecretID) throw new Error("Missing management token");
 
   const result = spawnSync("docker", [
-    "run", "--rm", "--network", "host", "--entrypoint", "nomad",
+    "run", "--rm", "-i", "--network", "host", "--entrypoint", "nomad",
     "-e", "NOMAD_ADDR", "-e", "NOMAD_TOKEN", "-e", "NOMAD_TLS_SERVER_NAME",
     "-e", "NOMAD_CACERT=/tls/ca.pem", "-e", "NOMAD_CLIENT_CERT=/tls/cert.pem",
     "-e", "NOMAD_CLIENT_KEY=/tls/key.pem", "-v", `${tls}:/tls:ro`,

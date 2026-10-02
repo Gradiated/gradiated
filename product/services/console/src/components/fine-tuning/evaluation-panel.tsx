@@ -151,23 +151,19 @@ export const EvaluationPanel = ({
           </TooltipTrigger>
           <TooltipContent side="left" className="max-w-sm text-xs leading-5">
             <p className="mb-2">
-              {summary.holdout_examples} held-out examples from{" "}
-              {summary.holdout_groups} independent groups were evaluated. Groups
-              connect examples sharing a session or prompt and are weighted
-              equally. This is the evaluation sample, not the full dataset.
+              {summary.holdout_examples} held-out examples based on production
+              data were evaluated.
             </p>
             <p className="mb-2">
-              For each request, {summary.judge_model_id} saw this model's answer
-              and a fresh {summary.comparison_model_id} answer, unlabelled.{" "}
+              For each request, the judge ({summary.judge_model_id}) saw this
+              model's answer and a fresh answer from the comparison model (
+              {summary.comparison_model_id}), unlabelled.
+            </p>
+            <p>
               {summary.judging_method === "randomized_single"
-                ? "Each pair was judged once, with randomized answer order. Unresolved means the judge did not return a valid decision."
-                : "Each pair was judged in both orders. Unresolved means the orders disagreed or the judge did not return a valid decision."}
+                ? "Each pair was judged once, with randomized answer order, and the judge decides which is better."
+                : "Each pair was judged in both answer orders, and the judge decides which is better."}
             </p>
-            <p className="mb-2">
-              Speed is measured during evaluation on the training GPU, including
-              prompt processing; it is not a serving benchmark.
-            </p>
-            <p>Nothing here blocks promotion. You decide.</p>
           </TooltipContent>
         </Tooltip>
       </div>

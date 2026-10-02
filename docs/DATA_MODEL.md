@@ -820,5 +820,7 @@ disk and CPU caches and GPU adapter slots; eviction retains lower-tier copies.
 Verified disk files survive process restarts; CPU/GPU residency is rebuilt.
 
 Qualified runtime configuration pins the base/runtime/tokenizer release, TP
-geometry, supported target modules and cache/admission limits. See
+geometry, supported target modules and cache/admission limits. These are host
+configuration, not stored adapter properties. Adapter preparation carries artifact
+metadata; the loader checks it against the host's local configuration. See
 [the implementation stack](LORA_HOSTING_PR_STACK.md).

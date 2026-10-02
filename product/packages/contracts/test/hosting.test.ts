@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 import {
   adapterRuntimeName,
   AdapterPreparationSchema,
-  LoraProfileSchema,
+  LoraHostConfigSchema,
   RuntimeAdapterSchema,
 } from "../src/hosting.js";
 import { TaskVersionAdapterSchema } from "../src/training.js";
 
 const versionId = "01980000-0000-7000-8000-000000000001";
 const hash = "a".repeat(64);
-const profile = {
+const hostConfig = {
   id: "tp2",
   base_model_id: "base-model",
   release: {
@@ -25,7 +25,7 @@ const profile = {
   target_modules: ["q_proj", "v_proj"],
   layer_count: 32,
   gpu_slots: 8,
-  max_adapters: 64,
+  cpu_adapter_slots: 64,
   cpu_cache_bytes: 8 * 1024 ** 3,
   disk_cache_bytes: 32 * 1024 ** 3,
   max_concurrency: 16,
@@ -34,13 +34,12 @@ const adapter = {
   version_id: versionId,
   sha256: hash,
   name: adapterRuntimeName(versionId, hash),
-  profile_id: profile.id,
 };
 const preparation = {
   workspace_id: "01980000-0000-7000-8000-000000000002",
   adapter,
-  profile,
-  base_model_revision: profile.release.model_revision,
+  base_model_id: hostConfig.base_model_id,
+  base_model_revision: hostConfig.release.model_revision,
   size_bytes: 1024,
   rank: 2,
   download_url: "https://artifacts.example.test/adapter.tar.gz",
@@ -62,7 +61,6 @@ describe("immutable runtime adapter identity", () => {
         version_id: id,
         sha256: hash,
         name: "public-path",
-        profile_id: "tp2",
       }).success,
     ).toBe(false);
   });
@@ -75,7 +73,7 @@ describe("immutable runtime adapter identity", () => {
   });
 });
 
-describe("serving compatibility and cache budgets", () => {
+describe("artifact metadata and host cache configuration", () => {
   it("keeps existing training artifacts readable without a recorded base revision", () => {
     const artifact = {
       format: "peft_lora",
@@ -107,28 +105,51 @@ describe("serving compatibility and cache budgets", () => {
     ["an empty disk budget", { disk_cache_bytes: 0 }],
   ])("rejects %s", (_, overrides) => {
     expect(
-      LoraProfileSchema.safeParse({ ...profile, ...overrides }).success,
+      LoraHostConfigSchema.safeParse({ ...hostConfig, ...overrides }).success,
     ).toBe(false);
   });
 
   it.each([
+    ["host configuration", { profile: hostConfig }],
+    ["tensor parallelism", { tensor_parallel_size: 4 }],
+    ["cache settings", { gpu_slots: 64 }],
     [
-      "a different base checkpoint",
-      { base_model_revision: "another-revision" },
-    ],
-    ["an excessive rank", { rank: 16 }],
-    [
-      "a different serving profile",
+      "a serving profile selector",
       { adapter: { ...adapter, profile_id: "tp4" } },
     ],
     [
       "an insecure artifact URL",
       { download_url: "http://artifacts.example.test/adapter.tar.gz" },
     ],
-  ])("rejects %s before loading", (_, overrides) => {
+  ])("rejects %s in an adapter preparation request", (_, overrides) => {
     expect(
       AdapterPreparationSchema.safeParse({ ...preparation, ...overrides })
         .success,
     ).toBe(false);
+  });
+
+  it("keeps one adapter identity across TP2 and TP4 host configurations", () => {
+    const tp2 = LoraHostConfigSchema.parse(hostConfig);
+    const tp4 = LoraHostConfigSchema.parse({
+      ...hostConfig,
+      tensor_parallel_size: 4,
+    });
+
+    expect(tp2.tensor_parallel_size).toBe(2);
+    expect(tp4.tensor_parallel_size).toBe(4);
+    expect(AdapterPreparationSchema.parse(preparation).adapter).toEqual(
+      adapter,
+    );
+  });
+
+  it("leaves architecture geometry to the qualified host configuration", () => {
+    expect(
+      LoraHostConfigSchema.safeParse({
+        ...hostConfig,
+        tensor_parallel_size: 16,
+        layer_count: 512,
+        target_modules: ["attention.q_proj", "experts.gate_proj"],
+      }).success,
+    ).toBe(true);
   });
 });

@@ -30,6 +30,8 @@ CPU adapter count and GPU slots are also bounded. GPU eviction retains the CPU
 copy, CPU eviction retains disk files, and disk eviction retains the S3 artifact.
 Verified disk files can be reused after restart; CPU/GPU residency is rebuilt.
 Concurrent cold requests for the same adapter share one materialization/load.
+Startup preloading can fill the CPU cache beyond the GPU slot count; only the
+GPU working set is GPU-resident.
 
 Each runtime controller enforces a single allocation-wide capacity limit across
 base and adapter requests. Existing gateway organization billing/concurrency
@@ -41,6 +43,16 @@ Immutable names contain a version UUID and full artifact checksum. Runtime
 configuration pins base/tokenizer/runtime compatibility, TP geometry,
 module/layer coverage, rank and cache limits. Inference uses the existing base
 catalog capabilities and prices. Configuration may only enable qualified runtimes.
+
+Host configuration is installed with the base-model deployment. Its
+`tensor_parallel_size` configures the base engine and adapter tensor distribution;
+it is not an adapter attribute. Adapter preparation carries workspace ownership,
+immutable identity, base model/revision, rank, size and a download grant. It cannot
+override host configuration or select a different serving profile. The loader
+checks compatibility against its local configuration before loading. Existing
+training artifacts without a recorded base revision remain readable, but serving
+requires a verified base revision. Architecture-specific module/layer geometry is
+qualified against real artifacts, rather than limited by arbitrary schema caps.
 
 Private selectors are `ft/<version_uuid>` and `tasks/<task_uuid>/production`,
 authorized and cached by workspace. Resolve production once; ongoing streams and

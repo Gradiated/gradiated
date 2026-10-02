@@ -18,6 +18,7 @@ class LaunchTests(unittest.TestCase):
             "LORA_CPU_SLOTS": "8",
             "LORA_MAX_RANK": "8",
             "LORA_DISK_CACHE_BYTES": "2097152",
+            "LORA_DOWNLOAD_HOSTS": "adapters.s3.amazonaws.com",
         }
 
     def command(self, tp):
@@ -57,6 +58,18 @@ class LaunchTests(unittest.TestCase):
                 engine_settings(
                     self.command(2), {**self.environment(2), **overrides}, {}
                 )
+
+    def test_empty_download_allowlist_is_rejected_before_engine_start(self):
+        for value in (None, "", " , , "):
+            environment = self.environment(2)
+            environment.pop("LORA_DOWNLOAD_HOSTS")
+            if value is not None:
+                environment["LORA_DOWNLOAD_HOSTS"] = value
+            with (
+                self.subTest(value=value),
+                self.assertRaisesRegex(ValueError, "LORA_DOWNLOAD_HOSTS"),
+            ):
+                engine_settings(self.command(2), environment, {})
 
     def test_bundle_entrypoint_keeps_lora_disabled_and_uses_allocation_cache_when_enabled(
         self,

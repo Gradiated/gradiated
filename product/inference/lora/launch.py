@@ -15,7 +15,19 @@ from server import create_server
 from startup import start_preload
 
 
+def download_hosts(environment):
+    hosts = {
+        host.strip()
+        for host in environment.get("LORA_DOWNLOAD_HOSTS", "").split(",")
+        if host.strip()
+    }
+    if not hosts:
+        raise ValueError("LORA_DOWNLOAD_HOSTS must allow at least one download host")
+    return hosts
+
+
 def engine_settings(command, environment, model_config):
+    download_hosts(environment)
     arguments = command[command.index("serve") + 1 :]
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("model")
@@ -69,11 +81,7 @@ def main():
         settings,
         os.environ["LORA_CACHE_DIR"],
         int(os.environ["RUNTIME_PORT"]),
-        {
-            host.strip()
-            for host in os.environ["LORA_DOWNLOAD_HOSTS"].split(",")
-            if host.strip()
-        },
+        download_hosts(os.environ),
         resolve=resolver(
             os.environ["LORA_GRANTS_URL"], os.environ["LORA_CONTROL_TOKEN"]
         ),

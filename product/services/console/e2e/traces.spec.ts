@@ -297,9 +297,7 @@ test("model selectors use supported roles and save comparison selections", async
       exact: true,
     }),
   ).toBeVisible();
-  await page
-    .getByRole("option", { name: "GPT-6 Astra", exact: true })
-    .click();
+  await page.getByRole("option", { name: "GPT-6 Astra", exact: true }).click();
   await expect
     .poll(() => saved)
     .toEqual({ comparison_model_id: "openai/gpt-6-astra" });

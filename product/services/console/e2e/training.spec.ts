@@ -153,9 +153,7 @@ for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
       ).toBeEnabled();
       await page.getByRole("tab", { name: "Settings", exact: true }).click();
       await page.getByRole("combobox", { name: "Comparison model" }).click();
-      await page
-        .getByRole("option", { name: "GPT-5", exact: true })
-        .click();
+      await page.getByRole("option", { name: "GPT-5", exact: true }).click();
       await expect
         .poll(
           async () =>

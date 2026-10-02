@@ -233,9 +233,7 @@ test("direct task reload initializes flags, edits schedules and opens held-out r
 
   await page.getByRole("tab", { name: "Settings", exact: true }).click();
   await page.getByRole("combobox", { name: "Comparison model" }).click();
-  await expect(
-    page.getByRole("option", { name: "Kev 9B" }),
-  ).toHaveCount(0);
+  await expect(page.getByRole("option", { name: "Kev 9B" })).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(page.getByRole("combobox", { name: "Base model" })).toHaveText(
     "Qwen3 0.6B",

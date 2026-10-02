@@ -70,8 +70,8 @@ removed=()
 for name in $running; do
   if [[ ! -f "$repo/$jobs/$name.vars.hcl" ]]; then
     spec=$(nomad operator api "/v1/job/$name")
-    # Buffers belong to the rolling controller, including interrupted rollouts.
-    if jq -e '.Meta.gradiated_buffer_for' <<<"$spec" >/dev/null; then continue; fi
+    # Training and rolling buffers are owned by their runtime controllers.
+    if node "$repo/tools/nomad/cleanup-jobs.mjs" --runtime-owned <<<"$spec"; then continue; fi
     node "$repo/tools/nomad/cleanup-jobs.mjs" <<<"$spec"
     removed+=("$name")
   fi

@@ -1,6 +1,10 @@
-import { TRAINING_ONLY_MODELS } from "@gradiated/contracts/model-catalog";
+import { ModelIcon } from "@/components/model-label";
+import {
+  catalogModel,
+  TRAINING_ONLY_MODELS,
+} from "@gradiated/contracts/model-catalog";
 import { useQuery } from "@tanstack/react-query";
-import { Boxes, CircleCheck, LoaderCircle } from "lucide-react";
+import { CircleCheck, LoaderCircle } from "lucide-react";
 
 import {
   modelsQuery,
@@ -61,12 +65,14 @@ export const ModelsPage = () => {
             >
               <div className="flex flex-col justify-between gap-5 border-b p-6 sm:flex-row sm:items-start">
                 <div className="flex gap-4">
-                  <span className="grid size-11 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
-                    <Boxes className="size-5" />
+                  <span className="grid size-11 shrink-0 place-items-center rounded-lg bg-muted">
+                    <ModelIcon id={model.id} className="size-6" />
                   </span>
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="text-lg font-semibold">{model.name}</h2>
+                      <h2 className="text-lg font-semibold">
+                        {catalogModel(model.id)?.displayName ?? model.name}
+                      </h2>
                       <span
                         className={
                           model.status === "available"

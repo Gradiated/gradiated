@@ -285,25 +285,23 @@ test("model selectors use supported roles and save comparison selections", async
   await page.getByRole("tab", { name: "Settings", exact: true }).click();
   await page.getByRole("combobox", { name: "Base model" }).click();
   await expect(page.getByRole("option", { name: /Qwen/ })).toBeVisible();
-  await expect(page.getByRole("option", { name: /kev/ })).toHaveCount(0);
+  await expect(page.getByRole("option", { name: /Kev/ })).toHaveCount(0);
   await page.keyboard.press("Escape");
   await page.getByRole("combobox", { name: "Comparison model" }).click();
   await expect(
-    page.getByRole("option", { name: "jaredpalmer/kev-9b", exact: true }),
+    page.getByRole("option", { name: "Kev 9B", exact: true }),
   ).toHaveCount(0);
   await expect(
     page.getByRole("option", {
-      name: "anthropic/claude-opus-5-5",
+      name: "Claude Opus 5.5",
       exact: true,
     }),
   ).toBeVisible();
-  await page
-    .getByRole("option", { name: "openai/gpt-6-astra", exact: true })
-    .click();
+  await page.getByRole("option", { name: "GPT-6 Astra", exact: true }).click();
   await expect
     .poll(() => saved)
     .toEqual({ comparison_model_id: "openai/gpt-6-astra" });
   await expect(
     page.getByRole("combobox", { name: "Comparison model" }),
-  ).toContainText("openai/gpt-6-astra");
+  ).toContainText("GPT-6 Astra");
 });

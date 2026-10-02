@@ -1,4 +1,7 @@
-import { TRAINING_ONLY_MODELS } from "@gradiated/contracts/model-catalog";
+import {
+  modelDisplayName,
+  TRAINING_ONLY_MODELS,
+} from "@gradiated/contracts/model-catalog";
 import { TRAINING_RECIPE, trainingRecipeForModel } from "@gradiated/contracts";
 import type { CatalogModelInput } from "../service.js";
 
@@ -10,7 +13,7 @@ export const createTrainingModelConfiguration = (
 
   return {
     id: recipe.model,
-    name: modelId.split("/").at(-1)!.replace("Qwen3-", "Qwen3 "),
+    name: modelDisplayName(modelId),
     status: "unavailable",
     properties: {
       description:

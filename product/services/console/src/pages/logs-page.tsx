@@ -253,7 +253,7 @@ export const LogsPage = () => {
                   </TableCell>
                   <TableCell>
                     <span className="block max-w-52 truncate text-xs font-medium">
-                      {generation.model_id}
+                      {modelDisplayName(generation.model_id)}
                     </span>
                   </TableCell>
                   <TableCell className="hidden tabular-nums md:table-cell">
@@ -332,3 +332,4 @@ export const LogsPage = () => {
     </ConsolePage>
   );
 };
+import { modelDisplayName } from "@gradiated/contracts/model-catalog";

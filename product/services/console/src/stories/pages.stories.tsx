@@ -88,6 +88,18 @@ const meta = {
       },
       { timeout: 10000 },
     );
+
+    if (parameters.modelSelect) {
+      await userEvent.click(
+        await canvas.findByRole("combobox", { name: parameters.modelSelect }),
+      );
+      const option = await body.findByRole("option", { name: "GPT-6.1 Sol" });
+      await waitFor(() => {
+        const icon = option.querySelector("img");
+        expect(icon?.complete && icon.naturalWidth > 0).toBe(true);
+      });
+    }
+
     canvasElement.dataset.storyPlayed = "true";
   },
 } satisfies Meta<typeof Page>;
@@ -117,6 +129,11 @@ export const TaskData: Story = {
 export const TaskSettings: Story = {
   args: { path: "/tasks/support-assistant" },
   parameters: { taskTab: "Settings" },
+};
+
+export const TaskJudgeSelector: Story = {
+  args: { path: "/tasks/support-assistant" },
+  parameters: { taskTab: "Settings", modelSelect: "Judge model" },
 };
 
 export const TaskTrace: Story = {

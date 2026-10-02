@@ -1,3 +1,4 @@
+import { modelDisplayName } from "@gradiated/contracts/model-catalog";
 import type { CatalogModelInput } from "../service.js";
 
 export const glm53FlashModelId = "z-ai/glm-5.3-flash";
@@ -6,7 +7,7 @@ export const glm53FlashArtifactModelPath = "zai-org/GLM-5.3-Flash";
 export const createGlm53FlashModelConfiguration = () =>
   ({
     id: glm53FlashModelId,
-    name: "GLM-5.3 Flash",
+    name: modelDisplayName(glm53FlashModelId),
     status: "available",
     properties: {
       description:

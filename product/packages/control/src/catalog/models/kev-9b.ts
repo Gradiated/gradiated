@@ -1,3 +1,4 @@
+import { modelDisplayName } from "@gradiated/contracts/model-catalog";
 import type { CatalogModelInput } from "../service.js";
 
 export const kev9bModelId = "jaredpalmer/kev-9b";
@@ -7,7 +8,7 @@ export const kev9bBaseModelPath = "Qwen/Qwen3.5-9B-Base";
 export const createKev9bModelConfiguration = () =>
   ({
     id: kev9bModelId,
-    name: "Kev 9B",
+    name: modelDisplayName(kev9bModelId),
     status: "available",
     properties: {
       description:

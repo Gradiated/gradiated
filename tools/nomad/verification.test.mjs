@@ -1,6 +1,59 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { createVerificationGate } from "./verification.mjs";
+import { EventEmitter } from "node:events";
+import { createVerificationGate, verifyInProduction } from "./verification.mjs";
+
+const interruptedExecutor = (codes) => {
+  const inputs = [];
+  return {
+    inputs,
+    spawnProcess: () => {
+      const child = new EventEmitter();
+      child.stdin = new EventEmitter();
+      child.stdin.end = (input) => {
+        inputs.push(JSON.parse(input));
+        queueMicrotask(() => child.emit("close", codes.shift()));
+      };
+      return child;
+    },
+    pause: async () => {},
+  };
+};
+
+test("worker termination repeats the complete SDK check before succeeding", async () => {
+  const executor = interruptedExecutor([137, 143, 0]);
+  const input = { stage: "canary", deploymentIds: ["new-allocation"] };
+  await verifyInProduction(input, undefined, executor);
+  assert.deepEqual(executor.inputs, [input, input, input]);
+});
+
+test("SDK assertion failures are not retried", async () => {
+  const executor = interruptedExecutor([1, 0]);
+  await assert.rejects(
+    verifyInProduction({}, undefined, executor),
+    /exited with 1$/,
+  );
+  assert.equal(executor.inputs.length, 1);
+});
+
+test("repeated worker termination fails after three attempts", async () => {
+  const executor = interruptedExecutor([137, 137, 137, 0]);
+  await assert.rejects(
+    verifyInProduction({}, undefined, executor),
+    /exited with 137$/,
+  );
+  assert.equal(executor.inputs.length, 3);
+});
+
+test("cancellation between attempts prevents another verification", async () => {
+  const executor = interruptedExecutor([143, 0]);
+  const controller = new AbortController();
+  executor.pause = async () => controller.abort();
+  await assert.rejects(verifyInProduction({}, controller.signal, executor), {
+    name: "AbortError",
+  });
+  assert.equal(executor.inputs.length, 1);
+});
 
 const fixture = async (overrides = {}) => {
   const controller = new AbortController();

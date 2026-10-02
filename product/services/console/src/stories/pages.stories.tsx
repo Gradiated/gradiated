@@ -56,13 +56,35 @@ const meta = {
       await expect(tab).toHaveAttribute("aria-selected", "true");
     }
 
+    const body = within(canvasElement.ownerDocument.body);
+
+    if (parameters.taskDetail === "trace") {
+      await userEvent.click(
+        await canvas.findByRole("button", { name: "storybook-trace" }),
+      );
+      await body.findByRole("heading", { name: /request/i });
+      await body.findByText(/How can I reset my password/);
+      await body.findByText(/Select Forgot password/);
+    }
+
+    if (parameters.taskDetail === "results") {
+      await userEvent.click(
+        await canvas.findByRole("button", { name: "View test results →" }),
+      );
+      await body.findByRole("heading", { name: "Test results" });
+      await body.findByRole("heading", { name: "Example 1" });
+      await body.findByText("Better", { exact: true });
+    }
+
     await waitFor(
       () => {
         expect(
           canvasElement.querySelector("[data-story-ready=true]"),
         ).not.toBeNull();
-        expect(canvasElement.querySelector(".animate-pulse")).toBeNull();
-        expect(canvas.queryAllByRole("alert")).toHaveLength(0);
+        expect(
+          canvasElement.ownerDocument.body.querySelector(".animate-pulse"),
+        ).toBeNull();
+        expect(body.queryAllByRole("alert")).toHaveLength(0);
       },
       { timeout: 10000 },
     );
@@ -95,4 +117,13 @@ export const TaskData: Story = {
 export const TaskSettings: Story = {
   args: { path: "/tasks/support-assistant" },
   parameters: { taskTab: "Settings" },
+};
+
+export const TaskTrace: Story = {
+  args: { path: "/tasks/support-assistant" },
+  parameters: { taskTab: "Data", taskDetail: "trace" },
+};
+export const TaskTestResults: Story = {
+  args: { path: "/tasks/support-assistant" },
+  parameters: { taskTab: "Model", taskDetail: "results" },
 };

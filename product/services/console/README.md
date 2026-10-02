@@ -104,7 +104,8 @@ history. MSW serves synthetic fixtures; authentication and unimplemented API
 mutations cannot reach the real backend. Training is enabled and analytics are
 disabled only for Storybook. Page stories cover sign-in, API keys, models,
 usage, logs, billing, training, and every task-detail tab: Model, Training runs,
-Data, and Settings. Tab stories select the actual tab through a play function.
+Data, and Settings, plus trace content and test results. Tab and detail stories
+select the actual tab and open the panel through a play function.
 Add stories under `src/`; screenshot capture discovers every page story automatically.
 
 Capture PNGs locally from the repository root with the pinned browser runtime:

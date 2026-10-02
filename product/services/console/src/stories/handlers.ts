@@ -173,6 +173,48 @@ const trace = {
   content_ref: "storybook-content",
 } satisfies components["schemas"]["TraceGeneration"];
 
+const traceContent = {
+  generation_id: trace.generation_id,
+  raw: {
+    request: {
+      model: task.base_model_id,
+      messages: [{ role: "user", content: "How can I reset my password?" }],
+    },
+    response: {
+      choices: [
+        {
+          message: {
+            role: "assistant",
+            content:
+              "Select Forgot password on the sign-in page. We will email you a link to reset it.",
+          },
+          finish_reason: "stop",
+        },
+      ],
+      usage: trace.usage,
+    },
+  },
+} satisfies components["schemas"]["TraceContent"];
+
+const evaluationResults = [
+  {
+    id: "storybook-evaluation",
+    group: "password-reset",
+    fine_tuned: {
+      text: "Select Forgot password on the sign-in page. We will email you a link to reset it.",
+      tokens: 22,
+      seconds: 0.28,
+    },
+    comparison: {
+      text: "Contact support for help resetting your password.",
+      tokens: 9,
+      seconds: 0.2,
+    },
+    judgment: "A",
+    fine_tuned_first: true,
+  },
+] satisfies components["schemas"]["EvaluationResults"];
+
 const events = [
   {
     id: 1,
@@ -319,6 +361,9 @@ export const handlers = [
         : list(generation),
     ),
   ),
+  http.get("/api/v1/workspaces/:workspaceId/generations/:generationId", () =>
+    HttpResponse.json(traceContent),
+  ),
   http.get("/api/v1/workspaces/:workspaceId/tasks", () =>
     HttpResponse.json(
       list({ ...task, latest_run: { ...run, version_name: version.name } }),
@@ -329,6 +374,10 @@ export const handlers = [
   ),
   http.get("/api/v1/workspaces/:workspaceId/tasks/:task/versions", () =>
     HttpResponse.json(list(version)),
+  ),
+  http.get(
+    "/api/v1/workspaces/:workspaceId/tasks/:task/versions/:versionId/evaluation",
+    () => HttpResponse.json(evaluationResults),
   ),
   http.get("/api/v1/workspaces/:workspaceId/training-runs", () =>
     HttpResponse.json(list(run)),

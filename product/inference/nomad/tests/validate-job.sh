@@ -49,6 +49,25 @@ for vars in "$root/jobs"/*.vars.hcl; do
       exit 1
     }
   fi
+  if [[ $name == glm-5-3-flash ]]; then
+    jq -e '(.Job.Meta.gradiated_release | fromjson | has("lora_enabled") | not)' <<<"$job" >/dev/null
+    for tp in 2 4; do
+      enabled=$(docker run --rm --network none --entrypoint nomad -v "$root/jobs:/jobs:ro" \
+        hashicorp/nomad@sha256:b964829b94c5493f3b543bb409b60c335a9ca03f21d9fac8b4cdd2af18b331c9 \
+        job run -output "${release[@]}" -var-file="/jobs/$name.vars.hcl" \
+        -var=lora_enabled=true -var=tensor_parallel_size="$tp" \
+        -var=lora_cpu_cache_bytes=1073741824 -var=lora_disk_cache_bytes=2147483648 "/jobs/$name.nomad.hcl")
+      jq -e --arg tp "$tp" '
+        (.Job.Meta.gradiated_release | fromjson | .lora_enabled == true) and
+        all(.Job.TaskGroups[];
+          (.Tasks[] | select(.Name == "vllm") |
+            .Resources.Devices[0].Count == ($tp | tonumber) and
+            .Env.TENSOR_PARALLEL_SIZE == $tp and .Env.LORA_ENABLED == "true") and
+          (.Tasks[] | select(.Name == "desmond") |
+            .Env.DESMOND_RUNTIME_PORT == "${NOMAD_PORT_runtime}"))
+      ' <<<"$enabled" >/dev/null
+    done
+  fi
 done
 
 node "$root/../../../tools/nomad/model-replica-rules.mjs" --check

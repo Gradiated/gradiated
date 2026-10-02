@@ -30,6 +30,10 @@ test("a bundle's own inputs verify only that bundle", () => {
     bundlesToVerify(["product/inference/runtimes/kev/adapter.py"]),
     ["kev-9b"],
   );
+  assert.deepEqual(
+    bundlesToVerify(["product/inference/lora/manager.py"]),
+    ["glm-5-3-flash"],
+  );
 });
 test("docs, tests, GLM and release tooling verify nothing", () => {
   assert.deepEqual(

@@ -15,6 +15,12 @@ Each branch targets its predecessor while stacked. Review identity/contracts
 before dependent interfaces and runtime/cache safety before private inference.
 The existing planning PR is the prerequisite.
 
+PR 1 is merged into the planning branch. PR 2's [runtime implementation](../product/inference/lora/README.md)
+adds opt-in GLM bundle support, host-local caches and private preparation. The
+existing deployment release advertises `lora_enabled` only when enabled. Private
+grant/list routes follow in PR 3 and gateway dispatch follows in PR 4; keep
+hosting disabled until those and real GPU qualification are complete.
+
 Existing task/version records are the source of truth. There are no new hosting
 or promotion tables, hosting workflow, reconciliation loop or fleet service.
 At startup, each allocation preloads compatible current task production versions

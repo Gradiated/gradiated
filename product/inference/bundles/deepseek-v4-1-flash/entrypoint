@@ -4,6 +4,9 @@ root=${GRADIATED_RUNTIME_ROOT:?The launcher must set the runtime directory}
 export CUDA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:?Nomad must assign GPU UUIDs}
 export PYTHONHOME="$root/python"
 export PYTHONPATH="$root/python/lib/python3.12/site-packages"
-export PATH="$root/python/bin:$PATH"
+export CUDA_HOME="$root/python/lib/python3.12/site-packages/nvidia/cu13"
+export CUDA_PATH="$CUDA_HOME"
+export PATH="$root/python/bin:$CUDA_HOME/bin:$PATH"
+export LD_LIBRARY_PATH="$CUDA_HOME/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export VLLM_BIN="$root/vllm"
 exec bash "$root/start.sh" "$@"

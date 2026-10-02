@@ -30,6 +30,7 @@ RUN --mount=from=package,source=/runtime.tar.gz,target=/tmp/runtime.tar.gz \
     && /bundle/python/bin/python3 -c 'import bz2, ctypes, lzma, readline, sqlite3, ssl, uuid, xml.parsers.expat' \
     && /bundle/python/bin/python3 -c 'import site; site.addsitedir("/bundle/python/lib/python3.12/site-packages"); import torch, vllm, cutlass.cute; print(torch.__version__, vllm.__version__)' \
     && /bundle/python/bin/python3 -c 'import vllm.entrypoints.cli.main' \
+    && /bundle/python/lib/python3.12/site-packages/nvidia/cu13/bin/nvcc --version \
     && timeout 60 cc -O3 -fPIC -c \
         /bundle/python/lib/python3.12/site-packages/triton/backends/nvidia/driver.c \
         -I/bundle/python/include/python3.12 \

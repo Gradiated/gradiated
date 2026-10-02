@@ -153,9 +153,7 @@ for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
       ).toBeEnabled();
       await page.getByRole("tab", { name: "Settings", exact: true }).click();
       await page.getByRole("combobox", { name: "Comparison model" }).click();
-      await page
-        .getByRole("option", { name: "openai/gpt-5", exact: true })
-        .click();
+      await page.getByRole("option", { name: "GPT-5", exact: true }).click();
       await expect
         .poll(
           async () =>
@@ -171,7 +169,7 @@ for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
       await page.getByRole("tab", { name: "Settings", exact: true }).click();
       await expect(
         page.getByRole("combobox", { name: "Comparison model" }),
-      ).toContainText("openai/gpt-5");
+      ).toContainText("GPT-5");
       await page.getByRole("tab", { name: "Model", exact: true }).click();
       await page.getByRole("button", { name: "Promote", exact: true }).click();
       await page.route(

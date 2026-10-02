@@ -211,3 +211,87 @@ fn interrupted_responses_keep_reasoning_summaries_and_annotations() {
         "url_citation"
     );
 }
+
+#[test]
+fn hosted_chat_is_trainable_with_canonical_text_and_tools() {
+    for streamed in [false, true] {
+        let message = json!({"role":"assistant","content":"Refund approved","tool_calls":null});
+        let response = if streamed {
+            stream(&[json!({"choices":[{"index":0,"delta":message,"finish_reason":"stop"}]})])
+                + "data: [DONE]\n\n"
+        } else {
+            json!({"choices":[{"message":message,"finish_reason":"stop"}]}).to_string()
+        };
+        let mut input = relay(
+            &response,
+            "openai",
+            "/v1/chat/completions",
+            if streamed {
+                "text/event-stream"
+            } else {
+                "application/json"
+            },
+        );
+        input["schema"] = json!("gradiated.hosted/1");
+        input["request"] = json!(json!({"model":"synthetic-model","messages":[{"role":"user","content":"Refund my order"}],"tools":null}).to_string());
+        let output: Value =
+            serde_json::from_slice(&normalize(&serde_json::to_vec(&input).unwrap()).unwrap())
+                .unwrap();
+        assert_eq!(output["source"], "hosted");
+        assert_eq!(output["provider"], "gradiated");
+        assert_eq!(output["trainable"], true);
+        assert_eq!(
+            output["canonical"]["messages"][0]["content"],
+            "Refund my order"
+        );
+        assert_eq!(output["canonical"]["output"]["content"], "Refund approved");
+        assert_eq!(output["canonical"]["tools"], json!([]));
+        assert_eq!(output["canonical"]["output"]["tool_calls"], json!([]));
+    }
+}
+
+#[test]
+fn hosted_tool_calls_are_retained_and_length_limited_answers_are_truncated() {
+    let tool = json!({"type":"function","function":{"name":"lookup"}});
+    let call = json!({"id":"c","type":"function","function":{"name":"lookup","arguments":"{}"}});
+    let mut input = relay(&json!({"choices":[{"message":{"role":"assistant","content":null,"tool_calls":[call]},"finish_reason":"tool_calls"}]}).to_string(),"openai","/v1/chat/completions","application/json");
+    input["schema"] = json!("gradiated.hosted/1");
+    input["request"] = json!(json!({"model":"synthetic-model","messages":[{"role":"user","content":"Lookup"}],"tools":[tool]}).to_string());
+    let output: Value =
+        serde_json::from_slice(&normalize(&serde_json::to_vec(&input).unwrap()).unwrap()).unwrap();
+    assert_eq!(output["canonical"]["tools"], json!([tool]));
+    assert_eq!(output["canonical"]["output"]["tool_calls"], json!([call]));
+    input["response"] = json!(json!({"choices":[{"message":{"role":"assistant","content":"partial"},"finish_reason":"length"}]}).to_string());
+    let output: Value =
+        serde_json::from_slice(&normalize(&serde_json::to_vec(&input).unwrap()).unwrap()).unwrap();
+    assert_eq!(output["outcome"], "truncated");
+}
+
+#[test]
+fn hosted_bare_endpoints_preserve_protocol_and_classify_token_limits() {
+    for (provider, path, response) in [
+        (
+            "openai",
+            "/chat/completions",
+            json!({"choices":[{"message":{"role":"assistant","content":"partial"},"finish_reason":"length"}]}),
+        ),
+        (
+            "anthropic",
+            "/messages",
+            json!({"content":[{"type":"text","text":"partial"}],"stop_reason":"max_tokens"}),
+        ),
+        (
+            "openai",
+            "/responses",
+            json!({"status":"incomplete","incomplete_details":{"reason":"max_output_tokens"},"output":[]}),
+        ),
+    ] {
+        let mut input = relay(&response.to_string(), provider, path, "application/json");
+        input["schema"] = json!("gradiated.hosted/1");
+        let output: Value =
+            serde_json::from_slice(&normalize(&serde_json::to_vec(&input).unwrap()).unwrap())
+                .unwrap();
+        assert_eq!(output["outcome"], "truncated");
+        assert_eq!(output["source"], "hosted");
+    }
+}

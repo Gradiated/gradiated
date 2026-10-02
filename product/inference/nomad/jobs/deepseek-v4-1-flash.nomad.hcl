@@ -74,8 +74,8 @@ job "deepseek-v4-1-flash" {
       max_parallel      = 1
       canary            = var.replicas
       min_healthy_time  = "30s"
-      healthy_deadline  = "70m"
-      progress_deadline = "90m"
+      healthy_deadline  = "100m"
+      progress_deadline = "105m"
       auto_revert       = true
       auto_promote      = var.replicas > 0
     }
@@ -232,7 +232,7 @@ job "deepseek-v4-1-flash" {
           timeout  = "2s"
           check_restart {
             limit = 3
-            grace = "60m"
+            grace = "90m"
           }
         }
       }

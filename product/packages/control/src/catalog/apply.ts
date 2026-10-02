@@ -1,8 +1,5 @@
 import type { ControlDatabase } from "../db/client.js";
-import {
-  catalogModels,
-  createQwenSftModelConfiguration,
-} from "./models/index.js";
+import { catalogModels, trainingOnlyModels } from "./models/index.js";
 import { createCatalogService, type CatalogModelInput } from "./service.js";
 
 // Git owns the catalog: every pass rewrites each defined model, so an edit made
@@ -11,7 +8,7 @@ export const applyCatalog = async (
   database: ControlDatabase,
   definitions: readonly CatalogModelInput[] = [
     ...catalogModels,
-    createQwenSftModelConfiguration(),
+    ...trainingOnlyModels(),
   ],
 ): Promise<{ applied: number; unmanaged: string[] }> => {
   const catalog = createCatalogService(database);

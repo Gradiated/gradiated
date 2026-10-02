@@ -1,3 +1,5 @@
+import { ModelLabel } from "@/components/model-label";
+import { modelDisplayName } from "@gradiated/contracts/model-catalog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
 import {
@@ -231,9 +233,10 @@ const TaskRowView = ({
         )}
       </TableCell>
       <TableCell className="px-4">
-        <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-muted-foreground">
-          {summary?.comparison_model_id ?? task.comparison_model_id ?? "—"}
-        </code>
+        <ModelLabel
+          id={summary?.comparison_model_id ?? task.comparison_model_id}
+          className="text-muted-foreground"
+        />
       </TableCell>
       <TableCell className="px-4 tabular-nums">
         {summary ? (
@@ -279,9 +282,9 @@ const QualityBar = ({ result }: { result: JudgeOutcome }) => (
       </span>
     </TooltipTrigger>
     <TooltipContent side="top" className="text-xs">
-      vs {result.comparator_model_id}: better {formatPercent(result.win)} ·
-      equivalent {formatPercent(result.tie)} · worse{" "}
-      {formatPercent(result.loss)}
+      vs {modelDisplayName(result.comparator_model_id)}: better{" "}
+      {formatPercent(result.win)} · equivalent {formatPercent(result.tie)} ·
+      worse {formatPercent(result.loss)}
     </TooltipContent>
   </Tooltip>
 );

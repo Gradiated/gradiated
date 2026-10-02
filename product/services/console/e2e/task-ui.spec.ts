@@ -233,28 +233,55 @@ test("direct task reload initializes flags, edits schedules and opens held-out r
 
   await page.getByRole("tab", { name: "Settings", exact: true }).click();
   await page.getByRole("combobox", { name: "Comparison model" }).click();
-  await expect(
-    page.getByRole("option", { name: "jaredpalmer/kev-9b" }),
-  ).toHaveCount(0);
+  await expect(page.getByRole("option", { name: "Kev 9B" })).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(page.getByRole("combobox", { name: "Base model" })).toHaveText(
-    "Qwen/Qwen3-0.6B",
+    "Qwen3 0.6B",
   );
   await page
     .getByRole("combobox", { name: "Judge model", exact: true })
     .click();
-  await page
-    .getByRole("option", { name: "openai/gpt-6-sol", exact: true })
-    .click();
+  await page.getByRole("option", { name: "GPT-6 Sol", exact: true }).click();
   await expect.poll(() => judge).toBe("openai/gpt-6-sol");
-  await page
-    .getByRole("textbox", { name: "Cron schedule" })
-    .fill("0 3 * * MON");
-  await page.getByRole("button", { name: "Save schedule" }).click();
-  await expect(page.getByRole("alert")).toContainText("Retry saving");
+  await page.getByRole("combobox", { name: "Training schedule" }).click();
+  await expect(
+    page.getByRole("option", { name: "Custom cron", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("option", { name: "Scheduled", exact: true }).click();
+  await page.getByRole("combobox", { name: "Training day" }).click();
+  await expect(
+    page.getByRole("option", { name: "Every day", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("option", { name: "Monday", exact: true }).click();
+  await expect(page.getByText("Every Monday at 03:00 UTC.")).toBeVisible();
   await expect(
     page.getByRole("textbox", { name: "Cron schedule" }),
-  ).toHaveValue("0 3 * * MON");
+  ).toHaveCount(0);
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const boxes = await Promise.all(
+      [
+        "Training schedule",
+        "Training hour",
+        "Training minute",
+        "Training day",
+      ].map((name) =>
+        page.getByRole("combobox", { name, exact: true }).boundingBox(),
+      ),
+    );
+    expect(boxes.every((box) => box && Math.abs(box.y - boxes[0]!.y) < 1)).toBe(
+      true,
+    );
+  }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.getByRole("button", { name: "Save schedule" }).click();
+  await expect(page.getByRole("alert")).toContainText("Retry saving");
+  await expect(page.getByRole("combobox", { name: "Training day" })).toHaveText(
+    "Monday",
+  );
+  await expect(
+    page.getByRole("combobox", { name: "Training hour" }),
+  ).toHaveText("03");
   await expect(
     page.getByRole("button", { name: "Save schedule" }),
   ).toBeEnabled();
@@ -265,11 +292,55 @@ test("direct task reload initializes flags, edits schedules and opens held-out r
   await page.getByRole("tab", { name: "Settings", exact: true }).click();
   await expect(
     page.getByRole("combobox", { name: "Judge model", exact: true }),
-  ).toHaveText("openai/gpt-6-sol");
+  ).toHaveText("GPT-6 Sol");
+  await expect(page.getByRole("combobox", { name: "Training day" })).toHaveText(
+    "Monday",
+  );
+  await expect(
+    page.getByRole("combobox", { name: "Training hour" }),
+  ).toHaveText("03");
+  await page.getByRole("combobox", { name: "Training minute" }).click();
+  await page.getByRole("option", { name: "45", exact: true }).click();
+  await page.getByRole("combobox", { name: "Training day" }).click();
+  await expect(
+    page.getByRole("option", { name: "Every day", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("option", { name: "Friday", exact: true }).click();
+  await expect(page.getByText("Every Friday at 03:45 UTC.")).toBeVisible();
+  await page.getByRole("button", { name: "Save schedule" }).click();
+  await expect.poll(() => schedule).toBe("45 3 * * FRI");
+  await page.reload();
+  await page.getByRole("tab", { name: "Settings", exact: true }).click();
+  await expect(page.getByRole("combobox", { name: "Training day" })).toHaveText(
+    "Friday",
+  );
+  await expect(
+    page.getByRole("combobox", { name: "Training minute" }),
+  ).toHaveText("45");
+  schedule = "0 3 * * *";
+  await page.reload();
+  await page.getByRole("tab", { name: "Settings", exact: true }).click();
+  await expect(
+    page.getByText("Choose a weekday to replace the current schedule."),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Save schedule" }),
+  ).toBeDisabled();
+  expect(schedule).toBe("0 3 * * *");
+  schedule = "30 6 * * MON-FRI";
+  await page.reload();
+  await page.getByRole("tab", { name: "Settings", exact: true }).click();
   await expect(
     page.getByRole("textbox", { name: "Cron schedule" }),
-  ).toHaveValue("0 3 * * MON");
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Save schedule" }),
+  ).toBeDisabled();
+  expect(schedule).toBe("30 6 * * MON-FRI");
   await page.getByRole("combobox", { name: "Training schedule" }).click();
+  await expect(
+    page.getByRole("option", { name: "Custom cron", exact: true }),
+  ).toHaveCount(0);
   await page.getByRole("option", { name: "Manual only" }).click();
   await page.getByRole("button", { name: "Save schedule" }).click();
   await expect.poll(() => schedule).toBeNull();

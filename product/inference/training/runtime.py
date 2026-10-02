@@ -29,6 +29,17 @@ def transfer(url, destination=None, upload=None):
 
 
 class TrainingRuntime(Trainer):
+    def generate(self, messages, adapted, max_tokens=256, max_prompt_tokens=None):
+        result = super().generate(messages, adapted, max_tokens, max_prompt_tokens)
+        prompt = self.tokenizer.apply_chat_template(
+            messages, tokenize=False, add_generation_prompt=True, enable_thinking=False
+        )
+        result["usage"] = {
+            "input_tokens": len(self.tokenizer(prompt)["input_ids"]),
+            "output_tokens": result["tokens"],
+        }
+        return result
+
     def download(self, reference, name):
         path = self.root / name
         transfer(reference["url"], destination=path)
@@ -49,6 +60,13 @@ class TrainingRuntime(Trainer):
         self.load()
         self.check()
         operation = command["operation"]
+        if operation == "predict":
+            return self.generate(
+                command["messages"],
+                adapted=False,
+                max_tokens=256,
+                max_prompt_tokens=4096,
+            )
         if operation == "train":
 
             def save_checkpoint(step, path):
@@ -82,6 +100,23 @@ class TrainingRuntime(Trainer):
                 fine_first = random.Random(
                     hashlib.sha256(example["id"].encode()).digest()
                 ).choice((True, False))
+                if command.get("external_evaluation"):
+                    fine = self.generate(example["prompt"], adapted=True)
+                    results.append(
+                        {
+                            "id": example["id"],
+                            "group": example["group"],
+                            "fine_tuned": fine,
+                        }
+                    )
+                    emit(
+                        {
+                            "type": "evaluation_progress",
+                            "completed": index + 1,
+                            "total": len(examples),
+                        }
+                    )
+                    continue
                 if fine_first:
                     fine = self.generate(example["prompt"], adapted=True)
                     comparison = self.generate(example["prompt"], adapted=False)

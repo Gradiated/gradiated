@@ -1,9 +1,8 @@
+import { modelDisplayName } from "@gradiated/contracts/model-catalog";
 import { Info } from "lucide-react";
 
 import {
   costAdvantage,
-  hasEvaluationCost,
-  usesQwenPlaceholderPrice,
   costPer1kRequests,
   outputSpeed,
   speedAdvantage,
@@ -134,7 +133,7 @@ export const EvaluationPanel = ({
         <p>
           Compared with{" "}
           <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em]">
-            {summary.comparison_model_id}
+            {modelDisplayName(summary.comparison_model_id)}
           </code>
         </p>
         <Tooltip>
@@ -146,30 +145,27 @@ export const EvaluationPanel = ({
             >
               judged by{" "}
               <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em]">
-                {summary.judge_model_id}
+                {modelDisplayName(summary.judge_model_id)}
               </code>
               <Info className="size-3.5" />
             </button>
           </TooltipTrigger>
           <TooltipContent side="left" className="max-w-sm text-xs leading-5">
             <p className="mb-2">
-              {summary.holdout_examples} held-out examples from{" "}
-              {summary.holdout_groups} independent groups were evaluated. Groups
-              connect examples sharing a session or prompt and are weighted
-              equally. This is the evaluation sample, not the full dataset.
+              {summary.holdout_examples} held-out examples based on production
+              data were evaluated.
             </p>
             <p className="mb-2">
-              For each request, {summary.judge_model_id} saw this model's answer
-              and a fresh {summary.comparison_model_id} answer, unlabelled.{" "}
+              For each request, the judge (
+              {modelDisplayName(summary.judge_model_id)}) saw this model's
+              answer and a fresh answer from the comparison model (
+              {modelDisplayName(summary.comparison_model_id)}), unlabelled.
+            </p>
+            <p>
               {summary.judging_method === "randomized_single"
-                ? "Each pair was judged once, with randomized answer order. Unresolved means the judge did not return a valid decision."
-                : "Each pair was judged in both orders. Unresolved means the orders disagreed or the judge did not return a valid decision."}
+                ? "Each pair was judged once, with randomized answer order, and the judge decides which is better."
+                : "Each pair was judged in both answer orders, and the judge decides which is better."}
             </p>
-            <p className="mb-2">
-              Speed is measured during evaluation on the training GPU, including
-              prompt processing; it is not a serving benchmark.
-            </p>
-            <p>Nothing here blocks promotion. You decide.</p>
           </TooltipContent>
         </Tooltip>
       </div>
@@ -177,21 +173,21 @@ export const EvaluationPanel = ({
       <OutcomeBar outcome={summary.vs_comparison} />
 
       <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-foreground tabular-nums">
-        {usesQwenPlaceholderPrice(summary) ? (
+        {summary.cost_per_request_nano_usd ? (
+          <Comparison
+            name="Cost"
+            ratio={costAdvantage(summary)}
+            numbers={costPer1kRequests(summary)}
+          />
+        ) : (
           <span>
-            Temporary token pricing{" "}
+            Cost{" "}
             <RatioLabel
               ratio={costAdvantage(summary)}
               detail={costPer1kRequests(summary)}
             />
           </span>
-        ) : hasEvaluationCost(summary) ? (
-          <Comparison
-            name={summary.cost_basis ? "Estimated output cost" : "Cost"}
-            ratio={costAdvantage(summary)}
-            numbers={costPer1kRequests(summary)}
-          />
-        ) : null}
+        )}
         <Comparison
           name="Speed"
           ratio={speedAdvantage(summary)}

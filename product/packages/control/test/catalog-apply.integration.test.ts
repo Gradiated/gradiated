@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { applyCatalog } from "../src/catalog/apply.js";
 import {
   catalogModels,
-  createQwenSftModelConfiguration,
+  trainingOnlyModels,
 } from "../src/catalog/models/index.js";
 import { createCatalogService } from "../src/catalog/service.js";
 import { models } from "../src/db/schema/index.js";
@@ -29,7 +29,7 @@ describe("catalog apply", () => {
     expect(stored.map((model) => model.id)).toEqual(
       expect.arrayContaining([
         ...catalogModels.map((model) => model.id),
-        createQwenSftModelConfiguration().id,
+        ...trainingOnlyModels().map((model) => model.id),
       ]),
     );
   });

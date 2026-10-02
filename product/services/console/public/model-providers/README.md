@@ -1,0 +1,1 @@
+Provider icons from [Lobe Icons](https://github.com/lobehub/lobe-icons/tree/79b551cf26aab9ea4ac701fb807160950a5b860f/packages/static-svg/icons), licensed under the included MIT license. Icons are served locally; no third-party requests are made by the console.

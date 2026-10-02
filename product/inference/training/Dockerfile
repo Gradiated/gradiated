@@ -30,7 +30,7 @@ RUN /bundle/python/bin/python3 -m unittest discover -s /bundle -p 'test_*.py' \
 FROM runtime-base AS verify
 RUN --mount=from=package,source=/runtime.tar.gz,target=/tmp/runtime.tar.gz \
     mkdir /bundle && tar -xzf /tmp/runtime.tar.gz -C /bundle \
-    && /bundle/python/bin/python3 -c 'import torch, transformers, peft; from transformers import Qwen3ForCausalLM' \
+    && /bundle/python/bin/python3 -c 'import torch, transformers, peft; from transformers import Qwen3ForCausalLM, Glm5NextForConditionalGeneration' \
     && /bundle/python/bin/python3 -m unittest discover -s /bundle -p 'test_*.py' \
     && rm -rf /bundle && touch /verified
 

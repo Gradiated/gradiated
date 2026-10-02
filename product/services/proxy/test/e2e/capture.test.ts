@@ -15,7 +15,7 @@ import {
 } from "./support/fixtures.js";
 
 const { makeCase } = useCases();
-const fixture = useProxy(makeCase);
+const fixture = useProxy(makeCase, { databaseLink: true });
 
 let collector: MockCollector;
 
@@ -255,5 +255,151 @@ describe("relay capture", () => {
     expect(collector.lines.map((line) => line.generation_id)).toContain(
       response.headers["x-gradiated-generation-id"],
     );
+  });
+});
+
+describe("hosted capture", () => {
+  it.each([false, true])(
+    "captures hosted chat with stream=%s",
+    async (stream) => {
+      const proxy = await fixture.startProxy(collector.env());
+      const instance = await fixture.hostedCase();
+      await enableCapture(instance);
+      const body = { ...CHAT.body(instance.model), stream };
+      const response = await proxy.client.post(CHAT.path, {
+        headers: {
+          ...instance.headers,
+          "x-gradiated-task": "hosted-agent",
+          "x-gradiated-trace-id": "episode-1",
+        },
+        json: body,
+      });
+      expect(response.status, response.text).toBe(200);
+      const line = await capturedFor(
+        String(response.headers["x-gradiated-generation-id"]),
+      );
+      expect(line).toMatchObject({
+        schema: "gradiated.hosted/1",
+        workspace_id: instance.workspace,
+        task: "hosted-agent",
+        trace_id: "episode-1",
+        status: 200,
+        outcome: "complete",
+      });
+      expect(JSON.parse(String(line.request))).toEqual(body);
+      expect(line.response).toBe(response.text);
+      expect(fixture.provider.requests).toHaveLength(0);
+    },
+  );
+
+  it("captures hosted Messages using the endpoint protocol", async () => {
+    const proxy = await fixture.startProxy(collector.env());
+    const instance = await fixture.hostedCase();
+    await enableCapture(instance);
+    const response = await proxy.client.post(MESSAGES.path, {
+      headers: { ...instance.headers, "x-gradiated-task": "hosted-messages" },
+      json: MESSAGES.body(instance.model),
+    });
+    expect(response.status, response.text).toBe(200);
+    const line = await capturedFor(
+      String(response.headers["x-gradiated-generation-id"]),
+    );
+    expect(line).toMatchObject({
+      schema: "gradiated.hosted/1",
+      provider: "anthropic",
+      path: MESSAGES.path,
+    });
+  });
+
+  it("uses Chat protocol for a hosted model with an Anthropic provider key", async () => {
+    const proxy = await fixture.startProxy(collector.env());
+    const instance = await fixture.hostedCase();
+    await enableCapture(instance);
+    await proxy.catalogRefreshedAfter(Date.now());
+    const response = await proxy.client.post(CHAT.path, {
+      headers: {
+        ...relayHeaders(instance, "anthropic"),
+        "x-gradiated-task": "hosted-with-provider-key",
+      },
+      json: CHAT.body(instance.model),
+    });
+    expect(response.status, response.text).toBe(200);
+    const line = await capturedFor(
+      String(response.headers["x-gradiated-generation-id"]),
+    );
+    expect(line).toMatchObject({
+      schema: "gradiated.hosted/1",
+      provider: "openai",
+      path: CHAT.path,
+    });
+    expect(fixture.provider.requests).toHaveLength(0);
+  });
+
+  it.each([
+    { route: CHAT, path: "/chat/completions", provider: "openai" },
+    { route: MESSAGES, path: "/messages", provider: "anthropic" },
+  ])(
+    "captures the hosted bare endpoint $path",
+    async ({ route, path, provider }) => {
+      const proxy = await fixture.startProxy(collector.env());
+      const instance = await fixture.hostedCase();
+      await enableCapture(instance);
+      const response = await proxy.client.post(path, {
+        headers: { ...instance.headers, "x-gradiated-task": "bare-endpoint" },
+        json: route.body(instance.model),
+      });
+      expect(response.status, response.text).toBe(200);
+      const line = await capturedFor(
+        String(response.headers["x-gradiated-generation-id"]),
+      );
+      expect(line).toMatchObject({
+        schema: "gradiated.hosted/1",
+        provider,
+        path,
+      });
+    },
+  );
+
+  it("does not capture hosted requests without workspace opt-in", async () => {
+    const proxy = await fixture.startProxy(collector.env());
+    const instance = await fixture.hostedCase();
+    const response = await proxy.client.post(CHAT.path, {
+      headers: { ...instance.headers, "x-gradiated-task": "no-opt-in" },
+      json: CHAT.body(instance.model),
+    });
+    expect(response.status, response.text).toBe(200);
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    expect(
+      collector.lines.find(
+        (line) =>
+          line.generation_id === response.headers["x-gradiated-generation-id"],
+      ),
+    ).toBeUndefined();
+  });
+  it("serves hosted requests when the capture database is unavailable", async () => {
+    const proxy = await fixture.startProxy(collector.env(), {
+      database: fixture.database,
+    });
+    const instance = await fixture.hostedCase();
+    await enableCapture(instance);
+    fixture.database.set("silent");
+    try {
+      const started = Date.now();
+      const response = await proxy.client.post(CHAT.path, {
+        headers: { ...instance.headers, "x-gradiated-task": "capture-outage" },
+        json: CHAT.body(instance.model),
+      });
+      expect(response.status, response.text).toBe(200);
+      expect(Date.now() - started).toBeLessThan(750);
+      expect(
+        collector.lines.find(
+          (line) =>
+            line.generation_id ===
+            response.headers["x-gradiated-generation-id"],
+        ),
+      ).toBeUndefined();
+    } finally {
+      fixture.database.set("up");
+    }
   });
 });

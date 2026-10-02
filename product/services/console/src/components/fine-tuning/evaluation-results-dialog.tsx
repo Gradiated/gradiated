@@ -1,3 +1,5 @@
+import { formatNanoUsd } from "@/lib/format";
+import { modelDisplayName } from "@gradiated/contracts/model-catalog";
 import { useQuery } from "@tanstack/react-query";
 import { getEvaluationResults } from "@/api/training";
 import { useProductContext } from "@/hooks/use-product-context";
@@ -33,8 +35,15 @@ export const EvaluationResultsDialog = ({
         <DialogHeader>
           <DialogTitle>Test results</DialogTitle>
           <DialogDescription>
-            {version.name} compared with {version.summary?.comparison_model_id}.
-            Held-out responses judged by {version.summary?.judge_model_id}.
+            {version.name} compared with{" "}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em]">
+              {modelDisplayName(version.summary?.comparison_model_id)}
+            </code>
+            . Held-out responses judged by{" "}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em]">
+              {modelDisplayName(version.summary?.judge_model_id)}
+            </code>
+            .
           </DialogDescription>
         </DialogHeader>
         <QueryState query={query} />
@@ -63,16 +72,15 @@ export const EvaluationResultsDialog = ({
                 <h3>Example {index + 1}</h3>
                 <span>{decision}</span>
               </div>
-              <p className="break-all text-xs text-muted-foreground">
-                Group: {row.group}
-              </p>
               <div className="grid gap-4 sm:grid-cols-2">
                 {(["fine_tuned", "comparison"] as const).map((arm) => (
                   <div key={arm} className="min-w-0 space-y-2">
                     <h4 className="text-sm font-medium">
                       {arm === "fine_tuned"
                         ? version.name
-                        : version.summary?.comparison_model_id}
+                        : modelDisplayName(
+                            version.summary?.comparison_model_id,
+                          )}
                     </h4>
                     <pre className="max-h-64 overflow-auto rounded-md bg-muted p-3 text-xs whitespace-pre-wrap break-words">
                       {row[arm].text}
@@ -80,18 +88,16 @@ export const EvaluationResultsDialog = ({
                     <p className="text-xs text-muted-foreground">
                       {row[arm].tokens} output tokens ·{" "}
                       {row[arm].seconds.toFixed(2)}s
+                      {row[arm].cost_nano_usd !== undefined
+                        ? ` · ${formatNanoUsd(row[arm].cost_nano_usd)}`
+                        : null}
                     </p>
                   </div>
                 ))}
               </div>
               <p className="text-xs text-muted-foreground">
-                Judge decision
-                {judgments.length > 1
-                  ? "s (both answer orders)"
-                  : "fine_tuned_first" in row && row.fine_tuned_first
-                    ? " (trained answer first)"
-                    : " (comparison answer first)"}
-                : {judgments.join(", ")}
+                Judge decision{judgments.length > 1 ? "s" : ""}:{" "}
+                {judgments.join(", ")}
               </p>
             </section>
           );

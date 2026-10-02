@@ -53,9 +53,9 @@ checks the chain without real provider calls. See [Product](../../README.md).
 
 ## Capture
 
-The proxy sends relayed generations to the collector when the workspace has
+The proxy sends hosted and relayed generations to the collector when the workspace has
 `trace_capture_enabled` and the request has a non-empty `x-gradiated-task`
-header. Only unencoded UTF-8 JSON and event-stream responses are captured. Encoded or invalid UTF-8 bodies are skipped and counted as `unsupported`; the client still receives the original bytes. The proxy does not
+header. Hosted Chat Completions are normalized into trainable conversational records; relayed records remain excluded from training. Tool calls are retained, but the text SFT builder excludes tool-bearing generations. Capture identity lookup runs alongside forwarding with a one-second deadline. If it is still pending when the gateway responds, capture is skipped. Only unencoded UTF-8 JSON and event-stream responses are captured. Encoded or invalid UTF-8 bodies are skipped and counted as `unsupported`; the client still receives the original bytes. The proxy does not
 parse the bodies: each line of the `application/x-ndjson` batch holds the raw
 request and response text with the generation's identifiers, and the collector
 does the parsing. See the [traces plan](../../../docs/TRACES_PLAN.md).

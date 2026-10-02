@@ -1,3 +1,4 @@
+import { ModelLabel } from "@/components/model-label";
 import { useQuery } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
 import {
@@ -252,9 +253,10 @@ export const LogsPage = () => {
                     ) : null}
                   </TableCell>
                   <TableCell>
-                    <span className="block max-w-52 truncate text-xs font-medium">
-                      {generation.model_id}
-                    </span>
+                    <ModelLabel
+                      id={generation.model_id}
+                      className="max-w-52 text-xs font-medium"
+                    />
                   </TableCell>
                   <TableCell className="hidden tabular-nums md:table-cell">
                     {(

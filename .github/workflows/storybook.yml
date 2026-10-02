@@ -1,0 +1,206 @@
+name: Storybook
+
+on:
+  pull_request:
+    paths:
+      - "product/services/console/**"
+      - "!product/services/console/screenshots/**"
+      - "product/packages/contracts/**"
+      - "product/pnpm-lock.yaml"
+      - "product/pnpm-workspace.yaml"
+      - "tools/browser/**"
+      - ".github/workflows/storybook.yml"
+  push:
+    branches: [main]
+    paths:
+      - "product/services/console/**"
+      - "!product/services/console/screenshots/**"
+      - "product/packages/contracts/**"
+      - "product/pnpm-lock.yaml"
+      - ".github/workflows/storybook.yml"
+  workflow_run:
+    workflows: [Terraform]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: storybook-${{ github.event.pull_request.number || 'production' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    continue-on-error: ${{ github.event_name == 'pull_request' }}
+    outputs:
+      capture: ${{ steps.capture.outputs.capture }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+          ref: ${{ github.event_name == 'workflow_run' && 'main' || github.event.pull_request.head.sha || github.sha }}
+      - name: Skip capture after a screenshot-only bot commit
+        id: capture
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        shell: bash
+        run: |
+          if [[ "${EVENT_NAME}" == 'pull_request' ]] &&
+             [[ "$(git log -1 --format=%s)" == 'chore(console): update informative page screenshots' ]] &&
+             [[ -z "$(git diff --name-only HEAD^ HEAD -- . ':!product/services/console/screenshots/*.png')" ]]; then
+            echo 'capture=false' >> "${GITHUB_OUTPUT}"
+          else
+            echo 'capture=true' >> "${GITHUB_OUTPUT}"
+          fi
+      - uses: jdx/mise-action@v4.2.3
+        if: steps.capture.outputs.capture == 'true'
+      - run: pnpm install --frozen-lockfile
+        if: steps.capture.outputs.capture == 'true'
+        working-directory: product
+      - run: pnpm exec turbo run build --filter=@gradiated/contracts
+        if: steps.capture.outputs.capture == 'true'
+        working-directory: product
+      - run: pnpm --filter @gradiated/console build-storybook
+        if: steps.capture.outputs.capture == 'true'
+        working-directory: product
+      - uses: actions/upload-artifact@v4
+        if: steps.capture.outputs.capture == 'true'
+        with:
+          name: storybook
+          path: product/services/console/storybook-static
+          retention-days: 7
+
+  screenshots:
+    needs: build
+    if: github.event_name == 'pull_request' && needs.build.outputs.capture == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: storybook
+          path: product/services/console/storybook-static
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked --project tools/browser
+      - run: uv run --locked --project tools/browser playwright install --with-deps chromium
+      - run: uv run --locked --project tools/browser python tools/browser/storybook_screenshots.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: page-screenshots
+          path: product/services/console/screenshots
+          retention-days: 14
+
+  publish-screenshots:
+    needs: screenshots
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    continue-on-error: true
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          ssh-key: ${{ secrets.DEPLOY_RELEASE_SSH_KEY }}
+      - name: Remove the old PNGs before installing the complete capture
+        run: find product/services/console/screenshots -name '*.png' -delete 2>/dev/null || true
+      - uses: actions/download-artifact@v4
+        with:
+          name: page-screenshots
+          path: product/services/console/screenshots
+      - name: Commit informative screenshots
+        id: commit
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+          PR_SHA: ${{ github.event.pull_request.head.sha }}
+        shell: bash
+        run: |
+          current_sha="$(git ls-remote origin "refs/heads/${PR_BRANCH}" | cut -f1)"
+          if [[ "${current_sha}" != "${PR_SHA}" ]]; then
+            echo 'The PR changed during capture; leave updates to its next run.'
+            exit 0
+          fi
+          git add --all -- 'product/services/console/screenshots/*.png'
+          if git diff --cached --quiet; then
+            echo "sha=${PR_SHA}" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore(console): update informative page screenshots'
+          git push origin "HEAD:refs/heads/${PR_BRANCH}"
+          echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+      - name: Show changed pages in the PR
+        if: steps.commit.outputs.sha
+        uses: actions/github-script@v8
+        env:
+          SCREENSHOT_SHA: ${{ steps.commit.outputs.sha }}
+        with:
+          script: |
+            const marker = '<!-- storybook-screenshots -->';
+            const { owner, repo } = context.repo;
+            const base = context.payload.pull_request.base.sha;
+            const changes = await github.paginate(github.rest.pulls.listFiles, { owner, repo, pull_number: context.issue.number });
+            const files = changes.filter(file => file.filename.startsWith('product/services/console/screenshots/') && file.filename.endsWith('.png'));
+            const image = (sha, file) => `https://github.com/${owner}/${repo}/blob/${sha}/${file}?raw=true`;
+            const rows = files.map(({ filename, status }) => {
+              const before = status === 'added' ? 'New story' : `![Before](${image(base, filename)})`;
+              const after = status === 'removed' ? 'Removed' : `![After](${image(process.env.SCREENSHOT_SHA, filename)})`;
+              return `| ${filename.split('/').pop()} | ${before} | ${after} |`;
+            });
+            const preview = rows.length ? `| Page | Before | After |\n| --- | --- | --- |\n${rows.join('\n')}` : 'No page screenshots changed.';
+            const body = `${marker}\nPage screenshots are informative; visual changes never fail CI. Browse [Storybook](https://storybook.gradiated.com) for the main-branch stories.\n\n${preview}`;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number });
+            const previous = comments.find(comment => comment.user.login === 'github-actions[bot]' && comment.body.includes(marker));
+            if (previous) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: previous.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
+
+  deploy:
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    environment: production
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+      AWS_REGION: us-east-1
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: storybook
+          path: storybook-static
+      - uses: aws-actions/configure-aws-credentials@v6.2.3
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/gradiated-prod-deployment
+          allowed-account-ids: ${{ env.AWS_ACCOUNT_ID }}
+      - name: Publish Storybook
+        shell: bash
+        run: |
+          aws s3 sync storybook-static "s3://gradiated-prod-storybook-${AWS_ACCOUNT_ID}" \
+            --cache-control 'public,max-age=300' --only-show-errors
+          distribution_id="$(aws cloudfront list-distributions \
+            --query "DistributionList.Items[?Aliases.Items && contains(Aliases.Items, 'storybook.gradiated.com')].Id | [0]" \
+            --output text)"
+          test -n "${distribution_id}" && test "${distribution_id}" != None
+          aws cloudfront create-invalidation --distribution-id "${distribution_id}" --paths '/*'

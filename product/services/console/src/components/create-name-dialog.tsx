@@ -1,7 +1,10 @@
-import NiceModal, { useModal } from "@ebay/nice-modal-react";
+import NiceModal, {
+  useModal,
+  type NiceModalHocProps,
+} from "@ebay/nice-modal-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoaderCircle } from "lucide-react";
-import { useId } from "react";
+import { useId, type FC } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -28,82 +31,83 @@ interface CreateNameDialogProps {
   submit: (name: string) => Promise<void>;
 }
 
-export const CreateNameDialog = NiceModal.create<CreateNameDialogProps>(
-  ({ title, label, placeholder, submitLabel, emptyMessage, submit }) => {
-    const modal = useModal();
-    const inputId = useId();
-    const form = useForm({
-      resolver: zodResolver(
-        z.object({
-          name: z.string().trim().min(1, emptyMessage).max(MAX_NAME_LENGTH),
-        }),
-      ),
-      defaultValues: { name: "" },
-    });
+export const CreateNameDialog: FC<CreateNameDialogProps & NiceModalHocProps> =
+  NiceModal.create<CreateNameDialogProps>(
+    ({ title, label, placeholder, submitLabel, emptyMessage, submit }) => {
+      const modal = useModal();
+      const inputId = useId();
+      const form = useForm({
+        resolver: zodResolver(
+          z.object({
+            name: z.string().trim().min(1, emptyMessage).max(MAX_NAME_LENGTH),
+          }),
+        ),
+        defaultValues: { name: "" },
+      });
 
-    const close = () => {
-      modal.resolve();
-      void modal.hide();
-    };
+      const close = () => {
+        modal.resolve();
+        void modal.hide();
+      };
 
-    const create = async ({ name }: { name: string }) => {
-      try {
-        await submit(name);
-      } catch (error) {
-        form.setError("root", {
-          message: errorMessage(error, "The request failed."),
-        });
-        return;
-      }
+      const create = async ({ name }: { name: string }) => {
+        try {
+          await submit(name);
+        } catch (error) {
+          form.setError("root", {
+            message: errorMessage(error, "The request failed."),
+          });
+          return;
+        }
 
-      close();
-    };
+        close();
+      };
 
-    return (
-      <Dialog
-        open={modal.visible}
-        onOpenChange={(open) => {
-          if (!open) close();
-        }}
-      >
-        <DialogContent
-          aria-describedby={undefined}
-          onCloseAutoFocus={() => modal.remove()}
+      return (
+        <Dialog
+          open={modal.visible}
+          onOpenChange={(open) => {
+            if (!open) close();
+          }}
         >
-          <form className="space-y-5" onSubmit={form.handleSubmit(create)}>
-            <DialogHeader>
-              <DialogTitle>{title}</DialogTitle>
-            </DialogHeader>
-            <Field data-invalid={Boolean(form.formState.errors.name)}>
-              <FieldLabel htmlFor={inputId}>{label}</FieldLabel>
-              <Input
-                id={inputId}
-                autoFocus
-                maxLength={MAX_NAME_LENGTH}
-                placeholder={placeholder}
-                {...form.register("name")}
-              />
-              {form.formState.errors.name ? (
-                <FieldError errors={[form.formState.errors.name]} />
-              ) : null}
-            </Field>
-            {form.formState.errors.root?.message ? (
-              <FieldError>{form.formState.errors.root.message}</FieldError>
-            ) : null}
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={close}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? (
-                  <LoaderCircle className="size-4 animate-spin" />
+          <DialogContent
+            aria-describedby={undefined}
+            onCloseAutoFocus={() => modal.remove()}
+          >
+            <form className="space-y-5" onSubmit={form.handleSubmit(create)}>
+              <DialogHeader>
+                <DialogTitle>{title}</DialogTitle>
+              </DialogHeader>
+              <Field data-invalid={Boolean(form.formState.errors.name)}>
+                <FieldLabel htmlFor={inputId}>{label}</FieldLabel>
+                <Input
+                  id={inputId}
+                  autoFocus
+                  maxLength={MAX_NAME_LENGTH}
+                  placeholder={placeholder}
+                  {...form.register("name")}
+                />
+                {form.formState.errors.name ? (
+                  <FieldError errors={[form.formState.errors.name]} />
                 ) : null}
-                {submitLabel}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    );
-  },
-);
+              </Field>
+              {form.formState.errors.root?.message ? (
+                <FieldError>{form.formState.errors.root.message}</FieldError>
+              ) : null}
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={close}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                  {form.formState.isSubmitting ? (
+                    <LoaderCircle className="size-4 animate-spin" />
+                  ) : null}
+                  {submitLabel}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      );
+    },
+  );

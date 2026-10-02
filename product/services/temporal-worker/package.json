@@ -20,7 +20,8 @@
     "zod": "4.6.5",
     "@temporalio/common": "1.24.0",
     "@gradiated/nomad-pki": "workspace:*",
-    "prom-client": "15.1.3"
+    "prom-client": "15.1.3",
+    "@gradiated/credentials": "workspace:*"
   },
   "devDependencies": {
     "@temporalio/proto": "1.24.0",

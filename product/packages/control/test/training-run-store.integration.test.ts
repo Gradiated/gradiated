@@ -7,7 +7,7 @@ import {
   trainingRunEvents,
   taskVersions,
 } from "../src/db/schema/index.js";
-import { createQwenSftModelConfiguration } from "../src/catalog/models/qwen3-0-6b.js";
+import { createQwenSftModelConfiguration } from "../src/catalog/models/training.js";
 import { createCatalogService } from "../src/catalog/service.js";
 import { createTrainingService } from "../src/training/service.js";
 import { createMemoryContentStore } from "./support/content-store.js";

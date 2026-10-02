@@ -1,3 +1,4 @@
+import { modelDisplayName } from "@gradiated/contracts/model-catalog";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
@@ -268,7 +269,7 @@ export const UsagePage = () => {
                   >
                     <BarChart
                       data={usage.data.models.map((model) => ({
-                        model: model.model_id,
+                        model: modelDisplayName(model.model_id),
                         cost: Number(model.charge) / Number(NANO_USD_PER_USD),
                       }))}
                       layout="vertical"

@@ -32,6 +32,8 @@ export {
 } from "./models.js";
 export {
   BalanceTransactionListSchema,
+  BalanceTransactionQuerySchema,
+  type BalanceTransactionQuery,
   BalanceTransactionSchema,
   BillingAccountSchema,
   CreateTopUpCheckoutSchema,
@@ -128,6 +130,8 @@ export {
   JUDGE_MODELS,
   EVALUATION_JUDGES,
   DEFAULT_EVALUATION_JUDGE,
+  DEFAULT_COMPARISON_MODEL,
+  DEFAULT_TRAINING_BASE,
   modelsForUseCase,
   TRAINING_BASE_MODELS,
   type ModelUseCase,

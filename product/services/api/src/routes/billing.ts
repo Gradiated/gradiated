@@ -1,5 +1,6 @@
 import {
   BalanceTransactionListSchema,
+  BalanceTransactionQuerySchema,
   BillingAccountSchema,
   CreateTopUpCheckoutSchema,
   OrganizationIdParamsSchema,
@@ -53,11 +54,19 @@ const listBalanceTransactionsRoute = createRoute({
   path: "/api/v1/organizations/{organization_id}/balance-transactions",
   operationId: "listBalanceTransactions",
   tags: ["Billing"],
-  request: { params: OrganizationIdParamsSchema },
+  request: {
+    params: OrganizationIdParamsSchema,
+    query: BalanceTransactionQuerySchema,
+  },
   responses: {
     200: {
-      description: "The organization's latest durable balance movements.",
+      description:
+        "The organization's durable balance movements, newest first.",
       content: { "application/json": { schema: BalanceTransactionListSchema } },
+    },
+    422: {
+      description: "The pagination parameters are invalid.",
+      content: problemContent,
     },
     401: {
       description: "Authentication is required.",
@@ -193,13 +202,17 @@ export const registerBillingRoutes = (
 
   app.openapi(listBalanceTransactionsRoute, async (context) => {
     const user = await requireUser(context);
-    const records = await accounts.listBalanceTransactions(
+    const page = await accounts.listBalanceTransactions(
       user.id,
       context.req.valid("param").organization_id,
+      context.req.valid("query"),
     );
 
     return context.json(
-      { data: records.map(balanceTransactionResponse), next_cursor: null },
+      {
+        data: page.data.map(balanceTransactionResponse),
+        next_cursor: page.nextCursor,
+      },
       200,
     );
   });

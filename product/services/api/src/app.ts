@@ -22,6 +22,7 @@ import { registerGatewayContract } from "./routes/gateway-contract.js";
 import { registerHealthRoutes } from "./routes/health.js";
 import { registerMeRoutes } from "./routes/me.js";
 import { registerModelRoutes } from "./routes/models.js";
+import { createExternalModelCatalog } from "./catalog/external-models.js";
 import { registerOrganizationRoutes } from "./routes/organizations.js";
 import { registerUsageRoutes } from "./routes/usage.js";
 import { registerWaitlistRoutes } from "./routes/waitlist.js";
@@ -46,6 +47,7 @@ export interface AppDependencies {
   metrics: ApiMetrics;
   sendWaitlistWelcome: WaitlistWelcomeSender;
   services: ApiServices;
+  externalModels?: ReturnType<typeof createExternalModelCatalog>;
 }
 
 export const createApp = ({
@@ -57,6 +59,7 @@ export const createApp = ({
   metrics,
   sendWaitlistWelcome,
   services,
+  externalModels = createExternalModelCatalog(),
 }: AppDependencies) => {
   const app = new OpenAPIHono<ApiEnvironment>({
     defaultHook: (result, context) => {
@@ -126,7 +129,7 @@ export const createApp = ({
     check: checkDependencies,
     observe: metrics.recordDependencies,
   });
-  registerModelRoutes(app, services.catalogBilling);
+  registerModelRoutes(app, services.catalogBilling, externalModels);
   registerBillingRoutes(app, {
     accounts: services.catalogBilling,
     payments: services.billingPayments,

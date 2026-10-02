@@ -30,7 +30,8 @@ Turborepo orchestrates the deployable `services/` and shared `packages/`:
 - `services/collector`: asynchronous generation-content batching and S3 uploads;
 - `packages/contracts`: Zod API and cross-process contracts;
 - `packages/control`: shared control-plane business logic and datastore adapters;
-- `packages/config`: strict runtime configuration.
+- `packages/config`: strict runtime configuration;
+- `packages/credentials`: shared TypeScript and Rust provider credential loaders.
 
 `packages/control` is a modular monolith shared by the two TypeScript processes,
 not another deployed service. Datastore-specific code remains inside it until a

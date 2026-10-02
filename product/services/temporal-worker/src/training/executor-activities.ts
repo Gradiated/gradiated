@@ -1,7 +1,8 @@
+import { createHash } from "node:crypto";
 import { Context } from "@temporalio/activity";
 import { z } from "zod";
 import {
-  TRAINING_RECIPE,
+  trainingRecipeForModel,
   RunDatasetSummarySchema,
   TrainingRunEventPayloadSchema,
   type RunEvaluation,
@@ -30,9 +31,19 @@ import {
 
 import {
   estimateOutputCost,
+  estimateTokenCost,
   predictionsSchema,
+  pricePredictions,
   summarizePredictions,
 } from "./evaluation.js";
+
+import { evaluatePairs } from "./evaluate-pairs.js";
+import { predictionSchema, type EvaluationModel } from "./evaluation-models.js";
+import {
+  evaluationPricingSchema,
+  type EvaluationPricing,
+  type createEvaluationPricing,
+} from "./evaluation-pricing.js";
 
 import { persistTrainingDataset } from "./dataset.js";
 
@@ -54,6 +65,8 @@ const datasetSchema = z.object({
     bundleSha256: z.string(),
     baseId: z.string(),
     gpuType: z.string(),
+    nodePool: z.string().optional(),
+    recipe: z.record(z.string(), z.unknown()).optional(),
   }),
   recipe: z.looseObject({
     id: z.string(),
@@ -62,6 +75,17 @@ const datasetSchema = z.object({
     max_steps: z.number().int().positive(),
     checkpoint_steps: z.number().int().positive(),
     rank: z.number().int().positive(),
+    early_stopping: z
+      .object({
+        patience: z.number().int().positive(),
+        threshold: z.number().nonnegative(),
+        min_steps: z.number().int().nonnegative(),
+      })
+      .optional(),
+    validation_examples: z.number().int().positive().optional(),
+    shuffle: z.boolean().optional(),
+    lr_scheduler_type: z.enum(["cosine", "linear", "constant"]).optional(),
+    warmup_steps: z.number().int().nonnegative().optional(),
   }),
 });
 const pollSchema = z.object({
@@ -94,6 +118,8 @@ export const createTrainingExecutorActivities = (options: {
   podIds: string[];
   host: TrainingHostConfig;
   token: string;
+  evaluationModels?: EvaluationModel;
+  evaluationPricing?: ReturnType<typeof createEvaluationPricing>;
 }) => {
   const { database, artifacts } = options;
   const store = createTrainingRunStore(database);
@@ -120,7 +146,10 @@ export const createTrainingExecutorActivities = (options: {
     host: TrainingHost,
     command: Record<string, unknown>,
   ) => {
-    const id = `${String(command.operation)}-${ordinal}`;
+    const id =
+      typeof command.id === "string"
+        ? command.id
+        : `${String(command.operation)}-${ordinal}`;
     await hosts.call(host, "/operations", { ...command, id });
     let after = 0;
     for (;;) {
@@ -176,6 +205,18 @@ export const createTrainingExecutorActivities = (options: {
       }),
     buildTrainingDataset: (runId: string, input: TrainingInput) =>
       heartbeat(async () => {
+        const externalEvaluation =
+          input.comparisonModelId !== input.baseModelId ||
+          input.judgeModelId !== input.baseModelId;
+        if (externalEvaluation) {
+          if (!options.evaluationModels)
+            throw new Error("Evaluation models are not configured.");
+          for (const modelId of [input.comparisonModelId, input.judgeModelId]) {
+            if (modelId !== input.baseModelId)
+              await options.evaluationModels.check(modelId);
+          }
+        }
+
         const manifestKey = `runs/${runId}/run-manifest.json`;
         const exists = await artifacts.exists(manifestKey);
         let manifest: unknown;
@@ -190,10 +231,12 @@ export const createTrainingExecutorActivities = (options: {
             dataset,
             input.inputCutoff,
           );
+          const recipe = trainingRecipeForModel(input.baseModelId);
+          if (!recipe) throw new Error("Training recipe is unavailable.");
           manifest = {
             ...saved,
-            host: options.host,
-            recipe: TRAINING_RECIPE,
+            host: { ...options.host, recipe },
+            recipe,
           };
         }
 
@@ -322,6 +365,9 @@ export const createTrainingExecutorActivities = (options: {
             runId,
             await execute(runId, ordinal, host, {
               operation: "generate",
+              external_evaluation:
+                input.comparisonModelId !== input.baseModelId ||
+                input.judgeModelId !== input.baseModelId,
               adapter: await artifacts.download(adapter),
               dataset: await artifacts.download(dataset.evaluation),
               output: await artifacts.upload(
@@ -330,15 +376,90 @@ export const createTrainingExecutorActivities = (options: {
             }),
           );
           await artifacts.verify(artifact);
+          if (
+            input.comparisonModelId !== input.baseModelId ||
+            input.judgeModelId !== input.baseModelId
+          ) {
+            if (!options.evaluationModels)
+              throw new Error("Evaluation models are not configured.");
+            const models: EvaluationModel = {
+              check: options.evaluationModels.check,
+              generate: (modelId, messages, signal) =>
+                modelId === input.baseModelId
+                  ? execute(runId, ordinal, host, {
+                      operation: "predict",
+                      id: `predict-${ordinal}-${createHash("sha256").update(JSON.stringify(messages)).digest("hex")}`,
+                      messages,
+                    }).then((value) => predictionSchema.parse(value))
+                  : options.evaluationModels!.generate(
+                      modelId,
+                      messages,
+                      signal,
+                    ),
+            };
+            const rows = await evaluatePairs({
+              runId,
+              generated: await json(artifact.key),
+              dataset: await artifacts.read(dataset.evaluation.key),
+              comparisonModelId: input.comparisonModelId,
+              judgeModelId: input.judgeModelId,
+              models,
+              artifacts,
+              signal: Context.current().cancellationSignal,
+            });
+            artifact = await putJson(
+              `runs/${runId}/evaluation/predictions.json`,
+              rows,
+            );
+          }
           await putJson(resultKey, artifact);
         }
         const predictions = predictionsSchema.parse(await json(artifact.key));
         const metrics = summarizePredictions(predictions);
-        const cost = estimateOutputCost(
+        const placeholderCost = estimateOutputCost(
           predictions,
           input.baseModelId,
           input.comparisonModelId,
         );
+        let pricing: EvaluationPricing | undefined;
+        if (!placeholderCost && options.evaluationPricing) {
+          const pricingKey = `runs/${runId}/evaluation/pricing.json`;
+          try {
+            if (await artifacts.exists(pricingKey)) {
+              pricing = evaluationPricingSchema.parse(await json(pricingKey));
+            } else {
+              pricing = await options.evaluationPricing(
+                input.baseModelId,
+                input.comparisonModelId,
+                Context.current().cancellationSignal,
+              );
+              await putJson(pricingKey, pricing);
+            }
+          } catch {
+            Context.current().cancellationSignal.throwIfAborted();
+          }
+        }
+        const priced = pricePredictions(
+          predictions,
+          pricing,
+          placeholderCost !== null,
+        );
+        if (
+          priced.some(
+            (row) =>
+              row.fine_tuned.cost_nano_usd !== undefined ||
+              row.comparison.cost_nano_usd !== undefined,
+          )
+        ) {
+          const pricedArtifact = await putJson(
+            `runs/${runId}/evaluation/priced-predictions.json`,
+            priced,
+          );
+          await putJson(resultKey, pricedArtifact);
+        }
+        const cost =
+          placeholderCost ??
+          (pricing ? estimateTokenCost(predictions, pricing) : null);
         const summary: RunEvaluation = {
           judging_method: metrics.judging_method,
           holdout_groups: metrics.holdout_groups,
@@ -350,7 +471,13 @@ export const createTrainingExecutorActivities = (options: {
             ...metrics.fractions,
           },
           cost_per_request_nano_usd: cost,
-          ...(cost ? { cost_basis: "placeholder_output_only" as const } : {}),
+          ...(cost
+            ? {
+                cost_basis: placeholderCost
+                  ? ("placeholder_output_only" as const)
+                  : ("catalog_token_estimate" as const),
+              }
+            : {}),
           output_tokens_per_second: metrics.output_tokens_per_second,
           error_rate: 0,
         };

@@ -9,7 +9,10 @@ owns the design.
 `POST /v1/contents` with `Authorization: Bearer $COLLECTOR_TOKEN` and one
 `gradiated.generation-content/1` JSON record as the body. `retention_days` must
 be 30, 90 or 180, and `trainable` must be `true` for `hosted` and `false` for
-`relay`.
+`relay`. The proxy also sends NDJSON `gradiated.hosted/1` and
+`gradiated.relay/1` envelopes with raw JSON or SSE response bodies. The collector
+normalizes them into generation records. Hosted Chat Completions include a
+canonical prompt and answer; length-limited answers are marked truncated.
 
 | Status | Meaning                                                                                 |
 | ------ | --------------------------------------------------------------------------------------- |

@@ -12,6 +12,8 @@ import {
   billingAccountQuery,
   type BalanceTransaction,
 } from "@/api/queries";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { TopUpBalance } from "@/components/top-up-balance";
 import { useProductContext } from "@/hooks/use-product-context";
 import { formatNanoUsd } from "@/lib/format";
@@ -48,10 +50,6 @@ export const BillingPage = () => {
   const refetchInterval = checkoutReturn === "success" ? 2_000 : false;
   const account = useQuery({
     ...billingAccountQuery(context.organizationId),
-    refetchInterval,
-  });
-  const transactions = useQuery({
-    ...balanceTransactionsQuery(context.organizationId),
     refetchInterval,
   });
 
@@ -114,53 +112,76 @@ export const BillingPage = () => {
         ) : null}
       </div>
 
-      <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
-        <div className="border-b px-5 py-4">
-          <h2 className="font-medium">Balance history</h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Payments, credits, refunds and usage.
-          </p>
+      <BalanceHistory
+        key={context.organizationId}
+        organizationId={context.organizationId}
+        refetchInterval={refetchInterval}
+      />
+    </ConsolePage>
+  );
+};
+
+const BalanceHistory = ({
+  organizationId,
+  refetchInterval,
+}: {
+  organizationId: string;
+  refetchInterval: number | false;
+}) => {
+  const [cursors, setCursors] = useState<string[]>([]);
+  const transactions = useQuery({
+    ...balanceTransactionsQuery(organizationId, cursors.at(-1)),
+    refetchInterval,
+  });
+
+  return (
+    <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
+      <div className="border-b px-5 py-4">
+        <h2 className="font-medium">Balance history</h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          Payments, credits, refunds and usage.
+        </p>
+      </div>
+      {transactions.isLoading ? (
+        <div className="grid min-h-48 place-items-center">
+          <LoaderCircle className="size-5 animate-spin text-muted-foreground" />
         </div>
-        {transactions.isLoading ? (
-          <div className="grid min-h-48 place-items-center">
-            <LoaderCircle className="size-5 animate-spin text-muted-foreground" />
-          </div>
-        ) : transactions.isError ? (
-          <LoadFailed
-            subject="balance history"
-            retrying={transactions.isFetching}
-            onRetry={() => void transactions.refetch()}
-          />
-        ) : transactions.data?.data.length ? (
-          <div className="divide-y">
+      ) : transactions.isError ? (
+        <LoadFailed
+          subject="balance history"
+          retrying={transactions.isFetching}
+          onRetry={() => void transactions.refetch()}
+        />
+      ) : transactions.data?.data.length ? (
+        <Table aria-label="Balance history" className="text-base">
+          <TableBody>
             {transactions.data.data.map((transaction) => {
               const positive = BigInt(transaction.amount) > 0n;
 
               return (
-                <div
-                  key={transaction.id}
-                  className="flex items-center justify-between gap-5 px-5 py-4"
-                >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
-                      {positive ? (
-                        <ArrowDownLeft className="size-4" />
-                      ) : (
-                        <ArrowUpRight className="size-4" />
-                      )}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="font-medium">
-                        {TRANSACTION_LABEL[transaction.type]}
-                      </p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {transactionTime.format(
-                          new Date(transaction.created_at),
+                <TableRow key={transaction.id} className="hover:bg-transparent">
+                  <TableCell className="whitespace-normal py-4 pl-5 pr-0">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
+                        {positive ? (
+                          <ArrowDownLeft className="size-4" />
+                        ) : (
+                          <ArrowUpRight className="size-4" />
                         )}
-                      </p>
+                      </span>
+                      <div className="min-w-0">
+                        <p className="font-medium">
+                          {TRANSACTION_LABEL[transaction.type]}
+                        </p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {transactionTime.format(
+                            new Date(transaction.created_at),
+                          )}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-right">
+                  </TableCell>
+                  <TableCell className="whitespace-normal py-4 pl-5 pr-5 text-right">
                     <p
                       className={
                         positive ? "font-medium text-[#536718]" : "font-medium"
@@ -172,17 +193,45 @@ export const BillingPage = () => {
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {formatNanoUsd(transaction.balance_after)} balance
                     </p>
-                  </div>
-                </div>
+                  </TableCell>
+                </TableRow>
               );
             })}
-          </div>
-        ) : (
-          <div className="grid min-h-48 place-items-center px-6 text-center text-sm text-muted-foreground">
-            No balance transactions yet.
-          </div>
-        )}
-      </section>
-    </ConsolePage>
+          </TableBody>
+        </Table>
+      ) : (
+        <div className="grid min-h-48 place-items-center px-6 text-center text-sm text-muted-foreground">
+          No balance transactions yet.
+        </div>
+      )}
+      {cursors.length > 0 || transactions.data?.next_cursor ? (
+        <div className="flex justify-end gap-2 border-t px-5 py-3">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={cursors.length === 0 || transactions.isFetching}
+            onClick={() => setCursors((previous) => previous.slice(0, -1))}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={
+              !transactions.data?.next_cursor ||
+              transactions.isFetching ||
+              transactions.isError
+            }
+            onClick={() => {
+              const cursor = transactions.data?.next_cursor;
+
+              if (cursor) setCursors((previous) => [...previous, cursor]);
+            }}
+          >
+            Next
+          </Button>
+        </div>
+      ) : null}
+    </section>
   );
 };

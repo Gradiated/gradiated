@@ -14,7 +14,10 @@ class Host:
     def __init__(self):
         self.trainer = TrainingRuntime(
             os.environ["NOMAD_ALLOC_DIR"] + "/training",
-            json.loads(Path(__file__).with_name("recipe.json").read_text()),
+            json.loads(
+                os.environ.get("TRAINING_RECIPE_JSON")
+                or Path(__file__).with_name("recipe.json").read_text()
+            ),
         )
         self.lock = threading.Lock()
         self.job = None
@@ -22,7 +25,6 @@ class Host:
         self.lease = time.monotonic() + 15 * 60
         self.allocation_id = os.environ["NOMAD_ALLOC_ID"]
         threading.Thread(target=self.watchdog, daemon=True).start()
-        self.trainer.load()
 
     def renew(self, allocation_id):
         with self.lock:

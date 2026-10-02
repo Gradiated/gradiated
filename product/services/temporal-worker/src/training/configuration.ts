@@ -18,6 +18,10 @@ const schema = z
         /^s3::https:\/\/[a-z0-9.-]+\.s3\.us-east-1\.amazonaws\.com\/bundles\/sha256\/[0-9a-f]{64}\.tar\.gz$/,
       ),
     TRAINING_BUNDLE_SHA256: z.string().regex(/^[0-9a-f]{64}$/),
+    TRAINING_NODE_POOL: z
+      .string()
+      .regex(/^[a-zA-Z0-9_-]+$/)
+      .default("default"),
     TRAINING_BASE_ID: z.string().min(1),
     TRAINING_GPU_MODEL: z.string().min(1).default("H100"),
     TRAINING_HOST_TOKEN: z.string().min(32),

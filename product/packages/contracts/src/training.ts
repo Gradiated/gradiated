@@ -64,7 +64,9 @@ export const RunEvaluationSchema = z
     judge_model_id: EvaluationJudgeSchema,
     vs_comparison: JudgeOutcomeSchema,
     cost_per_request_nano_usd: PairSchema.nullable(),
-    cost_basis: z.literal("placeholder_output_only").optional(),
+    cost_basis: z
+      .enum(["placeholder_output_only", "catalog_token_estimate"])
+      .optional(),
     output_tokens_per_second: PairSchema,
     error_rate: FractionSchema,
   })
@@ -402,9 +404,20 @@ export const StartTrainingRunResponseSchema = z
   .openapi("StartTrainingRunResponse");
 
 const EvaluationPredictionSchema = z.object({
+  cost_nano_usd: CountSchema.optional().describe(
+    "Saved token cost estimate in nano-USD.",
+  ),
   text: z.string(),
   tokens: z.number().int().nonnegative(),
   seconds: z.number().positive(),
+  usage: z
+    .object({
+      input_tokens: CountSchema,
+      output_tokens: CountSchema,
+      cached_input_tokens: CountSchema.optional(),
+      cache_write_tokens: CountSchema.optional(),
+    })
+    .optional(),
 });
 const EvaluationPairSchema = z.object({
   id: z.string(),

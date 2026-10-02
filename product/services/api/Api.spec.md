@@ -16,8 +16,9 @@ The public HTTP API: browser sessions, the management API, the Stripe webhook an
   handler: registerHealthRoutes in src/routes/health.ts
   trust: anonymous
   control: none — it reports liveness and dependency state only
-- models: anyone reads the public hosted-model catalog and its prices
+- models: anyone reads the public hosted-model catalog and its prices; external=true returns supported external provider models in the same format
   handler: registerModelRoutes in src/routes/models.ts
+  external loader: createExternalModelCatalog in src/catalog/external-models.ts fetches OpenRouter on demand, caches in API process memory for five minutes, and deduplicates concurrent refreshes; default and external=false requests never call it
   trust: anonymous
   control: none — the catalog is public by design
 - waitlist: a visitor joins the waitlist

@@ -1,3 +1,4 @@
+import { ModelLabel } from "@/components/model-label";
 import { Check } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -92,7 +93,10 @@ export const GenerationDetails = ({
       <div className="space-y-7 p-6">
         <DetailSection title="Overview">
           <DetailGrid>
-            <Detail label="Model" value={generation.model_id} />
+            <Detail
+              label="Model"
+              value={<ModelLabel id={generation.model_id} />}
+            />
             <Detail label="Cost" value={formatNanoUsd(generation.charge)} />
             <Detail
               label="Latency"
@@ -197,7 +201,7 @@ const DetailGrid = ({ children }: { children: ReactNode }) => (
   <dl className="grid grid-cols-2 gap-x-6 gap-y-5">{children}</dl>
 );
 
-const Detail = ({ label, value }: { label: string; value: string }) => (
+const Detail = ({ label, value }: { label: string; value: ReactNode }) => (
   <div className="min-w-0">
     <dt className="text-xs text-muted-foreground">{label}</dt>
     <dd className="mt-1 truncate text-sm font-medium">{value}</dd>

@@ -3,13 +3,26 @@ import shutil
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from autotrain.data import digest
 from runtime import TrainingRuntime
 
 
 class RuntimeTests(unittest.TestCase):
+    def test_retains_exact_input_and_output_usage_for_cost_estimates(self):
+        runtime = TrainingRuntime.__new__(TrainingRuntime)
+        runtime.tokenizer = Mock(return_value={"input_ids": [1, 2, 3]})
+        runtime.tokenizer.apply_chat_template.return_value = "formatted prompt"
+        messages = [{"role": "user", "content": "hello"}]
+        with patch("autotrain.Trainer.generate", return_value={"text": "answer", "tokens": 2, "seconds": 1}) as generate:
+            result = runtime.generate(messages, adapted=True)
+        self.assertEqual(result["usage"], {"input_tokens": 3, "output_tokens": 2})
+        generate.assert_called_once_with(messages, True, 256, None)
+        runtime.tokenizer.apply_chat_template.assert_called_once_with(
+            messages, tokenize=False, add_generation_prompt=True, enable_thinking=False
+        )
+
     def test_adapts_signed_artifacts_to_local_library_inputs_and_checkpoint_callback(
         self,
     ):
@@ -79,6 +92,42 @@ class RuntimeTests(unittest.TestCase):
                 },
             )
             self.assertEqual(events[1]["type"], "trainer_progress")
+
+    def test_external_evaluation_generates_only_adapter_answers(self):
+        with tempfile.TemporaryDirectory() as temp:
+            runtime = TrainingRuntime(temp, recipe={})
+            example = {
+                "id": "example",
+                "group": "session",
+                "prompt": [{"role": "user", "content": "request"}],
+            }
+            with (
+                patch.object(runtime, "load"),
+                patch.object(runtime, "download", return_value=Path(temp) / "input"),
+                patch.object(runtime, "load_adapter"),
+                patch("runtime.read_examples", return_value=[example]),
+                patch.object(
+                    runtime,
+                    "generate",
+                    return_value={"text": "answer", "tokens": 1, "seconds": 1},
+                ) as generate,
+                patch.object(runtime, "upload", return_value={"key": "result"}),
+            ):
+                runtime.run(
+                    {
+                        "operation": "generate",
+                        "external_evaluation": True,
+                        "adapter": {},
+                        "dataset": {},
+                        "output": {},
+                    },
+                    lambda event: None,
+                )
+                generate.assert_called_once_with(example["prompt"], adapted=True)
+                saved = json.loads((Path(temp) / "predictions.json").read_text())
+                self.assertEqual(saved[0]["id"], "example")
+                self.assertNotIn("comparison", saved[0])
+                self.assertNotIn("judgment", saved[0])
 
     def test_rejects_download_with_wrong_digest(self):
         with tempfile.TemporaryDirectory() as temp:

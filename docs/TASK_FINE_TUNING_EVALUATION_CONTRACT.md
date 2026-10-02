@@ -17,15 +17,15 @@ flowchart LR
 
 ## Decisions in this contract
 
-| Decision | Reason | Rejected |
-| --- | --- | --- |
+| Decision                                                                                            | Reason                                                                                         | Rejected                                                 |
+| --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
 | One judged comparison: the candidate against the original provider model it replaces (a fresh call) | That is the decision the customer is making; extra arms add cost and noise without changing it | Base and production arms (decided against on 2026-09-11) |
-| Fresh provider calls, paid by us, on every evaluation | Captured answers age; the customer never supplies a key | Reusing old captured answers as fresh |
-| Frontier judge, pairwise, both orders, disagreement unresolved | Position bias is real; unresolved is honest | Single-order judging; hiding unresolved |
-| Results only: no pass mark, no recommendation, no gate | Customers try versions and decide; scores are evidence | Quality gates on promotion |
-| Report unit is the session group, equal weight | Correlated turns must not count as independent evidence | Per-turn statistics |
-| Intervals by resampling whole groups; unavailable when they cannot be computed | Never a number that looks more certain than it is | Silent drops |
-| Latency compared only within the same measurement context | A provider call from production and a worker replay are not like for like | "N times faster" claims |
+| Fresh provider calls, paid by us, on every evaluation                                               | Captured answers age; the customer never supplies a key                                        | Reusing old captured answers as fresh                    |
+| Frontier judge, pairwise, both orders, disagreement unresolved                                      | Position bias is real; unresolved is honest                                                    | Single-order judging; hiding unresolved                  |
+| Results only: no pass mark, no recommendation, no gate                                              | Customers try versions and decide; scores are evidence                                         | Quality gates on promotion                               |
+| Report unit is the session group, equal weight                                                      | Correlated turns must not count as independent evidence                                        | Per-turn statistics                                      |
+| Intervals by resampling whole groups; unavailable when they cannot be computed                      | Never a number that looks more certain than it is                                              | Silent drops                                             |
+| Latency compared only within the same measurement context                                           | A provider call from production and a worker replay are not like for like                      | "N times faster" claims                                  |
 
 ## EVAL-01 The comparison
 
@@ -35,9 +35,9 @@ Task criteria are drafted automatically from permitted task context and developm
 
 **Frozen at creation:** dataset and example ids, split and grouping revision, sampling seed, arm identities, replay controls, judge identity, rubric version, operation limits, deadline. The training package supplies a frozen evaluation manifest under DATA-01. These examples are excluded from weight updates and training-time selection. The evaluation worker does not choose a new split. The evaluation belongs to one training run. A later recipe or judge change requires a new run; there is no independently scheduled evaluation at launch.
 
-| Arm | What runs |
-| --- | --- |
-| Candidate | The new adapter on its qualified base release |
+| Arm               | What runs                                                                      |
+| ----------------- | ------------------------------------------------------------------------------ |
+| Candidate         | The new adapter on its qualified base release                                  |
 | Original provider | The provider model the task is configured to replace; fresh call, company-paid |
 
 The provider is not automatically the judge; the task explicitly configures an eligible `provider_models` record for the reference model. Observed traffic may suggest one but cannot authorise an arbitrary endpoint. Recovery reuses only the matching accepted operation. Requested and observed provider identity and time are recorded. A retired alias reports unavailable and requires explicit reconfiguration.
@@ -56,12 +56,12 @@ Unit: the protected session group, weight 1; examples within a group weight 1. G
 
 Per group: weighted win, tie, loss and unresolved fractions over all selected examples; averaged across groups to `W`, `T`, `L`, `U` summing to 1.
 
-| Value | Definition |
-| --- | --- |
-| Resolved share | `1 - U` |
+| Value                   | Definition                                             |
+| ----------------------- | ------------------------------------------------------ |
+| Resolved share          | `1 - U`                                                |
 | Conditional judge score | `(W + 0.5·T) / (1 - U)`; undefined if nothing resolved |
-| Missing-evidence range | `[W + 0.5·T, W + 0.5·T + U]` |
-| Win, tie, loss, unknown | Weighted values with raw counts |
+| Missing-evidence range  | `[W + 0.5·T, W + 0.5·T + U]`                           |
+| Win, tie, loss, unknown | Weighted values with raw counts                        |
 
 The console bar shows resolved comparisons only: widths and labels use `W / (W + T + L)`, `T / (W + T + L)` and `L / (W + T + L)`. The three segments fill the bar; widths use unrounded proportions. The compact evaluation panel shows the resolved share alongside speed and errors. Keep unresolved outcomes in individual test results. The task-list tooltip shows only better, equivalent and worse percentages. With no resolved results, show "No resolved comparisons". Detailed results keep the original four fractions and counts.
 
@@ -83,9 +83,13 @@ Worker takeover waits out outstanding call bounds before redispatch. These rules
 
 External calls follow RUN-04 (run tokens, provider slots), use company credentials, and cost the customer nothing. No price lookup, Grafana query or ledger gates execution. An uncertain provider request waits out its bound before retry; duplicate cost is recorded; exactly-once is never claimed. A failed evaluation never retrains, unpublishes or promotes.
 
-**Cost.** A price registry for the actual direct provider, model, tier and time; an OpenRouter price is not a direct price. Stored: usage category, currency, pricing revision, estimate status, cached and reasoning token categories where supported. Refresh every five minutes; older than 24 hours is stale. Missing usage or price is unknown, never zero. Coverage and possible duplicates are shown. Registry failure leaves the result valid with cost incomplete.
+**Cost.** The Temporal worker calculates token-cost estimates from recorded usage. Hosted prices come from our model catalog. External prices come from the public `GET /api/v1/models?external=true` catalog, whose separate OpenRouter loader caches in API process memory for five minutes. Direct generation calls still use OpenAI or Anthropic; these are catalog estimates, not reconciled provider invoices or customer charges. The snapshot records the exact canonical model, pricing source, capture time and long-context tiers in `runs/<run_id>/evaluation/pricing.json`. Retries reuse it. The worker stores estimated mean per-request costs and `cost_basis=catalog_token_estimate` in the PostgreSQL run evaluation summary; the console reads the saved value without fetching prices or recomputing it.
 
-For the Qwen3-0.6B recipe, temporary user-authorized rates are $0.05 input and $0.10 output per million tokens, centralized in the model catalog. These are placeholders, not OpenRouter or GPU charges. New evaluations estimate output-token cost from recorded output usage and mark `cost_basis=placeholder_output_only`; input usage is unavailable and excluded explicitly. Other model combinations stay unknown. Historical runs with null cost show the placeholder token rates rather than inventing per-request usage or rewriting their stored results.
+Estimates count input, cached reads/writes and billable output including reasoning where usage is available. GPU and judge costs are excluded. Missing usage or prices leave cost unknown, never zero, and pricing failure does not invalidate evaluation. Historical results without usage are not backfilled. The console shows the cost value without appended qualifiers.
+
+The existing Qwen3-0.6B-only output estimate remains compatible with legacy runs. Its user-authorized placeholder output rate is $0.10 per million tokens, centralized in the model catalog, and the summary retains `cost_basis=placeholder_output_only`. It excludes input and GPU costs. Other combinations use the catalog estimate when complete usage and prices are available.
+
+The worker also saves each answer's optional `cost_nano_usd` in `runs/<run_id>/evaluation/priced-predictions.json` and updates the evaluation result manifest. Each arm can retain its own cost when the other lacks usage or pricing; the paired summary remains unknown unless both are complete. Legacy result manifests remain readable. The console shows saved per-answer costs beside output tokens and duration.
 
 The console fetches individual held-out responses and judgments through the workspace-authorized version evaluation resource. The API reads the run's evaluation result manifest from artifact storage, validates its run-scoped key and checksum, and returns validated prediction pairs without caching their contents.
 

@@ -9,6 +9,7 @@ import {
 } from "@gradiated/temporal";
 import {
   createTrainingArtifacts,
+  createCatalogService,
   createTrainingRunStore,
   createTemporalTrainingEngine,
   type TrainingEngine,
@@ -23,6 +24,8 @@ import {
 import { createTrainingExecutorActivities } from "./executor-activities.js";
 import { trainingConfiguration } from "./configuration.js";
 import { createMockTrainingActivities } from "./activities.js";
+import { createEvaluationModels } from "./evaluation-models.js";
+import { createEvaluationPricing } from "./evaluation-pricing.js";
 import { stopClosedTrainingJobs } from "./cleanup.js";
 
 export const runTrainingWorker = async (input: {
@@ -58,6 +61,10 @@ export const runTrainingWorker = async (input: {
 
     return createTrainingExecutorActivities({
       database: input.database,
+      evaluationModels: createEvaluationModels(input.environment),
+      evaluationPricing: createEvaluationPricing(
+        createCatalogService(input.database),
+      ),
       engine,
       contents: input.contents,
       artifacts: createTrainingArtifacts(
@@ -71,6 +78,7 @@ export const runTrainingWorker = async (input: {
         bundleSha256: config.TRAINING_BUNDLE_SHA256,
         baseId: config.TRAINING_BASE_ID,
         gpuType: config.TRAINING_GPU_MODEL,
+        nodePool: config.TRAINING_NODE_POOL,
       },
     });
   };

@@ -1,13 +1,15 @@
+import { ModelOption, modelOption } from "@/components/model-label";
 import { useState } from "react";
 import { TaskTrainingScheduleSchema } from "@gradiated/contracts";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { NextTraining } from "./next-training";
+import { TrainingScheduleEditor } from "./training-schedule-editor";
 import { useProductContext } from "@/hooks/use-product-context";
 import { useOptimisticValue } from "@/hooks/use-optimistic-patch";
 import type { components } from "@/api/schema";
 import { OptionSelect } from "@/components/option-select";
 import {
+  modelDisplayName,
   COMPARISON_MODELS,
   JUDGE_MODELS,
   TRAINING_BASE_MODELS,
@@ -26,7 +28,6 @@ export const TaskSettingsTab = ({ task: savedTask }: { task: TaskRow }) => {
     savedTask,
     (current, patch) => ({ ...current, ...patch }),
   );
-  const [customSchedule, setCustomSchedule] = useState(false);
   const [scheduleDraft, setScheduleDraft] = useState<string | null>(null);
   const schedule = scheduleDraft ?? task.training_schedule ?? "";
   const validSchedule = TaskTrainingScheduleSchema.safeParse(
@@ -38,8 +39,7 @@ export const TaskSettingsTab = ({ task: savedTask }: { task: TaskRow }) => {
     TRAINING_BASE_MODELS.some((base) => base.id === model.id),
   );
   const baseModelOptions = availableModels.map((model) => ({
-    value: model.id,
-    label: model.id,
+    ...modelOption(model.id),
     disabled: false,
   }));
 
@@ -49,7 +49,7 @@ export const TaskSettingsTab = ({ task: savedTask }: { task: TaskRow }) => {
   ) {
     baseModelOptions.unshift({
       value: task.base_model_id,
-      label: `${task.base_model_id} (unavailable)`,
+      label: `${modelDisplayName(task.base_model_id)} (unavailable)`,
       disabled: true,
     });
   }
@@ -66,7 +66,7 @@ export const TaskSettingsTab = ({ task: savedTask }: { task: TaskRow }) => {
       models.data?.data.some(
         (hosted) => hosted.id === model.id && hosted.status === "available",
       ),
-  ).map((model) => ({ value: model.id, label: model.id, disabled: false }));
+  ).map((model) => ({ ...modelOption(model.id), disabled: false }));
 
   if (
     task.comparison_model_id &&
@@ -74,7 +74,7 @@ export const TaskSettingsTab = ({ task: savedTask }: { task: TaskRow }) => {
   ) {
     comparisonOptions.unshift({
       value: task.comparison_model_id,
-      label: `${task.comparison_model_id} (unavailable)`,
+      label: `${modelDisplayName(task.comparison_model_id)} (unavailable)`,
       disabled: true,
     });
   }
@@ -86,8 +86,9 @@ export const TaskSettingsTab = ({ task: savedTask }: { task: TaskRow }) => {
         description="New versions are judged, costed and timed against this."
       >
         <OptionSelect
+          renderOption={ModelOption}
           label="Comparison model"
-          className="w-80 font-mono text-xs"
+          className="w-64"
           value={task.comparison_model_id ?? ""}
           placeholder="Select a comparison model"
           disabled={!canEdit || !models.data}
@@ -103,8 +104,9 @@ export const TaskSettingsTab = ({ task: savedTask }: { task: TaskRow }) => {
       >
         <div>
           <OptionSelect
+            renderOption={ModelOption}
             label="Base model"
-            className="w-64 font-mono text-xs"
+            className="w-64"
             value={task.base_model_id ?? ""}
             placeholder="Select a base model"
             disabled={!canEdit || !models.data}
@@ -119,20 +121,22 @@ export const TaskSettingsTab = ({ task: savedTask }: { task: TaskRow }) => {
         description="Judges comparisons for the next training run. Existing results are unaffected."
       >
         <OptionSelect
+          renderOption={ModelOption}
           label="Judge model"
-          className="w-64 font-mono text-xs"
+          className="w-64"
           value={task.judge_model_id}
           disabled={!canEdit}
           onValueChange={(judge_model_id) => update.mutate({ judge_model_id })}
-          options={JUDGE_MODELS.map(({ id }) => ({ value: id, label: id }))}
+          options={JUDGE_MODELS.map(({ id }) => modelOption(id))}
         />
       </SettingRow>
-      <SettingRow
-        title="Automatic training"
-        description="Set a recurring schedule in UTC. Leave it empty to train manually."
-      >
+      <div className="p-5">
+        <p className="text-sm font-medium">Automatic training</p>
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+          Choose when this task trains. All schedule times are in UTC.
+        </p>
         <form
-          className="w-80 max-w-full shrink-0 space-y-3"
+          className="mt-4 space-y-3"
           onSubmit={(event) => {
             event.preventDefault();
             if (validSchedule.success)
@@ -142,45 +146,19 @@ export const TaskSettingsTab = ({ task: savedTask }: { task: TaskRow }) => {
               );
           }}
         >
-          <OptionSelect
-            label="Training schedule"
-            value={
-              !customSchedule &&
-              ["", "0 3 * * *", "0 3 * * MON"].includes(schedule)
-                ? schedule || "manual"
-                : "custom"
-            }
-            disabled={!canEdit || update.isPending}
-            onValueChange={(value) => {
-              setCustomSchedule(value === "custom");
-              if (value !== "custom")
-                setScheduleDraft(value === "manual" ? "" : value);
-            }}
-            options={[
-              { value: "manual", label: "Manual only" },
-              { value: "0 3 * * *", label: "Daily at 03:00 UTC" },
-              { value: "0 3 * * MON", label: "Mondays at 03:00 UTC" },
-              { value: "custom", label: "Custom schedule" },
-            ]}
-          />
-          <Input
-            aria-label="Cron schedule"
-            placeholder="Minute Hour Day Month Weekday"
+          <TrainingScheduleEditor
             value={schedule}
+            onChange={setScheduleDraft}
             disabled={!canEdit || update.isPending}
-            onChange={(event) => setScheduleDraft(event.target.value)}
           />
-          <p className="text-xs text-muted-foreground">
-            Five-field cron, for example 0 3 * * MON.
-          </p>
           {!validSchedule.success ? (
             <p role="alert" className="text-xs text-destructive">
               Enter a valid five-field cron schedule.
             </p>
           ) : null}
-          <NextTraining
-            schedule={validSchedule.success ? validSchedule.data : null}
-          />
+          {validSchedule.success && validSchedule.data ? (
+            <NextTraining schedule={validSchedule.data} />
+          ) : null}
           <Button
             size="sm"
             disabled={
@@ -193,7 +171,7 @@ export const TaskSettingsTab = ({ task: savedTask }: { task: TaskRow }) => {
             Save schedule
           </Button>
         </form>
-      </SettingRow>
+      </div>
       {update.error ? (
         <p role="alert" className="p-4 text-sm text-destructive">
           {update.error.message}

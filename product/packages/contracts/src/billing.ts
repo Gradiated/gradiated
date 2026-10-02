@@ -85,6 +85,23 @@ export const BalanceTransactionSchema = z
   })
   .openapi("BalanceTransaction");
 
+export const BalanceTransactionQuerySchema = z.object({
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .default(50)
+    .describe("Maximum number of balance transactions to return."),
+  cursor: UuidSchema.optional().describe(
+    "Return transactions older than this transaction ID.",
+  ),
+});
+
+export type BalanceTransactionQuery = z.infer<
+  typeof BalanceTransactionQuerySchema
+>;
+
 export const BalanceTransactionListSchema = z
   .strictObject(pageFields(BalanceTransactionSchema))
   .openapi("BalanceTransactionList");

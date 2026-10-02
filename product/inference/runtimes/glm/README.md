@@ -12,7 +12,13 @@ FP8 KV cache, the GLM tool/reasoning parsers, and the existing startup
 qualification supervisor. `RUNTIME_PORT` is the loopback inference port;
 `WARMUP_PORT` exposes readiness only after cold-shape and concurrency checks
 finish. Desmond should use that readiness endpoint. `HF_HOME` selects the
-persistent model cache. The runtime launcher sets `GRADIATED_RUNTIME_ROOT`.
+model cache. The production Nomad job uses `/dev/shm/gradiated/model-cache`
+because memory-mapped weight loading from RunPod’s network-backed cache is slow.
+Allow at least 330 GB of shared memory for the pinned checkpoint, in addition to
+serving memory. Cache contents survive process restarts and are lost with the
+host; a cold host downloads the pinned checkpoint again. The job reserves
+400000 MiB of host RAM. Keep the network-volume checkpoint when prewarming an
+existing host, and verify copied weight checksums before starting the canary. The runtime launcher sets `GRADIATED_RUNTIME_ROOT`.
 
 Build the Dockerfile with `product/inference` as context and the pinned Nomad
 base as the `runtime-base` build context. The `verify` target checks dependency

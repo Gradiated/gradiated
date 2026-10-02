@@ -30,7 +30,22 @@ grant request is `{workspace_id, version_id, sha256}`; its response composes
 `{workspace_id, version: TaskVersion, download: AdapterDownload}`. Signed URLs are
 not persisted on task versions. The production list is
 `{data: [{workspace_id, version_id, sha256}]}`, filtered by base model. These private
-routes follow in PR 3; workspace authorization at the gateway follows in PR 4.
+routes are provided by the API; workspace authorization at the gateway follows in PR 4.
+
+Set `LORA_GRANTS_URL` to `https://<api>/api/internal/v1/adapter-downloads`
+and `LORA_PRODUCTION_URL` to
+`https://<api>/api/internal/v1/task-versions/production`. Configure the API's
+`LORA_CONTROL_TOKEN` through its existing secret environment and provision the
+same isolated credential on hosts as `GRADIATED_ADAPTER_CONTROL_TOKEN`. Without
+the API token these private routes are disabled. Grant responses use `no-store`
+and reuse the existing five-minute, versioned S3 signing path. Hosts still enforce
+their exact download hostname allowlist.
+
+The startup list includes at most 4096 available current production versions per
+base, ordered by the task's last update, with no signed URLs. Each host fetches a
+grant only when preparing an adapter. Archived workspaces and suspended
+organizations are excluded. Qualification candidates may obtain a grant while
+their version remains unavailable; preparing one does not make it production.
 
 ## Cache ownership
 

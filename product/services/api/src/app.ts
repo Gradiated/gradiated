@@ -29,6 +29,10 @@ import { registerWaitlistRoutes } from "./routes/waitlist.js";
 import { registerWizardRoutes } from "./routes/wizard.js";
 import { registerGenerationRoutes } from "./routes/generations.js";
 import { registerTrainingRoutes } from "./routes/training.js";
+import {
+  registerAdapterHostingRoutes,
+  type AdapterHostingDependencies,
+} from "./routes/adapter-hosting.js";
 import { registerWorkspaceRoutes } from "./routes/workspaces.js";
 import type {
   ApiEnvironment,
@@ -39,6 +43,7 @@ import type {
 import type { WaitlistWelcomeSender } from "./email/waitlist-welcome.js";
 
 export interface AppDependencies {
+  adapterHosting?: AdapterHostingDependencies;
   hostCertificates?: HostCertificateDependencies;
   allowedOrigins: string[];
   auth: AuthService;
@@ -51,6 +56,7 @@ export interface AppDependencies {
 }
 
 export const createApp = ({
+  adapterHosting,
   hostCertificates,
   allowedOrigins,
   auth,
@@ -149,6 +155,7 @@ export const createApp = ({
   registerWorkspaceRoutes(app, services.workspaces);
   registerGenerationRoutes(app, services.usage, services.traces);
   registerTrainingRoutes(app, services.training);
+  if (adapterHosting) registerAdapterHostingRoutes(app, adapterHosting);
   registerGatewayContract(app);
 
   app.get("/api/openapi.json", (context) =>

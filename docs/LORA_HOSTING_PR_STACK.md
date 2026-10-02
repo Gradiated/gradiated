@@ -4,22 +4,33 @@ The stack builds on the existing pinned vLLM bundles, Nomad allocations,
 TypeScript API/worker, Rust gateway and console. Adapter hosting is opt-in.
 Production enabling and live GPU qualification require separate authorization.
 
-| PR | Branch | Scope |
-| --- | --- | --- |
-| 1 | `feat/lora-hosting-contracts` | Base revision metadata on existing task versions and derived immutable runtime names |
-| 2 | `feat/lora-vllm-runtime` | Verified artifacts, local disk files, preparation and native vLLM cache integration |
-| 3 | `feat/lora-hosting-control` | Private artifact grants, candidate validation and the existing production pointer |
-| 4 | `feat/lora-private-inference` | Scoped gateway resolution, exact dispatch, release identity and console actions |
+| PR  | Branch                        | Scope                                                                                |
+| --- | ----------------------------- | ------------------------------------------------------------------------------------ |
+| 1   | `feat/lora-hosting-contracts` | Base revision metadata on existing task versions and derived immutable runtime names |
+| 2   | `feat/lora-vllm-runtime`      | Verified artifacts, local disk files, preparation and native vLLM cache integration  |
+| 3   | `feat/lora-hosting-control`   | Private artifact grants, candidate validation and the existing production pointer    |
+| 4   | `feat/lora-private-inference` | Scoped gateway resolution, exact dispatch, release identity and console actions      |
 
-Each branch targets its predecessor while stacked. Review identity/contracts
-before dependent interfaces and runtime/cache safety before private inference.
-The existing planning PR is the prerequisite.
+PRs 1 and 2 and the planning documents are merged into `main` via PR #360.
+PR 3 targets `main`; later dependent work targets its predecessor while stacked.
+Review runtime/cache safety before private inference.
 
-PR 1 is merged into the planning branch. PR 2's [runtime implementation](../product/inference/lora/README.md)
+PR 2's [runtime implementation](../product/inference/lora/README.md)
 adds opt-in GLM bundle support, host-local caches and private preparation. The
 existing deployment release advertises `lora_enabled` only when enabled. Private
-grant/list routes follow in PR 3 and gateway dispatch follows in PR 4; keep
+grant/list routes are implemented in PR 3 and gateway dispatch follows in PR 4; keep
 hosting disabled until those and real GPU qualification are complete.
+
+PR 3 adds authenticated private metadata/download grants and a bounded startup
+list using the existing S3 signer and task production pointer. Archived workspaces
+and suspended organizations are excluded. The list includes at most 4096 available
+current versions per base, ordered by the task's last update. Grant requests bind
+workspace, version and full artifact checksum; candidates can be prepared before
+they are available for production. Grants do not change eligibility or promotion.
+Publishing records the base revision from the frozen training manifest. Legacy
+artifacts without that revision remain downloadable through the existing public
+management route but cannot be loaded or promoted. Existing eligibility remains
+required for promotion; this PR does not automatically qualify trained versions.
 
 Existing task/version records are the source of truth. There are no new hosting
 or promotion tables, hosting workflow, reconciliation loop or fleet service.

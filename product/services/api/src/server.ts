@@ -10,6 +10,7 @@ import {
   createTraceService,
   createTrainingService,
   createAdapterDownloads,
+  createAdapterHostingService,
   ObjectStorage,
   createDeploymentStatusService,
   createOrganizationService,
@@ -146,8 +147,21 @@ const metrics = new ApiMetrics({
 });
 
 const trainingEngine = createTrainingEngine(process.env);
+const adapterDownloads = createAdapterDownloads(
+  environment.TRAINING_ARTIFACTS_BUCKET
+    ? new ObjectStorage(environment.TRAINING_ARTIFACTS_BUCKET)
+    : undefined,
+);
 
 const app = createApp({
+  ...(environment.LORA_CONTROL_TOKEN
+    ? {
+        adapterHosting: {
+          token: environment.LORA_CONTROL_TOKEN,
+          service: createAdapterHostingService(database, adapterDownloads),
+        },
+      }
+    : {}),
   ...(hostCertificates ? { hostCertificates } : {}),
   allowedOrigins: trustedOrigins,
   auth,
@@ -176,11 +190,7 @@ const app = createApp({
     training: createTrainingService(
       database,
       contents,
-      createAdapterDownloads(
-        environment.TRAINING_ARTIFACTS_BUCKET
-          ? new ObjectStorage(environment.TRAINING_ARTIFACTS_BUCKET)
-          : undefined,
-      ),
+      adapterDownloads,
       trainingEngine.engine,
     ),
   },

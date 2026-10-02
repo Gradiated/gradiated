@@ -131,6 +131,10 @@ export {
   type AdapterDownloads,
 } from "./training/downloads.js";
 export {
+  createAdapterHostingService,
+  type AdapterHostingService,
+} from "./training/hosting.js";
+export {
   TrainingAdmissionError,
   type TrainingEngine,
   type TrainingInput,

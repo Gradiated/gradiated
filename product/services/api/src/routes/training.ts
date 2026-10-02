@@ -221,7 +221,7 @@ const runResponse = (run: TrainingRunRecord): TrainingRun => ({
   finished_at: run.finishedAt?.toISOString() ?? null,
 });
 
-const versionResponse = (
+export const versionResponse = (
   task: TaskRecord,
   version: TaskVersionRecord,
 ): TaskVersion => ({

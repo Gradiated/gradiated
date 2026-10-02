@@ -23,6 +23,21 @@ describe("API environment", () => {
     });
   });
 
+  it("accepts an optional isolated adapter control credential", () => {
+    const controlToken = "a".repeat(43);
+    expect(
+      parseApiEnvironment({
+        ...baseEnvironment,
+        LORA_CONTROL_TOKEN: controlToken,
+      }).LORA_CONTROL_TOKEN,
+    ).toBe(controlToken);
+    for (const value of ["", "short", "a".repeat(257), "a".repeat(32) + "!"]) {
+      expect(() =>
+        parseApiEnvironment({ ...baseEnvironment, LORA_CONTROL_TOKEN: value }),
+      ).toThrow();
+    }
+  });
+
   it("requires the Nomad issuer configuration as a pair", () => {
     expect(() =>
       parseApiEnvironment({

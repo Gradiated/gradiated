@@ -120,6 +120,7 @@ describe("training service", () => {
           sha256: sha,
           size_bytes: 1,
           rank: 16,
+          base_model_revision: "frozen-revision",
         },
         status,
       })
@@ -512,6 +513,31 @@ describe("training service", () => {
       );
 
       expect(promoted.productionVersionId).toBe(version.id);
+    });
+
+    it("keeps production unchanged for a legacy version without a base revision", async () => {
+      const owner = await seedMember(db.database, { role: "owner" });
+      const task = await seedTask(owner.workspaceId);
+      const { version } = await seedVersion(task);
+      await db.database
+        .update(taskVersions)
+        .set({
+          adapter: { ...version.adapter, base_model_revision: undefined },
+        })
+        .where(eq(taskVersions.id, version.id));
+      await expect(
+        service().promote(
+          owner.userId,
+          owner.workspaceId,
+          task.name,
+          version.id,
+        ),
+      ).rejects.toMatchObject({ code: "unavailable" });
+      expect(
+        (
+          await db.database.select().from(tasks).where(eq(tasks.id, task.id))
+        )[0]!.productionVersionId,
+      ).toBeNull();
     });
 
     it.each([

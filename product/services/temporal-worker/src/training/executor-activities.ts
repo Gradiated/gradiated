@@ -355,7 +355,7 @@ export const createTrainingExecutorActivities = (options: {
             rank,
             base_model_revision: manifest.recipe.revision,
           },
-          "unavailable",
+          "available",
         );
       }),
     evaluateAdapter: (

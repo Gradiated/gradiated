@@ -419,6 +419,10 @@ prompts, weights, signed URLs or secrets. Record hosting and promotion actors.
 
 ### Implementation sequence and acceptance
 
+The [LoRA hosting PR stack](LORA_HOSTING_PR_STACK.md) expands these increments
+into four reviewable changes with code scope, dependencies, interface boundaries
+and acceptance checks, based on the existing pinned vLLM stack.
+
 | Increment | Deliverable | Acceptance |
 | --- | --- | --- |
 | 1. Runtime qualification | Qwen loop smoke plus exact GLM-sized rank-two/all-layer profiles, safe artifact loader, Nomad service job, private adapter control | Real adapters load; reference agreement, two-adapter cache isolation, streaming/cancel, TP2 + TP4 co-location and restart cleanup pass |

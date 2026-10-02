@@ -22,6 +22,7 @@ export const ModelDeploymentReleaseSchema = z
     tokenizer_path: BoundedIdentifierSchema,
     tokenizer_revision: BoundedIdentifierSchema,
     tokenizer_mode: z.enum(["deepseek_v4", "deepseek_v41"]).optional(),
+    lora_enabled: z.boolean().optional(),
   })
   .openapi("ModelDeploymentRelease");
 

@@ -80,6 +80,14 @@ export const TaskVersionAdapterSchema = z
     sha256: Sha256Schema,
     size_bytes: CountSchema,
     rank: z.number().int().positive(),
+    base_model_revision: z
+      .string()
+      .min(1)
+      .max(300)
+      .optional()
+      .describe(
+        "Immutable base checkpoint revision used to train this adapter.",
+      ),
   })
   .openapi("TaskVersionAdapter");
 export type TaskVersionAdapter = z.infer<typeof TaskVersionAdapterSchema>;

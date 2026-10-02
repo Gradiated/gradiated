@@ -17,7 +17,7 @@ const shared = [
 ];
 export const bundles = {
   training: ["product/inference/training", "product/packages/autotrain", "product/packages/contracts/src/training-recipe.json", "product/inference/nomad/jobs/claim-gpus.sh"],
-  "glm-5-3-flash": ["product/inference/bundles/glm-5-3-flash", "product/inference/runtimes/glm"],
+  "glm-5-3-flash": ["product/inference/bundles/glm-5-3-flash", "product/inference/runtimes/glm", "product/inference/lora"],
   "host-tools": ["product/inference/bundles/host-tools"],
   "deepseek-v4-1-flash": [
     "product/inference/bundles/deepseek-v4-1-flash",

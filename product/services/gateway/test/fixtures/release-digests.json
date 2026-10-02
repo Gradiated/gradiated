@@ -108,6 +108,238 @@
         "tokenizer_mode": "deepseek_v41"
       },
       "digest": "sha256:915437248d023f2411beba50950df54001b29c68a6b07150fe32387563c6b592"
+    },
+    {
+      "name": "required fields only; lora_enabled=false",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "lora_enabled": false
+      },
+      "digest": "sha256:e86303f8ba97011926cbfaf5cb2684da340ba14311814b95c7f5ec56bb48ed32"
+    },
+    {
+      "name": "tokenizer_mode; lora_enabled=false",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "tokenizer_mode": "deepseek_v41",
+        "lora_enabled": false
+      },
+      "digest": "sha256:1aa6d33c348b32717ad535538c04b2c5b8f23cc0622a2d0fbdb5851fc9afb633"
+    },
+    {
+      "name": "runtime_model_name; lora_enabled=false",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "runtime_model_name": "vendor/runtime-name",
+        "lora_enabled": false
+      },
+      "digest": "sha256:1f896c27be6ded924a3e93337f8e61e2ecb3a9101bb61f2074967e65a03b15b4"
+    },
+    {
+      "name": "runtime_model_name+tokenizer_mode; lora_enabled=false",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "runtime_model_name": "vendor/runtime-name",
+        "tokenizer_mode": "deepseek_v41",
+        "lora_enabled": false
+      },
+      "digest": "sha256:b68eca70a5cdc3d0d965265a850d965deb1eaa8576f2e471aed6650669619154"
+    },
+    {
+      "name": "protocol; lora_enabled=false",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "protocol": "system_one",
+        "lora_enabled": false
+      },
+      "digest": "sha256:2bd4f4f3a6f09283471ec92cfe4009e158d74ec5f913f4bb3e3ae5553c30f569"
+    },
+    {
+      "name": "protocol+tokenizer_mode; lora_enabled=false",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "protocol": "system_one",
+        "tokenizer_mode": "deepseek_v41",
+        "lora_enabled": false
+      },
+      "digest": "sha256:167fd3df1ae3528723b75f458e1e2802fa1743a2442eddb5ee72a3082a0ca24f"
+    },
+    {
+      "name": "protocol+runtime_model_name; lora_enabled=false",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "protocol": "system_one",
+        "runtime_model_name": "vendor/runtime-name",
+        "lora_enabled": false
+      },
+      "digest": "sha256:00ad5005c4a66033a7dd09d4db98632e034359214217a92c389b164826439e04"
+    },
+    {
+      "name": "protocol+runtime_model_name+tokenizer_mode; lora_enabled=false",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "protocol": "system_one",
+        "runtime_model_name": "vendor/runtime-name",
+        "tokenizer_mode": "deepseek_v41",
+        "lora_enabled": false
+      },
+      "digest": "sha256:efc6148f975e125786e4ef0bb2cf0d9f5b6e02c43d86c8b720bdc9e3200cc5b1"
+    },
+    {
+      "name": "required fields only; lora_enabled=true",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "lora_enabled": true
+      },
+      "digest": "sha256:6f49cdac595888a82835278bc5d4de5aed9ebc7f9705cff8b33f306e52215773"
+    },
+    {
+      "name": "tokenizer_mode; lora_enabled=true",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "tokenizer_mode": "deepseek_v41",
+        "lora_enabled": true
+      },
+      "digest": "sha256:35cb2f02c7a6a57ecb518242d2f8979688ccaf0fa3b380a4a64deceb170e4629"
+    },
+    {
+      "name": "runtime_model_name; lora_enabled=true",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "runtime_model_name": "vendor/runtime-name",
+        "lora_enabled": true
+      },
+      "digest": "sha256:ab381daa4b0e1dc849b590bbf4b60838afaa614c93c2da851bd48e0bd8d57914"
+    },
+    {
+      "name": "runtime_model_name+tokenizer_mode; lora_enabled=true",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "runtime_model_name": "vendor/runtime-name",
+        "tokenizer_mode": "deepseek_v41",
+        "lora_enabled": true
+      },
+      "digest": "sha256:a1f26e33dd955d6b5169faaafb4b65c1e80905927a3a741496d3d06ef05e8ba7"
+    },
+    {
+      "name": "protocol; lora_enabled=true",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "protocol": "system_one",
+        "lora_enabled": true
+      },
+      "digest": "sha256:db34d66c3548074e9cffb5f4e84dd38d8f504a22cbdcd51d42aa640c3f99774c"
+    },
+    {
+      "name": "protocol+tokenizer_mode; lora_enabled=true",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "protocol": "system_one",
+        "tokenizer_mode": "deepseek_v41",
+        "lora_enabled": true
+      },
+      "digest": "sha256:5ddb24afd9dfab5e1e5a8abb7e5d6cf70c455fbc765e6f5caf9164e84525cd6a"
+    },
+    {
+      "name": "protocol+runtime_model_name; lora_enabled=true",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "protocol": "system_one",
+        "runtime_model_name": "vendor/runtime-name",
+        "lora_enabled": true
+      },
+      "digest": "sha256:a9eef0a179aa0921d0cee66f6996f26bac1f49c0c7a21cff182413c8cc1d41be"
+    },
+    {
+      "name": "protocol+runtime_model_name+tokenizer_mode; lora_enabled=true",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "protocol": "system_one",
+        "runtime_model_name": "vendor/runtime-name",
+        "tokenizer_mode": "deepseek_v41",
+        "lora_enabled": true
+      },
+      "digest": "sha256:e98e88c358d92981babd727c4851e5a08e9ccc9aa631cc07eda50941afa17080"
     }
   ]
 }

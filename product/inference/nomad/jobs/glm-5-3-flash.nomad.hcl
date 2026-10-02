@@ -6,11 +6,47 @@ variable "cpu_mhz" { type = number }
 variable "memory_mb" { type = number }
 variable "runtime_disk_mb" { type = number }
 variable "status_url" { type = string }
+variable "tensor_parallel_size" {
+  type    = number
+  default = 2
+}
+variable "lora_enabled" {
+  type    = bool
+  default = false
+}
+variable "lora_gpu_slots" {
+  type    = number
+  default = 8
+}
+variable "lora_cpu_slots" {
+  type    = number
+  default = 64
+}
+variable "lora_max_rank" {
+  type    = number
+  default = 8
+}
+variable "lora_disk_cache_bytes" {
+  type    = number
+  default = 0
+}
+variable "lora_download_hosts" {
+  type    = string
+  default = ""
+}
+variable "lora_grants_url" {
+  type    = string
+  default = ""
+}
+variable "lora_production_url" {
+  type    = string
+  default = ""
+}
 
 locals {
   model_id       = "z-ai/glm-5.3-flash"
   model_revision = "84c6a6aa9497188e15a635ba793b0f95a79b1033"
-  release = {
+  release = merge({
     schema_version     = 1
     runtime_revision   = "glm-${substr(var.bundle_sha256, 0, 12)}"
     model_path         = "zai-org/GLM-5.3-Flash"
@@ -18,7 +54,7 @@ locals {
     runtime_model_name = "zai-org/GLM-5.3-Flash"
     tokenizer_path     = "zai-org/GLM-5.3-Flash"
     tokenizer_revision = local.model_revision
-  }
+  }, var.lora_enabled ? { lora_enabled = true } : {})
 }
 
 job "glm-5-3-flash" {
@@ -89,6 +125,9 @@ job "glm-5-3-flash" {
     network {
       mode = "host"
       port "runtime" {
+        host_network = "loopback"
+      }
+      port "adapter" {
         host_network = "loopback"
       }
       port "warmup" {
@@ -212,6 +251,18 @@ job "glm-5-3-flash" {
         TRITON_CACHE_DIR        = "/home/runtime/.cache/triton"
         HF_HOME                 = "/dev/shm/gradiated/model-cache"
         RUNTIME_PORT            = "${NOMAD_PORT_runtime}"
+        ADAPTER_PORT            = "${NOMAD_PORT_adapter}"
+        MODEL_ID                = local.model_id
+        TENSOR_PARALLEL_SIZE    = var.tensor_parallel_size
+        LORA_ENABLED            = var.lora_enabled ? "true" : "false"
+        LORA_GPU_SLOTS          = var.lora_gpu_slots
+        LORA_CPU_SLOTS          = var.lora_cpu_slots
+        LORA_MAX_RANK           = var.lora_max_rank
+        LORA_DISK_CACHE_BYTES   = var.lora_disk_cache_bytes
+        LORA_DOWNLOAD_HOSTS     = var.lora_download_hosts
+        LORA_GRANTS_URL         = var.lora_grants_url
+        LORA_PRODUCTION_URL     = var.lora_production_url
+        LORA_CONTROL_TOKEN_FILE = "/etc/gradiated/adapter-control.token"
         WARMUP_PORT             = "${NOMAD_PORT_warmup}"
       }
 
@@ -219,13 +270,20 @@ job "glm-5-3-flash" {
         cpu    = var.cpu_mhz
         memory = var.memory_mb
         device "nvidia/gpu" {
-          count = 2
+          count = var.tensor_parallel_size
           constraint {
             attribute = "${device.model}"
             operator  = "regexp"
             value     = "(^| )B300( |$)"
           }
         }
+      }
+
+      service {
+        name     = var.lora_enabled ? "gradiated-adapters" : "gradiated-adapters-disabled"
+        provider = "nomad"
+        address  = "127.0.0.1"
+        port     = "adapter"
       }
 
       service {

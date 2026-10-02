@@ -3,7 +3,7 @@
 # runtime port, so runtimes are never published and ports can be dynamic. Model
 # jobs register their runtime as the shared service "gradiated-runtime".
 job "host-proxy" {
-  type = "system"
+  type      = "system"
   node_pool = "all"
 
   # Hosts enrolled before the proxy run their own ingress on the same port; this
@@ -108,6 +108,12 @@ job "host-proxy" {
                   proxy_request_buffering off;
                   proxy_read_timeout 330s;
                   proxy_send_timeout 330s;
+                  location ~ ^/alloc/[^/]+/v1/(load|unload)_lora_adapter$ { return 404; }
+          {{- range nomadService "gradiated-adapters" }}{{ if eq .Node (env "node.unique.id") }}
+                  location /alloc/{{ .AllocID }}/internal/adapters {
+                      proxy_pass http://{{ .Address }}:{{ .Port }}/internal/adapters;
+                  }
+          {{- end }}{{ end }}
           {{- range nomadService "gradiated-runtime" }}{{ if eq .Node (env "node.unique.id") }}
                   location /alloc/{{ .AllocID }}/ {
                       proxy_pass http://{{ .Address }}:{{ .Port }}/;

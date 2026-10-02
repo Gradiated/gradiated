@@ -2682,6 +2682,12 @@
           "rank": {
             "type": "integer",
             "exclusiveMinimum": 0
+          },
+          "base_model_revision": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300,
+            "description": "Immutable base checkpoint revision used to train this adapter."
           }
         },
         "required": [

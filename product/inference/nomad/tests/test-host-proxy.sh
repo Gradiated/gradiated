@@ -79,6 +79,12 @@ job "fake-runtime" {
         }
       }
     }
+    service {
+      name     = "gradiated-adapters"
+      provider = "nomad"
+      port     = "runtime"
+      task     = "echo"
+    }
     task "echo" {
       driver = "raw_exec"
       shutdown_delay = "20s"
@@ -141,6 +147,11 @@ fail() {
 for alloc in "${allocs[@]}"; do
   response=$(request "/alloc/$alloc/v1/chat/completions?stream=true" "$token")
   [[ $response == "$alloc /v1/chat/completions?stream=true auth=[]"*" 200" ]] || fail "allocation $alloc was not routed with its prefix stripped: $response"
+  response=$(request "/alloc/$alloc/internal/adapters" "$token")
+  [[ $response == "$alloc /internal/adapters auth=[]"*" 200" ]] || fail "allocation $alloc control route was not preserved: $response"
+  for operation in load unload; do
+    [[ $(request "/alloc/$alloc/v1/${operation}_lora_adapter" "$token") == *" 404" ]] || fail "raw adapter admin API was exposed"
+  done
 done
 [[ $(request "/alloc/00000000-0000-4000-8000-000000000000/v1/models" "$token") == *" 404" ]] || fail "an unknown allocation was not rejected"
 

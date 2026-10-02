@@ -437,6 +437,9 @@ importers:
       '@gradiated/control':
         specifier: workspace:*
         version: link:../../packages/control
+      '@gradiated/credentials':
+        specifier: workspace:*
+        version: link:../../packages/credentials
       '@gradiated/nomad-pki':
         specifier: workspace:*
         version: link:../../packages/nomad-pki

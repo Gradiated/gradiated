@@ -8,16 +8,46 @@ const secretIds = {
   anthropic: "gradiated/prod/providers/anthropic",
 } as const;
 
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
 export type Provider = keyof typeof secretIds;
 
 export class CredentialLoader {
   readonly #client: SecretsManagerClient;
+  readonly #now: () => number;
+  readonly #cache = new Map<Provider, { key: string; expiresAt: number }>();
+  readonly #pending = new Map<Provider, Promise<string>>();
 
-  constructor(client = new SecretsManagerClient({ region: "us-east-1" })) {
+  constructor(
+    client = new SecretsManagerClient({ region: "us-east-1" }),
+    now = () => performance.now(),
+  ) {
     this.#client = client;
+    this.#now = now;
   }
 
   load = async (provider: Provider): Promise<string> => {
+    const cached = this.#cache.get(provider);
+    if (cached && this.#now() < cached.expiresAt) return cached.key;
+
+    this.#cache.delete(provider);
+    const pending = this.#pending.get(provider);
+    if (pending) return pending;
+
+    const request = this.#read(provider)
+      .then((key) => {
+        this.#cache.set(provider, {
+          key,
+          expiresAt: this.#now() + CACHE_TTL_MS,
+        });
+        return key;
+      })
+      .finally(() => this.#pending.delete(provider));
+    this.#pending.set(provider, request);
+    return request;
+  };
+
+  #read = async (provider: Provider): Promise<string> => {
     try {
       const secretId = secretIds[provider];
 

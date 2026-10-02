@@ -18,14 +18,21 @@ const setup = () => {
     send(command as GetSecretValueCommand),
   );
 
-  return { loader: new CredentialLoader(client), send };
+  let now = 0;
+  return {
+    loader: new CredentialLoader(client, () => now),
+    send,
+    advance: (ms: number) => {
+      now += ms;
+    },
+  };
 };
 
 describe("CredentialLoader", () => {
   it.each(["openai", "anthropic"] as const)(
-    "loads %s and observes a manual slot change on the next load",
+    "loads %s and caches for five minutes before observing a manual slot change",
     async (provider) => {
-      const { loader, send } = setup();
+      const { loader, send, advance } = setup();
       const keys = { primaryApiKey: "first-key", secondaryApiKey: "next-key" };
       send.mockResolvedValueOnce({
         SecretString: JSON.stringify({ ...keys, activeSlot: "primary" }),
@@ -35,6 +42,10 @@ describe("CredentialLoader", () => {
       });
 
       expect(await loader.load(provider)).toBe("first-key");
+      advance(5 * 60 * 1000 - 1);
+      expect(await loader.load(provider)).toBe("first-key");
+      expect(send).toHaveBeenCalledTimes(1);
+      advance(1);
       expect(await loader.load(provider)).toBe("next-key");
       expect(send).toHaveBeenCalledTimes(2);
       expect(send.mock.calls[0]?.[0].input).toEqual({
@@ -79,7 +90,7 @@ describe("CredentialLoader", () => {
   });
 
   it("does not expose SDK errors or return a cached key after a failed read", async () => {
-    const { loader, send } = setup();
+    const { loader, send, advance } = setup();
     send.mockResolvedValueOnce({
       SecretString: JSON.stringify({
         activeSlot: "primary",
@@ -89,8 +100,36 @@ describe("CredentialLoader", () => {
     send.mockRejectedValueOnce(new Error("private-provider-value"));
 
     expect(await loader.load("openai")).toBe("first-key");
+    advance(5 * 60 * 1000);
     await expect(loader.load("openai")).rejects.toThrow(
       /^Cannot load provider credential\.$/,
     );
+    send.mockResolvedValueOnce({
+      SecretString: JSON.stringify({
+        activeSlot: "secondary",
+        secondaryApiKey: "recovered-key",
+      }),
+    });
+    expect(await loader.load("openai")).toBe("recovered-key");
+    expect(send).toHaveBeenCalledTimes(3);
+  });
+
+  it("shares concurrent lookups and caches providers independently", async () => {
+    const { loader, send } = setup();
+    send.mockResolvedValue({
+      SecretString: JSON.stringify({
+        activeSlot: "primary",
+        primaryApiKey: "test-key",
+      }),
+    });
+    expect(
+      await Promise.all([
+        loader.load("openai"),
+        loader.load("openai"),
+        loader.load("anthropic"),
+      ]),
+    ).toEqual(["test-key", "test-key", "test-key"]);
+    await loader.load("anthropic");
+    expect(send).toHaveBeenCalledTimes(2);
   });
 });

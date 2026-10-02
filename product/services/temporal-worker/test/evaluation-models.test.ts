@@ -53,9 +53,14 @@ it("uses the selected Anthropic model and moves system instructions to its syste
 
 it("rejects missing credentials before sending data and rejects truncated answers", async () => {
   const send = vi.fn<typeof fetch>();
-  expect(() =>
-    createEvaluationModels({}, send).check("openai/gpt-6.1-sol"),
-  ).toThrow("credentials");
+  const credentials = {
+    load: vi
+      .fn()
+      .mockRejectedValue(new Error("Cannot load provider credential.")),
+  };
+  await expect(
+    createEvaluationModels({}, send, credentials).check("openai/gpt-6.1-sol"),
+  ).rejects.toThrow("credential");
   expect(send).not.toHaveBeenCalled();
   send.mockResolvedValue(
     new Response(
@@ -72,4 +77,52 @@ it("rejects missing credentials before sending data and rejects truncated answer
       new AbortController().signal,
     ),
   ).rejects.toThrow();
+});
+
+it("loads production provider credentials and observes key rotation on the next request", async () => {
+  const credentials = {
+    load: vi
+      .fn()
+      .mockResolvedValueOnce("first-key")
+      .mockResolvedValueOnce("rotated-key"),
+  };
+  const send = vi.fn<typeof fetch>().mockImplementation(
+    async () =>
+      new Response(
+        JSON.stringify({
+          choices: [{ message: { content: "answer" }, finish_reason: "stop" }],
+          usage: { completion_tokens: 1 },
+        }),
+      ),
+  );
+  const models = createEvaluationModels(
+    { NODE_ENV: "production", OPENAI_API_KEY: "stale-environment-key" },
+    send,
+    credentials,
+  );
+  for (let i = 0; i < 2; i++)
+    await models.generate(
+      "openai/gpt-6.1-sol",
+      [{ role: "user", content: "test" }],
+      new AbortController().signal,
+    );
+  expect(credentials.load.mock.calls).toEqual([["openai"], ["openai"]]);
+  expect(send.mock.calls.map(([, options]) => options?.headers)).toEqual([
+    { "Content-Type": "application/json", Authorization: "Bearer first-key" },
+    { "Content-Type": "application/json", Authorization: "Bearer rotated-key" },
+  ]);
+});
+
+it("preflights managed credentials without sending prompts", async () => {
+  const credentials = { load: vi.fn().mockResolvedValue("test-key") };
+  const send = vi.fn<typeof fetch>();
+  const models = createEvaluationModels(
+    { NODE_ENV: "production" },
+    send,
+    credentials,
+  );
+  await models.check("openai/gpt-6.1-sol");
+  await models.check("anthropic/claude-sonnet-5-5");
+  expect(credentials.load.mock.calls).toEqual([["openai"], ["anthropic"]]);
+  expect(send).not.toHaveBeenCalled();
 });

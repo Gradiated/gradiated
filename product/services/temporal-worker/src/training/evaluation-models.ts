@@ -1,5 +1,6 @@
 import { performance } from "node:perf_hooks";
 import { z } from "zod";
+import { CredentialLoader } from "@gradiated/credentials";
 
 export type EvaluationMessage = {
   role: "system" | "user" | "assistant";
@@ -11,7 +12,7 @@ export const predictionSchema = z.object({
   seconds: z.number().positive(),
 });
 export type EvaluationModel = {
-  check(modelId: string): void;
+  check(modelId: string): void | Promise<void>;
   generate(
     modelId: string,
     messages: EvaluationMessage[],
@@ -44,6 +45,7 @@ const claudeResponse = z.object({
 export const createEvaluationModels = (
   environment: NodeJS.ProcessEnv,
   send: typeof fetch = fetch,
+  credentials: Pick<CredentialLoader, "load"> = new CredentialLoader(),
 ): EvaluationModel => {
   const provider = (modelId: string) => {
     if (modelId.startsWith("openai/"))
@@ -64,18 +66,31 @@ export const createEvaluationModels = (
       kind: "hosted",
     };
   };
-  const check = (modelId: string) => {
-    if (!provider(modelId).key)
+  const credential = async (modelId: string) => {
+    const selected = provider(modelId);
+    if (selected.kind === "openai" || selected.kind === "anthropic") {
+      if (environment.NODE_ENV !== "production" && selected.key)
+        return selected.key;
+
+      return credentials.load(selected.kind);
+    }
+
+    if (!selected.key)
       throw new Error(
         `Evaluation credentials are not configured for ${modelId}.`,
       );
+
+    return selected.key;
+  };
+  const check = async (modelId: string) => {
+    await credential(modelId);
   };
 
   return {
     check,
     async generate(modelId, messages, signal) {
-      check(modelId);
-      const { key, url, kind } = provider(modelId);
+      const key = await credential(modelId);
+      const { url, kind } = provider(modelId);
       const model =
         kind === "hosted" ? modelId : modelId.slice(modelId.indexOf("/") + 1);
       const body =

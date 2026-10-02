@@ -1,4 +1,13 @@
 use aws_sdk_secretsmanager::Client;
+use std::time::{Duration, Instant};
+use tokio::sync::Mutex;
+
+const CACHE_TTL: Duration = Duration::from_secs(5 * 60);
+
+struct CachedKey {
+    key: String,
+    expires_at: Instant,
+}
 
 #[derive(Clone, Copy)]
 pub enum Provider {
@@ -21,14 +30,31 @@ pub struct CredentialError;
 
 pub struct CredentialLoader {
     client: Client,
+    openai: Mutex<Option<CachedKey>>,
+    anthropic: Mutex<Option<CachedKey>>,
 }
 
 impl CredentialLoader {
     pub fn new(client: Client) -> Self {
-        Self { client }
+        Self {
+            client,
+            openai: Mutex::new(None),
+            anthropic: Mutex::new(None),
+        }
     }
 
     pub async fn load(&self, provider: Provider) -> Result<String, CredentialError> {
+        let mut cached = match provider {
+            Provider::OpenAi => self.openai.lock().await,
+            Provider::Anthropic => self.anthropic.lock().await,
+        };
+        if let Some(entry) = cached.as_ref() {
+            if Instant::now() < entry.expires_at {
+                return Ok(entry.key.clone());
+            }
+        }
+
+        *cached = None;
         let response = self
             .client
             .get_secret_value()
@@ -38,7 +64,13 @@ impl CredentialLoader {
             .await
             .map_err(|_| CredentialError)?;
 
-        active_key(response.secret_string().ok_or(CredentialError)?)
+        let key = active_key(response.secret_string().ok_or(CredentialError)?)?;
+        *cached = Some(CachedKey {
+            key: key.clone(),
+            expires_at: Instant::now() + CACHE_TTL,
+        });
+
+        Ok(key)
     }
 }
 

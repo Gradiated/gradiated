@@ -2,7 +2,9 @@
 
 TypeScript and Rust services use this package to load one active provider key.
 The loader maps the provider to its production Secrets Manager name in
-`us-east-1`. It reads `AWSCURRENT` on each call. It keeps no key cache.
+`us-east-1`. Each loader caches the active key in memory for five minutes per provider.
+Concurrent lookups share one AWS request. Expired entries must refresh from
+`AWSCURRENT`; a failed refresh returns an error rather than an expired key.
 
 ```ts
 import { CredentialLoader } from "@gradiated/credentials";
@@ -32,12 +34,15 @@ An invalid slot, missing active key, or failed read returns a generic error.
 The loader does not return the inactive key after an error.
 
 To rotate a key, update the inactive key in Secrets Manager. Test that key.
-Change `activeSlot` to select it. The next load reads the selected key. If a
+Change `activeSlot` to select it. The selected key takes effect when the five-minute cache expires. Restart the
+service to pick it up immediately. If a
 service keeps a provider client, reload its key or restart the service before
-revoking the old key. Do not call the loader on each inference request.
+revoking the old key. Keep one loader per service so calls share the cache.
 
-No service currently consumes these stored keys. Grant `GetSecretValue` on the
-specific provider secret and `kms:Decrypt` on its KMS key when adding a consumer.
+The Temporal worker loads these keys before training allocation and when calling
+the selected comparison or judge provider. Production uses Secrets Manager; local
+evaluation can use `OPENAI_API_KEY` and `ANTHROPIC_API_KEY`. Grant `GetSecretValue`
+on the specific provider secret and `kms:Decrypt` on its KMS key when adding a consumer.
 The customer-key proxy continues to use the key supplied with each request.
 
 Run `pnpm --filter @gradiated/credentials check` from `product/` to check both

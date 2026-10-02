@@ -194,7 +194,7 @@ export const createTrainingExecutorActivities = (options: {
             throw new Error("Evaluation models are not configured.");
           for (const modelId of [input.comparisonModelId, input.judgeModelId]) {
             if (modelId !== input.baseModelId)
-              options.evaluationModels.check(modelId);
+              await options.evaluationModels.check(modelId);
           }
         }
 

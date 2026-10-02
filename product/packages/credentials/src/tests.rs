@@ -109,8 +109,18 @@ async fn reads_current_version_and_observes_manual_rotation() {
     let loader = CredentialLoader::new(Client::from_conf(config));
 
     for provider in [Provider::OpenAi, Provider::Anthropic] {
+        let (first, concurrent) = tokio::join!(loader.load(provider), loader.load(provider));
+        assert_eq!(first.unwrap(), "first-key");
+        assert_eq!(concurrent.unwrap(), "first-key");
         assert_eq!(loader.load(provider).await.unwrap(), "first-key");
+
+        let cache = match provider {
+            Provider::OpenAi => &loader.openai,
+            Provider::Anthropic => &loader.anthropic,
+        };
+        cache.lock().await.as_mut().unwrap().expires_at = Instant::now();
         assert_eq!(loader.load(provider).await.unwrap(), "next-key");
+        cache.lock().await.as_mut().unwrap().expires_at = Instant::now();
         assert_eq!(
             loader.load(provider).await.unwrap_err().to_string(),
             "Cannot load provider credential."

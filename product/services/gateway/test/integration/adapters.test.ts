@@ -7,8 +7,15 @@ import { deferred, eventually } from "./eventually.js";
 
 const { makeCase } = useCases();
 
-const enable = async (instance: Case): Promise<string> => {
-  const release = { ...instance.release, lora_enabled: true };
+const enable = async (
+  instance: Case,
+  loraBaseRevision?: string,
+): Promise<string> => {
+  const release = {
+    ...instance.release,
+    lora_enabled: true,
+    ...(loraBaseRevision ? { lora_base_model_revision: loraBaseRevision } : {}),
+  };
   for (const deployment of instance.deployments) deployment.release = release;
   await instance.publish();
   const digest = `sha256:${createHash("sha256").update(JSON.stringify(release)).digest("hex")}`;
@@ -32,7 +39,11 @@ const enable = async (instance: Case): Promise<string> => {
   return digest;
 };
 
-const version = async (instance: Case, task = crypto.randomUUID()) => {
+const version = async (
+  instance: Case,
+  task = crypto.randomUUID(),
+  baseRevision = instance.release.model_revision,
+) => {
   const id = crypto.randomUUID();
   const run = crypto.randomUUID();
   const sha256 = "a".repeat(64);
@@ -59,7 +70,7 @@ const version = async (instance: Case, task = crypto.randomUUID()) => {
         sha256,
         size_bytes: 10,
         rank: 2,
-        base_model_revision: instance.release.model_revision,
+        base_model_revision: baseRevision,
       }),
     ],
   );
@@ -92,6 +103,31 @@ const settlement = (instance: Case, generation: string | undefined) =>
   );
 
 describe("workspace-private adapters", () => {
+  it("serves a separately qualified training revision and rejects it without qualification", async () => {
+    const qualified = await makeCase("vllm");
+    await enable(qualified, "training-bf16-revision");
+    const selected = await version(
+      qualified,
+      crypto.randomUUID(),
+      "training-bf16-revision",
+    );
+    const response = await qualified.post({ model: selected.selector });
+    expect(response.status).toBe(200);
+    expect(qualified.runtimes[0]!.calls[0]!.model).toBe(selected.runtimeName);
+
+    const unqualified = await makeCase("vllm");
+    await enable(unqualified);
+    const rejected = await version(
+      unqualified,
+      crypto.randomUUID(),
+      "training-bf16-revision",
+    );
+    expect((await unqualified.post({ model: rejected.selector })).status).toBe(
+      404,
+    );
+    expect(unqualified.totalCalls()).toBe(0);
+  });
+
   it("sends normal inference for a private version and records exact identity with base pricing", async () => {
     const instance = await makeCase("vllm");
     const digest = await enable(instance);

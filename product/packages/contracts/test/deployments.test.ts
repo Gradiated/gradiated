@@ -52,6 +52,22 @@ describe("DeploymentStatusReportSchema", () => {
 });
 
 describe("ModelDeploymentReleaseSchema", () => {
+  it("pins a qualified training revision independently of the serving checkpoint", () => {
+    const parsed = ModelDeploymentReleaseSchema.parse({
+      ...release,
+      lora_enabled: true,
+      lora_base_model_revision: "bf16-training",
+    });
+    expect(parsed.model_revision).toBe("rev-1");
+    expect(parsed.lora_base_model_revision).toBe("bf16-training");
+    expect(
+      ModelDeploymentReleaseSchema.safeParse({
+        ...release,
+        lora_base_model_revision: "",
+      }).success,
+    ).toBe(false);
+  });
+
   it("rejects an unknown key", () => {
     expect(
       ModelDeploymentReleaseSchema.safeParse({ ...release, extra: true })

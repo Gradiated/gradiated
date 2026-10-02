@@ -96,3 +96,30 @@ async fn rejects_private_names_that_collide_with_public_catalog_models() {
         Some(GatewayError::ServingStateUnavailable)
     );
 }
+
+#[tokio::test]
+async fn accepts_only_the_explicitly_qualified_training_revision() {
+    for training_revision in ["bf16-training", "unqualified"] {
+        let mut state = state();
+        state.adapter.as_mut().unwrap().base_model_revision = training_revision.to_owned();
+        state.model.as_mut().unwrap().deployments[0]
+            .release
+            .lora_base_model_revision = Some("bf16-training".to_owned());
+
+        let result = private_request(Arc::new(state), "task-a-v1").await;
+        if training_revision == "bf16-training" {
+            let request = result.unwrap();
+            assert_eq!(
+                request
+                    .deployment
+                    .release
+                    .lora_base_model_revision
+                    .as_deref(),
+                Some("bf16-training")
+            );
+            assert_ne!(request.deployment.release.model_revision, "bf16-training");
+        } else {
+            assert_eq!(result.err(), Some(GatewayError::ModelUnavailable));
+        }
+    }
+}

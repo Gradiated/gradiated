@@ -340,6 +340,23 @@
         "lora_enabled": true
       },
       "digest": "sha256:e98e88c358d92981babd727c4851e5a08e9ccc9aa631cc07eda50941afa17080"
+    },
+    {
+      "name": "separately-qualified-lora-training-base",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "protocol": "system_one",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "runtime_model_name": "vendor/runtime-name",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "tokenizer_mode": "deepseek_v41",
+        "lora_enabled": true,
+        "lora_base_model_revision": "bf16-qualified-training-revision"
+      },
+      "digest": "sha256:fdebe782f0acedd73cd2a7774a4599a17aabcfc97916b0d0a877e32cc9aea62a"
     }
   ]
 }

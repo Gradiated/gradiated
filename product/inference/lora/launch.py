@@ -39,7 +39,8 @@ def engine_settings(command, environment, model_config):
     parsed, _unknown = parser.parse_known_args(arguments)
     settings = {
         "base_model_id": environment["MODEL_ID"],
-        "base_model_revision": parsed.revision,
+        "base_model_revision": environment.get("LORA_BASE_MODEL_REVISION")
+        or parsed.revision,
         "runtime_model_name": parsed.served_model_name or parsed.model,
         "tensor_parallel_size": parsed.tensor_parallel_size,
         "gpu_slots": int(environment["LORA_GPU_SLOTS"]),

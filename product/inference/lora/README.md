@@ -106,6 +106,14 @@ bounded preparations. There is no placement or spreading across allocations.
 
 TP and base revision come from the existing vLLM command; layer/expert geometry
 comes from the pinned model configuration, including nested `text_config`.
+A qualified deployment may set `lora_base_model_revision` in its existing release
+and `LORA_BASE_MODEL_REVISION` for the loader when training and serving use distinct
+checkpoint revisions (for example BF16 training and FP8 serving). Without that
+setting, the serving revision is required. This is an explicit qualified pairing,
+not an automatic quantization conversion or acceptance of arbitrary revisions.
+Task versions retain their actual training revision. Keep LoRA disabled until the
+pairing's model/tokenizer/adapter layout and inference have been verified.
+
 Nomad's `tensor_parallel_size` controls both GPU allocation and the engine flag;
 the assigned GPU UUID count must match. These are host decisions, not adapter fields.
 

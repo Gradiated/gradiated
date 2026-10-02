@@ -342,7 +342,12 @@ impl RequestCoordinator {
         if let Some(adapter) = &adapter {
             model.deployments.retain(|deployment| {
                 deployment.release.lora_enabled == Some(true)
-                    && deployment.release.model_revision == adapter.base_model_revision
+                    && deployment
+                        .release
+                        .lora_base_model_revision
+                        .as_ref()
+                        .unwrap_or(&deployment.release.model_revision)
+                        == &adapter.base_model_revision
                     && !deployment.release.is_system_one()
                     && !deployment.release.sends_token_ids()
             });

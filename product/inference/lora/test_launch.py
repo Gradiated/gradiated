@@ -64,6 +64,15 @@ class LaunchTests(unittest.TestCase):
                     self.command(2), {**self.environment(2), **overrides}, {}
                 )
 
+    def test_qualified_training_revision_does_not_change_serving_checkpoint(self):
+        environment = {
+            **self.environment(2),
+            "LORA_BASE_MODEL_REVISION": "bf16-revision",
+        }
+        settings, model, revision = engine_settings(self.command(2), environment, {})
+        self.assertEqual(settings["base_model_revision"], "bf16-revision")
+        self.assertEqual((model, revision), ("base-repository", "base-revision"))
+
     def test_empty_download_allowlist_is_rejected_before_engine_start(self):
         for value in (None, "", " , , "):
             environment = self.environment(2)

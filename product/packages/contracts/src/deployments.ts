@@ -23,6 +23,9 @@ export const ModelDeploymentReleaseSchema = z
     tokenizer_revision: BoundedIdentifierSchema,
     tokenizer_mode: z.enum(["deepseek_v4", "deepseek_v41"]).optional(),
     lora_enabled: z.boolean().optional(),
+    lora_base_model_revision: BoundedIdentifierSchema.optional().describe(
+      "Qualified training checkpoint revision accepted by this deployment; defaults to model_revision.",
+    ),
   })
   .openapi("ModelDeploymentRelease");
 

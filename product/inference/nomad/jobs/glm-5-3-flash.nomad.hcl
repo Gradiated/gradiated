@@ -14,6 +14,10 @@ variable "lora_enabled" {
   type    = bool
   default = false
 }
+variable "lora_base_model_revision" {
+  type    = string
+  default = ""
+}
 variable "lora_gpu_slots" {
   type    = number
   default = 8
@@ -50,7 +54,10 @@ locals {
     runtime_model_name = "zai-org/GLM-5.3-Flash"
     tokenizer_path     = "zai-org/GLM-5.3-Flash"
     tokenizer_revision = local.model_revision
-  }, var.lora_enabled ? { lora_enabled = true } : {})
+    }, var.lora_enabled ? merge(
+    { lora_enabled = true },
+    var.lora_base_model_revision != "" ? { lora_base_model_revision = var.lora_base_model_revision } : {},
+  ) : {})
 }
 
 job "glm-5-3-flash" {
@@ -241,24 +248,25 @@ job "glm-5-3-flash" {
       }
 
       env {
-        HOME                    = "/home/runtime"
-        XDG_CACHE_HOME          = "/home/runtime/.cache"
-        TORCHINDUCTOR_CACHE_DIR = "/home/runtime/.cache/torchinductor"
-        TRITON_CACHE_DIR        = "/home/runtime/.cache/triton"
-        HF_HOME                 = "/dev/shm/gradiated/model-cache"
-        RUNTIME_PORT            = "${NOMAD_PORT_runtime}"
-        ADAPTER_PORT            = "${NOMAD_PORT_adapter}"
-        MODEL_ID                = local.model_id
-        TENSOR_PARALLEL_SIZE    = var.tensor_parallel_size
-        LORA_ENABLED            = var.lora_enabled ? "true" : "false"
-        LORA_GPU_SLOTS          = var.lora_gpu_slots
-        LORA_CPU_SLOTS          = var.lora_cpu_slots
-        LORA_MAX_RANK           = var.lora_max_rank
-        LORA_DISK_CACHE_BYTES   = var.lora_disk_cache_bytes
-        LORA_DOWNLOAD_HOSTS     = var.lora_download_hosts
-        GRADIATED_API_BASE_URL  = var.gradiated_api_base_url
-        HOST_IDENTITY_FILE      = "/etc/gradiated/host-identity.json"
-        WARMUP_PORT             = "${NOMAD_PORT_warmup}"
+        HOME                     = "/home/runtime"
+        XDG_CACHE_HOME           = "/home/runtime/.cache"
+        TORCHINDUCTOR_CACHE_DIR  = "/home/runtime/.cache/torchinductor"
+        TRITON_CACHE_DIR         = "/home/runtime/.cache/triton"
+        HF_HOME                  = "/dev/shm/gradiated/model-cache"
+        RUNTIME_PORT             = "${NOMAD_PORT_runtime}"
+        ADAPTER_PORT             = "${NOMAD_PORT_adapter}"
+        MODEL_ID                 = local.model_id
+        TENSOR_PARALLEL_SIZE     = var.tensor_parallel_size
+        LORA_ENABLED             = var.lora_enabled ? "true" : "false"
+        LORA_BASE_MODEL_REVISION = var.lora_base_model_revision
+        LORA_GPU_SLOTS           = var.lora_gpu_slots
+        LORA_CPU_SLOTS           = var.lora_cpu_slots
+        LORA_MAX_RANK            = var.lora_max_rank
+        LORA_DISK_CACHE_BYTES    = var.lora_disk_cache_bytes
+        LORA_DOWNLOAD_HOSTS      = var.lora_download_hosts
+        GRADIATED_API_BASE_URL   = var.gradiated_api_base_url
+        HOST_IDENTITY_FILE       = "/etc/gradiated/host-identity.json"
+        WARMUP_PORT              = "${NOMAD_PORT_warmup}"
       }
 
       resources {

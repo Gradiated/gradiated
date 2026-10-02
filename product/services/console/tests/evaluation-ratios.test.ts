@@ -114,7 +114,7 @@ describe("outputSpeed", () => {
   });
 });
 
-it("shows placeholder Qwen rates while preserving unknown historical cost", () => {
+it("shows unknown historical cost without substituting model token rates", () => {
   const value = {
     ...summary(
       { fine_tuned: 1, comparison: 1 },
@@ -129,11 +129,9 @@ it("shows placeholder Qwen rates while preserving unknown historical cost", () =
   };
   expect(costAdvantage(value)).toEqual({
     tone: "neutral",
-    label: "$0.05 / $0.10",
+    label: "n/a",
   });
-  expect(costPer1kRequests(value)).toContain(
-    "Historical request costs were not recorded",
-  );
+  expect(costPer1kRequests(value)).toBe("Not measured");
   expect(value.cost_per_request_nano_usd).toBeNull();
   expect(
     costAdvantage({ ...value, comparison_model_id: "another/model" }).label,

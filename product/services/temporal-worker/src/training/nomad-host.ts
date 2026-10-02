@@ -131,7 +131,7 @@ export const trainingHostJob = (
             },
             Resources: {
               CPU: 4000 * gpuCount,
-              MemoryMB: 16000 * gpuCount,
+              MemoryMB: 64000 * gpuCount,
               Devices: [
                 {
                   Name: "nvidia/gpu",

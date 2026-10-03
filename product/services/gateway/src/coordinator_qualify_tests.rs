@@ -333,7 +333,7 @@ async fn a_rollout_keeps_a_healthy_release_until_its_replacement_is_ready() {
 
     for (old_ready, new_ready, new_accepting, expected_revision) in [
         (true, false, false, "old"),
-        (true, true, true, "new"),
+        (true, true, true, "either"),
         (true, true, false, "old"),
         (false, true, true, "new"),
     ] {
@@ -364,10 +364,12 @@ async fn a_rollout_keeps_a_healthy_release_until_its_replacement_is_ready() {
         );
 
         let qualified = qualify_chat(Arc::new(state), CHAT_BODY).await.unwrap();
-        assert_eq!(
-            qualified.deployment.release.runtime_revision,
-            expected_revision
-        );
+        if expected_revision != "either" {
+            assert_eq!(
+                qualified.deployment.release.runtime_revision,
+                expected_revision
+            );
+        }
         assert_eq!(
             qualified.served_release_digest,
             qualified.deployment.served_release_digest().unwrap()
@@ -381,13 +383,13 @@ async fn a_partial_replacement_does_not_reduce_the_serving_pool() {
     use crate::test_support::metadata;
     use crate::DeploymentRuntimeStatus;
 
-    for (new_ready, old_accepting, new_accepting, expected_revision) in [
-        (1, 2, 1, "old"),
-        (1, 1, 1, "old"),
-        (2, 2, 2, "new"),
-        (2, 2, 1, "new"),
-        (2, 2, 0, "old"),
-        (1, 0, 1, "new"),
+    for (new_ready, old_accepting, new_accepting) in [
+        (1, 2, 1),
+        (1, 1, 1),
+        (2, 2, 2),
+        (2, 2, 1),
+        (2, 2, 0),
+        (1, 0, 1),
     ] {
         let mut state = TestServingState::ready();
         let model = state.model.as_mut().unwrap();
@@ -424,10 +426,96 @@ async fn a_partial_replacement_does_not_reduce_the_serving_pool() {
                 })
                 .collect(),
         );
-        let qualified = qualify_chat(Arc::new(state), CHAT_BODY).await.unwrap();
-        assert_eq!(
-            qualified.deployment.release.runtime_revision,
-            expected_revision
-        );
+        let model = state.model.clone().unwrap();
+        let coordinator = RequestCoordinator::new(Arc::new(state));
+        let expected: HashSet<_> = (0..old_accepting)
+            .chain(2..2 + new_accepting.min(new_ready))
+            .map(|index| Uuid::from_u128(100 + index as u128))
+            .collect();
+        let mut selected_ids = HashSet::new();
+        for selection in 0..128 {
+            let selected = coordinator
+                .prefer_ready_release(
+                    model.clone(),
+                    metadata().received_at,
+                    Some(selection as u128),
+                )
+                .await
+                .unwrap();
+            selected_ids.insert(selected.serving_deployment().unwrap().deployment.id);
+        }
+        assert_eq!(selected_ids, expected);
+    }
+}
+
+#[tokio::test]
+async fn rollout_sessions_keep_their_revision_when_another_replica_stops_accepting() {
+    use crate::test_support::metadata;
+    use crate::DeploymentRuntimeStatus;
+
+    let mut state = TestServingState::ready();
+    let model = state.model.as_mut().unwrap();
+    let template = model.deployments[0].clone();
+    model.deployments = (0..3)
+        .map(|index| {
+            let mut deployment = template.clone();
+            deployment.id = Uuid::from_u128(100 + index);
+            deployment.release.runtime_revision = if index < 2 { "old" } else { "new" }.to_owned();
+            deployment
+        })
+        .collect();
+    state.statuses = Some(
+        model
+            .deployments
+            .iter()
+            .map(|deployment| DeploymentRuntimeStatus {
+                schema_version: 1,
+                deployment_id: deployment.id,
+                runtime_revision: deployment.release.runtime_revision.clone(),
+                received_at: metadata().received_at,
+                healthy: true,
+                accepting_requests: true,
+                reason_code: None,
+            })
+            .collect(),
+    );
+    let model = state.model.clone().unwrap();
+    let coordinator = RequestCoordinator::new(Arc::new(state));
+    let mut changed = TestServingState::ready();
+    changed.model = Some(model.clone());
+    changed.statuses = Some(
+        model
+            .deployments
+            .iter()
+            .map(|deployment| DeploymentRuntimeStatus {
+                schema_version: 1,
+                deployment_id: deployment.id,
+                runtime_revision: deployment.release.runtime_revision.clone(),
+                received_at: metadata().received_at,
+                healthy: true,
+                accepting_requests: deployment.id != Uuid::from_u128(100),
+                reason_code: None,
+            })
+            .collect(),
+    );
+    let changed = RequestCoordinator::new(Arc::new(changed));
+    for seed in 0..128 {
+        let before = coordinator
+            .prefer_ready_release(model.clone(), metadata().received_at, Some(seed))
+            .await
+            .unwrap();
+        let before = before.serving_deployment().unwrap().deployment;
+        let after = changed
+            .prefer_ready_release(model.clone(), metadata().received_at, Some(seed))
+            .await
+            .unwrap();
+        let after = after.serving_deployment().unwrap().deployment;
+        if before.id != Uuid::from_u128(100) {
+            assert_eq!(before.id, after.id);
+            assert_eq!(
+                before.release.runtime_revision,
+                after.release.runtime_revision
+            );
+        }
     }
 }

@@ -83,3 +83,34 @@ async fn a_failed_catalog_read_stops_the_listing() {
         assert_eq!(*state.inner.calls.lock().unwrap(), calls, "{phase:?}");
     }
 }
+
+#[tokio::test]
+async fn a_runtime_rollout_lists_all_ready_replicas() {
+    use crate::test_support::metadata;
+    use crate::DeploymentRuntimeStatus;
+
+    let mut state = TestServingState::ready();
+    let model = state.model.as_mut().unwrap();
+    let mut next = model.deployments[0].clone();
+    next.id = Uuid::from_u128(98765);
+    next.release.runtime_revision = "next-runtime".to_owned();
+    model.deployments.push(next);
+    state.statuses = Some(
+        model
+            .deployments
+            .iter()
+            .map(|deployment| DeploymentRuntimeStatus {
+                schema_version: 1,
+                deployment_id: deployment.id,
+                runtime_revision: deployment.release.runtime_revision.clone(),
+                received_at: metadata().received_at,
+                healthy: true,
+                accepting_requests: true,
+                reason_code: None,
+            })
+            .collect(),
+    );
+
+    let models = list_models(Arc::new(state)).await.unwrap();
+    assert_eq!(models[0].healthy_deployments, 2);
+}

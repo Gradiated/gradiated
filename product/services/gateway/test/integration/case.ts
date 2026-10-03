@@ -308,15 +308,19 @@ export class Case {
       ...overrides,
     };
 
-    await this.redis.hSet(
-      `deployment-status:{${this.digest}}`,
-      Object.fromEntries(
-        this.deployments.map((deployment) => [
-          deployment.id,
-          JSON.stringify({ ...values, deployment_id: deployment.id }),
-        ]),
-      ),
-    );
+    for (const deployment of this.deployments) {
+      const digest = `sha256:${createHash("sha256").update(JSON.stringify(deployment.release)).digest("hex")}`;
+      await this.redis.hSet(
+        `deployment-status:{${digest}}`,
+        deployment.id,
+        JSON.stringify({
+          ...values,
+          runtime_revision: deployment.release.runtime_revision,
+          ...overrides,
+          deployment_id: deployment.id,
+        }),
+      );
+    }
   }
 
   body(changes: JsonObject = {}): JsonObject {
@@ -373,7 +377,12 @@ export class Case {
     {
       status = "succeeded",
       charge,
-    }: { status?: SettlementStatus; charge?: number } = {},
+      releaseDigest = this.digest,
+    }: {
+      status?: SettlementStatus;
+      charge?: number;
+      releaseDigest?: string;
+    } = {},
   ): Promise<JsonObject> {
     const generation = response.headers["x-gradiated-generation-id"];
     expect(
@@ -397,7 +406,7 @@ export class Case {
     expect(properties.status, JSON.stringify(properties)).toBe(status);
     expect(properties.model_id).toBe(this.model);
     expect(properties.workspace_id).toBe(this.workspace);
-    expect(properties.served_release_digest).toBe(this.digest);
+    expect(properties.served_release_digest).toBe(releaseDigest);
     if (charge !== undefined) {
       expect(properties.usage).toMatchObject({ charge });
     }

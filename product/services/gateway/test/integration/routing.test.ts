@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import { describe, expect, it } from "vitest";
 
 import { expectRejected, type Rejection } from "./assertions.js";
@@ -61,6 +63,41 @@ describe.each(RUNTIME_KINDS)("%s routing", (kind) => {
       await instance.settled(response, { status: "failed", charge: 0 });
     },
   );
+
+  it("serves both runtime revisions throughout a sequential rollout", async () => {
+    const instance = await makeCase(kind, { replicas: 2 });
+    instance.deployments[1]!.release = {
+      ...instance.release,
+      runtime_revision: "next-runtime",
+    };
+    await instance.publish();
+    await instance.status();
+
+    for (let index = 0; index < 24; index += 1) {
+      await instance.status();
+      const before = instance.runtimes.map((runtime) => runtime.calls.length);
+      const session = `rollout-${index}`;
+      const first = await instance.post({ session_id: session });
+      expect(first.status).toBe(200);
+      const selected = instance.runtimes.findIndex(
+        (runtime, index) => runtime.calls.length > before[index]!,
+      );
+      const releaseDigest = `sha256:${createHash("sha256").update(JSON.stringify(instance.deployments[selected]!.release)).digest("hex")}`;
+      await instance.settled(first, { releaseDigest });
+      const second = await instance.http.post(instance.path, {
+        headers: { ...instance.headers, "x-gradiated-session-id": session },
+        json: instance.body(),
+      });
+      expect(second.status).toBe(200);
+      await instance.settled(second, { releaseDigest });
+      expect(instance.runtimes[selected]!.calls).toHaveLength(
+        before[selected]! + 2,
+      );
+    }
+    expect(instance.runtimes.every((runtime) => runtime.calls.length > 0)).toBe(
+      true,
+    );
+  });
 
   it("keeps session affinity and retries into success", async () => {
     const instance = await makeCase(kind, { replicas: 2 });

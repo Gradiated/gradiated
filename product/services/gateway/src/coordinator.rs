@@ -3,6 +3,7 @@ use std::{collections::HashSet, sync::Arc};
 use axum::http::HeaderMap;
 use chrono::{DateTime, Utc};
 use serde_json::Value;
+use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 use crate::{
@@ -187,31 +188,20 @@ impl RequestCoordinator {
         &self,
         mut model: GatewayModel,
         now: DateTime<Utc>,
+        selection: Option<u128>,
     ) -> Result<GatewayModel, GatewayError> {
         if model.serving_deployment().is_err() {
             return Ok(model);
         }
 
-        let mut seen = HashSet::new();
-        let releases: Vec<_> = model
-            .deployments
-            .iter()
-            .enumerate()
-            .filter(|(_, deployment)| deployment.status == crate::DeploymentStatus::Available)
-            .filter_map(|(index, deployment)| {
-                deployment
-                    .served_release_digest()
-                    .ok()
-                    .map(|digest| (index, digest))
-            })
-            .filter(|(_, digest)| seen.insert(digest.clone()))
-            .collect();
+        let releases = available_releases(&model);
         if releases.len() < 2 {
             return Ok(model);
         }
 
         let mut selected = None;
         let mut most_ready = 0;
+        let mut eligible = Vec::new();
         for (index, digest) in releases.into_iter().rev() {
             let statuses = self
                 .serving_state
@@ -231,13 +221,45 @@ impl RequestCoordinator {
                 .into_iter()
                 .filter(|status| status.accepting_requests)
                 .collect();
-            if ready > most_ready && healthy_deployment_count(&candidates, &accepting, now) > 0 {
-                most_ready = ready;
-                selected = Some(index);
+            let accepting_count = healthy_deployment_count(&candidates, &accepting, now);
+            if accepting_count > 0 {
+                eligible.extend(model.deployments.iter().enumerate().filter_map(
+                    |(candidate, deployment)| {
+                        (deployment.served_release_digest().ok().as_ref() == Some(&digest)
+                            && healthy_deployment_count(
+                                std::slice::from_ref(deployment),
+                                &accepting,
+                                now,
+                            ) > 0)
+                            .then_some(candidate)
+                    },
+                ));
+                if ready > most_ready {
+                    most_ready = ready;
+                    selected = Some(index);
+                }
             }
         }
 
-        if let Some(index) = selected {
+        if let Some(mut index) = selected {
+            if let Some(selection) = selection {
+                index = *eligible
+                    .iter()
+                    .filter(|candidate| {
+                        same_model_release(
+                            &model.deployments[index],
+                            &model.deployments[**candidate],
+                        )
+                    })
+                    .max_by_key(|candidate| {
+                        let mut hash = Sha256::new();
+                        hash.update(selection.to_be_bytes());
+                        hash.update(model.deployments[**candidate].id.as_bytes());
+                        let score: [u8; 32] = hash.finalize().into();
+                        (score, model.deployments[**candidate].id)
+                    })
+                    .expect("selected release has an accepting replica");
+            }
             model.deployments[..=index].rotate_right(1);
         }
 
@@ -261,15 +283,23 @@ impl RequestCoordinator {
 
         let mut catalog = Vec::with_capacity(models.len());
         for model in models {
-            let model = self.prefer_ready_release(model, requested_at).await?;
-            let statuses = match listed_release_digest(&model) {
-                Some(digest) => self
-                    .serving_state
-                    .deployment_statuses(&digest)
-                    .await
-                    .map_err(state_unavailable("deployment_status_read"))?,
-                None => Vec::new(),
-            };
+            let model = self.prefer_ready_release(model, requested_at, None).await?;
+            let mut statuses = Vec::new();
+            if listed_release_digest(&model).is_some() {
+                let selected = model
+                    .serving_deployment()
+                    .expect("validated serving deployment");
+                for (index, digest) in available_releases(&model) {
+                    if same_model_release(selected.deployment, &model.deployments[index]) {
+                        statuses.extend(
+                            self.serving_state
+                                .deployment_statuses(&digest)
+                                .await
+                                .map_err(state_unavailable("deployment_status_read"))?,
+                        );
+                    }
+                }
+            }
 
             catalog.push(CatalogModel {
                 healthy_deployments: healthy_deployment_count(
@@ -382,7 +412,24 @@ impl RequestCoordinator {
             deployment.status = crate::DeploymentStatus::Available;
         }
 
-        let model = self.prefer_ready_release(model, received_at).await?;
+        let session = target
+            .request
+            .get("session_id")
+            .and_then(Value::as_str)
+            .map(str::to_owned)
+            .map_or_else(|| session_header(headers), |session| Ok(Some(session)))?;
+        let selection = session.map_or_else(
+            || Uuid::now_v7().as_u128(),
+            |session| {
+                let mut hash = Sha256::new();
+                hash.update(identity.workspace_id.as_bytes());
+                hash.update(session.as_bytes());
+                u128::from_be_bytes(hash.finalize()[..16].try_into().expect("SHA-256 prefix"))
+            },
+        );
+        let model = self
+            .prefer_ready_release(model, received_at, Some(selection))
+            .await?;
 
         Ok(ClassifiedRequest {
             hosted: HostedRequest {
@@ -474,6 +521,31 @@ fn pricing_diagnostic_code(error: &CapturedPricingError) -> &'static str {
 
 fn warn_inconsistent_state(code: &'static str) {
     crate::diagnostics::limited_warn!(error_code = code, "serving state is inconsistent");
+}
+
+fn available_releases(model: &GatewayModel) -> Vec<(usize, String)> {
+    let mut seen = HashSet::new();
+    model
+        .deployments
+        .iter()
+        .enumerate()
+        .filter(|(_, deployment)| deployment.status == crate::DeploymentStatus::Available)
+        .filter_map(|(index, deployment)| {
+            deployment
+                .served_release_digest()
+                .ok()
+                .map(|digest| (index, digest))
+        })
+        .filter(|(_, digest)| seen.insert(digest.clone()))
+        .collect()
+}
+
+fn same_model_release(left: &GatewayModelDeployment, right: &GatewayModelDeployment) -> bool {
+    let mut release = left.release.clone();
+    release
+        .runtime_revision
+        .clone_from(&right.release.runtime_revision);
+    release == right.release
 }
 
 /// A model without an available deployment is listed as not ready. An invalid

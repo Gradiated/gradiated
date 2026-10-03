@@ -159,10 +159,22 @@ impl ServingState for TestServingState {
 
     async fn deployment_statuses(
         &self,
-        _release_digest: &str,
+        release_digest: &str,
     ) -> Result<Vec<DeploymentRuntimeStatus>, ServingStateError> {
         if let Some(statuses) = &self.statuses {
-            return Ok(statuses.clone());
+            return Ok(statuses
+                .iter()
+                .filter(|status| {
+                    self.model.as_ref().is_some_and(|model| {
+                        model.deployments.iter().any(|deployment| {
+                            deployment.id == status.deployment_id
+                                && deployment.served_release_digest().ok().as_deref()
+                                    == Some(release_digest)
+                        })
+                    })
+                })
+                .cloned()
+                .collect());
         }
 
         Ok(self

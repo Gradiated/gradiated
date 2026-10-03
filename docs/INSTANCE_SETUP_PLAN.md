@@ -252,11 +252,11 @@ published address plus `/alloc/<allocation id>`; each provider supplies how that
 port is reached (RunPod's HTTPS proxy, or TLS on a public or private IP).
 
 Hosts enrolled by `register_instance` carry `serving_ingress = "host-proxy"`.
-For capacity reserved for the four-GPU DeepSeek job, set `node_class = "deepseek"`
-in the host's `/etc/nomad/node.hcl` client block and restart only the Nomad agent.
-GLM excludes that class, so a two-GPU canary cannot consume its reserved capacity.
-The host proxy remains eligible. This setting survives in-place registration
-resumes; changing it does not require a provider reset.
+Inference and staging clients use the same native `default` node pool so the
+staging GPU can become serving capacity at cutover. Training clients remain in
+`training`. Keep four B300s on an eight-GPU inference host and one RTX PRO 6000
+as unused rollout headroom; the freed old GPU becomes the next staging slot.
+Do not exclude GLM from the B300 staging host with a `deepseek` node class.
 Hosts enrolled by hand before the proxy keep their own ingress on 8888 until
 migrated.
 
@@ -297,15 +297,24 @@ Each step is its own pull request.
 
 ### Safe model rollouts
 
-Single-replica model updates warm a canary while the existing replica continues
-serving; they require a spare compatible host. Models with at least two replicas
-use Nomad's rolling update with one replacement at a time, avoiding the need for
-a second fleet. Capacity is temporarily reduced by one replica. Every replacement
-must pass fresh runtime/reporting checks for the minimum healthy interval and the
-production SDK check before it becomes manually healthy and Nomad replaces another
-old allocation. SDK failures fail the deployment and trigger automatic rollback.
-The final SDK check verifies the complete serving set. There is no qualification
-of a single-replica rolling update without a canary.
+Replicated models use stable one-replica Nomad jobs and update those jobs
+sequentially. Each replacement must pass fresh runtime/reporting checks for the minimum
+healthy interval and the production SDK check before cutover. The pipeline waits
+for the serving registry and gateway handoff before manual Nomad promotion. SDK
+failures fail the deployment and trigger automatic rollback. The final SDK check
+verifies the complete serving set. Stop-first rolling updates are rejected before
+registration because they reduce serving capacity while a replacement warms.
+
+This policy requires spare compatible GPUs for one replacement replica. The
+requested reserve is four B300 GPUs on an eight-GPU host and one RTX PRO 6000 for
+Kev staging. The reserve is logical GPU headroom in the inference scheduling pool: native
+Nomad node pools assign whole clients and cannot split four devices from an
+eight-GPU host. Fixed serving counts and serialized rollouts keep this headroom
+available; adding serving replicas requires budgeting additional headroom. A single spare RTX stages
+both Kev replicas sequentially. Worker reconciliation selects one qualified
+allocation per logical replica slot, and submission retires the old allocation
+only after its replacement passes SDK verification. An insufficiently placed
+rollout must remain unpromoted and fail at its deadline while the old set serves.
 
 The gateway keeps using accepting, qualified deployments during replacement.
 Kev requires distinct Nomad hosts for its two replicas, avoiding a shared

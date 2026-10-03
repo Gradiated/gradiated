@@ -4,9 +4,10 @@ import { promisify } from "node:util";
 import { setTimeout as delay } from "node:timers/promises";
 import { submitJob } from "../../../../tools/nomad/submit-jobs.mjs";
 import { waitForDeployment } from "../../../../tools/nomad/wait-deployments.mjs";
+import { readModelAllocations } from "../../../services/worker/src/nomad-allocations.ts";
 
 const execute = promisify(execFile);
-const signal = AbortSignal.timeout(180_000);
+const signal = AbortSignal.timeout(240_000);
 const call = async (path, body) => {
   const { stdout } = await execute(
     "docker",
@@ -59,6 +60,57 @@ const verifyRoute = async (id) => {
   });
 };
 const allocations = () => call("/v1/job/fake-runtime/allocations");
+const observeServing = async () => {
+  const observations = [];
+  const get = async (path) => {
+    const response = await call(path);
+    if (path.endsWith("/versions")) {
+      for (const version of response.Versions) {
+        version.Meta ??= {};
+        version.Meta.gradiated_model_id = "synthetic/model";
+        version.Meta.gradiated_release = JSON.stringify({
+          schema_version: 1,
+          runtime_revision: version.Meta.gradiated_release
+            ? JSON.parse(version.Meta.gradiated_release).runtime_revision
+            : "v1",
+          model_path: "synthetic/model",
+          model_revision: "revision",
+          tokenizer_path: "synthetic/tokenizer",
+          tokenizer_revision: "revision",
+        });
+      }
+    }
+    return response;
+  };
+  const observe = async () => {
+    const items = await readModelAllocations(get, () => {});
+    observations.push(
+      items.filter((item) => !item.draining && !item.verificationPending)
+        .length,
+    );
+  };
+  await observe();
+  let observing = true;
+  const watching = (async () => {
+    while (observing) {
+      await observe();
+      await delay(50, undefined, { signal });
+    }
+  })();
+  void watching.catch(() => {});
+  return async () => {
+    observing = false;
+    await watching;
+    await observe();
+    assert.ok(
+      observations.every((count) => count === 2),
+      `Serving replica count changed: ${JSON.stringify(observations)}`,
+    );
+    console.log(
+      `Production allocation reader retained two serving replicas across ${observations.length} observations`,
+    );
+  };
+};
 const original = (await allocations())
   .filter((allocation) => allocation.ClientStatus === "running")
   .map((allocation) => allocation.ID);
@@ -75,6 +127,7 @@ Object.assign(job.TaskGroups[0].Update, {
   ProgressDeadline: 150_000_000_000,
 });
 job.TaskGroups[0].Tasks[0].Env = { RELEASE: "v2" };
+const finishSuccessObservation = await observeServing();
 const submitted = await call("/v1/jobs", { Job: job });
 let deployment;
 await wait(async () => {
@@ -112,6 +165,7 @@ await waitForDeployment(deployment, {
 });
 assert.equal(new Set(verified).size, 2);
 assert.equal((await call(`/v1/deployment/${deployment}`)).Status, "successful");
+await finishSuccessObservation();
 console.log(
   "Manual-health rollout retained old replicas until both exact canaries passed verification",
 );
@@ -142,6 +196,7 @@ console.log(
 );
 
 job.TaskGroups[0].Tasks[0].Env = { RELEASE: "v3" };
+const finishFailureObservation = await observeServing();
 const failed = await call("/v1/jobs", { Job: job });
 let failedDeployment;
 await wait(async () => {
@@ -156,6 +211,7 @@ await assert.rejects(
     signal,
     pause: () => delay(500, undefined, { signal }),
     verify: async () => {
+      await finishFailureObservation();
       throw new Error("Synthetic SDK rejection");
     },
   }),
@@ -178,6 +234,63 @@ assert.ok(
 );
 console.log(
   "A rejected replacement failed its deployment while the verified release kept serving",
+);
+for (const id of verified) await verifyRoute(id);
+
+const rollback = (await call("/v1/job/fake-runtime/deployments")).sort(
+  (a, b) => b.CreateIndex - a.CreateIndex,
+)[0];
+await waitForDeployment(rollback.ID, {
+  get: (path) => call(path),
+  post: call,
+  signal,
+  pause: () => delay(500, undefined, { signal }),
+  verify: async (input) => {
+    for (const id of input.deploymentIds) await verifyRoute(id);
+  },
+});
+const unhealthyJob = await call("/v1/job/fake-runtime");
+unhealthyJob.TaskGroups[0].Update.HealthyDeadline = 10_000_000_000;
+unhealthyJob.TaskGroups[0].Update.ProgressDeadline = 15_000_000_000;
+unhealthyJob.TaskGroups[0].Tasks[0].Config = {
+  command: "/bin/false",
+  args: [],
+};
+const unhealthy = await call("/v1/jobs", { Job: unhealthyJob });
+let unhealthyDeployment;
+await wait(async () => {
+  unhealthyDeployment = (await call(`/v1/evaluation/${unhealthy.EvalID}`))
+    .DeploymentID;
+  return unhealthyDeployment;
+});
+let sdkChecks = 0;
+await assert.rejects(
+  waitForDeployment(unhealthyDeployment, {
+    get: (path) => call(path),
+    post: call,
+    signal,
+    pause: () => delay(500, undefined, { signal }),
+    verify: async () => {
+      sdkChecks++;
+    },
+  }),
+  /is failed/,
+);
+assert.equal(sdkChecks, 0);
+const afterHealthFailure = await allocations();
+for (const id of verified) {
+  assert.ok(
+    afterHealthFailure.some(
+      (allocation) =>
+        allocation.ID === id &&
+        allocation.ClientStatus === "running" &&
+        allocation.DesiredStatus === "run",
+    ),
+  );
+  await verifyRoute(id);
+}
+console.log(
+  "Failed runtime health rejected the deployment without stopping either serving replica or running SDK qualification",
 );
 
 const initialJob = {

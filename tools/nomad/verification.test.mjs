@@ -85,6 +85,7 @@ const fixture = async (overrides = {}) => {
                 gradiated_sdk_verification: "true",
                 gradiated_model_id: "model",
                 gradiated_release: '{"runtime_revision":"v2"}',
+                ...state.meta,
               },
               TaskGroups: [
                 {
@@ -94,6 +95,7 @@ const fixture = async (overrides = {}) => {
                     HealthCheck: "manual",
                     MinHealthyTime: state.minimum,
                     AutoPromote: true,
+                    AutoRevert: true,
                     Canary: 2,
                     ...state.update,
                   },
@@ -105,10 +107,18 @@ const fixture = async (overrides = {}) => {
       if (path.endsWith("/checks")) return state.checks;
       if (path === "/v1/deployment/allocations/rollout")
         return structuredClone(state.allocations);
+      if (path === "/v1/deployment/rollout")
+        return {
+          TaskGroups: { replicas: { DesiredCanaries: 1, Promoted: false } },
+        };
       throw new Error(`Unexpected ${path}`);
     },
     post: async (path, body) => {
       state.posts.push({ path, body });
+      if (path.includes("allocation-health"))
+        for (const allocation of state.allocations)
+          if (body.HealthyAllocationIDs.includes(allocation.ID))
+            allocation.DeploymentStatus = { Healthy: true };
     },
     verify: async (input) => {
       state.verified.push(input);
@@ -121,6 +131,79 @@ const fixture = async (overrides = {}) => {
   );
   return { state, gate, controller };
 };
+
+test("the remaining legacy singleton verifies its slot while migrated peers serve", async () => {
+  const { gate, state } = await fixture({
+    count: 1,
+    allocations: [
+      {
+        ID: "one",
+        JobVersion: 2,
+        TaskGroup: "replicas",
+        DesiredStatus: "run",
+        ClientStatus: "running",
+      },
+    ],
+    update: { Canary: 1 },
+  });
+  await gate.qualify();
+  await gate.finish();
+  assert.ok(state.verified.every((input) => input.replicaRollout === true));
+});
+
+test("singleton promotion waits for the serving handoff after SDK qualification", async () => {
+  const events = [];
+  const { gate, state } = await fixture({
+    count: 1,
+    allocations: [
+      {
+        ID: "one",
+        JobVersion: 2,
+        TaskGroup: "replicas",
+        DesiredStatus: "run",
+        ClientStatus: "running",
+      },
+    ],
+    meta: { gradiated_replica_parent: "model", gradiated_replica_slot: "0" },
+    update: { Canary: 1, AutoPromote: false },
+    onVerify: async (input) => events.push(input.stage),
+  });
+  await gate.qualify();
+  assert.deepEqual(events, ["canary", "serving"]);
+  assert.deepEqual(
+    state.posts.map((post) => post.path),
+    [
+      "/v1/deployment/allocation-health/rollout",
+      "/v1/deployment/promote/rollout",
+    ],
+  );
+  assert.ok(state.verified.every((input) => input.replicaRollout === true));
+});
+
+test("failed singleton serving handoff fails before promotion", async () => {
+  const { gate, state } = await fixture({
+    count: 1,
+    allocations: [
+      {
+        ID: "one",
+        JobVersion: 2,
+        TaskGroup: "replicas",
+        DesiredStatus: "run",
+        ClientStatus: "running",
+      },
+    ],
+    meta: { gradiated_replica_parent: "model", gradiated_replica_slot: "0" },
+    update: { Canary: 1, AutoPromote: false },
+    onVerify: async (input) => {
+      if (input.stage === "serving") throw new Error("handoff failed");
+    },
+  });
+  await assert.rejects(gate.qualify(), /handoff failed/);
+  assert.deepEqual(
+    state.posts.map((post) => post.path),
+    ["/v1/deployment/allocation-health/rollout", "/v1/deployment/fail/rollout"],
+  );
+});
 
 test("only SDK-verified allocation identities become manually healthy", async () => {
   const { gate, state } = await fixture();
@@ -243,26 +326,12 @@ test("health lost during SDK verification prevents promotion", async () => {
   assert.equal(state.posts.length, 0);
 });
 
-test("replicated rolling updates qualify each replacement before proceeding", async () => {
-  const { gate, state } = await fixture({
-    update: { Canary: 0, MaxParallel: 1, AutoRevert: true, AutoPromote: false },
-  });
-  state.allocations[1].JobVersion = 1;
-  await gate.qualify();
-  assert.deepEqual(state.verified[0].deploymentIds, ["one"]);
-  assert.deepEqual(state.posts[0].body.HealthyAllocationIDs, ["one"]);
-  await assert.rejects(gate.finish(), /missing running allocations/);
-  state.allocations[0].DeploymentStatus = { Healthy: true };
-  state.allocations[1].JobVersion = 2;
-  await gate.qualify();
-  assert.deepEqual(state.verified[1].deploymentIds, ["two"]);
-  assert.deepEqual(state.posts[1].body.HealthyAllocationIDs, ["two"]);
-  await gate.finish();
-  assert.equal(state.verified[2].stage, "serving");
-  assert.deepEqual(state.verified[2].deploymentIds, ["one", "two"]);
-});
-
 for (const options of [
+  {
+    update: { Canary: 0, MaxParallel: 1, AutoRevert: true, AutoPromote: false },
+  },
+  { update: { AutoRevert: false } },
+  { update: { AutoPromote: false } },
   {
     count: 1,
     update: { Canary: 0, MaxParallel: 1, AutoRevert: true, AutoPromote: false },
@@ -286,39 +355,3 @@ for (const options of [
     await assert.rejects(fixture(options), /SDK verification requires/);
   });
 }
-
-test("SDK failure during rolling qualification fails the deployment for auto revert", async () => {
-  const { gate, state } = await fixture({
-    update: { Canary: 0, MaxParallel: 1, AutoRevert: true, AutoPromote: false },
-  });
-  state.allocations[1].JobVersion = 1;
-  state.onVerify = async () => {
-    throw new Error("SDK failed");
-  };
-  await assert.rejects(gate.qualify(), /SDK failed/);
-  assert.deepEqual(state.posts, [
-    {
-      path: "/v1/deployment/fail/rollout",
-      body: { DeploymentID: "rollout" },
-    },
-  ]);
-});
-
-test("rolling qualification retains the minimum healthy interval", async () => {
-  const { gate, state } = await fixture({
-    time: 100_000,
-    minimum: 30_000_000_000,
-    update: { Canary: 0, MaxParallel: 1, AutoRevert: true, AutoPromote: false },
-  });
-  state.allocations[1].JobVersion = 1;
-  await gate.qualify();
-  assert.deepEqual(state.verified, []);
-  state.time = 129_000;
-  state.checks.runtime.Timestamp = 129;
-  await gate.qualify();
-  assert.deepEqual(state.verified, []);
-  state.time = 130_000;
-  state.checks.runtime.Timestamp = 130;
-  await gate.qualify();
-  assert.deepEqual(state.verified[0].deploymentIds, ["one"]);
-});

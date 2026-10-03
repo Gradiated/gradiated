@@ -6,8 +6,11 @@ root=$(cd "$(dirname "$0")/.." && pwd)
 nomad_image=hashicorp/nomad@sha256:b964829b94c5493f3b543bb409b60c335a9ca03f21d9fac8b4cdd2af18b331c9
 image=gradiated-host-proxy-test
 container="host-proxy-test-$$"
+postgres="host-proxy-postgres-$$"
+memory=0
+[[ ${1:-} != --rolling-slots ]] || memory=320
 token=synthetic_runtime_token_0000000000000000
-cleanup() { docker rm -f "$container" >/dev/null 2>&1 || true; }
+cleanup() { docker rm -f "$container" "$postgres" >/dev/null 2>&1 || true; }
 trap cleanup EXIT
 
 docker build -q -t "$image" - >/dev/null <<EOF
@@ -17,7 +20,7 @@ RUN useradd --uid 10004 --create-home --shell /usr/sbin/nologin desmond && insta
 COPY --from=nomad /bin/nomad /usr/local/bin/nomad
 EOF
 
-docker run -d --privileged --cgroupns=host --name "$container" \
+docker run -d --privileged --cgroupns=host --name "$container" -e TEST_MEMORY="$memory" \
   -v "$root/jobs:/jobs:ro" --entrypoint /bin/bash "$image" -c '
     printf "\"Bearer %s\" 1;\n" '"$token"' >/etc/gradiated/runtime-proxy-auth.conf
     chown desmond:desmond /etc/gradiated/runtime-proxy-auth.conf
@@ -25,6 +28,7 @@ docker run -d --privileged --cgroupns=host --name "$container" \
     cat >/tmp/agent.hcl <<CONFIG
 acl { enabled = true }
 client {
+  memory_total_mb = $TEST_MEMORY
   meta { serving_ingress = "host-proxy" }
   options { "fingerprint.denylist" = "env_aws,env_azure,env_digitalocean,env_gce" }
 }
@@ -43,6 +47,7 @@ in_container dd if=/dev/zero of=/tmp/slow-response bs=1024 count=64 status=none
 
 in_container sh -c 'cat >/tmp/fake-runtime.nomad.hcl' <<'EOF'
 job "fake-runtime" {
+  meta { gradiated_model_id = "synthetic/model" }
   group "replicas" {
     count = 2
     update {
@@ -87,6 +92,10 @@ job "fake-runtime" {
     }
     task "echo" {
       driver = "raw_exec"
+      resources {
+        cpu = 100
+        memory = 64
+      }
       shutdown_delay = "20s"
       config {
         command = "/usr/sbin/nginx"
@@ -196,6 +205,26 @@ fi
 
 if [[ ${1:-} == --sdk-gate ]]; then
   TEST_CONTAINER="$container" TEST_NOMAD_TOKEN="$boot" node "$root/tests/sdk-gate.mjs"
+  exit 0
+fi
+
+if [[ ${1:-} == --rolling-slots ]]; then
+  docker run -d --name "$postgres" -p 127.0.0.1::5432 \
+    -e POSTGRES_USER=control -e POSTGRES_PASSWORD=control -e POSTGRES_DB=control \
+    postgres:17.10-alpine3.23 >/dev/null
+  ready=false
+  for _ in {1..60}; do
+    if docker exec "$postgres" pg_isready -U control -d control >/dev/null 2>&1; then
+      ready=true
+      break
+    fi
+    sleep 1
+  done
+  $ready || fail "PostgreSQL did not become ready before migrations"
+  port=$(docker port "$postgres" 5432/tcp | cut -d: -f2)
+  export DATABASE_URL="postgres://control:control@127.0.0.1:$port/control?sslmode=disable"
+  node "$root/../../packages/control/dist/db/migrate.js"
+  TEST_CONTAINER="$container" TEST_NOMAD_TOKEN="$boot" node "$root/tests/rolling-slots.mjs"
   exit 0
 fi
 

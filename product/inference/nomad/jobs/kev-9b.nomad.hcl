@@ -76,12 +76,12 @@ job "kev-9b" {
     update {
       health_check      = "manual"
       max_parallel      = 1
-      canary            = var.replicas > 1 ? 0 : var.replicas
+      canary            = var.replicas
       min_healthy_time  = "30s"
       healthy_deadline  = "30m"
       progress_deadline = "45m"
       auto_revert       = true
-      auto_promote      = var.replicas == 1
+      auto_promote      = var.replicas > 0
     }
 
     network {

@@ -5,6 +5,108 @@ import { deployJobs, submitJob } from "./submit-jobs.mjs";
 const job = { ID: "model" };
 const signal = () => new AbortController().signal;
 
+test("models share staging capacity sequentially while infrastructure progresses", async () => {
+  const events = [];
+  let finishFirst;
+  const first = new Promise((resolve) => {
+    finishFirst = resolve;
+  });
+  const result = deployJobs(
+    [
+      { ID: "first", Meta: { gradiated_model_id: "model-a" } },
+      { ID: "second", Meta: { gradiated_model_id: "model-b" } },
+      { ID: "host-proxy" },
+    ],
+    async ({ ID }) => {
+      events.push(`start:${ID}`);
+      if (ID === "first") await first;
+      events.push(`finish:${ID}`);
+    },
+  );
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(events, [
+    "start:first",
+    "start:host-proxy",
+    "finish:host-proxy",
+  ]);
+  finishFirst();
+  await result;
+  assert.deepEqual(events.slice(3), [
+    "finish:first",
+    "start:second",
+    "finish:second",
+  ]);
+});
+
+test("a failed model releases its turn and later model failures are reported", async () => {
+  const events = [];
+  await assert.rejects(
+    deployJobs(
+      ["a", "b"].map((ID) => ({
+        ID,
+        Meta: { gradiated_model_id: ID },
+      })),
+      async ({ ID }) => {
+        events.push(ID);
+        throw new Error(`${ID} rejected`);
+      },
+    ),
+    { message: "a: a rejected\nb: b rejected" },
+  );
+  assert.deepEqual(events, ["a", "b"]);
+});
+
+test("a rejected replica skips its model's remaining replicas while other models continue", async () => {
+  const attempted = [];
+  await assert.rejects(
+    deployJobs(
+      [
+        { ID: "kev-1", Meta: { gradiated_model_id: "kev" } },
+        { ID: "kev-0", Meta: { gradiated_model_id: "kev" } },
+        { ID: "glm", Meta: { gradiated_model_id: "glm" } },
+      ],
+      async ({ ID }) => {
+        attempted.push(ID);
+        if (ID === "kev-1") throw new Error("SDK rejected");
+      },
+    ),
+    /SDK rejected/,
+  );
+  assert.deepEqual(attempted, ["kev-1", "glm"]);
+});
+
+test("stop-first model updates are rejected before any Nomad request", async () => {
+  const unsafe = {
+    ...job,
+    Meta: { gradiated_sdk_verification: "true" },
+    TaskGroups: [
+      {
+        Count: 2,
+        Update: {
+          HealthCheck: "manual",
+          Canary: 0,
+          MaxParallel: 1,
+          AutoPromote: false,
+          AutoRevert: true,
+        },
+      },
+    ],
+  };
+  let requests = 0;
+  const request = async () => {
+    requests++;
+  };
+  await assert.rejects(
+    submitJob(unsafe, {
+      signal: signal(),
+      get: request,
+      post: request,
+    }),
+    /preserve serving capacity/,
+  );
+  assert.equal(requests, 0);
+});
+
 test("a failed model does not abort supervision of another model's rollout", async () => {
   let finishHealthy;
   let settled = false;
@@ -38,18 +140,28 @@ test("independent deployment failures are all reported", async () => {
   await deployJobs([{ ID: "healthy" }], async () => {});
 });
 
-test("an unchanged reverted job does not follow the failed deployment it replaced", async () => {
+test("an unchanged failed deployment cannot retire a healthy predecessor", async () => {
+  await assert.rejects(
+    submitJob(job, {
+      signal: signal(),
+      get: async () => [
+        { ID: "failed-canary", CreateIndex: 2, Status: "failed" },
+      ],
+      post: async () => ({ Diff: { Type: "None" }, JobModifyIndex: 10 }),
+    }),
+    /unchanged deployment failed-canary is failed/,
+  );
+});
+
+test("an unchanged successful deployment is verified before retirement", async () => {
   const result = await submitJob(job, {
     signal: signal(),
     get: async () => [
-      { ID: "failed-canary", CreateIndex: 2, Status: "failed" },
+      { ID: "qualified", CreateIndex: 2, Status: "successful" },
     ],
-    post: async (path) => {
-      assert.equal(path, "/v1/job/model/plan");
-      return { Diff: { Type: "None" }, JobModifyIndex: 10 };
-    },
+    post: async () => ({ Diff: { Type: "None" }, JobModifyIndex: 10 }),
   });
-  assert.deepEqual(result, { deployment: undefined });
+  assert.deepEqual(result, { deployment: "qualified" });
 });
 
 test("an unchanged job preserves its active canaries without registration", async () => {
@@ -231,3 +343,30 @@ for (const prior of [
     );
   });
 }
+
+test("placement constraints are refreshed after a prior allocation drains", async () => {
+  let draining = true;
+  const result = await submitJob(job, {
+    signal: signal(),
+    prepare: async (source) => ({
+      ...source,
+      Constraints: [{ RTarget: draining ? "old" : "current" }],
+    }),
+    get: async (path) =>
+      path.endsWith("deployments")
+        ? []
+        : draining
+          ? [{ DesiredStatus: "stop", ClientStatus: "running" }]
+          : [],
+    pause: async () => {
+      draining = false;
+    },
+    post: async (path, body) => {
+      if (path.endsWith("plan"))
+        return { Diff: { Type: "Added" }, JobModifyIndex: 0 };
+      assert.equal(body.Job.Constraints[0].RTarget, "current");
+      return { EvalID: "placed" };
+    },
+  });
+  assert.equal(result.evaluation, "placed");
+});

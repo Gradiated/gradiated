@@ -70,6 +70,8 @@ removed=()
 for name in $running; do
   if [[ ! -f "$repo/$jobs/$name.vars.hcl" ]]; then
     spec=$(nomad operator api "/v1/job/$name")
+    parent=$(jq -r '.Meta.gradiated_replica_parent // empty' <<<"$spec")
+    if [[ -n $parent && -f "$repo/$jobs/$parent.vars.hcl" ]]; then continue; fi
     # Training, rolling buffers and qualification jobs are owned by their runners.
     if node "$repo/tools/nomad/cleanup-jobs.mjs" --runtime-owned <<<"$spec"; then continue; fi
     node "$repo/tools/nomad/cleanup-jobs.mjs" <<<"$spec"

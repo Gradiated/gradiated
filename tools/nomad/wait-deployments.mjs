@@ -13,28 +13,43 @@ export const waitForDeployment = async (id, options) => {
   } = options;
   let gate;
   let initialized = false;
-  while (!signal.aborted) {
-    const deployment = await get(
-      `/v1/deployment/${encodeURIComponent(id)}`,
-      signal,
+  let lastStatus;
+  try {
+    while (!signal.aborted) {
+      const deployment = await get(
+        `/v1/deployment/${encodeURIComponent(id)}`,
+        signal,
+      );
+      lastStatus = deployment.Status;
+      if (verify && !initialized) {
+        gate = await createVerificationGate(deployment, options);
+        initialized = true;
+      }
+      if (deployment.Status === "successful") {
+        await gate?.finish();
+        return;
+      }
+      if (["failed", "cancelled", "blocked"].includes(deployment.Status)) {
+        throw new Error(`Deployment ${id} is ${deployment.Status}`);
+      }
+      await gate?.qualify();
+      await pause(10_000);
+    }
+    throw new Error(
+      `Deployment ${id} did not become healthy before its deadline`,
     );
-    if (verify && !initialized) {
-      gate = await createVerificationGate(deployment, options);
-      initialized = true;
-    }
-    if (deployment.Status === "successful") {
-      await gate?.finish();
-      return;
-    }
-    if (["failed", "cancelled", "blocked"].includes(deployment.Status)) {
-      throw new Error(`Deployment ${id} is ${deployment.Status}`);
-    }
-    await gate?.qualify();
-    await pause(10_000);
+  } catch (error) {
+    if (
+      signal.aborted &&
+      signal.reason?.name === "TimeoutError" &&
+      ["pending", "running", "paused"].includes(lastStatus) &&
+      options.post
+    )
+      await options.post(`/v1/deployment/fail/${encodeURIComponent(id)}`, {
+        DeploymentID: id,
+      });
+    throw error;
   }
-  throw new Error(
-    `Deployment ${id} did not become healthy before its deadline`,
-  );
 };
 
 export const waitForEvaluation = async (id, previous, options) => {

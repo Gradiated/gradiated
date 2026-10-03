@@ -38,6 +38,7 @@ const deployments = () =>
 test("requires the Git-defined verification config fully rolled out", () => {
   assert.ok(verificationInfrastructureReady(deployments(), deployments()));
   for (const change of [
+    (item) => (item.spec.template.spec.containers[0].image = "stale-worker"),
     (item) => (item.spec.template.spec.containers[0].env = []),
     (item) =>
       (item.spec.template.spec.containers[0].env[0].value = "old-workspace"),

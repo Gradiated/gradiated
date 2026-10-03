@@ -1,9 +1,16 @@
 import { waitForVerificationInfrastructure } from "./verification-infrastructure.mjs";
-import { verifyInProduction } from "./verification.mjs";
+import { validateModelRollout, verifyInProduction } from "./verification.mjs";
 import { readFileSync } from "node:fs";
 import { setTimeout as delay } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
 import { createNomadClient } from "./api.mjs";
+import {
+  replicaJobs,
+  releaseFailedMigration,
+  retireLegacyReplica,
+  withPeerHostConstraints,
+  validateReplicaRetirement,
+} from "./replica-jobs.mjs";
 import { waitForDeployment, waitForEvaluation } from "./wait-deployments.mjs";
 
 const latestDeployment = async (job, get) => {
@@ -19,22 +26,38 @@ export const submitJob = async (
     post,
     signal,
     verify,
+    prepare = async (job) => job,
     pause = (ms) => delay(ms, undefined, { signal }),
   },
 ) => {
+  validateModelRollout(job);
+
   const path = `/v1/job/${encodeURIComponent(job.ID)}`;
   while (!signal.aborted) {
-    const plan = await post(`${path}/plan`, { Job: job, Diff: true });
+    const prepared = await prepare(job);
+    const plan = await post(`${path}/plan`, { Job: prepared, Diff: true });
     const prior = plan.JobModifyIndex
       ? await latestDeployment(job.ID, get)
       : undefined;
     if (plan.Diff?.Type === "None") {
-      return {
-        deployment:
-          prior && ["pending", "running", "paused"].includes(prior.Status)
-            ? prior.ID
-            : undefined,
-      };
+      const disabled = job.TaskGroups?.every((group) => group.Count === 0);
+      if (
+        !disabled &&
+        prior &&
+        !["pending", "running", "paused", "successful"].includes(prior.Status)
+      )
+        throw new Error(
+          `${job.ID}: unchanged deployment ${prior.ID} is ${prior.Status}`,
+        );
+      if (
+        !disabled &&
+        !prior &&
+        job.Meta?.gradiated_sdk_verification === "true"
+      )
+        throw new Error(
+          `${job.ID}: unchanged model has no qualified deployment`,
+        );
+      return { deployment: disabled ? undefined : prior?.ID };
     }
     if (
       !plan.Diff ||
@@ -75,7 +98,7 @@ export const submitJob = async (
     }
 
     const result = await post("/v1/jobs", {
-      Job: job,
+      Job: prepared,
       EnforceIndex: true,
       JobModifyIndex: plan.JobModifyIndex,
     });
@@ -89,23 +112,41 @@ export const submitJob = async (
 };
 
 export const deployJobs = async (jobs, deploy) => {
-  const results = await Promise.allSettled(
-    jobs.map(async (job) => deploy(job)),
-  );
-  const failures = results.flatMap((result, index) =>
-    result.status === "rejected"
-      ? [`${jobs[index].ID}: ${result.reason?.message ?? "deployment failed"}`]
-      : [],
+  const errors = new Map();
+  const attempt = async (job) => {
+    try {
+      await deploy(job);
+      return true;
+    } catch (error) {
+      errors.set(job.ID, error?.message ?? "deployment failed");
+      return false;
+    }
+  };
+  const models = async () => {
+    const failed = new Set();
+    for (const job of jobs.filter((job) => job.Meta?.gradiated_model_id)) {
+      const model = job.Meta.gradiated_model_id;
+      if (!failed.has(model) && !(await attempt(job))) failed.add(model);
+    }
+  };
+  await Promise.all([
+    models(),
+    ...jobs.filter((job) => !job.Meta?.gradiated_model_id).map(attempt),
+  ]);
+  const failures = jobs.flatMap((job) =>
+    errors.has(job.ID) ? [`${job.ID}: ${errors.get(job.ID)}`] : [],
   );
 
   if (failures.length) throw new Error(failures.join("\n"));
 };
 
 const main = async () => {
-  const jobs = JSON.parse(readFileSync(process.argv[2], "utf8"));
+  const sources = JSON.parse(readFileSync(process.argv[2], "utf8"));
+  const jobs = replicaJobs(sources);
   const controller = new AbortController();
   const client = createNomadClient(controller.signal);
   try {
+    await validateReplicaRetirement(sources, client);
     if (
       jobs.some(
         (job) =>
@@ -124,36 +165,50 @@ const main = async () => {
       console.log(
         `${job.ID}: planning without interrupting existing canaries or draining requests`,
       );
-      const registration = await submitJob(job, {
-        ...client,
-        verify: verifyInProduction,
-        signal: AbortSignal.any([
-          controller.signal,
-          AbortSignal.timeout(110 * 60_000),
-        ]),
-      });
       const options = {
         ...client,
         verify: verifyInProduction,
+        prepare: (source) => withPeerHostConstraints(source, client),
         signal: AbortSignal.any([
           controller.signal,
-          AbortSignal.timeout(110 * 60_000),
+          AbortSignal.timeout(
+            Math.max(
+              ...job.TaskGroups.map((group) =>
+                group.Update?.ProgressDeadline
+                  ? group.Update.ProgressDeadline / 1_000_000 + 5 * 60_000
+                  : 110 * 60_000,
+              ),
+            ),
+          ),
         ]),
       };
-      if (registration.deployment) {
-        console.log(
-          `${job.ID}: unchanged; following deployment ${registration.deployment}`,
-        );
-        await waitForDeployment(registration.deployment, options);
-      } else if (registration.evaluation) {
-        console.log(
-          `${job.ID}: following evaluation ${registration.evaluation}`,
-        );
-        await waitForEvaluation(
-          registration.evaluation,
-          registration.previous,
-          options,
-        );
+      try {
+        const registration = await submitJob(job, options);
+        if (registration.deployment) {
+          console.log(
+            `${job.ID}: unchanged; following deployment ${registration.deployment}`,
+          );
+          await waitForDeployment(registration.deployment, options);
+        } else if (registration.evaluation) {
+          console.log(
+            `${job.ID}: following evaluation ${registration.evaluation}`,
+          );
+          await waitForEvaluation(
+            registration.evaluation,
+            registration.previous,
+            options,
+          );
+        }
+        await retireLegacyReplica(job, options);
+      } catch (error) {
+        try {
+          await releaseFailedMigration(job, options);
+        } catch (cleanupError) {
+          console.error(
+            `${job.ID}: staging cleanup failed: ${cleanupError.message}`,
+          );
+        }
+        throw error;
       }
       console.log(`${job.ID}: deployment healthy or no deployment required`);
     });

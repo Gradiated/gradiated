@@ -53,6 +53,7 @@ export const verificationInfrastructureReady = (desired, live) =>
     return (
       target &&
       current &&
+      target.image === current.image &&
       required.every((variable) => {
         const value = target.env?.find(
           (entry) => entry.name === variable,

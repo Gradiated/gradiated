@@ -55,7 +55,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.relevant == 'true'
     runs-on: depot-ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
@@ -70,6 +70,12 @@ jobs:
         run: bash product/inference/images/nomad-base/tests/test-renewal.sh
       - name: Test GLM startup qualification
         run: python3 -m unittest discover -s product/inference/runtimes/glm -p 'test_warmup*.py'
+      - name: Install production allocation reader dependencies for rollout regression
+        run: |
+          pnpm --dir product install --frozen-lockfile --filter @gradiated/worker...
+          pnpm --dir product --filter @gradiated/contracts build
+          pnpm --dir product --filter @gradiated/nomad-pki build
+          pnpm --dir product exec turbo run build --filter=@gradiated/control
       - uses: astral-sh/setup-uv@v6
       - name: Check and test adapter loading and cache hierarchy
         run: |
@@ -84,7 +90,8 @@ jobs:
           node --test product/inference/nomad/tests/claim-gpus.test.mjs
           timeout 600 bash product/inference/nomad/tests/test-host-proxy.sh --recovery
           timeout 180 bash product/inference/nomad/tests/test-host-proxy.sh --proxy-drain
-          timeout 240 bash product/inference/nomad/tests/test-host-proxy.sh --sdk-gate
+          timeout 420 bash product/inference/nomad/tests/test-host-proxy.sh --sdk-gate
+          timeout 420 bash product/inference/nomad/tests/test-host-proxy.sh --rolling-slots
           node --test tools/nomad/*.test.mjs
       - uses: depot/setup-action@v1
       - name: Build and test the runtime launcher
@@ -105,7 +112,7 @@ jobs:
     needs: configuration-checks
     runs-on: ubuntu-latest
     environment: production
-    timeout-minutes: 325
+    timeout-minutes: 360
     env:
       AWS_REGION: us-east-1
       AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}

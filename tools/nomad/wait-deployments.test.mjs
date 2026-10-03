@@ -57,6 +57,42 @@ test("an API failure cannot report a healthy deployment", async () => {
   );
 });
 
+test("an unplaced rollout fails its Nomad deployment when the supervisor deadline expires", async () => {
+  const controller = new AbortController();
+  const posts = [];
+  await assert.rejects(
+    waitForDeployment("release", {
+      signal: controller.signal,
+      get: async () => ({ Status: "running" }),
+      post: async (path, body) => posts.push({ path, body }),
+      pause: async () =>
+        controller.abort(new DOMException("deadline", "TimeoutError")),
+    }),
+    /deadline/,
+  );
+  assert.deepEqual(posts, [
+    {
+      path: "/v1/deployment/fail/release",
+      body: { DeploymentID: "release" },
+    },
+  ]);
+});
+
+test("workflow cancellation preserves a resumable deployment", async () => {
+  const controller = new AbortController();
+  const posts = [];
+  await assert.rejects(
+    waitForDeployment("release", {
+      signal: controller.signal,
+      get: async () => ({ Status: "running" }),
+      post: async (...args) => posts.push(args),
+      pause: async () => controller.abort(),
+    }),
+    /deadline/,
+  );
+  assert.deepEqual(posts, []);
+});
+
 test("does not miss a deployment created asynchronously after registration", async () => {
   const states = [
     { Status: "pending" },

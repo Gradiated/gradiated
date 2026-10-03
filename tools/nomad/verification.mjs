@@ -58,6 +58,26 @@ export const verifyInProduction = async (
   }
 };
 
+export const validateModelRollout = (job) => {
+  if (job.Meta?.gradiated_sdk_verification !== "true") return;
+
+  const groups = job.TaskGroups.filter((group) => group.Count > 0);
+  if (
+    groups.some(
+      (group) =>
+        group.Update?.HealthCheck !== "manual" ||
+        group.Update.Canary !== group.Count ||
+        (job.Meta.gradiated_replica_parent
+          ? group.Update.AutoPromote !== false
+          : group.Update.AutoPromote !== true) ||
+        group.Update.AutoRevert !== true,
+    )
+  )
+    throw new Error(
+      "SDK verification requires manual health, full-count canaries and automatic revert to preserve serving capacity; singleton replicas use manual promotion",
+    );
+};
+
 export const createVerificationGate = async (
   deployment,
   { get, post, verify, signal, now = Date.now },
@@ -73,31 +93,18 @@ export const createVerificationGate = async (
   if (job.Meta?.gradiated_sdk_verification !== "true") return undefined;
 
   const release = JSON.parse(job.Meta.gradiated_release);
+  const groups = job.TaskGroups.filter((group) => group.Count > 0);
   const input = {
     modelId: job.Meta.gradiated_model_id,
     runtimeRevision: release.runtime_revision,
+    ...(job.Meta.gradiated_replica_parent ||
+    (groups.length === 1 && groups[0].Count === 1)
+      ? { replicaRollout: true }
+      : {}),
     ...(release.protocol ? { protocol: release.protocol } : {}),
   };
-  const groups = job.TaskGroups.filter((group) => group.Count > 0);
   if (!groups.length) return undefined;
-  const rolling = groups.every(
-    (group) =>
-      group.Count >= 2 &&
-      group.Update?.Canary === 0 &&
-      group.Update.MaxParallel === 1 &&
-      group.Update.AutoRevert === true &&
-      group.Update.AutoPromote === false,
-  );
-  const canaries = groups.every(
-    (group) => group.Update?.AutoPromote && group.Update.Canary >= group.Count,
-  );
-  if (
-    groups.some((group) => group.Update?.HealthCheck !== "manual") ||
-    (!rolling && !canaries)
-  )
-    throw new Error(
-      "SDK verification requires manual health with full canaries or one-at-a-time rolling updates of replicated groups with auto revert",
-    );
+  validateModelRollout(job);
 
   const allocations = async () =>
     (
@@ -136,15 +143,54 @@ export const createVerificationGate = async (
     return healthy;
   };
 
+  const promote = async () => {
+    if (groups.every((group) => group.Update.AutoPromote)) return;
+    const state = await get(`/v1/deployment/${deployment.ID}`, signal);
+    if (
+      !Object.values(state.TaskGroups ?? {}).some(
+        (group) => group.DesiredCanaries > 0 && !group.Promoted,
+      )
+    )
+      return;
+    const ready = await allocations();
+    if (
+      !complete(ready) ||
+      ready.some((allocation) => allocation.DeploymentStatus?.Healthy !== true)
+    )
+      return;
+    try {
+      await verify(
+        {
+          ...input,
+          stage: "serving",
+          deploymentIds: ready.map((allocation) => allocation.ID),
+        },
+        signal,
+      );
+    } catch (error) {
+      if (!signal.aborted)
+        await post(`/v1/deployment/fail/${deployment.ID}`, {
+          DeploymentID: deployment.ID,
+        });
+      throw error;
+    }
+    for (const allocation of ready)
+      if (!(await checksHealthy(allocation))) return;
+    await post(`/v1/deployment/promote/${deployment.ID}`, {
+      DeploymentID: deployment.ID,
+      All: true,
+    });
+  };
+
   return {
     qualify: async () => {
       const candidates = await allocations();
-      if (!rolling && !complete(candidates)) return;
+      if (!complete(candidates)) return;
 
       const pending = candidates.filter(
         (allocation) => allocation.DeploymentStatus?.Healthy !== true,
       );
-      if (!pending.length) return;
+      if (!pending.length) return promote();
       let stable = true;
       for (const allocation of pending) {
         if (!(await checksHealthy(allocation))) {
@@ -189,6 +235,7 @@ export const createVerificationGate = async (
           DeploymentID: deployment.ID,
           HealthyAllocationIDs: verified.map((allocation) => allocation.ID),
         });
+      await promote();
     },
     finish: async () => {
       const promoted = await allocations();

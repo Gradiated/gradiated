@@ -31,7 +31,9 @@ permissions:
 
 concurrency:
   group: nomad-deployment-${{ github.ref }}
-  cancel-in-progress: true
+  # Let production rollouts finish their verification and drain before the next run.
+  # A failed upstream build must not cancel a healthy rollout either.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   changes:

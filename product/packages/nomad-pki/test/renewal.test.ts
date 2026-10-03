@@ -95,11 +95,12 @@ describe("a certificate renewed in memory", () => {
   });
 
   it("reissues once the certificate is due", async () => {
+    vi.useFakeTimers({ now: issuedAt, toFake: ["Date"] });
     const issue = issuer();
     const certificate = renewingCertificate(issue);
     const first = await certificate.get();
 
-    vi.useFakeTimers({ now: day(25), toFake: ["Date"] });
+    vi.setSystemTime(day(25));
     const second = await certificate.get();
     vi.useRealTimers();
 

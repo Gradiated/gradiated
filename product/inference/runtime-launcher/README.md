@@ -3,7 +3,8 @@
 Status: published runtime bundles; live serving qualification is in progress.
 
 `runtime-launch` is a small C++ executable for trusted serving runtimes.
-A Nomad pre-start task downloads the pinned archive with `s5cmd`, checks its
+A Nomad pre-start task downloads the pinned archive with the Python
+`download-runtime` helper and signed curl requests, checks its
 SHA-256 digest, and extracts it into the shared allocation directory. It runs
 as `downloader`, with read-only S3 credentials that the model user cannot read.
 The launcher checks base compatibility and supervises the entrypoint.
@@ -44,6 +45,11 @@ Add a shared runtime cache only if measured download time requires it.
 The downloader accepts only content-addressed S3 release URLs. It verifies
 the digest before using `bsdtar` to extract the trusted archive. Nomad's native
 artifact size and file-count limits do not apply to this pre-start task.
+Eight ranges share one staging file and a twenty-minute download deadline.
+Transient size-probe and range failures retry within that deadline; each range
+resumes from its written prefix. Startup logs show the download, checksum and
+extraction phases. Compatible host-tool updates install the helper and curl
+without restarting running workloads or changing provider images.
 The job requires `runtime_disk_mb`; include space for the compressed archive,
 extracted runtime, and logs. Measure this for each release.
 
@@ -162,7 +168,8 @@ CTest reports each case separately:
   test.
 
 The Nomad test runs only in the disposable container. It replaces
-`/usr/local/bin/s5cmd`, writes `/etc/gradiated/artifact.env`, and starts a
+`/usr/local/bin/curl` with a local HEAD/range fixture, writes synthetic credentials
+to `/etc/gradiated/artifact.env`, and starts a
 temporary agent as `nobody`.
 
 Live test: run `../nomad/tests/qualify-raw-exec.sh` on the selected Runpod

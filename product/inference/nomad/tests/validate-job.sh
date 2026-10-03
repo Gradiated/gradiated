@@ -33,8 +33,8 @@ for vars in "$root/jobs"/*.vars.hcl; do
     exit 1
   }
   if jq -e '.Job.Meta.gradiated_model_id' <<<"$job" >/dev/null; then
-    jq -e 'all(.Job.TaskGroups[]; .Update.Canary == .Count and .Update.AutoRevert and (.Count == 0 or .Update.AutoPromote))' <<<"$job" >/dev/null || {
-      echo "$name must warm a full replacement set and revert failed releases" >&2
+    jq -e 'all(.Job.TaskGroups[]; (.Update.Canary == (if .Count > 1 then 0 else .Count end)) and .Update.MaxParallel == 1 and .Update.AutoRevert and (.Update.AutoPromote == (.Count == 1)))' <<<"$job" >/dev/null || {
+      echo "$name must replace one replicated allocation at a time or use a single-replica canary, and revert failures" >&2
       exit 1
     }
     jq -e '.Job.Meta.gradiated_sdk_verification == "true" and all(.Job.TaskGroups[]; .Update.HealthCheck == "manual")' <<<"$job" >/dev/null || {

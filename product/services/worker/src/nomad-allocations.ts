@@ -12,7 +12,12 @@ const allocationsSchema = z.array(
     ClientStatus: z.string(),
     DesiredStatus: z.string(),
     JobVersion: z.number().int(),
-    DeploymentStatus: z.object({ Canary: z.boolean().optional() }).nullish(),
+    DeploymentStatus: z
+      .object({
+        Canary: z.boolean().optional(),
+        Healthy: z.boolean().nullish(),
+      })
+      .nullish(),
   }),
 );
 const versionsSchema = z.object({
@@ -65,6 +70,11 @@ export const readModelAllocations = async (
           .filter((deployment) => deployment.Status !== "successful")
           .map((deployment) => deployment.JobVersion),
       );
+      const updating = new Set(
+        deployments
+          .filter((deployment) => deployment.Status === "running")
+          .map((deployment) => deployment.JobVersion),
+      );
 
       return allocations
         .filter((allocation) => allocation.ClientStatus === "running")
@@ -77,6 +87,11 @@ export const readModelAllocations = async (
             return [];
           }
 
+          const qualifiedReplacement =
+            updating.has(allocation.JobVersion) &&
+            !allocation.DeploymentStatus?.Canary &&
+            allocation.DeploymentStatus?.Healthy === true;
+
           return [
             {
               allocationId: allocation.ID,
@@ -85,6 +100,7 @@ export const readModelAllocations = async (
               release: release.data,
               draining: allocation.DesiredStatus !== "run",
               ...(versionMeta?.gradiated_sdk_verification === "true" &&
+              !qualifiedReplacement &&
               (allocation.DeploymentStatus?.Canary ||
                 unverified.has(allocation.JobVersion))
                 ? { verificationPending: true }

@@ -72,12 +72,12 @@ job "deepseek-v4-1-flash" {
     update {
       health_check      = "manual"
       max_parallel      = 1
-      canary            = var.replicas
+      canary            = var.replicas > 1 ? 0 : var.replicas
       min_healthy_time  = "30s"
       healthy_deadline  = "100m"
       progress_deadline = "105m"
       auto_revert       = true
-      auto_promote      = var.replicas > 0
+      auto_promote      = var.replicas == 1
     }
 
     network {

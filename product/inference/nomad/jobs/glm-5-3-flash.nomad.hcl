@@ -118,12 +118,12 @@ job "glm-5-3-flash" {
     update {
       health_check      = "manual"
       max_parallel      = 1
-      canary            = var.replicas
+      canary            = var.replicas > 1 ? 0 : var.replicas
       min_healthy_time  = "30s"
       healthy_deadline  = "70m"
       progress_deadline = "90m"
       auto_revert       = true
-      auto_promote      = var.replicas > 0
+      auto_promote      = var.replicas == 1
     }
 
     network {

@@ -89,12 +89,13 @@ const fixture = async (overrides = {}) => {
               TaskGroups: [
                 {
                   Name: "replicas",
-                  Count: 2,
+                  Count: state.count ?? 2,
                   Update: {
                     HealthCheck: "manual",
                     MinHealthyTime: state.minimum,
                     AutoPromote: true,
                     Canary: 2,
+                    ...state.update,
                   },
                 },
               ],
@@ -240,4 +241,84 @@ test("health lost during SDK verification prevents promotion", async () => {
   };
   await gate.qualify();
   assert.equal(state.posts.length, 0);
+});
+
+test("replicated rolling updates qualify each replacement before proceeding", async () => {
+  const { gate, state } = await fixture({
+    update: { Canary: 0, MaxParallel: 1, AutoRevert: true, AutoPromote: false },
+  });
+  state.allocations[1].JobVersion = 1;
+  await gate.qualify();
+  assert.deepEqual(state.verified[0].deploymentIds, ["one"]);
+  assert.deepEqual(state.posts[0].body.HealthyAllocationIDs, ["one"]);
+  await assert.rejects(gate.finish(), /missing running allocations/);
+  state.allocations[0].DeploymentStatus = { Healthy: true };
+  state.allocations[1].JobVersion = 2;
+  await gate.qualify();
+  assert.deepEqual(state.verified[1].deploymentIds, ["two"]);
+  assert.deepEqual(state.posts[1].body.HealthyAllocationIDs, ["two"]);
+  await gate.finish();
+  assert.equal(state.verified[2].stage, "serving");
+  assert.deepEqual(state.verified[2].deploymentIds, ["one", "two"]);
+});
+
+for (const options of [
+  {
+    count: 1,
+    update: { Canary: 0, MaxParallel: 1, AutoRevert: true, AutoPromote: false },
+  },
+  { update: { Canary: 0, MaxParallel: 2, AutoRevert: true } },
+  { update: { Canary: 0, MaxParallel: 1, AutoRevert: false } },
+  {
+    update: { Canary: 0, MaxParallel: 1, AutoRevert: true, AutoPromote: true },
+  },
+  {
+    update: {
+      Canary: 0,
+      MaxParallel: 1,
+      AutoRevert: true,
+      HealthCheck: "checks",
+    },
+  },
+  { update: { Canary: 1 } },
+]) {
+  test(`unsafe partial qualification is rejected: ${JSON.stringify(options)}`, async () => {
+    await assert.rejects(fixture(options), /SDK verification requires/);
+  });
+}
+
+test("SDK failure during rolling qualification fails the deployment for auto revert", async () => {
+  const { gate, state } = await fixture({
+    update: { Canary: 0, MaxParallel: 1, AutoRevert: true, AutoPromote: false },
+  });
+  state.allocations[1].JobVersion = 1;
+  state.onVerify = async () => {
+    throw new Error("SDK failed");
+  };
+  await assert.rejects(gate.qualify(), /SDK failed/);
+  assert.deepEqual(state.posts, [
+    {
+      path: "/v1/deployment/fail/rollout",
+      body: { DeploymentID: "rollout" },
+    },
+  ]);
+});
+
+test("rolling qualification retains the minimum healthy interval", async () => {
+  const { gate, state } = await fixture({
+    time: 100_000,
+    minimum: 30_000_000_000,
+    update: { Canary: 0, MaxParallel: 1, AutoRevert: true, AutoPromote: false },
+  });
+  state.allocations[1].JobVersion = 1;
+  await gate.qualify();
+  assert.deepEqual(state.verified, []);
+  state.time = 129_000;
+  state.checks.runtime.Timestamp = 129;
+  await gate.qualify();
+  assert.deepEqual(state.verified, []);
+  state.time = 130_000;
+  state.checks.runtime.Timestamp = 130;
+  await gate.qualify();
+  assert.deepEqual(state.verified[0].deploymentIds, ["one"]);
 });

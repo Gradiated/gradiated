@@ -118,6 +118,81 @@ describe("reading model allocations from Nomad", () => {
     },
   );
 
+  it.each(["running", "paused", "failed"])(
+    "routes qualified rolling replacements only during active updates (%s)",
+    async (status) => {
+      const allocations = await readModelAllocations(
+        nomad({
+          "/v1/jobs?meta=true": [
+            { ID: "kev-9b", Meta: { gradiated_model_id: "kev/kev-9b" } },
+          ],
+          "/v1/job/kev-9b/deployments": [{ JobVersion: 1, Status: status }],
+          "/v1/job/kev-9b/allocations": [
+            {
+              ID: "qualified",
+              NodeID: "n1",
+              ClientStatus: "running",
+              DesiredStatus: "run",
+              JobVersion: 1,
+              DeploymentStatus: { Canary: false, Healthy: true },
+            },
+            {
+              ID: "warming",
+              NodeID: "n2",
+              ClientStatus: "running",
+              DesiredStatus: "run",
+              JobVersion: 1,
+              DeploymentStatus: { Canary: false, Healthy: null },
+            },
+            {
+              ID: "canary",
+              NodeID: "n3",
+              ClientStatus: "running",
+              DesiredStatus: "run",
+              JobVersion: 1,
+              DeploymentStatus: { Canary: true, Healthy: true },
+            },
+            {
+              ID: "rejected",
+              NodeID: "n4",
+              ClientStatus: "running",
+              DesiredStatus: "run",
+              JobVersion: 1,
+              DeploymentStatus: { Canary: false, Healthy: false },
+            },
+            {
+              ID: "previous",
+              NodeID: "n5",
+              ClientStatus: "running",
+              DesiredStatus: "run",
+              JobVersion: 0,
+            },
+          ],
+          "/v1/job/kev-9b/versions": {
+            Versions: kevVersions.Versions.map((version) => ({
+              ...version,
+              Meta: { ...version.Meta, gradiated_sdk_verification: "true" },
+            })),
+          },
+        }),
+        () => {},
+      );
+
+      expect(
+        allocations.map((allocation) => [
+          allocation.allocationId,
+          allocation.verificationPending ?? false,
+        ]),
+      ).toEqual([
+        ["qualified", status !== "running"],
+        ["warming", true],
+        ["canary", true],
+        ["rejected", true],
+        ["previous", false],
+      ]);
+    },
+  );
+
   it("returns running allocations of model jobs with their own version's release", async () => {
     const allocations = await readModelAllocations(
       nomad({

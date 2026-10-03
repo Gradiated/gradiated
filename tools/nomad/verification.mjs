@@ -80,16 +80,23 @@ export const createVerificationGate = async (
   };
   const groups = job.TaskGroups.filter((group) => group.Count > 0);
   if (!groups.length) return undefined;
+  const rolling = groups.every(
+    (group) =>
+      group.Count >= 2 &&
+      group.Update?.Canary === 0 &&
+      group.Update.MaxParallel === 1 &&
+      group.Update.AutoRevert === true &&
+      group.Update.AutoPromote === false,
+  );
+  const canaries = groups.every(
+    (group) => group.Update?.AutoPromote && group.Update.Canary >= group.Count,
+  );
   if (
-    groups.some(
-      (group) =>
-        group.Update?.HealthCheck !== "manual" ||
-        !group.Update?.AutoPromote ||
-        group.Update.Canary < group.Count,
-    )
+    groups.some((group) => group.Update?.HealthCheck !== "manual") ||
+    (!rolling && !canaries)
   )
     throw new Error(
-      "SDK verification requires manual health and a full automatically promoted canary set",
+      "SDK verification requires manual health with full canaries or one-at-a-time rolling updates of replicated groups with auto revert",
     );
 
   const allocations = async () =>
@@ -132,7 +139,7 @@ export const createVerificationGate = async (
   return {
     qualify: async () => {
       const candidates = await allocations();
-      if (!complete(candidates)) return;
+      if (!rolling && !complete(candidates)) return;
 
       const pending = candidates.filter(
         (allocation) => allocation.DeploymentStatus?.Healthy !== true,

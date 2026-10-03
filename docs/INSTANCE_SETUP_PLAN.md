@@ -297,15 +297,20 @@ Each step is its own pull request.
 
 ### Safe model rollouts
 
-Model updates warm a full replacement set while existing replicas continue serving.
-The gateway keeps using the larger healthy pool while the replacement warms;
-once healthy capacity matches, it prefers the newer accepting release. Nomad promotes the new set automatically only after all runtime and reporting checks stay
-healthy, and reverts a failed deployment to its last stable job. Reserve enough
-compatible GPU capacity for the replacement set; insufficient canary capacity must
-leave the old service running rather than turn a rollout into an outage. Kev
-requires distinct Nomad hosts for its two replicas, avoiding a shared host-proxy
-failure. Use separate provider machines when enrolling them; separate pod IDs
-on the same physical machine do not provide hardware redundancy.
+Single-replica model updates warm a canary while the existing replica continues
+serving; they require a spare compatible host. Models with at least two replicas
+use Nomad's rolling update with one replacement at a time, avoiding the need for
+a second fleet. Capacity is temporarily reduced by one replica. Every replacement
+must pass fresh runtime/reporting checks for the minimum healthy interval and the
+production SDK check before it becomes manually healthy and Nomad replaces another
+old allocation. SDK failures fail the deployment and trigger automatic rollback.
+The final SDK check verifies the complete serving set. There is no qualification
+of a single-replica rolling update without a canary.
+
+The gateway keeps using accepting, qualified deployments during replacement.
+Kev requires distinct Nomad hosts for its two replicas, avoiding a shared
+host-proxy failure. Use separate provider machines when enrolling them; separate
+pod IDs on the same physical machine do not provide hardware redundancy.
 
 The Nomad deployment workflow follows each registration evaluation and waits for
 new deployments to become healthy. Failure or rollback fails the release; queued

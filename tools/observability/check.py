@@ -39,7 +39,13 @@ def main():
         assert any(p['id'] == panel_id and p.get('targets')
                    for p in dashboard['panels']), name
         assert not annotations.get('runbook_url'), name
-        assert annotations['logs_url'].startswith('https://grafana.gradiated.com/d/gradiated-logs?'), name
+        if name in ('LoraLoaderUnavailable', 'LoraPreparationFailures',
+                    'LoraCapacityRejected', 'LoraPinnedDiskNearlyFull'):
+            assert annotations['logs_url'] == (
+                'https://nomad.gradiated.com/ui/allocations/'
+                '{{ $labels.deployment }}/vllm/logs'), name
+        else:
+            assert annotations['logs_url'].startswith('https://grafana.gradiated.com/d/gradiated-logs?'), name
 
     # Validate actual chart expressions as recording rules, substituting dashboard variables.
     chart_rules = []

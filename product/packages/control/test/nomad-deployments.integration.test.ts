@@ -257,7 +257,7 @@ describe("Nomad deployment reconciliation", () => {
     ]);
   });
 
-  it("discovers enabled available/canary loaders and excludes disabled or draining allocations", async () => {
+  it("discovers only qualified serving loaders and excludes startup canaries, disabled and draining allocations", async () => {
     const enabled = { ...deploymentRelease(), lora_enabled: true };
     const running = allocation({ release: enabled });
     const canary = allocation({ release: enabled, verificationPending: true });
@@ -265,7 +265,7 @@ describe("Nomad deployment reconciliation", () => {
     await store.reconcile(nomad([running, canary, stopping, allocation()]));
     const targets = await store.adapterMetricsTargets();
     expect(targets.map((target) => target.id).sort()).toEqual(
-      [running.allocationId, canary.allocationId].sort(),
+      [running.allocationId].sort(),
     );
     await testDatabase.database
       .update(modelDeployments)
@@ -273,7 +273,14 @@ describe("Nomad deployment reconciliation", () => {
       .where(eq(modelDeployments.id, running.allocationId));
     expect(
       (await store.adapterMetricsTargets()).map((target) => target.id),
-    ).toEqual([canary.allocationId]);
+    ).toEqual([]);
+
+    await store.reconcile(
+      nomad([running, { ...canary, verificationPending: false }, stopping]),
+    );
+    expect(
+      (await store.adapterMetricsTargets()).map((target) => target.id).sort(),
+    ).toEqual([running.allocationId, canary.allocationId].sort());
 
     for (const target of targets) {
       expect(target.modelId).toBe(modelId);

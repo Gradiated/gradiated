@@ -97,6 +97,12 @@ tables. Qwen checks do not qualify GLM all-layer/expert adapters. TP2 and TP4 ne
 independent qualification. Budgets include all allocations, staging, replication,
 tmpfs and restart overlap.
 
+Prometheus discovers enabled LoRA loaders only after the existing serving
+qualification marks their deployment available. Runtime downloads and GPU-lock
+waits do not create loader-down pages; deployment alerts cover startup failures.
+Qualified deployments remain monitored if their loader subsequently fails.
+This uses existing deployment status, with no extra Nomad reads or lifecycle state.
+
 Run DevEx first, then narrow contracts, PostgreSQL, runtime, API/worker, Rust and
 console checks. Cover corrupted/hostile archives, coalesced loads, cache pressure,
 registered-file retention, restart, workspace isolation, concurrent promotion and streaming

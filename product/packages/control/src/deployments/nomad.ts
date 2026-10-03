@@ -91,7 +91,7 @@ export const createNomadDeploymentStore = (
       .where(
         and(
           sql`${modelDeployments.release}->>'lora_enabled' = 'true'`,
-          sql`${modelDeployments.status} <> 'draining'`,
+          eq(modelDeployments.status, "available"),
           isNull(instances.retiredAt),
         ),
       );

@@ -128,8 +128,17 @@ request() { in_container curl -s --max-time 3 -o /dev/stdout -w ' %{http_code}' 
 read -ra allocs <<<"$(in_container nomad job allocs -json fake-runtime | grep -o '"ID": *"[0-9a-f-]\{36\}"' | grep -o '[0-9a-f-]\{36\}' | tr '\n' ' ')"
 [[ ${#allocs[@]} == 2 ]] || { echo "expected two runtime allocations, got ${#allocs[@]}" >&2; exit 1; }
 
-for _ in {1..60}; do
-  [[ $(request "/alloc/${allocs[1]}/ready" "$token") == *" 200" ]] && break
+routes_ready=false
+ready_deadline=$((SECONDS + 60))
+while ((SECONDS < ready_deadline)); do
+  routes_ready=true
+  for alloc in "${allocs[@]}"; do
+    if [[ $(request "/alloc/$alloc/ready" "$token" || true) != *" 200" ]]; then
+      routes_ready=false
+      break
+    fi
+  done
+  $routes_ready && break
   sleep 1
 done
 
@@ -141,6 +150,7 @@ fail() {
   in_container nomad alloc logs -stderr "$proxy_alloc" >&2 || true
   exit 1
 }
+$routes_ready || fail "both runtime allocations did not become routable within 60 seconds"
 [[ $(request /healthz) == "ok"*" 200" ]] || fail "the unauthenticated health check did not answer"
 [[ $(request "/alloc/${allocs[0]}/v1/chat/completions") == *" 401" ]] || fail "missing token was not rejected"
 [[ $(request "/alloc/${allocs[0]}/v1/chat/completions" wrong-token) == *" 401" ]] || fail "wrong token was not rejected"

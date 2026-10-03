@@ -59,7 +59,11 @@ for vars in "$root/jobs"/*.vars.hcl; do
     }
   fi
   if [[ $name == glm-5-3-flash ]]; then
-    jq -e '(.Job.Meta.gradiated_release | fromjson | has("lora_enabled") | not)' <<<"$job" >/dev/null
+    disabled_lora=$(docker run --rm --network none --entrypoint nomad -v "$root/jobs:/jobs:ro" \
+      hashicorp/nomad@sha256:b964829b94c5493f3b543bb409b60c335a9ca03f21d9fac8b4cdd2af18b331c9 \
+      job run -output "${release[@]}" -var-file="/jobs/$name.vars.hcl" \
+      -var=lora_enabled=false "/jobs/$name.nomad.hcl")
+    jq -e '(.Job.Meta.gradiated_release | fromjson | has("lora_enabled") | not)' <<<"$disabled_lora" >/dev/null
     for tp in 2 4; do
       for base_revision in "" "qualified-training-revision"; do
         enabled=$(docker run --rm --network none --entrypoint nomad -v "$root/jobs:/jobs:ro" \

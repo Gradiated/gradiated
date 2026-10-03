@@ -3,7 +3,8 @@
 The GLM bundle includes an opt-in adapter loader. It is a control service, not an
 inference proxy. Completion requests, streaming, cancellation, batching and CPU/GPU
 adapter caching remain with vLLM. The private metadata API and gateway integration
-are implemented. `lora_enabled` defaults to false pending real GPU qualification.
+are implemented. `lora_enabled` defaults to false in the job template. The production GLM vars
+enable it with the independently qualified BF16-training/FP8-serving revision pair.
 
 ## Request path
 
@@ -88,10 +89,18 @@ calling our loader. Disk LRU therefore evicts only files not returned to vLLM, i
 recovered files after a task restart. If pinned files fill the disk budget,
 new preparations return a capacity error; base and registered-adapter serving
 continue. There is no attempt to unload adapters to free disk. Size disk storage
-for the expected lifetime working set rather than just the CPU working set.
+for the expected lifetime working set rather than just the CPU working set. The
+production GLM allocation budgets 256 GiB for adapters and reserves 350000 MiB
+of local disk for the cache plus runtime bundle. Each allocation has its own
+cache, including when TP2 and TP4 deployments share a node. Native GPU/CPU
+limits remain 8/64 adapters, with maximum rank 8. A measured full-layer rank-2
+artifact uses about 38 MiB on disk, including its retained archive; this is a
+working-set estimate for that artifact, not a bound for every model or rank.
+Pinned-disk alerts indicate that a new allocation with fresh cache capacity may
+be needed; CPU or GPU eviction cannot release those retained paths.
 
 Materialization is serialized per allocation, with at most two preparation callers
-waiting/loading. Reservations include the archive, extracted files and manifest.
+admitted. Additional callers wait within the shared 60-second preparation deadline. Reservations include the archive, extracted files and manifest.
 Writes use a staging directory and atomic rename. Restart removes incomplete
 staging directories, revalidates recovered files when used and starts with no
 acknowledged registrations. Returned paths remain pinned even if native registration
@@ -197,4 +206,8 @@ coalescing to pass; local tests skip that native check when vLLM is absent. The 
 completion routing, private control routing and blocked admin endpoints. CI also
 runs loader tests inside the pinned GLM bundle. Real-artifact/reference, native
 CPU/GPU eviction and reload, KV/cancellation isolation, latency and colocated
-TP2/TP4 memory checks remain gates before enabling production.
+TP2/TP4 memory checks are release gates. The pinned GLM runtime and actual trained
+rank-two adapter passed these checks on B300, including all MLA layers in prefill
+and decode against independent same-input FP32 math; see [GLM qualification](../runtimes/glm/README.md).
+Absolute whole-model logprob tolerance also failed on the LoRA-disabled control,
+so these checks do not establish task quality or bitwise whole-model determinism.

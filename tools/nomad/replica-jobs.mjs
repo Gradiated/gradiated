@@ -167,7 +167,7 @@ export const retireLegacyReplica = async (job, options) => {
     EnforceIndex: true,
     JobModifyIndex: legacy.JobModifyIndex,
   });
-  await waitForEvaluation(result.EvalID, "", options);
+  await waitForEvaluation(result.EvalID, "", { ...options, verify: undefined });
 };
 
 export const releaseFailedMigration = async (job, { get, post }) => {

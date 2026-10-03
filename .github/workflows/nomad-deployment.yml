@@ -185,6 +185,8 @@ jobs:
         run: |
           git fetch origin main
           node tools/nomad/release-source.mjs "$SOURCE_SHA"
+          # Application image pins advance independently of model inputs.
+          git restore --source=origin/main -- infra/environments/prod/us-east-1/kubernetes/workloads
           bash tools/nomad/deploy-jobs.sh
 
   passed:

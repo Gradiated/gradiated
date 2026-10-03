@@ -266,3 +266,60 @@ test("failed initial migration releases staging only while the healthy legacy sl
     }
   }
 });
+
+test("legacy retirement does not replay serving verification for its previous replica count", async () => {
+  for (const count of [1, 2]) {
+    const original = {
+      ...model(count),
+      Version: 1,
+      JobModifyIndex: 42,
+      Meta: {
+        gradiated_model_id: "model",
+        gradiated_sdk_verification: "true",
+        gradiated_release: JSON.stringify({ runtime_revision: "legacy" }),
+      },
+    };
+    Object.assign(original.TaskGroups[0], { Name: "replicas" });
+    Object.assign(original.TaskGroups[0].Update, {
+      HealthCheck: "manual",
+      AutoRevert: true,
+    });
+    const legacy = structuredClone(original);
+    const retained = {
+      ID: "retained",
+      Name: "kev.replicas[0]",
+      TaskGroup: "replicas",
+      DesiredStatus: "run",
+      ClientStatus: "running",
+      JobVersion: 1,
+    };
+    let checks = 0;
+    await retireLegacyReplica(replicaJobs([legacy])[0], {
+      signal: new AbortController().signal,
+      verify: async () => {
+        checks++;
+      },
+      get: async (path) => {
+        if (path === "/v1/jobs?meta=true") return [{ ID: "kev", Stop: false }];
+        if (path === "/v1/job/kev") return legacy;
+        if (path === "/v1/job/kev/allocations") return [retained];
+        if (path === "/v1/job/kev/versions")
+          return { Versions: [structuredClone(original)] };
+        if (path === "/v1/evaluation/scale")
+          return { Status: "complete", DeploymentID: "previous" };
+        if (path === "/v1/deployment/previous")
+          return {
+            ID: "previous",
+            JobID: "kev",
+            JobVersion: 1,
+            Status: "successful",
+          };
+        if (path === "/v1/deployment/allocations/previous")
+          return count === 2 ? [retained] : [];
+        throw new Error(path);
+      },
+      post: async () => ({ EvalID: "scale" }),
+    });
+    assert.equal(checks, 0);
+  }
+});

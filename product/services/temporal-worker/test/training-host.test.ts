@@ -255,3 +255,42 @@ it("cancels retry backoff when the activity is cancelled", async () => {
   ).rejects.toMatchObject({ name: "AbortError" });
   expect(http).toHaveBeenCalledTimes(1);
 });
+
+it("retries a lost operation reply with the identical command", async () => {
+  const http = vi
+    .fn<typeof fetch>()
+    .mockRejectedValueOnce(new TypeError("fetch failed"))
+    .mockResolvedValueOnce(
+      Response.json({ id: "train-transport", status: "running" }),
+    );
+  await expect(
+    hostsWithHttp(http).call(retryHost, "/operations", {
+      id: "train-transport",
+      operation: "train",
+    }),
+  ).resolves.toEqual({ id: "train-transport", status: "running" });
+  expect(http).toHaveBeenCalledTimes(2);
+  expect(http.mock.calls[0]).toEqual(http.mock.calls[1]);
+});
+
+it("bounds transport retries and preserves the final error", async () => {
+  const error = new TypeError("fetch failed");
+  const http = vi.fn<typeof fetch>().mockRejectedValue(error);
+  await expect(hostsWithHttp(http).call(retryHost, "/health")).rejects.toBe(
+    error,
+  );
+  expect(http).toHaveBeenCalledTimes(3);
+});
+
+it("does not retry transport failures after activity cancellation", async () => {
+  const controller = new AbortController();
+  const error = new TypeError("fetch failed");
+  const http = vi.fn<typeof fetch>().mockImplementation(async () => {
+    controller.abort();
+    throw error;
+  });
+  await expect(
+    hostsWithHttp(http, controller.signal).call(retryHost, "/health"),
+  ).rejects.toBe(error);
+  expect(http).toHaveBeenCalledTimes(1);
+});

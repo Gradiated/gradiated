@@ -196,20 +196,26 @@ export const createTrainingHosts = (input: {
     ]);
 
     for (let attempt = 0; ; attempt++) {
-      const response = await http(`${host.url}${path}`, {
-        method: command === undefined ? "GET" : "POST",
-        headers: {
-          authorization: `Bearer ${input.token}`,
-          "content-type": "application/json",
-        },
-        ...(command === undefined ? {} : { body: JSON.stringify(command) }),
-        signal,
-      });
-      if (response.ok) return response.json() as Promise<unknown>;
+      try {
+        const response = await http(`${host.url}${path}`, {
+          method: command === undefined ? "GET" : "POST",
+          headers: {
+            authorization: `Bearer ${input.token}`,
+            "content-type": "application/json",
+          },
+          ...(command === undefined ? {} : { body: JSON.stringify(command) }),
+          signal,
+        });
+        if (response.ok) return (await response.json()) as unknown;
 
-      await response.body?.cancel();
-      if (response.status < 500 || attempt === 2)
-        throw new Error(`Trainer request failed (${response.status}).`);
+        await response.body?.cancel();
+        if (response.status < 500 || attempt === 2)
+          throw new Error(`Trainer request failed (${response.status}).`);
+      } catch (error) {
+        // Fetch transport failures can lose a reply after an idempotent command lands.
+        if (!(error instanceof TypeError) || signal.aborted || attempt === 2)
+          throw error;
+      }
 
       await delay(1000 * (attempt + 1), undefined, { signal });
     }

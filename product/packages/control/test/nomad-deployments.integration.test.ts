@@ -157,6 +157,35 @@ describe("Nomad deployment reconciliation", () => {
     ]);
   });
 
+  it("keeps exactly one available allocation per slot across stale health snapshots and rollback", async () => {
+    const original = allocation({
+      replica: { key: "slot-0", child: true, order: 10 },
+    });
+    const replacement = allocation({
+      replica: { key: "slot-0", child: true, order: 20 },
+    });
+    const peer = allocation({
+      replica: { key: "slot-1", child: true, order: 15 },
+    });
+    const frames = [
+      [original, { ...replacement, verificationPending: true }, peer],
+      [{ ...original, draining: true }, replacement, peer],
+      [original, { ...replacement, verificationPending: true }, peer],
+      [{ ...original, verificationPending: true }, replacement, peer],
+      [original, { ...replacement, draining: true }, peer],
+    ];
+    for (const frame of frames) {
+      await store.reconcile(nomad(frame));
+      expect(await store.replicas()).toHaveLength(2);
+    }
+    expect((await store.replicas()).map((row) => row.id).sort()).toEqual(
+      [original.allocationId, peer.allocationId].sort(),
+    );
+    expect(await deploymentsOf(replacement.allocationId)).toMatchObject([
+      { status: "draining" },
+    ]);
+  });
+
   it("does not carry qualification to changed release contents on the same allocation", async () => {
     const existing = allocation();
     await store.reconcile(nomad([existing]));

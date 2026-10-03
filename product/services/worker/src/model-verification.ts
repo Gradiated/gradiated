@@ -10,6 +10,7 @@ export const ModelVerificationInputSchema = z
     deploymentIds: z.array(z.guid()).min(1),
     protocol: z.literal("system_one").optional(),
     runtimeRevision: z.string().min(1).max(300),
+    replicaRollout: z.boolean().optional(),
   })
   .strict();
 

@@ -15,6 +15,11 @@ export interface NomadAllocation {
   readonly release: ModelDeploymentRelease;
   readonly draining: boolean;
   readonly verificationPending?: boolean;
+  readonly replica?: {
+    readonly key: string;
+    readonly child: boolean;
+    readonly order: number;
+  };
 }
 
 export type UnplacedReason =
@@ -270,6 +275,48 @@ export const createNomadDeploymentStore = (
               updatedAt: sql`now()`,
             },
           });
+      }
+
+      const slotted = allocations.filter((allocation) => allocation.replica);
+      if (slotted.length) {
+        const available = new Set(
+          (
+            await tx
+              .select({ id: modelDeployments.id })
+              .from(modelDeployments)
+              .where(
+                and(
+                  eq(modelDeployments.status, "available"),
+                  inArray(
+                    modelDeployments.id,
+                    slotted.map((allocation) => allocation.allocationId),
+                  ),
+                ),
+              )
+          ).map((row) => row.id),
+        );
+        const selected = new Map<string, NomadAllocation>();
+        const superseded: string[] = [];
+        for (const allocation of slotted) {
+          if (!available.has(allocation.allocationId)) continue;
+          const key = `${allocation.modelId}:${allocation.replica!.key}`;
+          const previous = selected.get(key);
+          if (
+            !previous ||
+            Number(allocation.replica!.child) >
+              Number(previous.replica!.child) ||
+            (allocation.replica!.child === previous.replica!.child &&
+              allocation.replica!.order > previous.replica!.order)
+          ) {
+            if (previous) superseded.push(previous.allocationId);
+            selected.set(key, allocation);
+          } else superseded.push(allocation.allocationId);
+        }
+        if (superseded.length)
+          await tx
+            .update(modelDeployments)
+            .set({ status: "draining", updatedAt: sql`now()` })
+            .where(inArray(modelDeployments.id, superseded));
       }
 
       // A list filtered by ACL or cut short would look like every replica stopped,

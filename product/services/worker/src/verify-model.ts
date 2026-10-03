@@ -52,6 +52,7 @@ try {
     );
     const promoted =
       input.stage === "canary" ||
+      input.replicaRollout === true ||
       rows.every(
         (row) =>
           row.status !== "available" || input.deploymentIds.includes(row.id),
@@ -72,7 +73,12 @@ try {
     },
   );
   stage = "inference";
-  const targets = input.stage === "canary" ? input.deploymentIds : [undefined];
+  const targets =
+    input.stage === "canary"
+      ? input.deploymentIds
+      : input.replicaRollout
+        ? [...input.deploymentIds, undefined]
+        : [undefined];
   for (const deploymentId of targets) {
     const result = await verifyModel({
       modelId: input.modelId,

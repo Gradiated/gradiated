@@ -56,6 +56,7 @@ test("legacy scale-down preserves other replicas and uses the observed modify in
         ];
       if (path === "/v1/job/kev/versions")
         return { Versions: [{ ...legacy, Version: 1 }] };
+      if (path === "/v1/job/kev/deployments") return [];
       if (path === "/v1/evaluation/scale") return { Status: "complete" };
       throw new Error(path);
     },
@@ -305,6 +306,8 @@ test("legacy retirement does not replay serving verification for its previous re
         if (path === "/v1/job/kev/allocations") return [retained];
         if (path === "/v1/job/kev/versions")
           return { Versions: [structuredClone(original)] };
+        if (path === "/v1/job/kev/deployments")
+          return [{ ID: "previous", CreateIndex: 1 }];
         if (path === "/v1/evaluation/scale")
           return { Status: "complete", DeploymentID: "previous" };
         if (path === "/v1/deployment/previous")
@@ -322,4 +325,87 @@ test("legacy retirement does not replay serving verification for its previous re
     });
     assert.equal(checks, 0);
   }
+});
+
+test("legacy scale-down qualifies a new manual-health deployment for the retained replica", async () => {
+  const legacy = { ...model(2), Version: 1, JobModifyIndex: 42 };
+  Object.assign(legacy.Meta, {
+    gradiated_sdk_verification: "true",
+    gradiated_release: JSON.stringify({ runtime_revision: "legacy" }),
+  });
+  Object.assign(legacy.TaskGroups[0], { Name: "replicas" });
+  Object.assign(legacy.TaskGroups[0].Update, {
+    HealthCheck: "manual",
+    AutoRevert: true,
+    MinHealthyTime: 0,
+  });
+  let retired;
+  let healthy = false;
+  const verified = [];
+  await retireLegacyReplica(replicaJobs([legacy])[0], {
+    signal: new AbortController().signal,
+    pause: async () => {
+      assert.ok(
+        healthy,
+        "The retained deployment must be SDK-qualified before waiting",
+      );
+    },
+    verify: async (input) => verified.push(input),
+    get: async (path) => {
+      if (path === "/v1/jobs?meta=true") return [{ ID: "kev", Stop: false }];
+      if (path === "/v1/job/kev") return structuredClone(legacy);
+      if (path === "/v1/job/kev/allocations")
+        return [
+          {
+            Name: "kev.replicas[0]",
+            DesiredStatus: "run",
+            ClientStatus: "running",
+            JobVersion: 1,
+          },
+        ];
+      if (path === "/v1/job/kev/versions")
+        return { Versions: retired ? [retired, legacy] : [legacy] };
+      if (path === "/v1/job/kev/deployments")
+        return [{ ID: "previous", CreateIndex: 1 }];
+      if (path === "/v1/evaluation/scale")
+        return { Status: "complete", DeploymentID: "retained" };
+      if (path === "/v1/deployment/retained")
+        return {
+          ID: "retained",
+          JobID: "kev",
+          JobVersion: 2,
+          Status: healthy ? "successful" : "running",
+        };
+      if (path === "/v1/deployment/allocations/retained")
+        return [
+          {
+            ID: "existing",
+            TaskGroup: "replicas",
+            DesiredStatus: "run",
+            ClientStatus: "running",
+            JobVersion: 2,
+            DeploymentStatus: { Healthy: healthy },
+          },
+        ];
+      if (path === "/v1/allocation/existing/checks")
+        return { runtime: { Status: "success", Timestamp: Date.now() / 1000 } };
+      throw new Error(path);
+    },
+    post: async (path, body) => {
+      if (path === "/v1/jobs") {
+        retired = { ...body.Job, Version: 2 };
+        return { EvalID: "scale" };
+      }
+      assert.equal(path, "/v1/deployment/allocation-health/retained");
+      assert.deepEqual(body.HealthyAllocationIDs, ["existing"]);
+      healthy = true;
+    },
+  });
+  assert.deepEqual(
+    verified.map(({ stage, deploymentIds }) => ({ stage, deploymentIds })),
+    [
+      { stage: "canary", deploymentIds: ["existing"] },
+      { stage: "serving", deploymentIds: ["existing"] },
+    ],
+  );
 });

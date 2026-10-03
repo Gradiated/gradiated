@@ -19,6 +19,75 @@ const latestDeployment = async (job, get) => {
   return deployments.sort((a, b) => b.CreateIndex - a.CreateIndex)[0];
 };
 
+const verifyRecoveredSystemJob = async (job, { get, pause, signal }) => {
+  const inspect = async () => {
+    signal.throwIfAborted();
+    const allocations = (
+      await get(`/v1/job/${encodeURIComponent(job.ID)}/allocations`)
+    ).filter((allocation) => allocation.DesiredStatus === "run");
+    const { Summary } = await get(
+      `/v1/job/${encodeURIComponent(job.ID)}/summary`,
+    );
+    for (const group of job.TaskGroups) {
+      const current = Summary?.[group.Name];
+      if (
+        !(current?.Running > 0) ||
+        current.Queued > 0 ||
+        current.Starting > 0 ||
+        current.Unknown > 0 ||
+        allocations.filter((a) => a.TaskGroup === group.Name).length !==
+          current.Running
+      )
+        throw new Error(
+          `${job.ID}: recovered system job is missing allocations`,
+        );
+    }
+    for (const allocation of allocations) {
+      if (
+        allocation.JobVersion !== job.Version ||
+        allocation.ClientStatus !== "running"
+      )
+        throw new Error(
+          `${job.ID}: recovered system allocation is not current and running`,
+        );
+      const checks = Object.values(
+        await get(`/v1/allocation/${allocation.ID}/checks`),
+      );
+      const now = Date.now() / 1000;
+      if (
+        !checks.length ||
+        checks.some(
+          (check) =>
+            check.Status !== "success" ||
+            !Number.isFinite(check.Timestamp) ||
+            check.Timestamp > now + 5 ||
+            now - check.Timestamp > 60,
+        )
+      )
+        throw new Error(
+          `${job.ID}: recovered system allocation has unhealthy or stale checks`,
+        );
+    }
+    return allocations.map((allocation) => allocation.ID).sort();
+  };
+  const before = await inspect();
+  let remaining = Math.max(
+    ...job.TaskGroups.map(
+      (group) => (group.Update?.MinHealthyTime ?? 0) / 1_000_000,
+    ),
+  );
+  do {
+    const interval = Math.min(1000, remaining);
+    await pause(interval);
+    const after = await inspect();
+    if (JSON.stringify(before) !== JSON.stringify(after))
+      throw new Error(
+        `${job.ID}: recovered system allocations changed during verification`,
+      );
+    remaining -= interval;
+  } while (remaining > 0);
+};
+
 export const submitJob = async (
   job,
   {
@@ -45,10 +114,25 @@ export const submitJob = async (
         !disabled &&
         prior &&
         !["pending", "running", "paused", "successful"].includes(prior.Status)
-      )
+      ) {
+        if (
+          job.Type === "system" &&
+          job.Meta?.gradiated_sdk_verification !== "true"
+        ) {
+          const current = await get(path);
+          if (current.Version > prior.JobVersion) {
+            await verifyRecoveredSystemJob(current, {
+              get,
+              pause,
+              signal,
+            });
+            return { deployment: undefined };
+          }
+        }
         throw new Error(
           `${job.ID}: unchanged deployment ${prior.ID} is ${prior.Status}`,
         );
+      }
       if (
         !disabled &&
         !prior &&

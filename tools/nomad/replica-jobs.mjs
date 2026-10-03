@@ -162,12 +162,15 @@ export const retireLegacyReplica = async (job, options) => {
   legacy.TaskGroups[0].Update.Canary = count;
   legacy.TaskGroups[0].Update.AutoPromote = count > 0;
   legacy.TaskGroups[0].Update.AutoRevert = true;
+  const previous = (
+    await get(`/v1/job/${encodeURIComponent(parent)}/deployments`)
+  ).sort((a, b) => b.CreateIndex - a.CreateIndex)[0]?.ID;
   const result = await post("/v1/jobs", {
     Job: legacy,
     EnforceIndex: true,
     JobModifyIndex: legacy.JobModifyIndex,
   });
-  await waitForEvaluation(result.EvalID, "", { ...options, verify: undefined });
+  await waitForEvaluation(result.EvalID, previous ?? "", options);
 };
 
 export const releaseFailedMigration = async (job, { get, post }) => {

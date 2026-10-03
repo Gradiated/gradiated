@@ -5,6 +5,112 @@ import { deployJobs, submitJob } from "./submit-jobs.mjs";
 const job = { ID: "model" };
 const signal = () => new AbortController().signal;
 
+test("a newer recovered system job verifies current allocations instead of its historical failure", async () => {
+  const system = {
+    ID: "proxy",
+    Type: "system",
+    Version: 28,
+    TaskGroups: [{ Name: "proxy", Count: 1, Update: { MinHealthyTime: 0 } }],
+  };
+  for (const failure of [
+    undefined,
+    "node-left",
+    "queued",
+    "same-version",
+    "missing",
+    "old-allocation",
+    "not-running",
+    "unhealthy",
+    "stale",
+    "empty-checks",
+    "transient",
+  ]) {
+    let inspections = 0;
+    let elapsed = 0;
+    system.TaskGroups[0].Update.MinHealthyTime =
+      failure === "transient" ? 2_000_000_000 : 0;
+    const options = {
+      signal: signal(),
+      pause: async (ms) => {
+        elapsed += ms;
+      },
+      post: async (path) => {
+        assert.equal(
+          path,
+          "/v1/job/proxy/plan",
+          "No running proxy should be restarted",
+        );
+        return { Diff: { Type: "None" }, JobModifyIndex: 42 };
+      },
+      get: async (path) => {
+        if (path === "/v1/job/proxy/deployments")
+          return [
+            {
+              ID: "historical",
+              JobVersion: failure === "same-version" ? 28 : 27,
+              Status: "failed",
+              TaskGroups: { proxy: { DesiredTotal: 2 } },
+            },
+          ];
+        if (path === "/v1/job/proxy") return system;
+        if (path === "/v1/job/proxy/summary")
+          return {
+            Summary: {
+              proxy: {
+                Running: failure === "node-left" ? 1 : 2,
+                Queued: failure === "queued" ? 1 : 0,
+                Starting: 0,
+                Unknown: 0,
+              },
+            },
+          };
+        if (path === "/v1/job/proxy/allocations")
+          return Array.from(
+            { length: ["missing", "node-left"].includes(failure) ? 1 : 2 },
+            (_, i) => ({
+              ID: String(i),
+              TaskGroup: "proxy",
+              DesiredStatus: "run",
+              ClientStatus: failure === "not-running" ? "failed" : "running",
+              JobVersion: failure === "old-allocation" ? 27 : 28,
+            }),
+          );
+        if (path.endsWith("/checks")) {
+          inspections++;
+          return failure === "empty-checks"
+            ? {}
+            : {
+                ready: {
+                  Status:
+                    failure === "unhealthy" ||
+                    (failure === "transient" && elapsed === 1000)
+                      ? "failure"
+                      : "success",
+                  Timestamp: Date.now() / 1000 - (failure === "stale" ? 61 : 0),
+                },
+              };
+        }
+        throw new Error(path);
+      },
+    };
+    if (failure && failure !== "node-left")
+      await assert.rejects(
+        submitJob(system, options),
+        /failed|missing|not current|unhealthy or stale/,
+      );
+    else {
+      assert.deepEqual(await submitJob(system, options), {
+        deployment: undefined,
+      });
+      assert.equal(
+        inspections,
+        failure === "node-left" ? 2 : 4,
+        "Every current proxy needs fresh checks across the healthy interval",
+      );
+    }
+  }
+});
+
 test("models share staging capacity sequentially while infrastructure progresses", async () => {
   const events = [];
   let finishFirst;

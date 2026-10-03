@@ -11,7 +11,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from transfers import read_body, transfer
+from transfers import exchange, read_body, transfer
 
 
 class TransferTests(unittest.TestCase):
@@ -154,13 +154,29 @@ class TransferTests(unittest.TestCase):
         self.assertEqual(self.connections, 1)
 
     def test_expired_shared_deadline_prevents_network_work(self):
-        clock = iter([0, 121])
+        clock = iter([0, 601])
         with (
-            patch("transfers.time.monotonic", side_effect=lambda: next(clock, 121)),
+            patch("transfers.time.monotonic", side_effect=lambda: next(clock, 601)),
             self.assertRaises(TimeoutError),
         ):
             transfer(self.url, destination=self.destination)
         self.assertEqual(self.connections, 0)
+
+    def test_slow_transfer_can_retry_after_two_minutes(self):
+        clock = [0]
+
+        def slow_exchange(url, destination, upload, deadline):
+            if clock[0] == 0:
+                clock[0] = 121
+                raise ConnectionResetError("slow connection reset")
+            return exchange(url, destination, upload, deadline)
+
+        with (
+            patch("transfers.time.monotonic", side_effect=lambda: clock[0]),
+            patch("transfers.exchange", side_effect=slow_exchange),
+        ):
+            transfer(self.url, destination=self.destination)
+        self.assertEqual(self.destination.read_bytes(), self.body)
 
     def test_late_body_bytes_cannot_extend_the_shared_deadline(self):
         clock = [0]

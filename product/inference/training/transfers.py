@@ -111,7 +111,7 @@ def transfer(url, destination=None, upload=None):
         raise ValueError("Choose download or upload")
     destination = Path(destination) if destination is not None else None
     upload = Path(upload) if upload is not None else None
-    deadline = time.monotonic() + 120
+    deadline = time.monotonic() + 600
     for attempt in range(3):
         try:
             exchange(url, destination, upload, deadline)

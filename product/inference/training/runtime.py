@@ -1,31 +1,10 @@
 import hashlib
 import json
 import random
-import urllib.request
 
 from autotrain import Trainer
 from autotrain.data import digest, read_examples
-
-
-def transfer(url, destination=None, upload=None):
-    if not url.startswith("https://"):
-        raise ValueError("Artifact URL must use HTTPS")
-    if upload is not None:
-        with open(upload, "rb") as source:
-            request = urllib.request.Request(url, data=source.read(), method="PUT")
-        with urllib.request.urlopen(request, timeout=120) as response:
-            response.read()
-        return
-    with (
-        urllib.request.urlopen(url, timeout=120) as response,
-        open(destination, "wb") as target,
-    ):
-        size = 0
-        while chunk := response.read(1024 * 1024):
-            size += len(chunk)
-            if size > 256 * 1024 * 1024:
-                raise ValueError("Artifact exceeds download limit")
-            target.write(chunk)
+from transfers import transfer
 
 
 class TrainingRuntime(Trainer):

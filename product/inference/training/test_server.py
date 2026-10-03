@@ -1,6 +1,8 @@
 import json
+import socket
 import threading
 import unittest
+import urllib.error
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -61,12 +63,42 @@ class TrainerEventTests(unittest.TestCase):
         host.trainer = SimpleNamespace(
             run=lambda command, emit: (_ for _ in ()).throw(RuntimeError("test"))
         )
-        with patch("server.logging.exception") as log:
+        with patch("server.logger.exception") as log:
             host.run({"operation": "train"})
         log.assert_called_once_with("Training operation failed")
         self.assertEqual(host.job["status"], "failed")
         self.assertEqual(host.job["events"][0]["details"]["error_type"], "RuntimeError")
         self.assertEqual(host.job["events"][0]["message"], "trainer_failed")
+
+    def test_failed_url_transfer_retains_only_safe_cause_and_status(self):
+        for error, expected in [
+            (
+                urllib.error.URLError(socket.gaierror(-3, "fixture-only")),
+                {"cause_type": "gaierror"},
+            ),
+            (
+                urllib.error.HTTPError(
+                    "https://example.test/?signature=fixture-only",
+                    403,
+                    "fixture-only",
+                    {},
+                    None,
+                ),
+                {"upstream_status": 403},
+            ),
+        ]:
+            with self.subTest(error=type(error).__name__):
+                host = self.host()
+                host.job.update(id="train-1", status="running", result=None)
+                host.trainer = SimpleNamespace(
+                    run=lambda command, emit, error=error: (_ for _ in ()).throw(error)
+                )
+                with patch("server.logger.exception"):
+                    host.run({"operation": "train"})
+                details = host.job["events"][0]["details"]
+                for key, value in expected.items():
+                    self.assertEqual(details[key], value)
+                self.assertNotIn("fixture-only", json.dumps(host.job["events"]))
 
     def test_progress_and_checkpoint_events_retain_their_core_fields(self):
         host = self.host()
@@ -131,8 +163,8 @@ class ReservationTests(unittest.TestCase):
             patch("server.time.monotonic", return_value=201),
             patch("server.time.sleep"),
             patch("server.os._exit", side_effect=SystemExit) as exit_process,
+            self.assertRaises(SystemExit),
         ):
-            with self.assertRaises(SystemExit):
-                host.watchdog()
+            host.watchdog()
         self.assertTrue(host.trainer.stop.is_set())
         exit_process.assert_called_once_with(75)

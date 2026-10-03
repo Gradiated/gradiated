@@ -49,6 +49,13 @@ existing inference bundles. The Nomad host image must match the bundle base ID.
 The HTTP server binds to the allocation's loopback port behind the existing
 host proxy. Commands have idempotent operation IDs and return bounded event pages.
 Workers provide expiring S3 URLs; GPU processes have no Temporal credentials.
+Artifact downloads and uploads retry transient DNS, connection, timeout and HTTP
+service failures at most three times within a shared two-minute deadline. Downloads
+restart from zero and retain the final checksum check; uploads retry the same
+bytes to the same signed object key. Authentication, certificate and integrity
+failures are not retried. Retry logs contain bounded reasons without URLs. Failed
+operation events retain exception/cause types and HTTP status for diagnosis after
+the allocation is cleaned up.
 Training checks cancellation between microbatches. The workflow renews the exact
 allocation's reservation every 30 seconds, including between compute activities.
 The host expires it after three minutes without renewal and exits after a short

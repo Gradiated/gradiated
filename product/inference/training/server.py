@@ -5,10 +5,13 @@ import re
 import signal
 import threading
 import time
+import urllib.error
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from runtime import TrainingRuntime
+
+logger = logging.getLogger(__name__)
 
 
 class Host:
@@ -85,15 +88,22 @@ class Host:
             with self.lock:
                 self.job.update(status="complete", result=result)
         except Exception as error:
-            logging.exception("Training operation failed")
+            logger.exception("Training operation failed")
             code = (
                 "cancelled" if isinstance(error, InterruptedError) else "trainer_failed"
             )
+            failure = {"error_type": type(error).__name__}
+            if isinstance(error, urllib.error.URLError) and isinstance(
+                error.reason, BaseException
+            ):
+                failure["cause_type"] = type(error.reason).__name__
+            if isinstance(error, urllib.error.HTTPError):
+                failure["upstream_status"] = error.code
             self.emit(
                 {
                     "type": "trainer_failed",
                     "error_code": "internal",
-                    "error_type": type(error).__name__,
+                    **failure,
                     "message": code,
                 }
             )

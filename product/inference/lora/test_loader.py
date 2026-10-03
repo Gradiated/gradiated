@@ -27,7 +27,7 @@ class LoaderTests(unittest.TestCase):
         self.loader.ready = True
         self.loader.engine = self.engine
 
-    def fetch(self, spec, path, hosts):
+    def fetch(self, spec, path, hosts, deadline=None):
         self.fetches += 1
         path.write_bytes(self.payload)
 
@@ -61,6 +61,24 @@ class LoaderTests(unittest.TestCase):
         self.assertNotIn("private-secret", json.dumps(event))
         self.assertEqual(self.loader.counters["failures"], 1)
         self.assertGreater(self.loader.last_failure, 0)
+
+    def test_grant_receives_deadline_and_late_grant_never_downloads(self):
+        import time
+
+        spec = grant(self.payload)
+
+        def resolve(name, workspace, deadline):
+            self.assertGreater(deadline, time.monotonic())
+            return spec
+
+        self.loader.resolve = resolve
+        with mock.patch("loader.remaining", side_effect=TimeoutError):
+            with self.assertRaises(TimeoutError):
+                self.loader.resolve_version(
+                    spec["version"]["name"], spec["workspace_id"]
+                )
+        self.assertEqual(self.fetches, 0)
+        self.assertEqual(self.loader.entries, {})
 
     def test_file_failure_is_counted_once_and_capacity_is_separate(self):
         spec = grant(self.payload)
@@ -105,6 +123,87 @@ class LoaderTests(unittest.TestCase):
         self.assertTrue(
             (Path(self.temp.name) / name / "adapter_model.safetensors").is_file()
         )
+
+    def test_three_distinct_cold_preparations_wait_instead_of_rejecting(self):
+        registered = [self.register() for _ in range(3)]
+        started, release = threading.Event(), threading.Event()
+        barrier = threading.Barrier(4)
+        original = self.loader.fetch
+
+        def fetch(*args):
+            started.set()
+            if not release.wait(5):
+                raise TimeoutError("Synthetic test timed out")
+            original(*args)
+
+        def prepare(item):
+            name, spec = item
+            barrier.wait(timeout=5)
+            return self.loader.prepare(name, spec["workspace_id"])
+
+        self.loader.fetch = fetch
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+            futures = [executor.submit(prepare, item) for item in registered]
+            try:
+                barrier.wait(timeout=5)
+                self.assertTrue(started.wait(2))
+                done, _ = concurrent.futures.wait(
+                    futures,
+                    timeout=0.1,
+                    return_when=concurrent.futures.FIRST_COMPLETED,
+                )
+                self.assertFalse(done, "Cold preparation should wait for admission")
+            finally:
+                release.set()
+            for future in futures:
+                future.result(timeout=5)
+        self.assertEqual(self.fetches, 3)
+        self.assertEqual(len(self.models), 3)
+
+    def test_cold_preparation_shares_deadline_between_waits_and_download(self):
+        name, spec = self.register()
+        clock = [90.0]
+        admission, loading = mock.Mock(), mock.Mock()
+        self.loader.admission, self.loader.loading = admission, loading
+
+        def acquire(delay):
+            def wait(**kwargs):
+                clock[0] += delay
+                return True
+
+            return wait
+
+        admission.acquire.side_effect = acquire(4)
+        loading.acquire.side_effect = acquire(3)
+        original = self.loader.fetch
+        self.loader.fetch = mock.Mock(side_effect=original)
+        with mock.patch("loader.time.monotonic", side_effect=lambda: clock[0]):
+            self.loader.resolve_files(name, spec["workspace_id"], deadline=100)
+        admission.acquire.assert_called_once_with(timeout=10)
+        loading.acquire.assert_called_once_with(timeout=6)
+        self.assertEqual(self.loader.fetch.call_args.args[3], 100)
+        admission.release.assert_called_once()
+        loading.release.assert_called_once()
+
+    def test_queued_deadline_is_failure_instead_of_cache_capacity(self):
+        name, spec = self.register()
+        for blocked in ["admission", "loading"]:
+            with self.subTest(blocked=blocked):
+                admission, loading = mock.Mock(), mock.Mock()
+                admission.acquire.return_value = blocked != "admission"
+                loading.acquire.return_value = blocked != "loading"
+                self.loader.admission, self.loader.loading = admission, loading
+                with self.assertLogs("loader", level="WARNING"):
+                    with self.assertRaises(TimeoutError):
+                        self.loader.operation(
+                            "resolve",
+                            lambda: self.loader.resolve_files(
+                                name, spec["workspace_id"], 0
+                            ),
+                        )
+                self.assertEqual(self.loader.last_capacity_rejection, 0)
+                self.assertEqual(self.fetches, 0)
+        self.assertEqual(self.loader.counters["failures"], 2)
 
     def test_native_cpu_capacity_does_not_limit_registration_or_trigger_unload(self):
         for _ in range(3):
@@ -256,7 +355,7 @@ class LoaderTests(unittest.TestCase):
     def test_startup_preloads_only_up_to_native_cpu_count(self):
         specs = [grant(self.payload) for _ in range(3)]
         names = {spec["version"]["name"]: spec for spec in specs}
-        self.loader.resolve = lambda name, workspace: names[name]
+        self.loader.resolve = lambda name, workspace, deadline=None: names[name]
         start_preload(
             self.loader,
             lambda: [

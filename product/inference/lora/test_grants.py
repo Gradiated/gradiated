@@ -1,4 +1,8 @@
 import json
+import io
+import time
+import http.server
+import threading
 import tempfile
 import unittest
 from pathlib import Path
@@ -31,25 +35,55 @@ class HostCredentialTests(unittest.TestCase):
                     host_identity(path)
 
     def test_private_requests_send_existing_host_identity(self):
-        response = mock.MagicMock()
-        response.__enter__.return_value.read.return_value = b'{"data": []}'
-        opener = mock.Mock()
-        opener.open.return_value = response
-        with mock.patch("urllib.request.build_opener", return_value=opener):
+        response = io.BytesIO(b'{"data": []}')
+        response.status = 200
+        response.isclosed = lambda: response.closed
+        connection = mock.Mock()
+        connection.getresponse.return_value = response
+        with mock.patch("http.client.HTTPSConnection", return_value=connection):
             self.assertEqual(
                 read_private("https://api.example/internal", self.identity()),
                 {"data": []},
             )
-        request = opener.open.call_args.args[0]
-        self.assertEqual(request.get_header("Authorization"), "Bearer " + "a" * 43)
+        headers = connection.request.call_args.kwargs["headers"]
+        self.assertEqual(headers["Authorization"], "Bearer " + "a" * 43)
         self.assertEqual(
-            request.get_header("X-gradiated-instance-id"),
-            self.identity()["instance_id"],
+            headers["X-Gradiated-Instance-Id"], self.identity()["instance_id"]
         )
         self.assertEqual(
-            request.get_header("X-gradiated-nomad-node-id"),
-            self.identity()["nomad_node_id"],
+            headers["X-Gradiated-Nomad-Node-Id"], self.identity()["nomad_node_id"]
         )
+
+    def test_slow_grant_response_expires_shared_deadline(self):
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(200)
+                self.send_header("Content-Length", "12")
+                self.end_headers()
+                for value in b'{"data": []}':
+                    try:
+                        self.wfile.write(bytes([value]))
+                        self.wfile.flush()
+                    except OSError:
+                        return
+                    time.sleep(0.05)
+
+            def log_message(self, *_):
+                pass
+
+        server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+        started = time.monotonic()
+        with self.assertRaises(TimeoutError):
+            read_private(
+                f"http://127.0.0.1:{server.server_port}/grant",
+                self.identity(),
+                deadline=started + 0.15,
+            )
+        self.assertLess(time.monotonic() - started, 0.4)
 
 
 class ApiUrlTests(unittest.TestCase):

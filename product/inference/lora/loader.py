@@ -10,7 +10,7 @@ import uuid
 import urllib.error
 from pathlib import Path
 
-from artifacts import cache_key, download, has_fused_experts, materialize
+from artifacts import cache_key, download, has_fused_experts, materialize, remaining
 
 logger = logging.getLogger(__name__)
 
@@ -166,26 +166,31 @@ class Loader:
         finally:
             connection.close()
 
-    def version_key(self, name, workspace_id):
+    def version_key(self, name, workspace_id, deadline=None):
         if self.resolve is None:
             raise LookupError("Version unavailable")
-        spec = self.resolve(name, workspace_id)
+        spec = self.resolve(name, workspace_id, deadline)
+        remaining(deadline)
         if spec["workspace_id"] != workspace_id or spec["version"]["name"] != name:
             raise ValueError("Version grant identity mismatch")
         return self.register_metadata(spec)
 
     def resolve_version(self, name, workspace_id):
+        deadline = time.monotonic() + 60
         return self.operation(
             "resolve",
             lambda: self.resolve_files(
-                self.version_key(name, workspace_id), workspace_id
+                self.version_key(name, workspace_id, deadline), workspace_id, deadline
             ),
         )
 
     def prepare_version(self, name, workspace_id):
+        deadline = time.monotonic() + 60
         return self.operation(
             "prepare",
-            lambda: self.prepare(self.version_key(name, workspace_id), workspace_id),
+            lambda: self.prepare(
+                self.version_key(name, workspace_id, deadline), workspace_id, deadline
+            ),
         )
 
     def operation(self, action, call):
@@ -230,7 +235,10 @@ class Loader:
         path = self.root / name
         return {"path": str(path), "is_3d_lora_weight": has_fused_experts(path)}
 
-    def resolve_files(self, name, workspace_id):
+    def resolve_files(self, name, workspace_id, deadline=None):
+        if deadline is None:
+            deadline = time.monotonic() + 60
+        remaining(deadline)
         if not self.ready:
             raise CapacityError("Base engine warming")
         with self.lock:
@@ -241,14 +249,14 @@ class Loader:
                 if entry["pinned"]:
                     entry["used"] = time.time()
                     return self.local_files(name)
-        if not self.admission.acquire(blocking=False):
-            raise CapacityError("Preparation at capacity")
+        if not self.admission.acquire(timeout=max(0, deadline - time.monotonic())):
+            raise TimeoutError("Cold adapter admission deadline exceeded")
         started = time.monotonic()
         try:
-            if not self.loading.acquire(timeout=60):
-                raise CapacityError("Preparation busy")
+            if not self.loading.acquire(timeout=max(0, deadline - time.monotonic())):
+                raise TimeoutError("Cold adapter materialization deadline exceeded")
             try:
-                return self._prepare(name, workspace_id)
+                return self._prepare(name, workspace_id, deadline)
             finally:
                 self.loading.release()
         except CapacityError:
@@ -262,8 +270,8 @@ class Loader:
                 self.preparations += 1
             self.admission.release()
 
-    def prepare(self, name, workspace_id):
-        files = self.resolve_files(name, workspace_id)
+    def prepare(self, name, workspace_id, deadline=None):
+        files = self.resolve_files(name, workspace_id, deadline)
         runtime_name = f"{workspace_id}/{self.entries[name]['spec']['version']['name']}"
         # Native resolution can call the loader while holding vLLM's model lock.
         # Do not hold the materialization lock across calls back into vLLM.
@@ -296,7 +304,7 @@ class Loader:
                 entry["registered"] = True
                 self.counters["registrations"] += 1
 
-    def _prepare(self, name, workspace_id):
+    def _prepare(self, name, workspace_id, deadline):
         with self.lock:
             entry = self.entries.get(name)
             if (
@@ -317,9 +325,11 @@ class Loader:
             fetched = True
             with self.lock:
                 self.counters["downloads"] += 1
-            self.fetch(spec, path, hosts)
+            self.fetch(spec, path, hosts, deadline)
 
         def reserve(required):
+            if time.monotonic() >= deadline:
+                raise TimeoutError("Cold adapter deadline exceeded")
             with self.lock:
                 self.reserve_disk(name, required)
 
@@ -332,6 +342,7 @@ class Loader:
                 self.config["model_config"],
                 fetch=fetch,
                 reserve=reserve,
+                deadline=deadline,
             )
         finally:
             with self.lock:
@@ -341,6 +352,8 @@ class Loader:
                     if directory.is_dir()
                     else 0
                 )
+        if time.monotonic() >= deadline:
+            raise TimeoutError("Cold adapter deadline exceeded")
         with self.lock:
             self.counters["disk_hits"] += int(not fetched)
             # vLLM retains returned paths for native CPU-cache reloads.

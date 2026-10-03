@@ -58,7 +58,7 @@ class ResolverTests(unittest.IsolatedAsyncioTestCase):
         self.spec = grant(payload)
         self.downloads = 0
 
-        def fetch(spec, path, hosts):
+        def fetch(spec, path, hosts, deadline=None):
             self.downloads += 1
             path.write_bytes(payload)
 
@@ -77,7 +77,7 @@ class ResolverTests(unittest.IsolatedAsyncioTestCase):
             f"{self.spec['workspace_id']}/{self.spec['version']['name']}"
         )
 
-    def grant(self, name, workspace):
+    def grant(self, name, workspace, deadline=None):
         if (
             name != self.spec["version"]["name"]
             or workspace != self.spec["workspace_id"]

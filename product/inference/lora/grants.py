@@ -1,11 +1,13 @@
 import json
+import http.client
+import time
+import urllib.error
 import re
 import urllib.parse
-import urllib.request
 import uuid
 from pathlib import Path
 
-from artifacts import NoRedirect, strict_json
+from artifacts import remaining, strict_json
 
 
 def host_identity(path):
@@ -35,25 +37,61 @@ def validate_endpoint(url):
         raise ValueError("Invalid private artifact endpoint")
 
 
-def read_private(url, identity, body=None, limit=65536):
+def read_private(url, identity, body=None, limit=65536, deadline=None):
     validate_endpoint(url)
-    request = urllib.request.Request(
-        url,
-        data=json.dumps(body).encode() if body is not None else None,
-        headers={
-            "Content-Type": "application/json",
-            "X-Gradiated-Instance-Id": identity["instance_id"],
-            "X-Gradiated-Nomad-Node-Id": identity["nomad_node_id"],
-            "Authorization": f"Bearer {identity['token']}",
-        },
+    if deadline is None:
+        deadline = time.monotonic() + 10
+    parsed = urllib.parse.urlsplit(url)
+    transport = (
+        http.client.HTTPSConnection
+        if parsed.scheme == "https"
+        else http.client.HTTPConnection
     )
-    with urllib.request.build_opener(NoRedirect()).open(
-        request, timeout=10
-    ) as response:
-        data = response.read(limit + 1)
-        if len(data) > limit:
-            raise ValueError("Oversized artifact response")
-        return strict_json(data)
+    connection = transport(
+        parsed.hostname, parsed.port, timeout=min(10, remaining(deadline))
+    )
+    try:
+        connection.connect()
+        socket = connection.sock
+        path = urllib.parse.urlunsplit(("", "", parsed.path or "/", parsed.query, ""))
+        socket.settimeout(min(10, remaining(deadline)))
+        connection.request(
+            "POST" if body is not None else "GET",
+            path,
+            body=json.dumps(body).encode() if body is not None else None,
+            headers={
+                "Content-Type": "application/json",
+                "X-Gradiated-Instance-Id": identity["instance_id"],
+                "X-Gradiated-Nomad-Node-Id": identity["nomad_node_id"],
+                "Authorization": f"Bearer {identity['token']}",
+            },
+        )
+        socket.settimeout(min(10, remaining(deadline)))
+        response = connection.getresponse()
+        if response.status != 200:
+            raise urllib.error.HTTPError(
+                f"{parsed.scheme}://{parsed.hostname}",
+                response.status,
+                "Private API request failed",
+                {},
+                None,
+            )
+        data = bytearray()
+        with response:
+            while not response.isclosed():
+                socket.settimeout(min(10, remaining(deadline)))
+                chunk = response.read1(min(65536, limit + 1 - len(data)))
+                remaining(deadline)
+                if not chunk:
+                    break
+                data.extend(chunk)
+                if len(data) > limit:
+                    raise ValueError("Oversized artifact response")
+        result = strict_json(data)
+        remaining(deadline)
+        return result
+    finally:
+        connection.close()
 
 
 def api_url(base_url, path):
@@ -79,11 +117,11 @@ def production_targets(base_url, identity, base_model_id):
 def resolver(base_url, identity):
     url = api_url(base_url, "adapter-downloads")
 
-    def resolve(name, workspace_id):
+    def resolve(name, workspace_id, deadline=None):
         if not isinstance(name, str) or not 0 < len(name) <= 300:
             raise ValueError("Invalid version name")
         target = {"workspace_id": workspace_id, "version_name": name}
-        grant = read_private(url, identity, target)
+        grant = read_private(url, identity, target, deadline=deadline)
         version = grant["version"]
         if grant["workspace_id"] != workspace_id or version["name"] != name:
             raise ValueError("Artifact grant identity mismatch")

@@ -31,6 +31,10 @@ The loader never forwards completions, reads token streams, holds inference slot
 tracks active requests, unloads adapters or restarts the engine. Startup preload
 and qualification retain the native load API. Materialization locks are released
 before calls into vLLM, allowing concurrent native resolution without deadlock.
+Cold preparations share a 60-second deadline across grants, admission,
+materialization and downloading rather than rejecting an ordinary burst
+immediately. Each network read uses the remaining budget. The HTTP server
+bounds concurrent requests; two admission slots bound preparation waiters.
 The existing host ingress blocks vLLM's administrative load/unload endpoints.
 The resolver is installed as a standard `vllm.general_plugins` entry point and
 selected by the LoRA launcher; disabled deployments do not register it.

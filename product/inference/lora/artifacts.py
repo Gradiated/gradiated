@@ -1,4 +1,5 @@
 import hashlib
+import http.client
 import json
 import math
 import re
@@ -6,6 +7,7 @@ import shutil
 import struct
 import tarfile
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -44,7 +46,16 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         raise ValueError("Artifact redirects are forbidden")
 
 
-def download(spec, destination, allowed_hosts):
+def remaining(deadline):
+    if deadline is None:
+        return 60
+    seconds = deadline - time.monotonic()
+    if seconds <= 0:
+        raise TimeoutError("Cold adapter deadline exceeded")
+    return seconds
+
+
+def download(spec, destination, allowed_hosts, deadline=None):
     url = urllib.parse.urlsplit(spec["download"]["url"])
     if (
         url.scheme != "https"
@@ -54,23 +65,43 @@ def download(spec, destination, allowed_hosts):
         or url.port not in (None, 443)
     ):
         raise ValueError("Untrusted artifact URL")
+    if deadline is None:
+        deadline = time.monotonic() + 60
     digest = hashlib.sha256()
     size = 0
-    deadline = time.monotonic() + 60
-    opener = urllib.request.build_opener(NoRedirect())
-    with (
-        opener.open(spec["download"]["url"], timeout=30) as response,
-        destination.open("wb") as output,
-    ):
-        while chunk := response.read(1024 * 1024):
-            size += len(chunk)
-            if (
-                size > spec["version"]["adapter"]["size_bytes"]
-                or time.monotonic() > deadline
-            ):
-                raise ValueError("Archive exceeds declared size")
-            digest.update(chunk)
-            output.write(chunk)
+    connection = http.client.HTTPSConnection(
+        url.hostname, timeout=min(30, remaining(deadline))
+    )
+    try:
+        connection.connect()
+        socket = connection.sock
+        socket.settimeout(min(30, remaining(deadline)))
+        path = urllib.parse.urlunsplit(("", "", url.path or "/", url.query, ""))
+        connection.request("GET", path)
+        socket.settimeout(min(30, remaining(deadline)))
+        response = connection.getresponse()
+        if response.status != 200:
+            raise urllib.error.HTTPError(
+                f"https://{url.hostname}",
+                response.status,
+                "Artifact request failed",
+                {},
+                None,
+            )
+        with response, destination.open("wb") as output:
+            while not response.isclosed():
+                socket.settimeout(min(30, remaining(deadline)))
+                chunk = response.read1(1024 * 1024)
+                remaining(deadline)
+                if not chunk:
+                    break
+                size += len(chunk)
+                if size > spec["version"]["adapter"]["size_bytes"]:
+                    raise ValueError("Archive exceeds declared size")
+                digest.update(chunk)
+                output.write(chunk)
+    finally:
+        connection.close()
     if (
         size != spec["version"]["adapter"]["size_bytes"]
         or digest.hexdigest() != spec["version"]["adapter"]["sha256"]
@@ -78,12 +109,13 @@ def download(spec, destination, allowed_hosts):
         raise ValueError("Archive integrity mismatch")
 
 
-def extract(archive, destination, max_bytes, reserve=None):
+def extract(archive, destination, max_bytes, reserve=None, deadline=None):
     allowed = {"adapter_config.json", "adapter_model.safetensors", "README.md"}
     seen = set()
     total = 0
     with tarfile.open(archive, "r:gz") as bundle:
         for ordinal, member in enumerate(bundle):
+            remaining(deadline)
             if ordinal >= 16:
                 raise ValueError("Archive has too many members")
             name = member.name.removeprefix("./")
@@ -104,13 +136,21 @@ def extract(archive, destination, max_bytes, reserve=None):
             seen.add(name)
             source = bundle.extractfile(member)
             with source, (destination / name).open("xb") as output:
-                shutil.copyfileobj(source, output, 1024 * 1024)
+                while True:
+                    remaining(deadline)
+                    chunk = source.read(1024 * 1024)
+                    remaining(deadline)
+                    if not chunk:
+                        break
+                    output.write(chunk)
+                    remaining(deadline)
     if not {"adapter_config.json", "adapter_model.safetensors"} <= seen:
         raise ValueError("Missing adapter files")
     return total
 
 
-def validate_tensors(directory, spec, model_config):
+def validate_tensors(directory, spec, model_config, deadline=None):
+    remaining(deadline)
     model_config = model_config.get("text_config", model_config)
     layer_count = model_config["num_hidden_layers"]
     expert_count = model_config.get(
@@ -145,6 +185,7 @@ def validate_tensors(directory, spec, model_config):
         if not 0 < size <= 100_000_000:
             raise ValueError("Oversized safetensors header")
         header = strict_json(weights.read(size))
+        remaining(deadline)
     tensor_bytes = path.stat().st_size - 8 - size
     offsets = []
     pairs = {}
@@ -152,6 +193,7 @@ def validate_tensors(directory, spec, model_config):
     expert_coverage = {}
     expert_layouts = set()
     for name, tensor in header.items():
+        remaining(deadline)
         if name == "__metadata__":
             continue
         match = re.fullmatch(
@@ -218,6 +260,7 @@ def validate_tensors(directory, spec, model_config):
         raise ValueError("Mixed expert layouts within one adapter")
     cursor = 0
     for start, end in sorted(offsets):
+        remaining(deadline)
         if start != cursor:
             raise ValueError("Overlapping or missing tensor data")
         cursor = end
@@ -226,9 +269,16 @@ def validate_tensors(directory, spec, model_config):
     return tensor_bytes
 
 
-def file_hash(path):
+def file_hash(path, deadline=None):
+    digest = hashlib.sha256()
     with path.open("rb") as source:
-        return hashlib.file_digest(source, "sha256").hexdigest()
+        while True:
+            remaining(deadline)
+            chunk = source.read(1024 * 1024)
+            remaining(deadline)
+            if not chunk:
+                return digest.hexdigest()
+            digest.update(chunk)
 
 
 def has_fused_experts(directory):
@@ -252,8 +302,16 @@ def cache_key(version):
 
 
 def materialize(
-    spec, root, max_bytes, allowed_hosts, model_config, fetch=download, reserve=None
+    spec,
+    root,
+    max_bytes,
+    allowed_hosts,
+    model_config,
+    fetch=download,
+    reserve=None,
+    deadline=None,
 ):
+    remaining(deadline)
     version = spec["version"]
     name = cache_key(version)
     destination = root / name
@@ -281,19 +339,21 @@ def materialize(
             ):
                 raise ValueError("Invalid cached manifest")
             if any(
-                file_hash(destination / filename) != digest
+                file_hash(destination / filename, deadline) != digest
                 for filename, digest in hashes.items()
             ):
                 raise ValueError("Cached file integrity mismatch")
             disk_bytes = sum(path.stat().st_size for path in destination.iterdir())
             if disk_bytes > max_bytes:
                 raise ValueError("Cached adapter exceeds disk budget")
-            tensor_bytes = validate_tensors(destination, spec, model_config)
+            tensor_bytes = validate_tensors(destination, spec, model_config, deadline)
             return (
                 destination,
                 sum(path.stat().st_size for path in destination.iterdir()),
                 tensor_bytes,
             )
+        except TimeoutError:
+            raise
         except (ValueError, KeyError, OSError, TypeError, AttributeError):
             shutil.rmtree(destination, ignore_errors=True)
     shutil.rmtree(destination, ignore_errors=True)
@@ -308,7 +368,7 @@ def materialize(
         fetch(spec, archive, allowed_hosts)
         if (
             archive.stat().st_size != spec["version"]["adapter"]["size_bytes"]
-            or file_hash(archive) != spec["version"]["adapter"]["sha256"]
+            or file_hash(archive, deadline) != spec["version"]["adapter"]["sha256"]
         ):
             raise ValueError("Archive integrity mismatch")
         extract(
@@ -318,12 +378,14 @@ def materialize(
             reserve=(lambda unpacked: reserve(archive_size + unpacked + 4096))
             if reserve
             else None,
+            deadline=deadline,
         )
-        tensor_bytes = validate_tensors(staging, spec, model_config)
-        hashes = {path.name: file_hash(path) for path in staging.iterdir()}
+        tensor_bytes = validate_tensors(staging, spec, model_config, deadline)
+        hashes = {path.name: file_hash(path, deadline) for path in staging.iterdir()}
         (staging / ".verified.json").write_text(json.dumps(hashes))
         disk_bytes = sum(path.stat().st_size for path in staging.iterdir())
         shutil.rmtree(destination, ignore_errors=True)
+        remaining(deadline)
         staging.rename(destination)
         return destination, disk_bytes, tensor_bytes
     finally:

@@ -6,7 +6,7 @@ import unittest
 from unittest import mock
 
 from fixtures import archive, grant, settings
-from loader import Loader
+from loader import CapacityError, Loader
 from server import create_server
 
 
@@ -21,10 +21,12 @@ class ServerTests(unittest.TestCase):
             self.temp.name,
             1,
             set(),
-            fetch=lambda spec, path, hosts: path.write_bytes(self.payload),
+            fetch=lambda spec, path, hosts, deadline=None: path.write_bytes(
+                self.payload
+            ),
         )
         self.name = self.loader.register_metadata(self.spec)
-        self.loader.resolve = lambda name, workspace: self.spec
+        self.loader.resolve = lambda name, workspace, deadline=None: self.spec
         self.loader.ready = True
         self.loader.engine = mock.Mock(return_value=b"ok")
         self.front = create_server(self.loader, 0)
@@ -96,7 +98,9 @@ class ServerTests(unittest.TestCase):
         self.assertTrue(self.loader.entries[self.name]["pinned"])
 
     def test_capacity_rejection_does_not_change_readiness(self):
-        with self.loader.admission, self.loader.admission:
+        with mock.patch.object(
+            self.loader, "reserve_disk", side_effect=CapacityError("Disk full")
+        ):
             status, _ = self.request(
                 "POST",
                 "/internal/adapters/prepare",

@@ -1,4 +1,7 @@
 import hashlib
+import http.client
+import http.server
+import threading
 import io
 import json
 import math
@@ -6,17 +9,27 @@ import struct
 import tempfile
 import unittest
 import uuid
+import urllib.error
 from pathlib import Path
 from unittest import mock
 
 from artifacts import (
     download,
     extract,
+    file_hash,
+    materialize,
     has_fused_experts,
     strict_json,
     validate_tensors,
 )
 from fixtures import archive
+
+
+class Response(io.BytesIO):
+    status = 200
+
+    def isclosed(self):
+        return self.closed
 
 
 class ArtifactTests(unittest.TestCase):
@@ -37,10 +50,44 @@ class ArtifactTests(unittest.TestCase):
             "download": {"url": "https://bucket.s3.amazonaws.com/adapter"},
         }
 
+    def test_extraction_and_hash_check_deadline_between_chunks(self):
+        archive_path = self.root / "archive.tar.gz"
+        archive_path.write_bytes(self.payload)
+        output = self.root / "extracted"
+        output.mkdir()
+        with mock.patch("artifacts.remaining", side_effect=[1, 1, TimeoutError]):
+            with self.assertRaises(TimeoutError):
+                extract(archive_path, output, 1024 * 1024, deadline=1)
+        with mock.patch("artifacts.remaining", side_effect=[1, TimeoutError]):
+            with self.assertRaises(TimeoutError):
+                file_hash(archive_path, deadline=1)
+
+    def test_recovered_cache_timeout_keeps_existing_files(self):
+        from fixtures import grant, settings
+
+        spec = grant(self.payload)
+        fetch = lambda spec, path, hosts: path.write_bytes(self.payload)
+        path, *_ = materialize(
+            spec, self.root, 1024 * 1024, set(), settings()["model_config"], fetch=fetch
+        )
+        with mock.patch("artifacts.file_hash", side_effect=TimeoutError):
+            with self.assertRaises(TimeoutError):
+                materialize(
+                    spec,
+                    self.root,
+                    1024 * 1024,
+                    set(),
+                    settings()["model_config"],
+                    fetch=fetch,
+                )
+        self.assertTrue((path / "adapter_model.safetensors").is_file())
+        self.assertTrue((path / ".verified.json").is_file())
+
     def test_download_checks_actual_bytes_and_full_checksum(self):
         opener = mock.Mock()
-        opener.open.return_value = io.BytesIO(self.payload)
-        with mock.patch("urllib.request.build_opener", return_value=opener):
+        opener.getresponse.return_value = Response(self.payload)
+        opener.getresponse.return_value.status = 200
+        with mock.patch("http.client.HTTPSConnection", return_value=opener):
             download(self.spec, self.root / "archive", {"bucket.s3.amazonaws.com"})
         self.assertEqual((self.root / "archive").read_bytes(), self.payload)
         for payload in (
@@ -48,12 +95,76 @@ class ArtifactTests(unittest.TestCase):
             self.payload + b"extra",
             b"x" * len(self.payload),
         ):
-            opener.open.return_value = io.BytesIO(payload)
+            opener.getresponse.return_value = Response(payload)
+            opener.getresponse.return_value.status = 200
             with (
-                mock.patch("urllib.request.build_opener", return_value=opener),
+                mock.patch("http.client.HTTPSConnection", return_value=opener),
                 self.assertRaises(ValueError),
             ):
                 download(self.spec, self.root / "bad", {"bucket.s3.amazonaws.com"})
+
+    def test_download_accepts_a_server_closing_the_connection_after_its_body(self):
+        payload = self.payload
+
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def log_message(self, *_args):
+                pass
+
+            def do_GET(self):
+                self.send_response(200)
+                self.send_header("Connection", "close")
+                self.send_header("Content-Length", str(len(payload)))
+                self.end_headers()
+                self.wfile.write(payload)
+                self.close_connection = True
+
+        server = http.server.HTTPServer(("127.0.0.1", 0), Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            connection = http.client.HTTPConnection("127.0.0.1", server.server_port)
+            with mock.patch("http.client.HTTPSConnection", return_value=connection):
+                download(self.spec, self.root / "closed", {"bucket.s3.amazonaws.com"})
+            self.assertEqual((self.root / "closed").read_bytes(), payload)
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=5)
+
+    def test_download_reads_use_remaining_budget_and_reject_redirects(self):
+        connection = mock.Mock()
+        clock = [9.0]
+
+        class SlowResponse(Response):
+            status = 200
+
+            def read1(self, size):
+                clock[0] = 11.0
+                return super().read1(size)
+
+        connection.getresponse.return_value = SlowResponse(self.payload)
+        with (
+            mock.patch("http.client.HTTPSConnection", return_value=connection),
+            mock.patch("artifacts.time.monotonic", side_effect=lambda: clock[0]),
+            self.assertRaises(TimeoutError),
+        ):
+            download(self.spec, self.root / "slow", {"bucket.s3.amazonaws.com"}, 10)
+        self.assertTrue(
+            all(
+                call.args == (1.0,)
+                for call in connection.sock.settimeout.call_args_list
+            )
+        )
+        connection.close.assert_called_once()
+        connection.getresponse.return_value = mock.Mock(status=302)
+        with (
+            mock.patch(
+                "http.client.HTTPSConnection", return_value=connection
+            ) as connect,
+            self.assertRaises(urllib.error.HTTPError),
+        ):
+            download(self.spec, self.root / "redirect", {"bucket.s3.amazonaws.com"})
+        connect.assert_called_once()
 
     def test_untrusted_download_destinations_are_rejected_before_network_access(self):
         for url in (
@@ -65,7 +176,7 @@ class ArtifactTests(unittest.TestCase):
         ):
             self.spec["download"]["url"] = url
             with (
-                mock.patch("urllib.request.build_opener") as opener,
+                mock.patch("http.client.HTTPSConnection") as opener,
                 self.assertRaises(ValueError),
             ):
                 download(self.spec, self.root / "bad", {"bucket.s3.amazonaws.com"})

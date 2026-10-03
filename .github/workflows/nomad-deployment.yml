@@ -134,6 +134,7 @@ jobs:
           role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/gradiated-prod-deployment
           allowed-account-ids: ${{ vars.AWS_ACCOUNT_ID }}
           role-session-name: nomad-deploy-${{ github.run_id }}
+          role-duration-seconds: 21600
       - name: Join the tailnet for the Kubernetes API
         uses: tailscale/github-action@v4
         with:

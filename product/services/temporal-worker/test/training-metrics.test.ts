@@ -2,7 +2,10 @@ import { Registry } from "prom-client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { TrainingMetrics } from "../src/training/metrics.js";
 
-afterEach(() => vi.useRealTimers());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+});
 
 describe("training metrics", () => {
   it("keeps the metrics endpoint responsive when the database observation stalls", async () => {
@@ -46,11 +49,21 @@ describe("training metrics", () => {
     expect(body).not.toContain(
       "gradiated_training_stage_duration_p95_seconds_24h{",
     );
-    read.mockRejectedValueOnce(new Error("PG down"));
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+    read.mockRejectedValueOnce(new Error("private-database-credential"));
     vi.advanceTimersByTime(30_000);
     await metrics.collect();
     body = await registry.metrics();
     expect(body).toContain("gradiated_training_metrics_available 0");
     expect(body).not.toContain("gradiated_training_active_runs{");
+    expect(warning).toHaveBeenCalledExactlyOnceWith(
+      JSON.stringify({
+        service: "temporal-worker",
+        event: "training_metrics_observation_failed",
+      }),
+    );
+    expect(JSON.stringify(warning.mock.calls)).not.toContain(
+      "private-database-credential",
+    );
   });
 });

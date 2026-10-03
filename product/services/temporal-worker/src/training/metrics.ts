@@ -82,6 +82,12 @@ export class TrainingMetrics {
       this.available.set(1);
       this.observed.set(Date.now() / 1000);
     } catch {
+      console.warn(
+        JSON.stringify({
+          service: "temporal-worker",
+          event: "training_metrics_observation_failed",
+        }),
+      );
       for (const gauge of Object.values(this.gauges)) gauge.reset();
       this.available.set(0);
     }

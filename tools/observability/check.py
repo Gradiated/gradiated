@@ -93,6 +93,23 @@ def main():
 
     scenario('lora discovery failure', [{'series': 'prometheus_sd_http_failures_total', 'values': '0+1x40'}], 'LoraTargetDiscoveryFailures', ['LoraTargetDiscoveryFailures'])
 
+    for name, available, snapshots, expected in [
+        ('fresh snapshot', 2, [(1, '0+30x40')], None),
+        ('one fresh worker suffices', 2, [(0, '0+0x40'), (1, '0+30x40')], None),
+        ('database observations fail', 2, [(0, '0+30x40')], 'TrainingObservationsUnavailable'),
+        ('successful observation stops refreshing', 2, [(1, '0+0x40')], 'TrainingObservationsUnavailable'),
+        ('training gauges disappear', 2, [], 'TrainingObservationsUnavailable'),
+        ('workers unavailable', 0, [], None),
+    ]:
+        inputs = [{'series': 'kube_deployment_status_replicas_available{namespace="gradiated",deployment="temporal-worker"}',
+                   'values': f'{available}+0x40'}]
+        for i, (healthy, timestamp) in enumerate(snapshots):
+            labels = '{job="temporal-worker",instance="worker-' + str(i) + '"}'
+            inputs += [{'series': 'gradiated_training_metrics_available' + labels, 'values': f'{healthy}+0x40'},
+                       {'series': 'gradiated_training_metrics_timestamp_seconds' + labels, 'values': timestamp}]
+        scenario('Training observation ' + name, inputs, expected,
+                 ['TrainingObservationsUnavailable'], eval_time='8m')
+
     # Temporal service alerts are disabled during bootstrap (replicas=0), tolerate
     # startup/drain windows and do not let another workload mask missing metrics.
     temporal_alerts = ['TemporalWorkerUnavailable', 'TemporalWorkerAvailabilityDegraded',

@@ -11,6 +11,7 @@ import tarfile
 import time
 import urllib.error
 import urllib.parse
+from socket import gaierror
 
 
 def strict_json(data):
@@ -140,12 +141,21 @@ def _download_part(url, destination, start, end, total, deadline):
                 if output.tell() != end + 1:
                     raise ValueError("Archive integrity mismatch")
                 return
-            except TimeoutError:
+            except (TimeoutError, gaierror) as error:
                 if attempt == 11 or time.monotonic() >= deadline:
                     raise
                 logging.getLogger(__name__).warning(
-                    json.dumps({"event": "lora_download_retry", "reason": "timeout"})
+                    json.dumps(
+                        {
+                            "event": "lora_download_retry",
+                            "reason": "dns"
+                            if isinstance(error, gaierror)
+                            else "timeout",
+                        }
+                    )
                 )
+                if isinstance(error, gaierror):
+                    time.sleep(min(1, remaining(deadline)))
             finally:
                 connection.close()
 

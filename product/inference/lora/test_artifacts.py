@@ -4,6 +4,7 @@ import http.server
 import io
 import json
 import math
+import socket
 import struct
 import tempfile
 import threading
@@ -482,6 +483,107 @@ class ArtifactTests(unittest.TestCase):
         self.assertEqual(len(logs.records), 11)
         for connection in connections:
             connection.close.assert_called_once()
+
+    def test_dns_failure_recovers_without_exposing_the_artifact_url(self):
+        first, second = mock.Mock(), mock.Mock()
+        first.connect.side_effect = socket.gaierror(socket.EAI_AGAIN, "DNS unavailable")
+        second.getresponse.return_value = Response(self.payload)
+        with (
+            mock.patch("http.client.HTTPSConnection", side_effect=[first, second]),
+            mock.patch("artifacts.time.sleep") as pause,
+            self.assertLogs("artifacts", level="WARNING") as logs,
+        ):
+            download(
+                self.spec, self.root / "dns-recovered", {"bucket.s3.amazonaws.com"}
+            )
+        self.assertEqual((self.root / "dns-recovered").read_bytes(), self.payload)
+        pause.assert_called_once_with(1)
+        self.assertIn('"reason": "dns"', logs.output[0])
+        self.assertNotIn("bucket.s3.amazonaws.com", logs.output[0])
+        first.close.assert_called_once()
+        second.close.assert_called_once()
+
+    def test_persistent_dns_failure_has_a_bounded_attempt_count(self):
+        connections = [mock.Mock() for _ in range(12)]
+        for connection in connections:
+            connection.connect.side_effect = socket.gaierror(
+                socket.EAI_AGAIN, "DNS unavailable"
+            )
+        with (
+            mock.patch(
+                "http.client.HTTPSConnection", side_effect=connections
+            ) as connect,
+            mock.patch("artifacts.time.sleep") as pause,
+            self.assertLogs("artifacts", level="WARNING") as logs,
+            self.assertRaises(socket.gaierror),
+        ):
+            download(self.spec, self.root / "dns-failed", {"bucket.s3.amazonaws.com"})
+        self.assertEqual(connect.call_count, 12)
+        self.assertEqual(pause.call_count, 11)
+        self.assertEqual(len(logs.records), 11)
+        for connection in connections:
+            connection.close.assert_called_once()
+
+    def test_dns_failure_does_not_extend_an_expired_deadline(self):
+        clock = [0.0]
+        connection = mock.Mock()
+
+        def fail():
+            clock[0] = 61
+            raise socket.gaierror(socket.EAI_AGAIN, "DNS unavailable")
+
+        connection.connect.side_effect = fail
+        with (
+            mock.patch(
+                "http.client.HTTPSConnection", return_value=connection
+            ) as connect,
+            mock.patch("artifacts.time.monotonic", side_effect=lambda: clock[0]),
+            mock.patch("artifacts.time.sleep") as pause,
+            self.assertRaises(socket.gaierror),
+        ):
+            download(
+                self.spec, self.root / "dns-expired", {"bucket.s3.amazonaws.com"}, 60
+            )
+        connect.assert_called_once()
+        pause.assert_not_called()
+        connection.close.assert_called_once()
+
+    def test_dns_failure_after_partial_transfer_keeps_the_written_prefix(self):
+        clock = [0.0]
+        first, second, third = mock.Mock(), mock.Mock(), mock.Mock()
+
+        class SlowResponse(Response):
+            def read1(self, size):
+                clock[0] += 3
+                return super().read1(min(size, 8))
+
+        first.getresponse.return_value = SlowResponse(self.payload)
+        second.connect.side_effect = socket.gaierror(
+            socket.EAI_AGAIN, "DNS unavailable"
+        )
+        response = Response(self.payload[8:])
+        response.status = 206
+        response.getheader = lambda _: (
+            f"bytes 8-{len(self.payload) - 1}/{len(self.payload)}"
+        )
+        third.getresponse.return_value = response
+        with (
+            mock.patch(
+                "http.client.HTTPSConnection", side_effect=[first, second, third]
+            ),
+            mock.patch("artifacts.time.monotonic", side_effect=lambda: clock[0]),
+            mock.patch("artifacts.time.sleep"),
+            self.assertLogs("artifacts", level="WARNING"),
+        ):
+            download(
+                self.spec, self.root / "dns-resumed", {"bucket.s3.amazonaws.com"}, 60
+            )
+        self.assertEqual((self.root / "dns-resumed").read_bytes(), self.payload)
+        second.request.assert_not_called()
+        self.assertEqual(
+            third.request.call_args.kwargs["headers"],
+            {"Range": f"bytes=8-{len(self.payload) - 1}"},
+        )
 
     def test_multiple_attempt_timeouts_resume_written_bytes(self):
         clock = [0.0]

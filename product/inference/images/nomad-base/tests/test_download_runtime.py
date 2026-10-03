@@ -66,7 +66,7 @@ class DownloadTests(unittest.TestCase):
         self.assertEqual(list(self.archive.parent.iterdir()), [self.archive])
 
     def test_size_probe_retries_transient_failures_before_starting_ranges(self):
-        codes = iter((7, 28, 56, 18, 0))
+        codes = iter((6, 7, 28, 56, 18, 0))
         probes = []
 
         def curl(args, **kwargs):
@@ -80,7 +80,7 @@ class DownloadTests(unittest.TestCase):
 
         with patch.object(module.time, "sleep"):
             self.run_download(curl)
-        self.assertEqual(probes, [7, 28, 56, 18, 0])
+        self.assertEqual(probes, [6, 7, 28, 56, 18, 0])
         self.assertEqual(self.archive.read_bytes(), self.payload)
 
     def test_size_probe_denial_is_not_retried(self):
@@ -132,7 +132,7 @@ class DownloadTests(unittest.TestCase):
             sorted(start for start, _ in self.calls), [i + 2 for i in starts]
         )
 
-    def test_range_connection_failure_retries_without_advancing_the_offset(self):
+    def test_range_dns_failure_retries_without_advancing_the_offset(self):
         attempted = set()
 
         def curl(args, **kwargs):
@@ -141,7 +141,7 @@ class DownloadTests(unittest.TestCase):
             value = args[args.index("--range") + 1]
             if value not in attempted:
                 attempted.add(value)
-                return subprocess.CompletedProcess(args, 7)
+                return subprocess.CompletedProcess(args, 6)
             return self.fake_curl(args, **kwargs)
 
         self.run_download(curl)

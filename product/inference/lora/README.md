@@ -35,7 +35,8 @@ before calls into vLLM, allowing concurrent native resolution without deadlock.
 Archives of at least 8 MiB use at most eight equal, non-overlapping ranges, all
 started together and written into one staging file; smaller archives use a single
 GET. Each range has at most twelve attempts, capped at five seconds and the
-original cold deadline. A timeout resumes from bytes already written. Queued
+original cold deadline. Timeouts and DNS lookup failures resume from bytes already
+written; DNS retries pause for up to one second within that deadline. Queued
 chunks cannot delay the last range, and there is no throughput extrapolation. Range responses must
 match the requested offset and declared total size. A server that ignores a resumed
 single GET restarts from zero; ignored ranges in a parallel download are rejected.

@@ -9,7 +9,7 @@ from pathlib import Path
 
 def download(url: str, destination: Path) -> None:
     deadline = time.monotonic() + 1200
-    retryable = (7, 18, 28, 56)
+    retryable = (6, 7, 18, 28, 56)
     credentials = (
         'aws-sigv4 = "aws:amz:us-east-1:s3"\n'
         f'user = "{os.environ["AWS_ACCESS_KEY_ID"]}:{os.environ["AWS_SECRET_ACCESS_KEY"]}"\n'

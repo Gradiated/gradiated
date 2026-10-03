@@ -15,7 +15,10 @@ class RuntimeTests(unittest.TestCase):
         runtime.tokenizer = Mock(return_value={"input_ids": [1, 2, 3]})
         runtime.tokenizer.apply_chat_template.return_value = "formatted prompt"
         messages = [{"role": "user", "content": "hello"}]
-        with patch("autotrain.Trainer.generate", return_value={"text": "answer", "tokens": 2, "seconds": 1}) as generate:
+        with patch(
+            "autotrain.Trainer.generate",
+            return_value={"text": "answer", "tokens": 2, "seconds": 1},
+        ) as generate:
             result = runtime.generate(messages, adapted=True)
         self.assertEqual(result["usage"], {"input_tokens": 3, "output_tokens": 2})
         generate.assert_called_once_with(messages, True, 256, None)
@@ -132,17 +135,92 @@ class RuntimeTests(unittest.TestCase):
     def test_rejects_download_with_wrong_digest(self):
         with tempfile.TemporaryDirectory() as temp:
             runtime = TrainingRuntime(temp, recipe={})
-            with patch(
-                "runtime.transfer",
-                side_effect=lambda url, destination: Path(destination).write_bytes(
-                    b"incorrect"
+            with (
+                patch(
+                    "runtime.transfer",
+                    side_effect=lambda url, destination: Path(destination).write_bytes(
+                        b"incorrect"
+                    ),
+                ),
+                self.assertRaisesRegex(ValueError, "digest mismatch"),
+            ):
+                runtime.download(
+                    {"url": "https://example.com/artifact", "sha256": "0" * 64},
+                    "artifact",
+                )
+
+    def test_self_judging_allows_reasoning_and_uses_only_the_final_choice(self):
+        for choice in ["A", "B", "TIE"]:
+            with self.subTest(choice=choice), tempfile.TemporaryDirectory() as temp:
+                runtime = TrainingRuntime(temp, recipe={})
+                example = {"id": "one", "group": "one", "prompt": []}
+
+                def generate(prompt, *, adapted, choice=choice, **options):
+                    if options:
+                        return {
+                            "text": "<think>unfinished"
+                            if options["max_tokens"] < 64
+                            else "<think>Compare both answers.</think> " + choice
+                        }
+                    return {"text": "answer", "tokens": 1, "seconds": 1}
+
+                with (
+                    patch.object(runtime, "load"),
+                    patch.object(runtime, "load_adapter"),
+                    patch.object(runtime, "download", return_value=Path(temp)),
+                    patch("runtime.read_examples", return_value=[example]),
+                    patch.object(runtime, "generate", side_effect=generate),
+                    patch.object(
+                        runtime,
+                        "upload",
+                        side_effect=lambda p, _: json.loads(p.read_text()),
+                    ),
+                ):
+                    rows = runtime.run(
+                        {
+                            "operation": "generate",
+                            "adapter": {},
+                            "dataset": {},
+                            "output": {},
+                        },
+                        lambda _: None,
+                    )
+                self.assertEqual(rows[0]["judgment"], choice)
+
+    def test_unfinished_self_judge_is_not_a_valid_choice(self):
+        with tempfile.TemporaryDirectory() as temp:
+            runtime = TrainingRuntime(temp, recipe={})
+            example = {"id": "one", "group": "one", "prompt": []}
+            with (
+                patch.object(runtime, "load"),
+                patch.object(runtime, "load_adapter"),
+                patch.object(runtime, "download", return_value=Path(temp)),
+                patch("runtime.read_examples", return_value=[example]),
+                patch.object(
+                    runtime,
+                    "generate",
+                    return_value={
+                        "text": "<think>unfinished",
+                        "tokens": 1,
+                        "seconds": 1,
+                    },
+                ),
+                patch.object(
+                    runtime,
+                    "upload",
+                    side_effect=lambda p, _: json.loads(p.read_text()),
                 ),
             ):
-                with self.assertRaisesRegex(ValueError, "digest mismatch"):
-                    runtime.download(
-                        {"url": "https://example.com/artifact", "sha256": "0" * 64},
-                        "artifact",
-                    )
+                rows = runtime.run(
+                    {
+                        "operation": "generate",
+                        "adapter": {},
+                        "dataset": {},
+                        "output": {},
+                    },
+                    lambda _: None,
+                )
+            self.assertNotIn(rows[0]["judgment"], ["A", "B", "TIE"])
 
     def test_evaluation_judges_each_pair_once_and_preserves_randomized_order(self):
         with tempfile.TemporaryDirectory() as temp:

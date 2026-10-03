@@ -115,9 +115,10 @@ class TrainingRuntime(Trainer):
                     self.generate(
                         [{"role": "user", "content": prompt}],
                         adapted=False,
-                        max_tokens=8,
+                        max_tokens=256,
                         max_prompt_tokens=4096,
                     )["text"]
+                    .rsplit("</think>", 1)[-1]
                     .strip()
                     .upper()
                 )

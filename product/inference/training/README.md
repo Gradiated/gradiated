@@ -101,6 +101,11 @@ revision. Users can promote that version; inference requires a compatible host
 with LoRA enabled. Hosts download adapters on demand, while vLLM owns the CPU and
 GPU adapter caches.
 
+When the base model also judges its own comparisons, judgments have a bounded
+256-token output budget so reasoning models can finish. Only the final answer
+after a completed thinking segment is interpreted as A, B or TIE; unfinished or
+unrecognized judgments remain unresolved.
+
 Datasets use JSONL with TRL-compatible conversational `prompt` and `completion`
 columns. The current recipe accepts text messages and one assistant completion,
 masks all prompt tokens and drops overlength examples without truncating targets.

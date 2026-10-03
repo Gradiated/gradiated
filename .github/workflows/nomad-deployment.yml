@@ -73,8 +73,8 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - name: Check and test adapter loading and cache hierarchy
         run: |
-          uv tool run ruff@0.16.10 check product/inference/lora
-          uv tool run ruff@0.16.10 format --check product/inference/lora
+          uv tool run ruff@0.16.10 check product/inference/lora product/inference/images/nomad-base/download-runtime.py product/inference/images/nomad-base/tests/test_download_runtime.py
+          uv tool run ruff@0.16.10 format --check product/inference/lora product/inference/images/nomad-base/download-runtime.py product/inference/images/nomad-base/tests/test_download_runtime.py
           python3 -m unittest discover -s product/inference/lora -p 'test_*.py'
       - run: |
           kubectl kustomize infra/environments/prod/us-east-1/kubernetes/nomad >/dev/null

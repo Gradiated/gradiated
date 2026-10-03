@@ -340,6 +340,14 @@ including placements that were already queued when the drain began. Device
 inspection errors fail startup. Kev performs uncached and cached inference before
 opening its HTTP listener, so readiness does not require a manual warmup request.
 
+Runtime downloads use eight independent S3 ranges and resume each range's written
+prefix after a bounded connection attempt. The downloader keeps one staging file,
+passes signing credentials to curl through stdin, and retains the twenty-minute
+total download deadline. Checksum verification and extraction finish before atomic
+publication. Startup logs identify the failed phase and elapsed time. Existing
+hosts receive compatible downloader tools through the host-tools installer;
+updating a provider image is not required.
+
 Runtime bundles carry their own launcher. Publish the bundle before changing the
 job to use it; the content-addressed release resolver prevents submission while
 that source release is missing. A newer Git deployment supersedes an older

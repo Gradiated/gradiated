@@ -4,18 +4,18 @@ set -euo pipefail
 work=$(mktemp -d)
 trap 'rm -rf "$work" /etc/gradiated/artifact.env' EXIT
 mkdir -p "$work/bin" "$work/bundle" /etc/gradiated
-printf 'AWS_ACCESS_KEY_ID=test-only\n' >/etc/gradiated/artifact.env
+printf 'AWS_ACCESS_KEY_ID=test-only\nAWS_SECRET_ACCESS_KEY=test-only\n' >/etc/gradiated/artifact.env
 printf 'verified runtime\n' >"$work/bundle/payload"
 tar -czf "$work/bundle.tar.gz" -C "$work/bundle" .
 export TEST_BUNDLE="$work/bundle.tar.gz"
 export PATH="$work/bin:$PATH"
 
-stub_s5cmd() {
+stub_curl() {
   {
     printf '#!/usr/bin/env bash\nset -euo pipefail\n'
     cat
-  } >"$work/bin/s5cmd"
-  chmod +x "$work/bin/s5cmd"
+  } >"$work/bin/curl"
+  chmod +x "$work/bin/curl"
 }
 
 bundle_url() {
@@ -38,9 +38,20 @@ left_nothing() {
   [[ -z $(find "$work" -maxdepth 1 -name '*.download.*' -print) ]]
 }
 
-stub_s5cmd <<'FIXTURE'
-[[ "$AWS_ACCESS_KEY_ID" == test-only ]]
-cp "$TEST_BUNDLE" "${@: -1}"
+stub_curl <<'FIXTURE'
+config=$(cat)
+[[ "$config" == *'user = "test-only:test-only"'* ]]
+[[ "$*" != *test-only* ]]
+if [[ "$*" == *--head* ]]; then
+  stat -c %s "$TEST_BUNDLE"
+  exit 0
+fi
+while (($#)); do
+  if [[ "$1" == --range ]]; then range=$2; break; fi
+  shift
+done
+start=${range%-*}; end=${range#*-}
+dd if="$TEST_BUNDLE" bs=1 skip="$start" count="$((end - start + 1))" status=none
 FIXTURE
 digest=$(sha256sum "$TEST_BUNDLE" | cut -d' ' -f1)
 url=$(bundle_url "$digest")
@@ -49,7 +60,7 @@ cmp "$work/bundle/payload" "$work/runtime/payload"
 [[ $(cat "$work/runtime/.bundle-sha256") == "$digest" ]]
 
 # A completed pre-start task can be retried without another download.
-rm "$work/bin/s5cmd"
+rm "$work/bin/curl"
 fetch "$url" "$digest" "$work/runtime"
 
 other=$(printf '%064d' 0)
@@ -68,24 +79,45 @@ rejects 'An unsupported source' 'https://example.invalid/bundle' "$digest" "$wor
 grep -qF 'Invalid bundle URL' "$work/stderr"
 left_nothing "$work/invalid"
 
-stub_s5cmd <<'FIXTURE'
+stub_curl <<'FIXTURE'
 exit 1
 FIXTURE
 rejects 'A failed download' "$url" "$digest" "$work/failed"
 left_nothing "$work/failed"
+grep -qF "Bundle download failed" "$work/stderr"
 
-stub_s5cmd <<'FIXTURE'
-printf 'corrupt archive' >"${@: -1}"
+stub_curl <<'FIXTURE'
+cat >/dev/null
+if [[ "$*" == *--head* ]]; then
+  stat -c %s "$TEST_BUNDLE"
+  exit 0
+fi
+while (($#)); do
+  if [[ "$1" == --max-filesize ]]; then count=$2; break; fi
+  shift
+done
+head -c "$count" /dev/zero
 FIXTURE
 rejects 'A corrupt download' "$url" "$digest" "$work/corrupt"
 left_nothing "$work/corrupt"
+grep -qF "Bundle checksum failed" "$work/stderr"
 
 # A valid checksum does not permit archive entries to escape the directory.
 tar -czf "$work/unsafe.tar.gz" --transform='s,payload,../escaped,' -C "$work/bundle" payload
 export TEST_BUNDLE="$work/unsafe.tar.gz"
 digest=$(sha256sum "$TEST_BUNDLE" | cut -d' ' -f1)
-stub_s5cmd <<'FIXTURE'
-cp "$TEST_BUNDLE" "${@: -1}"
+stub_curl <<'FIXTURE'
+cat >/dev/null
+if [[ "$*" == *--head* ]]; then
+  stat -c %s "$TEST_BUNDLE"
+  exit 0
+fi
+while (($#)); do
+  if [[ "$1" == --range ]]; then range=$2; break; fi
+  shift
+done
+start=${range%-*}; end=${range#*-}
+dd if="$TEST_BUNDLE" bs=1 skip="$start" count="$((end - start + 1))" status=none
 FIXTURE
 rejects 'An unsafe archive' "$(bundle_url "$digest")" "$digest" "$work/unsafe"
 left_nothing "$work/unsafe"

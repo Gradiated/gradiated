@@ -18,7 +18,7 @@ cleanup() {
   if [[ -n "$agent_pid" ]]; then
     stop_process "$agent_pid"
   fi
-  rm -f /usr/local/bin/s5cmd /etc/gradiated/artifact.env
+  rm -f /usr/local/bin/curl /etc/gradiated/artifact.env
   rm -rf "$work"
 }
 trap cleanup EXIT
@@ -29,14 +29,25 @@ prepare_bundle() {
 }
 
 prepare_downloader() {
-  printf 'AWS_ACCESS_KEY_ID=test-only\n' >/etc/gradiated/artifact.env
-  cat >/usr/local/bin/s5cmd <<'FIXTURE'
+  printf 'AWS_ACCESS_KEY_ID=test-only\nAWS_SECRET_ACCESS_KEY=test-only\n' >/etc/gradiated/artifact.env
+  cat >/usr/local/bin/curl <<'FIXTURE'
 #!/usr/bin/env bash
 set -euo pipefail
-[[ "$AWS_ACCESS_KEY_ID" == test-only ]]
-cp "$TEST_BUNDLE" "${@: -1}"
+config=$(cat)
+[[ "$config" == *'user = "test-only:test-only"'* ]]
+[[ "$*" != *test-only* ]]
+if [[ "$*" == *--head* ]]; then
+  stat -c %s "$TEST_BUNDLE"
+  exit 0
+fi
+while (($#)); do
+  if [[ "$1" == --range ]]; then range=$2; break; fi
+  shift
+done
+start=${range%-*}; end=${range#*-}
+dd if="$TEST_BUNDLE" bs=1 skip="$start" count="$((end - start + 1))" status=none
 FIXTURE
-  chmod 755 /usr/local/bin/s5cmd
+  chmod 755 /usr/local/bin/curl
 }
 
 node_is_ready() {

@@ -16,7 +16,7 @@ destination=${3:?Pass the runtime directory}
   exit 1
 }
 
-source_url="s3://${BASH_REMATCH[1]}/bundles/sha256/$digest.tar.gz"
+source_url=${url#s3::}
 if [[ -e "$destination" ]]; then
   [[ -f "$destination/.bundle-sha256" && $(cat "$destination/.bundle-sha256") == "$digest" ]] || {
     echo 'Runtime directory holds a different bundle' >&2
@@ -28,7 +28,15 @@ fi
 
 work=$(mktemp -d "${destination}.download.XXXXXX")
 started=$SECONDS
-trap 'rm -rf "$work"' EXIT
+phase=download
+cleanup() {
+  local status=$?
+  if ((status != 0)); then
+    printf 'Bundle %s failed after %ss (exit %s)\n' "$phase" "$((SECONDS - started))" "$status" >&2
+  fi
+  rm -rf "$work"
+}
+trap cleanup EXIT
 trap 'exit 143' TERM
 trap 'exit 130' INT
 (
@@ -37,13 +45,15 @@ trap 'exit 130' INT
   # shellcheck source=/dev/null
   source /etc/gradiated/artifact.env
   set +a
-  export AWS_EC2_METADATA_DISABLED=true AWS_REGION=us-east-1
-  timeout --kill-after=10s 20m s5cmd --numworkers 1 cp --concurrency 8 --part-size 64 \
+  printf 'Bundle download started\n'
+  timeout --kill-after=10s 20m python3 "$(dirname "$0")/download-runtime" \
     "$source_url" "$work/runtime.tar.gz"
 )
+phase=checksum
 printf 'Bundle download completed in %ss\n' "$((SECONDS - started))"
 printf '%s  %s\n' "$digest" "$work/runtime.tar.gz" | sha256sum --check --status
 printf 'Bundle checksum verified at %ss\n' "$((SECONDS - started))"
+phase=extraction
 mkdir "$work/runtime"
 # Extract only after verifying the trusted release. bsdtar rejects unsafe paths.
 timeout --kill-after=10s 10m bsdtar --no-same-owner --no-same-permissions \

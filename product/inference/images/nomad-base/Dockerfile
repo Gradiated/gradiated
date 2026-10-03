@@ -18,7 +18,7 @@ RUN curl -fsSLo /tmp/s5cmd.tar.gz https://github.com/peak/s5cmd/releases/downloa
 
 FROM nvidia/cuda:13.0.1-devel-ubuntu24.04@sha256:7d2f6a8c2071d911524f95061a0db363e24d27aa51ec831fcccf9e76eb72bc92
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates python3 openssl libcurl4t64 openssh-server nginx util-linux libarchive-tools libnuma1 libgomp1 libibverbs1 librdmacm1 \
+    ca-certificates curl python3 openssl libcurl4t64 openssh-server nginx util-linux libarchive-tools libnuma1 libgomp1 libibverbs1 librdmacm1 \
     libopenmpi3t64 libssl3t64 libgfortran5 \
     libexpat1 libffi8 libbz2-1.0 liblzma5 libsqlite3-0 libreadline8t64 libuuid1 \
     && rm -rf /var/lib/apt/lists/* \
@@ -36,6 +36,7 @@ COPY images/nomad-base/start-desmond.sh /opt/gradiated/bin/start-desmond
 COPY --from=launcher /build/runtime-launch /opt/gradiated/bin/runtime-launch
 COPY --from=launcher /s5cmd/s5cmd /usr/local/bin/s5cmd
 COPY images/nomad-base/fetch-runtime.sh /opt/gradiated/bin/fetch-runtime
+COPY images/nomad-base/download-runtime.py /opt/gradiated/bin/download-runtime
 COPY --from=launcher /plugin/nomad-device-nvidia /opt/nomad/plugins/nomad-device-nvidia
 COPY images/nomad-base/base-id /etc/gradiated/base-id
 COPY nomad/client.hcl /etc/nomad/client.hcl

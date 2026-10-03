@@ -2,8 +2,8 @@ FROM runtime-base AS package
 USER root
 RUN mkdir -p /bundle/bin \
     && cp /opt/gradiated/bin/runtime-launch /opt/gradiated/bin/desmondd \
-       /opt/gradiated/bin/fetch-runtime /opt/gradiated/bin/start-desmond \
-       /usr/local/bin/s5cmd /usr/bin/bsdtar /bundle/bin/ \
+       /opt/gradiated/bin/fetch-runtime /opt/gradiated/bin/download-runtime /opt/gradiated/bin/start-desmond \
+       /usr/local/bin/s5cmd /usr/bin/bsdtar /usr/bin/curl /bundle/bin/ \
     && cp /etc/gradiated/base-id /bundle/base-id
 COPY bundles/host-tools/install.sh /bundle/install.sh
 RUN tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -C /bundle -czf /runtime.tar.gz .
@@ -16,6 +16,8 @@ RUN printf 'runpod-glm-existing-v1\n' >/etc/gradiated/base-id \
     && printf 'AWS_ACCESS_KEY_ID=synthetic\nAWS_SECRET_ACCESS_KEY=synthetic\n' >/tmp/artifact.env \
     && bash /bundle/install.sh /tmp/artifact.env \
     && bash /bundle/install.sh /tmp/artifact.env \
+    && bash /bundle/install.sh /etc/gradiated/artifact.env \
+    && cmp /tmp/artifact.env /etc/gradiated/artifact.env \
     && test "$(cat /etc/gradiated/base-id)" = runpod-glm-existing-v1 \
     && test "$(stat -c %U:%a /etc/gradiated/artifact.env)" = downloader:600 \
     && /usr/local/bin/bsdtar --version \

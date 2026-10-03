@@ -22,7 +22,7 @@ reference = args.image.rsplit(':', 1)[0] + '@' + args.digest
 sources = (
     '/opt/gradiated/bin', '/opt/nomad/plugins', '/etc/nomad/client.hcl',
     '/etc/gradiated/base-id', '/etc/gradiated/runtime-proxy.conf.template',
-    '/usr/local/bin/nomad', '/usr/local/bin/s5cmd', '/usr/bin/bsdtar',
+    '/usr/local/bin/nomad', '/usr/local/bin/s5cmd', '/usr/bin/bsdtar', '/usr/bin/curl',
 )
 remote = r'''
 set -euo pipefail
@@ -35,7 +35,7 @@ python3 --version >/dev/null
 stage=$(mktemp -d)
 trap 'rm -rf "$stage"' EXIT
 tar -xf - -C "$stage"
-for binary in opt/gradiated/bin/runtime-launch opt/gradiated/bin/desmondd usr/bin/bsdtar; do
+for binary in opt/gradiated/bin/runtime-launch opt/gradiated/bin/desmondd usr/bin/bsdtar usr/bin/curl; do
   dependencies=$(ldd "$stage/$binary")
   [[ "$dependencies" != *'not found'* ]]
 done

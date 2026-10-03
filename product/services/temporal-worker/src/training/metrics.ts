@@ -36,6 +36,10 @@ export class TrainingMetrics {
         "completed_runs_24h",
         "Runs completed in the last 24 hours by terminal stage; a rolling gauge, not a counter.",
       ),
+      completed_recent: gauge(
+        "completed_runs_1h",
+        "Runs completed in the last hour by terminal stage; a rolling gauge, not a counter.",
+      ),
       duration: gauge(
         "stage_duration_p95_seconds_24h",
         "P95 duration of stage visits completed in the last 24 hours, including capacity waits.",
@@ -74,7 +78,10 @@ export class TrainingMetrics {
         this.gauges.active.set({ stage }, 0);
         this.gauges.oldest.set({ stage }, 0);
       }
-      for (const stage of outcomes) this.gauges.completed.set({ stage }, 0);
+      for (const stage of outcomes) {
+        this.gauges.completed.set({ stage }, 0);
+        this.gauges.completed_recent.set({ stage }, 0);
+      }
       for (const row of rows) {
         if (![...stages, ...outcomes].includes(row.stage)) continue;
         this.gauges[row.kind].set({ stage: row.stage }, row.value);

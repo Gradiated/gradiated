@@ -110,6 +110,33 @@ def main():
         scenario('Training observation ' + name, inputs, expected,
                  ['TrainingObservationsUnavailable'], eval_time='8m')
 
+    for name, failed, cancelled, available, timestamp, expected in [
+        ('recent failure', 1, 0, 1, '0+30x40', 'TrainingRunsFailed'),
+        ('replicated snapshot', 1, 0, 1, '0+30x40', 'TrainingRunsFailed'),
+        ('no failures', 0, 0, 1, '0+30x40', None),
+        ('cancelled only', 0, 2, 1, '0+30x40', None),
+        ('failed snapshot unavailable', 1, 0, 0, '0+30x40', None),
+        ('failed snapshot stale', 1, 0, 1, '0+0x40', None),
+    ]:
+        inputs = []
+        for i in range(2 if name == 'replicated snapshot' else 1):
+            labels = '{job="temporal-worker",instance="worker-' + str(i) + '"}'
+            inputs += [{'series': 'gradiated_training_completed_runs_1h{stage="failed",job="temporal-worker",instance="worker-' + str(i) + '"}', 'values': f'{failed}+0x40'},
+                       {'series': 'gradiated_training_completed_runs_1h{stage="cancelled",job="temporal-worker",instance="worker-' + str(i) + '"}', 'values': f'{cancelled}+0x40'},
+                       {'series': 'gradiated_training_metrics_available' + labels, 'values': f'{available}+0x40'},
+                       {'series': 'gradiated_training_metrics_timestamp_seconds' + labels, 'values': timestamp}]
+        scenario('Training failure ' + name, inputs, expected,
+                 ['TrainingRunsFailed'], eval_time='8m')
+
+    scenario('Training failure stale failed replica with fresh successful replica', [
+        {'series': 'gradiated_training_completed_runs_1h{stage="failed",job="temporal-worker",instance="stale"}', 'values': '1+0x40'},
+        {'series': 'gradiated_training_metrics_available{job="temporal-worker",instance="stale"}', 'values': '1+0x40'},
+        {'series': 'gradiated_training_metrics_timestamp_seconds{job="temporal-worker",instance="stale"}', 'values': '0+0x40'},
+        {'series': 'gradiated_training_completed_runs_1h{stage="failed",job="temporal-worker",instance="fresh"}', 'values': '0+0x40'},
+        {'series': 'gradiated_training_metrics_available{job="temporal-worker",instance="fresh"}', 'values': '1+0x40'},
+        {'series': 'gradiated_training_metrics_timestamp_seconds{job="temporal-worker",instance="fresh"}', 'values': '0+30x40'},
+    ], None, ['TrainingRunsFailed'], eval_time='8m')
+
     # Temporal service alerts are disabled during bootstrap (replicas=0), tolerate
     # startup/drain windows and do not let another workload mask missing metrics.
     temporal_alerts = ['TemporalWorkerUnavailable', 'TemporalWorkerAvailabilityDegraded',

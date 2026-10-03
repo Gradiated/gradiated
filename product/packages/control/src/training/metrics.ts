@@ -4,7 +4,13 @@ import { sql } from "drizzle-orm";
 import type { ControlDatabase } from "../db/client.js";
 
 const TrainingMetricSchema = z.object({
-  kind: z.enum(["active", "oldest", "completed", "duration"]),
+  kind: z.enum([
+    "active",
+    "oldest",
+    "completed",
+    "completed_recent",
+    "duration",
+  ]),
   stage: z.enum(RUN_STAGES),
   value: z.number().nonnegative(),
 });
@@ -38,6 +44,9 @@ export const readTrainingMetrics = async (
     union all
     select 'completed', stage, count(*)::float8 from recent_runs
       where finished_at is not null group by stage
+    union all
+    select 'completed_recent', stage, count(*)::float8 from recent_runs
+      where finished_at >= now() - interval '1 hour' group by stage
     union all
     select 'duration', stage,
       percentile_cont(0.95) within group (order by greatest(0, extract(epoch from next_at - at)))::float8

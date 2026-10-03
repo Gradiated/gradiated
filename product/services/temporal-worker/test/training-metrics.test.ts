@@ -23,6 +23,7 @@ describe("training metrics", () => {
     vi.useFakeTimers();
     const registry = new Registry();
     const read = vi.fn().mockResolvedValue([
+      { kind: "completed_recent", stage: "failed", value: 1 },
       { kind: "active", stage: "awaiting_capacity", value: 3 },
       { kind: "oldest", stage: "awaiting_capacity", value: 120 },
       { kind: "duration", stage: "awaiting_capacity", value: 50 },
@@ -37,6 +38,9 @@ describe("training metrics", () => {
     expect(body).toContain(
       'gradiated_training_oldest_stage_seconds{stage="awaiting_capacity"} 120',
     );
+    expect(body).toContain(
+      'gradiated_training_completed_runs_1h{stage="failed"} 1',
+    );
     expect(body).not.toContain("workspace_id");
     expect(body).not.toContain("run_id");
     read.mockResolvedValueOnce([]);
@@ -48,6 +52,9 @@ describe("training metrics", () => {
     );
     expect(body).not.toContain(
       "gradiated_training_stage_duration_p95_seconds_24h{",
+    );
+    expect(body).toContain(
+      'gradiated_training_completed_runs_1h{stage="failed"} 0',
     );
     const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
     read.mockRejectedValueOnce(new Error("private-database-credential"));

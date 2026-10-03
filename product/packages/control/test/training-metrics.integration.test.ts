@@ -31,6 +31,10 @@ it("measures live capacity waits and completed stage duration from persisted eve
   for (const [id, stage, finishedAt] of [
     [pending, "awaiting_capacity", null],
     [complete, "succeeded", at(10)],
+    [randomUUID(), "failed", at(10)],
+    [randomUUID(), "failed", at(7200)],
+    [randomUUID(), "failed", at(90000)],
+    [randomUUID(), "cancelled", at(20)],
   ] as const) {
     await db.database.insert(trainingRuns).values({
       id,
@@ -38,8 +42,8 @@ it("measures live capacity waits and completed stage duration from persisted eve
       stage,
       trigger: "manual",
       baseModelId: model.id,
-      inputCutoff: at(600),
-      createdAt: at(600),
+      inputCutoff: at(100000),
+      createdAt: at(100000),
       finishedAt,
     });
   }
@@ -72,6 +76,17 @@ it("measures live capacity waits and completed stage duration from persisted eve
     kind: "duration",
     stage: "awaiting_capacity",
     value: 60,
+  });
+  expect(rows).toContainEqual({ kind: "completed", stage: "failed", value: 2 });
+  expect(rows).toContainEqual({
+    kind: "completed_recent",
+    stage: "failed",
+    value: 1,
+  });
+  expect(rows).toContainEqual({
+    kind: "completed_recent",
+    stage: "cancelled",
+    value: 1,
   });
   const oldest = rows.find(
     (row) => row.kind === "oldest" && row.stage === "awaiting_capacity",

@@ -1,15 +1,17 @@
 import hashlib
 import http.client
 import http.server
-import threading
 import io
 import json
 import math
 import struct
 import tempfile
+import threading
+import time
 import unittest
-import uuid
 import urllib.error
+import uuid
+from itertools import pairwise
 from pathlib import Path
 from unittest import mock
 
@@ -17,8 +19,8 @@ from artifacts import (
     download,
     extract,
     file_hash,
-    materialize,
     has_fused_experts,
+    materialize,
     strict_json,
     validate_tensors,
 )
@@ -55,12 +57,16 @@ class ArtifactTests(unittest.TestCase):
         archive_path.write_bytes(self.payload)
         output = self.root / "extracted"
         output.mkdir()
-        with mock.patch("artifacts.remaining", side_effect=[1, 1, TimeoutError]):
-            with self.assertRaises(TimeoutError):
-                extract(archive_path, output, 1024 * 1024, deadline=1)
-        with mock.patch("artifacts.remaining", side_effect=[1, TimeoutError]):
-            with self.assertRaises(TimeoutError):
-                file_hash(archive_path, deadline=1)
+        with (
+            mock.patch("artifacts.remaining", side_effect=[1, 1, TimeoutError]),
+            self.assertRaises(TimeoutError),
+        ):
+            extract(archive_path, output, 1024 * 1024, deadline=1)
+        with (
+            mock.patch("artifacts.remaining", side_effect=[1, TimeoutError]),
+            self.assertRaises(TimeoutError),
+        ):
+            file_hash(archive_path, deadline=1)
 
     def test_recovered_cache_timeout_keeps_existing_files(self):
         from fixtures import grant, settings
@@ -70,16 +76,18 @@ class ArtifactTests(unittest.TestCase):
         path, *_ = materialize(
             spec, self.root, 1024 * 1024, set(), settings()["model_config"], fetch=fetch
         )
-        with mock.patch("artifacts.file_hash", side_effect=TimeoutError):
-            with self.assertRaises(TimeoutError):
-                materialize(
-                    spec,
-                    self.root,
-                    1024 * 1024,
-                    set(),
-                    settings()["model_config"],
-                    fetch=fetch,
-                )
+        with (
+            mock.patch("artifacts.file_hash", side_effect=TimeoutError),
+            self.assertRaises(TimeoutError),
+        ):
+            materialize(
+                spec,
+                self.root,
+                1024 * 1024,
+                set(),
+                settings()["model_config"],
+                fetch=fetch,
+            )
         self.assertTrue((path / "adapter_model.safetensors").is_file())
         self.assertTrue((path / ".verified.json").is_file())
 
@@ -174,13 +182,15 @@ class ArtifactTests(unittest.TestCase):
 
         class SlowResponse(Response):
             def read1(self, size):
-                clock[0] += 11
+                clock[0] += 3
                 return super().read1(min(size, 8))
 
         first.getresponse.return_value = SlowResponse(payload)
         second.getresponse.return_value = Response(payload)
         with (
-            mock.patch("http.client.HTTPSConnection", side_effect=[first, second]) as connect,
+            mock.patch(
+                "http.client.HTTPSConnection", side_effect=[first, second]
+            ) as connect,
             mock.patch("artifacts.time.monotonic", side_effect=lambda: clock[0]),
             self.assertLogs("artifacts", level="WARNING") as logs,
         ):
@@ -189,12 +199,15 @@ class ArtifactTests(unittest.TestCase):
         self.assertEqual(connect.call_count, 2)
         first.close.assert_called_once()
         second.close.assert_called_once()
-        self.assertEqual(second.request.call_args.kwargs["headers"], {"Range": f"bytes=8-{len(payload) - 1}"})
-        self.assertEqual(clock[0], 22)
+        self.assertEqual(
+            second.request.call_args.kwargs["headers"],
+            {"Range": f"bytes=8-{len(payload) - 1}"},
+        )
+        self.assertEqual(clock[0], 6)
         self.assertIn('"event": "lora_download_retry"', logs.output[0])
         self.assertNotIn("bucket.s3.amazonaws.com", logs.output[0])
 
-    def test_slow_transfer_that_can_finish_is_not_restarted(self):
+    def test_progress_within_attempt_budget_is_not_restarted(self):
         clock = [0.0]
         payload = self.payload
         connection = mock.Mock()
@@ -204,17 +217,19 @@ class ArtifactTests(unittest.TestCase):
                 return self.tell() == len(payload)
 
             def read1(self, size):
-                clock[0] += 21
+                clock[0] += 2
                 return super().read1((len(payload) + 1) // 2)
 
         connection.getresponse.return_value = SteadyResponse(payload)
         with (
-            mock.patch("http.client.HTTPSConnection", return_value=connection) as connect,
+            mock.patch(
+                "http.client.HTTPSConnection", return_value=connection
+            ) as connect,
             mock.patch("artifacts.time.monotonic", side_effect=lambda: clock[0]),
         ):
             download(self.spec, self.root / "steady", {"bucket.s3.amazonaws.com"}, 60)
         self.assertEqual((self.root / "steady").read_bytes(), payload)
-        self.assertEqual(clock[0], 42)
+        self.assertEqual(clock[0], 4)
         connect.assert_called_once()
 
     def test_slow_transfer_resumes_partial_bytes_with_a_valid_range(self):
@@ -223,7 +238,7 @@ class ArtifactTests(unittest.TestCase):
 
         class SlowResponse(Response):
             def read1(self, size):
-                clock[0] += 11
+                clock[0] += 3
                 return super().read1(min(size, 8))
 
         class PartialResponse(Response):
@@ -242,7 +257,10 @@ class ArtifactTests(unittest.TestCase):
         ):
             download(self.spec, self.root / "resumed", {"bucket.s3.amazonaws.com"}, 60)
         self.assertEqual((self.root / "resumed").read_bytes(), payload)
-        self.assertEqual(second.request.call_args.kwargs["headers"], {"Range": f"bytes=8-{len(payload) - 1}"})
+        self.assertEqual(
+            second.request.call_args.kwargs["headers"],
+            {"Range": f"bytes=8-{len(payload) - 1}"},
+        )
 
     def test_resumed_transfer_rejects_wrong_ranges_and_corrupt_bytes(self):
         payload = self.payload
@@ -251,32 +269,45 @@ class ArtifactTests(unittest.TestCase):
             (f"bytes 0-{len(payload) - 1}/{len(payload)}", payload[8:]),
             (f"bytes 8-{len(payload) - 2}/{len(payload)}", payload[8:]),
             (f"bytes 8-{len(payload) - 1}/{len(payload) + 1}", payload[8:]),
-            (f"bytes 8-{len(payload) - 1}/{len(payload)}", payload[8:-1] + bytes([payload[-1] ^ 1])),
+            (
+                f"bytes 8-{len(payload) - 1}/{len(payload)}",
+                payload[8:-1] + bytes([payload[-1] ^ 1]),
+            ),
         ):
             with self.subTest(header=header):
                 clock = [0.0]
 
                 class SlowResponse(Response):
-                    def read1(self, size):
-                        clock[0] += 11
+                    def read1(self, size, clock=clock):
+                        clock[0] += 3
                         return super().read1(min(size, 8))
 
                 class PartialResponse(Response):
                     status = 206
 
-                    def getheader(self, name):
+                    def getheader(self, name, header=header):
                         return header
 
                 first, second = mock.Mock(), mock.Mock()
                 first.getresponse.return_value = SlowResponse(payload)
                 second.getresponse.return_value = PartialResponse(body)
                 with (
-                    mock.patch("http.client.HTTPSConnection", side_effect=[first, second]) as connect,
-                    mock.patch("artifacts.time.monotonic", side_effect=lambda: clock[0]),
+                    mock.patch(
+                        "http.client.HTTPSConnection", side_effect=[first, second]
+                    ) as connect,
+                    mock.patch(
+                        "artifacts.time.monotonic",
+                        side_effect=lambda clock=clock: clock[0],
+                    ),
                     self.assertLogs("artifacts", level="WARNING"),
                     self.assertRaises(ValueError),
                 ):
-                    download(self.spec, self.root / "invalid-range", {"bucket.s3.amazonaws.com"}, 60)
+                    download(
+                        self.spec,
+                        self.root / "invalid-range",
+                        {"bucket.s3.amazonaws.com"},
+                        60,
+                    )
                 self.assertEqual(connect.call_count, 2)
                 first.close.assert_called_once()
                 second.close.assert_called_once()
@@ -301,7 +332,7 @@ class ArtifactTests(unittest.TestCase):
             size_bytes=len(payload), sha256=hashlib.sha256(payload).hexdigest()
         )
         requests = []
-        barrier = threading.Barrier(3)
+        barrier = threading.Barrier(8)
 
         class Handler(http.server.BaseHTTPRequestHandler):
             def log_message(self, *_args):
@@ -330,15 +361,53 @@ class ArtifactTests(unittest.TestCase):
             ):
                 download(self.spec, self.root / "parallel", {"bucket.s3.amazonaws.com"})
             self.assertEqual((self.root / "parallel").read_bytes(), payload)
-            self.assertCountEqual(
-                requests,
-                ["bytes=0-4194303", "bytes=4194304-8388607", f"bytes=8388608-{len(payload) - 1}"],
+            ranges = sorted(
+                tuple(map(int, value.removeprefix("bytes=").split("-")))
+                for value in requests
+            )
+            self.assertEqual(len(ranges), 8)
+            self.assertEqual(ranges[0][0], 0)
+            self.assertEqual(ranges[-1][1], len(payload) - 1)
+            for previous, following in pairwise(ranges):
+                self.assertEqual(previous[1] + 1, following[0])
+            self.assertTrue(
+                all(end - start + 1 <= 2 * 1024 * 1024 for start, end in ranges)
             )
             self.assertEqual({path.name for path in self.root.iterdir()}, {"parallel"})
         finally:
             server.shutdown()
             server.server_close()
             thread.join(timeout=5)
+
+    def test_large_archive_never_adds_queued_ranges(self):
+        size = 128 * 1024 * 1024 + 97
+        self.spec["version"]["adapter"]["size_bytes"] = size
+        bounds = []
+        barrier = threading.Barrier(8)
+        deadline = time.monotonic() + 60
+
+        def part(_url, _destination, start, end, total, shared_deadline):
+            self.assertEqual(total, size)
+            self.assertEqual(shared_deadline, deadline)
+            bounds.append((start, end))
+            barrier.wait(timeout=5)
+
+        with (
+            mock.patch("artifacts._download_part", side_effect=part),
+            mock.patch(
+                "artifacts.file_hash",
+                return_value=self.spec["version"]["adapter"]["sha256"],
+            ),
+        ):
+            download(
+                self.spec, self.root / "large", {"bucket.s3.amazonaws.com"}, deadline
+            )
+        self.assertEqual(len(bounds), 8)
+        bounds.sort()
+        self.assertEqual(bounds[0][0], 0)
+        self.assertEqual(bounds[-1][1], size - 1)
+        for previous, following in pairwise(bounds):
+            self.assertEqual(previous[1] + 1, following[0])
 
     def test_large_download_rejects_invalid_ranges_and_missing_or_corrupt_bytes(self):
         payload = hashlib.shake_256(b"invalid-range").digest(8 * 1024 * 1024 + 9)
@@ -349,13 +418,15 @@ class ArtifactTests(unittest.TestCase):
             with self.subTest(defect=defect):
                 connections = []
 
-                def connect(*_args, **_kwargs):
+                def connect(*_args, connections=connections, defect=defect, **_kwargs):
                     connection = mock.Mock()
                     connections.append(connection)
                     bounds = []
 
                     def request(_method, _path, headers):
-                        bounds.extend(map(int, headers["Range"].removeprefix("bytes=").split("-")))
+                        bounds.extend(
+                            map(int, headers["Range"].removeprefix("bytes=").split("-"))
+                        )
 
                     def response():
                         start, end = bounds
@@ -382,12 +453,81 @@ class ArtifactTests(unittest.TestCase):
                     mock.patch("http.client.HTTPSConnection", side_effect=connect),
                     self.assertRaises(ValueError),
                 ):
-                    download(self.spec, self.root / "invalid-part", {"bucket.s3.amazonaws.com"})
-                self.assertEqual(len(connections), 3)
+                    download(
+                        self.spec,
+                        self.root / "invalid-part",
+                        {"bucket.s3.amazonaws.com"},
+                    )
+                self.assertGreaterEqual(len(connections), 2)
+                self.assertLessEqual(len(connections), 8)
                 for connection in connections:
                     connection.request.assert_called_once()
                     connection.close.assert_called_once()
 
+    def test_immediate_connect_timeouts_have_a_bounded_attempt_count(self):
+        connections = [mock.Mock() for _ in range(12)]
+        for connection in connections:
+            connection.connect.side_effect = TimeoutError()
+        with (
+            mock.patch(
+                "http.client.HTTPSConnection", side_effect=connections
+            ) as connect,
+            self.assertLogs("artifacts", level="WARNING") as logs,
+            self.assertRaises(TimeoutError),
+        ):
+            download(
+                self.spec, self.root / "connect-timeouts", {"bucket.s3.amazonaws.com"}
+            )
+        self.assertEqual(connect.call_count, 12)
+        self.assertEqual(len(logs.records), 11)
+        for connection in connections:
+            connection.close.assert_called_once()
+
+    def test_multiple_attempt_timeouts_resume_written_bytes(self):
+        clock = [0.0]
+        payload = self.payload
+
+        class PartialResponse(Response):
+            def __init__(self, offset, slow):
+                super().__init__(payload[offset:])
+                self.offset, self.slow = offset, slow
+                self.status = 206 if offset else 200
+
+            def getheader(self, _name):
+                return f"bytes {self.offset}-{len(payload) - 1}/{len(payload)}"
+
+            def read1(self, size):
+                if self.slow:
+                    clock[0] += 3
+                    size = min(size, 8)
+                return super().read1(size)
+
+        connections = [mock.Mock() for _ in range(4)]
+        for index, connection in enumerate(connections):
+            connection.getresponse.return_value = PartialResponse(index * 8, index < 3)
+        with (
+            mock.patch(
+                "http.client.HTTPSConnection", side_effect=connections
+            ) as connect,
+            mock.patch("artifacts.time.monotonic", side_effect=lambda: clock[0]),
+            self.assertLogs("artifacts", level="WARNING") as logs,
+        ):
+            download(
+                self.spec,
+                self.root / "resumed-repeatedly",
+                {"bucket.s3.amazonaws.com"},
+                60,
+            )
+        self.assertEqual((self.root / "resumed-repeatedly").read_bytes(), payload)
+        self.assertEqual(connect.call_count, 4)
+        self.assertEqual(clock[0], 18)
+        self.assertEqual(len(logs.records), 3)
+        for index, connection in enumerate(connections):
+            self.assertEqual(
+                connection.request.call_args.kwargs["headers"],
+                {"Range": f"bytes={index * 8}-{len(payload) - 1}"} if index else {},
+            )
+            connection.close.assert_called_once()
 
     def test_retry_still_stops_at_the_original_deadline(self):
         clock = [0.0]
@@ -401,7 +541,9 @@ class ArtifactTests(unittest.TestCase):
         first.getresponse.return_value = SlowResponse(self.payload)
         second.getresponse.return_value = SlowResponse(self.payload)
         with (
-            mock.patch("http.client.HTTPSConnection", side_effect=[first, second]) as connect,
+            mock.patch(
+                "http.client.HTTPSConnection", side_effect=[first, second]
+            ) as connect,
             mock.patch("artifacts.time.monotonic", side_effect=lambda: clock[0]),
             self.assertLogs("artifacts", level="WARNING"),
             self.assertRaises(TimeoutError),
@@ -418,7 +560,9 @@ class ArtifactTests(unittest.TestCase):
             connection.getresponse.return_value = Response(b"")
             connection.getresponse.return_value.status = status
             with (
-                mock.patch("http.client.HTTPSConnection", return_value=connection) as connect,
+                mock.patch(
+                    "http.client.HTTPSConnection", return_value=connection
+                ) as connect,
                 self.assertRaises(urllib.error.HTTPError),
             ):
                 download(self.spec, self.root / "denied", {"bucket.s3.amazonaws.com"})

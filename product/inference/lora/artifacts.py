@@ -69,8 +69,8 @@ def download(spec, destination, allowed_hosts, deadline=None):
     if expected < 8 * 1024 * 1024:
         _download_part(url, destination, 0, expected - 1, expected, deadline)
     else:
-        part_bytes = 4 * 1024 * 1024
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+        part_bytes = (expected + 7) // 8
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
             list(
                 pool.map(
                     lambda bounds: _download_part(
@@ -90,22 +90,22 @@ def _download_part(url, destination, start, end, total, deadline):
     whole = start == 0 and end == total - 1
     with destination.open("r+b") as output:
         output.seek(start)
-        for attempt in range(2):
-            started = time.monotonic()
+        for attempt in range(12):
+            attempt_deadline = min(deadline, time.monotonic() + 5)
             offset = output.tell()
             connection = http.client.HTTPSConnection(
-                url.hostname, timeout=min(30, remaining(deadline))
+                url.hostname, timeout=remaining(attempt_deadline)
             )
             try:
                 connection.connect()
                 socket = connection.sock
-                socket.settimeout(min(30, remaining(deadline)))
+                socket.settimeout(remaining(attempt_deadline))
                 path = urllib.parse.urlunsplit(("", "", url.path or "/", url.query, ""))
                 headers = (
                     {"Range": f"bytes={offset}-{end}"} if offset or not whole else {}
                 )
                 connection.request("GET", path, headers=headers)
-                socket.settimeout(min(30, remaining(deadline)))
+                socket.settimeout(remaining(attempt_deadline))
                 with connection.getresponse() as response:
                     if response.status == 206:
                         if (
@@ -128,28 +128,20 @@ def _download_part(url, destination, start, end, total, deadline):
                             None,
                         )
                     while not response.isclosed():
-                        socket.settimeout(min(30, remaining(deadline)))
+                        socket.settimeout(remaining(attempt_deadline))
                         chunk = response.read1(1024 * 1024)
-                        remaining(deadline)
+                        remaining(attempt_deadline)
                         if not chunk:
                             break
                         after = output.tell() + len(chunk)
                         if after > end + 1:
                             raise ValueError("Archive exceeds declared size")
-                        elapsed = time.monotonic() - started
-                        if (
-                            not attempt
-                            and elapsed >= 20
-                            and (after - offset) * remaining(deadline)
-                            < (end + 1 - after) * elapsed
-                        ):
-                            raise TimeoutError("Artifact transfer cannot meet cold deadline")
                         output.write(chunk)
                 if output.tell() != end + 1:
                     raise ValueError("Archive integrity mismatch")
                 return
             except TimeoutError:
-                if attempt or time.monotonic() >= deadline:
+                if attempt == 11 or time.monotonic() >= deadline:
                     raise
                 logging.getLogger(__name__).warning(
                     json.dumps({"event": "lora_download_retry", "reason": "timeout"})

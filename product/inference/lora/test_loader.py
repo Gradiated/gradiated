@@ -52,9 +52,11 @@ class LoaderTests(unittest.TestCase):
             None,
         )
         self.loader.resolve = mock.Mock(side_effect=error)
-        with self.assertLogs("loader", level="WARNING") as captured:
-            with self.assertRaises(urllib.error.HTTPError):
-                self.loader.resolve_version("version", str(uuid.uuid4()))
+        with (
+            self.assertLogs("loader", level="WARNING") as captured,
+            self.assertRaises(urllib.error.HTTPError),
+        ):
+            self.loader.resolve_version("version", str(uuid.uuid4()))
         event = json.loads(captured.records[-1].getMessage())
         self.assertEqual(event["error_type"], "HTTPError")
         self.assertEqual(event["upstream_status"], 401)
@@ -72,11 +74,11 @@ class LoaderTests(unittest.TestCase):
             return spec
 
         self.loader.resolve = resolve
-        with mock.patch("loader.remaining", side_effect=TimeoutError):
-            with self.assertRaises(TimeoutError):
-                self.loader.resolve_version(
-                    spec["version"]["name"], spec["workspace_id"]
-                )
+        with (
+            mock.patch("loader.remaining", side_effect=TimeoutError),
+            self.assertRaises(TimeoutError),
+        ):
+            self.loader.resolve_version(spec["version"]["name"], spec["workspace_id"])
         self.assertEqual(self.fetches, 0)
         self.assertEqual(self.loader.entries, {})
 
@@ -84,11 +86,11 @@ class LoaderTests(unittest.TestCase):
         spec = grant(self.payload)
         self.loader.resolve = lambda *_: spec
         self.loader.fetch = mock.Mock(side_effect=ValueError("private-secret"))
-        with self.assertLogs("loader", level="WARNING") as captured:
-            with self.assertRaises(ValueError):
-                self.loader.resolve_version(
-                    spec["version"]["name"], spec["workspace_id"]
-                )
+        with (
+            self.assertLogs("loader", level="WARNING") as captured,
+            self.assertRaises(ValueError),
+        ):
+            self.loader.resolve_version(spec["version"]["name"], spec["workspace_id"])
         self.assertEqual(self.loader.counters["failures"], 1)
         self.assertNotIn("private-secret", "".join(captured.output))
         self.loader.ready = False
@@ -193,14 +195,16 @@ class LoaderTests(unittest.TestCase):
                 admission.acquire.return_value = blocked != "admission"
                 loading.acquire.return_value = blocked != "loading"
                 self.loader.admission, self.loader.loading = admission, loading
-                with self.assertLogs("loader", level="WARNING"):
-                    with self.assertRaises(TimeoutError):
-                        self.loader.operation(
-                            "resolve",
-                            lambda: self.loader.resolve_files(
-                                name, spec["workspace_id"], 0
-                            ),
-                        )
+                with (
+                    self.assertLogs("loader", level="WARNING"),
+                    self.assertRaises(TimeoutError),
+                ):
+                    self.loader.operation(
+                        "resolve",
+                        lambda: self.loader.resolve_files(
+                            name, spec["workspace_id"], 0
+                        ),
+                    )
                 self.assertEqual(self.loader.last_capacity_rejection, 0)
                 self.assertEqual(self.fetches, 0)
         self.assertEqual(self.loader.counters["failures"], 2)
@@ -310,7 +314,7 @@ class LoaderTests(unittest.TestCase):
     def test_bad_artifact_preserves_registered_paths_and_redacts_failure_logs(self):
         first, spec = self.register()
         self.loader.prepare(first, spec["workspace_id"])
-        second, spec = self.register()
+        _second, spec = self.register()
         self.loader.fetch = mock.Mock(side_effect=OSError("secret-url"))
         self.loader.resolve = lambda *_: spec
         with self.assertLogs(level="WARNING") as logs, self.assertRaises(OSError):

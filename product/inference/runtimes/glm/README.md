@@ -28,6 +28,11 @@ move only verified, unused checkpoint files to disk while preserving their cache
 paths. First startup can also include GPU-kernel compilation and autotuning.
 The runtime launcher sets `GRADIATED_RUNTIME_ROOT`.
 
+The pinned chat template recognizes `reasoning_effort: "low"` and `"high"`;
+omitting the field or using another value selects its maximum reasoning budget.
+In particular, `"none"` does not disable reasoning in this template. Use `"low"`
+for bounded serving probes and inspect both content and reasoning deltas in streams.
+
 Build the Dockerfile with `product/inference` as context and the pinned Nomad
 base as the `runtime-base` build context. The `verify` target checks dependency
 compatibility, imports vLLM in that base, and verifies the GLM architecture is

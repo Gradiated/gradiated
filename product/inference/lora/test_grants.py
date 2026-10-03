@@ -1,9 +1,9 @@
-import json
-import io
-import time
 import http.server
-import threading
+import io
+import json
 import tempfile
+import threading
+import time
 import unittest
 from pathlib import Path
 from unittest import mock

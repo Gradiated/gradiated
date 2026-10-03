@@ -32,15 +32,15 @@ The loader never forwards completions, reads token streams, holds inference slot
 tracks active requests, unloads adapters or restarts the engine. Startup preload
 and qualification retain the native load API. Materialization locks are released
 before calls into vLLM, allowing concurrent native resolution without deadlock.
-After twenty seconds, a first S3 transfer whose measured progress cannot meet
-the cold-load deadline gets one fresh-connection retry. Transfers progressing
-fast enough to finish keep going. Archives of at least 8 MiB use 4 MiB,
-non-overlapping byte ranges with at most four workers writing one staging file; smaller archives use a
-single GET. Each range gets at most one retry. The retry uses the remaining deadline and requests
-the bytes after the downloaded partial prefix using HTTP Range. Its range must match
-the declared offset and total size; servers that ignore Range restart from zero.
-The complete archive must still pass the original size and SHA256 checks;
-checksums, denied requests and other HTTP errors are not retried.
+Archives of at least 8 MiB use at most eight equal, non-overlapping ranges, all
+started together and written into one staging file; smaller archives use a single
+GET. Each range has at most twelve attempts, capped at five seconds and the
+original cold deadline. A timeout resumes from bytes already written. Queued
+chunks cannot delay the last range, and there is no throughput extrapolation. Range responses must
+match the requested offset and declared total size. A server that ignores a resumed
+single GET restarts from zero; ignored ranges in a parallel download are rejected.
+The complete archive must still pass its original size and SHA256 checks.
+Integrity failures, denied requests and other HTTP errors are not retried.
 
 Cold preparations share a 60-second deadline across grants, admission,
 materialization and downloading rather than rejecting an ordinary burst
@@ -203,8 +203,8 @@ adapters or GLM numeric correctness.
 
 ```sh
 python3 -m unittest discover -s product/inference/lora -p 'test_*.py'
-uv tool run ruff check product/inference/lora
-uv tool run ruff format --check product/inference/lora
+uv tool run ruff@0.16.10 check product/inference/lora
+uv tool run ruff@0.16.10 format --check product/inference/lora
 ```
 
 Synthetic/local HTTP tests cover registration, coalescing, archive integrity,

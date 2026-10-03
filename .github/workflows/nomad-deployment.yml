@@ -70,8 +70,12 @@ jobs:
         run: bash product/inference/images/nomad-base/tests/test-renewal.sh
       - name: Test GLM startup qualification
         run: python3 -m unittest discover -s product/inference/runtimes/glm -p 'test_warmup*.py'
-      - name: Test adapter loading and cache hierarchy
-        run: python3 -m unittest discover -s product/inference/lora -p 'test_*.py'
+      - uses: astral-sh/setup-uv@v6
+      - name: Check and test adapter loading and cache hierarchy
+        run: |
+          uv tool run ruff@0.16.10 check product/inference/lora
+          uv tool run ruff@0.16.10 format --check product/inference/lora
+          python3 -m unittest discover -s product/inference/lora -p 'test_*.py'
       - run: |
           kubectl kustomize infra/environments/prod/us-east-1/kubernetes/nomad >/dev/null
           bash infra/environments/prod/us-east-1/kubernetes/nomad/tests/validate-servers.sh

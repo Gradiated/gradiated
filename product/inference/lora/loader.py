@@ -6,8 +6,8 @@ import re
 import shutil
 import threading
 import time
-import uuid
 import urllib.error
+import uuid
 from pathlib import Path
 
 from artifacts import cache_key, download, has_fused_experts, materialize, remaining

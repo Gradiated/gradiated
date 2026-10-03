@@ -1,3 +1,4 @@
+import concurrent.futures
 import hashlib
 import http.client
 import json
@@ -10,7 +11,6 @@ import tarfile
 import time
 import urllib.error
 import urllib.parse
-import urllib.request
 
 
 def strict_json(data):
@@ -42,11 +42,6 @@ def strict_json(data):
     return result
 
 
-class NoRedirect(urllib.request.HTTPRedirectHandler):
-    def redirect_request(self, *_args, **_kwargs):
-        raise ValueError("Artifact redirects are forbidden")
-
-
 def remaining(deadline):
     if deadline is None:
         return 60
@@ -68,68 +63,99 @@ def download(spec, destination, allowed_hosts, deadline=None):
         raise ValueError("Untrusted artifact URL")
     if deadline is None:
         deadline = time.monotonic() + 60
-    for attempt in range(2):
-        try:
-            return _download_attempt(spec, destination, url, deadline, attempt == 0)
-        except TimeoutError:
-            if attempt or time.monotonic() >= deadline:
-                raise
-            logging.getLogger(__name__).warning(
-                json.dumps({"event": "lora_download_retry", "reason": "timeout"})
-            )
-
-
-def _download_attempt(spec, destination, url, deadline, retry_slow):
-    # Each attempt truncates partial bytes and starts a fresh digest/connection.
-    started = time.monotonic()
-    digest = hashlib.sha256()
-    size = 0
     expected = spec["version"]["adapter"]["size_bytes"]
-    connection = http.client.HTTPSConnection(
-        url.hostname, timeout=min(30, remaining(deadline))
-    )
-    try:
-        connection.connect()
-        socket = connection.sock
-        socket.settimeout(min(30, remaining(deadline)))
-        path = urllib.parse.urlunsplit(("", "", url.path or "/", url.query, ""))
-        connection.request("GET", path)
-        socket.settimeout(min(30, remaining(deadline)))
-        response = connection.getresponse()
-        if response.status != 200:
-            raise urllib.error.HTTPError(
-                f"https://{url.hostname}",
-                response.status,
-                "Artifact request failed",
-                {},
-                None,
+    with destination.open("wb") as output:
+        output.truncate(expected)
+    if expected < 8 * 1024 * 1024:
+        _download_part(url, destination, 0, expected - 1, expected, deadline)
+    else:
+        part_bytes = 4 * 1024 * 1024
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+            list(
+                pool.map(
+                    lambda bounds: _download_part(
+                        url, destination, *bounds, expected, deadline
+                    ),
+                    [
+                        (start, min(start + part_bytes, expected) - 1)
+                        for start in range(0, expected, part_bytes)
+                    ],
+                )
             )
-        with response, destination.open("wb") as output:
-            while not response.isclosed():
-                socket.settimeout(min(30, remaining(deadline)))
-                chunk = response.read1(1024 * 1024)
-                remaining(deadline)
-                if not chunk:
-                    break
-                size += len(chunk)
-                if size > expected:
-                    raise ValueError("Archive exceeds declared size")
-                elapsed = time.monotonic() - started
-                if (
-                    retry_slow
-                    and elapsed >= 20
-                    and size * remaining(deadline) < (expected - size) * elapsed
-                ):
-                    raise TimeoutError("Artifact transfer cannot meet cold deadline")
-                digest.update(chunk)
-                output.write(chunk)
-    finally:
-        connection.close()
-    if (
-        size != spec["version"]["adapter"]["size_bytes"]
-        or digest.hexdigest() != spec["version"]["adapter"]["sha256"]
-    ):
+    if file_hash(destination, deadline) != spec["version"]["adapter"]["sha256"]:
         raise ValueError("Archive integrity mismatch")
+
+
+def _download_part(url, destination, start, end, total, deadline):
+    whole = start == 0 and end == total - 1
+    with destination.open("r+b") as output:
+        output.seek(start)
+        for attempt in range(2):
+            started = time.monotonic()
+            offset = output.tell()
+            connection = http.client.HTTPSConnection(
+                url.hostname, timeout=min(30, remaining(deadline))
+            )
+            try:
+                connection.connect()
+                socket = connection.sock
+                socket.settimeout(min(30, remaining(deadline)))
+                path = urllib.parse.urlunsplit(("", "", url.path or "/", url.query, ""))
+                headers = (
+                    {"Range": f"bytes={offset}-{end}"} if offset or not whole else {}
+                )
+                connection.request("GET", path, headers=headers)
+                socket.settimeout(min(30, remaining(deadline)))
+                with connection.getresponse() as response:
+                    if response.status == 206:
+                        if (
+                            not headers
+                            or response.getheader("Content-Range")
+                            != f"bytes {offset}-{end}/{total}"
+                        ):
+                            raise ValueError("Invalid artifact range response")
+                    elif response.status == 200:
+                        if not whole:
+                            raise ValueError("Artifact server ignored byte range")
+                        output.seek(0)
+                        offset = 0
+                    else:
+                        raise urllib.error.HTTPError(
+                            f"https://{url.hostname}",
+                            response.status,
+                            "Artifact request failed",
+                            {},
+                            None,
+                        )
+                    while not response.isclosed():
+                        socket.settimeout(min(30, remaining(deadline)))
+                        chunk = response.read1(1024 * 1024)
+                        remaining(deadline)
+                        if not chunk:
+                            break
+                        after = output.tell() + len(chunk)
+                        if after > end + 1:
+                            raise ValueError("Archive exceeds declared size")
+                        elapsed = time.monotonic() - started
+                        if (
+                            not attempt
+                            and elapsed >= 20
+                            and (after - offset) * remaining(deadline)
+                            < (end + 1 - after) * elapsed
+                        ):
+                            raise TimeoutError("Artifact transfer cannot meet cold deadline")
+                        output.write(chunk)
+                if output.tell() != end + 1:
+                    raise ValueError("Archive integrity mismatch")
+                return
+            except TimeoutError:
+                if attempt or time.monotonic() >= deadline:
+                    raise
+                logging.getLogger(__name__).warning(
+                    json.dumps({"event": "lora_download_retry", "reason": "timeout"})
+                )
+            finally:
+                connection.close()
 
 
 def extract(archive, destination, max_bytes, reserve=None, deadline=None):

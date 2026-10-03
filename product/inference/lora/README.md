@@ -34,7 +34,12 @@ and qualification retain the native load API. Materialization locks are released
 before calls into vLLM, allowing concurrent native resolution without deadlock.
 After twenty seconds, a first S3 transfer whose measured progress cannot meet
 the cold-load deadline gets one fresh-connection retry. Transfers progressing
-fast enough to finish keep going. The retry uses the remaining deadline and starts from zero;
+fast enough to finish keep going. Archives of at least 8 MiB use 4 MiB,
+non-overlapping byte ranges with at most four workers writing one staging file; smaller archives use a
+single GET. Each range gets at most one retry. The retry uses the remaining deadline and requests
+the bytes after the downloaded partial prefix using HTTP Range. Its range must match
+the declared offset and total size; servers that ignore Range restart from zero.
+The complete archive must still pass the original size and SHA256 checks;
 checksums, denied requests and other HTTP errors are not retried.
 
 Cold preparations share a 60-second deadline across grants, admission,

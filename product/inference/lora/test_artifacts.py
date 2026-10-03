@@ -5,6 +5,7 @@ import io
 import json
 import math
 import socket
+import ssl
 import struct
 import tempfile
 import threading
@@ -99,11 +100,7 @@ class ArtifactTests(unittest.TestCase):
         with mock.patch("http.client.HTTPSConnection", return_value=opener):
             download(self.spec, self.root / "archive", {"bucket.s3.amazonaws.com"})
         self.assertEqual((self.root / "archive").read_bytes(), self.payload)
-        for payload in (
-            self.payload[:-1],
-            self.payload + b"extra",
-            b"x" * len(self.payload),
-        ):
+        for payload in (self.payload + b"extra", b"x" * len(self.payload)):
             opener.getresponse.return_value = Response(payload)
             opener.getresponse.return_value.status = 200
             with (
@@ -452,7 +449,10 @@ class ArtifactTests(unittest.TestCase):
 
                 with (
                     mock.patch("http.client.HTTPSConnection", side_effect=connect),
-                    self.assertRaises(ValueError),
+                    mock.patch("artifacts.time.sleep"),
+                    self.assertRaises(
+                        ConnectionError if defect == "short" else ValueError
+                    ),
                 ):
                     download(
                         self.spec,
@@ -460,7 +460,7 @@ class ArtifactTests(unittest.TestCase):
                         {"bucket.s3.amazonaws.com"},
                     )
                 self.assertGreaterEqual(len(connections), 2)
-                self.assertLessEqual(len(connections), 8)
+                self.assertLessEqual(len(connections), 96 if defect == "short" else 8)
                 for connection in connections:
                     connection.request.assert_called_once()
                     connection.close.assert_called_once()
@@ -483,6 +483,231 @@ class ArtifactTests(unittest.TestCase):
         self.assertEqual(len(logs.records), 11)
         for connection in connections:
             connection.close.assert_called_once()
+
+    def test_connection_failure_resumes_written_bytes(self):
+        for error in (
+            ConnectionResetError,
+            BrokenPipeError,
+            http.client.RemoteDisconnected,
+            ssl.SSLEOFError,
+        ):
+            with self.subTest(error=error):
+                first, second = mock.Mock(), mock.Mock()
+
+                class ResetResponse(Response):
+                    failure = error
+
+                    def read1(self, size):
+                        if self.tell() >= 8:
+                            raise self.failure(
+                                "transport closed https://private.invalid/?secret"
+                            )
+                        return super().read1(min(size, 8))
+
+                first.getresponse.return_value = ResetResponse(self.payload)
+                response = Response(self.payload[8:])
+                response.status = 206
+                response.getheader = lambda _: (
+                    f"bytes 8-{len(self.payload) - 1}/{len(self.payload)}"
+                )
+                second.getresponse.return_value = response
+                with (
+                    mock.patch(
+                        "http.client.HTTPSConnection", side_effect=[first, second]
+                    ),
+                    mock.patch("artifacts.time.sleep") as pause,
+                    self.assertLogs("artifacts", level="WARNING") as logs,
+                ):
+                    download(
+                        self.spec,
+                        self.root / "reset-resumed",
+                        {"bucket.s3.amazonaws.com"},
+                    )
+                self.assertEqual(
+                    (self.root / "reset-resumed").read_bytes(), self.payload
+                )
+                self.assertEqual(
+                    second.request.call_args.kwargs["headers"],
+                    {"Range": f"bytes=8-{len(self.payload) - 1}"},
+                )
+                pause.assert_called_once_with(1)
+                self.assertIn('"reason": "connection"', logs.output[0])
+                self.assertNotIn("private.invalid", logs.output[0])
+                first.close.assert_called_once()
+                second.close.assert_called_once()
+
+    def test_tls_eof_during_connect_recovers(self):
+        first, second = mock.Mock(), mock.Mock()
+        first.connect.side_effect = ssl.SSLEOFError("TLS connection closed")
+        second.getresponse.return_value = Response(self.payload)
+        with (
+            mock.patch("http.client.HTTPSConnection", side_effect=[first, second]),
+            mock.patch("artifacts.time.sleep") as pause,
+            self.assertLogs("artifacts", level="WARNING") as logs,
+        ):
+            download(
+                self.spec, self.root / "tls-recovered", {"bucket.s3.amazonaws.com"}
+            )
+        self.assertEqual((self.root / "tls-recovered").read_bytes(), self.payload)
+        self.assertIn('"reason": "connection"', logs.output[0])
+        pause.assert_called_once_with(1)
+        first.close.assert_called_once()
+        second.close.assert_called_once()
+
+    def test_tls_certificate_and_protocol_failures_do_not_retry(self):
+        for error in (ssl.SSLCertVerificationError, ssl.SSLError):
+            with self.subTest(error=error):
+                connection = mock.Mock()
+                connection.connect.side_effect = error("TLS validation failed")
+                with (
+                    mock.patch(
+                        "http.client.HTTPSConnection", return_value=connection
+                    ) as connect,
+                    mock.patch("artifacts.time.sleep") as pause,
+                    self.assertRaises(error),
+                ):
+                    download(
+                        self.spec, self.root / "tls-failed", {"bucket.s3.amazonaws.com"}
+                    )
+                connect.assert_called_once()
+                pause.assert_not_called()
+                connection.close.assert_called_once()
+
+    def test_persistent_connection_failures_have_bounded_attempts(self):
+        connections = [mock.Mock() for _ in range(12)]
+        for connection in connections:
+            connection.connect.side_effect = ConnectionResetError("connection reset")
+        with (
+            mock.patch(
+                "http.client.HTTPSConnection", side_effect=connections
+            ) as connect,
+            mock.patch("artifacts.time.sleep") as pause,
+            self.assertLogs("artifacts", level="WARNING") as logs,
+            self.assertRaises(ConnectionResetError),
+        ):
+            download(self.spec, self.root / "reset-failed", {"bucket.s3.amazonaws.com"})
+        self.assertEqual(connect.call_count, 12)
+        self.assertEqual(pause.call_count, 11)
+        self.assertEqual(len(logs.records), 11)
+        for connection in connections:
+            connection.close.assert_called_once()
+
+    def test_connection_failure_cannot_extend_expired_deadline(self):
+        clock = [0.0]
+        connection = mock.Mock()
+
+        def fail():
+            clock[0] = 61
+            raise ConnectionResetError("connection reset")
+
+        connection.connect.side_effect = fail
+        with (
+            mock.patch(
+                "http.client.HTTPSConnection", return_value=connection
+            ) as connect,
+            mock.patch("artifacts.time.monotonic", side_effect=lambda: clock[0]),
+            mock.patch("artifacts.time.sleep") as pause,
+            self.assertRaises(ConnectionResetError),
+        ):
+            download(
+                self.spec, self.root / "reset-expired", {"bucket.s3.amazonaws.com"}, 60
+            )
+        connect.assert_called_once()
+        pause.assert_not_called()
+        connection.close.assert_called_once()
+
+    def test_real_http_clean_mid_body_disconnect_resumes(self):
+        payload = self.payload
+        attempts = []
+
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def log_message(self, *_args):
+                pass
+
+            def do_GET(self):
+                attempts.append(self.headers.get("Range"))
+                if len(attempts) == 1:
+                    self.send_response(200)
+                    self.send_header("Content-Length", str(len(payload)))
+                    self.end_headers()
+                    self.wfile.write(payload[:8])
+                    self.wfile.flush()
+                    self.close_connection = True
+                    return
+                self.send_response(206)
+                self.send_header(
+                    "Content-Range", f"bytes 8-{len(payload) - 1}/{len(payload)}"
+                )
+                self.send_header("Content-Length", str(len(payload) - 8))
+                self.end_headers()
+                self.wfile.write(payload[8:])
+
+        server = http.server.HTTPServer(("127.0.0.1", 0), Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            with (
+                mock.patch(
+                    "http.client.HTTPSConnection",
+                    side_effect=lambda *args, **kwargs: http.client.HTTPConnection(
+                        "127.0.0.1", server.server_port, timeout=kwargs["timeout"]
+                    ),
+                ),
+                mock.patch("artifacts.time.sleep") as pause,
+                self.assertLogs("artifacts", level="WARNING"),
+            ):
+                download(self.spec, self.root / "real-eof", {"bucket.s3.amazonaws.com"})
+            self.assertEqual((self.root / "real-eof").read_bytes(), payload)
+            self.assertEqual(attempts, [None, f"bytes=8-{len(payload) - 1}"])
+            pause.assert_called_once_with(1)
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=5)
+
+    def test_real_http_disconnect_before_headers_recovers(self):
+        payload = self.payload
+        attempts = []
+
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def log_message(self, *_args):
+                pass
+
+            def do_GET(self):
+                attempts.append(self.path)
+                if len(attempts) == 1:
+                    self.connection.shutdown(socket.SHUT_RDWR)
+                    self.connection.close()
+                    self.close_connection = True
+                    return
+                self.send_response(200)
+                self.send_header("Content-Length", str(len(payload)))
+                self.end_headers()
+                self.wfile.write(payload)
+
+        server = http.server.HTTPServer(("127.0.0.1", 0), Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            with (
+                mock.patch(
+                    "http.client.HTTPSConnection",
+                    side_effect=lambda *args, **kwargs: http.client.HTTPConnection(
+                        "127.0.0.1", server.server_port, timeout=kwargs["timeout"]
+                    ),
+                ),
+                mock.patch("artifacts.time.sleep"),
+                self.assertLogs("artifacts", level="WARNING"),
+            ):
+                download(
+                    self.spec, self.root / "real-reset", {"bucket.s3.amazonaws.com"}
+                )
+            self.assertEqual((self.root / "real-reset").read_bytes(), payload)
+            self.assertEqual(len(attempts), 2)
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=5)
 
     def test_dns_failure_recovers_without_exposing_the_artifact_url(self):
         first, second = mock.Mock(), mock.Mock()

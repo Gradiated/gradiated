@@ -12,6 +12,7 @@ import time
 import urllib.error
 import urllib.parse
 from socket import gaierror
+from ssl import SSLEOFError
 
 
 def strict_json(data):
@@ -139,22 +140,22 @@ def _download_part(url, destination, start, end, total, deadline):
                             raise ValueError("Archive exceeds declared size")
                         output.write(chunk)
                 if output.tell() != end + 1:
-                    raise ValueError("Archive integrity mismatch")
+                    raise ConnectionError(
+                        "Artifact response ended before its declared size"
+                    )
                 return
-            except (TimeoutError, gaierror) as error:
+            except (TimeoutError, gaierror, ConnectionError, SSLEOFError) as error:
                 if attempt == 11 or time.monotonic() >= deadline:
                     raise
+                reason = "connection"
+                if isinstance(error, TimeoutError):
+                    reason = "timeout"
+                elif isinstance(error, gaierror):
+                    reason = "dns"
                 logging.getLogger(__name__).warning(
-                    json.dumps(
-                        {
-                            "event": "lora_download_retry",
-                            "reason": "dns"
-                            if isinstance(error, gaierror)
-                            else "timeout",
-                        }
-                    )
+                    json.dumps({"event": "lora_download_retry", "reason": reason})
                 )
-                if isinstance(error, gaierror):
+                if reason != "timeout":
                     time.sleep(min(1, remaining(deadline)))
             finally:
                 connection.close()

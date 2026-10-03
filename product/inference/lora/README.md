@@ -32,6 +32,11 @@ The loader never forwards completions, reads token streams, holds inference slot
 tracks active requests, unloads adapters or restarts the engine. Startup preload
 and qualification retain the native load API. Materialization locks are released
 before calls into vLLM, allowing concurrent native resolution without deadlock.
+After twenty seconds, a first S3 transfer whose measured progress cannot meet
+the cold-load deadline gets one fresh-connection retry. Transfers progressing
+fast enough to finish keep going. The retry uses the remaining deadline and starts from zero;
+checksums, denied requests and other HTTP errors are not retried.
+
 Cold preparations share a 60-second deadline across grants, admission,
 materialization and downloading rather than rejecting an ordinary burst
 immediately. Each network read uses the remaining budget. The HTTP server

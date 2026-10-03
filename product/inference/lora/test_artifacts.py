@@ -166,6 +166,90 @@ class ArtifactTests(unittest.TestCase):
             download(self.spec, self.root / "redirect", {"bucket.s3.amazonaws.com"})
         connect.assert_called_once()
 
+    def test_slow_transfer_retries_fresh_without_extending_the_deadline(self):
+        clock = [0.0]
+        first, second = mock.Mock(), mock.Mock()
+        payload = self.payload
+
+        class SlowResponse(Response):
+            def read1(self, size):
+                clock[0] += 11
+                return super().read1(min(size, 8))
+
+        first.getresponse.return_value = SlowResponse(payload)
+        second.getresponse.return_value = Response(payload)
+        with (
+            mock.patch("http.client.HTTPSConnection", side_effect=[first, second]) as connect,
+            mock.patch("artifacts.time.monotonic", side_effect=lambda: clock[0]),
+            self.assertLogs("artifacts", level="WARNING") as logs,
+        ):
+            download(self.spec, self.root / "retry", {"bucket.s3.amazonaws.com"}, 60)
+        self.assertEqual((self.root / "retry").read_bytes(), payload)
+        self.assertEqual(connect.call_count, 2)
+        first.close.assert_called_once()
+        second.close.assert_called_once()
+        self.assertEqual(clock[0], 22)
+        self.assertIn('"event": "lora_download_retry"', logs.output[0])
+        self.assertNotIn("bucket.s3.amazonaws.com", logs.output[0])
+
+    def test_slow_transfer_that_can_finish_is_not_restarted(self):
+        clock = [0.0]
+        payload = self.payload
+        connection = mock.Mock()
+
+        class SteadyResponse(Response):
+            def isclosed(self):
+                return self.tell() == len(payload)
+
+            def read1(self, size):
+                clock[0] += 21
+                return super().read1((len(payload) + 1) // 2)
+
+        connection.getresponse.return_value = SteadyResponse(payload)
+        with (
+            mock.patch("http.client.HTTPSConnection", return_value=connection) as connect,
+            mock.patch("artifacts.time.monotonic", side_effect=lambda: clock[0]),
+        ):
+            download(self.spec, self.root / "steady", {"bucket.s3.amazonaws.com"}, 60)
+        self.assertEqual((self.root / "steady").read_bytes(), payload)
+        self.assertEqual(clock[0], 42)
+        connect.assert_called_once()
+
+    def test_retry_still_stops_at_the_original_deadline(self):
+        clock = [0.0]
+
+        class SlowResponse(Response):
+            def read1(self, size):
+                clock[0] += 21
+                return super().read1(min(size, 8))
+
+        first, second = mock.Mock(), mock.Mock()
+        first.getresponse.return_value = SlowResponse(self.payload)
+        second.getresponse.return_value = SlowResponse(self.payload)
+        with (
+            mock.patch("http.client.HTTPSConnection", side_effect=[first, second]) as connect,
+            mock.patch("artifacts.time.monotonic", side_effect=lambda: clock[0]),
+            self.assertLogs("artifacts", level="WARNING"),
+            self.assertRaises(TimeoutError),
+        ):
+            download(self.spec, self.root / "expired", {"bucket.s3.amazonaws.com"}, 40)
+        self.assertEqual(clock[0], 42)
+        self.assertEqual(connect.call_count, 2)
+        first.close.assert_called_once()
+        second.close.assert_called_once()
+
+    def test_denied_and_failed_http_responses_are_not_retried(self):
+        for status in (403, 500):
+            connection = mock.Mock()
+            connection.getresponse.return_value = mock.Mock(status=status)
+            with (
+                mock.patch("http.client.HTTPSConnection", return_value=connection) as connect,
+                self.assertRaises(urllib.error.HTTPError),
+            ):
+                download(self.spec, self.root / "denied", {"bucket.s3.amazonaws.com"})
+            connect.assert_called_once()
+            connection.close.assert_called_once()
+
     def test_untrusted_download_destinations_are_rejected_before_network_access(self):
         for url in (
             "http://bucket.s3.amazonaws.com/adapter",

@@ -1,6 +1,7 @@
 import hashlib
 import http.client
 import json
+import logging
 import math
 import re
 import shutil
@@ -67,8 +68,23 @@ def download(spec, destination, allowed_hosts, deadline=None):
         raise ValueError("Untrusted artifact URL")
     if deadline is None:
         deadline = time.monotonic() + 60
+    for attempt in range(2):
+        try:
+            return _download_attempt(spec, destination, url, deadline, attempt == 0)
+        except TimeoutError:
+            if attempt or time.monotonic() >= deadline:
+                raise
+            logging.getLogger(__name__).warning(
+                json.dumps({"event": "lora_download_retry", "reason": "timeout"})
+            )
+
+
+def _download_attempt(spec, destination, url, deadline, retry_slow):
+    # Each attempt truncates partial bytes and starts a fresh digest/connection.
+    started = time.monotonic()
     digest = hashlib.sha256()
     size = 0
+    expected = spec["version"]["adapter"]["size_bytes"]
     connection = http.client.HTTPSConnection(
         url.hostname, timeout=min(30, remaining(deadline))
     )
@@ -96,8 +112,15 @@ def download(spec, destination, allowed_hosts, deadline=None):
                 if not chunk:
                     break
                 size += len(chunk)
-                if size > spec["version"]["adapter"]["size_bytes"]:
+                if size > expected:
                     raise ValueError("Archive exceeds declared size")
+                elapsed = time.monotonic() - started
+                if (
+                    retry_slow
+                    and elapsed >= 20
+                    and size * remaining(deadline) < (expected - size) * elapsed
+                ):
+                    raise TimeoutError("Artifact transfer cannot meet cold deadline")
                 digest.update(chunk)
                 output.write(chunk)
     finally:

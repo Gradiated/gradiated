@@ -223,3 +223,12 @@ rank-two adapter passed these checks on B300, including all MLA layers in prefil
 and decode against independent same-input FP32 math; see [GLM qualification](../runtimes/glm/README.md).
 Absolute whole-model logprob tolerance also failed on the LoRA-disabled control,
 so these checks do not establish task quality or bitwise whole-model determinism.
+
+A fresh full-layer rank-2 GLM adapter also passed the production gateway path after
+training, checkpoint recovery, verification and publication. Eight simultaneous
+cold requests shared one download and completed in about 8.3 seconds. A 270-request
+public soak at concurrency 8 passed streaming, cancellation, promotion and historical
+version checks without failures. Native CPU/GPU cache pressure passed 136 requests
+at concurrency 32 across 65 names with 8 GPU and 64 CPU slots, followed by clean
+unloading and successful base and canonical-adapter requests. These are measured
+serving reliability checks on B300, not task-quality or general latency guarantees.

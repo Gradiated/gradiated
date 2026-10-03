@@ -34,6 +34,8 @@ bash -n "$root/bin/fetch-runtime" "$root/bin/start-desmond"
   echo 'Artifact enrollment is missing' >&2
   exit 1
 }
+runuser -u runtime -- mkdir -p /workspace/gradiated/model-cache
+runuser -u runtime -- test -w /workspace/gradiated/model-cache
 
 install -d /opt/gradiated/bin /etc/gradiated
 for binary in s5cmd bsdtar curl; do
@@ -58,5 +60,4 @@ token=$(cat /etc/gradiated/runtime-access.token)
 printf '"Bearer %s" 1;\n' "$token" >/etc/gradiated/runtime-proxy-auth.conf
 chown desmond:desmond /etc/gradiated/runtime-proxy-auth.conf
 chmod 600 /etc/gradiated/runtime-proxy-auth.conf
-install -d -o runtime -g runtime /workspace/gradiated/model-cache
 printf 'Host tools installed for %s; running workloads were not restarted\n' "$(cat "$root/base-id")"

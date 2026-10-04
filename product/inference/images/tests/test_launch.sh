@@ -58,6 +58,14 @@ for speculation in 0 1; do
 
     if [[ $speculation == 1 ]]; then
         flag --speculative-config || fail 'speculation was not enabled'
+        python3 - "$TEST_ARGS" <<'PYTEST'
+import json
+import sys
+from pathlib import Path
+args = Path(sys.argv[1]).read_text().splitlines()
+config = json.loads(args[args.index("--speculative-config") + 1])
+assert config["revision"] == args[args.index("--revision") + 1], "draft must reuse the pinned target revision"
+PYTEST
     elif flag --speculative-config; then
         fail 'speculation was not disabled'
     fi

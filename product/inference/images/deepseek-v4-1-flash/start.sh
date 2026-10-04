@@ -22,6 +22,6 @@ args=("${VLLM_BIN:-vllm}" serve "$MODEL" --revision "$REVISION" --tokenizer-revi
 args+=(--max-num-queued-reqs "${MAX_QUEUED_REQUESTS:-64}")
 args+=(--max-num-queued-tokens "${MAX_QUEUED_TOKENS:-1048576}")
 if [[ "${SPECULATIVE_DECODING:-1}" == 1 ]]; then
-  args+=(--speculative-config '{"method":"dspark","num_speculative_tokens":5,"draft_sample_method":"probabilistic","rejection_sample_method":"block","enable_adaptive_verification":true}')
+  args+=(--speculative-config "{\"method\":\"dspark\",\"revision\":\"$REVISION\",\"num_speculative_tokens\":5,\"draft_sample_method\":\"probabilistic\",\"rejection_sample_method\":\"block\",\"enable_adaptive_verification\":true}")
 fi
 exec "${args[@]}"

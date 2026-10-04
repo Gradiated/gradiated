@@ -17,6 +17,8 @@ destination=${3:?Pass the runtime directory}
 }
 
 source_url=${url#s3::}
+# Release URLs stay stable; enrolled hosts use the bucket's accelerated endpoint.
+source_url=${source_url/.s3.us-east-1.amazonaws.com\//.s3-accelerate.amazonaws.com\/}
 if [[ -e "$destination" ]]; then
   [[ -f "$destination/.bundle-sha256" && $(cat "$destination/.bundle-sha256") == "$digest" ]] || {
     echo 'Runtime directory holds a different bundle' >&2

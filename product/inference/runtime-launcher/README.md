@@ -68,6 +68,13 @@ The downloader accepts only content-addressed S3 release URLs. It verifies
 the digest before using `bsdtar` to extract the trusted archive. Nomad's native
 artifact size and file-count limits do not apply to this pre-start task.
 Eight ranges share one staging file and a twenty-minute download deadline.
+The artifact bucket enables S3 Transfer Acceleration. The helper replaces the
+regional endpoint with `s3-accelerate.amazonaws.com` when downloading; pinned
+release URLs and bundle digests stay unchanged, so enabling this does not require
+a serving rollout. Older helpers can still use the regional endpoint. Transfer
+Acceleration adds AWS data-transfer charges. An isolated 3.8 GB GLM archive
+comparison on the serving B300 host measured a verified accelerated download in
+9.8 seconds; the preceding regional download exceeded its ten-minute test limit.
 Transient size-probe and range failures retry within that deadline; each range
 resumes from its written prefix. Startup logs show the download, checksum and
 extraction phases. Compatible host-tool updates install the helper and curl

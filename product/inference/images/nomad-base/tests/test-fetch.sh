@@ -47,6 +47,7 @@ stub_curl <<'FIXTURE'
 config=$(cat)
 [[ "$config" == *'user = "test-only:test-only"'* ]]
 [[ "$*" != *test-only* ]]
+[[ "${!#}" == https://test-bucket.s3-accelerate.amazonaws.com/bundles/sha256/*.tar.gz ]]
 if [[ "$*" == *--head* ]]; then
   stat -c %s "$TEST_BUNDLE"
   exit 0

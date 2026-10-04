@@ -38,6 +38,7 @@ runuser -u runtime -- mkdir -p /workspace/gradiated/model-cache
 runuser -u runtime -- test -w /workspace/gradiated/model-cache
 
 install -d /opt/gradiated/bin /etc/gradiated
+install -d -m 700 -o downloader -g downloader /var/cache/gradiated/runtime-bundles
 for binary in s5cmd bsdtar curl; do
   install -m 755 "$root/bin/$binary" "/usr/local/bin/$binary.new"
   mv -f "/usr/local/bin/$binary.new" "/usr/local/bin/$binary"

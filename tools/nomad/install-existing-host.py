@@ -51,6 +51,7 @@ install -d -m 755 -o nomad -g nomad /var/lib/nomad-alloc /var/lib/alloc_mounts
 runuser -u runtime -- mkdir -p /workspace/gradiated/model-cache
 cp -a "$stage/opt/." /opt/
 cp -a "$stage/usr/." /usr/
+install -d -m 700 -o downloader -g downloader /var/cache/gradiated/runtime-bundles
 install -d /etc/gradiated /etc/nomad
 cp -a "$stage/etc/nomad/client.hcl" /etc/nomad/client.hcl
 cp -a "$stage/etc/gradiated/." /etc/gradiated/

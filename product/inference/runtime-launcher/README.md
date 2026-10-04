@@ -37,10 +37,32 @@ Nomad extracts the archive into `local/runtime`. The job passes its absolute
 path through `NOMAD_ALLOC_DIR`. A failed download or checksum check prevents
 task startup. Direct local launches expect an already verified directory.
 
-Runtime files belong to each allocation. A new allocation downloads its own
-copy. There is no shared runtime cache, prefetch service, or cache lock.
-Keep model weights in `/workspace/gradiated/model-cache`, outside the allocation.
-Add a shared runtime cache only if measured download time requires it.
+Runtime files belong to each allocation. Enrolled hosts retain up to four
+compressed runtime archives in `/var/cache/gradiated/runtime-bundles`, owned by
+`downloader` with mode `0700`. Replacements reuse matching archives, verify their
+SHA-256 again and extract an independent allocation directory. One host cache
+lock protects downloads, verification and eviction; extraction keeps an open archive descriptor outside the lock, so queued allocations can proceed safely; the four most recently used
+archives remain. Budget disk space for four archives in addition to allocation
+storage. Hosts without this directory keep the uncached behavior.
+
+Measured production bundle downloads took 473 seconds for GLM and 995 seconds
+for DeepSeek; extraction took 18 and 39 seconds respectively. An isolated GLM test on an idle B300 host measured 367 seconds for cold bundle
+readiness and 19 seconds for each of two cached extractions, including a fresh
+SHA-256 check. The archive cache avoids repeated transfers for unchanged bundles. New bundle digests still need
+one download per host. It does not cache initialized GPU state or shorten the
+11-minute request drain. Keep model weights in
+`/workspace/gradiated/model-cache`, outside the allocation.
+
+For a compatible helper update on an already enrolled host, install the reviewed
+`fetch-runtime` script at `/opt/gradiated/bin/fetch-runtime` and create the cache
+with:
+
+```sh
+install -d -m 700 -o downloader -g downloader /var/cache/gradiated/runtime-bundles
+```
+
+Replace the helper atomically while no pre-start download is running; no Nomad
+agent or provider pod restart is needed.
 
 The downloader accepts only content-addressed S3 release URLs. It verifies
 the digest before using `bsdtar` to extract the trusted archive. Nomad's native

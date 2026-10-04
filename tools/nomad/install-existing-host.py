@@ -48,7 +48,7 @@ for spec in runtime:10001 nomad:10002 downloader:10003 desmond:10004; do
 done
 install -d -m 700 -o nomad -g nomad /etc/nomad/tls /var/lib/nomad
 install -d -m 755 -o nomad -g nomad /var/lib/nomad-alloc /var/lib/alloc_mounts
-runuser -u runtime -- mkdir -p /workspace/gradiated/model-cache
+runuser -u runtime -- mkdir -p /home/runtime/.cache/huggingface
 cp -a "$stage/opt/." /opt/
 cp -a "$stage/usr/." /usr/
 install -d -m 700 -o downloader -g downloader /var/cache/gradiated/runtime-bundles

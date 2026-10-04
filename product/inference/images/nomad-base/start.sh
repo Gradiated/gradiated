@@ -71,8 +71,8 @@ EOF
 }
 
 install -d /run/sshd
-# Mounted provider storage may reject chown. Create the cache as its user.
-runuser -u runtime -- mkdir -p /workspace/gradiated/model-cache
+# Node-local model files are disposable and shared across allocations.
+runuser -u runtime -- mkdir -p /home/runtime/.cache/huggingface
 
 if [[ -n "${GRADIATED_NOMAD_NODE_ID:-}" ]]; then
   write_bootstrap

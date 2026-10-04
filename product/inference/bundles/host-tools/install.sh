@@ -34,8 +34,8 @@ bash -n "$root/bin/fetch-runtime" "$root/bin/start-desmond"
   echo 'Artifact enrollment is missing' >&2
   exit 1
 }
-runuser -u runtime -- mkdir -p /workspace/gradiated/model-cache
-runuser -u runtime -- test -w /workspace/gradiated/model-cache
+runuser -u runtime -- mkdir -p /home/runtime/.cache/huggingface
+runuser -u runtime -- test -w /home/runtime/.cache/huggingface
 
 install -d /opt/gradiated/bin /etc/gradiated
 install -d -m 700 -o downloader -g downloader /var/cache/gradiated/runtime-bundles

@@ -201,7 +201,7 @@ job "deepseek-v4-1-flash" {
         XDG_CACHE_HOME          = "/home/runtime/.cache"
         TORCHINDUCTOR_CACHE_DIR = "/home/runtime/.cache/torchinductor"
         TRITON_CACHE_DIR        = "/home/runtime/.cache/triton"
-        HF_HOME                 = "/workspace/gradiated/model-cache"
+        HF_HOME                 = "/home/runtime/.cache/huggingface"
         RUNTIME_PORT            = "${NOMAD_PORT_runtime}"
         RUNTIME_HOST            = "127.0.0.1"
       }

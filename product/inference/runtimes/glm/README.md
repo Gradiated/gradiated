@@ -15,17 +15,16 @@ FP8 KV cache, the GLM tool/reasoning parsers, and the existing startup
 qualification supervisor. `RUNTIME_PORT` is the loopback inference port;
 `WARMUP_PORT` exposes readiness only after cold-shape and concurrency checks
 finish. Desmond should use that readiness endpoint. `HF_HOME` selects the
-model cache. The production Nomad job uses `/dev/shm/gradiated/model-cache`
-because memory-mapped weight loading from RunPod’s network-backed cache is slow.
-Allow at least 330 GB of shared memory for the pinned checkpoint, in addition to
-serving memory. Cache contents survive process restarts and are lost with the
-host; a cold host downloads the pinned checkpoint again. The job reserves
-400000 MiB of host RAM. Keep the network-volume checkpoint when prewarming an
-existing host, and verify copied weight checksums before starting the canary.
-Check `/dev/shm` free space separately from host RAM: unused checkpoint files can
-fill tmpfs while `MemAvailable` remains large. Leave headroom for worker IPC and
-move only verified, unused checkpoint files to disk while preserving their cache
-paths. First startup can also include GPU-kernel compilation and autotuning.
+model cache. The production Nomad job uses the node-local disk at
+`/home/runtime/.cache/huggingface`, shared across allocations on that host.
+Hugging Face downloads the pinned revision when files are absent and reuses
+completed blobs on subsequent starts. No network volume or RAM-backed checkpoint
+cache is required. The cache is disposable: a host reset can remove it, and the
+next rollout downloads it again before admission opens. Leave enough disk space
+for the checkpoint and retained revisions; use the Hugging Face cache tools to
+remove unused revisions while preserving weights used by running processes.
+The job reserves 400000 MiB of host RAM. First startup can also include
+GPU-kernel compilation and autotuning.
 The runtime launcher sets `GRADIATED_RUNTIME_ROOT`.
 
 The pinned chat template recognizes `reasoning_effort: "low"` and `"high"`;

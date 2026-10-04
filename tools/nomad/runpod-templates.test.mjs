@@ -41,6 +41,28 @@ test("templates start the host image without shared credentials or model command
   }
 });
 
+test("templates provision local checkpoint capacity without network volumes", () => {
+  for (const [index, request] of requests.entries()) {
+    assert.deepEqual(request.mounts, {});
+    assert.ok(request.disk >= 100);
+    if (
+      ["deepseek/deepseek-v4.1-flash", "z-ai/glm-5.3-flash"].includes(
+        config.models[index].model,
+      )
+    )
+      assert.ok(
+        request.disk >= 2000,
+        "shared B300 hosts need space for both checkpoints and rollbacks",
+      );
+  }
+  assert.throws(() =>
+    templateRequests(
+      { ...config, models: [{ name: "missing disk" }] },
+      config.image,
+    ),
+  );
+});
+
 test("check is read-only and apply only creates missing templates", async () => {
   const calls = [];
   const call = async (method, path, body) => {
@@ -56,7 +78,10 @@ test("check is read-only and apply only creates missing templates", async () => 
 
   const applied = await reconcileTemplates(requests, call, true);
   assert.ok(applied.every((item) => item.status === "created" && item.id));
-  assert.equal(calls.filter((item) => item.method === "POST").length, requests.length);
+  assert.equal(
+    calls.filter((item) => item.method === "POST").length,
+    requests.length,
+  );
 });
 
 test("finds existing templates across pages without mutating them", async () => {

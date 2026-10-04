@@ -33,6 +33,13 @@ for vars in "$root/jobs"/*.vars.hcl; do
     exit 1
   }
   if jq -e '.Job.Meta.gradiated_model_id' <<<"$job" >/dev/null; then
+    jq -e 'all(.Job.TaskGroups[].Tasks[] | select(.Name == "vllm" or .Name == "kev");
+      .Env.HF_HOME == "/home/runtime/.cache/huggingface" and
+      .Env.XDG_CACHE_HOME == "/home/runtime/.cache" and
+      (.Env.HF_HUB_OFFLINE // "0") != "1")' <<<"$job" >/dev/null || {
+      echo "$name must use a disposable node-local model cache with downloads enabled" >&2
+      exit 1
+    }
     jq -e 'all(.Job.TaskGroups[]; (.Update.Canary == .Count) and .Update.MaxParallel == 1 and .Update.AutoRevert and (.Update.AutoPromote == (.Count > 0)))' <<<"$job" >/dev/null || {
       echo "$name must stage all replacements before stopping serving replicas, and revert failures" >&2
       exit 1

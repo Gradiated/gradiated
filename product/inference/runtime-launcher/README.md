@@ -50,8 +50,17 @@ for DeepSeek; extraction took 18 and 39 seconds respectively. An isolated GLM te
 readiness and 19 seconds for each of two cached extractions, including a fresh
 SHA-256 check. The archive cache avoids repeated transfers for unchanged bundles. New bundle digests still need
 one download per host. It does not cache initialized GPU state or shorten the
-11-minute request drain. Keep model weights in
-`/workspace/gradiated/model-cache`, outside the allocation.
+11-minute request drain. Keep inference model weights in
+`/home/runtime/.cache/huggingface`, on node-local disk outside the allocation.
+All three inference jobs share this Hugging Face cache within each host and pin
+model/tokenizer revisions. Missing files download automatically; completed blobs
+are reused across allocations, models and revisions. Kernel caches remain under
+`/home/runtime/.cache`. Runtime archives, weights and compiled kernels are all
+disposable; a reset can wipe them and startup rebuilds them. Neither `/workspace`
+network storage nor `/dev/shm` is required for inference checkpoint storage.
+Budget local disk for weights, retained revisions, archives and allocation files.
+Use the Hugging Face cache tools to remove unused revisions; do not evict files
+used by active runtimes.
 
 For a compatible helper update on an already enrolled host, install the reviewed
 `fetch-runtime` script at `/opt/gradiated/bin/fetch-runtime` and create the cache

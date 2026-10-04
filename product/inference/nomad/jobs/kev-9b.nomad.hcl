@@ -203,7 +203,7 @@ job "kev-9b" {
       env {
         HOME           = "/home/runtime"
         XDG_CACHE_HOME = "/home/runtime/.cache"
-        HF_HOME        = "/workspace/gradiated/model-cache"
+        HF_HOME        = "/home/runtime/.cache/huggingface"
         RUNTIME_PORT   = "${NOMAD_PORT_runtime}"
       }
 

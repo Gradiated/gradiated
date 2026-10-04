@@ -30,7 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && install -d -m 755 -o nomad -g nomad /var/lib/nomad-alloc /var/lib/alloc_mounts \
     && install -d /etc/gradiated /opt/gradiated/bin /opt/nomad/plugins /run/sshd \
     && install -d -m 700 -o downloader -g downloader /var/cache/gradiated/runtime-bundles \
-    && install -d -o runtime -g runtime /workspace/gradiated/model-cache
+    && install -d -o runtime -g runtime /home/runtime/.cache/huggingface
 COPY --from=hashicorp/nomad@sha256:b964829b94c5493f3b543bb409b60c335a9ca03f21d9fac8b4cdd2af18b331c9 /bin/nomad /usr/local/bin/nomad
 COPY --from=launcher /desmond-build/desmond/desmondd /opt/gradiated/bin/desmondd
 COPY images/nomad-base/start-desmond.sh /opt/gradiated/bin/start-desmond

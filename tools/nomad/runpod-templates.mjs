@@ -9,12 +9,21 @@ export const templateRequests = (config, enrollmentImage) => {
   )
     throw new Error("Templates must use the immutable tagged enrollment image");
 
-  return config.models.map(({ name, volumeGb }) => ({
+  if (
+    !config.models.every(
+      ({ diskGb }) => Number.isInteger(diskGb) && diskGb >= 100,
+    )
+  )
+    throw new Error(
+      "Templates must provision at least 100 GB of node-local disk",
+    );
+
+  return config.models.map(({ name, diskGb }) => ({
     name,
     image: config.image,
     args: "",
-    disk: 100,
-    mounts: { persistent: { path: "/workspace", size: volumeGb } },
+    disk: diskGb,
+    mounts: {},
     ports: ["8888/http", "22/tcp"],
     env: {},
     registry: null,

@@ -132,6 +132,11 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     title: "Terms",
     description: "Read the terms that govern use of Gradiated services.",
   },
+  "/sla/": {
+    title: "Service Level Agreement",
+    description:
+      "Read Gradiated’s 99.9% inference uptime commitment, service credits and claims process.",
+  },
   "/acceptable-use/": {
     title: "Acceptable use",
     description: "Read the rules for acceptable use of Gradiated services.",

@@ -9,11 +9,12 @@ import {
   TermsContent,
 } from "../content";
 import "../styles/index.css";
+import { SlaContent } from "./SlaContent";
 
 /**
  * The legal pages, in the design system.
  *
- * One layout for all five: they are the same kind of document, and the only
+ * One layout for all legal pages: they are the same kind of document, and the only
  * thing that differs is which prose goes in. They borrow the docs shell —
  * sticky contents beside a measured column — because a policy is read the way
  * reference is read, by looking for the one clause you came for rather than
@@ -24,7 +25,12 @@ import "../styles/index.css";
  */
 
 export type LegalSlug =
-  "acceptable-use" | "dpa" | "privacy" | "subprocessors-security" | "terms";
+  | "acceptable-use"
+  | "dpa"
+  | "privacy"
+  | "sla"
+  | "subprocessors-security"
+  | "terms";
 
 /* The full name IS the title. These pages used to lead with an abbreviation
    and put the real name in an eyebrow above it — two pieces of chrome saying
@@ -50,6 +56,7 @@ export const LEGAL: Record<
     title: "Subprocessors and security",
   },
   terms: { Content: TermsContent as ComponentType, title: "Terms of Service" },
+  sla: { Content: SlaContent, title: "Service Level Agreement" },
 };
 
 /** `Your data` -> `your-data`, for the anchor. */

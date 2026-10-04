@@ -279,7 +279,7 @@ export const PrivacyContent = (): ReactNode => (
 
 export const TermsContent = (): ReactNode => (
   <>
-    <p>Effective date: August 26, 2026</p>
+    <p>Effective date: October 4, 2026</p>
     <p>
       These Terms of Service are an agreement between you and Gradiated Ltd.
       They apply when you use the Gradiated website, console, API, inference
@@ -333,6 +333,14 @@ export const TermsContent = (): ReactNode => (
       order. You authorize our payment provider to charge the selected payment
       method. Fees are exclusive of taxes unless stated otherwise. You are
       responsible for taxes that you must pay.
+    </p>
+    <h2>Inference availability</h2>
+    <p>
+      Paid production inference is covered by our{" "}
+      <SiteLink href="/sla/">Service Level Agreement</SiteLink>, which forms
+      part of these Terms. It sets out our uptime commitment, eligible service
+      credits and how to claim them. Its express commitments apply despite the
+      general disclaimers below.
     </p>
     <h2>Our rights</h2>
     <p>

@@ -167,15 +167,21 @@ export const submitJob = async (
     }
     {
       const allocations = (await get("/v1/allocations")) ?? [];
-      if (
-        allocations.some(
-          (allocation) =>
-            allocation.DesiredStatus === "stop" &&
-            !["complete", "failed", "lost", "unknown"].includes(
-              allocation.ClientStatus,
-            ),
-        )
-      ) {
+      const draining = allocations.filter(
+        (allocation) =>
+          allocation.DesiredStatus === "stop" &&
+          !["complete", "failed", "lost", "unknown"].includes(
+            allocation.ClientStatus,
+          ),
+      );
+      const drainingModels = await Promise.all(
+        draining.map(
+          async (allocation) =>
+            (await get(`/v1/allocation/${allocation.ID}`)).Job?.Meta
+              ?.gradiated_model_id,
+        ),
+      );
+      if (drainingModels.some(Boolean)) {
         await pause(10_000);
         continue;
       }

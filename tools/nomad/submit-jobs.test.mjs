@@ -294,21 +294,24 @@ test("a changed release waits for promotion and draining before reclaiming GPUs"
       phase++;
     },
     get: async (path) =>
-      path.endsWith("deployments")
-        ? [
-            {
-              ID: "old",
-              CreateIndex: 2,
-              Status: phase === 0 ? "running" : "successful",
-            },
-          ]
-        : [
-            {
-              JobID: "another-model",
-              DesiredStatus: "stop",
-              ClientStatus: phase === 1 ? "running" : "complete",
-            },
-          ],
+      path.startsWith("/v1/allocation/")
+        ? { Job: { Meta: { gradiated_model_id: "another-model" } } }
+        : path.endsWith("deployments")
+          ? [
+              {
+                ID: "old",
+                CreateIndex: 2,
+                Status: phase === 0 ? "running" : "successful",
+              },
+            ]
+          : [
+              {
+                ID: "old-model-allocation",
+                JobID: "another-model",
+                DesiredStatus: "stop",
+                ClientStatus: phase === 1 ? "running" : "complete",
+              },
+            ],
     post: async (path, body) => {
       if (path.endsWith("plan"))
         return { Diff: { Type: "Edited" }, JobModifyIndex: phase + 10 };
@@ -459,11 +462,13 @@ test("placement constraints are refreshed after a prior allocation drains", asyn
       Constraints: [{ RTarget: draining ? "old" : "current" }],
     }),
     get: async (path) =>
-      path.endsWith("deployments")
-        ? []
-        : draining
-          ? [{ DesiredStatus: "stop", ClientStatus: "running" }]
-          : [],
+      path.startsWith("/v1/allocation/")
+        ? { Job: { Meta: { gradiated_model_id: "model" } } }
+        : path.endsWith("deployments")
+          ? []
+          : draining
+            ? [{ ID: "old", DesiredStatus: "stop", ClientStatus: "running" }]
+            : [],
     pause: async () => {
       draining = false;
     },
@@ -476,3 +481,27 @@ test("placement constraints are refreshed after a prior allocation drains", asyn
   });
   assert.equal(result.evaluation, "placed");
 });
+
+for (const type of ["system", "batch"]) {
+  test(`an unrelated stopping ${type} allocation does not block model rollouts`, async () => {
+    const result = await submitJob(job, {
+      signal: signal(),
+      pause: async () =>
+        assert.fail("Unrelated allocations must not delay registration"),
+      get: async (path) => {
+        if (path.endsWith("deployments")) return [];
+        if (path === "/v1/allocations")
+          return [
+            { ID: "unrelated", DesiredStatus: "stop", ClientStatus: "pending" },
+          ];
+        assert.equal(path, "/v1/allocation/unrelated");
+        return { Job: { ID: "unrelated", Type: type } };
+      },
+      post: async (path) =>
+        path.endsWith("plan")
+          ? { Diff: { Type: "Added" }, JobModifyIndex: 0 }
+          : { EvalID: "replacement" },
+    });
+    assert.equal(result.evaluation, "replacement");
+  });
+}

@@ -59,8 +59,10 @@ are reused across allocations, models and revisions. Kernel caches remain under
 disposable; a reset can wipe them and startup rebuilds them. Neither `/workspace`
 network storage nor `/dev/shm` is required for inference checkpoint storage.
 Budget local disk for weights, retained revisions, archives and allocation files.
-Use the Hugging Face cache tools to remove unused revisions; do not evict files
-used by active runtimes.
+No prewarming, copied checkpoints or manual cache preparation is required.
+Hugging Face retains downloaded revisions; only runtime archives have bounded
+automatic eviction. Treat retained files as disposable acceleration, never as
+the only copy of an artifact.
 
 For a compatible helper update on an already enrolled host, install the reviewed
 `fetch-runtime` script at `/opt/gradiated/bin/fetch-runtime` and create the cache

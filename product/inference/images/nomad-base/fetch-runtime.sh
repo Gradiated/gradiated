@@ -57,19 +57,17 @@ trap cleanup EXIT
 trap 'exit 143' TERM
 trap 'exit 130' INT
 archive="$work/runtime.tar.gz"
-verified=false
 if [[ -n "$cached" && -f "$cached" ]]; then
   phase=checksum
   if printf '%s  %s\n' "$digest" "$cached" | sha256sum --check --status; then
     archive=$cached
-    verified=true
     printf 'Bundle cache hit\n'
   else
     rm -f -- "$cached"
     printf 'Discarded corrupt bundle cache entry\n' >&2
   fi
 fi
-if [[ "$verified" == false ]]; then
+if [[ "$archive" != "$cached" ]]; then
   phase=download
   (
     set -a
@@ -82,17 +80,15 @@ if [[ "$verified" == false ]]; then
       "$source_url" "$archive"
   )
   printf 'Bundle download completed in %ss\n' "$((SECONDS - started))"
-fi
-phase=checksum
-if [[ "$verified" == false ]]; then
+  phase=checksum
   printf '%s  %s\n' "$digest" "$archive" | sha256sum --check --status
-fi
-printf 'Bundle checksum verified at %ss\n' "$((SECONDS - started))"
-if [[ -n "$cached" ]]; then
-  if [[ "$archive" != "$cached" ]]; then
+  if [[ -n "$cached" ]]; then
     mv -T "$archive" "$cached"
     archive=$cached
   fi
+fi
+printf 'Bundle checksum verified at %ss\n' "$((SECONDS - started))"
+if [[ -n "$cached" ]]; then
   touch "$cached"
   # One lock covers readers and eviction. Retain at most four verified archives.
   mapfile -t stale < <(cd "$cache" && find . -maxdepth 1 -type f -name '*.tar.gz' -printf '%T@ %f\n' | sort -rn | tail -n +5 | cut -d' ' -f2-)

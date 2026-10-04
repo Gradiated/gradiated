@@ -178,6 +178,12 @@ fetch "$(bundle_url "$digest")" "$digest" "$work/repaired-runtime"
 cmp "$work/concurrent-1/payload" "$work/repaired-runtime/payload"
 [[ $(wc -l <"$TEST_HEAD_COUNT") == 2 ]]
 
+# Wiped cache contents rebuild from the source on the next allocation.
+rm -f "$cache/"*.tar.gz
+fetch "$(bundle_url "$digest")" "$digest" "$work/rebuilt-runtime"
+cmp "$work/concurrent-1/payload" "$work/rebuilt-runtime/payload"
+[[ $(wc -l <"$TEST_HEAD_COUNT") == 3 ]]
+
 # A stalled extractor releases the lock and survives removal of its cache entry.
 export TEST_EXTRACT_STARTED="$work/extract-started" TEST_EXTRACT_GATE="$work/extract-gate"
 mkfifo "$TEST_EXTRACT_GATE"

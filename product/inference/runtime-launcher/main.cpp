@@ -2,6 +2,7 @@
 
 #include <unistd.h>
 
+#include <charconv>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -19,6 +20,33 @@ constexpr std::size_t max_base_id_length = 128;
 
 [[noreturn]] void fail(const std::string &message) {
   throw std::runtime_error(message);
+}
+
+unsigned number_environment(const char *name, unsigned maximum) {
+  const char *value = std::getenv(name);
+  if (!value) {
+    fail(std::string("Missing ") + name);
+  }
+
+  const std::string_view text(value);
+  unsigned result = 0;
+  const auto parsed = std::from_chars(text.data(), text.data() + text.size(), result);
+  if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size() || result == 0 ||
+      result > maximum) {
+    fail(std::string("Invalid ") + name);
+  }
+  return result;
+}
+
+std::optional<RuntimeHealthPolicy> health_policy() {
+  if (!std::getenv("RUNTIME_STARTUP_TIMEOUT_SECONDS")) {
+    return std::nullopt;
+  }
+  return RuntimeHealthPolicy{
+      .port = static_cast<unsigned short>(number_environment("RUNTIME_PORT", 65535)),
+      .startup_timeout =
+          std::chrono::seconds{number_environment("RUNTIME_STARTUP_TIMEOUT_SECONDS", 86400)},
+  };
 }
 
 std::string read_base_id(const fs::path &path) {
@@ -73,7 +101,7 @@ int main(int argc, char **argv) {
     }
     args.push_back(nullptr);
 
-    return supervise(args.data(), default_shutdown_grace);
+    return supervise(args.data(), default_shutdown_grace, health_policy());
   } catch (const std::exception &error) {
     std::cerr << "runtime-launch: " << error.what() << '\n';
     return 1;

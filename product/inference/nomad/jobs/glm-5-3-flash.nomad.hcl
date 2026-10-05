@@ -243,25 +243,26 @@ job "glm-5-3-flash" {
       }
 
       env {
-        HOME                     = "/home/runtime"
-        XDG_CACHE_HOME           = "/home/runtime/.cache"
-        TORCHINDUCTOR_CACHE_DIR  = "/home/runtime/.cache/torchinductor"
-        TRITON_CACHE_DIR         = "/home/runtime/.cache/triton"
-        HF_HOME                  = "/home/runtime/.cache/huggingface"
-        RUNTIME_PORT             = "${NOMAD_PORT_runtime}"
-        ADAPTER_PORT             = "${NOMAD_PORT_adapter}"
-        MODEL_ID                 = local.model_id
-        TENSOR_PARALLEL_SIZE     = var.tensor_parallel_size
-        LORA_ENABLED             = var.lora_enabled ? "true" : "false"
-        LORA_BASE_MODEL_REVISION = var.lora_base_model_revision
-        LORA_GPU_SLOTS           = var.lora_gpu_slots
-        LORA_CPU_SLOTS           = var.lora_cpu_slots
-        LORA_MAX_RANK            = var.lora_max_rank
-        LORA_DISK_CACHE_BYTES    = var.lora_disk_cache_bytes
-        LORA_DOWNLOAD_HOSTS      = var.lora_download_hosts
-        GRADIATED_API_BASE_URL   = var.gradiated_api_base_url
-        HOST_IDENTITY_FILE       = "/etc/gradiated/host-identity.json"
-        WARMUP_PORT              = "${NOMAD_PORT_warmup}"
+        RUNTIME_STARTUP_TIMEOUT_SECONDS = "3600"
+        HOME                            = "/home/runtime"
+        XDG_CACHE_HOME                  = "/home/runtime/.cache"
+        TORCHINDUCTOR_CACHE_DIR         = "/home/runtime/.cache/torchinductor"
+        TRITON_CACHE_DIR                = "/home/runtime/.cache/triton"
+        HF_HOME                         = "/home/runtime/.cache/huggingface"
+        RUNTIME_PORT                    = "${NOMAD_PORT_runtime}"
+        ADAPTER_PORT                    = "${NOMAD_PORT_adapter}"
+        MODEL_ID                        = local.model_id
+        TENSOR_PARALLEL_SIZE            = var.tensor_parallel_size
+        LORA_ENABLED                    = var.lora_enabled ? "true" : "false"
+        LORA_BASE_MODEL_REVISION        = var.lora_base_model_revision
+        LORA_GPU_SLOTS                  = var.lora_gpu_slots
+        LORA_CPU_SLOTS                  = var.lora_cpu_slots
+        LORA_MAX_RANK                   = var.lora_max_rank
+        LORA_DISK_CACHE_BYTES           = var.lora_disk_cache_bytes
+        LORA_DOWNLOAD_HOSTS             = var.lora_download_hosts
+        GRADIATED_API_BASE_URL          = var.gradiated_api_base_url
+        HOST_IDENTITY_FILE              = "/etc/gradiated/host-identity.json"
+        WARMUP_PORT                     = "${NOMAD_PORT_warmup}"
       }
 
       resources {
@@ -295,10 +296,6 @@ job "glm-5-3-flash" {
           path     = "/health"
           interval = "5s"
           timeout  = "2s"
-          check_restart {
-            limit = 3
-            grace = "60m"
-          }
         }
       }
     }

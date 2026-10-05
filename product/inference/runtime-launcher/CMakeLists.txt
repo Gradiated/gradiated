@@ -10,7 +10,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 add_compile_options(-Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror)
 
+find_package(CURL REQUIRED)
 add_library(runtime_supervisor STATIC supervise.cpp)
+target_link_libraries(runtime_supervisor PUBLIC CURL::libcurl)
 target_include_directories(runtime_supervisor PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(runtime-launch main.cpp)
@@ -44,8 +46,13 @@ if(BUILD_TESTING)
             stubborn $<TARGET_FILE:supervise-adapter> $<TARGET_FILE:process-tree-fixture>)
   set_tests_properties(cleanup.stubborn PROPERTIES TIMEOUT 15)
 
+  add_test(NAME launcher.liveness
+    COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/tests/liveness.py
+            $<TARGET_FILE:runtime-launch> $<TARGET_FILE:process-tree-fixture>)
+  set_tests_properties(launcher.liveness PROPERTIES TIMEOUT 100)
+
   add_test(NAME nomad.artifact
     COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/nomad-artifact.sh
             $<TARGET_FILE:runtime-launch> $<TARGET_FILE:process-tree-fixture>)
-  set_tests_properties(nomad.artifact PROPERTIES TIMEOUT 60)
+  set_tests_properties(nomad.artifact PROPERTIES TIMEOUT 100)
 endif()

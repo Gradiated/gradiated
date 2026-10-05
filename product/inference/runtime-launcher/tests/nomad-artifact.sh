@@ -143,3 +143,5 @@ start_nomad
 test_valid_bundle
 test_invalid_checksum
 test_launcher_cleanup
+
+NOMAD_LIVENESS_TEST=1 python3 "$test_dir/liveness.py" "$launcher" "$process_fixture" LivenessTests.test_nomad_update_and_restart

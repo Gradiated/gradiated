@@ -132,6 +132,22 @@ The supervisor cannot guarantee cleanup in these cases:
 Fence the node before you replace it in these cases. This is process lifecycle
 management. It does not isolate hostile code.
 
+## Runtime liveness
+
+Serving jobs set `RUNTIME_STARTUP_TIMEOUT_SECONDS` and `RUNTIME_PORT`. The launcher
+checks `http://127.0.0.1:$RUNTIME_PORT/health` every five seconds, with a two-second
+request timeout. Until the first healthy response, it allows the configured cold
+start (Kev 30 minutes, GLM 60 minutes, DeepSeek 90 minutes). Once healthy, three
+consecutive failures kill and reap the whole runtime tree immediately and return
+a failed task exit; Nomad's restart policy starts a fresh task. A startup that
+never becomes healthy also exits when its deadline expires.
+
+The state lives in the launcher process and resets only with the runtime task.
+Nomad check registration, promotion and in-place job updates cannot reopen the
+startup grace. Normal shutdown signals still use the 25-second cleanup grace;
+rollouts still drain existing requests before signaling. Jobs without the startup
+timeout retain process supervision without liveness polling.
+
 ## Nomad integration
 
 The model jobs in `../nomad/jobs/` own task layout, resources, health checks,

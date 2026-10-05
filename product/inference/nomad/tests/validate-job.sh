@@ -65,6 +65,14 @@ for vars in "$root/jobs"/*.vars.hcl; do
       exit 1
     }
   fi
+  if [[ $name == kev-9b || $name == glm-5-3-flash || $name == deepseek-v4-1-flash ]]; then
+    jq -e 'all(.Job.TaskGroups[].Tasks[] | select(.Name == "kev" or .Name == "vllm");
+      (.Env.RUNTIME_STARTUP_TIMEOUT_SECONDS | tonumber) > 0 and
+      all(.Services[].Checks[]?; .CheckRestart == null))' <<<"$job" >/dev/null || {
+      echo "$name must use launcher liveness without a separate Nomad restart grace" >&2
+      exit 1
+    }
+  fi
   if [[ $name == glm-5-3-flash ]]; then
     disabled_lora=$(docker run --rm --network none --entrypoint nomad -v "$root/jobs:/jobs:ro" \
       hashicorp/nomad@sha256:b964829b94c5493f3b543bb409b60c335a9ca03f21d9fac8b4cdd2af18b331c9 \

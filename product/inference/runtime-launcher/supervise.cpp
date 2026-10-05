@@ -1,5 +1,7 @@
 #include "supervise.h"
 
+#include <curl/curl.h>
+
 #include <sys/prctl.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -15,6 +17,7 @@
 #include <memory>
 #include <new>
 #include <optional>
+#include <stdexcept>
 #include <system_error>
 #include <unordered_set>
 
@@ -23,6 +26,53 @@ constexpr std::array shutdown_signals{SIGTERM, SIGINT, SIGHUP};
 constexpr int parent_death_signal = SIGUSR1;
 constexpr auto children_path = "/proc/thread-self/children";
 constexpr timespec reap_interval{.tv_sec = 0, .tv_nsec = 50'000'000};
+
+class RuntimeHealth {
+public:
+  explicit RuntimeHealth(RuntimeHealthPolicy policy)
+      : startup_deadline_(std::chrono::steady_clock::now() + policy.startup_timeout),
+        url_("http://127.0.0.1:" + std::to_string(policy.port) + "/health"),
+        curl_(curl_easy_init(), curl_easy_cleanup) {
+    if (!curl_) {
+      throw std::runtime_error("Cannot initialize runtime health check");
+    }
+
+    curl_easy_setopt(curl_.get(), CURLOPT_URL, url_.c_str());
+    curl_easy_setopt(curl_.get(), CURLOPT_PROXY, "");
+    curl_easy_setopt(curl_.get(), CURLOPT_TIMEOUT_MS, 2000L);
+    curl_easy_setopt(curl_.get(), CURLOPT_NOSIGNAL, 1L);
+    curl_easy_setopt(
+        curl_.get(), CURLOPT_WRITEFUNCTION,
+        +[](char *, std::size_t size, std::size_t count, void *) { return size * count; });
+  }
+
+  bool alive() {
+    const auto now = std::chrono::steady_clock::now();
+    if (now < next_check_) {
+      return true;
+    }
+    next_check_ = now + std::chrono::seconds{5};
+
+    const auto result = curl_easy_perform(curl_.get());
+    long status = 0;
+    curl_easy_getinfo(curl_.get(), CURLINFO_RESPONSE_CODE, &status);
+    if (result == CURLE_OK && status >= 200 && status < 300) {
+      ready_ = true;
+      failures_ = 0;
+      return true;
+    }
+
+    return ready_ ? ++failures_ < 3 : std::chrono::steady_clock::now() < startup_deadline_;
+  }
+
+private:
+  std::chrono::steady_clock::time_point startup_deadline_;
+  std::chrono::steady_clock::time_point next_check_{};
+  std::string url_;
+  std::unique_ptr<CURL, decltype(&curl_easy_cleanup)> curl_;
+  bool ready_ = false;
+  unsigned failures_ = 0;
+};
 
 struct FileCloser {
   void operator()(FILE *file) const {
@@ -177,8 +227,11 @@ void signal_children(Shutdown &shutdown, int termination_signal) {
 
 // Adopted orphans raise no SIGCHLD, so a shutdown also wakes on a timer to
 // find and signal them.
-std::optional<int> wait_for_shutdown_signal(const sigset_t &signals, bool shutting_down) {
+std::optional<int> wait_for_shutdown_signal(const sigset_t &signals, bool shutting_down,
+                                            bool monitoring) {
+  constexpr timespec health_tick{.tv_sec = 1, .tv_nsec = 0};
   const int signal = shutting_down ? sigtimedwait(&signals, nullptr, &reap_interval)
+                     : monitoring  ? sigtimedwait(&signals, nullptr, &health_tick)
                                    : sigwaitinfo(&signals, nullptr);
 
   if (signal != parent_death_signal &&
@@ -189,7 +242,8 @@ std::optional<int> wait_for_shutdown_signal(const sigset_t &signals, bool shutti
   return signal;
 }
 
-int supervise_runtime(char *const argv[], std::chrono::seconds grace, const sigset_t &inherited) {
+int supervise_runtime(char *const argv[], std::chrono::seconds grace, const sigset_t &inherited,
+                      std::optional<RuntimeHealthPolicy> policy) {
   if (prctl(PR_SET_CHILD_SUBREAPER, 1) != 0) {
     system_failure("Cannot enable child subreaper");
   }
@@ -198,6 +252,10 @@ int supervise_runtime(char *const argv[], std::chrono::seconds grace, const sigs
 
   const sigset_t signals = supervisor_signals();
   block_supervisor_signals(signals);
+  std::optional<RuntimeHealth> health;
+  if (policy) {
+    health.emplace(*policy);
+  }
   const pid_t leader = start_runtime(argv, runtime_signal_mask(inherited));
 
   std::optional<int> leader_status;
@@ -226,6 +284,12 @@ int supervise_runtime(char *const argv[], std::chrono::seconds grace, const sigs
       return received_signal ? 128 + *received_signal : *leader_status;
     }
 
+    if (!shutdown && !received_signal && !leader_status && health && !health->alive()) {
+      std::cerr << "runtime-launch: Runtime failed liveness; killing its process tree\n";
+      received_signal = SIGKILL;
+      shutdown = Shutdown{.deadline = std::chrono::steady_clock::now()};
+    }
+
     if (!shutdown && (received_signal || leader_status)) {
       shutdown = Shutdown{.deadline = std::chrono::steady_clock::now() + grace};
     }
@@ -238,7 +302,7 @@ int supervise_runtime(char *const argv[], std::chrono::seconds grace, const sigs
       signal_children(*shutdown, received_signal.value_or(SIGTERM));
     }
 
-    const auto signal = wait_for_shutdown_signal(signals, shutdown.has_value());
+    const auto signal = wait_for_shutdown_signal(signals, shutdown.has_value(), health.has_value());
     if (signal && (!received_signal || *signal == parent_death_signal)) {
       received_signal = signal;
     }
@@ -247,7 +311,11 @@ int supervise_runtime(char *const argv[], std::chrono::seconds grace, const sigs
 
 } // namespace
 
-int supervise(char *const argv[], std::chrono::seconds grace) {
+int supervise(char *const argv[], std::chrono::seconds grace,
+              std::optional<RuntimeHealthPolicy> health) {
+  if (health && curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK) {
+    throw std::runtime_error("Cannot initialize runtime health client");
+  }
   const sigset_t signals = supervisor_signals();
   const sigset_t inherited = block_supervisor_signals(signals);
   const pid_t parent = getpid();
@@ -267,7 +335,7 @@ int supervise(char *const argv[], std::chrono::seconds grace) {
     }
 
     try {
-      _exit(supervise_runtime(argv, grace, inherited));
+      _exit(supervise_runtime(argv, grace, inherited, health));
     } catch (const std::exception &error) {
       std::cerr << "runtime-launch: " << error.what() << '\n';
       _exit(1);

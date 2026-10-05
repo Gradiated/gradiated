@@ -197,13 +197,14 @@ job "deepseek-v4-1-flash" {
       }
 
       env {
-        HOME                    = "/home/runtime"
-        XDG_CACHE_HOME          = "/home/runtime/.cache"
-        TORCHINDUCTOR_CACHE_DIR = "/home/runtime/.cache/torchinductor"
-        TRITON_CACHE_DIR        = "/home/runtime/.cache/triton"
-        HF_HOME                 = "/home/runtime/.cache/huggingface"
-        RUNTIME_PORT            = "${NOMAD_PORT_runtime}"
-        RUNTIME_HOST            = "127.0.0.1"
+        RUNTIME_STARTUP_TIMEOUT_SECONDS = "5400"
+        HOME                            = "/home/runtime"
+        XDG_CACHE_HOME                  = "/home/runtime/.cache"
+        TORCHINDUCTOR_CACHE_DIR         = "/home/runtime/.cache/torchinductor"
+        TRITON_CACHE_DIR                = "/home/runtime/.cache/triton"
+        HF_HOME                         = "/home/runtime/.cache/huggingface"
+        RUNTIME_PORT                    = "${NOMAD_PORT_runtime}"
+        RUNTIME_HOST                    = "127.0.0.1"
       }
 
       resources {
@@ -230,10 +231,6 @@ job "deepseek-v4-1-flash" {
           path     = "/health"
           interval = "5s"
           timeout  = "2s"
-          check_restart {
-            limit = 3
-            grace = "90m"
-          }
         }
       }
     }

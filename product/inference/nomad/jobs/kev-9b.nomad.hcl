@@ -201,10 +201,11 @@ job "kev-9b" {
       }
 
       env {
-        HOME           = "/home/runtime"
-        XDG_CACHE_HOME = "/home/runtime/.cache"
-        HF_HOME        = "/home/runtime/.cache/huggingface"
-        RUNTIME_PORT   = "${NOMAD_PORT_runtime}"
+        RUNTIME_STARTUP_TIMEOUT_SECONDS = "1800"
+        HOME                            = "/home/runtime"
+        XDG_CACHE_HOME                  = "/home/runtime/.cache"
+        HF_HOME                         = "/home/runtime/.cache/huggingface"
+        RUNTIME_PORT                    = "${NOMAD_PORT_runtime}"
       }
 
       resources {
@@ -231,11 +232,6 @@ job "kev-9b" {
           path     = "/health"
           interval = "5s"
           timeout  = "2s"
-          # The first start downloads about 20 GB of weights before it can answer.
-          check_restart {
-            limit = 3
-            grace = "30m"
-          }
         }
       }
     }

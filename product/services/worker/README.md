@@ -103,3 +103,27 @@ the component amounts. It does not acknowledge a rejected entry.
 
 `pnpm check` starts a disposable local Valkey container for the ingestion
 integration tests. Set `WORKER_TEST_VALKEY_URL` to use a local Valkey instead.
+
+## Public inference monitoring
+
+`INFERENCE_PROBE_BASE_URL` enables real inference checks through the public API.
+The existing verification workspace and user issue short-lived API keys that are
+rotated automatically and revoked on shutdown. Keys and response bodies are not
+logged. One worker holds a fifteen-second Valkey lease; standby workers take over
+when it expires. This runs independently of settlement leadership.
+
+Every five seconds the leader discovers available deployment rows, then probes
+each in parallel using the exact-deployment verification header. Chat requests
+use eight output tokens; System One requests use a small classification. A valid
+response must acknowledge the deployment, identify a generation, and contain a
+completed inference result. Each pass has a four-second request deadline and no
+retries. Canary and draining replicas are excluded; rollout qualification still
+uses its separate, more extensive SDK checks. Retired targets are removed from
+probe metrics automatically.
+
+Prometheus scrapes workers and evaluates availability rules every five seconds.
+An active deployment without a successful probe for fifteen seconds alerts after
+another ten seconds; stopped monitoring alerts separately. Alertmanager waits
+five seconds before notifying and groups by model and deployment. This probes
+the public serving path from EKS; it does not provide an independent external
+monitoring vantage point or replace customer request availability measurements.

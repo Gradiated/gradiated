@@ -1,7 +1,7 @@
 import { servedReleaseDigest, type NomadReplica } from "@gradiated/control";
 import { z } from "zod";
 
-const FRESH_MS = 60_000;
+const FRESH_MS = 15_000;
 
 const statusSchema = z.object({
   healthy: z.boolean(),

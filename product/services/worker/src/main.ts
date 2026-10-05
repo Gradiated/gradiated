@@ -1,6 +1,7 @@
 import {
   createClickHouseRuntimeClient,
   createControlDatabase,
+  createWorkspaceApiKeyService,
   createContentStore,
   createNomadDeploymentStore,
   createTraceCleanup,
@@ -30,6 +31,11 @@ import { serviceLog } from "./logging.js";
 import { loraMetricsTargets } from "./lora-metrics-targets.js";
 import { startWorkerMetricsServer, WorkerMetrics } from "./metrics.js";
 import { runGenerationSettlementLoop } from "./settlement-loop.js";
+import { probeModel } from "./inference-probe.js";
+import {
+  InferenceProbeMetrics,
+  runInferenceProbes,
+} from "./inference-probes.js";
 import { sleep } from "./sleep.js";
 import { supervise } from "./supervisor.js";
 
@@ -216,6 +222,67 @@ if (nomad) {
           );
           await markReady();
           await sleep(5_000, signal);
+        }
+      },
+    }),
+  );
+}
+
+if (environment.INFERENCE_PROBE_BASE_URL) {
+  const baseURL = environment.INFERENCE_PROBE_BASE_URL;
+  const userId = environment.MODEL_VERIFICATION_USER_ID!;
+  const workspaceId = environment.MODEL_VERIFICATION_WORKSPACE_ID!;
+  const keys = createWorkspaceApiKeyService(database);
+  const store = createNomadDeploymentStore(database);
+  const probeMetrics = new InferenceProbeMetrics(metrics.registry);
+  supervisors.push(
+    supervise({
+      loop: "inference_probes",
+      readinessPath: "/tmp/gradiated-inference-probes-ready",
+      metrics,
+      signal,
+      run: async (markReady) => {
+        let issued: Awaited<ReturnType<typeof keys.createApiKey>> | undefined;
+        let refreshAt = 0;
+        try {
+          await runInferenceProbes({
+            eval: (script, options) => settlementValkey.eval(script, options),
+            replicas: () => store.replicas(),
+            beforePass: async () => {
+              if (issued && Date.now() < refreshAt) return;
+
+              const previous = issued;
+              issued = await keys.createApiKey(userId, workspaceId, {
+                name: "Public inference monitoring",
+                expiresAt: new Date(Date.now() + 15 * 60_000),
+              });
+              refreshAt = Date.now() + 10 * 60_000;
+              if (previous)
+                await keys.revokeApiKey(
+                  userId,
+                  workspaceId,
+                  previous.apiKey.id,
+                );
+            },
+            probe: (replica, probeSignal) =>
+              probeModel({
+                apiKey: issued!.secret,
+                baseURL,
+                modelId: replica.modelId,
+                deploymentId: replica.id,
+                protocol: replica.release.protocol,
+                signal: probeSignal,
+              }),
+            metrics: probeMetrics,
+            signal,
+            onReady: async (durationSeconds) => {
+              metrics.recordPass("inference_probes", durationSeconds);
+              await markReady();
+            },
+          });
+        } finally {
+          if (issued)
+            await keys.revokeApiKey(userId, workspaceId, issued.apiKey.id);
         }
       },
     }),

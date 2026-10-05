@@ -27,7 +27,7 @@ describe("replica readiness", () => {
       [servedReleaseDigest(release)]: {
         ready: report(),
         unhealthy: report({ healthy: false }),
-        stale: report({ received_at: new Date(now - 61_000).toISOString() }),
+        stale: report({ received_at: new Date(now - 16_000).toISOString() }),
         wrongRevision: report({ runtime_revision: "r0" }),
         garbled: "{",
       },

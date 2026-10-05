@@ -64,7 +64,7 @@ def main():
     from autoscaling_checks import check_autoscaling
 
     tests = check_autoscaling(ROOT)
-    def scenario(name, inputs, expected, checks, labels=None, eval_time="8m"):
+    def scenario(name, inputs, expected, checks, labels=None, eval_time="8m", interval="30s"):
         cases = []
         for alert in checks:
             rule = alerts[alert]
@@ -77,7 +77,7 @@ def main():
             cases.append({'eval_time': eval_time, 'alertname': alert, 'exp_alerts':
                           [{'exp_labels': {**rule['labels'], **extra},
                             'exp_annotations': annotations}] if alert == expected else []})
-        tests.append({'name': name, 'interval': '30s', 'input_series': inputs,
+        tests.append({'name': name, 'interval': interval, 'input_series': inputs,
                       'alert_rule_test': cases})
 
     lora_labels = {'job': 'lora-loaders', 'instance': 'test:1', 'deployment': 'test-a'}
@@ -584,8 +584,65 @@ def main():
         inputs = [{'series': 'gradiated_model_desired_replicas{model="kev/kev-9b",nomad_job="kev"}', 'values': f'{desired}+0x80'}]
         if ready is not None:
             inputs.append({'series': 'gradiated_worker_model_ready_replicas{instance="a",model="kev/kev-9b"}', 'values': ready})
+            inputs.append({'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="a",loop="deployment_reconciliation"}', 'values': '1+30x80'})
         scenario('model replicas: ' + name, inputs, expected,
                  ['ModelNoReadyReplicas', 'ModelUnderReplicated'], {'model': 'kev/kev-9b'}, duration)
+
+    probe_labels = '{instance="a",model="test/model",deployment="test-deployment"}'
+    def probe_series(metric, values, labels=probe_labels):
+        return {'series': metric + labels, 'values': values}
+
+    probe_alerts = ['InferenceDeploymentProbeFailed', 'InferenceProbeMonitoringStalled']
+    for name, success, inventory, target, expected, duration in [
+        ('healthy', '1+5x30', '1+5x30', '1+0x30', None, '60s'),
+        ('never completed', '0+0x30', '1+5x30', '1+0x30', 'InferenceDeploymentProbeFailed', '30s'),
+        ('stops completing', '1+0x30', '1+5x30', '1+0x30', 'InferenceDeploymentProbeFailed', '30s'),
+        ('short transient', '1 1 1 16+5x27', '1+5x30', '1+0x30', None, '30s'),
+        ('monitor stopped', '1+0x30', '1+0x30', '1+0x30', 'InferenceProbeMonitoringStalled', '35s'),
+        ('retired target', '1+0x30', '1+5x30', '1+0x2 stale', None, '60s'),
+    ]:
+        scenario('public inference: ' + name, [
+            probe_series('gradiated_inference_probe_last_success_timestamp_seconds', success),
+            probe_series('gradiated_inference_probe_target', target),
+            probe_series('gradiated_inference_probe_inventory_timestamp_seconds', inventory, '{instance="a"}'),
+        ], expected, probe_alerts,
+        {'model': 'test/model', 'deployment': 'test-deployment'} if expected == 'InferenceDeploymentProbeFailed' else {},
+        duration, interval='5s')
+
+    scenario('public inference: missing telemetry', [], 'InferenceProbeMonitoringStalled',
+             ['InferenceProbeMonitoringStalled'], eval_time='15s', interval='5s')
+    scenario('public inference: replacement leader masks stale failed worker', [
+        probe_series('gradiated_inference_probe_last_success_timestamp_seconds', '0+0x30'),
+        probe_series('gradiated_inference_probe_target', '1+0x30'),
+        probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+0x30', '{instance="a"}'),
+        probe_series('gradiated_inference_probe_last_success_timestamp_seconds', '1+5x30', probe_labels.replace('"a"', '"b"')),
+        probe_series('gradiated_inference_probe_target', '1+0x30', probe_labels.replace('"a"', '"b"')),
+        probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+5x30', '{instance="b"}'),
+    ], None, probe_alerts, eval_time='60s', interval='5s')
+
+    for ready, expected, duration in [(0, 'ModelNoReadyReplicas', '15s'), (1, 'ModelUnderReplicated', '30s')]:
+        scenario('fast capacity alert: ' + expected, [
+            {'series': 'gradiated_model_desired_replicas{model="test/model"}', 'values': '2+0x20'},
+            {'series': 'gradiated_worker_model_ready_replicas{instance="a",model="test/model"}', 'values': f'{ready}+0x20'},
+            {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="a",loop="deployment_reconciliation"}', 'values': '1+5x20'},
+        ], expected, ['ModelNoReadyReplicas', 'ModelUnderReplicated'], {'model': 'test/model'}, duration, interval='5s')
+
+    scenario('stale healthy worker cannot hide unavailable model', [
+        {'series': 'gradiated_model_desired_replicas{model="test/model"}', 'values': '2+0x20'},
+        {'series': 'gradiated_worker_model_ready_replicas{instance="old",model="test/model"}', 'values': '2+0x20'},
+        {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="old",loop="deployment_reconciliation"}', 'values': '1+0x20'},
+        {'series': 'gradiated_worker_model_ready_replicas{instance="new",model="test/model"}', 'values': '0+0x20'},
+        {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="new",loop="deployment_reconciliation"}', 'values': '1+5x20'},
+    ], 'ModelNoReadyReplicas', ['ModelNoReadyReplicas'], {'model': 'test/model'}, '40s', interval='5s')
+
+    for failed, succeeded, expected in [('0+1x60', '0+100x60', 'GatewayRuntimeFailures'),
+                                        ('0+0x60', '0+100x60', None),
+                                        ('0 1+0x59', '0+100x60', None)]:
+        scenario('per-deployment runtime failures: ' + failed, [
+            {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="failed"}', 'values': failed},
+            {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="succeeded"}', 'values': succeeded},
+            {'series': 'gradiated_gateway_generations_total{model="other/model",deployment="healthy-deployment",status="succeeded"}', 'values': '0+100000x60'},
+        ], expected, ['GatewayRuntimeFailures'], {'model': 'test/model', 'deployment': 'test-deployment'}, '2m', interval='5s')
 
     route = 'route="/v1/deployment-status"'
     for name, values, fires in [
@@ -654,7 +711,11 @@ def main():
             'groups': [{'name': 'dashboard_syntax', 'rules': chart_rules}]}))
         (temp / 'test-rules.yaml').write_text(yaml.safe_dump({'groups': [g for g in groups if g['name'] != 'gradiated.models.desired']}))
         (temp / 'tests.yaml').write_text(yaml.safe_dump({
-            'rule_files': ['test-rules.yaml'], 'evaluation_interval': '30s', 'tests': tests}))
+            'rule_files': ['test-rules.yaml'], 'evaluation_interval': '30s', 'tests': [test for test in tests if test['interval'] != '5s']}))
+        (temp / 'fast-tests.yaml').write_text(yaml.safe_dump({
+            'rule_files': ['test-rules.yaml'], 'evaluation_interval': '5s',
+            'tests': [test for test in tests if test['interval'] == '5s']}))
+        subprocess.run([args.promtool, 'test', 'rules', str(temp / 'fast-tests.yaml')], check=True)
         subprocess.run([args.promtool, 'check', 'rules', str(temp / 'rules.yaml'),
                         str(temp / 'charts.yaml')], check=True)
         subprocess.run([args.promtool, 'test', 'rules', str(temp / 'tests.yaml')], check=True)

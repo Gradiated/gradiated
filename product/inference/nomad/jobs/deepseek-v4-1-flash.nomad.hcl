@@ -65,7 +65,7 @@ job "deepseek-v4-1-flash" {
     restart {
       attempts = 2
       interval = "1h"
-      delay    = "15s"
+      delay    = "1s"
       mode     = "fail"
     }
 
@@ -228,7 +228,7 @@ job "deepseek-v4-1-flash" {
           name     = "runtime-health"
           type     = "http"
           path     = "/health"
-          interval = "10s"
+          interval = "5s"
           timeout  = "2s"
           check_restart {
             limit = 3

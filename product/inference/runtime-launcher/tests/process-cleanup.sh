@@ -9,7 +9,7 @@ mode=${1:?Pass the process mode}
 supervisor=${2:?Pass the launcher, or the supervise adapter for the stubborn mode}
 fixture=${3:?Pass the process fixture executable}
 fixture_mode=${mode#*-}
-[[ "$mode" != launcher-killed* ]] || fixture_mode=stubborn
+[[ "$mode" != launcher-killed* && "$mode" != launcher-group-killed ]] || fixture_mode=stubborn
 work=$(mktemp -d)
 supervisor_pid=
 unrelated_pid=
@@ -37,7 +37,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-[[ "$mode" != launcher-killed* ]] || { sent_signal=9 expected_status=137; }
+[[ "$mode" != launcher-killed* && "$mode" != launcher-group-killed ]] || { sent_signal=9 expected_status=137; }
 
 stubborn_grace_seconds=2
 
@@ -53,6 +53,9 @@ start_supervisor() {
   make_bundle "$work" "$fixture"
 
   case "$mode" in
+    launcher-group-killed)
+      setsid "${launch[@]}" &
+      ;;
     ignored-*)
       (
         trap '' CHLD TERM INT HUP
@@ -85,7 +88,11 @@ if [[ "$mode" == launcher-killed-during-stop ]]; then
   sleep 1
 fi
 if [[ -n "$sent_signal" ]]; then
-  kill -"$sent_signal" "$supervisor_pid"
+  if [[ "$mode" == launcher-group-killed ]]; then
+    kill -"$sent_signal" -- "-$supervisor_pid"
+  else
+    kill -"$sent_signal" "$supervisor_pid"
+  fi
 fi
 
 if [[ "$mode" == stubborn ]]; then
@@ -103,7 +110,7 @@ process_exited() {
   ! kill -0 "$1" 2>/dev/null
 }
 
-if [[ "$mode" == launcher-killed* ]]; then
+if [[ "$mode" == launcher-killed* || "$mode" == launcher-group-killed ]]; then
   for process in leader ordinary detached; do
     pid=$(cat "$work/$process")
     wait_until "$process cleanup after launcher SIGKILL" 5 process_exited "$pid"
@@ -123,7 +130,7 @@ case "$fixture_mode" in
   exit | crash) signaled=(ordinary detached) forwarded=15 ;;
   stubborn) signaled=(leader ordinary) forwarded=$sent_signal ;;
 esac
-[[ "$mode" != launcher-killed* ]] || signaled=()
+[[ "$mode" != launcher-killed* && "$mode" != launcher-group-killed ]] || signaled=()
 for process in "${signaled[@]}"; do
   assert_equal "$forwarded" "$(cat "$work/$process.signal")" "Signal received by the $process process"
 done

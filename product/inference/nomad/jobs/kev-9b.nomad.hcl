@@ -69,7 +69,7 @@ job "kev-9b" {
     restart {
       attempts = 2
       interval = "1h"
-      delay    = "15s"
+      delay    = "1s"
       mode     = "fail"
     }
 
@@ -229,7 +229,7 @@ job "kev-9b" {
           name     = "runtime-health"
           type     = "http"
           path     = "/health"
-          interval = "10s"
+          interval = "5s"
           timeout  = "2s"
           # The first start downloads about 20 GB of weights before it can answer.
           check_restart {

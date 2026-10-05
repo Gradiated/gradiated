@@ -257,9 +257,9 @@ int supervise(char *const argv[], std::chrono::seconds grace) {
   }
 
   if (guardian == 0) {
-    // Nomad targets the launcher PID. Keep the reaper alive after its SIGKILL
-    // so detached runtime workers cannot retain GPU memory and listening ports.
-    if (prctl(PR_SET_PDEATHSIG, parent_death_signal) != 0) {
+    // Nomad also kills the launcher's process group during cleanup. Keep the
+    // guardian outside that group so it can finish reaping detached workers.
+    if (setsid() < 0 || prctl(PR_SET_PDEATHSIG, parent_death_signal) != 0) {
       _exit(126);
     }
     if (getppid() != parent) {

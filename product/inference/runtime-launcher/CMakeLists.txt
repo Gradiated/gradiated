@@ -32,7 +32,7 @@ if(BUILD_TESTING)
     set_tests_properties(launcher.${case} PROPERTIES TIMEOUT 10)
   endforeach()
 
-  foreach(mode stop interrupt hangup exit crash ignored-stop ignored-exit blocked-stop launcher-killed launcher-killed-during-stop)
+  foreach(mode stop interrupt hangup exit crash ignored-stop ignored-exit blocked-stop launcher-killed launcher-killed-during-stop launcher-group-killed)
     add_test(NAME cleanup.${mode}
       COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/process-cleanup.sh
               ${mode} $<TARGET_FILE:runtime-launch> $<TARGET_FILE:process-tree-fixture>)
@@ -46,6 +46,6 @@ if(BUILD_TESTING)
 
   add_test(NAME nomad.artifact
     COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/nomad-artifact.sh
-            $<TARGET_FILE:runtime-launch>)
+            $<TARGET_FILE:runtime-launch> $<TARGET_FILE:process-tree-fixture>)
   set_tests_properties(nomad.artifact PROPERTIES TIMEOUT 60)
 endif()

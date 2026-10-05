@@ -132,6 +132,16 @@ No tensor-parallel traffic crosses pods. Capture CPU, RAM, disk, shared-memory,
 GPU topology, and model-cache requirements from the working runtime. The GPU
 count is a user requirement; verify actual runtime fit before cutover.
 
+A crashed serving process restarts locally after a one-second delay. Runtime
+health checks run every five seconds and require three consecutive failures
+before requesting a local restart. This uses the existing allocation and GPUs;
+allocation shutdown delay applies to retirement, not these local restarts.
+Model loading and warmup still gate readiness after the process restarts.
+Startup grace remains model-specific to allow disposable caches to rebuild:
+30 minutes for Kev, 60 minutes for GLM, and 90 minutes for DeepSeek. During that grace,
+health-check failures do not trigger a restart, including failures after an
+early successful startup; process exits still trigger immediate recovery.
+
 A process or health-check failure should trigger bounded local recovery. Loss of
 the pod stops serving: there is no spare host or replica. Nomad cannot restore
 capacity until a compatible replacement is enrolled. Downtime is accepted.

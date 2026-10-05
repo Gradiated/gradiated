@@ -106,8 +106,10 @@ extracted runtime, and logs. Measure this for each release.
 
 ## Signals and cleanup
 
-The launcher starts a guardian that is a Linux child subreaper. The guardian
-starts the entrypoint in a new session and adopts orphaned descendants. Normal
+The launcher starts a guardian that is a Linux child subreaper in a separate
+session. Nomad can kill the launcher process group during cleanup without
+killing the guardian. The guardian starts the entrypoint in another session
+and adopts orphaned descendants. Normal
 shutdown signals pass through the launcher to the guardian. If the launcher
 is killed, a kernel parent-death notification makes the guardian immediately
 kill and reap the remaining runtime tree, including detached workers.

@@ -6,6 +6,7 @@ source "$test_dir/test-support.sh"
 require_test_container
 
 launcher=${1:?Pass the launcher executable}
+process_fixture=${2:?Pass the process fixture executable}
 work=$(mktemp -d)
 agent_pid=
 export NOMAD_ADDR=http://127.0.0.1:4646
@@ -74,9 +75,16 @@ allocation_exists() {
 
 submit_job() {
   local name=$1 checksum=$2
+  # shellcheck disable=SC2016
+  local runtime_args='["literal $(false)"]'
+  if (($# >= 3)); then runtime_args=$3; fi
   nomad job run -output -var="name=$name" -var="checksum=$checksum" \
     -var="launcher=$launcher" -var="bundle=$work/bundle.tar.gz" "$test_dir/fixtures/artifact.nomad.hcl" |
-    jq '.Job.ID = .Job.Name' >"$work/job.json"
+    jq --argjson runtime_args "$runtime_args" '
+      .Job.ID = .Job.Name |
+      (.Job.TaskGroups[].Tasks[] | select(.Name == "runtime") | .Config.args) |=
+        ([.[0], "--"] + $runtime_args)
+    ' >"$work/job.json"
   nomad job run -detach -json "$work/job.json" >/dev/null
   wait_until "an allocation for $name" 10 allocation_exists "$name"
 }
@@ -107,8 +115,31 @@ test_invalid_checksum() {
     fail "The bad checksum did not prevent task startup"
 }
 
+test_launcher_cleanup() {
+  local pids="$work/runtime-pids" checksum runtime_args pid
+  install -d -o nobody -m 700 "$pids"
+  install -m 755 "$process_fixture" "$work/bundle/entrypoint"
+  tar -czf "$work/bundle.tar.gz" -C "$work/bundle" .
+  checksum=$(sha256sum "$work/bundle.tar.gz" | cut -d' ' -f1)
+  runtime_args=$(jq -cn --arg pids "$pids" '[$pids, "stubborn"]')
+  submit_job artifact-launcher-killed "$checksum" "$runtime_args"
+  wait_until "the detached runtime fixture" 15 test -s "$pids/ready"
+  nomad alloc signal -s SIGKILL -task runtime "$allocation_id" >/dev/null
+  wait_until "the killed launcher" 10 task_is_dead runtime
+
+  process_exited() {
+    ! kill -0 "$1" 2>/dev/null
+  }
+
+  for process in leader ordinary detached; do
+    pid=$(cat "$pids/$process")
+    wait_until "$process cleanup after Nomad SIGKILL" 5 process_exited "$pid"
+  done
+}
+
 prepare_bundle
 prepare_downloader
 start_nomad
 test_valid_bundle
 test_invalid_checksum
+test_launcher_cleanup

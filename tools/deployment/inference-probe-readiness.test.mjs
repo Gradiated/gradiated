@@ -1,6 +1,13 @@
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { checkInferenceProbeReadiness } from "./inference-probe-readiness.mjs";
+import {
+  checkInferenceProbeReadiness,
+  readWorker,
+} from "./inference-probe-readiness.mjs";
 
 const observation = (success = 99, inventory = 99, id = "replica-a") => ({
   deployments: [{ id, modelId: "test/model" }],
@@ -41,4 +48,40 @@ test("a standby or stale previous leader does not hide a healthy new leader", ()
     ),
     99,
   );
+});
+
+test("the diagnostic loads control from the deployed product filesystem and reads real metrics", () => {
+  const cwd = mkdtempSync(join(tmpdir(), "inference-probe-reader-"));
+  try {
+    mkdirSync(join(cwd, "packages/control/dist"), { recursive: true });
+    writeFileSync(
+      join(cwd, "package.json"),
+      JSON.stringify({ type: "module" }),
+    );
+    writeFileSync(
+      join(cwd, "packages/control/dist/index.js"),
+      `
+      export const createControlDatabase = () => ({ database: {}, pool: { end: async () => {} } });
+      export const createNomadDeploymentStore = () => ({ replicas: async () => [{ id: "replica-a", modelId: "test/model" }] });
+    `,
+    );
+    const output = execFileSync(
+      process.execPath,
+      [
+        "--input-type=module",
+        "-e",
+        `
+      globalThis.fetch = async () => new Response("synthetic-metrics");
+      ${readWorker}
+    `,
+      ],
+      { cwd, encoding: "utf8", timeout: 5000 },
+    );
+    assert.deepEqual(JSON.parse(output), {
+      deployments: [{ id: "replica-a", modelId: "test/model" }],
+      metrics: "synthetic-metrics",
+    });
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
 });

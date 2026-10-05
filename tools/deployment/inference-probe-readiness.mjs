@@ -45,8 +45,8 @@ export const checkInferenceProbeReadiness = (
   return result;
 };
 
-const readWorker = `
-import { createControlDatabase, createNomadDeploymentStore } from '@gradiated/control';
+export const readWorker = `
+import { createControlDatabase, createNomadDeploymentStore } from './packages/control/dist/index.js';
 const { database, pool } = createControlDatabase(process.env.DATABASE_URL, 1);
 try {
   const deployments = (await createNomadDeploymentStore(database).replicas())

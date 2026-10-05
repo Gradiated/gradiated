@@ -83,6 +83,10 @@ job "glm-5-3-flash" {
   }
 
   group "replicas" {
+    constraint {
+      distinct_hosts = true
+    }
+
     count = var.replicas
 
     ephemeral_disk {

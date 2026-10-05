@@ -95,6 +95,7 @@ jobs:
           timeout 420 bash product/inference/nomad/tests/test-host-proxy.sh --sdk-gate
           timeout 420 bash product/inference/nomad/tests/test-host-proxy.sh --rolling-slots
           node --test tools/nomad/*.test.mjs
+          timeout 180 node product/inference/nomad/tests/token-visibility.mjs
       - uses: depot/setup-action@v1
       - name: Build and test the runtime launcher
         uses: depot/build-push-action@v1

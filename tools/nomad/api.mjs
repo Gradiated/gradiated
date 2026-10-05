@@ -1,5 +1,24 @@
 import { readFileSync } from "node:fs";
 import { request } from "node:https";
+import { setTimeout as delay } from "node:timers/promises";
+
+// Clients can query a follower before a newly issued ACL token reaches it.
+// Retry only an explicit authorization rejection immediately after renewal.
+export const withFreshTokenRetry = async (
+  call,
+  issuedAt,
+  signal,
+  { now = Date.now, pause = delay } = {},
+) => {
+  for (;;) {
+    try {
+      return await call();
+    } catch (error) {
+      if (error.statusCode !== 403 || now() - issuedAt >= 10_000) throw error;
+      await pause(250, undefined, { signal });
+    }
+  }
+};
 
 export const renewingToken = (initial, renew, now = Date.now) => {
   let token = initial;
@@ -22,8 +41,10 @@ export const renewingToken = (initial, renew, now = Date.now) => {
 };
 
 export const createNomadClient = (signal) => {
+  let issuedAt = -Infinity;
   const call = (path, signal, token, body) =>
     new Promise((resolve, reject) => {
+      const method = body ? "POST" : "GET";
       const req = request(
         new URL(path, process.env.NOMAD_ADDR),
         {
@@ -31,7 +52,7 @@ export const createNomadClient = (signal) => {
           cert: readFileSync(process.env.NOMAD_CLIENT_CERT),
           key: readFileSync(process.env.NOMAD_CLIENT_KEY),
           servername: process.env.NOMAD_TLS_SERVER_NAME,
-          method: body ? "POST" : "GET",
+          method,
           headers: {
             "x-nomad-token": token ?? "",
             "content-type": "application/json",
@@ -47,7 +68,14 @@ export const createNomadClient = (signal) => {
           response.on("error", reject);
           response.on("end", () => {
             if (response.statusCode !== 200)
-              return reject(new Error(`Nomad returned ${response.statusCode}`));
+              return reject(
+                Object.assign(
+                  new Error(
+                    `Nomad ${method} ${path} returned ${response.statusCode}`,
+                  ),
+                  { statusCode: response.statusCode },
+                ),
+              );
             try {
               resolve(JSON.parse(body));
             } catch (error) {
@@ -79,9 +107,18 @@ export const createNomadClient = (signal) => {
     });
     if (typeof result.SecretID !== "string" || !result.SecretID)
       throw new Error("Nomad login omitted its token");
+    issuedAt = Date.now();
     return result.SecretID;
   });
-  const get = async (path) => call(path, signal, await getToken());
-  const post = async (path, body) => call(path, signal, await getToken(), body);
+  const authenticatedCall = async (path, body) => {
+    const token = await getToken();
+    return withFreshTokenRetry(
+      () => call(path, signal, token, body),
+      issuedAt,
+      signal,
+    );
+  };
+  const get = (path) => authenticatedCall(path);
+  const post = (path, body) => authenticatedCall(path, body);
   return { get, post };
 };

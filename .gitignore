@@ -120,3 +120,8 @@ product/inference/build/
 !.coherence/work/
 
 **/storybook-static/
+
+# Locally installed agent skills — personal tooling, not project code.
+.agents/skills/
+.claude/skills/
+skills-lock.json

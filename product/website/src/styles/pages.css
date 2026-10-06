@@ -546,10 +546,6 @@
   font-size: var(--text-ui);
 }
 
-.gr-model-id-prompt {
-  color: var(--color-text-muted);
-}
-
 .gr-model-copy {
   padding: calc(0.35 * var(--u)) calc(0.7 * var(--u));
   border: 0;

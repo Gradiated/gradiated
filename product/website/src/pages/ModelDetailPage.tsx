@@ -167,16 +167,14 @@ const ModelVitals = ({ model }: { model: ModelPageData }): ReactElement => {
   );
 };
 
-/** The id as a shell line — a prompt, the string, and the one thing to do
- *  with it. */
+/** The id as what it is — a parameter for the snippets below, not a
+ *  command. No prompt glyph: a `$` dresses it as something to run, and a
+ *  reader who takes the costume literally gets `command not found`. */
 const ModelId = ({ id }: { id: string }): ReactElement => {
   const [copied, setCopied] = useState(false);
   return (
     <div className="gr-model-id-row">
       <span className="gr-model-id">
-        <span aria-hidden className="gr-model-id-prompt">
-          $
-        </span>
         <code>{id}</code>
       </span>
       <button
@@ -189,7 +187,7 @@ const ModelId = ({ id }: { id: string }): ReactElement => {
           });
         }}
       >
-        {copied ? "Copied" : "Copy"}
+        {copied ? "Copied" : "Copy ID"}
       </button>
     </div>
   );

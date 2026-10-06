@@ -330,25 +330,30 @@
   animation: gr-glyph-ride 4.2s linear infinite;
 }
 
-@keyframes gr-glyph-fall {
+@keyframes gr-glyph-convey {
   0% {
     translate: 0 0;
     opacity: 0;
   }
-  18% {
+  7% {
     opacity: 1;
   }
-  78% {
-    translate: 0px 8.1px;
+  93% {
     opacity: 1;
   }
   100% {
-    translate: 0px 8.1px;
+    translate: 48.88px 24.44px;
     opacity: 0;
   }
 }
-.gr-glyph--throughput .gr-glyph-bead {
-  animation: gr-glyph-fall 1.7s ease-in infinite;
+.gr-glyph--throughput .gr-glyph-crate1 {
+  animation: gr-glyph-convey 4.5s 0s linear infinite backwards;
+}
+.gr-glyph--throughput .gr-glyph-crate2 {
+  animation: gr-glyph-convey 4.5s 1.5s linear infinite backwards;
+}
+.gr-glyph--throughput .gr-glyph-crate3 {
+  animation: gr-glyph-convey 4.5s 3s linear infinite backwards;
 }
 
 @keyframes gr-glyph-route {

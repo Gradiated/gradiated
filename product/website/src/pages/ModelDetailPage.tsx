@@ -205,7 +205,16 @@ const BenchmarkBars = ({
     >
       {benchmarks.map((benchmark) => (
         <div className="gr-model-bench-row" key={benchmark.name}>
-          <span className="gr-model-bench-name">{benchmark.name}</span>
+          {/* The name IS the citation: every figure links to the primary
+              source it was pulled from. */}
+          <a
+            className="gr-model-bench-name"
+            href={benchmark.href}
+            rel="noreferrer"
+            target="_blank"
+          >
+            {benchmark.name}
+          </a>
           {benchmark.bar ? (
             <span className="gr-model-bench-track" aria-hidden>
               <span

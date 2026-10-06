@@ -27,6 +27,9 @@ export type ModelBenchmark = {
   /** 0–100, drives the bar. Omit where the scale would mislead. */
   bar?: number;
   note?: string;
+  /** The primary source the figure is pulled from — the row's name links
+   *  to it. Every figure MUST carry one. */
+  href: string;
 };
 
 export type ModelSnippet = {
@@ -105,7 +108,7 @@ export const models: ModelPageData[] = [
     goodFor: [
       {
         title: "Agentic coding",
-        body: "Top of its cohort on DeepSWE and terminal-driven work. A capable base for coding agents before post-training sharpens it on your repository.",
+        body: "Strong on DeepSWE v1.1 and Terminal-Bench 2.1. A capable base for coding agents before post-training sharpens it on your repository.",
         glyph: "terminal",
       },
       {
@@ -120,18 +123,37 @@ export const models: ModelPageData[] = [
       },
     ],
     benchmarks: [
-      { name: "MMLU", score: "91.0", bar: 91 },
-      { name: "GPQA Diamond", score: "90.9", bar: 90.9, note: "pass@1" },
-      { name: "MMLU-Pro", score: "81.2", bar: 81.2 },
+      {
+        name: "Terminal-Bench 2.1",
+        score: "90.6",
+        bar: 90.6,
+        note: "pass@1",
+        href: "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash",
+      },
+      {
+        name: "GPQA Diamond",
+        score: "90.9",
+        bar: 90.9,
+        note: "pass@1",
+        href: "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash",
+      },
       {
         name: "DeepSWE v1.1",
         score: "74.2",
         bar: 74.2,
-        note: "level with GPT-6 Astra and Opus 5",
+        note: "resolved",
+        href: "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash",
+      },
+      {
+        name: "MMLU-Pro",
+        score: "74.1",
+        bar: 74.1,
+        note: "5-shot, base model",
+        href: "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash",
       },
     ],
     benchmarksNote:
-      "Published figures from DeepSeek and independent evaluations, October 2026.",
+      "Figures from the DeepSeek-V4.1-Flash model card, October 2026.",
     specs: [
       { label: "Weights", value: "Open — deepseek-ai/DeepSeek-V4.1-Flash" },
       { label: "Released", value: "September 2026" },
@@ -240,24 +262,37 @@ response = client.chat.completions.create(
         score: "84.3",
         bar: 84.3,
         note: "Opus 4.8 scores 85.0",
+        href: "https://docs.z.ai/guides/vlm/glm-5.3-flash",
       },
-      { name: "Toolathlon Verified", score: "78.4", bar: 78.4 },
-      { name: "DeepSWE v1.1", score: "63.4", bar: 63.4 },
+      {
+        name: "Toolathlon Verified",
+        score: "78.4",
+        bar: 78.4,
+        href: "https://docs.z.ai/guides/vlm/glm-5.3-flash",
+      },
+      {
+        name: "DeepSWE v1.1",
+        score: "63.4",
+        bar: 63.4,
+        note: "pass@1",
+        href: "https://docs.z.ai/guides/vlm/glm-5.3-flash",
+      },
       {
         name: "AutomationBench",
         score: "48.8",
         bar: 48.8,
         note: "leads Opus 4.8 at 41.0",
+        href: "https://docs.z.ai/guides/vlm/glm-5.3-flash",
       },
       {
         name: "Humanity's Last Exam",
         score: "55.3",
         bar: 55.3,
         note: "with tools",
+        href: "https://docs.z.ai/guides/vlm/glm-5.3-flash",
       },
     ],
-    benchmarksNote:
-      "Published figures from Z.AI and independent evaluations, October 2026.",
+    benchmarksNote: "Figures as reported by Z.AI, October 2026.",
     specs: [
       { label: "Weights", value: "Open — zai-org/GLM-5.3-Flash" },
       { label: "Released", value: "August 2026" },
@@ -350,7 +385,7 @@ response = client.chat.completions.create(
       },
       {
         title: "Guardrails and checks",
-        body: "Calibrated yes/no decisions over structured state. The fitted temperature cuts confident errors roughly in half against the raw head.",
+        body: "Calibrated yes/no decisions over structured state, with a fitted temperature so the probabilities mean what they say.",
         glyph: "guardrails",
       },
       {
@@ -362,29 +397,33 @@ response = client.chat.completions.create(
     benchmarks: [
       {
         name: "Accuracy, in-distribution",
-        score: "87.4%",
-        bar: 87.4,
-        note: "locked test set",
+        score: "87.3%",
+        bar: 87.3,
+        note: "decision-v7 locked test",
+        href: "https://github.com/jaredpalmer/kev/blob/main/docs/model-cards/kev-9b.md",
       },
       {
         name: "Accuracy, out-of-domain",
         score: "85.2%",
         bar: 85.2,
-        note: "locked test set",
+        note: "transfer-v4 locked test",
+        href: "https://github.com/jaredpalmer/kev/blob/main/docs/model-cards/kev-9b.md",
       },
       {
         name: "Calibration error",
-        score: "0.042",
-        note: "0.106 before the fitted temperature",
+        score: "0.034",
+        note: "transfer-v4 locked test, at the fitted temperature",
+        href: "https://github.com/jaredpalmer/kev/blob/main/docs/model-cards/kev-9b.md",
       },
       {
         name: "Confident errors",
-        score: "4.0%",
-        note: "8.7% before the fitted temperature",
+        score: "1.4%",
+        note: "wrong at \u22650.9 confidence, transfer-v4 locked test",
+        href: "https://github.com/jaredpalmer/kev/blob/main/docs/model-cards/kev-9b.md",
       },
     ],
     benchmarksNote:
-      "Published figures from the Kev release, September 2026. Decision accuracy is not comparable with generative benchmarks.",
+      "Figures from the Kev-9B model card, October 2026. Decision accuracy is not comparable with generative benchmarks.",
     specs: [
       { label: "Weights", value: "Open — jaredpalmer/kev-9b, Apache-2.0" },
       { label: "Released", value: "September 2026" },

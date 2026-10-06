@@ -189,28 +189,145 @@
   animation: gr-glyph-cargo 6.4s ease-in-out infinite;
 }
 
-@keyframes gr-glyph-loop {
+@keyframes gr-glyph-ride {
   0% {
-    translate: 0 0;
-    opacity: 0;
-  }
-  10% {
     opacity: 1;
   }
-  36% {
+  0% {
+    translate: 0px 0px;
+  }
+  2.05% {
+    translate: 1.95px 1.9px;
+  }
+  4.1% {
+    translate: 3.9px 5.58px;
+  }
+  6.15% {
+    translate: 5.85px 10.76px;
+  }
+  8.2% {
+    translate: 7.79px 17.03px;
+  }
+  10.25% {
+    translate: 9.74px 23.87px;
+  }
+  12.3% {
+    translate: 11.69px 30.72px;
+  }
+  14.35% {
+    translate: 13.64px 36.99px;
+  }
+  16.4% {
+    translate: 15.59px 42.17px;
+  }
+  18.45% {
+    translate: 17.54px 45.84px;
+  }
+  20.5% {
+    translate: 19.48px 47.75px;
+  }
+  22.55% {
+    translate: 31.58px 53.41px;
+  }
+  24.6% {
+    translate: 33.85px 53.39px;
+  }
+  26.65% {
+    translate: 35.79px 52.53px;
+  }
+  28.7% {
+    translate: 37.28px 50.9px;
+  }
+  30.75% {
+    translate: 38.22px 48.6px;
+  }
+  32.8% {
+    translate: 38.54px 45.78px;
+  }
+  34.85% {
+    translate: 38.22px 42.65px;
+  }
+  36.9% {
+    translate: 37.28px 39.41px;
+  }
+  38.95% {
+    translate: 35.79px 36.29px;
+  }
+  41% {
+    translate: 33.85px 33.49px;
+  }
+  43.05% {
+    translate: 31.58px 31.21px;
+  }
+  45.1% {
+    translate: 29.15px 29.6px;
+  }
+  47.15% {
+    translate: 26.73px 28.78px;
+  }
+  49.2% {
+    translate: 24.46px 28.8px;
+  }
+  51.25% {
+    translate: 22.52px 29.65px;
+  }
+  53.3% {
+    translate: 21.03px 31.29px;
+  }
+  55.35% {
+    translate: 20.09px 33.59px;
+  }
+  57.4% {
+    translate: 19.77px 36.4px;
+  }
+  59.45% {
+    translate: 20.09px 39.54px;
+  }
+  61.5% {
+    translate: 21.03px 42.78px;
+  }
+  63.55% {
+    translate: 22.52px 45.9px;
+  }
+  65.6% {
+    translate: 24.46px 48.7px;
+  }
+  67.65% {
+    translate: 26.73px 50.98px;
+  }
+  69.7% {
+    translate: 29.15px 52.58px;
+  }
+  71.75% {
+    translate: 41.66px 59.19px;
+  }
+  73.8% {
+    translate: 44.79px 61.11px;
+  }
+  75.85% {
+    translate: 47.92px 63.03px;
+  }
+  77.9% {
+    translate: 51.05px 64.94px;
+  }
+  79.95% {
+    translate: 54.17px 66.86px;
+  }
+  82% {
+    translate: 57.3px 68.78px;
+  }
+  83% {
     opacity: 1;
+    translate: 57.3px 68.78px;
   }
-  46% {
-    translate: 7.11px 3.56px;
-    opacity: 0;
-  }
+  86%,
   100% {
-    translate: 7.11px 3.56px;
     opacity: 0;
+    translate: 57.3px 68.78px;
   }
 }
-.gr-glyph--automation .gr-glyph-ball {
-  animation: gr-glyph-loop 3.4s linear infinite;
+.gr-glyph--automation .gr-glyph-rider {
+  animation: gr-glyph-ride 4.2s linear infinite;
 }
 
 @keyframes gr-glyph-fall {

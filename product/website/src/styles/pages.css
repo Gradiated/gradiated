@@ -755,6 +755,16 @@
   stroke: none;
 }
 
+/* An open track: stroked, never filled — a rail is a line, not a plate. */
+.gr-glyph-rail {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
 /* A claim's title, one step below the section's own voice. */
 .gr-model-good-row .gr-heading {
   font-size: 1.25rem;

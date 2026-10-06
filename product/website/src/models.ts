@@ -46,11 +46,18 @@ export type ModelPageData = {
   icon?: string;
   oneLiner: string;
   tags: string[];
+  /** The head's factsheet — developers, family, size, license. Each model
+   *  names its own rows; not every row makes sense for every model. */
+  facts: { label: string; value: string }[];
   overview: string[];
   goodFor: { title: string; body: string }[];
   benchmarks: ModelBenchmark[];
   benchmarksNote: string;
   specs: { label: string; value: string }[];
+  /** What it runs on — Gradiated's own serving hardware first (from the
+   *  Nomad jobs that actually serve it), then what the open weights support
+   *  elsewhere. The closing table of the page. */
+  hardware: { name: string; support: string }[];
   /** Static mirror of the catalog; ModelVitals refreshes it live. */
   vitals: {
     input: string;
@@ -77,21 +84,29 @@ export const models: ModelPageData[] = [
     oneLiner:
       "A frontier-class generalist at flash-tier prices: a million tokens of context, strong agentic coding, and output fast enough to sit in an interactive loop.",
     tags: ["Open weights", "1M context", "FP4 on Gradiated", "Tool use"],
+    facts: [
+      { label: "Developers", value: "DeepSeek" },
+      { label: "Model family", value: "DeepSeek V4" },
+      { label: "Version", value: "4.1" },
+      { label: "Variant", value: "Flash" },
+      { label: "Size", value: "552B – A16B" },
+      { label: "License", value: "MIT" },
+    ],
     overview: [
       "DeepSeek V4.1 Flash is the efficiency cut of the V4 family: the same million-token context as its larger siblings, with aggressive KV-cache compression and speculative decoding doing the work of keeping it fast and cheap. We serve it with TP4 and DSpark speculative decoding.",
       "It benchmarks like a frontier model on knowledge and reasoning, and holds the top of its class on agentic coding — which makes it the default choice when you want one model to cover chat, code, and long-document work before specialising it on your own traffic.",
     ],
     goodFor: [
       {
-        title: "Agentic coding.",
+        title: "Agentic coding",
         body: "Top of its cohort on DeepSWE and terminal-driven work. A capable base for coding agents before post-training sharpens it on your repository.",
       },
       {
-        title: "Long-context work.",
+        title: "Long-context work",
         body: "A million tokens of context at a price that lets you actually use them — whole codebases, document sets, or long agent histories in one window.",
       },
       {
-        title: "General chat and reasoning.",
+        title: "General chat and reasoning",
         body: "Frontier-class MMLU and GPQA scores. A sensible default when a workload has not yet earned a specialist.",
       },
     ],
@@ -115,6 +130,20 @@ export const models: ModelPageData[] = [
       { label: "Max output", value: "131K tokens" },
       { label: "Streaming", value: "Yes" },
       { label: "Tool calls", value: "Parallel tool calls, reasoning effort" },
+    ],
+    hardware: [
+      {
+        name: "NVIDIA B200 / B300",
+        support: "What Gradiated serves on — four per replica, TP4 at FP4",
+      },
+      {
+        name: "NVIDIA H100 / H200",
+        support: "Self-host across a multi-GPU node, FP8",
+      },
+      {
+        name: "Inference engines",
+        support: "vLLM and SGLang",
+      },
     ],
     vitals: {
       input: "$0.30",
@@ -165,21 +194,29 @@ response = client.chat.completions.create(
     oneLiner:
       "Z.AI's fast reasoning and tool-use model: near-frontier agentic scores at a fraction of frontier prices, with a million tokens of context.",
     tags: ["Open weights", "1M context", "320B-A18B MoE", "FP8 on Gradiated"],
+    facts: [
+      { label: "Developers", value: "Z.AI" },
+      { label: "Model family", value: "GLM" },
+      { label: "Version", value: "5.3" },
+      { label: "Variant", value: "Flash" },
+      { label: "Size", value: "320B – A18B" },
+      { label: "License", value: "MIT" },
+    ],
     overview: [
       "GLM-5.3 Flash is the cost-optimised cut of Z.AI's GLM-5.3 line — a 320B mixture-of-experts that activates 18B parameters per token, built from a newly trained base rather than a distillation. The result is a model that reasons and uses tools like something much more expensive.",
       "Its distinguishing strength is multi-step work: terminal sessions, tool pipelines, automation flows. On automation benchmarks it leads models that cost ten times as much — which is exactly the shape of workload that benefits most from post-training on your own environment.",
     ],
     goodFor: [
       {
-        title: "Agents and tool use.",
+        title: "Agents and tool use",
         body: "Near-frontier scores on terminal and tool-orchestration benchmarks. The strongest choice per dollar for multi-step agent loops.",
       },
       {
-        title: "Automation workflows.",
+        title: "Automation workflows",
         body: "Leads its benchmark set on multi-step automation — the repetitive, structured work where post-training pays back fastest.",
       },
       {
-        title: "High-volume reasoning.",
+        title: "High-volume reasoning",
         body: "Reasoning-model quality at $0.25 per million output tokens. Built for workloads where unit economics decide the architecture.",
       },
     ],
@@ -214,6 +251,20 @@ response = client.chat.completions.create(
       { label: "Quantization on Gradiated", value: "FP8" },
       { label: "Max output", value: "131K tokens" },
       { label: "Streaming", value: "Yes" },
+    ],
+    hardware: [
+      {
+        name: "NVIDIA B300",
+        support: "What Gradiated serves on — tensor-parallel at FP8",
+      },
+      {
+        name: "NVIDIA H100 / H200",
+        support: "Self-host in BF16 or FP8",
+      },
+      {
+        name: "Inference engines",
+        support: "vLLM, SGLang, KTransformers, Transformers",
+      },
     ],
     vitals: {
       input: "$0.075",
@@ -263,21 +314,29 @@ response = client.chat.completions.create(
     oneLiner:
       "A decision model, not a chat model: give it structured state and typed questions, get back calibrated choices, yes/no decisions and scores — no generated text, no output tokens to pay for.",
     tags: ["Open weights", "Apache-2.0", "Typed decisions", "Calibrated"],
+    facts: [
+      { label: "Developers", value: "Jared Palmer" },
+      { label: "Model family", value: "Kev" },
+      { label: "Variant", value: "9B" },
+      { label: "Base", value: "Qwen3.5-9B" },
+      { label: "Size", value: "9B dense" },
+      { label: "License", value: "Apache-2.0" },
+    ],
     overview: [
       "Kev answers typed questions about structured state. Instead of generating prose it reads out probabilities — a choice among options you define, a yes/no decision, a score on a rubric — from a pointer head sitting on a Qwen3.5 base with a LoRA adapter. Each checkpoint ships with a fitted temperature, so the probabilities are calibrated out of the box.",
       "That shape makes it the model for the decisions scattered through a production system: routing, classification, guardrails, evals. The questions are typed, so there is no parsing step and no prompt-injection surface in the output — and because decisions generate no tokens, output is free. Kev 9B is the mid-size of an Apache-2.0 family that also ships 0.8B, 4B and 27B checkpoints you can run yourself.",
     ],
     goodFor: [
       {
-        title: "Routing and classification.",
+        title: "Routing and classification",
         body: "Choose a department, a priority, a pipeline branch — a typed choice with per-option probabilities, not text you have to parse.",
       },
       {
-        title: "Guardrails and checks.",
+        title: "Guardrails and checks",
         body: "Calibrated yes/no decisions over structured state. The fitted temperature cuts confident errors roughly in half against the raw head.",
       },
       {
-        title: "Scoring and evals.",
+        title: "Scoring and evals",
         body: "Rubric scores with honest uncertainty, at $0.03 per million input tokens and nothing for output. Cheap enough to score everything.",
       },
     ],
@@ -314,6 +373,22 @@ response = client.chat.completions.create(
       { label: "Family", value: "0.8B · 4B · 9B · 27B" },
       { label: "Precision on Gradiated", value: "BF16" },
       { label: "Output", value: "Decisions only — no generated text" },
+    ],
+    hardware: [
+      {
+        name: "NVIDIA RTX PRO 6000",
+        support: "What Gradiated serves on — one GPU per replica, BF16",
+      },
+      {
+        name: "Any 24 GB+ GPU",
+        support:
+          "Self-host the 9B in BF16; the smaller family checkpoints run on less",
+      },
+      {
+        name: "Inference engines",
+        support:
+          "Transformers with the Kev pointer head — LoRA on a Qwen3.5 base",
+      },
     ],
     vitals: {
       input: "$0.03",

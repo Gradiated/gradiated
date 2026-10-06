@@ -381,13 +381,381 @@
 }
 
 /* -- the model page --------------------------------------------------------
-   A model's identity, then everything there is to know about it.             */
+   Identity on the left — the art well and the factsheet — the argument
+   beside it, then a contents rail tracking four sections.                    */
 
-.gr-model-head {
+/* The head band sits on the overlay surface; the sections below keep the
+   page's ground, so the identity reads as its own plate. */
+.gr-module--model-head {
+  background: var(--color-overlay);
+  /* The head begins where a library piece begins — back link and art land
+     at the same heights as the library detail's (~188px and ~250px). */
+  padding-block-start: calc(7.2 * var(--u));
+  /* The head is the first fold, exactly: the plate runs to the viewport's
+     edge and the sections begin past it. */
+  min-height: 100dvh;
+  box-sizing: border-box;
+}
+
+.gr-model-back {
+  display: inline-block;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  margin-block-end: calc(1.2 * var(--u));
+  transition: color var(--dur-fast) var(--ease-response);
+}
+
+.gr-model-back:hover {
+  color: var(--color-text);
+}
+
+/* The head and the body share one grid geometry, so the intro and the
+   sections start on the same left edge. */
+.gr-model-head,
+.gr-model-body {
   display: grid;
-  grid-template-columns: calc(10 * var(--u)) 1fr;
-  gap: calc(1.5 * var(--u));
+  grid-template-columns: calc(9 * var(--u)) minmax(0, 44rem);
+  justify-content: space-between;
+  gap: calc(2 * var(--u));
   align-items: start;
+}
+
+/* The art well, and the facts under it. */
+.gr-model-art {
+  aspect-ratio: 1 / 1;
+  background: color-mix(in srgb, var(--color-text) 5%, var(--color-overlay));
+  border-radius: var(--radius);
+  display: grid;
+  place-items: center;
+  font-family: var(--font-code);
+  font-size: var(--text-ui);
+  color: var(--color-text-muted);
+  margin-block-end: var(--u);
+}
+
+.gr-model-art img {
+  width: 42%;
+  height: 42%;
+  object-fit: contain;
+}
+
+/* Floats along like the library detail's contents under its artwork. */
+.gr-model-side {
+  position: sticky;
+  top: calc(1.5 * var(--u));
+}
+
+.gr-model-facts {
+  margin: 0;
+  display: grid;
+  gap: calc(0.45 * var(--u));
+}
+
+.gr-model-fact dt,
+.gr-model-fact dd {
+  margin: 0;
+}
+
+.gr-model-fact {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--u);
+  align-items: baseline;
+}
+
+.gr-model-fact dd {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  text-align: right;
+}
+
+.gr-model-intro {
+  max-width: 40rem;
+}
+
+/* 64px on a desktop — the name is the page's masthead, not a section title. */
+.gr-model-intro .gr-model-name {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: var(--weight-heading);
+  letter-spacing: var(--tracking-heading);
+  line-height: 1.05;
+}
+
+/* Two classes, so these beat `.gr-root p` / `.gr-root h2` — the same
+   base-margin trap as every other page. */
+.gr-model-intro .gr-model-lede {
+  margin-block: calc(0.5 * var(--u)) calc(0.9 * var(--u));
+  max-width: 60ch;
+  font-size: 1.5rem;
+  line-height: 1.35;
+}
+
+.gr-model-overview {
+  display: grid;
+  gap: calc(0.6 * var(--u));
+}
+
+.gr-model-overview .gr-body {
+  max-width: 60ch;
+}
+
+/* The id as a shell line — a prompt, the string, one thing to do with it. */
+.gr-model-id-row {
+  display: flex;
+  align-items: stretch;
+  gap: calc(0.4 * var(--u));
+  margin-block-start: var(--u);
+}
+
+.gr-model-id {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(0.4 * var(--u));
+  padding: calc(0.35 * var(--u)) calc(0.6 * var(--u));
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  font-family: var(--font-code);
+  font-size: var(--text-ui);
+}
+
+.gr-model-id-prompt {
+  color: var(--color-text-muted);
+}
+
+.gr-model-copy {
+  padding: calc(0.35 * var(--u)) calc(0.7 * var(--u));
+  border: 0;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--color-text) 6%, var(--color-overlay));
+  color: var(--color-text);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-response);
+}
+
+.gr-model-copy:hover {
+  background: color-mix(in srgb, var(--color-text) 12%, var(--color-overlay));
+}
+
+/* -- the body: rail and sections ------------------------------------------ */
+
+/* The rail knows where the reader is; the marker square says so. Sticky, so
+   it keeps answering while the sections scroll. */
+.gr-model-rail {
+  position: sticky;
+  top: calc(1.5 * var(--u));
+}
+
+.gr-model-rail ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: calc(0.45 * var(--u));
+}
+
+.gr-model-rail-link {
+  position: relative;
+  display: inline-block;
+  padding-inline-start: calc(0.9 * var(--u));
+  font-family: var(--font-body);
+  /* The factsheet's own value size — the two left columns speak in one
+     voice. */
+  font-size: 1rem;
+  text-decoration: none;
+  color: var(--color-text-muted);
+  transition: color var(--dur-fast) var(--ease-response);
+}
+
+.gr-model-rail-link::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  translate: 0 -50%;
+  width: 0.5em;
+  height: 0.5em;
+  background: var(--color-text);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-response);
+}
+
+.gr-model-rail-link--active {
+  color: var(--color-text);
+}
+
+.gr-model-rail-link--active::before {
+  opacity: 1;
+}
+
+.gr-model-rail-link:hover {
+  color: var(--color-text);
+}
+
+.gr-model-sections {
+  display: grid;
+  gap: calc(2.5 * var(--u));
+  max-width: 44rem;
+}
+
+.gr-model-section .gr-model-section-title {
+  font-family: var(--font-title);
+  font-size: var(--text-section);
+  font-weight: var(--weight-heading);
+  letter-spacing: var(--tracking-heading);
+  line-height: 1.15;
+  margin: 0 0 calc(0.6 * var(--u));
+}
+
+.gr-model-section .gr-model-section-lede {
+  margin-block: 0 2rem;
+  max-width: 48ch;
+}
+
+/* What it's good for: a well and a claim per row. The well is the spot
+   illustration's seat; empty until the art exists. */
+.gr-model-good {
+  display: grid;
+  gap: calc(1.1 * var(--u));
+  margin-block-start: calc(1.3 * var(--u));
+}
+
+.gr-model-good-row {
+  display: grid;
+  grid-template-columns: calc(2.8 * var(--u)) 1fr;
+  gap: calc(0.9 * var(--u));
+  align-items: stretch;
+}
+
+/* As tall as the words beside it — the well and its claim are one row. */
+.gr-model-good-art {
+  border-radius: var(--radius);
+  background: var(--color-overlay);
+}
+
+.gr-model-good-row .gr-body {
+  margin-block-start: calc(0.2 * var(--u));
+  max-width: 54ch;
+}
+
+/* Benchmarks: name, bar, score; the note under the bar in the code voice.
+   The bars share a 0-100 track; a metric whose scale would mislead has no
+   bar at all. The ramp runs water to fired clay — the brand's own scale. */
+.gr-model-bench {
+  display: grid;
+  gap: calc(0.8 * var(--u));
+}
+
+.gr-model-bench-row {
+  display: grid;
+  grid-template-columns: minmax(8rem, 11rem) 1fr minmax(3.5rem, auto);
+  align-items: center;
+  column-gap: var(--u);
+  row-gap: calc(0.25 * var(--u));
+}
+
+.gr-model-bench-name {
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.gr-model-bench-track {
+  height: calc(0.4 * var(--u));
+  border-radius: var(--radius);
+  background: var(--color-overlay);
+  overflow: hidden;
+}
+
+.gr-model-bench-bar {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    var(--color-aegean-500),
+    var(--color-grove-500) 55%,
+    var(--color-kiln-300)
+  );
+}
+
+.gr-model-bench-score {
+  font-family: var(--font-code);
+  font-size: var(--text-ui);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.gr-model-bench-note {
+  grid-column: 2;
+  font-family: var(--font-code);
+  font-size: var(--text-fine);
+  color: var(--color-text-muted);
+}
+
+/* The vitals: the four numbers a developer checks first, as cards on the
+   overlay so they stand off the band. */
+.gr-model-vitals {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(0.6 * var(--u));
+  margin: 0 0 calc(1.2 * var(--u));
+}
+
+.gr-model-vital {
+  background: var(--color-overlay);
+  border-radius: var(--radius);
+  padding: calc(0.7 * var(--u)) calc(0.8 * var(--u));
+}
+
+.gr-model-vital dd {
+  margin: calc(0.5 * var(--u)) 0 0;
+  font-family: var(--font-title);
+  font-size: var(--text-heading);
+  font-weight: var(--weight-heading);
+  letter-spacing: var(--tracking-heading);
+}
+
+/* The spec rows: label left, value right, one rule per row. */
+.gr-model-specs {
+  margin: 0;
+  display: grid;
+}
+
+.gr-model-spec {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--u);
+  align-items: baseline;
+  padding-block: calc(0.5 * var(--u));
+  border-block-end: 1px solid var(--color-rule);
+}
+
+.gr-model-spec dd {
+  margin: 0;
+  text-align: right;
+  /* The base .gr-body cap boxes the value short of the row's edge. */
+  max-width: none;
+}
+
+.gr-model-snippets {
+  display: grid;
+  gap: var(--u);
+  margin-block-end: var(--u);
+}
+
+.gr-model-snippet .gr-label {
+  margin-block-end: calc(0.4 * var(--u));
 }
 
 .gr-model-mark {
@@ -408,302 +776,64 @@
   object-fit: contain;
 }
 
-.gr-model-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: calc(0.4 * var(--u));
-  margin-block-start: var(--u);
-  padding: 0;
-  list-style: none;
-}
-
-/* The contents of a model page, as a list you read rather than a rail you
-   scan. At this size the list IS the page's structure — it is the first thing
-   a reader meets, so it is set at title size rather than as navigation. */
-.gr-model-contents {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: calc(0.4 * var(--u));
-}
-
-.gr-model-contents a {
-  font-family: var(--font-title);
-  font-size: var(--text-section);
-  font-weight: var(--weight-heading);
-  line-height: 1.25;
-  letter-spacing: var(--tracking-heading);
-  text-decoration: none;
-  color: var(--color-text);
-  transition: color var(--dur-fast) var(--ease-response);
-}
-
-.gr-model-contents a:hover {
-  color: var(--color-interactive);
-}
-
-.gr-model-maker {
-  margin-block-end: calc(0.3 * var(--u));
-}
-
-.gr-model-lede {
-  margin-block-start: 0.5rem;
-  max-width: 44rem;
-}
-
-/* The model id, as the thing you actually take away from the head: code to
-   read, one affordance to copy. */
-.gr-model-id {
-  display: inline-flex;
-  align-items: baseline;
-  gap: calc(0.5 * var(--u));
-  margin-block-start: var(--u);
-  padding: calc(0.3 * var(--u)) calc(0.5 * var(--u));
-  border: 1px solid var(--color-rule);
-  border-radius: var(--radius);
-  background: transparent;
-  cursor: pointer;
-  color: var(--color-text);
-  transition: border-color var(--dur-fast) var(--ease-response);
-}
-
-.gr-model-id:hover {
-  border-color: var(--color-text);
-}
-
-.gr-model-id code {
-  font-family: var(--font-code);
-  font-size: var(--text-ui);
-}
-
-.gr-model-id .gr-label {
-  color: var(--color-text-muted);
-}
-
-.gr-model-overview {
-  display: grid;
-  gap: calc(0.6 * var(--u));
-  max-width: 44rem;
-}
-
-/* Reading paragraphs, not a caption column — the base 42ch is for standfirsts
-   beside media; an overview is the page's prose. */
-.gr-model-overview .gr-body,
-.gr-model-lede {
-  max-width: 60ch;
-}
-
-/* Benchmarks: name, bar, score. The bar is the comparison, the score is the
-   fact — a reader scans the bars and reads one number. Bars share a 0–100
-   track; a metric whose scale would mislead simply has no bar. */
-.gr-model-bench {
-  display: grid;
-  gap: calc(0.55 * var(--u));
-  max-width: 52rem;
-}
-
-.gr-model-bench-row {
-  display: grid;
-  grid-template-columns: minmax(10rem, 16rem) 1fr minmax(8rem, auto);
-  align-items: center;
-  gap: var(--u);
-}
-
-.gr-model-bench-name {
-  font-family: var(--font-caps);
-  font-size: var(--text-caps);
-  font-weight: var(--weight-caps);
-  letter-spacing: var(--tracking-caps);
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-}
-
-.gr-model-bench-track {
-  height: calc(0.45 * var(--u));
-  border-radius: var(--radius);
-  background: color-mix(in srgb, var(--color-text) 7%, transparent);
-  overflow: hidden;
-}
-
-.gr-model-bench-bar {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--color-text);
-}
-
-.gr-model-bench-score {
-  font-family: var(--font-code);
-  font-size: var(--text-ui);
-  text-align: right;
-  white-space: nowrap;
-}
-
-.gr-model-bench-note {
-  display: block;
-  font-family: var(--font-body);
-  font-size: var(--text-fine);
-  color: var(--color-text-muted);
-  white-space: normal;
-}
-
-.gr-model-bench-footnote {
-  margin-block-start: var(--u);
-  font-size: var(--text-fine);
-}
-
-/* The vitals: the four numbers a developer checks first, set large. */
-.gr-model-vitals {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--u);
-  margin: 0 0 calc(1.2 * var(--u));
-}
-
-.gr-model-vital {
-  border: 1px solid var(--color-rule);
-  border-radius: var(--radius);
-  padding: calc(0.7 * var(--u));
-}
-
-.gr-model-vital dd {
-  margin: calc(0.3 * var(--u)) 0 0;
-  font-family: var(--font-title);
-  font-size: var(--text-heading);
-  font-weight: var(--weight-heading);
-  letter-spacing: var(--tracking-heading);
-}
-
-.gr-model-specs {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0 calc(1.5 * var(--u));
-  margin: 0 0 var(--u);
-  max-width: 52rem;
-}
-
-.gr-model-spec {
-  display: grid;
-  grid-template-columns: minmax(10rem, 14rem) 1fr;
-  gap: var(--u);
-  align-items: baseline;
-  padding-block: calc(0.45 * var(--u));
-  border-block-end: 1px solid var(--color-rule);
-}
-
-.gr-model-spec dd {
-  margin: 0;
-}
-
-.gr-model-start-lede {
-  max-width: 44rem;
-}
-
-.gr-model-snippets {
-  display: grid;
-  gap: var(--u);
-  margin-block: var(--u);
-}
-
-.gr-model-snippet .gr-label {
-  margin-block-end: calc(0.4 * var(--u));
-}
-
-.gr-model-code {
-  max-width: 52rem;
-}
-
-/* The close: the page's argument, resolved. Centred like a fold's hero —
-   this is the one section that is about the reader's next move, not the
-   model. */
-.gr-model-close {
-  text-align: center;
-  max-width: 40rem;
-  margin-inline: auto;
-  padding-block: var(--u);
-}
-
-.gr-model-close .gr-body {
-  margin-block: calc(0.6 * var(--u)) var(--u);
-}
-
-.gr-model-close-actions {
-  display: flex;
-  justify-content: center;
-  gap: calc(0.6 * var(--u));
-  flex-wrap: wrap;
-}
-
-.gr-model-similar {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--u);
-}
-
-.gr-model-similar-card {
-  display: grid;
-  grid-template-columns: calc(3.2 * var(--u)) 1fr;
-  gap: calc(0.8 * var(--u));
-  align-items: start;
-  padding: calc(0.8 * var(--u));
-  border: 1px solid var(--color-rule);
-  border-radius: var(--radius-lg);
-  text-decoration: none;
-  color: var(--color-text);
-  transition: border-color var(--dur-fast) var(--ease-response);
-}
-
-.gr-model-similar-card:hover {
-  border-color: var(--color-text);
-}
-
 .gr-model-mark--small {
   width: calc(3.2 * var(--u));
   font-size: var(--text-fine);
 }
 
-.gr-model-similar-name {
-  display: block;
-  font-family: var(--font-title);
-  font-weight: var(--weight-heading);
-  letter-spacing: var(--tracking-heading);
-}
-
-.gr-model-similar-line {
-  display: block;
-  margin-block-start: calc(0.2 * var(--u));
-  font-size: var(--text-fine);
-}
-
 @media (max-width: 900px) {
-  .gr-model-vitals {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .gr-model-specs,
-  .gr-model-similar {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 620px) {
   .gr-model-head {
     grid-template-columns: 1fr;
   }
 
-  .gr-model-mark {
-    width: calc(6 * var(--u));
+  /* The facts stay a sheet; the art well caps its own size. */
+  .gr-model-art {
+    width: calc(7 * var(--u));
+  }
+
+  /* The rail has no column of its own on a phone — it becomes a row of
+     links above the sections. */
+  .gr-model-body {
+    grid-template-columns: 1fr;
+  }
+
+  .gr-model-rail {
+    position: static;
+  }
+
+  .gr-model-rail ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(0.4 * var(--u)) var(--u);
+  }
+}
+
+@media (max-width: 620px) {
+  .gr-model-vitals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .gr-model-bench-row {
     grid-template-columns: 1fr auto;
-    row-gap: calc(0.2 * var(--u));
   }
 
   .gr-model-bench-track {
     grid-column: 1 / -1;
     order: 1;
+  }
+
+  .gr-model-bench-note {
+    grid-column: 1 / -1;
+    order: 2;
+  }
+
+  .gr-model-spec {
+    grid-template-columns: 1fr;
+    gap: calc(0.15 * var(--u));
+  }
+
+  .gr-model-spec dd {
+    text-align: left;
   }
 }
 

@@ -3,30 +3,81 @@ import type { ReactElement } from "react";
 import {
   Band,
   CodeBlock,
-  Features,
   Footer,
   Module,
   Nav,
   Substrate,
 } from "../components/design";
-import { WaitlistButton } from "../components/WaitlistButton";
 import { listModels } from "../api/queries";
-import { models } from "../models";
 import type { ModelPageData } from "../models";
 import "../styles/index.css";
 
 /**
- * A model's page: what it is, what it is good for, the numbers, and the way
- * in. The page is built to end one way — "let's post-train this" — so every
- * section leans toward the workload the reader already has: benchmarks says
- * where the model starts, getting started says how traffic becomes traces,
- * and the close says what we do with them.
+ * A model's page, to the reworked layout: identity on the left — art well
+ * and factsheet — with the argument beside it, then a contents rail tracking
+ * four sections. The page is still built to end one way — "let's post-train
+ * this" — benchmarks say where the model starts, getting started says how
+ * traffic becomes traces, and the close says what we do with them.
  *
  * Copy and benchmarks live in src/models.ts. Pricing and context render from
- * the same static mirror, then ModelVitals refreshes them from the live API —
- * the catalog is the source of truth for money, and a repriced model should
- * not wait for a website deploy.
+ * the same static mirror as the control catalog, then ModelVitals refreshes
+ * them from the live API — the catalog is the source of truth for money, and
+ * a repriced model should not wait for a website deploy.
  */
+
+const SECTIONS = [
+  { id: "good-for", label: "What’s it good for" },
+  { id: "benchmarks", label: "Benchmarks" },
+  { id: "pricing", label: "Pricing & Specs" },
+  { id: "getting-started", label: "Getting Started" },
+  { id: "hardware", label: "Hardware" },
+] as const;
+
+/** The rail beside the sections: a list that knows where the reader is.
+ *  The observer band sits high in the viewport, so a section becomes the
+ *  active one as its title crosses the reading line, not when its last
+ *  pixel arrives. */
+const ContentsRail = (): ReactElement => {
+  const [active, setActive] = useState<string>(SECTIONS[0].id);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort(
+            (a, b) => a.boundingClientRect.top - b.boundingClientRect.top,
+          )[0];
+        if (visible) setActive(visible.target.id);
+      },
+      { rootMargin: "-15% 0px -70% 0px" },
+    );
+    for (const section of SECTIONS) {
+      const element = document.getElementById(section.id);
+      if (element) observer.observe(element);
+    }
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <nav aria-label="On this page" className="gr-model-rail">
+      <ul>
+        {SECTIONS.map((section) => (
+          <li key={section.id}>
+            <a
+              className={`gr-model-rail-link${
+                active === section.id ? " gr-model-rail-link--active" : ""
+              }`}
+              href={`#${section.id}`}
+            >
+              {section.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+};
 
 /** The live row for this model, refreshed after mount. The static mirror
  *  renders first — same numbers, same source — so the page needs nothing
@@ -96,22 +147,31 @@ const ModelVitals = ({ model }: { model: ModelPageData }): ReactElement => {
   );
 };
 
-const CopyModelId = ({ id }: { id: string }): ReactElement => {
+/** The id as a shell line — a prompt, the string, and the one thing to do
+ *  with it. */
+const ModelId = ({ id }: { id: string }): ReactElement => {
   const [copied, setCopied] = useState(false);
   return (
-    <button
-      className="gr-model-id"
-      type="button"
-      onClick={() => {
-        void navigator.clipboard.writeText(id).then(() => {
-          setCopied(true);
-          window.setTimeout(() => setCopied(false), 1600);
-        });
-      }}
-    >
-      <code>{id}</code>
-      <span className="gr-label">{copied ? "Copied" : "Copy"}</span>
-    </button>
+    <div className="gr-model-id-row">
+      <span className="gr-model-id">
+        <span aria-hidden className="gr-model-id-prompt">
+          $
+        </span>
+        <code>{id}</code>
+      </span>
+      <button
+        className="gr-model-copy"
+        type="button"
+        onClick={() => {
+          void navigator.clipboard.writeText(id).then(() => {
+            setCopied(true);
+            window.setTimeout(() => setCopied(false), 1600);
+          });
+        }}
+      >
+        {copied ? "Copied" : "Copy"}
+      </button>
+    </div>
   );
 };
 
@@ -120,185 +180,167 @@ export const ModelDetailPage = ({
 }: {
   model: ModelPageData;
 }): ReactElement => {
-  const similar = models.filter((entry) => entry.slug !== model.slug);
-
   return (
     <Substrate>
       <Nav />
 
       <Band>
-        <Module bleed index={0}>
+        <Module bleed className="gr-module--model-head" index={0}>
+          <a className="gr-label gr-model-back" href="/inference/">
+            &larr; All models
+          </a>
           <div className="gr-model-head">
-            {/* The provider's mark where one exists; the monogram holds the
-                space until every model has its own. */}
-            <div className="gr-model-mark">
-              {model.icon ? <img alt="" src={model.icon} /> : model.mark}
-            </div>
-            <div>
-              <p className="gr-label gr-model-maker">{model.maker}</p>
-              <h1 className="gr-section-title">{model.name}</h1>
-              <p className="gr-lede gr-muted gr-model-lede">{model.oneLiner}</p>
-              <ul className="gr-model-tags">
-                {model.tags.map((tag) => (
-                  <li className="gr-badge" key={tag}>
-                    {tag}
-                  </li>
+            <aside className="gr-model-side">
+              {/* The art well. The provider's mark holds it until each model
+                  has artwork of its own. */}
+              <div className="gr-model-art">
+                {model.icon ? <img alt="" src={model.icon} /> : model.mark}
+              </div>
+              <dl className="gr-model-facts">
+                {model.facts.map((fact) => (
+                  <div className="gr-model-fact" key={fact.label}>
+                    <dt className="gr-label">{fact.label}</dt>
+                    <dd>{fact.value}</dd>
+                  </div>
                 ))}
-              </ul>
-              <CopyModelId id={model.id} />
+              </dl>
+            </aside>
+
+            <div className="gr-model-intro">
+              <h1 className="gr-model-name">{model.name}</h1>
+              <p className="gr-lede gr-muted gr-model-lede">{model.oneLiner}</p>
+              <div className="gr-model-overview">
+                {model.overview.map((paragraph) => (
+                  <p className="gr-body" key={paragraph.slice(0, 32)}>
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+              <ModelId id={model.id} />
             </div>
           </div>
         </Module>
 
         <Module index={1}>
-          <div className="gr-model-overview">
-            {model.overview.map((paragraph) => (
-              <p className="gr-body" key={paragraph.slice(0, 32)}>
-                {paragraph}
-              </p>
-            ))}
-          </div>
-        </Module>
+          <div className="gr-model-body">
+            <ContentsRail />
 
-        <Module index={2}>
-          <h2 className="gr-heading gr-pair-title" id="good-for">
-            What it&rsquo;s good for
-          </h2>
-          <Features items={model.goodFor} />
-        </Module>
+            <div className="gr-model-sections">
+              <section className="gr-model-section" id="good-for">
+                <h2 className="gr-model-section-title">
+                  What&rsquo;s it good for
+                </h2>
+                <div className="gr-model-good">
+                  {model.goodFor.map((item) => (
+                    <div className="gr-model-good-row" key={item.title}>
+                      {/* PLACEHOLDER — a spot illustration per use, when the
+                          art exists. An empty well in the meantime. */}
+                      <span aria-hidden className="gr-model-good-art" />
+                      <div>
+                        <h3 className="gr-heading">{item.title}</h3>
+                        <p className="gr-body gr-muted">{item.body}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
 
-        <Module index={3}>
-          <h2 className="gr-heading gr-pair-title" id="benchmarks">
-            Benchmarks
-          </h2>
-          <div className="gr-model-bench">
-            {model.benchmarks.map((benchmark) => (
-              <div className="gr-model-bench-row" key={benchmark.name}>
-                <span className="gr-model-bench-name">{benchmark.name}</span>
-                {benchmark.bar ? (
-                  <span className="gr-model-bench-track" aria-hidden>
-                    <span
-                      className="gr-model-bench-bar"
-                      style={{ width: `${benchmark.bar}%` }}
-                    />
-                  </span>
-                ) : (
-                  <span aria-hidden />
-                )}
-                <span className="gr-model-bench-score">
-                  {benchmark.score}
-                  {benchmark.note ? (
-                    <span className="gr-model-bench-note">
-                      {benchmark.note}
-                    </span>
-                  ) : null}
-                </span>
-              </div>
-            ))}
-          </div>
-          <p className="gr-body gr-muted gr-model-bench-footnote">
-            {model.benchmarksNote}
-          </p>
-        </Module>
+              <section className="gr-model-section" id="benchmarks">
+                <h2 className="gr-model-section-title">Benchmarks</h2>
+                <p className="gr-body gr-muted gr-model-section-lede">
+                  {model.benchmarksNote}
+                </p>
+                <div className="gr-model-bench">
+                  {model.benchmarks.map((benchmark) => (
+                    <div className="gr-model-bench-row" key={benchmark.name}>
+                      <span className="gr-model-bench-name">
+                        {benchmark.name}
+                      </span>
+                      {benchmark.bar ? (
+                        <span className="gr-model-bench-track" aria-hidden>
+                          <span
+                            className="gr-model-bench-bar"
+                            style={{ width: `${benchmark.bar}%` }}
+                          />
+                        </span>
+                      ) : (
+                        <span aria-hidden />
+                      )}
+                      <span className="gr-model-bench-score">
+                        {benchmark.score}
+                      </span>
+                      {benchmark.note ? (
+                        <span className="gr-model-bench-note">
+                          {benchmark.note}
+                        </span>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </section>
 
-        <Module index={4}>
-          <h2 className="gr-heading gr-pair-title" id="pricing">
-            Pricing &amp; specs
-          </h2>
-          <ModelVitals model={model} />
-          <dl className="gr-model-specs">
-            {model.specs.map((spec) => (
-              <div className="gr-model-spec" key={spec.label}>
-                <dt className="gr-label">{spec.label}</dt>
-                <dd className="gr-body">{spec.value}</dd>
-              </div>
-            ))}
-          </dl>
-          <p className="gr-body gr-muted">
-            Latency is a choice, not a property of the model —{" "}
-            <a className="gr-link" href="/inference/">
-              pick the service tier
-            </a>{" "}
-            your workload needs.
-          </p>
-        </Module>
+              <section className="gr-model-section" id="pricing">
+                <h2 className="gr-model-section-title">Pricing &amp; Specs</h2>
+                <p className="gr-body gr-muted gr-model-section-lede">
+                  Latency is a choice, not a property of the model —{" "}
+                  <a className="gr-link" href="/inference/">
+                    pick the service tier
+                  </a>{" "}
+                  your workload needs.
+                </p>
+                <ModelVitals model={model} />
+                <dl className="gr-model-specs">
+                  {model.specs.map((spec) => (
+                    <div className="gr-model-spec" key={spec.label}>
+                      <dt className="gr-label">{spec.label}</dt>
+                      <dd className="gr-body">{spec.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
 
-        <Module index={5}>
-          <h2 className="gr-heading gr-pair-title" id="getting-started">
-            Getting started
-          </h2>
-          <p className="gr-body gr-muted gr-model-start-lede">
-            {model.gettingStarted.lede}
-          </p>
-          <div className="gr-model-snippets">
-            {model.gettingStarted.snippets.map((snippet) => (
-              <div
-                className="gr-model-snippet gr-model-code"
-                key={snippet.label}
-              >
-                <p className="gr-label">{snippet.label}</p>
-                <CodeBlock code={snippet.code} />
-              </div>
-            ))}
-          </div>
-          <p className="gr-body gr-muted">
-            <a className="gr-link" href={model.gettingStarted.docsHref}>
-              {model.gettingStarted.docsLabel}
-            </a>
-          </p>
-        </Module>
+              <section className="gr-model-section" id="getting-started">
+                <h2 className="gr-model-section-title">Getting Started</h2>
+                <p className="gr-body gr-muted gr-model-section-lede">
+                  {model.gettingStarted.lede}
+                </p>
+                <div className="gr-model-snippets">
+                  {model.gettingStarted.snippets.map((snippet) => (
+                    <div className="gr-model-snippet" key={snippet.label}>
+                      <p className="gr-label">{snippet.label}</p>
+                      <CodeBlock code={snippet.code} />
+                    </div>
+                  ))}
+                </div>
+                <p className="gr-body gr-muted">
+                  <a className="gr-link" href={model.gettingStarted.docsHref}>
+                    {model.gettingStarted.docsLabel}
+                  </a>
+                </p>
+              </section>
 
-        <Module index={6}>
-          <div className="gr-model-close">
-            <h2 className="gr-heading" id="post-train">
-              Then make it yours.
-            </h2>
-            <p className="gr-body gr-muted">
-              These numbers are where {model.name} starts, not where it ends.
-              Once your traffic runs through Gradiated, we turn your traces into
-              an RL environment, build the evals, and post-train the model on
-              your actual workload — same API, same base URL, better model every
-              week.
-            </p>
-            <div className="gr-model-close-actions">
-              <WaitlistButton className="gr-button gr-button--main">
-                Join the waitlist
-              </WaitlistButton>
-              <a className="gr-button gr-button--secondary" href="/training/">
-                How post-training works
-              </a>
+              <section className="gr-model-section" id="hardware">
+                <h2 className="gr-model-section-title">Hardware</h2>
+                <p className="gr-body gr-muted gr-model-section-lede">
+                  What {model.name} runs on — our serving fleet first, then what
+                  the open weights support anywhere else.
+                </p>
+                <dl className="gr-model-specs">
+                  {model.hardware.map((row) => (
+                    <div className="gr-model-spec" key={row.name}>
+                      <dt className="gr-label">{row.name}</dt>
+                      <dd className="gr-body">{row.support}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
             </div>
-          </div>
-        </Module>
-
-        <Module index={7}>
-          <h2 className="gr-heading gr-pair-title" id="similar">
-            Other models
-          </h2>
-          <div className="gr-model-similar">
-            {similar.map((entry) => (
-              <a
-                className="gr-model-similar-card"
-                href={`/models/${entry.slug}/`}
-                key={entry.slug}
-              >
-                <span className="gr-model-mark gr-model-mark--small">
-                  {entry.icon ? <img alt="" src={entry.icon} /> : entry.mark}
-                </span>
-                <span>
-                  <span className="gr-model-similar-name">{entry.name}</span>
-                  <span className="gr-body gr-muted gr-model-similar-line">
-                    {entry.oneLiner}
-                  </span>
-                </span>
-              </a>
-            ))}
           </div>
         </Module>
       </Band>
 
       <Band>
-        <Footer index={8} />
+        <Footer index={2} />
       </Band>
     </Substrate>
   );

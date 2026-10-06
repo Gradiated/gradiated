@@ -696,13 +696,15 @@
 
 .gr-model-good-row {
   display: grid;
-  grid-template-columns: calc(2.8 * var(--u)) 1fr;
+  grid-template-columns: auto 1fr;
   gap: calc(0.9 * var(--u));
-  align-items: start;
+  align-items: stretch;
 }
 
-/* A square, anchored to the claim's first line. */
+/* A square the full height of the words beside it: the text sets the row,
+   the aspect ratio turns that height into the tile's width. */
 .gr-model-good-art {
+  height: 100%;
   aspect-ratio: 1 / 1;
   border-radius: var(--radius);
   background: var(--color-overlay);
@@ -750,16 +752,47 @@
   overflow: hidden;
 }
 
+/* Drawn on arrival: zero until the section reaches the reader, then each
+   bar grows to its score, one beat after the last. */
 .gr-model-bench-bar {
   display: block;
   height: 100%;
   border-radius: inherit;
+  width: 0;
   background: linear-gradient(
     90deg,
     var(--color-aegean-500),
     var(--color-grove-500) 55%,
     var(--color-kiln-300)
   );
+  transition: width var(--dur-media) var(--ease-media);
+}
+
+.gr-model-bench--seen .gr-model-bench-bar {
+  width: var(--bench-bar, 0%);
+}
+
+.gr-model-bench--seen .gr-model-bench-row:nth-child(2) .gr-model-bench-bar {
+  transition-delay: 90ms;
+}
+
+.gr-model-bench--seen .gr-model-bench-row:nth-child(3) .gr-model-bench-bar {
+  transition-delay: 180ms;
+}
+
+.gr-model-bench--seen .gr-model-bench-row:nth-child(4) .gr-model-bench-bar {
+  transition-delay: 270ms;
+}
+
+.gr-model-bench--seen .gr-model-bench-row:nth-child(5) .gr-model-bench-bar {
+  transition-delay: 360ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-model-bench-bar {
+    transition: none;
+    width: var(--bench-bar, 0%);
+  }
 }
 
 .gr-model-bench-score {

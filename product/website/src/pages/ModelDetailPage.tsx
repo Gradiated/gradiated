@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import type { ReactElement } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { CSSProperties, ReactElement } from "react";
 import {
   Band,
   CodeBlock,
@@ -168,6 +168,63 @@ const ModelVitals = ({ model }: { model: ModelPageData }): ReactElement => {
   );
 };
 
+/** The benchmark bars, grown on arrival: each bar draws from zero to its
+ *  score as the section reaches the reader, one beat apart. The width lives
+ *  in a custom property so CSS owns the motion; the observer only says
+ *  "now", and only once — a chart that redraws on every pass reads as a
+ *  toy. */
+const BenchmarkBars = ({
+  benchmarks,
+}: {
+  benchmarks: ModelPageData["benchmarks"];
+}): ReactElement => {
+  const [seen, setSeen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setSeen(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.35 },
+    );
+    observer.observe(root);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      className={`gr-model-bench${seen ? " gr-model-bench--seen" : ""}`}
+      ref={rootRef}
+    >
+      {benchmarks.map((benchmark) => (
+        <div className="gr-model-bench-row" key={benchmark.name}>
+          <span className="gr-model-bench-name">{benchmark.name}</span>
+          {benchmark.bar ? (
+            <span className="gr-model-bench-track" aria-hidden>
+              <span
+                className="gr-model-bench-bar"
+                style={{ "--bench-bar": `${benchmark.bar}%` } as CSSProperties}
+              />
+            </span>
+          ) : (
+            <span aria-hidden />
+          )}
+          <span className="gr-model-bench-score">{benchmark.score}</span>
+          {benchmark.note ? (
+            <span className="gr-model-bench-note">{benchmark.note}</span>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 /** The snippets, tabbed the way the docs tab their SDKs — one visible
  *  sample, the others a click away. A single snippet renders plain: a
  *  one-option tab control is a label with extra steps. */
@@ -307,33 +364,7 @@ export const ModelDetailPage = ({
                   <p className="gr-body gr-muted gr-model-section-lede">
                     {model.benchmarksNote}
                   </p>
-                  <div className="gr-model-bench">
-                    {model.benchmarks.map((benchmark) => (
-                      <div className="gr-model-bench-row" key={benchmark.name}>
-                        <span className="gr-model-bench-name">
-                          {benchmark.name}
-                        </span>
-                        {benchmark.bar ? (
-                          <span className="gr-model-bench-track" aria-hidden>
-                            <span
-                              className="gr-model-bench-bar"
-                              style={{ width: `${benchmark.bar}%` }}
-                            />
-                          </span>
-                        ) : (
-                          <span aria-hidden />
-                        )}
-                        <span className="gr-model-bench-score">
-                          {benchmark.score}
-                        </span>
-                        {benchmark.note ? (
-                          <span className="gr-model-bench-note">
-                            {benchmark.note}
-                          </span>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
+                  <BenchmarkBars benchmarks={model.benchmarks} />
                 </section>
 
                 <section className="gr-model-section" id="pricing">

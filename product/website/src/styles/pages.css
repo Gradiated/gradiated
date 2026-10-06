@@ -710,16 +710,46 @@
   background: var(--color-overlay);
 }
 
-/* The claim's glyph, centred and quiet: the tile is a plate, not a button. */
+/* The claim's scene: a miniature in the hairline manner — the stroke is
+   the ink, the plates are the tile's own ground, the crease is dim. Motion
+   lives in glyph-motion.css. ABSOLUTE, so the drawing contributes nothing
+   to the tile's size: the square takes its side from the text alone, as
+   the empty well did, and a scene drawn past its box simply crops. */
 .gr-model-good-art {
-  display: grid;
-  place-items: center;
-  color: var(--color-text-muted);
+  position: relative;
+  color: var(--color-text);
+  overflow: hidden;
 }
 
 .gr-model-good-art svg {
-  width: 42%;
-  height: 42%;
+  position: absolute;
+  inset: 9%;
+  width: 82%;
+  height: 82%;
+}
+
+.gr-glyph-sil {
+  fill: var(--color-overlay);
+  stroke: currentColor;
+  stroke-width: 1;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.gr-glyph-crease {
+  fill: none;
+  stroke: var(--color-text-muted);
+  stroke-width: 1;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  opacity: 0.55;
+  vector-effect: non-scaling-stroke;
+}
+
+.gr-glyph-dot {
+  fill: currentColor;
+  stroke: none;
 }
 
 /* A claim's title, one step below the section's own voice. */

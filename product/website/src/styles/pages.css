@@ -690,7 +690,7 @@
    illustration's seat; empty until the art exists. */
 .gr-model-good {
   display: grid;
-  gap: calc(1.1 * var(--u));
+  gap: calc(1.7 * var(--u));
   margin-block-start: calc(1.3 * var(--u));
 }
 
@@ -721,11 +721,14 @@
   overflow: hidden;
 }
 
+/* Full bleed: the svg IS the tile, and a scene drawn past its box crops
+   at the tile's own edge. Breathing room for the scenes that want it is
+   drawn into the geometry, not reserved here. */
 .gr-model-good-art svg {
   position: absolute;
-  inset: 9%;
-  width: 82%;
-  height: 82%;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .gr-glyph-sil {

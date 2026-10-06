@@ -11,7 +11,7 @@
     translate: 0 0;
   }
   3.5% {
-    translate: 0px 1.24px;
+    translate: 0px 2.77px;
   }
 }
 .gr-glyph--terminal .gr-glyph-k01 {
@@ -45,48 +45,106 @@
   animation: gr-glyph-type 3.2s 2.88s infinite;
 }
 
-@keyframes gr-glyph-feed {
-  0% {
-    translate: 0 0;
+@keyframes gr-glyph-write-l0 {
+  0%,
+  8% {
     opacity: 0;
   }
-  25%,
-  75% {
+  16%,
+  72% {
     opacity: 1;
   }
+  84%,
   100% {
-    translate: 0px 1.35px;
     opacity: 0;
   }
 }
-.gr-glyph--context .gr-glyph-feed {
-  animation: gr-glyph-feed 1.6s linear infinite;
+.gr-glyph--context .gr-glyph-ctx-l0 {
+  animation: gr-glyph-write-l0 5.6s infinite backwards;
+}
+@keyframes gr-glyph-write-l1 {
+  0%,
+  21% {
+    opacity: 0;
+  }
+  29%,
+  72% {
+    opacity: 1;
+  }
+  84%,
+  100% {
+    opacity: 0;
+  }
+}
+.gr-glyph--context .gr-glyph-ctx-l1 {
+  animation: gr-glyph-write-l1 5.6s infinite backwards;
+}
+@keyframes gr-glyph-write-l2 {
+  0%,
+  34% {
+    opacity: 0;
+  }
+  42%,
+  72% {
+    opacity: 1;
+  }
+  84%,
+  100% {
+    opacity: 0;
+  }
+}
+.gr-glyph--context .gr-glyph-ctx-l2 {
+  animation: gr-glyph-write-l2 5.6s infinite backwards;
+}
+.gr-glyph--context .gr-glyph-ctx-d2 {
+  animation-delay: 1.4s;
+}
+.gr-glyph--context .gr-glyph-ctx-d3 {
+  animation-delay: 2.8s;
+}
+.gr-glyph--context .gr-glyph-ctx-d4 {
+  animation-delay: 4.2s;
 }
 
-@keyframes gr-glyph-say {
-  0% {
+@keyframes gr-glyph-b2 {
+  0%,
+  20% {
     opacity: 0;
-    translate: 0px 1.09px;
+    translate: 0px 2.65px;
   }
-  9%,
-  86% {
+  26%,
+  84% {
     opacity: 1;
     translate: 0 0;
   }
-  94%,
+  92%,
   100% {
     opacity: 0;
     translate: 0 0;
   }
 }
-.gr-glyph--chat .gr-glyph-b1 {
-  animation: gr-glyph-say 6s 0s infinite backwards;
-}
 .gr-glyph--chat .gr-glyph-b2 {
-  animation: gr-glyph-say 6s 1.5s infinite backwards;
+  animation: gr-glyph-b2 6.5s infinite;
+}
+@keyframes gr-glyph-b3 {
+  0%,
+  46% {
+    opacity: 0;
+    translate: 0px 2.65px;
+  }
+  52%,
+  84% {
+    opacity: 1;
+    translate: 0 0;
+  }
+  92%,
+  100% {
+    opacity: 0;
+    translate: 0 0;
+  }
 }
 .gr-glyph--chat .gr-glyph-b3 {
-  animation: gr-glyph-say 6s 3s infinite backwards;
+  animation: gr-glyph-b3 6.5s infinite;
 }
 
 @keyframes gr-glyph-grip {
@@ -98,7 +156,7 @@
   }
   40%,
   65% {
-    translate: -1.94px -0.97px;
+    translate: -4.57px -2.29px;
   }
 }
 .gr-glyph--agents .gr-glyph-jaw {
@@ -115,7 +173,7 @@
     opacity: 1;
   }
   100% {
-    translate: 10.79px 5.4px;
+    translate: 25.47px 12.73px;
     opacity: 0;
   }
 }
@@ -132,11 +190,11 @@
     opacity: 1;
   }
   78% {
-    translate: 0px 3.43px;
+    translate: 0px 8.1px;
     opacity: 1;
   }
   100% {
-    translate: 0px 3.43px;
+    translate: 0px 8.1px;
     opacity: 0;
   }
 }
@@ -154,13 +212,13 @@
   }
   46%,
   54% {
-    translate: 11.26px 5.63px;
+    translate: 26.58px 13.29px;
   }
   92% {
     opacity: 1;
   }
   100% {
-    translate: 27.35px 8.85px;
+    translate: 64.54px 20.88px;
     opacity: 0;
   }
 }
@@ -178,13 +236,13 @@
   }
   38%,
   58% {
-    translate: 11.1px -5.55px;
+    translate: 26.2px -13.1px;
   }
   90% {
     opacity: 1;
   }
   100% {
-    translate: 24.05px -12.02px;
+    translate: 56.76px -28.38px;
     opacity: 0;
   }
 }
@@ -199,11 +257,11 @@
   }
   33%,
   57% {
-    translate: 7.05px -2.95px;
+    translate: 16.63px -6.96px;
   }
   66%,
   90% {
-    translate: 14.1px 10.28px;
+    translate: 33.26px 24.27px;
   }
   100% {
     translate: 0 0;

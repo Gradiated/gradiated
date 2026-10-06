@@ -710,6 +710,18 @@
   background: var(--color-overlay);
 }
 
+/* The claim's glyph, centred and quiet: the tile is a plate, not a button. */
+.gr-model-good-art {
+  display: grid;
+  place-items: center;
+  color: var(--color-text-muted);
+}
+
+.gr-model-good-art svg {
+  width: 42%;
+  height: 42%;
+}
+
 /* A claim's title, one step below the section's own voice. */
 .gr-model-good-row .gr-heading {
   font-size: 1.25rem;

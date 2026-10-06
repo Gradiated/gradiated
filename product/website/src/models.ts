@@ -1,3 +1,5 @@
+import type { GoodForGlyphName } from "./components/design/GoodForGlyphs";
+
 /**
  * The models with pages — what each one is, what it is good for, and the
  * numbers a developer checks before committing to one.
@@ -53,7 +55,8 @@ export type ModelPageData = {
    *  names its own rows; not every row makes sense for every model. */
   facts: { label: string; value: string }[];
   overview: string[];
-  goodFor: { title: string; body: string }[];
+  /** `glyph` names the claim's spot icon — see GoodForGlyph. */
+  goodFor: { title: string; body: string; glyph: GoodForGlyphName }[];
   benchmarks: ModelBenchmark[];
   benchmarksNote: string;
   specs: { label: string; value: string }[];
@@ -103,14 +106,17 @@ export const models: ModelPageData[] = [
       {
         title: "Agentic coding",
         body: "Top of its cohort on DeepSWE and terminal-driven work. A capable base for coding agents before post-training sharpens it on your repository.",
+        glyph: "terminal",
       },
       {
         title: "Long-context work",
         body: "A million tokens of context at a price that lets you actually use them — whole codebases, document sets, or long agent histories in one window.",
+        glyph: "context",
       },
       {
         title: "General chat and reasoning",
         body: "Frontier-class MMLU and GPQA scores. A sensible default when a workload has not yet earned a specialist.",
+        glyph: "chat",
       },
     ],
     benchmarks: [
@@ -215,14 +221,17 @@ response = client.chat.completions.create(
       {
         title: "Agents and tool use",
         body: "Near-frontier scores on terminal and tool-orchestration benchmarks. The strongest choice per dollar for multi-step agent loops.",
+        glyph: "agents",
       },
       {
         title: "Automation workflows",
         body: "Leads its benchmark set on multi-step automation — the repetitive, structured work where post-training pays back fastest.",
+        glyph: "automation",
       },
       {
         title: "High-volume reasoning",
         body: "Reasoning-model quality at $0.25 per million output tokens. Built for workloads where unit economics decide the architecture.",
+        glyph: "throughput",
       },
     ],
     benchmarks: [
@@ -337,14 +346,17 @@ response = client.chat.completions.create(
       {
         title: "Routing and classification",
         body: "Choose a department, a priority, a pipeline branch — a typed choice with per-option probabilities, not text you have to parse.",
+        glyph: "routing",
       },
       {
         title: "Guardrails and checks",
         body: "Calibrated yes/no decisions over structured state. The fitted temperature cuts confident errors roughly in half against the raw head.",
+        glyph: "guardrails",
       },
       {
         title: "Scoring and evals",
         body: "Rubric scores with honest uncertainty, at $0.03 per million input tokens and nothing for output. Cheap enough to score everything.",
+        glyph: "scoring",
       },
     ],
     benchmarks: [

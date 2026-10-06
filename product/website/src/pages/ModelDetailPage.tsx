@@ -9,6 +9,7 @@ import {
   Substrate,
   Tabs,
 } from "../components/design";
+import { GoodForGlyph } from "../components/design/GoodForGlyphs";
 import { listModels } from "../api/queries";
 import type { ModelPageData } from "../models";
 import "../styles/index.css";
@@ -348,8 +349,10 @@ export const ModelDetailPage = ({
                     {model.goodFor.map((item) => (
                       <div className="gr-model-good-row" key={item.title}>
                         {/* PLACEHOLDER — a spot illustration per use, when the
-                          art exists. An empty well in the meantime. */}
-                        <span aria-hidden className="gr-model-good-art" />
+                          art exists; the claim's glyph holds it. */}
+                        <span aria-hidden className="gr-model-good-art">
+                          <GoodForGlyph name={item.glyph} />
+                        </span>
                         <div>
                           <h3 className="gr-heading">{item.title}</h3>
                           <p className="gr-body gr-muted">{item.body}</p>

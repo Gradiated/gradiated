@@ -147,20 +147,46 @@
   animation: gr-glyph-b3 6.5s infinite;
 }
 
-@keyframes gr-glyph-grip {
+@keyframes gr-glyph-claw {
   0%,
-  15%,
-  90%,
+  14% {
+    translate: 0 0;
+  }
+  30%,
+  40% {
+    translate: 0px 6.11px;
+  }
+  55%,
+  70% {
+    translate: 0 0;
+  }
+  82%,
+  90% {
+    translate: 0px 6.11px;
+  }
   100% {
     translate: 0 0;
   }
-  40%,
-  65% {
-    translate: -4.57px -2.29px;
+}
+.gr-glyph--agents .gr-glyph-claw {
+  animation: gr-glyph-claw 6.4s ease-in-out infinite;
+}
+@keyframes gr-glyph-cargo {
+  0%,
+  40% {
+    translate: 0 0;
+  }
+  55%,
+  70% {
+    translate: 0px -6.11px;
+  }
+  82%,
+  100% {
+    translate: 0 0;
   }
 }
-.gr-glyph--agents .gr-glyph-jaw {
-  animation: gr-glyph-grip 4.2s ease-in-out infinite;
+.gr-glyph--agents .gr-glyph-cargo {
+  animation: gr-glyph-cargo 6.4s ease-in-out infinite;
 }
 
 @keyframes gr-glyph-ride {

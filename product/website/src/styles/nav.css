@@ -737,6 +737,82 @@
   grid-template-columns: repeat(2, calc(10 * var(--u))) max-content;
 }
 
+/* -- the models list -------------------------------------------------------
+   The models with pages, set beside the Product cards the way the Library
+   panel carries its writing: a ruled column of marks and names, not a third
+   card — a model page is a destination inside Product, not a sibling of it. */
+
+/* Intro, two cards, models — the intro keeps the track the intro rule gives
+   it, the models column takes its own width like the writing list does. */
+.gr-nav-panel-content:has(.gr-nav-models) {
+  grid-template-columns:
+    calc(11.5 * var(--u)) repeat(2, calc(10 * var(--u)))
+    max-content;
+}
+
+.gr-nav-models {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: calc(0.5 * var(--u));
+  border-inline-start: 1px solid var(--color-rule);
+  padding-inline-start: calc(1.25 * var(--u));
+  margin-inline-start: calc(0.75 * var(--u));
+}
+
+.gr-nav-models-title {
+  color: var(--color-text-muted);
+  margin-block-end: calc(0.75 * var(--u));
+}
+
+.gr-nav-models ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: calc(0.5 * var(--u));
+}
+
+.gr-nav-model {
+  display: flex;
+  align-items: center;
+  gap: calc(0.5 * var(--u));
+  width: max-content;
+  text-decoration: none;
+  color: var(--color-text);
+}
+
+.gr-nav-model-mark {
+  display: grid;
+  place-items: center;
+  width: calc(1.6 * var(--u));
+  aspect-ratio: 1 / 1;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  background: var(--color-overlay);
+  font-family: var(--font-code);
+  font-size: var(--text-fine);
+  color: var(--color-text-muted);
+  transition: border-color var(--dur-fast) var(--ease-response);
+}
+
+.gr-nav-model-mark img {
+  width: 55%;
+  height: 55%;
+  object-fit: contain;
+}
+
+.gr-nav-model:hover .gr-nav-model-mark {
+  border-color: var(--color-text);
+}
+
+.gr-nav-model-name {
+  font-family: var(--font-title);
+  font-weight: var(--weight-heading);
+  letter-spacing: var(--tracking-heading);
+  font-size: var(--text-ui);
+}
+
 .gr-nav-writing {
   /* Centred on the cards, like the Product panel's statement. The column
      itself still stretches so its dividing rule runs the panel's full height —
@@ -933,7 +1009,8 @@
  * The rows also stop being max-content: in a column of their own width the
  * tappable area ends at the date, which on a phone means a row that looks
  * like a list item but only answers near its left half. */
-.gr-nav-sheet .gr-nav-writing {
+.gr-nav-sheet .gr-nav-writing,
+.gr-nav-sheet .gr-nav-models {
   padding: 0;
   border-inline-start: none;
   padding-inline-start: 0;

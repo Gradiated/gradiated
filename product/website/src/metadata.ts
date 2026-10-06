@@ -1,5 +1,6 @@
 import { jobs } from "./careers";
 import { methodPages } from "./method";
+import { models } from "./models";
 import { articles } from "./articles";
 
 export const siteOrigin = "https://gradiated.com";
@@ -68,6 +69,15 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     methodPages.map((page) => [
       `/library/method/${page.slug}/`,
       { title: page.pageTitle, description: page.description },
+    ]),
+  ),
+  ...Object.fromEntries(
+    models.map((model) => [
+      `/models/${model.slug}/`,
+      {
+        title: `${model.name} on Gradiated`,
+        description: model.oneLiner,
+      },
     ]),
   ),
   "/docs/": {

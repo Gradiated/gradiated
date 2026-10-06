@@ -2,6 +2,7 @@ import { WaitlistButton, WaitlistDrawer } from "../WaitlistButton";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactElement } from "react";
 import { library } from "./library";
+import { models } from "../../models";
 import { WaferArtwork } from "./WaferArtwork";
 import { Arrow } from "./icons";
 import { LOGO_ASPECT, Logo } from "./Logo";
@@ -82,6 +83,8 @@ type NavItem = {
     cards: PanelCard[];
     /** A line of standfirst set beside the cards, before them. */
     intro?: string;
+    /** Appends the model list beside the cards. */
+    models?: boolean;
     /** Appends the writing list beside the cards. */
     writing?: boolean;
   };
@@ -99,6 +102,7 @@ const NAV_ITEMS: NavItem[] = [
       /* Says what the company IS, beside what it sells. The panel is the one
          place a reader stops long enough to take a sentence in. */
       intro: "The research lab focused on inference.",
+      models: true,
       cards: [
         {
           image: "/brand/nav/service-tiers.jpg",
@@ -167,6 +171,27 @@ const SHEET_OUT_MS = 240;
  *  The same list in the panel and the drawer, like Card below — the two were
  *  the same markup written twice until the drawer needed it as well, which is
  *  how a list ends up with different dates in two places. */
+/** The models with pages, beside the Product cards — marks in a grid, the
+ *  way the Library panel carries its writing. Same list in the panel and the
+ *  sheet, same reason as WritingList. */
+const ModelsList = (): ReactElement => (
+  <div className="gr-nav-models">
+    <p className="gr-label gr-nav-models-title">Models</p>
+    <ul>
+      {models.map((model) => (
+        <li key={model.slug}>
+          <a className="gr-nav-model" href={`/models/${model.slug}/`}>
+            <span aria-hidden className="gr-nav-model-mark">
+              {model.icon ? <img alt="" src={model.icon} /> : model.mark}
+            </span>
+            <span className="gr-nav-model-name">{model.name}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+);
+
 const WritingList = (): ReactElement => (
   <div className="gr-nav-writing">
     <p className="gr-label gr-nav-writing-title">Latest writing</p>
@@ -563,6 +588,7 @@ export const Nav = (): ReactElement => {
               {/* Spans the width two more cards would have taken, so a panel
                   with a list is the same width as one without — the morph
                   between Product and Library changes height, not span. */}
+              {item.panel.models ? <ModelsList /> : null}
               {item.panel.writing ? <WritingList /> : null}
             </div>
           ) : null,
@@ -601,6 +627,7 @@ export const Nav = (): ReactElement => {
                   </div>
                   {/* Under the cards here, where the panel sets it beside
                       them: there is no second column in a drawer. */}
+                  {item.panel?.models ? <ModelsList /> : null}
                   {item.panel?.writing ? <WritingList /> : null}
                 </section>
               ))}

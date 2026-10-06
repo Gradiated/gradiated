@@ -3,6 +3,8 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { articles } from "./articles";
 import { jobs } from "./careers";
 import { methodPages } from "./method";
+import { models } from "./models";
+import { ModelDetailPage } from "./pages/ModelDetailPage";
 import { CareersIndexPage, JobDetailPage } from "./pages/CareersPages";
 import { DocsNextPage } from "./pages/DocsNextPage";
 import { HardwarePage } from "./pages/HardwarePage";
@@ -66,9 +68,13 @@ export const AppRoutes = (): ReactElement => (
     <Route element={<TrainingPage />} path="/training/" />
     <Route element={<HardwarePage />} path="/hardware/" />
     <Route element={<ArtworkGeneratorPage />} path="/artwork-generator/" />
-    {/* /model-detail/ is not routed while it has no data on it. The cards
-        that pointed here render as plain tiles now — see InferencePage. Put
-        the route back with the content. */}
+    {models.map((model) => (
+      <Route
+        element={<ModelDetailPage model={model} />}
+        key={model.slug}
+        path={`/models/${model.slug}/`}
+      />
+    ))}
     <Route element={<StylePage />} path="/style/" />
     <Route element={<NotFoundPage />} path="*" />
   </Routes>

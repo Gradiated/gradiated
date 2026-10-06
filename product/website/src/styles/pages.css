@@ -402,6 +402,12 @@
   color: var(--color-text-muted);
 }
 
+.gr-model-mark img {
+  width: 46%;
+  height: 46%;
+  object-fit: contain;
+}
+
 .gr-model-tags {
   display: flex;
   flex-wrap: wrap;
@@ -437,9 +443,267 @@
   color: var(--color-interactive);
 }
 
+.gr-model-maker {
+  margin-block-end: calc(0.3 * var(--u));
+}
+
+.gr-model-lede {
+  margin-block-start: 0.5rem;
+  max-width: 44rem;
+}
+
+/* The model id, as the thing you actually take away from the head: code to
+   read, one affordance to copy. */
+.gr-model-id {
+  display: inline-flex;
+  align-items: baseline;
+  gap: calc(0.5 * var(--u));
+  margin-block-start: var(--u);
+  padding: calc(0.3 * var(--u)) calc(0.5 * var(--u));
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  background: transparent;
+  cursor: pointer;
+  color: var(--color-text);
+  transition: border-color var(--dur-fast) var(--ease-response);
+}
+
+.gr-model-id:hover {
+  border-color: var(--color-text);
+}
+
+.gr-model-id code {
+  font-family: var(--font-code);
+  font-size: var(--text-ui);
+}
+
+.gr-model-id .gr-label {
+  color: var(--color-text-muted);
+}
+
+.gr-model-overview {
+  display: grid;
+  gap: calc(0.6 * var(--u));
+  max-width: 44rem;
+}
+
+/* Reading paragraphs, not a caption column — the base 42ch is for standfirsts
+   beside media; an overview is the page's prose. */
+.gr-model-overview .gr-body,
+.gr-model-lede {
+  max-width: 60ch;
+}
+
+/* Benchmarks: name, bar, score. The bar is the comparison, the score is the
+   fact — a reader scans the bars and reads one number. Bars share a 0–100
+   track; a metric whose scale would mislead simply has no bar. */
+.gr-model-bench {
+  display: grid;
+  gap: calc(0.55 * var(--u));
+  max-width: 52rem;
+}
+
+.gr-model-bench-row {
+  display: grid;
+  grid-template-columns: minmax(10rem, 16rem) 1fr minmax(8rem, auto);
+  align-items: center;
+  gap: var(--u);
+}
+
+.gr-model-bench-name {
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.gr-model-bench-track {
+  height: calc(0.45 * var(--u));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--color-text) 7%, transparent);
+  overflow: hidden;
+}
+
+.gr-model-bench-bar {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-text);
+}
+
+.gr-model-bench-score {
+  font-family: var(--font-code);
+  font-size: var(--text-ui);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.gr-model-bench-note {
+  display: block;
+  font-family: var(--font-body);
+  font-size: var(--text-fine);
+  color: var(--color-text-muted);
+  white-space: normal;
+}
+
+.gr-model-bench-footnote {
+  margin-block-start: var(--u);
+  font-size: var(--text-fine);
+}
+
+/* The vitals: the four numbers a developer checks first, set large. */
+.gr-model-vitals {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--u);
+  margin: 0 0 calc(1.2 * var(--u));
+}
+
+.gr-model-vital {
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  padding: calc(0.7 * var(--u));
+}
+
+.gr-model-vital dd {
+  margin: calc(0.3 * var(--u)) 0 0;
+  font-family: var(--font-title);
+  font-size: var(--text-heading);
+  font-weight: var(--weight-heading);
+  letter-spacing: var(--tracking-heading);
+}
+
+.gr-model-specs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0 calc(1.5 * var(--u));
+  margin: 0 0 var(--u);
+  max-width: 52rem;
+}
+
+.gr-model-spec {
+  display: grid;
+  grid-template-columns: minmax(10rem, 14rem) 1fr;
+  gap: var(--u);
+  align-items: baseline;
+  padding-block: calc(0.45 * var(--u));
+  border-block-end: 1px solid var(--color-rule);
+}
+
+.gr-model-spec dd {
+  margin: 0;
+}
+
+.gr-model-start-lede {
+  max-width: 44rem;
+}
+
+.gr-model-snippets {
+  display: grid;
+  gap: var(--u);
+  margin-block: var(--u);
+}
+
+.gr-model-snippet .gr-label {
+  margin-block-end: calc(0.4 * var(--u));
+}
+
+.gr-model-code {
+  max-width: 52rem;
+}
+
+/* The close: the page's argument, resolved. Centred like a fold's hero —
+   this is the one section that is about the reader's next move, not the
+   model. */
+.gr-model-close {
+  text-align: center;
+  max-width: 40rem;
+  margin-inline: auto;
+  padding-block: var(--u);
+}
+
+.gr-model-close .gr-body {
+  margin-block: calc(0.6 * var(--u)) var(--u);
+}
+
+.gr-model-close-actions {
+  display: flex;
+  justify-content: center;
+  gap: calc(0.6 * var(--u));
+  flex-wrap: wrap;
+}
+
+.gr-model-similar {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--u);
+}
+
+.gr-model-similar-card {
+  display: grid;
+  grid-template-columns: calc(3.2 * var(--u)) 1fr;
+  gap: calc(0.8 * var(--u));
+  align-items: start;
+  padding: calc(0.8 * var(--u));
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: var(--color-text);
+  transition: border-color var(--dur-fast) var(--ease-response);
+}
+
+.gr-model-similar-card:hover {
+  border-color: var(--color-text);
+}
+
+.gr-model-mark--small {
+  width: calc(3.2 * var(--u));
+  font-size: var(--text-fine);
+}
+
+.gr-model-similar-name {
+  display: block;
+  font-family: var(--font-title);
+  font-weight: var(--weight-heading);
+  letter-spacing: var(--tracking-heading);
+}
+
+.gr-model-similar-line {
+  display: block;
+  margin-block-start: calc(0.2 * var(--u));
+  font-size: var(--text-fine);
+}
+
+@media (max-width: 900px) {
+  .gr-model-vitals {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .gr-model-specs,
+  .gr-model-similar {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 620px) {
   .gr-model-head {
     grid-template-columns: 1fr;
+  }
+
+  .gr-model-mark {
+    width: calc(6 * var(--u));
+  }
+
+  .gr-model-bench-row {
+    grid-template-columns: 1fr auto;
+    row-gap: calc(0.2 * var(--u));
+  }
+
+  .gr-model-bench-track {
+    grid-column: 1 / -1;
+    order: 1;
   }
 }
 

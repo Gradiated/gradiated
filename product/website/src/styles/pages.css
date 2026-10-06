@@ -831,6 +831,11 @@
   margin-block-end: calc(0.4 * var(--u));
 }
 
+/* The tab row sits just off its sample, like the docs pages. */
+.gr-model-snippet .gr-tabs {
+  margin-block-end: calc(0.5 * var(--u));
+}
+
 .gr-model-mark {
   aspect-ratio: 1 / 1;
   background: var(--color-overlay);

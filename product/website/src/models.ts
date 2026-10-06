@@ -28,7 +28,10 @@ export type ModelBenchmark = {
 };
 
 export type ModelSnippet = {
+  /** The tab's label — "Python", "cURL". */
   label: string;
+  /** Which small grammar CodeBlock colours it with. */
+  language: "default" | "bash";
   code: string;
 };
 
@@ -155,7 +158,8 @@ export const models: ModelPageData[] = [
       lede: "Point your existing client at our base URL and name the model. Your traffic starts accruing as traces — the raw material post-training is built from.",
       snippets: [
         {
-          label: "Python — OpenAI SDK",
+          label: "Python",
+          language: "default" as const,
           code: `from openai import OpenAI
 import os
 
@@ -170,7 +174,8 @@ response = client.chat.completions.create(
 )`,
         },
         {
-          label: "curl",
+          label: "cURL",
+          language: "bash" as const,
           code: `curl https://api.gradiated.com/v1/chat/completions \\
   -H "Authorization: Bearer $GRADIATED_API_KEY" \\
   -H "Content-Type: application/json" \\
@@ -276,7 +281,8 @@ response = client.chat.completions.create(
       lede: "Point your existing client at our base URL and name the model. Your traffic starts accruing as traces — the raw material post-training is built from.",
       snippets: [
         {
-          label: "Python — OpenAI SDK",
+          label: "Python",
+          language: "default" as const,
           code: `from openai import OpenAI
 import os
 
@@ -291,7 +297,8 @@ response = client.chat.completions.create(
 )`,
         },
         {
-          label: "curl",
+          label: "cURL",
+          language: "bash" as const,
           code: `curl https://api.gradiated.com/v1/chat/completions \\
   -H "Authorization: Bearer $GRADIATED_API_KEY" \\
   -H "Content-Type: application/json" \\
@@ -401,6 +408,7 @@ response = client.chat.completions.create(
       snippets: [
         {
           label: "Python — TypeSafe SDK",
+          language: "default" as const,
           code: `import os
 from typesafe_sdk import Choice, TypeSafeClient
 

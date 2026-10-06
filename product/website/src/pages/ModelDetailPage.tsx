@@ -7,6 +7,7 @@ import {
   Module,
   Nav,
   Substrate,
+  Tabs,
 } from "../components/design";
 import { listModels } from "../api/queries";
 import type { ModelPageData } from "../models";
@@ -164,6 +165,41 @@ const ModelVitals = ({ model }: { model: ModelPageData }): ReactElement => {
         </div>
       ))}
     </dl>
+  );
+};
+
+/** The snippets, tabbed the way the docs tab their SDKs — one visible
+ *  sample, the others a click away. A single snippet renders plain: a
+ *  one-option tab control is a label with extra steps. */
+const SnippetTabs = ({
+  snippets,
+}: {
+  snippets: ModelPageData["gettingStarted"]["snippets"];
+}): ReactElement => {
+  const [current, setCurrent] = useState(snippets[0].label);
+  const active =
+    snippets.find((snippet) => snippet.label === current) ?? snippets[0];
+
+  if (snippets.length === 1) {
+    return (
+      <div className="gr-model-snippet">
+        <p className="gr-label">{snippets[0].label}</p>
+        <CodeBlock code={snippets[0].code} language={snippets[0].language} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="gr-model-snippet">
+      <Tabs
+        label="Code sample language"
+        onChange={setCurrent}
+        options={snippets.map((snippet) => snippet.label)}
+        quiet
+        value={current}
+      />
+      <CodeBlock code={active.code} language={active.language} />
+    </div>
   );
 };
 
@@ -328,12 +364,7 @@ export const ModelDetailPage = ({
                     {model.gettingStarted.lede}
                   </p>
                   <div className="gr-model-snippets">
-                    {model.gettingStarted.snippets.map((snippet) => (
-                      <div className="gr-model-snippet" key={snippet.label}>
-                        <p className="gr-label">{snippet.label}</p>
-                        <CodeBlock code={snippet.code} />
-                      </div>
-                    ))}
+                    <SnippetTabs snippets={model.gettingStarted.snippets} />
                   </div>
                   <p className="gr-body gr-muted">
                     <a className="gr-link" href={model.gettingStarted.docsHref}>

@@ -19,13 +19,24 @@ import type { ReactElement, ReactNode } from "react";
 const TOKEN =
   /(\/\*[\s\S]*?\*\/|\/\/[^\n]*)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`)|(\b\d+(?:\.\d+)?\b)|(\b(?:const|let|await|async|import|export|from|return|function|new|class|true|false|null)\b)/g;
 
+/* Shell is not a C-family language: `//` in a bare URL is a path, not a
+ * comment — the default grammar painted everything after `https:` as one.
+ * Comments are `#`, and the few words worth colouring are the commands. */
+const BASH_TOKEN =
+  /(#[^\n]*)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')|(\b\d+(?:\.\d+)?\b)|(\b(?:curl|export|echo)\b)/g;
+
 const KIND = ["comment", "string", "number", "keyword"] as const;
 
-const highlight = (code: string): ReactNode[] => {
+export type CodeLanguage = "default" | "bash";
+
+const highlight = (
+  code: string,
+  language: CodeLanguage = "default",
+): ReactNode[] => {
   const out: ReactNode[] = [];
   let last = 0;
   let key = 0;
-  for (const match of code.matchAll(TOKEN)) {
+  for (const match of code.matchAll(language === "bash" ? BASH_TOKEN : TOKEN)) {
     const at = match.index ?? 0;
     if (at > last) out.push(code.slice(last, at));
     const kind = KIND[match.slice(1).findIndex(Boolean)];
@@ -43,11 +54,14 @@ const highlight = (code: string): ReactNode[] => {
 export const CodeBlock = ({
   code,
   copyable = true,
+  language = "default",
 }: {
   code: string;
   /** Off where the surrounding component provides its own copy control — two
    *  for one sample is one too many. */
   copyable?: boolean;
+  /** Which small grammar colours the sample — see BASH_TOKEN. */
+  language?: CodeLanguage;
 }): ReactElement => {
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -75,7 +89,7 @@ export const CodeBlock = ({
   return (
     <div className="gr-codewrap">
       <pre className="gr-codeblock">
-        <code>{highlight(code)}</code>
+        <code>{highlight(code, language)}</code>
       </pre>
       {copyable ? (
         <button

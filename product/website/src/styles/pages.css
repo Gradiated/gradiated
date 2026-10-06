@@ -698,13 +698,19 @@
   display: grid;
   grid-template-columns: calc(2.8 * var(--u)) 1fr;
   gap: calc(0.9 * var(--u));
-  align-items: stretch;
+  align-items: start;
 }
 
-/* As tall as the words beside it — the well and its claim are one row. */
+/* A square, anchored to the claim's first line. */
 .gr-model-good-art {
+  aspect-ratio: 1 / 1;
   border-radius: var(--radius);
   background: var(--color-overlay);
+}
+
+/* A claim's title, one step below the section's own voice. */
+.gr-model-good-row .gr-heading {
+  font-size: 1.25rem;
 }
 
 .gr-model-good-row .gr-body {

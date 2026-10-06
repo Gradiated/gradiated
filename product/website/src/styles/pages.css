@@ -430,10 +430,16 @@
 }
 
 /* The column stretches the page's full height; its two halves pin to the
-   viewport's two edges — identity up top, the section nav at the foot. */
+   viewport's two edges — identity up top, the section nav at the foot. The
+   track is the identity's whole sticky range: it ends where the rail
+   begins, so the two can never overlap however short the viewport. */
 .gr-model-left {
   display: flex;
   flex-direction: column;
+}
+
+.gr-model-side-track {
+  flex: 1 0 auto;
 }
 
 /* The art well, and the facts under it. */
@@ -569,12 +575,20 @@
 /* -- the body: rail and sections ------------------------------------------ */
 
 /* The rail knows where the reader is; the marker square says so. It holds
-   the viewport's foot while the identity holds its head. */
+   the viewport's foot while the identity holds its head — and holds back
+   until the reader has left the first fold. */
 .gr-model-rail {
   position: sticky;
   bottom: calc(1.5 * var(--u));
-  margin-block-start: auto;
   padding-block-start: var(--u);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-base) var(--ease-response);
+}
+
+.gr-model-rail--shown {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .gr-model-rail ul {
@@ -822,8 +836,12 @@
     position: static;
   }
 
+  /* No fold to wait for in a single column — the rail is simply the list
+     of what follows. */
   .gr-model-rail {
     margin-block-start: var(--u);
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .gr-model-intro {

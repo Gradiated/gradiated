@@ -26,6 +26,7 @@ import "../styles/index.css";
  */
 
 const SECTIONS = [
+  { id: "overview", label: "Overview" },
   { id: "good-for", label: "What’s it good for" },
   { id: "benchmarks", label: "Benchmarks" },
   { id: "pricing", label: "Pricing & Specs" },
@@ -36,9 +37,15 @@ const SECTIONS = [
 /** The rail beside the sections: a list that knows where the reader is.
  *  The observer band sits high in the viewport, so a section becomes the
  *  active one as its title crosses the reading line, not when its last
- *  pixel arrives. */
+ *  pixel arrives.
+ *
+ *  The rail holds back until the reader has left the first fold — on the
+ *  fold the page IS the overview, and a nav answering "where am I" before
+ *  the question exists is noise. Overview leads the list so the top of the
+ *  page stays one tap away. */
 const ContentsRail = (): ReactElement => {
   const [active, setActive] = useState<string>(SECTIONS[0].id);
+  const [shown, setShown] = useState(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -56,11 +63,26 @@ const ContentsRail = (): ReactElement => {
       const element = document.getElementById(section.id);
       if (element) observer.observe(element);
     }
-    return () => observer.disconnect();
+
+    const intro = document.getElementById("overview");
+    const foldWatch = intro
+      ? new IntersectionObserver((entries) => {
+          for (const entry of entries) setShown(!entry.isIntersecting);
+        })
+      : null;
+    if (intro && foldWatch) foldWatch.observe(intro);
+
+    return () => {
+      observer.disconnect();
+      foldWatch?.disconnect();
+    };
   }, []);
 
   return (
-    <nav aria-label="On this page" className="gr-model-rail">
+    <nav
+      aria-label="On this page"
+      className={`gr-model-rail${shown ? " gr-model-rail--shown" : ""}`}
+    >
       <ul>
         {SECTIONS.map((section) => (
           <li key={section.id}>
@@ -194,26 +216,31 @@ export const ModelDetailPage = ({
               nav holds its foot, the full length of the scroll. */}
           <div className="gr-model-layout">
             <aside className="gr-model-left">
-              <div className="gr-model-side">
-                {/* The art well. The provider's mark holds it until each
+              {/* The track is what the identity sticks WITHIN: it ends where
+                  the rail begins, so the floating identity stops short of
+                  the nav instead of sliding over it at the page's foot. */}
+              <div className="gr-model-side-track">
+                <div className="gr-model-side">
+                  {/* The art well. The provider's mark holds it until each
                     model has artwork of its own. */}
-                <div className="gr-model-art">
-                  {model.icon ? <img alt="" src={model.icon} /> : model.mark}
+                  <div className="gr-model-art">
+                    {model.icon ? <img alt="" src={model.icon} /> : model.mark}
+                  </div>
+                  <dl className="gr-model-facts">
+                    {model.facts.map((fact) => (
+                      <div className="gr-model-fact" key={fact.label}>
+                        <dt className="gr-label">{fact.label}</dt>
+                        <dd>{fact.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
                 </div>
-                <dl className="gr-model-facts">
-                  {model.facts.map((fact) => (
-                    <div className="gr-model-fact" key={fact.label}>
-                      <dt className="gr-label">{fact.label}</dt>
-                      <dd>{fact.value}</dd>
-                    </div>
-                  ))}
-                </dl>
               </div>
               <ContentsRail />
             </aside>
 
             <div className="gr-model-main">
-              <div className="gr-model-intro">
+              <div className="gr-model-intro" id="overview">
                 <h1 className="gr-model-name">{model.name}</h1>
                 <p className="gr-lede gr-muted gr-model-lede">
                   {model.oneLiner}

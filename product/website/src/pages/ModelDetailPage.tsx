@@ -185,162 +185,168 @@ export const ModelDetailPage = ({
       <Nav />
 
       <Band>
-        <Module bleed className="gr-module--model-head" index={0}>
+        <Module bleed className="gr-module--model" index={0}>
           <a className="gr-label gr-model-back" href="/inference/">
             &larr; All models
           </a>
-          <div className="gr-model-head">
-            <aside className="gr-model-side">
-              {/* The art well. The provider's mark holds it until each model
-                  has artwork of its own. */}
-              <div className="gr-model-art">
-                {model.icon ? <img alt="" src={model.icon} /> : model.mark}
+          {/* ONE grid for the whole page, so the left column is one column:
+              the identity floats at the top of the viewport and the section
+              nav holds its foot, the full length of the scroll. */}
+          <div className="gr-model-layout">
+            <aside className="gr-model-left">
+              <div className="gr-model-side">
+                {/* The art well. The provider's mark holds it until each
+                    model has artwork of its own. */}
+                <div className="gr-model-art">
+                  {model.icon ? <img alt="" src={model.icon} /> : model.mark}
+                </div>
+                <dl className="gr-model-facts">
+                  {model.facts.map((fact) => (
+                    <div className="gr-model-fact" key={fact.label}>
+                      <dt className="gr-label">{fact.label}</dt>
+                      <dd>{fact.value}</dd>
+                    </div>
+                  ))}
+                </dl>
               </div>
-              <dl className="gr-model-facts">
-                {model.facts.map((fact) => (
-                  <div className="gr-model-fact" key={fact.label}>
-                    <dt className="gr-label">{fact.label}</dt>
-                    <dd>{fact.value}</dd>
-                  </div>
-                ))}
-              </dl>
+              <ContentsRail />
             </aside>
 
-            <div className="gr-model-intro">
-              <h1 className="gr-model-name">{model.name}</h1>
-              <p className="gr-lede gr-muted gr-model-lede">{model.oneLiner}</p>
-              <div className="gr-model-overview">
-                {model.overview.map((paragraph) => (
-                  <p className="gr-body" key={paragraph.slice(0, 32)}>
-                    {paragraph}
-                  </p>
-                ))}
+            <div className="gr-model-main">
+              <div className="gr-model-intro">
+                <h1 className="gr-model-name">{model.name}</h1>
+                <p className="gr-lede gr-muted gr-model-lede">
+                  {model.oneLiner}
+                </p>
+                <div className="gr-model-overview">
+                  {model.overview.map((paragraph) => (
+                    <p className="gr-body" key={paragraph.slice(0, 32)}>
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
+                <ModelId id={model.id} />
               </div>
-              <ModelId id={model.id} />
-            </div>
-          </div>
-        </Module>
 
-        <Module index={1}>
-          <div className="gr-model-body">
-            <ContentsRail />
-
-            <div className="gr-model-sections">
-              <section className="gr-model-section" id="good-for">
-                <h2 className="gr-model-section-title">
-                  What&rsquo;s it good for
-                </h2>
-                <div className="gr-model-good">
-                  {model.goodFor.map((item) => (
-                    <div className="gr-model-good-row" key={item.title}>
-                      {/* PLACEHOLDER — a spot illustration per use, when the
+              <div className="gr-model-sections">
+                <section className="gr-model-section" id="good-for">
+                  <h2 className="gr-model-section-title">
+                    What&rsquo;s it good for
+                  </h2>
+                  <div className="gr-model-good">
+                    {model.goodFor.map((item) => (
+                      <div className="gr-model-good-row" key={item.title}>
+                        {/* PLACEHOLDER — a spot illustration per use, when the
                           art exists. An empty well in the meantime. */}
-                      <span aria-hidden className="gr-model-good-art" />
-                      <div>
-                        <h3 className="gr-heading">{item.title}</h3>
-                        <p className="gr-body gr-muted">{item.body}</p>
+                        <span aria-hidden className="gr-model-good-art" />
+                        <div>
+                          <h3 className="gr-heading">{item.title}</h3>
+                          <p className="gr-body gr-muted">{item.body}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
+                    ))}
+                  </div>
+                </section>
 
-              <section className="gr-model-section" id="benchmarks">
-                <h2 className="gr-model-section-title">Benchmarks</h2>
-                <p className="gr-body gr-muted gr-model-section-lede">
-                  {model.benchmarksNote}
-                </p>
-                <div className="gr-model-bench">
-                  {model.benchmarks.map((benchmark) => (
-                    <div className="gr-model-bench-row" key={benchmark.name}>
-                      <span className="gr-model-bench-name">
-                        {benchmark.name}
-                      </span>
-                      {benchmark.bar ? (
-                        <span className="gr-model-bench-track" aria-hidden>
-                          <span
-                            className="gr-model-bench-bar"
-                            style={{ width: `${benchmark.bar}%` }}
-                          />
+                <section className="gr-model-section" id="benchmarks">
+                  <h2 className="gr-model-section-title">Benchmarks</h2>
+                  <p className="gr-body gr-muted gr-model-section-lede">
+                    {model.benchmarksNote}
+                  </p>
+                  <div className="gr-model-bench">
+                    {model.benchmarks.map((benchmark) => (
+                      <div className="gr-model-bench-row" key={benchmark.name}>
+                        <span className="gr-model-bench-name">
+                          {benchmark.name}
                         </span>
-                      ) : (
-                        <span aria-hidden />
-                      )}
-                      <span className="gr-model-bench-score">
-                        {benchmark.score}
-                      </span>
-                      {benchmark.note ? (
-                        <span className="gr-model-bench-note">
-                          {benchmark.note}
+                        {benchmark.bar ? (
+                          <span className="gr-model-bench-track" aria-hidden>
+                            <span
+                              className="gr-model-bench-bar"
+                              style={{ width: `${benchmark.bar}%` }}
+                            />
+                          </span>
+                        ) : (
+                          <span aria-hidden />
+                        )}
+                        <span className="gr-model-bench-score">
+                          {benchmark.score}
                         </span>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              </section>
+                        {benchmark.note ? (
+                          <span className="gr-model-bench-note">
+                            {benchmark.note}
+                          </span>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                </section>
 
-              <section className="gr-model-section" id="pricing">
-                <h2 className="gr-model-section-title">Pricing &amp; Specs</h2>
-                <p className="gr-body gr-muted gr-model-section-lede">
-                  Latency is a choice, not a property of the model —{" "}
-                  <a className="gr-link" href="/inference/">
-                    pick the service tier
-                  </a>{" "}
-                  your workload needs.
-                </p>
-                <ModelVitals model={model} />
-                <dl className="gr-model-specs">
-                  {model.specs.map((spec) => (
-                    <div className="gr-model-spec" key={spec.label}>
-                      <dt className="gr-label">{spec.label}</dt>
-                      <dd className="gr-body">{spec.value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </section>
+                <section className="gr-model-section" id="pricing">
+                  <h2 className="gr-model-section-title">
+                    Pricing &amp; Specs
+                  </h2>
+                  <p className="gr-body gr-muted gr-model-section-lede">
+                    Latency is a choice, not a property of the model —{" "}
+                    <a className="gr-link" href="/inference/">
+                      pick the service tier
+                    </a>{" "}
+                    your workload needs.
+                  </p>
+                  <ModelVitals model={model} />
+                  <dl className="gr-model-specs">
+                    {model.specs.map((spec) => (
+                      <div className="gr-model-spec" key={spec.label}>
+                        <dt className="gr-label">{spec.label}</dt>
+                        <dd className="gr-body">{spec.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </section>
 
-              <section className="gr-model-section" id="getting-started">
-                <h2 className="gr-model-section-title">Getting Started</h2>
-                <p className="gr-body gr-muted gr-model-section-lede">
-                  {model.gettingStarted.lede}
-                </p>
-                <div className="gr-model-snippets">
-                  {model.gettingStarted.snippets.map((snippet) => (
-                    <div className="gr-model-snippet" key={snippet.label}>
-                      <p className="gr-label">{snippet.label}</p>
-                      <CodeBlock code={snippet.code} />
-                    </div>
-                  ))}
-                </div>
-                <p className="gr-body gr-muted">
-                  <a className="gr-link" href={model.gettingStarted.docsHref}>
-                    {model.gettingStarted.docsLabel}
-                  </a>
-                </p>
-              </section>
+                <section className="gr-model-section" id="getting-started">
+                  <h2 className="gr-model-section-title">Getting Started</h2>
+                  <p className="gr-body gr-muted gr-model-section-lede">
+                    {model.gettingStarted.lede}
+                  </p>
+                  <div className="gr-model-snippets">
+                    {model.gettingStarted.snippets.map((snippet) => (
+                      <div className="gr-model-snippet" key={snippet.label}>
+                        <p className="gr-label">{snippet.label}</p>
+                        <CodeBlock code={snippet.code} />
+                      </div>
+                    ))}
+                  </div>
+                  <p className="gr-body gr-muted">
+                    <a className="gr-link" href={model.gettingStarted.docsHref}>
+                      {model.gettingStarted.docsLabel}
+                    </a>
+                  </p>
+                </section>
 
-              <section className="gr-model-section" id="hardware">
-                <h2 className="gr-model-section-title">Hardware</h2>
-                <p className="gr-body gr-muted gr-model-section-lede">
-                  What {model.name} runs on — our serving fleet first, then what
-                  the open weights support anywhere else.
-                </p>
-                <dl className="gr-model-specs">
-                  {model.hardware.map((row) => (
-                    <div className="gr-model-spec" key={row.name}>
-                      <dt className="gr-label">{row.name}</dt>
-                      <dd className="gr-body">{row.support}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </section>
+                <section className="gr-model-section" id="hardware">
+                  <h2 className="gr-model-section-title">Hardware</h2>
+                  <p className="gr-body gr-muted gr-model-section-lede">
+                    What {model.name} runs on — our serving fleet first, then
+                    what the open weights support anywhere else.
+                  </p>
+                  <dl className="gr-model-specs">
+                    {model.hardware.map((row) => (
+                      <div className="gr-model-spec" key={row.name}>
+                        <dt className="gr-label">{row.name}</dt>
+                        <dd className="gr-body">{row.support}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </section>
+              </div>
             </div>
           </div>
         </Module>
       </Band>
 
       <Band>
-        <Footer index={2} />
+        <Footer index={1} />
       </Band>
     </Substrate>
   );

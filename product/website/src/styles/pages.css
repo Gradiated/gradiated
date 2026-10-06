@@ -384,17 +384,29 @@
    Identity on the left — the art well and the factsheet — the argument
    beside it, then a contents rail tracking four sections.                    */
 
-/* The head band sits on the overlay surface; the sections below keep the
-   page's ground, so the identity reads as its own plate. */
-.gr-module--model-head {
-  background: var(--color-overlay);
+/* One module carries the whole page, so the left column is ONE column and
+   can float the full length of the scroll. The white plate of the first
+   fold is painted behind it — exactly one viewport of overlay, ending in
+   the band's rule. */
+.gr-module--model {
+  position: relative;
   /* The head begins where a library piece begins — back link and art land
      at the same heights as the library detail's (~188px and ~250px). */
   padding-block-start: calc(7.2 * var(--u));
-  /* The head is the first fold, exactly: the plate runs to the viewport's
-     edge and the sections begin past it. */
-  min-height: 100dvh;
-  box-sizing: border-box;
+  /* The first fold's plate and the rule under it, as background layers:
+     anything painted by an element inside .gr-module-inner lives under its
+     entrance transform, which clips absolutes to the band. A background
+     cannot be clipped by a descendant's transform. */
+  background-image:
+    linear-gradient(var(--color-overlay), var(--color-overlay)),
+    linear-gradient(var(--color-rule), var(--color-rule));
+  background-repeat: no-repeat;
+  background-size:
+    100% 100dvh,
+    100% 1px;
+  background-position:
+    0 0,
+    0 100dvh;
 }
 
 .gr-model-back {
@@ -409,15 +421,19 @@
   color: var(--color-text);
 }
 
-/* The head and the body share one grid geometry, so the intro and the
-   sections start on the same left edge. */
-.gr-model-head,
-.gr-model-body {
+.gr-model-layout {
+  position: relative;
   display: grid;
   grid-template-columns: calc(9 * var(--u)) minmax(0, 44rem);
   justify-content: space-between;
   gap: calc(2 * var(--u));
-  align-items: start;
+}
+
+/* The column stretches the page's full height; its two halves pin to the
+   viewport's two edges — identity up top, the section nav at the foot. */
+.gr-model-left {
+  display: flex;
+  flex-direction: column;
 }
 
 /* The art well, and the facts under it. */
@@ -448,7 +464,7 @@
 .gr-model-facts {
   margin: 0;
   display: grid;
-  gap: calc(0.45 * var(--u));
+  gap: calc(0.25 * var(--u));
 }
 
 .gr-model-fact dt,
@@ -472,6 +488,12 @@
 
 .gr-model-intro {
   max-width: 40rem;
+  /* Fills the rest of the first fold, so the sections begin past the white
+     plate and land where the body band used to begin. */
+  box-sizing: border-box;
+  min-height: calc(100dvh - 7.2 * var(--u));
+  padding-block-end: calc(2 * var(--u));
+  margin-block-end: calc(4.5 * var(--u));
 }
 
 /* 64px on a desktop — the name is the page's masthead, not a section title. */
@@ -546,11 +568,13 @@
 
 /* -- the body: rail and sections ------------------------------------------ */
 
-/* The rail knows where the reader is; the marker square says so. Sticky, so
-   it keeps answering while the sections scroll. */
+/* The rail knows where the reader is; the marker square says so. It holds
+   the viewport's foot while the identity holds its head. */
 .gr-model-rail {
   position: sticky;
-  top: calc(1.5 * var(--u));
+  bottom: calc(1.5 * var(--u));
+  margin-block-start: auto;
+  padding-block-start: var(--u);
 }
 
 .gr-model-rail ul {
@@ -782,10 +806,6 @@
 }
 
 @media (max-width: 900px) {
-  .gr-model-head {
-    grid-template-columns: 1fr;
-  }
-
   /* The facts stay a sheet; the art well caps its own size. */
   .gr-model-art {
     width: calc(7 * var(--u));
@@ -793,12 +813,22 @@
 
   /* The rail has no column of its own on a phone — it becomes a row of
      links above the sections. */
-  .gr-model-body {
+  .gr-model-layout {
     grid-template-columns: 1fr;
   }
 
+  .gr-model-side,
   .gr-model-rail {
     position: static;
+  }
+
+  .gr-model-rail {
+    margin-block-start: var(--u);
+  }
+
+  .gr-model-intro {
+    min-height: 0;
+    margin-block-end: calc(2 * var(--u));
   }
 
   .gr-model-rail ul {

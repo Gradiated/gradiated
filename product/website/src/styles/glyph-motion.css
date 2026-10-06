@@ -154,7 +154,7 @@
   }
   30%,
   40% {
-    translate: 0px 6.11px;
+    translate: 0px 9.75px;
   }
   55%,
   70% {
@@ -162,7 +162,7 @@
   }
   82%,
   90% {
-    translate: 0px 6.11px;
+    translate: 0px 9.75px;
   }
   100% {
     translate: 0 0;
@@ -178,7 +178,7 @@
   }
   55%,
   70% {
-    translate: 0px -6.11px;
+    translate: 0px -9.75px;
   }
   82%,
   100% {

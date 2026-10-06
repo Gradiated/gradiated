@@ -64,17 +64,15 @@ const ContentsRail = (): ReactElement => {
       if (element) observer.observe(element);
     }
 
-    const intro = document.getElementById("overview");
-    const foldWatch = intro
-      ? new IntersectionObserver((entries) => {
-          for (const entry of entries) setShown(!entry.isIntersecting);
-        })
-      : null;
-    if (intro && foldWatch) foldWatch.observe(intro);
+    /* The moment the reader starts leaving the fold, not once it is gone —
+       a tenth of a viewport is "they have started scrolling". */
+    const onScroll = () => setShown(window.scrollY > window.innerHeight * 0.1);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
 
     return () => {
       observer.disconnect();
-      foldWatch?.disconnect();
+      window.removeEventListener("scroll", onScroll);
     };
   }, []);
 
@@ -216,25 +214,20 @@ export const ModelDetailPage = ({
               nav holds its foot, the full length of the scroll. */}
           <div className="gr-model-layout">
             <aside className="gr-model-left">
-              {/* The track is what the identity sticks WITHIN: it ends where
-                  the rail begins, so the floating identity stops short of
-                  the nav instead of sliding over it at the page's foot. */}
-              <div className="gr-model-side-track">
-                <div className="gr-model-side">
-                  {/* The art well. The provider's mark holds it until each
+              <div className="gr-model-side">
+                {/* The art well. The provider's mark holds it until each
                     model has artwork of its own. */}
-                  <div className="gr-model-art">
-                    {model.icon ? <img alt="" src={model.icon} /> : model.mark}
-                  </div>
-                  <dl className="gr-model-facts">
-                    {model.facts.map((fact) => (
-                      <div className="gr-model-fact" key={fact.label}>
-                        <dt className="gr-label">{fact.label}</dt>
-                        <dd>{fact.value}</dd>
-                      </div>
-                    ))}
-                  </dl>
+                <div className="gr-model-art">
+                  {model.icon ? <img alt="" src={model.icon} /> : model.mark}
                 </div>
+                <dl className="gr-model-facts">
+                  {model.facts.map((fact) => (
+                    <div className="gr-model-fact" key={fact.label}>
+                      <dt className="gr-label">{fact.label}</dt>
+                      <dd>{fact.value}</dd>
+                    </div>
+                  ))}
+                </dl>
               </div>
               <ContentsRail />
             </aside>

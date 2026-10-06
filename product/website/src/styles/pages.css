@@ -429,17 +429,18 @@
   gap: calc(2 * var(--u));
 }
 
-/* The column stretches the page's full height; its two halves pin to the
-   viewport's two edges — identity up top, the section nav at the foot. The
-   track is the identity's whole sticky range: it ends where the rail
-   begins, so the two can never overlap however short the viewport. */
+/* The whole left column is ONE sticky block, exactly a viewport tall:
+   identity at its head, the section nav at its foot, and the space between
+   them is the viewport's own — held to the very end of the page rather
+   than collapsing as the column runs out. */
 .gr-model-left {
+  position: sticky;
+  top: calc(1.5 * var(--u));
+  height: calc(100dvh - 3 * var(--u));
   display: flex;
   flex-direction: column;
-}
-
-.gr-model-side-track {
-  flex: 1 0 auto;
+  justify-content: space-between;
+  align-self: start;
 }
 
 /* The art well, and the facts under it. */
@@ -462,10 +463,6 @@
 }
 
 /* Floats along like the library detail's contents under its artwork. */
-.gr-model-side {
-  position: sticky;
-  top: calc(1.5 * var(--u));
-}
 
 .gr-model-facts {
   margin: 0;
@@ -574,21 +571,57 @@
 
 /* -- the body: rail and sections ------------------------------------------ */
 
-/* The rail knows where the reader is; the marker square says so. It holds
-   the viewport's foot while the identity holds its head — and holds back
-   until the reader has left the first fold. */
+/* The rail knows where the reader is; the marker square says so. It sits
+   at the sticky block's foot and holds back until the reader starts past
+   the first fold — then its entries arrive one after another, sliding in
+   from the left. Leaving plays no stagger: the exits is one piece. */
 .gr-model-rail {
-  position: sticky;
-  bottom: calc(1.5 * var(--u));
   padding-block-start: var(--u);
-  opacity: 0;
   pointer-events: none;
-  transition: opacity var(--dur-base) var(--ease-response);
 }
 
 .gr-model-rail--shown {
-  opacity: 1;
   pointer-events: auto;
+}
+
+.gr-model-rail li {
+  opacity: 0;
+  translate: calc(-0.6 * var(--u)) 0;
+  transition:
+    opacity var(--dur-base) var(--ease-response),
+    translate var(--dur-base) var(--ease-response);
+}
+
+.gr-model-rail--shown li {
+  opacity: 1;
+  translate: 0 0;
+}
+
+.gr-model-rail--shown li:nth-child(2) {
+  transition-delay: 60ms;
+}
+
+.gr-model-rail--shown li:nth-child(3) {
+  transition-delay: 120ms;
+}
+
+.gr-model-rail--shown li:nth-child(4) {
+  transition-delay: 180ms;
+}
+
+.gr-model-rail--shown li:nth-child(5) {
+  transition-delay: 240ms;
+}
+
+.gr-model-rail--shown li:nth-child(6) {
+  transition-delay: 300ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-model-rail li {
+    transition: none;
+    translate: 0 0;
+  }
 }
 
 .gr-model-rail ul {
@@ -831,17 +864,21 @@
     grid-template-columns: 1fr;
   }
 
-  .gr-model-side,
-  .gr-model-rail {
+  .gr-model-left {
     position: static;
+    height: auto;
+    gap: var(--u);
   }
 
   /* No fold to wait for in a single column — the rail is simply the list
      of what follows. */
   .gr-model-rail {
-    margin-block-start: var(--u);
-    opacity: 1;
     pointer-events: auto;
+  }
+
+  .gr-model-rail li {
+    opacity: 1;
+    translate: 0 0;
   }
 
   .gr-model-intro {

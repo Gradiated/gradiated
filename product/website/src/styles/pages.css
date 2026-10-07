@@ -5375,7 +5375,14 @@
   translate: -50% -50%;
 }
 
-/* tile-sized ModelArt (nav rows): mark centred and small */
+/* tile-sized ModelArt (nav rows): the mark tile must CONTAIN the art —
+   the art layer is absolute-inset, and without a positioned, clipped
+   parent it anchors to the whole dropdown panel */
+.gr-nav-model-mark {
+  position: relative;
+  overflow: hidden;
+}
+
 .gr-models-card-art--small .gr-model-art-mark {
   left: 50%;
   top: 50%;

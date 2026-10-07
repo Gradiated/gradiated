@@ -135,9 +135,11 @@ commits changed PNGs to same-repository PR branches and adds a before/after
 comment. Forks receive downloadable artifacts. Capture and publication jobs are
 informative and never block merging; there is no pixel comparison or approval
 threshold. A separate publication job handles the write key without executing
-PR code. Its bot commits trigger the usual source checks and skip another Storybook
-capture, avoiding a screenshot update loop. PNG-only PRs and main-branch
-PNG-only pushes also skip capture.
+PR code. Its bot commits trigger the usual source checks. Screenshot-only commits from
+either the console or website skip both capture workflows, preventing them
+from triggering one another. PNG-only PRs and main-branch PNG-only pushes
+also skip capture. In-flight publishers retry over sibling screenshot commits,
+preserving both sets, and discard captures when source files change.
 
 Main-branch builds publish to a private S3 bucket through CloudFront. A successful
 Terraform run also republishes Storybook, so the initial hosting provisioning

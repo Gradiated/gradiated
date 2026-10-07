@@ -9,10 +9,10 @@ import {
   Footer,
   Module,
   Nav,
-  Showpiece,
   Substrate,
 } from "../components/design";
 import { Arrow } from "../components/design";
+import { WaitlistButton } from "../components/WaitlistButton";
 import "../styles/index.css";
 
 const FEATURES = [
@@ -38,17 +38,20 @@ export const TrainingPage = (): ReactElement => (
       <Module bleed className="gr-module--fold" index={0}>
         <Fold
           title={["Make the", "model yours."]}
-          lede="Switch the base URL to kick off auto fine tuning. We train on your traffic and ship new weights. Better results. Faster responses. 50–80% lower cost."
+          lede="Post-training is in private beta. Join the waitlist to train models on your workload for better results, faster responses, and lower cost."
         >
           <CostStory />
         </Fold>
       </Module>
 
       <Module index={1}>
-        <Features
-          action={{ href: "/docs/quickstart/", label: "Get started" }}
-          items={FEATURES}
-        />
+        <Features items={FEATURES} />
+        <div className="gr-features-action">
+          <WaitlistButton className="gr-button gr-button--main">
+            Join post-training waitlist
+            <Arrow />
+          </WaitlistButton>
+        </div>
       </Module>
 
       <Module index={2}>
@@ -66,14 +69,12 @@ export const TrainingPage = (): ReactElement => (
               and trace data behind individual results. Decide if the new
               weights earn their place in production.
             </p>
-            <a
-              className="gr-button gr-button--main"
-              href="/docs/quickstart/"
-              style={{ marginBlockStart: "1.5rem" }}
-            >
-              Start training
-              <Arrow />
-            </a>
+            <div style={{ marginBlockStart: "1.5rem" }}>
+              <WaitlistButton className="gr-button gr-button--main">
+                Join post-training waitlist
+                <Arrow />
+              </WaitlistButton>
+            </div>
           </div>
           <div>
             <Benchmark />

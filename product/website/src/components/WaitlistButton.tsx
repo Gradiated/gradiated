@@ -132,7 +132,7 @@ export const WaitlistDrawer = ({
     <dialog
       className={`gr-waitlist-drawer${closing ? " gr-waitlist-drawer--closing" : ""}${handoff ? " gr-waitlist-drawer--handoff" : ""}${returning ? " gr-waitlist-drawer--returning" : ""}`}
       ref={dialogRef}
-      aria-label="Request Gradiated beta access"
+      aria-label="Join the Gradiated post-training waitlist"
       onKeyDown={(event) => event.stopPropagation()}
       onCancel={(event) => {
         event.preventDefault();
@@ -175,7 +175,8 @@ export const WaitlistDrawer = ({
             <h2 className="gr-heading">Request received.</h2>
             <p className="gr-body gr-muted">
               Thanks — a confirmation is on its way to <strong>{email}</strong>.
-              Your beta invitation will land at the same address.
+              We’ll contact you at the same address when post-training access is
+              available.
             </p>
             <button
               className="gr-button gr-button--main gr-waitlist-submit"
@@ -188,18 +189,17 @@ export const WaitlistDrawer = ({
         ) : (
           <>
             <header className="gr-waitlist-head">
-              <h2 className="gr-heading">Request beta access</h2>
+              <h2 className="gr-heading">Join the post-training waitlist</h2>
               <p className="gr-body gr-muted">
-                Tell us about your company, and we&rsquo;ll be in touch with
-                beta access details.
+                Post-training is not yet available for self serve. Tell us about
+                your workload, and we&rsquo;ll be in touch when access is
+                available.
               </p>
             </header>
 
             <form className="gr-waitlist-form" onSubmit={submit}>
               <label>
-                <span className="gr-label">
-                  Work email (for beta invitation)
-                </span>
+                <span className="gr-label">Work email</span>
                 <input
                   autoFocus
                   name="email"
@@ -239,8 +239,7 @@ export const WaitlistDrawer = ({
 
               <label>
                 <span className="gr-label">
-                  What is prompting you to switch your inference to open-source
-                  models?
+                  What would you like to improve with post-training?
                 </span>
                 <textarea
                   name="motivation"
@@ -261,7 +260,7 @@ export const WaitlistDrawer = ({
                 type="submit"
                 disabled={phase === "submitting"}
               >
-                {phase === "submitting" ? "Requesting…" : "Request beta access"}
+                {phase === "submitting" ? "Joining…" : "Join waitlist"}
               </button>
             </form>
           </>
@@ -278,7 +277,7 @@ export const WaitlistDrawer = ({
  *  outside itself. */
 export const WaitlistButton = ({
   className,
-  children = "Request beta access",
+  children = "Join post-training waitlist",
 }: {
   className?: string;
   children?: ReactNode;

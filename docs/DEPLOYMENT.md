@@ -75,11 +75,28 @@ healthy. S3 versioning keeps previous entry points for recovery.
   checks and resolved review threads. Deploy keys bypass this ruleset; the
   separate `main integrity` ruleset retains deletion and force-push protections.
 
-Every workflow runs on every pull request. Its `changes` job
+Every required workflow runs on every pull request. Its `changes` job
 (`.github/actions/relevant`) compares the pull request's files with the
 workflow's own `push.paths` and skips the other jobs when nothing relevant
 changed; the `passed` gate treats skipped jobs as passing. A new job must be
 listed in its workflow's `passed.needs`; the `changes` job fails otherwise.
+
+Product tests further select individual jobs through
+`.github/actions/product-changes/plan.py`. Workspace unit checks include changed
+packages and their dependents; cross-service and Cargo fixture dependencies
+have explicit path scopes. Native runtime, storage, gateway, proxy, product
+browser, website, and tooling checks each have their own scopes. Shared manifests,
+lockfiles, toolchain settings, and changes to the test workflow run all checks.
+Manual dispatch also runs every check. Pushes compare the full before/after
+commit range; PRs include both current and previous names of renamed files.
+Documentation and screenshot-only changes skip product checks.
+
+Website builds run in the Product tests PR gate and the separate informative
+Website screenshots workflow. Website-only main-branch changes do not trigger
+Product tests and its downstream application deployment; Vercel owns website
+hosting. The screenshot workflow follows the console Storybook pattern: artifacts
+for all PRs, committed PNGs and before/after comments for same-repository PRs,
+and no pixel-diff failures.
 
 Before observability reconciliation, populate the externally managed
 `gradiated/prod/platform/alertmanager-notifications` secret with a

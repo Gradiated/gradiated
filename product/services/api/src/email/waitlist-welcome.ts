@@ -10,18 +10,19 @@ export type WaitlistWelcomeSender = (
   message: WaitlistWelcomeMessage,
 ) => Promise<void>;
 
-const welcomeContent = (): EmailContent => {
+const welcomeContent = (consoleUrl: string): EmailContent => {
   const body = [
-    "Thanks for joining the Gradiated waitlist — you're on the list for the beta.",
-    "We are onboarding teams in small groups so every workload gets real attention. When a spot opens, the invitation comes to this address.",
-    "If anything changes about your inference plans in the meantime, just reply to this email — it reaches people, not a queue.",
+    "Thanks for joining the Gradiated post-training waitlist — you're on the list for the private beta.",
+    "Post-training is not yet available for self serve. When access is available, we will contact you at this address.",
+    `You can already sign in and use hosted inference at ${consoleUrl}. If your post-training plans change, just reply to this email.`,
   ];
 
   return {
     html: createEmailShell({
       eyebrow: "Waitlist",
       title: "You're on the list.",
-      preheader: "Thanks for signing up — your beta invitation will land here.",
+      preheader:
+        "Thanks for signing up — we will contact you about post-training access.",
       body: body
         .map(
           (line) =>
@@ -34,12 +35,14 @@ const welcomeContent = (): EmailContent => {
 };
 
 export const createResendWaitlistWelcomeSender =
-  (configuration: ResendConfiguration): WaitlistWelcomeSender =>
+  (
+    configuration: ResendConfiguration & { consoleUrl: string },
+  ): WaitlistWelcomeSender =>
   ({ email }) =>
     sendResendEmail(configuration, {
       to: email,
-      subject: "You're on the Gradiated waitlist",
-      content: welcomeContent(),
+      subject: "You're on the Gradiated post-training waitlist",
+      content: welcomeContent(configuration.consoleUrl),
     });
 
 export const createLoggingWaitlistWelcomeSender =

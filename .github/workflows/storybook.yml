@@ -8,8 +8,14 @@ on:
       - "product/packages/contracts/**"
       - "product/pnpm-lock.yaml"
       - "product/pnpm-workspace.yaml"
-      - "tools/browser/**"
+      - "tools/browser/storybook_screenshots.py"
+      - "tools/browser/pyproject.toml"
+      - "tools/browser/uv.lock"
       - ".github/workflows/storybook.yml"
+      - ".github/actions/relevant/capture.sh"
+      - "product/package.json"
+      - "product/tsconfig.base.json"
+      - "mise.toml"
   push:
     branches: [main]
     paths:
@@ -17,7 +23,15 @@ on:
       - "!product/services/console/screenshots/**"
       - "product/packages/contracts/**"
       - "product/pnpm-lock.yaml"
+      - "product/pnpm-workspace.yaml"
+      - "tools/browser/storybook_screenshots.py"
+      - "tools/browser/pyproject.toml"
+      - "tools/browser/uv.lock"
       - ".github/workflows/storybook.yml"
+      - ".github/actions/relevant/capture.sh"
+      - "product/package.json"
+      - "product/tsconfig.base.json"
+      - "mise.toml"
   workflow_run:
     workflows: [Terraform]
     types: [completed]
@@ -29,7 +43,7 @@ permissions:
 
 concurrency:
   group: storybook-${{ github.event.pull_request.number || 'production' }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -44,19 +58,11 @@ jobs:
         with:
           fetch-depth: 2
           ref: ${{ github.event_name == 'workflow_run' && 'main' || github.event.pull_request.head.sha || github.sha }}
-      - name: Skip capture after a screenshot-only bot commit
+      - name: Skip capture after any screenshot-only commit
         id: capture
         env:
           EVENT_NAME: ${{ github.event_name }}
-        shell: bash
-        run: |
-          if [[ "${EVENT_NAME}" == 'pull_request' ]] &&
-             [[ "$(git log -1 --format=%s)" == 'chore(console): update informative page screenshots' ]] &&
-             [[ -z "$(git diff --name-only HEAD^ HEAD -- . ':!product/services/console/screenshots/*.png')" ]]; then
-            echo 'capture=false' >> "${GITHUB_OUTPUT}"
-          else
-            echo 'capture=true' >> "${GITHUB_OUTPUT}"
-          fi
+        run: bash .github/actions/relevant/capture.sh
       - uses: jdx/mise-action@v4.2.3
         if: steps.capture.outputs.capture == 'true'
       - run: pnpm install --frozen-lockfile
@@ -126,23 +132,44 @@ jobs:
         env:
           PR_BRANCH: ${{ github.event.pull_request.head.ref }}
           PR_SHA: ${{ github.event.pull_request.head.sha }}
+          SCREENSHOT_PATH: product/services/console/screenshots
+          COMMIT_MESSAGE: "chore(console): update informative page screenshots"
         shell: bash
         run: |
-          current_sha="$(git ls-remote origin "refs/heads/${PR_BRANCH}" | cut -f1)"
-          if [[ "${current_sha}" != "${PR_SHA}" ]]; then
-            echo 'The PR changed during capture; leave updates to its next run.'
-            exit 0
-          fi
-          git add --all -- 'product/services/console/screenshots/*.png'
-          if git diff --cached --quiet; then
-            echo "sha=${PR_SHA}" >> "${GITHUB_OUTPUT}"
-            exit 0
-          fi
+          set -euo pipefail
+
+          git add --all -- "${SCREENSHOT_PATH}/*.png"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'chore(console): update informative page screenshots'
-          git push origin "HEAD:refs/heads/${PR_BRANCH}"
-          echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+          if ! git diff --cached --quiet; then
+            git commit -m "$COMMIT_MESSAGE"
+          fi
+          capture_commit="$(git rev-parse HEAD)"
+
+          # A sibling publisher may have advanced the branch. Keep its screenshots and
+          # retry our commit, but never publish a capture over changed source files.
+          for attempt in 1 2 3; do
+            echo "Publication attempt ${attempt}"
+            git fetch --depth=100 origin "refs/heads/${PR_BRANCH}"
+            current_sha="$(git rev-parse FETCH_HEAD)"
+            if ! git diff --quiet "$PR_SHA" "$current_sha" -- . \
+                ':!product/services/console/screenshots/*.png' \
+                ':!product/website/screenshots/*.png'; then
+              echo 'The PR source changed during capture; discard this outdated capture.'
+              exit 0
+            fi
+            if [[ "$capture_commit" == "$PR_SHA" ]]; then
+              echo "sha=${current_sha}" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            git rebase --onto "$current_sha" HEAD^
+            if git push origin "HEAD:refs/heads/${PR_BRANCH}"; then
+              echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          echo 'The branch kept changing; screenshots remain available in the artifact.'
+          exit 1
       - name: Show changed pages in the PR
         if: steps.commit.outputs.sha
         uses: actions/github-script@v8

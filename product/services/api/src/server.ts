@@ -98,7 +98,10 @@ const createEmailSenders = () => {
   return {
     sendMagicLink: createResendMagicLinkSender(resend),
     sendOtp: createResendOtpSender(resend),
-    sendWaitlistWelcome: createResendWaitlistWelcomeSender(resend),
+    sendWaitlistWelcome: createResendWaitlistWelcomeSender({
+      ...resend,
+      consoleUrl: environment.CONSOLE_URL,
+    }),
   };
 };
 

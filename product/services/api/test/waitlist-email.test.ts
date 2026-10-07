@@ -16,6 +16,7 @@ const captureRequests = () => {
 
 const configuration = {
   apiKey: "test-key",
+  consoleUrl: "https://console.gradiated.com",
   from: "Gradiated <hello@mail.gradiated.com>",
 };
 
@@ -41,15 +42,40 @@ describe("waitlist welcome email", () => {
     expect(body).toMatchObject({
       from: configuration.from,
       to: ["founder@example.com"],
-      subject: "You're on the Gradiated waitlist",
+      subject: "You're on the Gradiated post-training waitlist",
     });
     expect(body.text).toMatch(/^You're on the list\.\n\nThanks for joining/);
+    expect(body.text).toContain("post-training waitlist");
+    expect(body.text).toContain(
+      "Post-training is not yet available for self serve.",
+    );
+    expect(body.text).toContain("https://console.gradiated.com");
     expect(body.text).toContain("— Gradiated");
     expect(body.html).toContain("You&#39;re on the list.</h1>");
     expect(body.html).toContain(
       '<p style="margin:0 0 20px;font-family:Arial,sans-serif;font-size:16px;line-height:1.65;color:#444444;">Thanks for joining',
     );
     expect(body.html).not.toContain("<p>");
+  });
+
+  it("links to the configured console in preview deployments", async () => {
+    const { requests, fetch } = captureRequests();
+    const consoleUrl = "https://console.preview.example.com";
+
+    await createResendWaitlistWelcomeSender({
+      ...configuration,
+      consoleUrl,
+      fetch,
+    })({
+      email: "founder@example.com",
+    });
+
+    const body = JSON.parse(String(requests[0]?.init.body));
+
+    expect(body.text).toContain(consoleUrl);
+    expect(body.html).toContain(consoleUrl);
+    expect(body.text).not.toContain("https://console.gradiated.com");
+    expect(body.html).not.toContain("https://console.gradiated.com");
   });
 
   it("reports a provider failure with a bounded code only", async () => {

@@ -2,6 +2,18 @@
 
 This folder contains the Gradiated website. It uses React, TypeScript, Vite, and the existing site CSS.
 
+## Product access
+
+The shared navigation and docs account link open the console at
+`VITE_CONSOLE_BASE_URL` (default: `https://console.gradiated.com`, or
+`http://localhost:3000` in development). Users can sign in and use inference
+without joining a waitlist.
+
+Post-training remains in private beta. The training page opens the waitlist
+drawer, which submits to `POST /api/v1/waitlist` and sends a post-training
+confirmation email. The console's existing `training` feature flag continues
+to limit training access.
+
 ## Install
 
 Run this command from this folder:
@@ -43,6 +55,35 @@ Preview the production build:
 ```bash
 pnpm preview
 ```
+
+## PR screenshots
+
+Build the site, then capture its pages and interactions with the existing
+repo-local Playwright runtime:
+
+```bash
+cd product
+mise exec -- pnpm --filter gradiated-com build
+cd ..
+uv run --locked --project tools/browser playwright install chromium
+uv run --locked --project tools/browser python tools/browser/website_screenshots.py
+```
+
+The capture set covers the desktop homepage, mobile menu, docs, inference,
+training page, and desktop/mobile post-training waitlist drawer. PNGs live in
+`screenshots/`. Captures use fixed viewport sizes, date, locale and light theme,
+reduced motion, isolated profiles, and an empty model catalog fixture. External
+requests are blocked; capture does not log in or submit the waitlist.
+
+The Website screenshots workflow runs on relevant PRs and main-branch pushes,
+uploads captures, and commits them to same-repository PR branches with a
+before/after comment, following the console Storybook workflow. Forks receive
+artifacts. Captures are informative and do not enforce a pixel comparison.
+Screenshot-only commits from either the website or console skip both capture
+workflows, preventing them from triggering one another. In-flight publishers
+retry over sibling screenshot commits, preserving both sets, and discard captures
+when source files change. Production website build and SEO
+checks remain part of the Product tests PR gate.
 
 ## Deploy with Vercel
 
@@ -207,16 +248,3 @@ tokens. Model requests link to `team@gradiated.com`.
 Console links use `CONSOLE_BASE_URL` from `src/urls.ts`. Vite development uses
 `http://localhost:3000`; production builds use `https://console.gradiated.com`.
 Set `VITE_CONSOLE_BASE_URL` at build time to override this destination.
-
-## Waitlist access
-
-Public desktop/mobile navigation and the docs sidebar use `WaitlistButton`
-instead of login controls. It opens Typeform `pU8EArMC` in a full-screen native
-modal dialog, loading the form only on demand. The dialog provides a close
-button, Escape dismissal, background scroll locking, and a direct new-tab
-link if the embedded form cannot load. Submissions are handled by Typeform.
-This website change does not disable authentication on the separate console
-or API services.
-
-Escape events stay inside the modal so navigation menu handlers cannot leave
-the page scroll-locked.

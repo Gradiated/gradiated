@@ -11,6 +11,9 @@
 
 .gr-waitlist-trigger {
   cursor: pointer;
+}
+
+.gr-waitlist-trigger:not(.gr-button) {
   font: inherit;
   color: inherit;
   text-align: inherit;

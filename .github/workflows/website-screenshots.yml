@@ -1,0 +1,179 @@
+name: Website screenshots
+
+on:
+  pull_request:
+    paths:
+      - "product/website/**"
+      - "!product/website/screenshots/**"
+      - "product/pnpm-lock.yaml"
+      - "product/pnpm-workspace.yaml"
+      - "product/package.json"
+      - "product/tsconfig.base.json"
+      - "product/services/api/generated/openapi.json"
+      - "tools/browser/website_screenshots.py"
+      - "tools/browser/storybook_screenshots.py"
+      - "tools/browser/pyproject.toml"
+      - "tools/browser/uv.lock"
+      - ".github/workflows/website-screenshots.yml"
+      - ".github/actions/relevant/capture.sh"
+      - "mise.toml"
+  push:
+    branches: [main]
+    paths:
+      - "product/website/**"
+      - "!product/website/screenshots/**"
+      - "product/pnpm-lock.yaml"
+      - "product/pnpm-workspace.yaml"
+      - "product/package.json"
+      - "product/tsconfig.base.json"
+      - "product/services/api/generated/openapi.json"
+      - "tools/browser/website_screenshots.py"
+      - "tools/browser/storybook_screenshots.py"
+      - "tools/browser/pyproject.toml"
+      - "tools/browser/uv.lock"
+      - ".github/workflows/website-screenshots.yml"
+      - ".github/actions/relevant/capture.sh"
+      - "mise.toml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: website-screenshots-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    continue-on-error: true
+    outputs:
+      captured: ${{ steps.upload.outputs.artifact-id != '' }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Skip capture after any screenshot-only commit
+        id: capture
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: bash .github/actions/relevant/capture.sh
+      - uses: jdx/mise-action@v4.2.3
+        if: steps.capture.outputs.capture == 'true'
+      - run: pnpm install --frozen-lockfile
+        if: steps.capture.outputs.capture == 'true'
+        working-directory: product
+      - run: pnpm --filter gradiated-com build
+        if: steps.capture.outputs.capture == 'true'
+        working-directory: product
+      - uses: astral-sh/setup-uv@v6
+        if: steps.capture.outputs.capture == 'true'
+      - run: uv sync --locked --project tools/browser
+        if: steps.capture.outputs.capture == 'true'
+      - run: uv run --locked --project tools/browser playwright install --with-deps chromium
+        if: steps.capture.outputs.capture == 'true'
+      - run: uv run --locked --project tools/browser python tools/browser/website_screenshots.py
+        if: steps.capture.outputs.capture == 'true'
+      - uses: actions/upload-artifact@v4
+        id: upload
+        if: steps.capture.outputs.capture == 'true'
+        with:
+          name: website-screenshots
+          path: product/website/screenshots
+          if-no-files-found: error
+          retention-days: 14
+
+  publish-screenshots:
+    needs: capture
+    if: needs.capture.outputs.captured == 'true' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    continue-on-error: true
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          ssh-key: ${{ secrets.DEPLOY_RELEASE_SSH_KEY }}
+      - name: Remove the old PNGs before installing the complete capture
+        run: find product/website/screenshots -name '*.png' -delete 2>/dev/null || true
+      - uses: actions/download-artifact@v4
+        with:
+          name: website-screenshots
+          path: product/website/screenshots
+      - name: Commit informative screenshots
+        id: commit
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+          PR_SHA: ${{ github.event.pull_request.head.sha }}
+          SCREENSHOT_PATH: product/website/screenshots
+          COMMIT_MESSAGE: "chore(website): update informative page screenshots"
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git add --all -- "${SCREENSHOT_PATH}/*.png"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if ! git diff --cached --quiet; then
+            git commit -m "$COMMIT_MESSAGE"
+          fi
+          capture_commit="$(git rev-parse HEAD)"
+
+          # A sibling publisher may have advanced the branch. Keep its screenshots and
+          # retry our commit, but never publish a capture over changed source files.
+          for attempt in 1 2 3; do
+            echo "Publication attempt ${attempt}"
+            git fetch --depth=100 origin "refs/heads/${PR_BRANCH}"
+            current_sha="$(git rev-parse FETCH_HEAD)"
+            if ! git diff --quiet "$PR_SHA" "$current_sha" -- . \
+                ':!product/services/console/screenshots/*.png' \
+                ':!product/website/screenshots/*.png'; then
+              echo 'The PR source changed during capture; discard this outdated capture.'
+              exit 0
+            fi
+            if [[ "$capture_commit" == "$PR_SHA" ]]; then
+              echo "sha=${current_sha}" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            git rebase --onto "$current_sha" HEAD^
+            if git push origin "HEAD:refs/heads/${PR_BRANCH}"; then
+              echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          echo 'The branch kept changing; screenshots remain available in the artifact.'
+          exit 1
+      - name: Show changed pages in the PR
+        if: steps.commit.outputs.sha
+        uses: actions/github-script@v8
+        env:
+          SCREENSHOT_SHA: ${{ steps.commit.outputs.sha }}
+        with:
+          script: |
+            const marker = '<!-- website-screenshots -->';
+            const { owner, repo } = context.repo;
+            const base = context.payload.pull_request.base.sha;
+            const changes = await github.paginate(github.rest.pulls.listFiles, { owner, repo, pull_number: context.issue.number });
+            const files = changes.filter(file => file.filename.startsWith('product/website/screenshots/') && file.filename.endsWith('.png'));
+            const image = (sha, file) => `https://github.com/${owner}/${repo}/blob/${sha}/${file}?raw=true`;
+            const rows = files.map(({ filename, status }) => {
+              const before = status === 'added' ? 'New capture' : `![Before](${image(base, filename)})`;
+              const after = status === 'removed' ? 'Removed' : `![After](${image(process.env.SCREENSHOT_SHA, filename)})`;
+              return `| ${filename.split('/').pop()} | ${before} | ${after} |`;
+            });
+            const preview = rows.length ? `| Page | Before | After |\n| --- | --- | --- |\n${rows.join('\n')}` : 'No page screenshots changed.';
+            const body = `${marker}\nWebsite screenshots are informative; visual changes never fail CI. Captures use the built website with an empty model catalog fixture and block external requests.\n\n${preview}`;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number });
+            const previous = comments.find(comment => comment.user.login === 'github-actions[bot]' && comment.body.includes(marker));
+            if (previous) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: previous.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }

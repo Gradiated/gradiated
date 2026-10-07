@@ -5568,7 +5568,7 @@
    class; the gap must be restated at matching weight — the system's own
    recurring trap, met from the paragraph side this time */
 .gr-root .gr-models-request {
-  margin-block-start: calc(4 * var(--u));
+  margin-block-start: calc(1.5 * var(--u));
 }
 
 @media (max-width: 900px) {

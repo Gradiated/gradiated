@@ -71,6 +71,11 @@ const pageMetadata: Record<string, PageMetadataContent> = {
       { title: page.pageTitle, description: page.description },
     ]),
   ),
+  "/models/": {
+    title: "Models",
+    description:
+      "The open models Gradiated serves and post-trains: catalogue, benchmarks, and pricing.",
+  },
   ...Object.fromEntries(
     models.map((model) => [
       `/models/${model.slug}/`,

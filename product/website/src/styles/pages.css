@@ -5308,6 +5308,8 @@
   justify-content: space-between;
   gap: var(--u);
   flex-wrap: wrap;
+  /* clears the floating nav; a shade higher than the fold heroes sit */
+  padding-block-start: calc(var(--u) + var(--nav-h) + 1.5 * var(--u));
   margin-block-end: calc(2.5 * var(--u));
 }
 
@@ -5343,12 +5345,20 @@
   margin-block: calc(3 * var(--u));
 }
 
+/* An invitation to everyone scanning the catalogue, not a caption on the
+   last card: centred, with clear air above the grid. */
 .gr-models-request {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   align-items: baseline;
   gap: 0.5em;
-  margin-block-start: calc(2 * var(--u));
+}
+
+/* the root reset addresses `p` by element (0-1-1) and outranks a lone
+   class; the gap must be restated at matching weight — the system's own
+   recurring trap, met from the paragraph side this time */
+.gr-root .gr-models-request {
+  margin-block-start: calc(4 * var(--u));
 }
 
 @media (max-width: 900px) {

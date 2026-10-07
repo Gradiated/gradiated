@@ -920,7 +920,9 @@
 
 .gr-model-spec {
   display: flex;
-  justify-content: space-between;
+  /* around, not between: the pair reads together instead of the value
+     being exiled to the far edge */
+  justify-content: space-around;
   gap: var(--u);
   align-items: baseline;
   padding-block: calc(0.5 * var(--u));
@@ -1143,15 +1145,8 @@
     order: 2;
   }
 
-  /* the KV rows (specs AND hardware share this class) stack label over
-     value — the old rule set grid-template-columns on a flex box, a
-     no-op, which is why long values ran off the edge */
-  .gr-model-spec {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: calc(0.15 * var(--u));
-  }
-
+  /* the KV rows (specs AND hardware share this class) keep the pair
+     side by side; long values just wrap within their half */
   .gr-model-spec dd {
     text-align: left;
     overflow-wrap: anywhere;

@@ -5462,3 +5462,52 @@
     min-height: 300px;
   }
 }
+
+/* -- the metal mark --------------------------------------------------------
+   The nav's G tile in liquid metal: the metal canvas is masked by the
+   mark's own exported alpha, so the metal sits exactly in the logo's
+   silhouette. The ink mark stays underneath as the fallback and
+   cross-fades out once the first metal frame lands.                        */
+.gr-metal-mark {
+  position: relative;
+  display: block;
+  /* sized by the nav's own logo token, like the svg it replaces */
+  height: var(--nav-logo-h, 32px);
+  aspect-ratio: 1;
+  flex: none;
+}
+
+.gr-metal-mark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transition: opacity 0.45s ease;
+}
+
+.gr-metal-mark canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  -webkit-mask: url("/gradiated-logo-dark-exact.png") center / contain
+    no-repeat;
+  mask: url("/gradiated-logo-dark-exact.png") center / contain no-repeat;
+}
+
+.gr-metal-mark--on canvas {
+  opacity: 1;
+}
+
+.gr-metal-mark--on svg {
+  opacity: 0;
+}
+
+/* the lockup recomposed as a row: mark tile + wordmark (the anchor is
+   already an inline-flex row sized off --nav-logo-h; it only needs the
+   seam between the two pieces) */
+.gr-nav-wordmark {
+  gap: 8px;
+}

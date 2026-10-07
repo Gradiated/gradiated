@@ -164,6 +164,50 @@ const BRAND: Record<string, { colors: string[]; bg: string }> = {
   },
 };
 
+const BLOOM: NeatPreset = {
+  colors: [
+    { color: "#3B00FF", enabled: true },
+    { color: "#FFC858", enabled: true },
+    { color: "#17E7FF", enabled: true },
+    { color: "#215BFF", enabled: true },
+    { color: "#D8A50C", enabled: true },
+  ],
+  speed: 4,
+  horizontalPressure: 4,
+  verticalPressure: 6,
+  waveFrequencyX: 1,
+  waveFrequencyY: 1,
+  waveAmplitude: 1,
+  shadows: 3,
+  highlights: 0,
+  colorBrightness: 1.15,
+  colorSaturation: 0,
+  wireframe: false,
+  colorBlending: 4,
+  backgroundColor: "#003FFF",
+  backgroundAlpha: 1,
+  resolution: 1,
+  flowDistortionA: 3.1,
+  flowDistortionB: 2.4,
+  flowScale: 1.5,
+  flowEase: 0.31,
+  flowEnabled: true,
+  vignetteIntensity: 0.85,
+  vignetteRadius: 0.65,
+  fresnelEnabled: true,
+  fresnelPower: 3.7,
+  fresnelIntensity: 0.7,
+  fresnelColor: "#FF0000",
+  iridescenceEnabled: true,
+  iridescenceIntensity: 0.35,
+  iridescenceSpeed: 3.9,
+  bloomIntensity: 0.8,
+  bloomThreshold: 0.9,
+  chromaticAberration: 4,
+  shapeType: "plane",
+  cameraLock: true,
+};
+
 const PRESETS: Record<string, NeatPreset> = {
   "deepseek-v4-1-flash": OIL_SLICK,
   "glm-5-3-flash": NEAT,
@@ -172,9 +216,9 @@ const PRESETS: Record<string, NeatPreset> = {
 
 /* EXPERIMENT: one material for every card — differentiated by the
    provider's core colour multiplied over it. The tint does the
-   branding; the material stays shared. Currently: Time. */
+   branding; the material stays shared. Currently: Bloom. */
 const ONE_MATERIAL = true;
-const MATERIAL = (): NeatPreset => TIME;
+const MATERIAL = (): NeatPreset => BLOOM;
 
 const TINT: Record<string, string> = {
   "deepseek-v4-1-flash": "#4D6BFE",

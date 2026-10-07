@@ -399,27 +399,259 @@ const GLYPHS: Record<string, ReactElement> = {
       viewBox="0 0 48 48"
     >
       <path
-        className="gr-glyph-rail"
-        d="M-4.84 -6.31L-3.28 -4.84L-1.66 -1.77L0.11 2.93L1.92 8.76L3.75 15.2L5.59 21.68L7.46 27.68L9.37 32.75L11.43 36.61L14.04 39.1L25.52 44.63L28.79 44.83L31.43 43.68L33.31 41.5L34.29 38.71L34.47 35.58L33.94 32.26L32.77 28.92L31.02 25.73L28.8 22.87L26.18 20.51L23.28 18.82L20.21 17.95L17.11 18.08L14.31 19.33L12.16 21.54L10.82 24.42L10.27 27.69L10.43 31.17L11.24 34.69L12.63 38.06L14.5 41.1L16.76 43.65L19.33 45.56L32.06 52.32L35.84 54.59L39.7 56.91L43.56 59.22L47.41 61.54L51.27 63.86"
+        className="gr-glyph-plate"
+        d="M-4.84 -6.31L-3.28 -4.84L0.49 -7.48L-1.62 -9.6Z"
       />
+      <path className="gr-glyph-rail" d="M-4.84 -6.31L-3.28 -4.84" />
+      <path className="gr-glyph-rail" d="M-1.62 -9.6L0.49 -7.48" />
+      <path
+        className="gr-glyph-plate"
+        d="M-3.28 -4.84L-1.66 -1.77L2.55 -3.62L0.49 -7.48Z"
+      />
+      <path className="gr-glyph-rail" d="M-3.28 -4.84L-1.66 -1.77" />
+      <path className="gr-glyph-rail" d="M0.49 -7.48L2.55 -3.62" />
+      <path
+        className="gr-glyph-plate"
+        d="M-1.66 -1.77L0.11 2.93L4.46 1.45L2.55 -3.62Z"
+      />
+      <path className="gr-glyph-rail" d="M-1.66 -1.77L0.11 2.93" />
+      <path className="gr-glyph-rail" d="M2.55 -3.62L4.46 1.45" />
+      <path
+        className="gr-glyph-plate"
+        d="M0.11 2.93L1.92 8.76L6.33 7.45L4.46 1.45Z"
+      />
+      <path className="gr-glyph-rail" d="M0.11 2.93L1.92 8.76" />
+      <path className="gr-glyph-rail" d="M4.46 1.45L6.33 7.45" />
       <path className="gr-glyph-crease" d="M0.11 2.93L4.46 1.45" />
+      <path
+        className="gr-glyph-plate"
+        d="M1.92 8.76L3.75 15.2L8.17 13.94L6.33 7.45Z"
+      />
+      <path className="gr-glyph-rail" d="M1.92 8.76L3.75 15.2" />
+      <path className="gr-glyph-rail" d="M6.33 7.45L8.17 13.94" />
+      <path
+        className="gr-glyph-plate"
+        d="M3.75 15.2L5.59 21.68L10 20.37L8.17 13.94Z"
+      />
+      <path className="gr-glyph-rail" d="M3.75 15.2L5.59 21.68" />
+      <path className="gr-glyph-rail" d="M8.17 13.94L10 20.37" />
+      <path
+        className="gr-glyph-plate"
+        d="M5.59 21.68L7.46 27.68L11.81 26.2L10 20.37Z"
+      />
+      <path className="gr-glyph-rail" d="M5.59 21.68L7.46 27.68" />
+      <path className="gr-glyph-rail" d="M10 20.37L11.81 26.2" />
+      <path
+        className="gr-glyph-plate"
+        d="M7.46 27.68L9.37 32.75L13.58 30.9L11.81 26.2Z"
+      />
+      <path className="gr-glyph-rail" d="M7.46 27.68L9.37 32.75" />
+      <path className="gr-glyph-rail" d="M11.81 26.2L13.58 30.9" />
+      <path
+        className="gr-glyph-plate"
+        d="M9.37 32.75L11.43 36.61L15.2 33.97L13.58 30.9Z"
+      />
+      <path className="gr-glyph-rail" d="M9.37 32.75L11.43 36.61" />
+      <path className="gr-glyph-rail" d="M13.58 30.9L15.2 33.97" />
       <path className="gr-glyph-crease" d="M9.37 32.75L13.58 30.9" />
+      <path
+        className="gr-glyph-plate"
+        d="M11.43 36.61L14.04 39.1L16.26 35.07L15.2 33.97Z"
+      />
+      <path className="gr-glyph-rail" d="M11.43 36.61L14.04 39.1" />
+      <path className="gr-glyph-rail" d="M15.2 33.97L16.26 35.07" />
+      <path
+        className="gr-glyph-plate"
+        d="M14.04 39.1L25.52 44.63L27.28 40.38L16.26 35.07Z"
+      />
+      <path className="gr-glyph-rail" d="M14.04 39.1L25.52 44.63" />
+      <path className="gr-glyph-rail" d="M16.26 35.07L27.28 40.38" />
+      <path
+        className="gr-glyph-plate"
+        d="M25.52 44.63L28.79 44.83L27.97 40.31L27.28 40.38Z"
+      />
+      <path className="gr-glyph-rail" d="M25.52 44.63L28.79 44.83" />
+      <path className="gr-glyph-rail" d="M27.28 40.38L27.97 40.31" />
+      <path
+        className="gr-glyph-plate"
+        d="M28.79 44.83L31.43 43.68L28.67 40L27.97 40.31Z"
+      />
+      <path className="gr-glyph-rail" d="M28.79 44.83L31.43 43.68" />
+      <path className="gr-glyph-rail" d="M27.97 40.31L28.67 40" />
+      <path
+        className="gr-glyph-plate"
+        d="M31.43 43.68L33.31 41.5L29.29 39.26L28.67 40Z"
+      />
+      <path className="gr-glyph-rail" d="M31.43 43.68L33.31 41.5" />
+      <path className="gr-glyph-rail" d="M28.67 40L29.29 39.26" />
       <path className="gr-glyph-crease" d="M31.43 43.68L28.67 40" />
+      <path
+        className="gr-glyph-plate"
+        d="M33.31 41.5L34.29 38.71L29.77 37.87L29.29 39.26Z"
+      />
+      <path className="gr-glyph-rail" d="M33.31 41.5L34.29 38.71" />
+      <path className="gr-glyph-rail" d="M29.29 39.26L29.77 37.87" />
+      <path
+        className="gr-glyph-plate"
+        d="M34.29 38.71L34.47 35.58L29.87 35.85L29.77 37.87Z"
+      />
+      <path className="gr-glyph-rail" d="M34.29 38.71L34.47 35.58" />
+      <path className="gr-glyph-rail" d="M29.77 37.87L29.87 35.85" />
+      <path
+        className="gr-glyph-plate"
+        d="M34.47 35.58L33.94 32.26L29.48 33.41L29.87 35.85Z"
+      />
+      <path className="gr-glyph-rail" d="M34.47 35.58L33.94 32.26" />
+      <path className="gr-glyph-rail" d="M29.87 35.85L29.48 33.41" />
+      <path
+        className="gr-glyph-plate"
+        d="M33.94 32.26L32.77 28.92L28.57 30.8L29.48 33.41Z"
+      />
+      <path className="gr-glyph-rail" d="M33.94 32.26L32.77 28.92" />
+      <path className="gr-glyph-rail" d="M29.48 33.41L28.57 30.8" />
+      <path
+        className="gr-glyph-plate"
+        d="M32.77 28.92L31.02 25.73L27.18 28.25L28.57 30.8Z"
+      />
+      <path className="gr-glyph-rail" d="M32.77 28.92L31.02 25.73" />
+      <path className="gr-glyph-rail" d="M28.57 30.8L27.18 28.25" />
       <path className="gr-glyph-crease" d="M32.77 28.92L28.57 30.8" />
+      <path
+        className="gr-glyph-plate"
+        d="M31.02 25.73L28.8 22.87L25.42 25.99L27.18 28.25Z"
+      />
+      <path className="gr-glyph-rail" d="M31.02 25.73L28.8 22.87" />
+      <path className="gr-glyph-rail" d="M27.18 28.25L25.42 25.99" />
+      <path
+        className="gr-glyph-plate"
+        d="M28.8 22.87L26.18 20.51L23.45 24.21L25.42 25.99Z"
+      />
+      <path className="gr-glyph-rail" d="M28.8 22.87L26.18 20.51" />
+      <path className="gr-glyph-rail" d="M25.42 25.99L23.45 24.21" />
+      <path
+        className="gr-glyph-plate"
+        d="M26.18 20.51L23.28 18.82L21.45 23.03L23.45 24.21Z"
+      />
+      <path className="gr-glyph-rail" d="M26.18 20.51L23.28 18.82" />
+      <path className="gr-glyph-rail" d="M23.45 24.21L21.45 23.03" />
+      <path
+        className="gr-glyph-plate"
+        d="M23.28 18.82L20.21 17.95L19.63 22.51L21.45 23.03Z"
+      />
+      <path className="gr-glyph-rail" d="M23.28 18.82L20.21 17.95" />
+      <path className="gr-glyph-rail" d="M21.45 23.03L19.63 22.51" />
+      <path
+        className="gr-glyph-plate"
+        d="M20.21 17.95L17.11 18.08L18.14 22.56L19.63 22.51Z"
+      />
+      <path className="gr-glyph-rail" d="M20.21 17.95L17.11 18.08" />
+      <path className="gr-glyph-rail" d="M19.63 22.51L18.14 22.56" />
       <path className="gr-glyph-crease" d="M20.21 17.95L19.63 22.51" />
+      <path
+        className="gr-glyph-plate"
+        d="M17.11 18.08L14.31 19.33L16.96 23.09L18.14 22.56Z"
+      />
+      <path className="gr-glyph-rail" d="M17.11 18.08L14.31 19.33" />
+      <path className="gr-glyph-rail" d="M18.14 22.56L16.96 23.09" />
+      <path
+        className="gr-glyph-plate"
+        d="M14.31 19.33L12.16 21.54L15.97 24.11L16.96 23.09Z"
+      />
+      <path className="gr-glyph-rail" d="M14.31 19.33L12.16 21.54" />
+      <path className="gr-glyph-rail" d="M16.96 23.09L15.97 24.11" />
+      <path
+        className="gr-glyph-plate"
+        d="M12.16 21.54L10.82 24.42L15.23 25.74L15.97 24.11Z"
+      />
+      <path className="gr-glyph-rail" d="M12.16 21.54L10.82 24.42" />
+      <path className="gr-glyph-rail" d="M15.97 24.11L15.23 25.74" />
+      <path
+        className="gr-glyph-plate"
+        d="M10.82 24.42L10.27 27.69L14.86 27.94L15.23 25.74Z"
+      />
+      <path className="gr-glyph-rail" d="M10.82 24.42L10.27 27.69" />
+      <path className="gr-glyph-rail" d="M15.23 25.74L14.86 27.94" />
+      <path
+        className="gr-glyph-plate"
+        d="M10.27 27.69L10.43 31.17L14.98 30.53L14.86 27.94Z"
+      />
+      <path className="gr-glyph-rail" d="M10.27 27.69L10.43 31.17" />
+      <path className="gr-glyph-rail" d="M14.86 27.94L14.98 30.53" />
       <path className="gr-glyph-crease" d="M10.27 27.69L14.86 27.94" />
+      <path
+        className="gr-glyph-plate"
+        d="M10.43 31.17L11.24 34.69L15.62 33.29L14.98 30.53Z"
+      />
+      <path className="gr-glyph-rail" d="M10.43 31.17L11.24 34.69" />
+      <path className="gr-glyph-rail" d="M14.98 30.53L15.62 33.29" />
+      <path
+        className="gr-glyph-plate"
+        d="M11.24 34.69L12.63 38.06L16.73 35.97L15.62 33.29Z"
+      />
+      <path className="gr-glyph-rail" d="M11.24 34.69L12.63 38.06" />
+      <path className="gr-glyph-rail" d="M15.62 33.29L16.73 35.97" />
+      <path
+        className="gr-glyph-plate"
+        d="M12.63 38.06L14.5 41.1L18.2 38.37L16.73 35.97Z"
+      />
+      <path className="gr-glyph-rail" d="M12.63 38.06L14.5 41.1" />
+      <path className="gr-glyph-rail" d="M16.73 35.97L18.2 38.37" />
+      <path
+        className="gr-glyph-plate"
+        d="M14.5 41.1L16.76 43.65L19.9 40.28L18.2 38.37Z"
+      />
+      <path className="gr-glyph-rail" d="M14.5 41.1L16.76 43.65" />
+      <path className="gr-glyph-rail" d="M18.2 38.37L19.9 40.28" />
+      <path
+        className="gr-glyph-plate"
+        d="M16.76 43.65L19.33 45.56L21.59 41.55L19.9 40.28Z"
+      />
+      <path className="gr-glyph-rail" d="M16.76 43.65L19.33 45.56" />
+      <path className="gr-glyph-rail" d="M19.9 40.28L21.59 41.55" />
       <path className="gr-glyph-crease" d="M16.76 43.65L19.9 40.28" />
+      <path
+        className="gr-glyph-plate"
+        d="M19.33 45.56L32.06 52.32L34.27 48.28L21.59 41.55Z"
+      />
+      <path className="gr-glyph-rail" d="M19.33 45.56L32.06 52.32" />
+      <path className="gr-glyph-rail" d="M21.59 41.55L34.27 48.28" />
+      <path
+        className="gr-glyph-plate"
+        d="M32.06 52.32L35.84 54.59L38.21 50.65L34.27 48.28Z"
+      />
+      <path className="gr-glyph-rail" d="M32.06 52.32L35.84 54.59" />
+      <path className="gr-glyph-rail" d="M34.27 48.28L38.21 50.65" />
+      <path
+        className="gr-glyph-plate"
+        d="M35.84 54.59L39.7 56.91L42.07 52.96L38.21 50.65Z"
+      />
+      <path className="gr-glyph-rail" d="M35.84 54.59L39.7 56.91" />
+      <path className="gr-glyph-rail" d="M38.21 50.65L42.07 52.96" />
+      <path
+        className="gr-glyph-plate"
+        d="M39.7 56.91L43.56 59.22L45.93 55.28L42.07 52.96Z"
+      />
+      <path className="gr-glyph-rail" d="M39.7 56.91L43.56 59.22" />
+      <path className="gr-glyph-rail" d="M42.07 52.96L45.93 55.28" />
+      <path
+        className="gr-glyph-plate"
+        d="M43.56 59.22L47.41 61.54L49.78 57.6L45.93 55.28Z"
+      />
+      <path className="gr-glyph-rail" d="M43.56 59.22L47.41 61.54" />
+      <path className="gr-glyph-rail" d="M45.93 55.28L49.78 57.6" />
       <path className="gr-glyph-crease" d="M43.56 59.22L45.93 55.28" />
+      <path
+        className="gr-glyph-plate"
+        d="M47.41 61.54L51.27 63.86L53.64 59.92L49.78 57.6Z"
+      />
+      <path className="gr-glyph-rail" d="M47.41 61.54L51.27 63.86" />
+      <path className="gr-glyph-rail" d="M49.78 57.6L53.64 59.92" />
       <ellipse
         className="gr-glyph-sil gr-glyph-rider"
         cx="-3.23"
         cy="-7.96"
         rx="4.04"
         ry="4.04"
-      />
-      <path
-        className="gr-glyph-rail"
-        d="M-1.62 -9.6L0.49 -7.48L2.55 -3.62L4.46 1.45L6.33 7.45L8.17 13.94L10 20.37L11.81 26.2L13.58 30.9L15.2 33.97L16.26 35.07L27.28 40.38L27.97 40.31L28.67 40L29.29 39.26L29.77 37.87L29.87 35.85L29.48 33.41L28.57 30.8L27.18 28.25L25.42 25.99L23.45 24.21L21.45 23.03L19.63 22.51L18.14 22.56L16.96 23.09L15.97 24.11L15.23 25.74L14.86 27.94L14.98 30.53L15.62 33.29L16.73 35.97L18.2 38.37L19.9 40.28L21.59 41.55L34.27 48.28L38.21 50.65L42.07 52.96L45.93 55.28L49.78 57.6L53.64 59.92"
       />
     </svg>
   ),

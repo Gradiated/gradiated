@@ -755,6 +755,13 @@
   stroke: none;
 }
 
+/* A band of track, opaque: segments painted in path order, so a nearer
+   run of tube covers a farther one instead of showing through it. */
+.gr-glyph-plate {
+  fill: var(--color-overlay);
+  stroke: none;
+}
+
 /* An open track: stroked, never filled — a rail is a line, not a plate. */
 .gr-glyph-rail {
   fill: none;

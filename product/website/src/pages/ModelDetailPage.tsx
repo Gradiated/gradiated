@@ -367,7 +367,10 @@ export const ModelDetailPage = ({
           {/* ONE grid for the whole page, so the left column is one column:
               the identity floats at the top of the viewport and the section
               nav holds its foot, the full length of the scroll. */}
-          <div className="gr-model-layout">
+          <div
+            className="gr-model-layout"
+            style={{ "--model-brand": model.brand } as CSSProperties}
+          >
             <aside className="gr-model-left">
               <div className="gr-model-side">
                 {/* The art well: the model's own living material — the

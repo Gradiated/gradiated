@@ -49,6 +49,8 @@ export type ModelPageData = {
   maker: string;
   /** The two-or-three letter stand-in until each model has its mark. */
   mark: string;
+  /** The provider's core colour — benchmark bars, accents. */
+  brand: string;
   /** Provider mark from /assets/models/, where one exists. Kev has none —
    *  its monogram stands in. */
   icon?: string;
@@ -89,6 +91,7 @@ export const models: ModelPageData[] = [
     name: "DeepSeek V4.1 Flash",
     maker: "DeepSeek",
     mark: "DS",
+    brand: "#4D6BFE",
     icon: "/assets/models/deepseek-color.svg",
     oneLiner:
       "A frontier-class generalist at flash-tier prices: a million tokens of context, strong agentic coding, and output fast enough to sit in an interactive loop.",
@@ -223,6 +226,7 @@ response = client.chat.completions.create(
     name: "GLM-5.3 Flash",
     maker: "Z.AI",
     mark: "GLM",
+    brand: "#5E5CE6",
     icon: "/assets/models/zhipu-color.svg",
     oneLiner:
       "Z.AI's fast reasoning and tool-use model: near-frontier agentic scores at a fraction of frontier prices, with a million tokens of context.",
@@ -362,6 +366,7 @@ response = client.chat.completions.create(
     name: "Kev 9B",
     maker: "Jared Palmer",
     mark: "KEV",
+    brand: "#E9B748",
     oneLiner:
       "A decision model, not a chat model: give it structured state and typed questions, get back calibrated choices, yes/no decisions and scores — no generated text, no output tokens to pay for.",
     tags: ["Open weights", "Apache-2.0", "Typed decisions", "Calibrated"],

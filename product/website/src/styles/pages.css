@@ -839,11 +839,13 @@
   height: 100%;
   border-radius: inherit;
   width: 0;
+  /* the model's own colour, deep into light — the same direction the
+     card tints run */
   background: linear-gradient(
     90deg,
-    var(--color-aegean-500),
-    var(--color-grove-500) 55%,
-    var(--color-kiln-300)
+    color-mix(in srgb, var(--model-brand, var(--color-grove-500)) 70%, #1c1a17),
+    var(--model-brand, var(--color-grove-500)) 55%,
+    color-mix(in srgb, var(--model-brand, var(--color-grove-500)) 55%, white)
   );
   transition: width var(--dur-media) var(--ease-media);
 }

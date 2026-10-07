@@ -5325,14 +5325,18 @@
 }
 
 .gr-models-card {
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+  justify-content: flex-end;
   aspect-ratio: 0.81;
   background: var(--color-panel);
   border-radius: var(--radius);
   padding: var(--u);
   text-decoration: none;
-  color: var(--color-text);
+  /* type sits on the wash: white, with the label at a calmer strength */
+  color: #fff;
   /* the 3D hover: a plate pivoting toward the cursor. --rx/--ry are set
      per-pointermove from the component; the slow transition carries the
      settle when the pointer leaves, the fast one the pursuit while on. */
@@ -5357,20 +5361,21 @@
 /* the caption rides a step proud of the plate, so the tilt has depth */
 .gr-models-card .gr-label,
 .gr-models-card .gr-heading {
+  position: relative;
   transform: translateZ(28px);
+  color: #fff;
 }
 
-/* the artwork well: a programmatic gradient wash (ModelArt) with the
-   provider's mark floating on it. Inner radius concentric to the card. */
+.gr-models-card .gr-label {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* the artwork: a full-card gradient wash (ModelArt), the provider's mark
+   top-left as a white overlay — the card IS the material. */
 .gr-models-card-art {
-  position: relative;
+  position: absolute;
+  inset: 0;
   display: block;
-  flex: 1;
-  border-radius: calc(var(--radius) - 4px);
-  overflow: hidden;
-  margin-block-end: calc(0.6 * var(--u));
-  /* part of the plate's 3D context, beneath the raised caption */
-  transform: translateZ(6px);
 }
 
 .gr-model-art-field {
@@ -5382,18 +5387,20 @@
 
 .gr-model-art-mark {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  translate: -50% -50%;
-  width: 56px;
-  height: 56px;
-  filter: drop-shadow(0 6px 18px rgba(20, 18, 12, 0.25));
+  left: var(--u);
+  top: var(--u);
+  width: 40px;
+  height: 40px;
+  /* any mark becomes a white overlay, whatever its source colours */
+  filter: brightness(0) invert(1);
+  opacity: 0.95;
 }
 
 .gr-model-art-mark--own {
   display: grid;
   place-items: center;
-  color: var(--color-dark-000, #222);
+  color: #fff;
+  filter: none;
 }
 
 .gr-model-art-mark--own svg {

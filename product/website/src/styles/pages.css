@@ -5530,11 +5530,13 @@
   height: 100%;
 }
 
-/* the brand tint: multiplied over the shared material */
+/* the brand tint: `color` blend — the tint's hue and saturation take
+   over while the material keeps its own light, so cards recolour
+   without darkening */
 .gr-model-art-tint {
   position: absolute;
   inset: 0;
-  mix-blend-mode: multiply;
+  mix-blend-mode: color;
   pointer-events: none;
 }
 

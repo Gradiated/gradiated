@@ -1092,11 +1092,11 @@
 
   .gr-model-lede {
     margin: 0;
-    padding-block-end: calc(0.7 * var(--u));
   }
 
+  /* the air above the metadata moved below it */
   .gr-model-facts {
-    padding-block-end: calc(0.9 * var(--u));
+    padding-block-end: calc(1.6 * var(--u));
   }
 
   .gr-model-overview {

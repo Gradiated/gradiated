@@ -615,6 +615,13 @@ const GLYPHS: Record<string, ReactElement> = {
       />
       <path className="gr-glyph-rail" d="M19.33 45.56L32.06 52.32" />
       <path className="gr-glyph-rail" d="M21.59 41.55L34.27 48.28" />
+      <ellipse
+        className="gr-glyph-sil gr-glyph-rider"
+        cx="-3.23"
+        cy="-7.96"
+        rx="4.04"
+        ry="4.04"
+      />
       <path
         className="gr-glyph-plate"
         d="M32.06 52.32L35.84 54.59L38.21 50.65L34.27 48.28Z"
@@ -647,7 +654,7 @@ const GLYPHS: Record<string, ReactElement> = {
       <path className="gr-glyph-rail" d="M47.41 61.54L51.27 63.86" />
       <path className="gr-glyph-rail" d="M49.78 57.6L53.64 59.92" />
       <ellipse
-        className="gr-glyph-sil gr-glyph-rider"
+        className="gr-glyph-sil gr-glyph-rider-over"
         cx="-3.23"
         cy="-7.96"
         rx="4.04"

@@ -191,9 +191,6 @@
 
 @keyframes gr-glyph-ride {
   0% {
-    opacity: 1;
-  }
-  0% {
     translate: 0px 0px;
   }
   3.23% {
@@ -316,18 +313,44 @@
   84% {
     translate: 55.69px 69.85px;
   }
+  85%,
+  100% {
+    translate: 55.69px 69.85px;
+  }
+}
+@keyframes gr-glyph-ride-under {
+  0%,
+  74.46% {
+    opacity: 1;
+  }
+  75.05999999999999%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes gr-glyph-ride-over {
+  0%,
+  74.46% {
+    opacity: 0;
+  }
+  75.05999999999999%,
   85% {
     opacity: 1;
-    translate: 55.69px 69.85px;
   }
   88%,
   100% {
     opacity: 0;
-    translate: 55.69px 69.85px;
   }
 }
 .gr-glyph--automation .gr-glyph-rider {
-  animation: gr-glyph-ride 4.6s linear infinite;
+  animation:
+    gr-glyph-ride 4.6s linear infinite,
+    gr-glyph-ride-under 4.6s linear infinite;
+}
+.gr-glyph--automation .gr-glyph-rider-over {
+  animation:
+    gr-glyph-ride 4.6s linear infinite,
+    gr-glyph-ride-over 4.6s linear infinite;
 }
 
 @keyframes gr-glyph-convey {

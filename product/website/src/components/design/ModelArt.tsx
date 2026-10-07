@@ -226,10 +226,14 @@ const PRESETS: Record<string, NeatPreset> = {
 const ONE_MATERIAL = true;
 const MATERIAL = (): NeatPreset => BLOOM;
 
+/* a gradient per brand, not a flat tone: the recolour itself has a
+   direction — deep into light across the card */
 const TINT: Record<string, string> = {
-  "deepseek-v4-1-flash": "#4D6BFE",
-  "glm-5-3-flash": "#5E5CE6",
-  "kev-9b": "#E9B748",
+  "deepseek-v4-1-flash":
+    "linear-gradient(160deg, #2B3FA8 0%, #4D6BFE 55%, #8FA5FF 100%)",
+  "glm-5-3-flash":
+    "linear-gradient(160deg, #3634A3 0%, #5E5CE6 55%, #9D8CFF 100%)",
+  "kev-9b": "linear-gradient(160deg, #BE5E31 0%, #E9B748 60%, #F6E7C8 100%)",
 };
 
 /* Domain-bound to gradiated.com (and localhost for dev) — public by

@@ -307,7 +307,7 @@ export const ModelDetailPage = ({
 
       <Band>
         <Module bleed className="gr-module--model" index={0}>
-          <a className="gr-label gr-model-back" href="/inference/">
+          <a className="gr-label gr-model-back" href="/models/">
             &larr; All models
           </a>
           {/* ONE grid for the whole page, so the left column is one column:

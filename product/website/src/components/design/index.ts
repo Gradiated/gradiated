@@ -29,6 +29,7 @@ export { HeroBeam } from "./HeroBeam";
 export { HeroBeamRaw } from "./HeroBeamRaw";
 export { HomeFlow } from "./HomeFlow";
 export { LoopSection } from "./LoopSection";
+export { ModelArt } from "./ModelArt";
 export { ModelMarquee } from "./ModelMarquee";
 export { PhoneFlow } from "./PhoneFlow";
 export { ValueFold } from "./ValueFold";

@@ -5360,17 +5360,45 @@
   transform: translateZ(28px);
 }
 
-/* the artwork well: everything above the caption block. Cover-fit, with
-   the inner radius concentric to the card's. Missing art renders as the
-   plate's own quiet surface. */
+/* the artwork well: a programmatic gradient wash (ModelArt) with the
+   provider's mark floating on it. Inner radius concentric to the card. */
 .gr-models-card-art {
+  position: relative;
+  display: block;
   flex: 1;
   border-radius: calc(var(--radius) - 4px);
-  background-size: cover;
-  background-position: center;
+  overflow: hidden;
   margin-block-end: calc(0.6 * var(--u));
   /* part of the plate's 3D context, beneath the raised caption */
   transform: translateZ(6px);
+}
+
+.gr-model-art-field {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.gr-model-art-mark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  width: 56px;
+  height: 56px;
+  filter: drop-shadow(0 6px 18px rgba(20, 18, 12, 0.25));
+}
+
+.gr-model-art-mark--own {
+  display: grid;
+  place-items: center;
+  color: var(--color-dark-000, #222);
+}
+
+.gr-model-art-mark--own svg {
+  width: 100%;
+  height: 100%;
 }
 
 /* An invitation to everyone scanning the catalogue, not a caption on the

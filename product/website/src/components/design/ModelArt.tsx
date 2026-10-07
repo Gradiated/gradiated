@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import type { ReactElement } from "react";
-import { Logo } from "./Logo";
 
 /**
  * Programmatic artwork for a model card: a soft gradient field with the
@@ -14,7 +13,8 @@ import { Logo } from "./Logo";
  * a per-frame GPU program to do, and one 320x400 paint at mount costs
  * nothing.
  *
- * Kev carries the Gradiated mark — it is ours.
+ * A model without a provider mark wears its initial in a square — the
+ * same stand-in rule the data's `mark` field plays elsewhere.
  */
 
 /** Each model's pools: anchored to the provider's brand colour. */
@@ -102,8 +102,8 @@ export const ModelArt = ({
       {icon ? (
         <img alt="" className="gr-model-art-mark" src={icon} />
       ) : (
-        <span className="gr-model-art-mark gr-model-art-mark--own">
-          <Logo mark />
+        <span className="gr-model-art-mark gr-model-art-mark--letter">
+          {name.charAt(0).toUpperCase()}
         </span>
       )}
       <span className="gr-visually-hidden">{name}</span>

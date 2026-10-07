@@ -5396,16 +5396,18 @@
   opacity: 0.95;
 }
 
-.gr-model-art-mark--own {
+/* no mark: the model's initial in a square, same white overlay voice */
+.gr-model-art-mark--letter {
   display: grid;
   place-items: center;
   color: #fff;
   filter: none;
-}
-
-.gr-model-art-mark--own svg {
-  width: 100%;
-  height: 100%;
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  font-family: var(--font-title);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1;
 }
 
 /* An invitation to everyone scanning the catalogue, not a caption on the

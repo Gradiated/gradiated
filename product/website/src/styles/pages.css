@@ -1080,8 +1080,10 @@
     row-gap: 0;
   }
 
+  /* margin, not padding: the art's canvas paints the padding box too,
+     which swallowed the gap under the image */
   .gr-model-art {
-    padding-block-end: calc(0.9 * var(--u));
+    margin-block-end: calc(0.9 * var(--u));
   }
 
   .gr-model-name {

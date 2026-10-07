@@ -1,5 +1,7 @@
+import { useRef } from "react";
 import type { ReactElement } from "react";
 import { Link } from "react-router-dom";
+import type { ModelPageData } from "../models";
 import {
   Arrow,
   Band,
@@ -21,7 +23,50 @@ import "../styles/index.css";
  *
  * No category rail yet: with one category's worth of models, a filter is
  * furniture. It returns when the catalogue grows past LLMs.
+ *
+ * The cards tilt toward the cursor — a plate pivoting under the hand, the
+ * same object-language as the chip fold's plates. Mouse only: a touch has
+ * no hover, and reduced-motion readers get the flat card.
  */
+
+/** Degrees of tilt at the card's edge. */
+const TILT = 7;
+
+const ModelCard = ({ model }: { model: ModelPageData }): ReactElement => {
+  const ref = useRef<HTMLAnchorElement>(null);
+
+  const onMove = (e: React.PointerEvent): void => {
+    const el = ref.current;
+    if (!el || e.pointerType !== "mouse") return;
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const r = el.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width - 0.5;
+    const py = (e.clientY - r.top) / r.height - 0.5;
+    el.style.setProperty("--ry", `${(px * TILT).toFixed(2)}deg`);
+    el.style.setProperty("--rx", `${(-py * TILT).toFixed(2)}deg`);
+  };
+
+  const onLeave = (): void => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.setProperty("--ry", "0deg");
+    el.style.setProperty("--rx", "0deg");
+  };
+
+  return (
+    <Link
+      className="gr-models-card"
+      onPointerLeave={onLeave}
+      onPointerMove={onMove}
+      ref={ref}
+      to={`/models/${model.slug}/`}
+    >
+      <span className="gr-models-card-art" />
+      <span className="gr-label">{model.maker}</span>
+      <span className="gr-heading">{model.name}</span>
+    </Link>
+  );
+};
 
 export const ModelsPage = (): ReactElement => {
   return (
@@ -36,15 +81,7 @@ export const ModelsPage = (): ReactElement => {
 
           <div className="gr-models-grid">
             {models.map((model) => (
-              <Link
-                className="gr-models-card"
-                key={model.slug}
-                to={`/models/${model.slug}/`}
-              >
-                <span className="gr-models-card-art" />
-                <span className="gr-label">{model.maker}</span>
-                <span className="gr-heading">{model.name}</span>
-              </Link>
+              <ModelCard key={model.slug} model={model} />
             ))}
           </div>
 

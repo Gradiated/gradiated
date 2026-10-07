@@ -5328,12 +5328,30 @@
   padding: var(--u);
   text-decoration: none;
   color: var(--color-text);
-  transition: translate var(--dur-media) var(--ease-media);
+  /* the 3D hover: a plate pivoting toward the cursor. --rx/--ry are set
+     per-pointermove from the component; the slow transition carries the
+     settle when the pointer leaves, the fast one the pursuit while on. */
+  transform: perspective(900px) rotateX(var(--rx, 0deg))
+    rotateY(var(--ry, 0deg));
+  transform-style: preserve-3d;
+  transition:
+    transform 0.6s var(--ease-media),
+    box-shadow 0.6s var(--ease-media);
+  will-change: transform;
 }
 
 .gr-models-card:hover,
 .gr-models-card:focus-visible {
-  translate: 0 calc(-0.25 * var(--u));
+  transition:
+    transform 0.08s linear,
+    box-shadow 0.3s var(--ease-media);
+  box-shadow: 0 24px 48px -24px color-mix(in srgb, var(--color-text) 35%, transparent);
+}
+
+/* the caption rides a step proud of the plate, so the tilt has depth */
+.gr-models-card .gr-label,
+.gr-models-card .gr-heading {
+  transform: translateZ(28px);
 }
 
 /* the artwork well: everything above the caption block */

@@ -61,7 +61,13 @@ const ModelCard = ({ model }: { model: ModelPageData }): ReactElement => {
       ref={ref}
       to={`/models/${model.slug}/`}
     >
-      <span className="gr-models-card-art" />
+      {/* the artwork well: fed by convention from /brand/models/<slug>.webp
+          — drop a file there and the card wears it; absent, the well is
+          quiet panel and the card still works */}
+      <span
+        className="gr-models-card-art"
+        style={{ backgroundImage: `url(/brand/models/${model.slug}.webp)` }}
+      />
       <span className="gr-label">{model.maker}</span>
       <span className="gr-heading">{model.name}</span>
     </Link>

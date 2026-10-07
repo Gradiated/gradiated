@@ -5354,9 +5354,17 @@
   transform: translateZ(28px);
 }
 
-/* the artwork well: everything above the caption block */
+/* the artwork well: everything above the caption block. Cover-fit, with
+   the inner radius concentric to the card's. Missing art renders as the
+   plate's own quiet surface. */
 .gr-models-card-art {
   flex: 1;
+  border-radius: calc(var(--radius) - 4px);
+  background-size: cover;
+  background-position: center;
+  margin-block-end: calc(0.6 * var(--u));
+  /* part of the plate's 3D context, beneath the raised caption */
+  transform: translateZ(6px);
 }
 
 

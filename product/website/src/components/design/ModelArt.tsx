@@ -170,6 +170,17 @@ const PRESETS: Record<string, NeatPreset> = {
   "kev-9b": TIME,
 };
 
+/* EXPERIMENT: one material for every card — Oil Slick in its own pastel
+   voice — differentiated by the provider's core colour multiplied over
+   it. The tint does the branding; the material stays shared. */
+const ONE_MATERIAL = true;
+
+const TINT: Record<string, string> = {
+  "deepseek-v4-1-flash": "#4D6BFE",
+  "glm-5-3-flash": "#5E5CE6",
+  "kev-9b": "#E9B748",
+};
+
 /* Domain-bound to gradiated.com (and localhost for dev) — public by
    design, useless elsewhere. Removes the NEAT watermark. */
 const NEAT_LICENSE =
@@ -210,8 +221,8 @@ export const ModelArt = ({
       if (cancelled) return;
 
       const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const preset = PRESETS[slug] ?? OIL_SLICK;
-      const brand = BRAND[slug];
+      const preset = ONE_MATERIAL ? OIL_SLICK : (PRESETS[slug] ?? OIL_SLICK);
+      const brand = ONE_MATERIAL ? undefined : BRAND[slug];
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       gradient = new NeatGradient({
@@ -244,6 +255,12 @@ export const ModelArt = ({
       className={`gr-models-card-art${small ? " gr-models-card-art--small" : ""}`}
     >
       <canvas className="gr-model-art-field" ref={canvasRef} />
+      {ONE_MATERIAL && TINT[slug] ? (
+        <span
+          className="gr-model-art-tint"
+          style={{ background: TINT[slug] }}
+        />
+      ) : null}
       {icon ? (
         <img alt="" className="gr-model-art-mark" src={icon} />
       ) : (

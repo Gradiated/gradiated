@@ -5530,6 +5530,14 @@
   height: 100%;
 }
 
+/* the brand tint: multiplied over the shared material */
+.gr-model-art-tint {
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
 .gr-model-art-mark {
   position: absolute;
   left: var(--u);

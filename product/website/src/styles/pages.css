@@ -5367,6 +5367,14 @@
   color: rgba(255, 255, 255, 0.75);
 }
 
+/* the detail page's art well: the mark sits centred, not corner-parked —
+   the well is a portrait of the model, not a card awaiting a caption */
+.gr-model-art .gr-model-art-mark {
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+}
+
 /* tile-sized ModelArt (nav rows): mark centred and small */
 .gr-models-card-art--small .gr-model-art-mark {
   left: 50%;

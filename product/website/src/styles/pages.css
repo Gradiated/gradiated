@@ -978,10 +978,26 @@
     width: calc(7 * var(--u));
   }
 
+  /* The back link clears the floating nav instead of sitting under it. */
+  .gr-model-back {
+    margin-block-start: calc(var(--nav-h) + 0.5 * var(--u));
+  }
+
   /* The rail has no column of its own on a phone — it becomes a row of
-     links above the sections. */
+     links above the sections.
+
+     minmax(0, 1fr), NOT 1fr: bare 1fr means minmax(auto, 1fr), and the
+     snippet <pre>'s unwrappable lines set that auto minimum (~700px) —
+     one code block was widening the single column for the whole page,
+     which is why every section clipped at the right edge on phones. */
   .gr-model-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* The pre scrolls inside its box rather than sizing the page. */
+  .gr-model-snippet pre {
+    overflow-x: auto;
+    max-width: 100%;
   }
 
   .gr-model-left {
@@ -1016,6 +1032,15 @@
 @media (max-width: 620px) {
   .gr-model-vitals {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Break the tile's height:100% + aspect-ratio circularity: on a phone
+     the text runs tall, and a tile sized by it paints over the words.
+     A fixed square, top-aligned, like the nav's model tiles. */
+  .gr-model-good-art {
+    height: calc(3.2 * var(--u));
+    width: calc(3.2 * var(--u));
+    align-self: start;
   }
 
   .gr-model-bench-row {

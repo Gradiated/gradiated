@@ -172,7 +172,8 @@ const BLOOM: NeatPreset = {
     { color: "#215BFF", enabled: true },
     { color: "#D8A50C", enabled: true },
   ],
-  speed: 4,
+  /* the editor ships Bloom at 4; a card is furniture, not a headline */
+  speed: 1.2,
   horizontalPressure: 4,
   verticalPressure: 6,
   waveFrequencyX: 1,
@@ -206,7 +207,7 @@ const BLOOM: NeatPreset = {
   fresnelColor: "#FF0000",
   iridescenceEnabled: true,
   iridescenceIntensity: 0.35,
-  iridescenceSpeed: 3.9,
+  iridescenceSpeed: 1.2,
   bloomIntensity: 0.8,
   bloomThreshold: 0.9,
   chromaticAberration: 4,

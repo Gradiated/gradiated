@@ -339,3 +339,11 @@ html {
     saturate(var(--glass-saturate));
   border: var(--glass-border-w) solid var(--glass-border);
 }
+
+/* iOS Safari inflates text inside wide or scrollable blocks (its "text
+   autosizing") — code snippets ballooned to lede size on phones. Type
+   sizes here are deliberate at every width; keep them. */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}

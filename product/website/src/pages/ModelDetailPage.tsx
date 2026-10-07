@@ -326,11 +326,35 @@ const ModelId = ({ id }: { id: string }): ReactElement => {
   );
 };
 
+/** On phones the white plate must end where the head does. CSS cannot
+ *  measure that, so this writes --model-plate-h (the copy-id box's bottom,
+ *  relative to the module) onto the module and the plate's background
+ *  layer reads it. Observes both, so edits and viewport changes track. */
+const usePlateHeight = (): void => {
+  useEffect(() => {
+    const module = document.querySelector<HTMLElement>(".gr-module--model");
+    const idRow = document.querySelector<HTMLElement>(".gr-model-id-row");
+    if (!module || !idRow) return;
+    const measure = (): void => {
+      const h =
+        idRow.getBoundingClientRect().bottom -
+        module.getBoundingClientRect().top;
+      module.style.setProperty("--model-plate-h", `${Math.round(h)}px`);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(module);
+    ro.observe(idRow);
+    return () => ro.disconnect();
+  }, []);
+};
+
 export const ModelDetailPage = ({
   model,
 }: {
   model: ModelPageData;
 }): ReactElement => {
+  usePlateHeight();
   return (
     <Substrate>
       <Nav />

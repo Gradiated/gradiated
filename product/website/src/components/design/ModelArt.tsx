@@ -190,7 +190,7 @@ const BLOOM: NeatPreset = {
   /* the authored preset has grain at zero; omitting the keys had let
      Neat's default (0.55!) through — a whisper instead */
   grainScale: 1,
-  grainIntensity: 0.08,
+  grainIntensity: 0.18,
   grainSparsity: 0,
   grainSpeed: 0.05,
   resolution: 1,

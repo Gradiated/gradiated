@@ -1149,7 +1149,8 @@
   .gr-model-spec {
     flex-direction: column;
     align-items: flex-start;
-    gap: 2px;
+    gap: 6px;
+    padding-block: calc(0.75 * var(--u));
   }
 
   .gr-model-spec dd,

@@ -445,14 +445,11 @@
 
 /* The art well, and the facts under it. */
 .gr-model-art {
+  position: relative;
+  overflow: hidden;
   aspect-ratio: 1 / 1;
   background: color-mix(in srgb, var(--color-text) 5%, var(--color-overlay));
   border-radius: var(--radius);
-  display: grid;
-  place-items: center;
-  font-family: var(--font-code);
-  font-size: var(--text-ui);
-  color: var(--color-text-muted);
   margin-block-end: var(--u);
 }
 
@@ -5368,6 +5365,20 @@
 
 .gr-models-card .gr-label {
   color: rgba(255, 255, 255, 0.75);
+}
+
+/* tile-sized ModelArt (nav rows): mark centred and small */
+.gr-models-card-art--small .gr-model-art-mark {
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  width: 18px;
+  height: 18px;
+}
+
+.gr-models-card-art--small .gr-model-art-mark--letter {
+  font-size: 11px;
+  border-radius: 4px;
 }
 
 /* the artwork: a full-card gradient wash (ModelArt), the provider's mark

@@ -188,10 +188,13 @@ export const ModelArt = ({
   icon,
   name,
   slug,
+  small = false,
 }: {
   icon?: string;
   name: string;
   slug: string;
+  /** Tile-sized: mark centred and shrunk, for the nav's model rows. */
+  small?: boolean;
 }): ReactElement => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -236,7 +239,10 @@ export const ModelArt = ({
   }, [slug]);
 
   return (
-    <span aria-hidden className="gr-models-card-art">
+    <span
+      aria-hidden
+      className={`gr-models-card-art${small ? " gr-models-card-art--small" : ""}`}
+    >
       <canvas className="gr-model-art-field" ref={canvasRef} />
       {icon ? (
         <img alt="" className="gr-model-art-mark" src={icon} />

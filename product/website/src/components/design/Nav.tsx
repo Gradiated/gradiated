@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactElement } from "react";
 import { library } from "./library";
 import { models } from "../../models";
+import { ModelArt } from "./ModelArt";
 import { WaferArtwork } from "./WaferArtwork";
 import { Arrow } from "./icons";
 import { LOGO_ASPECT, Logo } from "./Logo";
@@ -191,7 +192,12 @@ const ModelsList = ({
             onPointerEnter={(event) => onEnter?.(event.currentTarget)}
           >
             <span aria-hidden className="gr-nav-model-mark">
-              {model.icon ? <img alt="" src={model.icon} /> : model.mark}
+              <ModelArt
+                icon={model.icon}
+                name={model.name}
+                slug={model.slug}
+                small
+              />
             </span>
             <span className="gr-nav-model-name">
               {model.name}

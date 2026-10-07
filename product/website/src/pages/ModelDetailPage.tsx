@@ -4,6 +4,7 @@ import {
   Band,
   CodeBlock,
   Footer,
+  ModelArt,
   Module,
   Nav,
   Substrate,
@@ -316,10 +317,15 @@ export const ModelDetailPage = ({
           <div className="gr-model-layout">
             <aside className="gr-model-left">
               <div className="gr-model-side">
-                {/* The art well. The provider's mark holds it until each
-                    model has artwork of its own. */}
+                {/* The art well: the model's own living material — the
+                    same Neat preset + brand paint its listing card wears,
+                    so the identity travels with it. */}
                 <div className="gr-model-art">
-                  {model.icon ? <img alt="" src={model.icon} /> : model.mark}
+                  <ModelArt
+                    icon={model.icon}
+                    name={model.name}
+                    slug={model.slug}
+                  />
                 </div>
                 <dl className="gr-model-facts">
                   {model.facts.map((fact) => (

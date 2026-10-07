@@ -379,12 +379,20 @@
    every link on the site makes, driven here by the card rather than by
    .gr-link, because the card is the target and the title is inside it. */
 .gr-nav-card:hover .gr-arrow,
-.gr-nav-card:focus-visible .gr-arrow {
+.gr-nav-card:focus-visible .gr-arrow,
+.gr-nav-model:hover .gr-arrow,
+.gr-nav-model:focus-visible .gr-arrow,
+.gr-nav-note:hover .gr-arrow,
+.gr-nav-note:focus-visible .gr-arrow {
   translate: 0.15em 0;
 }
 
 .gr-nav-card:hover .gr-arrow-shaft,
-.gr-nav-card:focus-visible .gr-arrow-shaft {
+.gr-nav-card:focus-visible .gr-arrow-shaft,
+.gr-nav-model:hover .gr-arrow-shaft,
+.gr-nav-model:focus-visible .gr-arrow-shaft,
+.gr-nav-note:hover .gr-arrow-shaft,
+.gr-nav-note:focus-visible .gr-arrow-shaft {
   stroke-dashoffset: 0;
 }
 
@@ -773,9 +781,8 @@
   gap: calc(0.5 * var(--u));
 }
 
-/* The note rows' own hover, for the same reason the writing list has it:
-   the travelling block belongs to the cards, and a side list highlights by
-   tint, not by travel. */
+/* No hover surface of its own: the panel's ONE travelling block glides to
+   whichever row or card the pointer rests on. */
 .gr-nav-model {
   display: flex;
   align-items: center;
@@ -785,11 +792,6 @@
   border-radius: var(--radius);
   text-decoration: none;
   color: var(--color-text);
-  transition: background var(--dur-fast) var(--ease-response);
-}
-
-.gr-nav-model:hover {
-  background: color-mix(in srgb, var(--color-text) 6%, transparent);
 }
 
 .gr-nav-model-mark {
@@ -812,6 +814,9 @@
 }
 
 .gr-nav-model-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
   font-family: var(--font-title);
   font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-heading);
@@ -864,12 +869,8 @@
   transition: background var(--dur-fast) var(--ease-response);
 }
 
-/* Its own hover, not the travelling block: the block belongs to the cards, and
-   one indicator crossing between a row of pictures and a list of rows would
-   have to travel diagonally to get there. */
-.gr-nav-note:hover {
-  background: color-mix(in srgb, var(--color-text) 6%, transparent);
-}
+/* No hover surface of its own either — the travelling block covers the
+   lists now, exactly as it covers the cards. */
 
 /* Landscape where the cards are portrait — a row thumbnail is an aside, and
    matching the cards' 4:5 would make it a small card instead. */
@@ -897,12 +898,23 @@
   min-width: 0;
 }
 
+/* The models' own voice — the two side lists read as one register. */
 .gr-nav-note-name {
-  font-family: var(--font-body);
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+  min-width: 0;
+  font-family: var(--font-title);
+  font-weight: var(--weight-heading);
+  letter-spacing: var(--tracking-heading);
   font-size: var(--text-ui);
   line-height: 1.3;
-  /* One line: a wrapped title would make its row taller than the others and
-     the list would stop reading as a list. */
+}
+
+/* One line: a wrapped title would make its row taller than the others and
+   the list would stop reading as a list. The arrow stays clear of the
+   ellipsis by living outside this span. */
+.gr-nav-note-name-text {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

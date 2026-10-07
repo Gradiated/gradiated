@@ -174,17 +174,29 @@ const SHEET_OUT_MS = 240;
 /** The models with pages, beside the Product cards — marks in a grid, the
  *  way the Library panel carries its writing. Same list in the panel and the
  *  sheet, same reason as WritingList. */
-const ModelsList = (): ReactElement => (
+const ModelsList = ({
+  onEnter,
+}: {
+  /** Feeds the panel's one travelling highlight, like the cards do. */
+  onEnter?: (node: HTMLElement) => void;
+}): ReactElement => (
   <div className="gr-nav-models">
     <p className="gr-label gr-nav-models-title">Models</p>
     <ul>
       {models.map((model) => (
         <li key={model.slug}>
-          <a className="gr-nav-model" href={`/models/${model.slug}/`}>
+          <a
+            className="gr-nav-model"
+            href={`/models/${model.slug}/`}
+            onPointerEnter={(event) => onEnter?.(event.currentTarget)}
+          >
             <span aria-hidden className="gr-nav-model-mark">
               {model.icon ? <img alt="" src={model.icon} /> : model.mark}
             </span>
-            <span className="gr-nav-model-name">{model.name}</span>
+            <span className="gr-nav-model-name">
+              {model.name}
+              <Arrow />
+            </span>
           </a>
         </li>
       ))}
@@ -192,13 +204,22 @@ const ModelsList = (): ReactElement => (
   </div>
 );
 
-const WritingList = (): ReactElement => (
+const WritingList = ({
+  onEnter,
+}: {
+  /** Feeds the panel's one travelling highlight, like the cards do. */
+  onEnter?: (node: HTMLElement) => void;
+}): ReactElement => (
   <div className="gr-nav-writing">
     <p className="gr-label gr-nav-writing-title">Latest writing</p>
     <ul>
       {LATEST.map((note) => (
         <li key={note.href}>
-          <a className="gr-nav-note" href={note.href}>
+          <a
+            className="gr-nav-note"
+            href={note.href}
+            onPointerEnter={(event) => onEnter?.(event.currentTarget)}
+          >
             <div
               aria-hidden
               className="gr-nav-note-thumb"
@@ -218,7 +239,10 @@ const WritingList = (): ReactElement => (
               ) : null}
             </div>
             <span className="gr-nav-note-text">
-              <span className="gr-nav-note-name">{note.title}</span>
+              <span className="gr-nav-note-name">
+                <span className="gr-nav-note-name-text">{note.title}</span>
+                <Arrow />
+              </span>
               <time className="gr-nav-note-date" dateTime={note.dateTime}>
                 {note.date}
               </time>
@@ -340,7 +364,9 @@ export const Nav = (): ReactElement => {
   /* Measured against the card's own PANEL, not the viewport, so the block's
      position is unaffected by the panel gliding under it mid-hover. */
   const highlightCard = useCallback((node: HTMLElement) => {
-    const content = node.parentElement;
+    /* The panel content, not the parent: the side lists' rows live inside
+       their own column, and the block's coordinates are the panel's. */
+    const content = node.closest(".gr-nav-panel-content");
     if (!content) return;
     const box = node.getBoundingClientRect();
     const frame = content.getBoundingClientRect();
@@ -588,8 +614,12 @@ export const Nav = (): ReactElement => {
               {/* Spans the width two more cards would have taken, so a panel
                   with a list is the same width as one without — the morph
                   between Product and Library changes height, not span. */}
-              {item.panel.models ? <ModelsList /> : null}
-              {item.panel.writing ? <WritingList /> : null}
+              {item.panel.models ? (
+                <ModelsList onEnter={highlightCard} />
+              ) : null}
+              {item.panel.writing ? (
+                <WritingList onEnter={highlightCard} />
+              ) : null}
             </div>
           ) : null,
         )}

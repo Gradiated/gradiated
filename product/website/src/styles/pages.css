@@ -5341,9 +5341,6 @@
   flex: 1;
 }
 
-.gr-models-empty {
-  margin-block: calc(3 * var(--u));
-}
 
 /* An invitation to everyone scanning the catalogue, not a caption on the
    last card: centred, with clear air above the grid. */

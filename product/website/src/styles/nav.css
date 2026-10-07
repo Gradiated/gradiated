@@ -773,13 +773,23 @@
   gap: calc(0.5 * var(--u));
 }
 
+/* The note rows' own hover, for the same reason the writing list has it:
+   the travelling block belongs to the cards, and a side list highlights by
+   tint, not by travel. */
 .gr-nav-model {
   display: flex;
   align-items: center;
   gap: calc(0.5 * var(--u));
   width: max-content;
+  padding: calc(0.3 * var(--u)) calc(0.45 * var(--u));
+  border-radius: var(--radius);
   text-decoration: none;
   color: var(--color-text);
+  transition: background var(--dur-fast) var(--ease-response);
+}
+
+.gr-nav-model:hover {
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
 }
 
 .gr-nav-model-mark {
@@ -793,17 +803,12 @@
   font-family: var(--font-code);
   font-size: var(--text-fine);
   color: var(--color-text-muted);
-  transition: border-color var(--dur-fast) var(--ease-response);
 }
 
 .gr-nav-model-mark img {
   width: 55%;
   height: 55%;
   object-fit: contain;
-}
-
-.gr-nav-model:hover .gr-nav-model-mark {
-  border-color: var(--color-text);
 }
 
 .gr-nav-model-name {

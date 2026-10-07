@@ -920,9 +920,7 @@
 
 .gr-model-spec {
   display: flex;
-  /* around, not between: the pair reads together instead of the value
-     being exiled to the far edge */
-  justify-content: space-around;
+  justify-content: space-between;
   gap: var(--u);
   align-items: baseline;
   padding-block: calc(0.5 * var(--u));
@@ -1145,9 +1143,18 @@
     order: 2;
   }
 
-  /* the KV rows (specs AND hardware share this class) keep the pair
-     side by side; long values just wrap within their half */
-  .gr-model-spec dd {
+  /* the KV rows stack, label tight over value: the row's own gap is
+     near-zero, and the system's label-spacing rule (.gr-label + *) is
+     silenced here — it was adding its full margin on top. */
+  .gr-model-spec {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .gr-model-spec dd,
+  .gr-root .gr-model-spec .gr-label + dd {
+    margin-block-start: 0;
     text-align: left;
     overflow-wrap: anywhere;
   }

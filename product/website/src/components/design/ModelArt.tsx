@@ -170,10 +170,11 @@ const PRESETS: Record<string, NeatPreset> = {
   "kev-9b": TIME,
 };
 
-/* EXPERIMENT: one material for every card — Oil Slick in its own pastel
-   voice — differentiated by the provider's core colour multiplied over
-   it. The tint does the branding; the material stays shared. */
+/* EXPERIMENT: one material for every card — differentiated by the
+   provider's core colour multiplied over it. The tint does the
+   branding; the material stays shared. Currently: Time. */
 const ONE_MATERIAL = true;
+const MATERIAL = (): NeatPreset => TIME;
 
 const TINT: Record<string, string> = {
   "deepseek-v4-1-flash": "#4D6BFE",
@@ -221,7 +222,7 @@ export const ModelArt = ({
       if (cancelled) return;
 
       const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const preset = ONE_MATERIAL ? OIL_SLICK : (PRESETS[slug] ?? OIL_SLICK);
+      const preset = ONE_MATERIAL ? MATERIAL() : (PRESETS[slug] ?? OIL_SLICK);
       const brand = ONE_MATERIAL ? undefined : BRAND[slug];
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

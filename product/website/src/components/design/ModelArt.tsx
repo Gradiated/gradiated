@@ -1,27 +1,160 @@
 import { useEffect, useRef } from "react";
 import type { ReactElement } from "react";
-import { NeatGradient } from "@firecms/neat";
 
 /**
  * Programmatic artwork for a model card: a Neat gradient in the
  * provider's colours, the mark floating white on it.
  *
- * Neat (neat.firecms.co) drives the material — a 3D animated gradient
- * with real body, saturation intact. Each model brings its palette; the
- * slug seeds the wave character (frequencies, amplitude), so cards share
- * one material but no two move alike.
+ * Neat (neat.firecms.co) drives the material. Each card wears one of the
+ * editor's authored presets, extracted verbatim: Oil Slick on DeepSeek,
+ * Neat on GLM, Time on Kev. The slug seeds the field so each card is
+ * deterministic across loads.
  *
  * Reduced motion pins speed to zero — Neat renders one still frame's
  * worth of gradient and sits.
  */
 
-const PALETTES: Record<string, string[]> = {
-  "deepseek-v4-1-flash": ["#4D6BFE", "#8FA5FF", "#DCE4FF", "#2B3FA8"],
-  "glm-5-3-flash": ["#5E5CE6", "#9D8CFF", "#E4DEFF", "#3634A3"],
-  "kev-9b": ["#E9B748", "#BE5E31", "#F6E7C8", "#5E6043"],
+type NeatPreset = Record<string, unknown>;
+
+/* The editor's presets, verbatim. */
+const OIL_SLICK: NeatPreset = {
+  colors: [
+    { color: "#D6D4D1", enabled: true },
+    { color: "#C6A8F0", enabled: true },
+    { color: "#FFC3DA", enabled: true },
+    { color: "#FFF700", enabled: true },
+    { color: "#FFE7A6", enabled: false },
+    { color: "#A8EDE4", enabled: false },
+  ],
+  speed: 1.5,
+  horizontalPressure: 4.6,
+  verticalPressure: 4.6,
+  waveFrequencyX: 1.5,
+  waveFrequencyY: 1.5,
+  waveAmplitude: 4,
+  secondaryWaveEnabled: true,
+  secondaryWaveFrequencyX: 2.6,
+  secondaryWaveFrequencyY: 1.4,
+  secondaryWaveAmplitude: 6,
+  secondaryWaveSpeed: 0.45,
+  secondaryWaveAngle: 1.15,
+  shadows: 0,
+  highlights: 1,
+  colorBrightness: 1.02,
+  colorSaturation: 1,
+  wireframe: false,
+  colorBlending: 4.8,
+  backgroundColor: "#D6D4D1",
+  backgroundAlpha: 1,
+  grainScale: 1,
+  grainSparsity: 0,
+  grainIntensity: 0.08,
+  grainSpeed: 0.05,
+  resolution: 1,
+  flowEnabled: true,
+  flowDistortionA: 0.6,
+  flowDistortionB: 1.2,
+  flowScale: 1.2,
+  flowEase: 0.15,
+  prismEdgeEnabled: true,
+  prismEdgeIntensity: 0.45,
+  prismEdgeThinness: 4,
+  prismEdgeSpread: 1.2,
+  prismEdgeRipple: 0.8,
+  prismEdgeSpeed: 0.35,
+  shapeType: "plane",
+  cameraLock: true,
 };
 
-const FALLBACK = ["#C8C1B4", "#EFECE3", "#A9A192", "#6B6557"];
+const NEAT: NeatPreset = {
+  colors: [
+    { color: "#FF5772", enabled: true },
+    { color: "#4CB4BB", enabled: true },
+    { color: "#FFC600", enabled: true },
+    { color: "#8B6AE6", enabled: true },
+    { color: "#2E0EC7", enabled: true },
+    { color: "#FF9A9E", enabled: true },
+  ],
+  speed: 2.5,
+  horizontalPressure: 3,
+  verticalPressure: 4,
+  waveFrequencyX: 2,
+  waveFrequencyY: 3,
+  waveAmplitude: 5,
+  shadows: 1,
+  highlights: 5,
+  colorBrightness: 1,
+  colorSaturation: 7,
+  wireframe: false,
+  colorBlending: 8,
+  backgroundColor: "#003FFF",
+  backgroundAlpha: 1,
+  resolution: 1,
+  flowEnabled: true,
+  shapeType: "plane",
+  cameraLock: true,
+};
+
+const TIME: NeatPreset = {
+  colors: [
+    { color: "#167CB3", enabled: true },
+    { color: "#CB9854", enabled: true },
+    { color: "#CE96CE", enabled: true },
+    { color: "#E0115F", enabled: true },
+    { color: "#FFFFFF", enabled: false },
+    { color: "#000000", enabled: false },
+  ],
+  speed: 2.5,
+  horizontalPressure: 5,
+  verticalPressure: 5,
+  waveFrequencyX: 2,
+  waveFrequencyY: 3,
+  waveAmplitude: 6,
+  shadows: 2,
+  highlights: 0,
+  colorBrightness: 0.9,
+  colorSaturation: -3,
+  wireframe: false,
+  colorBlending: 5,
+  backgroundColor: "#A1A4B7",
+  backgroundAlpha: 1,
+  resolution: 0.4,
+  yOffset: 28659,
+  yOffsetWaveMultiplier: 1,
+  yOffsetColorMultiplier: 4.8,
+  yOffsetFlowMultiplier: 5.3,
+  flowDistortionA: 3.7,
+  flowDistortionB: 0.8,
+  flowScale: 1.6,
+  flowEase: 0.32,
+  flowEnabled: true,
+  domainWarpEnabled: true,
+  domainWarpIntensity: 0.1,
+  domainWarpScale: 2.4,
+  vignetteIntensity: 0.45,
+  vignetteRadius: 0.55,
+  bloomIntensity: 1.9,
+  bloomThreshold: 0.6,
+  chromaticAberration: 17,
+  shapeType: "ribbon",
+  shapeRotationX: 0.348,
+  shapeRotationY: -26.783,
+  shapeRotationZ: -0.29,
+  planeBend: 2.3,
+  planeTwist: -2.9,
+  silhouetteFade: 0.83,
+  ribbonFade: 0.31,
+  flatShading: false,
+  cameraLock: false,
+  cameraRotationX: -0.014,
+  cameraRotationY: -0.238,
+};
+
+const PRESETS: Record<string, NeatPreset> = {
+  "deepseek-v4-1-flash": OIL_SLICK,
+  "glm-5-3-flash": NEAT,
+  "kev-9b": TIME,
+};
 
 /* Domain-bound to gradiated.com (and localhost for dev) — public by
    design, useless elsewhere. Removes the NEAT watermark. */
@@ -51,40 +184,30 @@ export const ModelArt = ({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    /* Imported here, not at the top: @firecms/neat is CommonJS, and a
+       named import breaks the prerender's Node ESM pass. The gradient is
+       client-only anyway — inside the effect, the server never loads it. */
+    let gradient: { destroy(): void } | undefined;
+    let cancelled = false;
+    void import("@firecms/neat").then(({ NeatGradient }) => {
+      if (cancelled) return;
 
-    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const preset = PRESETS[slug] ?? OIL_SLICK;
 
-    let seed = hashSeed(slug);
-    const rnd = (): number => {
-      seed = (seed * 16807) % 2147483647;
-      return (seed - 1) / 2147483646;
-    };
-    const palette = PALETTES[slug] ?? FALLBACK;
-
-    const gradient = new NeatGradient({
-      ref: canvas,
-      colors: palette.map((color) => ({ color, enabled: true })),
-      /* slow enough to be calm, fast enough to be seen */
-      speed: reduced ? 0 : 2,
-      horizontalPressure: 2 + Math.round(rnd() * 3),
-      verticalPressure: 2 + Math.round(rnd() * 3),
-      waveFrequencyX: 1 + Math.round(rnd() * 3),
-      waveFrequencyY: 2 + Math.round(rnd() * 3),
-      waveAmplitude: 4 + Math.round(rnd() * 3),
-      shadows: 2,
-      highlights: 4,
-      colorBrightness: 1,
-      colorSaturation: 0,
-      wireframe: false,
-      colorBlending: 6,
-      backgroundColor: palette[2],
-      backgroundAlpha: 1,
-      resolution: 0.5,
-      licenseKey: NEAT_LICENSE,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      gradient = new NeatGradient({
+        ref: canvas,
+        ...(preset as any),
+        seed: hashSeed(slug),
+        ...(reduced ? { speed: 0 } : {}),
+        licenseKey: NEAT_LICENSE,
+      } as any);
     });
 
     return () => {
-      gradient.destroy();
+      cancelled = true;
+      gradient?.destroy();
     };
   }, [slug]);
 

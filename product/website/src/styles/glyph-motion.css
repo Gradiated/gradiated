@@ -379,73 +379,108 @@
   animation: gr-glyph-convey 4.5s 3s linear infinite backwards;
 }
 
-@keyframes gr-glyph-route {
+@keyframes gr-glyph-sort-a {
   0% {
     translate: 0 0;
+  }
+  34% {
+    translate: 20.72px 10.36px;
+  }
+  56% {
+    translate: 39.5px 10.04px;
+  }
+  100% {
+    translate: 61.51px 21.04px;
+  }
+}
+@keyframes gr-glyph-sort-b {
+  0% {
+    translate: 0 0;
+  }
+  34% {
+    translate: 20.72px 10.36px;
+  }
+  56% {
+    translate: 20.07px 19.75px;
+  }
+  100% {
+    translate: 42.09px 30.76px;
+  }
+}
+.gr-glyph--routing .gr-glyph-sortcube {
+  animation: gr-glyph-sort-a 5.6s ease-in-out infinite;
+}
+.gr-glyph--routing .gr-glyph-sortpuck {
+  animation: gr-glyph-sort-b 5.6s 2.8s ease-in-out infinite backwards;
+}
+
+@keyframes gr-glyph-check-0 {
+  0%,
+  8% {
     opacity: 0;
   }
-  10% {
+  12%,
+  82% {
     opacity: 1;
+  }
+  90%,
+  100% {
+    opacity: 0;
+  }
+}
+.gr-glyph--guardrails .gr-glyph-tick-0 {
+  animation: gr-glyph-check-0 6s infinite;
+}
+@keyframes gr-glyph-check-1 {
+  0%,
+  25% {
+    opacity: 0;
+  }
+  29%,
+  82% {
+    opacity: 1;
+  }
+  90%,
+  100% {
+    opacity: 0;
+  }
+}
+.gr-glyph--guardrails .gr-glyph-tick-1 {
+  animation: gr-glyph-check-1 6s infinite;
+}
+@keyframes gr-glyph-check-2 {
+  0%,
+  42% {
+    opacity: 0;
   }
   46%,
-  54% {
-    translate: 26.58px 13.29px;
-  }
-  92% {
+  82% {
     opacity: 1;
   }
+  90%,
   100% {
-    translate: 64.54px 20.88px;
     opacity: 0;
   }
 }
-.gr-glyph--routing .gr-glyph-parcel {
-  animation: gr-glyph-route 3.8s ease-in-out infinite;
+.gr-glyph--guardrails .gr-glyph-tick-2 {
+  animation: gr-glyph-check-2 6s infinite;
 }
-
-@keyframes gr-glyph-admit {
-  0% {
-    translate: 0 0;
-    opacity: 0;
-  }
-  12% {
-    opacity: 1;
-  }
-  38%,
-  58% {
-    translate: 26.2px -13.1px;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    translate: 56.76px -28.38px;
-    opacity: 0;
-  }
-}
-.gr-glyph--guardrails .gr-glyph-visitor {
-  animation: gr-glyph-admit 4.4s ease-in-out infinite;
-}
-
-@keyframes gr-glyph-score {
+@keyframes gr-glyph-check-3 {
   0%,
-  24% {
-    translate: 0 0;
+  59% {
+    opacity: 0;
   }
-  33%,
-  57% {
-    translate: 16.63px -6.96px;
+  63%,
+  82% {
+    opacity: 1;
   }
-  66%,
-  90% {
-    translate: 33.26px 24.27px;
-  }
+  90%,
   100% {
-    translate: 0 0;
+    opacity: 0;
   }
 }
-.gr-glyph--scoring .gr-glyph-marker {
-  animation: gr-glyph-score 5.2s ease-in-out infinite;
+.gr-glyph--guardrails .gr-glyph-tick-3 {
+  animation: gr-glyph-check-3 6s infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

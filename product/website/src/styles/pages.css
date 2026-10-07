@@ -762,6 +762,11 @@
   stroke: none;
 }
 
+/* A landed tick carries more ink than a hairline — it is the event. */
+.gr-glyph-tick {
+  stroke-width: 1.7;
+}
+
 /* An open track: stroked, never filled — a rail is a line, not a plate. */
 .gr-glyph-rail {
   fill: none;
@@ -5345,7 +5350,8 @@
   transition:
     transform 0.08s linear,
     box-shadow 0.3s var(--ease-media);
-  box-shadow: 0 24px 48px -24px color-mix(in srgb, var(--color-text) 35%, transparent);
+  box-shadow: 0 24px 48px -24px
+    color-mix(in srgb, var(--color-text) 35%, transparent);
 }
 
 /* the caption rides a step proud of the plate, so the tilt has depth */
@@ -5366,7 +5372,6 @@
   /* part of the plate's 3D context, beneath the raised caption */
   transform: translateZ(6px);
 }
-
 
 /* An invitation to everyone scanning the catalogue, not a caption on the
    last card: centred, with clear air above the grid. */
@@ -5394,4 +5399,3 @@
     min-height: 300px;
   }
 }
-

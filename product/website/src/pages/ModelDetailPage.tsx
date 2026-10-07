@@ -280,19 +280,48 @@ const ModelId = ({ id }: { id: string }): ReactElement => {
     <div className="gr-model-id-row">
       <span className="gr-model-id">
         <code>{id}</code>
+        {/* the copy affordance lives inside the parameter's own box — an
+            icon beside the value, not a second button competing with it */}
+        <button
+          aria-label={copied ? "Copied" : "Copy model id"}
+          className="gr-model-copy-inline"
+          onClick={() => {
+            void navigator.clipboard.writeText(id).then(() => {
+              setCopied(true);
+              window.setTimeout(() => setCopied(false), 1600);
+            });
+          }}
+          title={copied ? "Copied" : "Copy model id"}
+          type="button"
+        >
+          {copied ? (
+            <svg fill="none" height="14" viewBox="0 0 14 14" width="14">
+              <path
+                d="M2.5 7.5L5.5 10.5L11.5 3.5"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+            </svg>
+          ) : (
+            <svg fill="none" height="14" viewBox="0 0 14 14" width="14">
+              <rect
+                height="8.5"
+                rx="1.5"
+                stroke="currentColor"
+                strokeWidth="1.2"
+                width="8.5"
+                x="4"
+                y="4"
+              />
+              <path
+                d="M10 2H3.5A1.5 1.5 0 0 0 2 3.5V10"
+                stroke="currentColor"
+                strokeWidth="1.2"
+              />
+            </svg>
+          )}
+        </button>
       </span>
-      <button
-        className="gr-model-copy"
-        type="button"
-        onClick={() => {
-          void navigator.clipboard.writeText(id).then(() => {
-            setCopied(true);
-            window.setTimeout(() => setCopied(false), 1600);
-          });
-        }}
-      >
-        {copied ? "Copied" : "Copy ID"}
-      </button>
     </div>
   );
 };

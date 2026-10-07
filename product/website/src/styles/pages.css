@@ -543,19 +543,19 @@
   font-size: var(--text-ui);
 }
 
-.gr-model-copy {
-  padding: calc(0.35 * var(--u)) calc(0.7 * var(--u));
+.gr-model-copy-inline {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
   border: 0;
-  border-radius: var(--radius);
-  background: color-mix(in srgb, var(--color-text) 6%, var(--color-overlay));
-  color: var(--color-text);
-  font-family: var(--font-caps);
-  font-size: var(--text-caps);
-  font-weight: var(--weight-caps);
-  letter-spacing: var(--tracking-caps);
-  text-transform: uppercase;
+  background: none;
+  color: var(--color-text-muted);
   cursor: pointer;
-  transition: background var(--dur-fast) var(--ease-response);
+  transition: color var(--dur-fast) var(--ease-response);
+}
+
+.gr-model-copy-inline:hover {
+  color: var(--color-text);
 }
 
 .gr-model-copy:hover {
@@ -1006,32 +1006,61 @@
     gap: var(--u);
   }
 
-  /* No fold to wait for in a single column — the rail is simply the list
-     of what follows. */
+  /* No section nav on a phone: the sections simply follow. */
   .gr-model-rail {
-    pointer-events: auto;
+    display: none;
   }
 
-  .gr-model-rail li {
-    opacity: 1;
-    translate: 0 0;
-  }
-
+  /* The phone reads in one order — image, title + lede, the facts, then
+     the description and everything after — which crosses the desktop's
+     two-column DOM. The wrappers dissolve (display: contents) so the
+     pieces become items of the one-column grid, and order does the rest. */
+  .gr-model-left,
+  .gr-model-side,
+  .gr-model-main,
   .gr-model-intro {
-    min-height: 0;
-    margin-block-end: calc(2 * var(--u));
+    display: contents;
   }
 
-  .gr-model-rail ul {
-    display: flex;
-    flex-wrap: wrap;
-    gap: calc(0.4 * var(--u)) var(--u);
+  .gr-model-layout {
+    row-gap: var(--u);
+  }
+
+  .gr-model-art {
+    order: -4;
+    margin-block-end: 0;
+  }
+
+  .gr-model-name,
+  .gr-model-lede {
+    order: -3;
+    margin: 0;
+  }
+
+  .gr-model-facts {
+    order: -2;
+  }
+
+  .gr-model-overview,
+  .gr-model-id-row {
+    order: -1;
+    margin-block-start: 0;
+  }
+
+  .gr-model-sections {
+    min-width: 0;
   }
 }
 
 @media (max-width: 620px) {
+  /* the pricing boxes stack */
   .gr-model-vitals {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* each good-for item stacks: tile, then its words */
+  .gr-model-good-row {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   /* Break the tile's height:100% + aspect-ratio circularity: on a phone
@@ -1057,13 +1086,18 @@
     order: 2;
   }
 
+  /* the KV rows (specs AND hardware share this class) stack label over
+     value — the old rule set grid-template-columns on a flex box, a
+     no-op, which is why long values ran off the edge */
   .gr-model-spec {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: flex-start;
     gap: calc(0.15 * var(--u));
   }
 
   .gr-model-spec dd {
     text-align: left;
+    overflow-wrap: anywhere;
   }
 }
 

@@ -4,6 +4,7 @@ import { articles } from "./articles";
 import { jobs } from "./careers";
 import { methodPages } from "./method";
 import { models } from "./models";
+import { ModelsPage } from "./pages/ModelsPage";
 import { ModelDetailPage } from "./pages/ModelDetailPage";
 import { CareersIndexPage, JobDetailPage } from "./pages/CareersPages";
 import { DocsNextPage } from "./pages/DocsNextPage";
@@ -68,6 +69,7 @@ export const AppRoutes = (): ReactElement => (
     <Route element={<TrainingPage />} path="/training/" />
     <Route element={<HardwarePage />} path="/hardware/" />
     <Route element={<ArtworkGeneratorPage />} path="/artwork-generator/" />
+    <Route element={<ModelsPage />} path="/models/" />
     {models.map((model) => (
       <Route
         element={<ModelDetailPage model={model} />}

@@ -119,10 +119,6 @@ const TIME: NeatPreset = {
   backgroundColor: "#A1A4B7",
   backgroundAlpha: 1,
   resolution: 0.4,
-  yOffset: 28659,
-  yOffsetWaveMultiplier: 1,
-  yOffsetColorMultiplier: 4.8,
-  yOffsetFlowMultiplier: 5.3,
   flowDistortionA: 3.7,
   flowDistortionB: 0.8,
   flowScale: 1.6,
@@ -199,7 +195,10 @@ export const ModelArt = ({
       gradient = new NeatGradient({
         ref: canvas,
         ...(preset as any),
-        seed: hashSeed(slug),
+        /* Neat's seed is the time-accumulator's start: keep it SMALL.
+           A raw 32-bit hash collapses mediump float precision and the
+           field goes flat and motionless. */
+        seed: hashSeed(slug) % 3600,
         ...(reduced ? { speed: 0 } : {}),
         licenseKey: NEAT_LICENSE,
       } as any);

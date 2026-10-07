@@ -23,6 +23,11 @@ const PALETTES: Record<string, string[]> = {
 
 const FALLBACK = ["#C8C1B4", "#EFECE3", "#A9A192", "#6B6557"];
 
+/* Domain-bound to gradiated.com (and localhost for dev) — public by
+   design, useless elsewhere. Removes the NEAT watermark. */
+const NEAT_LICENSE =
+  "NEAT-eyJkb21haW4iOiJncmFkaWF0ZWQuY29tIiwiZW1haWwiOiJoZWxsb0BzYW11ZHJhZ3VwdGEuY29tIiwiaWF0IjoxNzkxMzQxMzg2fQ.9jvIzaNpbCRGyfwGVGrXBULGAYDm0--fQHtJ2DNbt4UYZ_xmhJUfRKqTw8ONvwyVsXwBR6LgwhY6dpqa1yOKqw";
+
 const hashSeed = (s: string): number => {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) {
@@ -75,6 +80,7 @@ export const ModelArt = ({
       backgroundColor: palette[2],
       backgroundAlpha: 1,
       resolution: 0.5,
+      licenseKey: NEAT_LICENSE,
     });
 
     return () => {

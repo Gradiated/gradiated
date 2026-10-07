@@ -5396,17 +5396,17 @@
   opacity: 0.95;
 }
 
-/* no mark: the model's initial in a square, same white overlay voice */
+/* no mark: the model's initial, semibold, cut into a filled white square */
 .gr-model-art-mark--letter {
   display: grid;
   place-items: center;
-  color: #fff;
+  background: #fff;
+  color: var(--color-dark-000, #222);
   filter: none;
-  border: 1.5px solid rgba(255, 255, 255, 0.9);
   border-radius: 8px;
   font-family: var(--font-title);
   font-size: 22px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1;
 }
 

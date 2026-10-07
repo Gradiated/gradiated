@@ -1105,7 +1105,7 @@
 
   .gr-model-id-row {
     margin: 0;
-    padding-block-end: calc(1.4 * var(--u));
+    padding-block-end: calc(2 * var(--u));
   }
 }
 

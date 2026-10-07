@@ -665,6 +665,10 @@
 
 .gr-model-sections {
   display: grid;
+  /* minmax(0,1fr), never an implicit auto column: auto takes the widest
+     child's min-content (the snippet pre), and every section inherits
+     that width — the mobile page was uniformly ~25% overwide. */
+  grid-template-columns: minmax(0, 1fr);
   gap: calc(2.5 * var(--u));
   max-width: 44rem;
 }
@@ -1049,6 +1053,61 @@
 
   .gr-model-sections {
     min-width: 0;
+    margin-block-start: calc(2.5 * var(--u));
+  }
+
+  /* THE PLATE, rebuilt for the stacked page. The desktop plate is a
+     100dvh background layer on the module, which on a phone ends mid-
+     facts. Here the head pieces carry the white themselves — full-bleed
+     via ±100vmax box-shadows — so the plate ends exactly where the head
+     does: after the copy-id box. Row gaps go to zero and the rhythm
+     moves into each piece's own padding (also where the title–lede and
+     lede–facts gaps tighten). */
+  .gr-module--model {
+    background-image: none;
+  }
+
+  .gr-model-layout {
+    row-gap: 0;
+  }
+
+  .gr-model-back,
+  .gr-model-art,
+  .gr-model-name,
+  .gr-model-lede,
+  .gr-model-facts,
+  .gr-model-overview,
+  .gr-model-id-row {
+    background: var(--color-overlay);
+    box-shadow:
+      100vmax 0 0 var(--color-overlay),
+      -100vmax 0 0 var(--color-overlay);
+  }
+
+  .gr-model-art {
+    padding-block-end: calc(0.9 * var(--u));
+  }
+
+  .gr-model-name {
+    padding-block-end: calc(0.35 * var(--u));
+  }
+
+  .gr-model-lede {
+    margin: 0;
+    padding-block-end: calc(0.7 * var(--u));
+  }
+
+  .gr-model-facts {
+    padding-block-end: calc(0.9 * var(--u));
+  }
+
+  .gr-model-overview {
+    padding-block-end: calc(0.5 * var(--u));
+  }
+
+  .gr-model-id-row {
+    margin: 0;
+    padding-block-end: calc(1.4 * var(--u));
   }
 }
 

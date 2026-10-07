@@ -7,7 +7,6 @@ import { ModelArt } from "./ModelArt";
 import { WaferArtwork } from "./WaferArtwork";
 import { Arrow } from "./icons";
 import { LOGO_ASPECT, Logo } from "./Logo";
-import { MetalMark } from "./MetalMark";
 
 /**
  * Site navigation: a bar with a shared dropdown above `wide`, a full-screen
@@ -495,10 +494,7 @@ export const Nav = (): ReactElement => {
           href="/"
           style={{ "--logo-aspect": LOGO_ASPECT } as CSSProperties}
         >
-          {/* the lockup, recomposed: the mark in liquid metal, the
-              wordmark in ink as ever */}
-          <MetalMark />
-          <Logo wordmark />
+          <Logo />
         </a>
 
         <div className="gr-nav-links" role="list">

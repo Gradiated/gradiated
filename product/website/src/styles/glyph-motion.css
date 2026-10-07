@@ -11,7 +11,7 @@
     translate: 0 0;
   }
   3.5% {
-    translate: 0px 2.77px;
+    translate: 0px 1.96px;
   }
 }
 .gr-glyph--terminal .gr-glyph-k01 {
@@ -110,7 +110,7 @@
   0%,
   20% {
     opacity: 0;
-    translate: 0px 2.65px;
+    translate: 0px 2.24px;
   }
   26%,
   84% {
@@ -130,7 +130,7 @@
   0%,
   46% {
     opacity: 0;
-    translate: 0px 2.65px;
+    translate: 0px 2.24px;
   }
   52%,
   84% {
@@ -154,7 +154,7 @@
   }
   30%,
   40% {
-    translate: 0px 9.75px;
+    translate: 0px 11.75px;
   }
   55%,
   70% {
@@ -162,7 +162,7 @@
   }
   82%,
   90% {
-    translate: 0px 9.75px;
+    translate: 0px 11.75px;
   }
   100% {
     translate: 0 0;
@@ -178,7 +178,7 @@
   }
   55%,
   70% {
-    translate: 0px -9.75px;
+    translate: 0px -11.75px;
   }
   82%,
   100% {
@@ -194,128 +194,128 @@
     translate: 0px 0px;
   }
   3.23% {
-    translate: 1.84px 1.8px;
+    translate: 2.1px 2.05px;
   }
   7.08% {
-    translate: 3.68px 5.26px;
+    translate: 4.2px 6.01px;
   }
   11.19% {
-    translate: 5.51px 10.15px;
+    translate: 6.29px 11.58px;
   }
   15.27% {
-    translate: 7.35px 16.06px;
+    translate: 8.39px 18.33px;
   }
   19.11% {
-    translate: 9.19px 22.52px;
+    translate: 10.49px 25.7px;
   }
   22.57% {
-    translate: 11.03px 28.98px;
+    translate: 12.59px 33.08px;
   }
   25.51% {
-    translate: 12.87px 34.9px;
+    translate: 14.69px 39.83px;
   }
   27.86% {
-    translate: 14.71px 39.78px;
+    translate: 16.78px 45.4px;
   }
   29.57% {
-    translate: 16.54px 43.25px;
+    translate: 18.88px 49.36px;
   }
   30.68% {
-    translate: 18.38px 45.04px;
+    translate: 20.98px 51.41px;
   }
   36.1% {
-    translate: 29.64px 50.46px;
+    translate: 33.82px 57.59px;
   }
   36.97% {
-    translate: 31.61px 50.53px;
+    translate: 36.08px 57.66px;
   }
   37.78% {
-    translate: 33.29px 49.8px;
+    translate: 37.99px 56.84px;
   }
   38.67% {
-    translate: 34.53px 48.34px;
+    translate: 39.41px 55.17px;
   }
   39.74% {
-    translate: 35.26px 46.24px;
+    translate: 40.24px 52.78px;
   }
   41.03% {
-    translate: 35.4px 43.67px;
+    translate: 40.4px 49.84px;
   }
   42.56% {
-    translate: 34.94px 40.79px;
+    translate: 39.88px 46.56px;
   }
   44.31% {
-    translate: 33.9px 37.81px;
+    translate: 38.69px 43.16px;
   }
   46.2% {
-    translate: 32.33px 34.95px;
+    translate: 36.9px 39.88px;
   }
   48.16% {
-    translate: 30.34px 32.39px;
+    translate: 34.63px 36.96px;
   }
   50.07% {
-    translate: 28.05px 30.32px;
+    translate: 32.01px 34.6px;
   }
   51.85% {
-    translate: 25.6px 28.88px;
+    translate: 29.22px 32.96px;
   }
   53.43% {
-    translate: 23.15px 28.18px;
+    translate: 26.42px 32.17px;
   }
   54.82% {
-    translate: 20.86px 28.28px;
+    translate: 23.8px 32.27px;
   }
   56.08% {
-    translate: 18.86px 29.16px;
+    translate: 21.53px 33.28px;
   }
   57.33% {
-    translate: 17.3px 30.79px;
+    translate: 19.74px 35.14px;
   }
   58.63% {
-    translate: 16.25px 33.04px;
+    translate: 18.55px 37.7px;
   }
   60.02% {
-    translate: 15.79px 35.77px;
+    translate: 18.03px 40.83px;
   }
   61.48% {
-    translate: 15.94px 38.81px;
+    translate: 18.19px 44.29px;
   }
   62.97% {
-    translate: 16.66px 41.94px;
+    translate: 19.02px 47.87px;
   }
   64.44% {
-    translate: 17.91px 44.97px;
+    translate: 20.44px 51.32px;
   }
   65.84% {
-    translate: 19.58px 47.69px;
+    translate: 22.35px 54.43px;
   }
   67.13% {
-    translate: 21.56px 49.92px;
+    translate: 24.61px 56.97px;
   }
   68.28% {
-    translate: 23.69px 51.51px;
+    translate: 27.04px 58.79px;
   }
   74.46% {
-    translate: 36.4px 58.26px;
+    translate: 41.54px 66.49px;
   }
   76.39% {
-    translate: 40.26px 60.57px;
+    translate: 45.95px 69.13px;
   }
   78.3% {
-    translate: 44.12px 62.89px;
+    translate: 50.35px 71.78px;
   }
   80.21% {
-    translate: 47.97px 65.21px;
+    translate: 54.75px 74.42px;
   }
   82.11% {
-    translate: 51.83px 67.53px;
+    translate: 59.16px 77.07px;
   }
   84% {
-    translate: 55.69px 69.85px;
+    translate: 63.56px 79.72px;
   }
   85%,
   100% {
-    translate: 55.69px 69.85px;
+    translate: 63.56px 79.72px;
   }
 }
 @keyframes gr-glyph-ride-under {
@@ -365,7 +365,7 @@
     opacity: 1;
   }
   100% {
-    translate: 48.88px 24.44px;
+    translate: 61.1px 30.55px;
     opacity: 0;
   }
 }

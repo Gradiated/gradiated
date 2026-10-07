@@ -146,6 +146,24 @@ const TIME: NeatPreset = {
   cameraRotationY: -0.238,
 };
 
+/* Each provider's core colours, worn over the preset's physics: the
+   materials keep their distinct motion, the paint stays on-brand so the
+   row reads as one family. */
+const BRAND: Record<string, { colors: string[]; bg: string }> = {
+  "deepseek-v4-1-flash": {
+    colors: ["#DCE4FF", "#8FA5FF", "#BFD1FF", "#4D6BFE"],
+    bg: "#DCE4FF",
+  },
+  "glm-5-3-flash": {
+    colors: ["#5E5CE6", "#9D8CFF", "#E4DEFF", "#3634A3"],
+    bg: "#3634A3",
+  },
+  "kev-9b": {
+    colors: ["#E9B748", "#BE5E31", "#F6E7C8", "#5E6043"],
+    bg: "#C8C1B4",
+  },
+};
+
 const PRESETS: Record<string, NeatPreset> = {
   "deepseek-v4-1-flash": OIL_SLICK,
   "glm-5-3-flash": NEAT,
@@ -190,11 +208,18 @@ export const ModelArt = ({
 
       const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
       const preset = PRESETS[slug] ?? OIL_SLICK;
+      const brand = BRAND[slug];
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       gradient = new NeatGradient({
         ref: canvas,
         ...(preset as any),
+        ...(brand
+          ? {
+              colors: brand.colors.map((color) => ({ color, enabled: true })),
+              backgroundColor: brand.bg,
+            }
+          : {}),
         /* Neat's seed is the time-accumulator's start: keep it SMALL.
            A raw 32-bit hash collapses mediump float precision and the
            field goes flat and motionless. */

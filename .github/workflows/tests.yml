@@ -43,6 +43,7 @@ on:
       - "mise.toml"
       - "tools/images/**"
       - "tools/deployment/**"
+      - "tools/github-apps/**"
   pull_request:
   workflow_dispatch:
 
@@ -158,7 +159,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: jdx/mise-action@v4.2.3
-      - run: node --test tools/deployment/*.test.mjs tools/images/*.test.mjs
+      - run: node --test tools/deployment/*.test.mjs tools/github-apps/*.test.mjs tools/images/*.test.mjs
       - run: pnpm install --frozen-lockfile
         working-directory: product
       - run: pnpm check:scripts && pnpm test:scripts && pnpm exec prettier --check mprocs.yaml scripts

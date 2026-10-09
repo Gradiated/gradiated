@@ -34,8 +34,9 @@ docker buildx bake -f product/inference/bundles/build.hcl verify-training
 ```
 
 The build installs the Python package from the pinned checkout, with dependencies
-locked by this runtime. CI fetches that exact commit using a read-only deploy key
-stored as `AUTOTRAIN_DEPLOY_KEY`; it does not follow the package’s main branch.
+locked by this runtime. CI fetches that exact commit with a read-only token from the
+Gradiated Autotrain Reader GitHub App (`AUTOTRAIN_APP_CLIENT_ID`,
+`AUTOTRAIN_APP_PRIVATE_KEY`); it does not follow the package’s main branch.
 To upgrade, commit a new submodule revision here and verify the runtime again.
 
 The image runs package and runtime CPU tests, including exact adapter-weight

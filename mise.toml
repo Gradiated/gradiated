@@ -29,6 +29,10 @@ run = [
   "git diff --check",
 ]
 
+[tasks."github-apps:create"]
+description = "Create Gradiated GitHub Apps and store their keys without printing them"
+run = "node tools/github-apps/create.mjs"
+
 [tasks.sglang-local]
 description = "Run the pinned Apple Silicon SGLang development model"
 dir = "product"

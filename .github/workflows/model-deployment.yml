@@ -68,13 +68,22 @@ jobs:
       - name: Read pinned autotrain revision
         id: autotrain
         run: echo "revision=$(git rev-parse HEAD:product/packages/autotrain)" >> "$GITHUB_OUTPUT"
+      - name: Create autotrain read token
+        id: autotrain-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.AUTOTRAIN_APP_CLIENT_ID }}
+          private-key: ${{ secrets.AUTOTRAIN_APP_PRIVATE_KEY }}
+          owner: Gradiated
+          repositories: autotrain
+          permission-contents: read
       - name: Check out private training library
         uses: actions/checkout@v7
         with:
           repository: Gradiated/autotrain
           ref: ${{ steps.autotrain.outputs.revision }}
           path: product/packages/autotrain
-          ssh-key: ${{ secrets.AUTOTRAIN_DEPLOY_KEY }}
+          token: ${{ steps.autotrain-token.outputs.token }}
           persist-credentials: false
       - id: verification
         if: github.event_name == 'pull_request'
@@ -127,13 +136,22 @@ jobs:
       - name: Read pinned autotrain revision
         id: autotrain
         run: echo "revision=$(git rev-parse HEAD:product/packages/autotrain)" >> "$GITHUB_OUTPUT"
+      - name: Create autotrain read token
+        id: autotrain-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.AUTOTRAIN_APP_CLIENT_ID }}
+          private-key: ${{ secrets.AUTOTRAIN_APP_PRIVATE_KEY }}
+          owner: Gradiated
+          repositories: autotrain
+          permission-contents: read
       - name: Check out private training library
         uses: actions/checkout@v7
         with:
           repository: Gradiated/autotrain
           ref: ${{ steps.autotrain.outputs.revision }}
           path: product/packages/autotrain
-          ssh-key: ${{ secrets.AUTOTRAIN_DEPLOY_KEY }}
+          token: ${{ steps.autotrain-token.outputs.token }}
           persist-credentials: false
       - name: Wait for the source infrastructure prerequisite
         env:

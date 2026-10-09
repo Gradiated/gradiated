@@ -28,7 +28,7 @@ the build idempotent. Kubernetes uses only resolved `sha256` image digests.
 3. Upload hashed console assets to the private S3 bucket. Do not upload the live
    `index.html` file.
 4. Commit the source revision, image digests and console revision directly to
-   `main`, using the repository-specific release deploy key. The source has
+   `main`, using a token from the Gradiated Release GitHub App. The source has
    already passed `Product tests`; the generated commit carries `[skip ci]`
    to avoid starting another build and deployment cycle.
 5. Wait for Argo CD to apply the release and for the API and worker Deployments
@@ -39,11 +39,12 @@ the build idempotent. Kubernetes uses only resolved `sha256` image digests.
 8. Compare the live root and SPA fallback with the built entry point. Check API
    readiness.
 
-The release job uses `DEPLOY_RELEASE_SSH_KEY` for its checkout and push. This
-write deploy key bypasses the PR and status-check rules for `main`; a separate
-ruleset still forbids branch deletion and force pushes. GitHub applies deploy-key
-bypass to repository deploy keys as a class, so existing write deploy keys share
-that exception. Ordinary user and app pushes retain their PR and CI requirements.
+The release job mints a short-lived token from the Gradiated Release GitHub App
+(`RELEASE_APP_CLIENT_ID` variable, `RELEASE_APP_PRIVATE_KEY` secret in the
+`production` environment) for its checkout and push. The app is a `main`
+ruleset bypass actor, so it can skip the PR and status-check
+rules; a separate ruleset still forbids branch deletion and force pushes.
+Ordinary user and app pushes retain their PR and CI requirements.
 The release helper stages only the generated manifest paths, rejects pre-staged
 changes, rechecks release ancestry before each push, and retries fast-forward
 races by rebasing onto the latest `main`. Conflicts or stale sources stop the
@@ -65,15 +66,25 @@ healthy. S3 versioning keeps previous entry points for recovery.
 - Repository variable `AWS_ACCOUNT_ID` must contain the production AWS account
   ID.
 - The `production` environment must permit the deployment workflow.
-- Repository secret `DEPLOY_RELEASE_SSH_KEY` contains the private SSH key for
-  the repository write deploy key used by the release job. Keep the key outside
-  version control; the job needs only read access through `GITHUB_TOKEN`.
+- The GitHub Apps in `tools/github-apps/apps.mjs` exist and are installed on
+  only their listed repositories. `mise run github-apps:create` creates them
+  through the manifest flow, verifies each installation's repository scope, and
+  writes each private key straight to its secret store:
+  - Gradiated Release (contents write, `main` bypass): release commits.
+  - Gradiated CI (contents write, no bypass): screenshot commits on PR branches.
+  - Gradiated Autotrain Reader (contents read on `autotrain`): runtime builds.
+  - Gradiated Argo CD (contents read): the
+    `gradiated/prod/gitops/argocd-github-app` repository credential.
+  To rotate a key, generate a new one on the app's settings page, pipe it into
+  the same secret (`gh secret set` or `aws secretsmanager put-secret-value`),
+  then delete the old key. Never keep keys in version control.
 - The `main` ruleset requires one gate per workflow: `Product tests passed`,
   `Kubernetes passed`, `Nomad deployment passed`, `Terraform passed`,
   `Model deployment passed`, `Wizard publish passed`, `Agent quality passed`,
   `Dependency age passed` and `Research lab passed`. Ordinary PRs satisfy these
-  checks and resolved review threads. Deploy keys bypass this ruleset; the
-  separate `main integrity` ruleset retains deletion and force-push protections.
+  checks and resolved review threads. The Gradiated Release app bypasses this
+  ruleset; the separate `main integrity` ruleset retains deletion and
+  force-push protections.
 
 Every required workflow runs on every pull request. Its `changes` job
 (`.github/actions/relevant`) compares the pull request's files with the

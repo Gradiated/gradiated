@@ -95,10 +95,18 @@ jobs:
       contents: read
       pull-requests: write
     steps:
+      # The CI app has no ruleset bypass; its pushes start the PR's checks.
+      - name: Create screenshot push token
+        id: push-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.CI_APP_CLIENT_ID }}
+          private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
+          permission-contents: write
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          ssh-key: ${{ secrets.DEPLOY_RELEASE_SSH_KEY }}
+          token: ${{ steps.push-token.outputs.token }}
       - name: Remove the old PNGs before installing the complete capture
         run: find product/website/screenshots -name '*.png' -delete 2>/dev/null || true
       - uses: actions/download-artifact@v4

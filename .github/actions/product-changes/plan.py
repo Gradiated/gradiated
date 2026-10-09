@@ -77,6 +77,7 @@ JOB_PATHS = {
         "product/mprocs.yaml",
         "product/tsconfig.scripts.json",
         "tools/deployment/*",
+        "tools/github-apps/*",
         "tools/images/*",
         "product/packages/contracts/*",
         ".github/workflows/application-deployment.yml",

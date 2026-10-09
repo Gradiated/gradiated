@@ -32,7 +32,7 @@ run = [
 
 [tasks.infra-sec]
 description = "Report security misconfigurations in the standalone bootstrap roots with Trivy"
-run = "trivy config --quiet infra/bootstrap"
+run = "trivy config --quiet --exit-code 1 infra/bootstrap"
 
 [tasks."github-apps:create"]
 description = "Create Gradiated GitHub Apps and store their keys without printing them"

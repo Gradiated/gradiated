@@ -7,6 +7,7 @@ pnpm = "10.34.5"
 rust = "1.97.1"
 terraform = "1.14.6"
 terragrunt = "1.1.2"
+trivy = "0.75.0"
 
 [tasks."aws:login"]
 description = "Log in to Gradiated AWS through the configured organization SSO profile"
@@ -28,6 +29,10 @@ run = [
   "terragrunt hcl validate --working-dir infra/environments/prod/us-east-1/terraform",
   "git diff --check",
 ]
+
+[tasks.infra-sec]
+description = "Report security misconfigurations in the standalone bootstrap roots with Trivy"
+run = "trivy config --quiet infra/bootstrap"
 
 [tasks."github-apps:create"]
 description = "Create Gradiated GitHub Apps and store their keys without printing them"

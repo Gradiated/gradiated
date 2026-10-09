@@ -56,6 +56,11 @@ proxy has no public route, so no customer traffic depends on it.
 
 ## Console cache behavior
 
+Product analytics uses the console's `CONSOLE_POSTHOG_KEY` build variable and
+the API's `POSTHOG_KEY`/`POSTHOG_HOST` fields in its existing Secrets Manager
+secret. Both must point to the same environment-specific project. See
+[product analytics](PRODUCT_ANALYTICS.md) for rollout and notification setup.
+
 Hashed assets use a one-year immutable cache lifetime. Deployments do not delete
 old hashed assets because open browser tabs can still request them. The live
 `index.html` uses revalidation headers and changes only after the backend is

@@ -6,6 +6,7 @@ on:
       - "product/services/console/**"
       - "!product/services/console/screenshots/**"
       - "product/packages/contracts/**"
+      - "product/packages/analytics/**"
       - "product/pnpm-lock.yaml"
       - "product/pnpm-workspace.yaml"
       - "tools/browser/storybook_screenshots.py"
@@ -22,6 +23,7 @@ on:
       - "product/services/console/**"
       - "!product/services/console/screenshots/**"
       - "product/packages/contracts/**"
+      - "product/packages/analytics/**"
       - "product/pnpm-lock.yaml"
       - "product/pnpm-workspace.yaml"
       - "tools/browser/storybook_screenshots.py"
@@ -68,7 +70,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
         if: steps.capture.outputs.capture == 'true'
         working-directory: product
-      - run: pnpm exec turbo run build --filter=@gradiated/contracts
+      - run: pnpm exec turbo run build --filter=@gradiated/contracts --filter=@gradiated/analytics
         if: steps.capture.outputs.capture == 'true'
         working-directory: product
       - run: pnpm --filter @gradiated/console build-storybook

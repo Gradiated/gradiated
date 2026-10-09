@@ -226,6 +226,12 @@ export const registerBillingRoutes = (
       amount: BigInt(context.req.valid("json").amount),
     });
 
+    context.get("analytics")?.track(user.id, "billing_checkout_started", {
+      organization_id: context.req.valid("param").organization_id,
+      amount_nano_usd: context.req.valid("json").amount,
+      currency: "USD",
+    });
+
     return context.json({ checkout_url: checkout.checkoutUrl }, 201);
   });
 

@@ -11,6 +11,7 @@ import type {
 } from "@gradiated/control";
 
 import type { BillingPaymentsService } from "./billing/top-ups.js";
+import type { ApiAnalytics } from "./analytics.js";
 
 export interface SessionUser {
   id: string;
@@ -25,6 +26,7 @@ export interface ApiEnvironment {
   Bindings: Partial<HttpBindings>;
   Variables: {
     requestId: string;
+    analytics?: ApiAnalytics;
     resolveUser: () => Promise<SessionUser | null>;
     sessionUser?: SessionUser;
     logResourceIds?: { workspace_id?: string; api_key_id?: string };

@@ -1,4 +1,6 @@
 import { createExternalModelCatalog } from "./catalog/external-models.js";
+import { createPostHogServer } from "@gradiated/analytics/server";
+import { createApiAnalytics, createSignupHandler } from "./analytics.js";
 import { createEvaluationModelValidator } from "./catalog/evaluation-models.js";
 import { kmsSigner } from "@gradiated/nomad-pki";
 import { createTrainingEngine } from "./training/engine.js";
@@ -20,6 +22,7 @@ import {
   createUsageService,
   createWaitlistService,
   createWorkspaceApiKeyService,
+  createWorkspaceStore,
   parseClickHouseRuntimeEnvironment,
 } from "@gradiated/control";
 import { createValkeyClient } from "@gradiated/valkey";
@@ -53,8 +56,22 @@ import { ApiMetrics, startApiMetricsServer } from "./metrics.js";
 import { createReadinessCheck } from "./readiness.js";
 
 const environment = parseApiEnvironment(process.env);
+const analyticsFailed = () => serviceLog("warn", "analytics_delivery_failed");
+const posthog = createPostHogServer({
+  key: environment.POSTHOG_KEY,
+  host: environment.POSTHOG_HOST,
+  onError: analyticsFailed,
+});
+
 // Keep the API within 100 database connections at its 20-pod ceiling.
 const { database, pool } = createControlDatabase(environment.DATABASE_URL, 5);
+const workspaceRecords = createWorkspaceStore(database);
+const analytics = createApiAnalytics(
+  posthog,
+  async (id) => (await workspaceRecords.get(id))?.organizationId,
+  analyticsFailed,
+);
+
 const clickhouse = createClickHouseRuntimeClient(
   parseClickHouseRuntimeEnvironment(process.env),
 );
@@ -125,8 +142,17 @@ const auth = createAuthService(database, {
           clientSecret: environment.GOOGLE_CLIENT_SECRET,
         }
       : undefined,
-  onUserCreated: async (user) => {
-    await organizations.ensurePersonalForUser(user.id);
+  onUserCreated: createSignupHandler(
+    (id) => organizations.ensurePersonalForUser(id),
+    posthog,
+  ),
+  onSessionCreated: async (session) => {
+    posthog.track(
+      session.userId,
+      "user_signed_in",
+      { user_id: session.userId, session_id: session.id },
+      session.id,
+    );
   },
   secret: environment.BETTER_AUTH_SECRET,
   trustedOrigins,
@@ -165,6 +191,7 @@ const validateEvaluationModel = createEvaluationModelValidator(
 );
 
 const app = createApp({
+  analytics,
   ...(hostCertificates
     ? {
         adapterHosting: {
@@ -272,6 +299,7 @@ const shutdown = async (signal: NodeJS.Signals) => {
       : undefined,
   ]);
 
+  await release("analytics", analytics.flush);
   await release("valkey", async () => {
     if (valkey.isOpen) await valkey.quit();
   });

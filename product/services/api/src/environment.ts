@@ -38,6 +38,11 @@ const DeploymentStatusTokensSchema = z
 
 const ApiOnlyEnvironmentSchema = z
   .object({
+    POSTHOG_KEY: z
+      .string()
+      .optional()
+      .transform((value) => value || undefined),
+    POSTHOG_HOST: z.url().default("https://us.i.posthog.com"),
     NOMAD_CA_KMS_KEY: z.string().min(1).optional(),
     NOMAD_CA_PEM: z.string().min(1).optional(),
     TRAINING_ARTIFACTS_BUCKET: z.string().min(1).optional(),

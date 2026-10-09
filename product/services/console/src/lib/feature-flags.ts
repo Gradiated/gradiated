@@ -1,5 +1,6 @@
-import posthog from "posthog-js";
+import { posthog, posthogKey } from "./posthog";
 import { useSyncExternalStore } from "react";
+import { clearAnalyticsScope } from "./analytics";
 
 export type FeatureFlag = "training";
 
@@ -14,7 +15,6 @@ const localOverrides = new Set(
     .filter(Boolean),
 );
 
-const posthogKey = import.meta.env.VITE_POSTHOG_KEY;
 const listeners = new Set<() => void>();
 let identifiedUserId: string | undefined;
 let flagsLoaded = false;
@@ -26,15 +26,6 @@ const setFlagsLoaded = (loaded: boolean) => {
 };
 
 if (posthogKey) {
-  posthog.init(posthogKey, {
-    api_host: import.meta.env.VITE_POSTHOG_HOST ?? "https://us.i.posthog.com",
-    person_profiles: "identified_only",
-    capture_pageview: false,
-    autocapture: false,
-    // Rollouts target person properties such as email, so anonymous flags would answer wrongly.
-    advanced_disable_feature_flags_on_first_load: true,
-  });
-
   posthog.onFeatureFlags(() => {
     if (
       identifiedUserId !== undefined &&
@@ -66,6 +57,7 @@ export const resetUser = () => {
   if (!posthogKey) return;
 
   posthog.reset();
+  clearAnalyticsScope();
   identifiedUserId = undefined;
   clearTimeout(loadTimeout);
   setFlagsLoaded(false);

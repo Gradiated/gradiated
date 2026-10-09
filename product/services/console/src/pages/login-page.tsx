@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 
 import { authClient } from "@/auth";
+import { analytics } from "@/lib/analytics";
 import { Brand } from "@/components/brand";
 import { GitHubIcon, GoogleIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -61,6 +62,7 @@ export const LoginPage = () => {
   }, [callbackError]);
 
   const submit = async (values: LoginValues) => {
+    analytics.track("sign_in_started", { method: "magic_link" });
     const failed = () =>
       form.setError("root", {
         message: "We could not send the sign-in link. Try again.",
@@ -80,6 +82,7 @@ export const LoginPage = () => {
       return failed();
     }
 
+    analytics.track("sign_in_link_sent", { method: "magic_link" });
     setSentTo(values.email);
   };
 
@@ -91,6 +94,7 @@ export const LoginPage = () => {
       });
     };
 
+    analytics.track("sign_in_started", { method: provider });
     setSocialPending(provider);
 
     try {

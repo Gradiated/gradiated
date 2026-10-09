@@ -1,5 +1,6 @@
 import { RefreshCw } from "lucide-react";
-import type { ComponentProps, ReactNode } from "react";
+import { useEffect, useRef, type ComponentProps, type ReactNode } from "react";
+import { analytics, setAnalyticsScope } from "@/lib/analytics";
 
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,26 @@ export const ConsolePage = ({
   children: ReactNode;
 }) => {
   const context = useProductContext();
+  const lastView = useRef("");
+  const { user, organizationId, workspaceId, workspaces } = context;
+  const isDefault =
+    workspaces.find((workspace) => workspace.id === workspaceId)?.is_default ??
+    false;
+
+  useEffect(() => {
+    if (!user || !organizationId || !workspaceId) return;
+
+    setAnalyticsScope(user.id, organizationId, workspaceId, isDefault);
+    const view = JSON.stringify([user.id, organizationId, workspaceId, page]);
+    if (view === lastView.current) return;
+
+    lastView.current = view;
+    analytics.track("console_page_viewed", {
+      page,
+      organization_id: organizationId,
+      workspace_id: workspaceId,
+    });
+  }, [user?.id, organizationId, workspaceId, isDefault, page]);
 
   return (
     <AppShell
@@ -36,8 +57,17 @@ export const ConsolePage = ({
       organizationId={context.organizationId}
       workspaces={context.workspaces}
       workspaceId={context.workspaceId}
-      onSelectOrganization={context.selectOrganization}
-      onSelectWorkspace={context.selectWorkspace}
+      onSelectOrganization={(id) => {
+        analytics.track("organization_selected", { organization_id: id });
+        context.selectOrganization(id);
+      }}
+      onSelectWorkspace={(id) => {
+        analytics.track("workspace_selected", {
+          organization_id: context.organizationId,
+          workspace_id: id,
+        });
+        context.selectWorkspace(id);
+      }}
       onSignOut={context.signOut}
       activePage={page}
       pageTitle={title}

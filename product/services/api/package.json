@@ -29,7 +29,8 @@
     "redis": "5.8.2",
     "stripe": "22.5.0",
     "uuid": "14.0.1",
-    "@gradiated/nomad-pki": "workspace:*"
+    "@gradiated/nomad-pki": "workspace:*",
+    "@gradiated/analytics": "workspace:*"
   },
   "devDependencies": {
     "yaml": "2.9.0"

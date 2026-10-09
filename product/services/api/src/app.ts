@@ -43,6 +43,7 @@ import type {
 import type { WaitlistWelcomeSender } from "./email/waitlist-welcome.js";
 
 export interface AppDependencies {
+  analytics?: import("./analytics.js").ApiAnalytics;
   adapterHosting?: AdapterHostingDependencies;
   hostCertificates?: HostCertificateDependencies;
   allowedOrigins: string[];
@@ -56,6 +57,7 @@ export interface AppDependencies {
 }
 
 export const createApp = ({
+  analytics,
   adapterHosting,
   hostCertificates,
   allowedOrigins,
@@ -83,6 +85,10 @@ export const createApp = ({
     },
   });
 
+  app.use("*", async (context, next) => {
+    if (analytics) context.set("analytics", analytics);
+    await next();
+  });
   app.use("*", metrics.middleware);
   app.use("*", requestId());
   app.use(

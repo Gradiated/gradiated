@@ -1,3 +1,4 @@
+import { changedFields } from "@gradiated/analytics";
 import {
   ApiKeyListSchema,
   ApiKeyPathSchema,
@@ -265,12 +266,22 @@ export const registerWorkspaceRoutes = (
       p.workspace_id,
       c.req.valid("json"),
     );
+    c.get("analytics")?.track(user.id, "workspace_settings_updated", {
+      organization_id: workspace.organizationId,
+      workspace_id: workspace.id,
+      changed_fields: changedFields(c.req.valid("json")),
+    });
+
     return c.json(workspaceResponse(workspace), 200);
   });
   app.openapi(archiveWorkspaceRoute, async (c) => {
     const user = await requireUser(c);
     const p = c.req.valid("param");
     await workspaces.archiveWorkspace(user.id, p.workspace_id);
+    c.get("analytics")?.trackWorkspace(user.id, "workspace_archived", {
+      workspace_id: p.workspace_id,
+    });
+
     return c.body(null, 202);
   });
   app.openapi(listWorkspacesRoute, async (context) => {
@@ -298,6 +309,12 @@ export const registerWorkspaceRoutes = (
       params.organization_id,
       input,
     );
+
+    context.get("analytics")?.track(user.id, "workspace_created", {
+      organization_id: workspace.organizationId,
+      workspace_id: workspace.id,
+      is_default: workspace.isDefault,
+    });
 
     context.set("logResourceIds", { workspace_id: workspace.id });
     return context.json(workspaceResponse(workspace), 201);
@@ -327,6 +344,13 @@ export const registerWorkspaceRoutes = (
       },
     );
 
+    context.get("analytics")?.track(user.id, "api_key_created", {
+      organization_id: created.apiKey.organizationId,
+      workspace_id: created.apiKey.workspaceId,
+      api_key_id: created.apiKey.id,
+      has_expiry: created.apiKey.expiresAt !== null,
+    });
+
     context.set("logResourceIds", { api_key_id: created.apiKey.id });
     context.header("Cache-Control", "no-store");
     return context.json(
@@ -343,6 +367,11 @@ export const registerWorkspaceRoutes = (
       params.workspace_id,
       params.api_key_id,
     );
+
+    context.get("analytics")?.trackWorkspace(user.id, "api_key_revoked", {
+      workspace_id: params.workspace_id,
+      api_key_id: params.api_key_id,
+    });
 
     return context.body(null, 204);
   });

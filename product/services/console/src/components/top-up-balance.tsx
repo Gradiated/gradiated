@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CreditCard, LoaderCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -47,6 +48,9 @@ export const TopUpBalance = ({
   });
 
   const submit = async (values: TopUpFormValues) => {
+    analytics.track("billing_top_up_clicked", {
+      organization_id: organizationId,
+    });
     try {
       const checkout = await createTopUpCheckout(
         organizationId,

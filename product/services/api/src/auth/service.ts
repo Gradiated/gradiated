@@ -12,7 +12,12 @@ export interface AuthConfiguration {
   baseUrl: string;
   github?: { clientId: string; clientSecret: string } | undefined;
   google?: { clientId: string; clientSecret: string } | undefined;
-  onUserCreated: (user: { id: string; name: string }) => Promise<void>;
+  onUserCreated: (user: {
+    id: string;
+    name: string;
+    email: string;
+  }) => Promise<void>;
+  onSessionCreated?: (session: { id: string; userId: string }) => Promise<void>;
   secret: string;
   sendMagicLink: MagicLinkSender;
   sendOtp: OtpCodeSender;
@@ -59,6 +64,9 @@ export const createAuthService = (
       ...(configuration.google ? { google: configuration.google } : {}),
     },
     databaseHooks: {
+      ...(configuration.onSessionCreated
+        ? { session: { create: { after: configuration.onSessionCreated } } }
+        : {}),
       user: {
         create: {
           after: configuration.onUserCreated,

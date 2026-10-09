@@ -1,3 +1,4 @@
+import { changedFields } from "@gradiated/analytics";
 import { createRoute, type OpenAPIHono } from "@hono/zod-openapi";
 import {
   StartTrainingRunResponseSchema,
@@ -244,19 +245,29 @@ export const registerTrainingRoutes = (
     const user = await requireUser(c);
     const p = c.req.valid("param");
 
-    return c.json(
-      await training.startRun(
-        user.id,
-        p.workspace_id,
-        c.req.valid("json").task_id,
-      ),
-      202,
-    );
+    const taskId = c.req.valid("json").task_id;
+    const run = await training.startRun(user.id, p.workspace_id, taskId);
+    c.get("analytics")?.trackWorkspace(user.id, "training_run_requested", {
+      workspace_id: p.workspace_id,
+      task_id: taskId,
+      run_id: run.id,
+    });
+
+    return c.json(run, 202);
   });
   app.openapi(cancelRun, async (c) => {
     const user = await requireUser(c);
     const p = c.req.valid("param");
     await training.cancelRun(user.id, p.workspace_id, p.run_id);
+
+    c.get("analytics")?.trackWorkspace(
+      user.id,
+      "training_run_cancellation_requested",
+      {
+        workspace_id: p.workspace_id,
+        run_id: p.run_id,
+      },
+    );
 
     return c.body(null, 202);
   });
@@ -296,6 +307,12 @@ export const registerTrainingRoutes = (
       p.task,
       c.req.valid("json"),
     );
+    c.get("analytics")?.trackWorkspace(user.id, "task_settings_updated", {
+      workspace_id: p.workspace_id,
+      task_id: task.id,
+      changed_fields: changedFields(c.req.valid("json")),
+    });
+
     return c.json(taskResponse(task), 200);
   });
   app.openapi(listRuns, async (c) => {
@@ -387,6 +404,12 @@ export const registerTrainingRoutes = (
       p.task,
       c.req.valid("json").version_id,
     );
+    c.get("analytics")?.trackWorkspace(user.id, "task_version_promoted", {
+      workspace_id: p.workspace_id,
+      task_id: task.id,
+      version_id: c.req.valid("json").version_id,
+    });
+
     return c.json(taskResponse(task), 200);
   });
 };

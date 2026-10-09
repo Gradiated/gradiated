@@ -1,5 +1,11 @@
 # Console
 
+## Analytics
+
+Core console interactions use `@gradiated/analytics`; completed business actions
+come from the API. See the [event catalogue and configuration](../../../docs/PRODUCT_ANALYTICS.md)
+for properties, workspace/organization groups and notification setup.
+
 ## Settings state
 
 TanStack Query owns server state; Zustand owns workspace selection and local

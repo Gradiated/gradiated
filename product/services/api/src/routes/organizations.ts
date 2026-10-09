@@ -1,3 +1,4 @@
+import { changedFields } from "@gradiated/analytics";
 import {
   CreateOrganizationSchema,
   CurrentOrganizationSchema,
@@ -88,6 +89,11 @@ export const registerOrganizationRoutes = (
       context.req.valid("json"),
     );
 
+    context.get("analytics")?.track(user.id, "organization_settings_updated", {
+      organization_id,
+      changed_fields: changedFields(context.req.valid("json")),
+    });
+
     return context.json(
       CurrentOrganizationSchema.parse({
         id: updated.id,
@@ -114,6 +120,16 @@ export const registerOrganizationRoutes = (
       created_at: created.createdAt.toISOString(),
       updated_at: created.updatedAt.toISOString(),
     };
+
+    context.get("analytics")?.track(user.id, "organization_created", {
+      organization_id: created.id,
+      default_workspace_id: created.defaultWorkspaceId,
+    });
+    context.get("analytics")?.track(user.id, "workspace_created", {
+      organization_id: created.id,
+      workspace_id: created.defaultWorkspaceId,
+      is_default: true,
+    });
 
     return context.json(response, 201);
   });

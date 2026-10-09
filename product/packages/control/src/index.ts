@@ -177,3 +177,4 @@ export {
   CertificateRateLimitError,
   type InstanceCertificateService,
 } from "./instances/certificates.js";
+export { createWorkspaceStore } from "./workspaces/store.js";

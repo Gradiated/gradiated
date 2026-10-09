@@ -25,6 +25,14 @@ const WorkspaceRecordSchema = z.object({
 });
 
 export const createWorkspaceStore = (database: ControlDatabase) => ({
+  async get(workspaceId: string) {
+    const [workspace] = await database
+      .select()
+      .from(workspaces)
+      .where(eq(workspaces.id, UuidSchema.parse(workspaceId)))
+      .limit(1);
+    return workspace ? WorkspaceRecordSchema.parse(workspace) : undefined;
+  },
   async update(workspaceId: string, input: UpdateWorkspace) {
     const patch = UpdateWorkspaceSchema.parse(input);
     const [workspace] = await database

@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -155,7 +156,14 @@ export const ApiKeysPage = () => {
           />
           <CreateKeyDialog
             open={createOpen}
-            onOpenChange={setCreateOpen}
+            onOpenChange={(open) => {
+              if (open)
+                analytics.track("api_key_create_clicked", {
+                  organization_id: organizationId,
+                  workspace_id: workspaceId,
+                });
+              setCreateOpen(open);
+            }}
             organizationId={organizationId}
             workspaceId={workspaceId}
             disabled={!workspaceId}
@@ -292,7 +300,15 @@ export const ApiKeysPage = () => {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => created && void secretCopy.copy(created.secret)}
+              onClick={() => {
+                if (!created) return;
+                analytics.track("api_key_copy_clicked", {
+                  organization_id: organizationId,
+                  workspace_id: workspaceId,
+                  api_key_id: created.api_key.id,
+                });
+                void secretCopy.copy(created.secret);
+              }}
             >
               <CopyStateIcon state={secretCopy.state} className="size-4" />
               {copyLabel(secretCopy.state, "Copy key")}

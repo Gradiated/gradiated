@@ -109,6 +109,8 @@ files directly. `vercel.json` redirects old docs routes to their current routes.
 - `src/pages/ArticlePage.tsx` renders every article with the same layout.
 - `src/content.tsx` contains legacy shared content, including the Thesis body.
 - `public/` contains files served without transformation.
+- `public/.well-known/security.txt` is the RFC 9116 security contact. The build
+  fails once its `Expires` date passes; renew it at least yearly.
 - The remaining root CSS files preserve legacy page styles.
 
 The docs use MDX compiled by Vite. Add a page to `src/docs/`, register its route

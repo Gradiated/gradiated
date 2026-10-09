@@ -161,4 +161,20 @@ for (const markdownFile of files.filter((file) => file.endsWith(".md"))) {
   }
 }
 
+const securityTxt = await readFile(
+  join(outputRoot, ".well-known/security.txt"),
+  "utf8",
+);
+if (!/^Contact: \S+$/m.test(securityTxt)) {
+  throw new Error(".well-known/security.txt must contain a Contact field.");
+}
+const securityExpires = Date.parse(
+  securityTxt.match(/^Expires: (\S+)$/m)?.[1] ?? "",
+);
+if (!(securityExpires > Date.now())) {
+  throw new Error(
+    ".well-known/security.txt has expired. Set Expires to a date less than a year away.",
+  );
+}
+
 console.log(`SEO checks passed for ${htmlFiles.length} static pages.`);

@@ -115,6 +115,8 @@ procs:
       CLICKHOUSE_ADMIN_USERNAME: gradiated
       CLICKHOUSE_APPLICATION_PASSWORD: gradiated
       CLICKHOUSE_APPLICATION_USERNAME: gradiated
+      CLICKHOUSE_METABASE_PASSWORD: gradiated
+      CLICKHOUSE_METABASE_USERNAME: metabase
       CLICKHOUSE_DATABASE: *clickhouse_database
       CLICKHOUSE_HOST: *clickhouse_host
       CLICKHOUSE_PORT: *clickhouse_port

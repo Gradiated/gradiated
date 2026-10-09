@@ -276,7 +276,7 @@ try {
         (tag) => `${tag.Key}=${tag.Value}`,
       ),
     ),
-    new Set(["retention=30d", "trainable=false"]),
+    new Set(["retention=90d", "trainable=false"]),
   );
   console.log(
     "PASS: dev proxy → gateway catalog; proxy streaming relay → native collector → S3 batch/manifest → tagged range read and zstd decode",

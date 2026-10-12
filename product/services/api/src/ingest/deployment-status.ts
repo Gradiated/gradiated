@@ -15,10 +15,12 @@ import {
 } from "./http.js";
 import { serviceLog } from "../logging.js";
 
-interface DeploymentStatusIngestDependencies {
-  tokens: ReadonlyMap<string, string>;
+type DeploymentStatusIngestDependencies = {
   service: DeploymentStatusService;
-}
+} & (
+  | { tokens: ReadonlyMap<string, string>; provider?: never }
+  | { provider: string; tokens?: never }
+);
 
 const failureStatus: Record<DeploymentStatusFailure, 403 | 404> = {
   deployment_not_found: 404,
@@ -42,6 +44,7 @@ const providerForToken = (
 
 export const createDeploymentStatusIngestApp = ({
   tokens,
+  provider: privateProvider,
   service,
 }: DeploymentStatusIngestDependencies): Hono => {
   const app = new Hono();
@@ -50,10 +53,9 @@ export const createDeploymentStatusIngestApp = ({
     "/v1/deployment-status",
     ingestBodyLimit(64 * 1024),
     async (context) => {
-      const provider = providerForToken(
-        context.req.header("authorization"),
-        tokens,
-      );
+      const provider =
+        privateProvider ??
+        providerForToken(context.req.header("authorization"), tokens!);
       if (!provider) return context.json({ error: "unauthorized" }, 401);
 
       const body = await readJsonBody(context);

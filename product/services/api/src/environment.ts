@@ -51,6 +51,11 @@ const ApiOnlyEnvironmentSchema = z
     PROFILING_INGEST_TOKEN: z.string().min(32).optional(),
     PROFILING_HOST: z.string().min(1).default("0.0.0.0"),
     PROFILING_PORT: PortSchema.default(3_003),
+    GPU_CONTROL_PORT: PortSchema.default(3_004),
+    GPU_CONTROL_PROVIDER: z
+      .string()
+      .regex(/^[a-z][a-z0-9_-]{0,99}$/)
+      .optional(),
     DEPLOYMENT_STATUS_INGEST_TOKENS: DeploymentStatusTokensSchema,
   })
   .refine(

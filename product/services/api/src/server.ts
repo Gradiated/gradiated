@@ -5,6 +5,10 @@ import { createEvaluationModelValidator } from "./catalog/evaluation-models.js";
 import { kmsSigner } from "@gradiated/nomad-pki";
 import { createTrainingEngine } from "./training/engine.js";
 import { serve } from "@hono/node-server";
+import { OpenAPIHono } from "@hono/zod-openapi";
+import type { ApiEnvironment } from "./types.js";
+import { registerAdapterHostingRoutes } from "./routes/adapter-hosting.js";
+import { createHostCertificateRouter } from "./routes/instance-certificates.js";
 import {
   createCatalogBillingService,
   createClickHouseRuntimeClient,
@@ -253,6 +257,31 @@ const server = serve({
   // Keep backend connections open beyond the public ALB's 660-second idle timeout.
   serverOptions: { keepAliveTimeout: 670_000 },
 });
+const gpuControlApp = new OpenAPIHono<ApiEnvironment>();
+gpuControlApp.get("/health", (context) => context.json({ ok: true }));
+if (environment.GPU_CONTROL_PROVIDER) {
+  gpuControlApp.route(
+    "/",
+    createDeploymentStatusIngestApp({
+      provider: environment.GPU_CONTROL_PROVIDER,
+      service: createDeploymentStatusService(database, valkey),
+    }),
+  );
+  if (hostCertificates) {
+    gpuControlApp.route("/", createHostCertificateRouter(hostCertificates));
+    registerAdapterHostingRoutes(gpuControlApp, {
+      credentials: hostCertificates.credentials,
+      service: createAdapterHostingService(database, adapterDownloads),
+    });
+  }
+}
+const gpuControlServer = environment.GPU_CONTROL_PROVIDER
+  ? serve({
+      fetch: gpuControlApp.fetch,
+      hostname: environment.HOST,
+      port: environment.GPU_CONTROL_PORT,
+    })
+  : undefined;
 const metricsServer = startApiMetricsServer(
   metrics,
   "0.0.0.0",
@@ -294,6 +323,9 @@ const shutdown = async (signal: NodeJS.Signals) => {
   await Promise.all([
     release("http", () => closeServer(server)),
     release("metrics", () => closeServer(metricsServer)),
+    gpuControlServer
+      ? release("gpu-control", () => closeServer(gpuControlServer))
+      : undefined,
     profilingServer
       ? release("profiling", () => closeServer(profilingServer))
       : undefined,

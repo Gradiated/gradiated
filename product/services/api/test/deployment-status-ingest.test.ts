@@ -51,6 +51,22 @@ afterEach(() => {
 });
 
 describe("deployment status ingestion", () => {
+  it("uses the configured provider on the private listener without a bearer token", async () => {
+    const reportStatus = vi.fn(async () => undefined);
+    const app = createDeploymentStatusIngestApp({
+      provider: "runpod",
+      service: { report: reportStatus },
+    });
+    const payload = report();
+    const response = await app.request(path, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    expect(response.status).toBe(204);
+    expect(reportStatus).toHaveBeenCalledWith("runpod", payload);
+  });
+
   it("accepts a valid status for the token's provider", async () => {
     const reports: Array<[string, DeploymentStatusReport]> = [];
     const payload = {

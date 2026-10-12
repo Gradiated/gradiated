@@ -292,7 +292,7 @@ export const ApiKeysPage = () => {
             </DialogDescription>
           </DialogHeader>
           <div
-            className="rounded-lg border bg-muted p-3 font-mono text-xs leading-5 break-all"
+            className="ph-no-capture rounded-lg border bg-muted p-3 font-mono text-xs leading-5 break-all"
             data-testid="api-key-secret"
           >
             {created?.secret}

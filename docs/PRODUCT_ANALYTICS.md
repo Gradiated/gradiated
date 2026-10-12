@@ -128,6 +128,8 @@ Both SDKs load remote replay settings while disabling the initial feature-flag f
 Both surfaces use PostHog's default replay behavior without SDK recording,
 masking, console-log, or network-capture overrides. Configure replay in the
 PostHog project settings, including [privacy and masking](https://posthog.com/docs/session-replay/privacy).
+Rendered API-key secrets and raw trace content use PostHog's built-in
+`ph-no-capture` class to exclude those elements from replay.
 
 Deploy both frontend builds to activate these SDK settings. After deployment,
 visit each surface, interact with it, and confirm a new recording in PostHog.

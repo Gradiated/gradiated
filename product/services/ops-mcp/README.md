@@ -294,9 +294,12 @@ proposal/approval contract can serve Claude, Cursor and OpenAI agents.
 
 Argo watches `platform/ops-mcp.yaml`, reconciling
 `infra/environments/prod/us-east-1/kubernetes/operations/ops-mcp/`.
-The public ingress names the Gateway `ops-mcp-public` with an internet-facing ALB;
-changing the scheme of the existing ALB in place is not the rollout strategy.
-Ordinary Route53 DNS and the existing Gradiated certificate are retained.
+The public HTTPRoute attaches to the `ops-mcp-https` listener on the shared
+`gradiated/public-api` Gateway. That listener admits routes only from
+`observability`; the backend remains the authenticated public listener on port 3003. The private administrative listener is not exposed by the route.
+Ordinary Route53 DNS and the existing Gradiated certificate are retained. Follow
+the [shared ALB migration](../../../infra/environments/prod/us-east-1/kubernetes/README.md#shared-public-alb)
+to verify routes and DNS before pruning the old dedicated Gateway and ALB.
 
 The authentication image must be released and verified before merging the public
 ingress change. The initial rollout order is:
@@ -306,10 +309,11 @@ ingress change. The initial rollout order is:
    and new image while the old private ingress is still in place. Confirm session
    persistence, storage permissions and renewable login. Do not expose the old image
    publicly by applying the ingress change ahead of the image release.
-2. Reconcile the public Gateway/route and let ExternalDNS update `ops.gradiated.com`.
-   Check Gateway conditions and ALB target health. Argo prunes the old private
-   Gateway as part of the cutover; DNS and ALB provisioning can cause a brief
-   interruption. No tailnet ACL or Kubernetes endpoint change is required.
+2. Reconcile the shared public Gateway/route and let ExternalDNS update
+   `ops.gradiated.com`. Check Gateway conditions and ALB target health. Retain
+   the old Gateway until route verification and the DNS TTL wait are complete,
+   then prune it as described in the migration instructions. No tailnet ACL or
+   Kubernetes endpoint change is required.
 3. From outside Tailscale, check `/healthz`, OAuth discovery and unauthenticated
    `/mcp` rejection (401 with resource metadata). Complete a real Gradiated login
    through the hosted client, query diagnostics, and reject a non-staff login.

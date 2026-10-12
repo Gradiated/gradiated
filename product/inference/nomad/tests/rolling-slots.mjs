@@ -104,7 +104,10 @@ const host = await instances.register({
 });
 const nodeId = "00000000-0000-4000-8000-000000000001";
 await instances.bindNomadNode(host.id, nodeId);
-await instances.setServingUrl(host.id, `http://gpu-${host.id}.tailscale-inference.svc.cluster.local:8888`);
+await instances.setServingUrl(
+  host.id,
+  `http://gpu-${host.id}.tailscale-inference.svc.cluster.local:8888`,
+);
 const get = async (path) => {
   const response = await call(path);
   if (path.endsWith("/versions")) {

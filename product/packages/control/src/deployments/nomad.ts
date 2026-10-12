@@ -265,6 +265,7 @@ export const createNomadDeploymentStore = (
           .values(row)
           .onConflictDoUpdate({
             target: modelDeployments.id,
+            setWhere: eq(modelDeployments.orchestrator, "nomad"),
             set: {
               instanceId: row.instanceId,
               modelId: row.modelId,
@@ -334,7 +335,10 @@ export const createNomadDeploymentStore = (
         .select({ id: modelDeployments.id })
         .from(modelDeployments)
         .where(
-          listed.length ? notInArray(modelDeployments.id, listed) : undefined,
+          and(
+            eq(modelDeployments.orchestrator, "nomad"),
+            listed.length ? notInArray(modelDeployments.id, listed) : undefined,
+          ),
         );
       const removed: string[] = [];
       for (const { id } of unlisted) {

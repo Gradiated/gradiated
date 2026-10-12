@@ -4,6 +4,7 @@ import {
   createWorkspaceApiKeyService,
   createContentStore,
   createNomadDeploymentStore,
+  createKubernetesDeploymentStore,
   createTraceCleanup,
   createGenerationSettlementReader,
   createGenerationSettlementStore,
@@ -27,6 +28,10 @@ import {
 } from "./deployment-reconciliation.js";
 import { createCatalogApply } from "./catalog-apply.js";
 import { createNomadGet } from "./nomad-allocations.js";
+import {
+  createKubernetesDeploymentView,
+  createKubernetesGet,
+} from "./kubernetes-deployments.js";
 import { serviceLog } from "./logging.js";
 import { loraMetricsTargets } from "./lora-metrics-targets.js";
 import { startWorkerMetricsServer, WorkerMetrics } from "./metrics.js";
@@ -189,6 +194,30 @@ supervisors.push(
     },
   }),
 );
+
+if (process.env.GPU_KUBERNETES_NAMESPACE) {
+  const store = createKubernetesDeploymentStore(database);
+  const view = createKubernetesDeploymentView(
+    process.env.GPU_KUBERNETES_NAMESPACE,
+    createKubernetesGet(signal),
+  );
+  supervisors.push(
+    supervise({
+      loop: "kubernetes_deployment_reconciliation",
+      readinessPath:
+        "/tmp/gradiated-kubernetes-deployment-reconciliation-ready",
+      metrics,
+      signal,
+      run: async (markReady) => {
+        while (!signal.aborted) {
+          await store.reconcile(view);
+          await markReady();
+          await sleep(5_000, signal);
+        }
+      },
+    }),
+  );
+}
 
 const nomad = parseNomadEnvironment(process.env);
 if (nomad) {

@@ -1,0 +1,96 @@
+import { ModelDeploymentReleaseSchema } from "@gradiated/contracts";
+import { and, eq, isNull, sql } from "drizzle-orm";
+import { z } from "zod";
+
+import { ModelDeploymentInsertSchema } from "../catalog/records.js";
+import type { ControlDatabase } from "../db/client.js";
+import { instances, modelDeployments } from "../db/schema/index.js";
+import { privateServingUrl } from "../instances/endpoints.js";
+
+export const KubernetesDeploymentSchema = z.object({
+  id: z.uuid(),
+  name: z.string().min(1),
+  instanceId: z.uuid(),
+  modelId: z.string().min(1),
+  release: ModelDeploymentReleaseSchema,
+  qualified: z.boolean(),
+  draining: z.boolean(),
+});
+
+export type KubernetesDeployment = z.infer<typeof KubernetesDeploymentSchema>;
+
+export interface KubernetesDeploymentView {
+  running(): Promise<readonly KubernetesDeployment[]>;
+  isGone(id: string): Promise<boolean>;
+}
+
+export const createKubernetesDeploymentStore = (database: ControlDatabase) => ({
+  reconcile: (view: KubernetesDeploymentView) =>
+    database.transaction(async (tx) => {
+      const {
+        rows: [lock],
+      } = await tx.execute<{ acquired: boolean }>(
+        sql`select pg_try_advisory_xact_lock(hashtext('gradiated-kubernetes-deployments-v1')) as acquired`,
+      );
+      if (!lock?.acquired) return null;
+
+      const current = KubernetesDeploymentSchema.array().parse(
+        await view.running(),
+      );
+      const listed = new Set(current.map((pod) => pod.id));
+      let written = 0;
+      for (const pod of current) {
+        const [host] = await tx
+          .select()
+          .from(instances)
+          .where(
+            and(eq(instances.id, pod.instanceId), isNull(instances.retiredAt)),
+          );
+        if (!host || host.servingUrl !== privateServingUrl(host.id)) continue;
+
+        const row = ModelDeploymentInsertSchema.parse({
+          id: pod.id,
+          instanceId: host.id,
+          modelId: pod.modelId,
+          status: pod.draining
+            ? "draining"
+            : pod.qualified
+              ? "available"
+              : "unavailable",
+          provider: host.provider,
+          region: host.region ?? "unknown",
+          faultDomain:
+            host.faultDomain ?? `${host.provider}:${host.providerInstanceId}`,
+          serviceUrl: `${host.servingUrl}/alloc/${pod.id}`,
+          release: pod.release,
+        });
+        await tx
+          .insert(modelDeployments)
+          .values({ ...row, orchestrator: "kubernetes" })
+          .onConflictDoUpdate({
+            target: modelDeployments.id,
+            set: { ...row, updatedAt: sql`now()` },
+            setWhere: eq(modelDeployments.orchestrator, "kubernetes"),
+          });
+        written += 1;
+      }
+
+      const owned = await tx
+        .select({ id: modelDeployments.id })
+        .from(modelDeployments)
+        .where(eq(modelDeployments.orchestrator, "kubernetes"));
+      for (const { id } of owned) {
+        if (!listed.has(id) && (await view.isGone(id))) {
+          await tx
+            .delete(modelDeployments)
+            .where(
+              and(
+                eq(modelDeployments.id, id),
+                eq(modelDeployments.orchestrator, "kubernetes"),
+              ),
+            );
+        }
+      }
+      return { written };
+    }),
+});

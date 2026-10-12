@@ -287,6 +287,9 @@ export const modelDeployments = pgTable(
     instanceId: uuid("instance_id").references(() => instances.id, {
       onDelete: "restrict",
     }),
+    orchestrator: text("orchestrator", { enum: ["nomad", "kubernetes"] })
+      .default("nomad")
+      .notNull(),
     modelId: text("model_id")
       .notNull()
       .references(() => models.id, { onDelete: "restrict" }),
@@ -312,6 +315,10 @@ export const modelDeployments = pgTable(
     check(
       "model_deployments_status_check",
       sql`${table.status} in ('available', 'unavailable', 'draining')`,
+    ),
+    check(
+      "model_deployments_orchestrator_check",
+      sql`${table.orchestrator} in ('nomad', 'kubernetes')`,
     ),
     check(
       "model_deployments_service_url_length_check",

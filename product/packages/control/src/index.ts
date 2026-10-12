@@ -27,6 +27,12 @@ export {
   type DeploymentStatusService,
 } from "./deployment-status/service.js";
 export {
+  createKubernetesDeploymentStore,
+  KubernetesDeploymentSchema,
+  type KubernetesDeployment,
+  type KubernetesDeploymentView,
+} from "./deployments/kubernetes.js";
+export {
   createGenerationSettlementReader,
   SettlementFinancialConflictError,
   type GenerationSettlementReader,

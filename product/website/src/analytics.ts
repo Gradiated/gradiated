@@ -9,17 +9,17 @@ if (key) {
     capture_pageview: "history_change",
     capture_pageleave: false,
     autocapture: false,
-    disable_session_recording: true,
     capture_exceptions: false,
     capture_performance: false,
     capture_dead_clicks: false,
     enable_heatmaps: false,
     disable_surveys: true,
-    advanced_disable_feature_flags: true,
+    advanced_disable_feature_flags_on_first_load: true,
     save_referrer: false,
     save_campaign_params: false,
     before_send: (event) => {
-      if (!event || event.event !== "$pageview") return null;
+      if (!event || !["$pageview", "$snapshot"].includes(event.event))
+        return null;
 
       event.properties.source = "website";
       event.properties.schema_version = 1;

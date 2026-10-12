@@ -11,7 +11,6 @@ if (posthogKey) {
     capture_pageview: "history_change",
     autocapture: false,
     capture_pageleave: false,
-    disable_session_recording: true,
     save_referrer: false,
     save_campaign_params: false,
     before_send: (event) => {

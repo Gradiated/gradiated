@@ -16,6 +16,22 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe("console analytics", () => {
+  it("allows recording snapshots without overriding project replay settings", async () => {
+    await import("@/lib/posthog");
+    const options = posthog.init.mock.calls[0]![1];
+    const snapshots = [{ type: 2, data: { node: { type: 0 } } }];
+    const event = options.before_send({
+      event: "$snapshot",
+      properties: { $snapshot_data: snapshots, $session_id: "test-session" },
+    });
+
+    expect(options).not.toHaveProperty("disable_session_recording");
+    expect(event.properties.$snapshot_data).toEqual(snapshots);
+    expect(event.properties.$session_id).toBe("test-session");
+    expect(options).not.toHaveProperty("session_recording");
+    expect(options).not.toHaveProperty("enable_recording_console_log");
+  });
+
   it("uses SDK pageviews with console attribution and sanitized URL paths", async () => {
     await import("@/lib/posthog");
     const options = posthog.init.mock.calls[0]![1];

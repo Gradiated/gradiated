@@ -411,7 +411,7 @@ const GenerationContent = ({
             {["request", "response"].map((key) => (
               <div key={key}>
                 <h4 className="my-2 text-sm font-medium capitalize">{key}</h4>
-                <pre className="max-h-96 overflow-auto rounded-md bg-muted p-3 text-xs whitespace-pre-wrap break-words">
+                <pre className="ph-no-capture max-h-96 overflow-auto rounded-md bg-muted p-3 text-xs whitespace-pre-wrap break-words">
                   {JSON.stringify(content.data?.raw?.[key] ?? null, null, 2)}
                 </pre>
               </div>

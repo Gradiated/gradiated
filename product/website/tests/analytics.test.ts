@@ -18,6 +18,27 @@ afterEach(() => {
 });
 
 describe("website analytics", () => {
+  it("allows recording snapshots without overriding project replay settings", async () => {
+    await import("../src/analytics");
+    const options = posthog.init.mock.calls[0]![1];
+    const snapshots = [{ type: 2, data: { node: { type: 0 } } }];
+    const event = options.before_send({
+      event: "$snapshot",
+      properties: { $snapshot_data: snapshots, $session_id: "test-session" },
+    });
+
+    expect(options).not.toHaveProperty("disable_session_recording");
+    expect(options.advanced_disable_feature_flags).not.toBe(true);
+    expect(event.properties.$snapshot_data).toEqual(snapshots);
+    expect(event.properties.$session_id).toBe("test-session");
+    expect(options).not.toHaveProperty("session_recording");
+    expect(options).not.toHaveProperty("enable_recording_console_log");
+    expect(event.properties.source).toBe("website");
+    expect(
+      options.before_send({ event: "$autocapture", properties: {} }),
+    ).toBeNull();
+  });
+
   it("tracks visits and SPA navigation in the production project", async () => {
     await import("../src/analytics");
 
@@ -27,7 +48,7 @@ describe("website analytics", () => {
         api_host: "https://us.i.posthog.com",
         capture_pageview: "history_change",
         autocapture: false,
-        disable_session_recording: true,
+        advanced_disable_feature_flags_on_first_load: true,
       }),
     );
   });

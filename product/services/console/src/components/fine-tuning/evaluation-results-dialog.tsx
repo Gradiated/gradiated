@@ -82,7 +82,7 @@ export const EvaluationResultsDialog = ({
                             version.summary?.comparison_model_id,
                           )}
                     </h4>
-                    <pre className="max-h-64 overflow-auto rounded-md bg-muted p-3 text-xs whitespace-pre-wrap break-words">
+                    <pre className="ph-no-capture max-h-64 overflow-auto rounded-md bg-muted p-3 text-xs whitespace-pre-wrap break-words">
                       {row[arm].text}
                     </pre>
                     <p className="text-xs text-muted-foreground">

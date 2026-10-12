@@ -108,7 +108,7 @@ local active = redis.call('ZCOUNT', KEYS[2], '(' .. now, '+inf')
 local selected_limit = concurrency_cap
 if account[3] == 'prepaid' then
   local funded_limit = math.floor((balance - 1) / balance_per_slot) + 1
-  selected_limit = math.min(concurrency_cap, funded_limit)
+  selected_limit = math.min(concurrency_cap, math.max(20, funded_limit))
 end
 if active >= selected_limit then
   return 4

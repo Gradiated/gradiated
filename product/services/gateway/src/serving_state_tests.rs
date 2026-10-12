@@ -956,7 +956,8 @@ mod admission {
     #[tokio::test]
     #[ignore = "requires the local one-node Valkey cluster"]
     async fn admission_applies_prepaid_limits_and_bypasses_them_for_invoiced_accounts() {
-        let fixture = Fixture::new().await;
+        let mut fixture = Fixture::new().await;
+        fixture.config.organization_concurrency_cap = 1;
         fixture.seed_account("prepaid", 1).await;
         let first_generation_id = Uuid::now_v7();
         let second_generation_id = Uuid::now_v7();
@@ -974,6 +975,7 @@ mod admission {
         ));
 
         fixture.seed_account("invoiced", -1).await;
+        fixture.config.organization_concurrency_cap = 50;
         fixture.admit(second_generation_id).await.unwrap();
         assert!(matches!(
             fixture.admit(first_generation_id).await,
@@ -1094,12 +1096,12 @@ mod admission {
 
     #[tokio::test]
     #[ignore = "requires the local one-node Valkey cluster"]
-    async fn concurrent_admission_never_exceeds_the_funded_limit() {
+    async fn concurrent_admission_never_exceeds_the_prepaid_floor() {
         let fixture = std::sync::Arc::new(Fixture::new().await);
         fixture.seed_account("prepaid", 2_000_000_000).await;
 
         let mut tasks = tokio::task::JoinSet::new();
-        for _ in 0..10 {
+        for _ in 0..30 {
             let fixture = fixture.clone();
             tasks.spawn(async move { fixture.admit(Uuid::now_v7()).await });
         }
@@ -1113,9 +1115,65 @@ mod admission {
                 Err(error) => panic!("unexpected admission result: {error}"),
             }
         }
-        assert_eq!(admitted, 2);
-        assert_eq!(rejected, 8);
-        assert_eq!(fixture.lease_count().await, 2);
+        assert_eq!(admitted, 20);
+        assert_eq!(rejected, 10);
+        assert_eq!(fixture.lease_count().await, 20);
+
+        fixture.cleanup().await;
+    }
+
+    #[tokio::test]
+    #[ignore = "requires the local one-node Valkey cluster"]
+    async fn prepaid_concurrency_has_a_floor_but_respects_balance_and_the_cap() {
+        for (balance, cap, expected) in [
+            (1, 50, 20),
+            (4_000_000_000, 50, 20),
+            (20_000_000_000, 50, 20),
+            (20_000_000_001, 50, 21),
+            (60_000_000_000, 50, 50),
+            (60_000_000_000, 500, 60),
+            (600_000_000_000, 500, 500),
+            (1, 10, 10),
+        ] {
+            let mut fixture = Fixture::new().await;
+            fixture.config.organization_concurrency_cap = cap;
+            fixture.seed_account("prepaid", balance).await;
+
+            for _ in 0..expected {
+                fixture.admit(Uuid::now_v7()).await.unwrap();
+            }
+            assert!(matches!(
+                fixture.admit(Uuid::now_v7()).await,
+                Err(AdmissionError::ConcurrencyExceeded)
+            ));
+            assert_eq!(fixture.lease_count().await, expected);
+
+            for empty_balance in [0, -1] {
+                fixture.set_account_field("balance", empty_balance).await;
+                assert!(matches!(
+                    fixture.admit(Uuid::now_v7()).await,
+                    Err(AdmissionError::InsufficientBalance)
+                ));
+            }
+
+            fixture.cleanup().await;
+        }
+    }
+
+    #[tokio::test]
+    #[ignore = "requires the local one-node Valkey cluster"]
+    async fn invoiced_concurrency_uses_the_default_cap_without_balance_scaling() {
+        let fixture = Fixture::new().await;
+        fixture.seed_account("invoiced", -1).await;
+
+        for _ in 0..500 {
+            fixture.admit(Uuid::now_v7()).await.unwrap();
+        }
+        assert!(matches!(
+            fixture.admit(Uuid::now_v7()).await,
+            Err(AdmissionError::ConcurrencyExceeded)
+        ));
+        assert_eq!(fixture.lease_count().await, 500);
 
         fixture.cleanup().await;
     }

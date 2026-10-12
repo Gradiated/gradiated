@@ -404,9 +404,10 @@ stream backlog. It performs the following operations without interleaving:
 8. Remove only leases older than the configured grace cutoff.
 9. Count leases with scores later than the current time.
 10. Select `organization_concurrency_cap` as the ceiling. For `prepaid`, lower
-    it to the balance-funded ceiling `ceil(balance / balance_per_concurrency_slot)`,
-    using checked positive integer arithmetic. Any positive prepaid balance funds
-    at least one slot; additional balance increases concurrency proportionally.
+    it to `max(20, ceil(balance / balance_per_concurrency_slot))`, using checked
+    positive integer arithmetic. Any positive prepaid balance allows 20 slots
+    within the organization cap; additional balance above that floor increases
+    concurrency proportionally.
 11. Reject at or above the selected ceiling with `429 concurrency_exceeded`.
     The cap applies to `invoiced` accounts too, because it protects shared
     capacity rather than billing.
@@ -425,8 +426,8 @@ subsequent prepaid requests are then blocked until the balance is positive.
 
 For invoiced accounts, balance is an accounting position that starts at zero
 and becomes negative as usage accrues. It does not control admission or
-concurrency. Invoiced organizations have no organization concurrency cap at
-launch and compete directly for the bounded capacity of the selected SGLang
+concurrency. Invoiced organizations use the same organization concurrency cap, defaulting
+to 500, and also compete for the bounded capacity of the selected SGLang
 deployment. `organization_status = suspended` is the explicit mechanism for
 stopping an invoiced organization.
 
@@ -439,7 +440,8 @@ Initial operational defaults and requirements are:
 | total-generation timeout                 |                  630 seconds |
 | lease finalization margin                |                   60 seconds |
 | expired-lease cleanup grace              |                    5 minutes |
-| maximum prepaid organization concurrency |                           50 |
+| maximum organization concurrency         |                          500 |
+| minimum prepaid concurrency (within cap) |                           20 |
 | balance per concurrency slot             |  1,000,000,000 nano-USD ($1) |
 
 Production validates every value at startup. The settlement-backlog ceiling is
@@ -1011,9 +1013,9 @@ proxy.
 
 - positive and nonpositive prepaid balance admission;
 - prepaid balance-derived concurrency boundaries, including proportional
-  reduction as balance falls and the cap of 50;
-- invoiced admission at zero or negative balance without an organization
-  concurrency check;
+  reduction as balance falls, the floor of 20, and the default cap of 500;
+- invoiced admission at zero or negative balance with the same organization
+  concurrency cap;
 - admission does not compare theoretical maximum request cost with balance or
   the per-slot concurrency scale;
 - early settlement-backlog closure;

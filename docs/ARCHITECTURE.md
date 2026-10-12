@@ -318,11 +318,12 @@ and enforce bounds on that payload before admission. The gateway keeps only a
 small typed request envelope; the model's Valkey-projected text-output
 `supported_parameters` and request-scoped `passthrough_parameters` maps qualify the remaining JSON fields without a
 gateway-wide model schema. Each concurrency slot represents
-a configured amount used only to make prepaid concurrency fall proportionally
-with the remaining balance. It is not a reservation or worst-case request-cost
-limit. Prepaid organizations additionally have a default maximum of 50
-concurrent generations. Invoiced organizations bypass the balance and
-organization-concurrency checks at launch. The gateway forwards only qualified
+a configured balance amount used to scale prepaid concurrency above a floor of
+20 concurrent generations. It is not a reservation or worst-case request-cost
+limit. All organizations have a default maximum of 500 concurrent generations;
+an explicit lower organization cap takes precedence over the prepaid floor.
+Prepaid admission requires a positive balance. Invoiced organizations bypass
+balance checks but use the same organization concurrency cap. The gateway forwards only qualified
 fields to the model runtime,
 preserving cancellation, backpressure and streaming semantics.
 For Chat Completions, the optional `service_tier` request field accepts `flex`, `default`, or `fast`.

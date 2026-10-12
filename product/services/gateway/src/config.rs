@@ -287,7 +287,7 @@ fn default_expired_lease_cleanup_grace_seconds() -> u64 {
 }
 
 fn default_organization_concurrency_cap() -> u64 {
-    50
+    500
 }
 
 fn default_balance_per_concurrency_slot_nano_usd() -> u64 {
@@ -370,7 +370,7 @@ mod tests {
             config.expired_lease_cleanup_grace_seconds,
             default_expired_lease_cleanup_grace_seconds()
         );
-        assert_eq!(config.organization_concurrency_cap, 50);
+        assert_eq!(config.organization_concurrency_cap, 500);
         assert_eq!(config.balance_per_concurrency_slot_nano_usd, 1_000_000_000);
         assert_eq!(config.settlement_backlog_limit, 100_000);
         assert_eq!(config.valkey_iam(), None);

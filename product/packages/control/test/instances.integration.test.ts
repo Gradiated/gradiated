@@ -36,7 +36,17 @@ describe("instances", () => {
   it("records a machine before it has joined Nomad", async () => {
     const record = await instances.register(machine());
 
-    expect(record).toMatchObject({ nomadNodeId: null, retiredAt: null });
+    expect(record).toMatchObject({
+      nomadNodeId: null,
+      servingUrl: null,
+      retiredAt: null,
+    });
+  });
+
+  it("does not activate a new host when it binds to Nomad", async () => {
+    const host = await instances.register(machine());
+    const bound = await instances.bindNomadNode(host.id, randomUUID());
+    expect(bound.servingUrl).toBeNull();
   });
 
   it("preserves a private serving endpoint across repeated registration", async () => {
@@ -88,9 +98,9 @@ describe("instances", () => {
         },
       ),
     ).rejects.toThrow();
-    expect((await instances.servingState(record.id)).host.servingUrl).toBe(
-      `http://gpu-${record.id}.tailscale-inference.svc.cluster.local:8888`,
-    );
+    expect(
+      (await instances.servingState(record.id)).host.servingUrl,
+    ).toBeNull();
   });
 
   it("refuses cutover when available allocations changed after qualification", async () => {

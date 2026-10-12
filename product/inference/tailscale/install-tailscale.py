@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import hashlib
 import io
+import ipaddress
 import json
 import os
 import pwd
@@ -119,7 +120,20 @@ def install(payload):
             {"hostname": hostname, "instance_id": instance, "proxy_port": proxy_port}
         ),
     )
-    for name in ("run-tailscale", "start-tailscale"):
+    if "control_endpoints" in payload:
+        endpoints = payload["control_endpoints"]
+        if set(endpoints) != {"api", "nomad-0", "nomad-1", "nomad-2"} or any(
+            ipaddress.ip_address(address) not in ipaddress.ip_network("100.64.0.0/10")
+            for address in endpoints.values()
+        ):
+            raise ValueError("Invalid private control endpoints")
+        control_config = Path("/etc/gradiated/tailscale-control.json")
+        private_write(control_config, json.dumps(endpoints), 0, 0)
+        control_config.chmod(0o644)
+    names = ["run-tailscale", "start-tailscale"]
+    if "control_endpoints" in payload:
+        names.extend(["forward-control", "run-control", "start-control"])
+    for name in names:
         target = Path("/opt/gradiated/bin") / name
         private_write(target, payload["scripts"][name], 0, 0)
         target.chmod(0o755)

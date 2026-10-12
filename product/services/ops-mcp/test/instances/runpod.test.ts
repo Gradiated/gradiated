@@ -53,7 +53,7 @@ describe("RunPod provider", () => {
 
   it.each([
     { desiredStatus: "CREATED" },
-    { ports: ["22/tcp"] },
+    { ports: ["8888/http"] },
     { publicIp: null },
     { portMappings: {} },
   ])(
@@ -225,7 +225,7 @@ describe("RunPod provider", () => {
     },
   );
 
-  it("declares the host proxy port once", async () => {
+  it("does not add public inference ports during an authorized bootstrap", async () => {
     const runpod = fakeRunPod({ ...rtxPod, ports: ["22/tcp", "8888/http"] });
     const provider = createRunPodProvider({
       apiKey: "key",
@@ -240,7 +240,7 @@ describe("RunPod provider", () => {
 
     expect(
       runpod.calls.find((call) => call.method === "PATCH")?.body,
-    ).toMatchObject({ ports: ["22/tcp", "8888/http"] });
+    ).not.toHaveProperty("ports");
   });
 
   it.each([
@@ -308,7 +308,6 @@ describe("RunPod provider", () => {
         PUBLIC_KEY: "ssh-ed25519 debug",
         GRADIATED_NODE_NAME: "runpod-pod1",
       },
-      ports: ["22/tcp", "8888/http"],
     });
   });
 

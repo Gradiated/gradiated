@@ -126,6 +126,7 @@ def main():
     parser.add_argument("--gateway", action="store_true")
     parser.add_argument("--proxy-port", type=int, choices=(8888, 8889))
     parser.add_argument("--auth-key-file")
+    parser.add_argument("--control-endpoints")
     parser.add_argument("--profile", default="gradiated-admin")
     parser.add_argument("--manifest", required=True)
     args = parser.parse_args()
@@ -202,6 +203,10 @@ def main():
     }
     if args.proxy_port is not None:
         payload["proxy_port"] = args.proxy_port
+    if args.control_endpoints:
+        payload["control_endpoints"] = json.loads(Path(args.control_endpoints).read_text())
+        for name, source in [("forward-control", "forward-control.py"), ("run-control", "run-control.sh"), ("start-control", "start-control.sh")]:
+            payload["scripts"][name] = (HOST / source).read_text()
     script = (HOST / "install-tailscale.py").read_text()
     try:
         command = [

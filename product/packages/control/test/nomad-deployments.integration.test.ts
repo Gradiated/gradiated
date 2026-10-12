@@ -53,7 +53,11 @@ describe("Nomad deployment reconciliation", () => {
       faultDomain: "runpod:machine-a",
       sku: "2x NVIDIA RTX PRO 6000 Blackwell Server Edition",
     });
-    host = await instances.bindNomadNode(registered.id, nodeId);
+    await instances.bindNomadNode(registered.id, nodeId);
+    host = await instances.setServingUrl(
+      registered.id,
+      `http://gpu-${registered.id}.tailscale-inference.svc.cluster.local:8888`,
+    );
   });
 
   const allocation = (

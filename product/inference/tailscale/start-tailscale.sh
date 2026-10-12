@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 umask 077
+if [[ -f /etc/gradiated/tailscale-control.json ]]; then
+  bash /opt/gradiated/bin/start-control
+fi
 [[ -f /etc/gradiated/tailscale.json ]] || exit 0
 if python3 - <<'CHECK'
 import os, pathlib, pwd, sys

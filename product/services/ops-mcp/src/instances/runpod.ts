@@ -11,8 +11,6 @@ import type { InstanceProvider, ProviderInstance } from "./provider.js";
 
 const API = "https://rest.runpod.io/v1";
 const REQUEST_TIMEOUT_MS = 30_000;
-// The host proxy's port; RunPod only reaches ports declared on the pod.
-const SERVING_PORT = "8888/http";
 
 const podSchema = z.object({
   id: z.string(),
@@ -37,6 +35,7 @@ const podSchema = z.object({
 export interface RunPodOptions {
   readonly apiKey: string;
   readonly fetch?: typeof fetch;
+  readonly controlEndpoints?: () => Promise<Record<string, string>>;
   readonly inPlace?: {
     readonly run: RunSsh;
     readonly hostKeys: Readonly<Record<string, string>>;
@@ -47,6 +46,7 @@ export const createRunPodProvider = ({
   apiKey,
   fetch: request = fetch,
   inPlace,
+  controlEndpoints,
 }: RunPodOptions): InstanceProvider => {
   const call = async (
     method: string,
@@ -123,27 +123,41 @@ export const createRunPodProvider = ({
     async enrollTailscale(podId, instanceId, authKey) {
       const current = await pod(podId);
       const sshTarget = target(current);
-      const [installer, supervisor, start] = await Promise.all(
-        ["install-tailscale.py", "run-tailscale.sh", "start-tailscale.sh"].map(
-          (name) =>
-            readFile(
-              new URL(
-                `../../../../inference/tailscale/${name}`,
-                import.meta.url,
-              ),
-              "utf8",
-            ),
+      const assets = [
+        "install-tailscale.py",
+        "run-tailscale.sh",
+        "start-tailscale.sh",
+        "forward-control.py",
+        "run-control.sh",
+        "start-control.sh",
+      ];
+      const source = await Promise.all(
+        assets.map((name) =>
+          readFile(
+            new URL(`../../../../inference/tailscale/${name}`, import.meta.url),
+            "utf8",
+          ),
         ),
       );
       const quote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
       const result = await inPlace!.run(
         sshTarget,
-        `python3 -c ${quote(installer!)}`,
+        `python3 -c ${quote(source[0]!)}`,
         JSON.stringify({
           instance_id: instanceId,
           auth_key: authKey,
           proxy_port: 8888,
-          scripts: { "run-tailscale": supervisor, "start-tailscale": start },
+          ...(controlEndpoints
+            ? { control_endpoints: await controlEndpoints() }
+            : {}),
+          scripts: Object.fromEntries(
+            assets
+              .slice(1)
+              .map((name, index) => [
+                name.replace(/\.(sh|py)$/, ""),
+                source[index + 1],
+              ]),
+          ),
         }),
         180_000,
       );
@@ -200,11 +214,6 @@ export const createRunPodProvider = ({
           "In-place enrollment requires a running pod; no provider changes were made",
         );
       }
-      if (!current.ports?.includes(SERVING_PORT)) {
-        throw new Error(
-          "In-place enrollment requires the host proxy port to be exposed already; provider ports will not be changed",
-        );
-      }
       const sshTarget = target(current);
       if (current.imageName !== image) {
         await verifyInPlaceBase(inPlace.run, sshTarget, image);
@@ -251,7 +260,6 @@ export const createRunPodProvider = ({
       await call("PATCH", `/pods/${current.id}`, {
         imageName: image,
         env: { ...current.env, ...environment },
-        ports: [...new Set([...(current.ports ?? []), SERVING_PORT])],
       });
       // Updating a stopped pod only changes its configuration; it stays stopped.
       if (current.desiredStatus === "EXITED") {

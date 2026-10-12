@@ -12,8 +12,12 @@ export const probeAllocations = async (
   allocationIds,
   request = fetch,
 ) => {
-  if (!allocationIds.length)
-    throw new Error("No available allocations to qualify");
+  const proxy = await request(`${base}/private-healthz`, {
+    redirect: "error",
+    signal: AbortSignal.timeout(10_000),
+  });
+  await proxy.body?.cancel();
+  if (proxy.status !== 200) throw new Error("Private host proxy health failed");
 
   for (const id of allocationIds) {
     const response = await request(`${base}/alloc/${id}/health`, {

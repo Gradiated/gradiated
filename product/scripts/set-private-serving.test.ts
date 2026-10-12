@@ -8,6 +8,7 @@ describe("private serving qualification", () => {
       .mockResolvedValue(new Response(null, { status: 200 }));
     await probeAllocations("http://private", ["one", "two"], request);
     expect(request.mock.calls.map(([url]) => url)).toEqual([
+      "http://private/private-healthz",
       "http://private/alloc/one/health",
       "http://private/alloc/two/health",
     ]);
@@ -17,16 +18,27 @@ describe("private serving qualification", () => {
     });
   });
 
-  it("refuses qualification when any allocation is unavailable or there are none", async () => {
+  it("qualifies an empty new host only after its private proxy is healthy", async () => {
     const request = vi
       .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(null, { status: 503 }))
+      .mockResolvedValueOnce(new Response(null, { status: 200 }));
+    await expect(
+      probeAllocations("http://private", [], request),
+    ).rejects.toThrow("Private host proxy health failed");
+    await expect(
+      probeAllocations("http://private", [], request),
+    ).resolves.toBeUndefined();
+  });
+
+  it("refuses qualification when any allocation is unavailable", async () => {
+    const request = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(null, { status: 200 }))
       .mockResolvedValueOnce(new Response(null, { status: 200 }))
       .mockResolvedValueOnce(new Response(null, { status: 503 }));
     await expect(
       probeAllocations("http://private", ["one", "two"], request),
     ).rejects.toThrow("Allocation health failed");
-    await expect(
-      probeAllocations("http://private", [], request),
-    ).rejects.toThrow("No available allocations");
   });
 });

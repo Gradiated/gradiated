@@ -15,6 +15,9 @@ RUN useradd --uid 10005 --create-home tailscale && useradd --uid 10001 runtime \
 DOCKER
 docker run -d --name "$container" --cpus=1 --memory=512m \
   -v "$root/run-tailscale.sh:/opt/gradiated/bin/run-tailscale:ro" \
+  -v "$root/forward-control.py:/opt/gradiated/bin/forward-control:ro" \
+  -v "$root/run-control.sh:/opt/gradiated/bin/run-control:ro" \
+  -v "$root/start-control.sh:/opt/gradiated/bin/start-control:ro" \
   -v "$root/start-tailscale.sh:/opt/gradiated/bin/start-tailscale:ro" "$image" sleep 180 >/dev/null
 
 docker exec -i "$container" bash -s <<'SETUP'
@@ -22,7 +25,10 @@ set -euo pipefail
 cat >/etc/gradiated/tailscale.json <<'CONFIG'
 {"hostname":"gpu-00000000-0000-4000-8000-000000000001"}
 CONFIG
-printf 'tskey-auth-synthetic\n' >/var/lib/gradiated-tailscale/auth-key
+cat >/etc/gradiated/tailscale-control.json <<'CONTROL'
+{"api":"100.64.0.1","nomad-0":"100.64.0.2","nomad-1":"100.64.0.3","nomad-2":"100.64.0.4"}
+CONTROL
+printf 'tskey-auth-synthetic\n'  >/var/lib/gradiated-tailscale/auth-key
 chown tailscale:tailscale /etc/gradiated/tailscale.json /var/lib/gradiated-tailscale/auth-key
 chmod 600 /etc/gradiated/tailscale.json /var/lib/gradiated-tailscale/auth-key
 cat >/opt/gradiated/tailscale/tailscaled <<'DAEMON'
@@ -42,6 +48,7 @@ up)
   printf 'enrolled\n' >/var/lib/gradiated-tailscale/state
   ;;
 serve) [[ "$*" == *'--tcp=8888 tcp://127.0.0.1:8888'* ]] ;;
+nc) cat ;;
 *) exit 1 ;;
 esac
 CLIENT
@@ -72,3 +79,37 @@ done
 docker exec "$container" bash -c 'kill -0 "$1"' _ "$supervisor"
 if docker exec "$container" grep -q 'tskey-auth-synthetic' /var/lib/gradiated-tailscale/calls; then exit 1; fi
 echo 'Tailscale supervisor restarts with persistent state, scopes Serve to TCP/8888 and isolates credentials'
+
+docker exec -i "$container" python3 - <<'CHECK'
+import socket, time
+payload = b"synthetic-control-bytes" * 2500
+for _ in range(30):
+    try:
+        connection = socket.create_connection(("127.0.0.1", 3004), timeout=2)
+        break
+    except OSError:
+        time.sleep(.2)
+with connection:
+    connection.sendall(payload)
+    received = bytearray()
+    while len(received) < len(payload):
+        received.extend(connection.recv(65536))
+    assert bytes(received) == payload
+host = socket.gethostbyname(socket.gethostname())
+try:
+    with socket.create_connection((host, 3004), timeout=1):
+        raise AssertionError("Control bridge must be loopback-only")
+except (ConnectionRefusedError, TimeoutError):
+    pass
+CHECK
+control=$(docker exec "$container" pgrep -f '^python3 /opt/gradiated/bin/forward-control$')
+[[ "$control" =~ ^[0-9]+$ ]]
+if docker exec -u runtime "$container" bash -c 'kill -TERM "$1"' _ "$control" 2>/dev/null; then exit 1; fi
+docker exec "$container" bash -c 'kill -KILL "$1"' _ "$control"
+for _ in {1..30}; do
+  next=$(docker exec "$container" pgrep -f '^python3 /opt/gradiated/bin/forward-control$' || true)
+  if [[ -n "$next" && "$next" != "$control" ]]; then break; fi
+  sleep .2
+done
+[[ -n "$next" && "$next" != "$control" ]]
+echo 'Private control forwarding preserves bytes, binds only loopback and restarts under its isolated UID'

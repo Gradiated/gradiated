@@ -74,7 +74,7 @@ export const createInstanceService = (
 
     const [record] = await database
       .insert(instances)
-      .values({ id, ...input, servingUrl: privateServingUrl(id) })
+      .values({ id, ...input, servingUrl: null })
       .onConflictDoUpdate({
         target: [
           instances.provider,
@@ -182,7 +182,6 @@ export const createInstanceService = (
       .update(instances)
       .set({
         nomadNodeId: z.uuid().parse(nomadNodeId),
-        servingUrl: privateServingUrl(id),
         updatedAt: sql`now()`,
       })
       .where(eq(instances.id, id))

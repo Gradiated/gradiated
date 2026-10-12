@@ -5,6 +5,14 @@ The API emits completed business actions after authorization and a successful
 service call. The console emits navigation and interactions, without duplicating
 API events. Analytics does not replace billing records or operational metrics.
 
+The Vercel website sends standard `$pageview` events with `source: website`
+on initial visits and client-side route changes. It uses the public token for
+production project 604827 on the production domains; local and preview builds
+are disabled unless `VITE_POSTHOG_KEY` is provided. Website tracking is initialized
+only by the browser entry point, so prerendering does not emit visits. Website
+URL properties retain paths but exclude query strings and fragments; form
+autocapture, exception capture and session recording are disabled.
+
 ## Identity and groups
 
 Every product event has `schema_version: 1` and `source: api | console`.
@@ -51,6 +59,7 @@ and `workspace_id`. Common properties above apply to every row.
 | `task_version_promoted`               | API     | workspace, `task_id`, `version_id`      | Production version update succeeds.                                             |
 | `sign_in_started`                     | Console | `method: google                         | github                                                                          | magic_link` | Sign-in initiated. |
 | `sign_in_link_sent`                   | Console | `method: magic_link`                    | Magic-link request succeeds.                                                    |
+| `sign_in_page_viewed`                 | Console | None                                    | Login page appears; rerenders/StrictMode deduplicated.                          |
 | `sign_out_clicked`                    | Console | `user_id`                               | Explicit sign-out clicked; not proof of session termination.                    |
 | `console_page_viewed`                 | Console | workspace, `page`                       | Authenticated page appears or scope changes; rerenders/StrictMode deduplicated. |
 | `organization_selected`               | Console | org                                     | Explicit org choice.                                                            |
@@ -81,7 +90,11 @@ Use the same PostHog project for the API and console in each environment, with
 separate development and production projects.
 
 - Console: `VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST` (US ingestion by default).
-  Production builds already use the `CONSOLE_POSTHOG_KEY` GitHub variable.
+  Production builds use the required `CONSOLE_POSTHOG_KEY` GitHub variable.
+- Website: uses production project 604827's public token on `gradiated.com`
+  and `www.gradiated.com`. `VITE_POSTHOG_KEY` and `VITE_POSTHOG_HOST` can override
+  it. Configure overrides only in the matching Vercel environment to keep
+  preview traffic separate; no Vercel environment change is needed for production.
 - API: `POSTHOG_KEY`, `POSTHOG_HOST` (US ingestion by default). Production loads
   its existing `api` secret from `gradiated/prod/product/api` in Secrets Manager;
   add these fields there and roll the API through normal deployment. No new

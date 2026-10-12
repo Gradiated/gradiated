@@ -25,6 +25,8 @@ if (posthogKey) {
         event.properties,
         event.properties.$set_once,
         event.properties.$set,
+        event.$set_once,
+        event.$set,
       ]) {
         if (!properties || typeof properties !== "object") continue;
         for (const key of [

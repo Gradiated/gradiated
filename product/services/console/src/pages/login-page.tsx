@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoaderCircle, MailCheck } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 
 import { authClient } from "@/auth";
@@ -45,6 +45,7 @@ const signInCallbacks = () => ({
 });
 
 export const LoginPage = () => {
+  const pageViewed = useRef(false);
   const callbackError = new URLSearchParams(window.location.search).get(
     "error",
   );
@@ -56,6 +57,13 @@ export const LoginPage = () => {
     resolver: zodResolver(LoginSchema),
     defaultValues: { email: "" },
   });
+
+  useEffect(() => {
+    if (pageViewed.current) return;
+
+    pageViewed.current = true;
+    analytics.track("sign_in_page_viewed", {});
+  }, []);
 
   useEffect(() => {
     if (callbackError) logSignInCallbackFailure(callbackError);

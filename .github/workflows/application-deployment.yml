@@ -132,9 +132,11 @@ jobs:
         working-directory: product
         env:
           VITE_API_URL: https://api.gradiated.com
-          # PostHog project key (a public client token); leave unset to keep every feature flag off.
+          # Public project token shared with API and website analytics.
           VITE_POSTHOG_KEY: ${{ vars.CONSOLE_POSTHOG_KEY }}
-        run: pnpm exec turbo run build --filter=@gradiated/console... --env-mode=loose
+        run: |
+          test -n "$VITE_POSTHOG_KEY" || { echo "CONSOLE_POSTHOG_KEY must be set for production analytics" >&2; exit 1; }
+          pnpm exec turbo run build --filter=@gradiated/console... --env-mode=loose
       - uses: aws-actions/configure-aws-credentials@v6.2.3
         with:
           aws-region: ${{ env.AWS_REGION }}
@@ -297,7 +299,6 @@ jobs:
           kubectl -n gradiated rollout status deployment/collector --timeout=10m
           PRODUCT_IMAGE="${product_image}" node tools/deployment/training-readiness.mjs
           node tools/deployment/inference-probe-readiness.mjs
-
 
   publish-console:
     name: Publish console and verify production

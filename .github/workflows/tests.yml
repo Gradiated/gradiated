@@ -147,6 +147,8 @@ jobs:
       - uses: jdx/mise-action@v4.2.3
       - run: pnpm install --frozen-lockfile
         working-directory: product
+      - run: pnpm --filter gradiated-com test
+        working-directory: product
       - run: pnpm --filter gradiated-com build
         working-directory: product
 

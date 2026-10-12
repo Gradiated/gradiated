@@ -87,6 +87,22 @@ checks remain part of the Product tests PR gate.
 
 ## Deploy with Vercel
 
+### Analytics
+
+Production visits on `gradiated.com` and `www.gradiated.com` send PostHog
+`$pageview` events to the production project (604827), using its public project
+token. Initial visits and client-side route changes carry `source: website`.
+Query strings and fragments are removed from event and person URL properties.
+Autocapture, session recording, exception capture and form tracking are disabled.
+Initialization runs only in the browser, outside static prerendering.
+
+Local and Vercel preview builds do not send events by default. Set
+`VITE_POSTHOG_KEY` to a development project's public token to test them.
+`VITE_POSTHOG_HOST` overrides the default US ingestion host. Never put a
+PostHog personal API key in a `VITE_` variable.
+
+### Hosting
+
 Create a Vercel project for this repository.
 
 Set the Vercel Root Directory to `product/website`.

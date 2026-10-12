@@ -16,11 +16,26 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe("console analytics", () => {
+  it("tracks an anonymous login-page visit without attaching a workspace", async () => {
+    const { analytics } = await import("@/lib/analytics");
+
+    expect(analytics.track("sign_in_page_viewed", {})).toBe(true);
+    expect(posthog.capture).toHaveBeenCalledWith("sign_in_page_viewed", {
+      source: "console",
+      schema_version: 1,
+      $groups: {},
+    });
+  });
+
   it("removes inherited workspace groups and URLs at the final SDK send boundary", async () => {
     await import("@/lib/analytics");
     const options = posthog.init.mock.calls[0]![1];
     const event = options.before_send({
       event: "billing_top_up_clicked",
+      $set_once: {
+        $initial_current_url:
+          "https://console.gradiated.com/login?token=private",
+      },
       properties: {
         organization_id: "org-2",
         $groups: { organization: "org-1", workspace: "ws-1" },

@@ -32,6 +32,11 @@ export default defineConfig(({ isSsrBuild, mode }) => {
   }
 
   return {
+    define: {
+      "import.meta.env.PREVIEW": JSON.stringify(
+        process.env.VERCEL_ENV === "preview",
+      ),
+    },
     plugins: [
       {
         name: "sand-article",

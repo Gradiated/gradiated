@@ -47,7 +47,7 @@ export function parseArticleMetadata(
 }
 export function buildArticleRegistry(
   sources: Record<string, string>,
-  development: boolean,
+  includeDrafts: boolean,
 ) {
   const paths = new Set<string>();
   return Object.entries(sources)
@@ -58,7 +58,7 @@ export function buildArticleRegistry(
       paths.add(article.path);
       return article;
     })
-    .filter((article) => development || article.status === "published")
+    .filter((article) => includeDrafts || article.status === "published")
     .sort(
       (a, b) =>
         b.publishedAt.localeCompare(a.publishedAt) ||

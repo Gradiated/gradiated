@@ -12,6 +12,8 @@ type Grain = {
   wind: boolean;
 };
 
+const CIRCUIT_ASPECT = 2;
+
 const random = (seed: number) => () => {
   seed = (seed + 0x6d2b79f5) | 0;
   let value = Math.imul(seed ^ (seed >>> 15), 1 | seed);
@@ -47,7 +49,7 @@ const circuitPoints = (): Point[] => {
       const angle = (i / 72) * Math.PI * 2;
       points.push({
         x: x + Math.cos(angle) * radius,
-        y: y + Math.sin(angle) * radius,
+        y: y + Math.sin(angle) * radius * CIRCUIT_ASPECT,
       });
     }
   };
@@ -194,6 +196,13 @@ export const SandCircuitArtwork = (): ReactElement => {
       const artHeight = height * 0.88;
       const left = (width - artWidth) / 2;
       const top = height * 0.05;
+      const circuitWidth = Math.min(
+        width * 0.94,
+        height * 0.88 * CIRCUIT_ASPECT,
+      );
+      const circuitHeight = circuitWidth / CIRCUIT_ASPECT;
+      const circuitLeft = (width - circuitWidth) / 2;
+      const circuitTop = (height - circuitHeight) / 2;
 
       for (const grain of points) {
         let { x, y } = grain.dune;
@@ -205,8 +214,11 @@ export const SandCircuitArtwork = (): ReactElement => {
           alpha *=
             (1 - eased) * Math.pow(Math.sin(travel * Math.PI), 1.5) + eased;
         }
-        x += (grain.circuit.x - x) * eased;
-        y += (grain.circuit.y - y) * eased;
+
+        x = left + x * artWidth;
+        y = top + y * artHeight;
+        x += (circuitLeft + grain.circuit.x * circuitWidth - x) * eased;
+        y += (circuitTop + grain.circuit.y * circuitHeight - y) * eased;
         const ridgeDistance = Math.max(0, grain.dune.y - crest(grain.dune.x));
         const ripple =
           Math.sin(grain.dune.x * 64 + ridgeDistance * 28) * 0.5 + 0.5;
@@ -228,8 +240,8 @@ export const SandCircuitArtwork = (): ReactElement => {
         context.fillStyle = `rgba(${color.join(",")},${alpha})`;
         context.beginPath();
         context.arc(
-          left + x * artWidth,
-          top + y * artHeight,
+          x,
+          y,
           Math.max(0.55, grain.size * Math.max(0.8, scale)),
           0,
           Math.PI * 2,

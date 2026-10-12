@@ -22,6 +22,7 @@ const valueOf = (html, pattern, label, file) => {
 const seenTitles = new Map();
 const seenDescriptions = new Map();
 const seenCanonicals = new Map();
+const indexableCanonicals = new Set();
 
 for (const file of htmlFiles) {
   const html = await readFile(join(outputRoot, file), "utf8");
@@ -38,7 +39,7 @@ for (const file of htmlFiles) {
     "canonical URL",
     file,
   );
-  valueOf(
+  const robots = valueOf(
     html,
     /<meta name="robots" content="([^"]+)" \/>/g,
     "robots meta tag",
@@ -68,12 +69,16 @@ for (const file of htmlFiles) {
     "Twitter description",
     file,
   );
-  valueOf(
-    html,
-    /<script type="application\/ld\+json" data-page-structured-data>([\s\S]*?)<\/script>/g,
-    "structured data block",
-    file,
-  );
+  const indexable = robots === "index, follow";
+  if (indexable) {
+    indexableCanonicals.add(canonical);
+    valueOf(
+      html,
+      /<script type="application\/ld\+json" data-page-structured-data>([\s\S]*?)<\/script>/g,
+      "structured data block",
+      file,
+    );
+  }
 
   const h1Count = (html.match(/<h1(?:\s|>)/g) ?? []).length;
   if (h1Count !== 1) {
@@ -82,7 +87,10 @@ for (const file of htmlFiles) {
   if (html.includes("Loading docs") || html.includes("Loading page")) {
     throw new Error(`${file} contains a docs loading fallback.`);
   }
-  if (html.includes('<meta property="og:type" content="article" />')) {
+  if (
+    indexable &&
+    html.includes('<meta property="og:type" content="article" />')
+  ) {
     const publishedAt = valueOf(
       html,
       /<meta property="article:published_time" content="([^"]+)" \/>/g,
@@ -146,10 +154,11 @@ const sitemap = await readFile(join(outputRoot, "sitemap.xml"), "utf8");
 const sitemapUrls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(
   (match) => match[1],
 );
-if (sitemapUrls.length !== htmlFiles.length) {
-  throw new Error(
-    `The sitemap has ${sitemapUrls.length} URLs for ${htmlFiles.length} indexable pages.`,
-  );
+if (
+  sitemapUrls.length !== indexableCanonicals.size ||
+  sitemapUrls.some((url) => !indexableCanonicals.has(url))
+) {
+  throw new Error("The sitemap must contain exactly the indexable pages.");
 }
 
 for (const markdownFile of files.filter((file) => file.endsWith(".md"))) {

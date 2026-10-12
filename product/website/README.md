@@ -276,8 +276,10 @@ Omitted categories default to Notes. The same metadata supplies cards, navigatio
 and reading-page labels. Existing company Methods stay in their authored sequence.
 
 The sand article uses `layout: journey`, preserving its sticky illustrations in
-the shared website shell. It remains a draft for local review and is excluded
-from production until its metadata is set to published. The prose is rendered at
+the shared website shell. Drafts are included locally and in Vercel Preview
+deployments (`VERCEL_ENV=preview`). Preview drafts are prerendered with noindex
+metadata and omitted from the sitemap. Production excludes drafts until their
+metadata is set to published. The prose is rendered at
 build time from `content/articles/sand/script.md`, with the ordered scene manifest
 validated by the renderer. The animation geometry is scoped to its mounted page
 and cleaned up on navigation. The imported animation files are a preserved

@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -32,6 +33,7 @@ import (
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/workqueue"
 )
 
 type host struct {
@@ -52,9 +54,37 @@ type provider struct {
 	node   *v1.Node
 }
 
+type statusPods struct{ typedv1.PodInterface }
+
+func (p statusPods) UpdateStatus(ctx context.Context, pod *v1.Pod, _ metav1.UpdateOptions) (*v1.Pod, error) {
+	// Virtual Kubelet's full-object status writes also overwrite rollout annotations.
+	patch, err := json.Marshal([]map[string]any{
+		{"op": "test", "path": "/metadata/uid", "value": pod.UID},
+		{"op": "add", "path": "/status", "value": pod.Status},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return p.Patch(ctx, pod.Name, types.JSONPatchType, patch, metav1.PatchOptions{}, "status")
+}
+
+type statusClient struct{ typedv1.CoreV1Interface }
+
+func (c statusClient) Pods(namespace string) typedv1.PodInterface {
+	return statusPods{c.CoreV1Interface.Pods(namespace)}
+}
+
 var hostClient = &http.Client{CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
 	return fmt.Errorf("host redirects are unsupported")
 }}
+
+func retryHostOperation(_ context.Context, _ string, _ int, _ time.Time, err error) (*time.Duration, error) {
+	if errdefs.IsInvalidInput(err) {
+		return nil, err
+	}
+	delay := 10 * time.Second
+	return &delay, nil
+}
 
 func (p *provider) call(ctx context.Context, operation string, uid string, pod *v1.Pod, result any) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
@@ -256,9 +286,11 @@ func runHost(ctx context.Context, client kubernetes.Interface, namespace string,
 	broadcaster := record.NewBroadcaster()
 	defer broadcaster.Shutdown()
 	broadcaster.StartRecordingToSink(&typedv1.EventSinkImpl{Interface: client.CoreV1().Events(namespace)})
-	pc, err := node.NewPodController(node.PodControllerConfig{PodClient: client.CoreV1(), PodInformer: pods, Provider: p,
-		EventRecorder:  broadcaster.NewRecorder(scheme.Scheme, v1.EventSource{Component: "runpod-kubelet", Host: name}),
-		SecretInformer: resourcesFactory.Core().V1().Secrets(), ConfigMapInformer: resourcesFactory.Core().V1().ConfigMaps(), ServiceInformer: resourcesFactory.Core().V1().Services()})
+	pc, err := node.NewPodController(node.PodControllerConfig{PodClient: statusClient{client.CoreV1()}, PodInformer: pods, Provider: p,
+		SyncPodsFromKubernetesRateLimiter:     workqueue.NewItemExponentialFailureRateLimiter(5*time.Second, 30*time.Second),
+		SyncPodsFromKubernetesShouldRetryFunc: retryHostOperation,
+		EventRecorder:                         broadcaster.NewRecorder(scheme.Scheme, v1.EventSource{Component: "runpod-kubelet", Host: name}),
+		SecretInformer:                        resourcesFactory.Core().V1().Secrets(), ConfigMapInformer: resourcesFactory.Core().V1().ConfigMaps(), ServiceInformer: resourcesFactory.Core().V1().Services()})
 	if err != nil {
 		return err
 	}

@@ -442,7 +442,9 @@ def serve():
                 response = agent.request(json.loads(self.rfile.read(size)))
                 payload = json.dumps(response).encode()
                 self.send_response(200)
-            except (ValueError, KeyError, FileNotFoundError):
+            except (ValueError, KeyError, FileNotFoundError) as error:
+                detail = f": {error}" if isinstance(error, (ValueError, FileNotFoundError)) else ""
+                print(f"Host operation rejected: {type(error).__name__}{detail}", flush=True)
                 payload = b'{"error":"invalid_host_operation"}'
                 self.send_response(422)
             self.send_header("Content-Type", "application/json")

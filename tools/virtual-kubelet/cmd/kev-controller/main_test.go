@@ -12,6 +12,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes/fake"
 	corelisters "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 )
@@ -85,5 +86,26 @@ func TestManagementCredentialDoesNotFollowRedirect(t *testing.T) {
 	}
 	if reached {
 		t.Fatal("management credential sent to redirect target")
+	}
+}
+
+func TestStatusUpdatePreservesQualificationAndRejectsReusedPodName(t *testing.T) {
+	original := &v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "kev", Namespace: "gpu-inference", UID: types.UID("current-uid"), Annotations: map[string]string{"gradiated.com/qualified": "true"}}}
+	client := fake.NewSimpleClientset(original)
+	pods := statusClient{client.CoreV1()}.Pods("gpu-inference")
+	stale := original.DeepCopy()
+	stale.Annotations = nil
+	stale.Status.Phase = v1.PodRunning
+	result, err := pods.UpdateStatus(context.Background(), stale, metav1.UpdateOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Annotations["gradiated.com/qualified"] != "true" || result.Status.Phase != v1.PodRunning {
+		t.Fatal("status update changed qualification")
+	}
+	stale.UID = types.UID("previous-uid")
+	stale.Status.Phase = v1.PodFailed
+	if _, err = pods.UpdateStatus(context.Background(), stale, metav1.UpdateOptions{}); err == nil {
+		t.Fatal("status update crossed Pod UID boundary")
 	}
 }

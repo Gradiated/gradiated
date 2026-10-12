@@ -18,6 +18,42 @@ afterEach(() => {
 });
 
 describe("website analytics", () => {
+  it("allows recording snapshots and masks sensitive recording data", async () => {
+    await import("../src/analytics");
+    const options = posthog.init.mock.calls[0]![1];
+    const snapshots = [{ type: 2, data: { node: { type: 0 } } }];
+    const event = options.before_send({
+      event: "$snapshot",
+      properties: { $snapshot_data: snapshots, $session_id: "test-session" },
+    });
+
+    expect(options.disable_session_recording).toBe(false);
+    expect(options.advanced_disable_feature_flags).not.toBe(true);
+    expect(event.properties.$snapshot_data).toEqual(snapshots);
+    expect(event.properties.$session_id).toBe("test-session");
+    expect(options.session_recording.maskAllInputs).toBe(true);
+    expect(options.session_recording.blockSelector).toContain(
+      'input[type="hidden"]',
+    );
+    expect(options.session_recording.recordBody).toBe(false);
+    expect(options.session_recording.recordHeaders).toBe(false);
+    expect(options.enable_recording_console_log).toBe(false);
+    expect(
+      options.session_recording.maskCapturedNetworkRequestFn({
+        name: "https://console.gradiated.com/login?token=private#secret",
+      }),
+    ).toEqual({ name: "https://console.gradiated.com/login" });
+    expect(
+      options.session_recording.maskCapturedNetworkRequestFn({
+        name: "invalid",
+      }),
+    ).toBeNull();
+    expect(event.properties.source).toBe("website");
+    expect(
+      options.before_send({ event: "$autocapture", properties: {} }),
+    ).toBeNull();
+  });
+
   it("tracks visits and SPA navigation in the production project", async () => {
     await import("../src/analytics");
 
@@ -27,7 +63,8 @@ describe("website analytics", () => {
         api_host: "https://us.i.posthog.com",
         capture_pageview: "history_change",
         autocapture: false,
-        disable_session_recording: true,
+        disable_session_recording: false,
+        advanced_disable_feature_flags_on_first_load: true,
       }),
     );
   });

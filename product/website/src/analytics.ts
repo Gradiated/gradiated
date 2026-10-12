@@ -9,17 +9,35 @@ if (key) {
     capture_pageview: "history_change",
     capture_pageleave: false,
     autocapture: false,
-    disable_session_recording: true,
+    disable_session_recording: false,
+    enable_recording_console_log: false,
+    session_recording: {
+      maskAllInputs: true,
+      blockSelector: 'input[type="hidden"], input[type="file"]',
+      recordHeaders: false,
+      recordBody: false,
+      maskCapturedNetworkRequestFn: (request) => {
+        try {
+          const url = new URL(request.name);
+          url.search = "";
+          url.hash = "";
+          return { ...request, name: url.toString() };
+        } catch {
+          return null;
+        }
+      },
+    },
     capture_exceptions: false,
     capture_performance: false,
     capture_dead_clicks: false,
     enable_heatmaps: false,
     disable_surveys: true,
-    advanced_disable_feature_flags: true,
+    advanced_disable_feature_flags_on_first_load: true,
     save_referrer: false,
     save_campaign_params: false,
     before_send: (event) => {
-      if (!event || event.event !== "$pageview") return null;
+      if (!event || !["$pageview", "$snapshot"].includes(event.event))
+        return null;
 
       event.properties.source = "website";
       event.properties.schema_version = 1;

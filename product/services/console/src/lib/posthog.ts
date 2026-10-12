@@ -11,7 +11,25 @@ if (posthogKey) {
     capture_pageview: "history_change",
     autocapture: false,
     capture_pageleave: false,
-    disable_session_recording: true,
+    disable_session_recording: false,
+    enable_recording_console_log: false,
+    session_recording: {
+      maskAllInputs: true,
+      maskTextSelector: "*",
+      blockSelector: 'input[type="hidden"], input[type="file"]',
+      recordHeaders: false,
+      recordBody: false,
+      maskCapturedNetworkRequestFn: (request) => {
+        try {
+          const url = new URL(request.name);
+          url.search = "";
+          url.hash = "";
+          return { ...request, name: url.toString() };
+        } catch {
+          return null;
+        }
+      },
+    },
     save_referrer: false,
     save_campaign_params: false,
     before_send: (event) => {

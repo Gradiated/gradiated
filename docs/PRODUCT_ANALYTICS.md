@@ -14,7 +14,8 @@ Production environment. Local and preview builds are disabled unless their
 environment supplies a separate `VITE_POSTHOG_KEY`. Website tracking is initialized
 only by the browser entry point, so prerendering does not emit visits. Website
 URL properties retain paths but exclude query strings and fragments; form
-autocapture, exception capture and session recording are disabled.
+autocapture and exception capture are disabled. Session replay is enabled for
+the website and console when the target project enables recording.
 
 ## Identity and groups
 
@@ -35,8 +36,8 @@ those groups; logout resets identity. The final SDK send hook reconstructs event
 automatic persistence merge attaching an unrelated workspace to org-only events.
 
 Strict schemas exclude names, API secrets/digests/prefixes, prompts, trace
-payloads, and checkout/download URLs. Page leaves, autocapture and session
-recording are disabled. Standard pageviews retain URL paths but exclude query
+payloads, and checkout/download URLs. Page leaves and autocapture are disabled. Standard pageviews retain URL paths
+but exclude query
 strings and fragments, including initial person URL properties. URL properties
 are stripped from custom console events at the final SDK boundary.
 
@@ -115,6 +116,25 @@ trigger a payment-received notification: that follow-up event is not implemented
 See [Slack destinations](https://posthog.com/docs/cdp/destinations/slack) and
 [Workflows](https://posthog.com/docs/workflows). No destinations or outbound
 notifications are configured by the repository.
+
+## Session replay
+
+Project 604827 has replay enabled with 30-day retention and no sampling or
+trigger restrictions. The browser SDKs allow recording when the project enables
+it; an unset project key keeps analytics and replay off. The website's send hook
+accepts `$pageview` and `$snapshot`, while continuing to reject unrelated events.
+Both SDKs load remote replay settings while disabling the initial feature-flag fetch.
+
+Both surfaces mask all form inputs and block hidden/file inputs from replay.
+Console text is masked throughout, including API keys and trace content;
+website public text remains visible. Console logs, network bodies and headers
+are disabled. Replay URLs retain their paths but strip queries and fragments.
+These controls run in the browser before upload. See PostHog's
+[replay privacy controls](https://posthog.com/docs/session-replay/privacy).
+
+Deploy both frontend builds to activate these SDK settings. After deployment,
+visit each surface, interact with it, and confirm a new recording in PostHog.
+Previously disabled sessions cannot be recovered retroactively.
 
 ## Delivery and verification
 

@@ -9,8 +9,9 @@ The console and Vercel website use PostHog's built-in `$pageview` tracking
 on initial visits and client-side route changes (`capture_pageview: "history_change"`).
 Console visits, including the login page, use `source: console`; website visits
 use `source: website`. There are no custom pageview events. The website uses the
-public token for production project 604827 on the production domains; local and preview builds
-are disabled unless `VITE_POSTHOG_KEY` is provided. Website tracking is initialized
+public token for production project 604827 from `VITE_POSTHOG_KEY` in Vercel's
+Production environment. Local and preview builds are disabled unless their
+environment supplies a separate `VITE_POSTHOG_KEY`. Website tracking is initialized
 only by the browser entry point, so prerendering does not emit visits. Website
 URL properties retain paths but exclude query strings and fragments; form
 autocapture, exception capture and session recording are disabled.
@@ -92,10 +93,11 @@ separate development and production projects.
 
 - Console: `VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST` (US ingestion by default).
   Production builds use the required `CONSOLE_POSTHOG_KEY` GitHub variable.
-- Website: uses production project 604827's public token on `gradiated.com`
-  and `www.gradiated.com`. `VITE_POSTHOG_KEY` and `VITE_POSTHOG_HOST` can override
-  it. Configure overrides only in the matching Vercel environment to keep
-  preview traffic separate; no Vercel environment change is needed for production.
+- Website: set `VITE_POSTHOG_KEY` to project 604827's public token in the Vercel
+  Production environment. Production Vercel builds reject a missing key.
+  `VITE_POSTHOG_HOST` can override the US ingestion host. Leave Development and
+  Preview keys unset, or use a separate project's key to keep that traffic out
+  of production. Keep token values in deployment configuration, outside Git.
 - API: `POSTHOG_KEY`, `POSTHOG_HOST` (US ingestion by default). Production loads
   its existing `api` secret from `gradiated/prod/product/api` in Secrets Manager;
   add these fields there and roll the API through normal deployment. No new

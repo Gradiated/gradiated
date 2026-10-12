@@ -7,7 +7,7 @@ beforeEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
   vi.stubEnv("PROD", true);
-  vi.stubEnv("VITE_POSTHOG_KEY", "");
+  vi.stubEnv("VITE_POSTHOG_KEY", "configured-test-project");
   vi.stubEnv("VITE_POSTHOG_HOST", "");
   vi.stubGlobal("window", { location: { hostname: "www.gradiated.com" } });
 });
@@ -22,7 +22,7 @@ describe("website analytics", () => {
     await import("../src/analytics");
 
     expect(posthog.init).toHaveBeenCalledWith(
-      "phc_m2sik8V9cUpSGFmprudSHQwQm96YbvoNYobyBA4YqHoW",
+      "configured-test-project",
       expect.objectContaining({
         api_host: "https://us.i.posthog.com",
         capture_pageview: "history_change",
@@ -35,6 +35,7 @@ describe("website analytics", () => {
   it.each(["localhost", "gradiated-preview.vercel.app"])(
     "keeps %s traffic out of the production project",
     async (hostname) => {
+      vi.stubEnv("VITE_POSTHOG_KEY", "");
       vi.stubGlobal("window", { location: { hostname } });
       await import("../src/analytics");
 
@@ -44,9 +45,38 @@ describe("website analytics", () => {
 
   it("keeps development builds off even on a production hostname", async () => {
     vi.stubEnv("PROD", false);
+    vi.stubEnv("VITE_POSTHOG_KEY", "");
     await import("../src/analytics");
 
     expect(posthog.init).not.toHaveBeenCalled();
+  });
+
+  it("does not initialize on production domains without deployment configuration", async () => {
+    vi.stubEnv("VITE_POSTHOG_KEY", "");
+    await import("../src/analytics");
+
+    expect(posthog.init).not.toHaveBeenCalled();
+  });
+
+  it("preserves direct referrer attribution on events and persons", async () => {
+    await import("../src/analytics");
+    const options = posthog.init.mock.calls[0]![1];
+    const event = options.before_send({
+      event: "$pageview",
+      $set_once: { $initial_referrer: "$direct" },
+      $set: { $session_entry_referrer: "$direct" },
+      properties: {
+        $referrer: "$direct",
+        $set_once: { $initial_referrer: "$direct" },
+        $set: { $session_entry_referrer: "$direct" },
+      },
+    });
+
+    expect(event.properties.$referrer).toBe("$direct");
+    expect(event.properties.$set_once.$initial_referrer).toBe("$direct");
+    expect(event.properties.$set.$session_entry_referrer).toBe("$direct");
+    expect(event.$set_once.$initial_referrer).toBe("$direct");
+    expect(event.$set.$session_entry_referrer).toBe("$direct");
   });
 
   it("allows a separate development project and ingestion host", async () => {

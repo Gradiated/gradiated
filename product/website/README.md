@@ -91,7 +91,8 @@ checks remain part of the Product tests PR gate.
 
 Production visits on `gradiated.com` and `www.gradiated.com` send PostHog
 `$pageview` events to the production project (604827), using its public project
-token. Initial visits and client-side route changes carry `source: website`.
+token supplied by `VITE_POSTHOG_KEY` in the Vercel Production environment.
+The production Vercel build fails if this variable is missing. Initial visits and client-side route changes carry `source: website`.
 Query strings and fragments are removed from event and person URL properties.
 Autocapture, session recording, exception capture and form tracking are disabled.
 Initialization runs only in the browser, outside static prerendering.

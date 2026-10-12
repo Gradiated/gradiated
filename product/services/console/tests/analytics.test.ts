@@ -48,6 +48,27 @@ describe("console analytics", () => {
     expect(JSON.stringify(event)).not.toMatch(/private|secret/);
   });
 
+  it("preserves direct referrer attribution on pageviews", async () => {
+    await import("@/lib/posthog");
+    const options = posthog.init.mock.calls[0]![1];
+    const event = options.before_send({
+      event: "$pageview",
+      $set_once: { $initial_referrer: "$direct" },
+      $set: { $session_entry_referrer: "$direct" },
+      properties: {
+        $referrer: "$direct",
+        $set_once: { $initial_referrer: "$direct" },
+        $set: { $session_entry_referrer: "$direct" },
+      },
+    });
+
+    expect(event.properties.$referrer).toBe("$direct");
+    expect(event.properties.$set_once.$initial_referrer).toBe("$direct");
+    expect(event.properties.$set.$session_entry_referrer).toBe("$direct");
+    expect(event.$set_once.$initial_referrer).toBe("$direct");
+    expect(event.$set.$session_entry_referrer).toBe("$direct");
+  });
+
   it("removes inherited workspace groups and URLs at the final SDK send boundary", async () => {
     await import("@/lib/analytics");
     const options = posthog.init.mock.calls[0]![1];

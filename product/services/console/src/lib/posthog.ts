@@ -50,7 +50,11 @@ if (posthogKey) {
             continue;
           }
 
-          if (key.endsWith("pathname") || typeof properties[key] !== "string")
+          if (
+            key.endsWith("pathname") ||
+            typeof properties[key] !== "string" ||
+            properties[key] === "$direct"
+          )
             continue;
 
           try {

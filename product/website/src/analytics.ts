@@ -1,13 +1,6 @@
 import posthog from "posthog-js";
 
-const productionSite =
-  import.meta.env.PROD &&
-  ["gradiated.com", "www.gradiated.com"].includes(window.location.hostname);
-const key =
-  import.meta.env.VITE_POSTHOG_KEY ||
-  (productionSite
-    ? "phc_m2sik8V9cUpSGFmprudSHQwQm96YbvoNYobyBA4YqHoW"
-    : undefined);
+const key = import.meta.env.VITE_POSTHOG_KEY;
 
 if (key) {
   posthog.init(key, {
@@ -48,7 +41,11 @@ if (key) {
           "$session_entry_url",
           "$session_entry_referrer",
         ]) {
-          if (typeof properties[name] !== "string") continue;
+          if (
+            typeof properties[name] !== "string" ||
+            properties[name] === "$direct"
+          )
+            continue;
 
           try {
             const url = new URL(properties[name]);

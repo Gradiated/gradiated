@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import fcntl
+from contextlib import ExitStack
 import hmac
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
@@ -89,33 +90,75 @@ def spawn_user(user, command, environment, log_path):
         )
 
 
+def gpu_pool(config):
+    return config.get("gpu_uuids") or [config["gpu_uuid"]]
+
+
+def runtime_profile(config, pod):
+    image = pod["spec"]["containers"][0]["image"]
+    digest = image.rsplit("@sha256:", 1)[-1]
+    if not re.fullmatch(r"[0-9a-f]{64}", digest):
+        raise ValueError("A pinned runtime bundle is required")
+    profiles = config.get("runtimes")
+    if profiles is None:
+        profiles = {config["bundle_sha256"]: {
+            "image": f"gradiated/kev-bundle@sha256:{config['bundle_sha256']}",
+            "model_id": config["model_id"], "release": config["release"],
+            "gpus": 1, "cpu": "16", "memory": "64Gi", "request_memory": "48Gi",
+            "startup_timeout": 1800,
+        }}
+    profile = profiles.get(digest)
+    if not profile or profile["image"] != image:
+        raise ValueError("Unsupported runtime release")
+    allowed_environment = {"TENSOR_PARALLEL_SIZE", "MODEL_ID", "LORA_ENABLED", "LORA_BASE_MODEL_REVISION",
+        "LORA_GPU_SLOTS", "LORA_CPU_SLOTS", "LORA_MAX_RANK", "LORA_DISK_CACHE_BYTES", "LORA_DOWNLOAD_HOSTS",
+        "GRADIATED_API_BASE_URL", "HOST_IDENTITY_FILE"}
+    extra = profile.get("environment", {})
+    if set(extra) - allowed_environment or any(not isinstance(value, str) for value in extra.values()):
+        raise ValueError("Unsupported runtime environment")
+    if extra.get("GRADIATED_API_BASE_URL", "http://127.0.0.1:3004") != "http://127.0.0.1:3004":
+        raise ValueError("GPU control traffic must use the private bridge")
+    return digest, profile
+
+
 def task(uid, stopping):
     (pod_cgroup(uid) / "cgroup.procs").write_text(str(os.getpid()))
     config = json.loads(CONFIG.read_text())
     directory = ROOT / "pods" / uid
-    state_path = directory / "state.json"
-    bundle = ROOT / "bundles" / config["bundle_sha256"]
-    marker = bundle / ".bundle-sha256"
-    if marker.read_text().strip() != config["bundle_sha256"]:
+    state = json.loads((directory / "state.json").read_text())
+    digest, profile = runtime_profile(config, state["pod"])
+    bundle = ROOT / "bundles" / digest
+    if (bundle / ".bundle-sha256").read_text().strip() != digest:
         raise ValueError("Unverified runtime bundle")
+    devices = state.get("gpu_uuids", gpu_pool(config)[:profile["gpus"]])
+    base = state.get("port_base", 38080)
     environment = {
         "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-        "HOME": "/home/runtime", "HF_HOME": "/home/runtime/.cache/huggingface",
-        "XDG_CACHE_HOME": "/home/runtime/.cache", "OMP_NUM_THREADS": "16",
-        "NVIDIA_VISIBLE_DEVICES": config["gpu_uuid"], "CUDA_VISIBLE_DEVICES": config["gpu_uuid"],
-        "RUNTIME_PORT": "38080", "RUNTIME_STARTUP_TIMEOUT_SECONDS": "1800",
+        "HOME": "/home/runtime", "HF_HOME": config.get("hf_home", "/home/runtime/.cache/huggingface"),
+        "XDG_CACHE_HOME": "/home/runtime/.cache", "OMP_NUM_THREADS": profile["cpu"],
+        "NVIDIA_VISIBLE_DEVICES": ",".join(devices), "CUDA_VISIBLE_DEVICES": ",".join(devices),
+        "RUNTIME_HOST": "127.0.0.1", "RUNTIME_PORT": str(base),
+        "ADAPTER_PORT": str(base + 2), "WARMUP_PORT": str(base + 3),
+        "RUNTIME_STARTUP_TIMEOUT_SECONDS": str(profile["startup_timeout"]),
+        "TORCHINDUCTOR_CACHE_DIR": "/home/runtime/.cache/torchinductor",
+        "TRITON_CACHE_DIR": "/home/runtime/.cache/triton",
+        "NOMAD_ALLOC_DIR": str(directory),
+        **profile.get("environment", {}),
     }
     model = reporter = None
     try:
-        lock_path = Path("/home/runtime/.cache/gradiated/gpu-locks") / config["gpu_uuid"]
-        lock_path.parent.mkdir(parents=True, exist_ok=True)
-        with lock_path.open("a") as gpu_lock:
+        with ExitStack() as stack:
             runtime_user = pwd.getpwnam("runtime")
-            os.chown(lock_path.parent, runtime_user.pw_uid, runtime_user.pw_gid)
-            os.chown(lock_path, runtime_user.pw_uid, runtime_user.pw_gid)
-            fcntl.flock(gpu_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            lock_directory = Path("/home/runtime/.cache/gradiated/gpu-locks")
+            lock_directory.mkdir(parents=True, exist_ok=True)
+            os.chown(lock_directory, runtime_user.pw_uid, runtime_user.pw_gid)
+            for device in sorted(devices):
+                lock_path = lock_directory / device
+                gpu_lock = stack.enter_context(lock_path.open("a"))
+                os.chown(lock_path, runtime_user.pw_uid, runtime_user.pw_gid)
+                fcntl.flock(gpu_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             active = subprocess.run(
-                ["nvidia-smi", f"--id={config['gpu_uuid']}", "--query-compute-apps=pid", "--format=csv,noheader"],
+                ["nvidia-smi", f"--id={','.join(devices)}", "--query-compute-apps=pid", "--format=csv,noheader"],
                 capture_output=True, text=True, check=True, timeout=10,
             ).stdout.strip()
             if active and active != "No running processes found":
@@ -125,12 +168,13 @@ def task(uid, stopping):
             atomic_json(directory / "runtime.json", {"runtime": owner(model)})
             reporting = {
                 "PATH": environment["PATH"], "DESMOND_DEPLOYMENT_ID": uid,
-                "DESMOND_RELEASE": config["release"]["runtime_revision"],
-                "DESMOND_MODEL": config["model_id"],
-                "DESMOND_MODEL_REVISION": config["release"]["model_revision"],
-                "DESMOND_RUNTIME_HOST": "127.0.0.1", "DESMOND_RUNTIME_PORT": "38080",
+                "DESMOND_RELEASE": profile["release"]["runtime_revision"],
+                "DESMOND_MODEL": profile["model_id"],
+                "DESMOND_MODEL_REVISION": profile["release"]["model_revision"],
+                "DESMOND_RUNTIME_HOST": "127.0.0.1",
+                "DESMOND_RUNTIME_PORT": str(base + 3 if profile.get("warmup") else base),
                 "DESMOND_INGRESS_PORT": "8889", "DESMOND_CONTROL_HOST": "127.0.0.1",
-                "DESMOND_CONTROL_PORT": "38081", "DESMOND_STATUS_HOST": "127.0.0.1",
+                "DESMOND_CONTROL_PORT": str(base + 1), "DESMOND_STATUS_HOST": "127.0.0.1",
                 "DESMOND_STATUS_PORT": "3004",
                 "DESMOND_CONTROL_TOKEN_FILE": "/etc/gradiated/runtime-access.token",
             }
@@ -167,18 +211,26 @@ class Agent:
     def proxy_config(self):
         proxy = self.root / "proxy"
         lines = [f"worker_processes 1; pid {proxy}/nginx.pid; error_log stderr warn;",
-                 "events { worker_connections 2048; }", "http { access_log off; client_max_body_size 1M;",
+                 "events { worker_connections 2048; }", "http { access_log off; client_max_body_size 32M;",
                  f"client_body_temp_path {proxy}/body; proxy_temp_path {proxy}/temp;",
                  "server { listen 127.0.0.1:8889;",
+                 'proxy_http_version 1.1; proxy_set_header Connection ""; proxy_set_header Authorization ""; proxy_buffering off; proxy_request_buffering off; proxy_read_timeout 330s;',
                  'location = /private-healthz { return 200 "ok\\n"; }',
                  'location = /healthz { return 200 "ok\\n"; }',
-                 "location = /_kubelet { proxy_pass http://127.0.0.1:8887; }",
-                 'location / { return 404 "unknown deployment\\n"; }']
+                 "location = /_kubelet { proxy_set_header Authorization $http_authorization; proxy_pass http://127.0.0.1:8887; }",
+                 'location / { return 404 "unknown deployment\\n"; }',
+                 'location ~ ^/alloc/[^/]+/v1/(load|unload)_lora_adapter$ { return 404; }']
         for state in self.states():
             uid = str(uuid.UUID(state["pod"]["metadata"]["uid"]))
+            port = state.get("port_base", 38080)
+            _, profile = runtime_profile(self.config, state["pod"])
             if state.get("draining"):
                 lines.append(f"location = /alloc/{uid}/health {{ return 503; }}")
-            lines.append(f"location /alloc/{uid}/ {{ proxy_pass http://127.0.0.1:38080/; "
+            elif profile.get("warmup"):
+                lines.append(f"location = /alloc/{uid}/health {{ proxy_pass http://127.0.0.1:{port + 3}/health; }}")
+            if profile.get("adapters"):
+                lines.append(f"location /alloc/{uid}/internal/adapters {{ proxy_pass http://127.0.0.1:{port + 2}/internal/adapters; }}")
+            lines.append(f"location /alloc/{uid}/ {{ proxy_pass http://127.0.0.1:{port}/; "
                          "proxy_http_version 1.1; proxy_set_header Connection \"\"; "
                          "proxy_set_header Authorization \"\"; proxy_buffering off; "
                          "proxy_request_buffering off; proxy_read_timeout 330s; }")
@@ -265,22 +317,39 @@ class Agent:
         if spec.get("nodeName") != f"gpu-{self.config['instance_id']}":
             raise ValueError("Pod is assigned to another host")
         containers = spec.get("containers", [])
-        if len(containers) != 1 or containers[0]["image"] != f"gradiated/kev-bundle@sha256:{self.config['bundle_sha256']}":
-            raise ValueError("Unsupported runtime release")
+        if len(containers) != 1:
+            raise ValueError("One pinned runtime container is required")
+        digest, profile = runtime_profile(self.config, pod)
         annotations = pod["metadata"].get("annotations", {})
-        if annotations.get("gradiated.com/model-id") != self.config["model_id"]:
+        if annotations.get("gradiated.com/model-id") != profile["model_id"]:
             raise ValueError("Unsupported model")
-        if json.loads(annotations.get("gradiated.com/release", "null")) != self.config["release"]:
+        if json.loads(annotations.get("gradiated.com/release", "null")) != profile["release"]:
             raise ValueError("Runtime metadata does not match the pinned release")
         container = containers[0]
         if any(container.get(key) for key in ["env", "envFrom", "command", "args", "volumeMounts"]):
             raise ValueError("Runtime execution overrides are unsupported")
-        limits = container.get("resources", {}).get("limits", {})
-        if limits.get("nvidia.com/gpu") not in (1, "1") or limits.get("cpu") != "16" or limits.get("memory") != "64Gi":
-            raise ValueError("Kev requires one GPU, 16 CPUs and 64 GiB limits")
+        resources = container.get("resources", {})
+        for kind in ["limits", "requests"]:
+            values = resources.get(kind, {})
+            memory = profile.get("request_memory", profile["memory"]) if kind == "requests" else profile["memory"]
+            if str(values.get("nvidia.com/gpu")) != str(profile["gpus"]) or values.get("cpu") != profile["cpu"] or values.get("memory") != memory:
+                raise ValueError("Runtime resource accounting does not match its profile")
         if spec.get("volumes") or spec.get("initContainers") or spec.get("hostNetwork") or spec.get("hostPID"):
             raise ValueError("Unsupported pod execution feature")
         return uid
+
+    def assignment(self, pod):
+        _, profile = runtime_profile(self.config, pod)
+        states = self.states()
+        occupied = {gpu for state in states for gpu in state.get("gpu_uuids", gpu_pool(self.config)[:runtime_profile(self.config, state["pod"])[1]["gpus"]])}
+        available = [gpu for gpu in gpu_pool(self.config) if gpu not in occupied]
+        if len(available) < profile["gpus"]:
+            raise ValueError("Required GPUs are owned by another deployment")
+        ports = {state.get("port_base", 38080) for state in states}
+        port = next((38080 + slot * 8 for slot in range(16) if 38080 + slot * 8 not in ports), None)
+        if port is None:
+            raise ValueError("No runtime port slot available")
+        return available[:profile["gpus"]], port
 
     def stop(self, directory, state):
         owned_signal(state.get("task"), signal.SIGTERM)
@@ -323,17 +392,21 @@ class Agent:
                 if self.validate(body["pod"]) != uid:
                     raise ValueError("Pod UID does not match the request")
                 if not path.exists():
-                    if self.states():
-                        raise ValueError("GPU is owned by another deployment")
+                    devices, port = self.assignment(body["pod"])
+                    _, profile = runtime_profile(self.config, body["pod"])
                     directory.mkdir(mode=0o755, exist_ok=True)
                     directory.chmod(0o755)
                     group = pod_cgroup(uid)
                     group.mkdir(exist_ok=True)
-                    (group / "cpu.max").write_text("1600000 100000")
-                    (group / "memory.max").write_text(str(64 * 1024 ** 3))
+                    (group / "cpu.max").write_text(f"{int(profile['cpu']) * 100000} 100000")
+                    (group / "memory.max").write_text(str(int(profile["memory"].removesuffix("Gi")) * 1024 ** 3))
                     (group / "memory.swap.max").write_text("0")
                     (group / "pids.max").write_text("8192")
-                    state = {"pod": body["pod"], "draining": False}
+                    lora = directory / "lora"
+                    lora.mkdir(exist_ok=True)
+                    account = pwd.getpwnam("runtime")
+                    os.chown(lora, account.pw_uid, account.pw_gid)
+                    state = {"pod": body["pod"], "draining": False, "gpu_uuids": devices, "port_base": port}
                     atomic_json(path, state)
                     with (directory / "task.log").open("ab") as output:
                         process = subprocess.Popen([sys.executable, __file__, "task", uid],
@@ -359,7 +432,7 @@ class Agent:
             state = json.loads(path.read_text())
             if operation == "status":
                 running = alive(state.get("task"))
-                ready = running and not state.get("draining") and health(38081, "/health/ready")
+                ready = running and not state.get("draining") and health(state.get("port_base", 38080) + 1, "/health/ready")
                 runtime_path = directory / "runtime.json"
                 details = json.loads(runtime_path.read_text()) if runtime_path.exists() else {}
                 return {"running": running, "ready": ready,
@@ -460,7 +533,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 2 and sys.argv[1] == "proxy":
         (CGROUP / "gradiated-proxy" / "cgroup.procs").write_text(str(os.getpid()))
         os.execv("/usr/bin/setpriv", ["setpriv", "--reuid=desmond", "--regid=desmond", "--init-groups",
-                 "--inh-caps=-all", "--ambient-caps=-all", "--no-new-privs", "--pdeathsig=TERM",
+                 "--inh-caps=-all", "--ambient-caps=-all", "--no-new-privs", "--pdeathsig=clear",
                  "nginx", "-c", str(ROOT / "nginx.conf"), "-g", "daemon off;"])
     elif len(sys.argv) == 3 and sys.argv[1] == "task":
         stopping = threading.Event()

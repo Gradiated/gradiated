@@ -40,6 +40,10 @@ type host struct {
 	InstanceID string `json:"instance_id"`
 	Endpoint   string `json:"endpoint"`
 	TokenFile  string `json:"token_file"`
+	GPUCount   int64  `json:"gpu_count"`
+	CPU        int64  `json:"cpu"`
+	MemoryGiB  int64  `json:"memory_gib"`
+	GPUProduct string `json:"gpu_product"`
 }
 type configuration struct {
 	Namespace string `json:"namespace"`
@@ -270,8 +274,20 @@ func (p *provider) NotifyNodeStatus(ctx context.Context, callback func(*v1.Node)
 
 func runHost(ctx context.Context, client kubernetes.Interface, namespace string, h host, epoch int32) error {
 	name := "gpu-" + h.InstanceID
-	resources := v1.ResourceList{v1.ResourceCPU: resource.MustParse("16"), v1.ResourceMemory: resource.MustParse("64Gi"), v1.ResourcePods: resource.MustParse("8"), "nvidia.com/gpu": resource.MustParse("1")}
-	spec := &v1.Node{ObjectMeta: metav1.ObjectMeta{Name: name, Labels: map[string]string{"type": "virtual-kubelet", "kubernetes.io/hostname": name, "gradiated.com/provider": "runpod", "gradiated.com/instance-id": h.InstanceID, "nvidia.com/gpu.product": "RTX-PRO-6000"}},
+	if h.GPUCount == 0 {
+		h.GPUCount = 1
+	}
+	if h.CPU == 0 {
+		h.CPU = 16
+	}
+	if h.MemoryGiB == 0 {
+		h.MemoryGiB = 64
+	}
+	if h.GPUProduct == "" {
+		h.GPUProduct = "RTX-PRO-6000"
+	}
+	resources := v1.ResourceList{v1.ResourceCPU: *resource.NewQuantity(h.CPU, resource.DecimalSI), v1.ResourceMemory: resource.MustParse(fmt.Sprintf("%dGi", h.MemoryGiB)), v1.ResourcePods: resource.MustParse("16"), "nvidia.com/gpu": *resource.NewQuantity(h.GPUCount, resource.DecimalSI)}
+	spec := &v1.Node{ObjectMeta: metav1.ObjectMeta{Name: name, Labels: map[string]string{"type": "virtual-kubelet", "kubernetes.io/hostname": name, "gradiated.com/provider": "runpod", "gradiated.com/instance-id": h.InstanceID, "nvidia.com/gpu.product": h.GPUProduct}},
 		Spec:   v1.NodeSpec{Taints: []v1.Taint{{Key: "gradiated.com/gpu", Value: "true", Effect: v1.TaintEffectNoSchedule}}},
 		Status: v1.NodeStatus{Capacity: resources, Allocatable: resources.DeepCopy(), NodeInfo: v1.NodeSystemInfo{OperatingSystem: "linux", Architecture: "amd64", KubeletVersion: "v1.33.5"}, Conditions: []v1.NodeCondition{{Type: v1.NodeReady, Status: v1.ConditionTrue, LastHeartbeatTime: metav1.Now(), LastTransitionTime: metav1.Now()}}}}
 	factory := informers.NewSharedInformerFactoryWithOptions(client, time.Minute, informers.WithNamespace(namespace), informers.WithTweakListOptions(func(o *metav1.ListOptions) {
@@ -335,6 +351,9 @@ func main() {
 		log.Fatal("invalid GPU namespace or empty host list")
 	}
 	for _, h := range config.Hosts {
+		if h.GPUCount < 0 || h.GPUCount > 8 || h.CPU < 0 || h.CPU > 512 || h.MemoryGiB < 0 || h.MemoryGiB > 4096 {
+			log.Fatal("invalid host resource capacity")
+		}
 		if h.Endpoint != "http://gpu-"+h.InstanceID+".tailscale-inference.svc.cluster.local:8888/_kubelet" {
 			log.Fatal("host endpoint must use its private inference Service")
 		}

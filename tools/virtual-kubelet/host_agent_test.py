@@ -20,13 +20,15 @@ class HostAgentTest(unittest.TestCase):
         (self.root / 'pods').mkdir()
         self.uid = str(uuid.uuid4())
         self.config = {'instance_id': str(uuid.uuid4()), 'bundle_sha256': 'a' * 64,
-                       'model_id': 'kev', 'release': {'runtime_revision': 'kev-a'}}
+                       'model_id': 'kev', 'release': {'runtime_revision': 'kev-a'},
+                       'gpu_uuid': 'GPU-test-0'}
         self.host = agent.Agent(self.config, self.root)
         self.pod = {'metadata': {'uid': self.uid, 'annotations': {
             'gradiated.com/model-id': 'kev', 'gradiated.com/release': json.dumps(self.config['release'])}},
             'spec': {'nodeName': 'gpu-' + self.config['instance_id'], 'containers': [{
                 'image': 'gradiated/kev-bundle@sha256:' + 'a' * 64,
-                'resources': {'limits': {'nvidia.com/gpu': '1', 'cpu': '16', 'memory': '64Gi'}}}]}}
+                'resources': {'limits': {'nvidia.com/gpu': '1', 'cpu': '16', 'memory': '64Gi'},
+                              'requests': {'nvidia.com/gpu': '1', 'cpu': '16', 'memory': '48Gi'}}}]}}
 
     def tearDown(self):
         self.directory.cleanup()
@@ -74,6 +76,35 @@ class HostAgentTest(unittest.TestCase):
         finally:
             process.terminate()
             process.wait()
+
+    def test_tensor_parallel_and_single_gpu_claims_do_not_overlap(self):
+        self.config['gpu_uuids'] = ['GPU-test-' + str(i) for i in range(4)]
+        self.config['runtimes'] = {
+            'a' * 64: {'image': self.pod['spec']['containers'][0]['image'], 'model_id': 'kev',
+                       'release': self.config['release'], 'gpus': 1, 'cpu': '16', 'memory': '64Gi',
+                       'request_memory': '48Gi', 'startup_timeout': 1800},
+            'b' * 64: {'image': 'gradiated/glm-bundle@sha256:' + 'b' * 64, 'model_id': 'glm',
+                       'release': {'runtime_revision': 'glm-b'}, 'gpus': 2, 'cpu': '32',
+                       'memory': '400Gi', 'startup_timeout': 3600},
+        }
+        pods = [json.loads(json.dumps(self.pod)) for _ in range(3)]
+        pods[0]['metadata']['annotations'] = {'gradiated.com/model-id': 'glm', 'gradiated.com/release': '{"runtime_revision":"glm-b"}'}
+        pods[0]['spec']['containers'][0] = {'image': self.config['runtimes']['b' * 64]['image'],
+            'resources': {kind: {'nvidia.com/gpu': '2', 'cpu': '32', 'memory': '400Gi'} for kind in ['limits', 'requests']}}
+        assignments = []
+        for pod in pods:
+            pod['metadata']['uid'] = str(uuid.uuid4())
+            self.host.validate(pod)
+            devices, port = self.host.assignment(pod)
+            directory = self.root / 'pods' / pod['metadata']['uid']
+            directory.mkdir()
+            agent.atomic_json(directory / 'state.json', {'pod': pod, 'gpu_uuids': devices, 'port_base': port})
+            assignments.append((devices, port))
+        self.assertEqual([len(devices) for devices, _ in assignments], [2, 1, 1])
+        self.assertEqual(len({device for devices, _ in assignments for device in devices}), 4)
+        self.assertEqual(len({port for _, port in assignments}), 3)
+        with self.assertRaises(ValueError):
+            self.host.assignment(self.pod)
 
     def test_failed_task_cleanup_stops_orphan_and_preserves_unrelated_process(self):
         owned = subprocess.Popen(['sleep', '120'], start_new_session=True)

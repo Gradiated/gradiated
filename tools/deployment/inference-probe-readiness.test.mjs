@@ -1,12 +1,8 @@
-import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   checkInferenceProbeReadiness,
-  readWorker,
+  readInferenceProbeObservations,
 } from "./inference-probe-readiness.mjs";
 
 const observation = (success = 99, inventory = 99, id = "replica-a") => ({
@@ -50,38 +46,78 @@ test("a standby or stale previous leader does not hide a healthy new leader", ()
   );
 });
 
-test("the diagnostic loads control from the deployed product filesystem and reads real metrics", () => {
-  const cwd = mkdtempSync(join(tmpdir(), "inference-probe-reader-"));
-  try {
-    mkdirSync(join(cwd, "packages/control/dist"), { recursive: true });
-    writeFileSync(
-      join(cwd, "package.json"),
-      JSON.stringify({ type: "module" }),
+const pods = ["worker-a", "worker-b"].map((name) => ({ metadata: { name } }));
+
+test("reads inventory once and every worker's metrics through the Kubernetes API", async () => {
+  const paths = [];
+  const expected = observation();
+  const observations = await readInferenceProbeObservations(
+    pods,
+    async (path) => {
+      paths.push(path);
+      return path.endsWith("/metrics/targets/inference")
+        ? JSON.stringify(expected.deployments)
+        : path.includes("worker-a")
+          ? observation(0, 0).metrics
+          : expected.metrics;
+    },
+  );
+
+  assert.deepEqual(paths, [
+    "/api/v1/namespaces/gradiated/pods/http:worker-a:9464/proxy/metrics/targets/inference",
+    "/api/v1/namespaces/gradiated/pods/http:worker-a:9464/proxy/metrics",
+    "/api/v1/namespaces/gradiated/pods/http:worker-b:9464/proxy/metrics",
+  ]);
+  assert.equal(checkInferenceProbeReadiness(observations, 100).size, 1);
+});
+
+test("inventory includes deployments that have no probe metrics yet", async () => {
+  const observations = await readInferenceProbeObservations(
+    pods,
+    async (path) =>
+      path.endsWith("/metrics/targets/inference")
+        ? JSON.stringify([
+            ...observation().deployments,
+            { id: "replica-missing", modelId: "test/new-model" },
+          ])
+        : observation().metrics,
+  );
+
+  assert.throws(
+    () => checkInferenceProbeReadiness(observations, 100),
+    /replica-missing/,
+  );
+});
+
+test("fails closed on unavailable inventory or worker metrics", async () => {
+  await assert.rejects(
+    readInferenceProbeObservations([], async () => ""),
+    /No ready workers/,
+  );
+  await assert.rejects(
+    readInferenceProbeObservations(pods, async () => {
+      throw new Error("inventory unavailable");
+    }),
+    /inventory unavailable/,
+  );
+  await assert.rejects(
+    readInferenceProbeObservations(pods, async (path) => {
+      if (path.endsWith("/metrics/targets/inference"))
+        return JSON.stringify(observation().deployments);
+
+      throw new Error("metrics unavailable");
+    }),
+    /metrics unavailable/,
+  );
+});
+
+test("rejects malformed inventory", async () => {
+  for (const inventory of [{}, [null], [{ id: "replica-a" }]]) {
+    await assert.rejects(
+      readInferenceProbeObservations(pods, async () =>
+        JSON.stringify(inventory),
+      ),
+      /Invalid serving inference inventory/,
     );
-    writeFileSync(
-      join(cwd, "packages/control/dist/index.js"),
-      `
-      export const createControlDatabase = () => ({ database: {}, pool: { end: async () => {} } });
-      export const createNomadDeploymentStore = () => ({ replicas: async () => [{ id: "replica-a", modelId: "test/model" }] });
-    `,
-    );
-    const output = execFileSync(
-      process.execPath,
-      [
-        "--input-type=module",
-        "-e",
-        `
-      globalThis.fetch = async () => new Response("synthetic-metrics");
-      ${readWorker}
-    `,
-      ],
-      { cwd, encoding: "utf8", timeout: 5000 },
-    );
-    assert.deepEqual(JSON.parse(output), {
-      deployments: [{ id: "replica-a", modelId: "test/model" }],
-      metrics: "synthetic-metrics",
-    });
-  } finally {
-    rmSync(cwd, { recursive: true, force: true });
   }
 });

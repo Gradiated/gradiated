@@ -51,6 +51,10 @@ const metricsServer = startWorkerMetricsServer(
     loraMetricsTargets(
       await createNomadDeploymentStore(database).adapterMetricsTargets(),
     ),
+  async () =>
+    (await createNomadDeploymentStore(database).replicas()).map(
+      ({ id, modelId }) => ({ id, modelId }),
+    ),
 );
 
 metricsServer.once("error", (error) => {

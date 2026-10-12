@@ -1,0 +1,13 @@
+When making engineering changes, we prioritize the following things in order.
+
+## 1. Reliability
+
+If inference is not reliable for our customers, we've failed to do the core thing we've promised them. Before anything else, we should make sure our inference is reliable.
+
+If that means taking things a bit slower to do it the right way, that's what we should do.
+
+## 2. Optimized
+
+Once we've prioritized making our inference reliable, we should optimize aggressively. This means cutting any waste we can.
+
+Given the choice between using something off the shelf or building something custom, we should consider whether it's on the hot path. If it isn't, make it as simple as possible. If it is, and optimizing it would move the needle, accept complexity to get a more optimized solution.

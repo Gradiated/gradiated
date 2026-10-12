@@ -3,6 +3,7 @@ import BrandContent from "./method/brand.mdx";
 import GoToMarketContent from "./method/getting-out-the-gate.mdx";
 import InPersonContent from "./method/in-person.mdx";
 import MissionContent from "./method/mission.mdx";
+import PrioritiesContent from "./method/priorities.mdx";
 import ProductContent from "./method/product.mdx";
 import SequencingContent from "./method/sequencing-and-depth.mdx";
 import ValuesContent from "./method/values.mdx";
@@ -12,6 +13,7 @@ export type MethodSlug =
   | "mission"
   | "product"
   | "sequencing-and-depth"
+  | "priorities"
   | "in-person"
   | "what-we-look-for"
   | "getting-out-the-gate"
@@ -55,6 +57,15 @@ export const methodPages: MethodPageDefinition[] = [
     description: "How Gradiated sequences product development and goes deep.",
     indexDescription: "Start in software. Go down the stack.",
     Content: SequencingContent,
+  },
+  {
+    slug: "priorities",
+    section: "Engineering",
+    title: "Priorities",
+    pageTitle: "Priorities",
+    description: "How Gradiated prioritizes engineering changes.",
+    indexDescription: "Reliable inference first. Then optimize aggressively.",
+    Content: PrioritiesContent,
   },
   {
     slug: "in-person",

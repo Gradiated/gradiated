@@ -45,17 +45,33 @@ export const checkInferenceProbeReadiness = (
   return result;
 };
 
-export const readWorker = `
-import { createControlDatabase, createNomadDeploymentStore } from './packages/control/dist/index.js';
-const { database, pool } = createControlDatabase(process.env.DATABASE_URL, 1);
-try {
-  const deployments = (await createNomadDeploymentStore(database).replicas())
-    .map(({ id, modelId }) => ({ id, modelId }));
-  const response = await fetch('http://127.0.0.1:9464/metrics', { signal: AbortSignal.timeout(4000) });
-  if (!response.ok) throw new Error('Worker metrics unavailable');
-  console.log(JSON.stringify({ deployments, metrics: await response.text() }));
-} finally { await pool.end(); }
-`;
+export const readInferenceProbeObservations = async (pods, read) => {
+  if (!pods.length) throw new Error("No ready workers discovered");
+
+  const path = (pod, endpoint) =>
+    `/api/v1/namespaces/gradiated/pods/http:${encodeURIComponent(pod.metadata.name)}:9464/proxy${endpoint}`;
+  const deployments = JSON.parse(
+    await read(path(pods[0], "/metrics/targets/inference")),
+  );
+  if (
+    !Array.isArray(deployments) ||
+    deployments.some(
+      (deployment) =>
+        typeof deployment?.id !== "string" ||
+        !deployment.id ||
+        typeof deployment.modelId !== "string" ||
+        !deployment.modelId,
+    )
+  )
+    throw new Error("Invalid serving inference inventory");
+
+  return Promise.all(
+    pods.map(async (pod) => ({
+      deployments,
+      metrics: await read(path(pod, "/metrics")),
+    })),
+  );
+};
 
 if (
   process.argv[1] &&
@@ -93,31 +109,19 @@ if (
             (container) => container.name === "worker" && container.ready,
           ),
       );
-      const observations = await Promise.all(
-        readyPods.map(async (pod) => {
+      const observations = await readInferenceProbeObservations(
+        readyPods,
+        async (path) => {
           const { stdout } = await execute(
             "kubectl",
-            [
-              "--request-timeout=20s",
-              "-n",
-              "gradiated",
-              "exec",
-              pod.metadata.name,
-              "-c",
-              "worker",
-              "--",
-              "node",
-              "--input-type=module",
-              "-e",
-              readWorker,
-            ],
+            ["--request-timeout=20s", "-n", "gradiated", "get", "--raw", path],
             {
               encoding: "utf8",
               timeout: Math.max(1, Math.min(25_000, deadline - Date.now())),
             },
           );
-          return JSON.parse(stdout);
-        }),
+          return stdout;
+        },
       );
       const current = checkInferenceProbeReadiness(observations);
       const advancing =

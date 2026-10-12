@@ -234,8 +234,17 @@ describe("worker metrics server", () => {
   const listen = async (
     metrics: WorkerMetrics,
     targets?: () => Promise<unknown>,
+    inferenceTargets?: () => Promise<
+      readonly { id: string; modelId: string }[]
+    >,
   ): Promise<string> => {
-    const started = startWorkerMetricsServer(metrics, "127.0.0.1", 0, targets);
+    const started = startWorkerMetricsServer(
+      metrics,
+      "127.0.0.1",
+      0,
+      targets,
+      inferenceTargets,
+    );
     server = started;
     await new Promise((resolve) => started.once("listening", resolve));
 
@@ -265,22 +274,46 @@ describe("worker metrics server", () => {
     expect((await fetch(`${origin}/metrics`)).status).toBe(200);
   });
 
-  it("serves the registry on GET /metrics", async () => {
-    const metrics = createMetrics();
-    const origin = await listen(metrics);
+  it.each(["/metrics", "/metrics?timeout=20s"])(
+    "serves the registry on GET %s",
+    async (path) => {
+      const metrics = createMetrics();
+      const origin = await listen(metrics);
 
-    const response = await fetch(`${origin}/metrics`);
+      const response = await fetch(`${origin}${path}`);
 
-    expect(response.status).toBe(200);
-    expect(response.headers.get("content-type")).toBe(
-      metrics.registry.contentType,
+      expect(response.status).toBe(200);
+      expect(response.headers.get("content-type")).toBe(
+        metrics.registry.contentType,
+      );
+      expect(await response.text()).toContain("gradiated_worker_service_info");
+    },
+  );
+
+  it("serves authoritative inference inventory and fails closed on discovery errors", async () => {
+    const deployments = [{ id: "test-deployment", modelId: "test/model" }];
+    const inventory = vi
+      .fn()
+      .mockResolvedValueOnce(deployments)
+      .mockRejectedValueOnce(new Error("private database connection details"));
+    const origin = await listen(createMetrics(), undefined, inventory);
+
+    const success = await fetch(
+      `${origin}/metrics/targets/inference?timeout=20s`,
     );
-    expect(await response.text()).toContain("gradiated_worker_service_info");
+    expect(success.status).toBe(200);
+    expect(await success.json()).toEqual(deployments);
+    const failed = await fetch(`${origin}/metrics/targets/inference`);
+    expect(failed.status).toBe(503);
+    expect(await failed.text()).toBe("");
+    expect((await fetch(`${origin}/metrics`)).status).toBe(200);
   });
 
   it.each([
     ["POST", "/metrics"],
     ["GET", "/other"],
+    ["GET", "/metrics/targets/inference"],
+    ["POST", "/metrics/targets/inference"],
   ])("answers %s %s with 404", async (method, path) => {
     const origin = await listen(createMetrics());
 

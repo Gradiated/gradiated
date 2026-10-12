@@ -102,7 +102,9 @@ describe("instances", () => {
     const model = await createCatalogService(testDatabase.database).upsertModel(
       modelInput(),
     );
-    const allocation = deploymentInput(model.id);
+    const allocation = deploymentInput(model.id, {
+      id: "c26d9847-9ff1-fcbe-baa1-676ebbe2fd46",
+    });
     await testDatabase.database
       .insert(modelDeployments)
       .values({ ...allocation, instanceId: host.id });

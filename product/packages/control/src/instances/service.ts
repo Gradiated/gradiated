@@ -2,6 +2,7 @@ import { and, eq, isNotNull, isNull, sql, getTableColumns } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
 
+import { ModelDeploymentRecordSchema } from "../catalog/records.js";
 import { NOMAD_RECONCILE_LOCK } from "../deployments/nomad.js";
 import type { ControlDatabase } from "../db/client.js";
 import { instances } from "../db/schema/instances.js";
@@ -103,7 +104,10 @@ export const createInstanceService = (
         );
 
       const allocationIds = expected
-        ? z.array(z.uuid()).parse(expected.allocationIds).sort()
+        ? z
+            .array(ModelDeploymentRecordSchema.shape.id)
+            .parse(expected.allocationIds)
+            .sort()
         : undefined;
       const [record] = await tx
         .update(instances)
@@ -165,7 +169,9 @@ export const createInstanceService = (
 
     return {
       host: instanceRecordSchema.parse(row),
-      allocationIds: z.array(z.uuid()).parse(rows.map((row) => row.id)),
+      allocationIds: z
+        .array(ModelDeploymentRecordSchema.shape.id)
+        .parse(rows.map((row) => row.id)),
     };
   },
 

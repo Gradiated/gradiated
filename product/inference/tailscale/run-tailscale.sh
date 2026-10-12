@@ -3,7 +3,9 @@ set -euo pipefail
 root=/var/lib/gradiated-tailscale
 bin=/opt/gradiated/tailscale
 hostname=$(python3 -c 'import json; print(json.load(open("/etc/gradiated/tailscale.json"))["hostname"])')
+proxy_port=$(python3 -c 'import json; print(json.load(open("/etc/gradiated/tailscale.json")).get("proxy_port", 8888))')
 [[ "$hostname" =~ ^gpu-[0-9a-f-]{36}$ ]] || exit 64
+[[ "$proxy_port" == 8888 || "$proxy_port" == 8889 ]] || exit 64
 umask 077
 child=''
 trap 'if [[ -n "$child" ]]; then kill -TERM "$child" 2>/dev/null || true; wait "$child" 2>/dev/null || true; fi; exit 0' TERM INT
@@ -22,7 +24,7 @@ while true; do
     [[ ! -f "$root/auth-key" ]] || args+=(--auth-key="file:$root/auth-key")
     if "$bin/tailscale" --socket="$root/socket" up "${args[@]}"; then
       rm -f "$root/auth-key"
-      if "$bin/tailscale" --socket="$root/socket" serve --bg --tcp=8888 tcp://127.0.0.1:8888; then
+      if "$bin/tailscale" --socket="$root/socket" serve --bg --tcp=8888 "tcp://127.0.0.1:$proxy_port"; then
         wait "$child" || true
       fi
     fi

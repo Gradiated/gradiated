@@ -43,8 +43,16 @@ def install(payload):
         raise ValueError("Registered host identity mismatch")
     hostname = "gpu-" + instance
     config = Path("/etc/gradiated/tailscale.json")
-    if config.exists() and json.loads(config.read_text())["hostname"] != hostname:
+    existing = json.loads(config.read_text()) if config.exists() else {}
+    if existing and existing["hostname"] != hostname:
         raise ValueError("Existing Tailscale identity mismatch")
+    proxy_port = payload.get("proxy_port", existing.get("proxy_port", 8888))
+    if proxy_port not in (8888, 8889):
+        raise ValueError("Unexpected inference proxy port")
+    if proxy_port == 8889:
+        with urllib.request.urlopen("http://127.0.0.1:8889/healthz", timeout=5) as r:
+            if r.status != 200:
+                raise ValueError("Private host proxy is not ready")
     try:
         account = pwd.getpwnam("tailscale")
     except KeyError:
@@ -94,7 +102,12 @@ def install(payload):
             os.fchown(output.fileno(), uid, gid)
             output.write(content)
 
-    private_write(config, json.dumps({"hostname": hostname, "instance_id": instance}))
+    private_write(
+        config,
+        json.dumps(
+            {"hostname": hostname, "instance_id": instance, "proxy_port": proxy_port}
+        ),
+    )
     for name in ("run-tailscale", "start-tailscale"):
         target = Path("/opt/gradiated/bin") / name
         private_write(target, payload["scripts"][name], 0, 0)
@@ -136,6 +149,19 @@ def install(payload):
                 ips = data.get("TailscaleIPs", [])
                 ip = next((value for value in ips if "." in value), None)
                 if ip:
+                    subprocess.run(
+                        [
+                            str(destination / "tailscale"),
+                            "--socket=" + str(root / "socket"),
+                            "serve",
+                            "--bg",
+                            "--tcp=8888",
+                            f"tcp://127.0.0.1:{proxy_port}",
+                        ],
+                        check=True,
+                        capture_output=True,
+                        timeout=10,
+                    )
                     print(
                         json.dumps(
                             {

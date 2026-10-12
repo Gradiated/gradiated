@@ -2,10 +2,14 @@
 """Enroll a registered GPU host without changing provider settings or model processes."""
 
 import argparse
+import base64
 import ipaddress
 import json
+import os
+import selectors
 import shlex
 import subprocess
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -14,6 +18,66 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 HOST = ROOT / "product/inference/tailscale"
+
+
+def gateway_install(command, script, payload):
+    # RunPod's SSH gateway requires a shell and ignores exec requests.
+    with subprocess.Popen(
+        command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+    ) as process:
+        marker = ("enrollment-ready-" + uuid.uuid4().hex).encode()
+        process.stdin.write(
+            b"unset HISTFILE; set +o history; PS1=; PS2=; stty -echo; printf '\\n"
+            + marker
+            + b"\\n'\n"
+        )
+        process.stdin.flush()
+        deadline = time.monotonic() + 30
+        output = b""
+        with selectors.DefaultSelector() as selector:
+            selector.register(process.stdout, selectors.EVENT_READ)
+            while marker + b"\r\n" not in output:
+                if time.monotonic() >= deadline or process.poll() is not None:
+                    process.kill()
+                    raise RuntimeError("Pinned SSH gateway shell did not become ready")
+                if selector.select(timeout=1):
+                    chunk = os.read(process.stdout.fileno(), 4096)
+                    if not chunk:
+                        raise RuntimeError(
+                            "Pinned SSH gateway closed before enrollment"
+                        )
+                    output += chunk
+
+        envelope = base64.encodebytes(
+            json.dumps({"installer": script, "payload": payload}).encode()
+        ).decode()
+        wrapper = (
+            "import base64,json,os,sys; "
+            "d=json.loads(base64.b64decode(sys.stdin.read())); "
+            "n={'__name__':'enrollment'}; exec(d['installer'],n); "
+            "os.umask(0o077); print(); n['install'](d['payload'])"
+        )
+        shell = (
+            "python3 -c "
+            + shlex.quote(wrapper)
+            + " <<'ENROLLMENT_PAYLOAD'\n"
+            + envelope
+            + "ENROLLMENT_PAYLOAD\nexit\n"
+        )
+        try:
+            output, _ = process.communicate(shell.encode(), timeout=180)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.communicate()
+            raise RuntimeError("Pinned SSH gateway installation timed out") from None
+
+        for line in output.decode(errors="replace").splitlines():
+            if line.startswith('{"instance_id":'):
+                return json.loads(line)
+
+        raise RuntimeError(
+            "Pinned SSH gateway installation failed; remote output withheld"
+        )
 
 
 def request(url, body, token=None):
@@ -58,6 +122,9 @@ def main():
     parser.add_argument("--port", required=True, type=int)
     parser.add_argument("--key", required=True)
     parser.add_argument("--known-hosts", required=True)
+    parser.add_argument("--ssh-user", default="root")
+    parser.add_argument("--gateway", action="store_true")
+    parser.add_argument("--proxy-port", type=int, choices=(8888, 8889))
     parser.add_argument("--auth-key-file")
     parser.add_argument("--profile", default="gradiated-admin")
     parser.add_argument("--manifest", required=True)
@@ -133,35 +200,44 @@ def main():
             "start-tailscale": (HOST / "start-tailscale.sh").read_text(),
         },
     }
+    if args.proxy_port is not None:
+        payload["proxy_port"] = args.proxy_port
     script = (HOST / "install-tailscale.py").read_text()
     try:
-        result = subprocess.run(
-            [
-                "ssh",
-                "-i",
-                args.key,
-                "-o",
-                "BatchMode=yes",
-                "-o",
-                "StrictHostKeyChecking=yes",
-                "-o",
-                "UserKnownHostsFile=" + args.known_hosts,
-                "-o",
-                "ConnectTimeout=10",
-                "-p",
-                str(args.port),
-                "root@" + args.host,
-                "python3 -c " + shlex.quote(script),
-            ],
-            input=json.dumps(payload),
-            capture_output=True,
-            text=True,
-            timeout=180,
-            check=False,
-        )
-        if result.returncode:
-            raise RuntimeError("Pinned SSH installation failed; remote output withheld")
-        metadata = json.loads(result.stdout)
+        command = [
+            "ssh",
+            "-i",
+            args.key,
+            "-o",
+            "BatchMode=yes",
+            "-o",
+            "StrictHostKeyChecking=yes",
+            "-o",
+            "UserKnownHostsFile=" + args.known_hosts,
+            "-o",
+            "ConnectTimeout=10",
+            "-p",
+            str(args.port),
+            args.ssh_user + "@" + args.host,
+        ]
+        if args.gateway:
+            metadata = gateway_install(
+                [*command[:1], "-tt", *command[1:]], script, payload
+            )
+        else:
+            result = subprocess.run(
+                [*command, "python3 -c " + shlex.quote(script)],
+                input=json.dumps(payload),
+                capture_output=True,
+                text=True,
+                timeout=180,
+                check=False,
+            )
+            if result.returncode:
+                raise RuntimeError(
+                    "Pinned SSH installation failed; remote output withheld"
+                )
+            metadata = json.loads(result.stdout)
         if metadata["instance_id"] != instance:
             raise ValueError("Installed identity mismatch")
         manifest = egress_service(instance, metadata["tailscale_ip"])

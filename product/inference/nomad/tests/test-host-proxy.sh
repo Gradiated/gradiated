@@ -29,6 +29,7 @@ docker run -d --privileged --cgroupns=host --name "$container" -e TEST_MEMORY="$
 acl { enabled = true }
 client {
   memory_total_mb = $TEST_MEMORY
+  host_network "loopback" { cidr = "127.0.0.0/8" }
   meta { serving_ingress = "host-proxy" }
   options { "fingerprint.denylist" = "env_aws,env_azure,env_digitalocean,env_gce" }
 }
@@ -131,16 +132,19 @@ job "fake-runtime" {
 }
 EOF
 proxy_args=()
+proxy_name=host-proxy
+proxy_port=8888
 proxy_job=/jobs/host-proxy.nomad.hcl
 if [[ ${1:-} == --private-ingress ]]; then
-  proxy_job=/staged/host-proxy.nomad.hcl
-  node=$(in_container nomad node status -json | jq -r '.[0].ID')
-  proxy_args=(-var "private_ingress_nodes=[\"$node\"]")
+  in_container nomad job run -detach /jobs/host-proxy.nomad.hcl >/dev/null
+  proxy_job=/jobs/host-proxy-private.nomad.hcl
+  proxy_name=host-proxy-private
+  proxy_port=8889
 fi
 in_container nomad job run -detach "${proxy_args[@]}" "$proxy_job" >/dev/null
 in_container nomad job run /tmp/fake-runtime.nomad.hcl >/dev/null
 
-request() { in_container curl -s --max-time 3 -o /dev/stdout -w ' %{http_code}' ${2:+-H "Authorization: Bearer $2"} "http://127.0.0.1:8888$1"; }
+request() { in_container curl -s --max-time 3 -o /dev/stdout -w ' %{http_code}' ${2:+-H "Authorization: Bearer $2"} "http://127.0.0.1:$proxy_port$1"; }
 read -ra allocs <<<"$(in_container nomad job allocs -json fake-runtime | grep -o '"ID": *"[0-9a-f-]\{36\}"' | grep -o '[0-9a-f-]\{36\}' | tr '\n' ' ')"
 [[ ${#allocs[@]} == 2 ]] || { echo "expected two runtime allocations, got ${#allocs[@]}" >&2; exit 1; }
 
@@ -161,9 +165,9 @@ done
 fail() {
   echo "$1" >&2
   in_container nomad job allocs fake-runtime >&2 || true
-  proxy_alloc=$(in_container nomad job allocs -json host-proxy | grep -o '"ID": *"[0-9a-f-]\{36\}"' | grep -o '[0-9a-f-]\{36\}' | head -1)
+  proxy_alloc=$(in_container nomad job allocs -json "$proxy_name" | grep -o '"ID": *"[0-9a-f-]\{36\}"' | grep -o '[0-9a-f-]\{36\}' | head -1)
   in_container nomad alloc status "$proxy_alloc" >&2 || true
-  in_container nomad job inspect -json host-proxy | jq '.TaskGroups[].Tasks[].Env.GRADIATED_PRIVATE_INGRESS_NODES' >&2 || true
+  in_container nomad job inspect -json "$proxy_name" | jq '.TaskGroups[].Tasks[].Env.GRADIATED_PRIVATE_INGRESS_NODES' >&2 || true
   in_container nomad alloc fs "$proxy_alloc" nginx/local/nginx.conf | grep 'listen ' >&2 || true
   in_container nomad alloc logs -stderr "$proxy_alloc" >&2 || true
   exit 1
@@ -184,7 +188,7 @@ done
 [[ $(request "/alloc/00000000-0000-4000-8000-000000000000/v1/models" "$token") == *" 404" ]] || fail "an unknown allocation was not rejected"
 if [[ ${1:-} == --private-ingress ]]; then
   public_address=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$container")
-  status=$(in_container curl --noproxy '*' -s --max-time 3 -o /dev/null -w '%{http_code}' "http://$public_address:8888/healthz" || true)
+  status=$(in_container curl --noproxy '*' -s --max-time 3 -o /dev/null -w '%{http_code}' "http://$public_address:$proxy_port/healthz" || true)
   [[ "$status" == 000 ]] || fail "private host proxy returned $status on its non-loopback interface"
   echo 'Private host proxy rejects non-loopback access while allocation routes remain healthy'
 fi
@@ -244,7 +248,7 @@ if [[ ${1:-} == --rolling-slots ]]; then
 fi
 
 if [[ ${1:-} == --recovery ]]; then
-  proxy_alloc=$(in_container nomad job allocs -json host-proxy | jq -r '.[] | select(.ClientStatus == "running") | .ID')
+  proxy_alloc=$(in_container nomad job allocs -json "$proxy_name" | jq -r '.[] | select(.ClientStatus == "running") | .ID')
   for fault in crash hang crash crash crash; do
     restarts_before=$(in_container nomad alloc status -json "$proxy_alloc" | jq '.TaskStates.nginx.Restarts')
     if [[ $fault == crash ]]; then

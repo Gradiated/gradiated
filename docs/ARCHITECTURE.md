@@ -569,7 +569,9 @@ initial demand targets are operating defaults, not measured throughput limits;
 production burst/recovery calibration remains an operational follow-up.
 
 KEDA manages API, worker and gateway replica counts using application demand plus
-CPU and memory triggers. Argo owns the ScaledObjects; the generated HPAs own live
+CPU and memory triggers. The worker requests 256 MiB with an 80% memory target,
+above its observed idle working set, and retains a 512 MiB limit.
+Argo owns the ScaledObjects; the generated HPAs own live
 replica counts. Cluster Autoscaler adjusts the managed CPU node group between
 3 and 20 nodes; Terraform owns those bounds and the initial count, while the
 autoscaler owns subsequent desired capacity. Each service scales from 3 to 20

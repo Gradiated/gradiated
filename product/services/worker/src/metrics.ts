@@ -295,11 +295,37 @@ export const startWorkerMetricsServer = (
   hostname: string,
   port: number,
   targets?: () => Promise<unknown>,
+  inferenceTargets?: () => Promise<readonly { id: string; modelId: string }[]>,
 ): Server => {
   const server = createServer((request, response) => {
+    const pathname = request.url?.split("?", 1)[0];
+
     if (
       request.method === "GET" &&
-      request.url === "/metrics/targets/lora" &&
+      pathname === "/metrics/targets/inference" &&
+      inferenceTargets
+    ) {
+      void inferenceTargets().then(
+        (deployments) => {
+          const body = JSON.stringify(deployments);
+          response
+            .writeHead(200, {
+              "Content-Type": "application/json",
+              "Content-Length": Buffer.byteLength(body),
+            })
+            .end(body);
+        },
+        (error: unknown) => {
+          serviceLog("error", "inference_probe_discovery_failed", { error });
+          response.writeHead(503).end();
+        },
+      );
+      return;
+    }
+
+    if (
+      request.method === "GET" &&
+      pathname === "/metrics/targets/lora" &&
       targets
     ) {
       void targets().then(
@@ -320,7 +346,7 @@ export const startWorkerMetricsServer = (
       return;
     }
 
-    if (request.method !== "GET" || request.url !== "/metrics") {
+    if (request.method !== "GET" || pathname !== "/metrics") {
       response.writeHead(404).end();
       return;
     }

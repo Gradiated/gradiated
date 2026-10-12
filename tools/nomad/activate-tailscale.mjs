@@ -99,7 +99,7 @@ export const qualificationJob = (
     kind: "Job",
     metadata: {
       name: `private-serving-${instanceId.slice(0, 8)}-${randomUUID().slice(0, 8)}`,
-      namespace: "observability",
+      namespace: "gradiated",
     },
     spec: {
       backoffLimit: 0,
@@ -132,15 +132,15 @@ export const qualificationJob = (
                 {
                   name: "DATABASE_URL",
                   valueFrom: {
-                    secretKeyRef: { name: "ops-mcp", key: "database-url" },
+                    secretKeyRef: { name: "worker", key: "DATABASE_URL" },
                   },
                 },
                 {
                   name: "SGLANG_API_KEY",
                   valueFrom: {
                     secretKeyRef: {
-                      name: "ops-mcp",
-                      key: "runtime-access-token",
+                      name: "gateway",
+                      key: "SGLANG_API_KEY",
                     },
                   },
                 },

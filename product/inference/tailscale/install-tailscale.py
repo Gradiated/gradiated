@@ -4,6 +4,7 @@ import io
 import json
 import os
 import pwd
+import re
 import shutil
 import subprocess
 import sys
@@ -11,16 +12,34 @@ import tarfile
 import tempfile
 import time
 import urllib.request
+import uuid
 from pathlib import Path
 
 VERSION = "1.104.1"
 SHA256 = "108d1d96ecf410d305571e173516f27038f870919a9b89c914a167c6d33a4528"
 
 
+def registered_instance_id(
+    identity_path=Path("/etc/gradiated/host-identity.json"),
+    node_config=Path("/etc/nomad/node.hcl"),
+):
+    if identity_path.exists():
+        return str(uuid.UUID(json.loads(identity_path.read_text())["instance_id"]))
+
+    matches = re.findall(
+        r'^\s*gradiated_instance_id\s*=\s*"([^"\n]+)"\s*$',
+        node_config.read_text(),
+        re.MULTILINE,
+    )
+    if len(matches) != 1:
+        raise ValueError("Registered host identity missing or ambiguous")
+
+    return str(uuid.UUID(matches[0]))
+
+
 def install(payload):
-    instance = payload["instance_id"]
-    identity = json.loads(Path("/etc/gradiated/host-identity.json").read_text())
-    if identity["instance_id"] != instance:
+    instance = str(uuid.UUID(payload["instance_id"]))
+    if registered_instance_id() != instance:
         raise ValueError("Registered host identity mismatch")
     hostname = "gpu-" + instance
     config = Path("/etc/gradiated/tailscale.json")
@@ -44,7 +63,7 @@ def install(payload):
         account = pwd.getpwnam("tailscale")
     if account.pw_uid != 10005:
         raise ValueError("Unexpected Tailscale account")
-    root = Path("/var/lib/gradiated/tailscale")
+    root = Path("/var/lib/gradiated-tailscale")
     root.mkdir(parents=True, exist_ok=True)
     os.chown(root, account.pw_uid, account.pw_gid)
     root.chmod(0o700)
@@ -56,6 +75,7 @@ def install(payload):
         raise ValueError("Tailscale archive checksum mismatch")
     destination = Path("/opt/gradiated/tailscale")
     destination.mkdir(parents=True, exist_ok=True)
+    destination.chmod(0o755)
     with tempfile.TemporaryDirectory() as stage:
         with tarfile.open(fileobj=io.BytesIO(archive)) as bundle:
             bundle.extractall(stage, filter="data")

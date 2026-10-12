@@ -10,7 +10,7 @@ FROM busybox:1.37.0-musl@sha256:5cec3fc171c87218698e85a52af7087de727372aae264a78
 FROM python@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea
 COPY --from=busybox /bin/busybox /usr/local/bin/pgrep
 RUN useradd --uid 10005 --create-home tailscale && useradd --uid 10001 runtime \
-    && install -d -m 700 -o tailscale -g tailscale /var/lib/gradiated/tailscale \
+    && install -d -m 700 -o tailscale -g tailscale /var/lib/gradiated-tailscale \
     && mkdir -p /etc/gradiated /opt/gradiated/bin /opt/gradiated/tailscale
 DOCKER
 docker run -d --name "$container" --cpus=1 --memory=512m \
@@ -22,24 +22,24 @@ set -euo pipefail
 cat >/etc/gradiated/tailscale.json <<'CONFIG'
 {"hostname":"gpu-00000000-0000-4000-8000-000000000001"}
 CONFIG
-printf 'tskey-auth-synthetic\n' >/var/lib/gradiated/tailscale/auth-key
-chown tailscale:tailscale /etc/gradiated/tailscale.json /var/lib/gradiated/tailscale/auth-key
-chmod 600 /etc/gradiated/tailscale.json /var/lib/gradiated/tailscale/auth-key
+printf 'tskey-auth-synthetic\n' >/var/lib/gradiated-tailscale/auth-key
+chown tailscale:tailscale /etc/gradiated/tailscale.json /var/lib/gradiated-tailscale/auth-key
+chmod 600 /etc/gradiated/tailscale.json /var/lib/gradiated-tailscale/auth-key
 cat >/opt/gradiated/tailscale/tailscaled <<'DAEMON'
 #!/usr/bin/env python3
 import signal,socket,time
-s=socket.socket(socket.AF_UNIX);s.bind('/var/lib/gradiated/tailscale/socket');s.listen()
+s=socket.socket(socket.AF_UNIX);s.bind('/var/lib/gradiated-tailscale/socket');s.listen()
 signal.signal(signal.SIGTERM,lambda *_:exit(0))
 while True:time.sleep(1)
 DAEMON
 cat >/opt/gradiated/tailscale/tailscale <<'CLIENT'
 #!/usr/bin/env bash
 set -euo pipefail
-printf '%s\n' "$*" >>/var/lib/gradiated/tailscale/calls
+printf '%s\n' "$*" >>/var/lib/gradiated-tailscale/calls
 case "$2" in
 up)
-  [[ -f /var/lib/gradiated/tailscale/state || "$*" == *'--auth-key=file:'* ]]
-  printf 'enrolled\n' >/var/lib/gradiated/tailscale/state
+  [[ -f /var/lib/gradiated-tailscale/state || "$*" == *'--auth-key=file:'* ]]
+  printf 'enrolled\n' >/var/lib/gradiated-tailscale/state
   ;;
 serve) [[ "$*" == *'--tcp=8888 tcp://127.0.0.1:8888'* ]] ;;
 *) exit 1 ;;
@@ -50,12 +50,12 @@ bash /opt/gradiated/bin/start-tailscale
 SETUP
 
 for _ in {1..30}; do
-  if docker exec "$container" test -f /var/lib/gradiated/tailscale/state; then break; fi
+  if docker exec "$container" test -f /var/lib/gradiated-tailscale/state; then break; fi
   sleep .2
 done
-docker exec "$container" test ! -f /var/lib/gradiated/tailscale/auth-key
-docker exec "$container" test -f /var/lib/gradiated/tailscale/state
-if docker exec -u runtime "$container" test -r /var/lib/gradiated/tailscale/state; then exit 1; fi
+docker exec "$container" test ! -f /var/lib/gradiated-tailscale/auth-key
+docker exec "$container" test -f /var/lib/gradiated-tailscale/state
+if docker exec -u runtime "$container" test -r /var/lib/gradiated-tailscale/state; then exit 1; fi
 if docker exec -u runtime "$container" test -r /etc/gradiated/tailscale.json; then exit 1; fi
 
 docker exec "$container" bash /opt/gradiated/bin/start-tailscale
@@ -64,11 +64,11 @@ supervisor=$(docker exec "$container" pgrep -f '^bash /opt/gradiated/bin/run-tai
 child=$(docker exec "$container" cat "/proc/$supervisor/task/$supervisor/children" | xargs)
 docker exec "$container" bash -c 'kill -KILL "$1"' _ "$child"
 for _ in {1..30}; do
-  calls=$(docker exec "$container" grep -c ' up ' /var/lib/gradiated/tailscale/calls)
+  calls=$(docker exec "$container" grep -c ' up ' /var/lib/gradiated-tailscale/calls)
   if ((calls >= 2)); then break; fi
   sleep .2
 done
 ((calls >= 2))
 docker exec "$container" bash -c 'kill -0 "$1"' _ "$supervisor"
-if docker exec "$container" grep -q 'tskey-auth-synthetic' /var/lib/gradiated/tailscale/calls; then exit 1; fi
+if docker exec "$container" grep -q 'tskey-auth-synthetic' /var/lib/gradiated-tailscale/calls; then exit 1; fi
 echo 'Tailscale supervisor restarts with persistent state, scopes Serve to TCP/8888 and isolates credentials'

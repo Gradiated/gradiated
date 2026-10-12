@@ -72,7 +72,9 @@ jobs:
       - name: Test GPU certificate renewal and actual Nomad TLS reload
         run: bash product/inference/images/nomad-base/tests/test-renewal.sh
       - name: Test Tailscale supervisor and credential isolation
-        run: timeout 180 bash product/inference/tailscale/tests/test-tailscale.sh
+        run: |
+          python3 -m unittest discover -s product/inference/tailscale/tests -p 'test_*.py'
+          timeout 180 bash product/inference/tailscale/tests/test-tailscale.sh
       - name: Test GLM startup qualification
         run: python3 -m unittest discover -s product/inference/runtimes/glm -p 'test_warmup*.py'
       - name: Install production allocation reader dependencies for rollout regression

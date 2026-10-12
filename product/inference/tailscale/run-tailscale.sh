@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-root=/var/lib/gradiated/tailscale
+root=/var/lib/gradiated-tailscale
 bin=/opt/gradiated/tailscale
 hostname=$(python3 -c 'import json; print(json.load(open("/etc/gradiated/tailscale.json"))["hostname"])')
 [[ "$hostname" =~ ^gpu-[0-9a-f-]{36}$ ]] || exit 64

@@ -36,6 +36,8 @@ the [wizard](product/services/wizard/README.md).
 | [`tools/`](tools/) | Development checks, browser automation, and model/operations utilities. |
 | [`docs/`](docs/) | Architecture, data contracts, deployment guides, and feature plans. |
 
+All paths in this table are relative to the repository root.
+
 The application uses TypeScript/Node and React, with pnpm and Turborepo managing
 the product workspace. Rust services handle inference and trace collection;
 GPU runtimes execute models separately. PostgreSQL holds durable product state,

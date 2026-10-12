@@ -375,14 +375,20 @@ fn prune_developer_turns(turns: Vec<Turn<'_>>) -> Vec<Turn<'_>> {
         .collect()
 }
 
-/// The last user turn, where a later system message also counts as one.
+/// A system message acts as a user turn when it follows another turn, or when
+/// it is the whole conversation, so a system-only request still gets a reply.
+fn system_acts_as_user(index: usize, turns: &[Turn<'_>]) -> bool {
+    index > 0 || turns.len() == 1
+}
+
+/// The last user turn, including a system message that acts as one.
 fn last_user_index(turns: &[Turn<'_>]) -> Option<usize> {
     turns
         .iter()
         .enumerate()
         .rfind(|(index, turn)| match turn {
             Turn::User(_) => true,
-            Turn::System { .. } => *index > 0,
+            Turn::System { .. } => system_acts_as_user(*index, turns),
             Turn::Developer(_) | Turn::Assistant { .. } => false,
         })
         .map(|(index, _)| index)
@@ -444,7 +450,7 @@ fn encode(turns: &[Turn<'_>], options: &RenderOptions) -> Result<String, Tokeniz
         // open only where the runtime keeps it.
         let expects_reply = match turn {
             Turn::User(_) | Turn::Developer(_) => true,
-            Turn::System { .. } => index > 0,
+            Turn::System { .. } => system_acts_as_user(index, turns),
             Turn::Assistant { .. } => false,
         };
         let next_is_reply = turns
@@ -709,6 +715,22 @@ mod tests {
                     {"role": "system", "content": "Second"},
                 ],
             }), thinking("First<｜User｜>One<｜Assistant｜></think>A<｜end▁of▁sentence｜><｜System｜>Second<｜Assistant｜><think>")),
+            ("a system-only conversation opens the assistant turn", json!({
+                "model": "test",
+                "messages": [{"role": "system", "content": "Write a greeting."}],
+            }), thinking("Write a greeting.<｜Assistant｜><think>")),
+            ("a system-only conversation without thinking opens the assistant turn", json!({
+                "model": "test",
+                "reasoning_effort": "none",
+                "messages": [{"role": "system", "content": "Write a greeting."}],
+            }), "<｜begin▁of▁sentence｜><｜System｜>Write a greeting.<｜Assistant｜></think>".to_owned()),
+            ("a leading system message followed by an assistant turn expects no reply", json!({
+                "model": "test",
+                "messages": [
+                    {"role": "system", "content": "Rules"},
+                    {"role": "assistant", "content": "A"},
+                ],
+            }), thinking("Rules</think>A<｜end▁of▁sentence｜>")),
             ("tool results follow call order", json!({
                 "model": "test",
                 "messages": [

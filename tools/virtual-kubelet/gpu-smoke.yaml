@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tp-smoke
+  namespace: vk-trial
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tp-smoke
+  template:
+    metadata:
+      labels:
+        app: tp-smoke
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/hostname: runpod-prototype
+      tolerations:
+        - key: gradiated.com/vk-trial
+          value: "true"
+          effect: NoSchedule
+      containers:
+        - name: discovery
+          image: gradiated/vk-gpu-smoke:process-v1
+          resources:
+            limits:
+              nvidia.com/gpu: 2
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: single-gpu-smoke
+  namespace: vk-trial
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: single-gpu-smoke
+  template:
+    metadata:
+      labels:
+        app: single-gpu-smoke
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/hostname: runpod-prototype
+      tolerations:
+        - key: gradiated.com/vk-trial
+          value: "true"
+          effect: NoSchedule
+      containers:
+        - name: discovery
+          image: gradiated/vk-gpu-smoke:process-v1
+          resources:
+            limits:
+              nvidia.com/gpu: 1

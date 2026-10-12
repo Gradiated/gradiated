@@ -21,7 +21,7 @@ COPY --from=nomad /bin/nomad /usr/local/bin/nomad
 EOF
 
 docker run -d --privileged --cgroupns=host --name "$container" -e TEST_MEMORY="$memory" \
-  -v "$root/jobs:/jobs:ro" --entrypoint /bin/bash "$image" -c '
+  -v "$root/jobs:/jobs:ro" -v "$root/staged:/staged:ro" --entrypoint /bin/bash "$image" -c '
     printf "\"Bearer %s\" 1;\n" '"$token"' >/etc/gradiated/runtime-proxy-auth.conf
     chown desmond:desmond /etc/gradiated/runtime-proxy-auth.conf
     chmod 600 /etc/gradiated/runtime-proxy-auth.conf
@@ -130,7 +130,14 @@ job "fake-runtime" {
   }
 }
 EOF
-in_container nomad job run -detach /jobs/host-proxy.nomad.hcl >/dev/null
+proxy_args=()
+proxy_job=/jobs/host-proxy.nomad.hcl
+if [[ ${1:-} == --private-ingress ]]; then
+  proxy_job=/staged/host-proxy.nomad.hcl
+  node=$(in_container nomad node status -json | jq -r '.[0].ID')
+  proxy_args=(-var "private_ingress_nodes=[\"$node\"]")
+fi
+in_container nomad job run -detach "${proxy_args[@]}" "$proxy_job" >/dev/null
 in_container nomad job run /tmp/fake-runtime.nomad.hcl >/dev/null
 
 request() { in_container curl -s --max-time 3 -o /dev/stdout -w ' %{http_code}' ${2:+-H "Authorization: Bearer $2"} "http://127.0.0.1:8888$1"; }
@@ -156,6 +163,8 @@ fail() {
   in_container nomad job allocs fake-runtime >&2 || true
   proxy_alloc=$(in_container nomad job allocs -json host-proxy | grep -o '"ID": *"[0-9a-f-]\{36\}"' | grep -o '[0-9a-f-]\{36\}' | head -1)
   in_container nomad alloc status "$proxy_alloc" >&2 || true
+  in_container nomad job inspect -json host-proxy | jq '.TaskGroups[].Tasks[].Env.GRADIATED_PRIVATE_INGRESS_NODES' >&2 || true
+  in_container nomad alloc fs "$proxy_alloc" nginx/local/nginx.conf | grep 'listen ' >&2 || true
   in_container nomad alloc logs -stderr "$proxy_alloc" >&2 || true
   exit 1
 }
@@ -173,6 +182,12 @@ for alloc in "${allocs[@]}"; do
   done
 done
 [[ $(request "/alloc/00000000-0000-4000-8000-000000000000/v1/models" "$token") == *" 404" ]] || fail "an unknown allocation was not rejected"
+if [[ ${1:-} == --private-ingress ]]; then
+  public_address=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$container")
+  status=$(in_container curl --noproxy '*' -s --max-time 3 -o /dev/null -w '%{http_code}' "http://$public_address:8888/healthz" || true)
+  [[ "$status" == 000 ]] || fail "private host proxy returned $status on its non-loopback interface"
+  echo 'Private host proxy rejects non-loopback access while allocation routes remain healthy'
+fi
 
 if [[ ${1:-} == --proxy-drain ]]; then
   in_container dd if=/dev/zero of=/tmp/slow-response bs=1024 count=320 status=none

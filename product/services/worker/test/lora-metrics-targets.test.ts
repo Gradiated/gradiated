@@ -15,6 +15,7 @@ describe("LoRA metrics targets", () => {
       {
         targets: ["host.example"],
         labels: {
+          __scheme__: "https",
           __metrics_path__: "/alloc/allocation-1/internal/adapters/metrics",
           model: "z-ai/glm-5.3-flash",
           deployment: "allocation-1",
@@ -24,8 +25,30 @@ describe("LoRA metrics targets", () => {
     ]);
     expect(loraMetricsTargets([])).toEqual([]);
   });
+  it("discovers public and canonical private allocations together", () => {
+    const id = "00000000-0000-4000-8000-000000000001";
+    const host = `gpu-${id}.tailscale-inference.svc.cluster.local:8888`;
+    const targets = loraMetricsTargets([
+      { id, modelId: "base", serviceUrl: `http://${host}/alloc/${id}` },
+      {
+        id: "public",
+        modelId: "base",
+        serviceUrl: "https://host.example/alloc/public",
+      },
+    ]);
+    expect(targets[0]).toMatchObject({
+      targets: [host],
+      labels: {
+        __scheme__: "http",
+        __metrics_path__: `/alloc/${id}/internal/adapters/metrics`,
+      },
+    });
+    expect(targets[1]?.labels.__scheme__).toBe("https");
+  });
   it.each([
     "http://host.example/alloc/a",
+    "http://gpu-00000000-0000-4000-8000-000000000001.tailscale-inference.svc.cluster.local.evil:8888/alloc/00000000-0000-4000-8000-000000000001",
+    "http://gpu-00000000-0000-4000-8000-000000000001.tailscale-inference.svc.cluster.local:9999/alloc/00000000-0000-4000-8000-000000000001",
     "https://secret@host.example/alloc/a",
     "https://host.example/alloc/a?token=secret",
     "https://host.example/alloc/a#fragment",

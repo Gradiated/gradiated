@@ -14,6 +14,7 @@ export const catalog = {
       "product/packages/",
       "product/services/",
       "product/Dockerfile",
+      "product/scripts/set-private-serving.mjs",
       "product/inference/images/nomad-base/renew-certificate.py",
       "product/inference/images/nomad-base/run-renewer.sh",
       "product/inference/images/nomad-base/start-client.sh",

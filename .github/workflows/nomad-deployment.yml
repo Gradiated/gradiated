@@ -14,6 +14,7 @@ on:
       - .mise/tasks/desmond/test
       - product/inference/runtime-launcher/**
       - product/inference/images/nomad-base/**
+      - product/inference/tailscale/**
       - tools/nomad/**
       - infra/environments/prod/us-east-1/kubernetes/workloads/observability/model-replica-rules.yaml
       - .github/workflows/nomad-deployment.yml
@@ -70,6 +71,8 @@ jobs:
           bash .mise/tasks/desmond/test
       - name: Test GPU certificate renewal and actual Nomad TLS reload
         run: bash product/inference/images/nomad-base/tests/test-renewal.sh
+      - name: Test Tailscale supervisor and credential isolation
+        run: timeout 180 bash product/inference/tailscale/tests/test-tailscale.sh
       - name: Test GLM startup qualification
         run: python3 -m unittest discover -s product/inference/runtimes/glm -p 'test_warmup*.py'
       - name: Install production allocation reader dependencies for rollout regression
@@ -92,6 +95,7 @@ jobs:
           node --test product/inference/nomad/tests/claim-gpus.test.mjs
           timeout 600 bash product/inference/nomad/tests/test-host-proxy.sh --recovery
           timeout 180 bash product/inference/nomad/tests/test-host-proxy.sh --proxy-drain
+          timeout 180 bash product/inference/nomad/tests/test-host-proxy.sh --private-ingress
           timeout 420 bash product/inference/nomad/tests/test-host-proxy.sh --sdk-gate
           timeout 420 bash product/inference/nomad/tests/test-host-proxy.sh --rolling-slots
           node --test tools/nomad/*.test.mjs

@@ -251,6 +251,24 @@ allocations can share a host. A deployment's `service_url` is the host's
 published address plus `/alloc/<allocation id>`; each provider supplies how that
 port is reached (RunPod's HTTPS proxy, or TLS on a public or private IP).
 
+Private inference is enrolled separately with
+`tools/nomad/enroll-tailscale.py` over pinned SSH. It installs the pinned
+userspace daemon and a supervisor without changing provider settings, Nomad
+identity or model processes, and generates a per-instance egress Service for
+Git review. It transfers only a one-time GPU-tagged auth key; OAuth credentials
+remain in AWS. The activation helper runs a bounded CPU-only qualification Job,
+probes all available allocations through the private Service, and changes the
+registered host URL only with `--apply`, and waits for the Job to complete.
+All cluster workloads may use the shared egress proxies; host-proxy bearer
+authentication remains required. The private host-proxy definition is staged in
+`product/inference/nomad/staged/`, outside automatic job deployment. After
+verification and projection, a separately reviewed rollout promotes that job
+and adds qualified Nomad node UUIDs to `private_ingress_nodes` to close
+non-loopback ingress. The
+[Tailscale guide](../infra/modules/tailscale/README.md) defines ordering,
+qualification and explicit rollback. Provider resets destroy this node-local
+state and require deliberate re-enrollment; do not reset an allocated GPU.
+
 Hosts enrolled by `register_instance` carry `serving_ingress = "host-proxy"`.
 Inference and staging clients use the same native `default` node pool so the
 staging GPU can become serving capacity at cutover. Training clients remain in

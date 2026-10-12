@@ -1,3 +1,7 @@
+import { eq } from "drizzle-orm";
+import { createCatalogService } from "../src/catalog/service.js";
+import { modelDeployments } from "../src/db/schema/index.js";
+import { deploymentInput, modelInput } from "./support/fixtures.js";
 import { randomUUID } from "node:crypto";
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -33,6 +37,118 @@ describe("instances", () => {
     const record = await instances.register(machine());
 
     expect(record).toMatchObject({ nomadNodeId: null, retiredAt: null });
+  });
+
+  it("preserves a private serving endpoint across repeated registration", async () => {
+    const input = machine();
+    const first = await instances.register(input);
+    await instances.bindNomadNode(first.id, randomUUID());
+    const servingUrl = `http://gpu-${first.id}.tailscale-inference.svc.cluster.local:8888`;
+
+    await instances.setServingUrl(first.id, servingUrl);
+
+    expect(await instances.register(input)).toMatchObject({
+      id: first.id,
+      servingUrl,
+    });
+    expect(await instances.setServingUrl(first.id, null)).toMatchObject({
+      servingUrl: null,
+    });
+  });
+
+  it("refuses private endpoint changes for unbound or retired hosts", async () => {
+    const host = await instances.register(machine());
+    const servingUrl = `http://gpu-${host.id}.tailscale-inference.svc.cluster.local:8888`;
+
+    await expect(
+      instances.setServingUrl(host.id, servingUrl),
+    ).rejects.toThrow();
+    await instances.bindNomadNode(host.id, randomUUID());
+    await instances.retire(host.id);
+    await expect(
+      instances.setServingUrl(host.id, servingUrl),
+    ).rejects.toThrow();
+  });
+
+  it("refuses an endpoint switch qualified against an obsolete node binding", async () => {
+    const record = await instances.register(machine());
+    const firstNode = randomUUID();
+    await instances.bindNomadNode(record.id, firstNode);
+    const { host } = await instances.servingState(record.id);
+    await instances.bindNomadNode(record.id, randomUUID());
+
+    await expect(
+      instances.setServingUrl(
+        record.id,
+        `http://gpu-${record.id}.tailscale-inference.svc.cluster.local:8888`,
+        {
+          nomadNodeId: firstNode,
+          servingUrl: host.servingUrl,
+          allocationIds: [],
+        },
+      ),
+    ).rejects.toThrow();
+    expect(
+      (await instances.servingState(record.id)).host.servingUrl,
+    ).toBeNull();
+  });
+
+  it("refuses cutover when available allocations changed after qualification", async () => {
+    const registered = await instances.register(machine());
+    const nodeId = randomUUID();
+    const host = await instances.bindNomadNode(registered.id, nodeId);
+    const url = `http://gpu-${host.id}.tailscale-inference.svc.cluster.local:8888`;
+    const qualified = await instances.servingState(host.id);
+    const model = await createCatalogService(testDatabase.database).upsertModel(
+      modelInput(),
+    );
+    const allocation = deploymentInput(model.id);
+    await testDatabase.database
+      .insert(modelDeployments)
+      .values({ ...allocation, instanceId: host.id });
+
+    await expect(
+      instances.setServingUrl(host.id, url, {
+        nomadNodeId: nodeId,
+        servingUrl: null,
+        allocationIds: qualified.allocationIds,
+      }),
+    ).rejects.toThrow();
+    const updated = await instances.servingState(host.id);
+    expect(updated.host.servingUrl).toBeNull();
+    await expect(
+      instances.setServingUrl(host.id, url, {
+        nomadNodeId: nodeId,
+        servingUrl: null,
+        allocationIds: updated.allocationIds,
+      }),
+    ).resolves.toMatchObject({ servingUrl: url });
+
+    await testDatabase.database
+      .update(modelDeployments)
+      .set({ status: "unavailable" })
+      .where(eq(modelDeployments.id, allocation.id));
+    await expect(
+      instances.setServingUrl(host.id, null, {
+        nomadNodeId: nodeId,
+        servingUrl: url,
+        allocationIds: updated.allocationIds,
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("rejects endpoints that do not identify this host's private egress service", async () => {
+    const host = await instances.register(machine());
+    await instances.bindNomadNode(host.id, randomUUID());
+
+    for (const url of [
+      "http://169.254.169.254:8888",
+      `http://gpu-${randomUUID()}.tailscale-inference.svc.cluster.local:8888`,
+      `http://gpu-${host.id}.tailscale-inference.svc.cluster.local:8888/alloc/x`,
+      `http://gpu-${host.id}.tailscale-inference.svc.cluster.local:8888?x=y`,
+    ]) {
+      await expect(instances.setServingUrl(host.id, url)).rejects.toThrow();
+    }
   });
 
   it("retires an instance without losing its identity or allowing certificate enrollment", async () => {

@@ -24,7 +24,7 @@ temporal-worker (TypeScript/Node) ---> Temporal Cloud / PostgreSQL / S3
 direct API key or OpenRouter key (`api.gradiated.com`)
   |
   v
-public ALB ---> proxy ---> gateway (Rust, EKS) ---> private/restricted TLS
+public ALB ---> proxy ---> gateway (Rust, EKS) ---> private transport / restricted TLS
                              |                         |
                              v                         v
                            Valkey          selected SGLang model runtime
@@ -186,6 +186,20 @@ generations indefinitely at launch; ClickHouse Cloud durability and backups
 are sufficient initially.
 
 ### Model deployments and GitOps
+
+The optional private GPU transport uses a Tailscale Linux-interface egress
+ProxyGroup with three replicas in EKS and userspace Serve forwarding on RunPod
+hosts. Three operator-managed peer relays provide fallback when direct UDP is
+unavailable. Each pool runs on distinct nodes across at least two AZs.
+Application authentication remains at the host proxy. This path is prepared
+for staged qualification; hosts retain provider ingress until their registered
+`instances.serving_url` changes. The private proxy definition is staged outside automatic deployment;
+qualified hosts bind only to loopback after a separately reviewed proxy rollout.
+The shared egress proxies accept all cluster workloads, with application
+authentication enforced at the GPU host proxy. The prepared path uses HTTP on
+the private cluster segment and WireGuard between egress and GPU; it does not provide end-to-end application TLS.
+The administrative AWS subnet router remains separate. The rollout instructions
+are in the [Tailscale module guide](../infra/modules/tailscale/README.md).
 
 PostgreSQL owns both the customer-facing global `models` catalog and the
 durable `model_deployments` registry. Each deployment row names one private

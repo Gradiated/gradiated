@@ -26,6 +26,7 @@ COPY services/ops-mcp/package.json ./services/ops-mcp/package.json
 
 RUN pnpm install --frozen-lockfile
 
+COPY scripts/set-private-serving.mjs ./scripts/
 COPY packages ./packages
 COPY services ./services
 COPY inference/images/nomad-base/renew-certificate.py inference/images/nomad-base/run-renewer.sh inference/images/nomad-base/start-client.sh ./inference/images/nomad-base/

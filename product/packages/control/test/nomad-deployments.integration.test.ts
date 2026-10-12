@@ -108,6 +108,28 @@ describe("Nomad deployment reconciliation", () => {
     ]);
   });
 
+  it("keeps migrated allocations and metrics on their registered private endpoint", async () => {
+    const running = allocation({
+      release: { ...deploymentRelease(), lora_enabled: true },
+    });
+    await store.reconcile(nomad([running]));
+    const servingUrl = `http://gpu-${host.id}.tailscale-inference.svc.cluster.local:8888`;
+
+    await createInstanceService(testDatabase.database).setServingUrl(
+      host.id,
+      servingUrl,
+    );
+    await store.reconcile(nomad([running]));
+    await store.reconcile(nomad([running]));
+
+    expect(await deploymentsOf(running.allocationId)).toMatchObject([
+      { serviceUrl: `${servingUrl}/alloc/${running.allocationId}` },
+    ]);
+    expect(await store.adapterMetricsTargets()).toMatchObject([
+      { serviceUrl: `${servingUrl}/alloc/${running.allocationId}` },
+    ]);
+  });
+
   it("drains an allocation Nomad is stopping", async () => {
     const stopping = allocation({ draining: true });
 

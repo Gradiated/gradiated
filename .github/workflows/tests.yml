@@ -164,6 +164,8 @@ jobs:
       - run: node --test tools/deployment/*.test.mjs tools/github-apps/*.test.mjs tools/images/*.test.mjs
       - run: pnpm install --frozen-lockfile
         working-directory: product
+      - run: pnpm --filter @gradiated/control... build
+        working-directory: product
       - run: pnpm check:scripts && pnpm test:scripts && pnpm exec prettier --check mprocs.yaml scripts
         working-directory: product
 

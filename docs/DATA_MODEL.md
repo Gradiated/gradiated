@@ -759,6 +759,20 @@ cannot disappear from alerts. Host reports support overdue-renewal, expiry, and
 missing-agent alerts, and do not attest
 to host integrity. See the Nomad README for rollout and compromise limits.
 
+Migration 0016 adds nullable `instances.serving_url`. Null retains the legacy
+provider ingress. A configured value must exactly name that instance's private
+Kubernetes egress Service:
+`http://gpu-<instance UUID>.tailscale-inference.svc.cluster.local:8888`.
+The database constraint and TypeScript setter reject arbitrary URLs. Only an
+active, Nomad-bound instance can change this field; qualification can bind the
+update to the node and endpoint observed before probing. Re-registration keeps
+it. Nomad reconciliation derives each allocation URL and adapter metrics target
+from it, retaining `/alloc/<allocation UUID>`. Private failures do not select
+public ingress automatically. Explicit rollback clears the field after public
+access has been restored and qualified. Git owns the egress Service's Tailscale
+IP and the per-node loopback binding configuration; PostgreSQL owns which host
+endpoint serves customers.
+
 ## Task training
 
 Migration 0008 adds workspace-owned `tasks`, named uniquely within a workspace.

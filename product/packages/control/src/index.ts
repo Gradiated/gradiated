@@ -42,6 +42,7 @@ export {
 export { betterAuthSchema } from "./db/schema/auth.js";
 export {
   createInstanceService,
+  privateServingUrl,
   type InstanceRecord,
   type InstanceRegistration,
   type InstanceService,

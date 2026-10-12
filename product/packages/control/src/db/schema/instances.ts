@@ -23,6 +23,7 @@ export const instances = pgTable(
     faultDomain: text("fault_domain"),
     sku: text("sku").notNull(),
     nomadNodeId: uuid("nomad_node_id"),
+    servingUrl: text("serving_url"),
     certificate: jsonb("certificate").$type<InstanceCertificate>(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
       .defaultNow()
@@ -44,5 +45,9 @@ export const instances = pgTable(
       sql`length(${t.provider}) between 1 and 100 and length(${t.providerAccountId}) between 1 and 200 and length(${t.providerInstanceId}) between 1 and 200`,
     ),
     check("instances_sku_check", sql`length(${t.sku}) between 1 and 200`),
+    check(
+      "instances_serving_url_check",
+      sql`${t.servingUrl} is null or ${t.servingUrl} = 'http://gpu-' || ${t.id}::text || '.tailscale-inference.svc.cluster.local:8888'`,
+    ),
   ],
 );

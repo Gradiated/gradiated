@@ -1,0 +1,2 @@
+ALTER TABLE "instances" ADD COLUMN "serving_url" text;--> statement-breakpoint
+ALTER TABLE "instances" ADD CONSTRAINT "instances_serving_url_check" CHECK ("instances"."serving_url" is null or "instances"."serving_url" = 'http://gpu-' || "instances"."id"::text || '.tailscale-inference.svc.cluster.local:8888');

@@ -65,13 +65,15 @@ export interface NomadDeploymentStore {
   >;
 }
 
-const PASS_LOCK = "gradiated-nomad-deployments-v1";
+export const NOMAD_RECONCILE_LOCK = "gradiated-nomad-deployments-v1";
 const HOST_PROXY_PORT = 8888;
 
 type Instance = typeof instances.$inferSelect;
 
 // How the gateway reaches a host's proxy differs by provider.
 const hostProxyUrl = (instance: Instance): string | null => {
+  if (instance.servingUrl !== null) return instance.servingUrl;
+
   switch (instance.provider) {
     case "runpod":
       return `https://${instance.providerInstanceId}-${HOST_PROXY_PORT}.proxy.runpod.net`;
@@ -175,7 +177,7 @@ export const createNomadDeploymentStore = (
       const {
         rows: [lock],
       } = await tx.execute<{ acquired: boolean }>(
-        sql`select pg_try_advisory_xact_lock(hashtext(${PASS_LOCK})) as acquired`,
+        sql`select pg_try_advisory_xact_lock(hashtext(${NOMAD_RECONCILE_LOCK})) as acquired`,
       );
       if (!lock?.acquired) return null;
 

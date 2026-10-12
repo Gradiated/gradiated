@@ -16,15 +16,36 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe("console analytics", () => {
-  it("tracks an anonymous login-page visit without attaching a workspace", async () => {
-    const { analytics } = await import("@/lib/analytics");
+  it("uses SDK pageviews with console attribution and sanitized URL paths", async () => {
+    await import("@/lib/posthog");
+    const options = posthog.init.mock.calls[0]![1];
+    expect(options.capture_pageview).toBe("history_change");
 
-    expect(analytics.track("sign_in_page_viewed", {})).toBe(true);
-    expect(posthog.capture).toHaveBeenCalledWith("sign_in_page_viewed", {
+    const event = options.before_send({
+      event: "$pageview",
+      $set_once: {
+        $initial_current_url:
+          "https://console.gradiated.com/login?token=private#secret",
+      },
+      properties: {
+        $current_url:
+          "https://console.gradiated.com/login?token=private#secret",
+        $pathname: "/login",
+        $session_entry_url:
+          "https://console.gradiated.com/login?token=private#secret",
+      },
+    });
+    expect(event.properties).toMatchObject({
       source: "console",
       schema_version: 1,
-      $groups: {},
+      $current_url: "https://console.gradiated.com/login",
+      $pathname: "/login",
+      $session_entry_url: "https://console.gradiated.com/login",
     });
+    expect(event.$set_once.$initial_current_url).toBe(
+      "https://console.gradiated.com/login",
+    );
+    expect(JSON.stringify(event)).not.toMatch(/private|secret/);
   });
 
   it("removes inherited workspace groups and URLs at the final SDK send boundary", async () => {

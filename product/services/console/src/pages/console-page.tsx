@@ -1,5 +1,5 @@
 import { RefreshCw } from "lucide-react";
-import { useEffect, useRef, type ComponentProps, type ReactNode } from "react";
+import { useEffect, type ComponentProps, type ReactNode } from "react";
 import { analytics, setAnalyticsScope } from "@/lib/analytics";
 
 import { AppShell } from "@/components/app-shell";
@@ -30,7 +30,6 @@ export const ConsolePage = ({
   children: ReactNode;
 }) => {
   const context = useProductContext();
-  const lastView = useRef("");
   const { user, organizationId, workspaceId, workspaces } = context;
   const isDefault =
     workspaces.find((workspace) => workspace.id === workspaceId)?.is_default ??
@@ -40,16 +39,7 @@ export const ConsolePage = ({
     if (!user || !organizationId || !workspaceId) return;
 
     setAnalyticsScope(user.id, organizationId, workspaceId, isDefault);
-    const view = JSON.stringify([user.id, organizationId, workspaceId, page]);
-    if (view === lastView.current) return;
-
-    lastView.current = view;
-    analytics.track("console_page_viewed", {
-      page,
-      organization_id: organizationId,
-      workspace_id: workspaceId,
-    });
-  }, [user?.id, organizationId, workspaceId, isDefault, page]);
+  }, [user?.id, organizationId, workspaceId, isDefault]);
 
   return (
     <AppShell

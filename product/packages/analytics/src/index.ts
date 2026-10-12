@@ -16,20 +16,7 @@ export const eventSchemas = {
   billing_top_up_clicked: z.strictObject({ ...organization }),
   workspace_archived: z.strictObject({ ...workspace }),
   sign_in_started: z.strictObject({ method }),
-  sign_in_page_viewed: z.strictObject({}),
   sign_in_link_sent: z.strictObject({ method: z.literal("magic_link") }),
-  console_page_viewed: z.strictObject({
-    ...workspace,
-    page: z.enum([
-      "api-keys",
-      "billing",
-      "logs",
-      "models",
-      "tasks",
-      "usage",
-      "settings",
-    ]),
-  }),
   organization_created: z.strictObject({
     ...organization,
     default_workspace_id: id,
@@ -101,9 +88,7 @@ export type AnalyticsSource = "console" | "api";
 const consoleEvents = new Set<AnalyticsEvent>([
   "sign_out_clicked",
   "sign_in_started",
-  "sign_in_page_viewed",
   "sign_in_link_sent",
-  "console_page_viewed",
   "organization_selected",
   "workspace_selected",
   "api_key_create_clicked",

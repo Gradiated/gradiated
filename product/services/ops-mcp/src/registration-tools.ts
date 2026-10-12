@@ -29,6 +29,7 @@ export const registerRegistrationTools = (
       description: [
         "Requires the private administrative MCP connection through Tailscale and Kubernetes port-forward, in addition to MCP OAuth.",
         "Enrol a GPU machine into Nomad: record the instance, issue a client certificate, and bind its ready node. Nomad deploys model jobs automatically after the node joins.",
+        "Registration requires pinned direct SSH access and enrolls Tailscale before binding. Commit the returned privateService manifest under tailscale-inference/hosts and sync inference-network before serving traffic. There is no public inference fallback.",
         "A running pod on the exact configured nomad-base image with SSH credentials, a pinned host key, and existing SSH and serving ports is bootstrapped over SSH without resetting it or changing provider image, environment, ports, or capacity. The bootstrap starts only the Nomad client, never model jobs. In-place files survive process restarts, but are lost if the provider resets the container.",
         "Other running machines are refused unless reset_running_pod is true and confirm_instance_id repeats instance_id. Only do that when a person explicitly authorizes resetting that exact machine; a reset stops everything and can release scarce GPU capacity. Stopped machines use the provider bootstrap and are started.",
         "Interrupted registrations carrying this instance's bootstrap resume without reset. An already bound node is refused.",
@@ -90,7 +91,7 @@ export const registerRegistrationTools = (
     {
       title: "instance registration status",
       description:
-        "Progress of GPU instance registrations started since the ops MCP last restarted: recording, issuing_certificate, updating_provider, waiting_for_node, then bound, or failed with the reason. Without registration_id, lists recent registrations, newest first. A registration interrupted by a restart is not listed; registering the machine again is safe.",
+        "Progress of GPU instance registrations started since the ops MCP last restarted: recording, issuing_certificate, updating_provider, waiting_for_node, enrolling_tailscale, then bound, or failed with the reason. A bound result includes privateService for Git review and Argo sync. Without registration_id, lists recent registrations, newest first. A registration interrupted by a restart is not listed; registering the machine again is safe.",
       inputSchema: { registration_id: z.uuid().optional() },
       annotations: {
         readOnlyHint: true,

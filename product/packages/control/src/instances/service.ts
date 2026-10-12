@@ -7,6 +7,9 @@ import { NOMAD_RECONCILE_LOCK } from "../deployments/nomad.js";
 import type { ControlDatabase } from "../db/client.js";
 import { instances } from "../db/schema/instances.js";
 import { modelDeployments } from "../db/schema/organizations.js";
+import { privateServingUrl } from "./endpoints.js";
+
+export { privateServingUrl } from "./endpoints.js";
 
 const identity = z.string().trim().min(1).max(200);
 
@@ -24,9 +27,6 @@ export type InstanceRegistration = z.infer<typeof instanceRegistrationSchema>;
 export type InstanceRecord = Omit<typeof instances.$inferSelect, "certificate">;
 const { certificate: _certificate, ...inventoryColumns } =
   getTableColumns(instances);
-
-export const privateServingUrl = (instanceId: string): string =>
-  `http://gpu-${z.uuid().parse(instanceId).toLowerCase()}.tailscale-inference.svc.cluster.local:8888`;
 
 const instanceRecordSchema = instanceRegistrationSchema
   .extend({
@@ -70,10 +70,11 @@ export const createInstanceService = (
 ): InstanceService => ({
   async register(value) {
     const input = instanceRegistrationSchema.parse(value);
+    const id = uuidv7();
 
     const [record] = await database
       .insert(instances)
-      .values({ id: uuidv7(), ...input })
+      .values({ id, ...input, servingUrl: privateServingUrl(id) })
       .onConflictDoUpdate({
         target: [
           instances.provider,
@@ -176,10 +177,15 @@ export const createInstanceService = (
   },
 
   async bindNomadNode(instanceId, nomadNodeId) {
+    const id = z.uuid().parse(instanceId);
     const [record] = await database
       .update(instances)
-      .set({ nomadNodeId: z.uuid().parse(nomadNodeId), updatedAt: sql`now()` })
-      .where(eq(instances.id, z.uuid().parse(instanceId)))
+      .set({
+        nomadNodeId: z.uuid().parse(nomadNodeId),
+        servingUrl: privateServingUrl(id),
+        updatedAt: sql`now()`,
+      })
+      .where(eq(instances.id, id))
       .returning(inventoryColumns);
     if (!record) throw new Error("Instance not found");
 

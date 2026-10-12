@@ -88,15 +88,16 @@ describe("instances", () => {
         },
       ),
     ).rejects.toThrow();
-    expect(
-      (await instances.servingState(record.id)).host.servingUrl,
-    ).toBeNull();
+    expect((await instances.servingState(record.id)).host.servingUrl).toBe(
+      `http://gpu-${record.id}.tailscale-inference.svc.cluster.local:8888`,
+    );
   });
 
   it("refuses cutover when available allocations changed after qualification", async () => {
     const registered = await instances.register(machine());
     const nodeId = randomUUID();
     const host = await instances.bindNomadNode(registered.id, nodeId);
+    await instances.setServingUrl(host.id, null);
     const url = `http://gpu-${host.id}.tailscale-inference.svc.cluster.local:8888`;
     const qualified = await instances.servingState(host.id);
     const model = await createCatalogService(testDatabase.database).upsertModel(

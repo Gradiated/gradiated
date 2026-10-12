@@ -11,6 +11,7 @@ import sys
 import tarfile
 import tempfile
 import time
+import urllib.error
 import urllib.request
 import uuid
 from pathlib import Path
@@ -49,10 +50,20 @@ def install(payload):
     proxy_port = payload.get("proxy_port", existing.get("proxy_port", 8888))
     if proxy_port not in (8888, 8889):
         raise ValueError("Unexpected inference proxy port")
-    if proxy_port == 8889:
-        with urllib.request.urlopen("http://127.0.0.1:8889/healthz", timeout=5) as r:
-            if r.status != 200:
+    if "proxy_port" in payload:
+        deadline = time.monotonic() + 60
+        while True:
+            try:
+                with urllib.request.urlopen(
+                    f"http://127.0.0.1:{proxy_port}/healthz", timeout=5
+                ) as r:
+                    if r.status == 200:
+                        break
+            except (urllib.error.URLError, OSError):
+                pass
+            if time.monotonic() >= deadline:
                 raise ValueError("Private host proxy is not ready")
+            time.sleep(1)
     try:
         account = pwd.getpwnam("tailscale")
     except KeyError:

@@ -80,7 +80,6 @@ export const qualificationJob = (
   instanceId,
   image,
   apply = false,
-  publicRollback = false,
 ) => {
   if (
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(
@@ -126,7 +125,6 @@ export const qualificationJob = (
                 "--instance-id",
                 instanceId,
                 ...(apply ? ["--apply"] : []),
-                ...(publicRollback ? ["--public"] : []),
               ],
               env: [
                 {
@@ -135,15 +133,7 @@ export const qualificationJob = (
                     secretKeyRef: { name: "worker", key: "DATABASE_URL" },
                   },
                 },
-                {
-                  name: "SGLANG_API_KEY",
-                  valueFrom: {
-                    secretKeyRef: {
-                      name: "gateway",
-                      key: "SGLANG_API_KEY",
-                    },
-                  },
-                },
+
               ],
               resources: {
                 requests: { cpu: "100m", memory: "256Mi" },
@@ -168,14 +158,11 @@ const main = async () => {
       "instance-id": { type: "string" },
       image: { type: "string" },
       apply: { type: "boolean", default: false },
-      public: { type: "boolean", default: false },
     },
   });
   if (!values["instance-id"] || !values.image)
     throw new Error("instance-id and image are required");
-  for (const [resource, name] of values.public
-    ? []
-    : [
+  for (const [resource, name] of [
         ["proxygroup", "inference-egress"],
         ["peerrelay", "tailscale-relay"],
       ]) {
@@ -202,7 +189,7 @@ const main = async () => {
     );
     if (!inferenceReady(object, resource, JSON.parse(podState))) {
       throw new Error(
-        `${resource} must have two ready replicas at its current generation`,
+        `${resource} must have three ready replicas at its current generation`,
       );
     }
   }
@@ -210,7 +197,6 @@ const main = async () => {
     values["instance-id"],
     values.image,
     values.apply,
-    values.public,
   );
   const child = execute("kubectl", ["create", "-f", "-"], { timeout: 30_000 });
   child.child.stdin.end(JSON.stringify(job));

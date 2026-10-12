@@ -1,8 +1,8 @@
-# One authenticated ingress per host. The gateway addresses a replica as
+# One private ingress per host. The gateway addresses a replica as
 # /alloc/<allocation id>/ and this proxy forwards to that allocation's loopback
 # runtime port, so runtimes are never published and ports can be dynamic. Model
 # jobs register their runtime as the shared service "gradiated-runtime".
-job "host-proxy-private" {
+job "host-proxy-loopback" {
   type      = "system"
   node_pool = "all"
 
@@ -29,19 +29,19 @@ job "host-proxy-private" {
 
     network {
       port "inference" {
-        static       = 8889
+        static       = 8888
         host_network = "loopback"
       }
     }
 
     service {
-      name     = "host-proxy-private"
+      name     = "host-proxy-loopback"
       provider = "nomad"
       port     = "inference"
       task     = "nginx"
       check {
         type     = "http"
-        path     = "/healthz"
+        path     = "/private-healthz"
         interval = "10s"
         timeout  = "2s"
         check_restart {
@@ -62,9 +62,35 @@ job "host-proxy-private" {
         command = "/usr/bin/setpriv"
         args = [
           "--inh-caps=-all", "--ambient-caps=-all", "--no-new-privs",
-          "/usr/sbin/nginx", "-c", "${NOMAD_TASK_DIR}/nginx.conf",
-          "-g", "daemon off;",
+          "/bin/bash", "${NOMAD_TASK_DIR}/start-proxy",
         ]
+      }
+
+      template {
+        destination = "local/start-proxy"
+        change_mode = "noop"
+        data = <<-SCRIPT
+          #!/usr/bin/env bash
+          set -euo pipefail
+          # Route updates can signal the task while the previous listener drains.
+          trap '' HUP
+          python3 - <<'WAIT'
+          import errno, os, socket, time
+          deadline = time.monotonic() + 180
+          while True:
+              with socket.socket() as listener:
+                  listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                  try:
+                      listener.bind(("127.0.0.1", int(os.environ["NOMAD_PORT_inference"])))
+                      break
+                  except OSError as error:
+                      if error.errno != errno.EADDRINUSE or time.monotonic() >= deadline:
+                          raise
+              time.sleep(0.05)
+          WAIT
+          trap - HUP
+          exec /usr/sbin/nginx -c "$NOMAD_TASK_DIR/nginx.conf" -g 'daemon off;'
+        SCRIPT
       }
 
       template {
@@ -74,7 +100,7 @@ job "host-proxy-private" {
         data          = <<-EOF
           {{- $allocation := env "NOMAD_ALLOC_ID" }}
           {{- $registered := false }}
-          {{- range nomadService "host-proxy-private" }}{{ if eq .AllocID $allocation }}{{ $registered = true }}{{ end }}{{ end }}
+          {{- range nomadService "host-proxy-loopback" }}{{ if eq .AllocID $allocation }}{{ $registered = true }}{{ end }}{{ end }}
           worker_processes 1;
           worker_rlimit_nofile 8192;
           pid {{ env "NOMAD_TASK_DIR" }}/nginx.pid;
@@ -92,6 +118,7 @@ job "host-proxy-private" {
               map $uri $health_check {
                   default 0;
                   /healthz 1;
+                  /private-healthz 1;
               }
               map $uri $withdrawn_readiness {
                   default 0;
@@ -99,14 +126,9 @@ job "host-proxy-private" {
                   ~^/alloc/[0-9a-f-]+/health$ 1;
           {{- end }}
               }
-              map $http_authorization $authorized {
-                  default 0;
-                  include /etc/gradiated/runtime-proxy-auth.conf;
-              }
               server {
                   listen 127.0.0.1:{{ env "NOMAD_PORT_inference" }};
                   if ($health_check) { return 200 "ok\n"; }
-                  if ($authorized = 0) { return 401; }
                   if ($withdrawn_readiness) { return 503; }
                   proxy_http_version 1.1;
                   proxy_set_header Connection "";

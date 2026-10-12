@@ -10,11 +10,12 @@ export type RunSsh = (
   target: SshTarget,
   command: string,
   input?: string,
+  timeoutMs?: number,
 ) => Promise<string>;
 
 export const sshRunner =
   (privateKey: string): RunSsh =>
-  (target, command, input) =>
+  (target, command, input, timeoutMs = 60_000) =>
     new Promise((resolve, reject) => {
       const client = new Client();
       let settled = false;
@@ -29,7 +30,7 @@ export const sshRunner =
       };
       const timeout = setTimeout(
         () => finish(new Error("In-place enrollment SSH timed out")),
-        60_000,
+        timeoutMs,
       );
 
       client.on("error", () =>

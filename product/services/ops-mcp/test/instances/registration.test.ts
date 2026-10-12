@@ -34,7 +34,12 @@ const setup = ({
     environment: Readonly<Record<string, string>>;
     options?: { readonly allowReset?: boolean };
   }[] = [];
+  const enrollTailscale = vi.fn(async () => ({ tailscaleIp: "100.64.0.1" }));
+  const revoke = vi.fn(async () => {});
+  const setServingUrl = vi.fn(async () => ({}) as InstanceRecord);
   const provider: InstanceProvider = {
+    enrollTailscale,
+    checkTailscaleEnrollment: async () => {},
     describe: async (id) => ({
       provider: "runpod",
       providerAccountId: "user_1",
@@ -58,17 +63,26 @@ const setup = ({
   const bindNomadNode = vi.fn(async () => ({}) as InstanceRecord);
   const register = vi.fn(
     async () =>
-      ({ id: INSTANCE_ID, nomadNodeId: boundNodeId }) as InstanceRecord,
+      ({
+        id: INSTANCE_ID,
+        nomadNodeId: boundNodeId,
+        servingUrl: null,
+      }) as InstanceRecord,
   );
   const audit = vi.fn();
   const dependencies: RegistrationDependencies = {
     providers: { runpod: async () => provider },
     instances: async () =>
-      ({ register, bindNomadNode }) as unknown as InstanceService,
+      ({
+        register,
+        bindNomadNode,
+        setServingUrl,
+      }) as unknown as InstanceService,
     certificateCredentials: async () =>
       ({
         enroll: async () => "r".repeat(43),
       }) as unknown as import("@gradiated/control").InstanceCertificateService,
+    tailscaleAuthKey: async () => ({ key: "tskey-auth-synthetic", revoke }),
     hostImage: "registry.example/nomad-base:inputs-abc",
     caCertificate: async () => testCa.certificate,
     signer: kmsSigner("alias/test-nomad-ca", fakeKms().client),
@@ -93,6 +107,9 @@ const setup = ({
   return {
     registrations: createRegistrations(dependencies),
     bootstraps,
+    enrollTailscale,
+    revoke,
+    setServingUrl,
     register,
     bindNomadNode,
     audit,
@@ -176,6 +193,7 @@ describe("instance registration", () => {
       "issuing_certificate",
       "updating_provider",
       "waiting_for_node",
+      "enrolling_tailscale",
       "bound",
     ]);
     expect(test.bindNomadNode).toHaveBeenCalledWith(
@@ -208,6 +226,66 @@ describe("instance registration", () => {
       GRADIATED_INSTANCE_ID: INSTANCE_ID,
       GRADIATED_RUNTIME_ACCESS_TOKEN: TOKEN,
       GRADIATED_DEPLOYMENT_STATUS_TOKEN: STATUS_TOKEN,
+    });
+  });
+
+  it("enrolls Tailscale before binding and revokes the one-time key", async () => {
+    const test = setup();
+    const result = await settled(
+      test.registrations,
+      (await test.registrations.start(request)).id,
+    );
+
+    expect(test.enrollTailscale).toHaveBeenCalledWith(
+      "pod1",
+      INSTANCE_ID,
+      "tskey-auth-synthetic",
+    );
+    expect(test.enrollTailscale.mock.invocationCallOrder[0]).toBeLessThan(
+      test.bindNomadNode.mock.invocationCallOrder[0]!,
+    );
+    expect(test.revoke).toHaveBeenCalledOnce();
+    expect(result.privateService).toMatchObject({
+      metadata: {
+        name: `gpu-${INSTANCE_ID}`,
+        annotations: { "tailscale.com/tailnet-ip": "100.64.0.1" },
+      },
+    });
+    expect(result.tailscaleIp).toBe("100.64.0.1");
+    expect(JSON.stringify(test.bootstraps)).not.toContain("tskey-auth-");
+  });
+
+  it("leaves a failed private enrollment unbound and revokes its key", async () => {
+    const test = setup();
+    test.revoke.mockRejectedValueOnce(new Error("Revoke unavailable"));
+    test.enrollTailscale.mockRejectedValueOnce(
+      new Error("Private proxy unavailable"),
+    );
+    const result = await settled(
+      test.registrations,
+      (await test.registrations.start(request)).id,
+    );
+
+    expect(result.phase).toBe("failed");
+    expect(result.error).toBe("Private proxy unavailable");
+    expect(test.bindNomadNode).not.toHaveBeenCalled();
+    expect(test.revoke).toHaveBeenCalledOnce();
+    expect(test.setServingUrl).not.toHaveBeenCalled();
+  });
+
+  it("retains a successful enrollment when key cleanup temporarily fails", async () => {
+    const test = setup();
+    test.revoke.mockRejectedValueOnce(new Error("Revoke unavailable"));
+    const result = await settled(
+      test.registrations,
+      (await test.registrations.start(request)).id,
+    );
+
+    expect(result.phase).toBe("bound");
+    expect(result.privateService).toBeDefined();
+    expect(test.audit).toHaveBeenCalledWith({
+      event: "tailscale_auth_key_revocation_failed",
+      instance_id: INSTANCE_ID,
     });
   });
 
@@ -264,6 +342,7 @@ describe("instance registration", () => {
     expect(test.audit.mock.calls.map(([event]) => event.phase)).toEqual([
       "recording",
       "waiting_for_node",
+      "enrolling_tailscale",
       "bound",
     ]);
   });

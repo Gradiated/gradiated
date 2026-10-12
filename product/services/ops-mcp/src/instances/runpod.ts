@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { readFile } from "node:fs/promises";
 
 import {
   installInPlace,
@@ -112,6 +113,58 @@ export const createRunPodProvider = ({
   };
 
   return {
+    async checkTailscaleEnrollment(podId) {
+      const current = await pod(podId);
+      if (!inPlace?.hostKeys[podId] || !current.ports?.includes("22/tcp"))
+        throw new Error(
+          "GPU registration requires a pinned SSH connection for Tailscale enrollment",
+        );
+    },
+    async enrollTailscale(podId, instanceId, authKey) {
+      const current = await pod(podId);
+      const sshTarget = target(current);
+      const [installer, supervisor, start] = await Promise.all(
+        ["install-tailscale.py", "run-tailscale.sh", "start-tailscale.sh"].map(
+          (name) =>
+            readFile(
+              new URL(
+                `../../../../inference/tailscale/${name}`,
+                import.meta.url,
+              ),
+              "utf8",
+            ),
+        ),
+      );
+      const quote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
+      const result = await inPlace!.run(
+        sshTarget,
+        `python3 -c ${quote(installer!)}`,
+        JSON.stringify({
+          instance_id: instanceId,
+          auth_key: authKey,
+          proxy_port: 8888,
+          scripts: { "run-tailscale": supervisor, "start-tailscale": start },
+        }),
+        180_000,
+      );
+      let metadata: unknown;
+      try {
+        metadata = JSON.parse(result);
+      } catch {
+        throw new Error("Invalid GPU Tailscale enrollment response");
+      }
+      const parsed = z
+        .object({
+          instance_id: z.literal(instanceId),
+          tailscale_ip: z.ipv4().refine((ip) => {
+            const octets = ip.split(".").map(Number);
+            return octets[0] === 100 && octets[1]! >= 64 && octets[1]! <= 127;
+          }),
+        })
+        .parse(metadata);
+
+      return { tailscaleIp: parsed.tailscale_ip };
+    },
     async describe(podId) {
       const found = await pod(podId);
       const sku =

@@ -18,7 +18,6 @@ test("qualification defaults to no mutation and uses secret references rather th
   assert.equal(job.metadata.namespace, "gradiated");
   assert.deepEqual(container.env.map((entry) => entry.valueFrom.secretKeyRef), [
     { name: "worker", key: "DATABASE_URL" },
-    { name: "gateway", key: "SGLANG_API_KEY" },
   ]);
   assert.equal(job.spec.template.spec.automountServiceAccountToken, false);
   assert(

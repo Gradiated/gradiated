@@ -18,6 +18,7 @@ export const catalog = {
       "product/inference/images/nomad-base/renew-certificate.py",
       "product/inference/images/nomad-base/run-renewer.sh",
       "product/inference/images/nomad-base/start-client.sh",
+      "product/inference/tailscale/",
       "product/.dockerignore",
       "product/package.json",
       "product/pnpm-lock.yaml",

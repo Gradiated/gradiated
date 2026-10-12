@@ -16,6 +16,12 @@ export interface InstanceProvider {
   isStopped(providerInstanceId: string): Promise<boolean>;
   supportsInPlace?(providerInstanceId: string, image: string): Promise<boolean>;
   resume?(providerInstanceId: string): Promise<void>;
+  checkTailscaleEnrollment(providerInstanceId: string): Promise<void>;
+  enrollTailscale(
+    providerInstanceId: string,
+    instanceId: string,
+    authKey: string,
+  ): Promise<{ tailscaleIp: string }>;
   bootstrap(
     instance: ProviderInstance,
     image: string,

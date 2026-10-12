@@ -135,7 +135,7 @@ const observe = async () => {
   });
   const serving = await store.replicas();
   const allocations = (await call("/v1/allocations")).filter(
-    (a) => a.JobID !== "host-proxy" && a.ClientStatus === "running",
+    (a) => a.JobID !== "host-proxy-loopback" && a.ClientStatus === "running",
   );
   snapshots.push({ available: serving.length, running: allocations.length });
   if (serving.length !== 2) {

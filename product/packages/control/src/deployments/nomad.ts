@@ -7,6 +7,7 @@ import {
 } from "../catalog/records.js";
 import type { ControlDatabase } from "../db/client.js";
 import { instances, modelDeployments, models } from "../db/schema/index.js";
+import { privateServingUrl } from "../instances/endpoints.js";
 
 export interface NomadAllocation {
   readonly allocationId: string;
@@ -66,20 +67,13 @@ export interface NomadDeploymentStore {
 }
 
 export const NOMAD_RECONCILE_LOCK = "gradiated-nomad-deployments-v1";
-const HOST_PROXY_PORT = 8888;
 
 type Instance = typeof instances.$inferSelect;
 
-// How the gateway reaches a host's proxy differs by provider.
 const hostProxyUrl = (instance: Instance): string | null => {
-  if (instance.servingUrl !== null) return instance.servingUrl;
-
-  switch (instance.provider) {
-    case "runpod":
-      return `https://${instance.providerInstanceId}-${HOST_PROXY_PORT}.proxy.runpod.net`;
-    default:
-      return null;
-  }
+  return instance.servingUrl === privateServingUrl(instance.id)
+    ? instance.servingUrl
+    : null;
 };
 
 export const createNomadDeploymentStore = (
@@ -250,6 +244,18 @@ export const createNomadDeploymentStore = (
           rows.push(placed);
         }
       }
+
+      const withoutPrivateEndpoint = unplaced
+        .filter(
+          (allocation) =>
+            allocation.reason === "provider_has_no_serving_address",
+        )
+        .map((allocation) => allocation.allocationId);
+      if (withoutPrivateEndpoint.length)
+        await tx
+          .update(modelDeployments)
+          .set({ status: "unavailable", updatedAt: sql`now()` })
+          .where(inArray(modelDeployments.id, withoutPrivateEndpoint));
 
       for (const value of rows) {
         const row = ModelDeploymentInsertSchema.parse(value);

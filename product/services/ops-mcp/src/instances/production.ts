@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { randomBytes } from "node:crypto";
 
 import {
   createControlDatabase,
@@ -15,6 +16,7 @@ import { nomadNodeReader } from "./nomad-node.js";
 import { createRegistrations } from "./registration.js";
 import { createRunPodProvider } from "./runpod.js";
 import { sshRunner } from "./ssh.js";
+import { tailscaleAuthKey } from "./tailscale.js";
 
 const RUNTIME_READER_SECRET = "gradiated/prod/nomad/host-runtime-reader";
 
@@ -122,10 +124,11 @@ export const productionRegistrations = (
       }
 
       return {
-        runtimeAccess: await credential("runtime-access-token"),
+        runtimeAccess: randomBytes(32).toString("base64url"),
         deploymentStatus,
       };
     },
+    tailscaleAuthKey,
     readNode: nomadNodeReader(backend),
     audit,
   });

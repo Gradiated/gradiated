@@ -102,10 +102,33 @@ describe("Nomad deployment reconciliation", () => {
         provider: "runpod",
         region: "US-NE-1",
         faultDomain: "runpod:machine-a",
-        serviceUrl: `https://${host.providerInstanceId}-8888.proxy.runpod.net/alloc/${running.allocationId}`,
+        serviceUrl: `http://gpu-${host.id}.tailscale-inference.svc.cluster.local:8888/alloc/${running.allocationId}`,
         release: running.release,
       },
     ]);
+  });
+
+  it("withdraws a serving allocation when its private endpoint is unset", async () => {
+    const running = allocation();
+    await store.reconcile(nomad([running]));
+    await createInstanceService(testDatabase.database).setServingUrl(
+      host.id,
+      null,
+    );
+
+    expect(await store.reconcile(nomad([running]))).toMatchObject({
+      written: 0,
+      unplaced: [
+        {
+          allocationId: running.allocationId,
+          reason: "provider_has_no_serving_address",
+        },
+      ],
+    });
+    expect(await deploymentsOf(running.allocationId)).toMatchObject([
+      { status: "unavailable" },
+    ]);
+    expect(await store.replicas()).toEqual([]);
   });
 
   it("keeps migrated allocations and metrics on their registered private endpoint", async () => {
@@ -336,7 +359,7 @@ describe("Nomad deployment reconciliation", () => {
     for (const target of targets) {
       expect(target.modelId).toBe(modelId);
       expect(target.serviceUrl).toBe(
-        `https://${host.providerInstanceId}-8888.proxy.runpod.net/alloc/${target.id}`,
+        `http://gpu-${host.id}.tailscale-inference.svc.cluster.local:8888/alloc/${target.id}`,
       );
     }
   });

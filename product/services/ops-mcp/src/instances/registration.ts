@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import type {
   InstanceService,
   InstanceCertificateService,
+  InstanceRecord,
 } from "@gradiated/control";
 
 import {
@@ -20,6 +21,7 @@ import {
 } from "./host-bootstrap.js";
 import { waitForNomadNode, type ReadNomadNode } from "./nomad-node.js";
 import type { InstanceProvider, ProviderInstance } from "./provider.js";
+import { gpuService } from "./tailscale.js";
 
 const NODE_READY_TIMEOUT_MS = 30 * 60 * 1000;
 const RETAINED_REGISTRATIONS = 50;
@@ -29,6 +31,7 @@ export type RegistrationPhase =
   | "issuing_certificate"
   | "updating_provider"
   | "waiting_for_node"
+  | "enrolling_tailscale"
   | "bound"
   | "failed";
 
@@ -47,6 +50,8 @@ export type Registration = {
   nomadNodeId?: string;
   nodeName?: string;
   error?: string;
+  tailscaleIp?: string;
+  privateService?: ReturnType<typeof gpuService>;
 };
 
 export type RegistrationRequest = {
@@ -67,6 +72,10 @@ export type RegistrationDependencies = {
   readonly servingTokens: (provider: string) => Promise<{
     runtimeAccess: string;
     deploymentStatus: string;
+  }>;
+  readonly tailscaleAuthKey: (instanceId: string) => Promise<{
+    key: string;
+    revoke: () => Promise<void>;
   }>;
   readonly readNode: ReadNomadNode;
   readonly audit: (event: Record<string, unknown>) => void;
@@ -106,15 +115,38 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
     });
   };
 
-  const waitAndBind = async (instanceId: string, nomadNodeId: string) => {
+  const waitAndBind = async (
+    registration: Registration,
+    provider: InstanceProvider,
+    record: InstanceRecord,
+    nomadNodeId: string,
+  ) => {
     await waitForNomadNode(dependencies.readNode, {
       nomadNodeId,
-      instanceId,
+      instanceId: record.id,
       timeoutMs: dependencies.nodeTimeoutMs ?? NODE_READY_TIMEOUT_MS,
     });
-    await (
-      await dependencies.instances()
-    ).bindNomadNode(instanceId, nomadNodeId);
+    advance(registration, "enrolling_tailscale");
+    const enrollment = await dependencies.tailscaleAuthKey(record.id);
+    let tailscaleIp: string;
+    try {
+      ({ tailscaleIp } = await provider.enrollTailscale(
+        registration.providerInstanceId,
+        record.id,
+        enrollment.key,
+      ));
+    } finally {
+      await enrollment.revoke().catch(() =>
+        dependencies.audit({
+          event: "tailscale_auth_key_revocation_failed",
+          instance_id: record.id,
+        }),
+      );
+    }
+    const inventory = await dependencies.instances();
+    await inventory.bindNomadNode(record.id, nomadNodeId);
+    registration.tailscaleIp = tailscaleIp;
+    registration.privateService = gpuService(record.id, tailscaleIp);
   };
 
   const run = async (
@@ -147,7 +179,7 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
         nodeName: name,
       });
       await provider.resume?.(instance.providerInstanceId);
-      await waitAndBind(record.id, carried.nomadNodeId);
+      await waitAndBind(registration, provider, record, carried.nomadNodeId);
       advance(registration, "bound");
 
       return;
@@ -194,7 +226,7 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
     );
     advance(registration, "waiting_for_node");
 
-    await waitAndBind(record.id, identity.nomadNodeId);
+    await waitAndBind(registration, provider, record, identity.nomadNodeId);
     advance(registration, "bound");
   };
 
@@ -206,6 +238,7 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
   ) => {
     const provider = await createProvider();
     const instance = await provider.describe(request.providerInstanceId);
+    await provider.checkTailscaleEnrollment(request.providerInstanceId);
     const stopped = await provider.isStopped(request.providerInstanceId);
     const environment = await provider.environment(request.providerInstanceId, {
       providerOnly: request.resetRunningPod,

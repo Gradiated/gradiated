@@ -56,7 +56,7 @@ for vars in "$root/jobs"/*.vars.hcl; do
       exit 1
     }
   fi
-  if [[ $name == host-proxy ]]; then
+  if [[ $name == host-proxy-loopback ]]; then
     jq -e 'all(.Job.TaskGroups[];
       ([.Tasks[].ShutdownDelay] | max) as $drain |
       .Update.HealthyDeadline > $drain and

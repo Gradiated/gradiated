@@ -1,37 +1,18 @@
 import { describe, expect, it, vi } from "vitest";
-import { probeAllocations, publicServingUrl } from "./set-private-serving.mjs";
+import { probeAllocations } from "./set-private-serving.mjs";
 
 describe("private serving qualification", () => {
-  it("accepts mixed-case provider IDs for public rollback without accepting arbitrary hosts", () => {
-    expect(
-      publicServingUrl({
-        provider: "runpod",
-        providerInstanceId: "RldmCif788b98e",
-      }),
-    ).toBe("https://rldmcif788b98e-8888.proxy.runpod.net");
-    expect(() =>
-      publicServingUrl({ provider: "runpod", providerInstanceId: "pod.evil" }),
-    ).toThrow();
-    expect(() =>
-      publicServingUrl({ provider: "other", providerInstanceId: "pod" }),
-    ).toThrow();
-  });
-  it("checks every allocation and refuses redirects with authenticated health requests", async () => {
+  it("checks every allocation and refuses redirects through the private endpoint", async () => {
     const request = vi
       .fn<typeof fetch>()
       .mockResolvedValue(new Response(null, { status: 200 }));
-    await probeAllocations(
-      "http://private",
-      ["one", "two"],
-      "synthetic-token",
-      request,
-    );
+    await probeAllocations("http://private", ["one", "two"], request);
     expect(request.mock.calls.map(([url]) => url)).toEqual([
       "http://private/alloc/one/health",
       "http://private/alloc/two/health",
     ]);
+    expect(request.mock.calls[0]?.[1]).not.toHaveProperty("headers");
     expect(request.mock.calls[0]?.[1]).toMatchObject({
-      headers: { authorization: "Bearer synthetic-token" },
       redirect: "error",
     });
   });
@@ -42,15 +23,10 @@ describe("private serving qualification", () => {
       .mockResolvedValueOnce(new Response(null, { status: 200 }))
       .mockResolvedValueOnce(new Response(null, { status: 503 }));
     await expect(
-      probeAllocations(
-        "http://private",
-        ["one", "two"],
-        "synthetic-token",
-        request,
-      ),
+      probeAllocations("http://private", ["one", "two"], request),
     ).rejects.toThrow("Allocation health failed");
     await expect(
-      probeAllocations("http://private", [], "synthetic-token", request),
+      probeAllocations("http://private", [], request),
     ).rejects.toThrow("No available allocations");
   });
 });

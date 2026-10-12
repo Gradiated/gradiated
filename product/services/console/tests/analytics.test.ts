@@ -16,7 +16,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe("console analytics", () => {
-  it("allows recording snapshots and masks sensitive recording data", async () => {
+  it("allows recording snapshots without overriding project replay settings", async () => {
     await import("@/lib/posthog");
     const options = posthog.init.mock.calls[0]![1];
     const snapshots = [{ type: 2, data: { node: { type: 0 } } }];
@@ -25,27 +25,11 @@ describe("console analytics", () => {
       properties: { $snapshot_data: snapshots, $session_id: "test-session" },
     });
 
-    expect(options.disable_session_recording).toBe(false);
+    expect(options).not.toHaveProperty("disable_session_recording");
     expect(event.properties.$snapshot_data).toEqual(snapshots);
     expect(event.properties.$session_id).toBe("test-session");
-    expect(options.session_recording.maskAllInputs).toBe(true);
-    expect(options.session_recording.blockSelector).toContain(
-      'input[type="hidden"]',
-    );
-    expect(options.session_recording.recordBody).toBe(false);
-    expect(options.session_recording.recordHeaders).toBe(false);
-    expect(options.enable_recording_console_log).toBe(false);
-    expect(
-      options.session_recording.maskCapturedNetworkRequestFn({
-        name: "https://console.gradiated.com/login?token=private#secret",
-      }),
-    ).toEqual({ name: "https://console.gradiated.com/login" });
-    expect(
-      options.session_recording.maskCapturedNetworkRequestFn({
-        name: "invalid",
-      }),
-    ).toBeNull();
-    expect(options.session_recording.maskTextSelector).toBe("*");
+    expect(options).not.toHaveProperty("session_recording");
+    expect(options).not.toHaveProperty("enable_recording_console_log");
   });
 
   it("uses SDK pageviews with console attribution and sanitized URL paths", async () => {

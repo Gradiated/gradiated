@@ -125,12 +125,9 @@ it; an unset project key keeps analytics and replay off. The website's send hook
 accepts `$pageview` and `$snapshot`, while continuing to reject unrelated events.
 Both SDKs load remote replay settings while disabling the initial feature-flag fetch.
 
-Both surfaces mask all form inputs and block hidden/file inputs from replay.
-Console text is masked throughout, including API keys and trace content;
-website public text remains visible. Console logs, network bodies and headers
-are disabled. Replay URLs retain their paths but strip queries and fragments.
-These controls run in the browser before upload. See PostHog's
-[replay privacy controls](https://posthog.com/docs/session-replay/privacy).
+Both surfaces use PostHog's default replay behavior without SDK recording,
+masking, console-log, or network-capture overrides. Configure replay in the
+PostHog project settings, including [privacy and masking](https://posthog.com/docs/session-replay/privacy).
 
 Deploy both frontend builds to activate these SDK settings. After deployment,
 visit each surface, interact with it, and confirm a new recording in PostHog.

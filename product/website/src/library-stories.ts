@@ -103,6 +103,7 @@ const METHOD_COVERS: Record<MethodSlug, StoryCover> = {
   mission: artworkPresets.mission,
   product: artworkPresets.product,
   "sequencing-and-depth": artworkPresets.sequencing,
+  priorities: artworkPresets.product,
   "in-person": artworkPresets.people,
   "what-we-look-for": artworkPresets.judgement,
   "getting-out-the-gate": artworkPresets.gate,

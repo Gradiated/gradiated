@@ -258,9 +258,11 @@ const WritingList = ({
                 <span className="gr-nav-note-name-text">{note.title}</span>
                 <Arrow />
               </span>
-              <time className="gr-nav-note-date" dateTime={note.dateTime}>
-                {note.date}
-              </time>
+              {note.date ? (
+                <time className="gr-nav-note-date" dateTime={note.dateTime}>
+                  {note.date}
+                </time>
+              ) : null}
             </span>
           </a>
         </li>

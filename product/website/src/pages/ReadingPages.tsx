@@ -93,7 +93,7 @@ export const ArticleReadingPage = ({
         <Module className="gr-module--top" index={0}>
           <Reading
             byline={
-              article.status === "draft" ? "Draft" : on(article.publishedAt)
+              article.status === "draft" ? undefined : on(article.publishedAt)
             }
             bylineDateTime={
               article.status === "draft" ? undefined : article.publishedAt

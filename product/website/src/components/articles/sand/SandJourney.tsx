@@ -42,18 +42,19 @@ export const SandJourney = ({
         ← Hardware library
       </a>
       <p className="sand-byline">
-        Hardware ·{" "}
-        {metadata.status === "draft" ? (
-          "Draft"
-        ) : (
-          <time dateTime={metadata.publishedAt}>
-            {new Date(metadata.publishedAt).toLocaleDateString("en-GB", {
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            })}
-          </time>
-        )}
+        Hardware
+        {metadata.status === "published" ? (
+          <>
+            {" · "}
+            <time dateTime={metadata.publishedAt}>
+              {new Date(metadata.publishedAt).toLocaleDateString("en-GB", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+            </time>
+          </>
+        ) : null}
       </p>
       <div className="post">
         <div className="stage-col">

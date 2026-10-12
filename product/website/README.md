@@ -94,7 +94,8 @@ Production visits on `gradiated.com` and `www.gradiated.com` send PostHog
 token supplied by `VITE_POSTHOG_KEY` in the Vercel Production environment.
 The production Vercel build fails if this variable is missing. Initial visits and client-side route changes carry `source: website`.
 Query strings and fragments are removed from event and person URL properties.
-Autocapture, session recording, exception capture and form tracking are disabled.
+Autocapture, exception capture and form tracking are disabled. Session replay
+uses PostHog defaults and project settings, with no SDK replay overrides.
 Initialization runs only in the browser, outside static prerendering.
 
 Local and Vercel preview builds do not send events by default. Set

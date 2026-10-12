@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { createRequire } from "node:module";
 import mdx from "@mdx-js/rollup";
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
@@ -6,6 +9,11 @@ import remarkGfm from "remark-gfm";
 import remarkFrontmatter from "remark-frontmatter";
 import rehypeHighlight from "rehype-highlight";
 import { all } from "lowlight";
+
+const require = createRequire(import.meta.url);
+const { renderPost } = require("./scripts/sand-renderer.cjs") as {
+  renderPost(source: string, template: string, scenes: string[]): string;
+};
 
 const mdxPlugin = mdx({
   remarkPlugins: [remarkFrontmatter, remarkGfm],
@@ -26,10 +34,28 @@ export default defineConfig(({ isSsrBuild, mode }) => {
   return {
     plugins: [
       {
+        name: "sand-article",
+        enforce: "pre",
+        load(id) {
+          if (!id.endsWith(".md?sand-article")) return;
+
+          const file = id.slice(0, -"?sand-article".length);
+          const manifest = join(dirname(file), "scenes.json");
+          this.addWatchFile(file);
+          this.addWatchFile(manifest);
+          const html = renderPost(
+            readFileSync(file, "utf8"),
+            "<!--{{TITLE}}-->{{ARTICLE}}",
+            JSON.parse(readFileSync(manifest, "utf8")),
+          );
+          return `export default ${JSON.stringify(html)};`;
+        },
+      },
+      {
         ...mdxPlugin,
         transform(code, id) {
-          // MDX strips query strings before filtering. Leave raw source imports to Vite.
-          if (id.includes("?raw")) return;
+          // MDX strips query strings before filtering, so bypass custom source loaders.
+          if (id.includes("?raw") || id.includes("?sand-article")) return;
           if (typeof mdxPlugin.transform === "function") {
             return mdxPlugin.transform.call(this, code, id);
           }

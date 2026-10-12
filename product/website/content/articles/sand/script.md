@@ -1,0 +1,103 @@
+# How to get an answer out of sand
+
+<!-- Editorial: copied from the live page on 2026-10-12 without rewriting the prose. Visual cue blocks and scene markers are editing notes, not article copy. This file builds the website automatically while preview.sh runs; see web/README.md. -->
+
+How do we get from the silicon atoms in a grain of sand to a machine that answers a question? Here we will follow the journey one step at a time: making a switch, combining switches into circuits that calculate and remember, and assembling those circuits into a computer that performs progressively more complex tasks. We will highlight examples of each successive structure and what it can accomplish.
+
+## Sand and metal
+
+<!-- scene: quartz -->
+
+We start with quartz, the main ingredient in sand. Quartz is silicon dioxide: one silicon atom for every two oxygen atoms, arranged in a repeating crystal structure. Our first task is to separate the silicon from the oxygen.
+
+<!-- scene: ingot -->
+
+We heat the quartz with carbon to extract silicon, then purify it. We melt the purified silicon and grow it into one large crystal, called an ingot.
+
+<!-- scene: wafer -->
+
+We then slice the ingot into thin wafers: the blank canvases for our chips.
+
+<!-- scene: boron -->
+
+We can change how silicon conducts electricity by adding small amounts of other elements. This is called doping. Here is a cross-section of our wafer, lightly doped with boron mixed into the melt before crystal growth.
+
+<!-- scene: implant -->
+
+We can also implant dopants into selected parts of the wafer using what is essentially an atom gun. Here we create two islands of phosphorus-doped silicon within the boron-doped silicon. Phosphorus supplies extra mobile electrons, while boron creates gaps called holes that carry current in a different way. By arranging these two types of silicon, we can shape how current flows.
+
+<!-- scene: wires -->
+
+We can now build our first transistor. We add a wire to each of the two islands and place a third wire, called the gate, above the silicon between them. A thin insulating layer separates the gate from the silicon, allowing it to control the current without making direct electrical contact.
+
+<!-- scene: voltages -->
+
+A voltage difference can drive electrons through a circuit. Let us hold the left wire at 0 volts and the right wire at 1 volt. Electrons would then flow from left to right if there were a conducting path between them. Imagine the electrons moving through an energy landscape, where a hill represents a barrier to their flow.
+
+<!-- scene: blocked -->
+
+With the gate also at 0 volts, this barrier is high and electrons struggle to flow between the two islands.
+
+<!-- scene: flowing -->
+
+Raising the gate to 1 volt lowers this barrier, opening a conducting path between the islands. Electrons can now flow through the transistor and around a connected circuit, perhaps lighting a bulb. This is the basic picture of an n-type MOSFET, an electrically controlled switch with no moving parts.
+
+<!-- scene: symbol -->
+
+We now have a switch that we can control with an electrical signal. To make larger circuits easier to draw, we will represent each transistor with a simple symbol. The next step is to connect these switches so that, together, they can calculate, remember and think. We will build towards these abilities one layer at a time, showing how each new structure makes more complex tasks possible.
+
+## Logic
+
+<!-- scene: not -->
+
+To calculate with electrical signals, we first need a way to represent information. We use a low voltage to represent 0 and a high voltage to represent 1. Each of these binary digits is called a bit.
+
+By connecting transistors, we can build circuits called logic gates that turn input bits into output bits according to a simple rule. The simplest example is the NOT gate, which flips its input. A 0 becomes a 1, and a 1 becomes a 0.
+
+Let’s zoom out one step and connect two transistors to make our first logic gate. The lower one is our n-type switch. The upper one, drawn with a small circle on its gate, is its mirror image, a p-type MOSFET made with the dopants swapped. In this circuit, it turns on when the input is 0, while the n-type turns on when the input is 1. Together, they make the output the opposite of the input. This is a NOT gate.
+
+<!-- scene: nand -->
+
+Add two more transistors and we can build a NAND gate. It takes two input bits, A and B, and produces a 1 unless both inputs are 1, in which case it produces a 0.
+
+<!-- scene: nand-symbol -->
+
+Let’s zoom out again and give this four-transistor circuit a symbol. The two inputs enter on the flat side, and the output leaves through the small circle, which indicates inversion. It can be shown that NAND gates alone can be combined to implement any function that maps a finite set of input bits to output bits. This makes them universal building blocks. From this one simple circuit, we can build the logic for everything from a calculator to a computer running an AI model.
+
+## Arithmetic
+
+<!-- scene: adder -->
+
+Let’s zoom out further and combine NAND gates into a circuit that adds. In binary, we have only two digits, 0 and 1, so adding 1 and 1 gives 10. We write down 0 and carry 1 into the next column, just as we carry digits in ordinary addition.
+
+Our circuit handles one column at a time. It adds two input bits, aᵢ and bᵢ, along with any carry from the previous column, cᵢ. It produces the answer bit sᵢ and a carry for the next column, cᵢ₊₁. This three-input, two-output circuit is called a full adder.
+
+<!-- scene: chain -->
+
+Connect several full adders in a row, passing each carry cᵢ₊₁ into the next column, and we can add entire binary numbers. Here, four adders calculate 0011 + 0110 = 1001, or 3 + 6 = 9. More columns let us work with larger numbers. With addition as a building block, it is a short step to circuits that subtract and multiply, and our toolset has grown.
+
+<!-- scene: heat -->
+
+We have combined small groups of transistors into a circuit that adds numbers, but each calculation has a physical cost. Every calculation involves voltage flips as some of the transistors switch. These flips charge or discharge the tiny capacitances of the transistors and wires, expending energy that is dissipated as heat.
+
+The faster we switch, the more heat we produce each second. This switching power scales with C V² f, where C is the capacitance being switched, V is the voltage swing, and f is the clock speed, which sets the pace of computation. Smaller capacitances and lower voltages reduce the energy needed, while switching less often reduces the rate at which we generate heat. Heat is a budget we will keep encountering as the counts climb.
+
+## Memory
+
+<!-- scene: latch -->
+
+We can now calculate an answer, but how do we remember it? Let’s zoom back in and connect a few NAND gates so that their outputs feed back into their inputs. This circuit is called a latch. It has a data input D, a write-enable input WE, and an output Q. While WE is 1, Q follows D. When WE becomes 0, Q holds its last value, even if D changes.
+
+How does a loop create memory? The two gates on the right feed their outputs into each other, each reinforcing the other’s state. With writing disabled, this feedback holds Q at its last value for as long as power is supplied. We have added memory to our toolset.
+
+<!-- scene: register -->
+
+Let’s zoom out again and place four latches side by side, each holding one bit. Together, they form a four-bit register that can remember an entire binary number. By sharing a write-enable signal, all four latches can copy their inputs at D simultaneously, then hold the number while those inputs change.
+
+<!-- scene: stored-answer -->
+
+We can now connect our register to the four-bit adder. With write-enable at 1, the register copies the answer, 1001. Set write-enable to 0 and that answer is held. The adder can calculate something new while the register remembers the previous result. We can now both calculate and keep the answer.
+
+<!-- footer -->
+
+We now have circuits that calculate and circuits that remember. Our next step is to combine them into a machine that follows instructions, choosing which values to use, what to calculate, and where to store each result.

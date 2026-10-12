@@ -1,0 +1,447 @@
+.sand-journey {
+  --paper: #f7f3ec;
+  --ink: #17161a;
+  --muted: #8d8781;
+  --shadow: #e3ddd2;
+  --panel: rgba(255, 253, 249, 0.92);
+}
+
+.sand-journey * {
+  box-sizing: border-box;
+}
+
+.sand-journey {
+  scroll-behavior: auto;
+}
+
+.sand-journey {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family:
+    ui-sans-serif,
+    -apple-system,
+    "SF Pro Text",
+    "Helvetica Neue",
+    Inter,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  font-size: 1.1rem;
+  line-height: 1.75;
+}
+
+.sand-journey .post {
+  display: grid;
+  grid-template-columns: minmax(0, 46fr) minmax(0, 54fr);
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.sand-journey .stage-col {
+  position: relative;
+}
+
+.sand-journey .stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 0 1rem;
+}
+
+.sand-journey .stage svg {
+  width: min(100%, 72vmin, 540px);
+  height: auto;
+  overflow: hidden;
+}
+
+.sand-journey #art {
+  --w: 1.8;
+}
+
+.sand-journey #shadow,
+.sand-journey .shadow {
+  fill: var(--shadow);
+}
+
+.sand-journey .part path,
+.sand-journey #mesh {
+  fill: none;
+  stroke: var(--ink);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.sand-journey .part .silhouette {
+  stroke-width: calc(var(--w) * 1px);
+}
+
+.sand-journey .part .crease {
+  stroke-width: calc(var(--w) * 0.75px);
+}
+
+.sand-journey .part .hatch {
+  stroke-width: calc(var(--w) * 0.7px);
+}
+
+.sand-journey .part .detail {
+  stroke-width: calc(var(--w) * 0.6px);
+}
+
+.sand-journey #mesh {
+  stroke: #b9b2a8;
+  stroke-width: 0.5px;
+  display: none;
+}
+/* 2D diagram layer */
+.sand-journey #d2 line,
+.sand-journey #d2 path,
+.sand-journey #d2 rect,
+.sand-journey #d2 circle,
+.sand-journey #d2 polyline {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: calc(var(--w) * 0.8px);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.sand-journey #d2 .thin,
+.sand-journey #d2 .thin * {
+  stroke-width: calc(var(--w) * 0.5px);
+}
+
+.sand-journey #d2 .muted,
+.sand-journey #d2 .muted * {
+  stroke: var(--muted);
+}
+
+.sand-journey #d2 .dashed {
+  stroke-dasharray: 3 3;
+}
+
+.sand-journey #d2 .dots circle,
+.sand-journey #d2 circle.dot {
+  fill: var(--ink);
+  stroke: none;
+}
+
+.sand-journey #d2 .flash {
+  stroke-width: calc(var(--w) * 1.7px);
+}
+
+.sand-journey #d2 .glow {
+  fill: rgba(242, 207, 91, 0.5);
+  stroke: none;
+}
+
+.sand-journey #d2 .ghost {
+  fill: none;
+  stroke: none;
+}
+
+.sand-journey #d2 .heat,
+.sand-journey #d2 .heat * {
+  stroke: #d9553f;
+}
+
+.sand-journey #d2 .faint-gates * {
+  stroke-width: calc(var(--w) * 0.5px);
+}
+
+.sand-journey #d2 .hero-nand * {
+  stroke-width: calc(var(--w) * var(--k, 1) * 1px);
+}
+
+.sand-journey #d2 .hollow circle {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: calc(var(--w) * 0.5px);
+}
+
+.sand-journey #d2 text {
+  fill: var(--ink);
+  stroke: none;
+  /* diagram labels and captions: a face that stays crisp at small sizes inside the scaled SVG */
+  font-family:
+    "IBM Plex Sans",
+    ui-sans-serif,
+    -apple-system,
+    "SF Pro Text",
+    "Helvetica Neue",
+    Inter,
+    sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+}
+/* Muted diagram strokes must not outline letters and make captions look heavier. */
+.sand-journey #d2 text.muted,
+.sand-journey #d2 text.muted *,
+.sand-journey #d2 .muted text,
+.sand-journey #d2 .muted text * {
+  stroke: none;
+}
+
+.sand-journey #d2 text.muted {
+  fill: #6f6a63;
+}
+
+.sand-journey #d2 text.tiny {
+  font-size: 10px;
+}
+
+.sand-journey #d2 text.faint {
+  opacity: 0.4;
+}
+
+.sand-journey #d2 text.caption {
+  font-size: 13.5px;
+  font-weight: 500;
+  fill: #4a4540;
+  letter-spacing: 0.01em;
+}
+
+.sand-journey #d2 text.bit {
+  font-weight: 600;
+}
+
+.sand-journey #d2 text.formula {
+  font-size: 16px;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.sand-journey #d2 text.formula .propto {
+  font-size: 26px;
+  font-style: normal;
+  font-weight: 300;
+}
+
+.sand-journey .prose {
+  padding: 0 clamp(1.5rem, 6vw, 5rem);
+  max-width: 36rem;
+}
+
+.sand-journey .post-header {
+  min-height: 90vh;
+  display: grid;
+  align-content: center;
+}
+
+.sand-journey .eyebrow {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.sand-journey h1 {
+  font-size: clamp(2.4rem, 5vw, 3.6rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin: 0 0 1.25rem;
+}
+
+.sand-journey .lede {
+  color: var(--muted);
+  margin: 0;
+  font-size: 1rem;
+}
+
+.sand-journey .scene-text {
+  min-height: 78vh;
+  display: grid;
+  align-content: center;
+  opacity: 0.28;
+  transition: opacity 0.5s ease;
+}
+
+.sand-journey .scene-text.is-active {
+  opacity: 1;
+}
+
+.sand-journey .scene-text h2 {
+  font-size: 1.7rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  margin: 0 0 1rem;
+}
+
+.sand-journey .scene-text p {
+  margin: 0;
+}
+
+.sand-journey .post-footer {
+  min-height: 60vh;
+  display: grid;
+  align-content: center;
+  color: var(--muted);
+}
+
+.sand-journey sup.fn {
+  font-size: 0.6em;
+  line-height: 0;
+  vertical-align: super;
+  margin-left: 0.05em;
+}
+
+.sand-journey sup.fn a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.sand-journey sup.fn a:hover {
+  color: var(--ink);
+}
+
+.sand-journey .footnote {
+  margin-top: 3rem;
+  max-width: 34rem;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.sand-journey .footnote sup {
+  font-size: 0.75em;
+  line-height: 0;
+  margin-right: 0.15em;
+}
+
+.sand-journey .footnote .fn-back {
+  color: inherit;
+  text-decoration: none;
+}
+
+.sand-journey .footnote .fn-back:hover {
+  color: var(--ink);
+}
+
+.sand-journey .panel {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 10;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  background: var(--panel);
+  border: 1px solid #e6e0d6;
+  border-radius: 10px;
+  padding: 0.4rem 0.7rem;
+  backdrop-filter: blur(8px);
+  min-width: 11rem;
+}
+
+.sand-journey .panel summary {
+  cursor: pointer;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  user-select: none;
+}
+
+.sand-journey .panel label {
+  display: grid;
+  grid-template-columns: 5rem 1fr;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.45rem;
+  color: var(--muted);
+}
+
+.sand-journey .panel label.check {
+  grid-template-columns: auto 1fr;
+}
+
+.sand-journey .panel input[type="range"] {
+  width: 100%;
+  accent-color: var(--ink);
+}
+
+.sand-journey .panel input[type="checkbox"] {
+  accent-color: var(--ink);
+  margin: 0;
+}
+
+.sand-journey .panel output {
+  display: block;
+  margin-top: 0.5rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 640px) {
+  .sand-journey .post {
+    display: block;
+  }
+
+  .sand-journey .stage-col {
+    display: contents;
+  }
+
+  .sand-journey .stage {
+    height: 44vh;
+    z-index: 1;
+    background: var(--paper);
+  }
+
+  .sand-journey .stage svg {
+    width: min(52vh, 80vw);
+  }
+
+  .sand-journey .prose {
+    max-width: none;
+  }
+
+  .sand-journey .post-header {
+    min-height: 46vh;
+  }
+
+  .sand-journey .scene-text {
+    min-height: 56vh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sand-journey .scene-text {
+    transition: none;
+  }
+}
+
+.sand-journey {
+  position: relative;
+  padding-top: 6rem;
+}
+.sand-journey .sand-return {
+  display: block;
+  width: fit-content;
+  margin: 0 auto;
+  padding: 1.5rem;
+  color: inherit;
+  text-decoration: none;
+}
+.sand-journey .prose p {
+  font-size: inherit;
+  line-height: inherit;
+}
+.sand-journey .panel {
+  display: none;
+}
+
+.sand-journey .sand-byline {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.sand-journey:not([data-animation-ready="true"]) .scene-text {
+  opacity: 1;
+}

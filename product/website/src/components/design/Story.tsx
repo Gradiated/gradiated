@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactElement } from "react";
 import type { ArtworkPreset } from "../../lib/artwork";
 import { WaferArtwork } from "./WaferArtwork";
+import { SandCircuitArtwork } from "./SandCircuitArtwork";
 
 /**
  * One piece in the Library, as a card.
@@ -31,8 +32,9 @@ export type Story = {
   art?: StoryArt;
   /** A generated wafer artwork — the fallback while art does not exist. */
   cover?: StoryCover;
-  /** Which half of the Library this belongs to — what the filters act on. */
-  kind: "method" | "note";
+  /** Which collection in the Library this belongs to — what the filters act on. */
+  kind: "method" | "note" | "hardware";
+  animatedCover?: "sand-circuit";
   /** Human-readable date; `dateTime` carries the machine-readable one. */
   date: string;
   dateTime?: string;
@@ -60,9 +62,11 @@ export const StoryCard = ({
           see .gr-story-art in pages.css. */}
       <span
         aria-hidden
-        className={`gr-story-well${story.art || story.cover ? " gr-story-cover" : ""}`}
+        className={`gr-story-well${story.art || story.cover || story.animatedCover ? " gr-story-cover" : ""}`}
       >
-        {story.art ? (
+        {story.animatedCover === "sand-circuit" ? (
+          <SandCircuitArtwork />
+        ) : story.art ? (
           <span
             className="gr-story-art"
             style={

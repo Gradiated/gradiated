@@ -268,3 +268,30 @@ tokens. Model requests link to `team@gradiated.com`.
 Console links use `CONSOLE_BASE_URL` from `src/urls.ts`. Vite development uses
 `http://localhost:3000`; production builds use `https://console.gradiated.com`.
 Set `VITE_CONSOLE_BASE_URL` at build time to override this destination.
+
+## Hardware library
+
+Articles declare `category: hardware` to appear under `/library/?show=hardware`.
+Omitted categories default to Notes. The same metadata supplies cards, navigation
+and reading-page labels. Existing company Methods stay in their authored sequence.
+
+The sand article uses `layout: journey`, preserving its sticky illustrations in
+the shared website shell. It remains a draft for local review and is excluded
+from production until its metadata is set to published. The prose is rendered at
+build time from `content/articles/sand/script.md`, with the ordered scene manifest
+validated by the renderer. The animation geometry is scoped to its mounted page
+and cleaned up on navigation. The imported animation files are a preserved
+snapshot; later illustration edits must be coordinated with the writing preview. Its four overview chapters belong to the continuous
+journey; future chapter guides will organise separate deeper articles, with one
+primary chapter and contextual links from others. Add guide links only when the
+destination exists.
+
+The writing workspace retains its working draft. Refresh the portable website
+edition with `node scripts/sync-sand-draft.mjs --source /path/to/script.md`.
+Visual cue blocks stay in the working draft and are omitted from the portable
+website edition. Add `--watch` while editing to update the website preview on saves. Production
+builds use the checked-in edition and do not depend on another local folder.
+
+The sand card uses one set of particles for a dune, wind and a logic circuit.
+Hover and keyboard focus morph those particles; leaving restores the dune.
+Reduced motion keeps a still dune. Offscreen artwork stops its frame loop.

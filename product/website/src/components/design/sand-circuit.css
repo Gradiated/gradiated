@@ -1,0 +1,21 @@
+.gr-sand-artwork {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: linear-gradient(145deg, #eadfc8 0%, #d9c49a 55%, #c5a770 100%);
+}
+.gr-sand-artwork canvas,
+.gr-sand-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.gr-sand-artwork[data-ready="true"] .gr-sand-poster {
+  visibility: hidden;
+}
+.gr-story-link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 8px;
+}

@@ -2108,6 +2108,8 @@
 
 .gr-library-controls {
   display: flex;
+  flex-wrap: wrap;
+  max-width: 100%;
   align-items: center;
   gap: calc(0.5 * var(--u));
   padding-block-end: calc(0.4 * var(--u));

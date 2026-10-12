@@ -46,18 +46,19 @@ const FILTERS = [
   { label: "All", show: null },
   { label: "Notes", show: "notes" as const },
   { label: "Methods", show: "methods" as const },
+  { label: "Hardware", show: "hardware" as const },
 ];
 
 export const LibraryIndexPage = ({
   initialFilter,
 }: {
-  initialFilter?: "methods" | "notes";
+  initialFilter?: "methods" | "notes" | "hardware";
 }): ReactElement => {
   /* The filter lives in the URL, not in component state, so a filtered view
      is a place that can be linked to — which is what the nav needs to send a
      reader to Notes or to Methods rather than to the whole index.
 
-     THREE CHOICES, ONE ACTIVE. It used to be two toggles, where "off" meant
+     FOUR CHOICES, ONE ACTIVE. It used to be two toggles, where "off" meant
      the whole list: a reader who wanted everything back had to work out that
      un-pressing the filter they were in was the way to do it. "All" says it
      instead, and is the state the page opens in — an absent `show` is what it
@@ -67,9 +68,17 @@ export const LibraryIndexPage = ({
 
   const requested = params.get("show") ?? initialFilter;
   const show =
-    requested === "notes" || requested === "methods" ? requested : null;
+    requested === "notes" || requested === "methods" || requested === "hardware"
+      ? requested
+      : null;
   const kinds: Story["kind"][] =
-    show === "notes" ? ["note"] : show === "methods" ? ["method"] : [];
+    show === "notes"
+      ? ["note"]
+      : show === "methods"
+        ? ["method"]
+        : show === "hardware"
+          ? ["hardware"]
+          : [];
 
   const shown = useMemo(
     () =>
@@ -87,7 +96,7 @@ export const LibraryIndexPage = ({
 
      A choice rather than a toggle now — pressing the active one again does
      nothing, because "All" is how you get the whole list back. */
-  const select = (next: "methods" | "notes" | null) => {
+  const select = (next: "methods" | "notes" | "hardware" | null) => {
     setParams(next ? { show: next } : {}, { replace: true });
   };
 
@@ -102,7 +111,7 @@ export const LibraryIndexPage = ({
               <div>
                 <p className="gr-label">Library</p>
                 <Reveal as="h1" by="word" className="gr-masthead-title">
-                  Notes &amp; Methods
+                  Notes, Methods &amp; Hardware
                 </Reveal>
               </div>
 

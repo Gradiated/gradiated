@@ -2,6 +2,7 @@ import { CONSOLE_BASE_URL } from "../../urls";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactElement } from "react";
 import { library } from "./library";
+import { SandCircuitArtwork } from "./SandCircuitArtwork";
 import { models } from "../../models";
 import { ModelArt } from "./ModelArt";
 import { WaferArtwork } from "./WaferArtwork";
@@ -146,6 +147,12 @@ const NAV_ITEMS: NavItem[] = [
              HandbookPage — a dead link in the nav. The handbook is Method now. */
           href: "/library/?show=methods",
         },
+        {
+          image: "/assets/artwork-sources/dunes-aerial.jpg",
+          label: "Hardware",
+          body: "From silicon and switches to computers and chip design.",
+          href: "/library/?show=hardware",
+        },
       ],
     },
   },
@@ -240,7 +247,9 @@ const WritingList = ({
                   : `${note.coverAt} 50%`,
               }}
             >
-              {!note.art && note.cover ? (
+              {note.animatedCover === "sand-circuit" ? (
+                <SandCircuitArtwork />
+              ) : !note.art && note.cover ? (
                 <WaferArtwork options={note.cover} />
               ) : null}
             </div>

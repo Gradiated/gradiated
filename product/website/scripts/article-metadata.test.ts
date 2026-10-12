@@ -70,3 +70,35 @@ test("Carat is published with the requested date; Thesis uses the same schema", 
   );
   assert.equal(thesis.path, "/notes/our-thesis/");
 });
+
+test("existing articles stay in Notes and Hardware is an explicit collection", () => {
+  assert.equal(parseArticleMetadata(fixture(), "legacy").category, "notes");
+  assert.equal(parseArticleMetadata(fixture(), "legacy").layout, "reading");
+  const hardware = fixture().replace(
+    "status: published",
+    "category: hardware\nlayout: journey\nstatus: published",
+  );
+  assert.equal(parseArticleMetadata(hardware, "hardware").category, "hardware");
+  assert.equal(parseArticleMetadata(hardware, "hardware").layout, "journey");
+  assert.throws(() =>
+    parseArticleMetadata(
+      hardware.replace("category: hardware", "category: typo"),
+      "bad",
+    ),
+  );
+});
+
+test("the sand journey is a Hardware draft and has no production route", () => {
+  const source = readFileSync(
+    new URL(
+      "../content/articles/how-to-get-an-answer-out-of-sand.mdx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const draft = parseArticleMetadata(source, "sand");
+  assert.equal(draft.category, "hardware");
+  assert.equal(draft.layout, "journey");
+  assert.equal(buildArticleRegistry({ sand: source }, true).length, 1);
+  assert.equal(buildArticleRegistry({ sand: source }, false).length, 0);
+});

@@ -111,14 +111,18 @@ const METHOD_COVERS: Record<MethodSlug, StoryCover> = {
   brand: artworkPresets.brand,
 };
 
-/** Newest first. Every MDX article is a Note, whatever its canonical path. */
+/** Newest first, with the collection supplied by article metadata. */
 const writing: Story[] = articles.map((article) => ({
   art: NOTE_ART[article.path],
   cover: NOTE_COVERS[article.path],
   date: article.status === "draft" ? "Draft" : displayDate(article.publishedAt),
   dateTime: article.status === "draft" ? undefined : article.publishedAt,
   href: article.path,
-  kind: "note" as const,
+  kind: article.category === "hardware" ? "hardware" : "note",
+  animatedCover:
+    article.path === "/library/how-to-get-an-answer-out-of-sand/"
+      ? "sand-circuit"
+      : undefined,
   lede: article.description,
   title: article.title,
 }));

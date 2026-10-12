@@ -688,6 +688,10 @@ def main():
     for name, health, sync, auto, fires in [
         ('healthy', 'Healthy', 'Synced', 'true', False),
         ('degraded', 'Degraded', 'Synced', 'true', True),
+        ('missing automatic application', 'Missing', 'Synced', 'true', True),
+        ('manual application staged but not deployed', 'Missing', 'OutOfSync', 'false', False),
+        ('degraded manual application', 'Degraded', 'Synced', 'false', True),
+        ('unknown manual application', 'Unknown', 'OutOfSync', 'false', True),
         ('automatic sync stalled', 'Healthy', 'OutOfSync', 'true', True),
         ('intentional manual drift', 'Healthy', 'OutOfSync', 'false', False),
     ]:

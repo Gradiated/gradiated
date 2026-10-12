@@ -100,6 +100,11 @@ receiver. Reaching a replica ceiling alone is capacity information, not evidence
 alerts remain visible in Prometheus and Grafana. Autoscaling failures, service
 errors/latency, worker backlog/stalls, and unavailable replicas still create
 incidents; capacity warnings in other namespaces retain their normal routing.
+`ApplicationReconciliationFailed` excludes `Missing` health for manually managed
+applications, which can be staged before their first deployment. Degraded or
+unknown health still creates incidents, as do missing resources or stalled sync
+for automatically managed applications. Kubernetes and service alerts continue
+to detect unavailable deployed workloads independently of Argo sync policy.
 Fast API/gateway outage pages suppress their slower service-wide ratio pages.
 Same-alert critical/warning inhibition is scoped to the affected resource. Alert runbook links
 and local alert runbook procedures are omitted. Product and logging alerts carry

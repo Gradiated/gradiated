@@ -32,6 +32,9 @@ def main():
                    '--kube-version', '1.36.3', '-f', str(values)]
         if not args.chart:
             command += ['--repo', source['repoURL'], '--version', source['targetRevision']]
+        for parameter in source['helm'].get('parameters', []):
+            command += ['--set-string' if parameter.get('forceString') else '--set',
+                        f'{parameter["name"]}={parameter["value"]}']
         output = subprocess.check_output(command, text=True)
         resources = [resource for resource in yaml.safe_load_all(output) if resource]
         grafana = next(resource for resource in resources if resource['kind'] == 'Deployment'

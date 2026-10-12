@@ -94,6 +94,12 @@ never enter Git.
 informational alerts, not a service failure. `Watchdog`, `InfoInhibitor`, and
 `info`/`none` severity alerts go to a null receiver. Unknown severities retain
 the incident receiver so a mislabeled failure is not silently discarded.
+For warning severity in the `gradiated` namespace, `KubeHpaMaxedOut`,
+`AutoscalingLimited`, and `RequestPathAutoscalingLimited` also go to the null
+receiver. Reaching a replica ceiling alone is capacity information, not evidence of service failure. These
+alerts remain visible in Prometheus and Grafana. Autoscaling failures, service
+errors/latency, worker backlog/stalls, and unavailable replicas still create
+incidents; capacity warnings in other namespaces retain their normal routing.
 Fast API/gateway outage pages suppress their slower service-wide ratio pages.
 Same-alert critical/warning inhibition is scoped to the affected resource. Alert runbook links
 and local alert runbook procedures are omitted. Product and logging alerts carry
@@ -224,6 +230,13 @@ Run the alert/dashboard checks (requires PyYAML and `promtool`):
 
 ```sh
 python3 tools/observability/check.py
+```
+
+Render the pinned monitoring chart and test notification routing with Helm,
+PyYAML, and `amtool`:
+
+```sh
+python3 tools/observability/check_platform.py
 ```
 
 This validates panel links and PromQL, and exercises healthy, failed, recovered,

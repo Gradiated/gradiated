@@ -8,7 +8,7 @@ if (posthogKey) {
   posthog.init(posthogKey, {
     api_host: import.meta.env.VITE_POSTHOG_HOST ?? "https://us.i.posthog.com",
     person_profiles: "identified_only",
-    capture_pageview: false,
+    capture_pageview: "history_change",
     autocapture: false,
     capture_pageleave: false,
     disable_session_recording: true,
@@ -16,6 +16,11 @@ if (posthogKey) {
     save_campaign_params: false,
     before_send: (event) => {
       if (!event) return null;
+
+      if (event.event === "$pageview") {
+        event.properties.source = "console";
+        event.properties.schema_version = 1;
+      }
 
       // The SDK merges persisted groups into event groups before this hook.
       if (event.event in eventSchemas)
@@ -25,6 +30,8 @@ if (posthogKey) {
         event.properties,
         event.properties.$set_once,
         event.properties.$set,
+        event.$set_once,
+        event.$set,
       ]) {
         if (!properties || typeof properties !== "object") continue;
         for (const key of [
@@ -38,7 +45,26 @@ if (posthogKey) {
           "$session_entry_referrer",
           "$session_entry_pathname",
         ]) {
-          delete properties[key];
+          if (event.event !== "$pageview") {
+            delete properties[key];
+            continue;
+          }
+
+          if (
+            key.endsWith("pathname") ||
+            typeof properties[key] !== "string" ||
+            properties[key] === "$direct"
+          )
+            continue;
+
+          try {
+            const url = new URL(properties[key]);
+            url.search = "";
+            url.hash = "";
+            properties[key] = url.toString();
+          } catch {
+            delete properties[key];
+          }
         }
       }
       return event;

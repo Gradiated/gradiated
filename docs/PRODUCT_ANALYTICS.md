@@ -5,6 +5,17 @@ The API emits completed business actions after authorization and a successful
 service call. The console emits navigation and interactions, without duplicating
 API events. Analytics does not replace billing records or operational metrics.
 
+The console and Vercel website use PostHog's built-in `$pageview` tracking
+on initial visits and client-side route changes (`capture_pageview: "history_change"`).
+Console visits, including the login page, use `source: console`; website visits
+use `source: website`. There are no custom pageview events. The website uses the
+public token for production project 604827 from `VITE_POSTHOG_KEY` in Vercel's
+Production environment. Local and preview builds are disabled unless their
+environment supplies a separate `VITE_POSTHOG_KEY`. Website tracking is initialized
+only by the browser entry point, so prerendering does not emit visits. Website
+URL properties retain paths but exclude query strings and fragments; form
+autocapture, exception capture and session recording are disabled.
+
 ## Identity and groups
 
 Every product event has `schema_version: 1` and `source: api | console`.
@@ -18,46 +29,46 @@ Workspace events include both `organization_id` and `workspace_id`, attaching
 both `$groups`; org-only events attach only the organization group. Workspace
 group properties are `organization_id` and `is_default`; organization group
 properties include `status`. API events use the actual resource's ownership,
-resolving it through the workspace store where necessary. Console page views
-identify the selected groups. Scope changes reset those groups; logout resets
-identity. The final SDK send hook reconstructs event groups to prevent its
+resolving it through the workspace store where necessary. The console
+sets the selected groups when authenticated pages load. Scope changes reset
+those groups; logout resets identity. The final SDK send hook reconstructs event groups to prevent its
 automatic persistence merge attaching an unrelated workspace to org-only events.
 
 Strict schemas exclude names, API secrets/digests/prefixes, prompts, trace
-payloads, and checkout/download URLs. Automatic page views, page leaves,
-autocapture and session recording are disabled. URL properties are stripped
-at the final SDK boundary, including initial person URL properties.
+payloads, and checkout/download URLs. Page leaves, autocapture and session
+recording are disabled. Standard pageviews retain URL paths but exclude query
+strings and fragments, including initial person URL properties. URL properties
+are stripped from custom console events at the final SDK boundary.
 
 ## Implemented events
 
 **Org** means `organization_id`; **workspace** means both `organization_id`
 and `workspace_id`. Common properties above apply to every row.
 
-| Event                                 | Source  | Properties                              | Trigger                                                                         |
-| ------------------------------------- | ------- | --------------------------------------- | ------------------------------------------------------------------------------- |
-| `user_signed_up`                      | API     | workspace, `user_id`                    | New-user hook after personal scope provisioning; stable event UUID is user ID.  |
-| `user_signed_in`                      | API     | `user_id`, `session_id`                 | Auth session created; stable UUID is session ID. No selected group assumed.     |
-| `organization_created`                | API     | org, `default_workspace_id`             | Explicit org creation succeeds.                                                 |
-| `organization_settings_updated`       | API     | org, `changed_fields`                   | PATCH succeeds; field names only.                                               |
-| `workspace_created`                   | API     | workspace, `is_default`                 | Explicit creation, including a new org's default workspace.                     |
-| `workspace_settings_updated`          | API     | workspace, `changed_fields`             | PATCH succeeds; field names only.                                               |
-| `workspace_archived`                  | API     | workspace                               | Archive accepted; content deletion may remain pending.                          |
-| `api_key_created`                     | API     | workspace, `api_key_id`, `has_expiry`   | Key creation succeeds; no secret or name.                                       |
-| `api_key_revoked`                     | API     | workspace, `api_key_id`                 | Revocation succeeds.                                                            |
-| `billing_checkout_started`            | API     | org, `amount_nano_usd`, `currency: USD` | Checkout created; integer-string amount, not payment completion.                |
-| `task_settings_updated`               | API     | workspace, `task_id`, `changed_fields`  | Task PATCH succeeds; field names only.                                          |
-| `training_run_requested`              | API     | workspace, `task_id`, `run_id`          | Manual request accepted, not actual execution start.                            |
-| `training_run_cancellation_requested` | API     | workspace, `run_id`                     | Cancellation accepted, not actual termination.                                  |
-| `task_version_promoted`               | API     | workspace, `task_id`, `version_id`      | Production version update succeeds.                                             |
-| `sign_in_started`                     | Console | `method: google                         | github                                                                          | magic_link` | Sign-in initiated. |
-| `sign_in_link_sent`                   | Console | `method: magic_link`                    | Magic-link request succeeds.                                                    |
-| `sign_out_clicked`                    | Console | `user_id`                               | Explicit sign-out clicked; not proof of session termination.                    |
-| `console_page_viewed`                 | Console | workspace, `page`                       | Authenticated page appears or scope changes; rerenders/StrictMode deduplicated. |
-| `organization_selected`               | Console | org                                     | Explicit org choice.                                                            |
-| `workspace_selected`                  | Console | workspace                               | Explicit workspace choice.                                                      |
-| `api_key_create_clicked`              | Console | workspace                               | Create-key dialog opened.                                                       |
-| `api_key_copy_clicked`                | Console | workspace, `api_key_id`                 | Copy clicked; no secret, not proof of clipboard success.                        |
-| `billing_top_up_clicked`              | Console | org                                     | Valid top-up form submitted.                                                    |
+| Event                                 | Source  | Properties                              | Trigger                                                                        |
+| ------------------------------------- | ------- | --------------------------------------- | ------------------------------------------------------------------------------ |
+| `user_signed_up`                      | API     | workspace, `user_id`                    | New-user hook after personal scope provisioning; stable event UUID is user ID. |
+| `user_signed_in`                      | API     | `user_id`, `session_id`                 | Auth session created; stable UUID is session ID. No selected group assumed.    |
+| `organization_created`                | API     | org, `default_workspace_id`             | Explicit org creation succeeds.                                                |
+| `organization_settings_updated`       | API     | org, `changed_fields`                   | PATCH succeeds; field names only.                                              |
+| `workspace_created`                   | API     | workspace, `is_default`                 | Explicit creation, including a new org's default workspace.                    |
+| `workspace_settings_updated`          | API     | workspace, `changed_fields`             | PATCH succeeds; field names only.                                              |
+| `workspace_archived`                  | API     | workspace                               | Archive accepted; content deletion may remain pending.                         |
+| `api_key_created`                     | API     | workspace, `api_key_id`, `has_expiry`   | Key creation succeeds; no secret or name.                                      |
+| `api_key_revoked`                     | API     | workspace, `api_key_id`                 | Revocation succeeds.                                                           |
+| `billing_checkout_started`            | API     | org, `amount_nano_usd`, `currency: USD` | Checkout created; integer-string amount, not payment completion.               |
+| `task_settings_updated`               | API     | workspace, `task_id`, `changed_fields`  | Task PATCH succeeds; field names only.                                         |
+| `training_run_requested`              | API     | workspace, `task_id`, `run_id`          | Manual request accepted, not actual execution start.                           |
+| `training_run_cancellation_requested` | API     | workspace, `run_id`                     | Cancellation accepted, not actual termination.                                 |
+| `task_version_promoted`               | API     | workspace, `task_id`, `version_id`      | Production version update succeeds.                                            |
+| `sign_in_started`                     | Console | `method: google                         | github                                                                         | magic_link` | Sign-in initiated. |
+| `sign_in_link_sent`                   | Console | `method: magic_link`                    | Magic-link request succeeds.                                                   |
+| `sign_out_clicked`                    | Console | `user_id`                               | Explicit sign-out clicked; not proof of session termination.                   |
+| `organization_selected`               | Console | org                                     | Explicit org choice.                                                           |
+| `workspace_selected`                  | Console | workspace                               | Explicit workspace choice.                                                     |
+| `api_key_create_clicked`              | Console | workspace                               | Create-key dialog opened.                                                      |
+| `api_key_copy_clicked`                | Console | workspace, `api_key_id`                 | Copy clicked; no secret, not proof of clipboard success.                       |
+| `billing_top_up_clicked`              | Console | org                                     | Valid top-up form submitted.                                                   |
 
 Signup records its initial personal scope in one `user_signed_up` event, without
 also emitting explicit org/workspace creation events. Training remains gated.
@@ -81,7 +92,12 @@ Use the same PostHog project for the API and console in each environment, with
 separate development and production projects.
 
 - Console: `VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST` (US ingestion by default).
-  Production builds already use the `CONSOLE_POSTHOG_KEY` GitHub variable.
+  Production builds use the required `CONSOLE_POSTHOG_KEY` GitHub variable.
+- Website: set `VITE_POSTHOG_KEY` to project 604827's public token in the Vercel
+  Production environment. Production Vercel builds reject a missing key.
+  `VITE_POSTHOG_HOST` can override the US ingestion host. Leave Development and
+  Preview keys unset, or use a separate project's key to keep that traffic out
+  of production. Keep token values in deployment configuration, outside Git.
 - API: `POSTHOG_KEY`, `POSTHOG_HOST` (US ingestion by default). Production loads
   its existing `api` secret from `gradiated/prod/product/api` in Secrets Manager;
   add these fields there and roll the API through normal deployment. No new

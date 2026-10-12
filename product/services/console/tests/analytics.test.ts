@@ -16,11 +16,68 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe("console analytics", () => {
+  it("uses SDK pageviews with console attribution and sanitized URL paths", async () => {
+    await import("@/lib/posthog");
+    const options = posthog.init.mock.calls[0]![1];
+    expect(options.capture_pageview).toBe("history_change");
+
+    const event = options.before_send({
+      event: "$pageview",
+      $set_once: {
+        $initial_current_url:
+          "https://console.gradiated.com/login?token=private#secret",
+      },
+      properties: {
+        $current_url:
+          "https://console.gradiated.com/login?token=private#secret",
+        $pathname: "/login",
+        $session_entry_url:
+          "https://console.gradiated.com/login?token=private#secret",
+      },
+    });
+    expect(event.properties).toMatchObject({
+      source: "console",
+      schema_version: 1,
+      $current_url: "https://console.gradiated.com/login",
+      $pathname: "/login",
+      $session_entry_url: "https://console.gradiated.com/login",
+    });
+    expect(event.$set_once.$initial_current_url).toBe(
+      "https://console.gradiated.com/login",
+    );
+    expect(JSON.stringify(event)).not.toMatch(/private|secret/);
+  });
+
+  it("preserves direct referrer attribution on pageviews", async () => {
+    await import("@/lib/posthog");
+    const options = posthog.init.mock.calls[0]![1];
+    const event = options.before_send({
+      event: "$pageview",
+      $set_once: { $initial_referrer: "$direct" },
+      $set: { $session_entry_referrer: "$direct" },
+      properties: {
+        $referrer: "$direct",
+        $set_once: { $initial_referrer: "$direct" },
+        $set: { $session_entry_referrer: "$direct" },
+      },
+    });
+
+    expect(event.properties.$referrer).toBe("$direct");
+    expect(event.properties.$set_once.$initial_referrer).toBe("$direct");
+    expect(event.properties.$set.$session_entry_referrer).toBe("$direct");
+    expect(event.$set_once.$initial_referrer).toBe("$direct");
+    expect(event.$set.$session_entry_referrer).toBe("$direct");
+  });
+
   it("removes inherited workspace groups and URLs at the final SDK send boundary", async () => {
     await import("@/lib/analytics");
     const options = posthog.init.mock.calls[0]![1];
     const event = options.before_send({
       event: "billing_top_up_clicked",
+      $set_once: {
+        $initial_current_url:
+          "https://console.gradiated.com/login?token=private",
+      },
       properties: {
         organization_id: "org-2",
         $groups: { organization: "org-1", workspace: "ws-1" },

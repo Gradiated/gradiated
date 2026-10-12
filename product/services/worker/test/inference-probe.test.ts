@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { getEventListeners } from "node:events";
 import { describe, expect, it, vi, afterEach } from "vitest";
 import { Registry } from "prom-client";
 import type { NomadReplica } from "@gradiated/control";
@@ -94,13 +95,106 @@ describe("public inference probes", () => {
       probeModel({
         ...options,
         signal: abort.signal,
-        fetch: async (_input, init) => {
-          init?.signal?.throwIfAborted();
+        fetch: async (input) => {
+          (input as Request).signal.throwIfAborted();
           return response(completion);
         },
       }),
     ).rejects.toThrow();
   });
+
+  it.each([undefined, "system_one"] as const)(
+    "cancels an in-flight %s request through the SDK and releases the caller listener",
+    async (protocol) => {
+      const abort = new AbortController();
+      const reason = new Error("synthetic shutdown");
+      await expect(
+        probeModel({
+          ...options,
+          protocol,
+          signal: abort.signal,
+          fetch: async (input) => {
+            const signal = (input as Request).signal;
+            abort.abort(reason);
+            expect(signal.aborted).toBe(true);
+            signal.throwIfAborted();
+            return response(completion);
+          },
+        }),
+      ).rejects.toThrow();
+      expect(getEventListeners(abort.signal, "abort")).toHaveLength(0);
+    },
+  );
+
+  it("cleans up a failed pass before releasing the lease", async () => {
+    vi.useFakeTimers();
+    const abort = new AbortController();
+    const failure = new Error("synthetic lease failure");
+    const evaluate = vi
+      .fn()
+      .mockRejectedValueOnce(failure)
+      .mockResolvedValue(0);
+
+    await expect(
+      runInferenceProbes({
+        eval: evaluate,
+        replicas: async () => [],
+        probe: async () => {},
+        metrics: new InferenceProbeMetrics(new Registry()),
+        signal: abort.signal,
+        onReady: async () => {},
+      }),
+    ).rejects.toBe(failure);
+
+    expect(evaluate.mock.calls.at(-1)?.[0]).toContain("DEL");
+    expect(getEventListeners(abort.signal, "abort")).toHaveLength(0);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it.each([undefined, "system_one"] as const)(
+    "keeps %s cancellation active while reading the response body",
+    async (protocol) => {
+      const abort = new AbortController();
+      let notifyRead!: () => void;
+      const reading = new Promise<void>((resolve) => {
+        notifyRead = resolve;
+      });
+      const probing = probeModel({
+        ...options,
+        protocol,
+        signal: abort.signal,
+        fetch: async (input) => {
+          const signal = (input as Request).signal;
+          const body = new ReadableStream(
+            {
+              start: (controller) => {
+                signal.addEventListener(
+                  "abort",
+                  () => controller.error(signal.reason),
+                  { once: true },
+                );
+              },
+              pull: () => notifyRead(),
+            },
+            { highWaterMark: 0 },
+          );
+          return new Response(body, {
+            headers: {
+              "content-type": "application/json",
+              "x-gradiated-verification-deployment": deploymentId,
+              "x-gradiated-generation-id": randomUUID(),
+            },
+          });
+        },
+      });
+      const outcome = expect(probing).rejects.toThrow();
+      await reading;
+      abort.abort(new Error("synthetic body cancellation"));
+      await outcome;
+
+      expect(getEventListeners(abort.signal, "abort")).toHaveLength(0);
+    },
+  );
 
   it("probes every five seconds despite failures and cleans up the lease and retired metrics", async () => {
     vi.useFakeTimers();
@@ -178,7 +272,11 @@ describe("public inference probes", () => {
     expect(await registry.metrics()).toContain(
       "gradiated_inference_probe_inventory_timestamp_seconds 0",
     );
+    expect(getEventListeners(abort.signal, "abort")).toHaveLength(1);
+    expect(vi.getTimerCount()).toBe(1);
     abort.abort();
     await run;
+    expect(getEventListeners(abort.signal, "abort")).toHaveLength(0);
+    expect(vi.getTimerCount()).toBe(0);
   });
 });

@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { NomadReplica } from "@gradiated/control";
 import { Counter, Gauge, Histogram, type Registry } from "prom-client";
 import { sleep } from "./sleep.js";
+import { createProbeDeadline } from "./probe-deadline.js";
 
 const labels = ["model", "deployment"] as const;
 type Labels = (typeof labels)[number];
@@ -108,39 +109,41 @@ export const runInferenceProbes = async (options: {
   try {
     while (!options.signal.aborted) {
       const start = performance.now();
-      const signal = AbortSignal.any([
-        options.signal,
-        AbortSignal.timeout(4_000),
-      ]);
-      if (Number(await options.eval(probeLeaseScript, lease)) === 1) {
-        signal.throwIfAborted();
-        const replicas = await options.replicas();
-        signal.throwIfAborted();
-        if (replicas.length) await options.beforePass?.();
-        signal.throwIfAborted();
-        options.metrics.discover(replicas);
-        await Promise.all(
-          replicas.map(async (replica) => {
-            const started = performance.now();
-            let succeeded = false;
-            try {
-              await options.probe(replica, signal);
-              succeeded = !signal.aborted;
-            } catch {
-              // SDK errors can contain authentication headers or response bodies.
-            }
-            options.metrics.record(
-              replica,
-              succeeded,
-              (performance.now() - started) / 1000,
-            );
-          }),
-        );
-      } else {
-        options.metrics.discover([]);
-        options.metrics.inventory.set(0);
+      const deadline = createProbeDeadline(options.signal, 4_000);
+      const { signal } = deadline;
+      try {
+        if (Number(await options.eval(probeLeaseScript, lease)) === 1) {
+          signal.throwIfAborted();
+          const replicas = await options.replicas();
+          signal.throwIfAborted();
+          if (replicas.length) await options.beforePass?.();
+          signal.throwIfAborted();
+          options.metrics.discover(replicas);
+          await Promise.all(
+            replicas.map(async (replica) => {
+              const started = performance.now();
+              let succeeded = false;
+              try {
+                await options.probe(replica, signal);
+                succeeded = !signal.aborted;
+              } catch {
+                // SDK errors can contain authentication headers or response bodies.
+              }
+              options.metrics.record(
+                replica,
+                succeeded,
+                (performance.now() - started) / 1000,
+              );
+            }),
+          );
+        } else {
+          options.metrics.discover([]);
+          options.metrics.inventory.set(0);
+        }
+        await options.onReady((performance.now() - start) / 1000);
+      } finally {
+        deadline.dispose();
       }
-      await options.onReady((performance.now() - start) / 1000);
       await sleep(
         Math.max(0, 5_000 - (performance.now() - start)),
         options.signal,

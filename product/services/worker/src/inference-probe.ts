@@ -12,9 +12,7 @@ export const probeModel = async (
       "x-gradiated-verification-deployment",
       options.deploymentId,
     );
-    const response = await (options.fetch ?? fetch)(request, {
-      signal: AbortSignal.any([request.signal, options.signal]),
-    });
+    const response = await (options.fetch ?? fetch)(request);
     if (
       response.ok &&
       (response.headers.get("x-gradiated-verification-deployment") !==
@@ -34,15 +32,18 @@ export const probeModel = async (
       retry: { maxRetries: 0 },
       timeout: 4_000,
     });
-    const result = await client.systemOne({
-      state: { message: "Payment question", probe: randomUUID() },
-      questions: {
-        category: choice("Choose a department", {
-          billing: "Payments",
-          technical: "Software",
-        }),
+    const result = await client.systemOne(
+      {
+        state: { message: "Payment question", probe: randomUUID() },
+        questions: {
+          category: choice("Choose a department", {
+            billing: "Payments",
+            technical: "Software",
+          }),
+        },
       },
-    });
+      { signal: options.signal },
+    );
     if (
       result.model !== options.modelId ||
       !(result.usage?.input_tokens > 0) ||
@@ -61,12 +62,15 @@ export const probeModel = async (
     maxRetries: 0,
     timeout: 4_000,
   });
-  const result = await client.chat.completions.create({
-    model: options.modelId,
-    messages: [{ role: "user", content: "Hi" }],
-    max_tokens: 8,
-    temperature: 0,
-  });
+  const result = await client.chat.completions.create(
+    {
+      model: options.modelId,
+      messages: [{ role: "user", content: "Hi" }],
+      max_tokens: 8,
+      temperature: 0,
+    },
+    { signal: options.signal },
+  );
   if (
     result.model !== options.modelId ||
     !result.id ||

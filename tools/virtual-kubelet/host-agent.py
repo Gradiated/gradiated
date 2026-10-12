@@ -1,0 +1,477 @@
+#!/usr/bin/env python3
+import fcntl
+import hmac
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import json
+import os
+from pathlib import Path
+import pwd
+import re
+import signal
+import subprocess
+import sys
+import threading
+import time
+import urllib.error
+import urllib.request
+import uuid
+
+ROOT = Path("/var/lib/gradiated-kubelet")
+CONFIG = Path("/etc/gradiated/kubelet.json")
+CGROUP = Path("/sys/fs/cgroup")
+
+
+def prepare_cgroups():
+    required = {"cpu", "memory", "pids"}
+    if not required.issubset(set((CGROUP / "cgroup.controllers").read_text().split())):
+        raise RuntimeError("CPU, memory and process limits are required")
+    if not required.issubset(set((CGROUP / "cgroup.subtree_control").read_text().split())):
+        system = CGROUP / "gradiated-system"
+        system.mkdir(exist_ok=True)
+        for pid in (CGROUP / "cgroup.procs").read_text().split():
+            try:
+                (system / "cgroup.procs").write_text(pid)
+            except ProcessLookupError:
+                pass
+        (CGROUP / "cgroup.subtree_control").write_text("+cpu +memory +pids")
+    pods = CGROUP / "gradiated-pods"
+    pods.mkdir(exist_ok=True)
+    (pods / "cgroup.subtree_control").write_text("+cpu +memory +pids")
+
+
+def pod_cgroup(uid):
+    return CGROUP / "gradiated-pods" / str(uuid.UUID(uid))
+
+
+def atomic_json(path, value):
+    temporary = path.with_suffix(f".{uuid.uuid4().hex}.new")
+    temporary.write_text(json.dumps(value))
+    temporary.chmod(0o600)
+    temporary.replace(path)
+
+
+def process_birth(pid):
+    try:
+        fields = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()
+        return None if fields[0] == "Z" else fields[19]
+    except FileNotFoundError:
+        return None
+
+
+def alive(owner):
+    return bool(owner and owner["birth"] and process_birth(owner["pid"]) == owner["birth"])
+
+
+def owner(process):
+    return {"pid": process.pid, "birth": process_birth(process.pid)}
+
+
+def owned_signal(process, signum):
+    if alive(process):
+        os.killpg(process["pid"], signum)
+
+
+def health(port, path="/health"):
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}{path}", timeout=2) as response:
+            return response.status == 200
+    except (OSError, urllib.error.URLError):
+        return False
+
+
+def spawn_user(user, command, environment, log_path):
+    with log_path.open("ab") as output:
+        return subprocess.Popen(
+            ["/usr/bin/setpriv", f"--reuid={user}", f"--regid={user}", "--init-groups",
+             "--inh-caps=-all", "--ambient-caps=-all", "--no-new-privs", "--pdeathsig=TERM", *command],
+            env=environment, stdin=subprocess.DEVNULL, stdout=output,
+            stderr=subprocess.STDOUT, start_new_session=True,
+        )
+
+
+def task(uid, stopping):
+    (pod_cgroup(uid) / "cgroup.procs").write_text(str(os.getpid()))
+    config = json.loads(CONFIG.read_text())
+    directory = ROOT / "pods" / uid
+    state_path = directory / "state.json"
+    bundle = ROOT / "bundles" / config["bundle_sha256"]
+    marker = bundle / ".bundle-sha256"
+    if marker.read_text().strip() != config["bundle_sha256"]:
+        raise ValueError("Unverified runtime bundle")
+    environment = {
+        "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "HOME": "/home/runtime", "HF_HOME": "/home/runtime/.cache/huggingface",
+        "XDG_CACHE_HOME": "/home/runtime/.cache", "OMP_NUM_THREADS": "16",
+        "NVIDIA_VISIBLE_DEVICES": config["gpu_uuid"], "CUDA_VISIBLE_DEVICES": config["gpu_uuid"],
+        "RUNTIME_PORT": "38080", "RUNTIME_STARTUP_TIMEOUT_SECONDS": "1800",
+    }
+    model = reporter = None
+    try:
+        lock_path = Path("/home/runtime/.cache/gradiated/gpu-locks") / config["gpu_uuid"]
+        lock_path.parent.mkdir(parents=True, exist_ok=True)
+        with lock_path.open("a") as gpu_lock:
+            runtime_user = pwd.getpwnam("runtime")
+            os.chown(lock_path.parent, runtime_user.pw_uid, runtime_user.pw_gid)
+            os.chown(lock_path, runtime_user.pw_uid, runtime_user.pw_gid)
+            fcntl.flock(gpu_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            active = subprocess.run(
+                ["nvidia-smi", f"--id={config['gpu_uuid']}", "--query-compute-apps=pid", "--format=csv,noheader"],
+                capture_output=True, text=True, check=True, timeout=10,
+            ).stdout.strip()
+            if active and active != "No running processes found":
+                raise ValueError("GPU already has a compute process")
+            model = spawn_user("runtime", [str(bundle / "runtime-launch"), str(bundle)],
+                               environment, directory / "runtime.log")
+            atomic_json(directory / "runtime.json", {"runtime": owner(model)})
+            reporting = {
+                "PATH": environment["PATH"], "DESMOND_DEPLOYMENT_ID": uid,
+                "DESMOND_RELEASE": config["release"]["runtime_revision"],
+                "DESMOND_MODEL": config["model_id"],
+                "DESMOND_MODEL_REVISION": config["release"]["model_revision"],
+                "DESMOND_RUNTIME_HOST": "127.0.0.1", "DESMOND_RUNTIME_PORT": "38080",
+                "DESMOND_INGRESS_PORT": "8889", "DESMOND_CONTROL_HOST": "127.0.0.1",
+                "DESMOND_CONTROL_PORT": "38081", "DESMOND_STATUS_HOST": "127.0.0.1",
+                "DESMOND_STATUS_PORT": "3004",
+                "DESMOND_CONTROL_TOKEN_FILE": "/etc/gradiated/runtime-access.token",
+            }
+            reporter = spawn_user("desmond", ["/opt/gradiated/kubelet/desmondd", "--observe"],
+                                  reporting, directory / "desmond.log")
+            atomic_json(directory / "runtime.json", {
+                "runtime": owner(model), "reporter": owner(reporter), "started_at": time.time(),
+            })
+            while not stopping.wait(1):
+                if model.poll() is not None or reporter.poll() is not None:
+                    raise RuntimeError("Runtime or reporter exited")
+    finally:
+        for process in (model, reporter):
+            if process and process.poll() is None:
+                os.killpg(process.pid, signal.SIGTERM)
+        for process in (model, reporter):
+            if process:
+                try:
+                    process.wait(timeout=65)
+                except subprocess.TimeoutExpired:
+                    os.killpg(process.pid, signal.SIGKILL)
+                    process.wait(timeout=5)
+
+
+class Agent:
+    def __init__(self, config, root=ROOT):
+        self.config, self.root = config, root
+        self.lock = threading.Lock()
+        self.children = {}
+
+    def states(self):
+        return [json.loads(path.read_text()) for path in (self.root / "pods").glob("*/state.json")]
+
+    def proxy_config(self):
+        proxy = self.root / "proxy"
+        lines = [f"worker_processes 1; pid {proxy}/nginx.pid; error_log stderr warn;",
+                 "events { worker_connections 2048; }", "http { access_log off; client_max_body_size 1M;",
+                 f"client_body_temp_path {proxy}/body; proxy_temp_path {proxy}/temp;",
+                 "server { listen 127.0.0.1:8889;",
+                 'location = /private-healthz { return 200 "ok\\n"; }',
+                 'location = /healthz { return 200 "ok\\n"; }',
+                 "location = /_kubelet { proxy_pass http://127.0.0.1:8887; }",
+                 'location / { return 404 "unknown deployment\\n"; }']
+        for state in self.states():
+            uid = str(uuid.UUID(state["pod"]["metadata"]["uid"]))
+            if state.get("draining"):
+                lines.append(f"location = /alloc/{uid}/health {{ return 503; }}")
+            lines.append(f"location /alloc/{uid}/ {{ proxy_pass http://127.0.0.1:38080/; "
+                         "proxy_http_version 1.1; proxy_set_header Connection \"\"; "
+                         "proxy_set_header Authorization \"\"; proxy_buffering off; "
+                         "proxy_request_buffering off; proxy_read_timeout 330s; }")
+        return "\n".join([*lines, "} }"])
+
+    def refresh_proxy(self):
+        path = self.root / "nginx.conf"
+        temporary = path.with_suffix(".new")
+        configuration = self.proxy_config()
+        test_pid = self.root / "proxy" / "nginx-test.pid"
+        temporary.write_text(configuration.replace(f"pid {self.root}/proxy/nginx.pid;", f"pid {test_pid};"))
+        temporary.chmod(0o644)
+        subprocess.run(["nginx", "-t", "-q", "-c", str(temporary)], check=True,
+                       capture_output=True, timeout=10)
+        test_pid.unlink(missing_ok=True)
+        temporary.write_text(configuration)
+        temporary.replace(path)
+        pid_file = self.root / "proxy" / "nginx.pid"
+        if pid_file.exists():
+            value = pid_file.read_text().strip()
+            if not value:
+                account = pwd.getpwnam("desmond")
+                matches = []
+                for process in Path("/proc").glob("[0-9]*/cmdline"):
+                    try:
+                        command = process.read_bytes()
+                        if process.stat().st_uid == account.pw_uid and b"nginx: master process" in command and str(path).encode() in command:
+                            matches.append(int(process.parent.name))
+                    except FileNotFoundError:
+                        pass
+                if len(matches) != 1:
+                    if health(8889, "/healthz"):
+                        raise RuntimeError("Cannot identify the private proxy")
+                    pid_file.unlink()
+                    return
+                value = str(matches[0])
+                pid_file.write_text(value)
+                os.chown(pid_file, account.pw_uid, account.pw_gid)
+            pid = int(value)
+            command_path = Path(f"/proc/{pid}/cmdline")
+            if not command_path.exists() or not process_birth(pid):
+                pid_file.unlink()
+                return
+            command = command_path.read_bytes()
+            if str(path).encode() not in command:
+                raise RuntimeError("Proxy PID does not belong to this agent")
+            os.kill(pid, signal.SIGHUP)
+
+    def ensure_proxy(self):
+        process = self.children.get("proxy")
+        if process and process.poll() is None:
+            return
+        pid_file = self.root / "proxy" / "nginx.pid"
+        if pid_file.exists():
+            value = pid_file.read_text().strip()
+            if value and process_birth(int(value)):
+                command = Path(f"/proc/{int(value)}/cmdline").read_bytes()
+                if str(self.root / "nginx.conf").encode() not in command:
+                    raise RuntimeError("Proxy PID does not belong to this agent")
+                return
+            pid_file.unlink()
+        group = CGROUP / "gradiated-proxy"
+        group.mkdir(exist_ok=True)
+        if (group / "cgroup.procs").read_text().strip():
+            (group / "cgroup.kill").write_text("1")
+            deadline = time.monotonic() + 5
+            while (group / "cgroup.procs").read_text().strip() and time.monotonic() < deadline:
+                time.sleep(.1)
+            if (group / "cgroup.procs").read_text().strip():
+                raise RuntimeError("Old private proxy processes did not stop")
+        (group / "memory.max").write_text(str(256 * 1024 ** 2))
+        (group / "pids.max").write_text("64")
+        self.refresh_proxy()
+        with (self.root / "proxy.log").open("ab") as output:
+            self.children["proxy"] = subprocess.Popen(
+                [sys.executable, __file__, "proxy"],
+                env={"PATH": "/usr/sbin:/usr/bin:/sbin:/bin"},
+                stdin=subprocess.DEVNULL, stdout=output, stderr=subprocess.STDOUT,
+                start_new_session=True)
+
+    def validate(self, pod):
+        uid = str(uuid.UUID(pod["metadata"]["uid"]))
+        spec = pod["spec"]
+        if spec.get("nodeName") != f"gpu-{self.config['instance_id']}":
+            raise ValueError("Pod is assigned to another host")
+        containers = spec.get("containers", [])
+        if len(containers) != 1 or containers[0]["image"] != f"gradiated/kev-bundle@sha256:{self.config['bundle_sha256']}":
+            raise ValueError("Unsupported runtime release")
+        annotations = pod["metadata"].get("annotations", {})
+        if annotations.get("gradiated.com/model-id") != self.config["model_id"]:
+            raise ValueError("Unsupported model")
+        if json.loads(annotations.get("gradiated.com/release", "null")) != self.config["release"]:
+            raise ValueError("Runtime metadata does not match the pinned release")
+        container = containers[0]
+        if any(container.get(key) for key in ["env", "envFrom", "command", "args", "volumeMounts"]):
+            raise ValueError("Runtime execution overrides are unsupported")
+        limits = container.get("resources", {}).get("limits", {})
+        if limits.get("nvidia.com/gpu") not in (1, "1") or limits.get("cpu") != "16" or limits.get("memory") != "64Gi":
+            raise ValueError("Kev requires one GPU, 16 CPUs and 64 GiB limits")
+        if spec.get("volumes") or spec.get("initContainers") or spec.get("hostNetwork") or spec.get("hostPID"):
+            raise ValueError("Unsupported pod execution feature")
+        return uid
+
+    def stop(self, directory, state):
+        owned_signal(state.get("task"), signal.SIGTERM)
+        details_path = directory / "runtime.json"
+        details = json.loads(details_path.read_text()) if details_path.exists() else {}
+        processes = [state.get("task"), details.get("runtime"), details.get("reporter")]
+        for process in processes:
+            owned_signal(process, signal.SIGTERM)
+        deadline = time.monotonic() + 75
+        while any(alive(process) for process in processes) and time.monotonic() < deadline:
+            time.sleep(1)
+        for process in processes:
+            owned_signal(process, signal.SIGKILL)
+        deadline = time.monotonic() + 5
+        while any(alive(process) for process in processes) and time.monotonic() < deadline:
+            time.sleep(.1)
+        if any(alive(process) for process in processes):
+            raise RuntimeError("Host processes did not stop; GPU claim retained")
+
+    def request(self, body):
+        with self.lock:
+            epoch = body.get("epoch")
+            if type(epoch) is not int or epoch < 1:
+                raise ValueError("Missing controller fencing epoch")
+            fence_file = self.root / "fence.json"
+            previous = json.loads(fence_file.read_text())["epoch"] if fence_file.exists() else 0
+            if epoch < previous:
+                raise ValueError("Stale controller fencing epoch")
+            if epoch > previous:
+                atomic_json(fence_file, {"epoch": epoch})
+            operation = body["operation"]
+            if operation == "ping":
+                return {"instance_id": self.config["instance_id"]}
+            if operation == "list":
+                return [state["pod"] for state in self.states()]
+            uid = str(uuid.UUID(body["uid"]))
+            directory = self.root / "pods" / uid
+            path = directory / "state.json"
+            if operation == "create":
+                if self.validate(body["pod"]) != uid:
+                    raise ValueError("Pod UID does not match the request")
+                if not path.exists():
+                    if self.states():
+                        raise ValueError("GPU is owned by another deployment")
+                    directory.mkdir(mode=0o755, exist_ok=True)
+                    directory.chmod(0o755)
+                    group = pod_cgroup(uid)
+                    group.mkdir(exist_ok=True)
+                    (group / "cpu.max").write_text("1600000 100000")
+                    (group / "memory.max").write_text(str(64 * 1024 ** 3))
+                    (group / "memory.swap.max").write_text("0")
+                    (group / "pids.max").write_text("8192")
+                    state = {"pod": body["pod"], "draining": False}
+                    atomic_json(path, state)
+                    with (directory / "task.log").open("ab") as output:
+                        process = subprocess.Popen([sys.executable, __file__, "task", uid],
+                            env={"PATH": "/usr/sbin:/usr/bin:/sbin:/bin"}, stdin=subprocess.DEVNULL,
+                            stdout=output, stderr=subprocess.STDOUT, start_new_session=True)
+                    self.children[uid] = process
+                    state["task"] = owner(process)
+                    atomic_json(path, state)
+                    self.refresh_proxy()
+                elif json.loads(path.read_text())["pod"]["spec"]["containers"][0]["image"] != body["pod"]["spec"]["containers"][0]["image"]:
+                    raise ValueError("A pod UID cannot change its runtime release")
+                return {"created": True}
+            if operation == "delete":
+                if path.exists():
+                    state = json.loads(path.read_text())
+                    if not state.get("draining"):
+                        state["draining"] = True
+                        state["drain_started_at"] = time.time()
+                        atomic_json(path, state)
+                        self.refresh_proxy()
+                        threading.Thread(target=self.drain, args=(uid,), daemon=True).start()
+                return {"deleted": not path.exists()}
+            state = json.loads(path.read_text())
+            if operation == "status":
+                running = alive(state.get("task"))
+                ready = running and not state.get("draining") and health(38081, "/health/ready")
+                runtime_path = directory / "runtime.json"
+                details = json.loads(runtime_path.read_text()) if runtime_path.exists() else {}
+                return {"running": running, "ready": ready,
+                        "epoch": details.get("runtime", {}), "draining": state.get("draining", False)}
+            raise ValueError("Unsupported host operation")
+
+    def drain(self, uid):
+        directory = self.root / "pods" / uid
+        path = directory / "state.json"
+        if not path.exists():
+            return
+        state = json.loads(path.read_text())
+        # New requests are withdrawn before the existing request drain.
+        if alive(state.get("task")):
+            time.sleep(max(0, state["drain_started_at"] + 660 - time.time()))
+        self.stop(directory, state)
+        group = pod_cgroup(uid)
+        if group.exists():
+            if (group / "cgroup.procs").read_text().strip():
+                (group / "cgroup.kill").write_text("1")
+                deadline = time.monotonic() + 5
+                while (group / "cgroup.procs").read_text().strip() and time.monotonic() < deadline:
+                    time.sleep(.1)
+            if (group / "cgroup.procs").read_text().strip():
+                raise RuntimeError("Pod cgroup is occupied; GPU claim retained")
+            group.rmdir()
+        with self.lock:
+            path.unlink(missing_ok=True)
+            self.refresh_proxy()
+
+
+def serve():
+    config = json.loads(CONFIG.read_text())
+    prepare_cgroups()
+    agent = Agent(config)
+    ROOT.mkdir(mode=0o755, exist_ok=True)
+    ROOT.chmod(0o755)
+    (ROOT / "pods").mkdir(mode=0o755, exist_ok=True)
+    (ROOT / "pods").chmod(0o755)
+    proxy = ROOT / "proxy"
+    proxy.mkdir(mode=0o755, exist_ok=True)
+    proxy.chmod(0o755)
+    account = pwd.getpwnam("desmond")
+    os.chown(proxy, account.pw_uid, account.pw_gid)
+    lock = (ROOT / "agent.lock").open("a")
+    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    agent.ensure_proxy()
+
+    def monitor_proxy():
+        while True:
+            time.sleep(2)
+            with agent.lock:
+                try:
+                    agent.ensure_proxy()
+                except (OSError, RuntimeError, subprocess.SubprocessError) as error:
+                    print(f"Proxy recovery failed: {type(error).__name__}", flush=True)
+
+    threading.Thread(target=monitor_proxy, daemon=True).start()
+    for state in agent.states():
+        if state.get("draining"):
+            threading.Thread(target=agent.drain, args=(state["pod"]["metadata"]["uid"],), daemon=True).start()
+    token = Path(config["token_file"]).read_text().strip()
+
+    class Handler(BaseHTTPRequestHandler):
+        def setup(self):
+            super().setup()
+            self.connection.settimeout(15)
+
+        def log_message(self, *_):
+            pass
+
+        def do_POST(self):
+            if self.path != "/_kubelet" or not hmac.compare_digest(self.headers.get("Authorization", ""), f"Bearer {token}"):
+                self.send_error(403)
+                return
+            try:
+                size = int(self.headers.get("Content-Length", "0"))
+                if not 0 < size <= 128 * 1024:
+                    raise ValueError("Invalid request length")
+                response = agent.request(json.loads(self.rfile.read(size)))
+                payload = json.dumps(response).encode()
+                self.send_response(200)
+            except (ValueError, KeyError, FileNotFoundError):
+                payload = b'{"error":"invalid_host_operation"}'
+                self.send_response(422)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
+
+    server = ThreadingHTTPServer(("127.0.0.1", 8887), Handler)
+    server.serve_forever()
+
+
+if __name__ == "__main__":
+    if len(sys.argv) == 2 and sys.argv[1] == "proxy":
+        (CGROUP / "gradiated-proxy" / "cgroup.procs").write_text(str(os.getpid()))
+        os.execv("/usr/bin/setpriv", ["setpriv", "--reuid=desmond", "--regid=desmond", "--init-groups",
+                 "--inh-caps=-all", "--ambient-caps=-all", "--no-new-privs", "--pdeathsig=TERM",
+                 "nginx", "-c", str(ROOT / "nginx.conf"), "-g", "daemon off;"])
+    elif len(sys.argv) == 3 and sys.argv[1] == "task":
+        stopping = threading.Event()
+        signal.signal(signal.SIGTERM, lambda *_: stopping.set())
+        signal.signal(signal.SIGINT, lambda *_: stopping.set())
+        backoff = 5
+        while not stopping.is_set():
+            try:
+                task(str(uuid.UUID(sys.argv[2])), stopping)
+            except Exception as error:
+                print(f"Runtime attempt failed: {type(error).__name__}", flush=True)
+            if stopping.wait(backoff):
+                break
+            backoff = min(backoff * 2, 60)
+    else:
+        serve()

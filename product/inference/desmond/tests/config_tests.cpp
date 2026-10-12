@@ -41,6 +41,20 @@ const Variables profiling_variables{{"DESMOND_PROFILING_HOST", "10.0.0.2"},
                                     {"DESMOND_RELEASE", "release-1"},
                                     {"DESMOND_MODEL", "test/model"}};
 
+DESMOND_TEST(private_loopback_status_does_not_require_a_bearer_token) {
+  const Variables variables{{"DESMOND_STATUS_HOST", "127.0.0.1"},
+                            {"DESMOND_STATUS_PORT", "3004"},
+                            {"DESMOND_DEPLOYMENT_ID", "deployment"},
+                            {"DESMOND_RELEASE", "release-1"}};
+  const auto config = load(supervise_sleep, variables);
+  REQUIRE(config.status);
+  CHECK(config.status->token.empty());
+
+  auto other = variables;
+  other["DESMOND_STATUS_HOST"] = "10.0.0.2";
+  CHECK(contains(config_error(supervise_sleep, other), "DESMOND_STATUS_TOKEN"));
+}
+
 Variables observer_variables() {
   return {
       {"DESMOND_DEPLOYMENT_ID", "00000000-0000-4000-8000-000000000001"},

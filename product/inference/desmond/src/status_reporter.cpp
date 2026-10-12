@@ -112,7 +112,9 @@ HttpResult StatusReporter::upload(const DeploymentStatus status) const {
   return http_request({
       .method = HttpMethod::post,
       .url = config_.url,
-      .authorization = "Bearer " + config_.token,
+      .authorization = config_.token.empty()
+                           ? std::nullopt
+                           : std::optional<std::string>{"Bearer " + config_.token},
       .body = body,
       .timeout = config_.request_timeout,
   });

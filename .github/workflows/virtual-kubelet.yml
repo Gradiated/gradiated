@@ -1,0 +1,25 @@
+name: GPU controller tests
+on:
+  push:
+    branches: [main]
+    paths: ["tools/virtual-kubelet/**", ".github/workflows/virtual-kubelet.yml"]
+  pull_request:
+    paths: ["tools/virtual-kubelet/**", ".github/workflows/virtual-kubelet.yml"]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.24.13"
+          cache-dependency-path: tools/virtual-kubelet/go.sum
+      - run: go test -race ./... && go vet ./...
+        working-directory: tools/virtual-kubelet
+      - run: python3 tools/virtual-kubelet/host_agent_test.py
+      - run: sudo python3 tools/virtual-kubelet/remote_test.py
+      - run: test -z "$(gofmt -l tools/virtual-kubelet/*.go tools/virtual-kubelet/cmd/kev-controller/*.go)"
+      - run: docker build tools/virtual-kubelet

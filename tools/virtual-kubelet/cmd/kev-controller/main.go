@@ -1,0 +1,376 @@
+package main
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"flag"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"strings"
+	"sync"
+	"syscall"
+	"time"
+
+	"github.com/virtual-kubelet/virtual-kubelet/errdefs"
+	"github.com/virtual-kubelet/virtual-kubelet/node"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/client-go/informers"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
+	typedv1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	corelisters "k8s.io/client-go/listers/core/v1"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/leaderelection"
+	"k8s.io/client-go/tools/leaderelection/resourcelock"
+	"k8s.io/client-go/tools/record"
+)
+
+type host struct {
+	InstanceID string `json:"instance_id"`
+	Endpoint   string `json:"endpoint"`
+	TokenFile  string `json:"token_file"`
+}
+type configuration struct {
+	Namespace string `json:"namespace"`
+	Hosts     []host `json:"hosts"`
+}
+type provider struct {
+	host   host
+	epoch  int32
+	source corelisters.PodLister
+	mu     sync.Mutex
+	pods   map[string]*v1.Pod
+	node   *v1.Node
+}
+
+var hostClient = &http.Client{CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
+	return fmt.Errorf("host redirects are unsupported")
+}}
+
+func (p *provider) call(ctx context.Context, operation string, uid string, pod *v1.Pod, result any) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	body, err := json.Marshal(map[string]any{"operation": operation, "uid": uid, "pod": pod, "epoch": p.epoch})
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, p.host.Endpoint, bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+	token, err := os.ReadFile(p.host.TokenFile)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+strings.TrimSpace(string(token)))
+	req.Header.Set("Content-Type", "application/json")
+	response, err := hostClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+	if response.StatusCode != 200 {
+		return fmt.Errorf("host operation %s returned %d", operation, response.StatusCode)
+	}
+	return json.NewDecoder(io.LimitReader(response.Body, 1024*1024)).Decode(result)
+}
+func (p *provider) CreatePod(ctx context.Context, pod *v1.Pod) error {
+	original, err := p.source.Pods(pod.Namespace).Get(pod.Name)
+	if err != nil {
+		return err
+	}
+	pod = original.DeepCopy()
+	if len(pod.Spec.Containers) != 1 || len(pod.Spec.Volumes) > 0 || len(pod.Spec.InitContainers) > 0 {
+		return errdefs.InvalidInput("unsupported runtime pod")
+	}
+	container := pod.Spec.Containers[0]
+	if len(container.Env) > 0 || len(container.EnvFrom) > 0 || len(container.Command) > 0 || len(container.Args) > 0 {
+		return errdefs.InvalidInput("runtime overrides unsupported")
+	}
+	var result map[string]any
+	if err = p.call(ctx, "create", string(pod.UID), pod, &result); err != nil {
+		return err
+	}
+	p.mu.Lock()
+	p.pods[pod.Namespace+"/"+pod.Name] = pod
+	p.mu.Unlock()
+	return nil
+}
+func (p *provider) UpdatePod(ctx context.Context, pod *v1.Pod) error { return p.CreatePod(ctx, pod) }
+func (p *provider) GetPod(_ context.Context, namespace, name string) (*v1.Pod, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	pod := p.pods[namespace+"/"+name]
+	if pod == nil {
+		return nil, errdefs.NotFound("pod not found")
+	}
+	return pod.DeepCopy(), nil
+}
+func (p *provider) GetPods(ctx context.Context) ([]*v1.Pod, error) {
+	var pods []*v1.Pod
+	if err := p.call(ctx, "list", "", nil, &pods); err != nil {
+		return nil, err
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	for _, pod := range pods {
+		p.pods[pod.Namespace+"/"+pod.Name] = pod
+	}
+	return pods, nil
+}
+func (p *provider) GetPodStatus(ctx context.Context, namespace, name string) (*v1.PodStatus, error) {
+	pod, err := p.GetPod(ctx, namespace, name)
+	if err != nil {
+		return nil, err
+	}
+	var result struct {
+		Running  bool `json:"running"`
+		Ready    bool `json:"ready"`
+		Draining bool `json:"draining"`
+		Epoch    struct {
+			PID   int    `json:"pid"`
+			Birth string `json:"birth"`
+		} `json:"epoch"`
+	}
+	if err = p.call(ctx, "status", string(pod.UID), nil, &result); err != nil {
+		return &v1.PodStatus{Phase: v1.PodRunning, Reason: "HostUnreachable",
+			Conditions: []v1.PodCondition{{Type: v1.PodReady, Status: v1.ConditionFalse}, {Type: v1.ContainersReady, Status: v1.ConditionFalse}}}, nil
+	}
+	status := &v1.PodStatus{Phase: v1.PodFailed, Reason: "RuntimeExited"}
+	if result.Running {
+		ready := v1.ConditionFalse
+		if result.Ready {
+			ready = v1.ConditionTrue
+		}
+		status.Phase = v1.PodRunning
+		status.Reason = ""
+		status.Conditions = []v1.PodCondition{{Type: v1.PodReady, Status: ready}, {Type: v1.ContainersReady, Status: ready}, {Type: v1.PodInitialized, Status: v1.ConditionTrue}, {Type: v1.PodScheduled, Status: v1.ConditionTrue}}
+		status.ContainerStatuses = []v1.ContainerStatus{{Name: pod.Spec.Containers[0].Name, Image: pod.Spec.Containers[0].Image, Ready: result.Ready, ContainerID: fmt.Sprintf("runpod://%d:%s", result.Epoch.PID, result.Epoch.Birth), State: v1.ContainerState{Running: &v1.ContainerStateRunning{}}}}
+	}
+	return status, nil
+}
+func (p *provider) DeletePod(ctx context.Context, pod *v1.Pod) error {
+	for {
+		var result struct {
+			Deleted bool `json:"deleted"`
+		}
+		if err := p.call(ctx, "delete", string(pod.UID), nil, &result); err != nil {
+			return err
+		}
+		if result.Deleted {
+			p.mu.Lock()
+			delete(p.pods, pod.Namespace+"/"+pod.Name)
+			p.mu.Unlock()
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(5 * time.Second):
+		}
+	}
+}
+func (p *provider) NotifyPods(ctx context.Context, callback func(*v1.Pod)) {
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				p.mu.Lock()
+				pods := make([]*v1.Pod, 0, len(p.pods))
+				for _, pod := range p.pods {
+					pods = append(pods, pod.DeepCopy())
+				}
+				p.mu.Unlock()
+				for _, pod := range pods {
+					status, err := p.GetPodStatus(ctx, pod.Namespace, pod.Name)
+					if err == nil {
+						pod.Status = *status
+						callback(pod)
+					}
+				}
+			}
+		}
+	}()
+}
+func (p *provider) Ping(ctx context.Context) error {
+	var result struct {
+		InstanceID string `json:"instance_id"`
+	}
+	if err := p.call(ctx, "ping", "", nil, &result); err != nil {
+		return err
+	}
+	if result.InstanceID != p.host.InstanceID {
+		return fmt.Errorf("host identity mismatch")
+	}
+	return nil
+}
+func (p *provider) NotifyNodeStatus(ctx context.Context, callback func(*v1.Node)) {
+	go func() {
+		ticker := time.NewTicker(10 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				copy := p.node.DeepCopy()
+				ready := v1.ConditionTrue
+				if p.Ping(ctx) != nil {
+					ready = v1.ConditionFalse
+				}
+				copy.Status.Conditions = []v1.NodeCondition{{Type: v1.NodeReady, Status: ready, LastHeartbeatTime: metav1.Now(), LastTransitionTime: metav1.Now()}}
+				callback(copy)
+			}
+		}
+	}()
+}
+
+func runHost(ctx context.Context, client kubernetes.Interface, namespace string, h host, epoch int32) error {
+	name := "gpu-" + h.InstanceID
+	resources := v1.ResourceList{v1.ResourceCPU: resource.MustParse("16"), v1.ResourceMemory: resource.MustParse("64Gi"), v1.ResourcePods: resource.MustParse("8"), "nvidia.com/gpu": resource.MustParse("1")}
+	spec := &v1.Node{ObjectMeta: metav1.ObjectMeta{Name: name, Labels: map[string]string{"type": "virtual-kubelet", "kubernetes.io/hostname": name, "gradiated.com/provider": "runpod", "gradiated.com/instance-id": h.InstanceID, "nvidia.com/gpu.product": "RTX-PRO-6000"}},
+		Spec:   v1.NodeSpec{Taints: []v1.Taint{{Key: "gradiated.com/gpu", Value: "true", Effect: v1.TaintEffectNoSchedule}}},
+		Status: v1.NodeStatus{Capacity: resources, Allocatable: resources.DeepCopy(), NodeInfo: v1.NodeSystemInfo{OperatingSystem: "linux", Architecture: "amd64", KubeletVersion: "v1.33.5"}, Conditions: []v1.NodeCondition{{Type: v1.NodeReady, Status: v1.ConditionTrue, LastHeartbeatTime: metav1.Now(), LastTransitionTime: metav1.Now()}}}}
+	factory := informers.NewSharedInformerFactoryWithOptions(client, time.Minute, informers.WithNamespace(namespace), informers.WithTweakListOptions(func(o *metav1.ListOptions) {
+		o.FieldSelector = fields.OneTermEqualSelector("spec.nodeName", name).String()
+	}))
+	resourcesFactory := informers.NewSharedInformerFactoryWithOptions(client, time.Minute, informers.WithNamespace(namespace))
+	pods := factory.Core().V1().Pods()
+	p := &provider{host: h, epoch: epoch, source: pods.Lister(), pods: map[string]*v1.Pod{}, node: spec}
+	if err := p.Ping(ctx); err != nil {
+		return err
+	}
+	broadcaster := record.NewBroadcaster()
+	defer broadcaster.Shutdown()
+	broadcaster.StartRecordingToSink(&typedv1.EventSinkImpl{Interface: client.CoreV1().Events(namespace)})
+	pc, err := node.NewPodController(node.PodControllerConfig{PodClient: client.CoreV1(), PodInformer: pods, Provider: p,
+		EventRecorder:  broadcaster.NewRecorder(scheme.Scheme, v1.EventSource{Component: "runpod-kubelet", Host: name}),
+		SecretInformer: resourcesFactory.Core().V1().Secrets(), ConfigMapInformer: resourcesFactory.Core().V1().ConfigMaps(), ServiceInformer: resourcesFactory.Core().V1().Services()})
+	if err != nil {
+		return err
+	}
+	nc, err := node.NewNodeController(p, spec, client.CoreV1().Nodes(), node.WithNodeEnableLeaseV1(client.CoordinationV1().Leases("kube-node-lease"), 40))
+	if err != nil {
+		return err
+	}
+	factory.Start(ctx.Done())
+	resourcesFactory.Start(ctx.Done())
+	go func() {
+		if err := pc.Run(ctx, 2); err != nil && ctx.Err() == nil {
+			log.Printf("pod controller %s failed: %v", name, err)
+		}
+	}()
+	go func() {
+		if err := nc.Run(ctx); err != nil && ctx.Err() == nil {
+			log.Printf("node controller %s failed: %v", name, err)
+		}
+	}()
+	select {
+	case <-ctx.Done():
+		return nil
+	case <-pc.Done():
+		return pc.Err()
+	case <-nc.Done():
+		return nc.Err()
+	}
+}
+
+func main() {
+	path := flag.String("config", "/etc/gpu-controller/hosts.json", "host configuration")
+	flag.Parse()
+	data, err := os.ReadFile(*path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var config configuration
+	if err = json.Unmarshal(data, &config); err != nil {
+		log.Fatal(err)
+	}
+	if config.Namespace != "gpu-inference" || len(config.Hosts) == 0 {
+		log.Fatal("invalid GPU namespace or empty host list")
+	}
+	for _, h := range config.Hosts {
+		if h.Endpoint != "http://gpu-"+h.InstanceID+".tailscale-inference.svc.cluster.local:8888/_kubelet" {
+			log.Fatal("host endpoint must use its private inference Service")
+		}
+	}
+	var clientConfig *rest.Config
+	if os.Getenv("KUBECONFIG") != "" {
+		clientConfig, err = clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
+	} else {
+		clientConfig, err = rest.InClusterConfig()
+	}
+	if err != nil {
+		log.Fatal(err)
+	}
+	client, err := kubernetes.NewForConfig(clientConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+	go func() {
+		http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) })
+		server := &http.Server{Addr: ":9090", ReadHeaderTimeout: 5 * time.Second}
+		if err := server.ListenAndServe(); err != nil {
+			log.Printf("health server: %v", err)
+			cancel()
+		}
+	}()
+	identity := os.Getenv("POD_NAME")
+	if identity == "" {
+		identity = fmt.Sprintf("local-%d", os.Getpid())
+	}
+	lock := &resourcelock.LeaseLock{LeaseMeta: metav1.ObjectMeta{Name: "gpu-controller", Namespace: config.Namespace}, Client: client.CoordinationV1(), LockConfig: resourcelock.ResourceLockConfig{Identity: identity}}
+	leaderelection.RunOrDie(ctx, leaderelection.LeaderElectionConfig{Lock: lock, LeaseDuration: 30 * time.Second, RenewDeadline: 20 * time.Second, RetryPeriod: 5 * time.Second, ReleaseOnCancel: true,
+		Callbacks: leaderelection.LeaderCallbacks{
+			OnStartedLeading: func(leader context.Context) {
+				lease, err := client.CoordinationV1().Leases(config.Namespace).Get(leader, "gpu-controller", metav1.GetOptions{})
+				if err != nil {
+					log.Print(err)
+					cancel()
+					return
+				}
+				epoch := int32(1)
+				if lease.Spec.LeaseTransitions != nil {
+					epoch += *lease.Spec.LeaseTransitions
+				}
+				var group sync.WaitGroup
+				for _, h := range config.Hosts {
+					group.Add(1)
+					go func(h host) {
+						defer group.Done()
+						for leader.Err() == nil {
+							hostContext, stopHost := context.WithCancel(leader)
+							err := runHost(hostContext, client, config.Namespace, h, epoch)
+							stopHost()
+							if err != nil {
+								log.Printf("host %s controller failed: %v", h.InstanceID, err)
+							}
+							select {
+							case <-leader.Done():
+								return
+							case <-time.After(5 * time.Second):
+							}
+						}
+					}(h)
+				}
+				group.Wait()
+			},
+			OnStoppedLeading: func() { cancel() },
+		},
+	})
+}

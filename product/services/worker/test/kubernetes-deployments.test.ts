@@ -24,7 +24,7 @@ const pod = (instanceId = randomUUID()) => ({
     } as Record<string, string>,
   },
   spec: { nodeName: `gpu-${instanceId}` },
-  status: { phase: "Running" },
+  status: { phase: "Running", conditions: [{ type: "Ready", status: "True" }] },
 });
 
 describe("Kubernetes inference deployment discovery", () => {
@@ -40,6 +40,17 @@ describe("Kubernetes inference deployment discovery", () => {
     expect(readKubernetesDeployments([candidate])[0]).toMatchObject({
       qualified: true,
     });
+    expect(
+      readKubernetesDeployments([
+        {
+          ...candidate,
+          status: {
+            phase: "Running",
+            conditions: [{ type: "Ready", status: "False" }],
+          },
+        },
+      ])[0],
+    ).toMatchObject({ qualified: false });
     expect(
       readKubernetesDeployments([
         {
@@ -68,6 +79,21 @@ describe("Kubernetes inference deployment discovery", () => {
     expect(paths).toHaveLength(2);
     expect(await view.isGone(second.metadata.uid)).toBe(false);
     expect(await view.isGone(randomUUID())).toBe(true);
+  });
+
+  it("isolates malformed declarations without treating their pods as gone", async () => {
+    const valid = pod(),
+      invalid = pod();
+    invalid.metadata.annotations["gradiated.com/release"] = "{";
+    const view = createKubernetesDeploymentView("gpu-inference", async () => ({
+      items: [valid, invalid],
+      metadata: {},
+    }));
+    expect(await view.running()).toHaveLength(1);
+    expect(await view.isGone(invalid.metadata.uid)).toBe(false);
+    delete invalid.metadata.annotations["gradiated.com/release"];
+    expect(await view.running()).toHaveLength(1);
+    expect(await view.isGone(invalid.metadata.uid)).toBe(false);
   });
 
   it("does not convert a failed API read into an empty fleet", async () => {

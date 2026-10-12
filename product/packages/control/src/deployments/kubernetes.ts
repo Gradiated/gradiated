@@ -2,9 +2,12 @@ import { ModelDeploymentReleaseSchema } from "@gradiated/contracts";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 
-import { ModelDeploymentInsertSchema } from "../catalog/records.js";
+import {
+  ModelDeploymentInsertSchema,
+  ModelDeploymentRecordSchema,
+} from "../catalog/records.js";
 import type { ControlDatabase } from "../db/client.js";
-import { instances, modelDeployments } from "../db/schema/index.js";
+import { instances, modelDeployments, models } from "../db/schema/index.js";
 import { privateServingUrl } from "../instances/endpoints.js";
 
 export const KubernetesDeploymentSchema = z.object({
@@ -39,6 +42,22 @@ export const createKubernetesDeploymentStore = (database: ControlDatabase) => ({
       );
       const listed = new Set(current.map((pod) => pod.id));
       let written = 0;
+      const withdraw = (id: string) =>
+        tx
+          .update(modelDeployments)
+          .set({
+            ...ModelDeploymentRecordSchema.pick({ status: true }).parse({
+              status: "unavailable",
+            }),
+            updatedAt: sql`now()`,
+          })
+          .where(
+            and(
+              eq(modelDeployments.id, id),
+              eq(modelDeployments.orchestrator, "kubernetes"),
+            ),
+          );
+
       for (const pod of current) {
         const [host] = await tx
           .select()
@@ -46,7 +65,14 @@ export const createKubernetesDeploymentStore = (database: ControlDatabase) => ({
           .where(
             and(eq(instances.id, pod.instanceId), isNull(instances.retiredAt)),
           );
-        if (!host || host.servingUrl !== privateServingUrl(host.id)) continue;
+        const [model] = await tx
+          .select({ id: models.id })
+          .from(models)
+          .where(eq(models.id, pod.modelId));
+        if (!host || host.servingUrl !== privateServingUrl(host.id) || !model) {
+          await withdraw(pod.id);
+          continue;
+        }
 
         const row = ModelDeploymentInsertSchema.parse({
           id: pod.id,
@@ -89,6 +115,8 @@ export const createKubernetesDeploymentStore = (database: ControlDatabase) => ({
                 eq(modelDeployments.orchestrator, "kubernetes"),
               ),
             );
+        } else if (!listed.has(id)) {
+          await withdraw(id);
         }
       }
       return { written };

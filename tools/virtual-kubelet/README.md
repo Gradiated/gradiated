@@ -116,3 +116,51 @@ Normal Kubernetes controllers can manage the virtual pods, but supported pod
 execution semantics depend on the provider. This experiment tests that boundary;
 it does not establish that a production adapter is cheaper to maintain than
 Nomad.
+
+## Kev canary in EKS
+
+`cmd/kev-controller` runs the official Virtual Kubelet node and pod controllers
+inside EKS. Three replicas elect one leader. Its namespace RBAC is limited to
+`gpu-inference`; node updates and heartbeats name only enrolled GPU hosts. Host
+requests carry the leader's fencing epoch, so an old leader cannot keep writing
+after its replacement takes over. Kubernetes credentials remain in EKS.
+
+The RunPod host agent executes the pinned Kev runtime bundle, not arbitrary OCI
+images. It rejects commands, environment overrides, mounts and host networking.
+The model runs as `runtime`, Desmond as `desmond`, and the local management API
+as root. A host-specific management key protects that API from model processes;
+it is not inference authentication. Models receive no Kubernetes, database or
+Tailscale administration credentials.
+
+Each Kev pod owns one GPU lock and a cgroup limited to 16 CPUs, 64 GiB and 8192
+processes. Host initialization delegates the container's existing processes to
+`gradiated-system` before enabling CPU, memory and process controllers for the
+GPU pods. This changes processes in the retained container without changing
+RunPod settings or releasing its reservation. Enrollment refuses unsupported
+hosts. The initial agent supports one pinned Kev release on a single RTX PRO
+6000; it is not yet a general provider for multi-GPU runtimes or training jobs.
+
+Controller and host-agent restarts retain model processes. A crashed model or
+reporter is restarted with bounded backoff. Deletion first withdraws readiness,
+then allows eleven minutes for existing requests before stopping the process
+groups and checking that the pod cgroup is empty. GPU claims remain occupied if
+cleanup fails. Process birth times prevent signalling reused PIDs.
+
+`infra/environments/prod/us-east-1/kubernetes/gpu-inference` owns the EKS
+controller and canary workload. Kubernetes Pod UIDs use the existing private
+`/alloc/<id>` serving path. The product worker registers these replicas separately
+from Nomad and keeps them unavailable until SDK qualification. Desmond reports
+through the Tailscale control bridge on loopback port 3004. The GPU has no VPC
+route to PostgreSQL, Valkey or the Kubernetes API.
+
+Nomad scheduling must be disabled on a host before enrolling it as a Kubernetes
+GPU worker. Do not assign the same GPU to both schedulers. Restore Nomad
+eligibility only after Kubernetes workloads have drained and their physical
+GPU claims are gone. The host agent's temporary loopback port 8889 allows its
+canary proxy to coexist with the old Nomad host proxy on port 8888; Tailscale
+Serve forwards the GPU's tailnet port 8888 to the new proxy.
+
+The canary does not provide pod IPs, CNI, volume mounts, arbitrary containers or
+kubelet logs/exec endpoints. Normal bare-metal workers can use the same model
+inventory and qualification flow, but run an ordinary kubelet and container
+runtime. These differences must remain visible in workload configuration.

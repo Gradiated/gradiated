@@ -401,6 +401,7 @@ shared concurrency lease for admission.
 | -------------- | ----------- | ---- | --------------------------------------------------------- |
 | `id`           | uuid        | no   | Primary key; stable deployment identity                   |
 | `model_id`     | text        | no   | FK `models.id`                                            |
+| `orchestrator` | text        | no   | Reconciliation owner: `nomad` or `kubernetes`; default `nomad` |
 | `status`       | text        | no   | `available`, `unavailable`, `draining`                    |
 | `provider`     | text        | no   | GPU provider identifier                                   |
 | `region`       | text        | no   | Provider region identifier                                |

@@ -14,7 +14,14 @@ const podSchema = z.object({
     deletionTimestamp: z.string().optional(),
   }),
   spec: z.object({ nodeName: z.string().optional() }),
-  status: z.object({ phase: z.string().optional() }).default({}),
+  status: z
+    .object({
+      phase: z.string().optional(),
+      conditions: z
+        .array(z.object({ type: z.string(), status: z.string() }))
+        .default([]),
+    })
+    .default({ conditions: [] }),
 });
 const listSchema = z.object({
   items: z.array(podSchema),
@@ -35,15 +42,26 @@ export const readKubernetesDeployments = (items: unknown[]) =>
       )
         return [];
 
+      let release: unknown;
+      try {
+        release = JSON.parse(annotations["gradiated.com/release"]);
+      } catch {
+        return [];
+      }
+
       const parsed = KubernetesDeploymentSchema.safeParse({
         id: pod.metadata.uid,
         name: pod.metadata.name,
         instanceId,
         modelId: annotations["gradiated.com/model-id"],
-        release: JSON.parse(annotations["gradiated.com/release"]),
+        release,
         qualified:
           annotations["gradiated.com/qualified"] === "true" &&
-          pod.status.phase === "Running",
+          pod.status.phase === "Running" &&
+          pod.status.conditions.some(
+            (condition) =>
+              condition.type === "Ready" && condition.status === "True",
+          ),
         draining: Boolean(pod.metadata.deletionTimestamp),
       });
       return parsed.success ? [parsed.data] : [];

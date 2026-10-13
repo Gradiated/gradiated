@@ -13,12 +13,14 @@ The archive contains:
 - `base-id`: one line matching `/etc/gradiated/base-id` in the provider image.
 - `entrypoint`: an executable regular file.
 - The runtime environment and its model-specific launch code.
-- `runtime-launch` and `desmondd`, built from the same pinned base, so supervisor
-  and readiness fixes roll out with the model without updating a GPU host.
+
+`runtime-launch` and `desmondd` are supplied by the verified host bundle. Host
+updates preserve existing runtime processes. Install a compatible host bundle
+before deploying model archives without a bundled launcher.
 
 The base ID identifies the system dependency contract, including OS, CPU
 architecture, Python ABI, and required system libraries. Assign a new ID for
-incompatible changes. The base image must also contain the launcher, the C++
+incompatible changes. The base image supplies the C++
 standard library and CA certificates. The host agent assigns exclusive GPU UUIDs.
 
 The bundle entrypoint uses `GRADIATED_RUNTIME_ROOT` to find its own files. Use

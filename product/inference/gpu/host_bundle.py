@@ -122,6 +122,8 @@ def stage_host(agent, pin, epoch):
     if getattr(agent, 'host_staging', None):
         return
     agent.host_staging = digest
+    downloader = Path(__file__).resolve().with_name('download-runtime')
+    if not downloader.is_file():downloader = Path('/opt/gradiated/bin/download-runtime')
 
     def stage():
         try:
@@ -138,7 +140,7 @@ def stage_host(agent, pin, epoch):
                     archive = downloads / (digest + '.' + uuid.uuid4().hex + '.tar.gz')
                     try:
                         with (agent.root / 'host-download.log').open('ab') as log:
-                            subprocess.run(['runuser', '-u', 'downloader', '--', 'python3', '/opt/gradiated/bin/download-runtime',
+                            subprocess.run(['runuser', '-u', 'downloader', '--', 'python3', str(downloader),
                                 f'https://gradiated-prod-model-artifacts-873716897517.s3-accelerate.amazonaws.com/bundles/sha256/{digest}.tar.gz',
                                 str(archive)], stdout=log, stderr=log, check=True, timeout=1800)
                         promote_archive(archive, destination, digest, base_id)

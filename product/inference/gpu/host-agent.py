@@ -270,6 +270,11 @@ def host_pods(config, exclude):
     return pods
 
 
+def host_tool(name):
+    local = Path(__file__).resolve().with_name(name)
+    return local if local.is_file() else Path('/opt/gradiated/bin') / name
+
+
 def task(uid, stopping):
     lock_path = ROOT / 'pods' / uid / 'task.lock'
     fd = os.open(lock_path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
@@ -333,7 +338,9 @@ def task(uid, stopping):
             ).stdout.strip()
             if active and active != "No running processes found":
                 raise ValueError("GPU already has a compute process")
-            model = spawn_user("runtime", [str(bundle / "runtime-launch"), str(bundle)],
+            launcher = host_tool("runtime-launch")
+            if not launcher.is_file():launcher = bundle / "runtime-launch"
+            model = spawn_user("runtime", [str(launcher), str(bundle)],
                                environment, directory / "runtime.log")
             atomic_json(directory / "runtime.json", {"runtime": owner(model)})
             if profile.get("kind") != "training":
@@ -650,7 +657,7 @@ class Agent:
                         marker = self.root / 'bundles' / digest / '.bundle-sha256'
                         if marker.exists() and marker.read_text().strip() == digest:
                             continue
-                        subprocess.run(['runuser', '-u', 'downloader', '--', '/opt/gradiated/bin/fetch-runtime',
+                        subprocess.run(['runuser', '-u', 'downloader', '--', str(host_tool('fetch-runtime')),
                             f's3::https://gradiated-prod-model-artifacts-873716897517.s3.us-east-1.amazonaws.com/bundles/sha256/{digest}.tar.gz',
                             digest, str(self.root / 'bundles' / digest)], stdout=log, stderr=log, check=True, timeout=1800)
                 with self.lock, configuration_lock(self.root):
@@ -821,6 +828,14 @@ class Agent:
 
 
 def serve():
+    forwarding = Path(__file__).resolve().with_name('forward-control.py')
+    if forwarding.is_file():
+        ROOT.mkdir(parents=True, exist_ok=True)
+        temporary = ROOT / 'control-program.new'
+        temporary.unlink(missing_ok=True)
+        temporary.symlink_to(forwarding)
+        temporary.replace(ROOT / 'control-program')
+        sync_directory(ROOT)
     config = json.loads(CONFIG.read_text())
     prepare_cgroups()
     agent = Agent(config, config_path=CONFIG)

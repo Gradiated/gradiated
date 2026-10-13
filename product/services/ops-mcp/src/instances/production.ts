@@ -6,6 +6,8 @@ import {
   GetSecretValueCommand,
   SecretsManagerClient,
 } from "@aws-sdk/client-secrets-manager";
+import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { hostBootstrapEnvironment } from "./host-bootstrap.js";
 
 import {
@@ -23,6 +25,7 @@ export type RegistrationSettings = {
   readonly credentialsDirectory: string;
   readonly hostImage: string;
   readonly apiEndpoint: string;
+  readonly hostBundleSha256?: string;
 };
 
 export const productionRegistrations = (
@@ -83,8 +86,48 @@ export const productionRegistrations = (
         createControlDatabase(await credential("database-url"), 2).database,
       )),
     hostImage: settings.hostImage,
-    bootstrap: (instance, id, key, auth) =>
-      hostBootstrapEnvironment(instance, id, key, auth, settings.apiEndpoint),
+    bootstrap: async (instance, id, key, auth) => {
+      let hostBundle;
+      if (settings.hostBundleSha256) {
+        const digest = z
+          .string()
+          .regex(/^[0-9a-f]{64}$/)
+          .parse(settings.hostBundleSha256);
+        const account = settings.hostImage.match(/^(\d{12})\.dkr\.ecr\./)?.[1];
+        if (!account)
+          throw new Error("GPU base image must identify its artifact account");
+
+        hostBundle = {
+          sha256: digest,
+          base_id: (
+            await readFile(
+              new URL(
+                "../../../../inference/images/gpu-base/base-id",
+                import.meta.url,
+              ),
+              "utf8",
+            )
+          ).trim(),
+          url: await getSignedUrl(
+            new S3Client({ region: "us-east-1" }),
+            new GetObjectCommand({
+              Bucket: `gradiated-prod-model-artifacts-${account}`,
+              Key: `bundles/sha256/${digest}.tar.gz`,
+            }),
+            { expiresIn: 3600 },
+          ),
+        };
+      }
+
+      return hostBootstrapEnvironment(
+        instance,
+        id,
+        key,
+        auth,
+        settings.apiEndpoint,
+        hostBundle,
+      );
+    },
     managementKey: async (id) => {
       const client = new SecretsManagerClient({});
       const existing = "gradiated/prod/platform/gpu-controller";

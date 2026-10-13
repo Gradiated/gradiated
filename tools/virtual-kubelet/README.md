@@ -242,14 +242,20 @@ requires replacement capacity; a provider reset requires deliberate enrollment.
 
 Model deployment publishes a `host` bundle alongside runtime bundles. Its
 `host-runtime-release` artifact contains `release.json` with the archive digest
-and base compatibility ID. Host bundles contain the agent, state and staging
-helpers, Desmond, and its startup script. The control bridge stays in the base.
-The base keeps SSH, enrollment, Tailscale, downloader, nginx, the launcher
-(`supervise.py`) and a frozen recovery agent under `images/gpu-base/recovery/`. Ordinary agent
-and staging changes build only the host bundle; they do not invalidate the base
-or model bundles. Refresh the recovery sources with
-`python3 tools/gpu/refresh-recovery.py` only for a deliberate, qualified base
-release. Host releases do not require re-pinning or replacing a reservation.
+and base compatibility ID. Host bundles contain the agent, enrollment and state
+helpers, Desmond, runtime launcher, downloader, Tailscale installation and private
+control forwarding. The base contains only platform dependencies and SSH startup.
+Enrollment installs a verified seed and retains a recovery copy on disk; no
+application recovery executable is baked into the image. Later host releases
+update the active version without rebuilding the base or model bundles. Historical
+recovery fixtures under `images/gpu-base/recovery/` qualify legacy hosts only.
+
+The stable private-control listener dispatches each new connection through the
+active bundle's forwarding helper. Changing that pointer preserves connections
+already owned by an older helper. The listener itself remains installed from the
+seed so it can forward artifact grants while the agent is being replaced.
+See [base enrollment ordering](../../product/inference/images/README.md) before
+selecting a platform-only image for new pods.
 
 `gpu-inference/host.json` is initially `null`: legacy hosts continue serving and
 no host software update is requested. After installing the launcher on retained
@@ -279,7 +285,7 @@ agent exits within ten minutes. A failed digest is not retried automatically.
 An interrupted trial or an unclean launcher exit consumes the previous target
 on restart. Normal launcher shutdown clears its running marker; storage failure
 keeps that marker conservative, so a rejected agent cannot resume unnoticed. Storage errors preserve the running
-agent or start the base recovery agent; new updates wait until state can be
+agent or start the on-disk recovery agent; new updates wait until state can be
 committed. The agent exits if its launcher dies, while independent model workers
 keep running. Current,
 previous, one unused verified bundle, and code referenced by live task/proxy
@@ -309,7 +315,7 @@ and alerts stop the fleet update; repair the bundle and pin a new digest. To
 revert, pin a previously healthy release. A failed digest requires deliberate
 operator investigation before clearing its launcher failure and node annotation.
 The recovery `ping`, `claim` and `configure` operations and additive on-disk
-state must remain compatible with every still-pinned base agent indefinitely;
+state must remain compatible with every retained recovery agent indefinitely;
 one-release compatibility applies only to the remaining API.
 
 The controller's `/metrics` exposes running/previous digest information, drift

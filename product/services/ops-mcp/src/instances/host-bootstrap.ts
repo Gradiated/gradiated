@@ -8,6 +8,7 @@ export const hostBootstrapEnvironment = async (
   managementToken: string,
   authKey: string,
   apiEndpoint: string,
+  hostBundle?: { sha256: string; base_id: string; url: string },
 ) => {
   const count = Number(instance.sku.match(/^(\d+)x /)?.[1]);
   if (
@@ -59,6 +60,7 @@ export const hostBootstrapEnvironment = async (
   return {
     GRADIATED_GPU_BOOTSTRAP: Buffer.from(
       JSON.stringify({
+        ...(hostBundle ? { host_bundle: hostBundle } : {}),
         instance_id: z.uuid().parse(instanceId),
         management_token: managementToken,
         auth_key: authKey,

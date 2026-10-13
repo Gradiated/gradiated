@@ -84,12 +84,13 @@ def enroll(payload):
     health = ThreadingHTTPServer(('127.0.0.1', 8889), Health)
     threading.Thread(target=health.serve_forever, daemon=True).start()
     try:
-        scripts = Path('/opt/gradiated/tailscale-scripts')
+        scripts = Path(__file__).resolve().parent
+        if not (scripts / 'install-tailscale.py').is_file():scripts = Path('/opt/gradiated/tailscale-scripts')
         spec = importlib.util.spec_from_file_location('tailscale_install', scripts / 'install-tailscale.py')
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         names = {'run-tailscale': 'run-tailscale.sh', 'start-tailscale': 'start-tailscale.sh',
-                 'forward-control': 'forward-control.py', 'run-control': 'run-control.sh', 'start-control': 'start-control.sh'}
+                 'forward-control': 'control-listener.py' if (scripts / 'control-listener.py').exists() else 'forward-control.py', 'run-control': 'run-control.sh', 'start-control': 'start-control.sh'}
         module.install({'instance_id': config['instance_id'], 'auth_key': payload['auth_key'], 'proxy_port': 8889,
                         'control_endpoints': {'api': payload['api_endpoint']},
                         'scripts': {name: (scripts / filename).read_text() for name, filename in names.items()}})
@@ -97,8 +98,10 @@ def enroll(payload):
         bundles.mkdir(exist_ok=True)
         downloader = pwd.getpwnam('downloader')
         os.chown(bundles, downloader.pw_uid, downloader.pw_gid)
+        fetch = scripts / "fetch-runtime"
+        if not fetch.is_file():fetch = Path("/opt/gradiated/bin/fetch-runtime")
         for digest in config['runtimes']:
-            subprocess.run(['runuser', '-u', 'downloader', '--', '/opt/gradiated/bin/fetch-runtime',
+            subprocess.run(['runuser', '-u', 'downloader', '--', str(fetch),
                 f's3::https://gradiated-prod-model-artifacts-873716897517.s3.us-east-1.amazonaws.com/bundles/sha256/{digest}.tar.gz',
                 digest, str(bundles / digest)], check=True, timeout=1800)
     finally:

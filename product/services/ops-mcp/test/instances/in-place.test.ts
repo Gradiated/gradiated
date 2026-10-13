@@ -80,7 +80,9 @@ print(json.dumps({"inventory":True}))
       ),
     ).toEqual(expected);
     expect(run.mock.calls[0]?.[1]).not.toContain("private-bootstrap");
-    expect(JSON.parse(run.mock.calls[0]![2]!)).toEqual({ environment: env });
+    expect(JSON.parse(run.mock.calls[0]![2]!)).toMatchObject({
+      environment: env,
+    });
   });
   it("rejects public network addresses and unqualified hardware in enrollment results", async () => {
     const run: RunSsh = async () =>

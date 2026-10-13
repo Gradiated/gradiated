@@ -15,7 +15,8 @@ RUN useradd --uid 10005 --create-home tailscale && useradd --uid 10001 runtime \
 DOCKER
 docker run -d --name "$container" --cpus=1 --memory=512m \
   -v "$root/run-tailscale.sh:/opt/gradiated/bin/run-tailscale:ro" \
-  -v "$root/forward-control.py:/opt/gradiated/bin/forward-control:ro" \
+  -v "$root/control-listener.py:/opt/gradiated/bin/forward-control:ro" \
+  -v "$root/forward-control.py:/var/lib/gradiated-kubelet/control-program:ro" \
   -v "$root/run-control.sh:/opt/gradiated/bin/run-control:ro" \
   -v "$root/start-control.sh:/opt/gradiated/bin/start-control:ro" \
   -v "$root/start-tailscale.sh:/opt/gradiated/bin/start-tailscale:ro" "$image" sleep 180 >/dev/null

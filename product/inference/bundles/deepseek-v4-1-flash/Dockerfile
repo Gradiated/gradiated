@@ -16,8 +16,6 @@ RUN uv python install 3.12.13 \
     && ln -sfn libcudart.so.13 lib/libcudart.so
 
 FROM dependencies AS package
-COPY --from=runtime-base /opt/gradiated/bin/runtime-launch /bundle/runtime-launch
-COPY --from=runtime-base /opt/gradiated/bin/desmondd /bundle/desmondd
 COPY bundles/package.sh /package.sh
 COPY images/deepseek-v4-1-flash/start.sh /bundle/start.sh
 COPY --chmod=755 bundles/deepseek-v4-1-flash/entrypoint /bundle/entrypoint

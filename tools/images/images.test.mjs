@@ -121,15 +121,15 @@ test("plans all enabled images against the actual repository tree", () => {
   );
 });
 
-test("GPU bootstrap, recovery and Tailscale edits invalidate the base image", () => {
+test("application code changes preserve the base image identity", () => {
   for (const path of [
     "product/inference/gpu/bootstrap.py",
     "product/inference/images/gpu-base/recovery/host-agent.py",
     "product/inference/tailscale/install-tailscale.py",
   ]) {
-    assert.notEqual(
-      fingerprint("gpu-base", [entry(path)]),
-      fingerprint("gpu-base", [entry(path, "100644 blob bbb")]),
+    assert.equal(
+      fingerprint("gpu-base", [entry("product/inference/images/gpu-base/Dockerfile"), entry(path)]),
+      fingerprint("gpu-base", [entry("product/inference/images/gpu-base/Dockerfile"), entry(path, "100644 blob bbb")]),
     );
   }
 });

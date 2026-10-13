@@ -626,7 +626,8 @@ def main():
         {'series': 'argocd_app_info{name="api",health_status="Healthy",sync_status="Synced",autosync_enabled="true"}', 'values': '_ _ _ _ _ _ _ _ _ 1+0x31'},
     ], None, [app_alert], eval_time='16m')
     rollout_alert = 'GpuRolloutFailed'
-    for name, phase, fires in [('healthy', 'Healthy', False), ('progressing', 'Progressing', False), ('degraded', 'Degraded', True)]:
+    for name, phase, fires in [('completed', 'Completed', False), ('progressing', 'Progressing', False), ('paused', 'Paused', False),
+                               ('aborted', 'Abort', True), ('deadline exceeded', 'Timeout', True), ('reconcile error', 'Error', True), ('invalid spec', 'InvalidSpec', True)]:
         scenario('GPU rollout ' + name, [{'series': f'rollout_info{{namespace="gpu-inference",name="glm",phase="{phase}"}}', 'values': '1+0x10'}],
                  rollout_alert if fires else None, [rollout_alert], {'namespace': 'gpu-inference', 'name': 'glm'}, '3m')
     blocked_alert = 'GpuRolloutBlocked'

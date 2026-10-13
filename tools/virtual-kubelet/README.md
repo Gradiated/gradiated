@@ -171,8 +171,9 @@ Scaling down a model releases GPUs but does not reduce the RunPod reservation bi
 
 ## Rollout alerts
 
-`GpuRolloutFailed` warns when a Rollout is Degraded: it aborted at its progress
-deadline or failed SDK qualification. It does not retry automatically. Free
+`GpuRolloutFailed` warns when Argo Rollouts reports a Rollout as `Abort`,
+`Timeout`, `Error` or `InvalidSpec`: it aborted at its progress deadline, failed
+SDK qualification, or cannot reconcile. It does not retry automatically. Free
 capacity if needed, then run `kubectl argo rollouts retry rollout <name> -n
 gpu-inference` or push a fix. `GpuRolloutBlocked` warns when a model pod has had no
 GPU host for 15 minutes, before the deadline aborts the rollout. To free capacity,

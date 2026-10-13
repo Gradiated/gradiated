@@ -47,7 +47,7 @@ test("changed build contents and file modes produce a new identity", () => {
     ]),
   );
 });
-test("Nomad configuration changes do not rebuild the application image", () => {
+test("Kubernetes configuration changes do not rebuild the application image", () => {
   const base = [entry("product/Dockerfile")];
   assert.equal(
     fingerprint("product", base),

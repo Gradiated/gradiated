@@ -6,7 +6,7 @@ export const UuidSchema = z
 export const DeploymentIdSchema = z
   .guid()
   .describe(
-    "Deployment identifier, including unversioned Nomad allocation UUIDs.",
+    "Kubernetes pod UUID used as the deployment identifier.",
   )
   .openapi({ example: "a4d51466-8782-bf13-3b97-b8a07ad79c26" });
 

@@ -20,6 +20,21 @@ describe("API environment", () => {
     });
   });
 
+  it("binds local private control independently of the public listener", () => {
+    expect(
+      parseApiEnvironment({
+        ...baseEnvironment,
+        HOST: "0.0.0.0",
+        GPU_CONTROL_HOST: "127.0.0.1",
+        GPU_CONTROL_PORT: "3005",
+      }),
+    ).toMatchObject({
+      HOST: "0.0.0.0",
+      GPU_CONTROL_HOST: "127.0.0.1",
+      GPU_CONTROL_PORT: 3005,
+    });
+  });
+
   it("rejects a profiling token shorter than 32 characters", () => {
     expect(() =>
       parseApiEnvironment({

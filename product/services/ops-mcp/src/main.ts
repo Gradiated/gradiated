@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createBackend } from "./backend.js";
 import { createHttp } from "./http.js";
 import { createAuth } from "./auth.js";
+import { GpuBaseImageSchema } from "./instances/image.js";
 import { productionRegistrations } from "./instances/production.js";
 const config = z
   .object({
@@ -16,10 +17,7 @@ const config = z
     LOKI_TENANTS: z.string().min(1),
     ALERTMANAGER_URL: z.url(),
     CREDENTIALS_DIRECTORY: z.string().min(1),
-    GPU_BASE_IMAGE: z
-      .string()
-      // RunPod applies its ECR delegation only to tagged references and rejects tag@digest.
-      .regex(/^[a-z0-9.-]+\/[a-z0-9._/-]+:[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$/),
+    GPU_BASE_IMAGE: GpuBaseImageSchema,
     GPU_CONTROL_ENDPOINT: z.ipv4(),
   })
   .parse(process.env);

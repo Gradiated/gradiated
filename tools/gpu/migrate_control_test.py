@@ -11,7 +11,7 @@ migration = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(migration)
 
 FIXTURE = r'''
-import contextlib,http.client,json,os,pathlib,shutil,subprocess,sys,threading,time
+import contextlib,hashlib,http.client,json,os,pathlib,shutil,subprocess,sys,threading,time
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from pathlib import Path
 class Api(BaseHTTPRequestHandler):
@@ -34,6 +34,7 @@ for path in (version,base/'recovery',Path('/etc/gradiated'),Path('/opt/gradiated
 (version/'forward-control.py').write_text(Path('/tests/forward-control.py').read_text())
 (root/'control-program').symlink_to(version/'forward-control.py')
 (version/'.bundle-sha256').write_text('a'*64)
+(version/'files.json').write_text(json.dumps({path.name:hashlib.sha256(path.read_bytes()).hexdigest() for path in version.iterdir() if path.name!='.bundle-sha256'}))
 (root/'host/status.json').write_text(json.dumps({'current':'a'*64,'trial':False}))
 (base/'supervise.py').write_text("raise AssertionError('legacy outer supervisor must not be imported')\n")
 (base/'host-launcher.py').write_text('def verified(*args):return True\n')
@@ -81,10 +82,21 @@ first=migrate()
 assert first['dispatcher_updated']==(os.environ.get('INTERRUPTED_HANDOFF')!='1')
 assert first['listener_restarted'] and first['existing_connection_preserved'] and first['private_artifact_grant_verified']
 assert (base/'recovery.legacy/earlier').read_text()=='earlier recovery'
-assert any((path/'legacy').read_text()=='preserve this recovery fixture' for path in base.glob('recovery.legacy.*'))
-assert (base/'recovery/control-listener.py').is_file()
+if first['recovery_seed_path']==str(base/'recovery'):
+    assert any((path/'legacy').read_text()=='preserve this recovery fixture' for path in base.glob('recovery.legacy.*'))
+else:assert (base/'recovery/legacy').read_text()=='preserve this recovery fixture'
+assert (Path(first['recovery_seed_path'])/'control-listener.py').is_file()
 second=migrate()
 assert not second['dispatcher_updated'] and second['listener_restarted']
+if first['recovery_seed_path']!=str(base/'recovery'):
+    seed=Path(first['recovery_seed_path'])
+    def rejected():
+        try:migrate()
+        except RuntimeError as error:assert 'Existing recovery seed verification failed' in str(error)
+        else:raise AssertionError('Invalid recovery seed was accepted')
+    manifest=(seed/'files.json').read_bytes();(seed/'files.json').unlink();rejected();(seed/'files.json').write_bytes(manifest)
+    (seed/'injected.py').write_text('unexpected module');rejected();(seed/'injected.py').unlink()
+    seed.chmod(0o777);rejected();seed.chmod(0o755)
 print(json.dumps({'connection_preserving_migration':True,'recovery_installed':True,'repeat_is_idempotent':True}))
 '''
 
@@ -98,11 +110,14 @@ class MigrationTests(unittest.TestCase):
                 (path / name).write_text((ROOT / 'product/inference/tailscale' / name).read_text())
             (path / 'remote.py').write_text(migration.REMOTE)
             (path / 'fixture.py').write_text(FIXTURE)
-            for interrupted in ('0','1'):
+            (path/'Dockerfile').write_text('FROM gradiated-tailscale-supervisor-test\nRUN mkdir -p /opt/gradiated/kubelet/recovery && touch /opt/gradiated/kubelet/recovery/image-layer\n')
+            image='gradiated-control-migration-overlay-test'
+            subprocess.run(['docker','build','-q','-t',image,str(path)],check=True,capture_output=True,timeout=60)
+            for interrupted,image in (('0','gradiated-tailscale-supervisor-test'),('1','gradiated-tailscale-supervisor-test'),('0',image)):
                 with self.subTest(interrupted_handoff=interrupted):
                     result = subprocess.run(['docker', 'run', '--rm', '--cpus=1', '--memory=512m',
                                              '-e','INTERRUPTED_HANDOFF='+interrupted,
-                                             '-v', str(path) + ':/tests:ro', 'gradiated-tailscale-supervisor-test',
+                                             '-v', str(path) + ':/tests:ro', image,
                                              'python3', '-B', '/tests/fixture.py'], capture_output=True, text=True, timeout=60)
                     self.assertEqual(result.returncode, 0, result.stderr)
                     self.assertTrue(json.loads(result.stdout)['connection_preserving_migration'])

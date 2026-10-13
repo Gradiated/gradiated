@@ -9,7 +9,6 @@ import {
   modelDeployments,
 } from "../src/db/schema/index.js";
 import { createKubernetesDeploymentStore } from "../src/deployments/kubernetes.js";
-import { createNomadDeploymentStore } from "../src/deployments/nomad.js";
 import { createTestDatabase, type TestDatabase } from "./support/postgres.js";
 import { deploymentRelease, modelInput } from "./support/fixtures.js";
 
@@ -63,13 +62,6 @@ describe("Kubernetes deployment ownership", () => {
       status: "unavailable",
     });
 
-    await createNomadDeploymentStore(database.database).reconcile({
-      running: async () => [],
-      isGone: async () => {
-        throw new Error("Nomad must not inspect Kubernetes deployments");
-      },
-    });
-    expect(await rows()).toHaveLength(1);
     await store.reconcile({
       running: async () => [{ ...pod, qualified: true }],
       isGone: async () => false,

@@ -5,6 +5,8 @@ import type { ControlDatabase } from "../db/client.js";
 import { instances, modelDeployments } from "../db/schema/index.js";
 import { privateServingUrl } from "../instances/endpoints.js";
 
+export const DEPLOYMENT_RECONCILE_LOCK = "gradiated-kubernetes-deployments-v1";
+
 export interface ModelReplica {
   readonly id: string;
   readonly modelId: string;

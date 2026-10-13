@@ -514,9 +514,6 @@ importers:
       '@gradiated/control':
         specifier: workspace:*
         version: link:../../packages/control
-      '@gradiated/nomad-pki':
-        specifier: workspace:*
-        version: link:../../packages/nomad-pki
       '@gradiated/valkey':
         specifier: workspace:*
         version: link:../../packages/valkey

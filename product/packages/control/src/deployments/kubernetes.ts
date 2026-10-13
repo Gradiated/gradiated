@@ -8,6 +8,7 @@ import {
 } from "../catalog/records.js";
 import type { ControlDatabase } from "../db/client.js";
 import { instances, modelDeployments, models } from "../db/schema/index.js";
+import { DEPLOYMENT_RECONCILE_LOCK } from "./store.js";
 import { privateServingUrl } from "../instances/endpoints.js";
 
 export const KubernetesDeploymentSchema = z.object({
@@ -33,7 +34,7 @@ export const createKubernetesDeploymentStore = (database: ControlDatabase) => ({
       const {
         rows: [lock],
       } = await tx.execute<{ acquired: boolean }>(
-        sql`select pg_try_advisory_xact_lock(hashtext('gradiated-kubernetes-deployments-v1')) as acquired`,
+        sql`select pg_try_advisory_xact_lock(hashtext(${DEPLOYMENT_RECONCILE_LOCK})) as acquired`,
       );
       if (!lock?.acquired) return null;
 

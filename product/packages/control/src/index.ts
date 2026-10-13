@@ -117,14 +117,7 @@ export {
 export { createContentStore, type ContentStore } from "./traces/storage.js";
 export { createTraceService, type TraceService } from "./traces/service.js";
 export { createTraceCleanup } from "./traces/cleanup.js";
-export {
-  createNomadDeploymentStore,
-  type NomadAllocation,
-  type NomadDeploymentStore,
-  type NomadReplica,
-  type NomadView,
-  type ReconcileResult,
-} from "./deployments/nomad.js";
+
 export {
   createTrainingService,
   type TaskRecord,

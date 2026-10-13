@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { afterEach, beforeEach, expect, it } from "vitest";
 import { Registry } from "prom-client";
-import type { NomadReplica } from "@gradiated/control";
+import type { ModelReplica } from "@gradiated/control";
 import type { RedisClientType } from "@gradiated/valkey";
 import { connectTestValkey } from "../support/valkey.js";
 import {
@@ -42,7 +42,7 @@ it("standby shutdown preserves the leader lease and a new worker takes over afte
     id: randomUUID(),
     modelId: "test/model",
     release: {},
-  } as NomadReplica;
+  } as ModelReplica;
   const leader = new AbortController();
   let notifyReady!: () => void;
   const ready = new Promise<void>((resolve) => {

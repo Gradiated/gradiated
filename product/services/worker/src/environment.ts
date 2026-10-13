@@ -76,8 +76,3 @@ export type WorkerEnvironment = z.infer<typeof environmentSchema>;
 export const parseWorkerEnvironment = (
   environment: NodeJS.ProcessEnv,
 ): WorkerEnvironment => environmentSchema.parse(environment);
-
-export {
-  parseNomadEnvironment,
-  type NomadEnvironment,
-} from "@gradiated/nomad-pki";

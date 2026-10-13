@@ -3,7 +3,7 @@ import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
 
 import { ModelDeploymentRecordSchema } from "../catalog/records.js";
-import { NOMAD_RECONCILE_LOCK } from "../deployments/nomad.js";
+import { DEPLOYMENT_RECONCILE_LOCK } from "../deployments/store.js";
 import type { ControlDatabase } from "../db/client.js";
 import { instances } from "../db/schema/instances.js";
 import { modelDeployments } from "../db/schema/organizations.js";
@@ -101,7 +101,7 @@ export const createInstanceService = (
     return database.transaction(async (tx) => {
       if (expected)
         await tx.execute(
-          sql`select pg_advisory_xact_lock(hashtext(${NOMAD_RECONCILE_LOCK}))`,
+          sql`select pg_advisory_xact_lock(hashtext(${DEPLOYMENT_RECONCILE_LOCK}))`,
         );
 
       const allocationIds = expected

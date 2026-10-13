@@ -13,7 +13,6 @@ export type WorkerLoop =
   | "generation_ingestion"
   | "settlement"
   | "trace_cleanup"
-  | "deployment_reconciliation"
   | "kubernetes_deployment_reconciliation"
   | "kubernetes_qualification"
   | "catalog_apply"
@@ -36,7 +35,6 @@ const passOperation: Record<WorkerLoop, string> = {
   generation_ingestion: "consume_pass",
   settlement: "settlement_pass",
   trace_cleanup: "cleanup_pass",
-  deployment_reconciliation: "reconcile_pass",
   kubernetes_deployment_reconciliation: "kubernetes_reconcile_pass",
   kubernetes_qualification: "kubernetes_qualification_pass",
   catalog_apply: "apply_pass",
@@ -56,7 +54,6 @@ export class WorkerMetrics {
   private readonly ingestionMessages: Counter<"source">;
   private readonly ingestionDeletedMessages: Counter;
   private readonly routedDeployments: Gauge;
-  private readonly unroutedAllocations: Gauge<"reason">;
   private readonly modelReplicas: Gauge<"model">;
   private readonly modelReadyReplicas: Gauge<"model">;
   private readonly loopFailures: Counter<"loop">;
@@ -142,24 +139,18 @@ export class WorkerMetrics {
     });
     this.routedDeployments = new Gauge({
       name: "gradiated_worker_routed_deployments",
-      help: "Model deployments the last reconciliation pass derived from Nomad allocations.",
-      registers: [this.registry],
-    });
-    this.unroutedAllocations = new Gauge({
-      name: "gradiated_worker_unrouted_allocations",
-      help: "Running model allocations the last reconciliation pass could not route, by reason.",
-      labelNames: ["reason"],
+      help: "Model deployments registered by Kubernetes reconciliation.",
       registers: [this.registry],
     });
     this.modelReplicas = new Gauge({
       name: "gradiated_worker_model_replicas",
-      help: "Available Nomad-managed replicas per model.",
+      help: "Available model replicas per model.",
       labelNames: ["model"],
       registers: [this.registry],
     });
     this.modelReadyReplicas = new Gauge({
       name: "gradiated_worker_model_ready_replicas",
-      help: "Nomad-managed replicas per model with a fresh, healthy status for their release.",
+      help: "Model replicas with a fresh, healthy status for their release.",
       labelNames: ["model"],
       registers: [this.registry],
     });
@@ -217,15 +208,8 @@ export class WorkerMetrics {
     this.loopLastSuccess.set({ loop }, Date.now() / 1_000);
   }
 
-  recordReconciliation(
-    routed: number,
-    unrouted: Readonly<Record<string, number>>,
-  ): void {
+  recordReconciliation(routed: number): void {
     this.routedDeployments.set(routed);
-    this.unroutedAllocations.reset();
-    for (const [reason, count] of Object.entries(unrouted)) {
-      this.unroutedAllocations.set({ reason }, count);
-    }
   }
 
   recordReplicaReadiness(

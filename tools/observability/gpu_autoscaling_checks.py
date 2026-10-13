@@ -77,6 +77,8 @@ def check_gpu_autoscaling(root):
             series('gradiated_gateway_active_generations', '7+0x12', model=model_id),
             series('gradiated_gateway_active_generations', '5+0x12', 'b', model=model_id)],
              {**zero, 'concurrency': 12})
+        case('completed work before its first scrape cannot establish a rate', reporters() + [
+            series('gradiated_gateway_runtime_latency_seconds_sum', '60+0x12', model=model_id)], zero)
         case('short requests between scrapes contribute occupied seconds', reporters() + [
             series('gradiated_gateway_runtime_latency_seconds_sum', '0+180x12', model=model_id)],
              {**zero, 'work': 6})

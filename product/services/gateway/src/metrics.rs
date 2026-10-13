@@ -323,6 +323,7 @@ impl GatewayMetrics {
         let labels = GenerationLabels::from(scope);
         self.inner.admissions.get_or_create(&labels).inc();
         self.inner.active_generations.get_or_create(&labels).inc();
+        drop(self.inner.runtime_latency_seconds.get_or_create(&labels));
 
         AdmittedGenerationMetrics {
             metrics: self.clone(),
@@ -422,6 +423,19 @@ pub(crate) struct AdmittedGenerationMetrics {
 }
 
 impl AdmittedGenerationMetrics {
+    pub(crate) fn prepare_deployment(&self, deployment: Uuid) {
+        let labels = GenerationLabels {
+            deployment: deployment.to_string(),
+            ..self.labels.clone()
+        };
+        drop(
+            self.metrics
+                .inner
+                .runtime_latency_seconds
+                .get_or_create(&labels),
+        );
+    }
+
     pub(crate) fn served_by(&mut self, deployment: Uuid) {
         let deployment = deployment.to_string();
         if self.labels.deployment == deployment {
@@ -432,6 +446,12 @@ impl AdmittedGenerationMetrics {
         active.get_or_create(&self.labels).dec();
         self.labels.deployment = deployment;
         active.get_or_create(&self.labels).inc();
+        drop(
+            self.metrics
+                .inner
+                .runtime_latency_seconds
+                .get_or_create(&self.labels),
+        );
     }
 
     pub(crate) fn record_terminal(&self, record: &TerminalRecord<'_>) {

@@ -142,7 +142,7 @@ private control API for routing; Prometheus supplies scaling measurements.
 
 Three gateway signals inform the HPA: concurrent generations over the last
 minute, runtime seconds per second over two minutes (so short requests between
-scrapes count), and capacity rejections. Each signal is scoped to the exact
+scrapes count once a rate baseline exists), and capacity rejections. Each signal is scoped to the exact
 model and summed across gateway replicas. The HPA takes the largest recommendation.
 Capacity rejections request the configured ceiling; customer balance and
 concurrency policy rejections do not. The initial concurrency targets are 0.7
@@ -150,6 +150,14 @@ for Kev's single execution slot and 16 for the batched runtimes. The batched
 targets are conservative starting policy, not measured throughput guarantees;
 tune them against time to first token and queue pressure under representative
 traffic. GPU memory allocation alone is not a useful scale-down signal.
+Prometheus samples traffic; a first successful burst that finishes before the
+first scrape can be missed. Runtime work series are created at admission and
+for every fallback candidate before dispatch so a scrape during an in-flight
+request establishes zero.
+Sustained traffic supplies the subsequent samples. The capacity timestamp
+signal captures a first rejection even without a preceding scrape. Warm minimum
+replicas remain necessary for sudden bursts; autoscaling cannot load a model
+in time for a burst that has already finished.
 
 All queries require fresh, complete gateway telemetry. Missing samples or a
 Prometheus outage trigger a fallback that retains the current replica count

@@ -5,7 +5,6 @@ import type {
   ProviderInstance,
   GpuInventory,
 } from "./provider.js";
-import { gpuService } from "./tailscale.js";
 
 const RETAINED_REGISTRATIONS = 50;
 
@@ -27,21 +26,16 @@ export type Registration = {
   nodeName?: string;
   error?: string;
   tailscaleIp?: string;
-  privateService?: ReturnType<typeof gpuService>;
   kubernetes?: {
     inventory: GpuInventory;
-    host: {
+    inventoryEntry: {
       instance_id: string;
-      endpoint: string;
-      token_file: string;
+      tailscale_ip: string;
       gpu_count: number;
       cpu: number;
       memory_gib: number;
       gpu_product: string;
-    };
-    managementSecret: {
-      secretKey: string;
-      remoteRef: { key: string; property?: string };
+      management_secret: { key: string; property?: string };
     };
   };
 };
@@ -131,24 +125,18 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
         environment,
         { allowReset: registration.resetRunningPod },
       );
-      const privateService = gpuService(record.id, inventory.tailscaleIp);
       advance(registration, "prepared", {
         tailscaleIp: inventory.tailscaleIp,
-        privateService,
         kubernetes: {
           inventory,
-          host: {
+          inventoryEntry: {
             instance_id: record.id,
-            endpoint: `http://gpu-${record.id}.tailscale-inference.svc.cluster.local:8888/_kubelet`,
-            token_file: `/var/run/gradiated-host-keys/${record.id}`,
+            tailscale_ip: inventory.tailscaleIp,
             gpu_count: inventory.gpuCount,
             cpu: inventory.cpu,
             memory_gib: inventory.memoryGiB,
             gpu_product: inventory.gpuProduct,
-          },
-          managementSecret: {
-            secretKey: record.id,
-            remoteRef: {
+            management_secret: {
               key: management.secretId,
               ...(management.property ? { property: management.property } : {}),
             },

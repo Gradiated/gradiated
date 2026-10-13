@@ -1,14 +1,10 @@
 # Runtime bundle launcher
 
-Status: published runtime bundles; live serving qualification is in progress.
-
 `runtime-launch` is a small C++ executable for trusted serving runtimes.
-A Nomad pre-start task downloads the pinned archive with the Python
-`download-runtime` helper and signed curl requests, checks its
-SHA-256 digest, and extracts it into the shared allocation directory. It runs
-as `downloader`, with read-only S3 credentials that the model user cannot read.
-The launcher checks base compatibility and supervises the entrypoint.
-It does not download files, install packages, or start a container.
+The GPU host agent stages pinned archives through private short-lived download
+grants. The downloader verifies SHA-256 and extracts a shared, read-only bundle.
+The launcher checks base compatibility and supervises the entrypoint. It does
+not install packages or start a container.
 
 ## Bundle contract
 
@@ -23,7 +19,7 @@ The archive contains:
 The base ID identifies the system dependency contract, including OS, CPU
 architecture, Python ABI, and required system libraries. Assign a new ID for
 incompatible changes. The base image must also contain the launcher, the C++
-standard library, CA certificates, Nomad, and the qualified GPU device plugin.
+standard library and CA certificates. The host agent assigns exclusive GPU UUIDs.
 
 The bundle entrypoint uses `GRADIATED_RUNTIME_ROOT` to find its own files. Use
 its interpreter explicitly rather than a console script with an old absolute
@@ -81,8 +77,7 @@ Replace the helper atomically while no pre-start download is running; no schedul
 agent or provider pod restart is needed.
 
 The downloader accepts only content-addressed S3 release URLs. It verifies
-the digest before using `bsdtar` to extract the trusted archive. Nomad's native
-artifact size and file-count limits do not apply to this pre-start task.
+the digest before using `bsdtar` to extract the trusted archive.
 Eight ranges share one staging file and a twenty-minute download deadline.
 The artifact bucket enables S3 Transfer Acceleration. The helper replaces the
 regional endpoint with `s3-accelerate.amazonaws.com` when downloading; pinned
@@ -112,7 +107,7 @@ extracted runtime, and logs. Measure this for each release.
 ## Signals and cleanup
 
 The launcher starts a guardian that is a Linux child subreaper in a separate
-session. Nomad can kill the launcher process group during cleanup without
+session. The host agent can kill the launcher process group during cleanup without
 killing the guardian. The guardian starts the entrypoint in another session
 and adopts orphaned descendants. Normal
 shutdown signals pass through the launcher to the guardian. If the launcher
@@ -131,7 +126,7 @@ kill and reap the remaining runtime tree, including detached workers.
 The supervisor cannot guarantee cleanup in these cases:
 
 - The guardian itself gets SIGKILL, or the entire process tree is killed.
-- The Nomad client dies.
+- The host agent cannot establish that the process tree stopped.
 - A process stays in an uninterruptible kernel wait.
 
 Fence the node before you replace it in these cases. This is process lifecycle
@@ -144,7 +139,7 @@ checks `http://127.0.0.1:$RUNTIME_PORT/health` every five seconds, with a two-se
 request timeout. Until the first healthy response, it allows the configured cold
 start (Kev 30 minutes, GLM 60 minutes, DeepSeek 90 minutes). Once healthy, three
 consecutive failures kill and reap the whole runtime tree immediately and return
-a failed task exit; Nomad's restart policy starts a fresh task. A startup that
+a failed task exit; the host agent's bounded restart policy starts a fresh serving process. A startup that
 never becomes healthy also exits when its deadline expires.
 
 The state lives in the launcher process and resets only with the runtime task.
@@ -209,7 +204,7 @@ CTest reports each case separately:
   The Docker checks also run the private bundle downloader tests with synthetic
   artifact grants. Live qualification must check real SDK requests, recovery after
   a model-process crash, rollout abort and rollback, and isolation from database
-  and Kubernetes API endpoints. The tests never need a Nomad agent.
+  and Kubernetes API endpoints. The tests do not require a running GPU host agent.
 
 ## Why the small supervisor remains
 

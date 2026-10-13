@@ -68,13 +68,10 @@ that ran for at least one minute.
 
 ## Operation
 
-Deployment reconciliation uses `NOMAD_ADDR`, `NOMAD_TOKEN`, and `NOMAD_CA_PEM`.
-With `NOMAD_CA_KMS_KEY`, the worker issues a client certificate on first use and
-renews it after two thirds of its lifetime. Each request uses the current
-certificate; renewal failures enter the supervised loop's retry path. The
-`nomad_certificate_expiry_timestamp_seconds{certificate="worker"}` metric
-reports the issued certificate's expiry. Without the signing-key setting,
-`NOMAD_CLIENT_CERT_PEM` and `NOMAD_CLIENT_KEY_PEM` remain supported during migration.
+Deployment reconciliation reads GPU Kubernetes pods using the worker
+ServiceAccount. It verifies model process incarnations through the production
+SDK before marking them Ready and projecting serving endpoints. No scheduler
+certificate issuance, renewal or ACL token is involved.
 
 Each loop writes a readiness file when it is ready and removes it when it
 fails or stops:

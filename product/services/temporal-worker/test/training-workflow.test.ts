@@ -273,7 +273,7 @@ describe("training workflow", () => {
       handlers.releaseTrainingHost.mockImplementation(async () => {
         shutdownAt = await environment.currentTimeMs();
         order.push("shutdown requested");
-        throw new Error("Nomad unreachable");
+        throw new Error("Kubernetes unreachable");
       });
       handlers[failedStep].mockRejectedValueOnce(new Error("host failed"));
       const taskQueue = randomUUID();

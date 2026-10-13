@@ -84,7 +84,7 @@ healthy. S3 versioning keeps previous entry points for recovery.
   the same secret (`gh secret set` or `aws secretsmanager put-secret-value`),
   then delete the old key. Never keep keys in version control.
 - The `main` ruleset requires one gate per workflow: `Product tests passed`,
-  `Kubernetes passed`, `Nomad deployment passed`, `Terraform passed`,
+  `Kubernetes passed`, `Terraform passed`,
   `Model deployment passed`, `Wizard publish passed`, `Agent quality passed`,
   `Dependency age passed` and `Research lab passed`. Ordinary PRs satisfy these
   checks and resolved review threads. The Gradiated Release app bypasses this

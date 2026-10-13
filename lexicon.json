@@ -16,7 +16,7 @@
     },
     {
       "name": "deployment",
-      "definition": "A model deployment: one concrete runtime that serves one model release at a private service URL, derived from Nomad allocations, among which the gateway places requests."
+      "definition": "A model deployment: one concrete runtime that serves one model release at a private service URL, derived from Kubernetes pods, among which the gateway places requests."
     },
     {
       "name": "generation",

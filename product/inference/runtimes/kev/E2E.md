@@ -1,8 +1,8 @@
 # Isolated Kev gateway E2E
 
 Prerequisites: Rust, Node and pnpm, Docker on a local unix socket, and two
-running Kev gateway-protocol adapters, such as the two allocations of the
-`kev-9b` Nomad job. The
+running Kev gateway-protocol adapters, such as the two pods of the
+Kev Kubernetes Rollout. The
 separately maintained `product/scripts/test-kev-gateway.test.ts` must be present.
 Remote Docker contexts are refused; the launcher resolves this host's own socket.
 
@@ -14,8 +14,8 @@ cargo build --locked --manifest-path product/services/gateway/Cargo.toml \
 ```
 
 Set `KEV_SSH_HOST`, `KEV_SSH_PORT`, and `KEV_SSH_KEY` to the pod's current SSH
-connection, and `KEV_PORT_0` and `KEV_PORT_1` to the two allocations' `runtime`
-ports from `nomad alloc status`, then keep this tunnel running in a separate
+connection, and `KEV_PORT_0` and `KEV_PORT_1` to the two pods' loopback runtime
+ports from the host agent's `/var/lib/gradiated-kubelet/pods/<Pod UID>/runtime.json`, then keep this tunnel running in a separate
 terminal:
 
 ```sh
@@ -61,7 +61,7 @@ The model is exactly `jaredpalmer/kev-9b`. Release metadata declares
 `kev-f0ae8fb9-systemone-v1` (production derives it from the bundle digest), adapter revision
 `2629c06a5aeb0feb3b9783bafed17ed8f39ecf5c`, and tokenizer
 `Qwen/Qwen3.5-9B-Base@68c46c4b3498877f3ef123c856ecfde50c39f404`, as pinned in
-`product/inference/nomad/jobs/kev-9b.nomad.hcl`. Release JSON preserves the Rust
+`product/inference/gpu/runtimes.json`. Release JSON preserves the Rust
 `ModelDeploymentRelease` field order and omits absent `runtime_model_name` and
 `tokenizer_mode` before SHA-256 hashing. Local deployment status timestamps are
 refreshed every second; these are synthetic availability declarations, not a

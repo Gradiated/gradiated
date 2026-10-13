@@ -26,7 +26,6 @@ export const bundles = {
     "product/inference/runtimes/glm",
     "product/inference/lora",
   ],
-  "host-tools": ["product/inference/bundles/host-tools"],
   "deepseek-v4-1-flash": [
     "product/inference/bundles/deepseek-v4-1-flash",
     "product/inference/images/deepseek-v4-1-flash/start.sh",

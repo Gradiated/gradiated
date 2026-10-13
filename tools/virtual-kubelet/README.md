@@ -82,11 +82,12 @@ migration or recovery step on a retained reservation.
 
 Enrollment stages and verifies the permitted runtime bundles, then installs
 `host-agent.py`, `supervise.py`, Desmond and the root-only configuration using
-`tools/gpu/install-host.py`. The controller's host inventory and named node/lease RBAC
-must include the instance, and its management key belongs in the
-`gradiated/prod/platform/gpu-controller` AWS secret. Argo owns the corresponding
-Kubernetes resources under
-`infra/environments/prod/us-east-1/kubernetes/gpu-inference`.
+`tools/gpu/install-host.py`. Add the registration's `kubernetes.inventoryEntry` to
+`infra/environments/prod/us-east-1/kubernetes/gpu-inference/hosts.json` and run
+`python3 tools/gpu/render-config.py` (requires PyYAML 6.0.2). This generates the
+private Service, controller inventory/checksum, host key projection and named
+Node/Lease RBAC. The inventory stores secret references, never key values.
+Argo owns the resulting manifests; review them before scheduling a new host.
 
 All production serving replicas and training Jobs use Kubernetes. Existing
 RunPod containers retain a suspended legacy main process only to preserve their
@@ -111,9 +112,17 @@ downloads use temporary grants from the private control bridge. Keep bootstrap
 values outside the repository.
 
 Model catalogue changes are rendered into the controller ConfigMap by
-`python3 tools/gpu/render-runtimes.py`. The controller asks each host to stage the
+`python3 tools/gpu/render-config.py`. The controller asks each host to stage the
 pinned bundles through private download grants. Downloads run outside the host
 operation lock; activation and pod creation share a lock. Active runtime profiles
-remain unchanged until their pods drain. Update the Rollout alongside the
+remain unchanged until their pods drain. Select the runtime and placement in `gpu-inference/models.json` alongside the
 catalogue; an unstaged candidate retries while existing replicas keep serving.
 The controller image is built and pinned by the normal application release.
+
+The model configuration names the runtime digest, replica count, deadline and
+placement. The renderer supplies the common canary strategy, qualification,
+service account, drain period and resources from the runtime catalogue. Do not
+edit generated Rollouts directly. Non-inventory fields in controller and RBAC
+manifests remain editable; rendering preserves them. CI checks that generated
+fields match the inputs. Remove a retired host Service or model Rollout explicitly after draining
+its workloads; rendering and --check fail if retired resources remain.

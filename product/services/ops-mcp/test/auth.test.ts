@@ -179,7 +179,7 @@ describe("staff identity verification", () => {
       await new SignJWT({ nonce: "nonce" })
         .setProtectedHeader({ alg: "RS256" })
         .setIssuer(issuer)
-        .setAudience("nomad-ui")
+        .setAudience("unrelated-service")
         .setSubject("s")
         .setIssuedAt()
         .setExpirationTime("1m")

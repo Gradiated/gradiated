@@ -11,5 +11,5 @@ Gradiated serves exact hosted models to customers through its gateway and proxy,
 - local-user (outside): The person who runs the wizard on their own machine, with their own files and credentials.
 - control-plane: Rows the TypeScript control plane writes to PostgreSQL: organizations, memberships, workspaces, API-key digests, the catalog and balance transactions.
 - serving-state: What the gateway writes to Valkey for the control plane to read back: finalized generation events and runtime status.
-- cluster: What the Nomad API reports about model allocations and their hosts.
-- production-read: What the ops MCP tools read and return from Prometheus, Loki, Alertmanager, Kubernetes and Nomad.
+- cluster: What the Kubernetes API reports about model allocations and their hosts.
+- production-read: What the ops MCP tools read and return from Prometheus, Loki, Alertmanager, Kubernetes and Kubernetes.

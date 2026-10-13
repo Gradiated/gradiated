@@ -18,7 +18,7 @@ The training library is [Gradiated/autotrain](https://github.com/Gradiated/autot
 pinned as a submodule at `product/packages/autotrain`. It accepts explicit recipes,
 local dataset/checkpoint paths and callbacks; it has no infrastructure dependencies.
 This directory owns the private HTTP runtime adapter, signed artifact transfers,
-container build and host lifecycle. TypeScript owns datasets, Temporal, Nomad and S3.
+container build and host lifecycle. TypeScript owns datasets, Temporal, Kubernetes and S3.
 The base model remains loaded for training, verification and evaluation.
 
 Initialize the private submodule before building:
@@ -45,7 +45,7 @@ a tiny Qwen model. Checkpoints also preserve the best adapter, early-stopping
 state and learning-rate scheduler; a resumed run cannot reset its patience.
 Existing frozen run manifests and runtime bundles retain their original behavior.
 The model deployment workflow publishes the runtime archive by SHA-256 alongside
-existing inference bundles. The Nomad host image must match the bundle base ID.
+existing inference bundles. The GPU host image must match the bundle base ID.
 
 The HTTP server binds to the allocation's loopback port behind the existing
 host proxy. Commands have idempotent operation IDs and return bounded event pages.

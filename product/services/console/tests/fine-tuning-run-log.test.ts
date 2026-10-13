@@ -51,7 +51,7 @@ const everyPayload = {
   capacity_granted: { type: "capacity_granted", host_id: "host-1", gpu },
   job_submitted: {
     type: "job_submitted",
-    runner: "nomad",
+    runner: "kubernetes",
     provider_job_id: "job-1",
     host_id: "host-1",
     gpu,

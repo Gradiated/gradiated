@@ -27,17 +27,14 @@ checked without replacing its workloads. A new host must have the verified GPU
 base implementation and idle GPUs. Stopped pods use the pinned `GPU_BASE_IMAGE`;
 changing any running pod's provider settings requires explicit reset authorization.
 
-Commit the prepared result:
-
-1. Put `privateService` under the Tailscale host Services.
-2. Add `kubernetes.host` to `gpu-inference/controller.yaml`'s `hosts.json`.
-3. Add `kubernetes.managementSecret` to the controller ExternalSecret when it
-   refers to a separate host secret. The existing fleet secret remains projected
-   for the first six hosts.
-4. Add the `gpu-<instance UUID>` name to the controller's named Node and Lease
-   permissions. Update the inventory checksum annotation to restart the controller.
-5. Let Argo sync, then verify that the Node is Ready and advertises the measured
-   GPU, CPU and memory budget before scheduling work.
+Commit the prepared result by adding `kubernetes.inventoryEntry` to
+`infra/environments/prod/us-east-1/kubernetes/gpu-inference/hosts.json`.
+Run `python3 -m pip install PyYAML==6.0.2` once, then
+`python3 tools/gpu/render-config.py` from the repository root. The renderer
+projects the private Service, controller inventory/checksum, secret reference
+and named Node/Lease permissions. Review and commit the generated manifests.
+Let Argo sync, then verify the Node is Ready with measured GPU, CPU and memory
+budgets before scheduling work.
 
 This explicit Git step keeps enrollment from giving the operations service broad
 Kubernetes write access. Three controller replicas run on separate EKS nodes;
@@ -63,8 +60,8 @@ profiles; model updates belong in Kubernetes Rollouts.
 ## Deploy and verify a model
 
 Update its pinned bundle and release metadata in the GPU runtime catalogue and
-its Rollout under `infra/environments/prod/us-east-1/kubernetes/gpu-inference/`.
-Run `python3 tools/gpu/render-runtimes.py` to project the catalogue into the
+select it in `infra/environments/prod/us-east-1/kubernetes/gpu-inference/models.json`.
+Run `python3 tools/gpu/render-config.py` to project the catalogue into the
 controller ConfigMap. The controller stages and verifies bundles through private
 download grants before accepting the new runtime. The
 scheduler places replicas using resources, GPU-product labels and affinity.

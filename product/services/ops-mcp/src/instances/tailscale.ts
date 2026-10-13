@@ -5,24 +5,6 @@ import { readSecret } from "./aws.js";
 const API = "https://api.tailscale.com/api/v2";
 const SECRET = "gradiated/prod/platform/tailscale-gpu-enrollment";
 
-export const gpuService = (instanceId: string, tailscaleIp: string) => ({
-  apiVersion: "v1",
-  kind: "Service",
-  metadata: {
-    name: `gpu-${z.uuid().parse(instanceId)}`,
-    namespace: "tailscale-inference",
-    annotations: {
-      "tailscale.com/tailnet-ip": tailscaleIp,
-      "tailscale.com/proxy-group": "inference-egress",
-    },
-  },
-  spec: {
-    type: "ExternalName",
-    externalName: "unused",
-    ports: [{ name: "inference", port: 8888, protocol: "TCP" }],
-  },
-});
-
 export const tailscaleAuthKey = async (
   instanceId: string,
   request: typeof fetch = fetch,

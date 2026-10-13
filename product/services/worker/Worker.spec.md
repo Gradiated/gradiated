@@ -1,6 +1,6 @@
 # Worker
 
-The background worker: it ingests finalized generations from Valkey into ClickHouse, settles them into PostgreSQL and reconciles model deployments from Nomad.
+The background worker: it ingests finalized generations from Valkey into ClickHouse, settles them into PostgreSQL and reconciles model deployments from Kubernetes.
 
 ## entrances
 
@@ -10,7 +10,7 @@ The background worker: it ingests finalized generations from Valkey into ClickHo
 - settlement: the worker posts each closed settlement slot to PostgreSQL
   handler: runGenerationSettlementLoop in src/settlement-loop.ts
   trust: serving-state
-- deployment reconciliation: the worker derives model deployments from the allocations Nomad reports
+- deployment reconciliation: the worker derives model deployments from the allocations Kubernetes reports
   handler: reconcileDeployments in src/deployment-reconciliation.ts
   trust: cluster
 

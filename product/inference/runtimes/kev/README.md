@@ -49,9 +49,9 @@ select dispatch.
 The [`kev-9b` bundle](../../bundles/kev-9b) packages this adapter with its own
 Python, upstream's frozen lock plus FLA and Triton, and Kev installed from Git at
 `f0ae8fb9af5762254974dcdba8c82cbf48587b2e`. The
-[`kev-9b` Nomad job](../../nomad/jobs/kev-9b.nomad.hcl) runs one allocation per
-RTX PRO 6000 on a dynamic loopback port behind the host proxy, with Desmond
-reporting readiness; the worker turns each allocation into a deployment. Its
+Kubernetes Rollout selects RTX PRO 6000 Nodes and runs each replica on a dynamic
+loopback port behind the private host proxy. Desmond reports runtime readiness;
+the worker qualifies each pod incarnation and projects its serving deployment. Its
 release declares `protocol: "system_one"`, without which the gateway treats the
 deployment as a chat model and every request fails closed. `GET /metrics`
 exposes whether the slot is busy, which Desmond needs to report the replica as

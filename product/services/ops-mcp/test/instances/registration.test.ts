@@ -76,15 +76,14 @@ describe("Kubernetes GPU enrollment", () => {
       { GRADIATED_GPU_BOOTSTRAP: "private-encoded-bootstrap" },
       { allowReset: false },
     );
-    expect(ready.kubernetes?.host).toMatchObject({
+    expect(ready.kubernetes?.inventoryEntry).toMatchObject({
       instance_id: id,
       gpu_count: 8,
       cpu: 96,
       memory_gib: 1280,
     });
-    expect(ready.kubernetes?.managementSecret).toEqual({
-      secretKey: id,
-      remoteRef: { key: "management-secret" },
+    expect(ready.kubernetes?.inventoryEntry.management_secret).toEqual({
+      key: "management-secret",
     });
     expect(JSON.stringify(ready)).not.toMatch(
       /private-management|private-encoded|tskey-auth/,

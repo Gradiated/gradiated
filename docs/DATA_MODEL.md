@@ -724,7 +724,7 @@ The following existed in older plans and are not part of the data model:
 - `allocation_members`
 - `cells`
 - all research program, campaign and experiment tables
-- a custom scheduler or a second store of Nomad allocation state
+- a custom scheduler or a second store of Kubernetes pod state
 
 ## Instance inventory
 

@@ -28,7 +28,7 @@ The serving implementation must:
    coalesces concurrent loads and retains it while requests use it.
 4. Prepare and validate a promotion before changing the task production pointer.
 
-There is one serving Nomad job per base release, not per adapter. Residency is
+There is one serving Argo Rollout per base release, not per adapter. Residency is
 local to each allocation, so a global `loading` or `loaded` version status would
 be misleading. Serving eligibility, healthy base capacity and per-allocation
 cache residency are separate facts. The trainer does not manage any of them.
@@ -114,7 +114,7 @@ Cold loading has a 60-second bound within the request deadline. Limit waiters to
 
 Publication validates the output, copies final bytes to `adapters/`, tests those immutable bytes through the same host loader, then commits the available model record. The private test is authorized only for the owning run before publication. The serving loader never reads unvalidated run output. Publication does not set the task production pointer.
 
-Base serving jobs and scaling policies remain in Git, referencing PostgreSQL base releases. No per-adapter Nomad job or worker load queue is created. A runtime release is qualified against the exact base and a fixed adapter test set. New base weights, tokenizer or template require a new base release. Publication waits visibly if compatible test capacity is unavailable.
+Base serving jobs and scaling policies remain in Git, referencing PostgreSQL base releases. No per-adapter Rollout or worker load queue is created. A runtime release is qualified against the exact base and a fixed adapter test set. New base weights, tokenizer or template require a new base release. Publication waits visibly if compatible test capacity is unavailable.
 
 ## SERV-03 Promotion
 
@@ -145,7 +145,7 @@ Cleanup denies new inference, export and loading, then deletes artifact, manifes
 
 Shared base dependencies are kept while any available version, production placement, accepted run input or active use references them. Old available versions keep an old base's configured serving minimum in force until retired; the console shows that required capacity.
 
-Runtime upgrades: qualified once per base on the fixed adapter set (SERV-02). The release owner runs the check before rollout. Git job configuration defines rollout and capacity constraints; Nomad performs the health-gated rollout (FLEET-04). Keep the old path until the new one is qualified and ready. S3 defines the numerical checks. No automatic model substitution or context-limit reduction.
+Runtime upgrades: qualified once per base on the fixed adapter set (SERV-02). The release owner runs the check before rollout. Git job configuration defines rollout and capacity constraints; Argo Rollouts performs the health-gated rollout (FLEET-04). Keep the old path until the new one is qualified and ready. S3 defines the numerical checks. No automatic model substitution or context-limit reduction.
 
 ## Required evidence
 

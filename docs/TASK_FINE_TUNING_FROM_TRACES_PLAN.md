@@ -69,7 +69,7 @@ behavior, replay a frozen history, and exercise schedule creation and a complete
 cover persistence, pagination, collector registration and outage recovery, admission errors and cancel.
 
 The real trainer increment adds dataset provenance and split tests, trainer event
-and artifact validation, Nomad host lifecycle tests, checkpoint recovery and a
+and artifact validation, GPU host lifecycle tests, checkpoint recovery and a
 bounded H100 smoke run. Synthetic orchestration results do not establish training
 correctness or quality.
 
@@ -81,7 +81,7 @@ pinned Qwen3-0.6B, rank-two LoRA and fifty optimizer steps. The training library
 lives in the private [Gradiated/autotrain](https://github.com/Gradiated/autotrain)
 repository, pinned as the `product/packages/autotrain` submodule. It accepts local
 files and an explicit recipe; progress and checkpoint callbacks connect it to the
-private runtime adapter. Docker packaging, HTTP, signed S3 transfers, Nomad and
+private runtime adapter. Docker packaging, HTTP, signed S3 transfers, Kubernetes and
 host lifecycle remain in this repository. Only the Python library is intended
 for future open sourcing.
 
@@ -114,7 +114,7 @@ promotion and weighted canaries are later features. The current small-model judg
 is infrastructure evidence; its score alone must not qualify a production release.
 
 Recommended hosting unit: a persistent base-model pool with multiple immutable
-LoRAs sharing each engine. A pool is a compatible set of existing Nomad service
+LoRAs sharing each engine. A pool is a compatible set of existing Kubernetes serving
 allocations, pinned to one base/tokenizer/template/runtime/precision profile.
 Do not merge every adapter into a full checkpoint or allocate one GPU per version
 as the default. Dedicated replicas remain an operator option for isolation or
@@ -147,8 +147,8 @@ flowchart LR
 | `task_versions` and signed downloads | Immutable trained output, workspace ownership | Freeze base identity and a serving manifest; qualify each version |
 | `PUT .../tasks/{task}/production` | Editor authorization, same-task check, manual pointer | Readiness gate, audit and cache/drain semantics |
 | Temporal training worker | Durable step retries, encrypted payloads, S3 verification | Separate hosting workflow; preserve existing training histories |
-| Nomad, instance inventory and runtime bundles | GPU reservation, process lifecycle, placement and restart | Qwen LoRA service job and explicit serving pool constraints |
-| Worker Nomad reconciliation | Physical allocation to `model_deployments` mapping | Desired adapter reconciliation and version-to-pool bindings |
+| Kubernetes, instance inventory and runtime bundles | GPU reservation, process lifecycle, placement and restart | Qwen LoRA service job and explicit serving pool constraints |
+| Worker Kubernetes reconciliation | Physical allocation to `model_deployments` mapping | Desired adapter reconciliation and version-to-pool bindings |
 | Desmond and allocation-aware host proxy | Authenticated ingress and runtime status | Adapter control allowlist, boot-bound adapter readiness |
 | Rust gateway | Authorization, admission, streaming, leases, retries and settlement | Workspace-scoped version resolution and adapter-aware routing |
 | Console versions tab | Evaluation, downloads and manual promotion | Hosting progress, readiness, test snippet and rollback |
@@ -156,7 +156,7 @@ flowchart LR
 Implementation code is the baseline where older architecture prose differs:
 `gateway/src/postgres_reader.rs` loads authoritative records from PostgreSQL;
 `serving_state.rs` caches them in Valkey with a bounded TTL. Physical deployments
-are reconciled from Nomad and must not be created by hand. The existing release
+are reconciled from Kubernetes and must not be created by hand. The existing release
 schema has no adapter identity, and generic deployment health does not prove
 that a specific adapter can serve. Update the canonical architecture and data
 model with implementation, without treating this proposal as current authority.
@@ -232,7 +232,7 @@ not a change to training schedule synchronization.
    readiness. The version becomes eligible and the hosting operation becomes
    ready only after its configured replica target has passed.
 
-The existing `worker` continuously reconciles desired attachments to active Nomad
+The existing `worker` continuously reconciles desired attachments to active Kubernetes
 allocations. It restores them after engine restart or allocation replacement and
 removes stale observed readiness. An authenticated host-side component beside the
 engine performs download/load/unload; the gateway never invokes those operations.
@@ -264,9 +264,9 @@ and sharding are manual initially.
 ### Mixed TP2 and TP4 allocations on one host
 
 Support multiple disjoint GPU allocations on the same eight-B300 host, including
-TP4 + TP2 + TP2 and four TP2 engines. The existing Nomad jobs already request
-explicit GPU counts and launch with allocation-assigned UUIDs through
-`claim-gpus.sh`. This is the placement foundation, not proof of LoRA support.
+TP4 + TP2 + TP2 and four TP2 engines. The serving Rollouts already request
+explicit GPU counts; the host agent assigns exclusive GPU UUIDs and passes
+`CUDA_VISIBLE_DEVICES` to each runtime. This is the placement foundation, not proof of LoRA support.
 
 - One engine allocation owns its CPU/GPU adapter caches, generation capacity and
   boot-bound readiness. A deployment identity is never the entire host.
@@ -279,12 +279,12 @@ explicit GPU counts and launch with allocation-assigned UUIDs through
 - Allocate byte budgets to each engine under a host-wide ceiling. Charge CPU
   copies, staging buffers, model files in tmpfs, engine overhead and restart
   overlap; do not grant the full host cache budget independently to every replica.
-  Nomad `raw_exec` resource reservations are not a hard process-memory limit, so
-  the cache loader must enforce its budget before allocations and transfers.
+  The host agent enforces cgroup memory limits; the cache loader must also bound
+  its own staging and transfers within that allocation.
 - Keep GPU budgets separate per assigned device. Prefer GPU groups and CPU memory
   from the same NUMA domain, verifying actual UUID topology. GPU counts alone do
   not guarantee NUMA-local placement. Respect the observed cgroup CPU/RAM limits,
-  rather than Nomad's whole-machine inventory totals.
+  rather than host-wide inventory totals.
 - Keep downloaded immutable files reusable on a host where practical. Start with
   separate tensor caches per engine, fully accounted for; cross-process shared
   tensor memory is a later optimization, not a correctness dependency.
@@ -403,7 +403,7 @@ can be tested with application-specific holdouts before manual promotion.
 ### Capacity, observability and recovery
 
 Keep training and inference node assignments disjoint. Persistent inference uses
-Nomad service restart/replacement policies, not the training allocation lease or
+Kubernetes serving restart/replacement policies, not the training allocation lease or
 24-hour hard deadline. Use compatible already authorized serving capacity if
 available; otherwise size a separate pool proposal before any rental or apply.
 Never reset a provider pod to publish a runtime or adapter.
@@ -430,7 +430,7 @@ and acceptance checks, based on the existing pinned vLLM stack.
 
 | Increment | Deliverable | Acceptance |
 | --- | --- | --- |
-| 1. Runtime qualification | Qwen loop smoke plus exact GLM-sized rank-two/all-layer profiles, safe artifact loader, Nomad service job, private adapter control | Real adapters load; reference agreement, two-adapter cache isolation, streaming/cancel, TP2 + TP4 co-location and restart cleanup pass |
+| 1. Runtime qualification | Qwen loop smoke plus exact GLM-sized rank-two/all-layer profiles, safe artifact loader, Kubernetes serving Rollout, private adapter control | Real adapters load; reference agreement, two-adapter cache isolation, streaming/cancel, TP2 + TP4 co-location and restart cleanup pass |
 | 2. Durable hosting | Manifest, hosting records/bindings, encrypted hosting workflow and worker reconciliation | Idempotent retries, lost workflow start, corruption, capacity wait, boot fencing and restart restore pass |
 | 3. Private inference | Scoped selectors, combined identity, readiness routing, shared leases, prices and provenance | Cross-workspace denial, private catalog isolation, adapter-aware response checks and billing pass; two versions share one engine's capacity |
 | 4. Production loop | Console testing, readiness-gated pointer, audit, rollback and safe unhost | Promotion during streams, cache propagation, concurrent promotion, stale reports and failed hosting preserve exact version semantics |

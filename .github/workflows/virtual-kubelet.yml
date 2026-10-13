@@ -2,9 +2,9 @@ name: GPU controller tests
 on:
   push:
     branches: [main]
-    paths: ["tools/virtual-kubelet/**", "product/inference/gpu/**", ".github/workflows/virtual-kubelet.yml"]
+    paths: ["tools/virtual-kubelet/**", "tools/gpu/**", "infra/environments/prod/us-east-1/kubernetes/gpu-inference/**", "infra/environments/prod/us-east-1/kubernetes/tailscale-inference/hosts/**", "product/inference/gpu/**", ".github/workflows/virtual-kubelet.yml"]
   pull_request:
-    paths: ["tools/virtual-kubelet/**", "product/inference/gpu/**", ".github/workflows/virtual-kubelet.yml"]
+    paths: ["tools/virtual-kubelet/**", "tools/gpu/**", "infra/environments/prod/us-east-1/kubernetes/gpu-inference/**", "infra/environments/prod/us-east-1/kubernetes/tailscale-inference/hosts/**", "product/inference/gpu/**", ".github/workflows/virtual-kubelet.yml"]
 permissions:
   contents: read
 jobs:
@@ -19,7 +19,9 @@ jobs:
           cache-dependency-path: tools/virtual-kubelet/go.sum
       - run: go test -race ./... && go vet ./...
         working-directory: tools/virtual-kubelet
-      - run: python3 tools/gpu/render-runtimes.py --check
+      - run: python3 -m pip install PyYAML==6.0.2
+      - run: python3 tools/gpu/render-config.py --check
+      - run: python3 tools/gpu/render_config_test.py
       - run: python3 tools/virtual-kubelet/host_agent_test.py
       - run: python3 product/inference/gpu/bootstrap_test.py
       - run: python3 product/inference/images/gpu-base/download_runtime_test.py

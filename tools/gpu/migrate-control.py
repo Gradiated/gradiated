@@ -61,34 +61,33 @@ connection=http.client.HTTPConnection('127.0.0.1',3004,timeout=10)
 probe(connection)
 original_socket=connection.sock
 try:
-    if changed:
-        old=installed.read_bytes()
-        matches=listeners()
-        if len(matches)!=1:raise ValueError('Cannot identify a single control listener')
-        pid,birth=matches[0]
-        replace(listener.read_bytes())
-        try:
-            if identity(pid)!=birth:raise ValueError('Control listener identity changed')
-            # Killing only the acceptor leaves its nc children and their sockets alive.
-            os.kill(pid,signal.SIGKILL)
-            deadline=time.monotonic()+10
-            while True:
-                current=listeners()
-                if len(current)==1 and current[0]!=(pid,birth):
-                    try:
-                        with contextlib.closing(http.client.HTTPConnection('127.0.0.1',3004,timeout=2)) as fresh:probe(fresh)
-                        break
-                    except OSError:pass
-                if time.monotonic()>deadline:raise TimeoutError('Control dispatcher did not restart')
-                time.sleep(.1)
-            probe(connection)
-            if connection.sock is not original_socket:raise ValueError('Existing control connection was replaced')
-            with contextlib.closing(http.client.HTTPConnection('127.0.0.1',3004,timeout=10)) as fresh:probe(fresh)
-        except Exception:
-            replace(old)
-            for current,birth in listeners():
-                if identity(current)==birth:os.kill(current,signal.SIGKILL)
-            raise
+    old=installed.read_bytes()
+    matches=listeners()
+    if len(matches)!=1:raise ValueError('Cannot identify a single control listener')
+    pid,birth=matches[0]
+    if changed:replace(listener.read_bytes())
+    try:
+        if identity(pid)!=birth:raise ValueError('Control listener identity changed')
+        # Killing only the acceptor leaves its nc children and their sockets alive.
+        os.kill(pid,signal.SIGKILL)
+        deadline=time.monotonic()+10
+        while True:
+            current=listeners()
+            if len(current)==1 and current[0]!=(pid,birth):
+                try:
+                    with contextlib.closing(http.client.HTTPConnection('127.0.0.1',3004,timeout=2)) as fresh:probe(fresh)
+                    break
+                except OSError:pass
+            if time.monotonic()>deadline:raise TimeoutError('Control dispatcher did not restart')
+            time.sleep(.1)
+        probe(connection)
+        if connection.sock is not original_socket:raise ValueError('Existing control connection was replaced')
+        with contextlib.closing(http.client.HTTPConnection('127.0.0.1',3004,timeout=10)) as fresh:probe(fresh)
+    except Exception:
+        replace(old)
+        for current,birth in listeners():
+            if identity(current)==birth:os.kill(current,signal.SIGKILL)
+        raise
 finally:connection.close()
 recovery=base/'recovery'
 if not (recovery/'control-listener.py').exists():
@@ -119,7 +118,7 @@ request=urllib.request.Request(grant['url'],headers={'Range':'bytes=0-31'})
 with urllib.request.urlopen(request,timeout=20) as response:
     if response.status!=206 or len(response.read(33))!=32:raise ValueError('Private artifact grant verification failed')
 print(json.dumps({'instance_id':config['instance_id'],'sha256':digest,'dispatcher_updated':changed,
-                  'existing_connection_preserved':True,'new_connections_healthy':True,
+                  'listener_restarted':True,'existing_connection_preserved':True,'new_connections_healthy':True,
                   'private_artifact_grant_verified':True,'recovery_seed_installed':True}))
 '''
 

@@ -75,13 +75,15 @@ def migrate():
 (installed.parent/'.forward-control.new').write_text('interrupted write')
 (base/'recovery.legacy').mkdir()
 (base/'recovery.legacy/earlier').write_text('earlier recovery')
+if os.environ.get('INTERRUPTED_HANDOFF')=='1':installed.write_bytes((version/'control-listener.py').read_bytes())
 first=migrate()
-assert first['dispatcher_updated'] and first['existing_connection_preserved'] and first['private_artifact_grant_verified']
+assert first['dispatcher_updated']==(os.environ.get('INTERRUPTED_HANDOFF')!='1')
+assert first['listener_restarted'] and first['existing_connection_preserved'] and first['private_artifact_grant_verified']
 assert (base/'recovery.legacy/earlier').read_text()=='earlier recovery'
 assert any((path/'legacy').read_text()=='preserve this recovery fixture' for path in base.glob('recovery.legacy.*'))
 assert (base/'recovery/control-listener.py').is_file()
 second=migrate()
-assert not second['dispatcher_updated']
+assert not second['dispatcher_updated'] and second['listener_restarted']
 print(json.dumps({'connection_preserving_migration':True,'recovery_installed':True,'repeat_is_idempotent':True}))
 '''
 
@@ -95,11 +97,14 @@ class MigrationTests(unittest.TestCase):
                 (path / name).write_text((ROOT / 'product/inference/tailscale' / name).read_text())
             (path / 'remote.py').write_text(migration.REMOTE)
             (path / 'fixture.py').write_text(FIXTURE)
-            result = subprocess.run(['docker', 'run', '--rm', '--cpus=1', '--memory=512m',
-                                     '-v', str(path) + ':/tests:ro', 'gradiated-tailscale-supervisor-test',
-                                     'python3', '-B', '/tests/fixture.py'], capture_output=True, text=True, timeout=60)
-            self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertTrue(json.loads(result.stdout)['connection_preserving_migration'])
+            for interrupted in ('0','1'):
+                with self.subTest(interrupted_handoff=interrupted):
+                    result = subprocess.run(['docker', 'run', '--rm', '--cpus=1', '--memory=512m',
+                                             '-e','INTERRUPTED_HANDOFF='+interrupted,
+                                             '-v', str(path) + ':/tests:ro', 'gradiated-tailscale-supervisor-test',
+                                             'python3', '-B', '/tests/fixture.py'], capture_output=True, text=True, timeout=60)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertTrue(json.loads(result.stdout)['connection_preserving_migration'])
 
 
 if __name__ == '__main__':unittest.main()

@@ -10,13 +10,13 @@ import {
   SectionFab,
   Substrate,
 } from "../components/design";
+import { ApplyForm } from "../components/ApplyForm";
 import { jobs } from "../careers";
 import type { Job } from "../careers";
 import {
   COMPENSATION,
   OFFICE_DAYS,
   aboutGradiated,
-  applyHrefFor,
   howWeWork,
   interviewSteps,
   payAndEquity,
@@ -138,6 +138,7 @@ export const JobDetailPage = ({ job }: { job: Job }): ReactElement => {
     { items: job.problems, title: "Problems you may work on" },
     { items: job.requirements, title: "What we are looking for" },
     { items: job.notFor, title: "This role is not for you if" },
+    ...(job.extraSections ?? []),
     { items: job.howWeWork ?? howWeWork, title: "How we work" },
     { items: payAndEquity, title: "Pay and equity" },
     {
@@ -253,16 +254,10 @@ export const JobDetailPage = ({ job }: { job: Job }): ReactElement => {
             <h2 className="gr-job-apply-title">Let&apos;s talk.</h2>
             <p className="gr-job-apply-body gr-muted">
               If this sounds interesting to you, we&apos;d like to hear from
-              you. There&apos;s no need to prepare anything, we&apos;ll start
-              with a conversation.
+              you. Fill in the form below and we&apos;ll get back to you within
+              a few days.
             </p>
-            <a
-              className="gr-button gr-button--main"
-              href={applyHrefFor(job.title)}
-            >
-              Start a conversation
-              <Arrow />
-            </a>
+            <ApplyForm jobPostingId={job.ashbyJobPostingId} />
           </section>
         </Module>
       </Band>

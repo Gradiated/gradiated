@@ -10,9 +10,12 @@ const source = (name: string) =>
 const assets = {
   "/opt/gradiated/kubelet/bootstrap.py": "gpu/bootstrap.py",
   "/opt/gradiated/kubelet/host_state.py": "gpu/host_state.py",
-  "/opt/gradiated/kubelet/recovery/host-agent.py": "images/gpu-base/recovery/host-agent.py",
-  "/opt/gradiated/kubelet/recovery/host_state.py": "images/gpu-base/recovery/host_state.py",
-  "/opt/gradiated/kubelet/recovery/host_bundle.py": "images/gpu-base/recovery/host_bundle.py",
+  "/opt/gradiated/kubelet/recovery/host-agent.py":
+    "images/gpu-base/recovery/host-agent.py",
+  "/opt/gradiated/kubelet/recovery/host_state.py":
+    "images/gpu-base/recovery/host_state.py",
+  "/opt/gradiated/kubelet/recovery/host_bundle.py":
+    "images/gpu-base/recovery/host_bundle.py",
   "/opt/gradiated/kubelet/supervise.py": "gpu/supervise.py",
   "/opt/gradiated/bin/fetch-runtime": "images/gpu-base/fetch-runtime.sh",
   "/opt/gradiated/bin/download-runtime": "images/gpu-base/download-runtime.py",

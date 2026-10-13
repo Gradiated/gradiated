@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 root="${GRADIATED_RUNTIME_ROOT:?}"
-export CUDA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:?Nomad must assign GPU UUIDs}
+export CUDA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:?Host agent must assign GPU UUIDs}
 export CUDA_HOME="$root/python/lib/python3.12/site-packages/nvidia/cu13"
 export CUDA_PATH="$CUDA_HOME"
 export PATH="$root/python/bin:$CUDA_HOME/bin:$PATH"

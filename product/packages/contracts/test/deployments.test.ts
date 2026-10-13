@@ -94,7 +94,7 @@ describe("GatewayModelDeploymentSchema", () => {
   });
 });
 
-it("accepts Nomad allocation IDs in status and gateway deployments", () => {
+it("accepts historical deployment UUIDs in status and gateway deployments", () => {
   const id = "a4d51466-8782-bf13-3b97-b8a07ad79c26";
   expect(
     DeploymentStatusReportSchema.safeParse({

@@ -159,11 +159,10 @@ def task(uid, stopping):
         "TORCHINDUCTOR_CACHE_DIR": "/home/runtime/.cache/torchinductor",
         "TRITON_CACHE_DIR": "/home/runtime/.cache/triton",
         "GRADIATED_RUNTIME_DIR": str(directory),
-        "NOMAD_ALLOC_DIR": str(directory),  # Compatibility with the pinned GLM bundle until its replacement is qualified.
         **profile.get("environment", {}),
     }
     if profile.get("kind") == "training":
-        environment.update({"GRADIATED_POD_UID": uid, "NOMAD_ALLOC_DIR": str(directory), "NOMAD_ALLOC_ID": uid, "NOMAD_PORT_runtime": str(base),
+        environment.update({"GRADIATED_POD_UID": uid,
                             "GRADIATED_RUNTIME_ROOT": str(bundle), "TRAINER_IMAGE_DIGEST": digest})
         if profile["recipe"]:
             environment["TRAINING_RECIPE_JSON"] = json.dumps(profile["recipe"])

@@ -7,6 +7,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import signal
+import select
 import tempfile
 import unittest
 from types import SimpleNamespace
@@ -323,10 +324,24 @@ class HostAgentTest(unittest.TestCase):
             self.request({'operation': 'create', 'uid': str(uuid.uuid4()), 'pod': self.pod, 'epoch': 1})
         self.assertEqual(self.host.states(), [])
 
+    def proxy_process(self, path, start_new_session=False):
+        process = subprocess.Popen(['python3', '-c', 'import time;print("ready",flush=True);time.sleep(60)', str(path)],
+                                   stdout=subprocess.PIPE, start_new_session=start_new_session)
+        try:
+            self.assertTrue(select.select([process.stdout], [], [], 5)[0], 'Proxy fixture did not start')
+            self.assertEqual(process.stdout.readline(), b'ready\n')
+        except BaseException:
+            process.kill()
+            process.wait()
+            raise
+        finally:
+            process.stdout.close()
+        return process
+
     def test_configuration_validation_preserves_the_live_proxy_pid(self):
         proxy = self.root / 'proxy'
         proxy.mkdir()
-        process = subprocess.Popen(['python3', '-c', 'import time;time.sleep(60)', str(self.root / 'nginx.conf')], start_new_session=True)
+        process = self.proxy_process(self.root / 'nginx.conf', start_new_session=True)
         pid_file = proxy / 'nginx.pid'
         pid_file.write_text(str(process.pid))
         def validate(command, **_):
@@ -351,7 +366,7 @@ class HostAgentTest(unittest.TestCase):
         directory = self.root / 'pods' / self.uid
         directory.mkdir()
         agent.atomic_json(directory / 'state.json', {'pod': self.pod, 'port_base': 38080})
-        process = subprocess.Popen(['python3', '-c', 'import time; time.sleep(60)', str(path)])
+        process = self.proxy_process(path)
         (proxy / 'nginx.pid').write_text(str(process.pid))
         try:
             with patch.object(agent.subprocess, 'run'), patch.object(agent.os, 'kill') as signal_proxy:

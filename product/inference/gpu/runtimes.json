@@ -38,8 +38,18 @@
     },
     "hf_home": "/home/runtime/.cache/huggingface"
   },
-  "24f2342cfad592069eaaf89ab3bd74818fdcdfbc547bfbef0ef805d661bb0fd8": {
-    "image": "gradiated/glm-bundle@sha256:24f2342cfad592069eaaf89ab3bd74818fdcdfbc547bfbef0ef805d661bb0fd8",
+  "50f70da3a1daf95b077b0b541ff42af090d9f1c90b8c71ed506690db4e279ee4": {
+    "kind": "training",
+    "image": "gradiated/training-bundle@sha256:50f70da3a1daf95b077b0b541ff42af090d9f1c90b8c71ed506690db4e279ee4",
+    "model_id": "training",
+    "release": {},
+    "gpus": 1,
+    "cpu": "4",
+    "memory": "64Gi",
+    "startup_timeout": 300
+  },
+  "e74e88f23ba155be65fcd8830c7e3c080b5e49951eae7d9d80a77344f2b2c9d6": {
+    "image": "gradiated/glm-bundle@sha256:e74e88f23ba155be65fcd8830c7e3c080b5e49951eae7d9d80a77344f2b2c9d6",
     "model_id": "z-ai/glm-5.3-flash",
     "release": {
       "model_path": "zai-org/GLM-5.3-Flash",
@@ -47,7 +57,7 @@
       "model_revision": "84c6a6aa9497188e15a635ba793b0f95a79b1033",
       "schema_version": 1,
       "tokenizer_path": "zai-org/GLM-5.3-Flash",
-      "runtime_revision": "glm-24f2342cfad5",
+      "runtime_revision": "glm-e74e88f23ba1",
       "runtime_model_name": "zai-org/GLM-5.3-Flash",
       "tokenizer_revision": "84c6a6aa9497188e15a635ba793b0f95a79b1033",
       "lora_base_model_revision": "a5b45eb41df6402735dedc900be14a42e8d5e538"
@@ -70,15 +80,5 @@
       "LORA_DOWNLOAD_HOSTS": "gradiated-prod-model-artifacts-873716897517.s3.us-east-1.amazonaws.com",
       "GRADIATED_API_BASE_URL": "http://127.0.0.1:3004"
     }
-  },
-  "50f70da3a1daf95b077b0b541ff42af090d9f1c90b8c71ed506690db4e279ee4": {
-    "kind": "training",
-    "image": "gradiated/training-bundle@sha256:50f70da3a1daf95b077b0b541ff42af090d9f1c90b8c71ed506690db4e279ee4",
-    "model_id": "training",
-    "release": {},
-    "gpus": 1,
-    "cpu": "4",
-    "memory": "64Gi",
-    "startup_timeout": 300
   }
 }

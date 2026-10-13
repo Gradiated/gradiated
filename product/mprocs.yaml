@@ -21,6 +21,8 @@ procs:
       TRUSTED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173
       NODE_ENV: development
       PORT: "3001"
+      GPU_CONTROL_PROVIDER: runpod
+      GPU_CONTROL_PORT: "3005"
       TRAINING_EXECUTOR: mock
       TEMPORAL_ADDRESS: localhost:7233
       TEMPORAL_NAMESPACE: default

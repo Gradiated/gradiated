@@ -83,7 +83,8 @@ class HostAgentTest(unittest.TestCase):
         digest = 'b' * 64
         pod = json.loads(json.dumps(self.pod))
         pod['spec']['containers'][0]['image'] = 'gradiated/kev-bundle@sha256:' + digest
-        self.host.catalogue_task = (1, json.dumps({digest: {'image': pod['spec']['containers'][0]['image']}}))
+        self.host.catalogue_wanted = {digest: {'image': pod['spec']['containers'][0]['image']}}
+        self.host.catalogue_task = None  # A failed download must remain retryable.
         with self.assertRaises(agent.RuntimeStaging):
             self.host.request({'operation': 'create', 'uid': self.uid, 'pod': pod, 'epoch': 1})
         self.assertEqual(self.host.states(), [])

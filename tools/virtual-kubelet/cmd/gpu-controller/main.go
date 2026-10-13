@@ -147,6 +147,12 @@ func (p *provider) CreatePod(ctx context.Context, pod *v1.Pod) error {
 	if len(container.Env) > 0 || len(container.EnvFrom) > 0 || len(container.Command) > 0 || len(container.Args) > 0 {
 		return errdefs.InvalidInput("runtime overrides unsupported")
 	}
+	if len(p.host.Runtimes) > 0 {
+		var staging map[string]any
+		if err = p.call(ctx, "configure", "", nil, &staging); err != nil {
+			return err
+		}
+	}
 	var result map[string]any
 	if err = p.call(ctx, "create", string(pod.UID), pod, &result); err != nil {
 		return err

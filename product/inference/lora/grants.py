@@ -9,7 +9,7 @@ from artifacts import remaining, strict_json
 
 def validate_endpoint(url):
     parsed = urllib.parse.urlsplit(url)
-    if (parsed.scheme != "http" or parsed.hostname != "127.0.0.1" or parsed.port != 3004
+    if (parsed.scheme != "http" or parsed.hostname != "127.0.0.1" or parsed.port not in (3004, 3005)
             or parsed.username or parsed.password):
         raise ValueError("Private artifact requests require the local control bridge")
 

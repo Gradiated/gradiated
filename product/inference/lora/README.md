@@ -65,14 +65,13 @@ identifiers, never filesystem paths. Disk directories use `<version UUID>-<SHA25
 cache keys; grants return the existing immutable metadata used to verify downloads.
 There is no `ft-` model-name prefix or checksum in the serving name.
 
-Set `GRADIATED_API_BASE_URL` to the API origin, for example
-`https://api.gradiated.com` in production or `http://127.0.0.1:3001` locally.
-The loader derives both private endpoint paths. HTTP is accepted only for loopback
-hosts; other destinations require HTTPS. Hosts reuse their existing per-host certificate-renewal bearer credential and send
-`X-Gradiated-Instance-Id` and `X-Gradiated-Nomad-Node-Id` identity headers. The API
-checks the enrolled node and revocation/retirement state using the existing host
-credential store. There is no LoRA-specific shared secret. Private routes are
-registered when the existing host authentication dependencies are configured.
+Production runtimes use `GRADIATED_API_BASE_URL=http://127.0.0.1:3004`.
+That loopback bridge forwards over Tailscale to the private GPU control listener.
+The local mprocs API starts the same listener on port 3005, leaving the collector
+on 3004; local LoRA uses `http://127.0.0.1:3005`. These are the only supported
+artifact API origins. GPU hosts have no database credentials or host bearer token
+for artifact grants. Tailscale grants restrict GPU access to the private listener.
+
 Grant responses use `no-store`
 and reuse the existing five-minute, versioned S3 signing path. Hosts still enforce
 their exact download hostname allowlist.
@@ -119,7 +118,7 @@ acknowledged registrations. Returned paths remain pinned even if native registra
 fails or a request is cancelled, because vLLM may retain them. Startup preload
 retries check vLLM's model list after an uncertain registration. Adapter failures
 leave base readiness available; engine health/restarts remain with the existing
-warmup supervisor, Desmond and Nomad.
+warmup supervisor, Desmond and Kubernetes.
 
 After base warmup qualifies, each allocation independently preloads production
 versions in the background, up to its native CPU adapter count or startup deadline.
@@ -139,12 +138,12 @@ not an automatic quantization conversion or acceptance of arbitrary revisions.
 Task versions retain their actual training revision. Keep LoRA disabled until the
 pairing's model/tokenizer/adapter layout and inference have been verified.
 
-Nomad's `tensor_parallel_size` controls both GPU allocation and the engine flag;
+The pinned runtime profile controls both GPU allocation and the engine flag;
 the assigned GPU UUID count must match. These are host decisions, not adapter fields.
 
 | Setting                  | Source/default                                                   |
 | ------------------------ | ---------------------------------------------------------------- |
-| `LORA_ENABLED`           | Nomad `lora_enabled`, false                                      |
+| `LORA_ENABLED`           | Runtime catalogue `lora_enabled`, false                          |
 | `MODEL_ID`               | Existing public base model ID                                    |
 | `LORA_GPU_SLOTS`         | Native `max_loras`, 8                                            |
 | `LORA_CPU_SLOTS`         | Native `max_cpu_loras`, 64; at least GPU slots                   |
@@ -152,29 +151,20 @@ the assigned GPU UUID count must match. These are host decisions, not adapter fi
 | `LORA_DISK_CACHE_BYTES`  | Explicit allocation disk budget; zero fails startup when enabled |
 | `LORA_DOWNLOAD_HOSTS`    | Exact S3 HTTPS host allowlist                                    |
 | `GRADIATED_API_BASE_URL` | API origin; HTTPS or local loopback HTTP                         |
-| `HOST_IDENTITY_FILE`     | `/etc/gradiated/host-identity.json`                              |
-| `LORA_CACHE_DIR`         | `${NOMAD_ALLOC_DIR}/lora`                                        |
+| `LORA_CACHE_DIR`         | `${GRADIATED_RUNTIME_DIR}/lora`                                  |
 | `ADAPTER_PORT`           | Allocation-local control port; inference stays on `RUNTIME_PORT` |
 
-Host bootstrap copies the existing certificate-renewal identity into
-`/etc/gradiated/host-identity.json`, owned by `runtime` with mode 0600; it contains
-only instance/node identity and the existing bearer credential, not a TLS private
-key. Existing enrolled hosts need the same copy installed before enabling LoRA;
-this does not require reenrollment or restarting provider pods. Revoking the host
-credential also denies subsequent adapter grants and startup lists.
-
 Prepare/probe/status/metrics bind only to loopback and use the existing
-bearer-authenticated host ingress for external access, like the native vLLM
+Tailscale host ingress for external access, like the native vLLM
 runtime. Prepare/probe/resolve take `{name, workspace_id}`, where `name` is the exact
 version slug. Probe checks a bounded generation's
 returned identity and usage.
 Metrics live at `/internal/adapters/metrics`; they report file hits, downloads,
 startup registrations, failures, disk evictions and preparation duration with no adapter or
 workspace labels. Prometheus discovers enabled allocations from the worker's internal
-`GET /metrics/targets/lora` endpoint and scrapes the existing authenticated host
+`GET /metrics/targets/lora` endpoint and scrapes the private host
 `/alloc/<id>/internal/adapters/metrics` route. Discovery reads the deployment
-inventory every thirty seconds; it is not part of inference or placement. The
-scrape uses the same runtime bearer credential as the gateway. Disabled and
+inventory every thirty seconds; it is not part of inference or placement. The scrape uses the private Tailscale route. Disabled and
 draining allocations are excluded. Discovery failures return 503, preserving
 Prometheus's last successful target list rather than silently returning no targets.
 
@@ -184,7 +174,7 @@ Failure logs include the exception type and upstream HTTP status when available,
 without exception messages, response bodies or URLs. Disk gauges expose the limit
 and bytes pinned for native reloads. Alerts cover failed/missing loader scrapes,
 recent operation/capacity failures and sustained pinned disk pressure. The
-[LoRA dashboard](https://grafana.gradiated.com/d/gradiated-lora) links to Nomad
+[LoRA dashboard](https://grafana.gradiated.com/d/gradiated-lora) links to Kubernetes
 allocation logs. Gateway failures remain in the central Loki diagnostics.
 
 `lora_operation` JSON logs report action, outcome and elapsed seconds. Successes
@@ -214,7 +204,7 @@ workspace checks, pinned-file safety, disk admission, recovery, startup and the
 absence of inference proxy routes. Resolver tests cover cold loading, disk reuse,
 workspace/version failures and the preload/resolution race. Bundle verification
 requires the pinned vLLM resolver interface, plugin discovery and native per-name
-coalescing to pass; local tests skip that native check when vLLM is absent. The real Nomad/NGINX fixture checks direct
+coalescing to pass; local tests skip that native check when vLLM is absent. The NGINX fixture checks direct
 completion routing, private control routing and blocked admin endpoints. CI also
 runs loader tests inside the pinned GLM bundle. Real-artifact/reference, native
 CPU/GPU eviction and reload, KV/cancellation isolation, latency and colocated

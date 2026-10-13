@@ -60,7 +60,7 @@ class PrivateControlTests(unittest.TestCase):
 
 class ApiUrlTests(unittest.TestCase):
     def test_derives_paths_for_production_and_local_api(self):
-        for base in ("http://127.0.0.1:3004",):
+        for base in ("http://127.0.0.1:3004", "http://127.0.0.1:3005"):
             for path in ("adapter-downloads", "task-versions/production"):
                 self.assertEqual(
                     api_url(base + "/", path), base + "/api/internal/v1/" + path

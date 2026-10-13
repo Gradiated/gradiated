@@ -144,3 +144,28 @@ func TestTransientProviderFailureKeepsTrainingJobPending(t *testing.T) {
 		t.Fatalf("invalid runtime was not rejected: %v", err)
 	}
 }
+
+func TestCreationStartsCatalogueStagingBeforeRequestingRuntime(t *testing.T) {
+	var operations []string
+	p := testProvider(t, func(w http.ResponseWriter, r *http.Request) {
+		var b struct{ Operation string }
+		if err := json.NewDecoder(r.Body).Decode(&b); err != nil {
+			t.Fatal(err)
+		}
+		operations = append(operations, b.Operation)
+		w.Write([]byte(`{}`))
+	})
+	p.host.Runtimes = json.RawMessage(`{"pinned":{}}`)
+	store := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
+	pod := &v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "training", Namespace: "gpu-inference", UID: types.UID("uid")}, Spec: v1.PodSpec{Containers: []v1.Container{{Name: "runtime", Image: "training"}}}}
+	if err := store.Add(pod); err != nil {
+		t.Fatal(err)
+	}
+	p.source = corelisters.NewPodLister(store)
+	if err := p.CreatePod(context.Background(), pod); err != nil {
+		t.Fatal(err)
+	}
+	if len(operations) != 2 || operations[0] != "configure" || operations[1] != "create" {
+		t.Fatalf("creation raced catalogue staging: %v", operations)
+	}
+}

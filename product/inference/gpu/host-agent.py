@@ -233,6 +233,7 @@ class Agent:
         self.lock = threading.Lock()
         self.children = {}
         self.catalogue_task = None
+        self.catalogue_wanted = {}
         self.catalogue_ready = False
 
     def states(self):
@@ -412,6 +413,7 @@ class Agent:
                 raise ValueError('Legacy host credentials are not supported')
             if profile.get('kind') == 'training' or profile['gpus'] <= len(gpu_pool(self.config)):
                 wanted[digest] = profile
+        self.catalogue_wanted = wanted
         task = (epoch, json.dumps(wanted, sort_keys=True))
         active = {runtime_profile(self.config, state['pod'])[0] for state in self.states()}
         if self.catalogue_task == task and (not self.catalogue_ready or set(self.config.get('runtimes', {})) == set(wanted) | active):
@@ -478,8 +480,8 @@ class Agent:
             if operation == "create":
                 image = body["pod"]["spec"]["containers"][0]["image"]
                 digest = image.rsplit("@sha256:", 1)[-1]
-                if digest not in self.config.get("runtimes", {}) and self.catalogue_task is not None:
-                    wanted = json.loads(self.catalogue_task[1])
+                if digest not in self.config.get("runtimes", {}):
+                    wanted = self.catalogue_wanted
                     if digest in wanted and image == wanted[digest]["image"]:
                         raise RuntimeStaging("Pinned bundle is still being staged")
                 if self.validate(body["pod"]) != uid:

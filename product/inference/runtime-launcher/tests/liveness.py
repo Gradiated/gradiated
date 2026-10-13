@@ -57,32 +57,11 @@ class LivenessTests(unittest.TestCase):
         self.thread = threading.Thread(target=self.server.serve_forever)
         self.thread.start()
         self.process = None
-        self.job = None
-        self.allocation = None
         self.log = (self.root / "launcher.log").open("w")
 
     def tearDown(self):
         self.release_hangs.set()
         try:
-            if self.job:
-                subprocess.run(
-                    ["nomad", "job", "stop", "-detach", self.job],
-                    capture_output=True,
-                    timeout=15,
-                    check=True,
-                )
-            if self.allocation and all(
-                (self.root / name).exists()
-                for name in ["leader", "ordinary", "detached"]
-            ):
-                self.assert_tree_gone()
-            if self.job:
-                subprocess.run(
-                    ["nomad", "job", "stop", "-purge", self.job],
-                    capture_output=True,
-                    timeout=15,
-                    check=True,
-                )
             if self.process and self.process.poll() is None:
                 self.process.kill()
                 self.process.wait(timeout=10)

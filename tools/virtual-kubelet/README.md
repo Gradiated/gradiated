@@ -267,7 +267,9 @@ digest before extracting; it then checks the file manifest and copies the result
 cannot modify the promoted code or launcher state. Extraction, validation and
 atomic promotion use one root-owned tree. Safe, hashed top-level helpers can be
 added without updating the immutable launcher; archive size and file count are
-bounded. The launcher consumes fenced `pending`
+bounded. Agent processes and their children disable Python bytecode writes so
+imports cannot add files to the immutable bundle or invalidate rollback checks.
+The launcher consumes fenced `pending`
 requests and keeps current, previous, trial and failure in one atomic
 `status.json` record; symlinks are only read during migration from the earlier
 layout. It commits an update before running it and consumes the previous target

@@ -265,10 +265,14 @@ class HostBundleTests(unittest.TestCase):
         initial.publish()
         good = self.root / ('a' * 64) / 'host-agent.py'
         ready = self.root / 'ready'
-        good.write_text('import pathlib,os,time; pathlib.Path(' + repr(str(ready)) + ').write_text(str(os.getpid())); time.sleep(60)')
+        helper = good.with_name('host_state.py')
+        helper.write_text('healthy = True\n')
+        good.write_text('import host_state,pathlib,os,time,subprocess,sys; '
+                       'subprocess.run([sys.executable,"-c","import host_state"],cwd=str(pathlib.Path(__file__).parent),check=True); '
+                       'pathlib.Path(' + repr(str(ready)) + ').write_text(str(os.getpid())); time.sleep(60)')
         broken = self.make_bundle('b' * 64) / 'host-agent.py'
         broken.write_text('raise SystemExit(13)')
-        for path in (good, broken):
+        for path in (good, helper, broken):
             manifest = path.with_name('files.json')
             hashes = json.loads(manifest.read_text())
             hashes[path.name] = hashlib.sha256(path.read_bytes()).hexdigest()
@@ -292,6 +296,8 @@ class HostBundleTests(unittest.TestCase):
                 self.fail('Broken agent did not roll back')
             self.assertIsNone(worker.poll())
             self.assertIsNone(supervisor.poll())
+            self.assertTrue(launcher.verified(self.root, 'a' * 64, self.base_id))
+            self.assertFalse((good.parent / '__pycache__').exists())
         finally:
             supervisor.terminate()
             supervisor.wait(timeout=10)

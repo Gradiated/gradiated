@@ -238,7 +238,8 @@ def main():
     while not stopping.is_set():
         running_digest = launcher.current if not launcher.dirty else ''
         try:
-            process = subprocess.Popen(['/usr/bin/setpriv', '--pdeathsig=TERM', 'python3', str(launcher.directory() / 'host-agent.py')])
+            process = subprocess.Popen(['/usr/bin/setpriv', '--pdeathsig=TERM', 'python3', str(launcher.directory() / 'host-agent.py')],
+                                       env={**os.environ, 'PYTHONDONTWRITEBYTECODE': '1'})
         except OSError as error:
             print(f'Agent start unavailable: {type(error).__name__}', flush=True)
             stopping.wait(2)

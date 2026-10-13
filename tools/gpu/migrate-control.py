@@ -44,8 +44,8 @@ def listeners():
         except OSError:pass
     return result
 def replace(data):
-    temporary=installed.with_name('.forward-control.new')
-    fd=os.open(temporary,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+    fd,name=tempfile.mkstemp(prefix='.forward-control-',dir=installed.parent)
+    temporary=Path(name)
     try:
         with os.fdopen(fd,'wb') as output:
             os.fchown(output.fileno(),account.pw_uid,account.pw_gid)
@@ -100,8 +100,15 @@ if not (recovery/'control-listener.py').exists():
             fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW)
             try:os.fsync(fd)
             finally:os.close(fd)
-        if recovery.exists():recovery.rename(base/'recovery.legacy')
-        staging.rename(recovery)
+        if recovery.exists():
+            import ctypes
+            libc=ctypes.CDLL(None,use_errno=True)
+            # Linux rename exchange keeps a recovery directory present throughout.
+            if libc.renameat2(-100,os.fsencode(staging),-100,os.fsencode(recovery),2)!=0:
+                error=ctypes.get_errno()
+                raise OSError(error,os.strerror(error))
+            staging.rename(base/f'recovery.legacy.{time.time_ns()}')
+        else:staging.rename(recovery)
         fd=os.open(base,os.O_RDONLY|os.O_DIRECTORY)
         try:os.fsync(fd)
         finally:os.close(fd)

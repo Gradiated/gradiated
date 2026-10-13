@@ -72,9 +72,13 @@ def migrate():
     result=subprocess.run([sys.executable,'-B','-c',Path('/tests/remote.py').read_text()],input=payload,text=True,capture_output=True,timeout=30)
     if result.returncode:raise RuntimeError(result.stderr)
     return json.loads(result.stdout)
+(installed.parent/'.forward-control.new').write_text('interrupted write')
+(base/'recovery.legacy').mkdir()
+(base/'recovery.legacy/earlier').write_text('earlier recovery')
 first=migrate()
 assert first['dispatcher_updated'] and first['existing_connection_preserved'] and first['private_artifact_grant_verified']
-assert (base/'recovery.legacy/legacy').read_text()=='preserve this recovery fixture'
+assert (base/'recovery.legacy/earlier').read_text()=='earlier recovery'
+assert any((path/'legacy').read_text()=='preserve this recovery fixture' for path in base.glob('recovery.legacy.*'))
 assert (base/'recovery/control-listener.py').is_file()
 second=migrate()
 assert not second['dispatcher_updated']

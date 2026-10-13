@@ -37,13 +37,18 @@ The GPU host agent downloads and verifies each pinned bundle before starting
 its launcher. The launcher receives the extracted bundle directory as its first
 argument. A failed download or checksum check prevents startup.
 
-Runtime files belong to each allocation. Enrolled hosts retain up to four
-compressed runtime archives in `/var/cache/gradiated/runtime-bundles`, owned by
-`downloader` with mode `0700`. Replacements reuse matching archives, verify their
-SHA-256 again and extract an independent allocation directory. One host cache
-lock protects downloads, verification and eviction; extraction keeps an open archive descriptor outside the lock, so queued allocations can proceed safely; the four most recently used
-archives remain. Budget disk space for four archives in addition to allocation
-storage. Hosts without this directory keep the uncached behavior.
+The host stages verified bundles under `/var/lib/gradiated-kubelet/bundles/<SHA256>`.
+Pods using the same digest share those executable files; each pod has its own
+scratch directory, training data and LoRA cache. Model processes cannot modify
+the bundle. After processes stop, pod deletion removes training data and adapter
+caches while retaining diagnostic logs.
+
+The downloader keeps at most four compressed runtime archives under
+`/var/cache/gradiated/runtime-bundles`, owned by `downloader` with mode `0700`.
+It verifies SHA-256 before extraction. A host-wide cache lock protects downloads,
+verification and eviction. Budget disk space for both the archive cache and the
+extracted bundles. This cache does not hold initialized GPU state or shorten the
+request drain.
 
 Measured production bundle downloads took 473 seconds for GLM and 995 seconds
 for DeepSeek; extraction took 18 and 39 seconds respectively. An isolated GLM test on an idle B300 host measured 367 seconds for cold bundle

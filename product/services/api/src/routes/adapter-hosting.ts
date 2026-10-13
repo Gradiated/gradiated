@@ -82,11 +82,21 @@ export interface AdapterHostingDependencies {
 
 export const registerAdapterHostingRoutes = (
   app: OpenAPIHono<ApiEnvironment>,
-  { credentials, service }: AdapterHostingDependencies,
+  {
+    credentials,
+    service,
+  }: Pick<AdapterHostingDependencies, "service"> &
+    Partial<Pick<AdapterHostingDependencies, "credentials">>,
+  privateListener = false,
 ) => {
+  if (!privateListener && !credentials)
+    throw new Error("Public adapter routes require host authentication");
+
   for (const route of [grant, production]) {
     app.use(route.getRoutingPath(), async (context, next) => {
       context.header("Cache-Control", "no-store");
+      if (privateListener) return next();
+
       const supplied = bearerToken(context.req.header("authorization"));
       const instance = UuidSchema.safeParse(
         context.req.header("X-Gradiated-Instance-Id"),
@@ -104,7 +114,7 @@ export const registerAdapterHostingRoutes = (
 
       try {
         await (
-          await credentials()
+          await credentials!()
         ).authorize(instance.data, node.data, supplied);
       } catch (error) {
         if (error instanceof CertificateAuthorizationError)

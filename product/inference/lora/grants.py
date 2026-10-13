@@ -42,6 +42,8 @@ def read_private(url, identity, body=None, limit=65536, deadline=None):
     if deadline is None:
         deadline = time.monotonic() + 10
     parsed = urllib.parse.urlsplit(url)
+    if identity is None and (parsed.scheme != "http" or parsed.hostname != "127.0.0.1" or parsed.port != 3004):
+        raise ValueError("Network authentication requires the private control bridge")
     transport = (
         http.client.HTTPSConnection
         if parsed.scheme == "https"
@@ -55,16 +57,14 @@ def read_private(url, identity, body=None, limit=65536, deadline=None):
         socket = connection.sock
         path = urllib.parse.urlunsplit(("", "", parsed.path or "/", parsed.query, ""))
         socket.settimeout(min(10, remaining(deadline)))
+        headers = {"Content-Type": "application/json"}
+        if identity is not None:
+            headers.update({"X-Gradiated-Instance-Id": identity["instance_id"],
+                            "X-Gradiated-Nomad-Node-Id": identity["nomad_node_id"],
+                            "Authorization": f"Bearer {identity['token']}"})
         connection.request(
-            "POST" if body is not None else "GET",
-            path,
-            body=json.dumps(body).encode() if body is not None else None,
-            headers={
-                "Content-Type": "application/json",
-                "X-Gradiated-Instance-Id": identity["instance_id"],
-                "X-Gradiated-Nomad-Node-Id": identity["nomad_node_id"],
-                "Authorization": f"Bearer {identity['token']}",
-            },
+            "POST" if body is not None else "GET", path,
+            body=json.dumps(body).encode() if body is not None else None, headers=headers,
         )
         socket.settimeout(min(10, remaining(deadline)))
         response = connection.getresponse()

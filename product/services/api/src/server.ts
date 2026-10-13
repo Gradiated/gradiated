@@ -262,15 +262,11 @@ const gpuControlServer = environment.GPU_CONTROL_PROVIDER
         ...(hostCertificates
           ? {
               certificates: hostCertificates,
-              adapters: {
-                credentials: hostCertificates.credentials,
-                service: createAdapterHostingService(
-                  database,
-                  adapterDownloads,
-                ),
-              },
             }
           : {}),
+        adapters: {
+          service: createAdapterHostingService(database, adapterDownloads),
+        },
         check: createReadinessCheck({ pool, valkey, timeoutMs: 2_000 }),
       }).fetch,
       hostname: environment.HOST,

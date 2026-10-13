@@ -19,6 +19,24 @@ describe("private GPU control listener", () => {
     });
   });
 
+  it("uses network authentication for private adapter requests", async () => {
+    const credentials = vi.fn(() => {
+      throw new Error("Legacy credentials must not be consulted");
+    });
+    const productionVersions = vi.fn(async () => []);
+    const privateApp = app({
+      credentials,
+      service: { productionVersions },
+    } as unknown as AdapterHostingDependencies);
+    const response = await privateApp.request(
+      "/api/internal/v1/task-versions/production?base_model_id=z-ai%2Fglm-5.3-flash",
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ data: [] });
+    expect(credentials).not.toHaveBeenCalled();
+    expect(productionVersions).toHaveBeenCalledWith("z-ai/glm-5.3-flash");
+  });
+
   it("rejects oversized adapter requests before credential lookup or JSON parsing", async () => {
     const credentials = vi.fn();
     const privateApp = app({

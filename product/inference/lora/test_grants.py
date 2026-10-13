@@ -34,6 +34,23 @@ class HostCredentialTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     host_identity(path)
 
+    def test_private_bridge_does_not_send_a_host_credential(self):
+        response = io.BytesIO(b'{"data": []}')
+        response.status = 200
+        response.isclosed = lambda: response.closed
+        connection = mock.Mock()
+        connection.getresponse.return_value = response
+        with mock.patch("http.client.HTTPConnection", return_value=connection):
+            self.assertEqual(read_private("http://127.0.0.1:3004/api/internal/v1/task-versions/production", None), {"data": []})
+        headers = connection.request.call_args.kwargs["headers"]
+        self.assertEqual(headers, {"Content-Type": "application/json"})
+
+    def test_network_authentication_rejects_other_destinations_before_connecting(self):
+        with mock.patch("http.client.HTTPSConnection") as connection:
+            with self.assertRaises(ValueError):
+                read_private("https://api.example/internal", None)
+            connection.assert_not_called()
+
     def test_private_requests_send_existing_host_identity(self):
         response = io.BytesIO(b'{"data": []}')
         response.status = 200

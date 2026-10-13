@@ -21,7 +21,7 @@ export const createGpuControlApp = (dependencies: {
   provider: string;
   status: DeploymentStatusService;
   certificates?: HostCertificateDependencies;
-  adapters?: AdapterHostingDependencies;
+  adapters?: Pick<AdapterHostingDependencies, "service">;
   check: DependencyCheck;
 }) => {
   const app = new OpenAPIHono<ApiEnvironment>();
@@ -47,6 +47,6 @@ export const createGpuControlApp = (dependencies: {
   if (dependencies.certificates)
     app.route("/", createHostCertificateRouter(dependencies.certificates));
   if (dependencies.adapters)
-    registerAdapterHostingRoutes(app, dependencies.adapters);
+    registerAdapterHostingRoutes(app, dependencies.adapters, true);
   return app;
 };

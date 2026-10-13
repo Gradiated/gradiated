@@ -85,6 +85,29 @@ class ProductChangesTest(unittest.TestCase):
             self.assertTrue(all(value for value in result.values()), path)
             self.assertNotIn("@gradiated/wizard", result["packages"])
 
+    def test_leaf_manifests_only_select_the_workspace_and_its_consumers(self):
+        result = plan(["product/services/console/package.json"])
+        self.assertEqual(result["packages"], ["@gradiated/console"])
+        self.assertTrue(result["playwright"])
+        for key in ("integration", "native_cpp", "native_kev", "inference_e2e", "website"):
+            self.assertFalse(result[key], key)
+
+        result = plan(["product/packages/analytics/package.json"])
+        for package in ("@gradiated/analytics", "@gradiated/api", "@gradiated/console"):
+            self.assertIn(package, result["packages"])
+        self.assertTrue(result["playwright"])
+        self.assertFalse(result["inference_e2e"])
+
+    def test_removed_workspace_manifest_runs_all_checks(self):
+        self.assertTrue(
+            all(plan(["product/services/deleted-service/package.json"]).values())
+        )
+
+    def test_script_typescript_configuration_selects_tooling(self):
+        result = plan(["product/tsconfig.scripts.json"])
+        self.assertTrue(result["tooling"])
+        self.assertFalse(result["unit"])
+
     def test_manual_dispatch_runs_all_checks(self):
         self.assertTrue(all(plan([], force=True).values()))
 

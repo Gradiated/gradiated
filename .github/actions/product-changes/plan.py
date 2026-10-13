@@ -18,8 +18,6 @@ COMMON = (
     "product/package.json",
     "product/pnpm-lock.yaml",
     "product/pnpm-workspace.yaml",
-    "product/packages/*/package.json",
-    "product/services/*/package.json",
     "product/tsconfig.base.json",
     "product/turbo.json",
     "product/prettier.config.mjs",
@@ -85,6 +83,9 @@ JOB_PATHS = {
         "product/Dockerfile",
         "product/.dockerignore",
         "product/services/rust-service.Dockerfile",
+        "product/inference/gpu/*",
+        "product/inference/images/gpu-base/*",
+        "product/inference/tailscale/*",
     ),
 }
 
@@ -112,7 +113,14 @@ def plan(paths: list[str], root: Path = ROOT, force: bool = False) -> dict:
         for path in paths
         if not path.endswith(".md") and "/screenshots/" not in path
     ]
-    all_checks = force or any(matches(path, COMMON) for path in paths)
+    # A leaf manifest affects its workspace and consumers, just like its source.
+    # Removed workspaces cannot be recovered from the current dependency graph.
+    removed_manifest = any(
+        matches(path, ("product/packages/*/package.json", "product/services/*/package.json"))
+        and not (root / path).exists()
+        for path in paths
+    )
+    all_checks = force or removed_manifest or any(matches(path, COMMON) for path in paths)
     packages = workspaces(root)
     selected = {
         name

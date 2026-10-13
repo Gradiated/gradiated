@@ -3,6 +3,7 @@ on:
   push:
     branches: [main]
     paths:
+      - ".github/actions/relevant/**"
       - ".github/workflows/virtual-kubelet.yml"
       - "tools/virtual-kubelet/**"
       - "tools/gpu/**"
@@ -39,47 +40,62 @@ jobs:
       pull-requests: read
     outputs:
       relevant: ${{ steps.relevant.outputs.relevant }}
+      checks: ${{ steps.relevant.outputs.checks }}
     steps:
       - uses: actions/checkout@v7
         with:
           sparse-checkout: .github
+          fetch-depth: ${{ github.event_name == 'push' && '0' || '1' }}
       - id: relevant
         uses: ./.github/actions/relevant
         with:
           workflow: .github/workflows/virtual-kubelet.yml
+          scopes: .github/actions/relevant/gpu.json
 
   test:
     needs: changes
-    if: needs.changes.outputs.relevant == 'true'
+    if: needs.changes.outputs.relevant == 'true' && (fromJSON(needs.changes.outputs.checks).controller || fromJSON(needs.changes.outputs.checks).configuration)
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v6
+        if: fromJSON(needs.changes.outputs.checks).controller
         with:
           go-version: "1.24.13"
           cache-dependency-path: tools/virtual-kubelet/go.sum
       - run: go test -race ./... && go vet ./...
+        if: fromJSON(needs.changes.outputs.checks).controller
         working-directory: tools/virtual-kubelet
       - run: python3 -m pip install PyYAML==6.0.2
       - run: python3 tools/gpu/render-config.py --check
+        if: fromJSON(needs.changes.outputs.checks).configuration
       - run: python3 tools/gpu/render_config_test.py
+        if: fromJSON(needs.changes.outputs.checks).configuration
       - run: python3 tools/virtual-kubelet/host_agent_test.py
+        if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 tools/virtual-kubelet/host_state_test.py
+        if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 product/inference/gpu/bootstrap_test.py
+        if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 product/inference/images/gpu-base/download_runtime_test.py
+        if: fromJSON(needs.changes.outputs.checks).controller
       - run: test -z "$(gofmt -l tools/virtual-kubelet/cmd/gpu-controller/*.go)"
+        if: fromJSON(needs.changes.outputs.checks).controller
       - run: docker build tools/virtual-kubelet
+        if: fromJSON(needs.changes.outputs.checks).controller
 
   manifests:
     name: Validate GPU manifests
     needs: changes
-    if: needs.changes.outputs.relevant == 'true'
+    if: needs.changes.outputs.relevant == 'true' && fromJSON(needs.changes.outputs.checks).manifests
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: jdx/mise-action@v4.2.3
+        with:
+          install_args: helm kubeconform
       - run: python3 -m pip install PyYAML==6.0.2 jsonschema==4.26.0
       - name: Validate against Kubernetes and the pinned Argo, KEDA and External Secrets CRDs
         run: python3 tools/security/check_gpu_inference.py

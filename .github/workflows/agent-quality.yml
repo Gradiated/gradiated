@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - ".github/actions/relevant/**"
       - ".agents/**"
       - ".github/workflows/agent-quality.yml"
       - "tools/devex/**"

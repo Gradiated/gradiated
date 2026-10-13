@@ -9,6 +9,7 @@ on:
       - "tools/security/check_gpu_inference.py"
       - "tools/security/check_tailscale_inference.py"
       - "infra/environments/prod/us-east-1/kubernetes/gpu-inference/**"
+      - "infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml"
       - "infra/environments/prod/us-east-1/kubernetes/tailscale-inference/hosts/**"
       - "infra/environments/prod/us-east-1/kubernetes/platform/argo-rollouts.yaml"
       - "infra/environments/prod/us-east-1/kubernetes/platform/external-secrets.yaml"

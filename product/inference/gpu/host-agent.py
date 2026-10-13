@@ -21,6 +21,8 @@ import uuid
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from host_state import atomic_json, bound_log, sync_directory
 
+REQUEST_DRAIN_SECONDS = 660
+
 ROOT = Path("/var/lib/gradiated-kubelet")
 CONFIG = Path("/etc/gradiated/kubelet.json")
 PROCESS_SCOPE = {"boot_id": Path("/proc/sys/kernel/random/boot_id").read_text().strip(),
@@ -322,7 +324,7 @@ class Agent:
                  "events { worker_connections 2048; }", "http { access_log off; client_max_body_size 32M;",
                  f"client_body_temp_path {proxy}/body; proxy_temp_path {proxy}/temp;",
                  "server { listen 127.0.0.1:8889;",
-                 'proxy_http_version 1.1; proxy_set_header Connection ""; proxy_set_header Authorization ""; proxy_buffering off; proxy_request_buffering off; proxy_read_timeout 330s;',
+                 f'proxy_http_version 1.1; proxy_set_header Connection ""; proxy_set_header Authorization ""; proxy_buffering off; proxy_request_buffering off; proxy_read_timeout {REQUEST_DRAIN_SECONDS}s;',
                  'location = /private-healthz { return 200 "ok\\n"; }',
                  'location = /healthz { return 200 "ok\\n"; }',
                  "location = /_kubelet { proxy_set_header Authorization $http_authorization; proxy_pass http://127.0.0.1:8887; }",
@@ -341,7 +343,7 @@ class Agent:
             lines.append(f"location /alloc/{uid}/ {{ proxy_pass http://127.0.0.1:{port}/; "
                          "proxy_http_version 1.1; proxy_set_header Connection \"\"; "
                          "proxy_set_header Authorization \"\"; proxy_buffering off; "
-                         "proxy_request_buffering off; proxy_read_timeout 330s; }")
+                         f"proxy_request_buffering off; proxy_read_timeout {REQUEST_DRAIN_SECONDS}s; }}")
         return "\n".join([*lines, "} }"])
 
     def refresh_proxy(self):
@@ -388,6 +390,9 @@ class Agent:
             os.kill(pid, signal.SIGHUP)
 
     def ensure_proxy(self):
+        path = self.root / 'nginx.conf'
+        if not path.exists() or path.read_text() != self.proxy_config():
+            self.refresh_proxy()
         process = self.children.get("proxy")
         if process and process.poll() is None:
             return
@@ -626,7 +631,7 @@ class Agent:
                         state["draining"] = True
                         state["drain_started_at"] = time.time()
                         _, profile = runtime_profile(self.config, state["pod"])
-                        state["drain_seconds"] = 660 if qualified and profile.get("kind") != "training" else 0
+                        state["drain_seconds"] = REQUEST_DRAIN_SECONDS if qualified and profile.get("kind") != "training" else 0
                         atomic_json(path, state)
                         self.refresh_proxy()
                         threading.Thread(target=self.drain, args=(uid,), daemon=True).start()
@@ -653,7 +658,7 @@ class Agent:
         state = json.loads(path.read_text())
         # New requests are withdrawn before the existing request drain.
         if alive(state.get("task")):
-            time.sleep(max(0, state["drain_started_at"] + state.get("drain_seconds", 660) - time.time()))
+            time.sleep(max(0, state["drain_started_at"] + state.get("drain_seconds", REQUEST_DRAIN_SECONDS) - time.time()))
         self.stop(directory, state)
         group = pod_cgroup(uid)
         if group.exists():
@@ -690,12 +695,13 @@ def serve():
     os.chown(proxy, account.pw_uid, account.pw_gid)
     lock = (ROOT / "agent.lock").open("a")
     fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    agent.ensure_proxy()
+    with configuration_lock(ROOT):
+        agent.ensure_proxy()
 
     def monitor_proxy():
         while True:
             time.sleep(2)
-            with agent.lock:
+            with agent.lock, configuration_lock(ROOT):
                 try:
                     agent.ensure_proxy()
                 except (OSError, RuntimeError, subprocess.SubprocessError) as error:

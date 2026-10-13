@@ -182,13 +182,16 @@ Process handles include boot and PID namespace identities as well as PID birth
 times. Serving task recovery retains the pod UID and requires SDK qualification
 of the new process incarnation. Training tasks that already started never retry
 automatically. Unknown processes retain their GPU claims instead of allowing
-another task to start. Child tasks are reaped; their cached process objects are
+another task to start. The private proxy reconstructs routes from durable pod state
+and reloads when they differ, retaining existing connections. Its 660-second
+read timeout covers the production generation budget, including non-streaming
+requests that send no response bytes until completion. Child tasks are reaped; their cached process objects are
 not durable workload state.
 
 Every minute, cleanup preserves configured, active and staging bundles. It keeps
 two verified unused bundles and at most twenty retired pod diagnostic directories
 for up to seven days. Live processes or occupied cgroups prevent retirement; an
-unrecorded live process blocks bundle cleanup. Model weights are not pruned.
+unrecorded live process blocks bundle cleanup. Model weights use each host's configured `hf_home`; runtime profiles must not override it with a second cache location. Model weights are not pruned.
 Diagnostic logs are bounded at 32 MiB per file using copy/truncate of the recent
 16 MiB, retaining the writer's inode. Concurrent log lines can be lost during
 truncation; inference output and durable training artifacts use separate paths.

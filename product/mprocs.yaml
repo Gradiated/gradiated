@@ -5,7 +5,7 @@ procs:
       send-keys: ["<C-c>"]
   api:
     # The repository .env may carry deployed auth origins; local sign-in keeps these.
-    shell: "scripts/with-root-env.sh BETTER_AUTH_URL TRUSTED_ORIGINS DATABASE_URL VALKEY_URL TRAINING_EXECUTOR TEMPORAL_ADDRESS TEMPORAL_NAMESPACE CONTENTS_BUCKET AWS_ENDPOINT_URL_S3 AWS_REGION AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN -- mise exec -- env -u AWS_PROFILE -u AWS_DEFAULT_PROFILE pnpm --filter @gradiated/api dev"
+    shell: "scripts/with-root-env.sh GPU_CONTROL_HOST GPU_CONTROL_PROVIDER GPU_CONTROL_PORT BETTER_AUTH_URL TRUSTED_ORIGINS DATABASE_URL VALKEY_URL TRAINING_EXECUTOR TEMPORAL_ADDRESS TEMPORAL_NAMESPACE CONTENTS_BUCKET AWS_ENDPOINT_URL_S3 AWS_REGION AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN -- mise exec -- env -u AWS_PROFILE -u AWS_DEFAULT_PROFILE pnpm --filter @gradiated/api dev"
     env:
       <<: &contents_env
         CONTENTS_BUCKET: gradiated-local-contents
@@ -21,6 +21,7 @@ procs:
       TRUSTED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173
       NODE_ENV: development
       PORT: "3001"
+      GPU_CONTROL_HOST: "127.0.0.1"
       GPU_CONTROL_PROVIDER: runpod
       GPU_CONTROL_PORT: "3005"
       TRAINING_EXECUTOR: mock

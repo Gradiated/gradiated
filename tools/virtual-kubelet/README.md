@@ -108,9 +108,6 @@ receives no OAuth, Kubernetes, database or AWS access credential. Bundle
 downloads use temporary grants from the private control bridge. Keep bootstrap
 values outside the repository.
 
-`main.go` and `remote.py` are the original isolated SSH lifecycle experiment.
-They are not the production controller or host agent.
-
 Model catalogue changes are rendered into the controller ConfigMap by
 `python3 tools/gpu/render-runtimes.py`. The controller asks each host to stage the
 pinned bundles through private download grants. Downloads run outside the host

@@ -240,7 +240,7 @@ const gpuControlServer = environment.GPU_CONTROL_PROVIDER
           : {}),
         check: createReadinessCheck({ pool, valkey, timeoutMs: 2_000 }),
       }).fetch,
-      hostname: environment.HOST,
+      hostname: environment.GPU_CONTROL_HOST,
       port: environment.GPU_CONTROL_PORT,
     })
   : undefined;

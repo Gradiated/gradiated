@@ -15,6 +15,7 @@ const ApiOnlyEnvironmentSchema = z.object({
   PROFILING_INGEST_TOKEN: z.string().min(32).optional(),
   PROFILING_HOST: z.string().min(1).default("0.0.0.0"),
   PROFILING_PORT: PortSchema.default(3_003),
+  GPU_CONTROL_HOST: z.string().min(1).default("0.0.0.0"),
   GPU_CONTROL_PORT: PortSchema.default(3_004),
   GPU_CONTROL_PROVIDER: z
     .string()

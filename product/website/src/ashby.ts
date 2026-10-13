@@ -26,6 +26,8 @@ export type AshbyPosting = {
   isListed?: boolean;
   /** FullTime, PartTime, Intern, Contract or Temporary. */
   employmentType?: string;
+  /** OnSite, Remote or Hybrid. */
+  workplaceType?: string;
 };
 
 export type AshbySubmitResult = {

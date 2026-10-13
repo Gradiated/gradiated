@@ -115,6 +115,8 @@ const toJob = (posting: AshbyPosting): Job => {
     datePosted: posting.publishedAt?.slice(0, 10) || undefined,
     title: posting.title,
     employmentType: EMPLOYMENT_TYPES[posting.employmentType ?? ""],
+    // The page otherwise states the usual office days.
+    officeDays: posting.workplaceType === "Remote" ? "Remote" : undefined,
     team: posting.team || undefined,
     location: [
       posting.location,
@@ -170,16 +172,22 @@ const toUniqueJobs = (postings: AshbyPosting[]): Job[] => {
   return postings.map((posting) => {
     const job = toJob(posting);
 
-    if (titles.has(job.title) && job.location)
-      job.title = `${job.title} (${job.location})`;
+    const baseTitle = job.title;
+    if (titles.has(job.title) && job.location) {
+      job.title = `${baseTitle} (${job.location})`;
+    }
+    for (let n = 2; titles.has(job.title); n++) {
+      job.title = `${baseTitle} (${job.location ? `${job.location}, ` : ""}${n})`;
+    }
     titles.add(job.title);
 
     const baseSlug = job.slug;
     for (let n = 2; slugs.has(job.slug); n++) job.slug = `${baseSlug}-${n}`;
     slugs.add(job.slug);
 
+    // The title is unique by now, so prefixing it makes the summary unique too.
     if (summaries.has(job.summary))
-      job.summary = `${posting.title} at Gradiated: ${job.summary}`;
+      job.summary = `${job.title} at Gradiated: ${job.summary}`;
     summaries.add(job.summary);
 
     return job;

@@ -8,6 +8,7 @@
 //   jobPostingId           the Ashby job posting id
 //   <ashby field path>     one part per answer, e.g. _systemfield_name
 //   <path>[]               multi-select answers
+//   <path>::boolean        Yes/No answers ("true"/"false"), sent to Ashby as booleans
 //   utm_*                  passed on to Ashby as source data
 //
 // Vercel caps request bodies at ~4.5MB, so the form limits files to 4MB.
@@ -17,6 +18,7 @@ declare const process: { env: Record<string, string | undefined> };
 const auth = (): string => `Basic ${btoa(`${process.env.ASHBY_API_KEY ?? ""}:`)}`;
 
 const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"];
+const BOOLEAN_SUFFIX = "::boolean";
 
 export async function POST(request: Request): Promise<Response> {
   let incoming: FormData;
@@ -49,8 +51,9 @@ export async function POST(request: Request): Promise<Response> {
       const existing = fieldSubmissions.find((field) => field.path === realPath);
       if (existing) (existing.value as string[]).push(value);
       else fieldSubmissions.push({ path: realPath, value: [value] });
-    } else if (value === "true" || value === "false") {
-      fieldSubmissions.push({ path, value: value === "true" });
+    } else if (path.endsWith(BOOLEAN_SUFFIX)) {
+      // Only Yes/No questions are sent as booleans: the form marks them with this suffix.
+      fieldSubmissions.push({ path: path.slice(0, -BOOLEAN_SUFFIX.length), value: value === "true" });
     } else if (value !== "") {
       fieldSubmissions.push({ path, value });
     }

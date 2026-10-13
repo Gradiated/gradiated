@@ -335,7 +335,7 @@ export const getStructuredData = (pathname: string): object[] => {
       title: job.title,
       description: jobDescription(job),
       datePosted: job.datePosted ?? "2026-08-28",
-      employmentType: "FULL_TIME",
+      employmentType: job.employmentType ?? "FULL_TIME",
       hiringOrganization: organization,
       identifier: {
         "@type": "PropertyValue",

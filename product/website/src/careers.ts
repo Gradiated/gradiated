@@ -7,6 +7,8 @@ export type Job = {
   extraSections?: { title: string; items: string[] }[];
   slug: string;
   datePosted?: string;
+  /** schema.org employment type; full-time when absent. */
+  employmentType?: string;
   foundingContext?: string;
   officeDays?: string;
   howWeWork?: string[];

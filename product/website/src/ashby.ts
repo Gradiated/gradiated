@@ -24,6 +24,8 @@ export type AshbyPosting = {
   publishedAt?: string;
   descriptionHtml?: string;
   isListed?: boolean;
+  /** FullTime, PartTime, Intern, Contract or Temporary. */
+  employmentType?: string;
 };
 
 export type AshbySubmitResult = {
@@ -35,6 +37,7 @@ export type AshbySubmitResult = {
 //   <ashby field path>     one part per answer, e.g. _systemfield_name
 //   <path>[]               multi-select answers
 //   <path>::boolean        Yes/No answers ("true"/"false"), sent to Ashby as booleans
+//   <path>::number         Number answers, sent to Ashby as numbers
 //   utm_*                  passed on to Ashby as source data
 export const UTM_KEYS = [
   "utm_source",
@@ -45,7 +48,8 @@ export const UTM_KEYS = [
 ];
 export const MULTI_SUFFIX = "[]";
 export const BOOLEAN_SUFFIX = "::boolean";
-/** Vercel caps request bodies at ~4.5MB, so the form limits files to 4MB. */
+export const NUMBER_SUFFIX = "::number";
+/** Vercel caps request bodies at ~4.5MB, so the form limits all files together to 4MB. */
 export const MAX_FILE_BYTES = 4 * 1024 * 1024;
 
 /** A failed Ashby call. Carries status and error codes, never the request body. */
@@ -152,12 +156,21 @@ export class AshbyService {
           path: path.slice(0, -BOOLEAN_SUFFIX.length),
           value: value === "true",
         });
+      } else if (path.endsWith(NUMBER_SUFFIX)) {
+        if (value) {
+          fieldSubmissions.push({
+            path: path.slice(0, -NUMBER_SUFFIX.length),
+            value: Number(value),
+          });
+        }
       } else if (value) {
         fieldSubmissions.push({ path, value });
       }
     }
 
     body.append("jobPostingId", jobPostingId);
+    // Ashby accepts applications to closed postings unless told otherwise.
+    body.append("allowSubmissionForUnpublishedJobPosting", "false");
     body.append("applicationForm", JSON.stringify({ fieldSubmissions }));
     if (Object.keys(utmData).length > 0)
       body.append("utmData", JSON.stringify(utmData));
@@ -171,6 +184,7 @@ export class AshbyService {
   /** POSTs to an authenticated endpoint and returns its `results`. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async #call(endpoint: string, body: string | FormData): Promise<any> {
+    if (!this.#apiKey) throw new Error("ASHBY_API_KEY is not set");
     const headers: Record<string, string> = {
       Accept: "application/json",
       Authorization: `Basic ${btoa(`${this.#apiKey}:`)}`,

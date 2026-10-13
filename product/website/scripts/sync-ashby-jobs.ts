@@ -16,7 +16,8 @@
 //     shared copy in careers-copy.ts
 //
 // No API key needed: the job board API is public. If Ashby can't be reached
-// the last generated file is kept, so a build never fails because of it.
+// the build carries on with the generated file as it is: on a fresh checkout
+// that is the committed empty list, so only the native jobs are published.
 
 import { writeFile } from "node:fs/promises";
 import { AshbyService } from "../src/ashby.ts";
@@ -49,6 +50,15 @@ const STANDARD_SECTIONS: Record<
 /** Headings whose content comes from the shared copy instead. */
 const SHARED_SECTIONS = new Set(["about gradiated", "pay and equity"]);
 
+/** Ashby employment types as schema.org JobPosting values. */
+const EMPLOYMENT_TYPES: Record<string, string> = {
+  FullTime: "FULL_TIME",
+  PartTime: "PART_TIME",
+  Intern: "INTERN",
+  Contract: "CONTRACTOR",
+  Temporary: "TEMPORARY",
+};
+
 const ENTITIES: Record<string, string> = {
   "&nbsp;": " ",
   "&amp;": "&",
@@ -75,16 +85,11 @@ const textOf = (html: string): string =>
     .replace(/\s+/g, " ")
     .trim();
 
-const matchesOf = (html: string, tag: string): string[] =>
-  [...html.matchAll(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "gi"))]
-    .map((match) => textOf(match[1]))
+/** Bullets and paragraphs in document order; a paragraph inside a bullet is part of it. */
+const itemsIn = (html: string): string[] =>
+  [...html.matchAll(/<(li|p)[^>]*>([\s\S]*?)<\/\1>/gi)]
+    .map((match) => textOf(match[2]))
     .filter(Boolean);
-
-/** List items if there are any, otherwise paragraphs. */
-const itemsIn = (html: string): string[] => {
-  const listItems = matchesOf(html, "li");
-  return listItems.length > 0 ? listItems : matchesOf(html, "p");
-};
 
 const slugify = (title: string): string =>
   title
@@ -109,6 +114,7 @@ const toJob = (posting: AshbyPosting): Job => {
     ashbyJobPostingId: posting.id,
     datePosted: posting.publishedAt?.slice(0, 10) || undefined,
     title: posting.title,
+    employmentType: EMPLOYMENT_TYPES[posting.employmentType ?? ""],
     team: posting.team || undefined,
     location: [
       posting.location,

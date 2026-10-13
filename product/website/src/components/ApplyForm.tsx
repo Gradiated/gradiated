@@ -5,6 +5,7 @@ import {
   BOOLEAN_SUFFIX,
   MAX_FILE_BYTES,
   MULTI_SUFFIX,
+  NUMBER_SUFFIX,
   UTM_KEYS,
 } from "../ashby";
 import type { AshbyFormField } from "../ashby";
@@ -24,7 +25,6 @@ const FULL_WIDTH = new Set(["LongText", "File", "MultiValueSelect", "Boolean"]);
 const INPUT_TYPES: Record<string, string> = {
   Email: "email",
   Phone: "tel",
-  Number: "number",
   Date: "date",
   SocialLink: "url",
 };
@@ -41,7 +41,9 @@ const Control = ({ field }: { field: AshbyFormField }): ReactElement => {
           {...shared}
           className="gr-input"
           type="file"
-          accept=".pdf,.doc,.docx"
+          accept={
+            field.path === "_systemfield_resume" ? ".pdf,.doc,.docx" : undefined
+          }
         />
       );
     case "ValueSelect":
@@ -101,6 +103,16 @@ const Control = ({ field }: { field: AshbyFormField }): ReactElement => {
           ))}
         </div>
       );
+    case "Number":
+      return (
+        <input
+          {...shared}
+          className="gr-input"
+          name={`${field.path}${NUMBER_SUFFIX}`}
+          step={1}
+          type="number"
+        />
+      );
     default:
       return (
         <input
@@ -137,11 +149,28 @@ export const ApplyForm = ({
     event.preventDefault();
     const form = new FormData(event.currentTarget);
 
-    for (const value of form.values()) {
-      if (typeof value !== "string" && value.size > MAX_FILE_BYTES) {
-        setError("That file is a bit big, please keep it under 4MB.");
-        return;
-      }
+    // Checkboxes can't be marked required as a group, so check those here.
+    const unanswered = (Array.isArray(fields) ? fields : []).find(
+      (field) =>
+        field.type === "MultiValueSelect" &&
+        field.required &&
+        form.getAll(`${field.path}${MULTI_SUFFIX}`).length === 0,
+    );
+    if (unanswered) {
+      setError(`Please choose at least one option for "${unanswered.title}".`);
+      return;
+    }
+
+    // The limit is on the whole request, so add up every file.
+    const uploadBytes = [...form.values()].reduce(
+      (total, value) => total + (typeof value === "string" ? 0 : value.size),
+      0,
+    );
+    if (uploadBytes > MAX_FILE_BYTES) {
+      setError(
+        "Those files are a bit big, please keep them under 4MB in total.",
+      );
+      return;
     }
 
     form.append("jobPostingId", jobPostingId);

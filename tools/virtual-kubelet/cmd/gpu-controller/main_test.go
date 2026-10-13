@@ -169,3 +169,18 @@ func TestCreationStartsCatalogueStagingBeforeRequestingRuntime(t *testing.T) {
 		t.Fatalf("creation raced catalogue staging: %v", operations)
 	}
 }
+
+func TestExitedServingTaskWaitsForRecoveryButTrainingFails(t *testing.T) {
+	p := testProvider(t, func(w http.ResponseWriter, r *http.Request) { w.Write([]byte(`{"running":false,"ready":false}`)) })
+	pod := &v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "runtime", Namespace: "gpu-inference", UID: types.UID("uid")}, Spec: v1.PodSpec{RestartPolicy: v1.RestartPolicyAlways}}
+	p.pods["gpu-inference/runtime"] = pod
+	status, err := p.GetPodStatus(context.Background(), pod.Namespace, pod.Name)
+	if err != nil || status.Phase != v1.PodPending {
+		t.Fatalf("serving process cannot recover: %v %v", status, err)
+	}
+	pod.Spec.RestartPolicy = v1.RestartPolicyNever
+	status, err = p.GetPodStatus(context.Background(), pod.Namespace, pod.Name)
+	if err != nil || status.Phase != v1.PodFailed {
+		t.Fatalf("training failure would be retried: %v %v", status, err)
+	}
+}

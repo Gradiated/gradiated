@@ -30,18 +30,195 @@ class HostAgentTest(unittest.TestCase):
                 'resources': {'limits': {'nvidia.com/gpu': '1', 'cpu': '16', 'memory': '64Gi'},
                               'requests': {'nvidia.com/gpu': '1', 'cpu': '16', 'memory': '48Gi'}}}]}}
 
+        self.term = str(uuid.uuid4())
+        self.host.request({'operation': 'claim', 'epoch': 0, 'term': self.term})
+
+    def request(self, body):
+        return self.host.request({'term': self.term, **body})
+
     def tearDown(self):
         self.directory.cleanup()
+
+    def test_completed_children_are_reaped_without_losing_live_children(self):
+        completed = subprocess.Popen(['python3', '-c', 'pass'])
+        live = subprocess.Popen(['python3', '-c', 'import time; time.sleep(60)'])
+        try:
+            completed.wait(timeout=5)
+            self.host.children = {'completed': completed, 'live': live}
+            self.host.reap_children()
+            self.assertEqual(self.host.children, {'live': live})
+        finally:
+            live.terminate()
+            live.wait(timeout=5)
+
+    def test_diagnostic_count_is_bounded_even_for_recent_retirements(self):
+        import os
+        now = 1000
+        for index in range(25):
+            path = self.root / 'pods' / str(uuid.uuid4())
+            path.mkdir()
+            os.utime(path, (now - index, now - index))
+        self.host.housekeep(now)
+        self.assertEqual(len(list((self.root / 'pods').iterdir())), 20)
+
+    def test_claim_retries_are_idempotent_and_survive_agent_restart(self):
+        term = str(uuid.uuid4())
+        request = {'operation': 'claim', 'epoch': 1, 'term': term}
+        self.assertEqual(self.request(request), {'epoch': 2})
+        restarted = agent.Agent(self.config, self.root)
+        self.assertEqual(restarted.request(request), {'epoch': 2})
+        with self.assertRaises(ValueError):
+            restarted.request({'operation': 'claim', 'epoch': 1, 'term': str(uuid.uuid4())})
+        for epoch in (1, 3, 1000):
+            with self.assertRaises(ValueError):
+                restarted.request({'operation': 'list', 'epoch': epoch, 'term': term})
+        self.assertEqual(restarted.request({'operation': 'list', 'epoch': 2, 'term': term}), [])
+
+    def test_competing_claims_have_one_winner(self):
+        import concurrent.futures
+        def claim(_):
+            try:
+                return self.request({'operation': 'claim', 'epoch': 1, 'term': str(uuid.uuid4())})
+            except ValueError:
+                return None
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
+            results = list(pool.map(claim, range(8)))
+        self.assertEqual([result for result in results if result], [{'epoch': 2}])
+
+    def test_failed_fence_write_does_not_acknowledge_the_claim(self):
+        request = {'operation': 'claim', 'epoch': 1, 'term': str(uuid.uuid4())}
+        with patch.object(agent, 'atomic_json', side_effect=OSError('disk full')), self.assertRaises(OSError):
+            self.request(request)
+        self.assertEqual(self.request({'operation': 'fence'}), {'epoch': 1})
+        self.assertEqual(self.request(request), {'epoch': 2})
+
+    def test_cleanup_protects_active_and_staging_bundles_and_recent_retirement(self):
+        import os
+        now = 10 * 86400
+        bundles = self.root / 'bundles'
+        bundles.mkdir()
+        self.host.catalogue_wanted = {'b' * 64: {}}
+        for index, letter in enumerate('abcdefg'):
+            path = bundles / (letter * 64)
+            path.mkdir()
+            (path / '.bundle-sha256').write_text(path.name)
+            os.utime(path, (index, index))
+        link = bundles / ('h' * 64)
+        link.symlink_to(bundles / ('a' * 64))
+        self.host.housekeep(now)
+        self.assertEqual({path.name for path in bundles.iterdir()}, {letter * 64 for letter in 'abefgh'})
+
+    def test_retired_diagnostics_are_pruned_but_live_orphans_block_bundle_cleanup(self):
+        import os
+        directory = self.root / 'pods' / self.uid
+        directory.mkdir()
+        (directory / 'runtime.log').write_text('diagnostic')
+        os.utime(directory, (0, 0))
+        bundles = self.root / 'bundles'
+        bundles.mkdir()
+        for letter in 'bcdef':
+            path = bundles / (letter * 64)
+            path.mkdir()
+            (path / '.bundle-sha256').write_text(path.name)
+            os.utime(path, (0, 0))
+        agent.atomic_json(directory / 'runtime.json', {'runtime': {'pid': 1, 'birth': 'synthetic'}})
+        os.utime(directory, (0, 0))
+        with patch.object(agent, 'alive', return_value=True):
+            self.host.housekeep(10 * 86400)
+        self.assertTrue(directory.exists())
+        self.assertEqual(len(list(bundles.iterdir())), 5)
+        with patch.object(agent, 'alive', return_value=False):
+            self.host.housekeep(10 * 86400)
+        self.assertFalse(directory.exists())
+        self.assertEqual(len(list(bundles.iterdir())), 2)
+
+    def test_corrupt_owner_state_prevents_cleanup(self):
+        directory = self.root / 'pods' / self.uid
+        directory.mkdir()
+        (directory / 'state.json').write_text('{')
+        with self.assertRaises(ValueError):
+            self.host.housekeep(10 * 86400)
+        self.assertTrue((directory / 'state.json').exists())
+
+    def test_recovery_preserves_live_tasks_and_never_retries_finished_training(self):
+        state = {'pod': self.pod, 'task': {'pid': 1, 'birth': 'synthetic'}}
+        with patch.object(agent, 'alive', return_value=True), patch.object(agent.subprocess, 'Popen') as spawn:
+            self.host.ensure_task(state)
+            spawn.assert_not_called()
+        self.config['runtimes'] = {'a' * 64: {'image': self.pod['spec']['containers'][0]['image'],
+            'kind': 'training', 'model_id': 'training', 'release': {}, 'gpus': 1, 'cpu': '4', 'memory': '64Gi'}}
+        with patch.object(agent, 'alive', return_value=False), patch.object(agent.subprocess, 'Popen') as spawn:
+            self.host.ensure_task(state)
+            spawn.assert_not_called()
+
+    def test_recovery_does_not_start_over_unrecorded_processes(self):
+        directory = self.root / 'pods' / self.uid
+        directory.mkdir()
+        group = self.root / 'cgroup'
+        group.mkdir()
+        (group / 'cgroup.procs').write_text('12345')
+        with patch.object(agent, 'pod_cgroup', return_value=group), patch.object(self.host, 'stop'), patch.object(agent.subprocess, 'Popen') as spawn:
+            with self.assertRaises(RuntimeError):
+                self.host.ensure_task({'pod': self.pod})
+            spawn.assert_not_called()
+
+    def test_process_handle_from_another_boot_or_namespace_is_not_signalled(self):
+        handle = {'pid': 1234, 'birth': '1', **agent.PROCESS_SCOPE}
+        for key in agent.PROCESS_SCOPE:
+            with patch.object(agent, 'process_birth', return_value='1'), patch.object(agent.os, 'killpg') as kill:
+                agent.owned_signal({**handle, key: 'another-scope'}, signal.SIGTERM)
+                kill.assert_not_called()
+
+    def test_interrupted_creation_recovers_once_then_preserves_the_live_task(self):
+        directory = self.root / 'pods' / self.uid
+        directory.mkdir()
+        state = {'pod': self.pod}
+        agent.atomic_json(directory / 'state.json', state)
+        process = subprocess.Popen(['sleep', '120'], start_new_session=True)
+        try:
+            with patch.object(agent.subprocess, 'Popen', return_value=process) as spawn:
+                self.host.ensure_task(state)
+                recovered = json.loads((directory / 'state.json').read_text())
+                agent.Agent(self.config, self.root).ensure_task(recovered)
+                self.assertEqual(spawn.call_count, 1)
+                self.assertTrue(agent.alive(recovered['task']))
+        finally:
+            process.terminate()
+            process.wait(timeout=5)
+
+    def test_real_http_storage_failure_is_retryable_and_private(self):
+        import threading
+        import urllib.error
+        import urllib.request
+        server = agent.ThreadingHTTPServer(('127.0.0.1', 0), agent.handler_for(self.host, 'synthetic-key'))
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        payload = {'operation': 'claim', 'epoch': 1, 'term': str(uuid.uuid4())}
+        request = urllib.request.Request(f'http://127.0.0.1:{server.server_port}/_kubelet',
+            data=json.dumps(payload).encode(), headers={'Authorization': 'Bearer synthetic-key'})
+        try:
+            with patch.object(agent, 'atomic_json', side_effect=OSError('synthetic-private-detail')):
+                with self.assertRaises(urllib.error.HTTPError) as failure:
+                    urllib.request.urlopen(request, timeout=2)
+                self.assertEqual(failure.exception.code, 503)
+                self.assertEqual(json.loads(failure.exception.read()), {'error': 'host_unavailable'})
+            with urllib.request.urlopen(request, timeout=2) as response:
+                self.assertEqual(json.load(response), {'epoch': 2})
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)
 
     def test_controller_restart_preserves_workloads_and_rejects_stale_leader(self):
         directory = self.root / 'pods' / self.uid
         directory.mkdir()
         agent.atomic_json(directory / 'state.json', {'pod': self.pod})
-        self.host.request({'operation': 'ping', 'epoch': 3})
+        term = str(uuid.uuid4())
+        self.request({'operation': 'claim', 'epoch': 1, 'term': term})
         restarted = agent.Agent(self.config, self.root)
-        self.assertEqual(restarted.request({'operation': 'list', 'epoch': 4}), [self.pod])
+        self.assertEqual(restarted.request({'operation': 'list', 'epoch': 2, 'term': term}), [self.pod])
         with self.assertRaises(ValueError):
-            self.host.request({'operation': 'delete', 'uid': self.uid, 'epoch': 3})
+            self.request({'operation': 'delete', 'uid': self.uid, 'epoch': 1})
         self.assertTrue((directory / 'state.json').exists())
 
     def test_requests_observe_profile_updates_under_the_shared_configuration_lock(self):
@@ -51,7 +228,7 @@ class HostAgentTest(unittest.TestCase):
         self.host.config_path = config_path
         result = []
         with agent.configuration_lock(self.root):
-            thread = threading.Thread(target=lambda: result.append(self.host.request({'operation': 'ping', 'epoch': 1})))
+            thread = threading.Thread(target=lambda: result.append(self.request({'operation': 'ping', 'epoch': 1})))
             thread.start()
             thread.join(.05)
             self.assertTrue(thread.is_alive())
@@ -60,7 +237,7 @@ class HostAgentTest(unittest.TestCase):
         thread.join(2)
         self.assertFalse(thread.is_alive())
         self.assertEqual(self.host.config, updated)
-        self.assertEqual(result, [{'instance_id': self.config['instance_id']}])
+        self.assertEqual(result, [{'instance_id': self.config['instance_id'], 'epoch': 1}])
 
     def test_catalogue_stages_before_activation_and_preserves_active_profiles(self):
         import time
@@ -72,7 +249,7 @@ class HostAgentTest(unittest.TestCase):
         state.mkdir()
         (state / 'state.json').write_text(json.dumps({'pod': self.pod}))
         profile = {'image': self.pod['spec']['containers'][0]['image'], 'model_id': 'kev', 'release': self.config['release'], 'gpus': 1, 'cpu': '16', 'memory': '64Gi'}
-        self.host.request({'operation': 'configure', 'epoch': 1, 'runtimes': {digest: profile}})
+        self.request({'operation': 'configure', 'epoch': 1, 'runtimes': {digest: profile}})
         deadline = time.monotonic() + 2
         while not self.host.catalogue_ready and time.monotonic() < deadline: time.sleep(.01)
         self.assertTrue(self.host.catalogue_ready)
@@ -86,11 +263,11 @@ class HostAgentTest(unittest.TestCase):
         self.host.catalogue_wanted = {digest: {'image': pod['spec']['containers'][0]['image']}}
         self.host.catalogue_task = None  # A failed download must remain retryable.
         with self.assertRaises(agent.RuntimeStaging):
-            self.host.request({'operation': 'create', 'uid': self.uid, 'pod': pod, 'epoch': 1})
+            self.request({'operation': 'create', 'uid': self.uid, 'pod': pod, 'epoch': 1})
         self.assertEqual(self.host.states(), [])
         pod['spec']['containers'][0]['image'] = 'gradiated/kev-bundle@sha256:' + 'c' * 64
         with self.assertRaises(ValueError):
-            self.host.request({'operation': 'create', 'uid': self.uid, 'pod': pod, 'epoch': 1})
+            self.request({'operation': 'create', 'uid': self.uid, 'pod': pod, 'epoch': 1})
 
     def test_no_execution_or_credential_overrides(self):
         for key, value in [('env', [{'name': 'TOKEN', 'value': 'secret'}]),
@@ -102,7 +279,7 @@ class HostAgentTest(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     self.host.validate(pod)
         with self.assertRaises(ValueError):
-            self.host.request({'operation': 'create', 'uid': str(uuid.uuid4()), 'pod': self.pod, 'epoch': 1})
+            self.request({'operation': 'create', 'uid': str(uuid.uuid4()), 'pod': self.pod, 'epoch': 1})
         self.assertEqual(self.host.states(), [])
 
     def test_configuration_validation_preserves_the_live_proxy_pid(self):
@@ -181,7 +358,7 @@ class HostAgentTest(unittest.TestCase):
         directory.mkdir()
         agent.atomic_json(directory / 'state.json', {'pod': pod, 'port_base': 38088, 'task': {'pid': 1, 'birth': 'test'}})
         with patch.object(agent, 'alive', return_value=True), patch.object(agent, 'health', return_value=True) as probe:
-            result = self.host.request({'operation': 'status', 'uid': self.uid, 'epoch': 1})
+            result = self.request({'operation': 'status', 'uid': self.uid, 'epoch': 1})
         self.assertTrue(result['ready'])
         probe.assert_called_once_with(38088, '/health')
 

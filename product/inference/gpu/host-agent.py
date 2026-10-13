@@ -18,8 +18,13 @@ import urllib.error
 import urllib.request
 import uuid
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from host_state import atomic_json, bound_log, sync_directory
+
 ROOT = Path("/var/lib/gradiated-kubelet")
 CONFIG = Path("/etc/gradiated/kubelet.json")
+PROCESS_SCOPE = {"boot_id": Path("/proc/sys/kernel/random/boot_id").read_text().strip(),
+                 "pid_namespace": os.readlink("/proc/self/ns/pid")}
 CGROUP = Path("/sys/fs/cgroup")
 
 
@@ -53,13 +58,6 @@ def pod_cgroup(uid):
     return CGROUP / "gradiated-pods" / str(uuid.UUID(uid))
 
 
-def atomic_json(path, value):
-    temporary = path.with_suffix(f".{uuid.uuid4().hex}.new")
-    temporary.write_text(json.dumps(value))
-    temporary.chmod(0o600)
-    temporary.replace(path)
-
-
 def process_birth(pid):
     try:
         fields = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()
@@ -69,11 +67,12 @@ def process_birth(pid):
 
 
 def alive(owner):
-    return bool(owner and owner["birth"] and process_birth(owner["pid"]) == owner["birth"])
+    return bool(owner and owner["birth"] and all(owner.get(key, value) == value for key, value in PROCESS_SCOPE.items())
+                and process_birth(owner["pid"]) == owner["birth"])
 
 
 def owner(process):
-    return {"pid": process.pid, "birth": process_birth(process.pid)}
+    return {"pid": process.pid, "birth": process_birth(process.pid), **PROCESS_SCOPE}
 
 
 def owned_signal(process, signum):
@@ -139,10 +138,19 @@ def runtime_profile(config, pod):
 
 
 def task(uid, stopping):
+    lock_path = ROOT / 'pods' / uid / 'task.lock'
+    fd = os.open(lock_path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
+    lock = os.fdopen(fd, 'r+')
+    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     (pod_cgroup(uid) / "cgroup.procs").write_text(str(os.getpid()))
-    config = json.loads(CONFIG.read_text())
     directory = ROOT / "pods" / uid
-    state = json.loads((directory / "state.json").read_text())
+    with configuration_lock(ROOT):
+        config = json.loads(CONFIG.read_text())
+        state = json.loads((directory / 'state.json').read_text())
+        if state.get('draining'):
+            return
+        state['task'] = {'pid': os.getpid(), 'birth': process_birth(os.getpid()), **PROCESS_SCOPE}
+        atomic_json(directory / 'state.json', state)
     digest, profile = runtime_profile(config, state["pod"])
     bundle = ROOT / "bundles" / digest
     if (bundle / ".bundle-sha256").read_text().strip() != digest:
@@ -238,6 +246,75 @@ class Agent:
 
     def states(self):
         return [json.loads(path.read_text()) for path in (self.root / "pods").glob("*/state.json")]
+
+    def reap_children(self):
+        for uid, process in list(self.children.items()):
+            if process.poll() is not None:
+                del self.children[uid]
+
+    def ensure_task(self, state):
+        if state.get('draining') or alive(state.get('task')):
+            return
+        _, profile = runtime_profile(self.config, state['pod'])
+        if profile.get('kind') == 'training' and state.get('task'):
+            return
+        uid = state['pod']['metadata']['uid']
+        directory = self.root / 'pods' / uid
+        self.stop(directory, state)
+        group = pod_cgroup(uid)
+        if group.exists() and (group / 'cgroup.procs').read_text().strip():
+            raise RuntimeError('Unrecorded pod processes retain their GPU claim')
+        with (directory / 'task.log').open('ab') as output:
+            process = subprocess.Popen([sys.executable, __file__, 'task', uid],
+                env={'PATH': '/usr/sbin:/usr/bin:/sbin:/bin'}, stdin=subprocess.DEVNULL,
+                stdout=output, stderr=subprocess.STDOUT, start_new_session=True)
+        self.children[uid] = process
+        state['task'] = owner(process)
+        atomic_json(directory / 'state.json', state)
+
+    def housekeep(self, now=None):
+        now = time.time() if now is None else now
+        with self.lock, configuration_lock(self.root):
+            if self.config_path is not None:
+                self.config = json.loads(self.config_path.read_text())
+            states = self.states()
+            protected = set(self.config.get('runtimes', {})) | set(self.catalogue_wanted)
+            if self.config.get('bundle_sha256'):
+                protected.add(self.config['bundle_sha256'])
+            protected.update(runtime_profile(self.config, state['pod'])[0] for state in states)
+            retired = []
+            unknown_processes = False
+            for directory in (self.root / 'pods').iterdir():
+                if directory.is_symlink() or not directory.is_dir():
+                    continue
+                uid = str(uuid.UUID(directory.name))
+                group = pod_cgroup(uid)
+                occupied = group.exists() and bool((group / 'cgroup.procs').read_text().strip())
+                details_path = directory / 'runtime.json'
+                details = json.loads(details_path.read_text()) if details_path.exists() else {}
+                live = any(alive(details.get(key)) for key in ('runtime', 'reporter'))
+                active = (directory / 'state.json').exists()
+                if not active and (occupied or live):
+                    unknown_processes = True
+                if not active and not occupied and not live:
+                    retired.append(directory)
+                for path in directory.glob('*.log'):
+                    bound_log(path)
+            for index, directory in enumerate(sorted(retired, key=lambda path: path.stat().st_mtime, reverse=True)):
+                age = now - directory.stat().st_mtime
+                if index >= 20 or age > 7 * 86400:
+                    shutil.rmtree(directory)
+            if not unknown_processes:
+                bundles = self.root / 'bundles'
+                unused = [path for path in bundles.glob('*') if not path.is_symlink() and path.is_dir()
+                          and re.fullmatch('[0-9a-f]{64}', path.name) and path.name not in protected
+                          and (path / '.bundle-sha256').is_file() and not (path / '.bundle-sha256').is_symlink()
+                          and (path / '.bundle-sha256').read_text().strip() == path.name]
+                for index, path in enumerate(sorted(unused, key=lambda path: path.stat().st_mtime, reverse=True)):
+                    if index >= 2:
+                        shutil.rmtree(path)
+            for path in self.root.glob('*.log'):
+                bound_log(path)
 
     def proxy_config(self):
         proxy = self.root / "proxy"
@@ -458,20 +535,39 @@ class Agent:
         with self.lock, configuration_lock(self.root):
             if self.config_path is not None:
                 self.config = json.loads(self.config_path.read_text())
+            fence_file = self.root / 'fence.json'
+            fence = json.loads(fence_file.read_text()) if fence_file.exists() else {'epoch': 0}
+            operation = body['operation']
+            if operation == 'ping':
+                return {'instance_id': self.config['instance_id'], 'epoch': fence['epoch']}
+            if operation == 'fence':
+                return {'epoch': fence['epoch']}
+            if operation == 'claim':
+                term = str(uuid.UUID(body['term']))
+                if fence.get('term') == term:
+                    sync_directory(self.root)
+                    return {'epoch': fence['epoch']}
+                if type(body.get('epoch')) is not int or body['epoch'] != fence['epoch']:
+                    raise ValueError('Controller claim raced a newer generation')
+                if not 0 <= fence['epoch'] < 2**63 - 1:
+                    raise ValueError('Controller generation exhausted')
+                fence = {'epoch': fence['epoch'] + 1, 'term': term}
+                atomic_json(fence_file, fence)
+                return {'epoch': fence['epoch']}
             epoch = body.get("epoch")
-            if type(epoch) is not int or epoch < 1:
+            if type(epoch) is not int or not 1 <= epoch <= 2**63 - 1:
                 raise ValueError("Missing controller fencing epoch")
-            fence_file = self.root / "fence.json"
-            previous = json.loads(fence_file.read_text())["epoch"] if fence_file.exists() else 0
-            if epoch < previous:
+            previous = fence['epoch']
+            # Existing reservations may use the lease-counter protocol until their first claim.
+            if not fence.get('term') and previous > 0 and epoch > previous:
+                atomic_json(fence_file, {'epoch': epoch})
+                previous = epoch
+            if fence.get('term') and body.get('term') != fence['term']:
+                raise ValueError('Stale controller term')
+            if epoch != previous:
                 raise ValueError("Stale controller fencing epoch")
-            if epoch > previous:
-                atomic_json(fence_file, {"epoch": epoch})
-            operation = body["operation"]
             if operation == "configure":
                 return self.configure(body["runtimes"], epoch)
-            if operation == "ping":
-                return {"instance_id": self.config["instance_id"]}
             if operation == "list":
                 return [state["pod"] for state in self.states()]
             uid = str(uuid.UUID(body["uid"]))
@@ -491,6 +587,7 @@ class Agent:
                     _, profile = runtime_profile(self.config, body["pod"])
                     directory.mkdir(mode=0o755, exist_ok=True)
                     directory.chmod(0o755)
+                    sync_directory(directory.parent)
                     group = pod_cgroup(uid)
                     group.mkdir(exist_ok=True)
                     (group / "cpu.max").write_text(f"{int(profile['cpu']) * 100000} 100000")
@@ -507,13 +604,7 @@ class Agent:
                         os.chown(training, account.pw_uid, account.pw_gid)
                     state = {"pod": body["pod"], "draining": False, "gpu_uuids": devices, "port_base": port}
                     atomic_json(path, state)
-                    with (directory / "task.log").open("ab") as output:
-                        process = subprocess.Popen([sys.executable, __file__, "task", uid],
-                            env={"PATH": "/usr/sbin:/usr/bin:/sbin:/bin"}, stdin=subprocess.DEVNULL,
-                            stdout=output, stderr=subprocess.STDOUT, start_new_session=True)
-                    self.children[uid] = process
-                    state["task"] = owner(process)
-                    atomic_json(path, state)
+                    self.ensure_task(state)
                     self.refresh_proxy()
                 elif json.loads(path.read_text())["pod"]["spec"]["containers"][0]["image"] != body["pod"]["spec"]["containers"][0]["image"]:
                     raise ValueError("A pod UID cannot change its runtime release")
@@ -522,6 +613,7 @@ class Agent:
                     state["pod"] = body["pod"]
                     state["qualified_once"] = state.get("qualified_once", False) or body["pod"]["metadata"].get("annotations", {}).get("gradiated.com/qualified") == "true"
                     atomic_json(path, state)
+                    self.ensure_task(state)
                 return {"created": True}
             if operation == "delete":
                 if path.exists():
@@ -579,6 +671,7 @@ class Agent:
                 shutil.rmtree(cache)
         with self.lock:
             path.unlink(missing_ok=True)
+            sync_directory(path.parent)
             self.refresh_proxy()
 
 
@@ -608,12 +701,48 @@ def serve():
                 except (OSError, RuntimeError, subprocess.SubprocessError) as error:
                     print(f"Proxy recovery failed: {type(error).__name__}", flush=True)
 
+    with agent.lock, configuration_lock(ROOT):
+        for state in agent.states():
+            directory = ROOT / 'pods' / state['pod']['metadata']['uid']
+            records = [(directory / 'state.json', state, ('task',))]
+            runtime_path = directory / 'runtime.json'
+            if runtime_path.exists():
+                records.append((runtime_path, json.loads(runtime_path.read_text()), ('runtime', 'reporter')))
+            for path, record, keys in records:
+                changed = False
+                for key in keys:
+                    handle = record.get(key)
+                    if handle and alive(handle) and any(field not in handle for field in PROCESS_SCOPE):
+                        handle.update(PROCESS_SCOPE)
+                        changed = True
+                if changed:
+                    atomic_json(path, record)
     threading.Thread(target=monitor_proxy, daemon=True).start()
+    def recover():
+        ticks = 0
+        while True:
+            try:
+                with agent.lock, configuration_lock(ROOT):
+                    agent.reap_children()
+                    for state in agent.states():
+                        agent.ensure_task(state)
+                if ticks % 12 == 0:
+                    agent.housekeep()
+            except (OSError, ValueError, RuntimeError) as error:
+                print(f'Host recovery failed: {type(error).__name__}', flush=True)
+            ticks += 1
+            time.sleep(5)
+    threading.Thread(target=recover, daemon=True).start()
     for state in agent.states():
         if state.get("draining"):
             threading.Thread(target=agent.drain, args=(state["pod"]["metadata"]["uid"],), daemon=True).start()
     token = Path(config["token_file"]).read_text().strip()
 
+    server = ThreadingHTTPServer(("127.0.0.1", 8887), handler_for(agent, token))
+    server.serve_forever()
+
+
+def handler_for(agent, token):
     class Handler(BaseHTTPRequestHandler):
         def setup(self):
             super().setup()
@@ -636,7 +765,11 @@ def serve():
             except RuntimeStaging:
                 payload = b'{"error":"runtime_staging"}'
                 self.send_response(503)
-            except (ValueError, KeyError, FileNotFoundError) as error:
+            except (OSError, RuntimeError) as error:
+                print(f'Host operation unavailable: {type(error).__name__}', flush=True)
+                payload = b'{"error":"host_unavailable"}'
+                self.send_response(503)
+            except (ValueError, KeyError) as error:
                 detail = f": {error}" if isinstance(error, (ValueError, FileNotFoundError)) else ""
                 print(f"Host operation rejected: {type(error).__name__}{detail}", flush=True)
                 payload = b'{"error":"invalid_host_operation"}'
@@ -646,8 +779,7 @@ def serve():
             self.end_headers()
             self.wfile.write(payload)
 
-    server = ThreadingHTTPServer(("127.0.0.1", 8887), Handler)
-    server.serve_forever()
+    return Handler
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -24,6 +25,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -54,7 +56,8 @@ type configuration struct {
 }
 type provider struct {
 	host   host
-	epoch  int32
+	epoch  int64
+	term   string
 	source corelisters.PodLister
 	client typedv1.CoreV1Interface
 	mu     sync.Mutex
@@ -101,12 +104,17 @@ func retryHostOperation(_ context.Context, _ string, _ int, _ time.Time, err err
 }
 
 func (p *provider) call(ctx context.Context, operation string, uid string, pod *v1.Pod, result any) error {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	payload := map[string]any{"operation": operation, "uid": uid, "pod": pod, "epoch": p.epoch}
+	payload := map[string]any{"operation": operation, "uid": uid, "pod": pod, "epoch": p.epoch, "term": p.term}
 	if operation == "configure" {
 		payload["runtimes"] = p.host.Runtimes
 	}
+	return p.callPayload(ctx, payload, result)
+}
+
+func (p *provider) callPayload(ctx context.Context, payload map[string]any, result any) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	operation := payload["operation"]
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return err
@@ -203,6 +211,10 @@ func (p *provider) GetPodStatus(ctx context.Context, namespace, name string) (*v
 			Conditions: []v1.PodCondition{{Type: v1.PodReady, Status: v1.ConditionFalse}, {Type: v1.ContainersReady, Status: v1.ConditionFalse}}}, nil
 	}
 	status := &v1.PodStatus{Phase: v1.PodFailed, Reason: "RuntimeExited"}
+	if pod.Spec.RestartPolicy != v1.RestartPolicyNever {
+		status.Phase = v1.PodPending
+		status.Reason = "RestartingRuntime"
+	}
 	if result.Running {
 		ready := v1.ConditionFalse
 		runtimeReady := v1.ConditionFalse
@@ -316,7 +328,7 @@ func (p *provider) NotifyNodeStatus(ctx context.Context, callback func(*v1.Node)
 	}()
 }
 
-func runHost(ctx context.Context, client kubernetes.Interface, namespace string, h host, epoch int32) error {
+func runHost(ctx context.Context, client kubernetes.Interface, namespace string, h host, epoch int64, term string) error {
 	name := "gpu-" + h.InstanceID
 	if h.GPUCount == 0 {
 		h.GPUCount = 1
@@ -339,7 +351,7 @@ func runHost(ctx context.Context, client kubernetes.Interface, namespace string,
 	}))
 	resourcesFactory := informers.NewSharedInformerFactoryWithOptions(client, time.Minute, informers.WithNamespace(namespace))
 	pods := factory.Core().V1().Pods()
-	p := &provider{host: h, epoch: epoch, source: pods.Lister(), client: client.CoreV1(), pods: map[string]*v1.Pod{}, node: spec}
+	p := &provider{host: h, epoch: epoch, term: term, source: pods.Lister(), client: client.CoreV1(), pods: map[string]*v1.Pod{}, node: spec}
 	if err := p.Ping(ctx); err != nil {
 		return err
 	}
@@ -494,18 +506,33 @@ func main() {
 					cancel()
 					return
 				}
-				epoch := int32(1)
-				if lease.Spec.LeaseTransitions != nil {
-					epoch += *lease.Spec.LeaseTransitions
-				}
+				term := string(uuid.NewUUID())
 				var group sync.WaitGroup
 				for _, h := range config.Hosts {
 					group.Add(1)
 					go func(h host) {
 						defer group.Done()
+						var epoch int64
 						for leader.Err() == nil {
+							if epoch == 0 {
+								var claimErr error
+								epoch, claimErr = claimHost(leader, client, config.Namespace, identity, lease, term, h)
+								if claimErr != nil {
+									if errors.Is(claimErr, errLeadershipChanged) {
+										cancel()
+										return
+									}
+									log.Printf("host %s claim failed: %v", h.InstanceID, claimErr)
+									select {
+									case <-leader.Done():
+										return
+									case <-time.After(5 * time.Second):
+										continue
+									}
+								}
+							}
 							hostContext, stopHost := context.WithCancel(leader)
-							err := runHost(hostContext, client, config.Namespace, h, epoch)
+							err := runHost(hostContext, client, config.Namespace, h, epoch, term)
 							stopHost()
 							if err != nil {
 								log.Printf("host %s controller failed: %v", h.InstanceID, err)

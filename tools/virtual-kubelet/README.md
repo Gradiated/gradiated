@@ -14,8 +14,12 @@ kubelet and container runtime instead.
 ## Scheduling and execution
 
 `cmd/gpu-controller` watches the `gpu-inference` namespace. Three controller
-replicas run on separate EKS nodes and elect one leader. Host operations carry a
-fencing epoch so a replaced leader cannot continue changing workloads.
+replicas run on separate EKS nodes and elect one leader. After election, the controller reads each host's durable generation, verifies
+that it still owns the Kubernetes Lease, then claims the next generation with a
+unique term. Operations require both values. Claim retries reuse the same term;
+a replaced leader cannot mutate workloads, even if its numeric generation is
+reused after state restoration. Recreating the Kubernetes Lease does not reset
+host generations. Existing reservations adopt this protocol on their first claim.
 
 Each RunPod host advertises its GPU count, CPU budget, memory budget and GPU
 model. Kubernetes places a pod using those resources and its node selector.
@@ -126,3 +130,28 @@ edit generated Rollouts directly. Non-inventory fields in controller and RBAC
 manifests remain editable; rendering preserves them. CI checks that generated
 fields match the inputs. Remove a retired host Service or model Rollout explicitly after draining
 its workloads; rendering and --check fail if retired resources remain.
+
+## Recovery and disk limits
+
+Host ownership records are written through a shared helper that fsyncs file data
+before replacement and the parent directory before acknowledging success.
+Process handles include boot and PID namespace identities as well as PID birth
+times. Serving task recovery retains the pod UID and requires SDK qualification
+of the new process incarnation. Training tasks that already started never retry
+automatically. Unknown processes retain their GPU claims instead of allowing
+another task to start. Child tasks are reaped; their cached process objects are
+not durable workload state.
+
+Every minute, cleanup preserves configured, active and staging bundles. It keeps
+two verified unused bundles and at most twenty retired pod diagnostic directories
+for up to seven days. Live processes or occupied cgroups prevent retirement; an
+unrecorded live process blocks bundle cleanup. Model weights are not pruned.
+Diagnostic logs are bounded at 32 MiB per file using copy/truncate of the recent
+16 MiB, retaining the writer's inode. Concurrent log lines can be lost during
+truncation; inference output and durable training artifacts use separate paths.
+
+CI runs Go race/vet checks, a real Go-to-Python HTTP fencing test, host recovery
+and cleanup tests, injected storage failures, process crashes around file
+replacement, bootstrap checks and downloader checks. These simulate process and
+storage failures without releasing GPU reservations. Physical host loss still
+requires replacement capacity; a provider reset requires deliberate enrollment.

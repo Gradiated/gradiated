@@ -9,10 +9,14 @@ from pathlib import Path
 import pwd
 import re
 import secrets
+import sys
 import subprocess
 import threading
 import time
 import uuid
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from host_state import atomic_json, atomic_write
 
 ROOT = Path('/var/lib/gradiated-kubelet')
 CONFIG = Path('/etc/gradiated/kubelet.json')
@@ -20,11 +24,7 @@ CONFIG = Path('/etc/gradiated/kubelet.json')
 
 def private_json(path, value, uid=0, gid=0):
     path.parent.mkdir(parents=True, exist_ok=True)
-    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o600)
-    with os.fdopen(fd, 'w') as output:
-        os.fchmod(output.fileno(), 0o600)
-        os.fchown(output.fileno(), uid, gid)
-        json.dump(value, output)
+    atomic_json(path, value, uid, gid)
 
 
 def validate(payload, inventory):
@@ -68,16 +68,10 @@ def enroll(payload):
     private_json(Path('/etc/gradiated/host-identity.json'), {'instance_id': config['instance_id']})
     private_json(CONFIG, config)
     token_path = Path(config['token_file'])
-    fd = os.open(token_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o600)
-    with os.fdopen(fd, 'w') as output:
-        os.fchmod(output.fileno(), 0o600)
-        output.write(payload['management_token'])
+    atomic_write(token_path, payload['management_token'].encode())
     account = pwd.getpwnam('desmond')
     local_key = Path('/etc/gradiated/runtime-access.token')
-    fd = os.open(local_key, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o600)
-    with os.fdopen(fd, 'w') as output:
-        os.fchown(output.fileno(), account.pw_uid, account.pw_gid)
-        output.write(secrets.token_urlsafe(48))
+    atomic_write(local_key, secrets.token_urlsafe(48).encode(), account.pw_uid, account.pw_gid)
 
     class Health(BaseHTTPRequestHandler):
         def log_message(self, *_):

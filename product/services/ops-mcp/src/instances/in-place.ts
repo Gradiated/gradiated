@@ -9,6 +9,7 @@ const source = (name: string) =>
   readFile(new URL(`../../../../inference/${name}`, import.meta.url), "utf8");
 const assets = {
   "/opt/gradiated/kubelet/bootstrap.py": "gpu/bootstrap.py",
+  "/opt/gradiated/kubelet/host_state.py": "gpu/host_state.py",
   "/opt/gradiated/kubelet/host-agent.py": "gpu/host-agent.py",
   "/opt/gradiated/kubelet/supervise.py": "gpu/supervise.py",
   "/opt/gradiated/bin/fetch-runtime": "images/gpu-base/fetch-runtime.sh",

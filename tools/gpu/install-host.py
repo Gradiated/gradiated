@@ -51,10 +51,6 @@ def install_locked(payload):
     token_path = Path(config['token_file'])
     if token_path.exists() and token_path.read_text() != payload['management_token']:
         raise ValueError('Rotate management credentials separately')
-    token_path.write_text(payload['management_token'])
-    token_path.chmod(0o600)
-    config_path.write_text(json.dumps(config))
-    config_path.chmod(0o600)
     digests = config.get('runtimes', {}).keys() if config.get('runtimes') else [config['bundle_sha256']]
     for digest in digests:
         if not re.fullmatch('[0-9a-f]{64}', digest):
@@ -62,7 +58,11 @@ def install_locked(payload):
         marker = root / 'bundles' / digest / '.bundle-sha256'
         if marker.read_text().strip() != digest:
             raise ValueError('Runtime bundle is not staged and verified')
-    for name in ['host-agent.py', 'supervise.py']:
+    shared = {}
+    exec(compile(payload['host_state.py'], 'host_state.py', 'exec'), shared)
+    shared['atomic_write'](token_path, payload['management_token'].encode())
+    shared['atomic_json'](config_path, config)
+    for name in ['host_state.py', 'host-agent.py', 'supervise.py']:
         path = destination / name
         temporary = path.with_suffix('.new')
         temporary.write_text(payload[name])
@@ -90,6 +90,5 @@ def install_locked(payload):
             env={'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'},
             stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
     birth = Path(f'/proc/{process.pid}/stat').read_text().rsplit(')', 1)[1].split()[19]
-    pid_path.write_text(json.dumps({'pid': process.pid, 'birth': birth}))
-    pid_path.chmod(0o600)
+    shared['atomic_json'](pid_path, {'pid': process.pid, 'birth': birth})
     print(json.dumps({'instance_id': instance, 'supervisor_pid': process.pid}))

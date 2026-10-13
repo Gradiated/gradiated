@@ -23,6 +23,7 @@ jobs:
       - run: python3 tools/gpu/render-config.py --check
       - run: python3 tools/gpu/render_config_test.py
       - run: python3 tools/virtual-kubelet/host_agent_test.py
+      - run: python3 tools/virtual-kubelet/host_state_test.py
       - run: python3 product/inference/gpu/bootstrap_test.py
       - run: python3 product/inference/images/gpu-base/download_runtime_test.py
       - run: test -z "$(gofmt -l tools/virtual-kubelet/cmd/gpu-controller/*.go)"

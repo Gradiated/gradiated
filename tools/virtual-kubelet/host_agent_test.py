@@ -151,6 +151,7 @@ class HostAgentTest(unittest.TestCase):
         self.assertEqual([len(devices) for devices, _ in assignments], [2, 1, 1])
         self.assertEqual(len({device for devices, _ in assignments for device in devices}), 4)
         self.assertEqual(len({port for _, port in assignments}), 3)
+        self.assertTrue(all(port < 32768 for _, port in assignments))
         with self.assertRaises(ValueError):
             self.host.assignment(self.pod)
 

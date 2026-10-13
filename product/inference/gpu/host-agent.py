@@ -379,7 +379,7 @@ class Agent:
         if len(available) < profile["gpus"]:
             raise ValueError("Required GPUs are owned by another deployment")
         ports = {state.get("port_base", 38080) for state in states}
-        port = next((38080 + slot * 8 for slot in range(16) if 38080 + slot * 8 not in ports), None)
+        port = next((18080 + slot * 8 for slot in range(16) if 18080 + slot * 8 not in ports), None)
         if port is None:
             raise ValueError("No runtime port slot available")
         return available[:profile["gpus"]], port

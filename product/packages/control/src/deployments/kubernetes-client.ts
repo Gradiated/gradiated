@@ -5,6 +5,7 @@ export const createKubernetesRequest = (signal: AbortSignal) => {
   const directory = "/var/run/secrets/kubernetes.io/serviceaccount";
   return (path: string, method = "GET", body?: unknown): Promise<unknown> =>
     new Promise((resolve, reject) => {
+      const payload = body === undefined ? undefined : JSON.stringify(body);
       const req = request(
         {
           hostname: process.env.KUBERNETES_SERVICE_HOST,
@@ -17,6 +18,9 @@ export const createKubernetesRequest = (signal: AbortSignal) => {
               method === "PATCH"
                 ? "application/json-patch+json"
                 : "application/json",
+            ...(payload === undefined
+              ? {}
+              : { "content-length": Buffer.byteLength(payload) }),
             authorization: `Bearer ${readFileSync(`${directory}/token`, "utf8").trim()}`,
           },
           signal: AbortSignal.any([signal, AbortSignal.timeout(10_000)]),
@@ -52,6 +56,6 @@ export const createKubernetesRequest = (signal: AbortSignal) => {
         },
       );
       req.on("error", reject);
-      req.end(body === undefined ? undefined : JSON.stringify(body));
+      req.end(payload);
     });
 };

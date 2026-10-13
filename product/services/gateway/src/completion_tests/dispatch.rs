@@ -286,11 +286,54 @@ async fn busy_deployments_reject_the_request_at_capacity() {
         GatewayError::CapacityExceeded
     );
 
+    assert_eq!(
+        harness.metric("routing_capacity_rejections_total", "model="),
+        1
+    );
+
+    assert!(harness.metric("capacity_rejection_timestamp_seconds", "model=") > 0);
+
     assert!(harness.journal.steps().is_empty());
     let events = logs.events();
     let failures = logged(&events, "routing");
     assert_eq!(failures.len(), 1);
     assert_eq!(failures[0]["fields"]["at_capacity"], 2);
+}
+
+#[tokio::test]
+async fn adapter_capacity_pressure_is_counted_against_its_base_model() {
+    let mut request = qualified_request(2);
+    request.request.model = "private-adapter".to_owned();
+    request.adapter = Some(crate::PrivateAdapter {
+        workspace_id: request.identity.workspace_id,
+        version_id: uuid::Uuid::nil(),
+        name: "private-adapter".to_owned(),
+        status: "available".to_owned(),
+        size_bytes: 1,
+        base_model_id: "base-model".to_owned(),
+        base_model_revision: "revision".to_owned(),
+        sha256: "a".repeat(64),
+    });
+    let harness = Harness::new(request, []);
+    for status in harness.state.statuses.lock().unwrap().iter_mut() {
+        status.accepting_requests = false;
+    }
+
+    assert_eq!(
+        harness.complete().await.unwrap_err(),
+        GatewayError::CapacityExceeded
+    );
+    assert_eq!(
+        harness.metric("routing_capacity_rejections_total", "model=\"base-model\""),
+        1
+    );
+    assert_eq!(
+        harness.metric(
+            "routing_capacity_rejections_total",
+            "model=\"private-adapter\""
+        ),
+        0
+    );
 }
 
 #[tokio::test]

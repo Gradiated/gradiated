@@ -93,6 +93,21 @@ class RenderTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             renderer.rollout('training', {**models['kev'], 'runtime': training}, runtimes)
 
+    def test_autoscaling_preserves_minimum_and_rejects_invalid_bounds(self):
+        runtimes = json.loads((renderer.ROOT / 'product/inference/gpu/runtimes.json').read_text())
+        models = json.loads((renderer.GPU / 'models.json').read_text())
+        model = models['deepseek']
+        obj = renderer.autoscaler('deepseek', model, runtimes[model['runtime']])
+        self.assertEqual(obj['spec']['minReplicaCount'], model['replicas'])
+        self.assertEqual(obj['spec']['maxReplicaCount'], 2)
+        for invalid in ({'max_replicas': 0, 'target_concurrency': 1},
+                        {'max_replicas': 2.5, 'target_concurrency': 1},
+                        {'max_replicas': 2, 'target_concurrency': 0},
+                        {'max_replicas': 2, 'target_concurrency': float('nan')},
+                        {'max_replicas': 2, 'target_concurrency': float('inf')}):
+            with self.assertRaises(ValueError):
+                renderer.autoscaler('deepseek', {**model, 'autoscaling': invalid}, runtimes[model['runtime']])
+
     def test_rejects_invalid_names_and_overridden_qualification_identity(self):
         runtimes = json.loads((renderer.ROOT / 'product/inference/gpu/runtimes.json').read_text())
         model = json.loads((renderer.GPU / 'models.json').read_text())['kev']

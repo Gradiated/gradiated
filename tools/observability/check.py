@@ -57,7 +57,9 @@ def main():
 
     from autoscaling_checks import check_autoscaling
 
-    tests = check_autoscaling(ROOT)
+    from gpu_autoscaling_checks import check_gpu_autoscaling
+
+    tests = check_autoscaling(ROOT) + check_gpu_autoscaling(ROOT)
     def scenario(name, inputs, expected, checks, labels=None, eval_time="8m", interval="30s"):
         cases = []
         for alert in checks:

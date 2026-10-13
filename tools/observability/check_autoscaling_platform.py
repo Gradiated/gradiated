@@ -51,7 +51,15 @@ def main():
         for service in ('api', 'worker', 'gateway', 'proxy'):
             obj = yaml.safe_load((KUBERNETES / 'workloads' / f'{service}-autoscaling.yaml').read_text())
             validator.validate(obj)
-        print('Validated every service ScaledObject against the pinned KEDA CRD')
+        for path in (KUBERNETES / 'gpu-inference').glob('*.yaml'):
+            for document in yaml.safe_load_all(path.read_text()):
+                if document and document.get('kind') == 'ScaledObject':
+                    validator.validate(document)
+        roles = [document for document in rendered['keda'] if document['kind'] == 'ClusterRole']
+        assert any('rollouts/scale' in rule.get('resources', []) and
+                   'argoproj.io' in rule.get('apiGroups', []) and 'update' in rule.get('verbs', [])
+                   for role in roles for rule in role.get('rules', []))
+        print('Validated service and GPU Rollout ScaledObjects and custom scale RBAC')
 
 
 if __name__ == '__main__':

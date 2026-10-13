@@ -148,6 +148,15 @@ impl CompletionService {
         let (diagnostics, error) = match availability {
             RouteAvailability::Ready(route) => return Ok(route),
             RouteAvailability::AtCapacity(diagnostics) => {
+                self.metrics.routing_capacity_rejected(
+                    request
+                        .adapter
+                        .as_ref()
+                        .map_or(request.request.model.as_str(), |adapter| {
+                            adapter.base_model_id.as_str()
+                        }),
+                );
+
                 (diagnostics, GatewayError::CapacityExceeded)
             }
             RouteAvailability::Unavailable(diagnostics) => {

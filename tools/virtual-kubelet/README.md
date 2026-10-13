@@ -131,6 +131,41 @@ manifests remain editable; rendering preserves them. CI checks that generated
 fields match the inputs. Remove a retired host Service or model Rollout explicitly after draining
 its workloads; rendering and --check fail if retired resources remain.
 
+## Model autoscaling
+
+KEDA owns each Rollout's replica count through the standard Kubernetes scale
+API. Argo CD ignores only `spec.replicas`; it still reconciles model releases,
+placement and scaling policy. Set the minimum with `replicas` and the ceiling
+and initial target in `models.json`'s `autoscaling` field, then render the
+manifests. Desmond continues reporting short-lived health directly to the
+private control API for routing; Prometheus supplies scaling measurements.
+
+Three gateway signals inform the HPA: concurrent generations over the last
+minute, runtime seconds per second over two minutes (so short requests between
+scrapes count), and capacity rejections. Each signal is scoped to the exact
+model and summed across gateway replicas. The HPA takes the largest recommendation.
+Capacity rejections request the configured ceiling; customer balance and
+concurrency policy rejections do not. The initial concurrency targets are 0.7
+for Kev's single execution slot and 16 for the batched runtimes. The batched
+targets are conservative starting policy, not measured throughput guarantees;
+tune them against time to first token and queue pressure under representative
+traffic. GPU memory allocation alone is not a useful scale-down signal.
+
+All queries require fresh, complete gateway telemetry. Missing samples or a
+Prometheus outage trigger a fallback that retains the current replica count
+when it exceeds the minimum. Scale-up adds at most one replica per minute;
+scale-down waits ten minutes and removes at most one per 750 seconds, longer
+than the runtime drain. New replicas become available only after the existing
+SDK qualification. None of this provisions or resets a provider GPU.
+
+The current ceilings are Kev 2, GLM 2 and DeepSeek 2. Kev retains its third RTX
+host for a zero-unavailable rollout. GLM retains a third B300 host for its hard
+host anti-affinity during a rollout. DeepSeek can grow from one to two replicas.
+These bounds preserve existing availability and rollout capacity; raising them
+requires reviewing GPU, CPU, memory, placement and concurrent training demand.
+Training consumes the same finite GPU resources and can delay serving placement.
+Scaling down a model releases GPUs but does not reduce the RunPod reservation bill.
+
 ## Recovery and disk limits
 
 Host ownership records are written through a shared helper that fsyncs file data

@@ -90,6 +90,42 @@ def rollout(name, model, runtimes):
                  'template': {'metadata': {'labels': labels, 'annotations': annotations}, 'spec': pod}}}
 
 
+def autoscaler(name, model, runtime):
+    settings = model['autoscaling']
+    maximum = settings['max_replicas']
+    target = settings['target_concurrency']
+    if type(maximum) is not int or maximum < model['replicas']:
+        raise ValueError('Autoscaling maximum must cover the minimum replicas')
+    if type(target) not in (int, float) or not 0 < target < float('inf'):
+        raise ValueError('Autoscaling concurrency target must be finite and positive')
+    selector = 'namespace="gradiated",model=' + json.dumps(runtime['model_id'])
+    health = 'gradiated:autoscaling_demand{service="gateway"}'
+    fresh = f'({health} and (timestamp({health}) > time() - 45))'
+    idle = f'(0 * sum({health}))'
+    queries = {
+        'concurrency': f'max_over_time((sum(gradiated_gateway_active_generations{{{selector}}}) or {idle})[1m:15s])',
+        'work': f'(sum(rate(gradiated_gateway_runtime_latency_seconds_sum{{{selector}}}[2m])) or {idle})',
+        'capacity': f'((max(gradiated_gateway_capacity_rejection_timestamp_seconds{{{selector}}} > time() - 120) > bool 0) or vector(0)) * {maximum}',
+    }
+    return {
+        'apiVersion': 'keda.sh/v1alpha1', 'kind': 'ScaledObject',
+        'metadata': {'name': name, 'namespace': 'gpu-inference', 'annotations': {
+            'argocd.argoproj.io/sync-wave': '20',
+            'argocd.argoproj.io/sync-options': 'SkipDryRunOnMissingResource=true'}},
+        'spec': {
+            'scaleTargetRef': {'apiVersion': 'argoproj.io/v1alpha1', 'kind': 'Rollout', 'name': name},
+            'pollingInterval': 15, 'minReplicaCount': model['replicas'], 'maxReplicaCount': maximum,
+            'fallback': {'failureThreshold': 3, 'replicas': model['replicas'], 'behavior': 'currentReplicasIfHigher'},
+            'advanced': {'restoreToOriginalReplicaCount': False, 'horizontalPodAutoscalerConfig': {'behavior': {
+                'scaleUp': {'stabilizationWindowSeconds': 0, 'policies': [{'type': 'Pods', 'value': 1, 'periodSeconds': 60}]},
+                'scaleDown': {'stabilizationWindowSeconds': 600, 'policies': [{'type': 'Pods', 'value': 1, 'periodSeconds': 750}]}}}},
+            'triggers': [{'type': 'prometheus', 'name': signal, 'metricType': 'AverageValue', 'metadata': {
+                'serverAddress': 'http://observability-kube-prometh-prometheus.observability.svc:9090',
+                'query': f'({query}) and on() {fresh}',
+                'threshold': str(1 if signal == 'capacity' else target), 'ignoreNullValues': 'false'}}
+                for signal, query in queries.items()]}}
+
+
 def render():
     hosts, services, secrets = inventory(json.loads((GPU / 'hosts.json').read_text()))
     runtimes = json.loads((ROOT / 'product/inference/gpu/runtimes.json').read_text())
@@ -117,9 +153,11 @@ def render():
             raise ValueError('Model name collides with a static manifest: ' + name)
         if path.exists():
             existing = [item for item in yaml.safe_load_all(path.read_text()) if item]
-            if len(existing) != 1 or existing[0].get('kind') != 'Rollout':
+            if not existing or existing[0].get('kind') != 'Rollout' or any(item.get('kind') != 'ScaledObject' for item in existing[1:]):
                 raise ValueError('Model name collides with a static manifest: ' + name)
         outputs[path] = [document]
+        if "autoscaling" in model:
+            outputs[path].append(autoscaler(name, model, runtimes[model["runtime"]]))
     return outputs
 
 

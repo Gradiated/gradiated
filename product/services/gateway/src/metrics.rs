@@ -26,6 +26,8 @@ struct Metrics {
     registry: Registry,
     http_requests: CounterFamily<HttpRequestLabels>,
     admissions: CounterFamily<GenerationLabels>,
+    routing_capacity_rejections: CounterFamily<ModelLabels>,
+    capacity_rejection_timestamp_seconds: GaugeFamily<ModelLabels>,
     admission_rejections: CounterFamily<AdmissionRejectionLabels>,
     active_generations: GaugeFamily<GenerationLabels>,
     generations: CounterFamily<GenerationOutcomeLabels>,
@@ -64,6 +66,11 @@ struct GenerationLabels {
     protocol: String,
     stream: String,
     service_tier: String,
+}
+
+#[derive(Clone, Debug, EncodeLabelSet, Eq, Hash, PartialEq)]
+struct ModelLabels {
+    model: String,
 }
 
 #[derive(Clone, Debug, EncodeLabelSet, Eq, Hash, PartialEq)]
@@ -131,6 +138,18 @@ impl GatewayMetrics {
                 "admissions",
                 "Generations admitted by Valkey.",
                 CounterFamily::default(),
+            ),
+            routing_capacity_rejections: registered(
+                &mut registry,
+                "routing_capacity_rejections",
+                "Qualified requests rejected because every healthy runtime was at capacity.",
+                CounterFamily::default(),
+            ),
+            capacity_rejection_timestamp_seconds: registered(
+                &mut registry,
+                "capacity_rejection_timestamp_seconds",
+                "Unix timestamp of the most recent routing or runtime capacity rejection.",
+                GaugeFamily::default(),
             ),
             admission_rejections: registered(
                 &mut registry,
@@ -311,6 +330,26 @@ impl GatewayMetrics {
         }
     }
 
+    fn record_capacity_pressure(&self, model: &str) {
+        self.inner
+            .capacity_rejection_timestamp_seconds
+            .get_or_create(&ModelLabels {
+                model: model.to_owned(),
+            })
+            .set(Utc::now().timestamp());
+    }
+
+    pub(crate) fn routing_capacity_rejected(&self, model: &str) {
+        self.record_capacity_pressure(model);
+
+        self.inner
+            .routing_capacity_rejections
+            .get_or_create(&ModelLabels {
+                model: model.to_owned(),
+            })
+            .inc();
+    }
+
     pub fn set_dependency_ready(&self, dependency: &'static str, ready: bool) {
         self.inner
             .dependency_ready
@@ -411,6 +450,10 @@ impl AdmittedGenerationMetrics {
         let metrics = &self.metrics.inner;
         let status = GenerationStatus::as_str(outcome.status());
         let error_code = outcome.error_code().unwrap_or("none");
+        if error_code == "capacity_exceeded" {
+            self.metrics.record_capacity_pressure(&labels.model);
+        }
+
         let cancellation_owner = outcome
             .cancellation_owner()
             .map_or("none", CancellationOwner::as_str);

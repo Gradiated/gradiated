@@ -220,7 +220,14 @@ not durable workload state.
 Every minute, cleanup preserves configured, active and staging bundles. It keeps
 two verified unused bundles and at most twenty retired pod diagnostic directories
 for up to seven days. Live processes or occupied cgroups prevent retirement; an
-unrecorded live process blocks bundle cleanup. Model weights use each host's configured `hf_home`; runtime profiles must not override it with a second cache location. Model weights are not pruned.
+unrecorded live process blocks bundle cleanup. Model weights use each host's configured `hf_home`; runtime profiles must not override it with a second cache location. Before a pod starts, the agent sizes its pinned weights (the release model plus a distinct pinned tokenizer repository, which for Kev is the base checkpoint it loads) from the Hugging Face
+file listing and evicts whole `models--*` repositories from that cache, least
+recently used first, until the missing files (blobs another revision already cached count as present), the unused part of each LoRA
+pod's `LORA_DISK_CACHE_BYTES` budget and `model_cache_reserve_gib` (default 64)
+fit. Models used by any pod on the host are never evicted, even at an unpinned revision; if any pod state on the host cannot be read, eviction is skipped. Unfinished
+downloads of models in use keep their space. Runtimes still download the files
+themselves. If sizing fails or space cannot be freed, the pod starts anyway and
+`runtime.log` records why.
 Diagnostic logs are bounded at 32 MiB per file using copy/truncate of the recent
 16 MiB, retaining the writer's inode. Concurrent log lines can be lost during
 truncation; inference output and durable training artifacts use separate paths.
@@ -286,7 +293,8 @@ still starts hosts from a base container image.
 A serial background controller worker observes every host before starting and
 updates in `hosts.json` order. Node health checks and metric scrapes never wait
 on rollout I/O. It requires five continuous minutes of model readiness with unchanged
-serving process identities before advancing. Staging has a 35-minute
+serving process identities before advancing. A missing original serving pod also
+stops the update, so concurrent model rescheduling cannot certify the host bundle. Staging has a 35-minute
 deadline; its download time does not consume the health grace or serving soak.
 Continuous agent or model health failure has a separate two-minute limit; an updated host that remains unreachable or unready stops the rollout.
 One node annotation (`gradiated.com/host-bundle-update`) checkpoints the release,

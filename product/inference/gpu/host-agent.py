@@ -140,6 +140,136 @@ def runtime_profile(config, pod):
     return digest, profile
 
 
+HUB_API = "https://huggingface.co/api/models"
+CACHE_MARKER = ".gradiated-last-used"
+UNUSED_WEIGHT_FORMATS = (".bin", ".pt", ".pth", ".ckpt", ".gguf", ".h5", ".msgpack", ".onnx")
+
+
+def hf_home(config, profile):
+    return Path(profile.get("hf_home", config.get("hf_home", "/home/runtime/.cache/huggingface")))
+
+
+def model_references(profile):
+    if profile.get("kind") == "training":
+        recipe = profile.get("recipe") or {}
+        references = [(recipe.get("model"), recipe.get("revision"))]
+    else:
+        # Kev loads its base checkpoint from the tokenizer repository as well as its own weights.
+        release = profile.get("release", {})
+        references = [(release.get("model_path"), release.get("model_revision")),
+                      (release.get("tokenizer_path"), release.get("tokenizer_revision"))]
+    return [(repo, revision) for repo, revision in references
+            if isinstance(repo, str) and re.fullmatch(r"[\w.-]+/[\w.-]+", repo)]
+
+
+def model_repos(profile):
+    # Protection needs only the repository; a pod with an unpinned revision still uses it.
+    return list(dict.fromkeys(repo for repo, _ in model_references(profile)))
+
+
+def model_weights(profile):
+    return list(dict.fromkeys(
+        (repo, revision) for repo, revision in model_references(profile)
+        if isinstance(revision, str) and re.fullmatch(r"[0-9a-f]{40}", revision)))
+
+
+def repo_directory(hub, repo):
+    return hub / ("models--" + repo.replace("/", "--"))
+
+
+def hub_files(repo, revision):
+    with urllib.request.urlopen(f"{HUB_API}/{repo}/revision/{revision}?blobs=true", timeout=30) as response:
+        siblings = json.load(response)["siblings"]
+    # The cache stores LFS files under their SHA-256 and other files under their git blob id.
+    files = {item["rfilename"]: (item.get("size") or 0, (item.get("lfs") or {}).get("sha256") or item.get("blobId"))
+             for item in siblings}
+    # Loaders fetch safetensors and skip the other weight formats a repo may also publish.
+    if any(name.endswith(".safetensors") for name in files):
+        files = {name: file for name, file in files.items() if not name.endswith(UNUSED_WEIGHT_FORMATS)}
+    return files
+
+
+def missing_bytes(hub, repo, revision, files):
+    # Another revision of the repository may already hold a file's blob, which the download reuses.
+    directory = repo_directory(hub, repo)
+    snapshot, blobs = directory / "snapshots" / revision, directory / "blobs"
+    return sum(size for name, (size, blob) in files.items()
+               if not (snapshot / name).exists()
+               and not (isinstance(blob, str) and re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", blob)
+                        and (blobs / blob).is_file()))
+
+
+def last_used(path):
+    try:
+        return (path / CACHE_MARKER).stat().st_mtime
+    except FileNotFoundError:
+        return path.stat().st_mtime
+
+
+def evict_models(hub, needed, protected, log, usage=shutil.disk_usage):
+    free = usage(hub).free
+    candidates = sorted((path for path in hub.glob("models--*") if path.is_dir() and path.name not in protected),
+                        key=last_used)
+    for path in candidates:
+        if free >= needed:
+            return
+        shutil.rmtree(path)
+        log(f"Evicted cached model {path.name}")
+        free = usage(hub).free
+    if free < needed:
+        log(f"Model cache needs {needed} free bytes but only {free} remain after eviction")
+
+
+def lora_headroom(profile, directory):
+    environment = profile.get("environment", {})
+    if environment.get("LORA_ENABLED") != "true":
+        return 0
+    cache = directory / "lora"
+    used = sum(path.stat().st_size for path in cache.rglob("*")
+               if path.is_file() and not path.is_symlink()) if cache.is_dir() else 0
+    return max(0, int(environment.get("LORA_DISK_CACHE_BYTES", "0")) - used)
+
+
+def prepare_model_cache(config, profile, directory, pods, log, files=hub_files, usage=shutil.disk_usage):
+    hub = hf_home(config, profile) / "hub"
+    weights = model_weights(profile)
+    if not weights or not hub.is_dir():
+        return
+    with (hub.parent / ".gradiated-cache.lock").open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        # Read the host's pods and cache contents under the lock, after any eviction a concurrent start made.
+        # Every model on this host stays cached, and unfinished downloads and LoRA caches keep their space.
+        pods = [(profile, directory), *pods()]
+        required = {pin for item, _ in pods for pin in model_weights(item)}
+        protected = {repo_directory(hub, repo).name for item, _ in pods for repo in model_repos(item)}
+        needed = config.get("model_cache_reserve_gib", 64) * 2**30
+        needed += sum(lora_headroom(item, path) for item, path in pods)
+        for repo, revision in required:
+            try:
+                needed += missing_bytes(hub, repo, revision, files(repo, revision))
+            except (OSError, ValueError, KeyError) as error:
+                log(f"Could not size {repo}@{revision}: {error}")
+        evict_models(hub, needed, protected, log, usage)
+        for repo, _ in weights:
+            cached = repo_directory(hub, repo)
+            if cached.is_dir():
+                (cached / CACHE_MARKER).touch()
+
+
+def host_pods(config, exclude):
+    # A pod whose state cannot be read may still hold weights, so its error skips eviction.
+    pods = []
+    for path in (ROOT / "pods").glob("*/state.json"):
+        if path.parent.name == exclude:
+            continue
+        try:
+            state = json.loads(path.read_text())
+        except FileNotFoundError:
+            continue
+        pods.append((runtime_profile(config, state["pod"])[1], path.parent))
+    return pods
+
+
 def task(uid, stopping):
     lock_path = ROOT / 'pods' / uid / 'task.lock'
     fd = os.open(lock_path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
@@ -178,6 +308,13 @@ def task(uid, stopping):
                             "GRADIATED_RUNTIME_ROOT": str(bundle), "TRAINER_IMAGE_DIGEST": digest})
         if profile["recipe"]:
             environment["TRAINING_RECIPE_JSON"] = json.dumps(profile["recipe"])
+    with (directory / "runtime.log").open("a") as cache_log:
+        def log(message):
+            cache_log.write(f"model-cache: {message}\n")
+        try:
+            prepare_model_cache(config, profile, directory, lambda: host_pods(config, uid), log)
+        except Exception as error:
+            log(f"Skipped eviction: {error}")
     model = reporter = None
     try:
         with ExitStack() as stack:

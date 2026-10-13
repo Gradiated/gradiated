@@ -31,6 +31,7 @@ type rolloutFixture struct {
 	updates            map[string]int
 	identities         map[string]int
 	unavailable        map[string]bool
+	absentPods         map[string]bool
 	ready              map[string]bool
 	rejectConfigure    bool
 	permanentConfigure bool
@@ -39,6 +40,7 @@ type rolloutFixture struct {
 func newRolloutFixture(t *testing.T) *rolloutFixture {
 	t.Helper()
 	f := &rolloutFixture{now: time.Unix(1000, 0), versions: map[string]hostVersion{}, updates: map[string]int{}, identities: map[string]int{}, unavailable: map[string]bool{}, ready: map[string]bool{}}
+	f.absentPods = map[string]bool{}
 	hosts := []host{{InstanceID: "first"}, {InstanceID: "second"}}
 	f.client = fake.NewSimpleClientset(&v1.Node{ObjectMeta: metav1.ObjectMeta{Name: "gpu-first"}}, &v1.Node{ObjectMeta: metav1.ObjectMeta{Name: "gpu-second"}})
 	f.rollout = newHostRollout(&hostBundle{SHA256: strings.Repeat("a", 64), BaseID: "base"}, hosts)
@@ -62,6 +64,10 @@ func newRolloutFixture(t *testing.T) *rolloutFixture {
 			}
 			json.NewEncoder(w).Encode(f.versions[id])
 		case "list":
+			if f.absentPods[id] {
+				json.NewEncoder(w).Encode([]*v1.Pod{})
+				return
+			}
 			json.NewEncoder(w).Encode([]*v1.Pod{{ObjectMeta: metav1.ObjectMeta{UID: types.UID(id + "-pod")}}})
 		case "status":
 			json.NewEncoder(w).Encode(map[string]any{"running": true, "ready": f.ready[id], "epoch": map[string]any{"pid": f.identities[id], "birth": "100"}})
@@ -448,5 +454,17 @@ func TestReachabilityRecoveryResetsGraceWhileAnotherHostIsUnavailable(t *testing
 	f.step(120 * time.Second)
 	if f.rollout.failure == nil {
 		t.Fatal("continuous active-host outage did not stop the update")
+	}
+}
+
+func TestMissingBaselinePodStopsHostUpdate(t *testing.T) {
+	f := newRolloutFixture(t)
+	f.step(0)
+	f.apply("first")
+	f.step(10 * time.Second)
+	f.absentPods["first"] = true
+	f.step(5 * time.Minute)
+	if f.rollout.failure == nil || f.updatesFor("second") != 0 {
+		t.Fatal("a missing original serving pod advanced the fleet update")
 	}
 }

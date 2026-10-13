@@ -332,7 +332,7 @@ func (r *hostRollout) step(ctx context.Context) {
 		}
 	}
 	for uid, identity := range state.Baseline {
-		if current, exists := identities[uid]; exists && current != identity {
+		if current, exists := identities[uid]; !exists || current != identity {
 			r.fail(p, state, "A serving process changed identity during the host update")
 			return
 		}

@@ -10,6 +10,9 @@ on:
       - "product/inference/CMakeLists.txt"
       - "product/inference/desmond/**"
       - "product/inference/engine/**"
+      - "product/inference/gpu/**"
+      - "product/inference/images/gpu-base/**"
+      - "product/inference/tailscale/**"
       - "product/inference/runtimes/kev/**"
       - "product/inference/runtimes/vllm/**"
       - "product/packages/**"
@@ -38,6 +41,7 @@ on:
       - "product/pnpm-lock.yaml"
       - "product/pnpm-workspace.yaml"
       - "product/prettier.config.mjs"
+      - "product/tsconfig.scripts.json"
       - "product/tsconfig.base.json"
       - "product/turbo.json"
       - "mise.toml"
@@ -122,8 +126,9 @@ jobs:
             product/services/gateway/target
             product/services/proxy/target
             product/services/collector/target
-          key: ${{ runner.os }}-gateway-unit-${{ hashFiles('product/services/gateway/Cargo.lock', 'product/services/proxy/Cargo.lock', 'product/services/collector/Cargo.lock') }}
+          key: ${{ runner.os }}-gateway-unit-${{ hashFiles('product/services/gateway/Cargo.lock', 'product/services/proxy/Cargo.lock', 'product/services/collector/Cargo.lock') }}-${{ github.sha }}
           restore-keys: |
+            ${{ runner.os }}-gateway-unit-${{ hashFiles('product/services/gateway/Cargo.lock', 'product/services/proxy/Cargo.lock', 'product/services/collector/Cargo.lock') }}-
             ${{ runner.os }}-gateway-unit-
       - run: pnpm install --frozen-lockfile
         working-directory: product
@@ -186,8 +191,9 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             product/services/gateway/target
-          key: ${{ runner.os }}-gateway-integration-${{ hashFiles('product/services/gateway/Cargo.lock') }}
+          key: ${{ runner.os }}-gateway-integration-${{ hashFiles('product/services/gateway/Cargo.lock') }}-${{ github.sha }}
           restore-keys: |
+            ${{ runner.os }}-gateway-integration-${{ hashFiles('product/services/gateway/Cargo.lock') }}-
             ${{ runner.os }}-gateway-integration-
       - name: Start product dependency stack
         working-directory: product
@@ -272,8 +278,9 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             product/services/gateway/target
-          key: ${{ runner.os }}-gateway-contract-${{ hashFiles('product/services/gateway/Cargo.lock') }}
+          key: ${{ runner.os }}-gateway-contract-${{ hashFiles('product/services/gateway/Cargo.lock') }}-${{ github.sha }}
           restore-keys: |
+            ${{ runner.os }}-gateway-contract-${{ hashFiles('product/services/gateway/Cargo.lock') }}-
             ${{ runner.os }}-gateway-contract-
             ${{ runner.os }}-gateway-integration-
             ${{ runner.os }}-gateway-unit-
@@ -317,8 +324,9 @@ jobs:
             ~/.cargo/git
             product/services/gateway/target
             product/services/proxy/target
-          key: ${{ runner.os }}-proxy-e2e-${{ hashFiles('product/services/gateway/Cargo.lock', 'product/services/proxy/Cargo.lock') }}
+          key: ${{ runner.os }}-proxy-e2e-${{ hashFiles('product/services/gateway/Cargo.lock', 'product/services/proxy/Cargo.lock') }}-${{ github.sha }}
           restore-keys: |
+            ${{ runner.os }}-proxy-e2e-${{ hashFiles('product/services/gateway/Cargo.lock', 'product/services/proxy/Cargo.lock') }}-
             ${{ runner.os }}-proxy-e2e-
             ${{ runner.os }}-gateway-contract-
       - run: pnpm install --frozen-lockfile
@@ -364,8 +372,9 @@ jobs:
             product/services/gateway/target
             product/services/proxy/target
             product/services/collector/target
-          key: ${{ runner.os }}-backend-storage-${{ hashFiles('product/services/gateway/Cargo.lock', 'product/services/proxy/Cargo.lock', 'product/services/collector/Cargo.lock') }}
+          key: ${{ runner.os }}-backend-storage-${{ hashFiles('product/services/gateway/Cargo.lock', 'product/services/proxy/Cargo.lock', 'product/services/collector/Cargo.lock') }}-${{ github.sha }}
           restore-keys: |
+            ${{ runner.os }}-backend-storage-${{ hashFiles('product/services/gateway/Cargo.lock', 'product/services/proxy/Cargo.lock', 'product/services/collector/Cargo.lock') }}-
             ${{ runner.os }}-backend-storage-
             ${{ runner.os }}-proxy-e2e-
             ${{ runner.os }}-gateway-unit-
@@ -401,8 +410,9 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             product/services/gateway/target
-          key: ${{ runner.os }}-gateway-contract-${{ hashFiles('product/services/gateway/Cargo.lock') }}
+          key: ${{ runner.os }}-gateway-contract-${{ hashFiles('product/services/gateway/Cargo.lock') }}-${{ github.sha }}
           restore-keys: |
+            ${{ runner.os }}-gateway-contract-${{ hashFiles('product/services/gateway/Cargo.lock') }}-
             ${{ runner.os }}-gateway-contract-
       - run: pnpm install --frozen-lockfile
         working-directory: product

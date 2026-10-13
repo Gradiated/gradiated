@@ -16,8 +16,8 @@
 //
 // No API key needed: the job board API is public. If Ashby can't be reached
 // the build fails on purpose, so Vercel keeps the last good deployment live
-// rather than publishing a careers page with no jobs on it. For local dev, run
-// `pnpm sync:ashby-jobs` once to fill in the jobs.
+// rather than publishing a careers page with no jobs on it. The dev server
+// (vite.config.ts) runs the sync on start and carries on if it is offline.
 
 import { writeFile } from "node:fs/promises";
 import { AshbyService } from "../src/ashby.ts";
@@ -211,8 +211,12 @@ try {
   );
   console.log(`Synced ${jobs.length} job postings from Ashby (${BOARD}).`);
 } catch (error) {
-  console.error(
-    `Could not load job postings from Ashby (${BOARD}): ${(error as Error).message}`,
-  );
-  process.exit(1);
+  const reason = `Could not load job postings from Ashby (${BOARD}): ${(error as Error).message}`;
+  // The dev server asks for a best-effort sync; a build needs the real list.
+  if (process.env.ASHBY_SYNC_OPTIONAL === "1") {
+    console.warn(`${reason}. Keeping src/ashby-jobs.generated.ts as it is.`);
+  } else {
+    console.error(reason);
+    process.exit(1);
+  }
 }

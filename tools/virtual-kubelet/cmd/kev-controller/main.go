@@ -19,6 +19,7 @@ import (
 	"github.com/virtual-kubelet/virtual-kubelet/errdefs"
 	"github.com/virtual-kubelet/virtual-kubelet/node"
 	v1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -53,6 +54,7 @@ type provider struct {
 	host   host
 	epoch  int32
 	source corelisters.PodLister
+	client typedv1.CoreV1Interface
 	mu     sync.Mutex
 	pods   map[string]*v1.Pod
 	node   *v1.Node
@@ -212,7 +214,16 @@ func (p *provider) DeletePod(ctx context.Context, pod *v1.Pod) error {
 			p.mu.Lock()
 			delete(p.pods, pod.Namespace+"/"+pod.Name)
 			p.mu.Unlock()
-			return nil
+			// Host cleanup completed the drain; Virtual Kubelet otherwise waits another grace period.
+			zero := int64(0)
+			uid := pod.UID
+			err := p.client.Pods(pod.Namespace).Delete(ctx, pod.Name, metav1.DeleteOptions{
+				GracePeriodSeconds: &zero, Preconditions: &metav1.Preconditions{UID: &uid},
+			})
+			if apierrors.IsNotFound(err) {
+				return nil
+			}
+			return err
 		}
 		select {
 		case <-ctx.Done():
@@ -303,7 +314,7 @@ func runHost(ctx context.Context, client kubernetes.Interface, namespace string,
 	}))
 	resourcesFactory := informers.NewSharedInformerFactoryWithOptions(client, time.Minute, informers.WithNamespace(namespace))
 	pods := factory.Core().V1().Pods()
-	p := &provider{host: h, epoch: epoch, source: pods.Lister(), pods: map[string]*v1.Pod{}, node: spec}
+	p := &provider{host: h, epoch: epoch, source: pods.Lister(), client: client.CoreV1(), pods: map[string]*v1.Pod{}, node: spec}
 	if err := p.Ping(ctx); err != nil {
 		return err
 	}

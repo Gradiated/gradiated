@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/fake"
 	corelisters "k8s.io/client-go/listers/core/v1"
+	ktesting "k8s.io/client-go/testing"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -107,5 +108,23 @@ func TestStatusUpdatePreservesQualificationAndRejectsReusedPodName(t *testing.T)
 	stale.Status.Phase = v1.PodFailed
 	if _, err = pods.UpdateStatus(context.Background(), stale, metav1.UpdateOptions{}); err == nil {
 		t.Fatal("status update crossed Pod UID boundary")
+	}
+}
+
+func TestDeletionReleasesKubernetesPodOnlyAfterHostCleanup(t *testing.T) {
+	p := testProvider(t, func(w http.ResponseWriter, r *http.Request) { w.Write([]byte(`{"deleted":true}`)) })
+	pod := &v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "drained", Namespace: "gpu-inference", UID: types.UID("old-uid")}}
+	client := fake.NewSimpleClientset(pod)
+	p.client = client.CoreV1()
+	if err := p.DeletePod(context.Background(), pod); err != nil {
+		t.Fatal(err)
+	}
+	actions := client.Actions()
+	if len(actions) != 1 || actions[0].GetVerb() != "delete" {
+		t.Fatalf("expected one deletion, got %v", actions)
+	}
+	options := actions[0].(ktesting.DeleteAction).GetDeleteOptions()
+	if options.GracePeriodSeconds == nil || *options.GracePeriodSeconds != 0 || options.Preconditions == nil || *options.Preconditions.UID != pod.UID {
+		t.Fatalf("unsafe deletion options: %+v", options)
 	}
 }

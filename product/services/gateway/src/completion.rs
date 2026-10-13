@@ -403,6 +403,10 @@ impl Generation {
             metrics: self.metrics,
         };
 
+        for fallback in &call.fallbacks {
+            settlement.metrics.prepare_deployment(fallback.id);
+        }
+
         (call, settlement)
     }
 

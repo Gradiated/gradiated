@@ -193,6 +193,7 @@ const llmsText = [
   "",
   "## Company",
   "",
+  `- [About](${absoluteUrl("/about/")}): How Gradiated began inside PostHog and why it exists.`,
   `- [Careers](${absoluteUrl("/careers/")}): Open roles in inference software and silicon.`,
   `- [Thesis](${absoluteUrl("/notes/our-thesis/")}): The Gradiated view of inference.`,
   "",

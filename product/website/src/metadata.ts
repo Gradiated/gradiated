@@ -30,6 +30,11 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     description:
       "Gradiated builds software and hardware to provide the most affordable open-model inference.",
   },
+  "/about/": {
+    title: "About",
+    description:
+      "Learn how Gradiated began inside PostHog and why PostHog created a dedicated brand for inference research and infrastructure.",
+  },
   "/training/": {
     title: "Training",
     description:

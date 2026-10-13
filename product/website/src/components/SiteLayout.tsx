@@ -201,7 +201,7 @@ const SiteFooter = (): ReactElement => (
         Gradiated
       </Link>
       <span className="mt-4 max-w-[150px] leading-[1.6]">
-        © 2026 Gradiated Ltd
+        © 2026 PostHog Inc.
       </span>
     </div>
     <nav className="grid grid-cols-2 gap-x-10 gap-y-4 max-site:grid-cols-1 max-site:content-start max-site:justify-items-start">

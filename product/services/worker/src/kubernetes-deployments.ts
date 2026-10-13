@@ -97,17 +97,19 @@ export const createKubernetesDeploymentView = (
   };
 };
 
-export const createKubernetesGet = (signal: AbortSignal) => {
+export const createKubernetesRequest = (signal: AbortSignal) => {
   const directory = "/var/run/secrets/kubernetes.io/serviceaccount";
-  return (path: string): Promise<unknown> =>
+  return (path: string, method = "GET", body?: unknown): Promise<unknown> =>
     new Promise((resolve, reject) => {
       const req = request(
         {
           hostname: process.env.KUBERNETES_SERVICE_HOST,
           port: process.env.KUBERNETES_SERVICE_PORT_HTTPS ?? "443",
           path,
+          method,
           ca: readFileSync(`${directory}/ca.crt`),
           headers: {
+            "content-type": "application/json-patch+json",
             authorization: `Bearer ${readFileSync(`${directory}/token`, "utf8").trim()}`,
           },
           signal: AbortSignal.any([signal, AbortSignal.timeout(10_000)]),
@@ -134,6 +136,11 @@ export const createKubernetesGet = (signal: AbortSignal) => {
         },
       );
       req.on("error", reject);
-      req.end();
+      req.end(body === undefined ? undefined : JSON.stringify(body));
     });
+};
+
+export const createKubernetesGet = (signal: AbortSignal) => {
+  const request = createKubernetesRequest(signal);
+  return (path: string) => request(path);
 };

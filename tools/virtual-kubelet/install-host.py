@@ -47,6 +47,11 @@ def install(payload):
         marker = root / 'bundles' / digest / '.bundle-sha256'
         if marker.read_text().strip() != digest:
             raise ValueError('Runtime bundle is not staged and verified')
+    if any(profile.get('environment', {}).get('LORA_ENABLED') == 'true' for profile in config.get('runtimes', {}).values()):
+        identity = Path('/etc/gradiated/host-identity.json')
+        if not identity.exists():
+            subprocess.run(['install', '-m', '600', '-o', 'runtime', '-g', 'runtime',
+                            '/etc/nomad/tls/renewal.json', str(identity)], check=True)
     for name in ['host-agent.py', 'supervise.py']:
         path = destination / name
         temporary = path.with_suffix('.new')

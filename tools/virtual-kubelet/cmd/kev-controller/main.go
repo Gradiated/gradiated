@@ -182,12 +182,20 @@ func (p *provider) GetPodStatus(ctx context.Context, namespace, name string) (*v
 	status := &v1.PodStatus{Phase: v1.PodFailed, Reason: "RuntimeExited"}
 	if result.Running {
 		ready := v1.ConditionFalse
+		runtimeReady := v1.ConditionFalse
 		if result.Ready {
+			runtimeReady = v1.ConditionTrue
+		}
+		incarnation := fmt.Sprintf("runpod://%d:%s", result.Epoch.PID, result.Epoch.Birth)
+		current, err := p.source.Pods(namespace).Get(name)
+		qualified := err == nil && current.UID == pod.UID && current.Annotations["gradiated.com/qualified"] == "true" &&
+			(current.Annotations["gradiated.com/qualified-runtime"] == "" || current.Annotations["gradiated.com/qualified-runtime"] == incarnation)
+		if result.Ready && qualified {
 			ready = v1.ConditionTrue
 		}
 		status.Phase = v1.PodRunning
 		status.Reason = ""
-		status.Conditions = []v1.PodCondition{{Type: v1.PodReady, Status: ready}, {Type: v1.ContainersReady, Status: ready}, {Type: v1.PodInitialized, Status: v1.ConditionTrue}, {Type: v1.PodScheduled, Status: v1.ConditionTrue}}
+		status.Conditions = []v1.PodCondition{{Type: "RuntimeReady", Status: runtimeReady}, {Type: v1.PodReady, Status: ready}, {Type: v1.ContainersReady, Status: runtimeReady}, {Type: v1.PodInitialized, Status: v1.ConditionTrue}, {Type: v1.PodScheduled, Status: v1.ConditionTrue}}
 		status.ContainerStatuses = []v1.ContainerStatus{{Name: pod.Spec.Containers[0].Name, Image: pod.Spec.Containers[0].Image, Ready: result.Ready, ContainerID: fmt.Sprintf("runpod://%d:%s", result.Epoch.PID, result.Epoch.Birth), State: v1.ContainerState{Running: &v1.ContainerStateRunning{}}}}
 	}
 	return status, nil
@@ -197,7 +205,7 @@ func (p *provider) DeletePod(ctx context.Context, pod *v1.Pod) error {
 		var result struct {
 			Deleted bool `json:"deleted"`
 		}
-		if err := p.call(ctx, "delete", string(pod.UID), nil, &result); err != nil {
+		if err := p.call(ctx, "delete", string(pod.UID), pod, &result); err != nil {
 			return err
 		}
 		if result.Deleted {
@@ -336,9 +344,62 @@ func runHost(ctx context.Context, client kubernetes.Interface, namespace string,
 	}
 }
 
+func checkQualification(selector string) error {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return err
+	}
+	client, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Minute)
+	defer cancel()
+	for {
+		pods, err := client.CoreV1().Pods("gpu-inference").List(ctx, metav1.ListOptions{LabelSelector: selector})
+		if err != nil {
+			return err
+		}
+		complete := len(pods.Items) > 0
+		for _, pod := range pods.Items {
+			incarnation := ""
+			if len(pod.Status.ContainerStatuses) > 0 {
+				incarnation = pod.Status.ContainerStatuses[0].ContainerID
+			}
+			if incarnation != "" && pod.Annotations["gradiated.com/qualification-error"] == incarnation {
+				return fmt.Errorf("SDK qualification rejected pod %s", pod.Name)
+			}
+			ready := false
+			for _, condition := range pod.Status.Conditions {
+				if condition.Type == v1.PodReady && condition.Status == v1.ConditionTrue {
+					ready = true
+				}
+			}
+			if !ready || pod.DeletionTimestamp != nil || pod.Annotations["gradiated.com/qualified"] != "true" {
+				complete = false
+			}
+		}
+		if complete {
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(5 * time.Second):
+		}
+	}
+}
+
 func main() {
+	check := flag.String("check-qualification", "", "wait for SDK-qualified pods matching this selector")
 	path := flag.String("config", "/etc/gpu-controller/hosts.json", "host configuration")
 	flag.Parse()
+	if *check != "" {
+		if err := checkQualification(*check); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
 	data, err := os.ReadFile(*path)
 	if err != nil {
 		log.Fatal(err)

@@ -15,6 +15,7 @@ export type WorkerLoop =
   | "trace_cleanup"
   | "deployment_reconciliation"
   | "kubernetes_deployment_reconciliation"
+  | "kubernetes_qualification"
   | "catalog_apply"
   | "inference_probes";
 
@@ -37,6 +38,7 @@ const passOperation: Record<WorkerLoop, string> = {
   trace_cleanup: "cleanup_pass",
   deployment_reconciliation: "reconcile_pass",
   kubernetes_deployment_reconciliation: "kubernetes_reconcile_pass",
+  kubernetes_qualification: "kubernetes_qualification_pass",
   catalog_apply: "apply_pass",
   inference_probes: "probe_pass",
 };

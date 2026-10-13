@@ -31,7 +31,12 @@ import { createNomadGet } from "./nomad-allocations.js";
 import {
   createKubernetesDeploymentView,
   createKubernetesGet,
+  createKubernetesRequest,
 } from "./kubernetes-deployments.js";
+import {
+  qualifyKubernetesPod,
+  runSdkQualification,
+} from "./kubernetes-qualification.js";
 import { serviceLog } from "./logging.js";
 import { loraMetricsTargets } from "./lora-metrics-targets.js";
 import { startWorkerMetricsServer, WorkerMetrics } from "./metrics.js";
@@ -196,6 +201,7 @@ supervisors.push(
 );
 
 if (process.env.GPU_KUBERNETES_NAMESPACE) {
+  const namespace = process.env.GPU_KUBERNETES_NAMESPACE;
   const store = createKubernetesDeploymentStore(database);
   const view = createKubernetesDeploymentView(
     process.env.GPU_KUBERNETES_NAMESPACE,
@@ -213,6 +219,55 @@ if (process.env.GPU_KUBERNETES_NAMESPACE) {
           await store.reconcile(view);
           await markReady();
           await sleep(5_000, signal);
+        }
+      },
+    }),
+  );
+  const request = createKubernetesRequest(signal);
+  supervisors.push(
+    supervise({
+      loop: "kubernetes_qualification",
+      readinessPath: "/tmp/gradiated-kubernetes-qualification-ready",
+      metrics,
+      signal,
+      run: async (markReady) => {
+        const qualificationPool = createControlDatabase(
+          environment.DATABASE_URL,
+          1,
+        ).pool;
+        qualificationPool.on("error", (error) =>
+          serviceLog("error", "dependency_error", {
+            dependency: "postgres",
+            error,
+          }),
+        );
+        try {
+          while (!signal.aborted) {
+            const client = await qualificationPool.connect();
+            let locked = false;
+            try {
+              const result = await client.query<{ locked: boolean }>(
+                "select pg_try_advisory_lock(hashtext('gpu-qualification-v1')) as locked",
+              );
+              locked = result.rows[0]?.locked === true;
+              if (locked)
+                await qualifyKubernetesPod(namespace, request, (input) =>
+                  runSdkQualification(input, signal),
+                );
+            } finally {
+              if (locked)
+                await client
+                  .query(
+                    "select pg_advisory_unlock(hashtext('gpu-qualification-v1'))",
+                  )
+                  .catch(() => undefined);
+              client.release();
+            }
+            await markReady();
+            await sleep(10_000, signal);
+          }
+        } finally {
+          await qualificationPool.end();
         }
       },
     }),

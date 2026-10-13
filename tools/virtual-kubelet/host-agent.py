@@ -86,7 +86,7 @@ def spawn_user(user, command, environment, log_path):
             ["/usr/bin/setpriv", f"--reuid={user}", f"--regid={user}", "--init-groups",
              "--inh-caps=-all", "--ambient-caps=-all", "--no-new-privs", "--pdeathsig=TERM", *command],
             env=environment, stdin=subprocess.DEVNULL, stdout=output,
-            stderr=subprocess.STDOUT, start_new_session=True,
+            stderr=subprocess.STDOUT, start_new_session=True, cwd="/",
         )
 
 
@@ -418,13 +418,23 @@ class Agent:
                     self.refresh_proxy()
                 elif json.loads(path.read_text())["pod"]["spec"]["containers"][0]["image"] != body["pod"]["spec"]["containers"][0]["image"]:
                     raise ValueError("A pod UID cannot change its runtime release")
+                else:
+                    state = json.loads(path.read_text())
+                    state["pod"] = body["pod"]
+                    state["qualified_once"] = state.get("qualified_once", False) or body["pod"]["metadata"].get("annotations", {}).get("gradiated.com/qualified") == "true"
+                    atomic_json(path, state)
                 return {"created": True}
             if operation == "delete":
                 if path.exists():
                     state = json.loads(path.read_text())
                     if not state.get("draining"):
+                        supplied = body.get("pod")
+                        if supplied is not None and self.validate(supplied) != uid:
+                            raise ValueError("Deletion UID does not match its pod")
+                        qualified = state.get("qualified_once", False) or (supplied or state["pod"])["metadata"].get("annotations", {}).get("gradiated.com/qualified") == "true"
                         state["draining"] = True
                         state["drain_started_at"] = time.time()
+                        state["drain_seconds"] = 660 if qualified else 0
                         atomic_json(path, state)
                         self.refresh_proxy()
                         threading.Thread(target=self.drain, args=(uid,), daemon=True).start()
@@ -447,7 +457,7 @@ class Agent:
         state = json.loads(path.read_text())
         # New requests are withdrawn before the existing request drain.
         if alive(state.get("task")):
-            time.sleep(max(0, state["drain_started_at"] + 660 - time.time()))
+            time.sleep(max(0, state["drain_started_at"] + state.get("drain_seconds", 660) - time.time()))
         self.stop(directory, state)
         group = pod_cgroup(uid)
         if group.exists():

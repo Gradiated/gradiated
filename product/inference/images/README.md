@@ -1,9 +1,11 @@
 # GPU images and runtime bundles
 
 `gpu-base` contains Ubuntu, CUDA, system libraries, Python, nginx, OpenSSH,
-fixed service UIDs and minimal SSH startup. It contains no Desmond, host agent,
+fixed service UIDs and minimal SSH/init startup. It contains no Desmond, host agent,
 downloader, enrollment implementation or model launcher. Application changes do
-not participate in its build identity.
+not participate in its build identity. The init loop waits for completed
+enrollment, supervises the installed bootstrap alongside SSH, and restarts it
+if it exits. The bootstrap and recovery implementation remain on disk.
 
 Enrollment installs a SHA-256-pinned host archive over authenticated SSH. The
 archive contains enrollment, supervision and recovery, the downloader, Desmond,

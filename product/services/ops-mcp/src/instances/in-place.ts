@@ -66,6 +66,7 @@ if config.exists():
 else:
     if subprocess.check_output(["nvidia-smi","--query-compute-apps=pid","--format=csv,noheader"],text=True).strip():
         raise ValueError("GPU workloads must drain before enrollment")
+    pathlib.Path("/opt/gradiated/kubelet/launch-ready").unlink(missing_ok=True)
     bootstrap_path=pathlib.Path("/opt/gradiated/kubelet/bootstrap.py")
     if bootstrap.get("host_bundle"):
         import types
@@ -81,6 +82,15 @@ else:
     except Exception:
         config.unlink(missing_ok=True)
         raise
+pathlib.Path("/opt/gradiated/kubelet/launch-ready").touch(mode=0o600)
+root=pathlib.Path("/var/lib/gradiated-kubelet")
+def supervisor_alive():
+    try:
+        owner=json.loads((root/"supervisor.json").read_text())
+        state=pathlib.Path(f"/proc/{owner['pid']}/stat").read_text().rsplit(")",1)[1].split()
+        return state[0]!="Z" and state[19]==owner["birth"]
+    except (OSError,ValueError,KeyError,IndexError):return False
+if not pathlib.Path("/run/gradiated/host-init").exists() and not supervisor_alive():
     with open("/var/log/gradiated-kubelet-bootstrap.log","ab") as log:
         subprocess.Popen(["python3","-B","/opt/gradiated/kubelet/bootstrap.py"],env={"PATH":"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"},stdin=subprocess.DEVNULL,stdout=log,stderr=log,start_new_session=True)
 deadline=time.monotonic()+120

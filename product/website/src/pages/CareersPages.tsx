@@ -202,7 +202,7 @@ export const JobDetailPage = ({ job }: { job: Job }): ReactElement => {
           jumped.current && document.getElementById(jumped.current);
         current =
           target && target.getBoundingClientRect().top < window.innerHeight
-            ? jumped.current
+            ? target.id
             : (blocks.at(-1)?.id ?? current);
       }
       setActive(current);

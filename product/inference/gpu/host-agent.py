@@ -142,7 +142,7 @@ def task(uid, stopping):
     base = state.get("port_base", 38080)
     environment = {
         "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-        "HOME": "/home/runtime", "HF_HOME": config.get("hf_home", "/home/runtime/.cache/huggingface"),
+        "HOME": "/home/runtime", "HF_HOME": profile.get("hf_home", config.get("hf_home", "/home/runtime/.cache/huggingface")),
         "XDG_CACHE_HOME": "/home/runtime/.cache", "OMP_NUM_THREADS": profile["cpu"],
         "NVIDIA_VISIBLE_DEVICES": ",".join(devices), "CUDA_VISIBLE_DEVICES": ",".join(devices),
         "RUNTIME_HOST": "127.0.0.1", "RUNTIME_PORT": str(base),

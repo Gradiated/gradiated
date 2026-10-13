@@ -8,6 +8,13 @@ import subprocess
 import uuid
 
 
+def validate_runtime_update(previous, config, states):
+    active = {state['pod']['spec']['containers'][0]['image'].rsplit('@sha256:', 1)[-1] for state in states}
+    for key in active:
+        if config.get('runtimes', {}).get(key) != previous.get('runtimes', {}).get(key):
+            raise ValueError('Cannot alter an active runtime')
+
+
 def install(payload):
     if not re.fullmatch(r"[A-Za-z0-9_-]{32,128}", payload['management_token']):
         raise ValueError('A strong host-specific management credential is required')
@@ -30,9 +37,7 @@ def install(payload):
         for key in ['instance_id', 'gpu_uuid', 'gpu_uuids', 'hf_home', 'bundle_sha256', 'model_id', 'release']:
             if previous.get(key) != config.get(key):
                 raise ValueError('Cannot change host identity or execution settings with active workloads')
-        for key, value in previous.get('runtimes', {}).items():
-            if config.get('runtimes', {}).get(key) != value:
-                raise ValueError('Cannot alter an enrolled runtime with active workloads')
+        validate_runtime_update(previous, config, [json.loads(path.read_text()) for path in (root / 'pods').glob('*/state.json')])
     token_path = Path(config['token_file'])
     if token_path.exists() and token_path.read_text() != payload['management_token']:
         raise ValueError('Rotate management credentials separately')

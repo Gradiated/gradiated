@@ -69,7 +69,8 @@
     "startup_timeout": 5400,
     "environment": {
       "TENSOR_PARALLEL_SIZE": "4"
-    }
+    },
+    "hf_home": "/home/runtime/.cache/huggingface"
   },
   "590ec302e50141b59f1db3d28c1d34128fd05ca3c7fc8007592b304b505fe652": {
     "kind": "training",

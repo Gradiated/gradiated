@@ -169,9 +169,14 @@ export const JobDetailPage = ({ job }: { job: Job }): ReactElement => {
        reading line, a little below where a contents link lands a heading
        (the root scroll-padding). Taking the first IntersectionObserver entry
        instead could name the section above the one just jumped to. */
+    let settle: number | undefined;
     const update = (): void => {
       if (pinned.current) {
         setActive(pinned.current);
+        /* Released once the jump has finished scrolling, so a scroll that no
+           input event announces (dragging the scrollbar) still moves it on. */
+        window.clearTimeout(settle);
+        settle = window.setTimeout(unpin, 200);
         return;
       }
       const landing =
@@ -191,7 +196,12 @@ export const JobDetailPage = ({ job }: { job: Job }): ReactElement => {
     const unpin = (): void => {
       pinned.current = undefined;
     };
-    const userScrollEvents = ["wheel", "touchstart", "keydown"] as const;
+    const userScrollEvents = [
+      "wheel",
+      "touchstart",
+      "keydown",
+      "pointerdown",
+    ] as const;
 
     update();
     window.addEventListener("scroll", update, { passive: true });
@@ -200,6 +210,7 @@ export const JobDetailPage = ({ job }: { job: Job }): ReactElement => {
       window.addEventListener(type, unpin, { passive: true }),
     );
     return () => {
+      window.clearTimeout(settle);
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
       userScrollEvents.forEach((type) =>

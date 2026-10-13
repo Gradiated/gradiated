@@ -123,6 +123,19 @@ class HostAgentTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.host.validate(pod)
 
+    def test_training_readiness_uses_the_trainer_without_a_reporter(self):
+        self.config['runtimes'] = {'b' * 64: {'kind': 'training', 'image': 'gradiated/training-bundle@sha256:' + 'b' * 64,
+            'model_id': 'training', 'release': {}, 'gpus': 1, 'cpu': '4', 'memory': '64Gi', 'startup_timeout': 300}}
+        pod = json.loads(json.dumps(self.pod))
+        pod['spec']['containers'][0]['image'] = self.config['runtimes']['b' * 64]['image']
+        directory = self.root / 'pods' / self.uid
+        directory.mkdir()
+        agent.atomic_json(directory / 'state.json', {'pod': pod, 'port_base': 38088, 'task': {'pid': 1, 'birth': 'test'}})
+        with patch.object(agent, 'alive', return_value=True), patch.object(agent, 'health', return_value=True) as probe:
+            result = self.host.request({'operation': 'status', 'uid': self.uid, 'epoch': 1})
+        self.assertTrue(result['ready'])
+        probe.assert_called_once_with(38088, '/health')
+
     def test_failed_task_cleanup_stops_orphan_and_preserves_unrelated_process(self):
         owned = subprocess.Popen(['sleep', '120'], start_new_session=True)
         unrelated = subprocess.Popen(['sleep', '120'], start_new_session=True)

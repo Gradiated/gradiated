@@ -463,7 +463,11 @@ class Agent:
             state = json.loads(path.read_text())
             if operation == "status":
                 running = alive(state.get("task"))
-                ready = running and not state.get("draining") and health(state.get("port_base", 38080) + 1, "/health/ready")
+                _, profile = runtime_profile(self.config, state["pod"])
+                training = profile.get("kind") == "training"
+                ready = running and not state.get("draining") and health(
+                    state.get("port_base", 38080) + (0 if training else 1),
+                    "/health" if training else "/health/ready")
                 runtime_path = directory / "runtime.json"
                 details = json.loads(runtime_path.read_text()) if runtime_path.exists() else {}
                 return {"running": running, "ready": ready,

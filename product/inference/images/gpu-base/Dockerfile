@@ -9,6 +9,7 @@ RUN sed -i 's|http://|https://|g' /etc/apt/sources.list.d/ubuntu.sources && apt-
     && useradd --uid 10004 --create-home --shell /usr/sbin/nologin desmond \
     && useradd --uid 10003 --no-create-home --shell /usr/sbin/nologin downloader \
     && install -d /etc/gradiated /opt/gradiated/bin /opt/gradiated/kubelet /run/sshd \
+    && touch /etc/gradiated/platform-only \
     && install -d -m 700 -o downloader -g downloader /var/cache/gradiated/runtime-bundles \
     && install -d -o runtime -g runtime /home/runtime/.cache/huggingface
 COPY images/gpu-base/base-id /etc/gradiated/base-id

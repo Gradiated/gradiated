@@ -6,16 +6,12 @@ import time
 import urllib.request
 
 from host_bundle import promote_archive, validate_pin
-from host_state import atomic_json, sync_directory
+from host_state import atomic_json, sync_directory, PLATFORM_HOST_FILES
 
 ROOT = Path('/var/lib/gradiated-kubelet')
 INSTALL = Path('/opt/gradiated/kubelet')
 BASE_ID = Path('/etc/gradiated/base-id')
-REQUIRED = {'bootstrap.py', 'supervise.py', 'host-agent.py', 'host_state.py',
-            'host_bundle.py', 'desmondd', 'runtime-launch', 'fetch-runtime',
-            'download-runtime', 'install-tailscale.py', 'control-listener.py',
-            'forward-control.py', 'run-tailscale.sh', 'start-tailscale.sh',
-            'run-control.sh', 'start-control.sh'}
+REQUIRED = PLATFORM_HOST_FILES
 
 
 def install(release):

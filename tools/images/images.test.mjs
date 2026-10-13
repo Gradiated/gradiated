@@ -121,10 +121,10 @@ test("plans all enabled images against the actual repository tree", () => {
   );
 });
 
-test("GPU bootstrap and proxy edits invalidate the base image", () => {
+test("GPU bootstrap, recovery and Tailscale edits invalidate the base image", () => {
   for (const path of [
     "product/inference/gpu/bootstrap.py",
-    "product/inference/gpu/host-agent.py",
+    "product/inference/images/gpu-base/recovery/host-agent.py",
     "product/inference/tailscale/install-tailscale.py",
   ]) {
     assert.notEqual(
@@ -132,4 +132,10 @@ test("GPU bootstrap and proxy edits invalidate the base image", () => {
       fingerprint("gpu-base", [entry(path, "100644 blob bbb")]),
     );
   }
+});
+
+test("host releases preserve the base image identity", () => {
+  const base = [entry("product/inference/images/gpu-base/Dockerfile")];
+  for (const path of ["product/inference/gpu/host-agent.py", "product/inference/gpu/host_bundle.py"])
+    assert.equal(fingerprint("gpu-base", base), fingerprint("gpu-base", [...base, entry(path)]));
 });

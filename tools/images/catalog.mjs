@@ -70,7 +70,9 @@ export const catalog = {
     paths: [
       "product/inference/.dockerignore",
       "product/inference/images/gpu-base/",
-      "product/inference/gpu/",
+      "product/inference/gpu/bootstrap.py",
+      "product/inference/gpu/host_state.py",
+      "product/inference/gpu/supervise.py",
       "product/inference/tailscale/",
       "product/inference/CMakeLists.txt",
       "product/inference/desmond/",

@@ -340,7 +340,7 @@ export const getStructuredData = (pathname: string): object[] => {
       title: job.title,
       description: jobDescription(job),
       datePosted: job.datePosted ?? "2026-08-28",
-      employmentType: "FULL_TIME",
+      employmentType: job.employmentType ?? "FULL_TIME",
       hiringOrganization: organization,
       identifier: {
         "@type": "PropertyValue",
@@ -355,6 +355,11 @@ export const getStructuredData = (pathname: string): object[] => {
           addressLocality: city.trim(),
         },
       })),
+      // Google's JobPosting name for a remote role.
+      ...(job.workplace === "REMOTE" && {
+        jobLocationType: "TELECOMMUTE",
+        applicantLocationRequirements: { "@type": "Country", name: "GB" },
+      }),
       url,
     });
     return data;

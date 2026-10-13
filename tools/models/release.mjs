@@ -16,6 +16,18 @@ const shared = [
   "tools/models/release.mjs",
 ];
 export const bundles = {
+  host: [
+    "product/inference/bundles/host",
+    "product/inference/CMakeLists.txt",
+    "product/inference/desmond",
+    "product/inference/engine",
+    "product/inference/gpu/host-agent.py",
+    "product/inference/gpu/host_state.py",
+    "product/inference/gpu/host_bundle.py",
+    "tools/virtual-kubelet/host_agent_test.py",
+    "tools/virtual-kubelet/host_state_test.py",
+    "infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml",
+  ],
   training: [
     "product/inference/training",
     "product/packages/autotrain",
@@ -42,7 +54,7 @@ export const inputDigest = (baseImage, tree) => {
     .update(JSON.stringify({ baseImage, tree }))
     .digest("hex");
 };
-export const manifest = ({ source, baseImage, baseId, digest, bucket }) => {
+export const manifest = ({ source, baseImage, baseId, digest, bucket, bundle }) => {
   if (!/^[0-9a-f]{40}$/.test(source))
     throw new Error("Invalid source revision");
   if (!/^[0-9a-f]{64}$/.test(digest)) throw new Error("Invalid bundle digest");
@@ -50,7 +62,10 @@ export const manifest = ({ source, baseImage, baseId, digest, bucket }) => {
     throw new Error("Invalid artifact bucket");
   inputDigest(baseImage, "");
   if (!/^[a-zA-Z0-9._-]+$/.test(baseId)) throw new Error("Invalid base ID");
+  if (bundle !== undefined && !Object.hasOwn(bundles, bundle))
+    throw new Error("Unknown bundle type");
   return {
+    ...(bundle === undefined ? {} : { bundle }),
     source,
     baseImage,
     baseId,
@@ -121,6 +136,7 @@ const main = async () => {
     const key = releaseKey(bundle, source, baseImage);
     const digest = await fileDigest("model-release/runtime.tar.gz");
     const release = manifest({
+      bundle,
       source,
       baseImage,
       bucket,

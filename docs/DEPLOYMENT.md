@@ -101,11 +101,31 @@ Product tests further select individual jobs through
 `.github/actions/product-changes/plan.py`. Workspace unit checks include changed
 packages and their dependents; cross-service and Cargo fixture dependencies
 have explicit path scopes. Native runtime, storage, gateway, proxy, product
-browser, website, and tooling checks each have their own scopes. Shared manifests,
+browser, website, and tooling checks each have their own scopes. Root manifests,
 lockfiles, toolchain settings, and changes to the test workflow run all checks.
+Leaf package manifests select that workspace and its dependents; deleting a
+workspace manifest runs all checks because the current graph cannot identify its
+former consumers. Changes to the shared relevance action revalidate every caller.
 Manual dispatch also runs every check. Pushes compare the full before/after
 commit range; PRs include both current and previous names of renamed files.
 Documentation and screenshot-only changes skip product checks.
+
+Product Rust build caches include the source commit in their save keys and restore
+the latest cache with matching lockfiles first. This lets successful source changes
+refresh compiled artifacts instead of repeatedly restoring an immutable old build.
+GPU enrollment, GPU base bootstrap, and Tailscale assets copied into the product
+image also trigger Product tests and application release, with tooling checks.
+
+Kubernetes selects its database, observability, Tailscale, Temporal UI/browser,
+Argo authentication, and Loki subchecks from `.github/actions/relevant/kubernetes.json`.
+GPU controller builds, configuration generation, and operator-schema validation
+use `.github/actions/relevant/gpu.json`. The relevance action resolves changed
+paths once and returns these selections alongside the workflow-level result.
+These callers fetch full Git history for push before/after comparisons; PR
+lookups include previous rename paths and failures fail the required gate.
+Manual dispatch, new-branch pushes without a base, workflow changes, shared-action
+changes, and toolchain changes run every subcheck. Keep scopes in sync with the
+files each validator reads, including shared helpers and cross-file fixtures.
 
 Website builds run in the Product tests PR gate and the separate informative
 Website screenshots workflow. Website-only main-branch changes do not trigger

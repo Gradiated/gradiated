@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - ".github/actions/relevant/**"
       - product/inference/gpu/**
       - product/inference/tailscale/**
       - product/inference/images/**
@@ -22,6 +23,10 @@ on:
       - product/inference/runtime-launcher/**
       - tools/images/**
       - tools/models/**
+      - tools/virtual-kubelet/host_agent_test.py
+      - tools/virtual-kubelet/host_state_test.py
+      - infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml
+      - mise.toml
       - .github/workflows/model-deployment.yml
       - .github/workflows/build-images.yml
   pull_request:
@@ -173,7 +178,7 @@ jobs:
         uses: depot/build-push-action@v1
         with:
           project: ${{ vars.DEPOT_PROJECT_ID }}
-          context: ${{ matrix.bundle == 'training' && 'product' || 'product/inference' }}
+          context: ${{ matrix.bundle == 'host' && '.' || (matrix.bundle == 'training' && 'product' || 'product/inference') }}
           file: ${{ matrix.bundle == 'training' && 'product/inference/training/Dockerfile' || format('product/inference/bundles/{0}/Dockerfile', matrix.bundle) }}
           platforms: linux/amd64
           build-contexts: runtime-base=docker-image://${{ env.BASE_IMAGE }}

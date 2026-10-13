@@ -14,6 +14,14 @@ fi
 
 if [[ "$EVENT" != pull_request ]]; then
   echo relevant=true >>"$GITHUB_OUTPUT"
+  if [[ -n "${SCOPES:-}" ]]; then
+    if [[ "$EVENT" == push && -n "${BEFORE:-}" && "$BEFORE" != 0000000000000000000000000000000000000000 ]]; then
+      git diff --name-only --no-renames "$BEFORE" "$HEAD" |
+        python3 "$GITHUB_ACTION_PATH/select.py" "$SCOPES" "$WORKFLOW"
+    else
+      python3 "$GITHUB_ACTION_PATH/select.py" "$SCOPES" "$WORKFLOW" --force
+    fi
+  fi
   exit 0
 fi
 
@@ -25,6 +33,10 @@ mapfile -t patterns < <(yq '.on.push.paths[]' "$WORKFLOW")
 # A failed lookup must fail the check, never read as "nothing changed".
 changed=$(gh api --paginate "repos/$REPOSITORY/pulls/$PULL_REQUEST/files" \
   --jq '.[] | .filename, (.previous_filename // empty)')
+if [[ -n "${SCOPES:-}" ]]; then
+  printf '%s\n' "$changed" |
+    python3 "$GITHUB_ACTION_PATH/select.py" "$SCOPES" "$WORKFLOW"
+fi
 mapfile -t files <<<"$changed"
 
 relevant=false

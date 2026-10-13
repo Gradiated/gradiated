@@ -33,3 +33,9 @@ target "verify-training" {
   context    = "product"
   dockerfile = "inference/training/Dockerfile"
 }
+
+target "verify-host" {
+  inherits   = ["bundle"]
+  context    = "."
+  dockerfile = "product/inference/bundles/host/Dockerfile"
+}

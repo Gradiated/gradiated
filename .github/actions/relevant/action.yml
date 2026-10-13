@@ -4,10 +4,16 @@ inputs:
   workflow:
     description: Path of the calling workflow file.
     required: true
+  scopes:
+    description: Optional JSON file mapping individual checks to their input paths.
+    default: ""
 outputs:
   relevant:
     description: "true when the workflow's jobs should run."
     value: ${{ steps.match.outputs.relevant }}
+  checks:
+    description: JSON object selecting individual checks when scopes are supplied.
+    value: ${{ steps.match.outputs.checks }}
 runs:
   using: composite
   steps:
@@ -19,4 +25,7 @@ runs:
         PULL_REQUEST: ${{ github.event.pull_request.number }}
         REPOSITORY: ${{ github.repository }}
         WORKFLOW: ${{ inputs.workflow }}
+        SCOPES: ${{ inputs.scopes }}
+        BEFORE: ${{ github.event.before }}
+        HEAD: ${{ github.sha }}
       run: bash "$GITHUB_ACTION_PATH/relevant.sh"

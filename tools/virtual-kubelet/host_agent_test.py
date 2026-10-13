@@ -1,14 +1,19 @@
+import fcntl
 import importlib.util
+import os
 import json
+import os
 from pathlib import Path
+import shutil
 import subprocess
 import signal
 import tempfile
 import unittest
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 import uuid
 
-spec = importlib.util.spec_from_file_location('agent', Path(__file__).with_name('host-agent.py'))
+spec = importlib.util.spec_from_file_location('agent', os.environ.get('HOST_AGENT_TEST_SOURCE', Path(__file__).with_name('host-agent.py')))
 agent = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(agent)
 
@@ -38,6 +43,41 @@ class HostAgentTest(unittest.TestCase):
 
     def tearDown(self):
         self.directory.cleanup()
+
+    def test_task_and_proxy_imports_preserve_the_bundle_with_explicit_environments(self):
+        bundle = self.root / 'bundle'
+        bundle.mkdir()
+        (bundle / 'host_state.py').write_text('healthy = True\n')
+        (self.root / 'pods' / self.uid).mkdir()
+        cgroup = self.root / 'cgroup'
+        cgroup.mkdir()
+        (cgroup / 'gradiated-proxy').mkdir()
+        (cgroup / 'gradiated-proxy' / 'cgroup.procs').write_text('')
+        original_spawn = subprocess.Popen
+
+        def probe(command, **kwargs):
+            script = command.index(agent.__file__)
+            return original_spawn([*command[:script], '-c', 'import host_state,time; time.sleep(1)'],
+                                  **{**kwargs, 'cwd': str(bundle)})
+
+        for mode in ('task', 'proxy'):
+            with self.subTest(mode=mode), patch.object(agent.subprocess, 'Popen', side_effect=probe), \
+                    patch.object(agent, 'CGROUP', cgroup), \
+                    patch.object(agent, 'pod_cgroup', return_value=cgroup / 'unused'), \
+                    patch.object(self.host, 'stop'), patch.object(self.host, 'refresh_proxy'):
+                if mode == 'task':
+                    self.host.ensure_task({'pod': self.pod})
+                    process = self.host.children[self.uid]
+                else:
+                    self.host.ensure_proxy()
+                    process = self.host.children['proxy']
+                try:
+                    self.assertEqual(process.wait(timeout=5), 0)
+                    self.assertEqual({path.name for path in bundle.iterdir()}, {'host_state.py'})
+                finally:
+                    if process.poll() is None:
+                        process.terminate()
+                        process.wait(timeout=5)
 
     def test_completed_children_are_reaped_without_losing_live_children(self):
         completed = subprocess.Popen(['python3', '-c', 'pass'])
@@ -237,7 +277,8 @@ class HostAgentTest(unittest.TestCase):
         thread.join(2)
         self.assertFalse(thread.is_alive())
         self.assertEqual(self.host.config, updated)
-        self.assertEqual(result, [{'instance_id': self.config['instance_id'], 'epoch': 1}])
+        self.assertEqual([{key: value[key] for key in ('instance_id', 'epoch')} for value in result],
+                         [{'instance_id': self.config['instance_id'], 'epoch': 1}])
 
     def test_catalogue_stages_before_activation_and_preserves_active_profiles(self):
         import time
@@ -424,6 +465,204 @@ class HostAgentTest(unittest.TestCase):
                     process.terminate()
                 process.wait()
 
+
+def fcntl_locked(path):
+    with path.open('a') as handle:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            return True
+        fcntl.flock(handle, fcntl.LOCK_UN)
+        return False
+
+
+class ModelCacheTest(unittest.TestCase):
+    revision = 'a' * 40
+
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.home = Path(self.directory.name)
+        self.hub = self.home / 'hub'
+        self.hub.mkdir()
+        self.config = {'hf_home': str(self.home), 'model_cache_reserve_gib': 0}
+        self.free = 0
+        self.sizes = {}
+        self.logs = []
+
+    def tearDown(self):
+        self.directory.cleanup()
+
+    def usage(self, _path):
+        evicted = sum(size for name, size in self.sizes.items() if not (self.hub / name).exists())
+        return SimpleNamespace(free=self.free + evicted)
+
+    def cached(self, repo, size, used, files=('model.safetensors',)):
+        directory = agent.repo_directory(self.hub, repo)
+        snapshot = directory / 'snapshots' / self.revision
+        snapshot.mkdir(parents=True)
+        for name in files:
+            (snapshot / name).write_bytes(b'x')
+        (directory / agent.CACHE_MARKER).touch()
+        os.utime(directory / agent.CACHE_MARKER, (used, used))
+        self.sizes[directory.name] = size
+        return directory
+
+    def serving(self, repo, revision=revision):
+        return {'release': {'model_path': repo, 'model_revision': revision}}
+
+    def prepare(self, profile, pods=(), files=lambda _repo, _revision: {'model.safetensors': (100, None), 'config.json': (1, None)}):
+        agent.prepare_model_cache(self.config, profile, self.home / 'pod', lambda: [(pod, self.home / f'pod-{index}') for index, pod in enumerate(pods)],
+                                  self.logs.append, files, self.usage)
+
+    def test_cache_hit_evicts_nothing_and_marks_the_model_used(self):
+        old = self.cached('org/old', 500, 1)
+        model = self.cached('org/model', 101, 2, ('model.safetensors', 'config.json'))
+
+        self.prepare(self.serving('org/model'))
+
+        self.assertTrue(old.exists())
+        self.assertGreater(agent.last_used(model), 2)
+        self.assertEqual(self.logs, [])
+
+    def test_miss_evicts_least_recently_used_until_the_pull_fits(self):
+        oldest = self.cached('org/oldest', 60, 1)
+        older = self.cached('org/older', 60, 2)
+        recent = self.cached('org/recent', 60, 3)
+
+        self.prepare(self.serving('org/new'))
+
+        self.assertFalse(oldest.exists())
+        self.assertFalse(older.exists())
+        self.assertTrue(recent.exists())
+        self.assertEqual(self.logs, ['Evicted cached model models--org--oldest', 'Evicted cached model models--org--older'])
+
+    def test_models_used_by_pods_on_the_host_are_never_evicted(self):
+        running = self.cached('org/running', 500, 1)
+        base = self.cached('org/base', 500, 1)
+        stale = self.cached('org/stale', 50, 5)
+        training = {'kind': 'training', 'recipe': {'model': 'org/base', 'revision': self.revision}}
+
+        self.prepare(self.serving('org/new'), [self.serving('org/running'), training])
+
+        self.assertTrue(running.exists())
+        self.assertTrue(base.exists())
+        self.assertFalse(stale.exists())
+        self.assertIn('needs', self.logs[-1])
+
+    def test_downloads_in_progress_keep_their_space(self):
+        stale = self.cached('org/stale', 150, 1)
+        self.free = 150
+
+        self.prepare(self.serving('org/new'), [self.serving('org/downloading')])
+
+        self.assertFalse(stale.exists())
+
+    def test_lora_caches_keep_their_unused_budget(self):
+        stale = self.cached('org/stale', 150, 1)
+        self.cached('org/model', 101, 2, ('model.safetensors', 'config.json'))
+        self.free = 20
+        lora = {**self.serving('org/model'), 'environment': {'LORA_ENABLED': 'true', 'LORA_DISK_CACHE_BYTES': '200'}}
+        cache = self.home / 'pod-0' / 'lora'
+        cache.mkdir(parents=True)
+        (cache / 'adapter.safetensors').write_bytes(b'x' * 150)
+
+        self.prepare(self.serving('org/model'), [lora])
+
+        self.assertFalse(stale.exists())
+
+    def test_sizing_skips_unused_weight_formats_and_failures_do_not_block(self):
+        listing = {'siblings': [{'rfilename': 'model.safetensors', 'size': 10, 'blobId': 'b' * 40,
+                                 'lfs': {'sha256': 'c' * 64, 'size': 10}},
+                                {'rfilename': 'pytorch_model.bin', 'size': 10},
+                                {'rfilename': 'tokenizer.json', 'size': 1, 'blobId': 'd' * 40}]}
+        response = MagicMock()
+        response.__enter__.return_value = response
+        response.read.return_value = json.dumps(listing).encode()
+        with patch.object(agent.urllib.request, 'urlopen', return_value=response):
+            self.assertEqual(agent.hub_files('org/model', self.revision), {'model.safetensors': (10, 'c' * 64), 'tokenizer.json': (1, 'd' * 40)})
+
+        def unavailable(_repo, _revision):
+            raise OSError('offline')
+        self.prepare(self.serving('org/model'), files=unavailable)
+
+        self.assertIn('Could not size', self.logs[0])
+
+    def test_base_repositories_loaded_with_the_model_are_protected_and_sized(self):
+        base = self.cached('org/base', 500, 1)
+        stale = self.cached('org/stale', 150, 2)
+        kev = {'release': {'model_path': 'org/model', 'model_revision': self.revision,
+                           'tokenizer_path': 'org/base', 'tokenizer_revision': self.revision}}
+        sized = []
+
+        def files(repo, _revision):
+            sized.append(repo)
+            return {'model.safetensors': (100, None), 'config.json': (1, None)}
+        self.prepare(kev, files=files)
+
+        self.assertTrue(base.exists())
+        self.assertFalse(stale.exists())
+        self.assertEqual(sorted(sized), ['org/base', 'org/model'])
+        self.assertGreater(agent.last_used(base), 1)
+
+    def test_repositories_of_unpinned_pods_on_the_host_are_protected(self):
+        unpinned = self.cached('org/unpinned', 500, 1)
+        stale = self.cached('org/stale', 150, 2)
+        training = {'kind': 'training', 'recipe': {'model': 'org/unpinned'}}
+
+        self.prepare(self.serving('org/new'), [training])
+
+        self.assertTrue(unpinned.exists())
+        self.assertFalse(stale.exists())
+
+    def test_unreadable_pod_state_skips_eviction(self):
+        pods = Path(self.directory.name) / 'pods'
+        (pods / 'broken').mkdir(parents=True)
+        (pods / 'broken' / 'state.json').write_text('{')
+        (pods / 'current').mkdir()
+        (pods / 'current' / 'state.json').write_text('{')
+        with patch.object(agent, 'ROOT', Path(self.directory.name)):
+            with self.assertRaises(ValueError):
+                agent.host_pods(self.config, 'current')
+            (pods / 'broken' / 'state.json').unlink()
+            self.assertEqual(agent.host_pods(self.config, 'current'), [])
+
+    def test_pods_and_missing_files_are_read_under_the_cache_lock(self):
+        model = self.cached('org/model', 101, 2, ('model.safetensors', 'config.json'))
+        stale = self.cached('org/stale', 150, 1)
+        seen = []
+
+        def pods():
+            # A concurrent start evicted this pod's weights while it waited for the lock.
+            seen.append(fcntl_locked(self.home / '.gradiated-cache.lock'))
+            shutil.rmtree(model)
+            self.sizes.pop(model.name)
+            return []
+        agent.prepare_model_cache(self.config, self.serving('org/model'), self.home / 'pod', pods,
+                                  self.logs.append, lambda _repo, _revision: {'model.safetensors': (100, None), 'config.json': (1, None)}, self.usage)
+
+        self.assertEqual(seen, [True])
+        self.assertFalse(stale.exists())
+
+    def test_blobs_cached_by_another_revision_are_not_counted_as_missing(self):
+        model = self.cached('org/model', 101, 2)
+        (model / 'blobs').mkdir()
+        (model / 'blobs' / ('c' * 64)).write_bytes(b'x')
+        stale = self.cached('org/stale', 150, 1)
+        listing = lambda _repo, _revision: {'model.safetensors': (100, 'c' * 64), 'config.json': (1, 'd' * 40)}
+
+        self.assertEqual(agent.missing_bytes(self.hub, 'org/model', 'e' * 40, listing(None, None)), 1)
+        self.free = 1
+        self.prepare(self.serving('org/model', 'e' * 40), files=listing)
+
+        self.assertTrue(stale.exists())
+
+    def test_profiles_without_pinned_weights_are_ignored(self):
+        old = self.cached('org/old', 500, 1)
+
+        self.prepare({'release': {'model_path': 'org/model', 'model_revision': 'main'}})
+        self.prepare({'kind': 'training', 'recipe': {}})
+
+        self.assertTrue(old.exists())
 
 if __name__ == '__main__':
     unittest.main()

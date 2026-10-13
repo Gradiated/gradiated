@@ -4,9 +4,12 @@ on:
   push:
     branches: [main]
     paths:
+      - ".github/actions/relevant/**"
       - ".agents/**"
       - ".github/workflows/agent-quality.yml"
       - "tools/devex/**"
+      - "tools/ci/**"
+      - ".github/workflows/ci-analytics.yml"
       - "AGENTS.md"
       - "Makefile"
       - "README.md"
@@ -50,6 +53,7 @@ jobs:
           python-version: "3.13"
       - run: python3 tools/devex/check.py
       - run: python3 -m py_compile tools/devex/*.py
+      - run: python3 -m unittest discover -s tools/ci -v
 
   passed:
     name: Agent quality passed

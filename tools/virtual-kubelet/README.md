@@ -185,6 +185,12 @@ updating its runtime, or provide another eligible host; do not assume spare GPUs
 split across hosts satisfy a tensor-parallel replica.
 Scaling down a model releases GPUs but does not reduce the RunPod reservation bill.
 
+Availability alerts use the Git minimum, so normal scale-up warmup does not page.
+No ready replicas still alerts after fifteen seconds, and falling below the
+minimum alerts after thirty seconds. Additional requested capacity that remains
+unready for twenty minutes has a separate warning. Keep the minimum large enough
+for immediate traffic; autoscaling adds capacity after model startup.
+
 ## Rollout alerts
 
 `GpuRolloutFailed` warns when Argo Rollouts reports a Rollout as `Abort`,
@@ -214,7 +220,14 @@ not durable workload state.
 Every minute, cleanup preserves configured, active and staging bundles. It keeps
 two verified unused bundles and at most twenty retired pod diagnostic directories
 for up to seven days. Live processes or occupied cgroups prevent retirement; an
-unrecorded live process blocks bundle cleanup. Model weights use each host's configured `hf_home`; runtime profiles must not override it with a second cache location. Model weights are not pruned.
+unrecorded live process blocks bundle cleanup. Model weights use each host's configured `hf_home`; runtime profiles must not override it with a second cache location. Before a pod starts, the agent sizes its pinned weights (the release model plus a distinct pinned tokenizer repository, which for Kev is the base checkpoint it loads) from the Hugging Face
+file listing and evicts whole `models--*` repositories from that cache, least
+recently used first, until the missing files (blobs another revision already cached count as present), the unused part of each LoRA
+pod's `LORA_DISK_CACHE_BYTES` budget and `model_cache_reserve_gib` (default 64)
+fit. Models used by any pod on the host are never evicted, even at an unpinned revision; if any pod state on the host cannot be read, eviction is skipped. Unfinished
+downloads of models in use keep their space. Runtimes still download the files
+themselves. If sizing fails or space cannot be freed, the pod starts anyway and
+`runtime.log` records why.
 Diagnostic logs are bounded at 32 MiB per file using copy/truncate of the recent
 16 MiB, retaining the writer's inode. Concurrent log lines can be lost during
 truncation; inference output and durable training artifacts use separate paths.
@@ -224,3 +237,118 @@ and cleanup tests, injected storage failures, process crashes around file
 replacement, bootstrap checks and downloader checks. These simulate process and
 storage failures without releasing GPU reservations. Physical host loss still
 requires replacement capacity; a provider reset requires deliberate enrollment.
+
+## Host software bundles
+
+Model deployment publishes a `host` bundle alongside runtime bundles. Its
+`host-runtime-release` artifact contains `release.json` with the archive digest
+and base compatibility ID. Host bundles contain the agent, state and staging
+helpers, Desmond, and its startup script. The control bridge stays in the base.
+The base keeps SSH, enrollment, Tailscale, downloader, nginx, the launcher
+(`supervise.py`) and a frozen recovery agent under `images/gpu-base/recovery/`. Ordinary agent
+and staging changes build only the host bundle; they do not invalidate the base
+or model bundles. Refresh the recovery sources with
+`python3 tools/gpu/refresh-recovery.py` only for a deliberate, qualified base
+release. Host releases do not require re-pinning or replacing a reservation.
+
+`gpu-inference/host.json` is initially `null`: legacy hosts continue serving and
+no host software update is requested. After installing the launcher on retained
+hosts, pin a **host** release artifact and commit the generated configuration:
+
+```sh
+python3 tools/gpu/pin-host.py /path/to/host-runtime-release/release.json
+python3 tools/gpu/render-config.py --check
+```
+
+The pin has `sha256` and `base_id` fields. A different base is rejected before
+download. Hosts use the existing downloader and short-lived control-bridge grants. Root
+copies the downloaded archive into private storage and independently verifies its
+digest before extracting; it then checks the file manifest and copies the result into root-owned `/var/lib/gradiated-kubelet/host/<digest>`. Downloaders
+cannot modify the promoted code or launcher state. Extraction, validation and
+atomic promotion use one root-owned tree. Safe, hashed top-level helpers can be
+added without updating the immutable launcher; archive size and file count are
+bounded. Agent processes and their children disable Python bytecode writes so
+imports cannot add files to the immutable bundle or invalidate rollback checks.
+The launcher consumes fenced `pending`
+requests and keeps current, previous, trial and failure in one atomic
+`status.json` record; symlinks are only read during migration from the earlier
+layout. It commits an update before running it and consumes the previous target
+on rollback, so a failing recovery target falls back to the base. It requires a
+loopback ping from the new digest within 120 seconds and rolls back after three
+agent exits within ten minutes. A failed digest is not retried automatically.
+An interrupted trial or an unclean launcher exit consumes the previous target
+on restart. Normal launcher shutdown clears its running marker; storage failure
+keeps that marker conservative, so a rejected agent cannot resume unnoticed. Storage errors preserve the running
+agent or start the base recovery agent; new updates wait until state can be
+committed. The agent exits if its launcher dies, while independent model workers
+keep running. Current,
+previous, one unused verified bundle, and code referenced by live task/proxy
+workers are retained. This last exception preserves workers across successive
+agent updates.
+
+Argo CD reconciles the model Rollouts and the controller's host-bundle pin.
+Argo Rollouts manages model pod updates; the GPU controller sequences host-agent
+updates itself. Models and host agents run verified tarballs unpacked on disk.
+Their Dockerfiles package and verify those artifacts in CI; the GPU provider
+still starts hosts from a base container image.
+
+A serial background controller worker observes every host before starting and
+updates in `hosts.json` order. Node health checks and metric scrapes never wait
+on rollout I/O. It requires five continuous minutes of model readiness with unchanged
+serving process identities before advancing. A missing original serving pod also
+stops the update, so concurrent model rescheduling cannot certify the host bundle. Staging has a 35-minute
+deadline; its download time does not consume the health grace or serving soak.
+Continuous agent or model health failure has a separate two-minute limit; an updated host that remains unreachable or unready stops the rollout.
+One node annotation (`gradiated.com/host-bundle-update`) checkpoints the release,
+phase, original process identities and deadline before staging. A new leader
+resumes that host and repeats the full soak while retaining the baseline and
+deadline. Failure annotation and event writes retry on API outages. Ambiguous
+configure responses retry on the same host. The health grace measures continuous
+failure separately from download time and resets when health returns. `GpuHostUpdateFailed` events
+and alerts stop the fleet update; repair the bundle and pin a new digest. To
+revert, pin a previously healthy release. A failed digest requires deliberate
+operator investigation before clearing its launcher failure and node annotation.
+The recovery `ping`, `claim` and `configure` operations and additive on-disk
+state must remain compatible with every still-pinned base agent indefinitely;
+one-release compatibility applies only to the remaining API.
+
+The controller's `/metrics` exposes running/previous digest information, drift
+from the Git pin, and rollout failure. The controllers dashboard shows host
+versions only while host observations are fresh, and a separate panel shows
+telemetry age. Drift alerts after 24 hours; stale host telemetry and missing
+controller scrapes also alert.
+
+### One-time retained-host migration
+
+Prepare an explicit JSON list of SSH targets outside version control, for example
+`[{"instance_id":"<inventory UUID>","ssh":"root@gpu-host","port":22}]`.
+Build the host artifact to obtain its Linux `desmondd`, and confirm each retained
+host's OS/CUDA compatibility ID before running:
+
+```sh
+python3 tools/gpu/rollout-host.py --targets /path/to/targets.json \
+  --desmondd /path/to/desmondd --base-id ubuntu24-cuda13-amd64-v2
+```
+
+This is a production operation requiring operator authorization. The command
+checks enrolled identity, staged runtime digests, and live model/reporter/proxy
+process identities; installs the recovery agent and launcher; and stops at the
+first failed host. It reads the management credential on the remote host and
+never outputs it. Known SSH host keys are required. Success waits for a fresh
+management-agent PID and birth time before checking health and preserved workers,
+including when a launcher is already installed. The existing supervisor may
+be PID 1: it stays running and its SIGHUP path launches a shim that execs the new
+launcher. No provider restart or image change is involved. Re-running the
+command signals the same supervisor. Hosts already using a direct launcher keep
+their agent entrypoint; the recovery directory is selected at each restart. New
+hosts obtain the launcher from the
+base image when its published digest is separately approved and pinned.
+
+Local checks use fake bundles and processes without GPUs or production access:
+
+```sh
+python3 product/inference/gpu/host_bundle_test.py
+python3 tools/gpu/rollout_host_test.py
+(cd tools/virtual-kubelet && go test -race ./... && go vet ./...)
+docker buildx bake -f product/inference/bundles/build.hcl verify-host
+```

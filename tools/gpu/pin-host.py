@@ -9,6 +9,8 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def pin(release):
+    if release.get('bundle') != 'host':
+        raise ValueError('Expected a verified host release, not a model runtime release')
     digest, base_id = release['sha256'], release['baseId']
     if not re.fullmatch('[0-9a-f]{64}', digest) or not re.fullmatch('[A-Za-z0-9._-]+', base_id):
         raise ValueError('Invalid verified host release')

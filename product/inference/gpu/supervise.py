@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import fcntl
 import hashlib
 import json
 import os
@@ -15,16 +16,29 @@ ROOT = Path('/var/lib/gradiated-kubelet/host')
 BASE = Path('/opt/gradiated/kubelet')
 CONFIG = Path('/etc/gradiated/kubelet.json')
 BASE_ID = Path('/etc/gradiated/base-id')
+FILES = {'host-agent.py', 'desmondd', 'base-id'}
+
+
+def read(path):
+    try:
+        value = json.loads(path.read_text())
+        return value if isinstance(value, dict) else {}
+    except (OSError, ValueError):
+        return {}
 
 
 def write(path, value):
     temporary = path.with_suffix('.new')
-    with temporary.open('w') as output:
-        json.dump(value, output)
-        output.flush()
-        os.fsync(output.fileno())
-    temporary.replace(path)
-    sync(path.parent)
+    fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o600)
+    try:
+        with os.fdopen(fd, 'w') as output:
+            json.dump(value, output)
+            output.flush()
+            os.fsync(output.fileno())
+        temporary.replace(path)
+        sync(path.parent)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def sync(path):
@@ -33,14 +47,6 @@ def sync(path):
         os.fsync(fd)
     finally:
         os.close(fd)
-
-
-def select(root, name, digest):
-    temporary = root / (name + '.new')
-    temporary.unlink(missing_ok=True)
-    temporary.symlink_to(digest)
-    temporary.replace(root / name)
-    sync(root)
 
 
 def verified(root, digest, base_id):
@@ -53,100 +59,128 @@ def verified(root, digest, base_id):
         if any(path.is_symlink() or path.stat().st_uid != os.geteuid() or path.stat().st_mode & 0o022
                for path in directory.iterdir()):
             return False
-        if (directory / '.bundle-sha256').read_text().strip() != digest:
+        if (directory / '.bundle-sha256').read_text().strip() != digest or (directory / 'base-id').read_text().strip() != base_id:
             return False
-        if (directory / 'base-id').read_text().strip() != base_id:
+        hashes = read(directory / 'files.json')
+        if (not FILES.issubset(hashes) or len(hashes) > 64 or
+                {path.name for path in directory.iterdir()} != set(hashes) | {'files.json', '.bundle-sha256'} or
+                any(not re.fullmatch('[A-Za-z0-9][A-Za-z0-9._-]{0,127}', name) or
+                    not isinstance(value, str) or not re.fullmatch('[0-9a-f]{64}', value)
+                    for name, value in hashes.items())):
             return False
-        hashes = json.loads((directory / 'files.json').read_text())
-        if set(hashes) != {'host-agent.py', 'host_state.py', 'host_bundle.py', 'desmondd', 'start-desmond', 'base-id'}:
-            return False
-        return all(not (directory / name).is_symlink() and
-                   hashlib.sha256((directory / name).read_bytes()).hexdigest() == value
+        return all(hashlib.sha256((directory / name).read_bytes()).hexdigest() == value
                    for name, value in hashes.items())
     except (OSError, ValueError, TypeError):
         return False
 
 
-def linked(root, name, base_id):
-    path = root / name
-    if path.is_symlink():
-        digest = os.readlink(path)
-        if verified(root, digest, base_id):
-            return digest
-    return ''
-
-
 class Launcher:
     def __init__(self, root=ROOT, base=BASE, base_id=None):
-        self.root = root
-        self.base = base / "recovery" if (base / "recovery").is_dir() else base
-        self.base_id = base_id if base_id is not None else BASE_ID.read_text().strip()
-        root.mkdir(parents=True, exist_ok=True)
-        self.current = linked(root, 'current', self.base_id)
-        self.previous = linked(root, 'previous', self.base_id)
+        self.root, self.base = root, base
         try:
-            self.state = json.loads((root / 'status.json').read_text())
-            if not isinstance(self.state, dict):
-                self.state = {}
-        except (OSError, ValueError):
-            self.state = {}
-        if not self.current:
-            self.current = self.previous
-            if self.current:
-                select(root, 'current', self.current)
-        self.trial = self.state.get('trial') == self.current and bool(self.current)
-        self.deadline = time.monotonic() + 120
+            self.base_id = base_id if base_id is not None else BASE_ID.read_text().strip()
+        except OSError:
+            self.base_id = ''
+        self.state = read(root / 'status.json')
+        if self.state.get('schema') != 2:
+            # Migrate selections written by the symlink-based launcher once.
+            for name in ('current', 'previous'):
+                path = root / name
+                try:
+                    self.state[name] = os.readlink(path) if path.is_symlink() else self.state.get(name, '')
+                except OSError:
+                    self.state[name] = ''
+        try:
+            birth = Path(f'/proc/{os.getpid()}/stat').read_text().rsplit(')', 1)[1].split()[19]
+        except OSError:
+            birth = ''
+        self.state.update({'schema': 2, 'launcher_pid': os.getpid(), 'launcher_birth': birth})
+        for name in ('current', 'previous', 'trial', 'failed', 'running'):
+            if not isinstance(self.state.get(name), str):
+                self.state[name] = ''
         self.exits = []
-        self.publish()
+        self.deadline = time.monotonic() + 120
+        current = self.state.get('current', '')
+        if self.state['trial'] or self.state['running'] or (current and not verified(root, current, self.base_id)):
+            # An interrupted trial is rejected before executing it again.
+            self.rollback('Unclean launcher exit, interrupted trial or invalid host bundle')
+        else:
+            self.state['current'] = current
+            self.state['running'] = current
+            self.publish()
+
+    @property
+    def current(self):
+        return self.state['current']
+
+    @property
+    def previous(self):
+        return self.state['previous']
+
+    @property
+    def trial(self):
+        return bool(self.state['trial'])
+
+    def directory(self):
+        if self.current and not self.dirty:
+            return self.root / self.current
+        recovery = self.base / 'recovery'
+        return recovery if recovery.is_dir() else self.base
 
     def publish(self):
-        self.state.update({'current': self.current, 'previous': self.previous,
-                           'trial': self.current if self.trial else ''})
-        write(self.root / 'status.json', self.state)
+        self.dirty = True
+        try:
+            self.root.mkdir(parents=True, exist_ok=True)
+            write(self.root / 'status.json', self.state)
+            self.dirty = False
+            return True
+        except OSError as error:
+            print(f'Launcher state unavailable: {type(error).__name__}', flush=True)
+            return False
 
     def update(self):
+        fd = os.open(self.root.parent / 'config.lock', os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
+        with os.fdopen(fd, 'r+') as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            return self.update_locked()
+
+    def update_locked(self):
+        if self.dirty and not self.publish():
+            return False
         pending = self.root / 'pending'
         if not pending.exists() or self.trial:
             return False
-        try:
-            digest = json.loads(pending.read_text())['sha256']
-        except (OSError, ValueError, KeyError, TypeError):
+        request = read(pending)
+        digest = request.get('sha256')
+        if 'epoch' in request and request['epoch'] != read(self.root.parent / 'fence.json').get('epoch'):
             pending.unlink(missing_ok=True)
-            sync(self.root)
             return False
         if digest == self.current or digest == self.state.get('failed'):
-            pending.unlink()
-            sync(self.root)
+            pending.unlink(missing_ok=True)
             return False
         if not verified(self.root, digest, self.base_id):
             self.state.update({'failed': digest, 'error': 'Host bundle verification failed'})
-            pending.unlink()
-            self.publish()
+            if self.publish():
+                pending.unlink(missing_ok=True)
             return False
-        self.previous = self.current
-        self.current = digest
-        self.trial = True
+        candidate = {**self.state, 'previous': self.current, 'current': digest, 'trial': digest, 'running': digest}
+        # A new bundle runs only after its rollback decision is durable.
+        write(self.root / 'status.json', candidate)
+        self.state = candidate
         self.deadline = time.monotonic() + 120
         self.exits = []
-        # Persist the trial before switching so an interrupted update is health-gated again.
-        self.publish()
-        if self.previous:
-            select(self.root, 'previous', self.previous)
-        else:
-            (self.root / 'previous').unlink(missing_ok=True)
-        select(self.root, 'current', digest)
-        pending.unlink()
-        sync(self.root)
+        try:
+            pending.unlink(missing_ok=True)
+        except OSError:
+            pass
         return True
 
     def rollback(self, error):
-        self.state.update({'failed': self.current, 'error': error})
-        self.current = self.previous if verified(self.root, self.previous, self.base_id) else ''
-        if self.current:
-            select(self.root, 'current', self.current)
-        else:
-            (self.root / 'current').unlink(missing_ok=True)
-        self.trial = False
+        previous = self.previous
+        self.state.update({'failed': self.state.get('current', ''), 'error': error,
+                           'current': previous if verified(self.root, previous, self.base_id) else '',
+                           'previous': '', 'trial': ''})
+        self.state['running'] = self.current
         self.exits = []
         self.publish()
 
@@ -158,7 +192,7 @@ class Launcher:
             self.rollback('Agent health gate failed')
             return True
         if self.trial and healthy:
-            self.trial = False
+            self.state['trial'] = ''
             self.publish()
         return False
 
@@ -190,38 +224,50 @@ def ping(digest):
         with urllib.request.urlopen(request, timeout=2) as response:
             result = json.load(response)
         return result.get('host_bundle_sha256') == digest and result.get('instance_id') == config['instance_id']
-    except (OSError, ValueError, KeyError):
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
         return False
 
 
 def main():
+    os.umask(0o022)
     stopping, reload = threading.Event(), threading.Event()
     signal.signal(signal.SIGTERM, lambda *_: stopping.set())
     signal.signal(signal.SIGINT, lambda *_: stopping.set())
     signal.signal(signal.SIGHUP, lambda *_: reload.set())
     launcher = Launcher()
-    pid = os.getpid()
-    birth = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[19]
-    write(ROOT.parent / "launcher.json", {"pid": pid, "birth": birth})
     while not stopping.is_set():
-        directory = launcher.root / launcher.current if launcher.current else launcher.base
-        process = subprocess.Popen(['python3', str(directory / 'host-agent.py')])
+        running_digest = launcher.current if not launcher.dirty else ''
+        try:
+            process = subprocess.Popen(['/usr/bin/setpriv', '--pdeathsig=TERM', 'python3', str(launcher.directory() / 'host-agent.py')])
+        except OSError as error:
+            print(f'Agent start unavailable: {type(error).__name__}', flush=True)
+            stopping.wait(2)
+            continue
         while not stopping.wait(1):
             exited = process.poll() is not None
-            if launcher.check(not exited and ping(launcher.current), exited):
-                break
-            if reload.is_set() or launcher.update() or exited:
+            try:
+                restart = (launcher.check(not exited and ping(launcher.current), exited) or launcher.update() or
+                           (running_digest != launcher.current and not launcher.dirty))
+            except OSError as error:
+                print(f'Launcher update unavailable: {type(error).__name__}', flush=True)
+                restart = False
+            if reload.is_set() or restart or exited:
                 break
         reload.clear()
         if process.poll() is None:
             process.terminate()
         try:
-            process.wait(timeout=20)
+            process.wait(timeout=15)
         except subprocess.TimeoutExpired:
             process.kill()
             process.wait()
-        launcher.cleanup()
+        try:
+            launcher.cleanup()
+        except OSError as error:
+            print(f'Launcher cleanup unavailable: {type(error).__name__}', flush=True)
         stopping.wait(2)
+    launcher.state['running'] = ''
+    launcher.publish()
 
 
 if __name__ == '__main__':

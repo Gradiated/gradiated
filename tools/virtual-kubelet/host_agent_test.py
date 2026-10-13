@@ -1,4 +1,5 @@
 import importlib.util
+import os
 import json
 from pathlib import Path
 import subprocess
@@ -8,7 +9,7 @@ import unittest
 from unittest.mock import patch
 import uuid
 
-spec = importlib.util.spec_from_file_location('agent', Path(__file__).with_name('host-agent.py'))
+spec = importlib.util.spec_from_file_location('agent', os.environ.get('HOST_AGENT_TEST_SOURCE', Path(__file__).with_name('host-agent.py')))
 agent = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(agent)
 

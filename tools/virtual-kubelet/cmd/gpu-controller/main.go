@@ -40,7 +40,6 @@ import (
 )
 
 type host struct {
-	Rollout    *hostRollout    `json:"-"`
 	Runtimes   json.RawMessage `json:"-"`
 	InstanceID string          `json:"instance_id"`
 	Endpoint   string          `json:"endpoint"`
@@ -296,23 +295,10 @@ func (p *provider) NotifyPods(ctx context.Context, callback func(*v1.Pod)) {
 func (p *provider) Ping(ctx context.Context) error {
 	var result hostVersion
 	if err := p.call(ctx, "ping", "", nil, &result); err != nil {
-		if p.host.Rollout != nil {
-			p.host.Rollout.unavailable(ctx, p)
-		}
 		return err
 	}
 	if result.InstanceID != p.host.InstanceID {
-		if p.host.Rollout != nil {
-			p.host.Rollout.unavailable(ctx, p)
-		}
 		return fmt.Errorf("host identity mismatch")
-	}
-	if p.host.Rollout != nil {
-		p.host.Rollout.observe(ctx, p, result)
-	}
-	if len(p.host.Runtimes) > 0 {
-		var status map[string]any
-		return p.call(ctx, "configure", "", nil, &status)
 	}
 	return nil
 }
@@ -473,7 +459,6 @@ func main() {
 	}
 	rollout := newHostRollout(config.HostBundle, config.Hosts)
 	for index := range config.Hosts {
-		config.Hosts[index].Rollout = rollout
 		config.Hosts[index].Runtimes = config.Runtimes
 		h := config.Hosts[index]
 		if h.GPUCount < 0 || h.GPUCount > 8 || h.CPU < 0 || h.CPU > 512 || h.MemoryGiB < 0 || h.MemoryGiB > 4096 {
@@ -523,6 +508,8 @@ func main() {
 				}
 				term := string(uuid.NewUUID())
 				var group sync.WaitGroup
+				group.Add(1)
+				go func() { defer group.Done(); rollout.run(leader) }()
 				for _, h := range config.Hosts {
 					group.Add(1)
 					go func(h host) {
@@ -546,6 +533,7 @@ func main() {
 									}
 								}
 							}
+							rollout.register(&provider{host: h, epoch: epoch, term: term, client: client.CoreV1()})
 							hostContext, stopHost := context.WithCancel(leader)
 							err := runHost(hostContext, client, config.Namespace, h, epoch, term)
 							stopHost()

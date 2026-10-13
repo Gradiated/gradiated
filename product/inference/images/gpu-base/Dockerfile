@@ -34,7 +34,8 @@ COPY images/gpu-base/download-runtime.py /opt/gradiated/bin/download-runtime
 COPY images/gpu-base/base-id /etc/gradiated/base-id
 COPY images/gpu-base/sshd_config /etc/ssh/sshd_config
 STOPSIGNAL SIGTERM
-COPY gpu/ /opt/gradiated/kubelet/
+COPY gpu/bootstrap.py gpu/host_state.py gpu/supervise.py /opt/gradiated/kubelet/
+COPY images/gpu-base/recovery/ /opt/gradiated/kubelet/recovery/
 COPY tailscale/ /opt/gradiated/tailscale-scripts/
-COPY --from=launcher /desmond-build/desmond/desmondd /opt/gradiated/kubelet/desmondd
+COPY --from=launcher /desmond-build/desmond/desmondd /opt/gradiated/kubelet/recovery/desmondd
 ENTRYPOINT ["python3", "/opt/gradiated/kubelet/bootstrap.py"]

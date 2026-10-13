@@ -70,6 +70,24 @@ def install_locked(payload):
     shared['atomic_json'](config_path, config)
     if not base_path.exists():
         shared['atomic_write'](base_path, (base_id + '\n').encode())
+    pid_path = root / 'supervisor.json'
+    owner = json.loads(pid_path.read_text()) if pid_path.exists() else None
+    supervisor_alive = False
+    direct_launcher = False
+    if owner:
+        try:
+            stat = Path(f"/proc/{owner['pid']}/stat").read_text().rsplit(')', 1)[1].split()
+            command = Path(f"/proc/{owner['pid']}/cmdline").read_bytes()
+            supervisor_alive = stat[0] != 'Z' and stat[19] == owner['birth'] and (
+                b'/opt/gradiated/kubelet/supervise.py' in command or b'/opt/gradiated/kubelet/host-launcher.py' in command)
+            status_path = root / 'host' / 'status.json'
+            status = json.loads(status_path.read_text()) if status_path.exists() else {}
+            direct_launcher = supervisor_alive and status.get('launcher_pid') == owner['pid'] and status.get('launcher_birth') == owner['birth']
+            legacy_path = root / 'launcher.json'
+            if legacy_path.exists():
+                direct_launcher |= supervisor_alive and json.loads(legacy_path.read_text()) == owner
+        except (OSError, ValueError):
+            pass
     recovery = destination / 'recovery'
     recovery.mkdir(exist_ok=True)
     for name in ['host_state.py', 'host_bundle.py', 'host-agent.py']:
@@ -77,21 +95,14 @@ def install_locked(payload):
         (recovery / name).chmod(0o644)
     shared['atomic_write'](recovery / 'desmondd', base64.b64decode(payload['desmondd']))
     (recovery / 'desmondd').chmod(0o755)
-    shared['atomic_write'](destination / 'host-launcher.py', payload['supervise.py'].encode())
-    shim = "import os\nos.execv('/usr/bin/python3', ['python3', '/opt/gradiated/kubelet/host-launcher.py'])\n"
-    shared['atomic_write'](destination / 'host-agent.py', shim.encode())
-    pid_path = root / 'supervisor.json'
-    if pid_path.exists():
-        owner = json.loads(pid_path.read_text())
-        try:
-            stat = Path(f"/proc/{owner['pid']}/stat").read_text().rsplit(')', 1)[1].split()
-            command = Path(f"/proc/{owner['pid']}/cmdline").read_bytes()
-            if stat[19] == owner['birth'] and (b'/opt/gradiated/kubelet/supervise.py' in command or b'/opt/gradiated/kubelet/host-launcher.py' in command):
-                os.kill(owner['pid'], signal.SIGHUP)
-                print(json.dumps({'instance_id': instance, 'updated': True}))
-                return
-        except FileNotFoundError:
-            pass
+    if not direct_launcher:
+        shared['atomic_write'](destination / 'host-launcher.py', payload['supervise.py'].encode())
+        shim = "import os\nos.execv('/usr/bin/python3', ['python3', '/opt/gradiated/kubelet/host-launcher.py'])\n"
+        shared['atomic_write'](destination / 'host-agent.py', shim.encode())
+    if supervisor_alive:
+        os.kill(owner['pid'], signal.SIGHUP)
+        print(json.dumps({'instance_id': instance, 'updated': True}))
+        return
     with (root / 'supervisor.log').open('ab') as log:
         process = subprocess.Popen(['python3', str(destination / 'host-launcher.py')],
             env={'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'},

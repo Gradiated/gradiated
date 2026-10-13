@@ -7,7 +7,6 @@ COPY product/inference/engine/ /src/engine/
 RUN cmake -S /src -B /build -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release \
     && cmake --build /build --target desmondd --parallel 2 \
     && cp /build/desmond/desmondd /bundle/desmondd
-COPY --chmod=755 product/inference/images/gpu-base/start-desmond.sh /bundle/start-desmond
 COPY product/inference/images/gpu-base/base-id /bundle/base-id
 RUN python3 -c 'import hashlib,json,pathlib; p=pathlib.Path("/bundle"); (p/"files.json").write_text(json.dumps({f.name:hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted(p.iterdir())},sort_keys=True))'
 COPY product/inference/bundles/package.sh /package.sh

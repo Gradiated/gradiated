@@ -13,19 +13,29 @@ import tarfile
 import tempfile
 import uuid
 
-from host_state import atomic_json, sync_directory
+from host_state import atomic_json, atomic_write, sync_directory
 
 BASE_ID = Path('/etc/gradiated/base-id')
 
-FILES = {'host-agent.py', 'host_state.py', 'host_bundle.py', 'desmondd', 'start-desmond', 'base-id'}
+FILES = {'host-agent.py', 'desmondd', 'base-id'}
 
 
 def host_version(root):
     marker = Path(__file__).resolve().with_name('.bundle-sha256')
     status = root / 'host' / 'status.json'
-    state = json.loads(status.read_text()) if status.exists() else {}
+    try:
+        state = json.loads(status.read_text())
+        if not isinstance(state, dict):
+            state = {}
+    except (OSError, ValueError):
+        state = {}
     staging = root / 'host' / 'staging-error.json'
-    failure = json.loads(staging.read_text()) if staging.exists() else {}
+    try:
+        failure = json.loads(staging.read_text())
+        if not isinstance(failure, dict):
+            failure = {}
+    except (OSError, ValueError):
+        failure = {}
     return {'host_bundle_sha256': marker.read_text().strip() if marker.exists() else '',
             'previous_host_bundle_sha256': state.get('previous', ''),
             'host_bundle_trial': bool(state.get('trial')),
@@ -35,43 +45,11 @@ def host_version(root):
 
 
 def validate_pin(pin, base_id):
-    if set(pin) != {'sha256', 'base_id'} or not re.fullmatch('[0-9a-f]{64}', pin['sha256']):
+    if (not isinstance(pin, dict) or set(pin) != {'sha256', 'base_id'} or
+            not isinstance(pin['sha256'], str) or not re.fullmatch('[0-9a-f]{64}', pin['sha256'])):
         raise ValueError('A pinned host bundle is required')
     if pin['base_id'] != base_id:
         raise ValueError('Host bundle requires a different base')
-
-
-def promote(source, destination, digest, base_id):
-    if source.is_symlink() or {p.name for p in source.iterdir()} != FILES | {'files.json', '.bundle-sha256'}:
-        raise ValueError('Unexpected host bundle contents')
-    if any(not p.is_file() or p.is_symlink() for p in source.iterdir()):
-        raise ValueError('Host bundle files must be regular files')
-    if (source / '.bundle-sha256').read_text().strip() != digest or (source / 'base-id').read_text().strip() != base_id:
-        raise ValueError('Host bundle digest or base mismatch')
-    hashes = json.loads((source / 'files.json').read_text())
-    if set(hashes) != FILES:
-        raise ValueError('Host bundle manifest is incomplete')
-    temporary = destination.with_name('.' + digest + '.' + uuid.uuid4().hex)
-    try:
-        temporary.mkdir(mode=0o755)
-        for path in source.iterdir():
-            data = path.read_bytes()
-            if path.name in hashes and hashlib.sha256(data).hexdigest() != hashes[path.name]:
-                raise ValueError('Host bundle file checksum mismatch')
-            target = temporary / path.name
-            with target.open('wb') as output:
-                output.write(data)
-                output.flush()
-                os.fsync(output.fileno())
-            target.chmod(0o755 if path.name in ('desmondd', 'start-desmond') else 0o644)
-        sync_directory(temporary)
-        if destination.exists():
-            raise ValueError('Host bundle destination already exists')
-        temporary.rename(destination)
-        sync_directory(destination.parent)
-    finally:
-        if temporary.exists():
-            shutil.rmtree(temporary)
 
 
 def promote_archive(source, destination, digest, base_id):
@@ -96,18 +74,40 @@ def promote_archive(source, destination, digest, base_id):
         tree.mkdir()
         total = 0
         with tarfile.open(archive, 'r:gz') as contents:
-            for member in contents:
+            for count, member in enumerate(contents, 1):
+                if count > 128:
+                    raise ValueError('Host archive exceeds its member limit')
                 if member.name == '.' and member.isdir():
                     continue
                 name = member.name.removeprefix('./')
                 total += member.size
-                if (not member.isfile() or name not in FILES | {'files.json'} or
-                        (tree / name).exists() or total > 128 * 1024 * 1024):
+                if (not member.isfile() or not re.fullmatch('[A-Za-z0-9][A-Za-z0-9._-]{0,127}', name) or
+                        member.size < 0 or (tree / name).exists() or
+                        len(list(tree.iterdir())) >= 65 or total > 128 * 1024 * 1024):
                     raise ValueError('Unsafe host archive contents')
                 with contents.extractfile(member) as incoming, (tree / name).open('wb') as output:
                     shutil.copyfileobj(incoming, output)
-        (tree / '.bundle-sha256').write_text(digest)
-        promote(tree, destination, digest, base_id)
+                    output.flush()
+                    os.fsync(output.fileno())
+                (tree / name).chmod(0o755 if member.mode & 0o111 else 0o644)
+        hashes = json.loads((tree / 'files.json').read_text())
+        if (not isinstance(hashes, dict) or not FILES.issubset(hashes) or 'files.json' in hashes or
+                {path.name for path in tree.iterdir()} != set(hashes) | {'files.json'} or
+                (tree / 'base-id').read_text().strip() != base_id):
+            raise ValueError('Incomplete or incompatible host bundle')
+        for name, checksum in hashes.items():
+            path = tree / name
+            if not isinstance(checksum, str) or not re.fullmatch('[0-9a-f]{64}', checksum) or hashlib.sha256(path.read_bytes()).hexdigest() != checksum:
+                raise ValueError('Host bundle file checksum mismatch')
+            if name == 'desmondd':
+                path.chmod(0o755)
+        atomic_write(tree / '.bundle-sha256', (digest + '\n').encode())
+        tree.chmod(0o755)
+        sync_directory(tree)
+        if destination.exists() or destination.is_symlink():
+            raise ValueError('Host bundle destination already exists')
+        tree.rename(destination)
+        sync_directory(destination.parent)
 
 
 def stage_host(agent, pin, epoch):
@@ -135,7 +135,7 @@ def stage_host(agent, pin, epoch):
                 fd = os.open(agent.root / 'host-download.lock', os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
                 with os.fdopen(fd, 'r+') as download_lock:
                     fcntl.flock(download_lock, fcntl.LOCK_EX)
-                    archive = downloads / (digest + '.tar.gz')
+                    archive = downloads / (digest + '.' + uuid.uuid4().hex + '.tar.gz')
                     try:
                         with (agent.root / 'host-download.log').open('ab') as log:
                             subprocess.run(['runuser', '-u', 'downloader', '--', 'python3', '/opt/gradiated/bin/download-runtime',
@@ -149,10 +149,13 @@ def stage_host(agent, pin, epoch):
                 with os.fdopen(fd, 'r+') as lock:
                     fcntl.flock(lock, fcntl.LOCK_EX)
                     if json.loads((agent.root / 'fence.json').read_text())['epoch'] == epoch:
-                        atomic_json(root / 'pending', {'sha256': digest})
+                        atomic_json(root / 'pending', {'sha256': digest, 'epoch': epoch})
                         (root / 'staging-error.json').unlink(missing_ok=True)
         except Exception as error:
-            atomic_json(agent.root / 'host' / 'staging-error.json', {'sha256': digest, 'error': type(error).__name__})
+            try:
+                atomic_json(agent.root / 'host' / 'staging-error.json', {'sha256': digest, 'error': type(error).__name__})
+            except OSError:
+                pass
             print(f'Host bundle staging failed: {type(error).__name__}', flush=True)
         finally:
             agent.host_staging = None

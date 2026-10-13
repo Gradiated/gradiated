@@ -13,7 +13,6 @@
 !product/inference/images/
 !product/inference/images/gpu-base/
 !product/inference/images/gpu-base/base-id
-!product/inference/images/gpu-base/start-desmond.sh
 !product/inference/bundles/
 !product/inference/bundles/package.sh
 !tools/

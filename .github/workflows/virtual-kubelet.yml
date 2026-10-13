@@ -65,6 +65,7 @@ jobs:
       - run: python3 tools/gpu/render-config.py --check
       - run: python3 tools/gpu/render_config_test.py
       - run: python3 tools/virtual-kubelet/host_agent_test.py
+      - run: HOST_AGENT_TEST_SOURCE=product/inference/images/gpu-base/recovery/host-agent.py python3 tools/virtual-kubelet/host_agent_test.py
       - run: python3 tools/virtual-kubelet/host_state_test.py
       - run: python3 tools/virtual-kubelet/install_host_test.py
       - run: python3 product/inference/gpu/host_bundle_test.py

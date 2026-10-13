@@ -14,6 +14,12 @@ spec.loader.exec_module(installer)
 
 class RuntimeUpdateTests(unittest.TestCase):
     def test_migration_only_reload_signals_the_existing_pid_one(self):
+        self.check_migration(False)
+
+    def test_direct_launcher_migration_keeps_the_agent_entrypoint(self):
+        self.check_migration(True)
+
+    def check_migration(self, direct):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             def mapped(value):
@@ -27,6 +33,12 @@ class RuntimeUpdateTests(unittest.TestCase):
             bundle.mkdir(parents=True)
             (bundle / '.bundle-sha256').write_text('a' * 64)
             (state / 'supervisor.json').write_text('{"pid":1,"birth":"42"}')
+            if direct:
+                (state / 'host').mkdir()
+                (state / 'host/status.json').write_text('{"schema":2,"launcher_pid":1,"launcher_birth":"42"}')
+                agent_path = mapped('/opt/gradiated/kubelet/host-agent.py')
+                agent_path.parent.mkdir(parents=True)
+                agent_path.write_text('original agent')
             proc = mapped('/proc/1')
             proc.mkdir(parents=True)
             (proc / 'stat').write_text('1 (python) ' + ' '.join(['S'] + ['0'] * 18 + ['42']))
@@ -45,7 +57,10 @@ class RuntimeUpdateTests(unittest.TestCase):
             spawn.assert_not_called()
             recovery = mapped('/opt/gradiated/kubelet/recovery/host-agent.py')
             self.assertEqual(recovery.read_text(), payload['host-agent.py'])
-            self.assertIn('host-launcher.py', mapped('/opt/gradiated/kubelet/host-agent.py').read_text())
+            if direct:
+                self.assertEqual(mapped('/opt/gradiated/kubelet/host-agent.py').read_text(), 'original agent')
+            else:
+                self.assertIn('host-launcher.py', mapped('/opt/gradiated/kubelet/host-agent.py').read_text())
 
     def test_preserves_active_profiles_and_allows_unused_profile_cleanup(self):
         previous = {'runtimes': {'a' * 64: {'cpu': '16'}, 'b' * 64: {'cpu': '32'}}}

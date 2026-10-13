@@ -238,8 +238,11 @@ Model deployment publishes a `host` bundle alongside runtime bundles. Its
 and base compatibility ID. Host bundles contain the agent, state and staging
 helpers, Desmond, and its startup script. The control bridge stays in the base.
 The base keeps SSH, enrollment, Tailscale, downloader, nginx, the launcher
-(`supervise.py`) and a recovery agent. Updating that recovery copy can rebuild a
-base image, but host releases do not require re-pinning or replacing a reservation.
+(`supervise.py`) and a frozen recovery agent under `images/gpu-base/recovery/`. Ordinary agent
+and staging changes build only the host bundle; they do not invalidate the base
+or model bundles. Refresh the recovery sources with
+`python3 tools/gpu/refresh-recovery.py` only for a deliberate, qualified base
+release. Host releases do not require re-pinning or replacing a reservation.
 
 `gpu-inference/host.json` is initially `null`: legacy hosts continue serving and
 no host software update is requested. After installing the launcher on retained
@@ -254,21 +257,44 @@ The pin has `sha256` and `base_id` fields. A different base is rejected before
 download. Hosts use the existing downloader and short-lived control-bridge grants. Root
 copies the downloaded archive into private storage and independently verifies its
 digest before extracting; it then checks the file manifest and copies the result into root-owned `/var/lib/gradiated-kubelet/host/<digest>`. Downloaders
-cannot modify the promoted code or selection symlinks. The launcher consumes
-`pending`, preserves `previous`, and restarts only the agent. It requires a
+cannot modify the promoted code or launcher state. Extraction, validation and
+atomic promotion use one root-owned tree. Safe, hashed top-level helpers can be
+added without updating the immutable launcher; archive size and file count are
+bounded. The launcher consumes fenced `pending`
+requests and keeps current, previous, trial and failure in one atomic
+`status.json` record; symlinks are only read during migration from the earlier
+layout. It commits an update before running it and consumes the previous target
+on rollback, so a failing recovery target falls back to the base. It requires a
 loopback ping from the new digest within 120 seconds and rolls back after three
 agent exits within ten minutes. A failed digest is not retried automatically.
-`status.json` records the trial and failure across launcher restarts. Current,
+An interrupted trial or an unclean launcher exit consumes the previous target
+on restart. Normal launcher shutdown clears its running marker; storage failure
+keeps that marker conservative, so a rejected agent cannot resume unnoticed. Storage errors preserve the running
+agent or start the base recovery agent; new updates wait until state can be
+committed. The agent exits if its launcher dies, while independent model workers
+keep running. Current,
 previous, one unused verified bundle, and code referenced by live task/proxy
 workers are retained. This last exception preserves workers across successive
 agent updates.
 
-The controller observes every host before starting, updates in `hosts.json`
-order, and requires five continuous minutes of model readiness with unchanged
-serving process identities before advancing. Staging has a 35-minute overall
-deadline; an updated host that remains unreachable or unready stops the rollout.
-Node annotations persist completed soaks and failures through leadership changes.
-A leader change during a soak repeats the full soak. `GpuHostUpdateFailed` events
+Argo CD reconciles the model Rollouts and the controller's host-bundle pin.
+Argo Rollouts manages model pod updates; the GPU controller sequences host-agent
+updates itself. Models and host agents run verified tarballs unpacked on disk.
+Their Dockerfiles package and verify those artifacts in CI; the GPU provider
+still starts hosts from a base container image.
+
+A serial background controller worker observes every host before starting and
+updates in `hosts.json` order. Node health checks and metric scrapes never wait
+on rollout I/O. It requires five continuous minutes of model readiness with unchanged
+serving process identities before advancing. Staging has a 35-minute
+deadline; its download time does not consume the health grace or serving soak.
+Continuous agent or model health failure has a separate two-minute limit; an updated host that remains unreachable or unready stops the rollout.
+One node annotation (`gradiated.com/host-bundle-update`) checkpoints the release,
+phase, original process identities and deadline before staging. A new leader
+resumes that host and repeats the full soak while retaining the baseline and
+deadline. Failure annotation and event writes retry on API outages. Ambiguous
+configure responses retry on the same host. The health grace measures continuous
+failure separately from download time and resets when health returns. `GpuHostUpdateFailed` events
 and alerts stop the fleet update; repair the bundle and pin a new digest. To
 revert, pin a previously healthy release. A failed digest requires deliberate
 operator investigation before clearing its launcher failure and node annotation.
@@ -278,7 +304,9 @@ one-release compatibility applies only to the remaining API.
 
 The controller's `/metrics` exposes running/previous digest information, drift
 from the Git pin, and rollout failure. The controllers dashboard shows host
-versions. Drift alerts after 24 hours; missing controller scrapes also alert.
+versions only while host observations are fresh, and a separate panel shows
+telemetry age. Drift alerts after 24 hours; stale host telemetry and missing
+controller scrapes also alert.
 
 ### One-time retained-host migration
 
@@ -299,7 +327,9 @@ first failed host. It reads the management credential on the remote host and
 never outputs it. Known SSH host keys are required. The existing supervisor may
 be PID 1: it stays running and its SIGHUP path launches a shim that execs the new
 launcher. No provider restart or image change is involved. Re-running the
-command signals the same supervisor. New hosts obtain the launcher from the
+command signals the same supervisor. Hosts already using a direct launcher keep
+their agent entrypoint; the recovery directory is selected at each restart. New
+hosts obtain the launcher from the
 base image when its published digest is separately approved and pinned.
 
 Local checks use fake bundles and processes without GPUs or production access:

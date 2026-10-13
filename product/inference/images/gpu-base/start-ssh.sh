@@ -17,8 +17,14 @@ stop() {
   if [[ -n "$host_pid" ]]; then kill -TERM "$host_pid" 2>/dev/null || true; fi
   wait || true
 }
-trap stop TERM INT EXIT
-while kill -0 "$ssh_pid" 2>/dev/null; do
+trap 'stop; exit 0' TERM INT
+trap stop EXIT
+while true; do
+  if ! kill -0 "$ssh_pid" 2>/dev/null; then
+    wait "$ssh_pid" || true
+    /usr/sbin/sshd -D -e &
+    ssh_pid=$!
+  fi
   if [[ -f /etc/gradiated/kubelet.json && -f /opt/gradiated/kubelet/launch-ready ]]; then
     if [[ -z "$host_pid" ]] || ! kill -0 "$host_pid" 2>/dev/null; then
       if [[ -n "$host_pid" ]]; then wait "$host_pid" || true; fi
@@ -30,4 +36,3 @@ while kill -0 "$ssh_pid" 2>/dev/null; do
   sleep 2 &
   wait $! || true
 done
-wait "$ssh_pid"

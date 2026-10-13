@@ -21,7 +21,11 @@ printf '#!/bin/sh\nexit 0\n' >/usr/local/bin/ssh-keygen
 chmod +x /usr/local/bin/ssh-keygen
 cat >/usr/sbin/sshd <<'SSH'
 #!/usr/local/bin/python3
-import signal,time
+import signal,time,pathlib
+p=pathlib.Path('/run/ssh-starts')
+n=int(p.read_text())+1 if p.exists() else 1
+p.write_text(str(n))
+if n==1:raise SystemExit(1)
 signal.signal(signal.SIGTERM,lambda *_:exit(0))
 while True:time.sleep(1)
 SSH
@@ -52,6 +56,7 @@ exec bash /tests/start-ssh.sh
                         IMAGE, 'bash', '/tests/fixture.sh')
                 time.sleep(2.5)
                 self.assertEqual(starts(), 0)
+                self.assertGreaterEqual(int(command('exec', container, 'cat', '/run/ssh-starts').strip()), 2)
                 command('exec', container, 'bash', '-c', 'touch /etc/gradiated/kubelet.json /opt/gradiated/kubelet/launch-ready')
                 wait_for(2)
                 command('restart', '-t', '5', container)

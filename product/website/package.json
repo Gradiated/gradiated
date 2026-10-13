@@ -10,7 +10,7 @@
   "scripts": {
     "api:generate": "openapi-typescript ../services/api/generated/openapi.json -o src/api/schema.ts && prettier --write src/api/schema.ts",
     "dev": "mise exec -- vite",
-    "build": "tsc -b && vite build && vite build --ssr src/entry-server.tsx --outDir dist/server && node scripts/prerender.mjs && node scripts/check-seo.mjs",
+    "build": "node scripts/sync-ashby-jobs.mjs && tsc -b && vite build && vite build --ssr src/entry-server.tsx --outDir dist/server && node scripts/prerender.mjs && node scripts/check-seo.mjs",
     "preview": "mise exec -- vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --config tests/vitest.config.ts"

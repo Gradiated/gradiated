@@ -156,8 +156,12 @@ export const JobDetailPage = ({ job }: { job: Job }): ReactElement => {
      by themselves: near the end of the page a short section cannot reach the
      top, and the highlight should still name the section that was chosen. */
   const pinned = useRef<string | undefined>(undefined);
+  /* The last section jumped to, kept after the pin is released so that, at the
+     end of the page, it can still win over the sections around it. */
+  const jumped = useRef<string | undefined>(undefined);
   const jumpTo = (id: string): void => {
     pinned.current = id;
+    jumped.current = id;
     setActive(id);
   };
 
@@ -176,7 +180,7 @@ export const JobDetailPage = ({ job }: { job: Job }): ReactElement => {
         /* Released once the jump has finished scrolling, so a scroll that no
            input event announces (dragging the scrollbar) still moves it on. */
         window.clearTimeout(settle);
-        settle = window.setTimeout(unpin, 200);
+        settle = window.setTimeout(settled, 200);
         return;
       }
       const landing =
@@ -191,10 +195,26 @@ export const JobDetailPage = ({ job }: { job: Job }): ReactElement => {
       for (const block of blocks) {
         if (block.getBoundingClientRect().top <= line) current = block.id;
       }
-      setActive(atEnd ? (blocks.at(-1)?.id ?? current) : current);
+      if (atEnd) {
+        /* At the end of the page several short sections can be on screen at
+           once: keep the one the reader jumped to if it is still in view. */
+        const target =
+          jumped.current && document.getElementById(jumped.current);
+        current =
+          target && target.getBoundingClientRect().top < window.innerHeight
+            ? jumped.current
+            : (blocks.at(-1)?.id ?? current);
+      }
+      setActive(current);
     };
     const unpin = (): void => {
       pinned.current = undefined;
+      jumped.current = undefined;
+    };
+    /* The jump has finished scrolling: let the scroll position decide again. */
+    const settled = (): void => {
+      pinned.current = undefined;
+      update();
     };
     const userScrollEvents = [
       "wheel",

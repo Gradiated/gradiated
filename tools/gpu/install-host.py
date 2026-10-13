@@ -88,6 +88,8 @@ def install_locked(payload):
                 direct_launcher |= supervisor_alive and json.loads(legacy_path.read_text()) == owner
         except (OSError, ValueError):
             pass
+    shared['atomic_write'](destination / 'host_state.py', payload['host_state.py'].encode())
+    (destination / 'host_state.py').chmod(0o644)
     recovery = destination / 'recovery'
     recovery.mkdir(exist_ok=True)
     for name in ['host_state.py', 'host_bundle.py', 'host-agent.py']:

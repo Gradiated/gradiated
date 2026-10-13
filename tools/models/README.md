@@ -2,9 +2,12 @@
 
 `model-deployment.yml` publishes the GPU base image to private ECR, verified
 runtime archives to private S3, and release records containing their source
-revision, base digest, base ID and archive SHA-256. The base contains CUDA,
-launcher/downloader tools, SSH, Tailscale and the GPU host agent. It contains no
-model weights, scheduler certificates or permanent artifact-reader credentials.
+revision, base digest, base ID and archive SHA-256. The base contains Ubuntu,
+CUDA and basic system dependencies with SSH startup. The verified host bundle
+contains enrollment, downloader, Desmond, runtime launcher and private control
+forwarding. See [enrollment ordering](../../product/inference/images/README.md)
+before selecting the platform-only base for new provider pods. No image contains
+model weights or permanent artifact-reader credentials.
 
 The workflow builds the base first, then verifies each runtime against that exact
 base. The runtime archive carries its own Python and pinned dependencies. Build
@@ -31,7 +34,8 @@ Publication does not change production routes. Pin the verified runtime in
 `product/inference/gpu/runtimes.json` and select its digest in
 `infra/environments/prod/us-east-1/kubernetes/gpu-inference/models.json`.
 Run `python3 tools/gpu/render-config.py`, review the generated manifests and
-merge them. Argo owns the deployment.
+merge them. Argo owns the deployment. Install the new host release before
+selecting model bundles that no longer carry their own `runtime-launch`.
 
 The controller stages new bundles without disturbing active processes. Argo
 Rollouts uses one surge replica and zero unavailable replicas. The worker runs

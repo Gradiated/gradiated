@@ -18,6 +18,10 @@ const config = z
     ALERTMANAGER_URL: z.url(),
     CREDENTIALS_DIRECTORY: z.string().min(1),
     GPU_BASE_IMAGE: GpuBaseImageSchema,
+    GPU_HOST_BOOTSTRAP_SHA256: z
+      .string()
+      .regex(/^[0-9a-f]{64}$/)
+      .optional(),
     GPU_CONTROL_ENDPOINT: z.ipv4(),
   })
   .parse(process.env);
@@ -55,6 +59,7 @@ const { server, privateServer, metrics } = createHttp({
     {
       credentialsDirectory: config.CREDENTIALS_DIRECTORY,
       hostImage: config.GPU_BASE_IMAGE,
+      hostBundleSha256: config.GPU_HOST_BOOTSTRAP_SHA256,
       apiEndpoint: config.GPU_CONTROL_ENDPOINT,
     },
     (event) => audit({ service: "ops-mcp", ...event }),

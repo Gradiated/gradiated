@@ -154,6 +154,11 @@ export const createRunPodProvider = ({
       }
       const sshTarget = target(current);
       if (!(await enrollment(current)).GRADIATED_INSTANCE_ID) {
+        if (current.imageName !== image)
+          throw new Error(
+            "Unenrolled GPU pod does not use the approved base image",
+          );
+
         await verifyInPlaceBase(inPlace.run, sshTarget, image);
       }
 
@@ -185,7 +190,11 @@ export const createRunPodProvider = ({
       // pulls through the account's ECR delegation, so no registry login is set.
       await call("PATCH", `/pods/${current.id}`, {
         imageName: image,
-        env: { ...current.env, ...environment },
+        env: Object.fromEntries(
+          Object.entries(current.env ?? {}).filter(
+            ([name]) => name !== "GRADIATED_GPU_BOOTSTRAP",
+          ),
+        ),
       });
       // Updating a stopped pod only changes its configuration; it stays stopped.
       if (current.desiredStatus === "EXITED") {

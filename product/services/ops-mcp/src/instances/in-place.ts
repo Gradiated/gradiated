@@ -8,17 +8,7 @@ const shellQuote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
 const source = (name: string) =>
   readFile(new URL(`../../../../inference/${name}`, import.meta.url), "utf8");
 const assets = {
-  "/opt/gradiated/kubelet/bootstrap.py": "gpu/bootstrap.py",
-  "/opt/gradiated/kubelet/host_state.py": "gpu/host_state.py",
-  "/opt/gradiated/kubelet/recovery/host-agent.py":
-    "images/gpu-base/recovery/host-agent.py",
-  "/opt/gradiated/kubelet/recovery/host_state.py":
-    "images/gpu-base/recovery/host_state.py",
-  "/opt/gradiated/kubelet/recovery/host_bundle.py":
-    "images/gpu-base/recovery/host_bundle.py",
-  "/opt/gradiated/kubelet/supervise.py": "gpu/supervise.py",
-  "/opt/gradiated/bin/fetch-runtime": "images/gpu-base/fetch-runtime.sh",
-  "/opt/gradiated/bin/download-runtime": "images/gpu-base/download-runtime.py",
+  "/etc/gradiated/base-id": "images/gpu-base/base-id",
 };
 
 export const readEnrollment =
@@ -57,6 +47,7 @@ export const verifyInPlaceBase = async (
 
 export const bootstrapScript = String.raw`
 import base64,contextlib,importlib.util,io,json,os,pathlib,subprocess,sys,time,urllib.request
+sys.dont_write_bytecode=True
 def enroll_quietly(module,bootstrap):
     output=os.dup(1)
     try:
@@ -75,11 +66,33 @@ if config.exists():
 else:
     if subprocess.check_output(["nvidia-smi","--query-compute-apps=pid","--format=csv,noheader"],text=True).strip():
         raise ValueError("GPU workloads must drain before enrollment")
-    spec=importlib.util.spec_from_file_location("gpu_bootstrap","/opt/gradiated/kubelet/bootstrap.py")
+    pathlib.Path("/opt/gradiated/kubelet/launch-ready").unlink(missing_ok=True)
+    bootstrap_path=pathlib.Path("/opt/gradiated/kubelet/bootstrap.py")
+    if bootstrap.get("host_bundle"):
+        import types
+        for name in ("host_state", "host_bundle", "supervise", "install_seed"):
+            module=types.ModuleType(name)
+            module.__file__="/opt/gradiated/kubelet/"+name+".py"
+            sys.modules[name]=module
+            exec(compile(payload["installer"][name],module.__file__,"exec"),module.__dict__)
+        bootstrap_path=sys.modules["install_seed"].install(bootstrap["host_bundle"])
+    spec=importlib.util.spec_from_file_location("gpu_bootstrap",bootstrap_path)
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
-    enroll_quietly(module,bootstrap)
+    try:enroll_quietly(module,bootstrap)
+    except Exception:
+        config.unlink(missing_ok=True)
+        raise
+pathlib.Path("/opt/gradiated/kubelet/launch-ready").touch(mode=0o600)
+root=pathlib.Path("/var/lib/gradiated-kubelet")
+def supervisor_alive():
+    try:
+        owner=json.loads((root/"supervisor.json").read_text())
+        state=pathlib.Path(f"/proc/{owner['pid']}/stat").read_text().rsplit(")",1)[1].split()
+        return state[0]!="Z" and state[19]==owner["birth"]
+    except (OSError,ValueError,KeyError,IndexError):return False
+if not pathlib.Path("/run/gradiated/host-init").exists() and not supervisor_alive():
     with open("/var/log/gradiated-kubelet-bootstrap.log","ab") as log:
-        subprocess.Popen(["python3","/opt/gradiated/kubelet/bootstrap.py"],env={"PATH":"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"},stdin=subprocess.DEVNULL,stdout=log,stderr=log,start_new_session=True)
+        subprocess.Popen(["python3","-B","/opt/gradiated/kubelet/bootstrap.py"],env={"PATH":"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"},stdin=subprocess.DEVNULL,stdout=log,stderr=log,start_new_session=True)
 deadline=time.monotonic()+120
 while True:
     try:
@@ -127,7 +140,21 @@ export const installInPlace = async (
   const result = await run(
     target,
     `python3 -c ${shellQuote(bootstrapScript)}`,
-    JSON.stringify({ environment }),
+    JSON.stringify({
+      environment,
+      installer: Object.fromEntries(
+        await Promise.all(
+          ["host_state", "host_bundle", "supervise", "install_seed"].map(
+            async (name) => [
+              name,
+              await source(
+                `gpu/${name === "install_seed" ? "install-seed" : name}.py`,
+              ),
+            ],
+          ),
+        ),
+      ),
+    }),
     30 * 60 * 1000,
   );
   return inventorySchema.parse(JSON.parse(result));

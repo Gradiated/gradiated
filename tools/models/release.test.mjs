@@ -34,5 +34,6 @@ test("release binds the source, base and content-addressed private bundle", () =
 test("release records distinguish host bundles from model runtimes", () => {
   const record = manifest({bundle:"host", source:"c".repeat(40), baseImage, baseId:"base-v1", digest:"d".repeat(64), bucket:"test-artifacts"});
   assert.equal(record.bundle, "host");
+  assert.equal(record.bootstrapVersion, 1);
   assert.throws(() => manifest({bundle:"unknown", source:"c".repeat(40), baseImage, baseId:"base-v1", digest:"d".repeat(64), bucket:"test-artifacts"}), /Unknown bundle/);
 });

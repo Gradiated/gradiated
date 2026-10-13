@@ -34,10 +34,10 @@ class HostBundleTests(unittest.TestCase):
     def make_bundle(self, digest):
         path = self.root / digest
         path.mkdir()
-        for name in bundle.FILES | {'host_state.py', 'host_bundle.py'}:
+        for name in bundle.required_host_files() | {'host_state.py', 'host_bundle.py'}:
             (path / name).write_text(self.base_id if name == 'base-id' else name)
         (path / 'files.json').write_text(json.dumps({name: hashlib.sha256((path / name).read_bytes()).hexdigest()
-                                                   for name in bundle.FILES | {'host_state.py', 'host_bundle.py'}}))
+                                                   for name in bundle.required_host_files() | {'host_state.py', 'host_bundle.py'}}))
         (path / '.bundle-sha256').write_text(digest)
         return path
 
@@ -45,6 +45,26 @@ class HostBundleTests(unittest.TestCase):
         self.make_bundle('a' * 64)
         launcher.write(self.root / 'status.json', {'schema': 2, 'current': 'a' * 64, 'previous': '', 'trial': ''})
         return launcher.Launcher(self.root, self.root, self.base_id)
+
+    def test_platform_only_staging_and_launcher_reject_legacy_same_base_bundle(self):
+        import host_state
+        platform = self.root / 'platform-only'
+        platform.touch()
+        with patch.object(host_state, 'PLATFORM_ONLY', platform):
+            path = self.make_bundle('a' * 64)
+            self.assertTrue(launcher.verified(self.root, path.name, self.base_id))
+            for tool in ('runtime-launch', 'fetch-runtime', 'download-runtime'):
+                contents = (path / tool).read_bytes()
+                hashes = json.loads((path / 'files.json').read_text())
+                (path / tool).unlink()
+                hashes.pop(tool)
+                (path / 'files.json').write_text(json.dumps(hashes))
+                self.assertFalse(launcher.verified(self.root, path.name, self.base_id))
+                with self.assertRaises(ValueError):self.promote(path)
+                (path / tool).write_bytes(contents)
+                hashes[tool] = hashlib.sha256(contents).hexdigest()
+                (path / 'files.json').write_text(json.dumps(hashes))
+            self.assertTrue(launcher.verified(self.root, path.name, self.base_id))
 
     def test_bad_checksum_or_base_never_runs(self):
         path = self.make_bundle('a' * 64)
@@ -367,7 +387,7 @@ class HostBundleTests(unittest.TestCase):
             def live(pid):
                 try:
                     return Path(f'/proc/{pid}/stat').read_text().rsplit(')', 1)[1].split()[0] != 'Z'
-                except FileNotFoundError:
+                except (FileNotFoundError, ProcessLookupError):
                     return False
             deadline = time.monotonic() + 5
             while live(children['agent']) and time.monotonic() < deadline:

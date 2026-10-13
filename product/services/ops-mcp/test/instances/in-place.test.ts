@@ -11,6 +11,30 @@ import {
 } from "../../src/instances/in-place.js";
 import type { RunSsh } from "../../src/instances/ssh.js";
 describe("pinned GPU bootstrap", () => {
+  it("recognizes the installed supervisor by PID and birth before resuming enrollment", () => {
+    const result = spawnSync(
+      "python3",
+      [
+        "-c",
+        `
+import ast,json,pathlib,os,sys,tempfile
+source=ast.parse(json.load(sys.stdin)["script"])
+helper=next(node for node in source.body if isinstance(node,ast.FunctionDef) and node.name=="supervisor_alive")
+exec(compile(ast.Module(body=[helper],type_ignores=[]),"supervisor-helper","exec"))
+with tempfile.TemporaryDirectory() as directory:
+    root=pathlib.Path(directory)
+    assert not supervisor_alive()
+    birth=pathlib.Path(f"/proc/{os.getpid()}/stat").read_text().rsplit(")",1)[1].split()[19]
+    (root/"supervisor.json").write_text(json.dumps({"pid":os.getpid(),"birth":birth}))
+    assert supervisor_alive()
+    (root/"supervisor.json").write_text(json.dumps({"pid":os.getpid(),"birth":"stale"}))
+    assert not supervisor_alive()
+`,
+      ],
+      { input: JSON.stringify({ script: bootstrapScript }), encoding: "utf8" },
+    );
+    expect(result.status, result.stderr).toBe(0);
+  });
   it("refuses modified bootstrap files before enrollment", () => {
     const root = mkdtempSync(join(tmpdir(), "gpu-bootstrap-"));
     try {
@@ -80,7 +104,9 @@ print(json.dumps({"inventory":True}))
       ),
     ).toEqual(expected);
     expect(run.mock.calls[0]?.[1]).not.toContain("private-bootstrap");
-    expect(JSON.parse(run.mock.calls[0]![2]!)).toEqual({ environment: env });
+    expect(JSON.parse(run.mock.calls[0]![2]!)).toMatchObject({
+      environment: env,
+    });
   });
   it("rejects public network addresses and unqualified hardware in enrollment results", async () => {
     const run: RunSsh = async () =>

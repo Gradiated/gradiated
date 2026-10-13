@@ -18,6 +18,26 @@ const create = (sku = instance.sku, address = "100.65.73.119") =>
     address,
   );
 describe("GPU bootstrap environment", () => {
+  it("carries the pinned enrollment seed and temporary grant outside runtime configuration", async () => {
+    const hostBundle = {
+      sha256: "b".repeat(64),
+      base_id: "ubuntu24-cuda13-amd64-v2",
+      url: "https://artifacts.example/seed?temporary=grant",
+    };
+    const env = await hostBootstrapEnvironment(
+      instance,
+      id,
+      "a".repeat(64),
+      "tskey-auth-one-time",
+      "100.65.73.119",
+      hostBundle,
+    );
+    const payload = JSON.parse(
+      Buffer.from(env.GRADIATED_GPU_BOOTSTRAP, "base64").toString(),
+    );
+    expect(payload.host_bundle).toEqual(hostBundle);
+    expect(JSON.stringify(payload.config)).not.toContain("temporary=grant");
+  });
   it("contains pinned private runtime profiles and only scoped GPU credentials", async () => {
     const env = await create();
     const payload = JSON.parse(

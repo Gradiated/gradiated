@@ -11,6 +11,10 @@ import subprocess
 import threading
 import time
 import urllib.request
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from host_state import required_host_files
 
 ROOT = Path('/var/lib/gradiated-kubelet/host')
 BASE = Path('/opt/gradiated/kubelet')
@@ -62,7 +66,7 @@ def verified(root, digest, base_id):
         if (directory / '.bundle-sha256').read_text().strip() != digest or (directory / 'base-id').read_text().strip() != base_id:
             return False
         hashes = read(directory / 'files.json')
-        if (not FILES.issubset(hashes) or len(hashes) > 64 or
+        if (not required_host_files().issubset(hashes) or len(hashes) > 64 or
                 {path.name for path in directory.iterdir()} != set(hashes) | {'files.json', '.bundle-sha256'} or
                 any(not re.fullmatch('[A-Za-z0-9][A-Za-z0-9._-]{0,127}', name) or
                     not isinstance(value, str) or not re.fullmatch('[0-9a-f]{64}', value)

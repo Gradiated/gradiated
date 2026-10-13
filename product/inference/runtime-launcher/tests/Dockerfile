@@ -8,9 +8,9 @@ FROM toolchain AS tests
 ENV GRADIATED_TEST_CONTAINER=1
 WORKDIR /src
 COPY runtime-launcher/ .
-COPY images/gpu-base/fetch-runtime.sh /opt/gradiated/bin/fetch-runtime
-COPY images/gpu-base/download-runtime.py /tests/download-runtime.py
-COPY images/gpu-base/download_runtime_test.py /tests/test_download_runtime.py
+COPY gpu/fetch-runtime.sh /opt/gradiated/bin/fetch-runtime
+COPY gpu/download-runtime.py /tests/download-runtime.py
+COPY gpu/download_runtime_test.py /tests/test_download_runtime.py
 RUN mkdir -p /etc/gradiated && printf 'test-base-v1\n' > /etc/gradiated/base-id
 RUN cmake -S . -B /build -DBUILD_TESTING=ON && cmake --build /build --parallel 2
 RUN clang-format --dry-run --Werror *.cpp *.h tests/*.cpp

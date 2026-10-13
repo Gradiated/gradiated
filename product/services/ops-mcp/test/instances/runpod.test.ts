@@ -102,7 +102,7 @@ describe("RunPod Kubernetes enrollment", () => {
     )![1]!;
     expect(JSON.parse(String(patch.body))).toEqual({
       imageName: image,
-      env: { PUBLIC_KEY: rtxPod.env.PUBLIC_KEY, ...env },
+      env: { PUBLIC_KEY: rtxPod.env.PUBLIC_KEY },
     });
     expect(
       fetch.mock.calls.some(([url]) => String(url).endsWith("/start")),

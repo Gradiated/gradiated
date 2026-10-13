@@ -20,8 +20,6 @@ RUN cd /kev \
     && rm -rf /kev /tmp/requirements.txt
 
 FROM dependencies AS package
-COPY --from=runtime-base /opt/gradiated/bin/runtime-launch /bundle/runtime-launch
-COPY --from=runtime-base /opt/gradiated/bin/desmondd /bundle/desmondd
 COPY bundles/package.sh /package.sh
 COPY runtimes/kev/adapter.py /bundle/adapter.py
 COPY --chmod=755 bundles/kev-9b/entrypoint /bundle/entrypoint

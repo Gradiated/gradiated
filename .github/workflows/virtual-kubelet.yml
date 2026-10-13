@@ -84,9 +84,13 @@ jobs:
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 tools/gpu/rollout_host_test.py
         if: fromJSON(needs.changes.outputs.checks).controller
+      - run: python3 product/inference/images/gpu-base/start_ssh_test.py
+        if: fromJSON(needs.changes.outputs.checks).controller
+      - run: python3 product/inference/gpu/install_seed_test.py
+        if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 product/inference/gpu/bootstrap_test.py
         if: fromJSON(needs.changes.outputs.checks).controller
-      - run: python3 product/inference/images/gpu-base/download_runtime_test.py
+      - run: python3 product/inference/gpu/download_runtime_test.py
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: test -z "$(gofmt -l tools/virtual-kubelet/cmd/gpu-controller/*.go)"
         if: fromJSON(needs.changes.outputs.checks).controller

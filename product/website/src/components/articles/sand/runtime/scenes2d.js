@@ -1,4 +1,5 @@
 import { gsap } from "gsap";
+import { COMPUTER_SCENES } from "./computer-scenes.js";
 /* ------------------------------------------------------------------ */
 /* 2D diagram scenes: everything after the wafer.                      */
 /*                                                                     */
@@ -45,7 +46,41 @@ export const SCENES2D = (function () {
     const afterRender = []; // functions main.js runs after each scrub, for scenes positioned from a tweened value
     const keys = new Map();
     const DUR = Math.max(0.05, 1 - 2 * hold);
-    const at = (s) => s - 1 + hold; // when the change INTO paragraph s begins
+    const originalScenes = [
+      "quartz",
+      "ingot",
+      "wafer",
+      "boron",
+      "implant",
+      "wires",
+      "voltages",
+      "blocked",
+      "flowing",
+      "symbol",
+      "not",
+      "nand",
+      "nand-symbol",
+      "adder",
+      "chain",
+      "heat",
+      "latch",
+      "register",
+      "stored-answer",
+    ];
+    const sceneKeys = Array.from(
+      root.closest(".post").querySelectorAll(".scene-text"),
+      (section) => section.dataset.scene,
+    );
+    // Original drawings retain their numbered keys when new sections are inserted.
+    const index = (scene) =>
+      sceneKeys.indexOf(
+        typeof scene === "string" ? scene : originalScenes[scene],
+      ) >= 0
+        ? sceneKeys.indexOf(
+            typeof scene === "string" ? scene : originalScenes[scene],
+          )
+        : sceneKeys.length;
+    const at = (s) => index(s) - 1 + hold; // when the change INTO paragraph s begins
 
     const mk = (tag, attrs = {}, parent = root) => {
       const e = document.createElementNS(NS, tag);
@@ -91,7 +126,7 @@ export const SCENES2D = (function () {
     };
     const loop = (scene, tween, reset) => {
       tween.pause();
-      loops.push({ scene, tween, reset });
+      loops.push({ scene: index(scene), tween, reset });
     };
     const hideAt0 = (el, vars = {}) => tl.set(el, { opacity: 0, ...vars }, 0);
 
@@ -532,7 +567,12 @@ export const SCENES2D = (function () {
     key(gLogic, 3, { scale: 1 });
     key(gLogic, 13, { scale: 0.34, x: -15, y: -5, opacity: 0 }); // fades away inside the shrinking symbol
     key(gSym, 13, { scale: 0.125, x: -48, y: -30 }); // the symbol lands in the box's top-left cell
-    key(gSym, 14, { scale: 0.125, x: -48, y: -30, opacity: 0 });
+    key(gSym, "binary-place-value", {
+      scale: 0.125,
+      x: -48,
+      y: -30,
+      opacity: 0,
+    });
     const gAdd = group({}, root, "220 250");
     mk("rect", { x: 160, y: 205, width: 120, height: 90, rx: 4 }, gAdd);
     // many more NAND gates inside the box (the centre is left clear for the "+")
@@ -605,8 +645,8 @@ export const SCENES2D = (function () {
     bits(360, 242, ["0", "0", "0", "1", "1"]);
     text(360, 270, "1", { class: "tiny bit" }, gAdd);
     show(gAdd, 13, undefined, { scale: 1, x: 0, y: 0 });
-    key(gAdd, 14, { scale: 0.52, x: 29, y: 0, opacity: 0 });
-    caption(13, "full adder: one digit, with carry");
+    key(gAdd, "binary-place-value", { scale: 0.52, x: 29, y: 0, opacity: 0 });
+    caption(13, "full adder: one digit, with carry", "binary-place-value");
 
     /* ================= 14chain of adders ================= */
     const gChain = group({}, root, "220 250");
@@ -956,18 +996,45 @@ export const SCENES2D = (function () {
     storeDemo.time(0.001, true).time(0, true);
     afterRender.push(() => {
       const progress = tl.time();
-      if (progress <= 17 + hold) storeDemo.pause(0);
-      else if (Math.abs(progress - 18) <= hold) storeDemo.play();
+      if (progress <= index(17) + hold) storeDemo.pause(0);
+      else if (Math.abs(progress - index(18)) <= hold) storeDemo.play();
       else storeDemo.pause();
     });
 
-    // Keep the timeline at the final scene index even after removing later scenes.
-    // The stored-answer demonstration remains visible through the closing paragraph.
-    tl.to({}, { duration: hold }, 18 - hold);
+    key(gRegister, 17, { opacity: 1 }, null, -1);
+    key(
+      gRegister,
+      "select-values",
+      { opacity: 0, scale: 0.7, y: 32 },
+      null,
+      0,
+      0.6,
+    );
+    key(gStored, "select-values", { opacity: 0 }, null, 0, 0.6);
+    const computer = COMPUTER_SCENES.build({
+      root,
+      tl,
+      hold,
+      at,
+      index,
+      DUR,
+      EASE,
+      mk,
+      group,
+      path,
+      text,
+      key,
+      show,
+      draw,
+      caption,
+      hideAt0,
+      afterRender,
+    });
+    tl.to({}, { duration: hold }, index("computer") - hold);
 
     /* ================= compile keys into the timeline ================= */
     for (const [el, ks] of keys) {
-      ks.sort((a, b) => a.s - b.s);
+      ks.sort((a, b) => index(a.s) - index(b.s));
       const first = ks[0];
       if (first.late >= 0) {
         const hidden = { ...first.p, opacity: 0, ...(first.from || {}) };
@@ -1003,7 +1070,7 @@ export const SCENES2D = (function () {
         );
       }
     }
-    return { tl, loops, afterRender, storeDemo };
+    return { tl, loops, afterRender, storeDemo, ...computer };
   }
 
   return { build };

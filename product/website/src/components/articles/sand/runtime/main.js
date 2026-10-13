@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SCENES2D } from "./scenes2d.js";
+import { SAND_PROGRESS } from "./scroll-progress.js";
 
 export const mountSandScenes = (host) => {
   const media = gsap.matchMedia();
@@ -485,6 +486,9 @@ export const mountSandScenes = (host) => {
   function applyCtl() {
     if (d2 && ctl.hold !== builtHold) {
       d2.tl.kill();
+      d2.storeDemo?.kill();
+      (d2.demos ?? []).forEach((animation) => animation.kill());
+      (d2.loops ?? []).forEach(({ tween }) => tween.kill());
       d2 = SCENES2D.build($("d2"), ctl.hold);
       builtHold = ctl.hold;
       prime(d2.tl);
@@ -515,28 +519,51 @@ export const mountSandScenes = (host) => {
   }
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // A paragraph is "at the centre" when its middle crosses this viewport line. On narrow
-  // screens the drawing is pinned across the top, so the line moves down into the text area.
   media.add(
     { wide: "(min-width: 641px)", narrow: "(max-width: 640px)" },
     (ctx) => {
-      const line = ctx.conditions.narrow ? "72%" : "center";
-      gsap.fromTo(
-        state,
-        { progress: 0 },
-        {
-          progress: sections.length - 1,
-          ease: "none",
-          scrollTrigger: {
-            trigger: sections[0],
-            start: "center " + line,
-            endTrigger: sections[sections.length - 1],
-            end: "center " + line,
-            scrub: reduced ? true : 0.8,
-          },
-          immediateRender: false, // a breakpoint change re-runs this; don't snap progress back to 0
+      const line = ctx.conditions.narrow ? 0.72 : 0.5;
+      const scrub = gsap.quickTo(state, "progress", {
+        duration: 0.55,
+        ease: "power1.out",
+      });
+      let bounds = [];
+      const measure = () => {
+        bounds = sections.map((section) => {
+          const contents = Array.from(section.children);
+          const first = contents[0].getBoundingClientRect();
+          const last = contents[contents.length - 1].getBoundingClientRect();
+          const box = section.getBoundingClientRect();
+          return {
+            start: first.top + scrollY,
+            end: last.bottom + scrollY,
+            center: box.top + scrollY + box.height / 2,
+          };
+        });
+      };
+      const update = () => {
+        const progress = SAND_PROGRESS.progressAt(
+          bounds,
+          scrollY + innerHeight * line,
+        );
+        if (reduced) state.progress = progress;
+        else scrub(progress);
+      };
+      ScrollTrigger.create({
+        trigger: sections[0],
+        start: "top bottom",
+        endTrigger: sections[sections.length - 1],
+        end: "bottom top",
+        onRefresh: () => {
+          measure();
+          update();
         },
-      );
+        onUpdate: update,
+      });
+      measure();
+      update();
+      document.fonts.ready.then(() => ScrollTrigger.refresh());
+      return () => scrub.tween.kill();
     },
   );
 
@@ -1091,6 +1118,7 @@ export const mountSandScenes = (host) => {
     listeners.forEach((remove) => remove());
     d2?.tl.kill();
     d2?.storeDemo?.kill();
+    (d2?.demos ?? []).forEach((tween) => tween.kill());
     (d2?.loops ?? []).forEach(({ tween }) => tween.kill());
     if (window.__demo === demo) delete window.__demo;
   };

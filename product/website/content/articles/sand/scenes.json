@@ -13,9 +13,19 @@
   "nand",
   "nand-symbol",
   "adder",
+  "binary-place-value",
   "chain",
   "heat",
   "latch",
   "register",
-  "stored-answer"
+  "stored-answer",
+  "select-values",
+  "timing",
+  "working-registers",
+  "alu",
+  "addressed-memory",
+  "program",
+  "control",
+  "execute",
+  "computer"
 ]

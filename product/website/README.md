@@ -291,7 +291,7 @@ metadata is set to published. The prose is rendered at
 build time from `content/articles/sand/script.md`, with the ordered scene manifest
 validated by the renderer. The animation geometry is scoped to its mounted page
 and cleaned up on navigation. The imported animation files are a preserved
-snapshot; later illustration edits must be coordinated with the writing preview. Its four overview chapters belong to the continuous
+snapshot; later illustration edits must be coordinated with the writing preview. Its five overview chapters belong to the continuous
 journey; future chapter guides will organise separate deeper articles, with one
 primary chapter and contextual links from others. Add guide links only when the
 destination exists.
@@ -301,6 +301,20 @@ edition with `node scripts/sync-sand-draft.mjs --source /path/to/script.md`.
 Visual cue blocks stay in the working draft and are omitted from the portable
 website edition. Add `--watch` while editing to update the website preview on saves. Production
 builds use the checked-in edition and do not depend on another local folder.
+
+Chapter 5, **Building a computer**, adds selection, a short propagation-and-capture
+animation, working registers, an ALU, addressed memory, stored instructions and
+control, then traces LC-3 ADD R0, R1, R2 with 3 + 6 = 9. The trace retains the
+source registers and writes 9 to R0. Detailed timing and instruction-processing
+treatments remain future articles. The original memory sum is unchanged.
+
+`runtime/computer-scenes.js` builds the new diagrams using the existing SVG/GSAP
+helpers. `runtime/scroll-progress.js` keeps each later illustration steady while
+its text crosses the reading line, with transitions in the gaps. It preserves the
+opening artwork's centre-to-centre choreography. Check this mapping with
+`node --test scripts/sand-scroll-progress.test.mjs`. The writing preview uses the
+same geometry and mapping; coordinate animation snapshots as well as the prose
+when editing either copy.
 
 The sand card uses one set of particles for a dune, wind and a logic circuit.
 Hover and keyboard focus morph those particles; leaving restores the dune.

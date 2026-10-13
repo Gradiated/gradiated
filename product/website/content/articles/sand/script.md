@@ -72,6 +72,10 @@ Let’s zoom out further and combine NAND gates into a circuit that adds. In bin
 
 Our circuit handles one column at a time. It adds two input bits, aᵢ and bᵢ, along with any carry from the previous column, cᵢ. It produces the answer bit sᵢ and a carry for the next column, cᵢ₊₁. This three-input, two-output circuit is called a full adder.
 
+<!-- scene: binary-place-value -->
+
+In a binary number, each position is worth twice the position to its right. Our four positions represent 8, 4, 2 and 1. So 0011 represents 2 + 1, or 3, while 0110 represents 4 + 2, or 6.
+
 <!-- scene: chain -->
 
 Connect several full adders in a row, passing each carry cᵢ₊₁ into the next column, and we can add entire binary numbers. Here, four adders calculate 0011 + 0110 = 1001, or 3 + 6 = 9. More columns let us work with larger numbers. With addition as a building block, it is a short step to circuits that subtract and multiply, and our toolset has grown.
@@ -98,6 +102,62 @@ Let’s zoom out again and place four latches side by side, each holding one bit
 
 We can now connect our register to the four-bit adder. With write-enable at 1, the register copies the answer, 1001. Set write-enable to 0 and that answer is held. The adder can calculate something new while the register remembers the previous result. We can now both calculate and keep the answer.
 
+We now have circuits that calculate and circuits that remember. Our next step is to combine them into a machine that follows instructions, choosing which values to use, what to calculate, and where to store each result.
+
+## Building a computer
+
+<!-- scene: select-values -->
+
+Our adder calculates with whatever values reach its inputs. To choose those values, we need another circuit called a multiplexer. It takes several inputs and passes one of them to its output, according to a selection signal. We can build this selection circuit from the logic gates we already know. Here, each value travels through a bundle of four wires, carrying the four bits of its binary number.
+
+<!-- scene: timing -->
+
+As a signal passes through gates and wires, each part takes a little time to respond. The light spreading through our illustration shows the result working its way through the circuit. We must let that result settle before capturing it.
+
+To coordinate successive operations, we will use a clock and registers that capture their inputs on a rising clock edge. These registers use storage elements called flip-flops, rather than the write-enable latches we showed earlier. The clock sets the pace, while control signals choose which registers update. One instruction can take several clock cycles.
+
+<!-- scene: working-registers -->
+
+Let’s zoom out again and give our machine several registers for its working values. For our example, we will use a small teaching computer called LC-3. It has eight general-purpose registers, named R0 to R7, each holding sixteen bits. More bit positions let us represent larger numbers using the same binary rules.
+
+We will begin with 3 in R1 and 6 in R2. The register name identifies the slot, while its contents are the value stored there.
+
+<!-- scene: alu -->
+
+We can also group our adder with circuits that perform logical operations. Together, they form an arithmetic and logic unit, or ALU. Control signals select which operation it performs. The registers supply its inputs, and another register can capture the result. A path marked 16 represents sixteen parallel wires, one for each bit.
+
+<!-- scene: addressed-memory -->
+
+Registers hold our immediate working values. We also need memory for a larger collection of information. Each memory location has an address that lets us select it. In LC-3, each addressed location holds sixteen bits.
+
+The address identifies the location. The bits stored there are its contents. Selection logic connects the chosen location to the wires carrying those contents.
+
+<!-- scene: program -->
+
+The same memory can hold both data and instructions. An instruction is a bit pattern specifying an operation and the values or locations involved. Storing a sequence of instructions gives us a program.
+
+A register called the program counter, or PC, holds the address of the instruction to fetch next. Another register, the instruction register, or IR, holds the instruction we have fetched.
+
+<!-- scene: control -->
+
+The instruction bits enter decoding logic, which identifies the operation and its operands. The control unit uses this information to select paths, choose an ALU operation and enable the required register updates.
+
+The controller also remembers which step it is performing. State stored in registers, combined with logic that determines the next step, forms a finite-state machine. Our familiar calculation and memory circuits now coordinate the work of the larger machine.
+
+<!-- scene: execute -->
+
+Let’s follow the instruction ADD R0, R1, R2. It tells the machine to add the contents of R1 and R2, then place the answer in R0. We have already put 3 in R1 and 6 in R2.
+
+The machine fetches the instruction into IR and decodes its fields. Control signals select R1 and R2, direct the ALU to add, and enable R0 to capture the result. R0 now holds 9. During the fetch, PC advances to the following instruction address, ready for the machine to continue.
+
+<!-- scene: computer -->
+
+Let’s zoom out once more. The calculation circuits, working registers and control unit form our central processing unit, or CPU. Connected memory holds its program and data, while input and output connect it to the outside world.
+
+We have built a machine that can follow stored instructions. Our next step is to see how a task written by a person becomes the instruction bits that direct these circuits.
+
 <!-- footer -->
 
-We now have circuits that calculate and circuits that remember. Our next step is to combine them into a machine that follows instructions, choosing which values to use, what to calculate, and where to store each result.
+From a switch to logic, calculation, memory and now a computer, each larger structure gives us a new ability. Next, we will follow the connection from code to physical action.
+
+The LC-3 example and the organisation of our computer diagram follow ETH Zürich’s [Digital Design and Computer Architecture course](https://safari.ethz.ch/ddca/spring2026/), particularly lecture 7 and its LC-3 diagram on slide 65. The illustration is simplified to introduce the parts one step at a time.

@@ -533,3 +533,22 @@ html:has(.sand-journey) {
 .sand-journey .sand-intro h1 {
   text-wrap: balance;
 }
+
+.sand-journey #d2 .computer-signal {
+  stroke: #c89c44;
+  stroke-width: 3px;
+  filter: drop-shadow(0 0 3px #e9c875);
+}
+.sand-journey #d2 .computer-glow {
+  fill: rgba(238, 220, 167, 0.5);
+  stroke: none;
+}
+.sand-journey
+  .scene-text:not([data-scene="quartz"]):not([data-scene="ingot"]):not(
+    [data-scene="wafer"]
+  ) {
+  padding-block: 10vh;
+}
+.sand-journey .scene-text > p + p {
+  margin-top: 1rem;
+}

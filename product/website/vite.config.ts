@@ -17,17 +17,27 @@ const mdxPlugin = mdx({
 
 /* Job postings come only from Ashby, synced into src/ashby-jobs.generated.ts.
    `pnpm build` syncs before building; the dev server does it on start, so a
-   fresh checkout's careers page is not empty. Offline, it carries on with the
-   generated file as it is. */
+   fresh checkout's careers page is not empty. Offline, or after 10 seconds, it
+   carries on with the generated file as it is. */
 const syncAshbyJobs: Plugin = {
   name: "sync-ashby-jobs",
   apply: "serve",
   buildStart() {
-    spawnSync(
+    const result = spawnSync(
       process.execPath,
       [fileURLToPath(new URL("./scripts/sync-ashby-jobs.ts", import.meta.url))],
-      { env: { ...process.env, ASHBY_SYNC_OPTIONAL: "1" }, stdio: "inherit" },
+      {
+        env: { ...process.env, ASHBY_SYNC_OPTIONAL: "1" },
+        stdio: "inherit",
+        // A stalled connection to Ashby must not hold up the dev server.
+        timeout: 10_000,
+      },
     );
+    if (result.error) {
+      console.warn(
+        `Ashby job sync did not finish (${result.error.message}); starting with src/ashby-jobs.generated.ts as it is.`,
+      );
+    }
   },
 };
 

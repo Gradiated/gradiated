@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactElement } from "react";
 import {
   Arrow,
@@ -128,9 +128,11 @@ export const JobDetailPage = ({ job }: { job: Job }): ReactElement => {
   /* Built from the same list the page renders, so the contents cannot come to
      disagree with the sections — unlike the Library's reading page, a posting
      knows its own headings before it draws them. */
-  const about = job.foundingContext
-    ? [...aboutGradiated.slice(0, -1), job.foundingContext]
-    : aboutGradiated;
+  const about =
+    job.about ??
+    (job.foundingContext
+      ? [...aboutGradiated.slice(0, -1), job.foundingContext]
+      : aboutGradiated);
   const sections = [
     { items: about, title: "About Gradiated" },
     { items: job.purpose, title: "Why this role exists" },
@@ -140,7 +142,7 @@ export const JobDetailPage = ({ job }: { job: Job }): ReactElement => {
     { items: job.notFor, title: "This role is not for you if" },
     ...(job.extraSections ?? []),
     { items: job.howWeWork ?? howWeWork, title: "How we work" },
-    { items: payAndEquity, title: "Pay and equity" },
+    { items: job.pay ?? payAndEquity, title: "Pay and equity" },
     {
       items: job.interviewSteps ?? interviewSteps,
       numbered: true,
@@ -150,20 +152,60 @@ export const JobDetailPage = ({ job }: { job: Job }): ReactElement => {
 
   const [active, setActive] = useState<string>();
 
+  /* A contents link pins the section it asked for until the reader scrolls
+     by themselves: near the end of the page a short section cannot reach the
+     top, and the highlight should still name the section that was chosen. */
+  const pinned = useRef<string | undefined>(undefined);
+  const jumpTo = (id: string): void => {
+    pinned.current = id;
+    setActive(id);
+  };
+
   useEffect(() => {
-    const blocks = [...document.querySelectorAll(".gr-job-section")];
-    /* The section the reader is IN: the band is the top third of the viewport,
-       so a heading counts as current from when it reaches the reading position
-       until the next one does. */
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.filter((entry) => entry.isIntersecting);
-        if (visible.length > 0) setActive(visible[0].target.id);
-      },
-      { rootMargin: "0px 0px -70% 0px", threshold: 0 },
+    const blocks = [
+      ...document.querySelectorAll<HTMLElement>(".gr-job-section"),
+    ];
+    /* The section the reader is IN: the last one whose top has passed the
+       reading line, a little below where a contents link lands a heading
+       (the root scroll-padding). Taking the first IntersectionObserver entry
+       instead could name the section above the one just jumped to. */
+    const update = (): void => {
+      if (pinned.current) {
+        setActive(pinned.current);
+        return;
+      }
+      const landing =
+        parseFloat(
+          getComputedStyle(document.documentElement).scrollPaddingTop,
+        ) || 0;
+      const line = landing + window.innerHeight * 0.15;
+      const atEnd =
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 2;
+      let current = blocks[0]?.id;
+      for (const block of blocks) {
+        if (block.getBoundingClientRect().top <= line) current = block.id;
+      }
+      setActive(atEnd ? (blocks.at(-1)?.id ?? current) : current);
+    };
+    const unpin = (): void => {
+      pinned.current = undefined;
+    };
+    const userScrollEvents = ["wheel", "touchstart", "keydown"] as const;
+
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    userScrollEvents.forEach((type) =>
+      window.addEventListener(type, unpin, { passive: true }),
     );
-    blocks.forEach((block) => observer.observe(block));
-    return () => observer.disconnect();
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+      userScrollEvents.forEach((type) =>
+        window.removeEventListener(type, unpin),
+      );
+    };
   }, [job.slug]);
 
   return (
@@ -222,6 +264,7 @@ export const JobDetailPage = ({ job }: { job: Job }): ReactElement => {
                     anchor(section.title) === active ? "true" : undefined
                   }
                   className="gr-job-nav-link"
+                  onClick={() => jumpTo(anchor(section.title))}
                   href={`#${anchor(section.title)}`}
                   key={section.title}
                 >
@@ -244,6 +287,7 @@ export const JobDetailPage = ({ job }: { job: Job }): ReactElement => {
               {sections.map((section) => (
                 <a
                   className="gr-fab-link"
+                  onClick={() => jumpTo(anchor(section.title))}
                   href={`#${anchor(section.title)}`}
                   key={section.title}
                 >

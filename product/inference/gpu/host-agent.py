@@ -151,13 +151,16 @@ def hf_home(config, profile):
 def model_weights(profile):
     if profile.get("kind") == "training":
         recipe = profile.get("recipe") or {}
-        repo, revision = recipe.get("model"), recipe.get("revision")
+        pins = [(recipe.get("model"), recipe.get("revision"))]
     else:
+        # Kev loads its base checkpoint from the tokenizer repository as well as its own weights.
         release = profile.get("release", {})
-        repo, revision = release.get("model_path"), release.get("model_revision")
-    if isinstance(repo, str) and re.fullmatch(r"[\w.-]+/[\w.-]+", repo) \
-            and isinstance(revision, str) and re.fullmatch(r"[0-9a-f]{40}", revision):
-        return repo, revision
+        pins = [(release.get("model_path"), release.get("model_revision")),
+                (release.get("tokenizer_path"), release.get("tokenizer_revision"))]
+    return list(dict.fromkeys(
+        (repo, revision) for repo, revision in pins
+        if isinstance(repo, str) and re.fullmatch(r"[\w.-]+/[\w.-]+", repo)
+        and isinstance(revision, str) and re.fullmatch(r"[0-9a-f]{40}", revision)))
 
 
 def repo_directory(hub, repo):
@@ -216,7 +219,7 @@ def prepare_model_cache(config, profile, directory, pods, log, files=hub_files, 
         return
     # Every model on this host stays cached, and unfinished downloads and LoRA caches keep their space.
     pods = [(profile, directory), *pods]
-    required = {other for other in (model_weights(item) for item, _ in pods) if other}
+    required = {pin for item, _ in pods for pin in model_weights(item)}
     needed = config.get("model_cache_reserve_gib", 64) * 2**30
     needed += sum(lora_headroom(item, path) for item, path in pods)
     for repo, revision in required:
@@ -227,9 +230,10 @@ def prepare_model_cache(config, profile, directory, pods, log, files=hub_files, 
     with (hub.parent / ".gradiated-cache.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         evict_models(hub, needed, {repo_directory(hub, repo).name for repo, _ in required}, log, usage)
-        cached = repo_directory(hub, weights[0])
-        if cached.is_dir():
-            (cached / CACHE_MARKER).touch()
+        for repo, _ in weights:
+            cached = repo_directory(hub, repo)
+            if cached.is_dir():
+                (cached / CACHE_MARKER).touch()
 
 
 def host_pods(config, exclude):

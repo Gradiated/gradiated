@@ -537,6 +537,23 @@ class ModelCacheTest(unittest.TestCase):
 
         self.assertIn('Could not size', self.logs[0])
 
+    def test_base_repositories_loaded_with_the_model_are_protected_and_sized(self):
+        base = self.cached('org/base', 500, 1)
+        stale = self.cached('org/stale', 150, 2)
+        kev = {'release': {'model_path': 'org/model', 'model_revision': self.revision,
+                           'tokenizer_path': 'org/base', 'tokenizer_revision': self.revision}}
+        sized = []
+
+        def files(repo, _revision):
+            sized.append(repo)
+            return {'model.safetensors': 100, 'config.json': 1}
+        self.prepare(kev, files=files)
+
+        self.assertTrue(base.exists())
+        self.assertFalse(stale.exists())
+        self.assertEqual(sorted(sized), ['org/base', 'org/model'])
+        self.assertGreater(agent.last_used(base), 1)
+
     def test_profiles_without_pinned_weights_are_ignored(self):
         old = self.cached('org/old', 500, 1)
 

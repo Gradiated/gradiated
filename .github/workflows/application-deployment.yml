@@ -18,7 +18,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: production-deployment
+  group: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion != 'success' && format('ignored-deployment-{0}', github.run_id) || 'production-deployment' }}
   cancel-in-progress: false
 
 env:
@@ -248,7 +248,8 @@ jobs:
           oauth-client-id: ${{ vars.TAILSCALE_CI_CLIENT_ID }}
           audience: ${{ vars.TAILSCALE_CI_AUDIENCE }}
           tags: tag:ci
-          args: --accept-routes
+      - name: Enable private AWS subnet routes
+        run: sudo "$(command -v tailscale)" set --accept-routes=true
       - name: Connect to production cluster
         run: aws eks update-kubeconfig --name gradiated-prod --region "${AWS_REGION}"
       - name: Wait for the recorded release

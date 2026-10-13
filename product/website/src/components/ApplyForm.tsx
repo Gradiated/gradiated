@@ -54,10 +54,10 @@ const Control = ({ field }: { field: AshbyField }): ReactElement => {
       return (
         <div className="gr-apply-choices" role="radiogroup" aria-labelledby={`${field.path}-label`}>
           <label>
-            <input name={field.path} required={field.required} type="radio" value="true" /> Yes
+            <input name={`${field.path}::boolean`} required={field.required} type="radio" value="true" /> Yes
           </label>
           <label>
-            <input name={field.path} type="radio" value="false" /> No
+            <input name={`${field.path}::boolean`} type="radio" value="false" /> No
           </label>
         </div>
       );

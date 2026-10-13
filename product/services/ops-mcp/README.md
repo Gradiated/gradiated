@@ -9,28 +9,28 @@ API using the existing product image.
 
 ## Tools and authority
 
-| Tool                           | Data                                                                                  |
-| ------------------------------ | ------------------------------------------------------------------------------------- |
-| `active_alerts`                | Prometheus firing/pending alerts and dashboard links                                  |
-| `query_metrics`                | Instant PromQL at an optional RFC 3339 time, maximum 200 returned series              |
-| `query_metric_history`         | PromQL between RFC 3339 `start` and `end`, optional step, 50 series                   |
-| `metric_metadata`              | Metric names, types, help text and units, searched by regular expression              |
-| `prometheus_targets`           | Scrape target health, last scrape and last error                                      |
-| `prometheus_rules`             | Alerting and recording rules with expressions, health and active alerts               |
-| `label_names`                  | Label names for metrics or logs, optionally for a selector and period                 |
-| `label_values`                 | Values of one label for metrics or logs, including `__name__`                         |
-| `series`                       | Full label sets of matching series or log streams                                     |
-| `query_logs`                   | LogQL between RFC 3339 `start` and `end`, optional step, 200 lines                    |
-| `log_fields`                   | Fields Loki detects in matching log lines, with type, cardinality and parser          |
-| `alertmanager_alerts`          | Alerts after routing, with silenced, inhibited and receiver state                     |
-| `alertmanager_silences`        | Silences with matchers, state, author and comment                                     |
-| `workload_status`              | Pod health, restarts, last termination, resources and node placement in one namespace |
-| `rollouts`                     | Deployments, StatefulSets, DaemonSets and ReplicaSets with revisions and images       |
-| `argocd_applications`          | Argo CD sync and health, deployed revision, deploy history and drifted resources      |
-| `node_status`                  | EKS node conditions and available resources                                           |
-| `dashboards`                   | Existing Grafana dashboard links                                                      |
-| `register_instance`            | Prepares a GPU host for Kubernetes and returns Git configuration (the only write tool)                    |
-| `instance_registration_status` | Progress of registrations since the last restart                                      |
+| Tool                           | Data                                                                                   |
+| ------------------------------ | -------------------------------------------------------------------------------------- |
+| `active_alerts`                | Prometheus firing/pending alerts and dashboard links                                   |
+| `query_metrics`                | Instant PromQL at an optional RFC 3339 time, maximum 200 returned series               |
+| `query_metric_history`         | PromQL between RFC 3339 `start` and `end`, optional step, 50 series                    |
+| `metric_metadata`              | Metric names, types, help text and units, searched by regular expression               |
+| `prometheus_targets`           | Scrape target health, last scrape and last error                                       |
+| `prometheus_rules`             | Alerting and recording rules with expressions, health and active alerts                |
+| `label_names`                  | Label names for metrics or logs, optionally for a selector and period                  |
+| `label_values`                 | Values of one label for metrics or logs, including `__name__`                          |
+| `series`                       | Full label sets of matching series or log streams                                      |
+| `query_logs`                   | LogQL between RFC 3339 `start` and `end`, optional step, 200 lines                     |
+| `log_fields`                   | Fields Loki detects in matching log lines, with type, cardinality and parser           |
+| `alertmanager_alerts`          | Alerts after routing, with silenced, inhibited and receiver state                      |
+| `alertmanager_silences`        | Silences with matchers, state, author and comment                                      |
+| `workload_status`              | Pod health, restarts, last termination, resources and node placement in one namespace  |
+| `rollouts`                     | Deployments, StatefulSets, DaemonSets and ReplicaSets with revisions and images        |
+| `argocd_applications`          | Argo CD sync and health, deployed revision, deploy history and drifted resources       |
+| `node_status`                  | EKS node conditions and available resources                                            |
+| `dashboards`                   | Existing Grafana dashboard links                                                       |
+| `register_instance`            | Prepares a GPU host for Kubernetes and returns Git configuration (the only write tool) |
+| `instance_registration_status` | Progress of registrations since the last restart                                       |
 
 Every tool except `register_instance` has `readOnlyHint: true`,
 `destructiveHint: false` and `idempotentHint: true`; client administrators may run

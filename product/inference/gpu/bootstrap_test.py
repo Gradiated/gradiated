@@ -64,6 +64,10 @@ class BootstrapTests(unittest.TestCase):
                 bootstrap.enroll(payload)
                 run.assert_called_once_with(['bash', '/opt/gradiated/bin/start-tailscale'], check=True, timeout=10)
                 self.assertEqual(token.read_text(), payload['management_token'])
+                updated = {**config, 'hf_home': '/new/controller/cache'}
+                config_path.write_text(json.dumps(updated))
+                bootstrap.enroll(payload)
+                self.assertEqual(json.loads(config_path.read_text()), updated)
                 changed = {**payload, 'management_token': 'different_' + 'a' * 48}
                 with self.assertRaises(ValueError): bootstrap.enroll(changed)
 

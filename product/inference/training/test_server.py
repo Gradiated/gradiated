@@ -16,8 +16,8 @@ class StartupTests(unittest.TestCase):
             patch.dict(
                 "os.environ",
                 {
-                    "NOMAD_ALLOC_DIR": "/tmp/allocation",
-                    "NOMAD_ALLOC_ID": "allocation-1",
+                    "GRADIATED_RUNTIME_DIR": "/tmp/allocation",
+                    "GRADIATED_POD_UID": "allocation-1",
                     "TRAINING_RECIPE_JSON": json.dumps(recipe),
                 },
             ),

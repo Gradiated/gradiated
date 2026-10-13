@@ -53,9 +53,11 @@ def enroll(payload):
     config = validate(payload, inventory)
     if CONFIG.exists():
         previous = json.loads(CONFIG.read_text())
-        matching = previous == config and hmac.compare_digest(Path(config['token_file']).read_text(), payload['management_token'])
-        staged = all((ROOT / 'bundles' / digest / '.bundle-sha256').exists() and (ROOT / 'bundles' / digest / '.bundle-sha256').read_text().strip() == digest for digest in config['runtimes'])
-        if matching and staged:
+        token_path = Path(previous.get('token_file', config['token_file']))
+        devices = previous.get('gpu_uuids', [])
+        matching = previous.get('instance_id') == config['instance_id'] and previous.get('token_file') == config['token_file'] and bool(devices) and set(devices).issubset(inventory) and token_path.exists() and hmac.compare_digest(token_path.read_text(), payload['management_token'])
+        staged = all((ROOT / 'bundles' / digest / '.bundle-sha256').exists() and (ROOT / 'bundles' / digest / '.bundle-sha256').read_text().strip() == digest for digest in previous.get('runtimes', {}))
+        if matching and staged and previous.get('runtimes'):
             subprocess.run(['bash', '/opt/gradiated/bin/start-tailscale'], check=True, timeout=10)
             return
         if active:

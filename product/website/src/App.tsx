@@ -19,6 +19,7 @@ import { ArticleReadingPage, MethodReadingPage } from "./pages/ReadingPages";
 import { StylePage } from "./pages/StylePage";
 import { TrainingPage } from "./pages/TrainingPage";
 import { ArtworkGeneratorPage } from "./pages/ArtworkGeneratorPage";
+import { AboutPage } from "./pages/AboutPage";
 
 /* No layout wrapper. Every route now carries its own Substrate, Nav and
    Footer, so there is nowhere left for the legacy SiteLayout to be reached
@@ -37,6 +38,7 @@ export const AppRoutes = (): ReactElement => (
         every other page on the design system. The legacy layout is what was
         giving it the old nav and the old footer. */}
     <Route element={<HomePage />} path="/" />
+    <Route element={<AboutPage />} path="/about/" />
     <Route element={<LibraryIndexPage />} path="/library/" />
     <Route
       element={<LibraryIndexPage initialFilter="notes" />}

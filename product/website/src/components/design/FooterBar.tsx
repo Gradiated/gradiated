@@ -1,3 +1,4 @@
+import { Logo as PostHogLogo } from "@posthog/brand/logo";
 import { useEffect, useState } from "react";
 import type { CSSProperties, ReactElement } from "react";
 import {
@@ -113,7 +114,21 @@ const ThemeSelector = (): ReactElement => {
 
 export const FooterBar = (): ReactElement => (
   <div className="gr-footer-bar">
-    <p className="gr-footer-legal">© 2026 Gradiated Ltd</p>
+    <div className="gr-footer-ownership">
+      <a
+        aria-label="PostHog"
+        className="gr-footer-parent-link"
+        href="https://posthog.com/"
+        rel="noreferrer"
+        target="_blank"
+      >
+        <PostHogLogo className="gr-footer-parent-logo" variant="mono" />
+      </a>
+      <p className="gr-footer-parent-copy">
+        Gradiated is a brand owned by PostHog.
+      </p>
+      <p className="gr-footer-legal">© 2026 PostHog Inc.</p>
+    </div>
     <Clock />
     <ThemeSelector />
   </div>

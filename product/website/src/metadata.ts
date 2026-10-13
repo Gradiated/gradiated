@@ -350,7 +350,8 @@ export const getStructuredData = (pathname: string): object[] => {
           addressLocality: city.trim(),
         },
       })),
-      ...(job.remote && {
+      // Google's JobPosting name for a remote role.
+      ...(job.workplace === "REMOTE" && {
         jobLocationType: "TELECOMMUTE",
         applicantLocationRequirements: { "@type": "Country", name: "GB" },
       }),

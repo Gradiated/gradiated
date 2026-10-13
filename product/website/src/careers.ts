@@ -11,8 +11,8 @@ export type Job = {
   employmentType?: string;
   foundingContext?: string;
   officeDays?: string;
-  /** Fully remote: marked as telecommute in the JobPosting structured data. */
-  remote?: boolean;
+  /** In person when absent. */
+  workplace?: "REMOTE" | "IN_PERSON";
   howWeWork?: string[];
   interviewSteps?: string[];
   title: string;

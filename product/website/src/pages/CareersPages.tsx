@@ -198,7 +198,11 @@ export const JobDetailPage = ({ job }: { job: Job }): ReactElement => {
               </div>
               <div>
                 <dt className="gr-label gr-muted">Office</dt>
-                <dd>{job.officeDays ?? OFFICE_DAYS}</dd>
+                <dd>
+                  {job.workplace === "REMOTE"
+                    ? "Remote"
+                    : (job.officeDays ?? OFFICE_DAYS)}
+                </dd>
               </div>
               <div>
                 <dt className="gr-label gr-muted">Compensation</dt>

@@ -88,6 +88,7 @@ print(json.dumps({'connection_preserving_migration':True,'recovery_installed':Tr
 
 class MigrationTests(unittest.TestCase):
     def test_dispatcher_handoff_preserves_live_http_and_installs_recovery(self):
+        (ROOT / '.agents/runtime').mkdir(parents=True,exist_ok=True)
         with tempfile.TemporaryDirectory(dir=ROOT / '.agents/runtime') as temporary:
             path = Path(temporary)
             for name in ('control-listener.py', 'forward-control.py', 'run-control.sh'):

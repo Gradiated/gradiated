@@ -132,7 +132,10 @@ def main():
     parser.add_argument('--known-hosts', type=Path, required=True)
     args = parser.parse_args()
     if not re.fullmatch('[0-9a-f]{64}', args.sha256):raise ValueError('A verified host digest is required')
-    for target in json.loads(args.targets.read_text()):
+    targets=json.loads(args.targets.read_text())
+    if any(target['ssh'].endswith('@ssh.runpod.io') for target in targets):
+        raise ValueError('This migration requires direct SSH; interactive RunPod gateways are not supported')
+    for target in targets:
         if not re.fullmatch(r'(?:[a-z0-9_][a-z0-9_-]*@)?[a-zA-Z0-9][a-zA-Z0-9.-]*', target['ssh']):raise ValueError('Explicit SSH targets are required')
         command = ['ssh', '-i', str(args.identity_file), '-o', 'UserKnownHostsFile=' + str(args.known_hosts),
                    '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'ConnectTimeout=10',

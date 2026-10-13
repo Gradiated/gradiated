@@ -99,32 +99,43 @@ const toJob = (posting) => {
     else job.extraSections.push({ title: heading, items });
   }
 
-  // No intro text in Ashby: fall back to the first line of "Why this role exists"
-  // (or "What you will do").
-  if (!job.summary) job.summary = job.purpose[0] ?? job.responsibilities[0] ?? "";
+  // No intro text in Ashby: fall back to the first line of the description, then
+  // to the title. The summary is also the page's meta description, which the SEO
+  // check requires, so it is never left empty.
+  if (!job.summary) {
+    job.summary =
+      job.purpose[0] ??
+      job.responsibilities[0] ??
+      job.requirements[0] ??
+      job.extraSections[0]?.items[0] ??
+      `${posting.title} at Gradiated.`;
+  }
   if (job.extraSections.length === 0) delete job.extraSections;
   return job;
 };
-
-/** A page needs a summary (it becomes the meta description) and something to read. */
-const isComplete = (job) =>
-  Boolean(job.summary) &&
-  [job.purpose, job.responsibilities, job.requirements].some((items) => items.length > 0);
 
 try {
   const res = await fetch(`https://api.ashbyhq.com/posting-api/job-board/${BOARD}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const { jobs = [] } = await res.json();
-  // A half-written posting is skipped rather than failing the whole site build.
+  // Every listed posting gets a page, however much of the description is filled
+  // in. Slugs and summaries must be unique (the SEO check fails on duplicates),
+  // so clashes get the title appended or a number added.
   const ashbyJobs = [];
+  const slugs = new Set();
+  const titles = new Set();
+  const summaries = new Set();
   for (const posting of jobs.filter((p) => p.isListed !== false)) {
     const job = toJob(posting);
-    if (isComplete(job)) ashbyJobs.push(job);
-    else
-      console.warn(
-        `Skipping "${posting.title}" from Ashby: it needs a summary line and at least one of ` +
-          `"Why this role exists", "What you will do" or "What we are looking for".`,
-      );
+    if (titles.has(job.title) && job.location) job.title = `${job.title} (${job.location})`;
+    titles.add(job.title);
+    let slug = job.slug;
+    for (let n = 2; slugs.has(slug); n++) slug = `${job.slug}-${n}`;
+    job.slug = slug;
+    slugs.add(slug);
+    if (summaries.has(job.summary)) job.summary = `${posting.title} at Gradiated: ${job.summary}`;
+    summaries.add(job.summary);
+    ashbyJobs.push(job);
   }
 
   await writeFile(

@@ -99,17 +99,33 @@ const toJob = (posting) => {
     else job.extraSections.push({ title: heading, items });
   }
 
-  // No intro text in Ashby: fall back to the first line of "Why this role exists".
-  if (!job.summary) job.summary = job.purpose[0] ?? "";
+  // No intro text in Ashby: fall back to the first line of "Why this role exists"
+  // (or "What you will do").
+  if (!job.summary) job.summary = job.purpose[0] ?? job.responsibilities[0] ?? "";
   if (job.extraSections.length === 0) delete job.extraSections;
   return job;
 };
+
+/** A page needs a summary (it becomes the meta description) and something to read. */
+const isComplete = (job) =>
+  Boolean(job.summary) &&
+  [job.purpose, job.responsibilities, job.requirements].some((items) => items.length > 0);
 
 try {
   const res = await fetch(`https://api.ashbyhq.com/posting-api/job-board/${BOARD}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const { jobs = [] } = await res.json();
-  const ashbyJobs = jobs.filter((posting) => posting.isListed !== false).map(toJob);
+  // A half-written posting is skipped rather than failing the whole site build.
+  const ashbyJobs = [];
+  for (const posting of jobs.filter((p) => p.isListed !== false)) {
+    const job = toJob(posting);
+    if (isComplete(job)) ashbyJobs.push(job);
+    else
+      console.warn(
+        `Skipping "${posting.title}" from Ashby: it needs a summary line and at least one of ` +
+          `"Why this role exists", "What you will do" or "What we are looking for".`,
+      );
+  }
 
   await writeFile(
     outputPath,

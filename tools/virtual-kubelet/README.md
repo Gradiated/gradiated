@@ -216,8 +216,9 @@ two verified unused bundles and at most twenty retired pod diagnostic directorie
 for up to seven days. Live processes or occupied cgroups prevent retirement; an
 unrecorded live process blocks bundle cleanup. Model weights use each host's configured `hf_home`; runtime profiles must not override it with a second cache location. Before a pod starts, the agent sizes its pinned weights from the Hugging Face
 file listing and evicts whole `models--*` repositories from that cache, least
-recently used first, until the missing files plus `model_cache_reserve_gib`
-(default 64) fit. Models used by any pod on the host are never evicted, and their
+recently used first, until the missing files, the unused part of each LoRA
+pod's `LORA_DISK_CACHE_BYTES` budget and `model_cache_reserve_gib` (default 64)
+fit. Models used by any pod on the host are never evicted, and their
 unfinished downloads keep their space. Runtimes still download the files
 themselves. If sizing fails or space cannot be freed, the pod starts anyway and
 `runtime.log` records why.

@@ -199,14 +199,26 @@ def evict_models(hub, needed, protected, log, usage=shutil.disk_usage):
         log(f"Model cache needs {needed} free bytes but only {free} remain after eviction")
 
 
-def prepare_model_cache(config, profile, pods, log, files=hub_files, usage=shutil.disk_usage):
+def lora_headroom(profile, directory):
+    environment = profile.get("environment", {})
+    if environment.get("LORA_ENABLED") != "true":
+        return 0
+    cache = directory / "lora"
+    used = sum(path.stat().st_size for path in cache.rglob("*")
+               if path.is_file() and not path.is_symlink()) if cache.is_dir() else 0
+    return max(0, int(environment.get("LORA_DISK_CACHE_BYTES", "0")) - used)
+
+
+def prepare_model_cache(config, profile, directory, pods, log, files=hub_files, usage=shutil.disk_usage):
     hub = hf_home(config, profile) / "hub"
     weights = model_weights(profile)
     if not weights or not hub.is_dir():
         return
-    # Every model on this host stays cached, and downloads still in progress keep their space.
-    required = {weights} | {other for other in map(model_weights, pods) if other}
+    # Every model on this host stays cached, and unfinished downloads and LoRA caches keep their space.
+    pods = [(profile, directory), *pods]
+    required = {other for other in (model_weights(item) for item, _ in pods) if other}
     needed = config.get("model_cache_reserve_gib", 64) * 2**30
+    needed += sum(lora_headroom(item, path) for item, path in pods)
     for repo, revision in required:
         try:
             needed += missing_bytes(hub, repo, revision, files(repo, revision))
@@ -215,21 +227,21 @@ def prepare_model_cache(config, profile, pods, log, files=hub_files, usage=shuti
     with (hub.parent / ".gradiated-cache.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         evict_models(hub, needed, {repo_directory(hub, repo).name for repo, _ in required}, log, usage)
-        directory = repo_directory(hub, weights[0])
-        if directory.is_dir():
-            (directory / CACHE_MARKER).touch()
+        cached = repo_directory(hub, weights[0])
+        if cached.is_dir():
+            (cached / CACHE_MARKER).touch()
 
 
-def host_profiles(config, exclude):
-    profiles = []
+def host_pods(config, exclude):
+    pods = []
     for path in (ROOT / "pods").glob("*/state.json"):
         if path.parent.name == exclude:
             continue
         try:
-            profiles.append(runtime_profile(config, json.loads(path.read_text())["pod"])[1])
+            pods.append((runtime_profile(config, json.loads(path.read_text())["pod"])[1], path.parent))
         except (OSError, ValueError, KeyError):
             pass
-    return profiles
+    return pods
 
 
 def task(uid, stopping):
@@ -274,7 +286,7 @@ def task(uid, stopping):
         def log(message):
             cache_log.write(f"model-cache: {message}\n")
         try:
-            prepare_model_cache(config, profile, host_profiles(config, uid), log)
+            prepare_model_cache(config, profile, directory, host_pods(config, uid), log)
         except Exception as error:
             log(f"Skipped eviction: {error}")
     model = reporter = None

@@ -462,7 +462,8 @@ class ModelCacheTest(unittest.TestCase):
         return {'release': {'model_path': repo, 'model_revision': revision}}
 
     def prepare(self, profile, pods=(), files=lambda _repo, _revision: {'model.safetensors': 100, 'config.json': 1}):
-        agent.prepare_model_cache(self.config, profile, list(pods), self.logs.append, files, self.usage)
+        agent.prepare_model_cache(self.config, profile, self.home / 'pod', [(pod, self.home / f'pod-{index}') for index, pod in enumerate(pods)],
+                                  self.logs.append, files, self.usage)
 
     def test_cache_hit_evicts_nothing_and_marks_the_model_used(self):
         old = self.cached('org/old', 500, 1)
@@ -504,6 +505,19 @@ class ModelCacheTest(unittest.TestCase):
         self.free = 150
 
         self.prepare(self.serving('org/new'), [self.serving('org/downloading')])
+
+        self.assertFalse(stale.exists())
+
+    def test_lora_caches_keep_their_unused_budget(self):
+        stale = self.cached('org/stale', 150, 1)
+        self.cached('org/model', 101, 2, ('model.safetensors', 'config.json'))
+        self.free = 20
+        lora = {**self.serving('org/model'), 'environment': {'LORA_ENABLED': 'true', 'LORA_DISK_CACHE_BYTES': '200'}}
+        cache = self.home / 'pod-0' / 'lora'
+        cache.mkdir(parents=True)
+        (cache / 'adapter.safetensors').write_bytes(b'x' * 150)
+
+        self.prepare(self.serving('org/model'), [lora])
 
         self.assertFalse(stale.exists())
 

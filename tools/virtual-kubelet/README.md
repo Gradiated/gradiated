@@ -70,7 +70,9 @@ existing requests eleven minutes to finish, stops its processes, and verifies
 that its cgroup is empty before releasing GPU claims. Unqualified canaries and
 training pods stop without that inference drain. Kubernetes pod deletion is
 completed after host cleanup; it does not add another grace period. Failed
-cleanup retains the claim. Process birth times prevent signalling a reused PID.
+cleanup retains the claim. Training data and per-pod LoRA caches are removed
+after processes stop; diagnostic logs remain on the host. Process birth times
+prevent signalling a reused PID.
 
 Controller, agent and proxy restarts retain model processes. A host reset loses
 node-local state and requires enrollment again; it must not be used as a

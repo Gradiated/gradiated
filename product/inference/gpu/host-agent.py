@@ -9,6 +9,7 @@ from pathlib import Path
 import pwd
 import re
 import signal
+import shutil
 import subprocess
 import sys
 import threading
@@ -572,6 +573,10 @@ class Agent:
             if (group / "cgroup.procs").read_text().strip():
                 raise RuntimeError("Pod cgroup is occupied; GPU claim retained")
             group.rmdir()
+        for name in ("training", "lora"):
+            cache = directory / name
+            if cache.exists():
+                shutil.rmtree(cache)
         with self.lock:
             path.unlink(missing_ok=True)
             self.refresh_proxy()

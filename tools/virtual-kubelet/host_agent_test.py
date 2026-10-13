@@ -191,6 +191,11 @@ class HostAgentTest(unittest.TestCase):
         directory = self.root / 'pods' / self.uid
         directory.mkdir()
         agent.atomic_json(directory / 'state.json', {'pod': self.pod, 'draining': True, 'drain_started_at': 0})
+        for name in ('training', 'lora'):
+            cache = directory / name
+            cache.mkdir()
+            (cache / 'private-artifact').write_text('synthetic')
+        (directory / 'runtime.log').write_text('diagnostic')
         agent.atomic_json(directory / 'runtime.json', {'runtime': agent.owner(owned),
                          'reporter': {'pid': unrelated.pid, 'birth': 'wrong-birth'}})
         try:
@@ -199,6 +204,9 @@ class HostAgentTest(unittest.TestCase):
             self.assertEqual(owned.wait(timeout=2), -signal.SIGTERM)
             self.assertIsNone(unrelated.poll())
             self.assertFalse((directory / 'state.json').exists())
+            self.assertFalse((directory / 'training').exists())
+            self.assertFalse((directory / 'lora').exists())
+            self.assertTrue((directory / 'runtime.log').exists())
         finally:
             for process in [owned, unrelated]:
                 if process.poll() is None:

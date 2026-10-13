@@ -192,7 +192,7 @@ func (p *provider) GetPodStatus(ctx context.Context, namespace, name string) (*v
 		current, err := p.source.Pods(namespace).Get(name)
 		qualified := err == nil && current.UID == pod.UID && current.Annotations["gradiated.com/qualified"] == "true" &&
 			(current.Annotations["gradiated.com/qualified-runtime"] == "" || current.Annotations["gradiated.com/qualified-runtime"] == incarnation)
-		if result.Ready && qualified {
+		if result.Ready && (qualified || pod.Annotations["gradiated.com/workload-kind"] == "training") {
 			ready = v1.ConditionTrue
 		}
 		status.Phase = v1.PodRunning

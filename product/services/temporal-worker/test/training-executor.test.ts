@@ -34,7 +34,7 @@ it.each([
       engine: {} as TrainingEngine,
       artifacts: {} as TrainingArtifacts,
       contents: createMemoryContentStore(new Map()),
-      nomad: vi.fn(),
+      request: vi.fn(),
       podIds: [],
       host: {
         bundleUrl: "test",
@@ -42,7 +42,6 @@ it.each([
         baseId: "test",
         gpuType: "H100",
       },
-      token: "test",
     });
     try {
       const result = activities.prepareTrainingRun("task-id");
@@ -70,16 +69,16 @@ it("awaits provider credential preflight before reading artifacts or allocating 
     cancellationSignal: new AbortController().signal,
   } as unknown as Context);
   const exists = vi.fn();
-  const nomad = vi.fn();
+  const request = vi.fn();
   const failure = new Error("Cannot load provider credential.");
   const activities = createTrainingExecutorActivities({
     database: {} as ControlDatabase,
     engine: {} as TrainingEngine,
     artifacts: { exists } as unknown as TrainingArtifacts,
     contents: createMemoryContentStore(new Map()),
-    nomad,
+    request,
     podIds: [],
-    token: "test",
+
     host: {
       bundleUrl: "test",
       bundleSha256: "a".repeat(64),
@@ -109,7 +108,7 @@ it("awaits provider credential preflight before reading artifacts or allocating 
       }),
     ).rejects.toBe(failure);
     expect(exists).not.toHaveBeenCalled();
-    expect(nomad).not.toHaveBeenCalled();
+    expect(request).not.toHaveBeenCalled();
   } finally {
     current.mockRestore();
   }

@@ -110,6 +110,14 @@ def runtime_profile(config, pod):
     profile = profiles.get(digest)
     if not profile or profile["image"] != image:
         raise ValueError("Unsupported runtime release")
+    if profile.get("kind") == "training":
+        recipe = json.loads(pod["metadata"].get("annotations", {}).get("gradiated.com/training-recipe", "{}"))
+        if not isinstance(recipe, dict):
+            raise ValueError("Training recipe must be an object")
+        count = recipe.get("gpu_count", 1)
+        if type(count) is not int or not 1 <= count <= 8:
+            raise ValueError("Training GPU count must be between one and eight")
+        profile = {**profile, "gpus": count, "cpu": str(4 * count), "memory": f"{64 * count}Gi", "recipe": recipe}
     allowed_environment = {"TENSOR_PARALLEL_SIZE", "MODEL_ID", "LORA_ENABLED", "LORA_BASE_MODEL_REVISION",
         "LORA_GPU_SLOTS", "LORA_CPU_SLOTS", "LORA_MAX_RANK", "LORA_DISK_CACHE_BYTES", "LORA_DOWNLOAD_HOSTS",
         "GRADIATED_API_BASE_URL", "HOST_IDENTITY_FILE"}
@@ -145,6 +153,11 @@ def task(uid, stopping):
         "NOMAD_ALLOC_DIR": str(directory),
         **profile.get("environment", {}),
     }
+    if profile.get("kind") == "training":
+        environment.update({"NOMAD_ALLOC_ID": uid, "NOMAD_PORT_runtime": str(base),
+                            "GRADIATED_RUNTIME_ROOT": str(bundle), "TRAINER_IMAGE_DIGEST": digest})
+        if profile["recipe"]:
+            environment["TRAINING_RECIPE_JSON"] = json.dumps(profile["recipe"])
     model = reporter = None
     try:
         with ExitStack() as stack:
@@ -166,25 +179,26 @@ def task(uid, stopping):
             model = spawn_user("runtime", [str(bundle / "runtime-launch"), str(bundle)],
                                environment, directory / "runtime.log")
             atomic_json(directory / "runtime.json", {"runtime": owner(model)})
-            reporting = {
-                "PATH": environment["PATH"], "DESMOND_DEPLOYMENT_ID": uid,
-                "DESMOND_RELEASE": profile["release"]["runtime_revision"],
-                "DESMOND_MODEL": profile["model_id"],
-                "DESMOND_MODEL_REVISION": profile["release"]["model_revision"],
-                "DESMOND_RUNTIME_HOST": "127.0.0.1",
-                "DESMOND_RUNTIME_PORT": str(base + 3 if profile.get("warmup") else base),
-                "DESMOND_INGRESS_PORT": "8889", "DESMOND_CONTROL_HOST": "127.0.0.1",
-                "DESMOND_CONTROL_PORT": str(base + 1), "DESMOND_STATUS_HOST": "127.0.0.1",
-                "DESMOND_STATUS_PORT": "3004",
-                "DESMOND_CONTROL_TOKEN_FILE": "/etc/gradiated/runtime-access.token",
-            }
-            reporter = spawn_user("desmond", ["/opt/gradiated/kubelet/desmondd", "--observe"],
-                                  reporting, directory / "desmond.log")
-            atomic_json(directory / "runtime.json", {
-                "runtime": owner(model), "reporter": owner(reporter), "started_at": time.time(),
-            })
+            if profile.get("kind") != "training":
+                reporting = {
+                    "PATH": environment["PATH"], "DESMOND_DEPLOYMENT_ID": uid,
+                    "DESMOND_RELEASE": profile["release"]["runtime_revision"],
+                    "DESMOND_MODEL": profile["model_id"],
+                    "DESMOND_MODEL_REVISION": profile["release"]["model_revision"],
+                    "DESMOND_RUNTIME_HOST": "127.0.0.1",
+                    "DESMOND_RUNTIME_PORT": str(base + 3 if profile.get("warmup") else base),
+                    "DESMOND_INGRESS_PORT": "8889", "DESMOND_CONTROL_HOST": "127.0.0.1",
+                    "DESMOND_CONTROL_PORT": str(base + 1), "DESMOND_STATUS_HOST": "127.0.0.1",
+                    "DESMOND_STATUS_PORT": "3004",
+                    "DESMOND_CONTROL_TOKEN_FILE": "/etc/gradiated/runtime-access.token",
+                }
+                reporter = spawn_user("desmond", ["/opt/gradiated/kubelet/desmondd", "--observe"],
+                                      reporting, directory / "desmond.log")
+                atomic_json(directory / "runtime.json", {
+                    "runtime": owner(model), "reporter": owner(reporter), "started_at": time.time(),
+                })
             while not stopping.wait(1):
-                if model.poll() is not None or reporter.poll() is not None:
+                if model.poll() is not None or (reporter and reporter.poll() is not None):
                     raise RuntimeError("Runtime or reporter exited")
     finally:
         for process in (model, reporter):
@@ -321,6 +335,8 @@ class Agent:
             raise ValueError("One pinned runtime container is required")
         digest, profile = runtime_profile(self.config, pod)
         annotations = pod["metadata"].get("annotations", {})
+        if (annotations.get("gradiated.com/workload-kind") == "training") != (profile.get("kind") == "training"):
+            raise ValueError("Workload kind does not match its runtime")
         if annotations.get("gradiated.com/model-id") != profile["model_id"]:
             raise ValueError("Unsupported model")
         if json.loads(annotations.get("gradiated.com/release", "null")) != profile["release"]:
@@ -406,6 +422,10 @@ class Agent:
                     lora.mkdir(exist_ok=True)
                     account = pwd.getpwnam("runtime")
                     os.chown(lora, account.pw_uid, account.pw_gid)
+                    if profile.get("kind") == "training":
+                        training = directory / "training"
+                        training.mkdir(mode=0o700, exist_ok=True)
+                        os.chown(training, account.pw_uid, account.pw_gid)
                     state = {"pod": body["pod"], "draining": False, "gpu_uuids": devices, "port_base": port}
                     atomic_json(path, state)
                     with (directory / "task.log").open("ab") as output:
@@ -434,7 +454,8 @@ class Agent:
                         qualified = state.get("qualified_once", False) or (supplied or state["pod"])["metadata"].get("annotations", {}).get("gradiated.com/qualified") == "true"
                         state["draining"] = True
                         state["drain_started_at"] = time.time()
-                        state["drain_seconds"] = 660 if qualified else 0
+                        _, profile = runtime_profile(self.config, state["pod"])
+                        state["drain_seconds"] = 660 if qualified and profile.get("kind") != "training" else 0
                         atomic_json(path, state)
                         self.refresh_proxy()
                         threading.Thread(target=self.drain, args=(uid,), daemon=True).start()
@@ -555,6 +576,10 @@ if __name__ == "__main__":
                 task(str(uuid.UUID(sys.argv[2])), stopping)
             except Exception as error:
                 print(f"Runtime attempt failed: {type(error).__name__}", flush=True)
+            config = json.loads(CONFIG.read_text())
+            state = json.loads((ROOT / "pods" / sys.argv[2] / "state.json").read_text())
+            if runtime_profile(config, state["pod"])[1].get("kind") == "training":
+                break
             if stopping.wait(backoff):
                 break
             backoff = min(backoff * 2, 60)

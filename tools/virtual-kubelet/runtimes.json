@@ -70,5 +70,15 @@
     "environment": {
       "TENSOR_PARALLEL_SIZE": "4"
     }
+  },
+  "590ec302e50141b59f1db3d28c1d34128fd05ca3c7fc8007592b304b505fe652": {
+    "kind": "training",
+    "image": "gradiated/training-bundle@sha256:590ec302e50141b59f1db3d28c1d34128fd05ca3c7fc8007592b304b505fe652",
+    "model_id": "training",
+    "release": {},
+    "gpus": 1,
+    "cpu": "4",
+    "memory": "64Gi",
+    "startup_timeout": 300
   }
 }

@@ -17,10 +17,7 @@ import {
   type ControlDatabase,
   type ContentStore,
 } from "@gradiated/control";
-import {
-  createNomadRequest,
-  parseNomadEnvironment,
-} from "@gradiated/nomad-pki";
+import { createKubernetesRequest } from "@gradiated/control";
 import { createTrainingExecutorActivities } from "./executor-activities.js";
 import { trainingConfiguration } from "./configuration.js";
 import { createMockTrainingActivities } from "./activities.js";
@@ -48,10 +45,7 @@ export const runTrainingWorker = async (input: {
   let cleanUpJobs: (() => Promise<void>) | undefined;
   const configureTrainingExecutor = (engine: TrainingEngine) => {
     const config = trainingConfiguration(input.environment);
-    const nomad = parseNomadEnvironment(input.environment);
-    if (!nomad) throw new Error("Training requires Nomad credentials.");
-
-    const request = createNomadRequest(nomad);
+    const request = createKubernetesRequest(input.signal);
     cleanUpJobs = () =>
       stopClosedTrainingJobs({
         request,
@@ -70,9 +64,8 @@ export const runTrainingWorker = async (input: {
       artifacts: createTrainingArtifacts(
         new ObjectStorage(config.TRAINING_ARTIFACTS_BUCKET),
       ),
-      nomad: request,
+      request,
       podIds: config.TRAINING_POD_IDS,
-      token: config.TRAINING_HOST_TOKEN,
       host: {
         bundleUrl: config.TRAINING_BUNDLE_URL,
         bundleSha256: config.TRAINING_BUNDLE_SHA256,

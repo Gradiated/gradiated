@@ -1,166 +1,105 @@
-# RunPod Virtual Kubelet prototype
+# Kubernetes workers on RunPod
 
-This tests whether the Kubernetes scheduler and Deployment controller can manage
-processes inside an existing RunPod container. It uses Virtual Kubelet v1.11.0
-and pinned SSH. It does not create, reset, update or terminate RunPod pods.
+RunPod gives us a container with attached GPUs, rather than a machine where we
+can install a normal kubelet and container runtime. The GPU controller runs in
+EKS and uses Virtual Kubelet to represent each enrolled RunPod host as a
+Kubernetes Node. Kubernetes schedules model pods and training Jobs onto those
+Nodes; a small host agent starts their pinned runtime bundles.
 
-The controller runs beside an isolated local Kubernetes API. Kubernetes
-credentials stay on that machine. A root-owned Python helper on an idle RunPod
-host starts a fixed smoke process as UID 65534, with an empty GPU visibility
-mask and no inherited credentials. Pod deletion terminates that process group;
-it does not release the provider reservation. The helper records process birth
-times to avoid signalling a different process after PID reuse. Smoke processes
-expire after ten minutes even if the controller disappears.
+The adapter supports our trusted model and training runtimes. It does not run
+arbitrary container images, provide pod IPs or CNI networking, mount Kubernetes
+volumes, or expose kubelet logs and exec. Bare-metal hosts should use an ordinary
+kubelet and container runtime instead.
 
-The virtual node advertises two CPUs, 1 GiB of memory and eight pod slots. These
-are scheduler accounting values, not enforced process limits. It advertises no
-GPUs by default. Only the `vk-trial` namespace and the fixed CPU/GPU discovery
-workloads are accepted. Their image names identify the helper's built-in
-processes; no container image is pulled or executed.
+## Scheduling and execution
 
-The binary deliberately rejects Kubernetes API endpoints outside HTTPS on
-`127.0.0.1`. This is a feasibility test, not an EKS deployment manifest.
+`cmd/kev-controller` watches the `gpu-inference` namespace. Three controller
+replicas run on separate EKS nodes and elect one leader. Host operations carry a
+fencing epoch so a replaced leader cannot continue changing workloads.
 
-The live smoke test passed on an existing four-B300 RunPod host: CPU Deployment
-scaling from two to three replicas and back to one, preservation of remote
-process IDs across controller restart, GPU discovery with a 2+1+1 allocation,
-and a fourth GPU pod remaining Pending because capacity was exhausted. No model
-processes or provider configuration were changed. This establishes feasibility
-of basic scheduling and process management, not production serving readiness.
+Each RunPod host advertises its GPU count, CPU budget, memory budget and GPU
+model. Kubernetes places a pod using those resources and its node selector.
+The host agent assigns physical GPU UUIDs, takes exclusive GPU locks, and puts
+the pod's processes in a cgroup with CPU, memory and process limits. It refuses
+a GPU that already has a compute process. Tensor-parallel and single-GPU
+workloads can share a host without sharing a GPU claim.
 
-## Run the smoke test
+`runtimes.json` pins the supported bundles and their execution settings. The
+agent accepts one runtime container per pod and rejects commands, environment
+overrides, mounts and host networking. Models run as `runtime`; their Desmond
+reporter runs as `desmond`. The management agent runs as root.
 
-Use an idle host with pinned SSH credentials. Run a local K3s control plane,
-without worker agents, using this image:
+Inference processes restart with bounded backoff. Training uses Kubernetes Jobs
+with `restartPolicy: Never` and no automatic retry, so a failed trainer cannot
+silently repeat work. The Temporal workflow owns training attempts, reservation
+renewal and cleanup.
 
-```text
-rancher/k3s@sha256:fd4740667b7033055c27d424d0d2d660bf66cedbdb225d68e0eab6dd48aa0fd2
-```
+## Private traffic and credentials
 
-Start it with `server --disable-agent
---disable=traefik,servicelb,metrics-server,local-storage --tls-san=127.0.0.1`,
-and publish its API port only on local loopback. Copy the generated kubeconfig
-to a mode-0600 file outside the repository and change its server port to the
-published port. Every kubectl command below must use that isolated kubeconfig.
+The controller calls the host agent through the host's existing private
+`gpu-<instance UUID>` Tailscale Service. A host-specific management key protects
+these operations from model processes on the same GPU host. This key is not
+inference authentication.
 
-Build and test with Go 1.24:
+The host proxy exposes `/alloc/<Pod UID>` over Tailscale. The product worker
+registers that URL in the existing deployment inventory, so the gateway keeps
+using the same routing, streaming and KV-cache machinery.
+
+Desmond reports through the loopback Tailscale bridge on port 3004. Training
+receives short-lived S3 download and upload grants for its artifacts. Kubernetes
+credentials, AWS administrative credentials and database credentials stay in
+EKS. GPU hosts have no VPC route or Tailscale grant to PostgreSQL, Valkey or the
+Kubernetes API.
+
+## Qualification, updates and deletion
+
+A model process being healthy sets `RuntimeReady`; it does not make the pod
+ready for serving. An EKS worker makes a targeted request through the production
+SDK and records the pod UID and process incarnation that passed. A process
+restart requires another verification. The deployment inventory keeps
+unqualified pods unavailable to normal customer requests.
+
+Argo Rollouts owns model updates. It permits one surge replica and zero
+unavailable replicas, and its analysis job checks the latest pods' SDK
+qualification. Keep enough spare GPU capacity to start the replacement while
+the old replica remains available. The verifier runs on an EKS CPU node and
+needs only permission to read GPU pod status.
+
+Deleting a previously qualified inference pod withdraws new traffic, allows
+existing requests eleven minutes to finish, stops its processes, and verifies
+that its cgroup is empty before releasing GPU claims. Unqualified canaries and
+training pods stop without that inference drain. Kubernetes pod deletion is
+completed after host cleanup; it does not add another grace period. Failed
+cleanup retains the claim. Process birth times prevent signalling a reused PID.
+
+Controller, agent and proxy restarts retain model processes. A host reset loses
+node-local state and requires enrollment again; it must not be used as a
+migration or recovery step on a retained reservation.
+
+## Enrollment and checks
+
+Enrollment stages and verifies the permitted runtime bundles, then installs
+`host-agent.py`, `supervise.py`, Desmond and the root-only configuration using
+`install-host.py`. The controller's host inventory and named node/lease RBAC
+must include the instance, and its management key belongs in the
+`gradiated/prod/platform/gpu-controller` AWS secret. Argo owns the corresponding
+Kubernetes resources under
+`infra/environments/prod/us-east-1/kubernetes/gpu-inference`.
+
+During the Nomad migration, disable Nomad placement before enrolling a host and
+wait for every old workload to drain. Never allow both schedulers to assign the
+same GPUs. Enrollment changes files and processes over pinned SSH, without
+changing RunPod provider settings or releasing the reservation.
+
+Run the local adapter checks with:
 
 ```sh
 cd tools/virtual-kubelet
-go test ./...
-go build -o /tmp/runpod-vk .
+go test -race ./...
+go vet ./...
+python3 host_agent_test.py
 python3 remote_test.py
 ```
 
-The Python process-lifecycle test needs root to drop the test workload to UID
-65534. It uses temporary local files and does not contact RunPod.
-
-Create a root-owned `/tmp/gradiated-vk-<unique trial ID>` directory on the host,
-then copy `remote.py` into it using pinned SSH/SCP. Start the controller:
-
-```sh
-KUBECONFIG=/path/to/isolated-kubeconfig /tmp/runpod-vk \
-  --host=HOST --port=PORT --key=/path/to/key \
-  --known-hosts=/path/to/pinned-known-hosts \
-  --script=/tmp/gradiated-vk-TRIAL/remote.py
-```
-
-Apply `smoke.yaml`, wait for the Deployment to become available, scale from two
-to three replicas and back to one, then delete it. Inspect the helper's
-`pods/<Pod UID>/stdout.log` files over SSH: each must contain
-`VK_READY uid=65534`. Restart the controller while pods are running and verify
-that their UIDs and remote PIDs remain unchanged.
-
-During cleanup, keep the controller running until pod deletion completes, and
-verify that the remote `pods` directory is empty. Then stop the controller,
-remove only the trial directory, and remove the local control-plane container.
-Do not run this test against allocated model GPUs or production EKS.
-
-For GPU discovery on an idle four-GPU host, restart the controller with
-`--gpu-smoke-count=4` and apply `gpu-smoke.yaml`. This schedules one two-GPU
-pod and two one-GPU pods on the same virtual node. The helper assigns distinct
-GPU UUIDs under a file lock and passes them through `CUDA_VISIBLE_DEVICES`.
-Each process initializes the CUDA driver and checks its visible device count;
-it does not allocate model weights, execute kernels or test tensor parallelism.
-Scale `single-gpu-smoke` to three replicas: the extra replica must stay Pending
-with `Insufficient nvidia.com/gpu`. Delete the deployments and verify that no
-remote workload state remains, apart from the helper's lock file.
-
-## What remains before this could replace Nomad
-
-- GPU inventory and allocation with reservation coordination against Nomad
-  during migration. The discovery test coordinates only its own claims; Nomad
-  does not know about them. `CUDA_VISIBLE_DEVICES` alone is not a security
-  boundary between arbitrary workloads. The GPU smoke is not a model-serving
-  or physical device-isolation qualification.
-- Executing our pinned runtime bundles, with separate workload identities,
-  resource enforcement and reliable supervision. Conventional containerd/CNI
-  workers cannot simply be installed inside the current constrained containers.
-- Host and process recovery. This prototype uses Virtual Kubelet's naive node
-  heartbeat, so node Ready does not prove SSH or workload health. It does not
-  restart crashed processes or implement Kubernetes restart policies.
-- Serving endpoints and private reporting over Tailscale. There are no pod IPs,
-  Service routing, DNS, volume mounts or network-policy semantics in this test.
-- SDK qualification before routing, model warmup, stream draining and rollback,
-  including the shared spare-GPU budget across models.
-- Authenticated logs/exec endpoints, metrics and restricted controller RBAC.
-  The high-level Virtual Kubelet constructor watches Secrets and ConfigMaps;
-  that default must be narrowed before connecting to EKS. This prototype reads
-  the original pod spec before execution and rejects explicit environments,
-  preventing resolved environment values from being transferred to RunPod.
-- A dedicated restricted host-management credential. The prototype uses an
-  existing administrative SSH key; a production controller must have only the
-  host operations it needs, rather than general root shell access.
-
-Normal Kubernetes controllers can manage the virtual pods, but supported pod
-execution semantics depend on the provider. This experiment tests that boundary;
-it does not establish that a production adapter is cheaper to maintain than
-Nomad.
-
-## Kev canary in EKS
-
-`cmd/kev-controller` runs the official Virtual Kubelet node and pod controllers
-inside EKS. Three replicas elect one leader. Its namespace RBAC is limited to
-`gpu-inference`; node updates and heartbeats name only enrolled GPU hosts. Host
-requests carry the leader's fencing epoch, so an old leader cannot keep writing
-after its replacement takes over. Kubernetes credentials remain in EKS.
-
-The RunPod host agent executes the pinned Kev runtime bundle, not arbitrary OCI
-images. It rejects commands, environment overrides, mounts and host networking.
-The model runs as `runtime`, Desmond as `desmond`, and the local management API
-as root. A host-specific management key protects that API from model processes;
-it is not inference authentication. Models receive no Kubernetes, database or
-Tailscale administration credentials.
-
-Each Kev pod owns one GPU lock and a cgroup limited to 16 CPUs, 64 GiB and 8192
-processes. Host initialization delegates the container's existing processes to
-`gradiated-system` before enabling CPU, memory and process controllers for the
-GPU pods. This changes processes in the retained container without changing
-RunPod settings or releasing its reservation. Enrollment refuses unsupported
-hosts. The initial agent supports one pinned Kev release on a single RTX PRO
-6000; it is not yet a general provider for multi-GPU runtimes or training jobs.
-
-Controller and host-agent restarts retain model processes. A crashed model or
-reporter is restarted with bounded backoff. Deletion first withdraws readiness,
-then allows eleven minutes for existing requests before stopping the process
-groups and checking that the pod cgroup is empty. GPU claims remain occupied if
-cleanup fails. Process birth times prevent signalling reused PIDs.
-
-`infra/environments/prod/us-east-1/kubernetes/gpu-inference` owns the EKS
-controller and canary workload. Kubernetes Pod UIDs use the existing private
-`/alloc/<id>` serving path. The product worker registers these replicas separately
-from Nomad and keeps them unavailable until SDK qualification. Desmond reports
-through the Tailscale control bridge on loopback port 3004. The GPU has no VPC
-route to PostgreSQL, Valkey or the Kubernetes API.
-
-Nomad scheduling must be disabled on a host before enrolling it as a Kubernetes
-GPU worker. Do not assign the same GPU to both schedulers. Restore Nomad
-eligibility only after Kubernetes workloads have drained and their physical
-GPU claims are gone. The host agent's temporary loopback port 8889 allows its
-canary proxy to coexist with the old Nomad host proxy on port 8888; Tailscale
-Serve forwards the GPU's tailnet port 8888 to the new proxy.
-
-The canary does not provide pod IPs, CNI, volume mounts, arbitrary containers or
-kubelet logs/exec endpoints. Normal bare-metal workers can use the same model
-inventory and qualification flow, but run an ordinary kubelet and container
-runtime. These differences must remain visible in workload configuration.
+`main.go` and `remote.py` are the original isolated SSH lifecycle experiment.
+They are not the production controller or host agent.

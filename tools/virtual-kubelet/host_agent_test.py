@@ -106,6 +106,23 @@ class HostAgentTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.host.assignment(self.pod)
 
+    def test_training_resources_follow_recipe_and_require_training_profile(self):
+        self.config['runtimes'] = {'b' * 64: {'kind': 'training', 'image': 'gradiated/training-bundle@sha256:' + 'b' * 64,
+            'model_id': 'training', 'release': {}, 'gpus': 1, 'cpu': '4', 'memory': '64Gi', 'startup_timeout': 300}}
+        pod = json.loads(json.dumps(self.pod))
+        pod['metadata']['annotations'] = {'gradiated.com/model-id': 'training', 'gradiated.com/release': '{}',
+            'gradiated.com/workload-kind': 'training', 'gradiated.com/training-recipe': '{"gpu_count": 4}'}
+        pod['spec']['containers'][0] = {'image': self.config['runtimes']['b' * 64]['image'],
+            'resources': {kind: {'nvidia.com/gpu': '4', 'cpu': '16', 'memory': '256Gi'} for kind in ['limits', 'requests']}}
+        self.host.validate(pod)
+        pod['spec']['containers'][0]['resources']['requests']['nvidia.com/gpu'] = '1'
+        with self.assertRaises(ValueError):
+            self.host.validate(pod)
+        pod['spec']['containers'][0]['resources']['requests']['nvidia.com/gpu'] = '4'
+        pod['metadata']['annotations'].pop('gradiated.com/workload-kind')
+        with self.assertRaises(ValueError):
+            self.host.validate(pod)
+
     def test_failed_task_cleanup_stops_orphan_and_preserves_unrelated_process(self):
         owned = subprocess.Popen(['sleep', '120'], start_new_session=True)
         unrelated = subprocess.Popen(['sleep', '120'], start_new_session=True)

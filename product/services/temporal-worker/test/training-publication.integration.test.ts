@@ -70,10 +70,9 @@ describe("serving metadata publication", () => {
         engine: {} as TrainingEngine,
         contents: createMemoryContentStore(new Map()),
         artifacts,
-        nomad: vi.fn(),
+        request: vi.fn(),
         podIds: [],
         host: manifest.host,
-        token: "test",
       });
       const current = vi.spyOn(Context, "current").mockReturnValue({
         heartbeat: vi.fn(),

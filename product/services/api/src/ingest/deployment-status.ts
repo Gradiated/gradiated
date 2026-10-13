@@ -6,21 +6,13 @@ import {
 } from "@gradiated/control";
 import { Hono } from "hono";
 
-import {
-  bearerToken,
-  handleIngestError,
-  ingestBodyLimit,
-  readJsonBody,
-  tokenMatches,
-} from "./http.js";
+import { handleIngestError, ingestBodyLimit, readJsonBody } from "./http.js";
 import { serviceLog } from "../logging.js";
 
 type DeploymentStatusIngestDependencies = {
   service: DeploymentStatusService;
-} & (
-  | { tokens: ReadonlyMap<string, string>; provider?: never }
-  | { provider: string; tokens?: never }
-);
+  provider: string;
+};
 
 const failureStatus: Record<DeploymentStatusFailure, 403 | 404> = {
   deployment_not_found: 404,
@@ -28,23 +20,8 @@ const failureStatus: Record<DeploymentStatusFailure, 403 | 404> = {
   runtime_revision_mismatch: 403,
 };
 
-const providerForToken = (
-  authorization: string | undefined,
-  tokens: ReadonlyMap<string, string>,
-): string | undefined => {
-  const supplied = bearerToken(authorization);
-  if (!supplied) return undefined;
-
-  for (const [provider, token] of tokens) {
-    if (tokenMatches(supplied, token)) return provider;
-  }
-
-  return undefined;
-};
-
 export const createDeploymentStatusIngestApp = ({
-  tokens,
-  provider: privateProvider,
+  provider,
   service,
 }: DeploymentStatusIngestDependencies): Hono => {
   const app = new Hono();
@@ -53,11 +30,6 @@ export const createDeploymentStatusIngestApp = ({
     "/v1/deployment-status",
     ingestBodyLimit(64 * 1024),
     async (context) => {
-      const provider =
-        privateProvider ??
-        providerForToken(context.req.header("authorization"), tokens!);
-      if (!provider) return context.json({ error: "unauthorized" }, 401);
-
       const body = await readJsonBody(context);
       if (!body.ok) return context.json({ error: "invalid_json" }, 400);
 

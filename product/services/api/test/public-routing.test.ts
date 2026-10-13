@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { parseAllDocuments } from "yaml";
 
-import { createDeploymentStatusIngestApp } from "../src/ingest/deployment-status.js";
 import { createTestApp } from "./support.js";
 
 const WORKLOADS = new URL(
@@ -61,13 +60,6 @@ const literalPrefix = (path: string) => {
 
 const servedPaths = () => {
   const app = createTestApp();
-  app.route(
-    "/",
-    createDeploymentStatusIngestApp({
-      tokens: new Map([["nomad", "n".repeat(40)]]),
-      service: { report: async () => undefined },
-    }),
-  );
 
   return [...new Set(app.routes.map((route) => literalPrefix(route.path)))]
     .filter((path) => path !== "")

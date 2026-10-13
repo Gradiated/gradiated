@@ -5,12 +5,7 @@ import {
   UuidSchema,
   problemContent,
 } from "@gradiated/contracts";
-import {
-  CertificateAuthorizationError,
-  type InstanceCertificateService,
-  type AdapterHostingService,
-} from "@gradiated/control";
-import { bearerToken } from "../ingest/http.js";
+import { type AdapterHostingService } from "@gradiated/control";
 import type { ApiEnvironment } from "../types.js";
 import { versionResponse } from "./training.js";
 
@@ -19,7 +14,6 @@ const target = z.strictObject({
   version_name: TaskVersionSchema.shape.name.min(1).max(300),
 });
 const errors = {
-  401: { description: "Missing or invalid enrolled host credential." },
   404: { description: "Version not found.", content: problemContent },
   422: { description: "Invalid request.", content: problemContent },
   503: { description: "Adapter unavailable.", content: problemContent },
@@ -76,53 +70,16 @@ const production = createRoute({
 });
 
 export interface AdapterHostingDependencies {
-  credentials: () => Promise<Pick<InstanceCertificateService, "authorize">>;
   service: AdapterHostingService;
 }
 
 export const registerAdapterHostingRoutes = (
   app: OpenAPIHono<ApiEnvironment>,
-  {
-    credentials,
-    service,
-  }: Pick<AdapterHostingDependencies, "service"> &
-    Partial<Pick<AdapterHostingDependencies, "credentials">>,
-  privateListener = false,
+  { service }: AdapterHostingDependencies,
 ) => {
-  if (!privateListener && !credentials)
-    throw new Error("Public adapter routes require host authentication");
-
   for (const route of [grant, production]) {
     app.use(route.getRoutingPath(), async (context, next) => {
       context.header("Cache-Control", "no-store");
-      if (privateListener) return next();
-
-      const supplied = bearerToken(context.req.header("authorization"));
-      const instance = UuidSchema.safeParse(
-        context.req.header("X-Gradiated-Instance-Id"),
-      );
-      const node = UuidSchema.safeParse(
-        context.req.header("X-Gradiated-Nomad-Node-Id"),
-      );
-      if (
-        !supplied ||
-        !/^[A-Za-z0-9_-]{43}$/.test(supplied) ||
-        !instance.success ||
-        !node.success
-      )
-        return context.body(null, 401);
-
-      try {
-        await (
-          await credentials!()
-        ).authorize(instance.data, node.data, supplied);
-      } catch (error) {
-        if (error instanceof CertificateAuthorizationError)
-          return context.body(null, 401);
-
-        throw error;
-      }
-
       await next();
     });
   }

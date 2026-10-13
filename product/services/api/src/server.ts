@@ -2,7 +2,6 @@ import { createExternalModelCatalog } from "./catalog/external-models.js";
 import { createPostHogServer } from "@gradiated/analytics/server";
 import { createApiAnalytics, createSignupHandler } from "./analytics.js";
 import { createEvaluationModelValidator } from "./catalog/evaluation-models.js";
-import { kmsSigner } from "@gradiated/nomad-pki";
 import { createTrainingEngine } from "./training/engine.js";
 import { serve } from "@hono/node-server";
 import { createGpuControlApp } from "./gpu-control.js";
@@ -10,7 +9,6 @@ import {
   createCatalogBillingService,
   createClickHouseRuntimeClient,
   createControlDatabase,
-  createInstanceCertificateService,
   createContentStore,
   createTraceService,
   createTrainingService,
@@ -50,7 +48,6 @@ import {
   createResendWaitlistWelcomeSender,
 } from "./email/waitlist-welcome.js";
 import { parseApiEnvironment } from "./environment.js";
-import { createDeploymentStatusIngestApp } from "./ingest/deployment-status.js";
 import { createProfilingIngestApp } from "./ingest/profiling.js";
 import { serviceLog } from "./logging.js";
 import { ApiMetrics, startApiMetricsServer } from "./metrics.js";
@@ -158,25 +155,7 @@ const auth = createAuthService(database, {
   secret: environment.BETTER_AUTH_SECRET,
   trustedOrigins,
 });
-const hostCertificates =
-  environment.NOMAD_CA_KMS_KEY && environment.NOMAD_CA_PEM
-    ? {
-        credentials: async () => createInstanceCertificateService(database),
-        caCertificate: async () => environment.NOMAD_CA_PEM!,
-        signer: kmsSigner(environment.NOMAD_CA_KMS_KEY),
-        audit: (event: Record<string, unknown>) => {
-          const { event: name, level, ...fields } = event;
-          serviceLog(
-            level === "error" ? "error" : level === "warn" ? "warn" : "info",
-            String(name),
-            fields,
-          );
-        },
-      }
-    : undefined;
-const metrics = new ApiMetrics({
-  hostCertificateCredentials: hostCertificates?.credentials,
-});
+const metrics = new ApiMetrics();
 
 const trainingEngine = createTrainingEngine(process.env);
 const adapterDownloads = createAdapterDownloads(
@@ -193,16 +172,7 @@ const validateEvaluationModel = createEvaluationModelValidator(
 
 const app = createApp({
   analytics,
-  ...(hostCertificates
-    ? {
-        adapterHosting: {
-          credentials: hostCertificates.credentials,
-          service: createAdapterHostingService(database, adapterDownloads),
-        },
-      }
-    : {}),
   externalModels,
-  ...(hostCertificates ? { hostCertificates } : {}),
   allowedOrigins: trustedOrigins,
   auth,
   authTestMailbox,
@@ -237,16 +207,6 @@ const app = createApp({
   },
 });
 
-if (environment.DEPLOYMENT_STATUS_INGEST_TOKENS.size > 0) {
-  app.route(
-    "/",
-    createDeploymentStatusIngestApp({
-      tokens: environment.DEPLOYMENT_STATUS_INGEST_TOKENS,
-      service: createDeploymentStatusService(database, valkey),
-    }),
-  );
-}
-
 const server = serve({
   fetch: app.fetch,
   hostname: environment.HOST,
@@ -262,11 +222,6 @@ const gpuControlServer = environment.GPU_CONTROL_PROVIDER
       fetch: createGpuControlApp({
         provider: environment.GPU_CONTROL_PROVIDER,
         status: createDeploymentStatusService(database, valkey),
-        ...(hostCertificates
-          ? {
-              certificates: hostCertificates,
-            }
-          : {}),
         adapters: {
           service: createAdapterHostingService(database, adapterDownloads),
         },

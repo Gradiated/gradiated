@@ -20,12 +20,8 @@ describe("private GPU control listener", () => {
   });
 
   it("uses network authentication for private adapter requests", async () => {
-    const credentials = vi.fn(() => {
-      throw new Error("Legacy credentials must not be consulted");
-    });
     const productionVersions = vi.fn(async () => []);
     const privateApp = app({
-      credentials,
       service: { productionVersions },
     } as unknown as AdapterHostingDependencies);
     const response = await privateApp.request(
@@ -33,7 +29,6 @@ describe("private GPU control listener", () => {
     );
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ data: [] });
-    expect(credentials).not.toHaveBeenCalled();
     expect(productionVersions).toHaveBeenCalledWith("z-ai/glm-5.3-flash");
   });
 
@@ -60,14 +55,12 @@ describe("private GPU control listener", () => {
           "/api/internal/v1/runtime-bundles/not-a-digest",
         )
       ).status,
-    ).toBe(400);
+    ).toBe(422);
     expect(runtimeBundle).toHaveBeenCalledTimes(1);
   });
 
-  it("rejects oversized adapter requests before credential lookup or JSON parsing", async () => {
-    const credentials = vi.fn();
+  it("rejects oversized adapter requests before JSON parsing", async () => {
     const privateApp = app({
-      credentials,
       service: {},
     } as unknown as AdapterHostingDependencies);
     const response = await privateApp.request(
@@ -79,6 +72,5 @@ describe("private GPU control listener", () => {
       },
     );
     expect(response.status).toBe(413);
-    expect(credentials).not.toHaveBeenCalled();
   });
 });

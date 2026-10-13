@@ -350,6 +350,10 @@ export const getStructuredData = (pathname: string): object[] => {
           addressLocality: city.trim(),
         },
       })),
+      ...(job.remote && {
+        jobLocationType: "TELECOMMUTE",
+        applicantLocationRequirements: { "@type": "Country", name: "GB" },
+      }),
       url,
     });
     return data;

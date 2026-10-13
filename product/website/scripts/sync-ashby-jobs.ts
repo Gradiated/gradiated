@@ -115,6 +115,7 @@ const toJob = (posting: AshbyPosting): Job => {
     datePosted: posting.publishedAt?.slice(0, 10) || undefined,
     title: posting.title,
     employmentType: EMPLOYMENT_TYPES[posting.employmentType ?? ""],
+    remote: posting.workplaceType === "Remote" || undefined,
     // The page otherwise states the usual office days.
     officeDays: posting.workplaceType === "Remote" ? "Remote" : undefined,
     team: posting.team || undefined,

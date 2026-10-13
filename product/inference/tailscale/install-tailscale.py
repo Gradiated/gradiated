@@ -122,7 +122,7 @@ def install(payload):
     )
     if "control_endpoints" in payload:
         endpoints = payload["control_endpoints"]
-        if set(endpoints) != {"api", "nomad-0", "nomad-1", "nomad-2"} or any(
+        if set(endpoints) not in ({"api"}, {"api", "nomad-0", "nomad-1", "nomad-2"}) or any(
             ipaddress.ip_address(address) not in ipaddress.ip_network("100.64.0.0/10")
             for address in endpoints.values()
         ):

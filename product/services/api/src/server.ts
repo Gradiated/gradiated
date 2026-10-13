@@ -254,6 +254,9 @@ const server = serve({
   // Keep backend connections open beyond the public ALB's 660-second idle timeout.
   serverOptions: { keepAliveTimeout: 670_000 },
 });
+const runtimeBundleStorage = environment.TRAINING_ARTIFACTS_BUCKET
+  ? new ObjectStorage(environment.TRAINING_ARTIFACTS_BUCKET)
+  : undefined;
 const gpuControlServer = environment.GPU_CONTROL_PROVIDER
   ? serve({
       fetch: createGpuControlApp({
@@ -267,6 +270,19 @@ const gpuControlServer = environment.GPU_CONTROL_PROVIDER
         adapters: {
           service: createAdapterHostingService(database, adapterDownloads),
         },
+        ...(runtimeBundleStorage
+          ? {
+              runtimeBundle: async (digest: string) => {
+                const key = `bundles/sha256/${digest}.tar.gz`;
+                if (!(await runtimeBundleStorage.exists(key))) return;
+                return {
+                  url: await runtimeBundleStorage.signDownload(key, {
+                    expiresIn: 7200,
+                  }),
+                };
+              },
+            }
+          : {}),
         check: createReadinessCheck({ pool, valkey, timeoutMs: 2_000 }),
       }).fetch,
       hostname: environment.HOST,

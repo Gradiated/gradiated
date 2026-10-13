@@ -18,11 +18,12 @@ TAILNET = ipaddress.ip_network("100.64.0.0/10")
 
 
 def routes(config):
-    if set(config) != set(ENDPOINTS):
+    if set(config) not in ({"api"}, set(ENDPOINTS)):
         raise ValueError("Missing private control endpoint")
     result = []
-    for name, local in ENDPOINTS.items():
-        address = ipaddress.ip_address(config[name])
+    for name, address in config.items():
+        local = ENDPOINTS[name]
+        address = ipaddress.ip_address(address)
         if address not in TAILNET:
             raise ValueError("Control endpoints must be tailnet addresses")
         result.append((local, str(address)))

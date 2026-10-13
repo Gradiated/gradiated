@@ -1,7 +1,9 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { bodyLimit } from "hono/body-limit";
+import { requestId } from "hono/request-id";
 import type { DeploymentStatusService } from "@gradiated/control";
 
+import { registerRuntimeBundleRoutes } from "./routes/runtime-bundles.js";
 import { apiRateLimit } from "./http/request-limits.js";
 import { problemResponse, problems } from "./http/problems.js";
 import { createDeploymentStatusIngestApp } from "./ingest/deployment-status.js";
@@ -22,9 +24,11 @@ export const createGpuControlApp = (dependencies: {
   status: DeploymentStatusService;
   certificates?: HostCertificateDependencies;
   adapters?: Pick<AdapterHostingDependencies, "service">;
+  runtimeBundle?: (digest: string) => Promise<{ url: string } | undefined>;
   check: DependencyCheck;
 }) => {
   const app = new OpenAPIHono<ApiEnvironment>();
+  app.use("*", requestId());
   app.use("/api/*", apiRateLimit());
   app.use(
     "/api/*",
@@ -48,5 +52,7 @@ export const createGpuControlApp = (dependencies: {
     app.route("/", createHostCertificateRouter(dependencies.certificates));
   if (dependencies.adapters)
     registerAdapterHostingRoutes(app, dependencies.adapters, true);
+  if (dependencies.runtimeBundle)
+    registerRuntimeBundleRoutes(app, dependencies.runtimeBundle);
   return app;
 };

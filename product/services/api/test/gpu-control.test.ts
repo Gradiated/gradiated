@@ -37,6 +37,33 @@ describe("private GPU control listener", () => {
     expect(productionVersions).toHaveBeenCalledWith("z-ai/glm-5.3-flash");
   });
 
+  it("issues immutable bundle grants only on the private listener", async () => {
+    const runtimeBundle = vi.fn(async () => ({
+      url: "https://bundles.example.invalid/download",
+    }));
+    const privateApp = createGpuControlApp({
+      provider: "runpod",
+      status: { report: async () => undefined },
+      check: async () => ({}),
+      runtimeBundle,
+    });
+    const digest = "a".repeat(64);
+    const response = await privateApp.request(
+      `/api/internal/v1/runtime-bundles/${digest}`,
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(runtimeBundle).toHaveBeenCalledWith(digest);
+    expect(
+      (
+        await privateApp.request(
+          "/api/internal/v1/runtime-bundles/not-a-digest",
+        )
+      ).status,
+    ).toBe(400);
+    expect(runtimeBundle).toHaveBeenCalledTimes(1);
+  });
+
   it("rejects oversized adapter requests before credential lookup or JSON parsing", async () => {
     const credentials = vi.fn();
     const privateApp = app({

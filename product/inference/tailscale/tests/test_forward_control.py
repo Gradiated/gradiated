@@ -16,7 +16,6 @@ class ControlEndpointTests(unittest.TestCase):
                 forward.routes({name: value for name in forward.ENDPOINTS})
 
     def test_requires_the_complete_known_endpoint_set(self):
-        with self.assertRaises(ValueError):
-            forward.routes({"api": "100.64.0.1"})
+        self.assertEqual(forward.routes({"api": "100.64.0.1"}), [(("127.0.0.1", 3004), "100.64.0.1")])
         with self.assertRaises(ValueError):
             forward.routes({**{name: "100.64.0.1" for name in forward.ENDPOINTS}, "database": "100.64.0.2"})

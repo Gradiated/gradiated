@@ -554,6 +554,28 @@ class ModelCacheTest(unittest.TestCase):
         self.assertEqual(sorted(sized), ['org/base', 'org/model'])
         self.assertGreater(agent.last_used(base), 1)
 
+    def test_repositories_of_unpinned_pods_on_the_host_are_protected(self):
+        unpinned = self.cached('org/unpinned', 500, 1)
+        stale = self.cached('org/stale', 150, 2)
+        training = {'kind': 'training', 'recipe': {'model': 'org/unpinned'}}
+
+        self.prepare(self.serving('org/new'), [training])
+
+        self.assertTrue(unpinned.exists())
+        self.assertFalse(stale.exists())
+
+    def test_unreadable_pod_state_skips_eviction(self):
+        pods = Path(self.directory.name) / 'pods'
+        (pods / 'broken').mkdir(parents=True)
+        (pods / 'broken' / 'state.json').write_text('{')
+        (pods / 'current').mkdir()
+        (pods / 'current' / 'state.json').write_text('{')
+        with patch.object(agent, 'ROOT', Path(self.directory.name)):
+            with self.assertRaises(ValueError):
+                agent.host_pods(self.config, 'current')
+            (pods / 'broken' / 'state.json').unlink()
+            self.assertEqual(agent.host_pods(self.config, 'current'), [])
+
     def test_profiles_without_pinned_weights_are_ignored(self):
         old = self.cached('org/old', 500, 1)
 

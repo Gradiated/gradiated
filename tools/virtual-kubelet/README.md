@@ -218,8 +218,8 @@ unrecorded live process blocks bundle cleanup. Model weights use each host's con
 file listing and evicts whole `models--*` repositories from that cache, least
 recently used first, until the missing files, the unused part of each LoRA
 pod's `LORA_DISK_CACHE_BYTES` budget and `model_cache_reserve_gib` (default 64)
-fit. Models used by any pod on the host are never evicted, and their
-unfinished downloads keep their space. Runtimes still download the files
+fit. Models used by any pod on the host are never evicted, even at an unpinned revision; if any pod state on the host cannot be read, eviction is skipped. Unfinished
+downloads of models in use keep their space. Runtimes still download the files
 themselves. If sizing fails or space cannot be freed, the pod starts anyway and
 `runtime.log` records why.
 Diagnostic logs are bounded at 32 MiB per file using copy/truncate of the recent

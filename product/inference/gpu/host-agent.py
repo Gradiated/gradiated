@@ -148,19 +148,28 @@ def hf_home(config, profile):
     return Path(profile.get("hf_home", config.get("hf_home", "/home/runtime/.cache/huggingface")))
 
 
-def model_weights(profile):
+def model_references(profile):
     if profile.get("kind") == "training":
         recipe = profile.get("recipe") or {}
-        pins = [(recipe.get("model"), recipe.get("revision"))]
+        references = [(recipe.get("model"), recipe.get("revision"))]
     else:
         # Kev loads its base checkpoint from the tokenizer repository as well as its own weights.
         release = profile.get("release", {})
-        pins = [(release.get("model_path"), release.get("model_revision")),
-                (release.get("tokenizer_path"), release.get("tokenizer_revision"))]
+        references = [(release.get("model_path"), release.get("model_revision")),
+                      (release.get("tokenizer_path"), release.get("tokenizer_revision"))]
+    return [(repo, revision) for repo, revision in references
+            if isinstance(repo, str) and re.fullmatch(r"[\w.-]+/[\w.-]+", repo)]
+
+
+def model_repos(profile):
+    # Protection needs only the repository; a pod with an unpinned revision still uses it.
+    return list(dict.fromkeys(repo for repo, _ in model_references(profile)))
+
+
+def model_weights(profile):
     return list(dict.fromkeys(
-        (repo, revision) for repo, revision in pins
-        if isinstance(repo, str) and re.fullmatch(r"[\w.-]+/[\w.-]+", repo)
-        and isinstance(revision, str) and re.fullmatch(r"[0-9a-f]{40}", revision)))
+        (repo, revision) for repo, revision in model_references(profile)
+        if isinstance(revision, str) and re.fullmatch(r"[0-9a-f]{40}", revision)))
 
 
 def repo_directory(hub, repo):
@@ -220,6 +229,7 @@ def prepare_model_cache(config, profile, directory, pods, log, files=hub_files, 
     # Every model on this host stays cached, and unfinished downloads and LoRA caches keep their space.
     pods = [(profile, directory), *pods]
     required = {pin for item, _ in pods for pin in model_weights(item)}
+    protected = {repo_directory(hub, repo).name for item, _ in pods for repo in model_repos(item)}
     needed = config.get("model_cache_reserve_gib", 64) * 2**30
     needed += sum(lora_headroom(item, path) for item, path in pods)
     for repo, revision in required:
@@ -229,7 +239,7 @@ def prepare_model_cache(config, profile, directory, pods, log, files=hub_files, 
             log(f"Could not size {repo}@{revision}: {error}")
     with (hub.parent / ".gradiated-cache.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        evict_models(hub, needed, {repo_directory(hub, repo).name for repo, _ in required}, log, usage)
+        evict_models(hub, needed, protected, log, usage)
         for repo, _ in weights:
             cached = repo_directory(hub, repo)
             if cached.is_dir():
@@ -237,14 +247,16 @@ def prepare_model_cache(config, profile, directory, pods, log, files=hub_files, 
 
 
 def host_pods(config, exclude):
+    # A pod whose state cannot be read may still hold weights, so its error skips eviction.
     pods = []
     for path in (ROOT / "pods").glob("*/state.json"):
         if path.parent.name == exclude:
             continue
         try:
-            pods.append((runtime_profile(config, json.loads(path.read_text())["pod"])[1], path.parent))
-        except (OSError, ValueError, KeyError):
-            pass
+            state = json.loads(path.read_text())
+        except FileNotFoundError:
+            continue
+        pods.append((runtime_profile(config, state["pod"])[1], path.parent))
     return pods
 
 

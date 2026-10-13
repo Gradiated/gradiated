@@ -159,6 +159,7 @@ def task(uid, stopping):
         "TORCHINDUCTOR_CACHE_DIR": "/home/runtime/.cache/torchinductor",
         "TRITON_CACHE_DIR": "/home/runtime/.cache/triton",
         "GRADIATED_RUNTIME_DIR": str(directory),
+        "NOMAD_ALLOC_DIR": str(directory),  # Compatibility with the pinned GLM bundle until its replacement is qualified.
         **profile.get("environment", {}),
     }
     if profile.get("kind") == "training":

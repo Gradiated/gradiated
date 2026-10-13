@@ -60,9 +60,9 @@ module['install'](payload)
 deadline=time.monotonic()+120
 while True:
     try:
-        result=ping()
         current_agent=agent_identity()
-        if result.get('host_launcher') and current_agent and current_agent!=before_agent:
+        result=ping()
+        if result.get('host_launcher') and current_agent and current_agent!=before_agent and agent_identity()==current_agent:
             if snapshot()!=before:raise RuntimeError('Serving process identities changed')
             print(json.dumps({'instance_id':config['instance_id'],'host_launcher':True,'preserved_processes':len(before)}))
             break

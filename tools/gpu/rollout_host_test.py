@@ -8,7 +8,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 spec = importlib.util.spec_from_file_location('rollout', Path(__file__).with_name('rollout-host.py'))
 rollout = importlib.util.module_from_spec(spec)
@@ -20,8 +20,8 @@ pin_spec.loader.exec_module(pin_host)
 
 class RolloutTests(unittest.TestCase):
     def test_migration_waits_for_a_fresh_agent_when_the_launcher_already_exists(self):
-        for restart_during_ping in (False, True):
-            with self.subTest(restart_during_ping=restart_during_ping), tempfile.TemporaryDirectory() as temporary:
+        for restart_during_ping, gateway in ((False, False), (True, False), (False, True), (True, True)):
+            with self.subTest(restart_during_ping=restart_during_ping, gateway=gateway), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary)
                 state = root / 'state'
                 state.mkdir()
@@ -49,7 +49,7 @@ class RolloutTests(unittest.TestCase):
                 paths = {'/var/lib/gradiated-kubelet': state, '/etc/gradiated/kubelet.json': config, '/proc': proc}
                 original_path = pathlib.PosixPath
                 output = io.StringIO()
-                payload = {'instance_id': 'first', 'installer': 'def install(payload): pass'}
+                payload = {'instance_id': 'first', 'installer': 'def install(payload): print(\'{"instance_id":"first","updated":true}\')'}
                 ping = json.dumps({'instance_id': 'first', 'host_launcher': True})
                 replies = 0
                 def reply(*args, **kwargs):
@@ -62,10 +62,27 @@ class RolloutTests(unittest.TestCase):
                         patch('sys.stdin', io.StringIO(json.dumps(payload))), \
                         patch('urllib.request.urlopen', side_effect=reply), \
                         patch('time.sleep', side_effect=restart) as wait, contextlib.redirect_stdout(output):
-                    exec(compile(rollout.REMOTE, 'remote-migration', 'exec'), {})
+                    namespace = {}
+                    exec(compile(rollout.GATEWAY_REMOTE if gateway else rollout.REMOTE, 'remote-migration', 'exec'), namespace)
+                    if gateway:
+                        namespace['install'](payload)
                 wait.assert_called_once()
                 self.assertEqual(json.loads(output.getvalue()),
                                  {'instance_id': 'first', 'host_launcher': True, 'preserved_processes': 0})
+
+    def test_runpod_gateway_uses_interactive_transport(self):
+        run, gateway = Mock(), Mock()
+        rollout.rollout([{'instance_id': 'first', 'ssh': '123abc-456def@ssh.runpod.io'}],
+                        b'binary', 'base', run=run, gateway=gateway)
+        run.assert_not_called()
+        gateway.assert_called_once()
+        command, payload = gateway.call_args.args
+        self.assertEqual(command[:2], ['ssh', '-tt'])
+        self.assertEqual(command[-1], '123abc-456def@ssh.runpod.io')
+        self.assertIn('StrictHostKeyChecking=yes', command)
+        self.assertEqual(payload['instance_id'], 'first')
+        self.assertEqual(payload['desmondd'], 'YmluYXJ5')
+        self.assertIn('installer', payload)
 
     def test_host_pin_cannot_select_a_model_runtime_artifact(self):
         release = {'sha256': 'a' * 64, 'baseId': 'base', 'bundle': 'host'}

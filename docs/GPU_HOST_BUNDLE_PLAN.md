@@ -123,6 +123,72 @@ update automatically. New hosts get the launcher from a re-pinned base image.
 | 3. Controller-driven rollout | `host.json`, renderer and CI check, `configure` staging, one-host-at-a-time rollout, digest metric, `GpuHostUpdateFailed` | A host-agent PR reaches all six hosts after merge with no SSH |
 | 4. Move the control bridge | Control bridge scripts move into the host bundle | One release of bridge changes ships automatically |
 
+## Handoff context
+
+This section is context for whoever implements the plan. The design above is a
+direction, not a specification: change names, formats and phase boundaries where
+the code suggests something better, and record why in the PR.
+
+**Where things live now**
+
+- **Host processes:** `product/inference/gpu/`: `bootstrap.py` enrolls a host and
+  then `execv`s into `supervise.py`, which runs `host-agent.py` and restarts it on
+  SIGHUP. `host_state.py` holds the fsynced atomic-write helpers.
+  `tools/virtual-kubelet/` contains symlinks to these files, plus their tests.
+- **Runtime bundle staging, the pattern to reuse:** `Agent.configure` in
+  `host-agent.py` (its nested `stage()`) downloads through
+  `/opt/gradiated/bin/fetch-runtime` as the `downloader` user and checks
+  `.bundle-sha256`. The controller drives it with the `configure` operation in
+  `tools/virtual-kubelet/cmd/gpu-controller/main.go`.
+- **Building and publishing bundles:** `product/inference/bundles/build.hcl`,
+  `package.sh`, `tools/models/release.mjs`, `tools/images/catalog.mjs` (which
+  defines the `gpu-base` inputs) and `.github/workflows/model-deployment.yml`.
+- **Generated controller configuration:** `tools/gpu/render-config.py`, with
+  inputs in `infra/environments/prod/us-east-1/kubernetes/gpu-inference/`. CI
+  runs `--check`.
+- **Today's manual update path:** `tools/gpu/install-host.py` (it copies the agent
+  files and SIGHUPs the supervisor) and ops-mcp's in-place enrollment in
+  `product/services/ops-mcp/src/instances/in-place.ts`, which verifies installed
+  file hashes.
+- **Background:** `tools/virtual-kubelet/README.md` describes the controller,
+  fencing, drain and recovery behaviour that host updates must not disturb.
+
+**Constraints that aren't obvious from the code**
+
+- Never stop, restart, reset or re-image a retained RunPod reservation. Agent
+  restarts are safe because they keep model processes running. A provider reset
+  loses the host.
+- The host agent and anything the launcher runs use only the Python standard
+  library. Hosts have no package installs.
+- Hosts never receive Kubernetes, database or AWS administrative credentials.
+  Downloads use short-lived grants through the private control bridge.
+- `host-agent.py` imports `/proc` state at load time, so its tests run on Linux
+  (CI uses Ubuntu; locally, a `python:3.12-slim` container with PyYAML 6.0.2
+  works). The controller has `go test -race ./...` and `go vet`.
+- Root `AGENTS.md` and `product/AGENTS.md` cover the PR workflow, commit
+  attribution and resolving review threads.
+
+**What needs a person**
+
+- Anything executed on a production GPU host: the phase 0 rollout itself, the
+  one-time launcher install on the six retained hosts, and the first
+  controller-driven rollout. Prepare these as reviewed commands or tools, and hand
+  them over.
+- Re-pinning the base image for new hosts and merging changes that alter host
+  behaviour, unless the person running the work says otherwise.
+
+**Proving it without production**
+
+Launcher rollback, the health gate, mixed-version controller behaviour and
+interrupted updates can all be exercised in local or CI tests with fake bundles
+and processes. Production rollouts should confirm what tests showed, not discover
+it.
+
+**Decisions left open**
+
+Whether the control bridge ever moves (phase 4); the exact `host.json` and
+`ping` fields; and whether the release automation or a person opens the pin PR.
+
 ## Risks and open questions
 
 - **The launcher is the new thing that must never break.** Keep it tiny, fully

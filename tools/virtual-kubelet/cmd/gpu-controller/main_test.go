@@ -128,3 +128,19 @@ func TestDeletionReleasesKubernetesPodOnlyAfterHostCleanup(t *testing.T) {
 		t.Fatalf("unsafe deletion options: %+v", options)
 	}
 }
+
+func TestTransientProviderFailureKeepsTrainingJobPending(t *testing.T) {
+	original := &v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "training", Namespace: "gpu-inference", UID: types.UID("training-uid")}}
+	client := fake.NewSimpleClientset(original)
+	failed := original.DeepCopy()
+	failed.Status = v1.PodStatus{Phase: v1.PodFailed, Reason: "ProviderFailed", Message: "host temporarily unavailable: operation create returned 503"}
+	result, err := (statusClient{client.CoreV1()}).Pods("gpu-inference").UpdateStatus(context.Background(), failed, metav1.UpdateOptions{})
+	if err != nil || result.Status.Phase != v1.PodPending {
+		t.Fatalf("transient staging failure completed Job: %v", err)
+	}
+	failed.Status.Message = "host operation create returned 422"
+	result, err = (statusClient{client.CoreV1()}).Pods("gpu-inference").UpdateStatus(context.Background(), failed, metav1.UpdateOptions{})
+	if err != nil || result.Status.Phase != v1.PodFailed {
+		t.Fatalf("invalid runtime was not rejected: %v", err)
+	}
+}

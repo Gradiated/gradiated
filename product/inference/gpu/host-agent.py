@@ -222,6 +222,10 @@ def task(uid, stopping):
                     process.wait(timeout=5)
 
 
+class RuntimeStaging(Exception):
+    pass
+
+
 class Agent:
     def __init__(self, config, root=ROOT, config_path=None):
         self.config, self.root = config, root
@@ -472,6 +476,12 @@ class Agent:
             directory = self.root / "pods" / uid
             path = directory / "state.json"
             if operation == "create":
+                image = body["pod"]["spec"]["containers"][0]["image"]
+                digest = image.rsplit("@sha256:", 1)[-1]
+                if digest not in self.config.get("runtimes", {}) and self.catalogue_task is not None:
+                    wanted = json.loads(self.catalogue_task[1])
+                    if digest in wanted and image == wanted[digest]["image"]:
+                        raise RuntimeStaging("Pinned bundle is still being staged")
                 if self.validate(body["pod"]) != uid:
                     raise ValueError("Pod UID does not match the request")
                 if not path.exists():
@@ -617,6 +627,9 @@ def serve():
                 response = agent.request(json.loads(self.rfile.read(size)))
                 payload = json.dumps(response).encode()
                 self.send_response(200)
+            except RuntimeStaging:
+                payload = b'{"error":"runtime_staging"}'
+                self.send_response(503)
             except (ValueError, KeyError, FileNotFoundError) as error:
                 detail = f": {error}" if isinstance(error, (ValueError, FileNotFoundError)) else ""
                 print(f"Host operation rejected: {type(error).__name__}{detail}", flush=True)

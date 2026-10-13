@@ -79,6 +79,18 @@ class HostAgentTest(unittest.TestCase):
         self.assertEqual(self.host.config['runtimes'][digest]['release'], self.config['release'])
         self.assertEqual(self.host.config['gpu_uuids'], ['GPU-test-0'])
 
+    def test_registered_bundle_waits_for_staging_without_creating_state(self):
+        digest = 'b' * 64
+        pod = json.loads(json.dumps(self.pod))
+        pod['spec']['containers'][0]['image'] = 'gradiated/kev-bundle@sha256:' + digest
+        self.host.catalogue_task = (1, json.dumps({digest: {'image': pod['spec']['containers'][0]['image']}}))
+        with self.assertRaises(agent.RuntimeStaging):
+            self.host.request({'operation': 'create', 'uid': self.uid, 'pod': pod, 'epoch': 1})
+        self.assertEqual(self.host.states(), [])
+        pod['spec']['containers'][0]['image'] = 'gradiated/kev-bundle@sha256:' + 'c' * 64
+        with self.assertRaises(ValueError):
+            self.host.request({'operation': 'create', 'uid': self.uid, 'pod': pod, 'epoch': 1})
+
     def test_no_execution_or_credential_overrides(self):
         for key, value in [('env', [{'name': 'TOKEN', 'value': 'secret'}]),
                            ('envFrom', [{'secretRef': {'name': 'db'}}]),

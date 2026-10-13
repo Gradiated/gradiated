@@ -65,6 +65,12 @@ type provider struct {
 type statusPods struct{ typedv1.PodInterface }
 
 func (p statusPods) UpdateStatus(ctx context.Context, pod *v1.Pod, _ metav1.UpdateOptions) (*v1.Pod, error) {
+	// Transient provider failures must not complete restartPolicy: Never Jobs.
+	if pod.Status.Reason == "ProviderFailed" && strings.HasPrefix(pod.Status.Message, "host temporarily unavailable:") {
+		pod = pod.DeepCopy()
+		pod.Status.Phase = v1.PodPending
+		pod.Status.Reason = "WaitingForHost"
+	}
 	// Virtual Kubelet's full-object status writes also overwrite rollout annotations.
 	patch, err := json.Marshal([]map[string]any{
 		{"op": "test", "path": "/metadata/uid", "value": pod.UID},
@@ -117,11 +123,14 @@ func (p *provider) call(ctx context.Context, operation string, uid string, pod *
 	req.Header.Set("Content-Type", "application/json")
 	response, err := hostClient.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("host temporarily unavailable: %w", err)
 	}
 	defer response.Body.Close()
+	if response.StatusCode >= 500 {
+		return fmt.Errorf("host temporarily unavailable: operation %s returned %d", operation, response.StatusCode)
+	}
 	if response.StatusCode != 200 {
-		return fmt.Errorf("host operation %s returned %d", operation, response.StatusCode)
+		return errdefs.InvalidInputf("host operation %s returned %d", operation, response.StatusCode)
 	}
 	return json.NewDecoder(io.LimitReader(response.Body, 1024*1024)).Decode(result)
 }

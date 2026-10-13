@@ -106,61 +106,6 @@ export const COMPUTER_SCENES = (function () {
       });
     };
 
-    const places = group({ "data-diagram": "binary-place-value" }, root);
-    text(220, 105, "each position doubles", { class: "caption" }, places);
-    const positions = [100, 160, 220, 280];
-    positions.forEach((x, i) => {
-      const column = group({}, places);
-      text(x, 150, String(8 >> i), { class: "caption muted" }, column);
-      path(`M${x} 161 V278`, { class: "muted thin" }, column);
-      for (const [digits, y] of [
-        ["0011", 200],
-        ["0110", 250],
-      ]) {
-        const digit = group({}, column);
-        if (digits[i] === "1")
-          mk(
-            "circle",
-            { cx: x, cy: y - 5, r: 15, class: "computer-glow" },
-            digit,
-          );
-        text(
-          x,
-          y,
-          digits[i],
-          { class: `caption ${digits[i] === "1" ? "bit" : "muted"}` },
-          digit,
-        );
-        tl.to(
-          digit,
-          {
-            x: y === 200 ? -12 : 12,
-            y: 186 - y,
-            duration: DUR * 0.65,
-            ease: EASE,
-          },
-          at(14),
-        );
-      }
-      tl.to(
-        column,
-        { x: [77, 163, 249, 335][i] - x, duration: DUR * 0.65, ease: EASE },
-        at(14),
-      );
-    });
-    const totals = group({}, places);
-    text(340, 200, "= 3", { class: "caption bit" }, totals);
-    text(340, 250, "= 6", { class: "caption bit" }, totals);
-    text(220, 310, "2 + 1 = 3", { class: "caption" }, totals);
-    text(220, 335, "4 + 2 = 6", { class: "caption" }, totals);
-    tl.to(totals, { opacity: 0, duration: DUR * 0.2 }, at(14));
-    show(places, "binary-place-value", 14, {}, 0.6);
-    caption(
-      "binary-place-value",
-      "the same positions will become adder columns",
-      14,
-    );
-
     const selector = group(
       { "data-diagram": "select-values" },
       root,
@@ -219,73 +164,71 @@ export const COMPUTER_SCENES = (function () {
     oneShot("select-values", selectDemo, "stored-answer");
 
     const timing = group({ "data-diagram": "timing" }, root);
-    text(220, 84, "let the result settle", { class: "caption" }, timing);
-    const gate = (x, y) => {
-      const halo = glow(x, y, timing, 23);
-      path(
-        `M${x - 18} ${y - 14} H${x - 3} A14 14 0 0 1 ${x - 3} ${y + 14} H${x - 18} Z`,
-        {},
-        timing,
-      );
-      mk("circle", { cx: x + 15, cy: y, r: 3, fill: "var(--paper)" }, timing);
-      return halo;
-    };
-    const lights = [gate(110, 150), gate(110, 240), gate(225, 195)];
-    const wires = [
-      lightPath("M40 143 H92 M40 157 H92", timing),
-      lightPath("M40 233 H92 M40 247 H92", timing),
-      lightPath("M128 150 H165 V188 H207", timing),
-      lightPath("M128 240 H176 V202 H207", timing),
-      lightPath("M243 195 H310", timing),
-    ];
-    const capture = box(root, 310, 160, 90, 70, "register");
-    key(capture.g, "timing", { scale: 1, x: 0, y: 0 });
-    key(
-      capture.g,
-      "working-registers",
-      { scale: 0.3, x: -135, y: -55, opacity: 0 },
-      null,
-      0,
-      0.75,
-    );
-    path("M310 210 L321 217 L310 224", {}, capture.g);
-    text(307, 185, "D", { class: "tiny", "text-anchor": "end" }, timing);
-    path("M305 281 H300 V217 H310", { class: "muted" }, timing);
-    path(
-      "M90 315 H140 V281 H195 V315 H250 V281 H305",
-      { class: "muted" },
-      timing,
-    );
-    text(73, 320, "clock", { class: "tiny", "text-anchor": "end" }, timing);
-    const ready = text(276, 182, "ready", { class: "tiny" }, timing);
-    const captured = text(355, 253, "captured", { class: "caption" }, timing);
-    const captureGlow = glow(355, 195, timing, 35);
-    const clockGlow = lightPath(
-      "M140 315 V281 H195 M305 281 H300 V217 H310",
-      timing,
-    );
-    gsap.set([ready, captured], { opacity: 0 });
-    show(timing, "timing", "working-registers", {}, 0.65);
-    caption(
-      "timing",
-      "signals settle · then a register captures them",
-      "working-registers",
-    );
     const timingDemo = gsap.timeline({ paused: true });
-    illuminate(timingDemo, wires[0], 0.3);
-    illuminate(timingDemo, wires[1], 0.45);
-    timingDemo.to(
-      lights.slice(0, 2),
-      { opacity: 1, duration: 0.5, stagger: 0.15 },
-      0.9,
-    );
-    illuminate(timingDemo, wires[2], 1.3);
-    illuminate(timingDemo, wires[3], 1.55);
-    timingDemo.to(lights[2], { opacity: 1, duration: 0.5 }, 2.3);
-    illuminate(timingDemo, wires[4], 2.6);
-    timingDemo.to(ready, { opacity: 1, duration: 0.35 }, 3.3);
-    illuminate(timingDemo, clockGlow, 4, 0.5);
-    timingDemo.to([captureGlow, captured], { opacity: 1, duration: 0.5 }, 4.55);
+    const wireGrid = group({}, timing);
+    const pulses = group({}, timing);
+    const values = group({}, timing);
+    const initialBits = [
+      0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0,
+    ];
+    const nodes = initialBits.map((initial, i) => {
+      const row = Math.floor(i / 5),
+        column = i % 5;
+      const x = 64 + column * 78,
+        y = 116 + row * 65;
+      const arrival =
+        0.75 + column * 0.62 + row * 0.82 + ((row + 2 * column) % 3) * 0.08;
+      const final = i % 4 === 3 ? initial : 1 - initial;
+      const node = group({ "data-timing-node": i }, values);
+      mk("circle", { cx: x, cy: y, r: 13, class: "timing-paper" }, node);
+      const bit = (value) => {
+        const g = group(
+          { class: `timing-${value ? "one" : "zero"}`, "data-value": value },
+          node,
+        );
+        mk("circle", { cx: x, cy: y, r: 13, class: "timing-highlight" }, g);
+        text(x, y + 5, String(value), { class: "caption bit" }, g);
+        return g;
+      };
+      const before = bit(initial);
+      if (final !== initial) {
+        const after = bit(final);
+        gsap.set(after, { opacity: 0 });
+        timingDemo.to(before, { opacity: 0, duration: 0.24 }, arrival - 0.04);
+        timingDemo.to(after, { opacity: 1, duration: 0.24 }, arrival - 0.04);
+      }
+      return { x, y, arrival };
+    });
+    const pulse = (from, to, start, finish) => {
+      const d = `M${from.x} ${from.y} L${to.x} ${to.y}`;
+      path(d, { class: "muted thin" }, wireGrid);
+      const line = path(d, { class: "timing-pulse" }, pulses);
+      const state = { progress: 0 };
+      gsap.set(line, { opacity: 0 });
+      afterRender.push(() => {
+        const head = Math.min(1, state.progress),
+          tail = Math.max(0, state.progress - 0.45);
+        const point = (fraction) =>
+          `${from.x + (to.x - from.x) * fraction} ${from.y + (to.y - from.y) * fraction}`;
+        line.setAttribute("d", `M${point(tail)} L${point(head)}`);
+      });
+      timingDemo.to(line, { opacity: 1, duration: 0.12 }, start);
+      timingDemo.to(
+        state,
+        { progress: 1, duration: finish - start, ease: "none" },
+        start,
+      );
+      timingDemo.to(line, { opacity: 0, duration: 0.25 }, finish - 0.1);
+    };
+    pulse({ x: 35, y: 116 }, nodes[0], 0.35, nodes[0].arrival);
+    nodes.forEach((node, i) => {
+      if (i % 5 < 4)
+        pulse(node, nodes[i + 1], node.arrival + 0.05, nodes[i + 1].arrival);
+      if (i < 15)
+        pulse(node, nodes[i + 5], node.arrival + 0.05, nodes[i + 5].arrival);
+    });
+    timingDemo.to({}, { duration: 1.2 }, 7);
+    show(timing, "timing", "working-registers", {}, 0.65);
     oneShot("timing", timingDemo, "select-values");
 
     const machine = group(

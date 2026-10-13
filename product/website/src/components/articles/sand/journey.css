@@ -552,3 +552,28 @@ html:has(.sand-journey) {
 .sand-journey .scene-text > p + p {
   margin-top: 1rem;
 }
+
+.sand-journey #d2 .timing-paper {
+  fill: var(--paper);
+  stroke: none;
+}
+.sand-journey #d2 .timing-highlight {
+  stroke: none;
+}
+.sand-journey #d2 .timing-one .timing-highlight {
+  fill: rgba(74, 139, 103, 0.13);
+}
+.sand-journey #d2 .timing-zero .timing-highlight {
+  fill: rgba(175, 91, 81, 0.13);
+}
+.sand-journey #d2 .timing-one text {
+  fill: #477b5d;
+}
+.sand-journey #d2 .timing-zero text {
+  fill: #a2574e;
+}
+.sand-journey #d2 .timing-pulse {
+  stroke: #e0b23d;
+  stroke-width: 3px;
+  filter: drop-shadow(0 0 3px #edcc70);
+}

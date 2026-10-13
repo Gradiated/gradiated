@@ -567,12 +567,7 @@ export const SCENES2D = (function () {
     key(gLogic, 3, { scale: 1 });
     key(gLogic, 13, { scale: 0.34, x: -15, y: -5, opacity: 0 }); // fades away inside the shrinking symbol
     key(gSym, 13, { scale: 0.125, x: -48, y: -30 }); // the symbol lands in the box's top-left cell
-    key(gSym, "binary-place-value", {
-      scale: 0.125,
-      x: -48,
-      y: -30,
-      opacity: 0,
-    });
+    key(gSym, "chain", { scale: 0.125, x: -48, y: -30, opacity: 0 });
     const gAdd = group({}, root, "220 250");
     mk("rect", { x: 160, y: 205, width: 120, height: 90, rx: 4 }, gAdd);
     // many more NAND gates inside the box (the centre is left clear for the "+")
@@ -645,8 +640,8 @@ export const SCENES2D = (function () {
     bits(360, 242, ["0", "0", "0", "1", "1"]);
     text(360, 270, "1", { class: "tiny bit" }, gAdd);
     show(gAdd, 13, undefined, { scale: 1, x: 0, y: 0 });
-    key(gAdd, "binary-place-value", { scale: 0.52, x: 29, y: 0, opacity: 0 });
-    caption(13, "full adder: one digit, with carry", "binary-place-value");
+    key(gAdd, "chain", { scale: 0.52, x: 29, y: 0, opacity: 0 });
+    caption(13, "full adder: one digit, with carry", "chain");
 
     /* ================= 14chain of adders ================= */
     const gChain = group({}, root, "220 250");

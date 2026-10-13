@@ -302,9 +302,9 @@ Visual cue blocks stay in the working draft and are omitted from the portable
 website edition. Add `--watch` while editing to update the website preview on saves. Production
 builds use the checked-in edition and do not depend on another local folder.
 
-Chapter 5, **Building a computer**, adds selection, a short propagation-and-capture
-animation, working registers, an ALU, addressed memory, stored instructions and
-control, then traces LC-3 ADD R0, R1, R2 with 3 + 6 = 9. The trace retains the
+Chapter 5, **Building a computer**, adds selection, an abstract wire-grid animation
+showing values settling, working registers, an ALU, addressed memory, stored
+instructions and control, then traces LC-3 ADD R0, R1, R2 with 3 + 6 = 9. The trace retains the
 source registers and writes 9 to R0. Detailed timing and instruction-processing
 treatments remain future articles. The original memory sum is unchanged.
 

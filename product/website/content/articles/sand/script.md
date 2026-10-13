@@ -72,10 +72,6 @@ Let’s zoom out further and combine NAND gates into a circuit that adds. In bin
 
 Our circuit handles one column at a time. It adds two input bits, aᵢ and bᵢ, along with any carry from the previous column, cᵢ. It produces the answer bit sᵢ and a carry for the next column, cᵢ₊₁. This three-input, two-output circuit is called a full adder.
 
-<!-- scene: binary-place-value -->
-
-In a binary number, each position is worth twice the position to its right. Our four positions represent 8, 4, 2 and 1. So 0011 represents 2 + 1, or 3, while 0110 represents 4 + 2, or 6.
-
 <!-- scene: chain -->
 
 Connect several full adders in a row, passing each carry cᵢ₊₁ into the next column, and we can add entire binary numbers. Here, four adders calculate 0011 + 0110 = 1001, or 3 + 6 = 9. More columns let us work with larger numbers. With addition as a building block, it is a short step to circuits that subtract and multiply, and our toolset has grown.
@@ -112,9 +108,7 @@ Our adder calculates with whatever values reach its inputs. To choose those valu
 
 <!-- scene: timing -->
 
-As a signal passes through gates and wires, each part takes a little time to respond. The light spreading through our illustration shows the result working its way through the circuit. We must let that result settle before capturing it.
-
-To coordinate successive operations, we will use a clock and registers that capture their inputs on a rising clock edge. These registers use storage elements called flip-flops, rather than the write-enable latches we showed earlier. The clock sets the pace, while control signals choose which registers update. One instruction can take several clock cycles.
+Changing an input does not change every part of a circuit at once. The change takes time to spread, and different values settle at different moments. Timing matters because using or storing a result too soon can give us the wrong answer.
 
 <!-- scene: working-registers -->
 

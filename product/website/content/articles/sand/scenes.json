@@ -13,7 +13,6 @@
   "nand",
   "nand-symbol",
   "adder",
-  "binary-place-value",
   "chain",
   "heat",
   "latch",

@@ -8,8 +8,8 @@ const every = Object.keys(bundles);
 
 test("base and shared packaging changes verify every bundle", () => {
   for (const path of [
-    "product/inference/images/nomad-base/start-client.sh",
-    "product/inference/nomad/client.hcl",
+    "product/inference/images/gpu-base/Dockerfile",
+    "product/inference/gpu/host-agent.py",
     "product/inference/runtime-launcher/supervise.cpp",
     "product/inference/bundles/package.sh",
     "product/inference/bundles/build.hcl",
@@ -30,10 +30,9 @@ test("a bundle's own inputs verify only that bundle", () => {
     bundlesToVerify(["product/inference/runtimes/kev/adapter.py"]),
     ["kev-9b"],
   );
-  assert.deepEqual(
-    bundlesToVerify(["product/inference/lora/manager.py"]),
-    ["glm-5-3-flash"],
-  );
+  assert.deepEqual(bundlesToVerify(["product/inference/lora/manager.py"]), [
+    "glm-5-3-flash",
+  ]);
 });
 test("docs, tests, GLM and release tooling verify nothing", () => {
   assert.deepEqual(
@@ -56,5 +55,14 @@ test("every bundle has a verification target", () => {
 });
 
 test("a pinned autotrain package change verifies the training bundle", () => {
-  assert.deepEqual(bundlesToVerify(["product/packages/autotrain"]), ["training"]);
+  assert.deepEqual(bundlesToVerify(["product/packages/autotrain"]), [
+    "training",
+  ]);
+});
+
+test("GPU bootstrap changes verify every runtime bundle", () => {
+  assert.deepEqual(
+    bundlesToVerify(["product/inference/gpu/host-agent.py"]).sort(),
+    Object.keys(bundles).sort(),
+  );
 });

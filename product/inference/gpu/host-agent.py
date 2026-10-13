@@ -178,16 +178,24 @@ def repo_directory(hub, repo):
 
 def hub_files(repo, revision):
     with urllib.request.urlopen(f"{HUB_API}/{repo}/revision/{revision}?blobs=true", timeout=30) as response:
-        files = {item["rfilename"]: item.get("size") or 0 for item in json.load(response)["siblings"]}
+        siblings = json.load(response)["siblings"]
+    # The cache stores LFS files under their SHA-256 and other files under their git blob id.
+    files = {item["rfilename"]: (item.get("size") or 0, (item.get("lfs") or {}).get("sha256") or item.get("blobId"))
+             for item in siblings}
     # Loaders fetch safetensors and skip the other weight formats a repo may also publish.
     if any(name.endswith(".safetensors") for name in files):
-        files = {name: size for name, size in files.items() if not name.endswith(UNUSED_WEIGHT_FORMATS)}
+        files = {name: file for name, file in files.items() if not name.endswith(UNUSED_WEIGHT_FORMATS)}
     return files
 
 
 def missing_bytes(hub, repo, revision, files):
-    snapshot = repo_directory(hub, repo) / "snapshots" / revision
-    return sum(size for name, size in files.items() if not (snapshot / name).exists())
+    # Another revision of the repository may already hold a file's blob, which the download reuses.
+    directory = repo_directory(hub, repo)
+    snapshot, blobs = directory / "snapshots" / revision, directory / "blobs"
+    return sum(size for name, (size, blob) in files.items()
+               if not (snapshot / name).exists()
+               and not (isinstance(blob, str) and re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", blob)
+                        and (blobs / blob).is_file()))
 
 
 def last_used(path):

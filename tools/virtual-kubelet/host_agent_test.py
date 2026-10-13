@@ -473,7 +473,7 @@ class ModelCacheTest(unittest.TestCase):
     def serving(self, repo, revision=revision):
         return {'release': {'model_path': repo, 'model_revision': revision}}
 
-    def prepare(self, profile, pods=(), files=lambda _repo, _revision: {'model.safetensors': 100, 'config.json': 1}):
+    def prepare(self, profile, pods=(), files=lambda _repo, _revision: {'model.safetensors': (100, None), 'config.json': (1, None)}):
         agent.prepare_model_cache(self.config, profile, self.home / 'pod', lambda: [(pod, self.home / f'pod-{index}') for index, pod in enumerate(pods)],
                                   self.logs.append, files, self.usage)
 
@@ -534,14 +534,15 @@ class ModelCacheTest(unittest.TestCase):
         self.assertFalse(stale.exists())
 
     def test_sizing_skips_unused_weight_formats_and_failures_do_not_block(self):
-        listing = {'siblings': [{'rfilename': 'model.safetensors', 'size': 10},
+        listing = {'siblings': [{'rfilename': 'model.safetensors', 'size': 10, 'blobId': 'b' * 40,
+                                 'lfs': {'sha256': 'c' * 64, 'size': 10}},
                                 {'rfilename': 'pytorch_model.bin', 'size': 10},
-                                {'rfilename': 'tokenizer.json', 'size': 1}]}
+                                {'rfilename': 'tokenizer.json', 'size': 1, 'blobId': 'd' * 40}]}
         response = MagicMock()
         response.__enter__.return_value = response
         response.read.return_value = json.dumps(listing).encode()
         with patch.object(agent.urllib.request, 'urlopen', return_value=response):
-            self.assertEqual(agent.hub_files('org/model', self.revision), {'model.safetensors': 10, 'tokenizer.json': 1})
+            self.assertEqual(agent.hub_files('org/model', self.revision), {'model.safetensors': (10, 'c' * 64), 'tokenizer.json': (1, 'd' * 40)})
 
         def unavailable(_repo, _revision):
             raise OSError('offline')
@@ -558,7 +559,7 @@ class ModelCacheTest(unittest.TestCase):
 
         def files(repo, _revision):
             sized.append(repo)
-            return {'model.safetensors': 100, 'config.json': 1}
+            return {'model.safetensors': (100, None), 'config.json': (1, None)}
         self.prepare(kev, files=files)
 
         self.assertTrue(base.exists())
@@ -600,10 +601,23 @@ class ModelCacheTest(unittest.TestCase):
             self.sizes.pop(model.name)
             return []
         agent.prepare_model_cache(self.config, self.serving('org/model'), self.home / 'pod', pods,
-                                  self.logs.append, lambda _repo, _revision: {'model.safetensors': 100, 'config.json': 1}, self.usage)
+                                  self.logs.append, lambda _repo, _revision: {'model.safetensors': (100, None), 'config.json': (1, None)}, self.usage)
 
         self.assertEqual(seen, [True])
         self.assertFalse(stale.exists())
+
+    def test_blobs_cached_by_another_revision_are_not_counted_as_missing(self):
+        model = self.cached('org/model', 101, 2)
+        (model / 'blobs').mkdir()
+        (model / 'blobs' / ('c' * 64)).write_bytes(b'x')
+        stale = self.cached('org/stale', 150, 1)
+        listing = lambda _repo, _revision: {'model.safetensors': (100, 'c' * 64), 'config.json': (1, 'd' * 40)}
+
+        self.assertEqual(agent.missing_bytes(self.hub, 'org/model', 'e' * 40, listing(None, None)), 1)
+        self.free = 1
+        self.prepare(self.serving('org/model', 'e' * 40), files=listing)
+
+        self.assertTrue(stale.exists())
 
     def test_profiles_without_pinned_weights_are_ignored(self):
         old = self.cached('org/old', 500, 1)

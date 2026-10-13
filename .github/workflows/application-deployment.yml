@@ -109,6 +109,7 @@ jobs:
     uses: ./.github/workflows/build-images.yml
     with:
       source_sha: ${{ needs.resolve.outputs.source_sha }}
+      images: '["product","gateway","proxy","gpu-controller"]'
     permissions:
       contents: read
       id-token: write
@@ -202,6 +203,7 @@ jobs:
       - name: Update release state
         env:
           SOURCE_SHA: ${{ needs.resolve.outputs.source_sha }}
+          GPU_CONTROLLER_DIGEST: ${{ fromJSON(needs.build-images.outputs.images)['gpu-controller'].digest }}
           PRODUCT_DIGEST: ${{ needs.build-images.outputs.product_digest }}
           GATEWAY_DIGEST: ${{ needs.build-images.outputs.gateway_digest }}
           PROXY_DIGEST: ${{ needs.build-images.outputs.proxy_digest }}
@@ -214,7 +216,8 @@ jobs:
             --product-digest "${PRODUCT_DIGEST}" \
             --gateway-digest "${GATEWAY_DIGEST}" \
             --proxy-digest "${PROXY_DIGEST}" \
-            --collector-digest "${COLLECTOR_DIGEST}"
+            --collector-digest "${COLLECTOR_DIGEST}" \
+            --gpu-controller-digest "${GPU_CONTROLLER_DIGEST}"
           kubectl kustomize infra/environments/prod/us-east-1/kubernetes/workloads >/dev/null
       - id: commit
         name: Commit production release to main

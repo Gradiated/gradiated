@@ -165,10 +165,6 @@ if (environment.CONTENTS_BUCKET) {
             "trace_cleanup",
             (performance.now() - start) / 1000,
           );
-          metrics.recordPass(
-            "kubernetes_deployment_reconciliation",
-            (performance.now() - start) / 1000,
-          );
           await markReady();
           await sleep(5_000, signal);
         }
@@ -220,6 +216,10 @@ if (process.env.GPU_KUBERNETES_NAMESPACE) {
             valkey: settlementValkey,
             metrics,
           });
+          metrics.recordPass(
+            "kubernetes_deployment_reconciliation",
+            (performance.now() - start) / 1000,
+          );
           await markReady();
           await sleep(5_000, signal);
         }

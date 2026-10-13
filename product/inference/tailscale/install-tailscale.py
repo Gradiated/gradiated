@@ -21,22 +21,8 @@ VERSION = "1.104.1"
 SHA256 = "108d1d96ecf410d305571e173516f27038f870919a9b89c914a167c6d33a4528"
 
 
-def registered_instance_id(
-    identity_path=Path("/etc/gradiated/host-identity.json"),
-    node_config=Path("/etc/nomad/node.hcl"),
-):
-    if identity_path.exists():
-        return str(uuid.UUID(json.loads(identity_path.read_text())["instance_id"]))
-
-    matches = re.findall(
-        r'^\s*gradiated_instance_id\s*=\s*"([^"\n]+)"\s*$',
-        node_config.read_text(),
-        re.MULTILINE,
-    )
-    if len(matches) != 1:
-        raise ValueError("Registered host identity missing or ambiguous")
-
-    return str(uuid.UUID(matches[0]))
+def registered_instance_id(identity_path=Path("/etc/gradiated/host-identity.json")):
+    return str(uuid.UUID(json.loads(identity_path.read_text())["instance_id"]))
 
 
 def install(payload):
@@ -122,7 +108,7 @@ def install(payload):
     )
     if "control_endpoints" in payload:
         endpoints = payload["control_endpoints"]
-        if set(endpoints) not in ({"api"}, {"api", "nomad-0", "nomad-1", "nomad-2"}) or any(
+        if set(endpoints) != {"api"} or any(
             ipaddress.ip_address(address) not in ipaddress.ip_network("100.64.0.0/10")
             for address in endpoints.values()
         ):

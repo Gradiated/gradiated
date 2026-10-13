@@ -39,13 +39,7 @@ def main():
         assert any(p['id'] == panel_id and p.get('targets')
                    for p in dashboard['panels']), name
         assert not annotations.get('runbook_url'), name
-        if name in ('LoraLoaderUnavailable', 'LoraPreparationFailures',
-                    'LoraCapacityRejected', 'LoraPinnedDiskNearlyFull'):
-            assert annotations['logs_url'] == (
-                'https://nomad.gradiated.com/ui/allocations/'
-                '{{ $labels.deployment }}/vllm/logs'), name
-        else:
-            assert annotations['logs_url'].startswith('https://grafana.gradiated.com/d/gradiated-logs?'), name
+        assert annotations['logs_url'].startswith('https://grafana.gradiated.com/d/gradiated-logs?'), name
 
     # Validate actual chart expressions as recording rules, substituting dashboard variables.
     chart_rules = []
@@ -327,73 +321,6 @@ def main():
     ]:
         scenario(name, inputs, stall if fires else None, [stall], {'deployment': 'stalled'})
 
-    renewal = 'NomadCertificateRenewalStalled'
-    for name, days_left, fires in [('renewing on schedule', 20, False),
-                                   ('renewal stalled', 5, True)]:
-        inputs = [{'series': 'nomad_certificate_expiry_timestamp_seconds'
-                   '{certificate="server-0",pod="nomad-0"}',
-                   'values': f'{days_left * 86400}+0x30'}]
-        scenario(f'nomad certificate {name}', inputs, renewal if fires else None,
-                 [renewal], {'certificate': 'server-0'})
-
-    renewer = 'NomadCertificateRenewerMissing'
-    certificate = {'series': 'nomad_certificate_expiry_timestamp_seconds{certificate="ops-mcp"}',
-                   'values': '2000000+0x200'}
-    scenario('ops MCP holds a Nomad certificate', [certificate], None, [renewer], eval_time='70m')
-    scenario('ops MCP has no Nomad certificate', [], renewer, [renewer],
-             {'certificate': 'ops-mcp'}, eval_time='70m')
-    sidecar = {'series': 'kube_pod_init_container_info{namespace="nomad",pod="nomad-0",'
-               'container="certificate-renewer"}', 'values': '1+0x200'}
-    scenario('server renewer has no certificate', [certificate, sidecar], renewer,
-             [renewer], {'namespace': 'nomad', 'pod': 'nomad-0',
-                         'container': 'certificate-renewer'}, eval_time='70m')
-    issued = {'series': 'nomad_certificate_expiry_timestamp_seconds{namespace="nomad",'
-              'pod="nomad-0",certificate="server-0"}', 'values': '2000000+0x200'}
-    scenario('server renewer holds a certificate', [certificate, sidecar, issued],
-             None, [renewer], eval_time='70m')
-
-    host_labels = {'instance_id': 'gpu-test'}
-    def host_series(metric, values):
-        return {'series': metric + '{instance_id="gpu-test"}', 'values': values}
-
-    for name, due, fires, duration in [
-        ('not due', '2000000+0x200', False, '70m'),
-        ('failed bootstrap migration', '1+0x200', True, '70m'),
-        ('freshly overdue', '1+0x200', False, '30m'),
-        ('renewed', '1+0x60 2000000+0x140', False, '70m'),
-    ]:
-        alert = 'NomadGpuCertificateRenewalStalled'
-        scenario('GPU renewal ' + name, [host_series('nomad_gpu_certificate_renewal_due_timestamp_seconds', due)],
-                 alert if fires else None, [alert], host_labels, duration)
-
-    for name, seen, fires, duration in [
-        ('healthy', '0+30x200', False, '80m'),
-        ('never installed', '0+0x200', True, '80m'),
-        ('stopped recently', '1+0x200', False, '65m'),
-        ('recovered', '0+0x150 4500+30x50', False, '80m'),
-    ]:
-        alert = 'NomadGpuCertificateRenewerMissing'
-        scenario('GPU heartbeat ' + name, [host_series('nomad_gpu_certificate_last_seen_timestamp_seconds', seen)],
-                 alert if fires else None, [alert], host_labels, duration)
-
-    for name, expires, fires in [('comfortable margin', 172800, False), ('urgent', 36000, True),
-                                  ('expired', 1, True), ('not observed', 0, False)]:
-        alert = 'NomadGpuCertificateExpiryImminent'
-        scenario('GPU expiry ' + name, [host_series('nomad_gpu_certificate_expiry_timestamp_seconds', f'{expires}+0x30')],
-                 alert if fires else None, [alert], host_labels, '8m')
-
-    for name, scrape, collection, fires in [('healthy', 1, 1, False), ('scrape down', 0, None, True),
-                                            ('scrape missing', None, None, True), ('database down', 1, 0, True),
-                                            ('collector absent', 1, None, True)]:
-        alert = 'NomadGpuCertificateMonitoringUnavailable'
-        inputs = []
-        if scrape is not None:
-            inputs.append({'series': 'up{service="api"}', 'values': f'{scrape}+0x30'})
-        if collection is not None:
-            inputs.append({'series': 'nomad_gpu_certificate_observation_up', 'values': f'{collection}+0x30'})
-        scenario('GPU monitoring ' + name, inputs, alert if fires else None, [alert],
-                 {'service': 'nomad'}, '8m')
-
     replica_alert = 'DeploymentUnavailable'
     for name, available, desired, fires in [
         ('complete service outage', 0, 2, True),
@@ -566,11 +493,6 @@ def main():
             {'series': f'gradiated_collector_contents_rejected_total{{pod="collector-0",reason="{reason}"}}',
              'values': '0+5x30'}], rejecting if fires else None, [rejecting], eval_time='12m')
 
-    for name, value, fires in [('an allocation stays unrouted', 1, True), ('everything is routed', 0, False)]:
-        scenario(f'unrouted model allocations: {name}', [
-            {'series': 'gradiated_worker_unrouted_allocations{instance="a",reason="node_not_registered"}', 'values': f'{value}+0x30'},
-        ], 'ModelAllocationsUnrouted' if fires else None, ['ModelAllocationsUnrouted'], {'reason': 'node_not_registered'}, eval_time='12m')
-
     for name, desired, ready, expected, duration in [
         ('healthy', 2, '2+0x80', None, '15m'),
         ('zero allocations and no readiness series', 2, None, 'ModelNoReadyReplicas', '6m'),
@@ -581,10 +503,10 @@ def main():
         ('recovered', 2, '0+0x20 2+0x60', None, '15m'),
         ('disabled in Git', 0, None, None, '15m'),
     ]:
-        inputs = [{'series': 'gradiated_model_desired_replicas{model="kev/kev-9b",nomad_job="kev"}', 'values': f'{desired}+0x80'}]
+        inputs = [{'series': 'gradiated_model_desired_replicas{model="kev/kev-9b",rollout="kev"}', 'values': f'{desired}+0x80'}]
         if ready is not None:
             inputs.append({'series': 'gradiated_worker_model_ready_replicas{instance="a",model="kev/kev-9b"}', 'values': ready})
-            inputs.append({'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="a",loop="deployment_reconciliation"}', 'values': '1+30x80'})
+            inputs.append({'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="a",loop="kubernetes_deployment_reconciliation"}', 'values': '1+30x80'})
         scenario('model replicas: ' + name, inputs, expected,
                  ['ModelNoReadyReplicas', 'ModelUnderReplicated'], {'model': 'kev/kev-9b'}, duration)
 
@@ -624,15 +546,15 @@ def main():
         scenario('fast capacity alert: ' + expected, [
             {'series': 'gradiated_model_desired_replicas{model="test/model"}', 'values': '2+0x20'},
             {'series': 'gradiated_worker_model_ready_replicas{instance="a",model="test/model"}', 'values': f'{ready}+0x20'},
-            {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="a",loop="deployment_reconciliation"}', 'values': '1+5x20'},
+            {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="a",loop="kubernetes_deployment_reconciliation"}', 'values': '1+5x20'},
         ], expected, ['ModelNoReadyReplicas', 'ModelUnderReplicated'], {'model': 'test/model'}, duration, interval='5s')
 
     scenario('stale healthy worker cannot hide unavailable model', [
         {'series': 'gradiated_model_desired_replicas{model="test/model"}', 'values': '2+0x20'},
         {'series': 'gradiated_worker_model_ready_replicas{instance="old",model="test/model"}', 'values': '2+0x20'},
-        {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="old",loop="deployment_reconciliation"}', 'values': '1+0x20'},
+        {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="old",loop="kubernetes_deployment_reconciliation"}', 'values': '1+0x20'},
         {'series': 'gradiated_worker_model_ready_replicas{instance="new",model="test/model"}', 'values': '0+0x20'},
-        {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="new",loop="deployment_reconciliation"}', 'values': '1+5x20'},
+        {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="new",loop="kubernetes_deployment_reconciliation"}', 'values': '1+5x20'},
     ], 'ModelNoReadyReplicas', ['ModelNoReadyReplicas'], {'model': 'test/model'}, '40s', interval='5s')
 
     for failed, succeeded, expected in [('0+1x60', '0+100x60', 'GatewayRuntimeFailures'),

@@ -9,6 +9,7 @@ const every = Object.keys(bundles);
 test("base and shared packaging changes verify every bundle", () => {
   for (const path of [
     "product/inference/images/gpu-base/Dockerfile",
+    "product/inference/.dockerignore",
     "product/inference/gpu/host-agent.py",
     "product/inference/runtime-launcher/supervise.cpp",
     "product/inference/bundles/package.sh",
@@ -37,7 +38,7 @@ test("a bundle's own inputs verify only that bundle", () => {
 test("docs, tests, GLM and release tooling verify nothing", () => {
   assert.deepEqual(
     bundlesToVerify([
-      "product/inference/images/nomad-base/README.md",
+      "product/inference/images/gpu-base/README.md",
       "product/inference/runtime-launcher/tests/launcher.sh",
       "product/inference/images/glm-5-3-flash/start.sh",
       "product/inference/runtimes/kev/test_http.py",

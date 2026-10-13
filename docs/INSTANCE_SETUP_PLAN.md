@@ -64,7 +64,9 @@ profiles; model updates belong in Kubernetes Rollouts.
 
 Update its pinned bundle and release metadata in the GPU runtime catalogue and
 its Rollout under `infra/environments/prod/us-east-1/kubernetes/gpu-inference/`.
-Stage the verified bundle on eligible hosts before changing the Rollout. The
+Run `python3 tools/gpu/render-runtimes.py` to project the catalogue into the
+controller ConfigMap. The controller stages and verifies bundles through private
+download grants before accepting the new runtime. The
 scheduler places replicas using resources, GPU-product labels and affinity.
 
 Native runtime health sets `RuntimeReady`. The product worker then verifies the

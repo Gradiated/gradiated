@@ -13,7 +13,7 @@ kubelet and container runtime instead.
 
 ## Scheduling and execution
 
-`cmd/kev-controller` watches the `gpu-inference` namespace. Three controller
+`cmd/gpu-controller` watches the `gpu-inference` namespace. Three controller
 replicas run on separate EKS nodes and elect one leader. Host operations carry a
 fencing epoch so a replaced leader cannot continue changing workloads.
 
@@ -24,7 +24,7 @@ the pod's processes in a cgroup with CPU, memory and process limits. It refuses
 a GPU that already has a compute process. Tensor-parallel and single-GPU
 workloads can share a host without sharing a GPU claim.
 
-`runtimes.json` pins the supported bundles and their execution settings. The
+`product/inference/gpu/runtimes.json` pins the supported bundles and their execution settings. The
 agent accepts one runtime container per pod and rejects commands, environment
 overrides, mounts and host networking. Models run as `runtime`; their Desmond
 reporter runs as `desmond`. The management agent runs as root.
@@ -80,16 +80,15 @@ migration or recovery step on a retained reservation.
 
 Enrollment stages and verifies the permitted runtime bundles, then installs
 `host-agent.py`, `supervise.py`, Desmond and the root-only configuration using
-`install-host.py`. The controller's host inventory and named node/lease RBAC
+`tools/gpu/install-host.py`. The controller's host inventory and named node/lease RBAC
 must include the instance, and its management key belongs in the
 `gradiated/prod/platform/gpu-controller` AWS secret. Argo owns the corresponding
 Kubernetes resources under
 `infra/environments/prod/us-east-1/kubernetes/gpu-inference`.
 
-During the Nomad migration, disable Nomad placement before enrolling a host and
-wait for every old workload to drain. Never allow both schedulers to assign the
-same GPUs. Enrollment changes files and processes over pinned SSH, without
-changing RunPod provider settings or releasing the reservation.
+All production serving replicas and training Jobs use Kubernetes. Existing
+RunPod containers retain a suspended legacy main process only to preserve their
+reservation; it has no jobs or cluster access. New hosts use the GPU base image.
 
 Run the local adapter checks with:
 
@@ -98,7 +97,6 @@ cd tools/virtual-kubelet
 go test -race ./...
 go vet ./...
 python3 host_agent_test.py
-python3 remote_test.py
 ```
 
 The default `gpu-base` image runs `product/inference/gpu/bootstrap.py`. Its
@@ -112,3 +110,11 @@ values outside the repository.
 
 `main.go` and `remote.py` are the original isolated SSH lifecycle experiment.
 They are not the production controller or host agent.
+
+Model catalogue changes are rendered into the controller ConfigMap by
+`python3 tools/gpu/render-runtimes.py`. The controller asks each host to stage the
+pinned bundles through private download grants. Downloads run outside the host
+operation lock; activation and pod creation share a lock. Active runtime profiles
+remain unchanged until their pods drain. Update the Rollout alongside the
+catalogue; an unstaged candidate retries while existing replicas keep serving.
+The controller image is built and pinned by the normal application release.

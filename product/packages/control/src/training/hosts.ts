@@ -2,6 +2,7 @@ import { z } from "zod";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import type { ControlDatabase } from "../db/client.js";
 import { instances } from "../db/schema/index.js";
+import { privateServingUrl } from "../instances/endpoints.js";
 
 export const trainingNodes = async (
   database: ControlDatabase,
@@ -12,7 +13,6 @@ export const trainingNodes = async (
   const rows = await database
     .select({
       nodeId: instances.id,
-      url: instances.servingUrl,
       podId: instances.providerInstanceId,
     })
     .from(instances)
@@ -23,7 +23,7 @@ export const trainingNodes = async (
         isNull(instances.retiredAt),
       ),
     );
-  if (rows.length !== podIds.length || rows.some((row) => !row.url))
+  if (rows.length !== podIds.length)
     throw new Error("Training hosts require private Kubernetes enrollment.");
   return z
     .array(
@@ -33,5 +33,5 @@ export const trainingNodes = async (
         podId: z.string().min(1),
       }),
     )
-    .parse(rows);
+    .parse(rows.map((row) => ({ ...row, url: privateServingUrl(row.nodeId) })));
 };

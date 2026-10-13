@@ -52,12 +52,7 @@ export const createKubernetesDeploymentStore = (database: ControlDatabase) => ({
             }),
             updatedAt: sql`now()`,
           })
-          .where(
-            and(
-              eq(modelDeployments.id, id),
-              eq(modelDeployments.orchestrator, "kubernetes"),
-            ),
-          );
+          .where(eq(modelDeployments.id, id));
 
       for (const pod of current) {
         const [host] = await tx
@@ -70,7 +65,7 @@ export const createKubernetesDeploymentStore = (database: ControlDatabase) => ({
           .select({ id: models.id })
           .from(models)
           .where(eq(models.id, pod.modelId));
-        if (!host || host.servingUrl !== privateServingUrl(host.id) || !model) {
+        if (!host || !model) {
           await withdraw(pod.id);
           continue;
         }
@@ -88,34 +83,25 @@ export const createKubernetesDeploymentStore = (database: ControlDatabase) => ({
           region: host.region ?? "unknown",
           faultDomain:
             host.faultDomain ?? `${host.provider}:${host.providerInstanceId}`,
-          serviceUrl: `${host.servingUrl}/alloc/${pod.id}`,
+          serviceUrl: `${privateServingUrl(host.id)}/alloc/${pod.id}`,
           release: pod.release,
         });
         await tx
           .insert(modelDeployments)
-          .values({ ...row, orchestrator: "kubernetes" })
+          .values(row)
           .onConflictDoUpdate({
             target: modelDeployments.id,
             set: { ...row, updatedAt: sql`now()` },
-            setWhere: eq(modelDeployments.orchestrator, "kubernetes"),
           });
         written += 1;
       }
 
       const owned = await tx
         .select({ id: modelDeployments.id })
-        .from(modelDeployments)
-        .where(eq(modelDeployments.orchestrator, "kubernetes"));
+        .from(modelDeployments);
       for (const { id } of owned) {
         if (!listed.has(id) && (await view.isGone(id))) {
-          await tx
-            .delete(modelDeployments)
-            .where(
-              and(
-                eq(modelDeployments.id, id),
-                eq(modelDeployments.orchestrator, "kubernetes"),
-              ),
-            );
+          await tx.delete(modelDeployments).where(eq(modelDeployments.id, id));
         } else if (!listed.has(id)) {
           await withdraw(id);
         }

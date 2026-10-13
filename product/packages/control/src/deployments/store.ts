@@ -25,9 +25,7 @@ export interface DeploymentStore {
   >;
 }
 const hostProxyUrl = (instance: typeof instances.$inferSelect) =>
-  instance.servingUrl === privateServingUrl(instance.id)
-    ? instance.servingUrl
-    : null;
+  privateServingUrl(instance.id);
 export const createDeploymentStore = (
   database: ControlDatabase,
 ): DeploymentStore => ({

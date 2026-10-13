@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import fcntl
-from contextlib import ExitStack
+from contextlib import ExitStack, contextmanager
 import hmac
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
@@ -20,6 +20,14 @@ import uuid
 ROOT = Path("/var/lib/gradiated-kubelet")
 CONFIG = Path("/etc/gradiated/kubelet.json")
 CGROUP = Path("/sys/fs/cgroup")
+
+
+@contextmanager
+def configuration_lock(root):
+    fd = os.open(root / 'config.lock', os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(fd, 'r+') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        yield
 
 
 def prepare_cgroups():
@@ -214,10 +222,13 @@ def task(uid, stopping):
 
 
 class Agent:
-    def __init__(self, config, root=ROOT):
+    def __init__(self, config, root=ROOT, config_path=None):
         self.config, self.root = config, root
+        self.config_path = config_path
         self.lock = threading.Lock()
         self.children = {}
+        self.catalogue_task = None
+        self.catalogue_ready = False
 
     def states(self):
         return [json.loads(path.read_text()) for path in (self.root / "pods").glob("*/state.json")]
@@ -385,8 +396,61 @@ class Agent:
         if any(alive(process) for process in processes):
             raise RuntimeError("Host processes did not stop; GPU claim retained")
 
+    def configure(self, catalogue, epoch):
+        if not isinstance(catalogue, dict) or not catalogue:
+            raise ValueError('A pinned runtime catalogue is required')
+        wanted = {}
+        for digest, profile in catalogue.items():
+            if not re.fullmatch('[0-9a-f]{64}', digest) or not profile.get('image', '').endswith('@sha256:' + digest):
+                raise ValueError('Invalid pinned runtime catalogue')
+            if profile.get('environment', {}).get('HOST_IDENTITY_FILE'):
+                raise ValueError('Legacy host credentials are not supported')
+            if profile.get('kind') == 'training' or profile['gpus'] <= len(gpu_pool(self.config)):
+                wanted[digest] = profile
+        task = (epoch, json.dumps(wanted, sort_keys=True))
+        active = {runtime_profile(self.config, state['pod'])[0] for state in self.states()}
+        if self.catalogue_task == task and (not self.catalogue_ready or set(self.config.get('runtimes', {})) == set(wanted) | active):
+            return {'configuring': not self.catalogue_ready}
+        self.catalogue_task = task
+        self.catalogue_ready = False
+
+        def stage():
+            try:
+                log_path = self.root / 'bundle-download.log'
+                fd = os.open(log_path, os.O_WRONLY | os.O_CREAT | os.O_APPEND | os.O_NOFOLLOW, 0o600)
+                with os.fdopen(fd, 'ab') as log:
+                    for digest in wanted:
+                        marker = self.root / 'bundles' / digest / '.bundle-sha256'
+                        if marker.exists() and marker.read_text().strip() == digest:
+                            continue
+                        subprocess.run(['runuser', '-u', 'downloader', '--', '/opt/gradiated/bin/fetch-runtime',
+                            f's3::https://gradiated-prod-model-artifacts-873716897517.s3.us-east-1.amazonaws.com/bundles/sha256/{digest}.tar.gz',
+                            digest, str(self.root / 'bundles' / digest)], stdout=log, stderr=log, check=True, timeout=1800)
+                with self.lock, configuration_lock(self.root):
+                    if self.catalogue_task != task or json.loads((self.root / 'fence.json').read_text())['epoch'] != epoch:
+                        return
+                    current = json.loads(self.config_path.read_text()) if self.config_path is not None else self.config
+                    merged = dict(wanted)
+                    for state in self.states():
+                        digest, profile = runtime_profile(current, state['pod'])
+                        merged[digest] = current.get('runtimes', {}).get(digest, {**profile, 'image': state['pod']['spec']['containers'][0]['image']})
+                    updated = {**current, 'gpu_uuids': gpu_pool(current), 'runtimes': merged}
+                    if self.config_path is not None:
+                        atomic_json(self.config_path, updated)
+                    self.config = updated
+                    self.catalogue_ready = True
+            except Exception as error:
+                with self.lock:
+                    if self.catalogue_task == task:
+                        self.catalogue_task = None
+                print(f'Runtime catalogue staging failed: {type(error).__name__}', flush=True)
+        threading.Thread(target=stage, daemon=True).start()
+        return {'configuring': True}
+
     def request(self, body):
-        with self.lock:
+        with self.lock, configuration_lock(self.root):
+            if self.config_path is not None:
+                self.config = json.loads(self.config_path.read_text())
             epoch = body.get("epoch")
             if type(epoch) is not int or epoch < 1:
                 raise ValueError("Missing controller fencing epoch")
@@ -397,6 +461,8 @@ class Agent:
             if epoch > previous:
                 atomic_json(fence_file, {"epoch": epoch})
             operation = body["operation"]
+            if operation == "configure":
+                return self.configure(body["runtimes"], epoch)
             if operation == "ping":
                 return {"instance_id": self.config["instance_id"]}
             if operation == "list":
@@ -502,7 +568,7 @@ class Agent:
 def serve():
     config = json.loads(CONFIG.read_text())
     prepare_cgroups()
-    agent = Agent(config)
+    agent = Agent(config, config_path=CONFIG)
     ROOT.mkdir(mode=0o755, exist_ok=True)
     ROOT.chmod(0o755)
     (ROOT / "pods").mkdir(mode=0o755, exist_ok=True)

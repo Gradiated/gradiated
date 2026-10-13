@@ -6,6 +6,7 @@ import { matches } from "../images/images.mjs";
 import { bundles } from "./release.mjs";
 
 const everyBundleInputs = [
+  "product/inference/.dockerignore",
   "product/inference/bundles/build.hcl",
   "product/inference/bundles/package.sh",
   ".github/workflows/model-deployment.yml",

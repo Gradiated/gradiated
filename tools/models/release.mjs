@@ -20,7 +20,6 @@ export const bundles = {
     "product/inference/training",
     "product/packages/autotrain",
     "product/packages/contracts/src/training-recipe.json",
-    "product/inference/nomad/jobs/claim-gpus.sh",
   ],
   "glm-5-3-flash": [
     "product/inference/bundles/glm-5-3-flash",

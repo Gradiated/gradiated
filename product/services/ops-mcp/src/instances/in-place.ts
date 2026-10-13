@@ -75,7 +75,7 @@ while True:
                 owner=json.loads((root/"supervisor.json").read_text())
                 birth=pathlib.Path(f"/proc/{owner['pid']}/stat").read_text().rsplit(")",1)[1].split()[19]
                 if birth!=owner["birth"]:raise ValueError("GPU supervisor identity changed")
-                epoch=json.loads((root/"fence.json").read_text())["epoch"] if (root/"fence.json").exists() else 0
+                epoch=max(1,json.loads((root/"fence.json").read_text())["epoch"]) if (root/"fence.json").exists() else 1
                 request=urllib.request.Request("http://127.0.0.1:8887/_kubelet",data=json.dumps({"operation":"ping","epoch":epoch}).encode(),headers={"Authorization":"Bearer "+bootstrap["management_token"],"Content-Type":"application/json"})
                 with urllib.request.urlopen(request,timeout=5) as response:
                     if response.status==200:break

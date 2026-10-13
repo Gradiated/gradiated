@@ -19,7 +19,7 @@ describe("Kubernetes deployment ownership", () => {
   });
   afterAll(() => database.dispose());
 
-  it("uses stable instance identity and survives an empty Nomad view", async () => {
+  it("uses stable instance identity and SDK qualification with an intrinsically private endpoint", async () => {
     const instances = createInstanceService(database.database);
     const host = await instances.register({
       provider: "runpod",
@@ -29,11 +29,6 @@ describe("Kubernetes deployment ownership", () => {
       sku: "RTX PRO 6000",
       faultDomain: "test-host",
     });
-    await instances.bindNomadNode(host.id, randomUUID());
-    await instances.setServingUrl(
-      host.id,
-      `http://gpu-${host.id}.tailscale-inference.svc.cluster.local:8888`,
-    );
     const model = await createCatalogService(database.database).upsertModel(
       modelInput(),
     );
@@ -58,7 +53,6 @@ describe("Kubernetes deployment ownership", () => {
         .where(eq(modelDeployments.id, pod.id));
     expect((await rows())[0]).toMatchObject({
       instanceId: host.id,
-      orchestrator: "kubernetes",
       status: "unavailable",
     });
 
@@ -82,24 +76,6 @@ describe("Kubernetes deployment ownership", () => {
         { ...pod, qualified: true },
         { ...pod, id: randomUUID(), modelId: "missing-model" },
       ],
-      isGone: async () => false,
-    });
-    expect((await rows())[0]?.status).toBe("available");
-    await database.database
-      .update(instanceTable)
-      .set({ servingUrl: null })
-      .where(eq(instanceTable.id, host.id));
-    await store.reconcile({
-      running: async () => [{ ...pod, qualified: true }],
-      isGone: async () => false,
-    });
-    expect((await rows())[0]?.status).toBe("unavailable");
-    await instances.setServingUrl(
-      host.id,
-      `http://gpu-${host.id}.tailscale-inference.svc.cluster.local:8888`,
-    );
-    await store.reconcile({
-      running: async () => [{ ...pod, qualified: true }],
       isGone: async () => false,
     });
     expect((await rows())[0]?.status).toBe("available");

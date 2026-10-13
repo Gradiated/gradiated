@@ -1,4 +1,4 @@
-module gradiated.com/runpod-virtual-kubelet-prototype
+module gradiated.com/gpu-controller
 
 go 1.24.0
 

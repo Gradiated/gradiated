@@ -10,15 +10,12 @@ from pathlib import Path
 
 ENDPOINTS = {
     "api": ("127.0.0.1", 3004),
-    "nomad-0": ("127.0.0.10", 4647),
-    "nomad-1": ("127.0.0.11", 4647),
-    "nomad-2": ("127.0.0.12", 4647),
 }
 TAILNET = ipaddress.ip_network("100.64.0.0/10")
 
 
 def routes(config):
-    if set(config) not in ({"api"}, set(ENDPOINTS)):
+    if set(config) != set(ENDPOINTS):
         raise ValueError("Missing private control endpoint")
     result = []
     for name, address in config.items():

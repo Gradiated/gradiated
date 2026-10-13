@@ -401,7 +401,6 @@ shared concurrency lease for admission.
 | -------------- | ----------- | ---- | --------------------------------------------------------- |
 | `id`           | uuid        | no   | Primary key; stable deployment identity                   |
 | `model_id`     | text        | no   | FK `models.id`                                            |
-| `orchestrator` | text        | no   | Reconciliation owner: `nomad` or `kubernetes`; default `nomad` |
 | `status`       | text        | no   | `available`, `unavailable`, `draining`                    |
 | `provider`     | text        | no   | GPU provider identifier                                   |
 | `region`       | text        | no   | Provider region identifier                                |
@@ -727,52 +726,26 @@ The following existed in older plans and are not part of the data model:
 - all research program, campaign and experiment tables
 - a custom scheduler or a second store of Nomad allocation state
 
-## Instance inventory (migration pending)
+## Instance inventory
 
-The Nomad pilot adds `instances` in migration 0005. One row represents one
-provider pod or machine. Provider, account, and provider instance ID form the
-unique provider identity. Region and fault domain can be unknown. `sku` identifies
-the hardware offering, such as `4xb300` or `cpu-32vcpu`.
+One `instances` row represents one provider pod or machine. Provider, account,
+and provider instance ID form its unique identity. Region and fault domain can
+be unknown; `sku` identifies the hardware. Reenrollment keeps the UUID, and
+retirement withdraws that host from serving and training inventory.
 
-The nullable, unique `nomad_node_id` links the inventory record to Nomad.
-Creation and update timestamps describe the record. Retirement additionally
-blocks GPU certificate renewal. Credential issuance and revocation are stored
-separately. Nomad owns
-device discovery, scheduling eligibility, resource availability, and allocations.
+Kubernetes owns placement and workload lifecycle. The controller represents a
+RunPod host as `gpu-<instance UUID>` and advertises its measured capacity. Each
+model deployment uses its Pod UID and references the stable instance UUID. Its
+endpoint is derived as
+`http://gpu-<instance UUID>.tailscale-inference.svc.cluster.local:8888/alloc/<Pod UID>`.
+Git owns the host Service, controller inventory and pinned runtime catalogue.
+The worker owns deployment observations in PostgreSQL and projects them to
+Valkey for gateway routing. Neither a scheduler binding nor a separate host URL
+activation is required. Host credentials live outside the application database.
 
-The optional `model_deployments.instance_id` foreign key preserves manual deployment
-compatibility. It does not assign jobs to hosts. The control service can register
-inventory and set or clear a Nomad node link. Authentication and verification of
-that link remain pending. The application database migration remains pending.
-
-Migration 0011 adds nullable `instances.certificate` JSONB state.
-It holds `tokenHash` (the separately enrolled renewal-token SHA-256 digest), authorized
-Nomad node ID, revocation time, last successful issuance time, and last
-host-reported installed certificate expiry (`expiresAt`), renewal due time
-(`renewalDueAt`), and heartbeat (`observedAt`). JSON dates are ISO-8601 strings
-validated with the shared certificate schema. Inventory responses omit this field. No private key or raw
-renewal token is stored. Renewal requires a non-retired instance, the current
-node binding, and a matching unrevoked credential. Re-enrollment replaces the
-credential. The instance row is locked through signing, so revocation and
-retirement serialize with issuance; failed signing rolls back the issuance
-limit. Monitoring includes active bound hosts without credentials so unenrolled agents
-cannot disappear from alerts. Host reports support overdue-renewal, expiry, and
-missing-agent alerts, and do not attest
-to host integrity. See the Nomad README for rollout and compromise limits.
-
-Migration 0016 adds nullable `instances.serving_url`. Null retains the legacy
-provider ingress. A configured value must exactly name that instance's private
-Kubernetes egress Service:
-`http://gpu-<instance UUID>.tailscale-inference.svc.cluster.local:8888`.
-The database constraint and TypeScript setter reject arbitrary URLs. Only an
-active, Nomad-bound instance can change this field; qualification can bind the
-update to the node and endpoint observed before probing. Re-registration keeps
-it. Nomad reconciliation derives each allocation URL and adapter metrics target
-from it, retaining `/alloc/<allocation UUID>`. Private failures do not select
-public ingress automatically. Explicit rollback clears the field after public
-access has been restored and qualified. Git owns the egress Service's Tailscale
-IP and the per-node loopback binding configuration; PostgreSQL owns which host
-endpoint serves customers.
+The former scheduler binding, certificate state, host endpoint and reconciliation
+owner columns are unused after the Kubernetes cutover. Remove them only after
+all application replicas run the code that no longer queries those columns.
 
 ## Task training
 

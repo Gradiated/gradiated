@@ -11,8 +11,6 @@ on:
       - product/inference/desmond/**
       - product/inference/engine/**
       - product/inference/.dockerignore
-      - product/inference/nomad/client.hcl
-      - product/inference/nomad/jobs/claim-gpus.sh
       - product/inference/bundles/**
       - product/inference/training/**
       - product/packages/autotrain

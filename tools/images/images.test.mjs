@@ -53,7 +53,7 @@ test("Nomad configuration changes do not rebuild the application image", () => {
     fingerprint("product", base),
     fingerprint("product", [
       ...base,
-      entry("infra/environments/prod/us-east-1/kubernetes/nomad/servers.yaml"),
+      entry("infra/environments/prod/us-east-1/kubernetes/gpu-inference/controller.yaml"),
     ]),
   );
 });
@@ -67,18 +67,14 @@ test("shared product packages invalidate the application image", () => {
     ]),
   );
 });
-test("host renewal scripts invalidate the application image", () => {
+test("GPU enrollment assets invalidate the application image", () => {
   const base = [entry("product/Dockerfile")];
-  for (const name of [
-    "renew-certificate.py",
-    "run-renewer.sh",
-    "start-client.sh",
-  ]) {
+  for (const name of ["bootstrap.py", "host-agent.py", "supervise.py"]) {
     assert.notEqual(
       fingerprint("product", base),
       fingerprint("product", [
         ...base,
-        entry(`product/inference/images/nomad-base/${name}`),
+        entry(`product/inference/gpu/${name}`),
       ]),
     );
   }
@@ -125,15 +121,15 @@ test("plans all enabled images against the actual repository tree", () => {
   );
 });
 
-test("Nomad serving bootstrap and proxy edits invalidate the base image", () => {
+test("GPU bootstrap and proxy edits invalidate the base image", () => {
   for (const path of [
-    "product/inference/images/nomad-base/configure-serving.sh",
-    "product/inference/images/nomad-base/runtime-proxy.conf.template",
-    "product/inference/nomad/client.hcl",
+    "product/inference/gpu/bootstrap.py",
+    "product/inference/gpu/host-agent.py",
+    "product/inference/tailscale/install-tailscale.py",
   ]) {
     assert.notEqual(
-      fingerprint("nomad-base", [entry(path)]),
-      fingerprint("nomad-base", [entry(path, "100644 blob bbb")]),
+      fingerprint("gpu-base", [entry(path)]),
+      fingerprint("gpu-base", [entry(path, "100644 blob bbb")]),
     );
   }
 });

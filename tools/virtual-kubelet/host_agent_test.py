@@ -44,6 +44,41 @@ class HostAgentTest(unittest.TestCase):
             self.host.request({'operation': 'delete', 'uid': self.uid, 'epoch': 3})
         self.assertTrue((directory / 'state.json').exists())
 
+    def test_requests_observe_profile_updates_under_the_shared_configuration_lock(self):
+        import threading
+        config_path = self.root / 'config.json'
+        config_path.write_text(json.dumps(self.config))
+        self.host.config_path = config_path
+        result = []
+        with agent.configuration_lock(self.root):
+            thread = threading.Thread(target=lambda: result.append(self.host.request({'operation': 'ping', 'epoch': 1})))
+            thread.start()
+            thread.join(.05)
+            self.assertTrue(thread.is_alive())
+            updated = {**self.config, 'runtimes': {}}
+            config_path.write_text(json.dumps(updated))
+        thread.join(2)
+        self.assertFalse(thread.is_alive())
+        self.assertEqual(self.host.config, updated)
+        self.assertEqual(result, [{'instance_id': self.config['instance_id']}])
+
+    def test_catalogue_stages_before_activation_and_preserves_active_profiles(self):
+        import time
+        digest = 'a' * 64
+        marker = self.root / 'bundles' / digest / '.bundle-sha256'
+        marker.parent.mkdir(parents=True)
+        marker.write_text(digest)
+        state = self.root / 'pods' / self.uid
+        state.mkdir()
+        (state / 'state.json').write_text(json.dumps({'pod': self.pod}))
+        profile = {'image': self.pod['spec']['containers'][0]['image'], 'model_id': 'kev', 'release': self.config['release'], 'gpus': 1, 'cpu': '16', 'memory': '64Gi'}
+        self.host.request({'operation': 'configure', 'epoch': 1, 'runtimes': {digest: profile}})
+        deadline = time.monotonic() + 2
+        while not self.host.catalogue_ready and time.monotonic() < deadline: time.sleep(.01)
+        self.assertTrue(self.host.catalogue_ready)
+        self.assertEqual(self.host.config['runtimes'][digest]['release'], self.config['release'])
+        self.assertEqual(self.host.config['gpu_uuids'], ['GPU-test-0'])
+
     def test_no_execution_or_credential_overrides(self):
         for key, value in [('env', [{'name': 'TOKEN', 'value': 'secret'}]),
                            ('envFrom', [{'secretRef': {'name': 'db'}}]),

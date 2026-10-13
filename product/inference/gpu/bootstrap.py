@@ -2,6 +2,7 @@
 import base64
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import importlib.util
+import hmac
 import json
 import os
 from pathlib import Path
@@ -45,10 +46,20 @@ def validate(payload, inventory):
 
 
 def enroll(payload):
-    if list((ROOT / 'pods').glob('*/state.json')):
+    active = list((ROOT / 'pods').glob('*/state.json'))
+    if active and not CONFIG.exists():
         raise ValueError('Bootstrap cannot replace an active GPU worker')
     inventory = subprocess.check_output(['nvidia-smi', '--query-gpu=uuid', '--format=csv,noheader'], text=True).splitlines()
     config = validate(payload, inventory)
+    if CONFIG.exists():
+        previous = json.loads(CONFIG.read_text())
+        matching = previous == config and hmac.compare_digest(Path(config['token_file']).read_text(), payload['management_token'])
+        staged = all((ROOT / 'bundles' / digest / '.bundle-sha256').exists() and (ROOT / 'bundles' / digest / '.bundle-sha256').read_text().strip() == digest for digest in config['runtimes'])
+        if matching and staged:
+            subprocess.run(['bash', '/opt/gradiated/bin/start-tailscale'], check=True, timeout=10)
+            return
+        if active:
+            raise ValueError('Bootstrap cannot replace an active GPU worker')
     ROOT.mkdir(parents=True, exist_ok=True)
     ROOT.chmod(0o755)
     (ROOT / 'pods').mkdir(exist_ok=True)

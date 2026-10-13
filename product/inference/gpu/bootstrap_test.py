@@ -45,6 +45,28 @@ class BootstrapTests(unittest.TestCase):
                 with self.assertRaises(ValueError): bootstrap.enroll(self.payload())
                 inventory.assert_not_called()
 
+    def test_matching_bootstrap_resumes_active_workloads_without_rotating_credentials(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            payload = self.payload()
+            token = root / 'management.token'
+            token.write_text(payload['management_token'])
+            config = {**payload['config'], 'token_file': str(token)}
+            config_path = root / 'config.json'
+            config_path.write_text(json.dumps(config))
+            pod = root / 'pods' / str(uuid.uuid4())
+            pod.mkdir(parents=True)
+            (pod / 'state.json').write_text('{}')
+            marker = root / 'bundles' / ('a' * 64) / '.bundle-sha256'
+            marker.parent.mkdir(parents=True)
+            marker.write_text('a' * 64)
+            with patch.object(bootstrap, 'ROOT', root), patch.object(bootstrap, 'CONFIG', config_path), patch.object(bootstrap, 'validate', return_value=config), patch.object(bootstrap.subprocess, 'check_output', return_value='GPU-one\n'), patch.object(bootstrap.subprocess, 'run') as run:
+                bootstrap.enroll(payload)
+                run.assert_called_once_with(['bash', '/opt/gradiated/bin/start-tailscale'], check=True, timeout=10)
+                self.assertEqual(token.read_text(), payload['management_token'])
+                changed = {**payload, 'management_token': 'different_' + 'a' * 48}
+                with self.assertRaises(ValueError): bootstrap.enroll(changed)
+
     def test_private_configuration_refuses_symlinks(self):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory) / 'target'

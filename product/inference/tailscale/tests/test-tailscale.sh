@@ -26,7 +26,7 @@ cat >/etc/gradiated/tailscale.json <<'CONFIG'
 {"hostname":"gpu-00000000-0000-4000-8000-000000000001"}
 CONFIG
 cat >/etc/gradiated/tailscale-control.json <<'CONTROL'
-{"api":"100.64.0.1","nomad-0":"100.64.0.2","nomad-1":"100.64.0.3","nomad-2":"100.64.0.4"}
+{"api":"100.64.0.1"}
 CONTROL
 printf 'tskey-auth-synthetic\n'  >/var/lib/gradiated-tailscale/auth-key
 chown tailscale:tailscale /etc/gradiated/tailscale.json /var/lib/gradiated-tailscale/auth-key

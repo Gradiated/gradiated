@@ -38,17 +38,19 @@ import (
 )
 
 type host struct {
-	InstanceID string `json:"instance_id"`
-	Endpoint   string `json:"endpoint"`
-	TokenFile  string `json:"token_file"`
-	GPUCount   int64  `json:"gpu_count"`
-	CPU        int64  `json:"cpu"`
-	MemoryGiB  int64  `json:"memory_gib"`
-	GPUProduct string `json:"gpu_product"`
+	Runtimes   json.RawMessage `json:"-"`
+	InstanceID string          `json:"instance_id"`
+	Endpoint   string          `json:"endpoint"`
+	TokenFile  string          `json:"token_file"`
+	GPUCount   int64           `json:"gpu_count"`
+	CPU        int64           `json:"cpu"`
+	MemoryGiB  int64           `json:"memory_gib"`
+	GPUProduct string          `json:"gpu_product"`
 }
 type configuration struct {
-	Namespace string `json:"namespace"`
-	Hosts     []host `json:"hosts"`
+	Runtimes  json.RawMessage `json:"runtimes"`
+	Namespace string          `json:"namespace"`
+	Hosts     []host          `json:"hosts"`
 }
 type provider struct {
 	host   host
@@ -95,7 +97,11 @@ func retryHostOperation(_ context.Context, _ string, _ int, _ time.Time, err err
 func (p *provider) call(ctx context.Context, operation string, uid string, pod *v1.Pod, result any) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	body, err := json.Marshal(map[string]any{"operation": operation, "uid": uid, "pod": pod, "epoch": p.epoch})
+	payload := map[string]any{"operation": operation, "uid": uid, "pod": pod, "epoch": p.epoch}
+	if operation == "configure" {
+		payload["runtimes"] = p.host.Runtimes
+	}
+	body, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
@@ -191,7 +197,7 @@ func (p *provider) GetPodStatus(ctx context.Context, namespace, name string) (*v
 		incarnation := fmt.Sprintf("runpod://%d:%s", result.Epoch.PID, result.Epoch.Birth)
 		current, err := p.source.Pods(namespace).Get(name)
 		qualified := err == nil && current.UID == pod.UID && current.Annotations["gradiated.com/qualified"] == "true" &&
-			(current.Annotations["gradiated.com/qualified-runtime"] == "" || current.Annotations["gradiated.com/qualified-runtime"] == incarnation)
+			current.Annotations["gradiated.com/qualified-runtime"] == incarnation
 		if result.Ready && (qualified || pod.Annotations["gradiated.com/workload-kind"] == "training") {
 			ready = v1.ConditionTrue
 		}
@@ -267,6 +273,10 @@ func (p *provider) Ping(ctx context.Context) error {
 	}
 	if result.InstanceID != p.host.InstanceID {
 		return fmt.Errorf("host identity mismatch")
+	}
+	if len(p.host.Runtimes) > 0 {
+		var status map[string]any
+		return p.call(ctx, "configure", "", nil, &status)
 	}
 	return nil
 }
@@ -422,7 +432,9 @@ func main() {
 	if config.Namespace != "gpu-inference" || len(config.Hosts) == 0 {
 		log.Fatal("invalid GPU namespace or empty host list")
 	}
-	for _, h := range config.Hosts {
+	for index := range config.Hosts {
+		config.Hosts[index].Runtimes = config.Runtimes
+		h := config.Hosts[index]
 		if h.GPUCount < 0 || h.GPUCount > 8 || h.CPU < 0 || h.CPU > 512 || h.MemoryGiB < 0 || h.MemoryGiB > 4096 {
 			log.Fatal("invalid host resource capacity")
 		}

@@ -130,7 +130,13 @@ def render():
     hosts, services, secrets = inventory(json.loads((GPU / 'hosts.json').read_text()))
     runtimes = json.loads((ROOT / 'product/inference/gpu/runtimes.json').read_text())
     controller = list(yaml.safe_load_all((GPU / 'controller.yaml').read_text()))
-    encoded = json.dumps({'namespace': 'gpu-inference', 'hosts': hosts, 'runtimes': runtimes}, separators=(',', ':'))
+    pin = json.loads((GPU / 'host.json').read_text())
+    if pin is not None and (set(pin) != {'sha256', 'base_id'} or
+                            not re.fullmatch('[0-9a-f]{64}', pin['sha256']) or
+                            not re.fullmatch('[A-Za-z0-9._-]+', pin['base_id'])):
+        raise ValueError('Invalid host bundle pin')
+    encoded = json.dumps({'namespace': 'gpu-inference', 'hosts': hosts, 'runtimes': runtimes,
+                          'host_bundle': pin}, separators=(',', ':'))
     controller[0]['data']['hosts.json'] = encoded + '\n'
     controller[1]['spec']['template']['metadata']['annotations']['gradiated.com/host-inventory'] = hashlib.sha256(encoded.encode()).hexdigest()
     rbac = list(yaml.safe_load_all((GPU / 'rbac.yaml').read_text()))

@@ -1,6 +1,11 @@
 import importlib.util
 from pathlib import Path
 import unittest
+import base64
+import json
+import signal
+import tempfile
+from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location('installer', Path(__file__).with_name('install-host.py'))
 installer = importlib.util.module_from_spec(spec)
@@ -8,6 +13,55 @@ spec.loader.exec_module(installer)
 
 
 class RuntimeUpdateTests(unittest.TestCase):
+    def test_migration_only_reload_signals_the_existing_pid_one(self):
+        self.check_migration(False)
+
+    def test_direct_launcher_migration_keeps_the_agent_entrypoint(self):
+        self.check_migration(True)
+
+    def check_migration(self, direct):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            def mapped(value):
+                return root / str(value).lstrip('/')
+            config = {'instance_id': '019d5a4a-0000-7000-8000-000000000001',
+                      'gpu_uuids': ['GPU-one'], 'runtimes': {'a' * 64: {}},
+                      'token_file': '/etc/gradiated/kubelet-management.token'}
+            state = mapped('/var/lib/gradiated-kubelet')
+            state.mkdir(parents=True)
+            bundle = state / 'bundles' / ('a' * 64)
+            bundle.mkdir(parents=True)
+            (bundle / '.bundle-sha256').write_text('a' * 64)
+            (state / 'supervisor.json').write_text('{"pid":1,"birth":"42"}')
+            if direct:
+                (state / 'host').mkdir()
+                (state / 'host/status.json').write_text('{"schema":2,"launcher_pid":1,"launcher_birth":"42"}')
+                agent_path = mapped('/opt/gradiated/kubelet/host-agent.py')
+                agent_path.parent.mkdir(parents=True)
+                agent_path.write_text('original agent')
+            proc = mapped('/proc/1')
+            proc.mkdir(parents=True)
+            (proc / 'stat').write_text('1 (python) ' + ' '.join(['S'] + ['0'] * 18 + ['42']))
+            (proc / 'cmdline').write_bytes(b'python3\x00/opt/gradiated/kubelet/supervise.py\x00')
+            mapped('/etc/gradiated').mkdir(parents=True)
+            payload = {'instance_id': config['instance_id'], 'management_token': 'a' * 48,
+                       'config': config, 'base_id': 'test-base', 'desmondd': base64.b64encode(b'binary').decode()}
+            source = Path(__file__).resolve().parents[2] / 'product/inference/gpu'
+            for name in ('host_state.py', 'host_bundle.py', 'host-agent.py', 'supervise.py'):
+                payload[name] = (source / name).read_text()
+            with patch.object(installer, 'Path', side_effect=mapped), \
+                    patch.object(installer.subprocess, 'check_output', return_value='GPU-one\n'), \
+                    patch.object(installer.os, 'kill') as kill, patch.object(installer.subprocess, 'Popen') as spawn:
+                installer.install(payload)
+            kill.assert_called_once_with(1, signal.SIGHUP)
+            spawn.assert_not_called()
+            recovery = mapped('/opt/gradiated/kubelet/recovery/host-agent.py')
+            self.assertEqual(recovery.read_text(), payload['host-agent.py'])
+            if direct:
+                self.assertEqual(mapped('/opt/gradiated/kubelet/host-agent.py').read_text(), 'original agent')
+            else:
+                self.assertIn('host-launcher.py', mapped('/opt/gradiated/kubelet/host-agent.py').read_text())
+
     def test_preserves_active_profiles_and_allows_unused_profile_cleanup(self):
         previous = {'runtimes': {'a' * 64: {'cpu': '16'}, 'b' * 64: {'cpu': '32'}}}
         state = {'pod': {'spec': {'containers': [{'image': 'model@sha256:' + 'a' * 64}]}}}

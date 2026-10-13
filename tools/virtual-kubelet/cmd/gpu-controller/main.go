@@ -50,9 +50,10 @@ type host struct {
 	GPUProduct string          `json:"gpu_product"`
 }
 type configuration struct {
-	Runtimes  json.RawMessage `json:"runtimes"`
-	Namespace string          `json:"namespace"`
-	Hosts     []host          `json:"hosts"`
+	HostBundle *hostBundle     `json:"host_bundle"`
+	Runtimes   json.RawMessage `json:"runtimes"`
+	Namespace  string          `json:"namespace"`
+	Hosts      []host          `json:"hosts"`
 }
 type provider struct {
 	host   host
@@ -292,18 +293,12 @@ func (p *provider) NotifyPods(ctx context.Context, callback func(*v1.Pod)) {
 	}()
 }
 func (p *provider) Ping(ctx context.Context) error {
-	var result struct {
-		InstanceID string `json:"instance_id"`
-	}
+	var result hostVersion
 	if err := p.call(ctx, "ping", "", nil, &result); err != nil {
 		return err
 	}
 	if result.InstanceID != p.host.InstanceID {
 		return fmt.Errorf("host identity mismatch")
-	}
-	if len(p.host.Runtimes) > 0 {
-		var status map[string]any
-		return p.call(ctx, "configure", "", nil, &status)
 	}
 	return nil
 }
@@ -459,6 +454,10 @@ func main() {
 	if config.Namespace != "gpu-inference" || len(config.Hosts) == 0 {
 		log.Fatal("invalid GPU namespace or empty host list")
 	}
+	if err := config.HostBundle.validate(); err != nil {
+		log.Fatal(err)
+	}
+	rollout := newHostRollout(config.HostBundle, config.Hosts)
 	for index := range config.Hosts {
 		config.Hosts[index].Runtimes = config.Runtimes
 		h := config.Hosts[index]
@@ -485,6 +484,7 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 	go func() {
+		http.HandleFunc("/metrics", rollout.metrics)
 		http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) })
 		server := &http.Server{Addr: ":9090", ReadHeaderTimeout: 5 * time.Second}
 		if err := server.ListenAndServe(); err != nil {
@@ -508,6 +508,8 @@ func main() {
 				}
 				term := string(uuid.NewUUID())
 				var group sync.WaitGroup
+				group.Add(1)
+				go func() { defer group.Done(); rollout.run(leader) }()
 				for _, h := range config.Hosts {
 					group.Add(1)
 					go func(h host) {
@@ -531,6 +533,7 @@ func main() {
 									}
 								}
 							}
+							rollout.register(&provider{host: h, epoch: epoch, term: term, client: client.CoreV1()})
 							hostContext, stopHost := context.WithCancel(leader)
 							err := runHost(hostContext, client, config.Namespace, h, epoch, term)
 							stopHost()

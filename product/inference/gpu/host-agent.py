@@ -20,6 +20,7 @@ import uuid
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from host_state import atomic_json, bound_log, sync_directory
+from host_bundle import host_version, stage_host
 
 REQUEST_DRAIN_SECONDS = 660
 
@@ -348,7 +349,7 @@ def task(uid, stopping):
                     "DESMOND_STATUS_PORT": "3004",
                     "DESMOND_CONTROL_TOKEN_FILE": "/etc/gradiated/runtime-access.token",
                 }
-                reporter = spawn_user("desmond", ["/opt/gradiated/kubelet/desmondd", "--observe"],
+                reporter = spawn_user("desmond", [str(Path(__file__).resolve().with_name("desmondd")), "--observe"],
                                       reporting, directory / "desmond.log")
                 atomic_json(directory / "runtime.json", {
                     "runtime": owner(model), "reporter": owner(reporter), "started_at": time.time(),
@@ -681,7 +682,7 @@ class Agent:
             fence = json.loads(fence_file.read_text()) if fence_file.exists() else {'epoch': 0}
             operation = body['operation']
             if operation == 'ping':
-                return {'instance_id': self.config['instance_id'], 'epoch': fence['epoch']}
+                return {'instance_id': self.config['instance_id'], 'epoch': fence['epoch'], **host_version(self.root)}
             if operation == 'fence':
                 return {'epoch': fence['epoch']}
             if operation == 'claim':
@@ -709,6 +710,8 @@ class Agent:
             if epoch != previous:
                 raise ValueError("Stale controller fencing epoch")
             if operation == "configure":
+                if body.get("host_bundle"):
+                    stage_host(self, body["host_bundle"], epoch)
                 return self.configure(body["runtimes"], epoch)
             if operation == "list":
                 return [state["pod"] for state in self.states()]

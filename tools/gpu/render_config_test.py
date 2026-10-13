@@ -17,6 +17,19 @@ class RenderTests(unittest.TestCase):
     def setUp(self):
         self.hosts = json.loads((renderer.GPU / 'hosts.json').read_text())
 
+    def test_host_pin_is_projected_and_invalid_digests_are_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            gpu = Path(directory)
+            shutil.copytree(renderer.GPU, gpu, dirs_exist_ok=True)
+            pin = {'sha256': 'a' * 64, 'base_id': 'test-base'}
+            (gpu / 'host.json').write_text(json.dumps(pin))
+            with patch.object(renderer, 'GPU', gpu):
+                outputs = renderer.render()
+                self.assertEqual(json.loads(outputs[gpu / 'controller.yaml'][0]['data']['hosts.json'])['host_bundle'], pin)
+                (gpu / 'host.json').write_text(json.dumps({**pin, 'sha256': '../escape'}))
+                with self.assertRaises(ValueError):
+                    renderer.render()
+
     def test_argo_only_reads_generated_manifests(self):
         app = yaml.safe_load((renderer.KUBE / 'platform/gpu-inference.yaml').read_text())
         self.assertEqual(app['spec']['source']['directory']['include'], '*.yaml')

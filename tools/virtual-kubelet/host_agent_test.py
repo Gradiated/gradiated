@@ -1,5 +1,6 @@
 import fcntl
 import importlib.util
+import os
 import json
 import os
 from pathlib import Path
@@ -12,7 +13,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 import uuid
 
-spec = importlib.util.spec_from_file_location('agent', Path(__file__).with_name('host-agent.py'))
+spec = importlib.util.spec_from_file_location('agent', os.environ.get('HOST_AGENT_TEST_SOURCE', Path(__file__).with_name('host-agent.py')))
 agent = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(agent)
 
@@ -241,7 +242,8 @@ class HostAgentTest(unittest.TestCase):
         thread.join(2)
         self.assertFalse(thread.is_alive())
         self.assertEqual(self.host.config, updated)
-        self.assertEqual(result, [{'instance_id': self.config['instance_id'], 'epoch': 1}])
+        self.assertEqual([{key: value[key] for key in ('instance_id', 'epoch')} for value in result],
+                         [{'instance_id': self.config['instance_id'], 'epoch': 1}])
 
     def test_catalogue_stages_before_activation_and_preserves_active_profiles(self):
         import time

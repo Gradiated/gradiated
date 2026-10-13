@@ -1,6 +1,7 @@
 {
   "controller": [
     "tools/virtual-kubelet/*",
+    "tools/gpu/*",
     "product/inference/gpu/*",
     "product/inference/images/gpu-base/*",
     "infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml"

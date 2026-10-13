@@ -74,7 +74,15 @@ jobs:
         if: fromJSON(needs.changes.outputs.checks).configuration
       - run: python3 tools/virtual-kubelet/host_agent_test.py
         if: fromJSON(needs.changes.outputs.checks).controller
+      - run: HOST_AGENT_TEST_SOURCE=product/inference/images/gpu-base/recovery/host-agent.py python3 tools/virtual-kubelet/host_agent_test.py
+        if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 tools/virtual-kubelet/host_state_test.py
+        if: fromJSON(needs.changes.outputs.checks).controller
+      - run: python3 tools/virtual-kubelet/install_host_test.py
+        if: fromJSON(needs.changes.outputs.checks).controller
+      - run: python3 product/inference/gpu/host_bundle_test.py
+        if: fromJSON(needs.changes.outputs.checks).controller
+      - run: python3 tools/gpu/rollout_host_test.py
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 product/inference/gpu/bootstrap_test.py
         if: fromJSON(needs.changes.outputs.checks).controller

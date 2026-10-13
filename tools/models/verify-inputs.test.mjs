@@ -10,7 +10,7 @@ test("base and shared packaging changes verify every bundle", () => {
   for (const path of [
     "product/inference/images/gpu-base/Dockerfile",
     "product/inference/.dockerignore",
-    "product/inference/gpu/host-agent.py",
+    "product/inference/gpu/bootstrap.py",
     "product/inference/runtime-launcher/supervise.cpp",
     "product/inference/bundles/package.sh",
     "product/inference/bundles/build.hcl",
@@ -63,7 +63,12 @@ test("a pinned autotrain package change verifies the training bundle", () => {
 
 test("GPU bootstrap changes verify every runtime bundle", () => {
   assert.deepEqual(
-    bundlesToVerify(["product/inference/gpu/host-agent.py"]).sort(),
+    bundlesToVerify(["product/inference/gpu/bootstrap.py"]).sort(),
     Object.keys(bundles).sort(),
   );
+});
+
+test("host agent and staging changes verify only the host bundle", () => {
+  for (const path of ["product/inference/gpu/host-agent.py", "product/inference/gpu/host_bundle.py"])
+    assert.deepEqual(bundlesToVerify([path]), ["host"]);
 });

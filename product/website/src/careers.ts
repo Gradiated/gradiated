@@ -217,15 +217,14 @@ const nativeJobs: Job[] = [
   },
 ];
 
+const nativeIds = new Set(nativeJobs.map((job) => job.ashbyJobPostingId));
+const nativeSlugs = new Set(nativeJobs.map((job) => job.slug));
+
 /** Native jobs first, then any Ashby postings that are not already written natively. */
 export const jobs: Job[] = [
   ...nativeJobs,
   ...ashbyJobs.filter(
-    (ashbyJob) =>
-      !nativeJobs.some(
-        (job) =>
-          job.ashbyJobPostingId === ashbyJob.ashbyJobPostingId ||
-          job.slug === ashbyJob.slug,
-      ),
+    (job) =>
+      !nativeIds.has(job.ashbyJobPostingId) && !nativeSlugs.has(job.slug),
   ),
 ];

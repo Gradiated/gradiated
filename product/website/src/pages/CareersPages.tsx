@@ -23,6 +23,12 @@ import {
 } from "../careers-copy";
 import "../styles/index.css";
 
+/** A remote role says so in its location, even if Ashby's location doesn't. */
+const locationOf = (job: Job): string =>
+  job.workplace === "REMOTE" && !/remote/i.test(job.location)
+    ? `Remote, ${job.location}`
+    : job.location;
+
 /**
  * Careers, in the design system.
  *
@@ -64,7 +70,7 @@ export const CareersIndexPage = (): ReactElement => (
                         <span aria-hidden>·</span>
                       </>
                     ) : null}
-                    <span>{job.location}</span>
+                    <span>{locationOf(job)}</span>
                   </span>
                 </span>
 
@@ -267,16 +273,15 @@ export const JobDetailPage = ({ job }: { job: Job }): ReactElement => {
             <dl className="gr-job-facts">
               <div>
                 <dt className="gr-label gr-muted">Location</dt>
-                <dd>{job.location}</dd>
+                <dd>{locationOf(job)}</dd>
               </div>
-              <div>
-                <dt className="gr-label gr-muted">Office</dt>
-                <dd>
-                  {job.workplace === "REMOTE"
-                    ? "Remote"
-                    : (job.officeDays ?? OFFICE_DAYS)}
-                </dd>
-              </div>
+              {/* A remote role has no office days; its location says it is remote. */}
+              {job.workplace !== "REMOTE" ? (
+                <div>
+                  <dt className="gr-label gr-muted">Office</dt>
+                  <dd>{job.officeDays ?? OFFICE_DAYS}</dd>
+                </div>
+              ) : null}
               <div>
                 <dt className="gr-label gr-muted">Compensation</dt>
                 <dd>{COMPENSATION}</dd>

@@ -3049,10 +3049,9 @@
   border-block-start: 1px solid var(--color-rule);
 }
 
-/* Clears the floating nav when a contents link jumps to a section. */
-.gr-job-section {
-  scroll-margin-top: calc(var(--nav-h) + 2 * var(--u));
-}
+/* No scroll-margin of its own: the root scroll-padding-top (base.css) already
+   clears the floating nav when a contents link jumps to a section. Adding one
+   here doubled the offset and landed each heading mid-screen. */
 
 /* The first section carries no rule of its own — the head's rule is directly
    above it — but it keeps a generous top so the posting starts clear of that

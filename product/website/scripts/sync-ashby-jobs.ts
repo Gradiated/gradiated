@@ -11,6 +11,8 @@
 //   - the usual headings ("About Gradiated", "Why this role exists", "What you
 //     will do", "Pay and equity", ...) fill the usual sections; any other
 //     heading becomes an extra section
+//   - an "Office" heading (e.g. "Several days a week") sets the office line
+//     beside the title instead of adding a section
 //   - a usual section missing from Ashby falls back to the shared copy in
 //     careers-copy.ts where there is one (About, How we work, Pay, Interview)
 //
@@ -52,6 +54,9 @@ const STANDARD_SECTIONS: Record<
   "pay and equity": "pay",
   "interview process": "interviewSteps",
 };
+
+/** Headings that set the office line beside the title instead of a section. */
+const OFFICE_HEADINGS = new Set(["office", "office days", "in the office"]);
 
 /** Ashby employment types as schema.org JobPosting values. */
 const EMPLOYMENT_TYPES: Record<string, string> = {
@@ -141,6 +146,13 @@ const toJob = (posting: AshbyPosting): Job => {
     const key = headingKey(heading);
     const items = itemsIn(bodyHtml);
     if (!heading || items.length === 0) continue;
+
+    // An "Office" heading sets the office line beside the title (e.g. "Several
+    // days a week") rather than adding a section.
+    if (OFFICE_HEADINGS.has(key)) {
+      job.officeDays = items.join(" ");
+      continue;
+    }
 
     const standard = STANDARD_SECTIONS[key];
     if (standard) job[standard] = items;

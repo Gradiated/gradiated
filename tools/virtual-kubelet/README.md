@@ -360,3 +360,30 @@ python3 tools/gpu/rollout_host_test.py
 (cd tools/virtual-kubelet && go test -race ./... && go vet ./...)
 docker buildx bake -f product/inference/bundles/build.hcl verify-host
 ```
+
+### Upgrade existing private control listeners
+
+After a complete host bundle has become healthy, migrate retained hosts without
+resetting their provider pods:
+
+```sh
+python3 tools/gpu/migrate-control.py /path/to/targets.json \
+  --sha256 <verified-host-digest> \
+  --identity-file /path/outside/repository/ssh-key \
+  --known-hosts /path/outside/repository/known-hosts
+```
+
+Targets use the same `instance_id`, `ssh` and optional `port` fields as
+`rollout-host.py`. The migration verifies the active host archive and identity,
+replaces only the control acceptor, and leaves its existing `nc` connections
+running. It checks readiness over the original HTTP connection and a new one,
+checks a temporary artifact grant, and retains a full on-disk recovery seed.
+Failed handoff restores the previous listener. Repeating a completed migration
+does not restart it. Serving model processes and GPU reservations stay running.
+
+The bounded container check exercises a live HTTP connection through the handoff:
+
+```sh
+bash product/inference/tailscale/tests/test-tailscale.sh
+python3 tools/gpu/migrate_control_test.py
+```

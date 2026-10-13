@@ -743,9 +743,10 @@ The worker owns deployment observations in PostgreSQL and projects them to
 Valkey for gateway routing. Neither a scheduler binding nor a separate host URL
 activation is required. Host credentials live outside the application database.
 
-The former scheduler binding, certificate state, host endpoint and reconciliation
-owner columns are unused after the Kubernetes cutover. Remove them only after
-all application replicas run the code that no longer queries those columns.
+Migration 0018 removes the former scheduler binding, certificate state, host
+endpoint and reconciliation-owner columns after the Kubernetes code is fully
+deployed. Instance and deployment identities, release metadata and serving
+URLs remain intact.
 
 ## Task training
 

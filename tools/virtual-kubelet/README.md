@@ -374,12 +374,15 @@ python3 tools/gpu/migrate-control.py /path/to/targets.json \
 ```
 
 Targets use the same `instance_id`, `ssh` and optional `port` fields as
-`rollout-host.py`. The migration verifies the active host archive and identity,
+`rollout-host.py`, and require direct SSH access. Interactive RunPod gateway
+connections are rejected before any host changes. The migration verifies the active host archive and identity,
 replaces only the control acceptor, and leaves its existing `nc` connections
 running. It checks readiness over the original HTTP connection and a new one,
 checks a temporary artifact grant, and retains a full on-disk recovery seed.
-Failed handoff restores the previous listener. Repeating a completed migration
-does not restart it. Serving model processes and GPU reservations stay running.
+Failed handoff restores the previous listener. Every invocation, including a
+retry, restarts the acceptor while preserving established connections. New
+connections may be refused during the supervisor's two-second restart delay.
+Serving model processes and GPU reservations stay running.
 
 The bounded container check exercises a live HTTP connection through the handoff:
 

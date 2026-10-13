@@ -19,6 +19,7 @@ test("frontmatter provides article metadata without reading its body", () => {
   const article = parseArticleMetadata(fixture(), "example.mdx");
   assert.equal(article.publishedAt, "2026-09-02");
   assert.equal(article.title, "Example");
+  assert.equal(article.collection, "library");
   assert.equal(article.image, "/brand/png/gradiated-mark-dark-1024.png");
 });
 test("draft filtering applies to every article, not a named route", () => {
@@ -71,7 +72,7 @@ test("Carat is published with the requested date; Thesis uses the same schema", 
   assert.equal(thesis.path, "/notes/our-thesis/");
 });
 
-test("existing articles stay in Notes and Hardware is an explicit collection", () => {
+test("existing articles default to the Library and hardware remains a subject", () => {
   assert.equal(parseArticleMetadata(fixture(), "legacy").category, "notes");
   assert.equal(parseArticleMetadata(fixture(), "legacy").layout, "reading");
   const hardware = fixture().replace(
@@ -88,7 +89,7 @@ test("existing articles stay in Notes and Hardware is an explicit collection", (
   );
 });
 
-test("the sand journey is a Hardware draft and has no production route", () => {
+test("the sand journey has its own collection and remains excluded from production", () => {
   const source = readFileSync(
     new URL(
       "../content/articles/how-to-get-an-answer-out-of-sand.mdx",
@@ -98,6 +99,8 @@ test("the sand journey is a Hardware draft and has no production route", () => {
   );
   const draft = parseArticleMetadata(source, "sand");
   assert.equal(draft.category, "hardware");
+  assert.equal(draft.collection, "sand-to-thought");
+  assert.equal(draft.path, "/sand-to-thought/");
   assert.equal(draft.layout, "journey");
   assert.equal(buildArticleRegistry({ sand: source }, true).length, 1);
   assert.equal(buildArticleRegistry({ sand: source }, false).length, 0);

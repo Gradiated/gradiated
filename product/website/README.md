@@ -124,7 +124,7 @@ files directly. `vercel.json` redirects old docs routes to their current routes.
 - `src/docs/` contains the public MDX documentation.
 - `content/articles/*.mdx` is the source of truth for articles and their metadata.
 - `src/articles.ts` discovers articles and filters drafts by build mode.
-- `src/pages/ArticlePage.tsx` renders every article with the same layout.
+- `src/pages/ReadingPages.tsx` renders articles and Methods in the shared site shell, including the guide’s journey layout.
 - `src/content.tsx` contains legacy shared content, including the Thesis body.
 - `public/` contains files served without transformation.
 - `public/.well-known/security.txt` is the RFC 9116 security contact. The build
@@ -160,7 +160,7 @@ and shared code blocks work in every article. The Thesis MDX file currently uses
 its existing React body to preserve the current copy.
 
 The registry validates required fields, calendar dates, paths, status, and
-duplicate routes. Paths use `/library/<slug>/` or `/notes/<slug>/`. An optional
+duplicate routes. Paths use `/library/<slug>/`, `/notes/<slug>/`, or `/sand-to-thought/` and its subpages. Articles default to `collection: library`; the semiconductor guide uses `collection: sand-to-thought` and is excluded from Library cards and navigation lists. An optional
 `updatedAt` date must not precede `publishedAt`. `image` is optional and defaults
 to the site mark. Use a site-relative image path. Dates use quoted `YYYY-MM-DD`.
 
@@ -269,11 +269,19 @@ Console links use `CONSOLE_BASE_URL` from `src/urls.ts`. Vite development uses
 `http://localhost:3000`; production builds use `https://console.gradiated.com`.
 Set `VITE_CONSOLE_BASE_URL` at build time to override this destination.
 
-## Hardware library
+## Sand to Thought
 
-Articles declare `category: hardware` to appear under `/library/?show=hardware`.
-Omitted categories default to Notes. The same metadata supplies cards, navigation
-and reading-page labels. Existing company Methods stay in their authored sequence.
+The semiconductor guide lives at `/sand-to-thought/`, with its own top navigation
+link immediately after Library. The old `/library/how-to-get-an-answer-out-of-sand/`
+address redirects to it, preserving section fragments. Library contains Notes and
+Methods. Article subjects (`category`) remain separate from their collection.
+
+The guide opens with the animated dune-to-circuit artwork and continues directly
+into the illustrated article. Its contents list is generated from the script’s
+existing headings, using the docs’ sidebar styling and mobile contents control.
+Chapter links jump within this page and the active chapter follows the reader.
+Future chapter guides and deeper articles can live under this collection without
+turning the opening journey into a catalogue.
 
 The sand article uses `layout: journey`, preserving its sticky illustrations in
 the shared website shell. Drafts are included locally and in Vercel Preview

@@ -112,20 +112,18 @@ const METHOD_COVERS: Record<MethodSlug, StoryCover> = {
 };
 
 /** Newest first, with the collection supplied by article metadata. */
-const writing: Story[] = articles.map((article) => ({
-  art: NOTE_ART[article.path],
-  cover: NOTE_COVERS[article.path],
-  date: article.status === "draft" ? "" : displayDate(article.publishedAt),
-  dateTime: article.status === "draft" ? undefined : article.publishedAt,
-  href: article.path,
-  kind: article.category === "hardware" ? "hardware" : "note",
-  animatedCover:
-    article.path === "/library/how-to-get-an-answer-out-of-sand/"
-      ? "sand-circuit"
-      : undefined,
-  lede: article.description,
-  title: article.title,
-}));
+const writing: Story[] = articles
+  .filter((article) => article.collection === "library")
+  .map((article) => ({
+    art: NOTE_ART[article.path],
+    cover: NOTE_COVERS[article.path],
+    date: article.status === "draft" ? "" : displayDate(article.publishedAt),
+    dateTime: article.status === "draft" ? undefined : article.publishedAt,
+    href: article.path,
+    kind: article.category === "hardware" ? "hardware" : "note",
+    lede: article.description,
+    title: article.title,
+  }));
 
 /* Method keeps its authored order rather than being sorted: it is a handbook,
    and its sequence is an argument — mission, then product, then people. */

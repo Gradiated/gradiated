@@ -417,15 +417,6 @@
 
 .sand-journey {
   position: relative;
-  padding-top: 6rem;
-}
-.sand-journey .sand-return {
-  display: block;
-  width: fit-content;
-  margin: 0 auto;
-  padding: 1.5rem;
-  color: inherit;
-  text-decoration: none;
 }
 .sand-journey .prose p {
   font-size: inherit;
@@ -444,4 +435,101 @@
 
 .sand-journey:not([data-animation-ready="true"]) .scene-text {
   opacity: 1;
+}
+
+.sand-journey {
+  padding: calc(var(--nav-h) + 3 * var(--u)) var(--u) 0;
+}
+
+.sand-journey .sand-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 9rem) minmax(0, 1fr);
+  gap: calc(1.5 * var(--u));
+  align-items: start;
+  max-width: 1440px;
+  margin-inline: auto;
+}
+
+.sand-journey .sand-side .gr-doc-nav {
+  display: grid;
+}
+
+.sand-journey .sand-main {
+  min-width: 0;
+}
+
+.sand-journey .sand-cover {
+  margin: 0;
+  height: clamp(240px, 28vw, 340px);
+  overflow: hidden;
+  border-radius: var(--radius);
+}
+
+.sand-journey .sand-cover:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 6px;
+}
+
+.sand-journey .sand-intro {
+  max-width: 46rem;
+  margin: calc(2 * var(--u)) auto 0;
+}
+
+.sand-journey .sand-intro .post-header {
+  min-height: 0;
+  padding-block: var(--u);
+  scroll-margin-top: calc(var(--nav-h) + var(--u));
+}
+
+.sand-journey .post {
+  margin-top: var(--u);
+}
+
+.sand-journey .prose {
+  padding-inline: clamp(1.25rem, 3vw, 2.5rem);
+  max-width: none;
+}
+
+.sand-journey .scene-text {
+  scroll-margin-top: 11vh;
+}
+
+.sand-journey .gr-doc-nav-link[aria-current] {
+  color: var(--color-text);
+}
+
+.gr-fab-link[aria-current="location"] {
+  color: var(--color-interactive);
+}
+
+@media (max-width: 899px) {
+  .sand-journey .sand-layout {
+    display: block;
+  }
+
+  .sand-journey .sand-side {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .sand-journey .sand-intro {
+    padding-inline: 0.5rem;
+  }
+
+  .sand-journey .prose {
+    padding-inline: 0.5rem;
+  }
+
+  .sand-journey .scene-text {
+    scroll-margin-top: 44vh;
+  }
+}
+
+html:has(.sand-journey) {
+  scroll-padding-top: 0;
+}
+
+.sand-journey .sand-intro h1 {
+  text-wrap: balance;
 }

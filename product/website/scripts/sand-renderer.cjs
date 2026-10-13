@@ -160,7 +160,7 @@ function renderPost(source, template, expectedScenes) {
   const sections = scenes.map((scene) => {
     if (!scene.tokens.some((token) => token.type !== "heading"))
       throw Error(`Scene ${scene.key} needs some article text.`);
-    return `<section class="scene-text" data-scene="${scene.key}">\n${render(scene.tokens)}\n</section>`;
+    return `<section class="scene-text" data-scene="${scene.key}" id="sand-${scene.key}">\n${render(scene.tokens)}\n</section>`;
   });
   const footerHTML = render(footer);
   const notes = [];
@@ -181,7 +181,7 @@ function renderPost(source, template, expectedScenes) {
     );
   }
   const article = [
-    `<header class="post-header">`,
+    `<header class="post-header" id="sand-introduction">`,
     titleHTML,
     lede,
     "</header>",

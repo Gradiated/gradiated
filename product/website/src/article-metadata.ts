@@ -15,7 +15,12 @@ const schema = z
   .object({
     title: z.string().trim().min(1),
     description: z.string().trim().min(1),
-    path: z.string().regex(/^\/(library|notes)\/[a-z0-9]+(?:-[a-z0-9]+)*\/$/),
+    path: z
+      .string()
+      .regex(
+        /^(?:\/(?:library|notes)\/[a-z0-9]+(?:-[a-z0-9]+)*\/|\/sand-to-thought(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)?\/)$/,
+      ),
+    collection: z.enum(["library", "sand-to-thought"]).default("library"),
     category: z.enum(["notes", "hardware"]).default("notes"),
     layout: z.enum(["reading", "journey"]).default("reading"),
     status: z.enum(["draft", "published"]),

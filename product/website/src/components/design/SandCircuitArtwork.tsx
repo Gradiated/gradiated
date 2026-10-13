@@ -173,7 +173,8 @@ export const SandCircuitArtwork = (): ReactElement => {
     const duneContext = duneCache.getContext("2d");
     if (!duneContext) return;
     const trigger =
-      host.closest<HTMLElement>(".gr-story-link, .gr-nav-note") ?? host;
+      host.closest<HTMLElement>(".gr-story-link, .gr-nav-note, .sand-cover") ??
+      host;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
     let frame = 0;
     let width = 0;

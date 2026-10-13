@@ -53,7 +53,27 @@ export default defineConfig(({ isSsrBuild, mode }) => {
             "<!--{{TITLE}}-->{{ARTICLE}}",
             JSON.parse(readFileSync(manifest, "utf8")),
           );
-          return `export default ${JSON.stringify(html)};`;
+          const contents = Array.from(
+            html.matchAll(
+              /<section[^>]* id="([^"]+)">\s*<h2>([\s\S]*?)<\/h2>/g,
+            ),
+            ([, id, heading]) => ({
+              id,
+              label: heading.replace(/<[^>]*>/g, "").replace(
+                /&(amp|lt|gt|quot|#39);/g,
+                (entity) =>
+                  ({
+                    "&amp;": "&",
+                    "&lt;": "<",
+                    "&gt;": ">",
+                    "&quot;": '"',
+                    "&#39;": "'",
+                  })[entity]!,
+              ),
+            }),
+          );
+
+          return `export const contents = ${JSON.stringify(contents)}; export default ${JSON.stringify(html)};`;
         },
       },
       {

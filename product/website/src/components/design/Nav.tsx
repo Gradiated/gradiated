@@ -1,6 +1,7 @@
 import { CONSOLE_BASE_URL } from "../../urls";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactElement } from "react";
+import { articles } from "../../articles";
 import { library } from "./library";
 import { SandCircuitArtwork } from "./SandCircuitArtwork";
 import { models } from "../../models";
@@ -147,15 +148,12 @@ const NAV_ITEMS: NavItem[] = [
              HandbookPage — a dead link in the nav. The handbook is Method now. */
           href: "/library/?show=methods",
         },
-        {
-          image: "/assets/artwork-sources/dunes-aerial.jpg",
-          label: "Hardware",
-          body: "From silicon and switches to computers and chip design.",
-          href: "/library/?show=hardware",
-        },
       ],
     },
   },
+  ...(articles.some((article) => article.collection === "sand-to-thought")
+    ? [{ href: "/sand-to-thought/", label: "Sand to Thought" }]
+    : []),
   { href: "/careers/", label: "Careers" },
   { href: "/docs/", label: "Docs" },
 ];
@@ -603,6 +601,7 @@ export const Nav = (): ReactElement => {
                   "--hl-x": highlight ? `${highlight.left}px` : "0px",
                   "--hl-y": highlight ? `${highlight.top}px` : "0px",
                   "--slide": active !== null && index < active ? "-1" : "1",
+                  "--nav-card-count": item.panel.cards.length,
                 } as CSSProperties
               }
             >

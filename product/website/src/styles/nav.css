@@ -742,7 +742,9 @@
    space on its right pushed the panel's visible mass left of the axis it was
    geometrically centred on — the panel measured centred and looked wrong. */
 .gr-nav-panel-content:has(.gr-nav-writing) {
-  grid-template-columns: repeat(2, calc(10 * var(--u))) max-content;
+  grid-template-columns:
+    repeat(var(--nav-card-count, 2), minmax(0, calc(10 * var(--u))))
+    minmax(0, max-content);
 }
 
 /* -- the models list -------------------------------------------------------
@@ -1070,4 +1072,38 @@
 .gr-nav-note-thumb > .gr-wafer-artwork {
   position: absolute;
   inset: 0;
+}
+
+.gr-nav-wordmark {
+  flex-shrink: 0;
+}
+
+.gr-nav-link,
+.gr-nav-action {
+  white-space: nowrap;
+}
+
+.gr-nav-panel-content .gr-nav-writing {
+  min-width: 0;
+}
+
+.gr-nav-note {
+  max-width: 100%;
+  grid-template-columns: calc(4 * var(--u)) minmax(0, 1fr);
+}
+
+@media (max-width: 959px) {
+  [data-tier="wide"] .gr-nav-links,
+  [data-tier="wide"] .gr-nav-actions,
+  [data-tier="wide"] .gr-nav-panel {
+    display: none;
+  }
+
+  [data-tier="wide"] .gr-nav-burger {
+    display: flex;
+  }
+}
+
+.gr-nav-writing ul {
+  grid-template-columns: minmax(0, 1fr);
 }

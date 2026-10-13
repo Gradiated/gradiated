@@ -21,7 +21,6 @@ export const catalog = {
       "product/packages/",
       "product/services/",
       "product/Dockerfile",
-      "product/scripts/set-private-serving.mjs",
       "product/inference/tailscale/",
       "product/inference/gpu/",
       "product/inference/images/gpu-base/",

@@ -97,6 +97,7 @@ export const trainingHostJob = (
         spec: {
           serviceAccountName: "model-runtime",
           automountServiceAccountToken: false,
+          priorityClassName: "gpu-training",
           restartPolicy: "Never",
           terminationGracePeriodSeconds: 90,
           nodeSelector: {

@@ -405,7 +405,7 @@ class Agent:
         if group.exists() and (group / 'cgroup.procs').read_text().strip():
             raise RuntimeError('Unrecorded pod processes retain their GPU claim')
         with (directory / 'task.log').open('ab') as output:
-            process = subprocess.Popen([sys.executable, __file__, 'task', uid],
+            process = subprocess.Popen([sys.executable, '-B', __file__, 'task', uid],
                 env={'PATH': '/usr/sbin:/usr/bin:/sbin:/bin'}, stdin=subprocess.DEVNULL,
                 stdout=output, stderr=subprocess.STDOUT, start_new_session=True)
         self.children[uid] = process
@@ -557,7 +557,7 @@ class Agent:
         self.refresh_proxy()
         with (self.root / "proxy.log").open("ab") as output:
             self.children["proxy"] = subprocess.Popen(
-                [sys.executable, __file__, "proxy"],
+                [sys.executable, '-B', __file__, "proxy"],
                 env={"PATH": "/usr/sbin:/usr/bin:/sbin:/bin"},
                 stdin=subprocess.DEVNULL, stdout=output, stderr=subprocess.STDOUT,
                 start_new_session=True)

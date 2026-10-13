@@ -44,6 +44,41 @@ class HostAgentTest(unittest.TestCase):
     def tearDown(self):
         self.directory.cleanup()
 
+    def test_task_and_proxy_imports_preserve_the_bundle_with_explicit_environments(self):
+        bundle = self.root / 'bundle'
+        bundle.mkdir()
+        (bundle / 'host_state.py').write_text('healthy = True\n')
+        (self.root / 'pods' / self.uid).mkdir()
+        cgroup = self.root / 'cgroup'
+        cgroup.mkdir()
+        (cgroup / 'gradiated-proxy').mkdir()
+        (cgroup / 'gradiated-proxy' / 'cgroup.procs').write_text('')
+        original_spawn = subprocess.Popen
+
+        def probe(command, **kwargs):
+            script = command.index(agent.__file__)
+            return original_spawn([*command[:script], '-c', 'import host_state,time; time.sleep(1)'],
+                                  **{**kwargs, 'cwd': str(bundle)})
+
+        for mode in ('task', 'proxy'):
+            with self.subTest(mode=mode), patch.object(agent.subprocess, 'Popen', side_effect=probe), \
+                    patch.object(agent, 'CGROUP', cgroup), \
+                    patch.object(agent, 'pod_cgroup', return_value=cgroup / 'unused'), \
+                    patch.object(self.host, 'stop'), patch.object(self.host, 'refresh_proxy'):
+                if mode == 'task':
+                    self.host.ensure_task({'pod': self.pod})
+                    process = self.host.children[self.uid]
+                else:
+                    self.host.ensure_proxy()
+                    process = self.host.children['proxy']
+                try:
+                    self.assertEqual(process.wait(timeout=5), 0)
+                    self.assertEqual({path.name for path in bundle.iterdir()}, {'host_state.py'})
+                finally:
+                    if process.poll() is None:
+                        process.terminate()
+                        process.wait(timeout=5)
+
     def test_completed_children_are_reaped_without_losing_live_children(self):
         completed = subprocess.Popen(['python3', '-c', 'pass'])
         live = subprocess.Popen(['python3', '-c', 'import time; time.sleep(60)'])

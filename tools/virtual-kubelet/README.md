@@ -172,6 +172,13 @@ host anti-affinity during a rollout. DeepSeek can grow from one to two replicas.
 These bounds preserve existing availability and rollout capacity; raising them
 requires reviewing GPU, CPU, memory, placement and concurrent training demand.
 Training consumes the same finite GPU resources and can delay serving placement.
+DeepSeek selects eight-GPU hosts: the current four-GPU training host does not have
+space for its weights alongside the existing training cache. Node labels publish
+the host GPU count, and Kubernetes enforces this placement selector. At two
+DeepSeek replicas, each eight-GPU host also runs GLM, leaving no contiguous
+four-GPU slot for a DeepSeek rollout surge. Scale DeepSeek to its minimum before
+updating its runtime, or provide another eligible host; do not assume spare GPUs
+split across hosts satisfy a tensor-parallel replica.
 Scaling down a model releases GPUs but does not reduce the RunPod reservation bill.
 
 ## Recovery and disk limits

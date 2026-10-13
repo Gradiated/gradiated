@@ -343,7 +343,7 @@ func runHost(ctx context.Context, client kubernetes.Interface, namespace string,
 		h.GPUProduct = "RTX-PRO-6000"
 	}
 	resources := v1.ResourceList{v1.ResourceCPU: *resource.NewQuantity(h.CPU, resource.DecimalSI), v1.ResourceMemory: resource.MustParse(fmt.Sprintf("%dGi", h.MemoryGiB)), v1.ResourcePods: resource.MustParse("16"), "nvidia.com/gpu": *resource.NewQuantity(h.GPUCount, resource.DecimalSI)}
-	spec := &v1.Node{ObjectMeta: metav1.ObjectMeta{Name: name, Labels: map[string]string{"type": "virtual-kubelet", "kubernetes.io/hostname": name, "gradiated.com/provider": "runpod", "gradiated.com/instance-id": h.InstanceID, "nvidia.com/gpu.product": h.GPUProduct}},
+	spec := &v1.Node{ObjectMeta: metav1.ObjectMeta{Name: name, Labels: map[string]string{"type": "virtual-kubelet", "kubernetes.io/hostname": name, "gradiated.com/provider": "runpod", "gradiated.com/instance-id": h.InstanceID, "nvidia.com/gpu.product": h.GPUProduct, "nvidia.com/gpu.count": fmt.Sprint(h.GPUCount)}},
 		Spec:   v1.NodeSpec{Taints: []v1.Taint{{Key: "gradiated.com/gpu", Value: "true", Effect: v1.TaintEffectNoSchedule}}},
 		Status: v1.NodeStatus{Capacity: resources, Allocatable: resources.DeepCopy(), NodeInfo: v1.NodeSystemInfo{OperatingSystem: "linux", Architecture: "amd64", KubeletVersion: "v1.33.5"}, Conditions: []v1.NodeCondition{{Type: v1.NodeReady, Status: v1.ConditionTrue, LastHeartbeatTime: metav1.Now(), LastTransitionTime: metav1.Now()}}}}
 	factory := informers.NewSharedInformerFactoryWithOptions(client, time.Minute, informers.WithNamespace(namespace), informers.WithTweakListOptions(func(o *metav1.ListOptions) {

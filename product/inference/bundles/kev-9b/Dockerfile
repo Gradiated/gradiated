@@ -25,7 +25,7 @@ COPY --from=runtime-base /opt/gradiated/bin/desmondd /bundle/desmondd
 COPY bundles/package.sh /package.sh
 COPY runtimes/kev/adapter.py /bundle/adapter.py
 COPY --chmod=755 bundles/kev-9b/entrypoint /bundle/entrypoint
-COPY images/nomad-base/base-id /bundle/base-id
+COPY images/gpu-base/base-id /bundle/base-id
 RUN bash /package.sh
 
 # The caller supplies the exact base digest as a named build context.

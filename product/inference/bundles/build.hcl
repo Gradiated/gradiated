@@ -1,6 +1,6 @@
 target "base" {
   context    = "product/inference"
-  dockerfile = "images/nomad-base/Dockerfile"
+  dockerfile = "images/gpu-base/Dockerfile"
   platforms  = ["linux/amd64"]
 }
 

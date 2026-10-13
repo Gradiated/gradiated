@@ -1,0 +1,130 @@
+#!/usr/bin/env python3
+import base64
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import importlib.util
+import json
+import os
+from pathlib import Path
+import pwd
+import re
+import secrets
+import subprocess
+import threading
+import time
+import uuid
+
+ROOT = Path('/var/lib/gradiated-kubelet')
+CONFIG = Path('/etc/gradiated/kubelet.json')
+
+
+def private_json(path, value, uid=0, gid=0):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(fd, 'w') as output:
+        os.fchmod(output.fileno(), 0o600)
+        os.fchown(output.fileno(), uid, gid)
+        json.dump(value, output)
+
+
+def validate(payload, inventory):
+    instance = str(uuid.UUID(payload['instance_id']))
+    if not re.fullmatch(r'[A-Za-z0-9_-]{32,128}', payload['management_token']):
+        raise ValueError('A host-specific management key is required')
+    config = payload['config']
+    if config['instance_id'] != instance:
+        raise ValueError('Bootstrap identity mismatch')
+    devices = config.get('gpu_uuids') or inventory
+    if not devices or len(set(devices)) != len(devices) or not set(devices).issubset(inventory):
+        raise ValueError('Bootstrap GPU inventory mismatch')
+    if not config.get('runtimes'):
+        raise ValueError('At least one pinned runtime is required')
+    for digest, profile in config['runtimes'].items():
+        if not re.fullmatch('[0-9a-f]{64}', digest) or not profile['image'].endswith('@sha256:' + digest):
+            raise ValueError('Runtime digest mismatch')
+    return {**config, 'gpu_uuids': devices, 'token_file': '/etc/gradiated/kubelet-management.token'}
+
+
+def enroll(payload):
+    if list((ROOT / 'pods').glob('*/state.json')):
+        raise ValueError('Bootstrap cannot replace an active GPU worker')
+    inventory = subprocess.check_output(['nvidia-smi', '--query-gpu=uuid', '--format=csv,noheader'], text=True).splitlines()
+    config = validate(payload, inventory)
+    ROOT.mkdir(parents=True, exist_ok=True)
+    ROOT.chmod(0o755)
+    (ROOT / 'pods').mkdir(exist_ok=True)
+    private_json(Path('/etc/gradiated/host-identity.json'), {'instance_id': config['instance_id']})
+    private_json(CONFIG, config)
+    token_path = Path(config['token_file'])
+    fd = os.open(token_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(fd, 'w') as output:
+        os.fchmod(output.fileno(), 0o600)
+        output.write(payload['management_token'])
+    account = pwd.getpwnam('desmond')
+    local_key = Path('/etc/gradiated/runtime-access.token')
+    fd = os.open(local_key, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(fd, 'w') as output:
+        os.fchown(output.fileno(), account.pw_uid, account.pw_gid)
+        output.write(secrets.token_urlsafe(48))
+
+    class Health(BaseHTTPRequestHandler):
+        def log_message(self, *_):
+            pass
+
+        def do_GET(self):
+            self.send_response(200 if self.path == '/healthz' else 404)
+            self.end_headers()
+
+    health = ThreadingHTTPServer(('127.0.0.1', 8889), Health)
+    threading.Thread(target=health.serve_forever, daemon=True).start()
+    try:
+        scripts = Path('/opt/gradiated/tailscale-scripts')
+        spec = importlib.util.spec_from_file_location('tailscale_install', scripts / 'install-tailscale.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        names = {'run-tailscale': 'run-tailscale.sh', 'start-tailscale': 'start-tailscale.sh',
+                 'forward-control': 'forward-control.py', 'run-control': 'run-control.sh', 'start-control': 'start-control.sh'}
+        module.install({'instance_id': config['instance_id'], 'auth_key': payload['auth_key'], 'proxy_port': 8889,
+                        'control_endpoints': {'api': payload['api_endpoint']},
+                        'scripts': {name: (scripts / filename).read_text() for name, filename in names.items()}})
+        bundles = ROOT / 'bundles'
+        bundles.mkdir(exist_ok=True)
+        downloader = pwd.getpwnam('downloader')
+        os.chown(bundles, downloader.pw_uid, downloader.pw_gid)
+        for digest in config['runtimes']:
+            subprocess.run(['runuser', '-u', 'downloader', '--', '/opt/gradiated/bin/fetch-runtime',
+                f's3::https://gradiated-prod-model-artifacts-873716897517.s3.us-east-1.amazonaws.com/bundles/sha256/{digest}.tar.gz',
+                digest, str(bundles / digest)], check=True, timeout=1800)
+    finally:
+        health.shutdown()
+        health.server_close()
+
+
+def main():
+    public_key = os.environ.pop('PUBLIC_KEY', '')
+    encoded = os.environ.pop('GRADIATED_GPU_BOOTSTRAP', '')
+    if public_key:
+        ssh = Path('/root/.ssh')
+        ssh.mkdir(mode=0o700, exist_ok=True)
+        key = ssh / 'authorized_keys'
+        key.write_text(public_key + '\n')
+        key.chmod(0o600)
+        subprocess.run(['ssh-keygen', '-A'], check=True)
+        subprocess.run(['/usr/sbin/sshd'], check=True)
+    if encoded:
+        try:
+            enroll(json.loads(base64.b64decode(encoded)))
+        except Exception as error:
+            print(f'GPU bootstrap failed: {type(error).__name__}; SSH remains available.', flush=True)
+            while True:
+                time.sleep(60)
+    if not CONFIG.exists():
+        print('GPU enrollment is required; SSH remains available.', flush=True)
+        while True:
+            time.sleep(60)
+    birth = Path(f'/proc/{os.getpid()}/stat').read_text().rsplit(')', 1)[1].split()[19]
+    private_json(ROOT / 'supervisor.json', {'pid': os.getpid(), 'birth': birth})
+    os.execv('/usr/bin/python3', ['python3', '/opt/gradiated/kubelet/supervise.py'])
+
+
+if __name__ == '__main__':
+    main()

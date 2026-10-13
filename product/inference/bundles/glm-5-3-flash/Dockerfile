@@ -33,7 +33,7 @@ COPY lora/*.py /bundle/lora/
 COPY lora/pyproject.toml lora/vllm_resolver.py /tmp/lora-plugin/
 RUN uv pip install --python /bundle/python/bin/python3 --break-system-packages \
     --no-build-isolation --no-deps /tmp/lora-plugin && rm -rf /tmp/lora-plugin
-COPY images/nomad-base/base-id /bundle/base-id
+COPY images/gpu-base/base-id /bundle/base-id
 RUN bash /package.sh
 
 FROM runtime-base AS verify

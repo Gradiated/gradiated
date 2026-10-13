@@ -22,7 +22,7 @@ COPY bundles/package.sh /package.sh
 COPY images/deepseek-v4-1-flash/start.sh /bundle/start.sh
 COPY --chmod=755 bundles/deepseek-v4-1-flash/entrypoint /bundle/entrypoint
 COPY --chmod=755 bundles/deepseek-v4-1-flash/vllm /bundle/vllm
-COPY images/nomad-base/base-id /bundle/base-id
+COPY images/gpu-base/base-id /bundle/base-id
 RUN bash /package.sh
 
 # The caller supplies the exact base digest as a named build context.

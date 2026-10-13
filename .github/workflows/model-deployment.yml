@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
     paths:
+      - product/inference/gpu/**
+      - product/inference/tailscale/**
       - product/inference/images/**
       - product/inference/CMakeLists.txt
       - product/inference/desmond/**
@@ -111,7 +113,7 @@ jobs:
     uses: ./.github/workflows/build-images.yml
     with:
       source_sha: ${{ github.sha }}
-      images: '["nomad-base"]'
+      images: '["gpu-base"]'
       artifact_prefix: models
 
   runtime:
@@ -128,7 +130,7 @@ jobs:
       SOURCE_SHA: ${{ github.sha }}
       AWS_REGION: us-east-1
       ARTIFACT_BUCKET: gradiated-prod-model-artifacts-${{ vars.AWS_ACCOUNT_ID }}
-      BASE_IMAGE: ${{ format('{0}.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/inference@{1}', vars.AWS_ACCOUNT_ID, fromJSON(needs.images.outputs.images)['nomad-base'].digest) }}
+      BASE_IMAGE: ${{ format('{0}.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/inference@{1}', vars.AWS_ACCOUNT_ID, fromJSON(needs.images.outputs.images)['gpu-base'].digest) }}
     steps:
       - uses: actions/checkout@v7
         with:

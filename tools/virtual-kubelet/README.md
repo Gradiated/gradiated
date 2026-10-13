@@ -101,5 +101,14 @@ python3 host_agent_test.py
 python3 remote_test.py
 ```
 
+The default `gpu-base` image runs `product/inference/gpu/bootstrap.py`. Its
+`GRADIATED_GPU_BOOTSTRAP` value is a base64 JSON envelope supplied at pod
+creation: instance UUID, host-management key, one-time GPU-tagged Tailscale
+auth key, private API tailnet address, and the permitted runtime configuration.
+The process clears the bootstrap environment before starting services. It
+receives no OAuth, Kubernetes, database or AWS access credential. Bundle
+downloads use temporary grants from the private control bridge. Keep bootstrap
+values outside the repository.
+
 `main.go` and `remote.py` are the original isolated SSH lifecycle experiment.
 They are not the production controller or host agent.

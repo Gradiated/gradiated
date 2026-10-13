@@ -12,12 +12,21 @@ import { awsDigest, plan } from "../images/images.mjs";
 
 const shared = [
   "product/inference/bundles/package.sh",
-  "product/inference/images/nomad-base/base-id",
+  "product/inference/images/gpu-base/base-id",
   "tools/models/release.mjs",
 ];
 export const bundles = {
-  training: ["product/inference/training", "product/packages/autotrain", "product/packages/contracts/src/training-recipe.json", "product/inference/nomad/jobs/claim-gpus.sh"],
-  "glm-5-3-flash": ["product/inference/bundles/glm-5-3-flash", "product/inference/runtimes/glm", "product/inference/lora"],
+  training: [
+    "product/inference/training",
+    "product/packages/autotrain",
+    "product/packages/contracts/src/training-recipe.json",
+    "product/inference/nomad/jobs/claim-gpus.sh",
+  ],
+  "glm-5-3-flash": [
+    "product/inference/bundles/glm-5-3-flash",
+    "product/inference/runtimes/glm",
+    "product/inference/lora",
+  ],
   "host-tools": ["product/inference/bundles/host-tools"],
   "deepseek-v4-1-flash": [
     "product/inference/bundles/deepseek-v4-1-flash",
@@ -61,7 +70,8 @@ const fileDigest = async (file) => {
 };
 
 const releaseKey = (bundle, source, baseImage) => {
-  if (!Object.hasOwn(bundles, bundle)) throw new Error(`Unknown bundle ${bundle}`);
+  if (!Object.hasOwn(bundles, bundle))
+    throw new Error(`Unknown bundle ${bundle}`);
   if (!/^[0-9a-f]{40}$/.test(source))
     throw new Error("Invalid source revision");
   const tree = execFileSync(
@@ -82,9 +92,12 @@ const readRelease = (bucket, key) => {
 };
 const publishedBase = (source, account) => {
   if (!/^[0-9]{12}$/.test(account)) throw new Error("Invalid AWS account");
-  const [{ repository, tag }] = plan(["nomad-base"], source).include;
+  const [{ repository, tag }] = plan(["gpu-base"], source).include;
   const digest = awsDigest(repository, tag);
-  return digest && `${account}.dkr.ecr.us-east-1.amazonaws.com/${repository}@${digest}`;
+  return (
+    digest &&
+    `${account}.dkr.ecr.us-east-1.amazonaws.com/${repository}@${digest}`
+  );
 };
 
 const main = async () => {
@@ -94,7 +107,8 @@ const main = async () => {
   } else if (command === "resolve") {
     const [bucket, account] = rest;
     const baseImage = publishedBase(source, account);
-    const release = baseImage && readRelease(bucket, releaseKey(bundle, source, baseImage));
+    const release =
+      baseImage && readRelease(bucket, releaseKey(bundle, source, baseImage));
     if (release) process.stdout.write(JSON.stringify(JSON.parse(release)));
   } else if (command === "lookup") {
     const [baseImage, bucket] = rest;
@@ -114,7 +128,7 @@ const main = async () => {
       bucket,
       digest,
       baseId: readFileSync(
-        "product/inference/images/nomad-base/base-id",
+        "product/inference/images/gpu-base/base-id",
         "utf8",
       ).trim(),
     });

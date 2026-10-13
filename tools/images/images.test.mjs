@@ -7,7 +7,7 @@ import { fingerprint, matches, plan } from "./images.mjs";
 const entry = (path, meta = "100644 blob aaa") => ({ path, meta });
 
 test("every local base-image COPY source participates in its identity", () => {
-  const image = catalog["nomad-base"];
+  const image = catalog["gpu-base"];
   const dockerfile = readFileSync(image.dockerfile, "utf8");
   for (const line of dockerfile
     .split("\n")
@@ -93,11 +93,17 @@ test("Cloud UI reuses the product repository with independent build inputs", () 
   const inputs = [entry("infra/images/temporal-ui/Dockerfile")];
   assert.equal(
     fingerprint("temporal-ui", inputs),
-    fingerprint("temporal-ui", [...inputs, entry("product/services/api/src/server.ts")]),
+    fingerprint("temporal-ui", [
+      ...inputs,
+      entry("product/services/api/src/server.ts"),
+    ]),
   );
   assert.notEqual(
     fingerprint("temporal-ui", inputs),
-    fingerprint("temporal-ui", [...inputs, entry("infra/images/temporal-ui/configure-cloud.cjs")]),
+    fingerprint("temporal-ui", [
+      ...inputs,
+      entry("infra/images/temporal-ui/configure-cloud.cjs"),
+    ]),
   );
 });
 

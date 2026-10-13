@@ -1,4 +1,4 @@
-name: GPU controller tests
+name: GPU controller and manifests
 on:
   push:
     branches: [main]
@@ -84,7 +84,7 @@ jobs:
         run: python3 tools/security/check_gpu_inference.py
 
   passed:
-    name: GPU controller passed
+    name: GPU controller and manifests passed
     if: always()
     needs: [changes, test, manifests]
     runs-on: ubuntu-latest

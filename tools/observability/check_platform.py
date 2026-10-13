@@ -55,6 +55,8 @@ def main():
             ('incident-webhook', 'AutoscalingLimited', 'gradiated', 'unexpected'),
             ('incident-webhook', 'AutoscalingUnavailable', 'gradiated', 'warning'),
             ('incident-webhook', 'ApplicationReconciliationFailed', 'argocd', 'warning'),
+            ('incident-webhook', 'GpuRolloutFailed', 'gpu-inference', 'warning'),
+            ('incident-webhook', 'GpuRolloutBlocked', 'gpu-inference', 'warning'),
             ('incident-webhook', 'WorkerLoopStalled', 'gradiated', 'critical'),
             ('incident-webhook', 'InferenceDeploymentProbeFailed', 'gradiated', 'critical'),
             ('incident-webhook', 'ModelUnderReplicated', 'gradiated', 'warning'),

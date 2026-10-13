@@ -302,6 +302,40 @@ class HostAgentTest(unittest.TestCase):
             process.terminate()
             process.wait()
 
+    def test_live_proxy_recovers_lost_route_updates_without_restarting(self):
+        proxy = self.root / 'proxy'
+        proxy.mkdir()
+        path = self.root / 'nginx.conf'
+        path.write_text('stale configuration with a retired allocation route')
+        directory = self.root / 'pods' / self.uid
+        directory.mkdir()
+        agent.atomic_json(directory / 'state.json', {'pod': self.pod, 'port_base': 38080})
+        process = subprocess.Popen(['python3', '-c', 'import time; time.sleep(60)', str(path)])
+        (proxy / 'nginx.pid').write_text(str(process.pid))
+        try:
+            with patch.object(agent.subprocess, 'run'), patch.object(agent.os, 'kill') as signal_proxy:
+                self.host.ensure_proxy()
+                signal_proxy.assert_called_once_with(process.pid, signal.SIGHUP)
+                self.assertIn('/alloc/' + self.uid + '/', path.read_text())
+                self.assertNotIn('retired allocation', path.read_text())
+                self.host.ensure_proxy()
+                signal_proxy.assert_called_once_with(process.pid, signal.SIGHUP)
+                self.assertIsNone(process.poll())
+        finally:
+            process.terminate()
+            process.wait(timeout=5)
+
+    def test_proxy_timeout_covers_the_production_generation_budget(self):
+        import re
+        import yaml
+        config = next(doc for doc in yaml.safe_load_all((Path(__file__).resolve().parents[2] /
+            'infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml').read_text())
+                      if doc['kind'] == 'ConfigMap')['data']
+        request_limit = int(config['GATEWAY_GENERATION_TIMEOUT_SECONDS'])
+        timeout = int(re.search(r'proxy_read_timeout (\d+)s;', self.host.proxy_config()).group(1))
+        self.assertGreaterEqual(timeout, request_limit + 30)
+        self.assertEqual(timeout, agent.REQUEST_DRAIN_SECONDS)
+
     def test_tensor_parallel_and_single_gpu_claims_do_not_overlap(self):
         self.config['gpu_uuids'] = ['GPU-test-' + str(i) for i in range(4)]
         self.config['runtimes'] = {

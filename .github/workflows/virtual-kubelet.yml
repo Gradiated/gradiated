@@ -1,14 +1,56 @@
-name: GPU controller tests
+name: GPU controller and manifests
 on:
   push:
     branches: [main]
-    paths: ["tools/virtual-kubelet/**", "tools/gpu/**", "infra/environments/prod/us-east-1/kubernetes/gpu-inference/**", "infra/environments/prod/us-east-1/kubernetes/tailscale-inference/hosts/**", "product/inference/gpu/**", ".github/workflows/virtual-kubelet.yml"]
+    paths:
+      - ".github/workflows/virtual-kubelet.yml"
+      - "tools/virtual-kubelet/**"
+      - "tools/gpu/**"
+      - "tools/security/check_gpu_inference.py"
+      - "tools/security/check_tailscale_inference.py"
+      - "infra/environments/prod/us-east-1/kubernetes/gpu-inference/**"
+      - "infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml"
+      - "infra/environments/prod/us-east-1/kubernetes/tailscale-inference/hosts/**"
+      - "infra/environments/prod/us-east-1/kubernetes/platform/argo-rollouts.yaml"
+      - "infra/environments/prod/us-east-1/kubernetes/platform/external-secrets.yaml"
+      - "infra/environments/prod/us-east-1/kubernetes/platform/gpu-inference.yaml"
+      - "infra/environments/prod/us-east-1/kubernetes/platform/inference-network.yaml"
+      - "infra/environments/prod/us-east-1/kubernetes/platform/keda.yaml"
+      - "infra/environments/prod/us-east-1/kubernetes/platform/tailscale-operator.yaml"
+      - "infra/environments/prod/us-east-1/kubernetes/platform/tailscale-relays.yaml"
+      - "infra/environments/prod/us-east-1/terraform/eks/terragrunt.hcl"
+      - "infra/modules/argocd-bootstrap/main.tf"
+      - "product/inference/gpu/**"
+      - "product/inference/images/gpu-base/**"
+      - "mise.toml"
   pull_request:
-    paths: ["tools/virtual-kubelet/**", "tools/gpu/**", "infra/environments/prod/us-east-1/kubernetes/gpu-inference/**", "infra/environments/prod/us-east-1/kubernetes/tailscale-inference/hosts/**", "product/inference/gpu/**", ".github/workflows/virtual-kubelet.yml"]
+  workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: virtual-kubelet-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
+  changes:
+    name: Relevant changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      relevant: ${{ steps.relevant.outputs.relevant }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github
+      - id: relevant
+        uses: ./.github/actions/relevant
+        with:
+          workflow: .github/workflows/virtual-kubelet.yml
+
   test:
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -28,3 +70,26 @@ jobs:
       - run: python3 product/inference/images/gpu-base/download_runtime_test.py
       - run: test -z "$(gofmt -l tools/virtual-kubelet/cmd/gpu-controller/*.go)"
       - run: docker build tools/virtual-kubelet
+
+  manifests:
+    name: Validate GPU manifests
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v4.2.3
+      - run: python3 -m pip install PyYAML==6.0.2 jsonschema==4.26.0
+      - name: Validate against Kubernetes and the pinned Argo, KEDA and External Secrets CRDs
+        run: python3 tools/security/check_gpu_inference.py
+
+  passed:
+    name: GPU controller and manifests passed
+    if: always()
+    needs: [changes, test, manifests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail when a required job failed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1

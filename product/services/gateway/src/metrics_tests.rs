@@ -465,3 +465,21 @@ fn served_by_moves_the_active_generation_to_the_serving_deployment() {
     drop(generation);
     assert_eq!((active(primary), active(fallback)), (Some(0), Some(0)));
 }
+
+#[test]
+fn runtime_work_has_a_zero_baseline_before_completion_including_fallbacks() {
+    let metrics = GatewayMetrics::new();
+    let baseline = |deployment: Uuid| {
+        metrics.encode().lines().any(|line| {
+            line.starts_with("gradiated_gateway_runtime_latency_seconds_sum{")
+                && line.contains(&format!("deployment=\"{deployment}\""))
+                && line.rsplit(' ').next().unwrap().parse::<f64>().unwrap() == 0.0
+        })
+    };
+    let mut generation = admitted(&metrics);
+    assert!(baseline(Uuid::from_u128(1)));
+    generation.prepare_deployment(Uuid::from_u128(2));
+    assert!(baseline(Uuid::from_u128(2)));
+    generation.served_by(Uuid::from_u128(2));
+    assert!(baseline(Uuid::from_u128(2)));
+}

@@ -142,7 +142,7 @@ private control API for routing; Prometheus supplies scaling measurements.
 
 Three gateway signals inform the HPA: concurrent generations over the last
 minute, runtime seconds per second over two minutes (so short requests between
-scrapes count), and capacity rejections. Each signal is scoped to the exact
+scrapes count once a rate baseline exists), and capacity rejections. Each signal is scoped to the exact
 model and summed across gateway replicas. The HPA takes the largest recommendation.
 Capacity rejections request the configured ceiling; customer balance and
 concurrency policy rejections do not. The initial concurrency targets are 0.7
@@ -150,6 +150,14 @@ for Kev's single execution slot and 16 for the batched runtimes. The batched
 targets are conservative starting policy, not measured throughput guarantees;
 tune them against time to first token and queue pressure under representative
 traffic. GPU memory allocation alone is not a useful scale-down signal.
+Prometheus samples traffic; a first successful burst that finishes before the
+first scrape can be missed. Runtime work series are created at admission and
+for every fallback candidate before dispatch so a scrape during an in-flight
+request establishes zero.
+Sustained traffic supplies the subsequent samples. The capacity timestamp
+signal captures a first rejection even without a preceding scrape. Warm minimum
+replicas remain necessary for sudden bursts; autoscaling cannot load a model
+in time for a burst that has already finished.
 
 All queries require fresh, complete gateway telemetry. Missing samples or a
 Prometheus outage trigger a fallback that retains the current replica count
@@ -163,8 +171,31 @@ host for a zero-unavailable rollout. GLM retains a third B300 host for its hard
 host anti-affinity during a rollout. DeepSeek can grow from one to two replicas.
 These bounds preserve existing availability and rollout capacity; raising them
 requires reviewing GPU, CPU, memory, placement and concurrent training demand.
-Training consumes the same finite GPU resources and can delay serving placement.
+Training Jobs use the `gpu-training` PriorityClass, below the default priority of
+model pods, so a model replica or rollout pod that cannot fit preempts training
+rather than waiting. Training never preempts. A preempted trainer resumes in a new
+Job from its latest checkpoint, with up to three attempts per training stage.
+
+DeepSeek selects eight-GPU hosts: the current four-GPU training host does not have
+space for its weights alongside the existing training cache. Node labels publish
+the host GPU count, and Kubernetes enforces this placement selector. At two
+DeepSeek replicas, each eight-GPU host also runs GLM, leaving no contiguous
+four-GPU slot for a DeepSeek rollout surge. Scale DeepSeek to its minimum before
+updating its runtime, or provide another eligible host; do not assume spare GPUs
+split across hosts satisfy a tensor-parallel replica.
 Scaling down a model releases GPUs but does not reduce the RunPod reservation bill.
+
+## Rollout alerts
+
+`GpuRolloutFailed` warns when Argo Rollouts reports a Rollout as `Abort`,
+`Timeout`, `Error` or `InvalidSpec`: it aborted at its progress deadline, failed
+SDK qualification, or cannot reconcile. It does not retry automatically. Free
+capacity if needed, then run `kubectl argo rollouts retry rollout <name> -n
+gpu-inference` or push a fix. `GpuRolloutBlocked` warns when a model pod has had no
+GPU host for 15 minutes, before the deadline aborts the rollout. To free capacity,
+lower another model's `replicas` or `max_replicas` in `models.json`, or pin it
+temporarily with the ScaledObject's `autoscaling.keda.sh/paused-replicas`
+annotation and remove the annotation afterwards.
 
 ## Recovery and disk limits
 
@@ -174,13 +205,16 @@ Process handles include boot and PID namespace identities as well as PID birth
 times. Serving task recovery retains the pod UID and requires SDK qualification
 of the new process incarnation. Training tasks that already started never retry
 automatically. Unknown processes retain their GPU claims instead of allowing
-another task to start. Child tasks are reaped; their cached process objects are
+another task to start. The private proxy reconstructs routes from durable pod state
+and reloads when they differ, retaining existing connections. Its 660-second
+read timeout covers the production generation budget, including non-streaming
+requests that send no response bytes until completion. Child tasks are reaped; their cached process objects are
 not durable workload state.
 
 Every minute, cleanup preserves configured, active and staging bundles. It keeps
 two verified unused bundles and at most twenty retired pod diagnostic directories
 for up to seven days. Live processes or occupied cgroups prevent retirement; an
-unrecorded live process blocks bundle cleanup. Model weights are not pruned.
+unrecorded live process blocks bundle cleanup. Model weights use each host's configured `hf_home`; runtime profiles must not override it with a second cache location. Model weights are not pruned.
 Diagnostic logs are bounded at 32 MiB per file using copy/truncate of the recent
 16 MiB, retaining the writer's inode. Concurrent log lines can be lost during
 truncation; inference output and durable training artifacts use separate paths.

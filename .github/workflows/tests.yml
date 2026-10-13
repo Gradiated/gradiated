@@ -42,6 +42,7 @@ on:
       - "product/turbo.json"
       - "mise.toml"
       - "tools/images/**"
+      - "tools/virtual-kubelet/**"
       - "tools/deployment/**"
       - "tools/github-apps/**"
   pull_request:

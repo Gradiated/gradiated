@@ -4,6 +4,7 @@ import {
   createWorkspaceApiKeyService,
   createContentStore,
   createNomadDeploymentStore,
+  createDeploymentStore,
   createKubernetesDeploymentStore,
   createTraceCleanup,
   createGenerationSettlementReader,
@@ -59,10 +60,10 @@ const metricsServer = startWorkerMetricsServer(
   environment.METRICS_PORT,
   async () =>
     loraMetricsTargets(
-      await createNomadDeploymentStore(database).adapterMetricsTargets(),
+      await createDeploymentStore(database).adapterMetricsTargets(),
     ),
   async () =>
-    (await createNomadDeploymentStore(database).replicas()).map(
+    (await createDeploymentStore(database).replicas()).map(
       ({ id, modelId }) => ({ id, modelId }),
     ),
 );

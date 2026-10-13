@@ -187,3 +187,9 @@ export {
 export { createWorkspaceStore } from "./workspaces/store.js";
 
 export { createKubernetesRequest } from "./deployments/kubernetes-client.js";
+
+export {
+  createDeploymentStore,
+  type DeploymentStore,
+  type ModelReplica,
+} from "./deployments/store.js";

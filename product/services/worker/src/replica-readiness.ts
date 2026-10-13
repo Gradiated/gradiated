@@ -1,4 +1,4 @@
-import { servedReleaseDigest, type NomadReplica } from "@gradiated/control";
+import { servedReleaseDigest, type ModelReplica } from "@gradiated/control";
 import { z } from "zod";
 
 const FRESH_MS = 15_000;
@@ -12,7 +12,7 @@ const statusSchema = z.object({
 export type ReplicaCounts = Record<string, { replicas: number; ready: number }>;
 
 export const countReadyReplicas = async (
-  replicas: readonly NomadReplica[],
+  replicas: readonly ModelReplica[],
   statusesFor: (digest: string) => Promise<Record<string, string>>,
   now = Date.now(),
 ): Promise<ReplicaCounts> => {

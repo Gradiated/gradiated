@@ -1,3 +1,4 @@
+import { createDeploymentStore } from "./store.js";
 import type { ModelDeploymentRelease } from "@gradiated/contracts";
 import { and, eq, inArray, isNull, notInArray, or, sql } from "drizzle-orm";
 
@@ -79,93 +80,7 @@ const hostProxyUrl = (instance: Instance): string | null => {
 export const createNomadDeploymentStore = (
   database: ControlDatabase,
 ): NomadDeploymentStore => ({
-  adapterMetricsTargets: async () => {
-    const rows = await database
-      .select({
-        id: modelDeployments.id,
-        modelId: modelDeployments.modelId,
-        serviceUrl: modelDeployments.serviceUrl,
-        instance: instances,
-      })
-      .from(modelDeployments)
-      .innerJoin(instances, eq(modelDeployments.instanceId, instances.id))
-      .where(
-        and(
-          sql`${modelDeployments.release}->>'lora_enabled' = 'true'`,
-          eq(modelDeployments.status, "available"),
-          isNull(instances.retiredAt),
-        ),
-      );
-
-    return ModelDeploymentRecordSchema.pick({
-      id: true,
-      modelId: true,
-      serviceUrl: true,
-    })
-      .array()
-      .parse(
-        rows.filter((row) => {
-          const proxy = hostProxyUrl(row.instance);
-          return (
-            proxy !== null && row.serviceUrl === `${proxy}/alloc/${row.id}`
-          );
-        }),
-      );
-  },
-
-  replicas: async () => {
-    const rows = await database
-      .select({
-        id: modelDeployments.id,
-        modelId: modelDeployments.modelId,
-        release: modelDeployments.release,
-      })
-      .from(modelDeployments)
-      .where(eq(modelDeployments.status, "available"));
-
-    return ModelDeploymentRecordSchema.pick({
-      id: true,
-      modelId: true,
-      release: true,
-    })
-      .array()
-      .parse(rows);
-  },
-
-  async verificationReplicas(modelId, deploymentIds) {
-    modelId = ModelDeploymentRecordSchema.shape.modelId.parse(modelId);
-    const ids = ModelDeploymentRecordSchema.shape.id
-      .array()
-      .parse(deploymentIds);
-
-    const rows = await database
-      .select({
-        id: modelDeployments.id,
-        modelId: modelDeployments.modelId,
-        status: modelDeployments.status,
-        release: modelDeployments.release,
-      })
-      .from(modelDeployments)
-      .where(
-        and(
-          eq(modelDeployments.modelId, modelId),
-          or(
-            ids.length ? inArray(modelDeployments.id, ids) : undefined,
-            eq(modelDeployments.status, "available"),
-          ),
-        ),
-      );
-
-    return ModelDeploymentRecordSchema.pick({
-      id: true,
-      modelId: true,
-      status: true,
-      release: true,
-    })
-      .array()
-      .parse(rows);
-  },
-
+  ...createDeploymentStore(database),
   reconcile: (nomad) =>
     database.transaction(async (tx) => {
       const {

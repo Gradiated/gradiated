@@ -88,6 +88,15 @@ else:assert (base/'recovery/legacy').read_text()=='preserve this recovery fixtur
 assert (Path(first['recovery_seed_path'])/'control-listener.py').is_file()
 second=migrate()
 assert not second['dispatcher_updated'] and second['listener_restarted']
+if first['recovery_seed_path']!=str(base/'recovery'):
+    seed=Path(first['recovery_seed_path'])
+    def rejected():
+        try:migrate()
+        except RuntimeError as error:assert 'Existing recovery seed verification failed' in str(error)
+        else:raise AssertionError('Invalid recovery seed was accepted')
+    manifest=(seed/'files.json').read_bytes();(seed/'files.json').unlink();rejected();(seed/'files.json').write_bytes(manifest)
+    (seed/'injected.py').write_text('unexpected module');rejected();(seed/'injected.py').unlink()
+    seed.chmod(0o777);rejected();seed.chmod(0o755)
 print(json.dumps({'connection_preserving_migration':True,'recovery_installed':True,'repeat_is_idempotent':True}))
 '''
 

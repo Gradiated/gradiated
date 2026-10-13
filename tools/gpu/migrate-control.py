@@ -114,7 +114,15 @@ if not (recovery/'control-listener.py').exists():
                 # frozen fallback present and retain the complete seed beside it.
                 recovery_seed=base/('recovery-seed-'+digest)
                 if recovery_seed.exists():
-                    manifest=json.loads((version/'files.json').read_text())
+                    manifest_bytes=(version/'files.json').read_bytes()
+                    manifest=json.loads(manifest_bytes)
+                    info=recovery_seed.lstat()
+                    if recovery_seed.is_symlink() or info.st_uid!=0 or info.st_mode & 0o022 or {path.name for path in recovery_seed.iterdir()}!=set(manifest)|{'files.json'}:
+                        raise ValueError('Existing recovery seed verification failed')
+                    manifest_path=recovery_seed/'files.json'
+                    info=manifest_path.lstat()
+                    if not manifest_path.is_file() or manifest_path.is_symlink() or info.st_uid!=0 or info.st_mode & 0o022 or manifest_path.read_bytes()!=manifest_bytes:
+                        raise ValueError('Existing recovery seed verification failed')
                     for name,expected in manifest.items():
                         path=recovery_seed/name
                         info=path.lstat()

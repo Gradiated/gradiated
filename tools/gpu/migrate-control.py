@@ -18,7 +18,10 @@ if config['instance_id']!=payload['instance_id']:raise ValueError('Host identity
 state=json.loads((root/'host/status.json').read_text())
 digest=payload['sha256']
 if state.get('current')!=digest or state.get('trial'):raise ValueError('A healthy active host version is required')
-spec=importlib.util.spec_from_file_location('launcher',base/'supervise.py')
+# Retained reservations keep a legacy outer supervisor with import side effects.
+# Its guarded bundle launcher is installed separately.
+launcher_path=base/'host-launcher.py' if (base/'host-launcher.py').is_file() else base/'supervise.py'
+spec=importlib.util.spec_from_file_location('launcher',launcher_path)
 launcher=importlib.util.module_from_spec(spec);spec.loader.exec_module(launcher)
 if not launcher.verified(root/'host',digest,Path('/etc/gradiated/base-id').read_text().strip()):raise ValueError('Active host bundle verification failed')
 version=root/'host'/digest

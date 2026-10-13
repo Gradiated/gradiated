@@ -111,7 +111,15 @@ def render():
     for instance, service in services.items():
         outputs[KUBE / 'tailscale-inference/hosts' / f'{instance}.yaml'] = [service]
     for name, model in json.loads((GPU / 'models.json').read_text()).items():
-        outputs[GPU / f'{name}.yaml'] = [rollout(name, model, runtimes)]
+        document = rollout(name, model, runtimes)
+        path = GPU / f'{name}.yaml'
+        if path in outputs:
+            raise ValueError('Model name collides with a static manifest: ' + name)
+        if path.exists():
+            existing = [item for item in yaml.safe_load_all(path.read_text()) if item]
+            if len(existing) != 1 or existing[0].get('kind') != 'Rollout':
+                raise ValueError('Model name collides with a static manifest: ' + name)
+        outputs[path] = [document]
     return outputs
 
 

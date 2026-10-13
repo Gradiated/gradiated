@@ -69,6 +69,10 @@ class RenderTests(unittest.TestCase):
             (gpu / 'models.json').write_text(json.dumps(models))
             with patch.multiple(renderer, ROOT=root, KUBE=kube, GPU=gpu):
                 self.assertEqual(renderer.retired_outputs(renderer.render()), {gpu / 'kev.yaml'})
+                for name in ('controller', 'rbac', 'credentials', 'namespace', 'qualification'):
+                    (gpu / 'models.json').write_text(json.dumps({**models, name: models['glm']}))
+                    with self.assertRaisesRegex(ValueError, 'collides with a static manifest'):
+                        renderer.render()
 
     def test_rollout_uses_catalogue_resources_and_qualification(self):
         runtimes = json.loads((renderer.ROOT / 'product/inference/gpu/runtimes.json').read_text())

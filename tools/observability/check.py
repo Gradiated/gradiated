@@ -625,6 +625,30 @@ def main():
         {'series': 'argocd_app_info{name="api",health_status="Healthy",sync_status="OutOfSync",autosync_enabled="true"}', 'values': '1+0x8 stale'},
         {'series': 'argocd_app_info{name="api",health_status="Healthy",sync_status="Synced",autosync_enabled="true"}', 'values': '_ _ _ _ _ _ _ _ _ 1+0x31'},
     ], None, [app_alert], eval_time='16m')
+    rollout_alert = 'GpuRolloutFailed'
+    for name, phase, fires in [('healthy', 'Healthy', False), ('progressing', 'Progressing', False), ('degraded', 'Degraded', True)]:
+        scenario('GPU rollout ' + name, [{'series': f'rollout_info{{namespace="gpu-inference",name="glm",phase="{phase}"}}', 'values': '1+0x10'}],
+                 rollout_alert if fires else None, [rollout_alert], {'namespace': 'gpu-inference', 'name': 'glm'}, '3m')
+    blocked_alert = 'GpuRolloutBlocked'
+    pod = 'namespace="gpu-inference",pod="glm-abc"'
+    for name, owner, gpu, unschedulable, eval_time, fires in [
+        ('blocked model pod', 'ReplicaSet', True, '1+0x40', '16m', True),
+        ('briefly unschedulable', 'ReplicaSet', True, '1+0x40', '10m', False),
+        ('scheduled', 'ReplicaSet', True, '0+0x40', '16m', False),
+        ('training waits for capacity', 'Job', True, '1+0x40', '16m', False),
+        ('controller pod without GPU', 'ReplicaSet', False, '1+0x40', '16m', False),
+    ]:
+        inputs = [{'series': f'kube_pod_status_unschedulable{{{pod}}}', 'values': unschedulable},
+                  {'series': f'kube_pod_owner{{{pod},owner_kind="{owner}"}}', 'values': '1+0x40'}]
+        if gpu:
+            inputs.append({'series': f'kube_pod_container_resource_requests{{{pod},resource="nvidia_com_gpu"}}', 'values': '2+0x40'})
+        scenario('GPU rollout ' + name, inputs, blocked_alert if fires else None, [blocked_alert], {'namespace': 'gpu-inference', 'pod': 'glm-abc'}, eval_time)
+    monitoring_alert = 'GpuRolloutMonitoringMissing'
+    for name, values, fires in [('scraped', '1+0x40', False), ('scrape failing', '0+0x40', True)]:
+        scenario('Argo Rollouts ' + name, [{'series': 'up{namespace="gpu-inference",service="argo-rollouts"}', 'values': values}],
+                 monitoring_alert if fires else None, [monitoring_alert], eval_time='16m')
+    scenario('Argo Rollouts never scraped', [{'series': 'up{namespace="gradiated",service="api"}', 'values': '1+0x40'}],
+             monitoring_alert, [monitoring_alert], eval_time='16m')
     secret_alert = 'SecretRefreshFailed'
     for name, values, fires in [('ready', '1+0x40', False), ('not ready', '0+0x40', True), ('brief refresh error', '1+0x8 0+0x3 1+0x28', False)]:
         scenario('Secret ' + name, [{'series': 'externalsecret_status_condition{exported_namespace="gradiated",name="api",condition="Ready",status="True"}', 'values': values}], secret_alert if fires else None, [secret_alert], {'exported_namespace': 'gradiated', 'name': 'api'}, '16m')

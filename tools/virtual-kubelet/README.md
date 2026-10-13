@@ -163,8 +163,22 @@ host for a zero-unavailable rollout. GLM retains a third B300 host for its hard
 host anti-affinity during a rollout. DeepSeek can grow from one to two replicas.
 These bounds preserve existing availability and rollout capacity; raising them
 requires reviewing GPU, CPU, memory, placement and concurrent training demand.
-Training consumes the same finite GPU resources and can delay serving placement.
+Training Jobs use the `gpu-training` PriorityClass, below the default priority of
+model pods, so a model replica or rollout pod that cannot fit preempts training
+rather than waiting. Training never preempts. A preempted trainer resumes in a new
+Job from its latest checkpoint, with up to three attempts per training stage.
 Scaling down a model releases GPUs but does not reduce the RunPod reservation bill.
+
+## Rollout alerts
+
+`GpuRolloutFailed` warns when a Rollout is Degraded: it aborted at its progress
+deadline or failed SDK qualification. It does not retry automatically. Free
+capacity if needed, then run `kubectl argo rollouts retry rollout <name> -n
+gpu-inference` or push a fix. `GpuRolloutBlocked` warns when a model pod has had no
+GPU host for 15 minutes, before the deadline aborts the rollout. To free capacity,
+lower another model's `replicas` or `max_replicas` in `models.json`, or pin it
+temporarily with the ScaledObject's `autoscaling.keda.sh/paused-replicas`
+annotation and remove the annotation afterwards.
 
 ## Recovery and disk limits
 

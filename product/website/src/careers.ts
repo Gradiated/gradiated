@@ -1,4 +1,10 @@
+import { ashbyJobs } from "./ashby-jobs.generated";
+
 export type Job = {
+  /** The job posting in Ashby that applications go to. */
+  ashbyJobPostingId: string;
+  /** Sections from an Ashby description whose heading is not one of the standard ones. */
+  extraSections?: { title: string; items: string[] }[];
   slug: string;
   datePosted?: string;
   foundingContext?: string;
@@ -16,9 +22,10 @@ export type Job = {
   notFor: string[];
 };
 
-export const jobs: Job[] = [
+const nativeJobs: Job[] = [
   {
     slug: "engineer-journalist",
+    ashbyJobPostingId: "b91af2c0-5367-454f-bc1d-1cc8d0e7f08c",
     datePosted: "2026-09-11",
     foundingContext:
       "We are early. Be the founding content and marketing person in the company.",
@@ -65,6 +72,7 @@ export const jobs: Job[] = [
   },
   {
     slug: "founding-inference-research-engineer",
+    ashbyJobPostingId: "a68c08a7-1921-4fec-a565-db484c184db5",
     title: "Founding Inference Research Engineer",
     team: "Inference Research",
     location: "Cambridge, London",
@@ -113,6 +121,7 @@ export const jobs: Job[] = [
   },
   {
     slug: "head-of-silicon",
+    ashbyJobPostingId: "bfa00f96-d09e-4d13-b3e9-3e42bf28345a",
     title: "Head of Silicon",
     team: "Silicon",
     location: "Bristol, London",
@@ -162,6 +171,7 @@ export const jobs: Job[] = [
   },
   {
     slug: "founding-silicon-engineer",
+    ashbyJobPostingId: "449f708e-ac4f-41e8-946c-080bc8a6fbc9",
     title: "Founding Silicon Engineer",
     team: "Silicon",
     location: "Bristol, London",
@@ -205,4 +215,17 @@ export const jobs: Job[] = [
       "You need a clear specification before you can start.",
     ],
   },
+];
+
+/** Native jobs first, then any Ashby postings that are not already written natively. */
+export const jobs: Job[] = [
+  ...nativeJobs,
+  ...ashbyJobs.filter(
+    (ashbyJob) =>
+      !nativeJobs.some(
+        (job) =>
+          job.ashbyJobPostingId === ashbyJob.ashbyJobPostingId ||
+          job.slug === ashbyJob.slug,
+      ),
+  ),
 ];

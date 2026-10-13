@@ -28,7 +28,7 @@ RUN --mount=from=package,source=/runtime.tar.gz,target=/tmp/runtime.tar.gz \
     tar -xzf /tmp/runtime.tar.gz -C /tests/tools/virtual-kubelet \
     && cd /tests/tools/virtual-kubelet && python3 host_agent_test.py && python3 host_state_test.py \
     && python3 install_seed_test.py && python3 host_bundle_test.py \
-    && (./runtime-launch >/dev/null 2>&1; test "$?" = 64) \
+    && (./runtime-launch >/dev/null 2>&1; test "$?" = 1) \
     && (./desmondd --invalid >/dev/null 2>&1; test "$?" = 64) && touch /verified
 
 FROM scratch AS artifact

@@ -505,12 +505,27 @@ def main():
         ('recovered', 2, '0+0x20 2+0x60', None, '15m'),
         ('disabled in Git', 0, None, None, '15m'),
     ]:
-        inputs = [{'series': 'gradiated_model_desired_replicas{model="kev/kev-9b",rollout="kev"}', 'values': f'{desired}+0x80'}]
+        inputs = [{'series': 'gradiated_model_desired_replicas{model="kev/kev-9b",rollout="kev"}', 'values': f'{desired}+0x80'},
+                  {'series': 'gradiated_model_minimum_replicas{model="kev/kev-9b",rollout="kev"}', 'values': f'{desired}+0x80'}]
         if ready is not None:
             inputs.append({'series': 'gradiated_worker_model_ready_replicas{instance="a",model="kev/kev-9b"}', 'values': ready})
             inputs.append({'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="a",loop="kubernetes_deployment_reconciliation"}', 'values': '1+30x80'})
         scenario('model replicas: ' + name, inputs, expected,
                  ['ModelNoReadyReplicas', 'ModelUnderReplicated'], {'model': 'kev/kev-9b'}, duration)
+
+    for name, ready, expected, duration in [
+        ('normal replica warmup', 2, None, '19m'),
+        ('capacity never arrives', 2, 'ModelScaleUpStalled', '21m'),
+        ('minimum lost during scale-up', 1, 'ModelUnderReplicated', '1m'),
+        ('scale-up has completed', 3, None, '21m'),
+    ]:
+        scenario('autoscaled capacity: ' + name, [
+            {'series': 'gradiated_model_desired_replicas{model="test/model"}', 'values': '3+0x80'},
+            {'series': 'gradiated_model_minimum_replicas{model="test/model"}', 'values': '2+0x80'},
+            {'series': 'gradiated_worker_model_ready_replicas{instance="a",model="test/model"}', 'values': f'{ready}+0x80'},
+            {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="a",loop="kubernetes_deployment_reconciliation"}', 'values': '1+30x80'},
+        ], expected, ['ModelNoReadyReplicas', 'ModelUnderReplicated', 'ModelScaleUpStalled'],
+        {'model': 'test/model'}, duration)
 
     probe_labels = '{instance="a",model="test/model",deployment="test-deployment"}'
     def probe_series(metric, values, labels=probe_labels):
@@ -547,12 +562,14 @@ def main():
     for ready, expected, duration in [(0, 'ModelNoReadyReplicas', '15s'), (1, 'ModelUnderReplicated', '30s')]:
         scenario('fast capacity alert: ' + expected, [
             {'series': 'gradiated_model_desired_replicas{model="test/model"}', 'values': '2+0x20'},
+            {'series': 'gradiated_model_minimum_replicas{model="test/model"}', 'values': '2+0x20'},
             {'series': 'gradiated_worker_model_ready_replicas{instance="a",model="test/model"}', 'values': f'{ready}+0x20'},
             {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="a",loop="kubernetes_deployment_reconciliation"}', 'values': '1+5x20'},
         ], expected, ['ModelNoReadyReplicas', 'ModelUnderReplicated'], {'model': 'test/model'}, duration, interval='5s')
 
     scenario('stale healthy worker cannot hide unavailable model', [
         {'series': 'gradiated_model_desired_replicas{model="test/model"}', 'values': '2+0x20'},
+            {'series': 'gradiated_model_minimum_replicas{model="test/model"}', 'values': '2+0x20'},
         {'series': 'gradiated_worker_model_ready_replicas{instance="old",model="test/model"}', 'values': '2+0x20'},
         {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="old",loop="kubernetes_deployment_reconciliation"}', 'values': '1+0x20'},
         {'series': 'gradiated_worker_model_ready_replicas{instance="new",model="test/model"}', 'values': '0+0x20'},

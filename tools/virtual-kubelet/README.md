@@ -185,6 +185,12 @@ updating its runtime, or provide another eligible host; do not assume spare GPUs
 split across hosts satisfy a tensor-parallel replica.
 Scaling down a model releases GPUs but does not reduce the RunPod reservation bill.
 
+Availability alerts use the Git minimum, so normal scale-up warmup does not page.
+No ready replicas still alerts after fifteen seconds, and falling below the
+minimum alerts after thirty seconds. Additional requested capacity that remains
+unready for twenty minutes has a separate warning. Keep the minimum large enough
+for immediate traffic; autoscaling adds capacity after model startup.
+
 ## Rollout alerts
 
 `GpuRolloutFailed` warns when Argo Rollouts reports a Rollout as `Abort`,

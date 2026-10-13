@@ -1,39 +1,15 @@
 import http.server
 import io
 import json
-import tempfile
 import threading
 import time
 import unittest
-from pathlib import Path
 from unittest import mock
 
-from grants import api_url, host_identity, read_private, resolver
+from grants import api_url, read_private, resolver
 
 
-class HostCredentialTests(unittest.TestCase):
-    def identity(self):
-        return {
-            "instance_id": "01980000-0000-7000-8000-000000000001",
-            "nomad_node_id": "01980000-0000-7000-8000-000000000002",
-            "token": "a" * 43,
-        }
-
-    def test_reads_existing_identity_and_rejects_invalid_credentials(self):
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "identity.json"
-            identity = self.identity()
-            path.write_text(json.dumps(identity))
-            self.assertEqual(host_identity(path), identity)
-            for override in (
-                {"token": "short"},
-                {"instance_id": "bad"},
-                {"nomad_node_id": "bad"},
-            ):
-                path.write_text(json.dumps({**identity, **override}))
-                with self.assertRaises(ValueError):
-                    host_identity(path)
-
+class PrivateControlTests(unittest.TestCase):
     def test_private_bridge_does_not_send_a_host_credential(self):
         response = io.BytesIO(b'{"data": []}')
         response.status = 200
@@ -41,35 +17,15 @@ class HostCredentialTests(unittest.TestCase):
         connection = mock.Mock()
         connection.getresponse.return_value = response
         with mock.patch("http.client.HTTPConnection", return_value=connection):
-            self.assertEqual(read_private("http://127.0.0.1:3004/api/internal/v1/task-versions/production", None), {"data": []})
+            self.assertEqual(read_private("http://127.0.0.1:3004/api/internal/v1/task-versions/production"), {"data": []})
         headers = connection.request.call_args.kwargs["headers"]
         self.assertEqual(headers, {"Content-Type": "application/json"})
 
     def test_network_authentication_rejects_other_destinations_before_connecting(self):
         with mock.patch("http.client.HTTPSConnection") as connection:
             with self.assertRaises(ValueError):
-                read_private("https://api.example/internal", None)
+                read_private("https://api.example/internal")
             connection.assert_not_called()
-
-    def test_private_requests_send_existing_host_identity(self):
-        response = io.BytesIO(b'{"data": []}')
-        response.status = 200
-        response.isclosed = lambda: response.closed
-        connection = mock.Mock()
-        connection.getresponse.return_value = response
-        with mock.patch("http.client.HTTPSConnection", return_value=connection):
-            self.assertEqual(
-                read_private("https://api.example/internal", self.identity()),
-                {"data": []},
-            )
-        headers = connection.request.call_args.kwargs["headers"]
-        self.assertEqual(headers["Authorization"], "Bearer " + "a" * 43)
-        self.assertEqual(
-            headers["X-Gradiated-Instance-Id"], self.identity()["instance_id"]
-        )
-        self.assertEqual(
-            headers["X-Gradiated-Nomad-Node-Id"], self.identity()["nomad_node_id"]
-        )
 
     def test_slow_grant_response_expires_shared_deadline(self):
         class Handler(http.server.BaseHTTPRequestHandler):
@@ -94,10 +50,9 @@ class HostCredentialTests(unittest.TestCase):
         self.addCleanup(server.server_close)
         self.addCleanup(server.shutdown)
         started = time.monotonic()
-        with self.assertRaises(TimeoutError):
+        with mock.patch("grants.validate_endpoint"), self.assertRaises(TimeoutError):
             read_private(
                 f"http://127.0.0.1:{server.server_port}/grant",
-                self.identity(),
                 deadline=started + 0.15,
             )
         self.assertLess(time.monotonic() - started, 0.4)
@@ -105,12 +60,7 @@ class HostCredentialTests(unittest.TestCase):
 
 class ApiUrlTests(unittest.TestCase):
     def test_derives_paths_for_production_and_local_api(self):
-        for base in (
-            "https://api.example",
-            "http://localhost:3001",
-            "http://127.0.0.1:3001",
-            "http://[::1]:3001",
-        ):
+        for base in ("http://127.0.0.1:3004",):
             for path in ("adapter-downloads", "task-versions/production"):
                 self.assertEqual(
                     api_url(base + "/", path), base + "/api/internal/v1/" + path
@@ -133,11 +83,11 @@ class VersionGrantTests(unittest.TestCase):
     def test_requests_exact_workspace_and_slug_and_rejects_mismatched_grants(self):
         name = "support/triage-日本語-20261002"
         grant = {"workspace_id": "workspace", "version": {"name": name}}
-        resolve = resolver("https://api.example", {})
+        resolve = resolver("http://127.0.0.1:3004")
         with mock.patch("grants.read_private", return_value=grant) as read:
             self.assertEqual(resolve(name, "workspace"), grant)
             self.assertEqual(
-                read.call_args.args[2],
+                read.call_args.args[1],
                 {"workspace_id": "workspace", "version_name": name},
             )
         for bad in (

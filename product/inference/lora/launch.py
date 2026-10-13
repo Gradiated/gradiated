@@ -10,7 +10,7 @@ import time
 import urllib.request
 from pathlib import Path
 
-from grants import host_identity, production_targets, resolver, validate_endpoint
+from grants import production_targets, resolver, validate_endpoint
 from loader import Loader
 from server import create_server
 from startup import start_preload
@@ -79,7 +79,6 @@ def main():
     command = sys.argv[1:]
     _settings, model, revision = engine_settings(command, os.environ, {})
     api_base_url = os.environ["GRADIATED_API_BASE_URL"]
-    identity = None if api_base_url.rstrip("/") == "http://127.0.0.1:3004" else host_identity(os.environ["HOST_IDENTITY_FILE"])
     model_config = json.loads(
         Path(hf_hub_download(model, "config.json", revision=revision)).read_text()
     )
@@ -95,7 +94,7 @@ def main():
         os.environ["LORA_CACHE_DIR"],
         int(os.environ["RUNTIME_PORT"]),
         download_hosts(os.environ),
-        resolve=resolver(api_base_url, identity),
+        resolve=resolver(api_base_url),
     )
     loader.ready = False
     command += [
@@ -143,7 +142,6 @@ def main():
                 loader,
                 lambda: production_targets(
                     api_base_url,
-                    identity,
                     settings["base_model_id"],
                 ),
                 int(os.environ.get("LORA_PRELOAD_SECONDS", "600")),

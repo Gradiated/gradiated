@@ -107,7 +107,7 @@ class LaunchTests(unittest.TestCase):
                 "RUNTIME_PORT": "8000",
                 "ADAPTER_PORT": "8001",
                 "WARMUP_PORT": "8002",
-                "NOMAD_ALLOC_DIR": str(root / "allocation"),
+                "GRADIATED_RUNTIME_DIR": str(root / "allocation"),
             }
             entrypoint = (
                 Path(__file__).resolve().parents[1] / "bundles/glm-5-3-flash/entrypoint"

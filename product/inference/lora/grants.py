@@ -1,49 +1,24 @@
 import http.client
 import json
-import re
 import time
 import urllib.error
 import urllib.parse
-import uuid
-from pathlib import Path
 
 from artifacts import remaining, strict_json
 
 
-def host_identity(path):
-    identity = strict_json(Path(path).read_bytes())
-    for key in ("instance_id", "nomad_node_id"):
-        if str(uuid.UUID(identity[key])) != identity[key]:
-            raise ValueError("Invalid host identity")
-    if not re.fullmatch(r"[A-Za-z0-9_-]{43}", identity["token"]):
-        raise ValueError("Invalid host credential")
-    return identity
-
-
 def validate_endpoint(url):
     parsed = urllib.parse.urlsplit(url)
-    if (
-        not (
-            parsed.scheme == "https"
-            or (
-                parsed.scheme == "http"
-                and parsed.hostname in ("localhost", "127.0.0.1", "::1")
-            )
-        )
-        or not parsed.hostname
-        or parsed.username
-        or parsed.password
-    ):
-        raise ValueError("Invalid private artifact endpoint")
+    if (parsed.scheme != "http" or parsed.hostname != "127.0.0.1" or parsed.port != 3004
+            or parsed.username or parsed.password):
+        raise ValueError("Private artifact requests require the local control bridge")
 
 
-def read_private(url, identity, body=None, limit=65536, deadline=None):
+def read_private(url, body=None, limit=65536, deadline=None):
     validate_endpoint(url)
     if deadline is None:
         deadline = time.monotonic() + 10
     parsed = urllib.parse.urlsplit(url)
-    if identity is None and (parsed.scheme != "http" or parsed.hostname != "127.0.0.1" or parsed.port != 3004):
-        raise ValueError("Network authentication requires the private control bridge")
     transport = (
         http.client.HTTPSConnection
         if parsed.scheme == "https"
@@ -58,10 +33,6 @@ def read_private(url, identity, body=None, limit=65536, deadline=None):
         path = urllib.parse.urlunsplit(("", "", parsed.path or "/", parsed.query, ""))
         socket.settimeout(min(10, remaining(deadline)))
         headers = {"Content-Type": "application/json"}
-        if identity is not None:
-            headers.update({"X-Gradiated-Instance-Id": identity["instance_id"],
-                            "X-Gradiated-Nomad-Node-Id": identity["nomad_node_id"],
-                            "Authorization": f"Bearer {identity['token']}"})
         connection.request(
             "POST" if body is not None else "GET", path,
             body=json.dumps(body).encode() if body is not None else None, headers=headers,
@@ -102,11 +73,10 @@ def api_url(base_url, path):
     return base_url.rstrip("/") + "/api/internal/v1/" + path
 
 
-def production_targets(base_url, identity, base_model_id):
+def production_targets(base_url, base_model_id):
     url = api_url(base_url, "task-versions/production")
     result = read_private(
         url + "?" + urllib.parse.urlencode({"base_model_id": base_model_id}),
-        identity,
         limit=1024 * 1024,
     )["data"]
     if not isinstance(result, list):
@@ -114,14 +84,14 @@ def production_targets(base_url, identity, base_model_id):
     return result
 
 
-def resolver(base_url, identity):
+def resolver(base_url):
     url = api_url(base_url, "adapter-downloads")
 
     def resolve(name, workspace_id, deadline=None):
         if not isinstance(name, str) or not 0 < len(name) <= 300:
             raise ValueError("Invalid version name")
         target = {"workspace_id": workspace_id, "version_name": name}
-        grant = read_private(url, identity, target, deadline=deadline)
+        grant = read_private(url, target, deadline=deadline)
         version = grant["version"]
         if grant["workspace_id"] != workspace_id or version["name"] != name:
             raise ValueError("Artifact grant identity mismatch")

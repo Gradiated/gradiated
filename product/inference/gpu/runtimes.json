@@ -38,16 +38,6 @@
     },
     "hf_home": "/home/runtime/.cache/huggingface"
   },
-  "590ec302e50141b59f1db3d28c1d34128fd05ca3c7fc8007592b304b505fe652": {
-    "kind": "training",
-    "image": "gradiated/training-bundle@sha256:590ec302e50141b59f1db3d28c1d34128fd05ca3c7fc8007592b304b505fe652",
-    "model_id": "training",
-    "release": {},
-    "gpus": 1,
-    "cpu": "4",
-    "memory": "64Gi",
-    "startup_timeout": 300
-  },
   "24f2342cfad592069eaaf89ab3bd74818fdcdfbc547bfbef0ef805d661bb0fd8": {
     "image": "gradiated/glm-bundle@sha256:24f2342cfad592069eaaf89ab3bd74818fdcdfbc547bfbef0ef805d661bb0fd8",
     "model_id": "z-ai/glm-5.3-flash",
@@ -80,5 +70,15 @@
       "LORA_DOWNLOAD_HOSTS": "gradiated-prod-model-artifacts-873716897517.s3.us-east-1.amazonaws.com",
       "GRADIATED_API_BASE_URL": "http://127.0.0.1:3004"
     }
+  },
+  "50f70da3a1daf95b077b0b541ff42af090d9f1c90b8c71ed506690db4e279ee4": {
+    "kind": "training",
+    "image": "gradiated/training-bundle@sha256:50f70da3a1daf95b077b0b541ff42af090d9f1c90b8c71ed506690db4e279ee4",
+    "model_id": "training",
+    "release": {},
+    "gpus": 1,
+    "cpu": "4",
+    "memory": "64Gi",
+    "startup_timeout": 300
   }
 }

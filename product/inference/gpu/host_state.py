@@ -5,6 +5,20 @@ import stat
 import uuid
 
 
+HOST_FILES = {'host-agent.py', 'desmondd', 'base-id'}
+PLATFORM_HOST_FILES = HOST_FILES | {
+    'bootstrap.py', 'supervise.py', 'host_state.py', 'host_bundle.py',
+    'runtime-launch', 'fetch-runtime', 'download-runtime', 'install-tailscale.py',
+    'control-listener.py', 'forward-control.py', 'run-tailscale.sh',
+    'start-tailscale.sh', 'run-control.sh', 'start-control.sh',
+}
+PLATFORM_ONLY = Path('/etc/gradiated/platform-only')
+
+
+def required_host_files():
+    return PLATFORM_HOST_FILES if PLATFORM_ONLY.exists() else HOST_FILES
+
+
 def sync_directory(path):
     fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY)
     try:

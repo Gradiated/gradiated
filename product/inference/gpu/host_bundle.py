@@ -13,7 +13,7 @@ import tarfile
 import tempfile
 import uuid
 
-from host_state import atomic_json, atomic_write, sync_directory
+from host_state import atomic_json, atomic_write, sync_directory, required_host_files
 
 BASE_ID = Path('/etc/gradiated/base-id')
 
@@ -91,7 +91,7 @@ def promote_archive(source, destination, digest, base_id):
                     os.fsync(output.fileno())
                 (tree / name).chmod(0o755 if member.mode & 0o111 else 0o644)
         hashes = json.loads((tree / 'files.json').read_text())
-        if (not isinstance(hashes, dict) or not FILES.issubset(hashes) or 'files.json' in hashes or
+        if (not isinstance(hashes, dict) or not required_host_files().issubset(hashes) or 'files.json' in hashes or
                 {path.name for path in tree.iterdir()} != set(hashes) | {'files.json'} or
                 (tree / 'base-id').read_text().strip() != base_id):
             raise ValueError('Incomplete or incompatible host bundle')

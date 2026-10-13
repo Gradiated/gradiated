@@ -18,6 +18,16 @@ payload['management_token']=pathlib.Path(config['token_file']).read_text()
 def ping():
     request=urllib.request.Request('http://127.0.0.1:8887/_kubelet',data=b'{"operation":"ping"}',headers={'Authorization':'Bearer '+payload['management_token'],'Content-Type':'application/json'})
     with urllib.request.urlopen(request,timeout=5) as response:return json.load(response)
+def agent_identity():
+    matches=[]
+    for path in pathlib.Path('/proc').glob('[0-9]*/cmdline'):
+        try:
+            arguments=[value for value in path.read_bytes().split(bytes([0])) if value]
+            if arguments and arguments[-1].endswith(b'/host-agent.py'):
+                state=(path.parent/'stat').read_text().rsplit(')',1)[1].split()
+                if state[0]!='Z':matches.append({'pid':int(path.parent.name),'birth':state[19]})
+        except (OSError,ValueError,IndexError):pass
+    return matches[0] if len(matches)==1 else None
 def snapshot():
     result={}
     for path in (root/'pods').glob('*/runtime.json'):
@@ -41,6 +51,8 @@ def snapshot():
         result['proxy']={'pid':pid,'birth':birth}
     return result
 before=snapshot()
+before_agent=agent_identity()
+if before_agent is None:raise RuntimeError('Cannot identify a single management agent before migration')
 if ping()['instance_id']!=config['instance_id']:raise ValueError('Agent identity mismatch')
 module={}
 exec(compile(payload.pop('installer'),'install-host.py','exec'),module)
@@ -49,7 +61,8 @@ deadline=time.monotonic()+120
 while True:
     try:
         result=ping()
-        if result.get('host_launcher'):
+        current_agent=agent_identity()
+        if result.get('host_launcher') and current_agent and current_agent!=before_agent:
             if snapshot()!=before:raise RuntimeError('Serving process identities changed')
             print(json.dumps({'instance_id':config['instance_id'],'host_launcher':True,'preserved_processes':len(before)}))
             break

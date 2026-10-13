@@ -1,7 +1,14 @@
 import importlib.util
+import contextlib
+import io
+import json
+import pathlib
 from pathlib import Path
+import shutil
 import subprocess
+import tempfile
 import unittest
+from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location('rollout', Path(__file__).with_name('rollout-host.py'))
 rollout = importlib.util.module_from_spec(spec)
@@ -12,6 +19,45 @@ pin_spec.loader.exec_module(pin_host)
 
 
 class RolloutTests(unittest.TestCase):
+    def test_migration_waits_for_a_fresh_agent_when_the_launcher_already_exists(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = root / 'state'
+            state.mkdir()
+            proc = root / 'proc'
+            proc.mkdir()
+            token = root / 'token'
+            token.write_text('test-management-token')
+            config = root / 'config.json'
+            config.write_text(json.dumps({'instance_id': 'first', 'token_file': str(token)}))
+
+            def process(pid, birth, arguments=None):
+                path = proc / str(pid)
+                path.mkdir()
+                (path / 'cmdline').write_bytes(arguments or b'python3\0-B\0/opt/gradiated/kubelet/host-agent.py\0')
+                (path / 'stat').write_text(f'{pid} (python3) S ' + '0 ' * 18 + str(birth) + ' 0')
+
+            process(100, 10)
+            process(102, 10, b'python3\0-B\0/opt/gradiated/kubelet/host-agent.py\0proxy\0')
+            process(103, 10, b'python3\0-B\0/opt/gradiated/kubelet/host-agent.py\0task\0uid\0')
+            def restart(_):
+                shutil.rmtree(proc / '100')
+                process(101, 20)
+
+            paths = {'/var/lib/gradiated-kubelet': state, '/etc/gradiated/kubelet.json': config, '/proc': proc}
+            original_path = pathlib.PosixPath
+            output = io.StringIO()
+            payload = {'instance_id': 'first', 'installer': 'def install(payload): pass'}
+            ping = json.dumps({'instance_id': 'first', 'host_launcher': True})
+            with patch('pathlib.Path', side_effect=lambda value: paths.get(str(value), original_path(value))), \
+                    patch('sys.stdin', io.StringIO(json.dumps(payload))), \
+                    patch('urllib.request.urlopen', side_effect=lambda *args, **kwargs: io.StringIO(ping)), \
+                    patch('time.sleep', side_effect=restart) as wait, contextlib.redirect_stdout(output):
+                exec(compile(rollout.REMOTE, 'remote-migration', 'exec'), {})
+            wait.assert_called_once()
+            self.assertEqual(json.loads(output.getvalue()),
+                             {'instance_id': 'first', 'host_launcher': True, 'preserved_processes': 0})
+
     def test_host_pin_cannot_select_a_model_runtime_artifact(self):
         release = {'sha256': 'a' * 64, 'baseId': 'base', 'bundle': 'host'}
         self.assertEqual(pin_host.pin(release), {'sha256': 'a' * 64, 'base_id': 'base'})

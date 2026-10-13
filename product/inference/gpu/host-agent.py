@@ -139,6 +139,99 @@ def runtime_profile(config, pod):
     return digest, profile
 
 
+HUB_API = "https://huggingface.co/api/models"
+CACHE_MARKER = ".gradiated-last-used"
+UNUSED_WEIGHT_FORMATS = (".bin", ".pt", ".pth", ".ckpt", ".gguf", ".h5", ".msgpack", ".onnx")
+
+
+def hf_home(config, profile):
+    return Path(profile.get("hf_home", config.get("hf_home", "/home/runtime/.cache/huggingface")))
+
+
+def model_weights(profile):
+    if profile.get("kind") == "training":
+        recipe = profile.get("recipe") or {}
+        repo, revision = recipe.get("model"), recipe.get("revision")
+    else:
+        release = profile.get("release", {})
+        repo, revision = release.get("model_path"), release.get("model_revision")
+    if isinstance(repo, str) and re.fullmatch(r"[\w.-]+/[\w.-]+", repo) \
+            and isinstance(revision, str) and re.fullmatch(r"[0-9a-f]{40}", revision):
+        return repo, revision
+
+
+def repo_directory(hub, repo):
+    return hub / ("models--" + repo.replace("/", "--"))
+
+
+def hub_files(repo, revision):
+    with urllib.request.urlopen(f"{HUB_API}/{repo}/revision/{revision}?blobs=true", timeout=30) as response:
+        files = {item["rfilename"]: item.get("size") or 0 for item in json.load(response)["siblings"]}
+    # Loaders fetch safetensors and skip the other weight formats a repo may also publish.
+    if any(name.endswith(".safetensors") for name in files):
+        files = {name: size for name, size in files.items() if not name.endswith(UNUSED_WEIGHT_FORMATS)}
+    return files
+
+
+def missing_bytes(hub, repo, revision, files):
+    snapshot = repo_directory(hub, repo) / "snapshots" / revision
+    return sum(size for name, size in files.items() if not (snapshot / name).exists())
+
+
+def last_used(path):
+    try:
+        return (path / CACHE_MARKER).stat().st_mtime
+    except FileNotFoundError:
+        return path.stat().st_mtime
+
+
+def evict_models(hub, needed, protected, log, usage=shutil.disk_usage):
+    free = usage(hub).free
+    candidates = sorted((path for path in hub.glob("models--*") if path.is_dir() and path.name not in protected),
+                        key=last_used)
+    for path in candidates:
+        if free >= needed:
+            return
+        shutil.rmtree(path)
+        log(f"Evicted cached model {path.name}")
+        free = usage(hub).free
+    if free < needed:
+        log(f"Model cache needs {needed} free bytes but only {free} remain after eviction")
+
+
+def prepare_model_cache(config, profile, pods, log, files=hub_files, usage=shutil.disk_usage):
+    hub = hf_home(config, profile) / "hub"
+    weights = model_weights(profile)
+    if not weights or not hub.is_dir():
+        return
+    # Every model on this host stays cached, and downloads still in progress keep their space.
+    required = {weights} | {other for other in map(model_weights, pods) if other}
+    needed = config.get("model_cache_reserve_gib", 64) * 2**30
+    for repo, revision in required:
+        try:
+            needed += missing_bytes(hub, repo, revision, files(repo, revision))
+        except (OSError, ValueError, KeyError) as error:
+            log(f"Could not size {repo}@{revision}: {error}")
+    with (hub.parent / ".gradiated-cache.lock").open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        evict_models(hub, needed, {repo_directory(hub, repo).name for repo, _ in required}, log, usage)
+        directory = repo_directory(hub, weights[0])
+        if directory.is_dir():
+            (directory / CACHE_MARKER).touch()
+
+
+def host_profiles(config, exclude):
+    profiles = []
+    for path in (ROOT / "pods").glob("*/state.json"):
+        if path.parent.name == exclude:
+            continue
+        try:
+            profiles.append(runtime_profile(config, json.loads(path.read_text())["pod"])[1])
+        except (OSError, ValueError, KeyError):
+            pass
+    return profiles
+
+
 def task(uid, stopping):
     lock_path = ROOT / 'pods' / uid / 'task.lock'
     fd = os.open(lock_path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
@@ -177,6 +270,13 @@ def task(uid, stopping):
                             "GRADIATED_RUNTIME_ROOT": str(bundle), "TRAINER_IMAGE_DIGEST": digest})
         if profile["recipe"]:
             environment["TRAINING_RECIPE_JSON"] = json.dumps(profile["recipe"])
+    with (directory / "runtime.log").open("a") as cache_log:
+        def log(message):
+            cache_log.write(f"model-cache: {message}\n")
+        try:
+            prepare_model_cache(config, profile, host_profiles(config, uid), log)
+        except Exception as error:
+            log(f"Skipped eviction: {error}")
     model = reporter = None
     try:
         with ExitStack() as stack:

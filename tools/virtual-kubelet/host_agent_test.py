@@ -1,11 +1,13 @@
 import importlib.util
 import json
+import os
 from pathlib import Path
 import subprocess
 import signal
 import tempfile
 import unittest
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 import uuid
 
 spec = importlib.util.spec_from_file_location('agent', Path(__file__).with_name('host-agent.py'))
@@ -424,6 +426,110 @@ class HostAgentTest(unittest.TestCase):
                     process.terminate()
                 process.wait()
 
+
+class ModelCacheTest(unittest.TestCase):
+    revision = 'a' * 40
+
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.home = Path(self.directory.name)
+        self.hub = self.home / 'hub'
+        self.hub.mkdir()
+        self.config = {'hf_home': str(self.home), 'model_cache_reserve_gib': 0}
+        self.free = 0
+        self.sizes = {}
+        self.logs = []
+
+    def tearDown(self):
+        self.directory.cleanup()
+
+    def usage(self, _path):
+        evicted = sum(size for name, size in self.sizes.items() if not (self.hub / name).exists())
+        return SimpleNamespace(free=self.free + evicted)
+
+    def cached(self, repo, size, used, files=('model.safetensors',)):
+        directory = agent.repo_directory(self.hub, repo)
+        snapshot = directory / 'snapshots' / self.revision
+        snapshot.mkdir(parents=True)
+        for name in files:
+            (snapshot / name).write_bytes(b'x')
+        (directory / agent.CACHE_MARKER).touch()
+        os.utime(directory / agent.CACHE_MARKER, (used, used))
+        self.sizes[directory.name] = size
+        return directory
+
+    def serving(self, repo, revision=revision):
+        return {'release': {'model_path': repo, 'model_revision': revision}}
+
+    def prepare(self, profile, pods=(), files=lambda _repo, _revision: {'model.safetensors': 100, 'config.json': 1}):
+        agent.prepare_model_cache(self.config, profile, list(pods), self.logs.append, files, self.usage)
+
+    def test_cache_hit_evicts_nothing_and_marks_the_model_used(self):
+        old = self.cached('org/old', 500, 1)
+        model = self.cached('org/model', 101, 2, ('model.safetensors', 'config.json'))
+
+        self.prepare(self.serving('org/model'))
+
+        self.assertTrue(old.exists())
+        self.assertGreater(agent.last_used(model), 2)
+        self.assertEqual(self.logs, [])
+
+    def test_miss_evicts_least_recently_used_until_the_pull_fits(self):
+        oldest = self.cached('org/oldest', 60, 1)
+        older = self.cached('org/older', 60, 2)
+        recent = self.cached('org/recent', 60, 3)
+
+        self.prepare(self.serving('org/new'))
+
+        self.assertFalse(oldest.exists())
+        self.assertFalse(older.exists())
+        self.assertTrue(recent.exists())
+        self.assertEqual(self.logs, ['Evicted cached model models--org--oldest', 'Evicted cached model models--org--older'])
+
+    def test_models_used_by_pods_on_the_host_are_never_evicted(self):
+        running = self.cached('org/running', 500, 1)
+        base = self.cached('org/base', 500, 1)
+        stale = self.cached('org/stale', 50, 5)
+        training = {'kind': 'training', 'recipe': {'model': 'org/base', 'revision': self.revision}}
+
+        self.prepare(self.serving('org/new'), [self.serving('org/running'), training])
+
+        self.assertTrue(running.exists())
+        self.assertTrue(base.exists())
+        self.assertFalse(stale.exists())
+        self.assertIn('needs', self.logs[-1])
+
+    def test_downloads_in_progress_keep_their_space(self):
+        stale = self.cached('org/stale', 150, 1)
+        self.free = 150
+
+        self.prepare(self.serving('org/new'), [self.serving('org/downloading')])
+
+        self.assertFalse(stale.exists())
+
+    def test_sizing_skips_unused_weight_formats_and_failures_do_not_block(self):
+        listing = {'siblings': [{'rfilename': 'model.safetensors', 'size': 10},
+                                {'rfilename': 'pytorch_model.bin', 'size': 10},
+                                {'rfilename': 'tokenizer.json', 'size': 1}]}
+        response = MagicMock()
+        response.__enter__.return_value = response
+        response.read.return_value = json.dumps(listing).encode()
+        with patch.object(agent.urllib.request, 'urlopen', return_value=response):
+            self.assertEqual(agent.hub_files('org/model', self.revision), {'model.safetensors': 10, 'tokenizer.json': 1})
+
+        def unavailable(_repo, _revision):
+            raise OSError('offline')
+        self.prepare(self.serving('org/model'), files=unavailable)
+
+        self.assertIn('Could not size', self.logs[0])
+
+    def test_profiles_without_pinned_weights_are_ignored(self):
+        old = self.cached('org/old', 500, 1)
+
+        self.prepare({'release': {'model_path': 'org/model', 'model_revision': 'main'}})
+        self.prepare({'kind': 'training', 'recipe': {}})
+
+        self.assertTrue(old.exists())
 
 if __name__ == '__main__':
     unittest.main()

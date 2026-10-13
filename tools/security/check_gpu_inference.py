@@ -21,8 +21,10 @@ KUBERNETES_VERSION = re.search(
 OPERATORS = ("argo-rollouts", "keda", "external-secrets")
 APPLICATIONS = (
     "argo-rollouts",
+    "external-secrets",
     "gpu-inference",
     "inference-network",
+    "keda",
     "tailscale-operator",
     "tailscale-relays",
 )

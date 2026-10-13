@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { readFile } from "node:fs/promises";
 
 import {
   installInPlace,
@@ -66,9 +65,7 @@ export const createRunPodProvider = ({
     });
     const text = await response.text();
     if (!response.ok) {
-      throw new Error(
-        `RunPod ${method} ${path} failed: ${response.status} ${text}`,
-      );
+      throw new Error(`RunPod ${method} ${path} failed: ${response.status}`);
     }
 
     return text === "" ? null : JSON.parse(text);
@@ -120,65 +117,6 @@ export const createRunPodProvider = ({
           "GPU registration requires a pinned SSH connection for Tailscale enrollment",
         );
     },
-    async enrollTailscale(podId, instanceId, authKey) {
-      const current = await pod(podId);
-      const sshTarget = target(current);
-      const assets = [
-        "install-tailscale.py",
-        "run-tailscale.sh",
-        "start-tailscale.sh",
-        "forward-control.py",
-        "run-control.sh",
-        "start-control.sh",
-      ];
-      const source = await Promise.all(
-        assets.map((name) =>
-          readFile(
-            new URL(`../../../../inference/tailscale/${name}`, import.meta.url),
-            "utf8",
-          ),
-        ),
-      );
-      const quote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
-      const result = await inPlace!.run(
-        sshTarget,
-        `python3 -c ${quote(source[0]!)}`,
-        JSON.stringify({
-          instance_id: instanceId,
-          auth_key: authKey,
-          proxy_port: 8888,
-          ...(controlEndpoints
-            ? { control_endpoints: await controlEndpoints() }
-            : {}),
-          scripts: Object.fromEntries(
-            assets
-              .slice(1)
-              .map((name, index) => [
-                name.replace(/\.(sh|py)$/, ""),
-                source[index + 1],
-              ]),
-          ),
-        }),
-        180_000,
-      );
-      let metadata: unknown;
-      try {
-        metadata = JSON.parse(result);
-      } catch {
-        throw new Error("Invalid GPU Tailscale enrollment response");
-      }
-      const parsed = z
-        .object({
-          instance_id: z.literal(instanceId),
-          tailscale_ip: z.ipv4().refine((ip) => {
-            const octets = ip.split(".").map(Number);
-            return octets[0] === 100 && octets[1]! >= 64 && octets[1]! <= 127;
-          }),
-        })
-        .parse(metadata);
-
-      return { tailscaleIp: parsed.tailscale_ip };
-    },
     async describe(podId) {
       const found = await pod(podId);
       const sku =
@@ -215,21 +153,11 @@ export const createRunPodProvider = ({
         );
       }
       const sshTarget = target(current);
-      if (current.imageName !== image) {
+      if (!(await enrollment(current)).GRADIATED_INSTANCE_ID) {
         await verifyInPlaceBase(inPlace.run, sshTarget, image);
       }
 
       return true;
-    },
-
-    async resume(podId) {
-      if (!inPlace?.hostKeys[podId]) return;
-
-      const current = await pod(podId);
-      await inPlace.run(
-        target(current),
-        "if test -f /etc/gradiated/in-place-enrollment.json; then test -f /etc/nomad/node.hcl && if ! pgrep -x nomad >/dev/null; then nohup bash /opt/gradiated/bin/start-client </dev/null >>/var/log/gradiated-nomad-client.log 2>&1 & sleep 2; pgrep -x nomad >/dev/null; fi; fi",
-      );
     },
 
     async isStopped(podId) {
@@ -243,9 +171,7 @@ export const createRunPodProvider = ({
         current.desiredStatus !== "EXITED" &&
         (await this.supportsInPlace?.(current.id, image))
       ) {
-        await installInPlace(inPlace!.run, target(current), environment);
-
-        return;
+        return installInPlace(inPlace!.run, target(current), environment);
       }
       if (current.desiredStatus !== "EXITED" && !options?.allowReset) {
         throw new Error(
@@ -265,6 +191,29 @@ export const createRunPodProvider = ({
       if (current.desiredStatus === "EXITED") {
         await call("POST", `/pods/${current.id}/start`);
       }
+      const deadline = Date.now() + 30 * 60 * 1000;
+      while (Date.now() < deadline) {
+        const ready = await pod(current.id);
+        if (
+          ready.desiredStatus === "RUNNING" &&
+          ready.publicIp &&
+          ready.portMappings?.["22"]
+        ) {
+          try {
+            return await installInPlace(
+              inPlace!.run,
+              target(ready),
+              environment,
+            );
+          } catch {
+            /* The image can still be preparing the host agent. */
+          }
+        }
+        await new Promise((resolve) => setTimeout(resolve, 10000));
+      }
+      throw new Error(
+        "GPU bootstrap did not become ready; provider capacity was left intact",
+      );
     },
   };
 };

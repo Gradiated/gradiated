@@ -29,7 +29,8 @@ RUN pnpm install --frozen-lockfile
 COPY scripts/set-private-serving.mjs ./scripts/
 COPY packages ./packages
 COPY services ./services
-COPY inference/images/nomad-base/renew-certificate.py inference/images/nomad-base/run-renewer.sh inference/images/nomad-base/start-client.sh ./inference/images/nomad-base/
+COPY inference/gpu/ ./inference/gpu/
+COPY inference/images/gpu-base/ ./inference/images/gpu-base/
 COPY inference/tailscale/ ./inference/tailscale/
 
 RUN mkdir -p packages/*/.turbo services/*/.turbo \

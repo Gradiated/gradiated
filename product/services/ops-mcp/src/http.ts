@@ -8,7 +8,6 @@ import type { Identity } from "./auth.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import {
   Counter,
-  Gauge,
   Histogram,
   Registry,
   collectDefaultMetrics,
@@ -23,7 +22,6 @@ export const createHttp = (options: {
   authRouter?: RequestHandler;
   backend: Backend;
   registrations?: Registrations;
-  nomadCertificateExpiry?: () => number | undefined;
   audit: (event: Record<string, unknown>) => void;
 }) => {
   const registry = new Registry();
@@ -41,20 +39,6 @@ export const createHttp = (options: {
     buckets: [0.1, 0.5, 1, 3, 5, 10, 15],
     registers: [registry],
   });
-  const certificateExpiry = options.nomadCertificateExpiry;
-  if (certificateExpiry) {
-    new Gauge({
-      name: "nomad_certificate_expiry_timestamp_seconds",
-      help: "Expiry of a Nomad certificate that renews itself",
-      labelNames: ["certificate"],
-      registers: [registry],
-      collect() {
-        const expiry = certificateExpiry();
-        if (expiry === undefined) this.reset();
-        else this.set({ certificate: "ops-mcp" }, expiry);
-      },
-    });
-  }
   let active = 0;
   const budgets = new Map<string, { window: number; count: number }>();
 

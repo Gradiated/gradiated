@@ -7,6 +7,14 @@ export interface HostImage {
   readonly registry: { username: string; password: string } | null;
 }
 
+export type GpuInventory = {
+  tailscaleIp: string;
+  gpuCount: number;
+  gpuProduct: string;
+  cpu: number;
+  memoryGiB: number;
+};
+
 export interface InstanceProvider {
   describe(providerInstanceId: string): Promise<ProviderInstance>;
   environment(
@@ -15,17 +23,11 @@ export interface InstanceProvider {
   ): Promise<Record<string, string>>;
   isStopped(providerInstanceId: string): Promise<boolean>;
   supportsInPlace?(providerInstanceId: string, image: string): Promise<boolean>;
-  resume?(providerInstanceId: string): Promise<void>;
   checkTailscaleEnrollment(providerInstanceId: string): Promise<void>;
-  enrollTailscale(
-    providerInstanceId: string,
-    instanceId: string,
-    authKey: string,
-  ): Promise<{ tailscaleIp: string }>;
   bootstrap(
     instance: ProviderInstance,
     image: string,
     environment: Readonly<Record<string, string>>,
     options?: { readonly allowReset?: boolean },
-  ): Promise<void>;
+  ): Promise<GpuInventory>;
 }

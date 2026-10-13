@@ -12,7 +12,6 @@
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "3.1135.0",
     "@gradiated/control": "workspace:*",
-    "@gradiated/nomad-pki": "workspace:*",
     "@modelcontextprotocol/sdk": "1.30.0",
     "express": "5.2.1",
     "jose": "6.2.2",

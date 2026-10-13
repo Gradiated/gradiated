@@ -1,116 +1,74 @@
-import { randomUUID } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import { z } from "zod";
+import type { ProviderInstance } from "./provider.js";
 
-export interface ArtifactCredentials {
-  readonly accessKeyId: string;
-  readonly secretAccessKey: string;
-}
-
-export interface HostBootstrap {
-  readonly instanceId: string;
-  readonly nodeName: string;
-  readonly nomadNodeId: string;
-  readonly nomadNodeSecret: string;
-  readonly ca: string;
-  readonly certificate: string;
-  readonly privateKey: string;
-  readonly artifact: ArtifactCredentials;
-  readonly renewalToken: string;
-}
-
-export const nodeName = (provider: string, providerInstanceId: string) => {
-  const name = `${provider}-${providerInstanceId}`.toLowerCase();
-  if (!/^[a-z0-9-]{1,63}$/.test(name)) {
-    throw new Error(`${name} is not a valid Nomad node name`);
-  }
-
-  return name;
-};
-
-export type CarriedBootstrap = {
-  readonly instanceId: string;
-  readonly nomadNodeId: string;
-  readonly nomadNodeSecret: string;
-};
-
-export const carriedBootstrap = (
-  environment: Readonly<Record<string, string>>,
-): CarriedBootstrap | null => {
-  const {
-    GRADIATED_INSTANCE_ID: instanceId,
-    GRADIATED_NOMAD_NODE_ID: nomadNodeId,
-    GRADIATED_NOMAD_NODE_SECRET: nomadNodeSecret,
-  } = environment;
-
-  return instanceId && nomadNodeId && nomadNodeSecret
-    ? { instanceId, nomadNodeId, nomadNodeSecret }
-    : null;
-};
-
-// Nomad refuses a known node id presented with a different secret, so a machine
-// already bootstrapped for this instance keeps the node it carries.
-export const nomadNodeIdentity = (
+export const hostBootstrapEnvironment = async (
+  instance: ProviderInstance,
   instanceId: string,
-  environment: Readonly<Record<string, string>>,
+  managementToken: string,
+  authKey: string,
+  apiEndpoint: string,
 ) => {
-  const carried = carriedBootstrap(environment);
-  if (carried?.instanceId === instanceId) {
-    return {
-      nomadNodeId: carried.nomadNodeId,
-      nomadNodeSecret: carried.nomadNodeSecret,
-    };
-  }
-
-  return { nomadNodeId: randomUUID(), nomadNodeSecret: randomUUID() };
-};
-
-const base64 = (value: string) => Buffer.from(value).toString("base64");
-
-export const hostBootstrapEnvironment = (
-  host: HostBootstrap,
-): Record<string, string> => {
-  const { accessKeyId, secretAccessKey } = host.artifact;
-  if (!/^[A-Za-z0-9_-]{43}$/.test(host.renewalToken))
-    throw new Error("Invalid host renewal token");
-  // The host sources this file, so accept only what AWS issues.
-  if (!/^[A-Z0-9]{16,128}$/.test(accessKeyId)) {
-    throw new Error("Artifact access key id has an unexpected format");
-  }
-  if (!/^[A-Za-z0-9/+]{40}$/.test(secretAccessKey)) {
-    throw new Error("Artifact secret access key has an unexpected format");
-  }
-
-  return {
-    GRADIATED_INSTANCE_ID: host.instanceId,
-    GRADIATED_NOMAD_RENEWAL_TOKEN: host.renewalToken,
-    GRADIATED_NODE_NAME: host.nodeName,
-    GRADIATED_NOMAD_NODE_ID: host.nomadNodeId,
-    GRADIATED_NOMAD_NODE_SECRET: host.nomadNodeSecret,
-    GRADIATED_NOMAD_CA: base64(host.ca),
-    GRADIATED_NOMAD_CERT: base64(host.certificate),
-    GRADIATED_NOMAD_KEY: base64(host.privateKey),
-    GRADIATED_ARTIFACT_ENV: base64(
-      `AWS_ACCESS_KEY_ID=${accessKeyId}\nAWS_SECRET_ACCESS_KEY=${secretAccessKey}\n`,
-    ),
-  };
-};
-
-const SERVING_TOKEN = /^[A-Za-z0-9_-]{32,256}$/;
-
-export const servingEnvironment = (tokens: {
-  readonly runtimeAccess: string;
-  readonly deploymentStatus: string;
-}): Record<string, string> => {
-  // The host writes these into nginx configuration.
-  for (const token of [tokens.runtimeAccess, tokens.deploymentStatus]) {
-    if (!SERVING_TOKEN.test(token)) {
-      throw new Error(
-        "Serving tokens must contain 32-256 base64url characters",
-      );
+  const count = Number(instance.sku.match(/^(\d+)x /)?.[1]);
+  if (
+    !Number.isInteger(count) ||
+    count < 1 ||
+    !/B300|RTX PRO 6000/.test(instance.sku)
+  )
+    throw new Error(
+      "GPU enrollment supports the qualified B300 and RTX PRO 6000 runtimes",
+    );
+  if (
+    !/^tskey-auth-/.test(authKey) ||
+    !/^[A-Za-z0-9_-]{32,128}$/.test(managementToken)
+  )
+    throw new Error("Invalid scoped GPU bootstrap credentials");
+  const address = z.ipv4().parse(apiEndpoint).split(".").map(Number);
+  if (address[0] !== 100 || address[1]! < 64 || address[1]! > 127)
+    throw new Error("GPU control requires a Tailscale address");
+  const catalogue: Record<
+    string,
+    {
+      gpus: number;
+      kind?: string;
+      model_id: string;
+      environment?: Record<string, string>;
     }
-  }
-
+  > = JSON.parse(
+    await readFile(
+      new URL("../../../../inference/gpu/runtimes.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  const runtimes = Object.fromEntries(
+    Object.entries(catalogue).filter(
+      ([, profile]) =>
+        profile.kind === "training" ||
+        (profile.gpus <= count &&
+          (instance.sku.includes("B300") ||
+            profile.model_id === "jaredpalmer/kev-9b")),
+    ),
+  );
+  if (
+    !Object.keys(runtimes).length ||
+    Object.values(runtimes).some(
+      (profile) => profile.environment?.HOST_IDENTITY_FILE,
+    )
+  )
+    throw new Error("GPU bootstrap requires private runtime profiles");
   return {
-    GRADIATED_RUNTIME_ACCESS_TOKEN: tokens.runtimeAccess,
-    GRADIATED_DEPLOYMENT_STATUS_TOKEN: tokens.deploymentStatus,
+    GRADIATED_GPU_BOOTSTRAP: Buffer.from(
+      JSON.stringify({
+        instance_id: z.uuid().parse(instanceId),
+        management_token: managementToken,
+        auth_key: authKey,
+        api_endpoint: apiEndpoint,
+        config: {
+          instance_id: instanceId,
+          hf_home: "/home/runtime/.cache/huggingface",
+          runtimes,
+        },
+      }),
+    ).toString("base64"),
   };
 };

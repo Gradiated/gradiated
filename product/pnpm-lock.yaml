@@ -403,9 +403,6 @@ importers:
       '@gradiated/control':
         specifier: workspace:*
         version: link:../../packages/control
-      '@gradiated/nomad-pki':
-        specifier: workspace:*
-        version: link:../../packages/nomad-pki
       '@modelcontextprotocol/sdk':
         specifier: 1.30.0
         version: 1.30.0(zod@4.6.5)

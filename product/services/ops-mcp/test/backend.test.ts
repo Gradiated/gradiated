@@ -1,9 +1,3 @@
-import { EventEmitter } from "node:events";
-import https from "node:https";
-import { mkdtempSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-
 import { afterEach, expect, it, vi } from "vitest";
 import { createBackend } from "../src/backend.js";
 
@@ -12,12 +6,6 @@ const backend = createBackend({
   loki: "http://loki.invalid",
   lokiTenant: "eks-prod|model-nebius-prod",
   alertmanager: "http://alertmanager.invalid",
-  nomad: {
-    url: "https://nomad.invalid",
-    caFile: "/nonexistent/ca",
-    tokenFile: "/nonexistent/token",
-    clientCertificate: async () => ({ certificate: "", privateKey: "" }),
-  },
 });
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -60,68 +48,4 @@ it("rejects failing and malformed upstream responses", async () => {
     vi.fn(async () => new Response("not JSON")),
   );
   await expect(backend("prometheus", "/api/v1/alerts")).rejects.toThrow();
-});
-
-it("sends the Nomad token, returns Nomad's next page token and uses the renewed client certificate", async () => {
-  const directory = mkdtempSync(join(tmpdir(), "ops-mcp-nomad-"));
-  for (const name of ["ca"]) {
-    writeFileSync(join(directory, name), "test-only-pem");
-  }
-  writeFileSync(join(directory, "token"), "test-only-token\n");
-  const get = vi.spyOn(https, "get").mockImplementation(((
-    _url: URL,
-    _options: https.RequestOptions,
-    callback: (response: EventEmitter) => void,
-  ) => {
-    const response = Object.assign(new EventEmitter(), {
-      statusCode: 200,
-      headers: { "x-nomad-nexttoken": "5678.efgh" },
-    });
-    queueMicrotask(() => {
-      callback(response);
-      response.emit("data", Buffer.from("[]"));
-      response.emit("end");
-    });
-
-    return Object.assign(new EventEmitter(), { destroy: vi.fn() });
-  }) as unknown as typeof https.get);
-  let client = { certificate: "test-only-pem", privateKey: "test-only-key" };
-  const nomad = createBackend({
-    prometheus: "http://prometheus.invalid",
-    loki: "http://loki.invalid",
-    lokiTenant: "eks-prod",
-    alertmanager: "http://alertmanager.invalid",
-    nomad: {
-      url: "https://nomad.invalid:4646",
-      caFile: join(directory, "ca"),
-      tokenFile: join(directory, "token"),
-      clientCertificate: async () => client,
-    },
-  });
-
-  await expect(
-    nomad("nomad", "/v1/allocations", { filter: 'ClientStatus == "failed"' }),
-  ).resolves.toEqual({ data: [], next_token: "5678.efgh" });
-
-  const [url, options] = get.mock.calls[0] as unknown as [
-    URL,
-    https.RequestOptions,
-  ];
-  expect(url.href).toBe(
-    "https://nomad.invalid:4646/v1/allocations?filter=ClientStatus+%3D%3D+%22failed%22",
-  );
-  expect(options.headers).toEqual({ "x-nomad-token": "test-only-token" });
-
-  await nomad("nomad", "/v1/jobs");
-  client = {
-    certificate: "renewed-test-only-pem",
-    privateKey: "test-only-key",
-  };
-  await nomad("nomad", "/v1/jobs");
-
-  const agents = get.mock.calls.map(
-    (call) => (call as unknown as [URL, https.RequestOptions])[1].agent,
-  );
-  expect(agents[1]).toBe(agents[0]);
-  expect(agents[2]).not.toBe(agents[1]);
 });

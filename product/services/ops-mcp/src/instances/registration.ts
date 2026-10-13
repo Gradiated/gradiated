@@ -1,39 +1,16 @@
 import { randomUUID } from "node:crypto";
-
+import type { InstanceService } from "@gradiated/control";
 import type {
-  InstanceService,
-  InstanceCertificateService,
-  InstanceRecord,
-} from "@gradiated/control";
-
-import {
-  renewableHostProfile,
-  issueCertificate,
-  type CertificateSigner,
-} from "@gradiated/nomad-pki";
-import {
-  carriedBootstrap,
-  hostBootstrapEnvironment,
-  nodeName,
-  nomadNodeIdentity,
-  servingEnvironment,
-  type ArtifactCredentials,
-} from "./host-bootstrap.js";
-import { waitForNomadNode, type ReadNomadNode } from "./nomad-node.js";
-import type { InstanceProvider, ProviderInstance } from "./provider.js";
+  InstanceProvider,
+  ProviderInstance,
+  GpuInventory,
+} from "./provider.js";
 import { gpuService } from "./tailscale.js";
 
-const NODE_READY_TIMEOUT_MS = 30 * 60 * 1000;
 const RETAINED_REGISTRATIONS = 50;
 
 export type RegistrationPhase =
-  | "recording"
-  | "issuing_certificate"
-  | "updating_provider"
-  | "waiting_for_node"
-  | "enrolling_tailscale"
-  | "bound"
-  | "failed";
+  "recording" | "updating_provider" | "prepared" | "failed";
 
 export type Registration = {
   readonly id: string;
@@ -47,11 +24,26 @@ export type Registration = {
   phase: RegistrationPhase;
   updatedAt: string;
   instanceId?: string;
-  nomadNodeId?: string;
   nodeName?: string;
   error?: string;
   tailscaleIp?: string;
   privateService?: ReturnType<typeof gpuService>;
+  kubernetes?: {
+    inventory: GpuInventory;
+    host: {
+      instance_id: string;
+      endpoint: string;
+      token_file: string;
+      gpu_count: number;
+      cpu: number;
+      memory_gib: number;
+      gpu_product: string;
+    };
+    managementSecret: {
+      secretKey: string;
+      remoteRef: { key: string; property?: string };
+    };
+  };
 };
 
 export type RegistrationRequest = {
@@ -64,28 +56,27 @@ export type RegistrationRequest = {
 export type RegistrationDependencies = {
   readonly providers: Readonly<Record<string, () => Promise<InstanceProvider>>>;
   readonly instances: () => Promise<InstanceService>;
-  readonly certificateCredentials: () => Promise<InstanceCertificateService>;
   readonly hostImage: string;
-  readonly caCertificate: () => Promise<string>;
-  readonly signer: CertificateSigner;
-  readonly runtimeReader: () => Promise<ArtifactCredentials>;
-  readonly servingTokens: (provider: string) => Promise<{
-    runtimeAccess: string;
-    deploymentStatus: string;
-  }>;
+  readonly bootstrap: (
+    instance: ProviderInstance,
+    instanceId: string,
+    key: string,
+    authKey: string,
+  ) => Promise<Record<string, string>>;
+  readonly managementKey: (
+    instanceId: string,
+  ) => Promise<{ key: string; secretId: string; property?: string }>;
   readonly tailscaleAuthKey: (instanceId: string) => Promise<{
     key: string;
     revoke: () => Promise<void>;
   }>;
-  readonly readNode: ReadNomadNode;
   readonly audit: (event: Record<string, unknown>) => void;
-  readonly nodeTimeoutMs?: number;
 };
 
 export type Registrations = ReturnType<typeof createRegistrations>;
 
 const isActive = ({ phase }: Registration) =>
-  phase !== "bound" && phase !== "failed";
+  phase !== "prepared" && phase !== "failed";
 
 export const createRegistrations = (dependencies: RegistrationDependencies) => {
   const registrations = new Map<string, Registration>();
@@ -115,26 +106,55 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
     });
   };
 
-  const waitAndBind = async (
+  const run = async (
     registration: Registration,
     provider: InstanceProvider,
-    record: InstanceRecord,
-    nomadNodeId: string,
+    instance: ProviderInstance,
   ) => {
-    await waitForNomadNode(dependencies.readNode, {
-      nomadNodeId,
+    const record = await (await dependencies.instances()).register(instance);
+    advance(registration, "updating_provider", {
       instanceId: record.id,
-      timeoutMs: dependencies.nodeTimeoutMs ?? NODE_READY_TIMEOUT_MS,
+      nodeName: `gpu-${record.id}`,
     });
-    advance(registration, "enrolling_tailscale");
+    const management = await dependencies.managementKey(record.id);
     const enrollment = await dependencies.tailscaleAuthKey(record.id);
-    let tailscaleIp: string;
     try {
-      ({ tailscaleIp } = await provider.enrollTailscale(
-        registration.providerInstanceId,
+      const environment = await dependencies.bootstrap(
+        instance,
         record.id,
+        management.key,
         enrollment.key,
-      ));
+      );
+      const inventory = await provider.bootstrap(
+        instance,
+        dependencies.hostImage,
+        environment,
+        { allowReset: registration.resetRunningPod },
+      );
+      const privateService = gpuService(record.id, inventory.tailscaleIp);
+      advance(registration, "prepared", {
+        tailscaleIp: inventory.tailscaleIp,
+        privateService,
+        kubernetes: {
+          inventory,
+          host: {
+            instance_id: record.id,
+            endpoint: `http://gpu-${record.id}.tailscale-inference.svc.cluster.local:8888/_kubelet`,
+            token_file: `/var/run/gradiated-host-keys/${record.id}`,
+            gpu_count: inventory.gpuCount,
+            cpu: inventory.cpu,
+            memory_gib: inventory.memoryGiB,
+            gpu_product: inventory.gpuProduct,
+          },
+          managementSecret: {
+            secretKey: record.id,
+            remoteRef: {
+              key: management.secretId,
+              ...(management.property ? { property: management.property } : {}),
+            },
+          },
+        },
+      });
     } finally {
       await enrollment.revoke().catch(() =>
         dependencies.audit({
@@ -143,95 +163,8 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
         }),
       );
     }
-    const inventory = await dependencies.instances();
-    await inventory.bindNomadNode(record.id, nomadNodeId);
-    registration.tailscaleIp = tailscaleIp;
-    registration.privateService = gpuService(record.id, tailscaleIp);
   };
 
-  const run = async (
-    registration: Registration,
-    provider: InstanceProvider,
-    instance: ProviderInstance,
-    environment: Readonly<Record<string, string>>,
-  ) => {
-    const record = await (await dependencies.instances()).register(instance);
-    const name = nodeName(instance.provider, instance.providerInstanceId);
-
-    const carried = carriedBootstrap(environment);
-    if (registration.resuming && carried) {
-      if (carried.instanceId !== record.id) {
-        throw new Error(
-          `${registration.providerInstanceId} carries the bootstrap of instance ${carried.instanceId}, not ${record.id}; ` +
-            "register it again with an authorized reset",
-        );
-      }
-      if (record.nomadNodeId === carried.nomadNodeId) {
-        throw new Error(
-          `${registration.providerInstanceId} is already registered as node ${carried.nomadNodeId}; ` +
-            "renew its certificate in place; replacing the provider image needs an explicitly authorized reset",
-        );
-      }
-
-      advance(registration, "waiting_for_node", {
-        instanceId: record.id,
-        nomadNodeId: carried.nomadNodeId,
-        nodeName: name,
-      });
-      await provider.resume?.(instance.providerInstanceId);
-      await waitAndBind(registration, provider, record, carried.nomadNodeId);
-      advance(registration, "bound");
-
-      return;
-    }
-
-    const [ca, artifact, tokens] = await Promise.all([
-      dependencies.caCertificate(),
-      dependencies.runtimeReader(),
-      dependencies.servingTokens(registration.provider),
-    ]);
-    const identity = nomadNodeIdentity(record.id, environment);
-    advance(registration, "issuing_certificate", {
-      instanceId: record.id,
-      nomadNodeId: identity.nomadNodeId,
-      nodeName: name,
-    });
-
-    const tls = await issueCertificate(
-      ca,
-      dependencies.signer,
-      renewableHostProfile,
-    );
-    const renewalToken = await (
-      await dependencies.certificateCredentials()
-    ).enroll(record.id, identity.nomadNodeId);
-    advance(registration, "updating_provider");
-
-    await provider.bootstrap(
-      instance,
-      dependencies.hostImage,
-      {
-        ...hostBootstrapEnvironment({
-          instanceId: record.id,
-          nodeName: name,
-          ...identity,
-          ca,
-          ...tls,
-          artifact,
-          renewalToken,
-        }),
-        ...servingEnvironment(tokens),
-      },
-      { allowReset: registration.resetRunningPod },
-    );
-    advance(registration, "waiting_for_node");
-
-    await waitAndBind(registration, provider, record, identity.nomadNodeId);
-    advance(registration, "bound");
-  };
-
-  // A running machine that already carries our bootstrap is resumed: it is
-  // waited for and bound, never reset, unless a reset is explicitly requested.
   const preflight = async (
     createProvider: () => Promise<InstanceProvider>,
     request: RegistrationRequest,
@@ -240,18 +173,10 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
     const instance = await provider.describe(request.providerInstanceId);
     await provider.checkTailscaleEnrollment(request.providerInstanceId);
     const stopped = await provider.isStopped(request.providerInstanceId);
-    const environment = await provider.environment(request.providerInstanceId, {
-      providerOnly: request.resetRunningPod,
-    });
-    const resuming =
-      !stopped &&
-      !request.resetRunningPod &&
-      carriedBootstrap(environment) !== null;
-
+    const resuming = false;
     const inPlace =
       !stopped &&
       !request.resetRunningPod &&
-      !resuming &&
       (await provider.supportsInPlace?.(
         request.providerInstanceId,
         dependencies.hostImage,
@@ -266,7 +191,7 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
       );
     }
 
-    return { provider, instance, environment, resuming };
+    return { provider, instance, resuming };
   };
 
   const retain = (registration: Registration) => {
@@ -303,7 +228,7 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
 
       checking.add(machine);
       try {
-        const { provider, instance, environment, resuming } = await preflight(
+        const { provider, instance, resuming } = await preflight(
           createProvider,
           request,
         );
@@ -323,11 +248,10 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
         retain(registration);
         advance(registration, "recording");
 
-        void run(registration, provider, instance, environment).catch(
-          (error: unknown) =>
-            advance(registration, "failed", {
-              error: error instanceof Error ? error.message : String(error),
-            }),
+        void run(registration, provider, instance).catch((error: unknown) =>
+          advance(registration, "failed", {
+            error: error instanceof Error ? error.message : String(error),
+          }),
         );
 
         return { ...registration };

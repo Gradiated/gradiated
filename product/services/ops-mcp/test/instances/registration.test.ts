@@ -1,506 +1,142 @@
-import { X509Certificate } from "node:crypto";
-
-import type { InstanceRecord, InstanceService } from "@gradiated/control";
+import type { InstanceService } from "@gradiated/control";
 import { describe, expect, it, vi } from "vitest";
-
+import { createRegistrations } from "../../src/instances/registration.js";
 import type { InstanceProvider } from "../../src/instances/provider.js";
-import {
-  createRegistrations,
-  type Registration,
-  type RegistrationDependencies,
-} from "../../src/instances/registration.js";
-import { kmsSigner } from "@gradiated/nomad-pki";
-import { fakeKms, testCa } from "@gradiated/nomad-pki/testing";
-
-const INSTANCE_ID = "019d5a4a-0000-7000-8000-000000000001";
-const BOUND_NODE = "3f1e5a52-8d4b-4c1e-9a55-111111111111";
-const TOKEN = "t".repeat(40);
-const STATUS_TOKEN = "s".repeat(40);
-const ARTIFACT = {
-  accessKeyId: "AKIAEXAMPLEEXAMPLE12",
-  secretAccessKey: "abcdEFGHijklMNOPqrstUVWXyz0123456789+/ab",
+const id = "019d5a4a-0000-7000-8000-000000000001";
+const instance = {
+  provider: "runpod",
+  providerAccountId: "account",
+  providerInstanceId: "pod",
+  region: "US-TX-1",
+  faultDomain: "host",
+  sku: "8x NVIDIA B300",
 };
-
-const setup = ({
-  stopped = true,
-  boundNodeId = null as string | null,
-  machineEnvironment = {} as Record<string, string>,
-  nodeAlreadyJoined = false,
-  nodeStatus = "ready",
-  supportsInPlace = false,
-  sshUnavailable = false,
-} = {}) => {
-  const bootstraps: {
-    environment: Readonly<Record<string, string>>;
-    options?: { readonly allowReset?: boolean };
-  }[] = [];
-  const enrollTailscale = vi.fn(async () => ({ tailscaleIp: "100.64.0.1" }));
-  const revoke = vi.fn(async () => {});
-  const setServingUrl = vi.fn(async () => ({}) as InstanceRecord);
+const setup = (stopped = false, ssh = true) => {
   const provider: InstanceProvider = {
-    enrollTailscale,
-    checkTailscaleEnrollment: async () => {},
-    describe: async (id) => ({
-      provider: "runpod",
-      providerAccountId: "user_1",
-      providerInstanceId: id,
-      region: "US-NE-1",
-      faultDomain: "runpod:machine1",
-      sku: "2x NVIDIA RTX PRO 6000",
-    }),
-    environment: async (_id, options) => {
-      if (sshUnavailable && !options?.providerOnly)
-        throw new Error("SSH unavailable");
-
-      return machineEnvironment;
-    },
+    describe: async () => instance,
+    environment: async () => ({}),
     isStopped: async () => stopped,
-    supportsInPlace: async () => supportsInPlace,
-    bootstrap: async (_instance, _image, environment, options) => {
-      bootstraps.push({ environment, options });
+    supportsInPlace: async () => ssh,
+    checkTailscaleEnrollment: async () => {
+      if (!ssh) throw new Error("Pinned SSH required");
     },
+    bootstrap: vi.fn(async () => ({
+      tailscaleIp: "100.64.0.1",
+      gpuCount: 8,
+      gpuProduct: "B300",
+      cpu: 96,
+      memoryGiB: 1280,
+    })),
   };
-  const bindNomadNode = vi.fn(async () => ({}) as InstanceRecord);
-  const register = vi.fn(
-    async () =>
-      ({
-        id: INSTANCE_ID,
-        nomadNodeId: boundNodeId,
-        servingUrl: null,
-      }) as InstanceRecord,
-  );
+  const revoke = vi.fn(async () => {});
   const audit = vi.fn();
-  const dependencies: RegistrationDependencies = {
+  const registrations = createRegistrations({
     providers: { runpod: async () => provider },
     instances: async () =>
       ({
-        register,
-        bindNomadNode,
-        setServingUrl,
+        register: async () => ({ ...instance, id }),
       }) as unknown as InstanceService,
-    certificateCredentials: async () =>
-      ({
-        enroll: async () => "r".repeat(43),
-      }) as unknown as import("@gradiated/control").InstanceCertificateService,
-    tailscaleAuthKey: async () => ({ key: "tskey-auth-synthetic", revoke }),
-    hostImage: "registry.example/nomad-base:inputs-abc",
-    caCertificate: async () => testCa.certificate,
-    signer: kmsSigner("alias/test-nomad-ca", fakeKms().client),
-    runtimeReader: async () => ARTIFACT,
-    servingTokens: async () => ({
-      runtimeAccess: TOKEN,
-      deploymentStatus: STATUS_TOKEN,
+    hostImage: "registry/gpu-base:pinned",
+    managementKey: async () => ({
+      key: "private-management-key".repeat(3),
+      secretId: "management-secret",
     }),
-    readNode: async (nodeId) =>
-      bootstraps.length === 0 && !nodeAlreadyJoined
-        ? null
-        : {
-            ID: nodeId,
-            Name: "runpod-pod1",
-            Status: nodeStatus,
-            Meta: { gradiated_instance_id: INSTANCE_ID },
-          },
+    tailscaleAuthKey: async () => ({ key: "tskey-auth-scoped", revoke }),
+    bootstrap: async () => ({
+      GRADIATED_GPU_BOOTSTRAP: "private-encoded-bootstrap",
+    }),
     audit,
-    nodeTimeoutMs: 50,
-  };
-
-  return {
-    registrations: createRegistrations(dependencies),
-    bootstraps,
-    enrollTailscale,
-    revoke,
-    setServingUrl,
-    register,
-    bindNomadNode,
-    audit,
-  };
+  });
+  return { provider, revoke, audit, registrations };
 };
-
-const carriedEnvironment = {
-  GRADIATED_INSTANCE_ID: INSTANCE_ID,
-  GRADIATED_NOMAD_NODE_ID: BOUND_NODE,
-  GRADIATED_NOMAD_NODE_SECRET: "3f1e5a52-8d4b-4c1e-9a55-222222222222",
-};
-
 const request = {
   provider: "runpod",
-  providerInstanceId: "pod1",
+  providerInstanceId: "pod",
+  requestedBy: "operator@example.com",
   resetRunningPod: false,
-  requestedBy: "tester@gradiated.com",
 };
-
-const settled = async (
-  registrations: ReturnType<typeof setup>["registrations"],
-  id: string,
-): Promise<Registration> => {
-  for (;;) {
-    const registration = registrations.get(id)!;
-    if (registration.phase === "bound" || registration.phase === "failed") {
-      return registration;
-    }
-    await new Promise((resolve) => setTimeout(resolve, 5));
-  }
+const wait = async (s: ReturnType<typeof setup>, registrationId: string) => {
+  await vi.waitFor(() =>
+    expect(["prepared", "failed"]).toContain(
+      s.registrations.get(registrationId)?.phase,
+    ),
+  );
+  return s.registrations.get(registrationId)!;
 };
-
-describe("instance registration", () => {
-  it("allows an explicitly authorized reset even when the in-place SSH identity is unavailable", async () => {
-    const test = setup({
-      stopped: false,
-      supportsInPlace: true,
-      sshUnavailable: true,
-    });
-
-    const finished = await settled(
-      test.registrations,
-      (await test.registrations.start({ ...request, resetRunningPod: true }))
-        .id,
+describe("Kubernetes GPU enrollment", () => {
+  it("prepares a running host without provider reset and returns credential-free Git inputs", async () => {
+    const s = setup();
+    const r = await s.registrations.start(request);
+    const ready = await wait(s, r.id);
+    expect(ready.phase).toBe("prepared");
+    expect(ready.nodeName).toBe(`gpu-${id}`);
+    expect(s.provider.bootstrap).toHaveBeenCalledWith(
+      instance,
+      "registry/gpu-base:pinned",
+      { GRADIATED_GPU_BOOTSTRAP: "private-encoded-bootstrap" },
+      { allowReset: false },
     );
-
-    expect(finished).toMatchObject({ phase: "bound", resetRunningPod: true });
-    expect(test.bootstraps[0]?.options).toEqual({ allowReset: true });
+    expect(ready.kubernetes?.host).toMatchObject({
+      instance_id: id,
+      gpu_count: 8,
+      cpu: 96,
+      memory_gib: 1280,
+    });
+    expect(ready.kubernetes?.managementSecret).toEqual({
+      secretKey: id,
+      remoteRef: { key: "management-secret" },
+    });
+    expect(JSON.stringify(ready)).not.toMatch(
+      /private-management|private-encoded|tskey-auth/,
+    );
+    expect(JSON.stringify(s.audit.mock.calls)).not.toMatch(
+      /private-management|private-encoded|tskey-auth/,
+    );
+    expect(s.revoke).toHaveBeenCalledOnce();
   });
-
-  it("records, certifies and binds a running pod using in-place bootstrap without allowing reset", async () => {
-    const test = setup({ stopped: false, supportsInPlace: true });
-
-    const finished = await settled(
-      test.registrations,
-      (await test.registrations.start(request)).id,
+  it("revokes the one-time key when bootstrap fails", async () => {
+    const s = setup();
+    vi.mocked(s.provider.bootstrap).mockRejectedValueOnce(
+      new Error("GPU host refused active workloads"),
     );
-
-    expect(finished).toMatchObject({ phase: "bound", resetRunningPod: false });
-    expect(test.bootstraps[0]?.options).toEqual({ allowReset: false });
-    expect(test.bindNomadNode).toHaveBeenCalledWith(
-      INSTANCE_ID,
-      finished.nomadNodeId,
-    );
+    const r = await s.registrations.start(request);
+    expect((await wait(s, r.id)).phase).toBe("failed");
+    expect(s.revoke).toHaveBeenCalledOnce();
   });
-
-  it("records, certifies, boots and binds a stopped machine in order", async () => {
-    const test = setup();
-
-    const started = await test.registrations.start(request);
-    const finished = await settled(test.registrations, started.id);
-
-    expect(finished).toMatchObject({
-      phase: "bound",
-      instanceId: INSTANCE_ID,
-      nodeName: "runpod-pod1",
-      requestedBy: "tester@gradiated.com",
-    });
-    expect(test.audit.mock.calls.map(([event]) => event.phase)).toEqual([
-      "recording",
-      "issuing_certificate",
-      "updating_provider",
-      "waiting_for_node",
-      "enrolling_tailscale",
-      "bound",
-    ]);
-    expect(test.bindNomadNode).toHaveBeenCalledWith(
-      INSTANCE_ID,
-      finished.nomadNodeId,
-    );
-    expect(test.bootstraps[0]?.options).toEqual({ allowReset: false });
+  it("refuses an unpinned host before creating registration state or credentials", async () => {
+    const s = setup(false, false);
+    await expect(s.registrations.start(request)).rejects.toThrow("Pinned SSH");
+    expect(s.registrations.list()).toEqual([]);
+    expect(s.provider.bootstrap).not.toHaveBeenCalled();
   });
-
-  it("boots the machine with a CA-signed certificate and the serving tokens", async () => {
-    const test = setup();
-
-    await settled(
-      test.registrations,
-      (await test.registrations.start(request)).id,
+  it("requires explicit reset authorization when in-place enrollment is unavailable", async () => {
+    const s = setup();
+    s.provider.supportsInPlace = async () => false;
+    await expect(s.registrations.start(request)).rejects.toThrow(
+      "Configure in-place SSH",
     );
-
-    const environment = test.bootstraps[0]!.environment;
-    const decode = (name: string) =>
-      Buffer.from(environment[name] ?? "", "base64").toString();
-    const certificate = new X509Certificate(decode("GRADIATED_NOMAD_CERT"));
-    expect(
-      certificate.verify(new X509Certificate(testCa.certificate).publicKey),
-    ).toBe(true);
-    expect(
-      Date.parse(certificate.validTo) - Date.parse(certificate.validFrom),
-    ).toBe((30 * 86400 + 300) * 1000);
-    expect(decode("GRADIATED_NOMAD_CA")).toBe(testCa.certificate);
-    expect(environment).toMatchObject({
-      GRADIATED_INSTANCE_ID: INSTANCE_ID,
-      GRADIATED_RUNTIME_ACCESS_TOKEN: TOKEN,
-      GRADIATED_DEPLOYMENT_STATUS_TOKEN: STATUS_TOKEN,
-    });
+    expect(s.provider.bootstrap).not.toHaveBeenCalled();
   });
-
-  it("enrolls Tailscale before binding and revokes the one-time key", async () => {
-    const test = setup();
-    const result = await settled(
-      test.registrations,
-      (await test.registrations.start(request)).id,
-    );
-
-    expect(test.enrollTailscale).toHaveBeenCalledWith(
-      "pod1",
-      INSTANCE_ID,
-      "tskey-auth-synthetic",
-    );
-    expect(test.enrollTailscale.mock.invocationCallOrder[0]).toBeLessThan(
-      test.bindNomadNode.mock.invocationCallOrder[0]!,
-    );
-    expect(test.revoke).toHaveBeenCalledOnce();
-    expect(result.privateService).toMatchObject({
-      metadata: {
-        name: `gpu-${INSTANCE_ID}`,
-        annotations: { "tailscale.com/tailnet-ip": "100.64.0.1" },
-      },
-    });
-    expect(result.tailscaleIp).toBe("100.64.0.1");
-    expect(JSON.stringify(test.bootstraps)).not.toContain("tskey-auth-");
-  });
-
-  it("leaves a failed private enrollment unbound and revokes its key", async () => {
-    const test = setup();
-    test.revoke.mockRejectedValueOnce(new Error("Revoke unavailable"));
-    test.enrollTailscale.mockRejectedValueOnce(
-      new Error("Private proxy unavailable"),
-    );
-    const result = await settled(
-      test.registrations,
-      (await test.registrations.start(request)).id,
-    );
-
-    expect(result.phase).toBe("failed");
-    expect(result.error).toBe("Private proxy unavailable");
-    expect(test.bindNomadNode).not.toHaveBeenCalled();
-    expect(test.revoke).toHaveBeenCalledOnce();
-    expect(test.setServingUrl).not.toHaveBeenCalled();
-  });
-
-  it("retains a successful enrollment when key cleanup temporarily fails", async () => {
-    const test = setup();
-    test.revoke.mockRejectedValueOnce(new Error("Revoke unavailable"));
-    const result = await settled(
-      test.registrations,
-      (await test.registrations.start(request)).id,
-    );
-
-    expect(result.phase).toBe("bound");
-    expect(result.privateService).toBeDefined();
-    expect(test.audit).toHaveBeenCalledWith({
-      event: "tailscale_auth_key_revocation_failed",
-      instance_id: INSTANCE_ID,
-    });
-  });
-
-  it("never writes a secret into the audit trail", async () => {
-    const test = setup();
-
-    await settled(
-      test.registrations,
-      (await test.registrations.start(request)).id,
-    );
-
-    const trail = JSON.stringify(test.audit.mock.calls);
-    for (const secret of [
-      TOKEN,
-      STATUS_TOKEN,
-      ARTIFACT.secretAccessKey,
-      "PRIVATE KEY",
-    ]) {
-      expect(trail).not.toContain(secret);
-    }
-  });
-
-  it("returns a bound machine to Nomad as the same node", async () => {
-    const test = setup({
-      boundNodeId: BOUND_NODE,
-      machineEnvironment: carriedEnvironment,
-    });
-
-    await settled(
-      test.registrations,
-      (await test.registrations.start(request)).id,
-    );
-
-    expect(test.bootstraps[0]!.environment).toMatchObject({
-      GRADIATED_NOMAD_NODE_ID: BOUND_NODE,
-      GRADIATED_NOMAD_NODE_SECRET: "3f1e5a52-8d4b-4c1e-9a55-222222222222",
-    });
-  });
-
-  it("resumes a running machine that carries this instance's bootstrap without resetting it", async () => {
-    const test = setup({
-      stopped: false,
-      machineEnvironment: carriedEnvironment,
-      nodeAlreadyJoined: true,
-    });
-
-    const started = await test.registrations.start(request);
-    const finished = await settled(test.registrations, started.id);
-
-    expect(started.resuming).toBe(true);
-    expect(finished).toMatchObject({ phase: "bound", nomadNodeId: BOUND_NODE });
-    expect(test.bootstraps).toEqual([]);
-    expect(test.bindNomadNode).toHaveBeenCalledWith(INSTANCE_ID, BOUND_NODE);
-    expect(test.audit.mock.calls.map(([event]) => event.phase)).toEqual([
-      "recording",
-      "waiting_for_node",
-      "enrolling_tailscale",
-      "bound",
-    ]);
-  });
-
-  it("refuses to pretend an already registered machine was renewed", async () => {
-    const test = setup({
-      stopped: false,
-      boundNodeId: BOUND_NODE,
-      machineEnvironment: carriedEnvironment,
-      nodeAlreadyJoined: true,
-    });
-
-    const finished = await settled(
-      test.registrations,
-      (await test.registrations.start(request)).id,
-    );
-
-    expect(finished).toMatchObject({
-      phase: "failed",
-      error: expect.stringContaining("is already registered"),
-    });
-    expect(test.bootstraps).toEqual([]);
-    expect(test.bindNomadNode).not.toHaveBeenCalled();
-  });
-
-  it("will not resume a machine carrying another instance's bootstrap", async () => {
-    const test = setup({
-      stopped: false,
-      machineEnvironment: {
-        ...carriedEnvironment,
-        GRADIATED_INSTANCE_ID: "019d5a4a-0000-7000-8000-000000000002",
-      },
-    });
-
-    const finished = await settled(
-      test.registrations,
-      (await test.registrations.start(request)).id,
-    );
-
-    expect(finished).toMatchObject({
-      phase: "failed",
-      error: expect.stringContaining("carries the bootstrap of instance"),
-    });
-    expect(test.bootstraps).toEqual([]);
-    expect(test.bindNomadNode).not.toHaveBeenCalled();
-  });
-
-  it("resets a bootstrapped machine only when asked, keeping its node", async () => {
-    const test = setup({
-      stopped: false,
-      machineEnvironment: carriedEnvironment,
-    });
-
-    const started = await test.registrations.start({
+  it("passes an explicitly authorized reset through without changing the default", async () => {
+    const s = setup();
+    const r = await s.registrations.start({
       ...request,
       resetRunningPod: true,
     });
-    await settled(test.registrations, started.id);
-
-    expect(started.resuming).toBe(false);
-    expect(test.bootstraps[0]).toMatchObject({
-      environment: { GRADIATED_NOMAD_NODE_ID: BOUND_NODE },
-      options: { allowReset: true },
-    });
-  });
-
-  it("refuses a running machine without an authorized reset before touching anything", async () => {
-    const test = setup({ stopped: false });
-
-    await expect(test.registrations.start(request)).rejects.toThrow(
-      "reset_running_pod",
-    );
-    expect(test.register).not.toHaveBeenCalled();
-    expect(test.bootstraps).toEqual([]);
-    expect(test.registrations.list()).toEqual([]);
-  });
-
-  it("resets a running machine when the reset is authorized", async () => {
-    const test = setup({ stopped: false });
-
-    const finished = await settled(
-      test.registrations,
-      (await test.registrations.start({ ...request, resetRunningPod: true }))
-        .id,
-    );
-
-    expect(finished.phase).toBe("bound");
-    expect(test.bootstraps[0]?.options).toEqual({ allowReset: true });
-    expect(test.audit).toHaveBeenCalledWith(
-      expect.objectContaining({ reset_running_pod: true, phase: "recording" }),
+    await wait(s, r.id);
+    expect(s.provider.bootstrap).toHaveBeenCalledWith(
+      instance,
+      expect.any(String),
+      expect.any(Object),
+      { allowReset: true },
     );
   });
-
-  it("allows one registration per machine at a time", async () => {
-    const test = setup();
-
-    const first = await test.registrations.start(request);
-
-    await expect(test.registrations.start(request)).rejects.toThrow(
-      `Registration ${first.id} for this machine is still`,
+  it("rejects concurrent enrollment of the same provider host", async () => {
+    const s = setup();
+    vi.mocked(s.provider.bootstrap).mockImplementationOnce(
+      () => new Promise(() => {}),
     );
-    await settled(test.registrations, first.id);
-  });
-
-  it("lets only one of two simultaneous requests for a machine start", async () => {
-    const test = setup();
-
-    const results = await Promise.allSettled([
-      test.registrations.start(request),
-      test.registrations.start(request),
-    ]);
-
-    expect(results.map((result) => result.status).sort()).toEqual([
-      "fulfilled",
-      "rejected",
-    ]);
-    expect(
-      results.find((result) => result.status === "rejected"),
-    ).toMatchObject({
-      reason: new Error("Another registration for this machine is starting"),
-    });
-    await settled(test.registrations, test.registrations.list()[0]!.id);
-    expect(test.bootstraps).toHaveLength(1);
-  });
-
-  it("releases the machine when a request is refused", async () => {
-    const test = setup({ stopped: false });
-
-    await expect(test.registrations.start(request)).rejects.toThrow(
-      "reset_running_pod",
-    );
-
-    await expect(
-      test.registrations.start({ ...request, resetRunningPod: true }),
-    ).resolves.toMatchObject({ phase: "recording" });
-  });
-
-  it("fails without binding when the node never becomes ready", async () => {
-    const test = setup({ nodeStatus: "initializing" });
-
-    const finished = await settled(
-      test.registrations,
-      (await test.registrations.start(request)).id,
-    );
-
-    expect(finished).toMatchObject({
-      phase: "failed",
-      error: expect.stringContaining("was not ready"),
-    });
-    expect(test.bindNomadNode).not.toHaveBeenCalled();
-    expect(test.audit).toHaveBeenLastCalledWith(
-      expect.objectContaining({ phase: "failed", error: finished.error }),
-    );
-  });
-
-  it("rejects an unknown provider", async () => {
-    await expect(
-      setup().registrations.start({ ...request, provider: "aws" }),
-    ).rejects.toThrow("Unknown provider aws");
+    await s.registrations.start(request);
+    await expect(s.registrations.start(request)).rejects.toThrow("still");
   });
 });

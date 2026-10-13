@@ -57,6 +57,14 @@ export const verifyInPlaceBase = async (
 
 export const bootstrapScript = String.raw`
 import base64,contextlib,importlib.util,io,json,os,pathlib,subprocess,sys,time,urllib.request
+def enroll_quietly(module,bootstrap):
+    output=os.dup(1)
+    try:
+        os.dup2(2,1)
+        with contextlib.redirect_stdout(io.StringIO()):module.enroll(bootstrap)
+    finally:
+        os.dup2(output,1)
+        os.close(output)
 payload=json.load(sys.stdin)
 config=pathlib.Path("/etc/gradiated/kubelet.json")
 bootstrap=json.loads(base64.b64decode(payload["environment"]["GRADIATED_GPU_BOOTSTRAP"]))
@@ -69,7 +77,7 @@ else:
         raise ValueError("GPU workloads must drain before enrollment")
     spec=importlib.util.spec_from_file_location("gpu_bootstrap","/opt/gradiated/kubelet/bootstrap.py")
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
-    with contextlib.redirect_stdout(io.StringIO()):module.enroll(bootstrap)
+    enroll_quietly(module,bootstrap)
     with open("/var/log/gradiated-kubelet-bootstrap.log","ab") as log:
         subprocess.Popen(["python3","/opt/gradiated/kubelet/bootstrap.py"],env={"PATH":"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"},stdin=subprocess.DEVNULL,stdout=log,stderr=log,start_new_session=True)
 deadline=time.monotonic()+120

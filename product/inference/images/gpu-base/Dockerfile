@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libopenmpi3t64 libssl3t64 libgfortran5 \
     libexpat1 libffi8 libbz2-1.0 liblzma5 libsqlite3-0 libreadline8t64 libuuid1 \
     && rm -rf /var/lib/apt/lists/* \
+    && rm -f /etc/ssh/ssh_host_* \
     && useradd --uid 10001 --create-home --shell /usr/sbin/nologin runtime \
     && useradd --uid 10004 --create-home --shell /usr/sbin/nologin desmond \
     && useradd --uid 10003 --no-create-home --shell /usr/sbin/nologin downloader \

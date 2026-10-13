@@ -2,9 +2,11 @@
 import argparse
 import base64
 import json
+import importlib.util
 from pathlib import Path
 import re
 import subprocess
+import textwrap
 
 ROOT = Path(__file__).resolve().parents[2]
 REMOTE = '''
@@ -56,7 +58,8 @@ if before_agent is None:raise RuntimeError('Cannot identify a single management 
 if ping()['instance_id']!=config['instance_id']:raise ValueError('Agent identity mismatch')
 module={}
 exec(compile(payload.pop('installer'),'install-host.py','exec'),module)
-module['install'](payload)
+import contextlib,io
+with contextlib.redirect_stdout(io.StringIO()):module['install'](payload)
 deadline=time.monotonic()+120
 while True:
     try:
@@ -72,20 +75,35 @@ while True:
 '''
 
 
-def rollout(targets, binary, base_id, run=subprocess.run):
+GATEWAY_REMOTE = 'def install(payload):\n' + textwrap.indent(REMOTE.replace('payload=json.load(sys.stdin)\n', ''), '    ')
+
+
+def gateway_migration(command, payload):
+    spec = importlib.util.spec_from_file_location('enrollment', ROOT / 'tools/gpu/enroll-tailscale.py')
+    enrollment = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(enrollment)
+    print(json.dumps(enrollment.gateway_install(command, GATEWAY_REMOTE, payload)))
+
+
+def rollout(targets, binary, base_id, run=subprocess.run, gateway=None):
     if not re.fullmatch("[A-Za-z0-9._-]+", base_id):
         raise ValueError("An explicitly confirmed base ID is required")
     for target in targets:
-        if set(target) - {'instance_id', 'ssh', 'port'} or not re.fullmatch(r'(?:[a-z_][a-z0-9_-]*@)?[a-zA-Z0-9][a-zA-Z0-9.-]*', target['ssh']):
+        if set(target) - {'instance_id', 'ssh', 'port'} or not re.fullmatch(r'(?:[a-z0-9_][a-z0-9_-]*@)?[a-zA-Z0-9][a-zA-Z0-9.-]*', target['ssh']):
             raise ValueError('Explicit SSH targets are required')
         payload = {'base_id': base_id, 'instance_id': target['instance_id'], 'desmondd': base64.b64encode(binary).decode(),
                    'installer': (ROOT / 'tools/gpu/install-host.py').read_text()}
         for name in ('host_state.py', 'host_bundle.py', 'host-agent.py', 'supervise.py'):
             payload[name] = (ROOT / 'product/inference/gpu' / name).read_text()
         import shlex
-        run(['ssh', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'ConnectTimeout=10',
-             '-p', str(int(target.get('port', 22))), target['ssh'], 'python3 -c ' + shlex.quote(REMOTE)],
-            input=json.dumps(payload), text=True, check=True, timeout=180)
+        command = ['ssh', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'ConnectTimeout=10',
+                   '-p', str(int(target.get('port', 22))), target['ssh']]
+        if target['ssh'].lower().endswith('@ssh.runpod.io'):
+            command.insert(1, '-tt')
+            (gateway or gateway_migration)(command, payload)
+        else:
+            run([*command, 'python3 -c ' + shlex.quote(REMOTE)],
+                input=json.dumps(payload), text=True, check=True, timeout=180)
 
 
 def main():

@@ -334,7 +334,9 @@ This is a production operation requiring operator authorization. The command
 checks enrolled identity, staged runtime digests, and live model/reporter/proxy
 process identities; installs the recovery agent and launcher; and stops at the
 first failed host. It reads the management credential on the remote host and
-never outputs it. Known SSH host keys are required. Success waits for a fresh
+never outputs it. Known SSH host keys are required. Targets at `ssh.runpod.io` use the interactive
+Runpod SSH gateway, so migration also works without a public TCP SSH port.
+Success waits for a fresh
 management-agent PID and birth time before checking health and preserved workers,
 including when a launcher is already installed. The existing supervisor may
 be PID 1: it stays running and its SIGHUP path launches a shim that execs the new

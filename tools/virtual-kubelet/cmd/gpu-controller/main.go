@@ -40,6 +40,7 @@ import (
 )
 
 type host struct {
+	Rollout    *hostRollout    `json:"-"`
 	Runtimes   json.RawMessage `json:"-"`
 	InstanceID string          `json:"instance_id"`
 	Endpoint   string          `json:"endpoint"`
@@ -50,9 +51,10 @@ type host struct {
 	GPUProduct string          `json:"gpu_product"`
 }
 type configuration struct {
-	Runtimes  json.RawMessage `json:"runtimes"`
-	Namespace string          `json:"namespace"`
-	Hosts     []host          `json:"hosts"`
+	HostBundle *hostBundle     `json:"host_bundle"`
+	Runtimes   json.RawMessage `json:"runtimes"`
+	Namespace  string          `json:"namespace"`
+	Hosts      []host          `json:"hosts"`
 }
 type provider struct {
 	host   host
@@ -292,14 +294,21 @@ func (p *provider) NotifyPods(ctx context.Context, callback func(*v1.Pod)) {
 	}()
 }
 func (p *provider) Ping(ctx context.Context) error {
-	var result struct {
-		InstanceID string `json:"instance_id"`
-	}
+	var result hostVersion
 	if err := p.call(ctx, "ping", "", nil, &result); err != nil {
+		if p.host.Rollout != nil {
+			p.host.Rollout.unavailable(ctx, p)
+		}
 		return err
 	}
 	if result.InstanceID != p.host.InstanceID {
+		if p.host.Rollout != nil {
+			p.host.Rollout.unavailable(ctx, p)
+		}
 		return fmt.Errorf("host identity mismatch")
+	}
+	if p.host.Rollout != nil {
+		p.host.Rollout.observe(ctx, p, result)
 	}
 	if len(p.host.Runtimes) > 0 {
 		var status map[string]any
@@ -459,7 +468,12 @@ func main() {
 	if config.Namespace != "gpu-inference" || len(config.Hosts) == 0 {
 		log.Fatal("invalid GPU namespace or empty host list")
 	}
+	if err := config.HostBundle.validate(); err != nil {
+		log.Fatal(err)
+	}
+	rollout := newHostRollout(config.HostBundle, config.Hosts)
 	for index := range config.Hosts {
+		config.Hosts[index].Rollout = rollout
 		config.Hosts[index].Runtimes = config.Runtimes
 		h := config.Hosts[index]
 		if h.GPUCount < 0 || h.GPUCount > 8 || h.CPU < 0 || h.CPU > 512 || h.MemoryGiB < 0 || h.MemoryGiB > 4096 {
@@ -485,6 +499,7 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 	go func() {
+		http.HandleFunc("/metrics", rollout.metrics)
 		http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) })
 		server := &http.Server{Addr: ":9090", ReadHeaderTimeout: 5 * time.Second}
 		if err := server.ListenAndServe(); err != nil {

@@ -237,7 +237,8 @@ class HostAgentTest(unittest.TestCase):
         thread.join(2)
         self.assertFalse(thread.is_alive())
         self.assertEqual(self.host.config, updated)
-        self.assertEqual(result, [{'instance_id': self.config['instance_id'], 'epoch': 1}])
+        self.assertEqual([{key: value[key] for key in ('instance_id', 'epoch')} for value in result],
+                         [{'instance_id': self.config['instance_id'], 'epoch': 1}])
 
     def test_catalogue_stages_before_activation_and_preserves_active_profiles(self):
         import time

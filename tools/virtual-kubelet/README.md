@@ -230,3 +230,83 @@ and cleanup tests, injected storage failures, process crashes around file
 replacement, bootstrap checks and downloader checks. These simulate process and
 storage failures without releasing GPU reservations. Physical host loss still
 requires replacement capacity; a provider reset requires deliberate enrollment.
+
+## Host software bundles
+
+Model deployment publishes a `host` bundle alongside runtime bundles. Its
+`host-runtime-release` artifact contains `release.json` with the archive digest
+and base compatibility ID. Host bundles contain the agent, state and staging
+helpers, Desmond, and its startup script. The control bridge stays in the base.
+The base keeps SSH, enrollment, Tailscale, downloader, nginx, the launcher
+(`supervise.py`) and a recovery agent. Updating that recovery copy can rebuild a
+base image, but host releases do not require re-pinning or replacing a reservation.
+
+`gpu-inference/host.json` is initially `null`: legacy hosts continue serving and
+no host software update is requested. After installing the launcher on retained
+hosts, pin a **host** release artifact and commit the generated configuration:
+
+```sh
+python3 tools/gpu/pin-host.py /path/to/host-runtime-release/release.json
+python3 tools/gpu/render-config.py --check
+```
+
+The pin has `sha256` and `base_id` fields. A different base is rejected before
+download. Hosts use the existing downloader and short-lived control-bridge grants. Root
+copies the downloaded archive into private storage and independently verifies its
+digest before extracting; it then checks the file manifest and copies the result into root-owned `/var/lib/gradiated-kubelet/host/<digest>`. Downloaders
+cannot modify the promoted code or selection symlinks. The launcher consumes
+`pending`, preserves `previous`, and restarts only the agent. It requires a
+loopback ping from the new digest within 120 seconds and rolls back after three
+agent exits within ten minutes. A failed digest is not retried automatically.
+`status.json` records the trial and failure across launcher restarts. Current,
+previous, one unused verified bundle, and code referenced by live task/proxy
+workers are retained. This last exception preserves workers across successive
+agent updates.
+
+The controller observes every host before starting, updates in `hosts.json`
+order, and requires five continuous minutes of model readiness with unchanged
+serving process identities before advancing. Staging has a 35-minute overall
+deadline; an updated host that remains unreachable or unready stops the rollout.
+Node annotations persist completed soaks and failures through leadership changes.
+A leader change during a soak repeats the full soak. `GpuHostUpdateFailed` events
+and alerts stop the fleet update; repair the bundle and pin a new digest. To
+revert, pin a previously healthy release. A failed digest requires deliberate
+operator investigation before clearing its launcher failure and node annotation.
+The recovery `ping`, `claim` and `configure` operations and additive on-disk
+state must remain compatible with every still-pinned base agent indefinitely;
+one-release compatibility applies only to the remaining API.
+
+The controller's `/metrics` exposes running/previous digest information, drift
+from the Git pin, and rollout failure. The controllers dashboard shows host
+versions. Drift alerts after 24 hours; missing controller scrapes also alert.
+
+### One-time retained-host migration
+
+Prepare an explicit JSON list of SSH targets outside version control, for example
+`[{"instance_id":"<inventory UUID>","ssh":"root@gpu-host","port":22}]`.
+Build the host artifact to obtain its Linux `desmondd`, and confirm each retained
+host's OS/CUDA compatibility ID before running:
+
+```sh
+python3 tools/gpu/rollout-host.py --targets /path/to/targets.json \
+  --desmondd /path/to/desmondd --base-id ubuntu24-cuda13-amd64-v2
+```
+
+This is a production operation requiring operator authorization. The command
+checks enrolled identity, staged runtime digests, and live model/reporter/proxy
+process identities; installs the recovery agent and launcher; and stops at the
+first failed host. It reads the management credential on the remote host and
+never outputs it. Known SSH host keys are required. The existing supervisor may
+be PID 1: it stays running and its SIGHUP path launches a shim that execs the new
+launcher. No provider restart or image change is involved. Re-running the
+command signals the same supervisor. New hosts obtain the launcher from the
+base image when its published digest is separately approved and pinned.
+
+Local checks use fake bundles and processes without GPUs or production access:
+
+```sh
+python3 product/inference/gpu/host_bundle_test.py
+python3 tools/gpu/rollout_host_test.py
+(cd tools/virtual-kubelet && go test -race ./... && go vet ./...)
+docker buildx bake -f product/inference/bundles/build.hcl verify-host
+```

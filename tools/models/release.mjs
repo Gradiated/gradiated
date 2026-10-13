@@ -16,6 +16,17 @@ const shared = [
   "tools/models/release.mjs",
 ];
 export const bundles = {
+  host: [
+    "product/inference/bundles/host",
+    "product/inference/CMakeLists.txt",
+    "product/inference/desmond",
+    "product/inference/engine",
+    "product/inference/gpu",
+    "product/inference/images/gpu-base/start-desmond.sh",
+    "tools/virtual-kubelet/host_agent_test.py",
+    "tools/virtual-kubelet/host_state_test.py",
+    "infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml",
+  ],
   training: [
     "product/inference/training",
     "product/packages/autotrain",

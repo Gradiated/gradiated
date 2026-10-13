@@ -7,7 +7,7 @@ import shlex
 import subprocess
 
 REMOTE = r'''
-import contextlib,http.client,importlib.util,json,os,pathlib,pwd,shutil,signal,sys,tempfile,time,urllib.request
+import contextlib,errno,hashlib,http.client,importlib.util,json,os,pathlib,pwd,shutil,signal,sys,tempfile,time,urllib.request
 sys.dont_write_bytecode=True
 from pathlib import Path
 payload=json.load(sys.stdin)
@@ -93,6 +93,7 @@ try:
         raise
 finally:connection.close()
 recovery=base/'recovery'
+recovery_seed=recovery
 if not (recovery/'control-listener.py').exists():
     with tempfile.TemporaryDirectory(prefix='.seed-',dir=base) as temporary:
         staging=Path(temporary)/'recovery'
@@ -108,8 +109,19 @@ if not (recovery/'control-listener.py').exists():
             # Linux rename exchange keeps a recovery directory present throughout.
             if libc.renameat2(-100,os.fsencode(staging),-100,os.fsencode(recovery),2)!=0:
                 error=ctypes.get_errno()
-                raise OSError(error,os.strerror(error))
-            staging.rename(base/f'recovery.legacy.{time.time_ns()}')
+                if error!=errno.EXDEV:raise OSError(error,os.strerror(error))
+                # OverlayFS image directories cannot be exchanged. Keep the
+                # frozen fallback present and retain the complete seed beside it.
+                recovery_seed=base/('recovery-seed-'+digest)
+                if recovery_seed.exists():
+                    manifest=json.loads((version/'files.json').read_text())
+                    for name,expected in manifest.items():
+                        path=recovery_seed/name
+                        info=path.lstat()
+                        if not path.is_file() or path.is_symlink() or info.st_uid!=0 or info.st_mode & 0o022 or hashlib.sha256(path.read_bytes()).hexdigest()!=expected:
+                            raise ValueError('Existing recovery seed verification failed')
+                else:staging.rename(recovery_seed)
+            else:staging.rename(base/f'recovery.legacy.{time.time_ns()}')
         else:staging.rename(recovery)
         fd=os.open(base,os.O_RDONLY|os.O_DIRECTORY)
         try:os.fsync(fd)
@@ -122,7 +134,7 @@ with urllib.request.urlopen(request,timeout=20) as response:
     if response.status!=206 or len(response.read(33))!=32:raise ValueError('Private artifact grant verification failed')
 print(json.dumps({'instance_id':config['instance_id'],'sha256':digest,'dispatcher_updated':changed,
                   'listener_restarted':True,'existing_connection_preserved':True,'new_connections_healthy':True,
-                  'private_artifact_grant_verified':True,'recovery_seed_installed':True}))
+                  'private_artifact_grant_verified':True,'recovery_seed_installed':True,'recovery_seed_path':str(recovery_seed)}))
 '''
 
 

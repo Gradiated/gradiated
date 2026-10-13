@@ -379,6 +379,9 @@ connections are rejected before any host changes. The migration verifies the act
 replaces only the control acceptor, and leaves its existing `nc` connections
 running. It checks readiness over the original HTTP connection and a new one,
 checks a temporary artifact grant, and retains a full on-disk recovery seed.
+When OverlayFS prevents exchanging an image-layer recovery directory, the frozen
+fallback stays intact and the full seed is saved in the reported
+`recovery_seed_path` for operator recovery.
 Failed handoff restores the previous listener. Every invocation, including a
 retry, restarts the acceptor while preserving established connections. New
 connections may be refused during the supervisor's two-second restart delay.

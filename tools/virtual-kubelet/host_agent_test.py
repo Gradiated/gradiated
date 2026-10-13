@@ -1,7 +1,9 @@
+import fcntl
 import importlib.util
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import signal
 import tempfile
@@ -427,6 +429,16 @@ class HostAgentTest(unittest.TestCase):
                 process.wait()
 
 
+def fcntl_locked(path):
+    with path.open('a') as handle:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            return True
+        fcntl.flock(handle, fcntl.LOCK_UN)
+        return False
+
+
 class ModelCacheTest(unittest.TestCase):
     revision = 'a' * 40
 
@@ -462,7 +474,7 @@ class ModelCacheTest(unittest.TestCase):
         return {'release': {'model_path': repo, 'model_revision': revision}}
 
     def prepare(self, profile, pods=(), files=lambda _repo, _revision: {'model.safetensors': 100, 'config.json': 1}):
-        agent.prepare_model_cache(self.config, profile, self.home / 'pod', [(pod, self.home / f'pod-{index}') for index, pod in enumerate(pods)],
+        agent.prepare_model_cache(self.config, profile, self.home / 'pod', lambda: [(pod, self.home / f'pod-{index}') for index, pod in enumerate(pods)],
                                   self.logs.append, files, self.usage)
 
     def test_cache_hit_evicts_nothing_and_marks_the_model_used(self):
@@ -575,6 +587,23 @@ class ModelCacheTest(unittest.TestCase):
                 agent.host_pods(self.config, 'current')
             (pods / 'broken' / 'state.json').unlink()
             self.assertEqual(agent.host_pods(self.config, 'current'), [])
+
+    def test_pods_and_missing_files_are_read_under_the_cache_lock(self):
+        model = self.cached('org/model', 101, 2, ('model.safetensors', 'config.json'))
+        stale = self.cached('org/stale', 150, 1)
+        seen = []
+
+        def pods():
+            # A concurrent start evicted this pod's weights while it waited for the lock.
+            seen.append(fcntl_locked(self.home / '.gradiated-cache.lock'))
+            shutil.rmtree(model)
+            self.sizes.pop(model.name)
+            return []
+        agent.prepare_model_cache(self.config, self.serving('org/model'), self.home / 'pod', pods,
+                                  self.logs.append, lambda _repo, _revision: {'model.safetensors': 100, 'config.json': 1}, self.usage)
+
+        self.assertEqual(seen, [True])
+        self.assertFalse(stale.exists())
 
     def test_profiles_without_pinned_weights_are_ignored(self):
         old = self.cached('org/old', 500, 1)

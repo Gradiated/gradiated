@@ -226,19 +226,20 @@ def prepare_model_cache(config, profile, directory, pods, log, files=hub_files, 
     weights = model_weights(profile)
     if not weights or not hub.is_dir():
         return
-    # Every model on this host stays cached, and unfinished downloads and LoRA caches keep their space.
-    pods = [(profile, directory), *pods]
-    required = {pin for item, _ in pods for pin in model_weights(item)}
-    protected = {repo_directory(hub, repo).name for item, _ in pods for repo in model_repos(item)}
-    needed = config.get("model_cache_reserve_gib", 64) * 2**30
-    needed += sum(lora_headroom(item, path) for item, path in pods)
-    for repo, revision in required:
-        try:
-            needed += missing_bytes(hub, repo, revision, files(repo, revision))
-        except (OSError, ValueError, KeyError) as error:
-            log(f"Could not size {repo}@{revision}: {error}")
     with (hub.parent / ".gradiated-cache.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
+        # Read the host's pods and cache contents under the lock, after any eviction a concurrent start made.
+        # Every model on this host stays cached, and unfinished downloads and LoRA caches keep their space.
+        pods = [(profile, directory), *pods()]
+        required = {pin for item, _ in pods for pin in model_weights(item)}
+        protected = {repo_directory(hub, repo).name for item, _ in pods for repo in model_repos(item)}
+        needed = config.get("model_cache_reserve_gib", 64) * 2**30
+        needed += sum(lora_headroom(item, path) for item, path in pods)
+        for repo, revision in required:
+            try:
+                needed += missing_bytes(hub, repo, revision, files(repo, revision))
+            except (OSError, ValueError, KeyError) as error:
+                log(f"Could not size {repo}@{revision}: {error}")
         evict_models(hub, needed, protected, log, usage)
         for repo, _ in weights:
             cached = repo_directory(hub, repo)
@@ -302,7 +303,7 @@ def task(uid, stopping):
         def log(message):
             cache_log.write(f"model-cache: {message}\n")
         try:
-            prepare_model_cache(config, profile, directory, host_pods(config, uid), log)
+            prepare_model_cache(config, profile, directory, lambda: host_pods(config, uid), log)
         except Exception as error:
             log(f"Skipped eviction: {error}")
     model = reporter = None

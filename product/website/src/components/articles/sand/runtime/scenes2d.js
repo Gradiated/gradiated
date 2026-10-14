@@ -997,15 +997,8 @@ export const SCENES2D = (function () {
     });
 
     key(gRegister, 17, { opacity: 1 }, null, -1);
-    key(
-      gRegister,
-      "select-values",
-      { opacity: 0, scale: 0.7, y: 32 },
-      null,
-      0,
-      0.6,
-    );
-    key(gStored, "select-values", { opacity: 0 }, null, 0, 0.6);
+    key(gRegister, "timing", { opacity: 0, scale: 0.7, y: 32 }, null, 0, 0.6);
+    key(gStored, "timing", { opacity: 0 }, null, 0, 0.6);
     const computer = COMPUTER_SCENES.build({
       root,
       tl,

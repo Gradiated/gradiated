@@ -98,17 +98,17 @@ Let’s zoom out again and place four latches side by side, each holding one bit
 
 We can now connect our register to the four-bit adder. With write-enable at 1, the register copies the answer, 1001. Set write-enable to 0 and that answer is held. The adder can calculate something new while the register remembers the previous result. We can now both calculate and keep the answer.
 
+<!-- scene: timing -->
+
+As circuits become larger and more complex, timing challenges appear to show. Changing an input does not change every part of a circuit at once. The change takes time to spread, and different values settle at different moments. These delays can result in incorrect information processing as old data gets used for computation, or glitches.
+
 We now have circuits that calculate and circuits that remember. Our next step is to combine them into a machine that follows instructions, choosing which values to use, what to calculate, and where to store each result.
 
 ## Building a computer
 
 <!-- scene: select-values -->
 
-Our adder calculates with whatever values reach its inputs. To choose those values, we need another circuit called a multiplexer. It takes several inputs and passes one of them to its output, according to a selection signal. We can build this selection circuit from the logic gates we already know. Here, each value travels through a bundle of four wires, carrying the four bits of its binary number.
-
-<!-- scene: timing -->
-
-Changing an input does not change every part of a circuit at once. The change takes time to spread, and different values settle at different moments. Timing matters because using or storing a result too soon can give us the wrong answer.
+Our adder calculates with whatever values reach its inputs. To choose those values, we need another circuit called a multiplexer. It takes several inputs and passes one of them to its output, according to a selection signal at the bottom. We can build this selection circuit from the logic gates we already know. Here, each value travels through a bundle of four wires, carrying the four bits of its binary number.
 
 <!-- scene: working-registers -->
 

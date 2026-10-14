@@ -88,7 +88,7 @@ export const COMPUTER_SCENES = (function () {
       gsap.set(circle, { opacity: 0 });
       return circle;
     };
-    const oneShot = (scene, demo, before, finalScene) => {
+    const playInScene = (scene, demo, before, finalScene) => {
       demo.pause().time(0.001, true).time(0, true);
       demos.push(demo);
       afterRender.push(() => {
@@ -149,10 +149,15 @@ export const COMPUTER_SCENES = (function () {
     );
     const selectedSix = text(374, 227, "6", { class: "caption bit" }, selector);
     gsap.set([selectOne, selectedSix], { opacity: 0 });
-    show(selector, "select-values", "timing", {}, 0.65);
-    caption("select-values", "a control signal chooses the value", "timing");
-    const selectDemo = gsap.timeline({ paused: true });
-    illuminate(selectDemo, upper, 0.3);
+    show(selector, "select-values", "working-registers", {}, 0.65);
+    caption(
+      "select-values",
+      "a control signal chooses the value",
+      "working-registers",
+    );
+    gsap.set(upper.line, { opacity: 1 });
+    upper.state.amount = 1;
+    const selectDemo = gsap.timeline({ paused: true, repeat: -1 });
     selectDemo.to(
       [upper.line, selectZero, selectedThree],
       { opacity: 0, duration: 0.4 },
@@ -161,7 +166,17 @@ export const COMPUTER_SCENES = (function () {
     selectDemo.to(selectOne, { opacity: 1, duration: 0.4 }, 2.4);
     selectDemo.to(selectedSix, { opacity: 1, duration: 0.4 }, 3.1);
     illuminate(selectDemo, lower, 2.4);
-    oneShot("select-values", selectDemo, "stored-answer");
+    selectDemo.to(
+      [lower.line, selectOne, selectedSix],
+      { opacity: 0, duration: 0.4 },
+      4.5,
+    );
+    selectDemo.set([upper.state, lower.state], { amount: 0 }, 4.9);
+    selectDemo.to(selectZero, { opacity: 1, duration: 0.4 }, 5);
+    selectDemo.to(selectedThree, { opacity: 1, duration: 0.4 }, 5.65);
+    illuminate(selectDemo, upper, 5);
+    selectDemo.to({}, { duration: 1.2 }, 5.65);
+    playInScene("select-values", selectDemo, "timing");
 
     const timing = group({ "data-diagram": "timing" }, root);
     const timingDemo = gsap.timeline({ paused: true });
@@ -228,8 +243,8 @@ export const COMPUTER_SCENES = (function () {
         pulse(node, nodes[i + 5], node.arrival + 0.05, nodes[i + 5].arrival);
     });
     timingDemo.to({}, { duration: 1.2 }, 7);
-    show(timing, "timing", "working-registers", {}, 0.65);
-    oneShot("timing", timingDemo, "select-values");
+    show(timing, "timing", "select-values", {}, 0.65);
+    playInScene("timing", timingDemo, "stored-answer");
 
     const machine = group(
       { "data-diagram": "computer-machine" },
@@ -387,7 +402,7 @@ export const COMPUTER_SCENES = (function () {
     memoryDemo.to(rowGlows[0], { opacity: 1, duration: 0.6 }, 0.3);
     memoryDemo.to(rowGlows[0], { opacity: 0, duration: 0.5 }, 2);
     memoryDemo.to(rowGlows[1], { opacity: 1, duration: 0.6 }, 2.5);
-    oneShot("addressed-memory", memoryDemo, "alu");
+    playInScene("addressed-memory", memoryDemo, "alu");
 
     const command = group({ "data-part": "instruction-registers" }, machine);
     box(command, 48, 55, 58, 36, "PC");
@@ -438,7 +453,7 @@ export const COMPUTER_SCENES = (function () {
     const controlDemo = gsap.timeline({ paused: true });
     controlDemo.to(controlParts, { opacity: 0, duration: 0.65 }, 2);
     controlDemo.to(controlName, { opacity: 1, duration: 0.65 }, 2.5);
-    oneShot("control", controlDemo, "program", "execute");
+    playInScene("control", controlDemo, "program", "execute");
     const controlLinks = group(
       { class: "thin", "data-part": "control-signals" },
       machine,
@@ -545,7 +560,7 @@ export const COMPUTER_SCENES = (function () {
       8.1,
     );
     computerDemo.to({}, { duration: 1.2 }, 8.5);
-    oneShot("execute", computerDemo, "control", "computer");
+    playInScene("execute", computerDemo, "control", "computer");
 
     const computer = group({ "data-part": "computer-outline" }, machine);
     const cpuOutline = path(

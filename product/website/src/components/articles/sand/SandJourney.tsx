@@ -1,6 +1,5 @@
 import { memo, useEffect, useRef, useState } from "react";
 import type { ReactElement } from "react";
-import type { ArticleMetadata } from "../../../article-metadata";
 import { SectionFab } from "../../design";
 import { SandCircuitArtwork } from "../../design/SandCircuitArtwork";
 import article, {
@@ -26,11 +25,7 @@ const chapters = [
   ...contents,
 ];
 
-export const SandJourney = ({
-  article: metadata,
-}: {
-  article: ArticleMetadata;
-}): ReactElement => {
+export const SandJourney = (): ReactElement => {
   const hostRef = useRef<HTMLElement>(null);
   const [active, setActive] = useState(chapters[0].id);
 
@@ -131,17 +126,6 @@ export const SandJourney = ({
             <SandCircuitArtwork />
           </figure>
           <SandMarkup className="sand-intro" html={introduction} />
-          {metadata.status === "published" ? (
-            <p className="sand-byline">
-              <time dateTime={metadata.publishedAt}>
-                {new Date(metadata.publishedAt).toLocaleDateString("en-GB", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
-              </time>
-            </p>
-          ) : null}
           <div className="post">
             <div className="stage-col">
               <SandMarkup className="stage" html={stage} />

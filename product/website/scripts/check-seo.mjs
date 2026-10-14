@@ -121,7 +121,9 @@ for (const file of htmlFiles) {
       article.mainEntityOfPage !== canonical
     )
       throw new Error(`${file}: inconsistent article metadata`);
+    const isJourneyGuide = html.includes('class="sand-journey"');
     if (
+      !isJourneyGuide &&
       !html.includes(`<time dateTime="${publishedAt}">`) &&
       !html.includes(`<time datetime="${publishedAt}">`)
     )

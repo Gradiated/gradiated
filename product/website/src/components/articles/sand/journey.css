@@ -437,13 +437,6 @@
   display: none;
 }
 
-.sand-journey .sand-byline {
-  text-align: center;
-  font-size: 0.8rem;
-  color: var(--muted);
-  margin: 0;
-}
-
 .sand-journey:not([data-animation-ready="true"]) .scene-text {
   opacity: 1;
 }

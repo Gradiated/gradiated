@@ -24,11 +24,11 @@ We can change how silicon conducts electricity by adding small amounts of other 
 
 <!-- scene: implant -->
 
-We can also implant dopants into selected parts of the wafer by firing electrically charged atoms into the silicon. Here we create two pockets of phosphorus-doped silicon within the boron-doped silicon. Phosphorus supplies extra mobile electrons, while boron creates gaps called holes that carry current in a different way. By arranging these two types of silicon, we can shape how current flows.
+We can also implant dopants into selected parts of the wafer by firing electrically charged atoms into the silicon. Here we create two pockets of phosphorus-doped silicon within the boron-doped silicon. Phosphorus and boron respectively donate and accept electrons. By carefully arranging distinct regions of silicon doped with these two elements, we can shape how current flows.
 
 <!-- scene: wires -->
 
-We can now build our first transistor. We add a wire to each of the two pockets and place a third wire, called the gate, above the silicon between them. A thin insulating layer separates the gate from the silicon, allowing it to control the electrical properties without making direct contact.
+We can now build our first transistor. We add a wire to each of the two pockets and place a third wire, called the gate, above the silicon between them. The gate is slightly separated from the silicon, allowing it to control the flow of current between the other wires without making direct contact.
 
 <!-- scene: voltages -->
 

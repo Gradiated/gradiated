@@ -549,8 +549,10 @@ export const SCENES2D = (function () {
       "not",
     );
 
-    const channel = (x, y) =>
-      `M${x + 10} ${y - 22} V${y - 8} H${x - 3} V${y + 8} H${x + 10} V${y + 22}`;
+    const channel = (x, y, up = false) =>
+      up
+        ? `M${x + 10} ${y + 22} V${y + 8} H${x - 3} V${y - 8} H${x + 10} V${y - 22}`
+        : `M${x + 10} ${y - 22} V${y - 8} H${x - 3} V${y + 8} H${x + 10} V${y + 22}`;
     const logicCases = (scene, parent, cases, ports, before, after) => {
       const layers = cases.map(({ inputs, output, connection }) => {
         const layer = group(
@@ -624,12 +626,12 @@ export const SCENES2D = (function () {
         {
           inputs: [0],
           output: 1,
-          connection: `M268 250 H230 V232 ${channel(220, 210)} M230 188 V172`,
+          connection: `M230 172 V188 ${channel(220, 210)} V250 H268`,
         },
         {
           inputs: [1],
           output: 0,
-          connection: `M268 250 H230 V268 ${channel(220, 290)} M230 312 V330`,
+          connection: `M230 330 V312 ${channel(220, 290, true)} V250 H268`,
         },
       ],
       [
@@ -688,8 +690,13 @@ export const SCENES2D = (function () {
         output: Number(!a && !b),
         connection:
           !a && !b
-            ? `M338 267 H230 V252 ${channel(220, 230)} M230 208 V197 ${channel(220, 175)} M230 153 V138`
-            : `M338 267 H230 ${a ? `M230 267 H190 V283 ${channel(180, 305)} M190 327 V350` : ""} ${b ? `M230 267 H290 V283 ${channel(280, 305)} M290 327 V350` : ""}`,
+            ? `M230 138 V153 ${channel(220, 175)} V208 ${channel(220, 230)} V267 H338`
+            : [
+                a ? `M190 350 V327 ${channel(180, 305, true)} V267 H338` : "",
+                b ? `M290 350 V327 ${channel(280, 305, true)} V267 H338` : "",
+              ]
+                .filter(Boolean)
+                .join(" "),
       })),
       [
         { x: 108, y: 196, anchor: "end" },
@@ -740,8 +747,13 @@ export const SCENES2D = (function () {
         output: Number(!(a && b)),
         connection:
           a && b
-            ? `M300 250 H240 V253 ${channel(230, 275)} M240 297 V300 ${channel(230, 322)} M240 344 V356`
-            : `M300 250 H240 ${!a ? `M240 250 H200 V232 ${channel(190, 210)} M200 188 V172` : ""} ${!b ? `M240 250 H270 V232 ${channel(260, 210)} M270 188 V172` : ""}`,
+            ? `M240 356 V344 ${channel(230, 322, true)} V297 ${channel(230, 275, true)} V250 H300`
+            : [
+                !a ? `M200 172 V188 ${channel(190, 210)} V250 H300` : "",
+                !b ? `M270 172 V188 ${channel(260, 210)} V250 H300` : "",
+              ]
+                .filter(Boolean)
+                .join(" "),
       })),
       [
         { x: 142, y: 236, anchor: "end" },

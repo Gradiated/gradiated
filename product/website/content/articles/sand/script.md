@@ -80,7 +80,7 @@ Connect several full adders in a row, passing each carry `cᵢ₊₁` into the n
 
 We have combined small groups of transistors into a circuit that adds numbers, but each calculation has a physical cost. Every calculation involves voltage flips as some of the transistors switch. These flips charge or discharge the tiny capacitances of the transistors and wires, expending energy that is dissipated as heat.
 
-The faster we switch, the more heat we produce each second. This switching power scales with `C V² f`, where `C` is the capacitance being switched, `V` is the voltage swing, and `f` is the clock speed, which sets the pace of computation. Smaller capacitances and lower voltages reduce the energy needed, while switching less often reduces the rate at which we generate heat. Heat is a budget we will keep encountering as the counts climb.
+The faster we switch, the more heat we produce each second. This switching power scales with `C V² f`, where `C` is the capacitance being switched, `V` is the voltage swing, and `f` is the clock speed, which sets the pace of computation. Smaller capacitances and lower voltages reduce the energy needed, while switching less often reduces the rate at which we generate heat. Heat is a budget we will keep encountering as the transistor populations climb.
 
 ## Memory
 
@@ -92,7 +92,7 @@ How does a loop create memory? The two gates on the right feed their outputs int
 
 <!-- scene: register -->
 
-Let’s zoom out again and place four latches side by side, each holding one bit. Together, they form a four-bit register that can remember an entire binary number. By sharing a write-enable signal, all four latches can copy their inputs at `D` simultaneously, then hold the number while those inputs change.
+Let’s zoom out again and place four latches side by side, each holding one bit. Together, they form a four-bit register that can remember an entire four-bit binary number. By sharing a write-enable signal, all four latches can copy their inputs at `D` simultaneously, then hold the number while those inputs change.
 
 <!-- scene: stored-answer -->
 

@@ -264,18 +264,6 @@ export const SCENES2D = (function () {
       },
       at(4),
     );
-    const gGuns = mk("g", { class: "thin" }, gSlab);
-    for (const [x0, x1] of trenches) {
-      const cx = (x0 + x1) / 2;
-      path(
-        `M${cx - 11} 120 L${cx + 11} 120 L${cx + 5} 136 L${cx - 5} 136 Z`,
-        {},
-        gGuns,
-      );
-    }
-    hideAt0(gGuns);
-    tl.to(gGuns, { opacity: 1, duration: DUR * 0.15 }, at(4));
-    tl.to(gGuns, { opacity: 0, duration: DUR * 0.15 }, at(4) + DUR * 0.85);
     caption(4, "phosphorus ●, fired in from above");
 
     /* ================= 5 · three wires ================= */

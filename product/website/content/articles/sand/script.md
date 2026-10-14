@@ -24,23 +24,23 @@ We can change how silicon conducts electricity by adding small amounts of other 
 
 <!-- scene: implant -->
 
-We can also implant dopants into selected parts of the wafer using what is essentially an atom gun. Here we create two islands of phosphorus-doped silicon within the boron-doped silicon. Phosphorus supplies extra mobile electrons, while boron creates gaps called holes that carry current in a different way. By arranging these two types of silicon, we can shape how current flows.
+We can also implant dopants into selected parts of the wafer by firing electrically charged atoms into the silicon. Here we create two pockets of phosphorus-doped silicon within the boron-doped silicon. Phosphorus supplies extra mobile electrons, while boron creates gaps called holes that carry current in a different way. By arranging these two types of silicon, we can shape how current flows.
 
 <!-- scene: wires -->
 
-We can now build our first transistor. We add a wire to each of the two islands and place a third wire, called the gate, above the silicon between them. A thin insulating layer separates the gate from the silicon, allowing it to control the electrical properties without making direct contact.
+We can now build our first transistor. We add a wire to each of the two pockets and place a third wire, called the gate, above the silicon between them. A thin insulating layer separates the gate from the silicon, allowing it to control the electrical properties without making direct contact.
 
 <!-- scene: voltages -->
 
-A voltage difference can drive electrons through a circuit. Let us hold the left wire at 0 volts and the right wire at 1 volt. Picture an energy landscape with lower ground on the right and a hill between the two islands. Electrons tend to move towards the lower ground, but the hill stands in their way. By raising or lowering this hill, we can control whether or not they cross.
+A voltage difference can drive electrons through a circuit. Let us hold the left wire at 0 volts and the right wire at 1 volt. Picture an energy landscape with lower ground on the right and a hill between the two pockets. Electrons tend to move towards the lower ground, but the hill stands in their way. By raising or lowering this hill, we can control whether or not they cross.
 
 <!-- scene: blocked -->
 
-With the central gate also at 0 volts, this barrier is high and electrons struggle to flow between the two islands.
+With the central gate also at 0 volts, this barrier is high and electrons struggle to flow between the two pockets.
 
 <!-- scene: flowing -->
 
-Raising the gate to 1 volt lowers this barrier, opening a conducting path between the islands. Electrons can now flow through the transistor and around a connected circuit, perhaps lighting a bulb. This is the basic picture of an n-type MOSFET, an electrically controlled switch with no moving parts.
+Raising the gate to 1 volt lowers this barrier, opening a conducting path between the pockets. Electrons can now flow through the transistor and around a connected circuit, perhaps lighting a bulb. This is the basic picture of an n-type MOSFET, an electrically controlled switch with no moving parts.
 
 <!-- scene: symbol -->
 

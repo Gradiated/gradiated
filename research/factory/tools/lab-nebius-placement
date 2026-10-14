@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-factory_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-export PYTHONPATH="${factory_root}/src${PYTHONPATH:+:${PYTHONPATH}}"
-exec python3 -m grad_research.nebius_placement "$@"

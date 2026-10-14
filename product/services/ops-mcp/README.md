@@ -72,7 +72,7 @@ arguments, annotations and status messages. Workload output keeps only images,
 replicas, revision and status. Argo CD output omits Helm values and manifests.
 Grafana links retain Grafana's own browser authentication.
 
-Loki queries use the tenants `eks-prod|model-nebius-prod`, so GPU host logs are visible next to EKS logs.
+Loki queries use the `eks-prod` tenant for the private EKS logging pipeline.
 
 Authorized identities can read telemetry across tenants. Metric and log tools
 take raw PromQL and LogQL, so any label, line filter or parser works; queries

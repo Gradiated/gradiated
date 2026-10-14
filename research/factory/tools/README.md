@@ -8,8 +8,6 @@ The canonical hardware-capability data is [`../data/accelerator_inventory.json`]
 
 `./grad-profile` is the shared GPU evidence tool. It captures profiler-off baselines, short Nsight or ROCm diagnostics, hashes compiler artifacts, normalizes traces/counters, compares $/token, and appends exact-shape measurements. Read [`../PROFILING.md`](../PROFILING.md) for commands. It never provisions provider resources.
 
-`./lab-nebius-placement --accelerator b200 --gpu-count 1` discovers all regional projects visible to the authenticated Nebius profile, reads live capacity advice, binds each candidate's ready regional subnet, and returns a ranked machine-readable placement. Its default `auto` policy prefers fresh preemptible capacity, then the lowest region-specific shared-inventory price, then stronger capacity, and finally falls back to on-demand; pass `--allocation preemptible` when interruption is mandatory. It is read-only and emits the project/platform/preset create flags plus the network-interface value, but never provisions a resource.
-
 `./lab-endpoint-pair`, `./lab-microscope`, `./lab-reproducer`, `./lab-kernel-eval`, `./lab-surgery`, `./lab-workspace`, and `./lab-tools` are optional scientific instruments. They standardize repeated evidence plumbing without prescribing experiment order or scientific conclusions. Read [`../SCIENTIFIC_TOOLS.md`](../SCIENTIFIC_TOOLS.md) and invoke only the tool needed by the current question.
 
 `./detached-owner` launches a bounded guest process in a new session, redirects

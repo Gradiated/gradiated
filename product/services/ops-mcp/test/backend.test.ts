@@ -4,7 +4,7 @@ import { createBackend } from "../src/backend.js";
 const backend = createBackend({
   prometheus: "http://prometheus.invalid",
   loki: "http://loki.invalid",
-  lokiTenant: "eks-prod|model-nebius-prod",
+  lokiTenant: "eks-prod",
   alertmanager: "http://alertmanager.invalid",
 });
 afterEach(() => {
@@ -30,7 +30,7 @@ it("fixes the Loki tenant, encodes parameters, disables redirects and sets a tim
   expect(url.host).toBe("loki.invalid");
   expect(url.searchParams.get("query")).toBe('{workload="api"}');
   expect(options.headers).toEqual({
-    "X-Scope-OrgID": "eks-prod|model-nebius-prod",
+    "X-Scope-OrgID": "eks-prod",
   });
   expect(options.redirect).toBe("error");
   expect(options.signal).toBeInstanceOf(AbortSignal);

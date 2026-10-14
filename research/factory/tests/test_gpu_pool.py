@@ -14,7 +14,7 @@ from grad_research.gpu_pool import GpuPool, GpuPoolError, main as gpu_pool_main
 def bench_spec() -> dict:
     return {
         "id": "gemma-h200-1",
-        "provider": "nebius",
+        "provider": "runpod",
         "accelerator": "h200-sxm",
         "resource": {
             "instance_id": "instance-1",

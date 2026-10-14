@@ -98,7 +98,11 @@ A truth table lists the output for every possible combination of inputs. These t
 
 <!-- scene: nand-symbol -->
 
-Let’s zoom out again and give this four-transistor circuit a symbol. The two inputs enter on the flat side, and the output exits after the small circle. It can be shown that NAND gates alone can be combined to implement any function that maps a finite set of input bits to output bits. This makes them universal building blocks. From this one simple circuit, we can build the logic for everything from a calculator to a computer running an AI model.
+Let’s zoom out again and give this four-transistor NAND circuit a symbol. The two inputs enter on the flat side, and the output exits after the small circle.
+
+It can be shown that NAND gates alone can be combined to implement any function that maps a finite set of input bits to output bits. In other words, we can specify a truth table and build a circuit that follows it using only NAND gates. One NAND with its two inputs tied together makes NOT. Two make AND by using the second to invert the first’s output. Three make OR by inverting each input before feeding them into the third. A fourth inverts that result to make NOR. NOT, AND and OR are enough to build any truth table, so NAND alone is enough too.
+
+This makes NAND gates universal building blocks. From this one simple circuit, we can build the logic for everything from a calculator to a computer running an AI model.
 
 ## Arithmetic
 

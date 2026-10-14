@@ -277,6 +277,7 @@ export const SCENES2D = (function () {
       { x: 182, y: 194, width: 76, height: 6, class: "thin dashed" },
       gWires,
     ); // insulating gap
+    text(220, 90, "Gate", { class: "caption", "data-gate-label": "" }, gWires);
     key(gWires, 5, { y: 0 }, { y: -100 });
 
     /* ================= 6 · voltages and electron potential energy ================= */
@@ -314,11 +315,11 @@ export const SCENES2D = (function () {
       [275, 268],
     ];
     const prof = path(
-      curve(P_slope),
+      curve(P_hill),
       { class: "muted", "data-energy-profile": "" },
       gEnergy,
     );
-    key(prof, 6, { attr: { d: curve(P_slope) } });
+    key(prof, 6, { attr: { d: curve(P_hill) } });
     key(prof, 7, { attr: { d: curve(P_hill) } });
     key(prof, 8, { attr: { d: curve(P_slope) } });
     caption(6, "higher voltage · lower electron potential energy");
@@ -349,7 +350,7 @@ export const SCENES2D = (function () {
       at(8) + DUR * 0.75,
     );
     const vG0 = text(220, 114, "0 V", {}, gSlab);
-    show(vG0, 7, 8);
+    show(vG0, 6, 8);
     const vG1 = text(220, 114, "1 V", {}, gSlab);
     show(vG1, 8);
     const gE7 = mk("g", { class: "dots", "data-electrons": "blocked" }, gSlab);

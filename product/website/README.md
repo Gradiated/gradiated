@@ -307,7 +307,9 @@ destination exists.
 The writing workspace retains its working draft. Refresh the portable website
 edition with `node scripts/sync-sand-draft.mjs --source /path/to/script.md`.
 Visual cue blocks stay in the working draft and are omitted from the portable
-website edition. Add `--watch` while editing to update the website preview on saves. Production
+website edition. Exports use the repository’s Prettier configuration so Markdown
+tables retain the formatting required by CI. Add `--watch` while editing to update
+the website preview on saves. Production
 builds use the checked-in edition and do not depend on another local folder.
 
 The memory section ends with an abstract timing grid, immediately before the

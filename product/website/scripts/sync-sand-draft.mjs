@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync, watch } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { format, resolveConfig } from "prettier";
 
 const input = process.argv.indexOf("--source");
 if (input === -1 || !process.argv[input + 1]) {
@@ -16,12 +17,15 @@ const entry = fileURLToPath(
     import.meta.url,
   ),
 );
-const sync = () => {
+const sync = async () => {
   const draftText = readFileSync(source, "utf8").replace(
     /^> \*\*Visual cue(?:\s|:|\*\*)[^\n]*(?:\n>[^\n]*)*(?:\n|$)/gm,
     "",
   );
-  const text = draftText.replace(/\n{3,}/g, "\n\n");
+  const text = await format(draftText.replace(/\n{3,}/g, "\n\n"), {
+    ...(await resolveConfig(destination)),
+    filepath: destination,
+  });
   const title = text.match(/^# (.+)$/m)?.[1];
   if (!title) throw new Error("The working draft needs its article title.");
   const previousEntry = readFileSync(entry, "utf8");
@@ -35,12 +39,14 @@ const sync = () => {
     console.log("Updated the website's sand article from the working draft.");
   }
 };
-sync();
+await sync();
 if (process.argv.includes("--watch")) {
   let timer;
   watch(resolve(source, ".."), () => {
     clearTimeout(timer);
-    timer = setTimeout(sync, 150);
+    timer = setTimeout(() => {
+      void sync().catch((error) => console.error(error.message));
+    }, 150);
   });
   console.log("Watching the working draft for changes.");
 }

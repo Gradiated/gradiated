@@ -162,6 +162,7 @@ fn rejects_missing_unparseable_and_impossible_engine_usage() {
         json!({"prompt_tokens":10,"completion_tokens":2,"total_tokens":99}),
         json!({"prompt_tokens":10,"completion_tokens":2,"total_tokens":12,"prompt_tokens_details":{"cached_tokens":11}}),
         json!({"prompt_tokens":10,"completion_tokens":2,"total_tokens":12,"reasoning_tokens":3}),
+        json!({"prompt_tokens":10,"completion_tokens":2,"total_tokens":12,"completion_tokens_details":{"reasoning_tokens":3}}),
     ] {
         let mut response = completion();
         response["usage"] = usage.clone();

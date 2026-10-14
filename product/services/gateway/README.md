@@ -27,6 +27,62 @@ admission, runtime dispatch and terminal settlement. Chat Completions support
 streaming; native SystemOne uses the same lifecycle without streaming. No fake
 inference endpoint is used.
 
+Chat Completions, Responses, and Messages return `usage.cost` as a JSON number
+in USD. This additive field uses the admission-time pricing snapshot and the same
+checked calculation as settlement, including cached input, cache writes,
+reasoning, and service-tier prices. Existing protocol-specific token fields are
+preserved. For example, a charge of 1,234,567 nano-USD returns
+`"cost": 0.001234567`.
+
+Streaming returns cost in the final Chat Completions usage chunk, the Responses
+`response.completed.response.usage` (or `response.incomplete.response.usage`),
+or the Messages `message_delta.usage`. Terminal usage is withheld until settlement
+succeeds; failed settlement ends with the protocol's error event. A lease already
+missing on the first settlement attempt returns zero cost because no charge was
+applied. SystemOne keeps its existing response contract.
+
+The native [OpenAI Chat Completions usage schema](https://developers.openai.com/api/reference/resources/completions),
+[OpenAI Responses usage schema](https://developers.openai.com/api/reference/typescript/resources/responses),
+and [Anthropic Messages schema](https://platform.claude.com/docs/en/api/messages/create)
+do not define a monetary cost field. `usage.cost` follows the
+[OpenRouter usage accounting convention](https://openrouter.ai/docs/cookbook/administration/usage-accounting)
+and is a Gradiated extension on the native endpoints. OpenRouter's optional
+`cost_details.upstream_inference_*` fields describe charges from an upstream
+provider; Gradiated does not invent these values for its own hosted runtime.
+
+The token breakdown follows the requested protocol:
+
+| Format           | Cache reads                           | Cache writes                               | Reasoning                                    |
+| ---------------- | ------------------------------------- | ------------------------------------------ | -------------------------------------------- |
+| Chat Completions | `prompt_tokens_details.cached_tokens` | `prompt_tokens_details.cache_write_tokens` | `completion_tokens_details.reasoning_tokens` |
+| Responses        | `input_tokens_details.cached_tokens`  | `input_tokens_details.cache_write_tokens`  | `output_tokens_details.reasoning_tokens`     |
+| Messages         | `cache_read_input_tokens`             | `cache_creation_input_tokens`              | `output_tokens_details.thinking_tokens`      |
+
+Chat Completions and Responses include cached tokens in their input total.
+Messages excludes cache reads and writes from `input_tokens` and reports them
+separately. Cache-write details are omitted when zero. Unknown cache lifetimes,
+audio/prediction counts, and server-tool charges are not fabricated. The runtime
+normalizer reads the standard nested cache-write and reasoning fields, with the
+legacy runtime top-level fields retained as fallbacks.
+
+The official TypeScript SDKs preserve `cost` on parsed non-streaming usage and
+raw terminal stream events. Their native TypeScript usage interfaces do not
+include the extension, so read it with a property guard:
+
+```ts
+const usage = completion.usage;
+if (usage && "cost" in usage && typeof usage.cost === "number") {
+  console.log(usage.cost);
+}
+```
+
+OpenAI's `finalChatCompletion()` and `finalResponse()` also preserve cost.
+Anthropic's `messages.stream().finalMessage()` aggregates only known native
+usage fields and drops cost. Read `message_delta.usage.cost` from the helper's
+`streamEvent` callback instead, or iterate `messages.create({ stream: true })`.
+These behaviors are exercised against pinned SDKs in
+[test/integration/sdk-pricing.test.ts](test/integration/sdk-pricing.test.ts).
+
 ## Private LoRA adapters
 
 Chat inference accepts the existing version slug or task production slug as `model`.

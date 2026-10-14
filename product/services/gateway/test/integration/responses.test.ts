@@ -1,4 +1,5 @@
 import { choice, noul, score, TypeSafeClient } from "@typesafe-ai/sdk";
+import { SystemOneResponseSchema } from "@gradiated/contracts";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -31,6 +32,11 @@ describe.each(RUNTIME_KINDS)("%s responses", (kind) => {
       expect(response.status, response.text).toBe(200);
       expect(response.headers["x-gradiated-service-tier"]).toBe("default");
       expect(response.json().model).toBe(instance.model);
+      if (kind === "kev") {
+        expect(SystemOneResponseSchema.safeParse(response.json()).success).toBe(
+          true,
+        );
+      }
 
       const output = kind === "kev" ? 0 : 3;
       const properties = await instance.settled(response, {

@@ -15,6 +15,7 @@ pub(super) struct StreamProgress {
     usage: NormalizedUsage,
     finish_reason: Option<String>,
     terminal_usage_seen: bool,
+    pub(super) terminal_response: Option<serde_json::Value>,
     first_token_at: Option<DateTime<Utc>>,
 }
 
@@ -24,6 +25,7 @@ impl StreamProgress {
             usage: NormalizedUsage::zero(),
             finish_reason: None,
             terminal_usage_seen: false,
+            terminal_response: None,
             first_token_at: None,
         }
     }
@@ -58,6 +60,11 @@ impl StreamProgress {
 
             if let Err(stop) = self.observe(&chunk) {
                 return stop;
+            }
+
+            if chunk.is_terminal_usage() {
+                self.terminal_response = Some(chunk.into_response());
+                continue;
             }
 
             let usable_output = chunk.has_usable_output();

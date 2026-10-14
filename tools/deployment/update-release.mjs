@@ -14,6 +14,7 @@ const IMAGES = [
     metadataKey: "productImage",
     manifests: [
       "api.yaml",
+      "rollout-analysis.yaml",
       "clickhouse-migrate.yaml",
       "worker.yaml",
       "temporal-worker.yaml",

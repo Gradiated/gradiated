@@ -59,7 +59,11 @@ def main():
 
     from gpu_autoscaling_checks import check_gpu_autoscaling
 
-    tests = check_autoscaling(ROOT) + check_gpu_autoscaling(ROOT)
+    from rollout_checks import check_rollouts
+
+    rollout_rules, rollout_tests = check_rollouts(ROOT)
+    groups.append({'name': 'rollout_analysis_syntax', 'rules': rollout_rules})
+    tests = check_autoscaling(ROOT) + check_gpu_autoscaling(ROOT) + rollout_tests
     def scenario(name, inputs, expected, checks, labels=None, eval_time="8m", interval="30s"):
         cases = []
         for alert in checks:
@@ -334,6 +338,20 @@ def main():
                    'values': f'{value}+0x30'} for metric, value in [
                        ('kube_deployment_status_replicas_available', available),
                        ('kube_deployment_spec_replicas', desired)]]
+        inputs += [{'series': metric + '{namespace="gradiated",name="api"}', 'values': '0+0x30'}
+                   for metric in ('rollout_info_replicas_available', 'rollout_info_replicas_desired')]
+        scenario(name, inputs, replica_alert if fires else None, [replica_alert],
+                 {'namespace': 'gradiated', 'deployment': 'api'})
+
+    for name, old, candidate, fires in [('migration old serves', 3, 0, False),
+                                        ('rollout serves', 0, 3, False),
+                                        ('rollout outage', 0, 0, True)]:
+        inputs = [{'series': f'{metric}{{namespace="gradiated",{label}="api"}}',
+                   'values': f'{value}+0x30'} for metric, label, value in [
+                       ('kube_deployment_status_replicas_available', 'deployment', old),
+                       ('kube_deployment_spec_replicas', 'deployment', old),
+                       ('rollout_info_replicas_available', 'name', candidate),
+                       ('rollout_info_replicas_desired', 'name', 3)]]
         scenario(name, inputs, replica_alert if fires else None, [replica_alert],
                  {'namespace': 'gradiated', 'deployment': 'api'})
 
@@ -647,6 +665,13 @@ def main():
                                ('aborted', 'Abort', True), ('deadline exceeded', 'Timeout', True), ('reconcile error', 'Error', True), ('invalid spec', 'InvalidSpec', True)]:
         scenario('GPU rollout ' + name, [{'series': f'rollout_info{{namespace="gpu-inference",name="glm",phase="{phase}"}}', 'values': '1+0x10'}],
                  rollout_alert if fires else None, [rollout_alert], {'namespace': 'gpu-inference', 'name': 'glm'}, '3m')
+    for phase, fires in [('Healthy', False), ('Progressing', False), ('Paused', False),
+                         ('Abort', True), ('Timeout', True), ('Error', True), ('InvalidSpec', True)]:
+        alert = 'ApplicationRolloutFailed'
+        scenario('application rollout ' + phase, [
+            {'series': f'rollout_info{{namespace="gradiated",name="api",phase="{phase}"}}',
+             'values': '1+0x10'}], alert if fires else None, [alert],
+                 {'namespace': 'gradiated', 'name': 'api'}, '3m')
     blocked_alert = 'GpuRolloutBlocked'
     pod = 'namespace="gpu-inference",pod="glm-abc"'
     for name, owner, gpu, unschedulable, eval_time, fires in [
@@ -661,7 +686,7 @@ def main():
         if gpu:
             inputs.append({'series': f'kube_pod_container_resource_requests{{{pod},resource="nvidia_com_gpu"}}', 'values': '2+0x40'})
         scenario('GPU rollout ' + name, inputs, blocked_alert if fires else None, [blocked_alert], {'namespace': 'gpu-inference', 'pod': 'glm-abc'}, eval_time)
-    monitoring_alert = 'GpuRolloutMonitoringMissing'
+    monitoring_alert = 'RolloutMonitoringMissing'
     for name, values, fires in [('scraped', '1+0x40', False), ('scrape failing', '0+0x40', True)]:
         scenario('Argo Rollouts ' + name, [{'series': 'up{namespace="gpu-inference",service="argo-rollouts"}', 'values': values}],
                  monitoring_alert if fires else None, [monitoring_alert], eval_time='16m')

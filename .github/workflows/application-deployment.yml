@@ -233,7 +233,7 @@ jobs:
     needs: [resolve, build-images, build-collector, record-release]
     runs-on: ubuntu-latest
     environment: production
-    timeout-minutes: 35
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v7
         with:
@@ -296,12 +296,10 @@ jobs:
             echo "Argo did not apply the expected release within 20 minutes." >&2
             exit 1
           fi
-          kubectl --request-timeout=20s -n gradiated rollout status deployment/api --timeout=10m
           kubectl --request-timeout=20s -n gradiated rollout status deployment/worker --timeout=10m
           kubectl --request-timeout=20s -n gradiated rollout status deployment/temporal-worker --timeout=10m
-          kubectl --request-timeout=20s -n gradiated rollout status deployment/gateway --timeout=10m
-          kubectl --request-timeout=20s -n gradiated rollout status deployment/proxy --timeout=10m
           kubectl --request-timeout=20s -n gradiated rollout status deployment/collector --timeout=10m
+          node tools/deployment/wait-rollouts.mjs
           PRODUCT_IMAGE="${product_image}" node tools/deployment/training-readiness.mjs
           node tools/deployment/inference-probe-readiness.mjs
 

@@ -14,6 +14,7 @@ release_paths=(
   infra/environments/prod/us-east-1/kubernetes/gpu-inference/controller.yaml
   infra/environments/prod/us-east-1/kubernetes/workloads/kustomization.yaml
   infra/environments/prod/us-east-1/kubernetes/workloads/release-metadata.yaml
+  infra/environments/prod/us-east-1/kubernetes/workloads/rollout-analysis.yaml
   infra/environments/prod/us-east-1/kubernetes/workloads/api.yaml
   infra/environments/prod/us-east-1/kubernetes/workloads/clickhouse-migrate.yaml
   infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml

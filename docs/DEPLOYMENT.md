@@ -31,8 +31,8 @@ the build idempotent. Kubernetes uses only resolved `sha256` image digests.
    `main`, using a token from the Gradiated Release GitHub App. The source has
    already passed `Product tests`; the generated commit carries `[skip ci]`
    to avoid starting another build and deployment cycle.
-5. Wait for Argo CD to apply the release and for the API and worker Deployments
-   to become available.
+5. Wait for Argo CD to apply the release, fully promote the API, gateway and proxy
+   Rollouts, and make the remaining worker/collector Deployments available.
    An explicit Argo gateway image override is preserved and checked for readiness.
 6. Upload `index.html` with revalidation headers.
 7. Invalidate the console CloudFront distribution.
@@ -50,9 +50,96 @@ changes, rechecks release ancestry before each push, and retries fast-forward
 races by rebasing onto the latest `main`. Conflicts or stale sources stop the
 release. No release PR or workflow approval is required.
 
-The proxy manifest carries an all-zero placeholder digest until the first release
-after its merge records a real one. Until then its pods cannot pull an image; the
-proxy has no public route, so no customer traffic depends on it.
+## Application canaries and rollback
+
+One shared Argo Rollouts installation manages API, gateway and proxy in
+`gradiated` and GPU models in `gpu-inference`. Its controller runs with three
+replicas in `gpu-inference` and watches the cluster. Worker, Temporal worker and
+collector remain Deployments. GPU model Rollouts retain their SDK qualification.
+Host bundles are managed by the GPU host controller, independently of these
+application Rollouts.
+
+Each application Rollout references its existing Deployment as its pod template.
+The initial takeover starts a full healthy replica set before scaling the old
+Deployment down (`workloadRef.scaleDown: onsuccess`); do not delete the template.
+Argo ignores the template's replica count so self-healing cannot restart it.
+After migration, image changes still go into the Deployment template, while
+KEDA scales the Rollout. Rollouts skip canary steps on initial creation: the
+first takeover is a readiness-gated migration, not a canary regression test.
+
+For later image changes, the Rollout uses 33%, 67% and 100% replica steps with
+zero allowed unavailable replicas and one surge pod. Each intermediate step
+runs seven candidate-only readiness requests over two minutes. Background
+analysis begins after the first replica step is ready, then checks every
+30 seconds for fresh scrapes from every ready candidate pod and server errors.
+Missing or stale candidate targets or replica-count telemetry fail the check.
+The configured `failureLimit: 1` aborts on the second failed measurement. Repeated provider
+errors also fail analysis instead of qualifying a release.
+A two-minute window with at least three 5xx responses and a server-error ratio
+above 2% fails a measurement. Gateway analysis additionally checks failed
+terminal generations, including errors after streaming response headers.
+The 100% step waits for pod readiness and completes promotion without a third
+timed soak. The two soaks add about four minutes, plus scheduling, startup and
+check overhead; the services progress independently. The progress deadline aborts
+an update that cannot make progress for 20 minutes.
+
+The public Services continue selecting ready stable and candidate pods. These
+weights control replica proportions, not exact ALB or per-request traffic
+percentages. Keeping existing Service selectors avoids a load-balancer target
+switch during migration. Candidate Services are internal and select only the
+latest revision. Existing readiness gates, topology placement and graceful
+stream draining remain in force.
+
+Failed analysis restores the stable revision's replica count and stops automatic
+promotion. Recovery can require stable pods to start: this configuration does
+not keep a full stable fleet warm throughout the rollout. An abort does not
+rewrite Git or undo migrations. Inspect the failure, then ship a fix or a new
+revert commit. A new image/pod template starts a fresh canary automatically;
+retrying the same unchanged candidate is an explicit operator action.
+Backward-compatible database migrations are required throughout this window.
+
+CI checks all three Rollouts' observed Deployment generations, stable revisions,
+phases and ready replica counts together on every poll. A stale `Healthy` status
+or an abort cannot publish the console. The existing training checks and fleet-wide public inference checks
+still run after application promotion. Readiness plus observed error metrics do
+not prove correctness under low traffic; this migration does not add an
+authenticated SDK test for each application revision or precise traffic routing.
+
+## Urgent hotfix promotion in Argo CD
+
+Build and record the hotfix through the normal release workflow. Once Argo has
+observed its candidate, open `https://argocd.gradiated.com`, choose the `api`,
+`gateway` or `proxy` Application, select its **Rollout** resource, and choose
+**promote-full** from the resource actions. Confirm the candidate image and
+revision before promotion; the zero-replica Deployment is only the template.
+
+`promote-full` explicitly skips the remaining canary steps, readiness analysis
+Jobs and metric analysis. It preserves pod readiness, zero-unavailable capacity
+constraints and graceful termination, so it cannot make an unready image serve.
+It does not skip building, database migration or the final CI release checks.
+Promotion applies to the current candidate, not a permanent fast mode for future
+releases. After full promotion, rollout analysis stops; normal service alerting
+continues. Do not expect the skipped analysis to automatically abort the hotfix.
+
+Use **pause** to hold a running rollout, **resume** to release a pause, **abort**
+to return an active rollout to stable, and **retry** to re-run an aborted
+candidate. If the hotfix candidate is already aborted, inspect the failure and
+retry it before full promotion. A fully promoted release requires a new image
+update/revert rather than an abort of an active rollout.
+
+All verified `@gradiated.com` Google users have application write access,
+including these actions, behind the existing domain gate. Application writers
+are trusted production operators: the default project permits applications to
+deploy privileged Kubernetes resources. No per-user role assignment or
+Kubernetes plugin is needed for the browser path. The public
+Google gate requires a browser session; do not bypass it for CLI convenience.
+For an existing authenticated Kubernetes operator session, the equivalent is:
+
+```sh
+kubectl argo rollouts get rollout gateway -n gradiated
+kubectl argo rollouts promote gateway -n gradiated --full
+kubectl argo rollouts abort gateway -n gradiated
+```
 
 ## Console cache behavior
 

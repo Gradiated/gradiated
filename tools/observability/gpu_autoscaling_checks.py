@@ -39,8 +39,9 @@ def check_gpu_autoscaling(root):
             return {'series': f'{metric}{{{selector}}}', 'values': values}
 
         def reporters():
-            result = [series('kube_deployment_status_replicas_available', '2+0x12',
-                             pod='', deployment='gateway')]
+            result = [series('kube_deployment_status_replicas_available', '0+0x12',
+                             pod='', deployment='gateway'),
+                      series('rollout_info_replicas_available', '2+0x12', pod='', name='gateway')]
             for pod in ('a', 'b'):
                 result += [series('gradiated_gateway_service_info', '1+0x12', pod),
                            series('up', '1+0x12', pod, job='gateway')]

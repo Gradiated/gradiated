@@ -752,7 +752,7 @@ export const SCENES2D = (function () {
       "adder",
     );
     key(wNand, "nand", {}, null, 0.55);
-    key(wNand, "adder", { opacity: 0 }, null, 0, 0.35);
+    key(wNand, "nand-symbol", { opacity: 0 }, null, 0, 0.35);
     caption(11, "NAND · not both A and B", 12, 398);
 
     /* ================= 12 · the NAND gate gets a symbol ================= */

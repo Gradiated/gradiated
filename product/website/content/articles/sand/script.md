@@ -108,7 +108,9 @@ We now have circuits that calculate and circuits that remember. Our next step is
 
 <!-- scene: select-values -->
 
-Our adder calculates with whatever values reach its inputs. To choose those values, we need another circuit called a multiplexer. It takes several inputs and passes one of them to its output, according to a selection signal at the bottom. We can build this selection circuit from the logic gates we already know. Here, each value travels through a bundle of four wires, carrying the four bits of its binary number.
+Our computer follows the von Neumann model, with instructions and data stored in the same memory.
+
+Our adder calculates with whatever values reach its inputs. To choose those values, we need another circuit called a multiplexer. It takes several inputs and passes one of them to its output, according to a selection signal at the bottom. We can build this selection circuit from the logic gates we already know. Here, each value travels through a bundle of four wires, carrying the four bits of its binary number. The idea of selectively choosing which input data to pass will be very common going forward.
 
 <!-- scene: working-registers -->
 

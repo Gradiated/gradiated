@@ -74,11 +74,15 @@ export const PageHero = ({
    */
   beside?: boolean;
   /** `tone` picks the button; defaults to the primary. */
-  action?: { href: string; label: string; tone?: "main" | "secondary" };
+  action?: {
+    href: string;
+    label: string;
+    tone?: "main" | "secondary" | "ghost";
+  };
   secondaryAction?: {
     href: string;
     label: string;
-    tone?: "main" | "secondary";
+    tone?: "main" | "secondary" | "ghost";
   };
   eyebrow?: string;
   lede?: ReactNode;
@@ -123,24 +127,20 @@ export const PageHero = ({
             </p>
           ))
         : null}
-      {action ? (
-        <a
-          className={`gr-button gr-button--${action.tone ?? "main"}`}
-          href={action.href}
-        >
-          {action.label}
-          <Arrow />
-        </a>
-      ) : null}
-      {secondaryAction ? (
-        <div>
-          <a
-            className={`gr-button gr-button--${secondaryAction.tone ?? "main"}`}
-            href={secondaryAction.href}
-          >
-            {secondaryAction.label}
-            <Arrow />
-          </a>
+      {action || secondaryAction ? (
+        <div className={secondaryAction ? "gr-page-hero-actions" : undefined}>
+          {[action, secondaryAction]
+            .filter((item) => item !== undefined)
+            .map((item) => (
+              <a
+                className={`gr-button gr-button--${item.tone ?? "main"}`}
+                href={item.href}
+                key={item.href}
+              >
+                {item.label}
+                <Arrow />
+              </a>
+            ))}
         </div>
       ) : null}
     </div>
@@ -164,11 +164,15 @@ export const Fold = ({
   children,
   ...hero
 }: {
-  action?: { href: string; label: string; tone?: "main" | "secondary" };
+  action?: {
+    href: string;
+    label: string;
+    tone?: "main" | "secondary" | "ghost";
+  };
   secondaryAction?: {
     href: string;
     label: string;
-    tone?: "main" | "secondary";
+    tone?: "main" | "secondary" | "ghost";
   };
   children?: ReactNode;
   /** Passed through to PageHero. */

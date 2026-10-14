@@ -37,7 +37,11 @@ export const HardwarePage = (): ReactElement => (
           action={{ href: "/careers/", label: "Build with us" }}
           secondaryAction={
             articles.some((article) => article.collection === "sand-to-thought")
-              ? { href: SAND_TO_THOUGHT_URL, label: "Sand to Thought" }
+              ? {
+                  href: SAND_TO_THOUGHT_URL,
+                  label: "Sand to Thought",
+                  tone: "ghost",
+                }
               : undefined
           }
           beside

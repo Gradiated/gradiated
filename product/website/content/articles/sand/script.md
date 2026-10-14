@@ -62,7 +62,7 @@ Add two more transistors and we can build a NAND gate. It takes two input bits, 
 
 <!-- scene: nand-symbol -->
 
-Let’s zoom out again and give this four-transistor circuit a symbol. The two inputs enter on the flat side, and the output leaves through the small circle, which indicates inversion. It can be shown that NAND gates alone can be combined to implement any function that maps a finite set of input bits to output bits. This makes them universal building blocks. From this one simple circuit, we can build the logic for everything from a calculator to a computer running an AI model.
+Let’s zoom out again and give this four-transistor circuit a symbol. The two inputs enter on the flat side, and the output exits after the small circle. It can be shown that NAND gates alone can be combined to implement any function that maps a finite set of input bits to output bits. This makes them universal building blocks. From this one simple circuit, we can build the logic for everything from a calculator to a computer running an AI model.
 
 ## Arithmetic
 
@@ -86,9 +86,9 @@ The faster we switch, the more heat we produce each second. This switching power
 
 <!-- scene: latch -->
 
-We can now calculate an answer, but how do we remember it? Let’s zoom back in and connect a few NAND gates so that their outputs feed back into their inputs. This circuit is called a latch. It has a data input D, a write-enable input WE, and an output Q. While WE is 1, Q follows D. When WE becomes 0, Q holds its last value, even if D changes.
+We can now calculate an answer, but how do we remember it? Let’s zoom back in and connect a few NAND gates so that their outputs feed back into their inputs. This circuit is called a latch. It has a data input D, a write-enable input WE, and an output Q. While WE is 1, Q becomes D. When WE becomes 0, Q holds its last value, even if D changes.
 
-How does a loop create memory? The two gates on the right feed their outputs into each other, each reinforcing the other’s state. With writing disabled, this feedback holds Q at its last value for as long as power is supplied. We have added memory to our toolset.
+How does a loop create memory? The two gates on the right feed their outputs into each other, each reinforcing the other’s state. With writing disabled (WE = 0), this feedback holds Q at its last value for as long as power is supplied. We have added memory to our toolset.
 
 <!-- scene: register -->
 

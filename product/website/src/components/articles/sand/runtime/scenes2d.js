@@ -175,8 +175,8 @@ export const SCENES2D = (function () {
       for (const f of drawn) f();
     });
 
-    const caption = (s, str, s1 = s + 1) => {
-      const t = text(220, 380, str, { class: "muted caption" });
+    const caption = (s, str, s1 = s + 1, y = 380) => {
+      const t = text(220, y, str, { class: "muted caption" });
       hideAt0(t);
       tl.to(t, { opacity: 1, duration: DUR * 0.35 }, at(s) + DUR * 0.65);
       tl.to(t, { opacity: 0, duration: DUR * 0.35 }, at(s1));
@@ -520,7 +520,7 @@ export const SCENES2D = (function () {
     text(142, 326, "B", { "text-anchor": "end" }, wNand);
     text(306, 254, "out", { "text-anchor": "start" }, wNand);
     show(wNand, 11, 12);
-    caption(11, "NAND gate");
+    caption(11, "NAND gate", 12, 398);
 
     /* ================= 12 · the NAND gate gets a symbol ================= */
     // The D outline draws itself around the circuit, which shrinks and dims inside it; then the
@@ -692,7 +692,7 @@ export const SCENES2D = (function () {
       gChain,
     );
     show(gChain, 14, 16);
-    caption(14, "ripple-carry adder: n blocks, n digits");
+    caption(14, "n full adder blocks, n digit addition");
 
     /* ================= 15every switch leaks heat ================= */
     const gHeat = mk("g", { class: "heat thin" }, root);
@@ -727,7 +727,7 @@ export const SCENES2D = (function () {
     loop(15, heat);
     const formula = mk("text", {
       x: 220,
-      y: 170,
+      y: 150,
       "text-anchor": "middle",
       class: "formula",
     });

@@ -259,7 +259,9 @@
 }
 
 .sand-journey :not(pre) > code {
-  font-family: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-family:
+    ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono",
+    monospace;
   font-size: 0.9em;
   line-height: 1.2;
   font-weight: 500;
@@ -598,4 +600,33 @@ html:has(.sand-journey) {
   stroke: #e0b23d;
   stroke-width: 3px;
   filter: drop-shadow(0 0 3px #edcc70);
+}
+
+.sand-journey #d2 .logic-connection {
+  stroke: #c49b3c;
+  stroke-width: 2.8px;
+  filter: drop-shadow(0 0 2px rgba(233, 200, 117, 0.55));
+}
+.sand-journey #d2 text.logic-value {
+  font-size: 16px;
+  font-weight: 600;
+}
+.sand-journey .scene-text table {
+  width: 100%;
+  margin: 0.65rem 0 1.5rem;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  text-align: center;
+}
+.sand-journey .scene-text th,
+.sand-journey .scene-text td {
+  padding: 0.5rem 0.3rem;
+  border-bottom: 1px solid rgba(23, 22, 26, 0.13);
+}
+.sand-journey .scene-text th {
+  font-weight: 500;
+}
+.sand-journey .scene-text table code {
+  background: none;
 }

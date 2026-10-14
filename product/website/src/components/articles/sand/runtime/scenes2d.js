@@ -472,67 +472,288 @@ export const SCENES2D = (function () {
       return g;
     };
     const gLogic = group({}, root, "220 250");
+    const logicDemos = [];
     const nHero = mos("n", gLogic);
-    key(nHero, 9, { x: 220, y: 250, scale: 1.7 }, { scale: 0.8 });
-    const symLabels = mk("g", { class: "muted" }, gLogic);
-    text(176, 254, "gate", { "text-anchor": "end" }, symLabels); // the only terminal the text names
-    show(symLabels, 9, 10);
-    caption(9, "the same transistor, drawn as a symbol");
+    key(nHero, "symbol", { x: 110, y: 250, scale: 1.5 }, { scale: 0.8 });
+    const symLabels = group({}, gLogic);
+    text(67, 254, "gate", { "text-anchor": "end", class: "muted" }, symLabels);
+    key(symLabels, "symbol", {}, null, 0.55);
+    key(symLabels, "switch-types", { opacity: 0 }, null, 0, 0.35);
 
-    /* ================= 10 · NOT gate: two transistors ================= */
-    const pHero = mos("p", gLogic);
-    key(pHero, 10, { x: 220, y: 210, scale: 1 }, { scale: 0.6 });
-    key(nHero, 10, { x: 220, y: 290, scale: 1 });
-    const wNot = mk("g", {}, gLogic);
+    const wireSwitch = (type, x, y, on, parent) => {
+      const g = group({ "data-switch": type, "data-on": on }, parent);
+      path(`M${x - 34} ${y} H${x - 14} M${x - 8} ${y - 12} V${y + 12}`, {}, g);
+      if (type === "p") mk("circle", { cx: x - 11, cy: y, r: 2.6 }, g);
+      else path(`M${x - 14} ${y} H${x - 8}`, {}, g);
+      const d = on
+        ? `M${x + 10} ${y - 26} V${y + 26}`
+        : `M${x + 10} ${y - 26} V${y - 8} M${x + 10} ${y + 8} V${y + 26}`;
+      path(d, {}, g);
+      if (on) path(d, { class: "logic-connection" }, g);
+      return g;
+    };
+    const equivalents = group({ "data-diagram": "switch-equivalents" }, gLogic);
+    wireSwitch("n", 300, 190, true, equivalents);
+    wireSwitch("n", 300, 305, false, equivalents);
+    text(285, 148, "gate at 1 V", { class: "caption" }, equivalents);
+    text(285, 263, "gate at 0 V", { class: "caption" }, equivalents);
+    text(
+      343,
+      195,
+      "ON",
+      { "text-anchor": "start", class: "caption" },
+      equivalents,
+    );
+    text(
+      343,
+      310,
+      "OFF",
+      { "text-anchor": "start", class: "caption" },
+      equivalents,
+    );
     path(
-      "M196 172 L244 172 M230 172 L230 188 M230 232 L230 268 M230 312 L230 330 M196 330 L244 330",
+      "M178 190 H221 M215 186 L221 190 L215 194 M178 305 H221 M215 301 L221 305 L215 309",
+      { class: "muted thin" },
+      equivalents,
+    );
+    key(equivalents, "symbol", {}, null, 0.55);
+    key(equivalents, "switch-types", { opacity: 0 }, null, 0, 0.35);
+    caption(9, "one transistor · two possible connections", "switch-types");
+
+    const pHero = mos("p", gLogic);
+    key(nHero, "switch-types", { x: 110, y: 195, scale: 1.3 });
+    key(pHero, "switch-types", { x: 110, y: 300, scale: 1.3 }, { scale: 0.6 });
+    const types = group({ "data-diagram": "switch-types" }, gLogic);
+    text(110, 148, "n-type", { class: "caption" }, types);
+    text(110, 253, "p-type", { class: "caption" }, types);
+    text(238, 133, "gate at 0 V", { class: "caption" }, types);
+    text(340, 133, "gate at 1 V", { class: "caption" }, types);
+    for (const [type, y] of [
+      ["n", 195],
+      ["p", 300],
+    ]) {
+      for (const [value, x] of [
+        [0, 238],
+        [1, 340],
+      ]) {
+        const on = type === "n" ? value === 1 : value === 0;
+        wireSwitch(type, x, y, on, types);
+        text(x + 10, y + 47, on ? "ON" : "OFF", { class: "caption" }, types);
+      }
+    }
+    key(types, "switch-types", {}, null, 0.55);
+    key(types, "not", { opacity: 0 }, null, 0, 0.35);
+    caption(
+      "switch-types",
+      "opposite responses to the same gate voltage",
+      "not",
+    );
+
+    const channel = (x, y) =>
+      `M${x + 10} ${y - 22} V${y - 8} H${x - 3} V${y + 8} H${x + 10} V${y + 22}`;
+    const logicCases = (scene, parent, cases, ports, before, after) => {
+      const layers = cases.map(({ inputs, output, connection }) => {
+        const layer = group(
+          { "data-logic-state": inputs.join(""), "data-output": output },
+          parent,
+        );
+        path(connection, { class: "logic-connection" }, layer);
+        ports.forEach(({ x, y, anchor }, i) => {
+          const value = i < inputs.length ? inputs[i] : output;
+          text(
+            x,
+            y,
+            String(value),
+            { class: "logic-value", "text-anchor": anchor },
+            layer,
+          );
+        });
+        return layer;
+      });
+      gsap.set(layers, { opacity: 0 });
+      gsap.set(layers[0], { opacity: 1 });
+      const demo = gsap.timeline({ paused: true, repeat: -1 });
+      const step = 3;
+      layers.forEach((layer, i) => {
+        const next = layers[(i + 1) % layers.length];
+        demo.to(
+          layer,
+          { opacity: 0, duration: 0.25, ease: "sine.inOut" },
+          i * step + 2.4,
+        );
+        demo.to(
+          next,
+          { opacity: 1, duration: 0.35, ease: "sine.inOut" },
+          i * step + 2.65,
+        );
+      });
+      demo.time(0.001, true).time(0, true);
+      logicDemos.push(demo);
+      afterRender.push(() => {
+        const progress = tl.time();
+        if (progress <= index(before) + hold || progress >= index(after) - hold)
+          demo.pause(0);
+        else if (
+          Math.abs(progress - index(scene)) <= hold &&
+          !matchMedia("(prefers-reduced-motion: reduce)").matches
+        )
+          demo.play();
+        else demo.pause();
+      });
+    };
+
+    key(pHero, "not", { x: 220, y: 210, scale: 1 });
+    key(nHero, "not", { x: 220, y: 290, scale: 1 });
+    const wNot = group({ "data-diagram": "not" }, gLogic);
+    path(
+      "M196 172 H244 M230 172 V188 M230 232 V268 M230 312 V330 M196 330 H244",
       {},
       wNot,
     );
-    path("M230 250 L268 250 M172 250 L198 250 M198 210 L198 290", {}, wNot);
+    path("M230 250 H268 M172 250 H198 M198 210 V290", {}, wNot);
     dot(230, 250, 1.8, wNot);
     dot(198, 250, 1.8, wNot);
-    text(186, 176, "1", { "text-anchor": "end", class: "muted" }, wNot);
-    text(186, 334, "0", { "text-anchor": "end", class: "muted" }, wNot);
-    text(164, 254, "A", { "text-anchor": "end" }, wNot);
-    text(276, 254, "Ā", { "text-anchor": "start" }, wNot);
-    show(wNot, 10, 11);
-    caption(10, "NOT gate: p-type above, n-type below");
+    text(186, 176, "1 V", { "text-anchor": "end", class: "muted" }, wNot);
+    text(186, 334, "0 V", { "text-anchor": "end", class: "muted" }, wNot);
+    text(164, 234, "A", { "text-anchor": "end" }, wNot);
+    text(280, 234, "Ā", { "text-anchor": "start" }, wNot);
+    logicCases(
+      "not",
+      wNot,
+      [
+        {
+          inputs: [0],
+          output: 1,
+          connection: `M268 250 H230 V232 ${channel(220, 210)} M230 188 V172`,
+        },
+        {
+          inputs: [1],
+          output: 0,
+          connection: `M268 250 H230 V268 ${channel(220, 290)} M230 312 V330`,
+        },
+      ],
+      [
+        { x: 164, y: 274, anchor: "end" },
+        { x: 280, y: 274, anchor: "start" },
+      ],
+      "switch-types",
+      "nor",
+    );
+    key(wNot, "not", {}, null, 0.55);
+    key(wNot, "nor", { opacity: 0 }, null, 0, 0.35);
+    caption(10, "NOT · the opposite of A", "nor");
 
-    /* ================= 11 · NAND gate: four transistors ================= */
-    key(pHero, 11, { x: 190, y: 210, scale: 1 });
-    key(nHero, 11, { x: 230, y: 275, scale: 1 });
+    key(pHero, "nor", { x: 220, y: 175, scale: 1 });
+    key(nHero, "nor", { x: 180, y: 305, scale: 1 });
     const p2 = mos("p", gLogic);
-    key(p2, 11, { x: 260, y: 210, scale: 1 }, { scale: 0.6 });
     const n2 = mos("n", gLogic);
-    key(n2, 11, { x: 230, y: 322, scale: 1 }, { scale: 0.6 });
-    const wNand = mk("g", {}, gLogic);
+    key(p2, "nor", { x: 220, y: 230, scale: 1 }, { scale: 0.6 });
+    key(n2, "nor", { x: 280, y: 305, scale: 1 }, { scale: 0.6 });
+    const wNor = group({ "data-diagram": "nor" }, gLogic);
     path(
-      "M170 172 L290 172 M200 172 L200 188 M270 172 L270 188 M200 232 L200 250 M270 232 L270 250 M200 250 L300 250",
+      "M196 138 H264 M230 138 V153 M230 197 V208 M230 252 V267 M190 267 H338 M190 267 V283 M290 267 V283 M190 327 V350 M290 327 V350 M166 350 H314",
+      {},
+      wNor,
+    );
+    path("M116 175 H198 M138 175 V305 H158", {}, wNor);
+    path(
+      "M116 230 H133 A5 5 0 0 1 143 230 H198 M168 230 V245 H225 A5 5 0 0 1 235 245 H250 V262 A5 5 0 0 1 250 272 V305 H258",
+      {},
+      wNor,
+    );
+    for (const [x, y] of [
+      [138, 175],
+      [168, 230],
+      [190, 267],
+      [230, 267],
+      [290, 267],
+    ])
+      dot(x, y, 1.8, wNor);
+    text(186, 142, "1 V", { "text-anchor": "end", class: "muted" }, wNor);
+    text(156, 354, "0 V", { "text-anchor": "end", class: "muted" }, wNor);
+    text(108, 163, "A", { "text-anchor": "end" }, wNor);
+    text(108, 218, "B", { "text-anchor": "end" }, wNor);
+    text(346, 253, "out", { "text-anchor": "start" }, wNor);
+    const inputs = [
+      [0, 0],
+      [0, 1],
+      [1, 0],
+      [1, 1],
+    ];
+    logicCases(
+      "nor",
+      wNor,
+      inputs.map(([a, b]) => ({
+        inputs: [a, b],
+        output: Number(!a && !b),
+        connection:
+          !a && !b
+            ? `M338 267 H230 V252 ${channel(220, 230)} M230 208 V197 ${channel(220, 175)} M230 153 V138`
+            : `M338 267 H230 ${a ? `M230 267 H190 V283 ${channel(180, 305)} M190 327 V350` : ""} ${b ? `M230 267 H290 V283 ${channel(280, 305)} M290 327 V350` : ""}`,
+      })),
+      [
+        { x: 108, y: 196, anchor: "end" },
+        { x: 108, y: 251, anchor: "end" },
+        { x: 346, y: 290, anchor: "start" },
+      ],
+      "not",
+      "nand",
+    );
+    key(wNor, "nor", {}, null, 0.55);
+    key(wNor, "nand", { opacity: 0 }, null, 0, 0.35);
+    caption("nor", "NOR · neither A nor B", "nand", 395);
+
+    key(pHero, "nand", { x: 190, y: 210, scale: 1 });
+    key(nHero, "nand", { x: 230, y: 275, scale: 1 });
+    key(p2, "nand", { x: 260, y: 210, scale: 1 });
+    key(n2, "nand", { x: 230, y: 322, scale: 1 });
+    const wNand = group({ "data-diagram": "nand" }, gLogic);
+    path(
+      "M170 172 H290 M200 172 V188 M270 172 V188 M200 232 V250 M270 232 V250 M200 250 H300",
       {},
       wNand,
     );
+    path("M240 250 V253 M240 297 V300 M240 344 V356 M200 356 H280", {}, wNand);
+    path("M150 210 H168 M150 210 V275 H208", {}, wNand);
     path(
-      "M240 250 L240 253 M240 297 L240 300 M240 344 L240 356 M200 356 L280 356",
+      "M150 322 H208 M176 322 V280 A4 4 0 0 1 176 270 V240 H196 A4 4 0 0 1 204 240 H238 V210",
       {},
       wNand,
     );
-    path("M150 210 L168 210 M150 210 L150 275 L208 275", {}, wNand);
-    path(
-      "M150 322 L208 322 M176 322 L176 280 A4 4 0 0 1 176 270 L176 240 L196 240 A4 4 0 0 1 204 240 L238 240 L238 210",
-      {},
+    for (const [x, y] of [
+      [240, 250],
+      [270, 250],
+      [176, 322],
+      [150, 210],
+    ])
+      dot(x, y, 1.8, wNand);
+    text(160, 176, "1 V", { "text-anchor": "end", class: "muted" }, wNand);
+    text(190, 360, "0 V", { "text-anchor": "end", class: "muted" }, wNand);
+    text(142, 198, "A", { "text-anchor": "end" }, wNand);
+    text(142, 310, "B", { "text-anchor": "end" }, wNand);
+    text(310, 236, "out", { "text-anchor": "start" }, wNand);
+    logicCases(
+      "nand",
       wNand,
+      inputs.map(([a, b]) => ({
+        inputs: [a, b],
+        output: Number(!(a && b)),
+        connection:
+          a && b
+            ? `M300 250 H240 V253 ${channel(230, 275)} M240 297 V300 ${channel(230, 322)} M240 344 V356`
+            : `M300 250 H240 ${!a ? `M240 250 H200 V232 ${channel(190, 210)} M200 188 V172` : ""} ${!b ? `M240 250 H270 V232 ${channel(260, 210)} M270 188 V172` : ""}`,
+      })),
+      [
+        { x: 142, y: 236, anchor: "end" },
+        { x: 142, y: 348, anchor: "end" },
+        { x: 310, y: 274, anchor: "start" },
+      ],
+      "nor",
+      "adder",
     );
-    dot(240, 250, 1.8, wNand);
-    dot(176, 322, 1.8, wNand);
-    dot(150, 210, 1.8, wNand);
-    text(160, 176, "1", { "text-anchor": "end", class: "muted" }, wNand);
-    text(190, 360, "0", { "text-anchor": "end", class: "muted" }, wNand);
-    text(142, 214, "A", { "text-anchor": "end" }, wNand);
-    text(142, 326, "B", { "text-anchor": "end" }, wNand);
-    text(306, 254, "out", { "text-anchor": "start" }, wNand);
-    show(wNand, 11, 12);
-    caption(11, "NAND gate", 12, 398);
+    key(wNand, "nand", {}, null, 0.55);
+    key(wNand, "adder", { opacity: 0 }, null, 0, 0.35);
+    caption(11, "NAND · not both A and B", 12, 398);
 
     /* ================= 12 · the NAND gate gets a symbol ================= */
     // The D outline draws itself around the circuit, which shrinks and dims inside it; then the
@@ -1070,7 +1291,14 @@ export const SCENES2D = (function () {
         );
       }
     }
-    return { tl, loops, afterRender, storeDemo, ...computer };
+    return {
+      tl,
+      loops,
+      afterRender,
+      storeDemo,
+      ...computer,
+      demos: [...logicDemos, ...computer.demos],
+    };
   }
 
   return { build };

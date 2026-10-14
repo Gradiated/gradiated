@@ -44,7 +44,15 @@ Raising the gate to `1` volt lowers this barrier, opening a conducting path betw
 
 <!-- scene: symbol -->
 
-We now have a switch that we can control with a voltage input. To make larger circuits easier to draw, we will represent each transistor with a simple symbol, shown on the left. The next step is to connect these switches so that, together, they can calculate, remember and think. We will build towards these abilities one layer at a time, showing how each new structure makes more complex tasks possible.
+We now have a switch that we can control with a voltage input. To make larger circuits easier to draw, we will represent each transistor with a simple symbol, shown on the left. On the right, we show what this switch does. With its gate at `1` volt, it connects the two ends like an unbroken wire. With its gate at `0` volts, the connection is broken. The gate controls this connection without joining it.
+
+For now, we treat wires and switches as ideal. Once a change has settled, wires connected through an on switch share the same voltage. Connecting a wire to a supply held at `1` volt brings it to `1` volt, and connecting it to a supply held at `0` volts brings it to `0` volts. An off switch keeps the two sides separate.
+
+<!-- scene: switch-types -->
+
+We can also make a p-type MOSFET by swapping the two types of doped silicon. In the circuits we are about to build, the n-type switch turns on for an input of `1` volt and off for `0` volts, while the p-type does the reverse. The small circle on its gate distinguishes the p-type symbol. We now have two switches that respond in opposite ways to the same input.
+
+The next step is to connect these switches so that, together, they can calculate, remember and think. We will build towards these abilities one layer at a time, showing how each new structure makes more complex tasks possible.
 
 ## Logic
 
@@ -54,11 +62,39 @@ To calculate with electrical signals, we first need a way to represent informati
 
 By connecting transistors, we can build circuits called logic gates that turn input bits into output bits according to a simple rule. The simplest example is the NOT gate, which flips its input. A `0` becomes a `1`, and a `1` becomes a `0`.
 
-Let’s zoom out one step and connect two transistors to make our first logic gate. The lower one is the n-type switch we have just introduced. The upper one, drawn with a small circle on its gate, is its mirror image, a p-type MOSFET made with the dopants swapped. In this circuit, it turns on (lowers the energy barrier) when the input is `0`, while the n-type turns on when the input is `1`. Together, they make the output the opposite of the input. This is a NOT gate.
+Let’s zoom out one step and connect two transistors to make our first logic gate. The top bar is held at `1` volt and the bottom bar at `0` volts. Our input `A` controls both gates, and the output `Ā` is the wire joining the two transistors.
+
+When `A` is `0`, the p-type switch is on and the n-type is off. The output is connected to the top bar, so it settles to `1`. When `A` is `1`, their roles reverse and the output connects to the bottom bar, settling to `0`. The output is always the opposite of the input. We have made a NOT gate.
+
+<!-- scene: nor -->
+
+Add two more transistors and we can give our circuit two inputs, `A` and `B`. Each input controls one p-type switch and one n-type switch. The two p-type switches at the top are connected one after another, so both must be on to connect the output to `1`. The two n-type switches at the bottom are side by side, giving two separate routes to `0`. Either one can make that connection.
+
+When both inputs are `0`, both p-type switches are on and both n-type switches are off. The output connects to the top bar and becomes `1`. If either input is `1`, its p-type switch breaks the upper path while its n-type switch connects the output to the bottom bar, making it `0`. This is a NOR gate. Its output is `1` when neither `A` nor `B` is `1`.
 
 <!-- scene: nand -->
 
-Add two more transistors and we can build a NAND gate. It takes two input bits, `A` and `B`, and produces a `1` unless both inputs are `1`, in which case it produces a `0`.
+Now rearrange the same four transistors. Put the two n-type switches one after another and the two p-type switches side by side. The output can reach the bottom bar only when both n-type switches are on, which requires both inputs to be `1`. It then becomes `0`.
+
+If either input is `0`, its n-type switch breaks that lower path and its p-type switch provides a connection to the top bar. The output becomes `1`. This is a NAND gate. Its output is `1` when `A` and `B` are not both `1` simultaneously.
+
+A truth table lists the output for every possible combination of inputs. These tables collect the rules we have just built from switches.
+
+**NOT**
+
+| `A` | NOT output `Ā` |
+| --- | --- |
+| `0` | `1` |
+| `1` | `0` |
+
+**NOR and NAND**
+
+| `A` | `B` | NOR output | NAND output |
+| --- | --- | --- | --- |
+| `0` | `0` | `1` | `1` |
+| `0` | `1` | `0` | `1` |
+| `1` | `0` | `0` | `1` |
+| `1` | `1` | `0` | `0` |
 
 <!-- scene: nand-symbol -->
 

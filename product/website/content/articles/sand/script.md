@@ -28,7 +28,7 @@ We can also implant dopants into selected parts of the wafer using what is essen
 
 <!-- scene: wires -->
 
-We can now build our first transistor. We add a wire to each of the two islands and place a third wire, called the gate, above the silicon between them. A thin insulating layer separates the gate from the silicon, allowing it to control the current without making direct electrical contact.
+We can now build our first transistor. We add a wire to each of the two islands and place a third wire, called the gate, above the silicon between them. A thin insulating layer separates the gate from the silicon, allowing it to control the electrical properties without making direct contact.
 
 <!-- scene: voltages -->
 

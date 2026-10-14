@@ -36,7 +36,7 @@ A voltage difference can drive electrons through a circuit. Let us hold the left
 
 <!-- scene: blocked -->
 
-With the gate also at 0 volts, this barrier is high and electrons struggle to flow between the two islands.
+With the central gate also at 0 volts, this barrier is high and electrons struggle to flow between the two islands.
 
 <!-- scene: flowing -->
 
@@ -44,7 +44,7 @@ Raising the gate to 1 volt lowers this barrier, opening a conducting path betwee
 
 <!-- scene: symbol -->
 
-We now have a switch that we can control with an electrical signal. To make larger circuits easier to draw, we will represent each transistor with a simple symbol. The next step is to connect these switches so that, together, they can calculate, remember and think. We will build towards these abilities one layer at a time, showing how each new structure makes more complex tasks possible.
+We now have a switch that we can control with a voltage input. To make larger circuits easier to draw, we will represent each transistor with a simple symbol. The next step is to connect these switches so that, together, they can calculate, remember and think. We will build towards these abilities one layer at a time, showing how each new structure makes more complex tasks possible.
 
 ## Logic
 
@@ -54,7 +54,7 @@ To calculate with electrical signals, we first need a way to represent informati
 
 By connecting transistors, we can build circuits called logic gates that turn input bits into output bits according to a simple rule. The simplest example is the NOT gate, which flips its input. A 0 becomes a 1, and a 1 becomes a 0.
 
-Let’s zoom out one step and connect two transistors to make our first logic gate. The lower one is our n-type switch. The upper one, drawn with a small circle on its gate, is its mirror image, a p-type MOSFET made with the dopants swapped. In this circuit, it turns on when the input is 0, while the n-type turns on when the input is 1. Together, they make the output the opposite of the input. This is a NOT gate.
+Let’s zoom out one step and connect two transistors to make our first logic gate. The lower one is the n-type switch we have just introduced. The upper one, drawn with a small circle on its gate, is its mirror image, a p-type MOSFET made with the dopants swapped. In this circuit, it turns on (lowers the energy barrier) when the input is 0, while the n-type turns on when the input is 1. Together, they make the output the opposite of the input. This is a NOT gate.
 
 <!-- scene: nand -->
 

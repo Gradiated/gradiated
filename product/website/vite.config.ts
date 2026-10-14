@@ -15,7 +15,12 @@ import { all } from "lowlight";
 
 const require = createRequire(import.meta.url);
 const { renderPost } = require("./scripts/sand-renderer.cjs") as {
-  renderPost(source: string, template: string, scenes: string[]): string;
+  renderPost(
+    source: string,
+    template: string,
+    scenes: string[],
+    publication?: { publishedThrough: string; footer: string },
+  ): string;
 };
 
 const mdxPlugin = mdx({
@@ -49,7 +54,7 @@ const syncAshbyJobs: Plugin = {
   },
 };
 
-export default defineConfig(({ isSsrBuild, mode }) => {
+export default defineConfig(({ command, isSsrBuild, mode }) => {
   const env = loadEnv(mode, process.cwd(), "VITE_");
   if (
     process.env.VERCEL_ENV === "production" &&
@@ -78,11 +83,21 @@ export default defineConfig(({ isSsrBuild, mode }) => {
           const manifest = join(dirname(file), "scenes.json");
           this.addWatchFile(file);
           this.addWatchFile(manifest);
-          const html = renderPost(
-            readFileSync(file, "utf8"),
-            "<!--{{TITLE}}-->{{ARTICLE}}",
-            JSON.parse(readFileSync(manifest, "utf8")),
-          );
+          const publicationFile = join(dirname(file), "publication.json");
+          this.addWatchFile(publicationFile);
+          const source = readFileSync(file, "utf8");
+          const scenes = JSON.parse(readFileSync(manifest, "utf8"));
+          const template = "<!--{{TITLE}}-->{{ARTICLE}}";
+          const complete = renderPost(source, template, scenes);
+          const html =
+            command === "serve" || process.env.VERCEL_ENV === "preview"
+              ? complete
+              : renderPost(
+                  source,
+                  template,
+                  scenes,
+                  JSON.parse(readFileSync(publicationFile, "utf8")),
+                );
           const contents = Array.from(
             html.matchAll(
               /<section[^>]* id="([^"]+)">\s*<h2>([\s\S]*?)<\/h2>/g,

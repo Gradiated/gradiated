@@ -1313,6 +1313,7 @@ export const SCENES2D = (function () {
     key(gRegister, "timing", { opacity: 0, scale: 0.7, y: 32 }, null, 0, 0.6);
     key(gStored, "timing", { opacity: 0 }, null, 0, 0.6);
     const computer = COMPUTER_SCENES.build({
+      includeComputer: sceneKeys.includes("select-values"),
       root,
       tl,
       hold,
@@ -1331,7 +1332,7 @@ export const SCENES2D = (function () {
       hideAt0,
       afterRender,
     });
-    tl.to({}, { duration: hold }, index("computer") - hold);
+    tl.to({}, { duration: hold }, sceneKeys.length - 1 - hold);
 
     /* ================= compile keys into the timeline ================= */
     for (const [el, ks] of keys) {

@@ -89,7 +89,7 @@ test("existing articles default to the Library and hardware remains a subject", 
   );
 });
 
-test("the sand journey has its own collection and remains excluded from production", () => {
+test("the published sand journey has its own collection and is included in production", () => {
   const source = readFileSync(
     new URL(
       "../content/articles/how-to-get-an-answer-out-of-sand.mdx",
@@ -97,11 +97,12 @@ test("the sand journey has its own collection and remains excluded from producti
     ),
     "utf8",
   );
-  const draft = parseArticleMetadata(source, "sand");
-  assert.equal(draft.category, "hardware");
-  assert.equal(draft.collection, "sand-to-thought");
-  assert.equal(draft.path, "/sand-to-thought/");
-  assert.equal(draft.layout, "journey");
+  const article = parseArticleMetadata(source, "sand");
+  assert.equal(article.category, "hardware");
+  assert.equal(article.collection, "sand-to-thought");
+  assert.equal(article.path, "/sand-to-thought/");
+  assert.equal(article.layout, "journey");
   assert.equal(buildArticleRegistry({ sand: source }, true).length, 1);
-  assert.equal(buildArticleRegistry({ sand: source }, false).length, 0);
+  assert.equal(article.status, "published");
+  assert.equal(buildArticleRegistry({ sand: source }, false).length, 1);
 });

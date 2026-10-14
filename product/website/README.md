@@ -287,7 +287,15 @@ The sand article uses `layout: journey`, preserving its sticky illustrations in
 the shared website shell. Drafts are included locally and in Vercel Preview
 deployments (`VERCEL_ENV=preview`). Preview drafts are prerendered with noindex
 metadata and omitted from the sitemap. Production excludes drafts until their
-metadata is set to published. The prose is rendered at
+metadata is set to published. Sand to Thought is now marked published, but the PR
+remains a draft until its author explicitly approves review. Its production build
+ends after chapter 4's timing scene. `content/articles/sand/publication.json`
+records `publishedThrough: "timing"` and the public closing paragraph. Development
+and Vercel previews retain all five chapters. Moving the boundary to a later
+chapter's final scene publishes that chapter on the next production deployment.
+The boundary must fall immediately before the next chapter heading. Production
+omits later prose, contents links and diagram nodes. The complete draft is still
+validated on every build. The prose is rendered at
 build time from `content/articles/sand/script.md`, with the ordered scene manifest
 validated by the renderer. The animation geometry is scoped to its mounted page
 and cleaned up on navigation. The imported animation files are a preserved
@@ -320,3 +328,5 @@ when editing either copy.
 The sand card uses one set of particles for a dune, wind and a logic circuit.
 Hover and keyboard focus morph those particles; leaving restores the dune.
 Reduced motion keeps a still dune. Offscreen artwork stops its frame loop.
+
+Check the publication boundary with `node --test scripts/sand-publication.test.mjs`.

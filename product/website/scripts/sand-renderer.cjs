@@ -8,7 +8,7 @@ const escape = (value) =>
       ],
   );
 
-function renderPost(source, template, expectedScenes) {
+function renderPost(source, template, expectedScenes, publication) {
   const definitions = new Map();
   const references = new Map();
   const markdown = new Marked({ gfm: true });
@@ -153,20 +153,42 @@ function renderPost(source, template, expectedScenes) {
       `Scene order changed. Keep these markers in order: ${expectedScenes.join(", ")}. Adding, removing or reordering scenes needs a coordinated animation update.`,
     );
   }
+  let visibleScenes = scenes;
+  if (publication) {
+    const last = expectedScenes.indexOf(publication.publishedThrough);
+    if (
+      last < 0 ||
+      typeof publication.footer !== "string" ||
+      !publication.footer.trim()
+    )
+      throw Error(
+        "Use a known publishedThrough scene and a non-empty publication footer.",
+      );
+    if (scenes[last + 1] && scenes[last + 1].tokens[0]?.type !== "heading")
+      throw Error(
+        "The publication boundary must end immediately before a chapter heading.",
+      );
+    visibleScenes = scenes.slice(0, last + 1);
+  }
   const render = (list) =>
     markdown.parser(Object.assign([...list], { links: tokens.links })).trim();
   const titleHTML = markdown.parser([title]).trim();
   const lede = render(intro).replace(/^<p>/, '<p class="lede">');
-  const sections = scenes.map((scene) => {
+  const sections = visibleScenes.map((scene) => {
     if (!scene.tokens.some((token) => token.type !== "heading"))
       throw Error(`Scene ${scene.key} needs some article text.`);
     return `<section class="scene-text" data-scene="${scene.key}" id="sand-${scene.key}">\n${render(scene.tokens)}\n</section>`;
   });
-  const footerHTML = render(footer);
+  const footerHTML = render(
+    publication ? markdown.lexer(publication.footer) : footer,
+  );
   const notes = [];
   for (const [id, definition] of definitions) {
     const refs = references.get(id);
-    if (!refs) throw Error(`Footnote ${id} is defined but never referenced.`);
+    if (!refs) {
+      if (publication) continue;
+      throw Error(`Footnote ${id} is defined but never referenced.`);
+    }
     if (/\[\^/.test(definition))
       throw Error("Nested footnotes are not supported.");
     const note = markdown.parseInline(definition);

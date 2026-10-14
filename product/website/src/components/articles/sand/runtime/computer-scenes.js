@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 export const COMPUTER_SCENES = (function () {
   const build = ({
+    includeComputer,
     root,
     tl,
     hold,
@@ -106,77 +107,85 @@ export const COMPUTER_SCENES = (function () {
       });
     };
 
-    const selector = group(
-      { "data-diagram": "select-values" },
-      root,
-      "220 220",
-    );
-    text(
-      220,
-      112,
-      "four wires carry each value",
-      { class: "caption" },
-      selector,
-    );
-    path("M175 155 L255 180 V265 L175 290 Z", {}, selector);
-    const upper = lightPath("M88 185 H175 L255 222 H353", selector);
-    const lower = lightPath("M88 260 H175 L255 222 H353", selector);
-    for (const [x, y] of [
-      [135, 185],
-      [135, 260],
-      [309, 222],
-    ]) {
-      path(
-        `M${x - 3} ${y + 4} L${x + 3} ${y - 4}`,
-        { class: "muted thin" },
+    if (includeComputer) {
+      const selector = group(
+        { "data-diagram": "select-values" },
+        root,
+        "220 220",
+      );
+      text(
+        220,
+        112,
+        "four wires carry each value",
+        { class: "caption" },
         selector,
       );
-      text(x, y - 9, "4", { class: "tiny muted" }, selector);
+      path("M175 155 L255 180 V265 L175 290 Z", {}, selector);
+      const upper = lightPath("M88 185 H175 L255 222 H353", selector);
+      const lower = lightPath("M88 260 H175 L255 222 H353", selector);
+      for (const [x, y] of [
+        [135, 185],
+        [135, 260],
+        [309, 222],
+      ]) {
+        path(
+          `M${x - 3} ${y + 4} L${x + 3} ${y - 4}`,
+          { class: "muted thin" },
+          selector,
+        );
+        text(x, y - 9, "4", { class: "tiny muted" }, selector);
+      }
+      text(74, 190, "3", { class: "caption bit" }, selector);
+      text(74, 265, "6", { class: "caption bit" }, selector);
+      text(216, 228, "MUX", { class: "caption" }, selector);
+      path("M215 306 V278", {}, selector);
+      text(215, 330, "select", { class: "caption muted" }, selector);
+      const selectZero = text(236, 305, "0", { class: "bit" }, selector);
+      const selectOne = text(236, 305, "1", { class: "bit" }, selector);
+      const selectedThree = text(
+        374,
+        227,
+        "3",
+        { class: "caption bit" },
+        selector,
+      );
+      const selectedSix = text(
+        374,
+        227,
+        "6",
+        { class: "caption bit" },
+        selector,
+      );
+      gsap.set([selectOne, selectedSix], { opacity: 0 });
+      show(selector, "select-values", "working-registers", {}, 0.65);
+      caption(
+        "select-values",
+        "a control signal chooses the value",
+        "working-registers",
+      );
+      gsap.set(upper.line, { opacity: 1 });
+      upper.state.amount = 1;
+      const selectDemo = gsap.timeline({ paused: true, repeat: -1 });
+      selectDemo.to(
+        [upper.line, selectZero, selectedThree],
+        { opacity: 0, duration: 0.4 },
+        2,
+      );
+      selectDemo.to(selectOne, { opacity: 1, duration: 0.4 }, 2.4);
+      selectDemo.to(selectedSix, { opacity: 1, duration: 0.4 }, 3.1);
+      illuminate(selectDemo, lower, 2.4);
+      selectDemo.to(
+        [lower.line, selectOne, selectedSix],
+        { opacity: 0, duration: 0.4 },
+        4.5,
+      );
+      selectDemo.set([upper.state, lower.state], { amount: 0 }, 4.9);
+      selectDemo.to(selectZero, { opacity: 1, duration: 0.4 }, 5);
+      selectDemo.to(selectedThree, { opacity: 1, duration: 0.4 }, 5.65);
+      illuminate(selectDemo, upper, 5);
+      selectDemo.to({}, { duration: 1.2 }, 5.65);
+      playInScene("select-values", selectDemo, "timing");
     }
-    text(74, 190, "3", { class: "caption bit" }, selector);
-    text(74, 265, "6", { class: "caption bit" }, selector);
-    text(216, 228, "MUX", { class: "caption" }, selector);
-    path("M215 306 V278", {}, selector);
-    text(215, 330, "select", { class: "caption muted" }, selector);
-    const selectZero = text(236, 305, "0", { class: "bit" }, selector);
-    const selectOne = text(236, 305, "1", { class: "bit" }, selector);
-    const selectedThree = text(
-      374,
-      227,
-      "3",
-      { class: "caption bit" },
-      selector,
-    );
-    const selectedSix = text(374, 227, "6", { class: "caption bit" }, selector);
-    gsap.set([selectOne, selectedSix], { opacity: 0 });
-    show(selector, "select-values", "working-registers", {}, 0.65);
-    caption(
-      "select-values",
-      "a control signal chooses the value",
-      "working-registers",
-    );
-    gsap.set(upper.line, { opacity: 1 });
-    upper.state.amount = 1;
-    const selectDemo = gsap.timeline({ paused: true, repeat: -1 });
-    selectDemo.to(
-      [upper.line, selectZero, selectedThree],
-      { opacity: 0, duration: 0.4 },
-      2,
-    );
-    selectDemo.to(selectOne, { opacity: 1, duration: 0.4 }, 2.4);
-    selectDemo.to(selectedSix, { opacity: 1, duration: 0.4 }, 3.1);
-    illuminate(selectDemo, lower, 2.4);
-    selectDemo.to(
-      [lower.line, selectOne, selectedSix],
-      { opacity: 0, duration: 0.4 },
-      4.5,
-    );
-    selectDemo.set([upper.state, lower.state], { amount: 0 }, 4.9);
-    selectDemo.to(selectZero, { opacity: 1, duration: 0.4 }, 5);
-    selectDemo.to(selectedThree, { opacity: 1, duration: 0.4 }, 5.65);
-    illuminate(selectDemo, upper, 5);
-    selectDemo.to({}, { duration: 1.2 }, 5.65);
-    playInScene("select-values", selectDemo, "timing");
 
     const timing = group({ "data-diagram": "timing" }, root);
     const timingDemo = gsap.timeline({ paused: true });
@@ -245,6 +254,8 @@ export const COMPUTER_SCENES = (function () {
     timingDemo.to({}, { duration: 1.2 }, 7);
     show(timing, "timing", "select-values", {}, 0.65);
     playInScene("timing", timingDemo, "stored-answer");
+
+    if (!includeComputer) return { demos, timingDemo };
 
     const machine = group(
       { "data-diagram": "computer-machine" },

@@ -138,6 +138,11 @@
   stroke: none;
 }
 
+.sand-journey #d2 .voltage-highlight {
+  fill: rgba(84, 161, 116, 0.23);
+  stroke: none;
+}
+
 .sand-journey #d2 .ghost {
   fill: none;
   stroke: none;

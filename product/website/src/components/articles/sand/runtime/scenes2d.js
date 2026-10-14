@@ -324,6 +324,30 @@ export const SCENES2D = (function () {
     caption(6, "higher voltage · lower electron potential energy");
 
     /* ================= 7 · gate at 0 V: a hill blocks the way ================= */
+    const gateVoltageHighlight = mk(
+      "rect",
+      {
+        x: 198,
+        y: 97,
+        width: 44,
+        height: 24,
+        rx: 8,
+        class: "voltage-highlight",
+        "data-gate-voltage-highlight": "",
+      },
+      gSlab,
+    );
+    hideAt0(gateVoltageHighlight);
+    tl.to(
+      gateVoltageHighlight,
+      { opacity: 1, duration: DUR * 0.4, ease: "sine.out" },
+      at(8) + DUR * 0.25,
+    );
+    tl.to(
+      gateVoltageHighlight,
+      { opacity: 0, duration: DUR * 0.4, ease: "sine.in" },
+      at(8) + DUR * 0.75,
+    );
     const vG0 = text(220, 114, "0 V", {}, gSlab);
     show(vG0, 7, 8);
     const vG1 = text(220, 114, "1 V", {}, gSlab);

@@ -7,6 +7,8 @@ const setup = async (page: Page, role = "owner") => {
     role,
     status: "active",
     default_workspace_id: "00000000-0000-4000-8000-000000000002",
+    auto_join_domain: null,
+    onboarding_completed: true,
   };
   const workspace = {
     id: organization.default_workspace_id,

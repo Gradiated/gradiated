@@ -36,7 +36,7 @@ describe("server-owned product events", () => {
     }));
     await createSignupHandler(ensure, client)(user);
     await client.flush();
-    expect(ensure).toHaveBeenCalledWith(user.id);
+    expect(ensure).toHaveBeenCalledWith(user);
     expect(events).toContainEqual(
       expect.objectContaining({
         event: "user_signed_up",

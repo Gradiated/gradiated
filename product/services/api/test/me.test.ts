@@ -66,6 +66,7 @@ describe("current user route", () => {
       name: user.name,
       email: user.email,
       email_verified: true,
+      company_email_domain: "example.com",
       image_url: null,
       created_at: "2026-08-16T12:00:00.000Z",
       organizations: [
@@ -75,6 +76,8 @@ describe("current user route", () => {
           status: "active",
           role: "owner",
           default_workspace_id: workspaceId,
+          auto_join_domain: null,
+          onboarding_completed: false,
         },
       ],
     });

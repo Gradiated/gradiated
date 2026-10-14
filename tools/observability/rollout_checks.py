@@ -24,10 +24,10 @@ def check_rollouts(root):
                 selector = ','.join(f'{k}="{v}"' for k, v in labels.items())
                 return {'series': f'{name}{{{selector}}}', 'values': values}
 
-            def case(label, data, expected):
+            def case(label, data, expected, eval_time='2m'):
                 tests.append({'name': f'rollout {service} {analysis["name"]}: {label}',
                               'interval': '30s', 'input_series': data,
-                              'promql_expr_test': [{'expr': f'{record} > bool 0', 'eval_time': '2m',
+                              'promql_expr_test': [{'expr': f'{record} > bool 0', 'eval_time': eval_time,
                                                    'exp_samples': [{'labels': '{}', 'value': expected}]}]})
 
             if analysis['name'] == 'candidate-metrics-present':
@@ -56,14 +56,16 @@ def check_rollouts(root):
                 success, failure = ('succeeded', 'failed') if stream else ('200', '500')
                 case('idle has no observed error regression', [], 0)
                 case('persistent errors fail', [series(counter, '0+10x8', status=failure)], 1)
+                case('errors outside the 90-second window expire',
+                     [series(counter, '0 0 10 10 10+0x4', status=failure)], 0, eval_time='150s')
                 case('healthy traffic passes', [series(counter, '0+100x8', status=success)], 0)
                 case('isolated error is tolerated', [series(counter, '0 1+0x8', status=failure)], 0)
                 case('exactly two percent errors is allowed', [
-                     series(counter, '0+1x8', status=failure),
-                     series(counter, '0+49x8', status=success)], 0)
+                     series(counter, '0+2x8', status=failure),
+                     series(counter, '0+98x8', status=success)], 0)
                 case('above two percent with enough failures is rejected', [
-                     series(counter, '0+1x8', status=failure),
-                     series(counter, '0+48x8', status=success)], 1)
+                     series(counter, '0+2x8', status=failure),
+                     series(counter, '0+96x8', status=success)], 1)
                 case('high ratio with fewer than three failures is allowed',
                      [series(counter, '0+0.5x8', status=failure)], 0)
                 case('stable errors do not contaminate candidate',

@@ -58,7 +58,9 @@ where api_keys.digest = $1";
 
 const HOSTED_MODELS_QUERY: &str = "select id from models";
 
-const POOL_SIZE: usize = 8;
+// Every replica holds up to this many connections, so the proxy's share of RDS
+// max_connections is POOL_SIZE times maxReplicaCount.
+const POOL_SIZE: usize = 4;
 const QUERY_TIMEOUT: Duration = Duration::from_secs(2);
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(2);
 

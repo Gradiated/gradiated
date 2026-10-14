@@ -11,6 +11,7 @@ import type { components } from "@/api/schema";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { TabsContent } from "@/components/ui/tabs";
 import { OptionTabs } from "@/components/option-select";
 import { useProductContext } from "@/hooks/use-product-context";
@@ -25,8 +26,13 @@ const tabs = [
 
 export const SettingsPage = () => {
   const [tab, setTab] = useState<Scope>("workspace");
-  const { organizationId, workspaceId, workspaces, selectedOrganization } =
-    useProductContext();
+  const {
+    user,
+    organizationId,
+    workspaceId,
+    workspaces,
+    selectedOrganization,
+  } = useProductContext();
   const client = useQueryClient();
   const workspace = workspaces.find((row) => row.id === workspaceId);
   const canEdit =
@@ -48,8 +54,10 @@ export const SettingsPage = () => {
         },
     );
   };
-  const saveOrganization = async (name: string) => {
-    const updated = await updateOrganization(organizationId, { name });
+  const saveOrganization = async (
+    patch: components["schemas"]["UpdateOrganization"],
+  ) => {
+    const updated = await updateOrganization(organizationId, patch);
     client.setQueryData<CurrentUser>(
       queryKeys.me,
       (current) =>
@@ -81,14 +89,29 @@ export const SettingsPage = () => {
         </TabsContent>
         <TabsContent value="organization">
           {selectedOrganization ? (
-            <NameSetting
-              key={`${selectedOrganization.id}:${selectedOrganization.name}`}
-              label="Organization name"
-              savedName={selectedOrganization.name}
-              canEdit={canEdit}
-              onSave={saveOrganization}
-              successMessage="Organization renamed."
-            />
+            <>
+              <NameSetting
+                key={`${selectedOrganization.id}:${selectedOrganization.name}`}
+                label="Organization name"
+                savedName={selectedOrganization.name}
+                canEdit={canEdit}
+                onSave={(name) => saveOrganization({ name })}
+                successMessage="Organization renamed."
+              />
+              <AutoJoinSetting
+                organizationName={selectedOrganization.name}
+                domain={
+                  selectedOrganization.auto_join_domain ??
+                  user?.company_email_domain ??
+                  null
+                }
+                enabled={selectedOrganization.auto_join_domain !== null}
+                canEdit={canEdit}
+                onSave={(domain) =>
+                  saveOrganization({ auto_join_domain: domain })
+                }
+              />
+            </>
           ) : (
             <p role="status">Loading organization settings…</p>
           )}
@@ -159,5 +182,57 @@ const NameSetting = ({
         {save.isPending ? "Saving…" : "Save changes"}
       </Button>
     </form>
+  );
+};
+
+const AutoJoinSetting = ({
+  organizationName,
+  domain,
+  enabled,
+  canEdit,
+  onSave,
+}: {
+  organizationName: string;
+  domain: string | null;
+  enabled: boolean;
+  canEdit: boolean;
+  onSave: (domain: string | null) => Promise<void>;
+}) => {
+  const id = useId();
+  const save = useMutation({
+    mutationFn: onSave,
+    onSuccess: (_, saved) =>
+      toast.success(
+        saved
+          ? "Automatic joining turned on."
+          : "Automatic joining turned off.",
+      ),
+    onError: (error) => toast.error(error.message),
+  });
+
+  if (!domain) return null;
+
+  return (
+    <div className="mt-4 flex max-w-xl items-center gap-6 rounded-xl border bg-card p-6">
+      <div className="min-w-0 flex-1">
+        <label htmlFor={id} className="text-sm font-medium">
+          Anyone with an{" "}
+          <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">
+            @{domain}
+          </code>{" "}
+          email can join
+        </label>
+        <p className="mt-1 text-sm leading-5 text-muted-foreground">
+          Let teammates join {organizationName} without an invite when they sign
+          in with a verified company email.
+        </p>
+      </div>
+      <Switch
+        id={id}
+        checked={save.isPending ? save.variables !== null : enabled}
+        onCheckedChange={(checked) => save.mutate(checked ? domain : null)}
+        disabled={!canEdit || save.isPending}
+      />
+    </div>
   );
 };

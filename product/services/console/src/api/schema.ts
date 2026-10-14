@@ -946,6 +946,8 @@ export interface components {
       /** Format: email */
       email: string;
       email_verified: boolean;
+      /** @description The verified email domain this user may offer for automatic joining, or null for personal and unverified addresses. */
+      company_email_domain: string | null;
       /** Format: uri */
       image_url: string | null;
       /**
@@ -971,9 +973,17 @@ export interface components {
        * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
        */
       default_workspace_id: string;
+      /** @description Users who sign up with a verified email at this domain join the organization automatically. */
+      auto_join_domain: string | null;
+      /** @description Whether the owner has finished first-run setup. */
+      onboarding_completed: boolean;
     };
     UpdateOrganization: {
-      name: string;
+      name?: string;
+      /** @description Must match the caller's verified company email domain, or null to stop automatic joining. */
+      auto_join_domain?: string | null;
+      /** @enum {boolean} */
+      onboarding_completed?: true;
     };
     Organization: {
       /**
@@ -2611,6 +2621,15 @@ export interface operations {
       };
       /** @description Organization not found. */
       404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Another organization already lets this email domain join automatically. */
+      409: {
         headers: {
           [name: string]: unknown;
         };

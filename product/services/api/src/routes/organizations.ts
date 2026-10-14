@@ -12,6 +12,7 @@ import type { OrganizationService } from "@gradiated/control";
 import { createRoute, type OpenAPIHono } from "@hono/zod-openapi";
 
 import { requireUser } from "../http/problems.js";
+import { toCurrentOrganization } from "./me.js";
 import type { ApiEnvironment } from "../types.js";
 
 const createOrganizationRoute = createRoute({
@@ -69,6 +70,11 @@ const updateOrganizationRoute = createRoute({
       content: problemContent,
     },
     404: { description: "Organization not found.", content: problemContent },
+    409: {
+      description:
+        "Another organization already lets this email domain join automatically.",
+      content: problemContent,
+    },
     422: {
       description: "Invalid organization update.",
       content: problemContent,
@@ -95,13 +101,7 @@ export const registerOrganizationRoutes = (
     });
 
     return context.json(
-      CurrentOrganizationSchema.parse({
-        id: updated.id,
-        name: updated.name,
-        status: updated.status,
-        role: updated.role,
-        default_workspace_id: updated.defaultWorkspaceId,
-      }),
+      CurrentOrganizationSchema.parse(toCurrentOrganization(updated)),
       200,
     );
   });

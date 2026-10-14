@@ -1430,6 +1430,15 @@
           "email_verified": {
             "type": "boolean"
           },
+          "company_email_domain": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 253,
+            "pattern": "^[a-z0-9-]+(\\.[a-z0-9-]+)+$",
+            "description": "The verified email domain this user may offer for automatic joining, or null for personal and unverified addresses."
+          },
           "image_url": {
             "type": [
               "string",
@@ -1454,6 +1463,7 @@
           "name",
           "email",
           "email_verified",
+          "company_email_domain",
           "image_url",
           "created_at",
           "organizations"
@@ -1492,6 +1502,19 @@
             "type": "string",
             "format": "uuid",
             "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          },
+          "auto_join_domain": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 253,
+            "pattern": "^[a-z0-9-]+(\\.[a-z0-9-]+)+$",
+            "description": "Users who sign up with a verified email at this domain join the organization automatically."
+          },
+          "onboarding_completed": {
+            "type": "boolean",
+            "description": "Whether the owner has finished first-run setup."
           }
         },
         "required": [
@@ -1499,7 +1522,9 @@
           "name",
           "status",
           "role",
-          "default_workspace_id"
+          "default_workspace_id",
+          "auto_join_domain",
+          "onboarding_completed"
         ]
       },
       "UpdateOrganization": {
@@ -1509,11 +1534,23 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 200
+          },
+          "auto_join_domain": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 253,
+            "pattern": "^[a-z0-9-]+(\\.[a-z0-9-]+)+$",
+            "description": "Must match the caller's verified company email domain, or null to stop automatic joining."
+          },
+          "onboarding_completed": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
-        "required": [
-          "name"
-        ],
         "additionalProperties": false
       },
       "Organization": {
@@ -5648,6 +5685,16 @@
           },
           "404": {
             "description": "Organization not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Another organization already lets this email domain join automatically.",
             "content": {
               "application/problem+json": {
                 "schema": {

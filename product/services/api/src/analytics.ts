@@ -5,6 +5,7 @@ import {
   type WorkspaceEvent,
 } from "@gradiated/analytics";
 import type { PostHogServer } from "@gradiated/analytics/server";
+import type { SignupUser } from "@gradiated/control";
 
 export const createApiAnalytics = (
   client: PostHogServer,
@@ -84,12 +85,12 @@ export type ApiAnalytics = ReturnType<typeof createApiAnalytics>;
 export const createSignupHandler =
   (
     ensureOrganization: (
-      userId: string,
+      user: SignupUser,
     ) => Promise<{ id: string; defaultWorkspaceId: string }>,
     client: PostHogServer,
   ) =>
-  async (user: { id: string; email: string }) => {
-    const organization = await ensureOrganization(user.id);
+  async (user: SignupUser) => {
+    const organization = await ensureOrganization(user);
     client.group(user.id, "organization", organization.id, {
       status: "active",
     });

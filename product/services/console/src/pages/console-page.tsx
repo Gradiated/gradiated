@@ -1,3 +1,4 @@
+import { Navigate } from "@tanstack/react-router";
 import { RefreshCw } from "lucide-react";
 import { useEffect, type ComponentProps, type ReactNode } from "react";
 import { analytics, setAnalyticsScope } from "@/lib/analytics";
@@ -5,6 +6,7 @@ import { analytics, setAnalyticsScope } from "@/lib/analytics";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { useProductContext } from "@/hooks/use-product-context";
+import { organizationToOnboard } from "@/lib/onboarding";
 import { cn } from "@/lib/utils";
 
 const WIDTH_CLASS = {
@@ -40,6 +42,8 @@ export const ConsolePage = ({
 
     setAnalyticsScope(user.id, organizationId, workspaceId, isDefault);
   }, [user?.id, organizationId, workspaceId, isDefault]);
+
+  if (organizationToOnboard(user)) return <Navigate to="/onboarding" />;
 
   return (
     <AppShell

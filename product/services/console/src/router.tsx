@@ -12,6 +12,7 @@ import { ApiKeysPage } from "@/pages/api-keys-page";
 import { BillingPage } from "@/pages/billing-page";
 import { LoginPage } from "@/pages/login-page";
 import { ModelsPage } from "@/pages/models-page";
+import { OnboardingPage } from "@/pages/onboarding-page";
 
 const rootRoute = createRootRoute({ component: Outlet });
 
@@ -29,6 +30,12 @@ const loginRoute = createRoute({
   component: LoginPage,
 });
 
+const onboardingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/onboarding",
+  component: OnboardingPage,
+});
+
 const apiKeysRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/api-keys",
@@ -38,6 +45,11 @@ const apiKeysRoute = createRoute({
 const modelsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/models",
+  validateSearch: (search: Record<string, unknown>) => ({
+    ...(search.welcome === true || search.welcome === "true"
+      ? { welcome: true }
+      : {}),
+  }),
   component: ModelsPage,
 });
 
@@ -99,6 +111,7 @@ const settingsRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
+  onboardingRoute,
   apiKeysRoute,
   modelsRoute,
   tasksRoute,

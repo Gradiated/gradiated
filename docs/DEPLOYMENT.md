@@ -77,19 +77,22 @@ After migration, image changes still go into the Deployment template, while
 KEDA scales the Rollout. Rollouts skip canary steps on initial creation: the
 first takeover is a readiness-gated migration, not a canary regression test.
 
-For later image changes, the Rollout uses 33%, 67% and 100% replica steps with
+For later image changes, the Rollout uses 10%, 25%, 50% and 100% replica steps with
 zero allowed unavailable replicas and one surge pod. Each intermediate step
-runs seven candidate-only readiness requests over two minutes. Background
-analysis begins after the first replica step is ready, then checks every
-30 seconds for fresh scrapes from every ready candidate pod and server errors.
+runs seven candidate-only readiness requests over 90 seconds. Background
+analysis begins after the first replica step is ready, waits 30 seconds for
+initial scrapes, then checks every 15 seconds for fresh scrapes from every ready
+candidate pod and server errors. All three services are scraped every 5 seconds.
 Missing or stale candidate targets or replica-count telemetry fail the check.
-The configured `failureLimit: 1` aborts on the second failed measurement. Repeated provider
-errors also fail analysis instead of qualifying a release.
-A two-minute window with at least three 5xx responses and a server-error ratio
+The configured `failureLimit: 1` aborts on the second failed measurement, nominally
+at 45 seconds for a persistently failing candidate, before the first 90-second
+soak ends. Background analysis continues across subsequent steps. Repeated
+provider errors also fail analysis instead of qualifying a release.
+A 90-second window with at least three 5xx responses and a server-error ratio
 above 2% fails a measurement. Gateway analysis additionally checks failed
 terminal generations, including errors after streaming response headers.
-The 100% step waits for pod readiness and completes promotion without a third
-timed soak. The two soaks add about four minutes, plus scheduling, startup and
+The 100% step waits for pod readiness and completes promotion without a fourth
+timed soak. The three soaks add about four and a half minutes, plus scheduling, startup and
 check overhead; the services progress independently. The progress deadline aborts
 an update that cannot make progress for 20 minutes.
 

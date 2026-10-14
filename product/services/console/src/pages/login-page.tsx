@@ -40,7 +40,7 @@ const callbackUrl = (path: string) =>
 
 const signInCallbacks = () => ({
   callbackURL: callbackUrl("/api-keys"),
-  newUserCallbackURL: callbackUrl("/api-keys"),
+  newUserCallbackURL: callbackUrl("/onboarding"),
   errorCallbackURL: callbackUrl("/login"),
 });
 

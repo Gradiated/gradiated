@@ -119,16 +119,20 @@ Email/password is the launch path, so the OAuth fields are initially null.
 
 Direct customers and distribution channels such as OpenRouter use the same organization boundary.
 
-| Field        | Type        | Null | Rules                              |
-| ------------ | ----------- | ---- | ---------------------------------- |
-| `id`         | uuid        | no   | Primary key                        |
-| `kind`       | text        | no   | `customer`, `distribution_channel` |
-| `name`       | text        | no   | Bounded display name               |
-| `status`     | text        | no   | `active`, `suspended`              |
-| `created_at` | timestamptz | no   | Creation time                      |
-| `updated_at` | timestamptz | no   | Last mutation time                 |
+| Field              | Type        | Null | Rules                                       |
+| ------------------ | ----------- | ---- | ------------------------------------------- |
+| `id`               | uuid        | no   | Primary key                                 |
+| `kind`             | text        | no   | `customer`, `distribution_channel`          |
+| `name`             | text        | no   | Bounded display name                        |
+| `status`           | text        | no   | `active`, `suspended`                       |
+| `auto_join_domain` | text        | yes  | Lowercase email domain; unique when present |
+| `onboarded_at`     | timestamptz | yes  | When the owner finished first-run setup     |
+| `created_at`       | timestamptz | no   | Creation time                               |
+| `updated_at`       | timestamptz | no   | Last mutation time                          |
 
 OpenRouter is an internal `distribution_channel` organization and is not visible in the customer organization chooser.
+
+A new user's signup organization has a null `onboarded_at`, and the console asks its owner to name it before continuing. An owner or admin may set `auto_join_domain` only to the domain of their own verified email, and only when that domain is not a free or disposable email provider. When a user signs up with a verified email at a claimed domain of an active customer organization, they join it as a `member` and no personal organization is created. One organization may claim a domain.
 
 ### 6. `organization_members`
 
@@ -165,17 +169,17 @@ There is at most one pending invitation per organization and normalized email.
 
 ### 8. `workspaces`
 
-| Field             | Type        | Null | Rules                                                   |
-| ----------------- | ----------- | ---- | ------------------------------------------------------- |
-| `id`              | uuid        | no   | Primary key                                             |
-| `organization_id` | uuid        | no   | FK `organizations.id`                                   |
-| `name`            | text        | no   | Unique per organization, case-insensitively             |
-| `is_default`      | boolean     | no   | Exactly one default workspace per organization          |
-| `archived_at`     | timestamptz | yes  | Null while usable; archived workspaces cannot serve API |
-| `trace_capture_enabled` | boolean | no | Content capture; defaults to true |
-| `trace_retention_days` | smallint | no | 30, 90 or 180; defaults to 180 |
-| `created_at`      | timestamptz | no   | Creation time                                           |
-| `updated_at`      | timestamptz | no   | Last mutation time                                      |
+| Field                   | Type        | Null | Rules                                                   |
+| ----------------------- | ----------- | ---- | ------------------------------------------------------- |
+| `id`                    | uuid        | no   | Primary key                                             |
+| `organization_id`       | uuid        | no   | FK `organizations.id`                                   |
+| `name`                  | text        | no   | Unique per organization, case-insensitively             |
+| `is_default`            | boolean     | no   | Exactly one default workspace per organization          |
+| `archived_at`           | timestamptz | yes  | Null while usable; archived workspaces cannot serve API |
+| `trace_capture_enabled` | boolean     | no   | Content capture; defaults to true                       |
+| `trace_retention_days`  | smallint    | no   | 30, 90 or 180; defaults to 180                          |
+| `created_at`            | timestamptz | no   | Creation time                                           |
+| `updated_at`            | timestamptz | no   | Last mutation time                                      |
 
 In addition to the primary key, `workspaces` has a unique `(organization_id, id)` constraint. `api_keys(organization_id, workspace_id)` references that composite key, so PostgreSQL enforces that an API key and its workspace belong to the same organization rather than relying only on application checks.
 
@@ -210,14 +214,14 @@ The raw format is `grad_<32 random bytes encoded as base64url>`. Authentication 
 
 Global hosted-model catalog. It is not organization-scoped. The primary key is the immutable human-readable model identifier used in direct requests and returned to OpenRouter, for example `google/gemma-4-31b-it`.
 
-| Field        | Type        | Null | Rules                                        |
-| ------------ | ----------- | ---- | -------------------------------------------- |
+| Field        | Type        | Null | Rules                                            |
+| ------------ | ----------- | ---- | ------------------------------------------------ |
 | `id`         | text        | no   | Primary key; lowercase immutable public model ID |
-| `name`       | text        | no   | Bounded customer-facing name                 |
-| `status`     | text        | no   | `available`, `unavailable`, `retired`        |
-| `properties` | jsonb       | no   | Closed Zod `ModelProperties` document        |
-| `created_at` | timestamptz | no   | Creation time                                |
-| `updated_at` | timestamptz | no   | Last mutation time                           |
+| `name`       | text        | no   | Bounded customer-facing name                     |
+| `status`     | text        | no   | `available`, `unavailable`, `retired`            |
+| `properties` | jsonb       | no   | Closed Zod `ModelProperties` document            |
+| `created_at` | timestamptz | no   | Creation time                                    |
+| `updated_at` | timestamptz | no   | Last mutation time                               |
 
 `ModelProperties` is a closed, versioned Zod document inspired by OpenRouter's
 current provider schema. It keeps model capabilities, limits, and prices in the
@@ -225,18 +229,18 @@ same modality-owned structure used to advertise the model, without storing the
 OpenRouter wire response verbatim. Exact deployed model and tokenizer artifacts
 belong to `model_deployments`, not to this customer-facing document.
 
-| Property                 | Type                    | Rules                                                        |
-| ------------------------ | ----------------------- | ------------------------------------------------------------ |
-| `schema_version`         | integer                 | Initially `1`                                                |
-| `description`            | string                  | Bounded customer-facing description                          |
-| `released_at`            | timestamp nullable      | Upstream model release time                                  |
-| `hugging_face_id`        | string nullable         | Upstream repository identity                                 |
-| `quantization`           | string nullable         | Closed OpenRouter-compatible quantization                    |
-| `tokenizer`              | string nullable         | Tokenizer family exposed to OpenRouter                       |
-| `input_modalities`       | input-modality[]        | Nonempty typed modality documents                            |
-| `output_modalities`      | output-modality[]       | Nonempty typed modality documents                            |
-| `passthrough_parameters` | capability-descriptor map | Bounded request-scoped extension allowlist                 |
-| `deprecation_date`       | timestamp nullable      | Optional scheduled retirement                                |
+| Property                 | Type                      | Rules                                      |
+| ------------------------ | ------------------------- | ------------------------------------------ |
+| `schema_version`         | integer                   | Initially `1`                              |
+| `description`            | string                    | Bounded customer-facing description        |
+| `released_at`            | timestamp nullable        | Upstream model release time                |
+| `hugging_face_id`        | string nullable           | Upstream repository identity               |
+| `quantization`           | string nullable           | Closed OpenRouter-compatible quantization  |
+| `tokenizer`              | string nullable           | Tokenizer family exposed to OpenRouter     |
+| `input_modalities`       | input-modality[]          | Nonempty typed modality documents          |
+| `output_modalities`      | output-modality[]         | Nonempty typed modality documents          |
+| `passthrough_parameters` | capability-descriptor map | Bounded request-scoped extension allowlist |
+| `deprecation_date`       | timestamp nullable        | Optional scheduled retirement              |
 
 The public Models API adds a required `properties.type` (`chat` or `decision`)
 from the Git-owned model catalog metadata. This field is response-only and is
@@ -380,13 +384,13 @@ There is no projection queue or outbox table. Most serving projections are low-v
 
 Projection behavior is explicit by state:
 
-| Valkey state | Ordinary synchronization rule |
-| ------------ | ----------------------------- |
-| `GatewayCredential` | Replace from the current PostgreSQL API-key row. |
-| `GatewayWorkspace` | Replace from the current PostgreSQL workspace row. |
-| `GatewayModel` | Replace from the current PostgreSQL model row and all of its deployment rows. |
-| `GatewayAccount.organization_id`, `organization_kind`, `organization_status`, `billing_mode` | Replace the selected nonmonetary hash fields from current PostgreSQL state. |
-| `GatewayAccount.balance` | Never overwrite from the current PostgreSQL row during ordinary operation; apply eligible PostgreSQL `balance_transactions` exactly once as deltas. |
+| Valkey state                                                                                 | Ordinary synchronization rule                                                                                                                       |
+| -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GatewayCredential`                                                                          | Replace from the current PostgreSQL API-key row.                                                                                                    |
+| `GatewayWorkspace`                                                                           | Replace from the current PostgreSQL workspace row.                                                                                                  |
+| `GatewayModel`                                                                               | Replace from the current PostgreSQL model row and all of its deployment rows.                                                                       |
+| `GatewayAccount.organization_id`, `organization_kind`, `organization_status`, `billing_mode` | Replace the selected nonmonetary hash fields from current PostgreSQL state.                                                                         |
+| `GatewayAccount.balance`                                                                     | Never overwrite from the current PostgreSQL row during ordinary operation; apply eligible PostgreSQL `balance_transactions` exactly once as deltas. |
 
 This distinction prevents an account metadata update or periodic reconciliation
 from erasing finalized Valkey usage that has not yet reached PostgreSQL.
@@ -406,18 +410,18 @@ may have multiple rows. The gateway combines these rows with fresh deployment
 status from Valkey. It uses rendezvous hashing for stable placement and one
 shared concurrency lease for admission.
 
-| Field          | Type        | Null | Rules                                                     |
-| -------------- | ----------- | ---- | --------------------------------------------------------- |
-| `id`           | uuid        | no   | Primary key; stable deployment identity                   |
-| `model_id`     | text        | no   | FK `models.id`                                            |
-| `status`       | text        | no   | `available`, `unavailable`, `draining`                    |
-| `provider`     | text        | no   | GPU provider identifier                                   |
-| `region`       | text        | no   | Provider region identifier                                |
-| `fault_domain` | text        | no   | Failure boundary used for retry placement                 |
+| Field          | Type        | Null | Rules                                                      |
+| -------------- | ----------- | ---- | ---------------------------------------------------------- |
+| `id`           | uuid        | no   | Primary key; stable deployment identity                    |
+| `model_id`     | text        | no   | FK `models.id`                                             |
+| `status`       | text        | no   | `available`, `unavailable`, `draining`                     |
+| `provider`     | text        | no   | GPU provider identifier                                    |
+| `region`       | text        | no   | Provider region identifier                                 |
+| `fault_domain` | text        | no   | Failure boundary used for retry placement                  |
 | `service_url`  | text        | no   | Bounded private or restricted absolute HTTP(S) runtime URL |
-| `release`      | jsonb       | no   | Closed Zod `ModelDeploymentRelease` document              |
-| `created_at`   | timestamptz | no   | Creation time                                             |
-| `updated_at`   | timestamptz | no   | Last durable mutation                                     |
+| `release`      | jsonb       | no   | Closed Zod `ModelDeploymentRelease` document               |
+| `created_at`   | timestamptz | no   | Creation time                                              |
+| `updated_at`   | timestamptz | no   | Last durable mutation                                      |
 
 `ModelDeploymentRelease` contains `schema_version`, initially `1`, plus
 `runtime_revision`, `model_path`, `model_revision`, `tokenizer_path`, and
@@ -618,12 +622,12 @@ Valkey key: `credential:<hex SHA-256 digest>`. The digest is the lookup key and 
 
 Valkey key: `model:<id>`.
 
-| Field        | Type              |
-| ------------ | ----------------- |
-| `id`         | string            |
-| `name`       | string            |
-| `status`     | model status      |
-| `properties` | `ModelProperties` |
+| Field         | Type                       |
+| ------------- | -------------------------- |
+| `id`          | string                     |
+| `name`        | string                     |
+| `status`      | model status               |
+| `properties`  | `ModelProperties`          |
 | `deployments` | `GatewayModelDeployment[]` |
 
 This is the route-ready projection of one PostgreSQL `models` row and all of
@@ -652,14 +656,14 @@ the durable runtime revision before it writes the field.
 
 Timing values, as implemented:
 
-| Stage | Value |
-| ----- | ----- |
-| Desmond send interval | 1 second |
-| Gateway in-memory status cache | 1 second |
-| Gateway accepts status age | 15 seconds |
-| Valkey key TTL | 30 seconds |
+| Stage                                | Value      |
+| ------------------------------------ | ---------- |
+| Desmond send interval                | 1 second   |
+| Gateway in-memory status cache       | 1 second   |
+| Gateway accepts status age           | 15 seconds |
+| Valkey key TTL                       | 30 seconds |
 | Desmond ready gate after last upload | 10 seconds |
-| Future-dated tolerance | 5 seconds |
+| Future-dated tolerance               | 5 seconds  |
 
 The key TTL is longer than the acceptance window. The gateway staleness check is
 the binding limit, so the key can outlive its usability. The gateway also

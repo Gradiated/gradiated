@@ -50,6 +50,14 @@ def main():
     resources = [r for r in yaml.safe_load_all(rendered) if r]
     templates = {r['metadata']['name']: r for r in resources if r['kind'] == 'AnalysisTemplate'}
     for template in templates.values():
+        for metric in template['spec']['metrics']:
+            if 'prometheus' not in metric['provider']:
+                continue
+            delay = int(metric['initialDelay'].removesuffix('s'))
+            interval = int(metric['interval'].removesuffix('s'))
+            # Leave one 15-second analysis interval before the 90-second soak ends.
+            assert delay + metric['failureLimit'] * interval <= 75, \
+                'Persistent telemetry failures must abort before the first soak ends'
         assert int(template['metadata'].get('annotations', {}).get('argocd.argoproj.io/sync-wave', '0')) < 0, \
             'Shared analysis templates must sync before the API Rollout'
     for resource in resources:
@@ -66,7 +74,10 @@ def main():
         assert canary['analysis']['startingStep'] == 1
         for ref in canary['analysis']['templates']:
             assert ref['templateName'] in templates
-        assert [s['setWeight'] for s in canary['steps'] if 'setWeight' in s] == [33, 67, 100]
+        assert [s['setWeight'] for s in canary['steps'] if 'setWeight' in s] == [10, 25, 50, 100]
+        assert len(canary['steps']) == 7
+        for step in canary['steps'][1::2]:
+            assert step['analysis']['templates'] == [{'templateName': 'service-readiness'}]
         print(f'Validated Rollout and analysis references: {name}')
 
 

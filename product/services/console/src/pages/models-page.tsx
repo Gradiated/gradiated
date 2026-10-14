@@ -4,9 +4,11 @@ import {
   TRAINING_ONLY_MODELS,
 } from "@gradiated/contracts/model-catalog";
 import { useQuery } from "@tanstack/react-query";
-import { CircleCheck, LoaderCircle } from "lucide-react";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { Check, CircleCheck, LoaderCircle } from "lucide-react";
 
 import {
+  billingAccountQuery,
   modelsQuery,
   type Model,
   type ServiceTierPricingPolicy,
@@ -19,8 +21,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { useProductContext } from "@/hooks/use-product-context";
 import { ConsolePage, LoadFailed } from "@/pages/console-page";
-import { formatUsd } from "@/lib/format";
+import { formatNanoUsd, formatUsd } from "@/lib/format";
 import { tierPriceRows } from "@/pages/model-pricing";
 
 const tierLabel = (policy: ServiceTierPricingPolicy): string => {
@@ -33,7 +37,54 @@ const tierLabel = (policy: ServiceTierPricingPolicy): string => {
   return `${name} (${sign}${policy.price_change_percent}%)`;
 };
 
+const WelcomeBanner = () => {
+  const { organizationId, selectedOrganization } = useProductContext();
+  const account = useQuery(billingAccountQuery(organizationId));
+  const navigate = useNavigate({ from: "/models" });
+  const balance = BigInt(account.data?.balance ?? 0);
+
+  if (!selectedOrganization) return null;
+
+  return (
+    <div className="mb-5 flex flex-col gap-4 rounded-xl border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:px-5">
+      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-[#e9f6b9] text-[#3f4c12]">
+        <Check className="size-4" />
+      </span>
+      <div className="min-w-0 flex-1 text-sm">
+        <p className="font-semibold">{selectedOrganization.name} is ready</p>
+        <p className="mt-0.5 text-muted-foreground">
+          {balance > 0n
+            ? `You have ${formatNanoUsd(balance)} in free credit. `
+            : null}
+          Set up your application with one of our models.{" "}
+          <a
+            href="https://gradiated.com/docs"
+            target="_blank"
+            rel="noreferrer"
+            className="text-foreground underline underline-offset-4"
+          >
+            Read the docs
+          </a>
+        </p>
+      </div>
+      <div className="flex shrink-0 gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => void navigate({ search: {} })}
+        >
+          Dismiss
+        </Button>
+        <Button size="sm" asChild>
+          <Link to="/api-keys">Create API key</Link>
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 export const ModelsPage = () => {
+  const { welcome } = useSearch({ from: "/models" });
   const models = useQuery(modelsQuery());
   const servingModels = (models.data?.data ?? []).filter(
     (model) => !TRAINING_ONLY_MODELS.some((base) => base.id === model.id),
@@ -45,6 +96,7 @@ export const ModelsPage = () => {
       title="Models"
       description="Choose a model and copy its ID to start making requests."
     >
+      {welcome ? <WelcomeBanner /> : null}
       {models.isLoading ? (
         <div className="grid min-h-64 place-items-center rounded-xl border bg-card">
           <LoaderCircle className="size-5 animate-spin text-muted-foreground" />

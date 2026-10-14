@@ -7,6 +7,12 @@ and alert resources live under
 Application metrics contain no organization, workspace, API-key, generation,
 prompt, or completion labels.
 
+Application metrics for API, gateway, proxy, collector, worker, and Temporal
+worker are scraped every 5 seconds with a 5-second timeout. Canary analysis
+queries Prometheus every 15 seconds after a 30-second initial delay; its
+90-second error window normally contains about eighteen samples per series.
+Infrastructure exporters and public probes keep their separate scrape cadences.
+
 ## Service coverage
 
 | Service        | Signal source                          | Important signals                                                                                                                                                            | Dashboard                      |
@@ -91,8 +97,19 @@ Alertmanager reads the token as a Bearer credential. The URL and token must
 never enter Git.
 
 `InfoInhibitor` is disabled. It is an upstream helper for suppressing standalone
-informational alerts, not a service failure. `Watchdog`, `InfoInhibitor`, and
-`info`/`none` severity alerts go to a null receiver. Unknown severities retain
+informational alerts, not a service failure. `InfoInhibitor` and
+`info`/`none` severity alerts go to a null receiver.
+
+`Watchdog` always fires. Alertmanager re-sends it every one to two minutes to an
+incident.io heartbeat alert source, which raises an Urgent alert when no ping
+arrives for ten minutes. A Prometheus, Alertmanager, egress or cluster outage
+therefore pages instead of silencing every alert. The `incident-io` Terraform
+unit creates the heartbeat and writes its ping URL and token to
+`gradiated/prod/platform/alertmanager-heartbeat`; the Alertmanager
+ExternalSecret merges them into the same Secret as the incident webhook. A
+heartbeat does not monitor until its first ping, so after changing this path
+confirm in incident.io that pings arrive. To test paging, silence `Watchdog`
+in Alertmanager for 15 minutes and expect a page within about ten. Unknown severities retain
 the incident receiver so a mislabeled failure is not silently discarded.
 For warning severity in the `gradiated` namespace, `KubeHpaMaxedOut`,
 `AutoscalingLimited`, and `RequestPathAutoscalingLimited` also go to the null
@@ -150,6 +167,10 @@ StatefulSet and DaemonSet rollouts, and generation mismatches. They also cover
 Prometheus rule evaluation/scrape failures and Alertmanager delivery failures.
 The `gradiated-logging` rules cover Loki replica loss, collector availability,
 dropped logs, delivery retries, and propagation latency.
+The `gradiated-data-stores` rules read RDS and Valkey CloudWatch metrics through
+`cloudwatch-exporter`. They page when product database storage is nearly full or
+Valkey evicts keys, and warn on connections, CPU, memory, and Valkey storage,
+ECPU and throttling. `DataStoreMetricsMissing` warns if the metrics stop.
 Healthy deployments do not create incidents; rollout failures and service
 regressions do.
 
@@ -190,11 +211,11 @@ absence of separate vendor-managed notifications outside the inspected systems.
 
 | Area | Existing protection | Important remaining gap and next action |
 | --- | --- | --- |
-| Monitoring and notifications — highest priority | Prometheus/Alertmanager self-monitoring and notification-failure rules | Watchdog is discarded and both servers have one replica. A cluster/monitoring outage can disable its own alarm. Configure an independently hosted heartbeat receiver and verify missing-heartbeat paging and delivery end to end; then assess HA placement. |
+| Monitoring and notifications — highest priority | Prometheus/Alertmanager self-monitoring and notification-failure rules; Watchdog heartbeat to incident.io | Both servers have one replica. The heartbeat proves Alertmanager can reach incident.io, not that the incident webhook credential works. Assess HA placement and alert on webhook delivery failures. |
 | Customer serving — highest priority | Public API/console probes; gateway request, generation and dependency metrics | Probes originate inside EKS and do not authenticate or run inference. Add an external, bounded exact-model synthetic transaction validating authentication, first token, completion, and usage. It needs an authorized test account, spend limit and external scheduler. |
 | Billing-integrity events | Immediate finalization/backpressure rules with first-event timestamp gauges; leader-aware worker progress and eligible backlog | Timestamp gauges cover first-sample events, but a process that dies before any subsequent scrape can still lose in-memory evidence. Durable billing records remain the accounting authority. |
-| PostgreSQL and Valkey | App dependency checks; primary RDS is Multi-AZ, deletion-protected, has 35-day backups and recent restorable time; cache has seven-day snapshots | No CloudWatch alarms. Add routed alarms for RDS free storage/connections/CPU credits and database availability, plus Valkey throttling, storage usage and failed requests. Cache caps are 10 GB and 5,000 ECPU/s. Dependency health alone provides no capacity lead time. |
-| ClickHouse / ingestion | Worker failures, pending age, eligible settlement backlog; Terraform specifies two replicas and daily backups retained seven days | No direct ClickHouse scrape target was present. Add query/insert failures, storage/resource saturation and backup freshness checks. Unread stream age is not measured; pending-only alerts cannot prove ingestion completeness. |
+| PostgreSQL and Valkey | App dependency checks; primary RDS is Multi-AZ, deletion-protected, has 35-day backups and recent restorable time; cache has 30-day snapshots; `gradiated-data-stores` alerts on RDS storage, connections, CPU and memory, and on Valkey storage, ECPU, throttling and evictions | RDS failover and availability events are not routed. Connection thresholds assume the default `max_connections`. |
+| ClickHouse / ingestion | Worker failures, pending age, eligible settlement backlog; Terraform specifies two replicas and daily backups retained 30 days | No direct ClickHouse scrape target was present. Add query/insert failures, storage/resource saturation and backup freshness checks. Unread stream age is not measured; pending-only alerts cannot prove ingestion completeness. |
 | GPU runtimes | Kubernetes Node and Rollout health, SDK qualification, and gateway generation outcomes | Monitor desired versus ready capacity, Pending pods, controller availability and runtime failures. Pod process health alone is not serving qualification or spare capacity. |
 | Deployment, DNS, load balancers and secrets | Kubernetes defaults, public probes and direct controller scrapes. Three warnings cover Argo degraded/failed automatic reconciliation (15m), External Secret not ready (10m), and DNS last successful sync >10m for 5m. Controller dashboard includes ALB reconciliation failures/latency. | ALB target health and load-balancer-generated errors still need direct AWS telemetry; edge request metrics only see requests that reach the gateway. Manual-sync application drift is intentionally excluded. |
 | Recovery | RDS/Valkey backup retention configured; ClickHouse backup policy in Terraform | Backup policy is not restore proof. Verify backup freshness and perform bounded restore/failover exercises with measured recovery time and data loss. Do not claim these were tested by this alert review. |

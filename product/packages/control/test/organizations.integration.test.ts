@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -261,5 +262,153 @@ describe("organization settings", () => {
       service.updateForUser(userId, organizationId, { name: "   " }),
     ).rejects.toThrow();
     expect(await service.listForUser(userId)).toEqual(before);
+  });
+});
+
+describe("organization onboarding and domain auto-join", () => {
+  let db: TestDatabase;
+  let service: OrganizationService;
+  beforeAll(async () => {
+    db = await createTestDatabase();
+    service = createOrganizationService(db.database);
+  });
+  afterAll(() => db.dispose());
+
+  const companyUser = async (domain: string, emailVerified = true) => {
+    const email = `${randomUUID()}@${domain}`;
+    const id = await seedUser(db.database, { email, emailVerified });
+
+    return { id, email, emailVerified };
+  };
+  const uniqueDomain = () => `acme-${randomUUID()}.com`;
+
+  it("marks signup organizations for onboarding and created ones as onboarded", async () => {
+    const userId = await seedUser(db.database);
+
+    const personal = await service.ensurePersonalForUser(userId);
+    const created = await service.createForUser(userId, "Team");
+
+    expect(personal).toMatchObject({
+      onboardingCompleted: false,
+      autoJoinDomain: null,
+    });
+    expect(
+      (await service.listForUser(userId)).find((row) => row.id === created.id),
+    ).toMatchObject({ onboardingCompleted: true });
+  });
+
+  it("completes onboarding with a name and the owner's company domain", async () => {
+    const domain = uniqueDomain();
+    const owner = await companyUser(domain);
+    const personal = await service.ensurePersonalForUser(owner.id);
+
+    const updated = await service.updateForUser(owner.id, personal.id, {
+      name: "Acme",
+      auto_join_domain: domain,
+      onboarding_completed: true,
+    });
+
+    expect(updated).toMatchObject({
+      name: "Acme",
+      autoJoinDomain: domain,
+      onboardingCompleted: true,
+    });
+
+    const updatedAgain = await service.updateForUser(owner.id, personal.id, {
+      auto_join_domain: null,
+    });
+    expect(updatedAgain).toMatchObject({
+      autoJoinDomain: null,
+      onboardingCompleted: true,
+    });
+  });
+
+  it.each([
+    ["another company's domain", true, "other.example"],
+    ["an unverified email domain", false, undefined],
+  ])("refuses %s", async (_label, emailVerified, requested) => {
+    const domain = uniqueDomain();
+    const owner = await companyUser(domain, emailVerified);
+    const personal = await service.ensurePersonalForUser(owner.id);
+
+    await expect(
+      service.updateForUser(owner.id, personal.id, {
+        auto_join_domain: requested ?? domain,
+      }),
+    ).rejects.toMatchObject({ code: "forbidden" });
+  });
+
+  it("refuses personal email domains", async () => {
+    const owner = await companyUser("gmail.com");
+    const personal = await service.ensurePersonalForUser(owner.id);
+
+    await expect(
+      service.updateForUser(owner.id, personal.id, {
+        auto_join_domain: "gmail.com",
+      }),
+    ).rejects.toMatchObject({ code: "forbidden" });
+  });
+
+  it("lets only one organization claim a domain", async () => {
+    const domain = uniqueDomain();
+    const first = await companyUser(domain);
+    const second = await companyUser(domain);
+    const firstOrganization = await service.ensurePersonalForUser(first.id);
+    const secondOrganization = await service.ensurePersonalForUser(second.id);
+    await service.updateForUser(first.id, firstOrganization.id, {
+      auto_join_domain: domain,
+    });
+
+    await expect(
+      service.updateForUser(second.id, secondOrganization.id, {
+        auto_join_domain: domain,
+      }),
+    ).rejects.toMatchObject({ code: "conflict" });
+  });
+
+  it("adds verified signups at a claimed domain as members instead of creating a personal organization", async () => {
+    const domain = uniqueDomain();
+    const owner = await companyUser(domain);
+    const acme = await service.ensurePersonalForUser(owner.id);
+    await service.updateForUser(owner.id, acme.id, {
+      name: "Acme",
+      auto_join_domain: domain,
+      onboarding_completed: true,
+    });
+    const teammate = await companyUser(domain);
+
+    const joined = await service.ensureForNewUser(teammate);
+
+    expect(joined).toMatchObject({
+      id: acme.id,
+      name: "Acme",
+      role: "member",
+      onboardingCompleted: true,
+    });
+    expect(await service.listForUser(teammate.id)).toHaveLength(1);
+    expect(await service.ensureForNewUser(teammate)).toMatchObject({
+      id: acme.id,
+    });
+  });
+
+  it("creates a personal organization for unverified or unclaimed domains", async () => {
+    const domain = uniqueDomain();
+    const owner = await companyUser(domain);
+    const acme = await service.ensurePersonalForUser(owner.id);
+    await service.updateForUser(owner.id, acme.id, {
+      auto_join_domain: domain,
+    });
+    const unverified = await companyUser(domain, false);
+    const elsewhere = await companyUser(uniqueDomain());
+
+    for (const user of [unverified, elsewhere]) {
+      const organization = await service.ensureForNewUser(user);
+
+      expect(organization).toMatchObject({
+        name: "Personal",
+        role: "owner",
+        onboardingCompleted: false,
+      });
+    }
   });
 });

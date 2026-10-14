@@ -80,6 +80,8 @@ export const organizationSummary: UserOrganization = {
   status: "active",
   role: "owner",
   defaultWorkspaceId: workspaceId,
+  autoJoinDomain: null,
+  onboardingCompleted: false,
 };
 
 export const createdOrganization: CreatedOrganization = {

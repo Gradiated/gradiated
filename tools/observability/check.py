@@ -26,7 +26,7 @@ def main():
         parser.error('promtool is required')
     dashboards = {d['uid']: d for p in OBS.glob('*.json')
                   if (d := json.loads(p.read_text()))}
-    groups = [g for name in ('prometheus-rules.yaml', 'logging-prometheus-rules.yaml', 'controller-prometheus-rules.yaml', 'autoscaling-prometheus-rules.yaml', 'model-replica-rules.yaml')
+    groups = [g for name in ('prometheus-rules.yaml', 'logging-prometheus-rules.yaml', 'controller-prometheus-rules.yaml', 'autoscaling-prometheus-rules.yaml', 'model-replica-rules.yaml', 'data-store-prometheus-rules.yaml')
               for g in yaml.safe_load((OBS / name).read_text())['spec']['groups']]
     alerts = {rule['alert']: rule for group in groups for rule in group['rules'] if 'alert' in rule}
     for name, rule in alerts.items():
@@ -698,6 +698,59 @@ def main():
     dns_alert = 'DnsSyncStalled'
     for name, values, fires in [('syncing', '0+30x40', False), ('stalled', '0+0x40', True), ('recovered', '0+0x24 750+30x15', False)]:
         scenario('DNS ' + name, [{'series': 'external_dns_controller_last_sync_timestamp_seconds', 'values': values}], dns_alert if fires else None, [dns_alert], eval_time='16m')
+
+    # Each threshold applies only to its own instance, and the cache alerts ignore
+    # samples CloudWatch omits when a count is zero.
+    data_store_alerts = ['DatabaseStorageLow', 'DatabaseConnectionsHigh', 'DatabaseCpuHigh',
+                         'DatabaseMemoryLow', 'CacheNearStorageLimit', 'CacheNearEcpuLimit',
+                         'CacheThrottling', 'CacheEvictions', 'DataStoreMetricsMissing']
+    def rds(metric, instance, values):
+        return {'series': f'aws_rds_{metric}{{dbinstance_identifier="{instance}"}}', 'values': values}
+    def cache(metric, values):
+        return {'series': f'aws_elasticache_{metric}{{cluster_id="gradiated-prod"}}', 'values': values}
+    healthy = {
+        ('free_storage_space_minimum', 'gradiated-prod'): f'{50 * 2**30}+0x40',
+        ('free_storage_space_minimum', 'gradiated-prod-metabase'): f'{10 * 2**30}+0x40',
+        ('database_connections_maximum', 'gradiated-prod'): '40+0x40',
+        ('database_connections_maximum', 'gradiated-prod-metabase'): '5+0x40',
+        ('cpuutilization_average', 'gradiated-prod'): '20+0x40',
+        ('cpuutilization_average', 'gradiated-prod-metabase'): '5+0x40',
+        ('freeable_memory_minimum', 'gradiated-prod'): f'{2 * 2**30}+0x40',
+        ('freeable_memory_minimum', 'gradiated-prod-metabase'): f'{2**30}+0x40',
+        ('bytes_used_for_cache_maximum', None): '1e8+0x40',
+        ('elasti_cache_processing_units_sum', None): '6000+0x40',
+    }
+    def data_store_inputs(**overrides):
+        inputs = []
+        for (metric, instance), values in healthy.items():
+            values = overrides.pop(f'{metric}:{instance}', values)
+            if values is not None:
+                inputs.append(rds(metric, instance, values) if instance else cache(metric, values))
+        for key, values in overrides.items():
+            inputs.append(cache(key, values))
+        return inputs
+    gib = 2**30
+    for name, overrides, expected, labels in [
+        ('healthy', {}, None, None),
+        ('product storage low', {'free_storage_space_minimum:gradiated-prod': f'{4 * gib}+0x40'}, 'DatabaseStorageLow', {'dbinstance_identifier': 'gradiated-prod'}),
+        ('Metabase uses its own storage threshold', {'free_storage_space_minimum:gradiated-prod-metabase': f'{4 * gib}+0x40'}, None, None),
+        ('Metabase storage low', {'free_storage_space_minimum:gradiated-prod-metabase': f'{gib // 2}+0x40'}, 'DatabaseStorageLow', {'dbinstance_identifier': 'gradiated-prod-metabase'}),
+        ('product connections high', {'database_connections_maximum:gradiated-prod': '400+0x40'}, 'DatabaseConnectionsHigh', {'dbinstance_identifier': 'gradiated-prod'}),
+        ('product memory low', {'freeable_memory_minimum:gradiated-prod': f'{200 * 2**20}+0x40'}, 'DatabaseMemoryLow', {'dbinstance_identifier': 'gradiated-prod'}),
+        ('cache storage high', {'bytes_used_for_cache_maximum:None': '9e9+0x40'}, 'CacheNearStorageLimit', {'cluster_id': 'gradiated-prod'}),
+        ('cache ECPU high', {'elasti_cache_processing_units_sum:None': '270000+0x40'}, 'CacheNearEcpuLimit', {'cluster_id': 'gradiated-prod'}),
+        ('cache throttling', {'throttled_cmds_sum': '3+0x40'}, 'CacheThrottling', {'cluster_id': 'gradiated-prod'}),
+        ('cache evictions', {'evictions_sum': '1+0x40'}, 'CacheEvictions', {'cluster_id': 'gradiated-prod'}),
+        ('cache metrics missing', {'bytes_used_for_cache_maximum:None': None}, 'DataStoreMetricsMissing', {'cluster_id': 'gradiated-prod'}),
+        ('database metrics missing', {'free_storage_space_minimum:gradiated-prod-metabase': None}, 'DataStoreMetricsMissing', {'dbinstance_identifier': 'gradiated-prod-metabase'}),
+        ('database CPU metric missing', {'cpuutilization_average:gradiated-prod': None}, 'DataStoreMetricsMissing', {'dbinstance_identifier': 'gradiated-prod'}),
+        ('cache ECPU metric missing', {'elasti_cache_processing_units_sum:None': None}, 'DataStoreMetricsMissing', {'cluster_id': 'gradiated-prod'}),
+    ]:
+        scenario('Data store ' + name, data_store_inputs(**overrides), expected, data_store_alerts, labels, '20m')
+    scenario('Data store CPU sustained', data_store_inputs(**{'cpuutilization_average:gradiated-prod': '95+0x80'}),
+             'DatabaseCpuHigh', ['DatabaseCpuHigh'], {'dbinstance_identifier': 'gradiated-prod'}, '35m')
+    scenario('Data store CPU brief spike', data_store_inputs(**{'cpuutilization_average:gradiated-prod': '95+0x20 20+0x60'}),
+             None, ['DatabaseCpuHigh'], None, '35m')
 
     with tempfile.TemporaryDirectory(prefix='observability-check-') as directory:
         temp = Path(directory)

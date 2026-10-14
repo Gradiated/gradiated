@@ -46,7 +46,7 @@ Raising the gate to `1` volt lowers this barrier, opening a conducting path betw
 
 We now have a switch that we can control with a voltage input. To make larger circuits easier to draw, we will represent each transistor with a simple symbol, shown on the left. On the right, we show what this switch does. With its gate at `1` volt, it connects the two ends like an unbroken wire. With its gate at `0` volts, the connection is broken. The gate controls this connection without joining it.
 
-For now, we treat wires and switches as ideal. Once a change has settled, wires connected through an on switch share the same voltage. Connecting a wire to a supply held at `1` volt brings it to `1` volt, and connecting it to a supply held at `0` volts brings it to `0` volts. An off switch keeps the two sides separate.
+Wires connected through an on switch share the same voltage. Connecting a wire to a supply held at `1` volt brings it to `1` volt, and connecting it to a supply held at `0` volts brings it to `0` volts. An off switch keeps the two sides separate.
 
 <!-- scene: switch-types -->
 
@@ -120,7 +120,7 @@ Connect several full adders in a row, passing each carry `cᵢ₊₁` into the n
 
 We have combined small groups of transistors into a circuit that adds numbers, but each calculation has a physical cost. Every calculation involves voltage flips as some of the transistors switch. These flips charge or discharge the tiny capacitances of the transistors and wires, expending energy that is dissipated as heat.
 
-The faster we switch, the more heat we produce each second. This switching power scales with `C V² f`, where `C` is the capacitance being switched, `V` is the voltage swing, and `f` is the clock speed, which sets the pace of computation. Smaller capacitances and lower voltages reduce the energy needed, while switching less often reduces the rate at which we generate heat. Heat is a budget we will keep encountering as the transistor populations climb.
+The faster we switch, the more heat we produce each second. This switching power scales with `CV²f`, where `C` is the capacitance being switched, `V` is the voltage swing, and `f` is the clock speed, which sets the pace of computation. Smaller capacitances and lower voltages reduce the energy needed, while switching less often reduces the rate at which we generate heat. Heat is a budget we will keep encountering as the transistor populations climb.
 
 ## Memory
 

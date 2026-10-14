@@ -187,9 +187,20 @@ it("normalizes Anthropic input usage including cache reads and writes", async ()
   });
 });
 
-it.each(["openai/gpt-5.1-codex", "openai/o3-pro"])(
+it.each([
+  ["openai/gpt-5.1-codex", "gpt-5.1-codex", false],
+  ["openai/o3-pro", "o3-pro", false],
+  ["openai/gpt-5.5-pro", "gpt-5.5-pro", false],
+  ["openai/gpt-6.1-sol-pro", "gpt-6.1-sol", true],
+  ["openai/gpt-6-astra-pro", "gpt-6-astra", true],
+  ["openai/gpt-6-sol-pro", "gpt-6-sol", true],
+  ["openai/gpt-6-luna-pro", "gpt-6-luna", true],
+  ["openai/gpt-5.6-sol-pro", "gpt-5.6-sol", true],
+  ["openai/gpt-5.6-terra-pro", "gpt-5.6-terra", true],
+  ["openai/gpt-5.6-luna-pro", "gpt-5.6-luna", true],
+] as const)(
   "uses Responses for %s and retains billing usage",
-  async (model) => {
+  async (model, providerModel, proMode) => {
     const send = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -220,10 +231,13 @@ it.each(["openai/gpt-5.1-codex", "openai/o3-pro"])(
     );
     expect(send.mock.calls[0]?.[0]).toBe("https://api.openai.com/v1/responses");
     expect(JSON.parse(String(send.mock.calls[0]?.[1]?.body))).toMatchObject({
-      model: model.slice(7),
+      model: providerModel,
       input: [{ role: "user", content: "test" }],
       store: false,
     });
+    expect(JSON.parse(String(send.mock.calls[0]?.[1]?.body)).reasoning).toEqual(
+      proMode ? { mode: "pro" } : undefined,
+    );
     expect(result).toMatchObject({
       text: "answer",
       tokens: 10,

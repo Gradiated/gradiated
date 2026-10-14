@@ -104,8 +104,20 @@ export const MODEL_CATALOG = [
     supportedUses: ["judge", "comparison"],
   },
   {
+    id: "openai/gpt-6.1-sol-pro",
+    displayName: "GPT-6.1 Sol Pro",
+    icon: "/model-providers/openai.svg",
+    supportedUses: ["judge", "comparison"],
+  },
+  {
     id: "openai/gpt-6-astra",
     displayName: "GPT-6 Astra",
+    icon: "/model-providers/openai.svg",
+    supportedUses: ["judge", "comparison"],
+  },
+  {
+    id: "openai/gpt-6-astra-pro",
+    displayName: "GPT-6 Astra Pro",
     icon: "/model-providers/openai.svg",
     supportedUses: ["judge", "comparison"],
   },
@@ -116,8 +128,20 @@ export const MODEL_CATALOG = [
     supportedUses: ["judge", "comparison"],
   },
   {
+    id: "openai/gpt-6-sol-pro",
+    displayName: "GPT-6 Sol Pro",
+    icon: "/model-providers/openai.svg",
+    supportedUses: ["judge", "comparison"],
+  },
+  {
     id: "openai/gpt-6-luna",
     displayName: "GPT-6 Luna",
+    icon: "/model-providers/openai.svg",
+    supportedUses: ["judge", "comparison"],
+  },
+  {
+    id: "openai/gpt-6-luna-pro",
+    displayName: "GPT-6 Luna Pro",
     icon: "/model-providers/openai.svg",
     supportedUses: ["judge", "comparison"],
   },
@@ -148,6 +172,12 @@ export const MODEL_CATALOG = [
   {
     id: "anthropic/claude-sonnet-5-5",
     displayName: "Claude Sonnet 5.5",
+    icon: "/model-providers/anthropic.svg",
+    supportedUses: ["judge", "comparison"],
+  },
+  {
+    id: "anthropic/claude-haiku-5-5",
+    displayName: "Claude Haiku 5.5",
     icon: "/model-providers/anthropic.svg",
     supportedUses: ["judge", "comparison"],
   },

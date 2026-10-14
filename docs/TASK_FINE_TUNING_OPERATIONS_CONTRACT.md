@@ -159,7 +159,9 @@ Generation ingestion migrates to one `generation-events` stream. Deploy readers 
 
 Readers and schemas expand before writers. Gateway readers for private ids, run tokens, policy revisions and tombstones deploy before the worker publishes those records. Membership contract deploys coherently across API, client and console. Model and deployment classes are registered with workspace identity.
 
-Rollout uses internal enable flags per increment, not customer switches; customer capture stays disabled until the capture-to-run path is ready. Old workers reject unsupported schema versions; new writers enable only when all consumers report compatible versions; mixed-version behaviour and Valkey bootstrap are audited.
+New workspaces enable task-labelled content capture with 180-day retention by default; owners and admins can disable it. Existing workspace settings are preserved. This capture policy replaces the earlier requirement to keep customer capture disabled during the fine-tuning rollout. Enabling capture does not enable training or establish readiness of an unimplemented capture path; each training executor still enforces source eligibility and admission checks.
+
+Rollout uses internal enable flags per increment. Old workers reject unsupported schema versions; new writers enable only when all consumers report compatible versions; mixed-version behaviour and Valkey bootstrap are audited.
 
 Rollback after the first private model or run exists keeps compatible readers and denial and tombstone support: disable writers, bound or drain work, restore a known compatible release; never roll back to code that could relay a private model id or ignore a policy revision. Destructive down-migrations need an explicit plan; disabling never deletes customer state. The last compatible rollback release is recorded and tested before launch.
 

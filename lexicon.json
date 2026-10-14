@@ -52,7 +52,7 @@
     },
     {
       "name": "capture",
-      "definition": "Opt-in copying of a generation's prompt and response into regional storage as trace contents, enabled per workspace with a retention period."
+      "definition": "Copying of a generation's prompt and response into regional storage as trace contents, enabled by default per workspace with 180-day retention."
     },
     {
       "name": "trace",

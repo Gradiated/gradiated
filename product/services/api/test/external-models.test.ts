@@ -25,9 +25,14 @@ const feed = (models: unknown[] = [provider]) =>
   new Response(JSON.stringify({ data: models }));
 
 it.each([
+  ["openai/gpt-6.1-sol-pro", "openai/gpt-6.1-sol-pro"],
+  ["openai/gpt-6-astra-pro", "openai/gpt-6-astra-pro"],
+  ["openai/gpt-6-sol-pro", "openai/gpt-6-sol-pro"],
+  ["openai/gpt-6-luna-pro", "openai/gpt-6-luna-pro"],
   ["anthropic/claude-fable-5.1", "anthropic/claude-fable-5-1"],
   ["anthropic/claude-opus-5.5", "anthropic/claude-opus-5-5"],
   ["anthropic/claude-sonnet-5.5", "anthropic/claude-sonnet-5-5"],
+  ["anthropic/claude-haiku-5.5", "anthropic/claude-haiku-5-5"],
 ])(
   "matches OpenRouter's %s while preserving the canonical %s ID",
   async (sourceId, id) => {

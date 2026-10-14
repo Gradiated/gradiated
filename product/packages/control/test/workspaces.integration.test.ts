@@ -130,7 +130,9 @@ describe("workspaces and API keys", () => {
         expect(workspace).toMatchObject({
           organizationId,
           name: "Research",
-          traceRetentionDays: 90,
+          traceCaptureEnabled: true,
+          traceRetentionDays: 180,
+          defaultJudgeModel: "openai/gpt-6.1-sol",
           isDefault: false,
           archivedAt: null,
         });

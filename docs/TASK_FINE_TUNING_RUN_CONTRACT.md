@@ -71,11 +71,26 @@ The worker tests replay a committed, synthetic encrypted v1 history and newly ge
 
 ## Shared model catalog
 
-`product/packages/contracts/src/model-catalog.ts` owns model IDs and their supported
-uses. Judge validation, workspace defaults, database constraints and console
-options derive from that catalog. Update the catalog and regenerate the database
-migration and API clients when changing the allowed set. Eligibility as a judge
-does not imply support by every training executor.
+`product/packages/contracts/src/model-catalog.ts` owns hosted/training model IDs,
+workspace defaults and display metadata. External judge and comparison options
+come from OpenRouter's live OpenAI/Anthropic model feed, refreshed every five
+minutes. The API accepts currently available text-output models, excludes expired
+models and routing variants, and normalizes Anthropic IDs to the direct API's
+hyphenated form. New external releases do not require a database migration or
+regenerated API clients. The evaluator calls each provider directly; OpenAI Pro
+and Codex models use Responses, and Anthropic models use Messages. GPT-5.6 and
+GPT-6/6.1 Pro aliases map to the base OpenAI model with `reasoning.mode="pro"`;
+older standalone Pro model IDs are passed through unchanged.
+
+The shared metadata includes GPT-6 Astra, GPT-6.1 Sol, GPT-6 Sol and GPT-6 Luna,
+their Pro variants, and Claude Fable 5.1, Opus 5.5, Sonnet 5.5 and Haiku 5.5.
+GPT-6.1 Sol remains the default judge and comparison model. This lineup was
+checked on 14 October 2026 against the
+[OpenAI model catalog](https://developers.openai.com/api/docs/models),
+[Anthropic model overview](https://platform.claude.com/docs/en/models/overview),
+and [OpenRouter model feed](https://openrouter.ai/api/v1/models?providers=OpenAI,Anthropic).
+Availability and prices in the picker come from the live feed. Eligibility as a
+judge does not imply support by every training executor.
 
 ## Portable dataset contract
 

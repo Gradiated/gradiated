@@ -23,7 +23,7 @@ research, alias and third-party-provider concepts.
   durable model-deployment registry. Git owns the infrastructure declarations
   that create the corresponding SGLang workloads, not a second routing record.
 - Prompts and responses are kept only when a workspace enables trace capture,
-  as generation contents in regional S3 batches with 90-day default retention. No
+  as generation contents in regional S3 batches with 180-day default retention. No
   database table holds them. See [TRACES_PLAN.md](TRACES_PLAN.md).
 - Organization membership is the human authorization boundary. Workspaces are
   policy and cost-attribution boundaries available to all active members.
@@ -172,8 +172,8 @@ There is at most one pending invitation per organization and normalized email.
 | `name`            | text        | no   | Unique per organization, case-insensitively             |
 | `is_default`      | boolean     | no   | Exactly one default workspace per organization          |
 | `archived_at`     | timestamptz | yes  | Null while usable; archived workspaces cannot serve API |
-| `trace_capture_enabled` | boolean | no | Opt-in content capture; defaults to false |
-| `trace_retention_days` | smallint | no | 30, 90 or 180; defaults to 90 |
+| `trace_capture_enabled` | boolean | no | Content capture; defaults to true |
+| `trace_retention_days` | smallint | no | 30, 90 or 180; defaults to 180 |
 | `created_at`      | timestamptz | no   | Creation time                                           |
 | `updated_at`      | timestamptz | no   | Last mutation time                                      |
 
@@ -183,7 +183,7 @@ A workspace is a policy and cost-attribution boundary, not an authorization boun
 
 Workspaces group API keys, usage and captured generation content. Every unarchived workspace can access every active hosted model, with no workspace spend, rate or concurrency limits. Future model allowlists and per-model limits belong in a workspace-model policy table rather than on API keys.
 
-Content capture is disabled by default. Organization owners and admins can enable relay capture and choose retention. Retention changes apply only to new captures. Content reads enforce the retention recorded on each generation; S3 lifecycle expires batches by their retention tags. Archiving disables capture and blocks reads immediately. The worker deletes archived or deleted workspace content asynchronously, including late collector writes. See [TRACES_PLAN.md](TRACES_PLAN.md) for the storage and capture contract.
+Content capture is enabled by default for new workspaces with 180-day retention. Organization owners and admins can disable capture or choose a different retention period. Existing workspace settings are preserved. Retention changes apply only to new captures. Content reads enforce the retention recorded on each generation; S3 lifecycle expires batches by their retention tags. Archiving disables capture and blocks reads immediately. The worker deletes archived or deleted workspace content asynchronously, including late collector writes. See [TRACES_PLAN.md](TRACES_PLAN.md) for the storage and capture contract.
 
 ### 9. `api_keys`
 

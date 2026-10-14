@@ -141,8 +141,8 @@ export const workspaces = pgTable(
     archivedAt: timestamp("archived_at", { withTimezone: true, mode: "date" }),
     traceCaptureEnabled: boolean("trace_capture_enabled")
       .notNull()
-      .default(false),
-    traceRetentionDays: smallint("trace_retention_days").notNull().default(90),
+      .default(true),
+    traceRetentionDays: smallint("trace_retention_days").notNull().default(180),
     defaultJudgeModel: text("default_judge_model")
       .$type<EvaluationJudge>()
       .notNull()

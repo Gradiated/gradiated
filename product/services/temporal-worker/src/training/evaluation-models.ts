@@ -138,17 +138,29 @@ export const createEvaluationModels = (
       const key = await credential(modelId);
       let { url } = provider(modelId);
       const { kind } = provider(modelId);
-      const model =
+      const requestedModel =
         kind === "hosted" ? modelId : modelId.slice(modelId.indexOf("/") + 1);
+      const proMode =
+        kind === "openai" &&
+        /^gpt-(?:5\.6|6(?:\.1)?)-(?:astra|sol|terra|luna)-pro$/.test(
+          requestedModel,
+        );
+      const model = proMode ? requestedModel.slice(0, -4) : requestedModel;
       const responses =
         kind === "openai" &&
-        (model.includes("codex") || model.endsWith("-pro"));
+        (requestedModel.includes("codex") || requestedModel.endsWith("-pro"));
       const completion = kind === "openai" && model.endsWith("-instruct");
       if (responses) url = "https://api.openai.com/v1/responses";
       if (completion) url = "https://api.openai.com/v1/completions";
 
       const body = responses
-        ? { model, input: messages, max_output_tokens: 4096, store: false }
+        ? {
+            model,
+            input: messages,
+            max_output_tokens: 4096,
+            store: false,
+            ...(proMode ? { reasoning: { mode: "pro" } } : {}),
+          }
         : completion
           ? {
               model,

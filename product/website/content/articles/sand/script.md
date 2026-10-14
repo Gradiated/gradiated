@@ -40,7 +40,7 @@ With the central gate also at `0` volts, this barrier is high and electrons stru
 
 <!-- scene: flowing -->
 
-Raising the gate to `1` volt lowers this barrier, opening a conducting path between the pockets. Electrons can now flow through the transistor and around a connected circuit, lighting a bulb. This is the basic picture of an n-type MOSFET, an electrically controlled switch with no moving parts. With no mechanism to move, the switch can be built as a microscopic pattern of materials and repeated across a chip.
+Raising the gate to `1` volt lowers this barrier, opening a conducting path between the pockets. Electrons can now flow through the transistor and around a connected circuit, lighting a bulb. This is the basic picture of an n-type MOSFET, an electrically controlled switch with no moving parts. With no mechanism to move, the switch can be built as a microscopic pattern of materials and repeated billions of times across a chip.
 
 <!-- scene: symbol -->
 

@@ -560,7 +560,7 @@ export const SCENES2D = (function () {
           { "data-logic-state": inputs.join(""), "data-output": output },
           parent,
         );
-        if (connection) path(connection, { class: "logic-connection" }, layer);
+        path(connection, { class: "logic-connection" }, layer);
         ports.forEach(({ x, y, anchor }, i) => {
           const value = i < inputs.length ? inputs[i] : output;
           text(
@@ -1013,27 +1013,71 @@ export const SCENES2D = (function () {
     text(98, 254, "WE", { "text-anchor": "end" }, wLatch);
     text(336, 219, "Q", { "text-anchor": "start" }, wLatch);
     const latchValues = group({ "data-latch-values": "" }, gLatch);
-    logicCases(
-      "latch",
-      latchValues,
-      [
-        { inputs: [0, 1], output: 0 },
-        { inputs: [1, 1], output: 1 },
-        { inputs: [1, 0], output: 1 },
-        { inputs: [0, 0], output: 1 },
-        { inputs: [0, 1], output: 0 },
-        { inputs: [0, 0], output: 0 },
-        { inputs: [1, 0], output: 0 },
-        { inputs: [1, 1], output: 1 },
-      ],
-      [
-        { x: 98, y: 234, anchor: "end" },
-        { x: 98, y: 276, anchor: "end" },
-        { x: 336, y: 241, anchor: "start" },
-      ],
-      "heat",
-      "register",
-    );
+    const latchDigits = [
+      text(
+        98,
+        234,
+        "0",
+        { class: "logic-value", "text-anchor": "end" },
+        latchValues,
+      ),
+      text(
+        98,
+        276,
+        "1",
+        { class: "logic-value", "text-anchor": "end" },
+        latchValues,
+      ),
+      text(
+        336,
+        241,
+        "0",
+        { class: "logic-value", "text-anchor": "start" },
+        latchValues,
+      ),
+    ];
+    const latchBits = { d: 0, we: 1, q: 0 };
+    const latchRandom = rng(41);
+    const latchEvents = [];
+    for (let time = 5; time < 40; time += 5) {
+      latchEvents.push({ time, we: (time / 5) % 2 === 0 ? 1 : 0 });
+    }
+    for (let time = 0.9; time < 40; time += 0.8 + latchRandom() * 1.3) {
+      latchEvents.push({ time, d: latchRandom() < 0.5 ? 0 : 1 });
+    }
+    latchEvents.sort((a, b) => a.time - b.time);
+    const latchDemo = gsap.timeline({ paused: true, repeat: -1 });
+    latchDemo.set(latchBits, { d: 0, we: 1, q: 0 }, 0);
+    let data = 0,
+      enabled = 1,
+      stored = 0;
+    for (const event of latchEvents) {
+      if (event.d !== undefined) data = event.d;
+      if (event.we !== undefined) enabled = event.we;
+      if (enabled === 1) stored = data;
+      latchDemo.set(latchBits, { d: data, we: enabled, q: stored }, event.time);
+    }
+    latchDemo.to({}, { duration: 40 }, 0);
+    latchDemo.time(0.001, true).time(0, true);
+    logicDemos.push(latchDemo);
+    afterRender.push(() => {
+      const progress = tl.time();
+      if (
+        progress <= index("heat") + hold ||
+        progress >= index("register") - hold
+      )
+        latchDemo.pause(0);
+      else if (
+        Math.abs(progress - index("latch")) <= hold &&
+        !matchMedia("(prefers-reduced-motion: reduce)").matches
+      )
+        latchDemo.play();
+      else latchDemo.pause();
+      [latchBits.d, latchBits.we, latchBits.q].forEach((value, i) => {
+        if (latchDigits[i].textContent !== String(value))
+          latchDigits[i].textContent = String(value);
+      });
+    });
     show(latchValues, "latch", "register", {}, 0.35);
     const fb1 = path(
       "M306 215 L306 250 L236 250 L236 278 L246 278",

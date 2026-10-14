@@ -7,6 +7,12 @@ and alert resources live under
 Application metrics contain no organization, workspace, API-key, generation,
 prompt, or completion labels.
 
+Application metrics for API, gateway, proxy, collector, worker, and Temporal
+worker are scraped every 5 seconds with a 5-second timeout. Canary analysis
+queries Prometheus every 15 seconds after a 30-second initial delay; its
+90-second error window normally contains about eighteen samples per series.
+Infrastructure exporters and public probes keep their separate scrape cadences.
+
 ## Service coverage
 
 | Service        | Signal source                          | Important signals                                                                                                                                                            | Dashboard                      |

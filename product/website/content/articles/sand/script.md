@@ -2,7 +2,7 @@
 
 <!-- Editorial: copied from the live page on 2026-10-12 without rewriting the prose. Visual cue blocks and scene markers are editing notes, not article copy. This file builds the website automatically while preview.sh runs; see web/README.md. -->
 
-How do we get from the silicon atoms in a grain of sand to a machine that answers a question? Here we will follow the journey one step at a time: making a switch, combining switches into circuits that calculate and remember, and assembling those circuits into a computer that performs progressively more complex tasks. We will highlight examples of each successive structure and what it can accomplish.
+How do we get from the silicon atoms in a grain of sand to a machine that can answer a question? This overview will follow a path through progressively larger and more complex structures that can calculate, remember, and ultimately think.
 
 ## Sand and metal
 

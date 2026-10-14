@@ -52,7 +52,7 @@ For now, we treat wires and switches as ideal. Once a change has settled, wires 
 
 We can also make a p-type MOSFET by swapping the two types of doped silicon. In the circuits we are about to build, the n-type switch turns on for an input of `1` volt and off for `0` volts, while the p-type does the reverse. The small circle on its gate distinguishes the p-type symbol. We now have two switches that respond in opposite ways to the same input.
 
-The next step is to connect these switches so that, together, they can calculate, remember and think. We will build towards these abilities one layer at a time, showing how each new structure makes more complex tasks possible.
+The next step is to combine these switches into larger and larger structures so that, together, they can calculate, remember and think. We will build towards these abilities one layer at a time, showing how each new structure makes more complex tasks possible.
 
 ## Logic
 
@@ -128,7 +128,7 @@ How does a loop create memory? The two gates on the right feed their outputs int
 
 <!-- scene: register -->
 
-Let’s zoom out again and place four latches side by side, each holding one bit. Together, they form a four-bit register that can remember an entire four-bit binary number. By sharing a write-enable signal, all four latches can copy their inputs at `D` simultaneously, then hold the number while those inputs change.
+Let’s zoom out again and place four latches side by side, each holding one bit. Together, they form a four-bit register that can remember a four-bit binary number. By sharing a write-enable signal, all four latches can copy their inputs at `D` simultaneously, then hold the number while those inputs change.
 
 <!-- scene: stored-answer -->
 

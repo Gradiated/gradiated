@@ -55,6 +55,7 @@ const heroLines = (title: string | string[]) => {
  */
 export const PageHero = ({
   action,
+  secondaryAction,
   beside = false,
   eyebrow,
   lede,
@@ -74,6 +75,11 @@ export const PageHero = ({
   beside?: boolean;
   /** `tone` picks the button; defaults to the primary. */
   action?: { href: string; label: string; tone?: "main" | "secondary" };
+  secondaryAction?: {
+    href: string;
+    label: string;
+    tone?: "main" | "secondary";
+  };
   eyebrow?: string;
   lede?: ReactNode;
   /** Sits above the eyebrow — the hardware page leads with its chip. */
@@ -126,6 +132,17 @@ export const PageHero = ({
           <Arrow />
         </a>
       ) : null}
+      {secondaryAction ? (
+        <div>
+          <a
+            className={`gr-button gr-button--${secondaryAction.tone ?? "main"}`}
+            href={secondaryAction.href}
+          >
+            {secondaryAction.label}
+            <Arrow />
+          </a>
+        </div>
+      ) : null}
     </div>
   </div>
 );
@@ -148,6 +165,11 @@ export const Fold = ({
   ...hero
 }: {
   action?: { href: string; label: string; tone?: "main" | "secondary" };
+  secondaryAction?: {
+    href: string;
+    label: string;
+    tone?: "main" | "secondary";
+  };
   children?: ReactNode;
   /** Passed through to PageHero. */
   beside?: boolean;

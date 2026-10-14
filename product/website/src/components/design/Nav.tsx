@@ -1,4 +1,4 @@
-import { CONSOLE_BASE_URL } from "../../urls";
+import { CONSOLE_BASE_URL, SAND_TO_THOUGHT_URL } from "../../urls";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactElement } from "react";
 import { articles } from "../../articles";
@@ -152,7 +152,7 @@ const NAV_ITEMS: NavItem[] = [
     },
   },
   ...(articles.some((article) => article.collection === "sand-to-thought")
-    ? [{ href: "/sand-to-thought/", label: "Sand to Thought" }]
+    ? [{ href: SAND_TO_THOUGHT_URL, label: "Sand to Thought" }]
     : []),
   { href: "/careers/", label: "Careers" },
   { href: "/docs/", label: "Docs" },

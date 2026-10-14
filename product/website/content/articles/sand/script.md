@@ -32,15 +32,15 @@ We can now build our first transistor. We add a wire to each of the two pockets 
 
 <!-- scene: voltages -->
 
-A voltage difference can drive electrons through a circuit. Let us hold the left wire at 0 volts and the right wire at 1 volt. Picture a landscape where height represents the electrons’ potential energy. Electrons would flow downhill towards the lower ground on the right, but a hill between the two pockets blocks their path. By raising or lowering this hill, we can control whether or not they cross.
+A voltage difference can drive electrons through a circuit. Let us hold the left wire at `0` volts and the right wire at `1` volt. Picture a landscape where height represents the electrons’ potential energy. Electrons would flow downhill towards the lower ground on the right, but a hill between the two pockets blocks their path. By raising or lowering this hill, we can control whether or not they cross.
 
 <!-- scene: blocked -->
 
-With the central gate also at 0 volts, this barrier is high and electrons struggle to flow between the two pockets.
+With the central gate also at `0` volts, this barrier is high and electrons struggle to flow between the two pockets.
 
 <!-- scene: flowing -->
 
-Raising the gate to 1 volt lowers this barrier, opening a conducting path between the pockets. Electrons can now flow through the transistor and around a connected circuit, lighting a bulb. This is the basic picture of an n-type MOSFET, an electrically controlled switch with no moving parts. With no mechanism to move, the switch can be built as a microscopic pattern of materials and repeated across a chip.
+Raising the gate to `1` volt lowers this barrier, opening a conducting path between the pockets. Electrons can now flow through the transistor and around a connected circuit, lighting a bulb. This is the basic picture of an n-type MOSFET, an electrically controlled switch with no moving parts. With no mechanism to move, the switch can be built as a microscopic pattern of materials and repeated across a chip.
 
 <!-- scene: symbol -->
 
@@ -50,15 +50,15 @@ We now have a switch that we can control with a voltage input. To make larger ci
 
 <!-- scene: not -->
 
-To calculate with electrical signals, we first need a way to represent information. We use a low voltage to represent 0 and a high voltage to represent 1. Each of these binary digits is called a bit.
+To calculate with electrical signals, we first need a way to represent information. We use a low voltage to represent `0` and a high voltage to represent `1`. Each of these binary digits is called a bit.
 
-By connecting transistors, we can build circuits called logic gates that turn input bits into output bits according to a simple rule. The simplest example is the NOT gate, which flips its input. A 0 becomes a 1, and a 1 becomes a 0.
+By connecting transistors, we can build circuits called logic gates that turn input bits into output bits according to a simple rule. The simplest example is the NOT gate, which flips its input. A `0` becomes a `1`, and a `1` becomes a `0`.
 
-Let’s zoom out one step and connect two transistors to make our first logic gate. The lower one is the n-type switch we have just introduced. The upper one, drawn with a small circle on its gate, is its mirror image, a p-type MOSFET made with the dopants swapped. In this circuit, it turns on (lowers the energy barrier) when the input is 0, while the n-type turns on when the input is 1. Together, they make the output the opposite of the input. This is a NOT gate.
+Let’s zoom out one step and connect two transistors to make our first logic gate. The lower one is the n-type switch we have just introduced. The upper one, drawn with a small circle on its gate, is its mirror image, a p-type MOSFET made with the dopants swapped. In this circuit, it turns on (lowers the energy barrier) when the input is `0`, while the n-type turns on when the input is `1`. Together, they make the output the opposite of the input. This is a NOT gate.
 
 <!-- scene: nand -->
 
-Add two more transistors and we can build a NAND gate. It takes two input bits, A and B, and produces a 1 unless both inputs are 1, in which case it produces a 0.
+Add two more transistors and we can build a NAND gate. It takes two input bits, `A` and `B`, and produces a `1` unless both inputs are `1`, in which case it produces a `0`.
 
 <!-- scene: nand-symbol -->
 
@@ -68,35 +68,35 @@ Let’s zoom out again and give this four-transistor circuit a symbol. The two i
 
 <!-- scene: adder -->
 
-Let’s zoom out further and combine NAND gates into a circuit that adds. In binary, we have only two digits, 0 and 1, so adding 1 and 1 gives 10. We write down 0 and carry 1 into the next column, just as we carry digits in ordinary addition.
+Let’s zoom out further and combine NAND gates into a circuit that adds. In binary, we have only two digits, `0` and `1`, so adding `1` and `1` gives `10`. We write down `0` and carry `1` into the next column, just as we carry digits in ordinary addition.
 
-Our circuit handles one column at a time. It adds two input bits, aᵢ and bᵢ, along with any carry from the previous column, cᵢ. It produces the answer bit sᵢ and a carry for the next column, cᵢ₊₁. This three-input, two-output circuit is called a full adder.
+Our circuit handles one column at a time. It adds two input bits, `aᵢ` and `bᵢ`, along with any carry from the previous column, `cᵢ`. It produces the answer bit `sᵢ` and a carry for the next column, `cᵢ₊₁`. This three-input, two-output circuit is called a full adder.
 
 <!-- scene: chain -->
 
-Connect several full adders in a row, passing each carry cᵢ₊₁ into the next column, and we can add entire binary numbers. Here, four adders calculate 0011 + 0110 = 1001, or 3 + 6 = 9. More columns let us work with larger numbers. With addition as a building block, it is a short step to circuits that subtract and multiply, and our toolset has grown.
+Connect several full adders in a row, passing each carry `cᵢ₊₁` into the next column, and we can add entire binary numbers. Here, four adders calculate `0011 + 0110 = 1001`, or `3 + 6 = 9`. More columns let us work with larger numbers. With addition as a building block, it is a short step to circuits that subtract and multiply, and our toolset has grown.
 
 <!-- scene: heat -->
 
 We have combined small groups of transistors into a circuit that adds numbers, but each calculation has a physical cost. Every calculation involves voltage flips as some of the transistors switch. These flips charge or discharge the tiny capacitances of the transistors and wires, expending energy that is dissipated as heat.
 
-The faster we switch, the more heat we produce each second. This switching power scales with C V² f, where C is the capacitance being switched, V is the voltage swing, and f is the clock speed, which sets the pace of computation. Smaller capacitances and lower voltages reduce the energy needed, while switching less often reduces the rate at which we generate heat. Heat is a budget we will keep encountering as the counts climb.
+The faster we switch, the more heat we produce each second. This switching power scales with `C V² f`, where `C` is the capacitance being switched, `V` is the voltage swing, and `f` is the clock speed, which sets the pace of computation. Smaller capacitances and lower voltages reduce the energy needed, while switching less often reduces the rate at which we generate heat. Heat is a budget we will keep encountering as the counts climb.
 
 ## Memory
 
 <!-- scene: latch -->
 
-We can now calculate an answer, but how do we remember it? Let’s zoom back in and connect a few NAND gates so that their outputs feed back into their inputs. This circuit is called a latch. It has a data input D, a write-enable input WE, and an output Q. While WE is 1, Q becomes D. When WE becomes 0, Q holds its last value, even if D changes.
+We can now calculate an answer, but how do we remember it? Let’s zoom back in and connect a few NAND gates so that their outputs feed back into their inputs. This circuit is called a latch. It has a data input `D`, a write-enable input `WE`, and an output `Q`. While `WE` is `1`, `Q` becomes `D`. When `WE` becomes `0`, `Q` holds its last value, even if `D` changes.
 
-How does a loop create memory? The two gates on the right feed their outputs into each other, each reinforcing the other’s state. With writing disabled (WE = 0), this feedback holds Q at its last value for as long as power is supplied. We have added memory to our toolset.
+How does a loop create memory? The two gates on the right feed their outputs into each other, each reinforcing the other’s state. With writing disabled (`WE = 0`), this feedback holds `Q` at its last value for as long as power is supplied. We have added memory to our toolset.
 
 <!-- scene: register -->
 
-Let’s zoom out again and place four latches side by side, each holding one bit. Together, they form a four-bit register that can remember an entire binary number. By sharing a write-enable signal, all four latches can copy their inputs at D simultaneously, then hold the number while those inputs change.
+Let’s zoom out again and place four latches side by side, each holding one bit. Together, they form a four-bit register that can remember an entire binary number. By sharing a write-enable signal, all four latches can copy their inputs at `D` simultaneously, then hold the number while those inputs change.
 
 <!-- scene: stored-answer -->
 
-We can now connect our register to the four-bit adder. With write-enable at 1, the register copies the answer, 1001. Set write-enable to 0 and that answer is held. The adder can calculate something new while the register remembers the previous result. We can now both calculate and keep the answer.
+We can now connect our register to the four-bit adder. With write-enable at `1`, the register copies the answer, `1001`. Set write-enable to `0` and that answer is held. The adder can calculate something new while the register remembers the previous result. We can now both calculate and keep the answer.
 
 <!-- scene: timing -->
 
@@ -114,13 +114,13 @@ Our adder calculates with whatever values reach its inputs. To choose those valu
 
 <!-- scene: working-registers -->
 
-Let’s zoom out again and give our machine several registers for its working values. For our example, we will use a small teaching computer called LC-3. It has eight general-purpose registers, named R0 to R7, each holding sixteen bits. More bit positions let us represent larger numbers using the same binary rules.
+Let’s zoom out again and give our machine several registers for its working values. For our example, we will use a small teaching computer called LC-3. It has eight general-purpose registers, named `R0` to `R7`, each holding sixteen bits. More bit positions let us represent larger numbers using the same binary rules.
 
-We will begin with 3 in R1 and 6 in R2. The register name identifies the slot, while its contents are the value stored there.
+We will begin with `3` in `R1` and `6` in `R2`. The register name identifies the slot, while its contents are the value stored there.
 
 <!-- scene: alu -->
 
-We can also group our adder with circuits that perform logical operations. Together, they form an arithmetic and logic unit, or ALU. Control signals select which operation it performs. The registers supply its inputs, and another register can capture the result. A path marked 16 represents sixteen parallel wires, one for each bit.
+We can also group our adder with circuits that perform logical operations. Together, they form an arithmetic and logic unit, or ALU. Control signals select which operation it performs. The registers supply its inputs, and another register can capture the result. A path marked `16` represents sixteen parallel wires, one for each bit.
 
 <!-- scene: addressed-memory -->
 
@@ -132,7 +132,7 @@ The address identifies the location. The bits stored there are its contents. Sel
 
 The same memory can hold both data and instructions. An instruction is a bit pattern specifying an operation and the values or locations involved. Storing a sequence of instructions gives us a program.
 
-A register called the program counter, or PC, holds the address of the instruction to fetch next. Another register, the instruction register, or IR, holds the instruction we have fetched.
+A register called the program counter, or `PC`, holds the address of the instruction to fetch next. Another register, the instruction register, or `IR`, holds the instruction we have fetched.
 
 <!-- scene: control -->
 
@@ -142,9 +142,9 @@ The controller also remembers which step it is performing. State stored in regis
 
 <!-- scene: execute -->
 
-Let’s follow the instruction ADD R0, R1, R2. It tells the machine to add the contents of R1 and R2, then place the answer in R0. We have already put 3 in R1 and 6 in R2.
+Let’s follow the instruction `ADD R0, R1, R2`. It tells the machine to add the contents of `R1` and `R2`, then place the answer in `R0`. We have already put `3` in `R1` and `6` in `R2`.
 
-The machine fetches the instruction into IR and decodes its fields. Control signals select R1 and R2, direct the ALU to add, and enable R0 to capture the result. R0 now holds 9. During the fetch, PC advances to the following instruction address, ready for the machine to continue.
+The machine fetches the instruction into `IR` and decodes its fields. Control signals select `R1` and `R2`, direct the ALU to add, and enable `R0` to capture the result. `R0` now holds `9`. During the fetch, `PC` advances to the following instruction address, ready for the machine to continue.
 
 <!-- scene: computer -->
 

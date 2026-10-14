@@ -258,6 +258,23 @@
   font-size: 1rem;
 }
 
+.sand-journey :not(pre) > code {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.9em;
+  line-height: 1.2;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums slashed-zero;
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: baseline;
+  color: inherit;
+  background: rgba(23, 22, 26, 0.06);
+  padding: 0.08em 0.25em;
+  border-radius: 0.2em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
 .sand-journey .scene-text {
   min-height: 78vh;
   display: grid;

@@ -32,7 +32,7 @@ We can now build our first transistor. We add a wire to each of the two pockets 
 
 <!-- scene: voltages -->
 
-A voltage difference can drive electrons through a circuit. Let us hold the left wire at 0 volts and the right wire at 1 volt. Picture an energy landscape with lower ground on the right and a hill between the two pockets. Electrons tend to move towards the lower ground, but the hill stands in their way. By raising or lowering this hill, we can control whether or not they cross.
+A voltage difference can drive electrons through a circuit. Let us hold the left wire at 0 volts and the right wire at 1 volt. Picture a landscape where height represents the electrons’ potential energy. Electrons would flow downhill towards the lower ground on the right, but a hill between the two pockets blocks their path. By raising or lowering this hill, we can control whether or not they cross.
 
 <!-- scene: blocked -->
 

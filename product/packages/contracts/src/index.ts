@@ -6,6 +6,7 @@ export {
 export {
   CurrentOrganizationSchema,
   CurrentUserSchema,
+  EmailDomainSchema,
   OrganizationRoleSchema,
   type CurrentUser,
 } from "./me.js";

@@ -78,6 +78,11 @@ export const organizations = pgTable(
     kind: text("kind", { enum: ORGANIZATION_KINDS }).notNull(),
     name: text("name").notNull(),
     status: text("status", { enum: ORGANIZATION_STATUSES }).notNull(),
+    autoJoinDomain: text("auto_join_domain"),
+    onboardedAt: timestamp("onboarded_at", {
+      withTimezone: true,
+      mode: "date",
+    }),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
       .defaultNow()
       .notNull(),
@@ -86,6 +91,9 @@ export const organizations = pgTable(
       .notNull(),
   },
   (table) => [
+    uniqueIndex("organizations_auto_join_domain_unique").on(
+      table.autoJoinDomain,
+    ),
     check(
       "organizations_kind_check",
       sql`${table.kind} in ('customer', 'distribution_channel')`,

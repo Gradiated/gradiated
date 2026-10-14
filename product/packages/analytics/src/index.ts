@@ -23,7 +23,9 @@ export const eventSchemas = {
   }),
   organization_settings_updated: z.strictObject({
     ...organization,
-    changed_fields: z.array(z.literal("name")).min(1),
+    changed_fields: z
+      .array(z.enum(["name", "auto_join_domain", "onboarding_completed"]))
+      .min(1),
   }),
   workspace_created: z.strictObject({ ...workspace, is_default: z.boolean() }),
   workspace_settings_updated: z.strictObject({

@@ -11,6 +11,7 @@ import {
   validationProblem,
   createTestApp,
   createdOrganization,
+  organizationSummary,
   postJson,
   user,
   workspaceId,
@@ -94,11 +95,9 @@ it("PATCH validates and returns an organization name with the caller's admin rol
         updateForUser: async (userId, organizationId, input) => {
           received.push({ userId, organizationId, input });
           return {
-            id: createdOrganization.id,
-            name: input.name,
+            ...organizationSummary,
+            name: input.name ?? organizationSummary.name,
             role: "admin",
-            status: "active",
-            defaultWorkspaceId: workspaceId,
           };
         },
       },
@@ -126,11 +125,54 @@ it("PATCH validates and returns an organization name with the caller's admin rol
     role: "admin",
   });
 });
+it("PATCH completes onboarding and claims the email domain", async () => {
+  const received: unknown[] = [];
+  const app = createTestApp({
+    auth: authenticated,
+    services: {
+      organizations: {
+        updateForUser: async (_userId, _organizationId, input) => {
+          received.push(input);
+          return {
+            ...organizationSummary,
+            name: input.name ?? organizationSummary.name,
+            autoJoinDomain: input.auto_join_domain ?? null,
+            onboardingCompleted: true,
+          };
+        },
+      },
+    },
+  });
+  const response = await app.request(
+    `/api/v1/organizations/${organizationSummary.id}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "Acme",
+        auto_join_domain: " Acme.com ",
+        onboarding_completed: true,
+      }),
+    },
+  );
+  expect(response.status).toBe(200);
+  expect(received).toEqual([
+    { name: "Acme", auto_join_domain: "acme.com", onboarding_completed: true },
+  ]);
+  await expect(response.json()).resolves.toMatchObject({
+    name: "Acme",
+    auto_join_domain: "acme.com",
+    onboarding_completed: true,
+  });
+});
 it.each([
   {},
   { name: "   " },
   { name: "x".repeat(201) },
   { name: "Research", status: "suspended" },
+  { auto_join_domain: "not a domain" },
+  { auto_join_domain: "@acme.com" },
+  { onboarding_completed: false },
 ])("rejects invalid organization settings %j", async (body) => {
   const response = await createTestApp({ auth: authenticated }).request(
     `/api/v1/organizations/${createdOrganization.id}`,

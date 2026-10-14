@@ -1,14 +1,13 @@
-import { and, asc, eq } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 
-import type { UpdateOrganization } from "@gradiated/contracts";
+import {
+  UpdateOrganizationSchema,
+  type UpdateOrganization,
+} from "@gradiated/contracts";
+import { companyEmailDomain } from "./email-domains.js";
 import { createOrganizationStore } from "./store.js";
 import { ControlServiceError } from "../errors.js";
-import {
-  managerRoles,
-  requireMembership,
-  activeCustomerMember,
-} from "../access.js";
+import { managerRoles, requireMembership } from "../access.js";
 import { postBalanceTransaction } from "../billing/ledger.js";
 import type { ControlDatabase } from "../db/client.js";
 import {
@@ -28,6 +27,14 @@ export interface UserOrganization {
   status: OrganizationStatus;
   role: OrganizationRole;
   defaultWorkspaceId: string;
+  autoJoinDomain: string | null;
+  onboardingCompleted: boolean;
+}
+
+export interface SignupUser {
+  id: string;
+  email: string;
+  emailVerified: boolean;
 }
 
 export interface CreatedOrganization {
@@ -64,6 +71,7 @@ export interface OrganizationService {
     userId: string,
     name?: string | undefined,
   ): Promise<UserOrganization>;
+  ensureForNewUser(user: SignupUser): Promise<UserOrganization>;
 }
 
 export const createOrganizationService = (
@@ -72,6 +80,7 @@ export const createOrganizationService = (
   const records = createOrganizationStore(database);
   const createOrganization = async (input: {
     signupCredit: boolean;
+    onboarded: boolean;
     userId: string;
     name: string;
   }): Promise<CreatedOrganization> => {
@@ -85,6 +94,7 @@ export const createOrganizationService = (
         kind: "customer",
         name: input.name,
         status: "active",
+        onboardedAt: input.onboarded ? now : null,
         createdAt: now,
         updatedAt: now,
       });
@@ -130,28 +140,29 @@ export const createOrganizationService = (
   };
 
   const listForUser = async (userId: string): Promise<UserOrganization[]> =>
-    database
-      .select({
-        id: organizations.id,
-        name: organizations.name,
-        status: organizations.status,
-        role: organizationMembers.role,
-        defaultWorkspaceId: workspaces.id,
-      })
-      .from(organizationMembers)
-      .innerJoin(
-        organizations,
-        eq(organizations.id, organizationMembers.organizationId),
-      )
-      .innerJoin(
-        workspaces,
-        and(
-          eq(workspaces.organizationId, organizations.id),
-          eq(workspaces.isDefault, true),
-        ),
-      )
-      .where(activeCustomerMember({ userId }))
-      .orderBy(asc(organizations.createdAt), asc(organizations.id));
+    records.listForUser(userId);
+
+  const ensurePersonalForUser = async (userId: string, name = "Personal") => {
+    const [existing] = await listForUser(userId);
+    if (existing) return existing;
+
+    const created = await createOrganization({
+      signupCredit: true,
+      onboarded: false,
+      userId,
+      name,
+    });
+
+    return {
+      id: created.id,
+      name: created.name,
+      status: created.status,
+      role: created.role,
+      defaultWorkspaceId: created.defaultWorkspaceId,
+      autoJoinDomain: null,
+      onboardingCompleted: false,
+    };
+  };
 
   return {
     listForUser,
@@ -169,11 +180,17 @@ export const createOrganizationService = (
           "Only owners and admins of active organizations can change their settings.",
         );
 
-      const organization = await records.updateName(
-        userId,
-        organizationId,
-        input,
-      );
+      const update = UpdateOrganizationSchema.parse(input);
+      if (update.auto_join_domain) {
+        const user = await records.findUser(userId);
+        if (!user || companyEmailDomain(user) !== update.auto_join_domain)
+          throw new ControlServiceError(
+            "forbidden",
+            "Automatic joining can only use your own verified company email domain.",
+          );
+      }
+
+      const organization = await records.update(userId, organizationId, update);
       if (!organization)
         throw new ControlServiceError(
           "not_found",
@@ -184,14 +201,26 @@ export const createOrganizationService = (
     },
 
     async createForUser(userId, name) {
-      return createOrganization({ signupCredit: false, userId, name });
+      return createOrganization({
+        signupCredit: false,
+        onboarded: true,
+        userId,
+        name,
+      });
     },
 
-    async ensurePersonalForUser(userId, name = "Personal") {
-      const [existing] = await listForUser(userId);
-      if (existing) return existing;
+    ensurePersonalForUser,
 
-      return createOrganization({ signupCredit: true, userId, name });
+    async ensureForNewUser(user) {
+      const domain = companyEmailDomain(user);
+      const joinedId = domain
+        ? await records.joinByDomain(user.id, domain)
+        : undefined;
+      if (!joinedId) return ensurePersonalForUser(user.id);
+
+      const [joined] = await records.listForUser(user.id, joinedId);
+
+      return joined ?? ensurePersonalForUser(user.id);
     },
   };
 };

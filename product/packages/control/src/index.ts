@@ -81,8 +81,10 @@ export {
   type CreatedOrganization,
   type OrganizationRole,
   type OrganizationService,
+  type SignupUser,
   type UserOrganization,
 } from "./organizations/service.js";
+export { companyEmailDomain } from "./organizations/email-domains.js";
 export {
   COMPANY_SIZES,
   createWaitlistService,

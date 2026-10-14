@@ -10,23 +10,53 @@ const createdAt = "2026-09-01T12:00:00Z";
 const modelId = "gradiated/example-model";
 const list = <T>(...data: T[]) => ({ data, next_cursor: null });
 
+const organization = {
+  id: organizationId,
+  name: "Example organization",
+  status: "active",
+  role: "owner",
+  default_workspace_id: workspaceId,
+  auto_join_domain: null,
+  onboarding_completed: true,
+} satisfies components["schemas"]["CurrentOrganization"];
+
 const user = {
   id: "storybook-user",
   name: "Alex Example",
   email: "alex@example.invalid",
   email_verified: true,
+  company_email_domain: null,
   image_url: null,
   created_at: createdAt,
-  organizations: [
-    {
-      id: organizationId,
-      name: "Example organization",
-      status: "active",
-      role: "owner",
-      default_workspace_id: workspaceId,
-    },
-  ],
+  organizations: [organization],
 } satisfies components["schemas"]["CurrentUser"];
+
+type CurrentUser = components["schemas"]["CurrentUser"];
+type CurrentOrganization = CurrentUser["organizations"][number];
+
+const acmeUser = (
+  email: string,
+  companyEmailDomain: string | null,
+  patch: Partial<CurrentOrganization>,
+): CurrentUser => ({
+  ...user,
+  email,
+  company_email_domain: companyEmailDomain,
+  organizations: [{ ...organization, ...patch }],
+});
+
+export const onboardingCompanyUser = acmeUser("alex@acme.com", "acme.com", {
+  name: "Personal",
+  onboarding_completed: false,
+});
+export const onboardingPersonalUser = acmeUser("alex.example@gmail.com", null, {
+  name: "Personal",
+  onboarding_completed: false,
+});
+export const acmeOwner = acmeUser("alex@acme.com", "acme.com", {
+  name: "Acme",
+  auto_join_domain: "acme.com",
+});
 
 const workspace = {
   id: workspaceId,
@@ -322,12 +352,19 @@ const usage = (from: string): UsageSummary => ({
   ],
 });
 
-export const handlers = [
-  http.get("/api/v1/me", () => HttpResponse.json(user)),
+export const handlersFor = (currentUser: CurrentUser) => [
+  http.get("/api/v1/me", () => HttpResponse.json(currentUser)),
   http.patch("/api/v1/organizations/:organizationId", async ({ request }) => {
-    const { name } = (await request.json()) as { name: string };
-    return HttpResponse.json({ ...user.organizations[0], name });
+    const patch = (await request.json()) as Partial<CurrentOrganization>;
+    return HttpResponse.json({
+      ...(currentUser.organizations[0] ?? organization),
+      ...patch,
+    });
   }),
+  ...sharedHandlers,
+];
+
+const sharedHandlers = [
   http.patch("/api/v1/workspaces/:workspaceId", async ({ request }) => {
     const patch = (await request.json()) as Partial<
       components["schemas"]["Workspace"]
@@ -438,4 +475,12 @@ export const handlers = [
       { status: 501 },
     ),
   ),
+];
+
+export const handlers = handlersFor(user);
+export const newOrganizationHandlers = [
+  http.get("/api/v1/organizations/:organizationId/billing", () =>
+    HttpResponse.json({ ...billing, balance: "5000000000" }),
+  ),
+  ...handlersFor(acmeOwner),
 ];

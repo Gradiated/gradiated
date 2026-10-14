@@ -16,6 +16,7 @@ export interface AuthConfiguration {
     id: string;
     name: string;
     email: string;
+    emailVerified: boolean;
   }) => Promise<void>;
   onSessionCreated?: (session: { id: string; userId: string }) => Promise<void>;
   secret: string;

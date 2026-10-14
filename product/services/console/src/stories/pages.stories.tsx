@@ -11,6 +11,13 @@ import { useState } from "react";
 
 import { Toaster } from "@/components/ui/sonner";
 import { createConsoleRouter } from "@/router";
+import {
+  acmeOwner,
+  handlersFor,
+  newOrganizationHandlers,
+  onboardingCompanyUser,
+  onboardingPersonalUser,
+} from "./handlers";
 
 const Ready = () => {
   const fetching = useIsFetching();
@@ -235,7 +242,19 @@ export const SettingsWorkspace: Story = {
 };
 export const SettingsOrganization: Story = {
   args: { path: "/settings" },
-  parameters: { settingsTab: "Organization" },
+  parameters: { settingsTab: "Organization", msw: handlersFor(acmeOwner) },
+};
+export const Onboarding: Story = {
+  args: { path: "/onboarding" },
+  parameters: { msw: handlersFor(onboardingCompanyUser) },
+};
+export const OnboardingPersonalEmail: Story = {
+  args: { path: "/onboarding" },
+  parameters: { msw: handlersFor(onboardingPersonalUser) },
+};
+export const ModelsWelcome: Story = {
+  args: { path: "/models?welcome=true" },
+  parameters: { msw: newOrganizationHandlers },
 };
 export const CreateWorkspace: Story = {
   args: { path: "/api-keys" },

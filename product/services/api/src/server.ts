@@ -141,7 +141,7 @@ const auth = createAuthService(database, {
         }
       : undefined,
   onUserCreated: createSignupHandler(
-    (id) => organizations.ensurePersonalForUser(id),
+    (user) => organizations.ensureForNewUser(user),
     posthog,
   ),
   onSessionCreated: async (session) => {

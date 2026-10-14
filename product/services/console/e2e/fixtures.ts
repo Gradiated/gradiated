@@ -138,6 +138,16 @@ export const test = base.extend<{ account: TestAccount }>({
       const organization = currentUser.organizations[0];
       if (!organization) throw new Error("Test account has no organization");
 
+      await requireOk(
+        await context.request.patch(
+          `${apiUrl}/api/v1/organizations/${organization.id}`,
+          {
+            headers: { Origin: consoleUrl },
+            data: { onboarding_completed: true },
+          },
+        ),
+      );
+
       const billingResponse = await context.request.get(
         `${apiUrl}/api/v1/organizations/${organization.id}/billing`,
       );

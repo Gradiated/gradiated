@@ -6,6 +6,7 @@ import {
   TimestampSchema,
   UuidSchema,
 } from "./common.js";
+import { EmailDomainSchema } from "./me.js";
 
 export const CreateOrganizationSchema = z
   .strictObject({
@@ -14,7 +15,18 @@ export const CreateOrganizationSchema = z
   .openapi("CreateOrganization");
 
 export const UpdateOrganizationSchema = z
-  .strictObject({ name: NameInputSchema })
+  .strictObject({
+    name: NameInputSchema,
+    auto_join_domain: EmailDomainSchema.nullable().describe(
+      "Must match the caller's verified company email domain, or null to stop automatic joining.",
+    ),
+    onboarding_completed: z.literal(true),
+  })
+  .partial()
+  .refine(
+    (input) => Object.keys(input).length > 0,
+    "Provide at least one organization field.",
+  )
   .openapi("UpdateOrganization");
 export type UpdateOrganization = z.infer<typeof UpdateOrganizationSchema>;
 

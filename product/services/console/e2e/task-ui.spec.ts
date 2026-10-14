@@ -66,6 +66,8 @@ test("direct task reload initializes flags, edits schedules and opens held-out r
             role: "owner",
             status: "active",
             default_workspace_id: workspaceId,
+            auto_join_domain: null,
+            onboarding_completed: true,
           },
         ],
       });
@@ -470,6 +472,8 @@ for (const initialRows of [0, 35]) {
               role: "owner",
               status: "active",
               default_workspace_id: workspaceId,
+              auto_join_domain: null,
+              onboarding_completed: true,
             },
           ],
         });
@@ -656,6 +660,8 @@ test("Billing loads 100 transactions at a time with skeleton rows and retry", as
             role: "owner",
             status: "active",
             default_workspace_id: workspaceId,
+            auto_join_domain: null,
+            onboarding_completed: true,
           },
         ],
       });

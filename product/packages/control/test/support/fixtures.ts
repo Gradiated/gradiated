@@ -34,12 +34,18 @@ export type OrganizationSeed = {
   billing?: { mode: (typeof BILLING_MODES)[number]; balance: bigint };
 };
 
-export const seedUser = async (database: ControlDatabase): Promise<string> => {
+export const seedUser = async (
+  database: ControlDatabase,
+  seed: { email?: string; emailVerified?: boolean } = {},
+): Promise<string> => {
   const id = randomUUID();
 
-  await database
-    .insert(users)
-    .values({ id, name: "Test user", email: `${id}@example.test` });
+  await database.insert(users).values({
+    id,
+    name: "Test user",
+    email: seed.email ?? `${id}@example.test`,
+    emailVerified: seed.emailVerified ?? false,
+  });
 
   return id;
 };

@@ -155,10 +155,10 @@ export const chatRequest = z
         "Allow the model to request multiple tool calls in one turn, when supported.",
       ),
     reasoning_effort: z
-      .string()
+      .union([z.string(), z.number().int().min(1).max(100)])
       .optional()
       .describe(
-        "Model-specific reasoning effort. Accepted values and effects depend on the hosted model.",
+        "Model-specific reasoning effort. DeepSeek also accepts integer effort from 1 to 100. Accepted values and effects depend on the hosted model.",
       ),
     chat_template_kwargs: wireObject
       .optional()

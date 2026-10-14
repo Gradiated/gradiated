@@ -21,12 +21,15 @@ export { WizardKeyResponseSchema, type WizardKeyResponse } from "./wizard.js";
 export { ProblemSchema, problemContent, type Problem } from "./problem.js";
 export {
   ModelListSchema,
+  ExternalModelListSchema,
+  ExternalModelSchema,
   ModelParameterDescriptorSchema,
   ModelPricingEntrySchema,
   ModelPropertiesInputSchema,
   ModelPropertiesSchema,
   ModelSchema,
   type Model,
+  type ExternalModel,
   type ModelParameterDescriptor,
   type ModelPricingEntry,
   type ModelProperties,

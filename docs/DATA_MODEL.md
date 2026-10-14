@@ -238,6 +238,15 @@ belong to `model_deployments`, not to this customer-facing document.
 | `passthrough_parameters` | capability-descriptor map | Bounded request-scoped extension allowlist                 |
 | `deprecation_date`       | timestamp nullable      | Optional scheduled retirement                                |
 
+The public Models API adds a required `properties.type` (`chat` or `decision`)
+from the Git-owned model catalog metadata. This field is response-only and is
+not written to PostgreSQL, so rolling API and worker releases keep the same
+closed stored document shape.
+
+The `external=true` pricing feed retains its legacy model-property shape without
+`type`. Evaluation workers read `ExternalModelListSchema`, allowing old and new
+workers and API replicas to overlap without losing external price snapshots.
+
 The launch text input modality contains `supported_inputs.max_context_length`
 and `max_prompt_length`, both expressed as positive token measures. Its pricing
 entries use `prompt`, `cached_prompt`, and optional `cache_write`. The launch

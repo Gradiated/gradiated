@@ -653,6 +653,11 @@ export interface components {
           cost: number;
         }[];
       }[];
+      /**
+       * @description The inference interface: chat generates text; decision scores typed questions without generating text.
+       * @enum {string}
+       */
+      type: "chat" | "decision";
     };
     ModelParameterDescriptor:
       | {
@@ -690,6 +695,149 @@ export interface components {
     };
     /** @enum {string} */
     ServiceTier: "flex" | "default" | "fast";
+    ExternalModelList: {
+      data: components["schemas"]["ExternalModel"][];
+      next_cursor: string | null;
+      service_tiers: components["schemas"]["ServiceTierPricingPolicy"][];
+      /**
+       * @description External pricing source; rates are catalog estimates, not billing charges.
+       * @enum {string}
+       */
+      pricing_source?: "openrouter";
+      /**
+       * Format: date-time
+       * @description Time this API instance fetched the external catalog.
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      pricing_updated_at?: string;
+    };
+    ExternalModel: {
+      id: string;
+      name: string;
+      /** @enum {string} */
+      status: "available" | "unavailable";
+      properties: components["schemas"]["ExternalModelProperties"];
+      /** @description Provider icon path in the console's local assets. */
+      icon?: string | null;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      created_at: string;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      updated_at: string;
+    };
+    ExternalModelProperties: {
+      /** @enum {number} */
+      schema_version: 1;
+      description: string;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      released_at: string | null;
+      hugging_face_id: string | null;
+      /** @enum {string|null} */
+      quantization:
+        | "int4"
+        | "int8"
+        | "fp4"
+        | "mxfp4"
+        | "nvfp4"
+        | "fp6"
+        | "fp8"
+        | "mxfp8"
+        | "fp16"
+        | "bf16"
+        | "fp32"
+        | null;
+      tokenizer: string | null;
+      input_modalities: {
+        /** @enum {string} */
+        type: "text";
+        supported_inputs: {
+          max_context_length: {
+            value: number;
+            /** @enum {string} */
+            unit: "token";
+          };
+          max_prompt_length: {
+            value: number;
+            /** @enum {string} */
+            unit: "token";
+          };
+        };
+        pricing: {
+          /** @enum {string} */
+          type: "prompt" | "cached_prompt" | "cache_write";
+          /** @enum {string} */
+          unit: "token";
+          cost: number;
+        }[];
+      }[];
+      output_modalities: {
+        /** @enum {string} */
+        type: "text";
+        max_length: {
+          value: number;
+          /** @enum {string} */
+          unit: "token";
+        };
+        default_length: {
+          value: number;
+          /** @enum {string} */
+          unit: "token";
+        };
+        streaming: boolean;
+        supported_parameters: {
+          [key: string]: components["schemas"]["ModelParameterDescriptor"];
+        };
+        pricing: {
+          /** @enum {string} */
+          type: "completion" | "internal_reasoning";
+          /** @enum {string} */
+          unit: "token";
+          cost: number;
+        }[];
+      }[];
+      passthrough_parameters: {
+        [key: string]: components["schemas"]["ModelParameterDescriptor"];
+      };
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      deprecation_date: string | null;
+      /** @description Published long-context price overrides; unspecified token types inherit base rates. */
+      pricing_overrides?: {
+        /** @description Minimum total input tokens for this price tier. */
+        min_prompt_tokens: number;
+        /** @description Input rates overriding the base tier, in nano-USD per token. */
+        input_pricing: {
+          /** @enum {string} */
+          type: "prompt" | "cached_prompt" | "cache_write";
+          /** @enum {string} */
+          unit: "token";
+          cost: number;
+        }[];
+        /** @description Output rates overriding the base tier, in nano-USD per token. */
+        output_pricing: {
+          /** @enum {string} */
+          type: "completion" | "internal_reasoning";
+          /** @enum {string} */
+          unit: "token";
+          cost: number;
+        }[];
+      }[];
+      /**
+       * @description The inference interface: chat generates text; decision scores typed questions without generating text.
+       * @enum {string}
+       */
+      type?: "chat" | "decision";
+    };
     Problem: {
       /**
        * Format: uri
@@ -1738,8 +1886,8 @@ export interface components {
       presence_penalty?: number;
       /** @description Allow the model to request multiple tool calls in one turn, when supported. */
       parallel_tool_calls?: boolean;
-      /** @description Model-specific reasoning effort. Accepted values and effects depend on the hosted model. */
-      reasoning_effort?: string;
+      /** @description Model-specific reasoning effort. DeepSeek also accepts integer effort from 1 to 100. Accepted values and effects depend on the hosted model. */
+      reasoning_effort?: string | number;
       /** @description Model-specific chat-template options, such as reasoning configuration. Accepted keys depend on the runtime. */
       chat_template_kwargs?: {
         [key: string]: unknown;
@@ -2174,7 +2322,7 @@ export interface operations {
   listModels: {
     parameters: {
       query?: {
-        /** @description Return the supported external provider catalog instead of hosted models. External prices are estimates and cached in API memory for five minutes. */
+        /** @description Return the supported external pricing catalog instead of hosted models. This feed retains the legacy model-property shape without type. External prices are estimates and cached in API memory for five minutes. */
         external?: "true" | "false";
       };
       header?: never;
@@ -2191,7 +2339,9 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["ModelList"];
+          "application/json":
+            | components["schemas"]["ModelList"]
+            | components["schemas"]["ExternalModelList"];
         };
       };
       /** @description The requested model catalog is unavailable. */

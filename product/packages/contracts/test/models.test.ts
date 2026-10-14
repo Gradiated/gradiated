@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   ModelPropertiesInputSchema,
   ModelPropertiesSchema,
+  ModelSchema,
+  ExternalModelSchema,
   type ModelPropertiesInput,
 } from "../src/index.js";
 
@@ -265,6 +267,36 @@ describe("ModelPropertiesInputSchema", () => {
 
 describe("ModelPropertiesSchema", () => {
   const canonical = ModelPropertiesInputSchema.parse(modelPropertiesInput());
+
+  it("accepts optional type in external readers without adding it to legacy responses", () => {
+    expect(
+      ExternalModelSchema.shape.properties.parse(canonical),
+    ).not.toHaveProperty("type");
+    expect(
+      ExternalModelSchema.shape.properties.parse({ ...canonical, type: "chat" })
+        .type,
+    ).toBe("chat");
+  });
+
+  it("keeps type out of stored properties and requires it in public responses", () => {
+    expect(canonical).not.toHaveProperty("type");
+    expect(ModelPropertiesSchema.parse(canonical)).toEqual(canonical);
+    expect(
+      ModelPropertiesInputSchema.safeParse({ ...canonical, type: "decision" })
+        .success,
+    ).toBe(false);
+    expect(ModelSchema.shape.properties.safeParse(canonical).success).toBe(
+      false,
+    );
+    expect(
+      ModelSchema.shape.properties.parse({ ...canonical, type: "decision" })
+        .type,
+    ).toBe("decision");
+    expect(
+      ModelSchema.shape.properties.safeParse({ ...canonical, type: "unknown" })
+        .success,
+    ).toBe(false);
+  });
 
   it("rejects input pricing without cached prompt pricing", () => {
     const result = ModelPropertiesSchema.safeParse({

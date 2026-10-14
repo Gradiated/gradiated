@@ -1,9 +1,9 @@
 import { z } from "@hono/zod-openapi";
 import {
-  ModelSchema,
+  ExternalModelSchema,
   ModelPropertiesInputSchema,
   SERVICE_TIER_PRICING_POLICY,
-  type Model,
+  type ExternalModel,
   type ModelPricingEntry,
 } from "@gradiated/contracts";
 import {
@@ -104,8 +104,9 @@ export const createExternalModelCatalog = (
   send: typeof fetch = fetch,
   now: () => number = Date.now,
 ) => {
-  let cached: { expires: number; data: Model[]; updatedAt: string } | undefined;
-  let pending: Promise<Model[]> | undefined;
+  let cached:
+    { expires: number; data: ExternalModel[]; updatedAt: string } | undefined;
+  let pending: Promise<ExternalModel[]> | undefined;
   let retryAt = 0;
   const unavailable = () =>
     new ControlServiceError(
@@ -113,7 +114,7 @@ export const createExternalModelCatalog = (
       "External model catalog unavailable.",
     );
 
-  const refresh = async (): Promise<Model[]> => {
+  const refresh = async (): Promise<ExternalModel[]> => {
     try {
       const response = await send(
         "https://openrouter.ai/api/v1/models?providers=OpenAI,Anthropic",
@@ -127,7 +128,7 @@ export const createExternalModelCatalog = (
       const body = z
         .object({ data: z.array(z.unknown()) })
         .parse(await response.json());
-      const data: Model[] = [];
+      const data: ExternalModel[] = [];
       const updatedAt = new Date(now()).toISOString();
       for (const entry of body.data) {
         const parsed = providerModel.safeParse(entry);
@@ -184,7 +185,7 @@ export const createExternalModelCatalog = (
             },
           ],
         });
-        const result = ModelSchema.safeParse({
+        const result = ExternalModelSchema.safeParse({
           id: modelId,
           name:
             metadata?.displayName ??

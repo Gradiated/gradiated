@@ -13,7 +13,12 @@ export type Organization = components["schemas"]["Organization"];
 export type Workspace = components["schemas"]["Workspace"];
 export type ApiKey = components["schemas"]["ApiKey"];
 export type CreatedApiKey = components["schemas"]["CreatedApiKey"];
-export type Model = components["schemas"]["Model"];
+type ModelList =
+  | components["schemas"]["ModelList"]
+  | components["schemas"]["ExternalModelList"];
+
+export type Model =
+  components["schemas"]["Model"] | components["schemas"]["ExternalModel"];
 export type ServiceTierPricingPolicy =
   components["schemas"]["ServiceTierPricingPolicy"];
 export type BalanceTransaction = components["schemas"]["BalanceTransaction"];
@@ -120,7 +125,7 @@ export const revokeApiKey = (
 export const modelsQuery = () =>
   queryOptions({
     queryKey: ["models"],
-    queryFn: () => requireData(api.GET("/api/v1/models")),
+    queryFn: (): Promise<ModelList> => requireData(api.GET("/api/v1/models")),
   });
 
 export const apiKeysQuery = (organizationId: string, workspaceId: string) =>
@@ -240,7 +245,7 @@ export const useCreateApiKey = (
 export const externalModelsQuery = () =>
   queryOptions({
     queryKey: ["models", "external"],
-    queryFn: () =>
+    queryFn: (): Promise<ModelList> =>
       requireData(
         api.GET("/api/v1/models", { params: { query: { external: "true" } } }),
       ),

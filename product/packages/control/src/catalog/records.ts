@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   GatewayModelDeploymentSchema,
+  ModelPropertiesSchema,
   ModelSchema,
   UuidSchema,
 } from "@gradiated/contracts";
@@ -10,7 +11,7 @@ export const ModelRecordSchema = z.object({
   id: ModelSchema.shape.id,
   name: ModelSchema.shape.name,
   status: z.enum(MODEL_STATUSES),
-  properties: ModelSchema.shape.properties,
+  properties: ModelPropertiesSchema,
   createdAt: z.date(),
   updatedAt: z.date(),
 });

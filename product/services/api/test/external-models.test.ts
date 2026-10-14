@@ -1,5 +1,5 @@
 import { expect, it, vi } from "vitest";
-import { ModelListSchema } from "@gradiated/contracts";
+import { ModelListSchema, ExternalModelListSchema } from "@gradiated/contracts";
 import { createExternalModelCatalog } from "../src/catalog/external-models.js";
 import { createTestApp, modelRecord, sessionStoreDown } from "./support.js";
 
@@ -61,7 +61,7 @@ it("loads plain models without touching the external service or making outbound 
   expect(send).not.toHaveBeenCalled();
 });
 
-it("uses the same model format and nano-USD prices without changing the hosted catalog", async () => {
+it("preserves the legacy external pricing feed without changing the hosted catalog", async () => {
   const send = vi.fn<typeof fetch>().mockImplementation(async () => feed());
   const listHosted = vi.fn().mockResolvedValue([modelRecord]);
   const app = createTestApp({
@@ -71,7 +71,8 @@ it("uses the same model format and nano-USD prices without changing the hosted c
   });
   const response = await app.request("/api/v1/models?external=true");
   expect(response.status).toBe(200);
-  const external = ModelListSchema.parse(await response.json());
+  const external = ExternalModelListSchema.parse(await response.json());
+  expect(external.data[0]?.properties).not.toHaveProperty("type");
   expect(external.data[0]).toMatchObject({
     id: provider.id,
     name: "GPT-6.1 Sol",

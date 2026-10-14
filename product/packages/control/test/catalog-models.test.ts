@@ -1,4 +1,5 @@
 import { ModelPropertiesInputSchema } from "@gradiated/contracts";
+import { modelType } from "@gradiated/contracts/model-catalog";
 import { describe, expect, it } from "vitest";
 
 import { catalogModels } from "../src/catalog/models/index.js";
@@ -47,6 +48,7 @@ describe("model configurations", () => {
   });
 
   it("advertises Kev 9B as a decision model that cannot generate", () => {
+    expect(modelType(createKev9bModelConfiguration().id)).toBe("decision");
     const [output] =
       createKev9bModelConfiguration().properties.output_modalities;
 
@@ -55,6 +57,28 @@ describe("model configurations", () => {
       supported_parameters: {},
       max_length: { value: 1 },
       pricing: [{ type: "completion", cost: 0 }],
+    });
+  });
+
+  it("classifies the generation models as chat", () => {
+    expect(catalogModels.map((model) => modelType(model.id))).toEqual([
+      "chat",
+      "chat",
+      "decision",
+    ]);
+  });
+
+  it("advertises the GLM effort parameter so the gateway forwards it to the runtime", () => {
+    const glm = catalogModels.find(
+      (model) => model.id === "z-ai/glm-5.3-flash",
+    );
+    const properties = ModelPropertiesInputSchema.parse(glm?.properties);
+
+    expect(
+      properties.output_modalities[0]?.supported_parameters.reasoning_effort,
+    ).toEqual({
+      type: "enum",
+      values: ["low", "high", "max"],
     });
   });
 });

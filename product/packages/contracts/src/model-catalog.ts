@@ -5,6 +5,7 @@ export type CatalogEntry = {
   displayName: string;
   icon: string | null;
   supportedUses: readonly ModelUseCase[];
+  type?: "chat" | "decision";
   training?: {
     revision: string;
     model?: string;
@@ -51,6 +52,7 @@ export const MODEL_CATALOG = [
   },
   {
     id: "jaredpalmer/kev-9b",
+    type: "decision",
     displayName: "Kev 9B",
     icon: null,
     supportedUses: ["serving"],
@@ -237,6 +239,12 @@ export const QWEN_PLACEHOLDER_PRICING = {
 
 export const catalogModel = (id: string) =>
   MODEL_CATALOG.find((model) => model.id === id);
+
+export const modelType = (id: string): "chat" | "decision" => {
+  const model: CatalogEntry | undefined = catalogModel(id);
+
+  return model?.type ?? "chat";
+};
 
 export const modelDisplayName = (id: string | null | undefined) =>
   id ? (catalogModel(id)?.displayName ?? id) : "—";

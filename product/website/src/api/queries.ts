@@ -5,12 +5,15 @@ export type CurrentUser = components["schemas"]["CurrentUser"];
 export type Workspace = components["schemas"]["Workspace"];
 export type ApiKey = components["schemas"]["ApiKey"];
 export type CreatedApiKey = components["schemas"]["CreatedApiKey"];
-export type Model = components["schemas"]["Model"];
+export type Model =
+  components["schemas"]["Model"] | components["schemas"]["ExternalModel"];
 
-export const listModels = (): Promise<components["schemas"]["ModelList"]> =>
-  requireData<components["schemas"]["ModelList"]>(
-    api.GET("/api/v1/models", { credentials: "omit" }),
-  );
+type ModelList =
+  | components["schemas"]["ModelList"]
+  | components["schemas"]["ExternalModelList"];
+
+export const listModels = (): Promise<ModelList> =>
+  requireData<ModelList>(api.GET("/api/v1/models", { credentials: "omit" }));
 
 export const getCurrentUser = (): Promise<CurrentUser> =>
   requireData<CurrentUser>(api.GET("/api/v1/me"));

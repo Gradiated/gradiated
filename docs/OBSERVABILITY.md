@@ -167,6 +167,10 @@ StatefulSet and DaemonSet rollouts, and generation mismatches. They also cover
 Prometheus rule evaluation/scrape failures and Alertmanager delivery failures.
 The `gradiated-logging` rules cover Loki replica loss, collector availability,
 dropped logs, delivery retries, and propagation latency.
+The `gradiated-data-stores` rules read RDS and Valkey CloudWatch metrics through
+`cloudwatch-exporter`. They page when product database storage is nearly full or
+Valkey evicts keys, and warn on connections, CPU, memory, and Valkey storage,
+ECPU and throttling. `DataStoreMetricsMissing` warns if the metrics stop.
 Healthy deployments do not create incidents; rollout failures and service
 regressions do.
 
@@ -210,7 +214,7 @@ absence of separate vendor-managed notifications outside the inspected systems.
 | Monitoring and notifications — highest priority | Prometheus/Alertmanager self-monitoring and notification-failure rules; Watchdog heartbeat to incident.io | Both servers have one replica. The heartbeat proves Alertmanager can reach incident.io, not that the incident webhook credential works. Assess HA placement and alert on webhook delivery failures. |
 | Customer serving — highest priority | Public API/console probes; gateway request, generation and dependency metrics | Probes originate inside EKS and do not authenticate or run inference. Add an external, bounded exact-model synthetic transaction validating authentication, first token, completion, and usage. It needs an authorized test account, spend limit and external scheduler. |
 | Billing-integrity events | Immediate finalization/backpressure rules with first-event timestamp gauges; leader-aware worker progress and eligible backlog | Timestamp gauges cover first-sample events, but a process that dies before any subsequent scrape can still lose in-memory evidence. Durable billing records remain the accounting authority. |
-| PostgreSQL and Valkey | App dependency checks; primary RDS is Multi-AZ, deletion-protected, has 35-day backups and recent restorable time; cache has 30-day snapshots | No CloudWatch alarms. Add routed alarms for RDS free storage/connections/CPU credits and database availability, plus Valkey throttling, storage usage and failed requests. Cache caps are 10 GB and 5,000 ECPU/s. Dependency health alone provides no capacity lead time. |
+| PostgreSQL and Valkey | App dependency checks; primary RDS is Multi-AZ, deletion-protected, has 35-day backups and recent restorable time; cache has 30-day snapshots; `gradiated-data-stores` alerts on RDS storage, connections, CPU and memory, and on Valkey storage, ECPU, throttling and evictions | RDS failover and availability events are not routed. Connection thresholds assume the default `max_connections`. |
 | ClickHouse / ingestion | Worker failures, pending age, eligible settlement backlog; Terraform specifies two replicas and daily backups retained 30 days | No direct ClickHouse scrape target was present. Add query/insert failures, storage/resource saturation and backup freshness checks. Unread stream age is not measured; pending-only alerts cannot prove ingestion completeness. |
 | GPU runtimes | Kubernetes Node and Rollout health, SDK qualification, and gateway generation outcomes | Monitor desired versus ready capacity, Pending pods, controller availability and runtime failures. Pod process health alone is not serving qualification or spare capacity. |
 | Deployment, DNS, load balancers and secrets | Kubernetes defaults, public probes and direct controller scrapes. Three warnings cover Argo degraded/failed automatic reconciliation (15m), External Secret not ready (10m), and DNS last successful sync >10m for 5m. Controller dashboard includes ALB reconciliation failures/latency. | ALB target health and load-balancer-generated errors still need direct AWS telemetry; edge request metrics only see requests that reach the gateway. Manual-sync application drift is intentionally excluded. |

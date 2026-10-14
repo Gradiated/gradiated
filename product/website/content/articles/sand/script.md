@@ -20,7 +20,7 @@ We then slice the ingot into thin wafers: the blank canvases for our chips.
 
 <!-- scene: boron -->
 
-We can change how silicon conducts electricity by adding small amounts of other elements. This is called doping. Here is a cross-section of our wafer, lightly doped with boron mixed into the melt before crystal growth.
+We can change how silicon conducts electricity by adding small amounts of other elements. This is called doping. Here is a cross-section of our wafer, lightly doped with boron which was mixed into the liquid silicon before crystal growth.
 
 <!-- scene: implant -->
 

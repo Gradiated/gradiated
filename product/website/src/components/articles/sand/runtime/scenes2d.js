@@ -231,7 +231,7 @@ export const SCENES2D = (function () {
     );
     key(gSlab, 3, { scale: 1 }, { scale: 1 }, 0.82); // appears in place, once the wafer's rim fills the same rectangle
     key(gSlab, 9, { scale: 0.55, opacity: 0 });
-    caption(3, "cross-section of the wafer · ○ boron");
+    caption(3, "cross-section of the wafer · boron ○");
 
     /* ================= 4 · implant two trenches of phosphorus ================= */
     const gTrench = mk("g", { class: "thin" }, gSlab);
@@ -276,7 +276,7 @@ export const SCENES2D = (function () {
     hideAt0(gGuns);
     tl.to(gGuns, { opacity: 1, duration: DUR * 0.15 }, at(4));
     tl.to(gGuns, { opacity: 0, duration: DUR * 0.15 }, at(4) + DUR * 0.85);
-    caption(4, "● phosphorus, fired in from above");
+    caption(4, "phosphorus ●, fired in from above");
 
     /* ================= 5 · three wires ================= */
     const gWires = mk("g", {}, gSlab);

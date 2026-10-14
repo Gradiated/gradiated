@@ -49,6 +49,9 @@ def main():
     rendered = subprocess.check_output(['kubectl', 'kustomize', str(KUBE / 'workloads')], text=True)
     resources = [r for r in yaml.safe_load_all(rendered) if r]
     templates = {r['metadata']['name']: r for r in resources if r['kind'] == 'AnalysisTemplate'}
+    for template in templates.values():
+        assert int(template['metadata'].get('annotations', {}).get('argocd.argoproj.io/sync-wave', '0')) < 0, \
+            'Shared analysis templates must sync before the API Rollout'
     for resource in resources:
         if resource['kind'] in ('Rollout', 'AnalysisTemplate'):
             Draft7Validator(schemas[resource['kind']]).validate(resource)

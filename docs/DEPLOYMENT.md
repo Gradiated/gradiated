@@ -59,6 +59,16 @@ collector remain Deployments. GPU model Rollouts retain their SDK qualification.
 Host bundles are managed by the GPU host controller, independently of these
 application Rollouts.
 
+Shared analysis templates are owned by the API application and sync at wave
+`-10`, before its Rollout. Gateway and proxy sync independently: parent
+Application waves do not guarantee that shared templates already exist. For a
+clean bootstrap or the first upgrade from older Application file filters, apply
+the committed `rollout-analysis.yaml` before introducing the Rollouts. An
+already-running sync can retain the old filter until it completes. Introduce
+future template names in a separate release and confirm they exist before
+shipping Rollouts that reference them. Missing templates prevent progression;
+controllers retry automatically once the templates exist.
+
 Each application Rollout references its existing Deployment as its pod template.
 The initial takeover starts a full healthy replica set before scaling the old
 Deployment down (`workloadRef.scaleDown: onsuccess`); do not delete the template.

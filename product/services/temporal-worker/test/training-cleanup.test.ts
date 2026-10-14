@@ -1,59 +1,51 @@
 import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import { stopClosedTrainingJobs } from "../src/training/cleanup.js";
-
-const runId = randomUUID();
-const taskId = randomUUID();
-const jobId = `training-${runId}-1`;
-
-const setup = () => {
-  const request = vi.fn(
-    async (path: string, method?: string): Promise<unknown> =>
-      method === "DELETE"
-        ? {}
-        : [{ ID: jobId, Stop: false, Status: "pending" }],
-  );
-  const status = vi.fn(async (): Promise<"running" | "failed"> => "failed");
-  const readRun = vi.fn(
+const runId = randomUUID(),
+  taskId = randomUUID(),
+  uid = randomUUID();
+const job = {
+  metadata: {
+    name: `training-${runId}-1`,
+    uid,
+    labels: { "gradiated.com/training-run": runId },
+  },
+  status: { conditions: [] },
+};
+const setup = () => ({
+  request: vi.fn(async (_path: string, method?: string): Promise<unknown> =>
+    method === "DELETE" ? {} : { items: [job] },
+  ),
+  engine: {
+    status: vi.fn(async (): Promise<"running" | "failed"> => "failed"),
+  },
+  readRun: vi.fn(
     async (): Promise<
       { taskId: string; workflowId: string | null } | undefined
-    > => ({
-      taskId,
-      workflowId: "exact-workflow",
+    > => ({ taskId, workflowId: "exact-workflow" }),
+  ),
+});
+it("deletes only the closed workflow Job with a UID precondition", async () => {
+  const input = setup();
+  await stopClosedTrainingJobs(input);
+  expect(input.engine.status).toHaveBeenCalledWith("exact-workflow", runId);
+  expect(input.request).toHaveBeenLastCalledWith(
+    `/apis/batch/v1/namespaces/gpu-inference/jobs/${job.metadata.name}`,
+    "DELETE",
+    expect.objectContaining({
+      preconditions: { uid },
+      propagationPolicy: "Foreground",
     }),
   );
-  return { request, engine: { status }, readRun };
-};
-
-it.each(["pending", "running"])(
-  "stops a %s job only after its exact workflow execution closes",
-  async (state) => {
-    const input = setup();
-    input.request.mockResolvedValueOnce([
-      { ID: jobId, Stop: false, Status: state },
-    ]);
-
-    await stopClosedTrainingJobs(input);
-
-    expect(input.engine.status).toHaveBeenCalledWith("exact-workflow", runId);
-    expect(input.request).toHaveBeenLastCalledWith(
-      `/v1/job/${jobId}?purge=false`,
-      "DELETE",
-    );
-  },
-);
-
+});
 it("uses the task workflow identity for older run records", async () => {
   const input = setup();
   input.readRun.mockResolvedValueOnce({ taskId, workflowId: null });
-
   await stopClosedTrainingJobs(input);
-
   expect(input.engine.status).toHaveBeenCalledWith(`training-${taskId}`, runId);
 });
-
 it.each(["running", "missing-run", "database-down", "temporal-down"])(
-  "leaves capacity alone when ownership is %s",
+  "preserves capacity when ownership is %s",
   async (condition) => {
     const input = setup();
     if (condition === "running")
@@ -61,44 +53,45 @@ it.each(["running", "missing-run", "database-down", "temporal-down"])(
     if (condition === "missing-run")
       input.readRun.mockResolvedValueOnce(undefined);
     if (condition === "database-down")
-      input.readRun.mockRejectedValueOnce(new Error("Unavailable"));
+      input.readRun.mockRejectedValueOnce(new Error("unavailable"));
     if (condition === "temporal-down")
-      input.engine.status.mockRejectedValueOnce(new Error("Unavailable"));
-
+      input.engine.status.mockRejectedValueOnce(new Error("unavailable"));
     await stopClosedTrainingJobs(input);
-
     expect(input.request).toHaveBeenCalledTimes(1);
   },
 );
-
-it("ignores stopped, dead, malformed and unrelated jobs", async () => {
+it("ignores completed, deleting, malformed and mismatched jobs", async () => {
   const input = setup();
-  input.request.mockResolvedValueOnce([
-    { ID: jobId, Stop: true, Status: "pending" },
-    { ID: jobId, Stop: false, Status: "dead" },
-    { ID: "training-not-a-run-1", Stop: false, Status: "running" },
-    { ID: `inference-${runId}-1`, Stop: false, Status: "running" },
-  ]);
-
+  input.request.mockResolvedValueOnce({
+    items: [
+      {
+        ...job,
+        status: { conditions: [{ type: "Complete", status: "True" }] },
+      },
+      { ...job, metadata: { ...job.metadata, deletionTimestamp: "today" } },
+      { ...job, metadata: { ...job.metadata, name: "training-bad-1" } },
+      {
+        ...job,
+        metadata: {
+          ...job.metadata,
+          labels: { "gradiated.com/training-run": randomUUID() },
+        },
+      },
+    ],
+  });
   await stopClosedTrainingJobs(input);
-
   expect(input.readRun).not.toHaveBeenCalled();
-  expect(input.request).toHaveBeenCalledTimes(1);
 });
-
-it("continues after one job cannot be stopped", async () => {
+it("continues through paginated Jobs", async () => {
   const input = setup();
-  input.request
-    .mockResolvedValueOnce([
-      { ID: jobId, Stop: false, Status: "pending" },
-      { ID: `training-${runId}-2`, Stop: false, Status: "running" },
-    ])
-    .mockRejectedValueOnce(new Error("Nomad unavailable"));
-
+  input.request.mockResolvedValueOnce({
+    items: [],
+    metadata: { continue: "next" },
+  });
   await stopClosedTrainingJobs(input);
-
-  expect(input.request).toHaveBeenLastCalledWith(
-    `/v1/job/training-${runId}-2?purge=false`,
-    "DELETE",
+  expect(input.request).toHaveBeenNthCalledWith(
+    2,
+    expect.stringContaining("&continue=next"),
   );
+  expect(input.readRun).toHaveBeenCalledWith(runId);
 });

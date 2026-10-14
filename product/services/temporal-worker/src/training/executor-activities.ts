@@ -22,12 +22,12 @@ import {
   type ContentStore,
   type TrainingInput,
 } from "@gradiated/control";
-import type { NomadRequest } from "@gradiated/nomad-pki";
+import type { KubernetesRequest } from "./kubernetes-host.js";
 import {
   createTrainingHosts,
   type TrainingHost,
   type TrainingHostConfig,
-} from "./nomad-host.js";
+} from "./kubernetes-host.js";
 
 import {
   estimateOutputCost,
@@ -114,20 +114,18 @@ export const createTrainingExecutorActivities = (options: {
   engine: TrainingEngine;
   contents: ContentStore;
   artifacts: TrainingArtifacts;
-  nomad: NomadRequest;
+  request: KubernetesRequest;
   podIds: string[];
   host: TrainingHostConfig;
-  token: string;
   evaluationModels?: EvaluationModel;
   evaluationPricing?: ReturnType<typeof createEvaluationPricing>;
 }) => {
   const { database, artifacts } = options;
   const store = createTrainingRunStore(database);
   const hosts = createTrainingHosts({
-    request: options.nomad,
+    request: options.request,
     nodes: () => trainingNodes(database, options.podIds),
     config: options.host,
-    token: options.token,
     signal: () => Context.current().cancellationSignal,
   });
   const json = async (key: string) =>

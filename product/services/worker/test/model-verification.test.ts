@@ -26,7 +26,7 @@ describe("production SDK verification", () => {
     runtimeRevision: "test-release",
   };
 
-  it("accepts Nomad allocation IDs without RFC UUID version or variant bits", () => {
+  it("accepts pod IDs without requiring RFC UUID version or variant bits", () => {
     for (const id of [
       "4a7fca4c-20c8-1ac4-6535-051217442d22",
       "eeb45cf5-037b-b48c-0a90-855453cf3572",

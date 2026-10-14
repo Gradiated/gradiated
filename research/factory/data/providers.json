@@ -4,27 +4,6 @@
   "scope": "Candidate infrastructure for repeatable model-serving experiments and bare-metal GPU profiling. This registry records interfaces and verified capability, not prices or credentials.",
   "providers": [
     {
-      "id": "nebius",
-      "name": "Nebius",
-      "interfaces": ["cli", "api", "terraform"],
-      "access_profiles": ["gpu_vm", "bare_metal_candidate"],
-      "credentials": [
-        {"env": "NEBIUS_IAM_TOKEN", "purpose": "API authentication", "required": false}
-      ],
-      "inventory": {
-        "command": "research/factory/tools/lab-nebius-placement --accelerator <name> --gpu-count <count> --allocation auto",
-        "reviewed_at_utc": "2026-07-28T10:20:00Z",
-        "projects": ["eu-north1", "eu-west1", "uk-south1", "me-west1", "us-central1"],
-        "current_capacity_summary": "Authenticated read-only resource advice found an 8-GPU preemptible B200 candidate in us-central1 and an 8-GPU preemptible H200 candidate in eu-west1. No matching 8-GPU B300, H100, L40S, or RTX PRO 6000 candidate was returned. Re-check immediately before allocation.",
-        "provisioning": "not performed by the placement command"
-      },
-      "profiling": {
-        "hardware_counters": "restricted",
-        "verified_profile": "gpu_vm",
-        "note": "System and timeline profiling are usable on the tested VM. Full performance-counter access was restricted; re-test on bare metal."
-      }
-    },
-    {
       "id": "runpod",
       "name": "RunPod",
       "interfaces": ["api", "graphql"],

@@ -207,8 +207,10 @@ std::optional<StatusReporterConfig> status_config(const Environment &environment
 
   return StatusReporterConfig{
       .url = *url,
-      .token = required_token(std::move(token), feature, "DESMOND_STATUS_TOKEN",
-                              "DESMOND_STATUS_TOKEN_FILE"),
+      .token = url->starts_with("http://127.0.0.1:3004/")
+                   ? std::move(token)
+                   : required_token(std::move(token), feature, "DESMOND_STATUS_TOKEN",
+                                    "DESMOND_STATUS_TOKEN_FILE"),
       .deployment_id = required(environment, feature, "DESMOND_DEPLOYMENT_ID"),
       .runtime_revision = required(environment, feature, "DESMOND_RELEASE"),
   };

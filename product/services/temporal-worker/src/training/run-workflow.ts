@@ -10,7 +10,7 @@ import {
 import type { TrainingInput } from "@gradiated/control";
 import type { TrainingActivities } from "./activities.js";
 import type { TrainingExecutorActivities } from "./executor-activities.js";
-import type { TrainingHost, TrainingHostConfig } from "./nomad-host.js";
+import type { TrainingHost, TrainingHostConfig } from "./kubernetes-host.js";
 
 const records = proxyActivities<
   Pick<TrainingActivities, "createRun" | "enterStage" | "finishRun">

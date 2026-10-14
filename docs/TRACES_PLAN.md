@@ -60,10 +60,14 @@ name in every direction.
 
 | Setting | Values | Default |
 | --- | --- | --- |
-| `trace_capture_enabled` | `true`, `false` | `false` |
-| `trace_retention_days` | 30, 90, 180 | 90 |
+| `trace_capture_enabled` | `true`, `false` | `true` |
+| `trace_retention_days` | 30, 90, 180 | 180 |
 
-Migration `0007` adds both workspace settings. The proxy reads them with its
+Migration `0007` adds both workspace settings. Migration `0019` enables capture
+and sets 180-day retention by default for new workspaces; existing settings are
+preserved. This default-on policy is also recorded in
+[TASK_FINE_TUNING_OPERATIONS_CONTRACT.md, OPS-06](TASK_FINE_TUNING_OPERATIONS_CONTRACT.md#ops-06-rollout-and-rollback).
+The proxy reads them with its
 identity query and caches them for 15 seconds. Capture requires both
 `trace_capture_enabled=true` and a non-empty `x-gradiated-task`. Enabling capture
 does not enable automatic training. The proxy applies the same settings to

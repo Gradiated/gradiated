@@ -1,8 +1,11 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { createRequire } from "node:module";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import mdx from "@mdx-js/rollup";
 import { defineConfig, loadEnv } from "vite";
+import type { Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import remarkGfm from "remark-gfm";
@@ -19,6 +22,32 @@ const mdxPlugin = mdx({
   remarkPlugins: [remarkFrontmatter, remarkGfm],
   rehypePlugins: [[rehypeHighlight, { detect: false, languages: all }]],
 });
+
+/* Job postings come only from Ashby, synced into src/ashby-jobs.generated.ts.
+   `pnpm build` syncs before building; the dev server does it on start, so a
+   fresh checkout's careers page is not empty. Offline, or after 10 seconds, it
+   carries on with the generated file as it is. */
+const syncAshbyJobs: Plugin = {
+  name: "sync-ashby-jobs",
+  apply: "serve",
+  buildStart() {
+    const result = spawnSync(
+      process.execPath,
+      [fileURLToPath(new URL("./scripts/sync-ashby-jobs.ts", import.meta.url))],
+      {
+        env: { ...process.env, ASHBY_SYNC_OPTIONAL: "1" },
+        stdio: "inherit",
+        // A stalled connection to Ashby must not hold up the dev server.
+        timeout: 10_000,
+      },
+    );
+    if (result.error) {
+      console.warn(
+        `Ashby job sync did not finish (${result.error.message}); starting with src/ashby-jobs.generated.ts as it is.`,
+      );
+    }
+  },
+};
 
 export default defineConfig(({ isSsrBuild, mode }) => {
   const env = loadEnv(mode, process.cwd(), "VITE_");
@@ -38,6 +67,7 @@ export default defineConfig(({ isSsrBuild, mode }) => {
       ),
     },
     plugins: [
+      syncAshbyJobs,
       {
         name: "sand-article",
         enforce: "pre",

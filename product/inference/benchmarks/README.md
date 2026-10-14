@@ -5,10 +5,14 @@ OpenAI-compatible runtime. It supports cold unique prompts, controlled shared
 prefixes, and replay of multi-turn coding-agent traces. It records TTFT,
 output throughput, SGLang's measured prefix-cache work, and Desmond GPU metrics.
 
-Run it from a client with private access to the inference and Desmond ports:
+Run it from a client with private access to the inference and Desmond ports.
+Replace the endpoint placeholders with the current private runtime and Desmond
+addresses:
 
 ```sh
 SGLANG_API_KEY=... python3 openai_sustained.py \
+  --base-url http://INFERENCE_HOST:INFERENCE_PORT \
+  --desmond-url http://DESMOND_HOST:DESMOND_PORT \
   --concurrencies 1,2,4,8,12,16,24 \
   --seconds 20 \
   --prompt-repetitions 25 \
@@ -33,6 +37,8 @@ python3 prepare_agentic_workload.py \
   --output workloads/agentic-coding-64.jsonl
 
 SGLANG_API_KEY=... python3 openai_sustained.py \
+  --base-url http://INFERENCE_HOST:INFERENCE_PORT \
+  --desmond-url http://DESMOND_HOST:DESMOND_PORT \
   --prompt-mode agent-trace \
   --trace-workload workloads/agentic-coding-64.jsonl \
   --concurrencies 4,8,12,16 \

@@ -39,13 +39,7 @@ def main():
         assert any(p['id'] == panel_id and p.get('targets')
                    for p in dashboard['panels']), name
         assert not annotations.get('runbook_url'), name
-        if name in ('LoraLoaderUnavailable', 'LoraPreparationFailures',
-                    'LoraCapacityRejected', 'LoraPinnedDiskNearlyFull'):
-            assert annotations['logs_url'] == (
-                'https://nomad.gradiated.com/ui/allocations/'
-                '{{ $labels.deployment }}/vllm/logs'), name
-        else:
-            assert annotations['logs_url'].startswith('https://grafana.gradiated.com/d/gradiated-logs?'), name
+        assert annotations['logs_url'].startswith('https://grafana.gradiated.com/d/gradiated-logs?'), name
 
     # Validate actual chart expressions as recording rules, substituting dashboard variables.
     chart_rules = []
@@ -63,7 +57,13 @@ def main():
 
     from autoscaling_checks import check_autoscaling
 
-    tests = check_autoscaling(ROOT)
+    from gpu_autoscaling_checks import check_gpu_autoscaling
+
+    from rollout_checks import check_rollouts
+
+    rollout_rules, rollout_tests = check_rollouts(ROOT)
+    groups.append({'name': 'rollout_analysis_syntax', 'rules': rollout_rules})
+    tests = check_autoscaling(ROOT) + check_gpu_autoscaling(ROOT) + rollout_tests
     def scenario(name, inputs, expected, checks, labels=None, eval_time="8m", interval="30s"):
         cases = []
         for alert in checks:
@@ -327,73 +327,6 @@ def main():
     ]:
         scenario(name, inputs, stall if fires else None, [stall], {'deployment': 'stalled'})
 
-    renewal = 'NomadCertificateRenewalStalled'
-    for name, days_left, fires in [('renewing on schedule', 20, False),
-                                   ('renewal stalled', 5, True)]:
-        inputs = [{'series': 'nomad_certificate_expiry_timestamp_seconds'
-                   '{certificate="server-0",pod="nomad-0"}',
-                   'values': f'{days_left * 86400}+0x30'}]
-        scenario(f'nomad certificate {name}', inputs, renewal if fires else None,
-                 [renewal], {'certificate': 'server-0'})
-
-    renewer = 'NomadCertificateRenewerMissing'
-    certificate = {'series': 'nomad_certificate_expiry_timestamp_seconds{certificate="ops-mcp"}',
-                   'values': '2000000+0x200'}
-    scenario('ops MCP holds a Nomad certificate', [certificate], None, [renewer], eval_time='70m')
-    scenario('ops MCP has no Nomad certificate', [], renewer, [renewer],
-             {'certificate': 'ops-mcp'}, eval_time='70m')
-    sidecar = {'series': 'kube_pod_init_container_info{namespace="nomad",pod="nomad-0",'
-               'container="certificate-renewer"}', 'values': '1+0x200'}
-    scenario('server renewer has no certificate', [certificate, sidecar], renewer,
-             [renewer], {'namespace': 'nomad', 'pod': 'nomad-0',
-                         'container': 'certificate-renewer'}, eval_time='70m')
-    issued = {'series': 'nomad_certificate_expiry_timestamp_seconds{namespace="nomad",'
-              'pod="nomad-0",certificate="server-0"}', 'values': '2000000+0x200'}
-    scenario('server renewer holds a certificate', [certificate, sidecar, issued],
-             None, [renewer], eval_time='70m')
-
-    host_labels = {'instance_id': 'gpu-test'}
-    def host_series(metric, values):
-        return {'series': metric + '{instance_id="gpu-test"}', 'values': values}
-
-    for name, due, fires, duration in [
-        ('not due', '2000000+0x200', False, '70m'),
-        ('failed bootstrap migration', '1+0x200', True, '70m'),
-        ('freshly overdue', '1+0x200', False, '30m'),
-        ('renewed', '1+0x60 2000000+0x140', False, '70m'),
-    ]:
-        alert = 'NomadGpuCertificateRenewalStalled'
-        scenario('GPU renewal ' + name, [host_series('nomad_gpu_certificate_renewal_due_timestamp_seconds', due)],
-                 alert if fires else None, [alert], host_labels, duration)
-
-    for name, seen, fires, duration in [
-        ('healthy', '0+30x200', False, '80m'),
-        ('never installed', '0+0x200', True, '80m'),
-        ('stopped recently', '1+0x200', False, '65m'),
-        ('recovered', '0+0x150 4500+30x50', False, '80m'),
-    ]:
-        alert = 'NomadGpuCertificateRenewerMissing'
-        scenario('GPU heartbeat ' + name, [host_series('nomad_gpu_certificate_last_seen_timestamp_seconds', seen)],
-                 alert if fires else None, [alert], host_labels, duration)
-
-    for name, expires, fires in [('comfortable margin', 172800, False), ('urgent', 36000, True),
-                                  ('expired', 1, True), ('not observed', 0, False)]:
-        alert = 'NomadGpuCertificateExpiryImminent'
-        scenario('GPU expiry ' + name, [host_series('nomad_gpu_certificate_expiry_timestamp_seconds', f'{expires}+0x30')],
-                 alert if fires else None, [alert], host_labels, '8m')
-
-    for name, scrape, collection, fires in [('healthy', 1, 1, False), ('scrape down', 0, None, True),
-                                            ('scrape missing', None, None, True), ('database down', 1, 0, True),
-                                            ('collector absent', 1, None, True)]:
-        alert = 'NomadGpuCertificateMonitoringUnavailable'
-        inputs = []
-        if scrape is not None:
-            inputs.append({'series': 'up{service="api"}', 'values': f'{scrape}+0x30'})
-        if collection is not None:
-            inputs.append({'series': 'nomad_gpu_certificate_observation_up', 'values': f'{collection}+0x30'})
-        scenario('GPU monitoring ' + name, inputs, alert if fires else None, [alert],
-                 {'service': 'nomad'}, '8m')
-
     replica_alert = 'DeploymentUnavailable'
     for name, available, desired, fires in [
         ('complete service outage', 0, 2, True),
@@ -405,6 +338,20 @@ def main():
                    'values': f'{value}+0x30'} for metric, value in [
                        ('kube_deployment_status_replicas_available', available),
                        ('kube_deployment_spec_replicas', desired)]]
+        inputs += [{'series': metric + '{namespace="gradiated",name="api"}', 'values': '0+0x30'}
+                   for metric in ('rollout_info_replicas_available', 'rollout_info_replicas_desired')]
+        scenario(name, inputs, replica_alert if fires else None, [replica_alert],
+                 {'namespace': 'gradiated', 'deployment': 'api'})
+
+    for name, old, candidate, fires in [('migration old serves', 3, 0, False),
+                                        ('rollout serves', 0, 3, False),
+                                        ('rollout outage', 0, 0, True)]:
+        inputs = [{'series': f'{metric}{{namespace="gradiated",{label}="api"}}',
+                   'values': f'{value}+0x30'} for metric, label, value in [
+                       ('kube_deployment_status_replicas_available', 'deployment', old),
+                       ('kube_deployment_spec_replicas', 'deployment', old),
+                       ('rollout_info_replicas_available', 'name', candidate),
+                       ('rollout_info_replicas_desired', 'name', 3)]]
         scenario(name, inputs, replica_alert if fires else None, [replica_alert],
                  {'namespace': 'gradiated', 'deployment': 'api'})
 
@@ -566,11 +513,6 @@ def main():
             {'series': f'gradiated_collector_contents_rejected_total{{pod="collector-0",reason="{reason}"}}',
              'values': '0+5x30'}], rejecting if fires else None, [rejecting], eval_time='12m')
 
-    for name, value, fires in [('an allocation stays unrouted', 1, True), ('everything is routed', 0, False)]:
-        scenario(f'unrouted model allocations: {name}', [
-            {'series': 'gradiated_worker_unrouted_allocations{instance="a",reason="node_not_registered"}', 'values': f'{value}+0x30'},
-        ], 'ModelAllocationsUnrouted' if fires else None, ['ModelAllocationsUnrouted'], {'reason': 'node_not_registered'}, eval_time='12m')
-
     for name, desired, ready, expected, duration in [
         ('healthy', 2, '2+0x80', None, '15m'),
         ('zero allocations and no readiness series', 2, None, 'ModelNoReadyReplicas', '6m'),
@@ -581,12 +523,27 @@ def main():
         ('recovered', 2, '0+0x20 2+0x60', None, '15m'),
         ('disabled in Git', 0, None, None, '15m'),
     ]:
-        inputs = [{'series': 'gradiated_model_desired_replicas{model="kev/kev-9b",nomad_job="kev"}', 'values': f'{desired}+0x80'}]
+        inputs = [{'series': 'gradiated_model_desired_replicas{model="kev/kev-9b",rollout="kev"}', 'values': f'{desired}+0x80'},
+                  {'series': 'gradiated_model_minimum_replicas{model="kev/kev-9b",rollout="kev"}', 'values': f'{desired}+0x80'}]
         if ready is not None:
             inputs.append({'series': 'gradiated_worker_model_ready_replicas{instance="a",model="kev/kev-9b"}', 'values': ready})
-            inputs.append({'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="a",loop="deployment_reconciliation"}', 'values': '1+30x80'})
+            inputs.append({'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="a",loop="kubernetes_deployment_reconciliation"}', 'values': '1+30x80'})
         scenario('model replicas: ' + name, inputs, expected,
                  ['ModelNoReadyReplicas', 'ModelUnderReplicated'], {'model': 'kev/kev-9b'}, duration)
+
+    for name, ready, expected, duration in [
+        ('normal replica warmup', 2, None, '19m'),
+        ('capacity never arrives', 2, 'ModelScaleUpStalled', '21m'),
+        ('minimum lost during scale-up', 1, 'ModelUnderReplicated', '1m'),
+        ('scale-up has completed', 3, None, '21m'),
+    ]:
+        scenario('autoscaled capacity: ' + name, [
+            {'series': 'gradiated_model_desired_replicas{model="test/model"}', 'values': '3+0x80'},
+            {'series': 'gradiated_model_minimum_replicas{model="test/model"}', 'values': '2+0x80'},
+            {'series': 'gradiated_worker_model_ready_replicas{instance="a",model="test/model"}', 'values': f'{ready}+0x80'},
+            {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="a",loop="kubernetes_deployment_reconciliation"}', 'values': '1+30x80'},
+        ], expected, ['ModelNoReadyReplicas', 'ModelUnderReplicated', 'ModelScaleUpStalled'],
+        {'model': 'test/model'}, duration)
 
     probe_labels = '{instance="a",model="test/model",deployment="test-deployment"}'
     def probe_series(metric, values, labels=probe_labels):
@@ -623,16 +580,18 @@ def main():
     for ready, expected, duration in [(0, 'ModelNoReadyReplicas', '15s'), (1, 'ModelUnderReplicated', '30s')]:
         scenario('fast capacity alert: ' + expected, [
             {'series': 'gradiated_model_desired_replicas{model="test/model"}', 'values': '2+0x20'},
+            {'series': 'gradiated_model_minimum_replicas{model="test/model"}', 'values': '2+0x20'},
             {'series': 'gradiated_worker_model_ready_replicas{instance="a",model="test/model"}', 'values': f'{ready}+0x20'},
-            {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="a",loop="deployment_reconciliation"}', 'values': '1+5x20'},
+            {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="a",loop="kubernetes_deployment_reconciliation"}', 'values': '1+5x20'},
         ], expected, ['ModelNoReadyReplicas', 'ModelUnderReplicated'], {'model': 'test/model'}, duration, interval='5s')
 
     scenario('stale healthy worker cannot hide unavailable model', [
         {'series': 'gradiated_model_desired_replicas{model="test/model"}', 'values': '2+0x20'},
+            {'series': 'gradiated_model_minimum_replicas{model="test/model"}', 'values': '2+0x20'},
         {'series': 'gradiated_worker_model_ready_replicas{instance="old",model="test/model"}', 'values': '2+0x20'},
-        {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="old",loop="deployment_reconciliation"}', 'values': '1+0x20'},
+        {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="old",loop="kubernetes_deployment_reconciliation"}', 'values': '1+0x20'},
         {'series': 'gradiated_worker_model_ready_replicas{instance="new",model="test/model"}', 'values': '0+0x20'},
-        {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="new",loop="deployment_reconciliation"}', 'values': '1+5x20'},
+        {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="new",loop="kubernetes_deployment_reconciliation"}', 'values': '1+5x20'},
     ], 'ModelNoReadyReplicas', ['ModelNoReadyReplicas'], {'model': 'test/model'}, '40s', interval='5s')
 
     for failed, succeeded, expected in [('0+1x60', '0+100x60', 'GatewayRuntimeFailures'),
@@ -701,6 +660,38 @@ def main():
         {'series': 'argocd_app_info{name="api",health_status="Healthy",sync_status="OutOfSync",autosync_enabled="true"}', 'values': '1+0x8 stale'},
         {'series': 'argocd_app_info{name="api",health_status="Healthy",sync_status="Synced",autosync_enabled="true"}', 'values': '_ _ _ _ _ _ _ _ _ 1+0x31'},
     ], None, [app_alert], eval_time='16m')
+    rollout_alert = 'GpuRolloutFailed'
+    for name, phase, fires in [('completed', 'Completed', False), ('progressing', 'Progressing', False), ('paused', 'Paused', False),
+                               ('aborted', 'Abort', True), ('deadline exceeded', 'Timeout', True), ('reconcile error', 'Error', True), ('invalid spec', 'InvalidSpec', True)]:
+        scenario('GPU rollout ' + name, [{'series': f'rollout_info{{namespace="gpu-inference",name="glm",phase="{phase}"}}', 'values': '1+0x10'}],
+                 rollout_alert if fires else None, [rollout_alert], {'namespace': 'gpu-inference', 'name': 'glm'}, '3m')
+    for phase, fires in [('Healthy', False), ('Progressing', False), ('Paused', False),
+                         ('Abort', True), ('Timeout', True), ('Error', True), ('InvalidSpec', True)]:
+        alert = 'ApplicationRolloutFailed'
+        scenario('application rollout ' + phase, [
+            {'series': f'rollout_info{{namespace="gradiated",name="api",phase="{phase}"}}',
+             'values': '1+0x10'}], alert if fires else None, [alert],
+                 {'namespace': 'gradiated', 'name': 'api'}, '3m')
+    blocked_alert = 'GpuRolloutBlocked'
+    pod = 'namespace="gpu-inference",pod="glm-abc"'
+    for name, owner, gpu, unschedulable, eval_time, fires in [
+        ('blocked model pod', 'ReplicaSet', True, '1+0x40', '16m', True),
+        ('briefly unschedulable', 'ReplicaSet', True, '1+0x40', '10m', False),
+        ('scheduled', 'ReplicaSet', True, '0+0x40', '16m', False),
+        ('training waits for capacity', 'Job', True, '1+0x40', '16m', False),
+        ('controller pod without GPU', 'ReplicaSet', False, '1+0x40', '16m', False),
+    ]:
+        inputs = [{'series': f'kube_pod_status_unschedulable{{{pod}}}', 'values': unschedulable},
+                  {'series': f'kube_pod_owner{{{pod},owner_kind="{owner}"}}', 'values': '1+0x40'}]
+        if gpu:
+            inputs.append({'series': f'kube_pod_container_resource_requests{{{pod},resource="nvidia_com_gpu"}}', 'values': '2+0x40'})
+        scenario('GPU rollout ' + name, inputs, blocked_alert if fires else None, [blocked_alert], {'namespace': 'gpu-inference', 'pod': 'glm-abc'}, eval_time)
+    monitoring_alert = 'RolloutMonitoringMissing'
+    for name, values, fires in [('scraped', '1+0x40', False), ('scrape failing', '0+0x40', True)]:
+        scenario('Argo Rollouts ' + name, [{'series': 'up{namespace="gpu-inference",service="argo-rollouts"}', 'values': values}],
+                 monitoring_alert if fires else None, [monitoring_alert], eval_time='16m')
+    scenario('Argo Rollouts never scraped', [{'series': 'up{namespace="gradiated",service="api"}', 'values': '1+0x40'}],
+             monitoring_alert, [monitoring_alert], eval_time='16m')
     secret_alert = 'SecretRefreshFailed'
     for name, values, fires in [('ready', '1+0x40', False), ('not ready', '0+0x40', True), ('brief refresh error', '1+0x8 0+0x3 1+0x28', False)]:
         scenario('Secret ' + name, [{'series': 'externalsecret_status_condition{exported_namespace="gradiated",name="api",condition="Ready",status="True"}', 'values': values}], secret_alert if fires else None, [secret_alert], {'exported_namespace': 'gradiated', 'name': 'api'}, '16m')

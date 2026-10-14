@@ -53,6 +53,7 @@ export const createGlm53FlashModelConfiguration = () =>
             tool_choice: { type: "unknown" },
             parallel_tool_calls: { type: "boolean" },
             reasoning: { type: "unknown" },
+            reasoning_effort: { type: "enum", values: ["low", "high", "max"] },
             response_format: { type: "unknown" },
           },
           pricing: [

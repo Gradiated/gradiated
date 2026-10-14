@@ -28,7 +28,7 @@ from grad_research.lab_harness import (
 def pool_bench_spec() -> dict:
     return {
         "id": "gemma-h200-1",
-        "provider": "nebius",
+        "provider": "runpod",
         "accelerator": "h200-sxm",
         "resource": {"instance_id": "instance-1"},
         "contents": {"model": "google/gemma-4-31b-it", "runtime": "sglang"},

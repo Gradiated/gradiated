@@ -26,6 +26,8 @@ struct Metrics {
     registry: Registry,
     http_requests: CounterFamily<HttpRequestLabels>,
     admissions: CounterFamily<GenerationLabels>,
+    routing_capacity_rejections: CounterFamily<ModelLabels>,
+    capacity_rejection_timestamp_seconds: GaugeFamily<ModelLabels>,
     admission_rejections: CounterFamily<AdmissionRejectionLabels>,
     active_generations: GaugeFamily<GenerationLabels>,
     generations: CounterFamily<GenerationOutcomeLabels>,
@@ -64,6 +66,11 @@ struct GenerationLabels {
     protocol: String,
     stream: String,
     service_tier: String,
+}
+
+#[derive(Clone, Debug, EncodeLabelSet, Eq, Hash, PartialEq)]
+struct ModelLabels {
+    model: String,
 }
 
 #[derive(Clone, Debug, EncodeLabelSet, Eq, Hash, PartialEq)]
@@ -131,6 +138,18 @@ impl GatewayMetrics {
                 "admissions",
                 "Generations admitted by Valkey.",
                 CounterFamily::default(),
+            ),
+            routing_capacity_rejections: registered(
+                &mut registry,
+                "routing_capacity_rejections",
+                "Qualified requests rejected because every healthy runtime was at capacity.",
+                CounterFamily::default(),
+            ),
+            capacity_rejection_timestamp_seconds: registered(
+                &mut registry,
+                "capacity_rejection_timestamp_seconds",
+                "Unix timestamp of the most recent routing or runtime capacity rejection.",
+                GaugeFamily::default(),
             ),
             admission_rejections: registered(
                 &mut registry,
@@ -304,11 +323,32 @@ impl GatewayMetrics {
         let labels = GenerationLabels::from(scope);
         self.inner.admissions.get_or_create(&labels).inc();
         self.inner.active_generations.get_or_create(&labels).inc();
+        drop(self.inner.runtime_latency_seconds.get_or_create(&labels));
 
         AdmittedGenerationMetrics {
             metrics: self.clone(),
             labels,
         }
+    }
+
+    fn record_capacity_pressure(&self, model: &str) {
+        self.inner
+            .capacity_rejection_timestamp_seconds
+            .get_or_create(&ModelLabels {
+                model: model.to_owned(),
+            })
+            .set(Utc::now().timestamp());
+    }
+
+    pub(crate) fn routing_capacity_rejected(&self, model: &str) {
+        self.record_capacity_pressure(model);
+
+        self.inner
+            .routing_capacity_rejections
+            .get_or_create(&ModelLabels {
+                model: model.to_owned(),
+            })
+            .inc();
     }
 
     pub fn set_dependency_ready(&self, dependency: &'static str, ready: bool) {
@@ -383,6 +423,19 @@ pub(crate) struct AdmittedGenerationMetrics {
 }
 
 impl AdmittedGenerationMetrics {
+    pub(crate) fn prepare_deployment(&self, deployment: Uuid) {
+        let labels = GenerationLabels {
+            deployment: deployment.to_string(),
+            ..self.labels.clone()
+        };
+        drop(
+            self.metrics
+                .inner
+                .runtime_latency_seconds
+                .get_or_create(&labels),
+        );
+    }
+
     pub(crate) fn served_by(&mut self, deployment: Uuid) {
         let deployment = deployment.to_string();
         if self.labels.deployment == deployment {
@@ -393,6 +446,12 @@ impl AdmittedGenerationMetrics {
         active.get_or_create(&self.labels).dec();
         self.labels.deployment = deployment;
         active.get_or_create(&self.labels).inc();
+        drop(
+            self.metrics
+                .inner
+                .runtime_latency_seconds
+                .get_or_create(&self.labels),
+        );
     }
 
     pub(crate) fn record_terminal(&self, record: &TerminalRecord<'_>) {
@@ -411,6 +470,10 @@ impl AdmittedGenerationMetrics {
         let metrics = &self.metrics.inner;
         let status = GenerationStatus::as_str(outcome.status());
         let error_code = outcome.error_code().unwrap_or("none");
+        if error_code == "capacity_exceeded" {
+            self.metrics.record_capacity_pressure(&labels.model);
+        }
+
         let cancellation_owner = outcome
             .cancellation_owner()
             .map_or("none", CancellationOwner::as_str);

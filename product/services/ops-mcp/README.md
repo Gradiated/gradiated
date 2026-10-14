@@ -9,42 +9,58 @@ API using the existing product image.
 
 ## Tools and authority
 
-| Tool                           | Data                                                                                  |
-| ------------------------------ | ------------------------------------------------------------------------------------- |
-| `active_alerts`                | Prometheus firing/pending alerts and dashboard links                                  |
-| `query_metrics`                | Instant PromQL at an optional RFC 3339 time, maximum 200 returned series              |
-| `query_metric_history`         | PromQL between RFC 3339 `start` and `end`, optional step, 50 series                   |
-| `metric_metadata`              | Metric names, types, help text and units, searched by regular expression              |
-| `prometheus_targets`           | Scrape target health, last scrape and last error                                      |
-| `prometheus_rules`             | Alerting and recording rules with expressions, health and active alerts               |
-| `label_names`                  | Label names for metrics or logs, optionally for a selector and period                 |
-| `label_values`                 | Values of one label for metrics or logs, including `__name__`                         |
-| `series`                       | Full label sets of matching series or log streams                                     |
-| `query_logs`                   | LogQL between RFC 3339 `start` and `end`, optional step, 200 lines                    |
-| `log_fields`                   | Fields Loki detects in matching log lines, with type, cardinality and parser          |
-| `alertmanager_alerts`          | Alerts after routing, with silenced, inhibited and receiver state                     |
-| `alertmanager_silences`        | Silences with matchers, state, author and comment                                     |
-| `workload_status`              | Pod health, restarts, last termination, resources and node placement in one namespace |
-| `rollouts`                     | Deployments, StatefulSets, DaemonSets and ReplicaSets with revisions and images       |
-| `argocd_applications`          | Argo CD sync and health, deployed revision, deploy history and drifted resources      |
-| `node_status`                  | EKS node conditions and available resources                                           |
-| `nomad`                        | Nomad jobs, allocations, deployments, evaluations, nodes and node pools (list stubs)  |
-| `dashboards`                   | Existing Grafana dashboard links                                                      |
-| `register_instance`            | Enrols a GPU machine into Nomad (the only write tool, destructive)                    |
-| `instance_registration_status` | Progress of registrations since the last restart                                      |
+| Tool                           | Data                                                                                   |
+| ------------------------------ | -------------------------------------------------------------------------------------- |
+| `active_alerts`                | Prometheus firing/pending alerts and dashboard links                                   |
+| `query_metrics`                | Instant PromQL at an optional RFC 3339 time, maximum 200 returned series               |
+| `query_metric_history`         | PromQL between RFC 3339 `start` and `end`, optional step, 50 series                    |
+| `metric_metadata`              | Metric names, types, help text and units, searched by regular expression               |
+| `prometheus_targets`           | Scrape target health, last scrape and last error                                       |
+| `prometheus_rules`             | Alerting and recording rules with expressions, health and active alerts                |
+| `label_names`                  | Label names for metrics or logs, optionally for a selector and period                  |
+| `label_values`                 | Values of one label for metrics or logs, including `__name__`                          |
+| `series`                       | Full label sets of matching series or log streams                                      |
+| `query_logs`                   | LogQL between RFC 3339 `start` and `end`, optional step, 200 lines                     |
+| `log_fields`                   | Fields Loki detects in matching log lines, with type, cardinality and parser           |
+| `alertmanager_alerts`          | Alerts after routing, with silenced, inhibited and receiver state                      |
+| `alertmanager_silences`        | Silences with matchers, state, author and comment                                      |
+| `workload_status`              | Pod health, restarts, last termination, resources and node placement in one namespace  |
+| `rollouts`                     | Deployments, StatefulSets, DaemonSets and ReplicaSets with revisions and images        |
+| `argocd_applications`          | Argo CD sync and health, deployed revision, deploy history and drifted resources       |
+| `node_status`                  | EKS node conditions and available resources                                            |
+| `dashboards`                   | Existing Grafana dashboard links                                                       |
+| `register_instance`            | Prepares a GPU host for Kubernetes and returns Git configuration (the only write tool) |
+| `instance_registration_status` | Progress of registrations since the last restart                                       |
 
 Every tool except `register_instance` has `readOnlyHint: true`,
 `destructiveHint: false` and `idempotentHint: true`; client administrators may run
-those automatically. `register_instance` is `destructiveHint: true`. For a running pod on the exact configured `nomad-base`, it installs the
-bootstrap over pinned SSH and starts Nomad without changing RunPod configuration.
-The secret properties `runpod-ssh-key` and `runpod-ssh-host-keys` enable this path;
-the latter maps pod IDs to lowercase hex SHA-256 SSH host-key fingerprints. The
-SSH key must already be authorized inside the container and ports 22/TCP and
-8888/HTTP must already be exposed. Missing prerequisites fail without changing
-the provider. Other running pods require an explicitly authorized
-`reset_running_pod` and matching `confirm_instance_id`. Each phase is audit-logged
-with the requesting employee. See `docs/INSTANCE_SETUP_PLAN.md`, "Running it". OAuth consent is
-still required when connecting or renewing the 30-day authorization.
+those automatically. `register_instance` requires private administrative ingress.
+It records the host identity, installs the pinned GPU bootstrap over SSH, and
+joins Tailscale. A `prepared` result includes a private Service, measured GPU/CPU/
+memory inventory, and an AWS secret reference. Commit those inputs to the GPU
+controller inventory, credential projection, named Node/Lease permissions, and
+Tailscale host Services before scheduling workloads.
+
+The secret properties `runpod-ssh-key` and `runpod-ssh-host-keys` enable pinned
+SSH; the latter maps pod IDs to lowercase SHA-256 host-key fingerprints. Direct
+SSH must already be exposed. A running host keeps its provider settings and
+reservation. An existing host agent is checked without replacing active model
+processes. An uninitialized host must have the verified GPU base implementation
+and idle GPUs. Other running pods require an explicitly authorized reset.
+Stopped pods use the immutable `GPU_BASE_IMAGE`; enrollment credentials are
+supplied over pinned SSH, never in a provider configuration update.
+For a platform-only base, configure `GPU_HOST_BOOTSTRAP_SHA256` with a published
+host release marked `bootstrapVersion: 1`. Ops MCP signs a short-lived download
+grant; the SSH installer independently verifies the archive and its base ID,
+installs the initial host version, and retains an on-disk recovery seed. The Ops
+MCP IAM role requires read access only to content-addressed bundle objects.
+An absent bootstrap pin supports previously published bases with enrollment
+already installed. New platform-only bases require the pin before enrollment.
+The bootstrap clears its credentials from the process environment. Runtime
+bundles use temporary private download grants; GPUs receive no AWS or Kubernetes
+credentials. Enrollment keys are one-time GPU-tagged Tailscale keys, revoked
+after bootstrap. Management keys are host-specific and stay in AWS and root-owned
+host files. See [instance setup](../../../docs/INSTANCE_SETUP_PLAN.md).
 
 There is no general shell, SSH, Kubernetes exec, secret reader, arbitrary HTTP
 fetch or database tool. Registration alone uses a fixed SSH bootstrap on hosts
@@ -56,9 +72,7 @@ arguments, annotations and status messages. Workload output keeps only images,
 replicas, revision and status. Argo CD output omits Helm values and manifests.
 Grafana links retain Grafana's own browser authentication.
 
-Loki queries use the tenants `eks-prod|model-nebius-prod`, so GPU host logs are
-visible next to EKS logs. The `nomad` tool reads list endpoints only; they never
-include job specifications, environment or templates.
+Loki queries use the `eks-prod` tenant for the private EKS logging pipeline.
 
 Authorized identities can read telemetry across tenants. Metric and log tools
 take raw PromQL and LogQL, so any label, line filter or parser works; queries
@@ -337,18 +351,3 @@ The service disables TypeScript's exact optional-property check locally because
 the SDK transport interface includes explicit undefined callback values; the
 remaining strict checks stay enabled. Cluster-only port 9090 exposes metrics;
 the existing dashboard and Kubernetes availability alerts cover the deployment.
-
-## Nomad access
-
-The `nomad` tool calls `https://nomad-api.nomad.svc.cluster.local:4646` with
-mutual TLS and a Nomad ACL token. The ops MCP issues its own `cli` client
-certificate through `kms:Sign` when it first needs one and reissues it in memory
-once two thirds of its 30-day lifetime has passed; it reports the expiry as
-`nomad_certificate_expiry_timestamp_seconds{certificate="ops-mcp"}`. The CA
-certificate and token come from the `nomad-ca` and `nomad-token` properties of
-`gradiated/prod/platform/ops-mcp`. The ExternalSecret extracts every property,
-so the tool returns an error, and nothing else fails, until they exist.
-
-To create the token, use an authenticated private API port-forward to create a
-**client** token with only the `ui-viewer` policy. Retain its AccessorID for
-revocation. Never put its value in Git, arguments or console output.

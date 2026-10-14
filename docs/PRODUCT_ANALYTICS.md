@@ -74,6 +74,93 @@ and `workspace_id`. Common properties above apply to every row.
 Signup records its initial personal scope in one `user_signed_up` event, without
 also emitting explicit org/workspace creation events. Training remains gated.
 
+## CI workflow timings
+
+`.github/workflows/ci-analytics.yml` starts one separate collector after
+**Product tests** completes on a PR. The collector waits for all workflows on
+that same head SHA and branch to finish, then sends one PostHog batch through
+`tools/ci/posthog.py`. It does not start a collector for every workflow completion.
+Because GitHub has no aggregate completion trigger, this single runner can wait
+for slower workflows that finish after Product tests. Source timestamps exclude
+that collection delay.
+
+The batch contains one `ci_workflow_completed` event per workflow run/attempt and
+one `ci_workflow_step_completed` event per recorded job step. All events use the
+fixed `distinct_id: github-ci`, `source: ci`, and `schema_version: 1`. This is a
+separate operational event contract, outside the product TypeScript schemas. It
+uses the existing production `CONSOLE_POSTHOG_KEY` repository variable and the US
+ingestion host; no personal PostHog API key is needed.
+
+The collector checks out the trusted default branch with read-only access to
+workflow runs, jobs, and PR associations. It never checks out PR code or reads
+artifacts/logs. It reports success, failure, cancellation, and skipped work.
+Pushes and deployments do not trigger collection. It includes optional Storybook
+and website workflows when those actually ran, without waiting for path-filtered
+workflows that never started. All unfiltered PR workflows must register before
+collection proceeds; `REQUIRED_WORKFLOWS` in the script and its tests enforce this
+coverage. Two stable completion snapshots and a recheck after fetching jobs catch
+late registrations or reruns during collection.
+
+Rerunning Product tests starts a new collection round; earlier attempts are
+included with their own status and timing. For an isolated rerun of another
+workflow after a round was reported, rerun the existing collector or manually
+run **CI analytics** with that PR's full `head_sha`. Event UUIDs deduplicate data
+already reported. New PR commits have separate concurrency groups; source
+workflows and their required gates remain independent of the collector. This
+workflow becomes active after its file is merged into the default branch.
+
+The following summary properties belong to `ci_workflow_completed`:
+
+| Properties | Meaning |
+| --- | --- |
+| `workflow_name`, `workflow_id`, `workflow_path` | Stable workflow identity for breakdowns. |
+| `repository`, `run_id`, `run_number`, `run_attempt`, `run_url` | Source run and rerun identity. |
+| `head_sha`, `head_branch`, `pr_numbers`, `status`, `conclusion` | PR revision and outcome; commit association fills missing PR numbers. |
+| `duration_seconds` | Attempt start to the source workflow's completion/update timestamp, including queueing and final bookkeeping. |
+| `initial_queue_seconds`, `execution_span_seconds` | Delay to the first executing job, and span from first job start to last job completion. |
+| `job_duration_sum_seconds`, `job_queue_sum_seconds` | Sum of job execution or queued elapsed times; parallel work overlaps, and neither is billed cost. |
+| `job_count`, `executed_job_count`, `substantive_job_count` | All jobs, jobs with a real start timestamp, and started jobs excluding relevance selectors and passing gates. |
+| `skipped_job_count`, `failed_job_count`, `cancelled_job_count` | Job outcomes. |
+| `slowest_job_name`, `slowest_job_seconds` | Longest executing job; this is not a reconstructed dependency critical path. |
+| `longest_queue_job_name`, `longest_queue_seconds` | Longest measured job queue delay. |
+| `slowest_step_job_name`, `slowest_step_name`, `slowest_step_seconds` | Longest executing step and its containing job. |
+| `jobs` | Job IDs/names, runner labels, queue/start/end timestamps, queue/execution seconds, outcomes, and individual step names/numbers/outcomes/durations. |
+
+Step events carry the same repository, PR/revision, workflow/run/attempt
+identifiers plus `workflow_status`, `workflow_conclusion`, `job_id`, `job_name`,
+`job_conclusion`, `runner_labels`, `step_name`, `step_number`, `status`,
+`conclusion`, `started_at`, `completed_at`, and `duration_seconds`. Their PostHog
+`timestamp` is the step's original completion time. If GitHub provides no finish
+time (for example, an unstarted skipped step), the event uses the job or workflow
+completion time with `timestamp_is_fallback: true`; `completed_at` stays null.
+Unknown durations stay null, and skipped work contributes zero.
+
+All run instances for the revision and their attempts are reported. Reruns use
+the exact attempt's metadata/jobs and original start/end times. Event UUIDs use
+repository/run/attempt, with job ID and step number added for steps. Delivery
+retries reuse the same batch and UUIDs. The collector polls every 30 seconds for
+up to 100 minutes, with a 110-minute workflow timeout, and sends no partial batch
+on timeout. GitHub lookups retry transient server/rate-limit/network failures three times
+with bounded backoff; permanent HTTP errors fail immediately. PostHog delivery
+has three bounded attempts. Capture errors fail the
+analytics workflow visibly, independently of source CI. The payload excludes
+actor identity, commit messages, logs, artifacts, and secrets.
+
+In PostHog, select `ci_workflow_completed`, aggregate average or p95
+`duration_seconds` over time, and break down by `workflow_name`. Filter
+`conclusion = success` for successful-check latency, or `substantive_job_count > 0`
+to exclude runs that only selected/skipped checks. Compare
+`longest_queue_seconds` with `slowest_job_seconds` to separate runner waits from
+execution. For detailed build/install/test trends, select
+`ci_workflow_step_completed`, aggregate average or p95 `duration_seconds`, and
+break down by `workflow_name`, `job_name`, and `step_name`. Filter skipped or
+cancelled steps as needed. Use event counts rather than unique users because all
+events share one identity.
+
+Run `python3 -m unittest discover -s tools/ci -v` for collection barriers,
+workflow/step payloads, timing, pagination, retries, PR associations, reruns,
+and trusted-workflow coverage tests.
+
 ## Draft follow-up events
 
 These are proposed, not emitted or accepted by the current schemas.

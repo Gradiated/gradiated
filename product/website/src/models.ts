@@ -66,7 +66,7 @@ export type ModelPageData = {
   benchmarksNote: string;
   specs: { label: string; value: string }[];
   /** What it runs on — Gradiated's own serving hardware first (from the
-   *  Nomad jobs that actually serve it), then what the open weights support
+   *  runtime configurations that actually serve it), then what the open weights support
    *  elsewhere. The closing table of the page. */
   hardware: { name: string; support: string }[];
   /** Static mirror of the catalog; ModelVitals refreshes it live. */

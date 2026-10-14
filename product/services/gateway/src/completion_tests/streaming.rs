@@ -96,6 +96,13 @@ async fn streaming_finalizes_before_done_and_exposes_only_terminal_usage() {
         1
     );
     let finalized = harness.only_finalized();
+    let usage_frame = frames
+        .iter()
+        .find(|frame| frame.data.contains("\"usage\""))
+        .unwrap();
+    let response: serde_json::Value = serde_json::from_str(&usage_frame.data).unwrap();
+    assert_eq!(response["usage"]["cost"], serde_json::json!(0.000000026));
+    assert_eq!(finalized["usage"]["charge"], 26);
     assert_eq!(finalized["status"], "succeeded");
     assert_eq!(finalized["streamed"], true);
     assert_eq!(finalized["usage"]["input_tokens"], 10);

@@ -19,10 +19,48 @@ describe("private GPU control listener", () => {
     });
   });
 
-  it("rejects oversized adapter requests before credential lookup or JSON parsing", async () => {
-    const credentials = vi.fn();
+  it("uses network authentication for private adapter requests", async () => {
+    const productionVersions = vi.fn(async () => []);
     const privateApp = app({
-      credentials,
+      service: { productionVersions },
+    } as unknown as AdapterHostingDependencies);
+    const response = await privateApp.request(
+      "/api/internal/v1/task-versions/production?base_model_id=z-ai%2Fglm-5.3-flash",
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ data: [] });
+    expect(productionVersions).toHaveBeenCalledWith("z-ai/glm-5.3-flash");
+  });
+
+  it("issues immutable bundle grants only on the private listener", async () => {
+    const runtimeBundle = vi.fn(async () => ({
+      url: "https://bundles.example.invalid/download",
+    }));
+    const privateApp = createGpuControlApp({
+      provider: "runpod",
+      status: { report: async () => undefined },
+      check: async () => ({}),
+      runtimeBundle,
+    });
+    const digest = "a".repeat(64);
+    const response = await privateApp.request(
+      `/api/internal/v1/runtime-bundles/${digest}`,
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(runtimeBundle).toHaveBeenCalledWith(digest);
+    expect(
+      (
+        await privateApp.request(
+          "/api/internal/v1/runtime-bundles/not-a-digest",
+        )
+      ).status,
+    ).toBe(422);
+    expect(runtimeBundle).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects oversized adapter requests before JSON parsing", async () => {
+    const privateApp = app({
       service: {},
     } as unknown as AdapterHostingDependencies);
     const response = await privateApp.request(
@@ -34,6 +72,5 @@ describe("private GPU control listener", () => {
       },
     );
     expect(response.status).toBe(413);
-    expect(credentials).not.toHaveBeenCalled();
   });
 });

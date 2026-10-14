@@ -3,30 +3,32 @@ import {
   createControlDatabase,
   createWorkspaceApiKeyService,
   createContentStore,
-  createNomadDeploymentStore,
+  createDeploymentStore,
+  createKubernetesDeploymentStore,
   createTraceCleanup,
   createGenerationSettlementReader,
   createGenerationSettlementStore,
   createGenerationWriter,
 } from "@gradiated/control";
-import { Gauge } from "prom-client";
 import { createValkeyClient } from "@gradiated/valkey";
 
 import {
   ingestionBoundaryMilliseconds,
   readConsumerGroupProgress,
 } from "./consumer-group.js";
-import {
-  parseNomadEnvironment,
-  parseWorkerEnvironment,
-} from "./environment.js";
+import { parseWorkerEnvironment } from "./environment.js";
 import { runGenerationIngestionLoop } from "./generation-ingestion-loop.js";
-import {
-  observeReplicaReadiness,
-  reconcileDeployments,
-} from "./deployment-reconciliation.js";
+import { observeReplicaReadiness } from "./deployment-reconciliation.js";
 import { createCatalogApply } from "./catalog-apply.js";
-import { createNomadGet } from "./nomad-allocations.js";
+import {
+  createKubernetesDeploymentView,
+  createKubernetesGet,
+  createKubernetesRequest,
+} from "./kubernetes-deployments.js";
+import {
+  qualifyKubernetesPod,
+  runSdkQualification,
+} from "./kubernetes-qualification.js";
 import { serviceLog } from "./logging.js";
 import { loraMetricsTargets } from "./lora-metrics-targets.js";
 import { startWorkerMetricsServer, WorkerMetrics } from "./metrics.js";
@@ -49,10 +51,10 @@ const metricsServer = startWorkerMetricsServer(
   environment.METRICS_PORT,
   async () =>
     loraMetricsTargets(
-      await createNomadDeploymentStore(database).adapterMetricsTargets(),
+      await createDeploymentStore(database).adapterMetricsTargets(),
     ),
   async () =>
-    (await createNomadDeploymentStore(database).replicas()).map(
+    (await createDeploymentStore(database).replicas()).map(
       ({ id, modelId }) => ({ id, modelId }),
     ),
 );
@@ -190,42 +192,85 @@ supervisors.push(
   }),
 );
 
-const nomad = parseNomadEnvironment(process.env);
-if (nomad) {
-  const store = createNomadDeploymentStore(database);
-  const certificateExpiry = nomad.NOMAD_CA_KMS_KEY
-    ? new Gauge({
-        name: "nomad_certificate_expiry_timestamp_seconds",
-        help: "Expiry of the worker's current Nomad client certificate.",
-        labelNames: ["certificate"],
-        registers: [metrics.registry],
-      })
-    : undefined;
-  const get = createNomadGet(nomad, {
-    onCertificate: (expires) =>
-      certificateExpiry?.set({ certificate: "worker" }, expires),
-  });
+if (process.env.GPU_KUBERNETES_NAMESPACE) {
+  const namespace = process.env.GPU_KUBERNETES_NAMESPACE;
+  const store = createKubernetesDeploymentStore(database);
+  const view = createKubernetesDeploymentView(
+    process.env.GPU_KUBERNETES_NAMESPACE,
+    createKubernetesGet(signal),
+  );
   supervisors.push(
     supervise({
-      loop: "deployment_reconciliation",
-      readinessPath: "/tmp/gradiated-deployment-reconciliation-ready",
+      loop: "kubernetes_deployment_reconciliation",
+      readinessPath:
+        "/tmp/gradiated-kubernetes-deployment-reconciliation-ready",
       metrics,
       signal,
       run: async (markReady) => {
         while (!signal.aborted) {
           const start = performance.now();
-          await reconcileDeployments({ store, get, metrics });
+          const result = await store.reconcile(view);
+          if (result) metrics.recordReconciliation(result.written);
           await observeReplicaReadiness({
-            store,
+            store: createDeploymentStore(database),
             valkey: settlementValkey,
             metrics,
           });
           metrics.recordPass(
-            "deployment_reconciliation",
+            "kubernetes_deployment_reconciliation",
             (performance.now() - start) / 1000,
           );
           await markReady();
           await sleep(5_000, signal);
+        }
+      },
+    }),
+  );
+  const request = createKubernetesRequest(signal);
+  supervisors.push(
+    supervise({
+      loop: "kubernetes_qualification",
+      readinessPath: "/tmp/gradiated-kubernetes-qualification-ready",
+      metrics,
+      signal,
+      run: async (markReady) => {
+        const qualificationPool = createControlDatabase(
+          environment.DATABASE_URL,
+          1,
+        ).pool;
+        qualificationPool.on("error", (error) =>
+          serviceLog("error", "dependency_error", {
+            dependency: "postgres",
+            error,
+          }),
+        );
+        try {
+          while (!signal.aborted) {
+            const client = await qualificationPool.connect();
+            let locked = false;
+            try {
+              const result = await client.query<{ locked: boolean }>(
+                "select pg_try_advisory_lock(hashtext('gpu-qualification-v1')) as locked",
+              );
+              locked = result.rows[0]?.locked === true;
+              if (locked)
+                await qualifyKubernetesPod(namespace, request, (input) =>
+                  runSdkQualification(input, signal),
+                );
+            } finally {
+              if (locked)
+                await client
+                  .query(
+                    "select pg_advisory_unlock(hashtext('gpu-qualification-v1'))",
+                  )
+                  .catch(() => undefined);
+              client.release();
+            }
+            await markReady();
+            await sleep(10_000, signal);
+          }
+        } finally {
+          await qualificationPool.end();
         }
       },
     }),
@@ -237,7 +282,7 @@ if (environment.INFERENCE_PROBE_BASE_URL) {
   const userId = environment.MODEL_VERIFICATION_USER_ID!;
   const workspaceId = environment.MODEL_VERIFICATION_WORKSPACE_ID!;
   const keys = createWorkspaceApiKeyService(database);
-  const store = createNomadDeploymentStore(database);
+  const store = createDeploymentStore(database);
   const probeMetrics = new InferenceProbeMetrics(metrics.registry);
   supervisors.push(
     supervise({

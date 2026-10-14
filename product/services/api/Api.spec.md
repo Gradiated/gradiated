@@ -51,7 +51,7 @@ The public HTTP API: browser sessions, the management API, the Stripe webhook an
   trust: stripe
 - deployment status ingest: a GPU host reports the readiness of its model deployments
   handler: createDeploymentStatusIngestApp in src/ingest/deployment-status.ts
-  trust: service-token
+  trust: private-network
 - profiling ingest: a GPU host sends a batch of profiling samples
   handler: createProfilingIngestApp in src/ingest/profiling.ts
   trust: service-token
@@ -73,21 +73,17 @@ The public HTTP API: browser sessions, the management API, the Stripe webhook an
   checklist: keyed-ordering dismissed: credits commute, so no ordering domain applies
   checklist: acknowledgment-barrier dismissed: the route returns success only after the posting commits
   checklist: retry-classification dismissed: Stripe owns retries; the route only returns success or an error
-- tokened readiness reports: A deployment status report is accepted only with a known reporter token, and only for that reporter's provider.
-  over: every request to the deployment status ingest route
-  via: rejects an unknown token
-  because: a forged readiness report could route customer requests to a runtime that is not serving
-  crossing: service-token -> control-plane
-  refuted: made providerForToken accept any token -> rejects an unknown token failed (2026-09-28)
-  kinds: credential, identity
-  checklist: capability-authorization declared as tokened readiness reports
-  checklist: revalidated-permission dismissed: a report applies in the request that carries the token
-  checklist: message-authenticity dismissed: reports carry a bearer token, not a signature
-  checklist: encrypted-storage dismissed: reporter tokens live in Secrets Manager and the environment, not in a store this service writes
-  checklist: key-rotation-compatibility dismissed: tokens are rotated by redeploying with the new secret
-  checklist: canonical-encoding dismissed: tokens are compared as exact strings in constant time
-  checklist: identity-continuity dismissed: a token names one fixed reporter
-  checklist: separation-of-duties dismissed: no approval policy applies to reports
+- private readiness reports: Deployment status is accepted only on the private GPU control listener and is bound to its configured provider.
+  over: every deployment status report on the private listener
+  via: fixed provider binding and deployment/runtime validation
+  because: GPUs and cluster workloads are trusted serving components, while public clients must not submit readiness observations
+  crossing: private-network -> control-plane
+  kinds: identity, message
+  checklist: capability-authorization declared as private readiness reports
+  checklist: message-authenticity declared as private-network authentication; there is no bearer token or signature on this path
+  checklist: input-validation declared as exact deployment, provider and runtime-revision validation
+  checklist: identity-continuity declared as a fixed provider on this listener
+  checklist: separation-of-duties dismissed: SDK qualification runs in EKS before a replica is made available; GPU reports alone cannot promote an unqualified pod
 - tokened profiling reports: A profiling batch is accepted only with the profiling bearer token.
   over: every request to the profiling ingest route: a missing token, a non-Bearer scheme and a wrong token of the same length
   via: profiling ingestion

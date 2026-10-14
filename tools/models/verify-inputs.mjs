@@ -6,16 +6,15 @@ import { matches } from "../images/images.mjs";
 import { bundles } from "./release.mjs";
 
 const everyBundleInputs = [
+  "product/inference/.dockerignore",
   "product/inference/bundles/build.hcl",
   "product/inference/bundles/package.sh",
   ".github/workflows/model-deployment.yml",
   "tools/models/verify-inputs.mjs",
 ];
 const affectsEveryBundle = (path) =>
-  matches(path, catalog["nomad-base"].paths) ||
-  everyBundleInputs.includes(path);
-const within = (path, input) =>
-  path === input || path.startsWith(`${input}/`);
+  matches(path, catalog["gpu-base"].paths) || everyBundleInputs.includes(path);
+const within = (path, input) => path === input || path.startsWith(`${input}/`);
 
 // Compare the full PR against its base. Comparing only the last push could skip
 // an earlier runtime change whose verification failed or was cancelled.

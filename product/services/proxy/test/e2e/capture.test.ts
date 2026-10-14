@@ -36,6 +36,13 @@ const enableCapture = async (instance: Case, retentionDays = 30) => {
   );
 };
 
+const disableCapture = async (instance: Case) => {
+  await instance.database.query(
+    "update workspaces set trace_capture_enabled = false, updated_at = now() where id = $1",
+    [instance.workspace],
+  );
+};
+
 const STREAM = [
   'event: message_start\ndata: {"type":"message_start"}\n\n',
   'event: content_block_delta\ndata: {"type":"content_block_delta","delta":{"type":"text_delta","text":"Hi"}}\n\n',
@@ -48,6 +55,40 @@ const capturedFor = (generationId: string) =>
     5000,
     `the collector never received ${generationId}`,
   );
+
+it.each(["relay", "hosted"] as const)(
+  "captures %s requests with 180-day retention in a new workspace by default",
+  async (kind) => {
+    const proxy = await fixture.startProxy(collector.env());
+    const instance =
+      kind === "hosted" ? await fixture.hostedCase() : await makeCase("vllm");
+    const body = CHAT.body(
+      kind === "hosted" ? instance.model : providerModel("openai"),
+    );
+    const response = await proxy.client.post(CHAT.path, {
+      headers: {
+        ...(kind === "hosted"
+          ? instance.headers
+          : relayHeaders(instance, "openai")),
+        "x-gradiated-task": "default-capture",
+      },
+      json: body,
+    });
+
+    expect(response.status, response.text).toBe(200);
+    const line = await capturedFor(
+      String(response.headers["x-gradiated-generation-id"]),
+    );
+    expect(line).toMatchObject({
+      schema: `gradiated.${kind}/1`,
+      workspace_id: instance.workspace,
+      task: "default-capture",
+      retention_days: 180,
+    });
+    expect(JSON.parse(String(line.request))).toEqual(body);
+    expect(line.response).toBe(response.text);
+  },
+);
 
 describe("relay capture", () => {
   it("sends a streamed relay to the collector with its raw bodies", async () => {
@@ -108,6 +149,7 @@ describe("relay capture", () => {
     const skipped = await makeCase("vllm");
     const sentinel = await makeCase("vllm");
     if (enabled) await enableCapture(skipped);
+    else await disableCapture(skipped);
     await enableCapture(sentinel);
 
     const send = (instance: Case, taskHeader: string | undefined) =>
@@ -360,11 +402,12 @@ describe("hosted capture", () => {
     },
   );
 
-  it("does not capture hosted requests without workspace opt-in", async () => {
+  it("does not capture hosted requests when workspace capture is disabled", async () => {
     const proxy = await fixture.startProxy(collector.env());
     const instance = await fixture.hostedCase();
+    await disableCapture(instance);
     const response = await proxy.client.post(CHAT.path, {
-      headers: { ...instance.headers, "x-gradiated-task": "no-opt-in" },
+      headers: { ...instance.headers, "x-gradiated-task": "capture-disabled" },
       json: CHAT.body(instance.model),
     });
     expect(response.status, response.text).toBe(200);

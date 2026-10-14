@@ -2,6 +2,7 @@ import { z } from "zod";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import type { ControlDatabase } from "../db/client.js";
 import { instances } from "../db/schema/index.js";
+import { privateServingUrl } from "../instances/endpoints.js";
 
 export const trainingNodes = async (
   database: ControlDatabase,
@@ -11,7 +12,7 @@ export const trainingNodes = async (
     throw new Error("Training requires one to four registered hosts.");
   const rows = await database
     .select({
-      nodeId: instances.nomadNodeId,
+      nodeId: instances.id,
       podId: instances.providerInstanceId,
     })
     .from(instances)
@@ -22,9 +23,15 @@ export const trainingNodes = async (
         isNull(instances.retiredAt),
       ),
     );
-  if (rows.length !== podIds.length || rows.some((row) => !row.nodeId))
-    throw new Error("Training hosts are not enrolled in Nomad.");
+  if (rows.length !== podIds.length)
+    throw new Error("Training hosts require private Kubernetes enrollment.");
   return z
-    .array(z.object({ nodeId: z.uuid(), podId: z.string().min(1) }))
-    .parse(rows);
+    .array(
+      z.object({
+        nodeId: z.uuid(),
+        url: z.string().url(),
+        podId: z.string().min(1),
+      }),
+    )
+    .parse(rows.map((row) => ({ ...row, url: privateServingUrl(row.nodeId) })));
 };

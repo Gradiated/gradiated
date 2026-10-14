@@ -24,7 +24,6 @@ const schema = z
       .default("default"),
     TRAINING_BASE_ID: z.string().min(1),
     TRAINING_GPU_MODEL: z.string().min(1).default("H100"),
-    TRAINING_HOST_TOKEN: z.string().min(32),
     TRAINING_ARTIFACTS_BUCKET: z.string().min(1),
   })
   .refine(

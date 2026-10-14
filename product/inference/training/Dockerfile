@@ -17,12 +17,10 @@ RUN uv pip install --python /bundle/python/bin/python3 --break-system-packages \
     --no-deps --no-build-isolation /tmp/autotrain \
     && /bundle/python/bin/python3 -m unittest discover -s /tmp/autotrain/tests \
     && rm -rf /tmp/autotrain
-COPY --from=runtime-base /opt/gradiated/bin/runtime-launch /bundle/runtime-launch
-COPY inference/nomad/jobs/claim-gpus.sh /bundle/claim-gpus.sh
 COPY inference/training/*.py /bundle/
 COPY packages/contracts/src/training-recipe.json /bundle/recipe.json
 COPY --chmod=755 inference/training/entrypoint /bundle/entrypoint
-COPY inference/images/nomad-base/base-id /bundle/base-id
+COPY inference/images/gpu-base/base-id /bundle/base-id
 COPY inference/bundles/package.sh /package.sh
 RUN /bundle/python/bin/python3 -m unittest discover -s /bundle -p 'test_*.py' \
     && bash /package.sh

@@ -57,6 +57,13 @@ these constants.
 | `json.ts`, `ports.ts` | JSON guards and loopback port probes.                                 |
 | `*.test.ts`           | One file for each gateway behavior area.                              |
 
+`sdk-pricing.test.ts` uses the official OpenAI and Anthropic TypeScript SDKs to
+read pricing from Chat Completions, Responses, and Messages. It checks buffered
+responses, raw terminal stream events, and SDK stream helpers against the durable
+settled charge, including cached input, service tiers, free models, cache writes,
+and reasoning. Anthropic's final-message helper drops extension fields; its
+`streamEvent` callback is the tested path for reading cost.
+
 ## Run the suite
 
 Run the commands from `product/`. You must have Docker, Cargo and pnpm.

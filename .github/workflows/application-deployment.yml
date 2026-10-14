@@ -18,7 +18,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: production-deployment
+  group: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion != 'success' && format('ignored-deployment-{0}', github.run_id) || 'production-deployment' }}
   cancel-in-progress: false
 
 env:
@@ -109,6 +109,7 @@ jobs:
     uses: ./.github/workflows/build-images.yml
     with:
       source_sha: ${{ needs.resolve.outputs.source_sha }}
+      images: '["product","gateway","proxy","gpu-controller"]'
     permissions:
       contents: read
       id-token: write
@@ -202,6 +203,7 @@ jobs:
       - name: Update release state
         env:
           SOURCE_SHA: ${{ needs.resolve.outputs.source_sha }}
+          GPU_CONTROLLER_DIGEST: ${{ fromJSON(needs.build-images.outputs.images)['gpu-controller'].digest }}
           PRODUCT_DIGEST: ${{ needs.build-images.outputs.product_digest }}
           GATEWAY_DIGEST: ${{ needs.build-images.outputs.gateway_digest }}
           PROXY_DIGEST: ${{ needs.build-images.outputs.proxy_digest }}
@@ -214,7 +216,8 @@ jobs:
             --product-digest "${PRODUCT_DIGEST}" \
             --gateway-digest "${GATEWAY_DIGEST}" \
             --proxy-digest "${PROXY_DIGEST}" \
-            --collector-digest "${COLLECTOR_DIGEST}"
+            --collector-digest "${COLLECTOR_DIGEST}" \
+            --gpu-controller-digest "${GPU_CONTROLLER_DIGEST}"
           kubectl kustomize infra/environments/prod/us-east-1/kubernetes/workloads >/dev/null
       - id: commit
         name: Commit production release to main
@@ -230,7 +233,7 @@ jobs:
     needs: [resolve, build-images, build-collector, record-release]
     runs-on: ubuntu-latest
     environment: production
-    timeout-minutes: 35
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v7
         with:
@@ -248,6 +251,8 @@ jobs:
           oauth-client-id: ${{ vars.TAILSCALE_CI_CLIENT_ID }}
           audience: ${{ vars.TAILSCALE_CI_AUDIENCE }}
           tags: tag:ci
+      - name: Enable private AWS subnet routes
+        run: sudo "$(command -v tailscale)" set --accept-routes=true
       - name: Connect to production cluster
         run: aws eks update-kubeconfig --name gradiated-prod --region "${AWS_REGION}"
       - name: Wait for the recorded release
@@ -264,24 +269,24 @@ jobs:
           proxy_image="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${PROXY_REPOSITORY}@${PROXY_DIGEST}"
           collector_image="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${COLLECTOR_REPOSITORY}@${COLLECTOR_DIGEST}"
           # Research may explicitly pin the gateway image through Argo's ignore policy.
-          if kubectl -n argocd get application gateway -o json | jq -e '
+          if kubectl --request-timeout=20s -n argocd get application gateway -o json | jq -e '
             any(.spec.ignoreDifferences[]?;
               .group == "apps" and .kind == "Deployment" and
               .name == "gateway" and .namespace == "gradiated" and
               any(.jsonPointers[]?; . == "/spec/template/spec/containers/0/image"))
           ' >/dev/null; then
-            gateway_image=$(kubectl -n gradiated get deployment gateway -o jsonpath='{.spec.template.spec.containers[0].image}')
+            gateway_image=$(kubectl --request-timeout=20s -n gradiated get deployment gateway -o jsonpath='{.spec.template.spec.containers[0].image}')
             echo "Verifying the gateway's explicitly pinned image: ${gateway_image}"
           fi
           deadline=$((SECONDS + 1200))
           while (( SECONDS < deadline )); do
-            api_image="$(kubectl -n gradiated get deployment api -o jsonpath='{.spec.template.spec.containers[?(@.name=="api")].image}' 2>/dev/null || true)"
-            worker_image="$(kubectl -n gradiated get deployment worker -o jsonpath='{.spec.template.spec.containers[?(@.name=="worker")].image}' 2>/dev/null || true)"
-            temporal_worker_image="$(kubectl -n gradiated get deployment temporal-worker -o jsonpath='{.spec.template.spec.containers[?(@.name=="temporal-worker")].image}' 2>/dev/null || true)"
-            gateway_image_actual="$(kubectl -n gradiated get deployment gateway -o jsonpath='{.spec.template.spec.containers[?(@.name=="gateway")].image}' 2>/dev/null || true)"
-            proxy_image_actual="$(kubectl -n gradiated get deployment proxy -o jsonpath='{.spec.template.spec.containers[?(@.name=="proxy")].image}' 2>/dev/null || true)"
-            collector_image_actual="$(kubectl -n gradiated get deployment collector -o jsonpath='{.spec.template.spec.containers[?(@.name=="collector")].image}' 2>/dev/null || true)"
-            source_revision="$(kubectl -n gradiated get configmap gradiated-release -o jsonpath='{.data.sourceRevision}' 2>/dev/null || true)"
+            api_image="$(kubectl --request-timeout=20s -n gradiated get deployment api -o jsonpath='{.spec.template.spec.containers[?(@.name=="api")].image}' 2>/dev/null || true)"
+            worker_image="$(kubectl --request-timeout=20s -n gradiated get deployment worker -o jsonpath='{.spec.template.spec.containers[?(@.name=="worker")].image}' 2>/dev/null || true)"
+            temporal_worker_image="$(kubectl --request-timeout=20s -n gradiated get deployment temporal-worker -o jsonpath='{.spec.template.spec.containers[?(@.name=="temporal-worker")].image}' 2>/dev/null || true)"
+            gateway_image_actual="$(kubectl --request-timeout=20s -n gradiated get deployment gateway -o jsonpath='{.spec.template.spec.containers[?(@.name=="gateway")].image}' 2>/dev/null || true)"
+            proxy_image_actual="$(kubectl --request-timeout=20s -n gradiated get deployment proxy -o jsonpath='{.spec.template.spec.containers[?(@.name=="proxy")].image}' 2>/dev/null || true)"
+            collector_image_actual="$(kubectl --request-timeout=20s -n gradiated get deployment collector -o jsonpath='{.spec.template.spec.containers[?(@.name=="collector")].image}' 2>/dev/null || true)"
+            source_revision="$(kubectl --request-timeout=20s -n gradiated get configmap gradiated-release -o jsonpath='{.data.sourceRevision}' 2>/dev/null || true)"
             if [[ "${api_image}" == "${product_image}" && "${worker_image}" == "${product_image}" && "${temporal_worker_image}" == "${product_image}" && "${gateway_image_actual}" == "${gateway_image}" && "${proxy_image_actual}" == "${proxy_image}" && "${collector_image_actual}" == "${collector_image}" && "${source_revision}" == "${SOURCE_SHA}" ]]; then
               break
             fi
@@ -291,12 +296,10 @@ jobs:
             echo "Argo did not apply the expected release within 20 minutes." >&2
             exit 1
           fi
-          kubectl -n gradiated rollout status deployment/api --timeout=10m
-          kubectl -n gradiated rollout status deployment/worker --timeout=10m
-          kubectl -n gradiated rollout status deployment/temporal-worker --timeout=10m
-          kubectl -n gradiated rollout status deployment/gateway --timeout=10m
-          kubectl -n gradiated rollout status deployment/proxy --timeout=10m
-          kubectl -n gradiated rollout status deployment/collector --timeout=10m
+          kubectl --request-timeout=20s -n gradiated rollout status deployment/worker --timeout=10m
+          kubectl --request-timeout=20s -n gradiated rollout status deployment/temporal-worker --timeout=10m
+          kubectl --request-timeout=20s -n gradiated rollout status deployment/collector --timeout=10m
+          node tools/deployment/wait-rollouts.mjs
           PRODUCT_IMAGE="${product_image}" node tools/deployment/training-readiness.mjs
           node tools/deployment/inference-probe-readiness.mjs
 

@@ -345,6 +345,8 @@ struct UpstreamUsage {
     #[serde(default)]
     prompt_tokens_details: Option<PromptTokenDetails>,
     #[serde(default)]
+    completion_tokens_details: Option<CompletionTokenDetails>,
+    #[serde(default)]
     reasoning_tokens: Option<u64>,
     #[serde(default)]
     cache_write_tokens: Option<u64>,
@@ -363,10 +365,17 @@ impl UpstreamUsage {
         NormalizedUsage::new(
             self.prompt_tokens,
             self.prompt_tokens_details
+                .as_ref()
                 .map_or(0, |details| details.cached_tokens),
-            self.cache_write_tokens.unwrap_or(0),
+            self.prompt_tokens_details
+                .and_then(|details| details.cache_write_tokens)
+                .or(self.cache_write_tokens)
+                .unwrap_or(0),
             self.completion_tokens,
-            self.reasoning_tokens.unwrap_or(0),
+            self.completion_tokens_details
+                .and_then(|details| details.reasoning_tokens)
+                .or(self.reasoning_tokens)
+                .unwrap_or(0),
         )
         .map_err(|_| ProtocolViolation::Usage.into())
     }
@@ -376,6 +385,14 @@ impl UpstreamUsage {
 struct PromptTokenDetails {
     #[serde(default)]
     cached_tokens: u64,
+    #[serde(default)]
+    cache_write_tokens: Option<u64>,
+}
+
+#[derive(Debug, Deserialize)]
+struct CompletionTokenDetails {
+    #[serde(default)]
+    reasoning_tokens: Option<u64>,
 }
 
 #[derive(Serialize)]
@@ -416,6 +433,7 @@ impl From<NormalizedUsage> for PublicUsage {
             total_tokens: usage.input_tokens() + usage.output_tokens(),
             prompt_tokens_details: PublicPromptTokenDetails {
                 cached_tokens: usage.cached_input_tokens(),
+                cache_write_tokens: usage.cache_write_tokens(),
             },
             completion_tokens_details: PublicCompletionTokenDetails {
                 reasoning_tokens: usage.reasoning_tokens(),
@@ -427,6 +445,12 @@ impl From<NormalizedUsage> for PublicUsage {
 #[derive(Serialize)]
 struct PublicPromptTokenDetails {
     cached_tokens: u64,
+    #[serde(skip_serializing_if = "is_zero")]
+    cache_write_tokens: u64,
+}
+
+fn is_zero(value: &u64) -> bool {
+    *value == 0
 }
 
 #[derive(Serialize)]

@@ -2,7 +2,7 @@ import https from "node:https";
 import { readFileSync } from "node:fs";
 
 export type BackendSystem =
-  "prometheus" | "loki" | "alertmanager" | "kubernetes" | "nomad";
+  "prometheus" | "loki" | "alertmanager" | "kubernetes";
 export type BackendParams = Record<string, string | readonly string[]>;
 export type Backend = (
   system: BackendSystem,
@@ -15,15 +15,6 @@ export type BackendConfig = {
   loki: string;
   lokiTenant: string;
   alertmanager: string;
-  nomad: {
-    url: string;
-    caFile: string;
-    tokenFile: string;
-    clientCertificate: () => Promise<{
-      certificate: string;
-      privateKey: string;
-    }>;
-  };
 };
 
 export class UpstreamError extends Error {
@@ -139,7 +130,6 @@ const getHttp = async (
 
 export const createBackend = (config: BackendConfig): Backend => {
   let kubernetesAgent: https.Agent | undefined;
-  let nomadTls: { material: string; agent: https.Agent } | undefined;
 
   return async (system, path, params = {}) => {
     if (system === "kubernetes") {
@@ -155,32 +145,6 @@ export const createBackend = (config: BackendConfig): Backend => {
       });
 
       return body;
-    }
-
-    if (system === "nomad") {
-      const { nomad } = config;
-      const url = new URL(path, nomad.url);
-      url.search = searchParams(params);
-      const ca = readFileSync(nomad.caFile, "utf8");
-      const client = await nomad.clientCertificate();
-      const material = `${ca}\n${client.certificate}`;
-      if (nomadTls?.material !== material) {
-        nomadTls = {
-          material,
-          agent: new https.Agent({
-            ca,
-            cert: client.certificate,
-            key: client.privateKey,
-          }),
-        };
-      }
-      const token = readFileSync(nomad.tokenFile, "utf8").trim();
-
-      const { body, headers } = await getHttps(url, nomadTls.agent, {
-        "x-nomad-token": token,
-      });
-
-      return { data: body, next_token: headers["x-nomad-nexttoken"] ?? null };
     }
 
     const url = new URL(path, config[system]);

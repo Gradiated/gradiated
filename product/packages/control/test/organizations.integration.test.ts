@@ -70,7 +70,9 @@ describe("organization bootstrap", () => {
       {
         id: organization.defaultWorkspaceId,
         isDefault: true,
-        traceRetentionDays: 90,
+        traceCaptureEnabled: true,
+        traceRetentionDays: 180,
+        defaultJudgeModel: "openai/gpt-6.1-sol",
       },
     ]);
     expect(rows.account).toMatchObject({

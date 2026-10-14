@@ -443,8 +443,8 @@ def run_level(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--base-url", default="http://10.96.0.50:30000")
-    parser.add_argument("--desmond-url", default="http://10.96.0.50:9090")
+    parser.add_argument("--base-url", required=True)
+    parser.add_argument("--desmond-url", required=True)
     parser.add_argument("--model", default="google/gemma-4-31B-it")
     parser.add_argument("--provider", default="")
     parser.add_argument("--api-key", default=os.environ.get("SGLANG_API_KEY", ""))

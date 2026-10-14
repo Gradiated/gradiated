@@ -1,7 +1,3 @@
-import {
-  createHostCertificateRouter,
-  type HostCertificateDependencies,
-} from "./routes/instance-certificates.js";
 import { apiReference } from "@scalar/hono-api-reference";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { bodyLimit } from "hono/body-limit";
@@ -29,10 +25,6 @@ import { registerWaitlistRoutes } from "./routes/waitlist.js";
 import { registerWizardRoutes } from "./routes/wizard.js";
 import { registerGenerationRoutes } from "./routes/generations.js";
 import { registerTrainingRoutes } from "./routes/training.js";
-import {
-  registerAdapterHostingRoutes,
-  type AdapterHostingDependencies,
-} from "./routes/adapter-hosting.js";
 import { registerWorkspaceRoutes } from "./routes/workspaces.js";
 import type {
   ApiEnvironment,
@@ -44,8 +36,6 @@ import type { WaitlistWelcomeSender } from "./email/waitlist-welcome.js";
 
 export interface AppDependencies {
   analytics?: import("./analytics.js").ApiAnalytics;
-  adapterHosting?: AdapterHostingDependencies;
-  hostCertificates?: HostCertificateDependencies;
   allowedOrigins: string[];
   auth: AuthService;
   authTestMailbox?: AuthTestMailbox | undefined;
@@ -58,8 +48,6 @@ export interface AppDependencies {
 
 export const createApp = ({
   analytics,
-  adapterHosting,
-  hostCertificates,
   allowedOrigins,
   auth,
   authTestMailbox,
@@ -129,9 +117,6 @@ export const createApp = ({
     await next();
   });
 
-  if (hostCertificates)
-    app.route("/", createHostCertificateRouter(hostCertificates));
-
   if (authTestMailbox) registerAuthTestRoutes(app, authTestMailbox);
   app.on(["GET", "POST"], "/api/auth/*", (context) =>
     auth.handler(context.req.raw),
@@ -161,7 +146,6 @@ export const createApp = ({
   registerWorkspaceRoutes(app, services.workspaces);
   registerGenerationRoutes(app, services.usage, services.traces);
   registerTrainingRoutes(app, services.training);
-  if (adapterHosting) registerAdapterHostingRoutes(app, adapterHosting);
   registerGatewayContract(app);
 
   app.get("/api/openapi.json", (context) =>

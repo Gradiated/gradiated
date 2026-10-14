@@ -103,7 +103,8 @@ spool and S3 volume; `docker compose down --volumes` intentionally removes the
 object store along with the other local datastores. Clear the collector spool
 as well if intentionally resetting captured content.
 
-Capture stays opt-in per workspace and requires `x-gradiated-task`. Use the
+Capture is enabled by default for new workspaces with 180-day retention and
+requires `x-gradiated-task`. Use the
 trace settings UI/API when available; enabling capture does not enable training.
 Hosted gateway capture is not implemented yet. The local object store exercises
 S3 uploads, tags, listing and range reads; it does not reproduce AWS IAM or KMS.

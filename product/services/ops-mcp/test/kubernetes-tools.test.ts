@@ -120,15 +120,15 @@ describe("kubernetes tools", () => {
   it("reads all workload kinds by default", async () => {
     const { backend } = await callTool(
       "rollouts",
-      { namespace: "nomad", label_selector: "app=nomad" },
+      { namespace: "gpu-inference", label_selector: "app=gpu-controller" },
       { items: [] },
     );
 
     expect(backend.mock.calls.map((call) => (call as unknown[])[1])).toEqual([
-      "/apis/apps/v1/namespaces/nomad/deployments",
-      "/apis/apps/v1/namespaces/nomad/statefulsets",
-      "/apis/apps/v1/namespaces/nomad/daemonsets",
-      "/apis/apps/v1/namespaces/nomad/replicasets",
+      "/apis/apps/v1/namespaces/gpu-inference/deployments",
+      "/apis/apps/v1/namespaces/gpu-inference/statefulsets",
+      "/apis/apps/v1/namespaces/gpu-inference/daemonsets",
+      "/apis/apps/v1/namespaces/gpu-inference/replicasets",
     ]);
   });
 

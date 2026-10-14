@@ -35,7 +35,6 @@ export const closeServers = async () => {
 export const setup = async (
   extra: {
     registrations?: Registrations;
-    nomadCertificateExpiry?: () => number | undefined;
     privateConnection?: boolean;
   } = {},
 ) => {

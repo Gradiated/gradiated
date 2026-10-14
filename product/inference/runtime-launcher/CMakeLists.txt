@@ -51,8 +51,4 @@ if(BUILD_TESTING)
             $<TARGET_FILE:runtime-launch> $<TARGET_FILE:process-tree-fixture>)
   set_tests_properties(launcher.liveness PROPERTIES TIMEOUT 100)
 
-  add_test(NAME nomad.artifact
-    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/nomad-artifact.sh
-            $<TARGET_FILE:runtime-launch> $<TARGET_FILE:process-tree-fixture>)
-  set_tests_properties(nomad.artifact PROPERTIES TIMEOUT 100)
 endif()

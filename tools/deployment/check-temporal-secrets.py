@@ -30,11 +30,6 @@ def check(profile):
             "TEMPORAL_PAYLOAD_KEYS": "payloadKeys",
         },
         "worker": {"DATABASE_URL": "databaseUrl"},
-        "worker-nomad": {
-            "NOMAD_ADDR": "nomadAddr",
-            "NOMAD_TOKEN": "nomadToken",
-            "NOMAD_CA_PEM": "nomadCaPem",
-        },
     }.items():
         external = read_json(kube + ["get", "externalsecret", name, "-o", "json"])
         if not any(
@@ -42,7 +37,7 @@ def check(profile):
             for c in external.get("status", {}).get("conditions", [])
         ):
             raise ValueError(f"ExternalSecret {name} is not Ready")
-        secret_name = "worker" if name == "worker-nomad" else name
+        secret_name = name
         source = read_json(aws + [
             "secretsmanager", "get-secret-value", "--secret-id",
             f"gradiated/prod/product/{secret_name}", "--output", "json",

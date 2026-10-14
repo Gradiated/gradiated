@@ -195,7 +195,7 @@ absence of separate vendor-managed notifications outside the inspected systems.
 | Billing-integrity events | Immediate finalization/backpressure rules with first-event timestamp gauges; leader-aware worker progress and eligible backlog | Timestamp gauges cover first-sample events, but a process that dies before any subsequent scrape can still lose in-memory evidence. Durable billing records remain the accounting authority. |
 | PostgreSQL and Valkey | App dependency checks; primary RDS is Multi-AZ, deletion-protected, has 35-day backups and recent restorable time; cache has seven-day snapshots | No CloudWatch alarms. Add routed alarms for RDS free storage/connections/CPU credits and database availability, plus Valkey throttling, storage usage and failed requests. Cache caps are 10 GB and 5,000 ECPU/s. Dependency health alone provides no capacity lead time. |
 | ClickHouse / ingestion | Worker failures, pending age, eligible settlement backlog; Terraform specifies two replicas and daily backups retained seven days | No direct ClickHouse scrape target was present. Add query/insert failures, storage/resource saturation and backup freshness checks. Unread stream age is not measured; pending-only alerts cannot prove ingestion completeness. |
-| Nomad / GPU runtimes | Three Nomad servers and Kubernetes replica/rollout checks; gateway observes generation outcomes | No Nomad or GPU/runtime scrape target was present. Add leader/quorum, unhealthy allocations, missing clients, GPU errors and runtime readiness per serving deployment. Nomad documentation also leaves snapshot/restore checks, certificate renewal and quorum alerts as follow-up. Pod readiness is not proof of runtime health or spare serving capacity. |
+| GPU runtimes | Kubernetes Node and Rollout health, SDK qualification, and gateway generation outcomes | Monitor desired versus ready capacity, Pending pods, controller availability and runtime failures. Pod process health alone is not serving qualification or spare capacity. |
 | Deployment, DNS, load balancers and secrets | Kubernetes defaults, public probes and direct controller scrapes. Three warnings cover Argo degraded/failed automatic reconciliation (15m), External Secret not ready (10m), and DNS last successful sync >10m for 5m. Controller dashboard includes ALB reconciliation failures/latency. | ALB target health and load-balancer-generated errors still need direct AWS telemetry; edge request metrics only see requests that reach the gateway. Manual-sync application drift is intentionally excluded. |
 | Recovery | RDS/Valkey backup retention configured; ClickHouse backup policy in Terraform | Backup policy is not restore proof. Verify backup freshness and perform bounded restore/failover exercises with measured recovery time and data loss. Do not claim these were tested by this alert review. |
 | Internal analytics | Metabase endpoint and replica warnings; its RDS has backups and deletion protection | Metabase RDS and application are single-instance; accept that recovery tradeoff explicitly or add redundancy. |
@@ -258,12 +258,8 @@ Verify scrape targets, dashboard data, blackbox probes, and notification
 delivery after Argo CD reconciliation. SGLang visibility is derived from the
 gateway because the runtime is external to this cluster.
 
-GPU Nomad certificate renewal adds four routed rules and four panels to the
-Controllers dashboard: renewal overdue for one hour (warning), heartbeat over
-one hour old for 15 minutes or never received (warning), less than 24 hours
-validity for five minutes (critical), and missing metrics or failed inventory
-queries for five minutes (warning). The production API exports these metrics
-and serves renewal independently of MCP. Active bound hosts without credentials are
-included. These metrics describe host-reported installation; they do not prove
-host integrity. The rules and panels are repository configuration until deployed;
-verify notification delivery during rollout. See the [Nomad rollout guide](../infra/environments/prod/us-east-1/kubernetes/nomad/README.md).
+GPU serving uses Kubernetes health and per-process SDK qualification rather
+than scheduler certificate-renewal metrics. Monitor missing Nodes, Pending pods,
+failed Rollouts, controller availability and desired versus qualified capacity.
+Verify both allowed private traffic and denied GPU-to-cluster destinations after
+network changes; see the [Tailscale guide](../infra/modules/tailscale/README.md).

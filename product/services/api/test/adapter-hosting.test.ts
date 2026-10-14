@@ -1,24 +1,13 @@
 import {
-  CertificateAuthorizationError,
   ControlServiceError,
   type AdapterHostingService,
 } from "@gradiated/control";
 import { describe, expect, it, vi } from "vitest";
-import {
-  authenticated,
-  createTestApp,
-  postJson,
-  workspaceId,
-} from "./support.js";
+import { createTestApp, postJson, workspaceId } from "./support.js";
 
-const token = "a".repeat(43);
-const instanceId = "0198ae50-94d8-7d4d-a8be-9f9b44b8c776";
-const nodeId = "0198ae50-94d8-7d4d-a8be-9f9b44b8c777";
-const hostHeaders = {
-  Authorization: "Bearer " + token,
-  "X-Gradiated-Instance-Id": instanceId,
-  "X-Gradiated-Nomad-Node-Id": nodeId,
-};
+import { createGpuControlApp } from "../src/gpu-control.js";
+
+const hostHeaders = {};
 const versionId = "0198ae50-94d8-7d4d-a8be-9f9b44b8c774";
 const taskId = "0198ae50-94d8-7d4d-a8be-9f9b44b8c775";
 const sha256 = "a".repeat(64);
@@ -68,57 +57,31 @@ const fixture = () => {
     grant: vi.fn(async () => row),
     productionVersions: vi.fn(async () => [target]),
   } satisfies AdapterHostingService;
-  const authorize = vi.fn(
-    async (_instance: string, _node: string, _token: string) => {},
-  );
-  const app = createTestApp({
-    auth: authenticated,
-    adapterHosting: { credentials: async () => ({ authorize }), service },
+  const app = createGpuControlApp({
+    provider: "runpod",
+    status: { report: async () => undefined },
+    check: async () => ({}),
+    adapters: { service },
   });
-  return { app, service, authorize };
+  return { app, service };
 };
 
 describe("private adapter routes", () => {
-  it("stays disabled when no host authentication service is configured", async () => {
+  it("does not expose GPU routes on the public app", async () => {
     const app = createTestApp();
-    expect(
-      (await app.request(listPath + "?base_model_id=gradiated/base")).status,
-    ).toBe(404);
-    expect((await postJson(app, grantsPath, target)).status).toBe(404);
-  });
-
-  it("requires the existing host credential before validating input, even with a human session", async () => {
-    const { app, service } = fixture();
-    for (const authorization of [
-      undefined,
-      "Bearer wrong",
-      "Bearer " + token + "x",
-    ]) {
-      const headers = authorization ? { Authorization: authorization } : {};
-      expect((await postJson(app, grantsPath, {}, headers)).status).toBe(401);
-      expect((await app.request(listPath, { headers })).status).toBe(401);
-    }
-    expect(service.grant).not.toHaveBeenCalled();
-    expect(service.productionVersions).not.toHaveBeenCalled();
-  });
-
-  it("rejects revoked hosts and missing identity headers before signing", async () => {
-    const { app, service, authorize } = fixture();
-    authorize.mockRejectedValueOnce(
-      new CertificateAuthorizationError("Unauthorized host"),
-    );
-    expect((await postJson(app, grantsPath, target, hostHeaders)).status).toBe(
-      401,
-    );
-    expect(authorize).toHaveBeenCalledWith(instanceId, nodeId, token);
-    expect(
-      (
-        await postJson(app, grantsPath, target, {
-          Authorization: "Bearer " + token,
-        })
-      ).status,
-    ).toBe(401);
-    expect(service.grant).not.toHaveBeenCalled();
+    for (const path of [
+      listPath,
+      grantsPath,
+      "/v1/deployment-status",
+      "/api/internal/v1/instances/0198ae50-94d8-7d4d-a8be-9f9b44b8c776/nomad-certificates",
+    ])
+      expect(
+        (
+          await app.request(path, {
+            method: path === listPath ? "GET" : "POST",
+          })
+        ).status,
+      ).toBe(404);
   });
 
   it("returns existing version metadata and the signed download protocol expected by the loader", async () => {
@@ -196,8 +159,8 @@ describe("private adapter routes", () => {
     expect(await response.text()).not.toContain("signature=test");
   });
 
-  it("keeps all private hosting routes out of public OpenAPI", async () => {
-    const { app } = fixture();
+  it("keeps GPU routes out of public OpenAPI", async () => {
+    const app = createTestApp();
     const document = await (await app.request("/api/openapi.json")).json();
     expect(document.paths).not.toHaveProperty(grantsPath);
     expect(document.paths).not.toHaveProperty(listPath);

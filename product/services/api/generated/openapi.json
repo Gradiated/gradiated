@@ -515,6 +515,14 @@
               "additionalProperties": false
             },
             "description": "Published long-context price overrides; unspecified token types inherit base rates."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "chat",
+              "decision"
+            ],
+            "description": "The inference interface: chat generates text; decision scores typed questions without generating text."
           }
         },
         "required": [
@@ -527,7 +535,8 @@
           "input_modalities",
           "output_modalities",
           "passthrough_parameters",
-          "deprecation_date"
+          "deprecation_date",
+          "type"
         ],
         "additionalProperties": false
       },
@@ -683,6 +692,485 @@
           "default",
           "fast"
         ]
+      },
+      "ExternalModelList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalModel"
+            }
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "service_tiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServiceTierPricingPolicy"
+            }
+          },
+          "pricing_source": {
+            "type": "string",
+            "enum": [
+              "openrouter"
+            ],
+            "description": "External pricing source; rates are catalog estimates, not billing charges."
+          },
+          "pricing_updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z",
+            "description": "Time this API instance fetched the external catalog."
+          }
+        },
+        "required": [
+          "data",
+          "next_cursor",
+          "service_tiers"
+        ],
+        "additionalProperties": false
+      },
+      "ExternalModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "available",
+              "unavailable"
+            ]
+          },
+          "properties": {
+            "$ref": "#/components/schemas/ExternalModelProperties"
+          },
+          "icon": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Provider icon path in the console's local assets."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "status",
+          "properties",
+          "created_at",
+          "updated_at"
+        ],
+        "additionalProperties": false
+      },
+      "ExternalModelProperties": {
+        "type": "object",
+        "properties": {
+          "schema_version": {
+            "type": "number",
+            "enum": [
+              1
+            ]
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "released_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          },
+          "hugging_face_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 300
+          },
+          "quantization": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "int4",
+              "int8",
+              "fp4",
+              "mxfp4",
+              "nvfp4",
+              "fp6",
+              "fp8",
+              "mxfp8",
+              "fp16",
+              "bf16",
+              "fp32",
+              null
+            ]
+          },
+          "tokenizer": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 100
+          },
+          "input_modalities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "text"
+                  ]
+                },
+                "supported_inputs": {
+                  "type": "object",
+                  "properties": {
+                    "max_context_length": {
+                      "type": "object",
+                      "properties": {
+                        "value": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0
+                        },
+                        "unit": {
+                          "type": "string",
+                          "enum": [
+                            "token"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "value",
+                        "unit"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "max_prompt_length": {
+                      "type": "object",
+                      "properties": {
+                        "value": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0
+                        },
+                        "unit": {
+                          "type": "string",
+                          "enum": [
+                            "token"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "value",
+                        "unit"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "max_context_length",
+                    "max_prompt_length"
+                  ],
+                  "additionalProperties": false
+                },
+                "pricing": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "prompt",
+                          "cached_prompt",
+                          "cache_write"
+                        ]
+                      },
+                      "unit": {
+                        "type": "string",
+                        "enum": [
+                          "token"
+                        ]
+                      },
+                      "cost": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "unit",
+                      "cost"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "minItems": 2,
+                  "maxItems": 3
+                }
+              },
+              "required": [
+                "type",
+                "supported_inputs",
+                "pricing"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "output_modalities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "text"
+                  ]
+                },
+                "max_length": {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0
+                    },
+                    "unit": {
+                      "type": "string",
+                      "enum": [
+                        "token"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "value",
+                    "unit"
+                  ],
+                  "additionalProperties": false
+                },
+                "default_length": {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0
+                    },
+                    "unit": {
+                      "type": "string",
+                      "enum": [
+                        "token"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "value",
+                    "unit"
+                  ],
+                  "additionalProperties": false
+                },
+                "streaming": {
+                  "type": "boolean"
+                },
+                "supported_parameters": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/ModelParameterDescriptor"
+                  }
+                },
+                "pricing": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "completion",
+                          "internal_reasoning"
+                        ]
+                      },
+                      "unit": {
+                        "type": "string",
+                        "enum": [
+                          "token"
+                        ]
+                      },
+                      "cost": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "unit",
+                      "cost"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "minItems": 1,
+                  "maxItems": 2
+                }
+              },
+              "required": [
+                "type",
+                "max_length",
+                "default_length",
+                "streaming",
+                "supported_parameters",
+                "pricing"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "passthrough_parameters": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ModelParameterDescriptor"
+            }
+          },
+          "deprecation_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          },
+          "pricing_overrides": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "min_prompt_tokens": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Minimum total input tokens for this price tier."
+                },
+                "input_pricing": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "prompt",
+                          "cached_prompt",
+                          "cache_write"
+                        ]
+                      },
+                      "unit": {
+                        "type": "string",
+                        "enum": [
+                          "token"
+                        ]
+                      },
+                      "cost": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "unit",
+                      "cost"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "description": "Input rates overriding the base tier, in nano-USD per token."
+                },
+                "output_pricing": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "completion",
+                          "internal_reasoning"
+                        ]
+                      },
+                      "unit": {
+                        "type": "string",
+                        "enum": [
+                          "token"
+                        ]
+                      },
+                      "cost": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "unit",
+                      "cost"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "description": "Output rates overriding the base tier, in nano-USD per token."
+                }
+              },
+              "required": [
+                "min_prompt_tokens",
+                "input_pricing",
+                "output_pricing"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Published long-context price overrides; unspecified token types inherit base rates."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "chat",
+              "decision"
+            ],
+            "description": "The inference interface: chat generates text; decision scores typed questions without generating text."
+          }
+        },
+        "required": [
+          "schema_version",
+          "description",
+          "released_at",
+          "hugging_face_id",
+          "quantization",
+          "tokenizer",
+          "input_modalities",
+          "output_modalities",
+          "passthrough_parameters",
+          "deprecation_date"
+        ],
+        "additionalProperties": false
       },
       "Problem": {
         "type": "object",
@@ -3501,6 +3989,44 @@
           "usage": {
             "type": "object",
             "properties": {
+              "cost": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Total charge in USD, calculated from the admission-time pricing snapshot and finalized usage. Gradiated extension to the standard usage object."
+              },
+              "prompt_tokens_details": {
+                "type": "object",
+                "properties": {
+                  "cached_tokens": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Prompt tokens read from cache; included in prompt_tokens."
+                  },
+                  "cache_write_tokens": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Prompt tokens written to cache; omitted when zero."
+                  }
+                },
+                "required": [
+                  "cached_tokens"
+                ],
+                "description": "Breakdown of prompt tokens."
+              },
+              "completion_tokens_details": {
+                "type": "object",
+                "properties": {
+                  "reasoning_tokens": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Reasoning tokens included in completion_tokens."
+                  }
+                },
+                "required": [
+                  "reasoning_tokens"
+                ],
+                "description": "Breakdown of completion tokens."
+              },
               "prompt_tokens": {
                 "type": "integer",
                 "minimum": 0,
@@ -3518,6 +4044,9 @@
               }
             },
             "required": [
+              "cost",
+              "prompt_tokens_details",
+              "completion_tokens_details",
               "prompt_tokens",
               "completion_tokens",
               "total_tokens"
@@ -3655,8 +4184,17 @@
             "description": "Allow the model to request multiple tool calls in one turn, when supported."
           },
           "reasoning_effort": {
-            "type": "string",
-            "description": "Model-specific reasoning effort. Accepted values and effects depend on the hosted model."
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100
+              }
+            ],
+            "description": "Model-specific reasoning effort. DeepSeek also accepts integer effort from 1 to 100. Accepted values and effects depend on the hosted model."
           },
           "chat_template_kwargs": {
             "type": "object",
@@ -3778,6 +4316,35 @@
           "usage": {
             "type": "object",
             "properties": {
+              "cost": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Total charge in USD, calculated from the admission-time pricing snapshot and finalized usage. Gradiated extension to the standard usage object."
+              },
+              "cache_read_input_tokens": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Input tokens read from cache; excluded from input_tokens in Messages format."
+              },
+              "cache_creation_input_tokens": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Input tokens written to cache; excluded from input_tokens in Messages format."
+              },
+              "output_tokens_details": {
+                "type": "object",
+                "properties": {
+                  "thinking_tokens": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Internal reasoning tokens included in output_tokens."
+                  }
+                },
+                "required": [
+                  "thinking_tokens"
+                ],
+                "description": "Breakdown of output tokens when reasoning usage is reported."
+              },
               "input_tokens": {
                 "type": "integer",
                 "minimum": 0,
@@ -3790,6 +4357,7 @@
               }
             },
             "required": [
+              "cost",
               "input_tokens",
               "output_tokens"
             ],
@@ -3971,6 +4539,44 @@
               "null"
             ],
             "properties": {
+              "cost": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Total charge in USD, calculated from the admission-time pricing snapshot and finalized usage. Gradiated extension to the standard usage object."
+              },
+              "input_tokens_details": {
+                "type": "object",
+                "properties": {
+                  "cached_tokens": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Input tokens read from cache; included in input_tokens."
+                  },
+                  "cache_write_tokens": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Input tokens written to cache; omitted when zero."
+                  }
+                },
+                "required": [
+                  "cached_tokens"
+                ],
+                "description": "Breakdown of input tokens."
+              },
+              "output_tokens_details": {
+                "type": "object",
+                "properties": {
+                  "reasoning_tokens": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Reasoning tokens included in output_tokens."
+                  }
+                },
+                "required": [
+                  "reasoning_tokens"
+                ],
+                "description": "Breakdown of output tokens."
+              },
               "input_tokens": {
                 "type": "integer",
                 "minimum": 0,
@@ -3988,6 +4594,9 @@
               }
             },
             "required": [
+              "cost",
+              "input_tokens_details",
+              "output_tokens_details",
               "input_tokens",
               "output_tokens",
               "total_tokens"
@@ -4650,10 +5259,10 @@
                 "true",
                 "false"
               ],
-              "description": "Return the supported external provider catalog instead of hosted models. External prices are estimates and cached in API memory for five minutes."
+              "description": "Return the supported external pricing catalog instead of hosted models. This feed retains the legacy model-property shape without type. External prices are estimates and cached in API memory for five minutes."
             },
             "required": false,
-            "description": "Return the supported external provider catalog instead of hosted models. External prices are estimates and cached in API memory for five minutes.",
+            "description": "Return the supported external pricing catalog instead of hosted models. This feed retains the legacy model-property shape without type. External prices are estimates and cached in API memory for five minutes.",
             "name": "external",
             "in": "query"
           }
@@ -4672,7 +5281,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ModelList"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ModelList"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ExternalModelList"
+                    }
+                  ]
                 }
               }
             }

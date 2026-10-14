@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 root=${GRADIATED_RUNTIME_ROOT:?The launcher must set the runtime directory}
-export CUDA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:?Nomad must assign a GPU UUID}
+export CUDA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:?Host agent must assign a GPU UUID}
 export PYTHONUNBUFFERED=1
 exec "$root/python/bin/python3" "$root/adapter.py" \
   --host 127.0.0.1 --port "${RUNTIME_PORT:?The job must assign the runtime port}"

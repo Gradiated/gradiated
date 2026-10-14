@@ -1,5 +1,5 @@
 import { expect, it, vi } from "vitest";
-import { ModelListSchema } from "@gradiated/contracts";
+import { ModelListSchema, ExternalModelListSchema } from "@gradiated/contracts";
 import { createExternalModelCatalog } from "../src/catalog/external-models.js";
 import { createTestApp, modelRecord, sessionStoreDown } from "./support.js";
 
@@ -25,9 +25,14 @@ const feed = (models: unknown[] = [provider]) =>
   new Response(JSON.stringify({ data: models }));
 
 it.each([
+  ["openai/gpt-6.1-sol-pro", "openai/gpt-6.1-sol-pro"],
+  ["openai/gpt-6-astra-pro", "openai/gpt-6-astra-pro"],
+  ["openai/gpt-6-sol-pro", "openai/gpt-6-sol-pro"],
+  ["openai/gpt-6-luna-pro", "openai/gpt-6-luna-pro"],
   ["anthropic/claude-fable-5.1", "anthropic/claude-fable-5-1"],
   ["anthropic/claude-opus-5.5", "anthropic/claude-opus-5-5"],
   ["anthropic/claude-sonnet-5.5", "anthropic/claude-sonnet-5-5"],
+  ["anthropic/claude-haiku-5.5", "anthropic/claude-haiku-5-5"],
 ])(
   "matches OpenRouter's %s while preserving the canonical %s ID",
   async (sourceId, id) => {
@@ -56,7 +61,7 @@ it("loads plain models without touching the external service or making outbound 
   expect(send).not.toHaveBeenCalled();
 });
 
-it("uses the same model format and nano-USD prices without changing the hosted catalog", async () => {
+it("preserves the legacy external pricing feed without changing the hosted catalog", async () => {
   const send = vi.fn<typeof fetch>().mockImplementation(async () => feed());
   const listHosted = vi.fn().mockResolvedValue([modelRecord]);
   const app = createTestApp({
@@ -66,7 +71,8 @@ it("uses the same model format and nano-USD prices without changing the hosted c
   });
   const response = await app.request("/api/v1/models?external=true");
   expect(response.status).toBe(200);
-  const external = ModelListSchema.parse(await response.json());
+  const external = ExternalModelListSchema.parse(await response.json());
+  expect(external.data[0]?.properties).not.toHaveProperty("type");
   expect(external.data[0]).toMatchObject({
     id: provider.id,
     name: "GPT-6.1 Sol",

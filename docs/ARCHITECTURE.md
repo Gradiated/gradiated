@@ -54,7 +54,7 @@ rollout moves the public inference paths from the gateway to the proxy.
 | `proxy`          | Rust deployment on EKS CPU nodes; not yet deployed                                      | read-only PostgreSQL; the gateway; Anthropic and OpenAI                                    | relay with customer provider keys, Gradiated key checks for relays, forwarding hosted requests to the gateway, draining and health/metrics                 | charge balances, translate or parse payloads, store provider keys, hold Valkey or ClickHouse clients                    |
 | `gateway`        | Rust deployment on EKS CPU nodes, exposed through the public ALB                        | Valkey; the selected SGLang endpoint; generated contract fixtures                          | API-key authentication, exact model lookup, bounds/admission, streaming proxy, cancellation, usage normalization, terminal finalization and health/metrics | query PostgreSQL/ClickHouse, run product CRUD, process Stripe, select providers, provision GPUs, persist prompts        |
 | `metabase`       | One Metabase Open Source pod on EKS at `metabase.gradiated.com`                         | dedicated RDS PostgreSQL state database; read-only product PostgreSQL and ClickHouse users | internal analytics, saved questions, dashboards, and Google Sign-In for `gradiated.com`                                                                    | write product data, serve public shares, or become a product data authority                                             |
-| `sglang-runtime` | SGLang runtime on the external provider's GPU Kubernetes cluster; never an EKS workload | pinned model/tokenizer artifacts, pinned runtime image, GPU node and provider networking   | execute one exact released model and expose a private OpenAI-compatible runtime endpoint to `gateway`                                                      | authenticate customers, charge balances, expose a public endpoint, choose another model/provider                        |
+| `sglang-runtime` | SGLang runtime on the external GPU nodes represented in EKS through Virtual Kubelet | pinned model/tokenizer artifacts, pinned runtime image, GPU node and provider networking   | execute one exact released model and expose a private OpenAI-compatible runtime endpoint to `gateway`                                                      | authenticate customers, charge balances, expose a public endpoint, choose another model/provider                        |
 
 `api`, `worker` and `temporal-worker` are separate TypeScript applications packaged in one image,
 not independently versioned domain services. Keeping them in separate EKS
@@ -72,13 +72,13 @@ are logged; users can retry by resubmitting settings. Scheduled workflows check
 workspace and organization eligibility before starting training. PostgreSQL owns tasks,
 runs, stage events and versions. S3 owns captured traces and large artifacts.
 The opt-in `qwen-sft` executor runs a pinned Qwen3-0.6B LoRA recipe on dedicated
-RunPod H100s through Nomad. It retains the mock executor for local tests and old
+registered RunPod GPU nodes through Kubernetes Jobs. It retains the mock executor for local tests and old
 histories. Published adapters remain unavailable until serving qualification. The [training run contract](TASK_FINE_TUNING_RUN_CONTRACT.md)
 defines admission, cancellation, retries and workflow compatibility. Temporal
 Cloud receives encrypted payloads and failures, and only internal IDs in workflow
 metadata. GPU hosts never receive Temporal credentials.
 The worker checks pending and running training jobs once per minute and requests
-Nomad shutdown when their exact Temporal execution has closed. This also cleans
+Kubernetes Job deletion when their exact Temporal execution has closed. This also cleans
 up queued jobs after workflow timeout or termination, when workflow cleanup cannot run.
 
 ## Agent access to production
@@ -187,19 +187,25 @@ are sufficient initially.
 
 ### Model deployments and GitOps
 
-The optional private GPU transport uses a Tailscale Linux-interface egress
-ProxyGroup with three replicas in EKS and userspace Serve forwarding on RunPod
-hosts. Three operator-managed peer relays provide fallback when direct UDP is
-unavailable. Each pool runs on distinct nodes across at least two AZs.
-Application authentication remains at the host proxy. This path is prepared
-for staged qualification; hosts retain provider ingress until their registered
-`instances.serving_url` changes. The private proxy definition is staged outside automatic deployment;
-qualified hosts bind only to loopback after a separately reviewed proxy rollout.
-The shared egress proxies accept all cluster workloads, with application
-authentication enforced at the GPU host proxy. The prepared path uses HTTP on
-the private cluster segment and WireGuard between egress and GPU; it does not provide end-to-end application TLS.
-The administrative AWS subnet router remains separate. The rollout instructions
-are in the [Tailscale module guide](../infra/modules/tailscale/README.md).
+GPU transport requires Tailscale. Three EKS egress proxies forward inference
+to userspace Tailscale daemons on RunPod. Direct UDP, peer relay and DERP are
+alternative encrypted routes across the internet. Three private control ingress
+proxies let GPUs report status and request artifact grants. GPUs can reach only
+that control API, with no route or grant to PostgreSQL, Valkey, the Kubernetes API
+or unrelated internal services. All cluster workloads may use the inference
+egress proxies; the cluster is the trust boundary. Customer authentication stays
+at the gateway. GPU management and Desmond local control retain separate
+host-local credentials.
+
+Kubernetes schedules model Rollouts and training Jobs onto virtual RunPod Nodes.
+The EKS controller owns Kubernetes credentials; GPU hosts execute only the pinned
+runtime catalogue. Native health precedes production SDK qualification before a
+replica becomes available. Previously qualified replicas drain on deletion. The
+host endpoint is derived from its stable instance UUID and private Service; no
+separate endpoint activation or public fallback exists. The AWS subnet router is
+separate and carries administrative Kubernetes access, not inference. See the
+[Tailscale guide](../infra/modules/tailscale/README.md) and
+[RunPod adapter](../tools/virtual-kubelet/README.md).
 
 PostgreSQL owns both the customer-facing global `models` catalog and the
 durable `model_deployments` registry. Each deployment row names one private
@@ -209,8 +215,8 @@ control plane projects each model and all of its deployments as one complete
 routing manifest.
 
 Git still owns the Kubernetes/SGLang workload declaration, image digest and
-provider infrastructure that create the endpoint. The deployment workflow
-registers a ready endpoint in PostgreSQL and drains the previous row explicitly.
+provider infrastructure that create the endpoint. The worker reconciles qualified Kubernetes pods into PostgreSQL and withdraws
+draining or missing replicas.
 This avoids a second Git-owned routing authority while retaining reviewed,
 reproducible infrastructure. Volatile health and free capacity are observations,
 not PostgreSQL model metadata.
@@ -227,8 +233,8 @@ secret API-key material after the one-time creation response.
 Production hosts the console at `console.gradiated.com` and all public API
 traffic at `api.gradiated.com`. Local development runs Vite on port 3000 and
 proxies API requests to port 3001. On the public ALB, `/api`, `/health`, `/docs`
-and the runtime ingest paths `/v1/deployment-status` and `/v1/profiling-events`
-route to the TypeScript API service. Every other path, including the
+route to the TypeScript API service. GPU deployment status and artifact grants
+use the separate private control listener. Every other path, including the
 legacy `/openai/v1/*` route, goes to the Rust proxy, which forwards hosted
 requests to the gateway inside the cluster. The console does not proxy
 inference requests through the API service. The static host must return
@@ -408,7 +414,7 @@ onboarding, model purchasing, provider APIs or GPU provisioning.
 
 ### `sglang-runtime`
 
-The runtime is one SGLang pod scheduled on the external provider's GPU cluster,
+The runtime is one SGLang pod scheduled on an enrolled GPU node,
 using a pinned image and model revision. It is not deployed to or joined with EKS. A private
 Kubernetes `Service` (or the provider's equivalent private endpoint) gives the
 EKS gateway a stable upstream address over private connectivity or restricted
@@ -528,7 +534,7 @@ The minimum production deployment units are:
    built Vite assets;
 2. `worker` TypeScript Deployment in EKS, with no Kubernetes Service;
 3. `gateway` Rust Deployment and ClusterIP Service in EKS;
-4. one SGLang model Deployment and private Service on the external GPU cluster;
+4. one SGLang model Rollout and private host Service in EKS;
 5. PostgreSQL, Valkey and ClickHouse managed services.
 6. one Metabase Deployment and Service, plus its dedicated RDS PostgreSQL
    state database.

@@ -1,12 +1,13 @@
 import {
   ModelListSchema,
+  ExternalModelListSchema,
   ProblemSchema,
   SERVICE_TIER_PRICING_POLICY,
   type Model,
 } from "@gradiated/contracts";
 import type { CatalogBillingService, ModelRecord } from "@gradiated/control";
 import { createRoute, z, type OpenAPIHono } from "@hono/zod-openapi";
-import { catalogModel } from "@gradiated/contracts/model-catalog";
+import { catalogModel, modelType } from "@gradiated/contracts/model-catalog";
 import type { createExternalModelCatalog } from "../catalog/external-models.js";
 
 import type { ApiEnvironment } from "../types.js";
@@ -25,7 +26,7 @@ const listModelsRoute = createRoute({
         .enum(["true", "false"])
         .optional()
         .describe(
-          "Return the supported external provider catalog instead of hosted models. External prices are estimates and cached in API memory for five minutes.",
+          "Return the supported external pricing catalog instead of hosted models. This feed retains the legacy model-property shape without type. External prices are estimates and cached in API memory for five minutes.",
         ),
     }),
   },
@@ -39,7 +40,11 @@ const listModelsRoute = createRoute({
           schema: { type: "string" },
         },
       },
-      content: { "application/json": { schema: ModelListSchema } },
+      content: {
+        "application/json": {
+          schema: z.union([ModelListSchema, ExternalModelListSchema]),
+        },
+      },
     },
     503: {
       description: "The requested model catalog is unavailable.",
@@ -59,7 +64,7 @@ const modelResponse = (record: ListedModelRecord): Model => ({
   id: record.id,
   name: record.name,
   status: record.status,
-  properties: record.properties,
+  properties: { ...record.properties, type: modelType(record.id) },
   icon: catalogModel(record.id)?.icon ?? null,
   created_at: record.createdAt.toISOString(),
   updated_at: record.updatedAt.toISOString(),

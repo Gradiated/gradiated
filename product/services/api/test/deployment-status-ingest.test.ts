@@ -11,8 +11,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createDeploymentStatusIngestApp } from "../src/ingest/deployment-status.js";
 import { captureServiceLogs } from "./support.js";
 
-const runpodToken = "runpod-test-token-with-at-least-32-characters";
-const nomadToken = "nomad-test-token-with-at-least-32-characters!";
 const path = "/v1/deployment-status";
 
 const report = (): DeploymentStatusReport => ({
@@ -28,21 +26,14 @@ const createIngestApp = (
   service: DeploymentStatusService = { report: async () => undefined },
 ) =>
   createDeploymentStatusIngestApp({
-    tokens: new Map([
-      ["runpod", runpodToken],
-      ["nomad", nomadToken],
-    ]),
+    provider: "runpod",
     service,
   });
 
-const send = (
-  app: Hono,
-  body: string,
-  authorization = `Bearer ${runpodToken}`,
-) =>
+const send = (app: Hono, body: string) =>
   app.request(path, {
     method: "POST",
-    headers: { authorization, "content-type": "application/json" },
+    headers: { "content-type": "application/json" },
     body,
   });
 
@@ -65,44 +56,6 @@ describe("deployment status ingestion", () => {
     });
     expect(response.status).toBe(204);
     expect(reportStatus).toHaveBeenCalledWith("runpod", payload);
-  });
-
-  it("accepts a valid status for the token's provider", async () => {
-    const reports: Array<[string, DeploymentStatusReport]> = [];
-    const payload = {
-      ...report(),
-      deployment_id: "a4d51466-8782-bf13-3b97-b8a07ad79c26",
-    };
-    const app = createIngestApp({
-      report: async (provider, value) => {
-        reports.push([provider, value]);
-      },
-    });
-
-    const runpod = await send(app, JSON.stringify(payload));
-    const nomad = await send(
-      app,
-      JSON.stringify(payload),
-      `Bearer ${nomadToken}`,
-    );
-
-    expect(runpod.status).toBe(204);
-    expect(nomad.status).toBe(204);
-    expect(reports).toEqual([
-      ["runpod", payload],
-      ["nomad", payload],
-    ]);
-  });
-
-  it("rejects an unknown token", async () => {
-    const response = await send(
-      createIngestApp(),
-      JSON.stringify(report()),
-      `Bearer ${"x".repeat(runpodToken.length)}`,
-    );
-
-    expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({ error: "unauthorized" });
   });
 
   it("rejects malformed JSON", async () => {

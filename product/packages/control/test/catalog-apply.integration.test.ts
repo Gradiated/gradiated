@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { ModelPropertiesSchema } from "@gradiated/contracts";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { applyCatalog } from "../src/catalog/apply.js";
@@ -24,7 +25,7 @@ describe("catalog apply", () => {
     await applyCatalog(testDatabase.database);
 
     const stored = await testDatabase.database
-      .select({ id: models.id })
+      .select({ id: models.id, properties: models.properties })
       .from(models);
     expect(stored.map((model) => model.id)).toEqual(
       expect.arrayContaining([
@@ -32,6 +33,13 @@ describe("catalog apply", () => {
         ...trainingOnlyModels().map((model) => model.id),
       ]),
     );
+
+    for (const model of stored) {
+      expect(model.properties).not.toHaveProperty("type");
+      expect(ModelPropertiesSchema.safeParse(model.properties).success).toBe(
+        true,
+      );
+    }
   });
 
   it("puts a model edited in the database back to its catalog definition", async () => {

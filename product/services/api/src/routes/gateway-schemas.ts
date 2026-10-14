@@ -155,10 +155,10 @@ export const chatRequest = z
         "Allow the model to request multiple tool calls in one turn, when supported.",
       ),
     reasoning_effort: z
-      .string()
+      .union([z.string(), z.number().int().min(1).max(100)])
       .optional()
       .describe(
-        "Model-specific reasoning effort. Accepted values and effects depend on the hosted model.",
+        "Model-specific reasoning effort. DeepSeek also accepts integer effort from 1 to 100. Accepted values and effects depend on the hosted model.",
       ),
     chat_template_kwargs: wireObject
       .optional()
@@ -276,8 +276,42 @@ export const responsesRequest = z
   .catchall(z.unknown())
   .openapi("ResponsesRequest");
 
+const usageCost = z
+  .number()
+  .nonnegative()
+  .describe(
+    "Total charge in USD, calculated from the admission-time pricing snapshot and finalized usage. Gradiated extension to the standard usage object.",
+  );
+
 const chatUsage = z
   .object({
+    cost: usageCost,
+    prompt_tokens_details: z
+      .object({
+        cached_tokens: z
+          .number()
+          .int()
+          .nonnegative()
+          .describe(
+            "Prompt tokens read from cache; included in prompt_tokens.",
+          ),
+        cache_write_tokens: z
+          .number()
+          .int()
+          .nonnegative()
+          .optional()
+          .describe("Prompt tokens written to cache; omitted when zero."),
+      })
+      .describe("Breakdown of prompt tokens."),
+    completion_tokens_details: z
+      .object({
+        reasoning_tokens: z
+          .number()
+          .int()
+          .nonnegative()
+          .describe("Reasoning tokens included in completion_tokens."),
+      })
+      .describe("Breakdown of completion tokens."),
     prompt_tokens: z
       .number()
       .int()
@@ -300,6 +334,33 @@ const chatUsage = z
   );
 const messagesUsage = z
   .object({
+    cost: usageCost,
+    cache_read_input_tokens: z
+      .number()
+      .int()
+      .nonnegative()
+      .optional()
+      .describe(
+        "Input tokens read from cache; excluded from input_tokens in Messages format.",
+      ),
+    cache_creation_input_tokens: z
+      .number()
+      .int()
+      .nonnegative()
+      .optional()
+      .describe(
+        "Input tokens written to cache; excluded from input_tokens in Messages format.",
+      ),
+    output_tokens_details: z
+      .object({
+        thinking_tokens: z
+          .number()
+          .int()
+          .nonnegative()
+          .describe("Internal reasoning tokens included in output_tokens."),
+      })
+      .optional()
+      .describe("Breakdown of output tokens when reasoning usage is reported."),
     input_tokens: z
       .number()
       .int()
@@ -317,6 +378,31 @@ const messagesUsage = z
   );
 const responsesUsage = z
   .object({
+    cost: usageCost,
+    input_tokens_details: z
+      .object({
+        cached_tokens: z
+          .number()
+          .int()
+          .nonnegative()
+          .describe("Input tokens read from cache; included in input_tokens."),
+        cache_write_tokens: z
+          .number()
+          .int()
+          .nonnegative()
+          .optional()
+          .describe("Input tokens written to cache; omitted when zero."),
+      })
+      .describe("Breakdown of input tokens."),
+    output_tokens_details: z
+      .object({
+        reasoning_tokens: z
+          .number()
+          .int()
+          .nonnegative()
+          .describe("Reasoning tokens included in output_tokens."),
+      })
+      .describe("Breakdown of output tokens."),
     input_tokens: z
       .number()
       .int()

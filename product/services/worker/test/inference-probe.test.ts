@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { getEventListeners } from "node:events";
 import { describe, expect, it, vi, afterEach } from "vitest";
 import { Registry } from "prom-client";
-import type { NomadReplica } from "@gradiated/control";
+import type { ModelReplica } from "@gradiated/control";
 import { probeModel } from "../src/inference-probe.js";
 import {
   InferenceProbeMetrics,
@@ -36,7 +36,7 @@ const replica = {
   id: deploymentId,
   modelId: options.modelId,
   release: {},
-} as NomadReplica;
+} as ModelReplica;
 
 afterEach(() => vi.useRealTimers());
 

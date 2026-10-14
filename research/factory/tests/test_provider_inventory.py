@@ -20,7 +20,7 @@ class ProviderInventoryTests(unittest.TestCase):
         with patch.dict("os.environ", {"RUNPOD_API_KEY": "test-only"}, clear=True):
             report = load_provider_inventory(INVENTORY)
 
-        self.assertEqual({"nebius", "runpod", "scaleway", "gcore"}, set(report["providers"]))
+        self.assertEqual({"runpod", "scaleway", "gcore"}, set(report["providers"]))
         self.assertEqual("configured", report["providers"]["runpod"]["credential_status"])
         self.assertEqual("unverified", report["providers"]["scaleway"]["profiling"]["hardware_counters"])
         serialized = json.dumps(report)

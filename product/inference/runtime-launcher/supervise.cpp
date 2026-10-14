@@ -325,7 +325,7 @@ int supervise(char *const argv[], std::chrono::seconds grace,
   }
 
   if (guardian == 0) {
-    // Nomad also kills the launcher's process group during cleanup. Keep the
+    // Host cleanup can kill the launcher's process group. Keep the
     // guardian outside that group so it can finish reaping detached workers.
     if (setsid() < 0 || prctl(PR_SET_PDEATHSIG, parent_death_signal) != 0) {
       _exit(126);

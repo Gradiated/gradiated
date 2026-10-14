@@ -27,6 +27,12 @@ export {
   type DeploymentStatusService,
 } from "./deployment-status/service.js";
 export {
+  createKubernetesDeploymentStore,
+  KubernetesDeploymentSchema,
+  type KubernetesDeployment,
+  type KubernetesDeploymentView,
+} from "./deployments/kubernetes.js";
+export {
   createGenerationSettlementReader,
   SettlementFinancialConflictError,
   type GenerationSettlementReader,
@@ -111,14 +117,7 @@ export {
 export { createContentStore, type ContentStore } from "./traces/storage.js";
 export { createTraceService, type TraceService } from "./traces/service.js";
 export { createTraceCleanup } from "./traces/cleanup.js";
-export {
-  createNomadDeploymentStore,
-  type NomadAllocation,
-  type NomadDeploymentStore,
-  type NomadReplica,
-  type NomadView,
-  type ReconcileResult,
-} from "./deployments/nomad.js";
+
 export {
   createTrainingService,
   type TaskRecord,
@@ -172,10 +171,12 @@ export {
   type ObjectDownloadOptions,
 } from "./storage/object-storage.js";
 
-export {
-  createInstanceCertificateService,
-  CertificateAuthorizationError,
-  CertificateRateLimitError,
-  type InstanceCertificateService,
-} from "./instances/certificates.js";
 export { createWorkspaceStore } from "./workspaces/store.js";
+
+export { createKubernetesRequest } from "./deployments/kubernetes-client.js";
+
+export {
+  createDeploymentStore,
+  type DeploymentStore,
+  type ModelReplica,
+} from "./deployments/store.js";

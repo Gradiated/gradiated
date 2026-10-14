@@ -2,6 +2,7 @@
 aws = "2.36.24"
 helm = "4.2.4"
 kubectl = "1.36.3"
+kubeconform = "0.7.0"
 node = "22.23.2"
 pnpm = "10.34.5"
 rust = "1.97.1"
@@ -42,7 +43,3 @@ run = "node tools/github-apps/create.mjs"
 description = "Run the pinned Apple Silicon SGLang development model"
 dir = "product"
 run = "./scripts/run-sglang-local.sh"
-
-[tasks."nomad:admin"]
-description = "Run the Nomad CLI with a fresh KMS-issued client certificate"
-run = "node tools/nomad/admin.mjs"

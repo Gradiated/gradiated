@@ -120,6 +120,27 @@
       "when": 1791797724145,
       "tag": "0016_private_gpu_serving",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1791839248501,
+      "tag": "0017_kubernetes_deployments",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791865060729,
+      "tag": "0018_remove_scheduler_credentials",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1791974446851,
+      "tag": "0019_workspace_trace_defaults",
+      "breakpoints": true
     }
   ]
 }

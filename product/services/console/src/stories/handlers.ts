@@ -49,6 +49,7 @@ const model = {
   updated_at: createdAt,
   properties: {
     schema_version: 1,
+    type: "chat",
     description: "A synthetic model for exploring the console in Storybook.",
     released_at: createdAt,
     hugging_face_id: null,

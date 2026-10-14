@@ -34,9 +34,13 @@ Owner: [OPS-01](TASK_FINE_TUNING_OPERATIONS_CONTRACT.md), [SERV-01](TASK_FINE_TU
 
 The earlier proposal for PostgreSQL call-operation rows is withdrawn. Evaluation belongs to a training run and uses `training_run_events` for dispatch history, results and recovery. EVAL-03 defines bounded retries and worker takeover. Do not add evaluation-operation tables from an earlier draft.
 
-## 7. Use Nomad and Nomad Autoscaler — accepted
+## 7. Use one Kubernetes scheduler — implemented
 
-Git owns serving job templates and scaling policies. Nomad Autoscaler uses Prometheus to adjust counts. Nomad owns placement, constraints and serving recovery. PostgreSQL retains the model catalog and host inventory; job declarations reference stable base-release IDs. The `serving_targets` table and custom fleet policy/coordinator are removed. Training jobs are rendered from run config. Future adapter sharding remains a separate design, not a reason to build a second scheduler now.
+Git owns serving runtime pins, replicas and placement. Kubernetes owns workload
+placement and lifecycle; Argo Rollouts gates serving updates on SDK qualification.
+Temporal creates training Jobs from frozen run configuration. PostgreSQL retains
+the model catalog and provider inventory. There is no second scheduler or enabled
+serving autoscaler. Future adapter sharding remains a separate design.
 
 ## 8. Use operational metrics for availability — accepted
 

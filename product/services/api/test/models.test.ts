@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { createOpenApiDocument } from "../src/openapi.js";
 
 import { createTestApp, modelRecord, sessionStoreDown } from "./support.js";
 
@@ -20,6 +21,7 @@ describe("model catalog route", () => {
           id: "moonshotai/kimi-k3",
           status: "available",
           properties: {
+            type: "chat",
             input_modalities: [{ pricing: [{ cost: 2_800 }, { cost: 2_800 }] }],
             output_modalities: [{ pricing: [{ cost: 14_000 }] }],
           },
@@ -45,6 +47,39 @@ describe("model catalog route", () => {
           price_change_percent: 50,
         },
       ],
+    });
+  });
+
+  it("adds decision type to legacy stored rows without mutating their properties", async () => {
+    const decisionRecord = { ...modelRecord, id: "jaredpalmer/kev-9b" };
+    const app = createTestApp({
+      services: {
+        catalogBilling: {
+          listModels: async () => [modelRecord, decisionRecord],
+        },
+      },
+    });
+
+    const response = await app.request("/api/v1/models");
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(
+      body.data.filter(
+        (model: { properties: { type: string } }) =>
+          model.properties.type === "chat",
+      ),
+    ).toMatchObject([{ id: modelRecord.id }]);
+    expect(body.data[1].properties.type).toBe("decision");
+    expect(decisionRecord.properties).not.toHaveProperty("type");
+    expect(modelRecord.properties).not.toHaveProperty("type");
+  });
+
+  it("requires model type in the generated public response schema", () => {
+    const document = createOpenApiDocument();
+
+    expect(document.components?.schemas?.ModelProperties).toMatchObject({
+      required: expect.arrayContaining(["type"]),
     });
   });
 

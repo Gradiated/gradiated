@@ -19,7 +19,7 @@ const matches = (path) =>
   );
 
 test("every base-image input triggers model publication", () => {
-  for (const path of catalog["nomad-base"].paths)
+  for (const path of catalog["gpu-base"].paths)
     assert.ok(matches(path.endsWith("/") ? `${path}input.cpp` : path), path);
 });
 

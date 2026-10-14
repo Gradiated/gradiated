@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { createOpenApiDocument } from "../src/openapi.js";
 import { createTestApp } from "./support.js";
+import { chatRequest } from "../src/routes/gateway-schemas.js";
 
 type Schema = {
   $ref?: string;
@@ -17,6 +18,24 @@ type Schema = {
 };
 
 describe("gateway API reference", () => {
+  it("accepts documented integer DeepSeek efforts and rejects out-of-range values", () => {
+    const body = {
+      model: "deepseek/deepseek-v4.1-flash",
+      messages: [{ role: "user", content: "hello" }],
+    };
+
+    for (const reasoning_effort of [1, 25, 100, "none", "high"]) {
+      expect(chatRequest.safeParse({ ...body, reasoning_effort }).success).toBe(
+        true,
+      );
+    }
+
+    for (const reasoning_effort of [0, 101, 1.5, true]) {
+      expect(chatRequest.safeParse({ ...body, reasoning_effort }).success).toBe(
+        false,
+      );
+    }
+  });
   it("covers the Rust inference routes with workspace-key authentication", () => {
     const document = createOpenApiDocument();
     const source = readFileSync(

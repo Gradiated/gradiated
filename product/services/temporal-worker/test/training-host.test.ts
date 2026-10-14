@@ -3,196 +3,165 @@ import { expect, it, vi } from "vitest";
 import {
   createTrainingHosts,
   trainingHostJob,
-} from "../src/training/nomad-host.js";
-
+} from "../src/training/kubernetes-host.js";
 const runId = randomUUID();
-// Nomad uses random 128-bit IDs without RFC UUID version or variant bits.
-const nodeId = "b5daa9aa-e0c4-ffc6-0da1-a8f7c5fe3845";
-const allocationId = "c82fdc17-e7c1-92a0-3a8b-21565de83dd1";
+const nodeId = randomUUID();
+const allocationId = randomUUID();
 const config = {
   bundleUrl: `s3::https://test.s3.us-east-1.amazonaws.com/bundles/sha256/${"a".repeat(64)}.tar.gz`,
   bundleSha256: "a".repeat(64),
   baseId: "base-test",
   gpuType: "B300",
-  nodePool: "training",
 };
-
-it("keeps placement within the registered pool and disables scheduler replacement", () => {
-  const job = trainingHostJob(runId, 1, [{ nodeId, podId: "pod1" }], config);
-  expect(job.NodePool).toBe("training");
-  expect(job.Constraints).toContainEqual({
-    LTarget: "${node.unique.id}",
-    Operand: "regexp",
-    RTarget: `^(${nodeId})$`,
-  });
-  expect(job.TaskGroups[0]).toMatchObject({
-    RestartPolicy: { Attempts: 0, Mode: "fail" },
-    ReschedulePolicy: { Attempts: 0, Unlimited: false },
-    Disconnect: { Replace: false },
-  });
-  expect(JSON.stringify(job)).not.toContain("TEMPORAL");
+const nodes = [
+  {
+    nodeId,
+    podId: "pod1",
+    url: `http://gpu-${nodeId}.tailscale-inference.svc.cluster.local:8888`,
+  },
+];
+const pod = (phase = "Running", ready = true) => ({
+  metadata: { uid: allocationId },
+  spec: { nodeName: `gpu-${nodeId}` },
+  status: {
+    phase,
+    conditions: [{ type: "Ready", status: ready ? "True" : "False" }],
+  },
 });
-
+it("keeps placement inside the registered pool and transfers no cluster credentials", () => {
+  const job = trainingHostJob(runId, 1, nodes, config);
+  const spec = job.spec.template.spec;
+  expect(
+    spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution
+      .nodeSelectorTerms[0]!.matchExpressions[0]!.values,
+  ).toEqual([nodeId]);
+  expect(spec.automountServiceAccountToken).toBe(false);
+  expect(spec.restartPolicy).toBe("Never");
+  expect(spec.priorityClassName).toBe("gpu-training");
+  expect(job.spec.backoffLimit).toBe(0);
+  expect(JSON.stringify(job)).not.toMatch(
+    /DATABASE|TEMPORAL|secretKeyRef|envFrom/,
+  );
+});
+it("reserves tensor-parallel training within one node", () => {
+  const job = trainingHostJob(runId, 1, nodes, {
+    ...config,
+    recipe: { model: "glm", gpu_count: 4 },
+  });
+  expect(job.spec.template.spec.containers[0]!.resources.requests).toEqual({
+    cpu: "16",
+    memory: "256Gi",
+    "nvidia.com/gpu": "4",
+  });
+  expect(() =>
+    trainingHostJob(runId, 1, nodes, { ...config, recipe: { gpu_count: 0 } }),
+  ).toThrow();
+});
 it.each([false, true])(
-  "requests shutdown without reading allocation death; request fails: %s",
+  "releases the complete run with foreground cleanup; failure: %s",
   async (fails) => {
-    const request = vi.fn(
-      async (path: string, method?: string): Promise<unknown> => {
-        if (path.startsWith("/v1/jobs?"))
-          return [{ ID: `training-${runId}-1` }];
-        if (method === "DELETE") {
-          if (fails) throw new Error("Nomad unreachable");
-          return {};
-        }
-        throw new Error("Must not poll for a dead host");
-      },
-    );
+    const request = vi.fn(async () => {
+      if (fails) throw new Error("API unavailable");
+      return {};
+    });
     const hosts = createTrainingHosts({
       request,
-      nodes: async () => [{ nodeId, podId: "pod1" }],
+      nodes: async () => nodes,
       config,
-      token: "test",
     });
     if (fails)
-      await expect(hosts.release(runId)).rejects.toThrow("Nomad unreachable");
+      await expect(hosts.release(runId)).rejects.toThrow("API unavailable");
     else await hosts.release(runId);
-    expect(request.mock.calls).toEqual([
-      [`/v1/jobs?prefix=training-${runId}-`],
-      [`/v1/job/training-${runId}-1?purge=false`, "DELETE"],
-    ]);
+    expect(request).toHaveBeenCalledWith(
+      expect.stringContaining(
+        encodeURIComponent(`gradiated.com/training-run=${runId}`),
+      ),
+      "DELETE",
+      expect.objectContaining({ propagationPolicy: "Foreground" }),
+    );
   },
 );
-
-it("requests shutdown for every attempt even when an earlier request fails", async () => {
-  const request = vi.fn(async (path: string): Promise<unknown> => {
-    if (path.startsWith("/v1/jobs?"))
-      return [{ ID: `training-${runId}-1` }, { ID: `training-${runId}-2` }];
-    if (path.endsWith("-1?purge=false")) throw new Error("Request failed");
-    return {};
+it("creates a missing Job once and waits for scheduling without blocking an activity", async () => {
+  const request = vi.fn(async (path: string, method?: string) => {
+    if (path.endsWith(`/training-${runId}-1`) && !method)
+      throw Object.assign(new Error("missing"), { code: "404" });
+    return path.includes("pods?") ? { items: [] } : {};
   });
   const hosts = createTrainingHosts({
     request,
-    nodes: async () => [],
+    nodes: async () => nodes,
     config,
-    token: "test",
-  });
-  await expect(hosts.release(runId)).rejects.toThrow("Request failed");
-  expect(request).toHaveBeenCalledWith(
-    `/v1/job/training-${runId}-2?purge=false`,
-    "DELETE",
-  );
-});
-
-it("returns pending capacity without occupying an activity slot", async () => {
-  const request = vi.fn(async (path: string): Promise<unknown> =>
-    path.endsWith("allocations?all=true") ? [] : {},
-  );
-  const hosts = createTrainingHosts({
-    request,
-    nodes: async () => [{ nodeId, podId: "pod1" }],
-    config,
-    token: "test",
   });
   expect(await hosts.allocate(runId, 1)).toBeNull();
-  expect(request).toHaveBeenCalledTimes(2);
+  expect(request.mock.calls.filter((c) => c[1] === "POST")).toHaveLength(1);
 });
-
-it("allocates a host with Nomad IDs outside RFC UUID versions and variants", async () => {
-  const request = vi.fn(async (path: string): Promise<unknown> =>
-    path.endsWith("allocations?all=true")
-      ? [{ ID: allocationId, NodeID: nodeId, ClientStatus: "running" }]
-      : {},
-  );
+it("uses a ready pod UID and the registered private serving URL", async () => {
+  const request = async (path: string) =>
+    path.includes("pods?") ? { items: [pod()] } : {};
+  const http = vi.fn(async () => Response.json({ renewed: true }));
   const hosts = createTrainingHosts({
     request,
-    nodes: async () => [{ nodeId, podId: "pod1" }],
+    nodes: async () => nodes,
     config,
-    token: "test",
-    fetch: async () => Response.json({ renewed: true }),
+    fetch: http,
   });
-
   expect(await hosts.allocate(runId, 1)).toEqual({
     allocationId,
     jobId: `training-${runId}-1`,
-    url: `https://pod1-8888.proxy.runpod.net/alloc/${allocationId}`,
+    url: `${nodes[0]!.url}/alloc/${allocationId}`,
   });
+  expect(http.mock.calls[0]).toBeDefined();
 });
-
-it.each(["running", "lost"])(
-  "renews only a running exact allocation: %s",
-  async (status) => {
-    const http = vi.fn(async () => Response.json({ renewed: true }));
-    const hosts = createTrainingHosts({
-      request: async () => [
-        { ID: allocationId, NodeID: nodeId, ClientStatus: status },
-      ],
-      nodes: async () => [{ nodeId, podId: "pod1" }],
-      config,
-      token: "test",
-      fetch: http,
-    });
-    const host = {
-      allocationId,
-      jobId: `training-${runId}-1`,
-      url: "https://trainer.test",
-    };
-    if (status === "lost") {
-      await expect(hosts.renew(host)).rejects.toThrow("no longer running");
-      expect(http).not.toHaveBeenCalled();
-    } else {
-      await hosts.renew(host);
-      expect(http).toHaveBeenCalledWith(
-        "https://trainer.test/reservation",
-        expect.objectContaining({
-          body: JSON.stringify({ allocation_id: allocationId }),
-        }),
-      );
-      await expect(
-        hosts.renew({ ...host, allocationId: randomUUID() }),
-      ).rejects.toThrow("no longer running");
-    }
+it.each(["Failed", "Succeeded"])(
+  "rejects an exited %s allocation without replacing it",
+  async (phase) => {
+    const request = async (path: string) =>
+      path.includes("pods?") ? { items: [pod(phase)] } : {};
+    await expect(
+      createTrainingHosts({
+        request,
+        nodes: async () => nodes,
+        config,
+      }).allocate(runId, 1),
+    ).rejects.toThrow("allocation failed");
   },
 );
-
-it("waits when every training node is absent", async () => {
-  const request = vi.fn(async () => ({}));
+it("does not renew an unready or different pod", async () => {
+  const http = vi.fn(async () => Response.json({ renewed: true }));
   const hosts = createTrainingHosts({
-    request,
-    nodes: async () => [],
+    request: async () => ({ items: [pod("Running", false)] }),
+    nodes: async () => nodes,
     config,
-    token: "test",
+    fetch: http,
   });
-  expect(await hosts.allocate(runId, 1)).toBeNull();
+  await expect(
+    hosts.renew({ allocationId, jobId: "job", url: nodes[0]!.url }),
+  ).rejects.toThrow("no longer ready");
+  expect(http).not.toHaveBeenCalled();
+});
+it("rejects allocations outside the assigned node pool", async () => {
+  const other = pod();
+  other.spec.nodeName = "gpu-" + randomUUID();
+  const request = async (path: string) =>
+    path.includes("pods?") ? { items: [other] } : {};
+  await expect(
+    createTrainingHosts({ request, nodes: async () => nodes, config }).allocate(
+      runId,
+      1,
+    ),
+  ).rejects.toThrow("outside its pool");
+});
+it("waits when no registered capacity is available", async () => {
+  const request = vi.fn(async () => ({}));
+  expect(
+    await createTrainingHosts({
+      request,
+      nodes: async () => [],
+      config,
+    }).allocate(runId, 1),
+  ).toBeNull();
   expect(request).not.toHaveBeenCalled();
 });
-
-it("keeps legacy frozen host configurations in the default pool", () => {
-  const { nodePool, ...legacy } = config;
-  expect(
-    trainingHostJob(runId, 1, [{ nodeId, podId: "pod1" }], legacy).NodePool,
-  ).toBe("default");
-});
-
-it("reserves the recipe's GPU count within one training node", () => {
-  const job = trainingHostJob(runId, 1, [{ nodeId, podId: "pod1" }], {
-    ...config,
-    recipe: { model: "zai-org/GLM-5.3-Flash-BF16", gpu_count: 4 },
-  });
-  const trainer = job.TaskGroups[0]!.Tasks.find(
-    (task) => task.Name === "trainer",
-  )!;
-  expect(trainer.Resources.Devices).toMatchObject([{ Count: 4 }]);
-  expect(JSON.parse(trainer.Env!.TRAINING_RECIPE_JSON!)).toMatchObject({
-    gpu_count: 4,
-  });
-  expect(() =>
-    trainingHostJob(runId, 1, [{ nodeId, podId: "pod1" }], {
-      ...config,
-      recipe: { gpu_count: 0 },
-    }),
-  ).toThrow();
-});
-
 const retryHost = {
   allocationId,
   jobId: `training-${runId}-1`,
@@ -203,7 +172,6 @@ const hostsWithHttp = (http: typeof fetch, signal?: AbortSignal) =>
     request: async () => ({}),
     nodes: async () => [],
     config,
-    token: "test",
     fetch: http,
     ...(signal ? { signal: () => signal } : {}),
   });

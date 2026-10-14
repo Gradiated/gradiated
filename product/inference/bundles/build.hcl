@@ -1,6 +1,6 @@
 target "base" {
   context    = "product/inference"
-  dockerfile = "images/nomad-base/Dockerfile"
+  dockerfile = "images/gpu-base/Dockerfile"
   platforms  = ["linux/amd64"]
 }
 
@@ -23,11 +23,6 @@ target "verify-kev-9b" {
   dockerfile = "bundles/kev-9b/Dockerfile"
 }
 
-target "verify-host-tools" {
-  inherits   = ["bundle"]
-  dockerfile = "bundles/host-tools/Dockerfile"
-}
-
 target "verify-glm-5-3-flash" {
   inherits = ["bundle"]
   dockerfile = "bundles/glm-5-3-flash/Dockerfile"
@@ -37,4 +32,10 @@ target "verify-training" {
   inherits   = ["bundle"]
   context    = "product"
   dockerfile = "inference/training/Dockerfile"
+}
+
+target "verify-host" {
+  inherits   = ["bundle"]
+  context    = "."
+  dockerfile = "product/inference/bundles/host/Dockerfile"
 }

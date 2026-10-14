@@ -23,7 +23,7 @@ research, alias and third-party-provider concepts.
   durable model-deployment registry. Git owns the infrastructure declarations
   that create the corresponding SGLang workloads, not a second routing record.
 - Prompts and responses are kept only when a workspace enables trace capture,
-  as generation contents in regional S3 batches with 90-day default retention. No
+  as generation contents in regional S3 batches with 180-day default retention. No
   database table holds them. See [TRACES_PLAN.md](TRACES_PLAN.md).
 - Organization membership is the human authorization boundary. Workspaces are
   policy and cost-attribution boundaries available to all active members.
@@ -172,8 +172,8 @@ There is at most one pending invitation per organization and normalized email.
 | `name`            | text        | no   | Unique per organization, case-insensitively             |
 | `is_default`      | boolean     | no   | Exactly one default workspace per organization          |
 | `archived_at`     | timestamptz | yes  | Null while usable; archived workspaces cannot serve API |
-| `trace_capture_enabled` | boolean | no | Opt-in content capture; defaults to false |
-| `trace_retention_days` | smallint | no | 30, 90 or 180; defaults to 90 |
+| `trace_capture_enabled` | boolean | no | Content capture; defaults to true |
+| `trace_retention_days` | smallint | no | 30, 90 or 180; defaults to 180 |
 | `created_at`      | timestamptz | no   | Creation time                                           |
 | `updated_at`      | timestamptz | no   | Last mutation time                                      |
 
@@ -183,7 +183,7 @@ A workspace is a policy and cost-attribution boundary, not an authorization boun
 
 Workspaces group API keys, usage and captured generation content. Every unarchived workspace can access every active hosted model, with no workspace spend, rate or concurrency limits. Future model allowlists and per-model limits belong in a workspace-model policy table rather than on API keys.
 
-Content capture is disabled by default. Organization owners and admins can enable relay capture and choose retention. Retention changes apply only to new captures. Content reads enforce the retention recorded on each generation; S3 lifecycle expires batches by their retention tags. Archiving disables capture and blocks reads immediately. The worker deletes archived or deleted workspace content asynchronously, including late collector writes. See [TRACES_PLAN.md](TRACES_PLAN.md) for the storage and capture contract.
+Content capture is enabled by default for new workspaces with 180-day retention. Organization owners and admins can disable capture or choose a different retention period. Existing workspace settings are preserved. Retention changes apply only to new captures. Content reads enforce the retention recorded on each generation; S3 lifecycle expires batches by their retention tags. Archiving disables capture and blocks reads immediately. The worker deletes archived or deleted workspace content asynchronously, including late collector writes. See [TRACES_PLAN.md](TRACES_PLAN.md) for the storage and capture contract.
 
 ### 9. `api_keys`
 
@@ -237,6 +237,15 @@ belong to `model_deployments`, not to this customer-facing document.
 | `output_modalities`      | output-modality[]       | Nonempty typed modality documents                            |
 | `passthrough_parameters` | capability-descriptor map | Bounded request-scoped extension allowlist                 |
 | `deprecation_date`       | timestamp nullable      | Optional scheduled retirement                                |
+
+The public Models API adds a required `properties.type` (`chat` or `decision`)
+from the Git-owned model catalog metadata. This field is response-only and is
+not written to PostgreSQL, so rolling API and worker releases keep the same
+closed stored document shape.
+
+The `external=true` pricing feed retains its legacy model-property shape without
+`type`. Evaluation workers read `ExternalModelListSchema`, allowing old and new
+workers and API replicas to overlap without losing external price snapshots.
 
 The launch text input modality contains `supported_inputs.max_context_length`
 and `max_prompt_length`, both expressed as positive token measures. Its pricing
@@ -724,54 +733,29 @@ The following existed in older plans and are not part of the data model:
 - `allocation_members`
 - `cells`
 - all research program, campaign and experiment tables
-- a custom scheduler or a second store of Nomad allocation state
+- a custom scheduler or a second store of Kubernetes pod state
 
-## Instance inventory (migration pending)
+## Instance inventory
 
-The Nomad pilot adds `instances` in migration 0005. One row represents one
-provider pod or machine. Provider, account, and provider instance ID form the
-unique provider identity. Region and fault domain can be unknown. `sku` identifies
-the hardware offering, such as `4xb300` or `cpu-32vcpu`.
+One `instances` row represents one provider pod or machine. Provider, account,
+and provider instance ID form its unique identity. Region and fault domain can
+be unknown; `sku` identifies the hardware. Reenrollment keeps the UUID, and
+retirement withdraws that host from serving and training inventory.
 
-The nullable, unique `nomad_node_id` links the inventory record to Nomad.
-Creation and update timestamps describe the record. Retirement additionally
-blocks GPU certificate renewal. Credential issuance and revocation are stored
-separately. Nomad owns
-device discovery, scheduling eligibility, resource availability, and allocations.
+Kubernetes owns placement and workload lifecycle. The controller represents a
+RunPod host as `gpu-<instance UUID>` and advertises its measured capacity. Each
+model deployment uses its Pod UID and references the stable instance UUID. Its
+endpoint is derived as
+`http://gpu-<instance UUID>.tailscale-inference.svc.cluster.local:8888/alloc/<Pod UID>`.
+Git owns the host Service, controller inventory and pinned runtime catalogue.
+The worker owns deployment observations in PostgreSQL and projects them to
+Valkey for gateway routing. Neither a scheduler binding nor a separate host URL
+activation is required. Host credentials live outside the application database.
 
-The optional `model_deployments.instance_id` foreign key preserves manual deployment
-compatibility. It does not assign jobs to hosts. The control service can register
-inventory and set or clear a Nomad node link. Authentication and verification of
-that link remain pending. The application database migration remains pending.
-
-Migration 0011 adds nullable `instances.certificate` JSONB state.
-It holds `tokenHash` (the separately enrolled renewal-token SHA-256 digest), authorized
-Nomad node ID, revocation time, last successful issuance time, and last
-host-reported installed certificate expiry (`expiresAt`), renewal due time
-(`renewalDueAt`), and heartbeat (`observedAt`). JSON dates are ISO-8601 strings
-validated with the shared certificate schema. Inventory responses omit this field. No private key or raw
-renewal token is stored. Renewal requires a non-retired instance, the current
-node binding, and a matching unrevoked credential. Re-enrollment replaces the
-credential. The instance row is locked through signing, so revocation and
-retirement serialize with issuance; failed signing rolls back the issuance
-limit. Monitoring includes active bound hosts without credentials so unenrolled agents
-cannot disappear from alerts. Host reports support overdue-renewal, expiry, and
-missing-agent alerts, and do not attest
-to host integrity. See the Nomad README for rollout and compromise limits.
-
-Migration 0016 adds nullable `instances.serving_url`. Null retains the legacy
-provider ingress. A configured value must exactly name that instance's private
-Kubernetes egress Service:
-`http://gpu-<instance UUID>.tailscale-inference.svc.cluster.local:8888`.
-The database constraint and TypeScript setter reject arbitrary URLs. Only an
-active, Nomad-bound instance can change this field; qualification can bind the
-update to the node and endpoint observed before probing. Re-registration keeps
-it. Nomad reconciliation derives each allocation URL and adapter metrics target
-from it, retaining `/alloc/<allocation UUID>`. Private failures do not select
-public ingress automatically. Explicit rollback clears the field after public
-access has been restored and qualified. Git owns the egress Service's Tailscale
-IP and the per-node loopback binding configuration; PostgreSQL owns which host
-endpoint serves customers.
+Migration 0018 removes the former scheduler binding, certificate state, host
+endpoint and reconciliation-owner columns after the Kubernetes code is fully
+deployed. Instance and deployment identities, release metadata and serving
+URLs remain intact.
 
 ## Task training
 

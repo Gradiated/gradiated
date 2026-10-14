@@ -14,7 +14,6 @@ COPY packages/config/package.json ./packages/config/package.json
 COPY packages/contracts/package.json ./packages/contracts/package.json
 COPY packages/control/package.json ./packages/control/package.json
 COPY packages/credentials/package.json ./packages/credentials/package.json
-COPY packages/nomad-pki/package.json ./packages/nomad-pki/package.json
 COPY packages/temporal/package.json ./packages/temporal/package.json
 COPY packages/valkey/package.json ./packages/valkey/package.json
 COPY services/api/package.json ./services/api/package.json
@@ -26,10 +25,10 @@ COPY services/ops-mcp/package.json ./services/ops-mcp/package.json
 
 RUN pnpm install --frozen-lockfile
 
-COPY scripts/set-private-serving.mjs ./scripts/
 COPY packages ./packages
 COPY services ./services
-COPY inference/images/nomad-base/renew-certificate.py inference/images/nomad-base/run-renewer.sh inference/images/nomad-base/start-client.sh ./inference/images/nomad-base/
+COPY inference/gpu/ ./inference/gpu/
+COPY inference/images/gpu-base/ ./inference/images/gpu-base/
 COPY inference/tailscale/ ./inference/tailscale/
 
 RUN mkdir -p packages/*/.turbo services/*/.turbo \

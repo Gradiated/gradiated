@@ -548,8 +548,8 @@ export const SubprocessorsContent = (): ReactNode => (
         and operational metrics.
       </li>
       <li>
-        <strong>Nebius and RunPod</strong> — GPU infrastructure used by selected
-        inference runtimes.
+        <strong>RunPod</strong> — GPU infrastructure used by selected inference
+        runtimes.
       </li>
       <li>
         <strong>Stripe</strong> — payment processing and billing support.

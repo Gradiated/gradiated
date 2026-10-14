@@ -9,7 +9,7 @@ Status: specified design; deployment evidence and backup configuration still req
 | PostgreSQL | Policy, task configuration, task and version identities, run config and lifecycle state, model lifecycle, production pointers, host enrollment | Bodies, high-rate telemetry |
 | ClickHouse | Traces, generations, structured training execution history, checkpoint references, evaluation results, best-effort action audit events, and summaries; execution history supports recovery decisions | Required synchronous gateway state |
 | S3 | Immutable content named by accepted manifests | Anything mutable |
-| Nomad | Actual workload placement, allocation lifecycle and serving-process recovery | Product authorisation, training retry decisions or adapter readiness |
+| Kubernetes | Actual workload placement, allocation lifecycle and serving-process recovery | Product authorisation, training retry decisions or adapter readiness |
 | Valkey | Gateway projections, admission counters, leases, one `generation-events` stream | Source of truth for anything |
 
 Valkey is the gateway's only required synchronous internal state store. ClickHouse capture writes must not block inference. Training, evaluation and control-plane operations may depend on ClickHouse or PostgreSQL as needed. There is no requirement for training recovery to remain available during a ClickHouse outage.
@@ -20,7 +20,7 @@ Logical records live in the existing control modular monolith; schemas and const
 
 | Decision | Reason | Rejected |
 | --- | --- | --- |
-| ClickHouse owns training execution history used for logs and recovery; PostgreSQL defines runs and stores product control records; Nomad owns allocation state | Store each fact where it is used; avoid duplicate training step records | A blanket ban on ClickHouse recovery decisions |
+| ClickHouse owns training execution history used for logs and recovery; PostgreSQL defines runs and stores product control records; Kubernetes owns allocation state | Store each fact where it is used; avoid duplicate training step records | A blanket ban on ClickHouse recovery decisions |
 | `MergeTree` plus explicit logical dedupe | Correctness never depends on background merges | `ReplacingMergeTree`, `FINAL` |
 | Projections carry `(bootstrap_epoch, revision)` with compare-and-set; tombstones ordered | An old worker cannot resurrect a deleted model or reopen a policy | Last-write-wins projections |
 | Restriction is a three-step barrier (intent and denial, project and acknowledge, commit) | Denial takes effect before the flag flips; nothing reopens through a stale snapshot | Flipping a boolean |
@@ -38,7 +38,7 @@ Every JSON and event variant has a closed versioned schema with lengths, units a
 
 Workspace `proxy_settings.fallback_models` contains nullable `anthropic` and `openai` model IDs. It has a strict described JSON schema and uses the workspace policy revision. Updates project the complete policy before reporting success. Request overrides are transient. Tasks have no fallback field. Provider price metadata is optional analytics data and contains no credentials. GW-05 defines customer-key routing; no external-provider accounting is required.
 
-**Records.** The gateway reads identity and the catalog from PostgreSQL through a Valkey cache keyed by the record, with a lifetime of `GATEWAY_RECORD_CACHE_TTL_SECONDS`. A record PostgreSQL does not have is never cached, so a created key or model is usable at once and a cache gap cannot hide an existing record. Nothing projects rows, so no resource carries a bootstrap epoch or a projected revision, and losing Valkey costs cache misses rather than availability. Deployment heartbeats are pushed by the runtimes and expire after 6 s; the gateway holds them for 1 s with no stale-on-error extension. Runtime registration validates actual Nomad allocation ownership and enrollment (FLEET-05). Status binds allocation id, engine boot id, release and base/loader readiness; stale incarnations cannot overwrite current readiness. Nomad running state alone never opens routing.
+**Records.** The gateway reads identity and the catalog from PostgreSQL through a Valkey cache keyed by the record, with a lifetime of `GATEWAY_RECORD_CACHE_TTL_SECONDS`. A record PostgreSQL does not have is never cached, so a created key or model is usable at once and a cache gap cannot hide an existing record. Nothing projects rows, so no resource carries a bootstrap epoch or a projected revision, and losing Valkey costs cache misses rather than availability. Deployment heartbeats are pushed by the runtimes and expire after 6 s; the gateway holds them for 1 s with no stale-on-error extension. Runtime registration validates actual Kubernetes pod ownership and enrollment (FLEET-05). Status binds allocation id, engine boot id, release and base/loader readiness; stale incarnations cannot overwrite current readiness. A running Kubernetes pod alone never opens routing.
 
 **Restriction barrier.**
 
@@ -84,7 +84,7 @@ Private data: `us-east-1`, encryption at rest, TLS, private bucket policies, sep
 
 ## OPS-03 Grants, cleanup and backups
 
-**Grants.** New grants require a currently authorized, non-terminal run and an unexpired JWT; cancellation does not revoke previously issued JWTs. A grant names a purpose; the server resolves one exact object and version. Authorised by the run token's `artifacts:read:<purpose>` or `artifacts:write:<purpose>` scope (RUN-04). Purposes: dataset input, run output, bounded intermediate output. Refused: arbitrary keys, prefix listing, cross-run access. URLs last at most 15 minutes and no longer than the operation or source deadline. No static IAM signer: the control service's short-lived workload credentials sign, bounded by their validity; S3 and KMS access validated together. Job specs and Nomad snapshots hold identities, never signed URLs or provider keys. A write inventory precedes every PUT or multipart grant. Exports use the same exact-version inventory and lifecycle checks.
+**Grants.** New grants require a currently authorized, non-terminal run and an unexpired JWT; cancellation does not revoke previously issued JWTs. A grant names a purpose; the server resolves one exact object and version. Authorised by the run token's `artifacts:read:<purpose>` or `artifacts:write:<purpose>` scope (RUN-04). Purposes: dataset input, run output, bounded intermediate output. Refused: arbitrary keys, prefix listing, cross-run access. URLs last at most 15 minutes and no longer than the operation or source deadline. No static IAM signer: the control service's short-lived workload credentials sign, bounded by their validity; S3 and KMS access validated together. Job specs and Kubernetes Job specifications hold identities, never signed URLs or provider keys. A write inventory precedes every PUT or multipart grant. Exports use the same exact-version inventory and lifecycle checks.
 
 **Cleanup.** Workspace deletion is outside launch scope. There is no purge endpoint, UI action or operation table. Archive stops use and retains records. Source TTL, temporary-file cleanup and the existing operator cleanup of unused model artifacts remain. Cleanup uses object manifests and storage lifecycle rules; it does not imply a workspace-wide deletion guarantee.
 
@@ -149,7 +149,7 @@ Use edge error metrics and independent external probes to detect failures before
 
 There is no `availability_events` table, availability Valkey stream, consumer or per-request reconciliation process. Monitoring must not block inference.
 
-Grafana: request outcomes, cold-load and drain failures, desired versus ready capacity, Nomad pending allocations, autoscaler decisions and metric freshness, queue and run age, capture loss, eligibility yield, projection age, cache bytes, provider usage and cost coverage, cleanup lag; bounded labels; per-task and per-organisation views from scoped database queries.
+Grafana: request outcomes, cold-load and drain failures, desired versus ready capacity, Kubernetes Pending pods, autoscaler decisions and metric freshness, queue and run age, capture loss, eligibility yield, projection age, cache bytes, provider usage and cost coverage, cleanup lag; bounded labels; per-task and per-organisation views from scoped database queries.
 
 Incidents: Incident.io, 24/7 coverage, 300 s human acknowledgement target, escalation and backup responders, drills before launch. No customer-facing SLA. Runbooks: stop automation, add capacity, quarantine, failed promotion or projection, bad-release rollback, expiry and artifact cleanup, capacity restoration.
 
@@ -159,7 +159,9 @@ Generation ingestion migrates to one `generation-events` stream. Deploy readers 
 
 Readers and schemas expand before writers. Gateway readers for private ids, run tokens, policy revisions and tombstones deploy before the worker publishes those records. Membership contract deploys coherently across API, client and console. Model and deployment classes are registered with workspace identity.
 
-Rollout uses internal enable flags per increment, not customer switches; customer capture stays disabled until the capture-to-run path is ready. Old workers reject unsupported schema versions; new writers enable only when all consumers report compatible versions; mixed-version behaviour and Valkey bootstrap are audited.
+New workspaces enable task-labelled content capture with 180-day retention by default; owners and admins can disable it. Existing workspace settings are preserved. This capture policy replaces the earlier requirement to keep customer capture disabled during the fine-tuning rollout. Enabling capture does not enable training or establish readiness of an unimplemented capture path; each training executor still enforces source eligibility and admission checks.
+
+Rollout uses internal enable flags per increment. Old workers reject unsupported schema versions; new writers enable only when all consumers report compatible versions; mixed-version behaviour and Valkey bootstrap are audited.
 
 Rollback after the first private model or run exists keeps compatible readers and denial and tombstone support: disable writers, bound or drain work, restore a known compatible release; never roll back to code that could relay a private model id or ignore a policy revision. Destructive down-migrations need an explicit plan; disabling never deletes customer state. The last compatible rollback release is recorded and tested before launch.
 

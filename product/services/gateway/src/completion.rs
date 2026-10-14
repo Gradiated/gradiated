@@ -148,6 +148,15 @@ impl CompletionService {
         let (diagnostics, error) = match availability {
             RouteAvailability::Ready(route) => return Ok(route),
             RouteAvailability::AtCapacity(diagnostics) => {
+                self.metrics.routing_capacity_rejected(
+                    request
+                        .adapter
+                        .as_ref()
+                        .map_or(request.request.model.as_str(), |adapter| {
+                            adapter.base_model_id.as_str()
+                        }),
+                );
+
                 (diagnostics, GatewayError::CapacityExceeded)
             }
             RouteAvailability::Unavailable(diagnostics) => {
@@ -394,6 +403,10 @@ impl Generation {
             metrics: self.metrics,
         };
 
+        for fallback in &call.fallbacks {
+            settlement.metrics.prepare_deployment(fallback.id);
+        }
+
         (call, settlement)
     }
 
@@ -421,13 +434,18 @@ impl Generation {
             usage: completion.usage(),
             delivery: Delivery::Buffered,
         };
-        let end = settlement.settle(terminal).await?;
+        let settled = settlement.settle(terminal).await?;
 
-        match end.public_error() {
+        match settled.end.public_error() {
             Some(error) => Err(error),
-            None => Ok(CompletionResult {
-                response: completion.into_response(),
-            }),
+            None => {
+                let mut response = completion.into_response();
+                if call.request.decision.is_none() {
+                    crate::protocol::set_usage_cost(&mut response, settled.charge_nano_usd);
+                }
+
+                Ok(CompletionResult { response })
+            }
         }
     }
 
@@ -471,15 +489,26 @@ impl Generation {
         drop(runtime_stream);
 
         let client_gone = matches!(stop, StreamStop::ClientGone);
+        let terminal_response = progress.terminal_response.take();
         let settled = settlement.settle(progress.into_terminal(stop)).await;
         if client_gone {
             return;
         }
 
         let last = match settled {
-            Ok(end) => end
-                .public_error()
-                .map_or(StreamItem::Done, StreamItem::Error),
+            Ok(settled) => match settled.end.public_error() {
+                Some(error) => StreamItem::Error(error),
+                None => {
+                    if let Some(mut response) = terminal_response {
+                        crate::protocol::set_usage_cost(&mut response, settled.charge_nano_usd);
+                        if events.send(StreamItem::Chunk(response)).await.is_err() {
+                            return;
+                        }
+                    }
+
+                    StreamItem::Done
+                }
+            },
             Err(error) => StreamItem::Error(error),
         };
         let _ = events.send(last).await;

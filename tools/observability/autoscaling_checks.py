@@ -73,9 +73,17 @@ def check_autoscaling(root):
         app = applications[service]['spec']
         assert f'{service}-autoscaling.yaml' in app['source']['directory']['include']
         assert 'RespectIgnoreDifferences=true' in app['syncPolicy']['syncOptions']
-        assert app['ignoreDifferences'] == [{'group': 'apps', 'kind': 'Deployment',
-                                           'name': service, 'namespace': 'gradiated',
-                                           'jsonPointers': ['/spec/replicas']}]
+        ignored = app['ignoreDifferences']
+        assert {'group': 'apps', 'kind': 'Deployment', 'name': service,
+                'namespace': 'gradiated', 'jsonPointers': ['/spec/replicas']} in ignored
+        if service != 'worker':
+            rollout = next(d for d in resources if d['kind'] == 'Rollout')
+            assert spec['scaleTargetRef'] == {'apiVersion': 'argoproj.io/v1alpha1', 'kind': 'Rollout', 'name': service}
+            assert rollout['spec']['workloadRef'] == {'apiVersion': 'apps/v1', 'kind': 'Deployment',
+                                                     'name': service, 'scaleDown': 'onsuccess'}
+            assert {'group': 'argoproj.io', 'kind': 'Rollout', 'name': service,
+                    'namespace': 'gradiated', 'jsonPointers': ['/spec/replicas']} in ignored
+
 
         def series(metric, values, pod='a', **labels):
             labels = {'namespace': 'gradiated', 'pod': pod, **labels}
@@ -85,6 +93,10 @@ def check_autoscaling(root):
         def inputs(pods=('a', 'b')):
             result = [series('kube_deployment_status_replicas_available', '2+0x8',
                              pod='', deployment=service)]
+            if service != 'worker':
+                result[0]['values'] = '0+0x8'
+                result.append(series('rollout_info_replicas_available', '2+0x8',
+                                     pod='', name=service))
             for pod in pods:
                 result.extend([
                     series(f'gradiated_{service}_service_info', '1+0x8', pod),
@@ -120,9 +132,21 @@ def check_autoscaling(root):
                  inputs(('a',)) + backlog('a', 100), 100)
         else:
             case('healthy idle exporters return zero', inputs(), 0)
+            missing_rollout = [item for item in inputs(('a',))
+                               if not item['series'].startswith('rollout_info_replicas_available')]
+            case('zero-replica template cannot hide missing Rollout metrics', missing_rollout, None)
+            case('missing Rollout metrics fails closed even with all reporters',
+                 [item for item in inputs() if not item['series'].startswith('rollout_info_replicas_available')], None)
+            migrating = inputs(('a', 'b', 'c'))
+            migrating[0]['values'] = '1+0x8'
+            case('migration includes original and Rollout serving replicas', migrating, 0)
+            incomplete_migration = inputs()
+            incomplete_migration[0]['values'] = '1+0x8'
+            case('migration cannot hide missing original serving pod', incomplete_migration, None)
+
             case('missing pod cannot masquerade as idle', inputs(('a',)), None)
             data = inputs()
-            data[2]['values'] = '0+0x8'
+            next(item for item in data if item['series'].startswith('up{'))['values'] = '0+0x8'
             case('failed scrape cannot masquerade as idle', data, None)
             if service == 'proxy':
                 case('sum in-flight requests across pods', inputs() + [

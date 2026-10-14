@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
 import type { Model, ServiceTierPricingPolicy } from "@/api/queries";
 import { tierPriceRows, usdPerMillionTokens } from "@/pages/model-pricing";
 
+const chatModels = (models: readonly Model[]) =>
+  models.filter((model) => model.properties.type === "chat");
+
 const policy = (
   service_tier: ServiceTierPricingPolicy["service_tier"],
   numerator: number,
@@ -22,6 +25,7 @@ const model = {
   updated_at: "2026-08-16T12:00:00.000Z",
   properties: {
     schema_version: 1,
+    type: "chat",
     description: "",
     released_at: null,
     hugging_face_id: null,
@@ -63,6 +67,16 @@ describe("usdPerMillionTokens", () => {
 });
 
 describe("tierPriceRows", () => {
+  it("supports the documented chat filter across generated response variants", () => {
+    const { type: _type, ...properties } = model.properties;
+    const legacy: Model = {
+      ...model,
+      id: "external/legacy-model",
+      properties,
+    };
+
+    expect(chatModels([model, legacy])).toEqual([model]);
+  });
   it("prices each listed token type for every tier in order", () => {
     const rows = tierPriceRows(model, [
       policy("flex", 1, 2),

@@ -22,7 +22,7 @@ describe("production MCP boundary", () => {
     );
     backend.mockResolvedValue(lokiStreams);
     const list = await client.listTools();
-    expect(list.tools).toHaveLength(19);
+    expect(list.tools).toHaveLength(18);
     expect(list.tools.every((t) => t.annotations?.readOnlyHint)).toBe(true);
     const result = await client.callTool({
       name: "query_logs",

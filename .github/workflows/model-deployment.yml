@@ -4,13 +4,14 @@ on:
   push:
     branches: [main]
     paths:
+      - ".github/actions/relevant/**"
+      - product/inference/gpu/**
+      - product/inference/tailscale/**
       - product/inference/images/**
       - product/inference/CMakeLists.txt
       - product/inference/desmond/**
       - product/inference/engine/**
       - product/inference/.dockerignore
-      - product/inference/nomad/client.hcl
-      - product/inference/nomad/jobs/claim-gpus.sh
       - product/inference/bundles/**
       - product/inference/training/**
       - product/packages/autotrain
@@ -22,6 +23,10 @@ on:
       - product/inference/runtime-launcher/**
       - tools/images/**
       - tools/models/**
+      - tools/virtual-kubelet/host_agent_test.py
+      - tools/virtual-kubelet/host_state_test.py
+      - infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml
+      - mise.toml
       - .github/workflows/model-deployment.yml
       - .github/workflows/build-images.yml
   pull_request:
@@ -111,7 +116,7 @@ jobs:
     uses: ./.github/workflows/build-images.yml
     with:
       source_sha: ${{ github.sha }}
-      images: '["nomad-base"]'
+      images: '["gpu-base"]'
       artifact_prefix: models
 
   runtime:
@@ -128,7 +133,7 @@ jobs:
       SOURCE_SHA: ${{ github.sha }}
       AWS_REGION: us-east-1
       ARTIFACT_BUCKET: gradiated-prod-model-artifacts-${{ vars.AWS_ACCOUNT_ID }}
-      BASE_IMAGE: ${{ format('{0}.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/inference@{1}', vars.AWS_ACCOUNT_ID, fromJSON(needs.images.outputs.images)['nomad-base'].digest) }}
+      BASE_IMAGE: ${{ format('{0}.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/inference@{1}', vars.AWS_ACCOUNT_ID, fromJSON(needs.images.outputs.images)['gpu-base'].digest) }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -173,7 +178,7 @@ jobs:
         uses: depot/build-push-action@v1
         with:
           project: ${{ vars.DEPOT_PROJECT_ID }}
-          context: ${{ matrix.bundle == 'training' && 'product' || 'product/inference' }}
+          context: ${{ matrix.bundle == 'host' && '.' || (matrix.bundle == 'training' && 'product' || 'product/inference') }}
           file: ${{ matrix.bundle == 'training' && 'product/inference/training/Dockerfile' || format('product/inference/bundles/{0}/Dockerfile', matrix.bundle) }}
           platforms: linux/amd64
           build-contexts: runtime-base=docker-image://${{ env.BASE_IMAGE }}

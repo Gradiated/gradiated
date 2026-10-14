@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import hashlib
 import io
+import ipaddress
 import json
 import os
 import pwd
@@ -20,22 +21,8 @@ VERSION = "1.104.1"
 SHA256 = "108d1d96ecf410d305571e173516f27038f870919a9b89c914a167c6d33a4528"
 
 
-def registered_instance_id(
-    identity_path=Path("/etc/gradiated/host-identity.json"),
-    node_config=Path("/etc/nomad/node.hcl"),
-):
-    if identity_path.exists():
-        return str(uuid.UUID(json.loads(identity_path.read_text())["instance_id"]))
-
-    matches = re.findall(
-        r'^\s*gradiated_instance_id\s*=\s*"([^"\n]+)"\s*$',
-        node_config.read_text(),
-        re.MULTILINE,
-    )
-    if len(matches) != 1:
-        raise ValueError("Registered host identity missing or ambiguous")
-
-    return str(uuid.UUID(matches[0]))
+def registered_instance_id(identity_path=Path("/etc/gradiated/host-identity.json")):
+    return str(uuid.UUID(json.loads(identity_path.read_text())["instance_id"]))
 
 
 def install(payload):
@@ -119,7 +106,20 @@ def install(payload):
             {"hostname": hostname, "instance_id": instance, "proxy_port": proxy_port}
         ),
     )
-    for name in ("run-tailscale", "start-tailscale"):
+    if "control_endpoints" in payload:
+        endpoints = payload["control_endpoints"]
+        if set(endpoints) != {"api"} or any(
+            ipaddress.ip_address(address) not in ipaddress.ip_network("100.64.0.0/10")
+            for address in endpoints.values()
+        ):
+            raise ValueError("Invalid private control endpoints")
+        control_config = Path("/etc/gradiated/tailscale-control.json")
+        private_write(control_config, json.dumps(endpoints), 0, 0)
+        control_config.chmod(0o644)
+    names = ["run-tailscale", "start-tailscale"]
+    if "control_endpoints" in payload:
+        names.extend(["forward-control", "run-control", "start-control"])
+    for name in names:
         target = Path("/opt/gradiated/bin") / name
         private_write(target, payload["scripts"][name], 0, 0)
         target.chmod(0o755)

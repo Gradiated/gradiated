@@ -1,5 +1,12 @@
 // Paths must include every tracked file that can enter the Docker build context.
 export const catalog = {
+  "gpu-controller": {
+    context: "tools/virtual-kubelet",
+    dockerfile: "tools/virtual-kubelet/Dockerfile",
+    repository: "gradiated/prod/product",
+    target: "",
+    paths: ["tools/virtual-kubelet/go.mod", "tools/virtual-kubelet/go.sum", "tools/virtual-kubelet/cmd/", "tools/virtual-kubelet/Dockerfile"],
+  },
   "temporal-ui": {
     context: "infra/images/temporal-ui",
     repository: "gradiated/prod/product",
@@ -14,11 +21,9 @@ export const catalog = {
       "product/packages/",
       "product/services/",
       "product/Dockerfile",
-      "product/scripts/set-private-serving.mjs",
-      "product/inference/images/nomad-base/renew-certificate.py",
-      "product/inference/images/nomad-base/run-renewer.sh",
-      "product/inference/images/nomad-base/start-client.sh",
       "product/inference/tailscale/",
+      "product/inference/gpu/",
+      "product/inference/images/gpu-base/",
       "product/.dockerignore",
       "product/package.json",
       "product/pnpm-lock.yaml",
@@ -32,40 +37,45 @@ export const catalog = {
     dockerfile: "product/services/rust-service.Dockerfile",
     repository: "gradiated/prod/gateway",
     target: "gateway",
-    paths: ["product/services/gateway/", "product/services/rust-service.Dockerfile"],
+    paths: [
+      "product/services/gateway/",
+      "product/services/rust-service.Dockerfile",
+    ],
   },
   proxy: {
     context: "product/services/proxy",
     dockerfile: "product/services/rust-service.Dockerfile",
     repository: "gradiated/prod/proxy",
     target: "proxy",
-    paths: ["product/services/proxy/", "product/services/rust-service.Dockerfile"],
+    paths: [
+      "product/services/proxy/",
+      "product/services/rust-service.Dockerfile",
+    ],
   },
   collector: {
     context: "product/services/collector",
     dockerfile: "product/services/rust-service.Dockerfile",
     repository: "gradiated/prod/collector",
     target: "collector",
-    paths: ["product/services/collector/", "product/services/rust-service.Dockerfile"],
+    paths: [
+      "product/services/collector/",
+      "product/services/rust-service.Dockerfile",
+    ],
   },
-  "nomad-base": {
+  "gpu-base": {
     context: "product/inference",
-    dockerfile: "product/inference/images/nomad-base/Dockerfile",
+    dockerfile: "product/inference/images/gpu-base/Dockerfile",
     repository: "gradiated/prod/inference",
     target: "",
     paths: [
-      "product/inference/images/nomad-base/",
-      "product/inference/CMakeLists.txt",
-      "product/inference/desmond/",
-      "product/inference/engine/",
       "product/inference/.dockerignore",
-      "product/inference/nomad/client.hcl",
-      "product/inference/runtime-launcher/CMakeLists.txt",
-      "product/inference/runtime-launcher/main.cpp",
-      "product/inference/runtime-launcher/supervise.cpp",
-      "product/inference/runtime-launcher/supervise.h",
+      "product/inference/images/gpu-base/Dockerfile",
+      "product/inference/images/gpu-base/base-id",
+      "product/inference/images/gpu-base/sshd_config",
+      "product/inference/images/gpu-base/start-ssh.sh",
     ],
   },
+
   "deepseek-v4-1-flash": {
     context: "product/inference/images/deepseek-v4-1-flash",
     repository: "gradiated/prod/inference",

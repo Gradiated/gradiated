@@ -281,6 +281,42 @@ async fn ignores_unadvertised_model_parameters() {
 }
 
 #[tokio::test]
+async fn forwards_advertised_reasoning_effort_and_rejects_unsupported_values() {
+    for effort in ["low", "high", "max", "none"] {
+        let mut state = TestServingState::ready();
+        state.model.as_mut().unwrap().properties.output_modalities[0]
+            .supported_parameters
+            .insert(
+                "reasoning_effort".to_owned(),
+                serde_json::from_value(serde_json::json!({
+                    "type": "enum", "values": ["low", "high", "max"]
+                }))
+                .unwrap(),
+            );
+        let body = serde_json::to_vec(&serde_json::json!({
+            "model": "model-a", "messages": [{}], "reasoning_effort": effort
+        }))
+        .unwrap();
+        let result = qualify_chat(Arc::new(state), &body).await;
+
+        if effort == "none" {
+            assert_eq!(
+                result.err(),
+                Some(GatewayError::invalid_request(Some("reasoning_effort")))
+            );
+            continue;
+        }
+
+        let request = result.unwrap();
+        let upstream = request
+            .request
+            .into_upstream_body_for_model(request.effective_output_tokens, None);
+
+        assert_eq!(upstream["reasoning_effort"], effort);
+    }
+}
+
+#[tokio::test]
 async fn rejects_invalid_supported_model_parameters() {
     for (body, expected) in [
         (

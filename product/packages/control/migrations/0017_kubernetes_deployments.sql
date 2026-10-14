@@ -1,0 +1,2 @@
+ALTER TABLE "model_deployments" ADD COLUMN "orchestrator" text DEFAULT 'nomad' NOT NULL;--> statement-breakpoint
+ALTER TABLE "model_deployments" ADD CONSTRAINT "model_deployments_orchestrator_check" CHECK ("model_deployments"."orchestrator" in ('nomad', 'kubernetes'));

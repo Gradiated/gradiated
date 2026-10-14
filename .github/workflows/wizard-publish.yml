@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - ".github/actions/relevant/**"
       - "product/services/wizard/**"
       - ".github/workflows/wizard-publish.yml"
       - "product/.nvmrc"

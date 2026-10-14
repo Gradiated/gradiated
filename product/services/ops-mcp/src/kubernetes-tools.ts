@@ -9,7 +9,7 @@ const namespace = z.enum([
   "argocd",
   "kube-system",
   "external-secrets",
-  "nomad",
+  "gpu-inference",
 ]);
 const selector = z.string().min(1).max(500).optional();
 const resourceName = z
@@ -393,7 +393,7 @@ export const registerKubernetesTools = (
 
   register(
     "node_status",
-    "EKS node conditions (Ready, MemoryPressure, DiskPressure, PIDPressure), capacity and allocatable resources. GPU hosts are not EKS nodes; use nomad with resource=nodes for them.",
+    "Cluster node conditions (Ready, MemoryPressure, DiskPressure, PIDPressure), capacity and allocatable resources, including enrolled GPU hosts.",
     {},
     async () => {
       const data = z

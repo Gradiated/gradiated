@@ -589,6 +589,33 @@ mod tests {
     }
 
     #[test]
+    fn documented_named_reasoning_efforts_set_the_budget_or_disable_thinking() {
+        for (effort, budget) in [
+            ("none", None),
+            ("low", Some(25)),
+            ("high", Some(50)),
+            ("xhigh", Some(75)),
+            ("max", Some(100)),
+        ] {
+            let request: InferenceRequest = serde_json::from_value(json!({
+                "model": "deepseek/deepseek-v4.1-flash",
+                "messages": [{"role": "user", "content": "hi"}],
+                "reasoning_effort": effort,
+            }))
+            .unwrap();
+            let prompt = render(&request).unwrap();
+
+            if let Some(budget) = budget {
+                assert!(prompt.contains(&format!("Reasoning Effort: {budget} (range 1-100")));
+                assert!(prompt.ends_with("<think>"));
+            } else {
+                assert!(!prompt.contains("Reasoning Effort:"));
+                assert!(prompt.ends_with("</think>"));
+            }
+        }
+    }
+
+    #[test]
     fn rejects_malformed_tool_calls_and_thinking_flags() {
         let request = |message: Value, kwargs: Value| -> InferenceRequest {
             serde_json::from_value(json!({

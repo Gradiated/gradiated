@@ -30,3 +30,10 @@ test("release binds the source, base and content-addressed private bundle", () =
     `s3::https://test-artifacts.s3.us-east-1.amazonaws.com/bundles/sha256/${record.sha256}.tar.gz`,
   );
 });
+
+test("release records distinguish host bundles from model runtimes", () => {
+  const record = manifest({bundle:"host", source:"c".repeat(40), baseImage, baseId:"base-v1", digest:"d".repeat(64), bucket:"test-artifacts"});
+  assert.equal(record.bundle, "host");
+  assert.equal(record.bootstrapVersion, 1);
+  assert.throws(() => manifest({bundle:"unknown", source:"c".repeat(40), baseImage, baseId:"base-v1", digest:"d".repeat(64), bucket:"test-artifacts"}), /Unknown bundle/);
+});

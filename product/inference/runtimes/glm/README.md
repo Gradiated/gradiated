@@ -15,7 +15,7 @@ FP8 KV cache, the GLM tool/reasoning parsers, and the existing startup
 qualification supervisor. `RUNTIME_PORT` is the loopback inference port;
 `WARMUP_PORT` exposes readiness only after cold-shape and concurrency checks
 finish. Desmond should use that readiness endpoint. `HF_HOME` selects the
-model cache. The production Nomad job uses the node-local disk at
+model cache. The production Kubernetes Rollout uses the node-local disk at
 `/home/runtime/.cache/huggingface`, shared across allocations on that host.
 Hugging Face downloads the pinned revision when files are absent and reuses
 completed blobs on subsequent starts. No network volume or RAM-backed checkpoint
@@ -23,7 +23,7 @@ cache is required. The cache is disposable: a host reset can remove it, and the
 next rollout downloads it again before admission opens. Leave enough disk space
 for the checkpoint and retained revisions; use the Hugging Face cache tools to
 remove unused revisions while preserving weights used by running processes.
-The job reserves 400000 MiB of host RAM. First startup can also include
+The job reserves 400 GiB of host RAM. First startup can also include
 GPU-kernel compilation and autotuning.
 The runtime launcher sets `GRADIATED_RUNTIME_ROOT`.
 
@@ -32,7 +32,7 @@ omitting the field or using another value selects its maximum reasoning budget.
 In particular, `"none"` does not disable reasoning in this template. Use `"low"`
 for bounded serving probes and inspect both content and reasoning deltas in streams.
 
-Build the Dockerfile with `product/inference` as context and the pinned Nomad
+Build the Dockerfile with `product/inference` as context and the pinned GPU
 base as the `runtime-base` build context. The `verify` target checks dependency
 compatibility, imports vLLM in that base, and verifies the GLM architecture is
 registered. The `artifact` target exports `runtime.tar.gz`. CPU verification does

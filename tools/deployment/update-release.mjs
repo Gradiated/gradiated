@@ -14,6 +14,7 @@ const IMAGES = [
     metadataKey: "productImage",
     manifests: [
       "api.yaml",
+      "rollout-analysis.yaml",
       "clickhouse-migrate.yaml",
       "worker.yaml",
       "temporal-worker.yaml",
@@ -122,6 +123,13 @@ export async function updateRelease(options) {
     }
   }
 
+  if (options.gpuControllerDigest) {
+    const digest = requireMatch("GPU controller digest", options.gpuControllerDigest, /^sha256:[0-9a-f]{64}$/);
+    const file = path.join(workloads, "../gpu-inference/controller.yaml");
+    const contents = await readFile(file, "utf8");
+    await writeFile(file, replaceImageReference(contents, repository("product"), digest, file));
+  }
+
   await writeFile(kustomizationPath, kustomization);
   await writeFile(metadataPath, metadata);
 }
@@ -131,6 +139,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   await updateRelease({
     root: argumentsByName.root,
     sourceSha: argumentsByName["source-sha"],
+    gpuControllerDigest: argumentsByName["gpu-controller-digest"],
     digests: Object.fromEntries(
       IMAGES.map(({ name }) => [name, argumentsByName[`${name}-digest`]]),
     ),

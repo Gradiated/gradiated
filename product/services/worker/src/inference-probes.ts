@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { NomadReplica } from "@gradiated/control";
+import type { ModelReplica } from "@gradiated/control";
 import { Counter, Gauge, Histogram, type Registry } from "prom-client";
 import { sleep } from "./sleep.js";
 import { createProbeDeadline } from "./probe-deadline.js";
@@ -51,7 +51,7 @@ export class InferenceProbeMetrics {
     });
   }
 
-  discover(replicas: readonly NomadReplica[]) {
+  discover(replicas: readonly ModelReplica[]) {
     const ids = new Set(replicas.map((replica) => replica.id));
     for (const [id, label] of this.active) {
       if (ids.has(id)) continue;
@@ -72,7 +72,7 @@ export class InferenceProbeMetrics {
     this.inventory.set(Date.now() / 1000);
   }
 
-  record(replica: NomadReplica, succeeded: boolean, duration: number) {
+  record(replica: ModelReplica, succeeded: boolean, duration: number) {
     const label = { model: replica.modelId, deployment: replica.id };
     this.attempts.inc({ ...label, result: succeeded ? "success" : "failure" });
     this.latency.observe(label, duration);
@@ -95,8 +95,8 @@ export const runInferenceProbes = async (options: {
     script: string,
     options: { keys: string[]; arguments: string[] },
   ) => Promise<unknown>;
-  replicas: () => Promise<readonly NomadReplica[]>;
-  probe: (replica: NomadReplica, signal: AbortSignal) => Promise<void>;
+  replicas: () => Promise<readonly ModelReplica[]>;
+  probe: (replica: ModelReplica, signal: AbortSignal) => Promise<void>;
   metrics: InferenceProbeMetrics;
   beforePass?: () => Promise<void>;
   onReady: (durationSeconds: number) => Promise<void>;

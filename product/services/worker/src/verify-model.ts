@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { setTimeout as delay } from "node:timers/promises";
 import {
   createControlDatabase,
-  createNomadDeploymentStore,
+  createDeploymentStore,
   createWorkspaceApiKeyService,
 } from "@gradiated/control";
 import { z } from "zod";
@@ -23,7 +23,7 @@ const environment = z
   .parse(process.env);
 const { database, pool } = createControlDatabase(environment.DATABASE_URL, 1);
 const keys = createWorkspaceApiKeyService(database);
-const deployments = createNomadDeploymentStore(database);
+const deployments = createDeploymentStore(database);
 const abort = new AbortController();
 process.once("SIGTERM", () => abort.abort());
 process.once("SIGINT", () => abort.abort());
@@ -68,7 +68,7 @@ try {
     environment.MODEL_VERIFICATION_USER_ID,
     environment.MODEL_VERIFICATION_WORKSPACE_ID,
     {
-      name: "Nomad SDK rollout verification",
+      name: "SDK rollout verification",
       expiresAt: new Date(Date.now() + 15 * 60_000),
     },
   );

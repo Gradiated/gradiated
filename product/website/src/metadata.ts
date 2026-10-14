@@ -30,6 +30,11 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     description:
       "Gradiated builds software and hardware to provide the most affordable open-model inference.",
   },
+  "/about/": {
+    title: "About",
+    description:
+      "Learn how Gradiated began inside PostHog and why PostHog created a dedicated brand for inference research and infrastructure.",
+  },
   "/training/": {
     title: "Training",
     description:
@@ -335,7 +340,7 @@ export const getStructuredData = (pathname: string): object[] => {
       title: job.title,
       description: jobDescription(job),
       datePosted: job.datePosted ?? "2026-08-28",
-      employmentType: "FULL_TIME",
+      employmentType: job.employmentType ?? "FULL_TIME",
       hiringOrganization: organization,
       identifier: {
         "@type": "PropertyValue",
@@ -350,6 +355,11 @@ export const getStructuredData = (pathname: string): object[] => {
           addressLocality: city.trim(),
         },
       })),
+      // Google's JobPosting name for a remote role.
+      ...(job.workplace === "REMOTE" && {
+        jobLocationType: "TELECOMMUTE",
+        applicantLocationRequirements: { "@type": "Country", name: "GB" },
+      }),
       url,
     });
     return data;

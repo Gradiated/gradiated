@@ -22,13 +22,18 @@ async fn decision_settlement_bills_input_and_cached_input_without_output() {
     )
     .unwrap();
     let decision = Script::Complete(RuntimeCompletion::from_normalized_parts(
-        json!({"model":"model-a","answers":{"q":{"type":"noul","noul":0.9}}}),
+        json!({"model":"model-a","answers":{"q":{"type":"noul","noul":0.9}},
+            "usage":{"input_tokens":10,"cached_input_tokens":4,"output_tokens":0}}),
         "stop".to_owned(),
         usage(10, 4, 0),
     ));
     let harness = Harness::new(request, [decision]);
 
-    harness.complete().await.unwrap();
+    let response = harness.complete().await.unwrap().into_response();
+    assert_eq!(
+        response["usage"],
+        json!({"input_tokens":10,"cached_input_tokens":4,"output_tokens":0})
+    );
 
     let finalized = harness.only_finalized();
     assert_eq!(finalized["usage"]["input_tokens"], 10);
@@ -225,6 +230,9 @@ async fn exhausted_stream_finalization_ends_with_an_error_frame() {
         Some(&StreamItem::Error(GatewayError::FinalizationUnavailable))
     );
     assert!(!items.contains(&StreamItem::Done));
+    assert!(items
+        .iter()
+        .all(|item| !matches!(item, StreamItem::Chunk(value) if value.get("usage").is_some())));
 }
 
 #[tokio::test]
@@ -344,4 +352,81 @@ fn assert_generation_task_failure_logged(events: &[Value], generation_id: Uuid) 
         failures[0]["fields"]["generation_id"],
         generation_id.to_string()
     );
+}
+
+#[tokio::test]
+async fn buffered_cost_matches_settlement_with_cache_writes_reasoning_and_tier_pricing() {
+    use crate::{CapturedPricing, InputTokenPrice, OutputTokenPrice, ServiceTier, TokenUnit};
+
+    let mut request = qualified_request(1);
+    request.request.service_tier = ServiceTier::Fast;
+    request.pricing = CapturedPricing::for_service_tier(
+        &[
+            InputTokenPrice::Prompt {
+                unit: TokenUnit::Token,
+                cost: 10,
+            },
+            InputTokenPrice::CachedPrompt {
+                unit: TokenUnit::Token,
+                cost: 2,
+            },
+            InputTokenPrice::CacheWrite {
+                unit: TokenUnit::Token,
+                cost: 5,
+            },
+        ],
+        &[
+            OutputTokenPrice::Completion {
+                unit: TokenUnit::Token,
+                cost: 20,
+            },
+            OutputTokenPrice::InternalReasoning {
+                unit: TokenUnit::Token,
+                cost: 30,
+            },
+        ],
+        ServiceTier::Fast,
+    )
+    .unwrap();
+    let script = Script::Complete(RuntimeCompletion::from_normalized_parts(
+        json!({"usage": {"prompt_tokens": 10, "completion_tokens": 5, "cost": 999}}),
+        "stop".to_owned(),
+        crate::NormalizedUsage::new(10, 4, 2, 5, 3).unwrap(),
+    ));
+    let harness = Harness::new(request, [script]);
+
+    let response = harness.complete().await.unwrap().into_response();
+    let finalized = harness.only_finalized();
+    let charge = finalized["usage"]["charge"].as_u64().unwrap();
+    assert!(charge > 0);
+    assert_eq!(
+        response["usage"]["cost"].as_f64().unwrap(),
+        charge as f64 / 1_000_000_000.0
+    );
+    assert_eq!(response["usage"]["prompt_tokens"], 10);
+    assert_eq!(response["usage"]["completion_tokens"], 5);
+}
+
+#[tokio::test]
+async fn lost_lease_returns_zero_cost_and_retry_absence_returns_the_settled_cost() {
+    for (outcomes, expected) in [
+        (vec![FinalizationResult::AlreadyAbsent], 0.0),
+        (
+            vec![
+                FinalizationResult::Unconfirmed,
+                FinalizationResult::AlreadyAbsent,
+            ],
+            0.000000031,
+        ),
+    ] {
+        let script = Script::Complete(RuntimeCompletion::from_normalized_parts(
+            json!({"usage": {"prompt_tokens": 10, "completion_tokens": 5}}),
+            "stop".to_owned(),
+            usage(10, 4, 5),
+        ));
+        let harness = Harness::new(qualified_request(1), [script]).finalizing(outcomes);
+
+        let response = harness.complete().await.unwrap().into_response();
+        assert_eq!(response["usage"]["cost"], json!(expected));
+    }
 }

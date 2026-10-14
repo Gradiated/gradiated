@@ -3067,10 +3067,9 @@
   border-block-start: 1px solid var(--color-rule);
 }
 
-/* Clears the floating nav when a contents link jumps to a section. */
-.gr-job-section {
-  scroll-margin-top: calc(var(--nav-h) + 2 * var(--u));
-}
+/* No scroll-margin of its own: the root scroll-padding-top (base.css) already
+   clears the floating nav when a contents link jumps to a section. Adding one
+   here doubled the offset and landed each heading mid-screen. */
 
 /* The first section carries no rule of its own — the head's rule is directly
    above it — but it keeps a generous top so the posting starts clear of that
@@ -5609,5 +5608,49 @@
   .gr-models-card {
     aspect-ratio: auto;
     min-height: 300px;
+  }
+}
+
+/* -- job application form --------------------------------------------------
+   Sits inside .gr-job-apply, under "Let's talk.". The apply section centres
+   its text; the form itself reads left-aligned, like every other form. Fields
+   come from Ashby, so the layout cannot know how many there are: short answers
+   pair up on wide screens, long ones take the row. */
+
+.gr-root .gr-apply-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--u) calc(0.8 * var(--u));
+  margin: 0 auto;
+  max-width: calc(28 * var(--u));
+  text-align: start;
+}
+
+.gr-root .gr-apply-form-wide {
+  grid-column: 1 / -1;
+}
+
+.gr-root .gr-apply-form-submit {
+  margin-block-start: calc(0.5 * var(--u));
+  text-align: center;
+}
+
+.gr-root .gr-apply-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(0.4 * var(--u)) var(--u);
+  font-family: var(--font-body);
+  font-size: var(--text-ui);
+}
+
+.gr-root .gr-apply-choices label {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(0.3 * var(--u));
+}
+
+@media (max-width: 60rem) {
+  .gr-root .gr-apply-form {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

@@ -16,7 +16,7 @@
     },
     {
       "name": "deployment",
-      "definition": "A model deployment: one concrete runtime that serves one model release at a private service URL, derived from Nomad allocations, among which the gateway places requests."
+      "definition": "A model deployment: one concrete runtime that serves one model release at a private service URL, derived from Kubernetes pods, among which the gateway places requests."
     },
     {
       "name": "generation",
@@ -52,7 +52,7 @@
     },
     {
       "name": "capture",
-      "definition": "Opt-in copying of a generation's prompt and response into regional storage as trace contents, enabled per workspace with a retention period."
+      "definition": "Copying of a generation's prompt and response into regional storage as trace contents, enabled by default per workspace with 180-day retention."
     },
     {
       "name": "trace",

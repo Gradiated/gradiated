@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class Host:
     def __init__(self):
         self.trainer = TrainingRuntime(
-            os.environ["NOMAD_ALLOC_DIR"] + "/training",
+            os.environ["GRADIATED_RUNTIME_DIR"] + "/training",
             json.loads(
                 os.environ.get("TRAINING_RECIPE_JSON")
                 or Path(__file__).with_name("recipe.json").read_text()
@@ -27,7 +27,7 @@ class Host:
         self.job = None
         self.deadline = time.monotonic() + 24 * 60 * 60
         self.lease = time.monotonic() + 15 * 60
-        self.allocation_id = os.environ["NOMAD_ALLOC_ID"]
+        self.allocation_id = os.environ["GRADIATED_POD_UID"]
         threading.Thread(target=self.watchdog, daemon=True).start()
 
     def renew(self, allocation_id):
@@ -184,7 +184,7 @@ def serve():
                 self.respond(400, {"error": "invalid_operation"})
 
     server = ThreadingHTTPServer(
-        ("127.0.0.1", int(os.environ["NOMAD_PORT_runtime"])), Handler
+        ("127.0.0.1", int(os.environ["RUNTIME_PORT"])), Handler
     )
     server.timeout = 1
 

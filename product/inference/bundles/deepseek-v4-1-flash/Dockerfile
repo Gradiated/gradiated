@@ -16,23 +16,17 @@ RUN uv python install 3.12.13 \
     && ln -sfn libcudart.so.13 lib/libcudart.so
 
 FROM dependencies AS package
-COPY --from=runtime-base /opt/gradiated/bin/runtime-launch /bundle/runtime-launch
-COPY --from=runtime-base /opt/gradiated/bin/desmondd /bundle/desmondd
 COPY bundles/package.sh /package.sh
 COPY images/deepseek-v4-1-flash/start.sh /bundle/start.sh
 COPY --chmod=755 bundles/deepseek-v4-1-flash/entrypoint /bundle/entrypoint
 COPY --chmod=755 bundles/deepseek-v4-1-flash/vllm /bundle/vllm
-COPY images/nomad-base/base-id /bundle/base-id
+COPY images/gpu-base/base-id /bundle/base-id
 RUN bash /package.sh
 
 # The caller supplies the exact base digest as a named build context.
 FROM runtime-base AS verify
-COPY images/nomad-base/tests/test-serving.sh /tmp/test-serving.sh
 COPY bundles/deepseek-v4-1-flash/cuda-compile.cu /tmp/cuda-compile.cu
 COPY bundles/deepseek-v4-1-flash/checkpoint-loader.py /tmp/checkpoint-loader.py
-RUN bash /tmp/test-serving.sh \
-    && rm /tmp/test-serving.sh /etc/gradiated/runtime-access.token \
-       /etc/gradiated/deployment-status.token /etc/gradiated/runtime-proxy.conf
 ENV PYTHONHOME=/bundle/python PYTHONPATH=/bundle/python/lib/python3.12/site-packages
 # Compile Triton's actual helper to check bundled headers without a GPU or driver.
 RUN --mount=from=package,source=/runtime.tar.gz,target=/tmp/runtime.tar.gz \

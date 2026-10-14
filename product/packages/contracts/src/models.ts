@@ -241,44 +241,48 @@ const QuantizationSchema = z.enum([
   "fp32",
 ]);
 
-export const ModelPropertiesSchema = z
-  .strictObject({
-    schema_version: z.literal(1),
-    description: z.string().max(2_000),
-    released_at: TimestampSchema.nullable(),
-    hugging_face_id: z.string().max(300).nullable(),
-    quantization: QuantizationSchema.nullable(),
-    tokenizer: z.string().max(100).nullable(),
-    input_modalities: z.array(TextInputModalitySchema).length(1),
-    output_modalities: z.array(TextOutputModalitySchema).length(1),
-    passthrough_parameters: ParameterMapSchema,
-    deprecation_date: TimestampSchema.nullable(),
-    pricing_overrides: z
-      .array(
-        z.strictObject({
-          min_prompt_tokens: z
-            .number()
-            .int()
-            .nonnegative()
-            .describe("Minimum total input tokens for this price tier."),
-          input_pricing: z
-            .array(InputTokenPricingEntrySchema)
-            .describe(
-              "Input rates overriding the base tier, in nano-USD per token.",
-            ),
-          output_pricing: z
-            .array(OutputTokenPricingEntrySchema)
-            .describe(
-              "Output rates overriding the base tier, in nano-USD per token.",
-            ),
-        }),
-      )
-      .optional()
-      .describe(
-        "Published long-context price overrides; unspecified token types inherit base rates.",
-      ),
-  })
-  .openapi("ModelProperties");
+const ModelTypeSchema = z
+  .enum(["chat", "decision"])
+  .describe(
+    "The inference interface: chat generates text; decision scores typed questions without generating text.",
+  );
+
+export const ModelPropertiesSchema = z.strictObject({
+  schema_version: z.literal(1),
+  description: z.string().max(2_000),
+  released_at: TimestampSchema.nullable(),
+  hugging_face_id: z.string().max(300).nullable(),
+  quantization: QuantizationSchema.nullable(),
+  tokenizer: z.string().max(100).nullable(),
+  input_modalities: z.array(TextInputModalitySchema).length(1),
+  output_modalities: z.array(TextOutputModalitySchema).length(1),
+  passthrough_parameters: ParameterMapSchema,
+  deprecation_date: TimestampSchema.nullable(),
+  pricing_overrides: z
+    .array(
+      z.strictObject({
+        min_prompt_tokens: z
+          .number()
+          .int()
+          .nonnegative()
+          .describe("Minimum total input tokens for this price tier."),
+        input_pricing: z
+          .array(InputTokenPricingEntrySchema)
+          .describe(
+            "Input rates overriding the base tier, in nano-USD per token.",
+          ),
+        output_pricing: z
+          .array(OutputTokenPricingEntrySchema)
+          .describe(
+            "Output rates overriding the base tier, in nano-USD per token.",
+          ),
+      }),
+    )
+    .optional()
+    .describe(
+      "Published long-context price overrides; unspecified token types inherit base rates.",
+    ),
+});
 
 export const ModelPropertiesInputSchema = z
   .strictObject({
@@ -295,41 +299,55 @@ export const ModelPropertiesInputSchema = z
   })
   .pipe(ModelPropertiesSchema);
 
-export const ModelSchema = z
-  .strictObject({
-    id: ModelIdSchema,
-    name: NameSchema,
-    status: z.enum(["available", "unavailable"]),
-    properties: ModelPropertiesSchema,
-    icon: z
-      .string()
-      .nullable()
-      .optional()
-      .describe("Provider icon path in the console's local assets."),
-    created_at: TimestampSchema,
-    updated_at: TimestampSchema,
-  })
-  .openapi("Model");
+const CatalogModelSchema = z.strictObject({
+  id: ModelIdSchema,
+  name: NameSchema,
+  status: z.enum(["available", "unavailable"]),
+  properties: ModelPropertiesSchema,
+  icon: z
+    .string()
+    .nullable()
+    .optional()
+    .describe("Provider icon path in the console's local assets."),
+  created_at: TimestampSchema,
+  updated_at: TimestampSchema,
+});
 
-export const ModelListSchema = z
-  .strictObject({
-    ...pageFields(ModelSchema),
-    service_tiers: z
-      .array(ServiceTierPricingPolicySchema)
-      .length(ServiceTierSchema.options.length),
-    pricing_source: z
-      .literal("openrouter")
-      .optional()
-      .describe(
-        "External pricing source; rates are catalog estimates, not billing charges.",
-      ),
-    pricing_updated_at: TimestampSchema.optional().describe(
-      "Time this API instance fetched the external catalog.",
+export const ModelSchema = CatalogModelSchema.extend({
+  properties: ModelPropertiesSchema.extend({ type: ModelTypeSchema }).openapi(
+    "ModelProperties",
+  ),
+}).openapi("Model");
+
+export const ExternalModelSchema = CatalogModelSchema.extend({
+  properties: ModelPropertiesSchema.extend({
+    type: ModelTypeSchema.optional(),
+  }).openapi("ExternalModelProperties"),
+}).openapi("ExternalModel");
+
+const CatalogModelListSchema = z.strictObject({
+  ...pageFields(ModelSchema),
+  service_tiers: z
+    .array(ServiceTierPricingPolicySchema)
+    .length(ServiceTierSchema.options.length),
+  pricing_source: z
+    .literal("openrouter")
+    .optional()
+    .describe(
+      "External pricing source; rates are catalog estimates, not billing charges.",
     ),
-  })
-  .openapi("ModelList");
+  pricing_updated_at: TimestampSchema.optional().describe(
+    "Time this API instance fetched the external catalog.",
+  ),
+});
+
+export const ModelListSchema = CatalogModelListSchema.openapi("ModelList");
+export const ExternalModelListSchema = CatalogModelListSchema.extend({
+  data: z.array(ExternalModelSchema),
+}).openapi("ExternalModelList");
 
 export type Model = z.infer<typeof ModelSchema>;
+export type ExternalModel = z.infer<typeof ExternalModelSchema>;
 export type ModelParameterDescriptor = z.infer<
   typeof ModelParameterDescriptorSchema
 >;

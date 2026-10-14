@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { ModelListSchema, type ModelProperties } from "@gradiated/contracts";
+import {
+  ExternalModelListSchema,
+  type ModelProperties,
+} from "@gradiated/contracts";
 import type { CatalogService } from "@gradiated/control";
 
 const rate = z.number().finite().nonnegative();
@@ -86,7 +89,7 @@ export const createEvaluationPricing = (
       );
       if (!response.ok) return prices;
 
-      const external = ModelListSchema.parse(await response.json());
+      const external = ExternalModelListSchema.parse(await response.json());
       for (const model of external.data) {
         if (model.status === "available")
           prices.set(

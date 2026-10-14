@@ -146,6 +146,11 @@ impl FailedGeneration {
     }
 }
 
+pub(super) struct SettledGeneration {
+    pub(super) end: GenerationEnd,
+    pub(super) charge_nano_usd: u64,
+}
+
 pub(super) struct GenerationSettlement {
     pub(super) serving_state: Arc<dyn ServingState>,
     pub(super) generation_id: Uuid,
@@ -176,7 +181,7 @@ impl GenerationSettlement {
     pub(super) async fn settle(
         self,
         terminal: GenerationTerminal,
-    ) -> Result<GenerationEnd, GatewayError> {
+    ) -> Result<SettledGeneration, GatewayError> {
         let GenerationTerminal {
             mut end,
             usage,
@@ -216,6 +221,7 @@ impl GenerationSettlement {
             timing: &timing,
         });
 
+        let charge_nano_usd = priced_usage.charge();
         let properties = GenerationProperties::new(
             self.generation_identity.clone(),
             self.service_tier,
@@ -224,12 +230,15 @@ impl GenerationSettlement {
             outcome,
             timing,
         );
-        self.finalize(&properties).await?;
+        let charged = self.finalize(&properties).await?;
 
-        Ok(end)
+        Ok(SettledGeneration {
+            end,
+            charge_nano_usd: if charged { charge_nano_usd } else { 0 },
+        })
     }
 
-    async fn finalize(&self, properties: &GenerationProperties) -> Result<(), GatewayError> {
+    async fn finalize(&self, properties: &GenerationProperties) -> Result<bool, GatewayError> {
         let generation_id = self.generation_id;
         let organization_id = properties.organization_id();
         let mut attempt = 1;
@@ -244,7 +253,7 @@ impl GenerationSettlement {
                 Ok(FinalizationOutcome::Settled) => {
                     self.metrics
                         .record_finalization_attempt(FinalizationAttempt::Settled);
-                    return Ok(());
+                    return Ok(true);
                 }
                 Ok(FinalizationOutcome::AlreadyAbsent) => {
                     self.metrics
@@ -261,7 +270,7 @@ impl GenerationSettlement {
                              the charge was not applied and no terminal event was appended"
                         );
                     }
-                    return Ok(());
+                    return Ok(attempt > 1);
                 }
                 Err(error) => {
                     self.metrics

@@ -1,15 +1,13 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { bodyLimit } from "hono/body-limit";
+import { requestId } from "hono/request-id";
 import type { DeploymentStatusService } from "@gradiated/control";
 
+import { registerRuntimeBundleRoutes } from "./routes/runtime-bundles.js";
 import { apiRateLimit } from "./http/request-limits.js";
-import { problemResponse, problems } from "./http/problems.js";
+import { problemResponse, problems, toApiProblem } from "./http/problems.js";
 import { createDeploymentStatusIngestApp } from "./ingest/deployment-status.js";
 import { registerHealthRoutes } from "./routes/health.js";
-import {
-  createHostCertificateRouter,
-  type HostCertificateDependencies,
-} from "./routes/instance-certificates.js";
 import {
   registerAdapterHostingRoutes,
   type AdapterHostingDependencies,
@@ -20,11 +18,28 @@ import type { ApiEnvironment } from "./types.js";
 export const createGpuControlApp = (dependencies: {
   provider: string;
   status: DeploymentStatusService;
-  certificates?: HostCertificateDependencies;
-  adapters?: AdapterHostingDependencies;
+  adapters?: Pick<AdapterHostingDependencies, "service">;
+  runtimeBundle?: (digest: string) => Promise<{ url: string } | undefined>;
   check: DependencyCheck;
 }) => {
-  const app = new OpenAPIHono<ApiEnvironment>();
+  const app = new OpenAPIHono<ApiEnvironment>({
+    defaultHook: (result, context) => {
+      if (result.success) return;
+      return problemResponse(
+        context,
+        problems.validation(
+          result.error.issues.map((issue) => ({
+            path: issue.path.join("."),
+            message: issue.message,
+          })),
+        ),
+      );
+    },
+  });
+  app.onError((error, context) =>
+    problemResponse(context, toApiProblem(error)?.problem ?? problems.internal),
+  );
+  app.use("*", requestId());
   app.use("/api/*", apiRateLimit());
   app.use(
     "/api/*",
@@ -44,9 +59,9 @@ export const createGpuControlApp = (dependencies: {
       service: dependencies.status,
     }),
   );
-  if (dependencies.certificates)
-    app.route("/", createHostCertificateRouter(dependencies.certificates));
   if (dependencies.adapters)
     registerAdapterHostingRoutes(app, dependencies.adapters);
+  if (dependencies.runtimeBundle)
+    registerRuntimeBundleRoutes(app, dependencies.runtimeBundle);
   return app;
 };

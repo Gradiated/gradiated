@@ -10,8 +10,10 @@
     "test:integration": "cargo build --locked && vitest run"
   },
   "devDependencies": {
-    "@typesafe-ai/sdk": "0.6.0",
+    "@anthropic-ai/sdk": "0.131.0",
+    "@gradiated/contracts": "workspace:*",
     "@types/pg": "8.15.6",
+    "@typesafe-ai/sdk": "0.6.0",
     "openai": "^7.5.0",
     "pg": "8.23.0",
     "redis": "5.8.2"

@@ -64,6 +64,7 @@ async function fixture() {
     path.join(workloads, "collector.yaml"),
     `image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/collector@sha256:${"0".repeat(64)}\n`,
   );
+  await writeFile(path.join(workloads, "rollout-analysis.yaml"), "image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/product:old\n");
   return { root, workloads };
 }
 
@@ -95,6 +96,7 @@ test("updates one complete production release", async () => {
   assert.match(kustomization, new RegExp(`digest: ${GATEWAY_DIGEST}`));
   assert.match(kustomization, new RegExp(`prod/proxy\\n    digest: ${PROXY_DIGEST}`));
   assert.match(api, new RegExp(`product@${PRODUCT_DIGEST}`));
+  assert.match(await readFile(path.join(workloads, "rollout-analysis.yaml"), "utf8"), new RegExp(`product@${PRODUCT_DIGEST}`));
   assert.match(clickhouseMigrate, new RegExp(`product@${PRODUCT_DIGEST}`));
   assert.match(worker, new RegExp(`product@${PRODUCT_DIGEST}`));
   const temporalWorker = await readFile(path.join(workloads, "temporal-worker.yaml"), "utf8");
@@ -134,3 +136,13 @@ test("refuses a release without every image", async () => {
     /Invalid proxy digest/,
   );
 });
+
+ test("pins the GPU controller through the same immutable release", async () => {
+   const {root} = await fixture();
+   const file = path.join(root, "infra/environments/prod/us-east-1/kubernetes/gpu-inference/controller.yaml");
+   await mkdir(path.dirname(file), {recursive: true});
+   await writeFile(file, "image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/product:gpu-controller-old\n");
+   const digest = `sha256:${"9".repeat(64)}`;
+   await updateRelease({root, sourceSha: SOURCE_SHA, digests: DIGESTS, gpuControllerDigest: digest});
+   assert.equal(await readFile(file, "utf8"), `image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/product@${digest}\n`);
+ });

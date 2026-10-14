@@ -44,10 +44,10 @@ describe("service logging", () => {
     expect(lines[0]).not.toMatch(/secret|customer@example|prompt=private/);
   });
 
-  it("keeps a Nomad allocation id and reason", () => {
+  it("keeps a Kubernetes pod id and reason", () => {
     const { log, entries } = recordingLogger();
 
-    log("warn", "nomad_allocation_unplaced", {
+    log("warn", "kubernetes_pod_unplaced", {
       allocation_id: "0f3c9a51-8d4b-4c1e-9a55-111111111111",
       model_id: "kev/kev-9b",
       reason: "node_not_registered",

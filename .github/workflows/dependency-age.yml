@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - ".github/actions/relevant/**"
       - ".github/workflows/dependency-age.yml"
       - ".cargo/config.toml"
       - "**/Cargo.lock"

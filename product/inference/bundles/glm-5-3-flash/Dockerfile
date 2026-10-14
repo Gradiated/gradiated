@@ -23,8 +23,6 @@ RUN cd /bundle/python/lib/python3.12/site-packages/nvidia/cu13 \
     && uv pip check --python /bundle/python/bin/python3
 
 FROM dependencies AS package
-COPY --from=runtime-base /opt/gradiated/bin/runtime-launch /bundle/runtime-launch
-COPY --from=runtime-base /opt/gradiated/bin/desmondd /bundle/desmondd
 COPY bundles/package.sh /package.sh
 COPY --chmod=755 bundles/glm-5-3-flash/entrypoint /bundle/entrypoint
 COPY runtimes/glm/warmup-supervisor.py /bundle/warmup-supervisor.py
@@ -33,7 +31,7 @@ COPY lora/*.py /bundle/lora/
 COPY lora/pyproject.toml lora/vllm_resolver.py /tmp/lora-plugin/
 RUN uv pip install --python /bundle/python/bin/python3 --break-system-packages \
     --no-build-isolation --no-deps /tmp/lora-plugin && rm -rf /tmp/lora-plugin
-COPY images/nomad-base/base-id /bundle/base-id
+COPY images/gpu-base/base-id /bundle/base-id
 RUN bash /package.sh
 
 FROM runtime-base AS verify

@@ -28,7 +28,7 @@ flowchart LR
   VK2[(Valkey projections)] -->|workspace, task, model,<br/>deployment status| RES
 ```
 
-The gateway reads Valkey projections and writes ClickHouse and Valkey generation stream. It never queries PostgreSQL, never calls Nomad or the autoscaler, and never waits on capture.
+The gateway reads Valkey projections and writes ClickHouse and Valkey generation stream. It never queries PostgreSQL, never calls Kubernetes, and never waits on capture.
 
 ## Decisions in this contract
 

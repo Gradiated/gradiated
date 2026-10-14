@@ -57,32 +57,11 @@ class LivenessTests(unittest.TestCase):
         self.thread = threading.Thread(target=self.server.serve_forever)
         self.thread.start()
         self.process = None
-        self.job = None
-        self.allocation = None
         self.log = (self.root / "launcher.log").open("w")
 
     def tearDown(self):
         self.release_hangs.set()
         try:
-            if self.job:
-                subprocess.run(
-                    ["nomad", "job", "stop", "-detach", self.job],
-                    capture_output=True,
-                    timeout=15,
-                    check=True,
-                )
-            if self.allocation and all(
-                (self.root / name).exists()
-                for name in ["leader", "ordinary", "detached"]
-            ):
-                self.assert_tree_gone()
-            if self.job:
-                subprocess.run(
-                    ["nomad", "job", "stop", "-purge", self.job],
-                    capture_output=True,
-                    timeout=15,
-                    check=True,
-                )
             if self.process and self.process.poll() is None:
                 self.process.kill()
                 self.process.wait(timeout=10)
@@ -182,123 +161,6 @@ class LivenessTests(unittest.TestCase):
                 self.assertIn("Invalid RUNTIME_", result.stderr)
                 self.assertFalse((self.root / "ready").exists())
 
-    @unittest.skipUnless(
-        os.environ.get("NOMAD_LIVENESS_TEST") == "1", "Needs fixture Nomad"
-    )
-    def test_nomad_update_and_restart(self):
-        self.job = "runtime-liveness"
-        job = {
-            "ID": self.job,
-            "Name": self.job,
-            "Type": "service",
-            "TaskGroups": [
-                {
-                    "Name": "runtime",
-                    "Count": 1,
-                    "RestartPolicy": {
-                        "Attempts": 2,
-                        "Interval": 3600000000000,
-                        "Delay": 1000000000,
-                        "Mode": "fail",
-                    },
-                    "Tasks": [
-                        {
-                            "Name": "runtime",
-                            "Driver": "raw_exec",
-                            "Config": {
-                                "command": str(launcher),
-                                "args": [
-                                    str(self.root),
-                                    "--",
-                                    str(self.root),
-                                    "stubborn",
-                                ],
-                            },
-                            "Env": self.environment(),
-                            "KillTimeout": 30000000000,
-                        }
-                    ],
-                }
-            ],
-        }
-
-        def api(path, body=None):
-            request = urllib.request.Request(
-                os.environ["NOMAD_ADDR"] + path,
-                data=json.dumps(body).encode() if body else None,
-                headers={"Content-Type": "application/json"},
-            )
-            with urllib.request.urlopen(request, timeout=5) as response:
-                return json.load(response)
-
-        group = job["TaskGroups"][0]
-        group["Networks"] = [
-            {
-                "Mode": "host",
-                "ReservedPorts": [
-                    {"Label": "health", "Value": self.server.server_port}
-                ],
-            }
-        ]
-        group["Tasks"][0]["Services"] = [
-            {
-                "Name": "fixture-runtime",
-                "Provider": "nomad",
-                "Address": "127.0.0.1",
-                "PortLabel": "health",
-                "Checks": [
-                    {
-                        "Name": "ready",
-                        "Type": "http",
-                        "Path": "/nomad-health",
-                        "Interval": 5000000000,
-                        "Timeout": 2000000000,
-                    }
-                ],
-            }
-        ]
-        api("/v1/jobs", {"Job": job})
-        wait_for(lambda: "ready" in self.requests)
-        allocation = api(f"/v1/job/{self.job}/allocations")[0]["ID"]
-        self.allocation = allocation
-        wait_for(
-            lambda: (
-                api(f"/v1/allocation/{allocation}")
-                .get("TaskStates", {})
-                .get("runtime", {})
-                .get("State")
-                == "running"
-            )
-        )
-        wait_for(lambda: (self.root / "ready").exists())
-        old_pids = [
-            int((self.root / name).read_text())
-            for name in ["leader", "ordinary", "detached"]
-        ]
-        group["Tasks"][0]["Services"][0]["Checks"][0]["Name"] = "promoted-ready"
-        api("/v1/jobs", {"Job": job})
-        self.mode = "fail"
-        started = time.monotonic()
-        wait_for(
-            lambda: (
-                api(f"/v1/allocation/{allocation}")
-                .get("TaskStates", {})
-                .get("runtime", {})
-                .get("Restarts", 0)
-                == 1
-            ),
-            timeout=21,
-        )
-        self.assertLess(time.monotonic() - started, 21)
-        for pid in old_pids:
-            self.assertFalse(Path(f"/proc/{pid}").exists())
-        self.mode = "ready"
-        ready_before = self.requests.count("ready")
-        wait_for(lambda: self.requests.count("ready") > ready_before)
-        self.assertEqual(api(f"/v1/job/{self.job}/allocations")[0]["ID"], allocation)
-        print(
-            "Nomad restarted an unhealthy runtime after an in-place job update without startup grace"
-        )
 
 
 if __name__ == "__main__":

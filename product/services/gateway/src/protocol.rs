@@ -130,6 +130,8 @@ impl Protocol {
             without_empty_text(&mut body);
         }
 
+        self.copy_usage(&mut body, response.get("usage"));
+
         Ok(body)
     }
 
@@ -138,6 +140,7 @@ impl Protocol {
             Self::OpenAiChat => StreamRenderer::Passthrough,
             Self::AnthropicMessages | Self::OpenAiResponses => StreamRenderer::Translated {
                 protocol: self,
+                usage: None,
                 state: Box::new(StreamTranslationState::new(
                     WireFormat::OpenAiChat,
                     self.wire(),
@@ -173,10 +176,58 @@ impl Protocol {
         }
     }
 
-    fn translated_frames(self, events: Result<Vec<Value>, TranslationError>) -> Vec<Frame> {
+    fn translated_frames(
+        self,
+        events: Result<Vec<Value>, TranslationError>,
+        usage: Option<&Value>,
+    ) -> Vec<Frame> {
         match events {
-            Ok(events) => events.iter().map(|event| self.named_frame(event)).collect(),
+            Ok(events) => events
+                .into_iter()
+                .map(|mut event| {
+                    match event["type"].as_str() {
+                        Some("message_delta") => self.copy_usage(&mut event, usage),
+                        Some("response.completed" | "response.incomplete") => {
+                            self.copy_usage(&mut event["response"], usage)
+                        }
+                        _ => {}
+                    }
+
+                    self.named_frame(&event)
+                })
+                .collect(),
             Err(error) => vec![self.error_frame(&self.completed_translation_failed(&error))],
+        }
+    }
+
+    fn copy_usage(self, response: &mut Value, chat_usage: Option<&Value>) {
+        copy_usage_cost(response, chat_usage.and_then(|usage| usage.get("cost")));
+        if self == Self::AnthropicMessages {
+            if let (Some(usage), Some(reasoning)) = (
+                response.get_mut("usage").and_then(Value::as_object_mut),
+                chat_usage
+                    .and_then(|usage| usage.pointer("/completion_tokens_details/reasoning_tokens"))
+                    .and_then(Value::as_u64)
+                    .filter(|tokens| *tokens > 0),
+            ) {
+                usage.insert(
+                    "output_tokens_details".to_owned(),
+                    serde_json::json!({"thinking_tokens": reasoning}),
+                );
+            }
+        }
+
+        if self != Self::OpenAiResponses {
+            return;
+        }
+
+        if let (Some(details), Some(writes)) = (
+            response
+                .pointer_mut("/usage/input_tokens_details")
+                .and_then(Value::as_object_mut),
+            chat_usage.and_then(|usage| usage.pointer("/prompt_tokens_details/cache_write_tokens")),
+        ) {
+            details.insert("cache_write_tokens".to_owned(), writes.clone());
         }
     }
 
@@ -196,6 +247,7 @@ pub enum StreamRenderer {
     Translated {
         protocol: Protocol,
         state: Box<StreamTranslationState>,
+        usage: Option<Value>,
     },
 }
 
@@ -210,20 +262,53 @@ impl StreamRenderer {
             (Self::Translated { protocol, .. }, StreamItem::Error(error)) => {
                 vec![protocol.error_frame(&error)]
             }
-            (Self::Translated { protocol, state }, StreamItem::Chunk(mut value)) => {
+            (
+                Self::Translated {
+                    protocol,
+                    state,
+                    usage,
+                },
+                StreamItem::Chunk(mut value),
+            ) => {
+                if value["usage"].is_object() {
+                    *usage = Some(value["usage"].clone());
+                }
                 without_reasoning(&mut value);
 
-                protocol.translated_frames(ENGINE.translate_event(
+                protocol.translated_frames(
+                    ENGINE.translate_event(state, WireFormat::OpenAiChat, protocol.wire(), &value),
+                    usage.as_ref(),
+                )
+            }
+            (
+                Self::Translated {
+                    protocol,
                     state,
-                    WireFormat::OpenAiChat,
-                    protocol.wire(),
-                    &value,
-                ))
-            }
-            (Self::Translated { protocol, state }, StreamItem::Done) => {
-                protocol.translated_frames(ENGINE.finish_stream(state, protocol.wire()))
-            }
+                    usage,
+                },
+                StreamItem::Done,
+            ) => protocol
+                .translated_frames(ENGINE.finish_stream(state, protocol.wire()), usage.as_ref()),
         }
+    }
+}
+
+pub(crate) fn set_usage_cost(response: &mut Value, charge_nano_usd: u64) {
+    let dollars = charge_nano_usd / 1_000_000_000;
+    let nanos = charge_nano_usd % 1_000_000_000;
+    let cost: serde_json::Number = format!("{dollars}.{nanos:09}")
+        .parse()
+        .expect("a nano-USD charge is a valid JSON number");
+
+    copy_usage_cost(response, Some(&Value::Number(cost)));
+}
+
+fn copy_usage_cost(response: &mut Value, cost: Option<&Value>) {
+    if let (Some(usage), Some(cost)) = (
+        response.get_mut("usage").and_then(Value::as_object_mut),
+        cost,
+    ) {
+        usage.insert("cost".to_owned(), cost.clone());
     }
 }
 
@@ -306,6 +391,71 @@ mod tests {
             "usage": {"prompt_tokens": 10, "completion_tokens": 2, "total_tokens": 12,
                 "prompt_tokens_details": {"cached_tokens": 0}, "completion_tokens_details": {"reasoning_tokens": 0}}
         })
+    }
+
+    #[test]
+    fn buffered_cost_survives_every_protocol_translation() {
+        for protocol in [
+            Protocol::OpenAiChat,
+            Protocol::AnthropicMessages,
+            Protocol::OpenAiResponses,
+        ] {
+            for charge in [0, 1, 1_234_567_890] {
+                let mut response = chat_completion();
+                set_usage_cost(&mut response, charge);
+                let cost = response["usage"]["cost"].clone();
+
+                let translated = protocol.translate_response(response).unwrap();
+                assert_eq!(translated["usage"]["cost"], cost, "{protocol:?}");
+                assert!(translated["usage"].is_object());
+            }
+        }
+    }
+
+    #[test]
+    fn streaming_cost_survives_every_protocol_translation_only_in_terminal_usage() {
+        for protocol in [
+            Protocol::OpenAiChat,
+            Protocol::AnthropicMessages,
+            Protocol::OpenAiResponses,
+        ] {
+            let mut renderer = protocol.stream_renderer();
+            let frames = chat_chunks()
+                .into_iter()
+                .flat_map(|mut item| {
+                    if let StreamItem::Chunk(value) = &mut item {
+                        set_usage_cost(value, 1_234_567_890);
+                    }
+
+                    renderer.render(item)
+                })
+                .collect::<Vec<_>>();
+            let values = frames
+                .iter()
+                .filter_map(|frame| serde_json::from_str::<Value>(&frame.data).ok())
+                .collect::<Vec<_>>();
+            let costs = values
+                .iter()
+                .filter_map(|value| {
+                    value
+                        .pointer("/usage/cost")
+                        .or_else(|| value.pointer("/response/usage/cost"))
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(costs, vec![&json!(1.23456789)], "{protocol:?}");
+        }
+    }
+
+    #[test]
+    fn responses_without_pricing_remain_without_cost() {
+        for protocol in [
+            Protocol::OpenAiChat,
+            Protocol::AnthropicMessages,
+            Protocol::OpenAiResponses,
+        ] {
+            let response = protocol.translate_response(chat_completion()).unwrap();
+            assert!(response["usage"].get("cost").is_none());
+        }
     }
 
     #[test]

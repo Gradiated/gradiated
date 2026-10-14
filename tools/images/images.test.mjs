@@ -7,7 +7,7 @@ import { fingerprint, matches, plan } from "./images.mjs";
 const entry = (path, meta = "100644 blob aaa") => ({ path, meta });
 
 test("every local base-image COPY source participates in its identity", () => {
-  const image = catalog["nomad-base"];
+  const image = catalog["gpu-base"];
   const dockerfile = readFileSync(image.dockerfile, "utf8");
   for (const line of dockerfile
     .split("\n")
@@ -47,13 +47,13 @@ test("changed build contents and file modes produce a new identity", () => {
     ]),
   );
 });
-test("Nomad configuration changes do not rebuild the application image", () => {
+test("Kubernetes configuration changes do not rebuild the application image", () => {
   const base = [entry("product/Dockerfile")];
   assert.equal(
     fingerprint("product", base),
     fingerprint("product", [
       ...base,
-      entry("infra/environments/prod/us-east-1/kubernetes/nomad/servers.yaml"),
+      entry("infra/environments/prod/us-east-1/kubernetes/gpu-inference/controller.yaml"),
     ]),
   );
 });
@@ -67,18 +67,14 @@ test("shared product packages invalidate the application image", () => {
     ]),
   );
 });
-test("host renewal scripts invalidate the application image", () => {
+test("GPU enrollment assets invalidate the application image", () => {
   const base = [entry("product/Dockerfile")];
-  for (const name of [
-    "renew-certificate.py",
-    "run-renewer.sh",
-    "start-client.sh",
-  ]) {
+  for (const name of ["bootstrap.py", "host-agent.py", "supervise.py"]) {
     assert.notEqual(
       fingerprint("product", base),
       fingerprint("product", [
         ...base,
-        entry(`product/inference/images/nomad-base/${name}`),
+        entry(`product/inference/gpu/${name}`),
       ]),
     );
   }
@@ -93,11 +89,17 @@ test("Cloud UI reuses the product repository with independent build inputs", () 
   const inputs = [entry("infra/images/temporal-ui/Dockerfile")];
   assert.equal(
     fingerprint("temporal-ui", inputs),
-    fingerprint("temporal-ui", [...inputs, entry("product/services/api/src/server.ts")]),
+    fingerprint("temporal-ui", [
+      ...inputs,
+      entry("product/services/api/src/server.ts"),
+    ]),
   );
   assert.notEqual(
     fingerprint("temporal-ui", inputs),
-    fingerprint("temporal-ui", [...inputs, entry("infra/images/temporal-ui/configure-cloud.cjs")]),
+    fingerprint("temporal-ui", [
+      ...inputs,
+      entry("infra/images/temporal-ui/configure-cloud.cjs"),
+    ]),
   );
 });
 
@@ -119,15 +121,21 @@ test("plans all enabled images against the actual repository tree", () => {
   );
 });
 
-test("Nomad serving bootstrap and proxy edits invalidate the base image", () => {
+test("application code changes preserve the base image identity", () => {
   for (const path of [
-    "product/inference/images/nomad-base/configure-serving.sh",
-    "product/inference/images/nomad-base/runtime-proxy.conf.template",
-    "product/inference/nomad/client.hcl",
+    "product/inference/gpu/bootstrap.py",
+    "product/inference/images/gpu-base/recovery/host-agent.py",
+    "product/inference/tailscale/install-tailscale.py",
   ]) {
-    assert.notEqual(
-      fingerprint("nomad-base", [entry(path)]),
-      fingerprint("nomad-base", [entry(path, "100644 blob bbb")]),
+    assert.equal(
+      fingerprint("gpu-base", [entry("product/inference/images/gpu-base/Dockerfile"), entry(path)]),
+      fingerprint("gpu-base", [entry("product/inference/images/gpu-base/Dockerfile"), entry(path, "100644 blob bbb")]),
     );
   }
+});
+
+test("host releases preserve the base image identity", () => {
+  const base = [entry("product/inference/images/gpu-base/Dockerfile")];
+  for (const path of ["product/inference/gpu/host-agent.py", "product/inference/gpu/host_bundle.py"])
+    assert.equal(fingerprint("gpu-base", base), fingerprint("gpu-base", [...base, entry(path)]));
 });

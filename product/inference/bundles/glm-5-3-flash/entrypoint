@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 root="${GRADIATED_RUNTIME_ROOT:?}"
-export CUDA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:?Nomad must assign GPU UUIDs}
+export CUDA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:?Host agent must assign GPU UUIDs}
 export CUDA_HOME="$root/python/lib/python3.12/site-packages/nvidia/cu13"
 export CUDA_PATH="$CUDA_HOME"
 export PATH="$root/python/bin:$CUDA_HOME/bin:$PATH"
@@ -11,7 +11,7 @@ unset PYTHONPATH VLLM_ALLOW_INSECURE_SERIALIZATION VLLM_SERVER_DEV_MODE
 wrapper=()
 lora_arguments=()
 if [[ "${LORA_ENABLED:-false}" == "true" ]]; then
-  export LORA_CACHE_DIR="${NOMAD_ALLOC_DIR:?}/lora"
+  export LORA_CACHE_DIR="${GRADIATED_RUNTIME_DIR:?}/lora"
   wrapper=("$root/python/bin/python3" "$root/lora/launch.py")
   # Only the trained attention projections; gate branches receive sliced inputs.
   lora_arguments=(--lora-target-modules in_proj_qkvbfg_a fused_qkv_a_proj q_b_proj kv_b_proj o_proj)

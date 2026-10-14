@@ -653,6 +653,11 @@ export interface components {
           cost: number;
         }[];
       }[];
+      /**
+       * @description The inference interface: chat generates text; decision scores typed questions without generating text.
+       * @enum {string}
+       */
+      type: "chat" | "decision";
     };
     ModelParameterDescriptor:
       | {
@@ -690,6 +695,149 @@ export interface components {
     };
     /** @enum {string} */
     ServiceTier: "flex" | "default" | "fast";
+    ExternalModelList: {
+      data: components["schemas"]["ExternalModel"][];
+      next_cursor: string | null;
+      service_tiers: components["schemas"]["ServiceTierPricingPolicy"][];
+      /**
+       * @description External pricing source; rates are catalog estimates, not billing charges.
+       * @enum {string}
+       */
+      pricing_source?: "openrouter";
+      /**
+       * Format: date-time
+       * @description Time this API instance fetched the external catalog.
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      pricing_updated_at?: string;
+    };
+    ExternalModel: {
+      id: string;
+      name: string;
+      /** @enum {string} */
+      status: "available" | "unavailable";
+      properties: components["schemas"]["ExternalModelProperties"];
+      /** @description Provider icon path in the console's local assets. */
+      icon?: string | null;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      created_at: string;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      updated_at: string;
+    };
+    ExternalModelProperties: {
+      /** @enum {number} */
+      schema_version: 1;
+      description: string;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      released_at: string | null;
+      hugging_face_id: string | null;
+      /** @enum {string|null} */
+      quantization:
+        | "int4"
+        | "int8"
+        | "fp4"
+        | "mxfp4"
+        | "nvfp4"
+        | "fp6"
+        | "fp8"
+        | "mxfp8"
+        | "fp16"
+        | "bf16"
+        | "fp32"
+        | null;
+      tokenizer: string | null;
+      input_modalities: {
+        /** @enum {string} */
+        type: "text";
+        supported_inputs: {
+          max_context_length: {
+            value: number;
+            /** @enum {string} */
+            unit: "token";
+          };
+          max_prompt_length: {
+            value: number;
+            /** @enum {string} */
+            unit: "token";
+          };
+        };
+        pricing: {
+          /** @enum {string} */
+          type: "prompt" | "cached_prompt" | "cache_write";
+          /** @enum {string} */
+          unit: "token";
+          cost: number;
+        }[];
+      }[];
+      output_modalities: {
+        /** @enum {string} */
+        type: "text";
+        max_length: {
+          value: number;
+          /** @enum {string} */
+          unit: "token";
+        };
+        default_length: {
+          value: number;
+          /** @enum {string} */
+          unit: "token";
+        };
+        streaming: boolean;
+        supported_parameters: {
+          [key: string]: components["schemas"]["ModelParameterDescriptor"];
+        };
+        pricing: {
+          /** @enum {string} */
+          type: "completion" | "internal_reasoning";
+          /** @enum {string} */
+          unit: "token";
+          cost: number;
+        }[];
+      }[];
+      passthrough_parameters: {
+        [key: string]: components["schemas"]["ModelParameterDescriptor"];
+      };
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      deprecation_date: string | null;
+      /** @description Published long-context price overrides; unspecified token types inherit base rates. */
+      pricing_overrides?: {
+        /** @description Minimum total input tokens for this price tier. */
+        min_prompt_tokens: number;
+        /** @description Input rates overriding the base tier, in nano-USD per token. */
+        input_pricing: {
+          /** @enum {string} */
+          type: "prompt" | "cached_prompt" | "cache_write";
+          /** @enum {string} */
+          unit: "token";
+          cost: number;
+        }[];
+        /** @description Output rates overriding the base tier, in nano-USD per token. */
+        output_pricing: {
+          /** @enum {string} */
+          type: "completion" | "internal_reasoning";
+          /** @enum {string} */
+          unit: "token";
+          cost: number;
+        }[];
+      }[];
+      /**
+       * @description The inference interface: chat generates text; decision scores typed questions without generating text.
+       * @enum {string}
+       */
+      type?: "chat" | "decision";
+    };
     Problem: {
       /**
        * Format: uri
@@ -1663,6 +1811,20 @@ export interface components {
       })[];
       /** @description Token usage in Chat Completions format; model-specific cache and reasoning details may also be present. */
       usage?: {
+        /** @description Total charge in USD, calculated from the admission-time pricing snapshot and finalized usage. Gradiated extension to the standard usage object. */
+        cost: number;
+        /** @description Breakdown of prompt tokens. */
+        prompt_tokens_details: {
+          /** @description Prompt tokens read from cache; included in prompt_tokens. */
+          cached_tokens: number;
+          /** @description Prompt tokens written to cache; omitted when zero. */
+          cache_write_tokens?: number;
+        };
+        /** @description Breakdown of completion tokens. */
+        completion_tokens_details: {
+          /** @description Reasoning tokens included in completion_tokens. */
+          reasoning_tokens: number;
+        };
         /** @description Tokens in the prompt, including any cached subset. */
         prompt_tokens: number;
         /** @description Tokens generated by the model. */
@@ -1724,8 +1886,8 @@ export interface components {
       presence_penalty?: number;
       /** @description Allow the model to request multiple tool calls in one turn, when supported. */
       parallel_tool_calls?: boolean;
-      /** @description Model-specific reasoning effort. Accepted values and effects depend on the hosted model. */
-      reasoning_effort?: string;
+      /** @description Model-specific reasoning effort. DeepSeek also accepts integer effort from 1 to 100. Accepted values and effects depend on the hosted model. */
+      reasoning_effort?: string | number;
       /** @description Model-specific chat-template options, such as reasoning configuration. Accepted keys depend on the runtime. */
       chat_template_kwargs?: {
         [key: string]: unknown;
@@ -1781,6 +1943,17 @@ export interface components {
       stop_sequence?: string | null;
       /** @description Token usage translated to Anthropic format; optional cache details depend on runtime reporting. */
       usage: {
+        /** @description Total charge in USD, calculated from the admission-time pricing snapshot and finalized usage. Gradiated extension to the standard usage object. */
+        cost: number;
+        /** @description Input tokens read from cache; excluded from input_tokens in Messages format. */
+        cache_read_input_tokens?: number;
+        /** @description Input tokens written to cache; excluded from input_tokens in Messages format. */
+        cache_creation_input_tokens?: number;
+        /** @description Breakdown of output tokens when reasoning usage is reported. */
+        output_tokens_details?: {
+          /** @description Internal reasoning tokens included in output_tokens. */
+          thinking_tokens: number;
+        };
         /** @description Input-token count reported in Anthropic format. */
         input_tokens: number;
         /** @description Output-token count reported in Anthropic format. */
@@ -1860,6 +2033,20 @@ export interface components {
       /** @description Token usage translated to Responses format; model-specific details may also be present. */
       usage?:
         | ({
+            /** @description Total charge in USD, calculated from the admission-time pricing snapshot and finalized usage. Gradiated extension to the standard usage object. */
+            cost: number;
+            /** @description Breakdown of input tokens. */
+            input_tokens_details: {
+              /** @description Input tokens read from cache; included in input_tokens. */
+              cached_tokens: number;
+              /** @description Input tokens written to cache; omitted when zero. */
+              cache_write_tokens?: number;
+            };
+            /** @description Breakdown of output tokens. */
+            output_tokens_details: {
+              /** @description Reasoning tokens included in output_tokens. */
+              reasoning_tokens: number;
+            };
             /** @description Tokens used for the response input. */
             input_tokens: number;
             /** @description Tokens generated for the response. */
@@ -2135,7 +2322,7 @@ export interface operations {
   listModels: {
     parameters: {
       query?: {
-        /** @description Return the supported external provider catalog instead of hosted models. External prices are estimates and cached in API memory for five minutes. */
+        /** @description Return the supported external pricing catalog instead of hosted models. This feed retains the legacy model-property shape without type. External prices are estimates and cached in API memory for five minutes. */
         external?: "true" | "false";
       };
       header?: never;
@@ -2152,7 +2339,9 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["ModelList"];
+          "application/json":
+            | components["schemas"]["ModelList"]
+            | components["schemas"]["ExternalModelList"];
         };
       };
       /** @description The requested model catalog is unavailable. */

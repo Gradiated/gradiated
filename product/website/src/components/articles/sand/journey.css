@@ -18,13 +18,7 @@
   margin: 0;
   background: var(--paper);
   color: var(--ink);
-  font-family:
-    ui-sans-serif,
-    -apple-system,
-    "SF Pro Text",
-    "Helvetica Neue",
-    Inter,
-    sans-serif;
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   font-size: 1.1rem;
   line-height: 1.75;
@@ -170,15 +164,7 @@
 .sand-journey #d2 text {
   fill: var(--ink);
   stroke: none;
-  /* diagram labels and captions: a face that stays crisp at small sizes inside the scaled SVG */
-  font-family:
-    "IBM Plex Sans",
-    ui-sans-serif,
-    -apple-system,
-    "SF Pro Text",
-    "Helvetica Neue",
-    Inter,
-    sans-serif;
+  font-family: var(--font-body);
   font-size: 13px;
   font-weight: 500;
 }
@@ -214,15 +200,16 @@
 }
 
 .sand-journey #d2 text.formula {
+  font-family: var(--font-code);
   font-size: 16px;
   font-weight: 400;
-  font-style: italic;
+  font-style: normal;
 }
 
 .sand-journey #d2 text.formula .propto {
   font-size: 26px;
   font-style: normal;
-  font-weight: 300;
+  font-weight: 400;
 }
 
 .sand-journey .prose {
@@ -245,6 +232,7 @@
 }
 
 .sand-journey h1 {
+  font-family: var(--font-title);
   font-size: clamp(2.4rem, 5vw, 3.6rem);
   font-weight: 500;
   letter-spacing: -0.02em;
@@ -259,9 +247,7 @@
 }
 
 .sand-journey :not(pre) > code {
-  font-family:
-    ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono",
-    monospace;
+  font-family: var(--font-code);
   font-size: 0.9em;
   line-height: 1.2;
   font-weight: 500;
@@ -290,6 +276,7 @@
 }
 
 .sand-journey .scene-text h2 {
+  font-family: var(--font-title);
   font-size: 1.7rem;
   font-weight: 500;
   letter-spacing: -0.01em;
@@ -629,4 +616,15 @@ html:has(.sand-journey) {
 }
 .sand-journey .scene-text table code {
   background: none;
+}
+
+.sand-journey #d2 text.bit,
+.sand-journey #d2 text.logic-value {
+  font-family: var(--font-code);
+  font-variant-numeric: tabular-nums slashed-zero;
+  font-variant-ligatures: none;
+}
+
+.sand-journey strong {
+  font-weight: 600;
 }

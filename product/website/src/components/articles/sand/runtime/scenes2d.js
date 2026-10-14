@@ -560,7 +560,7 @@ export const SCENES2D = (function () {
           { "data-logic-state": inputs.join(""), "data-output": output },
           parent,
         );
-        path(connection, { class: "logic-connection" }, layer);
+        if (connection) path(connection, { class: "logic-connection" }, layer);
         ports.forEach(({ x, y, anchor }, i) => {
           const value = i < inputs.length ? inputs[i] : output;
           text(
@@ -1012,6 +1012,29 @@ export const SCENES2D = (function () {
     text(98, 212, "D", { "text-anchor": "end" }, wLatch);
     text(98, 254, "WE", { "text-anchor": "end" }, wLatch);
     text(336, 219, "Q", { "text-anchor": "start" }, wLatch);
+    const latchValues = group({ "data-latch-values": "" }, gLatch);
+    logicCases(
+      "latch",
+      latchValues,
+      [
+        { inputs: [0, 1], output: 0 },
+        { inputs: [1, 1], output: 1 },
+        { inputs: [1, 0], output: 1 },
+        { inputs: [0, 0], output: 1 },
+        { inputs: [0, 1], output: 0 },
+        { inputs: [0, 0], output: 0 },
+        { inputs: [1, 0], output: 0 },
+        { inputs: [1, 1], output: 1 },
+      ],
+      [
+        { x: 98, y: 234, anchor: "end" },
+        { x: 98, y: 276, anchor: "end" },
+        { x: 336, y: 241, anchor: "start" },
+      ],
+      "heat",
+      "register",
+    );
+    show(latchValues, "latch", "register", {}, 0.35);
     const fb1 = path(
       "M306 215 L306 250 L236 250 L236 278 L246 278",
       {},

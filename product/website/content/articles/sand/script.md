@@ -32,7 +32,7 @@ We can now build our first transistor. We add a wire to each of the two islands 
 
 <!-- scene: voltages -->
 
-A voltage difference can drive electrons through a circuit. Let us hold the left wire at 0 volts and the right wire at 1 volt. Electrons would then flow from left to right if there were a conducting path between them. Imagine the electrons moving through an energy landscape, where a hill represents a barrier to their flow.
+A voltage difference can drive electrons through a circuit. Let us hold the left wire at 0 volts and the right wire at 1 volt. Picture an energy landscape with lower ground on the right and a hill between the two islands. Electrons tend to move towards the lower ground, but the hill stands in their way. By raising or lowering this hill, we can control whether or not they cross.
 
 <!-- scene: blocked -->
 

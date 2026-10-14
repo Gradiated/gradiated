@@ -1,7 +1,7 @@
-use std::{net::IpAddr, str::FromStr, sync::Arc};
+use std::{net::IpAddr, str::FromStr, sync::Arc, time::Duration};
 
 use chrono::{DateTime, TimeDelta, Utc};
-use deadpool_postgres::{Manager, ManagerConfig, Pool, RecyclingMethod};
+use deadpool_postgres::{Manager, ManagerConfig, Pool, RecyclingMethod, Runtime, Timeouts};
 use rustls::ClientConfig;
 use thiserror::Error;
 use tokio_postgres::{
@@ -78,7 +78,12 @@ pub struct BalanceSeed {
     pub replay_window_entries: Vec<Uuid>,
 }
 
-const POOL_SIZE: usize = 16;
+// Every replica holds up to this many connections, so the gateway's share of RDS
+// max_connections is POOL_SIZE times maxReplicaCount. Records are cached in Valkey,
+// so PostgreSQL sees only cache misses.
+const POOL_SIZE: usize = 6;
+// Fail a request instead of queueing it forever when the pool is exhausted.
+const POOL_TIMEOUT: Duration = Duration::from_secs(2);
 
 /// Ledger writers stamp `created_at` on their own hosts, so under clock skew, or
 /// within one millisecond where UUIDv7 ids order at random, an entry can commit
@@ -227,6 +232,12 @@ impl PostgresReader {
         Ok(Self {
             pool: Pool::builder(manager)
                 .max_size(POOL_SIZE)
+                .timeouts(Timeouts {
+                    wait: Some(POOL_TIMEOUT),
+                    create: Some(POOL_TIMEOUT),
+                    recycle: Some(POOL_TIMEOUT),
+                })
+                .runtime(Runtime::Tokio1)
                 .build()
                 .map_err(PostgresError::PoolBuild)?,
         })

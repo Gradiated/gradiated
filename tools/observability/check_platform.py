@@ -62,7 +62,8 @@ def main():
             ('incident-webhook', 'ModelUnderReplicated', 'gradiated', 'warning'),
             ('incident-webhook', 'GatewayHighErrorRate', 'gradiated', 'critical'),
             ('incident-webhook', 'ProxyHighErrorRate', 'gradiated', 'critical'),
-            ('null', 'Watchdog', 'observability', 'none'),
+            ('heartbeat', 'Watchdog', 'observability', 'none'),
+            ('null', 'InfoInhibitor', 'observability', 'none'),
         ]
         for receiver, alert, namespace, severity in cases:
             subprocess.run([

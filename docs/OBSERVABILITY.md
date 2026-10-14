@@ -97,8 +97,19 @@ Alertmanager reads the token as a Bearer credential. The URL and token must
 never enter Git.
 
 `InfoInhibitor` is disabled. It is an upstream helper for suppressing standalone
-informational alerts, not a service failure. `Watchdog`, `InfoInhibitor`, and
-`info`/`none` severity alerts go to a null receiver. Unknown severities retain
+informational alerts, not a service failure. `InfoInhibitor` and
+`info`/`none` severity alerts go to a null receiver.
+
+`Watchdog` always fires. Alertmanager re-sends it about once a minute to an
+incident.io heartbeat alert source, which raises an Urgent alert when no ping
+arrives for ten minutes. A Prometheus, Alertmanager, egress or cluster outage
+therefore pages instead of silencing every alert. The `incident-io` Terraform
+unit creates the heartbeat and writes its ping URL and token to
+`gradiated/prod/platform/alertmanager-heartbeat`; the Alertmanager
+ExternalSecret merges them into the same Secret as the incident webhook. A
+heartbeat does not monitor until its first ping, so after changing this path
+confirm in incident.io that pings arrive. To test paging, silence `Watchdog`
+in Alertmanager for 15 minutes and expect a page within about ten. Unknown severities retain
 the incident receiver so a mislabeled failure is not silently discarded.
 For warning severity in the `gradiated` namespace, `KubeHpaMaxedOut`,
 `AutoscalingLimited`, and `RequestPathAutoscalingLimited` also go to the null
@@ -196,7 +207,7 @@ absence of separate vendor-managed notifications outside the inspected systems.
 
 | Area | Existing protection | Important remaining gap and next action |
 | --- | --- | --- |
-| Monitoring and notifications — highest priority | Prometheus/Alertmanager self-monitoring and notification-failure rules | Watchdog is discarded and both servers have one replica. A cluster/monitoring outage can disable its own alarm. Configure an independently hosted heartbeat receiver and verify missing-heartbeat paging and delivery end to end; then assess HA placement. |
+| Monitoring and notifications — highest priority | Prometheus/Alertmanager self-monitoring and notification-failure rules; Watchdog heartbeat to incident.io | Both servers have one replica. The heartbeat proves Alertmanager can reach incident.io, not that the incident webhook credential works. Assess HA placement and alert on webhook delivery failures. |
 | Customer serving — highest priority | Public API/console probes; gateway request, generation and dependency metrics | Probes originate inside EKS and do not authenticate or run inference. Add an external, bounded exact-model synthetic transaction validating authentication, first token, completion, and usage. It needs an authorized test account, spend limit and external scheduler. |
 | Billing-integrity events | Immediate finalization/backpressure rules with first-event timestamp gauges; leader-aware worker progress and eligible backlog | Timestamp gauges cover first-sample events, but a process that dies before any subsequent scrape can still lose in-memory evidence. Durable billing records remain the accounting authority. |
 | PostgreSQL and Valkey | App dependency checks; primary RDS is Multi-AZ, deletion-protected, has 35-day backups and recent restorable time; cache has seven-day snapshots | No CloudWatch alarms. Add routed alarms for RDS free storage/connections/CPU credits and database availability, plus Valkey throttling, storage usage and failed requests. Cache caps are 10 GB and 5,000 ECPU/s. Dependency health alone provides no capacity lead time. |

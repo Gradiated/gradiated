@@ -63,7 +63,7 @@ After every arm:
 2. Update the causal bottleneck model and uncertainty.
 3. Measure the residual critical path; a successful optimization may move the bottleneck.
 4. Re-rank the opportunity register.
-5. Execute the highest-information admissible next arm while budget and decision remain open.
+5. Execute the highest-information admissible next arm while time and decision remain open.
 
 Do not repeatedly optimize a component after its end-to-end ceiling falls below the campaign gate.
 
@@ -79,7 +79,7 @@ Use one coordinator for mutable provider state, spend, resident sessions, and cl
 - audit artifacts, manifests, statistics, and claim scope;
 - prepare conditional preregistrations for likely outcomes.
 
-Run concurrent hardware arms only when they do not share mutable state, each has an owner/watchdog/cap, and the increased spend buys wall-clock decision value. Prefer parallel offline preparation plus sequential arms on one retained GPU when image, weights, or compilation dominate setup.
+Run concurrent hardware arms only when they do not share mutable state, each has an owner and deadline watchdog, and the increased spend buys wall-clock decision value. Prefer parallel offline preparation plus sequential arms on one retained GPU when image, weights, or compilation dominate setup.
 
 ## 6. Admit claims narrowly
 
@@ -92,8 +92,8 @@ Use these defaults when the campaign has not justified stronger task-specific va
 - Treat observer instrumentation as the candidate and the lowest-overhead observer as stock. Measure profiler-off/on perturbation; shorten or sample traces when throughput or median service time changes by more than 3%, or tail latency by more than 5%.
 - Define queue time separately from admission until first scheduling. Define prefill per request from first scheduled prefill work through its first generated token. Define steady decode only for iterations with no scheduled prefill tokens. Label mixed iterations separately. When asynchronous work crosses a boundary, attach it by dependency/request identity rather than timestamp containment alone.
 - Attribute critical-path time with the union of non-overlapping dependency intervals inside the request/iteration scope. Report summed kernel duration separately and never use it as a wall-time share.
-- For close decisions, collect at least three alternating control/candidate repetitions and retain per-request or per-launch raw samples. Default to a seeded 10,000-resample paired percentile bootstrap and report the two-sided 95% interval; bind the seed to the experiment identity. Increase repetitions when the confidence interval crosses the decision gate; stop when the preregistered precision, cap, or timeout is reached.
+- For close decisions, collect at least three alternating control/candidate repetitions and retain per-request or per-launch raw samples. Default to a seeded 10,000-resample paired percentile bootstrap and report the two-sided 95% interval; bind the seed to the experiment identity. Increase repetitions when the confidence interval crosses the decision gate; stop when the preregistered precision or timeout is reached.
 - If HBM/L2 counters are unavailable, a timing result may remain valid at its component scope, but a memory-bound diagnosis stays unproven. Use calibrated byte bounds, cache perturbations, clock sensitivity, or hardware contrasts only as discriminating follow-ups, not substitutes presented as counters.
 - Place stock observational replay before implementation work on the fidelity ladder when the current bottleneck attribution is weak.
-- Convert a session time cap into dollars before allocation using authenticated compute, disk, IP, storage, and other material rates when available. When ancillary rates are unavailable, reserve at least the greater of 10% of known exposure or $0.10 and prohibit a settled-cost claim; use a larger margin when transfer/storage volume makes that bound implausible.
+- Estimate and report exposure using authenticated compute, disk, IP, storage, and other material rates when available. Label incomplete pricing estimates clearly and distinguish estimated exposure from settled charges. Cost reporting does not introduce a financial stop condition.
 - Require request-to-phase attribution coverage of at least 95% for a phase-share claim. Otherwise label the trace incomplete and use it only to generate candidates.

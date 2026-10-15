@@ -369,7 +369,7 @@ export const COMPUTER_SCENES = (function () {
       at("program"),
     );
     const memoryTable = group({}, memory);
-    text(244, 290, "address", { class: "tiny muted" }, memoryTable);
+    text(244, 290, "ADDR", { class: "tiny muted bit" }, memoryTable);
     text(326, 290, "contents", { class: "tiny muted" }, memoryTable);
     path("M220 297 H370 M271 273 V361", { class: "muted thin" }, memoryTable);
     const rowGlows = [];
@@ -413,7 +413,7 @@ export const COMPUTER_SCENES = (function () {
     );
     caption(
       "addressed-memory",
-      "the address selects a location · its contents are data",
+      "ADDR selects a location · its contents are data",
       "program",
     );
     const memoryDemo = gsap.timeline({ paused: true });
@@ -441,14 +441,10 @@ export const COMPUTER_SCENES = (function () {
       "M220 338 H205 V291 H10 V28 H196 V55",
       command,
     );
-    text(77, 292, "address", { class: "tiny muted" }, command);
+    text(77, 292, "ADDR", { class: "tiny muted bit" }, command);
     text(286, 346, "0 · ADD R0, R1, R2", { class: "tiny" }, command);
     show(command, "program", undefined);
-    caption(
-      "program",
-      "PC holds an address · IR holds the instruction",
-      "control",
-    );
+    caption("program", "PC holds ADDR · IR holds the instruction", "control");
 
     const controller = group({ "data-part": "controller" }, machine, "296 83");
     box(controller, 228, 58, 137, 50, "");

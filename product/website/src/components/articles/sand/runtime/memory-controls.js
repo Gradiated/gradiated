@@ -61,7 +61,7 @@ export const mountMemoryControls = (stage, onChoose) => {
     stage.style.setProperty("--memory-art-shift", `${opacity * 53}px`);
     stage.style.setProperty("--memory-extra-height", `${opacity * 12}vh`);
     if (visible && !state.busy) {
-      const message = `${state.action} address ${state.address.toString(2).padStart(scene === "memory-two" ? 1 : 2, "0")}. Output ${state.output.toString(2).padStart(4, "0")}.`;
+      const message = `${state.action} ADDR ${state.address.toString(2).padStart(scene === "memory-two" ? 1 : 2, "0")}. Output ${state.output.toString(2).padStart(4, "0")}.`;
       if (status.textContent !== message) status.textContent = message;
     }
     for (const [name, panel] of panels) {

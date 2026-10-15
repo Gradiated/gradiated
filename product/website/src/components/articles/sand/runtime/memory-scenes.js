@@ -97,7 +97,9 @@ export const MEMORY_SCENES = (() => {
     key(firstAddress, "memory-array", { attr: { d: "M14 130 V345" } });
     const secondAddress = wire(decoder, "M22 130 V353");
     key(secondAddress, "memory-array", {});
-    const addressLabel = label(decoder, 14, 106, "Addr");
+    const addressLabel = label(decoder, 14, 106, "ADDR", {
+      class: "tiny bit",
+    });
     key(addressLabel, "memory-two", { attr: { x: 14 } });
     key(addressLabel, "memory-array", { attr: { x: 18 } });
     const addressValues = [14, 22].map((x) => digit(decoder, x, 125, "0"));
@@ -415,7 +417,7 @@ export const MEMORY_SCENES = (() => {
     bus("M220 129 V219", "M214 165 L226 155", 238, 164, 4);
     digit(compact, 254, 195, "1001");
     bus("M59 248 H117", "M80 254 L90 242", 86, 231, 2);
-    label(compact, 49, 230, "Addr");
+    label(compact, 49, 230, "ADDR", { class: "tiny bit" });
     const compactAddress = digit(compact, 49, 252, "00");
     wire(compact, "M59 302 H117");
     label(compact, 49, 284, "WE");
@@ -473,7 +475,7 @@ export const MEMORY_SCENES = (() => {
         root,
         220,
         scene === "stored-answer" ? 17 : 66,
-        "Read address 0",
+        "Read ADDR 0",
       );
       show(
         phase,
@@ -661,13 +663,10 @@ export const MEMORY_SCENES = (() => {
       phaseLabels.forEach((element) =>
         setText(
           element,
-          `${state.action} address ${bits(state.address, rows === 2 ? 1 : 2)}`,
+          `${state.action} ADDR ${bits(state.address, rows === 2 ? 1 : 2)}`,
         ),
       );
-      setText(
-        compactPhase,
-        `${state.action} address ${bits(state.address, 2)}`,
-      );
+      setText(compactPhase, `${state.action} ADDR ${bits(state.address, 2)}`);
       inputDigits.forEach((element, c) =>
         setText(element, bits(register ? registerState.input : state.input)[c]),
       );

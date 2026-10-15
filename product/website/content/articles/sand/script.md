@@ -136,29 +136,29 @@ Let’s zoom out again and place four latches side by side, each holding one bit
 
 <!-- scene: memory-two -->
 
-Now stack a second row underneath. We have two places to store a four-bit number, so we need a way to choose between them. An address bit selects row `0` or row `1`. An address decoder, shown in the box on the left, turns that address into one selection signal for each row. Only the chosen row’s signal is `1`. A NOT gate selects row `0` when the address is `0`, while a direct wire selects row `1` when it is `1`.
+Now stack a second row underneath. We have two places to store a four-bit number, so we need a way to choose between them. A single bit, labelled `ADDR`, selects row `0` or row `1`. A decoder, shown in the box on the left, turns `ADDR` into one selection signal for each row. Only the chosen row’s signal is `1`. A NOT gate selects row `0` when the `ADDR` is `0`, while a direct wire selects row `1` when it is `1`.
 
-Both rows receive the same four data inputs. To write a number, place its four bits on these wires, select the destination address, then set `WE` to `1`. A logic gate combines `WE` with each row’s selection signal, so only the chosen row copies the new number. Return `WE` to `0` and both rows hold their contents, even if the input changes.
+Both rows receive the same four data inputs. To write a number, place its four bits on these wires, select the destination `ADDR`, then set `WE` to `1`. A logic gate combines `WE` with each row’s selection signal, so only the chosen row copies the new number. Return `WE` to `0` and both rows hold their contents, even if the input changes.
 
-To read a number, select its address and leave `WE` at `0`. At the right of each latch, an AND gate passes its bit only when that row is selected. An OR gate at the bottom of each column combines these paths. Unselected rows contribute `0`, so each OR gate reproduces the selected bit, bringing the chosen word to the output. Reading does not change either stored number. This arrangement of gates is a multiplexer, a circuit that chooses which input reaches the output.
+To read a number, select its `ADDR` and leave `WE` at `0`. At the right of each latch, an AND gate passes its bit only when that row is selected. An OR gate at the bottom of each column combines these paths. Unselected rows contribute `0`, so each OR gate reproduces the selected bit, bringing the chosen word to the output. Reading does not change either stored number. This arrangement of gates is a multiplexer, a circuit that chooses which input reaches the output.
 
 <!-- scene: memory-array -->
 
-Zoom out once more and add two rows. We now have four locations, each holding four bits. Two address bits distinguish `00`, `01`, `10` and `11`. The same decoder now turns that two-bit address into four selection signals, with exactly one active at a time. That signal chooses the row to read and, if `WE` is `1`, the row to write.
+Zoom out once more and add two rows. We now have four locations, each holding four bits. Two `ADDR` bits distinguish `00`, `01`, `10` and `11`. The same decoder now turns that two-bit `ADDR` into four selection signals, with exactly one active at a time. That signal chooses the row to read and, if `WE` is `1`, the row to write.
 
-The address tells us where to look. The contents tell us what is stored there. Each address selects a whole four-bit word, so this memory is word-addressable. Two address bits choose among four locations, while four data bits make up the word in each location. The address width and the word width are separate choices.
+The `ADDR` tells us where to look. The contents tell us what is stored there. Each `ADDR` selects a whole four-bit word, so this memory is word-addressable. Two `ADDR` bits choose among four locations, while four data bits make up the word in each location. The `ADDR` width and the word width are separate choices.
 
 Adding rows gives us more locations, while adding columns lets each location hold a wider number. Here, sixteen latches give us a small memory array of four four-bit words.[^1]
 
 <!-- scene: stored-answer -->
 
-We can now connect our four-bit adder to the memory’s data inputs. It still calculates `0011 + 0110 = 1001`. Select address `01` and set `WE` to `1`, and the four latches in that row store the answer. Return `WE` to `0` and they hold `1001`. The other rows keep their own numbers throughout.
+We can now connect our four-bit adder to the memory’s data inputs. It still calculates `0011 + 0110 = 1001`. Select `ADDR` `01` and set `WE` to `1`, and the four latches in that row store the answer. Return `WE` to `0` and they hold `1001`. The other rows keep their own numbers throughout.
 
-Changing the address now lets us read a different stored number without erasing this answer. Yellow highlights follow the selected read path and, while writing is enabled, the path carrying the adder’s result into the chosen row. We can calculate, choose where to store the answer, and find it again.
+Changing the `ADDR` now lets us read a different stored number without erasing this answer. Yellow highlights follow the selected read path and, while writing is enabled, the path carrying the adder’s result into the chosen row. We can calculate, choose where to store the answer, and find it again.
 
 <!-- scene: memory-buses -->
 
-As these structures grow, drawing every wire becomes crowded. We can draw a bundle of wires as one thicker line, called a bus. A diagonal slash marked `4` means four separate wires, one for each bit. It is a drawing shorthand, not a break in the connection or four bits squeezed onto one wire. The address bus is marked `2`, while `WE` still needs only one wire.
+As these structures grow, drawing every wire becomes crowded. We can draw a bundle of wires as one thicker line, called a bus. A diagonal slash marked `4` means four separate wires, one for each bit. It is a drawing shorthand, not a break in the connection or four bits squeezed onto one wire. The `ADDR` bus is marked `2`, while `WE` still needs only one wire.
 
 We can also draw a box around the whole memory array. The latches, decoder and read-selection gates are still inside. With these simpler symbols, we can keep zooming out and connect familiar structures into a computer.
 
@@ -188,15 +188,15 @@ We can also group our adder with circuits that perform logical operations. Toget
 
 <!-- scene: addressed-memory -->
 
-Registers hold our immediate working values. We also need memory for a larger collection of information. Each memory location has an address that lets us select it. In LC-3, each addressed location holds sixteen bits.
+Registers hold our immediate working values. We also need memory for a larger collection of information. Each memory location has an `ADDR` that lets us select it. In LC-3, each addressed location holds sixteen bits.
 
-The address identifies the location. The bits stored there are its contents. Selection logic connects the chosen location to the wires carrying those contents.
+The `ADDR` identifies the location. The bits stored there are its contents. Selection logic connects the chosen location to the wires carrying those contents.
 
 <!-- scene: program -->
 
 The same memory can hold both data and instructions. An instruction is a bit pattern specifying an operation and the values or locations involved. Storing a sequence of instructions gives us a program.
 
-A register called the program counter, or `PC`, holds the address of the instruction to fetch next. Another register, the instruction register, or `IR`, holds the instruction we have fetched.
+A register called the program counter, or `PC`, holds the `ADDR` of the instruction to fetch next. Another register, the instruction register, or `IR`, holds the instruction we have fetched.
 
 <!-- scene: control -->
 
@@ -208,7 +208,7 @@ The controller also remembers which step it is performing. State stored in regis
 
 Let’s follow the instruction `ADD R0, R1, R2`. It tells the machine to add the contents of `R1` and `R2`, then place the answer in `R0`. We have already put `3` in `R1` and `6` in `R2`.
 
-The machine fetches the instruction into `IR` and decodes its fields. Control signals select `R1` and `R2`, direct the ALU to add, and enable `R0` to capture the result. `R0` now holds `9`. During the fetch, `PC` advances to the following instruction address, ready for the machine to continue.
+The machine fetches the instruction into `IR` and decodes its fields. Control signals select `R1` and `R2`, direct the ALU to add, and enable `R0` to capture the result. `R0` now holds `9`. During the fetch, `PC` advances to the following instruction `ADDR`, ready for the machine to continue.
 
 <!-- scene: computer -->
 

@@ -6,6 +6,6 @@ export const articles = buildArticleRegistry(
     query: "?raw",
     import: "default",
   }),
-  import.meta.env.DEV,
+  import.meta.env.DEV || import.meta.env.PREVIEW,
 );
 export type Article = (typeof articles)[number];

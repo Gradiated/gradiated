@@ -10,6 +10,8 @@ import {
   Substrate,
 } from "../components/design";
 import { storyAt } from "../library-stories";
+import { articles } from "../articles";
+import { SAND_TO_THOUGHT_URL } from "../urls";
 import "../styles/index.css";
 
 /* Three pieces from the Library, as the Library's own cards. Named by where
@@ -33,6 +35,15 @@ export const HardwarePage = (): ReactElement => (
       <Module bleed className="gr-module--fold" index={0}>
         <Fold
           action={{ href: "/careers/", label: "Build with us" }}
+          secondaryAction={
+            articles.some((article) => article.collection === "sand-to-thought")
+              ? {
+                  href: SAND_TO_THOUGHT_URL,
+                  label: "Sand to Thought",
+                  tone: "ghost",
+                }
+              : undefined
+          }
           beside
           lede={[
             "The chip design is based on your requirements. Our first chip is based on efficiency, not speed. It's designed for specific open source models, to suit ultra intense, long running cloud workloads at the lowest cost imaginable.",

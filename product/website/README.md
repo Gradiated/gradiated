@@ -124,7 +124,7 @@ files directly. `vercel.json` redirects old docs routes to their current routes.
 - `src/docs/` contains the public MDX documentation.
 - `content/articles/*.mdx` is the source of truth for articles and their metadata.
 - `src/articles.ts` discovers articles and filters drafts by build mode.
-- `src/pages/ArticlePage.tsx` renders every article with the same layout.
+- `src/pages/ReadingPages.tsx` renders articles and Methods in the shared site shell, including the guide’s journey layout.
 - `src/content.tsx` contains legacy shared content, including the Thesis body.
 - `public/` contains files served without transformation.
 - `public/.well-known/security.txt` is the RFC 9116 security contact. The build
@@ -160,7 +160,7 @@ and shared code blocks work in every article. The Thesis MDX file currently uses
 its existing React body to preserve the current copy.
 
 The registry validates required fields, calendar dates, paths, status, and
-duplicate routes. Paths use `/library/<slug>/` or `/notes/<slug>/`. An optional
+duplicate routes. Paths use `/library/<slug>/`, `/notes/<slug>/`, or `/sand-to-thought/` and its subpages. Articles default to `collection: library`; the semiconductor guide uses `collection: sand-to-thought` and is excluded from Library cards and navigation lists. An optional
 `updatedAt` date must not precede `publishedAt`. `image` is optional and defaults
 to the site mark. Use a site-relative image path. Dates use quoted `YYYY-MM-DD`.
 
@@ -268,3 +268,67 @@ tokens. Model requests link to `team@gradiated.com`.
 Console links use `CONSOLE_BASE_URL` from `src/urls.ts`. Vite development uses
 `http://localhost:3000`; production builds use `https://console.gradiated.com`.
 Set `VITE_CONSOLE_BASE_URL` at build time to override this destination.
+
+## Sand to Thought
+
+The semiconductor guide lives at `/sand-to-thought/`, with its own top navigation
+link immediately after Library. The old `/library/how-to-get-an-answer-out-of-sand/`
+address redirects to it, preserving section fragments. Library contains Notes and
+Methods. Article subjects (`category`) remain separate from their collection.
+
+The guide opens with the animated dune-to-circuit artwork and continues directly
+into the illustrated article. Its contents list is generated from the script’s
+existing headings, using the docs’ sidebar styling and mobile contents control.
+Chapter links jump within this page and the active chapter follows the reader.
+Future chapter guides and deeper articles can live under this collection without
+turning the opening journey into a catalogue.
+
+The sand article uses `layout: journey`, preserving its sticky illustrations in
+the shared website shell. Drafts are included locally and in Vercel Preview
+deployments (`VERCEL_ENV=preview`). Preview drafts are prerendered with noindex
+metadata and omitted from the sitemap. Production excludes drafts until their
+metadata is set to published. Sand to Thought is now marked published, but the PR
+remains a draft until its author explicitly approves review. Its production build
+ends after chapter 4's timing scene. `content/articles/sand/publication.json`
+records `publishedThrough: "timing"` and the public closing paragraph. Development
+and Vercel previews retain all five chapters. Moving the boundary to a later
+chapter's final scene publishes that chapter on the next production deployment.
+The boundary must fall immediately before the next chapter heading. Production
+omits later prose, contents links and diagram nodes. The complete draft is still
+validated on every build. The prose is rendered at
+build time from `content/articles/sand/script.md`, with the ordered scene manifest
+validated by the renderer. The animation geometry is scoped to its mounted page
+and cleaned up on navigation. The imported animation files are a preserved
+snapshot; later illustration edits must be coordinated with the writing preview. Its five overview chapters belong to the continuous
+journey; future chapter guides will organise separate deeper articles, with one
+primary chapter and contextual links from others. Add guide links only when the
+destination exists.
+
+The writing workspace retains its working draft. Refresh the portable website
+edition with `node scripts/sync-sand-draft.mjs --source /path/to/script.md`.
+Visual cue blocks stay in the working draft and are omitted from the portable
+website edition. Exports use the repository’s Prettier configuration so Markdown
+tables retain the formatting required by CI. Add `--watch` while editing to update
+the website preview on saves. Production
+builds use the checked-in edition and do not depend on another local folder.
+
+The memory section ends with an abstract timing grid, immediately before the
+transition into building a computer. Chapter 5 adds a looping multiplexer,
+working registers, an ALU, addressed memory, stored instructions and control,
+then traces LC-3 ADD R0, R1, R2 with 3 + 6 = 9. The trace retains the
+source registers and writes 9 to R0. Detailed timing and instruction-processing
+treatments remain future articles. The original memory sum is unchanged.
+
+`runtime/computer-scenes.js` builds the new diagrams using the existing SVG/GSAP
+helpers. `runtime/scroll-progress.js` keeps each later illustration steady while
+its text crosses the reading line, with transitions in the gaps. It preserves the
+opening artwork's centre-to-centre choreography. Check this mapping with
+`node --test scripts/sand-scroll-progress.test.mjs`. The writing preview uses the
+same geometry and mapping; coordinate animation snapshots as well as the prose
+when editing either copy.
+
+The sand card uses one set of particles for a dune, wind and a logic circuit.
+Hover and keyboard focus morph those particles; leaving restores the dune.
+Reduced motion keeps a still dune. Offscreen artwork stops its frame loop.
+
+Check the publication boundary with `node --test scripts/sand-publication.test.mjs`.

@@ -3,6 +3,7 @@ import { renderToString } from "react-dom/server";
 import { StaticRouter } from "react-router-dom";
 
 import { AppRoutes } from "./App";
+import { articles } from "./articles";
 import {
   formatPageTitle,
   getIndexablePaths,
@@ -20,7 +21,12 @@ export const renderPage = (pathname: string): string =>
   );
 
 export const getSeoPages = () =>
-  getIndexablePaths().map((path) => ({
+  [
+    ...new Set([
+      ...getIndexablePaths(),
+      ...articles.map((article) => article.path),
+    ]),
+  ].map((path) => ({
     metadata: getPageMetadata(path),
     path,
     structuredData: getStructuredData(path),

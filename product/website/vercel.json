@@ -8,6 +8,11 @@
   "trailingSlash": true,
   "redirects": [
     {
+      "source": "/library/how-to-get-an-answer-out-of-sand/",
+      "destination": "/sand-to-thought/",
+      "permanent": true
+    },
+    {
       "source": "/notes/working-with-us/",
       "destination": "/careers/",
       "permanent": true

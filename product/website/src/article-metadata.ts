@@ -15,7 +15,14 @@ const schema = z
   .object({
     title: z.string().trim().min(1),
     description: z.string().trim().min(1),
-    path: z.string().regex(/^\/(library|notes)\/[a-z0-9]+(?:-[a-z0-9]+)*\/$/),
+    path: z
+      .string()
+      .regex(
+        /^(?:\/(?:library|notes)\/[a-z0-9]+(?:-[a-z0-9]+)*\/|\/sand-to-thought(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)?\/)$/,
+      ),
+    collection: z.enum(["library", "sand-to-thought"]).default("library"),
+    category: z.enum(["notes", "hardware"]).default("notes"),
+    layout: z.enum(["reading", "journey"]).default("reading"),
     status: z.enum(["draft", "published"]),
     publishedAt: date,
     updatedAt: date.optional(),
@@ -45,7 +52,7 @@ export function parseArticleMetadata(
 }
 export function buildArticleRegistry(
   sources: Record<string, string>,
-  development: boolean,
+  includeDrafts: boolean,
 ) {
   const paths = new Set<string>();
   return Object.entries(sources)
@@ -56,7 +63,7 @@ export function buildArticleRegistry(
       paths.add(article.path);
       return article;
     })
-    .filter((article) => development || article.status === "published")
+    .filter((article) => includeDrafts || article.status === "published")
     .sort(
       (a, b) =>
         b.publishedAt.localeCompare(a.publishedAt) ||

@@ -55,6 +55,7 @@ const heroLines = (title: string | string[]) => {
  */
 export const PageHero = ({
   action,
+  secondaryAction,
   beside = false,
   eyebrow,
   lede,
@@ -73,7 +74,16 @@ export const PageHero = ({
    */
   beside?: boolean;
   /** `tone` picks the button; defaults to the primary. */
-  action?: { href: string; label: string; tone?: "main" | "secondary" };
+  action?: {
+    href: string;
+    label: string;
+    tone?: "main" | "secondary" | "ghost";
+  };
+  secondaryAction?: {
+    href: string;
+    label: string;
+    tone?: "main" | "secondary" | "ghost";
+  };
   eyebrow?: string;
   lede?: ReactNode;
   /** Sits above the eyebrow — the hardware page leads with its chip. */
@@ -117,7 +127,22 @@ export const PageHero = ({
             </p>
           ))
         : null}
-      {action ? (
+      {secondaryAction ? (
+        <div className="gr-page-hero-actions">
+          {[action, secondaryAction]
+            .filter((item) => item !== undefined)
+            .map((item) => (
+              <a
+                className={`gr-button gr-button--${item.tone ?? "main"}`}
+                href={item.href}
+                key={item.href}
+              >
+                {item.label}
+                <Arrow />
+              </a>
+            ))}
+        </div>
+      ) : action ? (
         <a
           className={`gr-button gr-button--${action.tone ?? "main"}`}
           href={action.href}
@@ -147,7 +172,16 @@ export const Fold = ({
   children,
   ...hero
 }: {
-  action?: { href: string; label: string; tone?: "main" | "secondary" };
+  action?: {
+    href: string;
+    label: string;
+    tone?: "main" | "secondary" | "ghost";
+  };
+  secondaryAction?: {
+    href: string;
+    label: string;
+    tone?: "main" | "secondary" | "ghost";
+  };
   children?: ReactNode;
   /** Passed through to PageHero. */
   beside?: boolean;

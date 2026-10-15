@@ -1259,6 +1259,22 @@
   margin-block-start: calc(1.6 * var(--u));
 }
 
+.gr-page-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(0.5 * var(--u));
+  margin-block-start: calc(2 * var(--u));
+}
+
+.gr-fold .gr-page-hero-actions {
+  margin-block-start: calc(1.6 * var(--u));
+}
+
+.gr-page-hero .gr-page-hero-actions .gr-button {
+  margin-block-start: 0;
+}
+
 /* min-height: 0 lets a grid row be SMALLER than its content, which is what
    allows the showpiece to be cropped instead of stretching the fold past a
    viewport. Without it the row floors at the content's height and the fade
@@ -2108,6 +2124,8 @@
 
 .gr-library-controls {
   display: flex;
+  flex-wrap: wrap;
+  max-width: 100%;
   align-items: center;
   gap: calc(0.5 * var(--u));
   padding-block-end: calc(0.4 * var(--u));

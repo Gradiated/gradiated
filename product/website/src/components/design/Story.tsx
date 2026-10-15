@@ -31,7 +31,7 @@ export type Story = {
   art?: StoryArt;
   /** A generated wafer artwork — the fallback while art does not exist. */
   cover?: StoryCover;
-  /** Which half of the Library this belongs to — what the filters act on. */
+  /** Which collection in the Library this belongs to — what the filters act on. */
   kind: "method" | "note";
   /** Human-readable date; `dateTime` carries the machine-readable one. */
   date: string;
@@ -90,13 +90,15 @@ export const StoryCard = ({
 
         {/* Last, and set quietest: the date is what you check after you have
             decided you are interested, not before. */}
-        <span className="gr-story-byline gr-muted">
-          {story.dateTime ? (
-            <time dateTime={story.dateTime}>{story.date}</time>
-          ) : (
-            story.date
-          )}
-        </span>
+        {story.date ? (
+          <span className="gr-story-byline gr-muted">
+            {story.dateTime ? (
+              <time dateTime={story.dateTime}>{story.date}</time>
+            ) : (
+              story.date
+            )}
+          </span>
+        ) : null}
       </span>
     </a>
   </article>

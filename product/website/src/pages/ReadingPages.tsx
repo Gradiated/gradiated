@@ -74,6 +74,18 @@ export const ArticleReadingPage = ({
   const Content = articleContent[`../${article.file}`]?.default;
   if (!Content) throw new Error(`Missing article component: ${article.file}`);
 
+  if (article.layout === "journey") {
+    return (
+      <Substrate>
+        <Nav />
+        <Content article={article} />
+        <Band>
+          <Footer index={1} />
+        </Band>
+      </Substrate>
+    );
+  }
+
   return (
     <Substrate>
       <Nav />
@@ -81,7 +93,7 @@ export const ArticleReadingPage = ({
         <Module className="gr-module--top" index={0}>
           <Reading
             byline={
-              article.status === "draft" ? "Draft" : on(article.publishedAt)
+              article.status === "draft" ? undefined : on(article.publishedAt)
             }
             bylineDateTime={
               article.status === "draft" ? undefined : article.publishedAt
@@ -89,7 +101,7 @@ export const ArticleReadingPage = ({
             art={storyAt(article.path)?.art?.tall}
             cover={storyAt(article.path)?.cover}
             lede={article.description}
-            tags={["Notes"]}
+            tags={[article.category === "hardware" ? "Hardware" : "Notes"]}
             title={article.title}
           >
             <Content

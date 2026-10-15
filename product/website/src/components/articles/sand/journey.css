@@ -1,0 +1,585 @@
+.sand-journey {
+  --paper: #f7f3ec;
+  --ink: #17161a;
+  --muted: #8d8781;
+  --shadow: #e3ddd2;
+}
+
+.sand-journey * {
+  box-sizing: border-box;
+}
+
+.sand-journey {
+  scroll-behavior: auto;
+}
+
+.sand-journey {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  font-size: 1.1rem;
+  line-height: 1.75;
+}
+
+.sand-journey .post {
+  display: grid;
+  grid-template-columns: minmax(0, 46fr) minmax(0, 54fr);
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.sand-journey .stage-col {
+  position: relative;
+}
+
+.sand-journey .stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 0 1rem;
+}
+
+.sand-journey .stage svg {
+  width: min(100%, 72vmin, 540px);
+  height: auto;
+  overflow: hidden;
+}
+
+.sand-journey #art {
+  --w: 1.8;
+}
+
+.sand-journey #shadow,
+.sand-journey .shadow {
+  fill: var(--shadow);
+}
+
+.sand-journey .part path,
+.sand-journey #mesh {
+  fill: none;
+  stroke: var(--ink);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.sand-journey .part .silhouette {
+  stroke-width: calc(var(--w) * 1px);
+}
+
+.sand-journey .part .crease {
+  stroke-width: calc(var(--w) * 0.75px);
+}
+
+.sand-journey .part .hatch {
+  stroke-width: calc(var(--w) * 0.7px);
+}
+
+.sand-journey .part .detail {
+  stroke-width: calc(var(--w) * 0.6px);
+}
+
+.sand-journey #mesh {
+  stroke: #b9b2a8;
+  stroke-width: 0.5px;
+  display: none;
+}
+/* 2D diagram layer */
+.sand-journey #d2 line,
+.sand-journey #d2 path,
+.sand-journey #d2 rect,
+.sand-journey #d2 circle,
+.sand-journey #d2 polyline {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: calc(var(--w) * 0.8px);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.sand-journey #d2 .thin,
+.sand-journey #d2 .thin * {
+  stroke-width: calc(var(--w) * 0.5px);
+}
+
+.sand-journey #d2 .muted,
+.sand-journey #d2 .muted * {
+  stroke: var(--muted);
+}
+
+.sand-journey #d2 .dashed {
+  stroke-dasharray: 3 3;
+}
+
+.sand-journey #d2 .dots circle,
+.sand-journey #d2 circle.dot {
+  fill: var(--ink);
+  stroke: none;
+}
+
+.sand-journey #d2 .flash {
+  stroke-width: calc(var(--w) * 1.7px);
+}
+
+.sand-journey #d2 .glow {
+  fill: rgba(242, 207, 91, 0.5);
+  stroke: none;
+}
+
+.sand-journey #d2 .voltage-highlight {
+  fill: rgba(84, 161, 116, 0.23);
+  stroke: none;
+}
+
+.sand-journey #d2 .ghost {
+  fill: none;
+  stroke: none;
+}
+
+.sand-journey #d2 .heat,
+.sand-journey #d2 .heat * {
+  stroke: #d9553f;
+}
+
+.sand-journey #d2 .faint-gates * {
+  stroke-width: calc(var(--w) * 0.5px);
+}
+
+.sand-journey #d2 .hero-nand * {
+  stroke-width: calc(var(--w) * var(--k, 1) * 1px);
+}
+
+.sand-journey #d2 .hollow circle {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: calc(var(--w) * 0.5px);
+}
+
+.sand-journey #d2 text {
+  fill: var(--ink);
+  stroke: none;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+}
+/* Muted diagram strokes must not outline letters and make captions look heavier. */
+.sand-journey #d2 text.muted,
+.sand-journey #d2 text.muted *,
+.sand-journey #d2 .muted text,
+.sand-journey #d2 .muted text * {
+  stroke: none;
+}
+
+.sand-journey #d2 text.muted {
+  fill: #6f6a63;
+}
+
+.sand-journey #d2 text.tiny {
+  font-size: 10px;
+}
+
+.sand-journey #d2 text.faint {
+  opacity: 0.4;
+}
+
+.sand-journey #d2 text.caption {
+  font-size: 13.5px;
+  font-weight: 500;
+  fill: #4a4540;
+  letter-spacing: 0.01em;
+}
+
+.sand-journey #d2 text.bit {
+  font-weight: 600;
+}
+
+.sand-journey #d2 text.formula {
+  font-family: var(--font-code);
+  font-size: 16px;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.sand-journey #d2 text.formula .propto {
+  font-size: 26px;
+  font-style: normal;
+  font-weight: 400;
+}
+
+.sand-journey .prose {
+  padding: 0 clamp(1.5rem, 6vw, 5rem);
+  max-width: 36rem;
+}
+
+.sand-journey .post-header {
+  min-height: 90vh;
+  display: grid;
+  align-content: center;
+}
+
+.sand-journey .eyebrow {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.sand-journey h1 {
+  font-family: var(--font-title);
+  font-size: clamp(2.4rem, 5vw, 3.6rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin: 0 0 1.25rem;
+}
+
+.sand-journey .lede {
+  color: var(--ink);
+  margin: 0;
+  font-size: 1rem;
+}
+
+.sand-journey :not(pre) > code {
+  font-family: var(--font-code);
+  font-size: 0.9em;
+  line-height: 1.2;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums slashed-zero;
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: baseline;
+  color: inherit;
+  background: rgba(23, 22, 26, 0.06);
+  padding: 0.08em 0.25em;
+  border-radius: 0.2em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.sand-journey .scene-text {
+  min-height: 78vh;
+  display: grid;
+  align-content: center;
+  opacity: 0.28;
+  transition: opacity 0.5s ease;
+}
+
+.sand-journey .scene-text.is-active {
+  opacity: 1;
+}
+
+.sand-journey .scene-text h2 {
+  font-family: var(--font-title);
+  font-size: 1.7rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  margin: 0 0 1rem;
+}
+
+.sand-journey .scene-text p {
+  margin: 0;
+}
+
+.sand-journey .post-footer {
+  min-height: 60vh;
+  display: grid;
+  align-content: center;
+  color: var(--muted);
+}
+
+.sand-journey sup.fn {
+  font-size: 0.6em;
+  line-height: 0;
+  vertical-align: super;
+  margin-left: 0.05em;
+}
+
+.sand-journey sup.fn a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.sand-journey sup.fn a:hover {
+  color: var(--ink);
+}
+
+.sand-journey .footnote {
+  margin-top: 3rem;
+  max-width: 34rem;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.sand-journey .footnote sup {
+  font-size: 0.75em;
+  line-height: 0;
+  margin-right: 0.15em;
+}
+
+.sand-journey .footnote .fn-back {
+  color: inherit;
+  text-decoration: none;
+}
+
+.sand-journey .footnote .fn-back:hover {
+  color: var(--ink);
+}
+
+@media (max-width: 640px) {
+  .sand-journey .post {
+    display: block;
+  }
+
+  .sand-journey .stage-col {
+    display: contents;
+  }
+
+  .sand-journey .stage {
+    height: 44vh;
+    z-index: 1;
+    background: var(--paper);
+  }
+
+  .sand-journey .stage svg {
+    width: min(52vh, 80vw);
+  }
+
+  .sand-journey .prose {
+    max-width: none;
+  }
+
+  .sand-journey .post-header {
+    min-height: 46vh;
+  }
+
+  .sand-journey .scene-text {
+    min-height: 56vh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sand-journey .scene-text {
+    transition: none;
+  }
+}
+
+.sand-journey {
+  position: relative;
+}
+.sand-journey .prose p {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.sand-journey:not([data-animation-ready="true"]) .scene-text {
+  opacity: 1;
+}
+
+.sand-journey {
+  padding: calc(var(--nav-h) + 3 * var(--u)) var(--u) 0;
+}
+
+.sand-journey .sand-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 9rem) minmax(0, 1fr);
+  gap: calc(1.5 * var(--u));
+  align-items: start;
+  max-width: 1440px;
+  margin-inline: auto;
+}
+
+.sand-journey .sand-side .gr-doc-nav {
+  display: grid;
+}
+
+.sand-journey .sand-main {
+  min-width: 0;
+}
+
+.sand-journey .sand-cover {
+  margin: 0;
+  height: clamp(240px, 28vw, 340px);
+  overflow: hidden;
+  border-radius: var(--radius);
+}
+
+.sand-journey .sand-cover:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 6px;
+}
+
+.sand-journey .sand-intro {
+  max-width: 46rem;
+  margin: calc(2 * var(--u)) auto 0;
+}
+
+.sand-journey .sand-intro .post-header {
+  min-height: 0;
+  padding-block: var(--u);
+  scroll-margin-top: calc(var(--nav-h) + var(--u));
+}
+
+.sand-journey .post {
+  margin-top: var(--u);
+}
+
+.sand-journey .prose {
+  padding-inline: clamp(1.25rem, 3vw, 2.5rem);
+  max-width: none;
+}
+
+.sand-journey .scene-text {
+  scroll-margin-top: 11vh;
+}
+
+.sand-journey .gr-doc-nav-link[aria-current] {
+  color: var(--color-text);
+}
+
+.sand-guide-link[aria-current="location"] {
+  color: var(--color-interactive);
+}
+
+@media (max-width: 899px) {
+  .sand-journey .sand-layout {
+    display: block;
+  }
+
+  .sand-journey .sand-side {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .sand-journey .sand-intro {
+    padding-inline: 0.5rem;
+  }
+
+  .sand-journey .prose {
+    padding-inline: 0.5rem;
+  }
+
+  .sand-journey .scene-text {
+    scroll-margin-top: 44vh;
+  }
+}
+
+html:has(.sand-journey) {
+  scroll-padding-top: 0;
+}
+
+.sand-journey .sand-intro h1 {
+  text-wrap: balance;
+}
+
+.sand-journey #d2 .computer-signal {
+  stroke: #c89c44;
+  stroke-width: 3px;
+  filter: drop-shadow(0 0 3px #e9c875);
+}
+.sand-journey #d2 .computer-glow {
+  fill: rgba(238, 220, 167, 0.5);
+  stroke: none;
+}
+.sand-journey
+  .scene-text:not([data-scene="quartz"]):not([data-scene="ingot"]):not(
+    [data-scene="wafer"]
+  ) {
+  padding-block: 10vh;
+}
+.sand-journey .scene-text > p + p {
+  margin-top: 1rem;
+}
+
+.sand-journey #d2 .timing-paper {
+  fill: var(--paper);
+  stroke: none;
+}
+.sand-journey #d2 .timing-highlight {
+  stroke: none;
+}
+.sand-journey #d2 .timing-one .timing-highlight {
+  fill: rgba(74, 139, 103, 0.13);
+}
+.sand-journey #d2 .timing-zero .timing-highlight {
+  fill: rgba(175, 91, 81, 0.13);
+}
+.sand-journey #d2 .timing-one text {
+  fill: #477b5d;
+}
+.sand-journey #d2 .timing-zero text {
+  fill: #a2574e;
+}
+.sand-journey #d2 .timing-pulse {
+  stroke: #e0b23d;
+  stroke-width: 3px;
+  filter: drop-shadow(0 0 3px #edcc70);
+}
+
+.sand-journey #d2 .logic-connection {
+  stroke: #c49b3c;
+  stroke-width: 2.8px;
+  filter: drop-shadow(0 0 2px rgba(233, 200, 117, 0.55));
+}
+.sand-journey #d2 text.logic-value {
+  font-size: 16px;
+  font-weight: 600;
+}
+.sand-journey .scene-text table {
+  width: 100%;
+  margin: 0.65rem 0 1.5rem;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  text-align: center;
+}
+.sand-journey .scene-text th,
+.sand-journey .scene-text td {
+  padding: 0.5rem 0.3rem;
+  border-bottom: 1px solid rgba(23, 22, 26, 0.13);
+}
+.sand-journey .scene-text th {
+  font-weight: 500;
+}
+.sand-journey .scene-text table code {
+  background: none;
+}
+
+.sand-journey #d2 text.bit,
+.sand-journey #d2 text.logic-value {
+  font-family: var(--font-code);
+  font-variant-numeric: tabular-nums slashed-zero;
+  font-variant-ligatures: none;
+}
+
+.sand-journey strong {
+  font-weight: 600;
+}
+
+[data-theme="dark"] .sand-journey {
+  --paper: var(--color-substrate);
+  --ink: var(--color-text);
+  --muted: var(--color-text-muted);
+  --shadow: var(--color-module);
+}
+
+[data-theme="dark"] .sand-journey #d2 .timing-one text {
+  fill: #8fc9a3;
+}
+
+[data-theme="dark"] .sand-journey #d2 .timing-zero text {
+  fill: #e6a39b;
+}
+
+[data-theme="dark"] .sand-journey #d2 text.muted,
+[data-theme="dark"] .sand-journey #d2 text.caption {
+  fill: var(--color-text-muted);
+}

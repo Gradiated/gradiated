@@ -19,6 +19,7 @@ test("frontmatter provides article metadata without reading its body", () => {
   const article = parseArticleMetadata(fixture(), "example.mdx");
   assert.equal(article.publishedAt, "2026-09-02");
   assert.equal(article.title, "Example");
+  assert.equal(article.collection, "library");
   assert.equal(article.image, "/brand/png/gradiated-mark-dark-1024.png");
 });
 test("draft filtering applies to every article, not a named route", () => {
@@ -69,4 +70,39 @@ test("Carat is published with the requested date; Thesis uses the same schema", 
     "thesis",
   );
   assert.equal(thesis.path, "/notes/our-thesis/");
+});
+
+test("existing articles default to the Library and hardware remains a subject", () => {
+  assert.equal(parseArticleMetadata(fixture(), "legacy").category, "notes");
+  assert.equal(parseArticleMetadata(fixture(), "legacy").layout, "reading");
+  const hardware = fixture().replace(
+    "status: published",
+    "category: hardware\nlayout: journey\nstatus: published",
+  );
+  assert.equal(parseArticleMetadata(hardware, "hardware").category, "hardware");
+  assert.equal(parseArticleMetadata(hardware, "hardware").layout, "journey");
+  assert.throws(() =>
+    parseArticleMetadata(
+      hardware.replace("category: hardware", "category: typo"),
+      "bad",
+    ),
+  );
+});
+
+test("the published sand journey has its own collection and is included in production", () => {
+  const source = readFileSync(
+    new URL(
+      "../content/articles/how-to-get-an-answer-out-of-sand.mdx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const article = parseArticleMetadata(source, "sand");
+  assert.equal(article.category, "hardware");
+  assert.equal(article.collection, "sand-to-thought");
+  assert.equal(article.path, "/sand-to-thought/");
+  assert.equal(article.layout, "journey");
+  assert.equal(buildArticleRegistry({ sand: source }, true).length, 1);
+  assert.equal(article.status, "published");
+  assert.equal(buildArticleRegistry({ sand: source }, false).length, 1);
 });

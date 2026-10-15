@@ -14,14 +14,16 @@
     "preview": "mise exec -- vite preview",
     "sync:ashby-jobs": "node scripts/sync-ashby-jobs.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --config tests/vitest.config.ts"
+    "test": "vitest run --config tests/vitest.config.ts && tsx --test scripts/article-metadata.test.ts && node --test scripts/sand-*.test.mjs"
   },
   "dependencies": {
     "@firecms/neat": "^1.1.0",
     "@hookform/resolvers": "5.9.1",
     "@posthog/brand": "0.12.3",
     "better-auth": "1.6.29",
+    "gsap": "3.13.0",
     "lucide-react": "1.34.0",
+    "marked": "17.0.5",
     "openapi-fetch": "0.17.0",
     "posthog-js": "1.430.2",
     "react": "19.2.8",

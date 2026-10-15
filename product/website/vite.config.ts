@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { createRequire } from "node:module";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import mdx from "@mdx-js/rollup";
@@ -9,6 +12,16 @@ import remarkGfm from "remark-gfm";
 import remarkFrontmatter from "remark-frontmatter";
 import rehypeHighlight from "rehype-highlight";
 import { all } from "lowlight";
+
+const require = createRequire(import.meta.url);
+const { renderPost } = require("./scripts/sand-renderer.cjs") as {
+  renderPost(
+    source: string,
+    template: string,
+    scenes: string[],
+    publication?: { publishedThrough: string; footer: string },
+  ): string;
+};
 
 const mdxPlugin = mdx({
   remarkPlugins: [remarkFrontmatter, remarkGfm],
@@ -41,7 +54,7 @@ const syncAshbyJobs: Plugin = {
   },
 };
 
-export default defineConfig(({ isSsrBuild, mode }) => {
+export default defineConfig(({ command, isSsrBuild, mode }) => {
   const env = loadEnv(mode, process.cwd(), "VITE_");
   if (
     process.env.VERCEL_ENV === "production" &&
@@ -53,13 +66,66 @@ export default defineConfig(({ isSsrBuild, mode }) => {
   }
 
   return {
+    define: {
+      "import.meta.env.PREVIEW": JSON.stringify(
+        process.env.VERCEL_ENV === "preview",
+      ),
+    },
     plugins: [
       syncAshbyJobs,
       {
+        name: "sand-article",
+        enforce: "pre",
+        load(id) {
+          if (!id.endsWith(".md?sand-article")) return;
+
+          const file = id.slice(0, -"?sand-article".length);
+          const manifest = join(dirname(file), "scenes.json");
+          this.addWatchFile(file);
+          this.addWatchFile(manifest);
+          const publicationFile = join(dirname(file), "publication.json");
+          this.addWatchFile(publicationFile);
+          const source = readFileSync(file, "utf8");
+          const scenes = JSON.parse(readFileSync(manifest, "utf8"));
+          const template = "<!--{{TITLE}}-->{{ARTICLE}}";
+          const complete = renderPost(source, template, scenes);
+          const html =
+            command === "serve" || process.env.VERCEL_ENV === "preview"
+              ? complete
+              : renderPost(
+                  source,
+                  template,
+                  scenes,
+                  JSON.parse(readFileSync(publicationFile, "utf8")),
+                );
+          const contents = Array.from(
+            html.matchAll(
+              /<section[^>]* id="([^"]+)">\s*<h2>([\s\S]*?)<\/h2>/g,
+            ),
+            ([, id, heading]) => ({
+              id,
+              label: heading.replace(/<[^>]*>/g, "").replace(
+                /&(amp|lt|gt|quot|#39);/g,
+                (entity) =>
+                  ({
+                    "&amp;": "&",
+                    "&lt;": "<",
+                    "&gt;": ">",
+                    "&quot;": '"',
+                    "&#39;": "'",
+                  })[entity]!,
+              ),
+            }),
+          );
+
+          return `export const contents = ${JSON.stringify(contents)}; export default ${JSON.stringify(html)};`;
+        },
+      },
+      {
         ...mdxPlugin,
         transform(code, id) {
-          // MDX strips query strings before filtering. Leave raw source imports to Vite.
-          if (id.includes("?raw")) return;
+          // MDX strips query strings before filtering, so bypass custom source loaders.
+          if (id.includes("?raw") || id.includes("?sand-article")) return;
           if (typeof mdxPlugin.transform === "function") {
             return mdxPlugin.transform.call(this, code, id);
           }

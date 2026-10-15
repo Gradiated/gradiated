@@ -1,5 +1,11 @@
 import type { ReactElement } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
 import { articles } from "./articles";
 import { jobs } from "./careers";
 import { methodPages } from "./method";
@@ -25,6 +31,12 @@ import { AboutPage } from "./pages/AboutPage";
    Footer, so there is nowhere left for the legacy SiteLayout to be reached
    from — the 404 was the last one. */
 
+const SandJourneyRedirect = (): ReactElement => {
+  const { hash } = useLocation();
+
+  return <Navigate replace to={`/sand-to-thought/${hash}`} />;
+};
+
 export const AppRoutes = (): ReactElement => (
   <Routes>
     {articles.map((article) => (
@@ -40,6 +52,10 @@ export const AppRoutes = (): ReactElement => (
     <Route element={<HomePage />} path="/" />
     <Route element={<AboutPage />} path="/about/" />
     <Route element={<LibraryIndexPage />} path="/library/" />
+    <Route
+      element={<SandJourneyRedirect />}
+      path="/library/how-to-get-an-answer-out-of-sand/"
+    />
     <Route
       element={<LibraryIndexPage initialFilter="notes" />}
       path="/notes/"

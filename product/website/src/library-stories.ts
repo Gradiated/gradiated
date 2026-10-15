@@ -111,17 +111,19 @@ const METHOD_COVERS: Record<MethodSlug, StoryCover> = {
   brand: artworkPresets.brand,
 };
 
-/** Newest first. Every MDX article is a Note, whatever its canonical path. */
-const writing: Story[] = articles.map((article) => ({
-  art: NOTE_ART[article.path],
-  cover: NOTE_COVERS[article.path],
-  date: article.status === "draft" ? "Draft" : displayDate(article.publishedAt),
-  dateTime: article.status === "draft" ? undefined : article.publishedAt,
-  href: article.path,
-  kind: "note" as const,
-  lede: article.description,
-  title: article.title,
-}));
+/** Newest first, with the collection supplied by article metadata. */
+const writing: Story[] = articles
+  .filter((article) => article.collection === "library")
+  .map((article) => ({
+    art: NOTE_ART[article.path],
+    cover: NOTE_COVERS[article.path],
+    date: article.status === "draft" ? "" : displayDate(article.publishedAt),
+    dateTime: article.status === "draft" ? undefined : article.publishedAt,
+    href: article.path,
+    kind: "note",
+    lede: article.description,
+    title: article.title,
+  }));
 
 /* Method keeps its authored order rather than being sorted: it is a handbook,
    and its sequence is an argument — mission, then product, then people. */

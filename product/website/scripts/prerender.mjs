@@ -159,9 +159,12 @@ for (const page of markdownPages) {
 const sitemap = [
   '<?xml version="1.0" encoding="UTF-8"?>',
   '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-  ...pages.map(
-    ({ path }) => `  <url><loc>${absoluteUrl(canonicalPath(path))}</loc></url>`,
-  ),
+  ...pages
+    .filter(({ metadata }) => metadata.index)
+    .map(
+      ({ path }) =>
+        `  <url><loc>${absoluteUrl(canonicalPath(path))}</loc></url>`,
+    ),
   "</urlset>",
   "",
 ].join("\n");

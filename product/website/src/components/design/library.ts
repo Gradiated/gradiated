@@ -33,7 +33,7 @@ export type LibraryEntry = {
   /** A --gradient-* token, standing in until each piece has a real cover. */
   gradient: string;
   href: string;
-  /** Which half of the Library it belongs to. */
+  /** Which collection in the Library it belongs to. */
   kind: "method" | "note";
   title: string;
 };

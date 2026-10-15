@@ -1,6 +1,7 @@
-import { CONSOLE_BASE_URL } from "../../urls";
+import { CONSOLE_BASE_URL, SAND_TO_THOUGHT_URL } from "../../urls";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactElement } from "react";
+import { articles } from "../../articles";
 import { library } from "./library";
 import { models } from "../../models";
 import { ModelArt } from "./ModelArt";
@@ -95,6 +96,10 @@ type NavItem = {
  *  `library` is already newest-first. */
 const LATEST = library.slice(0, 3);
 
+const hasGuide = articles.some(
+  (article) => article.collection === "sand-to-thought",
+);
+
 const NAV_ITEMS: NavItem[] = [
   {
     href: "/inference/",
@@ -149,6 +154,9 @@ const NAV_ITEMS: NavItem[] = [
       ],
     },
   },
+  ...(hasGuide
+    ? [{ href: SAND_TO_THOUGHT_URL, label: "Sand to Thought" }]
+    : []),
   { href: "/careers/", label: "Careers" },
   { href: "/docs/", label: "Docs" },
 ];
@@ -249,9 +257,11 @@ const WritingList = ({
                 <span className="gr-nav-note-name-text">{note.title}</span>
                 <Arrow />
               </span>
-              <time className="gr-nav-note-date" dateTime={note.dateTime}>
-                {note.date}
-              </time>
+              {note.date ? (
+                <time className="gr-nav-note-date" dateTime={note.dateTime}>
+                  {note.date}
+                </time>
+              ) : null}
             </span>
           </a>
         </li>
@@ -473,7 +483,7 @@ export const Nav = (): ReactElement => {
     <>
       <nav
         aria-label="Site"
-        className="gr-nav"
+        className={`gr-nav${hasGuide ? " gr-nav--with-guide" : ""}`}
         onKeyDown={onKeyDown}
         onPointerEnter={cancelClose}
         onPointerLeave={scheduleClose}

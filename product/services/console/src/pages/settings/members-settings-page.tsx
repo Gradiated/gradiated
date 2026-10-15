@@ -110,11 +110,7 @@ export const MembersSettingsPage = () => {
     <>
       <SettingsHeader
         title="Members"
-        description={
-          canManage
-            ? `People in ${organizationName}. Admins can invite people, manage members and billing.`
-            : `People in ${organizationName}. Ask an admin to invite someone.`
-        }
+        description="Admins can invite people, manage members and billing."
         actions={
           canManage ? (
             <Button onClick={invite}>

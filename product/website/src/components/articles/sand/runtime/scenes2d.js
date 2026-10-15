@@ -1053,12 +1053,12 @@ export const SCENES2D = (function () {
     dot(200, 215, 1.8, wLatch);
     dot(306, 215, 1.8, wLatch);
     text(98, 212, "D", { "text-anchor": "end" }, wLatch);
-    text(98, 254, "WE", { "text-anchor": "end" }, wLatch);
+    text(88, 254, "WE", {}, wLatch);
     text(336, 219, "Q", { "text-anchor": "start" }, wLatch);
     const latchValues = group({ "data-latch-values": "" }, gLatch);
     const latchPorts = [
       { name: "d", x: 98, y: 234, anchor: "end", value: 0 },
-      { name: "we", x: 98, y: 276, anchor: "end", value: 1 },
+      { name: "we", x: 88, y: 276, anchor: "middle", value: 1 },
       { name: "q", x: 336, y: 241, anchor: "start", value: 0 },
     ].map(({ name, x, y, anchor, value }) => {
       const port = group(
@@ -1071,7 +1071,7 @@ export const SCENES2D = (function () {
           : mk(
               "rect",
               {
-                x: x - (anchor === "end" ? 14 : 4),
+                x: x - (anchor === "end" ? 14 : anchor === "middle" ? 9 : 4),
                 y: y - 16,
                 width: 18,
                 height: 21,

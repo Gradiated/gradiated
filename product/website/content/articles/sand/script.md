@@ -136,13 +136,15 @@ Let’s zoom out again and place four latches side by side, each holding one bit
 
 <!-- scene: memory-two -->
 
-Now stack a second row underneath. We have two places to store a four-bit number, so we need a way to choose between them. An address bit selects row `0` or row `1`. Both rows receive the same four data inputs. To write a number, place its four bits on these wires, select the destination address, then set `WE` to `1`. A logic gate combines `WE` with each row’s selection signal, so only the chosen row copies the new number. Return `WE` to `0` and both rows hold their contents, even if the input changes.
+Now stack a second row underneath. We have two places to store a four-bit number, so we need a way to choose between them. An address bit selects row `0` or row `1`. An address decoder, shown in the box on the left, turns that address into one selection signal for each row. Only the chosen row’s signal is `1`. A NOT gate selects row `0` when the address is `0`, while a direct wire selects row `1` when it is `1`.
+
+Both rows receive the same four data inputs. To write a number, place its four bits on these wires, select the destination address, then set `WE` to `1`. A logic gate combines `WE` with each row’s selection signal, so only the chosen row copies the new number. Return `WE` to `0` and both rows hold their contents, even if the input changes.
 
 To read a number, select its address and leave `WE` at `0`. At the right of each latch, an AND gate passes its bit only when that row is selected. An OR gate at the bottom of each column combines these paths. Unselected rows contribute `0`, so each OR gate reproduces the selected bit, bringing the chosen word to the output. Reading does not change either stored number. This arrangement of gates is a multiplexer, a circuit that chooses which input reaches the output.
 
 <!-- scene: memory-array -->
 
-Zoom out once more and add two rows. We now have four locations, each holding four bits. Two address bits distinguish `00`, `01`, `10` and `11`. The address decoder turns that two-bit address into four selection signals, with exactly one active at a time. That signal chooses the row to read and, if `WE` is `1`, the row to write.
+Zoom out once more and add two rows. We now have four locations, each holding four bits. Two address bits distinguish `00`, `01`, `10` and `11`. The same decoder now turns that two-bit address into four selection signals, with exactly one active at a time. That signal chooses the row to read and, if `WE` is `1`, the row to write.
 
 The address tells us where to look. The contents tell us what is stored there. Each address selects a whole four-bit word, so this memory is word-addressable. Two address bits choose among four locations, while four data bits make up the word in each location. The address width and the word width are separate choices.
 

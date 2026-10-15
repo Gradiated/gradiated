@@ -77,23 +77,26 @@ export const MEMORY_SCENES = (() => {
     key(writeFeed, "memory-two", { attr: { d: "M78 132 V268" } });
     key(writeFeed, "memory-array", { attr: { d: "M78 132 V364" } });
     const writeFeedLight = signal(writeSignals, writeFeed.getAttribute("d"));
-    label(writeGates, 77, 106, "WE");
-    const weValue = digit(writeGates, 77, 125, "0");
+    label(writeGates, 78, 106, "WE");
+    const weValue = digit(writeGates, 78, 125, "0");
     const decoder = group({}, array);
     show(decoder, "memory-two", "memory-buses");
-    const decoderOutline = box(decoder, 34, 166, 30, 98);
+    const decoderOutline = box(decoder, 30, 180, 34, 98);
     key(decoderOutline, "memory-two", { attr: { height: 98 } });
     key(decoderOutline, "memory-array", { attr: { height: 194 } });
-    const decoderLabel = label(decoder, 49, 290, "Decoder");
-    key(decoderLabel, "memory-two", { attr: { y: 290 } });
-    key(decoderLabel, "memory-array", { attr: { y: 386 } });
+    const decoderLabel = label(decoder, 47, 304, "Decoder");
+    key(decoderLabel, "memory-two", { attr: { y: 304 } });
+    key(decoderLabel, "memory-array", { attr: { y: 400 } });
     const firstAddress = wire(decoder, "M14 130 V253");
     key(firstAddress, "memory-two", { attr: { d: "M14 130 V253" } });
     key(firstAddress, "memory-array", { attr: { d: "M14 130 V345" } });
     const secondAddress = wire(decoder, "M22 130 V353");
     key(secondAddress, "memory-array", {});
-    label(decoder, 19, 106, "Addr");
-    const addressValue = digit(decoder, 19, 125, "0");
+    const addressLabel = label(decoder, 14, 106, "Addr");
+    key(addressLabel, "memory-two", { attr: { x: 14 } });
+    key(addressLabel, "memory-array", { attr: { x: 18 } });
+    const addressValues = [14, 22].map((x) => digit(decoder, x, 125, "0"));
+    key(addressValues[1], "memory-array", {});
     const inputDeck = group({}, array);
     show(inputDeck, "register", "memory-buses");
     const inputFlashes = [];
@@ -305,10 +308,8 @@ export const MEMORY_SCENES = (() => {
     wire(registerOnly, enablePath);
     const registerEnableLight = signal(registerOnly, enablePath);
     registerEnableLight.classList.add("register-enable");
-    label(registerOnly, 68, 269, "WE", { "text-anchor": "end" });
-    const registerWE = digit(registerOnly, 68, 287, "0", {
-      "text-anchor": "end",
-    });
+    label(registerOnly, 62, 269, "WE");
+    const registerWE = digit(registerOnly, 62, 287, "0");
     const registerOutputs = xs.map((x, c) => {
       wire(registerOnly, `M${x + 16} 184 H${x + 32} V228`);
       return digit(registerOnly, x + 32, 247, "0011"[c], {
@@ -520,7 +521,10 @@ export const MEMORY_SCENES = (() => {
       array.setAttribute("data-address", String(state.address));
       array.setAttribute("data-we", String(state.we));
       array.setAttribute("data-output", bits(state.output));
-      setText(addressValue, bits(state.address, rows === 2 ? 1 : 2));
+      const addressBits = bits(state.address, rows === 2 ? 1 : 2);
+      addressValues.forEach((element, bit) =>
+        setText(element, addressBits[bit] ?? "0"),
+      );
       setText(weValue, state.we);
       rowAddresses.forEach((element, r) =>
         setText(element, bits(r, rows === 2 ? 1 : 2)),

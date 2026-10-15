@@ -1,9 +1,11 @@
 import { gsap } from "gsap";
 import {
-  MEMORY_MODEL,
+  createMemoryDemo,
+  MEMORY_TRANSFER_DURATION,
   REGISTER_MODEL,
   dataChangePulse,
 } from "./memory-model.js";
+import { mountMemoryControls } from "./memory-controls.js";
 export const MEMORY_SCENES = (() => {
   const build = ({
     root,
@@ -420,9 +422,46 @@ export const MEMORY_SCENES = (() => {
     const compactSelectLight = signal(compact, "M59 248 H117");
     const compactEnableLight = signal(compact, "M59 302 H117");
     const dynamic = { selected: [0, 0, 0, 0], writing: [0, 0, 0, 0] };
-    const clock = gsap.timeline({ paused: true, repeat: -1 });
-    clock.to({}, { duration: MEMORY_MODEL.PERIOD });
-    demos.push(clock);
+    const contexts = new Map();
+    const contextFor = (scene, words) => {
+      if (!contexts.has(scene)) {
+        const adder = scene === "stored-answer";
+        const model = createMemoryDemo(words, {
+          holdAfterWrite: adder,
+          delay: adder ? 0.8 : 0,
+        });
+        const clock = gsap.timeline({ paused: true });
+        clock.to(
+          {},
+          { duration: MEMORY_TRANSFER_DURATION + (adder ? 1.4 : 0) },
+        );
+        demos.push(clock);
+        if (adder) model.choose("Write", 1);
+        contexts.set(scene, { model, clock, visited: false });
+      }
+      return contexts.get(scene);
+    };
+    contextFor("memory-two", [3, 6]);
+    contextFor("memory-array", [3, 6, 0, 0]);
+    contextFor("stored-answer", [3, 6, 0, 0]);
+    const controls = mountMemoryControls(
+      root.closest(".stage"),
+      (scene, action, address) => {
+        const context = contexts.get(scene);
+        if (!context || context.model.frame(context.clock.time()).busy) return;
+
+        context.model.choose(action, address);
+        context.clock.restart();
+      },
+    );
+    const transfers = group({ "data-memory-transfers": "" }, array);
+    const transferDigits = xs.map((x, c) =>
+      digit(transfers, x - 23, 125, "0", {
+        class: "bit register-copy",
+        opacity: 0,
+        "data-memory-copy": c,
+      }),
+    );
     const phaseLabels = [];
     for (const scene of ["memory-two", "memory-array", "stored-answer"]) {
       const phase = label(
@@ -444,11 +483,8 @@ export const MEMORY_SCENES = (() => {
     }
     const compactPhase = label(compact, 244, 313, "Read");
     let lastTime = 0;
-    let previousRows = 2;
-    let initialWords = [3, 6, 0, 0];
-    let wasRegister = true;
     let registerWord = 3;
-    let lastState = MEMORY_MODEL.frame(0, previousRows, initialWords);
+    let previousContext = null;
     afterRender.push(() => {
       const progress = tl.time();
       const active = [
@@ -502,37 +538,106 @@ export const MEMORY_SCENES = (() => {
           element.setAttribute("y", y);
         }
       });
-      if (active && !reduced) clock.play();
-      else clock.pause();
-      if (
-        progress < index("register") - hold ||
-        progress > index("timing") - hold
-      )
-        clock.pause(0);
       const rows = progress < index("memory-array") - hold ? 2 : 4;
-      if (rows !== previousRows) {
-        initialWords = [...lastState.words];
-        clock.pause(0);
-        lastTime = 0;
-        previousRows = rows;
-      }
       const register = progress < index("memory-two") - hold;
       if (register) registerWord = registerState.output;
-      else if (wasRegister) {
-        initialWords = [...lastState.words];
-        initialWords[0] = registerWord;
-        clock.pause(0);
-        lastTime = 0;
+      const scene =
+        progress < index("memory-array") - hold
+          ? "memory-two"
+          : progress < index("stored-answer") - hold
+            ? "memory-array"
+            : "stored-answer";
+      const seed = [registerWord, 6, 0, 0];
+      const earlier =
+        scene === "memory-array"
+          ? contexts.get("memory-two")
+          : scene === "stored-answer"
+            ? contexts.get("memory-array")
+            : null;
+      const context = contexts.get(scene);
+      if (previousContext && previousContext !== context)
+        previousContext.model.frame(Infinity);
+      const previousWords = earlier?.model.frame(earlier.clock.time()).words;
+      if (active && !context.visited) {
+        const adder = scene === "stored-answer";
+        const words = (previousWords ?? seed).slice(
+          0,
+          scene === "memory-two" ? 2 : 4,
+        );
+        while (words.length < (scene === "memory-two" ? 2 : 4)) words.push(0);
+        context.model = createMemoryDemo(words, {
+          holdAfterWrite: adder,
+          delay: adder ? 0.8 : 0,
+        });
+        if (adder) context.model.choose("Write", 1);
+        context.clock.pause(0);
+        context.visited = true;
       }
-      wasRegister = register;
-      const elapsed = reduced ? 8 : clock.totalTime();
-      const state = MEMORY_MODEL.frame(elapsed, rows, initialWords);
-      lastState = state;
+      for (const other of contexts.values())
+        if (other !== context) other.clock.pause();
+      if (active && !reduced) context.clock.play();
+      else context.clock.pause();
+      const elapsed = reduced
+        ? MEMORY_TRANSFER_DURATION + 1.4
+        : context.clock.time();
+      const state = context.model.frame(elapsed);
       const delta = Math.min(0.05, Math.max(0, elapsed - lastTime));
-      const blend = reduced ? 1 : Math.min(1, delta * 9);
+      const blend =
+        reduced || previousContext !== context
+          ? 1
+          : Math.min(1, Math.max(delta, 1 / 60) * 9);
       lastTime = elapsed;
+      previousContext = context;
+      const controlScene =
+        Math.abs(progress - index("memory-two")) < 0.5
+          ? "memory-two"
+          : Math.abs(progress - index("memory-array")) < 0.5
+            ? "memory-array"
+            : null;
+      const controlOpacity = controlScene
+        ? Math.max(
+            0,
+            Math.min(
+              1,
+              (0.5 - Math.abs(progress - index(controlScene))) / (0.5 - hold),
+            ),
+          )
+        : 0;
+      controls.update(controlScene, state, controlOpacity);
+      transfers.style.opacity =
+        active === "memory-two" ||
+        active === "memory-array" ||
+        active === "stored-answer"
+          ? 1
+          : 0;
+      transferDigits.forEach((element, c) => {
+        const transfer = state.transfer;
+        const p = transfer?.progress ?? 0;
+        element.style.opacity = transfer
+          ? Math.min(1, p / 0.12, (1 - p) / 0.12)
+          : 0;
+        if (!transfer) return;
+
+        setText(element, bits(transfer.value)[c]);
+        const x = xs[c];
+        const y = ys[state.address];
+        if (transfer.kind === "Write") {
+          const travel = 1 - (1 - p) ** 2;
+          element.setAttribute("x", x - 23 + 25 * travel);
+          element.setAttribute("y", 125 + (y + 17 - 125) * p);
+        } else {
+          const travel = p * p * (3 - 2 * p);
+          element.setAttribute("x", x + 2 + 45 * travel);
+          element.setAttribute(
+            "y",
+            y + 17 + ((rows === 2 ? 345 : 435) - y - 17) * p,
+          );
+        }
+      });
       array.setAttribute("data-address", String(state.address));
       array.setAttribute("data-we", String(state.we));
+      array.setAttribute("data-action", state.action);
+      array.setAttribute("data-busy", String(state.busy));
       array.setAttribute("data-output", bits(state.output));
       const addressBits = bits(state.address, rows === 2 ? 1 : 2);
       addressValues.forEach((element, bit) =>
@@ -587,14 +692,14 @@ export const MEMORY_SCENES = (() => {
       writeFeedLight.setAttribute("d", writeFeed.getAttribute("d"));
       writeFeedLight.style.opacity = state.we;
       adderLights.forEach(
-        (element) => (element.style.opacity = dynamic.writing[2]),
+        (element) => (element.style.opacity = dynamic.writing[1]),
       );
       compactReadLight.style.opacity = 0.9;
       compactSelectLight.style.opacity = 0.9;
-      compactWriteLight.style.opacity = dynamic.writing[2];
-      compactEnableLight.style.opacity = dynamic.writing[2];
+      compactWriteLight.style.opacity = dynamic.writing[1];
+      compactEnableLight.style.opacity = dynamic.writing[1];
     });
-    return { demos };
+    return { demos, dispose: controls.dispose };
   };
   return { build };
 })();

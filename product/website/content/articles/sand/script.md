@@ -152,7 +152,7 @@ Adding rows gives us more locations, while adding columns lets each location hol
 
 <!-- scene: stored-answer -->
 
-We can now connect our four-bit adder to the memory’s data inputs. It still calculates `0011 + 0110 = 1001`. Select address `10` and set `WE` to `1`, and the four latches in that row store the answer. Return `WE` to `0` and they hold `1001`. The other rows keep their own numbers throughout.
+We can now connect our four-bit adder to the memory’s data inputs. It still calculates `0011 + 0110 = 1001`. Select address `01` and set `WE` to `1`, and the four latches in that row store the answer. Return `WE` to `0` and they hold `1001`. The other rows keep their own numbers throughout.
 
 Changing the address now lets us read a different stored number without erasing this answer. Yellow highlights follow the selected read path and, while writing is enabled, the path carrying the adder’s result into the chosen row. We can calculate, choose where to store the answer, and find it again.
 

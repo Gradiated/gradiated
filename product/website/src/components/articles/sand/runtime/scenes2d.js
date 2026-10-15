@@ -1263,6 +1263,7 @@ export const SCENES2D = (function () {
       afterRender,
       ...computer,
       demos: [...logicDemos, ...memory.demos, ...computer.demos],
+      dispose: memory.dispose,
     };
   }
 

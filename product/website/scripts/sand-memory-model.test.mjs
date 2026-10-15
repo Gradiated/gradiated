@@ -1,54 +1,103 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  MEMORY_MODEL,
+  createMemoryDemo,
+  MEMORY_TRANSFER_DURATION,
   REGISTER_MODEL,
   createLatchModel,
   dataChangePulse,
 } from "../src/components/articles/sand/runtime/memory-model.js";
 
-test("read selection returns the addressed word without writing", () => {
-  const first = MEMORY_MODEL.frame(1);
-  const second = MEMORY_MODEL.frame(3);
-  assert.equal(first.we, 0);
-  assert.equal(first.output, 3);
-  assert.equal(second.output, 6);
-  assert.deepEqual(first.words, second.words);
+test("memory stays still until a reader chooses an action", () => {
+  const model = createMemoryDemo();
+  const initial = model.frame();
+  assert.deepEqual(model.frame(120), initial);
+  assert.equal(initial.busy, false);
+  assert.equal(initial.transfer, null);
 });
-test("a write changes only the selected four-bit word", () => {
-  for (const rows of [2, 4]) {
-    const before = MEMORY_MODEL.frame(4.5, rows);
-    const during = MEMORY_MODEL.frame(6, rows);
-    assert.equal(during.we, 1);
-    assert.equal(during.words[during.address], during.input);
-    assert.equal(during.output, 9);
-    during.words.forEach((word, address) => {
-      if (address !== during.address) assert.equal(word, before.words[address]);
-    });
+
+test("reading every address copies its word without changing memory", () => {
+  for (const words of [
+    [3, 6],
+    [3, 6, 0, 15],
+  ]) {
+    const model = createMemoryDemo(words);
+    for (let address = 0; address < words.length; address++) {
+      model.choose("Read", address);
+      const moving = model.frame(MEMORY_TRANSFER_DURATION / 2);
+      assert.equal(moving.we, 0);
+      assert.equal(moving.transfer.kind, "Read");
+      assert.equal(moving.transfer.value, words[address]);
+      assert.deepEqual(moving.words, words);
+      const settled = model.frame(MEMORY_TRANSFER_DURATION);
+      assert.equal(settled.output, words[address]);
+      assert.deepEqual(settled.words, words);
+      assert.equal(settled.busy, false);
+    }
   }
 });
-test("disabling writing and reading elsewhere retain the stored answer", () => {
-  const held = MEMORY_MODEL.frame(8);
-  const elsewhere = MEMORY_MODEL.frame(11);
+
+test("writing every address updates only that row after the digits arrive", () => {
+  for (const words of [
+    [3, 6],
+    [3, 6, 0, 15],
+  ]) {
+    for (let address = 0; address < words.length; address++) {
+      const model = createMemoryDemo(words);
+      model.choose("Write", address);
+      const moving = model.frame(MEMORY_TRANSFER_DURATION / 2);
+      assert.equal(moving.we, 1);
+      assert.equal(moving.transfer.kind, "Write");
+      assert.equal(moving.transfer.value, 9);
+      assert.deepEqual(moving.words, words);
+      const expected = words.map((word, row) => (row === address ? 9 : word));
+      const settled = model.frame(MEMORY_TRANSFER_DURATION);
+      assert.deepEqual(settled.words, expected);
+      assert.equal(settled.output, 9);
+      assert.equal(settled.we, 1);
+      assert.equal(settled.transfer, null);
+      assert.deepEqual(model.frame(120), settled);
+      assert.deepEqual(words, words.length === 2 ? [3, 6] : [3, 6, 0, 15]);
+    }
+  }
+});
+
+test("reading elsewhere and replaying actions preserve earlier writes", () => {
+  const model = createMemoryDemo();
+  model.choose("Write", 1);
+  model.frame(MEMORY_TRANSFER_DURATION);
+  model.choose("Read", 0);
+  assert.equal(model.frame(MEMORY_TRANSFER_DURATION).output, 3);
+  model.choose("Read", 1);
+  assert.equal(model.frame(MEMORY_TRANSFER_DURATION).output, 9);
+  model.choose("Write", 1);
+  assert.equal(model.frame(0.6).transfer.value, 9);
+  assert.deepEqual(model.frame(MEMORY_TRANSFER_DURATION).words, [3, 9, 0, 0]);
+});
+
+test("expanding memory retains existing rows and adds empty locations", () => {
+  const small = createMemoryDemo([3, 6]);
+  small.choose("Write", 0);
+  const words = small.frame(MEMORY_TRANSFER_DURATION).words;
+  const large = createMemoryDemo([...words, 0, 0]);
+  assert.deepEqual(large.frame().words, [9, 6, 0, 0]);
+});
+
+test("the adder writes address 01 once then disables WE and holds indefinitely", () => {
+  const model = createMemoryDemo([3, 6, 0, 0], {
+    holdAfterWrite: true,
+    delay: 0.8,
+  });
+  model.choose("Write", 1);
+  assert.equal(model.frame(0.4).we, 0);
+  assert.equal(model.frame(0.4).transfer, null);
+  assert.equal(model.frame(1.4).we, 1);
+  const held = model.frame(2.1);
+  assert.equal(held.address, 1);
   assert.equal(held.we, 0);
-  assert.equal(held.output, 9);
-  assert.equal(elsewhere.address, 3);
-  assert.equal(elsewhere.output, 0);
-  assert.deepEqual(elsewhere.words, held.words);
-});
-test("a repeated animation never silently erases a stored word", () => {
-  assert.deepEqual(
-    MEMORY_MODEL.frame(11.999).words,
-    MEMORY_MODEL.frame(12).words,
-  );
-  assert.deepEqual(MEMORY_MODEL.frame(36).words, [3, 6, 9, 0]);
-});
-test("expanding the array preserves the existing rows before writing the new row", () => {
-  const small = MEMORY_MODEL.frame(8, 2);
-  const bigger = MEMORY_MODEL.frame(0, 4, small.words);
-  assert.deepEqual(bigger.words, small.words);
-  const written = MEMORY_MODEL.frame(8, 4, bigger.words);
-  assert.deepEqual(written.words, [3, 9, 9, 0]);
+  assert.equal(held.action, "Hold");
+  assert.deepEqual(held.words, [3, 9, 0, 0]);
+  assert.deepEqual(model.frame(120), held);
 });
 
 test("the register holds its outputs when disabled even as the input changes", () => {

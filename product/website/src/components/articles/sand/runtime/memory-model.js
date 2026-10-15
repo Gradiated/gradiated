@@ -1,18 +1,58 @@
-export const MEMORY_MODEL = (() => {
-  const PERIOD = 12;
-  const frame = (elapsed, rows = 4, initialWords = [3, 6, 0, 0]) => {
-    const time = Math.max(0, elapsed) % PERIOD;
-    const target = rows === 2 ? 1 : 2;
-    const words = [...initialWords];
-    const input = 9;
-    if (elapsed >= PERIOD || time >= 5) words[target] = input;
-    const address = time < 2 ? 0 : time < 4 ? 1 : time < 10 ? target : rows - 1;
-    const we = time >= 5 && time < 7 ? 1 : 0;
-    const action = we ? "Write" : time >= 7 && time < 10 ? "Hold" : "Read";
-    return { address, we, input, words, output: words[address], time, action };
+export const MEMORY_TRANSFER_DURATION = 1.2;
+
+export const createMemoryDemo = (
+  initialWords = [3, 6, 0, 0],
+  { holdAfterWrite = false, delay = 0 } = {},
+) => {
+  const words = [...initialWords];
+  let address = 0;
+  let action = "Read";
+  let output = words[0];
+  let pending = null;
+
+  const choose = (nextAction, nextAddress) => {
+    if (
+      !["Read", "Write"].includes(nextAction) ||
+      !Number.isInteger(nextAddress) ||
+      nextAddress < 0 ||
+      nextAddress >= words.length
+    )
+      throw new RangeError("Choose a valid memory action and address");
+
+    address = nextAddress;
+    action = nextAction;
+    pending = { value: action === "Write" ? 9 : words[address] };
   };
-  return { PERIOD, frame };
-})();
+
+  const frame = (elapsed = 0) => {
+    let transfer = null;
+    const progress = Math.max(
+      0,
+      Math.min(1, (elapsed - delay) / MEMORY_TRANSFER_DURATION),
+    );
+    if (pending && progress === 1) {
+      if (action === "Write") words[address] = pending.value;
+      output = words[address];
+      pending = null;
+      if (holdAfterWrite && action === "Write") action = "Hold";
+    } else if (pending && elapsed >= delay) {
+      transfer = { kind: action, value: pending.value, progress };
+    }
+
+    return {
+      address,
+      action,
+      input: 9,
+      output,
+      words: [...words],
+      transfer,
+      busy: pending !== null,
+      we: action === "Write" && (!pending || elapsed >= delay) ? 1 : 0,
+    };
+  };
+
+  return { choose, frame };
+};
 
 export const REGISTER_MODEL = (() => {
   const PERIOD = 18;

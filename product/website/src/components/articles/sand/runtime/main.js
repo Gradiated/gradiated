@@ -1104,6 +1104,7 @@ export const mountSandScenes = (host) => {
     media.revert();
     stopRendering();
     listeners.forEach((remove) => remove());
+    d2?.dispose?.();
     d2?.tl.kill();
     d2?.storeDemo?.kill();
     (d2?.demos ?? []).forEach((tween) => tween.kill());

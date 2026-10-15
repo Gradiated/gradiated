@@ -18,6 +18,7 @@ const publicRoutes = new Set([
   "GET /health/ready",
   "GET /api/v1/models",
   "POST /api/v1/waitlist",
+  "POST /api/v1/invitations/preview",
   "POST /api/webhooks/stripe",
 ]);
 
@@ -33,6 +34,13 @@ const validInputs: Record<string, { query?: string; body?: unknown }> = {
   "POST /api/v1/organizations/:organization_id/billing/top-ups": {
     body: { amount: "50000000000" },
   },
+  "PATCH /api/v1/organizations/:organization_id/members/:user_id": {
+    body: { role: "member" },
+  },
+  "POST /api/v1/organizations/:organization_id/invitations": {
+    body: { emails: ["new@example.com"], role: "member" },
+  },
+  "POST /api/v1/invitations/accept": { body: { token: "a".repeat(43) } },
   "PATCH /api/v1/workspaces/:workspace_id": {
     body: { trace_capture_enabled: false },
   },
@@ -54,6 +62,8 @@ const pathParameters: Record<string, string> = {
   version_id: "0198ae70-0e61-7a51-9d5c-2f4b5e6a7b8e",
   run_id: "0198ae70-0e61-7a51-9d5c-2f4b5e6a7b8d",
   task: "support-triage",
+  user_id: "0198ae70-0e61-7a51-9d5c-2f4b5e6a7b8f",
+  invitation_id: "0198ae70-0e61-7a51-9d5c-2f4b5e6a7b90",
 };
 
 const sessionRoutes = [

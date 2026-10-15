@@ -138,16 +138,16 @@ A new user's signup organization has a null `onboarded_at`, and the console asks
 
 Primary key: `(organization_id, user_id)`.
 
-| Field             | Type        | Null | Rules                                 |
-| ----------------- | ----------- | ---- | ------------------------------------- |
-| `organization_id` | uuid        | no   | FK `organizations.id`                 |
-| `user_id`         | uuid        | no   | FK `users.id`                         |
-| `role`            | text        | no   | `owner`, `admin`, `billing`, `member` |
-| `status`          | text        | no   | `active`, `suspended`                 |
-| `created_at`      | timestamptz | no   | Creation time                         |
-| `updated_at`      | timestamptz | no   | Last mutation time                    |
+| Field             | Type        | Null | Rules                 |
+| ----------------- | ----------- | ---- | --------------------- |
+| `organization_id` | uuid        | no   | FK `organizations.id` |
+| `user_id`         | uuid        | no   | FK `users.id`         |
+| `role`            | text        | no   | `admin`, `member`     |
+| `status`          | text        | no   | `active`, `suspended` |
+| `created_at`      | timestamptz | no   | Creation time         |
+| `updated_at`      | timestamptz | no   | Last mutation time    |
 
-Customer organizations must retain at least one active owner. Distribution-channel organizations do not require human members.
+Admins manage members, invitations, workspaces, organization settings, training and billing. Members use the console, see billing, and create API keys; they can revoke only the keys they created. Whoever creates an organization becomes its admin, and people who join through domain auto-join or an invitation get the invited role (the console offers admin by default). Admins cannot change or remove their own membership, so every customer organization keeps at least one admin. Removing a member deletes the row. Distribution-channel organizations do not require human members.
 
 ### 7. `invitations`
 
@@ -156,16 +156,16 @@ Customer organizations must retain at least one active owner. Distribution-chann
 | `id`              | uuid        | no   | Primary key                           |
 | `organization_id` | uuid        | no   | FK `organizations.id`                 |
 | `email`           | text        | no   | Normalized lowercase                  |
-| `role`            | text        | no   | Offered organization role             |
+| `role`            | text        | no   | `admin`, `member`                     |
 | `token_digest`    | bytea       | no   | Unique; raw token never stored        |
-| `expires_at`      | timestamptz | no   | Expiry                                |
+| `expires_at`      | timestamptz | no   | Seven days after issue or resend      |
 | `accepted_at`     | timestamptz | yes  | Mutually exclusive with `revoked_at`  |
 | `revoked_at`      | timestamptz | yes  | Mutually exclusive with `accepted_at` |
 | `created_by`      | uuid        | no   | FK `users.id`                         |
 | `created_at`      | timestamptz | no   | Creation time                         |
 | `updated_at`      | timestamptz | no   | Last mutation time                    |
 
-There is at most one pending invitation per organization and normalized email.
+An invitation is pending until it is accepted or revoked; expiry is derived from `expires_at`. There is at most one pending invitation per organization and normalized email, so inviting the same address again or resending replaces its token and expiry instead of adding a row. Accepting requires a signed-in user whose verified email matches and inserts the membership in the same transaction. A user who signs up with a verified email that has pending invitations joins those organizations instead of receiving a personal organization.
 
 ### 8. `workspaces`
 

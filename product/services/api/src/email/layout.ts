@@ -24,6 +24,25 @@ export const escapeHtml = (value: string): string =>
     (character) => htmlEntities[character] ?? character,
   );
 
+export const emailParagraph = (html: string, margin = "0 0 20px"): string =>
+  `<p style="margin:${margin};font-family:Arial,sans-serif;font-size:16px;line-height:1.65;color:#444444;">${html}</p>`;
+
+export const emailNote = (html: string, margin = "0 0 12px"): string =>
+  `<p style="margin:${margin};font-family:Arial,sans-serif;font-size:13px;line-height:1.6;color:#444444;">${html}</p>`;
+
+export const emailButton = (safeUrl: string, label: string): string =>
+  `<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;">
+                  <tr>
+                    <td bgcolor="#000000" style="background-color:#000000;border-radius:12px;">
+                      <a href="${safeUrl}" style="display:inline-block;padding:15px 24px;font-family:Arial,sans-serif;font-size:12px;font-weight:700;line-height:1;letter-spacing:0.8px;text-transform:uppercase;text-decoration:none;color:#ffffff;border-radius:12px;">${label}</a>
+                    </td>
+                  </tr>
+                </table>`;
+
+export const emailLinkFallback = (safeUrl: string): string =>
+  `${emailNote("If the button does not work, copy and paste this link into your browser:")}
+                  <p style="margin:0;font-family:Arial,sans-serif;font-size:12px;line-height:1.6;word-break:break-all;"><a href="${safeUrl}" style="color:#000000;text-decoration:underline;">${safeUrl}</a></p>`;
+
 export const createEmailShell = ({
   body,
   eyebrow,

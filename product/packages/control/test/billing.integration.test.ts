@@ -265,8 +265,8 @@ describe("billing", () => {
       () => billing.listBalanceTransactions(userId, organizationId),
     ];
 
-    it.each(["owner", "admin", "billing"] as const)(
-      "lets a %s read the account and the ledger",
+    it.each(["admin"] as const)(
+      "lets an %s read the account and the ledger",
       async (role) => {
         const { userId, organizationId } = await billedOrganizationWith(role);
         await topUp(organizationId, 700n);
@@ -283,13 +283,10 @@ describe("billing", () => {
       },
     );
 
-    it.each([
-      ["a member", "member", "active"],
-      ["an owner of a suspended organization", "owner", "suspended"],
-    ] as const)("forbids %s", async (_name, role, status) => {
+    it("forbids an admin of a suspended organization", async () => {
       const { userId, organizationId } = await billedOrganizationWith(
-        role,
-        status,
+        "admin",
+        "suspended",
       );
 
       for (const read of reads(userId, organizationId)) {
@@ -297,8 +294,23 @@ describe("billing", () => {
       }
     });
 
+    it("lets a member read billing but not manage it", async () => {
+      const { userId, organizationId } = await billedOrganizationWith("member");
+      await topUp(organizationId, 700n);
+
+      expect(
+        await billing.getBillingAccount(userId, organizationId),
+      ).toMatchObject({ balance: 700n });
+      expect(
+        await billing.listBalanceTransactions(userId, organizationId),
+      ).toMatchObject({ data: [{ organizationId, amount: 700n }] });
+      await expect(
+        billing.getManagedBillingAccount(userId, organizationId),
+      ).rejects.toMatchObject({ code: "forbidden" });
+    });
+
     it("hides the organization from a non-member", async () => {
-      const { organizationId } = await billedOrganizationWith("owner");
+      const { organizationId } = await billedOrganizationWith("admin");
       const outsider = await seedUser(testDatabase.database);
 
       for (const read of reads(outsider, organizationId)) {
@@ -309,7 +321,7 @@ describe("billing", () => {
     it("reports a missing billing account as not found", async () => {
       const { userId, organizationId } = await seedMember(
         testDatabase.database,
-        { role: "owner" },
+        { role: "admin" },
       );
 
       await expect(
@@ -321,7 +333,7 @@ describe("billing", () => {
     });
 
     it("paginates identical timestamps without skipping or repeating rows", async () => {
-      const { userId, organizationId } = await billedOrganizationWith("owner");
+      const { userId, organizationId } = await billedOrganizationWith("admin");
       for (let amount = 1n; amount <= 7n; amount += 1n) {
         await topUp(organizationId, amount);
       }
@@ -353,7 +365,7 @@ describe("billing", () => {
     });
 
     it("does not accept another organization's transaction as a cursor", async () => {
-      const { userId, organizationId } = await billedOrganizationWith("owner");
+      const { userId, organizationId } = await billedOrganizationWith("admin");
       const other = await prepaidOrganization();
       await topUp(organizationId, 1n);
       const foreign = await topUp(other, 1n);
@@ -366,7 +378,7 @@ describe("billing", () => {
     });
 
     it("lists the newest 50 transactions first", async () => {
-      const { userId, organizationId } = await billedOrganizationWith("owner");
+      const { userId, organizationId } = await billedOrganizationWith("admin");
 
       for (let amount = 1n; amount <= 51n; amount += 1n) {
         await topUp(organizationId, amount);

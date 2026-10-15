@@ -62,10 +62,10 @@ describe("organization bootstrap", () => {
     expect(organization).toMatchObject({
       name: "Personal",
       status: "active",
-      role: "owner",
+      role: "admin",
     });
     expect(rows.members).toMatchObject([
-      { userId, role: "owner", status: "active" },
+      { userId, role: "admin", status: "active" },
     ]);
     expect(rows.workspaces).toMatchObject([
       {
@@ -156,7 +156,7 @@ describe("organization bootstrap", () => {
     expect(organization).toMatchObject({
       kind: "customer",
       name: "Team",
-      role: "owner",
+      role: "admin",
     });
     expect(rows.credits).toEqual([]);
     expect(rows.account).toMatchObject({ mode: "prepaid", balance: 0n });
@@ -175,18 +175,18 @@ describe("organization bootstrap", () => {
     };
 
     const visible = await organizationWithDefault({
-      members: [{ userId, role: "billing" }],
+      members: [{ userId, role: "member" }],
     });
     await organizationWithDefault({
-      members: [{ userId, role: "owner", status: "suspended" }],
+      members: [{ userId, role: "admin", status: "suspended" }],
     });
     await organizationWithDefault({
       kind: "distribution_channel",
-      members: [{ userId, role: "owner" }],
+      members: [{ userId, role: "admin" }],
     });
 
     expect(await organizations.listForUser(userId)).toMatchObject([
-      { id: visible, role: "billing", status: "active" },
+      { id: visible, role: "member", status: "active" },
     ]);
   });
 });
@@ -200,7 +200,7 @@ describe("organization settings", () => {
   });
   afterAll(() => db.dispose());
 
-  it.each(["owner", "admin"] as const)(
+  it.each(["admin"] as const)(
     "lets %s rename an organization and returns its current role",
     async (role) => {
       const { userId, organizationId } = await seedMember(db.database, {
@@ -223,24 +223,21 @@ describe("organization settings", () => {
       ).toBe("Research team");
     },
   );
-  it.each(["member", "billing"] as const)(
-    "prevents %s from renaming",
-    async (role) => {
-      const { userId, organizationId } = await seedMember(db.database, {
-        role,
-      });
-      await seedWorkspace(db.database, { organizationId, isDefault: true });
+  it.each(["member"] as const)("prevents %s from renaming", async (role) => {
+    const { userId, organizationId } = await seedMember(db.database, {
+      role,
+    });
+    await seedWorkspace(db.database, { organizationId, isDefault: true });
 
-      const before = await service.listForUser(userId);
-      await expect(
-        service.updateForUser(userId, organizationId, { name: "Denied" }),
-      ).rejects.toMatchObject({ code: "forbidden" });
-      expect(await service.listForUser(userId)).toEqual(before);
-    },
-  );
+    const before = await service.listForUser(userId);
+    await expect(
+      service.updateForUser(userId, organizationId, { name: "Denied" }),
+    ).rejects.toMatchObject({ code: "forbidden" });
+    expect(await service.listForUser(userId)).toEqual(before);
+  });
   it("hides organizations from outsiders and rejects suspended organizations", async () => {
     const { userId, organizationId } = await seedMember(db.database, {
-      role: "owner",
+      role: "admin",
       organization: { status: "suspended" },
     });
     const outsider = await seedUser(db.database);
@@ -253,7 +250,7 @@ describe("organization settings", () => {
   });
   it("rejects blank names without persisting them", async () => {
     const { userId, organizationId } = await seedMember(db.database, {
-      role: "owner",
+      role: "admin",
     });
     await seedWorkspace(db.database, { organizationId, isDefault: true });
 
@@ -406,7 +403,7 @@ describe("organization onboarding and domain auto-join", () => {
 
       expect(organization).toMatchObject({
         name: "Personal",
-        role: "owner",
+        role: "admin",
         onboardingCompleted: false,
       });
     }

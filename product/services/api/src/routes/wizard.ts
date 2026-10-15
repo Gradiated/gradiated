@@ -61,7 +61,9 @@ export const registerWizardRoutes = (
 ): void => {
   app.openapi(createWizardKeyRoute, async (context) => {
     const user = await requireUser(context);
-    const [organization] = await organizations.listForUser(user.id);
+    const organization = (await organizations.listForUser(user.id)).find(
+      (candidate) => candidate.status === "active",
+    );
     if (!organization) {
       throw new ApiProblem(
         problems.notFound(

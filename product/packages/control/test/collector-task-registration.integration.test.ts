@@ -125,7 +125,7 @@ const send = async (port: number, workspaceId: string, task: string) =>
   });
 
 it("registers tasks once at capture, preserving existing IDs and training settings", async () => {
-  const member = await seedMember(db.database, { role: "owner" });
+  const member = await seedMember(db.database, { role: "admin" });
   await db.database
     .update(workspaces)
     .set({ defaultJudgeModel: "Qwen/Qwen3-0.6B" })
@@ -229,7 +229,7 @@ it("registers tasks once at capture, preserving existing IDs and training settin
 }, 30_000);
 
 it("accepts and uploads during a PostgreSQL outage, then registers pending tasks after restart", async () => {
-  const member = await seedMember(db.database, { role: "owner" });
+  const member = await seedMember(db.database, { role: "admin" });
   const directory = await mkdtemp(join(tmpdir(), "collector-outage-"));
   let service = await start(
     directory,

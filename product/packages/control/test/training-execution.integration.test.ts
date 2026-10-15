@@ -36,7 +36,7 @@ describe("training execution", () => {
   afterAll(() => db.dispose());
 
   const fixture = async (count: number, capture = true) => {
-    const member = await seedMember(db.database, { role: "owner" });
+    const member = await seedMember(db.database, { role: "admin" });
     await db.database
       .update(workspaces)
       .set({ traceCaptureEnabled: capture })
@@ -420,7 +420,7 @@ describe("training execution", () => {
 
   it("starts by task ID only within the authorized workspace", async () => {
     const f = await fixture(100);
-    const outsider = await seedMember(db.database, { role: "owner" });
+    const outsider = await seedMember(db.database, { role: "admin" });
     const started: TrainingInput[] = [];
     const runId = randomUUID();
     const service = createTrainingService(db.database, f.store, undefined, {
@@ -559,7 +559,7 @@ describe("training execution", () => {
     await expect(
       prepareTraining(db.database, f.store, f.taskId, "manual", f.userId),
     ).rejects.toMatchObject({ code: "already_training" });
-    const outsider = await seedMember(db.database, { role: "owner" });
+    const outsider = await seedMember(db.database, { role: "admin" });
     const cancelled: string[] = [];
     const service = createTrainingService(db.database, f.store, undefined, {
       start: async () => id,

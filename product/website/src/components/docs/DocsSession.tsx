@@ -83,10 +83,7 @@ export const DocsSessionProvider = ({
       setWorkspace(nextWorkspace);
       if (!nextWorkspace) return;
 
-      if (
-        nextOrganization.role === "owner" ||
-        nextOrganization.role === "admin"
-      ) {
+      if (nextOrganization.role === "admin") {
         const keyList = await listApiKeys(
           nextOrganization.id,
           nextWorkspace.id,
@@ -162,7 +159,7 @@ export const DocsSessionProvider = ({
       setWorkspace(nextWorkspace);
       setApiKeyState(null);
       setApiKeys([]);
-      if (organization.role !== "owner" && organization.role !== "admin") {
+      if (organization.role !== "admin") {
         return;
       }
       void listApiKeys(organization.id, nextWorkspace.id)
@@ -200,8 +197,7 @@ export const DocsSessionProvider = ({
     () => ({
       apiKey,
       apiKeys,
-      canManageKeys:
-        organization?.role === "owner" || organization?.role === "admin",
+      canManageKeys: organization?.role === "admin",
       clearApiKey: () => setApiKeyState(null),
       createDocsKey,
       error,

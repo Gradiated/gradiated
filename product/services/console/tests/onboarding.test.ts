@@ -12,7 +12,7 @@ const organization = (
   id: "00000000-0000-4000-8000-000000000001",
   name: "Personal",
   status: "active",
-  role: "owner",
+  role: "admin",
   default_workspace_id: "00000000-0000-4000-8000-000000000002",
   auto_join_domain: null,
   onboarding_completed: false,
@@ -33,7 +33,7 @@ const userWith = (
 });
 
 describe("onboarding", () => {
-  it("asks owners to set up an organization they have not finished", () => {
+  it("asks admins to set up an organization they have not finished", () => {
     const pending = organization({ id: "pending" });
 
     expect(

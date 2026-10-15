@@ -63,7 +63,7 @@ test("direct task reload initializes flags, edits schedules and opens held-out r
           {
             id: "test-org",
             name: "Test org",
-            role: "owner",
+            role: "admin",
             status: "active",
             default_workspace_id: workspaceId,
             auto_join_domain: null,
@@ -469,7 +469,7 @@ for (const initialRows of [0, 35]) {
             {
               id: "test-org",
               name: "Test org",
-              role: "owner",
+              role: "admin",
               status: "active",
               default_workspace_id: workspaceId,
               auto_join_domain: null,
@@ -657,7 +657,7 @@ test("Billing loads 100 transactions at a time with skeleton rows and retry", as
           {
             id: "test-org",
             name: "Test org",
-            role: "owner",
+            role: "admin",
             status: "active",
             default_workspace_id: workspaceId,
             auto_join_domain: null,

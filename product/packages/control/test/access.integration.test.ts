@@ -57,12 +57,12 @@ describe("organization access", () => {
   it.each<[string, () => Promise<Awaited<ReturnType<typeof setup>>>]>([
     [
       "a suspended member",
-      () => setup({ role: "owner", memberStatus: "suspended" }),
+      () => setup({ role: "admin", memberStatus: "suspended" }),
     ],
     [
       "a non-member",
       async () => ({
-        ...(await setup({ role: "owner" })),
+        ...(await setup({ role: "admin" })),
         userId: await seedUser(testDatabase.database),
       }),
     ],
@@ -70,7 +70,7 @@ describe("organization access", () => {
       "a member of a distribution channel",
       () =>
         setup({
-          role: "owner",
+          role: "admin",
           organization: { kind: "distribution_channel" },
         }),
     ],
@@ -93,8 +93,8 @@ describe("organization access", () => {
   });
 
   it("hides a workspace of another organization", async () => {
-    const key = await setup({ role: "owner" });
-    const other = await setup({ role: "owner" });
+    const key = await setup({ role: "admin" });
+    const other = await setup({ role: "admin" });
 
     await expect(
       requireWorkspaceMembership(testDatabase.database, {

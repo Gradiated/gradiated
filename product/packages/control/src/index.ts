@@ -86,6 +86,14 @@ export {
 } from "./organizations/service.js";
 export { companyEmailDomain } from "./organizations/email-domains.js";
 export {
+  createMemberService,
+  type InvitationAcceptor,
+  type InvitationRecord,
+  type IssuedInvitation,
+  type MemberRecord,
+  type MemberService,
+} from "./members/service.js";
+export {
   COMPANY_SIZES,
   createWaitlistService,
   waitlistSignupSchema,

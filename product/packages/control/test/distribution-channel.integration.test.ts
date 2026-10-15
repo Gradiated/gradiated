@@ -98,7 +98,7 @@ describe("OpenRouter distribution channel", () => {
     const { database } = testDatabase;
     const userId = await seedUser(database);
     const organizationId = await seedOrganization(database, {
-      members: [{ userId, role: "owner" }],
+      members: [{ userId, role: "admin" }],
     });
     const workspaceId = await seedWorkspace(database, { organizationId });
     const { secret } = await createWorkspaceApiKeyService(

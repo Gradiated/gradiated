@@ -46,7 +46,7 @@ const createPayments = ({
         gateway.constructWebhookEvent ?? notUsed("constructWebhookEvent"),
     },
     accounts: {
-      getBillingAccount: async () => ({
+      getManagedBillingAccount: async () => ({
         ...billingAccountRecord,
         balance: 0n,
         ...account,

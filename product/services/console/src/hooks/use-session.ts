@@ -7,6 +7,7 @@ import { authClient } from "@/auth";
 import { analytics } from "@/lib/analytics";
 import { identifyUser } from "@/lib/feature-flags";
 import { queryKeys } from "@/lib/query-keys";
+import type { LoginSearch } from "@/lib/login-search";
 import { endSession } from "@/lib/session";
 
 export type SignOutResult = "signed-out" | "failed";
@@ -23,7 +24,7 @@ export const useSession = () => {
     if (me.data) identifyUser(me.data);
   }, [me.data]);
 
-  const signOut = async (): Promise<SignOutResult> => {
+  const signOut = async (search?: LoginSearch): Promise<SignOutResult> => {
     if (me.data) analytics.track("sign_out_clicked", { user_id: me.data.id });
 
     const failureStatus = await authClient.signOut().then(
@@ -36,7 +37,7 @@ export const useSession = () => {
       return "failed";
     }
 
-    await endSession(queryClient, router);
+    await endSession(queryClient, router, search);
 
     return "signed-out";
   };

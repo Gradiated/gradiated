@@ -104,7 +104,7 @@ describe("usage service", () => {
     async (_name, organization, workspace) => {
       const clickhouse = fakeClickHouse(() => []);
       const hidden = await seedMember(testDatabase.database, {
-        role: "owner",
+        role: "admin",
         organization,
         workspace,
       });

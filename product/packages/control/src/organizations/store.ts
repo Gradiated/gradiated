@@ -15,7 +15,7 @@ import {
   users,
   workspaces,
 } from "../db/schema/index.js";
-import { activeCustomerMember } from "../access.js";
+import { activeCustomerMember, activeCustomerOrganization } from "../access.js";
 import { ControlServiceError } from "../errors.js";
 
 const OrganizationRecordSchema = CurrentOrganizationSchema.pick({
@@ -91,8 +91,7 @@ export const createOrganizationStore = (database: ControlDatabase) => {
           .where(
             and(
               eq(organizations.autoJoinDomain, domain),
-              eq(organizations.kind, "customer"),
-              eq(organizations.status, "active"),
+              activeCustomerOrganization,
             ),
           )
           .for("share");

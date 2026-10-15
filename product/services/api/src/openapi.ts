@@ -16,7 +16,9 @@ export const unservedDependencies = (): AppDependencies => ({
     resolveSession: unserved("auth.resolveSession"),
   },
   checkDependencies: unserved("checkDependencies"),
+  consoleUrl: "https://console.gradiated.com",
   metrics: new ApiMetrics({ collectProcessMetrics: false }),
+  sendInvitation: unserved("sendInvitation"),
   sendWaitlistWelcome: unserved("sendWaitlistWelcome"),
   services: {
     waitlist: { join: unserved("waitlist.join") },
@@ -27,9 +29,23 @@ export const unservedDependencies = (): AppDependencies => ({
     catalogBilling: {
       listModels: unserved("catalogBilling.listModels"),
       getBillingAccount: unserved("catalogBilling.getBillingAccount"),
+      getManagedBillingAccount: unserved(
+        "catalogBilling.getManagedBillingAccount",
+      ),
       listBalanceTransactions: unserved(
         "catalogBilling.listBalanceTransactions",
       ),
+    },
+    members: {
+      listMembers: unserved("members.listMembers"),
+      updateMember: unserved("members.updateMember"),
+      removeMember: unserved("members.removeMember"),
+      listInvitations: unserved("members.listInvitations"),
+      createInvitations: unserved("members.createInvitations"),
+      resendInvitation: unserved("members.resendInvitation"),
+      revokeInvitation: unserved("members.revokeInvitation"),
+      previewInvitation: unserved("members.previewInvitation"),
+      acceptInvitation: unserved("members.acceptInvitation"),
     },
     organizations: {
       listForUser: unserved("organizations.listForUser"),

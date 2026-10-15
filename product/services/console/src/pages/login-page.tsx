@@ -1,10 +1,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoaderCircle, MailCheck } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
+import { useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 
+import { previewInvitation } from "@/api/queries";
 import { authClient } from "@/auth";
+import { invitationPath } from "@/lib/login-search";
 import { analytics } from "@/lib/analytics";
 import { Brand } from "@/components/brand";
 import { GitHubIcon, GoogleIcon } from "@/components/icons";
@@ -38,13 +42,25 @@ type SocialProvider = (typeof SOCIAL_PROVIDERS)[number]["provider"];
 const callbackUrl = (path: string) =>
   new URL(path, window.location.origin).toString();
 
-const signInCallbacks = () => ({
-  callbackURL: callbackUrl("/api-keys"),
-  newUserCallbackURL: callbackUrl("/onboarding"),
-  errorCallbackURL: callbackUrl("/login"),
-});
+const signInCallbacks = (invitation: string | undefined) => {
+  const next = invitation ? invitationPath(invitation) : undefined;
+
+  return {
+    callbackURL: callbackUrl(next ?? "/api-keys"),
+    newUserCallbackURL: callbackUrl(next ?? "/onboarding"),
+    errorCallbackURL: callbackUrl("/login"),
+  };
+};
 
 export const LoginPage = () => {
+  const { invitation } = useSearch({ from: "/login" });
+  const preview = useQuery({
+    queryKey: ["invitation", invitation],
+    queryFn: () => previewInvitation(invitation ?? ""),
+    enabled: invitation !== undefined,
+    retry: false,
+  });
+  const invited = preview.data?.status === "pending" ? preview.data : null;
   const callbackError = new URLSearchParams(window.location.search).get(
     "error",
   );
@@ -56,6 +72,11 @@ export const LoginPage = () => {
     resolver: zodResolver(LoginSchema),
     defaultValues: { email: "" },
   });
+
+  useEffect(() => {
+    if (invited && !form.getValues("email"))
+      form.setValue("email", invited.email);
+  }, [invited, form]);
 
   useEffect(() => {
     if (callbackError) logSignInCallbackFailure(callbackError);
@@ -71,7 +92,7 @@ export const LoginPage = () => {
     try {
       const result = await authClient.signIn.magicLink({
         email: values.email,
-        ...signInCallbacks(),
+        ...signInCallbacks(invitation),
       });
       if (result.error) {
         logSignInFailure("magic_link", result.error);
@@ -100,7 +121,7 @@ export const LoginPage = () => {
     try {
       const result = await authClient.signIn.social({
         provider,
-        ...signInCallbacks(),
+        ...signInCallbacks(invitation),
       });
       if (result?.error) {
         logSignInFailure(provider, result.error);
@@ -123,9 +144,23 @@ export const LoginPage = () => {
             <form className="p-6 md:p-9" onSubmit={form.handleSubmit(submit)}>
               <FieldGroup>
                 <div className="flex flex-col items-center gap-2 text-center">
-                  <h1 className="text-2xl font-bold tracking-tight">Sign in</h1>
+                  <h1 className="text-2xl font-bold tracking-tight">
+                    {invited
+                      ? `Sign in to join ${invited.organization_name}`
+                      : "Sign in"}
+                  </h1>
                   <p className="text-sm text-muted-foreground">
-                    Create an account or continue to your workspace.
+                    {invited ? (
+                      <>
+                        {invited.invited_by_email} invited{" "}
+                        <span className="font-medium text-foreground">
+                          {invited.email}
+                        </span>{" "}
+                        to {invited.organization_name}.
+                      </>
+                    ) : (
+                      "Create an account or continue to your workspace."
+                    )}
                   </p>
                 </div>
                 <div className="flex flex-col gap-3">

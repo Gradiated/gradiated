@@ -1,8 +1,6 @@
-import { createHash, randomBytes } from "node:crypto";
+import { randomToken, sha256Digest } from "../secrets.js";
 
-export const generateApiKeySecret = (): string =>
-  `grad_${randomBytes(32).toString("base64url")}`;
+export const generateApiKeySecret = (): string => `grad_${randomToken()}`;
 
 // The gateway authenticates a key by this same SHA-256 digest of the secret.
-export const apiKeyDigest = (secret: string): Buffer =>
-  createHash("sha256").update(secret).digest();
+export const apiKeyDigest = sha256Digest;

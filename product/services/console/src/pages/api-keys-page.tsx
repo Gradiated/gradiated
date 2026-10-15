@@ -56,6 +56,7 @@ import {
 } from "@/components/ui/table";
 import { copyLabel, useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { useProductContext } from "@/hooks/use-product-context";
+import { canManageOrganization } from "@/lib/roles";
 import { errorMessage } from "@/lib/errors";
 import {
   apiKeyExpiresAt,
@@ -116,7 +117,9 @@ const formatDate = (value: string) => keyDate.format(new Date(value));
 
 export const ApiKeysPage = () => {
   const queryClient = useQueryClient();
-  const { organizationId, workspaceId } = useProductContext();
+  const { user, organizationId, workspaceId, selectedOrganization } =
+    useProductContext();
+  const canManage = canManageOrganization(selectedOrganization);
   const [createOpen, setCreateOpen] = useState(false);
   const [created, setCreated] = useState<CreatedApiKey | null>(null);
   const secretCopy = useCopyToClipboard();
@@ -244,7 +247,10 @@ export const ApiKeysPage = () => {
                         </DropdownMenuItem>
                         {status !== "revoked" ? (
                           <DropdownMenuItem
-                            disabled={revoke.isPending}
+                            disabled={
+                              revoke.isPending ||
+                              (!canManage && apiKey.created_by !== user?.id)
+                            }
                             className="text-destructive focus:text-destructive"
                             onSelect={() => {
                               if (

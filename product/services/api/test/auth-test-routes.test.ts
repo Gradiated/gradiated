@@ -17,6 +17,13 @@ const routes = [
     value: "841902",
     missing: "Code not found.",
   },
+  {
+    path: "/api/auth/test/invitation",
+    take: "takeInvitation",
+    body: { url: "https://console.example.com/invitations/accept?token=x" },
+    value: "https://console.example.com/invitations/accept?token=x",
+    missing: "Invitation not found.",
+  },
 ] as const;
 
 describe("auth test mailbox routes", () => {
@@ -44,6 +51,7 @@ describe("auth test mailbox routes", () => {
         authTestMailbox: {
           takeMagicLink: take === "takeMagicLink" ? taken : () => null,
           takeOtp: take === "takeOtp" ? taken : () => null,
+          takeInvitation: take === "takeInvitation" ? taken : () => null,
         },
       });
 
@@ -60,7 +68,11 @@ describe("auth test mailbox routes", () => {
 
   it.each(routes)("requires an email address on $path", async ({ path }) => {
     const app = createTestApp({
-      authTestMailbox: { takeMagicLink: () => null, takeOtp: () => null },
+      authTestMailbox: {
+        takeMagicLink: () => null,
+        takeOtp: () => null,
+        takeInvitation: () => null,
+      },
     });
 
     const response = await app.request(path);

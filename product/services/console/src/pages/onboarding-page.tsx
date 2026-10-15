@@ -4,9 +4,8 @@ import { ArrowRight, LoaderCircle } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
 import { updateOrganization, type CurrentUser } from "@/api/queries";
-import { Brand } from "@/components/brand";
+import { AuthCard } from "@/components/auth-card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Field,
@@ -53,22 +52,13 @@ export const OnboardingPage = () => {
   if (!organization) return <Navigate to="/models" />;
 
   return (
-    <main className="flex min-h-svh flex-col items-center justify-center bg-muted p-6 md:p-10">
-      <div className="w-full max-w-md">
-        <div className="mb-6">
-          <Brand />
-        </div>
-        <Card className="overflow-hidden p-0 shadow-xl shadow-black/5">
-          <CardContent className="p-0">
-            <OrganizationSetup
-              user={user}
-              organization={organization}
-              onSignOut={() => void signOut()}
-            />
-          </CardContent>
-        </Card>
-      </div>
-    </main>
+    <AuthCard>
+      <OrganizationSetup
+        user={user}
+        organization={organization}
+        onSignOut={() => void signOut()}
+      />
+    </AuthCard>
   );
 };
 

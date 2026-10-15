@@ -39,8 +39,10 @@ type TopUpFormValues = z.output<typeof TopUpFormSchema>;
 
 export const TopUpBalance = ({
   organizationId,
+  disabled = false,
 }: {
   organizationId: string;
+  disabled?: boolean;
 }) => {
   const form = useForm<TopUpFormInput, unknown, TopUpFormValues>({
     resolver: zodResolver(TopUpFormSchema),
@@ -70,57 +72,66 @@ export const TopUpBalance = ({
         <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
           <CreditCard className="size-4" />
         </span>
-        <h2 className="font-medium">Add funds</h2>
-      </div>
-      <form className="space-y-4" onSubmit={form.handleSubmit(submit)}>
-        <Field data-invalid={Boolean(form.formState.errors.amount)}>
-          <FieldLabel htmlFor="top-up-amount">Amount (USD)</FieldLabel>
-          <div className="relative">
-            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
-              $
-            </span>
-            <Input
-              id="top-up-amount"
-              className="pl-7"
-              inputMode="decimal"
-              autoComplete="off"
-              {...form.register("amount")}
-            />
-          </div>
-          {form.formState.errors.amount ? (
-            <FieldError errors={[form.formState.errors.amount]} />
+        <div>
+          <h2 className="font-medium">Add funds</h2>
+          {disabled ? (
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Only admins can add funds.
+            </p>
           ) : null}
-        </Field>
-        <div className="grid grid-cols-4 gap-2">
-          {[25, 50, 100, 250].map((amount) => (
-            <Button
-              key={amount}
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                form.setValue("amount", String(amount), {
-                  shouldValidate: true,
-                })
-              }
-            >
-              {formatUsdShort(amount)}
-            </Button>
-          ))}
         </div>
-        {form.formState.errors.root?.message ? (
-          <FieldError>{form.formState.errors.root.message}</FieldError>
-        ) : null}
-        <Button
-          className="w-full"
-          type="submit"
-          disabled={form.formState.isSubmitting}
-        >
-          {form.formState.isSubmitting ? (
-            <LoaderCircle className="size-4 animate-spin" />
+      </div>
+      <form onSubmit={form.handleSubmit(submit)}>
+        <fieldset className="space-y-4" disabled={disabled}>
+          <Field data-invalid={Boolean(form.formState.errors.amount)}>
+            <FieldLabel htmlFor="top-up-amount">Amount (USD)</FieldLabel>
+            <div className="relative">
+              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
+                $
+              </span>
+              <Input
+                id="top-up-amount"
+                className="pl-7"
+                inputMode="decimal"
+                autoComplete="off"
+                {...form.register("amount")}
+              />
+            </div>
+            {form.formState.errors.amount ? (
+              <FieldError errors={[form.formState.errors.amount]} />
+            ) : null}
+          </Field>
+          <div className="grid grid-cols-4 gap-2">
+            {[25, 50, 100, 250].map((amount) => (
+              <Button
+                key={amount}
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  form.setValue("amount", String(amount), {
+                    shouldValidate: true,
+                  })
+                }
+              >
+                {formatUsdShort(amount)}
+              </Button>
+            ))}
+          </div>
+          {form.formState.errors.root?.message ? (
+            <FieldError>{form.formState.errors.root.message}</FieldError>
           ) : null}
-          Continue to Stripe
-        </Button>
+          <Button
+            className="w-full"
+            type="submit"
+            disabled={form.formState.isSubmitting}
+          >
+            {form.formState.isSubmitting ? (
+              <LoaderCircle className="size-4 animate-spin" />
+            ) : null}
+            Continue to Stripe
+          </Button>
+        </fieldset>
       </form>
     </section>
   );

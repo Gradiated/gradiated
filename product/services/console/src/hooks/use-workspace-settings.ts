@@ -8,6 +8,7 @@ import {
   type WorkspaceSettingsPatch,
 } from "@/lib/workspace-settings";
 import { queryKeys } from "@/lib/query-keys";
+import { canManageOrganization } from "@/lib/roles";
 
 export const useWorkspaceSettings = () => {
   const { organizationId, workspaceId, workspaces, selectedOrganization } =
@@ -40,8 +41,6 @@ export const useWorkspaceSettings = () => {
       mutate: (patch: UpdateWorkspace) =>
         save.mutate({ id: workspaceId, patch }),
     },
-    canEdit:
-      selectedOrganization?.status === "active" &&
-      ["owner", "admin"].includes(selectedOrganization.role),
+    canEdit: canManageOrganization(selectedOrganization),
   };
 };

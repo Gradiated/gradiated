@@ -63,7 +63,8 @@ export const MEMORY_SCENES = (() => {
       rowAddresses = [],
       readLights = [],
       writeLights = [],
-      selectLights = [];
+      selectLights = [],
+      writeInputLights = [];
     const signalLayer = group({ "data-memory-signals": "" }, array);
     const readSignals = group({}, signalLayer);
     show(readSignals, "memory-two", "memory-buses");
@@ -204,20 +205,30 @@ export const MEMORY_SCENES = (() => {
       wire(readRow, select);
       junction(readRow, 88, y + 29);
       junction(writeRow, 78, y + 44);
-      selectLights.push(signal(readSignalRow, select));
+      const selectLight = signal(readSignalRow, select);
+      key(selectLight, "memory-array", {
+        attr: { d: `M53 ${y + 29} H${xs[3] + 18}` },
+      });
+      if (r < 2)
+        key(selectLight, "memory-two", {
+          attr: { d: `M${r === 0 ? 55 : 14} ${y + 29} H${xs[3] + 18}` },
+        });
+      selectLights.push(selectLight);
+      const writeInput = signal(writeSignalRow, `M78 ${y + 44} H92`);
+      writeInputLights.push(writeInput);
       const write = `M88 ${y + 29} V${y + 36} H92 M78 ${y + 44} H92`;
       wire(writeRow, write);
       andGate(writeRow, 92, y + 40);
       const writeOut = `M106 ${y + 40} H${xs[3] - 5}`;
       wire(writeRow, writeOut);
       const writeRoute = group({}, writeSignalRow);
-      signal(
-        writeRoute,
-        `M88 ${y + 29} V${y + 36} H92 M78 ${y + 44} H92`,
-      ).setAttribute("opacity", "1");
       signal(writeRoute, writeOut).setAttribute("opacity", "1");
       writeLights.push(writeRoute);
       const readRoute = group({}, readSignalRow);
+      signal(readRoute, `M88 ${y + 29} V${y + 36} H92`).setAttribute(
+        "opacity",
+        "1",
+      );
       readLights.push(readRoute);
       rowDigits.push(
         xs.map((x, c) => {
@@ -250,7 +261,9 @@ export const MEMORY_SCENES = (() => {
           wire(cell, q);
           if (r === 0) show(enable, "memory-two", "memory-buses");
           andGate(readRow, x + 20, y + 12);
-          wire(readRow, `M${x + 18} ${y + 29} V${y + 16} H${x + 20}`);
+          const readSelect = `M${x + 18} ${y + 29} V${y + 16} H${x + 20}`;
+          wire(readRow, readSelect);
+          signal(readRoute, readSelect).setAttribute("opacity", "1");
           const track = x + 47 - r * 4;
           const inputY = (top, offset) => {
             const position = (offset - 29) / 24;
@@ -568,6 +581,7 @@ export const MEMORY_SCENES = (() => {
         readLights[r].style.opacity = dynamic.selected[r];
         selectLights[r].style.opacity = dynamic.selected[r];
         writeLights[r].style.opacity = dynamic.writing[r];
+        writeInputLights[r].style.opacity = state.we;
       }
       outputLights.forEach((element) => (element.style.opacity = 0.85));
       writeFeedLight.setAttribute("d", writeFeed.getAttribute("d"));

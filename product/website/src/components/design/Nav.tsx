@@ -3,7 +3,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactElement } from "react";
 import { articles } from "../../articles";
 import { library } from "./library";
-import { SandCircuitArtwork } from "./SandCircuitArtwork";
 import { models } from "../../models";
 import { ModelArt } from "./ModelArt";
 import { WaferArtwork } from "./WaferArtwork";
@@ -97,6 +96,10 @@ type NavItem = {
  *  `library` is already newest-first. */
 const LATEST = library.slice(0, 3);
 
+const hasGuide = articles.some(
+  (article) => article.collection === "sand-to-thought",
+);
+
 const NAV_ITEMS: NavItem[] = [
   {
     href: "/inference/",
@@ -151,7 +154,7 @@ const NAV_ITEMS: NavItem[] = [
       ],
     },
   },
-  ...(articles.some((article) => article.collection === "sand-to-thought")
+  ...(hasGuide
     ? [{ href: SAND_TO_THOUGHT_URL, label: "Sand to Thought" }]
     : []),
   { href: "/careers/", label: "Careers" },
@@ -245,9 +248,7 @@ const WritingList = ({
                   : `${note.coverAt} 50%`,
               }}
             >
-              {note.animatedCover === "sand-circuit" ? (
-                <SandCircuitArtwork />
-              ) : !note.art && note.cover ? (
+              {!note.art && note.cover ? (
                 <WaferArtwork options={note.cover} />
               ) : null}
             </div>
@@ -482,7 +483,7 @@ export const Nav = (): ReactElement => {
     <>
       <nav
         aria-label="Site"
-        className="gr-nav"
+        className={`gr-nav${hasGuide ? " gr-nav--with-guide" : ""}`}
         onKeyDown={onKeyDown}
         onPointerEnter={cancelClose}
         onPointerLeave={scheduleClose}
@@ -601,7 +602,6 @@ export const Nav = (): ReactElement => {
                   "--hl-x": highlight ? `${highlight.left}px` : "0px",
                   "--hl-y": highlight ? `${highlight.top}px` : "0px",
                   "--slide": active !== null && index < active ? "-1" : "1",
-                  "--nav-card-count": item.panel.cards.length,
                 } as CSSProperties
               }
             >

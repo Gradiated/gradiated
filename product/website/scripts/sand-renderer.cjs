@@ -1,17 +1,19 @@
 const { Marked } = require("marked");
-const escape = (value) =>
-  String(value).replace(
-    /[&<>"']/g,
-    (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
-        c
-      ],
-  );
+const HTML_ENTITIES = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
+};
+const escapeHtml = (value) =>
+  String(value).replace(/[&<>"']/g, (character) => HTML_ENTITIES[character]);
 
-function renderPost(source, template, expectedScenes, publication) {
+function createMarkdown() {
   const definitions = new Map();
   const references = new Map();
   const markdown = new Marked({ gfm: true });
+
   markdown.use({
     extensions: [
       {
@@ -24,6 +26,7 @@ function renderPost(source, template, expectedScenes, publication) {
               src,
             );
           if (!match) return;
+
           const id = match[1];
           if (definitions.has(id))
             throw Error(`Footnote ${id} is defined twice.`);
@@ -70,14 +73,19 @@ function renderPost(source, template, expectedScenes, publication) {
       },
     },
   });
-  const tokens = markdown.lexer(source);
-  const intro = [],
-    scenes = [],
-    footer = [];
-  let title,
-    current = intro,
-    pendingHeading,
-    inFooter = false;
+
+  return { markdown, definitions, references };
+}
+
+function parseScript(tokens) {
+  const intro = [];
+  const scenes = [];
+  const footer = [];
+  let title;
+  let current = intro;
+  let pendingHeading;
+  let inFooter = false;
+
   for (const token of tokens) {
     if (token.type === "space" || token.type === "footnoteDefinition") continue;
     // Only explicitly labelled visual-direction blocks are editorial.
@@ -138,6 +146,11 @@ function renderPost(source, template, expectedScenes, publication) {
     throw Error(
       "Keep <!-- footer --> after the last scene and before the closing text.",
     );
+
+  return { title, intro, scenes, footer };
+}
+
+function validateScenes(scenes, expectedScenes) {
   if (
     !Array.isArray(expectedScenes) ||
     !expectedScenes.length ||
@@ -153,35 +166,32 @@ function renderPost(source, template, expectedScenes, publication) {
       `Scene order changed. Keep these markers in order: ${expectedScenes.join(", ")}. Adding, removing or reordering scenes needs a coordinated animation update.`,
     );
   }
-  let visibleScenes = scenes;
-  if (publication) {
-    const last = expectedScenes.indexOf(publication.publishedThrough);
-    if (
-      last < 0 ||
-      typeof publication.footer !== "string" ||
-      !publication.footer.trim()
-    )
-      throw Error(
-        "Use a known publishedThrough scene and a non-empty publication footer.",
-      );
-    if (scenes[last + 1] && scenes[last + 1].tokens[0]?.type !== "heading")
-      throw Error(
-        "The publication boundary must end immediately before a chapter heading.",
-      );
-    visibleScenes = scenes.slice(0, last + 1);
+}
+
+function selectPublishedScenes(scenes, expectedScenes, publication) {
+  if (!publication) return scenes;
+
+  const last = expectedScenes.indexOf(publication.publishedThrough);
+  if (
+    last < 0 ||
+    typeof publication.footer !== "string" ||
+    !publication.footer.trim()
+  ) {
+    throw Error(
+      "Use a known publishedThrough scene and a non-empty publication footer.",
+    );
   }
-  const render = (list) =>
-    markdown.parser(Object.assign([...list], { links: tokens.links })).trim();
-  const titleHTML = markdown.parser([title]).trim();
-  const lede = render(intro).replace(/^<p>/, '<p class="lede">');
-  const sections = visibleScenes.map((scene) => {
-    if (!scene.tokens.some((token) => token.type !== "heading"))
-      throw Error(`Scene ${scene.key} needs some article text.`);
-    return `<section class="scene-text" data-scene="${scene.key}" id="sand-${scene.key}">\n${render(scene.tokens)}\n</section>`;
-  });
-  const footerHTML = render(
-    publication ? markdown.lexer(publication.footer) : footer,
-  );
+
+  if (scenes[last + 1] && scenes[last + 1].tokens[0]?.type !== "heading") {
+    throw Error(
+      "The publication boundary must end immediately before a chapter heading.",
+    );
+  }
+
+  return scenes.slice(0, last + 1);
+}
+
+function renderFootnotes(markdown, definitions, references, publication) {
   const notes = [];
   for (const [id, definition] of definitions) {
     const refs = references.get(id);
@@ -202,6 +212,36 @@ function renderPost(source, template, expectedScenes, publication) {
       `<p class="footnote" id="fn-${id}"><sup>${id}</sup> ${note} ${back}</p>`,
     );
   }
+
+  return notes;
+}
+
+function renderPost(source, template, expectedScenes, publication) {
+  const { markdown, definitions, references } = createMarkdown();
+  const tokens = markdown.lexer(source);
+  const { title, intro, scenes, footer } = parseScript(tokens);
+
+  validateScenes(scenes, expectedScenes);
+
+  const visibleScenes = selectPublishedScenes(
+    scenes,
+    expectedScenes,
+    publication,
+  );
+  const links = tokens.links;
+  const render = (list) =>
+    markdown.parser(Object.assign([...list], { links })).trim();
+  const titleHTML = markdown.parser([title]).trim();
+  const lede = render(intro).replace(/^<p>/, '<p class="lede">');
+  const sections = visibleScenes.map((scene) => {
+    if (!scene.tokens.some((token) => token.type !== "heading"))
+      throw Error(`Scene ${scene.key} needs some article text.`);
+    return `<section class="scene-text" data-scene="${scene.key}" id="sand-${scene.key}">\n${render(scene.tokens)}\n</section>`;
+  });
+  const footerHTML = render(
+    publication ? markdown.lexer(publication.footer) : footer,
+  );
+  const notes = renderFootnotes(markdown, definitions, references, publication);
   const article = [
     `<header class="post-header" id="sand-introduction">`,
     titleHTML,
@@ -219,7 +259,7 @@ function renderPost(source, template, expectedScenes, publication) {
   }
   // Replacement callbacks preserve literal $ characters in the author's prose.
   return template
-    .replace("{{TITLE}}", () => escape(title.text))
+    .replace("{{TITLE}}", () => escapeHtml(title.text))
     .replace("{{ARTICLE}}", () => article);
 }
 

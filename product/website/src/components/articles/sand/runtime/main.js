@@ -3,7 +3,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SCENES2D } from "./scenes2d.js";
 import { SAND_PROGRESS } from "./scroll-progress.js";
 import { mountVisibleTicker } from "./visible-ticker.js";
-import { syncSceneLoops } from "./scene-loops.js";
 
 export const mountSandScenes = (host) => {
   const media = gsap.matchMedia();
@@ -491,8 +490,7 @@ export const mountSandScenes = (host) => {
     tl.time(0.001, true);
     tl.time(0, true);
   }
-  const motion = matchMedia("(prefers-reduced-motion: reduce)");
-  let invalidate = () => {};
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   media.add(
     { wide: "(min-width: 641px)", narrow: "(max-width: 640px)" },
@@ -521,11 +519,8 @@ export const mountSandScenes = (host) => {
           bounds,
           scrollY + innerHeight * line,
         );
-        if (motion.matches) {
-          scrub.tween.pause();
-          state.progress = progress;
-          invalidate();
-        } else scrub(progress);
+        if (reduced) state.progress = progress;
+        else scrub(progress);
       };
       ScrollTrigger.create({
         trigger: sections[0],
@@ -538,19 +533,10 @@ export const mountSandScenes = (host) => {
         },
         onUpdate: update,
       });
-      const updateMotion = () => {
-        scrub.tween.pause();
-        update();
-      };
-
-      motion.addEventListener("change", updateMotion);
       measure();
       update();
       document.fonts.ready.then(() => ScrollTrigger.refresh());
-      return () => {
-        motion.removeEventListener("change", updateMotion);
-        scrub.tween.kill();
-      };
+      return () => scrub.tween.kill();
     },
   );
 
@@ -600,7 +586,6 @@ export const mountSandScenes = (host) => {
   };
 
   function frame(time, dtMs) {
-    const reduced = motion.matches;
     const dt = Math.min(dtMs, 50) / 1000;
     const now = performance.now();
 
@@ -616,7 +601,19 @@ export const mountSandScenes = (host) => {
 
     d2.tl.time(p, true);
     for (const fn of d2.afterRender) fn();
-    syncSceneLoops(d2.loops, p, inTransition, reduced, suspendedLoops);
+    for (const l of d2.loops) {
+      const on = Math.round(p) === l.scene && !inTransition;
+      if (on && l.tween.paused()) {
+        if (suspendedLoops.has(l.tween)) l.tween.resume();
+        else l.tween.restart(true);
+      } else if (!on && (!l.tween.paused() || suspendedLoops.has(l.tween))) {
+        l.tween.pause();
+        if (l.reset) l.reset();
+        else l.tween.pause(0);
+      }
+    }
+
+    suspendedLoops.clear();
 
     const idx = Math.round(p);
     if (idx !== activeIdx) {
@@ -646,10 +643,7 @@ export const mountSandScenes = (host) => {
     const target = idle && !reduced ? ctl.spin : 0;
     spinVel += (target - spinVel) * (1 - Math.exp(-dt * 4));
     theta += spinVel * dt;
-    if (reduced) {
-      spinVel = 0;
-      theta = home;
-    } else if (inTransition) {
+    if (inTransition) {
       // ease the turntable to a home angle so transformations read clearly (slightly off side-on)
       const d = ((((theta - home + Math.PI) % TAU) + TAU) % TAU) - Math.PI;
       theta = home + d * Math.exp(-dt * 5);
@@ -1074,7 +1068,7 @@ export const mountSandScenes = (host) => {
     return d;
   }
 
-  const rendering = mountVisibleTicker(
+  const stopRendering = mountVisibleTicker(
     $("stage-svg"),
     gsap.ticker,
     frame,
@@ -1086,9 +1080,7 @@ export const mountSandScenes = (host) => {
         tween.pause();
       }
     },
-    motion,
   );
-  invalidate = rendering.invalidate;
 
   // Handy from the console: __demo.theta = 1.2; __demo.ctl.spin = 0
   const demo = (window.__demo = {
@@ -1110,7 +1102,7 @@ export const mountSandScenes = (host) => {
 
   return () => {
     media.revert();
-    rendering.destroy();
+    stopRendering();
     listeners.forEach((remove) => remove());
     d2?.tl.kill();
     d2?.storeDemo?.kill();

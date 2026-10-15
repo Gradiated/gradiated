@@ -1,5 +1,9 @@
 import { gsap } from "gsap";
-import { MEMORY_MODEL, REGISTER_MODEL } from "./memory-model.js";
+import {
+  MEMORY_MODEL,
+  REGISTER_MODEL,
+  dataChangePulse,
+} from "./memory-model.js";
 export const MEMORY_SCENES = (() => {
   const build = ({
     root,
@@ -85,8 +89,23 @@ export const MEMORY_SCENES = (() => {
     const addressValue = digit(decoder, 19, 125, "0");
     const inputDeck = group({}, array);
     show(inputDeck, "register", "memory-buses");
+    const inputFlashes = [];
     const inputDigits = xs.map((x, i) => {
       label(inputDeck, x - 23, 106, `D${3 - i}`, { class: "tiny" });
+      inputFlashes.push(
+        mk(
+          "rect",
+          {
+            x: x - 32,
+            y: 109,
+            width: 18,
+            height: 21,
+            rx: 4,
+            class: "data-change-highlight",
+          },
+          inputDeck,
+        ),
+      );
       return digit(inputDeck, x - 23, 125, "0011"[i]);
     });
     const inputNames = Array.from(inputDeck.querySelectorAll("text.tiny"));
@@ -195,6 +214,7 @@ export const MEMORY_SCENES = (() => {
           const value = digit(cell, x + 2, y + 17, bits([3, 6, 0, 0][r])[c], {
             "data-memory-bit": `${r}-${c}`,
           });
+          if (r === 0) key(value, "memory-two", {});
           wire(cell, `M${x - 23} ${y + 8} H${x - 16}`);
           const enable = wire(cell, `M${x - 5} ${y + 24} V${y + 36}`);
           const q = `M${x + 16} ${y + 8} H${x + 20}`;
@@ -419,6 +439,12 @@ export const MEMORY_SCENES = (() => {
         "data-loop-time",
         registerState.time.toFixed(3),
       );
+      const change = registerState.inputChange;
+      inputFlashes.forEach((element, c) => {
+        const changed = change && bits(change.from)[c] !== bits(change.to)[c];
+        element.style.opacity =
+          registerActive && changed ? dataChangePulse(change.age) : 0;
+      });
       setText(registerWE, registerState.we);
       registerEnableLight.style.opacity = registerState.we;
       registerCopies.forEach((element, c) => {

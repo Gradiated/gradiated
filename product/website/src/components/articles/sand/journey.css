@@ -603,33 +603,31 @@ html:has(.sand-journey) {
 
 .sand-journey #d2 .latch-value-highlight {
   stroke: none;
-  fill: rgba(175, 91, 81, 0.18);
-  transition:
-    fill 180ms ease,
-    opacity 180ms ease;
-}
-.sand-journey #d2 [data-latch-port][data-value="1"] .latch-value-highlight {
-  fill: rgba(74, 139, 103, 0.18);
-}
-.sand-journey #d2 [data-latch-port="we"] .latch-value-highlight {
   fill: rgba(224, 178, 61, 0.26);
   opacity: 0;
+  transition: opacity 180ms ease;
 }
 .sand-journey
   #d2
   [data-latch-port="we"][data-value="1"]
   .latch-value-highlight {
-  fill: rgba(224, 178, 61, 0.26);
   opacity: 1;
 }
 
 .sand-journey #d2 .register-enable {
   transition: opacity 180ms ease;
 }
-.sand-journey #d2 text.register-copy {
+.sand-journey #d2 text.register-copy,
+.sand-journey #d2 text.latch-copy {
   paint-order: stroke fill;
   stroke: var(--paper);
   stroke-width: 4px;
   stroke-linejoin: round;
   pointer-events: none;
+}
+
+.sand-journey #d2 .data-change-highlight {
+  fill: rgba(74, 139, 103, 0.22);
+  stroke: none;
+  opacity: 0;
 }

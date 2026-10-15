@@ -3,6 +3,8 @@ import test from "node:test";
 import {
   MEMORY_MODEL,
   REGISTER_MODEL,
+  createLatchModel,
+  dataChangePulse,
 } from "../src/components/articles/sand/runtime/memory-model.js";
 
 test("read selection returns the addressed word without writing", () => {
@@ -103,4 +105,71 @@ test("the register repeats without silently resetting its stored bits", () => {
     REGISTER_MODEL.frame(18).output,
   );
   assert.deepEqual(REGISTER_MODEL.frame(2), REGISTER_MODEL.frame(38));
+});
+
+const latchModel = createLatchModel(
+  [
+    { time: 1, d: 1 },
+    { time: 3, we: 0 },
+    { time: 4, d: 0 },
+    { time: 6, we: 1 },
+    { time: 7.5, d: 1 },
+    { time: 8, we: 0 },
+  ],
+  10,
+);
+
+test("the single latch flies a changed bit while enabled and settles before holding", () => {
+  const moving = latchModel.frame(1.3);
+  assert.equal(moving.we, 1);
+  assert.equal(moving.d, 1);
+  assert.equal(moving.q, 0);
+  assert.equal(moving.transfer.to, 1);
+  assert.equal(latchModel.frame(2).q, 1);
+  const held = latchModel.frame(4.5);
+  assert.equal(held.d, 0);
+  assert.equal(held.q, 1);
+  assert.equal(held.transfer, null);
+});
+
+test("enabling the latch copies a waiting input and another change copies while still enabled", () => {
+  assert.equal(latchModel.frame(6.2).transfer.to, 0);
+  assert.equal(latchModel.frame(6.8).q, 0);
+  assert.equal(latchModel.frame(7.7).transfer.to, 1);
+  assert.equal(latchModel.frame(8).q, 1);
+  assert.equal(latchModel.frame(8).we, 0);
+  assert.equal(latchModel.frame(8).transfer, null);
+});
+
+test("the single latch copies on repeat instead of silently resetting its held output", () => {
+  assert.equal(latchModel.frame(9.999).q, latchModel.frame(10).q);
+  assert.equal(latchModel.frame(10.3).transfer.to, 0);
+  assert.equal(latchModel.frame(10.8).q, 0);
+  for (let tick = 0; tick <= 3000; tick++) {
+    const state = latchModel.frame(tick / 100);
+    if (!state.we) assert.equal(state.transfer, null);
+  }
+});
+
+test("data-change flashes fade away and do not restart for an unchanged input", () => {
+  assert.equal(dataChangePulse(null), 0);
+  assert.equal(dataChangePulse(0), 0);
+  assert.equal(dataChangePulse(0.325), 1);
+  assert.equal(dataChangePulse(0.65), 0);
+  const model = createLatchModel([
+    { time: 1, d: 1 },
+    { time: 2, d: 1 },
+    { time: 3, d: 0 },
+  ]);
+  assert.ok(dataChangePulse(model.frame(1.3).dataAge) > 0.9);
+  assert.equal(dataChangePulse(model.frame(2.3).dataAge), 0);
+  assert.ok(dataChangePulse(model.frame(3.3).dataAge) > 0.9);
+});
+
+test("register input flashes identify only the bits changed by the new input", () => {
+  const change = REGISTER_MODEL.frame(6.325).inputChange;
+  assert.equal(change.from ^ change.to, 0b0101);
+  assert.ok(dataChangePulse(change.age) > 0.99);
+  assert.equal(dataChangePulse(REGISTER_MODEL.frame(7).inputChange.age), 0);
+  assert.equal(REGISTER_MODEL.frame(0).inputChange, null);
 });

@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { COMPUTER_SCENES } from "./computer-scenes.js";
 import { MEMORY_SCENES } from "./memory-scenes.js";
+import { createLatchModel, dataChangePulse } from "./memory-model.js";
 /* ------------------------------------------------------------------ */
 /* 2D diagram scenes: everything after the wafer.                      */
 /*                                                                     */
@@ -1064,18 +1065,24 @@ export const SCENES2D = (function () {
         { "data-latch-port": name, "data-value": value },
         latchValues,
       );
-      mk(
-        "rect",
-        {
-          x: x - (anchor === "end" ? 14 : 4),
-          y: y - 16,
-          width: 18,
-          height: 21,
-          rx: 4,
-          class: "latch-value-highlight",
-        },
-        port,
-      );
+      const highlight =
+        name === "q"
+          ? null
+          : mk(
+              "rect",
+              {
+                x: x - (anchor === "end" ? 14 : 4),
+                y: y - 16,
+                width: 18,
+                height: 21,
+                rx: 4,
+                class:
+                  name === "d"
+                    ? "data-change-highlight"
+                    : "latch-value-highlight",
+              },
+              port,
+            );
       const digit = text(
         x,
         y,
@@ -1083,9 +1090,15 @@ export const SCENES2D = (function () {
         { class: "logic-value", "text-anchor": anchor },
         port,
       );
-      return { port, digit };
+      return { port, digit, highlight };
     });
-    const latchBits = { d: 0, we: 1, q: 0 };
+    const latchCopy = text(
+      94,
+      234,
+      "0",
+      { class: "logic-value latch-copy", opacity: 0 },
+      latchValues,
+    );
     const latchRandom = rng(41);
     const latchEvents = [];
     for (let time = 5; time < 40; time += 5) {
@@ -1095,19 +1108,9 @@ export const SCENES2D = (function () {
       latchEvents.push({ time, d: latchRandom() < 0.5 ? 0 : 1 });
     }
     latchEvents.sort((a, b) => a.time - b.time);
+    const latchModel = createLatchModel(latchEvents);
     const latchDemo = gsap.timeline({ paused: true, repeat: -1 });
-    latchDemo.set(latchBits, { d: 0, we: 1, q: 0 }, 0);
-    let data = 0,
-      enabled = 1,
-      stored = 0;
-    for (const event of latchEvents) {
-      if (event.d !== undefined) data = event.d;
-      if (event.we !== undefined) enabled = event.we;
-      if (enabled === 1) stored = data;
-      latchDemo.set(latchBits, { d: data, we: enabled, q: stored }, event.time);
-    }
-    latchDemo.to({}, { duration: 40 }, 0);
-    latchDemo.time(0.001, true).time(0, true);
+    latchDemo.to({}, { duration: latchModel.period });
     logicDemos.push(latchDemo);
     afterRender.push(() => {
       const progress = tl.time();
@@ -1122,7 +1125,28 @@ export const SCENES2D = (function () {
       )
         latchDemo.play();
       else latchDemo.pause();
-      [latchBits.d, latchBits.we, latchBits.q].forEach((value, i) => {
+      const latchState = latchModel.frame(latchDemo.totalTime());
+      gLatch.setAttribute("data-d", String(latchState.d));
+      gLatch.setAttribute("data-we", String(latchState.we));
+      gLatch.setAttribute("data-q", String(latchState.q));
+      gLatch.setAttribute("data-loop-time", latchState.time.toFixed(3));
+      latchPorts[0].highlight.style.opacity = dataChangePulse(
+        latchState.dataAge,
+      );
+      const flight = latchState.transfer;
+      const p = flight?.progress ?? 0;
+      latchCopy.style.opacity = flight
+        ? Math.min(1, p / 0.12, (1 - p) / 0.12)
+        : 0;
+      latchPorts[2].digit.style.opacity = flight
+        ? 1 - Math.min(1, Math.max(0, (p - 0.78) / 0.22))
+        : 1;
+      if (flight) {
+        latchCopy.textContent = String(flight.to);
+        latchCopy.setAttribute("x", 94 + 248 * p);
+        latchCopy.setAttribute("y", 234 + 7 * p - 58 * Math.sin(Math.PI * p));
+      }
+      [latchState.d, latchState.we, latchState.q].forEach((value, i) => {
         const { port, digit } = latchPorts[i];
         if (digit.textContent !== String(value)) {
           digit.textContent = String(value);

@@ -26,6 +26,7 @@ const model = {
   properties: {
     schema_version: 1,
     type: "chat",
+    supported_uses: ["serving"],
     description: "",
     released_at: null,
     hugging_face_id: null,

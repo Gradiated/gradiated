@@ -75,11 +75,28 @@ describe("model catalog route", () => {
     expect(modelRecord.properties).not.toHaveProperty("type");
   });
 
+  it("marks training-only bases as unavailable for serving", async () => {
+    const trainingRecord = { ...modelRecord, id: "Qwen/Qwen3-8B" };
+    const app = createTestApp({
+      services: {
+        catalogBilling: {
+          listModels: async () => [modelRecord, trainingRecord],
+        },
+      },
+    });
+
+    const response = await app.request("/api/v1/models");
+    const body = await response.json();
+
+    expect(body.data[0].properties.supported_uses).toEqual(["serving"]);
+    expect(body.data[1].properties.supported_uses).toEqual(["training"]);
+  });
+
   it("requires model type in the generated public response schema", () => {
     const document = createOpenApiDocument();
 
     expect(document.components?.schemas?.ModelProperties).toMatchObject({
-      required: expect.arrayContaining(["type"]),
+      required: expect.arrayContaining(["type", "supported_uses"]),
     });
   });
 

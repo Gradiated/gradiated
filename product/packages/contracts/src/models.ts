@@ -6,6 +6,7 @@ import {
   pageFields,
   TimestampSchema,
 } from "./common.js";
+import { MODEL_USE_CASES } from "./model-catalog.js";
 import {
   ServiceTierPricingPolicySchema,
   ServiceTierSchema,
@@ -247,6 +248,12 @@ const ModelTypeSchema = z
     "The inference interface: chat generates text; decision scores typed questions without generating text.",
   );
 
+const ModelSupportedUsesSchema = z
+  .array(z.enum(MODEL_USE_CASES))
+  .describe(
+    "Product uses: serving is available for inference; training, judge and comparison are internal workflow uses.",
+  );
+
 export const ModelPropertiesSchema = z.strictObject({
   schema_version: z.literal(1),
   description: z.string().max(2_000),
@@ -314,9 +321,10 @@ const CatalogModelSchema = z.strictObject({
 });
 
 export const ModelSchema = CatalogModelSchema.extend({
-  properties: ModelPropertiesSchema.extend({ type: ModelTypeSchema }).openapi(
-    "ModelProperties",
-  ),
+  properties: ModelPropertiesSchema.extend({
+    type: ModelTypeSchema,
+    supported_uses: ModelSupportedUsesSchema,
+  }).openapi("ModelProperties"),
 }).openapi("Model");
 
 export const ExternalModelSchema = CatalogModelSchema.extend({

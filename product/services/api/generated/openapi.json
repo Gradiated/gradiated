@@ -523,6 +523,19 @@
               "decision"
             ],
             "description": "The inference interface: chat generates text; decision scores typed questions without generating text."
+          },
+          "supported_uses": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "judge",
+                "training",
+                "comparison",
+                "serving"
+              ]
+            },
+            "description": "Product uses: serving is available for inference; training, judge and comparison are internal workflow uses."
           }
         },
         "required": [
@@ -536,7 +549,8 @@
           "output_modalities",
           "passthrough_parameters",
           "deprecation_date",
-          "type"
+          "type",
+          "supported_uses"
         ],
         "additionalProperties": false
       },

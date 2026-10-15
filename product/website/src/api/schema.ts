@@ -771,6 +771,8 @@ export interface components {
        * @enum {string}
        */
       type: "chat" | "decision";
+      /** @description Product uses: serving is available for inference; training, judge and comparison are internal workflow uses. */
+      supported_uses: ("judge" | "training" | "comparison" | "serving")[];
     };
     ModelParameterDescriptor:
       | {

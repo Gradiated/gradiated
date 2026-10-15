@@ -7,7 +7,11 @@ import {
 } from "@gradiated/contracts";
 import type { CatalogBillingService, ModelRecord } from "@gradiated/control";
 import { createRoute, z, type OpenAPIHono } from "@hono/zod-openapi";
-import { catalogModel, modelType } from "@gradiated/contracts/model-catalog";
+import {
+  catalogModel,
+  modelSupportedUses,
+  modelType,
+} from "@gradiated/contracts/model-catalog";
 import type { createExternalModelCatalog } from "../catalog/external-models.js";
 
 import type { ApiEnvironment } from "../types.js";
@@ -64,7 +68,11 @@ const modelResponse = (record: ListedModelRecord): Model => ({
   id: record.id,
   name: record.name,
   status: record.status,
-  properties: { ...record.properties, type: modelType(record.id) },
+  properties: {
+    ...record.properties,
+    type: modelType(record.id),
+    supported_uses: [...modelSupportedUses(record.id)],
+  },
   icon: catalogModel(record.id)?.icon ?? null,
   created_at: record.createdAt.toISOString(),
   updated_at: record.updatedAt.toISOString(),

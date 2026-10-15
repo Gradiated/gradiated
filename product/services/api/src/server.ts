@@ -16,6 +16,7 @@ import {
   createAdapterHostingService,
   ObjectStorage,
   createDeploymentStatusService,
+  createMemberService,
   createOrganizationService,
   createProfilingWriter,
   createUsageService,
@@ -42,6 +43,10 @@ import {
   type MagicLinkMessage,
   type OtpCodeMessage,
 } from "./email/auth-messages.js";
+import {
+  createResendInvitationSender,
+  type InvitationMessage,
+} from "./email/invitation.js";
 import { createTestMailbox } from "./email/test-mailbox.js";
 import {
   createLoggingWaitlistWelcomeSender,
@@ -94,16 +99,20 @@ const createEmailSenders = () => {
   if (environment.authEmail.kind === "test") {
     const magicLinks = createTestMailbox();
     const otpCodes = createTestMailbox();
+    const invitationLinks = createTestMailbox();
 
     return {
       sendMagicLink: async ({ email, url }: MagicLinkMessage) =>
         magicLinks.send(email, url),
       sendOtp: async ({ email, code }: OtpCodeMessage) =>
         otpCodes.send(email, code),
+      sendInvitation: async ({ email, url }: InvitationMessage) =>
+        invitationLinks.send(email, url),
       sendWaitlistWelcome: createLoggingWaitlistWelcomeSender(),
       authTestMailbox: {
         takeMagicLink: magicLinks.take,
         takeOtp: otpCodes.take,
+        takeInvitation: invitationLinks.take,
       },
     };
   }
@@ -113,6 +122,7 @@ const createEmailSenders = () => {
   return {
     sendMagicLink: createResendMagicLinkSender(resend),
     sendOtp: createResendOtpSender(resend),
+    sendInvitation: createResendInvitationSender(resend),
     sendWaitlistWelcome: createResendWaitlistWelcomeSender({
       ...resend,
       consoleUrl: environment.CONSOLE_URL,
@@ -120,7 +130,7 @@ const createEmailSenders = () => {
   };
 };
 
-const { sendWaitlistWelcome, authTestMailbox, ...authEmail } =
+const { sendInvitation, sendWaitlistWelcome, authTestMailbox, ...authEmail } =
   createEmailSenders();
 
 const auth = createAuthService(database, {
@@ -177,7 +187,9 @@ const app = createApp({
   auth,
   authTestMailbox,
   checkDependencies: createReadinessCheck({ pool, valkey, timeoutMs: 2_000 }),
+  consoleUrl: environment.CONSOLE_URL,
   metrics,
+  sendInvitation,
   sendWaitlistWelcome,
   services: {
     billingPayments:
@@ -192,6 +204,7 @@ const app = createApp({
           })
         : unavailableBillingPaymentsService(),
     catalogBilling,
+    members: createMemberService(database),
     organizations,
     usage: createUsageService(database, clickhouse),
     waitlist: createWaitlistService(database),

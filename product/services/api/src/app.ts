@@ -19,6 +19,7 @@ import { registerHealthRoutes } from "./routes/health.js";
 import { registerMeRoutes } from "./routes/me.js";
 import { registerModelRoutes } from "./routes/models.js";
 import { createExternalModelCatalog } from "./catalog/external-models.js";
+import { registerMemberRoutes } from "./routes/members.js";
 import { registerOrganizationRoutes } from "./routes/organizations.js";
 import { registerUsageRoutes } from "./routes/usage.js";
 import { registerWaitlistRoutes } from "./routes/waitlist.js";
@@ -32,6 +33,7 @@ import type {
   AuthService,
   SessionUser,
 } from "./types.js";
+import type { InvitationSender } from "./email/invitation.js";
 import type { WaitlistWelcomeSender } from "./email/waitlist-welcome.js";
 
 export interface AppDependencies {
@@ -40,7 +42,9 @@ export interface AppDependencies {
   auth: AuthService;
   authTestMailbox?: AuthTestMailbox | undefined;
   checkDependencies: DependencyCheck;
+  consoleUrl: string;
   metrics: ApiMetrics;
+  sendInvitation: InvitationSender;
   sendWaitlistWelcome: WaitlistWelcomeSender;
   services: ApiServices;
   externalModels?: ReturnType<typeof createExternalModelCatalog>;
@@ -52,7 +56,9 @@ export const createApp = ({
   auth,
   authTestMailbox,
   checkDependencies,
+  consoleUrl,
   metrics,
+  sendInvitation,
   sendWaitlistWelcome,
   services,
   externalModels = createExternalModelCatalog(),
@@ -133,6 +139,12 @@ export const createApp = ({
   });
   registerMeRoutes(app, services.organizations);
   registerOrganizationRoutes(app, services.organizations);
+  registerMemberRoutes(app, {
+    members: services.members,
+    organizations: services.organizations,
+    sendInvitation,
+    consoleUrl,
+  });
   registerUsageRoutes(app, services.usage);
   registerWaitlistRoutes(app, {
     waitlist: services.waitlist,

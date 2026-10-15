@@ -41,7 +41,7 @@ describe("organization routes", () => {
     expect(received).toEqual([{ userId: user.id, name: "Analytical Engines" }]);
     await expect(response.json()).resolves.toMatchObject({
       name: "Analytical Engines",
-      role: "owner",
+      role: "admin",
       default_workspace_id: workspaceId,
     });
   });

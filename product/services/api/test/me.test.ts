@@ -74,7 +74,7 @@ describe("current user route", () => {
           id: organizationId,
           name: "Personal",
           status: "active",
-          role: "owner",
+          role: "admin",
           default_workspace_id: workspaceId,
           auto_join_domain: null,
           onboarding_completed: false,

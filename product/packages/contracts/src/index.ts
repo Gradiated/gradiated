@@ -9,6 +9,7 @@ export {
   EmailDomainSchema,
   OrganizationRoleSchema,
   type CurrentUser,
+  type OrganizationRole,
 } from "./me.js";
 export {
   CreateOrganizationSchema,
@@ -18,6 +19,24 @@ export {
   type CreateOrganization,
   type Organization,
 } from "./organizations.js";
+export {
+  CreateInvitationsSchema,
+  EmailInputSchema,
+  InvitationListSchema,
+  InvitationParamsSchema,
+  InvitationPreviewSchema,
+  InvitationSchema,
+  InvitationTokenSchema,
+  MemberListSchema,
+  MemberParamsSchema,
+  MemberSchema,
+  UpdateMemberSchema,
+  type CreateInvitations,
+  type Invitation,
+  type InvitationPreview,
+  type Member,
+  type UpdateMember,
+} from "./members.js";
 export { WizardKeyResponseSchema, type WizardKeyResponse } from "./wizard.js";
 export { ProblemSchema, problemContent, type Problem } from "./problem.js";
 export {

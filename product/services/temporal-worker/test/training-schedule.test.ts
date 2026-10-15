@@ -143,7 +143,7 @@ it("creates, updates, disables and re-enables a schedule directly across replica
 it("writes the Temporal schedule when the task is modified", async () => {
   const db = await createTestDatabase();
   const engine = createTemporalTrainingEngine(environment.client);
-  const member = await seedMember(db.database, { role: "owner" });
+  const member = await seedMember(db.database, { role: "admin" });
   const model = modelInput();
   await createCatalogService(db.database).upsertModel(model);
   const taskId = randomUUID();
@@ -195,7 +195,7 @@ it("starts and shuts down the worker with encrypted clients and PostgreSQL run s
   const abort = new AbortController();
   let running: Promise<void> | undefined;
   try {
-    const member = await seedMember(db.database, { role: "owner" });
+    const member = await seedMember(db.database, { role: "admin" });
     const model = modelInput();
     await createCatalogService(db.database).upsertModel(model);
     const taskId = randomUUID();

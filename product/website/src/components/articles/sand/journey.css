@@ -3,7 +3,6 @@
   --ink: #17161a;
   --muted: #8d8781;
   --shadow: #e3ddd2;
-  --panel: rgba(255, 253, 249, 0.92);
 }
 
 .sand-journey * {
@@ -334,60 +333,6 @@
   color: var(--ink);
 }
 
-.sand-journey .panel {
-  position: fixed;
-  right: 1rem;
-  bottom: 1rem;
-  z-index: 10;
-  font-size: 0.78rem;
-  line-height: 1.4;
-  background: var(--panel);
-  border: 1px solid #e6e0d6;
-  border-radius: 10px;
-  padding: 0.4rem 0.7rem;
-  backdrop-filter: blur(8px);
-  min-width: 11rem;
-}
-
-.sand-journey .panel summary {
-  cursor: pointer;
-  color: var(--muted);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-size: 0.7rem;
-  user-select: none;
-}
-
-.sand-journey .panel label {
-  display: grid;
-  grid-template-columns: 5rem 1fr;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.45rem;
-  color: var(--muted);
-}
-
-.sand-journey .panel label.check {
-  grid-template-columns: auto 1fr;
-}
-
-.sand-journey .panel input[type="range"] {
-  width: 100%;
-  accent-color: var(--ink);
-}
-
-.sand-journey .panel input[type="checkbox"] {
-  accent-color: var(--ink);
-  margin: 0;
-}
-
-.sand-journey .panel output {
-  display: block;
-  margin-top: 0.5rem;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-}
-
 @media (max-width: 640px) {
   .sand-journey .post {
     display: block;
@@ -432,9 +377,6 @@
 .sand-journey .prose p {
   font-size: inherit;
   line-height: inherit;
-}
-.sand-journey .panel {
-  display: none;
 }
 
 .sand-journey:not([data-animation-ready="true"]) .scene-text {
@@ -502,7 +444,7 @@
   color: var(--color-text);
 }
 
-.gr-fab-link[aria-current="location"] {
+.sand-guide-link[aria-current="location"] {
   color: var(--color-interactive);
 }
 
@@ -637,4 +579,24 @@ html:has(.sand-journey) {
 .sand-journey #d2 text.memory-port {
   font-size: 6px;
   fill: #6f6a63;
+}
+
+[data-theme="dark"] .sand-journey {
+  --paper: var(--color-substrate);
+  --ink: var(--color-text);
+  --muted: var(--color-text-muted);
+  --shadow: var(--color-module);
+}
+
+[data-theme="dark"] .sand-journey #d2 .timing-one text {
+  fill: #8fc9a3;
+}
+
+[data-theme="dark"] .sand-journey #d2 .timing-zero text {
+  fill: #e6a39b;
+}
+
+[data-theme="dark"] .sand-journey #d2 text.muted,
+[data-theme="dark"] .sand-journey #d2 text.caption {
+  fill: var(--color-text-muted);
 }

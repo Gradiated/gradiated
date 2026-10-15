@@ -14,6 +14,7 @@ import {
 } from "@/api/queries";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
+import { canManageOrganization } from "@/lib/roles";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { TopUpBalance } from "@/components/top-up-balance";
 import { useProductContext } from "@/hooks/use-product-context";
@@ -49,6 +50,7 @@ export const BillingPage = () => {
     return value === "success" || value === "cancelled" ? value : null;
   });
   const refetchInterval = checkoutReturn === "success" ? 2_000 : false;
+  const canManage = canManageOrganization(context.selectedOrganization);
   const account = useQuery({
     ...billingAccountQuery(context.organizationId),
     refetchInterval,
@@ -109,7 +111,10 @@ export const BillingPage = () => {
           )}
         </section>
         {account.data?.mode === "prepaid" && context.organizationId ? (
-          <TopUpBalance organizationId={context.organizationId} />
+          <TopUpBalance
+            organizationId={context.organizationId}
+            disabled={!canManage}
+          />
         ) : null}
       </div>
 

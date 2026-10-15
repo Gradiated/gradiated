@@ -5,6 +5,7 @@ import type { ApiEnvironment } from "../types.js";
 export interface AuthTestMailbox {
   takeMagicLink(email: string): string | null;
   takeOtp(email: string): string | null;
+  takeInvitation(email: string): string | null;
 }
 
 const takeRoutes = [
@@ -19,6 +20,12 @@ const takeRoutes = [
     field: "code",
     missing: "Code not found.",
     take: "takeOtp",
+  },
+  {
+    path: "/api/auth/test/invitation",
+    field: "url",
+    missing: "Invitation not found.",
+    take: "takeInvitation",
   },
 ] as const satisfies readonly {
   path: string;

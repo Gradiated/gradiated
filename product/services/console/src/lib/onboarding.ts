@@ -3,7 +3,7 @@ import type { CurrentUser } from "@/api/queries";
 export const organizationToOnboard = (user: CurrentUser | undefined) =>
   user?.organizations.find(
     (organization) =>
-      organization.role === "owner" && !organization.onboarding_completed,
+      organization.role === "admin" && !organization.onboarding_completed,
   );
 
 export const suggestedOrganizationName = (domain: string | null) => {

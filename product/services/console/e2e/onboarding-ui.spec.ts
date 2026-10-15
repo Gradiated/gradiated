@@ -17,7 +17,7 @@ const setup = async (
   const organization = {
     id: "00000000-0000-4000-8000-000000000001",
     name: "Personal",
-    role: "owner",
+    role: "admin",
     status: "active",
     default_workspace_id: "00000000-0000-4000-8000-000000000002",
     auto_join_domain: autoJoinDomain,
@@ -167,7 +167,7 @@ test("a personal-email owner only names the organization", async ({ page }) => {
   ]);
 });
 
-test("onboarded owners skip setup and can turn domain joining off in settings", async ({
+test("onboarded admins skip setup and can turn domain joining off in settings", async ({
   page,
 }) => {
   const { patches } = await setup(page, {
@@ -180,8 +180,7 @@ test("onboarded owners skip setup and can turn domain joining off in settings", 
   await page.goto("/onboarding");
   await expect(page).toHaveURL(/\/models$/);
 
-  await page.goto("/settings");
-  await page.getByRole("tab", { name: "Organization", exact: true }).click();
+  await page.goto("/settings/organization");
   const toggle = page.getByRole("switch", {
     name: "Anyone with an @acme.com email can join",
   });

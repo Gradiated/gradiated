@@ -4,7 +4,11 @@ import { createHash, randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { apiKeys, workspaces } from "../src/db/schema/index.js";
+import {
+  apiKeys,
+  organizationMembers,
+  workspaces,
+} from "../src/db/schema/index.js";
 import type { OrganizationRole } from "../src/organizations/service.js";
 import {
   createWorkspaceApiKeyService,
@@ -49,7 +53,7 @@ describe("workspaces and API keys", () => {
     "openai/gpt-4.1-mini",
     "anthropic/claude-haiku-4-5",
   ])("persists catalog judge %s", async (judge) => {
-    const { userId, workspaceId } = await membership("owner");
+    const { userId, workspaceId } = await membership("admin");
     const updated = await service.updateWorkspace(userId, workspaceId, {
       default_judge_model: judge,
     });
@@ -57,7 +61,7 @@ describe("workspaces and API keys", () => {
   });
 
   it("renames the selected workspace without changing its capture or judge settings", async () => {
-    const { userId, workspaceId, organizationId } = await membership("owner");
+    const { userId, workspaceId, organizationId } = await membership("admin");
     const before = (
       await service.listWorkspaces(userId, organizationId, false)
     ).find((row) => row.id === workspaceId)!;
@@ -77,7 +81,7 @@ describe("workspaces and API keys", () => {
   it.each([false, true])(
     "rejects duplicate workspace names even when archived=%s",
     async (archived) => {
-      const { userId, workspaceId, organizationId } = await membership("owner");
+      const { userId, workspaceId, organizationId } = await membership("admin");
       const original = (
         await service.listWorkspaces(userId, organizationId, false)
       ).find((row) => row.id === workspaceId)!;
@@ -99,7 +103,7 @@ describe("workspaces and API keys", () => {
     },
   );
   it("allows changing only the case of the current workspace name", async () => {
-    const { userId, workspaceId, organizationId } = await membership("owner");
+    const { userId, workspaceId, organizationId } = await membership("admin");
     const original = (
       await service.listWorkspaces(userId, organizationId, false)
     ).find((row) => row.id === workspaceId)!;
@@ -116,7 +120,7 @@ describe("workspaces and API keys", () => {
   });
 
   describe("createWorkspace", () => {
-    it.each<OrganizationRole>(["owner", "admin"])(
+    it.each<OrganizationRole>(["admin"])(
       "lets an %s create a workspace",
       async (role) => {
         const { userId, organizationId } = await membership(role);
@@ -139,19 +143,16 @@ describe("workspaces and API keys", () => {
       },
     );
 
-    it.each<OrganizationRole>(["billing", "member"])(
-      "forbids a %s",
-      async (role) => {
-        const { userId, organizationId } = await membership(role);
+    it.each<OrganizationRole>(["member"])("forbids a %s", async (role) => {
+      const { userId, organizationId } = await membership(role);
 
-        await expect(
-          service.createWorkspace(userId, organizationId, { name: "Denied" }),
-        ).rejects.toMatchObject({ code: "forbidden" });
-      },
-    );
+      await expect(
+        service.createWorkspace(userId, organizationId, { name: "Denied" }),
+      ).rejects.toMatchObject({ code: "forbidden" });
+    });
 
     it("forbids an owner of a suspended organization", async () => {
-      const { userId, organizationId } = await membership("owner", "suspended");
+      const { userId, organizationId } = await membership("admin", "suspended");
 
       await expect(
         service.createWorkspace(userId, organizationId, { name: "Denied" }),
@@ -159,7 +160,7 @@ describe("workspaces and API keys", () => {
     });
 
     it("hides the organization from a non-member", async () => {
-      const { organizationId } = await membership("owner");
+      const { organizationId } = await membership("admin");
       const outsider = await seedUser(testDatabase.database);
 
       await expect(
@@ -191,7 +192,7 @@ describe("workspaces and API keys", () => {
     });
 
     it("returns nothing to a non-member", async () => {
-      const { organizationId } = await membership("owner");
+      const { organizationId } = await membership("admin");
       const outsider = await seedUser(testDatabase.database);
 
       expect(
@@ -202,7 +203,7 @@ describe("workspaces and API keys", () => {
 
   describe("listApiKeys", () => {
     it("lists the workspace keys without their digests", async () => {
-      const { userId, organizationId, workspaceId } = await membership("owner");
+      const { userId, organizationId, workspaceId } = await membership("admin");
       const otherWorkspace = await seedWorkspace(testDatabase.database, {
         organizationId,
       });
@@ -222,7 +223,7 @@ describe("workspaces and API keys", () => {
     });
 
     it("hides the workspace from a non-member", async () => {
-      const { organizationId, workspaceId } = await membership("owner");
+      const { organizationId, workspaceId } = await membership("admin");
       const outsider = await seedUser(testDatabase.database);
 
       await expect(
@@ -245,19 +246,40 @@ describe("workspaces and API keys", () => {
       () => service.revokeApiKey(userId, workspaceId, randomUUID()),
     ];
 
-    it.each<OrganizationRole>(["billing", "member"])(
-      "forbids a %s",
-      async (role) => {
-        const { userId, organizationId, workspaceId } = await membership(role);
+    it("lets members create keys and revoke only their own", async () => {
+      const admin = await membership("admin");
+      const memberId = await seedUser(testDatabase.database);
+      await testDatabase.database.insert(organizationMembers).values({
+        organizationId: admin.organizationId,
+        userId: memberId,
+        role: "member",
+        status: "active",
+      });
+      const adminKey = await service.createApiKey(
+        admin.userId,
+        admin.workspaceId,
+        { name: "Admin", expiresAt: null },
+      );
 
-        for (const action of manage(userId, organizationId, workspaceId)) {
-          await expect(action()).rejects.toMatchObject({ code: "forbidden" });
-        }
-      },
-    );
+      const memberKey = await service.createApiKey(
+        memberId,
+        admin.workspaceId,
+        { name: "Mine", expiresAt: null },
+      );
+      await service.revokeApiKey(
+        memberId,
+        admin.workspaceId,
+        memberKey.apiKey.id,
+      );
+
+      expect((await storedKey(memberKey.apiKey.id))?.revokedAt).not.toBeNull();
+      await expect(
+        service.revokeApiKey(memberId, admin.workspaceId, adminKey.apiKey.id),
+      ).rejects.toMatchObject({ code: "forbidden" });
+    });
 
     it("hides the workspace from a non-member", async () => {
-      const { organizationId, workspaceId } = await membership("owner");
+      const { organizationId, workspaceId } = await membership("admin");
       const outsider = await seedUser(testDatabase.database);
 
       for (const action of manage(outsider, organizationId, workspaceId)) {
@@ -291,7 +313,7 @@ describe("workspaces and API keys", () => {
     });
 
     it("rejects an expiry in the past", async () => {
-      const { userId, organizationId, workspaceId } = await membership("owner");
+      const { userId, organizationId, workspaceId } = await membership("admin");
 
       await expect(
         service.createApiKey(userId, workspaceId, {
@@ -302,7 +324,7 @@ describe("workspaces and API keys", () => {
     });
 
     it("forbids keys in an archived workspace", async () => {
-      const { userId, organizationId, workspaceId } = await membership("owner");
+      const { userId, organizationId, workspaceId } = await membership("admin");
       await archive(workspaceId);
 
       await expect(
@@ -316,7 +338,7 @@ describe("workspaces and API keys", () => {
 
   describe("revokeApiKey", () => {
     const createKey = async () => {
-      const access = await membership("owner");
+      const access = await membership("admin");
       const { apiKey } = await service.createApiKey(
         access.userId,
         access.workspaceId,

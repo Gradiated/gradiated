@@ -9,6 +9,7 @@ export default defineConfig({
     "task-ui.spec.ts",
     "settings-ui.spec.ts",
     "onboarding-ui.spec.ts",
+    "members-ui.spec.ts",
   ],
   outputDir: "../../../.agents/runtime/task-ui-browser-output",
   use: { baseURL, headless: true },

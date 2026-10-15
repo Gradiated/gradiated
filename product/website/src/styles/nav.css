@@ -743,7 +743,7 @@
    geometrically centred on — the panel measured centred and looked wrong. */
 .gr-nav-panel-content:has(.gr-nav-writing) {
   grid-template-columns:
-    repeat(var(--nav-card-count, 2), minmax(0, calc(10 * var(--u))))
+    repeat(2, minmax(0, calc(10 * var(--u))))
     minmax(0, max-content);
 }
 
@@ -1074,12 +1074,12 @@
   inset: 0;
 }
 
-.gr-nav-wordmark {
+.gr-nav--with-guide .gr-nav-wordmark {
   flex-shrink: 0;
 }
 
-.gr-nav-link,
-.gr-nav-action {
+.gr-nav--with-guide .gr-nav-link,
+.gr-nav--with-guide .gr-nav-action {
   white-space: nowrap;
 }
 
@@ -1087,20 +1087,20 @@
   min-width: 0;
 }
 
-.gr-nav-note {
+.gr-nav-writing .gr-nav-note {
   max-width: 100%;
   grid-template-columns: calc(4 * var(--u)) minmax(0, 1fr);
 }
 
 @media (max-width: 959px) {
-  [data-tier="wide"] .gr-nav-links,
-  [data-tier="wide"] .gr-nav-actions,
-  [data-tier="wide"] .gr-nav-panel {
+  [data-tier="wide"] .gr-nav--with-guide .gr-nav-links,
+  [data-tier="wide"] .gr-nav--with-guide .gr-nav-actions,
+  [data-tier="wide"] .gr-nav--with-guide ~ .gr-nav-panel {
     display: none;
   }
 
-  [data-tier="wide"] .gr-nav-burger {
-    display: flex;
+  [data-tier="wide"] .gr-nav--with-guide ~ .gr-nav-burger {
+    display: grid;
   }
 }
 

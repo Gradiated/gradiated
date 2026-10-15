@@ -1,0 +1,86 @@
+# Weekly dependency updates. Minor and patch updates arrive as one pull request per
+# ecosystem; major updates arrive one per dependency. The cooldown matches the
+# 7-day release age that .cargo/config.toml and pnpm-workspace.yaml enforce.
+version: 2
+
+updates:
+  - package-ecosystem: cargo
+    directories:
+      - /product/services/gateway
+      - /product/services/proxy
+      - /product/services/collector
+      - /product/packages/credentials
+      - /research/lab
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/London
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    groups:
+      cargo-minor-and-patch:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: deps
+
+  - package-ecosystem: npm
+    directory: /product
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/London
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-and-patch:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: deps
+
+  - package-ecosystem: github-actions
+    directories:
+      - /
+      - /.github/actions/relevant
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/London
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    groups:
+      actions-minor-and-patch:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: deps
+
+  # Toolchain images follow mise.toml and are upgraded with it, not here. GPU
+  # inference images are built and validated per model, so they are left out.
+  - package-ecosystem: docker
+    directories:
+      - /product
+      - /product/services
+      - /infra/images/temporal-ui
+      - /tools/virtual-kubelet
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/London
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: node
+      - dependency-name: rust
+      - dependency-name: golang
+    groups:
+      docker-minor-and-patch:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: deps

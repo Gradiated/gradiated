@@ -8,8 +8,9 @@ import { v7 as uuidv7 } from "uuid";
 
 import {
   findMembership,
-  managerRoles,
-  requireMembership,
+  isAdmin,
+  requireOrganizationAdmin,
+  requireWritableWorkspace,
   requireWorkspaceEditor,
   requireWorkspaceMembership,
 } from "../access.js";
@@ -64,25 +65,6 @@ export const createWorkspaceApiKeyService = (
   validateEvaluationModel?: (id: string) => Promise<void>,
 ): WorkspaceApiKeyService => {
   const records = createWorkspaceStore(database);
-  const requireWorkspaceManager = async (
-    userId: string,
-    organizationId: string,
-  ): Promise<void> => {
-    const membership = await requireMembership(database, {
-      userId,
-      organizationId,
-    });
-    if (
-      membership.organizationStatus !== "active" ||
-      !managerRoles.has(membership.role)
-    ) {
-      throw new ControlServiceError(
-        "forbidden",
-        "Only active organization owners and admins can create workspaces.",
-      );
-    }
-  };
-
   return {
     async listWorkspaces(userId, organizationId, includeArchived) {
       const membership = await findMembership(database, {
@@ -104,7 +86,7 @@ export const createWorkspaceApiKeyService = (
     },
 
     async createWorkspace(userId, organizationId, input) {
-      await requireWorkspaceManager(userId, organizationId);
+      await requireOrganizationAdmin(database, { userId, organizationId });
 
       const now = new Date();
       const workspace: WorkspaceRecord = {
@@ -167,7 +149,7 @@ export const createWorkspaceApiKeyService = (
     },
 
     async createApiKey(userId, workspaceId, input) {
-      const workspace = await requireWorkspaceEditor(database, {
+      const { workspace } = await requireWritableWorkspace(database, {
         userId,
         workspaceId,
       });
@@ -201,7 +183,10 @@ export const createWorkspaceApiKeyService = (
     },
 
     async revokeApiKey(userId, workspaceId, apiKeyId) {
-      await requireWorkspaceEditor(database, { userId, workspaceId });
+      const { membership } = await requireWritableWorkspace(database, {
+        userId,
+        workspaceId,
+      });
 
       const [apiKey] = await database
         .select()
@@ -216,6 +201,11 @@ export const createWorkspaceApiKeyService = (
           "The API key was not found.",
         );
       }
+      if (!isAdmin(membership.role) && apiKey.createdBy !== userId)
+        throw new ControlServiceError(
+          "forbidden",
+          "Only admins can revoke API keys created by someone else.",
+        );
 
       // Revocation is a row update. The gateway stops accepting the key within
       // its record cache lifetime, so nothing has to be blocked ahead of it.

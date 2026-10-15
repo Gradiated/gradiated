@@ -14,7 +14,7 @@ const organization = {
   id: organizationId,
   name: "Example organization",
   status: "active",
-  role: "owner",
+  role: "admin",
   default_workspace_id: workspaceId,
   auto_join_domain: null,
   onboarding_completed: true,
@@ -53,11 +53,102 @@ export const onboardingPersonalUser = acmeUser("alex.example@gmail.com", null, {
   name: "Personal",
   onboarding_completed: false,
 });
-export const acmeOwner = acmeUser("alex@acme.com", "acme.com", {
+export const acmeAdmin = acmeUser("alex@acme.com", "acme.com", {
   name: "Acme",
   auto_join_domain: "acme.com",
 });
+export const acmeMember: CurrentUser = {
+  ...acmeUser("priya@acme.com", "acme.com", {
+    name: "Acme",
+    auto_join_domain: "acme.com",
+    role: "member",
+  }),
+  id: "storybook-member",
+};
+const members = [
+  ["storybook-user", "alex@acme.com", "admin", "2026-09-01T12:00:00Z"],
+  ["storybook-sam", "sam@acme.com", "admin", "2026-09-06T12:00:00Z"],
+  ["storybook-member", "priya@acme.com", "member", "2026-09-09T12:00:00Z"],
+  ["storybook-jordan", "jordan.kim@acme.com", "member", "2026-09-14T12:00:00Z"],
+] as const;
 
+const invitations = [
+  {
+    id: "00000000-0000-4000-8000-000000000101",
+    email: "morgan@acme.com",
+    role: "member",
+    invited_by_email: "sam@acme.com",
+    expires_at: "2026-10-08T12:00:00Z",
+    created_at: "2026-10-01T12:00:00Z",
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000102",
+    email: "casey@acme.com",
+    role: "admin",
+    invited_by_email: "alex@acme.com",
+    expires_at: "2026-09-29T12:00:00Z",
+    created_at: "2026-09-22T12:00:00Z",
+  },
+] satisfies components["schemas"]["Invitation"][];
+
+const sessionFor = (currentUser: CurrentUser) => ({
+  session: {
+    id: "storybook-session",
+    userId: currentUser.id,
+    expiresAt: "2027-01-01T00:00:00Z",
+  },
+  user: {
+    id: currentUser.id,
+    email: currentUser.email,
+    name: currentUser.name,
+    emailVerified: true,
+  },
+});
+
+export const invitee: CurrentUser = {
+  ...user,
+  id: "storybook-invitee",
+  email: "morgan@acme.com",
+  organizations: [],
+};
+export const otherAccount: CurrentUser = {
+  ...user,
+  email: "alex@gmail.com",
+  organizations: [],
+};
+
+export const invitationPreview = {
+  status: "pending",
+  organization_id: organizationId,
+  organization_name: "Acme",
+  email: "morgan@acme.com",
+  role: "member",
+  invited_by_email: "sam@acme.com",
+} satisfies components["schemas"]["InvitationPreview"];
+
+const problem = (status: number) =>
+  HttpResponse.json(
+    { title: "Unavailable", status, detail: "Try again." },
+    { status },
+  );
+
+export const invitationHandlers = (
+  preview: components["schemas"]["InvitationPreview"] | "error",
+  currentUser: CurrentUser | null,
+) => [
+  http.post("/api/v1/invitations/preview", () =>
+    preview === "error" ? problem(503) : HttpResponse.json(preview),
+  ),
+  http.post("/api/v1/invitations/accept", () =>
+    HttpResponse.json({ ...organization, name: "Acme", role: "member" }),
+  ),
+  ...(currentUser
+    ? handlersFor(currentUser)
+    : [
+        http.get("/api/auth/get-session", () => HttpResponse.json(null)),
+        ...handlersFor(user),
+      ]),
+];
 const workspace = {
   id: workspaceId,
   organization_id: organizationId,
@@ -354,6 +445,44 @@ const usage = (from: string): UsageSummary => ({
 
 export const handlersFor = (currentUser: CurrentUser) => [
   http.get("/api/v1/me", () => HttpResponse.json(currentUser)),
+  http.get("/api/auth/get-session", () =>
+    HttpResponse.json(sessionFor(currentUser)),
+  ),
+  http.get("/api/v1/organizations/:organizationId/members", () =>
+    HttpResponse.json(
+      list(
+        ...members.map(([user_id, email, role, joined_at]) => ({
+          user_id,
+          email,
+          role,
+          joined_at,
+        })),
+      ),
+    ),
+  ),
+  http.get("/api/v1/organizations/:organizationId/invitations", () =>
+    HttpResponse.json(list(...invitations)),
+  ),
+  http.post(
+    "/api/v1/organizations/:organizationId/invitations",
+    async ({ request }) => {
+      const body = (await request.json()) as {
+        emails: string[];
+        role: "admin" | "member";
+      };
+      return HttpResponse.json(
+        list(
+          ...body.emails.map((email, index) => ({
+            ...invitations[0],
+            id: `00000000-0000-4000-8000-00000000020${index}`,
+            email,
+            role: body.role,
+          })),
+        ),
+        { status: 201 },
+      );
+    },
+  ),
   http.patch("/api/v1/organizations/:organizationId", async ({ request }) => {
     const patch = (await request.json()) as Partial<CurrentOrganization>;
     return HttpResponse.json({
@@ -482,5 +611,5 @@ export const newOrganizationHandlers = [
   http.get("/api/v1/organizations/:organizationId/billing", () =>
     HttpResponse.json({ ...billing, balance: "5000000000" }),
   ),
-  ...handlersFor(acmeOwner),
+  ...handlersFor(acmeAdmin),
 ];

@@ -29,12 +29,7 @@ import { instances } from "./instances.js";
 
 export const ORGANIZATION_KINDS = ["customer", "distribution_channel"] as const;
 export const ORGANIZATION_STATUSES = ["active", "suspended"] as const;
-export const ORGANIZATION_ROLES = [
-  "owner",
-  "admin",
-  "billing",
-  "member",
-] as const;
+export const ORGANIZATION_ROLES = ["admin", "member"] as const;
 export const MEMBER_STATUSES = ["active", "suspended"] as const;
 export const BILLING_MODES = ["prepaid", "invoiced"] as const;
 export const MODEL_STATUSES = ["available", "unavailable", "retired"] as const;
@@ -127,13 +122,59 @@ export const organizationMembers = pgTable(
     primaryKey({ columns: [table.organizationId, table.userId] }),
     check(
       "organization_members_role_check",
-      sql`${table.role} in ('owner', 'admin', 'billing', 'member')`,
+      sql`${table.role} in ('admin', 'member')`,
     ),
     check(
       "organization_members_status_check",
       sql`${table.status} in ('active', 'suspended')`,
     ),
     index("organization_members_user_id_index").on(table.userId),
+  ],
+);
+
+export const invitations = pgTable(
+  "invitations",
+  {
+    id: uuid("id").primaryKey(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    role: text("role", { enum: ORGANIZATION_ROLES }).notNull(),
+    tokenDigest: bytea("token_digest").notNull(),
+    expiresAt: timestamp("expires_at", {
+      withTimezone: true,
+      mode: "date",
+    }).notNull(),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true, mode: "date" }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true, mode: "date" }),
+    createdBy: uuid("created_by")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("invitations_token_digest_unique").on(table.tokenDigest),
+    uniqueIndex("invitations_pending_email_unique")
+      .on(table.organizationId, table.email)
+      .where(sql`${table.acceptedAt} is null and ${table.revokedAt} is null`),
+    index("invitations_pending_email_index")
+      .on(table.email)
+      .where(sql`${table.acceptedAt} is null and ${table.revokedAt} is null`),
+    check("invitations_role_check", sql`${table.role} in ('admin', 'member')`),
+    check(
+      "invitations_email_normalized_check",
+      sql`${table.email} = lower(btrim(${table.email}))`,
+    ),
+    check(
+      "invitations_single_outcome_check",
+      sql`${table.acceptedAt} is null or ${table.revokedAt} is null`,
+    ),
   ],
 );
 

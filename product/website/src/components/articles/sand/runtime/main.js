@@ -404,7 +404,6 @@ export const mountSandScenes = (host) => {
     mesh: $("mesh"),
     parts: $("parts"),
     crop: $("crop-rect"),
-    readout: $("readout"),
   };
   el.shadows = {};
   for (const part of PARTS) {
@@ -461,8 +460,6 @@ export const mountSandScenes = (host) => {
     el.parts.appendChild(g);
   }
 
-  let d2 = null,
-    builtHold = null; // 2D diagram timeline, built once the controls are read
   const ctl = {
     spin: 0.45,
     elev: 18,
@@ -470,34 +467,10 @@ export const mountSandScenes = (host) => {
     hold: 0.18,
     light: 135,
     hatch: true,
-    wobble: false,
     mesh: false,
   };
-  host.querySelectorAll("[data-ctl]").forEach((input) => {
-    const key = input.dataset.ctl;
-    const read = () => {
-      ctl[key] =
-        input.type === "checkbox" ? input.checked : parseFloat(input.value);
-      applyCtl();
-    };
-    input.addEventListener("input", read);
-    listeners.push(() => input.removeEventListener("input", read));
-    read();
-  });
-  function applyCtl() {
-    if (d2 && ctl.hold !== builtHold) {
-      d2.tl.kill();
-      d2.storeDemo?.kill();
-      (d2.demos ?? []).forEach((animation) => animation.kill());
-      (d2.loops ?? []).forEach(({ tween }) => tween.kill());
-      d2 = SCENES2D.build($("d2"), ctl.hold);
-      builtHold = ctl.hold;
-      prime(d2.tl);
-    }
-    el.art.style.setProperty("--w", ctl.weight);
-    el.art.setAttribute("filter", ctl.wobble ? "url(#wobble)" : "");
-    el.mesh.style.display = ctl.mesh ? "block" : "none";
-  }
+  el.art.style.setProperty("--w", ctl.weight);
+  el.mesh.style.display = "none";
 
   /* ------------------------------------------------------------------ */
   /* 6. Scroll → progress (0 .. NSCENE - 1)                              */
@@ -508,8 +481,7 @@ export const mountSandScenes = (host) => {
   const state = { progress: 0 };
 
   // 2D diagram scenes live in their own scrubbed timeline (see scenes2d.js)
-  d2 = SCENES2D.build($("d2"), ctl.hold);
-  builtHold = ctl.hold;
+  const d2 = SCENES2D.build($("d2"), ctl.hold);
   prime(d2.tl);
 
   // A paused timeline sitting at 0 never renders its "hide everything" sets until it first moves,
@@ -914,8 +886,6 @@ export const mountSandScenes = (host) => {
       e.setAttribute("ry", (((g.maxY - g.minY) / 2) * 0.92 + 4).toFixed(1));
       e.setAttribute("opacity", (g.op * shadowFade).toFixed(2));
     }
-
-    el.readout.value = `scene ${ia} → ${ia + 1}  t=${t.toFixed(2)}  progress=${p.toFixed(2)}`;
   }
 
   // Is the screen point (x, y) at view depth z covered by a nearer front-facing triangle?

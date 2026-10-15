@@ -123,7 +123,7 @@ describe("task-owned schedule updates", () => {
 
   it("does not touch Temporal for unauthorized task changes", async () => {
     const own = await fixture();
-    const outsider = await seedMember(db.database, { role: "owner" });
+    const outsider = await seedMember(db.database, { role: "admin" });
     await expect(
       own.service.updateTask(outsider.userId, own.workspaceId, own.task.name, {
         training_schedule: null,

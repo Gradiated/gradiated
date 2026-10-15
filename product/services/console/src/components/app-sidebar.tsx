@@ -51,6 +51,7 @@ import {
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { canManageOrganization } from "@/lib/roles";
 import { useScopeCreation } from "@/hooks/use-product-context";
 import type { SignOutResult } from "@/hooks/use-session";
 import { useFeatureFlag, type FeatureFlag } from "@/lib/feature-flags";
@@ -177,7 +178,13 @@ export const AppSidebar = ({
                 <DropdownMenuSeparator />
                 <AddItem
                   label="Add workspace"
-                  disabled={!organizationId}
+                  disabled={
+                    !canManageOrganization(
+                      user?.organizations.find(
+                        (organization) => organization.id === organizationId,
+                      ),
+                    )
+                  }
                   onSelect={addWorkspace}
                 />
               </DropdownMenuContent>
@@ -206,7 +213,7 @@ export const AppSidebar = ({
             <SidebarMenuButton
               asChild
               tooltip="Settings"
-              isActive={Boolean(matchRoute({ to: "/settings" }))}
+              isActive={Boolean(matchRoute({ to: "/settings", fuzzy: true }))}
             >
               <Link to="/settings">
                 <Settings />

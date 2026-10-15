@@ -11,7 +11,6 @@ export const Toaster = (props: ToasterProps) => (
   <Sonner
     theme="light"
     position="bottom-right"
-    closeButton
     className="toaster group"
     icons={{
       success: <CircleCheck className="size-4 text-[#6e7f31]" />,
@@ -28,8 +27,6 @@ export const Toaster = (props: ToasterProps) => (
         title: "text-sm font-medium",
         description: "mt-1 text-xs leading-5 text-muted-foreground",
         icon: "mt-0.5 shrink-0",
-        closeButton:
-          "rounded-full border border-border bg-card text-muted-foreground",
       },
     }}
     {...props}

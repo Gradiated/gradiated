@@ -15,7 +15,3 @@
 .gr-sand-artwork[data-ready="true"] .gr-sand-poster {
   visibility: hidden;
 }
-.gr-story-link:focus-visible {
-  outline: 2px solid currentColor;
-  outline-offset: 8px;
-}

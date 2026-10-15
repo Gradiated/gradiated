@@ -120,7 +120,7 @@ const writing: Story[] = articles
     date: article.status === "draft" ? "" : displayDate(article.publishedAt),
     dateTime: article.status === "draft" ? undefined : article.publishedAt,
     href: article.path,
-    kind: article.category === "hardware" ? "hardware" : "note",
+    kind: "note",
     lede: article.description,
     title: article.title,
   }));

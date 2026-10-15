@@ -34,8 +34,7 @@ export type LibraryEntry = {
   gradient: string;
   href: string;
   /** Which collection in the Library it belongs to. */
-  kind: "method" | "note" | "hardware";
-  animatedCover?: "sand-circuit";
+  kind: "method" | "note";
   title: string;
 };
 
@@ -61,7 +60,6 @@ export const library: LibraryEntry[] = libraryStories.map((story, index) => {
   const cover = COVERS[index % COVERS.length];
   return {
     art: story.art?.tall,
-    animatedCover: story.animatedCover,
     cover: story.cover,
     coverAt: cover.at,
     date: story.date,

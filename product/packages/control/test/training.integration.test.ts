@@ -86,7 +86,7 @@ describe("training service", () => {
 
   it("validates and persists dynamic comparison and judge models", async () => {
     const { userId, workspaceId } = await seedMember(db.database, {
-      role: "owner",
+      role: "admin",
     });
     const task = await seedTask(workspaceId);
     const validate = vi.fn().mockResolvedValue(undefined);
@@ -167,8 +167,8 @@ describe("training service", () => {
   };
 
   it("includes only the latest run per task in workspace task summaries", async () => {
-    const owner = await seedMember(db.database, { role: "owner" });
-    const other = await seedMember(db.database, { role: "owner" });
+    const owner = await seedMember(db.database, { role: "admin" });
+    const other = await seedMember(db.database, { role: "admin" });
     const task = await seedTask(owner.workspaceId);
     const empty = await seedTask(owner.workspaceId, "empty");
     const foreign = await seedTask(other.workspaceId);
@@ -196,8 +196,8 @@ describe("training service", () => {
   });
 
   it("authorizes adapter downloads by workspace and task, independently of serving status", async () => {
-    const owner = await seedMember(db.database, { role: "owner" });
-    const outsider = await seedMember(db.database, { role: "owner" });
+    const owner = await seedMember(db.database, { role: "admin" });
+    const outsider = await seedMember(db.database, { role: "admin" });
     const task = await seedTask(owner.workspaceId);
     const otherTask = await seedTask(owner.workspaceId, "another-task");
     const { version } = await seedVersion(task, "unavailable");
@@ -259,7 +259,7 @@ describe("training service", () => {
   });
 
   it("rejects all training reads from archived workspaces before accessing traces", async () => {
-    const owner = await seedMember(db.database, { role: "owner" });
+    const owner = await seedMember(db.database, { role: "admin" });
     const task = await seedTask(owner.workspaceId);
     const run = await seedRun(task.id);
     await db.database
@@ -284,8 +284,8 @@ describe("training service", () => {
   });
 
   it("rejects versions whose workspace or run belongs to another task", async () => {
-    const owner = await seedMember(db.database, { role: "owner" });
-    const other = await seedMember(db.database, { role: "owner" });
+    const owner = await seedMember(db.database, { role: "admin" });
+    const other = await seedMember(db.database, { role: "admin" });
     const task = await seedTask(owner.workspaceId);
     const otherTask = await seedTask(other.workspaceId);
     const { version } = await seedVersion(task);
@@ -303,7 +303,7 @@ describe("training service", () => {
   });
 
   it("prevents direct persistence of dot-segment labels", async () => {
-    const owner = await seedMember(db.database, { role: "owner" });
+    const owner = await seedMember(db.database, { role: "admin" });
     for (const name of [".", ".."])
       await expect(seedTask(owner.workspaceId, name)).rejects.toMatchObject({
         cause: { code: "23514" },
@@ -333,8 +333,8 @@ describe("training service", () => {
     });
 
     it("hides workspaces the user is not a member of", async () => {
-      const owner = await seedMember(db.database, { role: "owner" });
-      const outsider = await seedMember(db.database, { role: "owner" });
+      const owner = await seedMember(db.database, { role: "admin" });
+      const outsider = await seedMember(db.database, { role: "admin" });
 
       await expect(
         service().listTasks(outsider.userId, owner.workspaceId),
@@ -344,7 +344,7 @@ describe("training service", () => {
 
   describe("updateTask", () => {
     it("rejects an unavailable base model", async () => {
-      const owner = await seedMember(db.database, { role: "owner" });
+      const owner = await seedMember(db.database, { role: "admin" });
       await seedTask(owner.workspaceId);
       const unavailable = modelInput({ status: "unavailable" });
       await createCatalogService(db.database).upsertModel(unavailable);
@@ -358,7 +358,7 @@ describe("training service", () => {
       ).rejects.toMatchObject({ code: "unavailable" });
     });
     it("changes the base and comparison models", async () => {
-      const owner = await seedMember(db.database, { role: "owner" });
+      const owner = await seedMember(db.database, { role: "admin" });
       await seedTask(owner.workspaceId);
 
       const task = await service().updateTask(
@@ -378,7 +378,7 @@ describe("training service", () => {
       ["a member", "member", { comparison_model_id: "x" }, "forbidden"],
       [
         "an unknown base model",
-        "owner",
+        "admin",
         { base_model_id: "nope" },
         "not_found",
       ],
@@ -446,7 +446,7 @@ describe("training service", () => {
     });
 
     it("allows one unfinished run per task", async () => {
-      const owner = await seedMember(db.database, { role: "owner" });
+      const owner = await seedMember(db.database, { role: "admin" });
       const task = await seedTask(owner.workspaceId);
       await seedRun(task.id, false);
 
@@ -527,8 +527,8 @@ describe("training service", () => {
     });
 
     it("hides runs from other workspaces", async () => {
-      const owner = await seedMember(db.database, { role: "owner" });
-      const other = await seedMember(db.database, { role: "owner" });
+      const owner = await seedMember(db.database, { role: "admin" });
+      const other = await seedMember(db.database, { role: "admin" });
       const run = await seedRun((await seedTask(other.workspaceId)).id);
 
       await expect(
@@ -539,7 +539,7 @@ describe("training service", () => {
 
   describe("promote", () => {
     it("points the task's production at an available version", async () => {
-      const owner = await seedMember(db.database, { role: "owner" });
+      const owner = await seedMember(db.database, { role: "admin" });
       const task = await seedTask(owner.workspaceId);
       const { version } = await seedVersion(task);
 
@@ -554,7 +554,7 @@ describe("training service", () => {
     });
 
     it("keeps production unchanged for a legacy version without a base revision", async () => {
-      const owner = await seedMember(db.database, { role: "owner" });
+      const owner = await seedMember(db.database, { role: "admin" });
       const task = await seedTask(owner.workspaceId);
       const { version } = await seedVersion(task);
       await db.database
@@ -579,8 +579,8 @@ describe("training service", () => {
     });
 
     it.each([
-      ["an unavailable version", "owner", "unavailable", false, "unavailable"],
-      ["another task's version", "owner", "available", true, "not_found"],
+      ["an unavailable version", "admin", "unavailable", false, "unavailable"],
+      ["another task's version", "admin", "available", true, "not_found"],
       ["a member", "member", "available", false, "forbidden"],
     ] as const)("rejects %s", async (_, role, status, otherTask, code) => {
       const scope = await seedMember(db.database, { role });

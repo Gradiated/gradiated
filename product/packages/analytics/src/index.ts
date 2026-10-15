@@ -27,6 +27,16 @@ export const eventSchemas = {
       .array(z.enum(["name", "auto_join_domain", "onboarding_completed"]))
       .min(1),
   }),
+  organization_members_invited: z.strictObject({
+    ...organization,
+    invitation_count: z.number().int().min(1).max(20),
+  }),
+  organization_invitation_accepted: z.strictObject({ ...organization }),
+  organization_member_role_changed: z.strictObject({
+    ...organization,
+    role: z.enum(["admin", "member"]),
+  }),
+  organization_member_removed: z.strictObject({ ...organization }),
   workspace_created: z.strictObject({ ...workspace, is_default: z.boolean() }),
   workspace_settings_updated: z.strictObject({
     ...workspace,

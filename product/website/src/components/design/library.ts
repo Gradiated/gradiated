@@ -34,7 +34,7 @@ export type LibraryEntry = {
   gradient: string;
   href: string;
   /** Which collection in the Library it belongs to. */
-  kind: "method" | "note" | "hardware";
+  kind: "method" | "note";
   title: string;
 };
 

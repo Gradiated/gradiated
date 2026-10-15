@@ -13,3 +13,34 @@ export const MEMORY_MODEL = (() => {
   };
   return { PERIOD, frame };
 })();
+
+export const REGISTER_MODEL = (() => {
+  const PERIOD = 18;
+  const TRANSFER_DURATION = 0.9;
+  const transfers = [
+    { start: 3, from: 3, to: 12 },
+    { start: 6, from: 12, to: 9 },
+    { start: 12, from: 9, to: 6 },
+    { start: 14.5, from: 6, to: 3 },
+  ];
+  const frame = (elapsed) => {
+    const time = Math.max(0, elapsed) % PERIOD;
+    const input =
+      time < 1 ? 3 : time < 6 ? 12 : time < 10 ? 9 : time < 14.5 ? 6 : 3;
+    const we = (time >= 3 && time < 9) || time >= 12 ? 1 : 0;
+    let output = 3;
+    let transfer = null;
+    for (const event of transfers) {
+      if (time >= event.start + TRANSFER_DURATION) output = event.to;
+      else if (time >= event.start) {
+        transfer = {
+          ...event,
+          progress: (time - event.start) / TRANSFER_DURATION,
+        };
+        break;
+      }
+    }
+    return { time, input, we, output, transfer };
+  };
+  return { PERIOD, TRANSFER_DURATION, frame };
+})();

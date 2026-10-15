@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { MEMORY_MODEL } from "../src/components/articles/sand/runtime/memory-model.js";
+import {
+  MEMORY_MODEL,
+  REGISTER_MODEL,
+} from "../src/components/articles/sand/runtime/memory-model.js";
 
 test("read selection returns the addressed word without writing", () => {
   const first = MEMORY_MODEL.frame(1);
@@ -44,4 +47,60 @@ test("expanding the array preserves the existing rows before writing the new row
   assert.deepEqual(bigger.words, small.words);
   const written = MEMORY_MODEL.frame(8, 4, bigger.words);
   assert.deepEqual(written.words, [3, 9, 9, 0]);
+});
+
+test("the register holds its outputs when disabled even as the input changes", () => {
+  for (const [time, input, output] of [
+    [0, 3, 3],
+    [2, 12, 3],
+    [10.5, 6, 9],
+  ]) {
+    const state = REGISTER_MODEL.frame(time);
+    assert.equal(state.we, 0);
+    assert.equal(state.input, input);
+    assert.equal(state.output, output);
+    assert.equal(state.transfer, null);
+  }
+});
+
+test("the register transfers on enable and on data changes while still enabled", () => {
+  for (const [start, from, to] of [
+    [3, 3, 12],
+    [6, 12, 9],
+    [12, 9, 6],
+    [14.5, 6, 3],
+  ]) {
+    const travelling = REGISTER_MODEL.frame(start + 0.45);
+    assert.equal(travelling.we, 1);
+    assert.equal(travelling.output, from);
+    assert.equal(travelling.input, to);
+    assert.deepEqual(travelling.transfer, {
+      start,
+      from,
+      to,
+      progress: (travelling.time - start) / REGISTER_MODEL.TRANSFER_DURATION,
+    });
+    const arrived = REGISTER_MODEL.frame(
+      start + REGISTER_MODEL.TRANSFER_DURATION,
+    );
+    assert.equal(arrived.output, to);
+    assert.equal(arrived.transfer, null);
+  }
+});
+
+test("every register output update occurs while writing is enabled", () => {
+  let previous = REGISTER_MODEL.frame(0).output;
+  for (let tick = 1; tick <= 5400; tick++) {
+    const state = REGISTER_MODEL.frame(tick / 100);
+    if (state.output !== previous) assert.equal(state.we, 1);
+    previous = state.output;
+  }
+});
+
+test("the register repeats without silently resetting its stored bits", () => {
+  assert.equal(
+    REGISTER_MODEL.frame(17.999).output,
+    REGISTER_MODEL.frame(18).output,
+  );
+  assert.deepEqual(REGISTER_MODEL.frame(2), REGISTER_MODEL.frame(38));
 });

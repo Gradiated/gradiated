@@ -1,5 +1,5 @@
 import { gsap } from "gsap";
-import { MEMORY_MODEL } from "./memory-model.js";
+import { MEMORY_MODEL, REGISTER_MODEL } from "./memory-model.js";
 export const MEMORY_SCENES = (() => {
   const build = ({
     root,
@@ -258,17 +258,39 @@ export const MEMORY_SCENES = (() => {
     const outputLights = xs.map((x) =>
       signal(outputDeck, `M${x + 32} 410 V419`),
     );
-    const registerOnly = group({}, array);
+    const registerOnly = group({ "data-diagram": "register" }, array);
     key(registerOnly, "register", {}, null, 0.65);
     key(registerOnly, "memory-two", { opacity: 0 }, null, 0, 0.35);
     label(registerOnly, 220, 72, "4-bit register");
-    wire(registerOnly, `M80 264 H${xs[3] - 5}`);
+    const enablePath =
+      `M80 264 H${xs[3] - 5}` + xs.map((x) => ` M${x - 5} 264 V200`).join("");
+    wire(registerOnly, enablePath);
+    const registerEnableLight = signal(registerOnly, enablePath);
+    registerEnableLight.classList.add("register-enable");
     label(registerOnly, 68, 269, "WE", { "text-anchor": "end" });
-    xs.forEach((x) => wire(registerOnly, `M${x - 5} 264 V200`));
-    xs.forEach((x, c) => {
-      wire(registerOnly, `M${x + 16} 184 H${x + 32} V228`);
-      digit(registerOnly, x + 32, 247, "0011"[c]);
+    const registerWE = digit(registerOnly, 68, 287, "0", {
+      "text-anchor": "end",
     });
+    const registerOutputs = xs.map((x, c) => {
+      wire(registerOnly, `M${x + 16} 184 H${x + 32} V228`);
+      return digit(registerOnly, x + 32, 247, "0011"[c], {
+        "data-register-output": c,
+      });
+    });
+    const registerCopies = xs.map((x, c) =>
+      digit(registerOnly, x - 23, 125, "0", {
+        class: "bit register-copy",
+        opacity: 0,
+        "data-register-copy": c,
+      }),
+    );
+    const registerClock = gsap.timeline({ paused: true, repeat: -1 });
+    registerClock.to({}, { duration: REGISTER_MODEL.PERIOD });
+    demos.push(registerClock);
+    const copyPosition = (x, progress) => [
+      x - 23 + 55 * (1 - (1 - progress) ** 3),
+      125 + 122 * progress,
+    ];
     const arrayTitle = label(root, 220, 46, "2 locations × 4 bits");
     show(arrayTitle, "memory-two", "memory-array");
     const biggerTitle = label(root, 220, 46, "4 locations × 4 bits");
@@ -367,6 +389,8 @@ export const MEMORY_SCENES = (() => {
     let lastTime = 0;
     let previousRows = 2;
     let initialWords = [3, 6, 0, 0];
+    let wasRegister = true;
+    let registerWord = 3;
     let lastState = MEMORY_MODEL.frame(0, previousRows, initialWords);
     afterRender.push(() => {
       const progress = tl.time();
@@ -377,6 +401,44 @@ export const MEMORY_SCENES = (() => {
         "memory-buses",
       ].find((scene) => Math.abs(progress - index(scene)) <= hold);
       const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const registerActive = Math.abs(progress - index("register")) <= hold;
+      if (registerActive && !reduced) registerClock.play();
+      else registerClock.pause();
+      if (
+        progress < index("register") - hold ||
+        progress > index("memory-two") - hold
+      )
+        registerClock.pause(0);
+      const registerState = REGISTER_MODEL.frame(
+        reduced ? 0 : registerClock.totalTime(),
+      );
+      registerOnly.setAttribute("data-we", String(registerState.we));
+      registerOnly.setAttribute("data-input", bits(registerState.input));
+      registerOnly.setAttribute("data-output", bits(registerState.output));
+      registerOnly.setAttribute(
+        "data-loop-time",
+        registerState.time.toFixed(3),
+      );
+      setText(registerWE, registerState.we);
+      registerEnableLight.style.opacity = registerState.we;
+      registerCopies.forEach((element, c) => {
+        const transfer = registerState.transfer;
+        const changed =
+          transfer && bits(transfer.from)[c] !== bits(transfer.to)[c];
+        const p = transfer?.progress ?? 0;
+        const opacity = changed ? Math.min(1, p / 0.12, (1 - p) / 0.12) : 0;
+        element.style.opacity = opacity;
+        registerOutputs[c].style.opacity = changed
+          ? 1 - Math.min(1, Math.max(0, (p - 0.78) / 0.22))
+          : 1;
+        setText(registerOutputs[c], bits(registerState.output)[c]);
+        if (changed) {
+          setText(element, bits(transfer.to)[c]);
+          const [x, y] = copyPosition(xs[c], p);
+          element.setAttribute("x", x);
+          element.setAttribute("y", y);
+        }
+      });
       if (active && !reduced) clock.play();
       else clock.pause();
       if (
@@ -391,10 +453,18 @@ export const MEMORY_SCENES = (() => {
         lastTime = 0;
         previousRows = rows;
       }
+      const register = progress < index("memory-two") - hold;
+      if (register) registerWord = registerState.output;
+      else if (wasRegister) {
+        initialWords = [...lastState.words];
+        initialWords[0] = registerWord;
+        clock.pause(0);
+        lastTime = 0;
+      }
+      wasRegister = register;
       const elapsed = reduced ? 8 : clock.totalTime();
       const state = MEMORY_MODEL.frame(elapsed, rows, initialWords);
       lastState = state;
-      const register = progress < index("memory-two") - hold;
       const delta = Math.min(0.05, Math.max(0, elapsed - lastTime));
       const blend = reduced ? 1 : Math.min(1, delta * 9);
       lastTime = elapsed;
@@ -420,13 +490,17 @@ export const MEMORY_SCENES = (() => {
         `${state.action} address ${bits(state.address, 2)}`,
       );
       inputDigits.forEach((element, c) =>
-        setText(element, bits(register ? 3 : state.input)[c]),
+        setText(element, bits(register ? registerState.input : state.input)[c]),
       );
       rowDigits.forEach((row, r) =>
         row.forEach((element, c) =>
           setText(
             element,
-            bits(register && r === 0 ? 3 : (state.words[r] ?? 0))[c],
+            bits(
+              register && r === 0
+                ? registerState.output
+                : (state.words[r] ?? 0),
+            )[c],
           ),
         ),
       );

@@ -2,6 +2,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SCENES2D } from "./scenes2d.js";
 import { SAND_PROGRESS } from "./scroll-progress.js";
+import { mountVisibleTicker } from "./visible-ticker.js";
 
 export const mountSandScenes = (host) => {
   const media = gsap.matchMedia();
@@ -585,6 +586,7 @@ export const mountSandScenes = (host) => {
   let spinVel = 0;
   let lastProgress = 0;
   let activeIdx = -1;
+  const suspendedLoops = new Set();
 
   const pt = (x, y) => x.toFixed(1) + " " + y.toFixed(1);
   const rotX = (a) => {
@@ -629,13 +631,17 @@ export const mountSandScenes = (host) => {
     for (const fn of d2.afterRender) fn();
     for (const l of d2.loops) {
       const on = Math.round(p) === l.scene && !inTransition;
-      if (on && l.tween.paused()) l.tween.restart(true);
-      else if (!on && !l.tween.paused()) {
+      if (on && l.tween.paused()) {
+        if (suspendedLoops.has(l.tween)) l.tween.resume();
+        else l.tween.restart(true);
+      } else if (!on && (!l.tween.paused() || suspendedLoops.has(l.tween))) {
         l.tween.pause();
         if (l.reset) l.reset();
         else l.tween.pause(0);
       }
     }
+
+    suspendedLoops.clear();
 
     const idx = Math.round(p);
     if (idx !== activeIdx) {
@@ -1092,7 +1098,19 @@ export const mountSandScenes = (host) => {
     return d;
   }
 
-  gsap.ticker.add(frame);
+  const stopRendering = mountVisibleTicker(
+    $("stage-svg"),
+    gsap.ticker,
+    frame,
+    () => {
+      d2.storeDemo?.pause();
+      (d2.demos ?? []).forEach((tween) => tween.pause());
+      for (const { tween } of d2.loops) {
+        if (!tween.paused()) suspendedLoops.add(tween);
+        tween.pause();
+      }
+    },
+  );
 
   // Handy from the console: __demo.theta = 1.2; __demo.ctl.spin = 0
   const demo = (window.__demo = {
@@ -1114,7 +1132,7 @@ export const mountSandScenes = (host) => {
 
   return () => {
     media.revert();
-    gsap.ticker.remove(frame);
+    stopRendering();
     listeners.forEach((remove) => remove());
     d2?.tl.kill();
     d2?.storeDemo?.kill();

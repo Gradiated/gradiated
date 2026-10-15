@@ -1,9 +1,6 @@
 export const MEMORY_TRANSFER_DURATION = 1.2;
 
-export const createMemoryDemo = (
-  initialWords = [3, 6, 0, 0],
-  { holdAfterWrite = false, delay = 0 } = {},
-) => {
+export const createMemoryDemo = (initialWords = [3, 6, 0, 0]) => {
   const words = [...initialWords];
   let address = 0;
   let action = "Read";
@@ -28,14 +25,13 @@ export const createMemoryDemo = (
     let transfer = null;
     const progress = Math.max(
       0,
-      Math.min(1, (elapsed - delay) / MEMORY_TRANSFER_DURATION),
+      Math.min(1, elapsed / MEMORY_TRANSFER_DURATION),
     );
     if (pending && progress === 1) {
       if (action === "Write") words[address] = pending.value;
       output = words[address];
       pending = null;
-      if (holdAfterWrite && action === "Write") action = "Hold";
-    } else if (pending && elapsed >= delay) {
+    } else if (pending) {
       transfer = { kind: action, value: pending.value, progress };
     }
 
@@ -47,11 +43,52 @@ export const createMemoryDemo = (
       words: [...words],
       transfer,
       busy: pending !== null,
-      we: action === "Write" && (!pending || elapsed >= delay) ? 1 : 0,
+      we: action === "Write" ? 1 : 0,
     };
   };
 
   return { choose, frame };
+};
+
+export const ADDER_MEMORY_DURATION = 4.4;
+
+export const createAdderMemoryDemo = (initialWords = [3, 6, 0, 0]) => {
+  const words = [...initialWords];
+  const writeStart = 0.8;
+  const writeEnd = writeStart + MEMORY_TRANSFER_DURATION;
+  const readStart = writeEnd + 0.6;
+  const readEnd = readStart + MEMORY_TRANSFER_DURATION;
+  const frame = (elapsed = 0) => {
+    const written = elapsed >= writeEnd;
+    const reading = elapsed >= readStart && elapsed < readEnd;
+    const writing = elapsed >= writeStart && !written;
+    const contents = words.map((word, row) =>
+      written && row === 1 ? 9 : word,
+    );
+    const transfer =
+      writing || reading
+        ? {
+            kind: writing ? "Write" : "Read",
+            value: 9,
+            progress:
+              (elapsed - (writing ? writeStart : readStart)) /
+              MEMORY_TRANSFER_DURATION,
+          }
+        : null;
+
+    return {
+      address: 1,
+      action: written ? "Read" : "Write",
+      input: 9,
+      output: written ? 9 : words[1],
+      words: contents,
+      transfer,
+      busy: elapsed < readEnd,
+      we: writing ? 1 : 0,
+    };
+  };
+
+  return { frame };
 };
 
 export const REGISTER_MODEL = (() => {

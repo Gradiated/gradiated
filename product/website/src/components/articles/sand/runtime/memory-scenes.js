@@ -1,6 +1,8 @@
 import { gsap } from "gsap";
 import {
   createMemoryDemo,
+  createAdderMemoryDemo,
+  ADDER_MEMORY_DURATION,
   MEMORY_TRANSFER_DURATION,
   REGISTER_MODEL,
   dataChangePulse,
@@ -120,6 +122,10 @@ export const MEMORY_SCENES = (() => {
         ),
       );
       return digit(inputDeck, x - 23, 125, "0011"[i]);
+    });
+    inputDigits.forEach((element, c) => {
+      key(element, "register", { attr: { x: xs[c] - 23 } });
+      key(element, "stored-answer", { attr: { x: xs[c] - 11 } });
     });
     const inputNames = Array.from(inputDeck.querySelectorAll("text.tiny"));
     inputNames.forEach((element) => {
@@ -372,10 +378,9 @@ export const MEMORY_SCENES = (() => {
       }
       const d = `M${centre} 120 V${250 + (132 - 250) * 0.82 + 32}`;
       const link = wire(adderLinks, d);
-      key(link, "stored-answer", { attr: { d }, strokeWidth: 1.4 });
+      key(link, "stored-answer", { attr: { d } });
       key(link, "memory-buses", {
         attr: { d: "M220 129 V219" },
-        strokeWidth: 3,
       });
       const lit = signal(adderLinks, d);
       key(lit, "stored-answer", { attr: { d } });
@@ -426,17 +431,17 @@ export const MEMORY_SCENES = (() => {
     const contextFor = (scene, words) => {
       if (!contexts.has(scene)) {
         const adder = scene === "stored-answer";
-        const model = createMemoryDemo(words, {
-          holdAfterWrite: adder,
-          delay: adder ? 0.8 : 0,
-        });
+        const model = adder
+          ? createAdderMemoryDemo(words)
+          : createMemoryDemo(words);
         const clock = gsap.timeline({ paused: true });
         clock.to(
           {},
-          { duration: MEMORY_TRANSFER_DURATION + (adder ? 1.4 : 0) },
+          {
+            duration: adder ? ADDER_MEMORY_DURATION : MEMORY_TRANSFER_DURATION,
+          },
         );
         demos.push(clock);
-        if (adder) model.choose("Write", 1);
         contexts.set(scene, { model, clock, visited: false });
       }
       return contexts.get(scene);
@@ -485,6 +490,7 @@ export const MEMORY_SCENES = (() => {
     let lastTime = 0;
     let registerWord = 3;
     let previousContext = null;
+    let adderActive = false;
     afterRender.push(() => {
       const progress = tl.time();
       const active = [
@@ -558,28 +564,29 @@ export const MEMORY_SCENES = (() => {
       if (previousContext && previousContext !== context)
         previousContext.model.frame(Infinity);
       const previousWords = earlier?.model.frame(earlier.clock.time()).words;
-      if (active && !context.visited) {
+      if (
+        active &&
+        (!context.visited || (active === "stored-answer" && !adderActive))
+      ) {
         const adder = scene === "stored-answer";
         const words = (previousWords ?? seed).slice(
           0,
           scene === "memory-two" ? 2 : 4,
         );
         while (words.length < (scene === "memory-two" ? 2 : 4)) words.push(0);
-        context.model = createMemoryDemo(words, {
-          holdAfterWrite: adder,
-          delay: adder ? 0.8 : 0,
-        });
-        if (adder) context.model.choose("Write", 1);
+        context.model = adder
+          ? createAdderMemoryDemo(words)
+          : createMemoryDemo(words);
         context.clock.pause(0);
         context.visited = true;
       }
+      adderActive = active === "stored-answer";
+      if (active === "memory-buses") context.clock.pause(ADDER_MEMORY_DURATION);
       for (const other of contexts.values())
         if (other !== context) other.clock.pause();
-      if (active && !reduced) context.clock.play();
+      if (active && active !== "memory-buses" && !reduced) context.clock.play();
       else context.clock.pause();
-      const elapsed = reduced
-        ? MEMORY_TRANSFER_DURATION + 1.4
-        : context.clock.time();
+      const elapsed = reduced ? context.clock.duration() : context.clock.time();
       const state = context.model.frame(elapsed);
       const delta = Math.min(0.05, Math.max(0, elapsed - lastTime));
       const blend =
@@ -623,7 +630,8 @@ export const MEMORY_SCENES = (() => {
         const y = ys[state.address];
         if (transfer.kind === "Write") {
           const travel = 1 - (1 - p) ** 2;
-          element.setAttribute("x", x - 23 + 25 * travel);
+          const startX = x - (scene === "stored-answer" ? 11 : 23);
+          element.setAttribute("x", startX + (x + 2 - startX) * travel);
           element.setAttribute("y", 125 + (y + 17 - 125) * p);
         } else {
           const travel = p * p * (3 - 2 * p);

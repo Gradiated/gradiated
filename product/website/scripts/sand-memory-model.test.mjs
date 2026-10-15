@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   createMemoryDemo,
+  createAdderMemoryDemo,
+  ADDER_MEMORY_DURATION,
   MEMORY_TRANSFER_DURATION,
   REGISTER_MODEL,
   createLatchModel,
@@ -83,21 +85,41 @@ test("expanding memory retains existing rows and adds empty locations", () => {
   assert.deepEqual(large.frame().words, [9, 6, 0, 0]);
 });
 
-test("the adder writes address 01 once then disables WE and holds indefinitely", () => {
-  const model = createMemoryDemo([3, 6, 0, 0], {
-    holdAfterWrite: true,
-    delay: 0.8,
-  });
-  model.choose("Write", 1);
+test("the adder writes address 01 then reads the same stored answer", () => {
+  const model = createAdderMemoryDemo([3, 6, 0, 15]);
   assert.equal(model.frame(0.4).we, 0);
   assert.equal(model.frame(0.4).transfer, null);
-  assert.equal(model.frame(1.4).we, 1);
-  const held = model.frame(2.1);
-  assert.equal(held.address, 1);
-  assert.equal(held.we, 0);
-  assert.equal(held.action, "Hold");
-  assert.deepEqual(held.words, [3, 9, 0, 0]);
+  const writing = model.frame(1.4);
+  assert.equal(writing.we, 1);
+  assert.equal(writing.address, 1);
+  assert.equal(writing.transfer.kind, "Write");
+  assert.deepEqual(writing.words, [3, 6, 0, 15]);
+  const reading = model.frame(3.2);
+  assert.equal(reading.we, 0);
+  assert.equal(reading.address, 1);
+  assert.equal(reading.transfer.kind, "Read");
+  assert.equal(reading.transfer.value, 9);
+  assert.deepEqual(reading.words, [3, 9, 0, 15]);
+  const held = model.frame(ADDER_MEMORY_DURATION);
+  assert.equal(held.action, "Read");
+  assert.equal(held.output, 9);
+  assert.equal(held.busy, false);
+  assert.equal(held.transfer, null);
   assert.deepEqual(model.frame(120), held);
+});
+
+test("the adder sequence restarts from its seed independently of skipped frames", () => {
+  const words = [12, 6, 0, 15];
+  const model = createAdderMemoryDemo(words);
+  const initial = model.frame(0);
+  const settled = model.frame(ADDER_MEMORY_DURATION);
+  assert.deepEqual(model.frame(0), initial);
+  assert.deepEqual(createAdderMemoryDemo(words).frame(0), initial);
+  assert.deepEqual(
+    createAdderMemoryDemo(words).frame(ADDER_MEMORY_DURATION),
+    settled,
+  );
+  assert.deepEqual(words, [12, 6, 0, 15]);
 });
 
 test("the register holds its outputs when disabled even as the input changes", () => {

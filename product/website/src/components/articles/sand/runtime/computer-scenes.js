@@ -21,6 +21,7 @@ export const COMPUTER_SCENES = (function () {
     afterRender,
   }) => {
     const demos = [];
+    const signalLayers = new Map();
     const box = (parent, x, y, w, h, label, attrs = {}) => {
       const g = group(attrs, parent, `${x + w / 2} ${y + h / 2}`);
       const outline = path(`M${x} ${y} H${x + w} V${y + h} H${x} Z`, {}, g);
@@ -29,7 +30,13 @@ export const COMPUTER_SCENES = (function () {
     };
     const lightPath = (d, parent) => {
       path(d, { class: "muted" }, parent);
-      const line = path(d, { class: "computer-signal" }, parent);
+      if (!signalLayers.has(parent))
+        signalLayers.set(parent, group({ "data-wire-highlights": "" }, parent));
+      const line = path(
+        d,
+        { class: "computer-signal" },
+        signalLayers.get(parent),
+      );
       const contours = d.match(/M[^M]+/g).map((part) => {
         const probe = path(part, { class: "ghost" }, parent);
         const length = probe.getTotalLength(),
@@ -592,6 +599,8 @@ export const COMPUTER_SCENES = (function () {
       "a processor, memory and connections to the world",
       "end",
     );
+
+    for (const [parent, layer] of signalLayers) parent.appendChild(layer);
 
     return { demos, timingDemo, computerDemo };
   };

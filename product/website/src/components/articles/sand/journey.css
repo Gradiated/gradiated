@@ -3,6 +3,9 @@
   --ink: #17161a;
   --muted: #8d8781;
   --shadow: #e3ddd2;
+  --signal-stroke: #c49b3c;
+  --signal-width: 3px;
+  --signal-glow: rgba(233, 200, 117, 0.55);
 }
 
 .sand-journey * {
@@ -480,11 +483,6 @@ html:has(.sand-journey) {
   text-wrap: balance;
 }
 
-.sand-journey #d2 .computer-signal {
-  stroke: #c89c44;
-  stroke-width: 3px;
-  filter: drop-shadow(0 0 3px #e9c875);
-}
 .sand-journey #d2 .computer-glow {
   fill: rgba(238, 220, 167, 0.5);
   stroke: none;
@@ -518,16 +516,14 @@ html:has(.sand-journey) {
 .sand-journey #d2 .timing-zero text {
   fill: #a2574e;
 }
+.sand-journey #d2 .logic-connection,
+.sand-journey #d2 .memory-signal,
+.sand-journey #d2 .computer-signal,
 .sand-journey #d2 .timing-pulse {
-  stroke: #e0b23d;
-  stroke-width: 3px;
-  filter: drop-shadow(0 0 3px #edcc70);
-}
-
-.sand-journey #d2 .logic-connection {
-  stroke: #c49b3c;
-  stroke-width: 2.8px;
-  filter: drop-shadow(0 0 2px rgba(233, 200, 117, 0.55));
+  fill: none;
+  stroke: var(--signal-stroke);
+  stroke-width: var(--signal-width);
+  filter: drop-shadow(0 0 2px var(--signal-glow));
 }
 .sand-journey #d2 text.logic-value {
   font-size: 16px;
@@ -566,12 +562,6 @@ html:has(.sand-journey) {
 
 .sand-journey #d2 .memory-box {
   fill: var(--paper);
-}
-.sand-journey #d2 .memory-signal {
-  stroke: #c49b3c;
-  stroke-width: 2.5px;
-  fill: none;
-  filter: drop-shadow(0 0 2px rgba(233, 200, 117, 0.5));
 }
 .sand-journey #d2 .memory-bus {
   stroke-width: 3px;

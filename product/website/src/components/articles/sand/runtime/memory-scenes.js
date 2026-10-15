@@ -22,13 +22,15 @@ export const MEMORY_SCENES = (() => {
     afterRender,
   }) => {
     const demos = [];
-    const xs = [154, 220, 286, 352];
-    const ys = [176, 220, 264, 308];
+    const xs = [142, 216, 290, 364];
+    const ys = [176, 224, 272, 320];
     const label = (parent, x, y, value, attrs = {}) =>
       text(x, y, value, { class: "caption", ...attrs }, parent);
     const digit = (parent, x, y, value, attrs = {}) =>
       text(x, y, value, { class: "bit", ...attrs }, parent);
     const wire = (parent, d) => path(d, {}, parent);
+    const junction = (parent, x, y) =>
+      mk("circle", { cx: x, cy: y, r: 1.4, class: "dot" }, parent);
     const signal = (parent, d) =>
       path(d, { class: "memory-signal", opacity: 0 }, parent);
     const box = (parent, x, y, width, height) =>
@@ -62,28 +64,33 @@ export const MEMORY_SCENES = (() => {
       readLights = [],
       writeLights = [],
       selectLights = [];
+    const signalLayer = group({ "data-memory-signals": "" }, array);
+    const readSignals = group({}, signalLayer);
+    show(readSignals, "memory-two", "memory-buses");
+    const writeSignals = group({}, signalLayer);
+    show(writeSignals, "memory-two", "memory-buses");
     const readGates = group({}, array);
     show(readGates, "memory-two", "memory-buses");
     const writeGates = group({}, array);
     show(writeGates, "memory-two", "memory-buses");
-    const writeFeed = wire(writeGates, "M78 132 V264");
-    key(writeFeed, "memory-two", { attr: { d: "M78 132 V264" } });
-    key(writeFeed, "memory-array", { attr: { d: "M78 132 V352" } });
-    const writeFeedLight = signal(writeGates, writeFeed.getAttribute("d"));
+    const writeFeed = wire(writeGates, "M78 132 V268");
+    key(writeFeed, "memory-two", { attr: { d: "M78 132 V268" } });
+    key(writeFeed, "memory-array", { attr: { d: "M78 132 V364" } });
+    const writeFeedLight = signal(writeSignals, writeFeed.getAttribute("d"));
     label(writeGates, 77, 106, "WE");
     const weValue = digit(writeGates, 77, 125, "0");
     const decoder = group({}, array);
     show(decoder, "memory-two", "memory-buses");
-    const decoderOutline = box(decoder, 34, 166, 30, 90);
-    key(decoderOutline, "memory-two", { attr: { height: 90 } });
-    key(decoderOutline, "memory-array", { attr: { height: 182 } });
-    const decoderLabel = label(decoder, 49, 280, "Decoder");
-    key(decoderLabel, "memory-two", { attr: { y: 280 } });
-    key(decoderLabel, "memory-array", { attr: { y: 374 } });
+    const decoderOutline = box(decoder, 34, 166, 30, 98);
+    key(decoderOutline, "memory-two", { attr: { height: 98 } });
+    key(decoderOutline, "memory-array", { attr: { height: 194 } });
+    const decoderLabel = label(decoder, 49, 290, "Decoder");
+    key(decoderLabel, "memory-two", { attr: { y: 290 } });
+    key(decoderLabel, "memory-array", { attr: { y: 386 } });
     const firstAddress = wire(decoder, "M14 130 V253");
     key(firstAddress, "memory-two", { attr: { d: "M14 130 V253" } });
-    key(firstAddress, "memory-array", { attr: { d: "M14 130 V341" } });
-    const secondAddress = wire(decoder, "M22 130 V341");
+    key(firstAddress, "memory-array", { attr: { d: "M14 130 V345" } });
+    const secondAddress = wire(decoder, "M22 130 V353");
     key(secondAddress, "memory-array", {});
     label(decoder, 19, 106, "Addr");
     const addressValue = digit(decoder, 19, 125, "0");
@@ -119,10 +126,10 @@ export const MEMORY_SCENES = (() => {
       const dataWire = wire(dataWires, `M${x - 23} 132 V184 H${x - 16}`);
       key(dataWire, "register", {});
       key(dataWire, "memory-two", {
-        attr: { d: `M${x - 23} 132 V228 H${x - 16}` },
+        attr: { d: `M${x - 23} 132 V232 H${x - 16}` },
       });
       key(dataWire, "memory-array", {
-        attr: { d: `M${x - 23} 132 V316 H${x - 16}` },
+        attr: { d: `M${x - 23} 132 V328 H${x - 16}` },
       });
     });
     ys.forEach((y, r) => {
@@ -133,16 +140,27 @@ export const MEMORY_SCENES = (() => {
           row,
           r === 1 ? "memory-two" : "memory-array",
           { y: 0 },
-          { y: -44, opacity: 0 },
+          { y: -48, opacity: 0 },
           0.25 + (r === 3 ? 0.15 : 0),
         );
-      const rowAddress = label(row, 122, y + 18, bits(r, 2), { class: "tiny" });
+      const rowAddress = label(row, 114, y + 18, bits(r, 2), {
+        class: "tiny",
+        "text-anchor": "end",
+      });
       rowAddresses.push(rowAddress);
       show(rowAddress, r < 2 ? "memory-two" : "memory-array", "memory-buses");
       const readRow = group({}, readGates);
       const writeRow = group({}, writeGates);
       const decodeRow = group({}, decoder);
-      for (const part of [readRow, writeRow, decodeRow])
+      const readSignalRow = group({}, readSignals);
+      const writeSignalRow = group({}, writeSignals);
+      for (const part of [
+        readRow,
+        writeRow,
+        decodeRow,
+        readSignalRow,
+        writeSignalRow,
+      ])
         key(part, r < 2 ? "memory-two" : "memory-array", {});
       const fourDecode = group({}, decodeRow);
       key(fourDecode, "memory-array", {});
@@ -181,20 +199,22 @@ export const MEMORY_SCENES = (() => {
       }
       const select = `M64 ${y + 29} H${xs[3] + 18}`;
       wire(readRow, select);
-      selectLights.push(signal(readRow, select));
-      const write = `M64 ${y + 29} H88 V${y + 36} H92 M78 ${y + 44} H92`;
+      junction(readRow, 88, y + 29);
+      junction(writeRow, 78, y + 44);
+      selectLights.push(signal(readSignalRow, select));
+      const write = `M88 ${y + 29} V${y + 36} H92 M78 ${y + 44} H92`;
       wire(writeRow, write);
       andGate(writeRow, 92, y + 40);
-      const writeOut = `M106 ${y + 40} H112 V${y + 36} H${xs[3] - 5}`;
+      const writeOut = `M106 ${y + 40} H${xs[3] - 5}`;
       wire(writeRow, writeOut);
-      const writeRoute = group({}, writeRow);
-      signal(writeRoute, `M64 ${y + 29} H88 V${y + 36} H92`).setAttribute(
-        "opacity",
-        "1",
-      );
+      const writeRoute = group({}, writeSignalRow);
+      signal(
+        writeRoute,
+        `M88 ${y + 29} V${y + 36} H92 M78 ${y + 44} H92`,
+      ).setAttribute("opacity", "1");
       signal(writeRoute, writeOut).setAttribute("opacity", "1");
       writeLights.push(writeRoute);
-      const readRoute = group({}, readRow);
+      const readRoute = group({}, readSignalRow);
       readLights.push(readRoute);
       rowDigits.push(
         xs.map((x, c) => {
@@ -216,38 +236,36 @@ export const MEMORY_SCENES = (() => {
           });
           if (r === 0) key(value, "memory-two", {});
           wire(cell, `M${x - 23} ${y + 8} H${x - 16}`);
-          const enable = wire(cell, `M${x - 5} ${y + 24} V${y + 36}`);
+          const dataJunction = junction(cell, x - 23, y + 8);
+          if (r === 0) key(dataJunction, "memory-two", {});
+          if (c < xs.length - 1) {
+            junction(readRow, x + 18, y + 29);
+            junction(writeRow, x - 5, y + 40);
+          }
+          const enable = wire(cell, `M${x - 5} ${y + 24} V${y + 40}`);
           const q = `M${x + 16} ${y + 8} H${x + 20}`;
           wire(cell, q);
           if (r === 0) show(enable, "memory-two", "memory-buses");
           andGate(readRow, x + 20, y + 12);
           wire(readRow, `M${x + 18} ${y + 29} V${y + 16} H${x + 20}`);
-          const lane = 3 - r;
-          const track = x + 36 + lane * 2;
-          const inputOffset = 20 + lane * 8;
-          const inputPosition = (inputOffset - 17) / 30;
-          const readInput = (
-            386 +
-            14 * inputPosition * (1 - inputPosition)
-          ).toFixed(2);
-          const route = `M${x + 34} ${y + 12} H${track} V${350 + lane * 6} H${x + inputOffset} V${readInput}`;
+          const track = x + 47 - r * 4;
+          const inputY = (top, offset) => {
+            const position = (offset - 29) / 24;
+            return (top + 14 * position * (1 - position)).toFixed(2);
+          };
+          const route = `M${x + 34} ${y + 12} H${track} V${inputY(386, track - x)}`;
           const readWire = wire(readRow, route);
           const readHighlight = signal(readRoute, q + route);
           readHighlight.setAttribute("opacity", "1");
           if (r < 2) {
-            const shortOffset = r === 0 ? 40 : 24;
-            const shortPosition = (shortOffset - 17) / 30;
-            const shortInput = (
-              304 +
-              14 * shortPosition * (1 - shortPosition)
-            ).toFixed(2);
-            const shortRoute = `M${x + 34} ${y + 12} H${track} V${276 + (1 - r) * 10} H${x + shortOffset} V${shortInput}`;
+            const shortTrack = x + (r === 0 ? 47 : 35);
+            const shortRoute = `M${x + 34} ${y + 12} H${shortTrack} V${inputY(296, shortTrack - x)}`;
             key(readWire, "memory-two", { attr: { d: shortRoute } });
             key(readWire, "memory-array", { attr: { d: route } });
             key(readHighlight, "memory-two", { attr: { d: q + shortRoute } });
             key(readHighlight, "memory-array", { attr: { d: q + route } });
           }
-          signal(writeRoute, `M${x - 5} ${y + 36} V${y + 24}`).setAttribute(
+          signal(writeRoute, `M${x - 5} ${y + 40} V${y + 24}`).setAttribute(
             "opacity",
             "1",
           );
@@ -260,23 +278,23 @@ export const MEMORY_SCENES = (() => {
       );
     });
     const outputDeck = group({}, array);
-    key(outputDeck, "memory-two", { y: -82 });
+    key(outputDeck, "memory-two", { y: -90 });
     key(outputDeck, "memory-array", { y: 0 });
     key(outputDeck, "memory-buses", { y: 0, opacity: 0 });
     const outputDigits = xs.map((x, c) => {
       wire(
         outputDeck,
-        `M${x + 17} 386 Q${x + 32} 393 ${x + 47} 386 Q${x + 45} 402 ${x + 32} 410 Q${x + 19} 402 ${x + 17} 386`,
+        `M${x + 29} 386 Q${x + 41} 393 ${x + 53} 386 Q${x + 51} 402 ${x + 41} 410 Q${x + 31} 402 ${x + 29} 386`,
       );
-      wire(outputDeck, `M${x + 32} 410 V419`);
-      label(outputDeck, x + 26, 435, `Q${3 - c}`, {
+      wire(outputDeck, `M${x + 41} 410 V419`);
+      label(outputDeck, x + 35, 435, `Q${3 - c}`, {
         class: "tiny",
         "text-anchor": "end",
       });
-      return digit(outputDeck, x + 38, 435, "0011"[c]);
+      return digit(outputDeck, x + 47, 435, "0011"[c]);
     });
     const outputLights = xs.map((x) =>
-      signal(outputDeck, `M${x + 32} 410 V419`),
+      signal(outputDeck, `M${x + 41} 410 V419`),
     );
     const registerOnly = group({ "data-diagram": "register" }, array);
     key(registerOnly, "register", {}, null, 0.65);
@@ -304,6 +322,8 @@ export const MEMORY_SCENES = (() => {
         "data-register-copy": c,
       }),
     );
+    registerOnly.appendChild(registerEnableLight);
+    array.appendChild(signalLayer);
     const registerClock = gsap.timeline({ paused: true, repeat: -1 });
     registerClock.to({}, { duration: REGISTER_MODEL.PERIOD });
     demos.push(registerClock);
@@ -330,7 +350,10 @@ export const MEMORY_SCENES = (() => {
       wire(adder, `M${centre - 8} 80 V90 M${centre + 8} 80 V90`);
       digit(adder, centre - 8, 76, "0011"[c], { class: "tiny bit" });
       digit(adder, centre + 8, 76, "0110"[c], { class: "tiny bit" });
-      if (c < 3) wire(adder, `M${centre + 33.12} 105 H${centre + 21}`);
+      if (c < 3) {
+        const next = 220 + (xs[c + 1] - 23 - 220) * 0.82;
+        wire(adder, `M${next - 21} 105 H${centre + 21}`);
+      }
       const d = `M${centre} 120 V${250 + (132 - 250) * 0.82 + 32}`;
       const link = wire(adderLinks, d);
       key(link, "stored-answer", { attr: { d }, strokeWidth: 1.4 });

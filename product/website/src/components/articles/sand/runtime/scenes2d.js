@@ -1170,7 +1170,7 @@ export const SCENES2D = (function () {
     // Its geometry and feedback remain unchanged at the settled latch scene.
     tl.to(
       gLatch,
-      { scale: 0.15, x: -66, y: 2, duration: DUR * 0.48, ease: EASE },
+      { scale: 0.15, x: -78, y: 2, duration: DUR * 0.48, ease: EASE },
       at(17),
     );
     tl.to(

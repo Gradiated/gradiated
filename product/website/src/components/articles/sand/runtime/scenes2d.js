@@ -1055,29 +1055,36 @@ export const SCENES2D = (function () {
     text(98, 254, "WE", { "text-anchor": "end" }, wLatch);
     text(336, 219, "Q", { "text-anchor": "start" }, wLatch);
     const latchValues = group({ "data-latch-values": "" }, gLatch);
-    const latchDigits = [
-      text(
-        98,
-        234,
-        "0",
-        { class: "logic-value", "text-anchor": "end" },
+    const latchPorts = [
+      { name: "d", x: 98, y: 234, anchor: "end", value: 0 },
+      { name: "we", x: 98, y: 276, anchor: "end", value: 1 },
+      { name: "q", x: 336, y: 241, anchor: "start", value: 0 },
+    ].map(({ name, x, y, anchor, value }) => {
+      const port = group(
+        { "data-latch-port": name, "data-value": value },
         latchValues,
-      ),
-      text(
-        98,
-        276,
-        "1",
-        { class: "logic-value", "text-anchor": "end" },
-        latchValues,
-      ),
-      text(
-        336,
-        241,
-        "0",
-        { class: "logic-value", "text-anchor": "start" },
-        latchValues,
-      ),
-    ];
+      );
+      mk(
+        "rect",
+        {
+          x: x - (anchor === "end" ? 14 : 4),
+          y: y - 16,
+          width: 18,
+          height: 21,
+          rx: 4,
+          class: "latch-value-highlight",
+        },
+        port,
+      );
+      const digit = text(
+        x,
+        y,
+        String(value),
+        { class: "logic-value", "text-anchor": anchor },
+        port,
+      );
+      return { port, digit };
+    });
     const latchBits = { d: 0, we: 1, q: 0 };
     const latchRandom = rng(41);
     const latchEvents = [];
@@ -1116,8 +1123,11 @@ export const SCENES2D = (function () {
         latchDemo.play();
       else latchDemo.pause();
       [latchBits.d, latchBits.we, latchBits.q].forEach((value, i) => {
-        if (latchDigits[i].textContent !== String(value))
-          latchDigits[i].textContent = String(value);
+        const { port, digit } = latchPorts[i];
+        if (digit.textContent !== String(value)) {
+          digit.textContent = String(value);
+          port.setAttribute("data-value", String(value));
+        }
       });
     });
     show(latchValues, "latch", "register", {}, 0.35);

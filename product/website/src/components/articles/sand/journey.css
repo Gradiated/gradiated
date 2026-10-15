@@ -621,3 +621,20 @@ html:has(.sand-journey) {
 .sand-journey strong {
   font-weight: 600;
 }
+
+.sand-journey #d2 .memory-box {
+  fill: var(--paper);
+}
+.sand-journey #d2 .memory-signal {
+  stroke: #c49b3c;
+  stroke-width: 2.5px;
+  fill: none;
+  filter: drop-shadow(0 0 2px rgba(233, 200, 117, 0.5));
+}
+.sand-journey #d2 .memory-bus {
+  stroke-width: 3px;
+}
+.sand-journey #d2 text.memory-port {
+  font-size: 6px;
+  fill: #6f6a63;
+}

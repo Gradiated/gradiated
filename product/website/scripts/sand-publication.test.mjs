@@ -24,13 +24,26 @@ test("the public guide ends with timing and excludes all chapter 5 prose and lin
   for (const draft of [
     "Building a computer",
     "von Neumann",
-    "multiplexer",
     "LC-3",
     "program counter",
     "sand-select-values",
     "sand-computer",
   ])
     assert.ok(!html.includes(draft), draft);
+  for (const memoryScene of [
+    "memory-two",
+    "memory-array",
+    "stored-answer",
+    "memory-buses",
+  ])
+    assert.ok(sceneKeys(html).includes(memoryScene));
+  assert.ok(html.includes("word-addressable"));
+  assert.ok(html.includes("Our example uses four bits per row"));
+  assert.ok(
+    !html.includes(
+      "Our adder calculates with whatever values reach its inputs.",
+    ),
+  );
   assert.ok(html.includes(publication.footer));
   assert.ok(!html.includes("The LC-3 example"));
 });

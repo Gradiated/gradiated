@@ -10,6 +10,7 @@ import {
 
 import { ApiKeysPage } from "@/pages/api-keys-page";
 import { BillingPage } from "@/pages/billing-page";
+import { parseLoginSearch } from "@/lib/login-search";
 import { LoginPage } from "@/pages/login-page";
 import { ModelsPage } from "@/pages/models-page";
 import { OnboardingPage } from "@/pages/onboarding-page";
@@ -27,7 +28,20 @@ const indexRoute = createRoute({
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
+  validateSearch: parseLoginSearch,
   component: LoginPage,
+});
+
+const invitationAcceptRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/invitations/accept",
+  validateSearch: (search: Record<string, unknown>) => ({
+    ...(typeof search.token === "string" ? { token: search.token } : {}),
+  }),
+  component: lazyRouteComponent(
+    () => import("@/pages/invitation-accept-page"),
+    "InvitationAcceptPage",
+  ),
 });
 
 const onboardingRoute = createRoute({
@@ -103,14 +117,50 @@ const settingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/settings",
   component: lazyRouteComponent(
-    () => import("@/pages/settings-page"),
-    "SettingsPage",
+    () => import("@/pages/settings/settings-layout"),
+    "SettingsLayout",
+  ),
+});
+
+const settingsIndexRoute = createRoute({
+  getParentRoute: () => settingsRoute,
+  path: "/",
+  beforeLoad: () => {
+    throw redirect({ to: "/settings/workspace" });
+  },
+});
+
+const workspaceSettingsRoute = createRoute({
+  getParentRoute: () => settingsRoute,
+  path: "workspace",
+  component: lazyRouteComponent(
+    () => import("@/pages/settings/workspace-settings-page"),
+    "WorkspaceSettingsPage",
+  ),
+});
+
+const organizationSettingsRoute = createRoute({
+  getParentRoute: () => settingsRoute,
+  path: "organization",
+  component: lazyRouteComponent(
+    () => import("@/pages/settings/organization-settings-page"),
+    "OrganizationSettingsPage",
+  ),
+});
+
+const membersSettingsRoute = createRoute({
+  getParentRoute: () => settingsRoute,
+  path: "members",
+  component: lazyRouteComponent(
+    () => import("@/pages/settings/members-settings-page"),
+    "MembersSettingsPage",
   ),
 });
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
+  invitationAcceptRoute,
   onboardingRoute,
   apiKeysRoute,
   modelsRoute,
@@ -119,7 +169,12 @@ const routeTree = rootRoute.addChildren([
   billingRoute,
   usageRoute,
   logsRoute,
-  settingsRoute,
+  settingsRoute.addChildren([
+    settingsIndexRoute,
+    workspaceSettingsRoute,
+    organizationSettingsRoute,
+    membersSettingsRoute,
+  ]),
 ]);
 
 export const createConsoleRouter = (history?: RouterHistory) =>

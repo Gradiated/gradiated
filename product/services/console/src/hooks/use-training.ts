@@ -20,6 +20,7 @@ import {
   promoteVersion,
 } from "@/api/training";
 import type { components } from "@/api/schema";
+import { canManageOrganization } from "@/lib/roles";
 import { useProductContext } from "./use-product-context";
 import { versionsForTask } from "@/store/fine-tuning-views";
 
@@ -164,9 +165,7 @@ export const useTrainingMutation = (task: string) => {
     mutationFn: (runId: string) => cancelTrainingRun(workspaceId, runId),
     onSuccess: invalidate,
   });
-  const canEdit =
-    selectedOrganization?.status === "active" &&
-    ["owner", "admin"].includes(selectedOrganization.role);
+  const canEdit = canManageOrganization(selectedOrganization);
 
   return { update, promote, start, cancel, canEdit };
 };

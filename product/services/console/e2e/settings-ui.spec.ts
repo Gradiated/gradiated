@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-const setup = async (page: Page, role = "owner") => {
+const setup = async (page: Page, role = "admin") => {
   const organization = {
     id: "00000000-0000-4000-8000-000000000001",
     name: "Example organization",
@@ -66,6 +66,7 @@ test("settings rename the selected scopes, persist on reload, and preserve input
 }) => {
   const { organization, workspace } = await setup(page);
   await page.goto("/settings");
+  await expect(page).toHaveURL(/\/settings\/workspace$/);
   const input = page.getByRole("textbox", { name: "Workspace name" });
   await expect(input).toHaveAttribute("data-1p-ignore", "true");
   await expect(input).toHaveAttribute("autocomplete", "off");
@@ -77,7 +78,10 @@ test("settings rename the selected scopes, persist on reload, and preserve input
   ).toContainText("Production");
   await page.reload();
   await expect(input).toHaveValue("Production");
-  await page.getByRole("tab", { name: "Organization", exact: true }).click();
+  await page
+    .getByRole("group", { name: "Organization" })
+    .getByRole("link", { name: "General" })
+    .click();
   const organizationInput = page.getByRole("textbox", {
     name: "Organization name",
   });
@@ -89,7 +93,10 @@ test("settings rename the selected scopes, persist on reload, and preserve input
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect.poll(() => organization.name).toBe("Research");
   await page.reload();
-  await page.getByRole("tab", { name: "Organization", exact: true }).click();
+  await page
+    .getByRole("group", { name: "Organization" })
+    .getByRole("link", { name: "General" })
+    .click();
   await expect(organizationInput).toHaveValue("Research");
 });
 
@@ -104,7 +111,10 @@ test("ordinary members can view names but cannot edit them", async ({
   await expect(
     page.getByRole("button", { name: "Save changes" }),
   ).toBeDisabled();
-  await page.getByRole("tab", { name: "Organization", exact: true }).click();
+  await page
+    .getByRole("group", { name: "Organization" })
+    .getByRole("link", { name: "General" })
+    .click();
   await expect(
     page.getByRole("textbox", { name: "Organization name" }),
   ).toBeDisabled();

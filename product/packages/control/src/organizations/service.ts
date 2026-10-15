@@ -6,8 +6,9 @@ import {
 } from "@gradiated/contracts";
 import { companyEmailDomain } from "./email-domains.js";
 import { createOrganizationStore } from "./store.js";
+import { createMemberStore } from "../members/store.js";
 import { ControlServiceError } from "../errors.js";
-import { managerRoles, requireMembership } from "../access.js";
+import { requireOrganizationAdmin } from "../access.js";
 import { postBalanceTransaction } from "../billing/ledger.js";
 import type { ControlDatabase } from "../db/client.js";
 import {
@@ -42,7 +43,7 @@ export interface CreatedOrganization {
   kind: "customer";
   name: string;
   status: "active";
-  role: "owner";
+  role: "admin";
   defaultWorkspaceId: string;
   createdAt: Date;
   updatedAt: Date;
@@ -65,7 +66,10 @@ export interface OrganizationService {
     organizationId: string,
     input: UpdateOrganization,
   ): Promise<UserOrganization>;
-  listForUser(userId: string): Promise<UserOrganization[]>;
+  listForUser(
+    userId: string,
+    organizationId?: string,
+  ): Promise<UserOrganization[]>;
   createForUser(userId: string, name: string): Promise<CreatedOrganization>;
   ensurePersonalForUser(
     userId: string,
@@ -78,6 +82,7 @@ export const createOrganizationService = (
   database: ControlDatabase,
 ): OrganizationService => {
   const records = createOrganizationStore(database);
+  const members = createMemberStore(database);
   const createOrganization = async (input: {
     signupCredit: boolean;
     onboarded: boolean;
@@ -101,7 +106,7 @@ export const createOrganizationService = (
       await transaction.insert(organizationMembers).values({
         organizationId,
         userId: input.userId,
-        role: "owner",
+        role: "admin",
         status: "active",
         createdAt: now,
         updatedAt: now,
@@ -132,15 +137,17 @@ export const createOrganizationService = (
       kind: "customer",
       name: input.name,
       status: "active",
-      role: "owner",
+      role: "admin",
       defaultWorkspaceId: defaultWorkspace.id,
       createdAt: now,
       updatedAt: now,
     };
   };
 
-  const listForUser = async (userId: string): Promise<UserOrganization[]> =>
-    records.listForUser(userId);
+  const listForUser = async (
+    userId: string,
+    organizationId?: string,
+  ): Promise<UserOrganization[]> => records.listForUser(userId, organizationId);
 
   const ensurePersonalForUser = async (userId: string, name = "Personal") => {
     const [existing] = await listForUser(userId);
@@ -164,21 +171,32 @@ export const createOrganizationService = (
     };
   };
 
+  const acceptPendingInvitations = async (user: SignupUser) => {
+    if (!user.emailVerified) return undefined;
+
+    const now = new Date();
+    const joined: string[] = [];
+    for (const id of await members.pendingInvitationIdsForEmail(
+      user.email,
+      now,
+    )) {
+      const accepted = await members.accept(id, user.id, now);
+      if (accepted?.joined) joined.push(accepted.organizationId);
+    }
+
+    return joined[0];
+  };
+
+  const joinByEmailDomain = async (user: SignupUser) => {
+    const domain = companyEmailDomain(user);
+
+    return domain ? records.joinByDomain(user.id, domain) : undefined;
+  };
+
   return {
     listForUser,
     async updateForUser(userId, organizationId, input) {
-      const membership = await requireMembership(database, {
-        userId,
-        organizationId,
-      });
-      if (
-        !managerRoles.has(membership.role) ||
-        membership.organizationStatus !== "active"
-      )
-        throw new ControlServiceError(
-          "forbidden",
-          "Only owners and admins of active organizations can change their settings.",
-        );
+      await requireOrganizationAdmin(database, { userId, organizationId });
 
       const update = UpdateOrganizationSchema.parse(input);
       if (update.auto_join_domain) {
@@ -212,10 +230,9 @@ export const createOrganizationService = (
     ensurePersonalForUser,
 
     async ensureForNewUser(user) {
-      const domain = companyEmailDomain(user);
-      const joinedId = domain
-        ? await records.joinByDomain(user.id, domain)
-        : undefined;
+      const joinedId =
+        (await acceptPendingInvitations(user)) ??
+        (await joinByEmailDomain(user));
       if (!joinedId) return ensurePersonalForUser(user.id);
 
       const [joined] = await records.listForUser(user.id, joinedId);

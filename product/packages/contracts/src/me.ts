@@ -2,12 +2,10 @@ import { z } from "@hono/zod-openapi";
 
 import { NameSchema, TimestampSchema, UuidSchema } from "./common.js";
 
-export const OrganizationRoleSchema = z.enum([
-  "owner",
-  "admin",
-  "billing",
-  "member",
-]);
+export const OrganizationRoleSchema = z
+  .enum(["admin", "member"])
+  .openapi("OrganizationRole");
+export type OrganizationRole = z.infer<typeof OrganizationRoleSchema>;
 
 export const EmailDomainSchema = z
   .string()

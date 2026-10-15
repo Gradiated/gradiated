@@ -12,8 +12,13 @@ import { useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { createConsoleRouter } from "@/router";
 import {
-  acmeOwner,
+  acmeAdmin,
+  acmeMember,
   handlersFor,
+  invitationHandlers,
+  invitationPreview,
+  invitee,
+  otherAccount,
   newOrganizationHandlers,
   onboardingCompanyUser,
   onboardingPersonalUser,
@@ -65,15 +70,36 @@ const meta = {
 
     const body = within(canvasElement.ownerDocument.body);
 
-    if (parameters.settingsTab) {
-      await userEvent.click(
-        await canvas.findByRole("tab", { name: parameters.settingsTab }),
-      );
+    if (parameters.nameField) {
       const input = await canvas.findByRole("textbox", {
-        name: `${parameters.settingsTab} name`,
+        name: parameters.nameField,
       });
       await expect(input).toHaveAttribute("data-1p-ignore", "true");
       await expect(input).toHaveAttribute("autocomplete", "off");
+    }
+
+    if (parameters.members) {
+      await canvas.findByText("morgan@acme.com", {}, { timeout: 10000 });
+    }
+
+    if (parameters.invite) {
+      await userEvent.click(
+        await canvas.findByRole("button", { name: /Invite/ }),
+      );
+      await userEvent.type(
+        await body.findByRole("textbox", { name: "Email addresses" }),
+        "morgan@acme.com, casey@acme.com",
+      );
+      await body.findByRole("button", { name: "Send 2 invitations" });
+    }
+
+    if (parameters.memberActions) {
+      await userEvent.click(
+        await canvas.findByRole("button", {
+          name: `Actions for ${parameters.memberActions}`,
+        }),
+      );
+      await body.findByRole("menuitem", { name: /Remove from/ });
     }
 
     if (parameters.createScope) {
@@ -204,6 +230,10 @@ export const LogDetails: Story = {
   parameters: { logDetail: true },
 };
 export const Billing: Story = { args: { path: "/billing" } };
+export const BillingAsMember: Story = {
+  args: { path: "/billing" },
+  parameters: { msw: handlersFor(acmeMember) },
+};
 export const Training: Story = { args: { path: "/tasks" } };
 export const TaskModel: Story = {
   args: { path: "/tasks/support-assistant" },
@@ -237,12 +267,42 @@ export const TaskTestResults: Story = {
 };
 
 export const SettingsWorkspace: Story = {
-  args: { path: "/settings" },
-  parameters: { settingsTab: "Workspace" },
+  args: { path: "/settings/workspace" },
+  parameters: { nameField: "Workspace name" },
 };
 export const SettingsOrganization: Story = {
-  args: { path: "/settings" },
-  parameters: { settingsTab: "Organization", msw: handlersFor(acmeOwner) },
+  args: { path: "/settings/organization" },
+  parameters: { nameField: "Organization name", msw: handlersFor(acmeAdmin) },
+};
+export const SettingsMembers: Story = {
+  args: { path: "/settings/members" },
+  parameters: { members: true, msw: handlersFor(acmeAdmin) },
+};
+export const SettingsMembersMobile: Story = {
+  args: { path: "/settings/members" },
+  parameters: { members: true, msw: handlersFor(acmeAdmin) },
+  tags: ["mobile"],
+};
+export const SettingsMembersAsMember: Story = {
+  args: { path: "/settings/members" },
+  parameters: { members: true, msw: handlersFor(acmeMember) },
+};
+export const SettingsMemberActions: Story = {
+  args: { path: "/settings/members" },
+  parameters: {
+    members: true,
+    memberActions: "sam@acme.com",
+    msw: handlersFor(acmeAdmin),
+  },
+};
+export const InviteMembers: Story = {
+  args: { path: "/settings/members" },
+  parameters: { members: true, invite: true, msw: handlersFor(acmeAdmin) },
+};
+export const SettingsOrganizationMobile: Story = {
+  args: { path: "/settings/organization" },
+  parameters: { nameField: "Organization name", msw: handlersFor(acmeAdmin) },
+  tags: ["mobile"],
 };
 export const Onboarding: Story = {
   args: { path: "/onboarding" },
@@ -271,4 +331,32 @@ export const TaskComparisonSelector: Story = {
     modelSelect: "Comparison model",
     modelSearch: "4.1",
   },
+};
+
+const invitationStory = (
+  preview: Parameters<typeof invitationHandlers>[0],
+  currentUser: Parameters<typeof invitationHandlers>[1],
+): Story => ({
+  args: { path: `/invitations/accept?token=${"a".repeat(43)}` },
+  parameters: { msw: invitationHandlers(preview, currentUser) },
+});
+
+export const InvitationAccept = invitationStory(invitationPreview, invitee);
+export const InvitationSignedOut = invitationStory(invitationPreview, null);
+export const InvitationWrongAccount = invitationStory(
+  invitationPreview,
+  otherAccount,
+);
+export const InvitationExpired = invitationStory(
+  { ...invitationPreview, status: "expired" },
+  invitee,
+);
+export const InvitationInvalid = invitationStory({ status: "invalid" }, null);
+export const InvitationAlreadyMember = invitationStory(
+  { ...invitationPreview, email: "priya@acme.com" },
+  acmeMember,
+);
+export const InvitationError: Story = {
+  ...invitationStory("error", invitee),
+  tags: ["request-failure"],
 };

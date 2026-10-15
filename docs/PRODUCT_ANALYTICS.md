@@ -52,6 +52,10 @@ and `workspace_id`. Common properties above apply to every row.
 | `user_signed_in`                      | API     | `user_id`, `session_id`                 | Auth session created; stable UUID is session ID. No selected group assumed.    |
 | `organization_created`                | API     | org, `default_workspace_id`             | Explicit org creation succeeds.                                                |
 | `organization_settings_updated`       | API     | org, `changed_fields`                   | PATCH succeeds; field names only.                                              |
+| `organization_members_invited`        | API     | org, `invitation_count`                 | Invitations created and emailed; no addresses.                                 |
+| `organization_invitation_accepted`    | API     | org                                     | A signed-in user accepts an invitation link.                                   |
+| `organization_member_role_changed`    | API     | org, `role`                             | An admin changes another member's role.                                        |
+| `organization_member_removed`         | API     | org                                     | An admin removes another member.                                               |
 | `workspace_created`                   | API     | workspace, `is_default`                 | Explicit creation, including a new org's default workspace.                    |
 | `workspace_settings_updated`          | API     | workspace, `changed_fields`             | PATCH succeeds; field names only.                                              |
 | `workspace_archived`                  | API     | workspace                               | Archive accepted; content deletion may remain pending.                         |
@@ -111,20 +115,20 @@ workflow becomes active after its file is merged into the default branch.
 
 The following summary properties belong to `ci_workflow_completed`:
 
-| Properties | Meaning |
-| --- | --- |
-| `workflow_name`, `workflow_id`, `workflow_path` | Stable workflow identity for breakdowns. |
-| `repository`, `run_id`, `run_number`, `run_attempt`, `run_url` | Source run and rerun identity. |
-| `head_sha`, `head_branch`, `pr_numbers`, `status`, `conclusion` | PR revision and outcome; commit association fills missing PR numbers. |
-| `duration_seconds` | Attempt start to the source workflow's completion/update timestamp, including queueing and final bookkeeping. |
-| `initial_queue_seconds`, `execution_span_seconds` | Delay to the first executing job, and span from first job start to last job completion. |
-| `job_duration_sum_seconds`, `job_queue_sum_seconds` | Sum of job execution or queued elapsed times; parallel work overlaps, and neither is billed cost. |
-| `job_count`, `executed_job_count`, `substantive_job_count` | All jobs, jobs with a real start timestamp, and started jobs excluding relevance selectors and passing gates. |
-| `skipped_job_count`, `failed_job_count`, `cancelled_job_count` | Job outcomes. |
-| `slowest_job_name`, `slowest_job_seconds` | Longest executing job; this is not a reconstructed dependency critical path. |
-| `longest_queue_job_name`, `longest_queue_seconds` | Longest measured job queue delay. |
-| `slowest_step_job_name`, `slowest_step_name`, `slowest_step_seconds` | Longest executing step and its containing job. |
-| `jobs` | Job IDs/names, runner labels, queue/start/end timestamps, queue/execution seconds, outcomes, and individual step names/numbers/outcomes/durations. |
+| Properties                                                           | Meaning                                                                                                                                            |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `workflow_name`, `workflow_id`, `workflow_path`                      | Stable workflow identity for breakdowns.                                                                                                           |
+| `repository`, `run_id`, `run_number`, `run_attempt`, `run_url`       | Source run and rerun identity.                                                                                                                     |
+| `head_sha`, `head_branch`, `pr_numbers`, `status`, `conclusion`      | PR revision and outcome; commit association fills missing PR numbers.                                                                              |
+| `duration_seconds`                                                   | Attempt start to the source workflow's completion/update timestamp, including queueing and final bookkeeping.                                      |
+| `initial_queue_seconds`, `execution_span_seconds`                    | Delay to the first executing job, and span from first job start to last job completion.                                                            |
+| `job_duration_sum_seconds`, `job_queue_sum_seconds`                  | Sum of job execution or queued elapsed times; parallel work overlaps, and neither is billed cost.                                                  |
+| `job_count`, `executed_job_count`, `substantive_job_count`           | All jobs, jobs with a real start timestamp, and started jobs excluding relevance selectors and passing gates.                                      |
+| `skipped_job_count`, `failed_job_count`, `cancelled_job_count`       | Job outcomes.                                                                                                                                      |
+| `slowest_job_name`, `slowest_job_seconds`                            | Longest executing job; this is not a reconstructed dependency critical path.                                                                       |
+| `longest_queue_job_name`, `longest_queue_seconds`                    | Longest measured job queue delay.                                                                                                                  |
+| `slowest_step_job_name`, `slowest_step_name`, `slowest_step_seconds` | Longest executing step and its containing job.                                                                                                     |
+| `jobs`                                                               | Job IDs/names, runner labels, queue/start/end timestamps, queue/execution seconds, outcomes, and individual step names/numbers/outcomes/durations. |
 
 Step events carry the same repository, PR/revision, workflow/run/attempt
 identifiers plus `workflow_status`, `workflow_conclusion`, `job_id`, `job_name`,

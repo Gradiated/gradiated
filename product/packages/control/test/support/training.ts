@@ -16,7 +16,7 @@ export const trainingAdapter: TaskVersionAdapter = {
 };
 
 export const seedTrainingTask = async (database: ControlDatabase) => {
-  const member = await seedMember(database, { role: "owner" });
+  const member = await seedMember(database, { role: "admin" });
   await database
     .update(workspaces)
     .set({ traceCaptureEnabled: true })

@@ -94,7 +94,7 @@ export const createBillingPaymentsService = ({
   gateway: StripeGateway;
   accounts: Pick<
     CatalogBillingService,
-    "getBillingAccount" | "applyBalanceTransaction"
+    "getManagedBillingAccount" | "applyBalanceTransaction"
   >;
   productUrl: string;
 }): BillingPaymentsService => {
@@ -108,7 +108,7 @@ export const createBillingPaymentsService = ({
         );
       }
 
-      const account = await accounts.getBillingAccount(
+      const account = await accounts.getManagedBillingAccount(
         input.userId,
         input.organizationId,
       );

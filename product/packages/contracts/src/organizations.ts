@@ -36,7 +36,7 @@ export const OrganizationSchema = z
     kind: z.literal("customer"),
     name: NameSchema,
     status: z.literal("active"),
-    role: z.literal("owner"),
+    role: z.literal("admin"),
     default_workspace_id: UuidSchema,
     created_at: TimestampSchema,
     updated_at: TimestampSchema,

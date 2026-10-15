@@ -17,7 +17,7 @@ beforeAll(async () => {
 afterAll(() => db.dispose());
 
 it("measures live capacity waits and completed stage duration from persisted events", async () => {
-  const member = await seedMember(db.database, { role: "owner" });
+  const member = await seedMember(db.database, { role: "admin" });
   const model = modelInput();
   await createCatalogService(db.database).upsertModel(model);
   const taskId = randomUUID();

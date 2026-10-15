@@ -12,6 +12,7 @@ export default defineConfig({
     "task-ui.spec.ts",
     "settings-ui.spec.ts",
     "onboarding-ui.spec.ts",
+    "members-ui.spec.ts",
   ],
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),

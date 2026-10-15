@@ -1,9 +1,9 @@
 import type { BalanceTransactionQuery } from "@gradiated/contracts";
 import { and, eq, isNull } from "drizzle-orm";
 
-import { requireMembership } from "../access.js";
+import { requireMembership, requireOrganizationAdmin } from "../access.js";
 import type { ControlDatabase } from "../db/client.js";
-import { billingAccounts, type OrganizationRole } from "../db/schema/index.js";
+import { billingAccounts } from "../db/schema/index.js";
 import { ControlServiceError } from "../errors.js";
 import {
   billingAccountNotFound,
@@ -20,6 +20,10 @@ export interface BillingService {
     userId: string,
     organizationId: string,
   ): Promise<BillingAccountRecord>;
+  getManagedBillingAccount(
+    userId: string,
+    organizationId: string,
+  ): Promise<BillingAccountRecord>;
   listBalanceTransactions(
     userId: string,
     organizationId: string,
@@ -32,16 +36,21 @@ export interface BillingService {
   ): Promise<BalanceTransactionRecord>;
 }
 
-const billingRoles: ReadonlySet<OrganizationRole> = new Set([
-  "owner",
-  "admin",
-  "billing",
-]);
-
 export const createBillingService = (
   database: ControlDatabase,
 ): BillingService => {
-  const requireBillingAccess = async (
+  const account = async (organizationId: string) => {
+    const [row] = await database
+      .select()
+      .from(billingAccounts)
+      .where(eq(billingAccounts.organizationId, organizationId))
+      .limit(1);
+    if (!row) throw billingAccountNotFound();
+
+    return row;
+  };
+
+  const requireBillingReader = async (
     userId: string,
     organizationId: string,
   ) => {
@@ -49,33 +58,28 @@ export const createBillingService = (
       userId,
       organizationId,
     });
-    if (
-      membership.organizationStatus !== "active" ||
-      !billingRoles.has(membership.role)
-    ) {
+    if (membership.organizationStatus !== "active")
       throw new ControlServiceError(
         "forbidden",
-        "The current member cannot view billing for this organization.",
+        "This organization's billing is unavailable.",
       );
-    }
   };
 
   return {
     async getBillingAccount(userId, organizationId) {
-      await requireBillingAccess(userId, organizationId);
+      await requireBillingReader(userId, organizationId);
 
-      const [account] = await database
-        .select()
-        .from(billingAccounts)
-        .where(eq(billingAccounts.organizationId, organizationId))
-        .limit(1);
-      if (!account) throw billingAccountNotFound();
+      return account(organizationId);
+    },
 
-      return account;
+    async getManagedBillingAccount(userId, organizationId) {
+      await requireOrganizationAdmin(database, { userId, organizationId });
+
+      return account(organizationId);
     },
 
     async listBalanceTransactions(userId, organizationId, query = {}) {
-      await requireBillingAccess(userId, organizationId);
+      await requireBillingReader(userId, organizationId);
 
       return listBalanceTransactionPage(database, organizationId, query);
     },

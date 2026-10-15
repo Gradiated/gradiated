@@ -109,31 +109,57 @@ export const requireWorkspaceMembership = async (
   return { membership, workspace };
 };
 
-export const managerRoles: ReadonlySet<OrganizationRole> = new Set([
-  "owner",
-  "admin",
-]);
+export const isAdmin = (role: OrganizationRole): boolean => role === "admin";
+
+export const activeCustomerOrganization = and(
+  eq(organizations.kind, "customer"),
+  eq(organizations.status, "active"),
+);
+
+export const requireOrganizationAdmin = async (
+  database: ControlDatabase,
+  key: MembershipKey,
+): Promise<Membership> => {
+  const membership = await requireMembership(database, key);
+  if (!isAdmin(membership.role) || membership.organizationStatus !== "active")
+    throw new ControlServiceError(
+      "forbidden",
+      "Only admins of active organizations can do this.",
+    );
+
+  return membership;
+};
+
+export const requireWritableWorkspace = async (
+  database: ControlDatabase,
+  key: { userId: string; workspaceId: string },
+) => {
+  const access = await requireWorkspaceMembership(database, key);
+  if (
+    access.membership.organizationStatus !== "active" ||
+    access.workspace.archivedAt
+  )
+    throw new ControlServiceError(
+      "forbidden",
+      "This workspace cannot be changed.",
+    );
+
+  return access;
+};
 
 export const requireWorkspaceEditor = async (
   database: ControlDatabase,
   key: { userId: string; workspaceId: string },
 ): Promise<typeof workspaces.$inferSelect> => {
-  const { membership, workspace } = await requireWorkspaceMembership(
+  const { membership, workspace } = await requireWritableWorkspace(
     database,
     key,
   );
-  if (!managerRoles.has(membership.role)) {
+  if (!isAdmin(membership.role))
     throw new ControlServiceError(
       "forbidden",
-      "Only organization owners and admins can manage this workspace.",
+      "Only organization admins can manage this workspace.",
     );
-  }
-  if (membership.organizationStatus !== "active" || workspace.archivedAt) {
-    throw new ControlServiceError(
-      "forbidden",
-      "This workspace cannot be changed.",
-    );
-  }
 
   return workspace;
 };

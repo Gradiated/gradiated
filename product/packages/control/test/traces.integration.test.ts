@@ -36,7 +36,7 @@ describe("generation content", () => {
     objects = new Map();
     store = createMemoryContentStore(objects);
   });
-  const fixture = async (role: "owner" | "member" = "owner", daysAgo = 0) => {
+  const fixture = async (role: "admin" | "member" = "admin", daysAgo = 0) => {
     const scope = await seedMember(db.database, { role });
     const started = new Date(Date.now() - daysAgo * 86_400_000);
     const generation = v7({ msecs: started.getTime() });
@@ -203,7 +203,7 @@ describe("generation content", () => {
     });
   });
   it("denies expired content using its recorded retention", async () => {
-    const f = await fixture("owner", 100);
+    const f = await fixture("admin", 100);
     await expect(
       f.service.content(
         f.userId,
@@ -257,7 +257,7 @@ describe("generation content", () => {
     ).rejects.toMatchObject({ code: "unavailable" });
   });
   it("retention changes leave existing captures readable until their recorded expiry", async () => {
-    const f = await fixture("owner", 40);
+    const f = await fixture("admin", 40);
     for (const days of [30, 180, 30] as const) {
       await f.workspaceService.updateWorkspace(f.userId, f.workspaceId, {
         trace_capture_enabled: true,
@@ -322,7 +322,7 @@ describe("generation content", () => {
     expect(store.read).not.toHaveBeenCalled();
   });
   it("skips empty hours within a bounded scan", async () => {
-    const f = await fixture("owner", 0.5);
+    const f = await fixture("admin", 0.5);
     const page = await f.service.list(f.userId, f.workspaceId, {
       task: "test",
     });
@@ -331,7 +331,7 @@ describe("generation content", () => {
     expect(vi.mocked(store.list).mock.calls.length).toBeLessThanOrEqual(24);
   });
   it("lists older captures after workspace retention is shortened", async () => {
-    const f = await fixture("owner", 40);
+    const f = await fixture("admin", 40);
     await f.workspaceService.updateWorkspace(f.userId, f.workspaceId, {
       trace_capture_enabled: true,
       trace_retention_days: 30,

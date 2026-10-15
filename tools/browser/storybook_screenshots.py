@@ -43,9 +43,16 @@ def main() -> None:
         ):
             browser = playwright.chromium.launch()
             for story in stories:
+                tags = story.get("tags", [])
+                mobile = "mobile" in tags
                 context = browser.new_context(
-                    viewport={"width": 1440, "height": 1000},
-                    device_scale_factor=1,
+                    viewport=(
+                        {"width": 390, "height": 844}
+                        if mobile
+                        else {"width": 1440, "height": 1000}
+                    ),
+                    device_scale_factor=2 if mobile else 1,
+                    is_mobile=mobile,
                     locale="en-US",
                     timezone_id="UTC",
                     color_scheme="light",
@@ -74,6 +81,12 @@ def main() -> None:
                 page.evaluate("document.activeElement?.blur()")
                 # Recharts animates through JS; let its entry animation finish.
                 page.wait_for_timeout(2000)
+                if "request-failure" in tags:
+                    errors = [
+                        error
+                        for error in errors
+                        if not error.startswith("Failed to load resource")
+                    ]
                 if errors:
                     raise RuntimeError(f"{story['id']}: {errors}")
 

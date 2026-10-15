@@ -13,6 +13,10 @@ export type Organization = components["schemas"]["Organization"];
 export type Workspace = components["schemas"]["Workspace"];
 export type ApiKey = components["schemas"]["ApiKey"];
 export type CreatedApiKey = components["schemas"]["CreatedApiKey"];
+export type OrganizationRole = components["schemas"]["OrganizationRole"];
+export type Member = components["schemas"]["Member"];
+export type Invitation = components["schemas"]["Invitation"];
+export type InvitationPreview = components["schemas"]["InvitationPreview"];
 type ModelList =
   | components["schemas"]["ModelList"]
   | components["schemas"]["ExternalModelList"];
@@ -50,6 +54,98 @@ export const updateOrganization = (
       body,
     }),
   );
+
+const organizationPath = (organizationId: string) => ({
+  params: { path: { organization_id: organizationId } },
+});
+
+export const listMembers = (organizationId: string) =>
+  requireData(
+    api.GET(
+      "/api/v1/organizations/{organization_id}/members",
+      organizationPath(organizationId),
+    ),
+  );
+
+export const updateMember = (
+  organizationId: string,
+  userId: string,
+  role: OrganizationRole,
+) =>
+  requireData(
+    api.PATCH("/api/v1/organizations/{organization_id}/members/{user_id}", {
+      params: { path: { organization_id: organizationId, user_id: userId } },
+      body: { role },
+    }),
+  );
+
+export const removeMember = (organizationId: string, userId: string) =>
+  requireOk(
+    api.DELETE("/api/v1/organizations/{organization_id}/members/{user_id}", {
+      params: { path: { organization_id: organizationId, user_id: userId } },
+    }),
+  );
+
+export const listInvitations = (organizationId: string) =>
+  requireData(
+    api.GET(
+      "/api/v1/organizations/{organization_id}/invitations",
+      organizationPath(organizationId),
+    ),
+  );
+
+export const createInvitations = (
+  organizationId: string,
+  body: components["schemas"]["CreateInvitations"],
+) =>
+  requireData(
+    api.POST("/api/v1/organizations/{organization_id}/invitations", {
+      ...organizationPath(organizationId),
+      body,
+    }),
+  );
+
+export const resendInvitation = (
+  organizationId: string,
+  invitationId: string,
+) =>
+  requireData(
+    api.POST(
+      "/api/v1/organizations/{organization_id}/invitations/{invitation_id}/resend",
+      {
+        params: {
+          path: {
+            organization_id: organizationId,
+            invitation_id: invitationId,
+          },
+        },
+      },
+    ),
+  );
+
+export const revokeInvitation = (
+  organizationId: string,
+  invitationId: string,
+) =>
+  requireOk(
+    api.DELETE(
+      "/api/v1/organizations/{organization_id}/invitations/{invitation_id}",
+      {
+        params: {
+          path: {
+            organization_id: organizationId,
+            invitation_id: invitationId,
+          },
+        },
+      },
+    ),
+  );
+
+export const previewInvitation = (token: string): Promise<InvitationPreview> =>
+  requireData(api.POST("/api/v1/invitations/preview", { body: { token } }));
+
+export const acceptInvitation = (token: string) =>
+  requireData(api.POST("/api/v1/invitations/accept", { body: { token } }));
 
 export const listWorkspaces = (organizationId: string) =>
   requireData(

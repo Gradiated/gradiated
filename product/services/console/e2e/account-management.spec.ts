@@ -126,7 +126,10 @@ test("settings save organization and workspace names across reloads", async ({
   await expect(
     page.getByRole("textbox", { name: "Workspace name" }),
   ).toHaveValue(workspaceName);
-  await page.getByRole("tab", { name: "Organization", exact: true }).click();
+  await page
+    .getByRole("group", { name: "Organization" })
+    .getByRole("link", { name: "General" })
+    .click();
   await expect(
     page.getByRole("textbox", { name: "Organization name" }),
   ).toHaveValue(account.organizationName);
@@ -139,7 +142,10 @@ test("settings save organization and workspace names across reloads", async ({
     page.getByText("Organization renamed.", { exact: true }),
   ).toBeVisible();
   await page.reload();
-  await page.getByRole("tab", { name: "Organization", exact: true }).click();
+  await page
+    .getByRole("group", { name: "Organization" })
+    .getByRole("link", { name: "General" })
+    .click();
   await expect(
     page.getByRole("textbox", { name: "Organization name" }),
   ).toHaveValue(organizationName);

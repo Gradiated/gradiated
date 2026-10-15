@@ -27,7 +27,7 @@ describe("private adapter hosting", () => {
   afterAll(() => db.dispose());
 
   const seed = async (status: "available" | "unavailable" = "available") => {
-    const owner = await seedMember(db.database, { role: "owner" });
+    const owner = await seedMember(db.database, { role: "admin" });
     const [task] = await db.database
       .insert(tasks)
       .values({

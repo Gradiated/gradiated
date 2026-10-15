@@ -62,6 +62,11 @@ def main():
             ('incident-webhook', 'ModelUnderReplicated', 'gradiated', 'warning'),
             ('incident-webhook', 'GatewayHighErrorRate', 'gradiated', 'critical'),
             ('incident-webhook', 'ProxyHighErrorRate', 'gradiated', 'critical'),
+            ('incident-webhook', 'VulnerabilityCriticalOverdue', 'gradiated', 'warning'),
+            ('incident-webhook', 'VulnerabilityHighOverdue', 'gpu-inference', 'warning'),
+            ('incident-webhook', 'KyvernoPolicyViolationsRising', 'gradiated', 'warning'),
+            ('incident-webhook', 'FalcoCriticalEvents', 'falco', 'warning'),
+            ('incident-webhook', 'FalcoDown', 'falco', 'warning'),
             ('heartbeat', 'Watchdog', 'observability', 'none'),
             ('null', 'InfoInhibitor', 'observability', 'none'),
         ]

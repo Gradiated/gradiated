@@ -229,6 +229,109 @@ while others complete; an oldest-active-request/deadline metric is still needed.
 No automatic external provisioning, test purchases/inference, destructive fault
 injection, restore, or failover was performed during this review.
 
+## Security monitoring
+
+Argo CD reconciles three open-source security tools from
+`infra/environments/prod/us-east-1/kubernetes/platform/`. They support the SOC 2
+vulnerability-management, preventive-control and intrusion-detection criteria.
+Their alerts are in the `gradiated-security` PrometheusRule and the
+`Gradiated / Security` dashboard. Kyverno and Falco dashboards are in the
+Grafana `Security` folder.
+
+| Tool | Namespace | What it does | Requested overhead |
+| --- | --- | --- | --- |
+| Trivy Operator 0.35 (chart 0.37.0) | `trivy-system` | Scans running images for CVEs and exposed secrets, and audits workload configuration, RBAC, node configuration and the EKS CIS, NSA and Pod Security compliance specs. Rescans every 24 hours, two scan jobs at a time. | Operator 50m/128Mi, Trivy server 100m/512Mi and a 5 GiB gp3 volume, scan jobs 100m/128Mi each while running |
+| Kyverno 1.19 (chart 3.9.1) | `kyverno` | Four baseline `ValidatingPolicy` resources in **Audit** mode: no privileged containers, no host namespaces or hostPath, no `latest` or untagged images, CPU and memory requests required. Nothing is blocked. Webhooks fail open. | Admission controller 100m/256Mi, reports controller 50m/128Mi |
+| Falco 0.45 (chart 9.2.0) | `falco` | Runtime intrusion detection on every EKS node with the modern eBPF probe in least-privileged mode and the pinned `falco-rules:5.2.0` default ruleset. Events at Notice and above go to Loki as JSON. | 50m/256Mi per node (15 nodes: 750m/3.75Gi), default priority so it never preempts workloads |
+
+Scope limits:
+
+- GPU model pods run on virtual-kubelet nodes backed by external hosts. Falco
+  cannot run there, and Trivy skips the `gradiated/*-bundle` images because the
+  cluster cannot pull them and they are tens of gigabytes. The Trivy node
+  collector also skips `type=virtual-kubelet` nodes. GPU workload configuration
+  is still audited by Trivy and Kyverno.
+- Trivy scan jobs read private ECR images through the
+  `gradiated-prod-trivy-operator` Pod Identity role in the `platform-iam`
+  Terraform unit. Apply that unit before or with this change; without it, ECR
+  images report scan failures while public images still scan.
+- Unfixed CVEs remain in the reports but do not alert.
+
+Kyverno policies live in
+`infra/environments/prod/us-east-1/kubernetes/kyverno-policies/`. Exclusions,
+taken from the manifests and live workloads:
+
+| Policy | Excluded |
+| --- | --- |
+| All | `kube-system` (VPC CNI, network policy agent, kube-proxy, EBS CSI, Pod Identity agent, CoreDNS), `kube-public`, `kube-node-lease`, `kyverno` |
+| Privileged containers | `falco`; `tailscale-inference`, whose kernel-mode proxies need privileges |
+| Host namespaces and hostPath | `falco`; `trivy-system` (node collector); node-exporter and `alloy-logs` pods by `app.kubernetes.io/name` |
+
+The first reports will include existing findings, for example containers in the
+kube-prometheus-stack release that set no resource requests. Fix a finding or
+add a commented exclusion before moving any policy to `Deny`.
+
+Falco tuning, in `customRules` of `platform/falco.yaml`; no rule is disabled and
+no critical-priority rule is changed:
+
+- `Contact K8S API Server From Container` ignores controllers in `argocd`,
+  `tailscale-inference`, `keda`, `external-secrets`, `kyverno`, `trivy-system`,
+  `falco`, `observability` and `gpu-inference`. Product namespaces still report.
+- `Packet socket created in container` ignores `tailscaled`, which opens an
+  AF_PACKET socket for NAT traversal in kernel mode.
+- The minimum output priority is Notice, which drops the Informational
+  `System user interactive` rule.
+- Rules update only when the pinned ruleset changes in Git; weekly automatic
+  rule downloads are off.
+
+Review the Falco Loki stream after rollout and add exceptions in the same file.
+
+| Alert | Condition | Severity |
+| --- | --- | --- |
+| `VulnerabilityCriticalOverdue` | A fixable Critical CVE in an image repository running in a namespace was also present 7–8 days ago, for 1h | warning (In-hours) |
+| `VulnerabilityHighOverdue` | The same for a fixable High CVE and 30–31 days | warning (In-hours) |
+| `TrivyOperatorNotReporting` | Operator unscraped, or no vulnerability reports exported, for 1h | warning (In-hours) |
+| `FalcoCriticalEvents` | Any Emergency, Alert or Critical Falco rule match in the last 10 minutes | warning (In-hours) during burn-in; raise to critical once the rules are tuned |
+| `FalcoDown` | A Falco sensor unavailable or unscraped, or the DaemonSet or its scrape targets missing, for 10m | warning (In-hours) |
+| `KyvernoPolicyViolationsRising` | A namespace's audited failure count exceeds its count a day earlier for 1h | warning (In-hours) |
+
+incident.io maps `critical` to Urgent and every other severity to In-hours,
+so no security alert pages at night yet. Vulnerability
+alerts repeat daily rather than every two hours. The SLA alerts key on image
+repository and CVE, so redeploying the same vulnerable image does not restart
+the clock. They need 7 or 30 days of metrics after installation before they can
+fire. `KyvernoPolicyViolationsRising` reads per-report failure counts that
+kube-state-metrics exports as `kube_policyreport_fail` and waits for a day of
+history.
+
+### Exporting SOC 2 evidence
+
+Reports are Kubernetes resources; export them with read-only access and store
+the files in the evidence system, not this repository:
+
+```sh
+stamp=$(date -u +%Y%m%dT%H%M%SZ)
+kubectl get vulnerabilityreports -A -o json > "vulnerability-reports-$stamp.json"
+kubectl get exposedsecretreports -A -o json > "exposed-secret-reports-$stamp.json"
+kubectl get configauditreports,rbacassessmentreports -A -o json > "config-audit-reports-$stamp.json"
+kubectl get clusterrbacassessmentreports,clusterinfraassessmentreports,clustercompliancereports -o json > "cluster-assessment-reports-$stamp.json"
+kubectl get policyreports.wgpolicyk8s.io -A -o json > "kyverno-policy-reports-$stamp.json"
+kubectl get validatingpolicies.policies.kyverno.io -o yaml > "kyverno-policies-$stamp.yaml"
+```
+
+Summaries for a control narrative:
+
+```sh
+kubectl get vulnerabilityreports -A -o json | jq -r '.items[] | [.metadata.namespace, .report.artifact.repository, .report.artifact.tag, .report.summary.criticalCount, .report.summary.highCount] | @tsv'
+kubectl get clustercompliancereports -o json | jq -r '.items[] | [.metadata.name, .status.summary.passCount, .status.summary.failCount] | @tsv'
+kubectl get policyreports.wgpolicyk8s.io -A -o json | jq -r '.items[] | .results[]? | select(.result == "fail") | [.policy, .resources[0].namespace, .resources[0].kind, .resources[0].name] | @tsv' | sort | uniq -c
+```
+
+Falco detections are in Loki (`{namespace="falco"}` in Production Logs). They
+use the `platform` retention class, so Loki keeps them for 14 days; export them
+within that window when an audit period needs the raw events. Alert history is
+in incident.io.
+
 ## Verification and access
 
 Render desired state before reconciliation:

@@ -26,7 +26,7 @@ def main():
         parser.error('promtool is required')
     dashboards = {d['uid']: d for p in OBS.glob('*.json')
                   if (d := json.loads(p.read_text()))}
-    groups = [g for name in ('prometheus-rules.yaml', 'logging-prometheus-rules.yaml', 'controller-prometheus-rules.yaml', 'autoscaling-prometheus-rules.yaml', 'model-replica-rules.yaml', 'data-store-prometheus-rules.yaml')
+    groups = [g for name in ('prometheus-rules.yaml', 'logging-prometheus-rules.yaml', 'controller-prometheus-rules.yaml', 'autoscaling-prometheus-rules.yaml', 'model-replica-rules.yaml', 'data-store-prometheus-rules.yaml', 'security-prometheus-rules.yaml')
               for g in yaml.safe_load((OBS / name).read_text())['spec']['groups']]
     alerts = {rule['alert']: rule for group in groups for rule in group['rules'] if 'alert' in rule}
     for name, rule in alerts.items():
@@ -752,6 +752,72 @@ def main():
     scenario('Data store CPU brief spike', data_store_inputs(**{'cpuutilization_average:gradiated-prod': '95+0x20 20+0x60'}),
              None, ['DatabaseCpuHigh'], None, '35m')
 
+    # Remediation-SLA alerts count only fixable findings for the same image repository
+    # across redeploys, and need the full window. Hourly inputs keep multi-day tests fast.
+    def cve(severity, values, tag='v1', fixed='1.2.4', vuln='CVE-2026-0001'):
+        return {'series': 'trivy_vulnerability_id{namespace="gradiated",image_repository="gradiated/prod/product",'
+                f'image_tag="{tag}",severity="{severity}",fixed_version="{fixed}",vuln_id="{vuln}"}}', 'values': values}
+    cve_labels = {'namespace': 'gradiated', 'image_repository': 'gradiated/prod/product'}
+    for severity, alert, days in [('Critical', 'VulnerabilityCriticalOverdue', 7), ('High', 'VulnerabilityHighOverdue', 30)]:
+        hours = days * 24
+        due = f'{days + 1}d'
+        for name, inputs, fires in [
+            ('present past the SLA', [cve(severity, f'1x{hours + 48}')], True),
+            ('present within the SLA', [cve(severity, f'_x{hours - 24} 1x72')], False),
+            ('unfixed', [cve(severity, f'1x{hours + 48}', fixed='')], False),
+            ('remediated', [cve(severity, f'1x{hours} _x48')], False),
+            ('redeployed with the same finding', [cve(severity, f'1x{hours // 2} _x{hours}'),
+                                                  cve(severity, f'_x{hours // 2} 1x{hours}', tag='v2')], True),
+        ]:
+            scenario(f'{alert} {name}', inputs, alert if fires else None, [alert],
+                     cve_labels if fires else None, due, '1h')
+    scenario('VulnerabilityCriticalOverdue ignores High', [cve('High', '1x220')], None,
+             ['VulnerabilityCriticalOverdue'], None, '8d', '1h')
+
+    trivy_alert = 'TrivyOperatorNotReporting'
+    trivy_up = lambda value: {'series': 'up{namespace="trivy-system",job="trivy-operator"}', 'values': f'{value}x300'}
+    trivy_reports = {'series': 'trivy_image_vulnerabilities{namespace="gradiated",severity="Critical"}', 'values': '2x300'}
+    scenario('Trivy reporting', [trivy_up(1), trivy_reports], None, [trivy_alert], eval_time='2h')
+    scenario('Trivy operator unscraped', [trivy_up(0), trivy_reports], trivy_alert, [trivy_alert], eval_time='2h')
+    scenario('Trivy exports no reports', [trivy_up(1)], trivy_alert, [trivy_alert], eval_time='2h')
+
+    falco_alert = 'FalcoCriticalEvents'
+    def falco(values, priority='2', pod='falco-a'):
+        return {'series': f'falcosecurity_falco_rules_matches_total{{namespace="falco",pod="{pod}",priority="{priority}",'
+                'rule_name="Drop and execute new binary in container"}', 'values': values}
+    falco_labels = {'rule_name': 'Drop and execute new binary in container', 'pod': 'falco-a'}
+    scenario('Falco first critical match', [falco('_x10 1x30')], falco_alert, [falco_alert], falco_labels, '8m')
+    scenario('Falco repeated critical match', [falco('3x20 4x20')], falco_alert, [falco_alert], falco_labels, '12m')
+    scenario('Falco old critical match', [falco('3x60')], None, [falco_alert], eval_time='20m')
+    scenario('Falco warning match', [falco('_x10 1x30', priority='4')], None, [falco_alert], eval_time='8m')
+
+    falco_down = 'FalcoDown'
+    def falco_state(unavailable, up):
+        series = [] if up is None else [{'series': 'up{namespace="falco",job="falco-metrics",pod="falco-a"}', 'values': f'{up}x40'}]
+        if unavailable is not None:
+            series.append({'series': 'kube_daemonset_status_number_unavailable{namespace="falco",daemonset="falco"}',
+                           'values': f'{unavailable}x40'})
+        return series
+    scenario('Falco healthy', falco_state(0, 1), None, [falco_down], eval_time='16m')
+    scenario('Falco sensor unavailable', falco_state(1, 1), falco_down, [falco_down], eval_time='16m')
+    scenario('Falco scrape failing', falco_state(0, 0), falco_down, [falco_down], eval_time='16m')
+    scenario('Falco not installed', falco_state(None, 1), falco_down, [falco_down],
+             {'namespace': 'falco', 'daemonset': 'falco'}, '16m')
+    scenario('Falco scrape targets missing', falco_state(0, None), falco_down, [falco_down],
+             {'namespace': 'falco', 'job': 'falco-metrics'}, '16m')
+
+    kyverno_alert = 'KyvernoPolicyViolationsRising'
+    def report(values, namespace='gradiated', name='r1'):
+        return {'series': f'kube_policyreport_fail{{namespace="{namespace}",name="{name}"}}', 'values': values}
+    # Instant selectors need a sample within five minutes of each 15-minute evaluation.
+    scenario('Kyverno violations steady', [report('2x240')], None, [kyverno_alert], eval_time='2d', interval='15m')
+    scenario('Kyverno violations rising', [report('2x240'), report('_x120 1x120', name='r2')], kyverno_alert,
+             [kyverno_alert], {'namespace': 'gradiated'}, '2d', '15m')
+    scenario('Kyverno violations in a new namespace', [report('2x240'), report('_x120 1x120', namespace='metabase')],
+             kyverno_alert, [kyverno_alert], {'namespace': 'metabase'}, '2d', '15m')
+    scenario('Kyverno violations fell', [report('3x120 1x120')], None, [kyverno_alert], eval_time='2d', interval='15m')
+    scenario('Kyverno first day after install', [report('1x40 3x80')], None, [kyverno_alert], eval_time='20h', interval='15m')
+
     with tempfile.TemporaryDirectory(prefix='observability-check-') as directory:
         temp = Path(directory)
         (temp / 'rules.yaml').write_text(yaml.safe_dump({'groups': groups}))
@@ -759,7 +825,10 @@ def main():
             'groups': [{'name': 'dashboard_syntax', 'rules': chart_rules}]}))
         (temp / 'test-rules.yaml').write_text(yaml.safe_dump({'groups': [g for g in groups if g['name'] != 'gradiated.models.desired']}))
         (temp / 'tests.yaml').write_text(yaml.safe_dump({
-            'rule_files': ['test-rules.yaml'], 'evaluation_interval': '30s', 'tests': [test for test in tests if test['interval'] != '5s']}))
+            'rule_files': ['test-rules.yaml'], 'evaluation_interval': '30s', 'tests': [test for test in tests if test['interval'] not in ('5s', '15m', '1h')]}))
+        (temp / 'slow-tests.yaml').write_text(yaml.safe_dump({
+            'rule_files': ['test-rules.yaml'], 'evaluation_interval': '15m',
+            'tests': [test for test in tests if test['interval'] in ('15m', '1h')]}))
         (temp / 'fast-tests.yaml').write_text(yaml.safe_dump({
             'rule_files': ['test-rules.yaml'], 'evaluation_interval': '5s',
             'tests': [test for test in tests if test['interval'] == '5s']}))
@@ -767,6 +836,7 @@ def main():
         subprocess.run([args.promtool, 'check', 'rules', str(temp / 'rules.yaml'),
                         str(temp / 'charts.yaml')], check=True)
         subprocess.run([args.promtool, 'test', 'rules', str(temp / 'tests.yaml')], check=True)
+        subprocess.run([args.promtool, 'test', 'rules', str(temp / 'slow-tests.yaml')], check=True)
     print(f'Validated {len(alerts)} alert panel links, {len(chart_rules)} chart queries, '
           f'and {len(tests)} behavioral scenarios.')
 

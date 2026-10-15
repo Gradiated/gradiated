@@ -1305,8 +1305,11 @@ export const SCENES2D = (function () {
     afterRender.push(() => {
       const progress = tl.time();
       if (progress <= index(17) + hold) storeDemo.pause(0);
-      else if (Math.abs(progress - index(18)) <= hold) storeDemo.play();
-      else storeDemo.pause();
+      else if (Math.abs(progress - index(18)) <= hold) {
+        if (matchMedia("(prefers-reduced-motion: reduce)").matches)
+          storeDemo.progress(1).pause();
+        else storeDemo.play();
+      } else storeDemo.pause();
     });
 
     key(gRegister, 17, { opacity: 1 }, null, -1);

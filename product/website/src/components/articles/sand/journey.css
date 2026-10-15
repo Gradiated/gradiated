@@ -563,3 +563,18 @@ html:has(.sand-journey) {
 .sand-journey strong {
   font-weight: 600;
 }
+
+[data-theme="dark"] .sand-journey {
+  --paper: var(--color-substrate);
+  --ink: var(--color-text);
+  --muted: var(--color-text-muted);
+  --shadow: var(--color-module);
+}
+
+[data-theme="dark"] .sand-journey #d2 .timing-one text {
+  fill: #8fc9a3;
+}
+
+[data-theme="dark"] .sand-journey #d2 .timing-zero text {
+  fill: #e6a39b;
+}

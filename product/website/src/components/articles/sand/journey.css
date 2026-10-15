@@ -444,7 +444,7 @@
   color: var(--color-text);
 }
 
-.gr-fab-link[aria-current="location"] {
+.sand-guide-link[aria-current="location"] {
   color: var(--color-interactive);
 }
 

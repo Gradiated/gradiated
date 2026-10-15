@@ -54,7 +54,7 @@ export const SandJourney = (): ReactElement => {
           {chapters.map(({ id, label }) => (
             <a
               aria-current={active === id ? "location" : undefined}
-              className="gr-fab-link"
+              className="gr-fab-link sand-guide-link"
               href={`#${id}`}
               key={id}
             >

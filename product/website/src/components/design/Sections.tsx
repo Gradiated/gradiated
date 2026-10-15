@@ -127,8 +127,8 @@ export const PageHero = ({
             </p>
           ))
         : null}
-      {action || secondaryAction ? (
-        <div className={secondaryAction ? "gr-page-hero-actions" : undefined}>
+      {secondaryAction ? (
+        <div className="gr-page-hero-actions">
           {[action, secondaryAction]
             .filter((item) => item !== undefined)
             .map((item) => (
@@ -142,6 +142,14 @@ export const PageHero = ({
               </a>
             ))}
         </div>
+      ) : action ? (
+        <a
+          className={`gr-button gr-button--${action.tone ?? "main"}`}
+          href={action.href}
+        >
+          {action.label}
+          <Arrow />
+        </a>
       ) : null}
     </div>
   </div>

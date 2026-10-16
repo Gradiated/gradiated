@@ -280,7 +280,7 @@ export const COMPUTER_SCENES = (function () {
       );
       const equation = text(
         349,
-        116,
+        143,
         "3 + 6",
         { class: "caption bit" },
         selection,

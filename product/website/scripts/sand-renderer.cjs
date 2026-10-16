@@ -59,6 +59,18 @@ function createMarkdown() {
       },
     ],
     renderer: {
+      codespan(token) {
+        const content = escapeHtml(token.text).replace(
+          /[⁰¹²³⁴⁵⁶⁷⁸⁹]{2,}/g,
+          (digits) => {
+            const exponent = Array.from(digits, (digit) =>
+              "⁰¹²³⁴⁵⁶⁷⁸⁹".indexOf(digit),
+            ).join("");
+            return `<sup class="math-exponent">${exponent}</sup>`;
+          },
+        );
+        return `<code>${content}</code>`;
+      },
       html() {
         throw Error(
           "Use Markdown for article content; raw HTML is not supported.",

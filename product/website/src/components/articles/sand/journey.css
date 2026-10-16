@@ -705,3 +705,10 @@ html:has(.sand-journey) {
     scroll-margin-top: 56vh;
   }
 }
+
+.sand-journey code > sup.math-exponent {
+  font-family: inherit;
+  font-size: 0.75em;
+  line-height: 0;
+  vertical-align: super;
+}

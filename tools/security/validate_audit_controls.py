@@ -79,6 +79,80 @@ def main():
         "iam_policy_changes": {"eventSource": "iam.amazonaws.com", "eventName": "AttachRolePolicy", "readOnly": False},
         "cloudtrail_changes": {"eventSource": "cloudtrail.amazonaws.com", "eventName": "StopLogging"},
         "security_group_changes": {"eventSource": "ec2.amazonaws.com", "eventName": "AuthorizeSecurityGroupIngress"},
+        "console_authentication_failures": {"eventName": "ConsoleLogin", "responseElements": {"ConsoleLogin": "Failure"}},
+        "iam_trust_changes": {"eventSource": "iam.amazonaws.com", "eventName": "UpdateAssumeRolePolicy"},
+        "identity_credential_changes": {"eventSource": "iam.amazonaws.com", "eventName": "DeactivateMFADevice"},
+        "s3_policy_changes": {"eventSource": "s3.amazonaws.com", "eventName": "PutBucketPublicAccessBlock"},
+        "network_changes": {"eventSource": "ec2.amazonaws.com", "eventName": "ReplaceRoute"},
+        "organizations_changes": {"eventSource": "organizations.amazonaws.com", "eventName": "LeaveOrganization"},
+        "security_pipeline_changes": {"eventSource": "logs.amazonaws.com", "eventName": "DeleteMetricFilter"},
+    }
+    additional_metric_cases = {
+        "iam_trust_changes": [
+            {"eventSource": "iam.amazonaws.com", "eventName": "CreateRole"},
+        ],
+        "iam_policy_changes": [
+            {"eventSource": "iam.amazonaws.com", "eventName": "AddUserToGroup"},
+            {"eventSource": "iam.amazonaws.com", "eventName": "RemoveUserFromGroup"},
+        ],
+        "identity_credential_changes": [
+            {"eventSource": "iam.amazonaws.com", "eventName": "CreateAccessKey"},
+            {"eventSource": "iam.amazonaws.com", "eventName": "CreateServiceSpecificCredential"},
+            {"eventSource": "iam.amazonaws.com", "eventName": "ResetServiceSpecificCredential"},
+            {"eventSource": "iam.amazonaws.com", "eventName": "UpdateServiceSpecificCredential"},
+            {"eventSource": "iam.amazonaws.com", "eventName": "DeleteServiceSpecificCredential"},
+            {"eventSource": "iam.amazonaws.com", "eventName": "UploadSigningCertificate"},
+            {"eventSource": "iam.amazonaws.com", "eventName": "UploadSSHPublicKey"},
+        ],
+        "s3_policy_changes": [
+            {"eventSource": "s3.amazonaws.com", "eventName": "DeleteBucketPolicy"},
+            {"eventSource": "s3.amazonaws.com", "eventName": "PutBucketEncryption"},
+            {"eventSource": "s3.amazonaws.com", "eventName": "DeleteBucketEncryption"},
+            {"eventSource": "s3control.amazonaws.com", "eventName": "PutAccessPointPolicy"},
+            {"eventSource": "s3control.amazonaws.com", "eventName": "DeletePublicAccessBlock"},
+        ],
+        "network_changes": [
+            {"eventSource": "ec2.amazonaws.com", "eventName": "ReplaceNetworkAclAssociation"},
+            {"eventSource": "ec2.amazonaws.com", "eventName": "DetachInternetGateway"},
+            {"eventSource": "ec2.amazonaws.com", "eventName": "ModifyVpcAttribute"},
+            {"eventSource": "ec2.amazonaws.com", "eventName": "CreateVpcPeeringConnection"},
+            {"eventSource": "ec2.amazonaws.com", "eventName": "AcceptVpcPeeringConnection"},
+            {"eventSource": "ec2.amazonaws.com", "eventName": "RejectVpcPeeringConnection"},
+            {"eventSource": "ec2.amazonaws.com", "eventName": "DeleteVpcPeeringConnection"},
+            {"eventSource": "ec2.amazonaws.com", "eventName": "ModifyVpcPeeringConnectionOptions"},
+            {"eventSource": "ec2.amazonaws.com", "eventName": "ModifyVpcEndpoint"},
+            {"eventSource": "ec2.amazonaws.com", "eventName": "CreateVpcEndpoint"},
+            {"eventSource": "ec2.amazonaws.com", "eventName": "DeleteVpcEndpoints"},
+            {"eventSource": "ec2.amazonaws.com", "eventName": "ModifyVpcEndpointServicePermissions"},
+        ],
+        "organizations_changes": [
+            {"eventSource": "organizations.amazonaws.com", "eventName": "EnableAWSServiceAccess"},
+            {"eventSource": "organizations.amazonaws.com", "eventName": "RegisterDelegatedAdministrator"},
+            {"eventSource": "organizations.amazonaws.com", "eventName": "EnablePolicyType"},
+            {"eventSource": "organizations.amazonaws.com", "eventName": "CreateAccount"},
+            {"eventSource": "organizations.amazonaws.com", "eventName": "CreateGovCloudAccount"},
+            {"eventSource": "organizations.amazonaws.com", "eventName": "CloseAccount"},
+            {"eventSource": "organizations.amazonaws.com", "eventName": "InviteAccountToOrganization"},
+            {"eventSource": "organizations.amazonaws.com", "eventName": "AcceptHandshake"},
+        ],
+        "security_pipeline_changes": [
+            {"eventSource": "monitoring.amazonaws.com", "eventName": "DisableAlarmActions"},
+            {"eventSource": "kms.amazonaws.com", "eventName": "ScheduleKeyDeletion"},
+            {"eventSource": "kms.amazonaws.com", "eventName": "TagResource", "readOnly": False},
+            {"eventSource": "kms.amazonaws.com", "eventName": "UntagResource", "readOnly": False},
+            {"eventSource": "sns.amazonaws.com", "eventName": "Unsubscribe"},
+            {"eventSource": "sns.amazonaws.com", "eventName": "SetSubscriptionAttributes"},
+            {"eventSource": "events.amazonaws.com", "eventName": "RemoveTargets"},
+            {"eventSource": "events.amazonaws.com", "eventName": "DisableRule"},
+            {"eventSource": "events.amazonaws.com", "eventName": "DeleteRule"},
+            {"eventSource": "events.amazonaws.com", "eventName": "PutTargets"},
+            {"eventSource": "events.amazonaws.com", "eventName": "PutRule"},
+            {"eventSource": "sqs.amazonaws.com", "eventName": "DeleteQueue"},
+            {"eventSource": "sqs.amazonaws.com", "eventName": "PurgeQueue"},
+            {"eventSource": "sqs.amazonaws.com", "eventName": "SetQueueAttributes"},
+            {"eventSource": "sqs.amazonaws.com", "eventName": "AddPermission"},
+            {"eventSource": "sqs.amazonaws.com", "eventName": "RemovePermission"},
+        ],
     }
     benign = {"eventSource": "ec2.amazonaws.com", "eventName": "DescribeInstances", "readOnly": True,
               "userIdentity": {"type": "AssumedRole"}}
@@ -87,11 +161,23 @@ def main():
         if resource["type"] != "aws_cloudwatch_log_metric_filter" or resource["name"] != "audit":
             continue
         name = resource["index"]
+        positive_events = [metric_cases[name], *additional_metric_cases.get(name, [])]
+        negative_messages = [json.dumps(benign), json.dumps({"eventName": "ConsoleLogin", "responseElements": {"ConsoleLogin": "Success"}})]
+        if "eventSource" in metric_cases[name]:
+            negative_messages.append(json.dumps({**metric_cases[name], "eventSource": "unrelated.amazonaws.com"}))
+        if name in {"iam_policy_changes", "iam_trust_changes", "identity_credential_changes", "s3_policy_changes", "network_changes", "organizations_changes", "security_pipeline_changes"}:
+            for value in (False, "false"):
+                event = {**metric_cases[name], "readOnly": value}
+                if event not in positive_events:
+                    positive_events.append(event)
+            for value in (True, "true"):
+                negative_messages.append(json.dumps({**metric_cases[name], "readOnly": value}))
+        positive_messages = [json.dumps(event) for event in positive_events]
         result = aws("logs", "test-metric-filter", "--filter-pattern", resource["values"]["pattern"],
-                     "--log-event-messages", json.dumps(metric_cases[name]), json.dumps(benign))
+                     "--log-event-messages", *positive_messages, *negative_messages)
         # Verify the matching payload itself; avoid relying on event-number
         # conventions in API examples or implementations.
-        assert [match["eventMessage"] for match in result["matches"]] == [json.dumps(metric_cases[name])], f"Unexpected metric matches: {name}: {result}"
+        assert [match["eventMessage"] for match in result["matches"]] == positive_messages, f"Unexpected metric matches: {name}: {result}"
         metric_checked += 1
     assert metric_checked == len(metric_cases), "Missing audit metric filters"
     print(f"PASS: {checked} policies, {len(cases)} EventBridge cases, {metric_checked} metric filters; no events published")

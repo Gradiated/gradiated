@@ -697,7 +697,7 @@ export const MEMORY_SCENES = (() => {
         (element) => (element.style.opacity = dynamic.writing[1]),
       );
     });
-    return { demos, dispose: controls.dispose };
+    return { demos, controls, dispose: controls.dispose };
   };
   return { build };
 })();

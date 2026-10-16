@@ -176,9 +176,43 @@ We will follow the von Neumann model, where both data and instructions are store
 
 The central processing unit, or CPU, carries out these instructions, using calculation circuits, working registers and control circuits. Memory holds the program and its data, while input and output connect the machine to the outside world.
 
+<!-- scene: memory-width -->
+
+Let’s return to our memory array. It has four locations, each holding four bits. We can make each stored number wider by adding more bit positions to every row. Doubling the width gives us eight bits per location. Eight bits make one byte, so this small array now holds four bytes in total.
+
+<!-- scene: memory-interface -->
+
+We can hide the individual latches inside four larger blocks, one for each stored number. The address and data wires still do the same jobs. To connect this memory to a processor, we add two registers that hold the values on those wires during an access.
+
+The memory address register, or `MAR`, holds the `ADDR` of the location to access. The memory data register, or `MDR`, holds either the number to write or the number just read. These additional storage circuits keep the address and data steady while the access proceeds.
+
+The processor coordinates its steps with a clock, a repeating electrical signal. Its registers can capture new values at a clock edge when their load controls allow it, then hold those values between updates. A separate write control, `WE`, determines whether memory is written. Unlike our earlier latches, these registers do not follow their inputs throughout the enabled interval.
+
+<!-- scene: memory-word -->
+
+Now widen each location again, from eight bits to sixteen. Each stored number occupies two bytes. The `MDR` and its data paths widen to sixteen bits too, so they can carry the whole number together.
+
+For the rest of our example, we will use LC-3, a small teaching computer. It works with sixteen-bit groups called words. We have reached its data width, but our four-location example is still much smaller than LC-3’s memory.
+
+<!-- scene: memory-address-space -->
+
+To add more locations, we need more address bits. Two bits choose among four locations. Sixteen bits choose among `2¹⁶ = 65,536` locations, so LC-3 uses a sixteen-bit `MAR`. We show only a few of those locations here. Each `ADDR` selects one complete sixteen-bit word, or two bytes, rather than a single byte.
+
+Address width and data width are separate choices. A sixteen-bit address can select 65,536 locations, while a thirty-two-bit address can select `2³²` locations. How many bytes that represents depends on the size of each location. In a byte-addressed system, thirty-two-bit addresses cover `4 GiB`. LC-3 instead addresses two-byte words.
+
+Calling a processor “16-bit” or “32-bit” usually describes the width of its main working registers and integer operations. It does not, by itself, tell us the size of its address space or how much memory is installed. In LC-3, the working registers, memory contents and addresses all happen to be sixteen bits wide.
+
+<!-- scene: memory-access -->
+
+Let’s use these registers to access a location. Choose Write to place `1` in `MAR` and `9` in `MDR`. The clock marks their capture. `MAR` then selects the second location, and the write control lets memory copy the number from `MDR` into it. The other locations keep their values.
+
+Choose Read to put the same `ADDR` in `MAR`. Memory selects that location and sends its contents back to `MDR`, where the processor can use them. Reading leaves the stored number unchanged. Try reading before and after writing to see the difference.
+
+The yellow paths show the transfer, while the moving bits show which value is being copied. Register updates and memory access are coordinated steps. The memory needs time to respond, so a complete access need not fit into one clock cycle.
+
 <!-- scene: working-registers -->
 
-Let’s look more closely at the registers inside the CPU. For our example, we will use a small teaching computer called LC-3. It has eight general-purpose registers, named `R0` to `R7`, each holding sixteen bits. This sixteen-bit group is called a word in LC-3. More bit positions let us represent larger numbers using the same binary rules.
+The CPU also needs registers for the values it is currently working on. Alongside dedicated registers such as `MAR` and `MDR`, LC-3 has eight general-purpose registers, named `R0` to `R7`. Each holds one sixteen-bit word. These few working slots are separate from the much larger collection of locations in memory.
 
 We will begin with `3` in `R1` and `6` in `R2`. The register name identifies the slot, while its contents are the value stored there.
 
@@ -192,15 +226,15 @@ We can also group our adder with circuits that perform logical operations. Toget
 
 <!-- scene: addressed-memory -->
 
-Registers hold our immediate working values. We also need memory for a larger collection of information. Each memory location has an `ADDR` that lets us select it. In LC-3, each addressed location holds sixteen bits.
+Now bring our memory and its interface alongside the working registers and ALU. The working registers keep the values needed immediately, while memory holds the larger collection of program instructions and data.
 
-The `ADDR` identifies the location. The bits stored there are its contents. Selection logic connects the chosen location to the wires carrying those contents.
+The processor supplies an `ADDR` through `MAR` and exchanges a sixteen-bit word through `MDR`. This is the same read-and-write connection we have just built, now serving the larger machine.
 
 <!-- scene: program -->
 
 The same memory can hold both data and instructions. An instruction is a bit pattern specifying an operation and the values or locations involved. Storing a sequence of instructions gives us a program.
 
-A register called the program counter, or `PC`, holds the `ADDR` of the instruction to fetch next. Another register, the instruction register, or `IR`, holds the instruction we have fetched.
+A register called the program counter, or `PC`, holds the `ADDR` of the instruction to fetch next. Another register, the instruction register, or `IR`, holds the instruction we have fetched. To fetch it, the processor copies `PC` into `MAR`, reads memory into `MDR`, then transfers the instruction to `IR`.
 
 The machine repeatedly fetches an instruction, decodes it and carries it out. Usually, `PC` advances to the next instruction. A jump directs execution to a different `ADDR`, while a conditional branch does so only when a condition is met. This lets a program choose between actions or repeat a sequence of steps.
 

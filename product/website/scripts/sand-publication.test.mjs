@@ -69,7 +69,17 @@ test("the complete preview retains all chapters and its own ending", () => {
       previewScenes.indexOf("memory-buses") + 1,
       previewScenes.indexOf("alu") + 1,
     ),
-    ["computer-overview", "working-registers", "select-values", "alu"],
+    [
+      "computer-overview",
+      "memory-width",
+      "memory-interface",
+      "memory-word",
+      "memory-address-space",
+      "memory-access",
+      "working-registers",
+      "select-values",
+      "alu",
+    ],
   );
   assert.ok(
     html.includes(

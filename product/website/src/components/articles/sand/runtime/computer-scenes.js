@@ -1,7 +1,9 @@
 import { gsap } from "gsap";
+import { MEMORY_INTERFACE_SCENES } from "./memory-interface-scenes.js";
 export const COMPUTER_SCENES = (function () {
   const build = ({
     includeComputer,
+    controls,
     root,
     tl,
     hold,
@@ -283,12 +285,29 @@ export const COMPUTER_SCENES = (function () {
     text(220, 344, "instructions + data", { class: "caption" }, overview);
     text(29, 162, "input", { class: "tiny" }, overview);
     text(404, 162, "output", { class: "tiny" }, overview);
-    show(overview, "computer-overview", "working-registers", {}, 0.65);
+    show(overview, "computer-overview", "memory-width", {}, 0.65);
     caption(
       "computer-overview",
       "the same circuits, directed by a stored program",
-      "working-registers",
+      "memory-width",
     );
+
+    const memoryInterface = MEMORY_INTERFACE_SCENES.build({
+      root,
+      tl,
+      hold,
+      at,
+      index,
+      mk,
+      group,
+      path,
+      text,
+      key,
+      show,
+      afterRender,
+      controls,
+    });
+    demos.push(...memoryInterface.demos);
 
     const machine = group(
       { "data-diagram": "computer-machine" },
@@ -340,7 +359,7 @@ export const COMPUTER_SCENES = (function () {
     );
     key(registerBank, "select-values", { opacity: 0 });
     key(registerBank, "alu", { x: 0, y: 0, scale: 1, opacity: 1 });
-    key(registerBank, "addressed-memory", { opacity: 0 });
+    key(registerBank, "addressed-memory", { opacity: 1 });
     key(registerBank, "program", { opacity: 1 });
     const bitExpansion = group({ "data-part": "bit-expansion" }, root);
     text(
@@ -367,7 +386,7 @@ export const COMPUTER_SCENES = (function () {
     text(303, 205, "ADD", { class: "bit" }, alu);
     text(303, 242, "ADD · AND · NOT", { class: "tiny muted" }, alu);
     key(alu, "alu", { scale: 1, x: 0, y: 0 }, { scale: 0.55, x: -70, y: 30 });
-    key(alu, "addressed-memory", { opacity: 0 });
+    key(alu, "addressed-memory", { opacity: 1 });
     key(alu, "program", { opacity: 1 });
     draw(aluShape, at("alu") + DUR * 0.15, DUR * 0.7);
     const datapath = group({ "data-part": "datapath" }, machine);
@@ -379,7 +398,7 @@ export const COMPUTER_SCENES = (function () {
     text(226, 200, "16", { class: "tiny muted" }, datapath);
     path("M221 207 L226 199", { class: "muted thin" }, datapath);
     show(datapath, "alu", undefined);
-    key(datapath, "addressed-memory", { opacity: 0 });
+    key(datapath, "addressed-memory", { opacity: 1 });
     key(datapath, "program", { opacity: 1 });
     caption(
       "alu",
@@ -428,8 +447,8 @@ export const COMPUTER_SCENES = (function () {
     key(
       memory,
       "addressed-memory",
-      { scale: 1.75, x: -74, y: -110 },
-      { scale: 0.7, x: -74, y: -110 },
+      { scale: 1, x: 0, y: 0 },
+      { scale: 0.7, x: 0, y: 0 },
     );
     key(memory, "program", { scale: 1, x: 0, y: 0 });
     tl.to(memoryTable, { opacity: 0, duration: DUR * 0.65 }, at("program"));
@@ -438,17 +457,25 @@ export const COMPUTER_SCENES = (function () {
       { opacity: 1, duration: DUR * 0.65 },
       at("program") + DUR * 0.3,
     );
-    caption(
-      "addressed-memory",
-      "ADDR selects a location · its contents are data",
-      "program",
-    );
+    caption("addressed-memory", "MAR selects · MDR transfers", "program");
     const memoryDemo = gsap.timeline({ paused: true });
     memoryDemo.to(rowGlows[0], { opacity: 1, duration: 0.6 }, 0.3);
     memoryDemo.to(rowGlows[0], { opacity: 0, duration: 0.5 }, 2);
     memoryDemo.to(rowGlows[1], { opacity: 1, duration: 0.6 }, 2.5);
     playInScene("addressed-memory", memoryDemo, "alu");
 
+    const memoryPorts = group(
+      { "data-part": "memory-interface-registers" },
+      machine,
+    );
+    box(memoryPorts, 48, 299, 80, 47, "MAR");
+    box(memoryPorts, 137, 319, 65, 42, "MDR");
+    path(
+      "M128 324 H132 V300 H220 M202 338 H220",
+      { class: "muted" },
+      memoryPorts,
+    );
+    show(memoryPorts, "addressed-memory", undefined);
     const command = group({ "data-part": "instruction-registers" }, machine);
     box(command, 48, 55, 58, 36, "PC");
     box(command, 118, 55, 90, 36, "IR");
@@ -463,9 +490,12 @@ export const COMPUTER_SCENES = (function () {
       command,
     );
     gsap.set([pcOne, irFetched], { opacity: 0 });
-    const fetchAddress = lightPath("M77 91 V102 H22 V300 H220", command);
+    const fetchAddress = lightPath(
+      "M77 91 V102 H22 V324 H48 M128 324 H132 V300 H220",
+      command,
+    );
     const fetchInstruction = lightPath(
-      "M220 338 H205 V291 H10 V28 H196 V55",
+      "M220 338 H202 M137 338 H132 V365 H10 V28 H196 V55",
       command,
     );
     text(77, 292, "ADDR", { class: "tiny muted bit" }, command);
@@ -605,14 +635,14 @@ export const COMPUTER_SCENES = (function () {
 
     const computer = group({ "data-part": "computer-outline" }, machine);
     const cpuOutline = path(
-      "M31 34 H419 V267 H31 Z",
+      "M4 18 H419 V267 H212 V373 H4 Z",
       { class: "muted thin" },
       computer,
     );
     text(396, 53, "CPU", { class: "caption" }, computer);
-    box(computer, 48, 313, 60, 34, "input");
-    box(computer, 128, 313, 64, 34, "output");
-    path("M78 313 V267 M159 313 V267", { class: "muted" }, computer);
+    box(computer, 48, 390, 60, 27, "input");
+    box(computer, 128, 390, 64, 27, "output");
+    path("M78 390 V373 M159 390 V373", { class: "muted" }, computer);
     show(computer, "computer", undefined);
     draw(cpuOutline, at("computer") + DUR * 0.1, DUR * 0.8);
     key(machine, "working-registers", { scale: 1, x: 0, y: 0 }, null, -1);
@@ -621,6 +651,7 @@ export const COMPUTER_SCENES = (function () {
       "computer",
       "a processor, memory and connections to the world",
       "end",
+      435,
     );
 
     for (const [parent, layer] of signalLayers) parent.appendChild(layer);

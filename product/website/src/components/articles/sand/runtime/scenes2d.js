@@ -1205,6 +1205,7 @@ export const SCENES2D = (function () {
     });
     const computer = COMPUTER_SCENES.build({
       includeComputer: sceneKeys.includes("select-values"),
+      controls: memory.controls,
       root,
       tl,
       hold,

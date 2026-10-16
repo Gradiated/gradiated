@@ -692,3 +692,19 @@ html:has(.sand-journey) {
     scroll-margin-top: 56vh;
   }
 }
+
+.sand-journey #d2 .interface-bus {
+  stroke-width: 2;
+}
+
+.sand-journey #d2 .interface-value {
+  font-family: var(--font-code);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .sand-journey #sand-memory-access {
+    scroll-margin-top: 56vh;
+  }
+}

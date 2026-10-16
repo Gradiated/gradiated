@@ -228,7 +228,16 @@ For our first calculation, we select `R1` and `R2`, sending `3` and `6` to the a
 
 <!-- scene: alu -->
 
-Let’s zoom out again and group our adder with circuits that perform logical operations. Together, they form an arithmetic and logic unit, or ALU. In LC-3, these operations include `ADD`, `AND` and `NOT`. An operation signal chooses which result the ALU produces. For `NOT`, only one input is needed.
+Let’s zoom out again and group our adder with circuits that perform logical operations. Together, they form an arithmetic and logic unit, or ALU. The LC-3 ALU has four modes. An operation signal chooses which result reaches its output.
+
+| Mode | What it does |
+| :--- | :--- |
+| `ADD` | Adds the two 16-bit inputs. |
+| `AND` | Each output bit is `1` only when both matching input bits are `1`. |
+| `NOT` | Flips every bit of the first input. The second input is unused. |
+| `PASSA` | Passes the first input through unchanged. The second input is unused. |
+
+`ADD`, `AND` and `NOT` are instructions a program can request. `PASSA` is an internal mode used to transfer a value without changing it.
 
 With addition selected, `3` and `6` enter the ALU and the result, `9`, travels back to be saved in `R0`. The other registers keep their values. We can now select `R0` and `R3`, adding the stored `9` to `2` and saving `11` in `R0`. We have completed `(3 + 6) + 2` by keeping an intermediate answer and using it in the next calculation.
 

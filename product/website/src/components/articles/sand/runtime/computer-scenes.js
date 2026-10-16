@@ -261,7 +261,6 @@ export const COMPUTER_SCENES = (function () {
       );
       text(349, 215, "ALU", { class: "caption" }, arithmetic);
       text(349, 241, "ADD", { class: "bit" }, arithmetic);
-      text(349, 143, "ADD · AND · NOT", { class: "tiny muted" }, arithmetic);
       show(arithmetic, "alu", undefined);
       const answerRoute = group({ "data-part": "result-return" }, selection);
       const returnGeometry = "M348 281 V394 H12 V143.5 H28";

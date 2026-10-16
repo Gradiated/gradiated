@@ -117,14 +117,15 @@ export const COMPUTER_SCENES = (function () {
     };
 
     if (includeComputer) {
-      const processing = group({ "data-diagram": "processing-unit" }, root);
+      const processing = group(
+        { "data-diagram": "processing-unit" },
+        root,
+        "0 0",
+      );
+      const detail = group({ "data-part": "processing-detail" }, processing);
       key(processing, "working-registers", {}, null, 0.55);
       key(processing, "addressed-memory", { opacity: 0 }, null, 0, 0.6);
-      const bank = group(
-        { "data-part": "working-storage" },
-        processing,
-        "88 238",
-      );
+      const bank = group({ "data-part": "working-storage" }, detail, "88 238");
       key(bank, "working-registers", { x: 15, y: 16, scale: 1.1 });
       key(bank, "select-values", { x: 0, y: 0, scale: 1 });
       text(88, 110, "fast storage registers", { class: "caption" }, bank);
@@ -197,10 +198,7 @@ export const COMPUTER_SCENES = (function () {
         show(binaryColumn, "working-registers", "select-values", {}, 0.45);
         key(row, "working-registers", { y: 0 }, { y: -i * 27 }, 0.55);
       }
-      const selection = group(
-        { "data-part": "register-selection" },
-        processing,
-      );
+      const selection = group({ "data-part": "register-selection" }, detail);
       show(selection, "select-values", undefined);
       const routes = [];
       const route = (d) => {
@@ -220,10 +218,10 @@ export const COMPUTER_SCENES = (function () {
           selection,
         );
         text(214, y + 23, "MUX", { class: "caption" }, selection);
-        path(`M215 ${y + 51} V${y + 34}`, {}, selection);
+        path(`M215 ${y - 12} V${y + 4.5}`, {}, selection);
       }
-      const selectA = text(215, 228, "R1", { class: "tiny bit" }, selection);
-      const selectB = text(215, 319, "R2", { class: "tiny bit" }, selection);
+      const selectA = text(215, 136, "R1", { class: "tiny bit" }, selection);
+      const selectB = text(215, 227, "R2", { class: "tiny bit" }, selection);
       const outputA = route("M235 179 H281 V190 H305");
       const outputB = route("M235 270 H281 V250 H305");
       for (const [x, y] of [
@@ -315,6 +313,8 @@ export const COMPUTER_SCENES = (function () {
       );
       const time = { value: 0 };
       let activeProcessingScene = null;
+      let heldStart = 11,
+        heldEnd = 11;
       const processingDemo = gsap.timeline({ paused: true, repeat: -1 });
       processingDemo.to(time, { value: 14, duration: 14, ease: "none" });
       demos.push(processingDemo);
@@ -345,9 +345,269 @@ export const COMPUTER_SCENES = (function () {
         { class: "ghost" },
         transfers,
       );
+      const easeBlock = gsap.parseEase("power2.inOut");
       afterRender.push(() => {
+        const p = tl.time();
+        if (
+          p > index("instruction") + hold &&
+          p < index("instruction-control") - hold
+        ) {
+          const progress = (p - index("instruction") - hold) / (1 - 2 * hold);
+          const slide = easeBlock(clamp(progress / 0.3));
+          const descend = easeBlock(clamp((progress - 0.3) / 0.25));
+          const grow = easeBlock(clamp((progress - 0.55) / 0.45));
+          gsap.set(processing, {
+            scale: 0.18 + 0.64 * grow,
+            x: 12 + 288 * slide - 220 * grow,
+            y: -6 + 166.24 * descend - 58.24 * grow,
+          });
+          gsap.set(detail, { opacity: grow });
+          gsap.set(silhouette, { opacity: 1 - grow });
+          return;
+        }
+        if (
+          p <= index("processing-block") + hold ||
+          p >= index("instruction") - hold
+        )
+          return;
+        const progress =
+          (p - index("processing-block") - hold) / (1 - 2 * hold);
+        const shrink = easeBlock(clamp(progress / 0.45));
+        const stack = easeBlock(clamp((progress - 0.45) / 0.25));
+        const slide = easeBlock(clamp((progress - 0.7) / 0.3));
+        const scale = 1 - 0.82 * shrink;
+        gsap.set(processing, {
+          scale,
+          x: 300 * shrink - 288 * slide,
+          y: 91 * (1 - scale) - 80.62 * stack,
+        });
+        gsap.set(root.querySelector('[data-part="memory-building-block"]'), {
+          y: 10 + 70 * stack,
+        });
+        gsap.set(root.querySelector(".memory-block-name"), { y: 70 * stack });
+      });
+      const redFrame = group(
+        { "data-part": "processing-red-frame" },
+        processing,
+      );
+      processing.insertBefore(redFrame, detail);
+      mk(
+        "rect",
+        {
+          x: 3,
+          y: 91,
+          width: 405,
+          height: 316,
+          rx: 8,
+          class: "processing-block-tint",
+        },
+        redFrame,
+      );
+      const redOutline = path(
+        "M11 91 H400 Q408 91 408 99 V399 Q408 407 400 407 H11 Q3 407 3 399 V99 Q3 91 11 91 Z",
+        { class: "processing-block-frame" },
+        redFrame,
+      );
+      key(redFrame, "processing-block");
+      draw(redOutline, at("processing-block"), (1 - 2 * hold) * 0.95);
+      const redTitle = text(
+        205,
+        79,
+        "processing unit",
+        { class: "caption" },
+        processing,
+      );
+      show(redTitle, "processing-block", "instruction", {}, 0.5);
+      const iconGeometry =
+        "M70 160 H180 V290 H70 Z M70 192 H180 M70 224 H180 M70 256 H180 M180 190 H238 V208 H270 M180 258 H250 V248 H276 M270 180 H298 L310 195 L322 180 H365 L350 285 H285 Z M315 285 V322 H45 V176 H70";
+      const silhouette = path(
+        iconGeometry,
+        { class: "processing-block-icon" },
+        processing,
+      );
+      key(silhouette, "instruction", {}, null, 0.15);
+      key(silhouette, "instruction-control", { opacity: 0 }, null, 0, 0.45);
+      key(detail, "working-registers");
+      key(detail, "instruction", { opacity: 0 }, null, 0, 0.5);
+      key(detail, "instruction-control", {}, null, 0.55);
+      key(processing, "instruction", { scale: 0.18, x: 12, y: -6 });
+      key(processing, "instruction-control", { scale: 0.82, x: 80, y: 102 });
+      const miniName = text(
+        49,
+        61,
+        "PU",
+        { class: "processing-block-name" },
+        root,
+      );
+      key(miniName, "instruction", {}, null, 0.9);
+      const miniature = group(
+        { "data-part": "processing-miniature" },
+        root,
+        "0 0",
+      );
+      mk(
+        "rect",
+        {
+          x: 12.54,
+          y: 10.38,
+          width: 72.9,
+          height: 56.88,
+          rx: 2,
+          class: "processing-block-tint",
+        },
+        miniature,
+      );
+      path(
+        "M14.54 10.38 H83.44 Q85.44 10.38 85.44 12.38 V65.26 Q85.44 67.26 83.44 67.26 H14.54 Q12.54 67.26 12.54 65.26 V12.38 Q12.54 10.38 14.54 10.38 Z",
+        { class: "processing-block-frame" },
+        miniature,
+      );
+      const smallIcon = group({}, miniature, "0 0");
+      gsap.set(smallIcon, { scale: 0.18, x: 12, y: -6 });
+      path(iconGeometry, { class: "processing-block-icon" }, smallIcon);
+      show(miniature, "instruction-control", undefined, {}, 0.45);
+
+      const instruction = group({ "data-diagram": "instruction-fields" }, root);
+      key(instruction, "instruction", {}, null, 0.7);
+      key(instruction, "addressed-memory", { opacity: 0 }, null, 0, 0.5);
+      const fields = [];
+      for (const [i, token, role] of [
+        [0, "ADD", "operation"],
+        [1, "R0,", "destination"],
+        [2, "R0,", "input 1"],
+        [3, "R3", "input 2"],
+      ]) {
+        const field = group(
+          { "data-instruction-field": i },
+          instruction,
+          "0 0",
+        );
+        const tint = mk(
+          "rect",
+          {
+            x: -24,
+            y: -20,
+            width: 48,
+            height: 29,
+            rx: 4,
+            class: "computer-glow",
+          },
+          field,
+        );
+        fields.push(tint);
+        text(0, 0, token, { class: "bit instruction-token" }, field);
+        const name = text(0, 32, role, { class: "caption" }, field);
+        key(field, "instruction", { x: 145 + i * 75, y: 198 });
+        key(field, "instruction-control", { x: 185 + i * 53, y: 32 });
+        show(name, "instruction", "instruction-control", {}, 0.5);
+      }
+      const control = group({ "data-diagram": "simple-control" }, root);
+      key(control, "instruction-control", {}, null, 0.6);
+      key(control, "addressed-memory", { opacity: 0 }, null, 0, 0.5);
+      path("M267 42 V58", { class: "control-wire" }, control);
+      box(control, 157, 58, 221, 47, "Control unit");
+      const controlRoutes = [
+        "M238 105 V223.36 H256.3",
+        "M264 105 V150 H232 V237.4 Q240 241.4 232 245.4 V297.98 H256.3",
+        "M378 82 H425 V287.32 H393.33",
+        "M157 94 H99 V416 H137.4 V385.72",
+      ].map((d) => {
+        path(d, { class: "control-wire" }, control);
+        return path(d, { class: "control-wire control-active" }, control);
+      });
+
+      text(
+        418,
+        262,
+        "ADD",
+        { class: "tiny bit", "text-anchor": "end" },
+        control,
+      );
+      text(184, 406, "write R0", { class: "tiny bit" }, control);
+      const writeTint = mk(
+        "rect",
+        {
+          x: 100,
+          y: 390,
+          width: 45,
+          height: 18,
+          rx: 3,
+          class: "computer-glow",
+        },
+        control,
+      );
+      text(112, 403, "WE", { class: "tiny bit" }, control);
+      const writeValue = text(131, 403, "0", { class: "tiny bit" }, control);
+      const controlTime = { value: 0 };
+      const controlDemo = gsap.timeline({ paused: true, repeat: -1 });
+      controlDemo.to(controlTime, { value: 12, duration: 12, ease: "none" });
+      demos.push(controlDemo);
+      const instructionTime = { value: 0 };
+      const instructionDemo = gsap.timeline({ paused: true, repeat: -1 });
+      instructionDemo.to(instructionTime, {
+        value: 8,
+        duration: 8,
+        ease: "none",
+      });
+      demos.push(instructionDemo);
+      let instructionActive = false;
+      let controlActive = false;
+      afterRender.push(() => {
+        const showFields = Math.abs(tl.time() - index("instruction")) <= hold;
+        if (showFields && !instructionActive) instructionDemo.restart();
+        if (!showFields) instructionDemo.pause(0);
+        else if (matchMedia("(prefers-reduced-motion: reduce)").matches)
+          instructionDemo.pause(0);
+        else instructionDemo.play();
+        instructionActive = showFields;
+        const active =
+          Math.abs(tl.time() - index("instruction-control")) <= hold;
+        if (active && !controlActive) controlDemo.restart();
+        if (!active) controlDemo.pause();
+        else if (matchMedia("(prefers-reduced-motion: reduce)").matches)
+          controlDemo.pause(9);
+        else controlDemo.play();
+        controlActive = active;
+        const t = controlTime.value;
+        const fade = Math.min(clamp(t * 3), clamp((12 - t) * 2));
+        const we = t >= 7 && t < 8;
+        setText(writeValue, we ? 1 : 0);
+        writeTint.style.opacity = String(
+          fade * Math.min(clamp((t - 6.9) * 10), clamp((8.1 - t) * 10)),
+        );
+        controlRoutes.forEach((node, i) => {
+          const on =
+            i < 2
+              ? clamp((t - 0.8) * 3)
+              : i === 2
+                ? clamp((t - 1.6) * 3)
+                : clamp((t - 2.2) * 3);
+          node.style.opacity = String(fade * on);
+        });
+        fields.forEach((node, i) => {
+          const now = active ? t : instructionTime.value;
+          const order = active ? [1.6, 2.2, 0.8, 0.8][i] : 0.5 + i * 1.6;
+          node.style.opacity = String(
+            Math.min(clamp((now - order) * 3), clamp((order + 1.4 - now) * 3)),
+          );
+        });
+      });
+      afterRender.push(() => {
+        processing.setAttribute(
+          "data-control-phase",
+          String(controlTime.value),
+        );
         const p = tl.time(),
-          isAlu = p >= index("alu") - hold;
+          isAlu = p >= index("alu") - hold,
+          controlled =
+            p > index("instruction") + hold &&
+            p < index("addressed-memory") - hold;
+        const controlBlend = clamp(
+          (p - index("instruction-control") + 1 - hold) / (1 - 2 * hold),
+        );
+        firstInput.base.style.opacity = secondInput.base.style.opacity = String(
+          1 - controlBlend,
+        );
         const aluBlend = clamp((p - index("alu") + 1 - hold) / (1 - 2 * hold));
         const inputAPath = `M235 179 H281 V190 H${305 + (15 * 25 * aluBlend) / 116}`;
         const inputBPath = `M235 270 H281 V250 H${305 + (15 * 85 * aluBlend) / 116}`;
@@ -362,6 +622,10 @@ export const COMPUTER_SCENES = (function () {
               ? "alu"
               : null;
         if (activeScene !== activeProcessingScene) {
+          if (activeProcessingScene === "alu" && p > index("alu") + hold) {
+            heldStart = processingDemo.totalTime();
+            heldEnd = Math.max(heldStart, Math.floor(heldStart / 6) * 6 + 5);
+          }
           processingDemo.pause(0);
           activeProcessingScene = activeScene;
         }
@@ -372,25 +636,45 @@ export const COMPUTER_SCENES = (function () {
           processingDemo.play();
         else if (!activeScene) processingDemo.pause(0);
         else processingDemo.pause(5);
-        const t = isAlu ? processingDemo.totalTime() : time.value;
-        const step = isAlu ? Math.floor(t / 6) : 0;
+        const held = p > index("alu") + hold;
+        const t = controlled
+          ? controlTime.value
+          : held
+            ? heldStart +
+              (heldEnd - heldStart) * clamp((p - index("alu") - hold) / 0.4)
+            : isAlu
+              ? processingDemo.totalTime()
+              : time.value;
+        const step = controlled ? 1 : isAlu ? Math.floor(t / 6) : 0;
         const second = step > 0;
-        const elapsed = isAlu ? t % 6 : t >= 13 ? 0 : t;
-        const reading = clamp((elapsed - 1) / 1.2);
-        const writing = isAlu ? clamp((elapsed - 2.7) / 1.5) : 0;
-        const readOpacity =
-          reading * (writing < 1 ? 1 : clamp(1 - (elapsed - 4.2) * 3));
+        const elapsed = controlled ? t : isAlu ? t % 6 : t >= 13 ? 0 : t;
+        const reading = clamp((elapsed - (controlled ? 2.6 : 1)) / 1.2);
+        const writing = isAlu
+          ? clamp(
+              (elapsed - (controlled ? 4.4 : 2.7)) / (controlled ? 1.8 : 1.5),
+            )
+          : 0;
+        const readOpacity = controlled
+          ? reading * clamp((11 - elapsed) * 2)
+          : reading * (writing < 1 ? 1 : clamp(1 - (elapsed - 4.2) * 3));
         const left = second ? (9 + 2 * (step - 1)) % 65536 : 3,
           right = second ? 2 : 6,
           answer = (left + right) % 65536;
-        const saved = !isAlu ? 0 : writing >= 1 ? answer : second ? left : 0;
-        const fade = isAlu
-          ? Math.min(clamp(elapsed * 2), clamp((6 - elapsed) * 2))
-          : t >= 12
-            ? t < 13
-              ? clamp(13 - t)
-              : clamp(t - 13)
-            : 1;
+        const captured = controlled ? elapsed >= 7.4 : writing >= 1;
+        const saved = !isAlu ? 0 : captured ? answer : second ? left : 0;
+        processing.setAttribute(
+          "data-write-enabled",
+          controlled && elapsed >= 7 && elapsed < 8 ? "1" : "0",
+        );
+        const fade = controlled
+          ? Math.min(clamp(elapsed * 3), clamp((12 - elapsed) * 2))
+          : isAlu
+            ? Math.min(clamp(elapsed * 2), clamp((6 - elapsed) * 2))
+            : t >= 12
+              ? t < 13
+                ? clamp(13 - t)
+                : clamp(t - 13)
+              : 1;
         const resultProgress = clamp((elapsed - 2.2) / 0.8);
         adderResult.setAttribute(
           "y",
@@ -398,7 +682,11 @@ export const COMPUTER_SCENES = (function () {
         );
         adderResult.style.opacity = String(fade * clamp(resultProgress * 4));
         transfers.style.opacity = String(fade);
-        registerNumbers[0].style.opacity = isAlu ? "1" : String(fade);
+        registerNumbers[0].style.opacity = controlled
+          ? String(fade)
+          : isAlu
+            ? "1"
+            : String(fade);
         setText(registerNumbers[0], saved);
         processing.setAttribute("data-saved-result", saved);
         processing.setAttribute("data-processing-step", String(step));
@@ -412,8 +700,8 @@ export const COMPUTER_SCENES = (function () {
           node.style.opacity = String(fade * readOpacity);
         });
         outputValue.style.opacity =
-          isAlu && elapsed >= 2.2
-            ? String(fade * clamp((elapsed - 2.2) * 3))
+          isAlu && elapsed >= (controlled ? 3.8 : 2.2)
+            ? String(fade * clamp((elapsed - (controlled ? 3.8 : 2.2)) * 3))
             : "0";
         const geometryA = second ? nextFirstInput.base : firstInput.base;
         const geometryB = second ? nextSecondInput.base : secondInput.base;
@@ -425,12 +713,14 @@ export const COMPUTER_SCENES = (function () {
           "d",
           `${geometryB.getAttribute("d")} L${inputBPath.slice(1)}`,
         );
-        const labelsFade = fade;
+        const labelsFade = controlled
+          ? fade * clamp((elapsed - 0.8) * 3)
+          : fade;
         for (const node of [selectA, selectB, equation])
           node.style.opacity = String(labelsFade);
         for (let i = 0; i < selectedRows.length; i++) {
           selectedRows[i].style.opacity =
-            (i === 0 && writing >= 1) ||
+            (i === 0 && captured) ||
             i === (second ? 0 : 1) ||
             i === (second ? 3 : 2)
               ? String(fade * readOpacity)
@@ -449,7 +739,11 @@ export const COMPUTER_SCENES = (function () {
         returnLight.style.opacity = String(
           fade *
             clamp(writing * 4) *
-            (writing < 1 ? 1 : clamp(1 - (elapsed - 4.2) * 3)),
+            (controlled
+              ? clamp((9 - elapsed) * 2)
+              : writing < 1
+                ? 1
+                : clamp(1 - (elapsed - 4.2) * 3)),
         );
         move(flying[0], firstTravel, reading, left);
         move(flying[1], secondTravel, reading, right);
@@ -884,8 +1178,8 @@ export const COMPUTER_SCENES = (function () {
     show(computer, "computer", undefined);
     draw(cpuOutline, at("computer") + DUR * 0.1, DUR * 0.8);
     key(machine, "working-registers", { scale: 1, x: 0, y: 0 }, null, -1);
-    key(machine, "addressed-memory", { scale: 0.75, x: 0, y: 36 });
-    key(machine, "computer", { scale: 0.75, x: 0, y: 36 });
+    key(machine, "addressed-memory", { scale: 0.7, x: 80, y: 70 });
+    key(machine, "computer", { scale: 0.7, x: 80, y: 70 });
     caption(
       "computer",
       "a processor, memory and connections to the world",

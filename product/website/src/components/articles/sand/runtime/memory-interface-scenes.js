@@ -44,6 +44,7 @@ export const MEMORY_INTERFACE_SCENES = {
     const module = group({ "data-part": "memory-building-block" }, root, "0 0");
     key(module, "memory-width", { x: 0, y: 0, scale: 1 });
     key(module, "working-registers", { x: 12, y: 10, scale: 0.18 });
+    key(module, "instruction", { x: 12, y: 80, scale: 0.18 });
     const frame = group({ "data-part": "memory-green-frame" }, module);
     mk(
       "rect",
@@ -466,8 +467,11 @@ export const MEMORY_INTERFACE_SCENES = {
       silhouette,
     );
     key(silhouette, "working-registers", {}, null, 0.1);
-    const name = label(root, 51.6, 73, "MEMORY", { class: "memory-block-name" });
+    const name = label(root, 51.6, 73, "MEMORY", {
+      class: "memory-block-name",
+    });
     key(name, "working-registers", {}, null, 0.55);
+    key(name, "instruction", { y: 70 });
     return { demos };
   },
 };

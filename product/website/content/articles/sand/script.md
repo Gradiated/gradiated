@@ -218,6 +218,8 @@ A calculation often produces a result that we need again. For example, we might 
 
 Each register is built from circuits that remember individual bits, like the D latches we used earlier. LC-3 has eight general-purpose registers, `R0` to `R7`, each holding sixteen bits, or two bytes. We keep this small collection directly connected to the calculation circuits inside the processing unit, to give them quick access to the values they need. These fast storage registers are separate from the larger memory array and its `MAR` and `MDR`.
 
+Reading and writing follow the same principle as our earlier memory array. Selection circuits choose which stored number to read, while a write-enable signal allows the chosen register to copy a new number and otherwise hold its contents.
+
 We will begin with `3` in `R1`, `6` in `R2` and `2` in `R3`. A register’s name identifies the storage slot, while its contents are the number stored there.
 
 <!-- scene: select-values -->
@@ -240,6 +242,22 @@ Let’s zoom out again and group our adder with circuits that perform logical op
 `ADD`, `AND` and `NOT` are instructions a program can request. `PASSA` is an internal mode used to transfer a value without changing it.
 
 With addition selected, `3` and `6` enter the ALU and the result, `9`, travels back to be saved in `R0`. We then select `R0` and `R3`, adding the stored `9` to `2` and saving `11` in `R0`. Repeating this gives `13`, then `15`, and so on. Each new result replaces the previous total in `R0`, ready for the next addition. The other registers keep their values.
+
+<!-- scene: processing-block -->
+
+Together, our fast storage registers, selection circuits and ALU form the processing unit, or `PU`. It holds working values, performs calculations and stores their results. We will set this building block alongside memory, then introduce the control circuits that direct its work.
+
+<!-- scene: instruction -->
+
+We have shown the processing unit repeatedly adding `2` to a running total. One instruction can request each of these additions. Written as `ADD R0, R0, R3`, it means add the numbers stored in `R0` and `R3`, then save the result in `R0`. The first register named is the destination. The next two supply the inputs.
+
+`R0` appears twice because we read its previous value and replace it with the new result. `R3` supplies `2` and keeps its contents.
+
+<!-- scene: instruction-control -->
+
+The control unit, or `CU`, translates an instruction into electrical signals that direct the processing unit. For this addition, those signals select `R0` and `R3` as inputs, choose `ADD` in the ALU and select `R0` as the destination.
+
+The result returning to the registers does not automatically replace a stored number. As with our earlier memory, writing must be enabled. The control unit enables the selected register to save the result, while the others keep their contents.
 
 <!-- scene: addressed-memory -->
 

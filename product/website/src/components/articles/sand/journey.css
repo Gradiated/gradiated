@@ -752,3 +752,38 @@ html:has(.sand-journey) {
 .sand-journey #d2 .processing-binary-outline {
   opacity: 0.4;
 }
+
+.sand-journey #d2 .processing-block-tint {
+  fill: rgba(178, 84, 76, 0.06);
+  stroke: none;
+}
+.sand-journey #d2 .processing-block-frame {
+  stroke: rgba(166, 78, 69, 0.5);
+  stroke-width: 1.3px;
+  fill: none;
+}
+.sand-journey #d2 .processing-block-icon {
+  stroke: #a4645c;
+  stroke-width: 0.9px;
+  fill: none;
+}
+.sand-journey #d2 text.processing-block-name {
+  fill: #a4645c;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+.sand-journey #d2 text.instruction-token {
+  font-size: 18px;
+}
+.sand-journey #d2 .control-wire {
+  stroke: #a4645c;
+  stroke-dasharray: 3 3;
+  stroke-width: 1.1px;
+  fill: none;
+  opacity: 0.2;
+}
+.sand-journey #d2 .control-active {
+  stroke-width: 1.6px;
+  opacity: 0;
+}

@@ -28,6 +28,9 @@ test("the public guide ends with memory and excludes all chapter 5 prose and lin
     "program counter",
     "sand-computer-overview",
     "sand-select-values",
+    "sand-processing-block",
+    "sand-instruction",
+    "sand-instruction-control",
     "sand-computer",
   ])
     assert.ok(!html.includes(draft), draft);
@@ -67,7 +70,7 @@ test("the complete preview retains all chapters and its own ending", () => {
   assert.deepEqual(
     previewScenes.slice(
       previewScenes.indexOf("memory-buses") + 1,
-      previewScenes.indexOf("alu") + 1,
+      previewScenes.indexOf("instruction-control") + 1,
     ),
     [
       "computer-overview",
@@ -80,6 +83,9 @@ test("the complete preview retains all chapters and its own ending", () => {
       "working-registers",
       "select-values",
       "alu",
+      "processing-block",
+      "instruction",
+      "instruction-control",
     ],
   );
   assert.ok(

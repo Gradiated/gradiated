@@ -116,15 +116,15 @@ Our circuit handles one column at a time. It adds two input bits, `aᵢ` and `b�
 
 Connect several full adders in a row, passing each carry `cᵢ₊₁` into the next column, and we can add entire binary numbers. Here, four adders calculate `0011 + 0110 = 1001`, or `3 + 6 = 9`. More columns let us work with larger numbers. With addition as a building block, it is a short step to circuits that subtract and multiply, and our toolset has grown.
 
-<!-- scene: timing -->
-
-As circuits become larger and more complex, timing challenges appear. Changing an input does not change every part of a circuit at once. The change takes time to spread, and different values settle at different moments. These delays can result in incorrect information processing as old data gets used for computation, or glitches. This will need to be carefully considered during circuit design.
-
 <!-- scene: heat -->
 
 We have combined small groups of transistors into a circuit that adds numbers, but each calculation has a physical cost. Every calculation involves voltage flips as some of the transistors switch. These flips charge or discharge the tiny capacitances of the transistors and wires, expending energy that is dissipated as heat.
 
 The faster we switch, the more heat we produce each second. This switching power scales with `CV²f`, where `C` is the capacitance being switched, `V` is the voltage swing, and `f` is the clock speed, which sets the pace of computation. Smaller capacitances and lower voltages reduce the energy needed, while switching less often reduces the rate at which we generate heat. Heat is a budget we will keep encountering as the transistor populations climb.
+
+<!-- scene: timing -->
+
+As circuits become larger and more complex, timing challenges appear. Changing an input does not change every part of a circuit at once. The change takes time to spread, and different values settle at different moments. These delays can result in incorrect information processing as old data gets used for computation, or glitches. This will need to be carefully considered during circuit design.
 
 ## Memory
 

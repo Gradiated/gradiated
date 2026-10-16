@@ -259,8 +259,8 @@ export const COMPUTER_SCENES = (function () {
         pulse(node, nodes[i + 5], node.arrival + 0.05, nodes[i + 5].arrival);
     });
     timingDemo.to({}, { duration: 1.2 }, 7);
-    show(timing, "timing", "heat", {}, 0.65);
-    playInScene("timing", timingDemo, "chain");
+    show(timing, "timing", "latch", {}, 0.65);
+    playInScene("timing", timingDemo, "heat");
 
     if (!includeComputer) return { demos, timingDemo };
 

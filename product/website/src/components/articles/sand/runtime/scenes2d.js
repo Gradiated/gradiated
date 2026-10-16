@@ -981,9 +981,7 @@ export const SCENES2D = (function () {
       gChain,
     );
     show(gChain, 14, "timing");
-    key(gChain, "heat", {});
-    key(gChain, "latch", { opacity: 0 });
-    caption(14, "n full adder blocks, n digit addition", "timing");
+    caption(14, "n full adder blocks, n digit addition", "heat");
 
     /* ================= 15every switch leaks heat ================= */
     const gHeat = mk("g", { class: "heat thin" }, root);
@@ -999,7 +997,7 @@ export const SCENES2D = (function () {
         );
       }),
     );
-    show(gHeat, 15, 16);
+    show(gHeat, 15, "timing");
     const heat = gsap.timeline({ repeat: -1 });
     squiggles.forEach((s, i) => {
       const t0 = (i % 7) * 0.22 + Math.floor(i / 7) * 0.13;
@@ -1028,8 +1026,8 @@ export const SCENES2D = (function () {
     propto.textContent = "\u221d"; // the glyph is tiny in this font, so it gets its own size
     formula.appendChild(propto);
     formula.appendChild(document.createTextNode(" C V\u00b2 f"));
-    show(formula, 15, 16);
-    caption(15, "heating: capacitance × voltage² × clock");
+    show(formula, 15, "timing");
+    caption(15, "heating: capacitance × voltage² × clock", "timing");
 
     /* ================= 16memory: a loop ================= */
     const gLatch = group({ "data-diagram": "latch" }, root, "220 250");

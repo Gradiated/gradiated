@@ -40,10 +40,10 @@ test("the public guide ends with memory and excludes all chapter 5 prose and lin
   const publicScenes = sceneKeys(html);
   assert.equal(
     publicScenes.indexOf("timing"),
-    publicScenes.indexOf("chain") + 1,
+    publicScenes.indexOf("heat") + 1,
   );
   assert.equal(
-    publicScenes.indexOf("heat"),
+    publicScenes.indexOf("latch"),
     publicScenes.indexOf("timing") + 1,
   );
   assert.ok(html.includes("selects a complete four-bit number"));

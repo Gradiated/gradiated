@@ -461,12 +461,12 @@ export const MEMORY_INTERFACE_SCENES = {
       module,
     );
     path(
-      "M85 145 H385 V325 H85 Z M135 145 V325 M85 190 H385 M85 235 H385 M85 280 H385",
+      "M70 90 H370 V270 H70 Z M120 90 V270 M70 135 H370 M70 180 H370 M70 225 H370",
       { class: "memory-block-icon" },
       silhouette,
     );
     key(silhouette, "working-registers", {}, null, 0.1);
-    const name = label(root, 52, 82, "MEMORY", { class: "memory-block-name" });
+    const name = label(root, 51.6, 73, "MEMORY", { class: "memory-block-name" });
     key(name, "working-registers", {}, null, 0.55);
     return { demos };
   },

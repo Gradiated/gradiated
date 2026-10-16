@@ -312,6 +312,7 @@ export const MEMORY_INTERFACE_SCENES = {
         addressWidth: 16,
         dataWidth: 16,
         compact: true,
+        prompt: "Choose Read or Write",
       },
       (_scene, action) => {
         if (model.frame(time.value).busy) return;

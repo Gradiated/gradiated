@@ -38,6 +38,12 @@ export const mountMemoryControls = (stage, onChoose) => {
       }
       panel.appendChild(row);
     }
+    if (config.prompt) {
+      const prompt = document.createElement("p");
+      prompt.className = "memory-control-prompt";
+      prompt.textContent = config.prompt;
+      panel.appendChild(prompt);
+    }
     panels.set(scene, panel);
     controls.appendChild(panel);
   };

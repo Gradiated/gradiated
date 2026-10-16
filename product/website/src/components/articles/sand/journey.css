@@ -712,3 +712,10 @@ html:has(.sand-journey) {
   line-height: 0;
   vertical-align: super;
 }
+
+.sand-journey .memory-control-prompt {
+  margin: 0.5rem 0 0;
+  text-align: center;
+  color: var(--ink);
+  font-family: var(--font-body);
+}

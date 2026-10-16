@@ -164,9 +164,7 @@ Changing the `ADDR` now lets us read a different stored number without erasing t
 
 As these structures grow, drawing every wire becomes crowded. We can draw a bundle of wires as one thicker line, called a bus. A diagonal slash marked `4` means four separate wires, one for each bit. It is a drawing shorthand, not a break in the connection or four bits squeezed onto one wire. The `ADDR` bus is marked `2`, while `WE` still needs only one wire.
 
-We can also draw a box around the whole memory array. The latches, decoder and read-selection gates are still inside. With these simpler symbols, we can keep zooming out and connect familiar structures into a computer.
-
-We now have circuits that calculate and circuits that remember. Our next step is to combine them into a machine that follows instructions, choosing which values to use, what to calculate, and where to store each result.
+We can now draw the whole memory array as a single block, with its latches, decoder and read-selection gates inside. We have circuits that calculate and remember. Let’s zoom out again and combine them into a computer that follows instructions, choosing which values to use, what to calculate and where to store each result.
 
 ## Building a computer
 

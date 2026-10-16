@@ -50,7 +50,7 @@ test("the public guide ends with memory and excludes all chapter 5 prose and lin
   assert.ok(!html.includes('class="footnote"'));
   assert.ok(
     html.includes(
-      "We now have circuits that calculate and circuits that remember.",
+      "We have circuits that calculate and remember.",
     ),
   );
   assert.ok(

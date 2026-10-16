@@ -563,7 +563,7 @@ export const COMPUTER_SCENES = (function () {
         "M264 105 V223.36 H256.3",
         "M238 105 V150 H232 V237.4 Q240 241.4 232 245.4 V297.98 H256.3",
         "M378 82 H425 V287.32 H393.33",
-        "M180 105 V166 H199.72 V208.6",
+        "M180 105 V166 H152.16 V208.6",
       ].map((d) => {
         path(d, { class: "control-wire" }, control);
         return path(d, { class: "control-wire control-active" }, control);
@@ -576,20 +576,6 @@ export const COMPUTER_SCENES = (function () {
         { class: "tiny bit", "text-anchor": "end" },
         control,
       );
-      const writeTint = mk(
-        "rect",
-        {
-          x: 139,
-          y: 134,
-          width: 40,
-          height: 18,
-          rx: 3,
-          class: "computer-glow",
-        },
-        control,
-      );
-      text(152, 147, "WE", { class: "tiny bit" }, control);
-      const writeValue = text(171, 147, "0", { class: "tiny bit" }, control);
       const controlTime = { value: 0 };
       const controlDemo = gsap.timeline({ paused: true, repeat: -1 });
       controlDemo.to(controlTime, { value: 12, duration: 12, ease: "none" });
@@ -606,11 +592,6 @@ export const COMPUTER_SCENES = (function () {
         controlActive = active;
         const t = controlTime.value;
         const fade = Math.min(clamp(t * 3), clamp((12 - t) * 2));
-        const we = t >= 7 && t < 8;
-        setText(writeValue, we ? 1 : 0);
-        writeTint.style.opacity = String(
-          fade * Math.min(clamp((t - 6.9) * 10), clamp((8.1 - t) * 10)),
-        );
         controlRoutes.forEach((node, i) => {
           const on =
             i < 2

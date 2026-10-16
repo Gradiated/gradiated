@@ -208,6 +208,10 @@ Let’s use these registers to access a location. Choose Write to place `1` in `
 
 Choose Read to put the same `ADDR` in `MAR`. Memory selects that location and sends its contents back to `MDR`, where the processor can use them. Reading leaves the stored number unchanged. Yellow paths and moving bits show each transfer.
 
+<!-- scene: memory-block -->
+
+We now have a basic memory block, our first building block for a complete von Neumann computer. Next, we’ll build the processing unit, one of the CPU’s main components.
+
 <!-- scene: working-registers -->
 
 The CPU also needs registers for the values it is currently working on. Alongside dedicated registers such as `MAR` and `MDR`, LC-3 has eight general-purpose registers, named `R0` to `R7`. Each holds one sixteen-bit word. These few working slots are separate from the much larger collection of locations in memory.

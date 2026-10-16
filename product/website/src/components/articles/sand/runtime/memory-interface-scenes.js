@@ -17,6 +17,7 @@ export const MEMORY_INTERFACE_SCENES = {
     text,
     key,
     show,
+    draw,
     afterRender,
     controls,
   }) {
@@ -40,8 +41,31 @@ export const MEMORY_INTERFACE_SCENES = {
       return value(parent, x + 10, y - 4, width, { class: "tiny bit" });
     };
     const rowValues = [3, 6, 0, 0];
-    const rowFrames = group({ "data-part": "memory-row-collapse" }, root);
-    show(rowFrames, "memory-width", "working-registers");
+    const module = group({ "data-part": "memory-building-block" }, root, "0 0");
+    key(module, "memory-width", { x: 0, y: 0, scale: 1 });
+    key(module, "working-registers", { x: 12, y: 10, scale: 0.18 });
+    const frame = group({ "data-part": "memory-green-frame" }, module);
+    mk(
+      "rect",
+      {
+        x: 12,
+        y: 8,
+        width: 416,
+        height: 428,
+        rx: 8,
+        class: "memory-block-tint",
+      },
+      frame,
+    );
+    const frameLine = path(
+      "M20 8 H420 Q428 8 428 16 V428 Q428 436 420 436 H20 Q12 436 12 428 V16 Q12 8 20 8 Z",
+      { class: "memory-block-frame" },
+      frame,
+    );
+    key(frame, "memory-block");
+    draw(frameLine, at("memory-block"), (1 - 2 * hold) * 0.95);
+    const rowFrames = group({ "data-part": "memory-row-collapse" }, module);
+    show(rowFrames, "memory-width", "working-registers", {}, 0.65);
     for (let row = 0; row < 4; row++) {
       const frame = box(rowFrames, 145, 155 + row * 45, 225, 26);
       key(frame, "memory-width", {
@@ -143,9 +167,9 @@ export const MEMORY_INTERFACE_SCENES = {
       widthActive = active;
     });
 
-    const diagram = group({ "data-diagram": "memory-interface" }, root);
+    const diagram = group({ "data-diagram": "memory-interface" }, module);
     key(diagram, "memory-interface", {}, null, 0.55);
-    key(diagram, "working-registers", { opacity: 0 }, null, 0, 0.8);
+    key(diagram, "working-registers", { opacity: 0 }, null, 0, 0.65);
     const eight = group({}, diagram);
     const sixteen = group({}, diagram);
     const labels = group({}, diagram);
@@ -280,7 +304,7 @@ export const MEMORY_INTERFACE_SCENES = {
     );
     show(addressCaption, "memory-address-space", "working-registers");
     const access = group({ "data-part": "memory-access-transfers" }, diagram);
-    show(access, "memory-access", "working-registers");
+    show(access, "memory-access", "memory-block", {}, 0.5);
     const flyingWord = value(access, 254, 414, word(9), {
       class: "interface-value bit",
       "data-access-flight": "",
@@ -343,9 +367,11 @@ export const MEMORY_INTERFACE_SCENES = {
         ])
           el.style.opacity = 0;
         lit.clear();
-        updateText(marWide, word(1));
-        updateText(mdrWide, word(9));
-        updateText(weDigit, "0");
+        if (p < index("memory-access")) {
+          updateText(marWide, word(1));
+          updateText(mdrWide, word(9));
+          updateText(weDigit, "0");
+        }
         return;
       }
       const state = model.frame(time.value);
@@ -430,6 +456,18 @@ export const MEMORY_INTERFACE_SCENES = {
       controls.update("memory-access", { ...state, prompt }, opacity);
     });
     diagram.append(eight, sixteen, labels, decimalAddresses, moreRows, access);
+    const silhouette = group(
+      { "data-part": "memory-block-silhouette" },
+      module,
+    );
+    path(
+      "M85 145 H385 V325 H85 Z M135 145 V325 M85 190 H385 M85 235 H385 M85 280 H385",
+      { class: "memory-block-icon" },
+      silhouette,
+    );
+    key(silhouette, "working-registers", {}, null, 0.1);
+    const name = label(root, 52, 82, "MEMORY", { class: "memory-block-name" });
+    key(name, "working-registers", {}, null, 0.55);
     return { demos };
   },
 };

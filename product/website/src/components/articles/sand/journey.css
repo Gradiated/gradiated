@@ -719,3 +719,24 @@ html:has(.sand-journey) {
   color: var(--ink);
   font-family: var(--font-body);
 }
+
+.sand-journey #d2 .memory-block-tint {
+  fill: rgba(82, 153, 111, 0.08);
+  stroke: none;
+}
+.sand-journey #d2 .memory-block-frame {
+  stroke: rgba(72, 139, 97, 0.5);
+  stroke-width: 1.3px;
+  fill: none;
+}
+.sand-journey #d2 .memory-block-icon {
+  stroke: #568568;
+  stroke-width: 0.9px;
+  fill: none;
+}
+.sand-journey #d2 text.memory-block-name {
+  fill: #568568;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}

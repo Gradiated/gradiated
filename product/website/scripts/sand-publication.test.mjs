@@ -76,6 +76,7 @@ test("the complete preview retains all chapters and its own ending", () => {
       "memory-word",
       "memory-address-space",
       "memory-access",
+      "memory-block",
       "working-registers",
       "select-values",
       "alu",

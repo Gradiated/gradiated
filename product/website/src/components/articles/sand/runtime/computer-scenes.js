@@ -304,6 +304,7 @@ export const COMPUTER_SCENES = (function () {
       text,
       key,
       show,
+      draw,
       afterRender,
       controls,
     });
@@ -356,6 +357,7 @@ export const COMPUTER_SCENES = (function () {
       "working-registers",
       { x: 113, y: 0, scale: 1.25 },
       { x: 113, y: 0, scale: 0.6 },
+      0.55,
     );
     key(registerBank, "select-values", { opacity: 0 });
     key(registerBank, "alu", { x: 0, y: 0, scale: 1, opacity: 1 });
@@ -369,7 +371,8 @@ export const COMPUTER_SCENES = (function () {
       { class: "caption bit" },
       bitExpansion,
     );
-    show(bitExpansion, "working-registers", "select-values");
+    key(bitExpansion, "working-registers", {}, null, 0.55);
+    key(bitExpansion, "select-values", { opacity: 0 });
     caption(
       "working-registers",
       "more storage, built from familiar parts",
@@ -457,7 +460,7 @@ export const COMPUTER_SCENES = (function () {
       { opacity: 1, duration: DUR * 0.65 },
       at("program") + DUR * 0.3,
     );
-    caption("addressed-memory", "MAR selects · MDR transfers", "program");
+    caption("addressed-memory", "MAR selects · MDR transfers", "program", 430);
     const memoryDemo = gsap.timeline({ paused: true });
     memoryDemo.to(rowGlows[0], { opacity: 1, duration: 0.6 }, 0.3);
     memoryDemo.to(rowGlows[0], { opacity: 0, duration: 0.5 }, 2);
@@ -501,7 +504,12 @@ export const COMPUTER_SCENES = (function () {
     text(77, 292, "ADDR", { class: "tiny muted bit" }, command);
     text(286, 346, "0 · ADD R0, R1, R2", { class: "tiny" }, command);
     show(command, "program", undefined);
-    caption("program", "PC holds ADDR · IR holds the instruction", "control");
+    caption(
+      "program",
+      "PC holds ADDR · IR holds the instruction",
+      "control",
+      430,
+    );
 
     const controller = group({ "data-part": "controller" }, machine, "296 83");
     box(controller, 228, 58, 137, 50, "");
@@ -542,6 +550,7 @@ export const COMPUTER_SCENES = (function () {
       "control",
       "stored state + logic coordinate the next step",
       "execute",
+      430,
     );
 
     const trace = group({ "data-part": "instruction-trace" }, machine);
@@ -569,6 +578,7 @@ export const COMPUTER_SCENES = (function () {
       "execute",
       "one instruction directs the familiar calculation",
       "computer",
+      435,
     );
     const rowOneGlow = mk(
       "rect",
@@ -646,7 +656,8 @@ export const COMPUTER_SCENES = (function () {
     show(computer, "computer", undefined);
     draw(cpuOutline, at("computer") + DUR * 0.1, DUR * 0.8);
     key(machine, "working-registers", { scale: 1, x: 0, y: 0 }, null, -1);
-    key(machine, "computer", { scale: 0.95, x: 0, y: 0 });
+    key(machine, "addressed-memory", { scale: 0.75, x: 0, y: 36 });
+    key(machine, "computer", { scale: 0.75, x: 0, y: 36 });
     caption(
       "computer",
       "a processor, memory and connections to the world",

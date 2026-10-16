@@ -140,15 +140,15 @@ Now stack a second row underneath. We have two places to store a four-bit number
 
 Both rows receive the same four data inputs. To write a number, place its four bits `D0` to `D3` on these wires, select the destination `ADDR`, then set `WE` to `1`. An AND gate combines `WE` with each row’s selection signal, so only the chosen row copies the number at `D`. Return `WE` to `0` and both rows hold their contents, even if the input changes.
 
-To read a number, select its `ADDR` and leave `WE` at `0`. At the right of each latch, an AND gate passes its bit only when that row is selected. An OR gate at the bottom of each column combines these paths. Unselected rows always contribute `0`, so each OR gate reproduces the selected bit, bringing the chosen word to output `Q`, where we read it. Reading does not change either stored number. These AND and OR gates, controlled by the decoder’s selection signals, form a multiplexer that chooses which row’s stored bits reach `Q`.
+To read a number, select its `ADDR` and leave `WE` at `0`. At the right of each latch, an AND gate passes its bit only when that row is selected. An OR gate at the bottom of each column combines these paths. Unselected rows always contribute `0`, so each OR gate reproduces the selected bit, bringing the chosen number to output `Q`, where we read it. Reading does not change either stored number. These AND and OR gates, controlled by the decoder’s selection signals, form a multiplexer that chooses which row’s stored bits reach `Q`.
 
 <!-- scene: memory-array -->
 
 Zoom out once more and add two rows. We now have four locations, each holding four bits. Two address bits `ADDR` distinguish `00`, `01`, `10` and `11`. The same decoder now turns that two-bit `ADDR` into four selection signals, with exactly one active at a time. That signal chooses the row to read and, if `WE` is `1`, the row to write.
 
-The `ADDR` tells us where to look. The contents tell us what is stored there. Each `ADDR` selects a whole four-bit word, so this memory is word-addressable. Two `ADDR` bits choose among four locations, while four data bits make up the word in each location. The `ADDR` width and the word width are separate choices.
+The `ADDR` tells us where to look. The contents tell us what is stored there. Each `ADDR` selects a complete four-bit number, rather than an individual bit. Two address bits choose among four locations, while each location stores four bits. The `ADDR` width and the number of bits stored at each location are separate choices.
 
-Adding rows gives us more locations, while adding columns lets each location hold a wider number. Here, sixteen latches give us a small memory array of four four-bit words.[^1]
+Adding rows gives us more locations, while adding columns lets each location hold a wider number. Here, sixteen latches give us a small memory array with four locations, each storing a four-bit number.[^1]
 
 <!-- scene: stored-answer -->
 

@@ -782,6 +782,7 @@ def main():
     scenario('Trivy exports no reports', [trivy_up(1)], trivy_alert, [trivy_alert], eval_time='2h')
 
     falco_alert = 'FalcoCriticalEvents'
+    assert alerts[falco_alert]['labels']['severity'] == 'critical', 'Critical runtime detections must route to urgent incident.io paging'
     def falco(values, priority='2', pod='falco-a'):
         return {'series': f'falcosecurity_falco_rules_matches_total{{namespace="falco",pod="{pod}",priority="{priority}",'
                 'rule_name="Drop and execute new binary in container"}', 'values': values}

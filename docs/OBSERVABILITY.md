@@ -293,12 +293,13 @@ Review the Falco Loki stream after rollout and add exceptions in the same file.
 | `VulnerabilityCriticalOverdue` | A fixable Critical CVE in an image repository running in a namespace was also present 7–8 days ago, for 1h | warning (In-hours) |
 | `VulnerabilityHighOverdue` | The same for a fixable High CVE and 30–31 days | warning (In-hours) |
 | `TrivyOperatorNotReporting` | Operator unscraped, or no vulnerability reports exported, for 1h | warning (In-hours) |
-| `FalcoCriticalEvents` | Any Emergency, Alert or Critical Falco rule match in the last 10 minutes | warning (In-hours) during burn-in; raise to critical once the rules are tuned |
+| `FalcoCriticalEvents` | Any Emergency, Alert or Critical Falco rule match in the last 10 minutes | critical (Urgent) |
 | `FalcoDown` | A Falco sensor unavailable or unscraped, or the DaemonSet or its scrape targets missing, for 10m | warning (In-hours) |
 | `KyvernoPolicyViolationsRising` | A namespace's audited failure count exceeds its count a day earlier for 1h | warning (In-hours) |
 
-incident.io maps `critical` to Urgent and every other severity to In-hours,
-so no security alert pages at night yet. Vulnerability
+incident.io maps `critical` to Urgent and every other severity to In-hours.
+Critical runtime detections page at night; vulnerability-remediation and sensor-health
+warnings remain In-hours. Vulnerability
 alerts repeat daily rather than every two hours. The SLA alerts key on image
 repository and CVE, so redeploying the same vulnerable image does not restart
 the clock. They need 7 or 30 days of metrics after installation before they can

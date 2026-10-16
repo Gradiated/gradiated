@@ -172,7 +172,7 @@ We can now draw the whole memory array as a single block, with its latches, deco
 
 We have circuits that calculate and circuits that remember. Now we can organise them into a machine whose task is determined by a list of instructions stored in memory.
 
-We will follow the von Neumann model, where both data and instructions are stored in the same "unified" memory. In Harvard architecture, instructions and data instead have separate memories. Data supplies the values to work on, while instructions tell the machine what to do with them. Changing those instructions lets the same circuits perform a different task without changing their physical connections.
+We will follow the von Neumann model, where both data and instructions are stored in the same "unified" memory. Data supplies the values to work on, while instructions tell the machine what to do with them. Changing those instructions lets the same circuits perform a different task without changing their physical connections.
 
 The central processing unit, or CPU, carries out these instructions, using calculation circuits, working registers and control circuits. Memory holds the program and its data, while input and output connect the machine to the outside world.
 

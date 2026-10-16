@@ -191,7 +191,7 @@ export const COMPUTER_SCENES = (function () {
       selectDemo.to(selectedThree, { opacity: 1, duration: 0.4 }, 5.65);
       illuminate(selectDemo, upper, 5);
       selectDemo.to({}, { duration: 1.2 }, 5.65);
-      playInScene("select-values", selectDemo, "timing");
+      playInScene("select-values", selectDemo, "memory-buses");
     }
 
     const timing = group({ "data-diagram": "timing" }, root);
@@ -259,8 +259,8 @@ export const COMPUTER_SCENES = (function () {
         pulse(node, nodes[i + 5], node.arrival + 0.05, nodes[i + 5].arrival);
     });
     timingDemo.to({}, { duration: 1.2 }, 7);
-    show(timing, "timing", "select-values", {}, 0.65);
-    playInScene("timing", timingDemo, "stored-answer");
+    show(timing, "timing", "heat", {}, 0.65);
+    playInScene("timing", timingDemo, "chain");
 
     if (!includeComputer) return { demos, timingDemo };
 

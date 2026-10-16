@@ -980,8 +980,10 @@ export const SCENES2D = (function () {
       { "text-anchor": "start", class: "tiny muted" },
       gChain,
     );
-    show(gChain, 14, 16);
-    caption(14, "n full adder blocks, n digit addition");
+    show(gChain, 14, "timing");
+    key(gChain, "heat", {});
+    key(gChain, "latch", { opacity: 0 });
+    caption(14, "n full adder blocks, n digit addition", "timing");
 
     /* ================= 15every switch leaks heat ================= */
     const gHeat = mk("g", { class: "heat thin" }, root);

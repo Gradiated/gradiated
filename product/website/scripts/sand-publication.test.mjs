@@ -14,12 +14,12 @@ const template = "<!--{{TITLE}}-->{{ARTICLE}}";
 const sceneKeys = (html) =>
   [...html.matchAll(/data-scene="([^"]+)"/g)].map((match) => match[1]);
 
-test("the public guide ends with timing and excludes all chapter 5 prose and links", () => {
+test("the public guide ends with memory and excludes all chapter 5 prose and links", () => {
   const html = renderPost(source, template, scenes, publication);
-  assert.equal(publication.publishedThrough, "timing");
+  assert.equal(publication.publishedThrough, "memory-buses");
   assert.deepEqual(
     sceneKeys(html),
-    scenes.slice(0, scenes.indexOf("timing") + 1),
+    scenes.slice(0, scenes.indexOf("memory-buses") + 1),
   );
   for (const draft of [
     "Building a computer",
@@ -37,8 +37,22 @@ test("the public guide ends with timing and excludes all chapter 5 prose and lin
     "memory-buses",
   ])
     assert.ok(sceneKeys(html).includes(memoryScene));
-  assert.ok(html.includes("word-addressable"));
-  assert.ok(html.includes("Our example uses four bits per row"));
+  const publicScenes = sceneKeys(html);
+  assert.equal(
+    publicScenes.indexOf("timing"),
+    publicScenes.indexOf("chain") + 1,
+  );
+  assert.equal(
+    publicScenes.indexOf("heat"),
+    publicScenes.indexOf("timing") + 1,
+  );
+  assert.ok(html.includes("selects a complete four-bit number"));
+  assert.ok(!html.includes('class="footnote"'));
+  assert.ok(
+    html.includes(
+      "We now have circuits that calculate and circuits that remember.",
+    ),
+  );
   assert.ok(
     !html.includes(
       "Our adder calculates with whatever values reach its inputs.",

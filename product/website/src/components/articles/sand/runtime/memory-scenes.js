@@ -395,7 +395,7 @@ export const MEMORY_SCENES = (() => {
       { opacity: 0, scale: 1.12 },
       0.28,
     );
-    key(compact, "timing", { opacity: 0 }, null, 0, 0.6);
+    key(compact, "select-values", { opacity: 0 }, null, 0, 0.6);
     box(compact, 134, 75, 172, 54);
     label(compact, 220, 106, "4-bit adder");
     path("M171 53 V75 M269 53 V75", { class: "memory-bus" }, compact);

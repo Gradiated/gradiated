@@ -1,4 +1,4 @@
 {
-  "publishedThrough": "timing",
+  "publishedThrough": "memory-buses",
   "footer": "From silicon to switches, logic, calculation and memory, each larger structure gives us a new ability. The journey will continue as we combine these circuits into a computer that follows instructions."
 }

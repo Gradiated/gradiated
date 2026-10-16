@@ -407,10 +407,10 @@ export const MEMORY_SCENES = (() => {
     digit(compact, 171, 46, "0011");
     digit(compact, 269, 46, "0110");
     box(compact, 117, 219, 254, 123);
-    label(compact, 204, 211, "D");
-    label(compact, 228, 358, "Q");
-    label(compact, 244, 253, "Memory");
-    label(compact, 244, 276, "4 locations × 4 bits");
+    label(compact, 220, 237, "D");
+    label(compact, 244, 333, "Q");
+    label(compact, 244, 273, "Memory");
+    label(compact, 244, 296, "4 locations × 4 bits");
     const bus = (d, slash, x, y, width) => {
       path(d, { class: "memory-bus" }, compact);
       wire(compact, slash);

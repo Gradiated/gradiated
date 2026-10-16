@@ -47,7 +47,7 @@ export const MEMORY_INTERFACE_SCENES = {
     box(detailed, 29, 122, 45, 207);
     label(detailed, 51, 353, "decoder", { class: "tiny" });
     label(detailed, 25, 82, "ADDR", { class: "tiny bit" });
-    path("M24 89 V141 H29", {}, detailed);
+    bus(detailed, "M24 89 V141 H29", "2", 24, 110);
     label(detailed, 89, 82, "WE", { class: "tiny bit" });
     path("M89 90 V310", {}, detailed);
     const rowValues = [3, 6, 0, 0];

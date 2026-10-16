@@ -186,7 +186,7 @@ We can hide the individual latches inside four larger blocks, one for each store
 
 The memory address register, or `MAR`, holds the `ADDR` of the location to access. The memory data register, or `MDR`, holds either the number to write or the number just read. These additional storage circuits keep the address and data steady while the access proceeds.
 
-The processor coordinates its steps with a clock, a repeating electrical signal. Its registers can capture new values at a clock edge when their load controls allow it, then hold those values between updates. A separate write control, `WE`, determines whether memory is written. Unlike our earlier latches, these registers do not follow their inputs throughout the enabled interval.
+The processor coordinates its steps with a clock, a repeating electrical signal. Here, its registers capture new values when the clock rises from low to high, provided their load controls allow it. They then hold those values between updates. A separate write control, `WE`, determines whether memory is written. Unlike our earlier latches, these registers do not follow their inputs throughout the enabled interval.
 
 <!-- scene: memory-word -->
 

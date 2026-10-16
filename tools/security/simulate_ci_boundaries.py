@@ -118,6 +118,13 @@ def main():
             # concrete synthetic log-stream ARN; use an action-level positive.
             (name, "logs:PutLogEvents", "*", True, []),
             (name, "logs:DeleteLogGroup", f"arn:aws:logs:us-east-1:{account}:log-group:/gradiated/prod/application", True, []),
+            (name, "sns:Publish", f"arn:aws:sns:us-east-1:{account}:gradiated-security-alerts", False, []),
+            (name, "sns:Publish", f"arn:aws:sns:eu-west-1:{account}:gradiated-security-alerts", False, []),
+            (name, "sns:Publish", f"arn:aws:sns:us-east-1:{account}:gradiated-prod-application", True, []),
+            (name, "cloudwatch:SetAlarmState", f"arn:aws:cloudwatch:us-east-1:{account}:alarm:gradiated-security-root-usage", False, []),
+            (name, "cloudwatch:PutMetricAlarm", f"arn:aws:cloudwatch:us-east-1:{account}:alarm:gradiated-security-root-usage", False, []),
+            (name, "cloudwatch:SetAlarmState", f"arn:aws:cloudwatch:us-east-1:{account}:alarm:gradiated-prod-example-cpu", True, []),
+            (name, "cloudwatch:PutMetricAlarm", f"arn:aws:cloudwatch:us-east-1:{account}:alarm:gradiated-prod-example-cpu", True, []),
             (name, "sns:Unsubscribe", f"arn:aws:sns:us-east-1:{account}:gradiated-security-alerts:example", False, []),
         ])
 
@@ -141,7 +148,7 @@ def main():
         result = json.loads(subprocess.check_output(command, text=True))["EvaluationResults"][0]
         allowed = result["EvalDecision"] == "allowed"
         assert allowed == expected, f"{name} {action} {resource}: {result['EvalDecision']} (expected allowed={expected})"
-        if not expected and (action.startswith("logs:") or action == "cloudwatch:PutMetricData" or (action.startswith("kms:") and context)):
+        if not expected and (action.startswith("logs:") or action in ("cloudwatch:PutMetricData", "sns:Publish", "cloudwatch:SetAlarmState", "cloudwatch:PutMetricAlarm") or (action.startswith("kms:") and context)):
             assert result["EvalDecision"] == "explicitDeny", f"Expected a matching security deny, not an unrelated implicit denial: {result}"
         return name, action, allowed
 

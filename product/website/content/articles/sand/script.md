@@ -186,7 +186,7 @@ We can hide the individual latches inside four larger blocks, one for each store
 
 The memory address register, or `MAR`, holds the `ADDR` of the location to access. The memory data register, or `MDR`, holds either the number to write or the number just read. These additional storage circuits keep the address and data steady while the access proceeds.
 
-The processor coordinates its steps with a clock, a repeating electrical signal. Here, its registers capture new values when the clock rises from low to high, provided their load controls allow it. They then hold those values between updates. A separate write control, `WE`, determines whether memory is written. Unlike our earlier latches, these registers do not follow their inputs throughout the enabled interval.
+A separate write control, `WE`, determines whether memory copies the number from `MDR` into the selected location. We will return to how the processor coordinates register updates when we build its control circuits.
 
 <!-- scene: memory-word -->
 
@@ -204,11 +204,11 @@ Calling a processor “16-bit” or “32-bit” usually describes the width of 
 
 <!-- scene: memory-access -->
 
-Let’s use these registers to access a location. Choose Write to place `1` in `MAR` and `9` in `MDR`. The clock marks their capture. `MAR` then selects the second location, and the write control lets memory copy the number from `MDR` into it. The other locations keep their values.
+Let’s use these registers to access a location. Choose Write to place `1` in `MAR` and `9` in `MDR`. `MAR` then selects the second location, and the write control lets memory copy the number from `MDR` into it. The other locations keep their values.
 
 Choose Read to put the same `ADDR` in `MAR`. Memory selects that location and sends its contents back to `MDR`, where the processor can use them. Reading leaves the stored number unchanged. Try reading before and after writing to see the difference.
 
-The yellow paths show the transfer, while the moving bits show which value is being copied. Register updates and memory access are coordinated steps. The memory needs time to respond, so a complete access need not fit into one clock cycle.
+The yellow paths show the transfer, while the moving bits show which value is being copied. Register updates and memory access are coordinated steps. The memory needs time to respond, so the processor must allow each transfer to finish before using its result.
 
 <!-- scene: working-registers -->
 

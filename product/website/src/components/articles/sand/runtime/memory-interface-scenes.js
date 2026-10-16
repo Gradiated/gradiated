@@ -39,53 +39,87 @@ export const MEMORY_INTERFACE_SCENES = {
       path(`M${x - 3} ${y + 4} L${x + 3} ${y - 4}`, { class: "thin" }, parent);
       return value(parent, x + 10, y - 4, width, { class: "tiny bit" });
     };
+    const rowValues = [3, 6, 0, 0];
+    const rowFrames = group({ "data-part": "memory-row-collapse" }, root);
+    show(rowFrames, "memory-width", "working-registers");
+    for (let row = 0; row < 4; row++) {
+      const frame = box(rowFrames, 145, 155 + row * 45, 225, 26);
+      key(frame, "memory-width", {
+        opacity: 0,
+        attr: { x: 145, y: 155 + row * 45, width: 225, height: 26 },
+      });
+      key(frame, "memory-interface", {
+        opacity: 1,
+        attr: { x: 135, y: 145 + row * 45, width: 250, height: 45 },
+      });
+    }
     const detailed = group({ "data-diagram": "memory-width" }, root);
-    show(detailed, "memory-width", "memory-interface", {}, 0.8);
+    show(detailed, "memory-width", "memory-interface", {}, 0.95);
     const oldTitle = label(detailed, 220, 45, "4 locations × 4 bits");
     const newTitle = label(detailed, 220, 45, "4 locations × 8 bits");
     gsap.set(newTitle, { opacity: 0 });
-    box(detailed, 29, 122, 45, 207);
-    label(detailed, 51, 353, "decoder", { class: "tiny" });
-    label(detailed, 25, 82, "ADDR", { class: "tiny bit" });
-    bus(detailed, "M24 89 V141 H29", "2", 24, 110);
-    label(detailed, 89, 82, "WE", { class: "tiny bit" });
-    path("M89 90 V310", {}, detailed);
-    const rowValues = [3, 6, 0, 0];
+    const routing = group({}, detailed);
+    key(routing, "memory-width");
+    key(routing, "memory-interface", { opacity: 0 }, null, 0, 0.4);
+    box(routing, 28, 203, 39, 52);
+    label(routing, 47.5, 225, "address", { class: "tiny" });
+    label(routing, 47.5, 239, "decoder", { class: "tiny" });
+    label(routing, 17, 95, "ADDR", { class: "tiny bit" });
+    bus(routing, "M17 103 V229 H28", "2", 17, 145);
+    label(routing, 91, 95, "WE", { class: "tiny bit" });
+    path("M91 103 V287", { class: "thin muted" }, routing);
     const widening = gsap.timeline({ paused: true });
     const additions = group({}, detailed);
     gsap.set(additions, { opacity: 0 });
     for (let row = 0; row < 4; row++) {
-      const y = 128 + row * 48;
-      value(detailed, 51, y + 10, binary(row, 2), { class: "tiny bit" });
+      const y = 155 + row * 45;
+      const portY = 213 + row * 10;
+      const elbowX = 74 + row * 3;
       path(
-        `M74 ${y + 15} H101 M89 ${y + 25} H101`,
+        `M67 ${portY} H${elbowX} V${y - 10} H110 M91 ${y - 3} H110`,
         { class: "thin muted" },
-        detailed,
+        routing,
       );
       path(
-        `M101 ${y + 13} H108 A7 7 0 0 1 108 ${y + 27} H101 Z`,
+        `M110 ${y - 12} H116 A6 6 0 0 1 116 ${y} H110 Z`,
         { class: "memory-box" },
-        detailed,
+        routing,
       );
-      path(`M115 ${y + 20} H360`, { class: "thin muted" }, detailed);
-      mk("circle", { cx: 89, cy: y + 25, r: 1.3, class: "dot" }, detailed);
+      path(`M122 ${y - 6} H363`, { class: "thin muted" }, routing);
+      mk("circle", { cx: 91, cy: y - 3, r: 1.3, class: "dot" }, routing);
+      value(routing, 102, y + 23, binary(row, 2), { class: "tiny bit" });
       for (let bit = 0; bit < 8; bit++) {
         const low = bit >= 4;
-        const x = 164 + bit * 25;
-        const cell = group({}, low ? detailed : additions);
-        path(`M${x - 13} ${y + 5} H${x - 9}`, { class: "thin muted" }, cell);
-        box(cell, x - 9, y, 18, 25);
-        value(cell, x, y + 17, binary(rowValues[row], 8)[bit], {
+        const x = 155 + bit * 29;
+        const growth = group({}, low ? detailed : additions);
+        const cell = group({}, growth);
+        path(`M${x - 14} ${y + 12} H${x - 9}`, { class: "thin muted" }, cell);
+        path(`M${x + 5} ${y - 6} V${y}`, { class: "thin muted" }, cell);
+        box(cell, x - 9, y, 18, 26);
+        value(cell, x, y + 18, binary(rowValues[row], 8)[bit], {
           class: "tiny bit",
         });
+        key(cell, "memory-width", { x: 0, scaleX: 1 });
+        key(cell, "memory-interface", {
+          x: 260 + (bit - 3.5) * 8 - x,
+          scaleX: 0.7,
+          opacity: 0,
+        });
+        const feed = group({}, growth);
+        key(feed, "memory-width");
+        key(feed, "memory-interface", { opacity: 0 }, null, 0, 0.4);
         if (row === 0) {
-          value(cell, x, 103, `D${7 - bit}`, { class: "tiny bit" });
-          path(`M${x - 13} 110 V277`, { class: "thin muted" }, cell);
+          value(feed, x - 14, 112, `D${7 - bit}`, { class: "tiny bit" });
+          path(`M${x - 14} 120 V302`, { class: "thin muted" }, feed);
         }
         if (low) {
-          const offset = 144 + (bit - 4) * 67 - x;
-          gsap.set(cell, { x: offset });
-          widening.to(cell, { x: 0, duration: 1.7, ease: "power2.inOut" }, 1.2);
+          const offset = 159 + (bit - 4) * 65 - x;
+          gsap.set(growth, { x: offset });
+          widening.to(
+            growth,
+            { x: 0, duration: 1.7, ease: "power2.inOut" },
+            1.2,
+          );
         }
       }
     }
@@ -101,26 +135,31 @@ export const MEMORY_INTERFACE_SCENES = {
     afterRender.push(() => {
       const active = Math.abs(tl.time() - index("memory-width")) <= hold;
       if (active && !widthActive) widening.restart();
-      if (!active) widening.pause();
+      if (!active) {
+        if (tl.time() > index("memory-width") && widening.progress() < 1)
+          widening.progress(1);
+        widening.pause();
+      }
       widthActive = active;
     });
 
     const diagram = group({ "data-diagram": "memory-interface" }, root);
-    show(diagram, "memory-interface", "working-registers", {}, 0.8);
+    key(diagram, "memory-interface", {}, null, 0.55);
+    key(diagram, "working-registers", { opacity: 0 }, null, 0, 0.8);
     const eight = group({}, diagram);
     const sixteen = group({}, diagram);
     const labels = group({}, diagram);
-    box(diagram, 85, 145, 300, 180);
-    path("M135 145 V325", { class: "thin muted" }, diagram);
+    box(diagram, 85, 145, 50, 180);
     for (let r = 1; r < 4; r++)
-      path(`M85 ${145 + r * 45} H385`, { class: "thin muted" }, diagram);
+      path(`M85 ${145 + r * 45} H135`, { class: "thin muted" }, diagram);
     const chosenRow = mk(
       "rect",
       { x: 87, y: 192, width: 296, height: 41, rx: 2, class: "computer-glow" },
       diagram,
     );
     gsap.set(chosenRow, { opacity: 0 });
-    label(diagram, 235, 132, "memory");
+    label(diagram, 260, 132, "memory");
+    label(diagram, 110, 132, "Address", { class: "tiny" });
     const addresses = [];
     const eightValues = [];
     const sixteenValues = [];
@@ -143,10 +182,16 @@ export const MEMORY_INTERFACE_SCENES = {
     show(eight, "memory-interface", "memory-word");
     show(sixteen, "memory-word", "working-registers");
     label(eight, 235, 24, "4 locations × 1 byte");
-    label(sixteen, 235, 24, "16 bits = 2 bytes per location");
-    const twoAddressBits = value(diagram, 95, 126, "2", { class: "tiny bit" });
+    const dataWidthTitle = label(
+      sixteen,
+      235,
+      24,
+      "16 bits = 2 bytes per location",
+    );
+    show(dataWidthTitle, "memory-word", "memory-address-space");
+    const twoAddressBits = value(diagram, 54, 141, "2", { class: "tiny bit" });
     show(twoAddressBits, "memory-interface", "memory-address-space");
-    const fullAddressBits = value(diagram, 95, 126, "16", {
+    const fullAddressBits = value(diagram, 54, 141, "16", {
       class: "tiny bit",
     });
     show(fullAddressBits, "memory-address-space", "working-registers");
@@ -160,22 +205,22 @@ export const MEMORY_INTERFACE_SCENES = {
       class: "interface-value bit",
     });
     show(marWide, "memory-address-space", "working-registers");
-    const addressD = "M126 99 V116 H62 V168 H85";
+    const addressD = "M126 99 V112 H62 V168 H85";
     path(addressD, { class: "interface-bus" }, diagram);
-    path("M90 120 L96 112", { class: "thin" }, diagram);
-    value(diagram, 36, 153, "ADDR", { class: "tiny bit" });
-    box(diagram, 169, 345, 170, 58);
-    label(diagram, 254, 363, "MDR", { class: "caption bit" });
-    value(eight, 254, 389, word(9, 8), {
+    path("M59 147 L65 139", { class: "thin" }, diagram);
+    value(diagram, 34, 123, "ADDR", { class: "tiny bit" });
+    box(diagram, 169, 374, 170, 52);
+    label(diagram, 254, 393, "MDR", { class: "caption bit" });
+    value(eight, 254, 414, word(9, 8), {
       class: "interface-value bit",
     });
-    const mdrWide = value(sixteen, 254, 389, word(9), {
+    const mdrWide = value(sixteen, 254, 414, word(9), {
       class: "interface-value bit",
     });
-    const writeD = "M235 345 V325";
-    const readD = "M285 325 V345";
-    bus(diagram, writeD, "8", 235, 335);
-    bus(diagram, readD, "8", 285, 335);
+    const writeD = "M220 374 V325";
+    const readD = "M292 325 V374";
+    bus(diagram, writeD, "8", 220, 350);
+    bus(diagram, readD, "8", 292, 350);
     for (const marker of diagram.querySelectorAll("text.tiny")) {
       if (marker.textContent === "8") {
         show(marker, "memory-interface", "memory-word");
@@ -190,35 +235,21 @@ export const MEMORY_INTERFACE_SCENES = {
       }
     }
     path(
-      "M231 333 L235 325 L239 333 M281 337 L285 345 L289 337",
+      "M216 333 L220 325 L224 333 M288 366 L292 374 L296 366",
       { class: "thin" },
       diagram,
     );
-    value(diagram, 217, 340, "D", { class: "tiny bit" });
-    value(diagram, 308, 340, "Q", { class: "tiny bit" });
+    value(diagram, 202, 351, "D", { class: "tiny bit" });
+    value(diagram, 318, 351, "Q", { class: "tiny bit" });
     const enableD = "M37 284 H85";
     path(enableD, {}, diagram);
     value(diagram, 55, 274, "WE", { class: "tiny bit" });
     const weDigit = value(diagram, 55, 303, "0", { class: "tiny bit" });
-    const clockWires = "M20 374 V71 H54 M20 374 H169";
-    path(clockWires, { class: "thin dashed muted" }, diagram);
-    path(
-      "M54 66 L62 71 L54 76 M169 369 L177 374 L169 379",
-      { class: "thin" },
-      diagram,
-    );
-    value(diagram, 57, 393, "CLK", { class: "tiny bit" });
-    path(
-      "M29 410 H43 V401 H57 V410 H71 V401 H85",
-      { class: "thin muted" },
-      diagram,
-    );
-    const clockLight = path(clockWires, { class: "computer-signal" }, diagram);
     const addressLight = path(addressD, { class: "computer-signal" }, diagram);
     const writeLight = path(writeD, { class: "computer-signal" }, diagram);
     const readLight = path(readD, { class: "computer-signal" }, diagram);
     const enableLight = path(enableD, { class: "computer-signal" }, diagram);
-    gsap.set([clockLight, addressLight, writeLight, readLight, enableLight], {
+    gsap.set([addressLight, writeLight, readLight, enableLight], {
       opacity: 0,
     });
     const moreRows = group({}, diagram);
@@ -243,21 +274,21 @@ export const MEMORY_INTERFACE_SCENES = {
     const addressCaption = label(
       diagram,
       235,
-      431,
+      24,
       "65,536 locations · 16 bits at each ADDR",
       { class: "tiny" },
     );
     show(addressCaption, "memory-address-space", "working-registers");
     const access = group({ "data-part": "memory-access-transfers" }, diagram);
     show(access, "memory-access", "working-registers");
-    const flyingWord = value(access, 254, 389, word(9), {
+    const flyingWord = value(access, 254, 414, word(9), {
       class: "interface-value bit",
       "data-access-flight": "",
     });
     const incomingAddress = value(access, 126, 19, word(1), {
       class: "interface-value bit",
     });
-    const incomingData = value(access, 254, 427, word(9), {
+    const incomingData = value(access, 254, 437, word(9), {
       class: "interface-value bit",
     });
     const status = label(access, 235, 111, "", {
@@ -307,7 +338,6 @@ export const MEMORY_INTERFACE_SCENES = {
 
       if (!nearAccess) {
         for (const el of [
-          clockLight,
           addressLight,
           writeLight,
           readLight,
@@ -332,7 +362,6 @@ export const MEMORY_INTERFACE_SCENES = {
       updateText(marWide, word(state.mar));
       updateText(mdrWide, word(state.mdr));
       updateText(weDigit, state.we);
-      fadeSignal(clockLight, state.clock ? 1 : 0);
       fadeSignal(addressLight, state.selected ? 1 : 0);
       fadeSignal(chosenRow, state.selected ? 0.65 : 0);
       fadeSignal(writeLight, state.we);
@@ -348,7 +377,7 @@ export const MEMORY_INTERFACE_SCENES = {
       incomingAddress.style.opacity = loadOpacity;
       incomingAddress.setAttribute("y", 19 + 64 * load);
       incomingData.style.opacity = state.action === "Write" ? loadOpacity : 0;
-      incomingData.setAttribute("y", 427 - 38 * load);
+      incomingData.setAttribute("y", 437 - 23 * load);
       const transfer = state.transfer;
       flyingWord.style.opacity = transfer
         ? Math.min(1, transfer.progress / 0.15, (1 - transfer.progress) / 0.15)
@@ -358,16 +387,16 @@ export const MEMORY_INTERFACE_SCENES = {
         const points =
           transfer.kind === "Write"
             ? [
-                [254, 389],
-                [235, 345],
-                [235, 325],
+                [254, 414],
+                [220, 374],
+                [220, 325],
                 [260, 218],
               ]
             : [
                 [260, 218],
-                [285, 325],
-                [285, 345],
-                [254, 389],
+                [292, 325],
+                [292, 374],
+                [254, 414],
               ];
         const segments =
           transfer.kind === "Write" ? [0, 0.2, 0.35, 1] : [0, 0.65, 0.8, 1];

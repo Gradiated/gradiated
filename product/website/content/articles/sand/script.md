@@ -164,7 +164,7 @@ We can also draw a box around the whole memory array. The latches, decoder and r
 
 <!-- scene: timing -->
 
-As circuits become larger and more complex, timing challenges appear to show. Changing an input does not change every part of a circuit at once. The change takes time to spread, and different values settle at different moments. These delays can result in incorrect information processing as old data gets used for computation, or glitches.
+As circuits become larger and more complex, timing challenges appear to show. Changing an input does not change every part of a circuit at once. The change takes time to spread, and different values settle at different moments. These delays can result in incorrect information processing as old data gets used for computation, or glitches. This will need to be carefully considered during circuit design.
 
 We now have circuits that calculate and circuits that remember. Our next step is to combine them into a machine that follows instructions, choosing which values to use, what to calculate, and where to store each result.
 

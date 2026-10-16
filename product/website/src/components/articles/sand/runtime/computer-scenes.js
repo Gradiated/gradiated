@@ -128,7 +128,14 @@ export const COMPUTER_SCENES = (function () {
       key(bank, "working-registers", { x: 15, y: 16, scale: 1.1 });
       key(bank, "select-values", { x: 0, y: 0, scale: 1 });
       text(88, 110, "working registers", { class: "caption" }, bank);
-      text(88, 363, "16 bits / 2 bytes each", { class: "tiny muted" }, bank);
+      const registerSize = text(
+        88,
+        363,
+        "16 bits / 2 bytes each",
+        { class: "tiny muted" },
+        bank,
+      );
+      show(registerSize, "working-registers", "select-values", {}, 0.45);
       const binaryHeading = text(
         250,
         110,
@@ -279,13 +286,6 @@ export const COMPUTER_SCENES = (function () {
         { class: "caption bit" },
         selection,
       );
-      const status = text(
-        220,
-        434,
-        "select R1 and R2",
-        { class: "caption" },
-        selection,
-      );
       const transfers = group(
         { "data-part": "processing-transfers" },
         selection,
@@ -391,7 +391,7 @@ export const COMPUTER_SCENES = (function () {
           equation,
           isAlu
             ? `${left} + ${right} = ${answer}`
-            : "choose two register values",
+            : "",
         );
         setText(outputValue, answer);
         setText(inputValues[0], left);
@@ -403,18 +403,6 @@ export const COMPUTER_SCENES = (function () {
           isAlu && elapsed >= 2.2
             ? String(fade * clamp((elapsed - 2.2) * 3))
             : "0";
-        setText(
-          status,
-          !isAlu
-            ? "select R1 and R2"
-            : writing >= 1
-              ? `R0 now holds ${answer}`
-              : elapsed >= 2.7
-                ? `save ${answer} in R0`
-                : elapsed >= 2.2
-                  ? `add ${left} and ${right}`
-                  : `read ${second ? "R0 and R3" : "R1 and R2"}`,
-        );
         const geometryA = second ? nextFirstInput.base : firstInput.base;
         const geometryB = second ? nextSecondInput.base : secondInput.base;
         firstTravel.setAttribute(
@@ -426,7 +414,7 @@ export const COMPUTER_SCENES = (function () {
           `${geometryB.getAttribute("d")} L${inputBPath.slice(1)}`,
         );
         const labelsFade = t >= 5.5 && t < 6.5 ? Math.abs(t - 6) * 2 : fade;
-        for (const node of [selectA, selectB, equation, status])
+        for (const node of [selectA, selectB, equation])
           node.style.opacity = String(labelsFade);
         for (let i = 0; i < selectedRows.length; i++) {
           selectedRows[i].style.opacity =

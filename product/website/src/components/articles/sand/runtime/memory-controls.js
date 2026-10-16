@@ -87,6 +87,14 @@ export const mountMemoryControls = (stage, onChoose) => {
       panel.hidden = name !== scene;
       if (name !== scene) continue;
 
+      const prompt = panel.querySelector(".memory-control-prompt");
+      if (
+        prompt &&
+        state.prompt !== undefined &&
+        prompt.textContent !== state.prompt
+      )
+        prompt.textContent = state.prompt;
+
       for (const button of panel.querySelectorAll("button")) {
         button.setAttribute(
           "aria-pressed",

@@ -291,10 +291,6 @@ export const MEMORY_INTERFACE_SCENES = {
     const incomingData = value(access, 254, 437, word(9), {
       class: "interface-value bit",
     });
-    const status = label(access, 235, 111, "", {
-      class: "tiny",
-      "data-access-phase": "",
-    });
     gsap.set([flyingWord, incomingAddress, incomingData], { opacity: 0 });
     const model = createMemoryAccessModel();
     const time = { value: 0 };
@@ -413,20 +409,17 @@ export const MEMORY_INTERFACE_SCENES = {
         flyingWord.setAttribute("x", start[0] + (end[0] - start[0]) * f);
         flyingWord.setAttribute("y", start[1] + (end[1] - start[1]) * f);
       }
-      updateText(
-        status,
-        !state.busy
-          ? state.action === "Ready"
-            ? ""
-            : `${state.action} complete`
-          : t < 0.9
-            ? "load the interface registers"
-            : t < 1.6
-              ? "select the location"
-              : state.action === "Read"
-                ? "memory → MDR"
-                : "MDR → memory",
-      );
+      const prompt = !state.busy
+        ? state.action === "Ready"
+          ? "Choose Read or Write"
+          : `${state.action} complete`
+        : t < 0.9
+          ? "load the interface registers"
+          : t < 1.6
+            ? "select the location"
+            : state.action === "Read"
+              ? "memory → MDR"
+              : "MDR → memory";
       const opacity = Math.max(
         0,
         Math.min(
@@ -434,7 +427,7 @@ export const MEMORY_INTERFACE_SCENES = {
           (0.5 - Math.abs(p - index("memory-access"))) / (0.5 - hold),
         ),
       );
-      controls.update("memory-access", state, opacity);
+      controls.update("memory-access", { ...state, prompt }, opacity);
     });
     diagram.append(eight, sixteen, labels, decimalAddresses, moreRows, access);
     return { demos };

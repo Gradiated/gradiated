@@ -174,7 +174,7 @@ We have circuits that calculate and circuits that remember. Now we can organise 
 
 We will follow the von Neumann model, where both data and instructions are stored in the same "unified" memory. Data supplies the values to work on, while instructions tell the machine what to do with them. Changing those instructions lets the same circuits perform a different task without changing their physical connections.
 
-The central processing unit, or CPU, carries out these instructions, using calculation circuits, working registers and control circuits. Memory holds the program and its data, while input and output connect the machine to the outside world.
+The central processing unit, or CPU, carries out these instructions, using calculation circuits, fast storage registers and control circuits. Memory holds the program and its data, while input and output connect the machine to the outside world.
 
 <!-- scene: memory-width -->
 
@@ -200,7 +200,7 @@ This is the memory of a computer called LC-3, a small computer used for teaching
 
 Address width and data width are separate choices. A sixteen-bit address can select 65,536 locations, while a thirty-two-bit address can select `2³²` locations. How many bytes that represents depends on the size of each location. In a byte-addressed system, thirty-two-bit addresses cover `4 GiB`. LC-3 instead addresses two-byte words.
 
-Calling a processor “16-bit” or “32-bit” usually describes the width of its main working registers and integer operations. It does not, by itself, tell us the size of its address space or how much memory is installed. In LC-3, the working registers, memory contents and addresses all happen to be sixteen bits wide.
+Calling a processor “16-bit” or “32-bit” usually describes the width of its main fast storage registers and integer operations. It does not, by itself, tell us the size of its address space or how much memory is installed. In LC-3, the fast storage registers, memory contents and addresses all happen to be sixteen bits wide.
 
 <!-- scene: memory-access -->
 
@@ -214,9 +214,9 @@ We now have a basic memory block, our first building block for a complete von Ne
 
 <!-- scene: working-registers -->
 
-A calculation often produces an intermediate result that we need again. Following BIDMAS, for example, we calculate the brackets in `(3 + 6) + 2` first, then keep the answer while we complete the next step. The processing unit has a small set of registers for these working values.
+A calculation often produces an intermediate result that we need again. Following BIDMAS, for example, we calculate the brackets in `(3 + 6) + 2` first, then keep the answer while we complete the next step. The processing unit has a small set of fast storage registers for these working values.
 
-Each register is built from circuits that remember individual bits, like the D latches we used earlier. LC-3 has eight general-purpose registers, `R0` to `R7`, each holding sixteen bits, or two bytes. We keep this small collection directly connected to the calculation circuits inside the processing unit, to give them quick access to the values they need. These working registers are separate from the larger memory array and its `MAR` and `MDR`.
+Each register is built from circuits that remember individual bits, like the D latches we used earlier. LC-3 has eight general-purpose registers, `R0` to `R7`, each holding sixteen bits, or two bytes. We keep this small collection directly connected to the calculation circuits inside the processing unit, to give them quick access to the values they need. These fast storage registers are separate from the larger memory array and its `MAR` and `MDR`.
 
 We will begin with `3` in `R1`, `6` in `R2` and `2` in `R3`. A register’s name identifies the storage slot, while its contents are the number stored there.
 
@@ -243,7 +243,7 @@ With addition selected, `3` and `6` enter the ALU and the result, `9`, travels b
 
 <!-- scene: addressed-memory -->
 
-Now bring our memory and its interface alongside the working registers and ALU. The working registers keep the values needed immediately, while memory holds the larger collection of program instructions and data.
+Now bring our memory and its interface alongside the fast storage registers and ALU. The fast storage registers keep the values needed immediately, while memory holds the larger collection of program instructions and data.
 
 The processor supplies an `ADDR` through `MAR` and exchanges a sixteen-bit word through `MDR`. This is the same read-and-write connection we have just built, now serving the larger machine.
 
@@ -271,7 +271,7 @@ This addition is one step. A program combines many such steps, using stored resu
 
 <!-- scene: computer -->
 
-Let’s zoom out once more. The calculation circuits, working registers and control unit form our central processing unit, or CPU. Connected memory holds its program and data, while input and output connect it to the outside world.
+Let’s zoom out once more. The calculation circuits, fast storage registers and control unit form our central processing unit, or CPU. Connected memory holds its program and data, while input and output connect it to the outside world.
 
 We have built a machine that can follow different programs using the same hardware. That flexibility has a cost. Choosing operations and moving instructions and data between memory and the CPU take hardware, time and energy. Data movement can limit how quickly the machine works, a constraint we will return to when exploring memory systems, parallel processors and specialised chips.
 

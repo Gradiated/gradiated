@@ -127,7 +127,7 @@ export const COMPUTER_SCENES = (function () {
       );
       key(bank, "working-registers", { x: 15, y: 16, scale: 1.1 });
       key(bank, "select-values", { x: 0, y: 0, scale: 1 });
-      text(88, 110, "working registers", { class: "caption" }, bank);
+      text(88, 110, "fast storage registers", { class: "caption" }, bank);
       const registerSize = text(
         88,
         363,

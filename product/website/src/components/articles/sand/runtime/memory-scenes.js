@@ -426,10 +426,6 @@ export const MEMORY_SCENES = (() => {
     const compactWE = digit(compact, 49, 306, "0");
     bus("M244 342 V395", "M238 372 L250 362", 263, 371, 4);
     const compactOutput = digit(compact, 244, 417, "0011");
-    const compactReadLight = signal(compact, "M244 342 V395");
-    const compactWriteLight = signal(compact, "M220 129 V219");
-    const compactSelectLight = signal(compact, "M59 248 H117");
-    const compactEnableLight = signal(compact, "M59 302 H117");
     const dynamic = { selected: [0, 0, 0, 0], writing: [0, 0, 0, 0] };
     const contexts = new Map();
     const contextFor = (scene, words) => {
@@ -701,10 +697,6 @@ export const MEMORY_SCENES = (() => {
       adderLights.forEach(
         (element) => (element.style.opacity = dynamic.writing[1]),
       );
-      compactReadLight.style.opacity = 0.9;
-      compactSelectLight.style.opacity = 0.9;
-      compactWriteLight.style.opacity = dynamic.writing[1];
-      compactEnableLight.style.opacity = dynamic.writing[1];
     });
     return { demos, dispose: controls.dispose };
   };

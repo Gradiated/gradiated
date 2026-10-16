@@ -222,7 +222,7 @@ We will begin with `3` in `R1`, `6` in `R2` and `2` in `R3`. A register’s name
 
 <!-- scene: select-values -->
 
-We already used a multiplexer to select which stored number reaches the memory’s output. Here, another multiplexer chooses which value reaches the adder. Each input can select any of the eight registers, so we can use different pairs of stored numbers without changing the wiring. The figure shows only the connections used in our example.
+We already used a multiplexer to select which stored number reaches the memory’s output. Here, another multiplexer, labelled `MUX`, chooses which value reaches the adder. Each input can select any of the eight registers, so we can use different pairs of stored numbers without changing the wiring. The figure shows only the connections used in our example.
 
 For our first calculation, we select `R1` and `R2`, sending `3` and `6` to the adder. Each thick path marked `16` represents sixteen parallel wires, carrying all the bits of one number together.
 

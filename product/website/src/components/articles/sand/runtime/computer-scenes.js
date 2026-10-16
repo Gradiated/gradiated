@@ -190,20 +190,6 @@ export const COMPUTER_SCENES = (function () {
         show(binaryColumn, "working-registers", "select-values", {}, 0.45);
         key(row, "working-registers", { y: 0 }, { y: -i * 27 }, 0.55);
       }
-      const bits = group({ "data-part": "register-bit-cells" }, processing);
-      for (let i = 0; i < 16; i++) {
-        const x = 108 + i * 14;
-        path(`M${x} 406 H${x + 10} V416 H${x} Z`, {}, bits);
-      }
-      text(
-        220,
-        434,
-        "sixteen bit-storage circuits make one register",
-        { class: "tiny muted" },
-        bits,
-      );
-      show(bits, "working-registers", "select-values");
-
       const selection = group(
         { "data-part": "register-selection" },
         processing,
@@ -254,7 +240,7 @@ export const COMPUTER_SCENES = (function () {
       show(adder, "select-values", "alu", {}, 0.55);
       const arithmetic = group({}, calculation);
       path(
-        "M305 165 H337 L349 181 L361 165 H390 L375 281 H305 Z",
+        "M305 165 H337 L349 181 L361 165 H390 L375 281 H320 Z",
         {},
         arithmetic,
       );
@@ -342,6 +328,13 @@ export const COMPUTER_SCENES = (function () {
       afterRender.push(() => {
         const p = tl.time(),
           isAlu = p >= index("alu") - hold;
+        const aluBlend = clamp((p - index("alu") + 1 - hold) / (1 - 2 * hold));
+        const inputAPath = `M235 179 H281 V190 H${305 + (15 * 25 * aluBlend) / 116}`;
+        const inputBPath = `M235 270 H281 V250 H${305 + (15 * 85 * aluBlend) / 116}`;
+        for (const node of [outputA.base, outputA.lit])
+          node.setAttribute("d", inputAPath);
+        for (const node of [outputB.base, outputB.lit])
+          node.setAttribute("d", inputBPath);
         const active =
           Math.abs(p - index("select-values")) <= hold ||
           Math.abs(p - index("alu")) <= hold;
@@ -412,11 +405,11 @@ export const COMPUTER_SCENES = (function () {
         const geometryB = second ? nextSecondInput.base : secondInput.base;
         firstTravel.setAttribute(
           "d",
-          `${geometryA.getAttribute("d")} L235 179 H281 V190 H305`,
+          `${geometryA.getAttribute("d")} L${inputAPath.slice(1)}`,
         );
         secondTravel.setAttribute(
           "d",
-          `${geometryB.getAttribute("d")} L235 270 H281 V250 H305`,
+          `${geometryB.getAttribute("d")} L${inputBPath.slice(1)}`,
         );
         const labelsFade = t >= 5.5 && t < 6.5 ? Math.abs(t - 6) * 2 : fade;
         for (const node of [selectA, selectB, equation, status])

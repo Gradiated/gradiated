@@ -787,3 +787,26 @@ html:has(.sand-journey) {
   stroke-width: 1.6px;
   opacity: 0;
 }
+
+.sand-journey #d2 text.instruction-alternative {
+  font-size: 17px;
+}
+.sand-journey #d2 .instruction-alternative-0 {
+  opacity: 0.35;
+}
+.sand-journey #d2 .instruction-alternative-1 {
+  opacity: 0.14;
+}
+.sand-journey #d2 text.instruction-bits {
+  font-size: 16px;
+  font-weight: 600;
+}
+.sand-journey #d2 .instruction-brace {
+  stroke: #8d8781;
+  stroke-width: 1px;
+  fill: none;
+}
+.sand-journey #d2 text.instruction-field-name {
+  font-size: 11.5px;
+  font-weight: 500;
+}

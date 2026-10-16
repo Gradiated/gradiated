@@ -471,11 +471,24 @@ export const COMPUTER_SCENES = (function () {
       key(instruction, "instruction", {}, null, 0.7);
       key(instruction, "addressed-memory", { opacity: 0 }, null, 0, 0.5);
       const fields = [];
-      for (const [i, token, role] of [
-        [0, "ADD", "operation"],
-        [1, "R0,", "destination"],
-        [2, "R0,", "input 1"],
-        [3, "R3", "input 2"],
+      const brace = (parent, width) => {
+        const edge = width / 2;
+        path(
+          `M${-edge} 26 C${-edge} 18 -6 26 -3 18 Q0 11 3 18 C6 26 ${edge} 18 ${edge} 26`,
+          { class: "instruction-brace" },
+          parent,
+        );
+        path(
+          `M${-edge} 58 C${-edge} 66 -6 58 -3 66 Q0 73 3 66 C6 58 ${edge} 66 ${edge} 58`,
+          { class: "instruction-brace" },
+          parent,
+        );
+      };
+      for (const [i, token, role, bits, x, alternatives] of [
+        [0, "ADD", "operation", "0001", 149, ["AND", "NOT"]],
+        [1, "R0", "destination", "000", 230, ["R7", "R6"]],
+        [2, "R0", "input 1", "000", 297, ["R7", "R6"]],
+        [3, "R3", "input 2", "011", 413, ["R2", "R1"]],
       ]) {
         const field = group(
           { "data-instruction-field": i },
@@ -496,11 +509,36 @@ export const COMPUTER_SCENES = (function () {
         );
         fields.push(tint);
         text(0, 0, token, { class: "bit instruction-token" }, field);
-        const name = text(0, 32, role, { class: "caption" }, field);
-        key(field, "instruction", { x: 145 + i * 75, y: 198 });
+        const annotation = group(
+          { "data-part": "instruction-encoding" },
+          field,
+        );
+        alternatives.forEach((alternative, level) => {
+          text(
+            0,
+            -36 - level * 30,
+            alternative,
+            {
+              class: `bit instruction-alternative instruction-alternative-${level}`,
+            },
+            annotation,
+          );
+        });
+        text(0, 46, bits, { class: "bit instruction-bits" }, annotation);
+        brace(annotation, bits.length * 10 + 4);
+        text(0, 96, role, { class: "instruction-field-name" }, annotation);
+        key(field, "instruction", { x, y: 210 });
         key(field, "instruction-control", { x: 185 + i * 53, y: 32 });
-        show(name, "instruction", "instruction-control", {}, 0.5);
+        show(annotation, "instruction", "instruction-control", {}, 0.25);
       }
+      const format = group({ "data-part": "instruction-format" }, instruction);
+      text(347, 256, "0 00", { class: "bit instruction-bits" }, format);
+      const formatBrace = group({}, format, "0 0");
+      gsap.set(formatBrace, { x: 347, y: 210 });
+      brace(formatBrace, 44);
+      text(347, 306, "format", { class: "instruction-field-name" }, format);
+      text(347, 320, "bits", { class: "instruction-field-name" }, format);
+      show(format, "instruction", "instruction-control", {}, 0.25);
       const control = group({ "data-diagram": "simple-control" }, root);
       key(control, "instruction-control", {}, null, 0.6);
       key(control, "addressed-memory", { opacity: 0 }, null, 0, 0.5);

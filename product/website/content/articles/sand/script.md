@@ -249,9 +249,13 @@ Together, our fast storage registers, selection circuits and ALU form the proces
 
 <!-- scene: instruction -->
 
-We have shown the processing unit repeatedly adding `2` to a running total. One instruction can request each of these additions. Written as `ADD R0, R0, R3`, it means add the numbers stored in `R0` and `R3`, then save the result in `R0`. The first register named is the destination. The next two supply the inputs.
+We have shown the processing unit repeatedly adding `2` to a running total. One instruction can request each addition. Written as `ADD R0, R0, R3`, it means add the numbers stored in `R0` and `R3`, then save the result in `R0`. The first register named is the destination. The next two supply the inputs. `R0` appears twice because we read its previous value and replace it with the result.
 
-`R0` appears twice because we read its previous value and replace it with the new result. `R3` supplies `2` and keeps its contents.
+These names are a readable form of the instruction. In memory, LC-3 stores it as sixteen bits, or two bytes. Our example becomes `0001 000 000 0 00 011`. The spaces separate fields to make them easier to read.
+
+The first four bits, `0001`, select the operation `ADD`. Each register field uses three bits to choose one of eight registers. Here, `000` names `R0` and `011` names `R3`. These identify storage slots, not the numbers inside them. Between the inputs, `0` selects a second register rather than a number written directly into the instruction. The following `00` bits are unused in this form.
+
+Changing the fields requests a different operation or different registers. The faint alternatives above show some choices. Other operations, such as `NOT`, use the remaining instruction bits differently.
 
 <!-- scene: instruction-control -->
 

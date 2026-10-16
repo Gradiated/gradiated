@@ -206,7 +206,7 @@ Calling a processor “16-bit” or “32-bit” usually describes the width of 
 
 Let’s use these registers to access a location. Choose Write to place `1` in `MAR` and `9` in `MDR`. `MAR` then selects the second location, and the write control lets memory copy the number from `MDR` into it. The other locations keep their values.
 
-Choose Read to put the same `ADDR` in `MAR`. Memory selects that location and sends its contents back to `MDR`, where the processor can use them. Reading leaves the stored number unchanged. Yellow paths and moving bits show each transfer. The processor must wait for memory to respond before using the result.
+Choose Read to put the same `ADDR` in `MAR`. Memory selects that location and sends its contents back to `MDR`, where the processor can use them. Reading leaves the stored number unchanged. Yellow paths and moving bits show each transfer.
 
 <!-- scene: working-registers -->
 

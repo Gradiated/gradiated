@@ -237,6 +237,14 @@ export const COMPUTER_SCENES = (function () {
       const adder = group({}, calculation);
       path("M305 168 H390 V278 H305 Z", {}, adder);
       text(348, 228, "adder", { class: "caption" }, adder);
+      path("M348 278 V309", { class: "interface-bus" }, adder);
+      const adderResult = text(
+        348,
+        278,
+        "9",
+        { class: "bit processing-number", "data-part": "adder-result" },
+        adder,
+      );
       show(adder, "select-values", "alu", {}, 0.55);
       const arithmetic = group({}, calculation);
       path(
@@ -363,6 +371,12 @@ export const COMPUTER_SCENES = (function () {
                 ? 9
                 : 0;
         const fade = t >= 12 ? (t < 13 ? clamp(13 - t) : clamp(t - 13)) : 1;
+        const resultProgress = clamp((elapsed - 2.2) / 0.8);
+        adderResult.setAttribute(
+          "y",
+          278 + 58 * (1 - (1 - resultProgress) ** 3),
+        );
+        adderResult.style.opacity = String(fade * clamp(resultProgress * 4));
         transfers.style.opacity = String(fade);
         registerNumbers[0].style.opacity = String(fade);
         setText(registerNumbers[0], saved);

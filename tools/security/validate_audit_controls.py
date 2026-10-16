@@ -71,7 +71,30 @@ def main():
                  "resources": [], "source": source, "detail-type": detail_type, "detail": detail}
         result = aws("events", "test-event-pattern", "--event-pattern", pattern, "--event", json.dumps(event))
         assert result["Result"] == expected, f"Unexpected match for {name}: {detail}"
-    print(f"PASS: {checked} policy documents and {len(cases)} EventBridge matching cases; no events published")
+    # Validate semantics with the AWS parser: Terraform accepts filter strings
+    # that are syntactically valid but never match the intended CloudTrail event.
+    metric_cases = {
+        "root_usage": {"userIdentity": {"type": "Root"}, "eventType": "AwsApiCall"},
+        "unauthorized_calls": {"errorCode": "AccessDeniedException"},
+        "iam_policy_changes": {"eventSource": "iam.amazonaws.com", "eventName": "AttachRolePolicy", "readOnly": False},
+        "cloudtrail_changes": {"eventSource": "cloudtrail.amazonaws.com", "eventName": "StopLogging"},
+        "security_group_changes": {"eventSource": "ec2.amazonaws.com", "eventName": "AuthorizeSecurityGroupIngress"},
+    }
+    benign = {"eventSource": "ec2.amazonaws.com", "eventName": "DescribeInstances", "readOnly": True,
+              "userIdentity": {"type": "AssumedRole"}}
+    metric_checked = 0
+    for resource in resources:
+        if resource["type"] != "aws_cloudwatch_log_metric_filter" or resource["name"] != "audit":
+            continue
+        name = resource["index"]
+        result = aws("logs", "test-metric-filter", "--filter-pattern", resource["values"]["pattern"],
+                     "--log-event-messages", json.dumps(metric_cases[name]), json.dumps(benign))
+        # Verify the matching payload itself; avoid relying on event-number
+        # conventions in API examples or implementations.
+        assert [match["eventMessage"] for match in result["matches"]] == [json.dumps(metric_cases[name])], f"Unexpected metric matches: {name}: {result}"
+        metric_checked += 1
+    assert metric_checked == len(metric_cases), "Missing audit metric filters"
+    print(f"PASS: {checked} policies, {len(cases)} EventBridge cases, {metric_checked} metric filters; no events published")
 
 
 if __name__ == "__main__":

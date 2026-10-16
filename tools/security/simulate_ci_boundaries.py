@@ -104,8 +104,32 @@ def main():
             (name, "ec2:ModifyEbsDefaultKmsKeyId", "*", False, []),
             (name, "ec2:ResetEbsDefaultKmsKeyId", "*", False, []),
             (name, "ec2:EnableEbsEncryptionByDefault", "*", True, []),
+            (name, "cloudwatch:PutMetricData", "*", False,
+             [{"ContextKeyName": "cloudwatch:namespace", "ContextKeyType": "string", "ContextKeyValues": ["Gradiated/Security"]}]),
+            (name, "cloudwatch:PutMetricData", "*", True,
+             [{"ContextKeyName": "cloudwatch:namespace", "ContextKeyType": "string", "ContextKeyValues": ["Gradiated/Application"]}]),
+            (name, "logs:DeleteLogGroup", f"arn:aws:logs:us-east-1:{account}:log-group:/gradiated/security/cloudtrail", False, []),
+            (name, "logs:DeleteMetricFilter", f"arn:aws:logs:us-east-1:{account}:log-group:/gradiated/security/cloudtrail:*", False, []),
+            (name, "logs:AssociateKmsKey", f"arn:aws:logs:us-east-1:{account}:log-group:/gradiated/security/cloudtrail", False, []),
+            (name, "logs:DisassociateKmsKey", f"arn:aws:logs:us-east-1:{account}:log-group:/gradiated/security/cloudtrail", False, []),
+            (name, "logs:AssociateKmsKey", f"arn:aws:logs:us-east-1:{account}:log-group:/gradiated/prod/application", True, []),
+            (name, "logs:PutRetentionPolicy", f"arn:aws:logs:us-east-1:{account}:log-group:/gradiated/security/cloudtrail", False, []),
+            # IAM's simulator returns implicitDeny even for allow-all on a
+            # concrete synthetic log-stream ARN; use an action-level positive.
+            (name, "logs:PutLogEvents", "*", True, []),
+            (name, "logs:DeleteLogGroup", f"arn:aws:logs:us-east-1:{account}:log-group:/gradiated/prod/application", True, []),
             (name, "sns:Unsubscribe", f"arn:aws:sns:us-east-1:{account}:gradiated-security-alerts:example", False, []),
         ])
+
+    security_key = f"arn:aws:kms:us-east-1:{account}:key/00000000-0000-0000-0000-000000000002"
+    security_tag = [{"ContextKeyName": "aws:ResourceTag/SecurityControl", "ContextKeyType": "string",
+                     "ContextKeyValues": ["gradiated-security-alerts"]}]
+    for name in policies:
+        for action in ["kms:DisableKey", "kms:DisableKeyRotation", "kms:ScheduleKeyDeletion", "kms:PutKeyPolicy", "kms:TagResource", "kms:UntagResource"]:
+            cases.append((name, action, security_key, False, security_tag))
+        cases.append((name, "kms:GenerateDataKey", security_key, True, security_tag))
+        cases.append((name, "kms:DisableKey", security_key, True,
+                      [{"ContextKeyName": "aws:ResourceTag/SecurityControl", "ContextKeyType": "string", "ContextKeyValues": ["application"]}]))
 
     def simulate(case):
         name, action, resource, expected, context = case
@@ -117,6 +141,8 @@ def main():
         result = json.loads(subprocess.check_output(command, text=True))["EvaluationResults"][0]
         allowed = result["EvalDecision"] == "allowed"
         assert allowed == expected, f"{name} {action} {resource}: {result['EvalDecision']} (expected allowed={expected})"
+        if not expected and (action.startswith("logs:") or action == "cloudwatch:PutMetricData" or (action.startswith("kms:") and context)):
+            assert result["EvalDecision"] == "explicitDeny", f"Expected a matching security deny, not an unrelated implicit denial: {result}"
         return name, action, allowed
 
     with ThreadPoolExecutor(max_workers=4) as executor:

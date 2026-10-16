@@ -565,7 +565,8 @@ html:has(.sand-journey) {
 .sand-journey #d2 .memory-box {
   fill: var(--paper);
 }
-.sand-journey #d2 .memory-bus {
+.sand-journey #d2 .memory-bus,
+.sand-journey #d2 .interface-bus {
   stroke-width: 3px;
 }
 .sand-journey #d2 text.memory-label,
@@ -691,10 +692,6 @@ html:has(.sand-journey) {
   .sand-journey #sand-memory-array {
     scroll-margin-top: 56vh;
   }
-}
-
-.sand-journey #d2 .interface-bus {
-  stroke-width: 2;
 }
 
 .sand-journey #d2 .interface-value {

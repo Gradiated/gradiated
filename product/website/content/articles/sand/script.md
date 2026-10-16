@@ -184,7 +184,7 @@ Let’s return to our memory array. It has four locations, each holding four bit
 
 We can hide the individual latches inside four larger blocks, one for each stored number. `ADDR` still selects the location, `D` carries the number to write, and `Q` carries the number read. To connect this memory to a processor, we add two registers that hold the values on those wires during an access.
 
-The memory address register, or `MAR`, holds the `ADDR` of the location to access. For now, it holds only `2` bits, enough to select one of our `4` memory locations. The memory data register, or `MDR`, holds either the 8-bit number to write or the 8-bit number just read. These additional storage circuits keep the address and data steady while the access proceeds.
+The memory address register, or `MAR`, holds the `ADDR` of the location to access. For now, it holds only `2` bits, enough to select one of our `4` memory locations. The memory data register, or `MDR`, holds either the 8-bit number to write or the 8-bit number just read.
 
 A separate write control, `WE`, determines whether memory copies the number from `MDR` into the selected location. We will return to how the processor coordinates register updates when we build its control circuits.
 

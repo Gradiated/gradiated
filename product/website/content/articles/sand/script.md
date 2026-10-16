@@ -253,7 +253,7 @@ We have shown the processing unit repeatedly adding `2` to a running total. One 
 
 These names are a readable form of the instruction. In memory, LC-3 stores it as sixteen bits, or two bytes. Our example becomes `0001 000 000 0 00 011`. The spaces separate fields to make them easier to read.
 
-The first four bits, `0001`, select the operation `ADD`. Each register field uses three bits to choose one of eight registers. Here, `000` names `R0` and `011` names `R3`. These identify storage slots, not the numbers inside them. Between the inputs, `0` selects a second register rather than a number written directly into the instruction. The following `00` bits are unused in this form.
+The first four bits, `0001`, select the operation `ADD`. Each register field uses three bits to choose one of eight registers. Here, `000` names `R0` and `011` names `R3`. These identify storage slots, not the numbers inside them. Between the inputs, `0` selects a second register, leaving the following `00` bits unused. Setting this bit to `1` instead puts a small number directly in the instruction, making common tasks such as adding `1` to a counter convenient, while larger values can come from registers.
 
 Changing the fields requests a different operation or different registers. The faint alternatives above show some choices. Other operations, such as `NOT`, use the remaining instruction bits differently.
 

@@ -214,17 +214,23 @@ We now have a basic memory block, our first building block for a complete von Ne
 
 <!-- scene: working-registers -->
 
-The CPU also needs registers for the values it is currently working on. Alongside dedicated registers such as `MAR` and `MDR`, LC-3 has eight general-purpose registers, named `R0` to `R7`. Each holds one sixteen-bit word. These few working slots are separate from the much larger collection of locations in memory.
+A calculation often produces an intermediate result that we need again. Following BIDMAS, for example, we calculate the brackets in `(3 + 6) + 2` first, then keep the answer while we complete the next step. The processing unit has a small set of registers for these working values.
 
-We will begin with `3` in `R1` and `6` in `R2`. The register name identifies the slot, while its contents are the value stored there.
+Each register is built from circuits that remember individual bits, like the D latches we used earlier. LC-3 has eight general-purpose registers, `R0` to `R7`, each holding sixteen bits, or two bytes. Keeping this small collection directly connected to the calculation circuits gives them quick access to the values they need. These working registers are separate from the larger memory array and its `MAR` and `MDR`.
+
+We will begin with `3` in `R1`, `6` in `R2` and `2` in `R3`. A register’s name identifies the storage slot, while its contents are the number stored there.
 
 <!-- scene: select-values -->
 
-Our adder calculates with whatever values reach its inputs. We already used a multiplexer to select which stored number reaches the memory’s output. Here, another multiplexer chooses which value reaches the adder. Its selection signal chooses one input and passes it on. The four-wire bundles in this small example carry the same four-bit numbers we used earlier.
+We already used a multiplexer to select which stored number reaches the memory’s output. Here, another multiplexer chooses which value reaches the adder. Each input can select any of the eight registers, so we can use different pairs of stored numbers without changing the wiring. The figure shows only the connections used in our example.
+
+For our first calculation, we select `R1` and `R2`, sending `3` and `6` to the adder. Each thick path marked `16` represents sixteen parallel wires, carrying all the bits of one number together.
 
 <!-- scene: alu -->
 
-We can also group our adder with circuits that perform logical operations. Together, they form an arithmetic and logic unit, or ALU. Control signals select which operation it performs. The registers supply its inputs, and another register can capture the result. A path marked `16` represents sixteen parallel wires, one for each bit.
+Let’s zoom out again and group our adder with circuits that perform logical operations. Together, they form an arithmetic and logic unit, or ALU. In LC-3, these operations include `ADD`, `AND` and `NOT`. An operation signal chooses which result the ALU produces. For `NOT`, only one input is needed.
+
+With addition selected, `3` and `6` enter the ALU and the result, `9`, travels back to be saved in `R0`. The other registers keep their values. We can now select `R0` and `R3`, adding the stored `9` to `2` and saving `11` in `R0`. We have completed `(3 + 6) + 2` by keeping an intermediate answer and using it in the next calculation.
 
 <!-- scene: addressed-memory -->
 

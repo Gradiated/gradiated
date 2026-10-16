@@ -117,81 +117,310 @@ export const COMPUTER_SCENES = (function () {
     };
 
     if (includeComputer) {
-      const selector = group(
-        { "data-diagram": "select-values" },
-        root,
-        "220 220",
+      const processing = group({ "data-diagram": "processing-unit" }, root);
+      key(processing, "working-registers", {}, null, 0.55);
+      key(processing, "addressed-memory", { opacity: 0 }, null, 0, 0.6);
+      const bank = group(
+        { "data-part": "working-storage" },
+        processing,
+        "88 238",
       );
+      key(bank, "working-registers", { x: 130, scale: 1.2 });
+      key(bank, "select-values", { x: 0, scale: 1 });
+      text(88, 110, "working registers", { class: "caption" }, bank);
+      text(88, 363, "16 bits / 2 bytes each", { class: "tiny muted" }, bank);
+      const registerNumbers = [],
+        selectedRows = [];
+      for (let i = 0; i < 8; i++) {
+        const y = 130 + i * 27;
+        const row = group({ "data-working-register": i }, bank);
+        path(`M28 ${y} H148 V${y + 27} H28 Z`, {}, row);
+        selectedRows.push(
+          mk(
+            "rect",
+            {
+              x: 29,
+              y: y + 1,
+              width: 118,
+              height: 25,
+              class: "computer-glow",
+            },
+            row,
+          ),
+        );
+        text(52, y + 18, `R${i}`, { class: "bit" }, row);
+        registerNumbers.push(
+          text(
+            120,
+            y + 18,
+            String([0, 3, 6, 2][i] || 0),
+            {
+              class: "bit processing-number",
+              "data-working-value": i,
+            },
+            row,
+          ),
+        );
+        key(row, "working-registers", { y: 0 }, { y: -i * 27 }, 0.55);
+      }
+      const bits = group({ "data-part": "register-bit-cells" }, processing);
+      for (let i = 0; i < 16; i++) {
+        const x = 108 + i * 14;
+        path(`M${x} 398 H${x + 10} V408 H${x} Z`, {}, bits);
+      }
       text(
         220,
-        112,
-        "four wires carry each value",
-        { class: "caption" },
-        selector,
+        434,
+        "sixteen bit-storage circuits make one register",
+        { class: "tiny muted" },
+        bits,
       );
-      path("M175 155 L255 180 V265 L175 290 Z", {}, selector);
-      const upper = lightPath("M88 185 H175 L255 222 H326", selector);
-      const lower = lightPath("M88 260 H175 L255 222 H326", selector);
-      for (const [x, y] of [
-        [135, 185],
-        [135, 260],
-        [285, 222],
-      ]) {
+      show(bits, "working-registers", "select-values");
+
+      const selection = group(
+        { "data-part": "register-selection" },
+        processing,
+      );
+      show(selection, "select-values", undefined);
+      const routes = [];
+      const route = (d) => {
+        const base = path(d, { class: "interface-bus" }, selection);
+        const lit = path(d, { class: "computer-signal" }, selection);
+        routes.push(lit);
+        return { base, lit };
+      };
+      const firstInput = route("M148 170.5 H160 V188 H195");
+      const secondInput = route("M148 197.5 H185 V261 H195");
+      const nextFirstInput = route("M148 143.5 H178 V170 H195");
+      const nextSecondInput = route("M148 224.5 H172 V280 H195");
+      for (const y of [160, 251]) {
         path(
-          `M${x - 3} ${y + 4} L${x + 3} ${y - 4}`,
-          { class: "muted thin" },
-          selector,
+          `M195 ${y} L235 ${y + 9} V${y + 29} L195 ${y + 38} Z`,
+          {},
+          selection,
         );
-        text(x, y - 9, "4", { class: "tiny muted" }, selector);
+        text(214, y + 23, "MUX", { class: "caption" }, selection);
+        path(`M215 ${y + 51} V${y + 34}`, {}, selection);
       }
-      text(74, 190, "3", { class: "caption bit" }, selector);
-      text(74, 265, "6", { class: "caption bit" }, selector);
-      text(216, 228, "MUX", { class: "caption" }, selector);
-      path("M215 306 V278", {}, selector);
-      text(215, 330, "select", { class: "caption muted" }, selector);
-      const selectZero = text(236, 305, "0", { class: "bit" }, selector);
-      const selectOne = text(236, 305, "1", { class: "bit" }, selector);
-      const selectedThree = text(
-        306,
-        211,
-        "3",
+      const selectA = text(215, 228, "R1", { class: "tiny bit" }, selection);
+      const selectB = text(215, 319, "R2", { class: "tiny bit" }, selection);
+      const outputA = route("M235 179 H281 V190 H305");
+      const outputB = route("M235 270 H281 V250 H305");
+      for (const [x, y] of [
+        [259, 179],
+        [259, 270],
+      ]) {
+        path(`M${x - 3} ${y + 4} L${x + 3} ${y - 4}`, {}, selection);
+        text(x, y - 10, "16", { class: "tiny muted" }, selection);
+      }
+      const inputValues = [
+        text(293, 181, "3", { class: "bit processing-number" }, selection),
+        text(293, 241, "6", { class: "bit processing-number" }, selection),
+      ];
+      const calculation = group(
+        { "data-part": "processing-calculation" },
+        selection,
+      );
+      const adder = group({}, calculation);
+      path("M305 168 H390 V278 H305 Z", {}, adder);
+      text(348, 228, "adder", { class: "caption" }, adder);
+      show(adder, "select-values", "alu", {}, 0.55);
+      const arithmetic = group({}, calculation);
+      path(
+        "M305 165 H337 L349 181 L361 165 H390 L375 281 H305 Z",
+        {},
+        arithmetic,
+      );
+      text(349, 215, "ALU", { class: "caption" }, arithmetic);
+      text(349, 241, "ADD", { class: "bit" }, arithmetic);
+      text(349, 143, "ADD · AND · NOT", { class: "tiny muted" }, arithmetic);
+      show(arithmetic, "alu", undefined);
+      const answerRoute = group({ "data-part": "result-return" }, selection);
+      const returnGeometry = "M348 281 V394 H12 V143.5 H28";
+      path(returnGeometry, { class: "interface-bus" }, answerRoute);
+      const returnLight = path(
+        returnGeometry,
+        { class: "computer-signal" },
+        answerRoute,
+      );
+      show(answerRoute, "alu", undefined, {}, 0.55);
+      const outputValue = text(
+        371,
+        345,
+        "9",
+        { class: "bit processing-number" },
+        answerRoute,
+      );
+      const equation = text(
+        270,
+        82,
+        "3 + 6",
         { class: "caption bit" },
-        selector,
+        selection,
       );
-      const selectedSix = text(
-        306,
-        211,
-        "6",
-        { class: "caption bit" },
-        selector,
+      const status = text(
+        220,
+        434,
+        "select R1 and R2",
+        { class: "caption" },
+        selection,
       );
-      box(selector, 326, 202, 76, 40, "adder");
-      path("M402 222 H424 M364 242 V276", {}, selector);
-      gsap.set([selectOne, selectedSix], { opacity: 0 });
-      show(selector, "select-values", "alu", {}, 0.65);
-      caption("select-values", "a control signal chooses the value", "alu");
-      gsap.set(upper.line, { opacity: 1 });
-      upper.state.amount = 1;
-      const selectDemo = gsap.timeline({ paused: true, repeat: -1 });
-      selectDemo.to(
-        [upper.line, selectZero, selectedThree],
-        { opacity: 0, duration: 0.4 },
-        2,
+      const transfers = group(
+        { "data-part": "processing-transfers" },
+        selection,
       );
-      selectDemo.to(selectOne, { opacity: 1, duration: 0.4 }, 2.4);
-      selectDemo.to(selectedSix, { opacity: 1, duration: 0.4 }, 3.1);
-      illuminate(selectDemo, lower, 2.4);
-      selectDemo.to(
-        [lower.line, selectOne, selectedSix],
-        { opacity: 0, duration: 0.4 },
-        4.5,
+      const flying = [0, 1, 2].map((i) =>
+        text(
+          0,
+          0,
+          "",
+          {
+            class: "bit processing-number",
+            "data-processing-transfer": i,
+          },
+          transfers,
+        ),
       );
-      selectDemo.set([upper.state, lower.state], { amount: 0 }, 4.9);
-      selectDemo.to(selectZero, { opacity: 1, duration: 0.4 }, 5);
-      selectDemo.to(selectedThree, { opacity: 1, duration: 0.4 }, 5.65);
-      illuminate(selectDemo, upper, 5);
-      selectDemo.to({}, { duration: 1.2 }, 5.65);
-      playInScene("select-values", selectDemo, "working-registers");
+      const time = { value: 0 };
+      const processingDemo = gsap.timeline({ paused: true, repeat: -1 });
+      processingDemo.to(time, { value: 14, duration: 14, ease: "none" });
+      demos.push(processingDemo);
+      const clamp = (n) => Math.max(0, Math.min(1, n));
+      const setText = (node, value) => {
+        if (node.textContent !== String(value))
+          node.textContent = String(value);
+      };
+      const move = (node, geometry, progress, value) => {
+        setText(node, value);
+        const point = geometry.getPointAtLength(
+          geometry.getTotalLength() * clamp(progress),
+        );
+        node.setAttribute("x", point.x);
+        node.setAttribute("y", point.y - 9);
+        node.style.opacity =
+          progress > 0 && progress < 1
+            ? String(Math.min(1, progress * 8, (1 - progress) * 8))
+            : "0";
+      };
+      const firstTravel = path(
+        "M148 170.5 H172 V179 H281 V190 H305",
+        { class: "ghost" },
+        transfers,
+      );
+      const secondTravel = path(
+        "M148 197.5 H160 V270 H281 V250 H305",
+        { class: "ghost" },
+        transfers,
+      );
+      afterRender.push(() => {
+        const p = tl.time(),
+          isAlu = p >= index("alu") - hold;
+        const active =
+          Math.abs(p - index("select-values")) <= hold ||
+          Math.abs(p - index("alu")) <= hold;
+        if (active && !matchMedia("(prefers-reduced-motion: reduce)").matches)
+          processingDemo.play();
+        else if (!active) processingDemo.pause(0);
+        else processingDemo.pause(5);
+        const t = time.value;
+        const second = isAlu && t >= 6 && t < 13;
+        const elapsed = t >= 13 ? 0 : second ? t - 6 : t;
+        const reading = clamp((elapsed - 1) / 1.2);
+        const writing = isAlu ? clamp((elapsed - 2.7) / 1.5) : 0;
+        const readOpacity =
+          reading * (writing < 1 ? 1 : clamp(1 - (elapsed - 4.2) * 3));
+        const left = second ? 9 : 3,
+          right = second ? 2 : 6,
+          answer = left + right;
+        const saved =
+          !isAlu || t >= 13
+            ? 0
+            : second
+              ? writing >= 1
+                ? 11
+                : 9
+              : writing >= 1
+                ? 9
+                : 0;
+        const fade = t >= 12 ? (t < 13 ? clamp(13 - t) : clamp(t - 13)) : 1;
+        transfers.style.opacity = String(fade);
+        registerNumbers[0].style.opacity = String(fade);
+        setText(registerNumbers[0], saved);
+        processing.setAttribute("data-saved-result", saved);
+        processing.setAttribute(
+          "data-processing-step",
+          second ? "second" : "first",
+        );
+        setText(selectA, second ? "R0" : "R1");
+        setText(selectB, second ? "R3" : "R2");
+        setText(
+          equation,
+          isAlu
+            ? `${left} + ${right} = ${answer}`
+            : "choose two register values",
+        );
+        setText(outputValue, answer);
+        setText(inputValues[0], left);
+        setText(inputValues[1], right);
+        inputValues.forEach((node) => {
+          node.style.opacity = String(fade * readOpacity);
+        });
+        outputValue.style.opacity =
+          isAlu && elapsed >= 2.2
+            ? String(fade * clamp((elapsed - 2.2) * 3))
+            : "0";
+        setText(
+          status,
+          !isAlu
+            ? "select R1 and R2"
+            : writing >= 1
+              ? `R0 now holds ${answer}`
+              : elapsed >= 2.7
+                ? `save ${answer} in R0`
+                : elapsed >= 2.2
+                  ? `add ${left} and ${right}`
+                  : `read ${second ? "R0 and R3" : "R1 and R2"}`,
+        );
+        const geometryA = second ? nextFirstInput.base : firstInput.base;
+        const geometryB = second ? nextSecondInput.base : secondInput.base;
+        firstTravel.setAttribute(
+          "d",
+          `${geometryA.getAttribute("d")} L235 179 H281 V190 H305`,
+        );
+        secondTravel.setAttribute(
+          "d",
+          `${geometryB.getAttribute("d")} L235 270 H281 V250 H305`,
+        );
+        const labelsFade = t >= 5.5 && t < 6.5 ? Math.abs(t - 6) * 2 : fade;
+        for (const node of [selectA, selectB, equation, status])
+          node.style.opacity = String(labelsFade);
+        for (let i = 0; i < selectedRows.length; i++) {
+          selectedRows[i].style.opacity =
+            (i === 0 && writing >= 1) ||
+            i === (second ? 0 : 1) ||
+            i === (second ? 3 : 2)
+              ? String(fade * readOpacity)
+              : "0";
+        }
+        for (const line of routes) line.style.opacity = "0";
+        for (const line of [
+          geometryA === firstInput.base ? firstInput.lit : nextFirstInput.lit,
+          geometryB === secondInput.base
+            ? secondInput.lit
+            : nextSecondInput.lit,
+          outputA.lit,
+          outputB.lit,
+        ])
+          line.style.opacity = String(fade * readOpacity);
+        returnLight.style.opacity = String(
+          fade *
+            clamp(writing * 4) *
+            (writing < 1 ? 1 : clamp(1 - (elapsed - 4.2) * 3)),
+        );
+        move(flying[0], firstTravel, reading, left);
+        move(flying[1], secondTravel, reading, right);
+        move(flying[2], returnLight, writing, answer);
+      });
     }
 
     const timing = group({ "data-diagram": "timing" }, root);
@@ -352,46 +581,16 @@ export const COMPUTER_SCENES = (function () {
       registerBank,
     );
     gsap.set(registerNine, { opacity: 0 });
-    key(
-      registerBank,
-      "working-registers",
-      { x: 113, y: 0, scale: 1.25 },
-      { x: 113, y: 0, scale: 0.6 },
-      0.55,
-    );
-    key(registerBank, "select-values", { opacity: 0 });
-    key(registerBank, "alu", { x: 0, y: 0, scale: 1, opacity: 1 });
     key(registerBank, "addressed-memory", { opacity: 1 });
     key(registerBank, "program", { opacity: 1 });
-    const bitExpansion = group({ "data-part": "bit-expansion" }, root);
-    text(
-      220,
-      58,
-      "0011 → 0000 0000 0000 0011",
-      { class: "caption bit" },
-      bitExpansion,
-    );
-    key(bitExpansion, "working-registers", {}, null, 0.55);
-    key(bitExpansion, "select-values", { opacity: 0 });
-    caption(
-      "working-registers",
-      "more storage, built from familiar parts",
-      "select-values",
-    );
 
     const alu = group({ "data-part": "alu" }, machine, "301 186");
-    const aluShape = path(
-      "M246 148 H288 L301 161 L314 148 H362 L345 224 H263 Z",
-      {},
-      alu,
-    );
+    path("M246 148 H288 L301 161 L314 148 H362 L345 224 H263 Z", {}, alu);
     text(303, 185, "ALU", { class: "caption" }, alu);
     text(303, 205, "ADD", { class: "bit" }, alu);
     text(303, 242, "ADD · AND · NOT", { class: "tiny muted" }, alu);
-    key(alu, "alu", { scale: 1, x: 0, y: 0 }, { scale: 0.55, x: -70, y: 30 });
     key(alu, "addressed-memory", { opacity: 1 });
     key(alu, "program", { opacity: 1 });
-    draw(aluShape, at("alu") + DUR * 0.15, DUR * 0.7);
     const datapath = group({ "data-part": "datapath" }, machine);
     const readOne = lightPath("M166 147 H195 V170 H251", datapath);
     const readTwo = lightPath("M166 165 H207 V202 H258", datapath);
@@ -400,14 +599,9 @@ export const COMPUTER_SCENES = (function () {
     path("M182 151 L187 143", { class: "muted thin" }, datapath);
     text(226, 200, "16", { class: "tiny muted" }, datapath);
     path("M221 207 L226 199", { class: "muted thin" }, datapath);
-    show(datapath, "alu", undefined);
+    show(datapath, "addressed-memory", undefined);
     key(datapath, "addressed-memory", { opacity: 1 });
     key(datapath, "program", { opacity: 1 });
-    caption(
-      "alu",
-      "selected values enter · an answer returns",
-      "addressed-memory",
-    );
 
     const memory = group({ "data-part": "memory" }, machine, "294 320");
     path("M220 273 H370 V361 H220 Z", {}, memory);

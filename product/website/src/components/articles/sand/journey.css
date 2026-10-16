@@ -740,3 +740,7 @@ html:has(.sand-journey) {
   font-weight: 600;
   letter-spacing: 0.06em;
 }
+
+.sand-journey #d2 text.processing-number {
+  font-size: 15px;
+}

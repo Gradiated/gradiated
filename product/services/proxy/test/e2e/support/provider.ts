@@ -69,7 +69,8 @@ export class MockProvider {
   }
 
   static async start(): Promise<MockProvider> {
-    const server = createServer();
+    // Tests control disconnects explicitly; idle eviction must not race pooled requests.
+    const server = createServer({ keepAliveTimeout: 0 });
     await new Promise<void>((resolve) =>
       server.listen(0, "127.0.0.1", resolve),
     );

@@ -153,7 +153,9 @@ test("admins invite, change roles and remove members", async ({ page }) => {
   const { requests } = await setup(page);
 
   await page.goto("/settings/members");
-  await expect(page.getByText("alex@acme.com")).toBeVisible();
+  await expect(
+    page.getByRole("table").getByText("alex@acme.com", { exact: true }),
+  ).toBeVisible();
   await expect(
     page.getByRole("combobox", { name: "Role for alex@acme.com" }),
   ).toHaveCount(0);

@@ -1,3 +1,4 @@
+import { RE2JS } from "re2js";
 import { z } from "zod";
 
 import type { Backend } from "./backend.js";
@@ -40,7 +41,9 @@ export const searchMetadata = (
   search: string | undefined,
   limit: number,
 ) => {
-  const pattern = search ? new RegExp(search, "i") : undefined;
+  const pattern = search
+    ? RE2JS.compile(search, RE2JS.CASE_INSENSITIVE)
+    : undefined;
   const matches = Object.entries(metadataResponse.parse(data).data)
     .flatMap(([name, entries]) =>
       entries.slice(0, 1).map((entry) => ({ name, ...entry })),
@@ -103,7 +106,7 @@ export const registerPrometheusTools = (
 
   register(
     "metric_metadata",
-    "Find metric names with their type (counter, gauge, histogram, summary), help text and unit. search is a case-insensitive regular expression over names and help text, for example 'worker.*fail', 'valkey' or '^kube_deployment'. Histograms and summaries are listed under their base name; query name_bucket, name_sum or name_count. Recording-rule outputs have no metadata; list them with label_values name=__name__.",
+    "Find metric names with their type (counter, gauge, histogram, summary), help text and unit. search is a case-insensitive RE2 regular expression over names and help text, for example 'worker.*fail', 'valkey' or '^kube_deployment'. Lookarounds and backreferences are unsupported; invalid expressions return a diagnostic error. Histograms and summaries are listed under their base name; query name_bucket, name_sum or name_count. Recording-rule outputs have no metadata; list them with label_values name=__name__.",
     {
       search: z.string().min(1).max(200).optional(),
       limit: z.number().int().min(1).max(500).default(100),

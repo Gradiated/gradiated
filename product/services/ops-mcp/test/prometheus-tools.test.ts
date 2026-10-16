@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { callTool, closeServers } from "./support/mcp.js";
@@ -30,6 +31,49 @@ const target = (job: string, health: string) => ({
 });
 
 describe("prometheus tools", () => {
+  it("finishes a nested-quantifier search on long nonmatching metadata", () => {
+    const module = new URL("../src/prometheus-tools.ts", import.meta.url).href;
+    const result = execFileSync(
+      process.execPath,
+      [
+        "--import",
+        "tsx",
+        "--input-type=module",
+        "-e",
+        `import { searchMetadata } from ${JSON.stringify(module)};
+         const data = { data: { probe: [{ type: "gauge", help: "a".repeat(100_000) + "!" }] } };
+         console.log(JSON.stringify(searchMetadata(data, "(a+)+$", 100)));`,
+      ],
+      { timeout: 5000, encoding: "utf8" },
+    );
+
+    expect(JSON.parse(result)).toEqual({
+      metrics: [],
+      total_matches: 0,
+      truncated: false,
+    });
+  }, 10_000);
+
+  it.each(["[", "(a)\\1", "(?=worker)worker"])(
+    "rejects unsupported or invalid expression %s as a diagnostic error",
+    async (search) => {
+      const { isError, audit } = await callTool(
+        "metric_metadata",
+        { search },
+        metadata,
+      );
+
+      expect(isError).toBe(true);
+      expect(audit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: "tool_completed",
+          tool: "metric_metadata",
+          outcome: "error",
+        }),
+      );
+    },
+  );
+
   it.each([
     [
       undefined,

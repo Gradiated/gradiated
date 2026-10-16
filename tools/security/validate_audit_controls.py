@@ -42,6 +42,16 @@ def main():
         checked += 1
 
     cases = [
+        ("external_access", "aws.access-analyzer", "Access Analyzer Finding", {"status": "ACTIVE", "isPublic": True}, True),
+        ("external_cross_account", "aws.access-analyzer", "Access Analyzer Finding", {"status": "ACTIVE", "isPublic": False}, True),
+        ("external_analysis_error", "aws.access-analyzer", "Access Analyzer Finding", {"status": "ACTIVE", "error": "ACCESS_DENIED"}, True),
+        ("external_resolved", "aws.access-analyzer", "Access Analyzer Finding", {"status": "RESOLVED"}, False),
+        ("external_archived", "aws.access-analyzer", "Access Analyzer Finding", {"status": "ARCHIVED"}, False),
+        ("external_preview", "aws.access-analyzer", "Access Preview State Change", {"status": "COMPLETED"}, False),
+        ("external_deleted", "aws.access-analyzer", "AWS API Call via CloudTrail", {"eventName": "DeleteAnalyzer"}, True),
+        ("external_suppressed", "aws.access-analyzer", "AWS API Call via CloudTrail", {"eventName": "UpdateFindings"}, True),
+        ("external_archive_rule", "aws.access-analyzer", "AWS API Call via CloudTrail", {"eventName": "CreateArchiveRule"}, True),
+        ("external_read", "aws.access-analyzer", "AWS API Call via CloudTrail", {"eventName": "ListFindings"}, False),
         ("findings", "aws.guardduty", "GuardDuty Finding", {"severity": 8}, True),
         ("findings", "aws.guardduty", "GuardDuty Finding", {"severity": 4}, True),
         ("findings", "aws.guardduty", "GuardDuty Finding", {"severity": 2}, False),

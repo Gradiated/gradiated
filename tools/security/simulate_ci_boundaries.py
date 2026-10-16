@@ -129,6 +129,11 @@ def main():
         ])
 
     for name in policies:
+        for action in ["backup:DeleteRecoveryPoint", "backup:UpdateRecoveryPointLifecycle", "backup:DeleteBackupPlan", "backup:DeleteBackupSelection", "backup:PutBackupVaultAccessPolicy", "backup:StartBackupJob", "backup:StartRestoreJob"]:
+            cases.append((name, action, "*", False, []))
+        cases.append((name, "iam:DeleteServiceLinkedRole", role + "aws-service-role/backup.amazonaws.com/AWSServiceRoleForBackup", False, []))
+
+    for name in policies:
         rule = f"arn:aws:events:us-east-1:{account}:rule/gradiated-prod-example"
         application = f"arn:aws:lambda:us-east-1:{account}:function:gradiated-prod-example"
         security_log = f"arn:aws:logs:us-east-1:{account}:log-group:/gradiated/security/cloudtrail"

@@ -22,8 +22,11 @@ def main():
     assert resources, "Missing rendered Terraform mock state"
     checked = 0
     patterns = {}
+    backup_policy = None
     for resource in resources:
         kind, values = resource["type"], resource["values"]
+        if kind == "aws_iam_role_policy" and resource["name"] == "monitoring_backup":
+            backup_policy = values["policy"]
         if kind == "aws_cloudwatch_event_rule" and resource["name"] == "regional":
             patterns[resource["index"]] = values["event_pattern"]
         if kind not in {"aws_iam_role", "aws_iam_role_policy", "aws_s3_bucket_policy", "aws_sns_topic_policy", "aws_sqs_queue_policy"}:
@@ -41,7 +44,30 @@ def main():
         assert not errors, f"{resource['address']}: {errors}"
         checked += 1
 
+    assert backup_policy, "Missing monitoring backup policy"
+    # Ask IAM to evaluate positive selections and realistic near misses, rather
+    # than trusting that a syntactically valid tag condition enforces the scope.
+    tags = {"KubernetesCluster": "gradiated-prod", "kubernetes.io/created-for/pvc/namespace": "observability", "kubernetes.io/created-for/pvc/name": "observability-grafana"}
+    selection_cases = [("grafana", tags, True)]
+    for key, value in [("KubernetesCluster", "another-cluster"), ("kubernetes.io/created-for/pvc/namespace", "another-namespace"), ("kubernetes.io/created-for/pvc/name", "ops-mcp-sessions"), ("kubernetes.io/created-for/pvc/name", "storage-loki-0")]:
+        selection_cases.append((value, {**tags, key: value}, False))
+    selection_cases.append(("untagged-node-disk", {}, False))
+    for name, selected_tags, expected in selection_cases:
+        context = [{"ContextKeyName": "aws:ResourceTag/" + key, "ContextKeyType": "string", "ContextKeyValues": [value]} for key, value in selected_tags.items()]
+        arguments = ["iam", "simulate-custom-policy", "--policy-input-list", backup_policy,
+                     "--action-names", "ec2:CreateSnapshot", "--resource-arns",
+                     "arn:aws:ec2:us-east-1:873716897517:volume/vol-0123456789abcdef0"]
+        if context:
+            arguments += ["--context-entries", json.dumps(context)]
+        decision = aws(*arguments)["EvaluationResults"][0]["EvalDecision"]
+        assert (decision == "allowed") == expected, f"Backup selection {name}: {decision}"
+    print(f"PASS: {len(selection_cases)} AWS IAM backup-volume selection cases")
+
     cases = [
+        ("monitoring_backup_failure", "aws.backup", "Backup Job State Change", {"state": "FAILED", "backupVaultName": "gradiated-security-monitoring"}, True),
+        ("monitoring_backup_partial", "aws.backup", "Backup Job State Change", {"state": "PARTIAL", "backupVaultName": "gradiated-security-monitoring"}, True),
+        ("monitoring_backup_success", "aws.backup", "Backup Job State Change", {"state": "COMPLETED", "backupVaultName": "gradiated-security-monitoring"}, False),
+        ("other_backup_failure", "aws.backup", "Backup Job State Change", {"state": "FAILED", "backupVaultName": "other-vault"}, False),
         ("external_access", "aws.access-analyzer", "Access Analyzer Finding", {"status": "ACTIVE", "isPublic": True}, True),
         ("external_cross_account", "aws.access-analyzer", "Access Analyzer Finding", {"status": "ACTIVE", "isPublic": False}, True),
         ("external_analysis_error", "aws.access-analyzer", "Access Analyzer Finding", {"status": "ACTIVE", "error": "ACCESS_DENIED"}, True),

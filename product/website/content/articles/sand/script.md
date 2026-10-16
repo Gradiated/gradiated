@@ -214,7 +214,7 @@ We now have a basic memory block, our first building block for a complete von Ne
 
 <!-- scene: working-registers -->
 
-A calculation often produces an intermediate result that we need again. Following BIDMAS, for example, we calculate the brackets in `(3 + 6) + 2` first, then keep the answer while we complete the next step. The processing unit has a small set of fast storage registers for these working values.
+A calculation often produces a result that we need again. For example, we might add two numbers, then repeatedly add `2` to the running total. The processing unit has a small set of fast storage registers for these working values.
 
 Each register is built from circuits that remember individual bits, like the D latches we used earlier. LC-3 has eight general-purpose registers, `R0` to `R7`, each holding sixteen bits, or two bytes. We keep this small collection directly connected to the calculation circuits inside the processing unit, to give them quick access to the values they need. These fast storage registers are separate from the larger memory array and its `MAR` and `MDR`.
 
@@ -239,7 +239,7 @@ Let’s zoom out again and group our adder with circuits that perform logical op
 
 `ADD`, `AND` and `NOT` are instructions a program can request. `PASSA` is an internal mode used to transfer a value without changing it.
 
-With addition selected, `3` and `6` enter the ALU and the result, `9`, travels back to be saved in `R0`. The other registers keep their values. We can now select `R0` and `R3`, adding the stored `9` to `2` and saving `11` in `R0`. We have completed `(3 + 6) + 2` by keeping an intermediate answer and using it in the next calculation.
+With addition selected, `3` and `6` enter the ALU and the result, `9`, travels back to be saved in `R0`. We then select `R0` and `R3`, adding the stored `9` to `2` and saving `11` in `R0`. Repeating this gives `13`, then `15`, and so on. Each new result replaces the previous total in `R0`, ready for the next addition. The other registers keep their values.
 
 <!-- scene: addressed-memory -->
 

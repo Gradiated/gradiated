@@ -234,8 +234,20 @@ export const COMPUTER_SCENES = (function () {
         text(x, y - 10, "16", { class: "tiny muted" }, selection);
       }
       const inputValues = [
-        text(293, 181, "3", { class: "bit processing-number" }, selection),
-        text(293, 241, "6", { class: "bit processing-number" }, selection),
+        text(
+          300,
+          181,
+          "3",
+          { class: "bit processing-number", "text-anchor": "end" },
+          selection,
+        ),
+        text(
+          300,
+          241,
+          "6",
+          { class: "bit processing-number", "text-anchor": "end" },
+          selection,
+        ),
       ];
       const calculation = group(
         { "data-part": "processing-calculation" },
@@ -272,10 +284,10 @@ export const COMPUTER_SCENES = (function () {
       );
       show(answerRoute, "alu", undefined, {}, 0.55);
       const outputValue = text(
-        371,
+        367,
         345,
         "9",
-        { class: "bit processing-number" },
+        { class: "bit processing-number", "text-anchor": "start" },
         answerRoute,
       );
       const equation = text(
@@ -302,6 +314,7 @@ export const COMPUTER_SCENES = (function () {
         ),
       );
       const time = { value: 0 };
+      let activeProcessingScene = null;
       const processingDemo = gsap.timeline({ paused: true, repeat: -1 });
       processingDemo.to(time, { value: 14, duration: 14, ease: "none" });
       demos.push(processingDemo);
@@ -342,34 +355,42 @@ export const COMPUTER_SCENES = (function () {
           node.setAttribute("d", inputAPath);
         for (const node of [outputB.base, outputB.lit])
           node.setAttribute("d", inputBPath);
-        const active =
-          Math.abs(p - index("select-values")) <= hold ||
-          Math.abs(p - index("alu")) <= hold;
-        if (active && !matchMedia("(prefers-reduced-motion: reduce)").matches)
+        const activeScene =
+          Math.abs(p - index("select-values")) <= hold
+            ? "select-values"
+            : Math.abs(p - index("alu")) <= hold
+              ? "alu"
+              : null;
+        if (activeScene !== activeProcessingScene) {
+          processingDemo.pause(0);
+          activeProcessingScene = activeScene;
+        }
+        if (
+          activeScene &&
+          !matchMedia("(prefers-reduced-motion: reduce)").matches
+        )
           processingDemo.play();
-        else if (!active) processingDemo.pause(0);
+        else if (!activeScene) processingDemo.pause(0);
         else processingDemo.pause(5);
-        const t = time.value;
-        const second = isAlu && t >= 6 && t < 13;
-        const elapsed = t >= 13 ? 0 : second ? t - 6 : t;
+        const t = isAlu ? processingDemo.totalTime() : time.value;
+        const step = isAlu ? Math.floor(t / 6) : 0;
+        const second = step > 0;
+        const elapsed = isAlu ? t % 6 : t >= 13 ? 0 : t;
         const reading = clamp((elapsed - 1) / 1.2);
         const writing = isAlu ? clamp((elapsed - 2.7) / 1.5) : 0;
         const readOpacity =
           reading * (writing < 1 ? 1 : clamp(1 - (elapsed - 4.2) * 3));
-        const left = second ? 9 : 3,
+        const left = second ? (9 + 2 * (step - 1)) % 65536 : 3,
           right = second ? 2 : 6,
-          answer = left + right;
-        const saved =
-          !isAlu || t >= 13
-            ? 0
-            : second
-              ? writing >= 1
-                ? 11
-                : 9
-              : writing >= 1
-                ? 9
-                : 0;
-        const fade = t >= 12 ? (t < 13 ? clamp(13 - t) : clamp(t - 13)) : 1;
+          answer = (left + right) % 65536;
+        const saved = !isAlu ? 0 : writing >= 1 ? answer : second ? left : 0;
+        const fade = isAlu
+          ? Math.min(clamp(elapsed * 2), clamp((6 - elapsed) * 2))
+          : t >= 12
+            ? t < 13
+              ? clamp(13 - t)
+              : clamp(t - 13)
+            : 1;
         const resultProgress = clamp((elapsed - 2.2) / 0.8);
         adderResult.setAttribute(
           "y",
@@ -377,21 +398,13 @@ export const COMPUTER_SCENES = (function () {
         );
         adderResult.style.opacity = String(fade * clamp(resultProgress * 4));
         transfers.style.opacity = String(fade);
-        registerNumbers[0].style.opacity = String(fade);
+        registerNumbers[0].style.opacity = isAlu ? "1" : String(fade);
         setText(registerNumbers[0], saved);
         processing.setAttribute("data-saved-result", saved);
-        processing.setAttribute(
-          "data-processing-step",
-          second ? "second" : "first",
-        );
+        processing.setAttribute("data-processing-step", String(step));
         setText(selectA, second ? "R0" : "R1");
         setText(selectB, second ? "R3" : "R2");
-        setText(
-          equation,
-          isAlu
-            ? `${left} + ${right} = ${answer}`
-            : "",
-        );
+        setText(equation, isAlu ? `${left} + ${right} = ${answer}` : "");
         setText(outputValue, answer);
         setText(inputValues[0], left);
         setText(inputValues[1], right);
@@ -412,7 +425,7 @@ export const COMPUTER_SCENES = (function () {
           "d",
           `${geometryB.getAttribute("d")} L${inputBPath.slice(1)}`,
         );
-        const labelsFade = t >= 5.5 && t < 6.5 ? Math.abs(t - 6) * 2 : fade;
+        const labelsFade = fade;
         for (const node of [selectA, selectB, equation])
           node.style.opacity = String(labelsFade);
         for (let i = 0; i < selectedRows.length; i++) {

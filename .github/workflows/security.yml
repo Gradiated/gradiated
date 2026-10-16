@@ -1,0 +1,108 @@
+name: Security scans
+
+# Secret scanning blocks merges; Semgrep reports only. Image vulnerability scans run
+# where images are published (build-images.yml) and AWS posture in prowler.yml.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-scans-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: jdx/mise-action@v4.2.3
+        with:
+          install_args: gitleaks
+      # Pull requests scan their own commits and pushes scan the pushed range. Manual
+      # runs, and pushes whose previous head is unknown, scan the full history.
+      - name: Scan commits with Gitleaks
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          BEFORE: ${{ github.event.before }}
+          HEAD: ${{ github.sha }}
+        shell: bash
+        run: |
+          range=""
+          if [[ "${EVENT}" == "pull_request" ]]; then
+            range="${PR_BASE}..${PR_HEAD}"
+          elif [[ "${EVENT}" == "push" && -n "${BEFORE}" && ! "${BEFORE}" =~ ^0+$ ]] \
+            && git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+            range="${BEFORE}..${HEAD}"
+          fi
+          echo "Scanning ${range:-the full history}"
+          scope=()
+          if [[ -n "${range}" ]]; then
+            scope=(--log-opts="${range}")
+          fi
+          report="${RUNNER_TEMP}/gitleaks.json"
+          gitleaks git --config .gitleaks.toml --gitleaks-ignore-path .gitleaksignore \
+            --redact --no-banner --exit-code 0 --report-format json --report-path "${report}" \
+            "${scope[@]}" .
+          python3 tools/security/scan_report.py gitleaks "${report}" | tee -a "${GITHUB_STEP_SUMMARY}"
+
+  policy:
+    name: Scan policy files
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - run: python3 -m unittest discover -s tools/security -p 'test_scan_report.py'
+      - name: Require a justification for every accepted image vulnerability
+        run: python3 tools/security/scan_report.py check-trivyignore .trivyignore
+
+  # Semgrep Community Edition with registry rules; no Semgrep login or token.
+  semgrep:
+    name: Semgrep (report only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: semgrep/semgrep:1.180.0@sha256:529ee8a277ec8adc5b534d7c74eea0a47e9de21d62852b6ba7ac6ba9566845c3
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Scan TypeScript, JavaScript and Rust
+        run: |
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+          semgrep scan --metrics off --timeout 30 \
+            --config p/default --config p/typescript --config p/rust \
+            --include '*.ts' --include '*.tsx' --include '*.mts' --include '*.cts' \
+            --include '*.js' --include '*.mjs' --include '*.cjs' --include '*.rs' \
+            --json --output semgrep.json
+      - name: Summarize findings
+        run: python3 tools/security/scan_report.py semgrep semgrep.json >> "${GITHUB_STEP_SUMMARY}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: semgrep
+          path: semgrep.json
+          retention-days: 30
+
+  passed:
+    name: Security scans passed
+    if: always()
+    # Semgrep findings never fail its job; only a scanner or rule-download error does.
+    needs: [secrets, policy, semgrep]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail when a required job failed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1

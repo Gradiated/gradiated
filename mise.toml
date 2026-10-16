@@ -1,5 +1,6 @@
 [tools]
 aws = "2.36.24"
+gitleaks = "8.30.1"
 helm = "4.2.4"
 kubectl = "1.36.3"
 kubeconform = "0.7.0"

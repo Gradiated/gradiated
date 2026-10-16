@@ -1,0 +1,21 @@
+# Reviewed historical gitleaks findings that are not secrets (October 2026 full-history scan).
+# Each line is a finding fingerprint: <commit>:<file>:<rule>:<line>. Add a line only after
+# confirming the match is not a credential. Rotate a real credential instead of listing it.
+#
+# Identifiers in source code (an import list, a function argument, a dictionary key):
+9f21ce285847786af005541baa034cb5ed98de89:research/agent_post_training/experiments/deepseek_preflight.py:generic-api-key:8
+e3b137542c8bc3d5f94f5050cd90881e2fd5e4d7:research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_swa_kv_pressure_discriminator/packet/inputs/source/mem_cache/swa_radix_cache.py:generic-api-key:454
+e3b137542c8bc3d5f94f5050cd90881e2fd5e4d7:research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_swa_kv_pressure_discriminator/packet/inputs/source/mem_cache/swa_radix_cache.py:generic-api-key:504
+faf036f80e11d55dd95dc05ff32f751b196af3e4:research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_state_aging_discriminator/inputs/source/mem_cache/swa_radix_cache.py:generic-api-key:454
+faf036f80e11d55dd95dc05ff32f751b196af3e4:research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_state_aging_discriminator/inputs/source/mem_cache/swa_radix_cache.py:generic-api-key:504
+0179e0a8917cd27b364e2d707eadd0899e88f803:research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_precision_hardware_frontier/h200_fp8_exact_shape_falsifier.py:generic-api-key:266
+# Prose in planning documents (lists of feature names):
+782ae2bffd97587b317a8ab25e3bb48564af7d67:product/docs/CONTROL_PLANE_IMPLEMENTATION.md:generic-api-key:195
+fe42e459d3220df2958815746f4412cadb3f0dc1:docs/SIMPLICITY_REVIEW.md:generic-api-key:321
+fe42e459d3220df2958815746f4412cadb3f0dc1:product/docs/CONTROL_PLANE_IMPLEMENTATION.md:generic-api-key:190
+b2f56b9eec3c4fde381f097c42ae18163761efd3:docs/STARTUP_ARCHITECTURE.md:generic-api-key:202
+fe345f39f0d5c925b32144ea9db99fb7da860258:infra/docs/DELIVERY_PLAN.md:generic-api-key:73
+95b6592f45b0b7c3d633639474a2d7639d2fd32f:infra/docs/DELIVERY_PLAN.md:generic-api-key:73
+a4369ed3c0f599bf85ab22ccb6953cabdc9d37ab:infra/docs/DELIVERY_PLAN.md:generic-api-key:73
+# Synthetic long-context recall prompt in a model quality suite:
+d21c562569af583eadf6e5792c121919d6ecb3d6:research/sol/experiments/gemma4_31b/research_lab/projects/sglang_v0512_h200_stock_quality_validation/quality_suite.py:generic-api-key:20

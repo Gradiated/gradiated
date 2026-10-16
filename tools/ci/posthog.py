@@ -29,6 +29,7 @@ REQUIRED_WORKFLOWS = {
     ".github/workflows/dependency-age.yml",
     ".github/workflows/research-lab.yml",
     ".github/workflows/virtual-kubelet.yml",
+    ".github/workflows/security.yml",
 }
 
 

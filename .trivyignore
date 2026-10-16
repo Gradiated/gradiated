@@ -1,0 +1,10 @@
+# Accepted vulnerability risks for the Trivy image scan in .github/workflows/build-images.yml.
+#
+# The scan blocks a release on any CRITICAL vulnerability that has a fix available.
+# Each entry needs a justification comment directly above it (CI checks this) and
+# should carry an `exp:YYYY-MM-DD` date, after which Trivy stops ignoring it. Say
+# what is affected, why the risk is acceptable for now, and who remediates it.
+# Entries apply to every scanned image.
+#
+# No risks are accepted. The adoption baseline (perl-base, npm's bundled tar and
+# esbuild's Go standard library in the product image) was fixed in product/Dockerfile.

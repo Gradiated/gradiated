@@ -24,7 +24,13 @@ the build idempotent. Kubernetes uses only resolved `sha256` image digests.
 
 1. Build the product image, gateway image, proxy image, collector image, and
    console in parallel.
-2. Push the images to ECR.
+2. Push the images to ECR, then scan each pushed digest with Trivy. A CRITICAL
+   vulnerability with a fix available fails the build and stops the release;
+   HIGH findings are reported in the job summary. Reports are kept as 90-day
+   workflow artifacts. Accepted risks go in `.trivyignore`, each with a
+   justification comment and an expiry date. The scan policy and Trivy version
+   come from the workflow revision, not the source commit. GPU base images are
+   scanned in report-only mode.
 3. Upload hashed console assets to the private S3 bucket. Do not upload the live
    `index.html` file.
 4. Commit the source revision, image digests and console revision directly to
@@ -186,7 +192,9 @@ healthy. S3 versioning keeps previous entry points for recovery.
 - The `main` ruleset requires one gate per workflow: `Product tests passed`,
   `Kubernetes passed`, `Terraform passed`,
   `Model deployment passed`, `Wizard publish passed`, `Agent quality passed`,
-  `Dependency age passed` and `Research lab passed`. Ordinary PRs satisfy these
+  `Dependency age passed`, `Research lab passed` and `Security scans passed`
+  (Gitleaks secret scanning, scan-policy checks and report-only Semgrep; see
+  `.github/workflows/security.yml`). Ordinary PRs satisfy these
   checks and resolved review threads. The Gradiated Release app bypasses this
   ruleset; the separate `main integrity` ruleset retains deletion and
   force-push protections.

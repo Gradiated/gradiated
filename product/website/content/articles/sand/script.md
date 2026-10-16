@@ -140,7 +140,7 @@ Now stack a second row underneath. We have two places to store a four-bit number
 
 Both rows receive the same four data inputs. To write a number, place its four bits `D0` to `D3` on these wires, select the destination `ADDR`, then set `WE` to `1`. An AND gate combines `WE` with each row’s selection signal, so only the chosen row copies the number at `D`. Return `WE` to `0` and both rows hold their contents, even if the input changes.
 
-To read a number, select its `ADDR` and leave `WE` at `0`. At the right of each latch, an AND gate passes its bit only when that row is selected. An OR gate at the bottom of each column combines these paths. Unselected rows always contribute `0`, so each OR gate reproduces the selected bit, bringing the chosen word to output `Q`, where we read it. Reading does not change either stored number. This arrangement of gates is a multiplexer, a circuit that chooses which input reaches the output.
+To read a number, select its `ADDR` and leave `WE` at `0`. At the right of each latch, an AND gate passes its bit only when that row is selected. An OR gate at the bottom of each column combines these paths. Unselected rows always contribute `0`, so each OR gate reproduces the selected bit, bringing the chosen word to output `Q`, where we read it. Reading does not change either stored number. These AND and OR gates, controlled by the decoder’s selection signals, form a multiplexer that chooses which row’s stored bits reach `Q`.
 
 <!-- scene: memory-array -->
 
@@ -174,7 +174,7 @@ We now have circuits that calculate and circuits that remember. Our next step is
 
 We will build a computer that follows the von Neumann model, where instructions and data are both stored in the same "unified" memory.
 
-Our adder calculates with whatever values reach its inputs. To choose those values, we need another circuit called a multiplexer. It takes several inputs and passes one of them to its output, according to a selection signal at the bottom. We can build this selection circuit from the logic gates we already know. Here, each value travels through a bundle of four wires, carrying the four bits of its binary number. The idea of selectively choosing which input data to pass will be very common going forward.
+Our adder calculates with whatever values reach its inputs. To choose those values, we use a multiplexer. We have already built one in our memory’s read circuit, where `ADDR` selects which row’s stored bits reach `Q`. Here, the same idea chooses between inputs to the adder, according to a selection signal at the bottom. We can build this selection circuit from the logic gates we already know. Here, each value travels through a bundle of four wires, carrying the four bits of its binary number. The idea of selectively choosing which input data to pass will be very common going forward.
 
 <!-- scene: working-registers -->
 

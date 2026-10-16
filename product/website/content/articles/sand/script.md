@@ -216,7 +216,7 @@ We now have a basic memory block, our first building block for a complete von Ne
 
 A calculation often produces an intermediate result that we need again. Following BIDMAS, for example, we calculate the brackets in `(3 + 6) + 2` first, then keep the answer while we complete the next step. The processing unit has a small set of registers for these working values.
 
-Each register is built from circuits that remember individual bits, like the D latches we used earlier. LC-3 has eight general-purpose registers, `R0` to `R7`, each holding sixteen bits, or two bytes. Keeping this small collection directly connected to the calculation circuits gives them quick access to the values they need. These working registers are separate from the larger memory array and its `MAR` and `MDR`.
+Each register is built from circuits that remember individual bits, like the D latches we used earlier. LC-3 has eight general-purpose registers, `R0` to `R7`, each holding sixteen bits, or two bytes. We keep this small collection directly connected to the calculation circuits inside the processing unit, to give them quick access to the values they need. These working registers are separate from the larger memory array and its `MAR` and `MDR`.
 
 We will begin with `3` in `R1`, `6` in `R2` and `2` in `R3`. A register’s name identifies the storage slot, while its contents are the number stored there.
 

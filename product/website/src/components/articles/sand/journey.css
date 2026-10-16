@@ -744,3 +744,11 @@ html:has(.sand-journey) {
 .sand-journey #d2 text.processing-number {
   font-size: 15px;
 }
+
+.sand-journey #d2 text.processing-binary {
+  font-size: 12px;
+  opacity: 0.55;
+}
+.sand-journey #d2 .processing-binary-outline {
+  opacity: 0.4;
+}

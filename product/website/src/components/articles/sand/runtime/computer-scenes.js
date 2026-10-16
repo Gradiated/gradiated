@@ -125,10 +125,18 @@ export const COMPUTER_SCENES = (function () {
         processing,
         "88 238",
       );
-      key(bank, "working-registers", { x: 130, scale: 1.2 });
-      key(bank, "select-values", { x: 0, scale: 1 });
+      key(bank, "working-registers", { x: 15, y: 16, scale: 1.1 });
+      key(bank, "select-values", { x: 0, y: 0, scale: 1 });
       text(88, 110, "working registers", { class: "caption" }, bank);
       text(88, 363, "16 bits / 2 bytes each", { class: "tiny muted" }, bank);
+      const binaryHeading = text(
+        250,
+        110,
+        "binary",
+        { class: "caption muted" },
+        bank,
+      );
+      show(binaryHeading, "working-registers", "select-values", {}, 0.45);
       const registerNumbers = [],
         selectedRows = [];
       for (let i = 0; i < 8; i++) {
@@ -161,12 +169,31 @@ export const COMPUTER_SCENES = (function () {
             row,
           ),
         );
+        const binaryColumn = group({ "data-register-binary": i }, row);
+        path(
+          `M148 ${y} H352 V${y + 27} H148`,
+          { class: "processing-binary-outline" },
+          binaryColumn,
+        );
+        const binary = ([0, 3, 6, 2][i] || 0)
+          .toString(2)
+          .padStart(16, "0")
+          .match(/.{4}/g)
+          .join(" ");
+        text(
+          250,
+          y + 18,
+          binary,
+          { class: "bit processing-binary" },
+          binaryColumn,
+        );
+        show(binaryColumn, "working-registers", "select-values", {}, 0.45);
         key(row, "working-registers", { y: 0 }, { y: -i * 27 }, 0.55);
       }
       const bits = group({ "data-part": "register-bit-cells" }, processing);
       for (let i = 0; i < 16; i++) {
         const x = 108 + i * 14;
-        path(`M${x} 398 H${x + 10} V408 H${x} Z`, {}, bits);
+        path(`M${x} 406 H${x + 10} V416 H${x} Z`, {}, bits);
       }
       text(
         220,

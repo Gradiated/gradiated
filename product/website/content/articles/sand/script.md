@@ -148,7 +148,7 @@ Zoom out once more and add two rows. We now have four locations, each holding fo
 
 The `ADDR` tells us where to look. The contents tell us what is stored there. Each `ADDR` selects a complete four-bit number, rather than an individual bit. Two address bits choose among four locations, while each location stores four bits. The `ADDR` width and the number of bits stored at each location are separate choices.
 
-Adding rows gives us more locations, while adding columns lets each location hold a wider number. Here, sixteen latches give us a small memory array with four locations, each storing a four-bit number.[^1]
+Adding rows gives us more locations, while adding columns lets each location hold a wider number. Here, sixteen latches give us a small memory array with four locations, each storing a four-bit number.
 
 <!-- scene: stored-answer -->
 
@@ -221,5 +221,3 @@ We have built a machine that can follow stored instructions. Our next step is to
 From a switch to logic, calculation, memory and now a computer, each larger structure gives us a new ability. Next, we will follow the connection from code to physical action.
 
 The LC-3 example and the organisation of our computer diagram follow ETH Zürich’s [Digital Design and Computer Architecture course](https://safari.ethz.ch/ddca/spring2026/), particularly lecture 7 and its LC-3 diagram on slide 65. The illustration is simplified to introduce the parts one step at a time.
-
-[^1]: This latch-based memory follows the organisation in lecture 3 of ETH Zürich’s [Digital Design and Computer Architecture course](https://safari.ethz.ch/ddca/spring2026/), shown in the supplied slides 116 and 118. Our example uses four bits per row instead of three.

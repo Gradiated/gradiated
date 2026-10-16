@@ -210,7 +210,7 @@ Choose Read to put the same `ADDR` in `MAR`. Memory selects that location and se
 
 <!-- scene: memory-block -->
 
-We now have a basic memory block, our first building block for a complete von Neumann computer. Next, we’ll build the processing unit, one of the CPU’s main components.
+We now have a basic memory block, our first building block for a complete von Neumann computer. We will set this aside for now as we introduce the processing unit, one of the CPU’s main components.
 
 <!-- scene: working-registers -->
 

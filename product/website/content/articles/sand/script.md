@@ -259,7 +259,9 @@ Changing the fields requests a different operation or different registers. The f
 
 <!-- scene: instruction-control -->
 
-The control unit, or `CU`, translates an instruction into electrical signals that direct the processing unit. For this addition, those signals select `R0` and `R3` as inputs, choose `ADD` in the ALU and select `R0` as the destination.
+The control unit, or `CU`, receives an instruction. We will soon see how it arrives from memory. To carry it out, the control unit directs electrical signals that select register values, choose an ALU operation and enable results to be saved. More complex tasks are built from sequences of these simple steps.
+
+Our example selects `ADD`. Other instructions can request logical operations, move data between registers and memory, or change which instruction runs next.
 
 The result returning to the registers does not automatically replace a stored number. As with our earlier memory, writing must be enabled. The control unit enables the selected register to save the result, while the others keep their contents.
 

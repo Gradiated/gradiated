@@ -186,7 +186,7 @@ We can hide the individual latches inside four larger blocks, one for each store
 
 The memory address register, or `MAR`, holds the `ADDR` of the location to access. For now, it holds only `2` bits, enough to select one of our `4` memory locations. The memory data register, or `MDR`, holds either the 8-bit number to write or the 8-bit number just read.
 
-A separate write control, `WE`, determines whether memory copies the number from `MDR` into the selected location. We will return to how the processor coordinates register updates when we build its control circuits.
+A separate write control, `WE`, determines whether memory copies the number from `MDR` into the selected location.
 
 <!-- scene: memory-word -->
 

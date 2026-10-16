@@ -1052,9 +1052,15 @@ export const SCENES2D = (function () {
     dot(114, 250, 1.8, wLatch);
     dot(200, 215, 1.8, wLatch);
     dot(306, 215, 1.8, wLatch);
-    text(98, 212, "D", { "text-anchor": "end" }, wLatch);
-    text(88, 254, "WE", {}, wLatch);
-    text(336, 219, "Q", { "text-anchor": "start" }, wLatch);
+    text(98, 212, "D", { class: "memory-label", "text-anchor": "end" }, wLatch);
+    text(88, 254, "WE", { class: "memory-label" }, wLatch);
+    text(
+      336,
+      219,
+      "Q",
+      { class: "memory-label", "text-anchor": "start" },
+      wLatch,
+    );
     const latchValues = group({ "data-latch-values": "" }, gLatch);
     const latchPorts = [
       { name: "d", x: 98, y: 234, anchor: "end", value: 0 },

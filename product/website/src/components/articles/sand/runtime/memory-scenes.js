@@ -30,6 +30,8 @@ export const MEMORY_SCENES = (() => {
     const ys = [176, 224, 272, 320];
     const label = (parent, x, y, value, attrs = {}) =>
       text(x, y, value, { class: "caption", ...attrs }, parent);
+    const portLabel = (parent, x, y, value, attrs = {}) =>
+      text(x, y, value, { class: "memory-label tiny", ...attrs }, parent);
     const digit = (parent, x, y, value, attrs = {}) =>
       text(x, y, value, { class: "bit", ...attrs }, parent);
     const wire = (parent, d) => path(d, {}, parent);
@@ -82,7 +84,7 @@ export const MEMORY_SCENES = (() => {
     key(writeFeed, "memory-two", { attr: { d: "M78 132 V268" } });
     key(writeFeed, "memory-array", { attr: { d: "M78 132 V364" } });
     const writeFeedLight = signal(writeSignals, writeFeed.getAttribute("d"));
-    label(writeGates, 78, 106, "WE");
+    portLabel(writeGates, 78, 106, "WE");
     const weValue = digit(writeGates, 78, 125, "0");
     const decoder = group({}, array);
     show(decoder, "memory-two", "memory-buses");
@@ -97,9 +99,7 @@ export const MEMORY_SCENES = (() => {
     key(firstAddress, "memory-array", { attr: { d: "M14 130 V345" } });
     const secondAddress = wire(decoder, "M22 130 V353");
     key(secondAddress, "memory-array", {});
-    const addressLabel = label(decoder, 14, 106, "ADDR", {
-      class: "tiny bit",
-    });
+    const addressLabel = portLabel(decoder, 14, 106, "ADDR");
     key(addressLabel, "memory-two", { attr: { x: 14 } });
     key(addressLabel, "memory-array", { attr: { x: 18 } });
     const addressValues = [14, 22].map((x) => digit(decoder, x, 125, "0"));
@@ -108,7 +108,7 @@ export const MEMORY_SCENES = (() => {
     show(inputDeck, "register", "memory-buses");
     const inputFlashes = [];
     const inputDigits = xs.map((x, i) => {
-      label(inputDeck, x - 23, 106, `D${3 - i}`, { class: "tiny" });
+      portLabel(inputDeck, x - 23, 106, `D${3 - i}`);
       inputFlashes.push(
         mk(
           "rect",
@@ -157,8 +157,8 @@ export const MEMORY_SCENES = (() => {
           { y: -48, opacity: 0 },
           0.25 + (r === 3 ? 0.15 : 0),
         );
-      const rowAddress = label(row, 114, y + 18, bits(r, 2), {
-        class: "tiny",
+      const rowAddress = digit(row, 114, y + 18, bits(r, 2), {
+        class: "tiny bit",
         "text-anchor": "end",
       });
       rowAddresses.push(rowAddress);
@@ -313,8 +313,7 @@ export const MEMORY_SCENES = (() => {
         `M${x + 29} 386 Q${x + 41} 393 ${x + 53} 386 Q${x + 51} 402 ${x + 41} 410 Q${x + 31} 402 ${x + 29} 386`,
       );
       wire(outputDeck, `M${x + 41} 410 V419`);
-      label(outputDeck, x + 35, 435, `Q${3 - c}`, {
-        class: "tiny",
+      portLabel(outputDeck, x + 35, 435, `Q${3 - c}`, {
         "text-anchor": "end",
       });
       return digit(outputDeck, x + 47, 435, "0011"[c]);
@@ -331,7 +330,7 @@ export const MEMORY_SCENES = (() => {
     wire(registerOnly, enablePath);
     const registerEnableLight = signal(registerOnly, enablePath);
     registerEnableLight.classList.add("register-enable");
-    label(registerOnly, 62, 269, "WE");
+    portLabel(registerOnly, 62, 269, "WE");
     const registerWE = digit(registerOnly, 62, 287, "0");
     const registerOutputs = xs.map((x, c) => {
       wire(registerOnly, `M${x + 16} 184 H${x + 32} V228`);
@@ -361,7 +360,7 @@ export const MEMORY_SCENES = (() => {
     show(biggerTitle, "memory-array", "stored-answer");
     const adder = group({ "data-diagram": "memory-adder" }, root);
     show(adder, "stored-answer", "memory-buses");
-    label(adder, 220, 38, "0011 + 0110 = 1001");
+    digit(adder, 220, 38, "0011 + 0110 = 1001");
     label(adder, 220, 53, "4-bit adder");
     const adderLinks = group({}, root);
     key(adderLinks, "stored-answer", {});
@@ -402,27 +401,27 @@ export const MEMORY_SCENES = (() => {
     label(compact, 220, 106, "4-bit adder");
     path("M171 53 V75 M269 53 V75", { class: "memory-bus" }, compact);
     wire(compact, "M166 69 L176 59 M264 69 L274 59");
-    label(compact, 185, 67, "4");
-    label(compact, 283, 67, "4");
+    portLabel(compact, 185, 67, "4");
+    portLabel(compact, 283, 67, "4");
     digit(compact, 171, 46, "0011");
     digit(compact, 269, 46, "0110");
     box(compact, 117, 219, 254, 123);
-    label(compact, 220, 237, "D");
-    label(compact, 244, 333, "Q");
+    portLabel(compact, 220, 237, "D");
+    portLabel(compact, 244, 333, "Q");
     label(compact, 244, 273, "Memory");
     label(compact, 244, 296, "4 locations × 4 bits");
     const bus = (d, slash, x, y, width) => {
       path(d, { class: "memory-bus" }, compact);
       wire(compact, slash);
-      label(compact, x, y, String(width));
+      portLabel(compact, x, y, String(width));
     };
     bus("M220 129 V219", "M214 165 L226 155", 238, 164, 4);
     digit(compact, 254, 195, "1001");
     bus("M59 248 H117", "M80 254 L90 242", 86, 231, 2);
-    label(compact, 49, 230, "ADDR", { class: "tiny bit" });
+    portLabel(compact, 49, 230, "ADDR");
     const compactAddress = digit(compact, 49, 252, "00");
     wire(compact, "M59 302 H117");
-    label(compact, 49, 284, "WE");
+    portLabel(compact, 49, 284, "WE");
     const compactWE = digit(compact, 49, 306, "0");
     bus("M244 342 V395", "M238 372 L250 362", 263, 371, 4);
     const compactOutput = digit(compact, 244, 417, "0011");
@@ -474,6 +473,7 @@ export const MEMORY_SCENES = (() => {
         220,
         scene === "stored-answer" ? 17 : 66,
         "Read ADDR 0",
+        { class: "memory-label" },
       );
       show(
         phase,

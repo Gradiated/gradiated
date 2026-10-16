@@ -550,7 +550,9 @@ html:has(.sand-journey) {
 }
 
 .sand-journey #d2 text.bit,
-.sand-journey #d2 text.logic-value {
+.sand-journey #d2 text.logic-value,
+.sand-journey #d2 text.memory-label,
+.sand-journey #d2 text.memory-port {
   font-family: var(--font-code);
   font-variant-numeric: tabular-nums slashed-zero;
   font-variant-ligatures: none;
@@ -565,6 +567,10 @@ html:has(.sand-journey) {
 }
 .sand-journey #d2 .memory-bus {
   stroke-width: 3px;
+}
+.sand-journey #d2 text.memory-label,
+.sand-journey #d2 text.memory-port {
+  font-weight: 500;
 }
 .sand-journey #d2 text.memory-port {
   font-size: 6px;

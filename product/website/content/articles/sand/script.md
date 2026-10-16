@@ -144,7 +144,7 @@ To read a number, select its `ADDR` and leave `WE` at `0`. At the right of each 
 
 <!-- scene: memory-array -->
 
-Zoom out once more and add two rows. We now have four locations, each holding four bits. Two `ADDR` bits distinguish `00`, `01`, `10` and `11`. The same decoder now turns that two-bit `ADDR` into four selection signals, with exactly one active at a time. That signal chooses the row to read and, if `WE` is `1`, the row to write.
+Zoom out once more and add two rows. We now have four locations, each holding four bits. Two address bits `ADDR` distinguish `00`, `01`, `10` and `11`. The same decoder now turns that two-bit `ADDR` into four selection signals, with exactly one active at a time. That signal chooses the row to read and, if `WE` is `1`, the row to write.
 
 The `ADDR` tells us where to look. The contents tell us what is stored there. Each `ADDR` selects a whole four-bit word, so this memory is word-addressable. Two `ADDR` bits choose among four locations, while four data bits make up the word in each location. The `ADDR` width and the word width are separate choices.
 

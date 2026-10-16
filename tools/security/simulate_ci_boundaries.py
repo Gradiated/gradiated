@@ -100,6 +100,10 @@ def main():
             (name, "iam:DeleteServiceLinkedRole", role + "aws-service-role/inspector2.amazonaws.com/AWSServiceRoleForAmazonInspector2", False, []),
             (name, "s3:DeleteObjectVersion", f"arn:aws:s3:::gradiated-security-audit-{account}/AWSLogs/example", False, []),
             (name, "events:RemoveTargets", f"arn:aws:events:us-east-1:{account}:rule/gradiated-security-events/gradiated-security-notify", False, []),
+            (name, "ec2:DisableEbsEncryptionByDefault", "*", False, []),
+            (name, "ec2:ModifyEbsDefaultKmsKeyId", "*", False, []),
+            (name, "ec2:ResetEbsDefaultKmsKeyId", "*", False, []),
+            (name, "ec2:EnableEbsEncryptionByDefault", "*", True, []),
             (name, "sns:Unsubscribe", f"arn:aws:sns:us-east-1:{account}:gradiated-security-alerts:example", False, []),
         ])
 

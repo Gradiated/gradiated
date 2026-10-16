@@ -138,7 +138,7 @@ Let’s zoom out again and place four latches side by side, each holding one bit
 
 Now stack a second row underneath. We have two places to store a four-bit number, so we need a way to choose between them. A single bit, labelled `ADDR`, selects row `0` or row `1`. A decoder, shown in the box on the left, turns `ADDR` into one selection signal for each row. Only the chosen row’s signal is `1`. A NOT gate selects row `0` when the `ADDR` is `0`, while a direct wire selects row `1` when it is `1`.
 
-Both rows receive the same four data inputs. To write a number, place its four bits on these wires, select the destination `ADDR`, then set `WE` to `1`. A logic gate combines `WE` with each row’s selection signal, so only the chosen row copies the new number. Return `WE` to `0` and both rows hold their contents, even if the input changes.
+Both rows receive the same four data inputs. To write a number, place its four bits on these wires, select the destination `ADDR`, then set `WE` to `1`. An AND gate combines `WE` with each row’s selection signal, so only the chosen row copies the new number. Return `WE` to `0` and both rows hold their contents, even if the input changes.
 
 To read a number, select its `ADDR` and leave `WE` at `0`. At the right of each latch, an AND gate passes its bit only when that row is selected. An OR gate at the bottom of each column combines these paths. Unselected rows contribute `0`, so each OR gate reproduces the selected bit, bringing the chosen word to the output. Reading does not change either stored number. This arrangement of gates is a multiplexer, a circuit that chooses which input reaches the output.
 

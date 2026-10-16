@@ -810,3 +810,8 @@ html:has(.sand-journey) {
   font-size: 11.5px;
   font-weight: 500;
 }
+
+.sand-journey #d2 text.control-encoding {
+  font-size: 12px;
+  opacity: 0.35;
+}

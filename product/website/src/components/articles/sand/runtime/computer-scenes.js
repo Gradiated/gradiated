@@ -128,7 +128,15 @@ export const COMPUTER_SCENES = (function () {
       const bank = group({ "data-part": "working-storage" }, detail, "88 238");
       key(bank, "working-registers", { x: 15, y: 16, scale: 1.1 });
       key(bank, "select-values", { x: 0, y: 0, scale: 1 });
-      text(88, 110, "fast storage registers", { class: "caption" }, bank);
+      const bankTitle = text(
+        88,
+        110,
+        "fast storage registers",
+        { class: "caption" },
+        bank,
+      );
+      key(bankTitle, "working-registers", { x: 0, y: 0 }, null, -1);
+      key(bankTitle, "instruction-control", { x: 0, y: 253 });
       const registerSize = text(
         88,
         363,
@@ -542,13 +550,20 @@ export const COMPUTER_SCENES = (function () {
       const control = group({ "data-diagram": "simple-control" }, root);
       key(control, "instruction-control", {}, null, 0.6);
       key(control, "addressed-memory", { opacity: 0 }, null, 0, 0.5);
+      text(
+        264.5,
+        12,
+        "0001 000 000 0 00 011",
+        { class: "bit control-encoding" },
+        control,
+      );
       path("M267 42 V58", { class: "control-wire" }, control);
       box(control, 157, 58, 221, 47, "Control unit");
       const controlRoutes = [
         "M264 105 V223.36 H256.3",
         "M238 105 V150 H232 V237.4 Q240 241.4 232 245.4 V297.98 H256.3",
         "M378 82 H425 V287.32 H393.33",
-        "M157 94 H99 V416 H137.4 V385.72",
+        "M180 105 V166 H199.72 V208.6",
       ].map((d) => {
         path(d, { class: "control-wire" }, control);
         return path(d, { class: "control-wire control-active" }, control);
@@ -556,48 +571,31 @@ export const COMPUTER_SCENES = (function () {
 
       text(
         418,
-        262,
+        280,
         "ADD",
         { class: "tiny bit", "text-anchor": "end" },
         control,
       );
-      text(184, 406, "write R0", { class: "tiny bit" }, control);
       const writeTint = mk(
         "rect",
         {
-          x: 100,
-          y: 390,
-          width: 45,
+          x: 139,
+          y: 134,
+          width: 40,
           height: 18,
           rx: 3,
           class: "computer-glow",
         },
         control,
       );
-      text(112, 403, "WE", { class: "tiny bit" }, control);
-      const writeValue = text(131, 403, "0", { class: "tiny bit" }, control);
+      text(152, 147, "WE", { class: "tiny bit" }, control);
+      const writeValue = text(171, 147, "0", { class: "tiny bit" }, control);
       const controlTime = { value: 0 };
       const controlDemo = gsap.timeline({ paused: true, repeat: -1 });
       controlDemo.to(controlTime, { value: 12, duration: 12, ease: "none" });
       demos.push(controlDemo);
-      const instructionTime = { value: 0 };
-      const instructionDemo = gsap.timeline({ paused: true, repeat: -1 });
-      instructionDemo.to(instructionTime, {
-        value: 8,
-        duration: 8,
-        ease: "none",
-      });
-      demos.push(instructionDemo);
-      let instructionActive = false;
       let controlActive = false;
       afterRender.push(() => {
-        const showFields = Math.abs(tl.time() - index("instruction")) <= hold;
-        if (showFields && !instructionActive) instructionDemo.restart();
-        if (!showFields) instructionDemo.pause(0);
-        else if (matchMedia("(prefers-reduced-motion: reduce)").matches)
-          instructionDemo.pause(0);
-        else instructionDemo.play();
-        instructionActive = showFields;
         const active =
           Math.abs(tl.time() - index("instruction-control")) <= hold;
         if (active && !controlActive) controlDemo.restart();
@@ -619,15 +617,21 @@ export const COMPUTER_SCENES = (function () {
               ? clamp((t - 0.8) * 3)
               : i === 2
                 ? clamp((t - 1.6) * 3)
-                : clamp((t - 2.2) * 3);
+                : Math.min(clamp((t - 6.9) * 10), clamp((8.1 - t) * 10));
           node.style.opacity = String(fade * on);
         });
         fields.forEach((node, i) => {
-          const now = active ? t : instructionTime.value;
-          const order = active ? [1.6, 2.2, 0.8, 0.8][i] : 0.5 + i * 1.6;
-          node.style.opacity = String(
-            Math.min(clamp((now - order) * 3), clamp((order + 1.4 - now) * 3)),
-          );
+          const [start, end] = [
+            [3.8, 4.8],
+            [7, 8],
+            [0.8, 4],
+            [0.8, 4],
+          ][i];
+          node.style.opacity = active
+            ? String(
+                fade * Math.min(clamp((t - start) * 10), clamp((end - t) * 10)),
+              )
+            : "0";
         });
       });
       afterRender.push(() => {

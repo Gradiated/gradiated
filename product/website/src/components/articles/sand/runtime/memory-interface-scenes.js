@@ -416,7 +416,7 @@ export const MEMORY_INTERFACE_SCENES = {
         status,
         !state.busy
           ? state.action === "Ready"
-            ? "choose Read or Write"
+            ? ""
             : `${state.action} complete`
           : t < 0.9
             ? "load the interface registers"

@@ -507,8 +507,8 @@ export const COMPUTER_SCENES = (function () {
       path("M267 42 V58", { class: "control-wire" }, control);
       box(control, 157, 58, 221, 47, "Control unit");
       const controlRoutes = [
-        "M238 105 V223.36 H256.3",
-        "M264 105 V150 H232 V237.4 Q240 241.4 232 245.4 V297.98 H256.3",
+        "M264 105 V223.36 H256.3",
+        "M238 105 V150 H232 V237.4 Q240 241.4 232 245.4 V297.98 H256.3",
         "M378 82 H425 V287.32 H393.33",
         "M157 94 H99 V416 H137.4 V385.72",
       ].map((d) => {

@@ -171,10 +171,10 @@ export const PrivacyContent = (): ReactNode => (
   <>
     <p>Effective date: August 26, 2026</p>
     <p>
-      Gradiated Ltd (“Gradiated,” “we,” “us,” or “our”) respects your privacy.
-      This policy explains what information we collect, why we use it, and when
-      we share it. It applies to gradiated.com, the Gradiated console, and
-      Gradiated inference services.
+      Gradiated, a division of PostHog Inc. (“Gradiated,” “we,” “us,” or “our”),
+      respects your privacy. This policy explains what information we collect,
+      why we use it, and when we share it. It applies to gradiated.com, the
+      Gradiated console, and Gradiated inference services.
     </p>
     <h2>Information we collect</h2>
     <p>
@@ -270,9 +270,10 @@ export const PrivacyContent = (): ReactNode => (
     <h2>Changes and contact</h2>
     <p>
       We may update this policy from time to time. We will post the revised
-      version here. Gradiated Ltd is the controller for the personal information
-      covered by this policy. Our registered office is 68 Vinery Road,
-      Cambridge, CB1 3DN, England. Questions can be sent to team@gradiated.com.
+      version here. Gradiated is the controller for the personal information
+      covered by this policy. Our address is PostHog Inc., 2261 Market Street,
+      Suite 4008, San Francisco, CA 94114, United States. Questions can be sent
+      to team@gradiated.com.
     </p>
   </>
 );
@@ -281,9 +282,9 @@ export const TermsContent = (): ReactNode => (
   <>
     <p>Effective date: October 4, 2026</p>
     <p>
-      These Terms of Service are an agreement between you and Gradiated Ltd.
-      They apply when you use the Gradiated website, console, API, inference
-      services, or related documentation.
+      These Terms of Service are an agreement between you and Gradiated, a
+      division of PostHog Inc. They apply when you use the Gradiated website,
+      console, API, inference services, or related documentation.
     </p>
     <h2>Using Gradiated</h2>
     <p>
@@ -373,10 +374,10 @@ export const TermsContent = (): ReactNode => (
     </p>
     <h2>Law and contact</h2>
     <p>
-      These Terms are governed by the laws of England and Wales. The courts of
-      England and Wales will have exclusive jurisdiction, unless mandatory law
-      gives you a different right. Questions about these Terms can be sent to
-      team@gradiated.com.
+      These Terms are governed by the laws of the State of Delaware, United
+      States. The state and federal courts located in Delaware will have
+      exclusive jurisdiction, unless mandatory law gives you a different right.
+      Questions about these Terms can be sent to team@gradiated.com.
     </p>
   </>
 );
@@ -444,9 +445,9 @@ export const DpaContent = (): ReactNode => (
     <p>
       This Data Processing Addendum (“DPA”) applies when a customer uses
       Gradiated to process personal data and the customer is the controller or
-      processor. In that case, Gradiated Ltd acts as the processor or
-      subprocessor. For account, billing, and business contact information,
-      Gradiated acts as a controller under our{" "}
+      processor. In that case, Gradiated, a division of PostHog Inc., acts as
+      the processor or subprocessor. For account, billing, and business contact
+      information, Gradiated acts as a controller under our{" "}
       <SiteLink href="/privacy/">Privacy Policy</SiteLink>.
     </p>
     <h2>Instructions and scope</h2>

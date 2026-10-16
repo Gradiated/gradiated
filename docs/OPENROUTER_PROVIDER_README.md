@@ -2,7 +2,7 @@
 
 - status: working checklist
 - date: 2026-08-27
-- owner: Gradiated Ltd
+- owner: Gradiated, a division of PostHog Inc.
 - application: https://openrouter.ai/providers/apply
 - technical requirements: https://openrouter.ai/docs/guides/community/for-providers
 - architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
@@ -43,7 +43,7 @@ invoice.
 | Payments         | Monthly invoice or automatic payment setup                | OpenRouter does not request payment details at application time; the production account is invoiced                       | post-acceptance |
 | Reliability      | Continuous monitoring and stable traffic handling         | Two gateway replicas, a production smoke test, and provider load results; the 24-hour soak was waived by owner decision   | ready        |
 | Status page      | Public operational status                                 | Public status page is live                                                                                                | done         |
-| Legal pages      | Company identity, privacy, and service terms              | Gradiated Ltd and privacy page exist; public service terms are not planned for the application                            | waived       |
+| Legal pages      | Company identity, privacy, and service terms              | Gradiated (a division of PostHog Inc.) and privacy page exist; public service terms are not planned for the application   | waived       |
 | Next model       | Model-specific runtime, features, and benchmarks          | GLM-5.3 Flash serves production traffic through the authenticated proxy; capability preflight remains before submission   | partial      |
 
 OpenRouter does not require every model to support every feature. Advertise only

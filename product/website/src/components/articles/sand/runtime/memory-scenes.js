@@ -407,6 +407,8 @@ export const MEMORY_SCENES = (() => {
     digit(compact, 171, 46, "0011");
     digit(compact, 269, 46, "0110");
     box(compact, 117, 219, 254, 123);
+    label(compact, 204, 211, "D");
+    label(compact, 228, 358, "Q");
     label(compact, 244, 253, "Memory");
     label(compact, 244, 276, "4 locations × 4 bits");
     const bus = (d, slash, x, y, width) => {
@@ -488,7 +490,6 @@ export const MEMORY_SCENES = (() => {
       );
       phaseLabels.push(phase);
     }
-    const compactPhase = label(compact, 244, 313, "Read");
     let lastTime = 0;
     let registerWord = 3;
     let previousContext = null;
@@ -666,7 +667,6 @@ export const MEMORY_SCENES = (() => {
           `${state.action} ADDR ${bits(state.address, rows === 2 ? 1 : 2)}`,
         ),
       );
-      setText(compactPhase, `${state.action} ADDR ${bits(state.address, 2)}`);
       inputDigits.forEach((element, c) =>
         setText(element, bits(register ? registerState.input : state.input)[c]),
       );

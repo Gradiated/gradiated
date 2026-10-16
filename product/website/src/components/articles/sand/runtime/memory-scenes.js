@@ -88,10 +88,10 @@ export const MEMORY_SCENES = (() => {
     const weValue = digit(writeGates, 78, 125, "0");
     const decoder = group({}, array);
     show(decoder, "memory-two", "memory-buses");
-    const decoderOutline = box(decoder, 26, 180, 48, 98);
+    const decoderOutline = box(decoder, 28, 180, 36, 98);
     key(decoderOutline, "memory-two", { attr: { height: 98 } });
     key(decoderOutline, "memory-array", { attr: { height: 194 } });
-    const decoderLabel = label(decoder, 50, 304, "Decoder");
+    const decoderLabel = label(decoder, 46, 304, "Decoder");
     key(decoderLabel, "memory-two", { attr: { y: 304 } });
     key(decoderLabel, "memory-array", { attr: { y: 400 } });
     const firstAddress = wire(decoder, "M14 130 V253");
@@ -157,7 +157,9 @@ export const MEMORY_SCENES = (() => {
           { y: -48, opacity: 0 },
           0.25 + (r === 3 ? 0.15 : 0),
         );
-      const rowAddress = portLabel(row, 50, y + 15, `ADDR ${bits(r, 2)}`);
+      const rowAddress = portLabel(row, 46, y + 15, `ADDR ${bits(r, 2)}`, {
+        class: "memory-label memory-row-address",
+      });
       rowAddresses.push(rowAddress);
       show(rowAddress, r < 2 ? "memory-two" : "memory-array", "memory-buses");
       const readRow = group({}, readGates);

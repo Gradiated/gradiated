@@ -572,6 +572,9 @@ html:has(.sand-journey) {
 .sand-journey #d2 text.memory-port {
   font-weight: 500;
 }
+.sand-journey #d2 text.memory-row-address {
+  font-size: 8px;
+}
 .sand-journey #d2 text.memory-port {
   font-size: 6px;
   fill: #6f6a63;

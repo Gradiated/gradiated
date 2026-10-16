@@ -67,6 +67,8 @@ def main():
             ('incident-webhook', 'KyvernoPolicyViolationsRising', 'gradiated', 'warning'),
             ('incident-webhook', 'FalcoCriticalEvents', 'falco', 'warning'),
             ('incident-webhook', 'FalcoDown', 'falco', 'warning'),
+            ('incident-webhook', 'AwsRootAccountUsed', 'gradiated', 'critical'),
+            ('incident-webhook', 'AwsRootUsageMonitoringMissing', 'gradiated', 'warning'),
             ('heartbeat', 'Watchdog', 'observability', 'none'),
             ('null', 'InfoInhibitor', 'observability', 'none'),
         ]

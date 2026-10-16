@@ -293,12 +293,14 @@ Review the Falco Loki stream after rollout and add exceptions in the same file.
 | `VulnerabilityCriticalOverdue` | A fixable Critical CVE in an image repository running in a namespace was also present 7–8 days ago, for 1h | warning (In-hours) |
 | `VulnerabilityHighOverdue` | The same for a fixable High CVE and 30–31 days | warning (In-hours) |
 | `TrivyOperatorNotReporting` | Operator unscraped, or no vulnerability reports exported, for 1h | warning (In-hours) |
+| `AwsRootAccountUsed` | CloudTrail root-use metric is positive in a window of 14–15 minutes ending two minutes ago | critical (Urgent) |
+| `AwsRootUsageMonitoringMissing` | Root-use metric absent for 30m | warning (In-hours) |
 | `FalcoCriticalEvents` | Any Emergency, Alert or Critical Falco rule match in the last 10 minutes | critical (Urgent) |
 | `FalcoDown` | A Falco sensor unavailable or unscraped, or the DaemonSet or its scrape targets missing, for 10m | warning (In-hours) |
 | `KyvernoPolicyViolationsRising` | A namespace's audited failure count exceeds its count a day earlier for 1h | warning (In-hours) |
 
 incident.io maps `critical` to Urgent and every other severity to In-hours.
-Critical runtime detections page at night; vulnerability-remediation and sensor-health
+Root-account activity and critical runtime detections page at night; vulnerability-remediation and sensor-health
 warnings remain In-hours. Vulnerability
 alerts repeat daily rather than every two hours. The SLA alerts key on image
 repository and CVE, so redeploying the same vulnerable image does not restart
@@ -306,6 +308,19 @@ the clock. They need 7 or 30 days of metrics after installation before they can
 fire. `KyvernoPolicyViolationsRising` reads per-report failure counts that
 kube-state-metrics exports as `kube_policyreport_fail` and waits for a day of
 history.
+
+Root activity also pages through the existing Prometheus/Alertmanager integration,
+so it does not depend on confirming SNS email subscriptions. The exporter reads
+`Maximum` over a window of 14–15 minutes with a two-minute delay. The requested
+range is 840 seconds and the aggregation period is 900 seconds, so rounding the
+start down by up to a minute cannot introduce a newer partial period that masks
+an earlier positive match. Repeated scrapes do not multiply events. CloudTrail delivery adds
+latency. The missing-data warning distinguishes an unavailable signal from zero
+root use, but quiet audit logs can also leave the metric empty. The Security
+dashboard links directly to the CloudWatch audit log for investigation. This is
+additional root-use coverage, not a replacement for SNS email confirmation or a
+separate notification path for every GuardDuty/Inspector finding. It still depends
+on the EKS monitoring stack and its existing incident.io integration.
 
 ### Exporting SOC 2 evidence
 

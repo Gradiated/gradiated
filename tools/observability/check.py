@@ -24,6 +24,12 @@ def main():
     args = parser.parse_args()
     if not args.promtool:
         parser.error('promtool is required')
+    exporter = yaml.safe_load((ROOT / 'infra/environments/prod/us-east-1/kubernetes/platform/cloudwatch-exporter.yaml').read_text())
+    exporter_config = yaml.safe_load(exporter['spec']['source']['helm']['valuesObject']['config'])
+    root_export = next(metric for metric in exporter_config['metrics']
+                       if metric['aws_namespace'] == 'Gradiated/Security' and metric['aws_metric_name'] == 'root_usage')
+    assert root_export['aws_statistics'] == ['Maximum']
+    assert 0 < root_export['range_seconds'] <= root_export['period_seconds'] - 60, 'CloudWatch start-time rounding must not create a second period whose newer zero masks root use'
     dashboards = {d['uid']: d for p in OBS.glob('*.json')
                   if (d := json.loads(p.read_text()))}
     groups = [g for name in ('prometheus-rules.yaml', 'logging-prometheus-rules.yaml', 'controller-prometheus-rules.yaml', 'autoscaling-prometheus-rules.yaml', 'model-replica-rules.yaml', 'data-store-prometheus-rules.yaml', 'security-prometheus-rules.yaml')
@@ -39,7 +45,10 @@ def main():
         assert any(p['id'] == panel_id and p.get('targets')
                    for p in dashboard['panels']), name
         assert not annotations.get('runbook_url'), name
-        assert annotations['logs_url'].startswith('https://grafana.gradiated.com/d/gradiated-logs?'), name
+        if name in ('AwsRootAccountUsed', 'AwsRootUsageMonitoringMissing'):
+            assert annotations['logs_url'] == 'https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#logsV2:log-groups/log-group/%252Fgradiated%252Fsecurity%252Fcloudtrail', name
+        else:
+            assert annotations['logs_url'].startswith('https://grafana.gradiated.com/d/gradiated-logs?'), name
 
     # Validate actual chart expressions as recording rules, substituting dashboard variables.
     chart_rules = []
@@ -780,6 +789,21 @@ def main():
     scenario('Trivy reporting', [trivy_up(1), trivy_reports], None, [trivy_alert], eval_time='2h')
     scenario('Trivy operator unscraped', [trivy_up(0), trivy_reports], trivy_alert, [trivy_alert], eval_time='2h')
     scenario('Trivy exports no reports', [trivy_up(1)], trivy_alert, [trivy_alert], eval_time='2h')
+
+    root_alert = 'AwsRootAccountUsed'
+    root_missing = 'AwsRootUsageMonitoringMissing'
+    assert alerts[root_alert]['labels']['severity'] == 'critical', 'Root account activity must page'
+    root_metric = 'gradiated_security_root_usage_maximum'
+    def root_usage(values, instance='exporter-a', namespace='observability'):
+        return {'series': f'{root_metric}{{namespace="{namespace}",job="cloudwatch-exporter",service="cloudwatch-exporter",instance="{instance}"}}', 'values': values}
+    scenario('AWS root unused', [root_usage('0x80')], None, [root_alert, root_missing], eval_time='35m')
+    scenario('AWS root use first scrape', [root_usage('_x10 1x30')], root_alert, [root_alert, root_missing], eval_time='6m')
+    scenario('AWS root zero neighbor cannot mask use', [root_usage('0x40'), root_usage('1x40', instance='exporter-b')], root_alert, [root_alert], eval_time='6m')
+    scenario('AWS root ignores application metric impersonation', [root_usage('0x40'), root_usage('1x40', namespace='gradiated')], None, [root_alert, root_missing], eval_time='6m')
+    scenario('AWS root window recovered', [root_usage('1x10 0x40')], None, [root_alert, root_missing], eval_time='8m')
+    scenario('AWS root missing startup grace', [], None, [root_alert, root_missing], eval_time='20m')
+    scenario('AWS root missing telemetry', [], root_missing, [root_alert, root_missing], eval_time='35m')
+    scenario('AWS root telemetry recovered', [root_usage('_x64 0x20')], None, [root_alert, root_missing], eval_time='35m')
 
     falco_alert = 'FalcoCriticalEvents'
     assert alerts[falco_alert]['labels']['severity'] == 'critical', 'Critical runtime detections must route to urgent incident.io paging'

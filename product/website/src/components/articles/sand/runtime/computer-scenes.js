@@ -593,10 +593,6 @@ export const COMPUTER_SCENES = (function () {
         });
       });
       afterRender.push(() => {
-        processing.setAttribute(
-          "data-control-phase",
-          String(controlTime.value),
-        );
         const p = tl.time(),
           isAlu = p >= index("alu") - hold,
           controlled =

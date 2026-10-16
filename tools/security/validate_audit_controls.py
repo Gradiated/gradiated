@@ -146,6 +146,12 @@ def main():
             {"eventSource": "organizations.amazonaws.com", "eventName": "AcceptHandshake"},
         ],
         "security_pipeline_changes": [
+            {"eventSource": "config.amazonaws.com", "eventName": "StopConfigurationRecorder"},
+            {"eventSource": "config.amazonaws.com", "eventName": "StartConfigurationRecorder"},
+            {"eventSource": "config.amazonaws.com", "eventName": "DeleteDeliveryChannel"},
+            {"eventSource": "config.amazonaws.com", "eventName": "PutDeliveryChannel"},
+            {"eventSource": "config.amazonaws.com", "eventName": "PutConfigurationRecorder"},
+            {"eventSource": "config.amazonaws.com", "eventName": "DeleteConformancePack"},
             {"eventSource": "monitoring.amazonaws.com", "eventName": "DisableAlarmActions"},
             {"eventSource": "kms.amazonaws.com", "eventName": "ScheduleKeyDeletion"},
             {"eventSource": "kms.amazonaws.com", "eventName": "TagResource", "readOnly": False},
@@ -182,6 +188,8 @@ def main():
                     positive_events.append(event)
             for value in (True, "true"):
                 negative_messages.append(json.dumps({**metric_cases[name], "readOnly": value}))
+        if name == "security_pipeline_changes":
+            negative_messages.append(json.dumps({"eventSource": "config.amazonaws.com", "eventName": "DescribeConfigurationRecorders", "readOnly": True}))
         positive_messages = [json.dumps(event) for event in positive_events]
         result = aws("logs", "test-metric-filter", "--filter-pattern", resource["values"]["pattern"],
                      "--log-event-messages", *positive_messages, *negative_messages)

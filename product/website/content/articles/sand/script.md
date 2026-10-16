@@ -192,11 +192,11 @@ A separate write control, `WE`, determines whether memory copies the number from
 
 Now widen each location again, from eight bits to sixteen. Each stored number occupies two bytes. The `MDR` and its data paths widen to sixteen bits too, so they can carry the whole number together.
 
-For the rest of our example, we will use LC-3, a small teaching computer. It works with sixteen-bit groups called words. We have reached its data width, but our four-location example is still much smaller than LC-3’s memory.
-
 <!-- scene: memory-address-space -->
 
-To add more locations, we need more address bits. Two bits choose among four locations. Sixteen bits choose among `2¹⁶ = 65,536` locations, so LC-3 uses a sixteen-bit `MAR`. We show only a few of those locations here. Each `ADDR` selects one complete sixteen-bit word, or two bytes, rather than a single byte.
+To add more locations, we need more address bits. Two bits choose among four locations. Sixteen bits choose among `2¹⁶ = 65,536` locations, so we widen `MAR` to sixteen bits. We show only a few of those locations here. Each `ADDR` selects one complete sixteen-bit number, or two bytes, rather than a single byte.
+
+For the rest of our example, we will use LC-3, a small teaching computer. It works with sixteen-bit groups called words. Our memory now matches its sixteen-bit data width and its address range of 65,536 locations.
 
 Address width and data width are separate choices. A sixteen-bit address can select 65,536 locations, while a thirty-two-bit address can select `2³²` locations. How many bytes that represents depends on the size of each location. In a byte-addressed system, thirty-two-bit addresses cover `4 GiB`. LC-3 instead addresses two-byte words.
 

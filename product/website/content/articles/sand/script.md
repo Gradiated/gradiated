@@ -170,11 +170,11 @@ We can now draw the whole memory array as a single block, with its latches, deco
 
 <!-- scene: computer-overview -->
 
-Let’s zoom out from our memory block to the computer it will serve. The central processing unit, or CPU, contains circuits that calculate, registers that hold working values, and control circuits that coordinate their work. Memory stores the information these circuits use, while input and output connect the machine to the outside world.
+We have circuits that calculate and circuits that remember. Now we can organise them into a machine whose task is determined by a program stored in memory.
 
-We will follow the von Neumann model, where the same memory stores both data and instructions. Data supplies the values to work on. Instructions tell the machine what to do with them. Changing the stored instructions lets the same circuits carry out a different task.
+We will follow the von Neumann model, where the same memory holds both data and instructions. Data supplies the values to work on, while instructions tell the machine what to do with them. Changing those instructions lets the same circuits perform a different task without changing their physical connections.
 
-Let’s look inside this machine, starting with the registers that hold its working values.
+The central processing unit, or CPU, carries out these instructions, using calculation circuits, working registers and control circuits. Memory holds the program and its data, while input and output connect the machine to the outside world.
 
 <!-- scene: working-registers -->
 
@@ -202,6 +202,8 @@ The same memory can hold both data and instructions. An instruction is a bit pat
 
 A register called the program counter, or `PC`, holds the `ADDR` of the instruction to fetch next. Another register, the instruction register, or `IR`, holds the instruction we have fetched.
 
+The machine repeatedly fetches an instruction, decodes it and carries it out. Usually, `PC` advances to the next instruction. A jump directs execution to a different `ADDR`, while a conditional branch does so only when a condition is met. This lets a program choose between actions or repeat a sequence of steps.
+
 <!-- scene: control -->
 
 The instruction bits enter decoding logic, which identifies the operation and its operands. The control unit uses this information to select paths, choose an ALU operation and enable the required register updates.
@@ -214,11 +216,15 @@ Let’s follow the instruction `ADD R0, R1, R2`. It tells the machine to add the
 
 The machine fetches the instruction into `IR` and decodes its fields. Control signals select `R1` and `R2`, direct the ALU to add, and enable `R0` to capture the result. `R0` now holds `9`. During the fetch, `PC` advances to the following instruction `ADDR`, ready for the machine to continue.
 
+This addition is one step. A program combines many such steps, using stored results, choices and repetition to carry out a larger task.
+
 <!-- scene: computer -->
 
 Let’s zoom out once more. The calculation circuits, working registers and control unit form our central processing unit, or CPU. Connected memory holds its program and data, while input and output connect it to the outside world.
 
-We have built a machine that can follow stored instructions. Our next step is to see how a task written by a person becomes the instruction bits that direct these circuits.
+We have built a machine that can follow different programs using the same hardware. That flexibility has a cost. Choosing operations and moving instructions and data between memory and the CPU take hardware, time and energy. Data movement can limit how quickly the machine works, a constraint we will return to when exploring memory systems, parallel processors and specialised chips.
+
+First, we will see how a task written by a person becomes the instruction bits that direct these circuits.
 
 <!-- footer -->
 

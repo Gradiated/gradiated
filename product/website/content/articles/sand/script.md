@@ -170,9 +170,9 @@ We can now draw the whole memory array as a single block, with its latches, deco
 
 <!-- scene: computer-overview -->
 
-We have circuits that calculate and circuits that remember. Now we can organise them into a machine whose task is determined by a program stored in memory.
+We have circuits that calculate and circuits that remember. Now we can organise them into a machine whose task is determined by a list of instructions stored in memory.
 
-We will follow the von Neumann model, where the same memory holds both data and instructions. Data supplies the values to work on, while instructions tell the machine what to do with them. Changing those instructions lets the same circuits perform a different task without changing their physical connections.
+We will follow the von Neumann model, where both data and instructions are stored in the same "unified" memory. In Harvard architecture, instructions and data instead have separate memories. Data supplies the values to work on, while instructions tell the machine what to do with them. Changing those instructions lets the same circuits perform a different task without changing their physical connections.
 
 The central processing unit, or CPU, carries out these instructions, using calculation circuits, working registers and control circuits. Memory holds the program and its data, while input and output connect the machine to the outside world.
 
@@ -229,5 +229,3 @@ First, we will see how a task written by a person becomes the instruction bits t
 <!-- footer -->
 
 From a switch to logic, calculation, memory and now a computer, each larger structure gives us a new ability. Next, we will follow the connection from code to physical action.
-
-The LC-3 example and the organisation of our computer diagram follow ETH Zürich’s [Digital Design and Computer Architecture course](https://safari.ethz.ch/ddca/spring2026/), particularly lecture 7 and its LC-3 diagram on slide 65. The illustration is simplified to introduce the parts one step at a time.

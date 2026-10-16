@@ -77,7 +77,12 @@ test("the complete preview retains all chapters and its own ending", () => {
     ),
   );
   assert.ok(html.includes("LC-3"));
-  assert.ok(html.includes("The LC-3 example"));
+  assert.ok(
+    html.includes(
+      "Next, we will follow the connection from code to physical action.",
+    ),
+  );
+  assert.ok(!html.includes('class="footnote"'));
   assert.ok(!html.includes(publication.footer));
 });
 

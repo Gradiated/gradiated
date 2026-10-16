@@ -128,12 +128,12 @@ export const COMPUTER_SCENES = (function () {
         selector,
       );
       path("M175 155 L255 180 V265 L175 290 Z", {}, selector);
-      const upper = lightPath("M88 185 H175 L255 222 H353", selector);
-      const lower = lightPath("M88 260 H175 L255 222 H353", selector);
+      const upper = lightPath("M88 185 H175 L255 222 H326", selector);
+      const lower = lightPath("M88 260 H175 L255 222 H326", selector);
       for (const [x, y] of [
         [135, 185],
         [135, 260],
-        [309, 222],
+        [285, 222],
       ]) {
         path(
           `M${x - 3} ${y + 4} L${x + 3} ${y - 4}`,
@@ -150,26 +150,24 @@ export const COMPUTER_SCENES = (function () {
       const selectZero = text(236, 305, "0", { class: "bit" }, selector);
       const selectOne = text(236, 305, "1", { class: "bit" }, selector);
       const selectedThree = text(
-        374,
-        227,
+        306,
+        211,
         "3",
         { class: "caption bit" },
         selector,
       );
       const selectedSix = text(
-        374,
-        227,
+        306,
+        211,
         "6",
         { class: "caption bit" },
         selector,
       );
+      box(selector, 326, 202, 76, 40, "adder");
+      path("M402 222 H424 M364 242 V276", {}, selector);
       gsap.set([selectOne, selectedSix], { opacity: 0 });
-      show(selector, "select-values", "working-registers", {}, 0.65);
-      caption(
-        "select-values",
-        "a control signal chooses the value",
-        "working-registers",
-      );
+      show(selector, "select-values", "alu", {}, 0.65);
+      caption("select-values", "a control signal chooses the value", "alu");
       gsap.set(upper.line, { opacity: 1 });
       upper.state.amount = 1;
       const selectDemo = gsap.timeline({ paused: true, repeat: -1 });
@@ -191,7 +189,7 @@ export const COMPUTER_SCENES = (function () {
       selectDemo.to(selectedThree, { opacity: 1, duration: 0.4 }, 5.65);
       illuminate(selectDemo, upper, 5);
       selectDemo.to({}, { duration: 1.2 }, 5.65);
-      playInScene("select-values", selectDemo, "memory-buses");
+      playInScene("select-values", selectDemo, "working-registers");
     }
 
     const timing = group({ "data-diagram": "timing" }, root);
@@ -264,6 +262,34 @@ export const COMPUTER_SCENES = (function () {
 
     if (!includeComputer) return { demos, timingDemo };
 
+    const overview = group({ "data-diagram": "computer-overview" }, root);
+    box(overview, 67, 61, 306, 190, "");
+    text(220, 87, "CPU", { class: "caption" }, overview);
+    box(overview, 88, 106, 112, 53, "calculate");
+    box(overview, 240, 106, 112, 53, "registers");
+    box(overview, 164, 189, 112, 40, "control");
+    path(
+      "M200 132 H240 M185 189 V176 H144 V159 M255 189 V176 H296 V159",
+      { class: "muted" },
+      overview,
+    );
+    path(
+      "M204 251 V294 M236 251 V294 M29 175 H67 M373 175 H411",
+      { class: "muted" },
+      overview,
+    );
+    box(overview, 111, 294, 218, 69, "");
+    text(220, 318, "memory", { class: "caption" }, overview);
+    text(220, 344, "instructions + data", { class: "caption" }, overview);
+    text(29, 162, "input", { class: "tiny" }, overview);
+    text(404, 162, "output", { class: "tiny" }, overview);
+    show(overview, "computer-overview", "working-registers", {}, 0.65);
+    caption(
+      "computer-overview",
+      "the same circuits, directed by a stored program",
+      "working-registers",
+    );
+
     const machine = group(
       { "data-diagram": "computer-machine" },
       root,
@@ -312,7 +338,8 @@ export const COMPUTER_SCENES = (function () {
       { x: 113, y: 0, scale: 1.25 },
       { x: 113, y: 0, scale: 0.6 },
     );
-    key(registerBank, "alu", { x: 0, y: 0, scale: 1 });
+    key(registerBank, "select-values", { opacity: 0 });
+    key(registerBank, "alu", { x: 0, y: 0, scale: 1, opacity: 1 });
     key(registerBank, "addressed-memory", { opacity: 0 });
     key(registerBank, "program", { opacity: 1 });
     const bitExpansion = group({ "data-part": "bit-expansion" }, root);
@@ -323,11 +350,11 @@ export const COMPUTER_SCENES = (function () {
       { class: "caption bit" },
       bitExpansion,
     );
-    show(bitExpansion, "working-registers", "alu");
+    show(bitExpansion, "working-registers", "select-values");
     caption(
       "working-registers",
       "more storage, built from familiar parts",
-      "alu",
+      "select-values",
     );
 
     const alu = group({ "data-part": "alu" }, machine, "301 186");

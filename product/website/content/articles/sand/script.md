@@ -168,17 +168,23 @@ We can now draw the whole memory array as a single block, with its latches, deco
 
 ## Building a computer
 
-<!-- scene: select-values -->
+<!-- scene: computer-overview -->
 
-We will build a computer that follows the von Neumann model, where instructions and data are both stored in the same "unified" memory.
+Let’s zoom out from our memory block to the computer it will serve. The central processing unit, or CPU, contains circuits that calculate, registers that hold working values, and control circuits that coordinate their work. Memory stores the information these circuits use, while input and output connect the machine to the outside world.
 
-Our adder calculates with whatever values reach its inputs. To choose those values, we use a multiplexer. We have already built one in our memory’s read circuit, where `ADDR` selects which row’s stored bits reach `Q`. Here, the same idea chooses between inputs to the adder, according to a selection signal at the bottom. We can build this selection circuit from the logic gates we already know. Here, each value travels through a bundle of four wires, carrying the four bits of its binary number. The idea of selectively choosing which input data to pass will be very common going forward.
+We will follow the von Neumann model, where the same memory stores both data and instructions. Data supplies the values to work on. Instructions tell the machine what to do with them. Changing the stored instructions lets the same circuits carry out a different task.
+
+Let’s look inside this machine, starting with the registers that hold its working values.
 
 <!-- scene: working-registers -->
 
-Let’s zoom out again and give our machine several registers for its working values. For our example, we will use a small teaching computer called LC-3. It has eight general-purpose registers, named `R0` to `R7`, each holding sixteen bits. More bit positions let us represent larger numbers using the same binary rules.
+Let’s look more closely at the registers inside the CPU. For our example, we will use a small teaching computer called LC-3. It has eight general-purpose registers, named `R0` to `R7`, each holding sixteen bits. This sixteen-bit group is called a word in LC-3. More bit positions let us represent larger numbers using the same binary rules.
 
 We will begin with `3` in `R1` and `6` in `R2`. The register name identifies the slot, while its contents are the value stored there.
+
+<!-- scene: select-values -->
+
+Our adder calculates with whatever values reach its inputs. We already used a multiplexer to select which stored number reaches the memory’s output. Here, another multiplexer chooses which value reaches the adder. Its selection signal chooses one input and passes it on. The four-wire bundles in this small example carry the same four-bit numbers we used earlier.
 
 <!-- scene: alu -->
 

@@ -26,6 +26,7 @@ test("the public guide ends with memory and excludes all chapter 5 prose and lin
     "von Neumann",
     "LC-3",
     "program counter",
+    "sand-computer-overview",
     "sand-select-values",
     "sand-computer",
   ])
@@ -48,11 +49,7 @@ test("the public guide ends with memory and excludes all chapter 5 prose and lin
   );
   assert.ok(html.includes("selects a complete four-bit number"));
   assert.ok(!html.includes('class="footnote"'));
-  assert.ok(
-    html.includes(
-      "We have circuits that calculate and remember.",
-    ),
-  );
+  assert.ok(html.includes("We have circuits that calculate and remember."));
   assert.ok(
     !html.includes(
       "Our adder calculates with whatever values reach its inputs.",
@@ -66,6 +63,19 @@ test("the complete preview retains all chapters and its own ending", () => {
   const html = renderPost(source, template, scenes);
   assert.deepEqual(sceneKeys(html), scenes);
   assert.ok(html.includes("Building a computer"));
+  const previewScenes = sceneKeys(html);
+  assert.deepEqual(
+    previewScenes.slice(
+      previewScenes.indexOf("memory-buses") + 1,
+      previewScenes.indexOf("alu") + 1,
+    ),
+    ["computer-overview", "working-registers", "select-values", "alu"],
+  );
+  assert.ok(
+    html.includes(
+      "We already used a multiplexer to select which stored number reaches the memory’s output.",
+    ),
+  );
   assert.ok(html.includes("LC-3"));
   assert.ok(html.includes("The LC-3 example"));
   assert.ok(!html.includes(publication.footer));

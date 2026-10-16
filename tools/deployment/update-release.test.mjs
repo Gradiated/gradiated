@@ -25,6 +25,11 @@ async function fixture() {
     "infra/environments/prod/us-east-1/kubernetes/workloads",
   );
   await mkdir(workloads, { recursive: true });
+  await mkdir(path.join(workloads, "recovery"), { recursive: true });
+  await writeFile(
+    path.join(workloads, "recovery/cronjobs.yaml"),
+    "image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/product:old\n".repeat(3),
+  );
   const ops = path.join(workloads, "../operations/ops-mcp");
   await mkdir(ops, { recursive: true });
   await writeFile(path.join(ops, "workload.yaml"), "image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/product:ops-mcp-release-required\n");
@@ -146,3 +151,17 @@ test("refuses a release without every image", async () => {
    await updateRelease({root, sourceSha: SOURCE_SHA, digests: DIGESTS, gpuControllerDigest: digest});
    assert.equal(await readFile(file, "utf8"), `image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/product@${digest}\n`);
  });
+
+test("release updates all weekly recovery worker images", async () => {
+  const { root } = await fixture();
+  await updateRelease({ root, sourceSha: SOURCE_SHA, digests: DIGESTS });
+  const manifest = await readFile(
+    path.join(
+      root,
+      "infra/environments/prod/us-east-1/kubernetes/workloads/recovery/cronjobs.yaml",
+    ),
+    "utf8",
+  );
+  assert.equal(manifest.split(PRODUCT_DIGEST).length - 1, 3);
+  assert.ok(!manifest.includes(":old"));
+});

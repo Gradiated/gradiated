@@ -19,3 +19,6 @@ fe345f39f0d5c925b32144ea9db99fb7da860258:infra/docs/DELIVERY_PLAN.md:generic-api
 a4369ed3c0f599bf85ab22ccb6953cabdc9d37ab:infra/docs/DELIVERY_PLAN.md:generic-api-key:73
 # Synthetic long-context recall prompt in a model quality suite:
 d21c562569af583eadf6e5792c121919d6ecb3d6:research/sol/experiments/gemma4_31b/research_lab/projects/sglang_v0512_h200_stock_quality_validation/quality_suite.py:generic-api-key:20
+
+# ClickHouse production service UUID used by a test to refuse deletion; an identifier, not authentication.
+a18b5b3125da03bf6dfb7502cd2e848feb4f6bc4:infra/environments/prod/us-east-1/kubernetes/workloads/recovery/verify.test.mjs:generic-api-key:299

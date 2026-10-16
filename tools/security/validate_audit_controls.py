@@ -22,9 +22,12 @@ def main():
     assert resources, "Missing rendered Terraform mock state"
     checked = 0
     patterns = {}
+    recovery_policy = None
     backup_policy = None
     for resource in resources:
         kind, values = resource["type"], resource["values"]
+        if kind == "aws_iam_role_policy" and resource["name"] == "recovery":
+            recovery_policy = values["policy"]
         if kind == "aws_iam_role_policy" and resource["name"] == "monitoring_backup":
             backup_policy = values["policy"]
         if kind == "aws_cloudwatch_event_rule" and resource["name"] == "regional":
@@ -43,6 +46,35 @@ def main():
         errors = [finding for finding in findings if finding["findingType"] == "ERROR"]
         assert not errors, f"{resource['address']}: {errors}"
         checked += 1
+
+    if recovery_policy:
+        target = "arn:aws:rds:us-east-1:873716897517:db:gradiated-recovery-pg-test"
+        owned = [{"ContextKeyName": "aws:ResourceTag/Purpose", "ContextKeyType": "string", "ContextKeyValues": ["weekly-recovery-verification"]}]
+        create = [
+            {"ContextKeyName": "aws:RequestTag/Purpose", "ContextKeyType": "string", "ContextKeyValues": ["weekly-recovery-verification"]},
+            {"ContextKeyName": "rds:DatabaseClass", "ContextKeyType": "string", "ContextKeyValues": ["db.t4g.small"]},
+            {"ContextKeyName": "rds:PubliclyAccessible", "ContextKeyType": "boolean", "ContextKeyValues": ["false"]},
+            {"ContextKeyName": "rds:MultiAz", "ContextKeyType": "boolean", "ContextKeyValues": ["false"]},
+        ]
+        checks = [("rds:RestoreDBInstanceFromDBSnapshot", target, True, create),
+                  ("rds:DeleteDBInstance", target, True, owned), ("rds:DeleteDBInstance", target, False, []),
+                  ("rds:ModifyDBInstance", target, False, owned)]
+        for source in ["gradiated-prod", "gradiated-prod-metabase"]:
+            for action in ["rds:DeleteDBInstance", "rds:ModifyDBInstance"]:
+                checks.append((action, f"arn:aws:rds:us-east-1:873716897517:db:{source}", False, owned))
+        for key, value in [("rds:PubliclyAccessible", "true"), ("rds:MultiAz", "true"), ("rds:DatabaseClass", "db.r7g.16xlarge")]:
+            context = [{**entry, "ContextKeyValues": [value]} if entry["ContextKeyName"] == key else entry for entry in create]
+            checks.append(("rds:RestoreDBInstanceFromDBSnapshot", target, False, context))
+        for action in ["CreateSecret", "PutSecretValue", "UpdateSecret", "RotateSecret", "DeleteSecret"]:
+            checks.append(("secretsmanager:" + action, "*", False, []))
+        for action, resource, expected, context in checks:
+            arguments = ["iam", "simulate-custom-policy", "--policy-input-list", recovery_policy,
+                         "--action-names", action, "--resource-arns", resource]
+            if context:
+                arguments += ["--context-entries", json.dumps(context)]
+            decision = aws(*arguments)["EvaluationResults"][0]["EvalDecision"]
+            assert (decision == "allowed") == expected, f"Recovery {action} {resource}: {decision}"
+        print(f"PASS: {len(checks)} AWS IAM recovery safety cases")
 
     assert backup_policy, "Missing monitoring backup policy"
     # Ask IAM to evaluate positive selections and realistic near misses, rather

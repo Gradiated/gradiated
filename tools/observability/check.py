@@ -32,7 +32,7 @@ def main():
     assert 0 < root_export['range_seconds'] <= root_export['period_seconds'] - 60, 'CloudWatch start-time rounding must not create a second period whose newer zero masks root use'
     dashboards = {d['uid']: d for p in OBS.glob('*.json')
                   if (d := json.loads(p.read_text()))}
-    groups = [g for name in ('prometheus-rules.yaml', 'logging-prometheus-rules.yaml', 'controller-prometheus-rules.yaml', 'autoscaling-prometheus-rules.yaml', 'model-replica-rules.yaml', 'data-store-prometheus-rules.yaml', 'security-prometheus-rules.yaml')
+    groups = [g for name in ('prometheus-rules.yaml', 'logging-prometheus-rules.yaml', 'controller-prometheus-rules.yaml', 'autoscaling-prometheus-rules.yaml', 'model-replica-rules.yaml', 'data-store-prometheus-rules.yaml', 'security-prometheus-rules.yaml', 'recovery-prometheus-rules.yaml')
               for g in yaml.safe_load((OBS / name).read_text())['spec']['groups']]
     alerts = {rule['alert']: rule for group in groups for rule in group['rules'] if 'alert' in rule}
     for name, rule in alerts.items():
@@ -804,6 +804,29 @@ def main():
     scenario('AWS root missing startup grace', [], None, [root_alert, root_missing], eval_time='20m')
     scenario('AWS root missing telemetry', [], root_missing, [root_alert, root_missing], eval_time='35m')
     scenario('AWS root telemetry recovered', [root_usage('_x64 0x20')], None, [root_alert, root_missing], eval_time='35m')
+
+    recovery_failure = 'DatabaseRestoreVerificationFailed'
+    def recovery_series(metric, values, cronjob='restore-postgres'):
+        return {'series': f'{metric}{{namespace="gradiated",cronjob="{cronjob}"}}', 'values': values}
+    failure_series = {'series': 'kube_job_status_failed{namespace="gradiated",job_name="restore-postgres-123"}', 'values': '1x80'}
+    scenario('restore verification failure reports', [failure_series], recovery_failure, [recovery_failure], {'namespace': 'gradiated', 'job_name': 'restore-postgres-123'})
+    scenario('no failed restore job', [], None, [recovery_failure])
+    weekly = 'DatabaseRestoreVerificationOverdue'
+    weekly_labels = {'namespace': 'gradiated', 'cronjob': 'restore-postgres'}
+    scenario('weekly restore overdue', [recovery_series('kube_cronjob_status_last_successful_time', '1x900')], weekly, [weekly], weekly_labels, '9d', '15m')
+    scenario('weekly restore recent', [recovery_series('kube_cronjob_status_last_successful_time', '1+900x900')], None, [weekly], eval_time='9d', interval='15m')
+    scenario('weekly restore first-run grace', [recovery_series('kube_cronjob_created', '0x80')], None, [weekly], eval_time='8h', interval='15m')
+    scenario('weekly restore never commissioned', [recovery_series('kube_cronjob_created', '0x200')], weekly, [weekly], weekly_labels, '2d', '15m')
+    maintenance = 'DatabaseRecoveryCleanupOverdue'
+    cleanup_labels = {'namespace': 'gradiated', 'cronjob': 'restore-cleanup'}
+    scenario('daily recovery maintenance overdue', [recovery_series('kube_cronjob_status_last_successful_time', '1x200', 'restore-cleanup')], maintenance, [maintenance], cleanup_labels, '2d', '15m')
+    scenario('daily recovery maintenance recent', [recovery_series('kube_cronjob_status_last_successful_time', '120000x200', 'restore-cleanup')], None, [maintenance], eval_time='2d', interval='15m')
+    scenario('daily maintenance never commissioned', [recovery_series('kube_cronjob_created', '0x200', 'restore-cleanup')], maintenance, [maintenance], cleanup_labels, '2d', '15m')
+    scenario('daily maintenance first-run grace', [recovery_series('kube_cronjob_created', '0x80', 'restore-cleanup')], None, [maintenance], eval_time='8h', interval='15m')
+    missing = 'DatabaseRestoreScheduleMissing'
+    other_schedules = [recovery_series('kube_cronjob_info', '1x80', cronjob) for cronjob in ['restore-clickhouse', 'restore-cleanup']]
+    scenario('weekly recovery schedule missing', other_schedules, missing, [missing], weekly_labels, '35m')
+    scenario('all recovery schedules present', other_schedules + [recovery_series('kube_cronjob_info', '1x80')], None, [missing], eval_time='35m')
 
     falco_alert = 'FalcoCriticalEvents'
     assert alerts[falco_alert]['labels']['severity'] == 'critical', 'Critical runtime detections must route to urgent incident.io paging'

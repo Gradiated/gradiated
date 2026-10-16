@@ -265,7 +265,7 @@ taken from the manifests and live workloads:
 | --- | --- |
 | All | `kube-system` (VPC CNI, network policy agent, kube-proxy, EBS CSI, Pod Identity agent, CoreDNS), `kube-public`, `kube-node-lease`, `kyverno` |
 | Privileged containers | `falco`; `tailscale-inference`, whose kernel-mode proxies need privileges |
-| Host namespaces and hostPath | `falco`; `trivy-system` (node collector); node-exporter and `alloy-logs` pods by `app.kubernetes.io/name` |
+| Host namespaces and hostPath | `falco`; `trivy-system` (node collector); the node-exporter and `alloy-logs` DaemonSets and their pods in `observability`, by a match condition on `app.kubernetes.io/name` and `app.kubernetes.io/instance` (an `objectSelector` exclusion does not apply in Kyverno 1.19 background scans) |
 
 The first reports will include existing findings, for example containers in the
 kube-prometheus-stack release that set no resource requests. Fix a finding or

@@ -182,7 +182,7 @@ Let’s return to our memory array. It has four locations, each holding four bit
 
 <!-- scene: memory-interface -->
 
-We can hide the individual latches inside four larger blocks, one for each stored number. The address and data wires still do the same jobs. To connect this memory to a processor, we add two registers that hold the values on those wires during an access.
+We can hide the individual latches inside four larger blocks, one for each stored number. `ADDR` still selects the location, `D` carries the number to write, and `Q` carries the number read. To connect this memory to a processor, we add two registers that hold the values on those wires during an access.
 
 The memory address register, or `MAR`, holds the `ADDR` of the location to access. The memory data register, or `MDR`, holds either the number to write or the number just read. These additional storage circuits keep the address and data steady while the access proceeds.
 

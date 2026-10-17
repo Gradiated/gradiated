@@ -820,15 +820,37 @@ export const COMPUTER_SCENES = (function () {
     demos.push(...memoryInterface.demos);
 
     const io = group({ "data-part": "io-building-block" }, root, "0 0");
+    const ioContents = group({}, io);
     mk(
       "rect",
       { x: 330, y: 10, width: 96, height: 38, rx: 4, class: "io-block-frame" },
-      io,
+      ioContents,
     );
-    text(378, 35, "I/O", { class: "io-block-name caption" }, io);
+    text(378, 35, "I/O", { class: "io-block-name caption" }, ioContents);
     key(io, "processing-block", { x: 0, y: 0 }, null, 0.65);
-    key(io, "addressed-memory", { x: -304, y: 116 });
-    key(io, "computer", { x: -158, y: -6 });
+    key(io, "instruction", { x: -223, y: 167, scale: 0.7 });
+    key(io, "addressed-memory", { x: -205, y: 119, scale: 0.7 });
+    key(io, "computer", { x: -158, y: -6, scale: 1 });
+    const ioTransitions = [
+      "processing-block",
+      "instruction",
+      "instruction-control",
+      "instruction-fetch",
+      "control",
+    ].map(index);
+    afterRender.push(() => {
+      const p = tl.time();
+      const start = Math.floor(p);
+      const transition = Math.max(
+        0,
+        Math.min(1, (p - start - hold) / (1 - 2 * hold)),
+      );
+      const opacity = ioTransitions.includes(start)
+        ? Math.max(0, 1 - transition / 0.12) +
+          Math.max(0, (transition - 0.88) / 0.12)
+        : 1;
+      gsap.set(ioContents, { opacity });
+    });
     const ioLink = group({ "data-part": "io-cpu-link" }, root);
     path(
       "M220 44 V57 M216 48 L220 44 L224 48 M216 53 L220 57 L224 53",

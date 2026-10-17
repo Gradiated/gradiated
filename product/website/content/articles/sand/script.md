@@ -295,7 +295,7 @@ The control unit must also keep track of which step comes next. It uses stored s
 
 <!-- scene: computer -->
 
-Let’s zoom out once more. Our processing unit and control unit, together with registers such as `PC` and `IR`, form the central processing unit, or `CPU`. Connected memory holds its instructions and data, while input and output connect the machine to the outside world.
+Let’s zoom out once more. Our control unit contains `PC`, `IR` and the circuits that decode and sequence instructions. Together with the processing unit, it forms the central processing unit, or `CPU`. The green memory block groups the memory array with its `MAR` and `MDR` interface, while input and output connect the machine to the outside world.
 
 We now have a machine that can follow a stored program. Instructions can calculate, transfer data or change which instruction runs next, allowing larger tasks to be assembled from small steps. This flexibility costs hardware, time and energy, including the movement of instructions and data between memory and the CPU. We will return to these limits as we explore larger computers.
 

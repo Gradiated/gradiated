@@ -50,16 +50,47 @@ export const INSTRUCTION_CYCLE_SCENES = {
       return { base, lit };
     };
     const cpu = group({ "data-part": "fetch-cpu-outline" }, diagram);
-    rect(cpu, 2, 4, 434, 284, "fetch-cpu-frame");
-    label(cpu, 219, 37, "CPU");
+    rect(cpu, 2, 4, 434, 214, "fetch-cpu-frame");
+    rect(cpu, 196, 0, 46, 16, "timing-paper");
+    label(cpu, 219, 14, "CPU");
     show(cpu, "computer", undefined);
     diagram.insertBefore(cpu, wires);
 
+    const boundaries = group({ "data-part": "system-boundaries" }, diagram);
+    diagram.insertBefore(boundaries, wires);
+    const controlBoundary = group(
+      { "data-part": "control-unit-boundary" },
+      boundaries,
+    );
+    const controlFrame = path(
+      "M22 16 H430 V98 H266 V98 H22 Z",
+      { class: "fetch-control-frame" },
+      controlBoundary,
+    );
+    label(controlBoundary, 231, 35, "control unit");
+    key(controlBoundary, "program");
+    key(controlFrame, "program", {
+      attr: { d: "M22 16 H430 V98 H266 V98 H22 Z" },
+    });
+    key(controlFrame, "execute", {
+      attr: { d: "M22 16 H430 V212 H266 V98 H22 Z" },
+    });
+    const memoryBoundary = group(
+      { "data-part": "memory-system-boundary" },
+      boundaries,
+    );
+    const memoryBoundaryShape = "M10 220 H428 V438 H100 V294 H10 Z";
+    path(memoryBoundaryShape, { class: "memory-block-tint" }, memoryBoundary);
+    path(memoryBoundaryShape, { class: "memory-block-frame" }, memoryBoundary);
+    label(memoryBoundary, 150, 235, "memory");
+    show(memoryBoundary, "program", undefined);
+
     const memory = group({ "data-part": "program-memory" }, ports, "0 0");
-    rect(memory, 106, 296, 314, 138, "memory-block-tint");
+    const tableTint = rect(memory, 106, 296, 314, 138, "memory-block-tint");
+    show(tableTint, "addressed-memory", "program");
     rect(memory, 106, 296, 314, 138, "memory-block-frame");
     bit(memory, 141, 316, "ADDR", { class: "tiny bit" });
-    label(memory, 298, 316, "memory");
+    const memoryHeading = label(memory, 298, 316, "memory");
     path(
       "M106 324 H420 M177 296 V434 M106 360 H420 M106 396 H420",
       { class: "thin muted" },
@@ -98,20 +129,20 @@ export const INSTRUCTION_CYCLE_SCENES = {
     label(mar, 54, 235, "MAR");
     const marValue = bit(mar, 54, 272, "—", { "data-fetch-value": "mar" });
     show(mar, "program", undefined);
-    const addressRoute = route("pc-mar", "M38 66 H8 V266 H16", "program");
+    const addressRoute = route("pc-mar", "M38 66 H12 V266 H16", "program");
     const selectionRoute = route(
       "mar-memory",
-      "M92 266 H98 V342 H106",
+      "M92 266 H102 V342 H106",
       "program",
     );
     const increment = group({}, ports);
     rect(increment, 142, 49, 29, 32);
     bit(increment, 156.5, 70, "+1", { class: "tiny bit" });
-    bus(increment, "M114 66 H142 M171 66 H182 V14 H76 V46");
+    bus(increment, "M114 66 H142 M171 66 H182 V22 H76 V46");
     show(increment, "instruction-fetch", undefined);
     const mdr = group({}, ports);
     rect(mdr, 212, 236, 208, 40);
-    label(mdr, 316, 225, "MDR");
+    label(mdr, 316, 235, "MDR");
     const mdrValue = bit(mdr, 316, 261, "—", {
       class: "fetch-bits bit",
       "data-fetch-value": "mdr",
@@ -160,8 +191,8 @@ export const INSTRUCTION_CYCLE_SCENES = {
     show(pu, "execute", undefined);
 
     const cu = group({ "data-part": "fetch-control-unit" }, ports);
-    rect(cu, 280, 112, 140, 80, "fetch-control-frame");
-    label(cu, 350, 131, "control unit");
+    rect(cu, 280, 112, 140, 80);
+    label(cu, 350, 131, "controller");
     const decoded = bit(cu, 350, 163, "ADD R0 R0 R3", {
       class: "fetch-bits bit",
     });
@@ -193,14 +224,14 @@ export const INSTRUCTION_CYCLE_SCENES = {
     show(states, "control", undefined);
     show(decoded, "execute", "control");
     const clock = group({ "data-part": "sequencing-clock" }, ports);
-    mk("circle", { cx: 287, cy: 207, r: 4, class: "computer-glow" }, clock);
+    mk("circle", { cx: 287, cy: 200, r: 4, class: "computer-glow" }, clock);
     const clockPulse = mk(
       "circle",
-      { cx: 287, cy: 207, r: 4, class: "fetch-clock-pulse" },
+      { cx: 287, cy: 200, r: 4, class: "fetch-clock-pulse" },
       clock,
     );
-    label(clock, 323, 211, "clock", { class: "tiny" });
-    path("M287 203 V192", { class: "thin muted" }, clock);
+    label(clock, 323, 204, "clock", { class: "tiny" });
+    path("M287 196 V192", { class: "thin muted" }, clock);
     show(clock, "control", undefined);
 
     const io = group({}, ports);
@@ -211,7 +242,7 @@ export const INSTRUCTION_CYCLE_SCENES = {
       rect(io, 16, y, 69, 22);
       label(io, 50.5, y + 15, name, { class: "tiny" });
     }
-    path("M34 378 V288 M16 424 H4 V288", { class: "thin muted" }, io);
+    path("M16 389 H6 V218 M16 424 H2 V218", { class: "thin muted" }, io);
     show(io, "computer", undefined);
     const status = label(diagram, 233, 8, "", {
       class: "fetch-phase caption",
@@ -314,6 +345,7 @@ export const INSTRUCTION_CYCLE_SCENES = {
       const full = stage === "control" || stage === "computer";
       const fetching = stage === "instruction-fetch" || full;
       const executing = stage === "execute" || full;
+      setText(memoryHeading, stage === "stored" ? "memory" : "contents");
       setText(pcValue, stage === "program" ? PROGRAM_START : state.pc);
       setText(marValue, state.mar ?? "—");
       setText(mdrValue, state.mdr ?? "—");

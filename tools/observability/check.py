@@ -26,10 +26,11 @@ def main():
         parser.error('promtool is required')
     exporter = yaml.safe_load((ROOT / 'infra/environments/prod/us-east-1/kubernetes/platform/cloudwatch-exporter.yaml').read_text())
     exporter_config = yaml.safe_load(exporter['spec']['source']['helm']['valuesObject']['config'])
-    root_export = next(metric for metric in exporter_config['metrics']
-                       if metric['aws_namespace'] == 'Gradiated/Security' and metric['aws_metric_name'] == 'root_usage')
-    assert root_export['aws_statistics'] == ['Maximum']
-    assert 0 < root_export['range_seconds'] <= root_export['period_seconds'] - 60, 'CloudWatch start-time rounding must not create a second period whose newer zero masks root use'
+    for metric_name in ('root_usage', 'urgent_findings', 'review_findings'):
+        security_export = next(metric for metric in exporter_config['metrics']
+                               if metric['aws_namespace'] == 'Gradiated/Security' and metric['aws_metric_name'] == metric_name)
+        assert security_export['aws_statistics'] == ['Maximum']
+        assert 0 < security_export['range_seconds'] <= security_export['period_seconds'] - 60, 'CloudWatch rounding must not create a second period whose newer zero masks security events'
     dashboards = {d['uid']: d for p in OBS.glob('*.json')
                   if (d := json.loads(p.read_text()))}
     groups = [g for name in ('prometheus-rules.yaml', 'logging-prometheus-rules.yaml', 'controller-prometheus-rules.yaml', 'autoscaling-prometheus-rules.yaml', 'model-replica-rules.yaml', 'data-store-prometheus-rules.yaml', 'security-prometheus-rules.yaml', 'recovery-prometheus-rules.yaml')
@@ -47,6 +48,8 @@ def main():
         assert not annotations.get('runbook_url'), name
         if name in ('AwsRootAccountUsed', 'AwsRootUsageMonitoringMissing'):
             assert annotations['logs_url'] == 'https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#logsV2:log-groups/log-group/%252Fgradiated%252Fsecurity%252Fcloudtrail', name
+        elif name in ('AwsUrgentSecurityFinding', 'AwsSecurityFindingNeedsReview'):
+            assert annotations['logs_url'] == 'https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#logsV2:log-groups/log-group/%252Fgradiated%252Fsecurity%252Ffindings', name
         else:
             assert annotations['logs_url'].startswith('https://grafana.gradiated.com/d/gradiated-logs?'), name
 
@@ -804,6 +807,15 @@ def main():
     scenario('AWS root missing startup grace', [], None, [root_alert, root_missing], eval_time='20m')
     scenario('AWS root missing telemetry', [], root_missing, [root_alert, root_missing], eval_time='35m')
     scenario('AWS root telemetry recovered', [root_usage('_x64 0x20')], None, [root_alert, root_missing], eval_time='35m')
+
+    for alert, metric_name, severity in [('AwsUrgentSecurityFinding', 'urgent_findings', 'critical'), ('AwsSecurityFindingNeedsReview', 'review_findings', 'warning')]:
+        assert alerts[alert]['labels']['severity'] == severity
+        def finding_series(values, namespace='observability'):
+            return {'series': f'gradiated_security_{metric_name}_maximum{{namespace="{namespace}",job="cloudwatch-exporter",service="cloudwatch-exporter"}}', 'values': values}
+        scenario(alert + ' first positive scrape', [finding_series('_x10 1x30')], alert, [alert], eval_time='6m')
+        scenario(alert + ' idle', [finding_series('0x40')], None, [alert])
+        scenario(alert + ' application impersonation ignored', [finding_series('0x40'), finding_series('1x40', namespace='gradiated')], None, [alert])
+        scenario(alert + ' expired event is not current finding status', [finding_series('1x10 0x40')], None, [alert])
 
     recovery_failure = 'DatabaseRestoreVerificationFailed'
     def recovery_series(metric, values, cronjob='restore-postgres'):

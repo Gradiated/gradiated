@@ -1,0 +1,14 @@
+--- a/accelerate/utils/modeling.py
++++ b/accelerate/utils/modeling.py
+@@ -1927,8 +1927,9 @@
+ 
+         if "weight_map" in index:
+             index = index["weight_map"]
+-        checkpoint_files = sorted(list(set(index.values())))
+-        checkpoint_files = [os.path.join(checkpoint_folder, f) for f in checkpoint_files]
++        from .gradiated_checkpoint_paths import validated_checkpoint_files
++
++        checkpoint_files = validated_checkpoint_files(checkpoint_folder, index.values())
+ 
+     # Logic for missing/unexepected keys goes here.
+ 

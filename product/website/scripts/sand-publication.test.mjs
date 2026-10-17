@@ -93,6 +93,17 @@ test("the complete preview retains all chapters and its own ending", () => {
       "We already used a multiplexer to select which stored number reaches the memory’s output.",
     ),
   );
+  assert.deepEqual(
+    previewScenes.slice(previewScenes.indexOf("instruction-control") + 1),
+    [
+      "addressed-memory",
+      "program",
+      "instruction-fetch",
+      "execute",
+      "control",
+      "computer",
+    ],
+  );
   assert.ok(html.includes("LC-3"));
   assert.ok(
     html.includes(

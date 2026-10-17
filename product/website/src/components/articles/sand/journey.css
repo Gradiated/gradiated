@@ -815,3 +815,36 @@ html:has(.sand-journey) {
   font-size: 12px;
   opacity: 0.35;
 }
+
+.sand-journey #d2 text.fetch-bits {
+  font-size: 10.5px;
+  font-weight: 500;
+}
+.sand-journey #d2 text.fetch-address {
+  font-size: 11px;
+}
+.sand-journey #d2 text.fetch-transfer {
+  font-size: 11px;
+  paint-order: stroke;
+  stroke: var(--paper);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+.sand-journey #d2 text.fetch-phase {
+  font-size: 11px;
+}
+.sand-journey #d2 .fetch-control-frame {
+  fill: rgba(98, 119, 153, 0.06);
+  stroke: rgba(98, 119, 153, 0.65);
+  stroke-width: 1.3px;
+}
+.sand-journey #d2 .fetch-cpu-frame {
+  stroke: var(--ink);
+  stroke-width: 1px;
+  fill: none;
+  opacity: 0.35;
+}
+.sand-journey #d2 .fetch-clock-pulse {
+  fill: var(--signal-stroke);
+  stroke: none;
+}

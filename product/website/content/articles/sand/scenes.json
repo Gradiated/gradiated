@@ -39,7 +39,8 @@
   "instruction-control",
   "addressed-memory",
   "program",
-  "control",
+  "instruction-fetch",
   "execute",
+  "control",
   "computer"
 ]

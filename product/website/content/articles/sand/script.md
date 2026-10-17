@@ -267,39 +267,39 @@ The result returning to the registers does not automatically replace a stored nu
 
 <!-- scene: addressed-memory -->
 
-Now bring our memory and its interface alongside the fast storage registers and ALU. The fast storage registers keep the values needed immediately, while memory holds the larger collection of program instructions and data.
+Where does the control unit get its instructions? Let’s bring memory back into the picture. Our familiar `ADD R0, R0, R3` is stored there as `0001 000 000 0 00 011`. The next location holds the same instruction, asking for another addition. A sequence of stored instructions forms a program.
 
-The processor supplies an `ADDR` through `MAR` and exchanges a sixteen-bit word through `MDR`. This is the same read-and-write connection we have just built, now serving the larger machine.
+Instructions and data share this memory. The bits themselves carry no label saying which they are. Fetching a bit pattern as an instruction tells the control unit to interpret it as an operation, while reading it as data supplies a value to work with.
 
 <!-- scene: program -->
 
-The same memory can hold both data and instructions. An instruction is a bit pattern specifying an operation and the values or locations involved. Storing a sequence of instructions gives us a program.
+We need to keep track of where we are in the program. The program counter, or `PC`, is a register holding the address of the next instruction to fetch. Here, we start at `12288`. Copying that address into `MAR` selects the memory location, using the same address connection we built earlier. The figure shows addresses as ordinary decimal numbers to keep them readable.
 
-A register called the program counter, or `PC`, holds the `ADDR` of the instruction to fetch next. Another register, the instruction register, or `IR`, holds the instruction we have fetched. To fetch it, the processor copies `PC` into `MAR`, reads memory into `MDR`, then transfers the instruction to `IR`.
+<!-- scene: instruction-fetch -->
 
-The machine repeatedly fetches an instruction, decodes it and carries it out. Usually, `PC` advances to the next instruction. A jump directs execution to a different `ADDR`, while a conditional branch does so only when a condition is met. This lets a program choose between actions or repeat a sequence of steps.
+We can now fetch the instruction. Memory copies the sixteen bits at the selected location into `MDR`. From there, they travel to a new register called the instruction register, or `IR`. It holds the current instruction while the control unit interprets it and directs the work.
 
-<!-- scene: control -->
-
-The instruction bits enter decoding logic, which identifies the operation and its operands. The control unit uses this information to select paths, choose an ALU operation and enable the required register updates.
-
-The controller also remembers which step it is performing. State stored in registers, combined with logic that determines the next step, forms a finite-state machine. Our familiar calculation and memory circuits now coordinate the work of the larger machine.
+During the fetch, `PC` advances by `1`, ready for the following instruction. Each LC-3 instruction occupies one memory location, so the next one is at `12289`. `MAR` keeps the address being read even after `PC` changes. Fetching copies the instruction, leaving the stored bits unchanged.
 
 <!-- scene: execute -->
 
-Let’s follow the instruction `ADD R0, R1, R2`. It tells the machine to add the contents of `R1` and `R2`, then place the answer in `R0`. We have already put `3` in `R1` and `6` in `R2`.
+With the instruction in `IR`, the control unit decodes its fields. This is the same instruction we have already taken apart. It selects `R0` and `R3` as inputs, chooses `ADD` and selects `R0` as the destination. The figure keeps just these two registers and the ALU visible inside our red processing block.
 
-The machine fetches the instruction into `IR` and decodes its fields. Control signals select `R1` and `R2`, direct the ALU to add, and enable `R0` to capture the result. `R0` now holds `9`. During the fetch, `PC` advances to the following instruction `ADDR`, ready for the machine to continue.
+Starting with `9` in `R0` and `2` in `R3`, the ALU produces `11`. The result travels back, and the control unit enables `R0` to save it. The other registers keep their contents. `IR` still holds the instruction being carried out, while `PC` already points to the next one.
 
-This addition is one step. A program combines many such steps, using stored results, choices and repetition to carry out a larger task.
+<!-- scene: control -->
+
+Let’s follow the whole sequence from the start, fetching an instruction, decoding it, then executing it. The first `ADD` takes our total from `9` to `11`, and fetching the second takes it to `13`. Changing the instructions in memory would change the work performed by the same circuits.
+
+The control unit must also keep track of which step comes next. It uses stored state and logic to choose the control signals and move between steps. This is a finite-state machine, or `FSM`. A clock provides regular timing pulses, allowing enabled registers to capture their new values at coordinated moments. One instruction takes several clock cycles, including time for memory and calculation. The figure groups these details into fetch, decode and execute.
 
 <!-- scene: computer -->
 
-Let’s zoom out once more. The calculation circuits, fast storage registers and control unit form our central processing unit, or CPU. Connected memory holds its program and data, while input and output connect it to the outside world.
+Let’s zoom out once more. Our processing unit and control unit, together with registers such as `PC` and `IR`, form the central processing unit, or `CPU`. Connected memory holds its instructions and data, while input and output connect the machine to the outside world.
 
-We have built a machine that can follow different programs using the same hardware. That flexibility has a cost. Choosing operations and moving instructions and data between memory and the CPU take hardware, time and energy. Data movement can limit how quickly the machine works, a constraint we will return to when exploring memory systems, parallel processors and specialised chips.
+We now have a machine that can follow a stored program. Instructions can calculate, transfer data or change which instruction runs next, allowing larger tasks to be assembled from small steps. This flexibility costs hardware, time and energy, including the movement of instructions and data between memory and the CPU. We will return to these limits as we explore larger computers.
 
-First, we will see how a task written by a person becomes the instruction bits that direct these circuits.
+Next, we will see how a task written by a person becomes the instruction bits that direct these circuits.
 
 <!-- footer -->
 

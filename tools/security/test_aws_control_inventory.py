@@ -89,6 +89,34 @@ class InventorySafetyTests(unittest.TestCase):
         self.assertEqual(facts["albs"][0]["target_groups"][0]["arn"], "regional-target")
         self.assertEqual(facts["albs"][0]["listeners"][0]["default_actions"], ["redirect"])
 
+    def test_policy_summary_handles_encoded_documents_without_emitting_resources(self):
+        from urllib.parse import quote
+        scoped = {"Statement": [{"Effect": "Allow", "Action": ["ec2:Describe*", "ssmmessages:CreateControlChannel"], "Resource": "private-resource-must-not-appear", "Condition": {"StringEquals": {"private-condition": "must-not-appear"}}}, {"Effect": "Deny", "Action": "lambda:*", "Resource": "*"}]}
+        broad = {"Statement": {"Effect": "Allow", "NotAction": ["iam:*", "organizations:*"], "Resource": "*"}}
+        summary = inventory.policy_action_summary([quote(json.dumps(scoped)), broad])
+        self.assertEqual(summary, {"allow_action_services": ["ec2", "ssmmessages"], "allow_not_actions": ["iam:*", "organizations:*"]})
+        self.assertNotIn("must-not-appear", json.dumps(summary))
+        self.assertEqual(inventory.policy_action_summary([{"Statement": {"Effect": "Allow", "Action": "*"}}])["allow_action_services"], ["*"])
+
+    def test_role_policy_reads_are_cached_and_preserve_broad_allow_warning(self):
+        calls = []
+        def read(service, operation, *args, **kwargs):
+            calls.append(operation)
+            if operation == "get-policy": return {"Policy": {"DefaultVersionId": "v1"}}
+            if operation == "get-policy-version": return {"PolicyVersion": {"Document": {"Statement": {"Effect": "Allow", "NotAction": "iam:*"}}}}
+            if operation == "list-role-policies": return {"PolicyNames": ["runtime"]}
+            if operation == "get-role-policy": return {"PolicyDocument": {"Statement": [{"Effect": "Allow", "Action": ["s3:GetObject", "kms:Decrypt"], "Resource": "private-resource-must-not-appear"}]}}
+            self.fail(operation)
+        cache = {}
+        with patch.object(inventory, "aws", side_effect=read):
+            for name in ["gradiated-prod-a", "gradiated-prod-b"]:
+                summary = inventory.role_permission_inputs(name, [{"PolicyArn": "shared-policy"}], "shared-boundary", cache)
+        self.assertEqual(calls.count("get-policy"), 2)
+        self.assertEqual(calls.count("get-policy-version"), 2)
+        self.assertEqual(summary["identity_allow_action_services"], ["kms", "s3"])
+        self.assertEqual(summary["identity_allow_not_actions"], ["iam:*"])
+        self.assertNotIn("private-resource", json.dumps(summary))
+
     def test_collects_central_bus_and_human_confirmation_without_endpoint_values(self):
         topic = "arn:aws:sns:us-east-1:873716897517:gradiated-security-alerts"
         calls = []

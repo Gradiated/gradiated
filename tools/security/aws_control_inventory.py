@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+from urllib.parse import unquote
 
 ACCOUNT = "873716897517"
 REGION = "us-east-1"
@@ -20,7 +21,7 @@ READS = {
     "cloudwatch": {"describe-alarms"},
     "rds": {"describe-db-instances"},
     "cloudtrail": {"describe-trails", "get-trail-status", "get-event-selectors"},
-    "iam": {"get-account-summary", "get-account-password-policy", "list-users", "list-roles", "get-role", "list-attached-role-policies"},
+    "iam": {"get-account-summary", "get-account-password-policy", "list-users", "list-roles", "get-role", "list-attached-role-policies", "get-policy", "get-policy-version", "list-role-policies", "get-role-policy"},
     "s3api": {"list-buckets", "get-bucket-location", "get-bucket-versioning", "get-bucket-logging", "get-bucket-encryption", "get-bucket-lifecycle-configuration"},
     "elbv2": {"describe-load-balancers", "describe-target-groups", "describe-listeners", "describe-tags"},
 }
@@ -93,6 +94,55 @@ def regional_workloads(region):
     return {"instances": instances_result, "databases": databases_result, "albs": albs_result}
 
 
+def policy_action_summary(documents):
+    """Summarize action namespaces, never policy resources or condition values.
+
+    This is an input to a service-boundary review, not effective IAM evaluation.
+    In particular an Allow/NotAction statement permits unlisted services.
+    """
+    services, not_actions = set(), set()
+    for document in documents:
+        if isinstance(document, str):
+            try:
+                document = json.loads(unquote(document))
+            except (json.JSONDecodeError, TypeError):
+                raise AuditError("Invalid IAM policy metadata; inventory stopped") from None
+        if not isinstance(document, dict):
+            raise AuditError("Invalid IAM policy metadata; inventory stopped")
+        statements = document.get("Statement", [])
+        if isinstance(statements, dict):
+            statements = [statements]
+        for statement in statements:
+            if statement.get("Effect") != "Allow":
+                continue
+            actions = statement.get("Action", [])
+            exclusions = statement.get("NotAction", [])
+            services.update(a.split(":", 1)[0] for a in ([actions] if isinstance(actions, str) else actions))
+            not_actions.update([exclusions] if isinstance(exclusions, str) else exclusions)
+    return {"allow_action_services": sorted(services), "allow_not_actions": sorted(not_actions)}
+
+
+def role_permission_inputs(name, attached_policies, boundary_arn, policy_cache):
+    def managed(arn):
+        if arn not in policy_cache:
+            version = aws("iam", "get-policy", "--policy-arn", arn)["Policy"]["DefaultVersionId"]
+            document = aws("iam", "get-policy-version", "--policy-arn", arn, "--version-id", version)["PolicyVersion"]["Document"]
+            policy_cache[arn] = policy_action_summary([document])
+        return policy_cache[arn]
+
+    identity = [managed(p["PolicyArn"]) for p in attached_policies]
+    inline = aws("iam", "list-role-policies", "--role-name", name)["PolicyNames"]
+    inline_documents = [aws("iam", "get-role-policy", "--role-name", name, "--policy-name", policy)["PolicyDocument"] for policy in inline]
+    identity.append(policy_action_summary(inline_documents))
+    return {
+        "name": name,
+        "identity_allow_action_services": sorted({service for p in identity for service in p["allow_action_services"]}),
+        "identity_allow_not_actions": sorted({action for p in identity for action in p["allow_not_actions"]}),
+        "boundary_arn": boundary_arn,
+        "boundary_actions": managed(boundary_arn) if boundary_arn else None,
+    }
+
+
 def collect():
     identity = aws("sts", "get-caller-identity")
     if identity["Account"] != ACCOUNT:
@@ -150,14 +200,21 @@ def collect():
     result["password_policy"] = aws("iam", "get-account-password-policy", missing=("NoSuchEntity",))
     result["iam_users"] = [u["UserName"] for u in aws("iam", "list-users")["Users"]]
     result["broad_managed_roles"] = []
+    result["role_permission_inputs"] = []
+    policy_cache = {}
     for role in aws("iam", "list-roles")["Roles"]:
         if role.get("Path", "").startswith("/aws-service-role/"):
             continue
         policies = aws("iam", "list-attached-role-policies", "--role-name", role["RoleName"])["AttachedPolicies"]
         broad = [p["PolicyArn"] for p in policies if p["PolicyName"] in ("AdministratorAccess", "PowerUserAccess", "IAMFullAccess")]
-        if broad:
+        relevant = role["RoleName"].startswith("gradiated-prod-") or role["RoleName"] == "gradiated-terraform-apply"
+        if broad or relevant:
             details = aws("iam", "get-role", "--role-name", role["RoleName"])["Role"]
+        if broad:
             result["broad_managed_roles"].append({"name": role["RoleName"], "policies": broad, "boundary": details.get("PermissionsBoundary")})
+        if relevant:
+            boundary = details.get("PermissionsBoundary", {}).get("PermissionsBoundaryArn")
+            result["role_permission_inputs"].append(role_permission_inputs(role["RoleName"], policies, boundary, policy_cache))
     result["trails"] = []
     for region in names:
         for trail in aws("cloudtrail", "describe-trails", "--no-include-shadow-trails", region=region)["trailList"]:

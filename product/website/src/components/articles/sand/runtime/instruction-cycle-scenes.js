@@ -24,6 +24,7 @@ export const INSTRUCTION_CYCLE_SCENES = {
       Math.min(clamp((time - start) / 0.18), clamp((end - time) / 0.18));
     const diagram = group({ "data-diagram": "instruction-cycle" }, root, "0 0");
     key(diagram, "addressed-memory", {}, null, 0.55);
+    key(diagram, "computer", { scale: 0.88, x: 26.4, y: 52 });
     const label = (parent, x, y, content, attrs = {}) =>
       text(x, y, content, { class: "caption", ...attrs }, parent);
     const bit = (parent, x, y, content, attrs = {}) =>
@@ -51,8 +52,8 @@ export const INSTRUCTION_CYCLE_SCENES = {
     };
     const cpu = group({ "data-part": "fetch-cpu-outline" }, diagram);
     rect(cpu, 6, 6, 428, 328, "fetch-cpu-frame");
-    rect(cpu, 196, 0, 46, 16, "timing-paper");
-    label(cpu, 219, 14, "CPU");
+    rect(cpu, 56, 0, 46, 16, "timing-paper");
+    label(cpu, 79, 14, "CPU");
     show(cpu, "computer", undefined);
     diagram.insertBefore(cpu, wires);
 

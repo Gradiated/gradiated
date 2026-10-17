@@ -819,6 +819,24 @@ export const COMPUTER_SCENES = (function () {
     });
     demos.push(...memoryInterface.demos);
 
+    const io = group({ "data-part": "io-building-block" }, root, "0 0");
+    mk(
+      "rect",
+      { x: 330, y: 10, width: 96, height: 38, rx: 4, class: "io-block-frame" },
+      io,
+    );
+    text(378, 35, "I/O", { class: "io-block-name caption" }, io);
+    key(io, "processing-block", { x: 0, y: 0 }, null, 0.65);
+    key(io, "addressed-memory", { x: -304, y: 116 });
+    key(io, "computer", { x: -158, y: -6 });
+    const ioLink = group({ "data-part": "io-cpu-link" }, root);
+    path(
+      "M220 44 V57 M216 48 L220 44 L224 48 M216 53 L220 57 L224 53",
+      { class: "io-link" },
+      ioLink,
+    );
+    key(ioLink, "computer", {}, null, 0.85);
+
     const instructionCycle = INSTRUCTION_CYCLE_SCENES.build({
       root,
       tl,

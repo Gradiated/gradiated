@@ -247,11 +247,15 @@ With addition selected, `3` and `6` enter the ALU and the result, `9`, travels b
 
 Together, our fast storage registers, selection circuits and ALU form the processing unit, or `PU`. It holds working values, performs calculations and stores their results. We will set this building block alongside memory, then introduce the control circuits that direct its work.
 
+Input and output, or `I/O`, connect the computer to the outside world. Input brings in information, such as a key pressed on a keyboard, while output sends results to a device such as a screen. We will set this aside as a small orange block and return to how the CPU exchanges data with these devices later.
+
 <!-- scene: instruction -->
 
 We have shown the processing unit repeatedly adding `2` to a running total. One instruction can request each addition. Written as `ADD R0, R0, R3`, it means add the numbers stored in `R0` and `R3`, then save the result in `R0`. The first register named is the destination. The next two supply the inputs. `R0` appears twice because we read its previous value and replace it with the result.
 
 These names are a readable form of the instruction. In memory, LC-3 stores it as sixteen bits, or two bytes. Our example becomes `0001 000 000 0 00 011`. The spaces separate fields to make them easier to read.
+
+The rules that give these instruction bits their meaning are part of the instruction set architecture, or `ISA`. It defines the instructions a processor supports, how they are encoded and what each one does.
 
 The first four bits, `0001`, select the operation `ADD`. Each register field uses three bits to choose one of eight registers. Here, `000` names `R0` and `011` names `R3`. These identify storage slots, not the numbers inside them. Between the inputs, `0` selects a second register, leaving the following `00` bits unused. Setting this bit to `1` instead puts a small number directly in the instruction, making common tasks such as adding `1` to a counter convenient, while larger values can come from registers.
 
@@ -295,7 +299,7 @@ The control unit must also keep track of which step comes next. It uses stored s
 
 <!-- scene: computer -->
 
-Let’s zoom out once more. Our control unit contains `PC`, `IR` and the circuits that decode and sequence instructions. Together with the processing unit, it forms the central processing unit, or `CPU`. The green memory block groups the memory array with its `MAR` and `MDR` interface, while input and output connect the machine to the outside world.
+Let’s zoom out once more. Our control unit contains `PC`, `IR` and the circuits that decode and sequence instructions. Together with the processing unit, it forms the central processing unit, or `CPU`. The green memory block groups the memory array with its `MAR` and `MDR` interface, while the orange `I/O` block connects the CPU to the outside world. Its two-way link represents incoming information and outgoing results.
 
 We now have a machine that can follow a stored program. Instructions can calculate, transfer data or change which instruction runs next, allowing larger tasks to be assembled from small steps. This flexibility costs hardware, time and energy, including the movement of instructions and data between memory and the CPU. We will return to these limits as we explore larger computers.
 

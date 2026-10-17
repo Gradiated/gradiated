@@ -848,3 +848,19 @@ html:has(.sand-journey) {
   fill: var(--signal-stroke);
   stroke: none;
 }
+
+.sand-journey #d2 .io-block-frame {
+  fill: rgba(202, 136, 62, 0.08);
+  stroke: rgba(183, 119, 48, 0.65);
+  stroke-width: 1.3px;
+}
+.sand-journey #d2 text.io-block-name {
+  fill: #a66c30;
+  font-size: 13px;
+}
+.sand-journey #d2 .io-link {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.3px;
+  opacity: 0.6;
+}

@@ -846,6 +846,12 @@ html:has(.sand-journey) {
   stroke: rgba(98, 119, 153, 0.65);
   stroke-width: 1.3px;
 }
+.sand-journey #d2 text.control-block-name {
+  fill: #627799;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
 .sand-journey #d2 .fetch-cpu-frame {
   stroke: var(--ink);
   stroke-width: 1px;

@@ -806,7 +806,7 @@ export const COMPUTER_SCENES = (function () {
       { class: "thin muted" },
       overview,
     );
-    text(271.55, 229.62, "CU", { class: "caption" }, overview);
+    text(271.55, 229.62, "CU", { class: "control-block-name" }, overview);
     overviewLink(
       "M204.9 207 H235.1 M209.9 203 L204.9 207 L209.9 211 M230.1 203 L235.1 207 L230.1 211",
     );

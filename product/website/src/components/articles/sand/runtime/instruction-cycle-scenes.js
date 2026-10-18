@@ -198,16 +198,16 @@ export const INSTRUCTION_CYCLE_SCENES = {
     }
     const r0Value = bit(puDetail, 135, 244, "9", { "data-fetch-value": "r0" });
     bit(puDetail, 135, 288, "2");
-    path("M285 226 H316 L330 242 L344 226 H390 L375 286 H300 Z", {}, puDetail);
+    path("M306 218 H329 L337 230 L345 218 H368 L357 303 H317 Z", {}, puDetail);
     label(puDetail, 337, 257, "ALU");
     const addMode = bit(puDetail, 337, 275, "ADD", { class: "tiny bit" });
     const inputRoutes = [
-      route("r0-alu", "M160 238 H230 V242 H289", "execute"),
-      route("r3-alu", "M160 282 H240 V266 H295", "execute"),
+      route("r0-alu", "M160 238 H230 V242 H309.106", "execute"),
+      route("r3-alu", "M160 282 H240 V266 H312.212", "execute"),
     ];
     const resultRoute = route(
       "alu-r0",
-      "M337 286 V312 H30 V238 H40",
+      "M337 303 V312 H30 V238 H40",
       "execute",
     );
     for (const item of [...inputRoutes, resultRoute])
@@ -262,7 +262,7 @@ export const INSTRUCTION_CYCLE_SCENES = {
       controlWires,
     );
     const modeRoute = path(
-      "M402 138 H430 V274 H378",
+      "M402 138 H430 V274 H360.753",
       { class: "control-wire" },
       controlWires,
     );

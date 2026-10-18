@@ -277,11 +277,7 @@ Instructions can do more than calculate. Some copy numbers from memory into regi
 
 <!-- scene: instruction-control -->
 
-The control unit, or CU, receives an instruction. We will soon see how it arrives from memory. To carry it out, the control unit directs electrical signals that select register values, choose an ALU operation and enable results to be saved. More complex tasks are built from sequences of these simple steps.
-
-Our example selects `ADD`.
-
-The result returning to the registers does not automatically replace a stored number. As with our earlier memory, writing must be enabled. The control unit enables the selected register to save the result, while the others keep their contents.
+The control unit, or CU, turns the instruction’s bit fields into electrical signals that select the inputs, choose the ALU operation and select the destination register. Let’s assume it has received our example instruction. We will soon see how it arrives from memory. The result travels back to the fast storage registers, but it is saved only when the CU enables the destination register to accept it. The other registers keep their contents.
 
 <!-- scene: addressed-memory -->
 

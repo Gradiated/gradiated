@@ -261,11 +261,9 @@ Input and output, or I/O, connect the computer to the outside world. Input bring
 
 ### Instructions and control
 
-We have shown the processing unit repeatedly adding `2` to a running total. The instruction `ADD R0, R0, R3` requests one such addition, adding the numbers in `R0` and `R3` and saving the result in `R0`.
+We have shown the processing unit repeatedly adding `2` to a running total. The instruction `ADD R0, R0, R3` requests one such addition. It adds the numbers stored in `R0` and `R3`, then saves the result in `R0`.
 
-These names are a readable form of the instruction. In memory, LC-3 stores it as sixteen bits, or two bytes. Our example becomes `0001 000 000 0 00 011`. The spaces separate fields to make them easier to read.
-
-The rules that give these instruction bits their meaning are part of the instruction set architecture, or ISA. It defines the instructions a processor supports, how they are encoded and what each one does.
+These words and register names are a readable form of the instruction. LC-3 stores it as sixteen bits, `0001000000000011`. The instruction set architecture, or ISA, defines which instructions the processor supports, how they are encoded and what they do.
 
 The first four bits, `0001`, select the operation `ADD`. The next three bits name the destination register, followed by fields identifying the two inputs. Each register field uses three bits to choose one of eight registers. Here, `000` names `R0` and `011` names `R3`. These identify storage slots, not their contents. `R0` appears twice because its previous value is an input and it also receives the result.
 
@@ -285,13 +283,13 @@ The result travels back to the fast storage registers, but it is saved only when
 
 ### Fetching and executing
 
-Where does the control unit get its instructions? Let’s bring memory back into the picture. In the table, address `12288` holds `0001 000 000 0 00 011`, our `ADD R0, R0, R3` instruction. The next address, `12289`, holds the same bits. With `2` stored in `R3`, the first instruction takes `R0` from `9` to `11`, and the second takes it from `11` to `13`. A sequence of stored instructions forms a program.
+Where does the control unit get its instructions? Let’s bring memory back into the picture. In the table, address `12288` holds `0001 000 000 0 00 011`, our `ADD R0, R0, R3` instruction. The next address, `12289`, holds the same instruction, so each requests another addition of the number in `R3` to the running total in `R0`. A sequence of stored instructions forms a program.
 
 Instructions and data share this memory. The bits at address `12288` mean `ADD R0, R0, R3` when fetched as an instruction, but represent the number `4099` when read as data. The stored bits are identical. How the processor uses them determines their meaning.
 
 <!-- scene: program -->
 
-We need to keep track of where we are in the program. The program counter, or `PC`, is a register holding the address of the next instruction to fetch. Here, we start at `12288`. Copying that address into `MAR` selects the memory location, using the same address connection we built earlier. The figure shows addresses as ordinary decimal numbers to keep them readable.
+We need to keep track of where we are in the program. The program counter, or `PC`, holds the address of the next instruction to fetch. Here, it starts at `12288`. The address is stored as sixteen bits, but the figure displays it in decimal for readability. Copying it into `MAR` selects the memory location, using the same address connection we built earlier.
 
 <!-- scene: instruction-fetch -->
 

@@ -261,13 +261,15 @@ Input and output, or I/O, connect the computer to the outside world. Input bring
 
 ### Instructions and control
 
-We have shown the processing unit repeatedly adding `2` to a running total. One instruction can request each addition. Written as `ADD R0, R0, R3`, it means add the numbers stored in `R0` and `R3`, then save the result in `R0`. The first register named is the destination. The next two supply the inputs. `R0` appears twice because we read its previous value and replace it with the result.
+We have shown the processing unit repeatedly adding `2` to a running total. The instruction `ADD R0, R0, R3` requests one such addition, adding the numbers in `R0` and `R3` and saving the result in `R0`.
 
 These names are a readable form of the instruction. In memory, LC-3 stores it as sixteen bits, or two bytes. Our example becomes `0001 000 000 0 00 011`. The spaces separate fields to make them easier to read.
 
 The rules that give these instruction bits their meaning are part of the instruction set architecture, or ISA. It defines the instructions a processor supports, how they are encoded and what each one does.
 
-The first four bits, `0001`, select the operation `ADD`. Each register field uses three bits to choose one of eight registers. Here, `000` names `R0` and `011` names `R3`. These identify storage slots, not the numbers inside them. Between the inputs, `0` selects a second register, leaving the following `00` bits unused. Setting this bit to `1` instead puts a small number directly in the instruction, making common tasks such as adding `1` to a counter convenient, while larger values can come from registers.
+The first four bits, `0001`, select the operation `ADD`. The next three bits name the destination register, followed by fields identifying the two inputs. Each register field uses three bits to choose one of eight registers. Here, `000` names `R0` and `011` names `R3`. These identify storage slots, not their contents. `R0` appears twice because its previous value is an input and it also receives the result.
+
+Between the inputs, `0` selects a second register, leaving the following `00` bits unused. Setting this bit to `1` instead puts a small number directly in the instruction, making common tasks such as adding `1` to a counter convenient, while larger values can come from registers.
 
 Changing the fields requests a different operation or different registers. The faint alternatives above show some choices. Other operations, such as `NOT`, use the remaining instruction bits differently.
 

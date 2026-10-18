@@ -167,18 +167,22 @@ export const INSTRUCTION_CYCLE_SCENES = {
     const puTint = rect(pu, 20, 190, 400, 135, "processing-block-tint");
     const puFrame = rect(pu, 20, 190, 400, 135, "processing-block-frame");
     for (const frame of [puTint, puFrame]) {
-      key(frame, "addressed-memory", { attr: { height: 290 } });
-      key(frame, "execute", { attr: { height: 135 } });
+      key(frame, "addressed-memory", {
+        attr: { x: 3, y: 91, width: 405, height: 316, rx: 8 },
+      });
+      key(frame, "execute", {
+        attr: { x: 20, y: 190, width: 400, height: 135, rx: 4 },
+      });
     }
-    key(pu, "addressed-memory", { scale: 0.2, x: 8, y: -14 });
+    key(pu, "addressed-memory", { scale: 0.18, x: 14.61, y: -6 });
     key(pu, "execute", { scale: 1, x: 0, y: 0 });
     const puIcon = path(
-      "M80 250 H180 V390 H80 Z M80 296 H180 M80 342 H180 M180 280 H250 V294 H280 M180 365 H246 V344 H290 M270 250 H304 L318 266 L332 250 H370 L350 380 H290 Z M318 380 V422 H56 V270 H80",
+      "M70 160 H180 V290 H70 Z M70 192 H180 M70 224 H180 M70 256 H180 M180 190 H238 V208 H270 M180 258 H250 V248 H276 M270 180 H298 L310 195 L322 180 H365 L350 285 H285 Z M315 285 V322 H45 V176 H70",
       { class: "processing-block-icon" },
       pu,
     );
     show(puIcon, "addressed-memory", "execute", {}, 0.55);
-    const puName = label(ports, 52, 96, "PU", {
+    const puName = label(ports, 51.6, 61, "PU", {
       class: "processing-block-name",
     });
     show(puName, "addressed-memory", "execute", {}, 0.35);
@@ -222,14 +226,19 @@ export const INSTRUCTION_CYCLE_SCENES = {
       const progress = (p - index("instruction-fetch") - hold) / (1 - 2 * hold);
       const slide = easePu(clamp(progress / 0.45));
       const grow = easePu(clamp((progress - 0.45) / 0.55));
-      const scale = 0.2 + 0.8 * grow;
+      const scale = 0.18 + 0.82 * grow;
       gsap.set(pu, {
         scale,
-        x: 12 + 8 * slide - 20 * scale,
-        y: 24 + 166 * slide - 190 * scale,
+        x: 15.15 + (20 - 15.15) * slide - (3 + 17 * grow) * scale,
+        y: 10.38 + (190 - 10.38) * slide - (91 + 99 * grow) * scale,
       });
-      for (const frame of [puTint, puFrame])
-        frame.setAttribute("height", 290 - 155 * grow);
+      for (const frame of [puTint, puFrame]) {
+        frame.setAttribute("x", 3 + 17 * grow);
+        frame.setAttribute("y", 91 + 99 * grow);
+        frame.setAttribute("width", 405 - 5 * grow);
+        frame.setAttribute("height", 316 - 181 * grow);
+        frame.setAttribute("rx", 8 - 4 * grow);
+      }
     });
 
     const cu = group({ "data-part": "fetch-control-unit" }, ports);

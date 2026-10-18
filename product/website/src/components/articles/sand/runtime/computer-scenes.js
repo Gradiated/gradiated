@@ -914,14 +914,14 @@ export const COMPUTER_SCENES = (function () {
       const clamp = (n) => Math.max(0, Math.min(1, n));
       const shrink = easeHandoff(clamp(t / 0.26));
       const slide = easeHandoff(clamp((t - 0.26) / 0.22));
-      const scale = 0.82 + (80 / 405 - 0.82) * shrink;
+      const scale = 0.82 + (0.18 - 0.82) * shrink;
       const swapPu = easeHandoff(clamp((t - 0.44) / 0.08));
       const growMemory = easeHandoff(clamp((t - 0.5) / 0.5));
       const swapMemory = easeHandoff(clamp((t - 0.78) / 0.22));
       gsap.set(processingHandoff.processing, {
         scale,
-        x: 248.51 + (52 - 248.51) * slide - 205.5 * scale,
-        y: 306.18 + (55 - 306.18) * slide - 249 * scale,
+        x: 248.51 + (51.6 - 248.51) * slide - 205.5 * scale,
+        y: 306.18 + (38.82 - 306.18) * slide - 249 * scale,
         opacity: 1 - swapPu,
       });
       gsap.set(processingHandoff.detail, { opacity: 1 - shrink });

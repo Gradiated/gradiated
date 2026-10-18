@@ -91,22 +91,23 @@ export const INSTRUCTION_CYCLE_SCENES = {
     bit(memory, 141, 316, "ADDR", { class: "tiny bit" });
     const memoryHeading = label(memory, 298, 316, "memory");
     path(
-      "M106 324 H420 M177 296 V434 M106 360 H420 M106 396 H420",
+      "M106 324 H420 M177 296 V434 M106 354 H420 M106 384 H420 M106 404 H420",
       { class: "thin muted" },
       memory,
     );
     const memoryRows = [];
-    for (const [i, address, contents] of [
-      [0, PROGRAM_START, INSTRUCTION_BITS],
-      [1, PROGRAM_START + 1, INSTRUCTION_BITS],
-      [2, 16384, "0000 0000 0000 0110"],
+    for (const [y, address, contents] of [
+      [344, PROGRAM_START, INSTRUCTION_BITS],
+      [374, PROGRAM_START + 1, INSTRUCTION_BITS],
+      [424, 2 ** 16 - 1, "—"],
     ]) {
-      const y = 348 + i * 36;
-      const tint = rect(memory, 108, y - 21, 310, 32, "computer-glow");
+      const tint = rect(memory, 108, y - 17, 310, 26, "computer-glow");
       bit(memory, 141, y, address, { class: "fetch-address bit" });
       bit(memory, 298, y, contents, { class: "fetch-bits bit" });
       memoryRows.push(tint);
     }
+    bit(memory, 141, 398, "…", { class: "tiny bit muted" });
+    bit(memory, 298, 398, "…", { class: "tiny bit muted" });
     const programNames = group({}, diagram);
     bit(programNames, 263, 180, "ADD R0 R0 R3");
     label(programNames, 263, 205, "the same instruction, stored as bits", {

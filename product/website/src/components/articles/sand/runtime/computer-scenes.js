@@ -299,7 +299,7 @@ export const COMPUTER_SCENES = (function () {
           const grow = easeBlock(clamp((progress - 0.55) / 0.45));
           gsap.set(processing, {
             scale: 0.18 + 0.64 * grow,
-            x: 12 + 288 * slide - 220 * grow,
+            x: 14.61 + 285.39 * slide - 220 * grow,
             y: -6 + 166.24 * descend - 58.24 * grow,
           });
           gsap.set(detail, { opacity: grow });
@@ -319,7 +319,7 @@ export const COMPUTER_SCENES = (function () {
         const scale = 1 - 0.82 * shrink;
         gsap.set(processing, {
           scale,
-          x: 300 * shrink - 288 * slide,
+          x: 300 * shrink - 285.39 * slide,
           y: 91 * (1 - scale) - 80.62 * stack,
         });
         gsap.set(root.querySelector('[data-part="memory-building-block"]'), {
@@ -371,10 +371,10 @@ export const COMPUTER_SCENES = (function () {
       key(detail, "working-registers");
       key(detail, "instruction", { opacity: 0 }, null, 0, 0.5);
       key(detail, "instruction-control", {}, null, 0.55);
-      key(processing, "instruction", { scale: 0.18, x: 12, y: -6 });
+      key(processing, "instruction", { scale: 0.18, x: 14.61, y: -6 });
       key(processing, "instruction-control", { scale: 0.82, x: 80, y: 102 });
       const miniName = text(
-        49,
+        51.6,
         61,
         "PU",
         { class: "processing-block-name" },
@@ -390,7 +390,7 @@ export const COMPUTER_SCENES = (function () {
       mk(
         "rect",
         {
-          x: 12.54,
+          x: 15.15,
           y: 10.38,
           width: 72.9,
           height: 56.88,
@@ -400,12 +400,12 @@ export const COMPUTER_SCENES = (function () {
         miniature,
       );
       path(
-        "M14.54 10.38 H83.44 Q85.44 10.38 85.44 12.38 V65.26 Q85.44 67.26 83.44 67.26 H14.54 Q12.54 67.26 12.54 65.26 V12.38 Q12.54 10.38 14.54 10.38 Z",
+        "M17.15 10.38 H86.05 Q88.05 10.38 88.05 12.38 V65.26 Q88.05 67.26 86.05 67.26 H17.15 Q15.15 67.26 15.15 65.26 V12.38 Q15.15 10.38 17.15 10.38 Z",
         { class: "processing-block-frame" },
         miniature,
       );
       const smallIcon = group({}, miniature, "0 0");
-      gsap.set(smallIcon, { scale: 0.18, x: 12, y: -6 });
+      gsap.set(smallIcon, { scale: 0.18, x: 14.61, y: -6 });
       path(iconGeometry, { class: "processing-block-icon" }, smallIcon);
       show(miniature, "instruction-control", "addressed-memory", {}, 0.45);
       processingHandoff = {

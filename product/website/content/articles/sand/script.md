@@ -285,7 +285,7 @@ The result returning to the registers does not automatically replace a stored nu
 
 ### Fetching and executing
 
-Where does the control unit get its instructions? Let’s bring memory back into the picture. Our familiar `ADD R0, R0, R3` is stored there as `0001 000 000 0 00 011`. The next location holds the same instruction, asking for another addition. A sequence of stored instructions forms a program.
+Where does the control unit get its instructions? Let’s bring memory back into the picture. Our familiar `ADD R0, R0, R3` is stored there as `0001 000 000 0 00 011`. The next location holds the same instruction, asking for another addition. A sequence of stored instructions forms a program. More complex tasks are built by combining these simple instructions.
 
 Instructions and data share this memory. The bits themselves carry no label saying which they are. Fetching a bit pattern as an instruction tells the control unit to interpret it as an operation, while reading it as data supplies a value to work with.
 

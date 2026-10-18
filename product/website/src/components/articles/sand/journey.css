@@ -286,6 +286,15 @@
   margin: 0 0 1rem;
 }
 
+.sand-journey .scene-text h3 {
+  font-family: var(--font-title);
+  font-size: 1.25rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  margin: 0 0 1rem;
+}
+
 .sand-journey .scene-text p {
   margin: 0;
 }

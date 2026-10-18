@@ -130,6 +130,8 @@ As circuits become larger and more complex, timing challenges appear. Changing a
 
 <!-- scene: latch -->
 
+### Latches and registers
+
 We can now calculate an answer, but how do we remember it? Let’s zoom back in and connect a few NAND gates so that their outputs feed back into their inputs. This circuit is called a latch. It has a data input `D`, a write-enable input `WE`, and an output `Q`. While `WE` is `1`, `Q` becomes `D`. When `WE` becomes `0`, `Q` holds its last value, even if `D` changes.
 
 How does a loop create memory? The two gates on the right feed their outputs into each other, each reinforcing the other’s state. With writing disabled (`WE = 0`), this feedback holds `Q` at its last value for as long as power is supplied. We have added memory to our toolset.
@@ -139,6 +141,8 @@ How does a loop create memory? The two gates on the right feed their outputs int
 Let’s zoom out again and place four latches side by side, each holding one bit. Together, they form a four-bit register that can remember a four-bit binary number. The four data wires carry one bit each. A shared write-enable signal lets all four latches copy their inputs together, then hold the number when `WE` returns to `0`.
 
 <!-- scene: memory-two -->
+
+### Addressed memory
 
 Now stack a second row underneath. We have two places to store a four-bit number, so we need a way to choose between them. A single bit, labelled `ADDR`, selects row `0` or row `1`. A decoder, shown in the box on the left, turns `ADDR` into one selection signal for each row. Only the chosen row’s signal is `1`. A NOT gate selects row `0` when the `ADDR` is `0`, while a direct wire selects row `1` when it is `1`.
 
@@ -178,6 +182,8 @@ The central processing unit, or CPU, carries out these instructions, using calcu
 
 <!-- scene: memory-width -->
 
+### Memory and its interface
+
 Let’s return to our memory array. It has four locations, each holding four bits. We can make each stored number wider by adding more bit positions to every row. Doubling the width gives us eight bits per location. Eight bits make one byte, so this small array now holds four bytes in total.
 
 <!-- scene: memory-interface -->
@@ -213,6 +219,8 @@ Choose Read to put the same `ADDR` in `MAR`. Memory selects that location and se
 We now have a basic memory block, our first building block for a complete von Neumann computer. We will set this aside for now as we introduce the processing unit, one of the CPU’s main components.
 
 <!-- scene: working-registers -->
+
+### The processing unit
 
 A calculation often produces a result that we need again. For example, we might add two numbers, then repeatedly add `2` to the running total. The processing unit has a small set of fast storage registers for these working values.
 
@@ -251,6 +259,8 @@ Input and output, or I/O, connect the computer to the outside world. Input bring
 
 <!-- scene: instruction -->
 
+### Instructions and control
+
 We have shown the processing unit repeatedly adding `2` to a running total. One instruction can request each addition. Written as `ADD R0, R0, R3`, it means add the numbers stored in `R0` and `R3`, then save the result in `R0`. The first register named is the destination. The next two supply the inputs. `R0` appears twice because we read its previous value and replace it with the result.
 
 These names are a readable form of the instruction. In memory, LC-3 stores it as sixteen bits, or two bytes. Our example becomes `0001 000 000 0 00 011`. The spaces separate fields to make them easier to read.
@@ -270,6 +280,8 @@ Our example selects `ADD`. Other instructions can request logical operations, mo
 The result returning to the registers does not automatically replace a stored number. As with our earlier memory, writing must be enabled. The control unit enables the selected register to save the result, while the others keep their contents.
 
 <!-- scene: addressed-memory -->
+
+### Fetching and executing
 
 Where does the control unit get its instructions? Let’s bring memory back into the picture. Our familiar `ADD R0, R0, R3` is stored there as `0001 000 000 0 00 011`. The next location holds the same instruction, asking for another addition. A sequence of stored instructions forms a program.
 

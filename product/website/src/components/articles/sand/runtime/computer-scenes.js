@@ -893,6 +893,7 @@ export const COMPUTER_SCENES = (function () {
     const memoryModule = root.querySelector(
       '[data-part="memory-building-block"]',
     );
+    const memoryFrame = root.querySelector('[data-part="memory-green-frame"]');
     const memoryName = root.querySelector(".memory-block-name");
     const memorySilhouette = root.querySelector(
       '[data-part="memory-block-silhouette"]',
@@ -927,6 +928,9 @@ export const COMPUTER_SCENES = (function () {
       gsap.set(processingHandoff.silhouette, { opacity: shrink });
       gsap.set(processingHandoff.miniature, { opacity: 1 - clamp(t / 0.12) });
       gsap.set(processingHandoff.miniName, { opacity: 1 - clamp(t / 0.12) });
+      const frameScaleY = 348 / 428 + (80 / 428) * growMemory;
+      const frameY = (48 - (8 * 348) / 428) * (1 - growMemory);
+      gsap.set(memoryFrame, { scaleY: frameScaleY, y: frameY });
       const memoryScaleX = 0.18 + (314 / 416 - 0.18) * growMemory;
       const memoryScaleY = 0.18 + (138 / 428 - 0.18) * growMemory;
       const memoryX = 12 + (106 - (12 * 314) / 416 - 12) * growMemory;
@@ -939,12 +943,15 @@ export const COMPUTER_SCENES = (function () {
         opacity: 1 - swapMemory,
       });
       const tableScaleX = (416 * memoryScaleX) / 314;
-      const tableScaleY = (428 * memoryScaleY) / 138;
+      const tableScaleY = (428 * frameScaleY * memoryScaleY) / 138;
       gsap.set(instructionCycle.handoff.memory, {
         scaleX: tableScaleX,
         scaleY: tableScaleY,
         x: memoryX + 12 * memoryScaleX - 106 * tableScaleX,
-        y: memoryY + 8 * memoryScaleY - 296 * tableScaleY,
+        y:
+          memoryY +
+          (8 * frameScaleY + frameY) * memoryScaleY -
+          296 * tableScaleY,
         opacity: swapMemory,
       });
       gsap.set(memorySilhouette, { opacity: 1 - growMemory });

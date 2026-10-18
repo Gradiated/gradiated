@@ -499,7 +499,23 @@ export const COMPUTER_SCENES = (function () {
         control,
       );
       path("M267 42 V58", { class: "control-wire" }, control);
-      box(control, 157, 58, 221, 47, "Control unit");
+      const controlUnit = group(
+        { "data-part": "instruction-control-unit" },
+        control,
+      );
+      mk(
+        "rect",
+        {
+          x: 157,
+          y: 58,
+          width: 221,
+          height: 47,
+          rx: 4,
+          class: "fetch-control-frame",
+        },
+        controlUnit,
+      );
+      text(267.5, 86.5, "control unit", { class: "caption" }, controlUnit);
       const controlRoutes = [
         "M264 105 V223.36 H256.3",
         "M238 105 V150 H232 V237.4 Q240 241.4 232 245.4 V297.98 H256.3",

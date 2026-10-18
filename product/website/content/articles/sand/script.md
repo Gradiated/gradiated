@@ -309,7 +309,7 @@ Starting with `9` in `R0` and `2` in `R3`, the ALU produces `11`. The result tra
 
 Let’s follow the whole sequence from the start, fetching an instruction, decoding it, then executing it. The first `ADD` takes our total from `9` to `11`, and fetching the second takes it to `13`. Changing the instructions in memory would change the work performed by the same circuits.
 
-The control unit must also keep track of which step comes next. It uses stored state and logic to choose the control signals and move between steps. This is a finite-state machine, or FSM. A clock provides regular timing pulses, allowing enabled registers to capture their new values at coordinated moments. One instruction takes several clock cycles, including time for memory and calculation. The figure groups these details into fetch, decode and execute.
+The control unit must remember which step it is carrying out, such as fetching an instruction or saving a result. It stores this information in **more** small registers within the CU and uses logic circuits to choose the control signals and the next step. Together, these circuits form a finite-state machine, or FSM. A clock provides regular timing pulses that coordinate register updates, with time between them for signals to settle. In our LC-3 computer, carrying out one instruction takes several clock cycles.
 
 <!-- scene: computer -->
 

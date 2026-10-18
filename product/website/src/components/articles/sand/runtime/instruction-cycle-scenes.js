@@ -39,6 +39,7 @@ export const INSTRUCTION_CYCLE_SCENES = {
     const wires = group({ "data-part": "fetch-wires" }, diagram);
     const ports = group({}, diagram);
     const signals = group({ "data-wire-highlights": "" }, diagram);
+    key(signals, "addressed-memory");
     const transfers = group({}, diagram);
     const route = (name, d, startScene) => {
       const base = bus(wires, d);
@@ -480,6 +481,9 @@ export const INSTRUCTION_CYCLE_SCENES = {
       flying[1].style.opacity = fetching ? flying[1].style.opacity : "0";
       flying[2].style.opacity = executing ? flying[2].style.opacity : "0";
     });
-    return { demos: [demo] };
+    return {
+      demos: [demo],
+      handoff: { diagram, memory, programNames, pu, puName, signals },
+    };
   },
 };

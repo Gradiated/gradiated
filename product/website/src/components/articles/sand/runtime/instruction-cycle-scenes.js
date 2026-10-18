@@ -99,7 +99,7 @@ export const INSTRUCTION_CYCLE_SCENES = {
     for (const [y, address, contents] of [
       [344, PROGRAM_START, INSTRUCTION_BITS],
       [374, PROGRAM_START + 1, INSTRUCTION_BITS],
-      [424, 2 ** 16 - 1, "—"],
+      [424, 2 ** 16 - 1, "1010 0110 1101 0011"],
     ]) {
       const tint = rect(memory, 108, y - 17, 310, 26, "computer-glow");
       bit(memory, 141, y, address, { class: "fetch-address bit" });

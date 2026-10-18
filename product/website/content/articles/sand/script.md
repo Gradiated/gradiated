@@ -216,7 +216,7 @@ We now have a basic memory block, our first building block for a complete von Ne
 
 A calculation often produces a result that we need again. For example, we might add two numbers, then repeatedly add `2` to the running total. The processing unit has a small set of fast storage registers for these working values.
 
-Each register is built from circuits that remember individual bits, like the D latches we used earlier. LC-3 has eight general-purpose registers, `R0` to `R7`, each holding sixteen bits, or two bytes. We keep this small collection directly connected to the calculation circuits inside the processing unit, to give them quick access to the values they need. These fast storage registers are separate from the larger memory array and its `MAR` and `MDR`.
+Each register is built from circuits that remember individual bits, like the D latches we used earlier. LC-3 has eight general-purpose registers, `R0` to `R7`, each holding sixteen bits, or two bytes. This small collection forms the first main part of our processing unit. We keep it directly connected to the calculation circuits, giving them quick access to the values they need. These fast storage registers are separate from the larger memory array and its `MAR` and `MDR`.
 
 Reading and writing follow the same principle as our earlier memory array. Selection circuits choose which stored number to read, while a write-enable signal allows the chosen register to copy a new number and otherwise hold its contents.
 

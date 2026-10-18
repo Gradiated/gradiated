@@ -273,11 +273,13 @@ After the first input’s register field, a single bit chooses where the second 
 
 Changing the fields requests a different operation or different registers. The faint alternatives above show some choices. Other operations, such as `NOT`, use the remaining instruction bits differently.
 
+Instructions can do more than calculate. Some copy numbers from memory into registers or save register contents back to memory. Others change which instruction runs next, allowing a program to repeat steps or skip them.
+
 <!-- scene: instruction-control -->
 
 The control unit, or CU, receives an instruction. We will soon see how it arrives from memory. To carry it out, the control unit directs electrical signals that select register values, choose an ALU operation and enable results to be saved. More complex tasks are built from sequences of these simple steps.
 
-Our example selects `ADD`. Other instructions can request logical operations, move data between registers and memory, or change which instruction runs next.
+Our example selects `ADD`.
 
 The result returning to the registers does not automatically replace a stored number. As with our earlier memory, writing must be enabled. The control unit enables the selected register to save the result, while the others keep their contents.
 

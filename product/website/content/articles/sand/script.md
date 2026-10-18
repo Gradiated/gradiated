@@ -184,7 +184,7 @@ Let’s return to our memory array. It has four locations, each holding four bit
 
 We can hide the individual latches inside four larger blocks, one for each stored number. `ADDR` still selects the location, `D` carries the number to write, and `Q` carries the number read. To connect this memory to a processor, we add two registers that hold the values on those wires during an access.
 
-The memory address register, or `MAR`, holds the `ADDR` of the location to access. For now, it holds only `2` bits, enough to select one of our `4` memory locations. The memory data register, or `MDR`, holds either the 8-bit number to write or the 8-bit number just read.
+The memory address register, or `MAR`, holds the `ADDR` of the location to access. For now, it holds only two bits, enough to select one of our four memory locations. The memory data register, or `MDR`, holds either the eight-bit number to write or the eight-bit number just read.
 
 A separate write control, `WE`, determines whether memory copies the number from `MDR` into the selected location.
 
@@ -198,9 +198,9 @@ To add more locations, we need more address bits. Two bits choose among four loc
 
 This is the memory of a computer called LC-3, a small computer used for teaching. Its simple design helps us understand the basic parts of a computer and how they work together. It works with sixteen-bit groups called words.
 
-Address width and data width are separate choices. A sixteen-bit address can select 65,536 locations, while a thirty-two-bit address can select `2³²` locations. How many bytes that represents depends on the size of each location. In a byte-addressed system, thirty-two-bit addresses cover `4 GiB`. LC-3 instead addresses two-byte words.
+Address width and data width are separate choices. A sixteen-bit address can select `65,536` locations, while a thirty-two-bit address can select `2³²` locations. How many bytes that represents depends on the size of each location. In a byte-addressed system, thirty-two-bit addresses cover `4 GiB`. LC-3 instead addresses two-byte words.
 
-Calling a processor “16-bit” or “32-bit” usually describes the width of its main fast storage registers and integer operations. It does not, by itself, tell us the size of its address space or how much memory is installed. In LC-3, the fast storage registers, memory contents and addresses all happen to be sixteen bits wide.
+Calling a processor `16-bit` or `32-bit` usually describes the width of its main fast storage registers and integer operations. It does not, by itself, tell us the size of its address space or how much memory is installed. In LC-3, the fast storage registers, memory contents and addresses all happen to be sixteen bits wide.
 
 <!-- scene: memory-access -->
 
@@ -224,7 +224,7 @@ We will begin with the values `3`, `6` and `2` stored in binary in `R1`, `R2` an
 
 <!-- scene: select-values -->
 
-We can now connect the adder we built from logic gates to our fast storage registers. We already used a multiplexer to select which stored number reaches the memory’s output. Here, another multiplexer, labelled `MUX`, chooses which value reaches the adder. Each input can select any of the eight registers, so we can use different pairs of stored numbers without changing the wiring. The figure shows only the connections used in our example.
+We can now connect the adder we built from logic gates to our fast storage registers. We already used a multiplexer to select which stored number reaches the memory’s output. Here, another multiplexer, labelled MUX, chooses which value reaches the adder. Each input can select any of the eight registers, so we can use different pairs of stored numbers without changing the wiring. The figure shows only the connections used in our example.
 
 For our first calculation, we select `R1` and `R2`, sending `3` and `6` to the adder. Each thick path marked `16` represents sixteen parallel wires, carrying all the bits of one number together.
 
@@ -234,7 +234,7 @@ Let’s group our adder with circuits that perform logical operations. Together,
 
 | Mode | What it does |
 | :--- | :--- |
-| `ADD` | Adds the two 16-bit inputs. |
+| `ADD` | Adds the two sixteen-bit inputs. |
 | `AND` | Each output bit is `1` only when both matching input bits are `1`. |
 | `NOT` | Flips every bit of the first input. The second input is unused. |
 | `PASSA` | Passes the first input through unchanged. The second input is unused. |
@@ -245,9 +245,9 @@ With addition selected, `3` and `6` enter the ALU and the result, `9`, travels b
 
 <!-- scene: processing-block -->
 
-Together, our fast storage registers, selection circuits and ALU form the processing unit, or `PU`. It holds working values, performs calculations and stores their results. We will set this building block alongside memory, then introduce the control circuits that direct its work.
+Together, our fast storage registers, selection circuits and ALU form the processing unit, or PU. It holds working values, performs calculations and stores their results. We will set this building block alongside memory, then introduce the control circuits that direct its work.
 
-Input and output, or `I/O`, connect the computer to the outside world. Input brings in information, such as a key pressed on a keyboard, while output sends results to a device such as a screen. We will set this aside as a small orange block and return to how the CPU exchanges data with these devices later.
+Input and output, or I/O, connect the computer to the outside world. Input brings in information, such as a key pressed on a keyboard, while output sends results to a device such as a screen. We will set this aside as a small orange block and return to how the CPU exchanges data with these devices later.
 
 <!-- scene: instruction -->
 
@@ -255,7 +255,7 @@ We have shown the processing unit repeatedly adding `2` to a running total. One 
 
 These names are a readable form of the instruction. In memory, LC-3 stores it as sixteen bits, or two bytes. Our example becomes `0001 000 000 0 00 011`. The spaces separate fields to make them easier to read.
 
-The rules that give these instruction bits their meaning are part of the instruction set architecture, or `ISA`. It defines the instructions a processor supports, how they are encoded and what each one does.
+The rules that give these instruction bits their meaning are part of the instruction set architecture, or ISA. It defines the instructions a processor supports, how they are encoded and what each one does.
 
 The first four bits, `0001`, select the operation `ADD`. Each register field uses three bits to choose one of eight registers. Here, `000` names `R0` and `011` names `R3`. These identify storage slots, not the numbers inside them. Between the inputs, `0` selects a second register, leaving the following `00` bits unused. Setting this bit to `1` instead puts a small number directly in the instruction, making common tasks such as adding `1` to a counter convenient, while larger values can come from registers.
 
@@ -263,7 +263,7 @@ Changing the fields requests a different operation or different registers. The f
 
 <!-- scene: instruction-control -->
 
-The control unit, or `CU`, receives an instruction. We will soon see how it arrives from memory. To carry it out, the control unit directs electrical signals that select register values, choose an ALU operation and enable results to be saved. More complex tasks are built from sequences of these simple steps.
+The control unit, or CU, receives an instruction. We will soon see how it arrives from memory. To carry it out, the control unit directs electrical signals that select register values, choose an ALU operation and enable results to be saved. More complex tasks are built from sequences of these simple steps.
 
 Our example selects `ADD`. Other instructions can request logical operations, move data between registers and memory, or change which instruction runs next.
 
@@ -295,11 +295,11 @@ Starting with `9` in `R0` and `2` in `R3`, the ALU produces `11`. The result tra
 
 Let’s follow the whole sequence from the start, fetching an instruction, decoding it, then executing it. The first `ADD` takes our total from `9` to `11`, and fetching the second takes it to `13`. Changing the instructions in memory would change the work performed by the same circuits.
 
-The control unit must also keep track of which step comes next. It uses stored state and logic to choose the control signals and move between steps. This is a finite-state machine, or `FSM`. A clock provides regular timing pulses, allowing enabled registers to capture their new values at coordinated moments. One instruction takes several clock cycles, including time for memory and calculation. The figure groups these details into fetch, decode and execute.
+The control unit must also keep track of which step comes next. It uses stored state and logic to choose the control signals and move between steps. This is a finite-state machine, or FSM. A clock provides regular timing pulses, allowing enabled registers to capture their new values at coordinated moments. One instruction takes several clock cycles, including time for memory and calculation. The figure groups these details into fetch, decode and execute.
 
 <!-- scene: computer -->
 
-Let’s zoom out once more. Our control unit contains `PC`, `IR` and the circuits that decode and sequence instructions. Together with the processing unit, it forms the central processing unit, or `CPU`. The green memory block groups the memory array with its `MAR` and `MDR` interface, while the orange `I/O` block connects the CPU to the outside world. Its two-way link represents incoming information and outgoing results.
+Let’s zoom out once more. Our control unit contains `PC`, `IR` and the circuits that decode and sequence instructions. Together with the processing unit, it forms the central processing unit, or CPU. The green memory block groups the memory array with its `MAR` and `MDR` interface, while the orange I/O block connects the CPU to the outside world. Its two-way link represents incoming information and outgoing results.
 
 We now have a machine that can follow a stored program. Instructions can calculate, transfer data or change which instruction runs next, allowing larger tasks to be assembled from small steps. This flexibility costs hardware, time and energy, including the movement of instructions and data between memory and the CPU. We will return to these limits as we explore larger computers.
 

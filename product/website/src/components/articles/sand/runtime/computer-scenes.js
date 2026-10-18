@@ -323,9 +323,9 @@ export const COMPUTER_SCENES = (function () {
           y: 91 * (1 - scale) - 80.62 * stack,
         });
         gsap.set(root.querySelector('[data-part="memory-building-block"]'), {
-          y: 10 + 70 * stack,
+          y: 10 + 58 * stack,
         });
-        gsap.set(root.querySelector(".memory-block-name"), { y: 70 * stack });
+        gsap.set(root.querySelector(".memory-block-name"), { y: 58 * stack });
       });
       const redFrame = group(
         { "data-part": "processing-red-frame" },
@@ -845,8 +845,8 @@ export const COMPUTER_SCENES = (function () {
     );
     text(0, 18, "I/O", { class: "io-block-name caption" }, ioContents);
     key(io, "processing-block", { x: 378, y: 10 }, null, 0.65);
-    key(io, "instruction", { x: 51.6, y: 174 });
-    key(io, "addressed-memory", { x: 52, y: 126 });
+    key(io, "instruction", { x: 51.6, y: 149 });
+    key(io, "addressed-memory", { x: 52, y: 78 });
     key(io, "computer", { x: 220, y: 12 });
     const ioTransitions = [
       "processing-block",
@@ -934,7 +934,7 @@ export const COMPUTER_SCENES = (function () {
       const memoryScaleX = 0.18 + (314 / 416 - 0.18) * growMemory;
       const memoryScaleY = 0.18 + (138 / 428 - 0.18) * growMemory;
       const memoryX = 12 + (106 - (12 * 314) / 416 - 12) * growMemory;
-      const memoryY = 80 + (256 - (8 * 138) / 428 - 80) * growMemory;
+      const memoryY = 68 + (256 - (8 * 138) / 428 - 68) * growMemory;
       gsap.set(memoryModule, {
         scaleX: memoryScaleX,
         scaleY: memoryScaleY,

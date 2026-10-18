@@ -25,6 +25,8 @@ export const COMPUTER_SCENES = (function () {
   }) => {
     const demos = [];
     let processingHandoff;
+    const iconGeometry =
+      "M70 160 H180 V290 H70 Z M70 192 H180 M70 224 H180 M70 256 H180 M180 190 H238 V208 H270 M180 258 H250 V248 H276 M270 180 H298 L310 195 L322 180 H365 L350 285 H285 Z M315 285 V322 H45 V176 H70";
     const box = (parent, x, y, w, h, label, attrs = {}) => {
       const g = group(attrs, parent, `${x + w / 2} ${y + h / 2}`);
       const outline = path(`M${x} ${y} H${x + w} V${y + h} H${x} Z`, {}, g);
@@ -359,8 +361,6 @@ export const COMPUTER_SCENES = (function () {
         processing,
       );
       show(redTitle, "processing-block", "instruction", {}, 0.5);
-      const iconGeometry =
-        "M70 160 H180 V290 H70 Z M70 192 H180 M70 224 H180 M70 256 H180 M180 190 H238 V208 H270 M180 258 H250 V248 H276 M270 180 H298 L310 195 L322 180 H365 L350 285 H285 Z M315 285 V322 H45 V176 H70";
       const silhouette = path(
         iconGeometry,
         { class: "processing-block-icon" },
@@ -786,35 +786,49 @@ export const COMPUTER_SCENES = (function () {
       mk("rect", { x, y, width, height, rx: 4, class: className }, overview);
     const overviewLink = (d) => path(d, { class: "io-link" }, overview);
 
-    overviewBlock(36, 110, 368, 198, "fetch-cpu-frame");
-    text(81, 134, "CPU", { class: "caption" }, overview);
-    overviewBlock(56, 150, 164, 136, "processing-block-tint");
-    overviewBlock(56, 150, 164, 136, "processing-block-frame");
-    text(138, 174, "processing unit", { class: "caption" }, overview);
-    box(overview, 76, 190, 124, 28, "registers");
-    path("M96 242 H126 L138 254 L150 242 H180 L168 274 H108 Z", {}, overview);
-    text(138, 268, "ALU", { class: "caption" }, overview);
-    overviewLink("M138 218 V254");
+    overviewBlock(100, 144, 240, 126, "fetch-cpu-frame");
+    text(124, 163, "CPU", { class: "caption" }, overview);
 
-    overviewBlock(254, 150, 130, 136, "fetch-control-frame");
-    text(319, 174, "control unit", { class: "caption" }, overview);
-    box(overview, 267, 202, 45, 34, "PC");
-    box(overview, 326, 202, 45, 34, "IR");
+    overviewBlock(132, 179, 72.9, 56.88, "processing-block-tint");
+    overviewBlock(132, 179, 72.9, 56.88, "processing-block-frame");
+    const overviewProcessingIcon = group({}, overview, "0 0");
+    gsap.set(overviewProcessingIcon, { scale: 0.18, x: 131.46, y: 162.62 });
+    path(
+      iconGeometry,
+      { class: "processing-block-icon" },
+      overviewProcessingIcon,
+    );
+    text(168.45, 229.62, "PU", { class: "processing-block-name" }, overview);
+
+    overviewBlock(235.1, 179, 72.9, 56.88, "fetch-control-frame");
+    path(
+      "M247 193 H259 V204 H247 Z M282 193 H294 V204 H282 Z M259 198 H282 M253 204 V211 H288 V204",
+      { class: "thin muted" },
+      overview,
+    );
+    text(271.55, 229.62, "CU", { class: "caption" }, overview);
     overviewLink(
-      "M220 254 H254 M225 250 L220 254 L225 258 M249 250 L254 254 L249 258",
+      "M204.9 207 H235.1 M209.9 203 L204.9 207 L209.9 211 M230.1 203 L235.1 207 L230.1 211",
     );
 
-    overviewBlock(104, 352, 232, 64, "memory-block-tint");
-    overviewBlock(104, 352, 232, 64, "memory-block-frame");
-    text(220, 391, "memory", { class: "caption" }, overview);
+    overviewBlock(182.56, 318, 74.88, 62.64, "memory-block-tint");
+    overviewBlock(182.56, 318, 74.88, 62.64, "memory-block-frame");
+    const overviewMemoryIcon = group({}, overview, "0 0");
+    gsap.set(overviewMemoryIcon, { scale: 0.18, x: 180.4, y: 309.36 });
+    path(
+      "M70 90 H370 V270 H70 Z M120 90 V270 M70 135 H370 M70 180 H370 M70 225 H370",
+      { class: "memory-block-icon" },
+      overviewMemoryIcon,
+    );
+    text(220, 372.36, "MEMORY", { class: "memory-block-name" }, overview);
     overviewLink(
-      "M220 308 V352 M216 313 L220 308 L224 313 M216 347 L220 352 L224 347",
+      "M220 270 V318 M216 275 L220 270 L224 275 M216 313 L220 318 L224 313",
     );
 
-    overviewBlock(172, 38, 96, 38, "io-block-frame");
-    text(220, 63, "I/O", { class: "caption" }, overview);
+    overviewBlock(192, 80, 56, 26, "io-block-frame");
+    text(220, 98, "I/O", { class: "io-block-name" }, overview);
     overviewLink(
-      "M220 76 V110 M216 81 L220 76 L224 81 M216 105 L220 110 L224 105",
+      "M220 106 V144 M216 111 L220 106 L224 111 M216 139 L220 144 L224 139",
     );
     show(overview, "computer-overview", "memory-width", {}, 0.65);
 

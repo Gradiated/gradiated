@@ -802,8 +802,8 @@ export const COMPUTER_SCENES = (function () {
 
     overviewBlock(235.1, 179, 72.9, 56.88, "fetch-control-frame");
     path(
-      "M247 193 H259 V204 H247 Z M282 193 H294 V204 H282 Z M259 198 H282 M253 204 V211 H288 V204",
-      { class: "thin muted" },
+      "M260.55 192 H282.55 V208 H260.55 Z M260.55 196 H251.55 V188 H245.55 M260.55 204 H249.55 V214 H245.55 M282.55 196 H291.55 V188 H297.55 M282.55 204 H293.55 V214 H297.55 M267.55 192 V184 H261.55 M275.55 192 V184 H281.55 M267.55 208 V216 H261.55 M275.55 208 V216 H281.55",
+      { class: "control-block-icon" },
       overview,
     );
     text(271.55, 229.62, "CU", { class: "control-block-name" }, overview);

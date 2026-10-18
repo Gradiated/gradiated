@@ -220,7 +220,7 @@ Each register is built from circuits that remember individual bits, like the D l
 
 Reading and writing follow the same principle as our earlier memory array. Selection circuits choose which stored number to read, while a write-enable signal allows the chosen register to copy a new number and otherwise hold its contents.
 
-We will begin with `3` in `R1`, `6` in `R2` and `2` in `R3`. A register’s name identifies the storage slot, while its contents are the number stored there.
+We will begin with the values `3`, `6` and `2` stored in binary in `R1`, `R2` and `R3` respectively. A register’s name identifies the storage slot, while its contents are the number stored there.
 
 <!-- scene: select-values -->
 

@@ -782,32 +782,41 @@ export const COMPUTER_SCENES = (function () {
     if (!includeComputer) return { demos, timingDemo };
 
     const overview = group({ "data-diagram": "computer-overview" }, root);
-    box(overview, 67, 61, 306, 190, "");
-    text(220, 87, "CPU", { class: "caption" }, overview);
-    box(overview, 88, 106, 112, 53, "calculate");
-    box(overview, 240, 106, 112, 53, "registers");
-    box(overview, 164, 189, 112, 40, "control");
-    path(
-      "M200 132 H240 M185 189 V176 H144 V159 M255 189 V176 H296 V159",
-      { class: "muted" },
-      overview,
+    const overviewBlock = (x, y, width, height, className) =>
+      mk("rect", { x, y, width, height, rx: 4, class: className }, overview);
+    const overviewLink = (d) => path(d, { class: "io-link" }, overview);
+
+    overviewBlock(36, 110, 368, 198, "fetch-cpu-frame");
+    text(81, 134, "CPU", { class: "caption" }, overview);
+    overviewBlock(56, 150, 164, 136, "processing-block-tint");
+    overviewBlock(56, 150, 164, 136, "processing-block-frame");
+    text(138, 174, "processing unit", { class: "caption" }, overview);
+    box(overview, 76, 190, 124, 28, "registers");
+    path("M96 242 H126 L138 254 L150 242 H180 L168 274 H108 Z", {}, overview);
+    text(138, 268, "ALU", { class: "caption" }, overview);
+    overviewLink("M138 218 V254");
+
+    overviewBlock(254, 150, 130, 136, "fetch-control-frame");
+    text(319, 174, "control unit", { class: "caption" }, overview);
+    box(overview, 267, 202, 45, 34, "PC");
+    box(overview, 326, 202, 45, 34, "IR");
+    overviewLink(
+      "M220 254 H254 M225 250 L220 254 L225 258 M249 250 L254 254 L249 258",
     );
-    path(
-      "M204 251 V294 M236 251 V294 M29 175 H67 M373 175 H411",
-      { class: "muted" },
-      overview,
+
+    overviewBlock(104, 352, 232, 64, "memory-block-tint");
+    overviewBlock(104, 352, 232, 64, "memory-block-frame");
+    text(220, 391, "memory", { class: "caption" }, overview);
+    overviewLink(
+      "M220 308 V352 M216 313 L220 308 L224 313 M216 347 L220 352 L224 347",
     );
-    box(overview, 111, 294, 218, 69, "");
-    text(220, 318, "memory", { class: "caption" }, overview);
-    text(220, 344, "instructions + data", { class: "caption" }, overview);
-    text(29, 162, "input", { class: "tiny" }, overview);
-    text(404, 162, "output", { class: "tiny" }, overview);
+
+    overviewBlock(172, 38, 96, 38, "io-block-frame");
+    text(220, 63, "I/O", { class: "caption" }, overview);
+    overviewLink(
+      "M220 76 V110 M216 81 L220 76 L224 81 M216 105 L220 110 L224 105",
+    );
     show(overview, "computer-overview", "memory-width", {}, 0.65);
-    caption(
-      "computer-overview",
-      "the same circuits, directed by a stored program",
-      "memory-width",
-    );
 
     const memoryInterface = MEMORY_INTERFACE_SCENES.build({
       root,

@@ -269,7 +269,7 @@ The rules that give these instruction bits their meaning are part of the instruc
 
 The first four bits, `0001`, select the operation `ADD`. The next three bits name the destination register, followed by fields identifying the two inputs. Each register field uses three bits to choose one of eight registers. Here, `000` names `R0` and `011` names `R3`. These identify storage slots, not their contents. `R0` appears twice because its previous value is an input and it also receives the result.
 
-Between the inputs, `0` selects a second register, leaving the following `00` bits unused. Setting this bit to `1` instead puts a small number directly in the instruction, making common tasks such as adding `1` to a counter convenient, while larger values can come from registers.
+After the first input’s register field, a single bit chooses where the second input comes from. When this bit is `0`, the final three bits name a second register, and the two bits before them are unused. When it is `1`, all five remaining bits instead hold a small number to use directly in the calculation. This lets us request common operations such as adding `1` without first storing that number in a register. Larger values can be stored in registers and used through the register form of the instruction.
 
 Changing the fields requests a different operation or different registers. The faint alternatives above show some choices. Other operations, such as `NOT`, use the remaining instruction bits differently.
 

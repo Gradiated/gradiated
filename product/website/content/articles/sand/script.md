@@ -230,7 +230,7 @@ For our first calculation, we select `R1` and `R2`, sending `3` and `6` to the a
 
 <!-- scene: alu -->
 
-Let’s group our adder with circuits that perform logical operations. Together, they form an arithmetic and logic unit, or ALU. The LC-3 ALU has four modes. An operation signal chooses which result reaches its output.
+Let’s group our adder with circuits that perform logical operations. Together, they form an arithmetic and logic unit, or ALU. The LC-3 ALU has four modes. A control signal chooses which result reaches its output. This signal is not shown here and comes from the control unit, which we will introduce next.
 
 | Mode | What it does |
 | :--- | :--- |

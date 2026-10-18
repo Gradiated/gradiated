@@ -308,7 +308,8 @@ export const INSTRUCTION_CYCLE_SCENES = {
       );
       const rightAligned = String(content).length > 8 && point.x > 350;
       node.setAttribute("text-anchor", rightAligned ? "end" : "middle");
-      node.setAttribute("x", point.x - (rightAligned ? 10 : 0));
+      const x = node === flying[0] ? Math.max(26, point.x) : point.x;
+      node.setAttribute("x", x - (rightAligned ? 10 : 0));
       node.setAttribute("y", point.y - 9);
       node.style.opacity =
         progress > 0 && progress < 1

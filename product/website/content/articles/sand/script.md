@@ -297,7 +297,7 @@ We need to keep track of where we are in the program. The program counter, or `P
 
 We can now fetch the instruction. Memory copies the sixteen bits at the selected location into `MDR`. From there, they travel to a new register called the instruction register, or `IR`. It holds the current instruction while the control unit interprets it and directs the work.
 
-During the fetch, `PC` advances by `1`, ready for the following instruction. Each LC-3 instruction occupies one memory location, so the next one is at `12289`. `MAR` keeps the address being read even after `PC` changes. Fetching copies the instruction, leaving the stored bits unchanged.
+During the fetch, `PC` advances by `1`, ready for the following instruction. This sequence of instructions has been prepared in advance from code written by a programmer. Each LC-3 instruction occupies one memory location, so the next one is at `12289`. `MAR` keeps the address being read even after `PC` changes. Fetching copies the instruction, leaving the stored bits unchanged.
 
 <!-- scene: execute -->
 

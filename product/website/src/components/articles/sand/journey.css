@@ -254,8 +254,7 @@
   line-height: 1.2;
   font-weight: 500;
   font-variant-numeric: tabular-nums slashed-zero;
-  display: inline-block;
-  max-width: 100%;
+  display: inline;
   vertical-align: baseline;
   color: inherit;
   background: rgba(23, 22, 26, 0.06);

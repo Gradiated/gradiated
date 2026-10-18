@@ -224,13 +224,13 @@ We will begin with the values `3`, `6` and `2` stored in binary in `R1`, `R2` an
 
 <!-- scene: select-values -->
 
-We already used a multiplexer to select which stored number reaches the memory’s output. Here, another multiplexer, labelled `MUX`, chooses which value reaches the adder. Each input can select any of the eight registers, so we can use different pairs of stored numbers without changing the wiring. The figure shows only the connections used in our example.
+We can now connect the adder we built from logic gates to our fast storage registers. We already used a multiplexer to select which stored number reaches the memory’s output. Here, another multiplexer, labelled `MUX`, chooses which value reaches the adder. Each input can select any of the eight registers, so we can use different pairs of stored numbers without changing the wiring. The figure shows only the connections used in our example.
 
 For our first calculation, we select `R1` and `R2`, sending `3` and `6` to the adder. Each thick path marked `16` represents sixteen parallel wires, carrying all the bits of one number together.
 
 <!-- scene: alu -->
 
-Let’s zoom out again and group our adder with circuits that perform logical operations. Together, they form an arithmetic and logic unit, or ALU. The LC-3 ALU has four modes. An operation signal chooses which result reaches its output.
+Let’s group our adder with circuits that perform logical operations. Together, they form an arithmetic and logic unit, or ALU. The LC-3 ALU has four modes. An operation signal chooses which result reaches its output.
 
 | Mode | What it does |
 | :--- | :--- |

@@ -133,7 +133,7 @@ class InventorySafetyTests(unittest.TestCase):
                 ("guardduty", "list-detectors"): {"DetectorIds": []},
                 ("sns", "list-topics"): {"Topics": [{"TopicArn": topic}]},
                 ("sns", "list-subscriptions-by-topic"): {"Subscriptions": [
-                    {"SubscriptionArn": topic + ":confirmed", "Protocol": "email", "Endpoint": "security@gradiated.com"},
+                    {"SubscriptionArn": topic + ":confirmed", "Protocol": "https", "Endpoint": "https://api.incident.io/sensitive-endpoint-must-not-appear"},
                     {"SubscriptionArn": "PendingConfirmation", "Protocol": "https", "Endpoint": "sensitive-endpoint-must-not-appear"}]},
                 ("events", "list-targets-by-rule"): {"Targets": [{"Arn": topic}]},
                 ("cloudwatch", "describe-alarms"): {"MetricAlarms": []},
@@ -155,7 +155,7 @@ class InventorySafetyTests(unittest.TestCase):
         with patch.object(inventory, "aws", side_effect=read):
             snapshot = inventory.collect()
         facts = snapshot["regions"]["us-east-1"]
-        self.assertTrue(facts["topics"][0]["security_email_confirmed"])
+        self.assertTrue(facts["topics"][0]["incident_io_confirmed"])
         self.assertEqual(facts["topics"][0]["pending"], 1)
         self.assertEqual(facts["rules"][0]["bus"], "gradiated-security-events")
         self.assertNotIn("sensitive-endpoint", json.dumps(snapshot))

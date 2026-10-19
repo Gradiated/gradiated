@@ -162,7 +162,7 @@ def collect():
             topics.append({"arn": arn, "confirmed": sum(s["SubscriptionArn"].startswith("arn:") for s in subscriptions),
                            "pending": sum(s["SubscriptionArn"] == "PendingConfirmation" for s in subscriptions),
                            "confirmed_protocols": sorted({s["Protocol"] for s in subscriptions if s["SubscriptionArn"].startswith("arn:")}),
-                           "security_email_confirmed": any(s["SubscriptionArn"].startswith("arn:") and s["Protocol"] == "email" and s["Endpoint"].lower() == "security@gradiated.com" for s in subscriptions)})
+                           "incident_io_confirmed": any(s["SubscriptionArn"].startswith("arn:") and s["Protocol"] == "https" and s["Endpoint"].startswith("https://api.incident.io/") for s in subscriptions)})
         rules = []
         buses = ["default", "gradiated-security-events"] if region == REGION else ["default"]
         for bus in buses:

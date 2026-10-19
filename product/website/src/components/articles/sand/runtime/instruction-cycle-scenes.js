@@ -339,7 +339,7 @@ export const INSTRUCTION_CYCLE_SCENES = {
     const demo = gsap.timeline({ paused: true });
     let activeScene = null;
     const durations = {
-      program: 2,
+      program: 2.2,
       "instruction-fetch": 4.2,
       execute: 6.5,
       control: 24.5,
@@ -388,7 +388,7 @@ export const INSTRUCTION_CYCLE_SCENES = {
         stage === "stored"
           ? 0
           : stage === "program"
-            ? Math.min(t, 1.8)
+            ? t
             : stage === "instruction-fetch"
               ? Math.min(1.6 + t, 5.8)
               : stage === "execute"
@@ -410,8 +410,14 @@ export const INSTRUCTION_CYCLE_SCENES = {
       setText(mdrValue, state.mdr?.replaceAll(" ", "") ?? "—");
       setText(irValue, state.ir?.replaceAll(" ", "") ?? "—");
       setText(r0Value, state.r0);
-      for (const [name, tint] of Object.entries(captures))
-        tint.style.opacity = scene ? String(state.captures[name]) : "0";
+      for (const [name, tint] of Object.entries(captures)) {
+        const captureShown =
+          scene &&
+          time.value < durations[scene] &&
+          !(stage === "program" && name === "pc") &&
+          !(stage === "instruction-fetch" && name === "mar");
+        tint.style.opacity = captureShown ? String(state.captures[name]) : "0";
+      }
       diagram.setAttribute(
         "data-fetch-pc",
         stage === "program" ? PROGRAM_START : state.pc,

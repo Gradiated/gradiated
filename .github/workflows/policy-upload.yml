@@ -1,0 +1,51 @@
+# Called locally from policy-sync.yml. A reusable job supplies job_workflow_ref
+# for the exact workflow-path condition on the AWS role; direct jobs do not.
+name: Policy upload
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  upload:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # An older queued event must reconcile the latest main, not re-upload
+          # content superseded while it waited for a previous run.
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python3 -m pip install -r tools/security/requirements-policy-sync.txt
+      - run: python3 -m unittest discover -s tools/security -p 'test_sync_drata_policies.py' -v
+      - uses: aws-actions/configure-aws-credentials@v6.2.3
+        with:
+          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/gradiated-security-drata
+          allowed-account-ids: '873716897517'
+          role-session-name: drata-${{ github.run_id }}
+          disable-retry: true
+      - name: Upload policy revisions for Drata approval
+        env:
+          DRATA_API_HOST: ${{ vars.DRATA_API_HOST }}
+        run: |
+          set -euo pipefail
+          credential_json="$(aws secretsmanager get-secret-value \
+            --secret-id gradiated/prod/platform/drata \
+            --query SecretString --output text)"
+          DRATA_API_KEY="$(jq -er '.api_key | select(type == "string" and length > 0)' <<< "$credential_json")"
+          echo "::add-mask::${DRATA_API_KEY}"
+          export DRATA_API_KEY
+          export GITHUB_SHA="$(git rev-parse HEAD)"
+          python3 tools/security/sync_drata_policies.py --apply >> "$GITHUB_STEP_SUMMARY"

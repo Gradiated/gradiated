@@ -1,0 +1,58 @@
+name: Policy sync
+
+on:
+  pull_request:
+    paths:
+      - 'docs/security/policies/**'
+      - 'tools/security/*drata_policies*'
+      - 'tools/security/requirements-policy-sync.txt'
+      - '.github/workflows/policy-sync.yml'
+      - '.github/workflows/policy-upload.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'docs/security/policies/**'
+      - 'tools/security/*drata_policies*'
+      - 'tools/security/requirements-policy-sync.txt'
+      - '.github/workflows/policy-sync.yml'
+      - '.github/workflows/policy-upload.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Reconcile every current draft on main; a superseded queued push cannot lose an
+# earlier unsynced policy. Never cancel an upload already in progress.
+concurrency:
+  group: policy-sync-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python3 -m pip install -r tools/security/requirements-policy-sync.txt
+      - run: python3 tools/devex/check.py
+      - run: python3 -m unittest discover -s tools/security -p 'test_sync_drata_policies.py' -v
+      - run: python3 tools/security/sync_drata_policies.py
+      - name: Require draft status and version increment for policy content edits
+        if: github.event_name == 'pull_request'
+        env:
+          POLICY_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python3 tools/security/sync_drata_policies.py --base "$POLICY_BASE_SHA"
+
+  upload:
+    needs: validate
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/policy-upload.yml

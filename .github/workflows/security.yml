@@ -94,7 +94,7 @@ jobs:
         with:
           name: semgrep
           path: semgrep.json
-          retention-days: 30
+          retention-days: 90
 
   passed:
     name: Security scans passed

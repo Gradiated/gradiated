@@ -138,7 +138,6 @@ export const buildControllerScene = ({
   ])
     mk("circle", { cx, cy, r: 1.5, class: "dot" }, contents);
 
-  const status = label(220, 377, "Waiting for memory · next bits 00");
   const time = { value: 0 };
   const demo = gsap
     .timeline({ paused: true })
@@ -205,26 +204,17 @@ export const buildControllerScene = ({
     setText(nextZero, frame.next0);
     setText(readyValue, Number(frame.ready));
     setText(enable, Number(frame.copy));
-    setText(
-      status,
-      frame.captures.state > 0
-        ? frame.captured
-          ? "IR captures instruction · state captures 10"
-          : frame.state === 0
-            ? "Clock edge · state captures 00 again"
-            : "State captures 01"
-        : frame.captured
-          ? "IR holds instruction · state holds 10"
-          : frame.copy
-            ? "Transfer enabled · IR waits for clock edge"
-            : frame.ready
-              ? "READY is 1 · next bits 01 wait for clock edge"
-              : "Waiting for memory · next bits 00",
-    );
+    const message = frame.captured
+      ? "Instruction captured in IR. State 10 holds."
+      : frame.copy
+        ? "State 01. MDR to IR transfer enabled."
+        : frame.ready
+          ? "Memory ready. Next bits 01 wait for the clock edge."
+          : "State 00. Waiting for memory.";
     if (inView)
       controls.update(
         "controller",
-        { busy: false, message: status.textContent },
+        { busy: false, message },
         visible && !reduced ? 1 : 0,
       );
     stateTints.forEach((node, i) => {

@@ -46,7 +46,7 @@ export const buildControllerScene = ({
   );
   scene.insertBefore(zoomFrame, contents);
   label(220, 27, "Inside the controller", "caption");
-  const stateNames = ["wait for memory", "copy to IR", "hold"];
+  const stateNames = ["wait for memory", "copy MDR to IR", "hold"];
   const stateTints = stateNames.map((name, i) => {
     const x = 112 + i * 100;
     const tint = mk(

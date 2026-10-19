@@ -46,6 +46,8 @@ export const MEMORY_INTERFACE_SCENES = {
     key(module, "working-registers", { x: 12, y: 10, scale: 0.18 });
     key(module, "instruction", { x: 12, y: 68, scale: 0.18 });
     key(module, "addressed-memory", { opacity: 0 }, null, 0, 0.5);
+    key(module, "instruction-control", { x: 12, y: 68, scale: 0.18 });
+    key(module, "program", { opacity: 0 }, null, 0, 0.5);
     const frame = group({ "data-part": "memory-green-frame" }, module, "0 0");
     mk(
       "rect",
@@ -70,6 +72,11 @@ export const MEMORY_INTERFACE_SCENES = {
       y: 48 - (8 * 348) / 428,
     });
     key(frame, "addressed-memory", { scaleY: 1, y: 0 });
+    key(frame, "instruction-control", {
+      scaleY: 348 / 428,
+      y: 48 - (8 * 348) / 428,
+    });
+    key(frame, "program", { scaleY: 1, y: 0 });
     draw(frameLine, at("memory-block"), (1 - 2 * hold) * 0.95);
     const rowFrames = group({ "data-part": "memory-row-collapse" }, module);
     show(rowFrames, "memory-width", "working-registers", {}, 0.65);
@@ -479,6 +486,8 @@ export const MEMORY_INTERFACE_SCENES = {
     key(name, "working-registers", {}, null, 0.55);
     key(name, "instruction", { y: 58 });
     key(name, "addressed-memory", { opacity: 0 }, null, 0, 0.5);
+    key(name, "instruction-control", { y: 58 });
+    key(name, "program", { opacity: 0 }, null, 0, 0.5);
     return { demos };
   },
 };

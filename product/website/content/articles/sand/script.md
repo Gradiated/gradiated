@@ -265,21 +265,21 @@ The second input can come from another register or be a small number included di
 
 Instructions can do more than calculate. Some copy numbers from memory into registers or save register contents back to memory. Others change which instruction runs next, allowing a program to repeat steps or skip them.
 
+<!-- scene: addressed-memory -->
+
+Where do these instructions come from? They are stored in memory. Address `12288` holds `0001 000 000 0 00 011`, our `ADD R0, R0, R3` instruction. The next address, `12289`, holds the same instruction. Each adds the number in `R3` to the running total in `R0`. A sequence of stored instructions forms a program.
+
+Instructions and data share this memory. The same bits at address `12288` can be interpreted as the instruction `ADD R0, R0, R3` or as the number `4099`. Nothing in the stored bits distinguishes these meanings. Fetching them as an instruction tells the processor to interpret them as an operation, while reading them as data supplies a number to work with.
+
 <!-- scene: instruction-control -->
 
 The control unit, or CU, turns the instruction’s bit fields into electrical signals that select the input registers, choose the ALU operation and select the destination register. For now, assume it has received our example instruction. We will explain how it arrives from memory next.
 
 The result travels back to the fast storage registers, but it is saved only when the CU enables the destination register to accept it (with another write-enable input `WE`). The other registers keep their contents.
 
-<!-- scene: addressed-memory -->
+<!-- scene: program -->
 
 ### Fetching and executing
-
-Where does the control unit get its instructions? Let’s bring memory back into the picture. Address `12288` holds `0001 000 000 0 00 011`, our `ADD R0, R0, R3` instruction. The next address, `12289`, holds the same instruction. Each adds the number in `R3` to the running total in `R0`. A sequence of stored instructions forms a program.
-
-Instructions and data share this memory. The same bits at address `12288` can be interpreted as the instruction `ADD R0, R0, R3` or as the number `4099`. Nothing in the stored bits distinguishes these meanings. Fetching them as an instruction tells the control unit to interpret them as an operation, while reading them as data supplies a number to work with.
-
-<!-- scene: program -->
 
 We need to keep track of where we are in the program. The program counter, or `PC`, holds the address of the next instruction to fetch. Here, it starts at `12288`. The address is stored as sixteen bits, but the figure displays it in decimal for readability. Copying it into `MAR` selects the memory location, using the same address connection we built earlier.
 

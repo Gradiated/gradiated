@@ -60,6 +60,7 @@ export const COMPUTER_SCENES = (function () {
       const detail = group({ "data-part": "processing-detail" }, processing);
       key(processing, "working-registers", {}, null, 0.55);
       key(processing, "addressed-memory", { opacity: 0 }, null, 0, 0.6);
+      key(processing, "program", { opacity: 0 }, null, 0, 0.6);
       const bank = group({ "data-part": "working-storage" }, detail, "88 238");
       key(bank, "working-registers", { x: 15, y: 16, scale: 1.1 });
       key(bank, "select-values", { x: 0, y: 0, scale: 1 });
@@ -292,12 +293,13 @@ export const COMPUTER_SCENES = (function () {
       afterRender.push(() => {
         const p = tl.time();
         if (
-          p > index("instruction") + hold &&
+          p > index("addressed-memory") + hold &&
           p < index("instruction-control") - hold
         ) {
-          const progress = (p - index("instruction") - hold) / (1 - 2 * hold);
-          const slide = easeBlock(clamp(progress / 0.3));
-          const descend = easeBlock(clamp((progress - 0.3) / 0.25));
+          const progress =
+            (p - index("addressed-memory") - hold) / (1 - 2 * hold);
+          const slide = easeBlock(clamp((progress - 0.3) / 0.15));
+          const descend = easeBlock(clamp((progress - 0.45) / 0.1));
           const grow = easeBlock(clamp((progress - 0.55) / 0.45));
           gsap.set(processing, {
             scale: 0.18 + 0.64 * grow,
@@ -382,6 +384,8 @@ export const COMPUTER_SCENES = (function () {
       );
       key(miniName, "instruction", {}, null, 0.9);
       key(miniName, "addressed-memory", { opacity: 0 }, null, 0, 0.5);
+      key(miniName, "instruction-control", {}, null, 0.5);
+      key(miniName, "program", { opacity: 0 }, null, 0, 0.5);
       const miniature = group(
         { "data-part": "processing-miniature" },
         root,
@@ -407,7 +411,7 @@ export const COMPUTER_SCENES = (function () {
       const smallIcon = group({}, miniature, "0 0");
       gsap.set(smallIcon, { scale: 0.18, x: 14.61, y: -6 });
       path(iconGeometry, { class: "processing-block-icon" }, smallIcon);
-      show(miniature, "instruction-control", "addressed-memory", {}, 0.45);
+      show(miniature, "instruction-control", "program", {}, 0.45);
       processingHandoff = {
         processing,
         detail,
@@ -418,7 +422,9 @@ export const COMPUTER_SCENES = (function () {
 
       const instruction = group({ "data-diagram": "instruction-fields" }, root);
       key(instruction, "instruction", {}, null, 0.7);
-      key(instruction, "addressed-memory", { opacity: 0 }, null, 0, 0.5);
+      key(instruction, "addressed-memory", { opacity: 0 }, null, 0, 0.35);
+      key(instruction, "instruction-control", {}, null, 0.8);
+      key(instruction, "program", { opacity: 0 }, null, 0, 0.5);
       const fields = [];
       const brace = (parent, width) => {
         const edge = width / 2;
@@ -478,7 +484,7 @@ export const COMPUTER_SCENES = (function () {
         text(0, 96, role, { class: "instruction-field-name" }, annotation);
         key(field, "instruction", { x, y: 210 });
         key(field, "instruction-control", { x: 185 + i * 53, y: 44 });
-        show(annotation, "instruction", "instruction-control", {}, 0.25);
+        show(annotation, "instruction", "addressed-memory", {}, 0.25);
       }
       const format = group({ "data-part": "instruction-format" }, instruction);
       text(347, 256, "0 00", { class: "bit instruction-bits" }, format);
@@ -487,10 +493,10 @@ export const COMPUTER_SCENES = (function () {
       brace(formatBrace, 44);
       text(347, 306, "format", { class: "instruction-field-name" }, format);
       text(347, 320, "bits", { class: "instruction-field-name" }, format);
-      show(format, "instruction", "instruction-control", {}, 0.25);
+      show(format, "instruction", "addressed-memory", {}, 0.25);
       const control = group({ "data-diagram": "simple-control" }, root);
       key(control, "instruction-control", {}, null, 0.6);
-      key(control, "addressed-memory", { opacity: 0 }, null, 0, 0.5);
+      key(control, "program", { opacity: 0 }, null, 0, 0.5);
       text(
         264.5,
         12,
@@ -576,8 +582,7 @@ export const COMPUTER_SCENES = (function () {
         const p = tl.time(),
           isAlu = p >= index("alu") - hold,
           controlled =
-            p > index("instruction") + hold &&
-            p < index("addressed-memory") - hold;
+            p > index("addressed-memory") + hold && p < index("program") - hold;
         const controlBlend = clamp(
           (p - index("instruction-control") + 1 - hold) / (1 - 2 * hold),
         );
@@ -906,25 +911,76 @@ export const COMPUTER_SCENES = (function () {
       '[data-part="memory-block-silhouette"]',
     );
     key(memorySilhouette, "addressed-memory", { opacity: 0 });
+    key(memorySilhouette, "instruction-control");
+    key(memorySilhouette, "program", { opacity: 0 });
     const easeHandoff = gsap.parseEase("power2.inOut");
+    const clampHandoff = (n) => Math.max(0, Math.min(1, n));
+    const morphMemory = (grow, left, top, width, height) => {
+      const frameScaleY = 348 / 428 + (80 / 428) * grow;
+      const frameY = (48 - (8 * 348) / 428) * (1 - grow);
+      const scaleX = 0.18 + (width / 416 - 0.18) * grow;
+      const scaleY = 0.18 + (height / 428 - 0.18) * grow;
+      const x = 12 + (left - (12 * width) / 416 - 12) * grow;
+      const y = 68 + (top - (8 * height) / 428 - 68) * grow;
+      const swap = easeHandoff(clampHandoff((grow - 0.78) / 0.22));
+      gsap.set(memoryFrame, { scaleY: frameScaleY, y: frameY });
+      gsap.set(memoryModule, { scaleX, scaleY, x, y, opacity: 1 - swap });
+      gsap.set(memorySilhouette, { opacity: 1 - grow });
+      gsap.set(memoryName, { opacity: 1 - clampHandoff(grow / 0.3) });
+      return { frameScaleY, frameY, scaleX, scaleY, x, y, swap };
+    };
     afterRender.push(() => {
       const p = tl.time();
-      if (
-        p < index("instruction-control") - hold ||
-        p > index("addressed-memory") + hold
-      )
+      const tableIn =
+        p >= index("instruction") + hold &&
+        p <= index("addressed-memory") + hold;
+      const tableOut =
+        p > index("addressed-memory") + hold &&
+        p < index("instruction-control") - hold;
+      const fetchIn =
+        p >= index("instruction-control") + hold &&
+        p <= index("program") + hold;
+      if (!tableIn && !tableOut && !fetchIn) return;
+      const start = tableIn
+        ? "instruction"
+        : tableOut
+          ? "addressed-memory"
+          : "instruction-control";
+      const t = clampHandoff((p - index(start) - hold) / (1 - 2 * hold));
+      if (tableIn || tableOut) {
+        const grow = tableIn
+          ? easeHandoff(t)
+          : 1 - easeHandoff(clampHandoff(t / 0.3));
+        const pose = morphMemory(grow, 106, 256, 314, 138);
+        const tableScaleX = (416 * pose.scaleX) / 314;
+        const tableScaleY = (428 * pose.frameScaleY * pose.scaleY) / 138;
+        gsap.set(instructionCycle.handoff.memory, {
+          scaleX: tableScaleX,
+          scaleY: tableScaleY,
+          x: pose.x + 12 * pose.scaleX - 106 * tableScaleX,
+          y:
+            pose.y +
+            (8 * pose.frameScaleY + pose.frameY) * pose.scaleY -
+            296 * tableScaleY,
+          opacity: pose.swap,
+        });
+        gsap.set(instructionCycle.handoff.diagram, {
+          opacity: tableIn || t < 0.3 ? 1 : 0,
+        });
+        gsap.set(instructionCycle.handoff.programNames, { opacity: pose.swap });
+        gsap.set(instructionCycle.handoff.signals, { opacity: 0 });
+        gsap.set(instructionCycle.handoff.pu, { opacity: pose.swap });
+        gsap.set(instructionCycle.handoff.puName, { opacity: pose.swap });
+        gsap.set(processingHandoff.processing, { opacity: 1 - pose.swap });
+        gsap.set(processingHandoff.miniName, { opacity: 1 - pose.swap });
         return;
-      const t = Math.max(
-        0,
-        Math.min(1, (p - index("instruction-control") - hold) / (1 - 2 * hold)),
-      );
-      const clamp = (n) => Math.max(0, Math.min(1, n));
-      const shrink = easeHandoff(clamp(t / 0.26));
-      const slide = easeHandoff(clamp((t - 0.26) / 0.22));
+      }
+      const shrink = easeHandoff(clampHandoff(t / 0.26));
+      const slide = easeHandoff(clampHandoff((t - 0.26) / 0.22));
       const scale = 0.82 + (0.18 - 0.82) * shrink;
-      const swapPu = easeHandoff(clamp((t - 0.44) / 0.08));
-      const growMemory = easeHandoff(clamp((t - 0.5) / 0.5));
-      const swapMemory = easeHandoff(clamp((t - 0.78) / 0.22));
+      const swapPu = easeHandoff(clampHandoff((t - 0.44) / 0.08));
+      const growMemory = easeHandoff(clampHandoff((t - 0.5) / 0.5));
+      const pose = morphMemory(growMemory, 20, 350, 400, 84);
       gsap.set(processingHandoff.processing, {
         scale,
         x: 248.51 + (51.6 - 248.51) * slide - 205.5 * scale,
@@ -933,41 +989,19 @@ export const COMPUTER_SCENES = (function () {
       });
       gsap.set(processingHandoff.detail, { opacity: 1 - shrink });
       gsap.set(processingHandoff.silhouette, { opacity: shrink });
-      gsap.set(processingHandoff.miniature, { opacity: 1 - clamp(t / 0.12) });
-      gsap.set(processingHandoff.miniName, { opacity: 1 - clamp(t / 0.12) });
-      const frameScaleY = 348 / 428 + (80 / 428) * growMemory;
-      const frameY = (48 - (8 * 348) / 428) * (1 - growMemory);
-      gsap.set(memoryFrame, { scaleY: frameScaleY, y: frameY });
-      const memoryScaleX = 0.18 + (314 / 416 - 0.18) * growMemory;
-      const memoryScaleY = 0.18 + (138 / 428 - 0.18) * growMemory;
-      const memoryX = 12 + (106 - (12 * 314) / 416 - 12) * growMemory;
-      const memoryY = 68 + (256 - (8 * 138) / 428 - 68) * growMemory;
-      gsap.set(memoryModule, {
-        scaleX: memoryScaleX,
-        scaleY: memoryScaleY,
-        x: memoryX,
-        y: memoryY,
-        opacity: 1 - swapMemory,
+      gsap.set(processingHandoff.miniature, {
+        opacity: 1 - clampHandoff(t / 0.12),
       });
-      const tableScaleX = (416 * memoryScaleX) / 314;
-      const tableScaleY = (428 * frameScaleY * memoryScaleY) / 138;
-      gsap.set(instructionCycle.handoff.memory, {
-        scaleX: tableScaleX,
-        scaleY: tableScaleY,
-        x: memoryX + 12 * memoryScaleX - 106 * tableScaleX,
-        y:
-          memoryY +
-          (8 * frameScaleY + frameY) * memoryScaleY -
-          296 * tableScaleY,
-        opacity: swapMemory,
+      gsap.set(processingHandoff.miniName, {
+        opacity: 1 - clampHandoff(t / 0.12),
       });
-      gsap.set(memorySilhouette, { opacity: 1 - growMemory });
-      gsap.set(memoryName, { opacity: 1 - clamp((t - 0.5) / 0.16) });
       gsap.set(instructionCycle.handoff.diagram, { opacity: 1 });
+      gsap.set(instructionCycle.handoff.memoryBoundary, { opacity: pose.swap });
+      gsap.set(instructionCycle.handoff.memory, { opacity: 0 });
+      gsap.set(instructionCycle.handoff.programNames, { opacity: 0 });
       gsap.set(instructionCycle.handoff.signals, { opacity: t < 1 ? 0 : 1 });
       gsap.set(instructionCycle.handoff.pu, { opacity: swapPu });
       gsap.set(instructionCycle.handoff.puName, { opacity: swapPu });
-      gsap.set(instructionCycle.handoff.programNames, { opacity: swapMemory });
     });
 
     return { demos, timingDemo };

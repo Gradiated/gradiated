@@ -86,6 +86,7 @@ test("the complete preview retains all chapters and its own ending", () => {
       "alu",
       "processing-block",
       "instruction",
+      "addressed-memory",
       "instruction-control",
     ],
   );
@@ -97,7 +98,6 @@ test("the complete preview retains all chapters and its own ending", () => {
   assert.deepEqual(
     previewScenes.slice(previewScenes.indexOf("instruction-control") + 1),
     [
-      "addressed-memory",
       "program",
       "instruction-fetch",
       "execute",

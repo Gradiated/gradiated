@@ -25,6 +25,8 @@ export const INSTRUCTION_CYCLE_SCENES = {
       Math.min(clamp((time - start) / 0.18), clamp((end - time) / 0.18));
     const diagram = group({ "data-diagram": "instruction-cycle" }, root, "0 0");
     key(diagram, "addressed-memory", {}, null, 0.55);
+    key(diagram, "instruction-control", { opacity: 0 }, null, 0, 0.5);
+    key(diagram, "program", {}, null, 0.5);
     key(diagram, "controller", { opacity: 0 });
     key(diagram, "computer", { scale: 0.88, x: 26.4, y: 52 });
     const label = (parent, x, y, content, attrs = {}) =>
@@ -115,8 +117,9 @@ export const INSTRUCTION_CYCLE_SCENES = {
     label(programNames, 263, 205, "the same instruction, stored as bits", {
       class: "tiny muted",
     });
-    show(programNames, "addressed-memory", "program", {}, 0.4);
+    show(programNames, "addressed-memory", "instruction-control", {}, 0.4);
     key(memory, "addressed-memory", { x: 0, y: -40, scaleX: 1, scaleY: 1 });
+    key(memory, "instruction-control", { opacity: 0 });
     key(memory, "program", {
       x: 0,
       y: 260,
@@ -536,7 +539,15 @@ export const INSTRUCTION_CYCLE_SCENES = {
     });
     return {
       demos: [demo, controllerDemo],
-      handoff: { diagram, memory, programNames, pu, puName, signals },
+      handoff: {
+        diagram,
+        memory,
+        memoryBoundary,
+        programNames,
+        pu,
+        puName,
+        signals,
+      },
     };
   },
 };

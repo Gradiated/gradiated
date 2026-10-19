@@ -283,6 +283,12 @@ Grafana `Security` folder.
 | Kyverno 1.19 (chart 3.9.1) | `kyverno` | Four baseline `ValidatingPolicy` resources in **Audit** mode: no privileged containers, no host namespaces or hostPath, no `latest` or untagged images, CPU and memory requests required. Nothing is blocked. Webhooks fail open. | Admission controller 100m/256Mi, reports controller 50m/128Mi |
 | Falco 0.45.1 (chart 9.2.0) | `falco` | Runtime intrusion detection on every EKS node with the modern eBPF probe in least-privileged mode and the pinned `falco-rules:5.2.0` default ruleset. Events at Notice and above go to Loki as JSON. | 20m/128Mi per node (16 nodes: 320m/2Gi), default priority so it never preempts workloads |
 
+Falco uses the patched image from `infra/images/falco`, pinned by digest. Its
+container plugin is baked into the image; the chart downloads only the pinned
+rules artifact. CRI enrichment and the `/run/containerd` directory mount remain
+enabled explicitly. `tools/security/check_falco.py` renders the chart and checks
+that a plugin download or volume cannot replace or hide the patched library.
+
 Scope limits:
 
 - GPU model pods run on virtual-kubelet nodes backed by external hosts. Falco

@@ -173,6 +173,7 @@ export const MEMORY_INTERFACE_SCENES = {
     afterRender.push(() => {
       const active = Math.abs(tl.time() - index("memory-width")) <= hold;
       if (active && !widthActive) widening.restart();
+      else if (active) widening.play();
       if (!active) {
         if (tl.time() > index("memory-width") && widening.progress() < 1)
           widening.progress(1);
@@ -361,15 +362,12 @@ export const MEMORY_INTERFACE_SCENES = {
       lit.set(element, opacity);
       element.style.opacity = opacity;
     };
-    let activeBefore = false;
     afterRender.push(() => {
       const p = tl.time();
       const nearAccess = Math.abs(p - index("memory-access")) < 0.5;
       const active = Math.abs(p - index("memory-access")) <= hold;
-      if (active && !activeBefore && model.frame(time.value).busy)
-        animation.play();
-      if (!active) animation.pause();
-      activeBefore = active;
+      if (active && model.frame(time.value).busy) animation.play();
+      else animation.pause();
 
       if (!nearAccess) {
         for (const el of [

@@ -165,6 +165,13 @@ export const createTrainingService = (
           if (!engine) throw new Error("Training engine unavailable");
 
           await engine.updateSchedule(updated.id, updated.trainingSchedule);
+          // Workspace cleanup may have deleted the schedule while this update
+          // was in flight; remove a schedule recreated for a deleted task.
+          if (
+            updated.trainingSchedule &&
+            !(await records.isTaskLive(updated.id))
+          )
+            await engine.updateSchedule(updated.id, null);
         } catch {
           throw new ControlServiceError(
             "unavailable",

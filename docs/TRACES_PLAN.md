@@ -324,6 +324,8 @@ key. The collector's role can only write.
   prefix asynchronously, retries partial failures, and catches late flushes.
   The API role reads/decrypts content; the worker can list/delete but cannot read
   or decrypt it. Capture/retention changes and deletion require owner/admin access.
+- The worker also deletes the workspace's training artifacts (`runs/<run_id>/`
+  in the model artifacts bucket) and its tasks, runs and task versions.
 - Version 1 has one bucket, in `us-east-1`. Other regions add a bucket, a
   collector deployment per region, and a region field on the workspace that
   selects them.

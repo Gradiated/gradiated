@@ -127,6 +127,10 @@ export {
 export { createContentStore, type ContentStore } from "./traces/storage.js";
 export { createTraceService, type TraceService } from "./traces/service.js";
 export { createTraceCleanup } from "./traces/cleanup.js";
+export {
+  createTrainingArtifactCleanup,
+  deleteArchivedTasks,
+} from "./training/artifact-cleanup.js";
 
 export {
   createTrainingService,

@@ -7,6 +7,7 @@ const environmentSchema = clickHouseRuntimeEnvironmentSchema
     MODEL_VERIFICATION_WORKSPACE_ID: z.uuid().optional(),
     MODEL_VERIFICATION_USER_ID: z.uuid().optional(),
     CONTENTS_BUCKET: z.string().min(1).optional(),
+    TRAINING_ARTIFACTS_BUCKET: z.string().min(1).optional(),
     DATABASE_URL: z.url(),
     VALKEY_URL: z.url(),
     VALKEY_IAM_CACHE_NAME: z.string().trim().min(1).optional(),

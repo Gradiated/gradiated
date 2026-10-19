@@ -287,15 +287,14 @@ The sand article uses `layout: journey`, preserving its sticky illustrations in
 the shared website shell. Drafts are included locally and in Vercel Preview
 deployments (`VERCEL_ENV=preview`). Preview drafts are prerendered with noindex
 metadata and omitted from the sitemap. Production excludes drafts until their
-metadata is set to published. Sand to Thought is now marked published, but the PR
-remains a draft until its author explicitly approves review. Its production build
-ends after chapter 4's timing scene. `content/articles/sand/publication.json`
-records `publishedThrough: "timing"` and the public closing paragraph. Development
-and Vercel previews retain all five chapters. Moving the boundary to a later
+metadata is set to published. Sand to Thought is published through all five
+current chapters. `content/articles/sand/publication.json` records
+`publishedThrough: "computer"` and the public closing paragraph. Development and
+Vercel previews render the complete script. Moving the boundary to a later
 chapter's final scene publishes that chapter on the next production deployment.
-The boundary must fall immediately before the next chapter heading. Production
-omits later prose, contents links and diagram nodes. The complete draft is still
-validated on every build. The prose is rendered at
+The boundary must fall at the end of the script or immediately before the next
+chapter heading. Production omits later prose, contents links and diagram nodes.
+The complete script is still validated on every build. The prose is rendered at
 build time from `content/articles/sand/script.md`, with the ordered scene manifest
 validated by the renderer. The animation geometry is scoped to its mounted page
 and cleaned up on navigation. The imported animation files are a preserved
@@ -304,20 +303,20 @@ journey; future chapter guides will organise separate deeper articles, with one
 primary chapter and contextual links from others. Add guide links only when the
 destination exists.
 
-The writing workspace retains its working draft. Refresh the portable website
-edition with `node scripts/sync-sand-draft.mjs --source /path/to/script.md`.
-Visual cue blocks stay in the working draft and are omitted from the portable
-website edition. Exports use the repository’s Prettier configuration so Markdown
-tables retain the formatting required by CI. Add `--watch` while editing to update
-the website preview on saves. Production
-builds use the checked-in edition and do not depend on another local folder.
+The checked-in `content/articles/sand/script.md` is the canonical prose source.
+The local authoring workspace links its `script.md` to this file. Saving updates
+both local views, while commit and push update the branch preview. The portable
+authoring edition has its own build tool and animation copy. Private visual cues
+remain in the authoring workspace and are not published. Production builds use
+only checked-in website files and do not depend on another local folder.
 
-The memory section ends with an abstract timing grid, immediately before the
-transition into building a computer. Chapter 5 adds a looping multiplexer,
-working registers, an ALU, addressed memory, stored instructions and control,
-then traces LC-3 ADD R0, R1, R2 with 3 + 6 = 9. The trace retains the
-source registers and writes 9 to R0. Detailed timing and instruction-processing
-treatments remain future articles. The original memory sum is unchanged.
+Timing follows the adder and heat discussion, before the memory chapter. Memory
+builds from a latch and register into addressed arrays with manual read and write
+controls. Chapter 5 develops MAR/MDR, fast storage registers, multiplexers, an ALU
+and control. Its LC-3 example adds R3 to R0, then follows stored instructions
+through PC, instruction fetching, IR and execution. An illustrative controller
+shows how gates and stored state coordinate a transfer and wait for memory.
+Detailed treatments remain future articles.
 
 `runtime/computer-scenes.js` builds the new diagrams using the existing SVG/GSAP
 helpers. `runtime/scroll-progress.js` keeps each later illustration steady while

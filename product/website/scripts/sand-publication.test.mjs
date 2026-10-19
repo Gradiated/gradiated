@@ -14,33 +14,40 @@ const template = "<!--{{TITLE}}-->{{ARTICLE}}";
 const sceneKeys = (html) =>
   [...html.matchAll(/data-scene="([^"]+)"/g)].map((match) => match[1]);
 
-test("the public guide ends with memory and excludes all chapter 5 prose and links", () => {
+test("the public guide includes chapter 5 through the completed computer", () => {
   const html = renderPost(source, template, scenes, publication);
-  assert.equal(publication.publishedThrough, "memory-buses");
-  assert.deepEqual(
-    sceneKeys(html),
-    scenes.slice(0, scenes.indexOf("memory-buses") + 1),
-  );
-  for (const draft of [
+  assert.equal(publication.publishedThrough, "computer");
+  assert.deepEqual(sceneKeys(html), scenes);
+  for (const chapterContent of [
     "Building a computer",
     "von Neumann",
     "LC-3",
     "program counter",
-    "sand-computer-overview",
-    "sand-select-values",
-    "sand-processing-block",
-    "sand-instruction",
     "sand-instruction-control",
+    "sand-controller",
     "sand-computer",
+    "machine code",
   ])
-    assert.ok(!html.includes(draft), draft);
-  for (const memoryScene of [
-    "memory-two",
-    "memory-array",
-    "stored-answer",
-    "memory-buses",
-  ])
-    assert.ok(sceneKeys(html).includes(memoryScene));
+    assert.ok(html.includes(chapterContent), chapterContent);
+  assert.ok(!html.includes('class="footnote"'));
+  assert.ok(html.includes(publication.footer));
+  assert.equal(html, renderPost(source, template, scenes));
+});
+
+test("an earlier publication boundary still excludes unpublished chapters", () => {
+  const boundary = {
+    publishedThrough: "memory-buses",
+    footer: "More to come.",
+  };
+  const html = renderPost(source, template, scenes, boundary);
+  assert.deepEqual(
+    sceneKeys(html),
+    scenes.slice(0, scenes.indexOf("memory-buses") + 1),
+  );
+  assert.ok(!html.includes("Building a computer"));
+  assert.ok(!html.includes("sand-computer-overview"));
+  assert.ok(!html.includes("sand-controller"));
+  assert.ok(html.includes(boundary.footer));
   const publicScenes = sceneKeys(html);
   assert.equal(
     publicScenes.indexOf("timing"),
@@ -50,17 +57,6 @@ test("the public guide ends with memory and excludes all chapter 5 prose and lin
     publicScenes.indexOf("latch"),
     publicScenes.indexOf("timing") + 1,
   );
-  assert.ok(html.includes("four locations"));
-  assert.ok(html.includes("four-bit number"));
-  assert.ok(!html.includes('class="footnote"'));
-  assert.ok(html.includes("We have circuits that calculate and remember."));
-  assert.ok(
-    !html.includes(
-      "Our adder calculates with whatever values reach its inputs.",
-    ),
-  );
-  assert.ok(html.includes(publication.footer));
-  assert.ok(!html.includes("The LC-3 example"));
 });
 
 test("the complete preview retains all chapters and its own ending", () => {
@@ -113,7 +109,6 @@ test("the complete preview retains all chapters and its own ending", () => {
     ),
   );
   assert.ok(!html.includes('class="footnote"'));
-  assert.ok(!html.includes(publication.footer));
 });
 
 test("unknown scenes, incomplete chapters and empty endings fail the build", () => {

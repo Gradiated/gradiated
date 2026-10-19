@@ -253,7 +253,7 @@ Together, our fast storage registers, selection circuits and ALU form the proces
 
 <!-- scene: instruction -->
 
-### Instructions and control
+### Instructions and programs
 
 We have shown the processing unit repeatedly adding `2` to a running total. The instruction `ADD R0, R0, R3` requests one such addition. It adds the numbers stored in `R0` and `R3`, then saves the result in `R0`.
 
@@ -272,6 +272,8 @@ Where do these instructions come from? They are stored in memory. Address `12288
 Instructions and data share this memory. The same bits at address `12288` can be interpreted as the instruction `ADD R0, R0, R3` or as the number `4099`. Nothing in the stored bits distinguishes these meanings. Fetching them as an instruction tells the processor to interpret them as an operation, while reading them as data supplies a number to work with.
 
 <!-- scene: instruction-control -->
+
+### The control unit
 
 The control unit, or CU, turns the instruction’s bit fields into electrical signals that select the input registers, choose the ALU operation and select the destination register. For now, assume it has received our example instruction. We will explain how it arrives from memory next.
 
@@ -316,6 +318,8 @@ The bits inside the register are the current state. The gates on the left prepar
 The wiring stays fixed, but changing the stored state changes which control signals are active. Together, the state register and these logic circuits form a finite-state machine, or FSM. The complete controller has more states and uses signals such as memory’s ready signal to decide when to advance, as well as instruction bits to choose which steps to follow.
 
 <!-- scene: computer -->
+
+### Putting the computer together
 
 Input and output, or I/O, connect the computer to the outside world. Input brings in information, such as a key pressed on a keyboard, while output sends results to a device such as a screen.
 

@@ -52,9 +52,19 @@ export const instructionCycleFrame = (time, cycles = 1) => {
   };
 };
 
-export const controllerFrame = (time) => {
+export const controllerFrame = (time, memoryReadyAt = 4) => {
   // These state codes illustrate one transfer rather than the full LC-3 controller.
-  const state = time < 2 ? 0 : time < 6 ? 1 : 2;
+  const ready = time >= memoryReadyAt;
+  let state = 0;
+  let captured = false;
+  let capture = 0;
+  for (let edge = 2; edge <= time && state !== 2; edge += 4) {
+    const next1 = (state >> 1) | (state & 1);
+    const next0 = Number(edge >= memoryReadyAt) & (1 - next1);
+    captured = state === 1;
+    state = (next1 << 1) | next0;
+    capture = capturePulse(time, edge);
+  }
   const s1 = state >> 1;
   const s0 = state & 1;
   const next1 = s1 | s0;
@@ -62,12 +72,11 @@ export const controllerFrame = (time) => {
     state,
     s1,
     s0,
+    ready,
     next1,
-    next0: 1 - next1,
+    next0: Number(ready) & (1 - next1),
     copy: s1 === 0 && s0 === 1,
-    captured: time >= 6,
-    captures: {
-      state: Math.max(capturePulse(time, 2), capturePulse(time, 6)),
-    },
+    captured,
+    captures: { state: capture },
   };
 };

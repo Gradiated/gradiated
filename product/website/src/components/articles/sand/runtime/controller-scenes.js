@@ -46,7 +46,7 @@ export const buildControllerScene = ({
   );
   scene.insertBefore(zoomFrame, contents);
   label(220, 27, "Inside the controller", "caption");
-  const stateNames = ["ready to copy", "copy to IR", "hold"];
+  const stateNames = ["wait for memory", "copy to IR", "hold"];
   const stateTints = stateNames.map((name, i) => {
     const x = 112 + i * 100;
     const tint = mk(
@@ -78,10 +78,18 @@ export const buildControllerScene = ({
   );
   const stateZeroPath = signal("M266 254 H278 V314 H32 V214 H72.414");
   wire("M68 188 Q79 206 68 224 Q100 224 110 206 Q100 188 68 188 Z");
-  wire("M72 243 L92 254 L72 265 Z");
-  mk("circle", { cx: 96, cy: 254, r: 3, class: "memory-box" }, contents);
-  const nextOnePath = signal("M110 206 H190 M122 206 V232 H54 V254 H72");
-  const nextZeroPath = signal("M99 254 H190");
+  wire("M72 227 L92 238 L72 249 Z");
+  mk("circle", { cx: 96, cy: 238, r: 3, class: "memory-box" }, contents);
+  const nextOnePath = signal("M110 206 H190 M122 206 V224 H54 V238 H72");
+  const noStatePath = signal("M99 238 H122");
+  wire("M122 230 H138 A24 24 0 0 1 138 278 H122 Z");
+  const nextZeroPath = signal("M162 254 H190");
+  const readyCrossing = path("M26 270 Q32 260 38 270", {}, contents);
+  readyCrossing.style.stroke = "var(--paper)";
+  readyCrossing.style.strokeWidth = "5px";
+  const readyPath = signal("M-20 270 H26 Q32 260 38 270 H122");
+  label(62, 292, "READY");
+  const readyValue = label(105, 292, "0", "bit");
   const nextOne = label(172, 194, "0", "bit");
   const nextZero = label(172, 242, "1", "bit");
 
@@ -130,7 +138,7 @@ export const buildControllerScene = ({
   ])
     mk("circle", { cx, cy, r: 1.5, class: "dot" }, contents);
 
-  const status = label(220, 377, "Instruction ready in MDR");
+  const status = label(220, 377, "Waiting for memory · next bits 00");
   const time = { value: 0 };
   const demo = gsap
     .timeline({ paused: true })
@@ -195,18 +203,23 @@ export const buildControllerScene = ({
     setText(s0, frame.s0);
     setText(nextOne, frame.next1);
     setText(nextZero, frame.next0);
+    setText(readyValue, Number(frame.ready));
     setText(enable, Number(frame.copy));
     setText(
       status,
       frame.captures.state > 0
         ? frame.captured
           ? "IR captures instruction · state captures 10"
-          : "State captures 01"
+          : frame.state === 0
+            ? "Clock edge · state captures 00 again"
+            : "State captures 01"
         : frame.captured
           ? "IR holds instruction · state holds 10"
           : frame.copy
             ? "Transfer enabled · IR waits for clock edge"
-            : "Instruction ready in MDR · next bits 01",
+            : frame.ready
+              ? "READY is 1 · next bits 01 wait for clock edge"
+              : "Waiting for memory · next bits 00",
     );
     if (inView)
       controls.update(
@@ -222,6 +235,8 @@ export const buildControllerScene = ({
       [stateZeroPath, frame.s0],
       [nextOnePath, frame.next1],
       [nextZeroPath, frame.next0],
+      [noStatePath, 1 - frame.next1],
+      [readyPath, frame.ready],
       [invertedPath, 1 - frame.s1],
       [directPath, frame.s0],
       [sendPath, frame.copy],
@@ -235,6 +250,7 @@ export const buildControllerScene = ({
       "data-controller-state",
       frame.state.toString(2).padStart(2, "0"),
     );
+    scene.setAttribute("data-controller-ready", String(frame.ready));
     scene.setAttribute("data-controller-copy", String(frame.copy));
     scene.setAttribute("data-controller-captured", String(frame.captured));
   });

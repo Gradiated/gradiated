@@ -303,6 +303,7 @@ export const INSTRUCTION_CYCLE_SCENES = {
       class: "fetch-phase caption",
       "data-fetch-phase": "",
     });
+    show(status, "addressed-memory", "computer");
     const flying = [
       "address",
       "instruction",

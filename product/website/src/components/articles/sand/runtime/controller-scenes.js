@@ -15,7 +15,6 @@ export const buildControllerScene = ({
 }) => {
   const scene = group({ "data-diagram": "controller-internals" }, root);
   const contents = group({}, scene, "0 0");
-  const io = root.querySelector('[data-part="io-building-block"]');
   const clamp = (value) => Math.max(0, Math.min(1, value));
   const ease = (value) => value * value * (3 - 2 * value);
   const mix = (a, b, amount) => a + (b - a) * amount;
@@ -178,7 +177,6 @@ export const buildControllerScene = ({
           : 1 - ease(clamp(entering / 0.35)),
       );
       diagram.style.opacity = backgroundOpacity;
-      if (io) io.style.opacity = backgroundOpacity;
     }
     const visible = Math.abs(position - index("controller")) <= hold;
     if (visible && !active) demo.restart();

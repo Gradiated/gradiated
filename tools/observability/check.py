@@ -867,6 +867,13 @@ def main():
              {'namespace': 'falco', 'job': 'falco-metrics'}, '16m')
 
     kyverno_alert = 'KyvernoPolicyViolationsRising'
+    host_stale = 'GpuHostTelemetryStale'
+    for name, timestamp, fires in [('fresh', '0+30x40', False), ('stale', '0x40', True)]:
+        scenario('GPU host telemetry ' + name,
+                 [{'series': 'gradiated_gpu_host_last_seen_seconds{instance_id="test-host"}', 'values': timestamp}],
+                 host_stale if fires else None, [host_stale],
+                 {'instance_id': 'test-host', 'node': 'gpu-test-host'} if fires else None)
+
     def report(values, namespace='gradiated', name='r1'):
         return {'series': f'kube_policyreport_fail{{namespace="{namespace}",name="{name}"}}', 'values': values}
     # Instant selectors need a sample within five minutes of each 15-minute evaluation.

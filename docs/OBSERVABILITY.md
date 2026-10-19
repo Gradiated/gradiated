@@ -78,6 +78,8 @@ The `gradiated-services` PrometheusRule covers:
 - missing telemetry for each server-side process;
 - sustained public DNS, TLS, CDN/ALB, and application availability failures,
   plus missing probe results for API, console, and Metabase;
+- bounded public inference probes for every serving deployment and separate
+  monitoring-stalled detection;
 - PostgreSQL, Valkey, and catalog readiness failures;
 - API/gateway error ratios and latency regressions;
 - worker crashes, readiness loss, pass stalls, poison-event
@@ -95,6 +97,42 @@ managed `gradiated/prod/platform/alertmanager-notifications` AWS Secrets
 Manager value with JSON containing `webhook-url` and `webhook-token`.
 Alertmanager reads the token as a Bearer credential. The URL and token must
 never enter Git.
+
+The incident.io Alertmanager source pauses timeout resolution while an alert is
+attached to an incident. Unattached alerts have a 48-hour timeout, longer than
+the longest reminder interval (24 hours). Explicit resolved events
+close recovered alerts promptly. The timeout must exceed all repeat intervals
+plus their group interval; otherwise persistent failures falsely close and
+reopen between reminders. The separate Watchdog heartbeat detects loss of the
+notification pipeline within about ten minutes. Timer expiration is not evidence
+of service recovery.
+
+Incident.io groups alerts by type for a fixed 30-minute window starting with the
+first alert. Alertmanager titles are rule names (for example,
+`InferenceDeploymentProbeFailed`), so model, deployment and host labels do not
+create separate incidents of that type within the group. All occurrences update
+one Slack summary, and only a priority increase re-escalates. Different types
+remain separate; a new occurrence after 30 minutes can create a new group. This is
+native time-window grouping, not a calendar-day quota or an indefinite
+one-open-incident constraint. Per-deployment alerts and their recovery behavior
+remain intact. Separate failures of the same type inside the window can still
+share a group and do not re-page at the same priority.
+
+Public inference probes use Gradiated's internal verification account and normal
+billing admission. HTTP 402 across all probes can mean that this account exhausted
+its prepaid credit; inspect its operational balance before diagnosing GPU failure.
+The guarded, idempotent internal reserve-credit operation is documented in
+[`tools/models/README.md`](../tools/models/README.md#internal-monitoring-billing).
+
+For the same `gradiated` recovery job, `DatabaseRestoreVerificationFailed`
+inhibits the generic `KubeJobFailed` warning. Other jobs and namespaces retain
+their notifications, and the generic warning becomes eligible again if the
+specific recovery alert stops firing. Both rules remain visible in Prometheus.
+
+`GpuHostTelemetryStale` includes the virtual node identity and inhibits warning
+notifications from `KubeNodeNotReady` and `KubeNodeUnreachable` for that same
+GPU node. The host failure remains actionable through the specific alert; other
+nodes and critical alerts retain their notifications.
 
 `InfoInhibitor` is disabled. It is an upstream helper for suppressing standalone
 informational alerts, not a service failure. `InfoInhibitor` and
@@ -182,6 +220,7 @@ of seconds). Range windows and `for` durations are not interchangeable.
 | Failure | Threshold and confirmation | Reason |
 | --- | --- | --- |
 | Public API/console/Metabase outage | Failed probes continuously for 2m | Detect complete outages promptly while tolerating isolated failed probes. Metabase remains warning. |
+| Public inference failure | No successful probe for >15s, then 10s confirmation | Per-deployment alerts retain diagnostics; the shared incident grouping policy combines occurrences of the same type. |
 | No serving replicas | Zero available for 2m with desired replicas >0 | A complete service outage should not wait for rollout diagnostics. |
 | Missing service/probe telemetry | No samples for 2m, then 1m confirmation | Roughly 3m of blindness; independent of customer traffic. |
 | Dependency down | 2m | Tolerates brief reconnects without concealing a sustained failure. |
@@ -212,7 +251,7 @@ absence of separate vendor-managed notifications outside the inspected systems.
 | Area | Existing protection | Important remaining gap and next action |
 | --- | --- | --- |
 | Monitoring and notifications — highest priority | Prometheus/Alertmanager self-monitoring and notification-failure rules; Watchdog heartbeat to incident.io | Both servers have one replica. The heartbeat proves Alertmanager can reach incident.io, not that the incident webhook credential works. Assess HA placement and alert on webhook delivery failures. |
-| Customer serving — highest priority | Public API/console probes; gateway request, generation and dependency metrics | Probes originate inside EKS and do not authenticate or run inference. Add an external, bounded exact-model synthetic transaction validating authentication, first token, completion, and usage. It needs an authorized test account, spend limit and external scheduler. |
+| Customer serving — highest priority | Public API/console probes; authenticated per-deployment inference probes; gateway request, generation and dependency metrics | Probes originate inside EKS. Inference probes validate authentication, completion and usage with a four-second deadline; they depend on the internal monitoring account. An independent external vantage point remains missing. |
 | Billing-integrity events | Immediate finalization/backpressure rules with first-event timestamp gauges; leader-aware worker progress and eligible backlog | Timestamp gauges cover first-sample events, but a process that dies before any subsequent scrape can still lose in-memory evidence. Durable billing records remain the accounting authority. |
 | PostgreSQL and Valkey | App dependency checks; primary RDS is Multi-AZ, deletion-protected, has 35-day backups and recent restorable time; cache has 30-day snapshots; `gradiated-data-stores` alerts on RDS storage, connections, CPU and memory, and on Valkey storage, ECPU, throttling and evictions | RDS failover and availability events are not routed. Connection thresholds assume the default `max_connections`. |
 | ClickHouse / ingestion | Worker failures, pending age, eligible settlement backlog; Terraform specifies two replicas and daily backups retained 30 days | No direct ClickHouse scrape target was present. Add query/insert failures, storage/resource saturation and backup freshness checks. Unread stream age is not measured; pending-only alerts cannot prove ingestion completeness. |
@@ -321,6 +360,11 @@ dashboard links directly to the CloudWatch audit log for investigation. This is
 additional root-use coverage, not a replacement for SNS email confirmation or a
 separate notification path for every GuardDuty/Inspector finding. It still depends
 on the EKS monitoring stack and its existing incident.io integration.
+
+High-severity GuardDuty finding events (7+) page immediately. Inspector High and
+Critical static vulnerability events use In-hours review, including findings for
+retained images that are not deployed. This does not disable Inspector scanning,
+its evidence stream, or the running-image vulnerability remediation-SLA alerts.
 
 ### Exporting SOC 2 evidence
 

@@ -10,6 +10,32 @@ def aws(*args):
     return json.loads(subprocess.check_output(["aws", *args, "--output", "json"], text=True))
 
 
+def validate_finding_metrics(resources):
+    finding_events = [
+        ({"source": "aws.guardduty", "detail": {"severity": 8}}, "urgent_findings"),
+        ({"source": "aws.guardduty", "detail": {"severity": 7}}, "urgent_findings"),
+        ({"source": "aws.guardduty", "detail": {"severity": 6.9}}, "review_findings"),
+        ({"source": "aws.guardduty", "detail": {"severity": 4}}, "review_findings"),
+        ({"source": "aws.guardduty", "detail": {"severity": 3}}, None),
+        ({"source": "aws.inspector2", "detail": {"severity": "CRITICAL", "status": "ACTIVE"}}, "review_findings"),
+        ({"source": "aws.inspector2", "detail": {"severity": "HIGH", "status": "ACTIVE"}}, "review_findings"),
+        ({"source": "aws.inspector2", "detail": {"severity": "MEDIUM", "status": "ACTIVE"}}, None),
+        ({"source": "aws.inspector2", "detail": {"severity": "CRITICAL", "status": "CLOSED"}}, None),
+        ({"source": "other", "detail": {"severity": 8}}, None),
+    ]
+    finding_filters = [resource for resource in resources
+                       if resource["type"] == "aws_cloudwatch_log_metric_filter" and resource["name"] == "findings"]
+    assert {resource["index"] for resource in finding_filters} == {"urgent_findings", "review_findings"}
+    for resource in finding_filters:
+        messages = [json.dumps(event) for event, _ in finding_events]
+        result = aws("logs", "test-metric-filter", "--filter-pattern", resource["values"]["pattern"],
+                     "--log-event-messages", *messages)
+        expected = [message for message, (_, receiver) in zip(messages, finding_events)
+                    if receiver == resource["index"]]
+        assert [match["eventMessage"] for match in result["matches"]] == expected, f"Incorrect finding priority: {resource['index']}"
+    return len(finding_filters)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("terraform_test_log", type=Path)
@@ -256,7 +282,8 @@ def main():
         assert [match["eventMessage"] for match in result["matches"]] == positive_messages, f"Unexpected metric matches: {name}: {result}"
         metric_checked += 1
     assert metric_checked == len(metric_cases), "Missing audit metric filters"
-    print(f"PASS: {checked} policies, {len(cases)} EventBridge cases, {metric_checked} metric filters; no events published")
+    finding_checked = validate_finding_metrics(resources)
+    print(f"PASS: {checked} policies, {len(cases)} EventBridge cases, {metric_checked} audit metric filters, {finding_checked} finding-priority filters; no events published")
 
 
 if __name__ == "__main__":

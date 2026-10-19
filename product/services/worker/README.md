@@ -121,6 +121,8 @@ probe metrics automatically.
 Prometheus scrapes workers and evaluates availability rules every five seconds.
 An active deployment without a successful probe for fifteen seconds alerts after
 another ten seconds; stopped monitoring alerts separately. Alertmanager waits
-five seconds before notifying and groups by model and deployment. This probes
+five seconds before notifying and groups notifications by model and deployment.
+Incident.io then groups all occurrences of the same alert type in a fixed
+30-minute window, regardless of deployment. This probes
 the public serving path from EKS; it does not provide an independent external
 monitoring vantage point or replace customer request availability measurements.

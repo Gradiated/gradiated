@@ -53,6 +53,7 @@ export const instructionCycleFrame = (time, cycles = 1) => {
 };
 
 export const controllerFrame = (time) => {
+  // These state codes illustrate one transfer rather than the full LC-3 controller.
   const state = time < 2 ? 0 : time < 6 ? 1 : 2;
   const s1 = state >> 1;
   const s0 = state & 1;

@@ -242,7 +242,7 @@ Grafana `Security` folder.
 | --- | --- | --- | --- |
 | Trivy Operator 0.35 (chart 0.37.0) | `trivy-system` | Scans running images for CVEs and exposed secrets, and audits workload configuration, RBAC, node configuration and the EKS CIS, NSA and Pod Security compliance specs. Rescans every 24 hours, two scan jobs at a time. | Operator 50m/128Mi, Trivy server 100m/512Mi and a 5 GiB gp3 volume, scan jobs 100m/128Mi each while running |
 | Kyverno 1.19 (chart 3.9.1) | `kyverno` | Four baseline `ValidatingPolicy` resources in **Audit** mode: no privileged containers, no host namespaces or hostPath, no `latest` or untagged images, CPU and memory requests required. Nothing is blocked. Webhooks fail open. | Admission controller 100m/256Mi, reports controller 50m/128Mi |
-| Falco 0.45 (chart 9.2.0) | `falco` | Runtime intrusion detection on every EKS node with the modern eBPF probe in least-privileged mode and the pinned `falco-rules:5.2.0` default ruleset. Events at Notice and above go to Loki as JSON. | 20m/128Mi per node (16 nodes: 320m/2Gi), default priority so it never preempts workloads |
+| Falco 0.45.1 (chart 9.2.0) | `falco` | Runtime intrusion detection on every EKS node with the modern eBPF probe in least-privileged mode and the pinned `falco-rules:5.2.0` default ruleset. Events at Notice and above go to Loki as JSON. | 20m/128Mi per node (16 nodes: 320m/2Gi), default priority so it never preempts workloads |
 
 Scope limits:
 

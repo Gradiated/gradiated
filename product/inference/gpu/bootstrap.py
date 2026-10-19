@@ -131,6 +131,7 @@ def main():
         print('GPU enrollment is required; SSH remains available.', flush=True)
         while True:
             time.sleep(60)
+    subprocess.run(['bash', '/opt/gradiated/bin/start-tailscale'], check=True, timeout=10)
     birth = Path(f'/proc/{os.getpid()}/stat').read_text().rsplit(')', 1)[1].split()[19]
     private_json(ROOT / 'supervisor.json', {'pid': os.getpid(), 'birth': birth})
     os.execv('/usr/bin/python3', ['python3', '/opt/gradiated/kubelet/supervise.py'])

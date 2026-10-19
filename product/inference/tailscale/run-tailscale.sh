@@ -2,6 +2,8 @@
 set -euo pipefail
 root=/var/lib/gradiated-tailscale
 bin=/opt/gradiated/tailscale
+exec 9>"$root/supervisor.lock"
+flock --exclusive --nonblock 9 || exit 0
 hostname=$(python3 -c 'import json; print(json.load(open("/etc/gradiated/tailscale.json"))["hostname"])')
 proxy_port=$(python3 -c 'import json; print(json.load(open("/etc/gradiated/tailscale.json")).get("proxy_port", 8888))')
 [[ "$hostname" =~ ^gpu-[0-9a-f-]{36}$ ]] || exit 64
@@ -11,7 +13,7 @@ child=''
 trap 'if [[ -n "$child" ]]; then kill -TERM "$child" 2>/dev/null || true; wait "$child" 2>/dev/null || true; fi; exit 0' TERM INT
 while true; do
   rm -f "$root/socket"
-  "$bin/tailscaled" --tun=userspace-networking --state="$root/state" --socket="$root/socket" --port=41641 &
+  "$bin/tailscaled" --tun=userspace-networking --state="$root/state" --socket="$root/socket" --port=41641 9>&- &
   child=$!
   ready=false
   for _ in {1..30}; do

@@ -234,9 +234,9 @@ const SiteFooter = (): ReactElement => (
       </Link>
       <Link
         className="text-ink transition-colors hover:text-accent"
-        to="/subprocessors-security/"
+        to="/subprocessors/"
       >
-        Security
+        Subprocessors
       </Link>
       <a
         className="text-ink transition-colors hover:text-accent"

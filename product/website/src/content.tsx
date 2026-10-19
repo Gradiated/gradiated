@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import type { ReactNode } from "react";
 import { SiteLink } from "./components/SiteLink";
 import { articles } from "./articles";
@@ -186,6 +187,12 @@ export const PrivacyContent = (): ReactNode => (
       We collect limited technical information such as browser type, device
       information, IP address, and pages visited through standard web logs.
     </p>
+    <p>
+      We use PostHog, operated by PostHog Inc., of which Gradiated is a
+      division, to record product usage events and session recordings of the
+      website and console. Recordings mask form inputs but can include other
+      content shown on screen.
+    </p>
     <h2>Inference data</h2>
     <p>
       We process prompts, messages, tool payloads, attachments, generated
@@ -198,9 +205,11 @@ export const PrivacyContent = (): ReactNode => (
       request that names a task in the <code>x-gradiated-task</code> header.
       Capture is best effort, so some of these requests may not be stored.
       Requests without a task are not stored. Captured content is encrypted in
-      Amazon S3 and deleted automatically after the workspace’s retention
-      period: 180 days by default, or 30 or 90 days if you choose. Deleted
-      content can remain in versioned storage for up to 30 more days.
+      Amazon S3 and deleted automatically after the retention period in effect
+      when it was captured: 180 days by default, or 30 or 90 days if you choose.
+      A change to the retention period applies only to content captured after
+      the change. Deleted content can remain in versioned storage for up to 30
+      more days.
     </p>
     <p>
       You can turn trace capture off at any time in workspace settings. The
@@ -215,12 +224,25 @@ export const PrivacyContent = (): ReactNode => (
     <p>
       We use captured content only to provide features to your workspace, such
       as showing your traces and training and evaluating models for your tasks.
-      When a training run uses a comparison or judge model from OpenAI or
-      Anthropic, the run sends the relevant traces to that provider. Training
-      datasets, evaluation results, and models built from your traces are kept
-      with your account until you ask us to delete them. We do not use your
-      content to train models for anyone else. We do not intentionally write
-      inference content to the Gradiated product database or application logs.
+      Each training run evaluates the new model on held-out examples from your
+      captured traces. A comparison model answers each example, and a judge
+      model compares that answer with the new model’s answer. Both use an OpenAI
+      model by default; you can choose an Anthropic model or a model that
+      Gradiated hosts instead. When a run uses an OpenAI or Anthropic model, it
+      sends those examples and answers to that provider. Training datasets and
+      intermediate training artifacts, such as checkpoints, are deleted
+      automatically 90 days after the training run finishes. Evaluation results,
+      including the compared answers and judgments for each evaluation example,
+      and published model adapters are kept until the workspace is deleted, or
+      until you ask us to delete them by emailing team@gradiated.com. Deleted
+      artifacts can remain in versioned storage for up to 30 more days, and a
+      copy of an adapter that served requests can remain in a GPU server’s cache
+      until the cache evicts it or the serving process is replaced. We do not
+      use your content to train models for anyone else. If trace capture is on
+      (the default), your captured traces are used only to train and evaluate
+      your own models; turn it off to stop capturing new traces. We do not
+      intentionally write inference content to the Gradiated product database or
+      application logs.
     </p>
     <p>
       Requests that OpenRouter sends to Gradiated do not name a task, so we do
@@ -233,10 +255,9 @@ export const PrivacyContent = (): ReactNode => (
       system, resolve incidents, and meet legal obligations.
     </p>
     <p>
-      Inference may run on contracted infrastructure providers. These providers
-      may process request data temporarily to operate the runtime. If you send a
-      request through another platform, that platform may process or retain data
-      under its own terms.
+      Hosted models run on GPU servers from RunPod, which process request data
+      temporarily to operate the runtime. If you send a request through another
+      platform, that platform may process or retain data under its own terms.
     </p>
     <h2>How we use information</h2>
     <p>
@@ -255,13 +276,12 @@ export const PrivacyContent = (): ReactNode => (
     <h2>How we share information</h2>
     <p>
       We share information with service providers that support hosting,
-      inference, payments, email, security, and analytics. We may also share
-      information when required by law or in connection with a corporate
-      transaction. The providers and purposes are listed on our{" "}
-      <SiteLink href="/subprocessors-security/">
-        Subprocessors and security
-      </SiteLink>{" "}
-      page. We do not sell personal information.
+      inference, training evaluation, payments, email, and security. We may also
+      share information when required by law or in connection with a corporate
+      transaction. The subprocessors that process your request content, with
+      their purposes, the data they process and their locations, are listed on
+      our <SiteLink href="/subprocessors/">Subprocessors</SiteLink> page. We do
+      not sell personal information.
     </p>
     <h2>International transfers</h2>
     <p>
@@ -277,6 +297,11 @@ export const PrivacyContent = (): ReactNode => (
       period needed to operate the service, prevent abuse, resolve disputes,
       meet tax and accounting duties, and comply with the law. We then delete or
       anonymize it where possible.
+    </p>
+    <p>
+      Usage records with no request content (model, token counts, timing and
+      status) are kept for billing, accounting and audit, and are not deleted
+      when an account closes.
     </p>
     <h2>Your rights</h2>
     <p>
@@ -494,27 +519,35 @@ export const DpaContent = (): ReactNode => (
     <p>
       Trace capture is on by default for each workspace. When it is on,
       Gradiated stores the request and response content of requests that name a
-      task, encrypted, for the workspace’s retention period (180 days by
-      default, or 30 or 90 days), to provide post-training features. The
-      customer can turn trace capture off at any time in workspace settings; the
-      change takes effect within one hour. When it is off, Gradiated-controlled
-      systems do not persist inference content after request processing, no new
-      traces are available for post-training features, and automatic training
-      stops. Gradiated uses captured content only to provide the service to the
-      customer and does not use it to train models for anyone else. Limited
-      non-content usage records may remain for billing, security, reliability,
-      and legal purposes.
+      task, encrypted, for the retention period in effect when it was captured
+      (180 days by default, or 30 or 90 days), to provide post-training
+      features. A change to the retention period applies only to content
+      captured after the change. The customer can turn trace capture off at any
+      time in workspace settings; the change takes effect within one hour. When
+      it is off, Gradiated-controlled systems do not persist inference content
+      after request processing, no new traces are available for post-training
+      features, and automatic training stops. Gradiated does not use customer
+      content to train models for anyone else. While trace capture is on (the
+      default), captured traces are used only to train and evaluate the
+      customer’s own models; turning it off stops new traces from being
+      captured. Limited non-content usage records may remain for billing,
+      security, reliability, and legal purposes.
     </p>
     <h2>Subprocessors</h2>
     <p>
       You give Gradiated general authorization to use the subprocessors listed
-      on our
-      <SiteLink href="/subprocessors-security/">
-        Subprocessors and security
-      </SiteLink>{" "}
-      page. We will update that page when we add or replace a material
-      subprocessor. We will require each subprocessor to protect personal data
-      under written terms that provide protection appropriate to its role.
+      on our <SiteLink href="/subprocessors/">Subprocessors</SiteLink> page. We
+      will require each subprocessor to protect personal data under written
+      terms that provide protection appropriate to its role.
+    </p>
+    <p>
+      Before a new or replacement subprocessor starts processing personal data,
+      we will publish it on that page, record the change with its date in the
+      page’s change log, and update the page’s “Last updated” date. If you
+      object to a change on reasonable data protection grounds, tell us at
+      team@gradiated.com within 30 days of the update. We will work with you in
+      good faith to resolve the objection. If we cannot, you may stop using the
+      affected part of the service.
     </p>
     <h2>International transfers</h2>
     <p>
@@ -533,6 +566,16 @@ export const DpaContent = (): ReactNode => (
     </p>
     <h2>Deletion and audits</h2>
     <p>
+      Training datasets and intermediate training artifacts built from captured
+      traces, such as checkpoints, are deleted automatically 90 days after the
+      training run finishes. Evaluation results and published model adapters are
+      kept until the workspace is deleted, or until the customer requests their
+      deletion by emailing team@gradiated.com. Deleted artifacts can remain in
+      versioned storage for up to 30 more days. A copy of an adapter that served
+      requests can remain in a GPU server’s cache until the cache evicts it or
+      the serving process is replaced.
+    </p>
+    <p>
       When the service ends, we will delete or return personal data where the
       service and law allow. We may keep information that the law requires us to
       keep, subject to confidentiality and security controls. We will make
@@ -549,63 +592,171 @@ export const DpaContent = (): ReactNode => (
   </>
 );
 
+type Subprocessor = {
+  name: string;
+  purpose: string;
+  data: string;
+  location: string;
+  security: string;
+};
+
+const subprocessors: Subprocessor[] = [
+  {
+    name: "Amazon Web Services, Inc.",
+    purpose:
+      "Cloud hosting for the Gradiated API, gateway, console, databases, storage, networking and secrets.",
+    data: "Inference requests and responses while they are processed, captured traces, training datasets, evaluation results and model adapters, account data (names, email addresses, IP addresses) and usage records.",
+    location: "United States (us-east-1)",
+    security: "https://aws.amazon.com/compliance/",
+  },
+  {
+    name: "RunPod, Inc.",
+    purpose: "GPU servers that run hosted models and training jobs.",
+    data: "Inference requests and responses while they are processed, training datasets and evaluation examples during a training run, and the model adapters that the servers load.",
+    location:
+      "RunPod data centers, which can be outside the United States, currently including the Netherlands",
+    security: "https://trust.runpod.io/",
+  },
+  {
+    name: "OpenAI, L.L.C.",
+    purpose:
+      "Evaluation of training runs. A comparison model answers held-out examples from your captured traces, and a judge model compares that answer with the answer of the model being trained. OpenAI models are the default for both.",
+    data: "Held-out evaluation examples from your captured traces (the request messages), the comparison model’s answers, and the answers of the model being trained.",
+    location: "United States",
+    security: "https://trust.openai.com/",
+  },
+  {
+    name: "Anthropic, PBC",
+    purpose:
+      "Evaluation of training runs, as for OpenAI, when a task uses an Anthropic model as its comparison or judge model.",
+    data: "Held-out evaluation examples from your captured traces (the request messages), the comparison model’s answers, and the answers of the model being trained.",
+    location: "United States",
+    security: "https://trust.anthropic.com/",
+  },
+];
+
 export const SubprocessorsContent = (): ReactNode => (
   <>
-    <p>Effective date: October 19, 2026</p>
+    <p>Last updated: October 19, 2026</p>
     <p>
-      This page lists the main providers that support Gradiated and summarises
-      the security measures used in the service. We update it when a material
-      provider or processing purpose changes.
+      A subprocessor is a third party that Gradiated, a division of PostHog
+      Inc., engages to process your request content: prompts, completions,
+      captured traces and the training artifacts built from them. Our{" "}
+      <SiteLink href="/dpa/">Data Processing Addendum</SiteLink> authorizes the
+      subprocessors below, and our{" "}
+      <SiteLink href="/privacy/">Privacy Policy</SiteLink> explains how we
+      handle personal information, including the service providers we use for
+      payments, email and analytics.
     </p>
-    <h2>Inference data</h2>
+    <h2>Current subprocessors</h2>
+    {subprocessors.map((subprocessor) => (
+      <Fragment key={subprocessor.name}>
+        <h3>{subprocessor.name}</h3>
+        <ul>
+          <li>
+            <strong>Purpose:</strong> {subprocessor.purpose}
+          </li>
+          <li>
+            <strong>Data processed:</strong> {subprocessor.data}
+          </li>
+          <li>
+            <strong>Location:</strong> {subprocessor.location}
+          </li>
+          <li>
+            <strong>Security:</strong>{" "}
+            <SiteLink href={subprocessor.security}>
+              {subprocessor.security.replace(/^https:\/\/|\/$/g, "")}
+            </SiteLink>
+          </li>
+        </ul>
+      </Fragment>
+    ))}
+    <p>
+      A training run sends data to OpenAI or Anthropic only when its comparison
+      or judge model comes from that provider. If you choose models that
+      Gradiated hosts for both, the run sends no data to either.
+    </p>
+    <h2>Services you choose</h2>
+    <p>
+      If you send a request to Gradiated with your own OpenAI or Anthropic API
+      key, we forward it to that provider. The provider processes the request
+      under your agreement with it, so it is not our subprocessor for that
+      request.
+    </p>
+    <p>
+      If you sign in with Google or GitHub, that provider authenticates you
+      under its own terms and shares your name and email address with us.
+      Requests that reach us through OpenRouter are processed by OpenRouter
+      under its own terms before they reach us.
+    </p>
+    <h2>Other vendors</h2>
+    <p>
+      We use other vendors that do not receive your request content, so they are
+      not subprocessors. For example, Temporal Cloud runs our training
+      workflows, but their payloads are encrypted with keys that Temporal does
+      not hold. ClickHouse Cloud stores usage records keyed by internal
+      identifiers: model, token counts, charges, timing and status. Resend
+      delivers sign-in codes and invitations, and Stripe processes payments.
+      Product analytics use PostHog, which is part of PostHog Inc., the same
+      company as Gradiated.
+    </p>
+    <h2>How we store your data</h2>
     <p>
       Trace capture is on by default for each workspace so you can use
       post-training features. When it is on, we store the request and response
       content of requests that name a task in Amazon S3, encrypted with a
-      dedicated AWS KMS key, for the workspace’s retention period: 180 days by
-      default, or 30 or 90 days. You can turn trace capture off at any time in
-      workspace settings. When it is off, we do not persist prompts, messages,
-      tool payloads, attachments, or generated outputs after request processing,
-      no new traces are collected for post-training features, and automatic
-      training stops. This content can exist in memory while a request is
-      running. We do not write it to the Gradiated product database or
+      dedicated AWS KMS key, for the retention period in effect when it was
+      captured: 180 days by default, or 30 or 90 days. A change to the retention
+      period applies only to content captured after the change. You can turn
+      trace capture off at any time in workspace settings. When it is off, we do
+      not persist prompts, messages, tool payloads, attachments, or generated
+      outputs after request processing. Post-training features need captured
+      traces, so no new traces are collected for them and automatic training
+      stops. We do not write this content to the Gradiated product database or
       application logs.
+    </p>
+    <p>
+      Training artifacts are stored in Amazon S3 under the training run.
+      Training datasets and intermediate artifacts, such as checkpoints, are
+      deleted automatically 90 days after the run finishes. Evaluation results,
+      including the compared answers and judgments, and published model adapters
+      are kept until the workspace is deleted, or until you ask us to delete
+      them by emailing team@gradiated.com. Deleted traces and artifacts can
+      remain in versioned storage for up to 30 more days. A copy of an adapter
+      that served requests can remain in a GPU server’s cache until the cache
+      evicts it or the serving process is replaced.
     </p>
     <p>
       We retain limited non-content data, including model identifiers, token
       counts, timing, request status, service identifiers, and billing data. We
       use this data for billing, security, reliability, support, and legal
-      obligations. We do not use customer content to train or improve models.
+      obligations.
     </p>
-    <h2>Current providers</h2>
+    <p>
+      We do not use your content to train models for anyone else. If trace
+      capture is on (the default), your captured traces are used only to train
+      and evaluate your own models; turn it off to stop capturing new traces.
+    </p>
+    <h2>How you learn of changes</h2>
+    <p>
+      We publish every new or replaced subprocessor on this page before it
+      starts processing your request content, and record the change with its
+      date in the change log below. The “Last updated” date at the top of the
+      page changes at the same time. If you object to a change on reasonable
+      data protection grounds, email team@gradiated.com within 30 days, as
+      described in our <SiteLink href="/dpa/">DPA</SiteLink>.
+    </p>
+    <h2>Change log</h2>
     <ul>
       <li>
-        <strong>Amazon Web Services</strong> — cloud hosting, networking,
-        secrets, transactional email delivery, and supporting infrastructure.
-      </li>
-      <li>
-        <strong>ClickHouse</strong> — storage and queries for non-content usage
-        and operational metrics.
-      </li>
-      <li>
-        <strong>RunPod</strong> — GPU infrastructure used by selected inference
-        runtimes.
-      </li>
-      <li>
-        <strong>Stripe</strong> — payment processing and billing support.
-      </li>
-      <li>
-        <strong>OpenAI</strong> and <strong>Anthropic</strong> — comparison and
-        judge models that evaluate training runs, when a task uses one of their
-        models. A run sends them the relevant captured traces.
+        <strong>October 19, 2026:</strong> Published this list as its own page,
+        with the purpose, data processed, location and security link of each
+        subprocessor. The list names the providers that process request content:
+        Amazon Web Services, RunPod, OpenAI and Anthropic. ClickHouse Cloud and
+        Stripe, which were on the earlier list, do not receive request content
+        and are no longer listed.
       </li>
     </ul>
-    <p>
-      Provider locations can vary by service and deployment. We use the
-      safeguards described in our{" "}
-      <SiteLink href="/privacy/">Privacy Policy</SiteLink> and{" "}
-      <SiteLink href="/dpa/">DPA</SiteLink> where required.
-    </p>
     <h2>Security measures</h2>
     <ul>
       <li>Public traffic uses encrypted HTTPS connections.</li>

@@ -8,6 +8,11 @@
   "trailingSlash": true,
   "redirects": [
     {
+      "source": "/subprocessors-security/",
+      "destination": "/subprocessors/",
+      "permanent": true
+    },
+    {
       "source": "/library/how-to-get-an-answer-out-of-sand/",
       "destination": "/sand-to-thought/",
       "permanent": true

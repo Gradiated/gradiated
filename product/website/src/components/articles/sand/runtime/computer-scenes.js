@@ -873,7 +873,7 @@ export const COMPUTER_SCENES = (function () {
       { x: -28, y: 0, width: 56, height: 26, rx: 3, class: "io-block-frame" },
       ioContents,
     );
-    text(0, 18, "I/O", { class: "io-block-name caption" }, ioContents);
+    text(0, 18, "I/O", { class: "io-block-name" }, ioContents);
     key(io, "processing-block", { x: 378, y: 10 }, null, 0.65);
     key(io, "instruction", { x: 51.6, y: 149 });
     key(io, "addressed-memory", { x: 52, y: 78 });

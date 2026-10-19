@@ -874,31 +874,7 @@ export const COMPUTER_SCENES = (function () {
       ioContents,
     );
     text(0, 18, "I/O", { class: "io-block-name" }, ioContents);
-    key(io, "processing-block", { x: 378, y: 10 }, null, 0.65);
-    key(io, "instruction", { x: 51.6, y: 149 });
-    key(io, "addressed-memory", { x: 52, y: 78 });
-    key(io, "controller", { opacity: 0 });
-    key(io, "computer", { x: 220, y: 12 });
-    const ioTransitions = [
-      "processing-block",
-      "instruction",
-      "instruction-control",
-      "instruction-fetch",
-      "control",
-    ].map(index);
-    afterRender.push(() => {
-      const p = tl.time();
-      const start = Math.floor(p);
-      const transition = Math.max(
-        0,
-        Math.min(1, (p - start - hold) / (1 - 2 * hold)),
-      );
-      const opacity = ioTransitions.includes(start)
-        ? Math.max(0, 1 - transition / 0.12) +
-          Math.max(0, (transition - 0.88) / 0.12)
-        : 1;
-      gsap.set(ioContents, { opacity });
-    });
+    key(io, "computer", { x: 220, y: 12 }, null, 0.65);
     const ioLink = group({ "data-part": "io-cpu-link" }, root);
     path(
       "M220 38 V57 M216 42 L220 38 L224 42 M216 53 L220 57 L224 53",

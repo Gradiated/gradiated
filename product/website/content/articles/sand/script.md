@@ -251,8 +251,6 @@ With addition selected, `3` and `6` enter the ALU and the result, `9`, travels b
 
 Together, our fast storage registers, selection circuits and ALU form the processing unit, or PU. It holds working values, performs calculations and stores their results. We will set this building block alongside memory, then introduce the control circuits that direct its work.
 
-Input and output, or I/O, connect the computer to the outside world. Input brings in information, such as a key pressed on a keyboard, while output sends results to a device such as a screen. We will set this aside as a small orange block and return to how the CPU exchanges data with these devices later.
-
 <!-- scene: instruction -->
 
 ### Instructions and control
@@ -318,6 +316,8 @@ The bits inside the register are the current state. The gates on the left prepar
 The wiring stays fixed, but changing the stored state changes which control signals are active. Together, the state register and these logic circuits form a finite-state machine, or FSM. The complete controller has more states and uses signals such as memory’s ready signal to decide when to advance, as well as instruction bits to choose which steps to follow.
 
 <!-- scene: computer -->
+
+Input and output, or I/O, connect the computer to the outside world. Input brings in information, such as a key pressed on a keyboard, while output sends results to a device such as a screen.
 
 Our control unit contains `PC`, `IR` and the circuits that decode and sequence instructions. Together with the processing unit, it forms the central processing unit, or CPU. The green memory block groups the memory array with its `MAR` and `MDR` interface, while the orange I/O block connects the CPU to the outside world. 
 

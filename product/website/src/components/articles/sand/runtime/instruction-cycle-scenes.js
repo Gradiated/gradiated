@@ -19,6 +19,7 @@ export const INSTRUCTION_CYCLE_SCENES = {
     key,
     show,
     afterRender,
+    controls,
   }) {
     const clamp = (n) => Math.max(0, Math.min(1, n));
     const during = (time, start, end) =>
@@ -526,6 +527,7 @@ export const INSTRUCTION_CYCLE_SCENES = {
     });
     const controllerDemo = buildControllerScene({
       diagram,
+      controls,
       root,
       tl,
       hold,

@@ -52,6 +52,25 @@ export const mountMemoryControls = (stage, onChoose) => {
     panels.set(scene, panel);
     controls.appendChild(panel);
   };
+  const registerReplay = (scene, handler) => {
+    configurations.set(scene, { replay: true });
+    handlers.set(scene, handler);
+    const panel = document.createElement("div");
+    panel.dataset.memoryControls = scene;
+    panel.hidden = true;
+    const row = document.createElement("div");
+    row.className = "memory-control-row";
+    panel.appendChild(row);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.action = "Replay";
+    button.dataset.address = "0";
+    button.textContent = "Replay";
+    button.setAttribute("aria-label", "Replay controller example");
+    row.appendChild(button);
+    panels.set(scene, panel);
+    controls.appendChild(panel);
+  };
   register("memory-two", { rows: 2, actionTitle: true });
   register("memory-array", { rows: 4, actionTitle: true });
   const click = (event) => {
@@ -85,7 +104,9 @@ export const mountMemoryControls = (stage, onChoose) => {
     stage.style.setProperty("--memory-extra-height", `${opacity * 12}vh`);
     if (visible && !state.busy) {
       const config = configurations.get(scene);
-      const message = `${state.action} ADDR ${state.address.toString(2).padStart(config.addressWidth, "0")}. Output ${state.output.toString(2).padStart(config.dataWidth, "0")}.`;
+      const message = config.replay
+        ? state.message
+        : `${state.action} ADDR ${state.address.toString(2).padStart(config.addressWidth, "0")}. Output ${state.output.toString(2).padStart(config.dataWidth, "0")}.`;
       if (status.textContent !== message) status.textContent = message;
     }
     for (const [name, panel] of panels) {
@@ -107,13 +128,14 @@ export const mountMemoryControls = (stage, onChoose) => {
         prompt.textContent = state.prompt;
 
       for (const button of panel.querySelectorAll("button")) {
-        button.setAttribute(
-          "aria-pressed",
-          String(
-            button.dataset.action === state.action &&
-              Number(button.dataset.address) === state.address,
-          ),
-        );
+        if (!configurations.get(scene).replay)
+          button.setAttribute(
+            "aria-pressed",
+            String(
+              button.dataset.action === state.action &&
+                Number(button.dataset.address) === state.address,
+            ),
+          );
         button.disabled = state.busy;
       }
     }
@@ -129,5 +151,5 @@ export const mountMemoryControls = (stage, onChoose) => {
     ])
       stage.style.removeProperty(property);
   };
-  return { register, update, dispose };
+  return { register, registerReplay, update, dispose };
 };

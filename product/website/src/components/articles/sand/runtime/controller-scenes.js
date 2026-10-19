@@ -12,6 +12,7 @@ export const buildControllerScene = ({
   text,
   afterRender,
   diagram,
+  controls,
 }) => {
   const scene = group({ "data-diagram": "controller-internals" }, root);
   const contents = group({}, scene, "0 0");
@@ -45,7 +46,7 @@ export const buildControllerScene = ({
   );
   scene.insertBefore(zoomFrame, contents);
   label(220, 27, "Inside the controller", "caption");
-  const stateNames = ["ready to copy", "copy to IR", "next step"];
+  const stateNames = ["ready to copy", "copy to IR", "hold"];
   const stateTints = stateNames.map((name, i) => {
     const x = 112 + i * 100;
     const tint = mk(
@@ -68,9 +69,9 @@ export const buildControllerScene = ({
     "M155 76 H168 M162 72 L168 76 L162 80 M255 76 H268 M262 72 L268 76 L262 80",
   );
 
-  label(121, 137, "next state");
-  label(228, 137, "current state");
-  label(351, 137, "control signals");
+  label(121, 137, "next-state logic");
+  label(228, 137, "state register");
+  label(351, 137, "output logic");
 
   const stateOnePath = signal(
     "M266 206 H278 V112 H32 V198 H72.414 M278 206 H290",
@@ -132,9 +133,10 @@ export const buildControllerScene = ({
   const status = label(220, 377, "Instruction ready in MDR");
   const time = { value: 0 };
   const demo = gsap
-    .timeline({ paused: true, repeat: -1 })
+    .timeline({ paused: true })
     .to(time, { value: 12, duration: 12, ease: "none" });
-  let active = false;
+  controls.registerReplay("controller", () => demo.restart());
+  let started = false;
   afterRender.push(() => {
     const position = tl.time();
     const span = 1 - 2 * hold;
@@ -179,13 +181,14 @@ export const buildControllerScene = ({
       diagram.style.opacity = backgroundOpacity;
     }
     const visible = Math.abs(position - index("controller")) <= hold;
-    if (visible && !active) demo.restart();
-    if (!visible) demo.pause();
-    active = visible;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (visible && !reduced) demo.play();
-    else demo.pause();
-    const frame = controllerFrame(reduced ? 4 : time.value);
+    if (visible && !reduced) {
+      if (!started) {
+        demo.restart();
+        started = true;
+      } else demo.play();
+    } else demo.pause();
+    const frame = controllerFrame(reduced ? 12 : time.value);
     stateCapture.style.opacity =
       visible && !reduced ? String(frame.captures.state) : "0";
     setText(s1, frame.s1);
@@ -195,12 +198,22 @@ export const buildControllerScene = ({
     setText(enable, Number(frame.copy));
     setText(
       status,
-      frame.captured
-        ? "Instruction captured in IR"
-        : frame.copy
-          ? "MDR → IR enabled"
-          : "Instruction ready in MDR",
+      frame.captures.state > 0
+        ? frame.captured
+          ? "IR captures instruction · state captures 10"
+          : "State captures 01"
+        : frame.captured
+          ? "IR holds instruction · state holds 10"
+          : frame.copy
+            ? "Transfer enabled · IR waits for clock edge"
+            : "Instruction ready in MDR · next bits 01",
     );
+    if (inView)
+      controls.update(
+        "controller",
+        { busy: false, message: status.textContent },
+        visible && !reduced ? 1 : 0,
+      );
     stateTints.forEach((node, i) => {
       node.style.opacity = i === frame.state ? "0.65" : "0";
     });

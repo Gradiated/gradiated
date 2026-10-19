@@ -309,13 +309,21 @@ When `MAR` selects an address, memory needs time to retrieve the bits stored the
 
 ### Inside the controller
 
-Let’s look inside the controller. A small clocked register stores bits identifying its current step, rather than the instruction being executed. These state codes are chosen by the designer. We wire the gates so that each code activates the signals needed for that step. The figure shows a simplified controller with two state bits, `S1` and `S0`. This close-up begins after memory has finished loading the instruction into `MDR`.
+How does the controller produce a sequence of actions? Let’s follow one instruction transfer using a small illustrative controller. We begin after memory has finished loading the instruction into `MDR`.
 
-In this example, `01` means copy the instruction from `MDR` into `IR`. A NOT gate and an AND gate recognise this pattern. Their output is `1` only when `S1` is `0` and `S0` is `1`. The two outgoing wires carry this control signal, allowing `MDR` to send the instruction onto the separate bus shown earlier and enabling `IR` to save it.
+The circuit has three jobs. A state register remembers the current step using two bits, `S1` and `S0`. Output logic, the gates on the right, turns those bits into electrical control signals. Next-state logic, the gates on the left, prepares the bits for the next step. The state bits identify a step in the sequence. They are separate from the instruction bits held in `IR`.
 
-The bits inside the register are the current state. The gates on the left prepare the next state at its inputs. While the register holds `01`, the gates on the right enable the instruction transfer, and the gates on the left prepare `10` for the next step. These new bits wait at the register’s inputs until the next clock pulse. At that pulse, `IR` captures the instruction and the state register captures `10`. The control signal then switches off, leaving the instruction stored in `IR`.
+Unlike our earlier latches, which pass their input through while writing is enabled, these clocked registers capture their inputs only at a clock edge, the instant the clock changes from low to high. They hold those values between edges, and only registers enabled to write capture new values.
 
-The wiring stays fixed, but changing the stored state changes which control signals are active. Together, the state register and these logic circuits form a finite-state machine, or FSM. The complete controller has more states and uses signals such as memory’s ready signal to decide when to advance, as well as instruction bits to choose which steps to follow.
+Start with state `00`. The next-state gates prepare `01` at the state register’s inputs. At the next clock edge, the register captures these bits, changing its state to `01`.
+
+The NOT and AND gates on the right detect `01` and activate two control wires. One allows `MDR` to send the instruction onto the bus. The other enables `IR` to save it at the next clock edge. Enabling the transfer does not immediately update `IR`. Meanwhile, the next-state gates prepare `10`.
+
+At the following clock edge, `IR` captures the instruction and the state register captures `10`. The transfer controls switch off. `IR` retains the instruction, and the state register stays at `10` because the next-state gates keep preparing `10`. The example stops here until you choose Replay.
+
+**The wiring stays fixed, but changing the stored state changes which control signals are active.** We describe this behaviour as a finite-state machine, or FSM, with a fixed set of states and rules for moving between them. The register and gates implement those rules as a circuit.
+
+The full controller has more states. It also uses instruction bits and inputs such as memory’s ready signal to choose its next state. While waiting for memory, its next-state logic keeps presenting the current state, so successive clock edges capture the same state again. Once memory is ready, the logic prepares the state for the next step.
 
 <!-- scene: computer -->
 

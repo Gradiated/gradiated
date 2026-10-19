@@ -889,6 +889,7 @@ export const COMPUTER_SCENES = (function () {
     key(ioLink, "computer", {}, null, 0.85);
 
     const instructionCycle = INSTRUCTION_CYCLE_SCENES.build({
+      controls,
       root,
       tl,
       hold,

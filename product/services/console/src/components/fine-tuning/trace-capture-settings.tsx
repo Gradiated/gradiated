@@ -12,7 +12,7 @@ export const TraceCaptureSettings = () => {
     <>
       <SettingRow
         title="Trace capture"
-        description="Disable this to prevent capturing traces for training, this will disable all training functionality"
+        description="Stores request and response content for requests that name a task, for training and evaluation. Turn this off to stop storing content; automatic training stops while it is off."
       >
         <Switch
           checked={workspace.trace_capture_enabled}

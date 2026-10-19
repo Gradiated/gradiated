@@ -169,7 +169,7 @@ export const ThesisContent = (): ReactNode => (
 
 export const PrivacyContent = (): ReactNode => (
   <>
-    <p>Effective date: August 26, 2026</p>
+    <p>Effective date: October 19, 2026</p>
     <p>
       Gradiated, a division of PostHog Inc. (“Gradiated,” “we,” “us,” or “our”),
       respects your privacy. This policy explains what information we collect,
@@ -188,18 +188,43 @@ export const PrivacyContent = (): ReactNode => (
     </p>
     <h2>Inference data</h2>
     <p>
-      Gradiated applies zero data retention to inference content. This policy
-      also applies to requests that OpenRouter sends to Gradiated. We process
-      prompts, messages, tool payloads, attachments, generated outputs, and
-      request metadata to return a response. Gradiated does not persist this
-      content after request processing. It may exist in volatile memory while
-      the request runs.
+      We process prompts, messages, tool payloads, attachments, generated
+      outputs, and request metadata to return a response.
     </p>
     <p>
-      We do not use customer prompts, outputs, or other inference content to
-      train, fine-tune, evaluate, rank, advertise, or improve models. We do not
-      intentionally write inference content to the Gradiated product database or
-      application logs.
+      Trace capture is on by default for each workspace so you can use
+      post-training features, such as fine-tuning a model on your own traces.
+      When capture is on, we store the request and response content of each
+      request that names a task in the <code>x-gradiated-task</code> header.
+      Capture is best effort, so some of these requests may not be stored.
+      Requests without a task are not stored. Captured content is encrypted in
+      Amazon S3 and deleted automatically after the workspace’s retention
+      period: 180 days by default, or 30 or 90 days if you choose. Deleted
+      content can remain in versioned storage for up to 30 more days.
+    </p>
+    <p>
+      You can turn trace capture off at any time in workspace settings. The
+      change usually takes effect within seconds and always within one hour.
+      When it is off, we do not store request or response content. It exists
+      only in memory while the request runs. Post-training features need
+      captured traces. While capture is off, no new traces are collected and
+      automatic training stops; you can still train on traces captured earlier
+      until they expire. Content already captured is deleted at the end of its
+      retention period, or sooner if you delete the workspace.
+    </p>
+    <p>
+      We use captured content only to provide features to your workspace, such
+      as showing your traces and training and evaluating models for your tasks.
+      When a training run uses a comparison or judge model from OpenAI or
+      Anthropic, the run sends the relevant traces to that provider. Training
+      datasets, evaluation results, and models built from your traces are kept
+      with your account until you ask us to delete them. We do not use your
+      content to train models for anyone else. We do not intentionally write
+      inference content to the Gradiated product database or application logs.
+    </p>
+    <p>
+      Requests that OpenRouter sends to Gradiated do not name a task, so we do
+      not store their content.
     </p>
     <p>
       We retain limited non-content usage records, such as the model, token
@@ -441,7 +466,7 @@ export const AcceptableUseContent = (): ReactNode => (
 
 export const DpaContent = (): ReactNode => (
   <>
-    <p>Effective date: August 26, 2026</p>
+    <p>Effective date: October 19, 2026</p>
     <p>
       This Data Processing Addendum (“DPA”) applies when a customer uses
       Gradiated to process personal data and the customer is the controller or
@@ -467,10 +492,18 @@ export const DpaContent = (): ReactNode => (
       service isolation, monitoring, and incident response processes.
     </p>
     <p>
-      Gradiated-controlled systems do not persist inference content after
-      request processing. Gradiated does not use it to train, fine-tune,
-      evaluate, rank, advertise, or improve models. Limited non-content usage
-      records may remain for billing, security, reliability, and legal purposes.
+      Trace capture is on by default for each workspace. When it is on,
+      Gradiated stores the request and response content of requests that name a
+      task, encrypted, for the workspace’s retention period (180 days by
+      default, or 30 or 90 days), to provide post-training features. The
+      customer can turn trace capture off at any time in workspace settings; the
+      change takes effect within one hour. When it is off, Gradiated-controlled
+      systems do not persist inference content after request processing, no new
+      traces are available for post-training features, and automatic training
+      stops. Gradiated uses captured content only to provide the service to the
+      customer and does not use it to train models for anyone else. Limited
+      non-content usage records may remain for billing, security, reliability,
+      and legal purposes.
     </p>
     <h2>Subprocessors</h2>
     <p>
@@ -518,7 +551,7 @@ export const DpaContent = (): ReactNode => (
 
 export const SubprocessorsContent = (): ReactNode => (
   <>
-    <p>Effective date: August 26, 2026</p>
+    <p>Effective date: October 19, 2026</p>
     <p>
       This page lists the main providers that support Gradiated and summarises
       the security measures used in the service. We update it when a material
@@ -526,11 +559,17 @@ export const SubprocessorsContent = (): ReactNode => (
     </p>
     <h2>Inference data</h2>
     <p>
-      Gradiated uses zero data retention for standard inference in its
-      controlled systems. We do not persist prompts, messages, tool payloads,
-      attachments, or generated outputs after request processing. This content
-      can exist in memory while a request is running. We do not write it to the
-      Gradiated product database or application logs.
+      Trace capture is on by default for each workspace so you can use
+      post-training features. When it is on, we store the request and response
+      content of requests that name a task in Amazon S3, encrypted with a
+      dedicated AWS KMS key, for the workspace’s retention period: 180 days by
+      default, or 30 or 90 days. You can turn trace capture off at any time in
+      workspace settings. When it is off, we do not persist prompts, messages,
+      tool payloads, attachments, or generated outputs after request processing,
+      no new traces are collected for post-training features, and automatic
+      training stops. This content can exist in memory while a request is
+      running. We do not write it to the Gradiated product database or
+      application logs.
     </p>
     <p>
       We retain limited non-content data, including model identifiers, token
@@ -554,6 +593,11 @@ export const SubprocessorsContent = (): ReactNode => (
       </li>
       <li>
         <strong>Stripe</strong> — payment processing and billing support.
+      </li>
+      <li>
+        <strong>OpenAI</strong> and <strong>Anthropic</strong> — comparison and
+        judge models that evaluate training runs, when a task uses one of their
+        models. A run sends them the relevant captured traces.
       </li>
     </ul>
     <p>

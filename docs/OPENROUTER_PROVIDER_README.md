@@ -133,12 +133,15 @@ The public privacy policy must add an inference-specific section. It must state:
 - which subprocessors handle inference traffic and infrastructure;
 - how customers request access or deletion;
 - how OpenRouter traffic follows the same policy;
-- that OpenRouter traffic follows the same zero-data-retention policy;
+- that Gradiated does not store the content of OpenRouter traffic;
 - which claims are not made, such as HIPAA or SOC 2, unless verified.
 
-The current architecture does not persist prompts or completions. The public
-policy states this operational behavior and applies it to OpenRouter traffic.
-This document does not replace legal review.
+Trace capture is on by default for customer workspaces and stores request and
+response content for requests that name a task in `x-gradiated-task`. OpenRouter
+requests do not name a task, so the proxy does not capture them, and the
+catalog's `zdr: true` stays accurate for OpenRouter traffic. The public policy
+states the default, the retention period and the OpenRouter exception. This
+document does not replace legal review.
 
 ## Provider account and payment setup
 

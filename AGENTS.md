@@ -54,6 +54,8 @@ This repository is the complete project state for the research and product-build
 
 ## Pull request reviews
 
+Every PR to `main` needs the required `AI review passed` status: Codex and Graphite must both have reviewed the current head commit (`.github/workflows/ai-review-gate.yml`). After pushing, wait for both bots; if one did not run, comment `@codex review` or re-run the review from the Graphite check's Details page.
+
 When addressing a review comment, resolve its thread after the fix is pushed. When deliberately ignoring or declining a comment, briefly explain why in the thread and resolve it. Do not leave addressed or intentionally declined comments unresolved.
 
 ## Verification

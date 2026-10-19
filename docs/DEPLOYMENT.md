@@ -192,9 +192,12 @@ healthy. S3 versioning keeps previous entry points for recovery.
 - The `main` ruleset requires one gate per workflow: `Product tests passed`,
   `Kubernetes passed`, `Terraform passed`,
   `Model deployment passed`, `Wizard publish passed`, `Agent quality passed`,
-  `Dependency age passed`, `Research lab passed` and `Security scans passed`
+  `Dependency age passed`, `Research lab passed`,
+  `GPU controller and manifests passed` and `Security scans passed`
   (Gitleaks secret scanning, scan-policy checks and report-only Semgrep; see
-  `.github/workflows/security.yml`). Ordinary PRs satisfy these
+  `.github/workflows/security.yml`). It also requires the `AI review passed`
+  status, which `.github/workflows/ai-review-gate.yml` sets once Codex and
+  Graphite have both reviewed the PR's head commit. Ordinary PRs satisfy these
   checks and resolved review threads; no approval is required. The Gradiated
   Release app is the only bypass actor. Organization admins, users and deploy
   keys cannot bypass it, so a red or pending required check blocks the merge;

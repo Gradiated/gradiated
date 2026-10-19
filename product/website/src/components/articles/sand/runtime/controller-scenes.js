@@ -124,7 +124,7 @@ export const buildControllerScene = ({
   const invertedPath = signal("M315 206 H326");
   const directPath = signal("M278 254 H326");
   wire("M326 194 H338 A36 36 0 0 1 338 266 H326 Z");
-  label(351, 168, "detects 01");
+  label(351, 168, "on only for 01");
   const enable = label(391, 248, "0", "bit");
   const sendPath = signal("M374 230 H460");
   const savePath = signal("M380 230 V314 H460");

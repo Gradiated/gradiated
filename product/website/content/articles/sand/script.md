@@ -275,9 +275,9 @@ Instructions and data share this memory. The same bits at address `12288` can be
 
 ### The control unit
 
-The control unit, or CU, turns the instruction’s bit fields into electrical signals that select the input registers, choose the ALU operation and select the destination register. For now, assume it has received our example instruction. We will explain how it arrives from memory next.
+The control unit, or CU, uses logic gates to decode an instruction and generate the electrical signals that carry it out. For our `ADD` instruction, these signals select the two input registers, choose addition at the ALU and select the destination register. For now, assume the CU has received the instruction. Next, we will see how it arrives from memory.
 
-The result travels back to the fast storage registers, but it is saved only when the CU enables the destination register to accept it (with another write-enable input `WE`). The other registers keep their contents.
+The result travels back to the fast storage registers. As with our earlier memory, arriving at a register is not enough to change its contents. The CU must enable writing through its write-enable input, `WE`. Only the selected register saves the result. The others keep their contents.
 
 <!-- scene: program -->
 

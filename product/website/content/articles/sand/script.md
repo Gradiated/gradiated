@@ -299,11 +299,11 @@ Starting with `9` in `R0` and `2` in `R3`, the ALU produces `11`. The result tra
 
 <!-- scene: control -->
 
-Let’s follow the whole sequence from the start, fetching an instruction, decoding it, then executing it. The first `ADD` takes our total from `9` to `11`, and executing the second takes it to `13`. 
+Let’s follow the whole sequence from the start, fetching an instruction, decoding it, then executing it.
 
-The control unit must remember which step it is carrying out. A clock provides regular timing pulses that coordinate register updates, with time between them for signals to settle. In our LC-3 computer, carrying out one instruction takes several clock cycles.
+The controller inside the control unit keeps track of the current step and activates the control signals needed for it. A clock provides regular timing pulses that coordinate register updates, with time between them for signals to settle. In our LC-3 computer, carrying out one instruction takes several clock cycles.
 
-These steps happen in order. While memory is reading the instruction, the controller stays in the memory-read step until memory signals that the instruction is ready in `MDR`. Only then does it move on to the step that copies `MDR` into `IR`. A clock pulse does not automatically mean the controller is ready to advance.
+The controller advances only when the current step is complete. For example, while memory reads the instruction, the controller stays in the memory-read step until memory signals that the instruction is ready in `MDR`. Only then does it move on to the step that copies `MDR` into `IR`. A clock pulse alone does not mean the controller is ready to advance.
 
 <!-- scene: controller -->
 

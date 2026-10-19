@@ -477,7 +477,7 @@ export const COMPUTER_SCENES = (function () {
         brace(annotation, bits.length * 10 + 4);
         text(0, 96, role, { class: "instruction-field-name" }, annotation);
         key(field, "instruction", { x, y: 210 });
-        key(field, "instruction-control", { x: 185 + i * 53, y: 32 });
+        key(field, "instruction-control", { x: 185 + i * 53, y: 44 });
         show(annotation, "instruction", "instruction-control", {}, 0.25);
       }
       const format = group({ "data-part": "instruction-format" }, instruction);
@@ -498,7 +498,7 @@ export const COMPUTER_SCENES = (function () {
         { class: "bit control-encoding" },
         control,
       );
-      path("M267 42 V58", { class: "control-wire" }, control);
+      path("M267 54 V70", { class: "control-wire" }, control);
       const controlUnit = group(
         { "data-part": "instruction-control-unit" },
         control,
@@ -507,7 +507,7 @@ export const COMPUTER_SCENES = (function () {
         "rect",
         {
           x: 157,
-          y: 58,
+          y: 70,
           width: 221,
           height: 47,
           rx: 4,
@@ -515,12 +515,12 @@ export const COMPUTER_SCENES = (function () {
         },
         controlUnit,
       );
-      text(267.5, 86.5, "control unit", { class: "caption" }, controlUnit);
+      text(267.5, 98.5, "control unit", { class: "caption" }, controlUnit);
       const controlRoutes = [
-        "M264 105 V223.36 H256.3",
-        "M238 105 V150 H232 V237.4 Q240 241.4 232 245.4 V297.98 H256.3",
-        "M378 82 H425 V287.32 H393.33",
-        "M180 105 V166 H152.16 V208.6",
+        "M264 117 V223.36 H256.3",
+        "M238 117 V150 H232 V237.4 Q240 241.4 232 245.4 V297.98 H256.3",
+        "M378 94 H425 V287.32 H393.33",
+        "M180 117 V166 H152.16 V208.6",
       ].map((d) => {
         path(d, { class: "control-wire" }, control);
         return path(d, { class: "control-wire control-active" }, control);

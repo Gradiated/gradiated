@@ -303,7 +303,7 @@ Let’s follow the whole sequence from the start, fetching an instruction, decod
 
 The controller inside the control unit keeps track of the current step and activates the control signals needed for it. A clock provides regular timing pulses that coordinate register updates, with time between them for signals to settle. In our LC-3 computer, carrying out one instruction takes several clock cycles.
 
-The controller advances only when the current step is complete. For example, while memory reads the instruction, the controller stays in the memory-read step until memory signals that the instruction is ready in `MDR`. Only then does it move on to the step that copies `MDR` into `IR`. A clock pulse alone does not mean the controller is ready to advance.
+When `MAR` selects an address, memory needs time to retrieve the bits stored there and copy them into `MDR`. The controller waits for a ready signal from memory before moving on. Clock pulses continue during this wait, but the controller remains in the same step. Once the bits are ready in `MDR`, the controller enables their transfer into `IR`, where they can be decoded as an instruction.
 
 <!-- scene: controller -->
 

@@ -21,6 +21,13 @@ def action(change):
     return ", ".join(actions)
 
 
+def changed_fields(change):
+    before, after = change.get("before") or {}, change.get("after") or {}
+    unknown = change.get("after_unknown") or {}
+    return sorted(key for key in before.keys() | after.keys() | unknown.keys()
+                  if before.get(key) != after.get(key) or unknown.get(key))
+
+
 def summarize(directory):
     paths = sorted(directory.rglob("*.json"))
     if not paths:
@@ -28,6 +35,7 @@ def summarize(directory):
 
     counts = collections.Counter()
     rows = []
+    drift_rows = []
     drift = 0
     for path in paths:
         plan = json.loads(path.read_text())
@@ -37,6 +45,10 @@ def summarize(directory):
             raise ValueError("Incomplete Terraform plan; refusing a success preview")
         unit = code(path.parent.relative_to(directory))
         drift += len(plan.get("resource_drift", []))
+        for resource in plan.get("resource_drift", []):
+            change = resource["change"]
+            fields = changed_fields(change)
+            drift_rows.append(f"| {unit} | refresh {action(change)} | {code(resource['address'])} | {', '.join(map(code, fields)) or '—'} |")
         for resource in plan.get("resource_changes", []):
             change = resource["change"]
             moved = resource.get("previous_address")
@@ -44,10 +56,7 @@ def summarize(directory):
                 continue
             operation = "MOVE" if moved and change["actions"] == ["no-op"] else action(change)
             counts[operation] += 1
-            before, after = change.get("before") or {}, change.get("after") or {}
-            unknown = change.get("after_unknown") or {}
-            fields = sorted(key for key in before.keys() | after.keys() | unknown.keys()
-                            if before.get(key) != after.get(key) or unknown.get(key))
+            fields = changed_fields(change)
             address = code(resource["address"])
             if moved:
                 address = code(moved) + " → " + address
@@ -60,12 +69,14 @@ def summarize(directory):
     totals = ", ".join(f"{count} {name}" for name, count in sorted(counts.items()))
     lines = [f"**{totals or 'No planned changes'}** across {len(paths)} Terraform units.", ""]
     if drift:
-        lines += [f"Refresh detected drift in {drift} resources; inspect the full plan before merging.", ""]
+        lines += [f"Refresh detected drift in {drift} resources; inspect the full plan before merging.",
+                  "Rows marked `refresh` describe observed state changes, not planned AWS writes; they are excluded from the action totals.", ""]
     lines += ["Resource and output values are omitted from this comment. Changed attributes are top-level names.", ""]
-    if rows:
+    if rows or drift_rows:
         lines += ["| Unit | Action | Resource / output | Changed attributes |", "| --- | --- | --- | --- |"]
         size = sum(len(line) + 1 for line in lines)
-        for row in rows:
+        # Across all units, planned writes take priority over refresh metadata.
+        for row in rows + drift_rows:
             if size + len(row) > 50_000:
                 lines += ["", "Preview truncated; inspect the full plan for remaining changes."]
                 break

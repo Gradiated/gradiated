@@ -97,7 +97,8 @@ All production serving replicas and training Jobs use Kubernetes. Existing
 RunPod containers retain a suspended legacy main process only to preserve their
 reservation; it has no jobs or cluster access. New hosts use the GPU base image.
 
-Run the local adapter checks with:
+Use Go 1.26.9, matching the compiler pinned in CI and the controller builder
+image. Run the local adapter checks with:
 
 ```sh
 cd tools/virtual-kubelet
@@ -105,6 +106,12 @@ go test -race ./...
 go vet ./...
 python3 host_agent_test.py
 ```
+
+CI also runs the pinned Go vulnerability checker against the controller's
+source call graph and fails on reachable known vulnerabilities. For the same
+local check, run `go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...` from
+this directory. Keep the compiler, builder digest and CI pin aligned when
+applying Go security updates.
 
 The default `gpu-base` image runs `product/inference/gpu/bootstrap.py`. Its
 `GRADIATED_GPU_BOOTSTRAP` value is a base64 JSON envelope supplied at pod

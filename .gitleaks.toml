@@ -1,0 +1,82 @@
+# Gitleaks configuration for CI (.github/workflows/security.yml).
+#
+# Starts from the upstream default rules. Each allowlist below names the reviewed
+# false-positive class it suppresses. Never allowlist a real credential: rotate it,
+# then remove it from the branch. Prefer the narrowest scope (rule, path and
+# pattern) and add a comment saying why the match is not a secret.
+title = "Gradiated gitleaks configuration"
+
+[extend]
+useDefault = true
+
+# Research artifacts are machine-generated manifests, logs and captures. The
+# entropy-based generic rule flags their content hashes and model revisions
+# (`token_sha256`, `tokenizer_revision`, file-hash manifests): about 26,000
+# findings in the October 2026 history scan, none of them credentials.
+# Provider-specific rules (AWS, GitHub, Hugging Face, private keys, ...) still
+# apply to these paths.
+[[allowlists]]
+description = "Hashes and revisions in generated research artifacts"
+targetRules = ["generic-api-key"]
+paths = [
+  '''^research/.+\.(json|jsonl|log|stderr|stdout|txt|md|csv)$''',
+  '''^docs/blog/[^/]+/evidence/''',
+]
+
+# Research scripts pin the SHA-256 of the files and tokenizers they freeze.
+[[allowlists]]
+description = "SHA-256 pins in research code"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''^research/''']
+regexes = ['''^[0-9a-f]{64}$''']
+
+# Content hashes, digests and pinned revisions named after tokens or keys.
+[[allowlists]]
+description = "Content hashes and revisions"
+targetRules = ["generic-api-key"]
+regexTarget = "match"
+regexes = [
+  '''(?i)(sha256|sha1|digest|revision|fingerprint)[a-z0-9_.\-]*["'`]?\s*[:=]\s*["'`]?[0-9a-f]{40,64}''',
+]
+
+# PostHog `phc_` project tokens are public client keys by design.
+[[allowlists]]
+description = "Public PostHog project tokens"
+targetRules = ["generic-api-key"]
+regexes = ['''^phc_[A-Za-z0-9]+$''']
+
+# Container image references for Valkey (`valkey/valkey:<tag>`): "valkey" contains "key".
+[[allowlists]]
+description = "Valkey image references"
+targetRules = ["generic-api-key"]
+regexTarget = "line"
+regexes = ['''valkey/valkey:''', '''^\s*valkey:\s*$''']
+
+# External Secrets manifests name AWS Secrets Manager entries and per-instance
+# property IDs; the secret values themselves never enter the repository.
+[[allowlists]]
+description = "External Secrets remote references"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''^infra/environments/.+\.ya?ml$''']
+regexTarget = "line"
+regexes = ['''^\s*-?\s*(\{\s*)?(secretKey|key|property|extract):\s''', '''^\s*-?\s*-\s*extract:\s*\{\s*key:\s''']
+
+# Test-only CA and TLS keys generated for unit tests; production signing uses AWS KMS.
+[[allowlists]]
+description = "Test-only private keys"
+targetRules = ["private-key"]
+paths = ['''^product/services/[^/]+/test/''']
+
+# Deliberately fake credentials in tests and runbooks: sequential alphabets, their
+# base64 encodings, and keys that say they are invalid.
+[[allowlists]]
+description = "Synthetic test credentials"
+stopwords = [
+  "0123456789abcdef",
+  "abcdefghijklmnop",
+  "mdeymzq1njc4owfiy2rl",
+  "invalid",
+  "test-only",
+]

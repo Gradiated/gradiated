@@ -64,7 +64,7 @@ These are separate scope choices:
 | --- | --- | --- |
 | Adaptive capture sampling | Capture at a fixed rate, initially all eligible traffic, within the existing resource bounds | Measure storage volume first. Preserve the 500-new-session training trigger and honest loss reporting. |
 | Five-minute provider-price refresh | A versioned operator-maintained price table | Keep price provenance, verification time and unknown usage categories. Estimates may need manual updates. |
-| Cleanup after a year without use | Retain models and record publication and customer-use evidence now | Workspace deletion is outside launch scope. Build inactivity cleanup before it can act; check imported models before deferring it. |
+| Cleanup after a year without use | Retain models and record publication and customer-use evidence now | Workspace deletion removes a workspace's run artifacts. Build inactivity cleanup before it can act; check imported models before deferring it. |
 
 Host failure fails the training run. Launch has no automatic restart or cross-run checkpoint resume.
 

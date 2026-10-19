@@ -1,4 +1,11 @@
-export type ModelUseCase = "judge" | "training" | "comparison" | "serving";
+export const MODEL_USE_CASES = [
+  "judge",
+  "training",
+  "comparison",
+  "serving",
+] as const;
+
+export type ModelUseCase = (typeof MODEL_USE_CASES)[number];
 
 export type CatalogEntry = {
   id: string;
@@ -244,6 +251,13 @@ export const modelType = (id: string): "chat" | "decision" => {
   const model: CatalogEntry | undefined = catalogModel(id);
 
   return model?.type ?? "chat";
+};
+
+// Hosted catalog rows without a catalog entry are inference deployments.
+export const modelSupportedUses = (id: string): readonly ModelUseCase[] => {
+  const model: CatalogEntry | undefined = catalogModel(id);
+
+  return model?.supportedUses ?? ["serving"];
 };
 
 export const modelDisplayName = (id: string | null | undefined) =>

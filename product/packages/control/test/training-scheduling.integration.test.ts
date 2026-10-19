@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { tasks } from "../src/db/schema/index.js";
+import { tasks, workspaces } from "../src/db/schema/index.js";
 import { createTrainingService } from "../src/training/service.js";
 import { createMemoryContentStore } from "./support/content-store.js";
 import { createTestDatabase, type TestDatabase } from "./support/postgres.js";
@@ -91,6 +91,24 @@ describe("task-owned schedule updates", () => {
       own.service.updateTask(own.userId, own.workspaceId, own.task.name, input),
     ).resolves.toMatchObject({ trainingSchedule: input.training_schedule });
     expect(own.engine.updateSchedule).toHaveBeenCalledTimes(2);
+  });
+
+  it("removes a schedule recreated after the workspace was deleted", async () => {
+    const own = await fixture();
+    own.engine.updateSchedule.mockImplementationOnce(async () => {
+      await db.database
+        .update(workspaces)
+        .set({ archivedAt: new Date() })
+        .where(eq(workspaces.id, own.workspaceId));
+    });
+
+    await own.service.updateTask(own.userId, own.workspaceId, own.task.name, {
+      training_schedule: "0 4 * * 1",
+    });
+    expect(own.engine.updateSchedule.mock.calls).toEqual([
+      [own.task.id, "0 4 * * 1"],
+      [own.task.id, null],
+    ]);
   });
 
   it("does not confirm a schedule update without a training engine", async () => {

@@ -15,6 +15,10 @@ on:
         description: JSON array of catalog image names required by this caller.
         type: string
         default: '["product","gateway","proxy"]'
+      vulnerability_scan:
+        description: "Trivy scan of each published image: enforce (fail on CRITICAL with a fix), report, or skip."
+        type: string
+        default: enforce
     outputs:
       product_digest:
         value: ${{ jobs.resolve.outputs.product_digest }}
@@ -98,6 +102,54 @@ jobs:
           IMAGE_TAG: ${{ matrix.tag }}
           SOURCE_SHA: ${{ inputs.source_sha }}
         run: node tools/images/images.mjs record "$IMAGE_NAME" "$REPOSITORY" "$IMAGE_TAG" "$SOURCE_SHA"
+      # Scan the exact published digest; nothing is rebuilt. The scanner, its version and
+      # the accepted risks in .trivyignore come from the workflow revision, so deploying
+      # an older source commit still uses the current policy.
+      - name: Check out the vulnerability scan policy
+        if: inputs.vulnerability_scan != 'skip'
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          path: .agents/runtime/security-policy
+          sparse-checkout: |
+            .trivyignore
+            mise.toml
+            tools/security/scan_report.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - if: inputs.vulnerability_scan != 'skip'
+        uses: jdx/mise-action@v4.2.3
+        with:
+          working_directory: .agents/runtime/security-policy
+          install_args: trivy
+      - name: Scan the published image with Trivy
+        if: inputs.vulnerability_scan != 'skip'
+        working-directory: .agents/runtime/security-policy
+        env:
+          IMAGE_NAME: ${{ matrix.name }}
+          SCAN_MODE: ${{ inputs.vulnerability_scan }}
+        shell: bash
+        run: |
+          result="${GITHUB_WORKSPACE}/image-results/${IMAGE_NAME}.json"
+          image="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/$(jq -er .repository "${result}")@$(jq -er .digest "${result}")"
+          mkdir -p reports
+          # Trivy reads ECR credentials from the AWS session configured above.
+          trivy image --quiet --scanners vuln --severity CRITICAL,HIGH --platform linux/amd64 \
+            --ignorefile .trivyignore --format json --output "reports/${IMAGE_NAME}.json" "${image}"
+          gate=()
+          if [[ "${SCAN_MODE}" == "enforce" ]]; then
+            gate=(--enforce)
+          fi
+          python3 tools/security/scan_report.py trivy "reports/${IMAGE_NAME}.json" \
+            --name "${IMAGE_NAME}" "${gate[@]}" | tee -a "${GITHUB_STEP_SUMMARY}"
+      - name: Store vulnerability report
+        if: always() && inputs.vulnerability_scan != 'skip'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact_prefix }}-trivy-${{ matrix.name }}
+          path: .agents/runtime/security-policy/reports/
+          if-no-files-found: ignore
+          retention-days: 90
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.artifact_prefix }}-image-${{ matrix.name }}

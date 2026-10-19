@@ -1,5 +1,11 @@
 // Paths must include every tracked file that can enter the Docker build context.
 export const catalog = {
+  falco: {
+    context: "infra/images/falco",
+    repository: "gradiated/prod/product",
+    target: "",
+    paths: ["infra/images/falco/"],
+  },
   "gpu-controller": {
     context: "tools/virtual-kubelet",
     dockerfile: "tools/virtual-kubelet/Dockerfile",

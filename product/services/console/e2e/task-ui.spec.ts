@@ -415,7 +415,7 @@ test("direct task reload initializes flags, edits schedules and opens held-out r
   await page.getByRole("tab", { name: "Settings", exact: true }).click();
   await expect(
     page.getByText(
-      "Disable this to prevent capturing traces for training, this will disable all training functionality",
+      "Stores request and response content for requests that name a task, for training and evaluation. Turn this off to stop storing content; automatic training stops while it is off.",
       { exact: true },
     ),
   ).toBeVisible();

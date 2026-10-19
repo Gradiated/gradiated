@@ -16,6 +16,8 @@ import test from "node:test";
 const script = path.resolve("tools/deployment/commit-release.sh");
 const metadata =
   "infra/environments/prod/us-east-1/kubernetes/workloads/release-metadata.yaml";
+const recovery =
+  "infra/environments/prod/us-east-1/kubernetes/workloads/recovery/cronjobs.yaml";
 const fixture = (t) => {
   const root = mkdtempSync(path.join(os.tmpdir(), "release-push-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
@@ -30,7 +32,7 @@ const fixture = (t) => {
   const files = readFileSync(script, "utf8")
     .match(/  infra\/[^\n]+/g)
     .map((line) => line.trim());
-  for (const file of [...files, "tools/deployment/release-order.mjs"]) {
+  for (const file of [...new Set([...files, recovery]), "tools/deployment/release-order.mjs"]) {
     mkdirSync(path.dirname(path.join(checkout, file)), { recursive: true });
     copyFileSync(file, path.join(checkout, file));
   }
@@ -100,6 +102,32 @@ test("rebases the release over concurrent source changes without dropping them",
     "concurrent source change\n",
   );
   assert.equal(f.git(f.checkout, "rev-parse", "HEAD^"), concurrent);
+});
+
+test("publishes recovery worker image updates together with the release", (t) => {
+  const f = fixture(t);
+  f.change();
+  const before = readFileSync(path.join(f.checkout, recovery), "utf8");
+  const images = before.match(/^\s+image: .+$/gm);
+  assert.equal(images.length, 3);
+  const digest = `sha256:${"b".repeat(64)}`;
+  const updated = before.replace(
+    /(^\s+image: \S+\/product)(?:@sha256:[a-f0-9]{64}|:[^\s]+)$/gm,
+    `$1@${digest}`,
+  );
+  assert.notEqual(updated, before);
+  writeFileSync(path.join(f.checkout, recovery), updated);
+  const result = f.run();
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(f.git(f.checkout, "status", "--porcelain"), "");
+  assert.equal(
+    f.git(f.root, "--git-dir", f.remote, "show", `main:${recovery}`),
+    updated.trim(),
+  );
+  assert.deepEqual(
+    f.git(f.checkout, "diff", "--name-only", "HEAD^", "HEAD").split("\n").sort(),
+    [metadata, recovery].sort(),
+  );
 });
 
 test("refuses to overwrite a newer release that was recorded while building", (t) => {

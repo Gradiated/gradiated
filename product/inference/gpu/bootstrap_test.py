@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -79,6 +80,27 @@ class BootstrapTests(unittest.TestCase):
             link.symlink_to(target)
             with self.assertRaises(OSError): bootstrap.private_json(link, {'secret': 'synthetic'})
             self.assertEqual(target.read_text(), 'preserved')
+
+    def test_restart_restores_private_network_before_starting_supervisor(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = root / 'kubelet.json'
+            config.write_text('{}')
+            calls = []
+            with patch.dict(os.environ, {}, clear=True), patch.object(bootstrap, 'ROOT', root), patch.object(bootstrap, 'CONFIG', config), patch.object(bootstrap.subprocess, 'run', side_effect=lambda *args, **kwargs: calls.append('network')), patch.object(bootstrap, 'private_json', side_effect=lambda *args: calls.append('identity')) as identity, patch.object(bootstrap.os, 'execv', side_effect=lambda *args: calls.append('supervisor')):
+                bootstrap.main()
+            self.assertEqual(calls, ['network', 'identity', 'supervisor'])
+            identity.assert_called_once()
+            self.assertEqual(identity.call_args.args[0], root / 'supervisor.json')
+            self.assertEqual(identity.call_args.args[1]['pid'], os.getpid())
+
+    def test_restart_does_not_start_supervisor_when_private_network_fails(self):
+        with tempfile.TemporaryDirectory() as directory:
+            config = Path(directory) / 'kubelet.json'
+            config.write_text('{}')
+            with patch.dict(os.environ, {}, clear=True), patch.object(bootstrap, 'CONFIG', config), patch.object(bootstrap.subprocess, 'run', side_effect=OSError('network startup failed')), patch.object(bootstrap.os, 'execv') as supervisor:
+                with self.assertRaises(OSError): bootstrap.main()
+                supervisor.assert_not_called()
 
 
 if __name__ == '__main__':

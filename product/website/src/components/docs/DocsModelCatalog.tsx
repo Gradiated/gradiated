@@ -13,6 +13,13 @@ const MODEL_COLUMNS = [
   "Context",
 ] as const;
 
+// The hosted catalog also lists training bases that cannot serve requests.
+// APIs deployed before supported_uses mark those bases unavailable instead.
+const isInferenceModel = (model: Model): boolean =>
+  "supported_uses" in model.properties && model.properties.supported_uses
+    ? model.properties.supported_uses.includes("serving")
+    : model.status === "available";
+
 const pricePerMillion = (model: Model, type: PriceType): string => {
   const entries =
     type === "completion"
@@ -149,7 +156,7 @@ export const DocsModelCatalog = ({
     setStatus("loading");
     try {
       const result = await listModels();
-      setModels(result.data);
+      setModels(result.data.filter(isInferenceModel));
       setStatus("ready");
     } catch {
       setStatus("error");

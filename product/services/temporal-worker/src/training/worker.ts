@@ -14,6 +14,7 @@ import {
   createTemporalTrainingEngine,
   type TrainingEngine,
   ObjectStorage,
+  deleteArchivedTasks,
   type ControlDatabase,
   type ContentStore,
 } from "@gradiated/control";
@@ -46,12 +47,18 @@ export const runTrainingWorker = async (input: {
   const configureTrainingExecutor = (engine: TrainingEngine) => {
     const config = trainingConfiguration(input.environment);
     const request = createKubernetesRequest(input.signal);
-    cleanUpJobs = () =>
-      stopClosedTrainingJobs({
-        request,
-        engine,
-        readRun: createTrainingRunStore(input.database).get,
-      });
+    cleanUpJobs = async () => {
+      const results = await Promise.allSettled([
+        stopClosedTrainingJobs({
+          request,
+          engine,
+          readRun: createTrainingRunStore(input.database).get,
+        }),
+        deleteArchivedTasks(input.database, engine),
+      ]);
+      const failed = results.find((result) => result.status === "rejected");
+      if (failed) throw failed.reason;
+    };
 
     return createTrainingExecutorActivities({
       database: input.database,
@@ -116,7 +123,7 @@ export const runTrainingWorker = async (input: {
           try {
             await cleanUpJobs();
           } catch {
-            console.warn("Could not list training jobs for cleanup.");
+            console.warn("Could not clean up training jobs or schedules.");
           }
 
           try {

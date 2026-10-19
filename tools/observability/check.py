@@ -24,9 +24,16 @@ def main():
     args = parser.parse_args()
     if not args.promtool:
         parser.error('promtool is required')
+    exporter = yaml.safe_load((ROOT / 'infra/environments/prod/us-east-1/kubernetes/platform/cloudwatch-exporter.yaml').read_text())
+    exporter_config = yaml.safe_load(exporter['spec']['source']['helm']['valuesObject']['config'])
+    for metric_name in ('root_usage', 'urgent_findings', 'review_findings'):
+        security_export = next(metric for metric in exporter_config['metrics']
+                               if metric['aws_namespace'] == 'Gradiated/Security' and metric['aws_metric_name'] == metric_name)
+        assert security_export['aws_statistics'] == ['Maximum']
+        assert 0 < security_export['range_seconds'] <= security_export['period_seconds'] - 60, 'CloudWatch rounding must not create a second period whose newer zero masks security events'
     dashboards = {d['uid']: d for p in OBS.glob('*.json')
                   if (d := json.loads(p.read_text()))}
-    groups = [g for name in ('prometheus-rules.yaml', 'logging-prometheus-rules.yaml', 'controller-prometheus-rules.yaml', 'autoscaling-prometheus-rules.yaml', 'model-replica-rules.yaml', 'data-store-prometheus-rules.yaml')
+    groups = [g for name in ('prometheus-rules.yaml', 'logging-prometheus-rules.yaml', 'controller-prometheus-rules.yaml', 'autoscaling-prometheus-rules.yaml', 'model-replica-rules.yaml', 'data-store-prometheus-rules.yaml', 'security-prometheus-rules.yaml', 'recovery-prometheus-rules.yaml')
               for g in yaml.safe_load((OBS / name).read_text())['spec']['groups']]
     alerts = {rule['alert']: rule for group in groups for rule in group['rules'] if 'alert' in rule}
     for name, rule in alerts.items():
@@ -39,7 +46,12 @@ def main():
         assert any(p['id'] == panel_id and p.get('targets')
                    for p in dashboard['panels']), name
         assert not annotations.get('runbook_url'), name
-        assert annotations['logs_url'].startswith('https://grafana.gradiated.com/d/gradiated-logs?'), name
+        if name in ('AwsRootAccountUsed', 'AwsRootUsageMonitoringMissing'):
+            assert annotations['logs_url'] == 'https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#logsV2:log-groups/log-group/%252Fgradiated%252Fsecurity%252Fcloudtrail', name
+        elif name in ('AwsUrgentSecurityFinding', 'AwsSecurityFindingNeedsReview'):
+            assert annotations['logs_url'] == 'https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#logsV2:log-groups/log-group/%252Fgradiated%252Fsecurity%252Ffindings', name
+        else:
+            assert annotations['logs_url'].startswith('https://grafana.gradiated.com/d/gradiated-logs?'), name
 
     # Validate actual chart expressions as recording rules, substituting dashboard variables.
     chart_rules = []
@@ -752,6 +764,127 @@ def main():
     scenario('Data store CPU brief spike', data_store_inputs(**{'cpuutilization_average:gradiated-prod': '95+0x20 20+0x60'}),
              None, ['DatabaseCpuHigh'], None, '35m')
 
+    # Remediation-SLA alerts count only fixable findings for the same image repository
+    # across redeploys, and need the full window. Hourly inputs keep multi-day tests fast.
+    def cve(severity, values, tag='v1', fixed='1.2.4', vuln='CVE-2026-0001'):
+        return {'series': 'trivy_vulnerability_id{namespace="gradiated",image_repository="gradiated/prod/product",'
+                f'image_tag="{tag}",severity="{severity}",fixed_version="{fixed}",vuln_id="{vuln}"}}', 'values': values}
+    cve_labels = {'namespace': 'gradiated', 'image_repository': 'gradiated/prod/product'}
+    for severity, alert, days in [('Critical', 'VulnerabilityCriticalOverdue', 7), ('High', 'VulnerabilityHighOverdue', 30)]:
+        hours = days * 24
+        due = f'{days + 1}d'
+        for name, inputs, fires in [
+            ('present past the SLA', [cve(severity, f'1x{hours + 48}')], True),
+            ('present within the SLA', [cve(severity, f'_x{hours - 24} 1x72')], False),
+            ('unfixed', [cve(severity, f'1x{hours + 48}', fixed='')], False),
+            ('remediated', [cve(severity, f'1x{hours} _x48')], False),
+            ('redeployed with the same finding', [cve(severity, f'1x{hours // 2} _x{hours}'),
+                                                  cve(severity, f'_x{hours // 2} 1x{hours}', tag='v2')], True),
+        ]:
+            scenario(f'{alert} {name}', inputs, alert if fires else None, [alert],
+                     cve_labels if fires else None, due, '1h')
+    scenario('VulnerabilityCriticalOverdue ignores High', [cve('High', '1x220')], None,
+             ['VulnerabilityCriticalOverdue'], None, '8d', '1h')
+
+    trivy_alert = 'TrivyOperatorNotReporting'
+    trivy_up = lambda value: {'series': 'up{namespace="trivy-system",job="trivy-operator"}', 'values': f'{value}x300'}
+    trivy_reports = {'series': 'trivy_image_vulnerabilities{namespace="gradiated",severity="Critical"}', 'values': '2x300'}
+    scenario('Trivy reporting', [trivy_up(1), trivy_reports], None, [trivy_alert], eval_time='2h')
+    scenario('Trivy operator unscraped', [trivy_up(0), trivy_reports], trivy_alert, [trivy_alert], eval_time='2h')
+    scenario('Trivy exports no reports', [trivy_up(1)], trivy_alert, [trivy_alert], eval_time='2h')
+
+    root_alert = 'AwsRootAccountUsed'
+    root_missing = 'AwsRootUsageMonitoringMissing'
+    assert alerts[root_alert]['labels']['severity'] == 'critical', 'Root account activity must page'
+    root_metric = 'gradiated_security_root_usage_maximum'
+    def root_usage(values, instance='exporter-a', namespace='observability'):
+        return {'series': f'{root_metric}{{namespace="{namespace}",job="cloudwatch-exporter",service="cloudwatch-exporter",instance="{instance}"}}', 'values': values}
+    scenario('AWS root unused', [root_usage('0x80')], None, [root_alert, root_missing], eval_time='35m')
+    scenario('AWS root use first scrape', [root_usage('_x10 1x30')], root_alert, [root_alert, root_missing], eval_time='6m')
+    scenario('AWS root zero neighbor cannot mask use', [root_usage('0x40'), root_usage('1x40', instance='exporter-b')], root_alert, [root_alert], eval_time='6m')
+    scenario('AWS root ignores application metric impersonation', [root_usage('0x40'), root_usage('1x40', namespace='gradiated')], None, [root_alert, root_missing], eval_time='6m')
+    scenario('AWS root window recovered', [root_usage('1x10 0x40')], None, [root_alert, root_missing], eval_time='8m')
+    scenario('AWS root missing startup grace', [], None, [root_alert, root_missing], eval_time='20m')
+    scenario('AWS root missing telemetry', [], root_missing, [root_alert, root_missing], eval_time='35m')
+    scenario('AWS root telemetry recovered', [root_usage('_x64 0x20')], None, [root_alert, root_missing], eval_time='35m')
+
+    for alert, metric_name, severity in [('AwsUrgentSecurityFinding', 'urgent_findings', 'critical'), ('AwsSecurityFindingNeedsReview', 'review_findings', 'warning')]:
+        assert alerts[alert]['labels']['severity'] == severity
+        def finding_series(values, namespace='observability'):
+            return {'series': f'gradiated_security_{metric_name}_maximum{{namespace="{namespace}",job="cloudwatch-exporter",service="cloudwatch-exporter"}}', 'values': values}
+        scenario(alert + ' first positive scrape', [finding_series('_x10 1x30')], alert, [alert], eval_time='6m')
+        scenario(alert + ' idle', [finding_series('0x40')], None, [alert])
+        scenario(alert + ' application impersonation ignored', [finding_series('0x40'), finding_series('1x40', namespace='gradiated')], None, [alert])
+        scenario(alert + ' expired event is not current finding status', [finding_series('1x10 0x40')], None, [alert])
+
+    recovery_failure = 'DatabaseRestoreVerificationFailed'
+    def recovery_series(metric, values, cronjob='restore-postgres'):
+        return {'series': f'{metric}{{namespace="gradiated",cronjob="{cronjob}"}}', 'values': values}
+    failure_series = {'series': 'kube_job_status_failed{namespace="gradiated",job_name="restore-postgres-123"}', 'values': '1x80'}
+    scenario('restore verification failure reports', [failure_series], recovery_failure, [recovery_failure], {'namespace': 'gradiated', 'job_name': 'restore-postgres-123'})
+    scenario('no failed restore job', [], None, [recovery_failure])
+    weekly = 'DatabaseRestoreVerificationOverdue'
+    weekly_labels = {'namespace': 'gradiated', 'cronjob': 'restore-postgres'}
+    scenario('weekly restore overdue', [recovery_series('kube_cronjob_status_last_successful_time', '1x900')], weekly, [weekly], weekly_labels, '9d', '15m')
+    scenario('weekly restore recent', [recovery_series('kube_cronjob_status_last_successful_time', '1+900x900')], None, [weekly], eval_time='9d', interval='15m')
+    scenario('weekly restore first-run grace', [recovery_series('kube_cronjob_created', '0x80')], None, [weekly], eval_time='8h', interval='15m')
+    scenario('weekly restore never commissioned', [recovery_series('kube_cronjob_created', '0x200')], weekly, [weekly], weekly_labels, '2d', '15m')
+    maintenance = 'DatabaseRecoveryCleanupOverdue'
+    cleanup_labels = {'namespace': 'gradiated', 'cronjob': 'restore-cleanup'}
+    scenario('daily recovery maintenance overdue', [recovery_series('kube_cronjob_status_last_successful_time', '1x200', 'restore-cleanup')], maintenance, [maintenance], cleanup_labels, '2d', '15m')
+    scenario('daily recovery maintenance recent', [recovery_series('kube_cronjob_status_last_successful_time', '120000x200', 'restore-cleanup')], None, [maintenance], eval_time='2d', interval='15m')
+    scenario('daily maintenance never commissioned', [recovery_series('kube_cronjob_created', '0x200', 'restore-cleanup')], maintenance, [maintenance], cleanup_labels, '2d', '15m')
+    scenario('daily maintenance first-run grace', [recovery_series('kube_cronjob_created', '0x80', 'restore-cleanup')], None, [maintenance], eval_time='8h', interval='15m')
+    missing = 'DatabaseRestoreScheduleMissing'
+    other_schedules = [recovery_series('kube_cronjob_info', '1x80', cronjob) for cronjob in ['restore-clickhouse', 'restore-cleanup']]
+    scenario('weekly recovery schedule missing', other_schedules, missing, [missing], weekly_labels, '35m')
+    scenario('all recovery schedules present', other_schedules + [recovery_series('kube_cronjob_info', '1x80')], None, [missing], eval_time='35m')
+
+    falco_alert = 'FalcoCriticalEvents'
+    assert alerts[falco_alert]['labels']['severity'] == 'critical', 'Critical runtime detections must route to urgent incident.io paging'
+    def falco(values, priority='2', pod='falco-a'):
+        return {'series': f'falcosecurity_falco_rules_matches_total{{namespace="falco",pod="{pod}",priority="{priority}",'
+                'rule_name="Drop and execute new binary in container"}', 'values': values}
+    falco_labels = {'rule_name': 'Drop and execute new binary in container', 'pod': 'falco-a'}
+    scenario('Falco first critical match', [falco('_x10 1x30')], falco_alert, [falco_alert], falco_labels, '8m')
+    scenario('Falco repeated critical match', [falco('3x20 4x20')], falco_alert, [falco_alert], falco_labels, '12m')
+    scenario('Falco old critical match', [falco('3x60')], None, [falco_alert], eval_time='20m')
+    scenario('Falco warning match', [falco('_x10 1x30', priority='4')], None, [falco_alert], eval_time='8m')
+
+    falco_down = 'FalcoDown'
+    def falco_state(unavailable, up):
+        series = [] if up is None else [{'series': 'up{namespace="falco",job="falco-metrics",pod="falco-a"}', 'values': f'{up}x40'}]
+        if unavailable is not None:
+            series.append({'series': 'kube_daemonset_status_number_unavailable{namespace="falco",daemonset="falco"}',
+                           'values': f'{unavailable}x40'})
+        return series
+    scenario('Falco healthy', falco_state(0, 1), None, [falco_down], eval_time='16m')
+    scenario('Falco sensor unavailable', falco_state(1, 1), falco_down, [falco_down], eval_time='16m')
+    scenario('Falco scrape failing', falco_state(0, 0), falco_down, [falco_down], eval_time='16m')
+    scenario('Falco not installed', falco_state(None, 1), falco_down, [falco_down],
+             {'namespace': 'falco', 'daemonset': 'falco'}, '16m')
+    scenario('Falco scrape targets missing', falco_state(0, None), falco_down, [falco_down],
+             {'namespace': 'falco', 'job': 'falco-metrics'}, '16m')
+
+    kyverno_alert = 'KyvernoPolicyViolationsRising'
+    host_stale = 'GpuHostTelemetryStale'
+    for name, timestamp, fires in [('fresh', '0+30x40', False), ('stale', '0x40', True)]:
+        scenario('GPU host telemetry ' + name,
+                 [{'series': 'gradiated_gpu_host_last_seen_seconds{instance_id="test-host"}', 'values': timestamp}],
+                 host_stale if fires else None, [host_stale],
+                 {'instance_id': 'test-host', 'node': 'gpu-test-host'} if fires else None)
+
+    def report(values, namespace='gradiated', name='r1'):
+        return {'series': f'kube_policyreport_fail{{namespace="{namespace}",name="{name}"}}', 'values': values}
+    # Instant selectors need a sample within five minutes of each 15-minute evaluation.
+    scenario('Kyverno violations steady', [report('2x240')], None, [kyverno_alert], eval_time='2d', interval='15m')
+    scenario('Kyverno violations rising', [report('2x240'), report('_x120 1x120', name='r2')], kyverno_alert,
+             [kyverno_alert], {'namespace': 'gradiated'}, '2d', '15m')
+    scenario('Kyverno violations in a new namespace', [report('2x240'), report('_x120 1x120', namespace='metabase')],
+             kyverno_alert, [kyverno_alert], {'namespace': 'metabase'}, '2d', '15m')
+    scenario('Kyverno violations fell', [report('3x120 1x120')], None, [kyverno_alert], eval_time='2d', interval='15m')
+    scenario('Kyverno first day after install', [report('1x40 3x80')], None, [kyverno_alert], eval_time='20h', interval='15m')
+
     with tempfile.TemporaryDirectory(prefix='observability-check-') as directory:
         temp = Path(directory)
         (temp / 'rules.yaml').write_text(yaml.safe_dump({'groups': groups}))
@@ -759,7 +892,10 @@ def main():
             'groups': [{'name': 'dashboard_syntax', 'rules': chart_rules}]}))
         (temp / 'test-rules.yaml').write_text(yaml.safe_dump({'groups': [g for g in groups if g['name'] != 'gradiated.models.desired']}))
         (temp / 'tests.yaml').write_text(yaml.safe_dump({
-            'rule_files': ['test-rules.yaml'], 'evaluation_interval': '30s', 'tests': [test for test in tests if test['interval'] != '5s']}))
+            'rule_files': ['test-rules.yaml'], 'evaluation_interval': '30s', 'tests': [test for test in tests if test['interval'] not in ('5s', '15m', '1h')]}))
+        (temp / 'slow-tests.yaml').write_text(yaml.safe_dump({
+            'rule_files': ['test-rules.yaml'], 'evaluation_interval': '15m',
+            'tests': [test for test in tests if test['interval'] in ('15m', '1h')]}))
         (temp / 'fast-tests.yaml').write_text(yaml.safe_dump({
             'rule_files': ['test-rules.yaml'], 'evaluation_interval': '5s',
             'tests': [test for test in tests if test['interval'] == '5s']}))
@@ -767,6 +903,7 @@ def main():
         subprocess.run([args.promtool, 'check', 'rules', str(temp / 'rules.yaml'),
                         str(temp / 'charts.yaml')], check=True)
         subprocess.run([args.promtool, 'test', 'rules', str(temp / 'tests.yaml')], check=True)
+        subprocess.run([args.promtool, 'test', 'rules', str(temp / 'slow-tests.yaml')], check=True)
     print(f'Validated {len(alerts)} alert panel links, {len(chart_rules)} chart queries, '
           f'and {len(tests)} behavioral scenarios.')
 

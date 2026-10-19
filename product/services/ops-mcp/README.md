@@ -14,7 +14,7 @@ API using the existing product image.
 | `active_alerts`                | Prometheus firing/pending alerts and dashboard links                                   |
 | `query_metrics`                | Instant PromQL at an optional RFC 3339 time, maximum 200 returned series               |
 | `query_metric_history`         | PromQL between RFC 3339 `start` and `end`, optional step, 50 series                    |
-| `metric_metadata`              | Metric names, types, help text and units, searched by regular expression               |
+| `metric_metadata`              | Metric names, types, help text and units, searched by RE2 regular expression           |
 | `prometheus_targets`           | Scrape target health, last scrape and last error                                       |
 | `prometheus_rules`             | Alerting and recording rules with expressions, health and active alerts                |
 | `label_names`                  | Label names for metrics or logs, optionally for a selector and period                  |
@@ -31,6 +31,12 @@ API using the existing product image.
 | `dashboards`                   | Existing Grafana dashboard links                                                       |
 | `register_instance`            | Prepares a GPU host for Kubernetes and returns Git configuration (the only write tool) |
 | `instance_registration_status` | Progress of registrations since the last restart                                       |
+
+`metric_metadata.search` uses case-insensitive, linear-time RE2 matching over
+metric names and help text. Anchors, alternation and repetition are supported;
+lookarounds and backreferences are rejected with the normal diagnostic error.
+This keeps untrusted search expressions from blocking the diagnostic service's
+event loop through catastrophic backtracking.
 
 Every tool except `register_instance` has `readOnlyHint: true`,
 `destructiveHint: false` and `idempotentHint: true`; client administrators may run

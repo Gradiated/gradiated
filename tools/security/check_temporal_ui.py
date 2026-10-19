@@ -17,6 +17,16 @@ ROOT = Path(__file__).resolve().parents[2]
 CONFIG = ROOT / 'infra/environments/prod/us-east-1/kubernetes/workloads/temporal-ui'
 
 
+def read_settings(docker, container):
+    for _ in range(50):
+        result = subprocess.run(docker + ['exec', container, 'wget', '-q', '-O', '-',
+            'http://127.0.0.1:8080/api/v1/settings'], capture_output=True, text=True, timeout=5)
+        if result.returncode == 0:
+            return json.loads(result.stdout)
+        time.sleep(0.1)
+    raise RuntimeError('Pinned Temporal UI startup timed out')
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--ui-image', help='Locally built Cloud UI image for CI validation')
@@ -54,15 +64,7 @@ def main():
         '--entrypoint', '/bin/sh', images['ui'], '/config/start-ui.sh']
     subprocess.run(start, check=True, capture_output=True, timeout=60)
     try:
-        for _ in range(50):
-            result = subprocess.run(docker_base + ['exec', container, 'wget', '-q', '-O', '-',
-                'http://127.0.0.1:8080/api/v1/settings'], capture_output=True, text=True, timeout=5)
-            if result.returncode == 0:
-                break
-            time.sleep(0.1)
-        else:
-            raise RuntimeError('Pinned Temporal UI startup timed out')
-        settings = json.loads(result.stdout)
+        settings = read_settings(docker_base, container)
         assert settings['DisableWriteActions'] is True
         assert settings['DefaultNamespace'] == 'fixture'
         config = yaml.safe_load(subprocess.check_output(docker_base + ['exec', container, 'cat',
@@ -72,6 +74,21 @@ def main():
     finally:
         subprocess.run(docker_base + ['rm', '-f', container], capture_output=True, timeout=30)
 
+    # The published image also supports its default Docker configuration without
+    # Kubernetes' command override. Exercise templated environment settings.
+    default_container = container + '-default'
+    subprocess.run(docker + ['--name', default_container, '-d',
+        '-e', 'TEMPORAL_ADDRESS=fixture.example:7233',
+        '-e', 'TEMPORAL_DEFAULT_NAMESPACE=default-fixture',
+        '-e', 'TEMPORAL_DISABLE_WRITE_ACTIONS=true', images['ui']],
+        check=True, capture_output=True, timeout=60)
+    try:
+        settings = read_settings(docker_base, default_container)
+        assert settings['DefaultNamespace'] == 'default-fixture'
+        assert settings['DisableWriteActions'] is True
+    finally:
+        subprocess.run(docker_base + ['rm', '-f', default_container], capture_output=True, timeout=30)
+
     for variable, value in [('TEMPORAL_ADDRESS', 'fixture:7233\nenableUi: false'),
                             ('TEMPORAL_NAMESPACE', 'fixture\ndisableWriteActions: false')]:
         environment = {'TEMPORAL_ADDRESS': 'fixture.example:7233', 'TEMPORAL_NAMESPACE': 'fixture',
@@ -80,7 +97,7 @@ def main():
         result = subprocess.run(docker + env_args + ['--entrypoint', '/bin/sh', images['ui'],
             '/config/start-ui.sh'], capture_output=True, timeout=15)
         assert result.returncode != 0, 'Unsafe configuration input was accepted'
-    print('Pinned OAuth config and UI startup, loopback binding, verified TLS, write controls and input rejection pass.')
+    print('Pinned OAuth config, Kubernetes and default image startup, loopback binding, verified TLS, write controls and input rejection pass.')
 
 
 if __name__ == '__main__':

@@ -33,14 +33,25 @@ COPY inference/tailscale/ ./inference/tailscale/
 
 RUN mkdir -p packages/*/.turbo services/*/.turbo \
   && pnpm turbo run build --filter=@gradiated/api... --filter=@gradiated/worker... --filter=@gradiated/temporal-worker... --filter=@gradiated/ops-mcp...
-RUN pnpm install --prod --offline --force --frozen-lockfile \
+# Reinstall only the runtime closure: an in-place --prod install keeps every
+# build and test tool in the pnpm virtual store. better-auth still resolves
+# drizzle-kit and vitest as optional peers, which bring esbuild's Go binaries;
+# nothing at runtime imports esbuild, so remove it.
+RUN rm -rf node_modules packages/*/node_modules services/*/node_modules \
+  && pnpm install --prod --offline --frozen-lockfile \
   --filter=@gradiated/api... \
-  --filter=@gradiated/worker... --filter=@gradiated/temporal-worker... --filter=@gradiated/ops-mcp...
+  --filter=@gradiated/worker... --filter=@gradiated/temporal-worker... --filter=@gradiated/ops-mcp... \
+  && rm -rf node_modules/.pnpm/esbuild@* node_modules/.pnpm/@esbuild+*
 
 FROM node:22.23.2-bookworm-slim
 
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
-  && rm -rf /var/lib/apt/lists/*
+# Take Debian security updates published after the base image was built. The
+# services start with node only, so drop the base image's package managers.
+RUN apt-get update && apt-get upgrade -y \
+  && apt-get install -y --no-install-recommends ca-certificates \
+  && rm -rf /var/lib/apt/lists/* \
+    /usr/local/lib/node_modules /opt/yarn-v* \
+    /usr/local/bin/corepack /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/yarn /usr/local/bin/yarnpkg
 
 ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/aws-rds-us-east-1-bundle.pem
 

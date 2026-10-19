@@ -2,7 +2,7 @@
 
 - status: preflight runbook
 - date: 2026-08-26
-- owner: Gradiated Ltd
+- owner: Gradiated, a division of PostHog Inc.
 - endpoint: `https://api.gradiated.com/openai/v1`
 - target model: DeepSeek V4 Flash 0731
 

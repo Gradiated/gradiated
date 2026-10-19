@@ -17,12 +17,13 @@ This repository is the complete project state for the research and product-build
 - Use the repository as the canonical source for implementation state, plans, prompts, measurements, reports, and generated decision artifacts.
 - Use `README.md`, `docs/ARCHITECTURE.md` and `research/README.md` as the orientation map.
 - Use the top-level documents in `docs/` for product architecture, data models and implementation plans; do not encode durable interfaces only in chat or issue comments.
+- Treat `docs/security/policies/` as binding company policy for security, access, change and data handling. Change a policy there by PR, then publish it to Drata.
 - Put browser automation code and dependency declarations in `tools/browser/`.
 - Put temporary profiles, caches, test output, and run logs under `.agents/runtime/`; never commit them.
 - Routine product, infrastructure, and CI work must not create evidence folders, dated reports, task packets, ledgers, or handoff files. Summarize checks in the PR or response. Update an existing README or plan only when behavior, operation, or a useful decision changes. Keep research deliverables only when the research task requires them.
 - Put decision-relevant browser captures and research outputs in the relevant `research/<workstream>/docs/` or `research/<workstream>/evidence/` directory.
 - Use `.env.example` for variable names and external secret storage for values.
-- Log in to AWS with `mise run aws:login` when an AWS, Terraform or Terragrunt command reports missing or expired credentials. The task opens an SSO login for the `gradiated-admin` profile.
+- Use the read-only `gradiated-readonly` profile for day-to-day AWS access and `mise run aws:login` when its credentials expire. Opt in explicitly with `mise run aws:login --profile gradiated-developer` only when a task needs developer writes, or `mise run aws:login --profile gradiated-admin` for break-glass administrative work such as bootstrap applies. Match the login task to the profile used by the command; logging in does not change the shell's `AWS_PROFILE`.
 - Preserve existing on-demand GPU reservations. Repurpose running pods by changing processes over SSH, not by stopping, restarting, resetting, terminating, or changing provider image/environment settings. Those actions require explicit authorization to risk losing capacity; a file backup does not preserve the reservation.
 - Do not make issue trackers, Notion, Drive, Jira, or Slack a required source of truth. The repository owns code, research, prompts, and artifacts.
 - Harness-launched `$research-director`, `$researcher`, and `$research-supervisor` turns are already claimed by their lab and project assignment. They update the lab/project logs directly and do not create a GitHub issue for every internal turn.
@@ -52,6 +53,8 @@ This repository is the complete project state for the research and product-build
 - `$experiment-run`: bounded, reproducible experiments with cleanup; routine output stays untracked.
 
 ## Pull request reviews
+
+Every PR to `main` needs the required `AI review passed` status: Codex and Graphite must both review the pull request before merge (`.github/workflows/ai-review-gate.yml`). A review of any commit on the PR counts; commits pushed after a review are covered by required CI, the security scans and resolved review threads. After opening a PR, wait for both bots; if one did not run, comment `@codex review` or re-run the review from the Graphite check's Details page. To re-evaluate the gate by hand, run `gh workflow run ai-review-gate.yml -f pr=123` with the PR number.
 
 When addressing a review comment, resolve its thread after the fix is pushed. When deliberately ignoring or declining a comment, briefly explain why in the thread and resolve it. Do not leave addressed or intentionally declined comments unresolved.
 

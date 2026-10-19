@@ -5,4 +5,10 @@ node_modules
 **/node_modules
 **/target
 services/api/generated
-# Separate service image. Exclude it from the application build context.
+# Rust services build their own images from their own directories. Keep their
+# sources and test fixtures out of the application image.
+services/collector
+services/proxy
+# The Dockerfile installs the workspace with the gateway's package manifest.
+services/gateway
+!services/gateway/package.json

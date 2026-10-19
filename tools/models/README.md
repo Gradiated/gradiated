@@ -48,3 +48,23 @@ Base-image updates affect new provider pods only. Update existing host tools ove
 pinned SSH and verify compatibility rather than resetting a GPU reservation.
 See [instance setup](../../docs/INSTANCE_SETUP_PLAN.md) and
 [RunPod execution](../virtual-kubelet/README.md) for the supported runtime contract.
+
+## Internal monitoring billing
+
+The production verification workspace uses Gradiated's own prepaid organization.
+Continuous probes traverse normal admission and usage settlement; a depleted
+prepaid balance makes every deployment fail with HTTP 402. An operator-approved
+$10,000 internal reserve credit uses the existing billing ledger without changing
+billing mode, charging a payment method or overwriting the operational balance.
+
+Run `node tools/models/monitoring-billing.mjs` for a read-only production preview.
+The separately approved `--apply-credit` operation uses the fixed operator source
+ID `gradiated-inference-monitoring-reserve-v1`; retries return the same posting
+rather than issuing another credit. The command verifies the fixed production
+context, configured workspace, account ID/name/status and prepaid policy. New
+reserve grants need a new reviewed source ID and approval; this is not automatic
+or recurring funding. Never use this internal reserve for customer accounts.
+
+The gateway applies the immutable credit through its normal ledger replay; do not
+write the Valkey balance directly. Verify fresh successes for every deployment
+with `node tools/deployment/inference-probe-readiness.mjs` afterward.

@@ -114,3 +114,42 @@ The worker publishes a versioned portable `dataset-manifest.json` with full trai
 artifacts and a separately identified evaluation sample. Runtime and host settings
 live in a separate `run-manifest.json`; see the
 [run contract](../../../docs/TASK_FINE_TUNING_RUN_CONTRACT.md).
+
+## Checkpoint shard paths
+
+The training archive keeps the hash-locked Accelerate 1.9.0 dependency and applies
+`accelerate-checkpoint-paths.patch` with zero fuzz during its build. The patch
+routes sharded-index entries through `checkpoint_paths.py` before any shard is
+loaded. This locally mitigates the traversal/non-regular-file paths described in
+[GHSA-4j2p-28q2-5m79](https://github.com/advisories/GHSA-4j2p-28q2-5m79); a package-version bump alone is not evidence of a fix.
+
+Shard entries must be relative strings within the checkpoint directory. Resolved
+symlinks must stay within that directory, except for normal Hugging Face cache
+file links from `models--*/snapshots/<40-character commit>/` to the same
+repository's real `blobs` directory. Symlinked external blob directories,
+escaping paths, directories, missing files and FIFOs are rejected. Returned
+filenames retain their suffix so safetensors use the correct decoder. Custom
+cache layouts with external links need qualification before use.
+
+Both packaging and archive verification require
+`GRADIATED_REQUIRE_ACCELERATE_GUARD=1`. Tests verify the installed helper matches
+the tested source, the patched loader invokes it before shard reads, a real
+sharded safetensors checkpoint restores on CPU, and malformed traversal/FIFO
+indexes fail before the state loader is called. The ordinary filesystem tests
+can run without Torch:
+
+```sh
+python3 -m unittest discover -s product/inference/training -p test_checkpoint_paths.py -v
+```
+
+The two real-loader tests are required in the full runtime build and skipped in
+a lightweight development environment. This is input-path hardening, not a
+sandbox against a local process that can rewrite the trusted cache while it is
+being loaded, or permission to load untrusted pickle weights. Existing catalog
+revision pins, `trust_remote_code=False` and artifact validation remain required.
+
+Publication does not change an active GPU runtime. Qualify the resulting archive
+before a separately authorized digest rollout. Until then, active archives keep
+their existing dependency behavior. The upstream advisory can remain visible
+because the declared dependency version is unchanged; use patch/build/runtime
+evidence rather than claiming the scanner is green.

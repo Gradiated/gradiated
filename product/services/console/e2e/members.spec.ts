@@ -14,7 +14,9 @@ test("an admin invites someone who joins from the emailed link", async ({
   await page.getByRole("button", { name: "Invite members" }).click();
   await page.getByRole("textbox", { name: "Email addresses" }).fill(email);
   await page.getByRole("button", { name: "Send invitation" }).click();
-  await expect(page.getByText(email)).toBeVisible();
+  await expect(
+    page.getByRole("table").getByText(email, { exact: true }),
+  ).toBeVisible();
 
   const captured = await page.request.get(
     `${apiUrl}/api/auth/test/invitation?email=${encodeURIComponent(email)}`,
@@ -49,6 +51,8 @@ test("an admin invites someone who joins from the emailed link", async ({
   await context.close();
 
   await page.reload();
-  await expect(page.getByText(email)).toBeVisible();
+  await expect(
+    page.getByRole("table").getByText(email, { exact: true }),
+  ).toBeVisible();
   await expect(page.getByText(`Invited · Member`)).toHaveCount(0);
 });

@@ -1,4 +1,17 @@
-import { and, asc, desc, eq, gt, isNull, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gt,
+  inArray,
+  isNotNull,
+  isNull,
+  lt,
+  notExists,
+  or,
+  sql,
+} from "drizzle-orm";
 import { z } from "zod";
 import {
   ModelSchema,
@@ -50,6 +63,11 @@ const AdmissionContextSchema = z.object({
 });
 
 export const createTrainingStore = (database: ControlDatabase) => {
+  const archivedWorkspaceIds = () =>
+    database
+      .select({ id: workspaces.id })
+      .from(workspaces)
+      .where(isNotNull(workspaces.archivedAt));
   const selectRuns = () =>
     database
       .select({
@@ -386,6 +404,94 @@ export const createTrainingStore = (database: ControlDatabase) => {
       return row
         ? RunRecordSchema.pick({ inputCutoff: true }).parse(row).inputCutoff
         : null;
+    },
+
+    async isTaskLive(taskId: string) {
+      const [row] = await database
+        .select({ id: tasks.id })
+        .from(tasks)
+        .innerJoin(workspaces, eq(workspaces.id, tasks.workspaceId))
+        .where(
+          and(
+            eq(tasks.id, UuidSchema.parse(taskId)),
+            isNull(workspaces.archivedAt),
+          ),
+        );
+
+      return Boolean(row);
+    },
+
+    async archivedRunToDelete(finishedBefore: Date, createdBefore: Date) {
+      const [row] = await database
+        .select({ id: trainingRuns.id })
+        .from(trainingRuns)
+        .innerJoin(tasks, eq(tasks.id, trainingRuns.taskId))
+        .where(
+          and(
+            inArray(tasks.workspaceId, archivedWorkspaceIds()),
+            or(
+              lt(trainingRuns.finishedAt, finishedBefore),
+              and(
+                isNull(trainingRuns.finishedAt),
+                lt(trainingRuns.createdAt, createdBefore),
+              ),
+            ),
+          ),
+        )
+        .limit(1);
+
+      return row ? UuidSchema.parse(row.id) : null;
+    },
+
+    async deleteRun(runId: string) {
+      await database
+        .delete(trainingRuns)
+        .where(eq(trainingRuns.id, UuidSchema.parse(runId)));
+    },
+
+    async archivedTasksWithoutRuns(limit: number) {
+      const rows = await database
+        .select({ id: tasks.id })
+        .from(tasks)
+        .where(
+          and(
+            inArray(tasks.workspaceId, archivedWorkspaceIds()),
+            notExists(
+              database
+                .select({ id: trainingRuns.id })
+                .from(trainingRuns)
+                .where(eq(trainingRuns.taskId, tasks.id)),
+            ),
+          ),
+        )
+        .limit(limit);
+
+      return rows.map((row) => UuidSchema.parse(row.id));
+    },
+
+    // FOR UPDATE waits for a concurrent run insert's key-share lock, so the
+    // recheck sees that run instead of the delete cascading over it.
+    async deleteTaskWithoutRuns(taskId: string) {
+      taskId = UuidSchema.parse(taskId);
+
+      return database.transaction(async (tx) => {
+        const [task] = await tx
+          .select({ id: tasks.id })
+          .from(tasks)
+          .where(eq(tasks.id, taskId))
+          .for("update");
+        if (!task) return false;
+
+        const [run] = await tx
+          .select({ id: trainingRuns.id })
+          .from(trainingRuns)
+          .where(eq(trainingRuns.taskId, taskId))
+          .limit(1);
+        if (run) return false;
+
+        await tx.delete(tasks).where(eq(tasks.id, taskId));
+        return true;
+      });
     },
   };
 };

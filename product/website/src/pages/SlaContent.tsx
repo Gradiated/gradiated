@@ -5,11 +5,11 @@ export const SlaContent = (): ReactElement => (
   <>
     <p>Effective date: October 4, 2026</p>
     <p>
-      This Service Level Agreement (SLA) describes Gradiated Ltd’s availability
-      commitment for paid inference and the credits you can claim if we miss it.
-      It forms part of our <SiteLink href="/terms/">Terms of Service</SiteLink>.
-      A separate agreement signed with Gradiated takes precedence where its SLA
-      terms differ.
+      This Service Level Agreement (SLA) describes the availability commitment
+      that Gradiated, a division of PostHog Inc., makes for paid inference and
+      the credits you can claim if we miss it. It forms part of our{" "}
+      <SiteLink href="/terms/">Terms of Service</SiteLink>. A separate agreement
+      signed with Gradiated takes precedence where its SLA terms differ.
     </p>
     <h2>Our uptime target and commitment</h2>
     <p>

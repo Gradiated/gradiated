@@ -165,9 +165,10 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     title: "DPA",
     description: "Read the Gradiated data processing agreement.",
   },
-  "/subprocessors-security/": {
-    title: "Security",
-    description: "Review Gradiated security practices and subprocessors.",
+  "/subprocessors/": {
+    title: "Subprocessors",
+    description:
+      "See the subprocessors that process Gradiated request content, where they process it, and how we announce changes.",
   },
 };
 

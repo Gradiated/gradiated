@@ -2,7 +2,7 @@
 
 - status: working checklist
 - date: 2026-08-27
-- owner: Gradiated Ltd
+- owner: Gradiated, a division of PostHog Inc.
 - application: https://openrouter.ai/providers/apply
 - technical requirements: https://openrouter.ai/docs/guides/community/for-providers
 - architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
@@ -43,7 +43,7 @@ invoice.
 | Payments         | Monthly invoice or automatic payment setup                | OpenRouter does not request payment details at application time; the production account is invoiced                       | post-acceptance |
 | Reliability      | Continuous monitoring and stable traffic handling         | Two gateway replicas, a production smoke test, and provider load results; the 24-hour soak was waived by owner decision   | ready        |
 | Status page      | Public operational status                                 | Public status page is live                                                                                                | done         |
-| Legal pages      | Company identity, privacy, and service terms              | Gradiated Ltd and privacy page exist; public service terms are not planned for the application                            | waived       |
+| Legal pages      | Company identity, privacy, and service terms              | Gradiated (a division of PostHog Inc.) and privacy page exist; public service terms are not planned for the application   | waived       |
 | Next model       | Model-specific runtime, features, and benchmarks          | GLM-5.3 Flash serves production traffic through the authenticated proxy; capability preflight remains before submission   | partial      |
 
 OpenRouter does not require every model to support every feature. Advertise only
@@ -133,12 +133,15 @@ The public privacy policy must add an inference-specific section. It must state:
 - which subprocessors handle inference traffic and infrastructure;
 - how customers request access or deletion;
 - how OpenRouter traffic follows the same policy;
-- that OpenRouter traffic follows the same zero-data-retention policy;
+- that Gradiated does not store the content of OpenRouter traffic;
 - which claims are not made, such as HIPAA or SOC 2, unless verified.
 
-The current architecture does not persist prompts or completions. The public
-policy states this operational behavior and applies it to OpenRouter traffic.
-This document does not replace legal review.
+Trace capture is on by default for customer workspaces and stores request and
+response content for requests that name a task in `x-gradiated-task`. OpenRouter
+requests do not name a task, so the proxy does not capture them, and the
+catalog's `zdr: true` stays accurate for OpenRouter traffic. The public policy
+states the default, the retention period and the OpenRouter exception. This
+document does not replace legal review.
 
 ## Provider account and payment setup
 

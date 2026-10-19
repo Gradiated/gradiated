@@ -6,6 +6,7 @@ import {
   createDeploymentStore,
   createKubernetesDeploymentStore,
   createTraceCleanup,
+  createTrainingArtifactCleanup,
   createGenerationSettlementReader,
   createGenerationSettlementStore,
   createGenerationWriter,
@@ -163,6 +164,33 @@ if (environment.CONTENTS_BUCKET) {
           await cleanup();
           metrics.recordPass(
             "trace_cleanup",
+            (performance.now() - start) / 1000,
+          );
+          await markReady();
+          await sleep(5_000, signal);
+        }
+      },
+    }),
+  );
+}
+
+if (environment.TRAINING_ARTIFACTS_BUCKET) {
+  const cleanup = createTrainingArtifactCleanup(
+    database,
+    createContentStore(environment.TRAINING_ARTIFACTS_BUCKET),
+  );
+  supervisors.push(
+    supervise({
+      loop: "training_artifact_cleanup",
+      readinessPath: "/tmp/gradiated-training-artifact-cleanup-ready",
+      metrics,
+      signal,
+      run: async (markReady) => {
+        while (!signal.aborted) {
+          const start = performance.now();
+          await cleanup();
+          metrics.recordPass(
+            "training_artifact_cleanup",
             (performance.now() - start) / 1000,
           );
           await markReady();

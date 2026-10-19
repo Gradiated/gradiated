@@ -289,12 +289,18 @@ describe("ModelPropertiesSchema", () => {
       false,
     );
     expect(
-      ModelSchema.shape.properties.parse({ ...canonical, type: "decision" })
-        .type,
+      ModelSchema.shape.properties.parse({
+        ...canonical,
+        type: "decision",
+        supported_uses: ["serving"],
+      }).type,
     ).toBe("decision");
     expect(
-      ModelSchema.shape.properties.safeParse({ ...canonical, type: "unknown" })
-        .success,
+      ModelSchema.shape.properties.safeParse({
+        ...canonical,
+        type: "unknown",
+        supported_uses: ["serving"],
+      }).success,
     ).toBe(false);
   });
 

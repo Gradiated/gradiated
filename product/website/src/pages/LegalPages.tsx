@@ -25,12 +25,7 @@ import { SlaContent } from "./SlaContent";
  */
 
 export type LegalSlug =
-  | "acceptable-use"
-  | "dpa"
-  | "privacy"
-  | "sla"
-  | "subprocessors-security"
-  | "terms";
+  "acceptable-use" | "dpa" | "privacy" | "sla" | "subprocessors" | "terms";
 
 /* The full name IS the title. These pages used to lead with an abbreviation
    and put the real name in an eyebrow above it — two pieces of chrome saying
@@ -51,9 +46,9 @@ export const LEGAL: Record<
     Content: PrivacyContent as ComponentType,
     title: "Privacy Policy",
   },
-  "subprocessors-security": {
+  subprocessors: {
     Content: SubprocessorsContent as ComponentType,
-    title: "Subprocessors and security",
+    title: "Subprocessors",
   },
   terms: { Content: TermsContent as ComponentType, title: "Terms of Service" },
   sla: { Content: SlaContent, title: "Service Level Agreement" },

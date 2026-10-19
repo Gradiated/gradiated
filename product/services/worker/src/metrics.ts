@@ -13,6 +13,7 @@ export type WorkerLoop =
   | "generation_ingestion"
   | "settlement"
   | "trace_cleanup"
+  | "training_artifact_cleanup"
   | "kubernetes_deployment_reconciliation"
   | "kubernetes_qualification"
   | "catalog_apply"
@@ -35,6 +36,7 @@ const passOperation: Record<WorkerLoop, string> = {
   generation_ingestion: "consume_pass",
   settlement: "settlement_pass",
   trace_cleanup: "cleanup_pass",
+  training_artifact_cleanup: "cleanup_pass",
   kubernetes_deployment_reconciliation: "kubernetes_reconcile_pass",
   kubernetes_qualification: "kubernetes_qualification_pass",
   catalog_apply: "apply_pass",

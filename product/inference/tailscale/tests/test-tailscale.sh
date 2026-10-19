@@ -56,7 +56,8 @@ nc) cat ;;
 esac
 CLIENT
 chmod 755 /opt/gradiated/tailscale/{tailscale,tailscaled}
-bash /opt/gradiated/bin/start-tailscale
+for _ in {1..8}; do bash /opt/gradiated/bin/start-tailscale & done
+wait
 SETUP
 
 for _ in {1..30}; do
@@ -71,6 +72,16 @@ if docker exec -u runtime "$container" test -r /etc/gradiated/tailscale.json; th
 docker exec "$container" bash /opt/gradiated/bin/start-tailscale
 supervisor=$(docker exec "$container" pgrep -f '^bash /opt/gradiated/bin/run-tailscale$')
 [[ "$supervisor" =~ ^[0-9]+$ ]]
+docker exec "$container" bash -c '
+  for _ in {1..8}; do
+    bash /opt/gradiated/bin/run-tailscale &
+    bash /opt/gradiated/bin/run-control &
+  done
+  wait
+'
+[[ $(docker exec "$container" pgrep -f '^bash /opt/gradiated/bin/run-tailscale$') == "$supervisor" ]]
+control_supervisor=$(docker exec "$container" pgrep -f '^bash /opt/gradiated/bin/run-control$')
+[[ "$control_supervisor" =~ ^[0-9]+$ ]]
 child=$(docker exec "$container" cat "/proc/$supervisor/task/$supervisor/children" | xargs)
 docker exec "$container" bash -c 'kill -KILL "$1"' _ "$child"
 for _ in {1..30}; do

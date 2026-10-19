@@ -12,25 +12,4 @@ This endpoint also returns output limits, streaming support, and supported param
 
 Each model's `properties.type` identifies its inference interface: `chat` for text generation or `decision` for typed question scoring. Filter on `properties.type === "chat"` when building a Chat Completions model list.
 
-## Reasoning controls
-
-Set the top-level `reasoning_effort` field in a Chat Completions request:
-
-| Model                          | Accepted named values                 | Turning reasoning off                          |
-| ------------------------------ | ------------------------------------- | ---------------------------------------------- |
-| `z-ai/glm-5.3-flash`           | `low`, `high`, `max`                  | Reasoning is always on; `none` is unsupported. |
-| `deepseek/deepseek-v4.1-flash` | `none`, `low`, `high`, `xhigh`, `max` | Set `reasoning_effort` to `none`.              |
-
-For DeepSeek, the named budgets are `low` = 25, `high` = 50, `xhigh` = 75, and `max` = 100. You can also supply an integer from 1 to 100. These are relative effort values, not token counts. Omitting the field uses 50. The string `medium` is unsupported.
-
-For example:
-
-```json
-{
-  "model": "deepseek/deepseek-v4.1-flash",
-  "messages": [{ "role": "user", "content": "Explain this error." }],
-  "reasoning_effort": "high"
-}
-```
-
-Chat Completions requests go to `POST https://api.gradiated.com/chat/completions`. With `@ai-sdk/openai-compatible`, use `https://api.gradiated.com` as the base URL; the adapter appends `/chat/completions`.
+Each model's `properties.supported_uses` lists what it can be used for. Only models that include `serving` accept inference requests; the catalog also lists training bases that you can fine-tune but not call directly.

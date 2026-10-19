@@ -66,7 +66,7 @@ const COLUMNS: FooterColumn[] = [
       { href: "/sla/", label: "SLA" },
       { href: "/acceptable-use/", label: "Acceptable use" },
       { href: "/dpa/", label: "DPA" },
-      { href: "/subprocessors-security/", label: "Security" },
+      { href: "/subprocessors/", label: "Subprocessors" },
     ],
   },
 ];

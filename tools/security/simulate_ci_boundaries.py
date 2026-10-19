@@ -91,10 +91,71 @@ def main():
             (name, "cloudformation:ExecuteChangeSet", "*", False, []),
             (name, "cloudtrail:StopLogging", f"arn:aws:cloudtrail:us-east-1:{account}:trail/gradiated-security-audit", False, []),
             (name, "guardduty:UpdateDetector", f"arn:aws:guardduty:us-east-1:{account}:detector/example", False, []),
+            (name, "inspector2:Disable", "*", False, []),
+            (name, "inspector2:CreateFilter", "*", False, []),
+            (name, "inspector2:UpdateConfiguration", "*", False, []),
+            (name, "inspector2:ListFindings", "*", True, []),
+            (name, "ecr:PutRegistryScanningConfiguration", "*", False, []),
+            (name, "ecr:PutImageScanningConfiguration", f"arn:aws:ecr:us-east-1:{account}:repository/gradiated/prod/product", True, []),
+            (name, "iam:DeleteServiceLinkedRole", role + "aws-service-role/inspector2.amazonaws.com/AWSServiceRoleForAmazonInspector2", False, []),
             (name, "s3:DeleteObjectVersion", f"arn:aws:s3:::gradiated-security-audit-{account}/AWSLogs/example", False, []),
             (name, "events:RemoveTargets", f"arn:aws:events:us-east-1:{account}:rule/gradiated-security-events/gradiated-security-notify", False, []),
+            (name, "ec2:DisableEbsEncryptionByDefault", "*", False, []),
+            (name, "ec2:ModifyEbsDefaultKmsKeyId", "*", False, []),
+            (name, "ec2:ResetEbsDefaultKmsKeyId", "*", False, []),
+            (name, "ec2:EnableEbsEncryptionByDefault", "*", True, []),
+            (name, "cloudwatch:PutMetricData", "*", False,
+             [{"ContextKeyName": "cloudwatch:namespace", "ContextKeyType": "string", "ContextKeyValues": ["Gradiated/Security"]}]),
+            (name, "cloudwatch:PutMetricData", "*", True,
+             [{"ContextKeyName": "cloudwatch:namespace", "ContextKeyType": "string", "ContextKeyValues": ["Gradiated/Application"]}]),
+            (name, "logs:DeleteLogGroup", f"arn:aws:logs:us-east-1:{account}:log-group:/gradiated/security/cloudtrail", False, []),
+            (name, "logs:DeleteMetricFilter", f"arn:aws:logs:us-east-1:{account}:log-group:/gradiated/security/cloudtrail:*", False, []),
+            (name, "logs:AssociateKmsKey", f"arn:aws:logs:us-east-1:{account}:log-group:/gradiated/security/cloudtrail", False, []),
+            (name, "logs:DisassociateKmsKey", f"arn:aws:logs:us-east-1:{account}:log-group:/gradiated/security/cloudtrail", False, []),
+            (name, "logs:AssociateKmsKey", f"arn:aws:logs:us-east-1:{account}:log-group:/gradiated/prod/application", True, []),
+            (name, "logs:PutRetentionPolicy", f"arn:aws:logs:us-east-1:{account}:log-group:/gradiated/security/cloudtrail", False, []),
+            # IAM's simulator returns implicitDeny even for allow-all on a
+            # concrete log-stream ARN; use an action-level positive.
+            (name, "logs:PutLogEvents", "*", True, []),
+            (name, "logs:DeleteLogGroup", f"arn:aws:logs:us-east-1:{account}:log-group:/gradiated/prod/application", True, []),
+            (name, "sns:Publish", f"arn:aws:sns:us-east-1:{account}:gradiated-security-alerts", False, []),
+            (name, "sns:Publish", f"arn:aws:sns:eu-west-1:{account}:gradiated-security-alerts", False, []),
+            (name, "sns:Publish", f"arn:aws:sns:us-east-1:{account}:gradiated-prod-application", True, []),
+            (name, "cloudwatch:SetAlarmState", f"arn:aws:cloudwatch:us-east-1:{account}:alarm:gradiated-security-root-usage", False, []),
+            (name, "cloudwatch:PutMetricAlarm", f"arn:aws:cloudwatch:us-east-1:{account}:alarm:gradiated-security-root-usage", False, []),
+            (name, "cloudwatch:SetAlarmState", f"arn:aws:cloudwatch:us-east-1:{account}:alarm:gradiated-prod-example-cpu", True, []),
+            (name, "cloudwatch:PutMetricAlarm", f"arn:aws:cloudwatch:us-east-1:{account}:alarm:gradiated-prod-example-cpu", True, []),
             (name, "sns:Unsubscribe", f"arn:aws:sns:us-east-1:{account}:gradiated-security-alerts:example", False, []),
         ])
+
+    for name in policies:
+        for action in ["backup:DeleteRecoveryPoint", "backup:UpdateRecoveryPointLifecycle", "backup:DeleteBackupPlan", "backup:DeleteBackupSelection", "backup:PutBackupVaultAccessPolicy", "backup:StartBackupJob", "backup:StartRestoreJob"]:
+            cases.append((name, action, "*", False, []))
+        cases.append((name, "iam:DeleteServiceLinkedRole", role + "aws-service-role/backup.amazonaws.com/AWSServiceRoleForBackup", False, []))
+
+    for name in policies:
+        rule = f"arn:aws:events:us-east-1:{account}:rule/gradiated-prod-example"
+        application = f"arn:aws:lambda:us-east-1:{account}:function:gradiated-prod-example"
+        security_log = f"arn:aws:logs:us-east-1:{account}:log-group:/gradiated/security/cloudtrail"
+        for targets, expected in [
+            ([security_log], False),
+            ([f"arn:aws:sns:us-east-1:{account}:gradiated-security-alerts"], False),
+            ([f"arn:aws:events:us-east-1:{account}:event-bus/gradiated-security-events"], False),
+            ([application, security_log], False),
+            ([application], True),
+        ]:
+            context = [{"ContextKeyName": "events:TargetArn", "ContextKeyType": "stringList", "ContextKeyValues": targets}]
+            cases.append((name, "events:PutTargets", rule, expected, context))
+
+    security_key = f"arn:aws:kms:us-east-1:{account}:key/00000000-0000-0000-0000-000000000002"
+    security_tag = [{"ContextKeyName": "aws:ResourceTag/SecurityControl", "ContextKeyType": "string",
+                     "ContextKeyValues": ["gradiated-security-alerts"]}]
+    for name in policies:
+        for action in ["kms:DisableKey", "kms:DisableKeyRotation", "kms:ScheduleKeyDeletion", "kms:PutKeyPolicy", "kms:TagResource", "kms:UntagResource"]:
+            cases.append((name, action, security_key, False, security_tag))
+        cases.append((name, "kms:GenerateDataKey", security_key, True, security_tag))
+        cases.append((name, "kms:DisableKey", security_key, True,
+                      [{"ContextKeyName": "aws:ResourceTag/SecurityControl", "ContextKeyType": "string", "ContextKeyValues": ["application"]}]))
 
     def simulate(case):
         name, action, resource, expected, context = case
@@ -106,11 +167,26 @@ def main():
         result = json.loads(subprocess.check_output(command, text=True))["EvaluationResults"][0]
         allowed = result["EvalDecision"] == "allowed"
         assert allowed == expected, f"{name} {action} {resource}: {result['EvalDecision']} (expected allowed={expected})"
+        if not expected and (action.startswith("logs:") or action in ("cloudwatch:PutMetricData", "sns:Publish", "cloudwatch:SetAlarmState", "cloudwatch:PutMetricAlarm", "events:PutTargets") or (action.startswith("kms:") and context)):
+            assert result["EvalDecision"] == "explicitDeny", f"Expected a matching security deny, not an unrelated implicit denial: {result}"
         return name, action, allowed
 
     with ThreadPoolExecutor(max_workers=4) as executor:
         results = list(executor.map(simulate, cases))
-    print(f"PASS: {len(results)} AWS IAM simulations, including malicious AdministratorAccess on workload identities")
+    # Access Analyzer evaluates stream ARNs that IAM's simulator rejects even with allow-all.
+    log_checks = 0
+    for name, document in policies.items():
+        for namespace, expected in [("security", "PASS"), ("prod", "FAIL")]:
+            group = f"arn:aws:logs:us-east-1:{account}:log-group:/gradiated/{namespace}/example"
+            for action in ("logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"):
+                resource = group if action == "logs:CreateLogGroup" else group + ":log-stream:example"
+                access = json.dumps([{"actions": [action], "resources": [resource]}])
+                result = json.loads(subprocess.check_output([
+                    "aws", "accessanalyzer", "check-access-not-granted", "--policy-type", "IDENTITY_POLICY",
+                    "--policy-document", document, "--access", access, "--output", "json"], text=True))
+                assert result["result"] == expected, f"{name} {action} {resource}: {result}"
+                log_checks += 1
+    print(f"PASS: {len(results)} AWS IAM simulations and {log_checks} Access Analyzer log-isolation checks, including malicious AdministratorAccess on workload identities")
 
 
 if __name__ == "__main__":

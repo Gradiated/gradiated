@@ -78,6 +78,8 @@ The `gradiated-services` PrometheusRule covers:
 - missing telemetry for each server-side process;
 - sustained public DNS, TLS, CDN/ALB, and application availability failures,
   plus missing probe results for API, console, and Metabase;
+- bounded public inference probes for every serving deployment and separate
+  monitoring-stalled detection;
 - PostgreSQL, Valkey, and catalog readiness failures;
 - API/gateway error ratios and latency regressions;
 - worker crashes, readiness loss, pass stalls, poison-event
@@ -95,6 +97,42 @@ managed `gradiated/prod/platform/alertmanager-notifications` AWS Secrets
 Manager value with JSON containing `webhook-url` and `webhook-token`.
 Alertmanager reads the token as a Bearer credential. The URL and token must
 never enter Git.
+
+The incident.io Alertmanager source pauses timeout resolution while an alert is
+attached to an incident. Unattached alerts have a 48-hour timeout, longer than
+the longest reminder interval (24 hours). Explicit resolved events
+close recovered alerts promptly. The timeout must exceed all repeat intervals
+plus their group interval; otherwise persistent failures falsely close and
+reopen between reminders. The separate Watchdog heartbeat detects loss of the
+notification pipeline within about ten minutes. Timer expiration is not evidence
+of service recovery.
+
+Incident.io groups alerts by type for a fixed 30-minute window starting with the
+first alert. Alertmanager titles are rule names (for example,
+`InferenceDeploymentProbeFailed`), so model, deployment and host labels do not
+create separate incidents of that type within the group. All occurrences update
+one Slack summary, and only a priority increase re-escalates. Different types
+remain separate; a new occurrence after 30 minutes can create a new group. This is
+native time-window grouping, not a calendar-day quota or an indefinite
+one-open-incident constraint. Per-deployment alerts and their recovery behavior
+remain intact. Separate failures of the same type inside the window can still
+share a group and do not re-page at the same priority.
+
+Public inference probes use Gradiated's internal verification account and normal
+billing admission. HTTP 402 across all probes can mean that this account exhausted
+its prepaid credit; inspect its operational balance before diagnosing GPU failure.
+The guarded, idempotent internal reserve-credit operation is documented in
+[`tools/models/README.md`](../tools/models/README.md#internal-monitoring-billing).
+
+For the same `gradiated` recovery job, `DatabaseRestoreVerificationFailed`
+inhibits the generic `KubeJobFailed` warning. Other jobs and namespaces retain
+their notifications, and the generic warning becomes eligible again if the
+specific recovery alert stops firing. Both rules remain visible in Prometheus.
+
+`GpuHostTelemetryStale` includes the virtual node identity and inhibits warning
+notifications from `KubeNodeNotReady` and `KubeNodeUnreachable` for that same
+GPU node. The host failure remains actionable through the specific alert; other
+nodes and critical alerts retain their notifications.
 
 `InfoInhibitor` is disabled. It is an upstream helper for suppressing standalone
 informational alerts, not a service failure. `InfoInhibitor` and
@@ -182,6 +220,7 @@ of seconds). Range windows and `for` durations are not interchangeable.
 | Failure | Threshold and confirmation | Reason |
 | --- | --- | --- |
 | Public API/console/Metabase outage | Failed probes continuously for 2m | Detect complete outages promptly while tolerating isolated failed probes. Metabase remains warning. |
+| Public inference failure | No successful probe for >15s, then 10s confirmation | Per-deployment alerts retain diagnostics; the shared incident grouping policy combines occurrences of the same type. |
 | No serving replicas | Zero available for 2m with desired replicas >0 | A complete service outage should not wait for rollout diagnostics. |
 | Missing service/probe telemetry | No samples for 2m, then 1m confirmation | Roughly 3m of blindness; independent of customer traffic. |
 | Dependency down | 2m | Tolerates brief reconnects without concealing a sustained failure. |
@@ -212,7 +251,7 @@ absence of separate vendor-managed notifications outside the inspected systems.
 | Area | Existing protection | Important remaining gap and next action |
 | --- | --- | --- |
 | Monitoring and notifications — highest priority | Prometheus/Alertmanager self-monitoring and notification-failure rules; Watchdog heartbeat to incident.io | Both servers have one replica. The heartbeat proves Alertmanager can reach incident.io, not that the incident webhook credential works. Assess HA placement and alert on webhook delivery failures. |
-| Customer serving — highest priority | Public API/console probes; gateway request, generation and dependency metrics | Probes originate inside EKS and do not authenticate or run inference. Add an external, bounded exact-model synthetic transaction validating authentication, first token, completion, and usage. It needs an authorized test account, spend limit and external scheduler. |
+| Customer serving — highest priority | Public API/console probes; authenticated per-deployment inference probes; gateway request, generation and dependency metrics | Probes originate inside EKS. Inference probes validate authentication, completion and usage with a four-second deadline; they depend on the internal monitoring account. An independent external vantage point remains missing. |
 | Billing-integrity events | Immediate finalization/backpressure rules with first-event timestamp gauges; leader-aware worker progress and eligible backlog | Timestamp gauges cover first-sample events, but a process that dies before any subsequent scrape can still lose in-memory evidence. Durable billing records remain the accounting authority. |
 | PostgreSQL and Valkey | App dependency checks; primary RDS is Multi-AZ, deletion-protected, has 35-day backups and recent restorable time; cache has 30-day snapshots; `gradiated-data-stores` alerts on RDS storage, connections, CPU and memory, and on Valkey storage, ECPU, throttling and evictions | RDS failover and availability events are not routed. Connection thresholds assume the default `max_connections`. |
 | ClickHouse / ingestion | Worker failures, pending age, eligible settlement backlog; Terraform specifies two replicas and daily backups retained 30 days | No direct ClickHouse scrape target was present. Add query/insert failures, storage/resource saturation and backup freshness checks. Unread stream age is not measured; pending-only alerts cannot prove ingestion completeness. |
@@ -228,6 +267,138 @@ failures are per deployment. The generation-stall rule can miss one stuck reques
 while others complete; an oldest-active-request/deadline metric is still needed.
 No automatic external provisioning, test purchases/inference, destructive fault
 injection, restore, or failover was performed during this review.
+
+## Security monitoring
+
+Argo CD reconciles three open-source security tools from
+`infra/environments/prod/us-east-1/kubernetes/platform/`. They support the SOC 2
+vulnerability-management, preventive-control and intrusion-detection criteria.
+Their alerts are in the `gradiated-security` PrometheusRule and the
+`Gradiated / Security` dashboard. Kyverno and Falco dashboards are in the
+Grafana `Security` folder.
+
+| Tool | Namespace | What it does | Requested overhead |
+| --- | --- | --- | --- |
+| Trivy Operator 0.35 (chart 0.37.0) | `trivy-system` | Scans running images for CVEs and exposed secrets, and audits workload configuration, RBAC, node configuration and the EKS CIS, NSA and Pod Security compliance specs. Rescans every 24 hours, two scan jobs at a time. | Operator 50m/128Mi, Trivy server 100m/512Mi and a 5 GiB gp3 volume, scan jobs 100m/128Mi each while running |
+| Kyverno 1.19 (chart 3.9.1) | `kyverno` | Four baseline `ValidatingPolicy` resources in **Audit** mode: no privileged containers, no host namespaces or hostPath, no `latest` or untagged images, CPU and memory requests required. Nothing is blocked. Webhooks fail open. | Admission controller 100m/256Mi, reports controller 50m/128Mi |
+| Falco 0.45.1 (chart 9.2.0) | `falco` | Runtime intrusion detection on every EKS node with the modern eBPF probe in least-privileged mode and the pinned `falco-rules:5.2.0` default ruleset. Events at Notice and above go to Loki as JSON. | 20m/128Mi per node (16 nodes: 320m/2Gi), default priority so it never preempts workloads |
+
+Falco uses the patched image from `infra/images/falco`, pinned by digest. Its
+container plugin is baked into the image; the chart downloads only the pinned
+rules artifact. CRI enrichment and the `/run/containerd` directory mount remain
+enabled explicitly. `tools/security/check_falco.py` renders the chart and checks
+that a plugin download or volume cannot replace or hide the patched library.
+
+Scope limits:
+
+- GPU model pods run on virtual-kubelet nodes backed by external hosts. Falco
+  cannot run there, and Trivy skips the `gradiated/*-bundle` images because the
+  cluster cannot pull them and they are tens of gigabytes. The Trivy node
+  collector also skips `type=virtual-kubelet` nodes. GPU workload configuration
+  is still audited by Trivy and Kyverno.
+- Trivy scan jobs read private ECR images through the
+  `gradiated-prod-trivy-operator` Pod Identity role in the `platform-iam`
+  Terraform unit. Apply that unit before or with this change; without it, ECR
+  images report scan failures while public images still scan.
+- Unfixed CVEs remain in the reports but do not alert.
+
+Kyverno policies live in
+`infra/environments/prod/us-east-1/kubernetes/kyverno-policies/`. Exclusions,
+taken from the manifests and live workloads:
+
+| Policy | Excluded |
+| --- | --- |
+| All | `kube-system` (VPC CNI, network policy agent, kube-proxy, EBS CSI, Pod Identity agent, CoreDNS), `kube-public`, `kube-node-lease`, `kyverno` |
+| Privileged containers | `falco`; `tailscale-inference`, whose kernel-mode proxies need privileges |
+| Host namespaces and hostPath | `falco`; `trivy-system` (node collector); the node-exporter and `alloy-logs` DaemonSets and their pods in `observability`, by a match condition on `app.kubernetes.io/name` and `app.kubernetes.io/instance` (an `objectSelector` exclusion does not apply in Kyverno 1.19 background scans) |
+
+The first reports will include existing findings, for example containers in the
+kube-prometheus-stack release that set no resource requests. Fix a finding or
+add a commented exclusion before moving any policy to `Deny`.
+
+Falco tuning, in `customRules` of `platform/falco.yaml`; no rule is disabled and
+no critical-priority rule is changed:
+
+- `Contact K8S API Server From Container` ignores controllers in `argocd`,
+  `tailscale-inference`, `keda`, `external-secrets`, `kyverno`, `trivy-system`,
+  `falco`, `observability` and `gpu-inference`, and the product `worker` and
+  `temporal-worker` containers, which manage GPU model deployments. Other product
+  pods still report.
+- `Packet socket created in container` ignores `tailscaled`, which opens an
+  AF_PACKET socket for NAT traversal in kernel mode.
+- The minimum output priority is Notice, which drops the Informational
+  `System user interactive` rule.
+- Rules update only when the pinned ruleset changes in Git; weekly automatic
+  rule downloads are off.
+
+Review the Falco Loki stream after rollout and add exceptions in the same file.
+
+| Alert | Condition | Severity |
+| --- | --- | --- |
+| `VulnerabilityCriticalOverdue` | A fixable Critical CVE in an image repository running in a namespace was also present 7–8 days ago, for 1h | warning (In-hours) |
+| `VulnerabilityHighOverdue` | The same for a fixable High CVE and 30–31 days | warning (In-hours) |
+| `TrivyOperatorNotReporting` | Operator unscraped, or no vulnerability reports exported, for 1h | warning (In-hours) |
+| `AwsRootAccountUsed` | CloudTrail root-use metric is positive in a window of 14–15 minutes ending two minutes ago | critical (Urgent) |
+| `AwsRootUsageMonitoringMissing` | Root-use metric absent for 30m | warning (In-hours) |
+| `FalcoCriticalEvents` | Any Emergency, Alert or Critical Falco rule match in the last 10 minutes | critical (Urgent) |
+| `FalcoDown` | A Falco sensor unavailable or unscraped, or the DaemonSet or its scrape targets missing, for 10m | warning (In-hours) |
+| `KyvernoPolicyViolationsRising` | A namespace's audited failure count exceeds its count a day earlier for 1h | warning (In-hours) |
+
+incident.io maps `critical` to Urgent and every other severity to In-hours.
+Root-account activity and critical runtime detections page at night; vulnerability-remediation and sensor-health
+warnings remain In-hours. Vulnerability
+alerts repeat daily rather than every two hours. The SLA alerts key on image
+repository and CVE, so redeploying the same vulnerable image does not restart
+the clock. They need 7 or 30 days of metrics after installation before they can
+fire. `KyvernoPolicyViolationsRising` reads per-report failure counts that
+kube-state-metrics exports as `kube_policyreport_fail` and waits for a day of
+history.
+
+Root activity also pages through the existing Prometheus/Alertmanager integration,
+so it does not depend on confirming SNS email subscriptions. The exporter reads
+`Maximum` over a window of 14–15 minutes with a two-minute delay. The requested
+range is 840 seconds and the aggregation period is 900 seconds, so rounding the
+start down by up to a minute cannot introduce a newer partial period that masks
+an earlier positive match. Repeated scrapes do not multiply events. CloudTrail delivery adds
+latency. The missing-data warning distinguishes an unavailable signal from zero
+root use, but quiet audit logs can also leave the metric empty. The Security
+dashboard links directly to the CloudWatch audit log for investigation. This is
+additional root-use coverage, not a replacement for SNS email confirmation or a
+separate notification path for every GuardDuty/Inspector finding. It still depends
+on the EKS monitoring stack and its existing incident.io integration.
+
+High-severity GuardDuty finding events (7+) page immediately. Inspector High and
+Critical static vulnerability events use In-hours review, including findings for
+retained images that are not deployed. This does not disable Inspector scanning,
+its evidence stream, or the running-image vulnerability remediation-SLA alerts.
+
+### Exporting SOC 2 evidence
+
+Reports are Kubernetes resources; export them with read-only access and store
+the files in the evidence system, not this repository:
+
+```sh
+stamp=$(date -u +%Y%m%dT%H%M%SZ)
+kubectl get vulnerabilityreports -A -o json > "vulnerability-reports-$stamp.json"
+kubectl get exposedsecretreports -A -o json > "exposed-secret-reports-$stamp.json"
+kubectl get configauditreports,rbacassessmentreports -A -o json > "config-audit-reports-$stamp.json"
+kubectl get clusterrbacassessmentreports,clusterinfraassessmentreports,clustercompliancereports -o json > "cluster-assessment-reports-$stamp.json"
+kubectl get policyreports.wgpolicyk8s.io -A -o json > "kyverno-policy-reports-$stamp.json"
+kubectl get validatingpolicies.policies.kyverno.io -o yaml > "kyverno-policies-$stamp.yaml"
+```
+
+Summaries for a control narrative:
+
+```sh
+kubectl get vulnerabilityreports -A -o json | jq -r '.items[] | [.metadata.namespace, .report.artifact.repository, .report.artifact.tag, .report.summary.criticalCount, .report.summary.highCount] | @tsv'
+kubectl get clustercompliancereports -o json | jq -r '.items[] | [.metadata.name, .status.summary.passCount, .status.summary.failCount] | @tsv'
+kubectl get policyreports.wgpolicyk8s.io -A -o json | jq -r '.items[] | .results[]? | select(.result == "fail") | [.policy, .resources[0].namespace, .resources[0].kind, .resources[0].name] | @tsv' | sort | uniq -c
+```
+
+Falco detections are in Loki (`{namespace="falco"}` in Production Logs). They
+use the `platform` retention class, so Loki keeps them for 14 days; export them
+within that window when an audit period needs the raw events. Alert history is
+in incident.io.
 
 ## Verification and access
 

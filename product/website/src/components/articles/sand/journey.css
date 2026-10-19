@@ -655,6 +655,12 @@ html:has(.sand-journey) {
   font-size: 0.75rem;
   line-height: 1.3;
 }
+.sand-journey .memory-control-title {
+  margin: 0 0 0.5rem;
+  text-align: center;
+  color: var(--ink);
+  font-family: var(--font-code);
+}
 .sand-journey .memory-control-row {
   display: flex;
   justify-content: center;
@@ -864,8 +870,9 @@ html:has(.sand-journey) {
   opacity: 0.35;
 }
 .sand-journey #d2 .fetch-clock-pulse {
-  fill: var(--signal-stroke);
+  fill: #e4b638;
   stroke: none;
+  filter: drop-shadow(0 0 3px var(--signal-glow));
 }
 
 .sand-journey #d2 .io-block-frame {

@@ -50,7 +50,8 @@ test("the public guide ends with memory and excludes all chapter 5 prose and lin
     publicScenes.indexOf("latch"),
     publicScenes.indexOf("timing") + 1,
   );
-  assert.ok(html.includes("selects a complete four-bit number"));
+  assert.ok(html.includes("four locations"));
+  assert.ok(html.includes("four-bit number"));
   assert.ok(!html.includes('class="footnote"'));
   assert.ok(html.includes("We have circuits that calculate and remember."));
   assert.ok(
@@ -101,13 +102,14 @@ test("the complete preview retains all chapters and its own ending", () => {
       "instruction-fetch",
       "execute",
       "control",
+      "controller",
       "computer",
     ],
   );
   assert.ok(html.includes("LC-3"));
   assert.ok(
     html.includes(
-      "Next, we will follow the connection from code to physical action.",
+      "Next, we will see how a task written by a person becomes the instruction bits that direct these circuits.",
     ),
   );
   assert.ok(!html.includes('class="footnote"'));

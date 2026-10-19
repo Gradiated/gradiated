@@ -877,6 +877,7 @@ export const COMPUTER_SCENES = (function () {
     key(io, "processing-block", { x: 378, y: 10 }, null, 0.65);
     key(io, "instruction", { x: 51.6, y: 149 });
     key(io, "addressed-memory", { x: 52, y: 78 });
+    key(io, "controller", { opacity: 0 });
     key(io, "computer", { x: 220, y: 12 });
     const ioTransitions = [
       "processing-block",

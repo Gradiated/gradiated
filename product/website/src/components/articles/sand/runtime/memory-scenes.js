@@ -466,11 +466,11 @@ export const MEMORY_SCENES = (() => {
       }),
     );
     const phaseLabels = [];
-    for (const scene of ["memory-two", "memory-array", "stored-answer"]) {
+    for (const scene of ["stored-answer"]) {
       const phase = label(
         root,
         220,
-        scene === "stored-answer" ? 17 : 66,
+        17,
         "Read ADDR 0",
         { class: "memory-label" },
       );

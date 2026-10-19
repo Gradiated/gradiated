@@ -1,4 +1,5 @@
 import { gsap } from "gsap";
+import { buildControllerScene } from "./controller-scenes.js";
 import {
   INSTRUCTION_BITS,
   PROGRAM_START,
@@ -24,6 +25,7 @@ export const INSTRUCTION_CYCLE_SCENES = {
       Math.min(clamp((time - start) / 0.18), clamp((end - time) / 0.18));
     const diagram = group({ "data-diagram": "instruction-cycle" }, root, "0 0");
     key(diagram, "addressed-memory", {}, null, 0.55);
+    key(diagram, "controller", { opacity: 0 });
     key(diagram, "computer", { scale: 0.88, x: 26.4, y: 52 });
     const label = (parent, x, y, content, attrs = {}) =>
       text(x, y, content, { class: "caption", ...attrs }, parent);
@@ -123,8 +125,16 @@ export const INSTRUCTION_CYCLE_SCENES = {
       opacity: 0,
     });
 
+    const captures = {};
+    const capture = (parent, name, x, y, width, height) => {
+      const tint = rect(parent, x, y, width, height, "computer-glow");
+      tint.setAttribute("data-register-capture", name);
+      tint.style.opacity = "0";
+      captures[name] = tint;
+    };
     const pc = group({ "data-part": "program-counter" }, ports);
     rect(pc, 150, 54, 80, 42);
+    capture(pc, "pc", 151, 55, 78, 40);
     bit(pc, 190, 49, "PC");
     const pcValue = bit(pc, 190, 81, PROGRAM_START, {
       "data-fetch-value": "pc",
@@ -132,6 +142,7 @@ export const INSTRUCTION_CYCLE_SCENES = {
     show(pc, "program", undefined);
     const mar = group({}, ports);
     rect(mar, 40, 379, 100, 40);
+    capture(mar, "mar", 41, 380, 98, 38);
     bit(mar, 90, 393, "MAR", { class: "tiny bit" });
     const marValue = bit(mar, 90, 411, "—", { "data-fetch-value": "mar" });
     show(mar, "program", undefined);
@@ -143,6 +154,7 @@ export const INSTRUCTION_CYCLE_SCENES = {
     const selectionRoute = route("mar-memory", "M90 419 V429", "program");
     const mdr = group({}, ports);
     rect(mdr, 180, 379, 220, 40);
+    capture(mdr, "mdr", 181, 380, 218, 38);
     bit(mdr, 290, 393, "MDR", { class: "tiny bit" });
     const mdrValue = bit(mdr, 290, 411, "—", {
       class: "fetch-bits bit",
@@ -151,6 +163,7 @@ export const INSTRUCTION_CYCLE_SCENES = {
     show(mdr, "instruction-fetch", undefined);
     const ir = group({}, ports);
     rect(ir, 248, 54, 154, 42);
+    capture(ir, "ir", 249, 55, 152, 40);
     bit(ir, 325, 49, "IR");
     const irValue = bit(ir, 325, 81, "—", {
       class: "fetch-bits bit",
@@ -195,6 +208,7 @@ export const INSTRUCTION_CYCLE_SCENES = {
       [266, "R3"],
     ]) {
       rect(puDetail, 40, y, 120, 32);
+      if (name === "R0") capture(puDetail, "r0", 41, y + 1, 118, 30);
       bit(puDetail, 65, y + 22, name);
     }
     const r0Value = bit(puDetail, 135, 244, "9", { "data-fetch-value": "r0" });
@@ -395,11 +409,17 @@ export const INSTRUCTION_CYCLE_SCENES = {
       setText(mdrValue, state.mdr?.replaceAll(" ", "") ?? "—");
       setText(irValue, state.ir?.replaceAll(" ", "") ?? "—");
       setText(r0Value, state.r0);
+      for (const [name, tint] of Object.entries(captures))
+        tint.style.opacity = scene ? String(state.captures[name]) : "0";
       diagram.setAttribute(
         "data-fetch-pc",
         stage === "program" ? PROGRAM_START : state.pc,
       );
       diagram.setAttribute("data-fetch-r0", state.r0);
+      diagram.setAttribute(
+        "data-fetch-memory-ready",
+        String(state.memoryReady),
+      );
       diagram.setAttribute(
         "data-fetch-write-enabled",
         String(state.writeEnabled),
@@ -459,21 +479,23 @@ export const INSTRUCTION_CYCLE_SCENES = {
               ? "instruction ready in IR"
               : elapsed < 1.6
                 ? "PC → MAR"
-                : elapsed < 3.4
-                  ? "memory → MDR"
-                  : elapsed < 4.8
-                    ? "MDR → IR"
-                    : elapsed < 6.4
-                      ? "decode"
-                      : elapsed < 7.6
-                        ? "read R0 and R3"
-                        : elapsed < 8.6
-                          ? `${state.input} + 2 = ${state.result}`
-                          : elapsed < 10.4
-                            ? "return the result"
-                            : elapsed < 10.8
-                              ? "save in R0"
-                              : "ready for the next instruction";
+                : state.waitingForMemory
+                  ? "waiting for memory"
+                  : elapsed < 3.4
+                    ? "instruction ready in MDR"
+                    : elapsed < 4.8
+                      ? "MDR → IR"
+                      : elapsed < 6.4
+                        ? "decode"
+                        : elapsed < 7.6
+                          ? "read R0 and R3"
+                          : elapsed < 8.6
+                            ? `${state.input} + 2 = ${state.result}`
+                            : elapsed < 10.4
+                              ? "return the result"
+                              : elapsed < 10.8
+                                ? "save in R0"
+                                : "ready for the next instruction";
       setText(status, phase);
       move(flying[0], addressRoute, addressProgress, state.address);
       move(
@@ -492,8 +514,21 @@ export const INSTRUCTION_CYCLE_SCENES = {
       flying[1].style.opacity = fetching ? flying[1].style.opacity : "0";
       flying[2].style.opacity = executing ? flying[2].style.opacity : "0";
     });
+    const controllerDemo = buildControllerScene({
+      diagram,
+      root,
+      tl,
+      hold,
+      index,
+      group,
+      mk,
+      path,
+      text,
+      show,
+      afterRender,
+    });
     return {
-      demos: [demo],
+      demos: [demo, controllerDemo],
       handoff: { diagram, memory, programNames, pu, puName, signals },
     };
   },

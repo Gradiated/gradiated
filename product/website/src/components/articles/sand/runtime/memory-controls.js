@@ -18,6 +18,11 @@ export const mountMemoryControls = (stage, onChoose) => {
     panel.setAttribute("aria-label", `${rows} location memory controls`);
     panel.dataset.memoryControls = scene;
     panel.hidden = true;
+    if (config.actionTitle) {
+      const title = document.createElement("p");
+      title.className = "memory-control-title";
+      panel.appendChild(title);
+    }
     const actions = compact ? [["Read", "Write"]] : [["Read"], ["Write"]];
     for (const group of actions) {
       const row = document.createElement("div");
@@ -47,8 +52,8 @@ export const mountMemoryControls = (stage, onChoose) => {
     panels.set(scene, panel);
     controls.appendChild(panel);
   };
-  register("memory-two", { rows: 2 });
-  register("memory-array", { rows: 4 });
+  register("memory-two", { rows: 2, actionTitle: true });
+  register("memory-array", { rows: 4, actionTitle: true });
   const click = (event) => {
     const button = event.target.closest("button");
     if (!button || !controls.contains(button) || button.disabled) return;
@@ -87,6 +92,12 @@ export const mountMemoryControls = (stage, onChoose) => {
       panel.hidden = name !== scene;
       if (name !== scene) continue;
 
+      const title = panel.querySelector(".memory-control-title");
+      if (title) {
+        const config = configurations.get(scene);
+        const message = `${state.action} ADDR ${state.address.toString(2).padStart(config.addressWidth, "0")}`;
+        if (title.textContent !== message) title.textContent = message;
+      }
       const prompt = panel.querySelector(".memory-control-prompt");
       if (
         prompt &&

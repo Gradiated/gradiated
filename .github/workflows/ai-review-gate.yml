@@ -1,13 +1,19 @@
 # Sets the required "AI review passed" commit status on a pull request's head
-# commit. It passes only when both AI reviewers have reviewed that exact commit:
+# commit. Like a human approval with stale-review dismissal turned off, it
+# passes once both AI reviewers have reviewed at least one commit of the PR;
+# later pushes keep it passing and are covered by required CI, the security
+# scans and resolved review threads.
 #
 # - Codex (chatgpt-codex-connector[bot]): its PR summary comment carries
-#   `codex-review-state:v1 {...}`; code_review.commit_sha must equal the head
-#   and code_review.status must be "completed". A Codex review whose commit_id
-#   is the head also counts.
-# - Graphite (graphite-app, app id 158384): the "Graphite / AI Reviews" check
-#   run on the head must have completed with conclusion "success". Graphite
-#   reports "skipped" when a PR is too large; that does not count.
+#   `codex-review-state:v1 {...}`. A "completed" state in the current comment
+#   or any earlier version (the comment's edit history) names a reviewed
+#   commit, as does a Codex review's commit_id. "failed" and "running" do not
+#   count.
+# - Graphite (graphite-app, app id 158384): a "Graphite / AI Reviews" check run
+#   with conclusion "success" on any PR commit. Graphite reports "skipped" when
+#   a PR is too large; that does not count.
+#
+# A reviewed commit must be in the PR's commit list (pulls/N/commits).
 #
 # Findings arrive as review threads from either bot. The main ruleset's
 # required_review_thread_resolution rule blocks merge until every thread is
@@ -42,8 +48,7 @@ on:
   issue_comment:
     types: [created, edited]
   check_run:
-    # created/rerequested reset the status to pending while Graphite re-reviews.
-    types: [created, rerequested, completed]
+    types: [completed]
   workflow_dispatch:
     inputs:
       pr:
@@ -78,8 +83,6 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       REPO: ${{ github.repository }}
       PR: ${{ github.event.pull_request.number || github.event.issue.number || inputs.pr || github.event.check_run.pull_requests[0].number }}
-      EVENT: ${{ github.event_name }}
-      ACTION: ${{ github.event.action }}
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
       - name: Evaluate AI reviews
@@ -90,30 +93,71 @@ jobs:
           [ "$(jq -r .state pr.json)" = open ] || exit 0
           head=$(jq -r .head.sha pr.json)
 
-          codex_state=$(gh api --paginate "repos/$REPO/issues/$pr/comments" \
-            --jq '.[] | select(.user.login == "chatgpt-codex-connector[bot]") | .body' |
-            sed -n 's/.*codex-review-state:v1 \({.*}\) -->.*/\1/p' | tail -n 1)
-          codex_status=$(jq -r '.code_review.status // empty' <<< "${codex_state:-null}")
-          codex_sha=$(jq -r '.code_review.commit_sha // empty' <<< "${codex_state:-null}")
-          [ "$codex_status" = completed ] || codex_sha=""
-          codex_review=$(gh api --paginate "repos/$REPO/pulls/$pr/reviews" \
-            --jq ".[] | select(.user.login == \"chatgpt-codex-connector[bot]\" and .commit_id == \"$head\") | .id")
-          graphite=$(gh api "repos/$REPO/commits/$head/check-runs?app_id=158384&check_name=Graphite%20%2F%20AI%20Reviews" \
-            --jq "[.check_runs[] | select(any(.pull_requests[]; .number == $pr))]"' | sort_by(.started_at) | last | if . == null then "missing" elif .status != "completed" then .status else .conclusion end')
-          # A re-request leaves the old run's success in place until Graphite
-          # updates it, so treat the review as in progress.
-          if [ "$EVENT" = check_run ] && [ "$ACTION" = rerequested ]; then graphite=rerequested; fi
+          # The PR's commits (REST lists up to 250), newest first. A review of
+          # any of them counts, like a human approval that is not dismissed by
+          # later pushes.
+          gh api --paginate "repos/$REPO/pulls/$pr/commits" --jq '.[].sha' | tac > commits.txt
+
+          # Codex: its summary comment and every earlier version of it (the
+          # edit history) carry codex-review-state:v1; a "completed" state names
+          # the reviewed commit. Codex reviews with findings also name it. The
+          # summary comment is posted when the PR opens, so it is always among
+          # the first 100 comments.
+          gh api graphql -F owner="${REPO%/*}" -F name="${REPO#*/}" -F pr="$pr" -f query='
+            query($owner: String!, $name: String!, $pr: Int!) {
+              repository(owner: $owner, name: $name) {
+                pullRequest(number: $pr) {
+                  comments(first: 100) {
+                    nodes {
+                      author { __typename login }
+                      body
+                      userContentEdits(first: 100) { nodes { editor { login } diff } }
+                    }
+                  }
+                }
+              }
+            }' --jq '[.data.repository.pullRequest.comments.nodes[]
+              | select(.author.__typename == "Bot" and .author.login == "chatgpt-codex-connector")]' > codex.json
+          {
+            gh api --paginate "repos/$REPO/pulls/$pr/reviews" \
+              --jq '.[] | select(.user.login == "chatgpt-codex-connector[bot]") | .commit_id'
+            jq -r '.[]
+              | .body, (.userContentEdits.nodes[] | select(.editor.login == "chatgpt-codex-connector") | .diff // empty)
+              | capture("codex-review-state:v1 (?<s>\\{.*\\}) -->").s
+              | fromjson | .code_review
+              | select(.status == "completed") | .commit_sha // empty' codex.json
+          } | sort -u > codex.txt
+          codex=$(grep -Fxf codex.txt commits.txt | head -n 1 || true)
+          codex_status=$(jq -r '[.[] | .body | capture("codex-review-state:v1 (?<s>\\{.*\\}) -->").s
+              | fromjson | .code_review.status] | last // empty' codex.json)
+
+          # Graphite: a successful "Graphite / AI Reviews" run, any attempt, on
+          # any PR commit. A skipped run (PR too large) does not count. GitHub
+          # links a run to PRs only while its commit is a PR head, so a run
+          # linked only to other PRs is rejected and an unlinked one accepted.
+          graphite=""
+          graphite_head=missing
+          while read -r sha; do
+            gh api "repos/$REPO/commits/$sha/check-runs?app_id=158384&filter=all&per_page=100&check_name=Graphite%20%2F%20AI%20Reviews" \
+              --jq "[.check_runs[] | select((.pull_requests | length) == 0 or any(.pull_requests[]; .number == $pr))]" \
+              < /dev/null > runs.json
+            if [ "$sha" = "$head" ]; then
+              graphite_head=$(jq -r 'sort_by(.started_at) | last
+                | if . == null then "missing" elif .status != "completed" then .status else .conclusion end' runs.json)
+            fi
+            if jq -e 'any(.[]; .conclusion == "success")' runs.json > /dev/null; then graphite=$sha; break; fi
+          done < commits.txt
 
           missing=()
-          if [ "$codex_sha" != "$head" ] && [ -z "$codex_review" ]; then
+          if [ -z "$codex" ]; then
             if [ "$codex_status" = failed ]; then missing+=("Codex failed: comment @codex review"); else missing+=("Codex"); fi
           fi
-          if [ "$graphite" != success ]; then missing+=("Graphite ($graphite)"); fi
+          if [ -z "$graphite" ]; then missing+=("Graphite ($graphite_head)"); fi
 
           if [ ${#missing[@]} -eq 0 ]; then
-            state=success; description="Codex and Graphite reviewed ${head:0:7}"
+            state=success; description="Codex reviewed ${codex:0:7}, Graphite reviewed ${graphite:0:7}"
           else
-            state=pending; description="Waiting for review of ${head:0:7}: $(IFS=,; echo "${missing[*]}")"
+            state=pending; description="Waiting for a review of this PR: $(IFS=,; echo "${missing[*]}")"
           fi
           echo "PR #$pr $head: $state - $description"
           gh api "repos/$REPO/statuses/$head" -f state="$state" -f context="AI review passed" \

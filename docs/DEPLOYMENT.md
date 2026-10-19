@@ -197,7 +197,7 @@ healthy. S3 versioning keeps previous entry points for recovery.
   (Gitleaks secret scanning, scan-policy checks and report-only Semgrep; see
   `.github/workflows/security.yml`). It also requires the `AI review passed`
   status, which `.github/workflows/ai-review-gate.yml` sets once Codex and
-  Graphite have both reviewed the PR's head commit. Ordinary PRs satisfy these
+  Graphite have both reviewed a commit of the PR. Ordinary PRs satisfy these
   checks and resolved review threads; no approval is required. The Gradiated
   Release app is the only bypass actor. Organization admins, users and deploy
   keys cannot bypass it, so a red or pending required check blocks the merge;

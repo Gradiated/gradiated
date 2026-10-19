@@ -195,9 +195,13 @@ healthy. S3 versioning keeps previous entry points for recovery.
   `Dependency age passed`, `Research lab passed` and `Security scans passed`
   (Gitleaks secret scanning, scan-policy checks and report-only Semgrep; see
   `.github/workflows/security.yml`). Ordinary PRs satisfy these
-  checks and resolved review threads. The Gradiated Release app bypasses this
-  ruleset; the separate `main integrity` ruleset retains deletion and
-  force-push protections.
+  checks and resolved review threads; no approval is required. The Gradiated
+  Release app is the only bypass actor. Organization admins, users and deploy
+  keys cannot bypass it, so a red or pending required check blocks the merge;
+  an emergency override means editing the ruleset, which GitHub records in its
+  history. The separate `main integrity` ruleset has no bypass actors and
+  retains deletion and force-push protections. The repository has no deploy
+  keys; each automated writer or reader is a GitHub App above.
 
 Every required workflow runs on every pull request. Its `changes` job
 (`.github/actions/relevant`) compares the pull request's files with the

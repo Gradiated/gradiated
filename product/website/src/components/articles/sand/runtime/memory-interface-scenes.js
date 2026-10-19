@@ -306,7 +306,7 @@ export const MEMORY_INTERFACE_SCENES = {
       diagram,
       235,
       24,
-      "65,536 locations · 16 bits at each ADDR",
+      "65,536 addressable locations in memory",
       { class: "tiny" },
     );
     show(addressCaption, "memory-address-space", "working-registers");

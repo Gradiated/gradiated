@@ -275,9 +275,9 @@ The result travels back to the fast storage registers, but it is saved only when
 
 ### Fetching and executing
 
-Where does the control unit get its instructions? Let’s bring memory back into the picture. In the table, address `12288` holds `0001 000 000 0 00 011`, our `ADD R0, R0, R3` instruction. The next address, `12289`, holds the same instruction, so each requests another addition of the number in `R3` to the running total in `R0`. A sequence of stored instructions forms a program.
+Where does the control unit get its instructions? Let’s bring memory back into the picture. Address `12288` holds `0001 000 000 0 00 011`, our `ADD R0, R0, R3` instruction. The next address, `12289`, holds the same instruction. Each adds the number in `R3` to the running total in `R0`. A sequence of stored instructions forms a program.
 
-Instructions and data share this memory. The bits at address `12288` mean `ADD R0, R0, R3` when fetched as an instruction, but represent the number `4099` when read as data. The stored bits are identical. How the processor uses them determines their meaning.
+Instructions and data share this memory. The same bits at address `12288` can be interpreted as the instruction `ADD R0, R0, R3` or as the number `4099`. Nothing in the stored bits distinguishes these meanings. Fetching them as an instruction tells the control unit to interpret them as an operation, while reading them as data supplies a number to work with.
 
 <!-- scene: program -->
 

@@ -74,13 +74,13 @@ export const buildControllerScene = ({
   label(351, 137, "output logic");
 
   const stateOnePath = signal(
-    "M266 206 H278 V112 H32 V198 H72.414 M278 206 H290",
+    "M266 206 H278 V112 H32 V174 H72.414 M278 206 H290",
   );
-  const stateZeroPath = signal("M266 254 H278 V314 H32 V214 H72.414");
-  wire("M68 188 Q79 206 68 224 Q100 224 110 206 Q100 188 68 188 Z");
+  const stateZeroPath = signal("M266 254 H278 V314 H32 V190 H72.414");
+  wire("M68 164 Q79 182 68 200 Q100 200 110 182 Q100 164 68 164 Z");
   wire("M72 227 L92 238 L72 249 Z");
   mk("circle", { cx: 96, cy: 238, r: 3, class: "memory-box" }, contents);
-  const nextOnePath = signal("M110 206 H190 M122 206 V224 H54 V238 H72");
+  const nextOnePath = signal("M110 182 H150 V206 H190 M122 182 V216 H54 V238 H72");
   const noStatePath = signal("M99 238 H122");
   wire("M122 230 H138 A24 24 0 0 1 138 278 H122 Z");
   const nextZeroPath = signal("M162 254 H190");
@@ -133,7 +133,7 @@ export const buildControllerScene = ({
   for (const [cx, cy] of [
     [278, 206],
     [278, 254],
-    [122, 206],
+    [122, 182],
     [380, 230],
   ])
     mk("circle", { cx, cy, r: 1.5, class: "dot" }, contents);

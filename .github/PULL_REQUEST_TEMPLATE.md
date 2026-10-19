@@ -9,6 +9,7 @@ Closes #
 - [ ] Relevant tests/checks run
 - [ ] Evidence or screenshots saved in the repository when relevant
 - [ ] CI expected to pass
+- [ ] Codex and Graphite reviewed the latest commit (`AI review passed`); findings fixed or answered and threads resolved
 
 ## Risks and rollback
 

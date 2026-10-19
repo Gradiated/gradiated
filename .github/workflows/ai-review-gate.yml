@@ -33,6 +33,7 @@
 # If a reviewer did not run or failed: comment `@codex review` for Codex, or
 # re-run the AI review from the Graphite PR page (the Details link on the
 # "Graphite / AI Reviews" check). The status updates when the bot finishes.
+# To re-evaluate a PR by hand: gh workflow run ai-review-gate.yml -f pr=123 (the PR number)
 # Dependabot PRs follow the same rule. If a reviewer is down and a change
 # cannot wait, an organization admin temporarily edits the main ruleset
 # (GitHub records this in the ruleset history) and notes it on the PR within

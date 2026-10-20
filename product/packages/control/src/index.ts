@@ -169,6 +169,7 @@ export {
 } from "./training/dataset.js";
 export {
   createTrainingArtifacts,
+  EXPIRING_TRAINING_INPUT_TAGS,
   type TrainingArtifacts,
   type TrainingArtifact,
 } from "./training/artifacts.js";
@@ -183,6 +184,8 @@ export {
   ObjectStorage,
   type ObjectReadOptions,
   type ObjectDownloadOptions,
+  type ObjectTags,
+  type ObjectWriteOptions,
 } from "./storage/object-storage.js";
 
 export { createWorkspaceStore } from "./workspaces/store.js";

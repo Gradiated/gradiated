@@ -8,6 +8,7 @@ vi.mock("@aws-sdk/client-s3", async (importOriginal) => ({
     send = send;
   },
 }));
+import { PutObjectTaggingCommand } from "@aws-sdk/client-s3";
 import { ObjectStorage } from "../src/storage/object-storage.js";
 
 beforeEach(() => vi.resetAllMocks());
@@ -83,5 +84,28 @@ it("ignores multipart checksum metadata rather than treating it as a file digest
     sizeBytes: 10,
     versionId: "original",
     sha256: undefined,
+  });
+});
+
+it("writes S3 lifecycle tags only when a write asks for them", async () => {
+  send.mockResolvedValue({});
+  const storage = new ObjectStorage("objects");
+  await storage.put("plain", Buffer.from("a"));
+  await storage.put("expiring", Buffer.from("b"), {
+    tags: { retention: "90d", "a b": "c&d" },
+  });
+  expect(send.mock.calls[0]![0].input).not.toHaveProperty("Tagging");
+  expect(send.mock.calls[1]![0].input.Tagging).toBe("retention=90d&a+b=c%26d");
+});
+
+it("replaces an existing object's tag set", async () => {
+  send.mockResolvedValue({});
+  await new ObjectStorage("objects").tag("key", { retention: "90d" });
+  const command = send.mock.calls[0]![0];
+  expect(command).toBeInstanceOf(PutObjectTaggingCommand);
+  expect(command.input).toEqual({
+    Bucket: "objects",
+    Key: "key",
+    Tagging: { TagSet: [{ Key: "retention", Value: "90d" }] },
   });
 });

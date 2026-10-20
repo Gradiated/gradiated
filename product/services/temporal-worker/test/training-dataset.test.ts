@@ -19,9 +19,15 @@ it.each([12, 80])(
         ).join("\n") + "\n",
       );
     const objects = new Map<string, Buffer>();
+    const expiring = new Set<string>();
     const artifacts = {
-      put: async (key: string, bytes: Uint8Array) => {
+      put: async (
+        key: string,
+        bytes: Uint8Array,
+        options?: { expiring?: boolean },
+      ) => {
         objects.set(key, Buffer.from(bytes));
+        if (options?.expiring) expiring.add(key);
         return {
           key,
           size_bytes: bytes.length,
@@ -90,5 +96,7 @@ it.each([12, 80])(
         expect(split.examples).toBe(bytes.toString().trim().split("\n").length);
       }
     }
+    expect([...expiring].sort()).toEqual([...objects.keys()].sort());
+    expect(expiring).toContain("runs/test/dataset/v1/dataset-manifest.json");
   },
 );

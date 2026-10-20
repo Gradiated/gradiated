@@ -7,22 +7,18 @@ export const persistTrainingDataset = async (
   dataset: Awaited<ReturnType<typeof buildSftDataset>>,
   inputCutoff: string,
 ) => {
-  const train = await artifacts.put(
-    `${prefix}/train.jsonl`,
-    dataset.files.train,
-  );
-  const validation = await artifacts.put(
-    `${prefix}/validation.jsonl`,
-    dataset.files.validation,
-  );
-  const test = await artifacts.put(`${prefix}/test.jsonl`, dataset.files.test);
+  const put = (name: string, bytes: Uint8Array) =>
+    artifacts.put(`${prefix}/${name}`, bytes, { expiring: true });
+  const train = await put("train.jsonl", dataset.files.train);
+  const validation = await put("validation.jsonl", dataset.files.validation);
+  const test = await put("test.jsonl", dataset.files.test);
   const sampleRows = dataset.files.test
     .toString()
     .trim()
     .split("\n")
     .slice(0, 64);
-  const evaluation = await artifacts.put(
-    `${prefix}/evaluation.jsonl`,
+  const evaluation = await put(
+    "evaluation.jsonl",
     Buffer.from(sampleRows.join("\n") + "\n"),
   );
   const split = (examples: number, file: typeof train) => ({
@@ -62,10 +58,7 @@ export const persistTrainingDataset = async (
         }
       : {}),
   });
-  await artifacts.put(
-    `${prefix}/dataset-manifest.json`,
-    Buffer.from(JSON.stringify(manifest)),
-  );
+  await put("dataset-manifest.json", Buffer.from(JSON.stringify(manifest)));
 
   return {
     train,

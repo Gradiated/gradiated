@@ -130,8 +130,11 @@ export const createTrainingExecutorActivities = (options: {
   });
   const json = async (key: string) =>
     JSON.parse(Buffer.from(await artifacts.read(key)).toString()) as unknown;
-  const putJson = (key: string, value: unknown) =>
-    artifacts.put(key, Buffer.from(JSON.stringify(value)));
+  const putJson = (
+    key: string,
+    value: unknown,
+    options?: Parameters<TrainingArtifacts["put"]>[2],
+  ) => artifacts.put(key, Buffer.from(JSON.stringify(value)), options);
   const scopedArtifact = (runId: string, value: unknown) => {
     const artifact = artifactSchema.parse(value);
     if (!artifact.key.startsWith(`runs/${runId}/`))
@@ -161,8 +164,15 @@ export const createTrainingExecutorActivities = (options: {
       for (let index = 0; index < events.length; index++) {
         if (events[index]!.type !== "trainer_checkpoint") continue;
         const checkpoint = scopedArtifact(runId, state.events[index]);
+        if (!checkpoint.key.startsWith(`runs/${runId}/checkpoints/`))
+          throw new Error("Trainer returned a checkpoint outside checkpoints.");
         await artifacts.verify(checkpoint);
-        await putJson(`runs/${runId}/checkpoints/latest.json`, checkpoint);
+        // Trainers upload checkpoints through presigned PUTs, so the worker
+        // tags each verified one for the 90-day expiry rule.
+        await artifacts.markExpiring(checkpoint.key);
+        await putJson(`runs/${runId}/checkpoints/latest.json`, checkpoint, {
+          expiring: true,
+        });
       }
       await store.appendTrainerEvents(runId, ordinal, events);
       after = state.next;

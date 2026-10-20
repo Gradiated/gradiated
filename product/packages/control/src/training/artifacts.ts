@@ -6,8 +6,18 @@ export type TrainingArtifact = {
   sha256: string;
   size_bytes: number;
 };
+// Matched by the bucket lifecycle rule ExpireTrainingInputsAfter90Days
+// (infra/modules/registry-secrets/model-artifacts.tf).
+export const EXPIRING_TRAINING_INPUT_TAGS = { retention: "90d" } as const;
+export type TrainingArtifactWriteOptions = { expiring?: boolean };
+
 export interface TrainingArtifacts {
-  put(key: string, bytes: Uint8Array): Promise<TrainingArtifact>;
+  put(
+    key: string,
+    bytes: Uint8Array,
+    options?: TrainingArtifactWriteOptions,
+  ): Promise<TrainingArtifact>;
+  markExpiring(key: string): Promise<void>;
   read(key: string): Promise<Uint8Array>;
   verify(artifact: TrainingArtifact): Promise<void>;
   download(
@@ -21,7 +31,7 @@ export interface TrainingArtifacts {
 export const createTrainingArtifacts = (
   storage: Pick<
     ObjectStorage,
-    "put" | "read" | "exists" | "signDownload" | "signUpload" | "uri"
+    "put" | "tag" | "read" | "exists" | "signDownload" | "signUpload" | "uri"
   >,
 ): TrainingArtifacts => {
   const checkKey = (key: string) => {
@@ -35,9 +45,16 @@ export const createTrainingArtifacts = (
   const read = (key: string) =>
     storage.read(checkKey(key), { maxBytes: 256 * 1024 * 1024 });
   return {
-    async put(key, bytes) {
-      await storage.put(checkKey(key), bytes);
+    async put(key, bytes, options = {}) {
+      await storage.put(
+        checkKey(key),
+        bytes,
+        options.expiring ? { tags: EXPIRING_TRAINING_INPUT_TAGS } : {},
+      );
       return { key, sha256: sha256(bytes), size_bytes: bytes.length };
+    },
+    async markExpiring(key) {
+      await storage.tag(checkKey(key), EXPIRING_TRAINING_INPUT_TAGS);
     },
     read,
     async verify(artifact) {

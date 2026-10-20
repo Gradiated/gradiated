@@ -3,6 +3,7 @@ import {
   GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
+  PutObjectTaggingCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -12,6 +13,8 @@ export type ObjectReadOptions = {
   timeoutMs?: number;
   versionId?: string;
 };
+export type ObjectTags = Readonly<Record<string, string>>;
+export type ObjectWriteOptions = { tags?: ObjectTags };
 export type ObjectDownloadOptions = {
   expiresIn: number;
   versionId?: string;
@@ -84,15 +87,34 @@ export class ObjectStorage {
     return { sha256: hash.digest("hex"), sizeBytes };
   };
 
-  put = async (key: string, bytes: Uint8Array) => {
+  put = async (
+    key: string,
+    bytes: Uint8Array,
+    { tags }: ObjectWriteOptions = {},
+  ) => {
     await this.client.send(
       new PutObjectCommand({
         Bucket: this.bucket,
         Key: key,
         Body: bytes,
         ChecksumSHA256: createHash("sha256").update(bytes).digest("base64"),
+        ...(tags ? { Tagging: new URLSearchParams(tags).toString() } : {}),
       }),
       { abortSignal: AbortSignal.timeout(120_000) },
+    );
+  };
+
+  // Replaces the object's whole tag set; S3 lifecycle rules match these tags.
+  tag = async (key: string, tags: ObjectTags) => {
+    await this.client.send(
+      new PutObjectTaggingCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Tagging: {
+          TagSet: Object.entries(tags).map(([Key, Value]) => ({ Key, Value })),
+        },
+      }),
+      { abortSignal: AbortSignal.timeout(10_000) },
     );
   };
 

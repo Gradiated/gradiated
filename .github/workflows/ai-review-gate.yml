@@ -1,36 +1,95 @@
-# Sets the required "AI review passed" commit status on a pull request's head
-# commit. Like a human approval with stale-review dismissal turned off, it
-# passes once either supported AI reviewer has reviewed a commit of the PR;
-# later pushes keep it passing and are covered by required CI, the security
-# scans and resolved review threads.
+# Two results on every pull request to main, both from the GitHub API only:
 #
+# 1. The required "AI review passed" commit status on the PR head. Like a
+#    human approval with stale-review dismissal turned off, it passes once
+#    either supported AI reviewer has reviewed a commit of the PR; later
+#    pushes keep it passing and are covered by required CI, the security scans
+#    and resolved review threads.
+# 2. A review from the gradiated-review GitHub App (app id 5394141), which
+#    behaves like a human reviewer and can satisfy the main ruleset's required
+#    approving review. It APPROVES when all of these hold:
+#    a. Codex or Graphite has reviewed a commit of the PR with a passing result:
+#       - Codex: a completed codex-review-state:v1 marker with
+#         has_any_findings false (its "Didn't find any major issues" result),
+#         or a Codex review whose inline comments carry no P0 or P1 badge
+#         (P2 and P3 findings do not block).
+#       - Graphite: a successful "Graphite / AI Reviews" check run (same rule
+#         as the status). Graphite comments carry no severity, so every
+#         Graphite thread blocks until it is resolved (rule c).
+#    b. Every Codex P0 or P1 finding, resolved or not, is followed by a clean
+#       Codex review (no P0/P1) of a newer PR commit than the one it was raised
+#       on. Resolving a P1 counts only once Codex has reviewed the fix; a
+#       Graphite pass does not stand in for it. A finding on a commit that is
+#       no longer in the PR (rebased away) counts as older than every commit.
+#    c. No review thread of any author is unresolved, outdated ones included
+#       (a PR with more than 100 threads is not approved automatically).
+#    d. Neither bot's latest non-comment review is CHANGES_REQUESTED.
+#    Otherwise it posts a COMMENT review (never CHANGES_REQUESTED, so it does
+#    not block on its own) listing what is outstanding: open Codex P0/P1
+#    threads and other unresolved threads with links, and the wait for a fix
+#    or for a clean review of it. A hidden state marker keeps it from posting
+#    the same list twice. When a fix for a Codex P0/P1 is pushed, it comments
+#    `@codex review` once per head commit, unless Codex is already reviewing
+#    that commit (set the repository variable AI_REVIEW_ASK_CODEX to false to
+#    stop). Codex may ignore a request from an app: it answers triggers it
+#    cannot tie to a connected ChatGPT account with "To use Codex here, create
+#    a Codex account". Codex's automatic reviews also cover some pushes, and
+#    `@codex review` from a person always works. If its own approval is active when new items appear, it
+#    dismisses that approval first, so an approval never outlives a finding.
+#    It approves once, re-approves after a dismissal, and never reviews a PR it
+#    authored. The main ruleset does not dismiss approvals on push.
+#
+# Talking to gradiated-review: GitHub silently drops a review request for a
+# bot (POST requested_reviewers answers 200 with an empty list), so "Request
+# review" cannot reach the app. Instead, a PR comment that mentions
+# `@gradiated-review` or starts with `/review`, from someone with write,
+# maintain or admin access, makes it react with an eyes emoji and review again. That
+# request always gets a fresh review, even when the list is unchanged.
+# Comments from bots and from people without write access are ignored.
+#
+# Inputs, as the bots publish them:
 # - Codex (chatgpt-codex-connector[bot]): its PR summary comment carries
 #   `codex-review-state:v1 {...}`. A "completed" state in the current comment
 #   or any earlier version (the comment's edit history) names a reviewed
 #   commit, as does a Codex review's commit_id. "failed" and "running" do not
-#   count.
+#   count. A review with findings is a COMMENTED review whose inline comments
+#   start with a P0/P1/P2 badge image (`![P1 Badge](...)`).
 # - Graphite (graphite-app, app id 158384): a "Graphite / AI Reviews" check run
 #   with conclusion "success" on any PR commit. Graphite reports "skipped" when
-#   a PR is too large; that does not count.
+#   a PR is too large; that does not count. Its findings are COMMENTED reviews
+#   with plain inline comments.
 #
 # A reviewed commit must be in the PR's commit list (pulls/N/commits).
 #
-# Findings arrive as review threads from either bot. The main ruleset's
-# required_review_thread_resolution rule blocks merge until every thread is
-# resolved, so this workflow does not repeat that check.
-#
-# The result is a commit status rather than this job's own check run, because
+# The status is a commit status rather than this job's own check run, because
 # the bots finish after the PR event; their later events (issue_comment,
 # check_run) run on main and could not otherwise update a check on the PR head.
-# Every trigger runs this file from the default branch. The job reads only the
-# GitHub API and never checks out PR code. Codex rewrites its summary comment
-# after every review, so issue_comment also covers reviews with findings.
+#
+# Resolving a thread fires no event that can start a workflow, so a scheduled
+# sweep (every 15 minutes) dispatches the gate for each open PR to main whose
+# "AI review passed" status is green, whose threads are all resolved and which
+# the app has not approved yet. Comment `@gradiated-review` to skip the wait.
+#
+# Trust: every trigger runs this file from main. pull_request_target,
+# issue_comment, check_run and schedule always use the default branch's
+# workflow; workflow_dispatch is accepted only on main.
+# Each gate condition also requires base branch main, and the ai-review-gate
+# environment, which holds the app's private key, admits only main. The job
+# never checks out or runs PR code. Codex rewrites its summary comment after
+# every review, so issue_comment also covers reviews with findings.
 #
 # Every run for a PR shares one concurrency key, so a stale "pending" cannot
 # overwrite a newer "success". Graphite check_run events without a linked PR
 # (fork PRs) are ignored; Codex events and workflow_dispatch still update it.
 #
-# If neither reviewer completed: comment `@codex review` for Codex, or
+# The status is posted with the workflow token (the main ruleset expects it
+# from GitHub Actions, integration 15368). Set the repository variable
+# AI_REVIEW_STATUS_AS_APP to true to post it as the gradiated-review app
+# instead, at the same time as pinning the ruleset check to integration
+# 5394141.
+#
+# Graphite reviews each new head commit by itself. If neither reviewer
+# completed: comment `@codex review` for Codex, or
 # re-run the AI review from the Graphite PR page (the Details link on the
 # "Graphite / AI Reviews" check). The status updates when the bot finishes.
 # To re-evaluate a PR by hand: gh workflow run ai-review-gate.yml -f pr=123 (the PR number)
@@ -51,6 +110,8 @@ on:
     types: [created, edited]
   check_run:
     types: [completed]
+  schedule:
+    - cron: "*/15 * * * *"
   workflow_dispatch:
     inputs:
       pr:
@@ -60,39 +121,125 @@ on:
 permissions: {}
 
 jobs:
-  gate:
-    name: AI review gate
-    # Skip events that cannot change the result. Dependabot-triggered PR runs
-    # get a read-only token; the bots' own events on those PRs set the status.
-    if: >-
-      (github.event_name == 'pull_request_target' && github.actor != 'dependabot[bot]') ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'issue_comment' && github.event.issue.pull_request &&
-        github.event.comment.user.login == 'chatgpt-codex-connector[bot]') ||
-      (github.event_name == 'check_run' && github.event.check_run.app.slug == 'graphite-app' &&
-        github.event.check_run.pull_requests[0] != null)
+  # Re-evaluates PRs that may have become approvable by resolving threads.
+  sweep:
+    name: AI review approval sweep
+    if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
+      actions: write
+      contents: read
       pull-requests: read
-      checks: read
+      statuses: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Dispatch the gate for approvable PRs
+        run: |
+          set -euo pipefail
+          gh api graphql -F owner="${REPO%/*}" -F name="${REPO#*/}" -f query='
+            query($owner: String!, $name: String!) {
+              repository(owner: $owner, name: $name) {
+                pullRequests(states: OPEN, baseRefName: "main", first: 100) {
+                  nodes {
+                    number
+                    reviewThreads(first: 100) { totalCount nodes { isResolved } }
+                    latestOpinionatedReviews(first: 100) { nodes { author { login } state } }
+                    commits(last: 1) { nodes { commit { status { context(name: "AI review passed") { state } } } } }
+                  }
+                }
+              }
+            }' --jq '.data.repository.pullRequests.nodes[]
+              | select(.commits.nodes[0].commit.status.context.state == "SUCCESS")
+              | select(.reviewThreads.totalCount <= 100 and all(.reviewThreads.nodes[]; .isResolved))
+              | select(any(.latestOpinionatedReviews.nodes[];
+                  .author.login == "gradiated-review" and .state == "APPROVED") | not)
+              | .number' > prs.txt
+          while read -r pr; do
+            echo "Dispatching the gate for PR #$pr"
+            gh workflow run ai-review-gate.yml --repo "$REPO" --ref main -f pr="$pr" < /dev/null
+          done < prs.txt
+
+  gate:
+    name: AI review gate
+    # Skip events that cannot change the result, and anything not aimed at
+    # main. Dependabot-triggered PR runs get no secrets; the bots' own events
+    # on those PRs evaluate them.
+    if: >-
+      (github.event_name == 'pull_request_target' && github.actor != 'dependabot[bot]' &&
+        github.event.pull_request.base.ref == 'main') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'issue_comment' && github.event.issue.pull_request &&
+        (github.event.comment.user.login == 'chatgpt-codex-connector[bot]' ||
+          (github.event.action == 'created' && github.event.comment.user.type == 'User' &&
+            (contains(github.event.comment.body, '@gradiated-review') ||
+              startsWith(github.event.comment.body, '/review'))))) ||
+      (github.event_name == 'check_run' && github.event.check_run.app.slug == 'graphite-app' &&
+        github.event.check_run.pull_requests[0] != null &&
+        github.event.check_run.pull_requests[0].base.ref == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment:
+      name: ai-review-gate
+      deployment: false
+    # API reads and the approval use the app token; the workflow token only
+    # posts the status while the ruleset expects it from GitHub Actions.
+    permissions:
       statuses: write
     concurrency:
       # One key per PR for every event type, so evaluations run one at a time
       # and a stale "pending" cannot overwrite a newer "success".
       group: ai-review-gate-${{ github.event.pull_request.number || github.event.issue.number || inputs.pr || github.event.check_run.pull_requests[0].number }}
     env:
-      GH_TOKEN: ${{ github.token }}
       REPO: ${{ github.repository }}
       PR: ${{ github.event.pull_request.number || github.event.issue.number || inputs.pr || github.event.check_run.pull_requests[0].number }}
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
+      - name: Create review app token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.AI_REVIEW_APP_CLIENT_ID }}
+          private-key: ${{ secrets.AI_REVIEW_APP_PRIVATE_KEY }}
+          permission-pull-requests: write
+          permission-statuses: write
+          permission-checks: read
+      # A person's `@gradiated-review` or `/review` comment counts only from
+      # someone with write access; anyone else's is ignored.
+      - name: Check requester
+        id: requester
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          EVENT: ${{ github.event_name }}
+          COMMENTER: ${{ github.event.comment.user.login }}
+          COMMENTER_TYPE: ${{ github.event.comment.user.type }}
+          COMMENT_ID: ${{ github.event.comment.id }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = issue_comment ] && [ "$COMMENTER_TYPE" = User ]; then
+            role=$(gh api "repos/$REPO/collaborators/$COMMENTER/permission" --jq .role_name)
+            case "$role" in
+              admin|maintain|write)
+                echo "requested=true" >> "$GITHUB_OUTPUT"
+                gh api "repos/$REPO/issues/comments/$COMMENT_ID/reactions" -f content=eyes > /dev/null ;;
+              *)
+                echo "Ignoring review request from $COMMENTER ($role)"
+                echo "skip=true" >> "$GITHUB_OUTPUT" ;;
+            esac
+          fi
       - name: Evaluate AI reviews
+        if: steps.requester.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          STATUS_TOKEN: ${{ vars.AI_REVIEW_STATUS_AS_APP == 'true' && steps.app-token.outputs.token || github.token }}
         run: |
           set -euo pipefail
           pr="$PR"
           gh api "repos/$REPO/pulls/$pr" > pr.json
           [ "$(jq -r .state pr.json)" = open ] || exit 0
+          [ "$(jq -r .base.ref pr.json)" = main ] || exit 0
           head=$(jq -r .head.sha pr.json)
 
           # The PR's commits (REST lists up to 250), newest first. A review of
@@ -149,6 +296,8 @@ jobs:
             fi
             if jq -e 'any(.[]; .conclusion == "success")' runs.json > /dev/null; then graphite=$sha; break; fi
           done < commits.txt
+          # The approval step reuses the Graphite result.
+          echo "$graphite" > graphite.txt
 
           missing=()
           if [ -z "$codex" ]; then
@@ -167,5 +316,161 @@ jobs:
             state=pending; description="Waiting for either AI reviewer: $(IFS=,; echo "${missing[*]}")"
           fi
           echo "PR #$pr $head: $state - $description"
-          gh api "repos/$REPO/statuses/$head" -f state="$state" -f context="AI review passed" \
+          GH_TOKEN="$STATUS_TOKEN" gh api "repos/$REPO/statuses/$head" -f state="$state" -f context="AI review passed" \
             -f description="${description:0:140}" -f target_url="$RUN_URL" > /dev/null
+      - name: Review as gradiated-review
+        if: steps.requester.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+          REQUESTED: ${{ steps.requester.outputs.requested }}
+          ASK_CODEX: ${{ vars.AI_REVIEW_ASK_CODEX }}
+        run: |
+          set -euo pipefail
+          pr="$PR"
+          app="$APP_SLUG[bot]"
+          codex_bot=chatgpt-codex-connector
+          badge='!\[P[01] Badge\]'
+          # The evaluation step stops early, without graphite.txt, for a
+          # closed PR or one not aimed at main.
+          [ -f graphite.txt ] || exit 0
+          head=$(jq -r .head.sha pr.json)
+          if [ "$(jq -r .user.login pr.json)" = "$app" ]; then
+            echo "PR #$pr is authored by $app; not reviewing"; exit 0
+          fi
+
+          # Reviews (oldest first), inline comments and the app's own PR
+          # comments come from REST, which the app's pull_requests permission
+          # covers; threads and their resolution exist only in GraphQL.
+          gh api --paginate "repos/$REPO/pulls/$pr/reviews" \
+            --jq '.[] | {id, login: .user.login, state, commit_id, body}' | jq -s . > reviews.json
+          gh api --paginate "repos/$REPO/pulls/$pr/comments" \
+            --jq '.[] | {review: .pull_request_review_id, login: .user.login, reply: .in_reply_to_id,
+                         commit: .original_commit_id, body}' | jq -s . > comments.json
+          gh api --paginate "repos/$REPO/issues/$pr/comments" \
+            --jq '.[] | {login: .user.login, body}' | jq -s . > issue_comments.json
+          gh api graphql -F owner="${REPO%/*}" -F name="${REPO#*/}" -F pr="$pr" -f query='
+            query($owner: String!, $name: String!, $pr: Int!) {
+              repository(owner: $owner, name: $name) {
+                pullRequest(number: $pr) {
+                  reviewThreads(first: 100) {
+                    totalCount
+                    nodes { isResolved path comments(first: 1) { nodes { author { login } body url } } }
+                  }
+                }
+              }
+            }' --jq .data.repository.pullRequest.reviewThreads > threads.json
+
+          # Position of a commit in commits.txt (1 = newest). A commit that is
+          # no longer in the PR (rebased away) sorts as older than all of them.
+          idx() { local n; n=$(grep -nFx -- "$1" commits.txt | head -n 1 | cut -d: -f1); echo "${n:-100000}"; }
+
+          # (a) Codex passing commits: a completed "no findings" marker, or a
+          # Codex review without P0/P1 comments. The newest PR commit wins.
+          {
+            jq -r '.[]
+              | .body, (.userContentEdits.nodes[] | select(.editor.login == "chatgpt-codex-connector") | .diff // empty)
+              | capture("codex-review-state:v1 (?<s>\\{.*\\}) -->").s
+              | fromjson | .code_review
+              | select(.status == "completed" and .has_any_findings == false) | .commit_sha // empty' codex.json
+            jq -r --slurpfile comments comments.json --arg bot "$codex_bot[bot]" --arg badge "$badge" '.[]
+              | select(.login == $bot and .commit_id != null)
+              | select(.state == "COMMENTED" or .state == "APPROVED")
+              | .id as $id
+              | select(all($comments[0][] | select(.review == $id); .body | test($badge) | not))
+              | .commit_id' reviews.json
+          } | sort -u > codex_pass.txt
+          codex=$(grep -Fxf codex_pass.txt commits.txt | head -n 1 || true)
+          graphite=$(cat graphite.txt)
+          codex_status=$(jq -r '[.[] | .body | capture("codex-review-state:v1 (?<s>\\{.*\\}) -->").s
+              | fromjson | .code_review] | last | "\(.status) \(.commit_sha)"' codex.json)
+
+          # (b) Every Codex P0/P1 finding, resolved or not, needs a clean Codex
+          # review of a newer commit than the one it was raised on.
+          p1_idx=100001
+          p1_commit=""
+          jq -r --arg bot "$codex_bot[bot]" --arg badge "$badge" '.[]
+            | select(.login == $bot and .reply == null and (.body | test($badge))) | .commit' comments.json > p1.txt
+          while read -r sha; do
+            [ -n "$sha" ] || continue
+            i=$(idx "$sha")
+            if [ "$i" -lt "$p1_idx" ]; then p1_idx=$i; p1_commit=$sha; fi
+          done < p1.txt
+          fix_reviewed=true
+          if [ -n "$p1_commit" ] && { [ -z "$codex" ] || [ "$(idx "$codex")" -ge "$p1_idx" ]; }; then
+            fix_reviewed=false
+          fi
+
+          # Outstanding items, one Markdown bullet each.
+          items=$(jq -r --arg bot "$codex_bot" --arg badge "$badge" '.nodes[] | select(.isResolved | not)
+            | .comments.nodes[0] as $c
+            | if ($c.author.login == $bot and ($c.body | test($badge))) then
+                "- Open Codex \($c.body | capture("(?<p>P[01]) Badge").p): [\(($c.body
+                  | capture("</sub></sub>\\s*(?<t>[^*\\n]+)").t? // "finding") | rtrimstr(" "))](\($c.url))"
+              else
+                "- Unresolved thread by @\($c.author.login // "ghost") on `\(.path)`: \($c.url)"
+              end' threads.json)
+          add() { items="${items:+$items$'\n'}$1"; }
+          threads=$(jq .totalCount threads.json)
+          if [ "$threads" -gt 100 ]; then add "- $threads review threads: too many to check automatically."; fi
+          if [ -z "$codex" ] && [ -z "$graphite" ]; then
+            add "- Waiting for a passing review from Codex or Graphite."
+          fi
+          if [ "$fix_reviewed" = false ] && [ "$(idx "$head")" -lt "$p1_idx" ]; then
+            add "- Waiting for a clean AI review of the latest fix: Codex raised a P0/P1 finding on \`${p1_commit:0:7}\` and has not yet reviewed a newer commit without one."
+          elif [ "$fix_reviewed" = false ]; then
+            add "- Waiting for a fix: Codex raised a P0/P1 finding on \`${p1_commit:0:7}\`, the latest commit. Push a fix; Codex then has to review it."
+          fi
+          changes=$(jq -r --arg a "$codex_bot[bot]" '[.[]
+            | select(.login == $a or .login == "graphite-app[bot]")
+            | select(.state != "COMMENTED" and .state != "PENDING")]
+            | group_by(.login) | map(last | select(.state == "CHANGES_REQUESTED") | .login) | join(", ")' reviews.json)
+          if [ -n "$changes" ]; then add "- Changes requested by $changes."; fi
+
+          # Ask Codex to review the fix: once per head commit, only when the
+          # head is newer than the finding and Codex is not already on it.
+          # AI_REVIEW_ASK_CODEX=false turns this off (see the header).
+          if [ "${ASK_CODEX:-}" != false ] && [ "$fix_reviewed" = false ] && [ "$(idx "$head")" -lt "$p1_idx" ] \
+             && [ "$codex_status" != "running $head" ] \
+             && ! jq -e --arg app "$app" --arg m "gradiated-review-codex-request:$head" \
+                  'any(.[]; .login == $app and (.body | contains($m)))' issue_comments.json > /dev/null; then
+            echo "PR #$pr: asking Codex to review $head"
+            gh api "repos/$REPO/issues/$pr/comments" > /dev/null \
+              -f body="$(printf '@codex review\n\n<!-- gradiated-review-codex-request:%s -->' "$head")"
+          fi
+
+          # The app's active approval, and its latest review body.
+          approval=$(jq -r --arg app "$app" '[.[] | select(.login == $app and .state != "COMMENTED" and .state != "PENDING")]
+            | last | select(.state == "APPROVED") | .id // empty' reviews.json)
+          last_body=$(jq -r --arg app "$app" '[.[] | select(.login == $app)] | last | .body // ""' reviews.json)
+
+          if [ -n "$items" ]; then
+            echo "PR #$pr: not approving:"; echo "$items"
+            hash=$(printf '%s' "$items" | cksum | cut -d' ' -f1)
+            marker="<!-- gradiated-review-state:$hash -->"
+            if [ -n "$approval" ]; then
+              # A stale approval would otherwise outlive a new finding.
+              gh api -X PUT "repos/$REPO/pulls/$pr/reviews/$approval/dismissals" > /dev/null \
+                -f event=DISMISS -f message="New outstanding review items; see the next gradiated-review comment."
+            elif [ "$REQUESTED" != true ] && [[ "$last_body" == *"$marker"* ]]; then
+              echo "PR #$pr: same outstanding items as the last comment review"; exit 0
+            fi
+            body=$(printf '%s\n' "**Not approved yet.** Outstanding:" "" "$items" "" \
+              "I re-check after AI reviews and pushes, and every 15 minutes once threads are resolved. Comment \`@gradiated-review\` to re-check now." \
+              "" "Rule: \`.github/workflows/ai-review-gate.yml\`. Run: $RUN_URL" "$marker")
+            gh api "repos/$REPO/pulls/$pr/reviews" -f event=COMMENT -f commit_id="$head" -f body="$body" > /dev/null
+            exit 0
+          fi
+          if [ -n "$approval" ]; then
+            echo "PR #$pr: $app already approved"; exit 0
+          fi
+
+          based=()
+          if [ -n "$codex" ]; then based+=("- Codex reviewed \`$codex\` with no P0/P1 findings."); fi
+          if [ -n "$graphite" ]; then based+=("- Graphite AI Reviews succeeded on \`$graphite\`."); fi
+          if [ -n "$p1_commit" ]; then based+=("- Codex P0/P1 findings raised on \`$p1_commit\` were followed by a clean Codex review."); fi
+          body=$(printf '%s\n' "**Approved.** An AI review passed:" "" "${based[@]}" \
+            "- No unresolved review threads ($threads in total)." "" \
+            "Rule: \`.github/workflows/ai-review-gate.yml\`. Run: $RUN_URL")
+          echo "PR #$pr $head: approving"
+          gh api "repos/$REPO/pulls/$pr/reviews" -f event=APPROVE -f commit_id="$head" -f body="$body" > /dev/null

@@ -56,6 +56,14 @@ This repository is the complete project state for the research and product-build
 
 Every PR to `main` needs the required `AI review passed` status: at least one of Codex or Graphite must complete a review of the pull request before merge (`.github/workflows/ai-review-gate.yml`). A review of any commit on the PR counts; commits pushed after a review are covered by required CI, the security scans and resolved review threads. After opening a PR, wait for at least one bot to complete; if neither completes, comment `@codex review` or re-run the review from the Graphite check's Details page. To re-evaluate the gate by hand, run `gh workflow run ai-review-gate.yml -f pr=123` with the PR number.
 
+The `gradiated-review` GitHub App reviews every PR like a human reviewer, from the same workflow, and its approval is the required approving review. It approves when all of these hold:
+
+- Codex or Graphite reviewed a commit of the PR with a passing result. For Codex, that means no P0/P1 findings; for Graphite, a successful AI Reviews check.
+- Every Codex P0/P1 finding was followed by a clean Codex review of a newer commit. A resolved P1 counts only after Codex has reviewed the fix.
+- Every review thread is resolved.
+
+Until then, it posts a comment review listing what is outstanding, with links, and posts it again only when that list changes. When you push a fix for a Codex P0/P1, it comments `@codex review` itself. Codex may refuse a request from an app; if no Codex review follows, comment `@codex review` yourself. It re-checks after bot reviews and pushes, and every 15 minutes. GitHub cannot send a review request to an app. To ask for a fresh review, comment `@gradiated-review` (or start a comment with `/review`); it reacts and reviews again. Only comments from people with write access count.
+
 When addressing a review comment, resolve its thread after the fix is pushed. When deliberately ignoring or declining a comment, briefly explain why in the thread and resolve it. Do not leave addressed or intentionally declined comments unresolved.
 
 ## Verification

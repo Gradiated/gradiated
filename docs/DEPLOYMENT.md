@@ -197,8 +197,19 @@ healthy. S3 versioning keeps previous entry points for recovery.
   (Gitleaks secret scanning, scan-policy checks and report-only Semgrep; see
   `.github/workflows/security.yml`). It also requires the `AI review passed`
   status, which `.github/workflows/ai-review-gate.yml` sets once either Codex or
-  Graphite has reviewed a commit of the PR. Ordinary PRs satisfy these
-  checks and resolved review threads; no approval is required. The Gradiated
+  Graphite has reviewed a commit of the PR. The same workflow reviews each PR
+  as the `gradiated-review` GitHub App (app id 5394141). It approves when a
+  bot review passed (Codex without P0/P1 findings, or a successful Graphite
+  AI Reviews check), every Codex P0/P1 was followed by a clean Codex review of
+  a newer commit, and every review thread is resolved. Otherwise it leaves a
+  comment review listing what is outstanding, and asks Codex to review pushed
+  fixes. Comment `@gradiated-review` (or `/review`) on a PR, with write
+  access, to make it review again. GitHub cannot send review requests to apps.
+  The rule is documented at the top of the workflow. The app's
+  private key is the `AI_REVIEW_APP_PRIVATE_KEY` secret of the
+  `ai-review-gate` environment, which admits only `main`, so PR code cannot
+  read it. Once the ruleset requires one approving review, this approval is
+  the required review; ordinary PRs need no human approval. The Gradiated
   Release app is the only bypass actor. Organization admins, users and deploy
   keys cannot bypass it, so a red or pending required check blocks the merge;
   an emergency override means editing the ruleset, which GitHub records in its

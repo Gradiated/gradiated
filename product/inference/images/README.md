@@ -7,6 +7,13 @@ not participate in its build identity. The init loop waits for completed
 enrollment, supervises the installed bootstrap alongside SSH, and restarts it
 if it exits. The bootstrap and recovery implementation remain on disk.
 
+The build upgrades the Ubuntu packages inherited from NVIDIA's CUDA image and
+keeps NVIDIA's CUDA packages at the pinned base versions. The ECR tag hashes the
+build inputs, so a later Ubuntu security fix enters the image only after an input
+changes, for example a newer CUDA base digest. Keep `base-id` unchanged for such
+patch rebuilds: bundles carry it, and enrolled hosts reject bundles whose ID
+differs from their own.
+
 Enrollment installs a SHA-256-pinned host archive over authenticated SSH. The
 archive contains enrollment, supervision and recovery, the downloader, Desmond,
 `runtime-launch`, and private control forwarding. A verified seed is retained on

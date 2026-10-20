@@ -3,6 +3,9 @@
   --ink: #17161a;
   --muted: #8d8781;
   --shadow: #e3ddd2;
+  --signal-stroke: #c49b3c;
+  --signal-width: 3px;
+  --signal-glow: rgba(233, 200, 117, 0.55);
 }
 
 .sand-journey * {
@@ -251,8 +254,7 @@
   line-height: 1.2;
   font-weight: 500;
   font-variant-numeric: tabular-nums slashed-zero;
-  display: inline-block;
-  max-width: 100%;
+  display: inline;
   vertical-align: baseline;
   color: inherit;
   background: rgba(23, 22, 26, 0.06);
@@ -280,6 +282,15 @@
   font-weight: 500;
   letter-spacing: -0.01em;
   line-height: 1.15;
+  margin: 0 0 1rem;
+}
+
+.sand-journey .scene-text h3 {
+  font-family: var(--font-title);
+  font-size: 1.25rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
   margin: 0 0 1rem;
 }
 
@@ -400,6 +411,43 @@
   display: grid;
 }
 
+.sand-journey .sand-side {
+  max-height: calc(100dvh - var(--nav-h) - 2 * var(--u));
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.sand-journey .sand-chapter {
+  display: grid;
+}
+
+.sand-journey .sand-subsections {
+  list-style: none;
+  margin: 0 0 0.5rem 1.5rem;
+  padding: 0;
+}
+
+.sand-journey .sand-subsection-link {
+  display: block;
+  border-left: 2px solid transparent;
+  padding: 0.3rem 0.2rem 0.3rem 0.65rem;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+.sand-journey .sand-subsection-link:hover,
+.sand-journey .sand-subsection-link:focus-visible,
+.sand-journey .sand-subsection-link[aria-current] {
+  color: var(--color-text);
+}
+
+.sand-journey .sand-subsection-link[aria-current] {
+  border-left-color: currentColor;
+  font-weight: 500;
+}
+
 .sand-journey .sand-main {
   min-width: 0;
 }
@@ -480,11 +528,6 @@ html:has(.sand-journey) {
   text-wrap: balance;
 }
 
-.sand-journey #d2 .computer-signal {
-  stroke: #c89c44;
-  stroke-width: 3px;
-  filter: drop-shadow(0 0 3px #e9c875);
-}
 .sand-journey #d2 .computer-glow {
   fill: rgba(238, 220, 167, 0.5);
   stroke: none;
@@ -518,16 +561,14 @@ html:has(.sand-journey) {
 .sand-journey #d2 .timing-zero text {
   fill: #a2574e;
 }
+.sand-journey #d2 .logic-connection,
+.sand-journey #d2 .memory-signal,
+.sand-journey #d2 .computer-signal,
 .sand-journey #d2 .timing-pulse {
-  stroke: #e0b23d;
-  stroke-width: 3px;
-  filter: drop-shadow(0 0 3px #edcc70);
-}
-
-.sand-journey #d2 .logic-connection {
-  stroke: #c49b3c;
-  stroke-width: 2.8px;
-  filter: drop-shadow(0 0 2px rgba(233, 200, 117, 0.55));
+  fill: none;
+  stroke: var(--signal-stroke);
+  stroke-width: var(--signal-width);
+  filter: drop-shadow(0 0 2px var(--signal-glow));
 }
 .sand-journey #d2 text.logic-value {
   font-size: 16px;
@@ -554,7 +595,9 @@ html:has(.sand-journey) {
 }
 
 .sand-journey #d2 text.bit,
-.sand-journey #d2 text.logic-value {
+.sand-journey #d2 text.logic-value,
+.sand-journey #d2 text.memory-label,
+.sand-journey #d2 text.memory-port {
   font-family: var(--font-code);
   font-variant-numeric: tabular-nums slashed-zero;
   font-variant-ligatures: none;
@@ -562,6 +605,25 @@ html:has(.sand-journey) {
 
 .sand-journey strong {
   font-weight: 600;
+}
+
+.sand-journey #d2 .memory-box {
+  fill: var(--paper);
+}
+.sand-journey #d2 .memory-bus,
+.sand-journey #d2 .interface-bus {
+  stroke-width: 3px;
+}
+.sand-journey #d2 text.memory-label,
+.sand-journey #d2 text.memory-port {
+  font-weight: 500;
+}
+.sand-journey #d2 text.memory-row-address {
+  font-size: 8px;
+}
+.sand-journey #d2 text.memory-port {
+  font-size: 6px;
+  fill: #6f6a63;
 }
 
 [data-theme="dark"] .sand-journey {
@@ -582,4 +644,295 @@ html:has(.sand-journey) {
 [data-theme="dark"] .sand-journey #d2 text.muted,
 [data-theme="dark"] .sand-journey #d2 text.caption {
   fill: var(--color-text-muted);
+}
+
+.sand-journey #d2 .latch-value-highlight {
+  stroke: none;
+  fill: rgba(224, 178, 61, 0.26);
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+.sand-journey
+  #d2
+  [data-latch-port="we"][data-value="1"]
+  .latch-value-highlight {
+  opacity: 1;
+}
+
+.sand-journey #d2 .register-enable {
+  transition: opacity 180ms ease;
+}
+.sand-journey #d2 text.register-copy,
+.sand-journey #d2 text.latch-copy {
+  paint-order: stroke fill;
+  stroke: var(--paper);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.sand-journey #d2 .data-change-highlight {
+  fill: rgba(74, 139, 103, 0.22);
+  stroke: none;
+  opacity: 0;
+}
+
+.sand-journey .stage svg {
+  transform: translateY(calc(-1 * var(--memory-art-shift, 0px)));
+}
+.sand-journey .memory-controls {
+  position: absolute;
+  top: calc(
+    50% + var(--memory-art-half, 0px) - var(--memory-art-shift, 0px) + 0.75rem
+  );
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 2rem);
+  max-width: 25rem;
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+.sand-journey [data-memory-controls="controller"] {
+  transform: translateY(calc(var(--memory-art-half, 0px) * -0.4091));
+}
+.sand-journey .memory-control-title {
+  margin: 0 0 0.5rem;
+  text-align: center;
+  color: var(--ink);
+  font-family: var(--font-code);
+}
+.sand-journey .memory-control-row {
+  display: flex;
+  justify-content: center;
+  gap: 0.375rem;
+}
+.sand-journey .memory-control-row + .memory-control-row {
+  margin-top: 0.375rem;
+}
+.sand-journey .memory-controls button {
+  flex: 1;
+  max-width: 5.75rem;
+  min-height: 2.75rem;
+  padding: 0.375rem;
+  border: 1px solid var(--muted);
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-code);
+  font-size: inherit;
+  line-height: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.sand-journey
+  [data-memory-controls="memory-access"][data-action="Ready"]
+  button[data-action="Read"] {
+  border-color: var(--signal-stroke);
+  box-shadow: inset 0 0 0 1px var(--signal-stroke);
+}
+.sand-journey .memory-controls button[aria-pressed="true"] {
+  border-color: var(--signal-stroke);
+  background: var(--signal-glow);
+}
+.sand-journey .memory-controls button:focus-visible {
+  outline: 2px solid var(--signal-stroke);
+  outline-offset: 3px;
+}
+.sand-journey .memory-controls button:disabled {
+  cursor: default;
+}
+@media (max-width: 640px) {
+  .sand-journey .stage {
+    height: calc(44vh + var(--memory-extra-height, 0vh));
+  }
+  .sand-journey .stage svg {
+    width: min(calc(52vh - var(--memory-extra-height, 0vh)), 80vw);
+  }
+  .sand-journey #sand-memory-two,
+  .sand-journey #sand-memory-array {
+    scroll-margin-top: 56vh;
+  }
+}
+
+.sand-journey #d2 .interface-value {
+  font-family: var(--font-code);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .sand-journey #sand-memory-access {
+    scroll-margin-top: 56vh;
+  }
+}
+
+.sand-journey code > sup.math-exponent {
+  font-family: inherit;
+  font-size: 0.75em;
+  line-height: 0;
+  vertical-align: super;
+}
+
+.sand-journey .memory-control-prompt {
+  margin: 0.5rem 0 0;
+  text-align: center;
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+.sand-journey #d2 .memory-block-tint {
+  fill: rgba(82, 153, 111, 0.08);
+  stroke: none;
+}
+.sand-journey #d2 .memory-block-frame {
+  stroke: rgba(72, 139, 97, 0.5);
+  stroke-width: 1.3px;
+  fill: none;
+}
+.sand-journey #d2 .memory-block-icon {
+  stroke: #568568;
+  stroke-width: 0.9px;
+  fill: none;
+}
+.sand-journey #d2 text.memory-block-name {
+  fill: #568568;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.sand-journey #d2 text.processing-number {
+  font-size: 15px;
+}
+
+.sand-journey #d2 text.processing-binary {
+  font-size: 12px;
+  opacity: 0.55;
+}
+.sand-journey #d2 .processing-binary-outline {
+  opacity: 0.4;
+}
+
+.sand-journey #d2 .processing-block-tint {
+  fill: rgba(178, 84, 76, 0.06);
+  stroke: none;
+}
+.sand-journey #d2 .processing-block-frame {
+  stroke: rgba(166, 78, 69, 0.5);
+  stroke-width: 1.3px;
+  fill: none;
+}
+.sand-journey #d2 .processing-block-icon {
+  stroke: #a4645c;
+  stroke-width: 0.9px;
+  fill: none;
+}
+.sand-journey #d2 text.processing-block-name {
+  fill: #a4645c;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+.sand-journey #d2 text.instruction-token {
+  font-size: 18px;
+}
+.sand-journey #d2 .control-wire {
+  stroke: #a4645c;
+  stroke-dasharray: 3 3;
+  stroke-width: 1.1px;
+  fill: none;
+  opacity: 0.2;
+}
+.sand-journey #d2 .control-active {
+  stroke-width: 1.6px;
+  opacity: 0;
+}
+
+.sand-journey #d2 text.instruction-alternative {
+  font-size: 17px;
+}
+.sand-journey #d2 .instruction-alternative-0 {
+  opacity: 0.35;
+}
+.sand-journey #d2 .instruction-alternative-1 {
+  opacity: 0.14;
+}
+.sand-journey #d2 text.instruction-bits {
+  font-size: 16px;
+  font-weight: 600;
+}
+.sand-journey #d2 .instruction-brace {
+  stroke: #8d8781;
+  stroke-width: 1px;
+  fill: none;
+}
+.sand-journey #d2 text.instruction-field-name {
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.sand-journey #d2 text.control-encoding {
+  font-size: 12px;
+  opacity: 0.35;
+}
+
+.sand-journey #d2 text.fetch-bits {
+  font-size: 12px;
+  font-weight: 500;
+}
+.sand-journey #d2 text.fetch-address {
+  font-size: 11px;
+}
+.sand-journey #d2 text.fetch-transfer {
+  font-size: 11px;
+  paint-order: stroke;
+  stroke: var(--paper);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+.sand-journey #d2 text.fetch-phase {
+  font-size: 11px;
+}
+.sand-journey #d2 .fetch-control-frame {
+  fill: rgba(98, 119, 153, 0.06);
+  stroke: rgba(98, 119, 153, 0.65);
+  stroke-width: 1.3px;
+}
+.sand-journey #d2 .control-block-icon {
+  stroke: #627799;
+  stroke-width: 0.9px;
+  fill: none;
+}
+.sand-journey #d2 text.control-block-name {
+  fill: #627799;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+.sand-journey #d2 .fetch-cpu-frame {
+  stroke: var(--ink);
+  stroke-width: 1px;
+  fill: none;
+  opacity: 0.35;
+}
+.sand-journey #d2 .fetch-clock-pulse {
+  fill: #e4b638;
+  stroke: none;
+  filter: drop-shadow(0 0 3px var(--signal-glow));
+}
+
+.sand-journey #d2 .io-block-frame {
+  fill: rgba(202, 136, 62, 0.08);
+  stroke: rgba(183, 119, 48, 0.65);
+  stroke-width: 1.3px;
+}
+.sand-journey #d2 text.io-block-name {
+  fill: #a66c30;
+  font-size: 13px;
+}
+.sand-journey #d2 .io-link {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.3px;
+  opacity: 0.6;
 }

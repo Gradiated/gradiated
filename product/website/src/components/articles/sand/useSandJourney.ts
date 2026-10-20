@@ -31,6 +31,38 @@ export const useSandAnimation = (hostRef: HostRef): void => {
   }, [hostRef]);
 };
 
+export const useSandSubsections = (
+  hostRef: HostRef,
+  chapters: readonly Chapter[],
+): Record<string, Chapter[]> => {
+  const [subsections, setSubsections] = useState<Record<string, Chapter[]>>({});
+
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+
+    const sections: Record<string, Chapter[]> = {};
+    let chapter = "";
+
+    for (const scene of host.querySelectorAll<HTMLElement>(".scene-text")) {
+      if (chapters.some(({ id }) => id === scene.id)) chapter = scene.id;
+      if (!chapter) continue;
+
+      const heading = scene.querySelector("h3");
+      if (heading) {
+        (sections[chapter] ??= []).push({
+          id: scene.id,
+          label: heading.textContent?.trim() ?? "",
+        });
+      }
+    }
+
+    setSubsections(sections);
+  }, [hostRef, chapters]);
+
+  return subsections;
+};
+
 export const useActiveChapter = (
   hostRef: HostRef,
   chapters: readonly Chapter[],

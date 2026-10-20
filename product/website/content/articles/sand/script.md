@@ -122,78 +122,215 @@ We have combined small groups of transistors into a circuit that adds numbers, b
 
 The faster we switch, the more heat we produce each second. This switching power scales with `CV²f`, where `C` is the capacitance being switched, `V` is the voltage swing, and `f` is the clock speed, which sets the pace of computation. Smaller capacitances and lower voltages reduce the energy needed, while switching less often reduces the rate at which we generate heat. Heat is a budget we will keep encountering as the transistor populations climb.
 
+<!-- scene: timing -->
+
+As circuits become larger and more complex, timing challenges appear. Changing an input does not change every part of a circuit at once. The change takes time to spread, and different values settle at different moments. These delays can result in incorrect information processing as old data gets used for computation, or glitches. This will need to be carefully considered during circuit design.
+
 ## Memory
 
 <!-- scene: latch -->
 
-We can now calculate an answer, but how do we remember it? Let’s zoom back in and connect a few NAND gates so that their outputs feed back into their inputs. This circuit is called a latch. It has a data input `D`, a write-enable input `WE`, and an output `Q`. While `WE` is `1`, `Q` becomes `D`. When `WE` becomes `0`, `Q` holds its last value, even if `D` changes.
+### Latches and registers
+
+We can now calculate an answer, but how do we remember it? Let’s zoom back in and connect a few NAND gates such that their outputs feed back into their inputs. This circuit is called a latch. It has a data input `D`, a write-enable input `WE`, and an output `Q`. While `WE` is `1`, `Q` becomes `D`. When `WE` becomes `0`, `Q` holds its last value, even if `D` changes.
 
 How does a loop create memory? The two gates on the right feed their outputs into each other, each reinforcing the other’s state. With writing disabled (`WE = 0`), this feedback holds `Q` at its last value for as long as power is supplied. We have added memory to our toolset.
 
 <!-- scene: register -->
 
-Let’s zoom out again and place four latches side by side, each holding one bit. Together, they form a four-bit register that can remember a four-bit binary number. By sharing a write-enable signal, all four latches can copy their inputs at `D` simultaneously, then hold the number while those inputs change.
+Let’s zoom out again and place four latches side by side, each holding one bit. Together, they form a four-bit register that can remember a four-bit binary number. The four data wires carry one bit each. A shared write-enable signal lets all four latches copy their inputs together, then hold the number when `WE` returns to `0`.
+
+<!-- scene: memory-two -->
+
+### Addressed memory
+
+Now stack a second 4-bit number as another row. We have two places to store a four-bit number, so we need a way to choose between them. A single bit, labelled `ADDR`, selects row `0` or row `1`. A decoder, shown in the box on the left, turns `ADDR` into one selection signal for each row. Only the chosen row’s signal is `1`. A NOT gate selects row `0` when the `ADDR` is `0`, while a direct wire selects row `1` when it is `1`.
+
+Both rows receive the same four data inputs. To write a number, place its four bits `D0` to `D3` on these wires, select the destination `ADDR`, then set `WE` to `1`. An AND gate combines `WE` with each row’s selection signal, so only the chosen row copies the number at `D`. Return `WE` to `0` and both rows hold their contents, even if the input changes.
+
+To read a number, select its `ADDR` and leave `WE` at `0`. At the right of each latch, an AND gate passes its bit only when that row is selected. An OR gate at the bottom of each column combines these paths. Unselected rows always contribute `0`, so each OR gate reproduces the selected bit, bringing the chosen number to output `Q`, where we read it. Reading does not change either stored number. These AND and OR gates, controlled by the decoder’s selection signals, form a multiplexer that chooses which row’s stored bits reach `Q`.
+
+<!-- scene: memory-array -->
+
+Zoom out once more and add two rows. We now have four locations, each holding four bits. Two address bits `ADDR` distinguish `00`, `01`, `10` and `11`. The same decoder now turns that two-bit `ADDR` into four selection signals, with exactly one active at a time. That signal chooses the row to read and, if `WE` is `1`, the row to write.
+
+The `ADDR` tells us which row of bits to look at. Two address bits choose among four locations, while each location stores four bits. The `ADDR` width and the number of bits stored at each location are separate choices. Adding rows gives us more locations, while adding columns lets each location hold a wider number. Here, sixteen latches give us a small memory array with four locations, each storing a four-bit number.
 
 <!-- scene: stored-answer -->
 
-We can now connect our register to the four-bit adder. With write-enable at `1`, the register copies the answer, `1001`. Set write-enable to `0` and that answer is held. The adder can calculate something new while the register remembers the previous result. We can now both calculate and keep the answer.
+We can now connect our four-bit adder to the memory’s data inputs. It still calculates `0011 + 0110 = 1001`. Select `ADDR` `01` and set `WE` to `1`, and the four latches in that row store the answer. Return `WE` to `0` and they hold `1001`. The other rows keep their own numbers throughout. Changing the `ADDR` now lets us read a different stored number without erasing this answer. We can calculate, choose where to store the answer, and find it again.
 
-<!-- scene: timing -->
+<!-- scene: memory-buses -->
 
-As circuits become larger and more complex, timing challenges appear to show. Changing an input does not change every part of a circuit at once. The change takes time to spread, and different values settle at different moments. These delays can result in incorrect information processing as old data gets used for computation, or glitches.
+As these structures grow, drawing every wire becomes crowded. We can draw a bundle of wires as one thicker line, called a bus. A diagonal slash marked `4` means four separate wires, one for each bit. It is a drawing shorthand, not a break in the connection or four bits squeezed onto one wire. The `ADDR` bus is marked `2`, as our previous memory array was 2-bit addressable, while `WE` still needs only one wire.
 
-We now have circuits that calculate and circuits that remember. Our next step is to combine them into a machine that follows instructions, choosing which values to use, what to calculate, and where to store each result.
+We can now draw the whole memory array as a single block, with its latches, decoder and read-selection gates inside. We have circuits that calculate and remember. Let’s zoom out again and combine them into a computer that follows instructions, choosing which values to use, what to calculate and where to store each result.
 
 ## Building a computer
 
-<!-- scene: select-values -->
+<!-- scene: computer-overview -->
 
-Our computer follows the von Neumann model, with instructions and data stored in the same memory.
+We have circuits that calculate and circuits that remember. Now we can combine them into a von Neumann computer, where the same hardware can perform different tasks by following different programs. Each program is a sequence of instructions stored in the same memory as its data. The central processing unit, or CPU, carries out these instructions. It has two main components, a processing unit (PU) containing calculation circuits and fast storage registers, and a control unit (CU) that directs their work. Input and output connect the machine to the outside world.
 
-Our adder calculates with whatever values reach its inputs. To choose those values, we need another circuit called a multiplexer. It takes several inputs and passes one of them to its output, according to a selection signal at the bottom. We can build this selection circuit from the logic gates we already know. Here, each value travels through a bundle of four wires, carrying the four bits of its binary number. The idea of selectively choosing which input data to pass will be very common going forward.
+<!-- scene: memory-width -->
+
+### Memory and its interface
+
+Let’s return to our memory array. It has four locations, each holding four bits. We can make each stored number wider by adding more bit positions to every row. Doubling the width gives us eight bits per location. Eight bits make one byte, so this small array now holds four bytes in total.
+
+<!-- scene: memory-interface -->
+
+We can hide the individual latches inside four larger blocks, one for each stored number. `ADDR` still selects the location, `D` carries the number to write, and `Q` carries the number read. To connect this memory to a processor, we add two registers that hold the values on those wires during an access.
+
+The memory address register, or `MAR`, holds the `ADDR` of the location to access. For now, it holds only two bits, enough to select one of our four memory locations. The memory data register, or `MDR`, holds either the eight-bit number to write or the eight-bit number just read.
+
+A separate write control, `WE`, determines whether memory copies the number from `MDR` into the selected location.
+
+<!-- scene: memory-word -->
+
+Now widen each location again, from eight bits to sixteen. Each stored number occupies two bytes. The `MDR` and its data paths widen to sixteen bits too, so they can carry the whole number together.
+
+<!-- scene: memory-address-space -->
+
+To add more locations, we need more address bits. Two bits choose among four locations. Sixteen bits choose among `2¹⁶ = 65,536` locations, so we widen `MAR` to sixteen bits. We show only a few of those locations here. Each `ADDR` selects one complete sixteen-bit number, or two bytes, rather than a single byte.
+
+This is the memory of LC-3 (Little Computer 3), a small teaching computer. Its simple design helps us understand the basic parts of a computer and how they work together.
+
+Address width determines how many memory locations we can select, while data width determines how many bits each location holds. A `16-bit` address selects up to `65,536` locations. Calling a processor `16-bit` or `32-bit` usually describes its main registers and integer operations, rather than its address space. In LC-3, registers, addresses and stored numbers are all sixteen bits wide, so each of the `2¹⁶` addresses selects a group of sixteen bits, or two bytes, called a word.
+
+<!-- scene: memory-access -->
+
+Let’s use these registers to access a location. Click the **Read** button beneath the figure to place `1` in `MAR`, selecting the second location. Memory sends its contents to `MDR`, where the CPU can later use them. Reading leaves the stored number unchanged.
+
+Click **Write** to put `9` in `MDR` and save it in the location selected by `MAR`. The other locations keep their values. Yellow paths and moving bits show each transfer.
+
+<!-- scene: memory-block -->
+
+We now have a basic memory block, our first building block for a complete von Neumann computer. We will set this aside for now as we introduce the processing unit, one of the CPU’s main components.
 
 <!-- scene: working-registers -->
 
-Let’s zoom out again and give our machine several registers for its working values. For our example, we will use a small teaching computer called LC-3. It has eight general-purpose registers, named `R0` to `R7`, each holding sixteen bits. More bit positions let us represent larger numbers using the same binary rules.
+### The processing unit
 
-We will begin with `3` in `R1` and `6` in `R2`. The register name identifies the slot, while its contents are the value stored there.
+A calculation often produces a result that we need again. Imagine counting items arriving in pairs. Each new pair adds `2` to a running total, so we need somewhere to keep that total between additions. The processing unit comes with another small set of fast storage registers for these working values. LC-3 has eight general-purpose registers, called `R0` to `R7`, each holding sixteen bits, or two bytes. We keep them directly connected to the calculation circuits, allowing quick access to the values they need. These fast storage registers are separate from the larger memory array and its `MAR` and `MDR`.
+
+Reading and writing follow the same principle as our earlier memory array. Selection circuits choose which stored number to read, while a write-enable signal allows the chosen register to copy a new number and otherwise hold its contents.
+
+We will begin with the values `3`, `6` and `2` stored in binary in `R1`, `R2` and `R3` respectively.
+
+<!-- scene: select-values -->
+
+We can now connect the adder we built earlier to our fast storage registers. A multiplexer, or MUX, selects one of several inputs and passes it to its output. We used one earlier to choose which stored number reaches memory’s output. Here, each of two MUXes selects one of the eight registers, supplying one input to the adder. Each thick data connection carries all sixteen bits of a number together.
+
+For our first calculation, we select `R1` and `R2`, sending `3` and `6` to the adder. Each thick path marked `16` represents sixteen parallel wires, carrying all the bits of one number together.
 
 <!-- scene: alu -->
 
-We can also group our adder with circuits that perform logical operations. Together, they form an arithmetic and logic unit, or ALU. Control signals select which operation it performs. The registers supply its inputs, and another register can capture the result. A path marked `16` represents sixteen parallel wires, one for each bit.
+Let’s group our adder with circuits that perform logical operations. Together, they form an arithmetic and logic unit, or ALU. The LC-3 ALU has four modes. A control signal selects the ALU mode. This signal is not shown here and comes from the control unit, which we will introduce next.
+
+| Mode    | What it does                                                          |
+| :------ | :-------------------------------------------------------------------- |
+| `ADD`   | Adds the two sixteen-bit inputs.                                      |
+| `AND`   | Each output bit is `1` only when both matching input bits are `1`.    |
+| `NOT`   | Flips every bit of the first input. The second input is unused.       |
+| `PASSA` | Passes the first input through unchanged. The second input is unused. |
+
+`ADD`, `AND` and `NOT` are instructions a program can request. `PASSA` is an internal mode used to transfer a value without changing it.
+
+With addition selected, `3` and `6` enter the ALU and the result, `9`, travels back to be saved in `R0`. We then select `R0` and `R3`, adding the stored `9` to `2` and saving `11` in `R0`. Repeating this gives `13`, then `15`, and so on. Each new result replaces the previous total in `R0`, ready for the next addition. The other registers keep their values.
+
+<!-- scene: processing-block -->
+
+Together, our fast storage registers, selection circuits and ALU form the processing unit, or PU. It holds working values, performs calculations and stores their results. We will set this building block alongside memory, then introduce the control circuits that direct its work.
+
+<!-- scene: instruction -->
+
+### Instructions and programs
+
+We have shown the processing unit repeatedly adding `2` to a running total. The instruction `ADD R0, R0, R3` requests one such addition. It adds the numbers stored in `R0` and `R3`, then saves the result in `R0`.
+
+These words and register names are a readable form of the instruction. LC-3 stores it as sixteen bits, `0001000000000011`. The instruction set architecture, or ISA, defines which instructions the processor supports, how they are encoded and what they do. The first four bits, `0001`, select the operation `ADD`. The next three bits name the destination register in which to save the output, followed by fields identifying the two inputs. Each register field uses three bits to choose one of eight registers. Here, `000` names `R0` and `011` names `R3`. These identify storage slots, not their contents. `R0` appears twice because its previous value is an input and it also receives the result.
+
+After the bits naming the first input register, one bit selects where the second input comes from.
+
+If that bit is `0`, the second input comes from a register (in this case, `R3`). Our instruction ends with `0 00 011`. The first `0` selects this option, the middle `00` is unused, and `011` names `R3`.
+
+If that bit is `1`, the final five bits instead contain a small number. An ending of `1 00001` supplies the number `1` directly, rather than selecting a register. This lets us add `1` to a counter without first storing `1` in another register.
+
+Instructions can do more than request an ALU operation. Some copy numbers from memory into registers or save register contents back to memory. Others change which instruction runs next, allowing a program to repeat steps or skip them.
 
 <!-- scene: addressed-memory -->
 
-Registers hold our immediate working values. We also need memory for a larger collection of information. Each memory location has an address that lets us select it. In LC-3, each addressed location holds sixteen bits.
+Where do these instructions come from? They are stored in memory. Address `12288` holds `0001 000 000 0 00 011`, our `ADD R0, R0, R3` instruction. The next address, `12289`, holds the same instruction. Each adds the number in `R3` to the running total in `R0`. A sequence of stored instructions forms a program.
 
-The address identifies the location. The bits stored there are its contents. Selection logic connects the chosen location to the wires carrying those contents.
+Instructions and data share this memory. The same bits at address `12288` can be interpreted as the instruction `ADD R0, R0, R3` or as the number `4099`. Nothing in the stored bits distinguishes these meanings. Fetching them as an instruction tells the processor to interpret them as an operation, while reading them as data supplies a number to work with.
+
+<!-- scene: instruction-control -->
+
+### The control unit
+
+The control unit, or CU, uses logic gates to decode an instruction and generate the electrical signals that carry it out. For our `ADD` instruction, these signals select the two input registers, choose addition at the ALU and select the destination register. For now, assume the CU has received the instruction. Next, we will see how it arrives from memory.
+
+The result travels back to the fast storage registers. As with our earlier memory, arriving at a register is not enough to change its contents. The CU must enable writing through its write-enable input, `WE`. Only the selected register saves the result. The others keep their contents.
 
 <!-- scene: program -->
 
-The same memory can hold both data and instructions. An instruction is a bit pattern specifying an operation and the values or locations involved. Storing a sequence of instructions gives us a program.
+### Fetching and executing
 
-A register called the program counter, or `PC`, holds the address of the instruction to fetch next. Another register, the instruction register, or `IR`, holds the instruction we have fetched.
+We need to keep track of where we are in the program. The program counter, or `PC`, is inside the CU and holds the address of the next instruction to fetch. Here, it starts at `12288`. The address is stored as sixteen bits, but the figure displays it in decimal for readability. Copying it into `MAR` selects the memory location, using the same address connection we built earlier.
 
-<!-- scene: control -->
+<!-- scene: instruction-fetch -->
 
-The instruction bits enter decoding logic, which identifies the operation and its operands. The control unit uses this information to select paths, choose an ALU operation and enable the required register updates.
+We can now fetch the instruction. Memory copies the sixteen bits at the location selected by `MAR` into `MDR`. From there, they travel via a bus of 16 wires to a new register called the instruction register, or `IR`, inside the `CU`. It holds the current instruction while the control unit interprets it and directs the work, as we will soon see.
 
-The controller also remembers which step it is performing. State stored in registers, combined with logic that determines the next step, forms a finite-state machine. Our familiar calculation and memory circuits now coordinate the work of the larger machine.
+During the fetch, `PC` advances by `1`, ready for the following instruction. This sequence of instructions has been prepared in advance from code written by a programmer. Each LC-3 instruction occupies one memory location, so the next one is at `12289`.
 
 <!-- scene: execute -->
 
-Let’s follow the instruction `ADD R0, R1, R2`. It tells the machine to add the contents of `R1` and `R2`, then place the answer in `R0`. We have already put `3` in `R1` and `6` in `R2`.
+With the instruction in `IR`, the control unit decodes its fields. Its controller sends electrical signals to the processing unit, selecting `R0` and `R3` as inputs, choosing `ADD` and selecting `R0` as the destination. We will shortly look inside the controller to see how it generates these signals.
 
-The machine fetches the instruction into `IR` and decodes its fields. Control signals select `R1` and `R2`, direct the ALU to add, and enable `R0` to capture the result. `R0` now holds `9`. During the fetch, `PC` advances to the following instruction address, ready for the machine to continue.
+Starting with `9` in `R0` and `2` in `R3`, the ALU produces `11`. The result travels back, and the control unit enables `R0` to save it. The other registers keep their contents. `IR` still holds the instruction being carried out, while `PC` already points to the next one.
+
+<!-- scene: control -->
+
+Let’s follow the whole sequence from the start, fetching an instruction, decoding it, then executing it.
+
+The controller inside the control unit keeps track of the current step (using even smaller memory registers) and activates the control signals needed for it. A clock provides regular timing pulses that coordinate register updates, with time between them for signals to settle. In our LC-3 computer, carrying out one instruction takes several clock cycles.
+
+When `MAR` selects an address, memory needs time to retrieve the bits stored there and copy them into `MDR`. The controller waits for a ready signal from memory before moving on. Clock pulses continue during this wait, but the controller remains in the same step. Once the bits are ready in `MDR`, the controller enables their transfer into `IR`, where they can be decoded as an instruction.
+
+<!-- scene: controller -->
+
+### Inside the controller
+
+How does the controller produce a sequence of actions? The figure follows a simplified `ADD` controller through four steps, fetching an instruction from memory and carrying it out. One step is always active.
+
+Another small state register stores two bits that identify the current step. These are separate from the instruction bits held in `IR`. Logic gates use the state bits to activate control wires and prepare the bits for the next step.
+
+When enabled, these clocked registers capture their inputs at a clock edge, the instant the clock changes from low to high. They hold their values between edges. Our earlier latches instead passed changes through for as long as writing was enabled. Preparing new bits at a register’s inputs does not immediately change what it stores.
+
+In state `00`, the controller requests an instruction from memory. At the next clock edge, the state register captures `01`, entering the wait step. Memory needs time to retrieve the instruction and place it in `MDR`. Clock pulses continue, but while `READY` is `0`, the gates keep preparing `01`, so the state register captures the same bits again and stays in the wait step.
+
+Once the instruction is available in `MDR`, memory sets `READY` to `1`. The gates now prepare `10` at the state register’s inputs. At the next clock edge, the register captures those bits and the copy step becomes active.
+
+In state `10`, the gates activate two control wires. One lets `MDR` send the instruction onto the bus of sixteen parallel wires. The other enables `IR` to save it. The instruction reaches `IR`’s inputs, but is not stored until the following clock edge. At that edge, `IR` captures the instruction and the state register captures `11`, entering the execute step. The copy controls (send MDR, load IR) then switch off, while `IR` retains the instruction.
+
+In state `11`, control signals select the input registers, choose addition at the ALU and enable the destination register to save the result. At the next clock edge, the destination captures the result and the state register returns to `00`, requesting the next instruction.
+
+The wiring stays fixed, but changing the stored state changes which control signals are active. This sequence of states and the rules for moving between them form a **finite-state machine** implemented here by a register and logic gates. The full LC-3 controller has many more states and can spend several clock cycles on the work grouped into one step here.
 
 <!-- scene: computer -->
 
-Let’s zoom out once more. The calculation circuits, working registers and control unit form our central processing unit, or CPU. Connected memory holds its program and data, while input and output connect it to the outside world.
+### Putting the computer together
 
-We have built a machine that can follow stored instructions. Our next step is to see how a task written by a person becomes the instruction bits that direct these circuits.
+Input and output, or I/O, connect the computer to the outside world. Input brings in information, such as a key pressed on a keyboard, while output sends results to a device such as a screen.
+
+Our control unit in blue contains `PC`, `IR` and the circuits that decode and sequence instructions wrapped into a controller. Together with the red processing unit, it forms the central processing unit, or CPU. The green memory block groups the memory array with its `MAR` and `MDR` interface, while the orange I/O block connects the CPU to the outside world.
+
+We now have a machine that can follow a stored program. The program’s binary instructions are called **machine code**. They can calculate, transfer data or change which instruction runs next, allowing larger, more complex tasks to be assembled from small steps. This flexibility costs hardware, time and energy, including the movement of instructions and data between memory and the CPU. We will return to these limits as we explore larger computers.
+
+Next, we will see how a task written by a person becomes the instruction bits that direct these circuits.
 
 <!-- footer -->
 
-From a switch to logic, calculation, memory and now a computer, each larger structure gives us a new ability. Next, we will follow the connection from code to physical action.
-
-The LC-3 example and the organisation of our computer diagram follow ETH Zürich’s [Digital Design and Computer Architecture course](https://safari.ethz.ch/ddca/spring2026/), particularly lecture 7 and its LC-3 diagram on slide 65. The illustration is simplified to introduce the parts one step at a time.
+Coming soon

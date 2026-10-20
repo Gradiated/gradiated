@@ -1,5 +1,7 @@
 import { gsap } from "gsap";
 import { COMPUTER_SCENES } from "./computer-scenes.js";
+import { MEMORY_SCENES } from "./memory-scenes.js";
+import { createLatchModel, dataChangePulse } from "./memory-model.js";
 /* ------------------------------------------------------------------ */
 /* 2D diagram scenes: everything after the wafer.                      */
 /*                                                                     */
@@ -805,7 +807,48 @@ export const SCENES2D = (function () {
       );
     }
     key(gSym, 12, { scale: 1, x: 0, y: 0 }, null, -1); // entrance handled above
-    caption(12, "the NAND gate symbol");
+    caption(12, "the NAND gate symbol", 13, 325);
+    const gateReference = group(
+      { "data-diagram": "gate-symbol-reference" },
+      root,
+    );
+    key(gateReference, "nand-symbol", {}, null, 0.72);
+    key(gateReference, "adder", { opacity: 0 }, null, 0, 0.35);
+    const referenceGate = (name, x) => {
+      const g = group({ "data-gate-reference": name }, gateReference);
+      gsap.set(g, { x, y: 370 });
+      return g;
+    };
+    const bubbleNot = referenceGate("not-bubble", 54);
+    mk("circle", { cx: 0, cy: 0, r: 3.3 }, bubbleNot);
+    path("M-15 0 H-3.3 M3.3 0 H15", {}, bubbleNot);
+    text(80, 374, "or", { class: "tiny muted" }, gateReference);
+    const triangleNot = referenceGate("not-triangle", 109);
+    path("M-10 -11 L9 0 L-10 11 Z", {}, triangleNot);
+    mk("circle", { cx: 12, cy: 0, r: 3 }, triangleNot);
+    path("M-21 0 H-10 M15 0 H25", {}, triangleNot);
+    const andReference = referenceGate("and", 184);
+    path("M-14 -12 H0 A12 12 0 0 1 0 12 H-14 Z", {}, andReference);
+    path("M-24 -6 H-14 M-24 6 H-14 M12 0 H26", {}, andReference);
+    for (const [kind, x] of [
+      ["or", 272],
+      ["nor", 360],
+    ]) {
+      const g = referenceGate(kind, x);
+      path("M-15 -12 Q-4 0 -15 12 Q6 13 20 0 Q6 -13 -15 -12 Z", {}, g);
+      path("M-24 -6 H-10.875 M-24 6 H-10.875", {}, g);
+      if (kind === "nor") {
+        mk("circle", { cx: 23, cy: 0, r: 3 }, g);
+        path("M26 0 H34", {}, g);
+      } else path("M20 0 H31", {}, g);
+    }
+    for (const [name, x] of [
+      ["NOT", 87],
+      ["AND", 184],
+      ["OR", 272],
+      ["NOR", 360],
+    ])
+      text(x, 410, name, { class: "caption" }, gateReference);
 
     /* ================= 13full adder: NANDs in a black box ================= */
     // The terminal names belong to the large NAND symbol, not the tiny building block.
@@ -937,8 +980,8 @@ export const SCENES2D = (function () {
       { "text-anchor": "start", class: "tiny muted" },
       gChain,
     );
-    show(gChain, 14, 16);
-    caption(14, "n full adder blocks, n digit addition");
+    show(gChain, 14, "timing");
+    caption(14, "n full adder blocks, n digit addition", "heat");
 
     /* ================= 15every switch leaks heat ================= */
     const gHeat = mk("g", { class: "heat thin" }, root);
@@ -954,7 +997,7 @@ export const SCENES2D = (function () {
         );
       }),
     );
-    show(gHeat, 15, 16);
+    show(gHeat, 15, "timing");
     const heat = gsap.timeline({ repeat: -1 });
     squiggles.forEach((s, i) => {
       const t0 = (i % 7) * 0.22 + Math.floor(i / 7) * 0.13;
@@ -983,8 +1026,8 @@ export const SCENES2D = (function () {
     propto.textContent = "\u221d"; // the glyph is tiny in this font, so it gets its own size
     formula.appendChild(propto);
     formula.appendChild(document.createTextNode(" C V\u00b2 f"));
-    show(formula, 15, 16);
-    caption(15, "heating: capacitance × voltage² × clock");
+    show(formula, 15, "timing");
+    caption(15, "heating: capacitance × voltage² × clock", "timing");
 
     /* ================= 16memory: a loop ================= */
     const gLatch = group({ "data-diagram": "latch" }, root, "220 250");
@@ -996,12 +1039,12 @@ export const SCENES2D = (function () {
     ].forEach(([x, y]) => gsap.set(nand(gLatch), { x, y }));
     const wLatch = mk("g", {}, gLatch);
     path(
-      "M104 208 L126 208 M104 250 L114 250 M114 222 L114 278 M114 222 L126 222 M114 278 L126 278",
+      "M104 208 L126 208 M104 250 L114 250 M114 222 L114 292 M114 222 L126 222 M114 292 L126 292",
       {},
       wLatch,
     );
     path(
-      "M172 215 L200 215 L200 208 L246 208 M200 215 L200 262 L120 262 L120 292 L126 292",
+      "M172 215 L200 215 L200 208 L246 208 M200 215 L200 262 L120 262 L120 278 L126 278",
       {},
       wLatch,
     );
@@ -1009,34 +1052,59 @@ export const SCENES2D = (function () {
     dot(114, 250, 1.8, wLatch);
     dot(200, 215, 1.8, wLatch);
     dot(306, 215, 1.8, wLatch);
-    text(98, 212, "D", { "text-anchor": "end" }, wLatch);
-    text(98, 254, "WE", { "text-anchor": "end" }, wLatch);
-    text(336, 219, "Q", { "text-anchor": "start" }, wLatch);
+    text(98, 212, "D", { class: "memory-label", "text-anchor": "end" }, wLatch);
+    text(88, 254, "WE", { class: "memory-label" }, wLatch);
+    text(
+      336,
+      219,
+      "Q",
+      { class: "memory-label", "text-anchor": "start" },
+      wLatch,
+    );
     const latchValues = group({ "data-latch-values": "" }, gLatch);
-    const latchDigits = [
-      text(
-        98,
-        234,
-        "0",
-        { class: "logic-value", "text-anchor": "end" },
+    const latchPorts = [
+      { name: "d", x: 98, y: 234, anchor: "end", value: 0 },
+      { name: "we", x: 88, y: 276, anchor: "middle", value: 1 },
+      { name: "q", x: 336, y: 241, anchor: "start", value: 0 },
+    ].map(({ name, x, y, anchor, value }) => {
+      const port = group(
+        { "data-latch-port": name, "data-value": value },
         latchValues,
-      ),
-      text(
-        98,
-        276,
-        "1",
-        { class: "logic-value", "text-anchor": "end" },
-        latchValues,
-      ),
-      text(
-        336,
-        241,
-        "0",
-        { class: "logic-value", "text-anchor": "start" },
-        latchValues,
-      ),
-    ];
-    const latchBits = { d: 0, we: 1, q: 0 };
+      );
+      const highlight =
+        name === "q"
+          ? null
+          : mk(
+              "rect",
+              {
+                x: x - (anchor === "end" ? 14 : anchor === "middle" ? 9 : 4),
+                y: y - 16,
+                width: 18,
+                height: 21,
+                rx: 4,
+                class:
+                  name === "d"
+                    ? "data-change-highlight"
+                    : "latch-value-highlight",
+              },
+              port,
+            );
+      const digit = text(
+        x,
+        y,
+        String(value),
+        { class: "logic-value", "text-anchor": anchor },
+        port,
+      );
+      return { port, digit, highlight };
+    });
+    const latchCopy = text(
+      94,
+      234,
+      "0",
+      { class: "logic-value latch-copy", opacity: 0 },
+      latchValues,
+    );
     const latchRandom = rng(41);
     const latchEvents = [];
     for (let time = 5; time < 40; time += 5) {
@@ -1046,19 +1114,9 @@ export const SCENES2D = (function () {
       latchEvents.push({ time, d: latchRandom() < 0.5 ? 0 : 1 });
     }
     latchEvents.sort((a, b) => a.time - b.time);
+    const latchModel = createLatchModel(latchEvents);
     const latchDemo = gsap.timeline({ paused: true, repeat: -1 });
-    latchDemo.set(latchBits, { d: 0, we: 1, q: 0 }, 0);
-    let data = 0,
-      enabled = 1,
-      stored = 0;
-    for (const event of latchEvents) {
-      if (event.d !== undefined) data = event.d;
-      if (event.we !== undefined) enabled = event.we;
-      if (enabled === 1) stored = data;
-      latchDemo.set(latchBits, { d: data, we: enabled, q: stored }, event.time);
-    }
-    latchDemo.to({}, { duration: 40 }, 0);
-    latchDemo.time(0.001, true).time(0, true);
+    latchDemo.to({}, { duration: latchModel.period });
     logicDemos.push(latchDemo);
     afterRender.push(() => {
       const progress = tl.time();
@@ -1073,9 +1131,33 @@ export const SCENES2D = (function () {
       )
         latchDemo.play();
       else latchDemo.pause();
-      [latchBits.d, latchBits.we, latchBits.q].forEach((value, i) => {
-        if (latchDigits[i].textContent !== String(value))
-          latchDigits[i].textContent = String(value);
+      const latchState = latchModel.frame(latchDemo.totalTime());
+      gLatch.setAttribute("data-d", String(latchState.d));
+      gLatch.setAttribute("data-we", String(latchState.we));
+      gLatch.setAttribute("data-q", String(latchState.q));
+      gLatch.setAttribute("data-loop-time", latchState.time.toFixed(3));
+      latchPorts[0].highlight.style.opacity = dataChangePulse(
+        latchState.dataAge,
+      );
+      const flight = latchState.transfer;
+      const p = flight?.progress ?? 0;
+      latchCopy.style.opacity = flight
+        ? Math.min(1, p / 0.12, (1 - p) / 0.12)
+        : 0;
+      latchPorts[2].digit.style.opacity = flight
+        ? 1 - Math.min(1, Math.max(0, (p - 0.78) / 0.22))
+        : 1;
+      if (flight) {
+        latchCopy.textContent = String(flight.to);
+        latchCopy.setAttribute("x", 94 + 248 * p);
+        latchCopy.setAttribute("y", 234 + 7 * p - 58 * Math.sin(Math.PI * p));
+      }
+      [latchState.d, latchState.we, latchState.q].forEach((value, i) => {
+        const { port, digit } = latchPorts[i];
+        if (digit.textContent !== String(value)) {
+          digit.textContent = String(value);
+          port.setAttribute("data-value", String(value));
+        }
       });
     });
     show(latchValues, "latch", "register", {}, 0.35);
@@ -1094,7 +1176,7 @@ export const SCENES2D = (function () {
     // Its geometry and feedback remain unchanged at the settled latch scene.
     tl.to(
       gLatch,
-      { scale: 0.18, x: -120, y: -4, duration: DUR * 0.48, ease: EASE },
+      { scale: 0.15, x: -78, y: 2, duration: DUR * 0.48, ease: EASE },
       at(17),
     );
     tl.to(
@@ -1105,215 +1187,25 @@ export const SCENES2D = (function () {
     for (const fb of [fb1, fb2]) draw(fb, at(16) + DUR * 0.55, DUR * 0.45);
     caption(16, "a latch: the output feeds back into the inputs");
 
-    /* ================= 17 · one latch becomes a four-bit register ================= */
-    const gRegister = group({ "data-diagram": "register" }, root, "220 250");
-    // Children stage their entrances; this parent handles only the later exit.
-    tl.set(gRegister, { opacity: 1 }, 0);
-    tl.to(gRegister, { y: 32, duration: DUR * 0.55, ease: EASE }, at(18));
-    const cellLabels = [],
-      dataLabels = [],
-      outputLabels = [];
-    const cellCentres = [100, 180, 260, 340];
-    cellCentres.forEach((cx, i) => {
-      const cell = group({ "data-register-cell": i }, gRegister, `${cx} 246`);
-      const box = path(
-        `M${cx - 28} 213 H${cx + 28} V279 H${cx - 28} Z`,
-        {},
-        cell,
-      );
-      const ports = group({}, cell);
-      path(`M${cx} 195 V213 M${cx} 279 V301`, {}, ports);
-      dataLabels.push(text(cx, 230, "D", { class: "tiny" }, ports));
-      outputLabels.push(text(cx, 271, "Q", { class: "tiny" }, ports));
-      cellLabels.push(text(cx, 251, "1 bit", { class: "caption" }, ports));
-      if (i === 0) {
-        hideAt0(cell);
-        tl.to(cell, { opacity: 1, duration: DUR * 0.2 }, at(17) + DUR * 0.26);
-        draw(box, at(17) + DUR * 0.26, DUR * 0.28);
-        hideAt0(ports);
-        tl.to(ports, { opacity: 1, duration: DUR * 0.2 }, at(17) + DUR * 0.48);
-      } else {
-        // Repeated cells emerge from the first block, then spread into an aligned row.
-        hideAt0(cell, { x: 100 - cx, scale: 0.92 });
-        tl.to(
-          cell,
-          { x: 0, scale: 1, opacity: 1, duration: DUR * 0.3, ease: EASE },
-          at(17) + DUR * (0.48 + i * 0.045),
-        );
-      }
+    const memory = MEMORY_SCENES.build({
+      root,
+      tl,
+      hold,
+      at,
+      index,
+      DUR,
+      EASE,
+      mk,
+      group,
+      path,
+      text,
+      key,
+      show,
+      afterRender,
     });
-    const sharedWrite = group({ "data-shared-write": "" }, gRegister);
-    hideAt0(sharedWrite);
-    tl.to(sharedWrite, { opacity: 1, duration: DUR * 0.1 }, at(17) + DUR * 0.8);
-    const bus = path("M48 330 H322", {}, sharedWrite);
-    draw(bus, at(17) + DUR * 0.8, DUR * 0.2);
-    cellCentres.forEach((cx) => {
-      const branch = path(`M${cx - 18} 330 V279`, {}, sharedWrite);
-      draw(branch, at(17) + DUR * 0.86, DUR * 0.14);
-      const junction = dot(cx - 18, 330, 1.8, sharedWrite);
-      hideAt0(junction);
-      tl.to(
-        junction,
-        { opacity: 1, duration: DUR * 0.08 },
-        at(17) + DUR * 0.92,
-      );
-    });
-    const writeLabel = text(
-      39,
-      334,
-      "WE",
-      { "text-anchor": "end" },
-      sharedWrite,
-    );
-    const registerTitle = text(
-      220,
-      166,
-      "4-bit register",
-      { class: "caption" },
-      gRegister,
-    );
-    hideAt0(registerTitle);
-    tl.to(
-      registerTitle,
-      { opacity: 1, duration: DUR * 0.18 },
-      at(17) + DUR * 0.82,
-    );
-    caption(17, "four one-bit latches · one shared write-enable");
-
-    /* ================= 18 · copy the answer, then hold it ================= */
-    // Keep the same four register cells on screen; make room above for the adder.
-    tl.to(
-      [registerTitle, ...cellLabels],
-      { opacity: 0, duration: DUR * 0.3 },
-      at(18),
-    );
-    const gStored = group({ "data-diagram": "stored-answer" }, root);
-    key(gStored, 18, {}, null, 0.35);
-    text(
-      220,
-      70,
-      "0011 + 0110 = 1001",
-      { class: "caption", "data-calculation": 0 },
-      gStored,
-    );
-    text(220, 92, "4-bit adder", { class: "caption" }, gStored);
-    const savedDigits = [];
-    cellCentres.forEach((cx, i) => {
-      mk("rect", { x: cx - 28, y: 128, width: 56, height: 46, rx: 3 }, gStored);
-      path(
-        `M${cx - 5} 151 H${cx + 5} M${cx} 146 V156`,
-        { class: "muted" },
-        gStored,
-      );
-      path(`M${cx - 10} 116 V128 M${cx + 10} 116 V128`, {}, gStored);
-      text(
-        cx - 10,
-        111,
-        "0011"[i],
-        { class: "tiny bit", "data-operand-a": i },
-        gStored,
-      );
-      text(
-        cx + 10,
-        111,
-        "0110"[i],
-        { class: "tiny bit", "data-operand-b": i },
-        gStored,
-      );
-      if (i < 3)
-        path(
-          `M${cx + 52} 151 H${cx + 28} M${cx + 34} 147 L${cx + 28} 151 L${cx + 34} 155`,
-          {},
-          gStored,
-        );
-      const link = path(`M${cx} 174 V227`, { "data-answer-wire": i }, gStored);
-      draw(link, at(18) + DUR * 0.5, DUR * 0.4);
-      // Put each live value beside its terminal rather than floating on the wire.
-      tl.to(
-        dataLabels[i],
-        { attr: { x: cx - 9, y: 229 }, duration: DUR * 0.55, ease: EASE },
-        at(18),
-      );
-      tl.to(
-        outputLabels[i],
-        { attr: { x: cx - 9, y: 270 }, duration: DUR * 0.55, ease: EASE },
-        at(18),
-      );
-      text(
-        cx + 9,
-        262,
-        "1001"[i],
-        { class: "bit", "data-answer-bit": i },
-        gStored,
-      );
-      savedDigits.push(
-        text(
-          cx + 9,
-          303,
-          "1001"[i],
-          { class: "bit", "data-saved-bit": i },
-          gStored,
-        ),
-      );
-    });
-    path("M72 151 H50 M56 147 L50 151 L56 155 M390 151 H368", {}, gStored);
-    text(
-      397,
-      155,
-      "0",
-      { class: "tiny muted", "text-anchor": "start" },
-      gStored,
-    );
-    // Keep the enable value on the same baseline as WE, before the wire starts.
-    tl.to(
-      writeLabel,
-      { attr: { x: 24 }, duration: DUR * 0.55, ease: EASE },
-      at(18),
-    );
-    const writeValues = ["1", "0"].map((value) =>
-      text(
-        38,
-        366,
-        value,
-        { class: "bit", "data-write-value": value },
-        gStored,
-      ),
-    );
-    const copyPulse = cellCentres.map((cx) => dot(cx, 176, 2.5, gStored));
-    // One deliberate demonstration per visit. It finishes on the retained answer.
-    // Pause during scroll transitions and reset only once the entire overlay is hidden.
-    // This avoids a visible reset when the user reverses scroll or leaves mid-demonstration.
-    const storeDemo = gsap.timeline({ paused: true });
-    storeDemo.set(
-      [writeValues[1], ...copyPulse, ...savedDigits],
-      { opacity: 0 },
-      0,
-    );
-    storeDemo.set(writeValues[0], { opacity: 1 }, 0);
-    storeDemo.set(copyPulse, { attr: { cy: 176 } }, 0);
-    storeDemo.to(copyPulse, { opacity: 1, duration: 0.25 }, 0.3);
-    storeDemo.to(
-      copyPulse,
-      { attr: { cy: 245 }, duration: 0.9, ease: "none" },
-      0.5,
-    );
-    storeDemo.to(savedDigits, { opacity: 1, duration: 0.4 }, 1.1);
-    storeDemo.to(copyPulse, { opacity: 0, duration: 0.25 }, 1.3);
-    storeDemo.to(writeValues[0], { opacity: 0, duration: 0.3 }, 2.5);
-    storeDemo.to(writeValues[1], { opacity: 1, duration: 0.3 }, 2.8);
-    storeDemo.time(0.001, true).time(0, true);
-    afterRender.push(() => {
-      const progress = tl.time();
-      if (progress <= index(17) + hold) storeDemo.pause(0);
-      else if (Math.abs(progress - index(18)) <= hold) storeDemo.play();
-      else storeDemo.pause();
-    });
-
-    key(gRegister, 17, { opacity: 1 }, null, -1);
-    key(gRegister, "timing", { opacity: 0, scale: 0.7, y: 32 }, null, 0, 0.6);
-    key(gStored, "timing", { opacity: 0 }, null, 0, 0.6);
     const computer = COMPUTER_SCENES.build({
       includeComputer: sceneKeys.includes("select-values"),
+      controls: memory.controls,
       root,
       tl,
       hold,
@@ -1376,9 +1268,9 @@ export const SCENES2D = (function () {
       tl,
       loops,
       afterRender,
-      storeDemo,
       ...computer,
-      demos: [...logicDemos, ...computer.demos],
+      demos: [...logicDemos, ...memory.demos, ...computer.demos],
+      dispose: memory.dispose,
     };
   }
 

@@ -14,40 +14,108 @@ const template = "<!--{{TITLE}}-->{{ARTICLE}}";
 const sceneKeys = (html) =>
   [...html.matchAll(/data-scene="([^"]+)"/g)].map((match) => match[1]);
 
-test("the public guide ends with timing and excludes all chapter 5 prose and links", () => {
+test("the public guide includes chapter 5 through the completed computer", () => {
   const html = renderPost(source, template, scenes, publication);
-  assert.equal(publication.publishedThrough, "timing");
-  assert.deepEqual(
-    sceneKeys(html),
-    scenes.slice(0, scenes.indexOf("timing") + 1),
-  );
-  for (const draft of [
+  assert.equal(publication.publishedThrough, "computer");
+  assert.deepEqual(sceneKeys(html), scenes);
+  for (const chapterContent of [
     "Building a computer",
     "von Neumann",
-    "multiplexer",
     "LC-3",
     "program counter",
-    "sand-select-values",
+    "sand-instruction-control",
+    "sand-controller",
     "sand-computer",
+    "machine code",
   ])
-    assert.ok(!html.includes(draft), draft);
+    assert.ok(html.includes(chapterContent), chapterContent);
+  assert.ok(!html.includes('class="footnote"'));
   assert.ok(html.includes(publication.footer));
-  assert.ok(!html.includes("The LC-3 example"));
+  assert.equal(html, renderPost(source, template, scenes));
+});
+
+test("an earlier publication boundary still excludes unpublished chapters", () => {
+  const boundary = {
+    publishedThrough: "memory-buses",
+    footer: "More to come.",
+  };
+  const html = renderPost(source, template, scenes, boundary);
+  assert.deepEqual(
+    sceneKeys(html),
+    scenes.slice(0, scenes.indexOf("memory-buses") + 1),
+  );
+  assert.ok(!html.includes("Building a computer"));
+  assert.ok(!html.includes("sand-computer-overview"));
+  assert.ok(!html.includes("sand-controller"));
+  assert.ok(html.includes(boundary.footer));
+  const publicScenes = sceneKeys(html);
+  assert.equal(
+    publicScenes.indexOf("timing"),
+    publicScenes.indexOf("heat") + 1,
+  );
+  assert.equal(
+    publicScenes.indexOf("latch"),
+    publicScenes.indexOf("timing") + 1,
+  );
 });
 
 test("the complete preview retains all chapters and its own ending", () => {
   const html = renderPost(source, template, scenes);
   assert.deepEqual(sceneKeys(html), scenes);
   assert.ok(html.includes("Building a computer"));
+  const previewScenes = sceneKeys(html);
+  assert.deepEqual(
+    previewScenes.slice(
+      previewScenes.indexOf("memory-buses") + 1,
+      previewScenes.indexOf("instruction-control") + 1,
+    ),
+    [
+      "computer-overview",
+      "memory-width",
+      "memory-interface",
+      "memory-word",
+      "memory-address-space",
+      "memory-access",
+      "memory-block",
+      "working-registers",
+      "select-values",
+      "alu",
+      "processing-block",
+      "instruction",
+      "addressed-memory",
+      "instruction-control",
+    ],
+  );
+  assert.ok(
+    html.includes(
+      "We used one earlier to choose which stored number reaches memory’s output.",
+    ),
+  );
+  assert.deepEqual(
+    previewScenes.slice(previewScenes.indexOf("instruction-control") + 1),
+    [
+      "program",
+      "instruction-fetch",
+      "execute",
+      "control",
+      "controller",
+      "computer",
+    ],
+  );
   assert.ok(html.includes("LC-3"));
-  assert.ok(html.includes("The LC-3 example"));
-  assert.ok(!html.includes(publication.footer));
+  assert.ok(
+    html.includes(
+      "Next, we will see how a task written by a person becomes the instruction bits that direct these circuits.",
+    ),
+  );
+  assert.ok(!html.includes('class="footnote"'));
 });
 
 test("unknown scenes, incomplete chapters and empty endings fail the build", () => {
   for (const invalid of [
     { ...publication, publishedThrough: "missing" },
     { ...publication, publishedThrough: "quartz" },
+    { ...publication, publishedThrough: "register" },
     { ...publication, footer: "" },
   ])
     assert.throws(

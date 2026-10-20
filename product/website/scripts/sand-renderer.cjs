@@ -194,7 +194,11 @@ function selectPublishedScenes(scenes, expectedScenes, publication) {
     );
   }
 
-  if (scenes[last + 1] && scenes[last + 1].tokens[0]?.type !== "heading") {
+  const nextHeading = scenes[last + 1]?.tokens[0];
+  if (
+    scenes[last + 1] &&
+    (nextHeading?.type !== "heading" || nextHeading.depth !== 2)
+  ) {
     throw Error(
       "The publication boundary must end immediately before a chapter heading.",
     );

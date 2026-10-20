@@ -170,7 +170,7 @@ We can now draw the whole memory array as a single block, with its latches, deco
 
 <!-- scene: computer-overview -->
 
-We have circuits that calculate and circuits that remember. Now we can combine them into a von Neumann computer, where the same hardware can perform different tasks by following different programs. Each program is a sequence of instructions stored in the same memory as its data. The central processing unit, or CPU, carries out these instructions using calculation circuits, fast storage registers and control circuits. Input and output connect the machine to the outside world.
+We have circuits that calculate and circuits that remember. Now we can combine them into a von Neumann computer, where the same hardware can perform different tasks by following different programs. Each program is a sequence of instructions stored in the same memory as its data. The central processing unit, or CPU, carries out these instructions. It has two main components, a processing unit (PU) containing calculation circuits and fast storage registers, and a control unit (CU) that directs their work. Input and output connect the machine to the outside world.
 
 <!-- scene: memory-width -->
 
@@ -220,7 +220,7 @@ We will begin with the values `3`, `6` and `2` stored in binary in `R1`, `R2` an
 
 <!-- scene: select-values -->
 
-We can now connect the adder we built from logic gates earlier to our fast storage registers. We already used a multiplexer to select which stored number reaches the memory’s output. Here, two multiplexers, labelled MUX, choose which values from `R0` to `R7` reach the adder. Each input can select any of the eight registers, so we can use different pairs of stored numbers without changing the wiring. The figure shows only the connections used in our example.
+We can now connect the adder we built earlier to our fast storage registers. A multiplexer, or MUX, selects one of several inputs and passes it to its output. We used one earlier to choose which stored number reaches memory’s output. Here, each of two MUXes selects one of the eight registers, supplying one input to the adder. Each thick data connection carries all sixteen bits of a number together.
 
 For our first calculation, we select `R1` and `R2`, sending `3` and `6` to the adder. Each thick path marked `16` represents sixteen parallel wires, carrying all the bits of one number together.
 
@@ -251,7 +251,11 @@ We have shown the processing unit repeatedly adding `2` to a running total. The 
 
 These words and register names are a readable form of the instruction. LC-3 stores it as sixteen bits, `0001000000000011`. The instruction set architecture, or ISA, defines which instructions the processor supports, how they are encoded and what they do. The first four bits, `0001`, select the operation `ADD`. The next three bits name the destination register in which to save the output, followed by fields identifying the two inputs. Each register field uses three bits to choose one of eight registers. Here, `000` names `R0` and `011` names `R3`. These identify storage slots, not their contents. `R0` appears twice because its previous value is an input and it also receives the result.
 
-The second input can come from another register or be a small number included directly in the instruction. A single bit chooses between these options. When it is `0`, the final three bits name a register, and the two bits before them are unused. When it is `1`, the final five bits hold the number itself. This makes common tasks such as adding `1` convenient, without first storing that number in a register.
+After the bits naming the first input register, one bit selects where the second input comes from.
+
+If that bit is `0`, the second input comes from a register (in this case, `R3`). Our instruction ends with `0 00 011`. The first `0` selects this option, the middle `00` is unused, and `011` names `R3`.
+
+If that bit is `1`, the final five bits instead contain a small number. An ending of `1 00001` supplies the number `1` directly, rather than selecting a register. This lets us add `1` to a counter without first storing `1` in another register.
 
 Instructions can do more than request an ALU operation. Some copy numbers from memory into registers or save register contents back to memory. Others change which instruction runs next, allowing a program to repeat steps or skip them.
 
@@ -299,23 +303,21 @@ When `MAR` selects an address, memory needs time to retrieve the bits stored the
 
 ### Inside the controller
 
-How does the controller produce a sequence of actions? Let’s follow our one instruction transfer using a small illustrative controller. We begin while memory is still retrieving the instruction for `MDR`.
+How does the controller produce a sequence of actions? The figure follows a simplified `ADD` controller through four steps, fetching an instruction from memory and carrying it out. One step is always active.
 
-The circuit has three jobs. A small state register remembers the current step using two bits, `S1` and `S0`. Output logic, the gates on the right, turns those bits into electrical control signals. Next-state logic, the gates on the left, prepares the bits for the next step. The state bits identify a step in the sequence. They are separate from the instruction bits held in `IR`.
+Another small state register stores two bits that identify the current step. These are separate from the instruction bits held in `IR`. Logic gates use the state bits to activate control wires and prepare the bits for the next step.
 
-Unlike our earlier latches, which pass their input through while writing is enabled, these clocked registers have been designed such that their inputs are only captured at a clock edge, the instant the clock changes from low to high. They hold those values between edges, and only registers enabled to write capture new values.
+When enabled, these clocked registers capture their inputs at a clock edge, the instant the clock changes from low to high. They hold their values between edges. Our earlier latches instead passed changes through for as long as writing was enabled. Preparing new bits at a register’s inputs does not immediately change what it stores.
 
-Start with state `00`, waiting for memory. The external input `READY` is `0` while the instruction is not yet available in `MDR`. The extra AND gate on the left keeps the next-state bits at `00`, so each clock edge captures `00` again. The controller stays in the same step.
+In state `00`, the controller requests an instruction from memory. At the next clock edge, the state register captures `01`, entering the wait step. Memory needs time to retrieve the instruction and place it in `MDR`. Clock pulses continue, but while `READY` is `0`, the gates keep preparing `01`, so the state register captures the same bits again and stays in the wait step.
 
-When memory has supplied the instruction, it sets `READY` to `1`. The AND gate now allows the next-state bits to become `01`. These bits wait at the state register’s inputs until the next clock edge, when the register captures them and changes its state to `01`.
+Once the instruction is available in `MDR`, memory sets `READY` to `1`. The gates now prepare `10` at the state register’s inputs. At the next clock edge, the register captures those bits and the copy step becomes active.
 
-The NOT and AND gates on the right detect `01` and activate two control wires. One allows `MDR` to send the instruction onto the bus. The other enables `IR` to save it at the next clock edge. Enabling the transfer does not immediately update `IR`. Meanwhile, the next-state gates prepare `10`, to hold.
+In state `10`, the gates activate two control wires. One lets `MDR` send the instruction onto the bus of sixteen parallel wires. The other enables `IR` to save it. The instruction reaches `IR`’s inputs, but is not stored until the following clock edge. At that edge, `IR` captures the instruction and the state register captures `11`, entering the execute step. The copy controls (send MDR, load IR) then switch off, while `IR` retains the instruction.
 
-At the following clock edge, `IR` captures the instruction and the state register captures `10`. The transfer controls switch off. `IR` retains the instruction, and the state register stays at `10` because the next-state gates keep preparing `10`.
+In state `11`, control signals select the input registers, choose addition at the ALU and enable the destination register to save the result. At the next clock edge, the destination captures the result and the state register returns to `00`, requesting the next instruction.
 
-**The wiring stays fixed, but changing the stored state changes which control signals are active.** We describe this behaviour as a finite-state machine, or FSM, with a fixed set of states and rules for moving between them. The register and gates implement those rules as a circuit.
-
-The full controller of course has more states and also uses instruction bits to choose which steps to follow. This example shows how its next-state logic can combine stored state with an external signal to decide when to advance and what to do.
+The wiring stays fixed, but changing the stored state changes which control signals are active. This sequence of states and the rules for moving between them form a **finite-state machine** implemented here by a register and logic gates. The full LC-3 controller has many more states and can spend several clock cycles on the work grouped into one step here.
 
 <!-- scene: computer -->
 

@@ -411,6 +411,43 @@
   display: grid;
 }
 
+.sand-journey .sand-side {
+  max-height: calc(100dvh - var(--nav-h) - 2 * var(--u));
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.sand-journey .sand-chapter {
+  display: grid;
+}
+
+.sand-journey .sand-subsections {
+  list-style: none;
+  margin: 0 0 0.5rem 1.5rem;
+  padding: 0;
+}
+
+.sand-journey .sand-subsection-link {
+  display: block;
+  border-left: 2px solid transparent;
+  padding: 0.3rem 0.2rem 0.3rem 0.65rem;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+.sand-journey .sand-subsection-link:hover,
+.sand-journey .sand-subsection-link:focus-visible,
+.sand-journey .sand-subsection-link[aria-current] {
+  color: var(--color-text);
+}
+
+.sand-journey .sand-subsection-link[aria-current] {
+  border-left-color: currentColor;
+  font-weight: 500;
+}
+
 .sand-journey .sand-main {
   min-width: 0;
 }

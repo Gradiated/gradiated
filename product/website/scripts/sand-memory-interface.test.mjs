@@ -3,7 +3,17 @@ import test from "node:test";
 import { MEMORY_INTERFACE_SCENES } from "../src/components/articles/sand/runtime/memory-interface-scenes.js";
 import { MEMORY_ACCESS_DURATION } from "../src/components/articles/sand/runtime/memory-access-model.js";
 
-const mountScene = () => {
+const mountScene = (t, reducedMotion = false) => {
+  const preference = { matches: reducedMotion };
+  const original = Object.getOwnPropertyDescriptor(globalThis, "matchMedia");
+  Object.defineProperty(globalThis, "matchMedia", {
+    configurable: true,
+    value: () => preference,
+  });
+  t.after(() => {
+    if (original) Object.defineProperty(globalThis, "matchMedia", original);
+    else delete globalThis.matchMedia;
+  });
   const nodes = [];
   const mk = (tag, attributes = {}) => {
     const node = {
@@ -83,7 +93,7 @@ const mountScene = () => {
 
 for (const action of ["Read", "Write"]) {
   test(`${action} resumes after a visibility pause without restarting the transfer`, (t) => {
-    const scene = mountScene();
+    const scene = mountScene(t);
     t.after(scene.dispose);
     scene.render();
     scene.choose(action);
@@ -108,7 +118,7 @@ for (const action of ["Read", "Write"]) {
 }
 
 test("memory widening resumes after a visibility pause without replaying", (t) => {
-  const scene = mountScene();
+  const scene = mountScene(t);
   t.after(scene.dispose);
   scene.enter("memory-width");
   scene.render();
@@ -120,5 +130,48 @@ test("memory widening resumes after a visibility pause without replaying", (t) =
   assert.equal(animation.time(), 1.5);
   animation.progress(1);
   scene.render();
+  assert.equal(animation.progress(), 1);
+});
+
+for (const action of ["Read", "Write"]) {
+  test(`${action} completes immediately with reduced motion and stays settled`, (t) => {
+    const scene = mountScene(t, true);
+    t.after(scene.dispose);
+    scene.render();
+    scene.choose(action);
+    scene.render();
+    const animation = scene.demos[1];
+    assert.equal(animation.paused(), true);
+    assert.equal(animation.progress(), 1);
+    assert.equal(scene.diagram.getAttribute("data-busy"), "false");
+    assert.equal(scene.diagram.getAttribute("data-we"), "0");
+    assert.equal(
+      scene.diagram.getAttribute("data-mdr"),
+      action === "Read" ? "6" : "9",
+    );
+
+    scene.enter("memory-block");
+    scene.render();
+    scene.enter("memory-access");
+    scene.render();
+    assert.equal(animation.paused(), true);
+    assert.equal(animation.progress(), 1);
+  });
+}
+
+test("reduced-motion widening settles immediately on entry and re-entry", (t) => {
+  const scene = mountScene(t, true);
+  t.after(scene.dispose);
+  scene.enter("memory-width");
+  scene.render();
+  const animation = scene.demos[0];
+  assert.equal(animation.paused(), true);
+  assert.equal(animation.progress(), 1);
+
+  scene.enter("memory-interface");
+  scene.render();
+  scene.enter("memory-width");
+  scene.render();
+  assert.equal(animation.paused(), true);
   assert.equal(animation.progress(), 1);
 });

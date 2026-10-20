@@ -5,6 +5,8 @@ import {
   PROGRAM_START,
   instructionCycleFrame,
   controllerFrame,
+  CONTROLLER_GATES,
+  CONTROLLER_OUTPUTS,
 } from "../src/components/articles/sand/runtime/instruction-cycle-model.js";
 
 test("the fetched bits encode the same ADD R0 R0 R3 used in the processing example", () => {
@@ -69,52 +71,72 @@ test("the second instruction continues the total without clearing the previous r
   assert.equal(done.writeEnabled, false);
 });
 
-test("the controller holds while memory is busy and prepares a state before capturing it", () => {
-  for (const time of [0, 2, 3.99]) {
-    const waiting = controllerFrame(time);
-    assert.equal(waiting.ready, false);
-    assert.equal(waiting.state, 0);
-    assert.equal(waiting.copy, false);
-    assert.equal((waiting.next1 << 1) | waiting.next0, 0);
+test("one step remains active throughout a complete illustrative ADD cycle", () => {
+  const visits = [];
+  for (let time = 0; time <= 15; time += 0.125) {
+    const frame = controllerFrame(time);
+    assert.equal(frame.bits.length, 2);
+    assert.equal(parseInt(frame.bits, 2), frame.state);
+    assert.equal(parseInt(frame.nextBits, 2), frame.nextState);
+    assert.ok(["request", "wait", "copy", "execute"].includes(frame.step));
+    if (visits.at(-1) !== frame.step) visits.push(frame.step);
   }
-  for (const time of [4, 5.99]) {
-    const ready = controllerFrame(time);
-    assert.equal(ready.ready, true);
-    assert.equal(ready.state, 0);
-    assert.equal(ready.copy, false);
-    assert.equal((ready.next1 << 1) | ready.next0, 1);
+  assert.deepEqual(visits, ["request", "wait", "copy", "execute", "request"]);
+  assert.equal(controllerFrame(14.99).completed, 0);
+  assert.equal(controllerFrame(15).completed, 1);
+  assert.equal(controllerFrame(15).request, true);
+  assert.equal(controllerFrame(15).ready, false);
+  assert.equal(controllerFrame(18).step, "wait");
+  assert.equal(controllerFrame(30).completed, 2);
+});
+
+test("memory readiness prepares a transition but only a clock edge captures it", () => {
+  for (const time of [3, 6, 7.99]) {
+    const frame = controllerFrame(time);
+    assert.equal(frame.step, "wait");
+    assert.equal(frame.nextState, frame.state);
+    assert.equal(frame.ready, false);
+    assert.equal(frame.copy, false);
   }
-  const copying = controllerFrame(6);
-  assert.equal(copying.state, 1);
-  assert.equal(copying.copy, true);
-  assert.equal(copying.captured, false);
-  assert.equal((copying.next1 << 1) | copying.next0, 2);
-  assert.equal(controllerFrame(9.99).copy, true);
-  for (const time of [10, 12, 60]) {
-    const captured = controllerFrame(time);
-    assert.equal(captured.state, 2);
-    assert.equal(captured.copy, false);
-    assert.equal(captured.captured, true);
-    assert.equal((captured.next1 << 1) | captured.next0, 2);
+  const ready = controllerFrame(8);
+  assert.equal(ready.step, "wait");
+  assert.equal(ready.nextState, 2);
+  assert.equal(ready.ready, true);
+  assert.equal(ready.copy, false);
+  assert.equal(controllerFrame(8.99).step, "wait");
+  assert.equal(controllerFrame(9).step, "copy");
+});
+
+test("a slower or absent memory response extends the waiting state", () => {
+  assert.equal(controllerFrame(9, 11).step, "wait");
+  assert.equal(controllerFrame(11, 11).nextState, 2);
+  assert.equal(controllerFrame(11.99, 11).copy, false);
+  assert.equal(controllerFrame(12, 11).copy, true);
+  assert.equal(controllerFrame(14.99, 11).captured, false);
+  assert.equal(controllerFrame(15, 11).captured, true);
+  for (const time of [3, 6, 9, 18, 60]) {
+    const frame = controllerFrame(time, Infinity);
+    assert.equal(frame.step, "wait");
+    assert.equal(frame.copy, false);
+    assert.equal(frame.completed, 0);
   }
 });
 
-test("a later memory response delays the transfer until a later clock edge", () => {
-  assert.equal(controllerFrame(6, 8).state, 0);
-  assert.equal(controllerFrame(6, 8).copy, false);
-  const prepared = controllerFrame(8, 8);
-  assert.equal(prepared.state, 0);
-  assert.equal(prepared.next0, 1);
-  assert.equal(controllerFrame(9.99, 8).state, 0);
-  assert.equal(controllerFrame(10, 8).state, 1);
-  assert.equal(controllerFrame(13.99, 8).captured, false);
-  assert.equal(controllerFrame(14, 8).captured, true);
-  for (const time of [2, 6, 10, 14]) {
-    const waiting = controllerFrame(time, Infinity);
-    assert.equal(waiting.state, 0);
-    assert.equal(waiting.copy, false);
-    assert.equal(waiting.captured, false);
+test("transfer controls are enabled before IR captures, then switch off", () => {
+  assert.equal(controllerFrame(8.99).copy, false);
+  for (const time of [9, 10.5, 11.99]) {
+    assert.equal(controllerFrame(time).copy, true);
+    assert.equal(controllerFrame(time).captured, false);
+    assert.equal(controllerFrame(time).captures.ir, 0);
   }
+  const captured = controllerFrame(12);
+  assert.equal(captured.step, "execute");
+  assert.equal(captured.copy, false);
+  assert.equal(captured.captured, true);
+  assert.equal(captured.captures.ir, 1);
+  assert.equal(captured.processing, true);
+  assert.equal(controllerFrame(15).step, "request");
+  assert.equal(controllerFrame(14.99).captured, true);
 });
 
 test("the whole-computer fetch waits for memory before transferring the instruction into IR", () => {
@@ -164,15 +186,54 @@ test("register capture flashes coincide with clock edges and value arrival", () 
   assert.equal(repeated.captures.ir, 1);
 });
 
-test("state captures coincide with clock edges, including holding the waiting state", () => {
-  for (const edge of [2, 6, 10]) {
+test("state captures and clock flashes share every rising edge, even while waiting", () => {
+  for (const edge of [3, 6, 9, 12, 15]) {
     assert.equal(controllerFrame(edge - 0.01).captures.state, 0);
     assert.equal(controllerFrame(edge).captures.state, 1);
+    assert.equal(controllerFrame(edge).clock, 1);
     assert.equal(controllerFrame(edge + 0.5).captures.state, 0);
   }
-  assert.equal(controllerFrame(2).state, 0);
-  assert.equal(controllerFrame(6).state, 1);
-  assert.equal(controllerFrame(10).state, 2);
-  assert.equal(controllerFrame(14).captures.state, 0);
-  assert.equal(controllerFrame(14).state, 2);
+  assert.equal(controllerFrame(0).clock, 0);
+  assert.equal(controllerFrame(3).step, "wait");
+  assert.equal(controllerFrame(6).step, "wait");
+  assert.equal(controllerFrame(9).step, "copy");
+  assert.equal(controllerFrame(12).step, "execute");
+  assert.equal(controllerFrame(15).step, "request");
+  assert.equal(controllerFrame(18).step, "wait");
+});
+
+test("the drawn gate circuit produces the four-state sequence and its control signals", () => {
+  for (let state = 0; state < 4; state += 1) {
+    for (const ready of [false, true]) {
+      const values = {
+        s1: Boolean(state & 2),
+        s0: Boolean(state & 1),
+        ready,
+      };
+      for (const [id, operation, inputs] of CONTROLLER_GATES) {
+        const operands = inputs.map((input) => {
+          assert.ok(input in values, `unconnected gate input ${input}`);
+          return values[input];
+        });
+        values[id] =
+          operation === "NOT"
+            ? !operands[0]
+            : operation === "AND"
+              ? operands.every(Boolean)
+              : operands.some(Boolean);
+      }
+      const outputs = Object.fromEntries(
+        Object.entries(CONTROLLER_OUTPUTS).map(([name, net]) => [
+          name,
+          values[net],
+        ]),
+      );
+      const next = Number(outputs.next1) * 2 + Number(outputs.next0);
+      assert.equal(next, state === 1 ? (ready ? 2 : 1) : (state + 1) % 4);
+      assert.equal(outputs.request, state === 0);
+      assert.equal(outputs.send, state === 2);
+      assert.equal(outputs.load, state === 2);
+      assert.equal(outputs.processing, state === 3);
+    }
+  }
 });

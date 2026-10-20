@@ -1,5 +1,10 @@
 import { gsap } from "gsap";
-import { controllerFrame } from "./instruction-cycle-model.js";
+import {
+  CONTROLLER_CYCLE_DURATION,
+  CONTROLLER_GATES,
+  CONTROLLER_OUTPUTS,
+  controllerFrame,
+} from "./instruction-cycle-model.js";
 
 export const buildControllerScene = ({
   root,
@@ -19,12 +24,27 @@ export const buildControllerScene = ({
   const clamp = (value) => Math.max(0, Math.min(1, value));
   const ease = (value) => value * value * (3 - 2 * value);
   const mix = (a, b, amount) => a + (b - a) * amount;
-  const label = (x, y, value, className = "tiny") =>
+  const label = (x, y, value, className = "fetch-phase") =>
     text(x, y, value, { class: className }, contents);
   const wire = (d) => path(d, {}, contents);
-  const signal = (d) => {
-    wire(d);
+  const signal = (d, bus = false) => {
+    path(d, bus ? { class: "interface-bus" } : {}, contents);
     return path(d, { class: "computer-signal" }, contents);
+  };
+  const arrow = (
+    d,
+    x,
+    y,
+    rotation = 0,
+    { highlighted = false, bus = false } = {},
+  ) => {
+    const shaft = highlighted ? signal(d, bus) : wire(d);
+    path(
+      "M-5 -3 L0 0 L-5 3",
+      { transform: `translate(${x} ${y}) rotate(${rotation})` },
+      contents,
+    );
+    return shaft;
   };
   const box = (x, y, width, height) =>
     mk("rect", { x, y, width, height, rx: 3, class: "memory-box" }, contents);
@@ -38,7 +58,7 @@ export const buildControllerScene = ({
       x: 12,
       y: 42,
       width: 416,
-      height: 308,
+      height: 370,
       rx: 6,
       class: "fetch-control-frame",
     },
@@ -46,61 +66,56 @@ export const buildControllerScene = ({
   );
   scene.insertBefore(zoomFrame, contents);
   label(220, 27, "Inside the controller", "caption");
-  const stateNames = ["wait for memory", "copy MDR to IR", "hold"];
-  const stateTints = stateNames.map((name, i) => {
-    const x = 112 + i * 100;
+  const stateTints = [
+    [116, 72, "Request instruction"],
+    [324, 72, "Wait for memory"],
+    [324, 148, "Copy MDR to IR"],
+    [116, 148, "Execute ADD"],
+  ].map(([x, y, name], state) => {
+    const card = group({ "data-controller-step": state }, contents);
     const tint = mk(
       "rect",
       {
-        x: x - 42,
-        y: 57,
-        width: 84,
-        height: 37,
+        x: x - 56,
+        y,
+        width: 112,
+        height: 44,
         rx: 3,
         class: "computer-glow",
       },
-      contents,
+      card,
     );
-    label(x, 71, ["00", "01", "10"][i], "bit tiny");
-    label(x, 86, name);
-    return tint;
+    text(
+      x,
+      y + 13,
+      state.toString(2).padStart(2, "0"),
+      { class: "bit tiny" },
+      card,
+    );
+    text(x, y + 31, name, { class: "fetch-phase" }, card);
+    return { card, tint };
   });
-  wire(
-    "M155 76 H168 M162 72 L168 76 L162 80 M255 76 H268 M262 72 L268 76 L262 80",
+  arrow("M178 94 H262", 262, 94);
+  arrow("M324 120 V142", 324, 142, 90);
+  arrow("M262 170 H178", 178, 170, 180);
+  arrow("M116 142 V120", 116, 120, -90);
+  const waitingLoop = arrow(
+    "M306 67 V63 C306 44 342 44 342 63 V67",
+    342,
+    67,
+    90,
+    { highlighted: true },
   );
 
-  label(121, 137, "next-state logic");
-  label(228, 137, "state register");
-  label(351, 137, "output logic");
-
-  const stateOnePath = signal(
-    "M266 206 H278 V112 H32 V174 H72.414 M278 206 H290",
-  );
-  const stateZeroPath = signal("M266 254 H278 V314 H32 V190 H72.414");
-  wire("M68 164 Q79 182 68 200 Q100 200 110 182 Q100 164 68 164 Z");
-  wire("M72 227 L92 238 L72 249 Z");
-  mk("circle", { cx: 96, cy: 238, r: 3, class: "memory-box" }, contents);
-  const nextOnePath = signal("M110 182 H150 V206 H190 M122 182 V216 H54 V238 H72");
-  const noStatePath = signal("M99 238 H122");
-  wire("M122 230 H138 A24 24 0 0 1 138 278 H122 Z");
-  const nextZeroPath = signal("M162 254 H190");
-  const readyCrossing = path("M26 270 Q32 260 38 270", {}, contents);
-  readyCrossing.style.stroke = "var(--paper)";
-  readyCrossing.style.strokeWidth = "5px";
-  const readyPath = signal("M-20 270 H26 Q32 260 38 270 H122");
-  label(62, 292, "READY");
-  const readyValue = label(105, 292, "0", "bit");
-  const nextOne = label(172, 194, "0", "bit");
-  const nextZero = label(172, 242, "1", "bit");
-
-  box(190, 178, 76, 108);
+  box(39, 270, 92, 80);
+  label(85, 293, "State register");
   const stateCapture = mk(
     "rect",
     {
-      x: 191,
-      y: 179,
-      width: 74,
-      height: 106,
+      x: 40,
+      y: 271,
+      width: 90,
+      height: 78,
       rx: 3,
       class: "computer-glow",
       "data-register-capture": "state",
@@ -108,41 +123,181 @@ export const buildControllerScene = ({
     },
     contents,
   );
-  label(208, 206, "S1", "bit");
-  label(208, 254, "S0", "bit");
-  const s1 = label(246, 206, "0", "bit");
-  const s0 = label(246, 254, "0", "bit");
-  wire("M228 163 V178 M224 178 L228 184 L232 178");
-  const clock = mk(
-    "circle",
-    { cx: 228, cy: 165, r: 4, class: "fetch-clock-pulse" },
+  const stateBits = label(85, 322, "00", "bit");
+  box(184, 242, 102, 122);
+  const circuitTransform = { x: 185, y: 243, scale: 0.196 };
+  const readyPort = { x: 235, y: 242 };
+  const circuit = group(
+    {
+      opacity: 0.13,
+      class: "thin",
+      transform: `translate(${circuitTransform.x} ${circuitTransform.y}) scale(${circuitTransform.scale})`,
+      "data-controller-circuit": "",
+      "aria-hidden": "true",
+    },
     contents,
   );
-  label(228, 155, "clock");
-  wire("M290 195 L308 206 L290 217 Z");
-  mk("circle", { cx: 312, cy: 206, r: 3, class: "memory-box" }, contents);
-  const invertedPath = signal("M315 206 H326");
-  const directPath = signal("M278 254 H326");
-  wire("M326 194 H338 A36 36 0 0 1 338 266 H326 Z");
-  label(351, 168, "on only for 01");
-  const enable = label(391, 248, "0", "bit");
-  const sendPath = signal("M374 230 H460");
-  const savePath = signal("M380 230 V314 H460");
-  label(400, 218, "send MDR");
-  label(407, 302, "load IR");
-  for (const [cx, cy] of [
-    [278, 206],
-    [278, 254],
-    [122, 182],
-    [380, 230],
-  ])
-    mk("circle", { cx, cy, r: 1.5, class: "dot" }, contents);
+  const circuitWires = group({}, circuit);
+  const circuitGates = group({}, circuit);
+  const positions = {
+    n1: [40, 90],
+    n0: [40, 290],
+    notReady: [40, 500],
+    request: [170, 75],
+    wait: [170, 215],
+    copy: [170, 355],
+    execute: [170, 495],
+    hold: [290, 185],
+    advance: [290, 375],
+    next0: [410, 155],
+    next1: [410, 415],
+  };
+  const terminals = {
+    s1: [16, 90],
+    s0: [16, 290],
+    ready: [24, 500],
+  };
+  const rails = {
+    s1: [100, 58],
+    n1: [120, 90],
+    s0: [140, 258],
+    n0: [160, 290],
+    ready: [270, 440],
+    notReady: [280, 548],
+    request: [350, 75],
+    wait: [250, 215],
+    copy: [390, 290],
+    execute: [244, 537],
+    hold: [370, 185],
+    advance: [370, 375],
+    next0: [478, 155],
+    next1: [470, 415],
+  };
+  const route = (d) => path(d, {}, circuitWires);
+  for (const [id, operation, inputs] of CONTROLLER_GATES) {
+    const [x, y] = positions[id];
+    const gate = group(
+      { transform: `translate(${x} ${y})`, "data-gate": id },
+      circuitGates,
+    );
+    if (operation === "NOT") {
+      path("M0 -16 L26 0 L0 16 Z", {}, gate);
+      mk("circle", { cx: 30, cy: 0, r: 4 }, gate);
+    } else if (operation === "AND") {
+      path("M0 -24 H24 A24 24 0 0 1 24 24 H0 Z", {}, gate);
+    } else {
+      path("M0 -24 Q16 0 0 24 Q32 24 48 0 Q32 -24 0 -24 Z", {}, gate);
+    }
+    inputs.forEach((input, i) => {
+      const dy = inputs.length === 1 ? 0 : (i * 24) / (inputs.length - 1) - 12;
+      const inset = operation === "OR" ? (dy === 0 ? 8 : 6) : 0;
+      const [sx, sy] = operation === "NOT" ? terminals[input] : rails[input];
+      route(`M${sx} ${sy} V${y + dy} H${x + inset}`);
+    });
+    terminals[id] = [x + (operation === "NOT" ? 34 : 48), y];
+  }
+  for (const name of ["s1", "s0", "ready"]) {
+    const [sx, sy] = terminals[name];
+    const [rx, ry] = rails[name];
+    route(`M${sx} ${sy} H28 V${ry} H${rx}`);
+  }
+  for (const name of [
+    "n1",
+    "n0",
+    "request",
+    "wait",
+    "hold",
+    "advance",
+    "next0",
+    "next1",
+  ]) {
+    const [sx, sy] = terminals[name];
+    const [rx, ry] = rails[name];
+    route(`M${sx} ${sy} H${rx} V${ry}`);
+  }
+  route("M74 500 H140 V548 H280");
+  route("M218 355 H232 V290 H390");
+  route("M218 495 H244 V537");
+  for (const [name, y, lane] of [
+    ["s1", 338, 4],
+    ["s0", 346, 10],
+  ]) {
+    const [x, sy] = terminals[name];
+    route(`M0 ${y} H${lane} V${sy} H${x}`);
+  }
+  const readyInputX =
+    (readyPort.x - circuitTransform.x) / circuitTransform.scale;
+  const readyInputY =
+    (readyPort.y - circuitTransform.y) / circuitTransform.scale;
+  route(`M${readyInputX} ${readyInputY} V40 H24 V500`);
+  for (const [output, y, lane] of [
+    ["request", 127, 488],
+    ["send", 270, 496],
+    ["load", 413, 496],
+    ["processing", 556, 502],
+  ]) {
+    const [sx, sy] = rails[CONTROLLER_OUTPUTS[output]];
+    route(`M${sx} ${sy} H${lane} V${y} H515`);
+  }
+  for (const [output, x, y] of [
+    ["next1", 251, 584],
+    ["next0", 259, 596],
+  ]) {
+    const [sx, sy] = rails[CONTROLLER_OUTPUTS[output]];
+    route(`M${sx} ${sy} V${y} H${x} V617`);
+  }
+  const gateLabels = group({ "data-part": "controller-gate-labels" }, contents);
+  text(
+    235,
+    303,
+    "Logic gates",
+    {
+      class: "fetch-phase",
+      "dominant-baseline": "central",
+    },
+    gateLabels,
+  );
+
+  const statePath = arrow("M131 310 H184", 184, 310, 0, {
+    highlighted: true,
+    bus: true,
+  });
+  const feedbackPath = arrow(
+    "M235 364 V376 Q235 386 225 386 H35 Q25 386 25 376 V344 Q25 334 35 334 H39",
+    39,
+    334,
+    0,
+    { highlighted: true, bus: true },
+  );
+  path("M155 314 L161 306 M205 390 L211 382", {}, contents);
+  label(158, 300, "2", "fetch-phase bit");
+  label(208, 402, "2", "fetch-phase bit");
+  const nextBits = label(133, 377, "next step 01", "fetch-phase bit");
+
+  wire("M85 245 V270 M81 270 L85 276 L89 270");
+  label(85, 235, "clock");
+  const clock = mk(
+    "circle",
+    { cx: 85, cy: 245, r: 4, class: "fetch-clock-pulse" },
+    contents,
+  );
+  const readyPath = signal(`M-20 218 H${readyPort.x} V${readyPort.y}`);
+  const readyValue = label(196, 208, "READY 0", "fetch-phase bit");
+  const memoryPath = signal("M286 268 H460");
+  const sendPath = signal("M286 296 H460");
+  const savePath = signal("M286 324 H460");
+  const processingPath = signal("M286 352 H460");
+  label(357, 258, "request memory");
+  label(357, 286, "send MDR");
+  label(357, 314, "load IR");
+  label(357, 342, "control the PU");
 
   const time = { value: 0 };
-  const demo = gsap
-    .timeline({ paused: true })
-    .to(time, { value: 12, duration: 12, ease: "none" });
-  controls.registerReplay("controller", () => demo.restart());
+  const demo = gsap.timeline({ paused: true, repeat: -1 }).to(time, {
+    value: CONTROLLER_CYCLE_DURATION,
+    duration: CONTROLLER_CYCLE_DURATION,
+    ease: "none",
+  });
   let started = false;
   afterRender.push(() => {
     const position = tl.time();
@@ -163,21 +318,21 @@ export const buildControllerScene = ({
         width: 154 * scaleX,
         height: 40 * scaleY,
       };
-      const expanded = { x: 12, y: 42, width: 416, height: 308 };
+      const expanded = { x: 12, y: 42, width: 416, height: 370 };
       for (const attribute of ["x", "y", "width", "height"])
         zoomFrame.setAttribute(
           attribute,
           mix(small[attribute], expanded[attribute], openness),
         );
       const scale = mix(
-        Math.min(small.width / 416, small.height / 308),
+        Math.min(small.width / 416, small.height / 370),
         1,
         openness,
       );
       gsap.set(contents, {
         scale,
         x: mix(small.x + small.width / 2, 220, openness) - 220 * scale,
-        y: mix(small.y + small.height / 2, 196, openness) - 196 * scale,
+        y: mix(small.y + small.height / 2, 227, openness) - 227 * scale,
         opacity: clamp((openness - 0.12) / 0.45),
       });
       const backgroundOpacity = String(
@@ -195,51 +350,37 @@ export const buildControllerScene = ({
         started = true;
       } else demo.play();
     } else demo.pause();
-    const frame = controllerFrame(reduced ? 12 : time.value);
+    const elapsed =
+      time.value +
+      (demo.totalTime() >= CONTROLLER_CYCLE_DURATION
+        ? CONTROLLER_CYCLE_DURATION
+        : 0);
+    const frame = controllerFrame(reduced ? 13 : elapsed);
     stateCapture.style.opacity =
       visible && !reduced ? String(frame.captures.state) : "0";
-    setText(s1, frame.s1);
-    setText(s0, frame.s0);
-    setText(nextOne, frame.next1);
-    setText(nextZero, frame.next0);
-    setText(readyValue, Number(frame.ready));
-    setText(enable, Number(frame.copy));
-    const message = frame.captured
-      ? "Instruction captured in IR. State 10 holds."
-      : frame.copy
-        ? "State 01. MDR to IR transfer enabled."
-        : frame.ready
-          ? "Memory ready. Next bits 01 wait for the clock edge."
-          : "State 00. Waiting for memory.";
-    if (inView)
-      controls.update(
-        "controller",
-        { busy: false, message },
-        visible && !reduced ? 1 : 0,
-      );
-    stateTints.forEach((node, i) => {
-      node.style.opacity = i === frame.state ? "0.65" : "0";
+    setText(stateBits, frame.bits);
+    setText(nextBits, `next step ${frame.nextBits}`);
+    setText(readyValue, `READY ${Number(frame.ready)}`);
+    if (inView) controls.update("controller", {}, 0);
+    stateTints.forEach(({ card, tint }, state) => {
+      const active = state === frame.state;
+      card.setAttribute("data-active", String(active));
+      tint.style.opacity = active ? "0.65" : "0";
     });
-    for (const [node, value] of [
-      [stateOnePath, frame.s1],
-      [stateZeroPath, frame.s0],
-      [nextOnePath, frame.next1],
-      [nextZeroPath, frame.next0],
-      [noStatePath, 1 - frame.next1],
+    for (const [node, active] of [
+      [waitingLoop, frame.step === "wait" && !frame.ready],
+      [statePath, true],
+      [feedbackPath, true],
       [readyPath, frame.ready],
-      [invertedPath, 1 - frame.s1],
-      [directPath, frame.s0],
+      [memoryPath, frame.request],
       [sendPath, frame.copy],
       [savePath, frame.copy],
+      [processingPath, frame.processing],
     ])
-      node.style.opacity = value ? "0.8" : "0";
-    const tick = Math.abs((time.value % 4) - 2);
-    clock.style.opacity =
-      visible && !reduced ? String(Math.max(0, 1 - tick / 0.2)) : "0";
-    scene.setAttribute(
-      "data-controller-state",
-      frame.state.toString(2).padStart(2, "0"),
-    );
+      node.style.opacity = active ? "0.8" : "0";
+    clock.style.opacity = visible && !reduced ? String(frame.clock) : "0";
+    scene.setAttribute("data-controller-state", frame.bits);
+    scene.setAttribute("data-controller-step", frame.step);
     scene.setAttribute("data-controller-ready", String(frame.ready));
     scene.setAttribute("data-controller-copy", String(frame.copy));
     scene.setAttribute("data-controller-captured", String(frame.captured));

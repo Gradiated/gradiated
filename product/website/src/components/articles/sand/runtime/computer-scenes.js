@@ -145,35 +145,56 @@ export const COMPUTER_SCENES = (function () {
       const selection = group({ "data-part": "register-selection" }, detail);
       show(selection, "select-values", undefined);
       const routes = [];
-      const route = (d) => {
-        const base = path(d, { class: "interface-bus" }, selection);
-        const lit = path(d, { class: "computer-signal" }, selection);
+      const dataWires = group(
+        { "data-part": "register-input-buses" },
+        selection,
+      );
+      const activeWires = group({}, selection);
+      const route = (d, attrs = {}) => {
+        const base = path(d, { class: "interface-bus", ...attrs }, dataWires);
+        const lit = path(d, { class: "computer-signal" }, activeWires);
         routes.push(lit);
         return { base, lit };
       };
-      const firstInput = route("M148 170.5 H160 V188 H195");
-      const secondInput = route("M148 197.5 H185 V261 H195");
-      const nextFirstInput = route("M148 143.5 H178 V170 H195");
-      const nextSecondInput = route("M148 224.5 H172 V280 H195");
-      for (const y of [160, 251]) {
+      const registerInputs = [0, 1].map((input) =>
+        Array.from({ length: 8 }, (_, register) => {
+          const y = 143.5 + register * 27;
+          const lane = input === 0 ? 183 - register * 4 : 189 + register * 4;
+          const port = (input === 0 ? 151 : 242) + register * 8;
+          return route(`M148 ${y} H${lane} V${port} H230`, {
+            "data-mux-input": input,
+            "data-source-register": register,
+          });
+        }),
+      );
+      const firstInput = registerInputs[0][1];
+      const secondInput = registerInputs[1][2];
+      const nextFirstInput = registerInputs[0][0];
+      const nextSecondInput = registerInputs[1][3];
+      for (const y of [147, 238]) {
         path(
-          `M195 ${y} L235 ${y + 9} V${y + 29} L195 ${y + 38} Z`,
+          `M230 ${y} L270 ${y + 14} V${y + 52} L230 ${y + 66} Z`,
           {},
           selection,
         );
-        text(214, y + 23, "MUX", { class: "caption" }, selection);
-        path(`M215 ${y - 12} V${y + 4.5}`, {}, selection);
+        text(250, y + 37, "MUX", { class: "caption" }, selection);
+        path(`M250 ${y - 12} V${y + 7}`, {}, selection);
       }
-      const selectA = text(215, 136, "R1", { class: "tiny bit" }, selection);
-      const selectB = text(215, 227, "R2", { class: "tiny bit" }, selection);
-      const outputA = route("M235 179 H281 V190 H305");
-      const outputB = route("M235 270 H281 V250 H305");
-      for (const [x, y] of [
-        [259, 179],
-        [259, 270],
-      ]) {
-        path(`M${x - 3} ${y + 4} L${x + 3} ${y - 4}`, {}, selection);
-        text(x, y - 10, "16", { class: "tiny muted" }, selection);
+      const selectA = text(250, 123, "R1", { class: "tiny bit" }, selection);
+      const selectB = text(250, 222, "R2", { class: "tiny bit" }, selection);
+      const outputA = route("M270 179 H286 V190 H305");
+      const outputB = route("M270 270 H286 V250 H305");
+      const inputBusMarkers = [];
+      for (const [i, [x, y]] of [
+        [210, 151],
+        [210, 242],
+        [278, 179],
+        [278, 270],
+      ].entries()) {
+        const marker = group({}, selection);
+        path(`M${x - 3} ${y + 4} L${x + 3} ${y - 4}`, {}, marker);
+        text(x, y - 10, "16", { class: "tiny muted" }, marker);
+        if (i < 2) inputBusMarkers.push(marker);
       }
       const inputValues = [
         text(
@@ -523,10 +544,10 @@ export const COMPUTER_SCENES = (function () {
       );
       text(267.5, 98.5, "control unit", { class: "caption" }, controlUnit);
       const controlRoutes = [
-        "M264 117 V223.36 H256.3",
-        "M238 117 V150 H232 V237.4 Q240 241.4 232 245.4 V297.98 H256.3",
+        "M285 117 V212.7",
+        "M260 117 V287.32 H285",
         "M378 94 H425 V287.32 H393.33",
-        "M180 117 V166 H152.16 V208.6",
+        "M157 94 H152.16 V208.6",
       ].map((d) => {
         path(d, { class: "control-wire" }, control);
         return path(d, { class: "control-wire control-active" }, control);
@@ -583,15 +604,9 @@ export const COMPUTER_SCENES = (function () {
           isAlu = p >= index("alu") - hold,
           controlled =
             p > index("addressed-memory") + hold && p < index("program") - hold;
-        const controlBlend = clamp(
-          (p - index("instruction-control") + 1 - hold) / (1 - 2 * hold),
-        );
-        firstInput.base.style.opacity = secondInput.base.style.opacity = String(
-          1 - controlBlend,
-        );
         const aluBlend = clamp((p - index("alu") + 1 - hold) / (1 - 2 * hold));
-        const inputAPath = `M235 179 H281 V190 H${305 + (15 * 25 * aluBlend) / 116}`;
-        const inputBPath = `M235 270 H281 V250 H${305 + (15 * 85 * aluBlend) / 116}`;
+        const inputAPath = `M270 179 H286 V190 H${305 + (15 * 25 * aluBlend) / 116}`;
+        const inputBPath = `M270 270 H286 V250 H${305 + (15 * 85 * aluBlend) / 116}`;
         for (const node of [outputA.base, outputA.lit])
           node.setAttribute("d", inputAPath);
         for (const node of [outputB.base, outputB.lit])
@@ -686,6 +701,23 @@ export const COMPUTER_SCENES = (function () {
             : "0";
         const geometryA = second ? nextFirstInput.base : firstInput.base;
         const geometryB = second ? nextSecondInput.base : secondInput.base;
+        const unusedBusOpacity =
+          0.16 *
+          (1 -
+            clamp(
+              (p - index("instruction-control") + 1 - hold) / (1 - 2 * hold),
+            ));
+        registerInputs.forEach((inputs, input) => {
+          const selected = input === 0 ? (second ? 0 : 1) : second ? 3 : 2;
+          inputs.forEach(({ base }, register) => {
+            base.style.opacity =
+              register === selected ? "1" : String(unusedBusOpacity);
+          });
+          inputBusMarkers[input].setAttribute(
+            "transform",
+            `translate(0 ${selected * 8})`,
+          );
+        });
         firstTravel.setAttribute(
           "d",
           `${geometryA.getAttribute("d")} L${inputAPath.slice(1)}`,

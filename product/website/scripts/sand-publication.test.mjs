@@ -88,7 +88,7 @@ test("the complete preview retains all chapters and its own ending", () => {
   );
   assert.ok(
     html.includes(
-      "We already used a multiplexer to select which stored number reaches the memory’s output.",
+      "We used one earlier to choose which stored number reaches memory’s output.",
     ),
   );
   assert.deepEqual(
@@ -115,6 +115,7 @@ test("unknown scenes, incomplete chapters and empty endings fail the build", () 
   for (const invalid of [
     { ...publication, publishedThrough: "missing" },
     { ...publication, publishedThrough: "quartz" },
+    { ...publication, publishedThrough: "register" },
     { ...publication, footer: "" },
   ])
     assert.throws(

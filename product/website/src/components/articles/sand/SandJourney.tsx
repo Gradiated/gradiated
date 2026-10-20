@@ -1,4 +1,4 @@
-import { memo, useRef } from "react";
+import { memo, useMemo, useRef } from "react";
 import type { ReactElement } from "react";
 import { SectionFab } from "../../design";
 import { SandCircuitArtwork } from "../../design/SandCircuitArtwork";
@@ -6,7 +6,11 @@ import article, {
   contents,
 } from "../../../../content/articles/sand/script.md?sand-article";
 import { SandStage } from "./SandStage";
-import { useActiveChapter, useSandAnimation } from "./useSandJourney";
+import {
+  useActiveChapter,
+  useSandAnimation,
+  useSandSubsections,
+} from "./useSandJourney";
 import "./journey.css";
 
 // The animation mutates this markup, so contents updates must preserve its nodes.
@@ -26,7 +30,23 @@ const chapters = [
 
 export const SandJourney = (): ReactElement => {
   const hostRef = useRef<HTMLElement>(null);
-  const active = useActiveChapter(hostRef, chapters);
+  const subsections = useSandSubsections(hostRef, chapters);
+  const headings = useMemo(
+    () =>
+      chapters.flatMap((chapter) => [
+        chapter,
+        ...(subsections[chapter.id] ?? []).filter(
+          ({ id }) => id !== chapter.id,
+        ),
+      ]),
+    [subsections],
+  );
+  const activeSection = useActiveChapter(hostRef, headings);
+  const active = chapters.find(
+    ({ id }) =>
+      id === activeSection ||
+      subsections[id]?.some((section) => section.id === activeSection),
+  )?.id;
 
   useSandAnimation(hostRef);
 
@@ -38,14 +58,37 @@ export const SandJourney = (): ReactElement => {
             <div className="gr-doc-nav-group">
               <p className="gr-doc-nav-heading gr-label">Sand to Thought</p>
               {chapters.map(({ id, label }) => (
-                <a
-                  aria-current={active === id ? "location" : undefined}
-                  className="gr-doc-nav-link"
-                  href={`#${id}`}
-                  key={id}
-                >
-                  {label}
-                </a>
+                <div className="sand-chapter" key={id}>
+                  <a
+                    aria-current={active === id ? "location" : undefined}
+                    className="gr-doc-nav-link"
+                    href={`#${id}`}
+                  >
+                    {label}
+                  </a>
+                  {active === id && subsections[id]?.length ? (
+                    <ul
+                      className="sand-subsections"
+                      aria-label={`${label} sections`}
+                    >
+                      {subsections[id].map((section) => (
+                        <li key={section.id}>
+                          <a
+                            aria-current={
+                              activeSection === section.id
+                                ? "location"
+                                : undefined
+                            }
+                            className="sand-subsection-link"
+                            href={`#${section.id}`}
+                          >
+                            {section.label}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
               ))}
             </div>
           </nav>

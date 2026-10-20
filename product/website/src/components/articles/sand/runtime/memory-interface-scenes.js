@@ -22,6 +22,7 @@ export const MEMORY_INTERFACE_SCENES = {
     controls,
   }) {
     const demos = [];
+    const motionPreference = matchMedia("(prefers-reduced-motion: reduce)");
     const label = (parent, x, y, value, attrs = {}) =>
       text(x, y, value, { class: "caption", ...attrs }, parent);
     const value = (parent, x, y, content, attrs = {}) =>
@@ -172,9 +173,11 @@ export const MEMORY_INTERFACE_SCENES = {
     let widthActive = false;
     afterRender.push(() => {
       const active = Math.abs(tl.time() - index("memory-width")) <= hold;
-      if (active && !widthActive) widening.restart();
-      else if (active) widening.play();
-      if (!active) {
+      if (active) {
+        if (motionPreference.matches) widening.progress(1).pause();
+        else if (!widthActive) widening.restart();
+        else widening.play();
+      } else {
         if (tl.time() > index("memory-width") && widening.progress() < 1)
           widening.progress(1);
         widening.pause();
@@ -352,13 +355,15 @@ export const MEMORY_INTERFACE_SCENES = {
       (_scene, action) => {
         if (model.frame(time.value).busy) return;
         model.choose(action);
-        animation.restart();
+        if (motionPreference.matches) animation.progress(1).pause();
+        else animation.restart();
       },
     );
     const lit = new Map();
     const fadeSignal = (element, target) => {
-      const opacity =
-        (lit.get(element) ?? 0) + (target - (lit.get(element) ?? 0)) * 0.2;
+      const opacity = motionPreference.matches
+        ? target
+        : (lit.get(element) ?? 0) + (target - (lit.get(element) ?? 0)) * 0.2;
       lit.set(element, opacity);
       element.style.opacity = opacity;
     };
@@ -366,7 +371,8 @@ export const MEMORY_INTERFACE_SCENES = {
       const p = tl.time();
       const nearAccess = Math.abs(p - index("memory-access")) < 0.5;
       const active = Math.abs(p - index("memory-access")) <= hold;
-      if (active && model.frame(time.value).busy) animation.play();
+      if (motionPreference.matches) animation.progress(1).pause();
+      else if (active && model.frame(time.value).busy) animation.play();
       else animation.pause();
 
       if (!nearAccess) {

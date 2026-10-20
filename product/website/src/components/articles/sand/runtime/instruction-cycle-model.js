@@ -52,31 +52,67 @@ export const instructionCycleFrame = (time, cycles = 1) => {
   };
 };
 
-export const controllerFrame = (time, memoryReadyAt = 4) => {
-  // These state codes illustrate one transfer rather than the full LC-3 controller.
-  const ready = time >= memoryReadyAt;
+export const CONTROLLER_CYCLE_DURATION = 15;
+export const CONTROLLER_STEPS = ["request", "wait", "copy", "execute"];
+
+export const CONTROLLER_GATES = [
+  ["n1", "NOT", ["s1"]],
+  ["n0", "NOT", ["s0"]],
+  ["notReady", "NOT", ["ready"]],
+  ["request", "AND", ["n1", "n0"]],
+  ["wait", "AND", ["n1", "s0"]],
+  ["copy", "AND", ["s1", "n0"]],
+  ["execute", "AND", ["s1", "s0"]],
+  ["hold", "AND", ["wait", "notReady"]],
+  ["advance", "AND", ["wait", "ready"]],
+  ["next0", "OR", ["request", "hold", "copy"]],
+  ["next1", "OR", ["advance", "copy"]],
+];
+
+export const CONTROLLER_OUTPUTS = {
+  request: "request",
+  send: "copy",
+  load: "copy",
+  processing: "execute",
+  next1: "next1",
+  next0: "next0",
+};
+
+const nextControllerState = (state, ready) =>
+  state === 1 ? (ready ? 2 : 1) : (state + 1) % CONTROLLER_STEPS.length;
+
+export const controllerFrame = (time, memoryReadyAt = 8) => {
+  // These four states illustrate ADD sequencing, not the LC-3 microstate encoding.
   let state = 0;
-  let captured = false;
-  let capture = 0;
-  for (let edge = 2; edge <= time && state !== 2; edge += 4) {
-    const next1 = (state >> 1) | (state & 1);
-    const next0 = Number(edge >= memoryReadyAt) & (1 - next1);
-    captured = state === 1;
-    state = (next1 << 1) | next0;
-    capture = capturePulse(time, edge);
+  let cycleStart = 0;
+  let completed = 0;
+  let irEdge = -Infinity;
+  for (let edge = 3; edge <= time; edge += 3) {
+    const ready = edge - cycleStart >= memoryReadyAt;
+    if (state === 2) irEdge = edge;
+    if (state === 3) {
+      completed += 1;
+      cycleStart = edge;
+    }
+    state = nextControllerState(state, ready);
   }
-  const s1 = state >> 1;
-  const s0 = state & 1;
-  const next1 = s1 | s0;
+  const ready = state !== 0 && time - cycleStart >= memoryReadyAt;
+  const nextState = nextControllerState(state, ready);
+  const clockEdge = Math.floor(time / 3) * 3;
+  const clock = clockEdge > 0 ? capturePulse(time, clockEdge) : 0;
   return {
     state,
-    s1,
-    s0,
+    step: CONTROLLER_STEPS[state],
+    bits: state.toString(2).padStart(2, "0"),
+    nextState,
+    nextBits: nextState.toString(2).padStart(2, "0"),
     ready,
-    next1,
-    next0: Number(ready) & (1 - next1),
-    copy: s1 === 0 && s0 === 1,
-    captured,
-    captures: { state: capture },
+    request: state === 0,
+    copy: state === 2,
+    processing: state === 3,
+    captured: irEdge >= cycleStart,
+    completed,
+    clock,
+    captures: { state: clock, ir: capturePulse(time, irEdge) },
   };
 };

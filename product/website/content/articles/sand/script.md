@@ -200,9 +200,9 @@ Address width determines how many memory locations we can select, while data wid
 
 <!-- scene: memory-access -->
 
-Let’s use these registers to access a location. Choose Read to place `1` in `MAR`, selecting the second location. Memory sends its contents to `MDR`, where the CPU can later use them. Reading leaves the stored number unchanged.
+Let’s use these registers to access a location. Click the **Read** button beneath the figure to place `1` in `MAR`, selecting the second location. Memory sends its contents to `MDR`, where the CPU can later use them. Reading leaves the stored number unchanged.
 
-Choose Write to put `9` in `MDR` and save it in the location selected by `MAR`. The other locations keep their values. Yellow paths and moving bits show each transfer.
+Click **Write** to put `9` in `MDR` and save it in the location selected by `MAR`. The other locations keep their values. Yellow paths and moving bits show each transfer.
 
 <!-- scene: memory-block -->
 

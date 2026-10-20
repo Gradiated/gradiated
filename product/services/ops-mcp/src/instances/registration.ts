@@ -174,7 +174,7 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
       throw new Error(
         `${instance.sku} ${request.providerInstanceId} is running or has an unknown status. ` +
           "Registering it resets the machine, which can release scarce GPU capacity. " +
-          "Configure in-place SSH enrollment to preserve its reservation, or only when that reset is explicitly authorized, call again with " +
+          "Enroll it in place over the tailnet (v5 GPU base image with a bootstrap key) to preserve its reservation, or only when that reset is explicitly authorized, call again with " +
           "reset_running_pod true and the same id in confirm_instance_id.",
       );
     }

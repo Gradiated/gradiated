@@ -14,12 +14,22 @@ RUN sed -i 's|http://|https://|g' /etc/apt/sources.list.d/ubuntu.sources && apt-
     && useradd --uid 10001 --create-home --shell /usr/sbin/nologin runtime \
     && useradd --uid 10004 --create-home --shell /usr/sbin/nologin desmond \
     && useradd --uid 10003 --no-create-home --shell /usr/sbin/nologin downloader \
-    && install -d /etc/gradiated /opt/gradiated/bin /opt/gradiated/kubelet /run/sshd \
+    && useradd --uid 10005 --create-home --shell /usr/sbin/nologin tailscale \
+    && install -d /etc/gradiated /opt/gradiated/bin /opt/gradiated/kubelet /opt/gradiated/tailscale /run/sshd \
+    && install -d -m 700 -o tailscale -g tailscale /var/lib/gradiated-tailscale \
     && touch /etc/gradiated/platform-only \
     && install -d -m 700 -o downloader -g downloader /var/cache/gradiated/runtime-bundles \
     && install -d -o runtime -g runtime /home/runtime/.cache/huggingface
+# Same pinned release as tailscale/install-tailscale.py.
+RUN curl -fsSL -o /tmp/tailscale.tgz https://pkgs.tailscale.com/stable/tailscale_1.104.1_amd64.tgz \
+    && echo '108d1d96ecf410d305571e173516f27038f870919a9b89c914a167c6d33a4528  /tmp/tailscale.tgz' | sha256sum -c - \
+    && tar -xzf /tmp/tailscale.tgz -C /opt/gradiated/tailscale --strip-components=1 \
+       tailscale_1.104.1_amd64/tailscale tailscale_1.104.1_amd64/tailscaled \
+    && rm /tmp/tailscale.tgz
 COPY images/gpu-base/base-id /etc/gradiated/base-id
 COPY images/gpu-base/sshd_config /etc/ssh/sshd_config
-COPY --chmod=755 images/gpu-base/start-ssh.sh /usr/local/bin/start-ssh
+COPY --chmod=755 tailscale/run-tailscale.sh /opt/gradiated/bin/run-tailscale
+COPY --chmod=755 tailscale/start-tailscale.sh /opt/gradiated/bin/start-tailscale
+COPY --chmod=755 images/gpu-base/start-host.sh /usr/local/bin/start-host
 STOPSIGNAL SIGTERM
-ENTRYPOINT ["/usr/local/bin/start-ssh"]
+ENTRYPOINT ["/usr/local/bin/start-host"]

@@ -112,7 +112,7 @@ describe("Kubernetes GPU enrollment", () => {
     const s = setup();
     s.provider.supportsInPlace = async () => false;
     await expect(s.registrations.start(request)).rejects.toThrow(
-      "Configure in-place SSH",
+      "Enroll it in place over the tailnet",
     );
     expect(s.provider.bootstrap).not.toHaveBeenCalled();
   });

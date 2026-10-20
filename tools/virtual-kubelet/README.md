@@ -251,7 +251,9 @@ Model deployment publishes a `host` bundle alongside runtime bundles. Its
 `host-runtime-release` artifact contains `release.json` with the archive digest
 and base compatibility ID. Host bundles contain the agent, enrollment and state
 helpers, Desmond, runtime launcher, downloader, Tailscale installation and private
-control forwarding. The base contains only platform dependencies and SSH startup.
+control forwarding. The base contains only platform dependencies, the pinned
+Tailscale binaries and the first-start Tailscale supervisor; OpenSSH starts only
+for break-glass recovery.
 Enrollment installs a verified seed and retains a recovery copy on disk; no
 application recovery executable is baked into the image. Later host releases
 update the active version without rebuilding the base or model bundles. Historical
@@ -333,8 +335,11 @@ controller scrapes also alert.
 
 ### One-time retained-host migration
 
-Prepare an explicit JSON list of SSH targets outside version control, for example
-`[{"instance_id":"<inventory UUID>","ssh":"root@gpu-host","port":22}]`.
+Prepare an explicit JSON list of enrolled hosts outside version control, for example
+`[{"instance_id":"<inventory UUID>"}]`. The tool connects with Tailscale SSH
+(`tailscale ssh root@<address>`) to the address committed in `hosts.json`; set
+`TAILSCALE` if the CLI is not on `PATH`. The first session of each 12-hour check
+period opens a Google sign-in.
 Build the host artifact to obtain its Linux `desmondd`, and confirm each retained
 host's OS/CUDA compatibility ID before running:
 
@@ -347,9 +352,8 @@ This is a production operation requiring operator authorization. The command
 checks enrolled identity, staged runtime digests, and live model/reporter/proxy
 process identities; installs the recovery agent and launcher; and stops at the
 first failed host. It reads the management credential on the remote host and
-never outputs it. Known SSH host keys are required. Targets at `ssh.runpod.io` use the interactive
-Runpod SSH gateway, so migration also works without a public TCP SSH port.
-Success waits for a fresh
+never outputs it. Tailscale verifies host keys from the tailnet; public SSH
+targets are rejected. Success waits for a fresh
 management-agent PID and birth time before checking health and preserved workers,
 including when a launcher is already installed. The existing supervisor may
 be PID 1: it stays running and its SIGHUP path launches a shim that execs the new
@@ -375,14 +379,11 @@ resetting their provider pods:
 
 ```sh
 python3 tools/gpu/migrate-control.py /path/to/targets.json \
-  --sha256 <verified-host-digest> \
-  --identity-file /path/outside/repository/ssh-key \
-  --known-hosts /path/outside/repository/known-hosts
+  --sha256 <verified-host-digest>
 ```
 
-Targets use the same `instance_id`, `ssh` and optional `port` fields as
-`rollout-host.py`, and require direct SSH access. Interactive RunPod gateway
-connections are rejected before any host changes. The migration verifies the active host archive and identity,
+Targets use the same `instance_id` entries as `rollout-host.py` and the same
+Tailscale SSH transport. The migration verifies the active host archive and identity,
 replaces only the control acceptor, and leaves its existing `nc` connections
 running. It checks readiness over the original HTTP connection and a new one,
 checks a temporary artifact grant, and retains a full on-disk recovery seed.

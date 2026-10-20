@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -25,3 +26,16 @@ class RegisteredIdentityTests(unittest.TestCase):
             identity.write_text(json.dumps({"instance_id": "invalid"}))
             with self.assertRaises(ValueError):
                 installer.registered_instance_id(identity)
+
+
+class PromotionTests(unittest.TestCase):
+    def test_finds_only_the_tailscale_supervisor_owned_by_the_given_uid(self):
+        with tempfile.TemporaryDirectory() as directory:
+            proc = Path(directory)
+            for pid, args in [(10, b"bash\0/opt/gradiated/bin/run-tailscale\0"),
+                              (11, b"bash\0/opt/gradiated/bin/run-control\0"),
+                              (12, b"python3\0/opt/gradiated/bin/run-tailscale\0")]:
+                (proc / str(pid)).mkdir()
+                (proc / str(pid) / "cmdline").write_bytes(args)
+            self.assertEqual(installer.supervisors(proc, os.getuid()), [10])
+            self.assertEqual(installer.supervisors(proc, os.getuid() + 1), [])

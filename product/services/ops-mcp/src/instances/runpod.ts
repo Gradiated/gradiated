@@ -7,6 +7,11 @@ import {
 } from "./in-place.js";
 import type { RunSsh, SshTarget } from "./ssh.js";
 import type { InstanceProvider, ProviderInstance } from "./provider.js";
+import {
+  bootstrapPeer,
+  waitForPromotion,
+  type TailnetStatus,
+} from "./tailnet.js";
 
 const API = "https://rest.runpod.io/v1";
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -19,11 +24,6 @@ const podSchema = z.object({
   vcpuCount: z.number().int().positive(),
   desiredStatus: z.string().optional(),
   imageName: z.string().optional(),
-  publicIp: z.ipv4().nullish(),
-  portMappings: z
-    .record(z.string(), z.number().int().min(1).max(65535))
-    .nullish(),
-  ports: z.array(z.string()).nullish(),
   env: z.record(z.string(), z.string()).nullish(),
   machine: z.object({
     dataCenterId: z.string().nullish(),
@@ -35,16 +35,18 @@ export interface RunPodOptions {
   readonly apiKey: string;
   readonly fetch?: typeof fetch;
   readonly controlEndpoints?: () => Promise<Record<string, string>>;
-  readonly inPlace?: {
+  readonly tailnet: {
     readonly run: RunSsh;
-    readonly hostKeys: Readonly<Record<string, string>>;
+    readonly status: () => Promise<TailnetStatus>;
+    readonly promotionTimeoutMs?: number;
+    readonly promotionPollMs?: number;
   };
 }
 
 export const createRunPodProvider = ({
   apiKey,
   fetch: request = fetch,
-  inPlace,
+  tailnet,
   controlEndpoints,
 }: RunPodOptions): InstanceProvider => {
   const call = async (
@@ -79,29 +81,47 @@ export const createRunPodProvider = ({
       ),
     );
 
-  const target = (current: z.infer<typeof podSchema>): SshTarget => {
-    const hostKeySha256 = inPlace?.hostKeys[current.id];
-    if (!inPlace || !hostKeySha256 || !/^[a-f0-9]{64}$/.test(hostKeySha256)) {
-      throw new Error(
-        `In-place enrollment needs a pinned SSH host key for ${current.id}`,
-      );
-    }
-    const host = current.publicIp;
-    const port = current.portMappings?.["22"];
-    if (!host || !port || !current.ports?.includes("22/tcp")) {
-      throw new Error(
-        "In-place enrollment requires an existing direct SSH port; provider ports will not be changed",
-      );
-    }
+  const tailnetTarget = async (podId: string): Promise<SshTarget | null> => {
+    const peer = bootstrapPeer(await tailnet.status(), podId);
+    return (
+      peer && { host: peer.ip, port: 22, hostKeySha256: peer.hostKeysSha256 }
+    );
+  };
 
-    return { host, port, hostKeySha256 };
+  const transport = async (current: z.infer<typeof podSchema>) => {
+    const target = await tailnetTarget(current.id);
+    return target && { run: tailnet.run, target };
+  };
+
+  const install = async (
+    current: z.infer<typeof podSchema>,
+    environment: Readonly<Record<string, string>>,
+  ) => {
+    const route = await transport(current);
+    if (!route) throw new Error("No enrollment connection to the GPU pod");
+
+    const { promotion, ...inventory } = await installInPlace(
+      route.run,
+      route.target,
+      environment,
+    );
+    if (promotion)
+      await waitForPromotion(
+        tailnet.status,
+        route.target.host,
+        tailnet.promotionTimeoutMs,
+        tailnet.promotionPollMs,
+      );
+    return inventory;
   };
 
   const enrollment = async (current: z.infer<typeof podSchema>) => {
-    if (!inPlace?.hostKeys[current.id] || current.desiredStatus !== "RUNNING")
-      return {};
+    if (current.desiredStatus !== "RUNNING") return {};
 
-    const result = await inPlace.run(target(current), readEnrollment);
+    const route = await transport(current);
+    if (!route) return {};
+
+    const result = await route.run(route.target, readEnrollment);
     try {
       return z.record(z.string(), z.string()).parse(JSON.parse(result));
     } catch {
@@ -111,10 +131,17 @@ export const createRunPodProvider = ({
 
   return {
     async checkTailscaleEnrollment(podId) {
+      if (await tailnetTarget(podId)) return;
+
+      // A stopped v5 pod joins the tailnet only after registration starts it.
       const current = await pod(podId);
-      if (!inPlace?.hostKeys[podId] || !current.ports?.includes("22/tcp"))
+      if (
+        current.desiredStatus !== "EXITED" ||
+        !current.env?.GRADIATED_TAILSCALE_BOOTSTRAP_KEY
+      )
         throw new Error(
-          "GPU registration requires a pinned SSH connection for Tailscale enrollment",
+          `GPU registration requires gpu-bootstrap-${podId} online in the tailnet ` +
+            "(v5 GPU base image with a bootstrap key), or a stopped v5 pod",
         );
     },
     async describe(podId) {
@@ -144,22 +171,22 @@ export const createRunPodProvider = ({
     },
 
     async supportsInPlace(podId, image) {
-      if (!inPlace?.hostKeys[podId]) return false;
-
       const current = await pod(podId);
+      const route = await transport(current);
+      if (!route) return false;
+
       if (current.desiredStatus !== "RUNNING") {
         throw new Error(
           "In-place enrollment requires a running pod; no provider changes were made",
         );
       }
-      const sshTarget = target(current);
       if (!(await enrollment(current)).GRADIATED_INSTANCE_ID) {
         if (current.imageName !== image)
           throw new Error(
             "Unenrolled GPU pod does not use the approved base image",
           );
 
-        await verifyInPlaceBase(inPlace.run, sshTarget, image);
+        await verifyInPlaceBase(route.run, route.target, image);
       }
 
       return true;
@@ -176,7 +203,7 @@ export const createRunPodProvider = ({
         current.desiredStatus !== "EXITED" &&
         (await this.supportsInPlace?.(current.id, image))
       ) {
-        return installInPlace(inPlace!.run, target(current), environment);
+        return install(current, environment);
       }
       if (current.desiredStatus !== "EXITED" && !options?.allowReset) {
         throw new Error(
@@ -203,19 +230,11 @@ export const createRunPodProvider = ({
       const deadline = Date.now() + 30 * 60 * 1000;
       while (Date.now() < deadline) {
         const ready = await pod(current.id);
-        if (
-          ready.desiredStatus === "RUNNING" &&
-          ready.publicIp &&
-          ready.portMappings?.["22"]
-        ) {
+        if (ready.desiredStatus === "RUNNING") {
           try {
-            return await installInPlace(
-              inPlace!.run,
-              target(ready),
-              environment,
-            );
+            return await install(ready, environment);
           } catch {
-            /* The image can still be preparing the host agent. */
+            /* The pod can still be joining the tailnet or preparing the host agent. */
           }
         }
         await new Promise((resolve) => setTimeout(resolve, 10000));

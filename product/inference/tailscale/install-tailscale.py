@@ -19,6 +19,39 @@ from pathlib import Path
 
 VERSION = "1.104.1"
 SHA256 = "108d1d96ecf410d305571e173516f27038f870919a9b89c914a167c6d33a4528"
+BOOTSTRAP_TAG = "tag:gpu-bootstrap"
+SUPERVISOR = b"/opt/gradiated/bin/run-tailscale"
+
+
+def supervisors(proc=Path("/proc"), uid=0):
+    found = []
+    for path in proc.glob("[0-9]*"):
+        try:
+            args = (path / "cmdline").read_bytes().split(b"\0")
+            if len(args) > 1 and Path(os.fsdecode(args[0])).name == "bash" and args[1] == SUPERVISOR and path.stat().st_uid == uid:
+                found.append(int(path.name))
+        except (OSError, ValueError):
+            pass
+    return found
+
+
+def schedule_promotion(delay=10):
+    """Restart tailscaled after the enrollment session has ended.
+
+    The staged auth key re-authenticates the pod as tag:gpu-inference, which
+    drops the ops-mcp SSH session that installed it.
+    """
+    if not Path("/var/lib/gradiated-tailscale/reauth").exists():
+        return False
+    pids = supervisors()
+    if len(pids) != 1:
+        raise RuntimeError("Expected exactly one root Tailscale supervisor")
+    subprocess.Popen(
+        ["/bin/sh", "-c", f"sleep {int(delay)}; kill -USR1 {pids[0]}"],
+        stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+    return True
 
 
 def registered_instance_id(identity_path=Path("/etc/gradiated/host-identity.json")):
@@ -32,8 +65,10 @@ def install(payload):
     hostname = "gpu-" + instance
     config = Path("/etc/gradiated/tailscale.json")
     existing = json.loads(config.read_text()) if config.exists() else {}
-    if existing and existing["hostname"] != hostname:
+    if existing and existing["hostname"] != hostname and existing.get("bootstrap") is not True:
         raise ValueError("Existing Tailscale identity mismatch")
+    if existing.get("bootstrap") is True:
+        existing = {}
     proxy_port = payload.get("proxy_port", existing.get("proxy_port", 8888))
     if proxy_port not in (8888, 8889):
         raise ValueError("Unexpected inference proxy port")
@@ -132,18 +167,27 @@ def install(payload):
     status = subprocess.run(
         status_command, capture_output=True, text=True, timeout=10, check=False
     )
-    running = (
-        status.returncode == 0
-        and json.loads(status.stdout).get("BackendState") == "Running"
-    )
-    if not running:
+    current = json.loads(status.stdout) if status.returncode == 0 else {}
+    running = current.get("BackendState") == "Running"
+    promotion = running and BOOTSTRAP_TAG in current.get("Self", {}).get("Tags", [])
+    if not running or promotion:
         private_write(root / "auth-key", payload["auth_key"])
+    if promotion:
+        # A bootstrap pod re-authenticates as tag:gpu-inference only after the
+        # enrollment session ends; see schedule_promotion.
+        private_write(root / "reauth", "")
     log = Path("/var/log/gradiated-tailscale.log")
     if not log.exists():
         private_write(log, "", 0, 0)
     subprocess.run(
         ["bash", "/opt/gradiated/bin/start-tailscale"], check=True, timeout=10
     )
+    if promotion:
+        ip = next((value for value in current.get("TailscaleIPs", []) if "." in value), None)
+        if not ip:
+            raise RuntimeError("Bootstrap Tailscale address is unavailable")
+        print(json.dumps({"instance_id": instance, "tailscale_ip": ip, "hostname": hostname, "promotion": True}))
+        return
     deadline = time.monotonic() + 60
     while time.monotonic() < deadline:
         status = subprocess.run(

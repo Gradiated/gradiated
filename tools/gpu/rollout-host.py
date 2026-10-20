@@ -2,11 +2,12 @@
 import argparse
 import base64
 import json
-import importlib.util
 from pathlib import Path
 import re
+import shlex
 import subprocess
-import textwrap
+
+import tailnet_ssh
 
 ROOT = Path(__file__).resolve().parents[2]
 REMOTE = '''
@@ -75,40 +76,29 @@ while True:
 '''
 
 
-GATEWAY_REMOTE = 'def install(payload):\n' + textwrap.indent(REMOTE.replace('payload=json.load(sys.stdin)\n', ''), '    ')
-
-
-def gateway_migration(command, payload):
-    spec = importlib.util.spec_from_file_location('enrollment', ROOT / 'tools/gpu/enroll-tailscale.py')
-    enrollment = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(enrollment)
-    print(json.dumps(enrollment.gateway_install(command, GATEWAY_REMOTE, payload)))
-
-
-def rollout(targets, binary, base_id, run=subprocess.run, gateway=None):
+def rollout(targets, binary, base_id, run=subprocess.run, resolve=tailnet_ssh.resolve):
     if not re.fullmatch("[A-Za-z0-9._-]+", base_id):
         raise ValueError("An explicitly confirmed base ID is required")
+    hosts = []
     for target in targets:
-        if set(target) - {'instance_id', 'ssh', 'port'} or not re.fullmatch(r'(?:[a-z0-9_][a-z0-9_-]*@)?[a-zA-Z0-9][a-zA-Z0-9.-]*', target['ssh']):
-            raise ValueError('Explicit SSH targets are required')
-        payload = {'base_id': base_id, 'instance_id': target['instance_id'], 'desmondd': base64.b64encode(binary).decode(),
+        if set(target) - {'instance_id', 'tailscale_ip'}:
+            raise ValueError('Targets name an enrolled instance and, optionally, its Tailscale address')
+        instance, address = resolve(target['instance_id'])
+        if target.get('tailscale_ip') not in (None, address):
+            raise ValueError('Target address differs from hosts.json')
+        hosts.append((instance, address))
+    for instance, address in hosts:
+        payload = {'base_id': base_id, 'instance_id': instance, 'desmondd': base64.b64encode(binary).decode(),
                    'installer': (ROOT / 'tools/gpu/install-host.py').read_text()}
         for name in ('host_state.py', 'host_bundle.py', 'host-agent.py', 'supervise.py'):
             payload[name] = (ROOT / 'product/inference/gpu' / name).read_text()
-        import shlex
-        command = ['ssh', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'ConnectTimeout=10',
-                   '-p', str(int(target.get('port', 22))), target['ssh']]
-        if target['ssh'].lower().endswith('@ssh.runpod.io'):
-            command.insert(1, '-tt')
-            (gateway or gateway_migration)(command, payload)
-        else:
-            run([*command, 'python3 -c ' + shlex.quote(REMOTE)],
-                input=json.dumps(payload), text=True, check=True, timeout=180)
+        run(tailnet_ssh.command(address, 'python3 -c ' + shlex.quote(REMOTE)),
+            input=json.dumps(payload), text=True, check=True, timeout=180)
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Install the launcher and agent on explicit SSH targets, one host at a time.')
-    parser.add_argument('--targets', type=Path, required=True)
+    parser = argparse.ArgumentParser(description='Install the launcher and agent on enrolled hosts over Tailscale SSH, one host at a time.')
+    parser.add_argument('--targets', type=Path, required=True, help='JSON list of {"instance_id": ...} entries from hosts.json')
     parser.add_argument('--desmondd', type=Path, required=True)
     parser.add_argument('--base-id', required=True, help='Confirmed compatibility ID of the retained hosts')
     args = parser.parse_args()

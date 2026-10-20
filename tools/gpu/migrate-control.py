@@ -6,6 +6,8 @@ import re
 import shlex
 import subprocess
 
+import tailnet_ssh
+
 REMOTE = r'''
 import contextlib,errno,hashlib,http.client,importlib.util,json,os,pathlib,pwd,shutil,signal,sys,tempfile,time,urllib.request
 sys.dont_write_bytecode=True
@@ -148,21 +150,14 @@ print(json.dumps({'instance_id':config['instance_id'],'sha256':digest,'dispatche
 
 def main():
     parser = argparse.ArgumentParser(description='Migrate an enrolled host to bundle-owned forwarding without replacing GPU capacity.')
-    parser.add_argument('targets', type=Path)
+    parser.add_argument('targets', type=Path, help='JSON list of {"instance_id": ...} entries from hosts.json')
     parser.add_argument('--sha256', required=True)
-    parser.add_argument('--identity-file', type=Path, required=True)
-    parser.add_argument('--known-hosts', type=Path, required=True)
     args = parser.parse_args()
     if not re.fullmatch('[0-9a-f]{64}', args.sha256):raise ValueError('A verified host digest is required')
-    targets=json.loads(args.targets.read_text())
-    if any(target['ssh'].endswith('@ssh.runpod.io') for target in targets):
-        raise ValueError('This migration requires direct SSH; interactive RunPod gateways are not supported')
-    for target in targets:
-        if not re.fullmatch(r'(?:[a-z0-9_][a-z0-9_-]*@)?[a-zA-Z0-9][a-zA-Z0-9.-]*', target['ssh']):raise ValueError('Explicit SSH targets are required')
-        command = ['ssh', '-i', str(args.identity_file), '-o', 'UserKnownHostsFile=' + str(args.known_hosts),
-                   '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'ConnectTimeout=10',
-                   '-p', str(int(target.get('port', 22))), target['ssh'], 'python3 -B -c ' + shlex.quote(REMOTE)]
-        subprocess.run(command, input=json.dumps({'instance_id': target['instance_id'], 'sha256': args.sha256}),
+    hosts = [tailnet_ssh.resolve(target['instance_id']) for target in json.loads(args.targets.read_text())]
+    for instance, address in hosts:
+        subprocess.run(tailnet_ssh.command(address, 'python3 -B -c ' + shlex.quote(REMOTE)),
+                       input=json.dumps({'instance_id': instance, 'sha256': args.sha256}),
                        text=True, check=True, timeout=90)
 
 

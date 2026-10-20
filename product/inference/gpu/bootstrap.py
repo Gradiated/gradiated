@@ -111,8 +111,9 @@ def enroll(payload):
 
 def main():
     public_key = os.environ.pop('PUBLIC_KEY', '')
+    break_glass = os.environ.pop('GRADIATED_BREAK_GLASS_SSH', '') == '1'
     encoded = os.environ.pop('GRADIATED_GPU_BOOTSTRAP', '')
-    if public_key:
+    if public_key and break_glass:
         ssh = Path('/root/.ssh')
         ssh.mkdir(mode=0o700, exist_ok=True)
         key = ssh / 'authorized_keys'
@@ -124,11 +125,11 @@ def main():
         try:
             enroll(json.loads(base64.b64decode(encoded)))
         except Exception as error:
-            print(f'GPU bootstrap failed: {type(error).__name__}; SSH remains available.', flush=True)
+            print(f'GPU bootstrap failed: {type(error).__name__}; Tailscale SSH remains available.', flush=True)
             while True:
                 time.sleep(60)
     if not CONFIG.exists():
-        print('GPU enrollment is required; SSH remains available.', flush=True)
+        print('GPU enrollment is required; Tailscale SSH remains available.', flush=True)
         while True:
             time.sleep(60)
     subprocess.run(['bash', '/opt/gradiated/bin/start-tailscale'], check=True, timeout=10)

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Stands in for the Tailscale CLI so tests need no control server. It records
+# each call with the caller's UID; the real tailscaled still runs.
+set -euo pipefail
+printf '%s %s\n' "$(id -u)" "$*" >>/var/log/fake-tailscale-calls
+case "${2:-}" in
+up | serve) exit 0 ;;
+*) exit 1 ;;
+esac

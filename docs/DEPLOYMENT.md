@@ -195,9 +195,10 @@ healthy. S3 versioning keeps previous entry points for recovery.
   `Dependency age passed`, `Research lab passed`,
   `GPU controller and manifests passed` and `Security scans passed`
   (Gitleaks secret scanning, scan-policy checks and report-only Semgrep; see
-  `.github/workflows/security.yml`). It also requires the `AI review passed`
-  status, which `.github/workflows/ai-review-gate.yml` sets once either Codex or
-  Graphite has reviewed a commit of the PR. The same workflow reviews each PR
+  `.github/workflows/security.yml`). It also requires one approving review,
+  from the `gradiated-review` app or a person with write access who is not the
+  author. `.github/workflows/ai-review-gate.yml` still posts an informational
+  `AI review passed` status, which is no longer required. The same workflow reviews each PR
   as the `gradiated-review` GitHub App (app id 5394141). It approves when a
   bot review passed (Codex without P0/P1 findings, or a successful Graphite
   AI Reviews check), every Codex P0/P1 was followed by a clean Codex review of

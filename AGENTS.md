@@ -54,7 +54,7 @@ This repository is the complete project state for the research and product-build
 
 ## Pull request reviews
 
-Every PR to `main` needs the required `AI review passed` status: at least one of Codex or Graphite must complete a review of the pull request before merge (`.github/workflows/ai-review-gate.yml`). A review of any commit on the PR counts; commits pushed after a review are covered by required CI, the security scans and resolved review threads. After opening a PR, wait for at least one bot to complete; if neither completes, comment `@codex review` or re-run the review from the Graphite check's Details page. To re-evaluate the gate by hand, run `gh workflow run ai-review-gate.yml -f pr=123` with the PR number.
+Every PR to `main` needs one approving review, from the `gradiated-review` app or a person with write access who is not the author. The app approves only after Codex or Graphite has reviewed the pull request (`.github/workflows/ai-review-gate.yml`). A review of any commit on the PR counts; commits pushed after a review are covered by required CI, the security scans and resolved review threads. After opening a PR, wait for at least one bot to complete; if neither completes, comment `@codex review` or re-run the review from the Graphite check's Details page. To re-evaluate the gate by hand, run `gh workflow run ai-review-gate.yml -f pr=123` with the PR number.
 
 The `gradiated-review` GitHub App reviews every PR like a human reviewer, from the same workflow, and its approval is the required approving review. It approves when all of these hold:
 

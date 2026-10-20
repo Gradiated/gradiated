@@ -9,7 +9,7 @@ Closes #
 - [ ] Relevant tests/checks run
 - [ ] Evidence or screenshots saved in the repository when relevant
 - [ ] CI expected to pass
-- [ ] At least one of Codex or Graphite reviewed this PR (`AI review passed`); findings fixed or answered and threads resolved, so the `gradiated-review` app approves (comment `@gradiated-review` to re-check)
+- [ ] Approved by the `gradiated-review` app (after a Codex or Graphite review) or by a person other than the author; findings fixed or answered and threads resolved (comment `@gradiated-review` to re-check)
 
 ## Risks and rollback
 

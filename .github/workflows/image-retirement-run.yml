@@ -1,0 +1,68 @@
+# A reusable job supplies the workflow identity checked by the AWS trust policy.
+name: Run image retirement
+
+on:
+  workflow_call:
+    inputs:
+      apply:
+        description: Delete eligible images (otherwise preview only).
+        type: boolean
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  retire:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_REGION: us-east-1
+      AWS_DEFAULT_REGION: us-east-1
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@v4.2.3
+        with:
+          install_args: aws kubectl node
+      - uses: aws-actions/configure-aws-credentials@v6.2.3
+        with:
+          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/gradiated-prod-image-retirement
+          allowed-account-ids: ${{ vars.AWS_ACCOUNT_ID }}
+      - uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ vars.TAILSCALE_CI_CLIENT_ID }}
+          audience: ${{ vars.TAILSCALE_CI_AUDIENCE }}
+          tags: tag:ci
+      - run: sudo "$(command -v tailscale)" set --accept-routes=true
+      - run: aws eks update-kubeconfig --name gradiated-prod --region us-east-1
+      - name: Inventory references and retire images unused for 90 days
+        env:
+          ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+          APPLY: ${{ inputs.apply }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t repositories < <(node --input-type=module -e '
+            import { catalog } from "./tools/images/catalog.mjs";
+            console.log([...new Set(Object.values(catalog).map(image => image.repository))].sort().join("\n"));
+          ')
+          mode=()
+          if [[ "${APPLY}" == "true" ]]; then mode=(--apply); fi
+          python3 tools/images/retire.py --account "${ACCOUNT_ID}" --days 90 \
+            --runpod-secret gradiated/prod/platform/image-retirement \
+            --repositories "${repositories[@]}" "${mode[@]}" > "${RUNNER_TEMP}/image-retirement.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: image-retirement
+          path: ${{ runner.temp }}/image-retirement.json
+          if-no-files-found: ignore
+          retention-days: 90

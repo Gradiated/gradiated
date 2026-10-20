@@ -29,8 +29,13 @@ the build idempotent. Kubernetes uses only resolved `sha256` image digests.
    HIGH findings are reported in the job summary. Reports are kept as 90-day
    workflow artifacts. Accepted risks go in `.trivyignore`, each with a
    justification comment and an expiry date. The scan policy and Trivy version
-   come from the workflow revision, not the source commit. GPU base images are
-   scanned in report-only mode.
+   come from the workflow revision, not the source commit. GPU base images use
+   the same gate. They upgrade Ubuntu packages and omit the optional Nsight
+   Compute profiler while retaining the qualified CUDA toolkit. Bump
+   `UBUNTU_SECURITY_REFRESH` in the GPU base Dockerfile to force a fresh Ubuntu
+   package rebuild: existing immutable input tags and Docker layers are reused
+   otherwise. A new GPU base does not patch existing provider reservations;
+   those require separate qualification and rollout.
 3. Upload hashed console assets to the private S3 bucket. Do not upload the live
    `index.html` file.
 4. Commit the source revision, image digests and console revision directly to

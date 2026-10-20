@@ -31,7 +31,7 @@ const Tiles = (): ReactElement => (
 export const ModelMarquee = (): ReactElement => (
   <section className="gr-marquee">
     <h2 className="gr-heading gr-marquee-title">
-      Available on your favourite models
+      One API, all your favorite models
     </h2>
     <div className="gr-marquee-lane">
       {/* two copies; the animation walks one copy's width, so the loop

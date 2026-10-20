@@ -1,4 +1,6 @@
 import { CONSOLE_BASE_URL } from "../urls";
+import { useRef, useState } from "react";
+import { Cpu } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { ReactElement } from "react";
 import {
@@ -21,28 +23,6 @@ import {
 import { libraryStories } from "../library-stories";
 import "../styles/index.css";
 
-/**
- * The homepage.
- *
- * One fold: a single centred statement, its standfirst, and two ways in.
- *
- * Centred, unlike every product hero. Those pair a claim with its evidence and
- * set the two side by side; this one has no evidence to place, so the sentence
- * sits in the middle of the screen and the measure shapes it.
- *
- * The second section is the news row: the Library's three latest pieces in
- * the same three-card grid the hardware page uses, fed from the same
- * catalogue as the Library index and the nav's list — one source, so none of
- * them can disagree. It was briefly a swipable carousel with a circular rim;
- * a static grid reads better and has nothing to explain. The beam overhangs
- * the fold and dissolves through this section, which ties the two together.
- *
- * What was here before: the legacy hero, the old ServiceTierSection and a
- * single Thesis card. The tier explorer has been superseded by TierExplorer on
- * the inference page, and the card by the Library — both were also running on
- * the legacy palette, whose variables no longer exist.
- */
-
 export const HomePage = (): ReactElement => (
   <Substrate>
     <Nav />
@@ -54,43 +34,14 @@ export const HomePage = (): ReactElement => (
             hero's light. Same wrapper, same cone, so they register. */}
         <HeroBeam />
         <HeroBeamRaw />
-        <div className="gr-fold-centred">
-          {/* `from` carries the word stagger across the two fixed lines — each
-              Reveal counts from zero on its own, which would otherwise animate
-              them in lockstep. */}
-          <h1 className="gr-display gr-home-title">
-            <span className="gr-hero-line">
-              <Reveal by="word" from={0}>
-                Fast and cheap inference
-              </Reveal>{" "}
-            </span>
-            <span className="gr-hero-line">
-              <Reveal by="word" from={4}>
-                post-trained on your workload.
-              </Reveal>
-            </span>
-          </h1>
-          <div className="gr-home-actions">
-            <a className="gr-button gr-button--main" href={CONSOLE_BASE_URL}>
-              Get API Key
-              <Arrow />
-            </a>
-            <Link className="gr-button gr-button--secondary" to="/docs/">
-              View Docs
-              <Arrow />
-            </Link>
-          </div>
-        </div>
+        <HomeProductCarousel />
       </Module>
     </Band>
 
-    {/* new-homepage-layout: the value proposition streams in on its own
-        fold, the loop fold shows the machine as a live diagram, and the
-        chip fold lands it. All full-bleed and self-measuring, so they sit
-        outside the Band/Module pair. */}
+    <ModelMarquee />
     <ValueFold />
     <LoopSection />
-    <ModelMarquee />
+    <ValueFold sentences={["One more thing…"]} />
     <HomeFlow />
 
     <Band>
@@ -136,3 +87,191 @@ export const HomePage = (): ReactElement => (
     <BottomHaze />
   </Substrate>
 );
+
+const products = [
+  {
+    id: "inference",
+    name: "Open model inference",
+    title: "Open models. One API.",
+    description:
+      "Bring your existing code, change your base URL, and start sending requests.",
+    features: ["Usage-based pricing", "No infrastructure to manage"],
+    action: "Get API Key",
+    href: CONSOLE_BASE_URL,
+  },
+  {
+    id: "post-training",
+    name: "Automated RL",
+    title: "Better at your workload.",
+    description:
+      "Automated reinforcement learning turns your production traces into a model trained for your workload.",
+    features: [
+      "Learn from real production traces",
+      "Evaluations built around your tasks",
+      "Served through the same API",
+    ],
+    action: "Contact us to set up",
+    href: "https://cal.com/jsgradiated/30min",
+  },
+] as const;
+
+const HomeProductCarousel = (): ReactElement => {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const tabs = useRef<(HTMLButtonElement | null)[]>([]);
+  const product = products[activeIndex];
+  const showProduct = (index: number, focusTab = false): void => {
+    const nextIndex = (index + products.length) % products.length;
+    setActiveIndex(nextIndex);
+    if (focusTab) tabs.current[nextIndex]?.focus();
+  };
+
+  return (
+    <div className="gr-home-products">
+      <div className="gr-fold-centred gr-home-products-intro">
+        <h1 className="gr-display gr-home-title">
+          <span className="gr-hero-line">
+            <Reveal by="word">The cheapest way to run</Reveal>
+          </span>
+          <span className="gr-hero-line">
+            <Reveal by="word" from={5}>
+              open-source models.
+            </Reveal>
+          </span>
+        </h1>
+        <div className="gr-home-actions">
+          <a className="gr-button gr-button--main" href={CONSOLE_BASE_URL}>
+            Get API Key <Arrow />
+          </a>
+          <Link className="gr-button gr-button--secondary" to="/docs/">
+            View Docs <Arrow />
+          </Link>
+        </div>
+      </div>
+      <div
+        className="gr-product-tabs"
+        role="tablist"
+        aria-label="Explore our products"
+      >
+        {products.map((item, index) => {
+          return (
+            <button
+              key={item.id}
+              ref={(element) => {
+                tabs.current[index] = element;
+              }}
+              type="button"
+              role="tab"
+              id={`product-tab-${item.id}`}
+              aria-controls={`product-panel-${item.id}`}
+              aria-selected={activeIndex === index}
+              tabIndex={activeIndex === index ? 0 : -1}
+              onClick={() => showProduct(index)}
+              onKeyDown={(event) => {
+                if (
+                  !["ArrowLeft", "ArrowRight", "Home", "End"].includes(
+                    event.key,
+                  )
+                )
+                  return;
+                event.preventDefault();
+                showProduct(
+                  event.key === "Home"
+                    ? 0
+                    : event.key === "End"
+                      ? products.length - 1
+                      : activeIndex + (event.key === "ArrowRight" ? 1 : -1),
+                  true,
+                );
+              }}
+              className={`gr-product-tab gr-product-tab--${item.id}`}
+            >
+              <span>{item.name}</span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="gr-product-stage">
+        {products.map((item, index) => (
+          <div
+            key={item.id}
+            id={`product-panel-${item.id}`}
+            role="tabpanel"
+            aria-labelledby={`product-tab-${item.id}`}
+            tabIndex={0}
+            hidden={activeIndex !== index}
+            className={`gr-product-panel gr-product-panel--${item.id}`}
+          >
+            <div className="gr-product-visual">
+              {item.id === "inference" ? (
+                <div className="gr-inference-example">
+                  <div className="gr-example-bar">
+                    <span>your-app.py</span>
+                    <span>Python / OpenAI SDK</span>
+                  </div>
+                  <pre>
+                    <code>
+                      <span className="gr-code-muted">from</span> openai{" "}
+                      <span className="gr-code-muted">import</span> OpenAI
+                      {"\n\n"}client = OpenAI({"\n"} api_key=
+                      <span className="gr-code-string">
+                        "YOUR_GRADIATED_KEY"
+                      </span>
+                      ,{"\n"}
+                      <span className="gr-code-highlight">
+                        {" "}
+                        base_url="https://api.gradiated.com"
+                      </span>
+                      {"\n"})
+                    </code>
+                  </pre>
+                  <div className="gr-example-footer">
+                    <Cpu size={18} aria-hidden="true" />
+                    <span>Your code. Open models. Gradiated underneath.</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="gr-rl-example">
+                  <span className="gr-example-caption">
+                    YOUR WORKLOAD IS THE TRAINING DATA
+                  </span>
+                  {[
+                    "Production traces",
+                    "Evaluations + RL",
+                    "Your post-trained model",
+                  ].map((step, stepIndex) => (
+                    <div className="gr-rl-step" key={step}>
+                      <span>0{stepIndex + 1}</span>
+                      {step}
+                      <span aria-hidden="true">
+                        {stepIndex === 2 ? "✓" : "↓"}
+                      </span>
+                    </div>
+                  ))}
+                  <span className="gr-rl-endpoint">
+                    Same API. A model trained for your tasks.
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="gr-product-copy">
+              <h2 className="gr-heading">{item.title}</h2>
+              <p>{item.description}</p>
+              <ul>
+                {item.features.map((feature) => (
+                  <li key={feature}>{feature}</li>
+                ))}
+              </ul>
+              <a className="gr-product-link" href={item.href}>
+                {item.action}
+                <Arrow />
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+      <span className="gr-product-announcement" role="status">
+        {product.name}
+      </span>
+    </div>
+  );
+};

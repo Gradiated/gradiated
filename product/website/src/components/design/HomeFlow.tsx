@@ -795,21 +795,13 @@ export const HomeFlow = (): ReactElement => {
           ref={siliconCopyRef}
         >
           <h2 className="gr-heading">
-            All the way down
+            We’re building
             <br />
-            to the silicon
+            our own chips.
           </h2>
           <p className="gr-muted">
-            Waste in inference isn&apos;t in one place. It comes from model
-            architectures that thrash memory, kernels that leave chips
-            half-idle, and schedulers that keep expensive capacity waiting.
-            Where possible, the workload should shape the silicon.
-          </p>
-          <p className="gr-muted">
-            We design chips for specific model families and provide the weights
-            we generate. Through hardware optimization, our goal is to be the
-            most efficient, configurable, and reliable place to run inference
-            for those base model families.
+            Cheapest means going all the way. We’re designing our own chips to
+            bring costs down further than software alone can.
           </p>
           <Link
             className="gr-button gr-button--main gr-flow-cta"

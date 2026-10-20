@@ -14,7 +14,11 @@ const SENTENCES = [
   "You just change your base URL.",
 ];
 
-export const ValueFold = (): ReactElement => {
+export const ValueFold = ({
+  sentences = SENTENCES,
+}: {
+  sentences?: readonly string[];
+}): ReactElement => {
   const hostRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,12 +42,12 @@ export const ValueFold = (): ReactElement => {
           timers.push(
             window.setTimeout(
               () => w.classList.add("gr-value-word--on"),
-              300 + i * 85,
+              100 + i * 35,
             ),
           );
         });
       },
-      { threshold: 0.55 },
+      { threshold: 0.3 },
     );
     seen.observe(host);
     return () => {
@@ -56,7 +60,7 @@ export const ValueFold = (): ReactElement => {
     <div className="gr-value" ref={hostRef}>
       <div className="gr-value-stage">
         <p className="gr-value-text">
-          {SENTENCES.map((sentence, si) => (
+          {sentences.map((sentence, si) => (
             <span className="gr-value-sentence" key={si}>
               {sentence.split(" ").map((word, wi) => (
                 <span className="gr-value-word" key={wi}>

@@ -36,6 +36,14 @@ and named Node/Lease permissions. Review and commit the generated manifests.
 Let Argo sync, then verify the Node is Ready with measured GPU, CPU and memory
 budgets before scheduling work.
 
+`inference-hosts` automatically reconciles generated host Services, while
+`gpu-inference` reconciles inventory, credentials and permissions. Shared proxy
+changes remain manually deployed through `inference-network`. A transient delay
+between these Applications is retried by the GPU controller. A missing Service
+lasting five minutes raises `GpuHostServiceMissing`; do not wait for a model
+Rollout deadline to diagnose enrollment. Automatic pruning is disabled for host
+Services, so retirement still requires explicit cleanup after draining workloads.
+
 This explicit Git step keeps enrollment from giving the operations service broad
 Kubernetes write access. Three controller replicas run on separate EKS nodes;
 leader fencing prevents two controllers from changing the same host concurrently.

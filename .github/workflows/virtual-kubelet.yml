@@ -16,6 +16,7 @@ on:
       - "infra/environments/prod/us-east-1/kubernetes/platform/external-secrets.yaml"
       - "infra/environments/prod/us-east-1/kubernetes/platform/gpu-inference.yaml"
       - "infra/environments/prod/us-east-1/kubernetes/platform/inference-network.yaml"
+      - "infra/environments/prod/us-east-1/kubernetes/platform/inference-hosts.yaml"
       - "infra/environments/prod/us-east-1/kubernetes/platform/keda.yaml"
       - "infra/environments/prod/us-east-1/kubernetes/platform/tailscale-operator.yaml"
       - "infra/environments/prod/us-east-1/kubernetes/platform/tailscale-relays.yaml"

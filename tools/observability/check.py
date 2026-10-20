@@ -64,7 +64,8 @@ def main():
             for target in panel.get('targets', []):
                 expr = target['expr'].replace('$__rate_interval', '5m')
                 expr = expr.replace('$deployment', '.*').replace('$model', '.*').replace('$__range', '1h')
-                assert '$' not in expr, expr
+                # PromQL label_replace uses numeric $1 captures, unlike Grafana variables.
+                assert '$' not in re.sub(r'\$[0-9]+', '', expr), expr
                 chart_rules.append({'record': f'check:panel_{len(chart_rules)}', 'expr': expr})
 
     from autoscaling_checks import check_autoscaling
@@ -672,6 +673,29 @@ def main():
         {'series': 'argocd_app_info{name="api",health_status="Healthy",sync_status="OutOfSync",autosync_enabled="true"}', 'values': '1+0x8 stale'},
         {'series': 'argocd_app_info{name="api",health_status="Healthy",sync_status="Synced",autosync_enabled="true"}', 'values': '_ _ _ _ _ _ _ _ _ 1+0x31'},
     ], None, [app_alert], eval_time='16m')
+    host_service_alert = 'GpuHostServiceMissing'
+    inventory = [{'series': f'gradiated_gpu_host_last_seen_seconds{{instance_id="test-host",pod="controller-{pod}"}}',
+                  'values': '0+0x40'} for pod in ('a', 'b')]
+    service = {'series': 'kube_service_info{namespace="tailscale-inference",service="gpu-test-host"}',
+               'values': '1+0x40'}
+    scraped = {'series': 'up{job="kube-state-metrics"}', 'values': '1+0x40'}
+    for name, services, up, eval_time, fires in [
+        ('never-seen host missing Service', [], scraped, '6m', True),
+        ('Service present', [service], scraped, '6m', False),
+        ('brief enrollment delay', [], scraped, '4m', False),
+        ('deleted Service remains missing', [{**service, 'values': '1+0x4 stale'}], scraped, '8m', True),
+        ('Service restored after firing', [{**service, 'values': '_x14 1+0x26'}], scraped, '8m', False),
+        ('Service in wrong namespace', [{**service, 'series': service['series'].replace('tailscale-inference', 'other')}], scraped, '6m', True),
+        ('another host cannot mask missing Service', [{**service, 'series': service['series'].replace('gpu-test-host', 'gpu-other-host')}], scraped, '6m', True),
+        ('operator proxy cannot mask missing Service', [{**service, 'series': service['series'].replace('gpu-test-host', 'ts-gpu-test-host-proxy')}], scraped, '6m', True),
+        ('Kubernetes state scrape failed', [], {**scraped, 'values': '0+0x40'}, '6m', False),
+        ('Kubernetes state scrape absent', [], None, '6m', False),
+    ]:
+        scenario('GPU host Service ' + name, inventory + services + ([up] if up else []),
+                 host_service_alert if fires else None, [host_service_alert],
+                 {'instance_id': 'test-host'} if fires else None, eval_time)
+    scenario('GPU host removed from inventory', [scraped], None, [host_service_alert], eval_time='6m')
+
     rollout_alert = 'GpuRolloutFailed'
     for name, phase, fires in [('completed', 'Completed', False), ('progressing', 'Progressing', False), ('paused', 'Paused', False),
                                ('aborted', 'Abort', True), ('deadline exceeded', 'Timeout', True), ('reconcile error', 'Error', True), ('invalid spec', 'InvalidSpec', True)]:

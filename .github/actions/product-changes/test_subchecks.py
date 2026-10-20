@@ -54,6 +54,13 @@ class SubcheckSelectionTest(unittest.TestCase):
     def test_gateway_timeout_keeps_cross_file_host_agent_coverage(self):
         self.assertTrue(selected("gpu", [KUBE + "workloads/gateway.yaml"])["controller"])
 
+    def test_inference_application_changes_check_service_ownership_and_sync_policy(self):
+        for app in ("inference-hosts", "inference-network"):
+            path = KUBE + f"platform/{app}.yaml"
+            self.assertEqual(selected("gpu", [path]),
+                             {"controller": False, "configuration": True, "manifests": True})
+            self.assertTrue(selected("kubernetes", [path])["tailscale"])
+
     def test_gpu_changes_skip_temporal_browser_and_database_fixtures(self):
         result = selected("kubernetes", [KUBE + "gpu-inference/kev.yaml"])
         self.assertTrue(result["observability"])

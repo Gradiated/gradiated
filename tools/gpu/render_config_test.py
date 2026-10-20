@@ -34,6 +34,27 @@ class RenderTests(unittest.TestCase):
         app = yaml.safe_load((renderer.KUBE / 'platform/gpu-inference.yaml').read_text())
         self.assertEqual(app['spec']['source']['directory']['include'], '*.yaml')
 
+    def test_host_services_reconcile_automatically_without_shared_proxy_changes(self):
+        hosts = yaml.safe_load((renderer.KUBE / 'platform/inference-hosts.yaml').read_text())['spec']
+        network = yaml.safe_load((renderer.KUBE / 'platform/inference-network.yaml').read_text())['spec']
+        self.assertEqual(hosts['source']['path'],
+                         str((renderer.KUBE / 'tailscale-inference/hosts').relative_to(renderer.ROOT)))
+        self.assertEqual(hosts['source']['directory'], {'include': '*.yaml'})
+        self.assertEqual(hosts['source']['targetRevision'], 'main')
+        self.assertEqual(hosts['destination']['namespace'], 'tailscale-inference')
+        self.assertEqual(hosts['syncPolicy']['automated'], {'prune': False, 'selfHeal': True})
+        self.assertIn('RespectIgnoreDifferences=true', hosts['syncPolicy']['syncOptions'])
+        self.assertEqual(hosts['ignoreDifferences'], [
+            {'group': '', 'kind': 'Service', 'jsonPointers': ['/spec/externalName']}])
+        self.assertNotIn('automated', network['syncPolicy'])
+        self.assertEqual(network['source']['directory'], {'include': 'proxies.yaml'})
+        self.assertEqual(network['source']['path'],
+                         str((renderer.KUBE / 'tailscale-inference').relative_to(renderer.ROOT)))
+        for path in (renderer.KUBE / 'tailscale-inference/hosts').glob('*.yaml'):
+            for resource in yaml.safe_load_all(path.read_text()):
+                self.assertEqual(resource['kind'], 'Service')
+                self.assertEqual(resource['metadata']['namespace'], hosts['destination']['namespace'])
+
     def test_new_host_projects_service_secret_and_private_endpoint(self):
         entry = {**self.hosts[0], 'instance_id': '019d5a4a-0000-7000-8000-000000000001',
                  'tailscale_ip': '100.64.0.1', 'management_secret': {'key': 'gradiated/prod/platform/gpu-host/test'}}

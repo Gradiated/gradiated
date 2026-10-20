@@ -23,6 +23,7 @@ APPLICATIONS = (
     "argo-rollouts",
     "external-secrets",
     "gpu-inference",
+    "inference-hosts",
     "inference-network",
     "keda",
     "tailscale-operator",

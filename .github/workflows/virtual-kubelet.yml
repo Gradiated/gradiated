@@ -98,6 +98,8 @@ jobs:
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: bash product/inference/tailscale/tests/test-tailscale.sh
         if: fromJSON(needs.changes.outputs.checks).controller
+      - run: bash product/inference/tailscale/tests/test-tailscale-ssh.sh
+        if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 product/inference/gpu/install_seed_test.py
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 product/inference/gpu/bootstrap_test.py

@@ -23,7 +23,8 @@ while true; do
     [[ "$proxy_port" == 8888 || "$proxy_port" == 8889 ]] || exit 64
   fi
   rm -f "$root/socket"
-  "$bin/tailscaled" --tun=userspace-networking --state="$root/state" --socket="$root/socket" --port=41641 9>&- &
+  # --statedir gives tailscaled somewhere to keep SSH host keys; without it Tailscale SSH stays off.
+  "$bin/tailscaled" --tun=userspace-networking --state="$root/state" --statedir="$root" --socket="$root/socket" --port=41641 9>&- &
   child=$!
   ready=false
   for _ in {1..30}; do

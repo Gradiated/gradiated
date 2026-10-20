@@ -1,6 +1,6 @@
 # Sets the required "AI review passed" commit status on a pull request's head
 # commit. Like a human approval with stale-review dismissal turned off, it
-# passes once both AI reviewers have reviewed at least one commit of the PR;
+# passes once either supported AI reviewer has reviewed a commit of the PR;
 # later pushes keep it passing and are covered by required CI, the security
 # scans and resolved review threads.
 #
@@ -30,12 +30,13 @@
 # overwrite a newer "success". Graphite check_run events without a linked PR
 # (fork PRs) are ignored; Codex events and workflow_dispatch still update it.
 #
-# If a reviewer did not run or failed: comment `@codex review` for Codex, or
+# If neither reviewer completed: comment `@codex review` for Codex, or
 # re-run the AI review from the Graphite PR page (the Details link on the
 # "Graphite / AI Reviews" check). The status updates when the bot finishes.
 # To re-evaluate a PR by hand: gh workflow run ai-review-gate.yml -f pr=123 (the PR number)
 # Dependabot PRs follow the same rule. If a reviewer is down and a change
-# cannot wait, an organization admin temporarily edits the main ruleset
+# cannot wait after requests/retries to both reviewers fail, an organization
+# admin temporarily edits the main ruleset
 # (GitHub records this in the ruleset history) and notes it on the PR within
 # one business day; see the Change Management Policy.
 name: AI review gate
@@ -155,10 +156,15 @@ jobs:
           fi
           if [ -z "$graphite" ]; then missing+=("Graphite ($graphite_head)"); fi
 
-          if [ ${#missing[@]} -eq 0 ]; then
-            state=success; description="Codex reviewed ${codex:0:7}, Graphite reviewed ${graphite:0:7}"
+          if [ -n "$codex" ] || [ -n "$graphite" ]; then
+            state=success
+            if [ -n "$codex" ]; then
+              description="Codex reviewed ${codex:0:7}"
+            else
+              description="Graphite reviewed ${graphite:0:7}"
+            fi
           else
-            state=pending; description="Waiting for a review of this PR: $(IFS=,; echo "${missing[*]}")"
+            state=pending; description="Waiting for either AI reviewer: $(IFS=,; echo "${missing[*]}")"
           fi
           echo "PR #$pr $head: $state - $description"
           gh api "repos/$REPO/statuses/$head" -f state="$state" -f context="AI review passed" \

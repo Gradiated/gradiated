@@ -144,6 +144,27 @@ class RetirementTests(unittest.TestCase):
                 retire.run(["aws", "secretsmanager"])
         self.assertNotIn("credential-value", str(error.exception))
 
+    def test_inventory_without_pull_exclusion_never_reads_manifests(self):
+        responses = [{"Account": "123456789012", "Arn": "arn:aws:sts::123456789012:assumed-role/cleanup/test"},
+                     {"pullTimeUpdateExclusions": []}]
+        with patch.object(retire, "aws", side_effect=responses) as aws:
+            with self.assertRaisesRegex(RuntimeError, "pull-time update exclusion"):
+                retire.ecr_inventory([REPO])
+        self.assertEqual([call.args[:2] for call in aws.call_args_list],
+                         [("sts", "get-caller-identity"), ("ecr", "list-pull-time-update-exclusions")])
+
+    def test_exclusion_matches_assumed_role_but_not_a_different_role(self):
+        identity = {"Account": "123456789012", "Arn": "arn:aws:sts::123456789012:assumed-role/cleanup/test"}
+        for role, succeeds in [("cleanup", True), ("different", False)]:
+            with self.subTest(role=role), patch.object(retire, "aws", side_effect=[
+                identity, {"pullTimeUpdateExclusions": [f"arn:aws:iam::123456789012:role/{role}"]},
+            ]):
+                if succeeds:
+                    retire.require_pull_exclusion()
+                else:
+                    with self.assertRaises(RuntimeError):
+                        retire.require_pull_exclusion()
+
     def test_runpod_errors_or_missing_templates_fail_closed(self):
         for result in [
             {"errors": [{"message": "upstream failed"}]},

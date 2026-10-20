@@ -167,7 +167,24 @@ def retirement_plan(images: dict, manifests: dict, protected: set, now: datetime
             for repo, digest in ordered]
 
 
+def require_pull_exclusion() -> None:
+    identity = aws("sts", "get-caller-identity")
+    exclusions = aws("ecr", "list-pull-time-update-exclusions")["pullTimeUpdateExclusions"]
+    principal = identity["Arn"]
+    if ":assumed-role/" in principal:
+        role = principal.split(":assumed-role/", 1)[1].split("/", 1)[0]
+        excluded = any(
+            arn.startswith(f"arn:aws:iam::{identity['Account']}:role/") and arn.rsplit("/", 1)[1] == role
+            for arn in exclusions
+        )
+    else:
+        excluded = principal in exclusions
+    if not excluded:
+        raise RuntimeError("Inventory principal must have an ECR pull-time update exclusion before reading manifests")
+
+
 def ecr_inventory(repositories: list[str]) -> tuple[dict, dict]:
+    require_pull_exclusion()
     images, manifests = {}, {}
     for repository in repositories:
         images[repository] = aws("ecr", "describe-images", "--repository-name", repository)["imageDetails"]

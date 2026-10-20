@@ -8,9 +8,6 @@ resolution-markers = [
     "(python_full_version < '3.13' and sys_platform != 'emscripten') or (python_full_version < '3.12' and sys_platform == 'emscripten')",
 ]
 
-[options]
-exclude-newer = "2026-10-13T00:00:00Z"
-
 [manifest]
 overrides = [
     { name = "aiohttp", specifier = ">=3.14.4,<4" },

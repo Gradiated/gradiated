@@ -23,6 +23,16 @@ const config = z
       .regex(/^[0-9a-f]{64}$/)
       .optional(),
     GPU_CONTROL_ENDPOINT: z.ipv4(),
+    TAILSCALE_SOCKS5_PORT: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(65535)
+      .default(1055),
+    TAILSCALE_LOCALAPI_SOCKET: z
+      .string()
+      .min(1)
+      .default("/var/run/tailscale/tailscaled.sock"),
   })
   .parse(process.env);
 const audit = (event: Record<string, unknown>) =>
@@ -61,6 +71,10 @@ const { server, privateServer, metrics } = createHttp({
       hostImage: config.GPU_BASE_IMAGE,
       hostBundleSha256: config.GPU_HOST_BOOTSTRAP_SHA256,
       apiEndpoint: config.GPU_CONTROL_ENDPOINT,
+      tailnet: {
+        socksPort: config.TAILSCALE_SOCKS5_PORT,
+        localApiSocket: config.TAILSCALE_LOCALAPI_SOCKET,
+      },
     },
     (event) => audit({ service: "ops-mcp", ...event }),
   ),

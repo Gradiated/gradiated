@@ -4,6 +4,7 @@
     "tools/gpu/*",
     "product/inference/gpu/*",
     "product/inference/images/gpu-base/*",
+    "product/inference/tailscale/*",
     "infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml"
   ],
   "configuration": [

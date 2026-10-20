@@ -32,6 +32,8 @@ cat >/etc/gradiated/tailscale-control.json <<'CONTROL'
 {"api":"100.64.0.1"}
 CONTROL
 printf 'tskey-auth-synthetic\n'  >/var/lib/gradiated-tailscale/auth-key
+# Root (tailscaled) and the operator account (control bridge) both record CLI calls.
+install -m 600 -o tailscale -g tailscale /dev/null /var/lib/gradiated-tailscale/calls
 chown tailscale:tailscale /etc/gradiated/tailscale.json /var/lib/gradiated-tailscale/auth-key
 chmod 600 /etc/gradiated/tailscale.json /var/lib/gradiated-tailscale/auth-key
 cat >/opt/gradiated/tailscale/tailscaled <<'DAEMON'
@@ -47,8 +49,13 @@ set -euo pipefail
 printf '%s\n' "$*" >>/var/lib/gradiated-tailscale/calls
 case "$2" in
 up)
+  [[ "$(id -u)" == 0 && "$*" == *' --ssh --operator=tailscale '* ]]
   [[ -f /var/lib/gradiated-tailscale/state || "$*" == *'--auth-key=file:'* ]]
-  printf 'enrolled\n' >/var/lib/gradiated-tailscale/state
+  if [[ "$*" == *'--force-reauth'* ]]; then
+    [[ "$*" == *'--auth-key=file:'* ]]
+    printf 'reauthenticated\n' >>/var/lib/gradiated-tailscale/state
+  fi
+  printf 'enrolled\n' >>/var/lib/gradiated-tailscale/state
   ;;
 serve) [[ "$*" == *'--tcp=8888 tcp://127.0.0.1:8888'* ]] ;;
 nc) cat ;;
@@ -92,7 +99,27 @@ done
 ((calls >= 2))
 docker exec "$container" bash -c 'kill -0 "$1"' _ "$supervisor"
 if docker exec "$container" grep -q 'tskey-auth-synthetic' /var/lib/gradiated-tailscale/calls; then exit 1; fi
-echo 'Tailscale supervisor restarts with persistent state, scopes Serve to TCP/8888 and isolates credentials'
+[[ $(docker exec "$container" stat -c %u "/proc/$supervisor") == 0 ]]
+echo 'Tailscale supervisor runs as root with Tailscale SSH, restarts with persistent state, scopes Serve to TCP/8888 and isolates credentials'
+
+# A staged re-authentication (bootstrap promotion) applies on USR1 and is consumed once.
+docker exec "$container" bash -c '
+  printf "tskey-auth-promotion\n" >/var/lib/gradiated-tailscale/auth-key
+  : >/var/lib/gradiated-tailscale/reauth
+  kill -USR1 "$1"' _ "$supervisor"
+for _ in {1..30}; do
+  if docker exec "$container" grep -q reauthenticated /var/lib/gradiated-tailscale/state; then break; fi
+  sleep .2
+done
+docker exec "$container" grep -q reauthenticated /var/lib/gradiated-tailscale/state
+for _ in {1..30}; do
+  if ! docker exec "$container" test -e /var/lib/gradiated-tailscale/reauth; then break; fi
+  sleep .2
+done
+docker exec "$container" test ! -e /var/lib/gradiated-tailscale/auth-key
+docker exec "$container" test ! -e /var/lib/gradiated-tailscale/reauth
+docker exec "$container" bash -c 'kill -0 "$1"' _ "$supervisor"
+echo 'A staged Tailscale re-authentication applies after USR1 and leaves no key behind'
 
 docker exec -i "$container" python3 - <<'CHECK'
 import socket, time

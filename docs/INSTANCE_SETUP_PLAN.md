@@ -20,12 +20,19 @@ the GPU host agent, and joins Tailscale. Status moves through `recording`,
 `updating_provider`, and `prepared`, or `failed`. The result contains public
 configuration and secret references, never credential values.
 
-Pinned direct SSH is required. Configure `runpod-ssh-key` and
-`runpod-ssh-host-keys` in the ops MCP secret. A running provider pod keeps its
+GPU hosts have no public SSH. A new pod uses the v5 RunPod template: the GPU base
+image, no exposed TCP 22, and a single-use `tag:gpu-bootstrap` Tailscale key from
+the RunPod secret `gradiated_tailscale_bootstrap` (minted with
+`tools/gpu/mint-bootstrap-key.py` immediately before creating the pod). On first
+start the pod joins the tailnet as `gpu-bootstrap-<pod ID>` with Tailscale SSH and
+no network grants. ops-mcp reaches it through its own `tag:ops-mcp` Tailscale
+sidecar, which may open Tailscale SSH only to bootstrap pods. Registration installs
+the host agent over that session and then re-authenticates the pod as
+`tag:gpu-inference`, which ops-mcp cannot reach. A running provider pod keeps its
 image, environment, ports, and GPU reservation. An already enrolled host is
 checked without replacing its workloads. A new host must have the verified GPU
-base implementation and idle GPUs. Stopped pods use the pinned `GPU_BASE_IMAGE`;
-changing any running pod's provider settings requires explicit reset authorization.
+base implementation and idle GPUs. Enrollment never uses public SSH. Changing any
+running pod's provider settings requires explicit reset authorization.
 
 Commit the prepared result by adding `kubernetes.inventoryEntry` to
 `infra/environments/prod/us-east-1/kubernetes/gpu-inference/hosts.json`.
@@ -50,8 +57,8 @@ leader fencing prevents two controllers from changing the same host concurrently
 
 ## Credentials and traffic
 
-The GPU receives a one-time, GPU-tagged Tailscale enrollment key and its own
-management key. OAuth, Kubernetes, database and AWS administrative credentials
+The GPU boots with a single-use `tag:gpu-bootstrap` key, then receives a one-time,
+GPU-tagged Tailscale enrollment key over Tailscale SSH and its own management key. OAuth, Kubernetes, database and AWS administrative credentials
 remain in EKS. A root-owned management key protects privileged host operations
 from unprivileged model processes. It is separate from customer authentication.
 
@@ -62,8 +69,14 @@ VPC route to PostgreSQL, Valkey, the Kubernetes API, or unrelated internal servi
 The [Tailscale guide](../infra/modules/tailscale/README.md) defines the network policy.
 
 Provider resets destroy local state. Do not reset an allocated GPU to update
-software. Apply host-agent updates over pinned SSH without changing active runtime
-profiles; model updates belong in Kubernetes Rollouts.
+software. Apply host-agent updates over Tailscale SSH (`tools/gpu/rollout-host.py`)
+without changing active runtime profiles; model updates belong in Kubernetes Rollouts.
+
+Administrators reach GPU hosts only with Tailscale SSH as root. The tailnet policy
+allows it for tailnet admins in check mode, which repeats the Google sign-in with
+MFA every 12 hours; Tailscale records each session. The
+[RunPod guide](../infra/environments/prod/runpod/README.md#shell-access-and-break-glass)
+describes break-glass access and moving existing hosts.
 
 ## Deploy and verify a model
 

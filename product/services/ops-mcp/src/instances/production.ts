@@ -20,12 +20,17 @@ import { createRegistrations } from "./registration.js";
 import { createRunPodProvider } from "./runpod.js";
 import { sshRunner } from "./ssh.js";
 import { tailscaleAuthKey } from "./tailscale.js";
+import { localStatus, socksConnector } from "./tailnet.js";
 
 export type RegistrationSettings = {
   readonly credentialsDirectory: string;
   readonly hostImage: string;
   readonly apiEndpoint: string;
   readonly hostBundleSha256?: string;
+  readonly tailnet: {
+    readonly socksPort: number;
+    readonly localApiSocket: string;
+  };
 };
 
 export const productionRegistrations = (
@@ -46,38 +51,16 @@ export const productionRegistrations = (
   return createRegistrations({
     providers: {
       runpod: async () => {
-        const optional = async (name: string) =>
-          readFile(
-            path.join(settings.credentialsDirectory, name),
-            "utf8",
-          ).catch((error: NodeJS.ErrnoException) => {
-            if (error.code === "ENOENT") return null;
-
-            throw new Error(
-              `Cannot read in-place enrollment credential ${name}`,
-            );
-          });
-        const [privateKey, pinnedKeys] = await Promise.all([
-          optional("runpod-ssh-key"),
-          optional("runpod-ssh-host-keys"),
-        ]);
-        let inPlace;
-        if (privateKey && pinnedKeys) {
-          let parsed: unknown;
-          try {
-            parsed = JSON.parse(pinnedKeys);
-          } catch {
-            throw new Error("runpod-ssh-host-keys is not valid JSON");
-          }
-          const hostKeys = z
-            .record(z.string(), z.string().regex(/^[a-f0-9]{64}$/))
-            .parse(parsed);
-          inPlace = { run: sshRunner(privateKey), hostKeys };
-        }
+        const tailnet = {
+          run: sshRunner(
+            socksConnector("127.0.0.1", settings.tailnet.socksPort),
+          ),
+          status: () => localStatus(settings.tailnet.localApiSocket),
+        };
 
         return createRunPodProvider({
           apiKey: await credential("runpod-api-key"),
-          inPlace,
+          tailnet,
         });
       },
     },

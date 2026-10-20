@@ -24,6 +24,7 @@ on:
       - "infra/modules/argocd-bootstrap/main.tf"
       - "product/inference/gpu/**"
       - "product/inference/images/gpu-base/**"
+      - "product/inference/tailscale/**"
       - "mise.toml"
   pull_request:
   workflow_dispatch:
@@ -89,7 +90,15 @@ jobs:
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 tools/gpu/rollout_host_test.py
         if: fromJSON(needs.changes.outputs.checks).controller
-      - run: python3 product/inference/images/gpu-base/start_ssh_test.py
+      - run: python3 tools/gpu/mint_bootstrap_key_test.py
+        if: fromJSON(needs.changes.outputs.checks).controller
+      - run: python3 product/inference/images/gpu-base/tests/start_host_test.py
+        if: fromJSON(needs.changes.outputs.checks).controller
+      - run: python3 -m unittest discover -s product/inference/tailscale/tests -p 'test_*.py'
+        if: fromJSON(needs.changes.outputs.checks).controller
+      - run: bash product/inference/tailscale/tests/test-tailscale.sh
+        if: fromJSON(needs.changes.outputs.checks).controller
+      - run: bash product/inference/tailscale/tests/test-tailscale-ssh.sh
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 product/inference/gpu/install_seed_test.py
         if: fromJSON(needs.changes.outputs.checks).controller

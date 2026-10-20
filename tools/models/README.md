@@ -3,7 +3,7 @@
 `model-deployment.yml` publishes the GPU base image to private ECR, verified
 runtime archives to private S3, and release records containing their source
 revision, base digest, base ID and archive SHA-256. The base contains Ubuntu,
-CUDA and basic system dependencies with SSH startup. The verified host bundle
+CUDA, basic system dependencies and the pinned Tailscale client; it starts no public SSH. The verified host bundle
 contains enrollment, downloader, Desmond, runtime launcher and private control
 forwarding. See [enrollment ordering](../../product/inference/images/README.md)
 before selecting the platform-only base for new provider pods. No image contains
@@ -45,7 +45,7 @@ capacity for the replacement. Previously qualified replicas drain for eleven
 minutes before their GPU claims are released.
 
 Base-image updates affect new provider pods only. Update existing host tools over
-pinned SSH and verify compatibility rather than resetting a GPU reservation.
+Tailscale SSH and verify compatibility rather than resetting a GPU reservation.
 See [instance setup](../../docs/INSTANCE_SETUP_PLAN.md) and
 [RunPod execution](../virtual-kubelet/README.md) for the supported runtime contract.
 

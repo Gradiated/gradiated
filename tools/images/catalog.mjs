@@ -78,7 +78,9 @@ export const catalog = {
       "product/inference/images/gpu-base/Dockerfile",
       "product/inference/images/gpu-base/base-id",
       "product/inference/images/gpu-base/sshd_config",
-      "product/inference/images/gpu-base/start-ssh.sh",
+      "product/inference/images/gpu-base/start-host.sh",
+      "product/inference/tailscale/run-tailscale.sh",
+      "product/inference/tailscale/start-tailscale.sh",
     ],
   },
 

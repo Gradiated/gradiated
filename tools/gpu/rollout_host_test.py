@@ -9,6 +9,14 @@ import subprocess
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
+import uuid
+
+import tailnet_ssh
+
+# Real entries from the committed inventory.
+HOSTS = json.loads(tailnet_ssh.HOSTS.read_text())
+FIRST, SECOND = HOSTS[0]['instance_id'], HOSTS[1]['instance_id']
+
 
 spec = importlib.util.spec_from_file_location('rollout', Path(__file__).with_name('rollout-host.py'))
 rollout = importlib.util.module_from_spec(spec)
@@ -20,8 +28,8 @@ pin_spec.loader.exec_module(pin_host)
 
 class RolloutTests(unittest.TestCase):
     def test_migration_waits_for_a_fresh_agent_when_the_launcher_already_exists(self):
-        for restart_during_ping, gateway in ((False, False), (True, False), (False, True), (True, True)):
-            with self.subTest(restart_during_ping=restart_during_ping, gateway=gateway), tempfile.TemporaryDirectory() as temporary:
+        for restart_during_ping in (False, True):
+            with self.subTest(restart_during_ping=restart_during_ping), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary)
                 state = root / 'state'
                 state.mkdir()
@@ -63,26 +71,35 @@ class RolloutTests(unittest.TestCase):
                         patch('urllib.request.urlopen', side_effect=reply), \
                         patch('time.sleep', side_effect=restart) as wait, contextlib.redirect_stdout(output):
                     namespace = {}
-                    exec(compile(rollout.GATEWAY_REMOTE if gateway else rollout.REMOTE, 'remote-migration', 'exec'), namespace)
-                    if gateway:
-                        namespace['install'](payload)
+                    exec(compile(rollout.REMOTE, 'remote-migration', 'exec'), namespace)
                 wait.assert_called_once()
                 self.assertEqual(json.loads(output.getvalue()),
                                  {'instance_id': 'first', 'host_launcher': True, 'preserved_processes': 0})
 
-    def test_runpod_gateway_uses_interactive_transport(self):
-        run, gateway = Mock(), Mock()
-        rollout.rollout([{'instance_id': 'first', 'ssh': '123abc-456def@ssh.runpod.io'}],
-                        b'binary', 'base', run=run, gateway=gateway)
-        run.assert_not_called()
-        gateway.assert_called_once()
-        command, payload = gateway.call_args.args
-        self.assertEqual(command[:2], ['ssh', '-tt'])
-        self.assertEqual(command[-1], '123abc-456def@ssh.runpod.io')
-        self.assertIn('StrictHostKeyChecking=yes', command)
-        self.assertEqual(payload['instance_id'], 'first')
+    def test_uses_tailscale_ssh_to_the_committed_address(self):
+        run = Mock()
+        rollout.rollout([{'instance_id': FIRST}], b'binary', 'base', run=run)
+        command = run.call_args.args[0]
+        self.assertEqual(command[:3], ['tailscale', 'ssh', 'root@' + HOSTS[0]['tailscale_ip']])
+        self.assertTrue(command[3].startswith('python3 -c '))
+        payload = json.loads(run.call_args.kwargs['input'])
+        self.assertEqual(payload['instance_id'], FIRST)
         self.assertEqual(payload['desmondd'], 'YmluYXJ5')
         self.assertIn('installer', payload)
+
+    def test_every_committed_host_resolves_to_its_tailnet_address(self):
+        for host in HOSTS:
+            self.assertEqual(tailnet_ssh.resolve(host['instance_id']), (host['instance_id'], host['tailscale_ip']))
+        with self.assertRaises(ValueError):
+            tailnet_ssh.resolve(str(uuid.uuid4()))
+
+    def test_rejects_public_and_duplicate_addresses(self):
+        with tempfile.TemporaryDirectory() as directory:
+            hosts = Path(directory) / 'hosts.json'
+            hosts.write_text(json.dumps([{**HOSTS[0], 'tailscale_ip': '203.0.113.1'}, HOSTS[1], HOSTS[1]]))
+            for instance in (FIRST, SECOND):
+                with self.subTest(instance=instance), self.assertRaises(ValueError):
+                    tailnet_ssh.resolve(instance, hosts)
 
     def test_host_pin_cannot_select_a_model_runtime_artifact(self):
         release = {'sha256': 'a' * 64, 'baseId': 'base', 'bundle': 'host'}
@@ -96,13 +113,16 @@ class RolloutTests(unittest.TestCase):
             called.append(command)
             raise subprocess.CalledProcessError(1, command)
         with self.assertRaises(subprocess.CalledProcessError):
-            rollout.rollout([{'instance_id': 'first', 'ssh': 'root@gpu-a'},
-                             {'instance_id': 'second', 'ssh': 'root@gpu-b'}], b'binary', 'base', run)
+            rollout.rollout([{'instance_id': FIRST}, {'instance_id': SECOND}], b'binary', 'base', run)
         self.assertEqual(len(called), 1)
 
-    def test_rejects_ssh_option_injection(self):
+    def test_rejects_public_ssh_targets_and_mismatched_addresses(self):
+        for target in ({'instance_id': FIRST, 'ssh': 'root@203.0.113.1'},
+                       {'instance_id': FIRST, 'tailscale_ip': '100.64.0.9'}):
+            with self.subTest(target=target), self.assertRaises(ValueError):
+                rollout.rollout([target], b'binary', 'base', Mock())
         with self.assertRaises(ValueError):
-            rollout.rollout([{'instance_id': 'first', 'ssh': '-oProxyCommand=evil'}], b'binary', 'base')
+            tailnet_ssh.command('-oProxyCommand=evil', 'true')
 
 
 if __name__ == '__main__':

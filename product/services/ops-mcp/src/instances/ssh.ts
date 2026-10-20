@@ -1,9 +1,10 @@
+import type { Duplex } from "node:stream";
 import { Client } from "ssh2";
 
 export type SshTarget = {
   readonly host: string;
   readonly port: number;
-  readonly hostKeySha256: string;
+  readonly hostKeySha256: string | readonly string[];
 };
 
 export type RunSsh = (
@@ -13,11 +14,16 @@ export type RunSsh = (
   timeoutMs?: number,
 ) => Promise<string>;
 
+export type ConnectSocket = (host: string, port: number) => Promise<Duplex>;
+
+// Without credentials ssh2 offers only "none" authentication, which Tailscale
+// SSH accepts when the tailnet policy allows the connecting node.
 export const sshRunner =
-  (privateKey: string): RunSsh =>
+  (connect: ConnectSocket): RunSsh =>
   (target, command, input, timeoutMs = 60_000) =>
     new Promise((resolve, reject) => {
       const client = new Client();
+      const pinned = [target.hostKeySha256].flat();
       let settled = false;
       const finish = (error?: Error, output = "") => {
         if (settled) return;
@@ -36,7 +42,7 @@ export const sshRunner =
       client.on("error", () =>
         finish(
           new Error(
-            "In-place enrollment SSH failed; check the pinned host key and credentials",
+            "Tailscale SSH to the GPU pod failed; check its pinned host keys",
           ),
         ),
       );
@@ -78,13 +84,16 @@ export const sshRunner =
           stream.end(input ?? "");
         });
       });
-      client.connect({
-        host: target.host,
-        port: target.port,
-        username: "root",
-        privateKey,
-        hostHash: "sha256",
-        hostVerifier: (hash: string) => hash === target.hostKeySha256,
-        readyTimeout: 15_000,
-      });
+
+      connect(target.host, target.port).then(
+        (sock) =>
+          client.connect({
+            sock,
+            username: "root",
+            hostHash: "sha256",
+            hostVerifier: (hash: string) => pinned.includes(hash),
+            readyTimeout: 15_000,
+          }),
+        () => finish(new Error("Tailnet connection to the GPU pod failed")),
+      );
     });

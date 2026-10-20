@@ -41,20 +41,27 @@ event loop through catastrophic backtracking.
 Every tool except `register_instance` has `readOnlyHint: true`,
 `destructiveHint: false` and `idempotentHint: true`; client administrators may run
 those automatically. `register_instance` requires private administrative ingress.
-It records the host identity, installs the pinned GPU bootstrap over SSH, and
-joins Tailscale. A `prepared` result includes a private Service, measured GPU/CPU/
-memory inventory, and an AWS secret reference. Commit those inputs to the GPU
-controller inventory, credential projection, named Node/Lease permissions, and
-Tailscale host Services before scheduling workloads.
+It records the host identity, installs the pinned GPU bootstrap over Tailscale
+SSH, and promotes the pod to `tag:gpu-inference`. A `prepared` result includes a
+private Service, measured GPU/CPU/memory inventory, and an AWS secret reference.
+Commit those inputs to the GPU controller inventory, credential projection, named
+Node/Lease permissions, and Tailscale host Services before scheduling workloads.
 
-The secret properties `runpod-ssh-key` and `runpod-ssh-host-keys` enable pinned
-SSH; the latter maps pod IDs to lowercase SHA-256 host-key fingerprints. Direct
-SSH must already be exposed. A running host keeps its provider settings and
+A `tailscale` sidecar joins the tailnet as an ephemeral `tag:ops-mcp` node using
+`gradiated/prod/platform/tailscale-ops-mcp` and exposes a loopback SOCKS5 proxy
+and its LocalAPI socket. ops-mcp finds the pod's `gpu-bootstrap-<pod ID>` peer,
+pins the Tailscale SSH host keys reported by the tailnet, and connects as root.
+The tailnet policy allows `tag:ops-mcp` Tailscale SSH only to `tag:gpu-bootstrap`,
+so ops-mcp cannot open a shell on an enrolled host. After the bootstrap returns,
+the pod re-authenticates with the one-time `tag:gpu-inference` key, and ops-mcp
+waits for the bootstrap identity to leave its netmap before revoking that key.
+
+Enrollment never uses public SSH. A running host keeps its provider settings and
 reservation. An existing host agent is checked without replacing active model
 processes. An uninitialized host must have the verified GPU base implementation
 and idle GPUs. Other running pods require an explicitly authorized reset.
 Stopped pods use the immutable `GPU_BASE_IMAGE`; enrollment credentials are
-supplied over pinned SSH, never in a provider configuration update.
+supplied over SSH, never in a provider configuration update.
 For a platform-only base, configure `GPU_HOST_BOOTSTRAP_SHA256` with a published
 host release marked `bootstrapVersion: 1`. Ops MCP signs a short-lived download
 grant; the SSH installer independently verifies the archive and its base ID,
@@ -69,8 +76,9 @@ after bootstrap. Management keys are host-specific and stay in AWS and root-owne
 host files. See [instance setup](../../../docs/INSTANCE_SETUP_PLAN.md).
 
 There is no general shell, SSH, Kubernetes exec, secret reader, arbitrary HTTP
-fetch or database tool. Registration alone uses a fixed SSH bootstrap on hosts
-with operator-pinned keys; command text and credentials are never caller inputs. Registration is the only mutation; its credentials
+fetch or database tool. Registration alone uses a fixed SSH bootstrap on
+bootstrap-tagged pods; command text and
+credentials are never caller inputs. Registration is the only mutation; its credentials
 reach no other tool. The service account may list nodes, and pods
 and apps workloads in selected namespaces, and read Argo CD Applications; it may
 not read Secrets or create exec sessions. Pod output omits specs, environment,

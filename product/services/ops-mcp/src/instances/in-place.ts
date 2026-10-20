@@ -110,7 +110,9 @@ while True:
     if time.monotonic()>deadline:raise ValueError("GPU host proxy is not ready")
     time.sleep(2)
 status=json.loads(subprocess.check_output(["/opt/gradiated/tailscale/tailscale","--socket=/var/lib/gradiated-tailscale/socket","status","--json"],text=True))
-if status["BackendState"]!="Running" or "tag:gpu-inference" not in status["Self"].get("Tags",[]):raise ValueError("Private GPU identity is not ready")
+tags=status["Self"].get("Tags",[])
+promotion=pathlib.Path("/var/lib/gradiated-tailscale/reauth").exists() and "tag:gpu-bootstrap" in tags
+if status["BackendState"]!="Running" or not ("tag:gpu-inference" in tags or promotion):raise ValueError("Private GPU identity is not ready")
 root=pathlib.Path("/sys/fs/cgroup")
 quota=(root/"cpu.max").read_text().split();cpu=os.cpu_count() if quota[0]=="max" else int(quota[0])//int(quota[1])
 limit=(root/"memory.max").read_text().strip()
@@ -118,7 +120,16 @@ if limit=="max":limit=int(next(line.split()[1] for line in pathlib.Path("/proc/m
 memory=max(1,int(limit)//(1024**3)-16)
 gpus=subprocess.check_output(["nvidia-smi","--query-gpu=name","--format=csv,noheader"],text=True).splitlines()
 if not gpus or len(set(gpus))!=1 or not any(product in gpus[0] for product in ("B300","RTX PRO 6000")):raise ValueError("A homogeneous GPU inventory is required")
-print(json.dumps({"tailscaleIp":next(ip for ip in status["TailscaleIPs"] if "." in ip),"gpuCount":len(gpus),"gpuProduct": "B300" if "B300" in gpus[0] else "RTX-PRO-6000", "cpu":max(1,int(cpu*0.9)),"memoryGiB":memory}))
+if promotion:
+    supervisors=[]
+    for path in pathlib.Path("/proc").glob("[0-9]*"):
+        try:
+            args=(path/"cmdline").read_bytes().split(bytes(1))
+            if len(args)>1 and os.path.basename(args[0])==b"bash" and args[1]==b"/opt/gradiated/bin/run-tailscale" and path.stat().st_uid==0:supervisors.append(int(path.name))
+        except (OSError,ValueError):pass
+    if len(supervisors)!=1:raise ValueError("Expected one root Tailscale supervisor")
+    subprocess.Popen(["/bin/sh","-c",f"sleep 10; kill -USR1 {supervisors[0]}"],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
+print(json.dumps({"tailscaleIp":next(ip for ip in status["TailscaleIPs"] if "." in ip),"gpuCount":len(gpus),"gpuProduct": "B300" if "B300" in gpus[0] else "RTX-PRO-6000", "cpu":max(1,int(cpu*0.9)),"memoryGiB":memory,"promotion":promotion}))
 `;
 
 export const inventorySchema = z.object({
@@ -130,13 +141,14 @@ export const inventorySchema = z.object({
   gpuProduct: z.enum(["B300", "RTX-PRO-6000"]),
   cpu: z.number().int().positive(),
   memoryGiB: z.number().int().positive(),
+  promotion: z.boolean().optional(),
 });
 
 export const installInPlace = async (
   run: RunSsh,
   target: SshTarget,
   environment: Readonly<Record<string, string>>,
-): Promise<GpuInventory> => {
+): Promise<GpuInventory & { promotion?: boolean }> => {
   const result = await run(
     target,
     `python3 -c ${shellQuote(bootstrapScript)}`,

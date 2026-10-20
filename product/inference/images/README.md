@@ -1,11 +1,16 @@
 # GPU images and runtime bundles
 
 `gpu-base` contains Ubuntu, CUDA, system libraries, Python, nginx, OpenSSH,
-fixed service UIDs and minimal SSH/init startup. It contains no Desmond, host agent,
-downloader, enrollment implementation or model launcher. Application changes do
-not participate in its build identity. The init loop waits for completed
-enrollment, supervises the installed bootstrap alongside SSH, and restarts it
-if it exits. The bootstrap and recovery implementation remain on disk.
+fixed service UIDs, the pinned Tailscale client with its supervisor scripts, and
+minimal init startup. It contains no Desmond, host agent, downloader, enrollment
+implementation or model launcher. Application changes do not participate in its
+build identity. On first start, the init loop stages the single-use bootstrap key
+from `GRADIATED_TAILSCALE_BOOTSTRAP_KEY` and joins the tailnet as
+`gpu-bootstrap-<pod ID>` with Tailscale SSH. It never starts public OpenSSH
+unless `GRADIATED_BREAK_GLASS_SSH=1` and `PUBLIC_KEY` are set, and it removes
+root's `authorized_keys` otherwise. It keeps the Tailscale supervisor running,
+waits for completed enrollment, supervises the installed bootstrap, and restarts
+it if it exits. The bootstrap and recovery implementation remain on disk.
 
 The build upgrades the Ubuntu packages inherited from NVIDIA's CUDA image and
 keeps NVIDIA's CUDA packages at the pinned base versions. The ECR tag hashes the
@@ -14,7 +19,7 @@ changes, for example a newer CUDA base digest. Keep `base-id` unchanged for such
 patch rebuilds: bundles carry it, and enrolled hosts reject bundles whose ID
 differs from their own.
 
-Enrollment installs a SHA-256-pinned host archive over authenticated SSH. The
+Enrollment installs a SHA-256-pinned host archive over Tailscale SSH. The
 archive contains enrollment, supervision and recovery, the downloader, Desmond,
 `runtime-launch`, and private control forwarding. A verified seed is retained on
 disk for recovery; it is independent of the image. Credentials travel through
@@ -29,8 +34,8 @@ are upgraded in place; changing their provider image is unnecessary.
 
 Install the new host bundle before rolling out model archives that omit
 `runtime-launch`. Existing model archives remain supported by the host agent's
-legacy launcher fallback. Existing hosts retain their installed SSH/Tailscale
-supervisors. The connection-preserving forwarding dispatcher is installed at new
+legacy launcher fallback. Hosts enrolled before the v5 template are re-imaged
+onto it. The connection-preserving forwarding dispatcher is installed at new
 enrollment; legacy forwarding listeners need a separate controlled migration.
 
 The model image directories provide pinned runtime packaging and launch scripts.

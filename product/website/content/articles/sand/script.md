@@ -194,9 +194,9 @@ Now widen each location again, from eight bits to sixteen. Each stored number oc
 
 To add more locations, we need more address bits. Two bits choose among four locations. Sixteen bits choose among `2¹⁶ = 65,536` locations, so we widen `MAR` to sixteen bits. We show only a few of those locations here. Each `ADDR` selects one complete sixteen-bit number, or two bytes, rather than a single byte.
 
-This is the memory of LC-3 (Little Computer 3), a small teaching computer. Its simple design helps us understand the basic parts of a computer and how they work together. It works with sixteen-bit groups called words.
+This is the memory of LC-3 (Little Computer 3), a small teaching computer. Its simple design helps us understand the basic parts of a computer and how they work together.
 
-Address width determines how many memory locations we can select, while data width determines how many bits each location holds. A `16-bit` address selects up to `65,536` locations. Calling a processor `16-bit` or `32-bit` usually describes its main registers and integer operations, rather than its address space. In LC-3, registers, addresses and stored numbers are all sixteen bits wide, so each of the `2¹⁶` addresses selects a sixteen-bit, or two-byte, word.
+Address width determines how many memory locations we can select, while data width determines how many bits each location holds. A `16-bit` address selects up to `65,536` locations. Calling a processor `16-bit` or `32-bit` usually describes its main registers and integer operations, rather than its address space. In LC-3, registers, addresses and stored numbers are all sixteen bits wide, so each of the `2¹⁶` addresses selects a group of sixteen bits, or two bytes, called a word.
 
 <!-- scene: memory-access -->
 

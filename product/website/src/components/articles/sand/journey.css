@@ -687,6 +687,12 @@ html:has(.sand-journey) {
   white-space: nowrap;
   cursor: pointer;
 }
+.sand-journey
+  [data-memory-controls="memory-access"][data-action="Ready"]
+  button[data-action="Read"] {
+  border-color: var(--signal-stroke);
+  box-shadow: inset 0 0 0 1px var(--signal-stroke);
+}
 .sand-journey .memory-controls button[aria-pressed="true"] {
   border-color: var(--signal-stroke);
   background: var(--signal-glow);

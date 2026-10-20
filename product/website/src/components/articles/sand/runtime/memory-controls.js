@@ -112,6 +112,7 @@ export const mountMemoryControls = (stage, onChoose) => {
     for (const [name, panel] of panels) {
       panel.hidden = name !== scene;
       if (name !== scene) continue;
+      panel.dataset.action = state.action;
 
       const title = panel.querySelector(".memory-control-title");
       if (title) {

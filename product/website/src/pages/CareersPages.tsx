@@ -141,7 +141,7 @@ export const CareersIndexPage = (): ReactElement => (
           </picture>
           <span className="gr-careers-handbook-copy">
             <h2 className="gr-heading gr-home-cta-title">
-              Working methods. Our internal handbook.
+              Working methods.
             </h2>
             <span className="gr-button gr-button--main">
               Read the handbook

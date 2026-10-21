@@ -50,16 +50,12 @@ const reasons = [
 
 const expectations = [
   {
-    title: "It is intensely scrappy.",
-    body: "We are building hard technology, but we are also hustling for customers and shipping constantly. This is not an academic lab: there is real pressure to perform, grow, and win.",
-  },
-  {
     title: "It is unusually low ego.",
     body: "The work is technically demanding, but we do not hire people who need to be the smartest person in the room. Startups are humbling; good people change their minds quickly.",
   },
   {
     title: "The mission is long term. The cadence is not.",
-    body: "We want to redesign inference all the way down to silicon. Today, that means moving quickly, getting software into customers' hands, and learning from what happens.",
+    body: "We want to redesign inference all the way down to silicon. Today, that means hustling for customers, shipping constantly, and learning from what happens. This is not an academic lab: there is real pressure to perform, grow, and win.",
   },
   {
     title: "Specialists still work on the whole problem.",
@@ -137,7 +133,7 @@ export const CareersIndexPage = (): ReactElement => (
       <Module
         className="gr-careers-module"
         index={2}
-        title="Research that has to ship."
+        title="What it’s really like to work here."
       >
         <ul className="gr-careers-reasons">
           {expectations.map((expectation) => (

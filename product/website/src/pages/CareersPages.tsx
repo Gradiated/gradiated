@@ -31,12 +31,8 @@ const locationOf = (job: Job): string =>
 
 const reasons = [
   {
-    title: "Work on the whole problem.",
-    body: "We put the latest open-weight models into production, develop new inference techniques, and follow performance all the way down to silicon. The field moves quickly; the work stays close to its edge.",
-  },
-  {
-    title: "Learn across the stack.",
-    body: "Nobody arrives knowing every layer. We run internal lectures, work through problems together, and expect everyone to teach what they know. You will leave with a much wider technical range than you arrived with.",
+    title: "One problem. Every layer.",
+    body: "We put the latest open-weight models into production, develop new inference techniques, and follow performance all the way down to silicon. Nobody arrives knowing every layer, so we run internal lectures, work through problems together, and expect everyone to teach what they know.",
   },
   {
     title: "Build with people who have done it before.",

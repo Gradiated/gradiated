@@ -2784,7 +2784,13 @@
   max-width: 58em;
 }
 
+.gr-careers-module::before,
+.gr-careers-module:last-child::after {
+  display: none;
+}
+
 .gr-root .gr-careers-head .gr-masthead-title {
+  margin-block-start: 0;
   max-width: 13ch;
 }
 
@@ -2830,10 +2836,11 @@
 .gr-careers-reasons {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: calc(4 * var(--u));
+  row-gap: calc(3 * var(--u));
   list-style: none;
   margin: 0;
   padding: 0;
-  border-block-start: 1px solid var(--color-rule);
 }
 
 .gr-careers-reason {
@@ -2841,17 +2848,6 @@
   grid-template-columns: 2.5em minmax(0, 1fr);
   column-gap: var(--u);
   align-content: start;
-  padding-block: calc(1.7 * var(--u));
-  border-block-end: 1px solid var(--color-rule);
-}
-
-.gr-careers-reason:nth-child(odd) {
-  padding-inline-end: calc(2 * var(--u));
-  border-inline-end: 1px solid var(--color-rule);
-}
-
-.gr-careers-reason:nth-child(even) {
-  padding-inline-start: calc(2 * var(--u));
 }
 
 .gr-careers-reason-number {
@@ -2898,15 +2894,6 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  border-block-start: 1px solid var(--color-rule);
-}
-
-.gr-careers-methods li {
-  border-block-end: 1px solid var(--color-rule);
-}
-
-.gr-careers-methods li:nth-child(odd) {
-  border-inline-end: 1px solid var(--color-rule);
 }
 
 .gr-careers-method {
@@ -2948,7 +2935,6 @@
   gap: calc(2 * var(--u));
   align-items: baseline;
   padding-block: calc(1.6 * var(--u));
-  border-block: 1px solid var(--color-rule);
 }
 
 .gr-root .gr-careers-no-roles-title,
@@ -2972,6 +2958,11 @@
 
 .gr-careers-no-roles a {
   color: inherit;
+}
+
+.gr-careers-module .gr-roles,
+.gr-careers-module .gr-roles li {
+  border: 0;
 }
 
 .gr-roles {
@@ -3354,14 +3345,8 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .gr-careers-reason:nth-child(odd),
-  .gr-careers-methods li:nth-child(odd) {
-    border-inline-end: 0;
-  }
-
-  .gr-careers-reason:nth-child(odd),
-  .gr-careers-reason:nth-child(even) {
-    padding-inline: 0;
+  .gr-careers-reasons {
+    row-gap: calc(2 * var(--u));
   }
 
   .gr-careers-methods-intro {

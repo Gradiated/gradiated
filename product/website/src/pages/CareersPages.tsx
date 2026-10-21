@@ -76,9 +76,8 @@ export const CareersIndexPage = (): ReactElement => (
     <Nav />
 
     <Band>
-      <Module className="gr-module--top" index={0}>
+      <Module className="gr-module--top gr-careers-module" index={0}>
         <header className="gr-masthead gr-careers-head">
-          <p className="gr-label">Careers</p>
           <Reveal
             as="h1"
             by="word"
@@ -101,7 +100,7 @@ export const CareersIndexPage = (): ReactElement => (
         </header>
       </Module>
 
-      <Module index={1} title="Why Gradiated">
+      <Module className="gr-careers-module" index={1} title="Why Gradiated">
         <ol className="gr-careers-reasons">
           {reasons.map((reason, index) => (
             <li className="gr-careers-reason" key={reason.title}>
@@ -115,7 +114,7 @@ export const CareersIndexPage = (): ReactElement => (
         </ol>
       </Module>
 
-      <Module index={2} title="Know us before you join us">
+      <Module className="gr-careers-module" index={2}>
         <div className="gr-careers-methods-intro">
           <p className="gr-careers-methods-lede">
             Our handbook is public because the way we work should not be a
@@ -151,7 +150,12 @@ export const CareersIndexPage = (): ReactElement => (
         </ul>
       </Module>
 
-      <Module id="open-roles" index={3} title="Open roles">
+      <Module
+        className="gr-careers-module"
+        id="open-roles"
+        index={3}
+        title="Open roles"
+      >
         {jobs.length > 0 ? (
           <ul className="gr-roles">
             {jobs.map((job) => (

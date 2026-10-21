@@ -133,7 +133,7 @@ export const CareersIndexPage = (): ReactElement => (
       <Module
         className="gr-careers-module"
         index={2}
-        title="What it’s really like to work here."
+        title="Before you decide."
       >
         <ul className="gr-careers-reasons">
           {expectations.map((expectation) => (

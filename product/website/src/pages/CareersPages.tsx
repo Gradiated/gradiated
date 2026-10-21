@@ -48,6 +48,33 @@ const reasons = [
   },
 ] as const;
 
+const expectations = [
+  {
+    title: "It is intensely scrappy.",
+    body: "We are building hard technology, but we are also hustling for customers and shipping constantly. This is not an academic lab: there is real pressure to perform, grow, and win.",
+  },
+  {
+    title: "It is unusually low ego.",
+    body: "The work is technically demanding, but we do not hire people who need to be the smartest person in the room. Startups are humbling; good people change their minds quickly.",
+  },
+  {
+    title: "The mission is long term. The cadence is not.",
+    body: "We want to redesign inference all the way down to silicon. Today, that means moving quickly, getting software into customers' hands, and learning from what happens.",
+  },
+  {
+    title: "Specialists still work on the whole problem.",
+    body: "Nobody knows every layer, but ‘that is not my area’ cannot become a reason to stop. You will be expected to learn outside your discipline and help wherever progress is blocked.",
+  },
+  {
+    title: "Customers are part of the technical work.",
+    body: "We do not develop technology in isolation and look for a use later. Customer workloads tell us what matters, what is wasteful, and what to build next.",
+  },
+  {
+    title: "We show our thinking.",
+    body: "Our methods are public, including beliefs that may change. Writing clearly enough for other people to disagree with us is part of doing the work properly.",
+  },
+] as const;
+
 const methods = [
   {
     href: "/library/method/mission/",
@@ -107,7 +134,24 @@ export const CareersIndexPage = (): ReactElement => (
         </ul>
       </Module>
 
-      <Module className="gr-careers-module" index={2}>
+      <Module
+        className="gr-careers-module"
+        index={2}
+        title="Research that has to ship."
+      >
+        <ul className="gr-careers-reasons">
+          {expectations.map((expectation) => (
+            <li className="gr-careers-reason" key={expectation.title}>
+              <h3 className="gr-careers-reason-title">{expectation.title}</h3>
+              <p className="gr-careers-reason-body gr-muted">
+                {expectation.body}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </Module>
+
+      <Module className="gr-careers-module" index={3}>
         <div className="gr-careers-methods-intro">
           <p className="gr-careers-methods-lede">
             Our handbook is public because the way we work should not be a
@@ -133,7 +177,7 @@ export const CareersIndexPage = (): ReactElement => (
       <Module
         className="gr-careers-module"
         id="open-roles"
-        index={3}
+        index={4}
         title="Open roles"
       >
         {jobs.length > 0 ? (
@@ -183,7 +227,7 @@ export const CareersIndexPage = (): ReactElement => (
     </Band>
 
     <Band>
-      <Footer index={4} />
+      <Footer index={5} />
     </Band>
   </Substrate>
 );

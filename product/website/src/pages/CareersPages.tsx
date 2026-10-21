@@ -35,7 +35,7 @@ const reasons = [
     body: "We put the latest open-weight models into production, develop new inference techniques, and follow performance all the way down to silicon. Nobody arrives knowing every layer, so we run internal lectures, work through problems together, and expect everyone to teach what they know.",
   },
   {
-    title: "Build with people who have done it before.",
+    title: "Half a million customers later, we’re starting again.",
     body: "You will work directly with a small founding team that has built PostHog into a unicorn and a developer brand people love, led AI engineering, and gone deep in mathematics, semiconductors, and quantum computing.",
   },
   {

@@ -381,6 +381,10 @@ class RuntimeStaging(Exception):
     pass
 
 
+class UnknownPod(Exception):
+    pass
+
+
 class Agent:
     def __init__(self, config, root=ROOT, config_path=None):
         self.config, self.root = config, root
@@ -783,6 +787,8 @@ class Agent:
                         self.refresh_proxy()
                         threading.Thread(target=self.drain, args=(uid,), daemon=True).start()
                 return {"deleted": not path.exists()}
+            if operation == "status" and not path.exists():
+                raise UnknownPod()
             state = json.loads(path.read_text())
             if operation == "status":
                 running = alive(state.get("task"))
@@ -926,6 +932,9 @@ def handler_for(agent, token):
             except RuntimeStaging:
                 payload = b'{"error":"runtime_staging"}'
                 self.send_response(503)
+            except UnknownPod:
+                payload = b'{"error":"unknown_pod"}'
+                self.send_response(404)
             except (OSError, RuntimeError) as error:
                 print(f'Host operation unavailable: {type(error).__name__}', flush=True)
                 payload = b'{"error":"host_unavailable"}'

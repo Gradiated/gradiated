@@ -227,6 +227,26 @@ class HostAgentTest(unittest.TestCase):
             process.terminate()
             process.wait(timeout=5)
 
+    @unittest.skipUnless(hasattr(agent, 'UnknownPod'), 'the frozen recovery agent predates unknown-pod reporting')
+    def test_real_http_status_of_an_unknown_pod_is_not_a_host_failure(self):
+        import threading
+        import urllib.error
+        import urllib.request
+        server = agent.ThreadingHTTPServer(('127.0.0.1', 0), agent.handler_for(self.host, 'synthetic-key'))
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        payload = {'operation': 'status', 'uid': str(uuid.uuid4()), 'epoch': 1, 'term': self.term}
+        request = urllib.request.Request(f'http://127.0.0.1:{server.server_port}/_kubelet',
+            data=json.dumps(payload).encode(), headers={'Authorization': 'Bearer synthetic-key'})
+        try:
+            with self.assertRaises(urllib.error.HTTPError) as failure:
+                urllib.request.urlopen(request, timeout=2)
+            self.assertEqual(failure.exception.code, 404)
+            self.assertEqual(json.loads(failure.exception.read()), {'error': 'unknown_pod'})
+        finally:
+            server.shutdown()
+            server.server_close()
+
     def test_real_http_storage_failure_is_retryable_and_private(self):
         import threading
         import urllib.error

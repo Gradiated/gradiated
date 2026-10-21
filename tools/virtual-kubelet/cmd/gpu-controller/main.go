@@ -135,6 +135,14 @@ func (p *provider) callPayload(ctx context.Context, payload map[string]any, resu
 		return fmt.Errorf("host temporarily unavailable: %w", err)
 	}
 	defer response.Body.Close()
+	if response.StatusCode == http.StatusNotFound {
+		var failure struct {
+			Error string `json:"error"`
+		}
+		if json.NewDecoder(io.LimitReader(response.Body, 1024)).Decode(&failure) == nil && failure.Error == "unknown_pod" {
+			return errdefs.NotFoundf("host has no record of the pod for operation %s", operation)
+		}
+	}
 	if response.StatusCode >= 500 {
 		return fmt.Errorf("host temporarily unavailable: operation %s returned %d", operation, response.StatusCode)
 	}
@@ -207,7 +215,15 @@ func (p *provider) GetPodStatus(ctx context.Context, namespace, name string) (*v
 			Birth string `json:"birth"`
 		} `json:"epoch"`
 	}
-	if err = p.call(ctx, "status", string(pod.UID), nil, &result); err != nil {
+	err = p.call(ctx, "status", string(pod.UID), nil, &result)
+	if errdefs.IsNotFound(err) {
+		// The host answered but has lost the runtime, for example after a
+		// re-image. Failing the pod lets its ReplicaSet replace it, as kubelet
+		// does for an evicted pod.
+		return &v1.PodStatus{Phase: v1.PodFailed, Reason: "RuntimeLost", Message: "The GPU host has no record of this pod",
+			Conditions: []v1.PodCondition{{Type: v1.PodReady, Status: v1.ConditionFalse}, {Type: v1.ContainersReady, Status: v1.ConditionFalse}}}, nil
+	}
+	if err != nil {
 		return &v1.PodStatus{Phase: v1.PodRunning, Reason: "HostUnreachable",
 			Conditions: []v1.PodCondition{{Type: v1.PodReady, Status: v1.ConditionFalse}, {Type: v1.ContainersReady, Status: v1.ConditionFalse}}}, nil
 	}

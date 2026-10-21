@@ -9,6 +9,7 @@ import SequencingContent from "./method/sequencing-and-depth.mdx";
 import SpendingCompanyMoneyContent from "./method/spending-company-money.mdx";
 import ValuesContent from "./method/values.mdx";
 import PeopleContent from "./method/what-we-look-for.mdx";
+import WorkingWithPostHogContent from "./method/working-with-posthog.mdx";
 
 export type MethodSlug =
   | "mission"
@@ -20,7 +21,8 @@ export type MethodSlug =
   | "spending-company-money"
   | "getting-out-the-gate"
   | "values"
-  | "brand";
+  | "brand"
+  | "working-with-posthog";
 
 export type MethodPageDefinition = {
   Content: ComponentType;
@@ -86,6 +88,15 @@ export const methodPages: MethodPageDefinition[] = [
     description: "What Gradiated looks for in people.",
     indexDescription: "Agency, optimism, and exceptional ability.",
     Content: PeopleContent,
+  },
+  {
+    slug: "working-with-posthog",
+    section: "Company",
+    title: "Working with PostHog",
+    pageTitle: "Working with PostHog",
+    description: "How Gradiated and PostHog work together.",
+    indexDescription: "Share the foundations. Build the company independently.",
+    Content: WorkingWithPostHogContent,
   },
   {
     slug: "spending-company-money",

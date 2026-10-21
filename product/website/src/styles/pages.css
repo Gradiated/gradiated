@@ -2868,16 +2868,8 @@
   line-height: 1.15;
 }
 
-.gr-careers-methods {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6em 1.5em;
-  margin-block-start: calc(1.25 * var(--u));
-}
-
-.gr-careers-method {
-  font-size: var(--text-note);
-  line-height: 1.4;
+.gr-careers-methods-intro .gr-story-row {
+  margin-block-start: calc(2 * var(--u));
 }
 
 .gr-careers-no-roles {

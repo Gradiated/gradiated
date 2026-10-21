@@ -8,6 +8,7 @@ import {
   Nav,
   Reveal,
   SectionFab,
+  StoryRow,
   Substrate,
 } from "../components/design";
 import { ApplyForm } from "../components/ApplyForm";
@@ -71,24 +72,17 @@ const expectations = [
   },
 ] as const;
 
-const methods = [
-  {
-    href: "/library/method/mission/",
-    title: "Affordable and open intelligence",
+const handbook = {
+  art: {
+    tall: "/brand/library/mission.webp",
+    wide: "/brand/library/mission-wide.webp",
   },
-  {
-    href: "/library/method/sequencing-and-depth/",
-    title: "Sequencing and depth",
-  },
-  {
-    href: "/library/method/what-we-look-for/",
-    title: "What we look for",
-  },
-  {
-    href: "/library/method/values/",
-    title: "Values",
-  },
-] as const;
+  date: "",
+  href: "/library/?show=methods",
+  kind: "method" as const,
+  lede: "Our methods, principles, and how we work.",
+  title: "Read our handbook.",
+};
 
 export const CareersIndexPage = (): ReactElement => (
   <Substrate>
@@ -153,20 +147,7 @@ export const CareersIndexPage = (): ReactElement => (
             Our handbook is public because the way we work should not be a
             surprise revealed after you start.
           </p>
-          <nav aria-label="Selected methods" className="gr-careers-methods">
-            {methods.map((method) => (
-              <a
-                className="gr-careers-method"
-                href={method.href}
-                key={method.href}
-              >
-                {method.title}
-              </a>
-            ))}
-            <a className="gr-careers-method" href="/library/?show=methods">
-              All methods
-            </a>
-          </nav>
+          <StoryRow columns="1fr" lead stories={[handbook]} />
         </div>
       </Module>
 

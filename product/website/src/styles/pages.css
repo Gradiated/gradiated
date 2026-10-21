@@ -2855,21 +2855,60 @@
   line-height: 1.55;
 }
 
-.gr-careers-methods-intro {
-  max-width: 50em;
+.gr-home-cta.gr-careers-handbook {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  gap: clamp(32px, 5vw, 80px);
+  align-items: center;
+  margin-block-start: 0;
+  padding: clamp(32px, 4vw, 56px);
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
 }
 
-.gr-root .gr-careers-methods-lede {
-  margin: 0;
-  max-width: 33ch;
-  font-family: var(--font-title);
-  font-size: calc(1.35 * var(--text-heading));
-  letter-spacing: var(--tracking-heading);
-  line-height: 1.15;
+.gr-careers-handbook-art {
+  display: block;
+  min-width: 0;
+  height: clamp(260px, 28vw, 400px);
+  overflow: hidden;
+  border-radius: var(--radius);
 }
 
-.gr-careers-methods-intro .gr-story-row {
-  margin-block-start: calc(2 * var(--u));
+.gr-careers-handbook-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gr-careers-handbook-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.gr-careers-handbook-copy .gr-button {
+  margin-block-start: calc(1.5 * var(--u));
+}
+
+.gr-careers-handbook:hover .gr-arrow,
+.gr-careers-handbook:hover .gr-arrow-shaft {
+  stroke-dashoffset: 0;
+}
+
+@media (max-width: 60rem) {
+  .gr-home-cta.gr-careers-handbook {
+    grid-template-columns: minmax(0, 1fr);
+    aspect-ratio: auto;
+    gap: calc(1.5 * var(--u));
+    padding: 24px;
+  }
+
+  .gr-careers-handbook-art {
+    height: auto;
+    aspect-ratio: 16 / 10;
+  }
 }
 
 .gr-careers-no-roles {

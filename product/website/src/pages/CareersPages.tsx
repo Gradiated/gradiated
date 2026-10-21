@@ -8,7 +8,6 @@ import {
   Nav,
   Reveal,
   SectionFab,
-  StoryRow,
   Substrate,
 } from "../components/design";
 import { ApplyForm } from "../components/ApplyForm";
@@ -72,18 +71,6 @@ const expectations = [
   },
 ] as const;
 
-const handbook = {
-  art: {
-    tall: "/brand/library/mission.webp",
-    wide: "/brand/library/mission-wide.webp",
-  },
-  date: "",
-  href: "/library/?show=methods",
-  kind: "method" as const,
-  lede: "Our methods, principles, and how we work.",
-  title: "Read our handbook.",
-};
-
 export const CareersIndexPage = (): ReactElement => (
   <Substrate>
     <Nav />
@@ -142,13 +129,27 @@ export const CareersIndexPage = (): ReactElement => (
       </Module>
 
       <Module className="gr-careers-module" index={3}>
-        <div className="gr-careers-methods-intro">
-          <p className="gr-careers-methods-lede">
-            Our handbook is public because the way we work should not be a
-            surprise revealed after you start.
-          </p>
-          <StoryRow columns="1fr" lead stories={[handbook]} />
-        </div>
+        <a
+          className="gr-home-cta gr-careers-handbook"
+          href="/library/?show=methods"
+        >
+          <picture aria-hidden className="gr-careers-handbook-art">
+            <source
+              media="(max-width: 60rem)"
+              srcSet="/brand/library/mission.webp"
+            />
+            <img alt="" src="/brand/library/mission-wide.webp" />
+          </picture>
+          <span className="gr-careers-handbook-copy">
+            <h2 className="gr-heading gr-home-cta-title">
+              Working methods. Our internal handbook.
+            </h2>
+            <span className="gr-button gr-button--main">
+              Read the handbook
+              <Arrow />
+            </span>
+          </span>
+        </a>
       </Module>
 
       <Module

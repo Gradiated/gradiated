@@ -22,6 +22,8 @@ import type { LegalSlug } from "./pages/LegalPages";
 import { LibraryIndexPage } from "./pages/LibraryIndexPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { ArticleReadingPage, MethodReadingPage } from "./pages/ReadingPages";
+import { SandLibraryPage } from "./pages/SandLibraryPage";
+import { SAND_TO_THOUGHT_URL } from "./urls";
 import { StylePage } from "./pages/StylePage";
 import { TrainingPage } from "./pages/TrainingPage";
 import { ArtworkGeneratorPage } from "./pages/ArtworkGeneratorPage";
@@ -52,6 +54,7 @@ export const AppRoutes = (): ReactElement => (
     <Route element={<HomePage />} path="/" />
     <Route element={<AboutPage />} path="/about/" />
     <Route element={<LibraryIndexPage />} path="/library/" />
+    <Route element={<SandLibraryPage />} path={SAND_TO_THOUGHT_URL} />
     <Route
       element={<SandJourneyRedirect />}
       path="/library/how-to-get-an-answer-out-of-sand/"

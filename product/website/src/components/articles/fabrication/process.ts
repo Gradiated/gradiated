@@ -1,0 +1,337 @@
+import type { MachineId } from "./model";
+import { maskCycles, stages } from "./sequence";
+import type { MaskId } from "./sequence";
+
+export const clamp = (value: number) => Math.max(0, Math.min(1, value));
+export const ease = (value: number) => {
+  const t = clamp(value);
+
+  return t * t * (3 - 2 * t);
+};
+export const portion = (value: number, start: number, end: number) =>
+  ease((value - start) / (end - start));
+
+export const inverterDuration = 2400;
+
+export const inverterOperation = (input: number, progress: number) => ({
+  supply: portion(progress, 0, 0.2),
+  gates: portion(progress, 0.2, 0.4),
+  transfer: portion(progress, 0.4, 0.9),
+  output: progress >= 0.9 ? 1 - input : undefined,
+});
+
+export const machineIconSize = { width: 72, height: 58 };
+
+export const machinePlaces: Record<MachineId, { x: number; y: number }> = {
+  furnace: { x: 58, y: 55 },
+  coat: { x: 163, y: 55 },
+  litho: { x: 268, y: 55 },
+  develop: { x: 372, y: 55 },
+  etch: { x: 477, y: 55 },
+  strip: { x: 582, y: 55 },
+  anneal: { x: 58, y: 197 },
+  implant: { x: 163, y: 197 },
+  deposit: { x: 268, y: 197 },
+  metal: { x: 372, y: 197 },
+  polish: { x: 477, y: 197 },
+  inspect: { x: 582, y: 197 },
+};
+
+export const machineLoadingSpots: Record<MachineId, { x: number; y: number }> =
+  {
+    furnace: { x: 36, y: 27 },
+    coat: { x: 36, y: 27 },
+    litho: { x: 36, y: 27 },
+    develop: { x: 36, y: 27 },
+    etch: { x: 36, y: 27 },
+    strip: { x: 36, y: 27 },
+    anneal: { x: 36, y: 27 },
+    implant: { x: 54, y: 27 },
+    deposit: { x: 36, y: 27 },
+    metal: { x: 36, y: 28 },
+    polish: { x: 36, y: 27 },
+    inspect: { x: 36, y: 27 },
+  };
+
+export const machineLoadingPoint = (machine: MachineId) => {
+  const centre = machinePlaces[machine];
+  const spot = machineLoadingSpots[machine];
+
+  return {
+    x: centre.x + spot.x - machineIconSize.width / 2,
+    y: centre.y + spot.y - machineIconSize.height / 2,
+  };
+};
+
+export const waferDetailRegion = { x: 162, y: 115, size: 8 };
+
+export type Visit = {
+  machine?: MachineId;
+  from?: MachineId;
+  progress: number;
+  process: number;
+  loaded: number;
+  working: boolean;
+};
+
+export const visitFor = (
+  progress: number,
+  machine: MachineId | undefined,
+  from: MachineId | undefined,
+): Visit => ({
+  machine,
+  from,
+  progress,
+  process: portion(progress, 0.36, 0.84),
+  loaded: portion(progress, 0.25, 0.36) * (1 - portion(progress, 0.88, 0.98)),
+  working: !!machine && progress >= 0.36 && progress < 0.84,
+});
+
+export { stages } from "./sequence";
+
+type ResistField = `${MaskId}${"Coat" | "Expose" | "Develop" | "Strip"}`;
+type ResistValues = Record<ResistField, number>;
+
+export const patternState = (index: number, visit: Visit) => {
+  const step = (scene: number) =>
+    index === 0 || index > scene ? 1 : index < scene ? 0 : visit.process;
+  const resists = Object.fromEntries(
+    maskCycles.flatMap((cycle) =>
+      (["coat", "expose", "develop", "strip"] as const).map((phase) => [
+        `${cycle.id}${phase[0].toUpperCase()}${phase.slice(1)}`,
+        step(cycle[phase]),
+      ]),
+    ),
+  ) as ResistValues;
+
+  return {
+    ...resists,
+    oxide: step(3),
+    well: step(stages.well),
+    wellAnneal: step(stages.wellAnneal),
+    isolation: step(stages.isolation),
+    prepareIsolation: step(stages.prepareIsolation),
+    gateOxide: step(stages.gateOxide),
+    poly: step(stages.poly),
+    patternGate: step(stages.patternGate),
+    implantN: step(stages.implant),
+    implantP: step(stages.implantP),
+    anneal: step(stages.anneal),
+    cover: step(stages.contactInsulation),
+    contacts: step(stages.contacts),
+    metalFill: portion(step(stages.metal), 0, 0.5),
+    metal: portion(step(stages.metal), 0.5, 1),
+    metalPattern: step(stages.metalPattern),
+    interconnect: index === 0 ? 0 : step(stages.interconnect),
+    polish: index === 0 ? 0 : step(stages.polish),
+    viaOpen: index === 0 ? 0 : step(stages.via),
+    viaFill: index === 0 ? 0 : portion(step(stages.upperMetal), 0, 0.5),
+    upperMetal: index === 0 ? 0 : portion(step(stages.upperMetal), 0.5, 1),
+    upperMetalPattern: index === 0 ? 0 : step(stages.upperMetalPattern),
+  };
+};
+export type PatternState = ReturnType<typeof patternState>;
+export const blendPattern = (
+  from: PatternState,
+  to: PatternState,
+  progress: number,
+): PatternState =>
+  Object.fromEntries(
+    (Object.keys(to) as (keyof PatternState)[]).map((key) => [
+      key,
+      (from[key] ?? 0) + (to[key] - (from[key] ?? 0)) * clamp(progress),
+    ]),
+  ) as PatternState;
+
+export const resistState = (state: PatternState, mask: MaskId) => ({
+  coat: state[`${mask}Coat`],
+  expose: state[`${mask}Expose`],
+  develop: state[`${mask}Develop`],
+  strip: state[`${mask}Strip`],
+  amount: state[`${mask}Coat`] * (1 - state[`${mask}Strip`]),
+});
+
+export type Rectangle = readonly [number, number, number, number];
+export const firstMetalTracks: Rectangle[] = [
+  [24, 76, 6, 10],
+  [34, 66, 21, 25],
+  [14, 18, 0, 26],
+  [82, 86, 0, 26],
+];
+export const upperMetalTracks: Rectangle[] = [
+  [48, 52, 0, 25],
+  [48, 92, 0, 4],
+];
+export const onMetalTrack = (
+  x: number,
+  y: number,
+  tracks: readonly Rectangle[],
+) => tracks.some(([x0, x1, y0, y1]) => x >= x0 && x < x1 && y >= y0 && y < y1);
+
+export const terminals = [
+  { x: 16, nType: true, gate: false },
+  { x: 26, nType: true, gate: true },
+  { x: 36, nType: true, gate: false },
+  { x: 64, nType: false, gate: false },
+  { x: 74, nType: false, gate: true },
+  { x: 84, nType: false, gate: false },
+];
+export const contactAt = (x: number, y: number) =>
+  terminals.find(
+    (terminal) =>
+      x >= terminal.x - 2 &&
+      x < terminal.x + 2 &&
+      y >= (terminal.gate ? 6 : 20) &&
+      y < (terminal.gate ? 10 : 26),
+  );
+export const activeSilicon = (x: number) =>
+  (x >= 2 && x < 40) || (x >= 60 && x < 98);
+export const gateRegion = (x: number) =>
+  (x >= 23 && x < 29) || (x >= 71 && x < 77);
+export const maskOpens = (mask: MaskId, x: number, y: number) => {
+  switch (mask) {
+    case "well":
+      return x >= 55;
+    case "isolation":
+      return activeSilicon(x);
+    case "gate":
+      return !gateRegion(x);
+    case "n":
+      return x >= 12 && x < 40 && y >= 12 && y < 53;
+    case "p":
+      return x >= 60 && x < 88 && y >= 12 && y < 53;
+    case "contact":
+      return !!contactAt(x, y);
+    case "metal":
+      return !onMetalTrack(x, y, firstMetalTracks);
+    case "via":
+      return x >= 48 && x < 52 && y >= 21 && y < 25;
+    case "upper":
+      return !onMetalTrack(x, y, upperMetalTracks);
+  }
+};
+
+export const maskMeshes: Record<MaskId, { xs: number[]; ys: number[] }> = {
+  well: { xs: [0, 55, 100], ys: [0, 65] },
+  isolation: { xs: [0, 2, 40, 60, 98, 100], ys: [0, 65] },
+  gate: { xs: [0, 2, 23, 29, 40, 60, 71, 77, 98, 100], ys: [0, 65] },
+  n: {
+    xs: [0, 2, 12, 23, 29, 40, 60, 71, 77, 90, 98, 100],
+    ys: [0, 12, 53, 65],
+  },
+  p: {
+    xs: [0, 2, 10, 23, 29, 40, 60, 71, 77, 88, 98, 100],
+    ys: [0, 12, 53, 65],
+  },
+  contact: {
+    xs: [0, 4, 8, 14, 18, 24, 28, 34, 38, 62, 66, 72, 76, 82, 86, 92, 96, 100],
+    ys: [0, 6, 10, 20, 26, 65],
+  },
+  metal: {
+    xs: [0, 4, 14, 18, 24, 34, 66, 76, 82, 86, 96, 100],
+    ys: [0, 6, 10, 21, 25, 26, 65],
+  },
+  via: { xs: [0, 48, 52, 100], ys: [0, 21, 25, 65] },
+  upper: { xs: [0, 48, 52, 92, 100], ys: [0, 4, 25, 65] },
+};
+
+export const contactEtchHeight = (bottom: number, progress: number) =>
+  14 + (bottom - 14) * clamp(progress);
+export const upperInsulatorHeight = (
+  x: number,
+  y: number,
+  state: PatternState,
+) => {
+  const raised = onMetalTrack(x, y, firstMetalTracks) ? 4 * state.metal : 0;
+
+  return 27 + raised - (2 + raised) * state.polish;
+};
+export const firstOxideHeight = (_x: number, _y: number, state: PatternState) =>
+  5 * state.oxide;
+export const insulationThickness = (
+  x: number,
+  _y: number,
+  state: PatternState,
+) =>
+  (5 * state.oxide + 3 * state.isolation) *
+    (activeSilicon(x) ? 1 - state.prepareIsolation : 1) +
+  (activeSilicon(x) ? 1.8 * state.gateOxide : 0);
+export const siliconSurfaceHeight = (
+  x: number,
+  _y: number,
+  state: PatternState,
+) =>
+  -2 * state.oxide -
+  1.2 * state.isolation -
+  (activeSilicon(x) ? 0.8 * state.gateOxide : 0);
+export const deviceSurfaceHeight = (
+  x: number,
+  y: number,
+  state: PatternState,
+) =>
+  siliconSurfaceHeight(x, y, state) +
+  insulationThickness(x, y, state) +
+  8 * state.poly * (gateRegion(x) ? 1 : 1 - state.patternGate);
+
+export const materialSurfaceHeight = (state: PatternState, x = 0, y = 0) => {
+  const deviceTop = deviceSurfaceHeight(x, y, state);
+  const coveredTop = deviceTop + (14 - deviceTop) * state.cover;
+  const metalTop =
+    coveredTop +
+    3 *
+      state.metal *
+      (onMetalTrack(x, y, firstMetalTracks) ? 1 : 1 - state.metalPattern);
+  const insulatedTop =
+    metalTop +
+    (upperInsulatorHeight(x, y, state) - metalTop) * state.interconnect;
+
+  return (
+    insulatedTop +
+    3 *
+      state.upperMetal *
+      (onMetalTrack(x, y, upperMetalTracks) ? 1 : 1 - state.upperMetalPattern)
+  );
+};
+export const resistTopHeight = (state: PatternState, mask: MaskId) => {
+  const coated = mask === "gate" ? { ...state, patternGate: 0 } : state;
+
+  return (
+    Math.max(
+      ...[
+        [0, 0],
+        [26, 8],
+        [50, 23],
+        [74, 8],
+        [94, 23],
+      ].map(([x, y]) => materialSurfaceHeight(coated, x, y)),
+    ) + 9
+  );
+};
+
+export const resistThickness = (
+  state: PatternState,
+  mask: MaskId,
+  x: number,
+  y: number,
+) => {
+  const resist = resistState(state, mask);
+
+  return (
+    Math.max(
+      0,
+      resistTopHeight(state, mask) - materialSurfaceHeight(state, x, y),
+    ) *
+    resist.amount *
+    (maskOpens(mask, x, y) ? 1 - resist.develop : 1)
+  );
+};
+
+export const patternSurfaceHeight = (state: PatternState, x = 0, y = 0) =>
+  materialSurfaceHeight(state, x, y) +
+  maskCycles.reduce(
+    (height, cycle) => height + resistThickness(state, cycle.id, x, y),
+    0,
+  );
+
+export const filmVisibility = (thickness: number) => ease(thickness / 0.8);
+export const sceneDuration = 6500;

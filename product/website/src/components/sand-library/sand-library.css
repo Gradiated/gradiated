@@ -1,0 +1,107 @@
+.sand-library-card {
+  min-width: 0;
+}
+.sand-library-link {
+  display: grid;
+  gap: calc(1.25 * var(--u));
+  color: inherit;
+  text-decoration: none;
+}
+.sand-library-link:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 8px;
+  border-radius: var(--radius);
+}
+.sand-library-art {
+  overflow: hidden;
+  position: relative;
+  border-radius: var(--radius);
+  aspect-ratio: 1.6;
+  box-shadow: var(--shadow-raise);
+}
+.sand-library-art--overview {
+  min-height: calc(17 * var(--u));
+}
+.sand-library-card--lead .sand-library-link {
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: calc(2 * var(--u));
+  align-items: center;
+}
+.sand-library-copy h2,
+.sand-library-copy h3 {
+  margin: calc(0.5 * var(--u)) 0 0;
+  font-family: var(--font-title);
+  font-size: var(--text-heading);
+  font-weight: 500;
+  letter-spacing: var(--tracking-heading);
+  line-height: 1.18;
+}
+.sand-library-copy h2 {
+  font-size: clamp(2rem, 3.1vw, 3.25rem);
+}
+.sand-library-description {
+  margin: calc(0.6 * var(--u)) 0 0;
+  font-size: var(--text-lede);
+  line-height: var(--leading-lede);
+}
+.sand-library-action {
+  display: flex;
+  align-items: center;
+  gap: calc(0.5 * var(--u));
+  width: fit-content;
+  margin-top: var(--u);
+  font-size: var(--text-body);
+  border-bottom: 1px solid transparent;
+  padding-bottom: 3px;
+}
+.sand-library-link:hover .sand-library-action,
+.sand-library-link:focus-visible .sand-library-action {
+  border-color: currentColor;
+}
+.sand-library-action svg {
+  width: 22px;
+}
+.sand-library-dives {
+  margin-top: calc(3 * var(--u));
+  padding-top: calc(1.25 * var(--u));
+  border-top: 1px solid var(--color-rule);
+}
+.sand-library-dives > h2 {
+  margin: 0 0 var(--u);
+}
+.sand-library-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(2 * var(--u));
+}
+.sand-library-chip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  color: #2a191c;
+  background: var(--color-kiln-700);
+}
+.sand-library-chip canvas,
+.sand-library-chip-poster {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  inset: 0;
+}
+.sand-library-chip[data-ready="true"] .sand-library-chip-poster {
+  visibility: hidden;
+}
+@media (max-width: 60rem) {
+  .sand-library-card--lead .sand-library-link {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--u);
+  }
+  .sand-library-art--overview {
+    min-height: 0;
+  }
+}
+@media (max-width: 40rem) {
+  .sand-library-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

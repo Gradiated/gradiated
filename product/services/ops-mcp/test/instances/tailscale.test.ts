@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  bootstrapAuthKey,
   promotedAddress,
   tailscaleAuthKey,
 } from "../../src/instances/tailscale.js";
@@ -43,6 +44,45 @@ describe("GPU Tailscale auth keys", () => {
     expect(request.mock.calls[2]![1]!.method).toBe("DELETE");
   });
 
+  it("issues a one-time tag:gpu-bootstrap key for one RunPod pod", async () => {
+    const request = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json({ access_token: "oauth-token" }))
+      .mockResolvedValueOnce(
+        Response.json({ key: "tskey-auth-bootstrap", id: "key-id" }),
+      );
+    const bootstrap = await bootstrapAuthKey(
+      "w9hw3ckrz26kua",
+      request,
+      async () => ({
+        client_id: "id",
+        client_secret: "secret",
+      }),
+    );
+
+    expect(bootstrap.key).toBe("tskey-auth-bootstrap");
+    expect(JSON.parse(request.mock.calls[1]![1]!.body as string)).toEqual({
+      capabilities: {
+        devices: {
+          create: {
+            reusable: false,
+            ephemeral: false,
+            preauthorized: true,
+            tags: ["tag:gpu-bootstrap"],
+          },
+        },
+      },
+      expirySeconds: 3600,
+      description: "GPU bootstrap w9hw3ckrz26kua",
+    });
+    await expect(
+      bootstrapAuthKey("../keys", request, async () => ({
+        client_id: "id",
+        client_secret: "secret",
+      })),
+    ).rejects.toThrow();
+  });
+
   it("withholds OAuth response bodies from failures", async () => {
     const request = vi
       .fn<typeof fetch>()
@@ -55,7 +95,7 @@ describe("GPU Tailscale auth keys", () => {
         client_id: "id",
         client_secret: "secret",
       })),
-    ).rejects.toThrow("GPU enrollment OAuth returned 403");
+    ).rejects.toThrow("Tailscale OAuth returned 403");
   });
 
   it("finds the new inference device that re-authentication created", async () => {

@@ -23,7 +23,10 @@ export interface InstanceProvider {
   ): Promise<Record<string, string>>;
   isStopped(providerInstanceId: string): Promise<boolean>;
   supportsInPlace?(providerInstanceId: string, image: string): Promise<boolean>;
-  checkTailscaleEnrollment(providerInstanceId: string): Promise<void>;
+  checkTailscaleEnrollment(
+    providerInstanceId: string,
+    options?: { readonly allowReset?: boolean },
+  ): Promise<void>;
   bootstrap(
     instance: ProviderInstance,
     image: string,

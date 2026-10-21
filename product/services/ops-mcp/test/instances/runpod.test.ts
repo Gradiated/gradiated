@@ -47,7 +47,7 @@ describe("RunPod Kubernetes enrollment", () => {
       expect(s.calls.every((c) => c.method === "GET")).toBe(true);
     },
   );
-  it("configures and starts a stopped pod, preserves SSH key, and uses ECR delegation", async () => {
+  it("re-images and starts a stopped pod with its own bootstrap key and no public SSH", async () => {
     const s = setup();
     let started = false;
     const fetch = vi.fn(
@@ -63,9 +63,15 @@ describe("RunPod Kubernetes enrollment", () => {
         );
       },
     );
+    const revoke = vi.fn(async () => {});
+    const bootstrapKey = vi.fn(async () => ({
+      key: "tskey-auth-bootstrap",
+      revoke,
+    }));
     const provider = createRunPodProvider({
       apiKey: "key",
       fetch,
+      bootstrapKey,
       tailnet: { run: s.run, status: async () => bootstrapStatus() },
     });
     const env = { GRADIATED_GPU_BOOTSTRAP: "private-encoded-bootstrap" };
@@ -73,13 +79,47 @@ describe("RunPod Kubernetes enrollment", () => {
     const patch = fetch.mock.calls.find(
       ([, init]) => init?.method === "PATCH",
     )![1]!;
+    expect(bootstrapKey).toHaveBeenCalledWith("pod1");
     expect(JSON.parse(String(patch.body))).toEqual({
       imageName: image,
-      env: { PUBLIC_KEY: rtxPod.env.PUBLIC_KEY },
+      ports: [],
+      env: { GRADIATED_TAILSCALE_BOOTSTRAP_KEY: "tskey-auth-bootstrap" },
     });
     expect(
       fetch.mock.calls.some(([url]) => String(url).endsWith("/start")),
     ).toBe(true);
+    expect(revoke).toHaveBeenCalledOnce();
+  });
+
+  it("revokes the bootstrap key when the reset fails, and records a failed revocation", async () => {
+    const s = setup();
+    const revoke = vi.fn(async () => {
+      throw new Error("Tailscale key revocation returned 500");
+    });
+    const audit = vi.fn();
+    const provider = createRunPodProvider({
+      apiKey: "key",
+      fetch: (async (input, init) =>
+        init?.method === "PATCH"
+          ? new Response("", { status: 500 })
+          : s.runpod.fetch(input, init)) as typeof globalThis.fetch,
+      bootstrapKey: async () => ({ key: "tskey-auth-bootstrap", revoke }),
+      audit,
+      tailnet: { run: s.run, status: async () => ({ Peer: {} }) },
+    });
+    await expect(
+      provider.bootstrap(
+        await provider.describe("pod1"),
+        image,
+        {},
+        { allowReset: true },
+      ),
+    ).rejects.toThrow("RunPod PATCH /pods/pod1 failed: 500");
+    expect(revoke).toHaveBeenCalledOnce();
+    expect(audit).toHaveBeenCalledWith({
+      event: "tailscale_bootstrap_key_revocation_failed",
+      provider_instance_id: "pod1",
+    });
   });
   it("redacts provider failure bodies that could echo bootstrap credentials", async () => {
     const s = setup();
@@ -231,6 +271,30 @@ describe("RunPod tailnet enrollment", () => {
     await expect(s.provider.supportsInPlace!("pod1", image)).resolves.toBe(
       false,
     );
+  });
+
+  it("lets an authorized reset re-image a pod that is not in the tailnet", async () => {
+    const provider = (minting: boolean) =>
+      createRunPodProvider({
+        apiKey: "key",
+        fetch: fakeRunPod(v5).fetch,
+        ...(minting && {
+          bootstrapKey: async () => ({
+            key: "tskey-auth-bootstrap",
+            revoke: async () => {},
+          }),
+        }),
+        tailnet: { run: vi.fn<RunSsh>(), status: async () => ({ Peer: {} }) },
+      });
+    await expect(
+      provider(true).checkTailscaleEnrollment("pod1", { allowReset: true }),
+    ).resolves.toBeUndefined();
+    await expect(
+      provider(true).checkTailscaleEnrollment("pod1"),
+    ).rejects.toThrow("authorized reset");
+    await expect(
+      provider(false).checkTailscaleEnrollment("pod1", { allowReset: true }),
+    ).rejects.toThrow("authorized reset");
   });
 
   it("lets a stopped v5 pod start before it joins the tailnet", async () => {

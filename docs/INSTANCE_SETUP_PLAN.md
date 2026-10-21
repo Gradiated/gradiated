@@ -34,6 +34,13 @@ checked without replacing its workloads. A new host must have the verified GPU
 base implementation and idle GPUs. Enrollment never uses public SSH. Changing any
 running pod's provider settings requires explicit reset authorization.
 
+To move an existing pod onto v5, register it with `reset_running_pod: true` and
+its ID in `confirm_instance_id` (a stopped pod needs neither). ops-mcp mints the
+pod's own single-use bootstrap key, re-images the pod with the approved GPU base
+image, no exposed ports and that key in its environment, waits for it to join,
+and enrolls it as above; nobody handles the key. The reset stops the pod's
+workloads, so drain a serving host first.
+
 Commit the prepared result by adding `kubernetes.inventoryEntry` to
 `infra/environments/prod/us-east-1/kubernetes/gpu-inference/hosts.json`.
 Run `python3 -m pip install PyYAML==6.0.2` once, then

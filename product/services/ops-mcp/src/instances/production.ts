@@ -19,7 +19,11 @@ import { z } from "zod";
 import { createRegistrations } from "./registration.js";
 import { createRunPodProvider } from "./runpod.js";
 import { sshRunner } from "./ssh.js";
-import { promotedAddress, tailscaleAuthKey } from "./tailscale.js";
+import {
+  bootstrapAuthKey,
+  promotedAddress,
+  tailscaleAuthKey,
+} from "./tailscale.js";
 import { localStatus, socksConnector } from "./tailnet.js";
 
 export type RegistrationSettings = {
@@ -62,6 +66,8 @@ export const productionRegistrations = (
 
         return createRunPodProvider({
           apiKey: await credential("runpod-api-key"),
+          bootstrapKey: (podId: string) => bootstrapAuthKey(podId),
+          audit,
           tailnet,
         });
       },

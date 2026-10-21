@@ -159,7 +159,9 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
   ) => {
     const provider = await createProvider();
     const instance = await provider.describe(request.providerInstanceId);
-    await provider.checkTailscaleEnrollment(request.providerInstanceId);
+    await provider.checkTailscaleEnrollment(request.providerInstanceId, {
+      allowReset: request.resetRunningPod,
+    });
     const stopped = await provider.isStopped(request.providerInstanceId);
     const resuming = false;
     const inPlace =

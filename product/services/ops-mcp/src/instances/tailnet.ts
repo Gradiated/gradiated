@@ -54,8 +54,11 @@ export const bootstrapPeer = (
 ): BootstrapPeer | null => {
   if (!/^[a-z0-9]{1,40}$/.test(podId)) throw new Error("Invalid RunPod pod ID");
 
+  // A re-imaged pod joins as a new device under the same name; the device from
+  // its previous boot stays listed offline.
   const matches = Object.values(status.Peer ?? {}).filter(
     (peer) =>
+      peer.Online !== false &&
       peer.HostName === `gpu-bootstrap-${podId}` &&
       (peer.Tags ?? []).includes(BOOTSTRAP_TAG),
   );

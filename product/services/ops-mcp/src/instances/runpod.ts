@@ -34,6 +34,12 @@ const podSchema = z.object({
 export interface RunPodOptions {
   readonly apiKey: string;
   readonly fetch?: typeof fetch;
+  // Mints the single-use tag:gpu-bootstrap key a reset or stopped pod joins
+  // the tailnet with.
+  readonly bootstrapKey?: (
+    podId: string,
+  ) => Promise<{ key: string; revoke: () => Promise<void> }>;
+  readonly audit?: (event: Record<string, unknown>) => void;
   readonly controlEndpoints?: () => Promise<Record<string, string>>;
   readonly tailnet: {
     readonly run: RunSsh;
@@ -50,6 +56,8 @@ export interface RunPodOptions {
 export const createRunPodProvider = ({
   apiKey,
   fetch: request = fetch,
+  bootstrapKey,
+  audit,
   tailnet,
   controlEndpoints,
 }: RunPodOptions): InstanceProvider => {
@@ -163,18 +171,21 @@ export const createRunPodProvider = ({
   };
 
   return {
-    async checkTailscaleEnrollment(podId) {
+    async checkTailscaleEnrollment(podId, options) {
       if (await tailnetTarget(podId)) return;
 
-      // A stopped v5 pod joins the tailnet only after registration starts it.
+      // A stopped or reset pod joins the tailnet only after registration
+      // re-images it with a bootstrap key.
       const current = await pod(podId);
+      const resettable =
+        current.desiredStatus === "EXITED" || options?.allowReset === true;
       if (
-        current.desiredStatus !== "EXITED" ||
-        !current.env?.GRADIATED_TAILSCALE_BOOTSTRAP_KEY
+        !resettable ||
+        (!bootstrapKey && !current.env?.GRADIATED_TAILSCALE_BOOTSTRAP_KEY)
       )
         throw new Error(
           `GPU registration requires gpu-bootstrap-${podId} online in the tailnet ` +
-            "(v5 GPU base image with a bootstrap key), or a stopped v5 pod",
+            "(v5 GPU base image with a bootstrap key), a stopped pod, or an authorized reset",
         );
     },
     async describe(podId) {
@@ -246,35 +257,57 @@ export const createRunPodProvider = ({
         );
       }
 
-      // Any PATCH resets the pod and wipes its container filesystem. The image
-      // pulls through the account's ECR delegation, so no registry login is set.
-      await call("PATCH", `/pods/${current.id}`, {
-        imageName: image,
-        env: Object.fromEntries(
-          Object.entries(current.env ?? {}).filter(
-            ([name]) => name !== "GRADIATED_GPU_BOOTSTRAP",
-          ),
-        ),
-      });
-      // Updating a stopped pod only changes its configuration; it stays stopped.
-      if (current.desiredStatus === "EXITED") {
-        await call("POST", `/pods/${current.id}/start`);
-      }
-      const deadline = Date.now() + 30 * 60 * 1000;
-      while (Date.now() < deadline) {
-        const ready = await pod(current.id);
-        if (ready.desiredStatus === "RUNNING") {
-          try {
-            return await install(ready, environment);
-          } catch {
-            /* The pod can still be joining the tailnet or preparing the host agent. */
-          }
+      // RunPod's REST API cannot write account secrets, so the pod gets its
+      // own single-use key directly. It expires within the hour and is
+      // revoked once enrollment ends.
+      const joining = bootstrapKey && (await bootstrapKey(current.id));
+      try {
+        // Any PATCH resets the pod and wipes its container filesystem. The
+        // image pulls through the account's ECR delegation, so no registry
+        // login is set. v5 pods expose no ports: Tailscale SSH is the only
+        // shell, so the public SSH key is dropped too.
+        await call("PATCH", `/pods/${current.id}`, {
+          imageName: image,
+          ports: [],
+          env: {
+            ...Object.fromEntries(
+              Object.entries(current.env ?? {}).filter(
+                ([name]) =>
+                  name !== "GRADIATED_GPU_BOOTSTRAP" && name !== "PUBLIC_KEY",
+              ),
+            ),
+            ...(joining && { GRADIATED_TAILSCALE_BOOTSTRAP_KEY: joining.key }),
+          },
+        });
+        // Updating a stopped pod only changes its configuration; it stays stopped.
+        if (current.desiredStatus === "EXITED") {
+          await call("POST", `/pods/${current.id}/start`);
         }
-        await new Promise((resolve) => setTimeout(resolve, 10000));
+        const deadline = Date.now() + 30 * 60 * 1000;
+        while (Date.now() < deadline) {
+          const ready = await pod(current.id);
+          if (ready.desiredStatus === "RUNNING") {
+            try {
+              return await install(ready, environment);
+            } catch {
+              /* The pod can still be joining the tailnet or preparing the host agent. */
+            }
+          }
+          await new Promise((resolve) => setTimeout(resolve, 10000));
+        }
+        throw new Error(
+          "GPU bootstrap did not become ready; provider capacity was left intact",
+        );
+      } finally {
+        // An unused key stays valid until it expires, so a failed revocation
+        // is recorded for cleanup.
+        await joining?.revoke().catch(() =>
+          audit?.({
+            event: "tailscale_bootstrap_key_revocation_failed",
+            provider_instance_id: current.id,
+          }),
+        );
       }
-      throw new Error(
-        "GPU bootstrap did not become ready; provider capacity was left intact",
-      );
     },
   };
 };

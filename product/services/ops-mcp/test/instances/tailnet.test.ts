@@ -49,12 +49,11 @@ describe("tailnet bootstrap peers", () => {
       expect(bootstrapPeer({ Peer: { a: other } }, "pod1")).toBeNull();
   });
 
-  it("refuses duplicates, offline pods and pods without Tailscale SSH", () => {
+  it("refuses duplicates and pods without Tailscale SSH", () => {
     expect(() =>
       bootstrapPeer({ Peer: { a: peer(), b: peer() } }, "pod1"),
     ).toThrow("Several tailnet devices");
     for (const broken of [
-      peer({ Online: false }),
       peer({ sshHostKeys: [] }),
       peer({ TailscaleIPs: ["203.0.113.9"] }),
     ])
@@ -62,6 +61,14 @@ describe("tailnet bootstrap peers", () => {
         "not online with Tailscale SSH",
       );
     expect(() => bootstrapPeer({}, "../pod")).toThrow("Invalid RunPod pod ID");
+  });
+
+  it("ignores the offline device a re-imaged pod leaves under the same name", () => {
+    const stale = peer({ Online: false, TailscaleIPs: ["100.64.0.8"] });
+    expect(bootstrapPeer({ Peer: { a: stale } }, "pod1")).toBeNull();
+    expect(bootstrapPeer({ Peer: { a: stale, b: peer() } }, "pod1")?.ip).toBe(
+      "100.64.0.9",
+    );
   });
 
   it("waits until the bootstrap address has left the netmap", async () => {

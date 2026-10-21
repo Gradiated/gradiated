@@ -3,16 +3,24 @@ import { z } from "zod";
 import { readSecret } from "./aws.js";
 
 const API = "https://api.tailscale.com/api/v2";
-const SECRET = "gradiated/prod/platform/tailscale-gpu-enrollment";
 
-const enrollmentCredentials = () =>
+const oauthCredentials = (secret: string) => () =>
   readSecret(
-    SECRET,
+    secret,
     z.object({
       client_id: z.string().min(1),
       client_secret: z.string().min(1),
     }),
   );
+const enrollmentCredentials = oauthCredentials(
+  "gradiated/prod/platform/tailscale-gpu-enrollment",
+);
+// Its OAuth client can only issue tag:gpu-bootstrap keys, which have no
+// network grants: only administrators and ops-mcp reach such a pod, over
+// Tailscale SSH.
+const bootstrapCredentials = oauthCredentials(
+  "gradiated/prod/platform/tailscale-gpu-bootstrap",
+);
 
 const accessToken = async (
   request: typeof fetch,
@@ -27,17 +35,18 @@ const accessToken = async (
     signal: AbortSignal.timeout(30_000),
   });
   if (!response.ok)
-    throw new Error(`GPU enrollment OAuth returned ${response.status}`);
+    throw new Error(`Tailscale OAuth returned ${response.status}`);
 
   return z
     .object({ access_token: z.string().min(1) })
     .parse(await response.json()).access_token;
 };
 
-export const tailscaleAuthKey = async (
-  instanceId: string,
-  request: typeof fetch = fetch,
-  credentials = enrollmentCredentials,
+const singleUseKey = async (
+  tag: string,
+  description: string,
+  request: typeof fetch,
+  credentials: typeof enrollmentCredentials,
 ) => {
   const token = await accessToken(request, credentials);
   const headers = {
@@ -54,17 +63,17 @@ export const tailscaleAuthKey = async (
             reusable: false,
             ephemeral: false,
             preauthorized: true,
-            tags: ["tag:gpu-inference"],
+            tags: [tag],
           },
         },
       },
       expirySeconds: 3600,
-      description: `GPU ${z.uuid().parse(instanceId)}`,
+      description,
     }),
     signal: AbortSignal.timeout(30_000),
   });
   if (!created.ok)
-    throw new Error(`GPU enrollment key creation returned ${created.status}`);
+    throw new Error(`Tailscale key creation returned ${created.status}`);
 
   const { key, id } = z
     .object({
@@ -85,12 +94,37 @@ export const tailscaleAuthKey = async (
         },
       );
       if (!revoked.ok && revoked.status !== 404)
-        throw new Error(
-          `GPU enrollment key revocation returned ${revoked.status}`,
-        );
+        throw new Error(`Tailscale key revocation returned ${revoked.status}`);
     },
   };
 };
+
+export const tailscaleAuthKey = async (
+  instanceId: string,
+  request: typeof fetch = fetch,
+  credentials = enrollmentCredentials,
+) =>
+  singleUseKey(
+    "tag:gpu-inference",
+    `GPU ${z.uuid().parse(instanceId)}`,
+    request,
+    credentials,
+  );
+
+export const bootstrapAuthKey = async (
+  podId: string,
+  request: typeof fetch = fetch,
+  credentials = bootstrapCredentials,
+) =>
+  singleUseKey(
+    "tag:gpu-bootstrap",
+    `GPU bootstrap ${z
+      .string()
+      .regex(/^[a-z0-9]{1,40}$/)
+      .parse(podId)}`,
+    request,
+    credentials,
+  );
 
 const devicesSchema = z.object({
   devices: z.array(

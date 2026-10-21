@@ -87,9 +87,8 @@ export const CareersIndexPage = (): ReactElement => (
           </Reveal>
           <p className="gr-careers-lede gr-muted">
             Gradiated is a small research and engineering team focused on making
-            open-model inference radically more efficient, from open-source
-            models and inference software to chips and, over the long term, the
-            data center.
+            open-model inference radically more efficient at every layer—from
+            the models to inference, chips, and the data center.
           </p>
           <a className="gr-careers-jump gr-label" href="#open-roles">
             See open roles

@@ -110,6 +110,12 @@ routes, authenticate to the private EKS API, and forward it locally:
 kubectl -n observability port-forward --address 127.0.0.1 deployment/ops-mcp 13006:3006
 ```
 
+The tailnet has no split DNS, so the private EKS hostname does not resolve on a
+laptop. Pass one of the API's private IPs (from
+`aws ec2 describe-network-interfaces --filters Name=description,Values="Amazon EKS*"`)
+and keep the hostname for TLS:
+`kubectl --server=https://<ip> --tls-server-name=<eks-hostname> ...`.
+
 Configure a local MCP client to POST to `http://127.0.0.1:13006/mcp` with
 its existing MCP OAuth bearer token. The private listener also accepts loopback
 Host/Origin values; the public listener retains its canonical-host checks. Keep the OAuth
@@ -119,6 +125,16 @@ the public OAuth endpoint. The local HTTP leg is loopback; the port-forward is
 encrypted through the Kubernetes API. Never bind the local forward publicly or
 expose port 3006 through a Service, ingress, or another proxy. Hosted MCP clients
 that cannot reach the local forward cannot perform registration.
+
+Claude Code refuses an OAuth resource that differs from the URL it connects to,
+so it cannot sign in at the forward. `scripts/private-token.py login` signs in
+through the public endpoint in the browser and stores the token (mode 0600, never
+printed); `header` returns the Authorization header and refreshes it:
+
+```sh
+python3 product/services/ops-mcp/scripts/private-token.py login
+claude mcp add-json -s local gradiated-ops-admin '{"type":"http","url":"http://127.0.0.1:13006/mcp","headersHelper":"python3 <repo>/product/services/ops-mcp/scripts/private-token.py header"}'
+```
 
 Both listeners use the same authentication, rate limits, tool discovery, and
 audit path. Listener provenance is server-owned; neither forwarded addresses nor

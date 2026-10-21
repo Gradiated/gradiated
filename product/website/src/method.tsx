@@ -6,6 +6,7 @@ import MissionContent from "./method/mission.mdx";
 import PrioritiesContent from "./method/priorities.mdx";
 import ProductContent from "./method/product.mdx";
 import SequencingContent from "./method/sequencing-and-depth.mdx";
+import SpendingCompanyMoneyContent from "./method/spending-company-money.mdx";
 import ValuesContent from "./method/values.mdx";
 import PeopleContent from "./method/what-we-look-for.mdx";
 
@@ -16,6 +17,7 @@ export type MethodSlug =
   | "priorities"
   | "in-person"
   | "what-we-look-for"
+  | "spending-company-money"
   | "getting-out-the-gate"
   | "values"
   | "brand";
@@ -84,6 +86,15 @@ export const methodPages: MethodPageDefinition[] = [
     description: "What Gradiated looks for in people.",
     indexDescription: "Agency, optimism, and exceptional ability.",
     Content: PeopleContent,
+  },
+  {
+    slug: "spending-company-money",
+    section: "Company",
+    title: "Spending company money",
+    pageTitle: "Spending company money",
+    description: "How Gradiated handles expenses and company spending.",
+    indexDescription: "Use judgement. Make the value and the expense legible.",
+    Content: SpendingCompanyMoneyContent,
   },
   {
     slug: "getting-out-the-gate",

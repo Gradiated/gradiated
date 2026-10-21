@@ -29,55 +29,120 @@ const locationOf = (job: Job): string =>
     ? `Remote, ${job.location}`
     : job.location;
 
-/**
- * Careers, in the design system.
- *
- * The index is a list rather than a grid: there are three roles, and a grid of
- * three cards would make them look like a product range. A role is read one at
- * a time, and each line is a decision — so the layout is rows with room, and
- * the only thing competing for attention is the next title down.
- */
+const reasons = [
+  {
+    title: "Work on the whole problem.",
+    body: "We put the latest open-weight models into production, develop new inference techniques, and follow performance all the way down to silicon. The field moves quickly; the work stays close to its edge.",
+  },
+  {
+    title: "Learn across the stack.",
+    body: "Nobody arrives knowing every layer. We run internal lectures, work through problems together, and expect everyone to teach what they know. You will leave with a much wider technical range than you arrived with.",
+  },
+  {
+    title: "Build with people who have done it before.",
+    body: "You will work directly with a small founding team that has built PostHog into a unicorn and a developer brand people love, led AI engineering, and gone deep in mathematics, semiconductors, and quantum computing.",
+  },
+  {
+    title: "Build a reputation that compounds.",
+    body: "We are engineering-led and trust-led. We want customers to find us through excellent work, useful writing, and other builders telling them about us. The aim is lasting technical advantage, not a brief turn in the hype cycle.",
+  },
+] as const;
+
+const methods = [
+  {
+    href: "/library/method/mission/",
+    label: "Mission",
+    title: "Affordable and open intelligence",
+  },
+  {
+    href: "/library/method/sequencing-and-depth/",
+    label: "Product",
+    title: "Start in software. Go down the stack.",
+  },
+  {
+    href: "/library/method/what-we-look-for/",
+    label: "People",
+    title: "Agency, optimism, and exceptional ability",
+  },
+  {
+    href: "/library/method/values/",
+    label: "Values",
+    title: "Figure it out. Do the hard thing.",
+  },
+] as const;
+
 export const CareersIndexPage = (): ReactElement => (
   <Substrate>
     <Nav />
 
     <Band>
       <Module className="gr-module--top" index={0}>
-        <header className="gr-masthead">
+        <header className="gr-masthead gr-careers-head">
           <p className="gr-label">Careers</p>
           <Reveal
             as="h1"
             by="word"
             className="gr-masthead-title gr-masthead-title--display"
           >
-            We are hiring.
+            Work on intelligence. All the way down.
           </Reveal>
+          <p className="gr-careers-lede gr-muted">
+            Gradiated is a small research and engineering team focused on making
+            open-model inference radically more efficient. We work from model
+            behaviour to software, systems, and silicon—and we are building the
+            company for the long term.
+          </p>
+          <a className="gr-careers-jump gr-label" href="#open-roles">
+            See open roles
+            <span aria-hidden className="gr-careers-jump-arrow">
+              <Arrow />
+            </span>
+          </a>
         </header>
+      </Module>
 
-        <ul className="gr-roles">
-          {jobs.map((job) => (
-            <li key={job.slug}>
-              <a className="gr-role" href={`/careers/${job.slug}/`}>
-                <span className="gr-role-text">
-                  <span className="gr-role-title">{job.title}</span>
-                  <span className="gr-role-summary gr-muted">
-                    {job.summary}
-                  </span>
-                  <span className="gr-role-facts gr-label gr-muted">
-                    {job.team ? (
-                      <>
-                        <span>{job.team}</span>
-                        <span aria-hidden>·</span>
-                      </>
-                    ) : null}
-                    <span>{locationOf(job)}</span>
+      <Module index={1} title="Why Gradiated">
+        <ol className="gr-careers-reasons">
+          {reasons.map((reason, index) => (
+            <li className="gr-careers-reason" key={reason.title}>
+              <span className="gr-careers-reason-number gr-label gr-muted">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <h3 className="gr-careers-reason-title">{reason.title}</h3>
+              <p className="gr-careers-reason-body gr-muted">{reason.body}</p>
+            </li>
+          ))}
+        </ol>
+      </Module>
+
+      <Module index={2} title="Know us before you join us">
+        <div className="gr-careers-methods-intro">
+          <p className="gr-careers-methods-lede">
+            Our handbook is public because the way we work should not be a
+            surprise revealed after you start.
+          </p>
+          <a
+            className="gr-careers-methods-all gr-label"
+            href="/library/?show=methods"
+          >
+            Read all methods
+            <span aria-hidden>
+              <Arrow />
+            </span>
+          </a>
+        </div>
+
+        <ul className="gr-careers-methods">
+          {methods.map((method) => (
+            <li key={method.href}>
+              <a className="gr-careers-method" href={method.href}>
+                <span>
+                  <span className="gr-label gr-muted">{method.label}</span>
+                  <span className="gr-careers-method-title">
+                    {method.title}
                   </span>
                 </span>
-
-                {/* At the end of the row and centred on it, rather than
-                    chasing the title's baseline — a mark that points at the
-                    whole row belongs at the row's edge. */}
-                <span aria-hidden className="gr-role-go">
+                <span aria-hidden className="gr-careers-method-arrow">
                   <Arrow />
                 </span>
               </a>
@@ -85,10 +150,56 @@ export const CareersIndexPage = (): ReactElement => (
           ))}
         </ul>
       </Module>
+
+      <Module id="open-roles" index={3} title="Open roles">
+        {jobs.length > 0 ? (
+          <ul className="gr-roles">
+            {jobs.map((job) => (
+              <li key={job.slug}>
+                <a className="gr-role" href={`/careers/${job.slug}/`}>
+                  <span className="gr-role-text">
+                    <span className="gr-role-title">{job.title}</span>
+                    <span className="gr-role-summary gr-muted">
+                      {job.summary}
+                    </span>
+                    <span className="gr-role-facts gr-label gr-muted">
+                      {job.team ? (
+                        <>
+                          <span>{job.team}</span>
+                          <span aria-hidden>·</span>
+                        </>
+                      ) : null}
+                      <span>{locationOf(job)}</span>
+                    </span>
+                  </span>
+
+                  {/* At the end of the row and centred on it, rather than
+                    chasing the title's baseline — a mark that points at the
+                    whole row belongs at the row's edge. */}
+                  <span aria-hidden className="gr-role-go">
+                    <Arrow />
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="gr-careers-no-roles">
+            <p className="gr-careers-no-roles-title">No role listed today?</p>
+            <p className="gr-careers-no-roles-body gr-muted">
+              If you are exceptional at inference software, systems, or silicon,
+              we would still like to hear from you.
+            </p>
+            <a className="gr-label" href="mailto:team@gradiated.com">
+              team@gradiated.com
+            </a>
+          </div>
+        )}
+      </Module>
     </Band>
 
     <Band>
-      <Footer index={1} />
+      <Footer index={4} />
     </Band>
   </Substrate>
 );

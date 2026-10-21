@@ -63,7 +63,7 @@ const pageMetadata: Record<string, PageMetadataContent> = {
   "/careers/": {
     title: "Careers",
     description:
-      "Explore open roles in inference software and silicon at Gradiated.",
+      "Join Gradiated to make open-model inference more efficient across models, software, systems, and silicon.",
   },
   "/notes/": {
     title: "Notes",

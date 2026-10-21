@@ -2803,33 +2803,25 @@
 }
 
 .gr-careers-jump,
-.gr-careers-methods-all {
+.gr-careers-method {
   display: inline-flex;
   align-items: center;
-  gap: 0.7em;
   color: inherit;
-  text-decoration: none;
 }
 
 .gr-careers-jump {
+  gap: 0.7em;
   margin-block-start: calc(1.5 * var(--u));
+  text-decoration: none;
 }
 
-.gr-careers-jump-arrow,
-.gr-careers-methods-all > span {
+.gr-careers-jump-arrow {
   display: inline-flex;
   font-size: 1.1rem;
 }
 
 .gr-careers-jump:hover .gr-arrow,
-.gr-careers-methods-all:hover .gr-arrow,
-.gr-careers-method:hover .gr-arrow {
-  translate: 0.15em 0;
-}
-
-.gr-careers-jump:hover .gr-arrow-shaft,
-.gr-careers-methods-all:hover .gr-arrow-shaft,
-.gr-careers-method:hover .gr-arrow-shaft {
+.gr-careers-jump:hover .gr-arrow-shaft {
   stroke-dashoffset: 0;
 }
 
@@ -2844,15 +2836,7 @@
 }
 
 .gr-careers-reason {
-  display: grid;
-  grid-template-columns: 2.5em minmax(0, 1fr);
-  column-gap: var(--u);
-  align-content: start;
-}
-
-.gr-careers-reason-number {
-  grid-row: 1 / span 2;
-  padding-block-start: 0.35em;
+  min-width: 0;
 }
 
 .gr-root .gr-careers-reason-title {
@@ -2872,11 +2856,7 @@
 }
 
 .gr-careers-methods-intro {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: calc(2 * var(--u));
-  align-items: end;
-  margin-block-end: calc(1.8 * var(--u));
+  max-width: 50em;
 }
 
 .gr-root .gr-careers-methods-lede {
@@ -2889,44 +2869,15 @@
 }
 
 .gr-careers-methods {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  list-style: none;
-  margin: 0;
-  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6em 1.5em;
+  margin-block-start: calc(1.25 * var(--u));
 }
 
 .gr-careers-method {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--u);
-  align-items: center;
-  min-height: calc(6 * var(--u));
-  padding: calc(1.25 * var(--u)) calc(1.5 * var(--u));
-  color: inherit;
-  text-decoration: none;
-  transition: background var(--dur-fast) var(--ease-response);
-}
-
-.gr-careers-method:hover,
-.gr-careers-method:focus-visible {
-  background: color-mix(in srgb, var(--color-text) 6%, transparent);
-}
-
-.gr-careers-method-title {
-  display: block;
-  margin-block-start: calc(0.35 * var(--u));
-  max-width: 26ch;
-  font-family: var(--font-title);
-  font-size: var(--text-card);
-  font-weight: 500;
-  letter-spacing: var(--tracking-heading);
-  line-height: 1.25;
-}
-
-.gr-careers-method-arrow {
-  display: inline-flex;
-  font-size: 1.35rem;
+  font-size: var(--text-note);
+  line-height: 1.4;
 }
 
 .gr-careers-no-roles {
@@ -3341,7 +3292,7 @@
 
 @media (max-width: 60rem) {
   .gr-careers-reasons,
-  .gr-careers-methods {
+  .gr-careers-no-roles {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -3349,17 +3300,7 @@
     row-gap: calc(2 * var(--u));
   }
 
-  .gr-careers-methods-intro {
-    grid-template-columns: minmax(0, 1fr);
-    align-items: start;
-  }
-
-  .gr-careers-method {
-    padding-inline: 0;
-  }
-
   .gr-careers-no-roles {
-    grid-template-columns: minmax(0, 1fr);
     gap: var(--u);
   }
 

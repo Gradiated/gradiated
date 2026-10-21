@@ -51,23 +51,19 @@ const reasons = [
 const methods = [
   {
     href: "/library/method/mission/",
-    label: "Mission",
     title: "Affordable and open intelligence",
   },
   {
     href: "/library/method/sequencing-and-depth/",
-    label: "Product",
-    title: "Start in software. Go down the stack.",
+    title: "Sequencing and depth",
   },
   {
     href: "/library/method/what-we-look-for/",
-    label: "People",
-    title: "Agency, optimism, and exceptional ability",
+    title: "What we look for",
   },
   {
     href: "/library/method/values/",
-    label: "Values",
-    title: "Figure it out. Do the hard thing.",
+    title: "Values",
   },
 ] as const;
 
@@ -101,17 +97,14 @@ export const CareersIndexPage = (): ReactElement => (
       </Module>
 
       <Module className="gr-careers-module" index={1} title="Why Gradiated">
-        <ol className="gr-careers-reasons">
-          {reasons.map((reason, index) => (
+        <ul className="gr-careers-reasons">
+          {reasons.map((reason) => (
             <li className="gr-careers-reason" key={reason.title}>
-              <span className="gr-careers-reason-number gr-label gr-muted">
-                {String(index + 1).padStart(2, "0")}
-              </span>
               <h3 className="gr-careers-reason-title">{reason.title}</h3>
               <p className="gr-careers-reason-body gr-muted">{reason.body}</p>
             </li>
           ))}
-        </ol>
+        </ul>
       </Module>
 
       <Module className="gr-careers-module" index={2}>
@@ -120,34 +113,21 @@ export const CareersIndexPage = (): ReactElement => (
             Our handbook is public because the way we work should not be a
             surprise revealed after you start.
           </p>
-          <a
-            className="gr-careers-methods-all gr-label"
-            href="/library/?show=methods"
-          >
-            Read all methods
-            <span aria-hidden>
-              <Arrow />
-            </span>
-          </a>
-        </div>
-
-        <ul className="gr-careers-methods">
-          {methods.map((method) => (
-            <li key={method.href}>
-              <a className="gr-careers-method" href={method.href}>
-                <span>
-                  <span className="gr-label gr-muted">{method.label}</span>
-                  <span className="gr-careers-method-title">
-                    {method.title}
-                  </span>
-                </span>
-                <span aria-hidden className="gr-careers-method-arrow">
-                  <Arrow />
-                </span>
+          <nav aria-label="Selected methods" className="gr-careers-methods">
+            {methods.map((method) => (
+              <a
+                className="gr-careers-method"
+                href={method.href}
+                key={method.href}
+              >
+                {method.title}
               </a>
-            </li>
-          ))}
-        </ul>
+            ))}
+            <a className="gr-careers-method" href="/library/?show=methods">
+              All methods
+            </a>
+          </nav>
+        </div>
       </Module>
 
       <Module

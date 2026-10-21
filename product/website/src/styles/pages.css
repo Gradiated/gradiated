@@ -2857,20 +2857,24 @@
 
 .gr-home-cta.gr-careers-handbook {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
-  gap: clamp(32px, 5vw, 80px);
+  grid-template-columns: minmax(0, 1.7fr) minmax(380px, 0.8fr);
+  gap: clamp(32px, 4vw, 64px);
   align-items: center;
   margin-block-start: 0;
-  padding: clamp(32px, 4vw, 56px);
+  padding: clamp(20px, 2.5vw, 32px);
   color: inherit;
   text-align: left;
   text-decoration: none;
 }
 
+.gr-home-cta.gr-careers-handbook::before {
+  display: none;
+}
+
 .gr-careers-handbook-art {
   display: block;
   min-width: 0;
-  height: clamp(260px, 28vw, 400px);
+  height: clamp(320px, 32vw, 460px);
   overflow: hidden;
   border-radius: var(--radius);
 }
@@ -2886,6 +2890,10 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+}
+
+.gr-careers-handbook .gr-home-cta-title {
+  font-size: clamp(28px, 2.7vw, 40px);
 }
 
 .gr-careers-handbook-copy .gr-button {

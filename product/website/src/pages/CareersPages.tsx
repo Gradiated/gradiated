@@ -50,10 +50,6 @@ const reasons = [
 
 const expectations = [
   {
-    title: "It is unusually low ego.",
-    body: "The work is technically demanding, but we do not hire people who need to be the smartest person in the room. Startups are humbling; good people change their minds quickly.",
-  },
-  {
     title: "The mission is long term. The cadence is not.",
     body: "We want to redesign inference all the way down to silicon. Today, that means hustling for customers, shipping constantly, and learning from what happens. This is not an academic lab: there is real pressure to perform, grow, and win.",
   },
@@ -68,6 +64,10 @@ const expectations = [
   {
     title: "We show our thinking.",
     body: "Our methods are public, including beliefs that may change. Writing clearly enough for other people to disagree with us is part of doing the work properly.",
+  },
+  {
+    title: "High standards. Low ego.",
+    body: "The work is technically demanding, but we do not hire people who need to be the smartest person in the room. Startups are humbling; good people change their minds quickly.",
   },
 ] as const;
 

@@ -45,6 +45,11 @@ def validate(payload, inventory):
     return {**config, 'gpu_uuids': devices, 'token_file': '/etc/gradiated/kubelet-management.token'}
 
 
+def promotion_pending(config=Path('/etc/gradiated/tailscale.json'), reauth=Path('/var/lib/gradiated-tailscale/reauth')):
+    """True while the pod is still tag:gpu-bootstrap, before its staged re-authentication."""
+    return reauth.exists() or (config.exists() and json.loads(config.read_text()).get('bootstrap') is True)
+
+
 def enroll(payload):
     active = list((ROOT / 'pods').glob('*/state.json'))
     if active and not CONFIG.exists():
@@ -62,6 +67,11 @@ def enroll(payload):
             return
         if active:
             raise ValueError('Bootstrap cannot replace an active GPU worker')
+    # A bootstrap pod cannot reach the control API until its staged
+    # re-authentication promotes it to tag:gpu-inference after enrollment. The
+    # host agent stages runtime bundles from the controller catalogue then.
+    if promotion_pending():
+        config['runtimes'] = {}
     ROOT.mkdir(parents=True, exist_ok=True)
     ROOT.chmod(0o755)
     (ROOT / 'pods').mkdir(exist_ok=True)

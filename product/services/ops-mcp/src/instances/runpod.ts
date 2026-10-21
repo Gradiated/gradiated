@@ -40,6 +40,10 @@ export interface RunPodOptions {
     readonly status: () => Promise<TailnetStatus>;
     readonly promotionTimeoutMs?: number;
     readonly promotionPollMs?: number;
+    readonly promotedAddress?: (
+      instanceId: string,
+      since: Date,
+    ) => Promise<string>;
   };
 }
 
@@ -100,19 +104,48 @@ export const createRunPodProvider = ({
     const route = await transport(current);
     if (!route) throw new Error("No enrollment connection to the GPU pod");
 
+    const started = new Date();
     const { promotion, ...inventory } = await installInPlace(
       route.run,
       route.target,
       environment,
     );
-    if (promotion)
-      await waitForPromotion(
-        tailnet.status,
-        route.target.host,
-        tailnet.promotionTimeoutMs,
-        tailnet.promotionPollMs,
+    if (!promotion) return inventory;
+
+    await waitForPromotion(
+      tailnet.status,
+      route.target.host,
+      tailnet.promotionTimeoutMs,
+      tailnet.promotionPollMs,
+    );
+    if (!tailnet.promotedAddress)
+      throw new Error("Promoted GPU address lookup is not configured");
+    const { instance_id } = z
+      .object({ instance_id: z.uuid() })
+      .parse(
+        JSON.parse(
+          Buffer.from(
+            environment.GRADIATED_GPU_BOOTSTRAP ?? "",
+            "base64",
+          ).toString(),
+        ),
       );
-    return inventory;
+    // The bootstrap device can go offline a few seconds before the
+    // re-authenticated device appears in the device list.
+    const deadline = Date.now() + (tailnet.promotionTimeoutMs ?? 180_000);
+    for (;;) {
+      try {
+        return {
+          ...inventory,
+          tailscaleIp: await tailnet.promotedAddress(instance_id, started),
+        };
+      } catch (error) {
+        if (Date.now() >= deadline) throw error;
+      }
+      await new Promise((resolve) =>
+        setTimeout(resolve, tailnet.promotionPollMs ?? 5_000),
+      );
+    }
   };
 
   const enrollment = async (current: z.infer<typeof podSchema>) => {

@@ -75,6 +75,18 @@ describe("tailnet bootstrap peers", () => {
     ).resolves.toBeUndefined();
   });
 
+  it("treats the offline bootstrap device left by re-authentication as promoted", async () => {
+    const left = peer({ Online: false });
+    await expect(
+      waitForPromotion(
+        async () => ({ Peer: { a: left } }),
+        "100.64.0.9",
+        1_000,
+        1,
+      ),
+    ).resolves.toBeUndefined();
+  });
+
   it("fails when re-authentication keeps the bootstrap tag under a new name", async () => {
     const renamed = peer({
       HostName: "gpu-00000000-0000-4000-8000-000000000001",

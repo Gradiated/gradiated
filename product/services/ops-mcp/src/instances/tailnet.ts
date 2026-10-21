@@ -179,6 +179,8 @@ export const socksConnector =
 // ops-mcp may only see tag:gpu-bootstrap peers, so a promoted pod leaves its
 // netmap. A failed re-authentication keeps the address and the bootstrap tag
 // (possibly under the new hostname), so the address is what is tracked.
+// Re-authentication registers a new device and leaves the bootstrap device
+// offline, so only an online bootstrap device counts.
 export const waitForPromotion = async (
   status: () => Promise<TailnetStatus>,
   address: string,
@@ -192,6 +194,7 @@ export const waitForPromotion = async (
     const peers = Object.values((await status()).Peer ?? {});
     const bootstrap = peers.some(
       (peer) =>
+        peer.Online !== false &&
         (peer.TailscaleIPs ?? []).includes(address) &&
         (peer.Tags ?? []).includes(BOOTSTRAP_TAG),
     );

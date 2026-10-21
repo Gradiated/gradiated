@@ -30,6 +30,7 @@ const withServer = async (
     calls: { command: string; input: string }[],
   ) => Promise<void>,
   code = 0,
+  stderr = "sensitive-remote-error-private-key",
 ) => {
   const calls: { command: string; input: string }[] = [];
   const server = new Server({ hostKeys: [hostKey] }, (client) => {
@@ -45,7 +46,7 @@ const withServer = async (
           });
           stream.on("end", () => {
             calls.push({ command: info.command, input });
-            if (code) stream.stderr.write("sensitive-remote-error-private-key");
+            if (code) stream.stderr.write(stderr);
             stream.write(code ? "sensitive-output" : "{}\n");
             stream.exit(code);
             stream.end();
@@ -104,5 +105,23 @@ describe("pinned Tailscale SSH", () => {
         ),
       ).rejects.toThrow("exited with status 70");
     }, 70);
+  });
+
+  it("names the Python exception class without its message", async () => {
+    await withServer(
+      async (port) => {
+        const failure = sshRunner(direct)(
+          { host: "127.0.0.1", port, hostKeySha256: fingerprint },
+          "command",
+          "secret",
+        );
+        await expect(failure).rejects.toThrow(
+          "exited with status 1 (subprocess.CalledProcessError)",
+        );
+        await expect(failure).rejects.not.toThrow("private-token");
+      },
+      1,
+      "Traceback (most recent call last):\n  File \"<string>\", line 9\nsubprocess.CalledProcessError: Command 'private-token' returned 1\n",
+    );
   });
 });

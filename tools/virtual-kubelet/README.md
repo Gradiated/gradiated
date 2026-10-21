@@ -97,7 +97,7 @@ All production serving replicas and training Jobs use Kubernetes. Existing
 RunPod containers retain a suspended legacy main process only to preserve their
 reservation; it has no jobs or cluster access. New hosts use the GPU base image.
 
-Use Go 1.26.9, matching the compiler pinned in CI and the controller builder
+Use Go 1.26.10, matching the compiler pinned in CI and the controller builder
 image. Run the local adapter checks with:
 
 ```sh

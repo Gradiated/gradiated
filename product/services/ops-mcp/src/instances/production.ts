@@ -19,7 +19,7 @@ import { z } from "zod";
 import { createRegistrations } from "./registration.js";
 import { createRunPodProvider } from "./runpod.js";
 import { sshRunner } from "./ssh.js";
-import { tailscaleAuthKey } from "./tailscale.js";
+import { promotedAddress, tailscaleAuthKey } from "./tailscale.js";
 import { localStatus, socksConnector } from "./tailnet.js";
 
 export type RegistrationSettings = {
@@ -56,6 +56,8 @@ export const productionRegistrations = (
             socksConnector("127.0.0.1", settings.tailnet.socksPort),
           ),
           status: () => localStatus(settings.tailnet.localApiSocket),
+          promotedAddress: (instanceId: string, since: Date) =>
+            promotedAddress(instanceId, since),
         };
 
         return createRunPodProvider({

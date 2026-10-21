@@ -5,17 +5,18 @@ import { readSecret } from "./aws.js";
 const API = "https://api.tailscale.com/api/v2";
 const SECRET = "gradiated/prod/platform/tailscale-gpu-enrollment";
 
-export const tailscaleAuthKey = async (
-  instanceId: string,
-  request: typeof fetch = fetch,
-  credentials = () =>
-    readSecret(
-      SECRET,
-      z.object({
-        client_id: z.string().min(1),
-        client_secret: z.string().min(1),
-      }),
-    ),
+const enrollmentCredentials = () =>
+  readSecret(
+    SECRET,
+    z.object({
+      client_id: z.string().min(1),
+      client_secret: z.string().min(1),
+    }),
+  );
+
+const accessToken = async (
+  request: typeof fetch,
+  credentials: typeof enrollmentCredentials,
 ) => {
   const response = await request(`${API}/oauth/token`, {
     method: "POST",
@@ -28,9 +29,17 @@ export const tailscaleAuthKey = async (
   if (!response.ok)
     throw new Error(`GPU enrollment OAuth returned ${response.status}`);
 
-  const token = z
+  return z
     .object({ access_token: z.string().min(1) })
     .parse(await response.json()).access_token;
+};
+
+export const tailscaleAuthKey = async (
+  instanceId: string,
+  request: typeof fetch = fetch,
+  credentials = enrollmentCredentials,
+) => {
+  const token = await accessToken(request, credentials);
   const headers = {
     authorization: `Bearer ${token}`,
     "content-type": "application/json",
@@ -81,4 +90,49 @@ export const tailscaleAuthKey = async (
         );
     },
   };
+};
+
+const devicesSchema = z.object({
+  devices: z.array(
+    z.object({
+      hostname: z.string(),
+      addresses: z.array(z.string()),
+      tags: z.array(z.string()).nullish(),
+      created: z.string(),
+    }),
+  ),
+});
+
+// Re-authentication registers the promoted pod as a new device with a new
+// address, which ops-mcp's own netmap cannot see.
+export const promotedAddress = async (
+  instanceId: string,
+  since: Date,
+  request: typeof fetch = fetch,
+  credentials = enrollmentCredentials,
+) => {
+  const token = await accessToken(request, credentials);
+  const response = await request(`${API}/tailnet/-/devices`, {
+    headers: { authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (!response.ok)
+    throw new Error(`Tailscale device listing returned ${response.status}`);
+
+  const hostname = `gpu-${z.uuid().parse(instanceId)}`;
+  const device = devicesSchema
+    .parse(await response.json())
+    .devices.filter(
+      (device) =>
+        device.hostname === hostname &&
+        (device.tags ?? []).includes("tag:gpu-inference") &&
+        Date.parse(device.created) >= since.getTime(),
+    )
+    .sort((a, b) => Date.parse(b.created) - Date.parse(a.created))[0];
+  const address = device?.addresses.find((address) =>
+    /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.\d+\.\d+$/.test(address),
+  );
+  if (!address)
+    throw new Error(`${hostname} has no new tag:gpu-inference device`);
+  return address;
 };

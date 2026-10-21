@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { tailscaleAuthKey } from "../../src/instances/tailscale.js";
+import {
+  promotedAddress,
+  tailscaleAuthKey,
+} from "../../src/instances/tailscale.js";
 
 const instance = "019d5a4a-0000-7000-8000-000000000001";
 
@@ -53,5 +56,63 @@ describe("GPU Tailscale auth keys", () => {
         client_secret: "secret",
       })),
     ).rejects.toThrow("GPU enrollment OAuth returned 403");
+  });
+
+  it("finds the new inference device that re-authentication created", async () => {
+    const hostname = `gpu-${instance}`;
+    const request = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json({ access_token: "oauth-token" }))
+      .mockResolvedValue(
+        Response.json({
+          devices: [
+            {
+              hostname,
+              addresses: ["100.75.50.69", "fd7a:115c:a1e0::1"],
+              tags: ["tag:gpu-inference"],
+              created: "2026-10-19T20:46:30Z",
+            },
+            {
+              hostname: "gpu-bootstrap-pod1",
+              addresses: ["100.126.83.106"],
+              tags: ["tag:gpu-bootstrap"],
+              created: "2026-10-21T11:00:00Z",
+            },
+            {
+              hostname,
+              addresses: ["fd7a:115c:a1e0::2", "100.85.29.110"],
+              tags: ["tag:gpu-inference"],
+              created: "2026-10-21T11:49:20Z",
+            },
+          ],
+        }),
+      );
+    const credentials = async () => ({
+      client_id: "id",
+      client_secret: "secret",
+    });
+
+    await expect(
+      promotedAddress(
+        instance,
+        new Date("2026-10-21T11:48:52Z"),
+        request,
+        credentials,
+      ),
+    ).resolves.toBe("100.85.29.110");
+    expect(request.mock.calls[1]![0]).toBe(
+      "https://api.tailscale.com/api/v2/tailnet/-/devices",
+    );
+    await expect(
+      promotedAddress(
+        instance,
+        new Date("2026-10-21T12:00:00Z"),
+        vi
+          .fn<typeof fetch>()
+          .mockResolvedValueOnce(Response.json({ access_token: "oauth-token" }))
+          .mockResolvedValueOnce(Response.json({ devices: [] })),
+        credentials,
+      ),
+    ).rejects.toThrow("no new tag:gpu-inference device");
   });
 });

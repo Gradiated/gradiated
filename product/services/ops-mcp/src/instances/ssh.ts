@@ -18,6 +18,15 @@ export type ConnectSocket = (host: string, port: number) => Promise<Duplex>;
 
 // Without credentials ssh2 offers only "none" authentication, which Tailscale
 // SSH accepts when the tailnet policy allows the connecting node.
+const exceptionClass = (stderr: string) => {
+  const name = stderr
+    .trimEnd()
+    .split("\n")
+    .at(-1)
+    ?.match(/^([A-Za-z_][\w.]*(?:Error|Exception|Exit))(?::|$)/)?.[1];
+  return name ? ` (${name})` : "";
+};
+
 export const sshRunner =
   (connect: ConnectSocket): RunSsh =>
   (target, command, input, timeoutMs = 60_000) =>
@@ -66,8 +75,12 @@ export const sshRunner =
                 ),
               );
           });
-          // Remote output can contain credentials; errors expose only the exit status.
-          stream.stderr.resume();
+          // Remote output can contain credentials. Errors expose only the exit
+          // status and the class of a Python exception, never its message.
+          let errors = "";
+          stream.stderr.on("data", (data: Buffer) => {
+            errors = (errors + data.toString()).slice(-4096);
+          });
           stream.on("error", () =>
             finish(new Error("In-place enrollment SSH stream failed")),
           );
@@ -76,7 +89,7 @@ export const sshRunner =
               code === 0
                 ? undefined
                 : new Error(
-                    `In-place enrollment command exited with status ${code}`,
+                    `In-place enrollment command exited with status ${code}${exceptionClass(errors)}`,
                   ),
               output,
             );

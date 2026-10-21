@@ -72,6 +72,17 @@ class BootstrapTests(unittest.TestCase):
                 changed = {**payload, 'management_token': 'different_' + 'a' * 48}
                 with self.assertRaises(ValueError): bootstrap.enroll(changed)
 
+    def test_promotion_is_pending_for_bootstrap_pods_and_staged_reauthentication(self):
+        with tempfile.TemporaryDirectory() as directory:
+            config, reauth = Path(directory) / 'tailscale.json', Path(directory) / 'reauth'
+            self.assertFalse(bootstrap.promotion_pending(config, reauth))
+            config.write_text(json.dumps({'hostname': 'gpu-bootstrap-pod', 'bootstrap': True}))
+            self.assertTrue(bootstrap.promotion_pending(config, reauth))
+            config.write_text(json.dumps({'hostname': 'gpu-' + str(uuid.uuid4())}))
+            self.assertFalse(bootstrap.promotion_pending(config, reauth))
+            reauth.touch()
+            self.assertTrue(bootstrap.promotion_pending(config, reauth))
+
     def test_private_configuration_refuses_symlinks(self):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory) / 'target'

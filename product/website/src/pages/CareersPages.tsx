@@ -79,7 +79,7 @@ export const CareersIndexPage = (): ReactElement => (
             by="word"
             className="gr-masthead-title gr-masthead-title--display"
           >
-            Work on intelligence. All the way down.
+            Work with us to make AI use less energy.
           </Reveal>
           <p className="gr-careers-lede gr-muted">
             Gradiated is a small research and engineering team focused on making

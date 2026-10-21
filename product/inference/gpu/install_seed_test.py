@@ -2,7 +2,9 @@ import hashlib
 import importlib.util
 import io
 import json
+import os
 from pathlib import Path
+import stat
 import sys
 import tarfile
 import tempfile
@@ -52,6 +54,16 @@ class SeedTests(unittest.TestCase):
             (root / 'state/host' / digest / 'host-agent.py').write_text('corrupt active copy')
             self.assertEqual((bootstrap.parent / 'host-agent.py').read_text(), 'host-agent.py')
             with self.assertRaises(ValueError):self.install(root, archive)
+
+    def test_host_bundles_stay_reachable_by_the_downloader_under_a_private_umask(self):
+        previous = os.umask(0o077)
+        try:
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                self.install(root, self.archive())
+                self.assertEqual(stat.S_IMODE((root / 'state/host').stat().st_mode), 0o755)
+        finally:
+            os.umask(previous)
 
     def test_checksum_failure_never_installs_or_activates_code(self):
         with tempfile.TemporaryDirectory() as temporary:

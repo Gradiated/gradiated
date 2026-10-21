@@ -106,6 +106,7 @@ def enroll(payload):
                         'scripts': {name: (scripts / filename).read_text() for name, filename in names.items()}})
         bundles = ROOT / 'bundles'
         bundles.mkdir(exist_ok=True)
+        bundles.chmod(0o755)
         downloader = pwd.getpwnam('downloader')
         os.chown(bundles, downloader.pw_uid, downloader.pw_gid)
         fetch = scripts / "fetch-runtime"

@@ -24,6 +24,9 @@ def install(release):
     ROOT.chmod(0o755)
     host = ROOT / 'host'
     host.mkdir(exist_ok=True)
+    # Enrollment runs under Tailscale SSH's umask 077; the downloader runs
+    # fetch-runtime from the bundle in here.
+    host.chmod(0o755)
     digest = release['sha256']
     destination = host / digest
     if not destination.exists():

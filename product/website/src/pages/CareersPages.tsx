@@ -87,9 +87,9 @@ export const CareersIndexPage = (): ReactElement => (
           </Reveal>
           <p className="gr-careers-lede gr-muted">
             Gradiated is a small research and engineering team focused on making
-            open-model inference radically more efficient. We work from model
-            behaviour to software, systems, and silicon—and we are building the
-            company for the long term.
+            open-model inference radically more efficient, from open-source
+            models and inference software to chips and, over the long term, the
+            data center.
           </p>
           <a className="gr-careers-jump gr-label" href="#open-roles">
             See open roles
@@ -179,7 +179,7 @@ export const CareersIndexPage = (): ReactElement => (
                     </span>
                   </span>
 
-                  {/* At the end of the row and centred on it, rather than
+                  {/* At the end of the row and centered on it, rather than
                     chasing the title's baseline — a mark that points at the
                     whole row belongs at the row's edge. */}
                   <span aria-hidden className="gr-role-go">

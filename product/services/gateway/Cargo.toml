@@ -25,7 +25,7 @@ reqwest = { version = "=0.12.15", default-features = false, features = ["rustls-
 rustls = { version = "=0.23.45", default-features = false, features = ["aws_lc_rs"] }
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = { version = "1.0.140", features = ["preserve_order"] }
-switchyard-translation = "=0.2.0"
+switchyard-translation = "=0.3.0"
 sha2 = "0.10.9"
 thiserror = "2.0.12"
 tokenizers = { version = "=0.23.1", default-features = false, features = ["fancy-regex"] }

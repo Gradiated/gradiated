@@ -68,13 +68,16 @@ class RenderTests(unittest.TestCase):
         platform = renderer.KUBE / 'platform'
         self.assertFalse((platform / 'gpu-inference.yaml').exists())
         models = yaml.safe_load((platform / 'gpu-models.yaml').read_text())
-        generator = models['spec']['generators'][0]
-        self.assertEqual(generator[next(iter(generator))]['directories'],
-                         [{'path': str(renderer.MODELS.relative_to(renderer.ROOT)) + '/*'}])
+        # A list generator: a git directory generator makes Argo check out the
+        # repository's private submodule, which fails.
+        self.assertEqual(models['spec']['generators'],
+                         [{'list': {'elements': [{'model': name} for name in
+                                                 sorted(json.loads((renderer.GPU / 'models.json').read_text()))]}}])
         # Deleting a model's application must not delete its serving Rollout.
         self.assertTrue(models['spec']['syncPolicy']['preserveResourcesOnDeletion'])
         template = models['spec']['template']['spec']
-        self.assertEqual(template['source']['path'], '{{ .path.path }}')
+        self.assertEqual(template['source']['path'],
+                         str(renderer.MODELS.relative_to(renderer.ROOT)) + '/{{ .model }}')
         self.assertIn('RespectIgnoreDifferences=true', template['syncPolicy']['syncOptions'])
         self.assertEqual(template['ignoreDifferences'][0]['jsonPointers'], ['/spec/replicas'])
         for name in json.loads((renderer.GPU / 'models.json').read_text()):

@@ -51,7 +51,7 @@ def main():
         for service in ('api', 'worker', 'gateway', 'proxy'):
             obj = yaml.safe_load((KUBERNETES / 'workloads' / f'{service}-autoscaling.yaml').read_text())
             validator.validate(obj)
-        for path in (KUBERNETES / 'gpu-inference').glob('*.yaml'):
+        for path in (KUBERNETES / 'gpu-inference').rglob('*.yaml'):
             for document in yaml.safe_load_all(path.read_text()):
                 if document and document.get('kind') == 'ScaledObject':
                     validator.validate(document)

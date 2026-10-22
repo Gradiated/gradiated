@@ -64,9 +64,48 @@ class RenderTests(unittest.TestCase):
         current = renderer.OPS_MCP.read_text().splitlines()
         self.assertEqual(len(workload.splitlines()), len(current))
 
-    def test_argo_only_reads_generated_manifests(self):
-        app = yaml.safe_load((renderer.KUBE / 'platform/gpu-inference.yaml').read_text())
-        self.assertEqual(app['spec']['source']['directory']['include'], '*.yaml')
+    def test_each_model_fleet_and_platform_sync_as_separate_argo_applications(self):
+        platform = renderer.KUBE / 'platform'
+        self.assertFalse((platform / 'gpu-inference.yaml').exists())
+        models = yaml.safe_load((platform / 'gpu-models.yaml').read_text())
+        generator = models['spec']['generators'][0]
+        self.assertEqual(generator[next(iter(generator))]['directories'],
+                         [{'path': str(renderer.MODELS.relative_to(renderer.ROOT)) + '/*'}])
+        # Deleting a model's application must not delete its serving Rollout.
+        self.assertTrue(models['spec']['syncPolicy']['preserveResourcesOnDeletion'])
+        template = models['spec']['template']['spec']
+        self.assertEqual(template['source']['path'], '{{ .path.path }}')
+        self.assertIn('RespectIgnoreDifferences=true', template['syncPolicy']['syncOptions'])
+        self.assertEqual(template['ignoreDifferences'][0]['jsonPointers'], ['/spec/replicas'])
+        for name in json.loads((renderer.GPU / 'models.json').read_text()):
+            self.assertTrue((renderer.MODELS / name / f'{name}.yaml').exists(), name)
+        # Each application prunes what leaves its files: a setting carried over
+        # from the handoff would keep removed resources running.
+        fleet_app = yaml.safe_load((platform / 'gpu-fleet.yaml').read_text())['spec']
+        shared_app = yaml.safe_load((platform / 'gpu-platform.yaml').read_text())['spec']
+        for spec in (template, fleet_app, shared_app):
+            self.assertEqual(spec['syncPolicy']['automated'], {'prune': True, 'selfHeal': True})
+            # A fresh cluster syncs in any order: namespaces are created and syncs retry.
+            self.assertIn('CreateNamespace=true', spec['syncPolicy']['syncOptions'])
+            self.assertGreaterEqual(spec['syncPolicy']['retry']['limit'], 1)
+        # Every manifest in gpu-inference/ belongs to exactly one of the fleet
+        # and platform applications.
+        fleet = fleet_app['source']
+        shared = shared_app['source']
+        for source in (fleet, shared):
+            self.assertEqual(source['path'], str(renderer.GPU.relative_to(renderer.ROOT)))
+        listed = set(fleet['directory']['include'].strip('{}').split(','))
+        self.assertEqual(shared['directory']['exclude'], fleet['directory']['include'])
+        self.assertEqual(shared['directory']['include'], '*.yaml')
+        root = {path.name for path in renderer.GPU.glob('*.yaml')}
+        self.assertLessEqual(listed, root)
+        self.assertIn('hosts.yaml', listed)
+        self.assertIn('controller.yaml', root - listed)
+        # No sync waves on model resources: one model's health must never
+        # hold back another model's changes.
+        for path in renderer.MODELS.glob('*/*.yaml'):
+            for document in yaml.safe_load_all(path.read_text()):
+                self.assertNotIn('argocd.argoproj.io/sync-wave', document['metadata'].get('annotations', {}))
 
     def test_host_services_belong_to_the_fleet_operator_not_git(self):
         self.assertFalse((renderer.KUBE / 'platform/inference-hosts.yaml').exists())
@@ -124,7 +163,7 @@ class RenderTests(unittest.TestCase):
             shutil.copyfile(renderer.ROOT / 'product/inference/gpu/runtimes.json', runtime_path)
             removed = self.hosts[-1]['spec']['instanceId']
             (gpu / 'hosts.yaml').write_text(yaml.safe_dump_all(self.hosts[:-1]))
-            with patch.multiple(renderer, ROOT=root, KUBE=kube, GPU=gpu):
+            with patch.multiple(renderer, ROOT=root, KUBE=kube, GPU=gpu, MODELS=gpu / 'models'):
                 # Step one: out of hosts.yaml, so Argo stops wanting the GpuHost,
                 # but still drainable.
                 with patch('sys.argv', ['render-config.py']):
@@ -161,7 +200,7 @@ class RenderTests(unittest.TestCase):
             shutil.copyfile(renderer.ROOT / 'product/inference/gpu/runtimes.json', runtime_path)
             entry = self.host()
             (gpu / 'hosts.yaml').write_text(yaml.safe_dump_all([*self.hosts, entry]))
-            with patch.multiple(renderer, ROOT=root, KUBE=kube, GPU=gpu):
+            with patch.multiple(renderer, ROOT=root, KUBE=kube, GPU=gpu, MODELS=gpu / 'models'):
                 outputs = renderer.render()
             instance = entry['spec']['instanceId']
             controller = outputs[gpu / 'controller.yaml']
@@ -176,12 +215,21 @@ class RenderTests(unittest.TestCase):
             models = json.loads((gpu / 'models.json').read_text())
             models.pop('kev')
             (gpu / 'models.json').write_text(json.dumps(models))
-            with patch.multiple(renderer, ROOT=root, KUBE=kube, GPU=gpu):
-                self.assertEqual(renderer.retired_outputs(renderer.render()), {gpu / 'kev.yaml'})
-                for name in ('controller', 'rbac', 'credentials', 'namespace', 'qualification'):
-                    (gpu / 'models.json').write_text(json.dumps({**models, name: models['glm']}))
-                    with self.assertRaisesRegex(ValueError, 'collides with a static manifest'):
+            with patch.multiple(renderer, ROOT=root, KUBE=kube, GPU=gpu, MODELS=gpu / 'models'):
+                self.assertEqual(renderer.retired_outputs(renderer.render()), {gpu / 'models/kev/kev.yaml'})
+                with patch('sys.argv', ['render-config.py', '--check']), \
+                        self.assertRaisesRegex(SystemExit, 'kubectl -n gpu-inference delete rollout,scaledobject kev'):
+                    renderer.main()
+                for invalid in ('../escape', 'a/b', 'Upper', 'x' * 54, ''):
+                    (gpu / 'models.json').write_text(json.dumps({**models, invalid: models['glm']}))
+                    with self.assertRaisesRegex(ValueError, 'DNS label'):
                         renderer.render()
+                # A model is written to its own directory, so its name cannot
+                # collide with a platform or fleet manifest.
+                (gpu / 'models.json').write_text(json.dumps({**models, 'controller': models['glm']}))
+                outputs = renderer.render()
+                self.assertIn(gpu / 'models/controller/controller.yaml', outputs)
+                self.assertEqual(outputs[gpu / 'controller.yaml'][1]['kind'], 'Deployment')
 
     def test_rollout_uses_catalogue_resources_and_qualification(self):
         runtimes = json.loads((renderer.ROOT / 'product/inference/gpu/runtimes.json').read_text())

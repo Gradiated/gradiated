@@ -7,7 +7,7 @@ import yaml
 def check_gpu_autoscaling(root):
     kube = root / 'infra/environments/prod/us-east-1/kubernetes'
     gpu = kube / 'gpu-inference'
-    app = yaml.safe_load((kube / 'platform/gpu-inference.yaml').read_text())['spec']
+    app = yaml.safe_load((kube / 'platform/gpu-models.yaml').read_text())['spec']['template']['spec']
     assert 'RespectIgnoreDifferences=true' in app['syncPolicy']['syncOptions']
     assert app['ignoreDifferences'] == [{'group': 'argoproj.io', 'kind': 'Rollout',
                                         'namespace': 'gpu-inference', 'jsonPointers': ['/spec/replicas']}]
@@ -15,7 +15,7 @@ def check_gpu_autoscaling(root):
     models = json.loads((gpu / 'models.json').read_text())
     catalogue = json.loads((root / 'product/inference/gpu/runtimes.json').read_text())
     for name, model in models.items():
-        rollout, obj = yaml.safe_load_all((gpu / f'{name}.yaml').read_text())
+        rollout, obj = yaml.safe_load_all((gpu / 'models' / name / f'{name}.yaml').read_text())
         spec = obj['spec']
         assert spec['scaleTargetRef'] == {'apiVersion': 'argoproj.io/v1alpha1', 'kind': 'Rollout', 'name': name}
         assert spec['minReplicaCount'] == rollout['spec']['replicas'] == model['replicas']

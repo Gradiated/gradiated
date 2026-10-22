@@ -1,4 +1,4 @@
-import {readFileSync,readdirSync,writeFileSync} from "node:fs";
+import {existsSync,readFileSync,readdirSync,writeFileSync} from "node:fs";
 import {createRequire} from "node:module";
 import {dirname,resolve} from "node:path";
 import {fileURLToPath,pathToFileURL} from "node:url";
@@ -23,8 +23,9 @@ export const modelReplicaRules=(resources)=>{
 };
 if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url){
  const {parseAllDocuments}=createRequire(resolve(root,"product/package.json"))("yaml");
- const directory=resolve(root,"infra/environments/prod/us-east-1/kubernetes/gpu-inference");
- const resources=readdirSync(directory).filter(name=>name.endsWith(".yaml")).sort().flatMap(name=>parseAllDocuments(readFileSync(resolve(directory,name),"utf8")).map(doc=>doc.toJS()));
+ // Each model is rendered into gpu-inference/models/<model>/<model>.yaml.
+ const directory=resolve(root,"infra/environments/prod/us-east-1/kubernetes/gpu-inference/models");
+ const resources=readdirSync(directory).sort().map(model=>resolve(directory,model,`${model}.yaml`)).filter(existsSync).flatMap(file=>parseAllDocuments(readFileSync(file,"utf8")).map(doc=>doc.toJS()));
  const content=JSON.stringify(modelReplicaRules(resources),null,2)+"\n";
  if(process.argv.includes("--check")){if(readFileSync(target,"utf8")!==content)throw new Error("Model replica rules are stale; run node tools/models/model-replica-rules.mjs");}
  else writeFileSync(target,content);

@@ -54,7 +54,7 @@ operator retires an `instances` row of the fleet's RunPod account that has had n
 
 The `gpu-fleet` operator creates the host's private Service, records the host in
 the PostgreSQL `instances` table and reports its health in the `GpuHost` status,
-which Argo shows on the `gpu-inference` application. Shared proxy changes remain
+which Argo shows on the `gpu-fleet` application. Shared proxy changes remain
 manually deployed through `inference-network`. A missing Service lasting five
 minutes raises `GpuHostServiceMissing`, and a Degraded host raises
 `GpuFleetHostDegraded`; do not wait for a model Rollout deadline to diagnose

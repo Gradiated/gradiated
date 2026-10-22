@@ -11,6 +11,9 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 KUBE = ROOT / 'infra/environments/prod/us-east-1/kubernetes'
 GPU = KUBE / 'gpu-inference'
+# One directory per model; the gpu-models ApplicationSet makes an Argo
+# application for each, so one model's sync never waits on another.
+MODELS = GPU / 'models'
 
 
 # Field bounds are checked against the GpuHost CRD schema by
@@ -182,27 +185,19 @@ def render(retire=()):
     outputs = {GPU / 'controller.yaml': controller, GPU / 'rbac.yaml': rbac, GPU / 'credentials.yaml': credentials,
                GPU / 'gpu-fleet-pins.yaml': fleet_pins}
     for name, model in json.loads((GPU / 'models.json').read_text()).items():
-        document = rollout(name, model, runtimes)
-        path = GPU / f'{name}.yaml'
-        if path in outputs:
-            raise ValueError('Model name collides with a static manifest: ' + name)
-        if path.exists():
-            existing = [item for item in yaml.safe_load_all(path.read_text()) if item]
-            if not existing or existing[0].get('kind') != 'Rollout' or any(item.get('kind') != 'ScaledObject' for item in existing[1:]):
-                raise ValueError('Model name collides with a static manifest: ' + name)
-        outputs[path] = [document]
+        # The name becomes a directory and the gpu-model-<name> application,
+        # which must stay a 63-character label.
+        if len(name) > 53 or not re.fullmatch(r'[a-z](?:[a-z0-9-]*[a-z0-9])?', name):
+            raise ValueError('A model name must be a DNS label of at most 53 characters: ' + repr(name))
+        path = MODELS / name / f'{name}.yaml'
+        outputs[path] = [rollout(name, model, runtimes)]
         if "autoscaling" in model:
             outputs[path].append(autoscaler(name, model, runtimes[model["runtime"]]))
     return outputs
 
 
 def retired_outputs(outputs):
-    existing = set()
-    for path in GPU.glob('*.yaml'):
-        if any(document and document.get('kind') == 'Rollout'
-               for document in yaml.safe_load_all(path.read_text())):
-            existing.add(path)
-    return existing - set(outputs)
+    return set(MODELS.glob('*/*.yaml')) - set(outputs)
 
 
 def main():
@@ -214,7 +209,14 @@ def main():
     outputs = render(set(args.retire))
     obsolete = retired_outputs(outputs)
     if obsolete:
-        raise SystemExit('Drain workloads and remove retired Rollouts explicitly: ' + ', '.join(str(path) for path in sorted(obsolete)))
+        # The gpu-models ApplicationSet keeps a removed model's resources serving.
+        names = sorted(path.parent.name for path in obsolete)
+        raise SystemExit('Models removed from models.json still have manifests: ' + ', '.join(names) + '. '
+                         'Delete their directories under gpu-inference/models/ in the same change and merge it. '
+                         'Once Argo has deleted ' + ', '.join(f'gpu-model-{name}' for name in names)
+                         + ' (their resources keep running), run '
+                         + '; '.join(f'kubectl -n gpu-inference delete rollout,scaledobject {name}' for name in names)
+                         + '.')
     stale = []
     for path, content in pinned_copies(json.loads((GPU / 'pins.json').read_text())).items():
         if args.check:
@@ -231,6 +233,7 @@ def main():
             if not path.exists() or path.read_text() != content:
                 stale.append(str(path.relative_to(ROOT)))
         else:
+            path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(content)
     if stale:
         raise SystemExit('GPU manifests are stale; run python3 tools/gpu/render-config.py:\n' + '\n'.join(stale))

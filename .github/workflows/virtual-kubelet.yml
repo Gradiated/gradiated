@@ -7,6 +7,8 @@ on:
       - ".github/workflows/virtual-kubelet.yml"
       - "tools/virtual-kubelet/**"
       - "tools/gpu/**"
+      - "tools/models/model-replica-rules.mjs"
+      - "infra/environments/prod/us-east-1/kubernetes/workloads/observability/model-replica-rules.yaml"
       - "tools/security/check_gpu_inference.py"
       - "tools/security/check_tailscale_inference.py"
       - "infra/environments/prod/us-east-1/kubernetes/gpu-inference/**"
@@ -15,7 +17,9 @@ on:
       - "infra/environments/prod/runpod/templates.json"
       - "infra/environments/prod/us-east-1/kubernetes/platform/argo-rollouts.yaml"
       - "infra/environments/prod/us-east-1/kubernetes/platform/external-secrets.yaml"
-      - "infra/environments/prod/us-east-1/kubernetes/platform/gpu-inference.yaml"
+      - "infra/environments/prod/us-east-1/kubernetes/platform/gpu-fleet.yaml"
+      - "infra/environments/prod/us-east-1/kubernetes/platform/gpu-models.yaml"
+      - "infra/environments/prod/us-east-1/kubernetes/platform/gpu-platform.yaml"
       - "infra/environments/prod/us-east-1/kubernetes/platform/inference-network.yaml"
       - "infra/environments/prod/us-east-1/kubernetes/platform/keda.yaml"
       - "infra/environments/prod/us-east-1/kubernetes/platform/tailscale-operator.yaml"
@@ -80,6 +84,11 @@ jobs:
       - run: python3 -m pip install PyYAML==6.0.2
       - run: python3 tools/gpu/render-config.py --check
         if: fromJSON(needs.changes.outputs.checks).configuration
+      - name: Check the model replica alert rules match the model Rollouts
+        if: fromJSON(needs.changes.outputs.checks).configuration
+        run: |
+          npm install --silent --no-save --prefix "$RUNNER_TEMP/rules" yaml@2.9.0
+          NODE_PATH="$RUNNER_TEMP/rules/node_modules" node tools/models/model-replica-rules.mjs --check
       - run: python3 tools/gpu/render_config_test.py
         if: fromJSON(needs.changes.outputs.checks).configuration
       - run: python3 tools/virtual-kubelet/host_agent_test.py

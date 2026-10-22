@@ -149,6 +149,31 @@ manifests remain editable; rendering preserves them. CI checks that generated
 fields match the inputs. Remove a retired host Service or model Rollout explicitly after draining
 its workloads; rendering and --check fail if retired resources remain.
 
+## Argo CD applications
+
+Each model is its own Argo CD application, so one model's sync, health or
+pruning never waits on another. `render-config.py` writes each model's Rollout
+and ScaledObject to `gpu-inference/models/<model>/`, and the `gpu-models`
+ApplicationSet (`platform/gpu-models.yaml`) creates a `gpu-model-<model>`
+application for every such directory from one template; adding a model is a
+new directory. Two plain applications read the rest of `gpu-inference/`:
+`gpu-fleet` (the `GpuHost` CRD and objects, the operator and its pins) and
+`gpu-platform` (everything else: the namespace, gpu-controller, credentials,
+RBAC, the training priority class and qualification). `gpu-fleet` creates the
+namespaces it deploys into, but the operator can cordon nodes only once
+`gpu-platform`'s `rbac.yaml` has synced.
+
+Removing a model is explicit, because deleting its directory deletes its
+application but leaves the Rollout serving (`preserveResourcesOnDeletion`):
+1. Withdraw the model from traffic.
+2. Remove it from `models.json` and delete `gpu-inference/models/<model>/` in
+   the same change, render and merge.
+3. Wait until Argo has deleted the `gpu-model-<model>` application; its Rollout
+   and ScaledObject keep running, no longer managed. Deleting them earlier
+   would let the application's self-heal recreate them.
+4. Run `kubectl -n gpu-inference delete rollout,scaledobject <model>`. Its pods
+   stop with their normal termination grace period.
+
 ## Model autoscaling
 
 KEDA owns each Rollout's replica count through the standard Kubernetes scale

@@ -67,7 +67,7 @@ class SubcheckSelectionTest(unittest.TestCase):
         self.assertTrue(selected("kubernetes", [path])["tailscale"])
 
     def test_gpu_changes_skip_temporal_browser_and_database_fixtures(self):
-        result = selected("kubernetes", [KUBE + "gpu-inference/kev.yaml"])
+        result = selected("kubernetes", [KUBE + "gpu-inference/models/kev/kev.yaml"])
         self.assertTrue(result["observability"])
         for check in ("temporal_ui", "metabase", "argocd", "logs", "tailscale"):
             self.assertFalse(result[check], check)

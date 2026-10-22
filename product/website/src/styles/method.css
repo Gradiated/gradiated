@@ -1,0 +1,267 @@
+/* -- code ------------------------------------------------------------------
+   The shared block's dark-ground palette outranks the system's syntax rules. */
+
+.gr-prose .docs-code-block:has(> pre.gr-method-code) {
+  --code-fg: var(--color-code-text);
+  --code-muted: var(--color-code-muted);
+  --code-accent: var(--color-code-keyword);
+  --code-string: var(--color-code-string);
+  --code-function: var(--color-code-text);
+  --code-deletion: var(--color-code-keyword);
+}
+
+.gr-prose pre.gr-method-code {
+  padding-inline-end: calc(3.5 * var(--u));
+}
+
+/* -- pills ----------------------------------------------------------------- */
+
+.gr-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  max-width: 100%;
+  padding: 0.05em 0.5em 0.05em 0.15em;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-full);
+  background: var(--color-panel);
+  color: var(--color-text);
+  font-size: 0.9em;
+  line-height: 1.5;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+.gr-prose a.gr-pill {
+  text-decoration: none;
+}
+
+a.gr-pill:hover,
+a.gr-pill:focus-visible,
+.gr-pill[tabindex]:hover,
+.gr-pill[tabindex]:focus-visible {
+  outline: none;
+  border-color: var(--color-interactive);
+}
+
+.gr-pill__avatar {
+  display: inline-grid;
+  place-items: center;
+  width: 1.35em;
+  height: 1.35em;
+  flex: none;
+  border-radius: var(--radius-full);
+  background: var(--color-module);
+  color: var(--color-text-muted);
+  font-family: var(--font-code);
+  font-size: 0.7em;
+  object-fit: cover;
+}
+
+img.gr-pill__avatar {
+  width: 1.35em;
+  height: 1.35em;
+  font-size: inherit;
+}
+
+.gr-pill__stack {
+  display: inline-flex;
+}
+
+.gr-pill__stack > * + * {
+  margin-inline-start: -0.35em;
+  box-shadow: 0 0 0 1px var(--color-panel);
+}
+
+.gr-pill__name {
+  font-weight: 500;
+}
+
+.gr-pill__avatar + .gr-pill__name,
+.gr-pill__stack + .gr-pill__name {
+  margin-inline-start: 0.05em;
+}
+
+.gr-pill-wrap {
+  position: relative;
+  white-space: nowrap;
+}
+
+.gr-pill__card {
+  position: absolute;
+  z-index: 2;
+  inset-block-end: calc(100% + 0.4em);
+  inset-inline-start: 0;
+  display: grid;
+  gap: 0.15em;
+  width: max-content;
+  max-width: min(18em, calc(100vw - 32px));
+  padding: 0.6em 0.8em;
+  border: 1px solid var(--color-rule);
+  border-radius: calc(var(--radius) / 2);
+  background: var(--color-panel);
+  color: var(--color-text);
+  font-size: 0.9em;
+  line-height: 1.4;
+  white-space: normal;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur-fast, 150ms) ease;
+}
+
+.gr-pill-wrap:hover .gr-pill__card,
+.gr-pill-wrap:focus-within .gr-pill__card {
+  opacity: 1;
+}
+
+.gr-pill__card-muted {
+  color: var(--color-text-muted);
+}
+
+/* -- private link ---------------------------------------------------------- */
+
+.gr-private-link-wrap {
+  position: relative;
+  white-space: nowrap;
+}
+
+.gr-private-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.05em 0.45em;
+  border-radius: calc(var(--radius) / 2);
+  background: color-mix(in srgb, var(--color-text) 7%, transparent);
+  color: var(--color-text);
+  white-space: nowrap;
+  transition: background var(--dur-fast, 150ms) ease;
+}
+
+.gr-root .gr-prose a.gr-private-link,
+.gr-root a.gr-private-link {
+  text-decoration: none;
+}
+
+.gr-private-link:hover,
+.gr-private-link:focus-visible {
+  background: color-mix(in srgb, var(--color-text) 13%, transparent);
+}
+
+.gr-private-link__icon {
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  margin-inline-end: 0.2em;
+  vertical-align: -0.05em;
+  color: var(--color-text-muted);
+}
+
+.gr-private-link__tip {
+  position: absolute;
+  inset-block-end: calc(100% + 0.4em);
+  inset-inline-start: 0;
+  padding: 0.2em 0.5em;
+  border: 1px solid var(--color-rule);
+  border-radius: calc(var(--radius) / 2);
+  background: var(--color-panel);
+  color: var(--color-text-muted);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur-fast, 150ms) ease;
+}
+
+.gr-private-link-wrap:hover .gr-private-link__tip,
+.gr-private-link-wrap:focus-within .gr-private-link__tip {
+  opacity: 1;
+}
+
+/* -- callout --------------------------------------------------------------- */
+
+.gr-root .gr-prose > .gr-callout {
+  margin-block: 1.6em;
+}
+
+.gr-callout {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.75em;
+  padding: 0.9em 1.1em;
+  border: 1px solid var(--color-rule);
+  border-inline-start-width: 2px;
+  border-radius: var(--radius);
+}
+
+.gr-callout--fyi {
+  border-inline-start-color: var(--color-text-muted);
+}
+
+.gr-callout--caution {
+  border-inline-start-color: var(--color-kiln-500);
+}
+
+.gr-callout--action {
+  border-inline-start-color: var(--color-interactive);
+}
+
+.gr-callout__icon {
+  width: 1.1em;
+  height: 1.1em;
+  margin-block-start: 0.25em;
+  color: var(--color-text-muted);
+}
+
+.gr-callout__body > * {
+  margin-block: 0;
+}
+
+.gr-callout__body > * + * {
+  margin-block-start: 0.6em;
+}
+
+.gr-root .gr-callout__title {
+  font-weight: 500;
+}
+
+/* -- hiring map ------------------------------------------------------------ */
+
+.gr-root .gr-prose > .gr-hiring-map {
+  margin-block: 1.6em;
+}
+
+.gr-hiring-map__globe {
+  width: 100%;
+  height: 400px;
+}
+
+@media (max-width: 500px) {
+  .gr-hiring-map__globe {
+    height: 300px;
+  }
+}
+
+.gr-root .gr-hiring-map__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em 1.2em;
+  margin: 0.8em 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text-muted);
+  font-size: 0.85em;
+}
+
+.gr-root .gr-hiring-map__legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  margin: 0;
+}
+
+.gr-hiring-map__swatch {
+  width: 0.8em;
+  height: 0.8em;
+  border-radius: calc(var(--radius) / 4);
+}

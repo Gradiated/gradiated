@@ -19,6 +19,12 @@ import {
   ThemeGallery,
 } from "../components/design";
 import type { Group } from "../components/design";
+import {
+  Callout,
+  CountriesWeHireIn,
+  Person,
+  PrivateLink,
+} from "../components/method";
 import "../styles/index.css";
 
 /** A ramp chip that hands over its hex on click. The literal lives in the
@@ -139,6 +145,15 @@ const GROUPS: Group[] = [
       { id: "code", label: "Code" },
       { id: "badges", label: "Badges" },
       { id: "navigation", label: "Navigation" },
+    ],
+  },
+  {
+    label: "Handbook",
+    sections: [
+      { id: "pills", label: "People and teams" },
+      { id: "private-link", label: "Private link" },
+      { id: "callout", label: "Callout" },
+      { id: "hiring-map", label: "Hiring map" },
     ],
   },
 ];
@@ -513,6 +528,68 @@ export const StylePage = (): ReactElement => (
         <p className="gr-body gr-muted">
           Live at the top of this page — hover Product or Library.
         </p>
+      </Spec>
+
+      <Spec
+        id="pills"
+        title="People and teams"
+        notes="Mentions a person or a team in a sentence. Hover a person to see their role and team, or a team to see who is on it."
+        code={`<Person name="James Hawkins" />`}
+      >
+        <p className="gr-body">
+          Written by <Person name="James Hawkins" />.
+        </p>
+      </Spec>
+
+      <Spec
+        id="private-link"
+        title="Private link"
+        notes="Links to something only the team can open, like a Slack channel. The lock and the hover label tell everyone else it will not open for them."
+        code={`<PrivateLink href="https://gradiated.slack.com/archives/…">#ops</PrivateLink>`}
+      >
+        <p className="gr-body">
+          Questions go in{" "}
+          <PrivateLink href="https://slack.com/">#ops</PrivateLink>.
+        </p>
+      </Spec>
+
+      <Spec
+        id="callout"
+        title="Callout"
+        notes="Pulls out something the reader should not miss: something good to know, a caution, or a thing to do."
+        code={`<Callout type="caution" title="Before you start">\n  What goes wrong if this is skipped.\n</Callout>`}
+      >
+        <div style={{ display: "grid", gap: "var(--u)" }}>
+          <Callout title="Good to know">
+            <p className="gr-body">Context to have before the next section.</p>
+          </Callout>
+          <Callout title="Before you start" type="caution">
+            <p className="gr-body">What goes wrong if this is skipped.</p>
+          </Callout>
+          <Callout type="action">
+            <p className="gr-body">The one thing to do next.</p>
+          </Callout>
+        </div>
+      </Spec>
+
+      <Spec
+        id="hiring-map"
+        title="Hiring map"
+        notes={
+          <>
+            Shows where remote roles can be based, copied from the list on{" "}
+            <a
+              className="gr-link"
+              href="https://posthog.com/handbook/people/hiring-process#countries-where-we-employ-people"
+            >
+              PostHog's hiring page
+            </a>
+            . Drag to turn the globe and hover a country for details.
+          </>
+        }
+        code={`<CountriesWeHireIn />`}
+      >
+        <CountriesWeHireIn />
       </Spec>
     </Storybook>
 

@@ -21,7 +21,7 @@ export type MethodSlug =
   | "brand";
 
 export type MethodPageDefinition = {
-  Content: ComponentType;
+  Content: ComponentType<{ components?: Record<string, unknown> }>;
   description: string;
   indexDescription: string;
   pageTitle: string;

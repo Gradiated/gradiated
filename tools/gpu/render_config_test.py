@@ -1,6 +1,8 @@
+import copy
 import importlib.util
 import json
 from pathlib import Path
+import re
 import shutil
 import tempfile
 import unittest
@@ -15,7 +17,16 @@ spec.loader.exec_module(renderer)
 
 class RenderTests(unittest.TestCase):
     def setUp(self):
-        self.hosts = json.loads((renderer.GPU / 'hosts.json').read_text())
+        self.definition = yaml.safe_load((renderer.GPU / 'gpuhost-crd.yaml').read_text())
+        self.hosts = [item for item in yaml.safe_load_all((renderer.GPU / 'hosts.yaml').read_text()) if item]
+
+    def host(self, instance='019d5a4a-0000-7000-8000-000000000001', pod='newpod1'):
+        document = copy.deepcopy(self.hosts[0])
+        document['metadata']['name'] = 'gpu-' + instance
+        document['spec']['instanceId'] = instance
+        document['spec']['provider']['podId'] = pod
+        document['spec']['managementSecret'] = {'key': 'gradiated/prod/platform/gpu-host/' + instance}
+        return document
 
     def test_host_pin_is_projected_and_invalid_digests_are_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -34,44 +45,87 @@ class RenderTests(unittest.TestCase):
         app = yaml.safe_load((renderer.KUBE / 'platform/gpu-inference.yaml').read_text())
         self.assertEqual(app['spec']['source']['directory']['include'], '*.yaml')
 
-    def test_host_services_reconcile_automatically_without_shared_proxy_changes(self):
-        hosts = yaml.safe_load((renderer.KUBE / 'platform/inference-hosts.yaml').read_text())['spec']
+    def test_host_services_belong_to_the_fleet_operator_not_git(self):
+        self.assertFalse((renderer.KUBE / 'platform/inference-hosts.yaml').exists())
+        self.assertFalse((renderer.KUBE / 'tailscale-inference/hosts').exists())
         network = yaml.safe_load((renderer.KUBE / 'platform/inference-network.yaml').read_text())['spec']
-        self.assertEqual(hosts['source']['path'],
-                         str((renderer.KUBE / 'tailscale-inference/hosts').relative_to(renderer.ROOT)))
-        self.assertEqual(hosts['source']['directory'], {'include': '*.yaml'})
-        self.assertEqual(hosts['source']['targetRevision'], 'main')
-        self.assertEqual(hosts['destination']['namespace'], 'tailscale-inference')
-        self.assertEqual(hosts['syncPolicy']['automated'], {'prune': False, 'selfHeal': True})
-        self.assertIn('RespectIgnoreDifferences=true', hosts['syncPolicy']['syncOptions'])
-        self.assertEqual(hosts['ignoreDifferences'], [
-            {'group': '', 'kind': 'Service', 'jsonPointers': ['/spec/externalName']}])
         self.assertNotIn('automated', network['syncPolicy'])
         self.assertEqual(network['source']['directory'], {'include': 'proxies.yaml'})
-        self.assertEqual(network['source']['path'],
-                         str((renderer.KUBE / 'tailscale-inference').relative_to(renderer.ROOT)))
-        for path in (renderer.KUBE / 'tailscale-inference/hosts').glob('*.yaml'):
-            for resource in yaml.safe_load_all(path.read_text()):
-                self.assertEqual(resource['kind'], 'Service')
-                self.assertEqual(resource['metadata']['namespace'], hosts['destination']['namespace'])
 
-    def test_new_host_projects_service_secret_and_private_endpoint(self):
-        entry = {**self.hosts[0], 'instance_id': '019d5a4a-0000-7000-8000-000000000001',
-                 'management_secret': {'key': 'gradiated/prod/platform/gpu-host/test'}}
-        hosts, services, secrets = renderer.inventory([entry])
-        instance = entry['instance_id']
-        self.assertEqual(services[instance]['metadata']['annotations']['tailscale.com/tailnet-fqdn'],
-                         f'gpu-{instance}.tail186117.ts.net')
-        self.assertNotIn('tailscale.com/tailnet-ip', services[instance]['metadata']['annotations'])
+    def test_new_host_projects_secret_and_private_endpoint(self):
+        document = self.host()
+        hosts, secrets = renderer.inventory([document])
+        instance = document['spec']['instanceId']
         self.assertEqual(hosts[0]['token_file'], '/var/run/gradiated-host-keys/' + instance)
         self.assertEqual(hosts[0]['endpoint'], f'http://gpu-{instance}.tailscale-inference.svc.cluster.local:8888/_kubelet')
-        self.assertEqual(secrets, [{'secretKey': instance, 'remoteRef': entry['management_secret']}])
+        self.assertEqual(hosts[0]['gpu_count'], document['spec']['inventory']['gpuCount'])
+        self.assertEqual(secrets, [{'secretKey': instance, 'remoteRef': document['spec']['managementSecret']}])
 
-    def test_rejects_duplicate_identity_a_pinned_address_and_empty_inventory(self):
-        for entries in ([self.hosts[0], self.hosts[0]],
-                        [{**self.hosts[0], 'tailscale_ip': '100.64.0.1'}], []):
-            with self.assertRaises(ValueError):
-                renderer.inventory(entries)
+    def test_rejects_duplicates_misnamed_other_kinds_and_empty_inventory(self):
+        first = self.host()
+        renamed = self.host()
+        renamed['metadata']['name'] = 'gpu-other'
+        shared_pod = self.host('019d5a4a-0000-7000-8000-000000000002', first['spec']['provider']['podId'])
+        wrong_kind = {**self.host(), 'kind': 'Service'}
+        for documents in ([first, self.host()], [first, shared_pod], [renamed], [wrong_kind], []):
+            with self.subTest(documents=documents), self.assertRaises(ValueError):
+                renderer.inventory(documents)
+
+    def test_argo_never_deletes_the_crd_or_a_gpuhost(self):
+        options = self.definition['metadata']['annotations']['argocd.argoproj.io/sync-options'].split(',')
+        self.assertIn('Delete=false', options)
+        self.assertIn('Prune=false', options)
+        for host in self.hosts:
+            with self.subTest(host=host['metadata']['name']):
+                self.assertIn('Prune=false', host['metadata']['annotations']['argocd.argoproj.io/sync-options'].split(','))
+                # Declared, so a host deleted before the operator's first pass is still held.
+                self.assertIn('fleet.gradiated.com/drain', host['metadata']['finalizers'])
+
+    def test_fleet_operator_manages_every_host_account(self):
+        documents = yaml.safe_load_all((renderer.GPU / 'gpu-fleet.yaml').read_text())
+        deployment = next(item for item in documents if item and item['kind'] == 'Deployment')
+        env = {item['name']: item.get('value') for item in deployment['spec']['template']['spec']['containers'][0]['env']}
+        managed = set(env['FLEET_ACCOUNTS'].split(','))
+        for host in self.hosts:
+            provider = host['spec']['provider']
+            self.assertIn(f"{provider['name']}/{provider['accountId']}", managed)
+
+    def test_a_removed_host_keeps_its_access_until_retired(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            kube = root / renderer.KUBE.relative_to(renderer.ROOT)
+            gpu = kube / 'gpu-inference'
+            shutil.copytree(renderer.GPU, gpu)
+            runtime_path = root / 'product/inference/gpu/runtimes.json'
+            runtime_path.parent.mkdir(parents=True)
+            shutil.copyfile(renderer.ROOT / 'product/inference/gpu/runtimes.json', runtime_path)
+            removed = self.hosts[-1]['spec']['instanceId']
+            (gpu / 'hosts.yaml').write_text(yaml.safe_dump_all(self.hosts[:-1]))
+            with patch.multiple(renderer, ROOT=root, KUBE=kube, GPU=gpu):
+                # Step one: out of hosts.yaml, so Argo stops wanting the GpuHost,
+                # but still drainable.
+                with patch('sys.argv', ['render-config.py']):
+                    renderer.main()
+                self.assertIn('gpu-' + removed, (gpu / 'rbac.yaml').read_text())
+                self.assertIn(removed, (gpu / 'credentials.yaml').read_text())
+                with patch('sys.argv', ['render-config.py', '--check']):
+                    renderer.main()
+
+                # Step two, once the GpuHost is gone.
+                with patch('sys.argv', ['render-config.py', '--retire', removed]):
+                    renderer.main()
+                self.assertNotIn('gpu-' + removed, (gpu / 'rbac.yaml').read_text())
+                self.assertNotIn(removed, (gpu / 'credentials.yaml').read_text())
+                with patch('sys.argv', ['render-config.py', '--check']):
+                    renderer.main()
+
+    def test_capacity_bounds_match_the_controller(self):
+        bounds = self.definition['spec']['versions'][0]['schema']['openAPIV3Schema']['properties']['spec']['properties']['inventory']['properties']
+        controller = (renderer.ROOT / 'tools/virtual-kubelet/cmd/gpu-controller/hosts.go').read_text()
+        for field, go in (('gpuCount', 'GPUCount'), ('cpu', 'CPU'), ('memoryGiB', 'MemoryGiB')):
+            match = re.search(rf'h\.{go} < (\d+) \|\| h\.{go} > (\d+)', controller)
+            self.assertEqual((int(match.group(1)), int(match.group(2))),
+                             (bounds[field]['minimum'], bounds[field]['maximum']), field)
 
     def test_added_host_updates_all_enrollment_resources(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -82,22 +136,20 @@ class RenderTests(unittest.TestCase):
             runtime_path = root / 'product/inference/gpu/runtimes.json'
             runtime_path.parent.mkdir(parents=True)
             shutil.copyfile(renderer.ROOT / 'product/inference/gpu/runtimes.json', runtime_path)
-            entry = {**self.hosts[0], 'instance_id': '019d5a4a-0000-7000-8000-000000000001',
-                     'management_secret': {'key': 'gradiated/prod/platform/gpu-host/test'}}
-            (gpu / 'hosts.json').write_text(json.dumps([*self.hosts, entry]))
+            entry = self.host()
+            (gpu / 'hosts.yaml').write_text(yaml.safe_dump_all([*self.hosts, entry]))
             with patch.multiple(renderer, ROOT=root, KUBE=kube, GPU=gpu):
                 outputs = renderer.render()
-            instance = entry['instance_id']
-            self.assertIn(kube / 'tailscale-inference/hosts' / f'{instance}.yaml', outputs)
+            instance = entry['spec']['instanceId']
             controller = outputs[gpu / 'controller.yaml']
             self.assertEqual(json.loads(controller[0]['data']['hosts.json'])['hosts'][-1]['instance_id'], instance)
             for resource in outputs[gpu / 'rbac.yaml']:
-                if resource['metadata']['name'] in ('gpu-controller-nodes', 'gpu-controller-leases'):
+                if resource['metadata']['name'] in ('gpu-controller-nodes', 'gpu-controller-leases', 'gpu-fleet-nodes'):
                     for rule in resource.get('rules', []):
                         if 'resourceNames' in rule:
                             self.assertIn('gpu-' + instance, rule['resourceNames'])
             self.assertEqual(outputs[gpu / 'credentials.yaml'][1]['spec']['data'][-1],
-                             {'secretKey': instance, 'remoteRef': entry['management_secret']})
+                             {'secretKey': instance, 'remoteRef': entry['spec']['managementSecret']})
             models = json.loads((gpu / 'models.json').read_text())
             models.pop('kev')
             (gpu / 'models.json').write_text(json.dumps(models))

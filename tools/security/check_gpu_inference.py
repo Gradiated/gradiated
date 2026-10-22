@@ -23,7 +23,6 @@ APPLICATIONS = (
     "argo-rollouts",
     "external-secrets",
     "gpu-inference",
-    "inference-hosts",
     "inference-network",
     "keda",
     "tailscale-operator",
@@ -91,8 +90,16 @@ def main():
                     path = directory / "schemas" / group / f"{kind}_{version['name']}.json"
                     path.parent.mkdir(parents=True, exist_ok=True)
                     path.write_text(json.dumps(strict_schema(version["schema"]["openAPIV3Schema"])))
-        manifests = sorted((KUBE / "gpu-inference").glob("*.yaml"))
-        manifests += sorted((KUBE / "tailscale-inference/hosts").glob("*.yaml"))
+        # GpuHost objects are checked against the repository's own CRD.
+        definition = yaml.safe_load((KUBE / "gpu-inference/gpuhost-crd.yaml").read_text())
+        for version in definition["spec"]["versions"]:
+            path = directory / "schemas/fleet.gradiated.com" / f"gpuhost_{version['name']}.json"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(strict_schema(version["schema"]["openAPIV3Schema"])))
+        # kubeconform has no schema for CustomResourceDefinition itself;
+        # tools/gpu/gpuhost_crd_test.py checks the GpuHost CRD on an API server.
+        manifests = sorted(path for path in (KUBE / "gpu-inference").glob("*.yaml")
+                           if path.name != "gpuhost-crd.yaml")
         manifests += [KUBE / f"platform/{name}.yaml" for name in APPLICATIONS]
         # No -ignore-missing-schemas: every resource must match a Kubernetes or pinned CRD schema.
         result = subprocess.run(

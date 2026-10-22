@@ -14,6 +14,7 @@ import (
 	"os/signal"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -26,6 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/uuid"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -40,20 +42,23 @@ import (
 )
 
 type host struct {
-	Runtimes   json.RawMessage `json:"-"`
-	InstanceID string          `json:"instance_id"`
-	Endpoint   string          `json:"endpoint"`
-	TokenFile  string          `json:"token_file"`
-	GPUCount   int64           `json:"gpu_count"`
-	CPU        int64           `json:"cpu"`
-	MemoryGiB  int64           `json:"memory_gib"`
-	GPUProduct string          `json:"gpu_product"`
+	Runtimes    json.RawMessage `json:"-"`
+	InstanceID  string          `json:"instance_id"`
+	Endpoint    string          `json:"endpoint"`
+	TokenFile   string          `json:"token_file"`
+	GPUCount    int64           `json:"gpu_count"`
+	CPU         int64           `json:"cpu"`
+	MemoryGiB   int64           `json:"memory_gib"`
+	GPUProduct  string          `json:"gpu_product"`
+	FaultDomain string          `json:"fault_domain,omitempty"`
 }
+
+// Hosts come from GpuHost objects; the ConfigMap carries the runtimes and the
+// host bundle pin.
 type configuration struct {
 	HostBundle *hostBundle     `json:"host_bundle"`
 	Runtimes   json.RawMessage `json:"runtimes"`
 	Namespace  string          `json:"namespace"`
-	Hosts      []host          `json:"hosts"`
 }
 type provider struct {
 	host   host
@@ -341,20 +346,15 @@ func (p *provider) NotifyNodeStatus(ctx context.Context, callback func(*v1.Node)
 
 func runHost(ctx context.Context, client kubernetes.Interface, namespace string, h host, epoch int64, term string) error {
 	name := "gpu-" + h.InstanceID
-	if h.GPUCount == 0 {
-		h.GPUCount = 1
-	}
-	if h.CPU == 0 {
-		h.CPU = 16
-	}
-	if h.MemoryGiB == 0 {
-		h.MemoryGiB = 64
-	}
-	if h.GPUProduct == "" {
-		h.GPUProduct = "RTX-PRO-6000"
-	}
 	resources := v1.ResourceList{v1.ResourceCPU: *resource.NewQuantity(h.CPU, resource.DecimalSI), v1.ResourceMemory: resource.MustParse(fmt.Sprintf("%dGi", h.MemoryGiB)), v1.ResourcePods: resource.MustParse("16"), "nvidia.com/gpu": *resource.NewQuantity(h.GPUCount, resource.DecimalSI)}
-	spec := &v1.Node{ObjectMeta: metav1.ObjectMeta{Name: name, Labels: map[string]string{"type": "virtual-kubelet", "kubernetes.io/hostname": name, "gradiated.com/provider": "runpod", "gradiated.com/instance-id": h.InstanceID, "nvidia.com/gpu.product": h.GPUProduct, "nvidia.com/gpu.count": fmt.Sprint(h.GPUCount)}},
+	labels := map[string]string{"type": "virtual-kubelet", "kubernetes.io/hostname": name, "gradiated.com/provider": "runpod", "gradiated.com/instance-id": h.InstanceID, "nvidia.com/gpu.product": h.GPUProduct, "nvidia.com/gpu.count": fmt.Sprint(h.GPUCount)}
+	if h.FaultDomain != "" {
+		labels[faultDomainLabel] = h.FaultDomain
+	}
+	if err := labelNode(ctx, client, h); err != nil {
+		return err
+	}
+	spec := &v1.Node{ObjectMeta: metav1.ObjectMeta{Name: name, Labels: labels},
 		Spec:   v1.NodeSpec{Taints: []v1.Taint{{Key: "gradiated.com/gpu", Value: "true", Effect: v1.TaintEffectNoSchedule}}},
 		Status: v1.NodeStatus{Capacity: resources, Allocatable: resources.DeepCopy(), NodeInfo: v1.NodeSystemInfo{OperatingSystem: "linux", Architecture: "amd64", KubeletVersion: "v1.33.5"}, Conditions: []v1.NodeCondition{{Type: v1.NodeReady, Status: v1.ConditionTrue, LastHeartbeatTime: metav1.Now(), LastTransitionTime: metav1.Now()}}}}
 	factory := informers.NewSharedInformerFactoryWithOptions(client, time.Minute, informers.WithNamespace(namespace), informers.WithTweakListOptions(func(o *metav1.ListOptions) {
@@ -467,22 +467,11 @@ func main() {
 	if err = json.Unmarshal(data, &config); err != nil {
 		log.Fatal(err)
 	}
-	if config.Namespace != "gpu-inference" || len(config.Hosts) == 0 {
-		log.Fatal("invalid GPU namespace or empty host list")
+	if config.Namespace != "gpu-inference" {
+		log.Fatal("invalid GPU namespace")
 	}
 	if err := config.HostBundle.validate(); err != nil {
 		log.Fatal(err)
-	}
-	rollout := newHostRollout(config.HostBundle, config.Hosts)
-	for index := range config.Hosts {
-		config.Hosts[index].Runtimes = config.Runtimes
-		h := config.Hosts[index]
-		if h.GPUCount < 0 || h.GPUCount > 8 || h.CPU < 0 || h.CPU > 512 || h.MemoryGiB < 0 || h.MemoryGiB > 4096 {
-			log.Fatal("invalid host resource capacity")
-		}
-		if h.Endpoint != "http://gpu-"+h.InstanceID+".tailscale-inference.svc.cluster.local:8888/_kubelet" {
-			log.Fatal("host endpoint must use its private inference Service")
-		}
 	}
 	var clientConfig *rest.Config
 	if os.Getenv("KUBECONFIG") != "" {
@@ -497,10 +486,19 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	objects, err := dynamic.NewForConfig(clientConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var rollout atomic.Pointer[hostRollout]
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 	go func() {
-		http.HandleFunc("/metrics", rollout.metrics)
+		http.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
+			if current := rollout.Load(); current != nil {
+				current.metrics(w, r)
+			}
+		})
 		http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) })
 		server := &http.Server{Addr: ":9090", ReadHeaderTimeout: 5 * time.Second}
 		if err := server.ListenAndServe(); err != nil {
@@ -523,10 +521,24 @@ func main() {
 					return
 				}
 				term := string(uuid.NewUUID())
+				// An unreadable fleet gives up the lease so another replica can
+				// try; an empty one runs no hosts until GpuHosts appear.
+				hosts, err := listHosts(leader, objects)
+				if err != nil {
+					log.Printf("GpuHost objects are unavailable, giving up leadership: %v", err)
+					cancel()
+					return
+				}
+				for index := range hosts {
+					hosts[index].Runtimes = config.Runtimes
+				}
+				current := newHostRollout(config.HostBundle, hosts)
+				rollout.Store(current)
 				var group sync.WaitGroup
-				group.Add(1)
-				go func() { defer group.Done(); rollout.run(leader) }()
-				for _, h := range config.Hosts {
+				group.Add(2)
+				go func() { defer group.Done(); current.run(leader) }()
+				go func() { defer group.Done(); watchHosts(leader, objects, hosts, 30*time.Second, cancel) }()
+				for _, h := range hosts {
 					group.Add(1)
 					go func(h host) {
 						defer group.Done()
@@ -549,7 +561,7 @@ func main() {
 									}
 								}
 							}
-							rollout.register(&provider{host: h, epoch: epoch, term: term, client: client.CoreV1()})
+							current.register(&provider{host: h, epoch: epoch, term: term, client: client.CoreV1()})
 							hostContext, stopHost := context.WithCancel(leader)
 							err := runHost(hostContext, client, config.Namespace, h, epoch, term)
 							stopHost()

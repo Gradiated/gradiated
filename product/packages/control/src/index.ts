@@ -54,6 +54,14 @@ export {
   type InstanceService,
 } from "./instances/service.js";
 export {
+  fleetHostSchema,
+  RETIRE_GRACE_MS,
+  syncFleetInstances,
+  type FleetHost,
+  type FleetSyncOptions,
+  type FleetSyncResult,
+} from "./instances/fleet-sync.js";
+export {
   createCatalogBillingService,
   type CatalogBillingService,
 } from "./catalog-billing/service.js";

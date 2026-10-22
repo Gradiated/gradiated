@@ -87,12 +87,24 @@ migration or recovery step on a retained reservation.
 Enrollment (`gradiated-host enroll`, see
 [`product/inference/host`](../../product/inference/host)) installs the pinned host
 bundle and the root-only configuration; the host agent then stages the runtime
-bundles the controller asks for. Add the registration's `kubernetes.inventoryEntry` to
-`infra/environments/prod/us-east-1/kubernetes/gpu-inference/hosts.json` and run
+bundles the controller asks for. Add the host as a `GpuHost` in
+`infra/environments/prod/us-east-1/kubernetes/gpu-inference/hosts.yaml` and run
 `python3 tools/gpu/render-config.py` (requires PyYAML 6.0.2). This generates the
-private Service, controller inventory/checksum, host key projection and named
-Node/Lease RBAC. The inventory stores secret references, never key values.
-Argo owns the resulting manifests; review them before scheduling a new host.
+host key projection and named Node/Lease RBAC. The inventory stores secret
+references, never key values.
+
+The controller reads its hosts only from the `GpuHost` objects, when it becomes
+leader; an invalid object is skipped and the operator marks it Degraded. If the
+objects cannot be listed, the leader gives up the lease so another replica tries.
+When any `GpuHost` changes (added, removed or edited), the leader steps down and
+the next leader restarts every host's virtual node, not just the changed one.
+Heartbeats pause for about a minute; serving processes on the hosts keep running,
+as they did when a host list change restarted the controller. Each node
+carries `gradiated.com/fault-domain`, the host's RunPod machine ID, for
+topology spread and anti-affinity. The `gpu-fleet` operator
+(`product/services/gpu-fleet`) keeps each host's private Service, reports its
+health in its `GpuHost` status, and holds a deleted `GpuHost` until no pods run on
+it; see the retirement steps in the [instance setup plan](../../docs/INSTANCE_SETUP_PLAN.md).
 
 All production serving replicas and training Jobs use Kubernetes. Existing
 RunPod containers retain a suspended legacy main process only to preserve their
@@ -299,7 +311,7 @@ Their Dockerfiles package and verify those artifacts in CI; the GPU provider
 still starts hosts from a base container image.
 
 A serial background controller worker observes every host before starting and
-updates in `hosts.json` order. Node health checks and metric scrapes never wait
+updates hosts in instance ID order. Node health checks and metric scrapes never wait
 on rollout I/O. It requires five continuous minutes of model readiness with unchanged
 serving process identities before advancing. A missing original serving pod also
 stops the update, so concurrent model rescheduling cannot certify the host bundle. Staging has a 35-minute

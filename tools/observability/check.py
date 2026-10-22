@@ -909,6 +909,34 @@ def main():
     scenario('Kyverno violations fell', [report('3x120 1x120')], None, [kyverno_alert], eval_time='2d', interval='15m')
     scenario('Kyverno first day after install', [report('1x40 3x80')], None, [kyverno_alert], eval_time='20h', interval='15m')
 
+    fleet_degraded = 'GpuFleetHostDegraded'
+    fleet_labels = {'instance_id': 'test-host', 'reason': 'Unreachable'}
+    degraded = 'gradiated_gpu_fleet_host_degraded{instance_id="test-host",reason="Unreachable"}'
+    scenario('GPU fleet host degraded for ten minutes', [{'series': degraded, 'values': '1+0x40'}],
+             fleet_degraded, [fleet_degraded], fleet_labels, '12m')
+    scenario('GPU fleet host degraded briefly', [{'series': degraded, 'values': '1+0x10 0+0x30'}],
+             None, [fleet_degraded], fleet_labels, '12m')
+    stalled = 'GpuFleetNotReconciling'
+    reconciled = 'gradiated_gpu_fleet_last_reconcile_timestamp_seconds'
+    scenario('GPU fleet operator reconciling', [{'series': reconciled, 'values': '0+30x80'}],
+             None, [stalled], eval_time='30m')
+    scenario('GPU fleet operator stalled', [{'series': reconciled, 'values': '0+0x80'}],
+             stalled, [stalled], eval_time='30m')
+    scenario('GPU fleet operator missing', [{'series': 'up{job="other"}', 'values': '1+0x80'}],
+             stalled, [stalled], eval_time='30m')
+    sync_failing = 'GpuFleetPostgresSyncFailing'
+    for name, configured, synced, fires in [
+        ('without PostgreSQL credentials', 0, '0+0x100', False),
+        ('PostgreSQL syncing', 1, '0+30x100', False),
+        ('PostgreSQL sync stopped', 1, '0+0x100', True),
+        ('PostgreSQL never synced', 1, None, True),
+        ('never synced without credentials', 0, None, False),
+    ]:
+        inputs = [{'series': 'gradiated_gpu_fleet_postgres_configured', 'values': f'{configured}+0x100'}]
+        if synced is not None:
+            inputs.append({'series': 'gradiated_gpu_fleet_postgres_last_sync_timestamp_seconds', 'values': synced})
+        scenario(f'GPU fleet {name}', inputs, sync_failing if fires else None, [sync_failing], eval_time='45m')
+
     with tempfile.TemporaryDirectory(prefix='observability-check-') as directory:
         temp = Path(directory)
         (temp / 'rules.yaml').write_text(yaml.safe_dump({'groups': groups}))

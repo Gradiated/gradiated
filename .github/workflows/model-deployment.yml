@@ -117,7 +117,9 @@ jobs:
 
   images:
     needs: checks
-    if: github.event_name == 'push'
+    # A manual run on main republishes after a failed push run, for example
+    # when the Terraform prerequisite failed and was fixed by a later commit.
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
     uses: ./.github/workflows/build-images.yml
     with:
       source_sha: ${{ github.sha }}

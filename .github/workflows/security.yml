@@ -66,6 +66,7 @@ jobs:
         with:
           persist-credentials: false
       - run: python3 -m unittest discover -s tools/security -p 'test_scan_report.py'
+      - run: python3 -m unittest discover -s tools/security -p 'test_select_node_release.py'
       - name: Require a justification for every accepted image vulnerability
         run: python3 tools/security/scan_report.py check-trivyignore .trivyignore
 

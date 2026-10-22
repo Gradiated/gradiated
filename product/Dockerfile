@@ -22,6 +22,7 @@ COPY services/gateway/package.json ./services/gateway/package.json
 COPY services/worker/package.json ./services/worker/package.json
 COPY services/temporal-worker/package.json ./services/temporal-worker/package.json
 COPY services/ops-mcp/package.json ./services/ops-mcp/package.json
+COPY services/gpu-fleet/package.json ./services/gpu-fleet/package.json
 
 RUN pnpm install --frozen-lockfile
 
@@ -30,7 +31,7 @@ COPY services ./services
 COPY inference/images/gpu-base/base-id ./inference/images/gpu-base/base-id
 
 RUN mkdir -p packages/*/.turbo services/*/.turbo \
-  && pnpm turbo run build --filter=@gradiated/api... --filter=@gradiated/worker... --filter=@gradiated/temporal-worker... --filter=@gradiated/ops-mcp...
+  && pnpm turbo run build --filter=@gradiated/api... --filter=@gradiated/worker... --filter=@gradiated/temporal-worker... --filter=@gradiated/ops-mcp... --filter=@gradiated/gpu-fleet...
 # Reinstall only the runtime closure: an in-place --prod install keeps every
 # build and test tool in the pnpm virtual store. better-auth still resolves
 # drizzle-kit and vitest as optional peers, which bring esbuild's Go binaries;
@@ -39,6 +40,7 @@ RUN rm -rf node_modules packages/*/node_modules services/*/node_modules \
   && pnpm install --prod --offline --frozen-lockfile \
   --filter=@gradiated/api... \
   --filter=@gradiated/worker... --filter=@gradiated/temporal-worker... --filter=@gradiated/ops-mcp... \
+  --filter=@gradiated/gpu-fleet... \
   && rm -rf node_modules/.pnpm/esbuild@* node_modules/.pnpm/@esbuild+*
 
 FROM node:22.23.3-bookworm-slim@sha256:3ed98443660ff48413b5af19ecefce3b9d50845a901a43420d47cc63a9fddbe9

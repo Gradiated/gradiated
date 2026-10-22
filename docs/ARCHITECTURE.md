@@ -54,6 +54,7 @@ rollout moves the public inference paths from the gateway to the proxy.
 | `proxy`          | Rust deployment on EKS CPU nodes; not yet deployed                                      | read-only PostgreSQL; the gateway; Anthropic and OpenAI                                    | relay with customer provider keys, Gradiated key checks for relays, forwarding hosted requests to the gateway, draining and health/metrics                 | charge balances, translate or parse payloads, store provider keys, hold Valkey or ClickHouse clients                    |
 | `gateway`        | Rust deployment on EKS CPU nodes, exposed through the public ALB                        | Valkey; the selected SGLang endpoint; generated contract fixtures                          | API-key authentication, exact model lookup, bounds/admission, streaming proxy, cancellation, usage normalization, terminal finalization and health/metrics | query PostgreSQL/ClickHouse, run product CRUD, process Stripe, select providers, provision GPUs, persist prompts        |
 | `metabase`       | One Metabase Open Source pod on EKS at `metabase.gradiated.com`                         | dedicated RDS PostgreSQL state database; read-only product PostgreSQL and ClickHouse users | internal analytics, saved questions, dashboards, and Google Sign-In for `gradiated.com`                                                                    | write product data, serve public shares, or become a product data authority                                             |
+| `gpu-fleet` | TypeScript/Node Kubernetes Deployment in `gpu-inference` using the product image; two replicas, one leading | `GpuHost` objects; host agents through the private inference Services; RDS PostgreSQL | each GPU host's private Service, `GpuHost` health status, and the PostgreSQL `instances` table as a copy of `hosts.yaml` | change GPU hosts, call RunPod or Tailscale, schedule pods, write any other table |
 | `sglang-runtime` | SGLang runtime on the external GPU nodes represented in EKS through Virtual Kubelet | pinned model/tokenizer artifacts, pinned runtime image, GPU node and provider networking   | execute one exact released model and expose a private OpenAI-compatible runtime endpoint to `gateway`                                                      | authenticate customers, charge balances, expose a public endpoint, choose another model/provider                        |
 
 `api`, `worker` and `temporal-worker` are separate TypeScript applications packaged in one image,
@@ -601,6 +602,16 @@ for fast scale-out; service pods preempt them and Cluster Autoscaler replenishes
 the reservation within the node ceiling. See the
 [workload operations](../infra/environments/prod/us-east-1/kubernetes/workloads/README.md)
 for thresholds, failure handling and rollback.
+
+GPU hosts are described by `GpuHost` objects in the repository and kept by the
+`gpu-fleet` operator. This explicitly supersedes the launch restriction on a
+custom operator, for the GPU fleet only. The measured need: rolling the v5 GPU
+base image onto eight hosts by hand took about 24 hours, with a host address PR
+after every re-image and the host list kept in both `hosts.json` and PostgreSQL.
+The repository is now the only source of the fleet; the operator writes the
+PostgreSQL copy, owns each host's private Service and reports host health to
+Argo. It starts observe-only; automated re-imaging is a separate, reviewed
+change. See the [instance setup plan](INSTANCE_SETUP_PLAN.md).
 
 The architecture is intentionally narrow until production evidence requires
 another boundary.

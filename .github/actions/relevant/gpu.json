@@ -11,10 +11,8 @@
     "tools/gpu/*",
     "product/inference/gpu/*",
     "infra/environments/prod/us-east-1/kubernetes/gpu-inference/*",
-    "infra/environments/prod/us-east-1/kubernetes/tailscale-inference/hosts/*",
     "infra/environments/prod/us-east-1/kubernetes/platform/gpu-inference.yaml",
-    "infra/environments/prod/us-east-1/kubernetes/platform/inference-network.yaml",
-    "infra/environments/prod/us-east-1/kubernetes/platform/inference-hosts.yaml"
+    "infra/environments/prod/us-east-1/kubernetes/platform/inference-network.yaml"
   ],
   "image": [
     "product/inference/gpu/*",
@@ -28,16 +26,17 @@
     "tools/security/check_gpu_inference.py",
     "tools/security/check_tailscale_inference.py",
     "infra/environments/prod/us-east-1/kubernetes/gpu-inference/*.yaml",
-    "infra/environments/prod/us-east-1/kubernetes/tailscale-inference/hosts/*.yaml",
     "infra/environments/prod/us-east-1/terraform/eks/terragrunt.hcl",
     "infra/modules/argocd-bootstrap/main.tf",
     "infra/environments/prod/us-east-1/kubernetes/platform/argo-rollouts.yaml",
     "infra/environments/prod/us-east-1/kubernetes/platform/external-secrets.yaml",
     "infra/environments/prod/us-east-1/kubernetes/platform/gpu-inference.yaml",
     "infra/environments/prod/us-east-1/kubernetes/platform/inference-network.yaml",
-    "infra/environments/prod/us-east-1/kubernetes/platform/inference-hosts.yaml",
     "infra/environments/prod/us-east-1/kubernetes/platform/keda.yaml",
     "infra/environments/prod/us-east-1/kubernetes/platform/tailscale-operator.yaml",
-    "infra/environments/prod/us-east-1/kubernetes/platform/tailscale-relays.yaml"
+    "infra/environments/prod/us-east-1/kubernetes/platform/tailscale-relays.yaml",
+    "tools/gpu/gpuhost_crd_test.py",
+    "tools/gpu/gpuhost_health_test.py",
+    "infra/modules/argocd-bootstrap/gpuhost-health.lua"
   ]
 }

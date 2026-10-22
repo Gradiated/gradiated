@@ -11,44 +11,32 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 KUBE = ROOT / 'infra/environments/prod/us-east-1/kubernetes'
 GPU = KUBE / 'gpu-inference'
-# Hosts are routed by MagicDNS name, which stays the same when a re-imaged pod
-# rejoins the tailnet with a new address.
-TAILNET = 'tail186117.ts.net'
 
 
-def inventory(entries):
-    hosts, services, secrets = [], {}, []
-    for entry in entries:
-        instance = str(uuid.UUID(entry['instance_id']))
-        if instance != entry['instance_id'] or instance in services:
-            raise ValueError('Host IDs must be canonical and unique')
-        allowed = {'instance_id', 'management_secret', 'gpu_count', 'cpu', 'memory_gib', 'gpu_product'}
-        if set(entry) - allowed:
-            raise ValueError('Unknown host inventory fields')
-        for field in ('gpu_count', 'cpu', 'memory_gib'):
-            if field in entry and (type(entry[field]) is not int or entry[field] <= 0):
-                raise ValueError('Host resource budgets must be positive integers')
-        name = 'gpu-' + instance
-        host = {'instance_id': instance,
-                'endpoint': f'http://{name}.tailscale-inference.svc.cluster.local:8888/_kubelet',
-                'token_file': f'/var/run/gradiated-host-keys/{instance}',
-                **{key: value for key, value in entry.items()
-                   if key not in ('instance_id', 'management_secret')}}
-        hosts.append(host)
-        services[instance] = {
-            'apiVersion': 'v1', 'kind': 'Service',
-            'metadata': {'name': name, 'namespace': 'tailscale-inference', 'annotations': {
-                'tailscale.com/tailnet-fqdn': f'{name}.{TAILNET}',
-                'tailscale.com/proxy-group': 'inference-egress'}},
-            'spec': {'type': 'ExternalName', 'externalName': 'unused',
-                     'ports': [{'name': 'inference', 'port': 8888, 'protocol': 'TCP'}]}}
-        remote = entry['management_secret']
-        if not remote['key']:
-            raise ValueError('A management secret reference is required')
-        secrets.append({'secretKey': instance, 'remoteRef': remote})
+# Field bounds are checked against the GpuHost CRD schema by
+# tools/security/check_gpu_inference.py; this derives what the manifests need.
+def inventory(documents):
+    hosts, secrets, pods = [], [], set()
+    for document in documents:
+        if document.get('apiVersion') != 'fleet.gradiated.com/v1alpha1' or document.get('kind') != 'GpuHost':
+            raise ValueError('hosts.yaml may only contain GpuHost objects')
+        spec = document['spec']
+        instance = str(uuid.UUID(spec['instanceId']))
+        if instance != spec['instanceId'] or document['metadata']['name'] != 'gpu-' + instance:
+            raise ValueError('A GpuHost must be named gpu-<canonical instance ID>')
+        if any(host['instance_id'] == instance for host in hosts) or spec['provider']['podId'] in pods:
+            raise ValueError('GpuHost instance and pod IDs must be unique')
+        pods.add(spec['provider']['podId'])
+        capacity = spec['inventory']
+        hosts.append({'instance_id': instance,
+                      'endpoint': f'http://gpu-{instance}.tailscale-inference.svc.cluster.local:8888/_kubelet',
+                      'token_file': f'/var/run/gradiated-host-keys/{instance}',
+                      'gpu_count': capacity['gpuCount'], 'cpu': capacity['cpu'],
+                      'memory_gib': capacity['memoryGiB'], 'gpu_product': capacity['gpuProduct']})
+        secrets.append({'secretKey': instance, 'remoteRef': dict(spec['managementSecret'])})
     if not hosts:
         raise ValueError('GPU inventory cannot be empty')
-    return hosts, services, secrets
+    return hosts, secrets
 
 
 def rollout(name, model, runtimes):
@@ -121,8 +109,14 @@ def autoscaler(name, model, runtime):
                 for signal, query in queries.items()]}}
 
 
-def render():
-    hosts, services, secrets = inventory(json.loads((GPU / 'hosts.json').read_text()))
+def node_names(documents):
+    return [name for resource in documents
+            if resource['kind'] == 'ClusterRole' and resource['metadata']['name'] == 'gpu-controller-nodes'
+            for rule in resource['rules'] for name in rule.get('resourceNames', [])]
+
+
+def render(retire=()):
+    hosts, secrets = inventory([item for item in yaml.safe_load_all((GPU / 'hosts.yaml').read_text()) if item])
     runtimes = json.loads((ROOT / 'product/inference/gpu/runtimes.json').read_text())
     controller = list(yaml.safe_load_all((GPU / 'controller.yaml').read_text()))
     pin = json.loads((GPU / 'host.json').read_text())
@@ -130,23 +124,33 @@ def render():
                             not re.fullmatch('[0-9a-f]{64}', pin['sha256']) or
                             not re.fullmatch('[A-Za-z0-9._-]+', pin['base_id'])):
         raise ValueError('Invalid host bundle pin')
+    # Controllers now read hosts from GpuHost objects. The list stays for the
+    # controller image running before the release that reads them; removing it
+    # in the same change would crash that controller before its successor starts.
     encoded = json.dumps({'namespace': 'gpu-inference', 'hosts': hosts, 'runtimes': runtimes,
                           'host_bundle': pin}, separators=(',', ':'))
     controller[0]['data']['hosts.json'] = encoded + '\n'
     controller[1]['spec']['template']['metadata']['annotations']['gradiated.com/host-inventory'] = hashlib.sha256(encoded.encode()).hexdigest()
     rbac = list(yaml.safe_load_all((GPU / 'rbac.yaml').read_text()))
-    names = ['gpu-' + host['instance_id'] for host in hosts]
+    credentials = list(yaml.safe_load_all((GPU / 'credentials.yaml').read_text()))
+    # Retiring has two steps. Removing a host from hosts.yaml stops Argo wanting
+    # its GpuHost, but the host keeps its node permissions and management key so
+    # it can still be drained after `kubectl delete gpuhost`; --retire drops them
+    # once the GpuHost is gone.
+    listed = {host['instance_id'] for host in hosts}
+    retiring = [name.removeprefix('gpu-') for name in node_names(rbac)
+                if name.removeprefix('gpu-') not in listed and name.removeprefix('gpu-') not in retire]
+    secrets += [entry for entry in credentials[1]['spec'].get('data', []) if entry['secretKey'] in retiring]
+    names = ['gpu-' + instance for instance in [host['instance_id'] for host in hosts] + retiring]
     for resource in rbac:
-        if resource['metadata']['name'] in ('gpu-controller-nodes', 'gpu-controller-leases') and 'rules' in resource:
+        # gpu-fleet-nodes lets the operator cordon a GPU node it is draining, and no other node.
+        if resource['metadata']['name'] in ('gpu-controller-nodes', 'gpu-controller-leases', 'gpu-fleet-nodes') and 'rules' in resource:
             for rule in resource['rules']:
                 if 'resourceNames' in rule:
                     rule['resourceNames'] = names
-    credentials = list(yaml.safe_load_all((GPU / 'credentials.yaml').read_text()))
     credentials[1]['spec'].pop('dataFrom', None)
     credentials[1]['spec']['data'] = secrets
     outputs = {GPU / 'controller.yaml': controller, GPU / 'rbac.yaml': rbac, GPU / 'credentials.yaml': credentials}
-    for instance, service in services.items():
-        outputs[KUBE / 'tailscale-inference/hosts' / f'{instance}.yaml'] = [service]
     for name, model in json.loads((GPU / 'models.json').read_text()).items():
         document = rollout(name, model, runtimes)
         path = GPU / f'{name}.yaml'
@@ -163,7 +167,7 @@ def render():
 
 
 def retired_outputs(outputs):
-    existing = set((KUBE / 'tailscale-inference/hosts').glob('*.yaml'))
+    existing = set()
     for path in GPU.glob('*.yaml'):
         if any(document and document.get('kind') == 'Rollout'
                for document in yaml.safe_load_all(path.read_text())):
@@ -172,18 +176,20 @@ def retired_outputs(outputs):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Render GPU enrollment and model Rollouts from their inventories.')
+    parser = argparse.ArgumentParser(description='Render GPU controller inventory and model Rollouts from hosts.yaml and models.json.')
     parser.add_argument('--check', action='store_true')
+    parser.add_argument('--retire', action='append', default=[], metavar='INSTANCE_ID',
+                        help='drop the access of a host removed from hosts.yaml whose GpuHost is gone')
     args = parser.parse_args()
-    outputs = render()
+    outputs = render(set(args.retire))
     obsolete = retired_outputs(outputs)
     if obsolete:
-        raise SystemExit('Drain workloads and remove retired Services/Rollouts explicitly: ' + ', '.join(str(path) for path in sorted(obsolete)))
+        raise SystemExit('Drain workloads and remove retired Rollouts explicitly: ' + ', '.join(str(path) for path in sorted(obsolete)))
     stale = []
     for path, documents in outputs.items():
         content = ('# Inventory fields generated by tools/gpu/render-config.py; other fields are editable.\n'
                    if path.name in ('controller.yaml', 'rbac.yaml', 'credentials.yaml')
-                   else '# Generated by tools/gpu/render-config.py; edit hosts.json, models.json or runtimes.json.\n')
+                   else '# Generated by tools/gpu/render-config.py; edit hosts.yaml, models.json or runtimes.json.\n')
         content += yaml.safe_dump_all(documents, sort_keys=False, width=120)
         if args.check:
             if not path.exists() or path.read_text() != content:

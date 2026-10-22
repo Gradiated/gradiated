@@ -61,11 +61,10 @@ class SubcheckSelectionTest(unittest.TestCase):
         self.assertTrue(selected("gpu", [KUBE + "workloads/gateway.yaml"])["controller"])
 
     def test_inference_application_changes_check_service_ownership_and_sync_policy(self):
-        for app in ("inference-hosts", "inference-network"):
-            path = KUBE + f"platform/{app}.yaml"
-            self.assertEqual(selected("gpu", [path]),
-                             {"controller": False, "configuration": True, "image": False, "manifests": True})
-            self.assertTrue(selected("kubernetes", [path])["tailscale"])
+        path = KUBE + "platform/inference-network.yaml"
+        self.assertEqual(selected("gpu", [path]),
+                         {"controller": False, "configuration": True, "image": False, "manifests": True})
+        self.assertTrue(selected("kubernetes", [path])["tailscale"])
 
     def test_gpu_changes_skip_temporal_browser_and_database_fixtures(self):
         result = selected("kubernetes", [KUBE + "gpu-inference/kev.yaml"])

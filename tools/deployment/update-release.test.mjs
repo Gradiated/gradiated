@@ -33,6 +33,9 @@ async function fixture() {
   const ops = path.join(workloads, "../operations/ops-mcp");
   await mkdir(ops, { recursive: true });
   await writeFile(path.join(ops, "workload.yaml"), "image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/product:ops-mcp-release-required\n");
+  const gpu = path.join(workloads, "../gpu-inference");
+  await mkdir(gpu, { recursive: true });
+  await writeFile(path.join(gpu, "gpu-fleet.yaml"), "image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/product:gpu-fleet-release-required\n");
   await writeFile(
     path.join(workloads, "kustomization.yaml"),
     "apiVersion: kustomize.config.k8s.io/v1beta1\nkind: Kustomization\n# deployment-images:start\n# deployment-images:end\n",
@@ -108,6 +111,8 @@ test("updates one complete production release", async () => {
   assert.match(temporalWorker, new RegExp(`product@${PRODUCT_DIGEST}`));
   const ops = await readFile(path.join(workloads, "../operations/ops-mcp/workload.yaml"), "utf8");
   assert.match(ops, new RegExp(`product@${PRODUCT_DIGEST}`));
+  const fleet = await readFile(path.join(workloads, "../gpu-inference/gpu-fleet.yaml"), "utf8");
+  assert.match(fleet, new RegExp(`product@${PRODUCT_DIGEST}`));
   assert.match(gateway, new RegExp(`gateway@${GATEWAY_DIGEST}`));
   assert.match(proxy, new RegExp(`proxy@${PROXY_DIGEST}`));
   assert.match(collector, new RegExp(`collector@${COLLECTOR_DIGEST}`));

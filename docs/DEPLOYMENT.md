@@ -210,11 +210,12 @@ healthy. S3 versioning keeps previous entry points for recovery.
   private key is the `AI_REVIEW_APP_PRIVATE_KEY` secret of the
   `ai-review-gate` environment, which admits only `main`, so PR code cannot
   read it. Once the ruleset requires one approving review, this approval is
-  the required review; ordinary PRs need no human approval. The Gradiated
-  Release app is the only bypass actor. Organization admins, users and deploy
-  keys cannot bypass it, so a red or pending required check blocks the merge;
-  an emergency override means editing the ruleset, which GitHub records in its
-  history. The separate `main integrity` ruleset has no bypass actors and
+  the required review; ordinary PRs need no human approval. Organization owners,
+  repository administrators and the Gradiated Release app are bypass actors.
+  Administrators bypass only as the Change Management Policy allows, when
+  both AI reviewers are unavailable or for an emergency, and record each
+  bypass in a PR comment. For everyone else a red or pending required check
+  blocks the merge. The separate `main integrity` ruleset has no bypass actors and
   retains deletion and force-push protections. The repository has no deploy
   keys; each automated writer or reader is a GitHub App above.
 

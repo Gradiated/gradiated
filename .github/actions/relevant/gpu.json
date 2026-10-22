@@ -16,6 +16,14 @@
     "infra/environments/prod/us-east-1/kubernetes/platform/inference-network.yaml",
     "infra/environments/prod/us-east-1/kubernetes/platform/inference-hosts.yaml"
   ],
+  "image": [
+    "product/inference/gpu/*",
+    "product/inference/images/gpu-base/*",
+    "product/inference/tailscale/*",
+    "product/inference/runtime-launcher/*",
+    "product/inference/bundles/host/*",
+    "product/inference/bundles/package.sh"
+  ],
   "manifests": [
     "tools/security/check_gpu_inference.py",
     "tools/security/check_tailscale_inference.py",

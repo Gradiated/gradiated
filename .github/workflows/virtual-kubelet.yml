@@ -25,6 +25,9 @@ on:
       - "product/inference/gpu/**"
       - "product/inference/images/gpu-base/**"
       - "product/inference/tailscale/**"
+      - "product/inference/runtime-launcher/**"
+      - "product/inference/bundles/host/**"
+      - "product/inference/bundles/package.sh"
       - "mise.toml"
   pull_request:
   workflow_dispatch:
@@ -92,8 +95,6 @@ jobs:
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 tools/gpu/mint_bootstrap_key_test.py
         if: fromJSON(needs.changes.outputs.checks).controller
-      - run: python3 product/inference/images/gpu-base/tests/start_host_test.py
-        if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 -m unittest discover -s product/inference/tailscale/tests -p 'test_*.py'
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: bash product/inference/tailscale/tests/test-tailscale.sh
@@ -110,6 +111,18 @@ jobs:
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: docker build tools/virtual-kubelet
         if: fromJSON(needs.changes.outputs.checks).controller
+
+  image:
+    name: GPU base image
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true' && fromJSON(needs.changes.outputs.checks).image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      # Both tests build the GPU base Dockerfile; the second reuses the first's layers.
+      - run: python3 product/inference/images/gpu-base/tests/start_host_test.py
+      - run: python3 product/inference/images/gpu-base/tests/enrollment_test.py
 
   manifests:
     name: Validate GPU manifests
@@ -129,7 +142,7 @@ jobs:
   passed:
     name: GPU controller and manifests passed
     if: always()
-    needs: [changes, test, manifests]
+    needs: [changes, test, image, manifests]
     runs-on: ubuntu-latest
     steps:
       - name: Fail when a required job failed

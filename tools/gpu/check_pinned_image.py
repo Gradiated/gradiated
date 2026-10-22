@@ -11,6 +11,7 @@ Needs the AWS CLI with credentials that can read the image's ECR repository.
 
 import base64
 import gzip
+import hashlib
 import io
 import json
 from pathlib import Path
@@ -67,8 +68,10 @@ class Ecr:
                 return response.headers, response.read()
 
     def manifest(self, reference):
-        headers, body = self._get(f'{self.base}/manifests/{reference}', MANIFESTS)
-        return headers['Docker-Content-Digest'], json.loads(body)
+        _, body = self._get(f'{self.base}/manifests/{reference}', MANIFESTS)
+        # A manifest's digest is the SHA-256 of its bytes. ECR does not always
+        # send Docker-Content-Digest.
+        return 'sha256:' + hashlib.sha256(body).hexdigest(), json.loads(body)
 
     def blob(self, digest):
         return self._get(f'{self.base}/blobs/{digest}')[1]

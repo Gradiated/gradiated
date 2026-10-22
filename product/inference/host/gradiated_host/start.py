@@ -82,6 +82,10 @@ def keep_running(action, stop, name):
 
 def main(layout=Layout(), environ=os.environ, stop=None, supervised=None):
     key = environ.pop('GRADIATED_TAILSCALE_BOOTSTRAP_KEY', '')
+    login_server = environ.pop('GRADIATED_TAILSCALE_LOGIN_SERVER', '')
+    if login_server and not layout.test_control_server.exists():
+        print('Ignoring GRADIATED_TAILSCALE_LOGIN_SERVER: this image joins only Tailscale.', flush=True)
+        login_server = ''
     for name in SECRETS:
         environ.pop(name, None)
     if stop is None:
@@ -91,7 +95,7 @@ def main(layout=Layout(), environ=os.environ, stop=None, supervised=None):
 
     tailscale = Tailscale(layout)
     try:
-        tailscale.join_as_bootstrap(environ.get('RUNPOD_POD_ID', ''), key)
+        tailscale.join_as_bootstrap(environ.get('RUNPOD_POD_ID', ''), key, login_server)
     except ValueError as error:
         print(error, flush=True)
     del key

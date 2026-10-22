@@ -13,6 +13,16 @@ environment. It keeps tailscaled running, starts the control bridge and the host
 agent launcher once enrollment has written their configuration, and restarts
 any of them that exits.
 
+Production pods use Tailscale's control server. The gpu-fleet end-to-end test
+([`product/services/gpu-fleet/test/e2e`](../../services/gpu-fleet/test/e2e))
+runs its own (headscale) and sets `GRADIATED_TAILSCALE_LOGIN_SERVER` to an
+`https://<host>[:<port>]` origin; the first start records it with the pod ID, so
+restarts and promotion use the same server. `gradiated-host` honours that
+setting, and headscale's `hskey-auth-` keys, only on an image containing
+`/etc/gradiated/test-control-server`, which only the test's image build adds; a
+production image logs a warning and joins Tailscale. The operator's re-image
+never carries `GRADIATED_TAILSCALE_*` settings forward from a pod's environment.
+
 The build upgrades the Ubuntu packages inherited from NVIDIA's CUDA image and
 keeps NVIDIA's CUDA packages at the pinned base versions. The ECR tag hashes the
 build inputs, so a later Ubuntu security fix enters the image only after an input

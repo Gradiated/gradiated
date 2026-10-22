@@ -78,10 +78,12 @@ export const createEnrollment = (deps: EnrollmentDependencies) => ({
         imageName: image,
         ports: [],
         env: {
+          // Tailscale settings come only from the operator: a carried-over
+          // GRADIATED_TAILSCALE_LOGIN_SERVER could send the bootstrap key elsewhere.
           ...Object.fromEntries(
             Object.entries(current.env ?? {}).filter(
               ([name]) =>
-                name !== "GRADIATED_TAILSCALE_BOOTSTRAP_KEY" &&
+                !name.startsWith("GRADIATED_TAILSCALE_") &&
                 name !== "PUBLIC_KEY",
             ),
           ),

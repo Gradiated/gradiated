@@ -435,3 +435,24 @@ python3 tools/gpu/pin_host_test.py
 docker buildx bake -f product/inference/bundles/build.hcl verify-host
 ```
 
+The rejoin end-to-end test runs the gpu-fleet operator's rollout engine and
+enrollment against the real GPU base image (only `nvidia-smi` is faked), the
+real Tailscale client and Tailscale SSH, on a private tailnet run by headscale,
+with RunPod faked so a re-image recreates the container. It enrolls a new host,
+re-images it, restarts the operator mid-rollout, and checks the host rejoins
+under the same instance and the exact `gpu-<id>` name, reached by that MagicDNS
+name. Headscale keeps a node through re-authentication rather than making a new
+device, so Tailscale's new-device rule and its `-1` renaming are covered by the
+stateful Tailscale fake in the rollout tests, and in production by the spare
+host's re-image, which goes first. The test's headscale adapter stands in for
+the Tailscale API calls (`releaseInstanceName`, `claimInstanceName`, key minting
+and revocation) and reads the sidecar with `tailscale status` rather than
+`localStatus`; those are covered by the stateful fake too. Only an image built
+by `e2e_image.py` contains `/etc/gradiated/test-control-server`, without which
+`gradiated-host` ignores `GRADIATED_TAILSCALE_LOGIN_SERVER`.
+
+```sh
+python3 product/inference/images/gpu-base/tests/e2e_image.py /tmp/gpu-fleet-e2e
+(cd product/services/gpu-fleet && GPU_FLEET_E2E=/tmp/gpu-fleet-e2e pnpm exec vitest run --config vitest.e2e.config.ts)
+```
+

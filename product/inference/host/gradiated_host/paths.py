@@ -53,6 +53,12 @@ class Layout:
     def tailscale_config(self):
         return self.etc / 'tailscale.json'
 
+    # Only the end-to-end test's image build writes this; production images never
+    # contain it, so a pod environment cannot point a production pod elsewhere.
+    @property
+    def test_control_server(self):
+        return self.etc / 'test-control-server'
+
     @property
     def control_config(self):
         return self.etc / 'tailscale-control.json'

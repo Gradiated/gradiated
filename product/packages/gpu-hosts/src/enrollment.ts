@@ -16,7 +16,8 @@ export const enrollmentPayloadSchema = z.strictObject({
     .string()
     .regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/),
   management_token: z.string().regex(/^[A-Za-z0-9_-]{32,128}$/),
-  auth_key: z.string().regex(/^tskey-auth-[A-Za-z0-9-]{1,200}$/),
+  // Tailscale's auth keys, or headscale's in the end-to-end test.
+  auth_key: z.string().regex(/^(?:tskey|hskey)-auth-[A-Za-z0-9_-]{1,200}$/),
   api_endpoint: tailnetAddress,
   host_bundle: z.strictObject({
     sha256: z.string().regex(/^[0-9a-f]{64}$/),

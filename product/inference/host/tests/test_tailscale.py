@@ -5,6 +5,7 @@ import threading
 import time
 import unittest
 import unittest.mock
+from pathlib import Path
 
 from support import executable, mode, temporary_root
 
@@ -62,6 +63,44 @@ class Identity(unittest.TestCase):
         self.assertEqual(self.tailscale.auth_key.read_text(), 'tskey-auth-bootstrap')
         for path in (self.tailscale.auth_key, self.layout.tailscale_config):
             self.assertEqual(mode(path), 0o600)
+
+    def test_a_production_image_ignores_a_login_server_and_test_keys(self):
+        # A pod environment must never send the bootstrap key to another control server.
+        self.assertTrue(self.tailscale.join_as_bootstrap('abc123', 'tskey-auth-bootstrap', 'https://attacker.example'))
+        self.assertEqual(self.tailscale.config(), {'pod': 'abc123'})
+        self.assertFalse(any(a.startswith('--login-server') for a in self.tailscale.up_arguments('x', key=True)))
+        with self.assertRaises(ValueError):
+            self.tailscale.stage_promotion(INSTANCE, 'hskey-auth-inference_1')
+        # A recorded server is ignored too, should one ever reach a production image.
+        self.layout.tailscale_config.write_text(json.dumps({'pod': 'abc123', 'login_server': 'https://attacker.example'}))
+        self.assertIsNone(self.tailscale.login_server())
+        self.assertFalse(any(a.startswith('--login-server') for a in self.tailscale.up_arguments('x', key=True)))
+
+    def test_only_the_end_to_end_image_carries_the_test_marker(self):
+        dockerfile = Path(__file__).resolve().parents[2] / 'images' / 'gpu-base' / 'Dockerfile'
+        self.assertNotIn('test-control-server', dockerfile.read_text())
+
+    def test_a_production_image_rejects_test_bootstrap_keys(self):
+        with self.assertRaises(ValueError):
+            self.tailscale.join_as_bootstrap('abc123', 'hskey-auth-bootstrap_1', 'https://headscale')
+
+    def test_a_custom_login_server_is_recorded_and_used_for_every_login(self):
+        self.layout.test_control_server.write_text('')
+        self.assertTrue(self.tailscale.join_as_bootstrap('abc123', 'hskey-auth-bootstrap_1', 'https://headscale'))
+        self.assertEqual(self.tailscale.config(), {'pod': 'abc123', 'login_server': 'https://headscale'})
+        self.tailscale.stage_promotion(INSTANCE, 'hskey-auth-inference_1')
+        for arguments in (self.tailscale.up_arguments('gpu-bootstrap-abc123'),
+                          self.tailscale.up_arguments(f'gpu-{INSTANCE}', key=True, reauth=True)):
+            self.assertIn('--login-server=https://headscale', arguments)
+
+    def test_a_login_server_must_be_a_plain_https_origin(self):
+        self.layout.test_control_server.write_text('')
+        for server in ('http://headscale', 'https://headscale/path', 'https://user@headscale', 'https://-x',
+                       'https://headscale:443 --ssh=false'):
+            with self.subTest(server=server), self.assertRaises(ValueError):
+                self.tailscale.join_as_bootstrap('abc123', 'tskey-auth-bootstrap', server)
+        self.layout.tailscale_config.write_text(json.dumps({'pod': 'abc123', 'login_server': 'http://x'}))
+        self.assertIsNone(self.tailscale.config())
 
     def test_a_saved_identity_is_never_replaced(self):
         (self.layout.tailscale_state / 'state').write_text('enrolled')

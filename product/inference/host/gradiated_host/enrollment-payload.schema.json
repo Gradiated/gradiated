@@ -13,7 +13,7 @@
     },
     "auth_key": {
       "type": "string",
-      "pattern": "^tskey-auth-[A-Za-z0-9-]{1,200}$"
+      "pattern": "^(?:tskey|hskey)-auth-[A-Za-z0-9_-]{1,200}$"
     },
     "api_endpoint": {
       "type": "string",

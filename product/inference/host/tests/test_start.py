@@ -90,6 +90,10 @@ class Entrypoint(unittest.TestCase):
                 self.fail('The entrypoint did not start Tailscale and its services')
             time.sleep(.05)
         self.assertEqual(environ, {'RUNPOD_POD_ID': 'abc123'})
+        # Production sets no login server, so the pod uses Tailscale's.
+        tailscale = start.Tailscale(self.layout)
+        self.assertEqual(tailscale.config(), {'pod': 'abc123'})
+        self.assertFalse(any(argument.startswith('--login-server') for argument in tailscale.up_arguments('x', key=True)))
         daemon, service = self.daemons()[0], sleeper.process.pid
 
         stop.set()
@@ -100,6 +104,44 @@ class Entrypoint(unittest.TestCase):
         while alive(daemon) and time.monotonic() < deadline:
             time.sleep(.05)
         self.assertFalse(alive(daemon), 'tailscaled must stop with the entrypoint')
+
+    def record(self, environ):
+        stop = threading.Event()
+        thread = threading.Thread(target=start.main, args=(self.layout, environ, stop, []), daemon=True)
+        thread.start()
+        self.addCleanup(stop.set)
+        deadline = time.monotonic() + 15
+        while start.Tailscale(self.layout).config() is None:
+            if time.monotonic() > deadline:
+                self.fail('The entrypoint did not record the bootstrap identity')
+            time.sleep(.05)
+        stop.set()
+        thread.join(30)
+        return start.Tailscale(self.layout).config()
+
+    def test_a_production_image_ignores_a_login_server_in_its_environment(self):
+        environ = {'RUNPOD_POD_ID': 'abc123', 'GRADIATED_TAILSCALE_BOOTSTRAP_KEY': 'tskey-auth-bootstrap',
+                   'GRADIATED_TAILSCALE_LOGIN_SERVER': 'https://attacker.example'}
+        self.assertEqual(self.record(environ), {'pod': 'abc123'})
+        self.assertEqual(environ, {'RUNPOD_POD_ID': 'abc123'})
+
+    def test_a_test_control_server_is_recorded_and_not_passed_to_children(self):
+        self.layout.test_control_server.write_text('')
+        environ = {'RUNPOD_POD_ID': 'abc123', 'GRADIATED_TAILSCALE_BOOTSTRAP_KEY': 'hskey-auth-bootstrap_1',
+                   'GRADIATED_TAILSCALE_LOGIN_SERVER': 'https://headscale'}
+        stop = threading.Event()
+        thread = threading.Thread(target=start.main, args=(self.layout, environ, stop, []), daemon=True)
+        thread.start()
+        self.addCleanup(stop.set)
+        deadline = time.monotonic() + 15
+        while start.Tailscale(self.layout).config() is None:
+            if time.monotonic() > deadline:
+                self.fail('The entrypoint did not record the bootstrap identity')
+            time.sleep(.05)
+        self.assertEqual(start.Tailscale(self.layout).config(), {'pod': 'abc123', 'login_server': 'https://headscale'})
+        self.assertEqual(environ, {'RUNPOD_POD_ID': 'abc123'})
+        stop.set()
+        thread.join(30)
 
     def test_waits_for_a_bootstrap_key_without_starting_tailscale(self):
         stop = threading.Event()

@@ -27,10 +27,17 @@ def selected(name, paths, force=False):
 
 
 class SubcheckSelectionTest(unittest.TestCase):
+    def test_fleet_operator_changes_run_the_rejoin_test(self):
+        for path in ("product/services/gpu-fleet/src/rollout.ts", "product/packages/gpu-hosts/src/tailscale.ts",
+                     "product/packages/control/src/index.ts", "product/pnpm-lock.yaml",
+                     "product/inference/host/gradiated_host/tailscale.py"):
+            with self.subTest(path=path):
+                self.assertTrue(selected("gpu", [path])["rejoin"])
+
     def test_gpu_schema_helper_skips_controller_and_configuration(self):
         self.assertEqual(
             selected("gpu", ["tools/security/check_gpu_inference.py"]),
-            {"controller": False, "configuration": False, "image": False, "manifests": True},
+            {"controller": False, "configuration": False, "image": False, "rejoin": False, "manifests": True},
         )
 
     def test_gpu_manifest_changes_validate_configuration_without_controller_build(self):
@@ -42,7 +49,7 @@ class SubcheckSelectionTest(unittest.TestCase):
     def test_controller_source_does_not_fetch_unrelated_operator_schemas(self):
         self.assertEqual(
             selected("gpu", ["tools/virtual-kubelet/cmd/gpu-controller/main.go"]),
-            {"controller": True, "configuration": False, "image": False, "manifests": False},
+            {"controller": True, "configuration": False, "image": False, "rejoin": False, "manifests": False},
         )
 
     def test_gpu_inventory_selects_renderer_and_host_runtime_consumers(self):
@@ -63,7 +70,7 @@ class SubcheckSelectionTest(unittest.TestCase):
     def test_inference_application_changes_check_service_ownership_and_sync_policy(self):
         path = KUBE + "platform/inference-network.yaml"
         self.assertEqual(selected("gpu", [path]),
-                         {"controller": False, "configuration": True, "image": False, "manifests": True})
+                         {"controller": False, "configuration": True, "image": False, "rejoin": False, "manifests": True})
         self.assertTrue(selected("kubernetes", [path])["tailscale"])
 
     def test_gpu_changes_skip_temporal_browser_and_database_fixtures(self):
@@ -165,7 +172,7 @@ class RelevantActionIntegrationTest(unittest.TestCase):
     def test_push_uses_git_range_without_pr_lookup(self):
         result, outputs = self.run_action("push", fail_lookup=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(json.loads(outputs["checks"]), {"controller": False, "configuration": False, "image": False, "manifests": True})
+        self.assertEqual(json.loads(outputs["checks"]), {"controller": False, "configuration": False, "image": False, "rejoin": False, "manifests": True})
 
     def test_manual_dispatch_selects_all(self):
         result, outputs = self.run_action("workflow_dispatch", fail_lookup=True)

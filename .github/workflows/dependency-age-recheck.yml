@@ -1,0 +1,39 @@
+name: Dependency age recheck
+
+# Dependabot's cooldown covers the dependencies it bumps, not the transitive
+# crates it re-resolves in Cargo.lock, so its pull requests can fail the 7-day
+# age check. Re-run those failures until the crates are old enough.
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  pull-requests: read
+
+jobs:
+  recheck:
+    name: Re-run failed Dependabot age checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - run: |
+          set -o pipefail
+          gh pr list --author app/dependabot --state open --limit 100 \
+            --json headRefName --jq '.[].headRefName' |
+          while read -r branch; do
+            run=$(gh run list --workflow dependency-age.yml --branch "$branch" \
+              --event pull_request --limit 1 --json databaseId,conclusion \
+              --jq '.[] | select(.conclusion == "failure") | .databaseId') || {
+              echo "Could not list runs for $branch"
+              continue
+            }
+            if [ -n "$run" ]; then
+              echo "Re-running $run for $branch"
+              gh run rerun "$run" --failed || echo "Could not re-run $run for $branch"
+            fi
+          done

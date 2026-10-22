@@ -106,7 +106,6 @@ def autoscaler(name, model, runtime):
     return {
         'apiVersion': 'keda.sh/v1alpha1', 'kind': 'ScaledObject',
         'metadata': {'name': name, 'namespace': 'gpu-inference', 'annotations': {
-            'argocd.argoproj.io/sync-wave': '20',
             'argocd.argoproj.io/sync-options': 'SkipDryRunOnMissingResource=true'}},
         'spec': {
             'scaleTargetRef': {'apiVersion': 'argoproj.io/v1alpha1', 'kind': 'Rollout', 'name': name},

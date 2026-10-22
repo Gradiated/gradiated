@@ -134,6 +134,9 @@ class RenderTests(unittest.TestCase):
         obj = renderer.autoscaler('deepseek', model, runtimes[model['runtime']])
         self.assertEqual(obj['spec']['minReplicaCount'], model['replicas'])
         self.assertEqual(obj['spec']['maxReplicaCount'], 2)
+        # A later sync wave would make every model's scaling wait for all
+        # Rollouts in the app to become healthy.
+        self.assertNotIn('argocd.argoproj.io/sync-wave', obj['metadata']['annotations'])
         for invalid in ({'max_replicas': 0, 'target_concurrency': 1},
                         {'max_replicas': 2.5, 'target_concurrency': 1},
                         {'max_replicas': 2, 'target_concurrency': 0},

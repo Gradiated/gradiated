@@ -247,6 +247,34 @@ class HostAgentTest(unittest.TestCase):
             server.shutdown()
             server.server_close()
 
+    @unittest.skipUnless(hasattr(agent, 'runtime_directory'), 'the frozen recovery agent predates no-follow runtime directories')
+    def test_runtime_directories_refuse_links_the_runtime_user_plants(self):
+        user = SimpleNamespace(pw_uid=os.getuid(), pw_gid=os.getgid())
+        with tempfile.TemporaryDirectory() as root:
+            home, outside = Path(root, 'home'), Path(root, 'etc')
+            home.mkdir()
+            outside.mkdir()
+            directory = agent.runtime_directory(user, '.cache', 'gradiated', 'gpu-locks', home=home)
+            try:
+                with agent.runtime_file(user, directory, '0') as lock:
+                    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                Path(outside, 'shadow').write_text('root')
+                os.symlink(outside / 'shadow', home / '.cache/gradiated/gpu-locks/1')
+                os.link(outside / 'shadow', home / '.cache/gradiated/gpu-locks/2')
+                with self.assertRaises(OSError):
+                    agent.runtime_file(user, directory, '1')
+                with self.assertRaisesRegex(ValueError, 'linked runtime file'):
+                    agent.runtime_file(user, directory, '2')
+            finally:
+                os.close(directory)
+            self.assertTrue(Path(home, '.cache/gradiated/gpu-locks/0').is_file())
+            shutil.rmtree(home / '.cache')
+            os.symlink(outside, home / '.cache')
+            with self.assertRaises(OSError):
+                agent.runtime_directory(user, '.cache', 'gradiated', home=home)
+            self.assertEqual(sorted(path.name for path in outside.iterdir()), ['shadow'])
+            self.assertEqual(Path(outside, 'shadow').read_text(), 'root')
+
     def test_real_http_storage_failure_is_retryable_and_private(self):
         import threading
         import urllib.error

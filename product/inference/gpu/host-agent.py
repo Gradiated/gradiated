@@ -10,6 +10,7 @@ import pwd
 import re
 import signal
 import shutil
+import stat
 import subprocess
 import sys
 import threading
@@ -230,6 +231,40 @@ def lora_headroom(profile, directory):
     return max(0, int(environment.get("LORA_DISK_CACHE_BYTES", "0")) - used)
 
 
+# The runtime user owns its home, so it can replace anything there with a symlink
+# or a hard link to a root file; open each level without following links before
+# handing it over.
+def runtime_directory(user, *parts, home="/home/runtime"):
+    directory = os.open(home, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        for part in parts:
+            try:
+                os.mkdir(part, 0o755, dir_fd=directory)
+            except FileExistsError:
+                pass
+            child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=directory)
+            os.close(directory)
+            directory = child
+            os.fchown(directory, user.pw_uid, user.pw_gid)
+    except BaseException:
+        os.close(directory)
+        raise
+    return directory
+
+
+def runtime_file(user, directory, name):
+    descriptor = os.open(name, os.O_RDWR | os.O_CREAT | os.O_APPEND | os.O_NOFOLLOW, 0o644, dir_fd=directory)
+    try:
+        status = os.fstat(descriptor)
+        if not stat.S_ISREG(status.st_mode) or status.st_nlink != 1:
+            raise ValueError(f"Refusing linked runtime file {name}")
+        os.fchown(descriptor, user.pw_uid, user.pw_gid)
+    except BaseException:
+        os.close(descriptor)
+        raise
+    return os.fdopen(descriptor, "a")
+
+
 def prepare_model_cache(config, profile, directory, pods, log, files=hub_files, usage=shutil.disk_usage):
     hub = hf_home(config, profile) / "hub"
     weights = model_weights(profile)
@@ -324,13 +359,12 @@ def task(uid, stopping):
     try:
         with ExitStack() as stack:
             runtime_user = pwd.getpwnam("runtime")
-            lock_directory = Path("/home/runtime/.cache/gradiated/gpu-locks")
-            lock_directory.mkdir(parents=True, exist_ok=True)
-            os.chown(lock_directory, runtime_user.pw_uid, runtime_user.pw_gid)
+            # Runtimes write torch, Triton and model caches under .cache; the base
+            # image created it as root.
+            lock_directory = runtime_directory(runtime_user, ".cache", "gradiated", "gpu-locks")
+            stack.callback(os.close, lock_directory)
             for device in sorted(devices):
-                lock_path = lock_directory / device
-                gpu_lock = stack.enter_context(lock_path.open("a"))
-                os.chown(lock_path, runtime_user.pw_uid, runtime_user.pw_gid)
+                gpu_lock = stack.enter_context(runtime_file(runtime_user, lock_directory, device))
                 fcntl.flock(gpu_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             active = subprocess.run(
                 ["nvidia-smi", f"--id={','.join(devices)}", "--query-compute-apps=pid", "--format=csv,noheader"],

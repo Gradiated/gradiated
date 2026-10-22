@@ -19,7 +19,7 @@ RUN sed -i 's|http://|https://|g' /etc/apt/sources.list.d/ubuntu.sources && apt-
     && install -d -m 700 -o tailscale -g tailscale /var/lib/gradiated-tailscale \
     && touch /etc/gradiated/platform-only \
     && install -d -m 700 -o downloader -g downloader /var/cache/gradiated/runtime-bundles \
-    && install -d -o runtime -g runtime /home/runtime/.cache/huggingface
+    && install -d -o runtime -g runtime /home/runtime/.cache /home/runtime/.cache/huggingface
 # Same pinned release as tailscale/install-tailscale.py.
 RUN curl -fsSL -o /tmp/tailscale.tgz https://pkgs.tailscale.com/stable/tailscale_1.104.1_amd64.tgz \
     && echo '108d1d96ecf410d305571e173516f27038f870919a9b89c914a167c6d33a4528  /tmp/tailscale.tgz' | sha256sum -c - \

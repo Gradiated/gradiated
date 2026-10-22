@@ -27,9 +27,7 @@ RUN pnpm install --frozen-lockfile
 
 COPY packages ./packages
 COPY services ./services
-COPY inference/gpu/ ./inference/gpu/
-COPY inference/images/gpu-base/ ./inference/images/gpu-base/
-COPY inference/tailscale/ ./inference/tailscale/
+COPY inference/images/gpu-base/base-id ./inference/images/gpu-base/base-id
 
 RUN mkdir -p packages/*/.turbo services/*/.turbo \
   && pnpm turbo run build --filter=@gradiated/api... --filter=@gradiated/worker... --filter=@gradiated/temporal-worker... --filter=@gradiated/ops-mcp...

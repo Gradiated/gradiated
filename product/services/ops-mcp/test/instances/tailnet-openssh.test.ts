@@ -2,7 +2,6 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { readEnrollment } from "../../src/instances/in-place.js";
 import { sshRunner } from "../../src/instances/ssh.js";
 import { bootstrapPeer, socksConnector } from "../../src/instances/tailnet.js";
 
@@ -91,12 +90,6 @@ describe.skipIf(!available)("enrollment SSH over SOCKS5 to OpenSSH", () => {
         "private-bootstrap-material",
       ),
     ).resolves.toBe("lairetam-partstoob-etavirp\n");
-    await expect(
-      run()(
-        { host: POD_ADDRESS, port: 22, hostKeySha256: hostKeys },
-        readEnrollment,
-      ),
-    ).resolves.toBe("{}\n");
   });
 
   it("refuses an unpinned host key before sending the command", async () => {

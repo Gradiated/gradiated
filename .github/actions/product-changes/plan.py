@@ -85,7 +85,7 @@ JOB_PATHS = {
         "product/services/rust-service.Dockerfile",
         "product/inference/gpu/*",
         "product/inference/images/gpu-base/*",
-        "product/inference/tailscale/*",
+        "product/inference/host/*",
     ),
 }
 

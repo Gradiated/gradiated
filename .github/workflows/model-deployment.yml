@@ -6,7 +6,7 @@ on:
     paths:
       - ".github/actions/relevant/**"
       - product/inference/gpu/**
-      - product/inference/tailscale/**
+      - product/inference/host/**
       - product/inference/images/**
       - product/inference/CMakeLists.txt
       - product/inference/desmond/**

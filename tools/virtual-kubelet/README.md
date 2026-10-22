@@ -84,9 +84,10 @@ migration or recovery step on a retained reservation.
 
 ## Enrollment and checks
 
-Enrollment stages and verifies the permitted runtime bundles, then installs
-`host-agent.py`, `supervise.py`, Desmond and the root-only configuration using
-`tools/gpu/install-host.py`. Add the registration's `kubernetes.inventoryEntry` to
+Enrollment (`gradiated-host enroll`, see
+[`product/inference/host`](../../product/inference/host)) installs the pinned host
+bundle and the root-only configuration; the host agent then stages the runtime
+bundles the controller asks for. Add the registration's `kubernetes.inventoryEntry` to
 `infra/environments/prod/us-east-1/kubernetes/gpu-inference/hosts.json` and run
 `python3 tools/gpu/render-config.py` (requires PyYAML 6.0.2). This generates the
 private Service, controller inventory/checksum, host key projection and named
@@ -105,6 +106,7 @@ cd tools/virtual-kubelet
 go test -race ./...
 go vet ./...
 python3 host_agent_test.py
+python3 -m unittest discover -s ../../product/inference/host/tests -p 'test_*.py'
 ```
 
 CI also runs the pinned Go vulnerability checker against the controller's
@@ -113,14 +115,11 @@ local check, run `go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...` from
 this directory. Keep the compiler, builder digest and CI pin aligned when
 applying Go security updates.
 
-The default `gpu-base` image runs `product/inference/gpu/bootstrap.py`. Its
-`GRADIATED_GPU_BOOTSTRAP` value is a base64 JSON envelope supplied at pod
-creation: instance UUID, host-management key, one-time GPU-tagged Tailscale
-auth key, private API tailnet address, and the permitted runtime configuration.
-The process clears the bootstrap environment before starting services. It
-receives no OAuth, Kubernetes, database or AWS access credential. Bundle
-downloads use temporary grants from the private control bridge. Keep bootstrap
-values outside the repository.
+Enrollment reads a typed JSON payload on stdin: instance UUID, host-management
+key, one-time GPU-tagged Tailscale auth key, private API tailnet address and the
+pinned host bundle. The host receives no OAuth, Kubernetes, database or AWS
+access credential. Bundle downloads use temporary grants from the private
+control bridge.
 
 Model catalogue changes are rendered into the controller ConfigMap by
 `python3 tools/gpu/render-config.py`. The controller asks each host to stage the
@@ -250,21 +249,13 @@ requires replacement capacity; a provider reset requires deliberate enrollment.
 Model deployment publishes a `host` bundle alongside runtime bundles. Its
 `host-runtime-release` artifact contains `release.json` with the archive digest
 and base compatibility ID. Host bundles contain the agent, enrollment and state
-helpers, Desmond, runtime launcher, downloader, Tailscale installation and private
-control forwarding. The base contains only platform dependencies, the pinned
-Tailscale binaries and the first-start Tailscale supervisor; OpenSSH starts only
-for break-glass recovery.
-Enrollment installs a verified seed and retains a recovery copy on disk; no
-application recovery executable is baked into the image. Later host releases
-update the active version without rebuilding the base or model bundles. Historical
-recovery fixtures under `images/gpu-base/recovery/` qualify legacy hosts only.
-
-The stable private-control listener dispatches each new connection through the
-active bundle's forwarding helper. Changing that pointer preserves connections
-already owned by an older helper. The listener itself remains installed from the
-seed so it can forward artifact grants while the agent is being replaced.
-See [base enrollment ordering](../../product/inference/images/README.md) before
-selecting a platform-only image for new pods.
+helpers, Desmond, runtime launcher and downloader. The base contains platform
+dependencies, the pinned Tailscale binaries and `gradiated-host`, which runs
+Tailscale, the private control bridge and the launcher; it has no SSH server.
+Enrollment installs a verified seed and retains a recovery copy on disk. Later
+host releases update the active version without rebuilding the base or model
+bundles. Historical recovery fixtures under `images/gpu-base/recovery/` qualify
+legacy hosts only. See [the GPU images guide](../../product/inference/images/README.md).
 
 `gpu-inference/host.json` is initially `null`: legacy hosts continue serving and
 no host software update is requested. After installing the launcher on retained

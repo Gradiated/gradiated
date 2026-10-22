@@ -24,7 +24,7 @@ on:
       - "infra/modules/argocd-bootstrap/main.tf"
       - "product/inference/gpu/**"
       - "product/inference/images/gpu-base/**"
-      - "product/inference/tailscale/**"
+      - "product/inference/host/**"
       - "product/inference/runtime-launcher/**"
       - "product/inference/bundles/host/**"
       - "product/inference/bundles/package.sh"
@@ -87,25 +87,15 @@ jobs:
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 tools/virtual-kubelet/host_state_test.py
         if: fromJSON(needs.changes.outputs.checks).controller
-      - run: python3 tools/virtual-kubelet/install_host_test.py
-        if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 product/inference/gpu/host_bundle_test.py
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 tools/gpu/pin_host_test.py
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 tools/gpu/mint_bootstrap_key_test.py
         if: fromJSON(needs.changes.outputs.checks).controller
-      - run: python3 -m unittest discover -s product/inference/tailscale/tests -p 'test_*.py'
-        if: fromJSON(needs.changes.outputs.checks).controller
-      - run: bash product/inference/tailscale/tests/test-tailscale.sh
-        if: fromJSON(needs.changes.outputs.checks).controller
-      - run: bash product/inference/tailscale/tests/test-tailscale-ssh.sh
-        if: fromJSON(needs.changes.outputs.checks).controller
-      - run: python3 product/inference/gpu/install_seed_test.py
-        if: fromJSON(needs.changes.outputs.checks).controller
-      - run: python3 product/inference/gpu/bootstrap_test.py
-        if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 product/inference/gpu/download_runtime_test.py
+        if: fromJSON(needs.changes.outputs.checks).controller
+      - run: python3 -m unittest discover -s product/inference/host/tests -p 'test_*.py'
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: test -z "$(gofmt -l tools/virtual-kubelet/cmd/gpu-controller/*.go)"
         if: fromJSON(needs.changes.outputs.checks).controller
@@ -116,10 +106,20 @@ jobs:
     name: GPU base image
     needs: changes
     if: needs.changes.outputs.relevant == 'true' && fromJSON(needs.changes.outputs.checks).image
-    runs-on: ubuntu-24.04
+    runs-on: depot-ubuntu-24.04
     timeout-minutes: 25
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      # Depot keeps the image layers between runs, and the mirror keeps a cold build
+      # independent of archive.ubuntu.com's throughput.
+      DEPOT_PROJECT_ID: ${{ vars.DEPOT_PROJECT_ID }}
+      GPU_BASE_TEST_BUILD: depot build --load
+      GPU_BASE_TEST_APT_MIRROR: http://mirrors.edge.kernel.org/ubuntu
     steps:
       - uses: actions/checkout@v7
+      - uses: depot/setup-action@v1
       # Both tests build the GPU base Dockerfile; the second reuses the first's layers.
       - run: python3 product/inference/images/gpu-base/tests/start_host_test.py
       - run: python3 product/inference/images/gpu-base/tests/enrollment_test.py

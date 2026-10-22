@@ -10,16 +10,10 @@
 !product/inference/gpu/host-agent.py
 !product/inference/gpu/host_state.py
 !product/inference/gpu/host_bundle.py
-!product/inference/gpu/bootstrap.py
 !product/inference/gpu/supervise.py
-!product/inference/gpu/install-seed.py
 !product/inference/gpu/fetch-runtime.sh
 !product/inference/gpu/download-runtime.py
-!product/inference/gpu/install_seed_test.py
 !product/inference/gpu/host_bundle_test.py
-!product/inference/tailscale/
-!product/inference/tailscale/*.py
-!product/inference/tailscale/*.sh
 !product/inference/runtime-launcher/
 !product/inference/runtime-launcher/CMakeLists.txt
 !product/inference/runtime-launcher/*.cpp

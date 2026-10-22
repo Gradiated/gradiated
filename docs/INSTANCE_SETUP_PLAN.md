@@ -83,8 +83,8 @@ Kubernetes Rollouts.
 Administrators reach GPU hosts only with Tailscale SSH as root. The tailnet policy
 allows it for tailnet admins in check mode, which repeats the Google sign-in with
 MFA every 12 hours; Tailscale records each session. The
-[RunPod guide](../infra/environments/prod/runpod/README.md#shell-access-and-break-glass)
-describes break-glass access and moving existing hosts.
+[RunPod guide](../infra/environments/prod/runpod/README.md#shell-access-and-recovery)
+describes recovery and moving existing hosts.
 
 ## Deploy and verify a model
 

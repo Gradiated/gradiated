@@ -58,14 +58,14 @@ test("a pinned autotrain package change verifies the training bundle", () => {
   ]);
 });
 
-test("GPU bootstrap changes verify only the host bundle", () => {
+test("GPU launcher changes verify only the host bundle", () => {
   assert.deepEqual(
-    bundlesToVerify(["product/inference/gpu/bootstrap.py"]).sort(),
+    bundlesToVerify(["product/inference/gpu/supervise.py"]).sort(),
     ["host"],
   );
 });
 
 test("host agent and staging changes verify only the host bundle", () => {
-  for (const path of ["product/inference/gpu/host-agent.py", "product/inference/gpu/host_bundle.py", "product/inference/runtime-launcher/supervise.cpp", "product/inference/gpu/download-runtime.py", "product/inference/tailscale/forward-control.py"])
+  for (const path of ["product/inference/gpu/host-agent.py", "product/inference/runtime-launcher/supervise.cpp", "product/inference/gpu/download-runtime.py"])
     assert.deepEqual(bundlesToVerify([path]), ["host"]);
 });

@@ -1,26 +1,14 @@
 import type { InstanceRegistration } from "@gradiated/control";
 
+import type { EnrollmentPayload, EnrollmentResult } from "./enrollment.js";
+
 export type ProviderInstance = InstanceRegistration;
 
-export interface HostImage {
-  readonly reference: string;
-  readonly registry: { username: string; password: string } | null;
-}
-
-export type GpuInventory = {
-  tailscaleIp: string;
-  gpuCount: number;
-  gpuProduct: string;
-  cpu: number;
-  memoryGiB: number;
-};
+// What enrollment measured, with the address the host serves from after promotion.
+export type GpuInventory = Omit<EnrollmentResult, "version" | "promotion">;
 
 export interface InstanceProvider {
   describe(providerInstanceId: string): Promise<ProviderInstance>;
-  environment(
-    providerInstanceId: string,
-    options?: { readonly providerOnly?: boolean },
-  ): Promise<Record<string, string>>;
   isStopped(providerInstanceId: string): Promise<boolean>;
   supportsInPlace?(providerInstanceId: string, image: string): Promise<boolean>;
   checkTailscaleEnrollment(
@@ -30,7 +18,7 @@ export interface InstanceProvider {
   bootstrap(
     instance: ProviderInstance,
     image: string,
-    environment: Readonly<Record<string, string>>,
+    payload: EnrollmentPayload,
     options?: { readonly allowReset?: boolean },
   ): Promise<GpuInventory>;
 }

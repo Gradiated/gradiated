@@ -404,6 +404,17 @@ class HostBundleTests(unittest.TestCase):
                 except ProcessLookupError:
                     pass
 
+    def test_a_bundle_for_a_newer_base_is_refused_before_download(self):
+        # A host on the previous base receiving a pin for a re-imaged fleet fails clearly
+        # instead of downloading a bundle it cannot run.
+        base_path = self.root / 'base-id'
+        base_path.write_text('ubuntu24-cuda13-amd64-v2\n')
+        agent = SimpleNamespace(root=self.root, lock=threading.RLock())
+        with patch.object(bundle, 'BASE_ID', base_path), patch.object(bundle.subprocess, 'run') as download:
+            with self.assertRaisesRegex(ValueError, 'requires a different base'):
+                bundle.stage_host(agent, {'sha256': 'a' * 64, 'base_id': 'ubuntu24-cuda13-amd64-v3'}, 1)
+            download.assert_not_called()
+
     def test_invalid_pin_rejects_before_download(self):
         for pin in ({'sha256': '../escape', 'base_id': self.base_id},
                     {'sha256': 'a' * 64, 'base_id': 'other'}):

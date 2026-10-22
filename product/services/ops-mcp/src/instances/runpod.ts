@@ -1,10 +1,6 @@
 import { z } from "zod";
 
-import {
-  installInPlace,
-  readEnrollment,
-  verifyInPlaceBase,
-} from "./in-place.js";
+import { enroll, type EnrollmentPayload } from "./enrollment.js";
 import type { RunSsh, SshTarget } from "./ssh.js";
 import type { InstanceProvider, ProviderInstance } from "./provider.js";
 import {
@@ -40,7 +36,6 @@ export interface RunPodOptions {
     podId: string,
   ) => Promise<{ key: string; revoke: () => Promise<void> }>;
   readonly audit?: (event: Record<string, unknown>) => void;
-  readonly controlEndpoints?: () => Promise<Record<string, string>>;
   readonly tailnet: {
     readonly run: RunSsh;
     readonly status: () => Promise<TailnetStatus>;
@@ -60,7 +55,6 @@ export const createRunPodProvider = ({
   bootstrapKey,
   audit,
   tailnet,
-  controlEndpoints,
 }: RunPodOptions): InstanceProvider => {
   const call = async (
     method: string,
@@ -108,39 +102,29 @@ export const createRunPodProvider = ({
 
   const install = async (
     current: z.infer<typeof podSchema>,
-    environment: Readonly<Record<string, string>>,
+    payload: EnrollmentPayload,
   ) => {
     const route = await transport(current);
     if (!route) throw new Error("No enrollment connection to the GPU pod");
 
-    const bootstrap = environment.GRADIATED_GPU_BOOTSTRAP;
-    const instanceId =
-      bootstrap &&
-      z
-        .object({ instance_id: z.uuid() })
-        .parse(JSON.parse(Buffer.from(bootstrap, "base64").toString()))
-        .instance_id;
-    if (instanceId) {
-      if (!tailnet.releaseName || !tailnet.claimName)
-        throw new Error("GPU tailnet name management is not configured");
-      const released = await tailnet.releaseName(instanceId);
-      if (released)
-        audit?.({
-          event: "tailscale_stale_devices_removed",
-          instance_id: instanceId,
-          count: released,
-        });
-    }
+    if (!tailnet.releaseName || !tailnet.claimName)
+      throw new Error("GPU tailnet name management is not configured");
+    const instanceId = payload.instance_id;
+    const released = await tailnet.releaseName(instanceId);
+    if (released)
+      audit?.({
+        event: "tailscale_stale_devices_removed",
+        instance_id: instanceId,
+        count: released,
+      });
 
     const started = new Date();
-    const { promotion, ...inventory } = await installInPlace(
-      route.run,
-      route.target,
-      environment,
-    );
+    const {
+      version: _version,
+      promotion,
+      ...inventory
+    } = await enroll(route.run, route.target, payload);
     if (!promotion) return inventory;
-    if (!instanceId || !tailnet.claimName)
-      throw new Error("Promotion needs the GPU instance identity");
 
     await waitForPromotion(
       tailnet.status,
@@ -155,7 +139,7 @@ export const createRunPodProvider = ({
       try {
         return {
           ...inventory,
-          tailscaleIp: await tailnet.claimName(instanceId, started),
+          tailscale_ip: await tailnet.claimName(instanceId, started),
         };
       } catch (error) {
         if (Date.now() >= deadline) throw error;
@@ -163,20 +147,6 @@ export const createRunPodProvider = ({
       await new Promise((resolve) =>
         setTimeout(resolve, tailnet.promotionPollMs ?? 5_000),
       );
-    }
-  };
-
-  const enrollment = async (current: z.infer<typeof podSchema>) => {
-    if (current.desiredStatus !== "RUNNING") return {};
-
-    const route = await transport(current);
-    if (!route) return {};
-
-    const result = await route.run(route.target, readEnrollment);
-    try {
-      return z.record(z.string(), z.string()).parse(JSON.parse(result));
-    } catch {
-      throw new Error("The in-place enrollment identity is invalid");
     }
   };
 
@@ -215,15 +185,8 @@ export const createRunPodProvider = ({
       } satisfies ProviderInstance;
     },
 
-    async environment(podId, options) {
-      const current = await pod(podId);
-
-      return {
-        ...(current.env ?? {}),
-        ...(!options?.providerOnly && (await enrollment(current))),
-      };
-    },
-
+    // A pod online as gpu-bootstrap-<pod> must run the approved image, which provides
+    // gradiated-host; enrollment then checks the bundle against the image's base ID.
     async supportsInPlace(podId, image) {
       const current = await pod(podId);
       const route = await transport(current);
@@ -234,15 +197,10 @@ export const createRunPodProvider = ({
           "In-place enrollment requires a running pod; no provider changes were made",
         );
       }
-      if (!(await enrollment(current)).GRADIATED_INSTANCE_ID) {
-        if (current.imageName !== image)
-          throw new Error(
-            "Unenrolled GPU pod does not use the approved base image",
-          );
-
-        await verifyInPlaceBase(route.run, route.target, image);
-      }
-
+      if (current.imageName !== image)
+        throw new Error(
+          "Unenrolled GPU pod does not use the approved base image",
+        );
       return true;
     },
 
@@ -250,14 +208,14 @@ export const createRunPodProvider = ({
       return (await pod(podId)).desiredStatus === "EXITED";
     },
 
-    async bootstrap(instance, image, environment, options) {
+    async bootstrap(instance, image, payload, options) {
       const current = await pod(instance.providerInstanceId);
       if (
         !options?.allowReset &&
         current.desiredStatus !== "EXITED" &&
         (await this.supportsInPlace?.(current.id, image))
       ) {
-        return install(current, environment);
+        return install(current, payload);
       }
       if (current.desiredStatus !== "EXITED" && !options?.allowReset) {
         throw new Error(
@@ -298,7 +256,7 @@ export const createRunPodProvider = ({
           const ready = await pod(current.id);
           if (ready.desiredStatus === "RUNNING") {
             try {
-              return await install(ready, environment);
+              return await install(ready, payload);
             } catch {
               /* The pod can still be joining the tailnet or preparing the host agent. */
             }

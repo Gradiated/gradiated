@@ -11,21 +11,32 @@ const instance = {
   faultDomain: "host",
   sku: "8x NVIDIA B300",
 };
+const payload = {
+  version: 1 as const,
+  instance_id: id,
+  management_token: "private-management-key".repeat(3),
+  auth_key: "tskey-auth-scoped",
+  api_endpoint: "100.64.0.1",
+  host_bundle: {
+    sha256: "a".repeat(64),
+    base_id: "ubuntu24-cuda13-amd64-v2",
+    url: "https://artifacts.example/host.tar.gz",
+  },
+};
 const setup = (stopped = false, ssh = true) => {
   const provider: InstanceProvider = {
     describe: async () => instance,
-    environment: async () => ({}),
     isStopped: async () => stopped,
     supportsInPlace: async () => ssh,
     checkTailscaleEnrollment: async () => {
       if (!ssh) throw new Error("Pinned SSH required");
     },
     bootstrap: vi.fn(async () => ({
-      tailscaleIp: "100.64.0.1",
-      gpuCount: 8,
-      gpuProduct: "B300",
+      tailscale_ip: "100.64.0.1",
+      gpu_count: 8,
+      gpu_product: "B300" as const,
       cpu: 96,
-      memoryGiB: 1280,
+      memory_gib: 1280,
     })),
   };
   const revoke = vi.fn(async () => {});
@@ -42,9 +53,7 @@ const setup = (stopped = false, ssh = true) => {
       secretId: "management-secret",
     }),
     tailscaleAuthKey: async () => ({ key: "tskey-auth-scoped", revoke }),
-    bootstrap: async () => ({
-      GRADIATED_GPU_BOOTSTRAP: "private-encoded-bootstrap",
-    }),
+    enrollmentPayload: async () => payload,
     audit,
   });
   return { provider, revoke, audit, registrations };
@@ -73,7 +82,7 @@ describe("Kubernetes GPU enrollment", () => {
     expect(s.provider.bootstrap).toHaveBeenCalledWith(
       instance,
       "registry/gpu-base:pinned",
-      { GRADIATED_GPU_BOOTSTRAP: "private-encoded-bootstrap" },
+      payload,
       { allowReset: false },
     );
     expect(ready.kubernetes?.inventoryEntry).toMatchObject({

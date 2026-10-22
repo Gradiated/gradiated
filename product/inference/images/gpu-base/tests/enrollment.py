@@ -1,6 +1,5 @@
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import hashlib
-import importlib.util
 import io
 import json
 import os
@@ -13,7 +12,8 @@ import tarfile
 import threading
 import time
 import traceback
-import types
+import urllib.error
+import urllib.request
 import uuid
 
 TEST = Path('/opt/enrollment-test')
@@ -23,8 +23,12 @@ ARTIFACTS = 'gradiated-test-artifacts.s3.amazonaws.com'
 ARTIFACTS_URL = f'https://{ARTIFACTS}:8443'
 ROOT = Path('/var/lib/gradiated-kubelet')
 CONFIG = Path('/etc/gradiated/kubelet.json')
+INSTANCE = '6a8f2a52-7b0e-4c1d-9a64-2f1d3c5b8e00'
+TOKEN = 'enrollment_test_' + 'a' * 40
 GPUS = ['GPU-00000000-0000-0000-0000-000000000001', 'GPU-00000000-0000-0000-0000-000000000002']
 POD = '6a8f2a52-7b0e-4c1d-9a64-2f1d3c5b8e01'
+LOGS = ['/var/log/gradiated-kubelet.log', '/var/log/gradiated-control.log', '/var/log/gradiated-tailscale.log',
+        str(ROOT / 'bundle-download.log')]
 
 # Stands in for a model runtime writing its torch compile, Triton and Hugging Face caches.
 ENTRYPOINT = r'''#!/bin/bash
@@ -39,16 +43,6 @@ echo "runtime started as $(id -un)"
 exec sleep infinity
 '''
 
-# Replaces install-tailscale.py, which needs the Tailscale control server.
-TAILSCALE_INSTALLER = '''
-import json, urllib.request
-def install(payload):
-    with urllib.request.urlopen(f"http://127.0.0.1:{payload['proxy_port']}/healthz", timeout=5) as response:
-        assert response.status == 200
-    with open("/opt/enrollment-test/tailscale-install.json", "w") as output:
-        json.dump(sorted(payload), output)
-'''
-
 
 class Artifacts(BaseHTTPRequestHandler):
 
@@ -56,8 +50,8 @@ class Artifacts(BaseHTTPRequestHandler):
         pass
 
     def do_GET(self):
-        path = FILES / self.path.lstrip('/')
-        if not re.fullmatch(r'/[A-Za-z0-9._-]+', self.path) or not path.is_file():
+        path = FILES / self.path.split('?')[0].lstrip('/')
+        if not re.fullmatch(r'/[A-Za-z0-9._-]+(\?.*)?', self.path) or not path.is_file():
             self.send_error(404)
             return
         data = path.read_bytes()
@@ -75,6 +69,7 @@ class Artifacts(BaseHTTPRequestHandler):
 
 
 class Grants(BaseHTTPRequestHandler):
+    """Stands in for the control API; it is reached through the host's control bridge."""
 
     def log_message(self, *_):
         pass
@@ -106,7 +101,7 @@ def serve():
     context.load_cert_chain(certificate, key)
     artifacts = ThreadingHTTPServer(('127.0.0.1', 8443), Artifacts)
     artifacts.socket = context.wrap_socket(artifacts.socket, server_side=True)
-    grants = ThreadingHTTPServer(('127.0.0.1', 3004), Grants)
+    grants = ThreadingHTTPServer(('127.0.0.1', 13004), Grants)
     threading.Thread(target=grants.serve_forever, daemon=True).start()
     (TEST / 'serving').touch()
     artifacts.serve_forever()
@@ -132,85 +127,70 @@ def profile(digest):
             'gpus': 2, 'cpu': '4', 'memory': '8Gi', 'startup_timeout': 300}
 
 
+def logs():
+    return ''.join(f'--- {path}\n{Path(path).read_text()[-4000:]}\n' for path in LOGS if Path(path).exists())
+
+
 def step(results, name, action):
     try:
         results[name] = {'ok': True, 'value': action()}
     except BaseException:
-        results[name] = {'ok': False, 'error': traceback.format_exc()}
+        results[name] = {'ok': False, 'error': traceback.format_exc() + logs()}
     RESULT.write_text(json.dumps(results, indent=2))
     return results[name]['ok']
 
 
-def install_seed(results):
-    # Loads the installer the way ops-mcp's in-place bootstrap script does.
+def enroll(results):
     archive = (TEST / 'host-bundle.tar.gz').read_bytes()
     digest = hashlib.sha256(archive).hexdigest()
     (FILES / 'host-bundle.tar.gz').write_bytes(archive)
-    for name in ('host_state', 'host_bundle', 'supervise', 'install_seed'):
-        module = types.ModuleType(name)
-        module.__file__ = f'/opt/gradiated/kubelet/{name}.py'
-        sys.modules[name] = module
-        source = (TEST / 'installer' / (name.replace('_seed', '-seed') + '.py')).read_text()
-        exec(compile(source, module.__file__, 'exec'), module.__dict__)
-    release = {'url': f'{ARTIFACTS_URL}/host-bundle.tar.gz', 'sha256': digest,
-               'base_id': Path('/etc/gradiated/base-id').read_text().strip()}
     results['host_bundle'] = digest
-    return str(sys.modules['install_seed'].install(release))
+    payload = {'version': 1, 'instance_id': INSTANCE, 'management_token': TOKEN,
+               'auth_key': 'tskey-auth-enrollment-test', 'api_endpoint': '100.64.0.1',
+               'host_bundle': {'sha256': digest, 'base_id': Path('/etc/gradiated/base-id').read_text().strip(),
+                               'url': f'{ARTIFACTS_URL}/host-bundle.tar.gz?X-Amz-Signature=test'}}
+    # Runs as ops-mcp runs it over Tailscale SSH: root, with this process's umask 077.
+    result = subprocess.run(['/usr/local/bin/gradiated-host', 'enroll'], input=json.dumps(payload),
+                            capture_output=True, text=True, timeout=600)
+    if result.returncode:
+        raise RuntimeError(f'gradiated-host enroll failed: {result.stderr}')
+    return json.loads(result.stdout)
 
 
-def enroll(results, bootstrap_path, runtime):
-    spec = importlib.util.spec_from_file_location('gpu_bootstrap', bootstrap_path)
-    bootstrap = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(bootstrap)
-    locate = importlib.util.spec_from_file_location
-    installer = TEST / 'install-tailscale.py'
-    installer.write_text(TAILSCALE_INSTALLER)
-
-    def tailscale_installer(name, path, *args, **kwargs):
-        return locate(name, installer if name == 'tailscale_install' else path, *args, **kwargs)
-
-    bootstrap.importlib = types.SimpleNamespace(util=types.SimpleNamespace(
-        spec_from_file_location=tailscale_installer, module_from_spec=importlib.util.module_from_spec))
-    instance = str(uuid.uuid4())
-    bootstrap.enroll({'instance_id': instance, 'management_token': 'enrollment_test_' + 'a' * 40,
-                      'auth_key': 'tskey-auth-enrollment-test', 'api_endpoint': '100.64.0.1',
-                      'config': {'instance_id': instance, 'gpu_uuids': GPUS, 'runtimes': {runtime: profile(runtime)}}})
+def agent(body):
+    request = urllib.request.Request('http://127.0.0.1:8887/_kubelet', data=json.dumps(body).encode(),
+                                     headers={'Authorization': f'Bearer {TOKEN}', 'Content-Type': 'application/json'})
+    with urllib.request.urlopen(request, timeout=30) as response:
+        return json.load(response)
 
 
-def load_agent(results):
-    path = ROOT / 'host' / results['host_bundle'] / 'host-agent.py'
-    spec = importlib.util.spec_from_file_location('host_agent', path)
-    agent = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(agent)
-    return agent
+def claim():
+    """Takes the host the way the controller does: fence, then claim a new epoch with a term."""
+    term = str(uuid.uuid4())
+    epoch = agent({'operation': 'claim', 'epoch': agent({'operation': 'fence'})['epoch'], 'term': term})['epoch']
+    return {'epoch': epoch, 'term': term}
 
 
 def stage(results, catalogue):
-    module = load_agent(results)
-    module.atomic_json(ROOT / 'fence.json', {'epoch': 1})
-    agent = module.Agent(json.loads(CONFIG.read_text()), ROOT, CONFIG)
-    agent.configure(catalogue, 1)
+    lease = results['lease'] = claim()
+    agent({'operation': 'configure', 'runtimes': catalogue, **lease})
     deadline = time.monotonic() + 180
-    while not agent.catalogue_ready:
-        if agent.catalogue_task is None or time.monotonic() > deadline:
-            log = ROOT / 'bundle-download.log'
-            raise RuntimeError('Runtime staging failed:\n' + (log.read_text() if log.exists() else ''))
+    while set(json.loads(CONFIG.read_text()).get('runtimes', {})) != set(catalogue):
+        if time.monotonic() > deadline:
+            raise RuntimeError('Runtime staging did not finish')
         time.sleep(.5)
     return sorted(json.loads(CONFIG.read_text())['runtimes'])
 
 
 def start_task(results, runtime):
-    module = load_agent(results)
-    directory = ROOT / 'pods' / POD
-    directory.mkdir(parents=True)
-    state = {'pod': {'metadata': {'uid': POD, 'name': 'enrollment-test'},
-                     'spec': {'containers': [{'image': f'gradiated/test-bundle@sha256:{runtime}'}]}},
-             'gpu_uuids': GPUS, 'port_base': 18080}
-    module.atomic_json(directory / 'state.json', state)
-    module.pod_cgroup(POD).mkdir(parents=True, exist_ok=True)
-    agent = module.Agent(json.loads(CONFIG.read_text()), ROOT, CONFIG)
-    agent.ensure_task(state)
-    return state['pod']['metadata']['uid']
+    lease = results['lease']
+    details = profile(runtime)
+    resources = {'nvidia.com/gpu': '2', 'cpu': details['cpu'], 'memory': details['memory']}
+    pod = {'metadata': {'uid': POD, 'name': 'enrollment-test', 'annotations': {
+               'gradiated.com/model-id': details['model_id'], 'gradiated.com/release': json.dumps(details['release'])}},
+           'spec': {'nodeName': f'gpu-{INSTANCE}', 'containers': [{
+               'name': 'runtime', 'image': details['image'], 'resources': {'limits': resources, 'requests': resources}}]}}
+    return agent({'operation': 'create', 'uid': POD, 'pod': pod, **lease})
 
 
 def main():
@@ -221,11 +201,10 @@ def main():
     os.umask(int(results['umask'], 8))
     first, second = runtime_bundle('first'), runtime_bundle('second')
     results['runtimes'] = [first, second, runtime_bundle('third')]
-    if not step(results, 'install_seed', lambda: install_seed(results)):
+    if not step(results, 'enroll', lambda: enroll(results)):
         return
-    if not step(results, 'enroll', lambda: enroll(results, results['install_seed']['value'], first)):
+    if not step(results, 'stage', lambda: stage(results, {first: profile(first), second: profile(second)})):
         return
-    step(results, 'stage', lambda: stage(results, {first: profile(first), second: profile(second)}))
     step(results, 'task', lambda: start_task(results, first))
 
 

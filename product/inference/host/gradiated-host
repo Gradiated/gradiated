@@ -1,0 +1,9 @@
+#!/usr/bin/python3 -B
+# The GPU base image installs this as /usr/local/bin/gradiated-host. The package and
+# the host bundle modules it verifies seeds with live in /opt/gradiated/lib.
+import sys
+
+sys.path.insert(0, '/opt/gradiated/lib')
+from gradiated_host.__main__ import main  # noqa: E402
+
+sys.exit(main())

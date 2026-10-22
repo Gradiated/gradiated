@@ -1,16 +1,17 @@
 # GPU images and runtime bundles
 
-`gpu-base` contains Ubuntu, CUDA, system libraries, Python, nginx, OpenSSH,
-fixed service UIDs, the pinned Tailscale client with its supervisor scripts, and
-minimal init startup. It contains no Desmond, host agent, downloader, enrollment
-implementation or model launcher. Application changes do not participate in its
-build identity. On first start, the init loop stages the single-use bootstrap key
-from `GRADIATED_TAILSCALE_BOOTSTRAP_KEY` and joins the tailnet as
-`gpu-bootstrap-<pod ID>` with Tailscale SSH. It never starts public OpenSSH
-unless `GRADIATED_BREAK_GLASS_SSH=1` and `PUBLIC_KEY` are set, and it removes
-root's `authorized_keys` otherwise. It keeps the Tailscale supervisor running,
-waits for completed enrollment, supervises the installed bootstrap, and restarts
-it if it exits. The bootstrap and recovery implementation remain on disk.
+`gpu-base` contains Ubuntu, CUDA, system libraries, Python, nginx, fixed service
+UIDs, the pinned Tailscale client and `gradiated-host`
+([`../host`](../host)), which is the entrypoint and the enrollment command. It
+contains no Desmond, host agent, downloader or model launcher, and no SSH server:
+Tailscale SSH is the only shell access.
+
+On first start, `gradiated-host start` stages the single-use key from
+`GRADIATED_TAILSCALE_BOOTSTRAP_KEY` and joins the tailnet as
+`gpu-bootstrap-<pod ID>` with Tailscale SSH, then removes the key from its
+environment. It keeps tailscaled running, starts the control bridge and the host
+agent launcher once enrollment has written their configuration, and restarts
+any of them that exits.
 
 The build upgrades the Ubuntu packages inherited from NVIDIA's CUDA image and
 keeps NVIDIA's CUDA packages at the pinned base versions. The ECR tag hashes the
@@ -19,24 +20,18 @@ changes, for example a newer CUDA base digest. Keep `base-id` unchanged for such
 patch rebuilds: bundles carry it, and enrolled hosts reject bundles whose ID
 differs from their own.
 
-Enrollment installs a SHA-256-pinned host archive over Tailscale SSH. The
-archive contains enrollment, supervision and recovery, the downloader, Desmond,
-`runtime-launch`, and private control forwarding. A verified seed is retained on
-disk for recovery; it is independent of the image. Credentials travel through
-SSH stdin and short-lived artifact grants, never the provider environment.
+Ops MCP enrolls a bootstrap pod by running `gradiated-host enroll` over
+Tailscale SSH with a typed JSON payload on stdin
+([`enrollment-payload.schema.json`](../host/gradiated_host/enrollment-payload.schema.json)).
+Enrollment installs the SHA-256-pinned host bundle, which contains the host
+agent, launcher, downloader, Desmond and `runtime-launch`, keeps a verified copy
+on disk for recovery, and stages promotion to `gpu-<instance ID>`
+(`tag:gpu-inference`). Credentials travel only on stdin and through short-lived
+artifact grants, never the provider environment. Running enrollment again with
+the same payload is safe.
 
-Publish and qualify the new host archive before selecting this base for new
-pods. Configure Ops MCP `GPU_HOST_BOOTSTRAP_SHA256` with that release's digest
-(`bootstrapVersion: 1`), apply its scoped artifact-read IAM policy, and then update
-the approved `GPU_BASE_IMAGE` and provisioning template. An older host archive
-without enrollment files is rejected before activation. Existing reservations
-are upgraded in place; changing their provider image is unnecessary.
-
-Install the new host bundle before rolling out model archives that omit
-`runtime-launch`. Existing model archives remain supported by the host agent's
-legacy launcher fallback. Hosts enrolled before the v5 template are re-imaged
-onto it. The connection-preserving forwarding dispatcher is installed at new
-enrollment; legacy forwarding listeners need a separate controlled migration.
+The image keeps copies of the host bundle's `host_bundle.py` and `host_state.py`
+to verify the seed bundle, so changing either rebuilds the base image.
 
 The model image directories provide pinned runtime packaging and launch scripts.
 On RunPod, the host agent executes verified archives rather than starting nested

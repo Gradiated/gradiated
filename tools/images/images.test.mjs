@@ -67,17 +67,15 @@ test("shared product packages invalidate the application image", () => {
     ]),
   );
 });
-test("GPU enrollment assets invalidate the application image", () => {
+test("the GPU base ID invalidates the application image", () => {
   const base = [entry("product/Dockerfile")];
-  for (const name of ["bootstrap.py", "host-agent.py", "supervise.py"]) {
-    assert.notEqual(
-      fingerprint("product", base),
-      fingerprint("product", [
-        ...base,
-        entry(`product/inference/gpu/${name}`),
-      ]),
-    );
-  }
+  assert.notEqual(
+    fingerprint("product", base),
+    fingerprint("product", [
+      ...base,
+      entry("product/inference/images/gpu-base/base-id"),
+    ]),
+  );
 });
 test("unqualified GLM image and unknown image fail explicitly", () => {
   assert.throws(() => fingerprint("glm-5-3-flash", []), /qualified GLM/);
@@ -123,9 +121,8 @@ test("plans all enabled images against the actual repository tree", () => {
 
 test("application code changes preserve the base image identity", () => {
   for (const path of [
-    "product/inference/gpu/bootstrap.py",
+    "product/inference/gpu/host-agent.py",
     "product/inference/images/gpu-base/recovery/host-agent.py",
-    "product/inference/tailscale/install-tailscale.py",
   ]) {
     assert.equal(
       fingerprint("gpu-base", [entry("product/inference/images/gpu-base/Dockerfile"), entry(path)]),
@@ -136,6 +133,14 @@ test("application code changes preserve the base image identity", () => {
 
 test("host releases preserve the base image identity", () => {
   const base = [entry("product/inference/images/gpu-base/Dockerfile")];
-  for (const path of ["product/inference/gpu/host-agent.py", "product/inference/gpu/host_bundle.py"])
-    assert.equal(fingerprint("gpu-base", base), fingerprint("gpu-base", [...base, entry(path)]));
+  assert.equal(
+    fingerprint("gpu-base", base),
+    fingerprint("gpu-base", [...base, entry("product/inference/gpu/host-agent.py")]),
+  );
+});
+
+test("enrollment code and the seed verifier are base image inputs", () => {
+  const base = [entry("product/inference/images/gpu-base/Dockerfile")];
+  for (const path of ["product/inference/host/gradiated_host/enroll.py", "product/inference/gpu/host_bundle.py"])
+    assert.notEqual(fingerprint("gpu-base", base), fingerprint("gpu-base", [...base, entry(path)]));
 });

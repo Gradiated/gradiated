@@ -5,6 +5,8 @@ import time
 import unittest
 import uuid
 
+from image_build import build_image
+
 GPU_BASE = Path(__file__).resolve().parents[1]
 CONTEXT = GPU_BASE.parents[1]
 HOST_BUNDLE = CONTEXT / 'bundles' / 'host' / 'Dockerfile'
@@ -12,6 +14,7 @@ HOST_BUNDLE = CONTEXT / 'bundles' / 'host' / 'Dockerfile'
 UBUNTU = 'ubuntu@sha256:68ee22004a9109b44973313b02ff7b1de250f1de0f5ecb628d73f579aaff33ac'
 IMAGE = 'gradiated-gpu-base-enrollment-test'
 ROOT = '/var/lib/gradiated-kubelet'
+INSTANCE = '6a8f2a52-7b0e-4c1d-9a64-2f1d3c5b8e00'
 POD = '6a8f2a52-7b0e-4c1d-9a64-2f1d3c5b8e01'
 GPUS = ['GPU-00000000-0000-0000-0000-000000000001', 'GPU-00000000-0000-0000-0000-000000000002']
 CONTAINER = 'gpu-base-enrollment-' + uuid.uuid4().hex
@@ -19,21 +22,21 @@ RESULTS = {}
 
 
 def docker(*args, check=True, **kwargs):
-    result = subprocess.run(['docker', *args], text=True, capture_output=True, timeout=1200, **kwargs)
+    result = subprocess.run(['docker', *args], text=True, capture_output=True, timeout=600, **kwargs)
     if check and result.returncode:
-        raise AssertionError(f'docker {args[0]} failed: {result.stderr[-3000:]}')
+        raise AssertionError(f'docker {args[0]} failed: {result.stderr[-5000:]}')
     return result
 
 
 def host_bundle_stage():
     lines = HOST_BUNDLE.read_text().replace('\\\n', ' ').splitlines()
     end = next(index for index, line in enumerate(lines[1:], 1) if line.startswith('FROM '))
-    stage = [f'FROM {UBUNTU} AS host-bundle',
-             'RUN apt-get update && apt-get install -y --no-install-recommends '
-             'python3 pigz cmake g++ make libcurl4-openssl-dev']
+    if not lines[0].endswith(' AS package'):
+        raise AssertionError('The host bundle Dockerfile changed shape; update host_bundle_stage')
+    # The production stage, except desmondd, which needs the whole inference engine (/src).
+    stage = [lines[0].replace(' AS package', ' AS host-bundle')]
     for line in lines[1:end]:
-        # desmondd needs the whole inference engine (/src), so a placeholder replaces it.
-        if not line.strip() or 'apt-get' in line or 'alpine' in line or ' /src' in line:
+        if not line.strip() or ' /src' in line:
             continue
         if 'files.json' in line:
             stage.append("RUN printf '#!/bin/sh\\nexec sleep infinity\\n' >/bundle/desmondd && chmod 755 /bundle/desmondd")
@@ -48,21 +51,26 @@ def setUpModule():
     if not dockerfile[0].startswith('FROM nvidia/cuda:'):
         raise AssertionError('Unexpected GPU base parent image')
     dockerfile[0:1] = [f'FROM {UBUNTU}', 'RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates']
+    entrypoint = dockerfile.pop()
     dockerfile += [
         'COPY --chmod=755 images/gpu-base/tests/fake-tailscale /opt/gradiated/tailscale/tailscale',
+        # The control bridge calls the stand-in CLI as the tailscale account.
+        'RUN install -m 666 /dev/null /var/log/fake-tailscale-calls',
         # Task processes run with a PATH that leaves out /usr/local/bin.
         'COPY --chmod=755 images/gpu-base/tests/fake-nvidia-smi /usr/bin/nvidia-smi',
-        'COPY gpu/host_state.py gpu/host_bundle.py gpu/supervise.py gpu/install-seed.py /opt/enrollment-test/installer/',
         'COPY images/gpu-base/tests/enrollment.py /opt/enrollment-test/enrollment.py',
         'COPY --from=host-bundle /runtime.tar.gz /opt/enrollment-test/host-bundle.tar.gz',
+        entrypoint,
     ]
-    docker('build', '-q', '--platform', 'linux/amd64', '-t', IMAGE, '-f', '-', str(CONTEXT),
-           input='\n'.join(host_bundle_stage() + dockerfile) + '\n')
-    # Runtime tasks move themselves into pod cgroups, which needs a writable cgroup tree.
-    docker('run', '-d', '--platform', 'linux/amd64', '--privileged', '--network', 'none',
-           '--name', CONTAINER, IMAGE)
+    build_image(IMAGE, host_bundle_stage() + dockerfile, CONTEXT)
+    # The real entrypoint joins as a bootstrap pod. Runtime tasks move themselves into pod
+    # cgroups, which needs a writable cgroup tree.
+    docker('run', '-d', '--platform', 'linux/amd64', '--privileged', '--network', 'none', '--name', CONTAINER,
+           '-e', 'RUNPOD_POD_ID=enrolltest', '-e', 'GRADIATED_TAILSCALE_BOOTSTRAP_KEY=tskey-auth-bootstrap-test',
+           IMAGE)
     docker('exec', '-d', CONTAINER, 'python3', '/opt/enrollment-test/enrollment.py', 'serve')
-    wait('test -e /opt/enrollment-test/serving')
+    if not wait('test -e /opt/enrollment-test/serving && grep -q " up " /var/log/fake-tailscale-calls'):
+        raise AssertionError('The container did not join as a bootstrap pod')
     enrollment = docker('exec', CONTAINER, 'bash', '-c',
                         'umask 077 && exec python3 /opt/enrollment-test/enrollment.py enroll', check=False)
     output = docker('exec', CONTAINER, 'cat', '/opt/enrollment-test/result.json', check=False)
@@ -123,16 +131,31 @@ class EnrollmentTests(unittest.TestCase):
     def runtime_started(self):
         log = f'{ROOT}/pods/{POD}/runtime.log'
         if not wait(f'grep -q "runtime started as runtime" {log}'):
-            output = shell(f'cat {log} {ROOT}/pods/{POD}/task.log').stdout
+            output = shell(f'cat {log} {ROOT}/pods/{POD}/task.log /var/log/gradiated-kubelet.log').stdout
             self.fail(f'The runtime task did not start:\n{output}')
         return shell(f'cat {log}').stdout
 
     def test_enrollment_runs_under_a_private_umask(self):
         self.assertEqual(RESULTS['umask'], '0o77')
-        self.require('install_seed', 'enroll', 'stage', 'task')
+        self.require('enroll', 'stage', 'task')
+
+    def test_enrollment_reports_the_inventory_and_promotes_the_pod(self):
+        self.require('enroll')
+        self.assertEqual(RESULTS['enroll']['value'], {
+            'version': 1, 'tailscale_ip': '100.101.172.112', 'gpu_count': 2, 'gpu_product': 'RTX-PRO-6000',
+            'cpu': RESULTS['enroll']['value']['cpu'], 'memory_gib': RESULTS['enroll']['value']['memory_gib'],
+            'promotion': True})
+        promoted = (f'0 --socket=/var/lib/gradiated-tailscale/socket up --hostname=gpu-{INSTANCE} '
+                    '--accept-dns=false --accept-routes=false --ssh --operator=tailscale --timeout=30s '
+                    '--auth-key=file:/var/lib/gradiated-tailscale/auth-key --force-reauth')
+        served = '0 --socket=/var/lib/gradiated-tailscale/socket serve --bg --tcp=8888 tcp://127.0.0.1:8889'
+        if not wait(f'grep -qxF -- "{served}" /var/log/fake-tailscale-calls', seconds=60):
+            self.fail(shell('cat /var/log/fake-tailscale-calls /var/log/gradiated-tailscale.log').stdout)
+        self.assertIn(promoted, shell('cat /var/log/fake-tailscale-calls').stdout.splitlines())
+        self.assertEqual(shell('ls /var/lib/gradiated-tailscale').stdout.split().count('auth-key'), 0)
 
     def test_service_users_can_read_the_installed_host(self):
-        self.require('install_seed')
+        self.require('enroll', 'stage')
         host, recovery = self.host(), '/opt/gradiated/kubelet/recovery'
         first = RESULTS['runtimes'][0]
         expected = {
@@ -149,8 +172,8 @@ class EnrollmentTests(unittest.TestCase):
             with self.subTest(user=user):
                 self.assertEqual(access(user, checks), [])
 
-    def test_downloader_fetches_a_runtime_with_the_host_bundle_tools(self):
-        self.require('install_seed', 'enroll')
+    def test_downloader_fetches_a_runtime_through_the_control_bridge(self):
+        self.require('enroll')
         third = RESULTS['runtimes'][2]
         source = ('s3::https://gradiated-prod-model-artifacts-873716897517.s3.us-east-1.amazonaws.com'
                   f'/bundles/sha256/{third}.tar.gz')
@@ -192,6 +215,42 @@ print(json.dumps(results))
 '''
         result = docker('exec', '-u', 'runtime', CONTAINER, 'python3', '-c', script)
         self.assertEqual(json.loads(result.stdout), {device: 'held' for device in GPUS})
+
+
+
+# Runs after EnrollmentTests (unittest orders classes by name) because it restarts the container.
+class RestartTests(unittest.TestCase):
+    PING = """
+import json, urllib.request
+token = open('/etc/gradiated/kubelet-management.token').read()
+request = urllib.request.Request('http://127.0.0.1:8887/_kubelet', data=b'{"operation":"ping"}',
+                                 headers={'Authorization': 'Bearer ' + token})
+print(json.load(urllib.request.urlopen(request, timeout=5))['instance_id'])
+"""
+
+    def calls(self):
+        return shell('cat /var/log/fake-tailscale-calls').stdout.splitlines()
+
+    def test_a_restarted_host_resumes_without_enrolling_again(self):
+        self.assertTrue(RESULTS.get('enroll', {}).get('ok'), 'Enrollment must succeed first')
+        served = '0 --socket=/var/lib/gradiated-tailscale/socket serve --bg --tcp=8888 tcp://127.0.0.1:8889'
+        self.assertTrue(wait(f'grep -qxF -- "{served}" /var/log/fake-tailscale-calls'), 'The pod was not promoted')
+        before = len(self.calls())
+        docker('restart', '-t', '20', CONTAINER)
+        deadline = time.monotonic() + 90
+        while docker('exec', CONTAINER, 'python3', '-c', self.PING, check=False).stdout.strip() != INSTANCE:
+            if time.monotonic() > deadline:
+                self.fail('The host agent did not come back:\n' + shell('cat /var/log/gradiated-kubelet.log').stdout[-3000:])
+            time.sleep(1)
+        self.assertTrue(wait(f'test "$(grep -cxF -- "{served}" /var/log/fake-tailscale-calls)" -ge 2'))
+        after = self.calls()[before:]
+        up = [call for call in after if ' up ' in call]
+        self.assertEqual(up[0], f'0 --socket=/var/lib/gradiated-tailscale/socket up --hostname=gpu-{INSTANCE} '
+                                '--accept-dns=false --accept-routes=false --ssh --operator=tailscale --timeout=30s')
+        # The bootstrap key is still in the container's environment but is never staged again.
+        self.assertEqual(shell('ls /var/lib/gradiated-tailscale').stdout.split().count('auth-key'), 0)
+        self.assertEqual(json.loads(shell('cat /etc/gradiated/tailscale.json').stdout),
+                         {'pod': 'enrolltest', 'instance_id': INSTANCE})
 
 
 if __name__ == '__main__':

@@ -306,8 +306,7 @@ def host_pods(config, exclude):
 
 
 def host_tool(name):
-    local = Path(__file__).resolve().with_name(name)
-    return local if local.is_file() else Path('/opt/gradiated/bin') / name
+    return Path(__file__).resolve().with_name(name)
 
 
 def task(uid, stopping):
@@ -868,14 +867,6 @@ class Agent:
 
 
 def serve():
-    forwarding = Path(__file__).resolve().with_name('forward-control.py')
-    if forwarding.is_file():
-        ROOT.mkdir(parents=True, exist_ok=True)
-        temporary = ROOT / 'control-program.new'
-        temporary.unlink(missing_ok=True)
-        temporary.symlink_to(forwarding)
-        temporary.replace(ROOT / 'control-program')
-        sync_directory(ROOT)
     config = json.loads(CONFIG.read_text())
     prepare_cgroups()
     agent = Agent(config, config_path=CONFIG)

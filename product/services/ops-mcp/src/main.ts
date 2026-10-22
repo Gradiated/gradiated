@@ -22,6 +22,10 @@ const config = z
       .string()
       .regex(/^[0-9a-f]{64}$/)
       .optional(),
+    GPU_HOST_BOOTSTRAP_BASE_ID: z
+      .string()
+      .regex(/^[A-Za-z0-9._-]{1,64}$/)
+      .optional(),
     GPU_CONTROL_ENDPOINT: z.ipv4(),
     TAILSCALE_SOCKS5_PORT: z.coerce
       .number()
@@ -70,6 +74,7 @@ const { server, privateServer, metrics } = createHttp({
       credentialsDirectory: config.CREDENTIALS_DIRECTORY,
       hostImage: config.GPU_BASE_IMAGE,
       hostBundleSha256: config.GPU_HOST_BOOTSTRAP_SHA256,
+      hostBundleBaseId: config.GPU_HOST_BOOTSTRAP_BASE_ID,
       apiEndpoint: config.GPU_CONTROL_ENDPOINT,
       tailnet: {
         socksPort: config.TAILSCALE_SOCKS5_PORT,

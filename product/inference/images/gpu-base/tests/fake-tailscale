@@ -1,9 +1,38 @@
 #!/usr/bin/env bash
-# Stands in for the Tailscale CLI so tests need no control server. It records
-# each call with the caller's UID; the real tailscaled still runs.
+# Stands in for the Tailscale CLI so tests need no control server; the real tailscaled
+# still runs. It records each call except status with the caller's UID. Like the real
+# CLI, `up` with a key logs the device in (as a bootstrap device, or with --force-reauth
+# as an inference device) and `status` reports it. `nc` connects to a stand-in for the
+# control API on 127.0.0.1:13004.
 set -euo pipefail
-printf '%s %s\n' "$(id -u)" "$*" >>/var/log/fake-tailscale-calls
+status=/var/lib/fake-tailscale-status.json
+running() {
+  printf '{"BackendState":"Running","TailscaleIPs":["100.101.172.112","fd7a:115c:a1e0::9"],"Self":{"Tags":["%s"]}}' "$1" >"$status"
+}
+[[ "${2:-}" == status ]] || printf '%s %s\n' "$(id -u)" "$*" >>/var/log/fake-tailscale-calls
 case "${2:-}" in
-up | serve) exit 0 ;;
+status) if [[ -f "$status" ]]; then cat "$status"; else echo '{"BackendState":"NeedsLogin"}'; fi ;;
+up)
+  if [[ "$*" == *--force-reauth* ]]; then
+    running tag:gpu-inference
+  elif [[ "$*" == *--auth-key=* ]]; then
+    running tag:gpu-bootstrap
+  else
+    [[ -f "$status" ]]
+  fi ;;
+serve) ;;
+nc)
+  exec python3 -c '
+import socket, sys, threading
+remote = socket.create_connection(("127.0.0.1", 13004))
+def upload():
+    while data := sys.stdin.buffer.read1(65536):
+        remote.sendall(data)
+    remote.shutdown(socket.SHUT_WR)
+threading.Thread(target=upload, daemon=True).start()
+while data := remote.recv(65536):
+    sys.stdout.buffer.write(data)
+    sys.stdout.buffer.flush()
+' ;;
 *) exit 1 ;;
 esac

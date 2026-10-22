@@ -4,7 +4,7 @@
     "tools/gpu/*",
     "product/inference/gpu/*",
     "product/inference/images/gpu-base/*",
-    "product/inference/tailscale/*",
+    "product/inference/host/*",
     "infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml"
   ],
   "configuration": [
@@ -19,7 +19,7 @@
   "image": [
     "product/inference/gpu/*",
     "product/inference/images/gpu-base/*",
-    "product/inference/tailscale/*",
+    "product/inference/host/*",
     "product/inference/runtime-launcher/*",
     "product/inference/bundles/host/*",
     "product/inference/bundles/package.sh"

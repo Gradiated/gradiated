@@ -174,8 +174,11 @@ class GpuFleetPolicyTest(unittest.TestCase):
         self.assertAllowed('scaledobject', {'metadata': {'annotations': {PAUSED: '3'}}})
         self.assertAllowed('scaledobject', {'metadata': {'annotations': {PAUSED: None}}})
         message = "may change only a ScaledObject's autoscaling.keda.sh/paused-replicas annotation"
+        owner = {'apiVersion': 'v1', 'kind': 'ConfigMap', 'name': 'x',
+                 'uid': '00000000-0000-0000-0000-000000000000'}
         for body in ({'metadata': {'annotations': {PAUSED: 'many'}}},
                      {'metadata': {'annotations': {'a': None}}},
+                     {'metadata': {'ownerReferences': [owner]}},
                      {'metadata': {'labels': {'x': 'y'}}},
                      {'spec': {'minReplicaCount': 0}}):
             with self.subTest(body=body):

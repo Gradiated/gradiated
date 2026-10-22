@@ -371,8 +371,8 @@ one at a time, and records each host's progress in `status.rollout` of its
   waits twice as long as the last (5 minutes, then 10, up to an hour), so
   autoscaling that only fills GPUs never restarts it. `GpuHostRolloutBlocked`
   fires after two hours blocked.
-- A host on the pinned image but another bundle is updated in place: the operator
-  writes the bundle to `status.rollout.bundle`, the controller (which holds the
+- A host on the pinned image but another bundle is updated in place: once every
+  serving pod on it is Ready, the operator records them and writes the bundle to `status.rollout.bundle`, the controller (which holds the
   fencing epoch) sends it with `configure`, and the operator requires the host to
   run it for five minutes with every serving pod still on the host, Ready, with
   its qualified runtime unchanged.
@@ -415,7 +415,9 @@ under way pauses. In-place bundle updates keep running in both modes, because
 the host's launcher rolls a failed bundle back by itself. The operator reads each
 pod's image and container start from RunPod, with the key in
 `gradiated/prod/platform/gpu-fleet` (property `runpod-api-key`); it tries to read
-that key on every pass, and until it can it reports re-imaging hosts as waiting.
+that key on every pass until it can, and again after RunPod rejects it, so a
+rotated key needs no restart. Until it has a key it reports re-imaging hosts as
+waiting.
 Until PR 4 removes it, ops-mcp keeps its own enrollment path for hosts it
 registers.
 

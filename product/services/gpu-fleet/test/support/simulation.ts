@@ -111,6 +111,8 @@ export const simulateFleet = (hosts: HostSpec[], models: Model[]) => {
     { key: string; tag: string; used: boolean; revoked: boolean }
   >();
   const sims = new Map<string, Host>();
+  // Pods held not Ready, as a model still loading.
+  const notReady = new Set<string>();
   const violations: string[] = [];
   const paused = new Set<string>();
   let next = 1;
@@ -435,7 +437,8 @@ export const simulateFleet = (hosts: HostSpec[], models: Model[]) => {
         const node = kube.objects.get(`${NODES}/${item.spec.nodeName}`) as any;
         const isReady =
           node.status.conditions[0].status === "True" &&
-          !item.metadata.deletionTimestamp;
+          !item.metadata.deletionTimestamp &&
+          !notReady.has(item.metadata.name);
         item.status = {
           phase: "Running",
           conditions: [{ type: "Ready", status: isReady ? "True" : "False" }],
@@ -690,6 +693,7 @@ export const simulateFleet = (hosts: HostSpec[], models: Model[]) => {
     host: (instanceId: string) =>
       kube.read(`${GPU_HOSTS}/gpu-${instanceId}`) as GpuHost,
     cordonByHand,
+    notReady,
     node: (instanceId: string) =>
       kube.read(`${NODES}/gpu-${instanceId}`) as {
         metadata: { annotations?: Record<string, string> };

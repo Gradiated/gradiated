@@ -1,8 +1,10 @@
 import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { createControlDatabase, syncFleetInstances } from "@gradiated/control";
+import type { RunPodClient } from "@gradiated/gpu-hosts";
 import { z } from "zod";
 
+import { reloadingRunPod } from "./access.js";
 import { createCluster } from "./cluster.js";
 import { productionEnrollment, productionRunPod } from "./credentials.js";
 import { credentialedSync } from "./database.js";
@@ -88,13 +90,16 @@ const pins = () => readPins(config.PINS_FILE);
 const ping = (instanceId: string) =>
   pingHost(instanceId, config.HOST_KEYS_DIRECTORY);
 
-// RunPod and Tailscale access is asked for again on every pass until it works.
-let access: Enrollment | undefined;
+// RunPod and Tailscale access is asked for again on every pass until it works,
+// and again after RunPod rejects its key.
+const runpodAccess = reloadingRunPod(productionRunPod);
+let access: { runpod: RunPodClient; enrollment: Enrollment } | undefined;
 const enrollment = async () => {
-  if (access) return access;
-  const runpod = await productionRunPod();
+  const runpod = await runpodAccess();
   if (!runpod) return undefined;
-  access = productionEnrollment(
+  if (access?.runpod === runpod) return access.enrollment;
+
+  const built = productionEnrollment(
     {
       hostKeysDirectory: config.HOST_KEYS_DIRECTORY,
       apiEndpoint: config.GPU_CONTROL_ENDPOINT,
@@ -104,7 +109,8 @@ const enrollment = async () => {
     runpod,
     pins,
   );
-  return access;
+  access = { runpod, enrollment: built };
+  return built;
 };
 const rollouts = createRollouts({
   api,

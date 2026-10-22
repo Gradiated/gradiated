@@ -382,6 +382,84 @@ describe("rolling re-image", () => {
       expect(fleet.node(id).spec?.unschedulable).toBeFalsy();
   });
 
+  // Binds a pod to the host while the operator cordons it, after the
+  // operator listed the host's pods.
+  const bindDuringCordon = (fleet: Simulation, bind: () => void) => {
+    const cluster = createCluster(fleet.kube.api);
+    let bound = false;
+    return {
+      ...cluster,
+      cordon: async (instanceId: string) => {
+        if (!bound) bind();
+        bound = true;
+        return cluster.cordon(instanceId);
+      },
+    };
+  };
+
+  it("blocks when a training job binds to the host while it is cordoned", async () => {
+    const fleet = kevFleet();
+    const cluster = bindDuringCordon(fleet, () => fleet.placeTraining(SPARE));
+
+    await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () => rollout(fleet, SPARE)?.result === "Blocked",
+      { cluster },
+    );
+
+    expect(rollout(fleet, SPARE)?.lastError).toBe(
+      "A training job runs on the host",
+    );
+    expect(fleet.sim(SPARE).resets).toBe(0);
+  });
+
+  it("moves a serving pod that binds to the host while it is cordoned", async () => {
+    const fleet = kevFleet();
+    // The spare had nothing to move when the operator listed its pods.
+    const cluster = bindDuringCordon(fleet, () => {
+      const [pod] = fleet.podsOn(FIRST);
+      pod!.spec.nodeName = `gpu-${SPARE}`;
+    });
+
+    await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () => ![undefined, "Cordon"].includes(rollout(fleet, SPARE)?.step),
+      { cluster },
+    );
+
+    expect(rollout(fleet, SPARE)?.step).toBe("Surge");
+    expect(fleet.sim(SPARE).resets).toBe(0);
+  });
+
+  it("moves a serving pod that binds to the host after the cordon, before the wipe", async () => {
+    const fleet = kevFleet();
+    const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+    await run(fleet, pinned, () => rollout(fleet, SPARE)?.step === "Reimage");
+
+    const [pod] = fleet.podsOn(FIRST);
+    pod!.spec.nodeName = `gpu-${SPARE}`;
+    await run(fleet, pinned, () => rollout(fleet, SPARE)?.step !== "Reimage");
+
+    expect(rollout(fleet, SPARE)?.step).toBe("Surge");
+    expect(fleet.sim(SPARE).resets).toBe(0);
+  });
+
+  it("blocks when a training job binds to the host after the cordon, before the wipe", async () => {
+    const fleet = kevFleet();
+    const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+    await run(fleet, pinned, () => rollout(fleet, SPARE)?.step === "Reimage");
+
+    fleet.placeTraining(SPARE);
+    await run(fleet, pinned, () => rollout(fleet, SPARE)?.result === "Blocked");
+
+    expect(rollout(fleet, SPARE)?.lastError).toBe(
+      "A training job runs on the host",
+    );
+    expect(fleet.sim(SPARE).resets).toBe(0);
+  });
+
   it("never re-images a host running a training job, and still rolls the rest", async () => {
     const fleet = kevFleet();
     fleet.placeTraining(SPARE);
@@ -694,6 +772,26 @@ describe("in-place bundle update", () => {
     expect(rollout(fleet, FIRST)?.lastError).toBe(
       "A serving pod restarted or left the host during the bundle update",
     );
+  });
+
+  it("waits for every serving pod to be Ready before taking the baseline", async () => {
+    const { fleet, pod } = bundleFleet();
+    fleet.notReady.add(pod);
+    const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+    await run(fleet, pinned, () => rollout(fleet, FIRST)?.step === "Apply");
+
+    await run(fleet, pinned, () => false, {}, 10);
+    expect(rollout(fleet, FIRST)).toMatchObject({ step: "Apply" });
+    expect(fleet.host(FIRST).status?.rollout?.bundle).toBeUndefined();
+
+    fleet.notReady.delete(pod);
+    await run(
+      fleet,
+      pinned,
+      () => rollout(fleet, FIRST)?.result === "Succeeded",
+    );
+    const uid = fleet.podsOn(FIRST)[0]!.metadata.uid;
+    expect(Object.keys(rollout(fleet, FIRST)?.baseline ?? {})).toEqual([uid]);
   });
 
   it("fails and holds the fleet when the host rejects the bundle", async () => {

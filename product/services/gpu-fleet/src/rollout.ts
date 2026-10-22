@@ -32,7 +32,8 @@ export const DEFAULT_LIMITS = {
   BundleVerify: 35 * MINUTE,
   Soak: 30 * MINUTE,
   Uncordon: 10 * MINUTE,
-  Apply: 10 * MINUTE,
+  // Apply waits for serving pods still loading, as Surge does.
+  Apply: 100 * MINUTE,
   soakFor: 5 * MINUTE,
   unschedulable: 10 * MINUTE,
   // A re-image request RunPod has not acted on by then is sent again.
@@ -286,14 +287,21 @@ export const createRollouts = (deps: RolloutDependencies) => {
     );
 
   const steps: Record<string, Step> = {
-    Cordon: async ({ host, servingPods }, rollout) => {
+    // A pod can be bound while the node is being cordoned, so the next step
+    // is decided from the pods on the node once nothing more can land there.
+    Cordon: async ({ host }, rollout) => {
       if (await runningTraining(host, rollout))
         return { block: "A training job runs on the host" };
 
       await act(() => cluster.cordon(host.spec.instanceId));
+      if (await runningTraining(host, rollout))
+        return { block: "A training job runs on the host" };
+
+      const serving = (await cluster.podsOn(host.spec.instanceId)).some(
+        (pod) => pod.model && !pod.terminating,
+      );
       return {
-        next:
-          rollout.kind === "reimage" && servingPods > 0 ? "Surge" : "Reimage",
+        next: rollout.kind === "reimage" && serving ? "Surge" : "Reimage",
       };
     },
 
@@ -387,6 +395,18 @@ export const createRollouts = (deps: RolloutDependencies) => {
         if (now().getTime() - requested < limits.reimageAfter)
           return { stay: "Waiting for RunPod to restart the pod" };
       }
+      // A pod whose binding was in flight during the cordon can still land;
+      // nothing on a live host is wiped without being moved or blocking.
+      if (await runningTraining(host, rollout))
+        return { block: "A training job runs on the host" };
+      if (
+        rollout.kind === "reimage" &&
+        (await cluster.podsOn(host.spec.instanceId)).some(
+          (pod) => pod.model && !pod.terminating,
+        )
+      )
+        return { next: "Surge" };
+
       if (rollout.kind !== "reimage") {
         // The plan saw no connected device; check again right before the wipe.
         const tailnet = await enroll.tailnetOf(host);
@@ -564,13 +584,19 @@ export const createRollouts = (deps: RolloutDependencies) => {
       return { done: true };
     },
 
+    // Every serving pod is in the baseline, so each must be Ready with a
+    // qualified runtime before the update starts.
     Apply: async ({ host }, rollout) => {
+      const serving = (await cluster.podsOn(host.spec.instanceId)).filter(
+        (pod) => pod.model && !pod.terminating,
+      );
+      if (serving.some((pod) => !pod.ready || !pod.qualifiedRuntime))
+        return {
+          stay: "Waiting for every serving pod on the host to be Ready",
+        };
+
       const baseline = Object.fromEntries(
-        (await cluster.podsOn(host.spec.instanceId))
-          .filter(
-            (pod) => pod.model && !pod.terminating && pod.qualifiedRuntime,
-          )
-          .map((pod) => [pod.uid, pod.qualifiedRuntime!]),
+        serving.map((pod) => [pod.uid, pod.qualifiedRuntime!]),
       );
       return {
         next: "Verify",

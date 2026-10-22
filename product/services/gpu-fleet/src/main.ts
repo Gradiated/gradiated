@@ -3,12 +3,17 @@ import { createServer } from "node:http";
 import { createControlDatabase, syncFleetInstances } from "@gradiated/control";
 import { z } from "zod";
 
+import { createCluster } from "./cluster.js";
+import { productionEnrollment, productionRunPod } from "./credentials.js";
 import { credentialedSync } from "./database.js";
 import { createFleet } from "./fleet.js";
 import { inClusterKubernetes } from "./kubernetes.js";
 import { createLease } from "./lease.js";
 import { createMetrics } from "./metrics.js";
 import { pingHost } from "./observe.js";
+import { readPins } from "./pins.js";
+import type { Enrollment } from "./enroll.js";
+import { createRollouts } from "./rollout.js";
 
 const config = z
   .object({
@@ -21,8 +26,15 @@ const config = z
       .string()
       .transform((value) => value.split(",").map((item) => item.trim()))
       .pipe(z.array(z.string().regex(/^[a-z][a-z0-9_-]*\/[^/\s]+$/)).min(1)),
+    PINS_FILE: z.string().min(1),
+    // observe plans and reports rollouts; act carries them out.
+    MODE: z.enum(["observe", "act"]).default("observe"),
+    GPU_CONTROL_ENDPOINT: z.string().min(1),
+    TAILSCALE_SOCKS5_PORT: z.coerce.number().int().min(1).max(65535),
+    TAILSCALE_LOCALAPI_SOCKET: z.string().min(1),
     METRICS_PORT: z.coerce.number().int().min(1).max(65535).default(9090),
     RECONCILE_SECONDS: z.coerce.number().int().min(5).default(30),
+    ROLLOUT_SECONDS: z.coerce.number().int().min(5).default(15),
     SYNC_SECONDS: z.coerce.number().int().min(30).default(300),
   })
   .parse(process.env);
@@ -72,6 +84,52 @@ const fleet = createFleet({
   leading,
   log,
 });
+const pins = () => readPins(config.PINS_FILE);
+const ping = (instanceId: string) =>
+  pingHost(instanceId, config.HOST_KEYS_DIRECTORY);
+
+// RunPod and Tailscale access is asked for again on every pass until it works.
+let access: Enrollment | undefined;
+const enrollment = async () => {
+  if (access) return access;
+  const runpod = await productionRunPod();
+  if (!runpod) return undefined;
+  access = productionEnrollment(
+    {
+      hostKeysDirectory: config.HOST_KEYS_DIRECTORY,
+      apiEndpoint: config.GPU_CONTROL_ENDPOINT,
+      socksPort: config.TAILSCALE_SOCKS5_PORT,
+      localApiSocket: config.TAILSCALE_LOCALAPI_SOCKET,
+    },
+    runpod,
+    pins,
+  );
+  return access;
+};
+const rollouts = createRollouts({
+  api,
+  cluster: createCluster(api),
+  ping,
+  pins,
+  enrollment,
+  mode: config.MODE,
+  leading,
+  identity: config.POD_NAME,
+  log,
+  metrics,
+});
+metrics.mode.set({ mode: config.MODE }, 1);
+log({ event: "gpu_fleet_started", mode: config.MODE });
+
+const rolloutPass = async () => {
+  try {
+    await rollouts.pass();
+  } catch (error) {
+    metrics.rolloutErrors.inc();
+    log({ event: "gpu_rollout_pass_failed", error: (error as Error).message });
+  }
+};
+
 const lease = createLease({
   api,
   namespace: config.NAMESPACE,
@@ -135,5 +193,6 @@ const renew = async () => {
 await Promise.all([
   renew(),
   every(config.RECONCILE_SECONDS, fleet.reconcile),
+  every(config.ROLLOUT_SECONDS, rolloutPass),
   every(config.SYNC_SECONDS, fleet.syncDatabase),
 ]);

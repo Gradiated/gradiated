@@ -50,10 +50,13 @@ const fleetHost = (host: GpuHost): FleetHost => ({
   }),
 });
 
+// The rollout and plan fields belong to the rollout loop, not this comparison.
 const withoutLastSeen = (status: HostStatus | undefined) =>
   JSON.stringify({
-    ...status,
+    observedGeneration: status?.observedGeneration,
+    phase: status?.phase,
     observed: { ...status?.observed, lastSeen: undefined },
+    conditions: status?.conditions,
   });
 
 export const createFleet = ({
@@ -270,8 +273,19 @@ export const createFleet = ({
 
   // A stale series on a former leader would keep an alert firing.
   const standDown = () => {
-    metrics.hosts.reset();
-    metrics.degraded.reset();
+    for (const gauge of [
+      metrics.hosts,
+      metrics.degraded,
+      metrics.rolloutStep,
+      metrics.rolloutStepSeconds,
+      metrics.rolloutFailed,
+      metrics.rolloutBlocked,
+      metrics.planned,
+      metrics.lastSeen,
+      metrics.bundleInfo,
+      metrics.bundleDrift,
+    ])
+      gauge.reset();
     metrics.postgresConflicts.set(0);
     conflicts = new Map();
     answered.clear();

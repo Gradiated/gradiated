@@ -129,6 +129,19 @@ importers:
         specifier: 3.1135.0
         version: 3.1135.0
 
+  packages/gpu-hosts:
+    dependencies:
+      ssh2:
+        specifier: 1.17.0
+        version: 1.17.0
+      zod:
+        specifier: 4.6.5
+        version: 4.6.5
+    devDependencies:
+      '@types/ssh2':
+        specifier: 1.15.5
+        version: 1.15.5
+
   packages/temporal:
     dependencies:
       '@temporalio/client':
@@ -403,9 +416,21 @@ importers:
 
   services/gpu-fleet:
     dependencies:
+      '@aws-sdk/client-s3':
+        specifier: 3.1135.0
+        version: 3.1135.0
+      '@aws-sdk/client-secrets-manager':
+        specifier: 3.1135.0
+        version: 3.1135.0
+      '@aws-sdk/s3-request-presigner':
+        specifier: 3.1135.0
+        version: 3.1135.0
       '@gradiated/control':
         specifier: workspace:*
         version: link:../../packages/control
+      '@gradiated/gpu-hosts':
+        specifier: workspace:*
+        version: link:../../packages/gpu-hosts
       prom-client:
         specifier: 15.1.3
         version: 15.1.3
@@ -427,6 +452,9 @@ importers:
       '@gradiated/control':
         specifier: workspace:*
         version: link:../../packages/control
+      '@gradiated/gpu-hosts':
+        specifier: workspace:*
+        version: link:../../packages/gpu-hosts
       '@modelcontextprotocol/sdk':
         specifier: 1.32.0
         version: 1.32.0(zod@4.6.5)
@@ -442,9 +470,6 @@ importers:
       re2js:
         specifier: 2.8.6
         version: 2.8.6
-      ssh2:
-        specifier: 1.17.0
-        version: 1.17.0
       zod:
         specifier: 4.6.5
         version: 4.6.5
@@ -455,9 +480,6 @@ importers:
       '@types/express':
         specifier: 5.0.6
         version: 5.0.6
-      '@types/ssh2':
-        specifier: 1.15.5
-        version: 1.15.5
 
   services/proxy:
     devDependencies:

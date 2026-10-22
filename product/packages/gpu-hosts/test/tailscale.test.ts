@@ -3,10 +3,11 @@ import { describe, expect, it, vi } from "vitest";
 import {
   bootstrapAuthKey,
   claimInstanceName,
+  instanceTailnet,
   releaseInstanceName,
   tailscaleAuthKey,
-} from "../../src/instances/tailscale.js";
-import { fakeTailnet } from "../support/tailnet.js";
+} from "../src/tailscale.js";
+import { fakeTailnet } from "./support/tailnet.js";
 
 const instance = "019d5a4a-0000-7000-8000-000000000001";
 
@@ -183,5 +184,30 @@ describe("GPU tailnet names across a re-image", () => {
     await expect(
       claimInstanceName(instance, tailnet.now(), tailnet.fetch, credentials),
     ).rejects.toThrow("no new tag:gpu-inference device");
+  });
+
+  it("reports whether a host's device is connected and when control last saw it", async () => {
+    const tailnet = fakeTailnet();
+    await expect(
+      instanceTailnet(instance, tailnet.fetch, credentials),
+    ).resolves.toEqual({ connected: false });
+
+    const device = tailnet.join(hostname, "tag:gpu-inference");
+    await expect(
+      instanceTailnet(instance, tailnet.fetch, credentials),
+    ).resolves.toEqual({ connected: true });
+
+    tailnet.disconnect(device);
+    const renamed = tailnet.join(hostname, "tag:gpu-inference");
+    expect(renamed.name).toBe(`${hostname}-1.tail186117.ts.net`);
+    await expect(
+      instanceTailnet(instance, tailnet.fetch, credentials),
+    ).resolves.toEqual({ connected: true, lastSeen: device.lastSeen });
+
+    tailnet.disconnect(renamed);
+    tailnet.join("gpu-bootstrap-pod1", "tag:gpu-bootstrap");
+    await expect(
+      instanceTailnet(instance, tailnet.fetch, credentials),
+    ).resolves.toEqual({ connected: false, lastSeen: renamed.lastSeen });
   });
 });

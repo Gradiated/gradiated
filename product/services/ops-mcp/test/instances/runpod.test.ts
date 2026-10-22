@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { ENROLL_COMMAND } from "../../src/instances/enrollment.js";
 import { createRunPodProvider } from "../../src/instances/runpod.js";
-import type { RunSsh } from "../../src/instances/ssh.js";
+import { ENROLL_COMMAND, type RunSsh } from "@gradiated/gpu-hosts";
 import { fakeRunPod, rtxPod } from "../support/runpod.js";
 const image = "registry.example/gpu-base:pinned";
 const inventory = {

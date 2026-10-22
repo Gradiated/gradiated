@@ -12,7 +12,9 @@
     "product/inference/gpu/*",
     "infra/environments/prod/us-east-1/kubernetes/gpu-inference/*",
     "infra/environments/prod/us-east-1/kubernetes/platform/gpu-inference.yaml",
-    "infra/environments/prod/us-east-1/kubernetes/platform/inference-network.yaml"
+    "infra/environments/prod/us-east-1/kubernetes/platform/inference-network.yaml",
+    "infra/environments/prod/runpod/templates.json",
+    "infra/environments/prod/us-east-1/kubernetes/operations/ops-mcp/workload.yaml"
   ],
   "image": [
     "product/inference/gpu/*",
@@ -36,6 +38,7 @@
     "infra/environments/prod/us-east-1/kubernetes/platform/tailscale-operator.yaml",
     "infra/environments/prod/us-east-1/kubernetes/platform/tailscale-relays.yaml",
     "tools/gpu/gpuhost_crd_test.py",
+    "tools/gpu/gpu_fleet_policy_test.py",
     "tools/gpu/gpuhost_health_test.py",
     "infra/modules/argocd-bootstrap/gpuhost-health.lua"
   ]

@@ -40,11 +40,14 @@ export const fakeHostAgents = async () => {
   const keys = await mkdtemp(path.join(tmpdir(), "gpu-fleet-keys-"));
   const down = new Set<string>();
   const identity = new Map<string, string>();
+  // Ping fields that differ from a host running bundle bbbb… with no trial.
+  const version = new Map<string, Record<string, unknown>>();
   const requests: { instanceId: string; body: unknown }[] = [];
   const server: Server = createServer(async (request, response) => {
     const instanceId = (request.url ?? "").split("/")[1] ?? "";
     const text = await body(request);
-    if (down.has(instanceId)) return request.socket.destroy();
+    // A gone host never answers; the request waits for the client's timeout.
+    if (down.has(instanceId)) return;
     if (request.headers.authorization !== `Bearer key-${instanceId}`) {
       response.statusCode = 403;
       return response.end();
@@ -56,6 +59,12 @@ export const fakeHostAgents = async () => {
         instance_id: identity.get(instanceId) ?? instanceId,
         epoch: 7,
         host_bundle_sha256: "b".repeat(64),
+        previous_host_bundle_sha256: "",
+        host_bundle_trial: false,
+        host_bundle_failed_sha256: "",
+        host_launcher: true,
+        host_bundle_staging_failed_sha256: "",
+        ...version.get(instanceId),
       }),
     );
   });
@@ -66,12 +75,14 @@ export const fakeHostAgents = async () => {
     keys,
     down,
     identity,
+    version,
     requests,
     endpoint: (instanceId: string) =>
       `http://127.0.0.1:${port}/${instanceId}/_kubelet`,
     addKey: (instanceId: string) =>
       writeFile(path.join(keys, instanceId), `key-${instanceId}\n`),
     close: async () => {
+      server.closeAllConnections();
       await new Promise<void>((resolve) => server.close(() => resolve()));
       await rm(keys, { recursive: true, force: true });
     },

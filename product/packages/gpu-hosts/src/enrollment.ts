@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-import type { ProviderInstance } from "./provider.js";
 import type { RunSsh, SshTarget } from "./ssh.js";
 
 const tailnetAddress = z
@@ -41,7 +40,7 @@ export type EnrollmentPayload = z.infer<typeof enrollmentPayloadSchema>;
 export type EnrollmentResult = z.infer<typeof enrollmentResultSchema>;
 
 export const enrollmentPayload = (
-  instance: ProviderInstance,
+  instance: { readonly sku: string },
   fields: Omit<EnrollmentPayload, "version">,
 ): EnrollmentPayload => {
   if (!/^\d+x .*(B300|RTX PRO 6000)/.test(instance.sku))

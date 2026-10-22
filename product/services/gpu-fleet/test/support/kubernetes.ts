@@ -56,16 +56,23 @@ export const fakeKubernetes = () => {
     async list(request) {
       calls.push({ method: "LIST", path: request });
       const [path, query = ""] = request.split("?");
-      const node = new URLSearchParams(query)
+      const params = new URLSearchParams(query);
+      const node = params
         .get("fieldSelector")
         ?.match(/^spec\.nodeName=(.+)$/)?.[1];
+      const [label, value] = params.get("labelSelector")?.split("=") ?? [];
       return [...objects.entries()]
         .filter(([key]) => key.slice(0, key.lastIndexOf("/")) === path)
         .map(([, item]) => clone(item))
         .filter(
           (item) =>
-            node === undefined ||
-            (item.spec as { nodeName?: string } | undefined)?.nodeName === node,
+            (node === undefined ||
+              (item.spec as { nodeName?: string } | undefined)?.nodeName ===
+                node) &&
+            (label === undefined ||
+              (item.metadata.labels as Record<string, string> | undefined)?.[
+                label
+              ] === value),
         );
     },
     async create(path, body) {

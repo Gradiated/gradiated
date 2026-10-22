@@ -57,7 +57,7 @@ the pod re-authenticates with the one-time `tag:gpu-inference` key, and ops-mcp
 waits for the bootstrap identity to leave its netmap before revoking that key.
 
 Enrollment never uses public SSH. ops-mcp runs `gradiated-host enroll` on the pod
-with a typed JSON payload on stdin (`src/instances/enrollment.ts`); the GPU base
+with a typed JSON payload on stdin (`product/packages/gpu-hosts/src/enrollment.ts`); the GPU base
 image validates it against the JSON Schema a test keeps equal to the zod types.
 A running pod must already be on the approved `GPU_BASE_IMAGE` with idle GPUs;
 other running pods require an explicitly authorized reset. Stopped pods are

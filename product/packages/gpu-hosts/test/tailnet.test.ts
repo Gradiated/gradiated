@@ -11,7 +11,7 @@ import {
   localStatus,
   waitForPromotion,
   type TailnetStatus,
-} from "../../src/instances/tailnet.js";
+} from "../src/tailnet.js";
 
 const hostKey = generateKeyPairSync("rsa", { modulusLength: 2048 })
   .privateKey.export({ type: "pkcs1", format: "pem" })

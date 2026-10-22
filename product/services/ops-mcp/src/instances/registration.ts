@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { InstanceService } from "@gradiated/control";
 
-import type { EnrollmentPayload } from "./enrollment.js";
+import type { EnrollmentPayload } from "@gradiated/gpu-hosts";
 import type {
   InstanceProvider,
   ProviderInstance,

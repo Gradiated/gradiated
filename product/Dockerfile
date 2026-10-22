@@ -13,6 +13,7 @@ COPY packages/analytics/package.json ./packages/analytics/package.json
 COPY packages/config/package.json ./packages/config/package.json
 COPY packages/contracts/package.json ./packages/contracts/package.json
 COPY packages/control/package.json ./packages/control/package.json
+COPY packages/gpu-hosts/package.json ./packages/gpu-hosts/package.json
 COPY packages/credentials/package.json ./packages/credentials/package.json
 COPY packages/temporal/package.json ./packages/temporal/package.json
 COPY packages/valkey/package.json ./packages/valkey/package.json

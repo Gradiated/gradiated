@@ -9,6 +9,7 @@ type Device = {
   tags: string[];
   created: string;
   connectedToControl: boolean;
+  lastSeen?: string;
 };
 
 const DOMAIN = "tail186117.ts.net";
@@ -70,6 +71,7 @@ export const fakeTailnet = () => {
     join,
     disconnect: (device: Device) => {
       device.connectedToControl = false;
+      device.lastSeen = new Date(clock).toISOString();
     },
     now: () => new Date(clock),
     fetch: fetch as typeof globalThis.fetch,

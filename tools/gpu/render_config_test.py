@@ -28,18 +28,41 @@ class RenderTests(unittest.TestCase):
         document['spec']['managementSecret'] = {'key': 'gradiated/prod/platform/gpu-host/' + instance}
         return document
 
-    def test_host_pin_is_projected_and_invalid_digests_are_rejected(self):
+    def test_pins_reach_the_operator_and_invalid_pins_are_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             gpu = Path(directory)
             shutil.copytree(renderer.GPU, gpu, dirs_exist_ok=True)
-            pin = {'sha256': 'a' * 64, 'base_id': 'test-base'}
-            (gpu / 'host.json').write_text(json.dumps(pin))
+            pins = {'image': '873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/inference:gpu-base-inputs-' + 'c' * 64,
+                    'imageDigest': 'sha256:' + 'd' * 64,
+                    'hostBundle': {'sha256': 'a' * 64, 'baseId': 'test-base'}}
+            (gpu / 'pins.json').write_text(json.dumps(pins))
             with patch.object(renderer, 'GPU', gpu):
                 outputs = renderer.render()
-                self.assertEqual(json.loads(outputs[gpu / 'controller.yaml'][0]['data']['hosts.json'])['host_bundle'], pin)
-                (gpu / 'host.json').write_text(json.dumps({**pin, 'sha256': '../escape'}))
-                with self.assertRaises(ValueError):
-                    renderer.render()
+                self.assertEqual(json.loads(outputs[gpu / 'gpu-fleet-pins.yaml'][0]['data']['pins.json']), pins)
+                # The controller applies whatever bundle the operator chose for each host.
+                self.assertNotIn('host_bundle', json.loads(outputs[gpu / 'controller.yaml'][0]['data']['hosts.json']))
+                for invalid in ({**pins, 'hostBundle': {**pins['hostBundle'], 'sha256': '../escape'}},
+                                {**pins, 'image': pins['image'] + '@' + pins['imageDigest']},
+                                {**pins, 'image': 'docker.io/library/ubuntu:latest'},
+                                {**pins, 'imageDigest': 'latest'},
+                                {**pins, 'extra': True}):
+                    (gpu / 'pins.json').write_text(json.dumps(invalid))
+                    with self.assertRaises(ValueError):
+                        renderer.render()
+
+    def test_template_and_ops_mcp_take_the_pinned_image_and_bundle(self):
+        pins = {'image': '873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/inference:gpu-base-inputs-' + 'c' * 64,
+                'imageDigest': 'sha256:' + 'd' * 64,
+                'hostBundle': {'sha256': 'a' * 64, 'baseId': 'test-base'}}
+        copies = renderer.pinned_copies(pins)
+        self.assertEqual(json.loads(copies[renderer.TEMPLATES])['image'], pins['image'])
+        workload = copies[renderer.OPS_MCP]
+        for name, value in (('GPU_BASE_IMAGE', pins['image']), ('GPU_HOST_BOOTSTRAP_SHA256', 'a' * 64),
+                            ('GPU_HOST_BOOTSTRAP_BASE_ID', 'test-base')):
+            self.assertRegex(workload, rf'- name: {name}\n\s+value: {re.escape(value)}\n')
+        # Everything else in the workload is left as written.
+        current = renderer.OPS_MCP.read_text().splitlines()
+        self.assertEqual(len(workload.splitlines()), len(current))
 
     def test_argo_only_reads_generated_manifests(self):
         app = yaml.safe_load((renderer.KUBE / 'platform/gpu-inference.yaml').read_text())

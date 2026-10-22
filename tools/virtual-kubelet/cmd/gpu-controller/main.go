@@ -14,7 +14,6 @@ import (
 	"os/signal"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -53,12 +52,11 @@ type host struct {
 	FaultDomain string          `json:"fault_domain,omitempty"`
 }
 
-// Hosts come from GpuHost objects; the ConfigMap carries the runtimes and the
-// host bundle pin.
+// Hosts and their host bundles come from GpuHost objects; the ConfigMap
+// carries the runtimes.
 type configuration struct {
-	HostBundle *hostBundle     `json:"host_bundle"`
-	Runtimes   json.RawMessage `json:"runtimes"`
-	Namespace  string          `json:"namespace"`
+	Runtimes  json.RawMessage `json:"runtimes"`
+	Namespace string          `json:"namespace"`
 }
 type provider struct {
 	host   host
@@ -314,7 +312,9 @@ func (p *provider) NotifyPods(ctx context.Context, callback func(*v1.Pod)) {
 	}()
 }
 func (p *provider) Ping(ctx context.Context) error {
-	var result hostVersion
+	var result struct {
+		InstanceID string `json:"instance_id"`
+	}
 	if err := p.call(ctx, "ping", "", nil, &result); err != nil {
 		return err
 	}
@@ -470,9 +470,6 @@ func main() {
 	if config.Namespace != "gpu-inference" {
 		log.Fatal("invalid GPU namespace")
 	}
-	if err := config.HostBundle.validate(); err != nil {
-		log.Fatal(err)
-	}
 	var clientConfig *rest.Config
 	if os.Getenv("KUBECONFIG") != "" {
 		clientConfig, err = clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
@@ -490,15 +487,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var rollout atomic.Pointer[hostRollout]
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 	go func() {
-		http.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
-			if current := rollout.Load(); current != nil {
-				current.metrics(w, r)
-			}
-		})
 		http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) })
 		server := &http.Server{Addr: ":9090", ReadHeaderTimeout: 5 * time.Second}
 		if err := server.ListenAndServe(); err != nil {
@@ -532,11 +523,10 @@ func main() {
 				for index := range hosts {
 					hosts[index].Runtimes = config.Runtimes
 				}
-				current := newHostRollout(config.HostBundle, hosts)
-				rollout.Store(current)
+				registry := &hostRegistry{}
 				var group sync.WaitGroup
 				group.Add(2)
-				go func() { defer group.Done(); current.run(leader) }()
+				go func() { defer group.Done(); configureHosts(leader, objects, registry, 10*time.Second) }()
 				go func() { defer group.Done(); watchHosts(leader, objects, hosts, 30*time.Second, cancel) }()
 				for _, h := range hosts {
 					group.Add(1)
@@ -561,7 +551,7 @@ func main() {
 									}
 								}
 							}
-							current.register(&provider{host: h, epoch: epoch, term: term, client: client.CoreV1()})
+							registry.register(&provider{host: h, epoch: epoch, term: term, client: client.CoreV1()})
 							hostContext, stopHost := context.WithCancel(leader)
 							err := runHost(hostContext, client, config.Namespace, h, epoch, term)
 							stopHost()

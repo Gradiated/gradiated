@@ -5,13 +5,13 @@ import {
   enrollmentSchemaFiles,
   renderSchema,
   schemaPath,
-} from "../../scripts/enrollment-schemas.js";
+} from "../scripts/enrollment-schemas.js";
 import {
   ENROLL_COMMAND,
   enroll,
   enrollmentPayload,
-} from "../../src/instances/enrollment.js";
-import type { RunSsh } from "../../src/instances/ssh.js";
+} from "../src/enrollment.js";
+import type { RunSsh } from "../src/ssh.js";
 
 const instance = {
   provider: "runpod",

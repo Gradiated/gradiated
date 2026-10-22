@@ -90,10 +90,13 @@ use short-lived signed downloads issued by that listener. GPUs have no grant or
 VPC route to PostgreSQL, Valkey, the Kubernetes API, or unrelated internal services.
 The [Tailscale guide](../infra/modules/tailscale/README.md) defines the network policy.
 
-Provider resets destroy local state. Do not reset an allocated GPU to update
-software. Host-agent updates are host bundle pins, which the controller rolls out one host
-at a time without changing active runtime profiles; model updates belong in
-Kubernetes Rollouts.
+Host software changes are pins in `gpu-inference/pins.json`. The `gpu-fleet`
+operator rolls them out one host at a time: a new host bundle in place, without
+restarting serving processes; a new GPU base image by moving the host's pods to
+other hosts first, then re-imaging and re-enrolling it. A provider reset destroys
+local state, so only the operator's drained rollout resets pods; model updates
+belong in Kubernetes Rollouts. See
+[the GPU controller guide](../tools/virtual-kubelet/README.md#rolling-hosts-onto-the-pins).
 
 Administrators reach GPU hosts only with Tailscale SSH as root. The tailnet policy
 allows it for tailnet admins in check mode, which repeats the Google sign-in with

@@ -43,7 +43,7 @@ describe("the GPU fleet operator", () => {
       createFleet({
         api: cluster.api,
         metrics,
-        ping: (id) => pingHost(id, agents.keys, agents.endpoint),
+        ping: (id) => pingHost(id, agents.keys, agents.endpoint, 200),
         sync: () => (hosts, beforeCommit) =>
           syncFleetInstances(database.database, hosts, {
             now: syncTime,
@@ -208,7 +208,7 @@ describe("the GPU fleet operator", () => {
     const fleet = createFleet({
       api: cluster.api,
       metrics,
-      ping: (id) => pingHost(id, agents.keys, agents.endpoint),
+      ping: (id) => pingHost(id, agents.keys, agents.endpoint, 200),
       sync: () =>
         credential
           ? (hosts) => syncFleetInstances(database.database, hosts)

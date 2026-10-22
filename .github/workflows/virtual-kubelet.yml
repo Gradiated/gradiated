@@ -11,6 +11,8 @@ on:
       - "tools/security/check_tailscale_inference.py"
       - "infra/environments/prod/us-east-1/kubernetes/gpu-inference/**"
       - "infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml"
+      - "infra/environments/prod/us-east-1/kubernetes/operations/ops-mcp/workload.yaml"
+      - "infra/environments/prod/runpod/templates.json"
       - "infra/environments/prod/us-east-1/kubernetes/platform/argo-rollouts.yaml"
       - "infra/environments/prod/us-east-1/kubernetes/platform/external-secrets.yaml"
       - "infra/environments/prod/us-east-1/kubernetes/platform/gpu-inference.yaml"
@@ -139,6 +141,8 @@ jobs:
         run: python3 tools/security/check_gpu_inference.py
       - name: Check GpuHost validation on a real API server
         run: python3 tools/gpu/gpuhost_crd_test.py
+      - name: Check what the gpu-fleet operator may change on pods and nodes
+        run: python3 tools/gpu/gpu_fleet_policy_test.py
       - name: Check Argo CD's GpuHost health
         run: python3 tools/gpu/gpuhost_health_test.py
 

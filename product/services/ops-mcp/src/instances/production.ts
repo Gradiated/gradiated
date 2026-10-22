@@ -15,17 +15,20 @@ import {
 } from "@gradiated/control";
 import { z } from "zod";
 
-import { enrollmentPayload } from "./enrollment.js";
 import { createRegistrations } from "./registration.js";
 import { createRunPodProvider } from "./runpod.js";
-import { sshRunner } from "./ssh.js";
 import {
   bootstrapAuthKey,
   claimInstanceName,
+  enrollmentPayload,
+  localStatus,
   releaseInstanceName,
+  socksConnector,
+  sshRunner,
   tailscaleAuthKey,
-} from "./tailscale.js";
-import { localStatus, socksConnector } from "./tailnet.js";
+} from "@gradiated/gpu-hosts";
+
+import { readSecret } from "./aws.js";
 
 export type RegistrationSettings = {
   readonly credentialsDirectory: string;
@@ -38,6 +41,24 @@ export type RegistrationSettings = {
     readonly localApiSocket: string;
   };
 };
+
+const oauthCredentials = (secret: string) => () =>
+  readSecret(
+    secret,
+    z.object({
+      client_id: z.string().min(1),
+      client_secret: z.string().min(1),
+    }),
+  );
+const enrollmentCredentials = oauthCredentials(
+  "gradiated/prod/platform/tailscale-gpu-enrollment",
+);
+// Its OAuth client can only issue tag:gpu-bootstrap keys, which have no
+// network grants: only administrators and ops-mcp reach such a pod, over
+// Tailscale SSH.
+const bootstrapCredentials = oauthCredentials(
+  "gradiated/prod/platform/tailscale-gpu-bootstrap",
+);
 
 export const productionRegistrations = (
   settings: RegistrationSettings,
@@ -62,14 +83,16 @@ export const productionRegistrations = (
             socksConnector("127.0.0.1", settings.tailnet.socksPort),
           ),
           status: () => localStatus(settings.tailnet.localApiSocket),
-          releaseName: (instanceId: string) => releaseInstanceName(instanceId),
+          releaseName: (instanceId: string) =>
+            releaseInstanceName(instanceId, fetch, enrollmentCredentials),
           claimName: (instanceId: string, since: Date) =>
-            claimInstanceName(instanceId, since),
+            claimInstanceName(instanceId, since, fetch, enrollmentCredentials),
         };
 
         return createRunPodProvider({
           apiKey: await credential("runpod-api-key"),
-          bootstrapKey: (podId: string) => bootstrapAuthKey(podId),
+          bootstrapKey: (podId: string) =>
+            bootstrapAuthKey(podId, fetch, bootstrapCredentials),
           audit,
           tailnet,
         });
@@ -187,7 +210,8 @@ export const productionRegistrations = (
         };
       }
     },
-    tailscaleAuthKey,
+    tailscaleAuthKey: (instanceId) =>
+      tailscaleAuthKey(instanceId, fetch, enrollmentCredentials),
     audit,
   });
 };

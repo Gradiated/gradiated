@@ -2,8 +2,8 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { sshRunner } from "../../src/instances/ssh.js";
-import { bootstrapPeer, socksConnector } from "../../src/instances/tailnet.js";
+import { sshRunner } from "../src/ssh.js";
+import { bootstrapPeer, socksConnector } from "../src/tailnet.js";
 
 // A container stands in for a bootstrap GPU pod: OpenSSH accepts "none"
 // authentication for root, as Tailscale SSH does, on a tailnet-range address,

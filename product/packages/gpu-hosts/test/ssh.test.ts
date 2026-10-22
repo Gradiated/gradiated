@@ -4,7 +4,7 @@ import type { Duplex } from "node:stream";
 import { Server, utils } from "ssh2";
 import { describe, expect, it } from "vitest";
 
-import { sshRunner } from "../../src/instances/ssh.js";
+import { sshRunner } from "../src/ssh.js";
 
 const key = () =>
   generateKeyPairSync("rsa", { modulusLength: 2048 })

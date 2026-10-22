@@ -21,10 +21,15 @@ const answering = {
   reachable: true as const,
   instanceId: FIRST,
   hostBundleSha256: "b".repeat(64),
+  previousHostBundleSha256: "",
+  failedHostBundleSha256: "",
+  stagingFailedHostBundleSha256: "",
+  trial: false,
 };
 const silent = {
   reachable: false as const,
   error: "The host agent is unreachable",
+  silent: true,
 };
 const condition = (status: GpuHost["status"], type: string) =>
   status?.conditions?.find((item) => item.type === type);
@@ -109,5 +114,42 @@ describe("GpuHost status", () => {
       reason: "PostgresConflict",
       message: "PostgreSQL records pod pod1 as instance other",
     });
+  });
+
+  it("reports a failed rollout as Degraded even while the host answers", () => {
+    const failed = host({
+      rollout: {
+        kind: "reimage",
+        target: {
+          image: "image",
+          bundle: { sha256: "b".repeat(64), baseId: "v3" },
+        },
+        step: "Enroll",
+        result: "Failed",
+        startedAt: created,
+        stepStartedAt: created,
+        lastError: "Enroll did not finish within 45 minutes",
+      },
+    });
+    const status = hostStatus(failed, { observation: answering }, at(10));
+    expect(status.phase).toBe("Degraded");
+    expect(condition(status, "Degraded")).toMatchObject({
+      reason: "RolloutFailed",
+      message:
+        "The reimage rollout failed at Enroll: Enroll did not finish within 45 minutes",
+    });
+  });
+
+  it("keeps the last real answer when a host goes silent, not the older stored lastSeen", () => {
+    const stored = host({
+      phase: "Ready",
+      observed: { reachable: true, lastSeen: at(0).toISOString() },
+    });
+    const status = hostStatus(
+      stored,
+      { observation: silent, lastAnswered: at(240).toISOString() },
+      at(250),
+    );
+    expect(status.observed?.lastSeen).toBe(at(240).toISOString());
   });
 });

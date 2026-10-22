@@ -1,6 +1,6 @@
 import type { InstanceRegistration } from "@gradiated/control";
 
-import type { EnrollmentPayload, EnrollmentResult } from "./enrollment.js";
+import type { EnrollmentPayload, EnrollmentResult } from "@gradiated/gpu-hosts";
 
 export type ProviderInstance = InstanceRegistration;
 

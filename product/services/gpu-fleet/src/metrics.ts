@@ -58,6 +58,72 @@ export const createMetrics = () => {
       labelNames: ["change"],
       registers: [registry],
     }),
+    mode: new Gauge({
+      name: "gradiated_gpu_fleet_mode",
+      help: "1 for the mode the operator runs in: observe or act",
+      labelNames: ["mode"],
+      registers: [registry],
+    }),
+    rolloutStep: new Gauge({
+      name: "gradiated_gpu_fleet_rollout_step",
+      help: "1 for the step a host's running rollout is in",
+      labelNames: ["instance_id", "kind", "step"],
+      registers: [registry],
+    }),
+    rolloutStepSeconds: new Gauge({
+      name: "gradiated_gpu_fleet_rollout_step_seconds",
+      help: "How long a host's running rollout has been in its step",
+      labelNames: ["instance_id"],
+      registers: [registry],
+    }),
+    planned: new Gauge({
+      name: "gradiated_gpu_fleet_rollout_planned",
+      help: "1 when the operator would start this kind of rollout on a host",
+      labelNames: ["instance_id", "kind"],
+      registers: [registry],
+    }),
+    rolloutBlocked: new Gauge({
+      name: "gradiated_gpu_fleet_rollout_blocked",
+      help: "1 while a host's blocked rollout holds the fleet, waiting for capacity",
+      labelNames: ["instance_id"],
+      registers: [registry],
+    }),
+    keyRevocationFailures: new Counter({
+      name: "gradiated_gpu_fleet_key_revocation_failures_total",
+      help: "Single-use Tailscale keys the operator could not revoke",
+      registers: [registry],
+    }),
+    rolloutErrors: new Counter({
+      name: "gradiated_gpu_fleet_rollout_errors_total",
+      help: "Rollout passes that failed before finishing",
+      registers: [registry],
+    }),
+    // The names below are the ones gpu-controller exported before the
+    // rollout moved here, so existing alerts and dashboards keep working.
+    rolloutFailed: new Gauge({
+      name: "gradiated_gpu_host_update_failed",
+      help: "1 while a host's failed rollout holds the fleet",
+      labelNames: ["instance_id"],
+      registers: [registry],
+    }),
+    lastSeen: new Gauge({
+      name: "gradiated_gpu_host_last_seen_seconds",
+      help: "When the host agent last answered ping, or 0 if never",
+      labelNames: ["instance_id"],
+      registers: [registry],
+    }),
+    bundleInfo: new Gauge({
+      name: "gradiated_gpu_host_bundle_info",
+      help: "The host bundle a host runs",
+      labelNames: ["instance_id", "sha256", "previous_sha256"],
+      registers: [registry],
+    }),
+    bundleDrift: new Gauge({
+      name: "gradiated_gpu_host_bundle_drift",
+      help: "1 when a host runs a bundle other than the pin",
+      labelNames: ["instance_id"],
+      registers: [registry],
+    }),
   };
 };
 

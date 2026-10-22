@@ -33,7 +33,7 @@ describe("retiring and leadership", () => {
     const fleet = createFleet({
       api: cluster.api,
       metrics: createMetrics(),
-      ping: (id) => pingHost(id, agents.keys, agents.endpoint),
+      ping: (id) => pingHost(id, agents.keys, agents.endpoint, 200),
       sync: () => undefined,
       leading,
       log: () => {},
@@ -257,7 +257,7 @@ describe("retiring and leadership", () => {
     const fleet = createFleet({
       api: cluster.api,
       metrics: createMetrics(),
-      ping: async () => ({ reachable: false, error: "down" }),
+      ping: async () => ({ reachable: false, error: "down", silent: true }),
       sync: () => {
         throw new TypeError("Invalid URL");
       },

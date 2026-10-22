@@ -28,6 +28,12 @@ const problem = (
 ): Problem | undefined => {
   if (findings.conflict)
     return { reason: "PostgresConflict", message: findings.conflict };
+  const rollout = host.status?.rollout;
+  if (rollout?.result === "Failed")
+    return {
+      reason: "RolloutFailed",
+      message: `The ${rollout.kind} rollout failed at ${rollout.step}: ${rollout.lastError ?? "no reason recorded"}`,
+    };
   if (findings.serviceError)
     return { reason: "ServiceFailed", message: findings.serviceError };
   const { observation } = findings;

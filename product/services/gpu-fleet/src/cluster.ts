@@ -1,0 +1,223 @@
+import { z } from "zod";
+
+import { hostName, NODES, PODS, ROLLOUTS, SCALED_OBJECTS } from "./hosts.js";
+import { CORDONED_BY } from "./drain.js";
+import type { Kubernetes } from "./kubernetes.js";
+
+const MODEL_LABEL = "app.kubernetes.io/name";
+const QUALIFIED_RUNTIME = "gradiated.com/qualified-runtime";
+// KEDA scales the target to this count and stops autoscaling while it is set.
+export const PAUSED_REPLICAS = "autoscaling.keda.sh/paused-replicas";
+const GPU_RESOURCE = "nvidia.com/gpu";
+// The ReplicaSet controller removes the pod with the lowest cost first.
+export const DELETION_COST = "controller.kubernetes.io/pod-deletion-cost";
+
+const podSchema = z.object({
+  metadata: z.object({
+    name: z.string(),
+    uid: z.string(),
+    labels: z.record(z.string(), z.string()).optional(),
+    annotations: z.record(z.string(), z.string()).optional(),
+    deletionTimestamp: z.string().optional(),
+    ownerReferences: z
+      .array(z.object({ kind: z.string(), name: z.string() }))
+      .optional(),
+  }),
+  spec: z
+    .object({
+      nodeName: z.string().optional(),
+      containers: z
+        .array(
+          z.object({
+            resources: z
+              .object({
+                requests: z.record(z.string(), z.string()).optional(),
+                limits: z.record(z.string(), z.string()).optional(),
+              })
+              .optional(),
+          }),
+        )
+        .optional(),
+    })
+    .optional(),
+  status: z
+    .object({
+      phase: z.string().optional(),
+      conditions: z
+        .array(
+          z.object({
+            type: z.string(),
+            status: z.string(),
+            reason: z.string().optional(),
+            lastTransitionTime: z.string().optional(),
+          }),
+        )
+        .optional(),
+    })
+    .optional(),
+});
+
+export type ClusterPod = {
+  name: string;
+  uid: string;
+  model?: string;
+  training: boolean;
+  node?: string;
+  ready: boolean;
+  terminating: boolean;
+  gpus: number;
+  // Since when the scheduler has found no node for it.
+  unschedulableSince?: string;
+  qualifiedRuntime?: string;
+};
+
+const clusterPod = (item: unknown): ClusterPod | undefined => {
+  const parsed = podSchema.safeParse(item);
+  if (!parsed.success) return;
+
+  const { metadata, spec, status } = parsed.data;
+  if (["Succeeded", "Failed"].includes(status?.phase ?? "")) return;
+
+  const condition = (type: string) =>
+    status?.conditions?.find((entry) => entry.type === type);
+  const scheduled = condition("PodScheduled");
+  return {
+    name: metadata.name,
+    uid: metadata.uid,
+    ...(metadata.labels?.[MODEL_LABEL] &&
+      metadata.ownerReferences?.some(
+        (owner) => owner.kind === "ReplicaSet",
+      ) && {
+        model: metadata.labels[MODEL_LABEL],
+      }),
+    training:
+      metadata.annotations?.["gradiated.com/workload-kind"] === "training",
+    ...(spec?.nodeName && { node: spec.nodeName }),
+    ready: condition("Ready")?.status === "True",
+    terminating: Boolean(metadata.deletionTimestamp),
+    gpus: (spec?.containers ?? []).reduce(
+      (sum, { resources }) =>
+        sum +
+        Number(
+          resources?.limits?.[GPU_RESOURCE] ??
+            resources?.requests?.[GPU_RESOURCE] ??
+            0,
+        ),
+      0,
+    ),
+    ...(scheduled?.status === "False" &&
+      scheduled.reason === "Unschedulable" && {
+        unschedulableSince: scheduled.lastTransitionTime ?? "",
+      }),
+    ...(metadata.annotations?.[QUALIFIED_RUNTIME] && {
+      qualifiedRuntime: metadata.annotations[QUALIFIED_RUNTIME],
+    }),
+  };
+};
+
+const selector = (key: string, value: string) =>
+  encodeURIComponent(`${key}=${value}`);
+
+export type NodeState = { ready: boolean; unschedulable: boolean };
+
+// The value of the drain's CORDONED_BY marker for a rollout's cordon.
+export const ROLLOUT_CORDON = "gpu-fleet-rollout";
+
+type Node = {
+  metadata?: { resourceVersion?: string; annotations?: Record<string, string> };
+  spec?: { unschedulable?: boolean };
+};
+
+export const createCluster = (api: Kubernetes) => {
+  const nodePath = (instanceId: string) => `${NODES}/${hostName(instanceId)}`;
+
+  return {
+    node: async (instanceId: string): Promise<NodeState | undefined> => {
+      const node = (await api.get(nodePath(instanceId))) as
+        | {
+            spec?: { unschedulable?: boolean };
+            status?: { conditions?: { type: string; status: string }[] };
+          }
+        | undefined;
+      if (!node) return;
+
+      return {
+        ready:
+          node.status?.conditions?.find((entry) => entry.type === "Ready")
+            ?.status === "True",
+        unschedulable: Boolean(node.spec?.unschedulable),
+      };
+    },
+
+    // A rollout cordons with its own marker, which the drain's
+    // uncordonIfReturned leaves alone, and uncordons only a node it marked.
+    // A node someone else cordoned stays as it is. The resourceVersion stops a
+    // cordon applied between the read and the patch from being overwritten.
+    cordon: async (instanceId: string) => {
+      const node = (await api.get(nodePath(instanceId))) as Node | undefined;
+      if (!node || node.spec?.unschedulable) return;
+      await api.mergePatch(nodePath(instanceId), {
+        metadata: {
+          resourceVersion: node.metadata?.resourceVersion,
+          annotations: { [CORDONED_BY]: ROLLOUT_CORDON },
+        },
+        spec: { unschedulable: true },
+      });
+    },
+
+    uncordon: async (instanceId: string) => {
+      const node = (await api.get(nodePath(instanceId))) as Node | undefined;
+      if (node?.metadata?.annotations?.[CORDONED_BY] !== ROLLOUT_CORDON) return;
+      await api.mergePatch(nodePath(instanceId), {
+        metadata: {
+          resourceVersion: node.metadata.resourceVersion,
+          annotations: { [CORDONED_BY]: null },
+        },
+        spec: { unschedulable: false },
+      });
+    },
+
+    podsOn: async (instanceId: string) =>
+      (
+        await api.list(
+          `${PODS}?fieldSelector=${selector("spec.nodeName", hostName(instanceId))}`,
+        )
+      )
+        .map(clusterPod)
+        .filter((pod): pod is ClusterPod => pod !== undefined),
+
+    modelPods: async (model: string) =>
+      (await api.list(`${PODS}?labelSelector=${selector(MODEL_LABEL, model)}`))
+        .map(clusterPod)
+        .filter((pod): pod is ClusterPod => pod?.model === model),
+
+    replicas: async (model: string) => {
+      const rollout = (await api.get(`${ROLLOUTS}/${model}`)) as
+        { spec?: { replicas?: number } } | undefined;
+      if (rollout?.spec?.replicas === undefined)
+        throw new Error(`Rollout ${model} has no replica count`);
+      return rollout.spec.replicas;
+    },
+
+    // Sets or clears KEDA's paused replica count, writing only on a change.
+    pauseScaling: async (model: string, replicas: number | null) => {
+      const scaled = (await api.get(`${SCALED_OBJECTS}/${model}`)) as
+        { metadata?: { annotations?: Record<string, string> } } | undefined;
+      if (!scaled) throw new Error(`ScaledObject ${model} is missing`);
+
+      const current = scaled.metadata?.annotations?.[PAUSED_REPLICAS] ?? null;
+      const wanted = replicas === null ? null : String(replicas);
+      if (current !== wanted)
+        await api.mergePatch(`${SCALED_OBJECTS}/${model}`, {
+          metadata: { annotations: { [PAUSED_REPLICAS]: wanted } },
+        });
+    },
+
+    removeFirst: (pod: ClusterPod) =>
+      api.mergePatch(`${PODS}/${pod.name}`, {
+        metadata: { annotations: { [DELETION_COST]: "-10000" } },
+      }),
+  };
+};
+
+export type Cluster = ReturnType<typeof createCluster>;

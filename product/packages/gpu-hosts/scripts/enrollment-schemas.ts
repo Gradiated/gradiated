@@ -6,7 +6,7 @@ import { z } from "zod";
 import {
   enrollmentPayloadSchema,
   enrollmentResultSchema,
-} from "../src/instances/enrollment.js";
+} from "../src/enrollment.js";
 
 // The GPU base image validates enrollment against these files.
 export const enrollmentSchemaFiles = {

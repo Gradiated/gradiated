@@ -269,17 +269,26 @@ host releases update the active version without rebuilding the base or model
 bundles. Historical recovery fixtures under `images/gpu-base/recovery/` qualify
 legacy hosts only. See [the GPU images guide](../../product/inference/images/README.md).
 
-`gpu-inference/host.json` is initially `null`: legacy hosts continue serving and
-no host software update is requested. After installing the launcher on retained
-hosts, pin a **host** release artifact and commit the generated configuration:
+`gpu-inference/pins.json` is the only place the host image and bundle are pinned:
+the GPU base `image` (its input-hash tag, because RunPod pulls ECR images only by
+tag), the `imageDigest` that tag must resolve to, and the `hostBundle` (`sha256`
+and `baseId`). The renderer writes the image into
+`infra/environments/prod/runpod/templates.json` and the image and bundle into the
+ops-mcp workload, and `--check` fails if either copy differs. On a pull request
+that changes the pins, `.github/workflows/gpu-pins.yml` checks in ECR that the
+tag resolves to `imageDigest` and that the image's `/etc/gradiated/base-id`
+equals `hostBundle.baseId` (`tools/gpu/check_pinned_image.py`). ECR tags in this
+account are immutable, so the operator, which sees only the tag RunPod reports,
+compares tags. Switching the operator to `MODE=act` needs a v3 image and a v3
+bundle pinned together. Pin a published host release and commit the generated
+configuration:
 
 ```sh
 python3 tools/gpu/pin-host.py /path/to/host-runtime-release/release.json
 python3 tools/gpu/render-config.py --check
 ```
 
-The pin has `sha256` and `base_id` fields. A different base is rejected before
-download. Hosts use the existing downloader and short-lived control-bridge grants. Root
+A host whose bundle base differs from its own rejects it before download. Hosts use the existing downloader and short-lived control-bridge grants. Root
 copies the downloaded archive into private storage and independently verifies its
 digest before extracting; it then checks the file manifest and copies the result into root-owned `/var/lib/gradiated-kubelet/host/<digest>`. Downloaders
 cannot modify the promoted code or launcher state. Extraction, validation and
@@ -304,37 +313,91 @@ previous, one unused verified bundle, and code referenced by live task/proxy
 workers are retained. This last exception preserves workers across successive
 agent updates.
 
-Argo CD reconciles the model Rollouts and the controller's host-bundle pin.
-Argo Rollouts manages model pod updates; the GPU controller sequences host-agent
-updates itself. Models and host agents run verified tarballs unpacked on disk.
-Their Dockerfiles package and verify those artifacts in CI; the GPU provider
-still starts hosts from a base container image.
+### Rolling hosts onto the pins
 
-A serial background controller worker observes every host before starting and
-updates hosts in instance ID order. Node health checks and metric scrapes never wait
-on rollout I/O. It requires five continuous minutes of model readiness with unchanged
-serving process identities before advancing. A missing original serving pod also
-stops the update, so concurrent model rescheduling cannot certify the host bundle. Staging has a 35-minute
-deadline; its download time does not consume the health grace or serving soak.
-Continuous agent or model health failure has a separate two-minute limit; an updated host that remains unreachable or unready stops the rollout.
-One node annotation (`gradiated.com/host-bundle-update`) checkpoints the release,
-phase, original process identities and deadline before staging. A new leader
-resumes that host and repeats the full soak while retaining the baseline and
-deadline. Failure annotation and event writes retry on API outages. Ambiguous
-configure responses retry on the same host. The health grace measures continuous
-failure separately from download time and resets when health returns. `GpuHostUpdateFailed` events
-and alerts stop the fleet update; repair the bundle and pin a new digest. To
-revert, pin a previously healthy release. A failed digest requires deliberate
-operator investigation before clearing its launcher failure and node annotation.
-The recovery `ping`, `claim` and `configure` operations and additive on-disk
-state must remain compatible with every retained recovery agent indefinitely;
-one-release compatibility applies only to the remaining API.
+The `gpu-fleet` operator (`product/services/gpu-fleet`) moves hosts onto the pins
+one at a time, and records each host's progress in `status.rollout` of its
+`GpuHost`, so a new leader or a restarted operator resumes at the same step:
 
-The controller's `/metrics` exposes running/previous digest information, drift
-from the Git pin, and rollout failure. The controllers dashboard shows host
-versions only while host observations are fresh, and a separate panel shows
-telemetry age. Drift alerts after 24 hours; stale host telemetry and missing
-controller scrapes also alert.
+- A host on another image is re-imaged: cordon its node (or block, if it runs a
+  training pod); for each model with
+  pods on it, raise the model's replica count by pausing its KEDA ScaledObject
+  (`autoscaling.keda.sh/paused-replicas`) and wait until the replacements are
+  Ready on other hosts; mark the host's pods to be removed first
+  (`controller.kubernetes.io/pod-deletion-cost`) and lower the count again, so no
+  model ever has fewer Ready replicas than it had; resume KEDA; re-image the pod
+  through RunPod with a single-use bootstrap key; wait for
+  `gpu-bootstrap-<pod>`; free the `gpu-<instance id>` name; run
+  `gradiated-host enroll`; wait for promotion and claim the exact name; wait until
+  the host answers on the pinned bundle with its node Ready; soak five minutes;
+  uncordon. Every step has a deadline. The operator records the surge and the
+  re-image request (with the key's ID) before acting, so a restart at any step
+  neither surges twice nor re-images twice, and it revokes every key it minted
+  (failures increment `gradiated_gpu_fleet_key_revocation_failures_total`).
+  RunPod shows the new image as soon as it accepts a re-image, and the container
+  starts once the image is pulled; the operator waits for that, and asks again
+  only if the pod is still on its old image ten minutes later. If RunPod refuses
+  the request (a 4xx answer), the key is revoked and the request sent again at
+  once; after a timeout or a 5xx, the request and key stand, because RunPod may
+  have applied it. If there is no room for a replacement, the operator reverts
+  the surge, uncordons the host and marks it Blocked; no other host starts a
+  re-image until the blocked host's serving pods would fit on the other Ready,
+  schedulable hosts with the same GPU product, and each retry of the same host
+  waits twice as long as the last (5 minutes, then 10, up to an hour), so
+  autoscaling that only fills GPUs never restarts it. `GpuHostRolloutBlocked`
+  fires after two hours blocked.
+- A host on the pinned image but another bundle is updated in place: the operator
+  writes the bundle to `status.rollout.bundle`, the controller (which holds the
+  fencing epoch) sends it with `configure`, and the operator requires the host to
+  run it for five minutes with every serving pod still on the host, Ready, with
+  its qualified runtime unchanged.
+- A host that has never answered since its `GpuHost` was added, and whose tailnet
+  device has not been seen since then, is enrolled after ten minutes. A host
+  whose container was wiped is re-enrolled when all of these hold: its agent
+  times out (an operator-side error, such as a missing key, an unreadable
+  answer, or an egress Service with no DNS name or nothing listening, proves
+  nothing); no tailnet device for it is connected; its container
+  started at or after the agent last answered and after the device was last
+  seen; and ten minutes have passed since that start. A host that is merely
+  unreachable, as in a provider network outage, keeps its device seen after its
+  container started and is left alone. The operator checks again that the host
+  is silent and disconnected immediately before it re-images it through RunPod.
+  Recovering and enrolling hosts go ahead even while a re-image is blocked.
+
+Hosts with no serving pods go first, so the spare host proves a new image before
+any other. The first failure holds the fleet: the host stays cordoned, its
+`GpuHost` is Degraded with the step and reason, `GpuHostUpdateFailed` fires, and
+no other host starts until the pins change or someone sets the
+`fleet.gradiated.com/retry` annotation on the host to a new value; a retry
+restarts only that host. A host on the old image keeps its old bundle until it
+is re-imaged.
+
+Only the leader acts, and it checks its lease before every side effect. Status
+writes carry the `GpuHost`'s resourceVersion, so a deposed leader's write fails.
+An enrollment records who started it and when; a new leader waits until that run
+could no longer be going before it starts another. Admission policies in
+`gpu-fleet.yaml` let the operator's service account change only a pod's
+`controller.kubernetes.io/pod-deletion-cost` annotation, a node's
+`spec.unschedulable` and its `fleet.gradiated.com/cordoned-by` marker, and a
+ScaledObject's `autoscaling.keda.sh/paused-replicas` annotation. A rollout marks
+its cordon `gpu-fleet-rollout` (the drain uses `gpu-fleet`) and uncordons only a
+node it marked, so a node someone cordoned by hand stays cordoned.
+
+The operator runs in `MODE=observe` until switched to `act`. Observe mode holds
+only the destructive steps: re-image, enroll and recover are written to each
+`GpuHost`'s `status.plan` as what the operator would do, and a rollout already
+under way pauses. In-place bundle updates keep running in both modes, because
+the host's launcher rolls a failed bundle back by itself. The operator reads each
+pod's image and container start from RunPod, with the key in
+`gradiated/prod/platform/gpu-fleet` (property `runpod-api-key`); it tries to read
+that key on every pass, and until it can it reports re-imaging hosts as waiting.
+Until PR 4 removes it, ops-mcp keeps its own enrollment path for hosts it
+registers.
+
+The operator exports host bundle versions, drift from the pin, rollout steps and
+failures under the metric names the controller used before
+(`gradiated_gpu_host_*`), so the controllers dashboard and alerts are unchanged;
+`GpuHostRolloutStuck` fires if a host stays in one step for two hours.
 
 Local checks use fake bundles and processes without GPUs or production access:
 

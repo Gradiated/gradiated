@@ -133,6 +133,27 @@ class GpuHostCrdTest(unittest.TestCase):
         phase = self.kubectl('get', 'gpuhost', name, '-o', 'jsonpath={.status.phase}').stdout
         self.assertEqual(phase, 'Ready')
 
+    def test_rollout_status_is_kept_and_its_bundle_validated(self):
+        document = self.host()
+        self.apply(document)
+        name = document['metadata']['name']
+        now = '2026-10-22T12:00:00Z'
+        bundle = {'sha256': 'b' * 64, 'baseId': 'ubuntu24-cuda13-amd64-v3'}
+        rollout = {'kind': 'reimage', 'target': {'image': 'example/gpu-base:v3', 'bundle': bundle}, 'step': 'Surge',
+                   'result': 'Running', 'startedAt': now, 'stepStartedAt': now, 'bundle': bundle,
+                   'surge': [{'model': 'kev', 'replicas': 2, 'extra': 1}], 'baseline': {'uid': 'kev-1:1'},
+                   'keys': ['bootstrap:k1']}
+        self.kubectl('patch', 'gpuhost', name, '--subresource=status', '--type=merge',
+                     '-p', json.dumps({'status': {'plan': 'Would reimage', 'rollout': rollout}}))
+        stored = json.loads(self.kubectl('get', 'gpuhost', name, '-o', 'json').stdout)['status']
+        self.assertEqual(stored['rollout'], rollout)
+        self.assertEqual(stored['plan'], 'Would reimage')
+
+        invalid = self.kubectl('patch', 'gpuhost', name, '--subresource=status', '--type=merge', '-p',
+                               json.dumps({'status': {'rollout': {'bundle': {'sha256': '../escape'}}}}), check=False)
+        self.assertNotEqual(invalid.returncode, 0)
+        self.assertIn('status.rollout.bundle.sha256', invalid.stderr)
+
 
 if __name__ == '__main__':
     unittest.main()

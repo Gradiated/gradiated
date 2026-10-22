@@ -1,31 +1,16 @@
-import { z } from "zod";
-
-import { enroll, type EnrollmentPayload } from "./enrollment.js";
-import type { RunSsh, SshTarget } from "./ssh.js";
-import type { InstanceProvider, ProviderInstance } from "./provider.js";
 import {
   bootstrapPeer,
+  createRunPodClient,
+  enroll,
   waitForPromotion,
+  type EnrollmentPayload,
+  type RunPod,
+  type RunSsh,
+  type SshTarget,
   type TailnetStatus,
-} from "./tailnet.js";
+} from "@gradiated/gpu-hosts";
 
-const API = "https://rest.runpod.io/v1";
-const REQUEST_TIMEOUT_MS = 30_000;
-
-const podSchema = z.object({
-  id: z.string(),
-  consumerUserId: z.string(),
-  machineId: z.string(),
-  gpuCount: z.number().int().nonnegative(),
-  vcpuCount: z.number().int().positive(),
-  desiredStatus: z.string().optional(),
-  imageName: z.string().optional(),
-  env: z.record(z.string(), z.string()).nullish(),
-  machine: z.object({
-    dataCenterId: z.string().nullish(),
-    gpuTypeId: z.string().nullish(),
-  }),
-});
+import type { InstanceProvider, ProviderInstance } from "./provider.js";
 
 export interface RunPodOptions {
   readonly apiKey: string;
@@ -56,37 +41,12 @@ export const createRunPodProvider = ({
   audit,
   tailnet,
 }: RunPodOptions): InstanceProvider => {
-  const call = async (
-    method: string,
-    path: string,
-    body?: unknown,
-  ): Promise<unknown> => {
-    const response = await request(`${API}${path}`, {
-      method,
-      headers: {
-        authorization: `Bearer ${apiKey}`,
-        "content-type": "application/json",
-        // RunPod's edge rejects requests without a client identity.
-        "user-agent": "gradiated-ops-mcp",
-      },
-      body: body === undefined ? null : JSON.stringify(body),
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    });
-    const text = await response.text();
-    if (!response.ok) {
-      throw new Error(`RunPod ${method} ${path} failed: ${response.status}`);
-    }
-
-    return text === "" ? null : JSON.parse(text);
-  };
-
-  const pod = async (podId: string) =>
-    podSchema.parse(
-      await call(
-        "GET",
-        `/pods/${encodeURIComponent(podId)}?includeMachine=true`,
-      ),
-    );
+  const runpod = createRunPodClient({
+    apiKey,
+    fetch: request,
+    userAgent: "gradiated-ops-mcp",
+  });
+  const pod = runpod.pod;
 
   const tailnetTarget = async (podId: string): Promise<SshTarget | null> => {
     const peer = bootstrapPeer(await tailnet.status(), podId);
@@ -95,15 +55,12 @@ export const createRunPodProvider = ({
     );
   };
 
-  const transport = async (current: z.infer<typeof podSchema>) => {
+  const transport = async (current: RunPod) => {
     const target = await tailnetTarget(current.id);
     return target && { run: tailnet.run, target };
   };
 
-  const install = async (
-    current: z.infer<typeof podSchema>,
-    payload: EnrollmentPayload,
-  ) => {
+  const install = async (current: RunPod, payload: EnrollmentPayload) => {
     const route = await transport(current);
     if (!route) throw new Error("No enrollment connection to the GPU pod");
 
@@ -234,7 +191,7 @@ export const createRunPodProvider = ({
         // image pulls through the account's ECR delegation, so no registry
         // login is set. v5 pods expose no ports: Tailscale SSH is the only
         // shell, so the public SSH key is dropped too.
-        await call("PATCH", `/pods/${current.id}`, {
+        await runpod.update(current.id, {
           imageName: image,
           ports: [],
           env: {
@@ -249,7 +206,7 @@ export const createRunPodProvider = ({
         });
         // Updating a stopped pod only changes its configuration; it stays stopped.
         if (current.desiredStatus === "EXITED") {
-          await call("POST", `/pods/${current.id}/start`);
+          await runpod.start(current.id);
         }
         const deadline = Date.now() + 30 * 60 * 1000;
         while (Date.now() < deadline) {

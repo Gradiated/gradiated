@@ -1,30 +1,15 @@
 import { z } from "zod";
 
-import { readSecret } from "./aws.js";
-
 const API = "https://api.tailscale.com/api/v2";
 
-const oauthCredentials = (secret: string) => () =>
-  readSecret(
-    secret,
-    z.object({
-      client_id: z.string().min(1),
-      client_secret: z.string().min(1),
-    }),
-  );
-const enrollmentCredentials = oauthCredentials(
-  "gradiated/prod/platform/tailscale-gpu-enrollment",
-);
-// Its OAuth client can only issue tag:gpu-bootstrap keys, which have no
-// network grants: only administrators and ops-mcp reach such a pod, over
-// Tailscale SSH.
-const bootstrapCredentials = oauthCredentials(
-  "gradiated/prod/platform/tailscale-gpu-bootstrap",
-);
+export type OAuthCredentials = () => Promise<{
+  client_id: string;
+  client_secret: string;
+}>;
 
 const accessToken = async (
   request: typeof fetch,
-  credentials: typeof enrollmentCredentials,
+  credentials: OAuthCredentials,
 ) => {
   const response = await request(`${API}/oauth/token`, {
     method: "POST",
@@ -46,7 +31,7 @@ const singleUseKey = async (
   tag: string,
   description: string,
   request: typeof fetch,
-  credentials: typeof enrollmentCredentials,
+  credentials: OAuthCredentials,
 ) => {
   const token = await accessToken(request, credentials);
   const headers = {
@@ -84,25 +69,36 @@ const singleUseKey = async (
 
   return {
     key,
-    revoke: async () => {
-      const revoked = await request(
-        `${API}/tailnet/-/keys/${encodeURIComponent(id)}`,
-        {
-          method: "DELETE",
-          headers,
-          signal: AbortSignal.timeout(30_000),
-        },
-      );
-      if (!revoked.ok && revoked.status !== 404)
-        throw new Error(`Tailscale key revocation returned ${revoked.status}`);
-    },
+    id,
+    revoke: () => revokeAuthKey(id, request, credentials, token),
   };
+};
+
+// Revokes a key by ID, so a key minted before an operator restart can still be
+// revoked after it.
+export const revokeAuthKey = async (
+  id: string,
+  request: typeof fetch,
+  credentials: OAuthCredentials,
+  token?: string,
+) => {
+  const bearer = token ?? (await accessToken(request, credentials));
+  const revoked = await request(
+    `${API}/tailnet/-/keys/${encodeURIComponent(id)}`,
+    {
+      method: "DELETE",
+      headers: { authorization: `Bearer ${bearer}` },
+      signal: AbortSignal.timeout(30_000),
+    },
+  );
+  if (!revoked.ok && revoked.status !== 404)
+    throw new Error(`Tailscale key revocation returned ${revoked.status}`);
 };
 
 export const tailscaleAuthKey = async (
   instanceId: string,
   request: typeof fetch = fetch,
-  credentials = enrollmentCredentials,
+  credentials: OAuthCredentials,
 ) =>
   singleUseKey(
     "tag:gpu-inference",
@@ -114,7 +110,7 @@ export const tailscaleAuthKey = async (
 export const bootstrapAuthKey = async (
   podId: string,
   request: typeof fetch = fetch,
-  credentials = bootstrapCredentials,
+  credentials: OAuthCredentials,
 ) =>
   singleUseKey(
     "tag:gpu-bootstrap",
@@ -134,6 +130,8 @@ const deviceSchema = z.object({
   tags: z.array(z.string()).nullish(),
   created: z.string(),
   connectedToControl: z.boolean().optional(),
+  // Omitted while the device is connected.
+  lastSeen: z.string().optional(),
 });
 
 const tailnetAddress = (address: string) =>
@@ -142,7 +140,7 @@ const tailnetAddress = (address: string) =>
 const instanceDevices = async (
   instanceId: string,
   request: typeof fetch,
-  credentials: typeof enrollmentCredentials,
+  credentials: OAuthCredentials,
 ) => {
   const token = await accessToken(request, credentials);
   const api = (path: string, init: RequestInit = {}) =>
@@ -176,10 +174,36 @@ const instanceDevices = async (
 // A re-imaged pod joins as a new device, and Tailscale names it gpu-<id>-1
 // while the device from its previous boot is listed. Removing the old devices
 // first keeps the MagicDNS name gpu-<id> that the cluster routes to.
+export type InstanceTailnet = {
+  // A tag:gpu-inference device for gpu-<id> is connected to control.
+  connected: boolean;
+  // When control last saw any such device; undefined if there is none.
+  lastSeen?: string;
+};
+
+// What Tailscale's control plane knows of a host, independent of whether the
+// operator can reach it.
+export const instanceTailnet = async (
+  instanceId: string,
+  request: typeof fetch,
+  credentials: OAuthCredentials,
+): Promise<InstanceTailnet> => {
+  const { devices } = await instanceDevices(instanceId, request, credentials);
+  const connected = devices.some(
+    (device) => device.connectedToControl !== false,
+  );
+  const seen = devices
+    .map((device) => device.lastSeen)
+    .filter((value): value is string => value !== undefined)
+    .sort()
+    .at(-1);
+  return { connected, ...(seen && { lastSeen: seen }) };
+};
+
 export const releaseInstanceName = async (
   instanceId: string,
   request: typeof fetch = fetch,
-  credentials = enrollmentCredentials,
+  credentials: OAuthCredentials,
 ) => {
   const { api, hostname, devices } = await instanceDevices(
     instanceId,
@@ -207,7 +231,7 @@ export const claimInstanceName = async (
   instanceId: string,
   since: Date,
   request: typeof fetch = fetch,
-  credentials = enrollmentCredentials,
+  credentials: OAuthCredentials,
 ) => {
   const { api, hostname, devices } = await instanceDevices(
     instanceId,

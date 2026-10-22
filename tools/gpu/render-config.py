@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import argparse
 import hashlib
-import ipaddress
 import json
 import re
 from pathlib import Path
@@ -12,6 +11,9 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 KUBE = ROOT / 'infra/environments/prod/us-east-1/kubernetes'
 GPU = KUBE / 'gpu-inference'
+# Hosts are routed by MagicDNS name, which stays the same when a re-imaged pod
+# rejoins the tailnet with a new address.
+TAILNET = 'tail186117.ts.net'
 
 
 def inventory(entries):
@@ -20,29 +22,23 @@ def inventory(entries):
         instance = str(uuid.UUID(entry['instance_id']))
         if instance != entry['instance_id'] or instance in services:
             raise ValueError('Host IDs must be canonical and unique')
-        allowed = {'instance_id', 'tailscale_ip', 'management_secret', 'gpu_count', 'cpu', 'memory_gib', 'gpu_product'}
+        allowed = {'instance_id', 'management_secret', 'gpu_count', 'cpu', 'memory_gib', 'gpu_product'}
         if set(entry) - allowed:
             raise ValueError('Unknown host inventory fields')
         for field in ('gpu_count', 'cpu', 'memory_gib'):
             if field in entry and (type(entry[field]) is not int or entry[field] <= 0):
                 raise ValueError('Host resource budgets must be positive integers')
-        address = ipaddress.ip_address(entry['tailscale_ip'])
-        if address not in ipaddress.ip_network('100.64.0.0/10'):
-            raise ValueError('Expected a Tailscale IPv4 address')
-        if any(service['metadata']['annotations']['tailscale.com/tailnet-ip'] == str(address)
-               for service in services.values()):
-            raise ValueError('Hosts cannot share a Tailscale address')
         name = 'gpu-' + instance
         host = {'instance_id': instance,
                 'endpoint': f'http://{name}.tailscale-inference.svc.cluster.local:8888/_kubelet',
                 'token_file': f'/var/run/gradiated-host-keys/{instance}',
                 **{key: value for key, value in entry.items()
-                   if key not in ('instance_id', 'tailscale_ip', 'management_secret')}}
+                   if key not in ('instance_id', 'management_secret')}}
         hosts.append(host)
         services[instance] = {
             'apiVersion': 'v1', 'kind': 'Service',
             'metadata': {'name': name, 'namespace': 'tailscale-inference', 'annotations': {
-                'tailscale.com/tailnet-ip': str(address),
+                'tailscale.com/tailnet-fqdn': f'{name}.{TAILNET}',
                 'tailscale.com/proxy-group': 'inference-egress'}},
             'spec': {'type': 'ExternalName', 'externalName': 'unused',
                      'ports': [{'name': 'inference', 'port': 8888, 'protocol': 'TCP'}]}}

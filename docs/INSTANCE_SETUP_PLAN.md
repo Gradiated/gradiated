@@ -76,8 +76,9 @@ VPC route to PostgreSQL, Valkey, the Kubernetes API, or unrelated internal servi
 The [Tailscale guide](../infra/modules/tailscale/README.md) defines the network policy.
 
 Provider resets destroy local state. Do not reset an allocated GPU to update
-software. Apply host-agent updates over Tailscale SSH (`tools/gpu/rollout-host.py`)
-without changing active runtime profiles; model updates belong in Kubernetes Rollouts.
+software. Host-agent updates are host bundle pins, which the controller rolls out one host
+at a time without changing active runtime profiles; model updates belong in
+Kubernetes Rollouts.
 
 Administrators reach GPU hosts only with Tailscale SSH as root. The tailnet policy
 allows it for tailnet admins in check mode, which repeats the Google sign-in with

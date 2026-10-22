@@ -126,47 +126,114 @@ export const bootstrapAuthKey = async (
     credentials,
   );
 
-const devicesSchema = z.object({
-  devices: z.array(
-    z.object({
-      hostname: z.string(),
-      addresses: z.array(z.string()),
-      tags: z.array(z.string()).nullish(),
-      created: z.string(),
-    }),
-  ),
+const deviceSchema = z.object({
+  nodeId: z.string().min(1),
+  name: z.string(),
+  hostname: z.string(),
+  addresses: z.array(z.string()),
+  tags: z.array(z.string()).nullish(),
+  created: z.string(),
+  connectedToControl: z.boolean().optional(),
 });
 
-// Re-authentication registers the promoted pod as a new device with a new
-// address, which ops-mcp's own netmap cannot see.
-export const promotedAddress = async (
+const tailnetAddress = (address: string) =>
+  /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.\d+\.\d+$/.test(address);
+
+const instanceDevices = async (
+  instanceId: string,
+  request: typeof fetch,
+  credentials: typeof enrollmentCredentials,
+) => {
+  const token = await accessToken(request, credentials);
+  const api = (path: string, init: RequestInit = {}) =>
+    request(`${API}${path}`, {
+      ...init,
+      headers: {
+        authorization: `Bearer ${token}`,
+        "content-type": "application/json",
+      },
+      signal: AbortSignal.timeout(30_000),
+    });
+  const response = await api("/tailnet/-/devices");
+  if (!response.ok)
+    throw new Error(`Tailscale device listing returned ${response.status}`);
+
+  const hostname = `gpu-${z.uuid().parse(instanceId)}`;
+  // Tailscale renames a device whose name is taken to <name>-1, -2, ...
+  const label = new RegExp(`^${hostname}(-\\d+)?$`);
+  const devices = z
+    .object({ devices: z.array(deviceSchema) })
+    .parse(await response.json())
+    .devices.filter(
+      (device) =>
+        (device.tags ?? []).includes("tag:gpu-inference") &&
+        (device.hostname === hostname ||
+          label.test(device.name.split(".")[0]!)),
+    );
+  return { api, hostname, devices };
+};
+
+// A re-imaged pod joins as a new device, and Tailscale names it gpu-<id>-1
+// while the device from its previous boot is listed. Removing the old devices
+// first keeps the MagicDNS name gpu-<id> that the cluster routes to.
+export const releaseInstanceName = async (
+  instanceId: string,
+  request: typeof fetch = fetch,
+  credentials = enrollmentCredentials,
+) => {
+  const { api, hostname, devices } = await instanceDevices(
+    instanceId,
+    request,
+    credentials,
+  );
+  if (devices.some((device) => device.connectedToControl !== false))
+    throw new Error(
+      `A connected tag:gpu-inference device already uses ${hostname}`,
+    );
+
+  for (const device of devices) {
+    const removed = await api(`/device/${encodeURIComponent(device.nodeId)}`, {
+      method: "DELETE",
+    });
+    if (!removed.ok && removed.status !== 404)
+      throw new Error(`Tailscale device removal returned ${removed.status}`);
+  }
+  return devices.length;
+};
+
+// Re-authentication registers the promoted pod as a new device, which
+// ops-mcp's own netmap cannot see. Its MagicDNS name must be exactly gpu-<id>.
+export const claimInstanceName = async (
   instanceId: string,
   since: Date,
   request: typeof fetch = fetch,
   credentials = enrollmentCredentials,
 ) => {
-  const token = await accessToken(request, credentials);
-  const response = await request(`${API}/tailnet/-/devices`, {
-    headers: { authorization: `Bearer ${token}` },
-    signal: AbortSignal.timeout(30_000),
-  });
-  if (!response.ok)
-    throw new Error(`Tailscale device listing returned ${response.status}`);
-
-  const hostname = `gpu-${z.uuid().parse(instanceId)}`;
-  const device = devicesSchema
-    .parse(await response.json())
-    .devices.filter(
+  const { api, hostname, devices } = await instanceDevices(
+    instanceId,
+    request,
+    credentials,
+  );
+  const device = devices
+    .filter(
       (device) =>
         device.hostname === hostname &&
-        (device.tags ?? []).includes("tag:gpu-inference") &&
         Date.parse(device.created) >= since.getTime(),
     )
     .sort((a, b) => Date.parse(b.created) - Date.parse(a.created))[0];
-  const address = device?.addresses.find((address) =>
-    /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.\d+\.\d+$/.test(address),
-  );
-  if (!address)
+  const address = device?.addresses.find(tailnetAddress);
+  if (!device || !address)
     throw new Error(`${hostname} has no new tag:gpu-inference device`);
+
+  if (devices.some((other) => other !== device))
+    throw new Error(`Another tag:gpu-inference device still uses ${hostname}`);
+  if (device.name.split(".")[0] !== hostname) {
+    const renamed = await api(
+      `/device/${encodeURIComponent(device.nodeId)}/name`,
+      { method: "POST", body: JSON.stringify({ name: hostname }) },
+    );
+    if (!renamed.ok)
+      throw new Error(`Tailscale device rename returned ${renamed.status}`);
+  }
   return address;
 };

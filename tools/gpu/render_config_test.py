@@ -57,18 +57,19 @@ class RenderTests(unittest.TestCase):
 
     def test_new_host_projects_service_secret_and_private_endpoint(self):
         entry = {**self.hosts[0], 'instance_id': '019d5a4a-0000-7000-8000-000000000001',
-                 'tailscale_ip': '100.64.0.1', 'management_secret': {'key': 'gradiated/prod/platform/gpu-host/test'}}
+                 'management_secret': {'key': 'gradiated/prod/platform/gpu-host/test'}}
         hosts, services, secrets = renderer.inventory([entry])
         instance = entry['instance_id']
-        self.assertEqual(services[instance]['metadata']['annotations']['tailscale.com/tailnet-ip'], '100.64.0.1')
+        self.assertEqual(services[instance]['metadata']['annotations']['tailscale.com/tailnet-fqdn'],
+                         f'gpu-{instance}.tail186117.ts.net')
+        self.assertNotIn('tailscale.com/tailnet-ip', services[instance]['metadata']['annotations'])
         self.assertEqual(hosts[0]['token_file'], '/var/run/gradiated-host-keys/' + instance)
         self.assertEqual(hosts[0]['endpoint'], f'http://gpu-{instance}.tailscale-inference.svc.cluster.local:8888/_kubelet')
         self.assertEqual(secrets, [{'secretKey': instance, 'remoteRef': entry['management_secret']}])
 
-    def test_rejects_duplicate_identity_or_address_and_public_address(self):
+    def test_rejects_duplicate_identity_a_pinned_address_and_empty_inventory(self):
         for entries in ([self.hosts[0], self.hosts[0]],
-                        [self.hosts[0], {**self.hosts[1], 'tailscale_ip': self.hosts[0]['tailscale_ip']}],
-                        [{**self.hosts[0], 'tailscale_ip': '1.1.1.1'}], []):
+                        [{**self.hosts[0], 'tailscale_ip': '100.64.0.1'}], []):
             with self.assertRaises(ValueError):
                 renderer.inventory(entries)
 
@@ -82,7 +83,6 @@ class RenderTests(unittest.TestCase):
             runtime_path.parent.mkdir(parents=True)
             shutil.copyfile(renderer.ROOT / 'product/inference/gpu/runtimes.json', runtime_path)
             entry = {**self.hosts[0], 'instance_id': '019d5a4a-0000-7000-8000-000000000001',
-                     'tailscale_ip': '100.64.0.1',
                      'management_secret': {'key': 'gradiated/prod/platform/gpu-host/test'}}
             (gpu / 'hosts.json').write_text(json.dumps([*self.hosts, entry]))
             with patch.multiple(renderer, ROOT=root, KUBE=kube, GPU=gpu):

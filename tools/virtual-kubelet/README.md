@@ -333,71 +333,12 @@ versions only while host observations are fresh, and a separate panel shows
 telemetry age. Drift alerts after 24 hours; stale host telemetry and missing
 controller scrapes also alert.
 
-### One-time retained-host migration
-
-Prepare an explicit JSON list of enrolled hosts outside version control, for example
-`[{"instance_id":"<inventory UUID>"}]`. The tool connects with Tailscale SSH
-(`tailscale ssh root@<address>`) to the address committed in `hosts.json`; set
-`TAILSCALE` if the CLI is not on `PATH`. The first session of each 12-hour check
-period opens a Google sign-in.
-Build the host artifact to obtain its Linux `desmondd`, and confirm each retained
-host's OS/CUDA compatibility ID before running:
-
-```sh
-python3 tools/gpu/rollout-host.py --targets /path/to/targets.json \
-  --desmondd /path/to/desmondd --base-id ubuntu24-cuda13-amd64-v2
-```
-
-This is a production operation requiring operator authorization. The command
-checks enrolled identity, staged runtime digests, and live model/reporter/proxy
-process identities; installs the recovery agent and launcher; and stops at the
-first failed host. It reads the management credential on the remote host and
-never outputs it. Tailscale verifies host keys from the tailnet; public SSH
-targets are rejected. Success waits for a fresh
-management-agent PID and birth time before checking health and preserved workers,
-including when a launcher is already installed. The existing supervisor may
-be PID 1: it stays running and its SIGHUP path launches a shim that execs the new
-launcher. No provider restart or image change is involved. Re-running the
-command signals the same supervisor. Hosts already using a direct launcher keep
-their agent entrypoint; the recovery directory is selected at each restart. New
-hosts obtain the launcher from the
-base image when its published digest is separately approved and pinned.
-
 Local checks use fake bundles and processes without GPUs or production access:
 
 ```sh
 python3 product/inference/gpu/host_bundle_test.py
-python3 tools/gpu/rollout_host_test.py
+python3 tools/gpu/pin_host_test.py
 (cd tools/virtual-kubelet && go test -race ./... && go vet ./...)
 docker buildx bake -f product/inference/bundles/build.hcl verify-host
 ```
 
-### Upgrade existing private control listeners
-
-After a complete host bundle has become healthy, migrate retained hosts without
-resetting their provider pods:
-
-```sh
-python3 tools/gpu/migrate-control.py /path/to/targets.json \
-  --sha256 <verified-host-digest>
-```
-
-Targets use the same `instance_id` entries as `rollout-host.py` and the same
-Tailscale SSH transport. The migration verifies the active host archive and identity,
-replaces only the control acceptor, and leaves its existing `nc` connections
-running. It checks readiness over the original HTTP connection and a new one,
-checks a temporary artifact grant, and retains a full on-disk recovery seed.
-When OverlayFS prevents exchanging an image-layer recovery directory, the frozen
-fallback stays intact and the full seed is saved in the reported
-`recovery_seed_path` for operator recovery.
-Failed handoff restores the previous listener. Every invocation, including a
-retry, restarts the acceptor while preserving established connections. New
-connections may be refused during the supervisor's two-second restart delay.
-Serving model processes and GPU reservations stay running.
-
-The bounded container check exercises a live HTTP connection through the handoff:
-
-```sh
-bash product/inference/tailscale/tests/test-tailscale.sh
-python3 tools/gpu/migrate_control_test.py
-```

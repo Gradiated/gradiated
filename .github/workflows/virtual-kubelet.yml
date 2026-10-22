@@ -91,7 +91,7 @@ jobs:
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 product/inference/gpu/host_bundle_test.py
         if: fromJSON(needs.changes.outputs.checks).controller
-      - run: python3 tools/gpu/rollout_host_test.py
+      - run: python3 tools/gpu/pin_host_test.py
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 tools/gpu/mint_bootstrap_key_test.py
         if: fromJSON(needs.changes.outputs.checks).controller

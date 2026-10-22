@@ -30,7 +30,6 @@ export type Registration = {
     inventory: GpuInventory;
     inventoryEntry: {
       instance_id: string;
-      tailscale_ip: string;
       gpu_count: number;
       cpu: number;
       memory_gib: number;
@@ -131,7 +130,6 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
           inventory,
           inventoryEntry: {
             instance_id: record.id,
-            tailscale_ip: inventory.tailscaleIp,
             gpu_count: inventory.gpuCount,
             cpu: inventory.cpu,
             memory_gib: inventory.memoryGiB,

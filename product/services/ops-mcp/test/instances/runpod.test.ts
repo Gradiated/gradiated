@@ -72,9 +72,18 @@ describe("RunPod Kubernetes enrollment", () => {
       apiKey: "key",
       fetch,
       bootstrapKey,
-      tailnet: { run: s.run, status: async () => bootstrapStatus() },
+      tailnet: {
+        run: s.run,
+        status: async () => bootstrapStatus(),
+        releaseName: async () => 0,
+        claimName: async () => "100.64.1.2",
+      },
     });
-    const env = { GRADIATED_GPU_BOOTSTRAP: "private-encoded-bootstrap" };
+    const env = {
+      GRADIATED_GPU_BOOTSTRAP: Buffer.from(
+        JSON.stringify({ instance_id: "00000000-0000-4000-8000-000000000001" }),
+      ).toString("base64"),
+    };
     await provider.bootstrap(await provider.describe("pod1"), image, env);
     const patch = fetch.mock.calls.find(
       ([, init]) => init?.method === "PATCH",
@@ -182,19 +191,21 @@ describe("RunPod tailnet enrollment", () => {
               promotion: true,
             }),
     );
-    const promotedAddress = vi.fn(async () => "100.64.1.2");
+    const releaseName = vi.fn(async () => 1);
+    const claimName = vi.fn(async () => "100.64.1.2");
     const provider = createRunPodProvider({
       apiKey: "private-api-key",
       fetch: runpod.fetch,
       tailnet: {
         run,
         status,
-        promotedAddress,
+        releaseName,
+        claimName,
         promotionTimeoutMs: 300,
         promotionPollMs: 10,
       },
     });
-    return { runpod, run, status, promotedAddress, provider };
+    return { runpod, run, status, releaseName, claimName, provider };
   };
 
   it("enrolls a bootstrap pod over Tailscale SSH without public SSH or provider changes", async () => {
@@ -221,10 +232,11 @@ describe("RunPod tailnet enrollment", () => {
     await expect(
       s.provider.bootstrap(await s.provider.describe("pod1"), image, env),
     ).resolves.toEqual({ ...inventory, tailscaleIp: "100.64.1.2" });
-    expect(s.promotedAddress).toHaveBeenCalledWith(
-      instanceId,
-      expect.any(Date),
+    expect(s.releaseName).toHaveBeenCalledWith(instanceId);
+    expect(s.releaseName.mock.invocationCallOrder[0]).toBeLessThan(
+      s.run.mock.invocationCallOrder.at(-1)!,
     );
+    expect(s.claimName).toHaveBeenCalledWith(instanceId, expect.any(Date));
     expect(s.runpod.calls.every((c) => c.method === "GET")).toBe(true);
     const [target, command, input] = s.run.mock.calls.at(-1)!;
     expect(target.host).toBe("100.64.0.9");
@@ -242,7 +254,7 @@ describe("RunPod tailnet enrollment", () => {
       bootstrapStatus(),
       { Peer: {} },
     ]);
-    s.promotedAddress
+    s.claimName
       .mockRejectedValueOnce(new Error("no new tag:gpu-inference device"))
       .mockResolvedValueOnce("100.64.1.3");
     const env = {
@@ -253,13 +265,18 @@ describe("RunPod tailnet enrollment", () => {
     await expect(
       s.provider.bootstrap(await s.provider.describe("pod1"), image, env),
     ).resolves.toEqual({ ...inventory, tailscaleIp: "100.64.1.3" });
-    expect(s.promotedAddress).toHaveBeenCalledTimes(2);
+    expect(s.claimName).toHaveBeenCalledTimes(2);
   });
 
   it("fails if the pod does not re-authenticate as an inference host", async () => {
     const s = tailnetSetup([bootstrapStatus()]);
+    const env = {
+      GRADIATED_GPU_BOOTSTRAP: Buffer.from(
+        JSON.stringify({ instance_id: "00000000-0000-4000-8000-000000000001" }),
+      ).toString("base64"),
+    };
     await expect(
-      s.provider.bootstrap(await s.provider.describe("pod1"), image, {}),
+      s.provider.bootstrap(await s.provider.describe("pod1"), image, env),
     ).rejects.toThrow("did not re-authenticate");
   });
 

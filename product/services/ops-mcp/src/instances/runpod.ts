@@ -46,10 +46,11 @@ export interface RunPodOptions {
     readonly status: () => Promise<TailnetStatus>;
     readonly promotionTimeoutMs?: number;
     readonly promotionPollMs?: number;
-    readonly promotedAddress?: (
-      instanceId: string,
-      since: Date,
-    ) => Promise<string>;
+    // Removes the offline devices an earlier boot left under gpu-<id>.
+    readonly releaseName?: (instanceId: string) => Promise<number>;
+    // Finds the promoted device, makes sure it is named gpu-<id> and returns
+    // its address.
+    readonly claimName?: (instanceId: string, since: Date) => Promise<string>;
   };
 }
 
@@ -112,6 +113,25 @@ export const createRunPodProvider = ({
     const route = await transport(current);
     if (!route) throw new Error("No enrollment connection to the GPU pod");
 
+    const bootstrap = environment.GRADIATED_GPU_BOOTSTRAP;
+    const instanceId =
+      bootstrap &&
+      z
+        .object({ instance_id: z.uuid() })
+        .parse(JSON.parse(Buffer.from(bootstrap, "base64").toString()))
+        .instance_id;
+    if (instanceId) {
+      if (!tailnet.releaseName || !tailnet.claimName)
+        throw new Error("GPU tailnet name management is not configured");
+      const released = await tailnet.releaseName(instanceId);
+      if (released)
+        audit?.({
+          event: "tailscale_stale_devices_removed",
+          instance_id: instanceId,
+          count: released,
+        });
+    }
+
     const started = new Date();
     const { promotion, ...inventory } = await installInPlace(
       route.run,
@@ -119,6 +139,8 @@ export const createRunPodProvider = ({
       environment,
     );
     if (!promotion) return inventory;
+    if (!instanceId || !tailnet.claimName)
+      throw new Error("Promotion needs the GPU instance identity");
 
     await waitForPromotion(
       tailnet.status,
@@ -126,18 +148,6 @@ export const createRunPodProvider = ({
       tailnet.promotionTimeoutMs,
       tailnet.promotionPollMs,
     );
-    if (!tailnet.promotedAddress)
-      throw new Error("Promoted GPU address lookup is not configured");
-    const { instance_id } = z
-      .object({ instance_id: z.uuid() })
-      .parse(
-        JSON.parse(
-          Buffer.from(
-            environment.GRADIATED_GPU_BOOTSTRAP ?? "",
-            "base64",
-          ).toString(),
-        ),
-      );
     // The bootstrap device can go offline a few seconds before the
     // re-authenticated device appears in the device list.
     const deadline = Date.now() + (tailnet.promotionTimeoutMs ?? 180_000);
@@ -145,7 +155,7 @@ export const createRunPodProvider = ({
       try {
         return {
           ...inventory,
-          tailscaleIp: await tailnet.promotedAddress(instance_id, started),
+          tailscaleIp: await tailnet.claimName(instanceId, started),
         };
       } catch (error) {
         if (Date.now() >= deadline) throw error;

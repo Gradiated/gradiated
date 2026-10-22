@@ -2,9 +2,11 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   bootstrapAuthKey,
-  promotedAddress,
+  claimInstanceName,
+  releaseInstanceName,
   tailscaleAuthKey,
 } from "../../src/instances/tailscale.js";
+import { fakeTailnet } from "../support/tailnet.js";
 
 const instance = "019d5a4a-0000-7000-8000-000000000001";
 
@@ -97,62 +99,89 @@ describe("GPU Tailscale auth keys", () => {
       })),
     ).rejects.toThrow("Tailscale OAuth returned 403");
   });
+});
 
-  it("finds the new inference device that re-authentication created", async () => {
-    const hostname = `gpu-${instance}`;
-    const request = vi
-      .fn<typeof fetch>()
-      .mockResolvedValueOnce(Response.json({ access_token: "oauth-token" }))
-      .mockResolvedValue(
-        Response.json({
-          devices: [
-            {
-              hostname,
-              addresses: ["100.75.50.69", "fd7a:115c:a1e0::1"],
-              tags: ["tag:gpu-inference"],
-              created: "2026-10-19T20:46:30Z",
-            },
-            {
-              hostname: "gpu-bootstrap-pod1",
-              addresses: ["100.126.83.106"],
-              tags: ["tag:gpu-bootstrap"],
-              created: "2026-10-21T11:00:00Z",
-            },
-            {
-              hostname,
-              addresses: ["fd7a:115c:a1e0::2", "100.85.29.110"],
-              tags: ["tag:gpu-inference"],
-              created: "2026-10-21T11:49:20Z",
-            },
-          ],
-        }),
-      );
-    const credentials = async () => ({
-      client_id: "id",
-      client_secret: "secret",
-    });
+describe("GPU tailnet names across a re-image", () => {
+  const hostname = `gpu-${instance}`;
+  const credentials = async () => ({
+    client_id: "id",
+    client_secret: "secret",
+  });
+
+  it("keeps gpu-<id> when a re-imaged pod rejoins", async () => {
+    const tailnet = fakeTailnet();
+    const old = tailnet.join(hostname, "tag:gpu-inference");
+    tailnet.disconnect(old);
+    tailnet.join("gpu-bootstrap-pod1", "tag:gpu-bootstrap");
 
     await expect(
-      promotedAddress(
-        instance,
-        new Date("2026-10-21T11:48:52Z"),
-        request,
-        credentials,
-      ),
-    ).resolves.toBe("100.85.29.110");
-    expect(request.mock.calls[1]![0]).toBe(
-      "https://api.tailscale.com/api/v2/tailnet/-/devices",
+      releaseInstanceName(instance, tailnet.fetch, credentials),
+    ).resolves.toBe(1);
+    const since = tailnet.now();
+    const promoted = tailnet.join(hostname, "tag:gpu-inference");
+
+    await expect(
+      claimInstanceName(instance, since, tailnet.fetch, credentials),
+    ).resolves.toBe(promoted.addresses[0]);
+    expect(promoted.name).toBe(`${hostname}.tail186117.ts.net`);
+    expect(tailnet.devices.has(old.nodeId)).toBe(false);
+    expect(
+      [...tailnet.devices.values()].map((device) => device.hostname),
+    ).toContain("gpu-bootstrap-pod1");
+  });
+
+  it("renames a promoted device that joined while the old name was taken", async () => {
+    const tailnet = fakeTailnet();
+    const old = tailnet.join(hostname, "tag:gpu-inference");
+    tailnet.disconnect(old);
+    const since = tailnet.now();
+    const promoted = tailnet.join(hostname, "tag:gpu-inference");
+    expect(promoted.name).toBe(`${hostname}-1.tail186117.ts.net`);
+
+    await expect(
+      claimInstanceName(instance, since, tailnet.fetch, credentials),
+    ).rejects.toThrow(
+      `Another tag:gpu-inference device still uses ${hostname}`,
     );
+    tailnet.devices.delete(old.nodeId);
     await expect(
-      promotedAddress(
-        instance,
-        new Date("2026-10-21T12:00:00Z"),
-        vi
-          .fn<typeof fetch>()
-          .mockResolvedValueOnce(Response.json({ access_token: "oauth-token" }))
-          .mockResolvedValueOnce(Response.json({ devices: [] })),
-        credentials,
-      ),
+      claimInstanceName(instance, since, tailnet.fetch, credentials),
+    ).resolves.toBe(promoted.addresses[0]);
+    expect(promoted.name).toBe(`${hostname}.tail186117.ts.net`);
+  });
+
+  it("refuses to remove a connected device that holds the name", async () => {
+    const tailnet = fakeTailnet();
+    const live = tailnet.join(hostname, "tag:gpu-inference");
+
+    await expect(
+      releaseInstanceName(instance, tailnet.fetch, credentials),
+    ).rejects.toThrow(
+      `A connected tag:gpu-inference device already uses ${hostname}`,
+    );
+    expect(tailnet.devices.has(live.nodeId)).toBe(true);
+  });
+
+  it("leaves other hosts and bootstrap devices alone", async () => {
+    const tailnet = fakeTailnet();
+    const other = tailnet.join(
+      "gpu-019d5a4a-0000-7000-8000-000000000002",
+      "tag:gpu-inference",
+    );
+    const bootstrap = tailnet.join("gpu-bootstrap-pod1", "tag:gpu-bootstrap");
+    tailnet.disconnect(other);
+    tailnet.disconnect(bootstrap);
+
+    await expect(
+      releaseInstanceName(instance, tailnet.fetch, credentials),
+    ).resolves.toBe(0);
+    expect(tailnet.devices.size).toBe(2);
+  });
+
+  it("fails while the promoted device has not appeared", async () => {
+    const tailnet = fakeTailnet();
+    await expect(
+      claimInstanceName(instance, tailnet.now(), tailnet.fetch, credentials),
     ).rejects.toThrow("no new tag:gpu-inference device");
   });
 });

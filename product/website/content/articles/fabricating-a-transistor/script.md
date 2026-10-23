@@ -1,26 +1,28 @@
 # How do we print a transistor onto silicon?
 
-A transistor is a carefully arranged pattern of materials. Silicon provides a path for current, an insulator separates the gate from that path, and conductors connect the device to the rest of a circuit. How can we put all of these features in the right places?
+The transistor we want to build acts as an electrically controlled switch. Its gate electrode controls whether current can flow through silicon between two connection points, the source and drain. A thin insulator separates the gate from the silicon, and conducting materials connect these parts to the rest of a circuit. How can we put all of these features in the right places?
 
-Let’s follow a wafer through a simplified planar process and build the two transistors of a NOT gate. Each gate will sit above a channel along the silicon surface. The drawings exaggerate thicknesses and simplify shapes so we can follow the material changes. This is a teaching example rather than a complete manufacturing recipe.
+Let’s follow a silicon wafer through a simplified planar process and build the two transistors of a NOT gate. In a planar transistor, the conducting path, called the channel, forms along the silicon surface beneath the gate electrode. The drawings exaggerate thicknesses and simplify shapes so we can follow the material changes. This is a teaching example rather than a complete manufacturing recipe.
 
 <!-- scene: destination -->
 
 ## Start with a working circuit
 
-Our destination is the NOT gate. Its input controls two transistors, one n-type and one p-type. Together, they connect the output to the high supply when the input is low, or to the low supply when the input is high.
+Our destination is a NOT gate, a circuit whose output is the opposite of its input. Here, “gate” names the whole logic circuit. Inside it, two transistors each have a gate electrode controlled by the same input. One transistor is n-type and the other p-type. Together, they connect the output to the high supply when the input is low, or to the low supply when the input is high.
 
-Notice the gate above each transistor, the thin insulation beneath it and the two doped regions called source and drain. We will form these features in or on the same piece of silicon, then connect them. Body contacts hold the surrounding silicon at fixed voltages, but we omit these connections from the diagrams for simplicity.
+Notice the narrow gate electrode above each transistor and the thin insulation beneath it. The source and drain sit on either side, with the channel between them. We will form these features in or on the same piece of silicon, then connect them.
 
 <!-- scene: wafer -->
 
 ## Give each operation a pattern
 
-We begin with a polished silicon wafer, a thin slice of a single crystal. Our starting silicon is lightly doped p-type. Many copies of our circuit will be made across its surface together. The red square marks a tiny part of one future chip, enlarged on the right.
+We begin with a polished silicon wafer, a thin slice of a single crystal. Many copies of our circuit will be made across its surface together. The red square marks a tiny part of one future chip, enlarged on the right.
+
+Doping means adding small quantities of selected elements, called dopants, to control how silicon conducts electricity. In n-type silicon, current is carried mainly by electrons. In p-type silicon, it is carried mainly by holes, missing electrons that behave as mobile positive charges. Our starting wafer is lightly doped p-type.
 
 <!-- scene: layout -->
 
-A layout specifies the shapes of the regions and connections we want. These shapes become patterns on photomasks, which control where light reaches a sensitive coating on the wafer.
+A layout is a drawing that specifies the shapes of the regions and connections we want. These shapes guide the patterns on photomasks, optical templates that control where light reaches a light-sensitive coating called photoresist.
 
 We need different patterns for different operations. Several can modify the same silicon, so a photomask does not necessarily correspond to a new material layer. We will keep returning to the same machines with new patterns.
 
@@ -28,13 +30,15 @@ We need different patterns for different operations. Several can modify the same
 
 ## Make the first implant pattern
 
-Our p-type wafer can provide the body of an n-type transistor. Its p-type partner needs an n-type body region, a deeper pocket called an n-well. First, we grow a thin silicon dioxide film by heating the wafer in an oxidising environment. Some silicon is consumed as the oxide grows.
+The body is the silicon beneath and around a transistor’s channel. The n-type transistor forms an electron-carrying channel in a p-type body, while its p-type partner forms a hole-carrying channel in an n-type body. The transistor names describe their channels when switched on. Our p-type wafer already provides the first body. We need to create a deeper n-type pocket, called an n-well, for the other transistor.
 
-This thin film can remain during implantation. With suitable energy, dopant ions pass through it and enter the silicon. The thicker photoresist we apply next will block the ions elsewhere. Being an electrical insulator does not make oxide impenetrable to accelerated atoms.
+We will do this by ion implantation, accelerating electrically charged dopant atoms into the silicon. First, we grow a thin silicon dioxide film by heating the wafer in oxygen. Some silicon is consumed as the oxide grows.
+
+This screen oxide helps protect the silicon from contamination during implantation. At the chosen energy, the dopant ions pass through it and enter the silicon. The thicker photoresist we apply next will stop them where we want to keep the original doping.
 
 <!-- scene: coat -->
 
-At the coater, the wafer spins while liquid photoresist spreads across it. A bake prepares the film. This temporary coating will protect the silicon that should remain p-type during the well implant.
+At the coater, the wafer spins to spread liquid photoresist into a thin film. Baking removes solvent from the coating. This temporary film will protect the silicon that should remain p-type during the well implant.
 
 <!-- scene: expose -->
 
@@ -42,11 +46,11 @@ At the lithography machine, a photomask controls where ultraviolet light reaches
 
 <!-- scene: develop -->
 
-Developer dissolves the exposed resist, opening the region for our n-well. The remaining resist stays on the wafer. We have made a physical protective pattern, while the thin oxide beneath it remains intact.
+Developer, a chemical solution, dissolves the exposed resist, opening the region for our n-well. The remaining resist stays on the wafer. We have made a physical protective pattern, while the thin oxide beneath it remains intact.
 
 <!-- scene: well -->
 
-The implanter directs n-type dopant ions towards the wafer. They pass through the resist opening and thin oxide into the silicon. The resist blocks them elsewhere. The selected silicon becomes an n-well within the original wafer, rather than a new slab added on top.
+The implanter directs ions of an n-type dopant towards the wafer. They pass through the resist opening and thin oxide into the silicon. The resist blocks them elsewhere. Inside the opening, the added atoms will make the silicon n-type after heat treatment. We are changing the existing crystal.
 
 <!-- scene: strip -->
 
@@ -54,13 +58,13 @@ Only after implantation do we strip the remaining resist and clean the wafer. It
 
 <!-- scene: well-anneal -->
 
-Heat treatment repairs implantation damage, activates dopants and helps establish their depth distribution. The n-well will provide the body of the p-type transistor. Implantation and heating are separate operations.
+Annealing heats the wafer to repair damage from implantation and move dopant atoms into positions in the crystal where they can provide the mobile electrons or holes that carry current. This makes the dopants electrically active. Heating also spreads the dopants through the silicon, helping establish the n-well’s depth. The well now provides the body of the p-type transistor.
 
 <!-- scene: isolation -->
 
 ## Open the device sites
 
-Neighbouring devices also need insulation around them. In this simplified flow, we first grow thicker field oxide across the surface, then remove it where we want to build the devices. Growing the oxide consumes more silicon. Etching it later will not restore that silicon.
+Thicker insulation around the device sites helps keep neighbouring circuits electrically separate. This is called field oxide. In our simplified flow, we grow it across the surface, then remove it where we want to build the devices. Growing the oxide consumes more silicon. Etching it later will not restore that silicon.
 
 <!-- scene: isolation-coat -->
 
@@ -76,7 +80,7 @@ Development opens the resist above those sites. Resist remains over the field ox
 
 <!-- scene: prepare-isolation -->
 
-The etcher removes oxide through the resist openings, stopping at the silicon. The remaining resist protects the surrounding oxide. We now have openings in the permanent insulating film, not just in the resist.
+Etching removes exposed material using chemical reactions, sometimes assisted by energetic particles. Here, we choose conditions that remove oxide much faster than silicon, allowing us to stop at the silicon surface. The resist protects the surrounding oxide. We now have openings in the permanent insulating film, not just in the resist.
 
 <!-- scene: isolation-strip -->
 
@@ -86,11 +90,11 @@ We strip the resist after etching. The oxide pattern remains, surrounding the ex
 
 ## Form the gates
 
-We prepare the exposed silicon and grow a thin, high-quality gate oxide. A voltage on the gate will affect charge in the silicon through its electric field, while this insulation limits direct current through the gate.
+We prepare the exposed silicon and grow a thin, high-quality gate oxide. Its thinness lets the gate’s electric field strongly influence charge just beneath it. Changing the voltage between gate and source will control whether a conducting channel forms between source and drain. The oxide keeps the gate electrically insulated from the silicon.
 
 <!-- scene: poly -->
 
-A deposition machine adds polysilicon, silicon containing many small crystals. With appropriate doping, it can conduct and serve as the gate material. Here we show it as a conducting film.
+A deposition machine adds a film of polysilicon, silicon made up of many small crystals. We use doped polysilicon so that the film conducts electricity and can serve as the gate electrode.
 
 Deposition adds material. Oxidation instead reacts with silicon already present. Neither operation defines our narrow gates yet.
 
@@ -118,7 +122,7 @@ We strip the resist, leaving the polysilicon gates and their thin insulation. We
 
 ## Make the source and drain
 
-We apply another resist film for an n-type implant. The two transistor types need different dopants, so we will use two separate masking cycles. No single implant should change both devices in the same way.
+We apply another resist film for an n-type implant. The two transistor types need different dopants, so we will use separate masking cycles to form their source and drain regions.
 
 <!-- scene: n-expose -->
 
@@ -130,17 +134,17 @@ Development opens those regions. The p-type transistor remains covered by resist
 
 <!-- scene: implant -->
 
-N-type ions enter exposed silicon through the thin oxide. The gate blocks implantation into the channel immediately beneath it, while resist protects the other device. This forms heavily doped source and drain regions beside the gate, labelled `n+`.
+Ions of an n-type dopant enter the silicon through the thin oxide. The gate blocks implantation into the channel region immediately beneath it, while resist protects the other device. This places a high concentration of dopants in the shallow source and drain regions beside the gate, labelled `n+`. The `+` means heavily doped, not electrically positive.
 
-The gate itself helps define the source and drain boundaries. This is why the process is called self-aligned.
+The gate’s edges define where these implants begin, so we do not need to align a separate pattern to each channel edge. This is called a self-aligned process.
 
 <!-- scene: n-strip -->
 
-We strip the n-type implant resist. The implanted regions stay in the silicon. Before introducing the opposite dopant type, we must prepare a different protective pattern.
+We strip the resist after the n-type implant. The dopants stay in the silicon, ready for the heat treatment after both implants.
 
 <!-- scene: p-coat -->
 
-A fresh resist film covers both devices again. This film will protect the regions made by the previous implant.
+A fresh resist film covers both devices again. This time it will protect the n-type transistor while we open the region around its p-type partner.
 
 <!-- scene: p-expose -->
 
@@ -148,19 +152,19 @@ The p-type implant photomask exposes the region around the p-type transistor.
 
 <!-- scene: p-develop -->
 
-Development opens these regions while leaving the n-type transistor covered. We have changed the selection pattern, not the positions of the existing devices.
+Development opens the resist around the p-type transistor while leaving the n-type transistor covered.
 
 <!-- scene: implant-p -->
 
-P-type ions form the p-type transistor’s source and drain, labelled `p+`. Its gate protects the channel beneath it. The resist shields the n-type transistor.
+Ions of a p-type dopant enter the source and drain regions, labelled `p+`. The `+` again means heavily doped. The gate protects the channel region beneath it, and the resist shields the n-type transistor.
 
 <!-- scene: p-strip -->
 
-We remove the remaining resist. Both implant patterns have now served their purpose. The source and drain regions are changes within the silicon, not separate material blocks sitting on it.
+We remove the remaining resist. Both implant patterns have now served their purpose. The new source and drain regions lie within the existing silicon.
 
 <!-- scene: anneal -->
 
-Controlled heating repairs crystal damage and makes the implanted dopants electrically active. This is annealing. Heating also moves dopants, so its temperature, duration and place in the sequence matter.
+We anneal the wafer to repair crystal damage and make the newly implanted dopants electrically active. Heating can also spread dopants beyond their initial positions, so we control its temperature and duration to preserve the intended source and drain boundaries.
 
 We now have the essential device structures. Their terminals still need electrical connections.
 
@@ -168,7 +172,7 @@ We now have the essential device structures. Their terminals still need electric
 
 ## Turn the devices into a circuit
 
-We deposit insulation over the devices. This will keep unrelated conductors apart. To reach the source, drain and gate terminals, we need holes through it, defined by another photomask.
+We deposit insulation over the devices to keep unrelated conductors apart. We still need to reach each terminal, an electrical connection point at the source, drain or gate. Another photomask will define holes through the insulation at those points.
 
 <!-- scene: contact-coat -->
 
@@ -198,7 +202,7 @@ The blanket film is not yet our circuit. We must separate it into individual con
 
 <!-- scene: metal-coat -->
 
-We coat the metal with fresh resist. This mask has a different job from the contact mask. It will define the wires across the surface rather than the holes through the insulation.
+We coat the metal with fresh resist. The next photomask will define wire routes across the surface, while the previous contact pattern defined holes through the insulation.
 
 <!-- scene: metal-expose -->
 
@@ -214,13 +218,19 @@ The etcher removes that exposed metal, separating the remaining film into wires.
 
 <!-- scene: metal-strip -->
 
-We strip the resist to reveal the connections. The two gates join as input `A`, the drains join as output `Q`, and the sources connect to the low and high supplies.
+We strip the resist to reveal the connections. The two gate electrodes join as input `A`, and the drains join as output `Q`. The n-type transistor’s source connects to the low supply, while the p-type transistor’s source connects to the high supply.
+
+Body contacts also hold the surrounding silicon at fixed voltages. We omit these connections from the diagrams for simplicity.
 
 <!-- scene: inverter -->
 
-Try changing input `A`. When it is `0`, the p-type transistor connects the output to the high supply while the n-type transistor is off. When `A` is `1`, the n-type transistor connects the output to the low supply while the p-type transistor is off.
+Use the `0` and `1` buttons to change input `A`. In this example, logic `0` corresponds to `0 V` and logic `1` to `+1 V`.
 
-The output settles to the opposite logic value. This pairing is called complementary metal–oxide–semiconductor, or CMOS. Our physical structure now implements the NOT gate we began with. A reusable layout for a gate like this can become a standard cell in a larger design.
+When `A` is `0`, the p-type transistor connects the output to the high supply while the n-type transistor is off. When `A` is `1`, the n-type transistor connects the output to the low supply while the p-type transistor is off. The output settles to the opposite logic value.
+
+This complementary pairing is called complementary metal–oxide–semiconductor, or CMOS. The historical name also covers processes with polysilicon gate electrodes. Our physical structure now implements the NOT gate we began with.
+
+A gate like this can be developed into a standard cell, a reusable circuit building block with a defined layout and known electrical behaviour. Designers can combine cells to build larger circuits.
 
 <!-- scene: interconnect -->
 
@@ -230,19 +240,19 @@ Larger circuits need many connections, often on several levels. We deposit anoth
 
 <!-- scene: planarise -->
 
-Chemical-mechanical planarisation combines chemical action and polishing to remove excess material and flatten the surface. The polisher removes material. It does not add a new film.
+Chemical-mechanical planarisation combines chemical action and polishing to remove raised material and flatten the surface. A flatter surface makes it easier to apply the next resist coating evenly and accurately focus its exposure pattern.
 
 <!-- scene: via-coat -->
 
-We coat this surface with fresh resist to define a via, a connection between wiring levels. Its opening must land on the intended wire below.
+We coat this surface with fresh resist to define a via, a metal connection between wiring levels. First we need an opening through the insulation, landing on the intended wire below.
 
 <!-- scene: via-expose -->
 
-The via photomask exposes resist above that wire. This pattern selects the vertical connection, not the route of the upper wire.
+The via photomask exposes resist above the lower wire at the point where the two wiring levels should connect.
 
 <!-- scene: via-develop -->
 
-Development opens the resist at the via location. The insulating film below is still intact.
+Development opens the resist at that point, ready for the etcher to remove the insulation below.
 
 <!-- scene: via -->
 
@@ -258,7 +268,7 @@ Metal fills the via and covers the insulating surface. As before, this is initia
 
 <!-- scene: upper-coat -->
 
-Fresh resist covers the new metal. We now need the upper-wire pattern, separate from the via pattern we just used.
+Fresh resist covers the new metal. The upper-wire pattern will define its route across the surface, including where it meets the filled via.
 
 <!-- scene: upper-expose -->
 
@@ -282,11 +292,11 @@ We have repeated the same patterning cycle with different patterns and materials
 
 ## From the wafer to the outside world
 
-Zoom out and our gate becomes one small part of a die, an individual chip on the wafer. Electrical tests help identify which dies meet the required criteria. The fraction that passes is the yield for those criteria. Dies are separated and packaged so that their connections can reach other parts of a system, then tested further.
+Zoom out and our gate becomes one small part of a die, an individual chip on the wafer. Electrical tests help identify which dies meet the required criteria. The fraction that passes is the yield for those criteria. Dies are separated and packaged to protect them and provide connections to other parts of a system, then tested further.
 
-Designers specify circuits and layouts for a chosen manufacturing process. The foundry carries out the physical operations. A process design kit supplies models and rules that help designers make suitable layouts. We will explore that relationship in another deep dive.
+Designers specify circuits and layouts for a chosen manufacturing process. A foundry is a company that manufactures chips for other companies. Its process design kit supplies device models and layout rules that help designers create circuits suitable for that process. We will explore that relationship in another deep dive.
 
-Our transistor emerged through repeated, aligned changes to materials. Light selected resist patterns, machines added or removed material, dopants changed the silicon, and conductors connected the result. Those same kinds of operations can build the many gates that make a computer.
+Our two transistors and their connections emerged through repeated, aligned changes to materials. Light selected resist patterns, machines added or removed material, dopants changed the silicon, and conductors connected the result. Those same kinds of operations can build the many gates that make a computer.
 
 <details>
 <summary>Sources and further reading</summary>
@@ -294,6 +304,7 @@ Our transistor emerged through repeated, aligned changes to materials. Light sel
 - [NPTEL planar MOS fabrication sequence](https://archive.nptel.ac.in/content/storage2/courses/117101058/Slides/12.7.htm) and [CMOS inverter connections](https://archive.nptel.ac.in/content/storage2/courses/117103066/chap3/slides/slide209.htm).
 - [NPTEL on lithography and selective processing](https://archive.nptel.ac.in/content/storage2/courses/117103066/chap3/slides/slide174.htm).
 - [MIT Micro/Nano Processing Technology](https://ocw.mit.edu/courses/6-152j-micro-nano-processing-technology-fall-2005/pages/lecture-notes/) covers implantation, deposition and etching.
+- [MIT’s device and process overview](https://ocw.mit.edu/courses/6-152j-micro-nano-processing-technology-fall-2005/9878a7acdd9632caa5afb8b4b96a6f39_lecture2.pdf) explains doping and transistor structure. [Kiel University on silicon oxide](https://www.tf.uni-kiel.de/matwis/amat/semitech_en/kap_6/backbone/r6_1_1.html) explains screen oxides, and [Plasma-Therm on etch selectivity](https://corial.plasmatherm.com/en/blog/etch-selectivity-faq) explains selective material removal.
 - [Applied Materials on planarisation](https://www.appliedmaterials.com/il/en/semiconductor/semiconductor-technologies/cmp.html) and [ASML on manufacturing](https://www.asml.com/en/technology/all-about-microchips/how-microchips-are-made).
 - Branch Education's [manufacturing video](https://www.youtube.com/watch?v=dX9CGRZwD-w) and [transistor and CPU video](https://www.youtube.com/watch?v=_Pqfjer8-O4) provide further visual orientation. Their device examples differ from the planar process followed here.
 

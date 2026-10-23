@@ -23,7 +23,7 @@ export const machines = [
     id: "litho",
     label: "Lithography",
     job: "Expose a pattern in photoresist",
-    wiki: "Photolithography",
+    wiki: 'Photolithography#Exposure_("printing")_systems',
     summary:
       "Photolithography uses light to define a pattern in a sensitive coating. Development then creates openings used by subsequent fabrication operations.",
   },
@@ -31,7 +31,7 @@ export const machines = [
     id: "develop",
     label: "Developer",
     job: "Remove the exposed positive resist",
-    wiki: "Photolithography",
+    wiki: "Photolithography#Exposure_and_developing",
     summary:
       "Developer dissolves the light-exposed areas of our positive resist. The unexposed resist stays on the wafer as a protective pattern. This bench uses different chemistry from the resist stripper.",
   },
@@ -47,7 +47,7 @@ export const machines = [
     id: "strip",
     label: "Resist stripper",
     job: "Remove the remaining protective resist",
-    wiki: "Photoresist",
+    wiki: "Photolithography#Photoresist_removal",
     summary:
       "After etching or implantation, a resist remover strips away the remaining protective coating. Unlike development, this operation removes the resist pattern once its job is finished.",
   },
@@ -55,7 +55,7 @@ export const machines = [
     id: "anneal",
     label: "Annealer",
     job: "Repair implantation damage and activate dopants",
-    wiki: "Annealing_(semiconductors)",
+    wiki: "Annealing_(materials_science)#Diffusion_annealing_of_semiconductors",
     summary:
       "Annealing heats implanted silicon to repair crystal damage and make dopants electrically active. This is a separate heat treatment from growing an oxide film.",
   },
@@ -95,7 +95,7 @@ export const machines = [
     id: "inspect",
     label: "Inspection",
     job: "Check patterns and connections",
-    wiki: "Semiconductor_device_fabrication",
+    wiki: "Semiconductor_device_fabrication#Wafer_metrology",
     summary:
       "Measurements, inspection and electrical tests help manufacturers check the structures they are producing. They recur throughout fabrication.",
   },

@@ -1,4 +1,10 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import type { CSSProperties } from "react";
 import { siliconColours } from "./materials";
 import { CleanRoom, WholeWafer } from "./FabricationLab";
@@ -31,10 +37,15 @@ const initialPresentation: Presentation = {
 export const FabricationJourney = () => {
   const host = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLElement>(null);
+  const roomRef = useRef<HTMLDivElement>(null);
   const sections = useRef<(HTMLElement | null)[]>([]);
+  const openTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
   const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
   );
+  const pinnedPreview = useRef(false);
   const [active, setActive] = useState(0);
   const [animation, setAnimation] = useState({
     index: 0,
@@ -47,6 +58,7 @@ export const FabricationJourney = () => {
   const [fromIndex, setFromIndex] = useState(1);
   const [input, setInput] = useState(0);
   const [preview, setPreview] = useState<MachineId | undefined>();
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [reduced, setReduced] = useState(false);
   const [replay, setReplay] = useState(0);
   const progress = reduced
@@ -79,6 +91,16 @@ export const FabricationJourney = () => {
           : "Oxide etch"
       : machine?.label;
   const previewMachine = machines.find((item) => item.id === preview);
+
+  const clearPreviewTimers = useCallback(() => {
+    clearTimeout(openTimer.current);
+    clearTimeout(closeTimer.current);
+  }, []);
+  const dismissPreview = useCallback(() => {
+    clearPreviewTimers();
+    pinnedPreview.current = false;
+    setPreviewOpen(false);
+  }, [clearPreviewTimers]);
 
   useLayoutEffect(() => {
     displayed.current = {
@@ -135,7 +157,7 @@ export const FabricationJourney = () => {
       setFromIndex(previousScene.current);
       previousScene.current = active;
     }
-    setPreview(undefined);
+    dismissPreview();
     if (reduced) {
       setAnimation({ index: active, progress: 1, from: origin });
       return;
@@ -184,17 +206,88 @@ export const FabricationJourney = () => {
       observer.disconnect();
       document.removeEventListener("visibilitychange", resume);
     };
-  }, [active, reduced, replay]);
+  }, [active, reduced, replay, dismissPreview]);
 
-  useEffect(() => () => clearTimeout(closeTimer.current), []);
+  useEffect(() => clearPreviewTimers, [clearPreviewTimers]);
 
-  const showPreview = (id: MachineId) => {
-    clearTimeout(closeTimer.current);
+  useEffect(() => {
+    window.addEventListener("scroll", dismissPreview, { passive: true });
+    window.addEventListener("resize", dismissPreview);
+    window.addEventListener("blur", dismissPreview);
+
+    return () => {
+      window.removeEventListener("scroll", dismissPreview);
+      window.removeEventListener("resize", dismissPreview);
+      window.removeEventListener("blur", dismissPreview);
+    };
+  }, [dismissPreview]);
+
+  useEffect(() => {
+    if (!previewOpen) return;
+
+    const dismissOutside = (event: PointerEvent) => {
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        roomRef.current?.contains(target) &&
+        target.closest(".fab-room-machine, .fab-machine-preview")
+      ) {
+        return;
+      }
+
+      dismissPreview();
+    };
+    document.addEventListener("pointerdown", dismissOutside);
+
+    return () => document.removeEventListener("pointerdown", dismissOutside);
+  }, [previewOpen, dismissPreview]);
+
+  const showPreview = (id: MachineId, immediate = false) => {
+    if (pinnedPreview.current && !immediate) return;
+
+    clearPreviewTimers();
+    const open = () => {
+      setPreview(id);
+      setPreviewOpen(true);
+    };
+    if (immediate) {
+      pinnedPreview.current = false;
+      open();
+    } else {
+      openTimer.current = setTimeout(open, 450);
+    }
+  };
+  const keepPreview = () => clearPreviewTimers();
+  const togglePreview = (id: MachineId) => {
+    if (previewOpen && preview === id && pinnedPreview.current) {
+      dismissPreview();
+      return;
+    }
+
+    clearPreviewTimers();
+    pinnedPreview.current = true;
     setPreview(id);
+    setPreviewOpen(true);
   };
   const hidePreview = () => {
-    clearTimeout(closeTimer.current);
-    closeTimer.current = setTimeout(() => setPreview(undefined), 180);
+    clearPreviewTimers();
+    if (
+      pinnedPreview.current ||
+      roomRef.current
+        ?.querySelector(".fab-machine-preview")
+        ?.contains(document.activeElement)
+    ) {
+      return;
+    }
+
+    closeTimer.current = setTimeout(() => setPreviewOpen(false), 350);
+  };
+  const closePreview = () => {
+    const trigger = roomRef.current?.querySelector<HTMLButtonElement>(
+      '.fab-room-info[aria-expanded="true"]',
+    );
+    dismissPreview();
+    trigger?.focus({ preventScroll: true });
   };
   const go = (index: number) => {
     const section = sections.current[index];
@@ -256,33 +349,51 @@ export const FabricationJourney = () => {
           </div>
           <div
             className="fab-room-host"
-            onFocusCapture={() => clearTimeout(closeTimer.current)}
+            ref={roomRef}
+            onFocusCapture={keepPreview}
+            onBlurCapture={(event) => {
+              if (
+                event.relatedTarget &&
+                !event.currentTarget.contains(event.relatedTarget)
+              ) {
+                dismissPreview();
+              }
+            }}
             onKeyDown={(event) => {
-              if (event.key === "Escape") setPreview(undefined);
+              if (event.key === "Escape" && previewOpen) {
+                event.preventDefault();
+                event.stopPropagation();
+                closePreview();
+              }
             }}
           >
             <CleanRoom
               visit={visit}
-              preview={preview}
+              preview={previewOpen ? preview : undefined}
               showPreview={showPreview}
               hidePreview={hidePreview}
+              togglePreview={togglePreview}
             />
             {previewMachine ? (
               <div
                 id="fab-machine-preview"
-                className="fab-machine-preview"
-                onPointerEnter={() => showPreview(previewMachine.id)}
+                className={`fab-machine-preview ${previewOpen ? "is-open" : ""}`}
+                role="region"
+                aria-labelledby="fab-preview-title"
+                aria-hidden={!previewOpen}
+                inert={!previewOpen}
+                onPointerEnter={keepPreview}
                 onPointerLeave={hidePreview}
               >
                 <button
                   aria-label="Close machine preview"
-                  onClick={() => setPreview(undefined)}
+                  onClick={closePreview}
                 >
                   ×
                 </button>
                 <span className="fab-preview-source">Wikipedia preview</span>
-                <strong>{previewMachine.label}</strong>
-                <p>{previewMachine.summary}</p>
+                <strong id="fab-preview-title">{previewMachine.label}</strong>
+                <p id="fab-machine-description">{previewMachine.summary}</p>
                 <a
                   href={`https://en.wikipedia.org/wiki/${previewMachine.wiki}`}
                   target="_blank"

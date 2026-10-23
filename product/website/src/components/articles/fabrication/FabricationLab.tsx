@@ -273,11 +273,13 @@ export const CleanRoom = ({
   preview,
   showPreview,
   hidePreview,
+  togglePreview,
 }: {
   visit: Visit;
   preview?: MachineId;
-  showPreview: (id: MachineId) => void;
+  showPreview: (id: MachineId, immediate?: boolean) => void;
   hidePreview: () => void;
+  togglePreview: (id: MachineId) => void;
 }) => {
   const home = { x: 320, y: 126 };
   const destination = visit.machine ? machinePlaces[visit.machine] : home;
@@ -349,6 +351,15 @@ export const CleanRoom = ({
           <div
             key={machine.id}
             className={`fab-room-machine ${current ? "is-current" : ""} ${place.y > 120 ? "is-bottom" : ""}`}
+            onPointerEnter={(event) => {
+              if (
+                event.pointerType !== "touch" &&
+                window.matchMedia("(any-hover: hover)").matches
+              ) {
+                showPreview(machine.id);
+              }
+            }}
+            onPointerLeave={hidePreview}
             style={
               {
                 left: `${place.x / 6.4}%`,
@@ -362,11 +373,13 @@ export const CleanRoom = ({
               rel="noopener noreferrer"
               aria-label={`${machine.label} on Wikipedia, opens in a new tab`}
               aria-describedby={
-                preview === machine.id ? "fab-machine-preview" : undefined
+                preview === machine.id ? "fab-machine-description" : undefined
               }
-              onPointerEnter={() => showPreview(machine.id)}
-              onPointerLeave={hidePreview}
-              onFocus={() => showPreview(machine.id)}
+              onFocus={(event) => {
+                if (event.currentTarget.matches(":focus-visible")) {
+                  showPreview(machine.id, true);
+                }
+              }}
               onBlur={hidePreview}
             >
               <LabMachine
@@ -381,7 +394,7 @@ export const CleanRoom = ({
               aria-label={`About ${machine.label}`}
               aria-expanded={preview === machine.id}
               aria-controls="fab-machine-preview"
-              onClick={() => showPreview(machine.id)}
+              onClick={() => togglePreview(machine.id)}
             >
               i
             </button>

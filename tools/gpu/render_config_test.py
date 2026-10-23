@@ -213,8 +213,9 @@ class RenderTests(unittest.TestCase):
                     for rule in resource.get('rules', []):
                         if 'resourceNames' in rule:
                             self.assertIn('gpu-' + instance, rule['resourceNames'])
-            self.assertEqual(outputs[gpu / 'credentials.yaml'][1]['spec']['data'][-1],
-                             {'secretKey': instance, 'remoteRef': entry['spec']['managementSecret']})
+            # Hosts being retired keep their keys after the listed hosts.
+            self.assertIn({'secretKey': instance, 'remoteRef': entry['spec']['managementSecret']},
+                          outputs[gpu / 'credentials.yaml'][1]['spec']['data'])
             models = json.loads((gpu / 'models.json').read_text())
             models.pop('kev')
             (gpu / 'models.json').write_text(json.dumps(models))

@@ -14,7 +14,13 @@ const SENTENCES = [
   "You just change your base URL.",
 ];
 
-export const ValueFold = (): ReactElement => {
+export const ValueFold = ({
+  className,
+  sentences = SENTENCES,
+}: {
+  className?: string;
+  sentences?: readonly string[];
+}): ReactElement => {
   const hostRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,12 +44,14 @@ export const ValueFold = (): ReactElement => {
           timers.push(
             window.setTimeout(
               () => w.classList.add("gr-value-word--on"),
-              300 + i * 85,
+              200 + i * 110,
             ),
           );
         });
       },
-      { threshold: 0.55 },
+      /* Fires as the line approaches the viewport's centre band, not the
+         moment a corner clips the fold — the reveal belongs mid-screen. */
+      { rootMargin: "-35% 0px -35% 0px", threshold: 0 },
     );
     seen.observe(host);
     return () => {
@@ -53,10 +61,10 @@ export const ValueFold = (): ReactElement => {
   }, []);
 
   return (
-    <div className="gr-value" ref={hostRef}>
+    <div className={`gr-value${className ? ` ${className}` : ""}`} ref={hostRef}>
       <div className="gr-value-stage">
         <p className="gr-value-text">
-          {SENTENCES.map((sentence, si) => (
+          {sentences.map((sentence, si) => (
             <span className="gr-value-sentence" key={si}>
               {sentence.split(" ").map((word, wi) => (
                 <span className="gr-value-word" key={wi}>

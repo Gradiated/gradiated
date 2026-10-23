@@ -6,8 +6,10 @@ import MissionContent from "./method/mission.mdx";
 import PrioritiesContent from "./method/priorities.mdx";
 import ProductContent from "./method/product.mdx";
 import SequencingContent from "./method/sequencing-and-depth.mdx";
+import SpendingCompanyMoneyContent from "./method/spending-company-money.mdx";
 import ValuesContent from "./method/values.mdx";
 import PeopleContent from "./method/what-we-look-for.mdx";
+import WorkingWithPostHogContent from "./method/working-with-posthog.mdx";
 
 export type MethodSlug =
   | "mission"
@@ -16,9 +18,11 @@ export type MethodSlug =
   | "priorities"
   | "in-person"
   | "what-we-look-for"
+  | "spending-company-money"
   | "getting-out-the-gate"
   | "values"
-  | "brand";
+  | "brand"
+  | "working-with-posthog";
 
 export type MethodPageDefinition = {
   Content: ComponentType<{ components?: Record<string, unknown> }>;
@@ -84,6 +88,24 @@ export const methodPages: MethodPageDefinition[] = [
     description: "What Gradiated looks for in people.",
     indexDescription: "Agency, optimism, and exceptional ability.",
     Content: PeopleContent,
+  },
+  {
+    slug: "working-with-posthog",
+    section: "Company",
+    title: "Working with PostHog",
+    pageTitle: "Working with PostHog",
+    description: "How Gradiated and PostHog work together.",
+    indexDescription: "Share the foundations. Build the company independently.",
+    Content: WorkingWithPostHogContent,
+  },
+  {
+    slug: "spending-company-money",
+    section: "Company",
+    title: "Spending company money",
+    pageTitle: "Spending company money",
+    description: "How Gradiated handles expenses and company spending.",
+    indexDescription: "Use judgement. Make the value and the expense legible.",
+    Content: SpendingCompanyMoneyContent,
   },
   {
     slug: "getting-out-the-gate",

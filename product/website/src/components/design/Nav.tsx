@@ -7,7 +7,7 @@ import { models } from "../../models";
 import { ModelArt } from "./ModelArt";
 import { WaferArtwork } from "./WaferArtwork";
 import { Arrow } from "./icons";
-import { LOGO_ASPECT, Logo } from "./Logo";
+import { NAV_LOGO_ASPECT, NavLogo } from "./NavLogo";
 
 /**
  * Site navigation: a bar with a shared dropdown above `wide`, a full-screen
@@ -498,9 +498,9 @@ export const Nav = (): ReactElement => {
           aria-label="Gradiated home"
           className="gr-nav-wordmark"
           href="/"
-          style={{ "--logo-aspect": LOGO_ASPECT } as CSSProperties}
+          style={{ "--logo-aspect": NAV_LOGO_ASPECT } as CSSProperties}
         >
-          <Logo />
+          <NavLogo />
         </a>
 
         <div className="gr-nav-links" role="list">

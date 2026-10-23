@@ -1,5 +1,6 @@
-import { useEffect, useRef } from "react";
-import type { CSSProperties, ReactElement } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { CSSProperties, ReactElement, ReactNode } from "react";
+import { ModelPicker } from "./ModelPicker";
 import { PhoneFlow } from "./PhoneFlow";
 
 /**
@@ -260,7 +261,15 @@ const STAGE_LABELS = [
   "Post-training",
 ];
 
-export const LoopSection = (): ReactElement => {
+export const LoopSection = ({
+  header,
+}: {
+  /** Rendered above the fold's title — the machine toggle lives here. */
+  header?: ReactNode;
+} = {}): ReactElement => {
+  /* The target open model, chosen beside the field. Visual state only —
+     the loop's own slots mint their versions regardless. */
+  const [targetModel, setTargetModel] = useState(0);
   const hostRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mockRef = useRef<HTMLDivElement>(null);
@@ -826,6 +835,7 @@ export const LoopSection = (): ReactElement => {
         </div>
 
         <div className="gr-loop-right">
+          {header}
           <h2 className="gr-heading gr-loop-title gr-enter">
             Trained on your production traffic
           </h2>
@@ -837,9 +847,15 @@ export const LoopSection = (): ReactElement => {
               <span ref={urlRef}>{OLD_URL}</span>
               <span className="gr-loop-caret" />
             </div>
-            <button className="gr-loop-start" ref={startRef} type="button">
+            <button
+              className="gr-loop-start"
+              ref={startRef}
+              style={{ display: "none" }}
+              type="button"
+            >
               Start
             </button>
+            <ModelPicker onChange={setTargetModel} value={targetModel} />
           </div>
           <div
             className="gr-loop-stack gr-enter"

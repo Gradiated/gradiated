@@ -1,15 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import type { ReactElement } from "react";
+import type { CSSProperties, ReactElement } from "react";
 import {
   Arrow,
   Band,
   Footer,
   Module,
+  BadgeCard,
   Nav,
   Reveal,
   SectionFab,
   Substrate,
 } from "../components/design";
+import { GradientASCII } from "../components/design/GradientASCII";
+import { Noise } from "../components/design/Noise";
 import { ApplyForm } from "../components/ApplyForm";
 import { jobs } from "../careers";
 import type { Job } from "../careers";
@@ -29,66 +32,468 @@ const locationOf = (job: Job): string =>
     ? `Remote, ${job.location}`
     : job.location;
 
+const reasons = [
+  {
+    title: (
+      <>
+        One problem.
+        <br />
+        Every layer.
+      </>
+    ),
+    body: "We put the latest open-weight models into production, develop new inference techniques, and follow performance all the way down to silicon. Nobody arrives knowing every layer, so we run internal lectures, work through problems together, and expect everyone to teach what they know.",
+  },
+  {
+    title: "Half a million customers later, we’re starting again.",
+    body: "You will work directly with a small founding team that has built PostHog into a unicorn and a developer brand people love, led AI engineering, and gone deep in mathematics, semiconductors, and quantum computing.",
+  },
+  {
+    title: "Build a reputation that compounds.",
+    body: "We are engineering-led and trust-led. We want customers to find us through excellent work, useful writing, and other builders telling them about us. The aim is lasting technical advantage, not a brief turn in the hype cycle.",
+  },
+] as const;
+
+const expectations = [
+  {
+    title: "The mission is long term. The cadence is not.",
+    body: "We want to redesign inference all the way down to silicon. Today that means hustling for customers, shipping constantly, and learning as we go. This is not an academic lab: the pressure to perform, grow, and win is real.",
+  },
+  {
+    title: "Specialists still work on the whole problem.",
+    body: "Nobody knows every layer, but ‘that is not my area’ cannot become a reason to stop. You will be expected to learn outside your discipline and help wherever progress is blocked.",
+  },
+  {
+    title: "Customers are part of the technical work.",
+    body: "We do not develop technology in isolation and look for a use later. Customer workloads tell us what matters, what is wasteful, and what to build next.",
+  },
+  {
+    title: "We show our thinking.",
+    body: "Our methods are public, including beliefs that may change. Writing clearly enough for other people to disagree with us is part of doing the work properly.",
+  },
+  {
+    title: "High standards. Low ego.",
+    body: "The work is technically demanding, but we do not hire people who need to be the smartest person in the room. Startups are humbling; good people change their minds quickly.",
+  },
+] as const;
+
 /**
- * Careers, in the design system.
- *
- * The index is a list rather than a grid: there are three roles, and a grid of
- * three cards would make them look like a product range. A role is read one at
- * a time, and each line is a decision — so the layout is rows with room, and
- * the only thing competing for attention is the next title down.
+ * The separator is Cambridge itself: punts under Clare Bridge, drifting
+ * slower than the page — the background-position eases against scroll,
+ * so the photograph lags the text passing over it. Reduced motion (and
+ * no slack in the crop) leaves it a still image.
  */
+const Interlude = (): ReactElement => {
+  const lineRef = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    const band = lineRef.current?.closest<HTMLElement>(".gr-careers-interlude");
+    if (!band) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const DRIFT = 110; // px of image travel across the band's pass
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const rect = band.getBoundingClientRect();
+      const vh = window.innerHeight;
+      /* -1 when the band enters from below, +1 as it leaves above. */
+      const progress =
+        (vh / 2 - (rect.top + rect.height / 2)) / ((vh + rect.height) / 2);
+      const shift = Math.max(-1, Math.min(1, progress)) * DRIFT;
+      band.style.backgroundPositionY = `calc(50% + ${shift.toFixed(1)}px)`;
+    };
+    const queue = () => {
+      if (raf === 0) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", queue, { passive: true });
+    window.addEventListener("resize", queue);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", queue);
+      window.removeEventListener("resize", queue);
+    };
+  }, []);
+
+  return (
+    <Module bleed className="gr-careers-module gr-careers-interlude" index={2}>
+      <p className="gr-careers-interlude-line" ref={lineRef}>
+        <span>Gradiated</span>
+        <span>Inference lab in Cambridge,&nbsp;UK</span>
+      </p>
+      {/* Film grain over the photograph. */}
+      <Noise dust={0.25} opacity={0.14} size={1.4} />
+    </Module>
+  );
+};
+
+/**
+ * The badge holds the centre; the reasons take the remaining sides —
+ * left, right, and below. The whole fold blur-fades in once seen:
+ * title first, then the card, then the orbiting reasons (the seen
+ * class lands on the module so the title is choreographed too).
+ */
+const WhyOrbit = (): ReactElement => {
+  const hostRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          host.classList.add("gr-careers-why--seen");
+          io.disconnect();
+        }
+      },
+      { threshold: 0.2 },
+    );
+    io.observe(host);
+    return () => io.disconnect();
+  }, []);
+
+  /* The card shows at load: it starts lifted over the title (visible
+     in the hero's sliver) and travels down into its orbit seat as the
+     reader scrolls, revealing "Why Gradiated" from underneath. */
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!window.matchMedia("(min-width: 60rem)").matches) return;
+    const card = host.querySelector<HTMLElement>(".gr-idcard");
+    const module = host.closest<HTMLElement>(".gr-careers-why-module");
+    if (!card || !module) return;
+
+    const LOAD_GAP = 200; // hero leaves this much of the fold on screen
+    const PEEK = 120; // px of card visible at load
+    const ARRIVE = 110; // module top at which the card is seated
+    const INTRO_MS = 1000; // the card slides up into its peek on load
+    let travel = 0;
+    let uncoverAt = 40; // lift (px) below which the title is clear of the card
+    let uncovered = false;
+    let raf = 0;
+    let introStart = 0;
+
+    const measure = () => {
+      const prev = card.style.transform;
+      card.style.transform = "none";
+      const moduleTop = module.getBoundingClientRect().top;
+      const inner = card.getBoundingClientRect().top - moduleTop;
+      card.style.transform = prev;
+      travel = Math.max(0, inner - LOAD_GAP + PEEK);
+      const title = module.querySelector(".gr-module-title");
+      if (title) {
+        const titleBottom = title.getBoundingClientRect().bottom - moduleTop;
+        uncoverAt = Math.max(8, inner - titleBottom + 6);
+      }
+    };
+
+    const update = () => {
+      raf = 0;
+      const vh = window.innerHeight;
+      const top = module.getBoundingClientRect().top;
+      const start = vh - LOAD_GAP;
+      const p = Math.min(1, Math.max(0, (top - ARRIVE) / Math.max(1, start - ARRIVE)));
+      const eased = p * p * (3 - 2 * p);
+      /* The load intro: the card starts below the fold's edge and
+         slides up into its peek, then the scroll owns it. */
+      if (introStart === 0) introStart = performance.now();
+      const introP = Math.min(1, (performance.now() - introStart) / INTRO_MS);
+      const introEase = 1 - (1 - introP) ** 3;
+      const slide = (1 - introEase) * (PEEK + 60) * eased;
+      card.style.transform = `translateY(${(-eased * travel + slide).toFixed(1)}px)`;
+      /* The title stays hidden while the card's lift still covers it;
+         once the card has scrolled clear, it blur-reveals (one way). */
+      if (!uncovered && eased * travel < uncoverAt) {
+        uncovered = true;
+        host.classList.add("gr-careers-why--uncovered");
+      }
+      if (introP < 1) queue();
+    };
+
+    const queue = () => {
+      if (raf === 0) raf = requestAnimationFrame(update);
+    };
+    const onResize = () => {
+      measure();
+      queue();
+    };
+    measure();
+    update();
+    window.addEventListener("scroll", queue, { passive: true });
+    window.addEventListener("resize", onResize);
+    return () => {
+      cancelAnimationFrame(raf);
+      card.style.transform = "";
+      window.removeEventListener("scroll", queue);
+      window.removeEventListener("resize", onResize);
+    };
+  }, []);
+
+  return (
+    <div className="gr-careers-why" ref={hostRef}>
+      {reasons.map((reason, i) => (
+        <div
+          className={`gr-careers-reason gr-careers-why-${
+            (["left", "right", "bottom"] as const)[i]
+          }`}
+          key={reason.body}
+        >
+          <h3 className="gr-careers-reason-title">{reason.title}</h3>
+          <p className="gr-careers-reason-body gr-muted">{reason.body}</p>
+        </div>
+      ))}
+      <BadgeCard />
+    </div>
+  );
+};
+
+/** Per-item parallax depth, px of travel across the board's pass. */
+const DECIDE_DRIFTS = [-48, 38, -26, 56, -38, 44] as const;
+
+/** The expectations that have poster art (the rest stay text notes). */
+const BOARD_ART: Record<string, string> = {
+  "The mission is long term. The cadence is not.":
+    "/assets/careers-board/mission-cadence.jpg",
+  "Specialists still work on the whole problem.":
+    "/assets/careers-board/specialists-work.jpg",
+  "Customers are part of the technical work.":
+    "/assets/careers-board/customers-work.jpg",
+  "We show our thinking.": "/assets/careers-board/show-thinking.jpg",
+  "High standards. Low ego.": "/assets/careers-board/high-low.jpg",
+};
+
+/**
+ * Before you decide, as a collage: the expectations scattered across
+ * the fold like notes on a board, the handbook poster among them, each
+ * drifting at its own rate against the scroll (timeless.co/type's
+ * layout, in our materials). Reduced motion pins everything flat.
+ */
+const DecideBoard = (): ReactElement => {
+  const hostRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const items = Array.from(host.querySelectorAll<HTMLElement>("[data-drift]"));
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const rect = host.getBoundingClientRect();
+      const vh = window.innerHeight;
+      const progress =
+        (vh / 2 - (rect.top + rect.height / 2)) / ((vh + rect.height) / 2);
+      const p = Math.max(-1, Math.min(1, progress));
+      for (const item of items) {
+        const depth = Number(item.dataset.drift) || 0;
+        item.style.transform = `translateY(${(p * depth).toFixed(1)}px)`;
+      }
+    };
+    const queue = () => {
+      if (raf === 0) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", queue, { passive: true });
+    window.addEventListener("resize", queue);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", queue);
+      window.removeEventListener("resize", queue);
+    };
+  }, []);
+
+  const print = (i: number, extra = "") => {
+    const expectation = expectations[i];
+    const art = BOARD_ART[expectation.title];
+    return (
+      <div
+        className={`gr-careers-note gr-careers-print${extra ? ` ${extra}` : ""}`}
+        data-drift={DECIDE_DRIFTS[i]}
+        key={expectation.title}
+      >
+        <figure className="gr-careers-print-frame" tabIndex={0}>
+          <img alt={expectation.title} src={art} />
+        </figure>
+        {/* The writing is collapsed under the print; on hover the well
+            opens (nudging the card below) and the words blur-stream in,
+            in the prelude's manner. */}
+        <div aria-hidden className="gr-careers-print-well">
+          <div>
+            <p className="gr-careers-print-caption gr-muted">
+          {expectation.body
+            .trim()
+            .split(/\s+/)
+            .map((word, wi) => (
+              <span
+                key={wi}
+                style={{ "--w-delay": `${wi * 14}ms` } as CSSProperties}
+              >
+                {word}{" "}
+              </span>
+            ))}
+            </p>
+          </div>
+        </div>
+        <p className="gr-visually-hidden">{expectation.body}</p>
+      </div>
+    );
+  };
+
+  /* Four columns, the title part of the collage: title + mission on
+     the left, then specialists over customers, high-low over
+     show-thinking, and the handbook standing alone on the right. */
+  return (
+    <div className="gr-careers-boardwrap">
+      {/* Outside the scroller, so on narrow screens it holds still
+          above the swipe row; on wide screens it is placed over the
+          board's first column. */}
+      <h2 className="gr-heading gr-careers-board-title">Before you decide</h2>
+      <div className="gr-careers-board" ref={hostRef}>
+      <div className="gr-careers-stack gr-careers-stack--1">{print(0)}</div>
+      <div className="gr-careers-stack gr-careers-stack--2">
+        {print(1, "gr-careers-print--round")}
+        {print(2, "gr-careers-print--wide")}
+      </div>
+      <div className="gr-careers-stack gr-careers-stack--3">
+        {print(4)}
+        {print(3)}
+      </div>
+      <div className="gr-careers-stack gr-careers-stack--4">
+        {/* The handbook print — the way into the library. */}
+        <div
+          className="gr-careers-note gr-careers-print gr-careers-print--round"
+          data-drift={DECIDE_DRIFTS[5]}
+        >
+          <a className="gr-careers-print-frame" href="/library/?show=methods">
+            <img
+              alt="Working methods — read the handbook"
+              src="/assets/careers-board/work-methods.jpg"
+            />
+          </a>
+        </div>
+      </div>
+      </div>
+    </div>
+  );
+};
+
 export const CareersIndexPage = (): ReactElement => (
   <Substrate>
     <Nav />
 
     <Band>
-      <Module className="gr-module--top" index={0}>
-        <header className="gr-masthead">
-          <p className="gr-label">Careers</p>
+      {/* The field sits behind the whole fold: the hero module's
+          entrance wrapper would otherwise become the absolute anchor. */}
+      <div className="gr-careers-hero-wrap">
+        <div aria-hidden className="gr-careers-hero-field">
+          <GradientASCII
+            cellSize={15}
+            colors={["#f6f3ec", "#e9b748", "#be5e31", "#1f3b50"]}
+            fontFamily='"JetBrains Mono", ui-monospace, monospace'
+            glow={0.15}
+            gradientOpacity={0.55}
+            grain={0.05}
+            lightMode
+            scale={1.25}
+            shape="horizon"
+          />
+        </div>
+      <Module
+        bleed
+        className="gr-module--top gr-careers-module gr-careers-hero"
+        index={0}
+      >
+        <header className="gr-masthead gr-careers-head">
           <Reveal
             as="h1"
             by="word"
             className="gr-masthead-title gr-masthead-title--display"
           >
-            We are hiring.
+            Come make AI use less energy.
           </Reveal>
+          <p className="gr-careers-lede gr-muted">
+            Gradiated is a small research and engineering team focused on making
+            open-model inference radically more efficient at every layer—from
+            the models to inference, chips, and the data center.
+          </p>
+          <a className="gr-button gr-button--main gr-careers-jump" href="#open-roles">
+            See open roles
+            <Arrow />
+          </a>
         </header>
+      </Module>
+      </div>
 
-        <ul className="gr-roles">
-          {jobs.map((job) => (
-            <li key={job.slug}>
-              <a className="gr-role" href={`/careers/${job.slug}/`}>
-                <span className="gr-role-text">
-                  <span className="gr-role-title">{job.title}</span>
-                  <span className="gr-role-summary gr-muted">
-                    {job.summary}
-                  </span>
-                  <span className="gr-role-facts gr-label gr-muted">
-                    {job.team ? (
-                      <>
-                        <span>{job.team}</span>
-                        <span aria-hidden>·</span>
-                      </>
-                    ) : null}
-                    <span>{locationOf(job)}</span>
-                  </span>
-                </span>
+      <Module
+        className="gr-careers-module gr-careers-why-module"
+        index={1}
+        title="Why Gradiated"
+      >
+        <WhyOrbit />
+      </Module>
 
-                {/* At the end of the row and centred on it, rather than
+      <Interlude />
+
+      {/* The board carries its own title, inside the collage. */}
+      <Module className="gr-careers-module" index={3}>
+        <DecideBoard />
+      </Module>
+
+      <Module
+        className="gr-careers-module gr-careers-roles-module"
+        id="open-roles"
+        index={4}
+        title="Open roles"
+      >
+        {jobs.length > 0 ? (
+          <ul className="gr-roles">
+            {jobs.map((job) => (
+              <li key={job.slug}>
+                <a className="gr-role" href={`/careers/${job.slug}/`}>
+                  <span className="gr-role-text">
+                    <span className="gr-role-title">{job.title}</span>
+                    <span className="gr-role-summary gr-muted">
+                      {job.summary}
+                    </span>
+                    <span className="gr-role-facts gr-label gr-muted">
+                      {job.team ? (
+                        <>
+                          <span>{job.team}</span>
+                          <span aria-hidden>·</span>
+                        </>
+                      ) : null}
+                      <span>{locationOf(job)}</span>
+                    </span>
+                  </span>
+
+                  {/* At the end of the row and centered on it, rather than
                     chasing the title's baseline — a mark that points at the
                     whole row belongs at the row's edge. */}
-                <span aria-hidden className="gr-role-go">
-                  <Arrow />
-                </span>
-              </a>
-            </li>
-          ))}
-        </ul>
+                  <span aria-hidden className="gr-role-go">
+                    <Arrow />
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="gr-careers-no-roles">
+            <p className="gr-careers-no-roles-title">No role listed today?</p>
+            <p className="gr-careers-no-roles-body gr-muted">
+              If you are exceptional at inference software, systems, or silicon,
+              we would still like to hear from you.
+            </p>
+            <a className="gr-label" href="mailto:team@gradiated.com">
+              team@gradiated.com
+            </a>
+          </div>
+        )}
       </Module>
     </Band>
 
     <Band>
-      <Footer index={1} />
+      <Footer index={5} />
     </Band>
   </Substrate>
 );

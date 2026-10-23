@@ -106,6 +106,8 @@ const METHOD_COVERS: Record<MethodSlug, StoryCover> = {
   priorities: artworkPresets.product,
   "in-person": artworkPresets.people,
   "what-we-look-for": artworkPresets.judgement,
+  "working-with-posthog": artworkPresets.people,
+  "spending-company-money": artworkPresets.people,
   "getting-out-the-gate": artworkPresets.gate,
   values: artworkPresets.values,
   brand: artworkPresets.brand,

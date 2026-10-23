@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { ReactElement } from "react";
+import type { CSSProperties, ReactElement } from "react";
 import { Link } from "react-router-dom";
 import { Arrow } from "./icons";
 import { Logo } from "./Logo";
@@ -235,11 +235,11 @@ export const HomeFlow = (): ReactElement => {
     const SOCK = { x: 64, y: 40, w: 60, h: 60, cx: 94, cy: 70 };
 
     /* STROKE DISCIPLINE: every line is exactly one device pixel, in ONE
-       shared paint — the loop fold's hairline (ink @ 30%). Solid ink is
-       reserved for data (pin dots, text sits between). Coincident lines
-       are drawn once. */
-    const A_LINE = 0.3;
-    const A_TEXT = 0.45;
+       shared paint. The blueprint ran at the page's 30% hairline and read
+       too faint at the back of the fold (reader feedback) — the drawing
+       now sits at 55/70 while solid ink stays reserved for data. */
+    const A_LINE = 0.55;
+    const A_TEXT = 0.7;
     const TOTAL = 110; /* sum of the gate weights below */
 
     const drawBoardArt = (k: number, T: number): void => {
@@ -741,6 +741,7 @@ export const HomeFlow = (): ReactElement => {
       shadowEl.style.opacity = `${out.shadowAlpha * 0.6}`;
 
       siliconCopy.style.opacity = `${out.siliconCopyA}`;
+      if (out.siliconCopyA > 0.35) siliconCopy.classList.add("gr-stream--on");
       siliconCopy.style.visibility =
         out.siliconCopyA > 0.01 ? "visible" : "hidden";
       /* the CSS turns this into rise + blur, so the entrance is one value */
@@ -795,21 +796,38 @@ export const HomeFlow = (): ReactElement => {
           ref={siliconCopyRef}
         >
           <h2 className="gr-heading">
-            All the way down
+            {["We’re", "building"].map((w, i) => (
+              <span
+                className="gr-stream-word"
+                key={w}
+                style={{ "--w-delay": `${0.15 + i * 0.07}s` } as CSSProperties}
+              >
+                {w}{" "}
+              </span>
+            ))}
             <br />
-            to the silicon
+            {["our", "own", "chips."].map((w, i) => (
+              <span
+                className="gr-stream-word"
+                key={w}
+                style={{ "--w-delay": `${0.3 + i * 0.07}s` } as CSSProperties}
+              >
+                {w}{" "}
+              </span>
+            ))}
           </h2>
           <p className="gr-muted">
-            Waste in inference isn&apos;t in one place. It comes from model
-            architectures that thrash memory, kernels that leave chips
-            half-idle, and schedulers that keep expensive capacity waiting.
-            Where possible, the workload should shape the silicon.
-          </p>
-          <p className="gr-muted">
-            We design chips for specific model families and provide the weights
-            we generate. Through hardware optimization, our goal is to be the
-            most efficient, configurable, and reliable place to run inference
-            for those base model families.
+            {"Cheapest means going all the way. We’re designing our own chips to bring costs down further than software alone can."
+              .split(" ")
+              .map((w, i) => (
+                <span
+                  className="gr-stream-word"
+                  key={i}
+                  style={{ "--w-delay": `${0.55 + i * 0.06}s` } as CSSProperties}
+                >
+                  {w}{" "}
+                </span>
+              ))}
           </p>
           <Link
             className="gr-button gr-button--main gr-flow-cta"

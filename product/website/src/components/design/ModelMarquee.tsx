@@ -1,9 +1,10 @@
 import type { ReactElement } from "react";
 
 /**
- * The models marquee, between the loop fold and the chip fold: the open
- * model families Gradiated post-trains, as app-icon pillows drifting
- * left to right. Text tiles until the real logo set lands — each entry
+ * The model families Gradiated post-trains, as one static row of app-icon
+ * pillows closing the products section. It drifted as a marquee for a
+ * while, but eight logos fit the band — motion added a vanishing edge and
+ * nothing else. Text tiles until the real logo set lands — each entry
  * takes a `src` when it does.
  */
 
@@ -31,15 +32,10 @@ const Tiles = (): ReactElement => (
 export const ModelMarquee = (): ReactElement => (
   <section className="gr-marquee">
     <h2 className="gr-heading gr-marquee-title">
-      Available on your favourite models
+      One API, all your favorite models
     </h2>
-    <div className="gr-marquee-lane">
-      {/* two copies; the animation walks one copy's width, so the loop
-          is seamless */}
-      <div className="gr-marquee-track">
-        <Tiles />
-        <Tiles />
-      </div>
+    <div className="gr-marquee-row">
+      <Tiles />
     </div>
   </section>
 );

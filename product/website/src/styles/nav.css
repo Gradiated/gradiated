@@ -967,8 +967,8 @@
    Not transitioned: `fill` cannot interpolate from a colour to a gradient
    reference, so a duration here would jump partway rather than fade. It
    arrives at once, which suits a mark lighting up. */
-.gr-nav-wordmark:hover svg path,
-.gr-nav-wordmark:focus-visible svg path {
+.gr-nav-wordmark:hover svg .gr-navlogo-plate,
+.gr-nav-wordmark:focus-visible svg .gr-navlogo-plate {
   fill: var(--logo-gradient);
 }
 

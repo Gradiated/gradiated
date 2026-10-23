@@ -347,3 +347,13 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
+
+/* -- list markers ----------------------------------------------------------
+   Bullets are square chips, everywhere: a list item is a die on the lattice,
+   not a period that drifted. The native square marker is the right size at
+   every type scale and inherits the ink; lists that opt out of markers
+   (nav, footers, roles) carry list-style: none — :where() keeps this rule
+   at zero specificity so those opt-outs always win. */
+.gr-root :where(ul) {
+  list-style-type: square;
+}

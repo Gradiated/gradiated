@@ -5248,6 +5248,24 @@
   font-family: var(--font-code);
 }
 
+/* The stage reserves the full snippet's height (the hidden sizer), and
+   the typed code paints over it — the card holds still while lines
+   arrive, instead of growing with them. */
+.gr-code-stage {
+  position: relative;
+  display: block;
+}
+
+.gr-code-sizer {
+  display: block;
+  visibility: hidden;
+}
+
+.gr-code-stage > code:last-child {
+  position: absolute;
+  inset: 0;
+}
+
 .gr-code-muted {
   color: var(--color-code-keyword);
 }

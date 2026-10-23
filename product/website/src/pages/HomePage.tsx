@@ -330,7 +330,7 @@ const HomeProducts = (): ReactElement => (
           text: "It is undeniable that the frontier model companies offer the path of least resistance for your most important work. It is however also true that it comes at a cost ~10\u201315x higher than using open models. That's a significant dent on your cash flows and consequently, runway.",
         },
         {
-          text: "So then, why do most teams that try open weight models just end up switching back? In our experience we've seen that teams tend to switch their base models but don't optimise any of their other parameters. And models can be temperamental, to say the least. This leads to performance regressions and the inevitable switch back.",
+          text: "So then, why do most teams that try open weight models just end up switching back? In our experience we've seen that teams tend to switch their base models but don't optimize any of their other parameters. And models can be temperamental, to say the least. This leads to performance regressions and the inevitable switch back.",
         },
         {
           text: "At Gradiated we start with your real production traces. We benchmark open models against them, show you before-and-afters, and tune your prompts to your preferences until the open model matches or beats what you run now. All that with significant cost savings.",
@@ -523,8 +523,15 @@ const InferenceExample = (): ReactElement => {
         <span>{snippet.file}</span>
       </div>
       <pre key={index}>
-        <code>
-          {snippet.tokens.map((token, tokenIndex) => {
+        {/* The stage is sized by the FULL snippet (hidden), and the
+            typed text paints over it — so the card never grows or
+            shrinks while the keyboard works. */}
+        <span className="gr-code-stage">
+          <code aria-hidden className="gr-code-sizer">
+            {snippet.tokens.map((token) => token.t).join("")}
+          </code>
+          <code>
+            {snippet.tokens.map((token, tokenIndex) => {
             const text = token.t.slice(0, Math.max(0, remaining));
             remaining -= token.t.length;
             if (!text) return null;
@@ -536,12 +543,13 @@ const InferenceExample = (): ReactElement => {
               <span key={tokenIndex}>{text}</span>
             );
           })}
-          <span
-            aria-hidden
-            className="gr-code-caret"
-            data-typing={typing || undefined}
-          />
-        </code>
+            <span
+              aria-hidden
+              className="gr-code-caret"
+              data-typing={typing || undefined}
+            />
+          </code>
+        </span>
       </pre>
     </div>
   );

@@ -10,7 +10,7 @@
 export const aboutGradiated = [
   "Gradiated is a research lab focused on inference. We co-design software and hardware for efficiently serving open-weight models.",
   "Our goal is to maximize intelligence per joule. We work across model behavior, software, systems, and silicon to find better ways to run models.",
-  "We start by thinking about the model as a mathematical function, and map that out onto hardware and then build software on top of that which is custom to each model. This maximises performance and removes wasted abstractions.",
+  "We start by thinking about the model as a mathematical function, and map that out onto hardware and then build software on top of that which is custom to each model. This maximizes performance and removes wasted abstractions.",
   "We are early. You will help set the technical direction and the way the company works.",
 ];
 

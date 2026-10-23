@@ -20,6 +20,11 @@ unique term. Operations require both values. Claim retries reuse the same term;
 a replaced leader cannot mutate workloads, even if its numeric generation is
 reused after state restoration. Recreating the Kubernetes Lease does not reset
 host generations. Existing reservations adopt this protocol on their first claim.
+A host answers a request with a stale generation or term with 409
+`stale_epoch`. If the host's generation is now below the one the leader holds,
+as after a re-image, the leader claims it again under its lease and retries
+once. A host at or ahead of that generation belongs to another leader and is
+never claimed back; a controller that has lost the Lease never claims.
 
 Each RunPod host advertises its GPU count, CPU budget, memory budget and GPU
 model. Kubernetes places a pod using those resources and its node selector.

@@ -85,7 +85,7 @@ func (h *hostRegistry) snapshot() []*provider {
 // configureHost stages the pod runtimes and, if the operator chose one, the
 // host bundle. Only the controller holds the fencing epoch configure needs.
 func configureHost(ctx context.Context, objects dynamic.Interface, p *provider) error {
-	payload := map[string]any{"operation": "configure", "runtimes": p.host.Runtimes, "epoch": p.epoch, "term": p.term}
+	payload := map[string]any{"operation": "configure", "runtimes": p.host.Runtimes}
 	bundle, err := targetBundle(ctx, objects, p.host.InstanceID)
 	if err != nil {
 		log.Printf("host %s bundle target unavailable: %v", p.host.InstanceID, err)
@@ -93,7 +93,7 @@ func configureHost(ctx context.Context, objects dynamic.Interface, p *provider) 
 		payload["host_bundle"] = bundle
 	}
 	var response map[string]any
-	return p.callPayload(ctx, payload, &response)
+	return p.fenced(ctx, payload, &response)
 }
 
 func configureHosts(ctx context.Context, objects dynamic.Interface, registry *hostRegistry, every time.Duration) {

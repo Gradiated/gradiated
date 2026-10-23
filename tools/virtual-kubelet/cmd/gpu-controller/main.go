@@ -60,8 +60,7 @@ type configuration struct {
 }
 type provider struct {
 	host   host
-	epoch  int64
-	term   string
+	fence  *hostFence
 	source corelisters.PodLister
 	client typedv1.CoreV1Interface
 	mu     sync.Mutex
@@ -108,10 +107,28 @@ func retryHostOperation(_ context.Context, _ string, _ int, _ time.Time, err err
 }
 
 func (p *provider) call(ctx context.Context, operation string, uid string, pod *v1.Pod, result any) error {
-	payload := map[string]any{"operation": operation, "uid": uid, "pod": pod, "epoch": p.epoch, "term": p.term}
+	payload := map[string]any{"operation": operation, "uid": uid, "pod": pod}
 	if operation == "configure" {
 		payload["runtimes"] = p.host.Runtimes
 	}
+	return p.fenced(ctx, payload, result)
+}
+
+// fenced sends an operation with this leader's fencing generation. When the
+// host rejects it as stale, the leader re-claims a host that was reset and
+// retries once; see hostFence.reclaim.
+func (p *provider) fenced(ctx context.Context, payload map[string]any, result any) error {
+	epoch, term := p.fence.current()
+	payload["epoch"], payload["term"] = epoch, term
+	err := p.callPayload(ctx, payload, result)
+	var stale *staleFenceError
+	if !errors.As(err, &stale) {
+		return err
+	}
+	if err = p.fence.reclaim(ctx, epoch, stale); err != nil {
+		return err
+	}
+	payload["epoch"], payload["term"] = p.fence.current()
 	return p.callPayload(ctx, payload, result)
 }
 
@@ -144,6 +161,14 @@ func (p *provider) callPayload(ctx context.Context, payload map[string]any, resu
 		}
 		if json.NewDecoder(io.LimitReader(response.Body, 1024)).Decode(&failure) == nil && failure.Error == "unknown_pod" {
 			return errdefs.NotFoundf("host has no record of the pod for operation %s", operation)
+		}
+	}
+	if response.StatusCode == http.StatusConflict {
+		var failure struct {
+			Error string `json:"error"`
+		}
+		if json.NewDecoder(io.LimitReader(response.Body, 1024)).Decode(&failure) == nil && failure.Error == "stale_epoch" {
+			return &staleFenceError{operation: operation}
 		}
 	}
 	if response.StatusCode >= 500 {
@@ -344,7 +369,7 @@ func (p *provider) NotifyNodeStatus(ctx context.Context, callback func(*v1.Node)
 	}()
 }
 
-func runHost(ctx context.Context, client kubernetes.Interface, namespace string, h host, epoch int64, term string) error {
+func runHost(ctx context.Context, client kubernetes.Interface, namespace string, h host, fence *hostFence) error {
 	name := "gpu-" + h.InstanceID
 	resources := v1.ResourceList{v1.ResourceCPU: *resource.NewQuantity(h.CPU, resource.DecimalSI), v1.ResourceMemory: resource.MustParse(fmt.Sprintf("%dGi", h.MemoryGiB)), v1.ResourcePods: resource.MustParse("16"), "nvidia.com/gpu": *resource.NewQuantity(h.GPUCount, resource.DecimalSI)}
 	labels := map[string]string{"type": "virtual-kubelet", "kubernetes.io/hostname": name, "gradiated.com/provider": "runpod", "gradiated.com/instance-id": h.InstanceID, "nvidia.com/gpu.product": h.GPUProduct, "nvidia.com/gpu.count": fmt.Sprint(h.GPUCount)}
@@ -362,7 +387,7 @@ func runHost(ctx context.Context, client kubernetes.Interface, namespace string,
 	}))
 	resourcesFactory := informers.NewSharedInformerFactoryWithOptions(client, time.Minute, informers.WithNamespace(namespace))
 	pods := factory.Core().V1().Pods()
-	p := &provider{host: h, epoch: epoch, term: term, source: pods.Lister(), client: client.CoreV1(), pods: map[string]*v1.Pod{}, node: spec}
+	p := &provider{host: h, fence: fence, source: pods.Lister(), client: client.CoreV1(), pods: map[string]*v1.Pod{}, node: spec}
 	if err := p.Ping(ctx); err != nil {
 		return err
 	}
@@ -532,11 +557,10 @@ func main() {
 					group.Add(1)
 					go func(h host) {
 						defer group.Done()
-						var epoch int64
+						var fence *hostFence
 						for leader.Err() == nil {
-							if epoch == 0 {
-								var claimErr error
-								epoch, claimErr = claimHost(leader, client, config.Namespace, identity, lease, term, h)
+							if fence == nil {
+								epoch, claimErr := claimHost(leader, client, config.Namespace, identity, lease, term, h)
 								if claimErr != nil {
 									if errors.Is(claimErr, errLeadershipChanged) {
 										cancel()
@@ -550,10 +574,11 @@ func main() {
 										continue
 									}
 								}
+								fence = leaderFence(client, config.Namespace, identity, lease, term, h, epoch, cancel)
 							}
-							registry.register(&provider{host: h, epoch: epoch, term: term, client: client.CoreV1()})
+							registry.register(&provider{host: h, fence: fence, client: client.CoreV1()})
 							hostContext, stopHost := context.WithCancel(leader)
-							err := runHost(hostContext, client, config.Namespace, h, epoch, term)
+							err := runHost(hostContext, client, config.Namespace, h, fence)
 							stopHost()
 							if err != nil {
 								log.Printf("host %s controller failed: %v", h.InstanceID, err)

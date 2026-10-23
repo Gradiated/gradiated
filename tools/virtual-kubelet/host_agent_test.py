@@ -298,6 +298,43 @@ class HostAgentTest(unittest.TestCase):
             server.server_close()
             thread.join(timeout=2)
 
+    @unittest.skipUnless(hasattr(agent, 'StaleFence'), 'the frozen recovery agent reports every rejection as 422')
+    def test_real_http_reports_stale_fencing_apart_from_invalid_operations(self):
+        import threading
+        import urllib.error
+        import urllib.request
+        server = agent.ThreadingHTTPServer(('127.0.0.1', 0), agent.handler_for(self.host, 'synthetic-key'))
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+
+        def post(payload):
+            request = urllib.request.Request(f'http://127.0.0.1:{server.server_port}/_kubelet',
+                data=json.dumps(payload).encode(), headers={'Authorization': 'Bearer synthetic-key'})
+            try:
+                with urllib.request.urlopen(request, timeout=2) as response:
+                    return response.status, json.load(response)
+            except urllib.error.HTTPError as failure:
+                return failure.code, json.loads(failure.read())
+        try:
+            stale = (409, {'error': 'stale_epoch'})
+            self.assertEqual(post({'operation': 'list', 'epoch': 1, 'term': self.term}), (200, []))
+            self.assertEqual(post({'operation': 'list', 'epoch': 2, 'term': self.term}), stale)
+            self.assertEqual(post({'operation': 'list', 'epoch': 1, 'term': str(uuid.uuid4())}), stale)
+            invalid = (422, {'error': 'invalid_host_operation'})
+            self.assertEqual(post({'operation': 'list', 'term': self.term}), invalid)
+            self.assertEqual(post({'operation': 'reboot', 'epoch': 1, 'term': self.term}), invalid)
+            self.assertEqual(post({'operation': 'claim', 'epoch': 0, 'term': str(uuid.uuid4())}), invalid)
+            # A re-image starts the host with no fence file.
+            (self.root / 'fence.json').unlink()
+            self.assertEqual(post({'operation': 'list', 'epoch': 1, 'term': self.term}), stale)
+            self.assertEqual(post({'operation': 'fence'}), (200, {'epoch': 0}))
+            self.assertEqual(post({'operation': 'claim', 'epoch': 0, 'term': self.term}), (200, {'epoch': 1}))
+            self.assertEqual(post({'operation': 'list', 'epoch': 1, 'term': self.term}), (200, []))
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)
+
     def test_controller_restart_preserves_workloads_and_rejects_stale_leader(self):
         directory = self.root / 'pods' / self.uid
         directory.mkdir()

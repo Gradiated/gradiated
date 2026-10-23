@@ -29,7 +29,7 @@ func configured(t *testing.T, objects ...runtime.Object) map[string]any {
 	})
 	p.host.InstanceID = first
 	p.host.Runtimes = json.RawMessage(`{"kev":{}}`)
-	p.term = "term"
+	p.fence.term = "term"
 	if err := configureHost(context.Background(), fleetClient(objects...), p); err != nil {
 		t.Fatal(err)
 	}

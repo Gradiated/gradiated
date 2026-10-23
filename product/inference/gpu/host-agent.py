@@ -418,6 +418,12 @@ class UnknownPod(Exception):
     pass
 
 
+# The request carries another controller generation than this host's fence. The
+# controller re-claims a host whose generation went backwards, as after a re-image.
+class StaleFence(ValueError):
+    pass
+
+
 class Agent:
     def __init__(self, config, root=ROOT, config_path=None):
         self.config, self.root = config, root
@@ -750,9 +756,9 @@ class Agent:
                 atomic_json(fence_file, {'epoch': epoch})
                 previous = epoch
             if fence.get('term') and body.get('term') != fence['term']:
-                raise ValueError('Stale controller term')
+                raise StaleFence('Stale controller term')
             if epoch != previous:
-                raise ValueError("Stale controller fencing epoch")
+                raise StaleFence("Stale controller fencing epoch")
             if operation == "configure":
                 if body.get("host_bundle"):
                     stage_host(self, body["host_bundle"], epoch)
@@ -960,6 +966,10 @@ def handler_for(agent, token):
             except UnknownPod:
                 payload = b'{"error":"unknown_pod"}'
                 self.send_response(404)
+            except StaleFence as error:
+                print(f"Host operation rejected: {error}", flush=True)
+                payload = b'{"error":"stale_epoch"}'
+                self.send_response(409)
             except (OSError, RuntimeError) as error:
                 print(f'Host operation unavailable: {type(error).__name__}', flush=True)
                 payload = b'{"error":"host_unavailable"}'

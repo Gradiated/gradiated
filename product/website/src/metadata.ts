@@ -207,7 +207,7 @@ export const getPageMetadata = (pathname: string): PageMetadata => {
   if (article) {
     return {
       title: article.title,
-      description: article.description,
+      description: article.description ?? article.title,
       image: article.image,
       publishedAt: article.publishedAt,
       updatedAt: article.updatedAt,

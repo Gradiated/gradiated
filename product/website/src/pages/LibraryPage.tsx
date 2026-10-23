@@ -14,7 +14,7 @@ export const LibraryPage = (): ReactElement => (
             <span>{note.status === "draft" ? "Draft" : note.publishedAt}</span>
             <div>
               <h2>{note.title}</h2>
-              <p>{note.description}</p>
+              {note.description ? <p>{note.description}</p> : null}
             </div>
             <ArrowUpRight
               aria-hidden="true"

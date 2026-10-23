@@ -164,6 +164,9 @@ duplicate routes. Paths use `/library/<slug>/`, `/notes/<slug>/`, or `/sand-to-t
 `updatedAt` date must not precede `publishedAt`. `image` is optional and defaults
 to the site mark. Use a site-relative image path. Dates use quoted `YYYY-MM-DD`.
 
+The description is optional. Omit it to hide the article's introductory summary;
+search and social metadata then use the article title as a fallback.
+
 Frontmatter feeds the library, visible heading/date, canonical metadata, social
 tags, Article JSON-LD, static rendering, and sitemap. The browser updates the same
 metadata on navigation. `pnpm build` checks the generated SEO output for every

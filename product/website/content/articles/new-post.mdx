@@ -1,0 +1,60 @@
+---
+title: "Progress on Gradiated so far"
+path: /notes/new-post/
+category: notes
+status: draft
+publishedAt: "2026-10-23"
+---
+## Starting Gradiated
+
+PostHog's going well. _Really_ well. To the point where it's the literal dream to build a company like this for the majority of founders I meet. And yet, I'm now focused on Gradiated. Why mess with a good thing?
+
+Specifically, we are doing this to _not_ mess with a good thing! Tim has gradually been running more and more of PostHog over the last couple of years as I've been more and more focused on new products - I've tended to work on zero to one things, for example, PostHog AI, self driving, our desktop app, our support product and our AI research team doing model training. So we're going to acknowledge that Tim _is_ running PostHog and I am focused on new products.
+
+As we get bigger, I want to increase the size of the bets we take. I have to (and love doing this!) so that we can continue growing very fast month over month. The thing we want to experiment with though is creating new products without pulling engineers, for example, off of very popular existing products. And so we're shipping Gradiated as an entirely new brand, with a separate Slack, and using as little internal resource as possible. That means I'm manually doing cold outreach, hiring and so on myself. Josh, ex PostHog engineer and my cofounder at Gradiated is manually implementing the product for customers as a forward deployed engineer.
+
+## Building a team and somewhere to work
+
+The idea is to port across the concepts _behind_ things that worked well, but not the actual playbooks that resulted. For example, PostHog has lots of tiny teams that entirely own separate product areas. This has worked very well.
+
+At Gradiated, the failure would be to thus have small teams for each product area, blindly copying the playbook. Instead we should look at _why_ that worked so well for PostHog. The reason we implemented small teams was that we initially asked how do we best deliver our product. PostHog's product was wide, so a wide flat org worked well. At Gradiated, the product strategy is deep. It should just be a base url from a customer perspective, then we optimize _everything_ we can, down to and including the hardware and data center level (long term) at least.
+
+So we felt almost the polar opposite structure would work - we want to be in person as much as possible, and we want to make sure the majority of the early team can grok teh entire stack - from transistors through to token prediction.
+
+We've hired several early people, it's me, Josh, Aidan, Scott, Shmo and Charley so far. In short:
+
+* I'm going to get customers. I did that a lot at PostHog in the early days and I've got a good following online so will use this to our advantage.
+* Josh will build the product. We've worked together very closely at PostHog so I know this will work great!
+* Aidan will make sure we all understand chips through to token prediction so we're hardware-informed. Not doing this I think means we'll forever be scared of it, and we just need to lose any ignorance we have.
+* Scott will run hiring and ops. So we can focus on the above!
+* Shmo is brand design. We want to target people building new products and not just enterprise, so product led growth and thus brand are _very_ important. In fact, I think brand is _always_ very important. So we want to be very thoughtful here. 
+* We just hired Charley. We've started getting customers pretty early, she'll help us build up our online following by writing about technical topics that developers find interesting related to chips, inference and models.
+
+## The importance of hard mode at the start
+I started by doing cold outbound sales myself. This is definitely sales on hard mode, especially given our developer focus - an audience who stereotypically at least _hate_ cold messages from random vendors. There were lots of easier options, for example I could have just hired someone to do this, or I could have focused on self serving PostHog customers over.
+
+The reason I chose to do this manually was in the earliest stages the focus is learning not scaling. We can have all the confidence in the world about our product strategy _until_ customers tell us otherwise! Cold outbound gives a quick feedback loop - message potential customers then see what they do next, if anything.
+
+Within the first couple of days, this led to a big realization - most software teams, especially early on, aren't particularly good at implementing OS models instead of frontier ones. We realized that most of them will take an existing frontier model they're using in product, swap it out for something like Deepseek and then will be sad at the results. This has a lot of implications. We realized the website needs to be more focused on "hey, start by workiing with us just to get the basic OS models working successfully for you, _then_ we can do all the clever stuff around GEPA, RL, chips and so on. That also has product implications - right now we're doing forward deploye
+
+Since making these tweaks, we've immediately seen we can pretty easily get meetings and our meetings turn into deals 80% of the time or more, from our small current sample. We would have literally wasted six months going in teh wrong direction if not.
+
+The other meta point - Josh pushed us to "just sell inference for OS models" instead of even trying RL stuff. And it worked. And this gets us into the game, so we can start generating the data for customers they will then need to us to use to train their own models on. Consider this your 300th reminder today to always be interacting with customers as aggressively as possible unless it directly takes you in the wrong direction. Even SpaceX, focused on making life multiplanetary, started off with a relatively simplistic satellite launching business!
+
+## What an early saving actually looks like
+
+On product, we've been taking the same approach - our focus is _learning_, not _efficiency_. This means when a customer wants to work with us, we send an NDA, then deploy Josh who acts as a forward deployed engineer. We've instantly seen how having direct code access means we have exactly the right environment to test new models out in, instead of having to hassle customers to try things on our behalf to sell to them. That avoids bottlenecks. Having Josh act like an engineer working for our customers also means we have to tackle directly ourselves all the practical problems instead of getting bottlenecked or passing off work to customers that should really be a feature we build ourselves.
+
+For example, the implementation work taught us that you need to adjust the prompts for a new model. So we built a labelling suite to grab feedback more quickly and concretely than just relying on hoping customers would adapt their prompts based on vibes.
+
+## Getting compute is part of building the business
+
+After a recent trip to San Francisco, it became clear how crazy the GPU market is. It's often a case of DMing some rando from X and then transferring millions of dollars to them. It's standard for providers to have uptime guarantees of 85% (!!!!) It _is_ the wild west at the moment.
+
+Our belief is this will calm down - I'm not going to be  80 years old and we're still cutling for GPUs. My take is that it'll get far faster and simlper for people to build GPUs and so this trend will die over the next 3-4 years. Especially if Anthropic has a bit of a demand-based wobble, which I think it will based on two things. First, models don't connect that well to the majority of real-world use cases  - hence US GDP growth is 1.5% not 30%, and second - I think the model space is getting commoditized for all except the absolute most advanced use cases, which I don't think represent the bulk of the market and thus where the demand will come from.
+
+It has felt very uncomfortable seeing the procurement process for GPUs right now, we're taking solace that we think this phenomen will die off. It has made us feel that one way to screw up would be to over focus on getting as many GPUs as possible (PostHog has lots of capital _and_ could raise pretty easily so we're successful enough to be dangerous...), instead of building a fundamental technological advantage. I'd rather spend on the latter instead of buying too much compute at the potential top of a hype cycle, even though that would probably cause faster revenue growth.
+
+## You have to start _really_ small
+
+I want to emphasize just how puny the first customers were. We actually started through an implementation onto one of Josh's sideprojects - this is around 700 requests in a day — only about $0.50 of daily revenue at our prices. I've built a company worth well over $1bn, and _yes_ I was very excited to see this happening. You must take things one practical step at a time! If you want to follow those steps along, stay tuned.

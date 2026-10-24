@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  clusterPod,
   createCluster,
   PAUSED_REPLICAS,
   ROLLOUT_CORDON,
@@ -27,6 +28,7 @@ import {
   simulateFleet,
   type Simulation,
 } from "./support/simulation.js";
+import { virtualKubeletPod } from "./support/pods.js";
 
 const SPARE = "01a0f19d-1ff3-7613-8cbf-81b693c0f0d4";
 const FIRST = "01a0fbf7-5276-700b-903b-7e04da150ed6";
@@ -43,7 +45,7 @@ const engine = (
   const events: Record<string, unknown>[] = [];
   const rollouts = createRollouts({
     api: fleet.kube.api,
-    cluster: createCluster(fleet.kube.api),
+    cluster: createCluster(fleet.kube.api, (event) => events.push(event)),
     ping: fleet.ping,
     pins: async () => pinned,
     enrollment: async () => fleet.enrollment,
@@ -385,7 +387,7 @@ describe("rolling re-image", () => {
   // Binds a pod to the host while the operator cordons it, after the
   // operator listed the host's pods.
   const bindDuringCordon = (fleet: Simulation, bind: () => void) => {
-    const cluster = createCluster(fleet.kube.api);
+    const cluster = createCluster(fleet.kube.api, () => undefined);
     let bound = false;
     return {
       ...cluster,
@@ -475,6 +477,134 @@ describe("rolling re-image", () => {
   });
 });
 
+// The 2026-10-23 incident: every pod gpu-controller published failed to parse
+// and was left out, so a serving host looked empty and was re-imaged at once.
+describe("pods as the virtual kubelet publishes them", () => {
+  const DEEPSEEK = "deepseek-5867b44cff-x2k9p";
+
+  it("reads a serving pod with null condition and start times", () => {
+    expect(
+      clusterPod(virtualKubeletPod("deepseek", DEEPSEEK, `gpu-${FIRST}`)),
+    ).toEqual({
+      name: DEEPSEEK,
+      uid: `${DEEPSEEK}-uid`,
+      model: "deepseek",
+      training: false,
+      node: `gpu-${FIRST}`,
+      ready: true,
+      terminating: false,
+      gpus: 4,
+      qualifiedRuntime: `${DEEPSEEK}:1`,
+    });
+  });
+
+  // Three 8-GPU B300 hosts, each of the two serving hosts running one
+  // DeepSeek and one GLM replica, as in production.
+  const b300Fleet = () => {
+    const fleet = simulateFleet(
+      [
+        { instanceId: SPARE, podId: "yzno396wdsidu4", gpus: 8 },
+        { instanceId: FIRST, podId: "zhimpngvqyotuj", gpus: 8 },
+        { instanceId: SECOND, podId: "dv31b4wrd2yc8n", gpus: 8 },
+      ],
+      [
+        { name: "deepseek", gpus: 4, replicas: 2 },
+        { name: "glm", gpus: 4, replicas: 2 },
+      ],
+    );
+    for (const [model, name, id] of [
+      ["deepseek", DEEPSEEK, FIRST],
+      ["glm", "glm-7d9f8c6b5a-q4m2n", FIRST],
+      ["deepseek", "deepseek-5867b44cff-h7v3c", SECOND],
+      ["glm", "glm-7d9f8c6b5a-w8r5t", SECOND],
+    ] as const)
+      fleet.kube.seed(PODS, virtualKubeletPod(model, name, `gpu-${id}`));
+    return fleet;
+  };
+
+  it("surges and drains a serving host before re-imaging it", async () => {
+    const fleet = b300Fleet();
+    // The pods left on each host when RunPod is asked to re-image it.
+    const wiped = new Map<string, string[]>();
+    const enrollment: Enrollment = {
+      ...fleet.enrollment,
+      reimage: async (host, image, key) => {
+        wiped.set(
+          host.spec.instanceId,
+          fleet
+            .podsOn(host.spec.instanceId)
+            .map((pod) => pod.metadata.name as string),
+        );
+        return fleet.enrollment.reimage(host, image, key);
+      },
+    };
+
+    const events = await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      allSucceeded(fleet),
+      { enrollment: async () => enrollment },
+    );
+
+    const steps = events
+      .filter(
+        (event) =>
+          event.event === "gpu_rollout_step" && event.instance_id === FIRST,
+      )
+      .map((event) => `${event.from} -> ${event.to}`);
+    expect(steps.slice(0, 4)).toEqual([
+      "Cordon -> Surge",
+      "Surge -> Drain",
+      "Drain -> Reimage",
+      "Reimage -> Join",
+    ]);
+    expect(Object.fromEntries(wiped)).toEqual({
+      [SPARE]: [],
+      [FIRST]: [],
+      [SECOND]: [],
+    });
+    expect(fleet.violations).toEqual([]);
+    expect(fleet.ready("deepseek")).toBe(2);
+    expect(fleet.ready("glm")).toBe(2);
+  });
+
+  it("re-images nothing while a pod on a host cannot be read", async () => {
+    const fleet = kevFleet();
+    const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+    await run(fleet, pinned, () => rollout(fleet, SPARE)?.step === "Reimage");
+
+    // A field the schema does not expect: a GPU count sent as a number.
+    const pod = virtualKubeletPod(
+      "glm",
+      "glm-7d9f8c6b5a-q4m2n",
+      `gpu-${SPARE}`,
+    );
+    (pod.spec.containers[0]!.resources.limits as Record<string, unknown>)[
+      "nvidia.com/gpu"
+    ] = 4;
+    fleet.kube.seed(PODS, pod);
+    const events = await run(fleet, pinned, () => false, {}, 20);
+
+    expect(rollout(fleet, SPARE)).toMatchObject({
+      step: "Reimage",
+      result: "Running",
+    });
+    expect([...fleet.sims.values()].every((host) => host.resets === 0)).toBe(
+      true,
+    );
+    expect(events).toContainEqual({
+      event: "gpu_fleet_pod_unreadable",
+      level: "warn",
+      error: expect.stringContaining(
+        "Pod glm-7d9f8c6b5a-q4m2n cannot be read: spec.containers.0.resources.limits.nvidia.com/gpu",
+      ),
+    });
+    expect(events).toContainEqual(
+      expect.objectContaining({ event: "pass_failed" }),
+    );
+  });
+});
+
 // The faults a crash, a lost leader or a flaky API cause between a side effect
 // and the status write that records it.
 describe("failures between steps", () => {
@@ -513,7 +643,7 @@ describe("failures between steps", () => {
 
     await run(fleet, pins(NEW_IMAGE, NEW_BUNDLE), allSucceeded(fleet), {
       api,
-      cluster: createCluster(api),
+      cluster: createCluster(api, () => undefined),
     });
 
     expectRolledOut(fleet);
@@ -595,7 +725,7 @@ describe("failures between steps", () => {
     });
     await run(clean, pins(NEW_IMAGE, NEW_BUNDLE), allSucceeded(clean), {
       api: counting,
-      cluster: createCluster(counting),
+      cluster: createCluster(counting, () => undefined),
     });
 
     for (let k = 1; k <= writes; k++) {
@@ -603,7 +733,7 @@ describe("failures between steps", () => {
       const api = failingWrite(fleet.kube.api, (count) => count === k);
       await run(fleet, pins(NEW_IMAGE, NEW_BUNDLE), allSucceeded(fleet), {
         api,
-        cluster: createCluster(api),
+        cluster: createCluster(api, () => undefined),
       });
       expect(
         HOSTS.map((id) => rollout(fleet, id)?.result),
@@ -629,7 +759,11 @@ describe("failures between steps", () => {
       fleet,
       pins(NEW_IMAGE, NEW_BUNDLE),
       allSucceeded(fleet),
-      { api, cluster: createCluster(api), enrollment: async () => flaky },
+      {
+        api,
+        cluster: createCluster(api, () => undefined),
+        enrollment: async () => flaky,
+      },
       800,
     );
 

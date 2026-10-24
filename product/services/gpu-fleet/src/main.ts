@@ -114,7 +114,7 @@ const enrollment = async () => {
 };
 const rollouts = createRollouts({
   api,
-  cluster: createCluster(api),
+  cluster: createCluster(api, log),
   ping,
   pins,
   enrollment,

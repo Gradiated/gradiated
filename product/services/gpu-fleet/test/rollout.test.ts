@@ -322,6 +322,23 @@ describe("rolling re-image", () => {
     expect([...fleet.keys.values()].every((key) => key.revoked)).toBe(true);
   });
 
+  it("holds the fleet after a rollout fails on a healthy host", async () => {
+    const fleet = kevFleet();
+    const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+    // The spare is re-imaged and healthy, but its soak outlasts the step's deadline.
+    await run(fleet, pinned, () => rollout(fleet, SPARE)?.result === "Failed", {
+      limits: { ...LIMITS, soakFor: 10 * 60_000, Soak: 5 * 60_000 },
+    });
+    const failed = rollout(fleet, SPARE);
+    expect(failed?.lastError).toMatch(/^Soak did not finish/);
+
+    await run(fleet, pinned, () => false, {}, 50);
+
+    expect(rollout(fleet, SPARE)).toEqual(failed);
+    expect(rollout(fleet, FIRST)).toBeUndefined();
+    expect(rollout(fleet, SECOND)).toBeUndefined();
+  });
+
   it("restarts a failed rollout only for a new retry annotation", async () => {
     const fleet = kevFleet();
     fleet.sim(SPARE).enrollFails = "Enrollment command exited with status 1";

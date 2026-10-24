@@ -24,6 +24,10 @@ class HostAgentTest(unittest.TestCase):
         self.directory = tempfile.TemporaryDirectory()
         self.root = Path(self.directory.name)
         (self.root / 'pods').mkdir()
+        (self.root / 'base-id').write_text('test-base\n')
+        base = patch.object(agent, 'BASE_ID', self.root / 'base-id', create=True)
+        base.start()
+        self.addCleanup(base.stop)
         self.uid = str(uuid.uuid4())
         self.config = {'instance_id': str(uuid.uuid4()), 'bundle_sha256': 'a' * 64,
                        'model_id': 'kev', 'release': {'runtime_revision': 'kev-a'},
@@ -375,13 +379,73 @@ class HostAgentTest(unittest.TestCase):
         state = self.root / 'pods' / self.uid
         state.mkdir()
         (state / 'state.json').write_text(json.dumps({'pod': self.pod}))
-        profile = {'image': self.pod['spec']['containers'][0]['image'], 'model_id': 'kev', 'release': self.config['release'], 'gpus': 1, 'cpu': '16', 'memory': '64Gi'}
+        profile = {'image': self.pod['spec']['containers'][0]['image'], 'bundles': {'test-base': digest},
+                   'model_id': 'kev', 'release': self.config['release'], 'gpus': 1, 'cpu': '16', 'memory': '64Gi'}
         self.request({'operation': 'configure', 'epoch': 1, 'runtimes': {digest: profile}})
         deadline = time.monotonic() + 2
         while not self.host.catalogue_ready and time.monotonic() < deadline: time.sleep(.01)
         self.assertTrue(self.host.catalogue_ready)
         self.assertEqual(self.host.config['runtimes'][digest]['release'], self.config['release'])
         self.assertEqual(self.host.config['gpu_uuids'], ['GPU-test-0'])
+
+    def wait_for_catalogue(self):
+        import time
+        deadline = time.monotonic() + 2
+        while not self.host.catalogue_ready and time.monotonic() < deadline: time.sleep(.01)
+        self.assertTrue(self.host.catalogue_ready)
+
+    @unittest.skipUnless(hasattr(agent, 'runtime_bundle'), 'the frozen recovery agent predates per-base bundles')
+    def test_catalogue_stages_the_bundle_built_for_the_host_base(self):
+        release, bundle, other = '9' * 64, 'b' * 64, 'c' * 64
+        image = 'gradiated/kev-bundle@sha256:' + release
+        fetched = []
+
+        def fetch(command, **kwargs):
+            digest, destination = command[-2], Path(command[-1])
+            fetched.append(digest)
+            destination.mkdir(parents=True)
+            (destination / '.bundle-sha256').write_text(digest)
+
+        profile = {'image': image, 'bundles': {'old-base': other, 'test-base': bundle}, 'model_id': 'kev',
+                   'release': self.config['release'], 'gpus': 1, 'cpu': '16', 'memory': '64Gi'}
+        with patch.object(agent.subprocess, 'run', side_effect=fetch):
+            self.request({'operation': 'configure', 'epoch': 1, 'runtimes': {release: profile}})
+            self.wait_for_catalogue()
+        self.assertEqual(fetched, [bundle])
+        self.assertEqual(agent.runtime_bundle(self.host.config['runtimes'][release]), bundle)
+        (self.root / 'base-id').write_text('new-base\n')
+        with self.assertRaisesRegex(ValueError, 'no bundle for base new-base'):
+            agent.runtime_bundle(profile)
+
+    @unittest.skipUnless(hasattr(agent, 'runtime_bundle'), 'the frozen recovery agent predates per-base bundles')
+    def test_release_without_a_bundle_for_the_host_base_is_not_staged(self):
+        release = '9' * 64
+        profile = {'image': 'gradiated/kev-bundle@sha256:' + release, 'bundles': {'old-base': release},
+                   'model_id': 'kev', 'release': self.config['release'], 'gpus': 1, 'cpu': '16', 'memory': '64Gi'}
+        with patch.object(agent.subprocess, 'run') as fetch:
+            self.request({'operation': 'configure', 'epoch': 1, 'runtimes': {release: profile}})
+            self.wait_for_catalogue()
+        fetch.assert_not_called()
+        self.assertEqual(self.host.config['runtimes'], {})
+        for invalid in ({**profile, 'bundles': None}, {**profile, 'bundles': {'test-base': '../escape'}}):
+            with self.subTest(bundles=invalid['bundles']), self.assertRaises(ValueError):
+                self.request({'operation': 'configure', 'epoch': 1, 'runtimes': {release: invalid}})
+
+    @unittest.skipUnless(hasattr(agent, 'runtime_bundle'), 'the frozen recovery agent predates per-base bundles')
+    def test_cleanup_keeps_the_bundle_each_release_built_for_the_host_base(self):
+        import os
+        bundles = self.root / 'bundles'
+        bundles.mkdir()
+        for index, letter in enumerate('bcdef'):
+            path = bundles / (letter * 64)
+            path.mkdir()
+            (path / '.bundle-sha256').write_text(path.name)
+            os.utime(path, (index, index))
+        self.config['runtimes'] = {'9' * 64: {'image': 'gradiated/kev-bundle@sha256:' + '9' * 64,
+                                              'bundles': {'old-base': 'c' * 64, 'test-base': 'b' * 64}}}
+        self.host.housekeep(10 * 86400)
+        # The oldest directory survives only because it is this base's bundle.
+        self.assertEqual({path.name for path in bundles.iterdir()}, {letter * 64 for letter in 'bef'})
 
     def test_registered_bundle_waits_for_staging_without_creating_state(self):
         digest = 'b' * 64

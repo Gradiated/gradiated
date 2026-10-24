@@ -32,9 +32,10 @@ class RenderTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             gpu = Path(directory)
             shutil.copytree(renderer.GPU, gpu, dirs_exist_ok=True)
+            base = json.loads((renderer.GPU / 'pins.json').read_text())['hostBundle']['baseId']
             pins = {'image': '873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/inference:gpu-base-inputs-' + 'c' * 64,
                     'imageDigest': 'sha256:' + 'd' * 64,
-                    'hostBundle': {'sha256': 'a' * 64, 'baseId': 'test-base'}}
+                    'hostBundle': {'sha256': 'a' * 64, 'baseId': base}}
             (gpu / 'pins.json').write_text(json.dumps(pins))
             with patch.object(renderer, 'GPU', gpu):
                 outputs = renderer.render()
@@ -49,6 +50,21 @@ class RenderTests(unittest.TestCase):
                     (gpu / 'pins.json').write_text(json.dumps(invalid))
                     with self.assertRaises(ValueError):
                         renderer.render()
+
+    def test_a_base_is_pinned_only_once_every_release_has_a_bundle_for_it(self):
+        runtimes = json.loads(renderer.RUNTIMES.read_text())
+        base = json.loads((renderer.GPU / 'pins.json').read_text())['hostBundle']['baseId']
+        renderer.validate_bundles(runtimes, base)
+        release = next(iter(runtimes))
+        for bundles, message in (({key: value for key, value in runtimes[release]['bundles'].items() if key != base}, 'no bundle for the pinned base'),
+                                 ({base: '../escape'}, 'needs a bundles map'), (None, 'needs a bundles map'), ({}, 'needs a bundles map')):
+            with self.subTest(bundles=bundles), self.assertRaisesRegex(ValueError, message):
+                renderer.validate_bundles({**runtimes, release: {**runtimes[release], 'bundles': bundles}}, base)
+        with tempfile.TemporaryDirectory() as directory:
+            catalogue = Path(directory) / 'runtimes.json'
+            catalogue.write_text(json.dumps({**runtimes, release: {**runtimes[release], 'bundles': {'older-base': 'a' * 64}}}))
+            with patch.object(renderer, 'RUNTIMES', catalogue), self.assertRaisesRegex(ValueError, 'no bundle for the pinned base'):
+                renderer.render()
 
     def test_template_and_ops_mcp_take_the_pinned_image_and_bundle(self):
         pins = {'image': '873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/inference:gpu-base-inputs-' + 'c' * 64,

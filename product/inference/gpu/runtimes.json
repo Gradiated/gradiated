@@ -1,6 +1,10 @@
 {
   "1ce6df8008f648729e42119763512c55f789e8caf088d491d4dcd4212fabda55": {
     "image": "gradiated/kev-bundle@sha256:1ce6df8008f648729e42119763512c55f789e8caf088d491d4dcd4212fabda55",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v2": "1ce6df8008f648729e42119763512c55f789e8caf088d491d4dcd4212fabda55",
+      "ubuntu24-cuda13-amd64-v3": "e3647cbf157e4889a6355d65630eb6ead8925fa72a4705727c962d7d914ca7a0"
+    },
     "model_id": "jaredpalmer/kev-9b",
     "release": {
       "protocol": "system_one",
@@ -19,6 +23,10 @@
   },
   "66deaf79bf9a27ab43a6fde9d56a98fe5c38096aba3f0d6818bac13aded05796": {
     "image": "gradiated/deepseek-bundle@sha256:66deaf79bf9a27ab43a6fde9d56a98fe5c38096aba3f0d6818bac13aded05796",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v2": "66deaf79bf9a27ab43a6fde9d56a98fe5c38096aba3f0d6818bac13aded05796",
+      "ubuntu24-cuda13-amd64-v3": "58f40e17158432f39d828f40a0f001233ea97db75cecf22f67aa0e70f6642867"
+    },
     "model_id": "deepseek/deepseek-v4.1-flash",
     "release": {
       "schema_version": 1,
@@ -39,6 +47,10 @@
   },
   "50f70da3a1daf95b077b0b541ff42af090d9f1c90b8c71ed506690db4e279ee4": {
     "kind": "training",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v2": "50f70da3a1daf95b077b0b541ff42af090d9f1c90b8c71ed506690db4e279ee4",
+      "ubuntu24-cuda13-amd64-v3": "41516fa79fe80ee5b828c1ba26e90e5d892fca3ad20ad0fab4978f93b351673e"
+    },
     "image": "gradiated/training-bundle@sha256:50f70da3a1daf95b077b0b541ff42af090d9f1c90b8c71ed506690db4e279ee4",
     "model_id": "training",
     "release": {},
@@ -49,6 +61,10 @@
   },
   "e74e88f23ba155be65fcd8830c7e3c080b5e49951eae7d9d80a77344f2b2c9d6": {
     "image": "gradiated/glm-bundle@sha256:e74e88f23ba155be65fcd8830c7e3c080b5e49951eae7d9d80a77344f2b2c9d6",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v2": "e74e88f23ba155be65fcd8830c7e3c080b5e49951eae7d9d80a77344f2b2c9d6",
+      "ubuntu24-cuda13-amd64-v3": "76d1a67588c079ad9b8a728a7a943452b450987e3e829913879e3613a8b4decb"
+    },
     "model_id": "z-ai/glm-5.3-flash",
     "release": {
       "model_path": "zai-org/GLM-5.3-Flash",

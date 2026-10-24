@@ -61,7 +61,10 @@ export const ValueFold = ({
   }, []);
 
   return (
-    <div className={`gr-value${className ? ` ${className}` : ""}`} ref={hostRef}>
+    <div
+      className={`gr-value${className ? ` ${className}` : ""}`}
+      ref={hostRef}
+    >
       <div className="gr-value-stage">
         <p className="gr-value-text">
           {sentences.map((sentence, si) => (

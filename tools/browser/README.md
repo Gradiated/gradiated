@@ -13,8 +13,9 @@ Create the environment from the repository root with `uv sync --project tools/br
 Before an authenticated or state-changing task, stop for a human checkpoint. Browser credentials and cookies must remain outside Git and outside shared agent artifacts.
 
 The lockfile includes security updates beyond Browser Use's exact upstream pins
-for aiohttp, AnyIO, MCP and pypdf. Keep the bounded overrides in `pyproject.toml` until
+for aiohttp, AnyIO, certifi, MCP, Pillow and pypdf. Keep the bounded overrides in `pyproject.toml` until
 upstream pins include the patched versions. When updating them, check Browser
 Use's MCP integration, a PDF round trip and a local Playwright interaction, then
-audit the complete lockfile across platform markers; an import check alone does
+verify PNG/JPEG/WebP round trips and CA-bundle loading for Pillow/certifi changes,
+then audit the complete lockfile across platform markers; an import check alone does
 not establish compatibility or clear vulnerability findings.

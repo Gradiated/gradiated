@@ -300,8 +300,8 @@ export const InferenceFlow = ({
             style={{ "--enter-delay": "0.3s" } as CSSProperties}
           >
             <p>
-              Choose an open model, then set the latency your workload
-              actually needs.
+              Choose an open model, then set the latency your workload actually
+              needs.
             </p>
             <p>
               We handle the infrastructure behind one API, so you get serious
@@ -314,7 +314,8 @@ export const InferenceFlow = ({
         <div className="gr-loop-right">
           {header}
           <h2 className="gr-heading gr-loop-title gr-enter">
-            Choose your model <br />and latency.
+            Choose your model <br />
+            and latency.
           </h2>
           <div
             className="gr-loop-controls gr-enter"

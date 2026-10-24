@@ -193,7 +193,10 @@ const WhyOrbit = (): ReactElement => {
       const vh = window.innerHeight;
       const top = module.getBoundingClientRect().top;
       const start = vh - LOAD_GAP;
-      const p = Math.min(1, Math.max(0, (top - ARRIVE) / Math.max(1, start - ARRIVE)));
+      const p = Math.min(
+        1,
+        Math.max(0, (top - ARRIVE) / Math.max(1, start - ARRIVE)),
+      );
       const eased = p * p * (3 - 2 * p);
       /* The load intro: the card starts below the fold's edge and
          slides up into its peek, then the scroll owns it. */
@@ -276,7 +279,9 @@ const DecideBoard = (): ReactElement => {
     const host = hostRef.current;
     if (!host) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const items = Array.from(host.querySelectorAll<HTMLElement>("[data-drift]"));
+    const items = Array.from(
+      host.querySelectorAll<HTMLElement>("[data-drift]"),
+    );
     let raf = 0;
     const update = () => {
       raf = 0;
@@ -321,17 +326,17 @@ const DecideBoard = (): ReactElement => {
         <div aria-hidden className="gr-careers-print-well">
           <div>
             <p className="gr-careers-print-caption gr-muted">
-          {expectation.body
-            .trim()
-            .split(/\s+/)
-            .map((word, wi) => (
-              <span
-                key={wi}
-                style={{ "--w-delay": `${wi * 14}ms` } as CSSProperties}
-              >
-                {word}{" "}
-              </span>
-            ))}
+              {expectation.body
+                .trim()
+                .split(/\s+/)
+                .map((word, wi) => (
+                  <span
+                    key={wi}
+                    style={{ "--w-delay": `${wi * 14}ms` } as CSSProperties}
+                  >
+                    {word}{" "}
+                  </span>
+                ))}
             </p>
           </div>
         </div>
@@ -350,29 +355,29 @@ const DecideBoard = (): ReactElement => {
           board's first column. */}
       <h2 className="gr-heading gr-careers-board-title">Before you decide</h2>
       <div className="gr-careers-board" ref={hostRef}>
-      <div className="gr-careers-stack gr-careers-stack--1">{print(0)}</div>
-      <div className="gr-careers-stack gr-careers-stack--2">
-        {print(1, "gr-careers-print--round")}
-        {print(2, "gr-careers-print--wide")}
-      </div>
-      <div className="gr-careers-stack gr-careers-stack--3">
-        {print(4)}
-        {print(3)}
-      </div>
-      <div className="gr-careers-stack gr-careers-stack--4">
-        {/* The handbook print — the way into the library. */}
-        <div
-          className="gr-careers-note gr-careers-print gr-careers-print--round"
-          data-drift={DECIDE_DRIFTS[5]}
-        >
-          <a className="gr-careers-print-frame" href="/library/?show=methods">
-            <img
-              alt="Working methods — read the handbook"
-              src="/assets/careers-board/work-methods.jpg"
-            />
-          </a>
+        <div className="gr-careers-stack gr-careers-stack--1">{print(0)}</div>
+        <div className="gr-careers-stack gr-careers-stack--2">
+          {print(1, "gr-careers-print--round")}
+          {print(2, "gr-careers-print--wide")}
         </div>
-      </div>
+        <div className="gr-careers-stack gr-careers-stack--3">
+          {print(4)}
+          {print(3)}
+        </div>
+        <div className="gr-careers-stack gr-careers-stack--4">
+          {/* The handbook print — the way into the library. */}
+          <div
+            className="gr-careers-note gr-careers-print gr-careers-print--round"
+            data-drift={DECIDE_DRIFTS[5]}
+          >
+            <a className="gr-careers-print-frame" href="/library/?show=methods">
+              <img
+                alt="Working methods — read the handbook"
+                src="/assets/careers-board/work-methods.jpg"
+              />
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -399,30 +404,33 @@ export const CareersIndexPage = (): ReactElement => (
             shape="horizon"
           />
         </div>
-      <Module
-        bleed
-        className="gr-module--top gr-careers-module gr-careers-hero"
-        index={0}
-      >
-        <header className="gr-masthead gr-careers-head">
-          <Reveal
-            as="h1"
-            by="word"
-            className="gr-masthead-title gr-masthead-title--display"
-          >
-            Come make AI use less energy.
-          </Reveal>
-          <p className="gr-careers-lede gr-muted">
-            Gradiated is a small research and engineering team focused on making
-            open-model inference radically more efficient at every layer—from
-            the models to inference, chips, and the data center.
-          </p>
-          <a className="gr-button gr-button--main gr-careers-jump" href="#open-roles">
-            See open roles
-            <Arrow />
-          </a>
-        </header>
-      </Module>
+        <Module
+          bleed
+          className="gr-module--top gr-careers-module gr-careers-hero"
+          index={0}
+        >
+          <header className="gr-masthead gr-careers-head">
+            <Reveal
+              as="h1"
+              by="word"
+              className="gr-masthead-title gr-masthead-title--display"
+            >
+              Come make AI use less energy.
+            </Reveal>
+            <p className="gr-careers-lede gr-muted">
+              Gradiated is a small research and engineering team focused on
+              making open-model inference radically more efficient at every
+              layer—from the models to inference, chips, and the data center.
+            </p>
+            <a
+              className="gr-button gr-button--main gr-careers-jump"
+              href="#open-roles"
+            >
+              See open roles
+              <Arrow />
+            </a>
+          </header>
+        </Module>
       </div>
 
       <Module

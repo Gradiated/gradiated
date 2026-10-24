@@ -823,7 +823,9 @@ export const HomeFlow = (): ReactElement => {
                 <span
                   className="gr-stream-word"
                   key={i}
-                  style={{ "--w-delay": `${0.55 + i * 0.06}s` } as CSSProperties}
+                  style={
+                    { "--w-delay": `${0.55 + i * 0.06}s` } as CSSProperties
+                  }
                 >
                   {w}{" "}
                 </span>

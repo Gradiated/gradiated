@@ -35,10 +35,7 @@ export const ModelPicker = ({
 
   const current = OPEN_MODELS[value];
   return (
-    <div
-      className={`gr-mpick${open ? " gr-mpick--open" : ""}`}
-      ref={hostRef}
-    >
+    <div className={`gr-mpick${open ? " gr-mpick--open" : ""}`} ref={hostRef}>
       <button
         aria-expanded={open}
         aria-haspopup="listbox"

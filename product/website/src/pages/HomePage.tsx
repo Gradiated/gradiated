@@ -80,7 +80,10 @@ export const HomePage = (): ReactElement => (
       <Module className="gr-products-module" index={1}>
         <ProductsEntrance>
           <HomeProducts />
-          <div className="gr-enter" style={{ "--enter-delay": "0.3s" } as CSSProperties}>
+          <div
+            className="gr-enter"
+            style={{ "--enter-delay": "0.3s" } as CSSProperties}
+          >
             <ModelMarquee />
           </div>
         </ProductsEntrance>
@@ -149,7 +152,10 @@ const MachineFold = (): ReactElement => {
   const show = (next: "inference" | "rl") => {
     setMode(next);
     requestAnimationFrame(() => {
-      sectionRef.current?.scrollIntoView({ behavior: "instant", block: "start" });
+      sectionRef.current?.scrollIntoView({
+        behavior: "instant",
+        block: "start",
+      });
     });
   };
   const toggle = (
@@ -359,7 +365,9 @@ const HomeProducts = (): ReactElement => (
           className="gr-product-card gr-enter"
           key={item.id}
           style={
-            { "--enter-delay": `${0.1 + products.indexOf(item) * 0.15}s` } as CSSProperties
+            {
+              "--enter-delay": `${0.1 + products.indexOf(item) * 0.15}s`,
+            } as CSSProperties
           }
         >
           <header className="gr-product-head">
@@ -532,17 +540,17 @@ const InferenceExample = (): ReactElement => {
           </code>
           <code>
             {snippet.tokens.map((token, tokenIndex) => {
-            const text = token.t.slice(0, Math.max(0, remaining));
-            remaining -= token.t.length;
-            if (!text) return null;
-            return token.cls ? (
-              <span className={token.cls} key={tokenIndex}>
-                {text}
-              </span>
-            ) : (
-              <span key={tokenIndex}>{text}</span>
-            );
-          })}
+              const text = token.t.slice(0, Math.max(0, remaining));
+              remaining -= token.t.length;
+              if (!text) return null;
+              return token.cls ? (
+                <span className={token.cls} key={tokenIndex}>
+                  {text}
+                </span>
+              ) : (
+                <span key={tokenIndex}>{text}</span>
+              );
+            })}
             <span
               aria-hidden
               className="gr-code-caret"
@@ -555,7 +563,11 @@ const InferenceExample = (): ReactElement => {
   );
 };
 
-const RL_STEPS = ["Production traces", "Evaluations + RL", "Your post-trained model"];
+const RL_STEPS = [
+  "Production traces",
+  "Evaluations + RL",
+  "Your post-trained model",
+];
 
 /** A 3x3 field of square dies; `lit` of them are on. The matrix fills as
  *  the pipeline advances — the card's state, drawn in chips. */

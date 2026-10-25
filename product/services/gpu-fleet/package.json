@@ -16,6 +16,6 @@
     "@gradiated/control": "workspace:*",
     "@gradiated/gpu-hosts": "workspace:*",
     "prom-client": "15.1.3",
-    "zod": "4.6.5"
+    "zod": "4.6.6"
   }
 }

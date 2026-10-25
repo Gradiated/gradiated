@@ -6,9 +6,17 @@ import {
   useState,
 } from "react";
 import type { CSSProperties } from "react";
-import { siliconColours } from "./materials";
+import { materialColours, siliconColours } from "./materials";
 import { CleanRoom, WholeWafer } from "./FabricationLab";
 import { PatterningModel, patterningCamera } from "./PatterningModel";
+import { InverterViews } from "./InverterViews";
+import {
+  initialOpening,
+  openingState,
+  useOpeningLayout,
+  WaferTransfer,
+} from "./FabricationIntroduction";
+import type { OpeningState } from "./FabricationIntroduction";
 import { WaferMagnification } from "./WaferMagnification";
 import {
   blendPattern,
@@ -28,16 +36,23 @@ import type { MachineId } from "./model";
 import { maskCycles } from "./sequence";
 import "./fabrication.css";
 
-type Presentation = { material: PatternState; camera: CameraState };
+type Presentation = {
+  material: PatternState;
+  camera: CameraState;
+  opening: OpeningState;
+};
 const initialPresentation: Presentation = {
   material: patternState(0, visitFor(1, undefined, undefined)),
   camera: { elevation: 0.62, section: 0 },
+  opening: initialOpening,
 };
 
 export const FabricationJourney = () => {
   const host = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLElement>(null);
   const roomRef = useRef<HTMLDivElement>(null);
+  const visualsRef = useRef<HTMLDivElement>(null);
+  const openingLayout = useOpeningLayout(visualsRef);
   const sections = useRef<(HTMLElement | null)[]>([]);
   const openTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
@@ -57,6 +72,7 @@ export const FabricationJourney = () => {
   const [fromMachine, setFromMachine] = useState<MachineId>();
   const [fromIndex, setFromIndex] = useState(1);
   const [input, setInput] = useState(0);
+  const [openingAuto, setOpeningAuto] = useState(true);
   const [preview, setPreview] = useState<MachineId | undefined>();
   const [previewOpen, setPreviewOpen] = useState(false);
   const [reduced, setReduced] = useState(false);
@@ -77,19 +93,21 @@ export const FabricationJourney = () => {
     ? targetMaterial
     : blendPattern(from.material, targetMaterial, portion(progress, 0, 0.28));
   const camera = patterningCamera(active, progress, from.camera);
+  const opening = openingState(active, reduced ? 1 : progress, from.opening);
+  const entering = active === stages.operator && from.opening.entry < 0.99;
+  const detailReveal = portion(opening.magnify, 0.3, 1);
+  const door =
+    entering && !reduced
+      ? portion(progress, 0, 0.12) * (1 - portion(progress, 0.86, 1))
+      : 0;
+  const doorOpen =
+    entering && !reduced
+      ? portion(progress, 0.08, 0.25) * (1 - portion(progress, 0.7, 0.86))
+      : 0;
   const surfaceHeights = [
     patternSurfaceHeight(material),
     patternSurfaceHeight(material, 0, camera.ymax - 0.001),
   ];
-  const machine = machines.find((item) => item.id === visit.machine);
-  const machineLabel =
-    step.machine === "etch"
-      ? step.mask === "gate"
-        ? "Polysilicon etch"
-        : step.mask === "metal" || step.mask === "upper"
-          ? "Metal etch"
-          : "Oxide etch"
-      : machine?.label;
   const previewMachine = machines.find((item) => item.id === preview);
 
   const clearPreviewTimers = useCallback(() => {
@@ -105,7 +123,13 @@ export const FabricationJourney = () => {
   useLayoutEffect(() => {
     displayed.current = {
       material,
-      camera: { elevation: camera.elevation, section: camera.section },
+      opening,
+      camera: {
+        elevation: camera.elevation,
+        section: camera.section,
+        scale: camera.scale,
+        centreY: camera.centreY,
+      },
     };
   });
 
@@ -168,7 +192,13 @@ export const FabricationJourney = () => {
     const duration =
       active === 0 || active === stages.inverter
         ? inverterDuration
-        : sceneDuration;
+        : active <= stages.layout
+          ? active === stages.operator
+            ? 2200
+            : 1600
+          : sceneDuration;
+    const looping = active === 0 && openingAuto;
+    const cycleDuration = inverterDuration + 1800;
     let previous = performance.now();
     const update = (now: number) => {
       frame = 0;
@@ -182,15 +212,19 @@ export const FabricationJourney = () => {
 
       elapsed += Math.min(now - previous, 64);
       previous = now;
+      if (looping && elapsed >= cycleDuration) {
+        elapsed = 0;
+        setInput((value) => 1 - value);
+      }
       setAnimation({
         index: active,
         progress: Math.min(1, elapsed / duration),
         from: origin,
       });
-      if (elapsed < duration) frame = requestAnimationFrame(update);
+      if (looping || elapsed < duration) frame = requestAnimationFrame(update);
     };
     const resume = () => {
-      if (frame || elapsed >= duration || document.hidden) return;
+      if (frame || (!looping && elapsed >= duration) || document.hidden) return;
 
       previous = performance.now();
       frame = requestAnimationFrame(update);
@@ -206,7 +240,7 @@ export const FabricationJourney = () => {
       observer.disconnect();
       document.removeEventListener("visibilitychange", resume);
     };
-  }, [active, reduced, replay, dismissPreview]);
+  }, [active, reduced, replay, openingAuto, dismissPreview]);
 
   useEffect(() => clearPreviewTimers, [clearPreviewTimers]);
 
@@ -289,27 +323,18 @@ export const FabricationJourney = () => {
     dismissPreview();
     trigger?.focus({ preventScroll: true });
   };
-  const go = (index: number) => {
-    const section = sections.current[index];
-    if (!section) return;
 
-    const behaviour = reduced ? "auto" : "smooth";
-    if (window.innerWidth < 900) {
-      const stageHeight =
-        stageRef.current?.getBoundingClientRect().height ?? 450;
-      window.scrollTo({
-        top:
-          window.scrollY +
-          section.getBoundingClientRect().top -
-          stageHeight -
-          88,
-        behavior: behaviour,
-      });
-      return;
-    }
-
-    section.scrollIntoView({ behavior: behaviour, block: "center" });
-  };
+  const physicalView = (
+    <PatterningModel
+      fromIndex={fromIndex}
+      view={camera}
+      index={active}
+      progress={progress}
+      visit={visit}
+      state={material}
+      input={input}
+    />
+  );
 
   return (
     <article
@@ -337,137 +362,205 @@ export const FabricationJourney = () => {
           ref={stageRef}
           aria-label="Fabrication animation"
         >
-          <div className="fab-stage-heading">
-            <span>
-              {String(active + 1).padStart(2, "0")} / {scenes.length}
-            </span>
-            <span>{step.title}</span>
-          </div>
-          <div className="fab-lab-heading">
-            <span>Clean room</span>
-            <span>{machineLabel ?? "Our wafer journey"}</span>
-          </div>
-          <div
-            className="fab-room-host"
-            ref={roomRef}
-            onFocusCapture={keepPreview}
-            onBlurCapture={(event) => {
-              if (
-                event.relatedTarget &&
-                !event.currentTarget.contains(event.relatedTarget)
-              ) {
-                dismissPreview();
-              }
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Escape" && previewOpen) {
-                event.preventDefault();
-                event.stopPropagation();
-                closePreview();
-              }
-            }}
-          >
-            <CleanRoom
-              visit={visit}
-              preview={previewOpen ? preview : undefined}
-              showPreview={showPreview}
-              hidePreview={hidePreview}
-              togglePreview={togglePreview}
-            />
-            {previewMachine ? (
-              <div
-                id="fab-machine-preview"
-                className={`fab-machine-preview ${previewOpen ? "is-open" : ""}`}
-                role="region"
-                aria-labelledby="fab-preview-title"
-                aria-hidden={!previewOpen}
-                inert={!previewOpen}
-                onPointerEnter={keepPreview}
-                onPointerLeave={hidePreview}
+          <div className="fab-visuals" ref={visualsRef}>
+            <div className="fab-lab-heading" style={{ opacity: opening.room }}>
+              Gradiated’s backyard clean room
+            </div>
+            <div
+              className="fab-room-host"
+              style={{ opacity: opening.room }}
+              aria-hidden={opening.room < 0.01}
+              inert={opening.room < 0.99}
+              ref={roomRef}
+              onFocusCapture={keepPreview}
+              onBlurCapture={(event) => {
+                if (
+                  event.relatedTarget &&
+                  !event.currentTarget.contains(event.relatedTarget)
+                ) {
+                  dismissPreview();
+                }
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Escape" && previewOpen) {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  closePreview();
+                }
+              }}
+            >
+              <CleanRoom
+                visit={visit}
+                state={material}
+                machinesOpacity={opening.machines}
+                operatorOpacity={opening.operator}
+                entry={opening.entry}
+                held={portion(opening.transfer, 0.94, 1)}
+                door={door}
+                doorOpen={doorOpen}
+                preview={previewOpen ? preview : undefined}
+                showPreview={showPreview}
+                hidePreview={hidePreview}
+                togglePreview={togglePreview}
+              />
+              {previewMachine ? (
+                <div
+                  id="fab-machine-preview"
+                  className={`fab-machine-preview ${previewOpen ? "is-open" : ""}`}
+                  role="region"
+                  aria-labelledby="fab-preview-title"
+                  aria-hidden={!previewOpen}
+                  inert={!previewOpen}
+                  onPointerEnter={keepPreview}
+                  onPointerLeave={hidePreview}
+                >
+                  <button
+                    aria-label="Close machine preview"
+                    onClick={closePreview}
+                  >
+                    ×
+                  </button>
+                  <span className="fab-preview-source">Wikipedia preview</span>
+                  <strong id="fab-preview-title">{previewMachine.label}</strong>
+                  <p id="fab-machine-description">{previewMachine.summary}</p>
+                  <a
+                    href={`https://en.wikipedia.org/wiki/${previewMachine.wiki}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Read on Wikipedia <span aria-hidden="true">↗</span>
+                  </a>
+                </div>
+              ) : null}
+            </div>
+            <div className="fab-observations">
+              <figure className="fab-wafer-panel" aria-label="Whole wafer">
+                <div
+                  className="fab-wafer-position"
+                  style={{
+                    opacity: opening.wafer,
+                    transform: openingLayout
+                      ? `translate(${openingLayout.dx * opening.centred}px, ${openingLayout.dy * opening.centred}px) scale(${1 + (openingLayout.scale - 1) * opening.centred})`
+                      : undefined,
+                  }}
+                  aria-hidden={opening.wafer < 0.01}
+                >
+                  <WholeWafer
+                    index={active}
+                    visit={visit}
+                    state={material}
+                    gloves={opening.gloves}
+                    detail={portion(opening.magnify, 0, 0.3)}
+                  />
+                </div>
+              </figure>
+              <figure
+                className="fab-detail-panel"
+                style={{ opacity: detailReveal }}
+                aria-hidden={detailReveal < 0.01}
+                inert={detailReveal < 0.99}
+                aria-label="Enlarged wafer region"
               >
-                <button
-                  aria-label="Close machine preview"
-                  onClick={closePreview}
+                {opening.magnify > 0 ? physicalView : null}
+              </figure>
+              {opening.magnify > 0 ? (
+                <WaferMagnification
+                  opacity={portion(opening.magnify, 0.15, 0.35)}
+                  progress={portion(opening.magnify, 0.15, 1)}
+                  corners={[
+                    camera.project([0, 0, surfaceHeights[0]]),
+                    camera.project([0, camera.ymax, surfaceHeights[1]]),
+                  ]}
+                />
+              ) : null}
+            </div>
+            <WaferTransfer
+              layout={openingLayout}
+              progress={opening.transfer}
+              state={material}
+            />
+            {opening.destination > 0 ? (
+              <div
+                className="fab-opening-destination"
+                style={{ opacity: opening.destination }}
+                inert={active !== 0}
+                aria-hidden={active !== 0}
+              >
+                <InverterViews
+                  input={input}
+                  progress={active === 0 ? progress : 1}
                 >
-                  ×
-                </button>
-                <span className="fab-preview-source">Wikipedia preview</span>
-                <strong id="fab-preview-title">{previewMachine.label}</strong>
-                <p id="fab-machine-description">{previewMachine.summary}</p>
-                <a
-                  href={`https://en.wikipedia.org/wiki/${previewMachine.wiki}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Read on Wikipedia <span aria-hidden="true">↗</span>
-                </a>
+                  <PatterningModel
+                    fromIndex={0}
+                    view={patterningCamera(0, 1, initialPresentation.camera)}
+                    index={0}
+                    progress={active === 0 ? progress : 1}
+                    visit={visitFor(1, undefined, undefined)}
+                    state={initialPresentation.material}
+                    input={input}
+                  />
+                </InverterViews>
               </div>
             ) : null}
           </div>
-          <div className="fab-observations">
-            <figure className="fab-wafer-panel">
-              <figcaption>Whole wafer</figcaption>
-              <WholeWafer index={active} visit={visit} state={material} />
-            </figure>
-            <figure className="fab-detail-panel">
-              <figcaption>
-                One small area <span>Layers enlarged</span>
-              </figcaption>
-              <PatterningModel
-                fromIndex={fromIndex}
-                view={camera}
-                index={active}
-                progress={progress}
-                visit={visit}
-                state={material}
-                input={input}
-              />
-            </figure>
-            {active >= 1 ? (
-              <WaferMagnification
-                corners={[
-                  camera.project([0, 0, surfaceHeights[0]]),
-                  camera.project([0, camera.ymax, surfaceHeights[1]]),
-                ]}
-              />
-            ) : null}
-          </div>
-          <div className="fab-materials" aria-label="Material key">
+          <div
+            className="fab-materials"
+            aria-label="Material key"
+            style={{ opacity: active === 0 ? 1 : detailReveal }}
+            aria-hidden={active !== 0 && opening.magnify < 0.01}
+          >
             {[
-              ["silicon", "Silicon"],
-              ["oxide", "Insulator"],
-              ["resist", "Resist"],
-              ["poly", "Gate"],
-              ["metal", "Metal"],
+              { label: "Silicon", colour: siliconColours.top, visible: true },
+              {
+                label: "Insulator",
+                colour: materialColours.insulator[0],
+                visible: true,
+              },
+              {
+                label: "Resist",
+                colour: materialColours.resist[0],
+                visible: true,
+              },
+              {
+                label: "n-doped",
+                colour: materialColours.n[0],
+                visible: active === 0 || active >= stages.implant,
+              },
+              {
+                label: "p-doped",
+                colour: materialColours.p[0],
+                visible: active === 0 || active >= stages.implantP,
+              },
+              {
+                label: "Gate",
+                colour: materialColours.gate[0],
+                visible: active === 0 || active >= stages.poly,
+              },
+              {
+                label: "Metal",
+                colour: materialColours.metal[0],
+                visible: active === 0 || active >= stages.poly,
+              },
             ]
-              .filter(
-                (_, index) =>
-                  active === 0 || active >= stages.poly || index < 3,
-              )
-              .map(([kind, label]) => (
-                <span key={kind}>
-                  <i className={`fab-material-${kind}`} />
+              .filter(({ visible }) => visible)
+              .map(({ label, colour }) => (
+                <span key={label}>
+                  <i style={{ backgroundColor: colour }} />
                   {label}
                 </span>
               ))}
           </div>
-          <div className="fab-controls">
-            <button
-              aria-label="Previous fabrication step"
-              disabled={active === 0}
-              onClick={() => go(active - 1)}
-            >
-              ←
-            </button>
-            {inverter ? (
+          {inverter ? (
+            <div className="fab-controls">
               <div className="fab-input-controls">
-                <span>Input A</span>
+                <span>Input</span>
                 {[0, 1].map((value) => (
                   <button
                     key={value}
                     aria-pressed={input === value}
                     onClick={() => {
                       setInput(value);
+                      setOpeningAuto(false);
                       setAnimation({
                         index: active,
                         progress: reduced ? 1 : 0,
@@ -479,28 +572,10 @@ export const FabricationJourney = () => {
                     {value}
                   </button>
                 ))}
-                <span>Q = {electrical.output ?? "…"}</span>
+                <span>Output = {electrical.output ?? "…"}</span>
               </div>
-            ) : (
-              <button
-                className="fab-replay"
-                onClick={() => {
-                  setFromMachine(step.machine);
-                  setFromIndex(active);
-                  setReplay((value) => value + 1);
-                }}
-              >
-                Replay this step <span aria-hidden="true">↻</span>
-              </button>
-            )}
-            <button
-              aria-label="Next fabrication step"
-              disabled={active === scenes.length - 1}
-              onClick={() => go(active + 1)}
-            >
-              →
-            </button>
-          </div>
+            </div>
+          ) : null}
           {cycle ? (
             <div
               className="fab-mask-cycle"

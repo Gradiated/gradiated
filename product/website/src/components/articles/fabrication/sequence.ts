@@ -99,7 +99,31 @@ export const steps: FabricationStep[] = [
   {
     key: "wafer",
     title: "One wafer, many circuits",
-    operation: "Begin with p-type silicon",
+    operation: "Begin with a continuous silicon wafer",
+    group: 1,
+  },
+  {
+    key: "clean-room",
+    title: "A place to work",
+    operation: "Set the wafer beside our clean-room map",
+    group: 1,
+  },
+  {
+    key: "operator",
+    title: "Meet our operator",
+    operation: "Protective clothing helps keep particles off the wafer",
+    group: 1,
+  },
+  {
+    key: "hand-off",
+    title: "One wafer in two views",
+    operation: "The operator carries the same wafer we see below",
+    group: 1,
+  },
+  {
+    key: "magnify",
+    title: "Look closer",
+    operation: "Enlarge a small region of the silicon surface",
     group: 1,
   },
   {
@@ -274,6 +298,14 @@ export const steps: FabricationStep[] = [
 
 const stage = (key: string) => steps.findIndex((step) => step.key === key);
 export const stages = {
+  wafer: stage("wafer"),
+  cleanRoom: stage("clean-room"),
+  operator: stage("operator"),
+  handOff: stage("hand-off"),
+  magnify: stage("magnify"),
+  layout: stage("layout"),
+  growOxide: stage("grow-oxide"),
+  develop: stage("develop"),
   well: stage("well"),
   wellAnneal: stage("well-anneal"),
   isolation: stage("isolation"),

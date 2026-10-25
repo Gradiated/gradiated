@@ -1,14 +1,23 @@
 import { useId } from "react";
 import type { CSSProperties } from "react";
 import { machines } from "./model";
-import { siliconColours } from "./materials";
+import { LabMachine, SmallWafer } from "./FabricationMachine";
+import {
+  exposedResistColour,
+  materialColours,
+  siliconColours,
+} from "./materials";
+import { WaferProcessEffects } from "./ProcessEffects";
+import { ExposureBeams } from "./ExposureBeams";
 import type { MachineId } from "./model";
 import {
   ease,
+  exposureLighting,
+  exposureRegions,
   resistState,
   maskMeshes,
   maskOpens,
-  machineIconSize,
+  machineLoadingSpots,
   machineLoadingPoint,
   machinePlaces,
   portion,
@@ -16,223 +25,8 @@ import {
   waferDetailRegion,
 } from "./process";
 import type { PatternState, Visit } from "./process";
-import { maskCycles } from "./sequence";
+import { maskCycles, steps } from "./sequence";
 import type { MaskId } from "./sequence";
-
-const LabMachine = ({
-  id,
-  working,
-  process,
-}: {
-  id: MachineId;
-  working: boolean;
-  process: number;
-}) => (
-  <svg
-    viewBox={`0 0 ${machineIconSize.width} ${machineIconSize.height}`}
-    data-machine-icon={id}
-    aria-hidden="true"
-  >
-    <rect x="3" y="5" width="66" height="50" rx="7" fill="#dce2dc" />
-    <rect
-      x="3"
-      y="2"
-      width="66"
-      height="50"
-      rx="7"
-      fill="#f9faf5"
-      stroke="#8c9c90"
-    />
-    <g>
-      {id === "coat" || id === "polish" ? (
-        <>
-          <circle cx="36" cy="27" r="19" fill="#e3e9e1" stroke="#a3b2a5" />
-          <g transform={`rotate(${process * 1080} 36 27)`}>
-            <circle cx="36" cy="27" r="13" fill="#c6cfc9" stroke="#738779" />
-            <path
-              d="M36 14v5m0 16v5m-13-13h5m16 0h5"
-              stroke="#edf2eb"
-              strokeWidth="2"
-            />
-          </g>
-          <path
-            d={id === "coat" ? "M18 8h18v12" : "M18 8h18v15h10v8H26v-8h10"}
-            fill="none"
-            stroke="#879e8e"
-            strokeWidth="4"
-          />
-        </>
-      ) : id === "litho" ? (
-        <>
-          <rect
-            x="11"
-            y="11"
-            width="50"
-            height="32"
-            rx="3"
-            fill="#e6e3ec"
-            stroke="#b5b0c0"
-          />
-          <path d="M18 15h36v24H18Z" fill="#cfccd9" />
-          <path d="M18 27h36m-18-12v24" stroke="#f5f3f8" />
-          <circle
-            cx="36"
-            cy="27"
-            r="9"
-            fill={working ? "#c1a5dc" : "#9e96b1"}
-            stroke="#8b819f"
-          />
-          <circle
-            cx="36"
-            cy="27"
-            r="4"
-            fill="#f1e5fc"
-            opacity={working ? 1 : 0.4}
-          />
-        </>
-      ) : id === "develop" || id === "strip" ? (
-        <>
-          {[
-            { x: 8, width: 15 },
-            { x: 27, width: 18 },
-            { x: 49, width: 15 },
-          ].map((bath) => (
-            <rect
-              key={bath.x}
-              x={bath.x}
-              y="13"
-              width={bath.width}
-              height="28"
-              rx="2"
-              fill={id === "develop" ? "#cddfe0" : "#e2ccd6"}
-              stroke={id === "develop" ? "#9cb9b8" : "#bb9aaa"}
-            />
-          ))}
-          <path d="M12 21h7m13 5h8m13-6h7" stroke="#f3faf7" strokeWidth="2" />
-        </>
-      ) : id === "furnace" ? (
-        <>
-          <rect
-            x="12.5"
-            y="13"
-            width="47"
-            height="28"
-            rx="13"
-            fill={working ? "#dfb69b" : "#e0d2bf"}
-            stroke="#b29b7e"
-          />
-          {[22.5, 31.5, 40.5, 49.5].map((x) => (
-            <path key={x} d={`M${x} 16v22`} stroke="#f8eee1" strokeWidth="2" />
-          ))}
-          <path d="M6.5 27h6m47 0h6" stroke="#b29b7e" strokeWidth="4" />
-        </>
-      ) : id === "anneal" ? (
-        <>
-          <circle
-            cx="36"
-            cy="27"
-            r="20"
-            fill={working ? "#e5b496" : "#e1d4c5"}
-            stroke="#b39b80"
-          />
-          <circle cx="36" cy="27" r="13" fill="#f6e8d9" stroke="#c5ac90" />
-          <path
-            d="M20 14l4 4m28-4-4 4M20 40l4-4m28 4-4-4"
-            stroke={working ? "#ca825c" : "#bca58d"}
-            strokeWidth="3"
-          />
-        </>
-      ) : id === "metal" ? (
-        <>
-          <circle cx="36" cy="28" r="18" fill="#ded7c5" stroke="#b0a487" />
-          <circle cx="36" cy="28" r="12" fill="#f4eee0" stroke="#bdaf91" />
-          <rect
-            x="23"
-            y="8"
-            width="26"
-            height="6"
-            rx="2"
-            fill="#c5ad70"
-            stroke="#a78f56"
-          />
-          <path
-            d="M28 17v6m8-6v6m8-6v6"
-            stroke={working ? "#b79547" : "#c6b996"}
-            strokeWidth="2"
-          />
-        </>
-      ) : id === "implant" ? (
-        <>
-          <rect
-            x="8"
-            y="17.5"
-            width="28"
-            height="19"
-            rx="3"
-            fill="#c9d4dd"
-            stroke="#99adbc"
-          />
-          <path d="M35 27h16" stroke="#9caec4" strokeWidth="5" />
-          <circle cx="54" cy="27" r="10" fill="#dae2e8" stroke="#99adbc" />
-          <path d="M14 24h15m-15 6h15" stroke="#9aafbf" />
-        </>
-      ) : id === "inspect" ? (
-        <>
-          <rect
-            x="11"
-            y="11"
-            width="50"
-            height="32"
-            rx="3"
-            fill="#e4e5d4"
-            stroke="#b6b89e"
-          />
-          <path d="M18 27h36m-18-12v24" stroke="#b6b89e" />
-          <circle
-            cx="36"
-            cy="27"
-            r="10"
-            fill="#f2f1e4"
-            stroke="#8f997e"
-            strokeWidth="2"
-          />
-          <circle cx="36" cy="27" r="4" fill="#9aab94" />
-        </>
-      ) : (
-        <>
-          <circle
-            cx="36"
-            cy="27"
-            r="20"
-            fill={id === "etch" ? "#e2d8e7" : "#d1ddd7"}
-            stroke="#a6b3a8"
-          />
-          <circle cx="36" cy="27" r="13" fill="#f5f6ef" stroke="#acb9ac" />
-          <path
-            d="M16 27h8m24 0h8M36 7v8m0 24v8"
-            stroke="#94a897"
-            strokeWidth="3"
-          />
-          <circle
-            cx="36"
-            cy="27"
-            r="6"
-            fill={working ? "#b8a6cf" : "#c9d2ca"}
-          />
-        </>
-      )}
-    </g>
-    <rect
-      x="23"
-      y="48"
-      width="26"
-      height="6"
-      rx="2"
-      fill="#d1dacf"
-      stroke="#a4b3a3"
-    />
-  </svg>
-);
 
 const walk = (
   from: { x: number; y: number },
@@ -270,12 +64,26 @@ const walk = (
 
 export const CleanRoom = ({
   visit,
+  state,
   preview,
   showPreview,
   hidePreview,
   togglePreview,
+  machinesOpacity = 1,
+  operatorOpacity = 1,
+  entry = 1,
+  held = 1,
+  door = 0,
+  doorOpen = 0,
 }: {
+  machinesOpacity?: number;
+  operatorOpacity?: number;
+  entry?: number;
+  held?: number;
+  door?: number;
+  doorOpen?: number;
   visit: Visit;
+  state: PatternState;
   preview?: MachineId;
   showPreview: (id: MachineId, immediate?: boolean) => void;
   hidePreview: () => void;
@@ -284,7 +92,11 @@ export const CleanRoom = ({
   const home = { x: 320, y: 126 };
   const destination = visit.machine ? machinePlaces[visit.machine] : home;
   const origin = visit.from ? machinePlaces[visit.from] : home;
-  const person = walk(origin, destination, portion(visit.progress, 0, 0.25));
+  const walked = walk(origin, destination, portion(visit.progress, 0, 0.25));
+  const person = {
+    x: walked.x + (658 - walked.x) * (1 - entry),
+    y: walked.y,
+  };
   const inMachine = visit.machine ? visit.loaded : 0;
   const loadingPoint = visit.machine
     ? machineLoadingPoint(visit.machine)
@@ -293,7 +105,12 @@ export const CleanRoom = ({
   const heldY = person.y + 2;
   const waferX = heldX + (loadingPoint.x - heldX) * inMachine;
   const waferY = heldY + (loadingPoint.y - heldY) * inMachine;
-  const waferTilt = 0.625 + 0.375 * inMachine;
+  const shape = visit.machine
+    ? machineLoadingSpots[visit.machine]
+    : { rx: 8, ry: 5 };
+  const waferRx = 8 + (shape.rx - 8) * inMachine;
+  const waferRy = 5 + (shape.ry - 5) * inMachine;
+  const seated = portion(inMachine, 0.9, 1);
 
   return (
     <div
@@ -341,79 +158,99 @@ export const CleanRoom = ({
           strokeWidth="1"
           strokeDasharray="3 7"
         />
+        <g opacity={door} data-room-door="true">
+          <path d="M632 103v46" stroke="#f7f3ec" strokeWidth="5" />
+          <path d="M633 102h-5m5 48h-5" stroke="#839784" strokeWidth="2" />
+          <g transform={`translate(632 104) rotate(${doorOpen * 86})`}>
+            <path d="M0 0v44" stroke="#7d9185" strokeWidth="3" />
+            <circle cx="-3" cy="37" r="1.5" fill="#7d9185" />
+          </g>
+        </g>
       </svg>
-      {machines.map((machine) => {
-        const place = machinePlaces[machine.id];
-        const current = visit.machine === machine.id;
-        const working = current && visit.working;
+      {machinesOpacity > 0
+        ? machines.map((machine) => {
+            const place = machinePlaces[machine.id];
+            const current = visit.machine === machine.id;
+            const working = current && visit.working;
 
-        return (
-          <div
-            key={machine.id}
-            className={`fab-room-machine ${current ? "is-current" : ""} ${place.y > 120 ? "is-bottom" : ""}`}
-            onPointerEnter={(event) => {
-              if (
-                event.pointerType !== "touch" &&
-                window.matchMedia("(any-hover: hover)").matches
-              ) {
-                showPreview(machine.id);
-              }
-            }}
-            onPointerLeave={hidePreview}
-            style={
-              {
-                left: `${place.x / 6.4}%`,
-                top: `${place.y / 2.58}%`,
-              } as CSSProperties
-            }
-          >
-            <a
-              href={`https://en.wikipedia.org/wiki/${machine.wiki}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`${machine.label} on Wikipedia, opens in a new tab`}
-              aria-describedby={
-                preview === machine.id ? "fab-machine-description" : undefined
-              }
-              onFocus={(event) => {
-                if (event.currentTarget.matches(":focus-visible")) {
-                  showPreview(machine.id, true);
+            return (
+              <div
+                key={machine.id}
+                className={`fab-room-machine ${current ? "is-current" : ""} ${place.y > 120 ? "is-bottom" : ""}`}
+                onPointerEnter={(event) => {
+                  if (
+                    event.pointerType !== "touch" &&
+                    window.matchMedia("(any-hover: hover)").matches
+                  ) {
+                    showPreview(machine.id);
+                  }
+                }}
+                onPointerLeave={hidePreview}
+                aria-hidden={machinesOpacity < 0.01}
+                inert={machinesOpacity < 0.99}
+                style={
+                  {
+                    opacity: machinesOpacity,
+                    left: `${place.x / 6.4}%`,
+                    top: `${place.y / 2.58}%`,
+                  } as CSSProperties
                 }
-              }}
-              onBlur={hidePreview}
-            >
-              <LabMachine
-                id={machine.id}
-                working={working}
-                process={visit.process}
-              />
-              <span>{machine.label}</span>
-            </a>
-            <button
-              className="fab-room-info"
-              aria-label={`About ${machine.label}`}
-              aria-expanded={preview === machine.id}
-              aria-controls="fab-machine-preview"
-              onClick={() => togglePreview(machine.id)}
-            >
-              i
-            </button>
-            {current ? (
-              <span className="fab-room-progress" aria-hidden="true">
-                <i style={{ width: `${visit.process * 100}%` }} />
-              </span>
-            ) : null}
-          </div>
-        );
-      })}
+              >
+                <a
+                  href={`https://en.wikipedia.org/wiki/${machine.wiki}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`${machine.label} on Wikipedia, opens in a new tab`}
+                  aria-describedby={
+                    preview === machine.id
+                      ? "fab-machine-description"
+                      : undefined
+                  }
+                  onFocus={(event) => {
+                    if (event.currentTarget.matches(":focus-visible")) {
+                      showPreview(machine.id, true);
+                    }
+                  }}
+                  onBlur={hidePreview}
+                >
+                  <LabMachine
+                    id={machine.id}
+                    working={working}
+                    process={visit.process}
+                    loaded={current ? seated : 0}
+                    state={state}
+                  />
+                  <span>{machine.label}</span>
+                </a>
+                <button
+                  className="fab-room-info"
+                  aria-label={`About ${machine.label}`}
+                  aria-expanded={preview === machine.id}
+                  aria-controls="fab-machine-preview"
+                  onClick={() => togglePreview(machine.id)}
+                >
+                  i
+                </button>
+                {current ? (
+                  <span className="fab-room-progress" aria-hidden="true">
+                    <i style={{ width: `${visit.process * 100}%` }} />
+                  </span>
+                ) : null}
+              </div>
+            );
+          })
+        : null}
       <svg
+        style={{ opacity: operatorOpacity }}
         className="fab-room-person"
         viewBox="0 0 640 258"
         role="img"
         aria-label={
           visit.machine
             ? `A clean-room operator carries the wafer to the ${machines.find((m) => m.id === visit.machine)?.label.toLowerCase()}`
-            : "A clean-room operator with our wafer"
+            : held > 0.5
+              ? "A clean-room operator with our wafer"
+              : "A clean-room operator entering empty-handed"
         }
       >
         <g
@@ -438,6 +275,14 @@ export const CleanRoom = ({
             strokeWidth="5"
           />
           <path d="M0-5v12" stroke="#ccd6ca" />
+          <image
+            href="/brand/favicon.svg"
+            x="-7.5"
+            y="-0.5"
+            width="6"
+            height="6"
+            aria-hidden="true"
+          />
           <ellipse cy="-11" rx="8" ry="9" fill="#fcfcf9" />
           <path
             d="M-5-10q5-3 10 0v5H-5Z"
@@ -450,16 +295,10 @@ export const CleanRoom = ({
         <g
           className="fab-room-wafer"
           data-placement={inMachine > 0.999 ? "loaded" : "carried"}
-          opacity={1 - 0.12 * inMachine}
-          transform={`translate(${waferX} ${waferY}) scale(1 ${waferTilt})`}
+          opacity={(1 - seated) * held}
+          transform={`translate(${waferX} ${waferY}) scale(${waferRx} ${waferRy})`}
         >
-          <circle
-            className="fab-room-wafer-disc"
-            r="8"
-            fill={siliconColours.top}
-            stroke={siliconColours.edge}
-            strokeWidth="1.2"
-          />
+          <SmallWafer state={state} />
         </g>
       </svg>
     </div>
@@ -472,42 +311,68 @@ export const WholeWafer = ({
   index,
   visit,
   state,
+  gloves = 1,
+  detail = 1,
 }: {
   index: number;
   visit: Visit;
   state: PatternState;
+  gloves?: number;
+  detail?: number;
 }) => {
   const id = useId();
+  const lighting = exposureLighting(visit);
+  const exposureMask =
+    steps[index].phase === "expose" ? steps[index].mask : undefined;
   const showDicingLines = index === stages.finish;
+  const gloveOpacity = gloves * (visit.machine ? 1 - visit.loaded : 1);
   const active = visit.working;
   const resists = maskCycles
     .map((cycle) => ({ ...cycle, ...resistState(state, cycle.id) }))
     .filter((resist) => resist.amount > 0.001);
-  const windows = Array.from({ length: 35 }, (_, i) => ({
-    x: 47 + (i % 7) * 27,
-    y: 52 + Math.floor(i / 7) * 27,
-  }));
   const activity = active ? Math.sin(Math.PI * visit.process) : 0;
   const permanentPatterns: { mask: MaskId; open: boolean; fill: string }[] = [
     { mask: "isolation", open: true, fill: siliconColours.top },
-    { mask: "gate", open: false, fill: "#829a75" },
+    { mask: "gate", open: false, fill: materialColours.gate[0] },
     { mask: "contact", open: true, fill: "#545961" },
-    { mask: "metal", open: false, fill: "#8899af" },
+    { mask: "metal", open: false, fill: materialColours.metal[1] },
     { mask: "via", open: true, fill: "#545961" },
-    { mask: "upper", open: false, fill: "#bdc7d4" },
+    { mask: "upper", open: false, fill: materialColours.metal[0] },
   ];
 
   return (
     <svg
       viewBox="0 0 280 264"
       role="img"
-      aria-label="The whole wafer with gloved hands at its edges and a marked region enlarged in the view on the right"
+      aria-label={
+        detail > 0.5
+          ? "The whole wafer with a small region marked for enlargement"
+          : "A continuous silicon wafer"
+      }
       className="fab-whole-wafer"
     >
       <defs>
         <clipPath id={`${id}-disc`}>
           <ellipse cx="140" cy="119" rx="95" ry="76" />
         </clipPath>
+        {exposureMask ? (
+          <pattern
+            id={`${id}-exposure-pattern`}
+            width="27"
+            height="27"
+            x="47"
+            y="52"
+            patternUnits="userSpaceOnUse"
+            patternTransform={`scale(${waferPatternScale})`}
+            overflow="visible"
+          >
+            <ExposureBeams
+              regions={exposureRegions(exposureMask)}
+              surfaceHeight={() => 0}
+              project={([x, y, z]) => [x * 0.27, (y * 27) / 65 - z * 0.45]}
+            />
+          </pattern>
+        ) : null}
         {permanentPatterns.map((pattern) => {
           const mesh = maskMeshes[pattern.mask];
 
@@ -570,8 +435,8 @@ export const WholeWafer = ({
                       height={((mesh.ys[row + 1] - y) * 27) / 65 + 0.1}
                       fill={
                         open
-                          ? `color-mix(in srgb, #d7bdce, #b795d1 ${resist.expose * 65}%)`
-                          : "#d7bdce"
+                          ? exposedResistColour(resist.expose, lighting.glow)
+                          : materialColours.resist[0]
                       }
                       opacity={open ? 1 - resist.develop : 1}
                     />
@@ -582,10 +447,17 @@ export const WholeWafer = ({
           );
         })}
       </defs>
-      <ellipse cx="140" cy="201" rx="83" ry="10" fill="#ddd9ce" opacity=".35" />
+      <ellipse
+        cx="140"
+        cy="201"
+        rx="83"
+        ry="10"
+        fill="#ddd9ce"
+        opacity={0.35 * gloveOpacity}
+      />
       <g
         className="fab-gloves"
-        opacity={1 - visit.loaded * 0.92}
+        opacity={gloveOpacity}
         fill="#edf1eb"
         stroke="#b8c7bd"
         strokeWidth="1.3"
@@ -619,7 +491,7 @@ export const WholeWafer = ({
           y="40"
           width="200"
           height="160"
-          fill="#c5dce1"
+          fill={materialColours.insulator[0]}
           opacity={state.oxide}
         />
         <rect
@@ -635,7 +507,7 @@ export const WholeWafer = ({
           y="40"
           width="200"
           height="160"
-          fill="#94aa88"
+          fill={materialColours.gate[0]}
           opacity={state.poly * (1 - state.patternGate)}
         />
         <rect
@@ -651,7 +523,7 @@ export const WholeWafer = ({
           y="40"
           width="200"
           height="160"
-          fill="#bdd5dc"
+          fill={materialColours.insulator[0]}
           opacity={state.cover * 0.6}
         />
         <rect
@@ -667,7 +539,7 @@ export const WholeWafer = ({
           y="40"
           width="200"
           height="160"
-          fill="#b1bac8"
+          fill={materialColours.metal[0]}
           opacity={state.metal * (1 - state.metalPattern)}
         />
         <rect
@@ -683,7 +555,7 @@ export const WholeWafer = ({
           y="40"
           width="200"
           height="160"
-          fill="#bdd5dc"
+          fill={materialColours.insulator[0]}
           opacity={state.interconnect * 0.25}
         />
         <rect
@@ -699,7 +571,7 @@ export const WholeWafer = ({
           y="40"
           width="200"
           height="160"
-          fill="#b1bac8"
+          fill={materialColours.metal[0]}
           opacity={state.upperMetal * (1 - state.upperMetalPattern)}
         />
         <rect
@@ -760,21 +632,6 @@ export const WholeWafer = ({
           </g>
         ) : null}
         {active &&
-        (visit.machine === "develop" || visit.machine === "strip") ? (
-          <g fill="#edf6f7" opacity={activity * 0.55}>
-            {windows
-              .filter((_, i) => i % 3 === 0)
-              .map(({ x, y }, i) => (
-                <circle
-                  key={i}
-                  cx={x + 13}
-                  cy={y + 15 - visit.process * 15}
-                  r="3"
-                />
-              ))}
-          </g>
-        ) : null}
-        {active &&
         (visit.machine === "furnace" || visit.machine === "anneal") ? (
           <rect
             x="40"
@@ -785,24 +642,30 @@ export const WholeWafer = ({
             opacity={activity * 0.25}
           />
         ) : null}
+        {lighting.beam > 0 && exposureMask ? (
+          <rect
+            data-wafer-exposure-beam={exposureMask}
+            x="40"
+            y="40"
+            width="200"
+            height="160"
+            fill={`url(#${id}-exposure-pattern)`}
+            opacity={lighting.beam * 0.55}
+          />
+        ) : null}
+        <WaferProcessEffects visit={visit} />
       </g>
-      {index >= 1 ? (
+      {detail > 0 ? (
         <rect
+          opacity={detail}
           className="fab-wafer-detail-region"
           x={waferDetailRegion.x}
           y={waferDetailRegion.y}
           width={waferDetailRegion.size}
           height={waferDetailRegion.size}
           fill="none"
-          stroke="#986b49"
-          strokeWidth="1.1"
-        />
-      ) : null}
-      {active && visit.machine === "litho" ? (
-        <path
-          d="m90 22 18 80h65l17-80Z"
-          fill="#c1a3e4"
-          opacity={activity * 0.35}
+          stroke="var(--color-kiln-600)"
+          strokeWidth="1.2"
         />
       ) : null}
       {active && visit.machine === "coat" ? (

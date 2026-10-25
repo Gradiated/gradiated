@@ -1,8 +1,8 @@
 # How do we print a transistor onto silicon?
 
-The transistor we want to build acts as an electrically controlled switch. Its gate electrode controls whether current can flow through silicon between two connection points, the source and drain. A thin insulator separates the gate from the silicon, and conducting materials connect these parts to the rest of a circuit. How can we put all of these features in the right places?
+A microchip is built on a small piece of silicon cut from a wafer. Transistors are formed just below and on its surface. Many are grouped into reusable building blocks called standard cells, such as NOT gates, NAND gates and flip-flops. These cells combine into larger circuits that calculate, remember and control. Layers of metal wires above the transistors connect nearby cells and distant parts of the chip.
 
-Let’s follow a silicon wafer through a simplified planar process and build the two transistors of a NOT gate. In a planar transistor, the conducting path, called the channel, forms along the silicon surface beneath the gate electrode. The drawings exaggerate thicknesses and simplify shapes so we can follow the material changes. This is a teaching example rather than a complete manufacturing recipe.
+Here, we will follow a silicon wafer through the main steps of building the two transistors of a NOT gate, also called an inverter. We use a simplified planar design, where the conducting channel runs along a flat silicon surface beneath each transistor’s gate electrode, between its source and drain connections. The structures are simplified and exaggerated to make operation clear and changes visible.
 
 <!-- scene: destination -->
 
@@ -14,13 +14,33 @@ Notice the narrow gate electrode above each transistor and the thin insulation b
 
 <!-- scene: wafer -->
 
-## Give each operation a pattern
+## Begin with a silicon wafer
 
-We begin with a polished silicon wafer, a thin slice of a single crystal. Many copies of our circuit will be made across its surface together. The red square marks a tiny part of one future chip, enlarged on the right.
+We begin with a polished silicon wafer, a thin slice of a single crystal. Many copies of our circuit will be made across its surface together. For now, it is a continuous piece of silicon, with no transistors or wires.
+
+<!-- scene: clean-room -->
+
+Processing happens in a clean room, where filtered air and protective clothing help keep particles off the wafer. Even tiny particles can spoil the structures we are trying to make. Our simplified room appears above, while the wafer moves into gloved hands below.
+
+<!-- scene: operator -->
+
+An operator enters wearing a protective coverall, often called a bunny suit. In our drawing, this person will carry the wafer between machines. The suit helps prevent particles from their skin and clothing reaching the wafer.
+
+<!-- scene: hand-off -->
+
+The operator picks up our wafer. The small disc in their hand and the larger view below represent the same wafer. We keep the larger view visible so we can follow what happens to its surface as it moves around the room.
+
+<!-- scene: magnify -->
+
+The red square marks a tiny part of one future chip. That region is enlarged on the right, where we will watch the two transistors take shape. Both lower views follow the same wafer throughout the process.
 
 Doping means adding small quantities of selected elements, called dopants, to control how silicon conducts electricity. In n-type silicon, current is carried mainly by electrons. In p-type silicon, it is carried mainly by holes, missing electrons that behave as mobile positive charges. Our starting wafer is lightly doped p-type.
 
 <!-- scene: layout -->
+
+## Give each operation a pattern
+
+The machines now appear around the room. Each represents a different kind of operation. We will visit them one at a time, returning to the same tools as we build up the circuit.
 
 A layout is a drawing that specifies the shapes of the regions and connections we want. These shapes guide the patterns on photomasks, optical templates that control where light reaches a light-sensitive coating called photoresist.
 
@@ -218,15 +238,15 @@ The etcher removes that exposed metal, separating the remaining film into wires.
 
 <!-- scene: metal-strip -->
 
-We strip the resist to reveal the connections. The two gate electrodes join as input `A`, and the drains join as output `Q`. The n-type transistor’s source connects to the low supply, while the p-type transistor’s source connects to the high supply.
+We strip the resist to reveal the connections. The two gate electrodes join as the input, and the drains join as the output. The n-type transistor’s source connects to the low supply, while the p-type transistor’s source connects to the high supply.
 
 Body contacts also hold the surrounding silicon at fixed voltages. We omit these connections from the diagrams for simplicity.
 
 <!-- scene: inverter -->
 
-Use the `0` and `1` buttons to change input `A`. In this example, logic `0` corresponds to `0 V` and logic `1` to `+1 V`.
+Use the `0` and `1` buttons to change the input. In this example, logic `0` corresponds to `0 V` and logic `1` to `+1 V`.
 
-When `A` is `0`, the p-type transistor connects the output to the high supply while the n-type transistor is off. When `A` is `1`, the n-type transistor connects the output to the low supply while the p-type transistor is off. The output settles to the opposite logic value.
+When the input is `0`, the p-type transistor connects the output to the high supply while the n-type transistor is off. When the input is `1`, the n-type transistor connects the output to the low supply while the p-type transistor is off. The output settles to the opposite logic value.
 
 This complementary pairing is called complementary metal–oxide–semiconductor, or CMOS. The historical name also covers processes with polysilicon gate electrodes. Our physical structure now implements the NOT gate we began with.
 
@@ -297,15 +317,3 @@ Zoom out and our gate becomes one small part of a die, an individual chip on the
 Designers specify circuits and layouts for a chosen manufacturing process. A foundry is a company that manufactures chips for other companies. Its process design kit supplies device models and layout rules that help designers create circuits suitable for that process. We will explore that relationship in another deep dive.
 
 Our two transistors and their connections emerged through repeated, aligned changes to materials. Light selected resist patterns, machines added or removed material, dopants changed the silicon, and conductors connected the result. Those same kinds of operations can build the many gates that make a computer.
-
-<details>
-<summary>Sources and further reading</summary>
-
-- [NPTEL planar MOS fabrication sequence](https://archive.nptel.ac.in/content/storage2/courses/117101058/Slides/12.7.htm) and [CMOS inverter connections](https://archive.nptel.ac.in/content/storage2/courses/117103066/chap3/slides/slide209.htm).
-- [NPTEL on lithography and selective processing](https://archive.nptel.ac.in/content/storage2/courses/117103066/chap3/slides/slide174.htm).
-- [MIT Micro/Nano Processing Technology](https://ocw.mit.edu/courses/6-152j-micro-nano-processing-technology-fall-2005/pages/lecture-notes/) covers implantation, deposition and etching.
-- [MIT’s device and process overview](https://ocw.mit.edu/courses/6-152j-micro-nano-processing-technology-fall-2005/9878a7acdd9632caa5afb8b4b96a6f39_lecture2.pdf) explains doping and transistor structure. [Kiel University on silicon oxide](https://www.tf.uni-kiel.de/matwis/amat/semitech_en/kap_6/backbone/r6_1_1.html) explains screen oxides, and [Plasma-Therm on etch selectivity](https://corial.plasmatherm.com/en/blog/etch-selectivity-faq) explains selective material removal.
-- [Applied Materials on planarisation](https://www.appliedmaterials.com/il/en/semiconductor/semiconductor-technologies/cmp.html) and [ASML on manufacturing](https://www.asml.com/en/technology/all-about-microchips/how-microchips-are-made).
-- Branch Education's [manufacturing video](https://www.youtube.com/watch?v=dX9CGRZwD-w) and [transistor and CPU video](https://www.youtube.com/watch?v=_Pqfjer8-O4) provide further visual orientation. Their device examples differ from the planar process followed here.
-
-</details>

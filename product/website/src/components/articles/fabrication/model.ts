@@ -55,7 +55,7 @@ export const machines = [
     id: "anneal",
     label: "Annealer",
     job: "Repair implantation damage and activate dopants",
-    wiki: "Annealing_(materials_science)#Diffusion_annealing_of_semiconductors",
+    wiki: "Rapid_thermal_processing#Rapid_thermal_anneal",
     summary:
       "Annealing heats implanted silicon to repair crystal damage and make dopants electrically active. This is a separate heat treatment from growing an oxide film.",
   },
@@ -79,7 +79,7 @@ export const machines = [
     id: "metal",
     label: "Metal deposition",
     job: "Add conducting material for contacts and wires",
-    wiki: "Physical_vapor_deposition",
+    wiki: "Sputter_deposition",
     summary:
       "Metal deposition adds conducting material for connections. Physical vapour deposition is one way to deposit aluminium films. Our drawing simplifies the filling of contact holes and vias.",
   },

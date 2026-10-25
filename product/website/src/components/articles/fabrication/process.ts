@@ -14,9 +14,13 @@ export const portion = (value: number, start: number, end: number) =>
 export const inverterDuration = 2400;
 
 export const inverterOperation = (input: number, progress: number) => ({
-  supply: portion(progress, 0, 0.2),
-  gates: portion(progress, 0.2, 0.4),
-  transfer: portion(progress, 0.4, 0.9),
+  supply: 1,
+  input: portion(progress, 0, 0.08),
+  gates: portion(progress, 0.08, 0.2),
+  electrodes: portion(progress, 0.2, 0.3),
+  transfer: portion(progress, 0.3, 0.65),
+  outputRail: portion(progress, 0.65, 0.78),
+  exit: portion(progress, 0.78, 0.9),
   output: progress >= 0.9 ? 1 - input : undefined,
 });
 
@@ -37,21 +41,23 @@ export const machinePlaces: Record<MachineId, { x: number; y: number }> = {
   inspect: { x: 582, y: 197 },
 };
 
-export const machineLoadingSpots: Record<MachineId, { x: number; y: number }> =
-  {
-    furnace: { x: 36, y: 27 },
-    coat: { x: 36, y: 27 },
-    litho: { x: 36, y: 27 },
-    develop: { x: 36, y: 27 },
-    etch: { x: 36, y: 27 },
-    strip: { x: 36, y: 27 },
-    anneal: { x: 36, y: 27 },
-    implant: { x: 54, y: 27 },
-    deposit: { x: 36, y: 27 },
-    metal: { x: 36, y: 28 },
-    polish: { x: 36, y: 27 },
-    inspect: { x: 36, y: 27 },
-  };
+export const machineLoadingSpots: Record<
+  MachineId,
+  { x: number; y: number; rx: number; ry: number }
+> = {
+  furnace: { x: 36, y: 27, rx: 3.5, ry: 10 },
+  coat: { x: 36, y: 29, rx: 13, ry: 13 },
+  litho: { x: 36, y: 34, rx: 10, ry: 3 },
+  develop: { x: 36, y: 35, rx: 13, ry: 3.5 },
+  etch: { x: 36, y: 35, rx: 16, ry: 3 },
+  strip: { x: 36, y: 35, rx: 13, ry: 3.5 },
+  anneal: { x: 36, y: 33, rx: 16, ry: 4 },
+  implant: { x: 55, y: 27, rx: 3, ry: 10 },
+  deposit: { x: 36, y: 35, rx: 16, ry: 3 },
+  metal: { x: 36, y: 35, rx: 16, ry: 3 },
+  polish: { x: 36, y: 28, rx: 13, ry: 13 },
+  inspect: { x: 32, y: 30, rx: 16, ry: 16 },
+};
 
 export const machineLoadingPoint = (machine: MachineId) => {
   const centre = machinePlaces[machine];
@@ -63,7 +69,7 @@ export const machineLoadingPoint = (machine: MachineId) => {
   };
 };
 
-export const waferDetailRegion = { x: 162, y: 115, size: 8 };
+export const waferDetailRegion = { x: 200.4, y: 104.7, size: 8.1 };
 
 export type Visit = {
   machine?: MachineId;
@@ -87,6 +93,19 @@ export const visitFor = (
   working: !!machine && progress >= 0.36 && progress < 0.84,
 });
 
+export const exposureLighting = (visit: Visit) => {
+  const active = visit.working && visit.machine === "litho";
+
+  return {
+    beam: active ? 1 - portion(visit.process, 0.6, 0.72) : 0,
+    glow: active
+      ? portion(visit.process, 0, 0.12) *
+        (1 - portion(visit.process, 0.45, 0.95)) *
+        0.72
+      : 0,
+  };
+};
+
 export { stages } from "./sequence";
 
 type ResistField = `${MaskId}${"Coat" | "Expose" | "Develop" | "Strip"}`;
@@ -106,7 +125,7 @@ export const patternState = (index: number, visit: Visit) => {
 
   return {
     ...resists,
-    oxide: step(3),
+    oxide: step(stages.growOxide),
     well: step(stages.well),
     wellAnneal: step(stages.wellAnneal),
     isolation: step(stages.isolation),
@@ -155,6 +174,8 @@ export type Rectangle = readonly [number, number, number, number];
 export const firstMetalTracks: Rectangle[] = [
   [24, 76, 6, 10],
   [34, 66, 21, 25],
+  [48, 52, 0, 10],
+  [48, 52, 21, 34],
   [14, 18, 0, 26],
   [82, 86, 0, 26],
 ];
@@ -228,11 +249,48 @@ export const maskMeshes: Record<MaskId, { xs: number[]; ys: number[] }> = {
     ys: [0, 6, 10, 20, 26, 65],
   },
   metal: {
-    xs: [0, 4, 14, 18, 24, 34, 66, 76, 82, 86, 96, 100],
-    ys: [0, 6, 10, 21, 25, 26, 65],
+    xs: [0, 4, 14, 18, 24, 34, 48, 52, 66, 76, 82, 86, 96, 100],
+    ys: [0, 6, 10, 21, 25, 26, 34, 65],
   },
   via: { xs: [0, 48, 52, 100], ys: [0, 21, 25, 65] },
   upper: { xs: [0, 48, 52, 92, 100], ys: [0, 4, 25, 65] },
+};
+
+export const exposureRegions = (mask: MaskId, ymax = 65): Rectangle[] => {
+  const mesh = maskMeshes[mask];
+  const regions: Rectangle[] = [];
+  let previous = new Map<string, number>();
+
+  for (let row = 0; row < mesh.ys.length - 1; row++) {
+    const y = mesh.ys[row];
+    const y1 = Math.min(mesh.ys[row + 1], ymax);
+    if (y >= y1) break;
+
+    const current = new Map<string, number>();
+    let start: number | undefined;
+    for (let col = 0; col < mesh.xs.length - 1; col++) {
+      const open = maskOpens(mask, mesh.xs[col], y);
+      if (open && start === undefined) start = mesh.xs[col];
+      if (start === undefined) continue;
+      if (open && col < mesh.xs.length - 2) continue;
+
+      const end = open ? mesh.xs[col + 1] : mesh.xs[col];
+      const key = `${start}-${end}`;
+      const existing = previous.get(key);
+      const index = existing ?? regions.length;
+      regions[index] = [
+        start,
+        end,
+        existing === undefined ? y : regions[index][2],
+        y1,
+      ];
+      current.set(key, index);
+      start = undefined;
+    }
+    previous = current;
+  }
+
+  return regions;
 };
 
 export const contactEtchHeight = (bottom: number, progress: number) =>

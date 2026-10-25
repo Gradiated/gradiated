@@ -12,7 +12,11 @@ const transformPoint = ([x, y]: Point, matrix: Transform): Point => [
 
 export const WaferMagnification = ({
   corners,
+  opacity = 1,
+  progress = 1,
 }: {
+  opacity?: number;
+  progress?: number;
   corners: [Point, Point];
 }) => {
   const overlay = useRef<SVGSVGElement>(null);
@@ -52,7 +56,7 @@ export const WaferMagnification = ({
     measure();
 
     return () => observer.disconnect();
-  }, []);
+  }, [opacity > 0]);
 
   const { x, y, size } = waferDetailRegion;
   const sources: [Point, Point] = [
@@ -61,13 +65,26 @@ export const WaferMagnification = ({
   ];
 
   return (
-    <svg className="fab-magnification-links" ref={overlay} aria-hidden="true">
+    <svg
+      className="fab-magnification-links"
+      style={{ opacity }}
+      ref={overlay}
+      aria-hidden="true"
+    >
       {layout
         ? corners.map((corner, index) => {
             const [x1, y1] = transformPoint(sources[index], layout.wafer);
             const [x2, y2] = transformPoint(corner, layout.detail);
 
-            return <line key={index} x1={x1} y1={y1} x2={x2} y2={y2} />;
+            return (
+              <line
+                key={index}
+                x1={x1}
+                y1={y1}
+                x2={x1 + (x2 - x1) * progress}
+                y2={y1 + (y2 - y1) * progress}
+              />
+            );
           })
         : null}
     </svg>

@@ -1,6 +1,15 @@
-import { useId } from "react";
-import { logicColours, siliconColours } from "./materials";
+import { useEffect, useId, useRef, useState } from "react";
+import type { PointerEvent } from "react";
 import {
+  exposedResistColour,
+  logicColours,
+  materialColours,
+  siliconColours,
+} from "./materials";
+import {
+  activeSilicon,
+  exposureLighting,
+  exposureRegions,
   filmVisibility,
   inverterOperation,
   firstMetalTracks,
@@ -24,14 +33,28 @@ import {
 } from "./process";
 import type { PatternState, Visit } from "./process";
 import { maskCycles, steps } from "./sequence";
+import { CloseupProcessEffects } from "./ProcessEffects";
+import { ExposureBeams } from "./ExposureBeams";
 
 type Point = [number, number, number];
-type Face = { points: Point[]; fill: string; depth: number; opacity: number };
+type RegionLabel = string | ((x: number, y: number) => string);
+type Face = {
+  points: Point[];
+  fill: string;
+  depth: number;
+  opacity: number;
+  region: string;
+};
 
 const mix = (from: number, to: number, progress: number) =>
   from + (to - from) * progress;
 
-export type CameraState = { elevation: number; section: number };
+export type CameraState = {
+  elevation: number;
+  section: number;
+  scale?: number;
+  centreY?: number;
+};
 
 export const patterningCamera = (
   index: number,
@@ -41,7 +64,7 @@ export const patterningCamera = (
   const viewChange = portion(progress, 0, 0.28);
   const step = steps[index];
   const angle =
-    index === 2 || step.phase === "expose"
+    index === stages.layout || step.phase === "expose"
       ? 1.05
       : index >= stages.contactInsulation
         ? 0.65
@@ -49,23 +72,25 @@ export const patterningCamera = (
   const elevation = mix(from.elevation, angle ?? 0.62, viewChange);
   const section = mix(
     from.section,
-    index === 0 || index === 1 || index >= 6 ? 1 : 0,
+    index === 0 || index < stages.layout || index >= stages.develop ? 1 : 0,
     viewChange,
   );
   const ymax = mix(65, 34, section);
   const yaw = mix(0.42, 0.08, section);
-  const scale = 2.6;
+  const exposing = step.phase === "expose";
+  const scale = mix(from.scale ?? 2.6, exposing ? 2.1 : 2.6, viewChange);
+  const centreY = mix(from.centreY ?? 132, exposing ? 170 : 132, viewChange);
   const project = ([x, y, z]: Point) => {
     const u = (x - 50) * Math.cos(yaw) - (y - 32.5) * Math.sin(yaw);
     const v = (x - 50) * Math.sin(yaw) + (y - 32.5) * Math.cos(yaw);
 
     return [
       190 + u * scale,
-      132 + (v * Math.sin(elevation) - z * Math.cos(elevation)) * scale,
+      centreY + (v * Math.sin(elevation) - z * Math.cos(elevation)) * scale,
     ] as [number, number];
   };
 
-  return { elevation, section, ymax, yaw, project };
+  return { elevation, section, scale, centreY, ymax, yaw, project };
 };
 
 export const PatterningModel = ({
@@ -86,7 +111,72 @@ export const PatterningModel = ({
   input: number;
 }) => {
   const id = useId();
+  const hoveredRegion = useRef("");
+  const [regionTip, setRegionTip] = useState<{
+    label: string;
+    x: number;
+    y: number;
+    scene: number;
+  } | null>(null);
+  useEffect(() => {
+    hoveredRegion.current = "";
+    setRegionTip(null);
+  }, [index]);
+  useEffect(() => {
+    const dismiss = () => {
+      hoveredRegion.current = "";
+      setRegionTip(null);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") dismiss();
+    };
+    window.addEventListener("scroll", dismiss, true);
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      window.removeEventListener("scroll", dismiss, true);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, []);
+  const hideRegionTip = () => {
+    hoveredRegion.current = "";
+    setRegionTip(null);
+  };
+  const showRegionTip = (event: PointerEvent<HTMLDivElement>) => {
+    const target = event.target as Element;
+    const label =
+      target.closest("[data-region]")?.getAttribute("data-region") ?? "";
+    const key = `${index}:${label}`;
+    if (hoveredRegion.current === key) return;
+
+    hoveredRegion.current = key;
+    if (!label) {
+      setRegionTip(null);
+      return;
+    }
+
+    const bounds = event.currentTarget.getBoundingClientRect();
+    setRegionTip({
+      label,
+      x: Math.max(
+        8,
+        Math.min(bounds.width - 208, event.clientX - bounds.left + 12),
+      ),
+      y: Math.max(4, event.clientY - bounds.top - 40),
+      scene: index,
+    });
+  };
   const { elevation, section, ymax, yaw, project } = view;
+  const lighting = exposureLighting(visit);
+  const implanted = Math.max(state.implantN, state.implantP);
+  const crystalDamage = Math.max(
+    state.well * (1 - state.wellAnneal),
+    implanted * (1 - state.anneal),
+  );
+  const crystalRepair = Math.max(
+    state.wellAnneal * (1 - implanted),
+    state.anneal,
+  );
   const path = (points: Point[], close = true) =>
     points
       .map(
@@ -99,6 +189,7 @@ export const PatterningModel = ({
   const faces: Face[] = [];
   let layerOrder = 0;
   let faceOpacity = 1;
+  let faceRegion = "";
   const addFace = (points: Point[], fill: string, opacity = 1) => {
     const depth =
       points.reduce(
@@ -113,6 +204,7 @@ export const PatterningModel = ({
       fill,
       depth: depth + layerOrder * 1000,
       opacity: opacity * faceOpacity,
+      region: faceRegion,
     });
   };
   const layer = (
@@ -123,6 +215,7 @@ export const PatterningModel = ({
     colours: [string, string, string],
     expose: boolean | ((col: number, row: number) => number) = false,
     opacity = 1,
+    region: RegionLabel = "Silicon",
   ) => {
     layerOrder += 1;
     if (opacity <= 0) return;
@@ -138,6 +231,10 @@ export const PatterningModel = ({
 
         const bottom = typeof base === "number" ? base : base(col, row);
         faceOpacity = opacity * (layerOrder === 1 ? 1 : filmVisibility(h));
+        faceRegion =
+          typeof region === "function"
+            ? region((x0 + x1) / 2, (y0 + y1) / 2)
+            : region;
         const top = bottom + h;
         const exposure = typeof expose === "function" ? expose(col, row) : 0;
         addFace(
@@ -148,7 +245,7 @@ export const PatterningModel = ({
             [x0, y1, top],
           ],
           exposure > 0
-            ? `color-mix(in srgb, ${colours[0]}, #b795d1 ${exposure * 65}%)`
+            ? exposedResistColour(exposure, lighting.glow)
             : colours[0],
         );
         const neighbour = (col: number, row: number) => {
@@ -238,6 +335,7 @@ export const PatterningModel = ({
     height: number,
     colours: [string, string, string],
     opacity = 1,
+    region = "Metal contact",
   ) => {
     if (y0 >= ymax || height <= 0 || opacity <= 0) return;
 
@@ -249,6 +347,7 @@ export const PatterningModel = ({
       colours,
       false,
       opacity,
+      region,
     );
   };
   layer(
@@ -257,6 +356,9 @@ export const PatterningModel = ({
     -20,
     (col, row) => 20 + siliconTop(surfaceXs[col], surfaceYs[row]),
     [siliconColours.top, siliconColours.side, siliconColours.front],
+    false,
+    1,
+    "p-type silicon substrate",
   );
   const wellXs = surfaceXs.filter((x) => x >= 55);
   layer(
@@ -264,14 +366,11 @@ export const PatterningModel = ({
     surfaceYs,
     -16,
     (col, row) => 16 + siliconTop(wellXs[col], surfaceYs[row]),
-    ["#99adbb", "#758d9e", "#849dab"],
+    materialColours.well,
     false,
     state.well,
+    "n-well",
   );
-  const implantColour = (nType: boolean): [string, string, string] =>
-    nType
-      ? ["#8cabc8", "#5f7d9a", "#7493b0"]
-      : ["#c397aa", "#9c6f85", "#ae8298"];
   terminals
     .filter((terminal) => !terminal.gate)
     .forEach(({ x, nType }) => {
@@ -288,21 +387,14 @@ export const PatterningModel = ({
         53,
         -9,
         9 + oxideBase,
-        implantColour(nType),
+        nType ? materialColours.n : materialColours.p,
         nType ? state.implantN : state.implantP,
+        `${nType ? "n" : "p"}-doped ${x === 16 || x === 84 ? "source" : "drain"}`,
       );
     });
-  const insulator: [string, string, string] = ["#bdd5dc", "#89b0bb", "#9cbdc5"];
-  const gateColours: [string, string, string] = [
-    "#94aa88",
-    "#62795b",
-    "#788d6c",
-  ];
-  const metalColours: [string, string, string] = [
-    "#b1bac8",
-    "#75859d",
-    "#8c9bb0",
-  ];
+  const insulator = materialColours.insulator;
+  const gateColours = materialColours.gate;
+  const metalColours = materialColours.metal;
   const insulationHeight = (x: number, y: number) =>
     insulationThickness(x, y, state);
   const deviceTop = (x: number, y: number) => deviceSurfaceHeight(x, y, state);
@@ -337,6 +429,14 @@ export const PatterningModel = ({
       );
     },
     insulator,
+    false,
+    1,
+    (x) =>
+      activeSilicon(x) && state.gateOxide > 0
+        ? "Gate oxide · insulator"
+        : state.isolation > 0
+          ? "Field oxide · insulator"
+          : "Screen oxide · insulator",
   );
   layer(
     gateXs,
@@ -347,6 +447,11 @@ export const PatterningModel = ({
     (col) =>
       8 * state.poly * (gateRegion(gateXs[col]) ? 1 : 1 - state.patternGate),
     gateColours,
+    false,
+    1,
+    state.patternGate > 0.5
+      ? "Polysilicon gate electrode"
+      : "Polysilicon layer",
   );
   layer(
     coverXs,
@@ -363,8 +468,9 @@ export const PatterningModel = ({
     insulator,
     false,
     0.46,
+    "Insulating silicon dioxide",
   );
-  terminals.forEach(({ x, gate }) => {
+  terminals.forEach(({ x, gate, nType }) => {
     const bottom = gate ? deviceTop(x, 6) : siliconTop(x, 20);
     box(
       x - 2,
@@ -374,6 +480,10 @@ export const PatterningModel = ({
       bottom,
       (14 - bottom) * state.metalFill,
       metalColours,
+      1,
+      gate
+        ? "Gate contact"
+        : `${nType ? "n-type" : "p-type"} ${x === 16 || x === 84 ? "source" : "drain"} contact`,
     );
   });
   const metalXs = [
@@ -395,6 +505,14 @@ export const PatterningModel = ({
         ? 1
         : 1 - state.metalPattern),
     metalColours,
+    false,
+    1,
+    (x, y) => {
+      if (state.metalPattern < 0.5) return "Deposited metal";
+      if (x >= 14 && x <= 18) return "0 V metal connection";
+      if (x >= 82 && x <= 86) return "+1 V metal connection";
+      return y <= 10 ? "Input metal connection" : "Output metal connection";
+    },
   );
   const upperXs = [
     ...new Set([
@@ -439,8 +557,19 @@ export const PatterningModel = ({
     insulator,
     false,
     0.34,
+    "Insulation between metal layers",
   );
-  box(48, 52, 21, 25, 17, 8 * state.viaFill, metalColours);
+  box(
+    48,
+    52,
+    21,
+    25,
+    17,
+    8 * state.viaFill,
+    metalColours,
+    1,
+    "Metal via · between wiring levels",
+  );
   layer(
     [0, 48, 52, 92, 100],
     [0, 4, 25, ymax].filter((y) => y <= ymax),
@@ -452,6 +581,9 @@ export const PatterningModel = ({
         ? 1
         : 1 - state.upperMetalPattern),
     metalColours,
+    false,
+    1,
+    "Upper metal interconnect",
   );
   maskCycles.forEach((cycle) => {
     const resist = resistState(state, cycle.id);
@@ -467,43 +599,21 @@ export const PatterningModel = ({
       ys,
       (col, row) => materialSurfaceHeight(state, xs[col], ys[row]),
       (col, row) => resistThickness(state, cycle.id, xs[col], ys[row]),
-      ["#d7bdce", "#b694ac", "#c3a1b9"],
+      materialColours.resist,
       (col, row) => (maskOpens(cycle.id, xs[col], ys[row]) ? resist.expose : 0),
+      1,
+      "Photoresist · temporary mask",
     );
   });
   faces.sort((a, b) => a.depth - b.depth);
   const step = steps[index];
   const cycle = maskCycles.find((cycle) => cycle.id === step.mask);
   const currentResist = cycle ? resistState(state, cycle.id) : undefined;
-  const beam = visit.working && step.phase === "expose";
-  const maskOpacity = beam ? Math.sin(Math.PI * visit.process) * 0.85 : 0;
-  const maskZ = materialSurfaceHeight(state, 50, 0) + 28;
-  const mesh = cycle ? maskMeshes[cycle.id] : undefined;
-  const apertures = mesh
-    ? mesh.xs.slice(0, -1).flatMap((x, col) =>
-        mesh.ys.slice(0, -1).flatMap((y, row) => {
-          if (!maskOpens(cycle!.id, x, y) || y >= ymax) return [];
-
-          return [
-            {
-              x,
-              x1: mesh.xs[col + 1],
-              y,
-              y1: Math.min(mesh.ys[row + 1], ymax),
-            },
-          ];
-        }),
-      )
-    : [];
-  const activeRemoval =
-    visit.working &&
-    (step.phase === "develop" ||
-      step.phase === "strip" ||
-      visit.machine === "etch");
+  const beamRegions = cycle ? exposureRegions(cycle.id, ymax) : [];
   const layoutPlan =
-    index === 2
+    index === stages.layout
       ? portion(progress, 0, 0.22)
-      : fromIndex === 2
+      : fromIndex === stages.layout
         ? 1 - portion(progress, 0, 0.22)
         : 0;
   const electrical = inverterOperation(input, progress);
@@ -511,6 +621,7 @@ export const PatterningModel = ({
   const inputColour = input ? logicColours.high : logicColours.low;
   const supplyX = input ? 16 : 84;
   const drainX = input ? 36 : 64;
+  const outputY = 34;
   const trace = (
     name: string,
     points: Point[],
@@ -541,11 +652,17 @@ export const PatterningModel = ({
     section > 0.5 ? "Cutaway" : elevation > 1 ? "Top view" : "3D view";
 
   return (
-    <div className="fab-pattern-model" data-view={camera}>
+    <div
+      className="fab-pattern-model"
+      data-view={camera}
+      onPointerMove={showRegionTip}
+      onPointerDown={showRegionTip}
+      onPointerLeave={hideRegionTip}
+    >
       <svg
         viewBox="0 0 380 264"
         role="img"
-        aria-label={`${camera} of the same small wafer region. ${step.operation}. ${cycle ? `Photomask pattern ${cycle.label}.` : ""}`}
+        aria-label={`${camera} of the same small wafer region. ${step.operation}. ${cycle ? `Exposure pattern ${cycle.label}.` : ""}`}
         data-mask={cycle?.id}
         data-phase={step.phase}
         data-resist={
@@ -553,13 +670,21 @@ export const PatterningModel = ({
         }
       >
         <defs>
+          <clipPath id={`${id}-beam-clip`}>
+            <rect x="0" y="8" width="380" height="240" />
+          </clipPath>
           <pattern
             id={`${id}-section`}
             width="7"
             height="7"
             patternUnits="userSpaceOnUse"
           >
-            <path d="M0 7 7 0" stroke={siliconColours.hatch} strokeWidth=".6" />
+            <path
+              d="M0 7 7 0"
+              stroke={siliconColours.hatch}
+              strokeWidth={0.6 + crystalRepair * 0.3}
+              strokeDasharray={`${10 - crystalDamage * 8} ${crystalDamage * 3}`}
+            />
           </pattern>
         </defs>
         <ellipse
@@ -574,6 +699,8 @@ export const PatterningModel = ({
           <path
             key={i}
             d={path(face.points)}
+            data-region={face.opacity > 0.5 ? face.region : undefined}
+            aria-label={face.region}
             fill={face.fill}
             opacity={face.opacity}
             stroke={face.fill}
@@ -591,7 +718,8 @@ export const PatterningModel = ({
                 .map((x) => [x, ymax, siliconTop(x, ymax - 0.001)] as Point),
             ])}
             fill={`url(#${id}-section)`}
-            opacity={section * 0.26}
+            data-crystal-repair={crystalRepair}
+            opacity={section * (0.26 + crystalRepair * 0.48)}
           />
         ) : null}
         {layoutPlan > 0 ? (
@@ -603,7 +731,7 @@ export const PatterningModel = ({
                 [100, ymax, 1],
                 [55, ymax, 1],
               ])}
-              fill="#99adbb"
+              fill={materialColours.well[0]}
               fillOpacity=".15"
               stroke="#8a7993"
               strokeWidth=".8"
@@ -620,89 +748,20 @@ export const PatterningModel = ({
             </text>
           </g>
         ) : null}
-        {maskOpacity > 0 ? (
-          <g opacity={maskOpacity} data-photomask={cycle?.id}>
-            <path
-              d={`${path([
-                [0, 0, maskZ],
-                [100, 0, maskZ],
-                [100, ymax, maskZ],
-                [0, ymax, maskZ],
-              ])} ${apertures
-                .map(({ x, x1, y, y1 }) =>
-                  path([
-                    [x, y, maskZ],
-                    [x1, y, maskZ],
-                    [x1, y1, maskZ],
-                    [x, y1, maskZ],
-                  ]),
-                )
-                .join(" ")}`}
-              fill="#7f8190"
-              fillRule="evenodd"
-            />
-            {apertures.map(({ x, x1, y, y1 }, i) => (
-              <path
-                key={i}
-                d={path([
-                  [x, y, maskZ - 1],
-                  [x1, y, maskZ - 1],
-                  [x1, y1, maskZ - 1],
-                  [x, y1, maskZ - 1],
-                ])}
-                fill="#b697da"
-                opacity=".25"
-              />
-            ))}
-            {apertures.map(({ x, x1, y, y1 }, i) => (
-              <path
-                key={`light-${i}`}
-                d={path(
-                  [
-                    [(x + x1) / 2, (y + y1) / 2, maskZ - 1],
-                    [
-                      (x + x1) / 2,
-                      (y + y1) / 2,
-                      materialSurfaceHeight(state, x, y) + 9,
-                    ],
-                  ],
-                  false,
-                )}
-                stroke="#b399d3"
-                strokeWidth="2"
-                opacity=".6"
-              />
-            ))}
-          </g>
-        ) : null}
-        {activeRemoval ? (
+        {lighting.beam > 0 && cycle ? (
           <g
-            fill={visit.machine === "etch" ? "#a3bbc0" : "#ba98b1"}
-            opacity={Math.sin(Math.PI * visit.process) * 0.7}
+            opacity={lighting.beam}
+            data-exposure-beam={cycle.id}
+            clipPath={`url(#${id}-beam-clip)`}
           >
-            {Array.from({ length: 14 }, (_, i) => {
-              const phase = (visit.process * 2 + i * 0.17) % 1;
-              const positions =
-                step.phase === "strip"
-                  ? [{ x: 0, x1: 100, y: 0, y1: ymax }]
-                  : apertures;
-              const opening = positions[i % positions.length];
-              if (!opening) return null;
-
-              const x = opening.x + (opening.x1 - opening.x) * ((i * 0.37) % 1);
-              const y = opening.y + (opening.y1 - opening.y) * ((i * 0.23) % 1);
-              const [cx, cy] = project([
-                x,
-                y,
+            <ExposureBeams
+              regions={beamRegions}
+              surfaceHeight={(x, y) =>
                 materialSurfaceHeight(state, x, y) +
-                  (currentResist?.amount ?? 0) * 9 +
-                  phase * 15,
-              ]);
-
-              return (
-                <circle key={i} cx={cx} cy={cy} r="1.3" opacity={1 - phase} />
-              );
-            })}
+                resistThickness(state, cycle.id, x, y)
+              }
+              project={project}
+            />
           </g>
         ) : null}
         {visit.working &&
@@ -717,89 +776,15 @@ export const PatterningModel = ({
             ))}
           </g>
         ) : null}
-        {visit.working && visit.machine === "polish" ? (
-          <g opacity={Math.sin(Math.PI * visit.process) * 0.65}>
-            <path
-              d={path(
-                [
-                  [
-                    visit.process * 100,
-                    0,
-                    upperInsulatorHeight(visit.process * 100, 0, state) + 0.4,
-                  ],
-                  [
-                    visit.process * 100,
-                    ymax,
-                    upperInsulatorHeight(
-                      visit.process * 100,
-                      ymax - 0.01,
-                      state,
-                    ) + 0.4,
-                  ],
-                ],
-                false,
-              )}
-              stroke="#ede5d5"
-              strokeWidth="7"
-              fill="none"
-            />
-            {Array.from({ length: 12 }, (_, i) => {
-              const phase = (visit.process * 2 + i * 0.17) % 1;
-              const [cx, cy] = project([8 + i * 7, ymax - 3, 26 + phase * 9]);
-
-              return (
-                <circle
-                  key={i}
-                  cx={cx}
-                  cy={cy}
-                  r="1.2"
-                  fill="#a9c2c9"
-                  opacity={1 - phase}
-                />
-              );
-            })}
-          </g>
-        ) : null}
-        {visit.working && visit.machine === "implant" ? (
-          <g
-            data-implant={index === stages.implantP ? "p-type" : "n-type"}
-            opacity={Math.sin(Math.PI * visit.process)}
-          >
-            <text
-              x="190"
-              y="20"
-              textAnchor="middle"
-              fontSize="9"
-              fill="#86727f"
-            >
-              Resist stays on during implantation
-            </text>
-            <g fill={index === stages.implantP ? "#ba8ca3" : "#829fb7"}>
-              {Array.from({ length: 20 }, (_, i) => {
-                const phase = (visit.process * 2 + i * 0.13) % 1;
-                const x =
-                  index === stages.well
-                    ? 59 + (i % 7) * 5
-                    : (index === stages.implantP ? [64, 84] : [16, 36])[i % 2];
-                const [cx, cy] = project([
-                  x,
-                  14 + (i % 4) * 4,
-                  materialSurfaceHeight(state, x, 15) + 20 - phase * 26,
-                ]);
-
-                return (
-                  <circle
-                    key={i}
-                    cx={cx}
-                    cy={cy}
-                    r="1.4"
-                    opacity={Math.sin(Math.PI * phase)}
-                  />
-                );
-              })}
-            </g>
-          </g>
-        ) : null}
+        <g clipPath={`url(#${id}-beam-clip)`}>
+          <CloseupProcessEffects
+            index={index}
+            visit={visit}
+            state={state}
+            project={project}
+            ymax={ymax}
+          />
+        </g>
         {index >= stages.well && index <= stages.anneal ? (
           <g fontSize="9" textAnchor="middle" fill={siliconColours.label}>
             <text
@@ -858,7 +843,7 @@ export const PatterningModel = ({
                   <path
                     d={path(points, false)}
                     fill="none"
-                    stroke="#75859d"
+                    stroke={materialColours.metal[1]}
                     strokeWidth="1.2"
                   />
                   {trace(`supply-${x}`, points, colour, electrical.supply)}
@@ -874,37 +859,76 @@ export const PatterningModel = ({
                 </g>
               );
             })}
-            {[26, 74].map((x) =>
-              trace(
-                `gate-${x}`,
-                [
-                  [50, 8, 18],
-                  [x, 8, 18],
-                  [x, 8, deviceTop(x, 8) + 0.3],
-                ],
-                inputColour,
-                electrical.gates,
-              ),
+            {trace(
+              "input",
+              [
+                [50, 0, 18],
+                [50, 8, 18],
+              ],
+              inputColour,
+              electrical.input,
             )}
+            {[26, 74].map((x) => (
+              <g key={x}>
+                {trace(
+                  `gate-${x}`,
+                  [
+                    [50, 8, 18],
+                    [x, 8, 18],
+                    [x, 8, deviceTop(x, 8) + 0.3],
+                  ],
+                  inputColour,
+                  electrical.gates,
+                )}
+                {[0, ymax].map((y) =>
+                  trace(
+                    `electrode-${x}-${y}`,
+                    [
+                      [x, 8, deviceTop(x, 8) + 0.3],
+                      [x, y, deviceTop(x, y) + 0.3],
+                    ],
+                    inputColour,
+                    electrical.electrodes,
+                  ),
+                )}
+              </g>
+            ))}
             {trace(
               "conducting-transistor",
               [
                 [supplyX, 23, 18],
-                [supplyX, 23, oxideBase - 0.2],
-                [drainX, 23, oxideBase - 0.2],
+                [supplyX, 23, oxideBase - 2.5],
+                [drainX, 23, oxideBase - 2.5],
                 [drainX, 23, 18],
-                [input ? 64 : 36, 23, 18],
               ],
               supplyColour,
               electrical.transfer,
             )}
+            {trace(
+              "output-junction",
+              [
+                [drainX, 23, 18],
+                [50, 23, 18],
+              ],
+              supplyColour,
+              electrical.outputRail,
+            )}
+            {trace(
+              "output-exit",
+              [
+                [50, 23, 18],
+                [50, outputY, 18],
+              ],
+              supplyColour,
+              electrical.exit,
+            )}
             {(
               [
-                [50, 8, `A = ${input}`, inputColour, -9],
+                [50, 0, `Input = ${input}`, inputColour, -13],
                 [
                   50,
-                  28,
-                  `Q = ${electrical.output ?? "…"}`,
+                  outputY,
+                  `Output = ${electrical.output ?? "…"}`,
                   electrical.output === undefined ? "#514e47" : supplyColour,
                   12,
                 ],
@@ -916,7 +940,7 @@ export const PatterningModel = ({
                 <text
                   key={label}
                   x={point[0]}
-                  y={point[1] + offset}
+                  y={y === outputY ? 211 : point[1] + offset}
                   textAnchor="middle"
                   fontSize="12"
                   fill={colour}
@@ -929,7 +953,7 @@ export const PatterningModel = ({
               <text
                 key={x}
                 x={project([x, 23, 0])[0]}
-                y="207"
+                y="233"
                 textAnchor="middle"
                 fontSize="11"
                 fill={
@@ -937,7 +961,7 @@ export const PatterningModel = ({
                     ? supplyColour
                     : "#8e8271"
                 }
-                opacity={electrical.gates}
+                opacity={electrical.electrodes}
               >
                 {x === 26 ? "n-type" : "p-type"}{" "}
                 {(x === 26 ? input === 1 : input === 0) ? "on" : "off"}
@@ -945,11 +969,16 @@ export const PatterningModel = ({
             ))}
           </g>
         ) : null}
-        <text x="190" y="254" textAnchor="middle" className="fab-view-label">
-          {camera}
-          {section > 0.5 ? " · front portion hidden" : ""}
-        </text>
       </svg>
+      {regionTip && regionTip.scene === index ? (
+        <div
+          className="fab-region-tip"
+          role="tooltip"
+          style={{ left: regionTip.x, top: regionTip.y }}
+        >
+          {regionTip.label}
+        </div>
+      ) : null}
     </div>
   );
 };

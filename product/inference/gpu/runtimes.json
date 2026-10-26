@@ -16,7 +16,7 @@
       "tokenizer_revision": "68c46c4b3498877f3ef123c856ecfde50c39f404"
     },
     "gpus": 1,
-    "cpu": "16",
+    "cpu": "10",
     "memory": "64Gi",
     "request_memory": "48Gi",
     "startup_timeout": 1800

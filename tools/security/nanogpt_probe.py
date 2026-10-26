@@ -9,6 +9,7 @@ import math
 import os
 from pathlib import Path
 import random
+import re
 import socket
 import statistics
 import subprocess
@@ -54,13 +55,24 @@ def request(url, payload=None, key=None, timeout=90):
     return urllib.request.build_opener(NoRedirect).open(req, timeout=timeout)
 
 
+def verify_public_commit(commit):
+    if not re.fullmatch(r"[0-9a-f]{40}", commit):
+        raise ValueError("A full Git commit hash is required")
+    url = "https://api.github.com/repos/PostHog/posthog-js/git/commits/" + commit
+    with request(url, timeout=25) as response:
+        public = json.load(response)
+    if public.get("sha") != commit:
+        raise ValueError("Selected commit was not verified by the public GitHub repository")
+
+
 def public_cases(repo, revision):
     def git(*args):
-        return subprocess.check_output(["git", "-C", str(repo), *args], timeout=20).decode()
+        return subprocess.check_output(["git", "--no-replace-objects", "-C", str(repo), *args], timeout=20).decode()
 
     if git("remote", "get-url", "origin").strip().removesuffix(".git") != PUBLIC_ORIGIN.removesuffix(".git"):
         raise ValueError("Only the public PostHog/posthog-js origin is accepted")
     commit = git("rev-parse", "--verify", revision + "^{commit}").strip()
+    verify_public_commit(commit)
     cases = []
     for name, paths in FILES.items():
         sections, sources = [], []

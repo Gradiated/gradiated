@@ -7,8 +7,9 @@ GLM 5.3 Flash Uncensored. The purpose is to measure the client experience of eac
 provider under a small concurrency staircase, not to certify the reviewed SDK or
 establish a provider's total capacity or long-term uptime.
 
-It accepts only the public PostHog repository origin, reads fixed source paths
-from an explicit Git commit with `git show`, and never collects this repository's
+It accepts only the public PostHog repository origin and verifies the selected
+commit against GitHub's public PostHog commit API before reading fixed source
+paths with `git show`. Local Git replacement objects are disabled. It never collects this repository's
 product code. Keep the checkout and all results under ignored `.agents/runtime/`.
 The NanoGPT key is read only from `NANOGPT_API_KEY`; it is never saved in results.
 Do not put a key in a command argument or commit it.
@@ -18,7 +19,7 @@ git clone --depth 1 https://github.com/PostHog/posthog-js.git \
   .agents/runtime/nanogpt-review/posthog-js
 git -C .agents/runtime/nanogpt-review/posthog-js rev-parse HEAD
 
-# Use the full commit printed above. A prepare-only run needs no API key.
+# Use the full commit printed above. Prepare-only needs public GitHub access, but no API key.
 python3 tools/security/nanogpt_probe.py \
   --repo .agents/runtime/nanogpt-review/posthog-js \
   --revision FULL_COMMIT \

@@ -1,4 +1,5 @@
 import json
+import io
 from pathlib import Path
 import sys
 import unittest
@@ -6,10 +7,26 @@ from unittest.mock import patch
 import urllib.error
 
 sys.path.insert(0, str(Path(__file__).parent))
-from nanogpt_probe import NoRedirect, StreamObservation, body_for, probe, summary
+from nanogpt_probe import NoRedirect, StreamObservation, body_for, probe, public_cases, summary, verify_public_commit
 
 
 class ProbeTest(unittest.TestCase):
+    def test_public_commit_must_be_verified_by_github(self):
+        commit = "a" * 40
+        with patch("nanogpt_probe.request") as req:
+            req.return_value.__enter__.return_value = io.BytesIO(json.dumps({"sha": "b" * 40}).encode())
+            with self.assertRaisesRegex(ValueError, "not verified"):
+                verify_public_commit(commit)
+
+    def test_spoofed_remote_cannot_upload_local_commit(self):
+        with patch("nanogpt_probe.subprocess.check_output", side_effect=[
+            b"https://github.com/PostHog/posthog-js.git\n", b"a" * 40 + b"\n"
+        ]) as git, patch("nanogpt_probe.verify_public_commit", side_effect=ValueError("not public")):
+            with self.assertRaisesRegex(ValueError, "not public"):
+                public_cases(Path("/unused"), "HEAD")
+        self.assertEqual(git.call_count, 2)
+        self.assertTrue(all("--no-replace-objects" in call.args[0] for call in git.call_args_list))
+
     def test_provider_pin_and_auto(self):
         case = {"prompt": "public source"}
         body = body_for("arnict", case, 512)

@@ -231,6 +231,20 @@ def summary(rows):
     return output
 
 
+def validate_geometry(providers, levels, allow_high_concurrency=False):
+    if not levels or any(n not in (1, 2, 4, 8, 16, 32, 64) for n in levels):
+        raise ValueError("Use concurrency levels from 1,2,4,8,16,32,64")
+    if len(levels) != len(set(levels)) or not providers or len(providers) != len(set(providers)):
+        raise ValueError("Provider IDs and concurrency levels must be nonempty and unique")
+    if max(levels) > 16 and not allow_high_concurrency:
+        raise ValueError("Concurrency above 16 requires --allow-high-concurrency")
+    count = len(providers) * sum(levels)
+    limit = 64 if allow_high_concurrency else 32
+    if count > limit:
+        raise ValueError(f"At most {limit} requests per run")
+    return count
+
+
 def run(args):
     cases = [case for case in public_cases(args.repo, args.revision) if case["id"] == args.workload]
     args.output.mkdir(parents=True, exist_ok=False)
@@ -250,11 +264,7 @@ def run(args):
     if not snapshot.get("supportsProviderSelection") or any(p != "auto" and p not in available for p in providers):
         raise ValueError("Requested provider is unavailable or hard pinning is unsupported")
     levels = [int(n) for n in args.concurrency.split(",")]
-    if any(n not in (1, 2, 4, 8, 16) for n in levels) or len(levels) != len(set(levels)) or len(providers) != len(set(providers)):
-        raise ValueError("Use unique concurrency levels from 1,2,4,8,16 and unique provider IDs")
-    count = len(providers) * sum(levels)
-    if count > 32:
-        raise ValueError("At most 32 requests per run")
+    count = validate_geometry(providers, levels, args.allow_high_concurrency)
     rates = [snapshot["defaultPrice"]] + [p.get("pricing", {}) for p in snapshot["providers"] if p["provider"] in providers]
     input_rate = max(p.get("inputPer1kTokens", 0) for p in rates) * 2
     output_rate = max(p.get("outputPer1kTokens", 0) for p in rates) * 2
@@ -315,6 +325,7 @@ def main():
     parser.add_argument("--workload", choices=sorted(FILES), default="toolbar")
     parser.add_argument("--cache-mode", choices=["shared", "unique"], default="shared")
     parser.add_argument("--concurrency", default="1,2,4")
+    parser.add_argument("--allow-high-concurrency", action="store_true")
     parser.add_argument("--max-tokens", type=int, default=1536)
     parser.add_argument("--timeout", type=float, default=90)
     parser.add_argument("--deadline", type=float, default=900)

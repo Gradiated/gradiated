@@ -7,10 +7,19 @@ from unittest.mock import patch
 import urllib.error
 
 sys.path.insert(0, str(Path(__file__).parent))
-from nanogpt_probe import NoRedirect, StreamObservation, body_for, probe, public_cases, summary, verify_public_commit
+from nanogpt_probe import NoRedirect, StreamObservation, body_for, probe, public_cases, summary, validate_geometry, verify_public_commit
 
 
 class ProbeTest(unittest.TestCase):
+    def test_high_concurrency_requires_explicit_opt_in(self):
+        with self.assertRaisesRegex(ValueError, "allow-high-concurrency"):
+            validate_geometry(["heabsy"], [32])
+        self.assertEqual(validate_geometry(["heabsy"], [64], True), 64)
+        with self.assertRaisesRegex(ValueError, "At most 64"):
+            validate_geometry(["heabsy"], [32, 64], True)
+        with self.assertRaisesRegex(ValueError, "unique"):
+            validate_geometry(["heabsy"], [32, 32], True)
+
     def test_public_commit_must_be_verified_by_github(self):
         commit = "a" * 40
         with patch("nanogpt_probe.request") as req:

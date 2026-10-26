@@ -47,6 +47,12 @@ spending limit in NanoGPT as well when a hard billing limit is needed. HTTP
 401/402/403 stops later phases. Requests are not automatically retried, so failures
 remain visible. Provider pins use `only` and `allow_fallbacks: false`.
 
+An explicitly authorized larger burst can use `--allow-high-concurrency` with
+`--providers heabsy --concurrency 32` or `64`. That opt-in raises the per-run
+request ceiling to 64; the $1 estimate limit and other bounds still apply.
+Run stages separately and examine errors, throttling and latency before raising
+concurrency. An account or gateway limit does not establish an upstream GPU limit.
+
 Results include the provider/pricing snapshot, public input hashes, run plan,
 request metrics, candidate review responses and per-phase summary. The runner
 reports first reasoning-or-content delta and first answer content separately.

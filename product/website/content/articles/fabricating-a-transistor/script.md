@@ -6,63 +6,63 @@ Here, we will follow a silicon wafer through the main steps of building the two 
 
 <!-- scene: destination -->
 
-## Start with a working circuit
+## Printing a NOT gate with two transistors and metal wire
 
-Our destination is a NOT gate, a circuit whose output is the opposite of its input. Here, “gate” names the whole logic circuit. Inside it, two transistors each have a gate electrode controlled by the same input. One transistor is n-type and the other p-type. Together, they connect the output to the high supply when the input is low, or to the low supply when the input is high.
+Our target structure is a NOT gate, a circuit whose output voltage is the opposite of its input. Inside it, two transistors each have a gate electrode connected to the same input. One transistor is n-type and the other p-type. Together, they connect the output to the high voltage supply (+1 V) when the input is low (0 V), or to the low supply (0 V) when the input is high (+1 V).
 
-Notice the narrow gate electrode above each transistor and the thin insulation beneath it. The source and drain sit on either side, with the channel between them. We will form these features in or on the same piece of silicon, then connect them.
+One transistor is made of the narrow gate electrode, the source and drain on either side of it, and the conducting channel between them flowing from doped regions of the wafer. We will form these features in or on the same piece of silicon, then connect them to each other and other parts of the chip. {{please improve this paragraph, make it sound clearer and nicer}}
 
 <!-- scene: wafer -->
 
 ## Begin with a silicon wafer
 
-We begin with a polished silicon wafer, a thin slice of a single crystal. Many copies of our circuit will be made across its surface together. For now, it is a continuous piece of silicon, with no transistors or wires.
+Let's begin with a polished silicon wafer, a thin slice out of a large, single crystal {{mention that it is an element and mention atomic number and please polish this section}}. For now, {{apart from some sparse dopants to make it slightly conductive}}, it is a continuous crystal {{use a better word than crystal here to avoid repetition}} with no transistors or wires.
 
-<!-- scene: clean-room -->
+<!-- scene: clean-room --> {{I think the clean room figure should be white everywhere inside it, to make it look clean}}
 
-Processing happens in a clean room, where filtered air and protective clothing help keep particles off the wafer. Even tiny particles can spoil the structures we are trying to make. Our simplified room appears above, while the wafer moves into gloved hands below.
+Let's go inside Gradiated's clean room, where filtered air and protective clothing help keep particles off the wafer, which can spoil the structures we are trying to make.
 
 <!-- scene: operator -->
 
-An operator enters wearing a protective coverall, often called a bunny suit. In our drawing, this person will carry the wafer between machines. The suit helps prevent particles from their skin and clothing reaching the wafer.
+Normally all steps in a clean room are performed entirely by robots, guided by rails on the ceiling. However in this case, our intern is undergoing initiations and enters wearing a Gradiated merch protective coverall.
 
 <!-- scene: hand-off -->
 
-The operator picks up our wafer. The small disc in their hand and the larger view below represent the same wafer. We keep the larger view visible so we can follow what happens to its surface as it moves around the room.
+The intern is handed our wafer.
 
 <!-- scene: magnify -->
 
-The red square marks a tiny part of one future chip. That region is enlarged on the right, where we will watch the two transistors take shape. Both lower views follow the same wafer throughout the process.
-
-Doping means adding small quantities of selected elements, called dopants, to control how silicon conducts electricity. In n-type silicon, current is carried mainly by electrons. In p-type silicon, it is carried mainly by holes, missing electrons that behave as mobile positive charges. Our starting wafer is lightly doped p-type.
+Let's zoom into one small chunk of the wafer. Here we will watch the two transistors take shape. {{This next bit need to fit better with the previous 2 sentences, it is a bit abrupt. Please make it clearer - it is important to introduce what n type and p type means, please explain how they work and examples of dopants}} Doping means adding small quantities of selected elements, called dopants, to control how silicon conducts electricity. In n-type silicon, current is carried mainly by electrons. In p-type silicon, it is carried mainly by holes, missing electrons that behave as mobile positive charges. Our starting wafer is lightly doped p-type.
 
 <!-- scene: layout -->
 
-## Give each operation a pattern
+## The machines
 
-The machines now appear around the room. Each represents a different kind of operation. We will visit them one at a time, returning to the same tools as we build up the circuit.
+{{we no longer need the dotted line mask region in this section's figure}}
 
-A layout is a drawing that specifies the shapes of the regions and connections we want. These shapes guide the patterns on photomasks, optical templates that control where light reaches a light-sensitive coating called photoresist.
+A semiconductor fab clean room {{Is that the best way of calling it?}} contains often {{hundreds? thousands?}} of machines to preform various tasks on the surface of the silicon. Here we have simplified the clean room to the twelve main processes we will need to supply the best possible intuition for building transistors and gates.
 
-We need different patterns for different operations. Several can modify the same silicon, so a photomask does not necessarily correspond to a new material layer. We will keep returning to the same machines with new patterns.
+In order to make our NOT gate, our intern will have to perform {{is it 43 steps to the firt NOT gate?}} steps by visiting {{43?}} machines, altering layer after layer of the chip.
 
 <!-- scene: grow-oxide -->
 
-## Make the first implant pattern
+## Two different environments for two adjacent transistors
 
-The body is the silicon beneath and around a transistor’s channel. The n-type transistor forms an electron-carrying channel in a p-type body, while its p-type partner forms a hole-carrying channel in an n-type body. The transistor names describe their channels when switched on. Our p-type wafer already provides the first body. We need to create a deeper n-type pocket, called an n-well, for the other transistor.
+We need an n-type and a p-type transistor side-by-side for our NOT gate. The n-type transistor forms a conductive electron-carrying channel between two small n-doped pockets in a p-type silicon background "body", while its p-type partner forms a hole-carrying channel between p-doped pockets in an n-type body. Since our wafer is already p-type, we automatically have the correct body for an n-type transistor. However since we need a p-type transistor next to our n-type, we must first create a deeper n-type "n-well". {{I changed this last part alot - can you make it sound more fluid/eloquent? dont change it too much please.}}
 
-We will do this by ion implantation, accelerating electrically charged dopant atoms into the silicon. First, we grow a thin silicon dioxide film by heating the wafer in oxygen. Some silicon is consumed as the oxide grows.
+We do this by ion implantation, accelerating electrically charged n-type dopant atoms (such as phosphorus) into the silicon. First, we grow a thin silicon dioxide film by heating the wafer in oxygen. Some silicon is consumed as the oxide grows.
 
-This screen oxide helps protect the silicon from contamination during implantation. At the chosen energy, the dopant ions pass through it and enter the silicon. The thicker photoresist we apply next will stop them where we want to keep the original doping.
+This oxide helps protect the silicon from contamination during implantation. As the electrically charged ions are moving very quickly, they punch through the oxide and into the silicon. The thicker photoresist we apply next will stop them where we want to keep the original doping.
+
+{{after the oxide is finished, can you add a label and a dotted line saying something like "target n-well region"}}
 
 <!-- scene: coat -->
 
-At the coater, the wafer spins to spread liquid photoresist into a thin film. Baking removes solvent from the coating. This temporary film will protect the silicon that should remain p-type during the well implant.
+The intern now goes to the coater, where the wafer spins as we spread liquid photoresist into a thin film. This temporary film will protect the silicon that should remain p-type during the n-well implantion.
 
 <!-- scene: expose -->
 
-At the lithography machine, a photomask controls where ultraviolet light reaches the resist. We use positive resist, so exposure makes the illuminated region easier to dissolve. Nothing has been removed yet. The photomask belongs to the exposure equipment and does not travel to the implanter.
+Next, we will imprint the pattern of the n-well. At the lithography machine, a photomask controls where ultraviolet light reaches the resist. We use positive resist, so exposure makes the illuminated region easier to dissolve. Nothing has been removed yet. The photomask belongs to the exposure equipment and does not travel to the implanter.
 
 <!-- scene: develop -->
 

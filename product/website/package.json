@@ -14,7 +14,7 @@
     "preview": "mise exec -- vite preview",
     "sync:ashby-jobs": "node scripts/sync-ashby-jobs.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --config tests/vitest.config.ts && tsx --test scripts/article-metadata.test.ts && node --test scripts/sand-*.test.mjs"
+    "test": "vitest run --config tests/vitest.config.ts && tsx --test scripts/article-metadata.test.ts && node --test scripts/sand-*.test.mjs scripts/article-citations.test.mjs"
   },
   "dependencies": {
     "@firecms/neat": "^1.1.0",

@@ -106,6 +106,23 @@ export const InverterViews = ({
             electrical.transfer,
           )}
           {signal("M140 140H215", outputColour, electrical.exit)}
+          <g fontSize="11" fill="var(--fab-muted)">
+            <path
+              d="M68 204H105 M153 177H140 M153 232H140"
+              fill="none"
+              stroke="var(--fab-muted)"
+              strokeWidth=".7"
+            />
+            <text x="65" y="208" textAnchor="end">
+              Gate
+            </text>
+            <text x="157" y="180">
+              Drain
+            </text>
+            <text x="157" y="236">
+              Source
+            </text>
+          </g>
           <g fontSize="15" fill="var(--fab-muted)">
             <text x="140" y="22" textAnchor="middle" fill={logicColours.high}>
               +1 V

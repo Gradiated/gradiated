@@ -11,17 +11,15 @@ export const logicColours = { high: "#40865a", low: "#b65b55" };
 
 type MaterialFaces = [string, string, string];
 
+const nDopedColours: MaterialFaces = [
+  "var(--color-aegean-400)",
+  "var(--color-aegean-600)",
+  "var(--color-aegean-500)",
+];
+
 export const materialColours = {
-  well: [
-    "color-mix(in srgb, var(--color-aegean-400) 65%, var(--color-light-400))",
-    "color-mix(in srgb, var(--color-aegean-600) 65%, var(--color-dark-300))",
-    "color-mix(in srgb, var(--color-aegean-400) 65%, var(--color-dark-300))",
-  ],
-  n: [
-    "var(--color-aegean-400)",
-    "var(--color-aegean-600)",
-    "var(--color-aegean-500)",
-  ],
+  well: nDopedColours,
+  n: nDopedColours,
   p: [
     "var(--color-kiln-600)",
     "var(--color-kiln-700)",

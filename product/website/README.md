@@ -331,3 +331,51 @@ Hover and keyboard focus morph those particles; leaving restores the dune.
 Reduced motion keeps a still dune. Offscreen artwork stops its frame loop.
 
 Check the publication boundary with `node --test scripts/sand-publication.test.mjs`.
+
+## Article citations
+
+All blog posts should use citations for factual claims that need supporting sources.
+Add and verify them as posts are written or revised.
+
+Use `[@source-key]` after the sentence it supports, after punctuation. For several
+sources together, use `[@source-one; @source-two]`. Reusing a key reuses its number.
+Numbers follow first appearance. Citations link to a References section at the end
+of the article, with return links for each occurrence. This is a bibliography,
+separate from explanatory footnotes.
+
+Keep sources in a companion JSON file beside the prose. For `example.mdx`, use
+`example.references.json`. For either journey's `script.md`, use
+`script.references.json` in the same directory. For example
+
+```json
+{
+  "example-paper": {
+    "authors": ["Surname, A. B.", "Surname, C. D."],
+    "title": "Article title in sentence case",
+    "publication": "Nature Phys.",
+    "volume": "22",
+    "pages": "1–5",
+    "year": 2026,
+    "url": "https://doi.org/10.example/paper"
+  }
+}
+```
+
+The shared formatter uses Nature-style author names, article titles, italic
+publication names, bold volumes, pages and years. Supply names as shown above and
+use an organisation as the author for an unsigned institutional source. Authors,
+title and an absolute HTTP(S) URL are required. Publication, volume, pages, year,
+publisher and accessed date are optional, so books, documentation, videos and web
+sources can also be recorded. Use the DOI URL when a publication has one. Metadata
+is rendered as plain text, not HTML or Markdown.
+
+This syntax works in standard article MDX and both scrolling journeys. Code and
+existing link labels stay literal. Sources not cited in the rendered article are
+omitted, including sources used only beyond a journey's publication boundary.
+Articles without citations produce no bibliography. Missing sources and invalid
+cited source details fail the build. Vite watches companion files for local edits.
+
+Prefer primary research, official technical documentation and original teaching
+materials. Verify that each source supports the specific statement being cited.
+Adding this infrastructure does not supply or validate sources for older prose.
+Keep citation research and editorial changes scoped to the passages being revised.

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 270" role="img" aria-labelledby="title">
+<title>Two gate electrodes connected to the inverter input</title>
+<g fill="none" stroke="#27251f" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+<path d="M185 30V64H165 M165 104H185V174H165 M165 214H185V240 M185 137H290"/>
+<path d="M165 64V104 M150 69V99 M165 174V214 M150 179V209"/>
+<path d="M35 137H105 M105 84V194H150 M105 84H142"/>
+<circle cx="146" cy="84" r="4"/>
+<circle cx="185" cy="137" r="2.5" fill="#27251f"/>
+<circle cx="105" cy="137" r="2.5" fill="#27251f"/>
+<path d="M172 30H198 M173 240H197 M177 245H193 M182 250H188"/>
+</g>
+<g fill="#817b70" font-family="Barlow,Arial,sans-serif" font-size="13">
+<text x="185" y="19" text-anchor="middle">+1 V</text>
+<text x="185" y="267" text-anchor="middle">0 V</text>
+<text x="35" y="160">Input</text><text x="263" y="160">Output</text>
+<text x="217" y="88">p-type</text><text x="217" y="198">n-type</text>
+</g>
+<g fill="#657c6e" font-family="Barlow,Arial,sans-serif" font-size="14">
+<path d="M56 68H135L150 76 M56 211H134L150 202" fill="none" stroke="#657c6e" stroke-width="1"/>
+<text x="28" y="61">Gate</text><text x="28" y="229">Gate</text>
+</g>
+</svg>

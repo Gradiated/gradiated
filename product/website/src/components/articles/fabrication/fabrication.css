@@ -436,12 +436,6 @@
 .fab-input-controls span:last-child {
   margin-left: 0.8rem;
 }
-.fab-operation {
-  text-align: center;
-  font-size: 0.75rem;
-  color: var(--fab-muted);
-  margin: 0.6rem 0 0;
-}
 .fab-contents {
   display: flex;
   gap: 0.45rem;
@@ -630,10 +624,6 @@
     min-height: 32px;
     min-width: 35px;
   }
-  .fab-operation {
-    font-size: 0.65rem;
-    margin-top: 0.3rem;
-  }
   .fab-prose {
     max-width: 600px;
     margin: 1.5rem auto 0;
@@ -797,4 +787,29 @@
   overflow: visible;
   pointer-events: none;
   z-index: 5;
+}
+
+.fab-inline-circuit {
+  margin: 1.5rem auto;
+  max-width: 340px;
+}
+.fab-inline-circuit img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 280px;
+}
+.fab-wiring-overview {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  align-items: center;
+  background: var(--fab-paper);
+  pointer-events: none;
+}
+.fab-interconnect-stack {
+  display: block;
+  width: 100%;
+  max-height: 100%;
 }

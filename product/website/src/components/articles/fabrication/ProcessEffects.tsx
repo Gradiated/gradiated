@@ -2,17 +2,20 @@ import { materialColours } from "./materials";
 import {
   contactAt,
   contactEtchHeight,
+  contactInsulatorHeight,
   deviceSurfaceHeight,
   exposureRegions,
-  materialSurfaceHeight,
+  gateRegion,
   maskMeshes,
   maskOpens,
   patternSurfaceHeight,
   portion,
+  resistThickness,
   siliconSurfaceHeight,
   stages,
   upperInsulatorHeight,
   waferDetailRegion,
+  waferPatternScale,
 } from "./process";
 import type { PatternState, Rectangle, Visit } from "./process";
 import { steps } from "./sequence";
@@ -66,25 +69,46 @@ const surfaceSites = (step: FabricationStep, ymax: number) =>
     step.mask ? exposureRegions(step.mask, ymax) : [[0, 100, 0, ymax]],
   );
 
-const implantSites = (step: FabricationStep, ymax: number) => {
-  if (step.mask === "well") return surfaceSites(step, ymax);
-
-  const ranges =
-    step.mask === "p"
-      ? [
-          [60, 71],
-          [77, 88],
-        ]
-      : [
-          [12, 23],
-          [29, 40],
-        ];
-
-  return sitesInRegions(
-    ranges.map(([x0, x1]) => [x0, x1, 12, Math.min(53, ymax)]),
-    24,
+const beamSites = (ymax: number) =>
+  Array.from(
+    { length: 52 },
+    (_, i) =>
+      [2 + (i % 13) * 8, (Math.floor(i / 13) * (ymax - 0.001)) / 3] as [
+        number,
+        number,
+      ],
   );
+
+const bombardmentSites = (step: FabricationStep, ymax: number) => {
+  const sites = beamSites(ymax);
+  for (const [x0, x1, y0, y1] of step.mask
+    ? exposureRegions(step.mask, ymax)
+    : []) {
+    if (!sites.some(([x, y]) => x >= x0 && x < x1 && y >= y0 && y < y1)) {
+      sites.push([(x0 + x1) / 2, (y0 + y1) / 2]);
+    }
+  }
+
+  return sites;
 };
+
+const arrivingMaterialFor = (step: FabricationStep) =>
+  step.machine === "implant"
+    ? step.mask === "p"
+      ? materialColours.p
+      : materialColours.n
+    : step.machine === "metal"
+      ? materialColours.metal
+      : step.key === "poly"
+        ? materialColours.gate
+        : materialColours.insulator;
+
+const etchedMaterialFor = (step: FabricationStep) =>
+  step.mask === "gate"
+    ? materialColours.gate[0]
+    : step.mask === "metal" || step.mask === "upper"
+      ? materialColours.metal[1]
+      : materialColours.insulator[1];
 
 const dissolvingSitesFor = (step: FabricationStep, ymax: number) => {
   const mask = step.mask;
@@ -127,6 +151,7 @@ const EtchImpact = ({
   seed,
   project,
   material,
+  blocked = false,
 }: {
   point: Point;
   top: number;
@@ -134,6 +159,7 @@ const EtchImpact = ({
   seed: number;
   project: Project;
   material: string;
+  blocked?: boolean;
 }) => {
   const arrival = portion(phase, 0, 0.55);
   const height = top + (z + 0.5 - top) * arrival;
@@ -145,7 +171,7 @@ const EtchImpact = ({
   const scattering = portion(phase, 0.58, 1);
 
   return (
-    <g data-etch-impact="true">
+    <g data-etch-impact="true" data-etch-blocked={blocked || undefined}>
       <g opacity={incoming}>
         <path
           d={`M${tx} ${ty}L${cx} ${cy}`}
@@ -184,9 +210,9 @@ const EtchImpact = ({
         fill="var(--color-light-000)"
         stroke="var(--color-kiln-600)"
         strokeWidth=".65"
-        opacity={impact * 0.8}
+        opacity={impact * (blocked ? 0.3 : 0.8)}
       />
-      {scattering > 0 && scattering < 1
+      {!blocked && scattering > 0 && scattering < 1
         ? [0, 1, 2].map((fragment) => {
             const angle = seed * 2.399963 + (fragment * Math.PI * 2) / 3;
             const [fx, fy] = project([
@@ -270,16 +296,21 @@ export const CloseupProcessEffects = ({
             .join(" ")}`,
       )
       .join(" ") + (close ? "Z" : "");
-  const sites = surfaceSites(step, ymax);
+  const sites =
+    visit.machine === "implant"
+      ? beamSites(ymax)
+      : visit.machine === "etch"
+        ? bombardmentSites(step, ymax)
+        : surfaceSites(step, ymax);
   const wet = visit.machine === "develop" || visit.machine === "strip";
   const deposit = visit.machine === "deposit" || visit.machine === "metal";
   const dissolvingSites = wet ? dissolvingSitesFor(step, ymax) : [];
-  const etchedMaterial =
-    step.mask === "gate"
-      ? materialColours.gate[0]
-      : step.mask === "metal" || step.mask === "upper"
-        ? materialColours.metal[1]
-        : materialColours.insulator[1];
+  const etchedMaterial = etchedMaterialFor(step);
+  const material = arrivingMaterialFor(step);
+  const polishingHeight =
+    index === stages.contactPolish
+      ? contactInsulatorHeight
+      : upperInsulatorHeight;
 
   return (
     <g
@@ -301,6 +332,10 @@ export const CloseupProcessEffects = ({
                     seed={i}
                     project={project}
                     material={etchedMaterial}
+                    blocked={
+                      !!step.mask &&
+                      resistThickness(state, step.mask, x, y) > 0.1
+                    }
                   />
                 </g>
               );
@@ -314,7 +349,6 @@ export const CloseupProcessEffects = ({
             ]);
             const hit = Math.sin(Math.PI * portion(phase, 0.8, 1));
             const [sx, sy] = project([x, y, z + 0.5]);
-            const colour = visit.machine === "metal" ? "#c1ccdc" : "#94b9c1";
 
             return (
               <g key={i} data-surface-site={`${x} ${y}`}>
@@ -322,7 +356,9 @@ export const CloseupProcessEffects = ({
                   cx={cx}
                   cy={cy}
                   r="1.3"
-                  fill={colour}
+                  fill={material[0]}
+                  stroke={material[1]}
+                  strokeWidth=".4"
                   opacity={Math.sin(Math.PI * phase) * 0.85}
                 />
                 <ellipse
@@ -330,7 +366,7 @@ export const CloseupProcessEffects = ({
                   cy={sy}
                   rx={1 + hit * 1.8}
                   ry={0.7 + hit * 0.5}
-                  fill="#d6e6e7"
+                  fill={material[0]}
                   opacity={hit * 0.5}
                 />
               </g>
@@ -367,7 +403,7 @@ export const CloseupProcessEffects = ({
                 cx={cx}
                 cy={cy}
                 r={(stripping ? 1.5 : 1.2) * (1 - phase)}
-                fill={stripping ? materialColours.resist[1] : "#d4becb"}
+                fill={materialColours.resist[stripping ? 1 : 0]}
                 opacity={Math.sin(Math.PI * phase) * (stripping ? 0.65 : 0.5)}
               />
             );
@@ -376,37 +412,51 @@ export const CloseupProcessEffects = ({
       ) : null}
       {visit.machine === "implant" ? (
         <g data-implant={index === stages.implantP ? "p-type" : "n-type"}>
-          <text x="190" y="20" textAnchor="middle" fontSize="9" fill="#86727f">
-            Resist stays on during implantation
-          </text>
-          {implantSites(step, ymax).map(([x, y], i) => {
+          {sites.map(([x, y], i) => {
             const phase = phaseAt(progress, i);
-            const top = materialSurfaceHeight(state, x, y);
-            const buried =
-              siliconSurfaceHeight(x, y, state) -
-              (index === stages.well ? 7 : 3);
-            const z =
-              phase < 0.7
-                ? incomingHeight + (top - incomingHeight) * (phase / 0.7)
-                : top + (buried - top) * portion(phase, 0.7, 1);
+            const top = patternSurfaceHeight(state, x, y);
+            const target =
+              step.mask && resistThickness(state, step.mask, x, y) > 0.1
+                ? "photoresist"
+                : state.poly > 0.5 && gateRegion(x)
+                  ? "gate"
+                  : "silicon";
+            const blocked = target !== "silicon";
+            const silicon = siliconSurfaceHeight(x, y, state);
+            const depth = index === stages.well ? silicon - 11 : -8;
+            const distance = incomingHeight - depth;
+            const freeHeight = incomingHeight - (phase / 0.9) * distance;
+            const stop = blocked ? top : depth;
+            const z = Math.max(stop, freeHeight);
+            const arrival = ((incomingHeight - stop) / distance) * 0.9;
+            const cutFace = y > ymax - 0.01;
+            const visibility =
+              portion(phase, 0, 0.03) *
+              (1 - portion(phase, arrival, Math.min(1, arrival + 0.1))) *
+              (blocked || cutFace ? 1 : portion(z, silicon - 0.5, silicon));
+            const tail = project([x, y, Math.min(incomingHeight, z + 2)]);
             const [cx, cy] = project([x, y, z]);
             return (
-              <circle
-                key={i}
-                data-implant-site={`${x} ${y}`}
-                cx={cx}
-                cy={cy}
-                r="1.4"
-                fill={
-                  index === stages.implantP
-                    ? materialColours.p[0]
-                    : materialColours.n[0]
-                }
-                opacity={
-                  Math.sin(Math.PI * phase) *
-                  (0.85 - 0.4 * portion(phase, 0.68, 0.86))
-                }
-              />
+              <g key={i} opacity=".85">
+                <path
+                  d={`M${tail[0]} ${tail[1]}L${cx} ${cy}`}
+                  stroke={material[0]}
+                  strokeWidth=".65"
+                  opacity={visibility * 0.5}
+                />
+                <circle
+                  data-implant-site={`${x} ${y}`}
+                  data-implant-target={target}
+                  data-implant-cut-face={cutFace || undefined}
+                  cx={cx}
+                  cy={cy}
+                  r="1.2"
+                  stroke="var(--color-light-000)"
+                  strokeWidth=".4"
+                  fill={material[0]}
+                  opacity={visibility}
+                />
+              </g>
             );
           })}
         </g>
@@ -423,7 +473,7 @@ export const CloseupProcessEffects = ({
                 return [
                   px,
                   py,
-                  upperInsulatorHeight(px, py, state) + height,
+                  polishingHeight(px, py, state) + height,
                 ] as Point;
               });
             const angle = progress * Math.PI * 6;
@@ -444,7 +494,7 @@ export const CloseupProcessEffects = ({
                         [
                           x + Math.cos(angle) * 7 * sign,
                           y + Math.sin(angle) * 5 * sign,
-                          upperInsulatorHeight(x, y, state) + 2.2,
+                          polishingHeight(x, y, state) + 2.2,
                         ] as Point,
                     ),
                   )}
@@ -457,7 +507,7 @@ export const CloseupProcessEffects = ({
                   const [cx, cy] = project([
                     x - 9 - phase * 5,
                     y + 2 + i * 2,
-                    upperInsulatorHeight(x, y, state) + 0.5,
+                    polishingHeight(x, y, state) + 0.5,
                   ]);
                   return (
                     <circle
@@ -526,12 +576,21 @@ export const CloseupProcessEffects = ({
   );
 };
 
-export const WaferProcessEffects = ({ visit }: { visit: Visit }) => {
+export const WaferProcessEffects = ({
+  visit,
+  index,
+  state,
+}: {
+  visit: Visit;
+  index: number;
+  state: PatternState;
+}) => {
   if (!visit.working) return null;
 
   const progress = visit.process;
   const wet = visit.machine === "develop" || visit.machine === "strip";
   const deposit = visit.machine === "deposit" || visit.machine === "metal";
+  const material = arrivingMaterialFor(steps[index]);
 
   return (
     <g
@@ -547,6 +606,13 @@ export const WaferProcessEffects = ({ visit }: { visit: Visit }) => {
             const angle = i * Math.PI * (3 - Math.sqrt(5));
             const x = 140 + Math.cos(angle) * radius * 92;
             const y = 119 + Math.sin(angle) * radius * 73;
+            const localX =
+              ((((x / waferPatternScale - 47) % 27) + 27) % 27) / 0.27;
+            const localY =
+              (((((y / waferPatternScale - 52) % 27) + 27) % 27) * 65) / 27;
+            const mask = steps[index].mask;
+            const blocked =
+              !!mask && resistThickness(state, mask, localX, localY) > 0.1;
             if (visit.machine === "etch")
               return (
                 <g key={i} data-wafer-site={`${x} ${y}`}>
@@ -556,9 +622,29 @@ export const WaferProcessEffects = ({ visit }: { visit: Visit }) => {
                     phase={phaseAt(progress * 1.6, i)}
                     seed={i}
                     project={([px, py, pz]) => [px, py - pz]}
-                    material={materialColours.insulator[1]}
+                    material={etchedMaterialFor(steps[index])}
+                    blocked={blocked}
                   />
                 </g>
+              );
+
+            if (visit.machine === "implant")
+              return (
+                <circle
+                  key={i}
+                  data-wafer-implant="true"
+                  cx={x}
+                  cy={y - (1 - portion(phase, 0, 0.85)) * 18}
+                  r="1"
+                  fill={material[0]}
+                  stroke="var(--color-light-000)"
+                  strokeWidth=".3"
+                  opacity={
+                    portion(phase, 0, 0.03) *
+                    (1 - portion(phase, 0.85, 0.95)) *
+                    0.65
+                  }
+                />
               );
 
             const hit = portion(phase, 0.65, 1);
@@ -568,8 +654,10 @@ export const WaferProcessEffects = ({ visit }: { visit: Visit }) => {
                   cx={x}
                   cy={y - (1 - phase) * 18}
                   r="1"
-                  fill="#e0e8e9"
-                  opacity={Math.sin(Math.PI * phase) * (1 - hit) * 0.5}
+                  fill={material[0]}
+                  stroke={material[1]}
+                  strokeWidth=".35"
+                  opacity={Math.sin(Math.PI * phase) * (1 - hit) * 0.75}
                 />
                 <ellipse
                   cx={x}
@@ -577,7 +665,7 @@ export const WaferProcessEffects = ({ visit }: { visit: Visit }) => {
                   rx={1 + hit * 2}
                   ry={0.7 + hit}
                   fill="none"
-                  stroke="#dfebec"
+                  stroke={material[0]}
                   strokeWidth=".6"
                   opacity={Math.sin(Math.PI * hit) * 0.4}
                 />

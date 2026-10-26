@@ -1,6 +1,5 @@
-import { marked } from "marked";
 import { steps } from "./sequence";
-import source from "../../../../content/articles/fabricating-a-transistor/script.md?raw";
+import article from "../../../../content/articles/fabricating-a-transistor/script.md?fabrication-article";
 
 export const machines = [
   {
@@ -105,18 +104,18 @@ export type MachineId = (typeof machines)[number]["id"];
 
 export { steps } from "./sequence";
 
-const chunks = source.split(/<!-- scene: ([a-z-]+) -->/);
-if ((chunks.length - 1) / 2 !== steps.length)
+if (article.scenes.length !== steps.length)
   throw new Error("Fabrication script and sequence differ in length");
-export const introduction = marked.parse(chunks[0], { async: false });
+export const introduction = article.introduction;
+export const bibliography = article.bibliography;
 export const scenes = steps.map((step, index) => {
-  if (chunks[index * 2 + 1] !== step.key) {
+  if (article.scenes[index].key !== step.key) {
     throw new Error(`Fabrication scene ${step.key} is missing from script.md`);
   }
 
   return {
     ...step,
-    html: marked.parse(chunks[index * 2 + 2], { async: false }),
+    html: article.scenes[index].html,
   };
 });
 

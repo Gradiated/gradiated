@@ -9,3 +9,12 @@ declare module "*.md?sand-article" {
   const html: string;
   export default html;
 }
+
+declare module "*.md?fabrication-article" {
+  const article: {
+    introduction: string;
+    scenes: { key: string; html: string }[];
+    bibliography: string;
+  };
+  export default article;
+}

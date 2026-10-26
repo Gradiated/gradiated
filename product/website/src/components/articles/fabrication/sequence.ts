@@ -128,8 +128,8 @@ export const steps: FabricationStep[] = [
   },
   {
     key: "layout",
-    title: "The pattern comes first",
-    operation: "Each operation has its own pattern",
+    title: "The machine room",
+    operation: "Twelve stations represent the processes we will follow",
     group: 1,
   },
   {
@@ -221,6 +221,13 @@ export const steps: FabricationStep[] = [
     machine: "deposit",
     group: 6,
   },
+  {
+    key: "contact-planarise",
+    title: "Flatten the insulation above the devices",
+    operation: "Polish excess oxide before patterning the contact holes",
+    machine: "polish",
+    group: 6,
+  },
   ...cycle(
     "contact",
     "contact-",
@@ -289,9 +296,8 @@ export const steps: FabricationStep[] = [
   ),
   {
     key: "finish",
-    title: "From the wafer to a chip",
-    operation: "Test, separate and package",
-    machine: "inspect",
+    title: "More wiring above the transistors",
+    operation: "Zoom out to layers of insulated wires connected by vias",
     group: 8,
   },
 ];
@@ -317,6 +323,7 @@ export const stages = {
   implantP: stage("implant-p"),
   anneal: stage("anneal"),
   contactInsulation: stage("contact-insulation"),
+  contactPolish: stage("contact-planarise"),
   contacts: stage("contacts"),
   metal: stage("metal"),
   metalPattern: stage("metal-pattern"),

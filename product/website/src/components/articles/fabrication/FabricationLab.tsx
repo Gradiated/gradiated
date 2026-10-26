@@ -23,6 +23,7 @@ import {
   portion,
   stages,
   waferDetailRegion,
+  waferPatternScale,
 } from "./process";
 import type { PatternState, Visit } from "./process";
 import { maskCycles, steps } from "./sequence";
@@ -140,7 +141,7 @@ export const CleanRoom = ({
           width="624"
           height="247"
           rx="14"
-          fill="#edf0e8"
+          fill="#ffffff"
           stroke="#ced7cb"
         />
         <rect
@@ -151,7 +152,7 @@ export const CleanRoom = ({
           rx="13"
           fill="url(#fab-floor)"
         />
-        <path d="M24 126h592" stroke="#e4e9df" strokeWidth="48" />
+        <path d="M24 126h592" stroke="#ffffff" strokeWidth="48" />
         <path
           d="M24 109h592m-592 34h592"
           stroke="#d5ded1"
@@ -304,8 +305,6 @@ export const CleanRoom = ({
     </div>
   );
 };
-
-const waferPatternScale = 0.3;
 
 export const WholeWafer = ({
   index,
@@ -653,7 +652,7 @@ export const WholeWafer = ({
             opacity={lighting.beam * 0.55}
           />
         ) : null}
-        <WaferProcessEffects visit={visit} />
+        <WaferProcessEffects visit={visit} index={index} state={state} />
       </g>
       {detail > 0 ? (
         <rect

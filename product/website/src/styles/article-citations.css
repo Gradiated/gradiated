@@ -1,0 +1,95 @@
+sup.article-citation {
+  display: inline;
+  position: relative;
+  top: -0.45em;
+  vertical-align: baseline;
+  margin-inline-start: 0.08em;
+  font-size: 0.65em;
+  line-height: 0;
+  white-space: nowrap;
+}
+sup.article-citation a {
+  padding-inline: 0.1em;
+  color: inherit;
+  text-decoration: none;
+  font-weight: 500;
+}
+sup.article-citation a:hover,
+sup.article-citation a:focus-visible {
+  text-decoration: underline;
+}
+.article-citation a,
+.article-references li {
+  scroll-margin-top: 7rem;
+}
+.article-references.article-references {
+  margin-block: 4rem 2rem;
+  padding-block-start: 1.5rem;
+  border-block-start: 1px solid var(--fab-line, var(--color-rule, #d9d1c4));
+  font-size: 0.9rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.article-references.article-references h2 {
+  margin: 0 0 1.5rem;
+  font: 500 1.2rem/1.3 var(--font-title, sans-serif);
+  letter-spacing: -0.02em;
+}
+.article-references.article-references ol {
+  margin: 0;
+  padding-inline-start: 1.6em;
+  list-style: decimal;
+}
+.article-references.article-references li {
+  margin: 0 0 1.3em;
+  padding-inline-start: 0.3em;
+  font: inherit;
+  letter-spacing: normal;
+}
+.article-references.article-references li::marker {
+  color: inherit;
+  font-size: 1em;
+}
+.article-references.article-references p {
+  display: inline;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: normal;
+}
+.article-references.article-references a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+  text-underline-offset: 0.15em;
+}
+.article-references .article-reference-backlinks {
+  margin-inline-start: 0.5em;
+  white-space: nowrap;
+}
+.article-references .article-reference-backlinks a {
+  padding: 0.2em;
+  text-decoration: none;
+}
+.article-references li:target {
+  outline: 1px solid currentColor;
+  outline-offset: 0.4rem;
+  border-radius: 2px;
+}
+.fab-bibliography {
+  max-width: 1000px;
+  margin-inline: auto;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .article-references li:target {
+    animation: citation-target 1.5s ease-out;
+  }
+  @keyframes citation-target {
+    from {
+      background-color: rgba(196, 155, 60, 0.15);
+    }
+    to {
+      background-color: transparent;
+    }
+  }
+}

@@ -18,6 +18,7 @@ import {
   upperMetalTracks,
   onMetalTrack,
   contactEtchHeight,
+  contactInsulatorHeight,
   stages,
   deviceSurfaceHeight,
   gateRegion,
@@ -54,6 +55,7 @@ export type CameraState = {
   section: number;
   scale?: number;
   centreY?: number;
+  cutY?: number;
 };
 
 export const patterningCamera = (
@@ -75,7 +77,12 @@ export const patterningCamera = (
     index === 0 || index < stages.layout || index >= stages.develop ? 1 : 0,
     viewChange,
   );
-  const ymax = mix(65, 34, section);
+  const cutY = mix(
+    from.cutY ?? 34,
+    index >= stages.via && index < stages.upperMetal ? 25 : 34,
+    viewChange,
+  );
+  const ymax = mix(65, cutY, section);
   const yaw = mix(0.42, 0.08, section);
   const exposing = step.phase === "expose";
   const scale = mix(from.scale ?? 2.6, exposing ? 2.1 : 2.6, viewChange);
@@ -90,7 +97,7 @@ export const patterningCamera = (
     ] as [number, number];
   };
 
-  return { elevation, section, scale, centreY, ymax, yaw, project };
+  return { elevation, section, scale, centreY, cutY, ymax, yaw, project };
 };
 
 export const PatterningModel = ({
@@ -395,6 +402,8 @@ export const PatterningModel = ({
   const insulator = materialColours.insulator;
   const gateColours = materialColours.gate;
   const metalColours = materialColours.metal;
+  const metalBase = 14;
+  const metalThickness = 3;
   const insulationHeight = (x: number, y: number) =>
     insulationThickness(x, y, state);
   const deviceTop = (x: number, y: number) => deviceSurfaceHeight(x, y, state);
@@ -461,7 +470,10 @@ export const PatterningModel = ({
       const hole = contactAt(coverXs[col], coverYs[row]);
       const base = deviceTop(coverXs[col], coverYs[row]);
       const target = hole?.gate ? base : siliconTop(coverXs[col], coverYs[row]);
-      const top = hole ? contactEtchHeight(target, state.contacts) : 14;
+      const top =
+        hole && state.contacts > 0
+          ? contactEtchHeight(target, state.contacts)
+          : contactInsulatorHeight(coverXs[col], coverYs[row], state);
 
       return Math.max(0, top - base) * state.cover;
     },
@@ -497,9 +509,9 @@ export const PatterningModel = ({
   layer(
     metalXs,
     metalYs,
-    14,
+    metalBase,
     (col, row) =>
-      3 *
+      metalThickness *
       state.metal *
       (onMetalTrack(metalXs[col], metalYs[row], firstMetalTracks)
         ? 1
@@ -610,11 +622,11 @@ export const PatterningModel = ({
   const cycle = maskCycles.find((cycle) => cycle.id === step.mask);
   const currentResist = cycle ? resistState(state, cycle.id) : undefined;
   const beamRegions = cycle ? exposureRegions(cycle.id, ymax) : [];
-  const layoutPlan =
-    index === stages.layout
-      ? portion(progress, 0, 0.22)
-      : fromIndex === stages.layout
-        ? 1 - portion(progress, 0, 0.22)
+  const targetWell =
+    index === stages.growOxide
+      ? portion(visit.process, 0.85, 1)
+      : fromIndex === stages.growOxide
+        ? 1 - portion(progress, 0, 0.18)
         : 0;
   const electrical = inverterOperation(input, progress);
   const supplyColour = input ? logicColours.low : logicColours.high;
@@ -622,6 +634,7 @@ export const PatterningModel = ({
   const supplyX = input ? 16 : 84;
   const drainX = input ? 36 : 64;
   const outputY = 34;
+  const wireTop = metalBase + metalThickness * state.metal;
   const trace = (
     name: string,
     points: Point[],
@@ -722,14 +735,14 @@ export const PatterningModel = ({
             opacity={section * (0.26 + crystalRepair * 0.48)}
           />
         ) : null}
-        {layoutPlan > 0 ? (
-          <g opacity={layoutPlan} data-layout-plan="well">
+        {targetWell > 0 ? (
+          <g opacity={targetWell} data-target-well="true">
             <path
               d={path([
-                [55, 0, 1],
-                [100, 0, 1],
-                [100, ymax, 1],
-                [55, ymax, 1],
+                [55, 0, materialSurfaceHeight(state, 55, 0) + 0.3],
+                [100, 0, materialSurfaceHeight(state, 100, 0) + 0.3],
+                [100, ymax, materialSurfaceHeight(state, 100, ymax) + 0.3],
+                [55, ymax, materialSurfaceHeight(state, 55, ymax) + 0.3],
               ])}
               fill={materialColours.well[0]}
               fillOpacity=".15"
@@ -744,8 +757,38 @@ export const PatterningModel = ({
               textAnchor="middle"
               fill="#746982"
             >
-              First implant area
+              Target n-well region
             </text>
+          </g>
+        ) : null}
+        {index >= stages.via &&
+        index < stages.upperMetal &&
+        state.viaOpen > 0 ? (
+          <g data-via-floor={25 - 8 * state.viaOpen} opacity={state.viaOpen}>
+            <path
+              d={path([
+                [48, 21, 25 - 8 * state.viaOpen],
+                [52, 21, 25 - 8 * state.viaOpen],
+                [52, 25, 25 - 8 * state.viaOpen],
+                [48, 25, 25 - 8 * state.viaOpen],
+              ])}
+              fill="var(--signal-stroke)"
+              fillOpacity=".22"
+              stroke="var(--signal-stroke)"
+              strokeWidth=".8"
+            />
+            <path
+              d={path(
+                [
+                  [48, 25, 25],
+                  [48, 25, 25 - 8 * state.viaOpen],
+                ],
+                false,
+              )}
+              fill="none"
+              stroke="var(--signal-stroke)"
+              strokeWidth=".7"
+            />
           </g>
         ) : null}
         {lighting.beam > 0 && cycle ? (
@@ -788,15 +831,15 @@ export const PatterningModel = ({
         {index >= stages.well && index <= stages.anneal ? (
           <g fontSize="9" textAnchor="middle" fill={siliconColours.label}>
             <text
-              x={project([24, ymax, -11])[0]}
-              y={project([24, ymax, -11])[1]}
+              x={project([24, ymax, -17])[0]}
+              y={project([24, ymax, -17])[1]}
             >
               p-type silicon
             </text>
             <text
               opacity={state.well}
-              x={project([77, ymax, -11])[0]}
-              y={project([77, ymax, -11])[1]}
+              x={project([77, ymax, -13])[0]}
+              y={project([77, ymax, -13])[1]}
             >
               n-well
             </text>
@@ -805,12 +848,12 @@ export const PatterningModel = ({
         {index >= stages.implant && index <= stages.anneal ? (
           <g
             opacity={Math.max(state.implantN, state.implantP)}
-            fontSize="8"
+            fontSize="6.5"
             textAnchor="middle"
-            fill="#f5f3ed"
+            fill={siliconColours.label}
           >
             {[16, 36, 64, 84].map((x) => {
-              const point = project([x, ymax, oxideBase - 1.5]);
+              const point = project([x, ymax, -7]);
 
               return (
                 <text
@@ -819,7 +862,7 @@ export const PatterningModel = ({
                   y={point[1]}
                   opacity={x < 50 ? state.implantN : state.implantP}
                 >
-                  {x < 50 ? "n+" : "p+"}
+                  {x < 50 ? "n-doped" : "p-doped"}
                 </text>
               );
             })}
@@ -833,10 +876,10 @@ export const PatterningModel = ({
             {([16, 84] as const).map((x) => {
               const colour = x === 16 ? logicColours.low : logicColours.high;
               const points: Point[] = [
-                [x, -9, 18],
-                [x, 23, 18],
+                [x, -9, wireTop],
+                [x, 23, wireTop],
               ];
-              const label = project([x, -9, 18]);
+              const label = project([x, -9, wireTop]);
 
               return (
                 <g key={x}>
@@ -862,8 +905,8 @@ export const PatterningModel = ({
             {trace(
               "input",
               [
-                [50, 0, 18],
-                [50, 8, 18],
+                [50, 0, wireTop],
+                [50, 8, wireTop],
               ],
               inputColour,
               electrical.input,
@@ -873,8 +916,8 @@ export const PatterningModel = ({
                 {trace(
                   `gate-${x}`,
                   [
-                    [50, 8, 18],
-                    [x, 8, 18],
+                    [50, 8, wireTop],
+                    [x, 8, wireTop],
                     [x, 8, deviceTop(x, 8) + 0.3],
                   ],
                   inputColour,
@@ -896,10 +939,10 @@ export const PatterningModel = ({
             {trace(
               "conducting-transistor",
               [
-                [supplyX, 23, 18],
-                [supplyX, 23, oxideBase - 2.5],
-                [drainX, 23, oxideBase - 2.5],
-                [drainX, 23, 18],
+                [supplyX, 23, wireTop],
+                [supplyX, 23, oxideBase - 5.5],
+                [drainX, 23, oxideBase - 5.5],
+                [drainX, 23, wireTop],
               ],
               supplyColour,
               electrical.transfer,
@@ -907,8 +950,8 @@ export const PatterningModel = ({
             {trace(
               "output-junction",
               [
-                [drainX, 23, 18],
-                [50, 23, 18],
+                [drainX, 23, wireTop],
+                [50, 23, wireTop],
               ],
               supplyColour,
               electrical.outputRail,
@@ -916,8 +959,8 @@ export const PatterningModel = ({
             {trace(
               "output-exit",
               [
-                [50, 23, 18],
-                [50, outputY, 18],
+                [50, 23, wireTop],
+                [50, outputY, wireTop],
               ],
               supplyColour,
               electrical.exit,

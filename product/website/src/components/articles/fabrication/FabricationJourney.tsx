@@ -1,4 +1,5 @@
 import {
+  memo,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -10,6 +11,7 @@ import { materialColours, siliconColours } from "./materials";
 import { CleanRoom, WholeWafer } from "./FabricationLab";
 import { PatterningModel, patterningCamera } from "./PatterningModel";
 import { InverterViews } from "./InverterViews";
+import { InterconnectStack } from "./InterconnectStack";
 import {
   initialOpening,
   openingState,
@@ -31,20 +33,31 @@ import {
 } from "./process";
 import type { PatternState } from "./process";
 import type { CameraState } from "./PatterningModel";
-import { groups, introduction, machines, scenes } from "./model";
+import { bibliography, groups, introduction, machines, scenes } from "./model";
 import type { MachineId } from "./model";
 import { maskCycles } from "./sequence";
 import "./fabrication.css";
+
+// Keep native disclosures and citation targets intact during animation updates.
+const FabricationMarkup = memo(
+  ({ html, className }: { html: string; className?: string }) => (
+    <div className={className} dangerouslySetInnerHTML={{ __html: html }} />
+  ),
+);
 
 type Presentation = {
   material: PatternState;
   camera: CameraState;
   opening: OpeningState;
+  workingInverter: number;
+  wiringOverview: number;
 };
 const initialPresentation: Presentation = {
   material: patternState(0, visitFor(1, undefined, undefined)),
   camera: { elevation: 0.62, section: 0 },
   opening: initialOpening,
+  workingInverter: 0,
+  wiringOverview: 0,
 };
 
 export const FabricationJourney = () => {
@@ -65,6 +78,7 @@ export const FabricationJourney = () => {
   const [animation, setAnimation] = useState({
     index: 0,
     progress: 1,
+    transition: 1,
     from: initialPresentation,
   });
   const displayed = useRef<Presentation>(initialPresentation);
@@ -82,18 +96,31 @@ export const FabricationJourney = () => {
     : animation.index === active
       ? animation.progress
       : 0;
+  const transition = reduced
+    ? 1
+    : animation.index === active
+      ? animation.transition
+      : 0;
   const inverter = active === 0 || active === stages.inverter;
   const electrical = inverterOperation(input, progress);
   const step = scenes[active];
   const cycle = maskCycles.find((cycle) => cycle.id === step.mask);
   const visit = visitFor(progress, step.machine, fromMachine);
   const from = animation.index === active ? animation.from : displayed.current;
+  const workingInverter =
+    from.workingInverter +
+    ((active === stages.inverter ? 1 : 0) - from.workingInverter) *
+      portion(transition, 0, 0.24);
+  const wiringOverview =
+    from.wiringOverview +
+    ((step.key === "finish" ? 1 : 0) - from.wiringOverview) *
+      portion(transition, 0, 0.24);
   const targetMaterial = patternState(active, visit);
   const material = reduced
     ? targetMaterial
-    : blendPattern(from.material, targetMaterial, portion(progress, 0, 0.28));
-  const camera = patterningCamera(active, progress, from.camera);
-  const opening = openingState(active, reduced ? 1 : progress, from.opening);
+    : blendPattern(from.material, targetMaterial, portion(transition, 0, 0.28));
+  const camera = patterningCamera(active, transition, from.camera);
+  const opening = openingState(active, transition, from.opening);
   const entering = active === stages.operator && from.opening.entry < 0.99;
   const detailReveal = portion(opening.magnify, 0.3, 1);
   const door =
@@ -124,11 +151,14 @@ export const FabricationJourney = () => {
     displayed.current = {
       material,
       opening,
+      workingInverter,
+      wiringOverview,
       camera: {
         elevation: camera.elevation,
         section: camera.section,
         scale: camera.scale,
         centreY: camera.centreY,
+        cutY: camera.cutY,
       },
     };
   });
@@ -183,12 +213,13 @@ export const FabricationJourney = () => {
     }
     dismissPreview();
     if (reduced) {
-      setAnimation({ index: active, progress: 1, from: origin });
+      setAnimation({ index: active, progress: 1, transition: 1, from: origin });
       return;
     }
 
     let frame = 0;
     let elapsed = 0;
+    let transitionElapsed = 0;
     const duration =
       active === 0 || active === stages.inverter
         ? inverterDuration
@@ -210,7 +241,9 @@ export const FabricationJourney = () => {
         !document.hidden;
       if (!visible) return;
 
-      elapsed += Math.min(now - previous, 64);
+      const delta = Math.min(now - previous, 64);
+      elapsed += delta;
+      transitionElapsed += delta;
       previous = now;
       if (looping && elapsed >= cycleDuration) {
         elapsed = 0;
@@ -219,6 +252,7 @@ export const FabricationJourney = () => {
       setAnimation({
         index: active,
         progress: Math.min(1, elapsed / duration),
+        transition: Math.min(1, transitionElapsed / duration),
         from: origin,
       });
       if (looping || elapsed < duration) frame = requestAnimationFrame(update);
@@ -232,7 +266,7 @@ export const FabricationJourney = () => {
     const observer = new IntersectionObserver(resume);
     if (stageRef.current) observer.observe(stageRef.current);
     document.addEventListener("visibilitychange", resume);
-    setAnimation({ index: active, progress: 0, from: origin });
+    setAnimation({ index: active, progress: 0, transition: 0, from: origin });
     resume();
 
     return () => {
@@ -348,7 +382,7 @@ export const FabricationJourney = () => {
           <span>Deep dive 01</span>
           <span className="fab-draft">First draft</span>
         </div>
-        <div dangerouslySetInnerHTML={{ __html: introduction }} />
+        <FabricationMarkup html={introduction} />
         <a className="fab-start" href="#fab-destination">
           Follow the wafer <span aria-hidden="true">↓</span>
         </a>
@@ -479,27 +513,37 @@ export const FabricationJourney = () => {
               progress={opening.transfer}
               state={material}
             />
-            {opening.destination > 0 ? (
+            {Math.max(opening.destination, workingInverter) > 0 ? (
               <div
                 className="fab-opening-destination"
-                style={{ opacity: opening.destination }}
-                inert={active !== 0}
-                aria-hidden={active !== 0}
+                style={{
+                  opacity: Math.max(opening.destination, workingInverter),
+                }}
+                inert={!inverter}
+                aria-hidden={!inverter}
               >
-                <InverterViews
-                  input={input}
-                  progress={active === 0 ? progress : 1}
-                >
+                <InverterViews input={input} progress={inverter ? progress : 1}>
                   <PatterningModel
                     fromIndex={0}
                     view={patterningCamera(0, 1, initialPresentation.camera)}
                     index={0}
-                    progress={active === 0 ? progress : 1}
+                    progress={inverter ? progress : 1}
                     visit={visitFor(1, undefined, undefined)}
                     state={initialPresentation.material}
                     input={input}
                   />
                 </InverterViews>
+              </div>
+            ) : null}
+            {wiringOverview > 0 ? (
+              <div
+                className="fab-wiring-overview"
+                style={{ opacity: wiringOverview }}
+                aria-hidden={step.key !== "finish"}
+              >
+                <InterconnectStack
+                  progress={step.key === "finish" ? progress : 1}
+                />
               </div>
             ) : null}
           </div>
@@ -524,7 +568,7 @@ export const FabricationJourney = () => {
               {
                 label: "n-doped",
                 colour: materialColours.n[0],
-                visible: active === 0 || active >= stages.implant,
+                visible: active === 0 || active >= stages.well,
               },
               {
                 label: "p-doped",
@@ -564,6 +608,7 @@ export const FabricationJourney = () => {
                       setAnimation({
                         index: active,
                         progress: reduced ? 1 : 0,
+                        transition: 1,
                         from: displayed.current,
                       });
                       setReplay((count) => count + 1);
@@ -601,9 +646,6 @@ export const FabricationJourney = () => {
               </ol>
             </div>
           ) : null}
-          <p className="fab-operation" aria-live="polite">
-            {step.operation}
-          </p>
         </aside>
 
         <div className="fab-prose">
@@ -635,11 +677,14 @@ export const FabricationJourney = () => {
                 {String(index + 1).padStart(2, "0")}{" "}
                 <span aria-hidden="true">—</span> {scene.title}
               </span>
-              <div dangerouslySetInnerHTML={{ __html: scene.html }} />
+              <FabricationMarkup html={scene.html} />
             </section>
           ))}
         </div>
       </div>
+      {bibliography ? (
+        <FabricationMarkup className="fab-bibliography" html={bibliography} />
+      ) : null}
     </article>
   );
 };

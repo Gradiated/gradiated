@@ -69,6 +69,8 @@ export const machineLoadingPoint = (machine: MachineId) => {
   };
 };
 
+export const waferPatternScale = 0.3;
+
 export const waferDetailRegion = { x: 200.4, y: 104.7, size: 8.1 };
 
 export type Visit = {
@@ -137,6 +139,7 @@ export const patternState = (index: number, visit: Visit) => {
     implantP: step(stages.implantP),
     anneal: step(stages.anneal),
     cover: step(stages.contactInsulation),
+    contactPolish: step(stages.contactPolish),
     contacts: step(stages.contacts),
     metalFill: portion(step(stages.metal), 0, 0.5),
     metal: portion(step(stages.metal), 0.5, 1),
@@ -173,9 +176,9 @@ export const resistState = (state: PatternState, mask: MaskId) => ({
 export type Rectangle = readonly [number, number, number, number];
 export const firstMetalTracks: Rectangle[] = [
   [24, 76, 6, 10],
-  [34, 66, 21, 25],
+  [34, 66, 20, 26],
   [48, 52, 0, 10],
-  [48, 52, 21, 34],
+  [48, 52, 20, 34],
   [14, 18, 0, 26],
   [82, 86, 0, 26],
 ];
@@ -250,7 +253,7 @@ export const maskMeshes: Record<MaskId, { xs: number[]; ys: number[] }> = {
   },
   metal: {
     xs: [0, 4, 14, 18, 24, 34, 48, 52, 66, 76, 82, 86, 96, 100],
-    ys: [0, 6, 10, 21, 25, 26, 34, 65],
+    ys: [0, 6, 10, 20, 26, 34, 65],
   },
   via: { xs: [0, 48, 52, 100], ys: [0, 21, 25, 65] },
   upper: { xs: [0, 48, 52, 92, 100], ys: [0, 4, 25, 65] },
@@ -331,9 +334,20 @@ export const deviceSurfaceHeight = (
   insulationThickness(x, y, state) +
   8 * state.poly * (gateRegion(x) ? 1 : 1 - state.patternGate);
 
+export const contactInsulatorHeight = (
+  x: number,
+  y: number,
+  state: PatternState,
+) => {
+  const deposited = deviceSurfaceHeight(x, y, state) + 20;
+
+  return deposited + (14 - deposited) * state.contactPolish;
+};
+
 export const materialSurfaceHeight = (state: PatternState, x = 0, y = 0) => {
   const deviceTop = deviceSurfaceHeight(x, y, state);
-  const coveredTop = deviceTop + (14 - deviceTop) * state.cover;
+  const coveredTop =
+    deviceTop + (contactInsulatorHeight(x, y, state) - deviceTop) * state.cover;
   const metalTop =
     coveredTop +
     3 *

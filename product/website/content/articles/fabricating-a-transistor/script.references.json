@@ -1,0 +1,194 @@
+{
+  "chemical-amplification": {
+    "authors": [
+      "Ito, H."
+    ],
+    "title": "Chemical amplification resists: inception, implementation in device manufacture, and new developments",
+    "publication": "J. Polym. Sci. A Polym. Chem.",
+    "volume": "41",
+    "pages": "3863–3870",
+    "year": 2003,
+    "url": "https://doi.org/10.1002/pola.10963"
+  },
+  "euv-electrons": {
+    "authors": [
+      "Kozawa, T.",
+      "Tagawa, S."
+    ],
+    "title": "Image formation in chemically amplified resists upon exposure to extreme ultraviolet radiation",
+    "publication": "J. Photopolym. Sci. Technol.",
+    "volume": "22",
+    "pages": "51–58",
+    "year": 2009,
+    "url": "https://doi.org/10.2494/photopolymer.22.51"
+  },
+  "resist-dissolution": {
+    "authors": [
+      "Flanagin, L. W.",
+      "McAdams, C. L.",
+      "Hinsberg, W. D.",
+      "Sanchez, I. C.",
+      "Willson, C. G."
+    ],
+    "title": "Mechanism of phenolic polymer dissolution: importance of acid–base equilibria",
+    "publication": "Macromolecules",
+    "volume": "32",
+    "pages": "5337–5343",
+    "year": 1999,
+    "url": "https://doi.org/10.1021/ma990271y"
+  },
+  "acid-spread": {
+    "authors": [
+      "Soles, C. L."
+    ],
+    "title": "Evolution of the deprotection reaction front profile in chemically amplified photoresists",
+    "publication": "National Institute of Standards and Technology",
+    "year": 2002,
+    "url": "https://www.nist.gov/publications/evolution-deprotection-reaction-front-profile-chemically-amplified-photoresists"
+  },
+  "implant-screen-oxide": {
+    "authors": [
+      "Zhang, X."
+    ],
+    "title": "Oxygen-insertion technology for CMOS performance enhancement",
+    "publication": "PhD thesis",
+    "publisher": "University of California, Berkeley",
+    "year": 2019,
+    "url": "https://people.eecs.berkeley.edu/~tking/theses/XZhang.pdf#page=38"
+  },
+  "lithography-alignment": {
+    "authors": [
+      "van den Hurk, P."
+    ],
+    "title": "Aligning lithography to the nanometer",
+    "publication": "ASML",
+    "year": 2021,
+    "url": "https://www.asml.com/en/company/stories/2021/fellow-simon-mathijssen-aligning-lithography-nanometer"
+  },
+  "lithography-overlay": {
+    "authors": [
+      "ASML"
+    ],
+    "title": "Measuring accuracy",
+    "accessed": "26 October 2026",
+    "url": "https://www.asml.com/en/technology/lithography-principles/measuring-accuracy"
+  },
+  "polysilicon-doping": {
+    "authors": [
+      "Carleton University, Department of Electronics"
+    ],
+    "title": "LPCVD",
+    "accessed": "26 October 2026",
+    "url": "https://carleton.ca/doe/lpcvd/"
+  },
+  "dielectric-polishing": {
+    "authors": [
+      "Applied Materials"
+    ],
+    "title": "Applied Materials leads the industry in CMP for 7th year",
+    "publication": "Applied Materials",
+    "year": 2005,
+    "url": "https://ir.appliedmaterials.com/news-releases/news-release-details/applied-materials-leads-industry-cmp-7th-year"
+  },
+  "etch-selectivity": {
+    "authors": [
+      "Lam Research"
+    ],
+    "title": "Tech brief: all about ALE",
+    "accessed": "26 October 2026",
+    "url": "https://newsroom.lamresearch.com/Tech-Brief-All-About-ALE"
+  },
+  "silicon-element": {
+    "authors": [
+      "Royal Society of Chemistry"
+    ],
+    "title": "Silicon",
+    "publication": "Periodic Table",
+    "accessed": "26 October 2026",
+    "url": "https://periodic-table.rsc.org/element/14/"
+  },
+  "silicon-doping": {
+    "authors": [
+      "Gilbert, M. J."
+    ],
+    "title": "ECE 340, lecture 7: intrinsic and extrinsic material II",
+    "publication": "University of Illinois Urbana-Champaign",
+    "year": 2011,
+    "url": "https://transport.ece.illinois.edu/ECE340F11-Lectures/ECE340Lecture7-IntrinsicExtrinsicII.pdf"
+  },
+  "fab-cleanroom": {
+    "authors": [
+      "Intel"
+    ],
+    "title": "Explore an Intel fab: cleanroom",
+    "accessed": "26 October 2026",
+    "url": "https://virtualmuseum.intel.com/fabtour/cleanroom.html"
+  },
+  "plasma-etching": {
+    "authors": [
+      "Lam Research"
+    ],
+    "title": "Etch essentials: the building blocks of AI era microchips",
+    "year": 2024,
+    "url": "https://newsroom.lamresearch.com/etch-essentials-semiconductor-manufacturing"
+  },
+  "gate-materials": {
+    "authors": [
+      "Bohr, M. T.",
+      "Chau, R. S.",
+      "Ghani, T.",
+      "Mistry, K."
+    ],
+    "title": "The high-k solution",
+    "publication": "IEEE Spectrum",
+    "volume": "44",
+    "pages": "29–35",
+    "year": 2007,
+    "url": "https://spectrum.ieee.org/the-highk-solution"
+  },
+  "metal-gate-process": {
+    "authors": [
+      "Jan, C.-H. et al."
+    ],
+    "title": "A 32nm SoC platform technology with 2nd generation high-k/metal gate transistors",
+    "publication": "IEEE International Electron Devices Meeting presentation",
+    "year": 2009,
+    "url": "https://www.intel.com/content/dam/doc/technology-brief/32nm-soc-platform-technology-presentation.pdf#page=4"
+  },
+  "cmos-fabrication": {
+    "authors": [
+      "Schmidt, M. A."
+    ],
+    "title": "3.155J/6.152J, lecture 18: CMOS",
+    "publication": "MIT OpenCourseWare",
+    "year": 2005,
+    "url": "https://ocw.mit.edu/courses/6-152j-micro-nano-processing-technology-fall-2005/57460d7d1e3ffe8e245f4f2eb3d8f845_lecture18.pdf"
+  },
+  "cmos-origin": {
+    "authors": [
+      "Wanlass, F. M.",
+      "Sah, C. T."
+    ],
+    "title": "Nanowatt logic using field-effect metal-oxide semiconductor triodes",
+    "publication": "IEEE International Solid-State Circuits Conference, Digest of Technical Papers",
+    "pages": "32–33",
+    "year": 1963,
+    "url": "https://doi.org/10.1109/ISSCC.1963.1157450"
+  },
+  "chipmaking-overview": {
+    "authors": [
+      "ASML"
+    ],
+    "title": "How microchips are made",
+    "accessed": "26 October 2026",
+    "url": "https://www.asml.com/en/technology/all-about-microchips/how-microchips-are-made"
+  },
+  "interconnect-layers": {
+    "authors": [
+      "Zhao, L."
+    ],
+    "title": "Tech brief: an introduction to interconnects",
+    "year": 2017,
+    "url": "https://newsroom.lamresearch.com/Tech-Brief-An-Introduction-to-Interconnects"
+  }
+}

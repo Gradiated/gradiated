@@ -340,8 +340,9 @@ Add and verify them as posts are written or revised.
 Use `[@source-key]` after the sentence it supports, after punctuation. For several
 sources together, use `[@source-one; @source-two]`. Reusing a key reuses its number.
 Numbers follow first appearance. Citations link to a References section at the end
-of the article, with return links for each occurrence. This is a bibliography,
-separate from explanatory footnotes.
+of the article, with return links for each occurrence. Source links open in a new
+tab, while citation numbers and return links navigate within the article. This is
+a bibliography, separate from explanatory footnotes.
 
 Keep sources in a companion JSON file beside the prose. For `example.mdx`, use
 `example.references.json`. For either journey's `script.md`, use
@@ -366,8 +367,22 @@ publication names, bold volumes, pages and years. Supply names as shown above an
 use an organisation as the author for an unsigned institutional source. Authors,
 title and an absolute HTTP(S) URL are required. Publication, volume, pages, year,
 publisher and accessed date are optional, so books, documentation, videos and web
-sources can also be recorded. Use the DOI URL when a publication has one. Metadata
-is rendered as plain text, not HTML or Markdown.
+sources can also be recorded. Metadata is rendered as plain text, not HTML or
+Markdown.
+
+Link to the most specific verified supporting passage available. For web pages,
+prefer a stable section anchor and, where supported, a text fragment such as
+`#section:~:text=encoded%20opening,encoded%20ending` to scroll to and highlight the
+relevant text. Encode each selector's text separately and check it against the
+source. Use short, distinctive ranges, not a whole page. Preserve a section
+anchor as a fallback where one exists. For PDFs, use `#page=N` with the one-based
+PDF page number, which may differ from the printed page number. Verify the page
+before linking it. A source supporting several claims may need more than one
+highlighted passage. Keep the DOI URL when there is no more precise, reliable
+publisher or author-hosted destination. Highlighting depends on the reader's
+browser and the source site, so the underlying source must remain usable without
+it. Check targeted links in the in-app browser and revisit them when revising
+the associated claims.
 
 This syntax works in standard article MDX and both scrolling journeys. Code and
 existing link labels stay literal. Sources not cited in the rendered article are

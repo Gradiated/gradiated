@@ -20,7 +20,7 @@
     "volume": "22",
     "pages": "51–58",
     "year": 2009,
-    "url": "https://doi.org/10.2494/photopolymer.22.51"
+    "url": "https://www.jstage.jst.go.jp/article/photopolymer/22/1/22_1_51/_article#:~:text=In%20EUV%20resists%2C%20secondary%20electrons%20play%20a%20major%20role,discussion%20of%20image%20formation%20in%20EUV%20resists.&text=To%20minimize%20line%20edge%20roughness%2C,in%20accordance%20with%20the%20aerial%20image%20contrast."
   },
   "resist-dissolution": {
     "authors": [
@@ -35,7 +35,7 @@
     "volume": "32",
     "pages": "5337–5343",
     "year": 1999,
-    "url": "https://doi.org/10.1021/ma990271y"
+    "url": "https://willson.cm.utexas.edu/Research/Sub_Files/Resist_Modeling/Files/Flanagin_Macro_v32_p5337_1999.pdf#page=1"
   },
   "acid-spread": {
     "authors": [
@@ -44,17 +44,22 @@
     "title": "Evolution of the deprotection reaction front profile in chemically amplified photoresists",
     "publication": "National Institute of Standards and Technology",
     "year": 2002,
-    "url": "https://www.nist.gov/publications/evolution-deprotection-reaction-front-profile-chemically-amplified-photoresists"
+    "url": "https://www.nist.gov/publications/evolution-deprotection-reaction-front-profile-chemically-amplified-photoresists#:~:text=The%20deprotection%20reaction%20front%20profile%20between%20exposed%20and%20unexposed%20regions,additives%2C%20temperature%2C%20and%20time."
   },
   "implant-screen-oxide": {
     "authors": [
-      "Zhang, X."
+      "King, W. J.",
+      "Burrill, J. T.",
+      "Harrison, S.",
+      "Martin, F.",
+      "Kellett, C."
     ],
-    "title": "Oxygen-insertion technology for CMOS performance enhancement",
-    "publication": "PhD thesis",
-    "publisher": "University of California, Berkeley",
-    "year": 2019,
-    "url": "https://people.eecs.berkeley.edu/~tking/theses/XZhang.pdf#page=38"
+    "title": "Experience in fabricating semiconductor devices using ion implantation techniques",
+    "publication": "Nuclear Instruments and Methods",
+    "volume": "38",
+    "pages": "178–179",
+    "year": 1965,
+    "url": "https://www.sciencedirect.com/science/article/abs/pii/0029554X65901291#abstracts:~:text=The%20resulting%20process%20is%20highly%20controlled,silicon%2C%20respectively."
   },
   "lithography-alignment": {
     "authors": [
@@ -63,7 +68,7 @@
     "title": "Aligning lithography to the nanometer",
     "publication": "ASML",
     "year": 2021,
-    "url": "https://www.asml.com/en/company/stories/2021/fellow-simon-mathijssen-aligning-lithography-nanometer"
+    "url": "https://www.asml.com/en/company/stories/2021/fellow-simon-mathijssen-aligning-lithography-nanometer#:~:text=an%20optical%20alignment%20sensor,called%20%27alignment%20marks%27.&text=Alignment%20marks%20are%20specially%20designed%20gratings,alongside%20each%20layer%E2%80%99s%20pattern."
   },
   "lithography-overlay": {
     "authors": [
@@ -71,7 +76,7 @@
     ],
     "title": "Measuring accuracy",
     "accessed": "26 October 2026",
-    "url": "https://www.asml.com/en/technology/lithography-principles/measuring-accuracy"
+    "url": "https://www.asml.com/en/technology/lithography-principles/measuring-accuracy#:~:text=YieldStar%20allows%20manufacturers%20to%20track%20key%20production%20parameters,real%2Dtime%20corrections%20to%20the%20manufacturing%20process."
   },
   "polysilicon-doping": {
     "authors": [
@@ -79,7 +84,7 @@
     ],
     "title": "LPCVD",
     "accessed": "26 October 2026",
-    "url": "https://carleton.ca/doe/lpcvd/"
+    "url": "https://carleton.ca/doe/lpcvd/#:~:text=Polysilicon%20is%20deposited%20from%20silane,using%20either%20phosphine%20or%20diborane."
   },
   "dielectric-polishing": {
     "authors": [
@@ -88,7 +93,7 @@
     "title": "Applied Materials leads the industry in CMP for 7th year",
     "publication": "Applied Materials",
     "year": 2005,
-    "url": "https://ir.appliedmaterials.com/news-releases/news-release-details/applied-materials-leads-industry-cmp-7th-year"
+    "url": "https://ir.appliedmaterials.com/news-releases/news-release-details/applied-materials-leads-industry-cmp-7th-year#:~:text=performance%2Dcritical%20transistor%20steps%20like%20shallow%20trench%20isolation%20and%20pre%2Dmetal%20dielectric%20polishing"
   },
   "etch-selectivity": {
     "authors": [
@@ -96,7 +101,7 @@
     ],
     "title": "Tech brief: all about ALE",
     "accessed": "26 October 2026",
-    "url": "https://newsroom.lamresearch.com/Tech-Brief-All-About-ALE"
+    "url": "https://newsroom.lamresearch.com/Tech-Brief-All-About-ALE#:~:text=Another%20challenge%20is%20that%20the%20etch%20process%20needs%20to%20remove%20the%20targeted%20material,many%20etch%20processes%20require%20very%20high%20selectivity."
   },
   "silicon-element": {
     "authors": [
@@ -109,20 +114,23 @@
   },
   "silicon-doping": {
     "authors": [
-      "Gilbert, M. J."
+      "Pearson, G. L.",
+      "Bardeen, J."
     ],
-    "title": "ECE 340, lecture 7: intrinsic and extrinsic material II",
-    "publication": "University of Illinois Urbana-Champaign",
-    "year": 2011,
-    "url": "https://transport.ece.illinois.edu/ECE340F11-Lectures/ECE340Lecture7-IntrinsicExtrinsicII.pdf"
+    "title": "Electrical Properties of Pure Silicon and Silicon Alloys Containing Boron and Phosphorus",
+    "publication": "Phys. Rev.",
+    "volume": "75",
+    "pages": "865–883",
+    "year": 1949,
+    "url": "https://journals.aps.org/pr/abstract/10.1103/PhysRev.75.865#abstract:~:text=Electrical%20resistivity%20and%20Hall%20measurements,donor%20level."
   },
   "fab-cleanroom": {
     "authors": [
-      "Intel"
+      "Samsung Semiconductor"
     ],
-    "title": "Explore an Intel fab: cleanroom",
-    "accessed": "26 October 2026",
-    "url": "https://virtualmuseum.intel.com/fabtour/cleanroom.html"
+    "title": "The Invisible Highways: Tracing the Journey Inside a Semiconductor Fab",
+    "year": 2025,
+    "url": "https://news.samsungsemiconductor.com/global/the-invisible-highways-tracing-the-journey-inside-a-semiconductor-fab/#:~:text=At%20the%20heart%20of%20this%20system,at%20the%20precise%20moment."
   },
   "plasma-etching": {
     "authors": [
@@ -130,7 +138,7 @@
     ],
     "title": "Etch essentials: the building blocks of AI era microchips",
     "year": 2024,
-    "url": "https://newsroom.lamresearch.com/etch-essentials-semiconductor-manufacturing"
+    "url": "https://newsroom.lamresearch.com/etch-essentials-semiconductor-manufacturing#:~:text=Advanced%20process%20technologies%20rely%20more%20on%20dry%20etching,which%20is%20critical%20to%20form%20FinFET%20and%20Gate%2Dall%2Daround%20%28GAA%29%20devices."
   },
   "gate-materials": {
     "authors": [
@@ -144,7 +152,7 @@
     "volume": "44",
     "pages": "29–35",
     "year": 2007,
-    "url": "https://spectrum.ieee.org/the-highk-solution"
+    "url": "https://spectrum.ieee.org/the-highk-solution#:~:text=The%20normal%20fabrication%20method%20is%20known%20as,which%20we%20ultimately%20adopted%2C%20as%20too%20much%20of%20a%20departure%20and%20too%20challenging."
   },
   "metal-gate-process": {
     "authors": [
@@ -162,7 +170,7 @@
     "title": "3.155J/6.152J, lecture 18: CMOS",
     "publication": "MIT OpenCourseWare",
     "year": 2005,
-    "url": "https://ocw.mit.edu/courses/6-152j-micro-nano-processing-technology-fall-2005/57460d7d1e3ffe8e245f4f2eb3d8f845_lecture18.pdf"
+    "url": "https://ocw.mit.edu/courses/6-152j-micro-nano-processing-technology-fall-2005/57460d7d1e3ffe8e245f4f2eb3d8f845_lecture18.pdf#page=14"
   },
   "cmos-origin": {
     "authors": [
@@ -181,7 +189,7 @@
     ],
     "title": "How microchips are made",
     "accessed": "26 October 2026",
-    "url": "https://www.asml.com/en/technology/all-about-microchips/how-microchips-are-made"
+    "url": "https://www.asml.com/en/technology/all-about-microchips/how-microchips-are-made#:~:text=Microchips%20are%20made%20by%20building%20up%20layers%20of%20interconnected%20patterns,as%20robots%20transport%20their%20precious%20wafers%20from%20machine%20to%20machine."
   },
   "interconnect-layers": {
     "authors": [
@@ -189,7 +197,7 @@
     ],
     "title": "Tech brief: an introduction to interconnects",
     "year": 2017,
-    "url": "https://newsroom.lamresearch.com/Tech-Brief-An-Introduction-to-Interconnects"
+    "url": "https://newsroom.lamresearch.com/Tech-Brief-An-Introduction-to-Interconnects#:~:text=Interconnects%20close%20to%20the%20transistors,from%20one%20layer%20to%20the%20next."
   },
   "oxide-over-aluminium": {
     "authors": [
@@ -222,6 +230,23 @@
     "publication": "PhD thesis",
     "publisher": "Technische Universität Wien",
     "year": 2007,
-    "url": "https://iue.tuwien.ac.at/phd/hollauer/node7.html"
+    "url": "https://iue.tuwien.ac.at/phd/hollauer/node7.html#:~:text=Local%20Oxidation%20of%20Silicon%20%28LOCOS%29%20is%20the%20traditional%20isolation%20technique.,defines%20the%20active%20areas%20for%20the%20oxidation%20process.&text=The%20first%20difference%20compared%20to%20LOCOS,the%20rest%20of%20the%20trench%20is%20filled%20with%20a%20deposited%20oxide"
+  },
+  "cleanroom-filtration": {
+    "authors": [
+      "Wikipedia contributors"
+    ],
+    "title": "Cleanroom, section: basic construction",
+    "publication": "Wikipedia",
+    "accessed": "27 October 2026",
+    "url": "https://en.wikipedia.org/wiki/Cleanroom#Basic_construction:~:text=Within%2C%20air%20is%20constantly%20recirculated,internally%20generated%20contaminants."
+  },
+  "fab-tool-count": {
+    "authors": [
+      "NVIDIA"
+    ],
+    "title": "Accelerating Semiconductor Design and Manufacturing",
+    "accessed": "27 October 2026",
+    "url": "https://www.nvidia.com/en-us/industries/semiconductor/#:~:text=Gigafab%20lot%20scheduling%20demands%20real-time%20decisions%20across%20thousands%20of%20tools."
   }
 }

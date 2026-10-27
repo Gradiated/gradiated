@@ -52,6 +52,12 @@ test("citations number by first appearance and repeated sources share one entry"
   assert.equal((bibliography.match(/id="ref-second"/g) ?? []).length, 1);
   assert.match(bibliography, /href="#cite-second-1"/);
   assert.match(bibliography, /href="#cite-second-2"/);
+  assert.match(
+    bibliography,
+    /href="https:\/\/example.org\/explanation" target="_blank" rel="noopener noreferrer"/,
+  );
+  assert.ok(!html.includes('target="_blank"'));
+  assert.match(bibliography, /href="#cite-second-1" role="doc-backlink"/);
   assert.match(bibliography, /One, A. &amp; Two, B./);
   assert.match(
     bibliography,
@@ -157,6 +163,11 @@ test("MDX articles compile citations and backlinks while docs remain untouched",
     assert.match(html, /role="doc-bibliography"/);
     assert.match(html, /id="ref-first"/);
     assert.match(html, /href="#cite-first-2"/);
+    assert.match(
+      html,
+      /href="https:\/\/doi.org\/10.1234\/example" target="_blank" rel="noopener noreferrer"/,
+    );
+    assert.match(html, /href="#ref-first" id="cite-first-1" role="doc-biblioref"/);
     assert.match(html, /<code>\[@missing\]<\/code>/);
     const untouched = await compile(
       {

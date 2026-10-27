@@ -104,7 +104,11 @@ const referenceText = (source) => {
         : `${source.authors.slice(0, -1).join(", ")} & ${source.authors.at(-1)}`;
   const children = [
     text(`${authors}${/[.!?]$/.test(authors) ? "" : "."} `),
-    element("a", [text(source.title)], { href: source.url }),
+    element("a", [text(source.title)], {
+      href: source.url,
+      target: "_blank",
+      rel: "noopener noreferrer",
+    }),
     text(/[.!?]$/.test(source.title) ? "" : "."),
   ];
   if (source.publication)

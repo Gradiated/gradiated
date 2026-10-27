@@ -2,7 +2,7 @@
 
 A microchip is built on a small piece of silicon cut from a wafer. Transistors are formed at the silicon surface, with doped regions extending beneath it. Layers of metal wiring connect the transistors into logic gates, such as NOT and NAND, and larger circuits that calculate, remember and control.
 
-Here, we will follow a silicon wafer through the main steps of building and connecting the two transistors of a NOT gate, also called an inverter. We use a simplified planar design, where the conducting channel runs along a flat silicon surface beneath each transistor’s gate electrode, between its source and drain connections. We simplify the manufacturing sequence and exaggerate dimensions to make each step clear.
+Here, we will follow a silicon wafer through the main steps of building and connecting the two transistors of a NOT gate, also called an inverter. We use a simplified planar design[@cmos-fabrication], where the conducting channel runs along a flat silicon surface beneath each transistor’s gate electrode, between its source and drain connections. We simplify the manufacturing sequence and exaggerate dimensions to make each step clear.
 
 <!-- scene: destination -->
 
@@ -16,11 +16,11 @@ Each transistor has two doped regions called the source and drain, with a gate e
 
 ## Begin with a silicon wafer
 
-Let's begin with a polished silicon wafer, a thin slice cut from a large single crystal[@silicon-element]. Apart from a small quantity of dopant atoms, which we will explain shortly, our wafer is a continuous piece of silicon with no transistors or wires.
+Let's begin with a polished silicon wafer, a thin slice cut from a large single crystal[@silicon-element]. Apart from a small, sparse quantity of dopant atoms, which we will explain shortly, our wafer is a continuous piece of silicon with no transistors or wires.
 
 <!-- scene: clean-room -->
 
-Let’s go inside Gradiated’s imaginary clean room, where filtered air and protective clothing help keep particles off the wafer. Even tiny particles can spoil the structures we are trying to make.
+Let’s go inside Gradiated’s imaginary clean room, where filtered air and protective clothing help keep particles off the wafer. Even nanometer-scale debris can disrupt the tiny circuit patterns, so the air is continually recirculated through fine filters.[@cleanroom-filtration]
 
 <!-- scene: operator -->
 
@@ -34,21 +34,21 @@ The intern is handed our wafer.
 
 Let's zoom into one small chunk of the wafer, where we will watch the two transistors take shape. Before we begin, we need a way to control how silicon conducts electricity.
 
-Doping adds small quantities of selected elements, called dopants. Phosphorus, for example, supplies extra mobile electrons, producing n-type silicon. Boron produces p-type silicon, where missing electrons, called holes, behave as mobile positive charges. These electrons or holes carry current when a voltage is applied. Our starting wafer is lightly doped p-type.[@silicon-doping]
+Doping adds small quantities of selected elements, called dopants. Phosphorus, for example, supplies extra mobile electrons which can carry current, producing n-type silicon. Boron produces p-type silicon, where missing electrons, called holes, behave as mobile positive charges and also carry current. Our starting wafer is lightly doped p-type.[@silicon-doping]
 
 <!-- scene: layout -->
 
 ## The machines
 
-A fab contains machines that add, remove and alter materials on a wafer. Large fabs can contain more than a thousand manufacturing tools.[@fab-cleanroom] Our clean room groups their jobs into twelve stations so we can follow the process.
+A fab contains machines that add, remove and alter materials on a wafer. Large fabs can contain more than a thousand manufacturing tools.[@fab-tool-count] Our clean room groups their jobs into twelve stations so we can follow the process.
 
-Our intern will make `44` processing visits before we have a working NOT gate, returning to the same machines with new patterns and materials.
+Our intern will visit `44` processing machines (even in our simplified example) before we have a working NOT gate, returning to the same machines with new patterns and materials.
 
 <!-- scene: grow-oxide -->
 
 ## Prepare the silicon
 
-We need an n-type and a p-type transistor side by side for our NOT gate. The n-type transistor forms an electron-carrying channel between two n-doped pockets in a p-type silicon body. Its p-type partner forms a hole-carrying channel between p-doped pockets in an n-type body. Our p-type wafer already provides the body for the n-type transistor. To build its p-type partner alongside it, we first create a deeper n-type region called an n-well.
+As shown at the start, we need an n-type and a p-type transistor side by side for our NOT gate. The n-type transistor forms an electron-carrying channel between two n-doped pockets in a p-type silicon body. Its p-type partner forms a hole-carrying channel between p-doped pockets in an n-type body. Our p-type wafer already provides the body for the n-type transistor. To build its p-type partner alongside it, we must first create a large, deep n-type region called an n-well.
 
 We do this by ion implantation, accelerating electrically charged n-type dopant atoms, such as phosphorus, into the silicon. First, we grow a thin silicon dioxide film by heating the wafer in oxygen. Some silicon is consumed as the oxide grows.
 

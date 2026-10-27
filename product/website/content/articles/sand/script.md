@@ -66,6 +66,8 @@ Let’s zoom out one step and connect two transistors to make our first logic ga
 
 When `A` is `0`, the p-type switch is on and the n-type is off. The output is connected to the top bar, so it settles to `1`. When `A` is `1`, their roles reverse and the output connects to the bottom bar, settling to `0`. The output is always the opposite of the input. We have made a NOT gate.
 
+How are these two transistors and their connections actually made on silicon? [Follow a wafer through the fabrication process.](/sand-to-thought/fabricating-a-transistor/)
+
 <!-- scene: nor -->
 
 Add two more transistors and we can give our circuit two inputs, `A` and `B`. Each input controls one p-type switch and one n-type switch. The two p-type switches at the top are connected one after another, so both must be on to connect the output to `1`. The two n-type switches at the bottom are side by side, giving two separate routes to `0`. Either one can make that connection.

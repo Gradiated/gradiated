@@ -24,7 +24,7 @@ Let’s go inside Gradiated’s imaginary clean room, where filtered air and pro
 
 <!-- scene: operator -->
 
-In many modern chip factories, or fabs, automated systems carry wafers between machines, often using overhead rails.[@fab-cleanroom] Here, our intern has drawn the short straw and will carry ours, wearing a Gradiated-branded protective coverall.
+In many modern chip factories, or fabs, automated systems carry wafers between machines, often using overhead rails.[@fab-cleanroom] Here, our intern is undergoing initiations and will carry ours, wearing a Gradiated-merch protective coverall.
 
 <!-- scene: hand-off -->
 

@@ -122,7 +122,9 @@ def runtime_bundle(name):
 
 
 def profile(digest):
-    return {'image': f'gradiated/test-bundle@sha256:{digest}', 'model_id': 'test/model',
+    # The agent must stage this base's bundle; the older base's does not exist.
+    bundles = {'older-base': 'f' * 64, Path('/etc/gradiated/base-id').read_text().strip(): digest}
+    return {'image': f'gradiated/test-bundle@sha256:{digest}', 'bundles': bundles, 'model_id': 'test/model',
             'release': {'model_path': 'test/model', 'model_revision': 'main', 'runtime_revision': 'test'},
             'gpus': 2, 'cpu': '4', 'memory': '8Gi', 'startup_timeout': 300}
 

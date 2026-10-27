@@ -18,6 +18,6 @@
     "check": "tsc --noEmit && vitest run"
   },
   "dependencies": {
-    "zod": "4.6.5"
+    "zod": "4.6.6"
   }
 }

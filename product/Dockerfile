@@ -1,4 +1,4 @@
-FROM node:22.23.3-bookworm-slim@sha256:3ed98443660ff48413b5af19ecefce3b9d50845a901a43420d47cc63a9fddbe9 AS build
+FROM node:22.23.4-bookworm-slim@sha256:de170b39439eb0e5a3444ad7d60b015614a381e10fecae2e30ec9e735122f38d AS build
 
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
@@ -44,7 +44,7 @@ RUN rm -rf node_modules packages/*/node_modules services/*/node_modules \
   --filter=@gradiated/gpu-fleet... \
   && rm -rf node_modules/.pnpm/esbuild@* node_modules/.pnpm/@esbuild+*
 
-FROM node:22.23.3-bookworm-slim@sha256:3ed98443660ff48413b5af19ecefce3b9d50845a901a43420d47cc63a9fddbe9
+FROM node:22.23.4-bookworm-slim@sha256:de170b39439eb0e5a3444ad7d60b015614a381e10fecae2e30ec9e735122f38d
 
 # Take Debian security updates published after the base image was built. The
 # services start with node only, so drop the base image's package managers.

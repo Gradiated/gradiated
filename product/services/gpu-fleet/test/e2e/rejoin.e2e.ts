@@ -177,7 +177,7 @@ describe.skipIf(!files)("a GPU host rejoining after a re-image", () => {
       }
       await createRollouts({
         api: kube.api,
-        cluster: createCluster(kube.api),
+        cluster: createCluster(kube.api, () => undefined),
         ping,
         pins: async () => pinned,
         enrollment: async () => enrollment,

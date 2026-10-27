@@ -13,6 +13,7 @@ import {
   gpuHost,
   hostPath,
 } from "./support/fleet.js";
+import { virtualKubeletPod } from "./support/pods.js";
 
 const pod = (name: string, node: string, phase = "Running") => ({
   apiVersion: "v1",
@@ -112,6 +113,31 @@ describe("retiring and leadership", () => {
     expect(cluster.read(hostPath(FIRST))).toBeDefined();
 
     cluster.remove(`${PODS}/late`);
+    await fleet.reconcile();
+    expect(cluster.read(hostPath(FIRST))).toBeUndefined();
+  });
+
+  it("holds a deleted host while a pod the virtual kubelet publishes runs on it", async () => {
+    const { cluster, fleet } = await operator();
+    const name = "deepseek-5867b44cff-x2k9p";
+    cluster.seed(GPU_HOSTS, gpuHost(FIRST, "firstpod"));
+    cluster.seed(NODES, {
+      apiVersion: "v1",
+      kind: "Node",
+      metadata: { name: `gpu-${FIRST}` },
+      spec: {},
+    });
+    cluster.seed(PODS, virtualKubeletPod("deepseek", name, `gpu-${FIRST}`));
+    await fleet.reconcile();
+    cluster.delete(hostPath(FIRST));
+
+    for (let pass = 0; pass < 3; pass++) await fleet.reconcile();
+    expect(cluster.read(hostPath(FIRST))).toMatchObject({
+      metadata: { finalizers: [DRAIN_FINALIZER] },
+      status: { phase: "Draining" },
+    });
+
+    cluster.remove(`${PODS}/${name}`);
     await fleet.reconcile();
     expect(cluster.read(hostPath(FIRST))).toBeUndefined();
   });

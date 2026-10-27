@@ -121,6 +121,7 @@ def node_names(documents):
 
 IMAGE = re.compile(r'\d{12}\.dkr\.ecr\.[a-z0-9-]+\.amazonaws\.com/[a-z0-9/._-]+:gpu-base-inputs-[0-9a-f]{64}')
 TEMPLATES = ROOT / 'infra/environments/prod/runpod/templates.json'
+RUNTIMES = ROOT / 'product/inference/gpu/runtimes.json'
 OPS_MCP = KUBE / 'operations/ops-mcp/workload.yaml'
 
 
@@ -131,6 +132,20 @@ def validate_pins(pins):
             not re.fullmatch('[0-9a-f]{64}', pins['hostBundle']['sha256']) or
             not re.fullmatch('[A-Za-z0-9._-]{1,64}', pins['hostBundle']['baseId'])):
         raise ValueError('Invalid GPU fleet pins')
+
+
+def validate_bundles(runtimes, base_id):
+    # A host runs the bundle each release built for its own base, so a base
+    # can be pinned only once every release has a bundle for it. Bundles for
+    # older bases stay until no host runs them.
+    for key, runtime in runtimes.items():
+        bundles = runtime.get('bundles')
+        if (not isinstance(bundles, dict) or not bundles or
+                not all(re.fullmatch('[A-Za-z0-9._-]{1,64}', base) and isinstance(digest, str) and
+                        re.fullmatch('[0-9a-f]{64}', digest) for base, digest in bundles.items())):
+            raise ValueError(f'Runtime release {key} needs a bundles map from base ID to bundle digest')
+        if base_id not in bundles:
+            raise ValueError(f'Runtime release {key} has no bundle for the pinned base {base_id}')
 
 
 def pinned_copies(pins):
@@ -150,10 +165,11 @@ def pinned_copies(pins):
 
 def render(retire=()):
     hosts, secrets = inventory([item for item in yaml.safe_load_all((GPU / 'hosts.yaml').read_text()) if item])
-    runtimes = json.loads((ROOT / 'product/inference/gpu/runtimes.json').read_text())
+    runtimes = json.loads(RUNTIMES.read_text())
     controller = list(yaml.safe_load_all((GPU / 'controller.yaml').read_text()))
     pins = json.loads((GPU / 'pins.json').read_text())
     validate_pins(pins)
+    validate_bundles(runtimes, pins['hostBundle']['baseId'])
     # Controllers now read hosts from GpuHost objects. The list stays for the
     # controller image running before the release that reads them; removing it
     # in the same change would crash that controller before its successor starts.

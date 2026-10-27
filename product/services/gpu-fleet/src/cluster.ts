@@ -12,49 +12,51 @@ const GPU_RESOURCE = "nvidia.com/gpu";
 // The ReplicaSet controller removes the pod with the lowest cost first.
 export const DELETION_COST = "controller.kubernetes.io/pod-deletion-cost";
 
+// Only fields the operator reads are checked. Unset fields arrive as null
+// (gpu-controller sends null condition times), so optional fields accept it.
 const podSchema = z.object({
   metadata: z.object({
     name: z.string(),
     uid: z.string(),
-    labels: z.record(z.string(), z.string()).optional(),
-    annotations: z.record(z.string(), z.string()).optional(),
-    deletionTimestamp: z.string().optional(),
+    labels: z.record(z.string(), z.string()).nullish(),
+    annotations: z.record(z.string(), z.string()).nullish(),
+    deletionTimestamp: z.string().nullish(),
     ownerReferences: z
       .array(z.object({ kind: z.string(), name: z.string() }))
-      .optional(),
+      .nullish(),
   }),
   spec: z
     .object({
-      nodeName: z.string().optional(),
+      nodeName: z.string().nullish(),
       containers: z
         .array(
           z.object({
             resources: z
               .object({
-                requests: z.record(z.string(), z.string()).optional(),
-                limits: z.record(z.string(), z.string()).optional(),
+                requests: z.record(z.string(), z.string()).nullish(),
+                limits: z.record(z.string(), z.string()).nullish(),
               })
-              .optional(),
+              .nullish(),
           }),
         )
-        .optional(),
+        .nullish(),
     })
-    .optional(),
+    .nullish(),
   status: z
     .object({
-      phase: z.string().optional(),
+      phase: z.string().nullish(),
       conditions: z
         .array(
           z.object({
             type: z.string(),
             status: z.string(),
-            reason: z.string().optional(),
-            lastTransitionTime: z.string().optional(),
+            reason: z.string().nullish(),
+            lastTransitionTime: z.string().nullish(),
           }),
         )
-        .optional(),
+        .nullish(),
     })
-    .optional(),
+    .nullish(),
 });
 
 export type ClusterPod = {
@@ -71,11 +73,26 @@ export type ClusterPod = {
   qualifiedRuntime?: string;
 };
 
-const clusterPod = (item: unknown): ClusterPod | undefined => {
-  const parsed = podSchema.safeParse(item);
-  if (!parsed.success) return;
+// An unreadable pod fails the whole read: dropping it would make a serving
+// host look empty, and the operator would re-image or release it.
+export class UnreadablePod extends Error {}
 
-  const { metadata, spec, status } = parsed.data;
+const parsePod = (item: unknown) => {
+  const parsed = podSchema.safeParse(item);
+  if (parsed.success) return parsed.data;
+
+  const name = (item as { metadata?: { name?: unknown } } | undefined)?.metadata
+    ?.name;
+  const issues = parsed.error.issues
+    .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+    .join("; ");
+  throw new UnreadablePod(
+    `Pod ${typeof name === "string" ? name : "(unnamed)"} cannot be read: ${issues}`,
+  );
+};
+
+export const clusterPod = (item: unknown): ClusterPod | undefined => {
+  const { metadata, spec, status } = parsePod(item);
   if (["Succeeded", "Failed"].includes(status?.phase ?? "")) return;
 
   const condition = (type: string) =>
@@ -128,8 +145,26 @@ type Node = {
   spec?: { unschedulable?: boolean };
 };
 
-export const createCluster = (api: Kubernetes) => {
+export const createCluster = (
+  api: Kubernetes,
+  log: (event: Record<string, unknown>) => void,
+) => {
   const nodePath = (instanceId: string) => `${NODES}/${hostName(instanceId)}`;
+  const clusterPods = (items: unknown[]) => {
+    try {
+      return items
+        .map(clusterPod)
+        .filter((pod): pod is ClusterPod => pod !== undefined);
+    } catch (error) {
+      if (error instanceof UnreadablePod)
+        log({
+          event: "gpu_fleet_pod_unreadable",
+          level: "warn",
+          error: error.message,
+        });
+      throw error;
+    }
+  };
 
   return {
     node: async (instanceId: string): Promise<NodeState | undefined> => {
@@ -178,18 +213,16 @@ export const createCluster = (api: Kubernetes) => {
     },
 
     podsOn: async (instanceId: string) =>
-      (
+      clusterPods(
         await api.list(
           `${PODS}?fieldSelector=${selector("spec.nodeName", hostName(instanceId))}`,
-        )
-      )
-        .map(clusterPod)
-        .filter((pod): pod is ClusterPod => pod !== undefined),
+        ),
+      ),
 
     modelPods: async (model: string) =>
-      (await api.list(`${PODS}?labelSelector=${selector(MODEL_LABEL, model)}`))
-        .map(clusterPod)
-        .filter((pod): pod is ClusterPod => pod?.model === model),
+      clusterPods(
+        await api.list(`${PODS}?labelSelector=${selector(MODEL_LABEL, model)}`),
+      ).filter((pod) => pod.model === model),
 
     replicas: async (model: string) => {
       const rollout = (await api.get(`${ROLLOUTS}/${model}`)) as

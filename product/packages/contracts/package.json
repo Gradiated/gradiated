@@ -28,6 +28,6 @@
   "dependencies": {
     "@hono/zod-openapi": "1.6.0",
     "cron-parser": "5.4.0",
-    "zod": "4.6.5"
+    "zod": "4.6.6"
   }
 }

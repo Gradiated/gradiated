@@ -21,7 +21,7 @@ import uuid
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from host_state import atomic_json, bound_log, sync_directory
-from host_bundle import host_version, stage_host
+from host_bundle import BASE_ID, host_version, stage_host
 
 REQUEST_DRAIN_SECONDS = 660
 
@@ -115,6 +115,7 @@ def runtime_profile(config, pod):
     if profiles is None:
         profiles = {config["bundle_sha256"]: {
             "image": f"gradiated/kev-bundle@sha256:{config['bundle_sha256']}",
+            "bundles": {BASE_ID.read_text().strip(): config["bundle_sha256"]},
             "model_id": config["model_id"], "release": config["release"],
             "gpus": 1, "cpu": "16", "memory": "64Gi", "request_memory": "48Gi",
             "startup_timeout": 1800,
@@ -305,6 +306,18 @@ def host_pods(config, exclude):
     return pods
 
 
+def runtime_bundle(profile):
+    """The bundle a runtime release built for this host's base.
+
+    A release lists one bundle per base, so re-imaging a host onto a new base
+    keeps every release it serves runnable."""
+    base = BASE_ID.read_text().strip()
+    bundle = profile.get("bundles", {}).get(base)
+    if not isinstance(bundle, str) or not re.fullmatch(r"[0-9a-f]{64}", bundle):
+        raise ValueError(f"Runtime release {profile['image']} has no bundle for base {base}")
+    return bundle
+
+
 def host_tool(name):
     return Path(__file__).resolve().with_name(name)
 
@@ -324,8 +337,9 @@ def task(uid, stopping):
         state['task'] = {'pid': os.getpid(), 'birth': process_birth(os.getpid()), **PROCESS_SCOPE}
         atomic_json(directory / 'state.json', state)
     digest, profile = runtime_profile(config, state["pod"])
-    bundle = ROOT / "bundles" / digest
-    if (bundle / ".bundle-sha256").read_text().strip() != digest:
+    bundle_digest = runtime_bundle(profile)
+    bundle = ROOT / "bundles" / bundle_digest
+    if (bundle / ".bundle-sha256").read_text().strip() != bundle_digest:
         raise ValueError("Unverified runtime bundle")
     devices = state.get("gpu_uuids", gpu_pool(config)[:profile["gpus"]])
     base = state.get("port_base", 38080)
@@ -418,6 +432,12 @@ class UnknownPod(Exception):
     pass
 
 
+# The request carries another controller generation than this host's fence. The
+# controller re-claims a host whose generation went backwards, as after a re-image.
+class StaleFence(ValueError):
+    pass
+
+
 class Agent:
     def __init__(self, config, root=ROOT, config_path=None):
         self.config, self.root = config, root
@@ -465,7 +485,11 @@ class Agent:
             protected = set(self.config.get('runtimes', {})) | set(self.catalogue_wanted)
             if self.config.get('bundle_sha256'):
                 protected.add(self.config['bundle_sha256'])
-            protected.update(runtime_profile(self.config, state['pod'])[0] for state in states)
+            active = [runtime_profile(self.config, state['pod']) for state in states]
+            protected.update(digest for digest, _ in active)
+            base = BASE_ID.read_text().strip()
+            profiles = [*self.config.get('runtimes', {}).values(), *self.catalogue_wanted.values(), *(profile for _, profile in active)]
+            protected.update(profile['bundles'][base] for profile in profiles if base in profile.get('bundles', {}))
             retired = []
             unknown_processes = False
             for directory in (self.root / 'pods').iterdir():
@@ -675,7 +699,11 @@ class Agent:
                 raise ValueError('Invalid pinned runtime catalogue')
             if profile.get('environment', {}).get('HOST_IDENTITY_FILE'):
                 raise ValueError('Legacy host credentials are not supported')
-            if profile.get('kind') == 'training' or profile['gpus'] <= len(gpu_pool(self.config)):
+            bundles = profile.get('bundles')
+            if not isinstance(bundles, dict) or not all(isinstance(bundle, str) and re.fullmatch('[0-9a-f]{64}', bundle) for bundle in bundles.values()):
+                raise ValueError('Invalid pinned runtime catalogue')
+            # A release with no bundle for this host's base cannot run here.
+            if BASE_ID.read_text().strip() in bundles and (profile.get('kind') == 'training' or profile['gpus'] <= len(gpu_pool(self.config))):
                 wanted[digest] = profile
         self.catalogue_wanted = wanted
         task = (epoch, json.dumps(wanted, sort_keys=True))
@@ -690,7 +718,7 @@ class Agent:
                 log_path = self.root / 'bundle-download.log'
                 fd = os.open(log_path, os.O_WRONLY | os.O_CREAT | os.O_APPEND | os.O_NOFOLLOW, 0o600)
                 with os.fdopen(fd, 'ab') as log:
-                    for digest in wanted:
+                    for digest in {runtime_bundle(profile) for profile in wanted.values()}:
                         marker = self.root / 'bundles' / digest / '.bundle-sha256'
                         if marker.exists() and marker.read_text().strip() == digest:
                             continue
@@ -702,9 +730,10 @@ class Agent:
                         return
                     current = json.loads(self.config_path.read_text()) if self.config_path is not None else self.config
                     merged = dict(wanted)
+                    # Active pods keep releases the catalogue has dropped.
                     for state in self.states():
                         digest, profile = runtime_profile(current, state['pod'])
-                        merged[digest] = current.get('runtimes', {}).get(digest, {**profile, 'image': state['pod']['spec']['containers'][0]['image']})
+                        merged.setdefault(digest, current.get('runtimes', {}).get(digest, {**profile, 'image': state['pod']['spec']['containers'][0]['image']}))
                     updated = {**current, 'gpu_uuids': gpu_pool(current), 'runtimes': merged}
                     if self.config_path is not None:
                         atomic_json(self.config_path, updated)
@@ -750,9 +779,9 @@ class Agent:
                 atomic_json(fence_file, {'epoch': epoch})
                 previous = epoch
             if fence.get('term') and body.get('term') != fence['term']:
-                raise ValueError('Stale controller term')
+                raise StaleFence('Stale controller term')
             if epoch != previous:
-                raise ValueError("Stale controller fencing epoch")
+                raise StaleFence("Stale controller fencing epoch")
             if operation == "configure":
                 if body.get("host_bundle"):
                     stage_host(self, body["host_bundle"], epoch)
@@ -960,6 +989,10 @@ def handler_for(agent, token):
             except UnknownPod:
                 payload = b'{"error":"unknown_pod"}'
                 self.send_response(404)
+            except StaleFence as error:
+                print(f"Host operation rejected: {error}", flush=True)
+                payload = b'{"error":"stale_epoch"}'
+                self.send_response(409)
             except (OSError, RuntimeError) as error:
                 print(f'Host operation unavailable: {type(error).__name__}', flush=True)
                 payload = b'{"error":"host_unavailable"}'

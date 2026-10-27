@@ -33,6 +33,13 @@ separate account and receive per-pod scratch space and exclusive GPU UUIDs.
 Publication does not change production routes. Pin the verified runtime in
 `product/inference/gpu/runtimes.json` and select its digest in
 `infra/environments/prod/us-east-1/kubernetes/gpu-inference/models.json`.
+
+Each release lists a bundle per GPU base in `bundles`, keyed by base ID and
+taken from the `release.json` of the runtime job that built it. A host runs the
+bundle for its own base, so re-imaging a host onto a new base never strands the
+releases it serves. The renderer refuses a base pin in `pins.json` until every
+release has a bundle for that base. Keep an older base's bundles until no host
+runs that base.
 Run `python3 tools/gpu/render-config.py`, review the generated manifests and
 merge them. Argo owns the deployment. Install the new host release before
 selecting model bundles that no longer carry their own `runtime-launch`.

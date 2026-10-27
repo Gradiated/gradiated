@@ -6,6 +6,22 @@ type Item = { metadata: Record<string, unknown>; [key: string]: unknown };
 
 const clone = <T>(value: T): T => structuredClone(value);
 
+// The API server returns object fields in its own order, not the order they
+// were written, so code must never compare stored objects by serialization.
+const reorder = (value: unknown): unknown =>
+  value && typeof value === "object" && !Array.isArray(value)
+    ? Object.fromEntries(
+        Object.keys(value)
+          .sort()
+          .map((key) => [
+            key,
+            reorder((value as Record<string, unknown>)[key]),
+          ]),
+      )
+    : Array.isArray(value)
+      ? value.map(reorder)
+      : value;
+
 // RFC 7386 JSON merge patch: objects merge, null removes, anything else replaces.
 const merge = (target: unknown, patch: unknown): unknown => {
   if (patch === null || typeof patch !== "object" || Array.isArray(patch))
@@ -41,8 +57,9 @@ export const fakeKubernetes = () => {
       return clone(item);
     }
     item.metadata.resourceVersion = String(++version);
-    objects.set(path, item);
-    return clone(item);
+    const stored = reorder(item) as Item;
+    objects.set(path, stored);
+    return clone(stored);
   };
   const missing = (path: string) =>
     new KubernetesError(404, `Kubernetes ${path} returned 404`);

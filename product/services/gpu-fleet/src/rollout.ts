@@ -1,3 +1,5 @@
+import { isDeepStrictEqual } from "node:util";
+
 import type { Cluster, ClusterPod } from "./cluster.js";
 import { ReimageNotSent, type Enrollment } from "./enroll.js";
 import {
@@ -671,8 +673,10 @@ export const createRollouts = (deps: RolloutDependencies) => {
       if (
         Object.entries(set).some(
           ([key, value]) =>
-            JSON.stringify(value) !==
-            JSON.stringify((rollout as Record<string, unknown>)[key]),
+            !isDeepStrictEqual(
+              value,
+              (rollout as Record<string, unknown>)[key],
+            ),
         )
       )
         await record(set);
@@ -747,9 +751,9 @@ export const createRollouts = (deps: RolloutDependencies) => {
     });
   };
 
+  // The API server reorders a stored target's fields, so compare values.
   const sameTarget = (rollout: Rollout | undefined, pins: Pins) =>
-    rollout !== undefined &&
-    JSON.stringify(rollout.target) === JSON.stringify(target(pins));
+    rollout !== undefined && isDeepStrictEqual(rollout.target, target(pins));
 
   // A failed rollout stops the fleet until the pins change or a person sets
   // the retry annotation to a new value.

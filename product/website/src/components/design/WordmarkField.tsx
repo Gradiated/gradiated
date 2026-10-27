@@ -72,7 +72,7 @@ const CHIP_GAP_U = 1 / 6;
  * 96 is what the desktop already had, so widening the mark is not a change
  * there — a phone now gets the same picture in smaller pixels.
  */
-const CHIP_COLS = 96;
+const CHIP_COLS = 150;
 
 /** Chip size and gap for a given width, keeping the 2:1 size-to-gap ratio.
  *
@@ -105,8 +105,9 @@ const SHIMMER = { angle: -45, speed: 0.16, width: 0.16 };
    them, so the sweep has the engine's full positive range to climb. */
 const SHIMMER_INTENSITY = 0.85;
 
-/** Width-to-height ratio of public/brand/wordmark.svg's viewBox. */
-const WORDMARK_ASPECT = 913.69 / 159.75;
+/** Width-to-height ratio of public/brand/wordmark-angular.svg's viewBox
+ *  (the new angular lockup, re-kerned at build of the asset). */
+const WORDMARK_ASPECT = 694.2 / 77;
 
 export const WordmarkField = (): ReactElement => {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -263,7 +264,7 @@ export const WordmarkField = (): ReactElement => {
       // fight that and leave the mark a gap-width off its own grid.
       field.setPixelRatio(window.devicePixelRatio || 1);
       field.resize(cols, rows);
-      await field.setShapeFromImage("/brand/wordmark.svg", {
+      await field.setShapeFromImage("/brand/wordmark-angular.svg", {
         cols,
         mode: "alpha",
         rows,

@@ -26,7 +26,7 @@ func testProvider(t *testing.T, handler http.HandlerFunc) *provider {
 	if err := os.WriteFile(token, []byte("host-only-key"), 0600); err != nil {
 		t.Fatal(err)
 	}
-	return &provider{host: host{Endpoint: server.URL, TokenFile: token}, epoch: 7, pods: map[string]*v1.Pod{}}
+	return &provider{host: host{Endpoint: server.URL, TokenFile: token}, fence: &hostFence{epoch: 7}, pods: map[string]*v1.Pod{}}
 }
 
 func TestOriginalPodPreventsResolvedCredentialTransfer(t *testing.T) {

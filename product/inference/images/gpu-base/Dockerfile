@@ -19,10 +19,10 @@ RUN sed -i 's|http://|https://|g' /etc/apt/sources.list.d/ubuntu.sources && apt-
     && touch /etc/gradiated/platform-only \
     && install -d -m 700 -o downloader -g downloader /var/cache/gradiated/runtime-bundles \
     && install -d -o runtime -g runtime /home/runtime/.cache /home/runtime/.cache/huggingface
-RUN curl -fsSL -o /tmp/tailscale.tgz https://pkgs.tailscale.com/stable/tailscale_1.104.1_amd64.tgz \
-    && echo '108d1d96ecf410d305571e173516f27038f870919a9b89c914a167c6d33a4528  /tmp/tailscale.tgz' | sha256sum -c - \
+RUN curl -fsSL -o /tmp/tailscale.tgz https://pkgs.tailscale.com/stable/tailscale_1.104.2_amd64.tgz \
+    && echo '512f613ed7d04fc7282f7dc5bd76aa105aae28168fbb9357eb749ebcbc29f0ae  /tmp/tailscale.tgz' | sha256sum -c - \
     && tar -xzf /tmp/tailscale.tgz -C /opt/gradiated/tailscale --strip-components=1 \
-       tailscale_1.104.1_amd64/tailscale tailscale_1.104.1_amd64/tailscaled \
+       tailscale_1.104.2_amd64/tailscale tailscale_1.104.2_amd64/tailscaled \
     && rm /tmp/tailscale.tgz
 COPY images/gpu-base/base-id /etc/gradiated/base-id
 # Enrollment verifies the seed host bundle with the bundle's own modules.

@@ -24,6 +24,7 @@ import {
 import type { Observation } from "../../src/observe.js";
 import type { Pins } from "../../src/pins.js";
 import { fakeKubernetes } from "./kubernetes.js";
+import { virtualKubeletStatus } from "./pods.js";
 
 const IMAGE = (tag: string) =>
   `873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/inference:${tag}`;
@@ -251,10 +252,9 @@ export const simulateFleet = (hosts: HostSpec[], models: Model[]) => {
         creationTimestamp: now().toISOString(),
       },
       spec: { ...(node && { nodeName: node }), containers: containers(gpus) },
-      status: {
-        phase: node ? "Running" : "Pending",
-        conditions: [{ type: "Ready", status: ready ? "True" : "False" }],
-      },
+      status: node
+        ? virtualKubeletStatus(ready)
+        : { phase: "Pending", conditions: [] },
     });
     return name;
   };
@@ -274,10 +274,7 @@ export const simulateFleet = (hosts: HostSpec[], models: Model[]) => {
         nodeName: `gpu-${instanceId}`,
         containers: containers(TRAINING.gpus),
       },
-      status: {
-        phase: "Running",
-        conditions: [{ type: "Ready", status: "True" }],
-      },
+      status: virtualKubeletStatus(true),
     });
     return name;
   };
@@ -439,10 +436,7 @@ export const simulateFleet = (hosts: HostSpec[], models: Model[]) => {
           node.status.conditions[0].status === "True" &&
           !item.metadata.deletionTimestamp &&
           !notReady.has(item.metadata.name);
-        item.status = {
-          phase: "Running",
-          conditions: [{ type: "Ready", status: isReady ? "True" : "False" }],
-        };
+        item.status = virtualKubeletStatus(isReady);
         if (isReady)
           item.metadata.annotations["gradiated.com/qualified-runtime"] ??=
             `${item.metadata.name}:1`;
@@ -457,10 +451,7 @@ export const simulateFleet = (hosts: HostSpec[], models: Model[]) => {
       );
       if (target) {
         item.spec = { ...item.spec, nodeName: target.item.metadata.name };
-        item.status = {
-          phase: "Running",
-          conditions: [{ type: "Ready", status: "False" }],
-        };
+        item.status = virtualKubeletStatus(false);
       } else if (
         !item.status.conditions.some((c: any) => c.type === "PodScheduled")
       )

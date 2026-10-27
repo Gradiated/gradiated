@@ -16,7 +16,7 @@
     "@gradiated/valkey": "workspace:*",
     "luxon": "^3.7.2",
     "prom-client": "15.1.3",
-    "zod": "4.6.5",
+    "zod": "4.6.6",
     "@typesafe-ai/sdk": "0.6.0",
     "openai": "7.5.0"
   },

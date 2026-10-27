@@ -101,6 +101,11 @@
   --color-grove-500: #838e70;
   --color-grove-400: #7f917d;
 
+  /* Signal — the one emissive colour: an LED, not a pigment. For status
+     dies and indicator lights only; it is the same on every theme because
+     a diode does not care about the ground behind it. */
+  --color-signal-green: #2fd655;
+
   /* Plum — the night sky over the Academy. */
   --color-plum-800: #291e3a;
   --color-plum-700: #413758;

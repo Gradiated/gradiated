@@ -3853,6 +3853,55 @@
   margin: 0;
 }
 
+/* Methods opens as an index, not as a chapter. The chapter navigation only
+   appears after a reader chooses a topic. */
+.gr-methods-index {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: calc(4 * var(--u));
+  row-gap: calc(2.5 * var(--u));
+}
+
+.gr-methods-index-group h2 {
+  margin: 0 0 calc(0.6 * var(--u));
+  color: var(--color-text-muted);
+}
+
+.gr-methods-index-group ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-block-start: 1px solid var(--color-rule);
+}
+
+.gr-methods-index-group li {
+  border-block-end: 1px solid var(--color-rule);
+}
+
+.gr-methods-index-group a {
+  display: block;
+  padding-block: calc(0.8 * var(--u));
+  color: var(--color-text);
+  font-family: var(--font-title);
+  font-size: var(--text-card);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: var(--tracking-heading);
+  text-decoration: none;
+  transition: padding-inline var(--dur-fast) var(--ease-response);
+}
+
+.gr-methods-index-group a:hover,
+.gr-methods-index-group a:focus-visible {
+  padding-inline-start: calc(0.35 * var(--u));
+}
+
+@media (max-width: 46rem) {
+  .gr-methods-index {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* -- tables ---------------------------------------------------------------- */
 
 /* Scrolls inside its own box. A wide table must never make the PAGE scroll

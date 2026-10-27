@@ -14,6 +14,15 @@ export const ChipLayersArtwork = (): ReactElement => {
     if (!host || !canvas || !context || !trigger) return;
 
     const grains = makeChipGrains();
+    const bounds = grains.reduce(
+      (box, { chip }) => ({
+        left: Math.min(box.left, chip.x),
+        right: Math.max(box.right, chip.x),
+        top: Math.min(box.top, chip.y),
+        bottom: Math.max(box.bottom, chip.y),
+      }),
+      { left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity },
+    );
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
     let width = 0;
     let height = 0;
@@ -30,12 +39,14 @@ export const ChipLayersArtwork = (): ReactElement => {
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
       context.clearRect(0, 0, width, height);
       const scale = Math.min(width / 640, height / 400);
-      const left = (width - 640 * scale) / 2;
-      const top = (height - 400 * scale) / 2;
+      const left = (width - (bounds.left + bounds.right) * scale) / 2;
+      const top = (height - (bounds.top + bounds.bottom) * scale) / 2;
       const ease = progress * progress * (3 - 2 * progress);
       for (const grain of grains) {
-        const x = grain.sand.x + (grain.chip.x - grain.sand.x) * ease;
-        const y = grain.sand.y + (grain.chip.y - grain.sand.y) * ease;
+        const sandX = (grain.sand.x / 640) * width;
+        const sandY = (grain.sand.y / 400) * height;
+        const x = sandX + (left + grain.chip.x * scale - sandX) * ease;
+        const y = sandY + (top + grain.chip.y * scale - sandY) * ease;
         const light =
           grain.surface === 2
             ? ease * 0.78
@@ -47,13 +58,7 @@ export const ChipLayersArtwork = (): ReactElement => {
         const b = Math.round(24 + grain.shade * 8 + light * 107);
         context.fillStyle = `rgba(${r},${g},${b},${0.55 + grain.shade * 0.4})`;
         context.beginPath();
-        context.arc(
-          left + x * scale,
-          top + y * scale,
-          Math.max(0.45, grain.size * scale),
-          0,
-          Math.PI * 2,
-        );
+        context.arc(x, y, Math.max(0.45, grain.size * scale), 0, Math.PI * 2);
         context.fill();
       }
       host.dataset.morph = progress.toFixed(3);
@@ -147,14 +152,16 @@ export const ChipLayersArtwork = (): ReactElement => {
         stroke="currentColor"
         strokeWidth="2"
       >
-        {[0, 1, 2, 3].map((layer) => (
-          <path
-            key={layer}
-            d="M70 250 320 154 570 250 465 290 360 250 215 306Z"
-            transform={`translate(0 ${-layer * 25})`}
-          />
-        ))}
-        <path d="M70 250V280L320 376 570 280V250M320 346V376" />
+        <g transform="translate(0 -27.5)">
+          {[0, 1, 2, 3].map((layer) => (
+            <path
+              key={layer}
+              d="M70 250 320 154 570 250 465 290 360 250 215 306Z"
+              transform={`translate(0 ${-layer * 25})`}
+            />
+          ))}
+          <path d="M70 250V280L320 376 570 280V250M320 346V376" />
+        </g>
       </svg>
       <canvas ref={canvasRef} />
     </div>

@@ -108,6 +108,7 @@ export const PatterningModel = ({
   visit,
   state,
   input,
+  embedded = false,
 }: {
   index: number;
   progress: number;
@@ -116,6 +117,7 @@ export const PatterningModel = ({
   visit: Visit;
   state: PatternState;
   input: number;
+  embedded?: boolean;
 }) => {
   const id = useId();
   const hoveredRegion = useRef("");
@@ -664,6 +666,340 @@ export const PatterningModel = ({
   const camera =
     section > 0.5 ? "Cutaway" : elevation > 1 ? "Top view" : "3D view";
 
+  const drawing = (
+    <>
+      <defs>
+        <clipPath id={`${id}-beam-clip`}>
+          <rect x="0" y="8" width="380" height="240" />
+        </clipPath>
+        <pattern
+          id={`${id}-section`}
+          width="7"
+          height="7"
+          patternUnits="userSpaceOnUse"
+        >
+          <path
+            d="M0 7 7 0"
+            stroke={siliconColours.hatch}
+            strokeWidth={0.6 + crystalRepair * 0.3}
+            strokeDasharray={`${10 - crystalDamage * 8} ${crystalDamage * 3}`}
+          />
+        </pattern>
+      </defs>
+      {!embedded ? (
+        <ellipse
+          cx="190"
+          cy="225"
+          rx="127"
+          ry="15"
+          fill="#dcd4c5"
+          opacity=".32"
+        />
+      ) : null}
+      {faces.map((face, i) => (
+        <path
+          key={i}
+          d={path(face.points)}
+          data-region={face.opacity > 0.5 ? face.region : undefined}
+          aria-label={face.region}
+          fill={face.fill}
+          opacity={face.opacity}
+          stroke={face.fill}
+          strokeWidth=".45"
+          strokeLinejoin="round"
+        />
+      ))}
+      {section > 0.05 ? (
+        <path
+          d={path([
+            [0, ymax, -20],
+            [100, ymax, -20],
+            ...[...geometryXs]
+              .reverse()
+              .map((x) => [x, ymax, siliconTop(x, ymax - 0.001)] as Point),
+          ])}
+          fill={`url(#${id}-section)`}
+          data-crystal-repair={crystalRepair}
+          opacity={section * (0.26 + crystalRepair * 0.48)}
+        />
+      ) : null}
+      {targetWell > 0 ? (
+        <g opacity={targetWell} data-target-well="true">
+          <path
+            d={path([
+              [55, 0, materialSurfaceHeight(state, 55, 0) + 0.3],
+              [100, 0, materialSurfaceHeight(state, 100, 0) + 0.3],
+              [100, ymax, materialSurfaceHeight(state, 100, ymax) + 0.3],
+              [55, ymax, materialSurfaceHeight(state, 55, ymax) + 0.3],
+            ])}
+            fill={materialColours.well[0]}
+            fillOpacity=".15"
+            stroke="#8a7993"
+            strokeWidth=".8"
+            strokeDasharray="3 3"
+          />
+          <text
+            x={project([77, 17, 2])[0]}
+            y={project([77, 17, 2])[1]}
+            fontSize="9"
+            textAnchor="middle"
+            fill="#746982"
+          >
+            Target n-well region
+          </text>
+        </g>
+      ) : null}
+      {index >= stages.via && index < stages.upperMetal && state.viaOpen > 0 ? (
+        <g data-via-floor={25 - 8 * state.viaOpen} opacity={state.viaOpen}>
+          <path
+            d={path([
+              [48, 21, 25 - 8 * state.viaOpen],
+              [52, 21, 25 - 8 * state.viaOpen],
+              [52, 25, 25 - 8 * state.viaOpen],
+              [48, 25, 25 - 8 * state.viaOpen],
+            ])}
+            fill="var(--signal-stroke)"
+            fillOpacity=".22"
+            stroke="var(--signal-stroke)"
+            strokeWidth=".8"
+          />
+          <path
+            d={path(
+              [
+                [48, 25, 25],
+                [48, 25, 25 - 8 * state.viaOpen],
+              ],
+              false,
+            )}
+            fill="none"
+            stroke="var(--signal-stroke)"
+            strokeWidth=".7"
+          />
+        </g>
+      ) : null}
+      {lighting.beam > 0 && cycle ? (
+        <g
+          opacity={lighting.beam}
+          data-exposure-beam={cycle.id}
+          clipPath={`url(#${id}-beam-clip)`}
+        >
+          <ExposureBeams
+            regions={beamRegions}
+            surfaceHeight={(x, y) =>
+              materialSurfaceHeight(state, x, y) +
+              resistThickness(state, cycle.id, x, y)
+            }
+            project={project}
+          />
+        </g>
+      ) : null}
+      {visit.working &&
+      (visit.machine === "furnace" || visit.machine === "anneal") ? (
+        <g
+          stroke="#cf9665"
+          fill="none"
+          opacity={Math.sin(Math.PI * visit.process) * 0.5}
+        >
+          {[125, 190, 255].map((x) => (
+            <path key={x} d={`M${x} 70q-10-12 0-23t0-23`} strokeWidth="1.4" />
+          ))}
+        </g>
+      ) : null}
+      <g clipPath={`url(#${id}-beam-clip)`}>
+        <CloseupProcessEffects
+          index={index}
+          visit={visit}
+          state={state}
+          project={project}
+          ymax={ymax}
+        />
+      </g>
+      {index >= stages.well && index <= stages.anneal ? (
+        <g fontSize="9" textAnchor="middle" fill={siliconColours.label}>
+          <text x={project([24, ymax, -17])[0]} y={project([24, ymax, -17])[1]}>
+            p-type silicon
+          </text>
+          <text
+            opacity={state.well}
+            x={project([77, ymax, -13])[0]}
+            y={project([77, ymax, -13])[1]}
+          >
+            n-well
+          </text>
+        </g>
+      ) : null}
+      {index >= stages.implant && index <= stages.anneal ? (
+        <g
+          opacity={Math.max(state.implantN, state.implantP)}
+          fontSize="6.5"
+          textAnchor="middle"
+          fill={siliconColours.label}
+        >
+          {[16, 36, 64, 84].map((x) => {
+            const point = project([x, ymax, -7]);
+
+            return (
+              <text
+                key={x}
+                x={point[0]}
+                y={point[1]}
+                opacity={x < 50 ? state.implantN : state.implantP}
+              >
+                {x < 50 ? "n-doped" : "p-doped"}
+              </text>
+            );
+          })}
+        </g>
+      ) : null}
+      {index === 0 || index === stages.inverter ? (
+        <g
+          data-inverter-input={input}
+          data-inverter-output={electrical.output ?? "settling"}
+        >
+          {([16, 84] as const).map((x) => {
+            const colour = x === 16 ? logicColours.low : logicColours.high;
+            const points: Point[] = [
+              [x, -9, wireTop],
+              [x, 23, wireTop],
+            ];
+            const label = project([x, -9, wireTop]);
+
+            return (
+              <g key={x}>
+                <path
+                  d={path(points, false)}
+                  fill="none"
+                  stroke={materialColours.metal[1]}
+                  strokeWidth="1.2"
+                />
+                {trace(`supply-${x}`, points, colour, electrical.supply)}
+                <text
+                  x={label[0]}
+                  y={label[1] - 7}
+                  textAnchor="middle"
+                  fontSize="13"
+                  fill={colour}
+                >
+                  {x === 16 ? "0 V" : "+1 V"}
+                </text>
+              </g>
+            );
+          })}
+          {trace(
+            "input",
+            [
+              [50, 0, wireTop],
+              [50, 8, wireTop],
+            ],
+            inputColour,
+            electrical.input,
+          )}
+          {[26, 74].map((x) => (
+            <g key={x}>
+              {trace(
+                `gate-${x}`,
+                [
+                  [50, 8, wireTop],
+                  [x, 8, wireTop],
+                  [x, 8, deviceTop(x, 8) + 0.3],
+                ],
+                inputColour,
+                electrical.gates,
+              )}
+              {[0, ymax].map((y) =>
+                trace(
+                  `electrode-${x}-${y}`,
+                  [
+                    [x, 8, deviceTop(x, 8) + 0.3],
+                    [x, y, deviceTop(x, y) + 0.3],
+                  ],
+                  inputColour,
+                  electrical.electrodes,
+                ),
+              )}
+            </g>
+          ))}
+          {trace(
+            "conducting-transistor",
+            [
+              [supplyX, 23, wireTop],
+              [supplyX, 23, oxideBase - 5.5],
+              [drainX, 23, oxideBase - 5.5],
+              [drainX, 23, wireTop],
+            ],
+            supplyColour,
+            electrical.transfer,
+          )}
+          {trace(
+            "output-junction",
+            [
+              [drainX, 23, wireTop],
+              [50, 23, wireTop],
+            ],
+            supplyColour,
+            electrical.outputRail,
+          )}
+          {trace(
+            "output-exit",
+            [
+              [50, 23, wireTop],
+              [50, outputY, wireTop],
+            ],
+            supplyColour,
+            electrical.exit,
+          )}
+          {(
+            [
+              [50, 0, `Input = ${input}`, inputColour, -13],
+              [
+                50,
+                outputY,
+                `Output = ${electrical.output ?? "…"}`,
+                electrical.output === undefined ? "#514e47" : supplyColour,
+                12,
+              ],
+            ] as [number, number, string, string, number][]
+          ).map(([x, y, label, colour, offset]) => {
+            const point = project([x, y, 20]);
+
+            return (
+              <text
+                key={label}
+                x={point[0]}
+                y={y === outputY ? 211 : point[1] + offset}
+                textAnchor="middle"
+                fontSize="12"
+                fill={colour}
+              >
+                {label}
+              </text>
+            );
+          })}
+          {[26, 74].map((x) => (
+            <text
+              key={x}
+              x={project([x, 23, 0])[0]}
+              y="233"
+              textAnchor="middle"
+              fontSize="11"
+              fill={
+                (x === 26 ? input === 1 : input === 0)
+                  ? supplyColour
+                  : "#8e8271"
+              }
+              opacity={electrical.electrodes}
+            >
+              {x === 26 ? "n-type" : "p-type"}{" "}
+              {(x === 26 ? input === 1 : input === 0) ? "on" : "off"}
+            </text>
+          ))}
+        </g>
+      ) : null}
+    </>
+  );
+
+  if (embedded) return <g data-embedded-inverter="true">{drawing}</g>;
+
   return (
     <div
       className="fab-pattern-model"
@@ -682,336 +1018,7 @@ export const PatterningModel = ({
           currentResist && currentResist.amount > 0.001 ? "present" : "absent"
         }
       >
-        <defs>
-          <clipPath id={`${id}-beam-clip`}>
-            <rect x="0" y="8" width="380" height="240" />
-          </clipPath>
-          <pattern
-            id={`${id}-section`}
-            width="7"
-            height="7"
-            patternUnits="userSpaceOnUse"
-          >
-            <path
-              d="M0 7 7 0"
-              stroke={siliconColours.hatch}
-              strokeWidth={0.6 + crystalRepair * 0.3}
-              strokeDasharray={`${10 - crystalDamage * 8} ${crystalDamage * 3}`}
-            />
-          </pattern>
-        </defs>
-        <ellipse
-          cx="190"
-          cy="225"
-          rx="127"
-          ry="15"
-          fill="#dcd4c5"
-          opacity=".32"
-        />
-        {faces.map((face, i) => (
-          <path
-            key={i}
-            d={path(face.points)}
-            data-region={face.opacity > 0.5 ? face.region : undefined}
-            aria-label={face.region}
-            fill={face.fill}
-            opacity={face.opacity}
-            stroke={face.fill}
-            strokeWidth=".45"
-            strokeLinejoin="round"
-          />
-        ))}
-        {section > 0.05 ? (
-          <path
-            d={path([
-              [0, ymax, -20],
-              [100, ymax, -20],
-              ...[...geometryXs]
-                .reverse()
-                .map((x) => [x, ymax, siliconTop(x, ymax - 0.001)] as Point),
-            ])}
-            fill={`url(#${id}-section)`}
-            data-crystal-repair={crystalRepair}
-            opacity={section * (0.26 + crystalRepair * 0.48)}
-          />
-        ) : null}
-        {targetWell > 0 ? (
-          <g opacity={targetWell} data-target-well="true">
-            <path
-              d={path([
-                [55, 0, materialSurfaceHeight(state, 55, 0) + 0.3],
-                [100, 0, materialSurfaceHeight(state, 100, 0) + 0.3],
-                [100, ymax, materialSurfaceHeight(state, 100, ymax) + 0.3],
-                [55, ymax, materialSurfaceHeight(state, 55, ymax) + 0.3],
-              ])}
-              fill={materialColours.well[0]}
-              fillOpacity=".15"
-              stroke="#8a7993"
-              strokeWidth=".8"
-              strokeDasharray="3 3"
-            />
-            <text
-              x={project([77, 17, 2])[0]}
-              y={project([77, 17, 2])[1]}
-              fontSize="9"
-              textAnchor="middle"
-              fill="#746982"
-            >
-              Target n-well region
-            </text>
-          </g>
-        ) : null}
-        {index >= stages.via &&
-        index < stages.upperMetal &&
-        state.viaOpen > 0 ? (
-          <g data-via-floor={25 - 8 * state.viaOpen} opacity={state.viaOpen}>
-            <path
-              d={path([
-                [48, 21, 25 - 8 * state.viaOpen],
-                [52, 21, 25 - 8 * state.viaOpen],
-                [52, 25, 25 - 8 * state.viaOpen],
-                [48, 25, 25 - 8 * state.viaOpen],
-              ])}
-              fill="var(--signal-stroke)"
-              fillOpacity=".22"
-              stroke="var(--signal-stroke)"
-              strokeWidth=".8"
-            />
-            <path
-              d={path(
-                [
-                  [48, 25, 25],
-                  [48, 25, 25 - 8 * state.viaOpen],
-                ],
-                false,
-              )}
-              fill="none"
-              stroke="var(--signal-stroke)"
-              strokeWidth=".7"
-            />
-          </g>
-        ) : null}
-        {lighting.beam > 0 && cycle ? (
-          <g
-            opacity={lighting.beam}
-            data-exposure-beam={cycle.id}
-            clipPath={`url(#${id}-beam-clip)`}
-          >
-            <ExposureBeams
-              regions={beamRegions}
-              surfaceHeight={(x, y) =>
-                materialSurfaceHeight(state, x, y) +
-                resistThickness(state, cycle.id, x, y)
-              }
-              project={project}
-            />
-          </g>
-        ) : null}
-        {visit.working &&
-        (visit.machine === "furnace" || visit.machine === "anneal") ? (
-          <g
-            stroke="#cf9665"
-            fill="none"
-            opacity={Math.sin(Math.PI * visit.process) * 0.5}
-          >
-            {[125, 190, 255].map((x) => (
-              <path key={x} d={`M${x} 70q-10-12 0-23t0-23`} strokeWidth="1.4" />
-            ))}
-          </g>
-        ) : null}
-        <g clipPath={`url(#${id}-beam-clip)`}>
-          <CloseupProcessEffects
-            index={index}
-            visit={visit}
-            state={state}
-            project={project}
-            ymax={ymax}
-          />
-        </g>
-        {index >= stages.well && index <= stages.anneal ? (
-          <g fontSize="9" textAnchor="middle" fill={siliconColours.label}>
-            <text
-              x={project([24, ymax, -17])[0]}
-              y={project([24, ymax, -17])[1]}
-            >
-              p-type silicon
-            </text>
-            <text
-              opacity={state.well}
-              x={project([77, ymax, -13])[0]}
-              y={project([77, ymax, -13])[1]}
-            >
-              n-well
-            </text>
-          </g>
-        ) : null}
-        {index >= stages.implant && index <= stages.anneal ? (
-          <g
-            opacity={Math.max(state.implantN, state.implantP)}
-            fontSize="6.5"
-            textAnchor="middle"
-            fill={siliconColours.label}
-          >
-            {[16, 36, 64, 84].map((x) => {
-              const point = project([x, ymax, -7]);
-
-              return (
-                <text
-                  key={x}
-                  x={point[0]}
-                  y={point[1]}
-                  opacity={x < 50 ? state.implantN : state.implantP}
-                >
-                  {x < 50 ? "n-doped" : "p-doped"}
-                </text>
-              );
-            })}
-          </g>
-        ) : null}
-        {index === 0 || index === stages.inverter ? (
-          <g
-            data-inverter-input={input}
-            data-inverter-output={electrical.output ?? "settling"}
-          >
-            {([16, 84] as const).map((x) => {
-              const colour = x === 16 ? logicColours.low : logicColours.high;
-              const points: Point[] = [
-                [x, -9, wireTop],
-                [x, 23, wireTop],
-              ];
-              const label = project([x, -9, wireTop]);
-
-              return (
-                <g key={x}>
-                  <path
-                    d={path(points, false)}
-                    fill="none"
-                    stroke={materialColours.metal[1]}
-                    strokeWidth="1.2"
-                  />
-                  {trace(`supply-${x}`, points, colour, electrical.supply)}
-                  <text
-                    x={label[0]}
-                    y={label[1] - 7}
-                    textAnchor="middle"
-                    fontSize="13"
-                    fill={colour}
-                  >
-                    {x === 16 ? "0 V" : "+1 V"}
-                  </text>
-                </g>
-              );
-            })}
-            {trace(
-              "input",
-              [
-                [50, 0, wireTop],
-                [50, 8, wireTop],
-              ],
-              inputColour,
-              electrical.input,
-            )}
-            {[26, 74].map((x) => (
-              <g key={x}>
-                {trace(
-                  `gate-${x}`,
-                  [
-                    [50, 8, wireTop],
-                    [x, 8, wireTop],
-                    [x, 8, deviceTop(x, 8) + 0.3],
-                  ],
-                  inputColour,
-                  electrical.gates,
-                )}
-                {[0, ymax].map((y) =>
-                  trace(
-                    `electrode-${x}-${y}`,
-                    [
-                      [x, 8, deviceTop(x, 8) + 0.3],
-                      [x, y, deviceTop(x, y) + 0.3],
-                    ],
-                    inputColour,
-                    electrical.electrodes,
-                  ),
-                )}
-              </g>
-            ))}
-            {trace(
-              "conducting-transistor",
-              [
-                [supplyX, 23, wireTop],
-                [supplyX, 23, oxideBase - 5.5],
-                [drainX, 23, oxideBase - 5.5],
-                [drainX, 23, wireTop],
-              ],
-              supplyColour,
-              electrical.transfer,
-            )}
-            {trace(
-              "output-junction",
-              [
-                [drainX, 23, wireTop],
-                [50, 23, wireTop],
-              ],
-              supplyColour,
-              electrical.outputRail,
-            )}
-            {trace(
-              "output-exit",
-              [
-                [50, 23, wireTop],
-                [50, outputY, wireTop],
-              ],
-              supplyColour,
-              electrical.exit,
-            )}
-            {(
-              [
-                [50, 0, `Input = ${input}`, inputColour, -13],
-                [
-                  50,
-                  outputY,
-                  `Output = ${electrical.output ?? "…"}`,
-                  electrical.output === undefined ? "#514e47" : supplyColour,
-                  12,
-                ],
-              ] as [number, number, string, string, number][]
-            ).map(([x, y, label, colour, offset]) => {
-              const point = project([x, y, 20]);
-
-              return (
-                <text
-                  key={label}
-                  x={point[0]}
-                  y={y === outputY ? 211 : point[1] + offset}
-                  textAnchor="middle"
-                  fontSize="12"
-                  fill={colour}
-                >
-                  {label}
-                </text>
-              );
-            })}
-            {[26, 74].map((x) => (
-              <text
-                key={x}
-                x={project([x, 23, 0])[0]}
-                y="233"
-                textAnchor="middle"
-                fontSize="11"
-                fill={
-                  (x === 26 ? input === 1 : input === 0)
-                    ? supplyColour
-                    : "#8e8271"
-                }
-                opacity={electrical.electrodes}
-              >
-                {x === 26 ? "n-type" : "p-type"}{" "}
-                {(x === 26 ? input === 1 : input === 0) ? "on" : "off"}
-              </text>
-            ))}
-          </g>
-        ) : null}
+        {drawing}
       </svg>
       {regionTip && regionTip.scene === index ? (
         <div

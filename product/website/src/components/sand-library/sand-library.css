@@ -1,3 +1,9 @@
+.gr-root[data-tier="wide"] .sand-library .gr-module--top {
+  padding-block-start: calc(var(--nav-h) + 2.5 * var(--u));
+}
+.sand-library .gr-masthead {
+  margin-block-end: calc(1.5 * var(--u));
+}
 .sand-library-card {
   min-width: 0;
 }
@@ -20,10 +26,10 @@
   box-shadow: var(--shadow-raise);
 }
 .sand-library-art--overview {
-  min-height: calc(17 * var(--u));
+  aspect-ratio: 1.8;
 }
 .sand-library-card--lead .sand-library-link {
-  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
   gap: calc(2 * var(--u));
   align-items: center;
 }
@@ -35,6 +41,7 @@
   font-weight: 500;
   letter-spacing: var(--tracking-heading);
   line-height: 1.18;
+  text-wrap: balance;
 }
 .sand-library-copy h2 {
   font-size: clamp(2rem, 3.1vw, 3.25rem);
@@ -44,25 +51,26 @@
   font-size: var(--text-lede);
   line-height: var(--leading-lede);
 }
-.sand-library-action {
+.sand-library-title {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: calc(0.5 * var(--u));
-  width: fit-content;
-  margin-top: var(--u);
-  font-size: var(--text-body);
-  border-bottom: 1px solid transparent;
-  padding-bottom: 3px;
 }
-.sand-library-link:hover .sand-library-action,
-.sand-library-link:focus-visible .sand-library-action {
-  border-color: currentColor;
+.sand-library-title span {
+  min-width: 0;
 }
-.sand-library-action svg {
-  width: 22px;
+.sand-library-title svg {
+  flex: 0 0 20px;
+  width: 20px;
+  margin-top: 0.2em;
+  transition: transform var(--dur-base) var(--ease-response);
+}
+.sand-library-link:hover .sand-library-title svg,
+.sand-library-link:focus-visible .sand-library-title svg {
+  transform: translateX(3px);
 }
 .sand-library-dives {
-  margin-top: calc(3 * var(--u));
+  margin-top: calc(2 * var(--u));
   padding-top: calc(1.25 * var(--u));
   border-top: 1px solid var(--color-rule);
 }
@@ -103,5 +111,11 @@
 @media (max-width: 40rem) {
   .sand-library-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sand-library-title svg {
+    transition: none;
   }
 }

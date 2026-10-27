@@ -16,6 +16,7 @@
 <text x="217" y="88">p-type</text><text x="217" y="198">n-type</text>
 </g>
 <g fill="#657c6e" font-family="Barlow,Arial,sans-serif" font-size="13">
+<path d="M250 62H206L194 64 M240 127H206L194 108 M240 180H206L194 174 M250 240H206L194 218" fill="none" stroke="#657c6e" stroke-width="1"/>
 <text x="206" y="55">Source</text><text x="206" y="120">Drain</text>
 <text x="206" y="173">Drain</text><text x="206" y="233">Source</text>
 <g fill="#657c6e" stroke="#f7f3ec" stroke-width="1.5">

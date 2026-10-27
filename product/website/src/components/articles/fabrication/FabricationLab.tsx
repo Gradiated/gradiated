@@ -141,7 +141,7 @@ export const CleanRoom = ({
           width="624"
           height="247"
           rx="14"
-          fill="#ffffff"
+          fill="#eceeea"
           stroke="#ced7cb"
         />
         <rect
@@ -152,7 +152,7 @@ export const CleanRoom = ({
           rx="13"
           fill="url(#fab-floor)"
         />
-        <path d="M24 126h592" stroke="#ffffff" strokeWidth="48" />
+        <path d="M24 126h592" stroke="#f1f2ef" strokeWidth="48" />
         <path
           d="M24 109h592m-592 34h592"
           stroke="#d5ded1"
@@ -177,6 +177,7 @@ export const CleanRoom = ({
             return (
               <div
                 key={machine.id}
+                data-machine={machine.id}
                 className={`fab-room-machine ${current ? "is-current" : ""} ${place.y > 120 ? "is-bottom" : ""}`}
                 onPointerEnter={(event) => {
                   if (

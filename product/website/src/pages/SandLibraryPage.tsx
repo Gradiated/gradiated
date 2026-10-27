@@ -29,7 +29,6 @@ export const SandLibraryPage = (): ReactElement => {
         <Band>
           <Module className="gr-module--top" index={0}>
             <header className="gr-masthead">
-              <p className="gr-label">Explore the semiconductor stack</p>
               <h1 className="gr-masthead-title">Sand to Thought</h1>
             </header>
             {overview && (
@@ -42,14 +41,15 @@ export const SandLibraryPage = (): ReactElement => {
                     <SandCircuitArtwork />
                   </div>
                   <div className="sand-library-copy">
-                    <p className="gr-label">The complete journey</p>
-                    <h2>{overview.title}</h2>
+                    <p className="gr-label">Start here</p>
+                    <h2 className="sand-library-title">
+                      <span>{overview.title}</span>
+                      <Arrow />
+                    </h2>
                     <p className="sand-library-description">
-                      {overview.description}
+                      An illustrated journey from silicon to circuits that
+                      calculate and remember.
                     </p>
-                    <span className="sand-library-action">
-                      Start exploring <Arrow />
-                    </span>
                   </div>
                 </a>
               </article>
@@ -74,13 +74,16 @@ export const SandLibraryPage = (): ReactElement => {
                             Fabrication
                             {article.status === "draft" ? " · Draft" : ""}
                           </p>
-                          <h3>{article.title}</h3>
+                          <h3 className="sand-library-title">
+                            <span>{article.title}</span>
+                            <Arrow />
+                          </h3>
                           <p className="sand-library-description">
-                            {article.description}
+                            {article.path ===
+                            "/sand-to-thought/fabricating-a-transistor/"
+                              ? "Follow a silicon wafer through the machines that build a working NOT gate."
+                              : article.description}
                           </p>
-                          <span className="sand-library-action">
-                            Explore the process <Arrow />
-                          </span>
                         </div>
                       </a>
                     </article>

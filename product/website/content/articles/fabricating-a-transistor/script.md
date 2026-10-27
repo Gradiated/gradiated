@@ -1,12 +1,12 @@
 # How do we print a transistor onto silicon?
 
-A microchip is built on a small piece of silicon cut from a wafer. Transistors are formed at the silicon surface, with doped regions extending beneath it. Many are grouped into reusable building blocks called standard cells, such as NOT gates, NAND gates and flip-flops. These cells combine into larger circuits that calculate, remember and control. Layers of metal wires above the transistors connect nearby cells and distant parts of the chip.
+A microchip is built on a small piece of silicon cut from a wafer. Transistors are formed at the silicon surface, with doped regions extending beneath it. These transistors combine into logic gates, such as NOT and NAND gates, which form larger circuits that calculate, remember and control. Layers of metal wires above the transistors connect nearby circuits and distant parts of the chip.
 
 Here, we will follow a silicon wafer through the main steps of building the two transistors of a NOT gate, also called an inverter. We use a simplified planar design, where the conducting channel runs along a flat silicon surface beneath each transistorâ€™s gate electrode, between its source and drain connections. The structures are simplified and exaggerated to make operation clear and changes visible.
 
 <!-- scene: destination -->
 
-## Printing a NOT gate with two transistors and metal wire
+## The NOT gate we will build
 
 Our target structure is a NOT gate, a circuit whose output voltage is the opposite of its input. Inside it, two transistors each have a gate electrode connected to the same input. One transistor is n-type and the other p-type. Together, they connect the output to the high voltage supply (`+1 V`) when the input is low (`0 V`), or to the low supply (`0 V`) when the input is high (`+1 V`).
 
@@ -16,7 +16,7 @@ Each transistor has two doped regions called the source and drain, with a gate e
 
 ## Begin with a silicon wafer
 
-Let's begin with a polished silicon wafer, a thin slice cut from a large single crystal. Silicon is a chemical element with atomic number `14`, meaning each atom has `14` protons.[@silicon-element] Apart from a small quantity of dopant atoms, which we will explain shortly, our wafer is a continuous piece of silicon with no transistors or wires.
+Let's begin with a polished silicon wafer, a thin slice cut from a large single crystal[@silicon-element]. Apart from a small quantity of dopant atoms, which we will explain shortly, our wafer is a continuous piece of silicon with no transistors or wires.
 
 <!-- scene: clean-room -->
 
@@ -46,7 +46,7 @@ Our intern will make `44` processing visits before we have a working NOT gate, r
 
 <!-- scene: grow-oxide -->
 
-## Two different environments for two adjacent transistors
+## Prepare the silicon
 
 We need an n-type and a p-type transistor side by side for our NOT gate. The n-type transistor forms an electron-carrying channel between two n-doped pockets in a p-type silicon body. Its p-type partner forms a hole-carrying channel between p-doped pockets in an n-type body. Our p-type wafer already provides the body for the n-type transistor. To build its p-type partner alongside it, we first create a deeper n-type region called an n-well.
 
@@ -56,7 +56,7 @@ This oxide helps protect the silicon from contamination during implantation. As 
 
 <!-- scene: coat -->
 
-The intern now goes to the coater, where the wafer spins as we spread liquid photoresist into a thin film. A gentle heating step, called a soft bake, removes solvent and leaves a solid coating. This temporary film will protect the silicon that should remain p-type. Next, we will define an opening in it so ions can reach the future n-well.
+The intern now goes to the coater, where the wafer spins as we spread liquid photoresist into a thin film. Gentle heating removes solvent and leaves a solid coating. This temporary film will protect the silicon that should remain p-type. Next, we will define an opening in it so ions can reach the future n-well.
 
 <!-- scene: expose -->
 
@@ -83,7 +83,7 @@ Our intern now uses developer to wash away the exposed photoresist, opening the 
 
 <!-- scene: well -->
 
-Next we create the n-well. The implanter accelerates ions of an n-type dopant (usually phosphorus, antimony or arsenic) towards the wafer. They pass through the photoresist opening and thin oxide into the silicon. The photoresist blocks them elsewhere. Inside the opening, the added atoms will make the silicon n-type after heat treatment.
+Next we create the n-well. The implanter accelerates ions of an n-type dopant, such as phosphorus, towards the wafer. They pass through the photoresist opening and thin oxide into the silicon. The photoresist blocks them elsewhere. Inside the opening, the added atoms will make the silicon n-type after heat treatment.
 
 <!-- scene: strip -->
 
@@ -142,7 +142,14 @@ We prepare the exposed silicon by growing a thin *gate oxide*. Both oxides are s
 
 <!-- scene: poly -->
 
-A deposition machine adds the polysilicon film. Inside the chamber, gases such as silane and a small amount of phosphine supply silicon and phosphorus, incorporating dopant atoms into the growing film so it conducts electricity.[@polysilicon-doping] We will shape this conducting film into the gate electrodes later.
+A deposition machine adds the polysilicon film. Inside the chamber, gases supply silicon to build the film and dopant atoms to make it conduct electricity.[@polysilicon-doping] We will shape this conducting film into the gate electrodes later.
+
+<details>
+<summary>Which gases supply the silicon and dopant?</summary>
+
+For example, silane gas supplies silicon while a small amount of phosphine gas supplies phosphorus. The phosphorus atoms become part of the film as it grows.[@polysilicon-doping]
+
+</details>
 
 <!-- scene: gate-coat -->
 
@@ -250,7 +257,7 @@ We strip the photoresist after etching. The contact holes remain in the insulati
 
 <!-- scene: metal -->
 
-Metal deposition fills the contacts and forms a film across the surface. The blanket film is not yet our circuit. We must separate and cut it into individual connections.
+Metal deposition fills the contacts and forms a film across the surface. This continuous film is not yet our circuit. We must separate and cut it into individual connections.
 
 <!-- scene: metal-coat -->
 
@@ -292,7 +299,7 @@ Our intern now begins the next wiring level by depositing another insulating oxi
 
 <!-- scene: planarise -->
 
-Chemical-mechanical planarisation combines chemical action and polishing to remove raised material and flatten the surface. A flatter surface makes it easier to apply the next photoresist coating evenly and accurately focus its exposure pattern.
+We polish the oxide flat again. A flatter surface makes it easier to apply the next photoresist coating evenly and accurately focus its exposure pattern.
 
 <!-- scene: via-coat -->
 
@@ -308,7 +315,7 @@ Development opens the photoresist at that point, ready for the etcher to remove 
 
 <!-- scene: via -->
 
-The etcher digs a hole through the exposed insulation until it reaches the lower metal wire. Photoresist protects the surrounding surface. This recipe removes oxide much faster than metal, so the wire can form the bottom of the hole.[@etch-selectivity]
+The etcher digs a hole through the exposed insulation until it reaches the lower metal wire. Photoresist protects the surrounding surface. This recipe removes oxide much faster than metal, so the wire can form the bottom of the hole.[@etch-selectivity; @oxide-over-aluminium]
 
 <!-- scene: via-strip -->
 
@@ -332,7 +339,7 @@ Development reveals the unwanted metal while leaving photoresist along the wireâ
 
 <!-- scene: upper-metal-pattern -->
 
-The etcher removes exposed metal, leaving the upper connection beneath the photoresist. Here we use a metal-etching recipe that largely preserves the oxide beneath it.[@etch-selectivity] The insulating film keeps the new wire separate from unrelated wires below.
+The etcher removes exposed metal, leaving the upper connection beneath the photoresist. Here we use a metal-etching recipe that largely preserves the oxide beneath it.[@etch-selectivity; @aluminium-over-oxide] The insulating film keeps the new wire separate from unrelated wires below.
 
 <!-- scene: upper-strip -->
 
@@ -342,8 +349,8 @@ We have repeated the same patterning cycle with different patterns and materials
 
 <!-- scene: finish -->
 
-## Zooming out
+## From one gate to a chip
 
 Our NOT gate is one tiny part of a chip. Repeating the insulation, patterning and connection steps builds more wiring levels above it. Lower wires join nearby transistors, while larger wires higher up carry signals and power between distant parts of the chip. Vias connect the levels.[@interconnect-layers]
 
-The transistors stay near the silicon surface. Above them, layers of insulated metal turn many small circuits into one connected machine.
+The transistors stay on the silicon surface. Above them, a jungle of insulated metal layers turn many small circuits into one connected machine.

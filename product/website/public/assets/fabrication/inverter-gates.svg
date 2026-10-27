@@ -16,7 +16,7 @@
 <text x="217" y="88">p-type</text><text x="217" y="198">n-type</text>
 </g>
 <g fill="#657c6e" font-family="Barlow,Arial,sans-serif" font-size="14">
-<path d="M56 68H135L150 76 M56 211H134L150 202" fill="none" stroke="#657c6e" stroke-width="1"/>
-<text x="28" y="61">Gate</text><text x="28" y="229">Gate</text>
+<path d="M56 68H135L144 73 M56 211H134L144 205" fill="none" stroke="#657c6e" stroke-width="1"/>
+<text x="28" y="61">Gate</text><text x="28" y="204">Gate</text>
 </g>
 </svg>

@@ -190,5 +190,28 @@
     "title": "Tech brief: an introduction to interconnects",
     "year": 2017,
     "url": "https://newsroom.lamresearch.com/Tech-Brief-An-Introduction-to-Interconnects"
+  },
+  "oxide-over-aluminium": {
+    "authors": [
+      "Senthilkumar, D.",
+      "Shee, K. L. T.",
+      "Rao, B. S. S. C."
+    ],
+    "title": "Reduction of aluminum fluoride formation during fluorinated plasma etching of dielectric passivation layer over aluminum pad",
+    "publication": "2022 IEEE 24th Electronics Packaging Technology Conference (EPTC)",
+    "pages": "175–178",
+    "year": 2022,
+    "url": "https://doi.org/10.1109/EPTC56328.2022.10013198"
+  },
+  "aluminium-over-oxide": {
+    "authors": [
+      "Chapman, G. H."
+    ],
+    "title": "Plasma etching rates & gases",
+    "publication": "ENSC 495 lecture notes",
+    "publisher": "Simon Fraser University",
+    "pages": "1",
+    "accessed": "26 October 2026",
+    "url": "https://www.sfu.ca/~gchapman/e495/e495l12k.pdf#page=1"
   }
 }

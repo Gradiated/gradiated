@@ -1,6 +1,7 @@
 import type { Story, StoryCover, StoryArt } from "./components/design";
 import { articles } from "./articles";
-import { methodPages, type MethodSlug } from "./method";
+import { methodPages } from "./method";
+import { methodArt, methodCovers } from "./method-visuals";
 import { artworkPresets } from "./lib/artwork";
 
 /**
@@ -84,37 +85,9 @@ const NOTE_ART: Record<string, StoryArt> = {
   },
 };
 
-const METHOD_ART: Partial<Record<MethodSlug, StoryArt>> = {
-  mission: {
-    tall: "/brand/library/mission.webp",
-    wide: "/brand/library/mission-wide.webp",
-  },
-  "sequencing-and-depth": {
-    tall: "/brand/library/sequencing.webp",
-    wide: "/brand/library/sequencing-wide.webp",
-  },
-  "in-person": {
-    tall: "/brand/library/in-person.webp",
-  },
-};
-
 const NOTE_COVERS: Record<string, StoryCover> = {
   "/library/gemma-inference-engine/": artworkPresets.carat,
   "/notes/our-thesis/": artworkPresets.thesis,
-};
-
-const METHOD_COVERS: Record<MethodSlug, StoryCover> = {
-  mission: artworkPresets.mission,
-  product: artworkPresets.product,
-  "sequencing-and-depth": artworkPresets.sequencing,
-  priorities: artworkPresets.product,
-  "in-person": artworkPresets.people,
-  "what-we-look-for": artworkPresets.judgement,
-  "working-with-posthog": artworkPresets.people,
-  "spending-company-money": artworkPresets.people,
-  "getting-out-the-gate": artworkPresets.gate,
-  values: artworkPresets.values,
-  brand: artworkPresets.brand,
 };
 
 /** Newest first, with the collection supplied by article metadata. */
@@ -135,8 +108,8 @@ const writing: Story[] = articles
    and its sequence is an argument — mission, then product, then people. */
 const method: Story[] = methodPages.map((page) => ({
   ...METHOD_DATE,
-  art: METHOD_ART[page.slug],
-  cover: METHOD_COVERS[page.slug],
+  art: methodArt[page.slug],
+  cover: methodCovers[page.slug],
   excerpt: excerptFor(page.slug),
   /* Brand leads to the living reference, not prose about it: the style
      page IS the brand documentation. The MDX page stays routed but

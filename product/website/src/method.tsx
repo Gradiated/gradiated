@@ -137,15 +137,22 @@ export const methodPages: MethodPageDefinition[] = [
 ];
 
 const methodSectionOrder: Array<{
+  artSlug: MethodSlug;
   label: string;
   slugs: MethodSlug[];
 }> = [
-  { label: "Foundations", slugs: ["mission", "values"] },
   {
+    artSlug: "mission",
+    label: "Foundations",
+    slugs: ["mission", "values"],
+  },
+  {
+    artSlug: "sequencing-and-depth",
     label: "Product and engineering",
     slugs: ["product", "sequencing-and-depth", "priorities"],
   },
   {
+    artSlug: "in-person",
     label: "How we work",
     slugs: [
       "in-person",
@@ -155,12 +162,14 @@ const methodSectionOrder: Array<{
     ],
   },
   {
+    artSlug: "getting-out-the-gate",
     label: "Going to market",
     slugs: ["getting-out-the-gate", "brand"],
   },
 ];
 
 export const methodSections = methodSectionOrder.map((section) => ({
+  artSlug: section.artSlug,
   label: section.label,
   pages: section.slugs.map((slug) =>
     methodPages.find((page) => page.slug === slug)!,

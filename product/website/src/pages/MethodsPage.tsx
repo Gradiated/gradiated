@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import type { ReactElement } from "react";
+import type { CSSProperties, ReactElement } from "react";
 import {
   Band,
   Footer,
@@ -8,11 +8,13 @@ import {
   SectionNavigation,
   SectionNavigationFab,
   Substrate,
+  WaferArtwork,
 } from "../components/design";
 import type { SectionNavigationGroup } from "../components/design";
 import { methodComponents } from "../components/method";
 import { methodPages, methodSections } from "../method";
 import type { MethodSlug } from "../method";
+import { methodArt, methodCovers } from "../method-visuals";
 import "../styles/index.css";
 
 const navigation: SectionNavigationGroup[] = methodSections.map((section) => ({
@@ -23,6 +25,28 @@ const navigation: SectionNavigationGroup[] = methodSections.map((section) => ({
   })),
 }));
 
+const MethodSectionArtwork = ({ slug }: { slug: MethodSlug }): ReactElement => {
+  const art = methodArt[slug];
+
+  return (
+    <span aria-hidden className="gr-story-well gr-story-cover">
+      {art ? (
+        <span
+          className="gr-story-art"
+          style={
+            {
+              "--art-tall": `url(${art.tall})`,
+              "--art-wide": `url(${art.wide ?? art.tall})`,
+            } as CSSProperties
+          }
+        />
+      ) : (
+        <WaferArtwork options={methodCovers[slug]} />
+      )}
+    </span>
+  );
+};
+
 const MethodsIndex = (): ReactElement => (
   <>
     <header className="gr-masthead">
@@ -32,7 +56,11 @@ const MethodsIndex = (): ReactElement => (
 
     <div className="gr-methods-index">
       {methodSections.map((section) => (
-        <section className="gr-methods-index-group" key={section.label}>
+        <section
+          className="gr-methods-index-group gr-story"
+          key={section.label}
+        >
+          <MethodSectionArtwork slug={section.artSlug} />
           <h2 className="gr-label">{section.label}</h2>
           <ul>
             {section.pages.map((page) => (

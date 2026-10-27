@@ -1,14 +1,14 @@
 # How do we print a transistor onto silicon?
 
-A microchip is built on a small piece of silicon cut from a wafer. Transistors are formed at the silicon surface, with doped regions extending beneath it. These transistors combine into logic gates, such as NOT and NAND gates, which form larger circuits that calculate, remember and control. Layers of metal wires above the transistors connect nearby circuits and distant parts of the chip.
+A microchip is built on a small piece of silicon cut from a wafer. Transistors are formed at the silicon surface, with doped regions extending beneath it. Layers of metal wiring connect the transistors into logic gates, such as NOT and NAND, and larger circuits that calculate, remember and control.
 
-Here, we will follow a silicon wafer through the main steps of building the two transistors of a NOT gate, also called an inverter. We use a simplified planar design, where the conducting channel runs along a flat silicon surface beneath each transistor’s gate electrode, between its source and drain connections. The structures are simplified and exaggerated to make operation clear and changes visible.
+Here, we will follow a silicon wafer through the main steps of building and connecting the two transistors of a NOT gate, also called an inverter. We use a simplified planar design, where the conducting channel runs along a flat silicon surface beneath each transistor’s gate electrode, between its source and drain connections. We simplify the manufacturing sequence and exaggerate dimensions to make each step clear.
 
 <!-- scene: destination -->
 
 ## The NOT gate we will build
 
-Our target structure is a NOT gate, a circuit whose output voltage is the opposite of its input. Inside it, two transistors each have a gate electrode connected to the same input. One transistor is n-type and the other p-type. Together, they connect the output to the high voltage supply (`+1 V`) when the input is low (`0 V`), or to the low supply (`0 V`) when the input is high (`+1 V`).
+Our target structure is a NOT gate, a circuit whose output voltage is inverted from its input. Inside it, two transistors each have a gate electrode connected to the same input. One transistor is n-type and the other p-type. Together, they connect the output to the high voltage supply (`+1 V`) when the input is low (`0 V`), or to the low supply (`0 V`) when the input is high (`+1 V`).
 
 Each transistor has two doped regions called the source and drain, with a gate electrode above the silicon between them. The gate voltage controls whether a conducting channel forms between source and drain. We will make these features in and on the same wafer, then add the connections that turn them into a circuit.
 
@@ -20,7 +20,7 @@ Let's begin with a polished silicon wafer, a thin slice cut from a large single 
 
 <!-- scene: clean-room -->
 
-Let’s go inside Gradiated’s clean room, where filtered air and protective clothing help keep particles off the wafer. Even tiny particles can spoil the structures we are trying to make.
+Let’s go inside Gradiated’s imaginary clean room, where filtered air and protective clothing help keep particles off the wafer. Even tiny particles can spoil the structures we are trying to make.
 
 <!-- scene: operator -->
 
@@ -60,7 +60,7 @@ The intern now goes to the coater, where the wafer spins as we spread liquid pho
 
 <!-- scene: expose -->
 
-We use a light-sensitive polymer called "positive" photoresist. At the lithography machine, a patterned template called a photomask controls where ultraviolet light reaches it. The light triggers chemical reactions that make the exposed photoresist easier to dissolve and wash away using a chemical solution called developer. Here, the photomask exposes only the area where we want to form the n-well. “Positive” means that these light-exposed regions will be removed.
+We use a light-sensitive coating called "positive" photoresist. At the lithography machine, a patterned template called a photomask controls where ultraviolet light reaches it. The light triggers chemical reactions that make the exposed photoresist easier to dissolve and wash away using a chemical solution called developer. Here, the photomask exposes only the area where we want to form the n-well. “Positive” means that these light-exposed regions will be removed.
 
 <details>
 <summary>How does light make the photoresist easier to dissolve?</summary>
@@ -91,13 +91,13 @@ Only after implantation do we strip the remaining photoresist and clean the wafe
 
 <!-- scene: well-anneal -->
 
-Annealing heats the wafer so atoms can move back into ordered positions after implantation damage. It also helps dopants occupy silicon lattice sites where they can supply electrons or holes. The n-well now provides the body of the p-type transistor.
+Annealing heats the wafer so atoms can move back into ordered positions after implantation damage. It also helps dopant atoms take positions in the silicon crystal where they can supply electrons or holes. The n-well now provides the body of the p-type transistor.
 
 <!-- scene: isolation -->
 
 ## Foundations of the NOT gate
 
-We now grow a thicker silicon dioxide layer in the furnace. This field oxide will help keep neighbouring devices electrically separate. We will remove it from the two sites where we want our transistors, leaving insulation around them.
+We now grow a thicker silicon dioxide layer in the furnace. This field oxide helps prevent unwanted conduction between neighbouring devices. We will remove it from the two transistor sites, leaving insulation around them. This sequence simplifies isolation. Common methods instead grow oxide selectively around protected device sites or fill trenches in the silicon with insulation.[@device-isolation]
 
 <!-- scene: isolation-coat -->
 
@@ -122,7 +122,7 @@ Development clears out the photoresist above those sites. Photoresist remains ov
 
 <!-- scene: prepare-isolation -->
 
-Etching removes exposed material through chemical reactions, sometimes assisted by energetic particles. In our plasma etcher, reactive gases turn material at the surface into gaseous products that can be pumped away.[@plasma-etching] Here, we choose conditions that remove oxide much faster than silicon, allowing us to stop at the silicon surface. The photoresist protects the surrounding oxide. We now have openings in the permanent insulating film, not just in the photoresist.
+Etching removes exposed material through chemical reactions, sometimes assisted by energetic particles. Our etcher uses plasma, an electrically energised gas containing ions and other reactive particles. These react with or strike the surface, helping remove material as gaseous products that can be pumped away.[@plasma-etching] Here, we choose conditions that remove oxide much faster than silicon, allowing us to stop at the silicon surface. The photoresist protects the surrounding oxide. We now have openings in the permanent insulating film, not just in the photoresist.
 
 <!-- scene: isolation-strip -->
 
@@ -165,7 +165,7 @@ Development washes away the exposed photoresist, leaving protective strips above
 
 <!-- scene: pattern-gate -->
 
-The etcher removes unprotected polysilicon and stops at the oxide. Two narrow gates remain beneath the photoresist. Their edges will block the later source and drain implants, aligning those regions with the channel beneath each gate. This avoids a separate alignment step that could leave gaps or excessive overlap between the gate and the doped regions.[@cmos-fabrication]
+The etcher removes unprotected polysilicon and stops at the oxide. Two narrow gates remain beneath the photoresist. They will also help position the source and drain regions we form next.
 
 <!-- scene: gate-strip -->
 
@@ -189,7 +189,7 @@ Those regions are cleared out after a visit to the developer. The p-type transis
 
 Ions of an n-type dopant enter the silicon through the thin oxide. The gate blocks implantation into the channel region immediately beneath it, while photoresist protects the other device. This places a high concentration of dopants in the shallow source and drain regions beside the gate, labelled n-doped.
 
-Because the gate itself sets the implant boundaries, this is called a self-aligned process.
+Using the gate itself to set these boundaries is called a self-aligned process. It avoids having to align another pattern precisely to the gate edges.[@cmos-fabrication]
 
 <!-- scene: n-strip -->
 
@@ -213,7 +213,7 @@ Ions of a p-type dopant enter the source and drain regions, labelled p-doped. Th
 
 <!-- scene: p-strip -->
 
-We remove the remaining photoresist. Both implant patterns have now served their purpose. The new source and drain regions lie buried within the existing silicon.
+We remove the remaining photoresist. Both implant patterns have now served their purpose. The source and drain regions are now formed within the silicon, extending down from its surface.
 
 <!-- scene: anneal -->
 
@@ -229,7 +229,7 @@ We now have the essential device structures. Their terminals still need electric
 <img src="/assets/fabrication/inverter-contacts.svg" alt="CMOS inverter circuit. The two sources connect to the supply rails and the two drains join at the output. The gates share the input.">
 </figure>
 
-We now need metal connections to the source, drain and gate of each transistor. First, our intern deposits silicon dioxide insulation over the devices. This fills the gaps, supports the wiring we will build above, and prevents unwanted electrical connections. Another photomask defines where we will etch contact holes through the insulation. We then fill these holes with metal to connect to the terminals below. The insulator is mostly transparent in the following diagrams to make visualisation easier.
+We now need metal connections to the source, drain and gate of each transistor. First, our intern deposits silicon dioxide insulation over the devices. This fills the gaps, supports the wiring we will build above, and prevents unwanted electrical connections. We show the insulation as transparent so the devices beneath it remain visible.
 
 <!-- scene: contact-planarise -->
 
@@ -237,7 +237,7 @@ The deposited oxide follows the raised shapes beneath it. Before applying photor
 
 <!-- scene: contact-coat -->
 
-Fresh photoresist covers the insulating oxide film. It will protect the insulation everywhere except at the intended contact holes.
+To reach the terminals below, we will etch contact holes through the insulation. Fresh photoresist covers the oxide so we can define where those holes will go.
 
 <!-- scene: contact-expose -->
 
@@ -249,7 +249,7 @@ Development opens up these small regions in the photoresist. The insulator still
 
 <!-- scene: contacts -->
 
-The etcher removes insulating oxide through those openings. Each hole stops at its intended terminal, either doped silicon or the polysilicon gate. The drawing exaggerates the holes so we can follow their destinations.
+The etcher removes oxide through the openings to expose doped silicon or a polysilicon gate. We control the etch conditions and duration to clear the oxide while limiting damage to these terminals.[@plasma-etching] The drawing exaggerates the holes so we can follow their destinations.
 
 <!-- scene: contact-strip -->
 

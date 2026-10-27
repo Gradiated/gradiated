@@ -213,5 +213,15 @@
     "pages": "1",
     "accessed": "26 October 2026",
     "url": "https://www.sfu.ca/~gchapman/e495/e495l12k.pdf#page=1"
+  },
+  "device-isolation": {
+    "authors": [
+      "Hollauer, C."
+    ],
+    "title": "Modeling of thermal oxidation and stress effects, section 1.2: isolation techniques",
+    "publication": "PhD thesis",
+    "publisher": "Technische Universität Wien",
+    "year": 2007,
+    "url": "https://iue.tuwien.ac.at/phd/hollauer/node7.html"
   }
 }

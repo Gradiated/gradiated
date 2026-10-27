@@ -65,15 +65,13 @@ We use a light-sensitive coating called "positive" photoresist. At the lithograp
 <details>
 <summary>How does light make the photoresist easier to dissolve?</summary>
 
-One common approach uses a chemically amplified positive photoresist. Its polymer molecules have chemical protecting groups attached, which make them resist dissolution in the water-based, alkaline developer. The coating also contains a photoacid generator, an ingredient that produces acid after exposure.[@chemical-amplification]
+One common type of positive photoresist is made up of polymer molecules with chemical protecting groups attached, which make them difficult to dissolve in the water-based, alkaline developer.[@chemical-amplification] The coating also contains an ingredient called a photoacid generator. Extreme ultraviolet light, or EUV, can knock electrons out of molecules in the coating, including the polymer. These electrons can release further electrons through collisions and trigger reactions involving the photoacid generator, producing acid in the exposed regions.[@euv-electrons]
 
-With extreme ultraviolet light, or EUV, each absorbed photon has enough energy to knock an electron out of a photoresist molecule. Collisions release further electrons, which trigger reactions that generate acid in the exposed regions.[@euv-electrons]
-
-The acid catalyses reactions that remove protecting groups, helped by a controlled bake after exposure. This reveals acidic sites on the polymer. The acid is regenerated as it acts, so it can remove many protecting groups. This repeated action is the chemical amplification.[@chemical-amplification]
+The acid catalyses reactions that remove protecting groups, helped by a controlled bake after exposure. This reveals acidic sites on the polymer. The acid is regenerated as it acts, so it can remove many protecting groups. This repeated action is called chemical amplification.[@chemical-amplification]
 
 Some acid can spread beyond the illuminated area and blur the pattern. The photoresist’s chemistry, carefully controlled bake time and temperature, and acid-neutralising additives called quenchers limit this spread.[@acid-spread; @euv-electrons]
 
-The alkaline developer then makes the revealed sites electrically charged. Once enough sites on a polymer chain are charged, the chain can dissolve in the solution and wash away. The unexposed photoresist keeps its protecting groups and dissolves much more slowly.[@resist-dissolution]
+The alkaline developer then makes the polymer's revealed acidic sites electrically charged. Once enough sites on a polymer chain are charged, the chain can dissolve in the solution and wash away. The unexposed photoresist keeps its protecting groups and dissolves much more slowly.[@resist-dissolution]
 
 </details>
 

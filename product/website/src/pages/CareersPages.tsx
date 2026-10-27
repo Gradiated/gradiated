@@ -370,7 +370,7 @@ const DecideBoard = (): ReactElement => {
             className="gr-careers-note gr-careers-print gr-careers-print--round"
             data-drift={DECIDE_DRIFTS[5]}
           >
-            <a className="gr-careers-print-frame" href="/library/?show=methods">
+            <a className="gr-careers-print-frame" href="/methods/">
               <img
                 alt="Working methods — read the handbook"
                 src="/assets/careers-board/work-methods.jpg"

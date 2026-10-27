@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import type { ReactElement } from "react";
 import {
   BrowserRouter,
@@ -19,9 +20,10 @@ import { HomePage } from "./pages/HomePage";
 import { InferencePage } from "./pages/InferencePage";
 import { LEGAL, LegalPage } from "./pages/LegalPages";
 import type { LegalSlug } from "./pages/LegalPages";
-import { LibraryIndexPage } from "./pages/LibraryIndexPage";
+import { NotesIndexPage } from "./pages/LibraryIndexPage";
+import { MethodsPage } from "./pages/MethodsPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
-import { ArticleReadingPage, MethodReadingPage } from "./pages/ReadingPages";
+import { ArticleReadingPage } from "./pages/ReadingPages";
 import { StylePage } from "./pages/StylePage";
 import { TrainingPage } from "./pages/TrainingPage";
 import { ArtworkGeneratorPage } from "./pages/ArtworkGeneratorPage";
@@ -35,6 +37,18 @@ const SandJourneyRedirect = (): ReactElement => {
   const { hash } = useLocation();
 
   return <Navigate replace to={`/sand-to-thought/${hash}`} />;
+};
+
+const LibraryRedirect = (): ReactElement => {
+  const { search } = useLocation();
+  const destination = new URLSearchParams(search).get("show");
+
+  return (
+    <Navigate
+      replace
+      to={destination === "methods" ? "/methods/" : "/notes/"}
+    />
+  );
 };
 
 export const AppRoutes = (): ReactElement => (
@@ -51,15 +65,13 @@ export const AppRoutes = (): ReactElement => (
         giving it the old nav and the old footer. */}
     <Route element={<HomePage />} path="/" />
     <Route element={<AboutPage />} path="/about/" />
-    <Route element={<LibraryIndexPage />} path="/library/" />
+    <Route element={<LibraryRedirect />} path="/library/" />
     <Route
       element={<SandJourneyRedirect />}
       path="/library/how-to-get-an-answer-out-of-sand/"
     />
-    <Route
-      element={<LibraryIndexPage initialFilter="notes" />}
-      path="/notes/"
-    />
+    <Route element={<NotesIndexPage />} path="/notes/" />
+    <Route element={<MethodsPage />} path="/methods/" />
     <Route element={<CareersIndexPage />} path="/careers/" />
     {jobs.map((job) => (
       <Route
@@ -69,11 +81,16 @@ export const AppRoutes = (): ReactElement => (
       />
     ))}
     {methodPages.map((page) => (
-      <Route
-        element={<MethodReadingPage slug={page.slug} />}
-        key={page.slug}
-        path={`/library/method/${page.slug}/`}
-      />
+      <Fragment key={page.slug}>
+        <Route
+          element={<MethodsPage slug={page.slug} />}
+          path={`/methods/${page.slug}/`}
+        />
+        <Route
+          element={<Navigate replace to={`/methods/${page.slug}/`} />}
+          path={`/library/method/${page.slug}/`}
+        />
+      </Fragment>
     ))}
     <Route element={<DocsNextPage />} path="/docs/*" />
     {Object.keys(LEGAL).map((slug) => (

@@ -1,14 +1,16 @@
 import { Children, isValidElement, useId, useState } from "react";
-import { Link, Navigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import type { ComponentPropsWithoutRef, ReactElement, ReactNode } from "react";
 import {
   Band,
   Footer,
   Module,
   Nav,
-  SectionFab,
+  SectionNavigation,
+  SectionNavigationFab,
   Substrate,
 } from "../components/design";
+import type { SectionNavigationGroup } from "../components/design";
 import { DocsAccount } from "../components/docs/DocsAccount";
 import { DocsApiKeyAction } from "../components/docs/InteractiveQuickstart";
 import { DocsModelCatalog } from "../components/docs/DocsModelCatalog";
@@ -19,7 +21,6 @@ import {
   markdownPathFor,
   navigation,
 } from "./DocsPage";
-import type { DocsPageKey } from "./DocsPage";
 import "../styles/index.css";
 
 /**
@@ -203,28 +204,13 @@ export const DocsCodeVariants = ({
   );
 };
 
-const Sidebar = ({ current }: { current: DocsPageKey }): ReactElement => (
-  <nav aria-label="Documentation" className="gr-doc-nav">
-    {navigation.map((group) => (
-      <div className="gr-doc-nav-group" key={group.heading}>
-        <p className="gr-doc-nav-heading gr-label">{group.heading}</p>
-        {group.items.map((item) => (
-          /* A router link, not an anchor. An <a href> here is a full
-             document navigation: the app unmounts, the bundle re-parses and
-             every entrance replays — which is the blink between pages. */
-          <Link
-            aria-current={item === current ? "page" : undefined}
-            className="gr-doc-nav-link"
-            key={item}
-            to={documents[item].path}
-          >
-            {documents[item].title}
-          </Link>
-        ))}
-      </div>
-    ))}
-  </nav>
-);
+const docsNavigation: SectionNavigationGroup[] = navigation.map((group) => ({
+  heading: group.heading,
+  items: group.items.map((item) => ({
+    href: documents[item].path,
+    label: documents[item].title,
+  })),
+}));
 
 /** Copies the page as Markdown, for pasting into a model. */
 const CopyPage = ({ path }: { path: string }): ReactElement => {
@@ -267,7 +253,7 @@ const DocsBody = (): ReactElement => {
   );
   if (!entry) return <Navigate replace to="/docs/" />;
 
-  const [key, document] = entry as [DocsPageKey, (typeof documents)["index"]];
+  const [, document] = entry as [string, (typeof documents)["index"]];
   const Content = document.Component;
 
   return (
@@ -279,29 +265,21 @@ const DocsBody = (): ReactElement => {
           <div className="gr-doc">
             <aside className="gr-doc-side">
               <DocsAccount />
-              <Sidebar current={key} />
+              <SectionNavigation
+                ariaLabel="Documentation"
+                current={document.path}
+                groups={docsNavigation}
+              />
             </aside>
 
             {/* The sidebar's mobile form. Router links, like the sidebar's —
                 an <a href> here reloads the document. Hidden above the wide
                 tier, where the sticky sidebar does this job. */}
-            <SectionFab label="Chapters">
-              {navigation.map((group) => (
-                <div className="gr-fab-group" key={group.heading}>
-                  <p className="gr-fab-heading gr-label">{group.heading}</p>
-                  {group.items.map((item) => (
-                    <Link
-                      aria-current={item === key ? "page" : undefined}
-                      className="gr-fab-link"
-                      key={item}
-                      to={documents[item].path}
-                    >
-                      {documents[item].title}
-                    </Link>
-                  ))}
-                </div>
-              ))}
-            </SectionFab>
+            <SectionNavigationFab
+              current={document.path}
+              groups={docsNavigation}
+              label="Chapters"
+            />
 
             <article className="gr-doc-main gr-prose">
               <CopyPage path={document.path} />

@@ -37,7 +37,7 @@ export type MethodPageDefinition = {
 export const methodPages: MethodPageDefinition[] = [
   {
     slug: "mission",
-    section: "Mission",
+    section: "Foundations",
     title: "Affordable and open intelligence",
     pageTitle: "Mission",
     description: "The mission of Gradiated.",
@@ -46,7 +46,7 @@ export const methodPages: MethodPageDefinition[] = [
   },
   {
     slug: "product",
-    section: "Product",
+    section: "Product and engineering",
     title: "What we’re building",
     pageTitle: "What we’re building",
     description: "What Gradiated is building and who it is for.",
@@ -55,7 +55,7 @@ export const methodPages: MethodPageDefinition[] = [
   },
   {
     slug: "sequencing-and-depth",
-    section: "Product",
+    section: "Product and engineering",
     title: "Sequencing and depth",
     pageTitle: "Sequencing and depth",
     description: "How Gradiated sequences product development and goes deep.",
@@ -64,7 +64,7 @@ export const methodPages: MethodPageDefinition[] = [
   },
   {
     slug: "priorities",
-    section: "Engineering",
+    section: "Product and engineering",
     title: "Priorities",
     pageTitle: "Priorities",
     description: "How Gradiated prioritizes engineering changes.",
@@ -73,7 +73,7 @@ export const methodPages: MethodPageDefinition[] = [
   },
   {
     slug: "in-person",
-    section: "People",
+    section: "How we work",
     title: "In person",
     pageTitle: "In person",
     description: "Why Gradiated works in person.",
@@ -82,7 +82,7 @@ export const methodPages: MethodPageDefinition[] = [
   },
   {
     slug: "what-we-look-for",
-    section: "People",
+    section: "How we work",
     title: "What we look for",
     pageTitle: "What we look for",
     description: "What Gradiated looks for in people.",
@@ -91,7 +91,7 @@ export const methodPages: MethodPageDefinition[] = [
   },
   {
     slug: "working-with-posthog",
-    section: "Company",
+    section: "How we work",
     title: "Working with PostHog",
     pageTitle: "Working with PostHog",
     description: "How Gradiated and PostHog work together.",
@@ -100,7 +100,7 @@ export const methodPages: MethodPageDefinition[] = [
   },
   {
     slug: "spending-company-money",
-    section: "Company",
+    section: "How we work",
     title: "Spending company money",
     pageTitle: "Spending company money",
     description: "How Gradiated handles expenses and company spending.",
@@ -109,7 +109,7 @@ export const methodPages: MethodPageDefinition[] = [
   },
   {
     slug: "getting-out-the-gate",
-    section: "Go to market",
+    section: "Going to market",
     title: "Getting out the gate",
     pageTitle: "Getting out the gate",
     description: "How Gradiated gets out the gate.",
@@ -118,7 +118,7 @@ export const methodPages: MethodPageDefinition[] = [
   },
   {
     slug: "values",
-    section: "Values",
+    section: "Foundations",
     title: "Values",
     pageTitle: "Values",
     description: "The values of Gradiated.",
@@ -127,7 +127,7 @@ export const methodPages: MethodPageDefinition[] = [
   },
   {
     slug: "brand",
-    section: "Market",
+    section: "Going to market",
     title: "Brand",
     pageTitle: "Brand",
     description: "The Gradiated brand principles.",
@@ -136,11 +136,33 @@ export const methodPages: MethodPageDefinition[] = [
   },
 ];
 
-export const methodSections = methodPages.reduce<
-  Array<{ label: string; pages: MethodPageDefinition[] }>
->((sections, page) => {
-  const current = sections.at(-1);
-  if (current?.label === page.section) current.pages.push(page);
-  else sections.push({ label: page.section, pages: [page] });
-  return sections;
-}, []);
+const methodSectionOrder: Array<{
+  label: string;
+  slugs: MethodSlug[];
+}> = [
+  { label: "Foundations", slugs: ["mission", "values"] },
+  {
+    label: "Product and engineering",
+    slugs: ["product", "sequencing-and-depth", "priorities"],
+  },
+  {
+    label: "How we work",
+    slugs: [
+      "in-person",
+      "what-we-look-for",
+      "working-with-posthog",
+      "spending-company-money",
+    ],
+  },
+  {
+    label: "Going to market",
+    slugs: ["getting-out-the-gate", "brand"],
+  },
+];
+
+export const methodSections = methodSectionOrder.map((section) => ({
+  label: section.label,
+  pages: section.slugs.map((slug) =>
+    methodPages.find((page) => page.slug === slug)!,
+  ),
+}));

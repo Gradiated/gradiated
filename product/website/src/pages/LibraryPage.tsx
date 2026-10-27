@@ -35,7 +35,7 @@ export const LibraryPage = (): ReactElement => (
           <Link
             className="post-row"
             key={page.slug}
-            to={`/library/method/${page.slug}/`}
+            to={`/methods/${page.slug}/`}
           >
             <span>{page.section}</span>
             <div>

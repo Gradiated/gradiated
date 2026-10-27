@@ -24,7 +24,7 @@ import "../styles/index.css";
 const PIECES = [
   storyAt("/library/gemma-inference-engine/"),
   storyAt("/notes/our-thesis/"),
-  storyAt("/library/method/mission/"),
+  storyAt("/methods/mission/"),
 ].filter((story): story is NonNullable<typeof story> => story !== undefined);
 
 export const HardwarePage = (): ReactElement => (

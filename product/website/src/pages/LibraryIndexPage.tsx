@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import type { ReactElement } from "react";
-import { useSearchParams } from "react-router-dom";
 import {
   Band,
   Footer,
@@ -39,57 +38,16 @@ const rowsOf = (stories: Story[]) => {
   return rows;
 };
 
-const ALL: Story[] = libraryStories;
-
-/** All first, and it is the default: `show` absent means the whole list. */
-const FILTERS = [
-  { label: "All", show: null },
-  { label: "Notes", show: "notes" as const },
-  { label: "Methods", show: "methods" as const },
-];
-
-export const LibraryIndexPage = ({
-  initialFilter,
-}: {
-  initialFilter?: "methods" | "notes";
-}): ReactElement => {
-  /* The filter lives in the URL, not in component state, so a filtered view
-     is a place that can be linked to — which is what the nav needs to send a
-     reader to Notes or to Methods rather than to the whole index.
-
-     THREE CHOICES, ONE ACTIVE. It used to be two toggles, where "off" meant
-     the whole list: a reader who wanted everything back had to work out that
-     un-pressing the filter they were in was the way to do it. "All" says it
-     instead, and is the state the page opens in — an absent `show` is what it
-     means, so the default URL stays clean. */
-  const [params, setParams] = useSearchParams();
+export const NotesIndexPage = (): ReactElement => {
   const [view, setView] = useState<"grid" | "list">("grid");
 
-  const requested = params.get("show") ?? initialFilter;
-  const show =
-    requested === "notes" || requested === "methods" ? requested : null;
-  const kinds: Story["kind"][] =
-    show === "notes" ? ["note"] : show === "methods" ? ["method"] : [];
-
   const shown = useMemo(
-    () =>
-      kinds.length === 0 ? ALL : ALL.filter((s) => kinds.includes(s.kind)),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [show],
+    () => libraryStories.filter((story) => story.kind === "note"),
+    [],
   );
 
   const [lead, ...rest] = shown;
   const rows = useMemo(() => rowsOf(rest), [rest]);
-
-  /* `replace`, so filtering does not stack entries in the back button: a
-     reader who tried both filters and pressed Back wants the page they came
-     from, not the filter they tried two clicks ago.
-
-     A choice rather than a toggle now — pressing the active one again does
-     nothing, because "All" is how you get the whole list back. */
-  const select = (next: "methods" | "notes" | null) => {
-    setParams(next ? { show: next } : {}, { replace: true });
-  };
 
   return (
     <Substrate>
@@ -100,25 +58,13 @@ export const LibraryIndexPage = ({
           <header className="gr-masthead">
             <div className="gr-masthead-line">
               <div>
-                <p className="gr-label">Library</p>
+                <p className="gr-label">Notes</p>
                 <Reveal as="h1" by="word" className="gr-masthead-title">
-                  Notes &amp; Methods
+                  Notes
                 </Reveal>
               </div>
 
               <div className="gr-library-controls">
-                {FILTERS.map((filter) => (
-                  <button
-                    aria-pressed={show === filter.show}
-                    className="gr-library-filter"
-                    key={filter.label}
-                    onClick={() => select(filter.show)}
-                    type="button"
-                  >
-                    {filter.label}
-                  </button>
-                ))}
-
                 {/* Shows the view it will switch TO, which is what a single
                     toggle button has to do to be readable at a glance. */}
                 <button

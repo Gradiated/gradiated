@@ -49,6 +49,11 @@ export { Nav } from "./Nav";
 export { Reading } from "./Reading";
 export { Reveal } from "./Reveal";
 export { SectionFab } from "./SectionFab";
+export { SectionNavigation, SectionNavigationFab } from "./SectionNavigation";
+export type {
+  SectionNavigationGroup,
+  SectionNavigationItem,
+} from "./SectionNavigation";
 export { WordmarkField } from "./WordmarkField";
 export { WaferArtwork } from "./WaferArtwork";
 export type { WaferArtworkOptions } from "./WaferArtwork";

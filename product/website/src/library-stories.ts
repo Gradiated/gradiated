@@ -141,13 +141,13 @@ const method: Story[] = methodPages.map((page) => ({
   /* Brand leads to the living reference, not prose about it: the style
      page IS the brand documentation. The MDX page stays routed but
      unlisted (parked). */
-  href: page.slug === "brand" ? "/style/" : `/library/method/${page.slug}/`,
+  href: page.slug === "brand" ? "/style/" : `/methods/${page.slug}/`,
   kind: "method" as const,
   lede: page.indexDescription,
   title: page.title,
 }));
 
-/** Newest note first, then the handbook in its authored order. */
+/** Newest note first, then Methods in its authored order. */
 export const libraryStories: Story[] = [...writing, ...method];
 
 /** One piece, by the path it lives at. Returns nothing if it has moved. */

@@ -22,7 +22,7 @@ export const MethodPage = ({ slug }: MethodPageProps): ReactElement => {
               <Link
                 aria-current={item.slug === slug ? "page" : undefined}
                 key={item.slug}
-                to={`/library/method/${item.slug}/`}
+                to={`/methods/${item.slug}/`}
               >
                 {item.title}
               </Link>
@@ -31,7 +31,7 @@ export const MethodPage = ({ slug }: MethodPageProps): ReactElement => {
         ))}
       </nav>
       <div className="method-content">
-        <Link className="eyebrow inline-flex items-center gap-2" to="/library/">
+        <Link className="eyebrow inline-flex items-center gap-2" to="/methods/">
           <ArrowLeft aria-hidden="true" className="h-3 w-3" strokeWidth={1.5} />
           Library
         </Link>

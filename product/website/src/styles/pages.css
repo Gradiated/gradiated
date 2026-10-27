@@ -3857,21 +3857,21 @@
    appears after a reader chooses a topic. */
 .gr-methods-index {
   display: grid;
-  border-block-start: 1px solid var(--color-rule);
+  gap: calc(2.5 * var(--u));
 }
 
 .gr-methods-index-group {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(11rem, 16rem);
+  grid-template-columns: minmax(13rem, 18rem) minmax(0, 1fr);
   gap: calc(2 * var(--u));
-  align-items: start;
-  padding-block: calc(1.5 * var(--u));
-  border-block-end: 1px solid var(--color-rule);
+  align-items: center;
 }
 
-.gr-methods-index-group h2 {
-  margin: 0 0 calc(0.6 * var(--u));
-  color: var(--color-text-muted);
+.gr-methods-index-visual {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-raise);
 }
 
 /* The Library artwork remains the visual language, but each image belongs to
@@ -3880,25 +3880,44 @@
   width: 100%;
   height: auto;
   aspect-ratio: 16 / 9;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .gr-methods-index-group .gr-story-art {
   background-image: var(--art-wide, var(--art-tall));
 }
 
+.gr-methods-index-visual::after {
+  content: "";
+  position: absolute;
+  inset: 35% 0 0;
+  z-index: 1;
+  background: linear-gradient(to bottom, transparent, rgb(20 18 15 / 72%));
+  pointer-events: none;
+}
+
+.gr-methods-index-group h2 {
+  position: absolute;
+  inset-inline: var(--u);
+  bottom: calc(0.75 * var(--u));
+  z-index: 2;
+  margin: 0;
+  color: white;
+  text-shadow: 0 1px 12px rgb(0 0 0 / 45%);
+}
+
 .gr-methods-index-group ul {
+  display: grid;
+  gap: calc(0.45 * var(--u));
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.gr-methods-index-group li {
-  border-block-end: 1px solid var(--color-rule);
-}
-
 .gr-methods-index-group a {
-  display: block;
-  padding-block: calc(0.55 * var(--u));
+  display: inline-block;
+  padding-block: calc(0.15 * var(--u));
   color: var(--color-text);
   font-family: var(--font-title);
   font-size: var(--text-card);
@@ -3906,19 +3925,32 @@
   line-height: 1.2;
   letter-spacing: var(--tracking-heading);
   text-decoration: none;
-  transition: padding-inline var(--dur-fast) var(--ease-response);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
 }
 
 .gr-methods-index-group a:hover,
 .gr-methods-index-group a:focus-visible {
-  padding-inline-start: calc(0.35 * var(--u));
+  text-decoration: underline;
+}
+
+/* The Library's mobile card rule uses a portrait cover. These are compact
+   section markers, so keep them landscape-ish at every non-wide tier. */
+.gr-root:not([data-tier="wide"])
+  .gr-methods-index-group
+  .gr-story-well {
+  aspect-ratio: 4 / 3;
 }
 
 @media (max-width: 46rem) {
   .gr-methods-index-group {
-    grid-template-columns: minmax(0, 1fr) minmax(6rem, 7.5rem);
+    grid-template-columns: minmax(8rem, 9rem) minmax(0, 1fr);
     gap: var(--u);
-    padding-block: var(--u);
+  }
+
+  .gr-methods-index-group h2 {
+    inset-inline: calc(0.5 * var(--u));
+    bottom: calc(0.45 * var(--u));
   }
 }
 

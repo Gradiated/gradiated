@@ -60,17 +60,17 @@ const MethodsIndex = (): ReactElement => (
           className="gr-methods-index-group gr-story"
           key={section.label}
         >
-          <div className="gr-methods-index-copy">
+          <div className="gr-methods-index-visual">
+            <MethodSectionArtwork slug={section.artSlug} />
             <h2 className="gr-label">{section.label}</h2>
-            <ul>
-              {section.pages.map((page) => (
-                <li key={page.slug}>
-                  <Link to={`/methods/${page.slug}/`}>{page.pageTitle}</Link>
-                </li>
-              ))}
-            </ul>
           </div>
-          <MethodSectionArtwork slug={section.artSlug} />
+          <ul>
+            {section.pages.map((page) => (
+              <li key={page.slug}>
+                <Link to={`/methods/${page.slug}/`}>{page.pageTitle}</Link>
+              </li>
+            ))}
+          </ul>
         </section>
       ))}
     </div>

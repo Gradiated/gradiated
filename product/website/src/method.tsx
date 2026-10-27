@@ -41,7 +41,7 @@ export const methodPages: MethodPageDefinition[] = [
     title: "Affordable and open intelligence",
     pageTitle: "Mission",
     description: "The mission of Gradiated.",
-    indexDescription: "More intelligence for less energy, open to everyone.",
+    indexDescription: "",
     Content: MissionContent,
   },
   {

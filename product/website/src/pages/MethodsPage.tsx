@@ -108,9 +108,11 @@ export const MethodsPage = ({ slug }: { slug?: MethodSlug }): ReactElement => {
 
               <article className="gr-doc-main gr-prose">
                 <h1>{page.title}</h1>
-                <div className="gr-doc-lead">
-                  <p>{page.indexDescription}</p>
-                </div>
+                {page.indexDescription ? (
+                  <div className="gr-doc-lead">
+                    <p>{page.indexDescription}</p>
+                  </div>
+                ) : null}
                 <Content components={methodComponents} />
               </article>
             </div>

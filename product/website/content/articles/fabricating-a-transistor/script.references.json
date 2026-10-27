@@ -240,13 +240,5 @@
     "publication": "Wikipedia",
     "accessed": "27 October 2026",
     "url": "https://en.wikipedia.org/wiki/Cleanroom#Basic_construction:~:text=Within%2C%20air%20is%20constantly%20recirculated,internally%20generated%20contaminants."
-  },
-  "fab-tool-count": {
-    "authors": [
-      "NVIDIA"
-    ],
-    "title": "Accelerating Semiconductor Design and Manufacturing",
-    "accessed": "27 October 2026",
-    "url": "https://www.nvidia.com/en-us/industries/semiconductor/#:~:text=Gigafab%20lot%20scheduling%20demands%20real-time%20decisions%20across%20thousands%20of%20tools."
   }
 }

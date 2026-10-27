@@ -40,7 +40,7 @@ Doping adds small quantities of selected elements, called dopants. Phosphorus, f
 
 ## The machines
 
-A fab contains machines that add, remove and alter materials on a wafer. Large fabs can contain more than a thousand manufacturing tools.[@fab-tool-count] Our clean room groups their jobs into twelve stations so we can follow the process.
+A fab contains machines that add, remove and alter materials on a wafer. Large fabs can contain more than a thousand manufacturing tools. Our clean room groups their jobs into twelve stations so we can follow the process.
 
 Our intern will visit `44` processing machines (even in our simplified example) before we have a working NOT gate, returning to the same machines with new patterns and materials.
 
@@ -48,7 +48,7 @@ Our intern will visit `44` processing machines (even in our simplified example) 
 
 ## Prepare the silicon
 
-As shown at the start, we need an n-type and a p-type transistor side by side for our NOT gate. The n-type transistor forms an electron-carrying channel between two n-doped pockets in a p-type silicon body. Its p-type partner forms a hole-carrying channel between p-doped pockets in an n-type body. Our p-type wafer already provides the body for the n-type transistor. To build its p-type partner alongside it, we must first create a large, deep n-type region called an n-well.
+As shown at the start, we need an n-type and a p-type transistor side by side for our NOT gate. The n-type transistor forms an electron-carrying channel between two n-doped pockets in a p-type silicon body. Its p-type partner forms a hole-carrying channel between p-doped pockets in an n-type body. Our p-type wafer already provides the body for the n-type transistor. To build its p-type partner alongside it, we must first create a large, deep n-type region called an n-well to fully contain the p-type transistor.
 
 We do this by ion implantation, accelerating electrically charged n-type dopant atoms, such as phosphorus, into the silicon. First, we grow a thin silicon dioxide film by heating the wafer in oxygen. Some silicon is consumed as the oxide grows.
 

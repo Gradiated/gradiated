@@ -40,7 +40,6 @@ export const LibraryPage = (): ReactElement => (
             <span>{page.section}</span>
             <div>
               <h2>{page.title}</h2>
-              <p>{page.indexDescription}</p>
             </div>
             <ArrowUpRight
               aria-hidden="true"

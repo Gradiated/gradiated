@@ -27,7 +27,6 @@ export type MethodSlug =
 export type MethodPageDefinition = {
   Content: ComponentType<{ components?: Record<string, unknown> }>;
   description: string;
-  indexDescription: string;
   pageTitle: string;
   section: string;
   slug: MethodSlug;
@@ -41,7 +40,6 @@ export const methodPages: MethodPageDefinition[] = [
     title: "Affordable and open intelligence",
     pageTitle: "Mission",
     description: "The mission of Gradiated.",
-    indexDescription: "",
     Content: MissionContent,
   },
   {
@@ -50,7 +48,6 @@ export const methodPages: MethodPageDefinition[] = [
     title: "What we’re building",
     pageTitle: "What we’re building",
     description: "What Gradiated is building and who it is for.",
-    indexDescription: "Inference for long-running work.",
     Content: ProductContent,
   },
   {
@@ -59,7 +56,6 @@ export const methodPages: MethodPageDefinition[] = [
     title: "Sequencing and depth",
     pageTitle: "Sequencing and depth",
     description: "How Gradiated sequences product development and goes deep.",
-    indexDescription: "Start in software. Go down the stack.",
     Content: SequencingContent,
   },
   {
@@ -68,7 +64,6 @@ export const methodPages: MethodPageDefinition[] = [
     title: "Priorities",
     pageTitle: "Priorities",
     description: "How Gradiated prioritizes engineering changes.",
-    indexDescription: "Reliable inference first. Then optimize aggressively.",
     Content: PrioritiesContent,
   },
   {
@@ -77,7 +72,6 @@ export const methodPages: MethodPageDefinition[] = [
     title: "In person",
     pageTitle: "In person",
     description: "Why Gradiated works in person.",
-    indexDescription: "Hard problems benefit from shared context.",
     Content: InPersonContent,
   },
   {
@@ -86,7 +80,6 @@ export const methodPages: MethodPageDefinition[] = [
     title: "What we look for",
     pageTitle: "What we look for",
     description: "What Gradiated looks for in people.",
-    indexDescription: "Agency, optimism, and exceptional ability.",
     Content: PeopleContent,
   },
   {
@@ -95,7 +88,6 @@ export const methodPages: MethodPageDefinition[] = [
     title: "Working with PostHog",
     pageTitle: "Working with PostHog",
     description: "How Gradiated and PostHog work together.",
-    indexDescription: "Share the foundations. Build the company independently.",
     Content: WorkingWithPostHogContent,
   },
   {
@@ -104,7 +96,6 @@ export const methodPages: MethodPageDefinition[] = [
     title: "Spending company money",
     pageTitle: "Spending company money",
     description: "How Gradiated handles expenses and company spending.",
-    indexDescription: "Use judgement. Make the value and the expense legible.",
     Content: SpendingCompanyMoneyContent,
   },
   {
@@ -113,7 +104,6 @@ export const methodPages: MethodPageDefinition[] = [
     title: "Getting out the gate",
     pageTitle: "Getting out the gate",
     description: "How Gradiated gets out the gate.",
-    indexDescription: "Win the first users by being meaningfully better.",
     Content: GoToMarketContent,
   },
   {
@@ -122,7 +112,6 @@ export const methodPages: MethodPageDefinition[] = [
     title: "Values",
     pageTitle: "Values",
     description: "The values of Gradiated.",
-    indexDescription: "Figure it out. Do the hard thing. Primitive first.",
     Content: ValuesContent,
   },
   {
@@ -131,7 +120,6 @@ export const methodPages: MethodPageDefinition[] = [
     title: "Brand",
     pageTitle: "Brand",
     description: "The Gradiated brand principles.",
-    indexDescription: "Everything is considered.",
     Content: BrandContent,
   },
 ];

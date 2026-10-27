@@ -116,7 +116,6 @@ const method: Story[] = methodPages.map((page) => ({
      unlisted (parked). */
   href: page.slug === "brand" ? "/style/" : `/methods/${page.slug}/`,
   kind: "method" as const,
-  lede: page.indexDescription,
   title: page.title,
 }));
 

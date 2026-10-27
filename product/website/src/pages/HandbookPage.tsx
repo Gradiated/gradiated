@@ -11,22 +11,26 @@ import {
   WaferArtwork,
 } from "../components/design";
 import type { SectionNavigationGroup } from "../components/design";
-import { methodComponents } from "../components/method";
-import { methodPages, methodSections } from "../method";
-import type { MethodSlug } from "../method";
-import { methodArt, methodCovers } from "../method-visuals";
+import { handbookComponents } from "../components/handbook";
+import { handbookPages, handbookSections } from "../handbook";
+import type { HandbookSlug } from "../handbook";
+import { handbookArt, handbookCovers } from "../handbook-visuals";
 import "../styles/index.css";
 
-const navigation: SectionNavigationGroup[] = methodSections.map((section) => ({
+const navigation: SectionNavigationGroup[] = handbookSections.map((section) => ({
   heading: section.label,
   items: section.pages.map((page) => ({
-    href: `/methods/${page.slug}/`,
+    href: `/handbook/${page.slug}/`,
     label: page.pageTitle,
   })),
 }));
 
-const MethodSectionArtwork = ({ slug }: { slug: MethodSlug }): ReactElement => {
-  const art = methodArt[slug];
+const HandbookSectionArtwork = ({
+  slug,
+}: {
+  slug: HandbookSlug;
+}): ReactElement => {
+  const art = handbookArt[slug];
 
   return (
     <span aria-hidden className="gr-story-well gr-story-cover">
@@ -41,33 +45,33 @@ const MethodSectionArtwork = ({ slug }: { slug: MethodSlug }): ReactElement => {
           }
         />
       ) : (
-        <WaferArtwork options={methodCovers[slug]} />
+        <WaferArtwork options={handbookCovers[slug]} />
       )}
     </span>
   );
 };
 
-const MethodsIndex = (): ReactElement => (
+const HandbookIndex = (): ReactElement => (
   <>
     <header className="gr-masthead">
-      <p className="gr-label">Methods</p>
-      <h1 className="gr-masthead-title">Methods</h1>
+      <p className="gr-label">Handbook</p>
+      <h1 className="gr-masthead-title">Handbook</h1>
     </header>
 
-    <div className="gr-methods-index">
-      {methodSections.map((section) => (
+    <div className="gr-handbook-index">
+      {handbookSections.map((section) => (
         <section
-          className="gr-methods-index-group gr-story"
+          className="gr-handbook-index-group gr-story"
           key={section.label}
         >
-          <div className="gr-methods-index-visual">
-            <MethodSectionArtwork slug={section.artSlug} />
+          <div className="gr-handbook-index-visual">
+            <HandbookSectionArtwork slug={section.artSlug} />
             <h2 className="gr-label">{section.label}</h2>
           </div>
           <ul>
             {section.pages.map((page) => (
               <li key={page.slug}>
-                <Link to={`/methods/${page.slug}/`}>{page.pageTitle}</Link>
+                <Link to={`/handbook/${page.slug}/`}>{page.pageTitle}</Link>
               </li>
             ))}
           </ul>
@@ -77,12 +81,16 @@ const MethodsIndex = (): ReactElement => (
   </>
 );
 
-export const MethodsPage = ({ slug }: { slug?: MethodSlug }): ReactElement => {
+export const HandbookPage = ({
+  slug,
+}: {
+  slug?: HandbookSlug;
+}): ReactElement => {
   const page = slug
-    ? methodPages.find((candidate) => candidate.slug === slug)
+    ? handbookPages.find((candidate) => candidate.slug === slug)
     : undefined;
   const Content = page?.Content;
-  const current = page ? `/methods/${page.slug}/` : "";
+  const current = page ? `/handbook/${page.slug}/` : "";
 
   return (
     <Substrate>
@@ -91,10 +99,10 @@ export const MethodsPage = ({ slug }: { slug?: MethodSlug }): ReactElement => {
       <Band>
         <Module className="gr-module--top" index={0}>
           {page && Content ? (
-            <div className="gr-doc gr-methods">
+            <div className="gr-doc gr-handbook">
               <aside className="gr-doc-side">
                 <SectionNavigation
-                  ariaLabel="Methods"
+                  ariaLabel="Handbook"
                   current={current}
                   groups={navigation}
                 />
@@ -103,16 +111,16 @@ export const MethodsPage = ({ slug }: { slug?: MethodSlug }): ReactElement => {
               <SectionNavigationFab
                 current={current}
                 groups={navigation}
-                label="Methods"
+                label="Handbook"
               />
 
               <article className="gr-doc-main gr-prose">
                 <h1>{page.title}</h1>
-                <Content components={methodComponents} />
+                <Content components={handbookComponents} />
               </article>
             </div>
           ) : (
-            <MethodsIndex />
+            <HandbookIndex />
           )}
         </Module>
       </Band>

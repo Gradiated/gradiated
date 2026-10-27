@@ -9,7 +9,7 @@ import {
 } from "react-router-dom";
 import { articles } from "./articles";
 import { jobs } from "./careers";
-import { methodPages } from "./method";
+import { handbookPages } from "./handbook";
 import { models } from "./models";
 import { ModelsPage } from "./pages/ModelsPage";
 import { ModelDetailPage } from "./pages/ModelDetailPage";
@@ -21,7 +21,7 @@ import { InferencePage } from "./pages/InferencePage";
 import { LEGAL, LegalPage } from "./pages/LegalPages";
 import type { LegalSlug } from "./pages/LegalPages";
 import { NotesIndexPage } from "./pages/LibraryIndexPage";
-import { MethodsPage } from "./pages/MethodsPage";
+import { HandbookPage } from "./pages/HandbookPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { ArticleReadingPage } from "./pages/ReadingPages";
 import { StylePage } from "./pages/StylePage";
@@ -46,7 +46,7 @@ const LibraryRedirect = (): ReactElement => {
   return (
     <Navigate
       replace
-      to={destination === "methods" ? "/methods/" : "/notes/"}
+      to={destination === "methods" || destination === "handbook" ? "/handbook/" : "/notes/"}
     />
   );
 };
@@ -71,7 +71,8 @@ export const AppRoutes = (): ReactElement => (
       path="/library/how-to-get-an-answer-out-of-sand/"
     />
     <Route element={<NotesIndexPage />} path="/notes/" />
-    <Route element={<MethodsPage />} path="/methods/" />
+    <Route element={<HandbookPage />} path="/handbook/" />
+    <Route element={<Navigate replace to="/handbook/" />} path="/methods/" />
     <Route element={<CareersIndexPage />} path="/careers/" />
     {jobs.map((job) => (
       <Route
@@ -80,14 +81,18 @@ export const AppRoutes = (): ReactElement => (
         path={`/careers/${job.slug}/`}
       />
     ))}
-    {methodPages.map((page) => (
+    {handbookPages.map((page) => (
       <Fragment key={page.slug}>
         <Route
-          element={<MethodsPage slug={page.slug} />}
+          element={<HandbookPage slug={page.slug} />}
+          path={`/handbook/${page.slug}/`}
+        />
+        <Route
+          element={<Navigate replace to={`/handbook/${page.slug}/`} />}
           path={`/methods/${page.slug}/`}
         />
         <Route
-          element={<Navigate replace to={`/methods/${page.slug}/`} />}
+          element={<Navigate replace to={`/handbook/${page.slug}/`} />}
           path={`/library/method/${page.slug}/`}
         />
       </Fragment>

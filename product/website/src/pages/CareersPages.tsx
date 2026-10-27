@@ -68,7 +68,7 @@ const expectations = [
   },
   {
     title: "We show our thinking.",
-    body: "Our methods are public, including beliefs that may change. Writing clearly enough for other people to disagree with us is part of doing the work properly.",
+    body: "Our handbook is public, including beliefs that may change. Writing clearly enough for other people to disagree with us is part of doing the work properly.",
   },
   {
     title: "High standards. Low ego.",
@@ -370,9 +370,9 @@ const DecideBoard = (): ReactElement => {
             className="gr-careers-note gr-careers-print gr-careers-print--round"
             data-drift={DECIDE_DRIFTS[5]}
           >
-            <a className="gr-careers-print-frame" href="/methods/">
+            <a className="gr-careers-print-frame" href="/handbook/">
               <img
-                alt="Working methods — read the handbook"
+                alt="Read the Gradiated handbook"
                 src="/assets/careers-board/work-methods.jpg"
               />
             </a>

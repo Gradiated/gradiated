@@ -116,7 +116,7 @@ const NAV_ITEMS: NavItem[] = [
      complexity where there is a set to move between. */
   { href: "/hardware/", label: "Hardware" },
   { href: "/notes/", label: "Notes" },
-  { href: "/methods/", label: "Methods" },
+  { href: "/handbook/", label: "Handbook" },
   ...(hasGuide
     ? [{ href: SAND_TO_THOUGHT_URL, label: "Sand to Thought" }]
     : []),

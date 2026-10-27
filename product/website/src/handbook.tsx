@@ -1,17 +1,17 @@
 import type { ComponentType } from "react";
-import BrandContent from "./method/brand.mdx";
-import GoToMarketContent from "./method/getting-out-the-gate.mdx";
-import InPersonContent from "./method/in-person.mdx";
-import MissionContent from "./method/mission.mdx";
-import PrioritiesContent from "./method/priorities.mdx";
-import ProductContent from "./method/product.mdx";
-import SequencingContent from "./method/sequencing-and-depth.mdx";
-import SpendingCompanyMoneyContent from "./method/spending-company-money.mdx";
-import ValuesContent from "./method/values.mdx";
-import PeopleContent from "./method/what-we-look-for.mdx";
-import WorkingWithPostHogContent from "./method/working-with-posthog.mdx";
+import BrandContent from "./handbook/brand.mdx";
+import GoToMarketContent from "./handbook/getting-out-the-gate.mdx";
+import InPersonContent from "./handbook/in-person.mdx";
+import MissionContent from "./handbook/mission.mdx";
+import PrioritiesContent from "./handbook/priorities.mdx";
+import ProductContent from "./handbook/product.mdx";
+import SequencingContent from "./handbook/sequencing-and-depth.mdx";
+import SpendingCompanyMoneyContent from "./handbook/spending-company-money.mdx";
+import ValuesContent from "./handbook/values.mdx";
+import PeopleContent from "./handbook/what-we-look-for.mdx";
+import WorkingWithPostHogContent from "./handbook/working-with-posthog.mdx";
 
-export type MethodSlug =
+export type HandbookSlug =
   | "mission"
   | "product"
   | "sequencing-and-depth"
@@ -24,16 +24,16 @@ export type MethodSlug =
   | "brand"
   | "working-with-posthog";
 
-export type MethodPageDefinition = {
+export type HandbookPageDefinition = {
   Content: ComponentType<{ components?: Record<string, unknown> }>;
   description: string;
   pageTitle: string;
   section: string;
-  slug: MethodSlug;
+  slug: HandbookSlug;
   title: string;
 };
 
-export const methodPages: MethodPageDefinition[] = [
+export const handbookPages: HandbookPageDefinition[] = [
   {
     slug: "mission",
     section: "Foundations",
@@ -124,10 +124,10 @@ export const methodPages: MethodPageDefinition[] = [
   },
 ];
 
-const methodSectionOrder: Array<{
-  artSlug: MethodSlug;
+const handbookSectionOrder: Array<{
+  artSlug: HandbookSlug;
   label: string;
-  slugs: MethodSlug[];
+  slugs: HandbookSlug[];
 }> = [
   {
     artSlug: "mission",
@@ -156,10 +156,10 @@ const methodSectionOrder: Array<{
   },
 ];
 
-export const methodSections = methodSectionOrder.map((section) => ({
+export const handbookSections = handbookSectionOrder.map((section) => ({
   artSlug: section.artSlug,
   label: section.label,
   pages: section.slugs.map((slug) =>
-    methodPages.find((page) => page.slug === slug)!,
+    handbookPages.find((page) => page.slug === slug)!,
   ),
 }));

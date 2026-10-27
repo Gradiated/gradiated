@@ -1,7 +1,7 @@
 import type { Story, StoryCover, StoryArt } from "./components/design";
 import { articles } from "./articles";
-import { methodPages } from "./method";
-import { methodArt, methodCovers } from "./method-visuals";
+import { handbookPages } from "./handbook";
+import { handbookArt, handbookCovers } from "./handbook-visuals";
 import { artworkPresets } from "./lib/artwork";
 
 /**
@@ -13,9 +13,9 @@ import { artworkPresets } from "./lib/artwork";
  * standfirsts. One place turns a catalogue entry into a card.
  */
 
-/* Method dates are intentionally shared until the handbook carries dates in
+/* Handbook dates are intentionally shared until the catalogue carries dates in
    its own catalogue. Notes always use their authored article metadata. */
-const METHOD_DATE = { date: "Sep 9, 2026", dateTime: "2026-09-09" };
+const HANDBOOK_DATE = { date: "Sep 9, 2026", dateTime: "2026-09-09" };
 
 const displayDate = (date: string): string =>
   new Date(date).toLocaleDateString("en-US", {
@@ -27,7 +27,7 @@ const displayDate = (date: string): string =>
 /* The excerpt is the piece's own opening, read from the MDX at build time
    rather than written a second time here. A summary maintained beside the
    thing it summarises drifts from it — this cannot. */
-const bodies = import.meta.glob("../method/*.mdx", {
+const bodies = import.meta.glob("../handbook/*.mdx", {
   eager: true,
   import: "default",
   query: "?raw",
@@ -46,7 +46,7 @@ const trim = (prose: string): string | undefined => {
 };
 
 const excerptFor = (slug: string): string | undefined => {
-  const raw = bodies[`../method/${slug}.mdx`];
+  const raw = bodies[`../handbook/${slug}.mdx`];
   if (!raw) return undefined;
 
   const prose = raw
@@ -104,23 +104,23 @@ const writing: Story[] = articles
     title: article.title,
   }));
 
-/* Method keeps its authored order rather than being sorted: it is a handbook,
+/* Handbook keeps its authored order rather than being sorted,
    and its sequence is an argument — mission, then product, then people. */
-const method: Story[] = methodPages.map((page) => ({
-  ...METHOD_DATE,
-  art: methodArt[page.slug],
-  cover: methodCovers[page.slug],
+const handbook: Story[] = handbookPages.map((page) => ({
+  ...HANDBOOK_DATE,
+  art: handbookArt[page.slug],
+  cover: handbookCovers[page.slug],
   excerpt: excerptFor(page.slug),
   /* Brand leads to the living reference, not prose about it: the style
      page IS the brand documentation. The MDX page stays routed but
      unlisted (parked). */
-  href: page.slug === "brand" ? "/style/" : `/methods/${page.slug}/`,
-  kind: "method" as const,
+  href: page.slug === "brand" ? "/style/" : `/handbook/${page.slug}/`,
+  kind: "handbook" as const,
   title: page.title,
 }));
 
-/** Newest note first, then Methods in its authored order. */
-export const libraryStories: Story[] = [...writing, ...method];
+/** Newest note first, then Handbook entries in their authored order. */
+export const libraryStories: Story[] = [...writing, ...handbook];
 
 /** One piece, by the path it lives at. Returns nothing if it has moved. */
 export const storyAt = (href: string): Story | undefined =>

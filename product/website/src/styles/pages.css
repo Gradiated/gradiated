@@ -3853,21 +3853,21 @@
   margin: 0;
 }
 
-/* Methods opens as an index, not as a chapter. The chapter navigation only
+/* Handbook opens as an index, not as a chapter. The chapter navigation only
    appears after a reader chooses a topic. */
-.gr-methods-index {
+.gr-handbook-index {
   display: grid;
   gap: calc(2.5 * var(--u));
 }
 
-.gr-methods-index-group {
+.gr-handbook-index-group {
   display: grid;
   grid-template-columns: minmax(13rem, 18rem) minmax(0, 1fr);
   gap: calc(2 * var(--u));
   align-items: center;
 }
 
-.gr-methods-index-visual {
+.gr-handbook-index-visual {
   position: relative;
   overflow: hidden;
   border-radius: var(--radius);
@@ -3876,7 +3876,7 @@
 
 /* The Library artwork remains the visual language, but each image belongs to
    a whole section here rather than pretending to be one topic's card. */
-.gr-methods-index-group .gr-story-well {
+.gr-handbook-index-group .gr-story-well {
   width: 100%;
   height: auto;
   aspect-ratio: 16 / 9;
@@ -3884,11 +3884,11 @@
   box-shadow: none;
 }
 
-.gr-methods-index-group .gr-story-art {
+.gr-handbook-index-group .gr-story-art {
   background-image: var(--art-wide, var(--art-tall));
 }
 
-.gr-methods-index-visual::after {
+.gr-handbook-index-visual::after {
   content: "";
   position: absolute;
   inset: 35% 0 0;
@@ -3897,7 +3897,7 @@
   pointer-events: none;
 }
 
-.gr-methods-index-group h2 {
+.gr-handbook-index-group h2 {
   position: absolute;
   inset-inline: var(--u);
   bottom: calc(0.75 * var(--u));
@@ -3907,7 +3907,7 @@
   text-shadow: 0 1px 12px rgb(0 0 0 / 45%);
 }
 
-.gr-methods-index-group ul {
+.gr-handbook-index-group ul {
   display: grid;
   gap: calc(0.45 * var(--u));
   margin: 0;
@@ -3915,7 +3915,7 @@
   list-style: none;
 }
 
-.gr-methods-index-group a {
+.gr-handbook-index-group a {
   display: inline-block;
   padding-block: calc(0.15 * var(--u));
   color: var(--color-text);
@@ -3929,26 +3929,26 @@
   text-underline-offset: 0.2em;
 }
 
-.gr-methods-index-group a:hover,
-.gr-methods-index-group a:focus-visible {
+.gr-handbook-index-group a:hover,
+.gr-handbook-index-group a:focus-visible {
   text-decoration: underline;
 }
 
 /* The Library's mobile card rule uses a portrait cover. These are compact
    section markers, so keep them landscape-ish at every non-wide tier. */
 .gr-root:not([data-tier="wide"])
-  .gr-methods-index-group
+  .gr-handbook-index-group
   .gr-story-well {
   aspect-ratio: 4 / 3;
 }
 
 @media (max-width: 46rem) {
-  .gr-methods-index-group {
+  .gr-handbook-index-group {
     grid-template-columns: minmax(8rem, 9rem) minmax(0, 1fr);
     gap: var(--u);
   }
 
-  .gr-methods-index-group h2 {
+  .gr-handbook-index-group h2 {
     inset-inline: calc(0.5 * var(--u));
     bottom: calc(0.45 * var(--u));
   }

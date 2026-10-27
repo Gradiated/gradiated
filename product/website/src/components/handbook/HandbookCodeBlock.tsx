@@ -1,9 +1,9 @@
 import type { ComponentPropsWithoutRef, ReactElement } from "react";
 import { DocsCodeBlock } from "../docs/DocsCodeBlock";
 
-export const MethodCodeBlock = ({
+export const HandbookCodeBlock = ({
   className = "",
   ...props
 }: ComponentPropsWithoutRef<"pre">): ReactElement => (
-  <DocsCodeBlock className={`gr-method-code ${className}`} {...props} />
+  <DocsCodeBlock className={`gr-handbook-code ${className}`} {...props} />
 );

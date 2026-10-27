@@ -24,7 +24,7 @@ import {
   CountriesWeHireIn,
   Person,
   PrivateLink,
-} from "../components/method";
+} from "../components/handbook";
 import "../styles/index.css";
 
 /** A ramp chip that hands over its hex on click. The literal lives in the

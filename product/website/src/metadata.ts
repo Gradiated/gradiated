@@ -1,5 +1,5 @@
 import { jobs } from "./careers";
-import { methodPages } from "./method";
+import { handbookPages } from "./handbook";
 import { models } from "./models";
 import { articles } from "./articles";
 
@@ -70,14 +70,14 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     description:
       "Read Gradiated notes about inference research, systems, hardware, and company building.",
   },
-  "/methods/": {
-    title: "Methods",
+  "/handbook/": {
+    title: "Handbook",
     description:
       "How Gradiated works, makes decisions, and builds the company.",
   },
   ...Object.fromEntries(
-    methodPages.map((page) => [
-      `/methods/${page.slug}/`,
+    handbookPages.map((page) => [
+      `/handbook/${page.slug}/`,
       { title: page.pageTitle, description: page.description },
     ]),
   ),
@@ -281,8 +281,8 @@ const breadcrumbFor = (pathname: string, title: string): object | null => {
     parts.push({ name: "Careers", path: "/careers/" });
   } else if (pathname.startsWith("/notes/")) {
     parts.push({ name: "Notes", path: "/notes/" });
-  } else if (pathname.startsWith("/methods/")) {
-    parts.push({ name: "Methods", path: "/methods/" });
+  } else if (pathname.startsWith("/handbook/")) {
+    parts.push({ name: "Handbook", path: "/handbook/" });
   } else if (pathname.startsWith("/library/")) {
     parts.push({ name: "Library", path: "/library/" });
   } else {

@@ -32,7 +32,7 @@ export type Story = {
   /** A generated wafer artwork — the fallback while art does not exist. */
   cover?: StoryCover;
   /** Which collection in the Library this belongs to — what the filters act on. */
-  kind: "method" | "note";
+  kind: "handbook" | "note";
   /** Human-readable date; `dateTime` carries the machine-readable one. */
   date: string;
   dateTime?: string;

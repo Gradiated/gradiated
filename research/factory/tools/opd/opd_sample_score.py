@@ -173,9 +173,11 @@ def main() -> None:
     p.add_argument("--tok-dir", default=str(HERE))
     p.add_argument("--workers", type=int, default=16)
     p.add_argument("--no-gaps", action="store_true", help="leave template runs between content spans unscored")
+    p.add_argument("--weights", default="", help="advantage multipliers by field kind, e.g. name=20,key=5")
     p.add_argument("--out", required=True)
     args = p.parse_args()
 
+    weights = {k: float(v) for k, v in (item.split("=") for item in args.weights.split(",") if item)}
     qwen = Qwen()
     kimi, k3_special = load_k3(Path(args.tok_dir))
     fireworks = {"Authorization": f"Bearer {os.environ['FIREWORKS_API_KEY']}"}
@@ -188,6 +190,8 @@ def main() -> None:
     rng.shuffle(points)
     stats: Counter = Counter()
     usage: Counter = Counter()
+    field_kl: Counter = Counter()
+    field_tokens: Counter = Counter()
 
     def k3_ids(rendering) -> tuple[list[int], list[tuple[int, int]]]:
         ids, offsets, position = [], [], 0
@@ -250,10 +254,19 @@ def main() -> None:
         content = {i for s in spans for i in s.student_tokens}
         if not args.no_gaps:
             spans = with_gaps(spans, len(ids), len(mine))
-        advantages = token_advantages(spans, logprobs, t_logprobs)
-        covered = [a for a in advantages if a is not None]
-        gap_kl = -sum(a for i, a in enumerate(advantages) if a is not None and i not in content)
-        stats["gap_tokens"] += sum(1 for i, a in enumerate(advantages) if a is not None and i not in content)
+        raw = token_advantages(spans, logprobs, t_logprobs)
+        kind = {}
+        for span in spans:
+            for i in span.student_tokens:
+                kind[i] = span.field.split(".")[-1] if "." in span.field else span.field
+        for i, a in enumerate(raw):
+            if a is not None:
+                field_kl[kind[i]] -= a
+                field_tokens[kind[i]] += 1
+        advantages = [None if a is None else a * weights.get(kind[i], 1.0) for i, a in enumerate(raw)]
+        covered = [a for a in raw if a is not None]
+        gap_kl = -sum(a for i, a in enumerate(raw) if a is not None and i not in content)
+        stats["gap_tokens"] += sum(1 for i, a in enumerate(raw) if a is not None and i not in content)
         stats["scored"] += 1
         stats["tokens"] += len(ids)
         stats["covered"] += len(covered)
@@ -311,6 +324,8 @@ def main() -> None:
         "reverse_kl_per_sample": round(sum(r["reverse_kl"] for r in ok) / max(1, len(ok)), 3),
         "mean_tokens": round(stats["tokens"] / max(1, len(ok)), 1),
         "gap_kl_per_sample": round(sum(r["gap_kl"] for r in ok) / max(1, len(ok)), 3),
+        "field_kl_per_token": {k: round(field_kl[k] / field_tokens[k], 4) for k in field_tokens},
+        "field_tokens": dict(field_tokens), "weights": weights,
         "stats": dict(stats), "usage": dict(usage),
     }
     print(json.dumps(summary))

@@ -57,6 +57,7 @@ def main() -> None:
     p.add_argument("--gpus", default="0,1,2,3,5,6,7")
     p.add_argument("--eval-every", type=int, default=5)
     p.add_argument("--base", default="qwen27b-base")
+    p.add_argument("--score-args", default="", help="extra opd_sample_score.py arguments, space-separated")
     args = p.parse_args()
 
     run = OPD / "runs" / args.name
@@ -79,7 +80,8 @@ def main() -> None:
         batch = run / "rounds" / f"round-{k:03d}.jsonl"
         if not batch.with_suffix(".summary.json").exists():
             subprocess.run([str(SERVE_PY), str(OPD / "opd_sample_score.py"), "--round", str(k), "--student", model_name(k),
-                            "--prefixes", str(args.prefixes), "--samples", str(args.samples), "--out", str(batch)],
+                            "--prefixes", str(args.prefixes), "--samples", str(args.samples), "--out", str(batch),
+                            *args.score_args.split()],
                            check=True, env=env, cwd=OPD)
         summary = json.loads(batch.with_suffix(".summary.json").read_text())
         log(run, {"event": "round", **summary})

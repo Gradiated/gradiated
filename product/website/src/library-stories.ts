@@ -78,6 +78,10 @@ const NOTE_ART: Record<string, StoryArt> = {
     tall: "/brand/library/thesis.webp",
     wide: "/brand/library/thesis-wide.webp",
   },
+  "/notes/2026-10-starting-on-hard-mode/": {
+    tall: "/brand/library/in-person.webp",
+    wide: "/assets/careers-board/customers-work.jpg",
+  },
 };
 
 const METHOD_ART: Partial<Record<MethodSlug, StoryArt>> = {

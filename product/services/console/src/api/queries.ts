@@ -218,6 +218,34 @@ export const revokeApiKey = (
     }),
   );
 
+const PLAYGROUND_CREDENTIAL_LIFETIME_MS = 60 * 60 * 1000;
+const PLAYGROUND_CREDENTIAL_RENEWAL_MS = 5 * 60 * 1000;
+
+export const playgroundCredentialQuery = (
+  organizationId: string,
+  workspaceId: string,
+) =>
+  queryOptions({
+    queryKey: ["playground-credential", organizationId, workspaceId],
+    queryFn: () =>
+      requireData(
+        api.POST("/api/v1/workspaces/{workspace_id}/playground-credentials", {
+          params: { path: { workspace_id: workspaceId } },
+        }),
+      ),
+    staleTime: ({ state }) =>
+      state.data
+        ? Math.max(
+            Date.parse(state.data.expires_at) -
+              Date.now() -
+              PLAYGROUND_CREDENTIAL_RENEWAL_MS,
+            0,
+          )
+        : 0,
+    gcTime: PLAYGROUND_CREDENTIAL_LIFETIME_MS,
+    enabled: Boolean(organizationId && workspaceId),
+  });
+
 export const modelsQuery = () =>
   queryOptions({
     queryKey: ["models"],

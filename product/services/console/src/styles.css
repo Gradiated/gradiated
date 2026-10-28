@@ -67,8 +67,11 @@
   --sidebar-ring: #8f8d83;
 }
 
-* {
-  border-color: var(--border);
+/* Layered so border utilities such as border-transparent can override it. */
+@layer base {
+  * {
+    border-color: var(--border);
+  }
 }
 
 body {
@@ -107,4 +110,53 @@ textarea {
   --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
   --sidebar-border: hsl(240 3.7% 15.9%);
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+/* Code samples share the docs' terminal surface and highlight.js palette
+   (website/src/tailwind.css), dark in both themes. */
+.code-snippet {
+  --code-bg: #181713;
+  --code-fg: #f4f1e8;
+  --code-muted: #92978f;
+  --code-accent: #e0a45c;
+  --code-string: #8fb5a3;
+  --code-function: #cfd9e6;
+  --code-border: rgba(240, 236, 226, 0.13);
+  background: var(--code-bg);
+  color: var(--code-fg);
+}
+.code-snippet .hljs-comment,
+.code-snippet .hljs-doctag,
+.code-snippet .hljs-meta,
+.code-snippet .hljs-quote,
+.code-snippet .hljs-params,
+.code-snippet .hljs-punctuation {
+  color: var(--code-muted);
+}
+.code-snippet .hljs-keyword,
+.code-snippet .hljs-built_in,
+.code-snippet .hljs-literal,
+.code-snippet .hljs-type,
+.code-snippet .hljs-title.class_,
+.code-snippet .hljs-tag,
+.code-snippet .hljs-name,
+.code-snippet .hljs-section {
+  color: var(--code-accent);
+}
+.code-snippet .hljs-string,
+.code-snippet .hljs-regexp,
+.code-snippet .hljs-symbol,
+.code-snippet .hljs-char.escape_,
+.code-snippet .hljs-number,
+.code-snippet .hljs-attr,
+.code-snippet .hljs-template-variable {
+  color: var(--code-string);
+}
+.code-snippet .hljs-title,
+.code-snippet .hljs-title.function_,
+.code-snippet .hljs-attribute,
+.code-snippet .hljs-property,
+.code-snippet .hljs-variable,
+.code-snippet .hljs-variable.language_ {
+  color: var(--code-function);
 }

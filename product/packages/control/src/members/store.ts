@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { v7 as uuidv7 } from "uuid";
 
@@ -12,6 +12,7 @@ import type { ControlDatabase } from "../db/client.js";
 
 type Transaction = Parameters<Parameters<ControlDatabase["transaction"]>[0]>[0];
 import {
+  apiKeys,
   invitations,
   organizationMembers,
   organizations,
@@ -202,11 +203,25 @@ export const createMemberStore = (database: ControlDatabase) => {
       actorId: string,
       userId: string,
     ) {
-      return asAdmin(organizationId, actorId, (transaction) =>
-        transaction
+      return asAdmin(organizationId, actorId, async (transaction) => {
+        await transaction
           .delete(organizationMembers)
-          .where(memberKey(organizationId, userId)),
-      );
+          .where(memberKey(organizationId, userId));
+
+        // Admins cannot see playground keys, so removal revokes them.
+        const revokedAt = new Date();
+        await transaction
+          .update(apiKeys)
+          .set({ revokedAt, updatedAt: revokedAt })
+          .where(
+            and(
+              eq(apiKeys.organizationId, organizationId),
+              eq(apiKeys.createdBy, userId),
+              eq(apiKeys.hidden, true),
+              isNull(apiKeys.revokedAt),
+            ),
+          );
+      });
     },
 
     async organizationName(organizationId: string) {

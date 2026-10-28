@@ -41,6 +41,7 @@ export const OptionCombobox = <Value extends string>({
   const selected = options.find((option) => option.value === value);
   const render = (option: Option<Value>) =>
     renderOption ? renderOption(option) : option.label;
+  const groups = [...new Set(options.map((option) => option.group))];
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -71,28 +72,35 @@ export const OptionCombobox = <Value extends string>({
           />
           <CommandList>
             <CommandEmpty>No models found.</CommandEmpty>
-            <CommandGroup>
-              {options.map((option) => (
-                <CommandItem
-                  key={option.value}
-                  value={option.value}
-                  keywords={[option.label]}
-                  disabled={option.disabled ?? false}
-                  onSelect={() => {
-                    onValueChange(option.value);
-                    setOpen(false);
-                  }}
-                >
-                  {render(option)}
-                  <Check
-                    className={cn(
-                      "ml-auto size-4 shrink-0",
-                      value === option.value ? "opacity-100" : "opacity-0",
-                    )}
-                  />
-                </CommandItem>
-              ))}
-            </CommandGroup>
+            {groups.map((group) => (
+              <CommandGroup
+                key={group ?? ""}
+                {...(group ? { heading: group } : {})}
+              >
+                {options
+                  .filter((option) => option.group === group)
+                  .map((option) => (
+                    <CommandItem
+                      key={option.value}
+                      value={option.value}
+                      keywords={[option.label]}
+                      disabled={option.disabled ?? false}
+                      onSelect={() => {
+                        onValueChange(option.value);
+                        setOpen(false);
+                      }}
+                    >
+                      {render(option)}
+                      <Check
+                        className={cn(
+                          "ml-auto size-4 shrink-0",
+                          value === option.value ? "opacity-100" : "opacity-0",
+                        )}
+                      />
+                    </CommandItem>
+                  ))}
+              </CommandGroup>
+            ))}
           </CommandList>
         </Command>
       </PopoverContent>

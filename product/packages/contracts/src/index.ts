@@ -93,6 +93,7 @@ export {
   CreateWorkspaceSchema,
   UpdateWorkspaceSchema,
   CreatedApiKeySchema,
+  PlaygroundCredentialSchema,
   WorkspaceListQuerySchema,
   WorkspaceListSchema,
   WorkspacePathSchema,
@@ -100,6 +101,7 @@ export {
   type ApiKey,
   type CreatedApiKeyResponse,
   type CreateWorkspace,
+  type PlaygroundCredential,
   type UpdateWorkspace,
   type Workspace,
 } from "./workspaces.js";

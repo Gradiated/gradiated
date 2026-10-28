@@ -5,7 +5,7 @@ import {
 } from "@gradiated/contracts/model-catalog";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { Check, CircleCheck, LoaderCircle } from "lucide-react";
+import { Check, CircleCheck, LoaderCircle, MessagesSquare } from "lucide-react";
 
 import {
   billingAccountQuery,
@@ -25,17 +25,7 @@ import { Button } from "@/components/ui/button";
 import { useProductContext } from "@/hooks/use-product-context";
 import { ConsolePage, LoadFailed } from "@/pages/console-page";
 import { formatNanoUsd, formatUsd } from "@/lib/format";
-import { tierPriceRows } from "@/pages/model-pricing";
-
-const tierLabel = (policy: ServiceTierPricingPolicy): string => {
-  const name =
-    policy.service_tier.charAt(0).toUpperCase() + policy.service_tier.slice(1);
-  if (policy.price_change_percent === 0) return name;
-
-  const sign = policy.price_change_percent > 0 ? "+" : "";
-
-  return `${name} (${sign}${policy.price_change_percent}%)`;
-};
+import { tierLabel, tierPriceRows } from "@/pages/model-pricing";
 
 const WelcomeBanner = () => {
   const { organizationId, selectedOrganization } = useProductContext();
@@ -145,6 +135,15 @@ export const ModelsPage = () => {
                     </code>
                   </div>
                 </div>
+                {model.status === "available" &&
+                model.properties.type === "chat" ? (
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/playground" search={{ model: model.id }}>
+                      <MessagesSquare />
+                      Try in playground
+                    </Link>
+                  </Button>
+                ) : null}
               </div>
               <div className="grid gap-6 p-6 md:grid-cols-[1fr_auto]">
                 <p className="max-w-2xl text-sm leading-6 text-muted-foreground">

@@ -238,6 +238,7 @@ export const apiKeys = pgTable(
     digest: bytea("digest").notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true, mode: "date" }),
     revokedAt: timestamp("revoked_at", { withTimezone: true, mode: "date" }),
+    hidden: boolean("hidden").default(false).notNull(),
     createdBy: uuid("created_by").references(() => users.id, {
       onDelete: "restrict",
     }),
@@ -255,6 +256,9 @@ export const apiKeys = pgTable(
       name: "api_keys_workspace_foreign_key",
     }).onDelete("cascade"),
     uniqueIndex("api_keys_digest_unique").on(table.digest),
+    uniqueIndex("api_keys_hidden_owner_unique")
+      .on(table.workspaceId, table.createdBy)
+      .where(sql`${table.hidden}`),
     index("api_keys_workspace_created_at_index").on(
       table.organizationId,
       table.workspaceId,

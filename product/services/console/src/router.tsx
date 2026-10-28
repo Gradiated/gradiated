@@ -67,6 +67,20 @@ const modelsRoute = createRoute({
   component: ModelsPage,
 });
 
+const playgroundRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/playground",
+  validateSearch: (search: Record<string, unknown>) => ({
+    ...(typeof search.model === "string" && search.model
+      ? { model: search.model }
+      : {}),
+  }),
+  component: lazyRouteComponent(
+    () => import("@/pages/playground-page"),
+    "PlaygroundPage",
+  ),
+});
+
 const tasksRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/tasks",
@@ -164,6 +178,7 @@ const routeTree = rootRoute.addChildren([
   onboardingRoute,
   apiKeysRoute,
   modelsRoute,
+  playgroundRoute,
   tasksRoute,
   taskRoute,
   billingRoute,

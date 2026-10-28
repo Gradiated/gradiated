@@ -334,3 +334,58 @@ describe("ModelPropertiesSchema", () => {
     );
   });
 });
+
+describe("default parameters and reasoning", () => {
+  const withParameters = (overrides: Partial<ModelPropertiesInput>) => ({
+    ...withModalities({
+      output: {
+        supported_parameters: {
+          temperature: { type: "range", min: 0, max: 2 },
+          reasoning_effort: { type: "enum", values: ["low", "high", "max"] },
+        },
+      },
+    }),
+    ...overrides,
+  });
+
+  it("accepts OpenRouter-style defaults and efforts the model supports", () => {
+    const properties = ModelPropertiesInputSchema.parse(
+      withParameters({
+        default_parameters: { temperature: 1 },
+        reasoning: { supported_efforts: ["low", "max"], default_effort: "max" },
+      }),
+    );
+
+    expect(properties.default_parameters).toEqual({ temperature: 1 });
+    expect(properties.reasoning?.default_effort).toBe("max");
+  });
+
+  it.each([
+    ["an unsupported parameter", { default_parameters: { top_p: 0.9 } }],
+    ["an out-of-range default", { default_parameters: { temperature: 3 } }],
+    [
+      "an effort the parameter rejects",
+      { reasoning: { supported_efforts: ["medium"], default_effort: null } },
+    ],
+    [
+      "a default effort outside the supported efforts",
+      { reasoning: { supported_efforts: ["low"], default_effort: "max" } },
+    ],
+  ] satisfies [string, Partial<ModelPropertiesInput>][])(
+    "rejects %s",
+    (_, overrides) => {
+      expect(
+        ModelPropertiesInputSchema.safeParse(withParameters(overrides)).success,
+      ).toBe(false);
+    },
+  );
+
+  it("requires the reasoning_effort parameter for reasoning levels", () => {
+    expect(
+      ModelPropertiesInputSchema.safeParse({
+        ...modelPropertiesInput(),
+        reasoning: { supported_efforts: ["high"], default_effort: "high" },
+      }).success,
+    ).toBe(false);
+  });
+});

@@ -63,5 +63,17 @@ export const createDeepseekV41FlashModelConfiguration = () =>
           ],
         },
       ],
+      // No generation_config.json, so the runtime's sampling defaults apply. The
+      // gateway renders an omitted effort as high; integers 1-100 are also accepted.
+      default_parameters: {
+        temperature: 1,
+        top_p: 1,
+        frequency_penalty: 0,
+        presence_penalty: 0,
+      },
+      reasoning: {
+        supported_efforts: ["none", "low", "high", "xhigh", "max"],
+        default_effort: "high",
+      },
     },
   }) satisfies CatalogModelInput;

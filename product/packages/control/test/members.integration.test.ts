@@ -2,7 +2,11 @@ import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { invitations, organizationMembers } from "../src/db/schema/index.js";
+import {
+  apiKeys,
+  invitations,
+  organizationMembers,
+} from "../src/db/schema/index.js";
 import {
   createMemberService,
   type MemberService,
@@ -11,6 +15,7 @@ import {
   createOrganizationService,
   type OrganizationService,
 } from "../src/organizations/service.js";
+import { createWorkspaceApiKeyService } from "../src/workspaces/service.js";
 import { seedMember, seedUser, seedWorkspace } from "./support/fixtures.js";
 import { createTestDatabase, type TestDatabase } from "./support/postgres.js";
 
@@ -78,6 +83,32 @@ describe("organization members and invitations", () => {
     await expect(
       members.removeMember(admin, organizationId, admin),
     ).rejects.toMatchObject({ code: "forbidden" });
+  });
+
+  it("revokes the playground key of a removed member", async () => {
+    const {
+      userId: admin,
+      organizationId,
+      workspaceId,
+    } = await seedMember(db.database, { role: "admin" });
+    const member = await addMember(organizationId, "member");
+    const keys = createWorkspaceApiKeyService(db.database);
+    const playground = await keys.createPlaygroundCredential(
+      member,
+      workspaceId,
+    );
+    const visible = await keys.createApiKey(member, workspaceId, {
+      name: "Visible",
+      expiresAt: null,
+    });
+
+    await members.removeMember(admin, organizationId, member);
+
+    const revokedAt = async (id: string) =>
+      (await db.database.select().from(apiKeys).where(eq(apiKeys.id, id)))[0]
+        ?.revokedAt;
+    expect(await revokedAt(playground.apiKeyId)).toBeInstanceOf(Date);
+    expect(await revokedAt(visible.apiKey.id)).toBeNull();
   });
 
   it("removes another member", async () => {

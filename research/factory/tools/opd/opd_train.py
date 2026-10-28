@@ -54,7 +54,7 @@ def main() -> None:
     p.add_argument("--lr", type=float, default=5e-5)
     p.add_argument("--minibatches", type=int, default=2, help="optimizer steps per round")
     p.add_argument("--clip", type=float, default=0.2)
-    p.add_argument("--max-length", type=int, default=28000)
+    p.add_argument("--max-length", type=int, default=34500)
     p.add_argument("--max-grad-norm", type=float, default=1.0)
     p.add_argument("--seed", type=int, default=0)
     args = p.parse_args()

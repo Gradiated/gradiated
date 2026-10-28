@@ -166,7 +166,7 @@ def main() -> None:
     p.add_argument("--samples", type=int, default=4)
     p.add_argument("--temperature", type=float, default=1.0)
     p.add_argument("--max-tokens", type=int, default=2048)
-    p.add_argument("--max-prompt-tokens", type=int, default=24000)
+    p.add_argument("--max-prompt-tokens", type=int, default=32000)
     p.add_argument("--vllm", default="http://127.0.0.1:18000/v1")
     p.add_argument("--teacher", default="accounts/fireworks/models/kimi-k3")
     p.add_argument("--tok-dir", default=str(HERE))

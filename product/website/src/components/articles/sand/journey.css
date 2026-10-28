@@ -298,6 +298,45 @@
   margin: 0;
 }
 
+.sand-journey .scene-text a[href="/sand-to-thought/fabricating-a-transistor/"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 100%;
+  min-height: 48px;
+  padding: 0.8rem 1.1rem;
+  border: 1px solid #713b43;
+  border-radius: 6px;
+  background: #713b43;
+  color: #fff9f0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.45;
+  text-decoration: none;
+}
+
+.sand-journey
+  .scene-text
+  a[href="/sand-to-thought/fabricating-a-transistor/"]::after {
+  content: "→";
+  flex-shrink: 0;
+}
+
+.sand-journey
+  .scene-text
+  a[href="/sand-to-thought/fabricating-a-transistor/"]:hover {
+  background: #562c33;
+  border-color: #562c33;
+}
+
+.sand-journey
+  .scene-text
+  a[href="/sand-to-thought/fabricating-a-transistor/"]:focus-visible {
+  outline: 2px solid #713b43;
+  outline-offset: 4px;
+}
+
 .sand-journey .post-footer {
   min-height: 60vh;
   display: grid;

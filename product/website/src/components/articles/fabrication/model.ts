@@ -69,10 +69,10 @@ export const machines = [
   {
     id: "deposit",
     label: "Film deposition",
-    job: "Deposit polysilicon or insulation",
+    job: "Deposit nitride, polysilicon or insulation",
     wiki: "Chemical_vapor_deposition",
     summary:
-      "Chemical vapour deposition forms a film through chemical reactions at the wafer. We use this equipment category for polysilicon and insulating films, with a different process for each material. Metal deposition has its own station.",
+      "Chemical vapour deposition forms a film through chemical reactions at the wafer. We use this equipment category for silicon nitride, polysilicon and oxide films, with a different process for each material. Metal deposition has its own station.",
   },
   {
     id: "metal",

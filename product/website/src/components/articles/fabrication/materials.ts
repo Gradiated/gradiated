@@ -30,6 +30,11 @@ export const materialColours = {
     "var(--color-taupe-400)",
     "var(--color-taupe-350)",
   ],
+  nitride: [
+    "var(--color-kiln-300)",
+    "var(--color-taupe-500)",
+    "color-mix(in srgb, var(--color-kiln-300) 65%, var(--color-taupe-500))",
+  ],
   resist: [
     "color-mix(in srgb, var(--color-plum-400) 60%, var(--color-light-000))",
     "var(--color-plum-500)",

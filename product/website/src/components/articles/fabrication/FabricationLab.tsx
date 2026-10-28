@@ -331,13 +331,39 @@ export const WholeWafer = ({
     .map((cycle) => ({ ...cycle, ...resistState(state, cycle.id) }))
     .filter((resist) => resist.amount > 0.001);
   const activity = active ? Math.sin(Math.PI * visit.process) : 0;
-  const permanentPatterns: { mask: MaskId; open: boolean; fill: string }[] = [
-    { mask: "isolation", open: true, fill: siliconColours.top },
-    { mask: "gate", open: false, fill: materialColours.gate[0] },
-    { mask: "contact", open: true, fill: "#545961" },
-    { mask: "metal", open: false, fill: materialColours.metal[1] },
-    { mask: "via", open: true, fill: "#545961" },
-    { mask: "upper", open: false, fill: materialColours.metal[0] },
+  const permanentPatterns: {
+    name: string;
+    mask: MaskId;
+    open: boolean;
+    fill: string;
+  }[] = [
+    {
+      name: "nitride",
+      mask: "isolation",
+      open: false,
+      fill: materialColours.nitride[0],
+    },
+    {
+      name: "isolation",
+      mask: "isolation",
+      open: false,
+      fill: siliconColours.top,
+    },
+    { name: "gate", mask: "gate", open: false, fill: materialColours.gate[0] },
+    { name: "contact", mask: "contact", open: true, fill: "#545961" },
+    {
+      name: "metal",
+      mask: "metal",
+      open: false,
+      fill: materialColours.metal[1],
+    },
+    { name: "via", mask: "via", open: true, fill: "#545961" },
+    {
+      name: "upper",
+      mask: "upper",
+      open: false,
+      fill: materialColours.metal[0],
+    },
   ];
 
   return (
@@ -378,8 +404,8 @@ export const WholeWafer = ({
 
           return (
             <pattern
-              key={pattern.mask}
-              id={`${id}-surface-${pattern.mask}`}
+              key={pattern.name}
+              id={`${id}-surface-${pattern.name}`}
               width="27"
               height="27"
               x="47"
@@ -500,7 +526,29 @@ export const WholeWafer = ({
           width="200"
           height="160"
           fill={`url(#${id}-surface-isolation)`}
-          opacity={state.prepareIsolation * (1 - state.gateOxide)}
+          opacity={state.padOxideStrip * (1 - state.gateOxide)}
+        />
+        <rect
+          x="40"
+          y="40"
+          width="200"
+          height="160"
+          fill={materialColours.nitride[0]}
+          opacity={
+            state.nitride *
+            (1 - state.prepareIsolation) *
+            (1 - state.nitrideStrip)
+          }
+        />
+        <rect
+          x="40"
+          y="40"
+          width="200"
+          height="160"
+          fill={`url(#${id}-surface-nitride)`}
+          opacity={
+            state.nitride * state.prepareIsolation * (1 - state.nitrideStrip)
+          }
         />
         <rect
           x="40"

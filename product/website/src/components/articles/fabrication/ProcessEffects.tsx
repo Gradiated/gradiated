@@ -1,5 +1,6 @@
 import { materialColours } from "./materials";
 import {
+  activeSilicon,
   contactAt,
   contactEtchHeight,
   contactInsulatorHeight,
@@ -101,14 +102,18 @@ const arrivingMaterialFor = (step: FabricationStep) =>
       ? materialColours.metal
       : step.key === "poly"
         ? materialColours.gate
-        : materialColours.insulator;
+        : step.key === "isolation"
+          ? materialColours.nitride
+          : materialColours.insulator;
 
 const etchedMaterialFor = (step: FabricationStep) =>
-  step.mask === "gate"
-    ? materialColours.gate[0]
-    : step.mask === "metal" || step.mask === "upper"
-      ? materialColours.metal[1]
-      : materialColours.insulator[1];
+  step.mask === "isolation" || step.key === "nitride-strip"
+    ? materialColours.nitride[1]
+    : step.mask === "gate"
+      ? materialColours.gate[0]
+      : step.mask === "metal" || step.mask === "upper"
+        ? materialColours.metal[1]
+        : materialColours.insulator[1];
 
 const dissolvingSitesFor = (step: FabricationStep, ymax: number) => {
   const mask = step.mask;
@@ -333,8 +338,10 @@ export const CloseupProcessEffects = ({
                     project={project}
                     material={etchedMaterial}
                     blocked={
-                      !!step.mask &&
-                      resistThickness(state, step.mask, x, y) > 0.1
+                      step.key === "nitride-strip"
+                        ? !activeSilicon(x)
+                        : !!step.mask &&
+                          resistThickness(state, step.mask, x, y) > 0.1
                     }
                   />
                 </g>
@@ -612,7 +619,9 @@ export const WaferProcessEffects = ({
               (((((y / waferPatternScale - 52) % 27) + 27) % 27) * 65) / 27;
             const mask = steps[index].mask;
             const blocked =
-              !!mask && resistThickness(state, mask, localX, localY) > 0.1;
+              steps[index].key === "nitride-strip"
+                ? !activeSilicon(localX)
+                : !!mask && resistThickness(state, mask, localX, localY) > 0.1;
             if (visit.machine === "etch")
               return (
                 <g key={i} data-wafer-site={`${x} ${y}`}>

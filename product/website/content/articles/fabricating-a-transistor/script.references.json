@@ -230,7 +230,7 @@
     "publication": "PhD thesis",
     "publisher": "Technische Universität Wien",
     "year": 2007,
-    "url": "https://iue.tuwien.ac.at/phd/hollauer/node7.html#:~:text=Local%20Oxidation%20of%20Silicon%20%28LOCOS%29%20is%20the%20traditional%20isolation%20technique.,defines%20the%20active%20areas%20for%20the%20oxidation%20process.&text=The%20first%20difference%20compared%20to%20LOCOS,the%20rest%20of%20the%20trench%20is%20filled%20with%20a%20deposited%20oxide"
+    "url": "https://iue.tuwien.ac.at/phd/hollauer/node7.html#:~:text=Local%20Oxidation%20of%20Silicon%20%28LOCOS%29%20is%20the%20traditional%20isolation%20technique.,defines%20the%20active%20areas%20for%20the%20oxidation%20process."
   },
   "cleanroom-filtration": {
     "authors": [
@@ -240,5 +240,42 @@
     "publication": "Wikipedia",
     "accessed": "27 October 2026",
     "url": "https://en.wikipedia.org/wiki/Cleanroom#Basic_construction:~:text=Within%2C%20air%20is%20constantly%20recirculated,internally%20generated%20contaminants."
+  },
+  "locos-process": {
+    "authors": [
+      "University of California, Berkeley, Nanofabrication Laboratory"
+    ],
+    "title": "Baseline CMOS 180 mix & match process flow with LOCOS",
+    "accessed": "28 October 2026",
+    "url": "https://nanolab.berkeley.edu/public/process/baseline/cmos180/CMOS180_LOCOS.htm#:~:text=NITRIDE%20REMOVAL%20%2F%20PAD%20OXIDE%20REMOVAL"
+  },
+  "nitride-etch-stop": {
+    "authors": [
+      "Applied Materials"
+    ],
+    "title": "Applied Materials introduces Nitride550 CVD process to enable next-generation transistor structures",
+    "year": 1998,
+    "url": "https://ir.appliedmaterials.com/news-releases/news-release-details/applied-materials-introduces-nitride550-cvd-process-enable-next#:~:text=Thin%20layers%20of%20nitride%20are%20especially%20useful%20as"
+  },
+  "nitride-spacers": {
+    "authors": [
+      "Pradeep, Y. R.",
+      "Yu, J.",
+      "Wu, G. P."
+    ],
+    "title": "Method to form an L-shaped silicon nitride sidewall spacer",
+    "publication": "US patent 6,251,764 B1",
+    "year": 2001,
+    "url": "https://patents.google.com/patent/US6251764B1/en#:~:text=In%20particular%2C%20silicon%20nitride%20sidewall%20spacers"
+  },
+  "chip-passivation": {
+    "authors": [
+      "Sheikholeslami, A."
+    ],
+    "title": "Topography simulation",
+    "publication": "Institute for Microelectronics annual review",
+    "publisher": "Technische Universität Wien",
+    "year": 2006,
+    "url": "https://www.iue.tuwien.ac.at/personal/jb2006/content/staff/Sheikholeslami.html#:~:text=A%20typical%20passivation%20process%20in%20IC%20chips"
   }
 }

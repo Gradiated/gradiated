@@ -130,8 +130,11 @@ export const patternState = (index: number, visit: Visit) => {
     oxide: step(stages.growOxide),
     well: step(stages.well),
     wellAnneal: step(stages.wellAnneal),
-    isolation: step(stages.isolation),
+    nitride: step(stages.isolation),
     prepareIsolation: step(stages.prepareIsolation),
+    isolation: step(stages.fieldOxide),
+    nitrideStrip: step(stages.nitrideStrip),
+    padOxideStrip: step(stages.padOxideStrip),
     gateOxide: step(stages.gateOxide),
     poly: step(stages.poly),
     patternGate: step(stages.patternGate),
@@ -164,6 +167,15 @@ export const blendPattern = (
       (from[key] ?? 0) + (to[key] - (from[key] ?? 0)) * clamp(progress),
     ]),
   ) as PatternState;
+
+export const transitionPattern = (
+  from: PatternState,
+  to: PatternState,
+  progress: number,
+  fromIndex: number,
+  toIndex: number,
+): PatternState =>
+  Math.abs(toIndex - fromIndex) > 1 ? to : blendPattern(from, to, progress);
 
 export const resistState = (state: PatternState, mask: MaskId) => ({
   coat: state[`${mask}Coat`],
@@ -217,7 +229,7 @@ export const maskOpens = (mask: MaskId, x: number, y: number) => {
     case "well":
       return x >= 55;
     case "isolation":
-      return activeSilicon(x);
+      return !activeSilicon(x);
     case "gate":
       return !gateRegion(x);
     case "n":
@@ -307,24 +319,54 @@ export const upperInsulatorHeight = (
 
   return 27 + raised - (2 + raised) * state.polish;
 };
-export const firstOxideHeight = (_x: number, _y: number, state: PatternState) =>
-  5 * state.oxide;
+export const fieldOxideProfile = (x: number, growth = 1) => {
+  if (growth <= 0) return activeSilicon(x) ? 0 : 1;
+
+  const distance = Math.min(
+    ...[2, 40, 60, 98].map((edge) => Math.abs(x - edge)),
+  );
+  const signedDistance = activeSilicon(x) ? distance : -distance;
+  const reach = 3 * growth;
+
+  return ease((reach - signedDistance) / (2 * reach));
+};
+export const fieldOxideGrowth = (x: number, state: PatternState) =>
+  8 * state.isolation * fieldOxideProfile(x, state.isolation);
 export const insulationThickness = (
   x: number,
   _y: number,
   state: PatternState,
 ) =>
-  (5 * state.oxide + 3 * state.isolation) *
-    (activeSilicon(x) ? 1 - state.prepareIsolation : 1) +
-  (activeSilicon(x) ? 1.8 * state.gateOxide : 0);
+  5 * state.oxide * (1 - state.padOxideStrip) +
+  fieldOxideGrowth(x, state) +
+  1.8 * state.gateOxide * (1 - fieldOxideProfile(x, state.isolation));
 export const siliconSurfaceHeight = (
   x: number,
   _y: number,
   state: PatternState,
 ) =>
   -2 * state.oxide -
-  1.2 * state.isolation -
-  (activeSilicon(x) ? 0.8 * state.gateOxide : 0);
+  0.44 * fieldOxideGrowth(x, state) -
+  0.8 * state.gateOxide * (1 - fieldOxideProfile(x, state.isolation));
+export const nitrideThickness = (x: number, state: PatternState) =>
+  6 *
+  state.nitride *
+  (1 - state.nitrideStrip) *
+  (activeSilicon(x) ? 1 : 1 - state.prepareIsolation);
+export const isolationProfileXs = [
+  ...new Set([
+    0,
+    52,
+    55,
+    80,
+    100,
+    ...[2, 40, 60, 98].flatMap((edge) =>
+      Array.from({ length: 25 }, (_, i) => edge - 3 + i * 0.25).filter(
+        (x) => x >= 0 && x <= 100,
+      ),
+    ),
+  ]),
+].sort((a, b) => a - b);
 export const deviceSurfaceHeight = (
   x: number,
   y: number,
@@ -345,7 +387,8 @@ export const contactInsulatorHeight = (
 };
 
 export const materialSurfaceHeight = (state: PatternState, x = 0, y = 0) => {
-  const deviceTop = deviceSurfaceHeight(x, y, state);
+  const deviceTop =
+    deviceSurfaceHeight(x, y, state) + nitrideThickness(x, state);
   const coveredTop =
     deviceTop + (contactInsulatorHeight(x, y, state) - deviceTop) * state.cover;
   const metalTop =

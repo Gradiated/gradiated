@@ -23,7 +23,7 @@ import {
 import type { OpeningState } from "./FabricationIntroduction";
 import { WaferMagnification } from "./WaferMagnification";
 import {
-  blendPattern,
+  transitionPattern,
   inverterDuration,
   inverterOperation,
   patternState,
@@ -125,6 +125,11 @@ export const FabricationJourney = () => {
     .pop();
   const visit = visitFor(progress, step.machine, fromMachine);
   const from = animation.index === active ? animation.from : displayed.current;
+  const sourceIndex =
+    animation.index === active ? fromIndex : previousScene.current;
+  const skippedScenes = Math.abs(active - sourceIndex) > 1;
+  const materialReveal =
+    reduced || !skippedScenes ? 1 : portion(transition, 0, 0.28);
   const workingInverter =
     from.workingInverter +
     ((active === stages.inverter ? 1 : 0) - from.workingInverter) *
@@ -136,7 +141,13 @@ export const FabricationJourney = () => {
   const targetMaterial = patternState(active, visit);
   const material = reduced
     ? targetMaterial
-    : blendPattern(from.material, targetMaterial, portion(transition, 0, 0.28));
+    : transitionPattern(
+        from.material,
+        targetMaterial,
+        portion(transition, 0, 0.28),
+        sourceIndex,
+        active,
+      );
   const camera = patterningCamera(active, transition, from.camera);
   const opening = openingState(active, transition, from.opening);
   const entering = active === stages.operator && from.opening.entry < 0.99;
@@ -224,6 +235,7 @@ export const FabricationJourney = () => {
 
   useEffect(() => {
     const origin = displayed.current;
+    const skippedScenes = Math.abs(active - previousScene.current) > 1;
     if (previousScene.current !== active) {
       setFromMachine(scenes[previousScene.current].machine);
       setFromIndex(previousScene.current);
@@ -246,6 +258,9 @@ export const FabricationJourney = () => {
             ? 2200
             : 1600
           : sceneDuration;
+    const transitionDuration = skippedScenes
+      ? Math.min(duration, 1200)
+      : duration;
     const looping = active === 0 && openingAuto;
     const cycleDuration = inverterDuration + 1800;
     let previous = performance.now();
@@ -259,7 +274,7 @@ export const FabricationJourney = () => {
         !document.hidden;
       if (!visible) return;
 
-      const delta = Math.min(now - previous, 64);
+      const delta = now - previous;
       elapsed += delta;
       transitionElapsed += delta;
       previous = now;
@@ -270,7 +285,7 @@ export const FabricationJourney = () => {
       setAnimation({
         index: active,
         progress: Math.min(1, elapsed / duration),
-        transition: Math.min(1, transitionElapsed / duration),
+        transition: Math.min(1, transitionElapsed / transitionDuration),
         from: origin,
       });
       if (looping || elapsed < duration) frame = requestAnimationFrame(update);
@@ -534,7 +549,7 @@ export const FabricationJourney = () => {
                     <div
                       className="fab-wafer-position"
                       style={{
-                        opacity: opening.wafer,
+                        opacity: opening.wafer * materialReveal,
                         transform: openingLayout
                           ? `translate(${openingLayout.dx * opening.centred}px, ${openingLayout.dy * opening.centred}px) scale(${1 + (openingLayout.scale - 1) * opening.centred})`
                           : undefined,
@@ -552,7 +567,7 @@ export const FabricationJourney = () => {
                   </figure>
                   <figure
                     className="fab-detail-panel"
-                    style={{ opacity: detailReveal }}
+                    style={{ opacity: detailReveal * materialReveal }}
                     aria-hidden={detailReveal < 0.01}
                     inert={detailReveal < 0.99}
                     aria-label="Enlarged wafer region"

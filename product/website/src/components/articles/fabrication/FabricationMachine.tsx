@@ -27,7 +27,13 @@ const maskCoverage = maskCycles.map(({ id }) => ({
 export const SmallWafer = ({ state }: { state: PatternState }) => {
   const films = [
     [materialColours.insulator[0], state.oxide],
-    [siliconColours.top, state.prepareIsolation * (1 - state.gateOxide) * 0.55],
+    [siliconColours.top, state.padOxideStrip * (1 - state.gateOxide) * 0.55],
+    [
+      materialColours.nitride[0],
+      state.nitride *
+        (1 - state.nitrideStrip) *
+        (1 - state.prepareIsolation * 0.24),
+    ],
     [materialColours.gate[0], state.poly * (1 - state.patternGate * 0.88)],
     [materialColours.insulator[0], state.cover * 0.6],
     [materialColours.metal[0], state.metal * (1 - state.metalPattern * 0.82)],
@@ -442,7 +448,9 @@ export const LabMachine = ({
                     ? "#d56c71"
                     : id === "metal"
                       ? "#8e9292"
-                      : "#9eb69a"
+                      : state.nitride > 0 && state.nitrideStrip < 1
+                        ? materialColours.nitride[0]
+                        : "#9eb69a"
                 }
                 strokeWidth={id === "etch" ? 1.3 : 1.7}
                 strokeLinecap="round"

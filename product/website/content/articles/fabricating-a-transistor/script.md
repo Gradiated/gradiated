@@ -42,7 +42,7 @@ Doping adds small quantities of selected elements, called dopants. Phosphorus, f
 
 A fab contains machines that add, remove and alter materials on a wafer. Large fabs can contain more than a thousand manufacturing tools. Our clean room groups their jobs into twelve stations so we can follow the process.
 
-Our intern will visit `44` processing machines (even in our simplified example) before we have a working NOT gate, returning to the same machines with new patterns and materials.
+Our intern will visit `47` processing machines (even in our simplified example) before we have a working NOT gate, returning to the same machines with new patterns and materials.
 
 <!-- scene: grow-oxide -->
 
@@ -81,7 +81,7 @@ Our intern now uses developer to wash away the exposed photoresist, opening the 
 
 <!-- scene: well -->
 
-Next we create the n-well. The implanter accelerates ions of an n-type dopant, such as phosphorus, towards the wafer. They pass through the photoresist opening and thin oxide into the silicon. The photoresist blocks them elsewhere. Inside the opening, the added atoms will make the silicon n-type after heat treatment.
+Next we create the n-well. The implanter accelerates ions of an n-type dopant, such as phosphorus, towards the wafer. They pass through the gaps in the photoresist and thin oxide into the silicon. The photoresist blocks them elsewhere. Inside the opening, the added atoms will make the silicon n-type after heat treatment.
 
 <!-- scene: strip -->
 
@@ -89,21 +89,21 @@ Only after implantation do we strip the remaining photoresist and clean the wafe
 
 <!-- scene: well-anneal -->
 
-Annealing heats the wafer so atoms can move back into ordered positions after implantation damage. It also helps dopant atoms take positions in the silicon crystal where they can supply electrons or holes. The n-well now provides the body of the p-type transistor.
+Annealing heats the wafer so silicon and dopant atoms are “shaken” back into ordered positions after implantation damage, allowing it to be electrically conductive. The n-well now provides the body of the p-type transistor.
 
 <!-- scene: isolation -->
 
 ## Foundations of the NOT gate
 
-We now grow a thicker silicon dioxide layer in the furnace. This field oxide helps prevent unwanted conduction between neighbouring devices. We will remove it from the two transistor sites, leaving insulation around them. This sequence simplifies isolation. Common methods instead grow oxide selectively around protected device sites or fill trenches in the silicon with insulation.[@device-isolation]
+We need thicker insulation around the two transistor sites to help prevent unwanted conduction between neighbouring devices. We will grow this field oxide only where it is needed, using local oxidation of silicon, or LOCOS. First, the deposition machine adds silicon nitride, a temporary barrier to oxidation. We keep the existing thin oxide between this film and the silicon.[@device-isolation]
 
 <!-- scene: isolation-coat -->
 
-Our intern returns to the coater for a fresh photoresist film. This time, we are going to remove oxide rather than implant dopants.
+Our intern returns to the coater for fresh photoresist. This time, we will pattern the nitride rather than implant dopants.
 
 <!-- scene: isolation-expose -->
 
-A different photomask exposes a new pattern of two sites for two transistors. The pattern must line up with the n-well we have already made.
+A different photomask exposes the photoresist around the two future transistor sites. The photoresist over those sites stays unexposed. The pattern must line up with the n-well we have already made.
 
 <details>
 <summary>How do successive patterns line up?</summary>
@@ -116,15 +116,27 @@ Small positioning errors remain. Manufacturers measure how closely successive pa
 
 <!-- scene: isolation-develop -->
 
-Development clears out the photoresist above those sites. Photoresist remains over the field oxide we want to keep.
+Developer removes the exposed photoresist. The remaining photoresist covers the two transistor sites, protecting the nitride beneath it.
 
 <!-- scene: prepare-isolation -->
 
-Etching removes exposed material through chemical reactions, sometimes assisted by energetic particles. Our etcher uses plasma, an electrically energised gas containing ions and other reactive particles. These react with or strike the surface, helping remove material as gaseous products that can be pumped away.[@plasma-etching] Here, we choose conditions that remove oxide much faster than silicon, allowing us to stop at the silicon surface. The photoresist protects the surrounding oxide. We now have openings in the permanent insulating film, not just in the photoresist.
+Etching removes exposed material through chemical reactions, sometimes assisted by energetic particles. Our etcher uses plasma, an electrically energised gas containing ions and other reactive particles. These react with or strike the surface, helping remove material as gaseous products that can be pumped away.[@plasma-etching] Here, we remove the exposed nitride while leaving the thin oxide beneath it. Photoresist protects the nitride over the transistor sites.
 
 <!-- scene: isolation-strip -->
 
-We strip away the photoresist after etching with another wash. The oxide pattern remains, surrounding the exposed device sites. We have now completed two cycles of coating, exposure, development, material processing and stripping. We will repeat this sequence with different patterns as we build the transistors and their wiring.
+We strip away the photoresist before returning to the hot furnace. The patterned nitride remains over the two transistor sites. It will protect them during oxidation.
+
+<!-- scene: field-oxide -->
+
+In the furnace, field oxide grows where the nitride has been removed. It consumes silicon as it grows, extending below the original surface as well as above it. Some oxide also spreads a short distance beneath the nitride edges. The protected transistor sites retain their thin oxide.[@device-isolation]
+
+<!-- scene: nitride-strip -->
+
+The nitride has done its job. We remove it with an etch that leaves the oxide largely intact, exposing the thin oxide over our transistor sites.
+
+<!-- scene: pad-oxide-strip -->
+
+A separate oxide etch clears that thin film, ready for fresh gate oxide. It also thins the field oxide, which remains around the device sites.[@locos-process] We have now used photoresist to define both an implant and a permanent material pattern. We will repeat coating, exposure, development, material processing and stripping as we build the transistors and their wiring.
 
 <!-- scene: oxide -->
 
@@ -247,7 +259,7 @@ Development opens up these small regions in the photoresist. The insulator still
 
 <!-- scene: contacts -->
 
-The etcher removes oxide through the openings to expose doped silicon or a polysilicon gate. We control the etch conditions and duration to clear the oxide while limiting damage to these terminals.[@plasma-etching] The drawing exaggerates the holes so we can follow their destinations.
+The etcher removes oxide through the openings to expose doped silicon or a polysilicon gate. We control the etch conditions and duration to clear the oxide while limiting damage to these terminals.[@plasma-etching] The drawing exaggerates the holes so we can follow their destinations. Some processes add a thin silicon nitride layer beneath the oxide to help stop the etch before it reaches the devices. We omit this extra layer here.[@nitride-etch-stop]
 
 <!-- scene: contact-strip -->
 
@@ -343,12 +355,14 @@ The etcher removes exposed metal, leaving the upper connection beneath the photo
 
 We strip the photoresist to reveal the upper wire, which can act as a connection to the greater circuit.
 
-We have repeated the same patterning cycle with different patterns and materials. Real fabrication also needs frequent cleaning and measurements of film thickness, pattern size and alignment. We have left out detailed chemical recipes and refinements such as extra implants and insulating spacers beside the gates, which help control the transistors’ behaviour.[@cmos-fabrication; @chipmaking-overview]
+We have repeated the same patterning cycle with different patterns and materials. Real fabrication also needs frequent cleaning and measurements of film thickness, pattern size and alignment. We have left out detailed chemical recipes and refinements such as extra implants.[@cmos-fabrication; @chipmaking-overview] We also omit insulating spacers beside the gates, often made from silicon nitride, which help set how close later source and drain implants reach to the channel.[@nitride-spacers]
 
 <!-- scene: finish -->
 
 ## From one gate to a chip
 
 Our NOT gate is one tiny part of a chip. Repeating the insulation, patterning and connection steps builds more wiring levels above it. Lower wires join nearby transistors, while larger wires higher up carry signals and power between distant parts of the chip. Vias connect the levels.[@interconnect-layers]
+
+A finished chip also receives a protective coating, often combining oxide and silicon nitride, to keep moisture and contaminants out. We leave this final coating out of the drawing so the wiring remains visible.[@chip-passivation]
 
 The transistors stay on the silicon surface. Above them, a jungle of insulated metal layers turn many small circuits into one connected machine.

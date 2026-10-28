@@ -10,6 +10,7 @@ import {
   activeSilicon,
   exposureLighting,
   exposureRegions,
+  fieldOxideGrowth,
   filmVisibility,
   inverterOperation,
   firstMetalTracks,
@@ -30,6 +31,8 @@ import {
   terminals,
   contactAt,
   insulationThickness,
+  isolationProfileXs,
+  nitrideThickness,
   siliconSurfaceHeight,
 } from "./process";
 import type { PatternState, Visit } from "./process";
@@ -37,10 +40,13 @@ import { maskCycles, steps } from "./sequence";
 import { CloseupProcessEffects } from "./ProcessEffects";
 import { ExposureBeams } from "./ExposureBeams";
 
-type Point = [number, number, number];
+import { surfaceContours } from "./surfaces";
+import type { SurfacePoint as Point } from "./surfaces";
 type RegionLabel = string | ((x: number, y: number) => string);
 type Face = {
   points: Point[];
+  contours?: Point[][];
+  surface?: string;
   fill: string;
   depth: number;
   opacity: number;
@@ -199,6 +205,7 @@ export const PatterningModel = ({
   let layerOrder = 0;
   let faceOpacity = 1;
   let faceRegion = "";
+  let faceSurface: string | undefined;
   const addFace = (points: Point[], fill: string, opacity = 1) => {
     const depth =
       points.reduce(
@@ -214,6 +221,7 @@ export const PatterningModel = ({
       depth: depth + layerOrder * 1000,
       opacity: opacity * faceOpacity,
       region: faceRegion,
+      surface: faceSurface,
     });
   };
   const layer = (
@@ -318,17 +326,206 @@ export const PatterningModel = ({
       }
     }
   };
+  const profileLayer = (
+    xs: number[],
+    ys: number[],
+    baseAt: (x: number, y: number) => number,
+    heightAt: (x: number, y: number) => number,
+    colours: [string, string, string],
+    opacity: number,
+    region: RegionLabel,
+    exposureAt?: (x: number, y: number) => number,
+    fadeGroupAt?: (x: number, y: number) => string | number | boolean,
+  ) => {
+    layerOrder += 1;
+    if (opacity <= 0) return;
+
+    const firstFace = faces.length;
+    const regionAt = (x: number, y: number) =>
+      typeof region === "function" ? region(x, y) : region;
+    const fadeGroup = (x: number, y: number) =>
+      JSON.stringify([regionAt(x, y), fadeGroupAt?.(x, y)]);
+    const thicknessByGroup = new Map<string, number>();
+    for (let row = 0; row < ys.length - 1; row++) {
+      for (let col = 0; col < xs.length - 1; col++) {
+        const x = (xs[col] + xs[col + 1]) / 2;
+        const y = (ys[row] + ys[row + 1]) / 2;
+        const group = fadeGroup(x, y);
+        thicknessByGroup.set(
+          group,
+          Math.max(thicknessByGroup.get(group) ?? 0, heightAt(x, y)),
+        );
+      }
+    }
+    for (let row = 0; row < ys.length - 1; row++) {
+      for (let col = 0; col < xs.length - 1; col++) {
+        const x0 = xs[col],
+          x1 = xs[col + 1];
+        const y0 = ys[row],
+          y1 = ys[row + 1];
+        const epsilon = 0.00001;
+        const samples = [
+          [x0 + epsilon, y0 + epsilon],
+          [x1 - epsilon, y0 + epsilon],
+          [x1 - epsilon, y1 - epsilon],
+          [x0 + epsilon, y1 - epsilon],
+        ];
+        const corners = [
+          [x0, y0],
+          [x1, y0],
+          [x1, y1],
+          [x0, y1],
+        ];
+        const atCorner = (
+          sample: (x: number, y: number) => number,
+          i: number,
+        ) => {
+          const exact = sample(corners[i][0], corners[i][1]);
+          const inside = sample(samples[i][0], samples[i][1]);
+
+          return Math.abs(exact - inside) < 0.001 ? exact : inside;
+        };
+        const heights = samples.map((_, i) => atCorner(heightAt, i));
+        if (Math.max(...heights) < 0.001) continue;
+
+        const bases = samples.map((_, i) => atCorner(baseAt, i));
+        const tops = bases.map((base, i) => base + heights[i]);
+        const centreX = (x0 + x1) / 2;
+        const centreY = (y0 + y1) / 2;
+        faceOpacity =
+          opacity *
+          filmVisibility(
+            thicknessByGroup.get(fadeGroup(centreX, centreY)) ?? 0,
+          );
+        faceRegion = regionAt(centreX, centreY);
+        faceSurface = "top";
+        const exposure = exposureAt?.((x0 + x1) / 2, (y0 + y1) / 2) ?? 0;
+        addFace(
+          corners.map(([x, y], i) => [x, y, tops[i]] as Point),
+          exposure > 0
+            ? exposedResistColour(exposure, lighting.glow)
+            : colours[0],
+        );
+
+        const edges = [
+          {
+            a: 0,
+            b: 1,
+            dx: 0,
+            dy: -epsilon,
+            outside: row === 0,
+            colour: colours[2],
+          },
+          {
+            a: 1,
+            b: 2,
+            dx: epsilon,
+            dy: 0,
+            outside: col === xs.length - 2,
+            colour: colours[1],
+          },
+          {
+            a: 2,
+            b: 3,
+            dx: 0,
+            dy: epsilon,
+            outside: row === ys.length - 2,
+            colour: colours[2],
+          },
+          {
+            a: 3,
+            b: 0,
+            dx: -epsilon,
+            dy: 0,
+            outside: col === 0,
+            colour: colours[1],
+          },
+        ];
+        for (const { a, b, dx, dy, outside, colour } of edges) {
+          const floor = (i: number) => {
+            if (outside) return bases[i];
+
+            const [x, y] = samples[i];
+            const neighbourX = x + dx * 2,
+              neighbourY = y + dy * 2;
+
+            return Math.max(
+              bases[i],
+              baseAt(neighbourX, neighbourY) + heightAt(neighbourX, neighbourY),
+            );
+          };
+          const lowA = Math.min(tops[a], floor(a));
+          const lowB = Math.min(tops[b], floor(b));
+          if (tops[a] - lowA < 0.001 && tops[b] - lowB < 0.001) continue;
+
+          faceSurface =
+            dx < 0 ? "left" : dx > 0 ? "right" : dy < 0 ? "back" : "front";
+          addFace(
+            [
+              [corners[a][0], corners[a][1], lowA],
+              [corners[b][0], corners[b][1], lowB],
+              [corners[b][0], corners[b][1], tops[b]],
+              [corners[a][0], corners[a][1], tops[a]],
+            ],
+            colour,
+          );
+        }
+      }
+    }
+    faceSurface = undefined;
+    const patches = new Map<string, Face[]>();
+    for (const face of faces.splice(firstFace)) {
+      const key = JSON.stringify([
+        face.surface,
+        face.fill,
+        face.opacity,
+        face.region,
+      ]);
+      if (!patches.has(key)) patches.set(key, []);
+      patches.get(key)!.push(face);
+    }
+    for (const patch of patches.values()) {
+      const contours = surfaceContours(patch.map(({ points }) => points));
+      faces.push({
+        ...patch[0],
+        points: contours.flat(),
+        contours,
+        depth: patch.reduce((sum, face) => sum + face.depth, 0) / patch.length,
+      });
+    }
+  };
   const siliconTop = (x: number, y: number) =>
     siliconSurfaceHeight(x, y, state);
   const oxideBase = siliconTop(16, 23);
   const geometryXs = [
-    0, 2, 4, 8, 10, 12, 14, 18, 23, 24, 28, 29, 34, 38, 40, 52, 55, 60, 62, 66,
-    71, 72, 76, 77, 80, 82, 86, 88, 90, 92, 96, 98, 100,
-  ];
+    ...new Set([
+      ...isolationProfileXs,
+      8,
+      10,
+      12,
+      14,
+      18,
+      23,
+      24,
+      28,
+      29,
+      34,
+      66,
+      71,
+      72,
+      76,
+      77,
+      82,
+      86,
+      88,
+      90,
+      92,
+    ]),
+  ].sort((a, b) => a - b);
   const geometryYs = [...new Set([0, 6, 10, 12, 20, 26, 53, ymax])]
     .filter((y) => y <= ymax)
     .sort((a, b) => a - b);
-  const surfaceXs = [0, 2, 40, 52, 55, 60, 80, 98, 100];
+  const surfaceXs = isolationProfileXs;
   const surfaceYs = [...new Set([0, 12, 53, ymax])]
     .filter((y) => y <= ymax)
     .sort((a, b) => a - b);
@@ -359,24 +556,22 @@ export const PatterningModel = ({
       region,
     );
   };
-  layer(
+  profileLayer(
     surfaceXs,
     surfaceYs,
-    -20,
-    (col, row) => 20 + siliconTop(surfaceXs[col], surfaceYs[row]),
+    () => -20,
+    (x, y) => 20 + siliconTop(x, y),
     [siliconColours.top, siliconColours.side, siliconColours.front],
-    false,
     1,
     "p-type silicon substrate",
   );
   const wellXs = surfaceXs.filter((x) => x >= 55);
-  layer(
+  profileLayer(
     wellXs,
     surfaceYs,
-    -16,
-    (col, row) => 16 + siliconTop(wellXs[col], surfaceYs[row]),
+    () => -16,
+    (x, y) => 16 + siliconTop(x, y),
     materialColours.well,
-    false,
     state.well,
     "n-well",
   );
@@ -421,13 +616,11 @@ export const PatterningModel = ({
   const coverXs = state.contacts > 0 ? contactXs : gateXs;
   const coverYs = state.contacts > 0 ? contactYs : surfaceYs;
 
-  layer(
+  profileLayer(
     dielectricXs,
     dielectricYs,
-    (col, row) => siliconTop(dielectricXs[col], dielectricYs[row]),
-    (col, row) => {
-      const x = dielectricXs[col],
-        y = dielectricYs[row];
+    siliconTop,
+    (x, y) => {
       const hole = contactAt(x, y);
       const thickness = insulationHeight(x, y);
       if (!hole || hole.gate) return thickness;
@@ -440,49 +633,60 @@ export const PatterningModel = ({
       );
     },
     insulator,
-    false,
     1,
     (x) =>
-      activeSilicon(x) && state.gateOxide > 0
-        ? "Gate oxide · insulator"
-        : state.isolation > 0
-          ? "Field oxide · insulator"
-          : "Screen oxide · insulator",
+      fieldOxideGrowth(x, state) > 0.001
+        ? "Field oxide · insulator"
+        : activeSilicon(x) && state.gateOxide > 0
+          ? "Gate oxide · insulator"
+          : state.nitride > 0
+            ? "Thin oxide · insulator"
+            : "Screen oxide · insulator",
   );
-  layer(
+  profileLayer(
+    surfaceXs,
+    surfaceYs,
+    (x, y) => siliconTop(x, y) + insulationHeight(x, y),
+    (x) => nitrideThickness(x, state),
+    materialColours.nitride,
+    1,
+    "Silicon nitride · temporary oxidation barrier",
+    undefined,
+    (x) => activeSilicon(x),
+  );
+  profileLayer(
     gateXs,
     surfaceYs,
-    (col, row) =>
-      siliconTop(gateXs[col], surfaceYs[row]) +
-      insulationHeight(gateXs[col], surfaceYs[row]),
-    (col) =>
-      8 * state.poly * (gateRegion(gateXs[col]) ? 1 : 1 - state.patternGate),
+    (x, y) => siliconTop(x, y) + insulationHeight(x, y),
+    (x) => 8 * state.poly * (gateRegion(x) ? 1 : 1 - state.patternGate),
     gateColours,
-    false,
     1,
     state.patternGate > 0.5
       ? "Polysilicon gate electrode"
       : "Polysilicon layer",
+    undefined,
+    (x) => gateRegion(x),
   );
-  layer(
+  profileLayer(
     coverXs,
     coverYs,
-    (col, row) => deviceTop(coverXs[col], coverYs[row]),
-    (col, row) => {
-      const hole = contactAt(coverXs[col], coverYs[row]);
-      const base = deviceTop(coverXs[col], coverYs[row]);
-      const target = hole?.gate ? base : siliconTop(coverXs[col], coverYs[row]);
+    deviceTop,
+    (x, y) => {
+      const hole = contactAt(x, y);
+      const base = deviceTop(x, y);
+      const target = hole?.gate ? base : siliconTop(x, y);
       const top =
         hole && state.contacts > 0
           ? contactEtchHeight(target, state.contacts)
-          : contactInsulatorHeight(coverXs[col], coverYs[row], state);
+          : contactInsulatorHeight(x, y, state);
 
       return Math.max(0, top - base) * state.cover;
     },
     insulator,
-    false,
     0.46,
     "Insulating silicon dioxide",
+    undefined,
+    (x, y) => contactAt(x, y)?.x ?? "unetched",
   );
   terminals.forEach(({ x, gate, nType }) => {
     const bottom = gate ? deviceTop(x, 6) : siliconTop(x, 20);
@@ -604,19 +808,22 @@ export const PatterningModel = ({
     if (resist.amount <= 0.001) return;
 
     const mesh = maskMeshes[cycle.id];
-    const xs = mesh.xs;
+    const xs = [...new Set([...mesh.xs, ...isolationProfileXs])].sort(
+      (a, b) => a - b,
+    );
     const ys = [...new Set([...mesh.ys.filter((y) => y < ymax), ymax])].sort(
       (a, b) => a - b,
     );
-    layer(
+    profileLayer(
       xs,
       ys,
-      (col, row) => materialSurfaceHeight(state, xs[col], ys[row]),
-      (col, row) => resistThickness(state, cycle.id, xs[col], ys[row]),
+      (x, y) => materialSurfaceHeight(state, x, y),
+      (x, y) => resistThickness(state, cycle.id, x, y),
       materialColours.resist,
-      (col, row) => (maskOpens(cycle.id, xs[col], ys[row]) ? resist.expose : 0),
       1,
       "Photoresist · temporary mask",
+      (x, y) => (maskOpens(cycle.id, x, y) ? resist.expose : 0),
+      (x, y) => maskOpens(cycle.id, x, y),
     );
   });
   faces.sort((a, b) => a.depth - b.depth);
@@ -699,7 +906,9 @@ export const PatterningModel = ({
       {faces.map((face, i) => (
         <path
           key={i}
-          d={path(face.points)}
+          d={(face.contours ?? [face.points])
+            .map((points) => path(points))
+            .join(" ")}
           data-region={face.opacity > 0.5 ? face.region : undefined}
           aria-label={face.region}
           fill={face.fill}

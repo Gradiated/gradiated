@@ -79,8 +79,8 @@ const NOTE_ART: Record<string, StoryArt> = {
     wide: "/brand/library/thesis-wide.webp",
   },
   "/notes/2026-10-starting-on-hard-mode/": {
-    tall: "/brand/library/in-person.webp",
-    wide: "/assets/careers-board/customers-work.jpg",
+    tall: "/brand/library/mission.webp",
+    wide: "/brand/library/mission-wide.webp",
   },
 };
 

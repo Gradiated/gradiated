@@ -110,7 +110,8 @@ def post(url: str, body: dict, headers: dict, attempts: int = 6, timeout: int = 
                 return json.load(response)
         except urllib.error.HTTPError as error:
             text = error.read().decode(errors="replace")[:300]
-            if error.code not in (408, 429, 500, 502, 503, 504, 529, 583) or attempt == attempts - 1:
+            # Fireworks returns a bare 500 for some long requests every time; retry those once, not with full backoff.
+            if error.code not in (408, 429, 500, 502, 503, 504, 529, 583) or attempt == attempts - 1 or (error.code == 500 and attempt >= 1):
                 raise RuntimeError(f"HTTP {error.code}: {text}") from None
         except (urllib.error.URLError, TimeoutError, ConnectionError) as error:
             if attempt == attempts - 1:

@@ -148,6 +148,65 @@ def parse_deepseek_output(output: str, *, thinking: bool) -> tuple[AssistantTurn
     return AssistantTurn(reasoning, content, tuple(calls)), tuple(fields)
 
 
+QWEN_EOS = "<|im_end|>"
+_QWEN_CALL = re.compile(
+    r"<tool_call>\n<function=(?P<name>[^>\n]*)>\n(?P<body>(?:<parameter=[^>\n]*>\n.*?\n</parameter>\n)*)</function>\n</tool_call>",
+    re.S,
+)
+_QWEN_PARAMETER = re.compile(r"<parameter=(?P<key>[^>\n]*)>\n(?P<value>.*?)\n</parameter>\n", re.S)
+
+
+def _qwen_is_string(value: str, schema_type: str | None) -> bool:
+    """Qwen does not mark string values; the tool schema decides, as vLLM's qwen3_coder parser does."""
+    if schema_type is not None:
+        return schema_type == "string"
+    try:
+        return isinstance(json.loads(value), str)
+    except ValueError:
+        return True
+
+
+def parse_qwen_output(
+    output: str, *, param_types: dict[str, dict[str, str | None]] | None = None
+) -> tuple[AssistantTurn, tuple[FieldSpan, ...]]:
+    """Parse a non-thinking Qwen 3.x completion that follows `<think>\\n\\n</think>\\n\\n`.
+
+    `param_types` maps tool name to parameter name to its JSON-schema type, when known.
+    """
+    end = output.find(QWEN_EOS)
+    end = len(output) if end < 0 else end
+    first = output.find("<tool_call>", 0, end)
+    calls_start = end if first < 0 else first
+    content_end = calls_start
+    if first >= 0:
+        if output.endswith("\n\n", 0, calls_start):
+            content_end -= 2
+        elif output.endswith("\n", 0, calls_start):
+            content_end -= 1
+    fields = [FieldSpan("content", 0, content_end)]
+    calls: list[ToolCall] = []
+    cursor = calls_start
+    for index, call in enumerate(_QWEN_CALL.finditer(output, calls_start, end)):
+        gap = output[cursor : call.start()]
+        if gap not in ("", "\n"):
+            raise ParseError(f"unexpected text before call {index}")
+        name = call.group("name")
+        fields.append(FieldSpan(f"call{index}.name", *call.span("name")))
+        types = (param_types or {}).get(name, {})
+        arguments = []
+        for arg_index, parameter in enumerate(_QWEN_PARAMETER.finditer(output, call.start("body"), call.end("body"))):
+            prefix = f"call{index}.arg{arg_index}"
+            key, value = parameter.group("key"), parameter.group("value")
+            fields.append(FieldSpan(f"{prefix}.key", *parameter.span("key")))
+            fields.append(FieldSpan(f"{prefix}.value", *parameter.span("value")))
+            arguments.append(Argument(key, _qwen_is_string(value, types.get(key)), value))
+        calls.append(ToolCall(name, tuple(arguments)))
+        cursor = call.end()
+    if output[cursor:end].strip():
+        raise ParseError("unparsed text after the tool calls")
+    return AssistantTurn(None, output[:content_end], tuple(calls)), tuple(fields)
+
+
 def _json_type(argument: Argument) -> str:
     if argument.is_string:
         return "string"

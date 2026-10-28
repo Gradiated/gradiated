@@ -15,6 +15,7 @@ from grad_research.xtok_distill import (
     coverage,
     offsets_from_pieces,
     parse_deepseek_output,
+    parse_qwen_output,
     render_k3_completion,
     token_advantages,
 )
@@ -92,6 +93,44 @@ class ParseAndRenderTests(unittest.TestCase):
         )
         rendering = render_k3_completion(turn, thinking=True)
         self.assertNotIn("call0.name", {field.field for field in rendering.fields})
+
+
+class QwenParseTests(unittest.TestCase):
+    QWEN = (
+        "Checking pageviews."
+        "\n\n<tool_call>\n<function=execute_sql>\n"
+        f"<parameter=query>\n{HOGQL}\n</parameter>\n"
+        "<parameter=limit>\n20\n</parameter>\n"
+        "</function>\n</tool_call>"
+        "\n<tool_call>\n<function=create_insight>\n"
+        f"<parameter=query>\n{QUERY}\n</parameter>\n"
+        "</function>\n</tool_call><|im_end|>"
+    )
+
+    def test_fields_match_the_k3_rendering(self):
+        turn, fields = parse_qwen_output(self.QWEN, param_types={"execute_sql": {"query": "string", "limit": "integer"}})
+        rendering = render_k3_completion(turn, thinking=False)
+        self.assertEqual(field_texts(self.QWEN, fields), field_texts(rendering.text, rendering.fields))
+        self.assertEqual("Checking pageviews.", turn.content)
+        self.assertEqual(HOGQL, turn.calls[0].arguments[0].text)
+        self.assertIn('argument key="limit" type="number"<|sep|>20', rendering.text)
+        self.assertIn('argument key="query" type="object"<|sep|>{"kind"', rendering.text)
+
+    def test_schema_string_type_keeps_json_looking_text_a_string(self):
+        output = "<tool_call>\n<function=f>\n<parameter=x>\n42\n</parameter>\n</function>\n</tool_call>"
+        turn, _ = parse_qwen_output(output, param_types={"f": {"x": "string"}})
+        self.assertTrue(turn.calls[0].arguments[0].is_string)
+        turn, _ = parse_qwen_output(output)
+        self.assertFalse(turn.calls[0].arguments[0].is_string)
+
+    def test_answer_without_calls(self):
+        turn, fields = parse_qwen_output("Done.<|im_end|>")
+        self.assertEqual(((), "Done."), (turn.calls, turn.content))
+        self.assertEqual([FieldSpan("content", 0, 5)], list(fields))
+
+    def test_trailing_text_after_calls_is_rejected(self):
+        with self.assertRaises(ParseError):
+            parse_qwen_output("<tool_call>\n<function=f>\n</function>\n</tool_call>\nmore")
 
 
 class AlignTests(unittest.TestCase):

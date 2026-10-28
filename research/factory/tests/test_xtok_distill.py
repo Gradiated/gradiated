@@ -18,6 +18,7 @@ from grad_research.xtok_distill import (
     parse_qwen_output,
     render_k3_completion,
     token_advantages,
+    with_gaps,
 )
 
 TOKENIZER_DIR = os.environ.get("XTOK_TOKENIZER_DIR")
@@ -153,6 +154,24 @@ class AlignTests(unittest.TestCase):
         spans = align(student, student_fields, teacher, teacher_fields)
         self.assertEqual([AlignedSpan("content", range(0, 1), range(0, 1))], spans)
         self.assertAlmostEqual(0.5, coverage(spans, 2))
+
+    def test_gaps_between_spans_pair_up_in_order(self):
+        spans = [AlignedSpan("content", range(1, 3), range(2, 3)), AlignedSpan("call0.name", range(5, 6), range(7, 8))]
+        self.assertEqual(
+            [
+                AlignedSpan("gap", range(0, 1), range(0, 2)),
+                spans[0],
+                AlignedSpan("gap", range(3, 5), range(3, 7)),
+                spans[1],
+                AlignedSpan("gap", range(6, 8), range(8, 10)),
+            ],
+            with_gaps(spans, 8, 10),
+        )
+        self.assertAlmostEqual(1.0, coverage(with_gaps(spans, 8, 10), 8))
+
+    def test_gap_with_no_teacher_tokens_keeps_an_empty_teacher_range(self):
+        spans = [AlignedSpan("content", range(0, 2), range(0, 2))]
+        self.assertEqual(AlignedSpan("gap", range(2, 3), range(2, 2)), with_gaps(spans, 3, 2)[-1])
 
     def test_advantage_splits_span_reverse_kl_over_student_tokens(self):
         spans = [AlignedSpan("content", range(0, 2), range(0, 1))]

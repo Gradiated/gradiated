@@ -343,6 +343,28 @@ def align(
     return spans
 
 
+def with_gaps(spans: Sequence[AlignedSpan], student_count: int, teacher_count: int) -> list[AlignedSpan]:
+    """Add the template runs between consecutive content spans as spans of their own.
+
+    Both renderings carry the same fields in the same order, so the markup between aligned span k and span k+1
+    is the same decision in both formats: open a tool call, start another argument, stop. Pairing those runs
+    gives the teacher a say on structure, which content spans alone leave unanchored. A student run whose
+    teacher run is empty is paired with it too (teacher logprob 0): the teacher pays that decision elsewhere.
+    """
+    ordered = sorted(spans, key=lambda s: s.student_tokens.start)
+    out: list[AlignedSpan] = []
+    s_prev = t_prev = 0
+    for span in [*ordered, None]:
+        s_next = span.student_tokens.start if span else student_count
+        t_next = span.teacher_tokens.start if span else teacher_count
+        if s_next > s_prev:
+            out.append(AlignedSpan("gap", range(s_prev, s_next), range(t_prev, max(t_prev, t_next))))
+        if span:
+            out.append(span)
+            s_prev, t_prev = span.student_tokens.stop, span.teacher_tokens.stop
+    return out
+
+
 def token_advantages(
     spans: Sequence[AlignedSpan],
     student_logprobs: Sequence[float],

@@ -34,7 +34,7 @@ from formats import anthropic_to_openai, openai_tools  # noqa: E402
 from providers import restore_required_properties  # noqa: E402
 from sampling import _clean, enumerate_points  # noqa: E402
 from tokenizers import Tokenizer  # noqa: E402
-from xtok_distill import ParseError, align, parse_qwen_output, render_k3_completion, token_advantages  # noqa: E402
+from xtok_distill import ParseError, align, parse_qwen_output, render_k3_completion, token_advantages, with_gaps  # noqa: E402
 
 QWEN_DIR = Path("/opt/posthog-sft/models/Qwen3.8-27B")
 K3_PATTERN = "|".join([
@@ -172,6 +172,7 @@ def main() -> None:
     p.add_argument("--teacher", default="accounts/fireworks/models/kimi-k3")
     p.add_argument("--tok-dir", default=str(HERE))
     p.add_argument("--workers", type=int, default=16)
+    p.add_argument("--no-gaps", action="store_true", help="leave template runs between content spans unscored")
     p.add_argument("--out", required=True)
     args = p.parse_args()
 
@@ -246,15 +247,20 @@ def main() -> None:
         except ValueError:
             stats["align_error"] += 1
             return None
+        content = {i for s in spans for i in s.student_tokens}
+        if not args.no_gaps:
+            spans = with_gaps(spans, len(ids), len(mine))
         advantages = token_advantages(spans, logprobs, t_logprobs)
         covered = [a for a in advantages if a is not None]
+        gap_kl = -sum(a for i, a in enumerate(advantages) if a is not None and i not in content)
+        stats["gap_tokens"] += sum(1 for i, a in enumerate(advantages) if a is not None and i not in content)
         stats["scored"] += 1
         stats["tokens"] += len(ids)
         stats["covered"] += len(covered)
         stats["calls"] += len(turn.calls)
         return {
             "status": "ok", "point_id": point.point_id, "token_ids": ids, "sampler_logprobs": logprobs,
-            "advantages": advantages, "reverse_kl": -sum(covered), "covered": len(covered),
+            "advantages": advantages, "reverse_kl": -sum(covered), "covered": len(covered), "gap_kl": gap_kl,
         }
 
     def run_prefix(point) -> list[dict]:
@@ -304,6 +310,7 @@ def main() -> None:
         "reverse_kl_per_covered_token": round(sum(r["reverse_kl"] for r in ok) / max(1, stats["covered"]), 4),
         "reverse_kl_per_sample": round(sum(r["reverse_kl"] for r in ok) / max(1, len(ok)), 3),
         "mean_tokens": round(stats["tokens"] / max(1, len(ok)), 1),
+        "gap_kl_per_sample": round(sum(r["gap_kl"] for r in ok) / max(1, len(ok)), 3),
         "stats": dict(stats), "usage": dict(usage),
     }
     print(json.dumps(summary))

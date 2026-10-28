@@ -88,6 +88,13 @@ export const CreatedApiKeySchema = z
   })
   .openapi("CreatedApiKey");
 
+export const PlaygroundCredentialSchema = z
+  .object({
+    secret: ApiKeySecretSchema,
+    expires_at: TimestampSchema,
+  })
+  .openapi("PlaygroundCredential");
+
 export const WorkspacePathSchema = z.object({
   workspace_id: UuidSchema,
 });
@@ -102,5 +109,6 @@ export const WorkspaceListQuerySchema = z.object({
 
 export type ApiKey = z.infer<typeof ApiKeySchema>;
 export type CreatedApiKeyResponse = z.infer<typeof CreatedApiKeySchema>;
+export type PlaygroundCredential = z.infer<typeof PlaygroundCredentialSchema>;
 export type CreateWorkspace = z.infer<typeof CreateWorkspaceSchema>;
 export type Workspace = z.infer<typeof WorkspaceSchema>;

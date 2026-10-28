@@ -16,6 +16,7 @@ export default defineConfig({
     proxy: {
       "/api/": process.env.CONSOLE_API_PROXY_URL ?? "http://127.0.0.1:3001",
       "/health": process.env.CONSOLE_API_PROXY_URL ?? "http://127.0.0.1:3001",
+      "/v1/": "http://127.0.0.1:3002",
     },
   },
 });

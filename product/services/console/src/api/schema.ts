@@ -293,6 +293,22 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace_id}/playground-credentials": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations["createPlaygroundCredential"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/workspaces/{workspace_id}/api-keys/{api_key_id}": {
     parameters: {
       query?: never;
@@ -740,6 +756,8 @@ export interface components {
       passthrough_parameters: {
         [key: string]: components["schemas"]["ModelParameterDescriptor"];
       };
+      default_parameters?: components["schemas"]["ModelDefaultParameters"];
+      reasoning?: components["schemas"]["ModelReasoning"];
       /**
        * Format: date-time
        * @example 2026-08-16T12:00:00.000Z
@@ -802,6 +820,22 @@ export interface components {
           /** @enum {string} */
           type: "unknown";
         };
+    /** @description Sampling values the runtime applies when a request omits them; null or absent means not published. */
+    ModelDefaultParameters: {
+      temperature?: number | null;
+      top_p?: number | null;
+      top_k?: number | null;
+      frequency_penalty?: number | null;
+      presence_penalty?: number | null;
+      repetition_penalty?: number | null;
+    };
+    /** @description Reasoning effort levels; absent for models without them. */
+    ModelReasoning: {
+      /** @description reasoning_effort values the model accepts, lowest first. */
+      supported_efforts: string[];
+      /** @description Effort applied when a request omits reasoning_effort. */
+      default_effort: string | null;
+    };
     ServiceTierPricingPolicy: {
       service_tier: components["schemas"]["ServiceTier"];
       price_multiplier_numerator: number;
@@ -921,6 +955,8 @@ export interface components {
       passthrough_parameters: {
         [key: string]: components["schemas"]["ModelParameterDescriptor"];
       };
+      default_parameters?: components["schemas"]["ModelDefaultParameters"];
+      reasoning?: components["schemas"]["ModelReasoning"];
       /**
        * Format: date-time
        * @example 2026-08-16T12:00:00.000Z
@@ -1316,6 +1352,14 @@ export interface components {
        * @example 2026-08-16T12:00:00.000Z
        */
       expires_at?: string | null;
+    };
+    PlaygroundCredential: {
+      secret: string;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      expires_at: string;
     };
     TraceGenerationList: {
       data: components["schemas"]["TraceGeneration"][];
@@ -3870,6 +3914,66 @@ export interface operations {
       };
       /** @description The request body is invalid. */
       422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Serving state is unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  createPlaygroundCredential: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description A one-hour inference key for the console playground. Each call rotates the member's single playground key, which is not listed with the workspace keys. */
+      201: {
+        headers: {
+          /** @description Prevents storage of the one-time secret. */
+          "Cache-Control"?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PlaygroundCredential"];
+        };
+      };
+      /** @description Authentication is required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The workspace cannot be used. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The workspace was not found. */
+      404: {
         headers: {
           [name: string]: unknown;
         };

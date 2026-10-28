@@ -8,6 +8,7 @@ import {
   UpdateWorkspaceSchema,
   CreatedApiKeySchema,
   OrganizationIdParamsSchema,
+  PlaygroundCredentialSchema,
   WorkspaceListQuerySchema,
   WorkspaceListSchema,
   WorkspacePathSchema,
@@ -217,6 +218,43 @@ const createApiKeyRoute = createRoute({
   },
 });
 
+const createPlaygroundCredentialRoute = createRoute({
+  method: "post",
+  path: "/api/v1/workspaces/{workspace_id}/playground-credentials",
+  operationId: "createPlaygroundCredential",
+  tags: ["API keys"],
+  request: { params: WorkspacePathSchema },
+  responses: {
+    201: {
+      description:
+        "A one-hour inference key for the console playground. Each call rotates the member's single playground key, which is not listed with the workspace keys.",
+      headers: {
+        "Cache-Control": {
+          description: "Prevents storage of the one-time secret.",
+          schema: { type: "string" },
+        },
+      },
+      content: { "application/json": { schema: PlaygroundCredentialSchema } },
+    },
+    401: {
+      description: "Authentication is required.",
+      content: problemContent,
+    },
+    403: {
+      description: "The workspace cannot be used.",
+      content: problemContent,
+    },
+    404: {
+      description: "The workspace was not found.",
+      content: problemContent,
+    },
+    503: {
+      description: "Serving state is unavailable.",
+      content: problemContent,
+    },
+  },
+});
+
 const revokeApiKeyRoute = createRoute({
   method: "delete",
   path: "/api/v1/workspaces/{workspace_id}/api-keys/{api_key_id}",
@@ -355,6 +393,25 @@ export const registerWorkspaceRoutes = (
     context.header("Cache-Control", "no-store");
     return context.json(
       { api_key: apiKeyResponse(created.apiKey), secret: created.secret },
+      201,
+    );
+  });
+
+  app.openapi(createPlaygroundCredentialRoute, async (context) => {
+    const user = await requireUser(context);
+    const params = context.req.valid("param");
+    const credential = await workspaces.createPlaygroundCredential(
+      user.id,
+      params.workspace_id,
+    );
+
+    context.set("logResourceIds", { api_key_id: credential.apiKeyId });
+    context.header("Cache-Control", "no-store");
+    return context.json(
+      {
+        secret: credential.secret,
+        expires_at: credential.expiresAt.toISOString(),
+      },
       201,
     );
   });

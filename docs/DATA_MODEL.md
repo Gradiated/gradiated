@@ -202,11 +202,12 @@ Used by direct customers and OpenRouter.
 | `digest`          | bytea       | no   | Unique SHA-256 digest of the canonical raw key                            |
 | `expires_at`      | timestamptz | yes  | Optional expiry                                                           |
 | `revoked_at`      | timestamptz | yes  | Irreversible manual revocation                                            |
+| `hidden`          | boolean     | no   | Default false; true for playground credentials, which are not listed      |
 | `created_by`      | uuid        | yes  | FK `users.id`; null for system-created channels                           |
 | `created_at`      | timestamptz | no   | Creation time                                                             |
 | `updated_at`      | timestamptz | no   | Last mutation time                                                        |
 
-The raw format is `grad_<32 random bytes encoded as base64url>`. Authentication computes SHA-256 over that complete canonical string and looks up the unique digest. High-entropy keys do not need a pepper or pepper rotation. Do not store the raw key, a display prefix, last four characters or `last_used_at`; the key name and creation time identify it in the product, and last use is derived from usage. A key is valid only when `revoked_at IS NULL` and `expires_at` is either null or in the future. Rotation creates a new key and sets `revoked_at` on the old one.
+The raw format is `grad_<32 random bytes encoded as base64url>`. Authentication computes SHA-256 over that complete canonical string and looks up the unique digest. High-entropy keys do not need a pepper or pepper rotation. Do not store the raw key, a display prefix, last four characters or `last_used_at`; the key name and creation time identify it in the product, and last use is derived from usage. A key is valid only when `revoked_at IS NULL` and `expires_at` is either null or in the future. Rotation creates a new key and sets `revoked_at` on the old one. The console playground upserts one hidden key named Playground per member and workspace (`api_keys_hidden_owner_unique` on `(workspace_id, created_by) WHERE hidden`); each request rotates its digest and resets a one-hour expiry. It bills and logs like any other workspace key.
 
 ## Model catalog
 

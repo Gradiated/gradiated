@@ -136,6 +136,8 @@ const localQwen = {
           pricing: [{ type: "completion", unit: "token", cost: 300 }],
         },
       ],
+      // From the model's generation_config.json; SGLang applies it by default.
+      default_parameters: { temperature: 0.6 },
     },
   },
   deployments: [

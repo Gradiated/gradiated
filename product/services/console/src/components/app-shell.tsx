@@ -38,7 +38,14 @@ export const AppShell = ({
   onSelectWorkspace: (workspaceId: string) => void;
   onSignOut: () => Promise<SignOutResult>;
   activePage:
-    "api-keys" | "billing" | "logs" | "models" | "tasks" | "usage" | "settings";
+    | "api-keys"
+    | "billing"
+    | "logs"
+    | "models"
+    | "playground"
+    | "tasks"
+    | "usage"
+    | "settings";
   pageTitle: string;
   children: ReactNode;
 }) => {

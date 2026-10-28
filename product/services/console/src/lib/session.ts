@@ -4,6 +4,7 @@ import type { RegisteredRouter } from "@tanstack/react-router";
 import type { LoginSearch } from "@/lib/login-search";
 
 import { resetUser } from "@/lib/feature-flags";
+import { usePlaygroundStore } from "@/store/playground";
 import { useWorkspaceSelection } from "@/store/workspace-selection";
 
 export const endSession = async (
@@ -15,5 +16,6 @@ export const endSession = async (
 
   queryClient.clear();
   useWorkspaceSelection.getState().reset();
+  usePlaygroundStore.getState().reset();
   resetUser();
 };

@@ -45,6 +45,7 @@ export SGLANG_USE_MLX=1
 exec "${venv_dir}/bin/python" -m sglang.launch_server \
   --model-path "${MODEL}" \
   --revision "${MODEL_REVISION}" \
+  --reasoning-parser qwen3 \
   --disable-cuda-graph \
   --max-running-requests 4 \
   --max-queued-requests 4 \

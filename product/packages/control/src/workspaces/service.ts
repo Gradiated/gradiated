@@ -3,7 +3,7 @@ import {
   DEFAULT_EVALUATION_JUDGE,
   type UpdateWorkspace,
 } from "@gradiated/contracts";
-import { and, asc, eq, getTableColumns, isNull } from "drizzle-orm";
+import { and, asc, eq, getTableColumns, isNull, sql } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 
 import {
@@ -17,15 +17,26 @@ import {
 import type { ControlDatabase } from "../db/client.js";
 import { apiKeys, workspaces } from "../db/schema/index.js";
 import { ControlServiceError } from "../errors.js";
+import { requireRow } from "../require-row.js";
 import { apiKeyDigest, generateApiKeySecret } from "./api-key-secret.js";
 
 export type WorkspaceRecord = typeof workspaces.$inferSelect;
 
 export type ApiKeyRecord = Omit<typeof apiKeys.$inferSelect, "digest">;
 
+const PLAYGROUND_CREDENTIAL_NAME = "Playground";
+
+const PLAYGROUND_CREDENTIAL_LIFETIME_MS = 60 * 60 * 1000;
+
 export interface CreatedApiKey {
   apiKey: ApiKeyRecord;
   secret: string;
+}
+
+export interface PlaygroundCredentialRecord {
+  apiKeyId: string;
+  secret: string;
+  expiresAt: Date;
 }
 
 export interface WorkspaceApiKeyService {
@@ -51,6 +62,10 @@ export interface WorkspaceApiKeyService {
     workspaceId: string,
     input: { name: string; expiresAt: Date | null },
   ): Promise<CreatedApiKey>;
+  createPlaygroundCredential(
+    userId: string,
+    workspaceId: string,
+  ): Promise<PlaygroundCredentialRecord>;
   revokeApiKey(
     userId: string,
     workspaceId: string,
@@ -65,6 +80,7 @@ export const createWorkspaceApiKeyService = (
   validateEvaluationModel?: (id: string) => Promise<void>,
 ): WorkspaceApiKeyService => {
   const records = createWorkspaceStore(database);
+
   return {
     async listWorkspaces(userId, organizationId, includeArchived) {
       const membership = await findMembership(database, {
@@ -144,7 +160,9 @@ export const createWorkspaceApiKeyService = (
       return database
         .select(apiKeyColumns)
         .from(apiKeys)
-        .where(eq(apiKeys.workspaceId, workspaceId))
+        .where(
+          and(eq(apiKeys.workspaceId, workspaceId), eq(apiKeys.hidden, false)),
+        )
         .orderBy(asc(apiKeys.createdAt), asc(apiKeys.id));
     },
 
@@ -170,6 +188,7 @@ export const createWorkspaceApiKeyService = (
         name: input.name,
         expiresAt: input.expiresAt,
         revokedAt: null,
+        hidden: false,
         createdBy: userId,
         createdAt: now,
         updatedAt: now,
@@ -180,6 +199,55 @@ export const createWorkspaceApiKeyService = (
         .values({ ...apiKey, digest: apiKeyDigest(secret) });
 
       return { apiKey, secret };
+    },
+
+    // Signed-in members try models without managing keys. Each member has one
+    // hidden key per workspace; every call rotates its secret and expiry.
+    async createPlaygroundCredential(userId, workspaceId) {
+      const { workspace } = await requireWritableWorkspace(database, {
+        userId,
+        workspaceId,
+      }).catch((error: unknown) => {
+        if (error instanceof ControlServiceError && error.code === "forbidden")
+          throw new ControlServiceError(
+            "forbidden",
+            "The playground is unavailable in an archived workspace or a suspended organization.",
+          );
+        throw error;
+      });
+
+      const now = new Date();
+      const expiresAt = new Date(
+        now.getTime() + PLAYGROUND_CREDENTIAL_LIFETIME_MS,
+      );
+      const secret = generateApiKeySecret();
+      const digest = apiKeyDigest(secret);
+
+      const apiKey = requireRow(
+        await database
+          .insert(apiKeys)
+          .values({
+            id: uuidv7(),
+            organizationId: workspace.organizationId,
+            workspaceId,
+            name: PLAYGROUND_CREDENTIAL_NAME,
+            digest,
+            expiresAt,
+            hidden: true,
+            createdBy: userId,
+            createdAt: now,
+            updatedAt: now,
+          })
+          .onConflictDoUpdate({
+            target: [apiKeys.workspaceId, apiKeys.createdBy],
+            targetWhere: sql`${apiKeys.hidden}`,
+            set: { digest, expiresAt, revokedAt: null, updatedAt: now },
+          })
+          .returning({ id: apiKeys.id }),
+        "The playground key was not saved.",
+      );
+
+      return { apiKeyId: apiKey.id, secret, expiresAt };
     },
 
     async revokeApiKey(userId, workspaceId, apiKeyId) {

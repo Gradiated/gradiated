@@ -117,6 +117,7 @@ export {
   createWorkspaceApiKeyService,
   type ApiKeyRecord,
   type CreatedApiKey,
+  type PlaygroundCredentialRecord,
   type WorkspaceApiKeyService,
   type WorkspaceRecord,
 } from "./workspaces/service.js";

@@ -254,7 +254,61 @@ const ModelSupportedUsesSchema = z
     "Product uses: serving is available for inference; training, judge and comparison are internal workflow uses.",
   );
 
-export const ModelPropertiesSchema = z.strictObject({
+// Field names and shapes follow OpenRouter's model list (`default_parameters`,
+// `reasoning`), so catalog clients can read either source the same way.
+const DefaultParametersSchema = z
+  .strictObject({
+    temperature: z.number().nullable().optional(),
+    top_p: z.number().nullable().optional(),
+    top_k: z.number().int().nullable().optional(),
+    frequency_penalty: z.number().nullable().optional(),
+    presence_penalty: z.number().nullable().optional(),
+    repetition_penalty: z.number().nullable().optional(),
+  })
+  .describe(
+    "Sampling values the runtime applies when a request omits them; null or absent means not published.",
+  )
+  .openapi("ModelDefaultParameters");
+
+const ReasoningEffortSchema = z.string().min(1).max(32);
+
+const ModelReasoningSchema = z
+  .strictObject({
+    supported_efforts: z
+      .array(ReasoningEffortSchema)
+      .min(1)
+      .describe("reasoning_effort values the model accepts, lowest first."),
+    default_effort: ReasoningEffortSchema.nullable().describe(
+      "Effort applied when a request omits reasoning_effort.",
+    ),
+  })
+  .refine(
+    ({ supported_efforts, default_effort }) =>
+      default_effort === null || supported_efforts.includes(default_effort),
+    { message: "default_effort must be a supported effort" },
+  )
+  .describe("Reasoning effort levels; absent for models without them.")
+  .openapi("ModelReasoning");
+
+const parameterDescriptor = (
+  properties: {
+    output_modalities: ReadonlyArray<{
+      supported_parameters: Record<string, ModelParameterDescriptor>;
+    }>;
+  },
+  name: string,
+) => properties.output_modalities[0]?.supported_parameters[name];
+
+const DEFAULT_PARAMETER_NAMES = [
+  "temperature",
+  "top_p",
+  "top_k",
+  "frequency_penalty",
+  "presence_penalty",
+  "repetition_penalty",
+] as const;
+
+const BaseModelPropertiesSchema = z.strictObject({
   schema_version: z.literal(1),
   description: z.string().max(2_000),
   released_at: TimestampSchema.nullable(),
@@ -264,6 +318,8 @@ export const ModelPropertiesSchema = z.strictObject({
   input_modalities: z.array(TextInputModalitySchema).length(1),
   output_modalities: z.array(TextOutputModalitySchema).length(1),
   passthrough_parameters: ParameterMapSchema,
+  default_parameters: DefaultParametersSchema.optional(),
+  reasoning: ModelReasoningSchema.optional(),
   deprecation_date: TimestampSchema.nullable(),
   pricing_overrides: z
     .array(
@@ -291,6 +347,51 @@ export const ModelPropertiesSchema = z.strictObject({
     ),
 });
 
+// Defaults and efforts must describe parameters the model accepts, within their bounds.
+export const ModelPropertiesSchema = BaseModelPropertiesSchema.superRefine(
+  (properties, context) => {
+    for (const name of DEFAULT_PARAMETER_NAMES) {
+      const value = properties.default_parameters?.[name];
+      if (value === undefined || value === null) continue;
+
+      const descriptor = parameterDescriptor(properties, name);
+      const outOfBounds =
+        (descriptor?.type === "range" || descriptor?.type === "integer") &&
+        (value < descriptor.min || value > descriptor.max);
+
+      if (!descriptor || outOfBounds) {
+        context.addIssue({
+          code: "custom",
+          path: ["default_parameters", name],
+          message: descriptor
+            ? `${name} default is outside the supported range`
+            : `${name} has a default but is not a supported parameter`,
+        });
+      }
+    }
+
+    if (!properties.reasoning) return;
+
+    const effort = parameterDescriptor(properties, "reasoning_effort");
+    const undeclared =
+      effort?.type === "enum"
+        ? properties.reasoning.supported_efforts.filter(
+            (level) => !effort.values.includes(level),
+          )
+        : [];
+
+    if (!effort || undeclared.length) {
+      context.addIssue({
+        code: "custom",
+        path: ["reasoning", "supported_efforts"],
+        message: effort
+          ? `reasoning_effort does not accept ${undeclared.join(", ")}`
+          : "reasoning requires the reasoning_effort parameter",
+      });
+    }
+  },
+);
+
 export const ModelPropertiesInputSchema = z
   .strictObject({
     schema_version: z.literal(1).default(1),
@@ -302,6 +403,8 @@ export const ModelPropertiesInputSchema = z
     input_modalities: z.array(TextInputModalityInputSchema).length(1),
     output_modalities: z.array(TextOutputModalityInputSchema).length(1),
     passthrough_parameters: ParameterMapSchema.default({}),
+    default_parameters: DefaultParametersSchema.optional(),
+    reasoning: ModelReasoningSchema.optional(),
     deprecation_date: TimestampSchema.nullable().default(null),
   })
   .pipe(ModelPropertiesSchema);
@@ -321,14 +424,14 @@ const CatalogModelSchema = z.strictObject({
 });
 
 export const ModelSchema = CatalogModelSchema.extend({
-  properties: ModelPropertiesSchema.extend({
+  properties: BaseModelPropertiesSchema.extend({
     type: ModelTypeSchema,
     supported_uses: ModelSupportedUsesSchema,
   }).openapi("ModelProperties"),
 }).openapi("Model");
 
 export const ExternalModelSchema = CatalogModelSchema.extend({
-  properties: ModelPropertiesSchema.extend({
+  properties: BaseModelPropertiesSchema.extend({
     type: ModelTypeSchema.optional(),
   }).openapi("ExternalModelProperties"),
 }).openapi("ExternalModel");

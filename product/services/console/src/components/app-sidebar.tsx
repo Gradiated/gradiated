@@ -9,6 +9,7 @@ import {
   KeyRound,
   LogOut,
   Logs,
+  MessagesSquare,
   PackageOpen,
   Plus,
   WalletCards,
@@ -76,6 +77,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Inference",
     items: [
       { to: "/models", label: "Models", icon: PackageOpen },
+      { to: "/playground", label: "Playground", icon: MessagesSquare },
       { to: "/api-keys", label: "API keys", icon: KeyRound },
       { to: "/usage", label: "Usage", icon: ChartNoAxesCombined },
       { to: "/logs", label: "Logs", icon: Logs },

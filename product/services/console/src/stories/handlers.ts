@@ -1,5 +1,6 @@
+import { SERVICE_TIER_PRICING_POLICY } from "@gradiated/contracts";
 import { MODEL_CATALOG } from "@gradiated/contracts/model-catalog";
-import { http, HttpResponse } from "msw";
+import { delay, http, HttpResponse } from "msw";
 
 import type { components } from "@/api/schema";
 import type { GenerationLog, UsageSummary } from "@/api/queries";
@@ -193,11 +194,30 @@ const model = {
         max_length: { value: 16384, unit: "token" },
         default_length: { value: 4096, unit: "token" },
         streaming: true,
-        supported_parameters: {},
+        supported_parameters: {
+          temperature: { type: "range", min: 0, max: 2 },
+          top_p: { type: "range", min: 0, max: 1 },
+          seed: { type: "integer", min: 0, max: Number.MAX_SAFE_INTEGER },
+          frequency_penalty: { type: "range", min: -2, max: 2 },
+          presence_penalty: { type: "range", min: -2, max: 2 },
+          stop: { type: "unknown" },
+          response_format: { type: "unknown" },
+          reasoning_effort: { type: "enum", values: ["low", "high", "max"] },
+        },
         pricing: [{ type: "completion", unit: "token", cost: 900 }],
       },
     ],
     passthrough_parameters: {},
+    default_parameters: {
+      temperature: 1,
+      top_p: 0.95,
+      frequency_penalty: 0,
+      presence_penalty: 0,
+    },
+    reasoning: {
+      supported_efforts: ["low", "high", "max"],
+      default_effort: "max",
+    },
     deprecation_date: null,
   },
 } satisfies components["schemas"]["Model"];
@@ -444,6 +464,72 @@ const usage = (from: string): UsageSummary => ({
   ],
 });
 
+const PLAYGROUND_REASONING =
+  "A haiku needs five, seven and five syllables. Speed is the theme.";
+const PLAYGROUND_REPLY =
+  "Tokens stream like rain\nfirst light reaches the answer\nbefore the thought ends";
+
+const PLAYGROUND_CHUNK_DELAY_MS = 30;
+
+const sseEvent = (data: unknown) => `data: ${JSON.stringify(data)}\n\n`;
+const words = (text: string) => text.match(/\S+\s*/g) ?? [];
+
+const chatCompletionHandler = http.post(
+  "/v1/chat/completions",
+  async ({ request }) => {
+    if (!request.headers.get("authorization")?.startsWith("Bearer ")) {
+      return HttpResponse.json(
+        { error: { message: "Missing API key." } },
+        { status: 401 },
+      );
+    }
+
+    const { model } = (await request.json()) as { model: string };
+    const chunk = (delta: Record<string, string>) =>
+      sseEvent({
+        id: "storybook-completion",
+        object: "chat.completion.chunk",
+        model,
+        choices: [{ index: 0, delta, finish_reason: null }],
+      });
+    const events = [
+      ...words(PLAYGROUND_REASONING).map((text) =>
+        chunk({ reasoning_content: text }),
+      ),
+      ...words(PLAYGROUND_REPLY).map((text) => chunk({ content: text })),
+      sseEvent({
+        id: "storybook-completion",
+        object: "chat.completion.chunk",
+        model,
+        choices: [],
+        usage: {
+          cost: 0.000021,
+          prompt_tokens: 24,
+          completion_tokens: 31,
+          total_tokens: 55,
+          prompt_tokens_details: { cached_tokens: 0 },
+          completion_tokens_details: { reasoning_tokens: 14 },
+        },
+      }),
+      "data: [DONE]\n\n",
+    ];
+    const encoder = new TextEncoder();
+
+    return new HttpResponse(
+      new ReadableStream({
+        start: async (controller) => {
+          for (const event of events) {
+            await delay(PLAYGROUND_CHUNK_DELAY_MS);
+            controller.enqueue(encoder.encode(event));
+          }
+          controller.close();
+        },
+      }),
+      { headers: { "Content-Type": "text/event-stream" } },
+    );
+  },
+);
+
 export const handlersFor = (currentUser: CurrentUser) => [
   http.get("/api/v1/me", () => HttpResponse.json(currentUser)),
   http.get("/api/auth/get-session", () =>
@@ -533,19 +619,22 @@ const sharedHandlers = [
               },
             ]),
       ),
-      service_tiers: [
-        {
-          service_tier: "default",
-          price_multiplier_numerator: 1,
-          price_multiplier_denominator: 1,
-          price_change_percent: 0,
-        },
-      ],
+      service_tiers: [...SERVICE_TIER_PRICING_POLICY],
     }),
   ),
   http.get("/api/v1/workspaces/:workspaceId/api-keys", () =>
     HttpResponse.json(list(apiKey)),
   ),
+  http.post("/api/v1/workspaces/:workspaceId/playground-credentials", () =>
+    HttpResponse.json<components["schemas"]["PlaygroundCredential"]>(
+      {
+        secret: "grad_storybook_playground_secret",
+        expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      },
+      { status: 201 },
+    ),
+  ),
+  chatCompletionHandler,
   http.get("/api/v1/organizations/:organizationId/billing", () =>
     HttpResponse.json(billing),
   ),
@@ -595,7 +684,7 @@ const sharedHandlers = [
       );
     },
   ),
-  http.all(/\/api\//, () =>
+  http.all("/api/*", () =>
     HttpResponse.json(
       {
         title: "Mock unavailable",
@@ -613,4 +702,24 @@ export const newOrganizationHandlers = [
     HttpResponse.json({ ...billing, balance: "5000000000" }),
   ),
   ...handlersFor(acmeAdmin),
+];
+export const playgroundHandlers = [
+  http.get("/api/v1/workspaces/:workspaceId/tasks", () =>
+    HttpResponse.json(list({ ...task, production_version_id: version.id })),
+  ),
+  ...handlers,
+];
+export const playgroundUnavailableHandlers = [
+  http.post("/api/v1/workspaces/:workspaceId/playground-credentials", () =>
+    HttpResponse.json(
+      {
+        title: "Forbidden",
+        detail:
+          "The playground is unavailable in an archived workspace or a suspended organization.",
+        status: 403,
+      },
+      { status: 403 },
+    ),
+  ),
+  ...playgroundHandlers,
 ];

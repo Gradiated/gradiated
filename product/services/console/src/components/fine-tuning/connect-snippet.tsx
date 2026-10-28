@@ -3,6 +3,7 @@ import { KeyRound } from "lucide-react";
 import { useState } from "react";
 
 import { useCreateApiKey } from "@/api/queries";
+import { CodeSnippet } from "@/components/code-snippet";
 import { CopyStateIcon } from "@/components/copy-state-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,7 +48,6 @@ export const ConnectSnippet = () => {
   const [client, setClient] = useState<ConnectClient>(
     LANGUAGES[0].variants[0].client,
   );
-  const snippetCopy = useCopyToClipboard();
 
   const language =
     LANGUAGES.find((candidate) =>
@@ -59,11 +59,6 @@ export const ConnectSnippet = () => {
   const selectLanguage = (label: string) => {
     const next = LANGUAGES.find((candidate) => candidate.label === label);
     if (next) setClient(next.variants[0].client);
-  };
-
-  const selectClient = (value: string) => {
-    const next = language.variants.find((variant) => variant.client === value);
-    if (next) setClient(next.client);
   };
 
   return (
@@ -102,34 +97,22 @@ export const ConnectSnippet = () => {
         </TabsList>
       </Tabs>
 
-      <div className="min-w-0 max-w-full overflow-hidden rounded-lg border bg-muted">
-        <div className="flex items-center justify-between border-b px-3">
-          <Tabs value={client} onValueChange={selectClient} className="w-auto">
-            <TabsList className="h-auto gap-4 border-b-0">
-              {language.variants.map((variant) => (
-                <TabsTrigger
-                  key={variant.client}
-                  value={variant.client}
-                  className="h-auto px-0 py-2 font-mono text-[10px] uppercase tracking-[0.06em]"
-                >
-                  {variant.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            aria-label={copyLabel(snippetCopy.state, "Copy snippet")}
-            onClick={() => void snippetCopy.copy(code)}
-          >
-            <CopyStateIcon state={snippetCopy.state} />
-          </Button>
-        </div>
-        <pre className="overflow-x-auto p-3 text-[11px] leading-5">
-          <code>{code}</code>
-        </pre>
-      </div>
+      <CodeSnippet
+        code={code}
+        language={
+          client.endsWith("python")
+            ? "python"
+            : client.endsWith("node")
+              ? "typescript"
+              : "bash"
+        }
+        value={client}
+        options={language.variants.map((variant) => ({
+          value: variant.client,
+          label: variant.label,
+        }))}
+        onValueChange={setClient}
+      />
     </div>
   );
 };

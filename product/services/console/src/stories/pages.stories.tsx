@@ -22,6 +22,8 @@ import {
   newOrganizationHandlers,
   onboardingCompanyUser,
   onboardingPersonalUser,
+  playgroundHandlers,
+  playgroundUnavailableHandlers,
 } from "./handlers";
 
 const Ready = () => {
@@ -149,6 +151,37 @@ const meta = {
       });
     }
 
+    if (
+      parameters.playground === "conversation" ||
+      parameters.playground === "unavailable"
+    ) {
+      const message = await canvas.findByRole("textbox", { name: "Message" });
+      await waitFor(() => expect(message).toBeEnabled());
+      await userEvent.type(message, "Write a haiku about fast inference.");
+      await userEvent.click(
+        canvas.getByRole("button", { name: "Send message" }),
+      );
+    }
+
+    if (parameters.playground === "conversation") {
+      await canvas.findByText(/to first token/, {}, { timeout: 10000 });
+      await canvas.findByText(/before the thought ends/);
+    }
+
+    if (parameters.playground === "unavailable") {
+      await canvas.findByText(
+        "The playground is unavailable in an archived workspace or a suspended organization.",
+      );
+    }
+
+    if (parameters.playground === "models") {
+      const model = await canvas.findByRole("combobox", { name: "Model" });
+      await waitFor(() => expect(model).toBeEnabled());
+      await userEvent.click(model);
+      await body.findByRole("group", { name: "Your models" });
+      await body.findByRole("option", { name: "support-assistant" });
+    }
+
     if (parameters.taskDetail === "trace") {
       await userEvent.click(
         await canvas.findByRole("button", { name: "storybook-trace" }),
@@ -178,7 +211,9 @@ const meta = {
         expect(
           canvasElement.ownerDocument.body.querySelector(".animate-pulse"),
         ).toBeNull();
-        expect(body.queryAllByRole("alert")).toHaveLength(0);
+        expect(body.queryAllByRole("alert")).toHaveLength(
+          parameters.playground === "unavailable" ? 1 : 0,
+        );
       },
       { timeout: 10000 },
     );
@@ -223,6 +258,23 @@ export const CreateApiKey: Story = {
   parameters: { createApiKey: true },
 };
 export const Models: Story = { args: { path: "/models" } };
+export const Playground: Story = {
+  args: { path: "/playground" },
+  parameters: { msw: playgroundHandlers },
+};
+export const PlaygroundConversation: Story = {
+  args: { path: "/playground" },
+  parameters: { playground: "conversation", msw: playgroundHandlers },
+};
+export const PlaygroundUnavailable: Story = {
+  args: { path: "/playground" },
+  tags: ["request-failure"],
+  parameters: { playground: "unavailable", msw: playgroundUnavailableHandlers },
+};
+export const PlaygroundModels: Story = {
+  args: { path: "/playground" },
+  parameters: { playground: "models", msw: playgroundHandlers },
+};
 export const Usage: Story = { args: { path: "/usage" } };
 export const Logs: Story = { args: { path: "/logs" } };
 export const LogDetails: Story = {

@@ -423,6 +423,12 @@
               "$ref": "#/components/schemas/ModelParameterDescriptor"
             }
           },
+          "default_parameters": {
+            "$ref": "#/components/schemas/ModelDefaultParameters"
+          },
+          "reasoning": {
+            "$ref": "#/components/schemas/ModelReasoning"
+          },
           "deprecation_date": {
             "type": [
               "string",
@@ -672,6 +678,79 @@
             "additionalProperties": false
           }
         ]
+      },
+      "ModelDefaultParameters": {
+        "type": "object",
+        "properties": {
+          "temperature": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "top_p": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "top_k": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "frequency_penalty": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "presence_penalty": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "repetition_penalty": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "description": "Sampling values the runtime applies when a request omits them; null or absent means not published."
+      },
+      "ModelReasoning": {
+        "type": "object",
+        "properties": {
+          "supported_efforts": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 32
+            },
+            "minItems": 1,
+            "description": "reasoning_effort values the model accepts, lowest first."
+          },
+          "default_effort": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 32,
+            "description": "Effort applied when a request omits reasoning_effort."
+          }
+        },
+        "required": [
+          "supported_efforts",
+          "default_effort"
+        ],
+        "additionalProperties": false,
+        "description": "Reasoning effort levels; absent for models without them."
       },
       "ServiceTierPricingPolicy": {
         "type": "object",
@@ -1069,6 +1148,12 @@
             "additionalProperties": {
               "$ref": "#/components/schemas/ModelParameterDescriptor"
             }
+          },
+          "default_parameters": {
+            "$ref": "#/components/schemas/ModelDefaultParameters"
+          },
+          "reasoning": {
+            "$ref": "#/components/schemas/ModelReasoning"
           },
           "deprecation_date": {
             "type": [
@@ -2145,6 +2230,24 @@
           "name"
         ],
         "additionalProperties": false
+      },
+      "PlaygroundCredential": {
+        "type": "object",
+        "properties": {
+          "secret": {
+            "type": "string",
+            "pattern": "^grad_[A-Za-z0-9_-]{43}$"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "secret",
+          "expires_at"
+        ]
       },
       "TraceGenerationList": {
         "type": "object",
@@ -7355,6 +7458,86 @@
           },
           "422": {
             "description": "The request body is invalid.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Serving state is unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/playground-credentials": {
+      "post": {
+        "operationId": "createPlaygroundCredential",
+        "tags": [
+          "API keys"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "A one-hour inference key for the console playground. Each call rotates the member's single playground key, which is not listed with the workspace keys.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Prevents storage of the one-time secret.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaygroundCredential"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication is required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The workspace cannot be used.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The workspace was not found.",
             "content": {
               "application/problem+json": {
                 "schema": {

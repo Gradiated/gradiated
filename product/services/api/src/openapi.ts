@@ -81,6 +81,9 @@ export const unservedDependencies = (): AppDependencies => ({
       createWorkspace: unserved("workspaces.createWorkspace"),
       listApiKeys: unserved("workspaces.listApiKeys"),
       createApiKey: unserved("workspaces.createApiKey"),
+      createPlaygroundCredential: unserved(
+        "workspaces.createPlaygroundCredential",
+      ),
       revokeApiKey: unserved("workspaces.revokeApiKey"),
     },
   },

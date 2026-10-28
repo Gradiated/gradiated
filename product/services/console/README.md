@@ -24,6 +24,27 @@ Use `OptionSelect` from `src/components/option-select.tsx` for finite option lis
 select with typed values, disabled options, placeholders, and a required
 accessible label.
 
+## Playground
+
+`/playground` chats with hosted chat models and, when training is enabled,
+tasks with a production version. The browser streams `/v1/chat/completions`
+from the gateway with a playground credential, so signed-in members never
+handle a key. Each member has one hidden key named Playground per workspace,
+which the API keys page does not list; every credential request rotates its
+secret and resets its one-hour expiry. The query cache reuses it until five
+minutes before expiry, renews it after a 401 and clears it on sign-out.
+
+Settings come from the model's catalog entry. The panel shows only the
+parameters the model accepts, because the gateway drops the others. Each field
+shows the value that is sent: the service tier (flex, default or fast, with its
+price change), the reasoning effort, temperature and top P (1 until changed),
+and max tokens (the catalog default length). Seed, penalties, stop sequences
+and JSON output are under Advanced. The conversation, settings and last model persist per workspace in local
+storage, and sign-out clears them. The gateway validates the values that are
+sent. Locally, Vite proxies `/v1/` to the
+gateway on port 3002. Storybook mocks the stream; `Pages/Playground*` and
+`Playground/Chat message` stories cover the page and reply states.
+
 ## Task training
 
 Task settings offer manual-only, daily, weekly and custom five-field UTC cron

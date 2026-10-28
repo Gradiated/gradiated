@@ -185,9 +185,10 @@ for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
         { times: 1 },
       );
       await page.getByRole("button", { name: "Promote", exact: true }).click();
-      await expect(page.getByRole("dialog").getByRole("alert")).toContainText(
-        "Promotion temporarily unavailable",
-      );
+      // Action errors are toasts, outside the dialog.
+      await expect(
+        page.getByText("Promotion temporarily unavailable"),
+      ).toBeVisible();
       await page.getByRole("button", { name: "Promote", exact: true }).click();
       await expect(page.getByText("Production", { exact: true })).toBeVisible();
       await page.getByRole("button", { name: "Use", exact: true }).click();
@@ -269,9 +270,7 @@ for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
       await page
         .getByRole("button", { name: "adapter.tar.gz", exact: true })
         .click();
-      await expect(page.getByRole("alert")).toContainText(
-        "Storage unavailable",
-      );
+      await expect(page.getByText("Storage unavailable")).toBeVisible();
       failDownload = false;
       const downloaded = page.waitForEvent("download");
       await page

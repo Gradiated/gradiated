@@ -24,6 +24,7 @@ export const NameSetting = ({
   const save = useMutation({
     mutationFn: onSave,
     onSuccess: () => toast.success(successMessage),
+    meta: { errorMessage: "The name could not be saved." },
   });
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -50,11 +51,6 @@ export const NameSetting = ({
           disabled={!canEdit || save.isPending}
         />
       </Field>
-      {save.error ? (
-        <p role="alert" className="text-sm text-destructive">
-          {save.error.message}
-        </p>
-      ) : null}
       <Button
         type="submit"
         disabled={

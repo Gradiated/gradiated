@@ -232,6 +232,15 @@ not start automatically; select it and press `s` when you want to test Stripe.
 After copying a newly printed webhook secret into `.env`, restart the `api`
 pane so it loads the value.
 
+Auto top-up charges run in the worker, which does not read `.env`. To test
+them locally, start mprocs with `STRIPE_SECRET_KEY` exported in your shell.
+Deployed webhook endpoints need `checkout.session.completed`,
+`checkout.session.async_payment_succeeded`, `invoice.paid`,
+`invoice.payment_failed` and `customer.updated`. Cards are entered in the console with Stripe's Payment
+Element, which needs `STRIPE_PUBLISHABLE_KEY`; without it the card dialog
+reports that card entry is not configured. Manage billing opens the Stripe
+billing portal, which needs a saved portal configuration with invoice history.
+
 Without both variables, the rest of the local stack runs normally and the
 billing page reports that Checkout is not configured if a top-up is attempted.
 

@@ -283,59 +283,81 @@ export const ashbyJobs: Job[] = [
     ]
   },
   {
-    "slug": "engineer-journalist",
-    "ashbyJobPostingId": "b91af2c0-5367-454f-bc1d-1cc8d0e7f08c",
-    "datePosted": "2026-10-13",
-    "title": "Engineer Journalist",
+    "slug": "founding-post-training-researcher",
+    "ashbyJobPostingId": "8f7b83f4-dce2-44e9-b54b-a1aaf7bb129a",
+    "datePosted": "2026-10-27",
+    "title": "Founding Post-Training Researcher",
     "employmentType": "FULL_TIME",
     "workplace": "IN_PERSON",
-    "team": "Team",
+    "team": "Inference research",
     "location": "Cambridge",
-    "summary": "Turn research on models, inference, and hardware into work that helps engineers understand the stack they rely on.",
+    "summary": "Be our first dedicated post-training hire. You’ll own the loop that turns customers’ production traces into smaller, cheaper open models built for their workloads.",
     "purpose": [
-      "Software engineers increasingly rely on models, inference systems, and hardware for almost all of their day-to-day work, but rarely get a clear view of how those systems work. We think they should. Knowledge is power.",
-      "Our research team produces whitepapers about the inference stack. You will be the translation layer between this work and regular full-stack software engineers who want a deeper understanding of what they are building on top of."
+      "Our automated RL product, Gradiated Training, is in private beta. It takes a team’s production traces, builds evals around their tasks, and post-trains an open model for that workload. In one early case, SFT followed by GRPO took GLM-5.3 Flash from 54% to 76% on a support agent task, at about 1/25th the cost of a frontier model.",
+      "The loop is starting to work, but it’s early. You’ll be our first dedicated post-training hire. You’ll own and improve the loop that takes production trace data and turns that into cost effective LoRA adapters."
     ],
     "responsibilities": [
-      "Work with our researchers as their work develops, not only after a paper is finished.",
-      "Turn our whitepapers into articles that teach full-stack engineers the concepts, evidence, and practical consequences of the research.",
-      "Read new model papers, then explain the architecture, training process, evaluations, strengths, weaknesses, and implications for inference.",
-      "Build small experiments, benchmarks, diagrams, and code examples when they make an explanation more useful or more honest.",
-      "Develop a distinct technical reputation for Gradiated that engineers trust."
+      "The pipeline, end to end: take raw production traces all the way to a model we’re confident putting into production",
+      "Recipes that generalize: Test SFT, GRPO and new training methods across real customer environments. This will be hands on, working with customer data to see what works, and then trying to generalize it",
+      "Building an RL environment pipeline: We are using customers trace data and github repositories to reconstruct RL environments. This has a lot of variation in practice, so working directly with customer data to trial this on many different environments is important.",
+      "Honest evals: judge models, rubrics and baselines that tell a customer what got better and what got worse",
+      "The team: help hire and shape post-training as it grows, and share what we learn publicly"
     ],
     "problems": [],
     "requirements": [
-      "You have real software engineering experience and can investigate a technical claim in papers, code, traces, and benchmarks rather than repeating its summary.",
-      "You write clearly and precisely, and you care about teaching rather than sounding clever.",
-      "You can explain technical depth without removing the caveats, evidence, or uncertainty that make it trustworthy.",
-      "You are curious enough to follow a question across models, training, inference software, systems, and hardware.",
-      "You know how to interview technical people, challenge assumptions, and find the question that unlocks an explanation.",
-      "You have writing, teaching, or explanatory work that shows how you think. It does not need to have been your job title."
+      "Several years post-training large language models that shipped to real users, for example at DeepMind or a frontier lab. You owned the outcome, not just the experiments",
+      "Hands-on experience running RL for LLMs (RLHF, PPO, GRPO, DPO or similar), and you have experience of how things break",
+      "Experience building good evals",
+      "You've built infrastructure for post-training, and run training jobs at scale in production",
+      "You have experience leading a team focused on post-training",
+      "Low ego. You write clearly, you ship, and you’d rather fix the thing than present about fixing it",
+      "Based in London or Cambridge. We’re in person in Cambridge on Monday, Wednesday and Friday"
     ],
-    "notFor": [
-      "You don't already read lots of whitepapers.",
-      "You're scared about learning about hardware if you're not in that world already.",
-      "You haven't truly been an engineer building production systems before.",
-      "You need lots of handholding."
-    ],
+    "notFor": [],
     "about": [
       "Gradiated is a research lab focused on inference. We co-design software and hardware for efficiently serving open-weight models.",
       "Our goal is to maximize intelligence per joule. We work across model behavior, software, systems, and silicon to find better ways to run models.",
       "We start by thinking about the model as a mathematical function, and map that out onto hardware and then build software on top of that which is custom to each model. This maximises performance and removes wasted abstractions.",
-      "We are early. Be the founding content and marketing person in the company."
+      "We are early. You will help set the technical direction and the way the company works."
     ],
     "howWeWork": [
-      "We like to experiment a lot and do the hard thing even if it's likely to fail.",
-      "We work in the office several days a week. We value working in person to solve hard problems, but are also flexible, some of the team work abroad for short periods."
+      "We hire great people and get out of their way. You’ll be the one driving this, and you won't be micro-managed by someone",
+      "We take ownership, which means making systems reliable so we’re not fighting fires in production",
+      "We experiment a lot and take on hard problems, even when they’re likely to fail"
     ],
     "pay": [
-      "We offer top-of-market compensation, with significant equity.",
+      "We offer top-of-market compensation, with significant equity. If you are interested, but you think pay will be a blocker, please apply anyway",
       "We pay at the top of the market because talent density is what allows us to build the most efficient inference. We want a small team of exceptional people who have fun solving hard problems together."
     ],
     "interviewSteps": [
-      "We get together in person and talk through the problems we will work on.",
-      "A paid in-person working session, so we can get to know you and you can meet the team.",
+      "A 60-minute call about your goals and the role.",
+      "We get together on Zoom and talk through the problems we will work on.",
+      "A paid day of working, so we can get to know you and you can meet the team.",
       "References and an offer decision."
+    ],
+    "extraSections": [
+      {
+        "title": "Problems you might work on",
+        "items": [
+          "Reward design and judge reliability when every customer’s task is different",
+          "Turning noisy production traces into useful training data, and automating that process across multiple customers",
+          "RL on long-running, multi-step agent tasks",
+          "Avoiding regressions on things the customer didn’t measure",
+          "Making training runs cheap and fast enough to run continuously as traffic changes"
+        ]
+      },
+      {
+        "title": "This role isn’t for you if",
+        "items": [
+          "You want a well-defined role with little ambiguity, we are an early stage startup so you should be comfortable handling ambiguity in the work you're doing",
+          "You are looking for a role to develop as a manager more than an IC, despite leading the post-training team, your will mostly be doing IC work",
+          "You'd like to publish lots of papers - this role will involve writing publicly and sharing the research work you do, but the goal won't be publishing papers",
+          "You've mostly used off the shelf tools for fine-tuning models, or one off training scripts, rather than post-training models in production",
+          "Your career has been almost entirely at big tech, without time in the scrappy, little-exists-yet setting of a seed-stage startup",
+          "It’s the other way round: you’ve only worked at small startups and haven’t yet operated systems at real scale",
+          "A short stint is what you’re after. We want someone to build this with us for years"
+        ]
+      }
     ]
   }
 ];

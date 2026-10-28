@@ -6,6 +6,9 @@ import { createTrainingEngine } from "./training/engine.js";
 import { serve } from "@hono/node-server";
 import { createGpuControlApp } from "./gpu-control.js";
 import {
+  createTopUpChargeStore,
+  createStripeTopUpCharger,
+  createStripeClient,
   createCatalogBillingService,
   createClickHouseRuntimeClient,
   createControlDatabase,
@@ -36,7 +39,7 @@ import { createStripeGateway } from "./billing/stripe-gateway.js";
 import {
   createBillingPaymentsService,
   unavailableBillingPaymentsService,
-} from "./billing/top-ups.js";
+} from "./billing/payments.js";
 import {
   createResendMagicLinkSender,
   createResendOtpSender,
@@ -86,6 +89,9 @@ valkey.on("error", (error) =>
 await valkey.connect();
 
 const catalogBilling = createCatalogBillingService(database);
+const stripe = environment.STRIPE_SECRET_KEY
+  ? createStripeClient(environment.STRIPE_SECRET_KEY)
+  : null;
 const organizations = createOrganizationService(database);
 const contents = createContentStore(
   environment.CONTENTS_BUCKET ?? "unconfigured",
@@ -193,14 +199,18 @@ const app = createApp({
   sendWaitlistWelcome,
   services: {
     billingPayments:
-      environment.STRIPE_SECRET_KEY && environment.STRIPE_WEBHOOK_SECRET
+      stripe && environment.STRIPE_WEBHOOK_SECRET
         ? createBillingPaymentsService({
             gateway: createStripeGateway({
-              secretKey: environment.STRIPE_SECRET_KEY,
+              stripe,
               webhookSecret: environment.STRIPE_WEBHOOK_SECRET,
             }),
             accounts: catalogBilling,
+            topUpCharges: createTopUpChargeStore(database),
+            charger: createStripeTopUpCharger(stripe),
             productUrl: environment.CONSOLE_URL,
+            publishableKey: environment.STRIPE_PUBLISHABLE_KEY,
+            cardDetails: valkey,
           })
         : unavailableBillingPaymentsService(),
     catalogBilling,

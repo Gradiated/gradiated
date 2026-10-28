@@ -43,9 +43,6 @@ const Conversation = ({ messages }: { messages: PlaygroundMessage[] }) => (
 const meta = {
   title: "Playground/Chat message",
   component: Conversation,
-  play: ({ canvasElement }) => {
-    canvasElement.dataset.storyPlayed = "true";
-  },
 } satisfies Meta<typeof Conversation>;
 
 export default meta;

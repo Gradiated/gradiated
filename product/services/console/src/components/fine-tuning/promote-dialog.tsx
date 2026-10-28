@@ -1,3 +1,7 @@
+import { toast } from "sonner";
+
+import { errorMessage } from "@/lib/errors";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -46,11 +50,6 @@ export const PromoteDialog = ({
             Serving is not enabled for this version.
           </p>
         ) : null}
-        {promote.error ? (
-          <p role="alert" className="text-sm text-destructive">
-            {promote.error.message}
-          </p>
-        ) : null}
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Cancel
@@ -59,7 +58,15 @@ export const PromoteDialog = ({
             disabled={
               !canEdit || promote.isPending || version.status !== "available"
             }
-            onClick={() => promote.mutate(version.id, { onSuccess: onClose })}
+            onClick={() =>
+              promote.mutate(version.id, {
+                onSuccess: onClose,
+                onError: (error) =>
+                  toast.error(
+                    errorMessage(error, "The version could not be promoted."),
+                  ),
+              })
+            }
           >
             Promote
           </Button>

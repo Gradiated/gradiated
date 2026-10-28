@@ -17,7 +17,8 @@ export type WorkerLoop =
   | "kubernetes_deployment_reconciliation"
   | "kubernetes_qualification"
   | "catalog_apply"
-  | "inference_probes";
+  | "inference_probes"
+  | "auto_top_up";
 
 export type IngestionSource = "new" | "recovered";
 
@@ -26,6 +27,9 @@ export type IngestionBacklog = {
   unread: number | null;
   oldestPendingMilliseconds: number | null;
 };
+
+export type TopUpChargeOutcomeLabel =
+  "succeeded" | "processing" | "failed" | "error";
 
 export type SettlementPassSummary = {
   processedSlots: number;
@@ -41,6 +45,7 @@ const passOperation: Record<WorkerLoop, string> = {
   kubernetes_qualification: "kubernetes_qualification_pass",
   catalog_apply: "apply_pass",
   inference_probes: "probe_pass",
+  auto_top_up: "auto_top_up_pass",
 };
 
 const operationBuckets = [
@@ -67,6 +72,9 @@ export class WorkerMetrics {
   private readonly settlementLag: Gauge;
   private readonly settlementLeader: Gauge;
   private readonly settlementSlots: Counter;
+  private readonly topUpCharges: Counter<"reason" | "outcome">;
+  private readonly autoTopUpRateLimited: Counter;
+  private readonly topUpChargeOldestPending: Gauge;
 
   constructor(options: { collectProcessMetrics?: boolean } = {}) {
     this.registry.setDefaultLabels({ service: "worker" });
@@ -172,6 +180,22 @@ export class WorkerMetrics {
       help: "Age beyond the settlement delay of the oldest eligible unsettled slot.",
       registers: [this.registry],
     });
+    this.topUpCharges = new Counter({
+      name: "gradiated_worker_top_up_charges_total",
+      help: "Top-up charges the worker settled, by reason and outcome.",
+      labelNames: ["reason", "outcome"],
+      registers: [this.registry],
+    });
+    this.autoTopUpRateLimited = new Counter({
+      name: "gradiated_worker_auto_top_up_rate_limited_total",
+      help: "Auto top-ups skipped because the organization hit the hourly limit.",
+      registers: [this.registry],
+    });
+    this.topUpChargeOldestPending = new Gauge({
+      name: "gradiated_worker_top_up_charge_oldest_pending_seconds",
+      help: "Age of the oldest top-up charge still waiting for Stripe.",
+      registers: [this.registry],
+    });
     if (options.collectProcessMetrics !== false) {
       collectDefaultMetrics({
         prefix: "gradiated_worker_",
@@ -252,6 +276,23 @@ export class WorkerMetrics {
     this.ingestionLag.set(
       { kind: "oldest_pending_age_seconds" },
       oldestPendingAgeSeconds,
+    );
+  }
+
+  recordTopUpCharge(
+    reason: "top_up" | "auto_top_up",
+    outcome: TopUpChargeOutcomeLabel,
+  ): void {
+    this.topUpCharges.inc({ reason, outcome });
+  }
+
+  recordAutoTopUpRateLimited(): void {
+    this.autoTopUpRateLimited.inc();
+  }
+
+  recordOldestPendingTopUpCharge(createdAt: Date | null, now: Date): void {
+    this.topUpChargeOldestPending.set(
+      createdAt ? Math.max(0, now.getTime() - createdAt.getTime()) / 1_000 : 0,
     );
   }
 

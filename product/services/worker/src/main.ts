@@ -10,8 +10,13 @@ import {
   createGenerationSettlementReader,
   createGenerationSettlementStore,
   createGenerationWriter,
+  createTopUpChargeStore,
+  createStripeTopUpCharger,
+  createStripeClient,
 } from "@gradiated/control";
 import { createValkeyClient } from "@gradiated/valkey";
+
+import { processAutoTopUpPass } from "./auto-top-up-loop.js";
 
 import {
   ingestionBoundaryMilliseconds,
@@ -33,6 +38,7 @@ import {
 import { serviceLog } from "./logging.js";
 import { loraMetricsTargets } from "./lora-metrics-targets.js";
 import { startWorkerMetricsServer, WorkerMetrics } from "./metrics.js";
+import { createOperationalBalanceReader } from "./operational-balance.js";
 import { runGenerationSettlementLoop } from "./settlement-loop.js";
 import { probeModel } from "./inference-probe.js";
 import {
@@ -195,6 +201,35 @@ if (environment.TRAINING_ARTIFACTS_BUCKET) {
           );
           await markReady();
           await sleep(5_000, signal);
+        }
+      },
+    }),
+  );
+}
+
+if (environment.STRIPE_SECRET_KEY) {
+  const pass = {
+    store: createTopUpChargeStore(database),
+    charger: createStripeTopUpCharger(
+      createStripeClient(environment.STRIPE_SECRET_KEY),
+    ),
+    operationalBalance: createOperationalBalanceReader(settlementValkey),
+    telemetry: metrics,
+    maxPerHour: environment.AUTO_TOP_UP_MAX_PER_HOUR,
+  };
+  supervisors.push(
+    supervise({
+      loop: "auto_top_up",
+      readinessPath: "/tmp/gradiated-auto-top-up-ready",
+      metrics,
+      signal,
+      run: async (markReady) => {
+        while (!signal.aborted) {
+          const start = performance.now();
+          await processAutoTopUpPass({ ...pass, now: new Date() });
+          metrics.recordPass("auto_top_up", (performance.now() - start) / 1000);
+          await markReady();
+          await sleep(environment.AUTO_TOP_UP_POLL_SECONDS * 1_000, signal);
         }
       },
     }),

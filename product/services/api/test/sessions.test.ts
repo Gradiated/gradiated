@@ -31,6 +31,12 @@ const validInputs: Record<string, { query?: string; body?: unknown }> = {
   "POST /api/v1/organizations/:organization_id/workspaces": {
     body: { name: "Research" },
   },
+  "PATCH /api/v1/organizations/:organization_id/billing": {
+    body: { auto_top_up: { enabled: false } },
+  },
+  "POST /api/v1/organizations/:organization_id/billing/card": {
+    body: { setup_intent_id: "seti_123" },
+  },
   "POST /api/v1/organizations/:organization_id/billing/top-ups": {
     body: { amount: "50000000000" },
   },

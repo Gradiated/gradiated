@@ -15,6 +15,8 @@ const getUsageSummaryRoute = createRoute({
   method: "get",
   path: "/api/v1/workspaces/{workspace_id}/usage",
   operationId: "getUsageSummary",
+  summary: "Get usage summary",
+  description: "Gets the workspace's inference usage and spend.",
   tags: ["Usage"],
   request: { params: WorkspacePathSchema, query: UsageQuerySchema },
   responses: {

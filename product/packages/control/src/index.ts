@@ -80,6 +80,23 @@ export {
   type BillingService,
 } from "./billing/service.js";
 export {
+  createTopUpChargeStore,
+  type AutoTopUpClaim,
+  type TopUpChargeRecord,
+  type TopUpChargeStore,
+  type TopUpRequest,
+  type LedgerCredit,
+  type OperationalBalanceReader,
+  type TopUpStatus,
+} from "./billing/top-up-charges.js";
+export {
+  createStripeTopUpCharger,
+  createStripeClient,
+  settleTopUpCharge,
+  type TopUpChargeOutcome,
+  type TopUpCharger,
+} from "./billing/stripe-top-up-charges.js";
+export {
   BalanceSourceConflictError,
   type BalanceTransactionRecord,
 } from "./billing/ledger.js";

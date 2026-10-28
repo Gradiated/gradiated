@@ -417,10 +417,24 @@ const generation = {
   completed_at: "2026-10-01T15:30:02Z",
 } satisfies GenerationLog;
 
-const billing = {
+export const billing = {
   organization_id: organizationId,
   mode: "prepaid",
   balance: "42500000000",
+  payment_method: {
+    brand: "visa",
+    last4: "4242",
+    exp_month: 8,
+    exp_year: 2028,
+  },
+  auto_top_up: {
+    enabled: true,
+    threshold: "10000000000",
+    amount: "50000000000",
+    failure: null,
+  },
+  top_up_pending: false,
+  billing_portal: true,
   created_at: createdAt,
   updated_at: createdAt,
 } satisfies components["schemas"]["BillingAccount"];
@@ -432,6 +446,7 @@ const transaction = {
   amount: "50000000000",
   balance_after: "50000000000",
   source_type: "stripe_checkout_session",
+  stripe_id: "cs_storybook",
   period_start: null,
   period_end: null,
   generation_count: null,
@@ -638,6 +653,30 @@ const sharedHandlers = [
   http.get("/api/v1/organizations/:organizationId/billing", () =>
     HttpResponse.json(billing),
   ),
+  http.post("/api/v1/organizations/:organizationId/billing/top-ups", () =>
+    HttpResponse.json({ status: "paid", checkout_url: null }, { status: 201 }),
+  ),
+  http.post(
+    "/api/v1/organizations/:organizationId/billing/payment-method-sessions",
+    () =>
+      HttpResponse.json(
+        { url: "https://checkout.stripe.com/c/pay/cs_test_storybook" },
+        { status: 201 },
+      ),
+  ),
+  http.patch(
+    "/api/v1/organizations/:organizationId/billing",
+    async ({ request }) => {
+      const { auto_top_up: changes } = (await request.json()) as {
+        auto_top_up: Partial<typeof billing.auto_top_up>;
+      };
+
+      return HttpResponse.json({
+        ...billing,
+        auto_top_up: { ...billing.auto_top_up, ...changes, failure: null },
+      });
+    },
+  ),
   http.get("/api/v1/organizations/:organizationId/balance-transactions", () =>
     HttpResponse.json(list(transaction)),
   ),
@@ -697,6 +736,24 @@ const sharedHandlers = [
 ];
 
 export const handlers = handlersFor(user);
+export const billingHandlers = (
+  account: Partial<components["schemas"]["BillingAccount"]>,
+) => [
+  http.get("/api/v1/organizations/:organizationId/billing", () =>
+    HttpResponse.json({ ...billing, ...account }),
+  ),
+  ...handlers,
+];
+// Billing requests that never answer, to show the page's loading state.
+export const billingLoadingHandlers = [
+  http.get("/api/v1/organizations/:organizationId/billing", () =>
+    delay("infinite"),
+  ),
+  http.get("/api/v1/organizations/:organizationId/balance-transactions", () =>
+    delay("infinite"),
+  ),
+  ...handlers,
+];
 export const newOrganizationHandlers = [
   http.get("/api/v1/organizations/:organizationId/billing", () =>
     HttpResponse.json({ ...billing, balance: "5000000000" }),

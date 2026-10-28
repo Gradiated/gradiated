@@ -6,10 +6,11 @@ import {
 import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 
-import { BillingPaymentsError } from "../billing/top-ups.js";
+import { BillingPaymentsError } from "../billing/payments.js";
 import type { ApiEnvironment, SessionUser } from "../types.js";
 
-type ProblemStatus = 400 | 401 | 403 | 404 | 409 | 413 | 422 | 429 | 500 | 503;
+type ProblemStatus =
+  400 | 401 | 402 | 403 | 404 | 409 | 413 | 422 | 429 | 500 | 503;
 
 export type ProblemBody = Omit<Problem, "request_id" | "status"> & {
   status: ProblemStatus;
@@ -73,6 +74,26 @@ export const problems = {
     status: 409,
     detail,
     code: "not_prepaid",
+  }),
+  billingConflict: (
+    code: "card_not_confirmed" | "no_billing_customer",
+    detail: string,
+  ): ProblemBody => ({
+    type: problemType(code.replaceAll("_", "-")),
+    title:
+      code === "card_not_confirmed"
+        ? "Card not confirmed"
+        : "No billing history",
+    status: 409,
+    detail,
+    code,
+  }),
+  paymentFailed: (detail: string): ProblemBody => ({
+    type: problemType("payment-failed"),
+    title: "Payment failed",
+    status: 402,
+    detail,
+    code: "payment_failed",
   }),
   billingProviderUnavailable: (
     code: "provider_error" | "unavailable",
@@ -148,6 +169,14 @@ const billingProblem = (error: BillingPaymentsError): ApiProblem => {
       );
     case "not_prepaid":
       return new ApiProblem(problems.notPrepaid(error.message), error.cause);
+    case "card_not_confirmed":
+    case "no_billing_customer":
+      return new ApiProblem(
+        problems.billingConflict(error.code, error.message),
+        error.cause,
+      );
+    case "payment_failed":
+      return new ApiProblem(problems.paymentFailed(error.message), error.cause);
     case "provider_error":
     case "unavailable":
       return new ApiProblem(

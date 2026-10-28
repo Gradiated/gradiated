@@ -53,6 +53,8 @@ const listTasks = createRoute({
   method: "get",
   path: `${base}/tasks`,
   operationId: "listTasks",
+  summary: "List tasks",
+  description: "Lists the workspace's tasks.",
   tags: ["Training"],
   request: { params: WorkspacePathSchema },
   responses: {
@@ -64,6 +66,8 @@ const getTask = createRoute({
   method: "get",
   path: `${base}/tasks/{task}`,
   operationId: "getTask",
+  summary: "Get task",
+  description: "Gets a task.",
   tags: ["Training"],
   request: { params: TaskPathSchema },
   responses: { 200: json(TaskSchema, "The task."), ...errors },
@@ -72,6 +76,8 @@ const updateTask = createRoute({
   method: "patch",
   path: `${base}/tasks/{task}`,
   operationId: "updateTask",
+  summary: "Update task",
+  description: "Changes a task's settings.",
   tags: ["Training"],
   request: {
     params: TaskPathSchema,
@@ -83,6 +89,8 @@ const listRuns = createRoute({
   method: "get",
   path: `${base}/training-runs`,
   operationId: "listTrainingRuns",
+  summary: "List training runs",
+  description: "Lists the workspace's training runs.",
   tags: ["Training"],
   request: { params: WorkspacePathSchema, query: TrainingRunListQuerySchema },
   responses: {
@@ -94,6 +102,8 @@ const startRun = createRoute({
   method: "post",
   path: `${base}/training-runs`,
   operationId: "startTrainingRun",
+  summary: "Start training run",
+  description: "Starts training a task.",
   tags: ["Training"],
   request: {
     params: WorkspacePathSchema,
@@ -116,6 +126,8 @@ const cancelRun = createRoute({
   method: "delete",
   path: `${base}/training-runs/{run_id}`,
   operationId: "cancelTrainingRun",
+  summary: "Cancel training run",
+  description: "Cancels a training run.",
   tags: ["Training"],
   request: { params: TrainingRunPathSchema },
   responses: { 202: { description: "Cancellation requested." }, ...errors },
@@ -124,6 +136,8 @@ const getRun = createRoute({
   method: "get",
   path: `${base}/training-runs/{run_id}`,
   operationId: "getTrainingRun",
+  summary: "Get training run",
+  description: "Gets a training run.",
   tags: ["Training"],
   request: { params: TrainingRunPathSchema },
   responses: { 200: json(TrainingRunSchema, "The run."), ...errors },
@@ -132,6 +146,8 @@ const listRunEvents = createRoute({
   method: "get",
   path: `${base}/training-runs/{run_id}/events`,
   operationId: "listTrainingRunEvents",
+  summary: "List training run events",
+  description: "Lists a training run's progress events.",
   tags: ["Training"],
   request: {
     params: TrainingRunPathSchema,
@@ -146,6 +162,8 @@ const listVersions = createRoute({
   method: "get",
   path: `${base}/tasks/{task}/versions`,
   operationId: "listTaskVersions",
+  summary: "List task versions",
+  description: "Lists a task's trained versions.",
   tags: ["Training"],
   request: { params: TaskPathSchema },
   responses: {
@@ -157,6 +175,8 @@ const evaluationResults = createRoute({
   method: "get",
   path: `${base}/tasks/{task}/versions/{version_id}/evaluation`,
   operationId: "getEvaluationResults",
+  summary: "Get evaluation results",
+  description: "Gets a task version's evaluation results.",
   tags: ["Training"],
   request: { params: TaskVersionPathSchema },
   responses: {
@@ -171,6 +191,8 @@ const downloadAdapter = createRoute({
   method: "get",
   path: `${base}/tasks/{task}/versions/{version_id}/adapter`,
   operationId: "getAdapterDownload",
+  summary: "Download adapter",
+  description: "Gets a download link for a task version's adapter.",
   tags: ["Training"],
   request: { params: TaskVersionPathSchema },
   responses: {
@@ -185,6 +207,8 @@ const promote = createRoute({
   method: "put",
   path: `${base}/tasks/{task}/production`,
   operationId: "promoteTaskVersion",
+  summary: "Promote task version",
+  description: "Sets which task version serves requests.",
   tags: ["Training"],
   request: {
     params: TaskPathSchema,

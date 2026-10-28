@@ -30,6 +30,8 @@ const listGenerationsRoute = createRoute({
   method: "get",
   path: "/api/v1/workspaces/{workspace_id}/generations",
   operationId: "listGenerations",
+  summary: "List generations",
+  description: "Lists the workspace's inference requests.",
   tags: ["Generations"],
   request: { params: WorkspacePathSchema, query: GenerationsQuerySchema },
   responses: {
@@ -58,6 +60,8 @@ const content = createRoute({
   method: "get",
   path: `${base}/generations/{generation_id}`,
   operationId: "getGeneration",
+  summary: "Get generation",
+  description: "Gets one inference request.",
   tags: ["Generations"],
   request: { params: TraceContentPathSchema, query: TraceContentQuerySchema },
   responses: {

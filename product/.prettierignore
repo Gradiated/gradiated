@@ -4,6 +4,7 @@
 **/dist/
 pnpm-lock.yaml
 services/api/generated/openapi.json
+services/api/generated/client-openapi.json
 inference/build/
 **/test-results/
 **/playwright-report/

@@ -30,6 +30,8 @@ const updateWorkspaceRoute = createRoute({
   method: "patch",
   path: "/api/v1/workspaces/{workspace_id}",
   operationId: "updateWorkspace",
+  summary: "Update workspace",
+  description: "Changes the workspace's settings.",
   tags: ["Workspaces"],
   request: {
     params: WorkspacePathSchema,
@@ -61,6 +63,8 @@ const archiveWorkspaceRoute = createRoute({
   method: "delete",
   path: "/api/v1/workspaces/{workspace_id}",
   operationId: "deleteWorkspace",
+  summary: "Archive workspace",
+  description: "Archives a workspace.",
   tags: ["Workspaces"],
   request: { params: WorkspacePathSchema },
   responses: {
@@ -85,6 +89,8 @@ const listWorkspacesRoute = createRoute({
   method: "get",
   path: "/api/v1/organizations/{organization_id}/workspaces",
   operationId: "listWorkspaces",
+  summary: "List workspaces",
+  description: "Lists the organization's workspaces.",
   tags: ["Workspaces"],
   request: {
     params: OrganizationIdParamsSchema,
@@ -106,6 +112,8 @@ const createWorkspaceRoute = createRoute({
   method: "post",
   path: "/api/v1/organizations/{organization_id}/workspaces",
   operationId: "createWorkspace",
+  summary: "Create workspace",
+  description: "Creates a workspace.",
   tags: ["Workspaces"],
   request: {
     params: OrganizationIdParamsSchema,
@@ -146,6 +154,8 @@ const listApiKeysRoute = createRoute({
   method: "get",
   path: "/api/v1/workspaces/{workspace_id}/api-keys",
   operationId: "listApiKeys",
+  summary: "List API keys",
+  description: "Lists the workspace's API keys.",
   tags: ["API keys"],
   request: { params: WorkspacePathSchema },
   responses: {
@@ -176,6 +186,8 @@ const createApiKeyRoute = createRoute({
   method: "post",
   path: "/api/v1/workspaces/{workspace_id}/api-keys",
   operationId: "createApiKey",
+  summary: "Create API key",
+  description: "Creates an API key for inference.",
   tags: ["API keys"],
   request: {
     params: WorkspacePathSchema,
@@ -259,6 +271,8 @@ const revokeApiKeyRoute = createRoute({
   method: "delete",
   path: "/api/v1/workspaces/{workspace_id}/api-keys/{api_key_id}",
   operationId: "revokeApiKey",
+  summary: "Revoke API key",
+  description: "Revokes an API key.",
   tags: ["API keys"],
   request: { params: ApiKeyPathSchema },
   responses: {

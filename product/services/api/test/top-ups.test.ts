@@ -8,11 +8,12 @@ import type { StripeGateway } from "../src/billing/stripe-gateway.js";
 import {
   BillingPaymentsError,
   createBillingPaymentsService,
-} from "../src/billing/top-ups.js";
+} from "../src/billing/payments.js";
 import {
   balanceTransactionRecord,
   billingAccountRecord,
   captureServiceLogs,
+  cardDetailsCache,
   notUsed,
   organizationId,
   user,
@@ -42,6 +43,14 @@ const createPayments = ({
   const payments = createBillingPaymentsService({
     gateway: {
       createCheckoutSession,
+      createCustomer: async () => ({ customerId: "cus_new" }),
+      retrieveDefaultCard: notUsed("retrieveDefaultCard"),
+      retrieveCard: notUsed("retrieveCard"),
+      retrievePaymentCard: notUsed("retrievePaymentCard"),
+      createCardSetup: notUsed("createCardSetup"),
+      retrieveCardSetup: notUsed("retrieveCardSetup"),
+      setDefaultPaymentMethod: notUsed("setDefaultPaymentMethod"),
+      createBillingPortalSession: notUsed("createBillingPortalSession"),
       constructWebhookEvent:
         gateway.constructWebhookEvent ?? notUsed("constructWebhookEvent"),
     },
@@ -52,8 +61,26 @@ const createPayments = ({
         ...account,
       }),
       applyBalanceTransaction,
+      savePaymentMethod: notUsed("savePaymentMethod"),
+      updateCustomerPaymentMethod: notUsed("updateCustomerPaymentMethod"),
+      bindStripeCustomer: async (_organizationId, customerId) => customerId,
+      clearCustomerPaymentMethod: notUsed("clearCustomerPaymentMethod"),
+      savedPaymentMethod: notUsed("savedPaymentMethod"),
+    },
+    topUpCharges: {
+      claimTopUp: notUsed("topUpCharges.claimTopUp"),
+      recordRequest: async (request) => ({ ...request, createdAt: new Date() }),
+      recordInvoice: notUsed("topUpCharges.recordInvoice"),
+      succeed: notUsed("topUpCharges.succeed"),
+      fail: notUsed("topUpCharges.fail"),
+    },
+    charger: {
+      charge: notUsed("charger.charge"),
+      resolve: notUsed("charger.resolve"),
     },
     productUrl: "http://localhost:3000/",
+    publishableKey: "pk_test_123",
+    cardDetails: cardDetailsCache(),
   });
 
   return { applyBalanceTransaction, createCheckoutSession, payments };
@@ -116,25 +143,36 @@ describe("Stripe top-up checkout", () => {
   it("creates a server-priced Checkout Session", async () => {
     const { createCheckoutSession, payments } = createPayments();
 
-    await expect(payments.createTopUpCheckout(topUp())).resolves.toEqual({
+    await expect(payments.createTopUp(topUp())).resolves.toEqual({
+      status: "checkout",
       checkoutUrl,
     });
     expect(createCheckoutSession).toHaveBeenCalledWith({
       amountCents: 5_000,
       organizationId,
       userId: user.id,
-      customerId: null,
-      customerEmail: user.email,
+      customerId: "cus_new",
+      replacesPaymentMethodId: null,
       successUrl:
         "http://localhost:3000/billing?topup=success&session_id={CHECKOUT_SESSION_ID}",
       cancelUrl: "http://localhost:3000/billing?topup=cancelled",
     });
   });
 
+  it("passes the request key so a retry gets the same Checkout Session", async () => {
+    const { createCheckoutSession, payments } = createPayments();
+
+    await payments.createTopUp({ ...topUp(), requestKey: "retry-key" });
+
+    expect(createCheckoutSession).toHaveBeenCalledWith(
+      expect.objectContaining({ requestKey: "retry-key" }),
+    );
+  });
+
   it("converts the nano-USD amount to exact cents", async () => {
     const { createCheckoutSession, payments } = createPayments();
 
-    await payments.createTopUpCheckout(topUp(123_450_000_000n));
+    await payments.createTopUp(topUp(123_450_000_000n));
 
     expect(createCheckoutSession).toHaveBeenCalledWith(
       expect.objectContaining({ amountCents: 12_345 }),
@@ -146,7 +184,7 @@ describe("Stripe top-up checkout", () => {
     async (amount) => {
       const { createCheckoutSession, payments } = createPayments();
 
-      await expect(payments.createTopUpCheckout(topUp(amount))).rejects.toThrow(
+      await expect(payments.createTopUp(topUp(amount))).rejects.toThrow(
         RangeError,
       );
       expect(createCheckoutSession).not.toHaveBeenCalled();
@@ -158,7 +196,7 @@ describe("Stripe top-up checkout", () => {
       account: { stripeCustomerId: "cus_existing" },
     });
 
-    await payments.createTopUpCheckout(topUp());
+    await payments.createTopUp(topUp());
 
     expect(createCheckoutSession).toHaveBeenCalledWith(
       expect.objectContaining({ customerId: "cus_existing" }),
@@ -170,7 +208,7 @@ describe("Stripe top-up checkout", () => {
       account: { mode: "invoiced" },
     });
 
-    await expect(payments.createTopUpCheckout(topUp())).rejects.toMatchObject({
+    await expect(payments.createTopUp(topUp())).rejects.toMatchObject({
       code: "not_prepaid",
     });
     expect(createCheckoutSession).not.toHaveBeenCalled();
@@ -187,7 +225,7 @@ describe("Stripe top-up checkout", () => {
     });
 
     const rejection = await payments
-      .createTopUpCheckout(topUp())
+      .createTopUp(topUp())
       .catch((error: unknown) => error);
 
     expect(rejection).toBeInstanceOf(BillingPaymentsError);
@@ -201,7 +239,7 @@ describe("Stripe top-up checkout", () => {
       },
     });
 
-    await expect(payments.createTopUpCheckout(topUp())).rejects.toMatchObject({
+    await expect(payments.createTopUp(topUp())).rejects.toMatchObject({
       code: "provider_error",
     });
   });

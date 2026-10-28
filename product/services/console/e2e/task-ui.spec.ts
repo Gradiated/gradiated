@@ -678,7 +678,22 @@ test("Billing loads 100 transactions at a time with skeleton rows and retry", as
         next_cursor: null,
       });
     if (path.endsWith("/billing") && path.startsWith("/api/"))
-      return json({ balance: "100000000000", mode: "prepaid" });
+      return json({
+        organization_id: "test-org",
+        mode: "prepaid",
+        balance: "100000000000",
+        payment_method: null,
+        auto_top_up: {
+          enabled: false,
+          threshold: null,
+          amount: null,
+          failure: null,
+        },
+        top_up_pending: false,
+        billing_portal: false,
+        created_at: "2026-10-01T12:00:00Z",
+        updated_at: "2026-10-01T12:00:00Z",
+      });
     if (path.endsWith("/balance-transactions")) {
       expect(path).toBe("/api/v1/organizations/test-org/balance-transactions");
       expect(url.searchParams.get("limit")).toBe("100");

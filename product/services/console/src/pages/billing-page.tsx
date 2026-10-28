@@ -4,7 +4,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { ArrowDownLeft, ArrowUpRight, WalletCards } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -150,10 +150,22 @@ export const BillingPage = () => {
   };
 
   // History refreshes once whenever the balance moves, instead of polling.
+  // The first balance is not a move, so loading the page fetches it once.
   const queryClient = useQueryClient();
   const balance = account.data?.balance;
+  const seenBalance = useRef<{ organizationId: string; balance: string }>(
+    undefined,
+  );
   useEffect(() => {
     if (balance === undefined) return;
+
+    const previous = seenBalance.current;
+    seenBalance.current = { organizationId: context.organizationId, balance };
+    if (
+      previous?.organizationId !== context.organizationId ||
+      previous.balance === balance
+    )
+      return;
 
     void queryClient.invalidateQueries({
       queryKey: balanceTransactionsQuery(context.organizationId).queryKey,

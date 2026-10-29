@@ -101,7 +101,7 @@
     "bundles": {
       "ubuntu24-cuda13-amd64-v3": "43cdd1187074c633a08bb41babd1298fe3bb85dd8850bb1964d89849a3b63919"
     },
-    "model_id": "dealignai/glm-5.3-flash-uncensored-nvfp4",
+    "model_id": "dealignai/glm-5.3-flash-uncensored",
     "release": {
       "schema_version": 1,
       "model_path": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",

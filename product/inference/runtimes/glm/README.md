@@ -29,7 +29,7 @@ GPU-kernel compilation and autotuning.
 The runtime launcher sets `GRADIATED_RUNTIME_ROOT`.
 
 The immutable stock release remains available for rollback. Dealign has a separate
-catalog identity, `dealignai/glm-5.3-flash-uncensored-nvfp4`; its modified base
+catalog identity, `dealignai/glm-5.3-flash-uncensored`; its modified base
 weights do not qualify existing stock-model LoRA adapters. A release selecting
 Dealign must omit `adapters`, `lora_enabled`, and the LoRA environment settings.
 Publishing this bundle does not change the selected production runtime: pin a

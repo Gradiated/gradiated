@@ -35,7 +35,7 @@ describe("model configurations", () => {
   const pinnedPrices: Record<string, { input: number[]; output: number[] }> = {
     "deepseek/deepseek-v4.1-flash": { input: [300, 6], output: [1_200, 1_200] },
     "z-ai/glm-5.3-flash": { input: [75, 15], output: [250, 250] },
-    "dealignai/glm-5.3-flash-uncensored-nvfp4": {
+    "dealignai/glm-5.3-flash-uncensored": {
       input: [100, 10],
       output: [450, 450],
     },
@@ -90,7 +90,7 @@ describe("model configurations", () => {
 
 it("identifies Dealign weights separately from the stock training base", () => {
   const model = catalogModels.find(
-    (item) => item.id === "dealignai/glm-5.3-flash-uncensored-nvfp4",
+    (item) => item.id === "dealignai/glm-5.3-flash-uncensored",
   );
 
   expect(model?.status).toBe("available");

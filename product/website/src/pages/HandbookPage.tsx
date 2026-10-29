@@ -54,7 +54,6 @@ const HandbookSectionArtwork = ({
 const HandbookIndex = (): ReactElement => (
   <>
     <header className="gr-masthead">
-      <p className="gr-label">Handbook</p>
       <h1 className="gr-masthead-title">Handbook</h1>
     </header>
 

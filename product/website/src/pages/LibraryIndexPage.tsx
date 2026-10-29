@@ -58,7 +58,6 @@ export const NotesIndexPage = (): ReactElement => {
           <header className="gr-masthead">
             <div className="gr-masthead-line">
               <div>
-                <p className="gr-label">Notes</p>
                 <Reveal as="h1" by="word" className="gr-masthead-title">
                   Notes
                 </Reveal>

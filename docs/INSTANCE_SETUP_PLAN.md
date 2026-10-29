@@ -34,22 +34,44 @@ checked without replacing its workloads. A new host must have the verified GPU
 base implementation and idle GPUs. Enrollment never uses public SSH. Changing any
 running pod's provider settings requires explicit reset authorization.
 
-Commit the prepared result by adding `kubernetes.inventoryEntry` to
-`infra/environments/prod/us-east-1/kubernetes/gpu-inference/hosts.json`.
-Run `python3 -m pip install PyYAML==6.0.2` once, then
-`python3 tools/gpu/render-config.py` from the repository root. The renderer
-projects the private Service, controller inventory/checksum, secret reference
-and named Node/Lease permissions. Review and commit the generated manifests.
-Let Argo sync, then verify the Node is Ready with measured GPU, CPU and memory
-budgets before scheduling work.
+To move an existing pod onto v5, register it with `reset_running_pod: true` and
+its ID in `confirm_instance_id` (a stopped pod needs neither). ops-mcp mints the
+pod's own single-use bootstrap key, re-images the pod with the approved GPU base
+image, no exposed ports and that key in its environment, waits for it to join,
+and enrolls it as above; nobody handles the key. The reset stops the pod's
+workloads, so drain a serving host first.
 
-`inference-hosts` automatically reconciles generated host Services, while
-`gpu-inference` reconciles inventory, credentials and permissions. Shared proxy
-changes remain manually deployed through `inference-network`. A transient delay
-between these Applications is retried by the GPU controller. A missing Service
-lasting five minutes raises `GpuHostServiceMissing`; do not wait for a model
-Rollout deadline to diagnose enrollment. Automatic pruning is disabled for host
-Services, so retirement still requires explicit cleanup after draining workloads.
+Commit the prepared host as a `GpuHost` in
+`infra/environments/prod/us-east-1/kubernetes/gpu-inference/hosts.yaml`: its
+instance ID, RunPod account and pod ID, measured inventory and management secret
+reference. Run `python3 -m pip install PyYAML==6.0.2` once, then
+`python3 tools/gpu/render-config.py` from the repository root, which projects the
+controller's host list, secret reference and named Node/Lease permissions. Let
+Argo sync, then verify the Node is Ready with measured GPU, CPU and memory budgets
+before scheduling work. Merge the `GpuHost` within a day of registering: the
+operator retires an `instances` row of the fleet's RunPod account that has had no
+`GpuHost` for 24 hours, and restores it when the `GpuHost` arrives.
+
+The `gpu-fleet` operator creates the host's private Service, records the host in
+the PostgreSQL `instances` table and reports its health in the `GpuHost` status,
+which Argo shows on the `gpu-fleet` application. Shared proxy changes remain
+manually deployed through `inference-network`. A missing Service lasting five
+minutes raises `GpuHostServiceMissing`, and a Degraded host raises
+`GpuFleetHostDegraded`; do not wait for a model Rollout deadline to diagnose
+enrollment.
+
+To retire a host:
+
+1. Remove it from `hosts.yaml`, run `python3 tools/gpu/render-config.py` and
+   merge. Argo then stops wanting the `GpuHost`, and does not prune it; the
+   renderer keeps the host's node permissions and management key.
+2. `kubectl delete gpuhost gpu-<instance id>`. The operator cordons the node and
+   holds the deletion until no pods run on it, so drain its workloads.
+3. Once the `GpuHost` is gone, run
+   `python3 tools/gpu/render-config.py --retire <instance id>` and merge, which
+   drops the host's access.
+4. Delete its Service in `tailscale-inference` by hand; the operator never
+   deletes Services. Its PostgreSQL row is retired a day later.
 
 This explicit Git step keeps enrollment from giving the operations service broad
 Kubernetes write access. Three controller replicas run on separate EKS nodes;
@@ -68,15 +90,19 @@ use short-lived signed downloads issued by that listener. GPUs have no grant or
 VPC route to PostgreSQL, Valkey, the Kubernetes API, or unrelated internal services.
 The [Tailscale guide](../infra/modules/tailscale/README.md) defines the network policy.
 
-Provider resets destroy local state. Do not reset an allocated GPU to update
-software. Apply host-agent updates over Tailscale SSH (`tools/gpu/rollout-host.py`)
-without changing active runtime profiles; model updates belong in Kubernetes Rollouts.
+Host software changes are pins in `gpu-inference/pins.json`. The `gpu-fleet`
+operator rolls them out one host at a time: a new host bundle in place, without
+restarting serving processes; a new GPU base image by moving the host's pods to
+other hosts first, then re-imaging and re-enrolling it. A provider reset destroys
+local state, so only the operator's drained rollout resets pods; model updates
+belong in Kubernetes Rollouts. See
+[the GPU controller guide](../tools/virtual-kubelet/README.md#rolling-hosts-onto-the-pins).
 
 Administrators reach GPU hosts only with Tailscale SSH as root. The tailnet policy
 allows it for tailnet admins in check mode, which repeats the Google sign-in with
 MFA every 12 hours; Tailscale records each session. The
-[RunPod guide](../infra/environments/prod/runpod/README.md#shell-access-and-break-glass)
-describes break-glass access and moving existing hosts.
+[RunPod guide](../infra/environments/prod/runpod/README.md#shell-access-and-recovery)
+describes recovery and moving existing hosts.
 
 ## Deploy and verify a model
 

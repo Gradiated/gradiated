@@ -7,24 +7,36 @@ on:
       - ".github/workflows/virtual-kubelet.yml"
       - "tools/virtual-kubelet/**"
       - "tools/gpu/**"
+      - "tools/models/model-replica-rules.mjs"
+      - "infra/environments/prod/us-east-1/kubernetes/workloads/observability/model-replica-rules.yaml"
       - "tools/security/check_gpu_inference.py"
       - "tools/security/check_tailscale_inference.py"
       - "infra/environments/prod/us-east-1/kubernetes/gpu-inference/**"
       - "infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml"
-      - "infra/environments/prod/us-east-1/kubernetes/tailscale-inference/hosts/**"
+      - "infra/environments/prod/us-east-1/kubernetes/operations/ops-mcp/workload.yaml"
+      - "infra/environments/prod/runpod/templates.json"
       - "infra/environments/prod/us-east-1/kubernetes/platform/argo-rollouts.yaml"
       - "infra/environments/prod/us-east-1/kubernetes/platform/external-secrets.yaml"
-      - "infra/environments/prod/us-east-1/kubernetes/platform/gpu-inference.yaml"
+      - "infra/environments/prod/us-east-1/kubernetes/platform/gpu-fleet.yaml"
+      - "infra/environments/prod/us-east-1/kubernetes/platform/gpu-models.yaml"
+      - "infra/environments/prod/us-east-1/kubernetes/platform/gpu-platform.yaml"
       - "infra/environments/prod/us-east-1/kubernetes/platform/inference-network.yaml"
-      - "infra/environments/prod/us-east-1/kubernetes/platform/inference-hosts.yaml"
       - "infra/environments/prod/us-east-1/kubernetes/platform/keda.yaml"
       - "infra/environments/prod/us-east-1/kubernetes/platform/tailscale-operator.yaml"
       - "infra/environments/prod/us-east-1/kubernetes/platform/tailscale-relays.yaml"
       - "infra/environments/prod/us-east-1/terraform/eks/terragrunt.hcl"
       - "infra/modules/argocd-bootstrap/main.tf"
+      - "infra/modules/argocd-bootstrap/gpuhost-health.lua"
       - "product/inference/gpu/**"
       - "product/inference/images/gpu-base/**"
-      - "product/inference/tailscale/**"
+      - "product/inference/host/**"
+      - "product/inference/runtime-launcher/**"
+      - "product/inference/bundles/host/**"
+      - "product/inference/bundles/package.sh"
+      - "product/services/gpu-fleet/**"
+      - "product/packages/gpu-hosts/**"
+      - "product/packages/control/**"
+      - "product/pnpm-lock.yaml"
       - "mise.toml"
   pull_request:
   workflow_dispatch:
@@ -64,7 +76,7 @@ jobs:
       - uses: actions/setup-go@v6
         if: fromJSON(needs.changes.outputs.checks).controller
         with:
-          go-version: "1.26.9"
+          go-version: "1.26.10"
           cache-dependency-path: tools/virtual-kubelet/go.sum
       - run: go test -race ./... && go vet ./...
         if: fromJSON(needs.changes.outputs.checks).controller
@@ -76,6 +88,11 @@ jobs:
       - run: python3 -m pip install PyYAML==6.0.2
       - run: python3 tools/gpu/render-config.py --check
         if: fromJSON(needs.changes.outputs.checks).configuration
+      - name: Check the model replica alert rules match the model Rollouts
+        if: fromJSON(needs.changes.outputs.checks).configuration
+        run: |
+          npm install --silent --no-save --prefix "$RUNNER_TEMP/rules" yaml@2.9.0
+          NODE_PATH="$RUNNER_TEMP/rules/node_modules" node tools/models/model-replica-rules.mjs --check
       - run: python3 tools/gpu/render_config_test.py
         if: fromJSON(needs.changes.outputs.checks).configuration
       - run: python3 tools/virtual-kubelet/host_agent_test.py
@@ -84,32 +101,69 @@ jobs:
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 tools/virtual-kubelet/host_state_test.py
         if: fromJSON(needs.changes.outputs.checks).controller
-      - run: python3 tools/virtual-kubelet/install_host_test.py
-        if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 product/inference/gpu/host_bundle_test.py
         if: fromJSON(needs.changes.outputs.checks).controller
-      - run: python3 tools/gpu/rollout_host_test.py
+      - run: python3 tools/gpu/pin_host_test.py
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 tools/gpu/mint_bootstrap_key_test.py
         if: fromJSON(needs.changes.outputs.checks).controller
-      - run: python3 product/inference/images/gpu-base/tests/start_host_test.py
-        if: fromJSON(needs.changes.outputs.checks).controller
-      - run: python3 -m unittest discover -s product/inference/tailscale/tests -p 'test_*.py'
-        if: fromJSON(needs.changes.outputs.checks).controller
-      - run: bash product/inference/tailscale/tests/test-tailscale.sh
-        if: fromJSON(needs.changes.outputs.checks).controller
-      - run: bash product/inference/tailscale/tests/test-tailscale-ssh.sh
-        if: fromJSON(needs.changes.outputs.checks).controller
-      - run: python3 product/inference/gpu/install_seed_test.py
-        if: fromJSON(needs.changes.outputs.checks).controller
-      - run: python3 product/inference/gpu/bootstrap_test.py
-        if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 product/inference/gpu/download_runtime_test.py
+        if: fromJSON(needs.changes.outputs.checks).controller
+      - run: python3 -m unittest discover -s product/inference/host/tests -p 'test_*.py'
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: test -z "$(gofmt -l tools/virtual-kubelet/cmd/gpu-controller/*.go)"
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: docker build tools/virtual-kubelet
         if: fromJSON(needs.changes.outputs.checks).controller
+
+  image:
+    name: GPU base image
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true' && fromJSON(needs.changes.outputs.checks).image
+    runs-on: depot-ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      # Depot keeps the image layers between runs, and the mirror keeps a cold build
+      # independent of archive.ubuntu.com's throughput.
+      DEPOT_PROJECT_ID: ${{ vars.DEPOT_PROJECT_ID }}
+      GPU_BASE_TEST_BUILD: depot build --load
+      GPU_BASE_TEST_APT_MIRROR: http://mirrors.edge.kernel.org/ubuntu
+    steps:
+      - uses: actions/checkout@v7
+      - uses: depot/setup-action@v1
+      # Both tests build the GPU base Dockerfile; the second reuses the first's layers.
+      - run: python3 product/inference/images/gpu-base/tests/start_host_test.py
+      - run: python3 product/inference/images/gpu-base/tests/enrollment_test.py
+
+  rejoin:
+    name: GPU host rejoin end to end
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true' && fromJSON(needs.changes.outputs.checks).rejoin
+    runs-on: depot-ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      DEPOT_PROJECT_ID: ${{ vars.DEPOT_PROJECT_ID }}
+      GPU_BASE_TEST_BUILD: depot build --load
+      GPU_BASE_TEST_APT_MIRROR: http://mirrors.edge.kernel.org/ubuntu
+    steps:
+      - uses: actions/checkout@v7
+      - uses: depot/setup-action@v1
+      - uses: jdx/mise-action@v4.2.3
+      - run: pnpm install --frozen-lockfile
+        working-directory: product
+      - run: pnpm turbo run build --filter=@gradiated/gpu-fleet^...
+        working-directory: product
+      # The GPU base image (only nvidia-smi faked), its host bundle and test TLS material.
+      - run: python3 product/inference/images/gpu-base/tests/e2e_image.py "$RUNNER_TEMP/e2e"
+      - name: Enroll and re-image a GPU host on a private tailnet through the gpu-fleet operator
+        working-directory: product/services/gpu-fleet
+        run: GPU_FLEET_E2E="$RUNNER_TEMP/e2e" pnpm exec vitest run --config vitest.e2e.config.ts
 
   manifests:
     name: Validate GPU manifests
@@ -121,15 +175,21 @@ jobs:
       - uses: actions/checkout@v7
       - uses: jdx/mise-action@v4.2.3
         with:
-          install_args: helm kubeconform
+          install_args: helm kubeconform kubectl
       - run: python3 -m pip install PyYAML==6.0.2 jsonschema==4.26.0
       - name: Validate against Kubernetes and the pinned Argo, KEDA and External Secrets CRDs
         run: python3 tools/security/check_gpu_inference.py
+      - name: Check GpuHost validation on a real API server
+        run: python3 tools/gpu/gpuhost_crd_test.py
+      - name: Check what the gpu-fleet operator may change on pods and nodes
+        run: python3 tools/gpu/gpu_fleet_policy_test.py
+      - name: Check Argo CD's GpuHost health
+        run: python3 tools/gpu/gpuhost_health_test.py
 
   passed:
     name: GPU controller and manifests passed
     if: always()
-    needs: [changes, test, manifests]
+    needs: [changes, test, image, rejoin, manifests]
     runs-on: ubuntu-latest
     steps:
       - name: Fail when a required job failed

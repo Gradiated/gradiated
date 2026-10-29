@@ -12,6 +12,7 @@ fi
 
 release_paths=(
   infra/environments/prod/us-east-1/kubernetes/gpu-inference/controller.yaml
+  infra/environments/prod/us-east-1/kubernetes/gpu-inference/gpu-fleet.yaml
   infra/environments/prod/us-east-1/kubernetes/workloads/kustomization.yaml
   infra/environments/prod/us-east-1/kubernetes/workloads/release-metadata.yaml
   infra/environments/prod/us-east-1/kubernetes/workloads/recovery/cronjobs.yaml

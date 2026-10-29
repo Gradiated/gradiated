@@ -4,6 +4,7 @@
 **/dist/
 pnpm-lock.yaml
 services/api/generated/openapi.json
+services/api/generated/client-openapi.json
 inference/build/
 **/test-results/
 **/playwright-report/
@@ -12,3 +13,9 @@ packages/autotrain/
 # MSW-generated service worker.
 services/console/.storybook/public/mockServiceWorker.js
 services/console/storybook-static/
+
+# Generated Ashby data and vendored React Bits sources retain their source format.
+website/src/ashby-jobs.generated.ts
+website/src/components/design/GradientASCII.tsx
+website/src/components/design/Noise.tsx
+website/src/components/design/ReflectiveCard.tsx

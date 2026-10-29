@@ -5,6 +5,8 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 
+import { toast } from "sonner";
+
 import type { components, operations } from "./schema";
 import { api, requireData, requireOk } from "./client";
 
@@ -26,6 +28,7 @@ export type Model =
 export type ServiceTierPricingPolicy =
   components["schemas"]["ServiceTierPricingPolicy"];
 export type BalanceTransaction = components["schemas"]["BalanceTransaction"];
+export type BillingAccount = components["schemas"]["BillingAccount"];
 export type UsageRange = operations["getUsageSummary"]["parameters"]["query"];
 export type UsageSummary =
   operations["getUsageSummary"]["responses"][200]["content"]["application/json"];
@@ -180,11 +183,48 @@ export const createWorkspace = (
     }),
   );
 
-export const createTopUpCheckout = (organizationId: string, amount: string) =>
+export const createTopUp = (
+  organizationId: string,
+  body: components["schemas"]["CreateTopUp"],
+) =>
   requireData(
     api.POST("/api/v1/organizations/{organization_id}/billing/top-ups", {
       params: { path: { organization_id: organizationId } },
-      body: { amount },
+      body,
+    }),
+  );
+
+export const updateAutoTopUp = (
+  organizationId: string,
+  autoTopUp: components["schemas"]["UpdateAutoTopUp"],
+) =>
+  requireData(
+    api.PATCH("/api/v1/organizations/{organization_id}/billing", {
+      params: { path: { organization_id: organizationId } },
+      body: { auto_top_up: autoTopUp },
+    }),
+  );
+
+export const createPaymentMethodSession = (organizationId: string) =>
+  requireData(
+    api.POST(
+      "/api/v1/organizations/{organization_id}/billing/payment-method-sessions",
+      { params: { path: { organization_id: organizationId } } },
+    ),
+  );
+
+export const createCardSetup = (organizationId: string) =>
+  requireData(
+    api.POST("/api/v1/organizations/{organization_id}/billing/card-setups", {
+      params: { path: { organization_id: organizationId } },
+    }),
+  );
+
+export const saveCard = (organizationId: string, setupIntentId: string) =>
+  requireData(
+    api.POST("/api/v1/organizations/{organization_id}/billing/card", {
+      params: { path: { organization_id: organizationId } },
+      body: { setup_intent_id: setupIntentId },
     }),
   );
 
@@ -217,6 +257,34 @@ export const revokeApiKey = (
       },
     }),
   );
+
+const PLAYGROUND_CREDENTIAL_LIFETIME_MS = 60 * 60 * 1000;
+const PLAYGROUND_CREDENTIAL_RENEWAL_MS = 5 * 60 * 1000;
+
+export const playgroundCredentialQuery = (
+  organizationId: string,
+  workspaceId: string,
+) =>
+  queryOptions({
+    queryKey: ["playground-credential", organizationId, workspaceId],
+    queryFn: () =>
+      requireData(
+        api.POST("/api/v1/workspaces/{workspace_id}/playground-credentials", {
+          params: { path: { workspace_id: workspaceId } },
+        }),
+      ),
+    staleTime: ({ state }) =>
+      state.data
+        ? Math.max(
+            Date.parse(state.data.expires_at) -
+              Date.now() -
+              PLAYGROUND_CREDENTIAL_RENEWAL_MS,
+            0,
+          )
+        : 0,
+    gcTime: PLAYGROUND_CREDENTIAL_LIFETIME_MS,
+    enabled: Boolean(organizationId && workspaceId),
+  });
 
 export const modelsQuery = () =>
   queryOptions({
@@ -334,6 +402,24 @@ export const useCreateApiKey = (
       void queryClient.invalidateQueries({
         queryKey: apiKeysQuery(organizationId, workspaceId).queryKey,
       });
+    },
+  });
+};
+
+// Saves a card Stripe confirmed, from the card dialog or a confirmation redirect.
+export const useSaveCard = (organizationId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (setupIntentId: string) =>
+      saveCard(organizationId, setupIntentId),
+    meta: { errorMessage: "The card was not saved." },
+    onSuccess: (account) => {
+      queryClient.setQueryData(
+        billingAccountQuery(organizationId).queryKey,
+        account,
+      );
+      toast.success("Card saved", { id: "card-saved" });
     },
   });
 };

@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { InstanceService } from "@gradiated/control";
+
+import type { EnrollmentPayload } from "@gradiated/gpu-hosts";
 import type {
   InstanceProvider,
   ProviderInstance,
@@ -30,7 +32,6 @@ export type Registration = {
     inventory: GpuInventory;
     inventoryEntry: {
       instance_id: string;
-      tailscale_ip: string;
       gpu_count: number;
       cpu: number;
       memory_gib: number;
@@ -51,12 +52,12 @@ export type RegistrationDependencies = {
   readonly providers: Readonly<Record<string, () => Promise<InstanceProvider>>>;
   readonly instances: () => Promise<InstanceService>;
   readonly hostImage: string;
-  readonly bootstrap: (
+  readonly enrollmentPayload: (
     instance: ProviderInstance,
     instanceId: string,
     key: string,
     authKey: string,
-  ) => Promise<Record<string, string>>;
+  ) => Promise<EnrollmentPayload>;
   readonly managementKey: (
     instanceId: string,
   ) => Promise<{ key: string; secretId: string; property?: string }>;
@@ -113,7 +114,7 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
     const management = await dependencies.managementKey(record.id);
     const enrollment = await dependencies.tailscaleAuthKey(record.id);
     try {
-      const environment = await dependencies.bootstrap(
+      const payload = await dependencies.enrollmentPayload(
         instance,
         record.id,
         management.key,
@@ -122,20 +123,19 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
       const inventory = await provider.bootstrap(
         instance,
         dependencies.hostImage,
-        environment,
+        payload,
         { allowReset: registration.resetRunningPod },
       );
       advance(registration, "prepared", {
-        tailscaleIp: inventory.tailscaleIp,
+        tailscaleIp: inventory.tailscale_ip,
         kubernetes: {
           inventory,
           inventoryEntry: {
             instance_id: record.id,
-            tailscale_ip: inventory.tailscaleIp,
-            gpu_count: inventory.gpuCount,
+            gpu_count: inventory.gpu_count,
             cpu: inventory.cpu,
-            memory_gib: inventory.memoryGiB,
-            gpu_product: inventory.gpuProduct,
+            memory_gib: inventory.memory_gib,
+            gpu_product: inventory.gpu_product,
             management_secret: {
               key: management.secretId,
               ...(management.property ? { property: management.property } : {}),
@@ -159,7 +159,9 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
   ) => {
     const provider = await createProvider();
     const instance = await provider.describe(request.providerInstanceId);
-    await provider.checkTailscaleEnrollment(request.providerInstanceId);
+    await provider.checkTailscaleEnrollment(request.providerInstanceId, {
+      allowReset: request.resetRunningPod,
+    });
     const stopped = await provider.isStopped(request.providerInstanceId);
     const resuming = false;
     const inPlace =

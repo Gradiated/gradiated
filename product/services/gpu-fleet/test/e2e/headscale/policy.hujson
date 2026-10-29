@@ -1,0 +1,25 @@
+// The production tailnet policy's GPU rules, for the end-to-end test: the
+// operator's sidecar (tag:gpu-fleet) reaches GPU pods and opens root Tailscale
+// SSH sessions on bootstrap pods only.
+{
+  "tagOwners": {
+    "tag:gpu-bootstrap": ["fleet@"],
+    "tag:gpu-inference": ["fleet@"],
+    "tag:gpu-fleet": ["fleet@"]
+  },
+  "acls": [
+    {
+      "action": "accept",
+      "src": ["tag:gpu-fleet"],
+      "dst": ["tag:gpu-bootstrap:*", "tag:gpu-inference:*"]
+    }
+  ],
+  "ssh": [
+    {
+      "action": "accept",
+      "src": ["tag:gpu-fleet"],
+      "dst": ["tag:gpu-bootstrap"],
+      "users": ["root"]
+    }
+  ]
+}

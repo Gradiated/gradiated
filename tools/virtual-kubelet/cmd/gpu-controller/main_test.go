@@ -26,7 +26,7 @@ func testProvider(t *testing.T, handler http.HandlerFunc) *provider {
 	if err := os.WriteFile(token, []byte("host-only-key"), 0600); err != nil {
 		t.Fatal(err)
 	}
-	return &provider{host: host{Endpoint: server.URL, TokenFile: token}, epoch: 7, pods: map[string]*v1.Pod{}}
+	return &provider{host: host{Endpoint: server.URL, TokenFile: token}, fence: &hostFence{epoch: 7}, pods: map[string]*v1.Pod{}}
 }
 
 func TestOriginalPodPreventsResolvedCredentialTransfer(t *testing.T) {
@@ -182,5 +182,25 @@ func TestExitedServingTaskWaitsForRecoveryButTrainingFails(t *testing.T) {
 	status, err = p.GetPodStatus(context.Background(), pod.Namespace, pod.Name)
 	if err != nil || status.Phase != v1.PodFailed {
 		t.Fatalf("training failure would be retried: %v %v", status, err)
+	}
+}
+
+func TestPodLostByAReachableHostFailsSoItIsReplaced(t *testing.T) {
+	body := `{"error":"unknown_pod"}`
+	p := testProvider(t, func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(body))
+	})
+	pod := &v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "runtime", Namespace: "gpu-inference", UID: types.UID("uid")}, Spec: v1.PodSpec{RestartPolicy: v1.RestartPolicyAlways}}
+	p.pods["gpu-inference/runtime"] = pod
+	status, err := p.GetPodStatus(context.Background(), pod.Namespace, pod.Name)
+	if err != nil || status.Phase != v1.PodFailed || status.Reason != "RuntimeLost" {
+		t.Fatalf("lost runtime is not replaced: %v %v", status, err)
+	}
+	// Any other 404, such as a misrouted proxy, stays a temporary host failure.
+	body = `not found`
+	status, err = p.GetPodStatus(context.Background(), pod.Namespace, pod.Name)
+	if err != nil || status.Phase != v1.PodRunning || status.Reason != "HostUnreachable" {
+		t.Fatalf("an unrelated 404 failed the pod: %v %v", status, err)
 	}
 }

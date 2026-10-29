@@ -8,7 +8,7 @@
     "node": ">=22.12.0 <23"
   },
   "scripts": {
-    "api:generate": "openapi-typescript ../services/api/generated/openapi.json -o src/api/schema.ts && prettier --write src/api/schema.ts",
+    "api:generate": "openapi-typescript ../services/api/generated/client-openapi.json -o src/api/schema.ts && prettier --write src/api/schema.ts",
     "dev": "mise exec -- vite",
     "build": "pnpm sync:ashby-jobs && tsc -b && vite build && vite build --ssr src/entry-server.tsx --outDir dist/server && node scripts/prerender.mjs && node scripts/check-seo.mjs",
     "preview": "mise exec -- vite preview",
@@ -17,10 +17,12 @@
     "test": "vitest run --config tests/vitest.config.ts && tsx --test scripts/article-metadata.test.ts && node --test scripts/sand-*.test.mjs scripts/article-citations.test.mjs"
   },
   "dependencies": {
+    "@amcharts/amcharts5": "5.21.1",
+    "@amcharts/amcharts5-geodata": "5.1.6",
     "@firecms/neat": "^1.1.0",
     "@hookform/resolvers": "5.9.1",
     "@posthog/brand": "0.12.3",
-    "better-auth": "1.6.29",
+    "better-auth": "1.7.7",
     "gsap": "3.13.0",
     "lucide-react": "1.34.0",
     "marked": "17.0.5",
@@ -31,7 +33,7 @@
     "react-hook-form": "7.86.0",
     "react-router-dom": "7.18.2",
     "yaml": "2.9.0",
-    "zod": "4.6.5"
+    "zod": "4.6.6"
   },
   "devDependencies": {
     "@mdx-js/rollup": "^3.1.1",
@@ -46,6 +48,6 @@
     "remark-gfm": "^4.0.1",
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3",
-    "vite": "8.2.1"
+    "vite": "8.2.4"
   }
 }

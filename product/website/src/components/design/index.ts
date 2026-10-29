@@ -28,6 +28,8 @@ export { Footer } from "./Footer";
 export { HeroBeam } from "./HeroBeam";
 export { HeroBeamRaw } from "./HeroBeamRaw";
 export { HomeFlow } from "./HomeFlow";
+export { InferenceFlow } from "./InferenceFlow";
+export { BadgeCard } from "./BadgeCard";
 export { LoopSection } from "./LoopSection";
 export { ModelArt } from "./ModelArt";
 export { ModelMarquee } from "./ModelMarquee";

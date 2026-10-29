@@ -29,9 +29,9 @@ export const registerRegistrationTools = (
       description: [
         "Requires the private administrative MCP connection through Tailscale and Kubernetes port-forward, in addition to MCP OAuth.",
         "Prepare a GPU host for Kubernetes: record its identity, install the pinned GPU host agent, and enroll Tailscale. Return the private Service, measured node inventory, and management-secret reference for Git and Argo.",
-        "Registration requires pinned direct SSH access. Commit the returned kubernetes.inventoryEntry to gpu-inference/hosts.json and render the manifests before scheduling workloads. Secrets remain in AWS and on the GPU host; results contain only secret references.",
+        "Add the host as a GpuHost in gpu-inference/hosts.yaml (instance ID, RunPod account and pod ID, and the returned kubernetes.inventoryEntry inventory and secret reference) and render the manifests before scheduling workloads; merge it within a day or the gpu-fleet operator retires the instance row until it lands. Secrets remain in AWS and on the GPU host; results contain only secret references.",
         "A running pod with the pinned GPU bootstrap can enroll over SSH without changing provider settings or releasing capacity. New enrollment requires idle GPUs; an existing enrollment keeps active model processes.",
-        "Other running machines are refused unless reset_running_pod is true and confirm_instance_id repeats instance_id. Only do that when a person explicitly authorizes resetting that exact machine; a reset stops everything and can release scarce GPU capacity. Stopped machines use the provider bootstrap and are started.",
+        "Other running machines are refused unless reset_running_pod is true and confirm_instance_id repeats instance_id. Only do that when a person explicitly authorizes resetting that exact machine; a reset stops everything and can release scarce GPU capacity. A stopped machine, or one whose reset is authorized, is re-imaged with the approved GPU base image, no public ports and a single-use bootstrap key that ops-mcp mints, then started and enrolled over Tailscale SSH.",
         "An enrolled host is checked without replacing its active processes or provider settings.",
         "Returns a registration id at once; registration then takes up to 30 minutes. Follow it with instance_registration_status.",
       ].join(" "),
@@ -91,7 +91,7 @@ export const registerRegistrationTools = (
     {
       title: "instance registration status",
       description:
-        "Progress of GPU instance registrations started since the ops MCP last restarted: recording, updating_provider, then prepared, or failed with the reason. A prepared result includes kubernetes.inventoryEntry for hosts.json, Git review and Argo sync. Without registration_id, lists recent registrations, newest first. A registration interrupted by a restart is not listed; registering the machine again is safe.",
+        "Progress of GPU instance registrations started since the ops MCP last restarted: recording, updating_provider, then prepared, or failed with the reason. A prepared result includes kubernetes.inventoryEntry for the host's GpuHost in hosts.yaml, Git review and Argo sync. Without registration_id, lists recent registrations, newest first. A registration interrupted by a restart is not listed; registering the machine again is safe.",
       inputSchema: { registration_id: z.uuid().optional() },
       annotations: {
         readOnlyHint: true,

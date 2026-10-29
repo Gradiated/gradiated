@@ -24,6 +24,9 @@ import {
   useTrainingMutation,
 } from "@/hooks/use-training";
 import { QueryState } from "./query-state";
+import { toast } from "sonner";
+
+import { errorMessage } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
 
 const STAGE_BADGE_CLASS: Partial<Record<RunStage, string>> = {
@@ -156,11 +159,6 @@ export const TaskRunsTab = ({
               <VersionEvaluation version={selectedVersion} />
             </div>
           ) : null}
-          {cancel.error ? (
-            <p role="alert" className="text-sm text-destructive">
-              {cancel.error.message}
-            </p>
-          ) : null}
           <QueryState query={events} />
           {events.hasNextPage ? (
             <p className="mb-2 text-xs text-muted-foreground">
@@ -180,7 +178,18 @@ export const TaskRunsTab = ({
             <StageTimeline
               run={selectedRun}
               {...(canEdit && !cancel.isPending
-                ? { onCancel: () => cancel.mutate(selectedRun.id) }
+                ? {
+                    onCancel: () =>
+                      cancel.mutate(selectedRun.id, {
+                        onError: (error) =>
+                          toast.error(
+                            errorMessage(
+                              error,
+                              "The run could not be cancelled.",
+                            ),
+                          ),
+                      }),
+                  }
                 : {})}
               events={events.data?.pages.flatMap((page) => page.data) ?? []}
             />

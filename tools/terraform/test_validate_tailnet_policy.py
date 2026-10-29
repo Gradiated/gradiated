@@ -14,7 +14,7 @@ class TailnetPolicyTests(unittest.TestCase):
         admin = rules[('check', ('autogroup:admin',))]
         self.assertEqual((admin['dst'], admin['users'], admin['checkPeriod']),
                          (['tag:gpu-inference', 'tag:gpu-bootstrap'], ['root'], '12h'))
-        self.assertEqual(rules[('accept', ('tag:ops-mcp',))]['dst'], ['tag:gpu-bootstrap'])
+        self.assertEqual(rules[('accept', ('tag:ops-mcp', 'tag:gpu-fleet'))]['dst'], ['tag:gpu-bootstrap'])
         gpu_destinations = [rule for rule in policy['ssh'] if {'tag:gpu-inference', 'tag:gpu-bootstrap'} & set(rule['dst'])]
         self.assertEqual(len(gpu_destinations), 2)
         self.assertTrue(policy['sshTests'])
@@ -22,7 +22,7 @@ class TailnetPolicyTests(unittest.TestCase):
                          if 'tcp:22' in grant.get('ip', []) or '*' in grant.get('ip', []))
         self.assertEqual(port_22, [(('autogroup:admin',), ('tag:gpu-inference', 'tag:gpu-bootstrap')),
                                    (('autogroup:member',), ('autogroup:self',)),
-                                   (('tag:ops-mcp',), ('tag:gpu-bootstrap',))])
+                                   (('tag:ops-mcp', 'tag:gpu-fleet'), ('tag:gpu-bootstrap',))])
 
     def test_reports_failed_policy_tests(self):
         self.assertEqual(checker.failures({}), [])

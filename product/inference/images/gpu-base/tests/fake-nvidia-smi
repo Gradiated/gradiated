@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Stands in for nvidia-smi on a host without GPUs: two GPUs, no compute processes.
+set -euo pipefail
+for argument in "$@"; do
+  case "$argument" in
+  --query-gpu=uuid)
+    printf '%s\n' GPU-00000000-0000-0000-0000-000000000001 GPU-00000000-0000-0000-0000-000000000002
+    exit 0
+    ;;
+  --query-gpu=name)
+    printf '%s\n' 'NVIDIA RTX PRO 6000' 'NVIDIA RTX PRO 6000'
+    exit 0
+    ;;
+  --query-compute-apps=pid) exit 0 ;;
+  esac
+done
+exit 1

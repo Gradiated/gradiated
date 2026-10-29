@@ -8,7 +8,6 @@ import {
 } from "@aws-sdk/client-secrets-manager";
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { hostBootstrapEnvironment } from "./host-bootstrap.js";
 
 import {
   createControlDatabase,
@@ -18,20 +17,48 @@ import { z } from "zod";
 
 import { createRegistrations } from "./registration.js";
 import { createRunPodProvider } from "./runpod.js";
-import { sshRunner } from "./ssh.js";
-import { tailscaleAuthKey } from "./tailscale.js";
-import { localStatus, socksConnector } from "./tailnet.js";
+import {
+  bootstrapAuthKey,
+  claimInstanceName,
+  enrollmentPayload,
+  localStatus,
+  releaseInstanceName,
+  socksConnector,
+  sshRunner,
+  tailscaleAuthKey,
+} from "@gradiated/gpu-hosts";
+
+import { readSecret } from "./aws.js";
 
 export type RegistrationSettings = {
   readonly credentialsDirectory: string;
   readonly hostImage: string;
   readonly apiEndpoint: string;
   readonly hostBundleSha256?: string;
+  readonly hostBundleBaseId?: string;
   readonly tailnet: {
     readonly socksPort: number;
     readonly localApiSocket: string;
   };
 };
+
+const oauthCredentials = (secret: string) => () =>
+  readSecret(
+    secret,
+    z.object({
+      client_id: z.string().min(1),
+      client_secret: z.string().min(1),
+    }),
+  );
+const enrollmentCredentials = oauthCredentials(
+  "gradiated/prod/platform/tailscale-gpu-enrollment",
+);
+// Its OAuth client can only issue tag:gpu-bootstrap keys, which have no
+// network grants: only administrators and ops-mcp reach such a pod, over
+// Tailscale SSH.
+const bootstrapCredentials = oauthCredentials(
+  "gradiated/prod/platform/tailscale-gpu-bootstrap",
+);
 
 export const productionRegistrations = (
   settings: RegistrationSettings,
@@ -56,10 +83,17 @@ export const productionRegistrations = (
             socksConnector("127.0.0.1", settings.tailnet.socksPort),
           ),
           status: () => localStatus(settings.tailnet.localApiSocket),
+          releaseName: (instanceId: string) =>
+            releaseInstanceName(instanceId, fetch, enrollmentCredentials),
+          claimName: (instanceId: string, since: Date) =>
+            claimInstanceName(instanceId, since, fetch, enrollmentCredentials),
         };
 
         return createRunPodProvider({
           apiKey: await credential("runpod-api-key"),
+          bootstrapKey: (podId: string) =>
+            bootstrapAuthKey(podId, fetch, bootstrapCredentials),
+          audit,
           tailnet,
         });
       },
@@ -69,28 +103,39 @@ export const productionRegistrations = (
         createControlDatabase(await credential("database-url"), 2).database,
       )),
     hostImage: settings.hostImage,
-    bootstrap: async (instance, id, key, auth) => {
-      let hostBundle;
-      if (settings.hostBundleSha256) {
-        const digest = z
-          .string()
-          .regex(/^[0-9a-f]{64}$/)
-          .parse(settings.hostBundleSha256);
-        const account = settings.hostImage.match(/^(\d{12})\.dkr\.ecr\./)?.[1];
-        if (!account)
-          throw new Error("GPU base image must identify its artifact account");
+    // Every gpu-base image enrolls from a pinned host bundle.
+    enrollmentPayload: async (instance, id, key, auth) => {
+      const digest = z
+        .string()
+        .regex(/^[0-9a-f]{64}$/)
+        .parse(settings.hostBundleSha256);
+      const account = settings.hostImage.match(/^(\d{12})\.dkr\.ecr\./)?.[1];
+      if (!account)
+        throw new Error("GPU base image must identify its artifact account");
 
-        hostBundle = {
+      // The pinned bundle must be built for the image that runs gradiated-host enroll.
+      const baseId = (
+        await readFile(
+          new URL(
+            "../../../../inference/images/gpu-base/base-id",
+            import.meta.url,
+          ),
+          "utf8",
+        )
+      ).trim();
+      if (settings.hostBundleBaseId !== baseId)
+        throw new Error(
+          `GPU_HOST_BOOTSTRAP_BASE_ID is ${settings.hostBundleBaseId ?? "unset"}, but enrollment needs a host bundle for base ${baseId}`,
+        );
+
+      return enrollmentPayload(instance, {
+        instance_id: id,
+        management_token: key,
+        auth_key: auth,
+        api_endpoint: settings.apiEndpoint,
+        host_bundle: {
           sha256: digest,
-          base_id: (
-            await readFile(
-              new URL(
-                "../../../../inference/images/gpu-base/base-id",
-                import.meta.url,
-              ),
-              "utf8",
-            )
-          ).trim(),
+          base_id: baseId,
           url: await getSignedUrl(
             new S3Client({ region: "us-east-1" }),
             new GetObjectCommand({
@@ -99,17 +144,8 @@ export const productionRegistrations = (
             }),
             { expiresIn: 3600 },
           ),
-        };
-      }
-
-      return hostBootstrapEnvironment(
-        instance,
-        id,
-        key,
-        auth,
-        settings.apiEndpoint,
-        hostBundle,
-      );
+        },
+      });
     },
     managementKey: async (id) => {
       const client = new SecretsManagerClient({});
@@ -174,7 +210,8 @@ export const productionRegistrations = (
         };
       }
     },
-    tailscaleAuthKey,
+    tailscaleAuthKey: (instanceId) =>
+      tailscaleAuthKey(instanceId, fetch, enrollmentCredentials),
     audit,
   });
 };

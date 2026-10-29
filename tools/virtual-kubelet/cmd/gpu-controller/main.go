@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/uuid"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -40,25 +41,26 @@ import (
 )
 
 type host struct {
-	Runtimes   json.RawMessage `json:"-"`
-	InstanceID string          `json:"instance_id"`
-	Endpoint   string          `json:"endpoint"`
-	TokenFile  string          `json:"token_file"`
-	GPUCount   int64           `json:"gpu_count"`
-	CPU        int64           `json:"cpu"`
-	MemoryGiB  int64           `json:"memory_gib"`
-	GPUProduct string          `json:"gpu_product"`
+	Runtimes    json.RawMessage `json:"-"`
+	InstanceID  string          `json:"instance_id"`
+	Endpoint    string          `json:"endpoint"`
+	TokenFile   string          `json:"token_file"`
+	GPUCount    int64           `json:"gpu_count"`
+	CPU         int64           `json:"cpu"`
+	MemoryGiB   int64           `json:"memory_gib"`
+	GPUProduct  string          `json:"gpu_product"`
+	FaultDomain string          `json:"fault_domain,omitempty"`
 }
+
+// Hosts and their host bundles come from GpuHost objects; the ConfigMap
+// carries the runtimes.
 type configuration struct {
-	HostBundle *hostBundle     `json:"host_bundle"`
-	Runtimes   json.RawMessage `json:"runtimes"`
-	Namespace  string          `json:"namespace"`
-	Hosts      []host          `json:"hosts"`
+	Runtimes  json.RawMessage `json:"runtimes"`
+	Namespace string          `json:"namespace"`
 }
 type provider struct {
 	host   host
-	epoch  int64
-	term   string
+	fence  *hostFence
 	source corelisters.PodLister
 	client typedv1.CoreV1Interface
 	mu     sync.Mutex
@@ -105,10 +107,28 @@ func retryHostOperation(_ context.Context, _ string, _ int, _ time.Time, err err
 }
 
 func (p *provider) call(ctx context.Context, operation string, uid string, pod *v1.Pod, result any) error {
-	payload := map[string]any{"operation": operation, "uid": uid, "pod": pod, "epoch": p.epoch, "term": p.term}
+	payload := map[string]any{"operation": operation, "uid": uid, "pod": pod}
 	if operation == "configure" {
 		payload["runtimes"] = p.host.Runtimes
 	}
+	return p.fenced(ctx, payload, result)
+}
+
+// fenced sends an operation with this leader's fencing generation. When the
+// host rejects it as stale, the leader re-claims a host that was reset and
+// retries once; see hostFence.reclaim.
+func (p *provider) fenced(ctx context.Context, payload map[string]any, result any) error {
+	epoch, term := p.fence.current()
+	payload["epoch"], payload["term"] = epoch, term
+	err := p.callPayload(ctx, payload, result)
+	var stale *staleFenceError
+	if !errors.As(err, &stale) {
+		return err
+	}
+	if err = p.fence.reclaim(ctx, epoch, stale); err != nil {
+		return err
+	}
+	payload["epoch"], payload["term"] = p.fence.current()
 	return p.callPayload(ctx, payload, result)
 }
 
@@ -135,6 +155,22 @@ func (p *provider) callPayload(ctx context.Context, payload map[string]any, resu
 		return fmt.Errorf("host temporarily unavailable: %w", err)
 	}
 	defer response.Body.Close()
+	if response.StatusCode == http.StatusNotFound {
+		var failure struct {
+			Error string `json:"error"`
+		}
+		if json.NewDecoder(io.LimitReader(response.Body, 1024)).Decode(&failure) == nil && failure.Error == "unknown_pod" {
+			return errdefs.NotFoundf("host has no record of the pod for operation %s", operation)
+		}
+	}
+	if response.StatusCode == http.StatusConflict {
+		var failure struct {
+			Error string `json:"error"`
+		}
+		if json.NewDecoder(io.LimitReader(response.Body, 1024)).Decode(&failure) == nil && failure.Error == "stale_epoch" {
+			return &staleFenceError{operation: operation}
+		}
+	}
 	if response.StatusCode >= 500 {
 		return fmt.Errorf("host temporarily unavailable: operation %s returned %d", operation, response.StatusCode)
 	}
@@ -207,7 +243,15 @@ func (p *provider) GetPodStatus(ctx context.Context, namespace, name string) (*v
 			Birth string `json:"birth"`
 		} `json:"epoch"`
 	}
-	if err = p.call(ctx, "status", string(pod.UID), nil, &result); err != nil {
+	err = p.call(ctx, "status", string(pod.UID), nil, &result)
+	if errdefs.IsNotFound(err) {
+		// The host answered but has lost the runtime, for example after a
+		// re-image. Failing the pod lets its ReplicaSet replace it, as kubelet
+		// does for an evicted pod.
+		return &v1.PodStatus{Phase: v1.PodFailed, Reason: "RuntimeLost", Message: "The GPU host has no record of this pod",
+			Conditions: []v1.PodCondition{{Type: v1.PodReady, Status: v1.ConditionFalse}, {Type: v1.ContainersReady, Status: v1.ConditionFalse}}}, nil
+	}
+	if err != nil {
 		return &v1.PodStatus{Phase: v1.PodRunning, Reason: "HostUnreachable",
 			Conditions: []v1.PodCondition{{Type: v1.PodReady, Status: v1.ConditionFalse}, {Type: v1.ContainersReady, Status: v1.ConditionFalse}}}, nil
 	}
@@ -293,7 +337,9 @@ func (p *provider) NotifyPods(ctx context.Context, callback func(*v1.Pod)) {
 	}()
 }
 func (p *provider) Ping(ctx context.Context) error {
-	var result hostVersion
+	var result struct {
+		InstanceID string `json:"instance_id"`
+	}
 	if err := p.call(ctx, "ping", "", nil, &result); err != nil {
 		return err
 	}
@@ -323,22 +369,17 @@ func (p *provider) NotifyNodeStatus(ctx context.Context, callback func(*v1.Node)
 	}()
 }
 
-func runHost(ctx context.Context, client kubernetes.Interface, namespace string, h host, epoch int64, term string) error {
+func runHost(ctx context.Context, client kubernetes.Interface, namespace string, h host, fence *hostFence) error {
 	name := "gpu-" + h.InstanceID
-	if h.GPUCount == 0 {
-		h.GPUCount = 1
-	}
-	if h.CPU == 0 {
-		h.CPU = 16
-	}
-	if h.MemoryGiB == 0 {
-		h.MemoryGiB = 64
-	}
-	if h.GPUProduct == "" {
-		h.GPUProduct = "RTX-PRO-6000"
-	}
 	resources := v1.ResourceList{v1.ResourceCPU: *resource.NewQuantity(h.CPU, resource.DecimalSI), v1.ResourceMemory: resource.MustParse(fmt.Sprintf("%dGi", h.MemoryGiB)), v1.ResourcePods: resource.MustParse("16"), "nvidia.com/gpu": *resource.NewQuantity(h.GPUCount, resource.DecimalSI)}
-	spec := &v1.Node{ObjectMeta: metav1.ObjectMeta{Name: name, Labels: map[string]string{"type": "virtual-kubelet", "kubernetes.io/hostname": name, "gradiated.com/provider": "runpod", "gradiated.com/instance-id": h.InstanceID, "nvidia.com/gpu.product": h.GPUProduct, "nvidia.com/gpu.count": fmt.Sprint(h.GPUCount)}},
+	labels := map[string]string{"type": "virtual-kubelet", "kubernetes.io/hostname": name, "gradiated.com/provider": "runpod", "gradiated.com/instance-id": h.InstanceID, "nvidia.com/gpu.product": h.GPUProduct, "nvidia.com/gpu.count": fmt.Sprint(h.GPUCount)}
+	if h.FaultDomain != "" {
+		labels[faultDomainLabel] = h.FaultDomain
+	}
+	if err := labelNode(ctx, client, h); err != nil {
+		return err
+	}
+	spec := &v1.Node{ObjectMeta: metav1.ObjectMeta{Name: name, Labels: labels},
 		Spec:   v1.NodeSpec{Taints: []v1.Taint{{Key: "gradiated.com/gpu", Value: "true", Effect: v1.TaintEffectNoSchedule}}},
 		Status: v1.NodeStatus{Capacity: resources, Allocatable: resources.DeepCopy(), NodeInfo: v1.NodeSystemInfo{OperatingSystem: "linux", Architecture: "amd64", KubeletVersion: "v1.33.5"}, Conditions: []v1.NodeCondition{{Type: v1.NodeReady, Status: v1.ConditionTrue, LastHeartbeatTime: metav1.Now(), LastTransitionTime: metav1.Now()}}}}
 	factory := informers.NewSharedInformerFactoryWithOptions(client, time.Minute, informers.WithNamespace(namespace), informers.WithTweakListOptions(func(o *metav1.ListOptions) {
@@ -346,7 +387,7 @@ func runHost(ctx context.Context, client kubernetes.Interface, namespace string,
 	}))
 	resourcesFactory := informers.NewSharedInformerFactoryWithOptions(client, time.Minute, informers.WithNamespace(namespace))
 	pods := factory.Core().V1().Pods()
-	p := &provider{host: h, epoch: epoch, term: term, source: pods.Lister(), client: client.CoreV1(), pods: map[string]*v1.Pod{}, node: spec}
+	p := &provider{host: h, fence: fence, source: pods.Lister(), client: client.CoreV1(), pods: map[string]*v1.Pod{}, node: spec}
 	if err := p.Ping(ctx); err != nil {
 		return err
 	}
@@ -451,22 +492,8 @@ func main() {
 	if err = json.Unmarshal(data, &config); err != nil {
 		log.Fatal(err)
 	}
-	if config.Namespace != "gpu-inference" || len(config.Hosts) == 0 {
-		log.Fatal("invalid GPU namespace or empty host list")
-	}
-	if err := config.HostBundle.validate(); err != nil {
-		log.Fatal(err)
-	}
-	rollout := newHostRollout(config.HostBundle, config.Hosts)
-	for index := range config.Hosts {
-		config.Hosts[index].Runtimes = config.Runtimes
-		h := config.Hosts[index]
-		if h.GPUCount < 0 || h.GPUCount > 8 || h.CPU < 0 || h.CPU > 512 || h.MemoryGiB < 0 || h.MemoryGiB > 4096 {
-			log.Fatal("invalid host resource capacity")
-		}
-		if h.Endpoint != "http://gpu-"+h.InstanceID+".tailscale-inference.svc.cluster.local:8888/_kubelet" {
-			log.Fatal("host endpoint must use its private inference Service")
-		}
+	if config.Namespace != "gpu-inference" {
+		log.Fatal("invalid GPU namespace")
 	}
 	var clientConfig *rest.Config
 	if os.Getenv("KUBECONFIG") != "" {
@@ -481,10 +508,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	objects, err := dynamic.NewForConfig(clientConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 	go func() {
-		http.HandleFunc("/metrics", rollout.metrics)
 		http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) })
 		server := &http.Server{Addr: ":9090", ReadHeaderTimeout: 5 * time.Second}
 		if err := server.ListenAndServe(); err != nil {
@@ -507,18 +537,30 @@ func main() {
 					return
 				}
 				term := string(uuid.NewUUID())
+				// An unreadable fleet gives up the lease so another replica can
+				// try; an empty one runs no hosts until GpuHosts appear.
+				hosts, err := listHosts(leader, objects)
+				if err != nil {
+					log.Printf("GpuHost objects are unavailable, giving up leadership: %v", err)
+					cancel()
+					return
+				}
+				for index := range hosts {
+					hosts[index].Runtimes = config.Runtimes
+				}
+				registry := &hostRegistry{}
 				var group sync.WaitGroup
-				group.Add(1)
-				go func() { defer group.Done(); rollout.run(leader) }()
-				for _, h := range config.Hosts {
+				group.Add(2)
+				go func() { defer group.Done(); configureHosts(leader, objects, registry, 10*time.Second) }()
+				go func() { defer group.Done(); watchHosts(leader, objects, hosts, 30*time.Second, cancel) }()
+				for _, h := range hosts {
 					group.Add(1)
 					go func(h host) {
 						defer group.Done()
-						var epoch int64
+						var fence *hostFence
 						for leader.Err() == nil {
-							if epoch == 0 {
-								var claimErr error
-								epoch, claimErr = claimHost(leader, client, config.Namespace, identity, lease, term, h)
+							if fence == nil {
+								epoch, claimErr := claimHost(leader, client, config.Namespace, identity, lease, term, h)
 								if claimErr != nil {
 									if errors.Is(claimErr, errLeadershipChanged) {
 										cancel()
@@ -532,10 +574,11 @@ func main() {
 										continue
 									}
 								}
+								fence = leaderFence(client, config.Namespace, identity, lease, term, h, epoch, cancel)
 							}
-							rollout.register(&provider{host: h, epoch: epoch, term: term, client: client.CoreV1()})
+							registry.register(&provider{host: h, fence: fence, client: client.CoreV1()})
 							hostContext, stopHost := context.WithCancel(leader)
-							err := runHost(hostContext, client, config.Namespace, h, epoch, term)
+							err := runHost(hostContext, client, config.Namespace, h, fence)
 							stopHost()
 							if err != nil {
 								log.Printf("host %s controller failed: %v", h.InstanceID, err)

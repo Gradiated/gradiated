@@ -54,6 +54,14 @@ export {
   type InstanceService,
 } from "./instances/service.js";
 export {
+  fleetHostSchema,
+  RETIRE_GRACE_MS,
+  syncFleetInstances,
+  type FleetHost,
+  type FleetSyncOptions,
+  type FleetSyncResult,
+} from "./instances/fleet-sync.js";
+export {
   createCatalogBillingService,
   type CatalogBillingService,
 } from "./catalog-billing/service.js";
@@ -71,6 +79,23 @@ export {
   type BillingAccountRecord,
   type BillingService,
 } from "./billing/service.js";
+export {
+  createTopUpChargeStore,
+  type AutoTopUpClaim,
+  type TopUpChargeRecord,
+  type TopUpChargeStore,
+  type TopUpRequest,
+  type LedgerCredit,
+  type OperationalBalanceReader,
+  type TopUpStatus,
+} from "./billing/top-up-charges.js";
+export {
+  createStripeTopUpCharger,
+  createStripeClient,
+  settleTopUpCharge,
+  type TopUpChargeOutcome,
+  type TopUpCharger,
+} from "./billing/stripe-top-up-charges.js";
 export {
   BalanceSourceConflictError,
   type BalanceTransactionRecord,
@@ -109,6 +134,7 @@ export {
   createWorkspaceApiKeyService,
   type ApiKeyRecord,
   type CreatedApiKey,
+  type PlaygroundCredentialRecord,
   type WorkspaceApiKeyService,
   type WorkspaceRecord,
 } from "./workspaces/service.js";

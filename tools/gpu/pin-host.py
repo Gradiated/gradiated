@@ -14,16 +14,17 @@ def pin(release):
     digest, base_id = release['sha256'], release['baseId']
     if not re.fullmatch('[0-9a-f]{64}', digest) or not re.fullmatch('[A-Za-z0-9._-]+', base_id):
         raise ValueError('Invalid verified host release')
-    return {'sha256': digest, 'base_id': base_id}
+    return {'sha256': digest, 'baseId': base_id}
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Pin a published host release and render controller configuration.')
+    parser = argparse.ArgumentParser(description='Pin a published host bundle and render the fleet configuration.')
     parser.add_argument('release', type=Path, help='host-runtime-release/release.json from Model deployment')
     args = parser.parse_args()
-    value = pin(json.loads(args.release.read_text()))
-    path = ROOT / 'infra/environments/prod/us-east-1/kubernetes/gpu-inference/host.json'
-    path.write_text(json.dumps(value, indent=2) + '\n')
+    path = ROOT / 'infra/environments/prod/us-east-1/kubernetes/gpu-inference/pins.json'
+    pins = json.loads(path.read_text())
+    pins['hostBundle'] = pin(json.loads(args.release.read_text()))
+    path.write_text(json.dumps(pins, indent=2) + '\n')
     subprocess.run(['python3', str(ROOT / 'tools/gpu/render-config.py')], check=True)
 
 

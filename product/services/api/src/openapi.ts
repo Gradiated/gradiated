@@ -1,7 +1,9 @@
 import {
+  clientOpenApiDocument,
   createApp,
   publicOpenApiDocument,
   type AppDependencies,
+  type OpenApiDocument,
 } from "./app.js";
 import { ApiMetrics } from "./metrics.js";
 
@@ -23,18 +25,26 @@ export const unservedDependencies = (): AppDependencies => ({
   services: {
     waitlist: { join: unserved("waitlist.join") },
     billingPayments: {
-      createTopUpCheckout: unserved("billingPayments.createTopUpCheckout"),
+      createTopUp: unserved("billingPayments.createTopUp"),
+      createPaymentMethodSession: unserved(
+        "billingPayments.createPaymentMethodSession",
+      ),
+      createCardSetup: unserved("billingPayments.createCardSetup"),
+      saveCard: unserved("billingPayments.saveCard"),
+      describeCard: unserved("billingPayments.describeCard"),
       handleWebhook: unserved("billingPayments.handleWebhook"),
     },
     catalogBilling: {
       listModels: unserved("catalogBilling.listModels"),
       getBillingAccount: unserved("catalogBilling.getBillingAccount"),
+      topUpStatus: unserved("catalogBilling.topUpStatus"),
       getManagedBillingAccount: unserved(
         "catalogBilling.getManagedBillingAccount",
       ),
       listBalanceTransactions: unserved(
         "catalogBilling.listBalanceTransactions",
       ),
+      updateAutoTopUp: unserved("catalogBilling.updateAutoTopUp"),
     },
     members: {
       listMembers: unserved("members.listMembers"),
@@ -81,14 +91,25 @@ export const unservedDependencies = (): AppDependencies => ({
       createWorkspace: unserved("workspaces.createWorkspace"),
       listApiKeys: unserved("workspaces.listApiKeys"),
       createApiKey: unserved("workspaces.createApiKey"),
+      createPlaygroundCredential: unserved(
+        "workspaces.createPlaygroundCredential",
+      ),
       revokeApiKey: unserved("workspaces.revokeApiKey"),
     },
   },
 });
 
-type OpenApiDocument = ReturnType<
-  ReturnType<typeof createApp>["getOpenAPI31Document"]
->;
+export const createOpenApiDocuments = (): {
+  public: OpenApiDocument;
+  client: OpenApiDocument;
+} => {
+  const app = createApp(unservedDependencies());
+
+  return {
+    public: publicOpenApiDocument(app),
+    client: clientOpenApiDocument(app),
+  };
+};
 
 export const createOpenApiDocument = (): OpenApiDocument =>
-  publicOpenApiDocument(createApp(unservedDependencies()));
+  createOpenApiDocuments().public;

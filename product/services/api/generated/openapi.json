@@ -423,6 +423,12 @@
               "$ref": "#/components/schemas/ModelParameterDescriptor"
             }
           },
+          "default_parameters": {
+            "$ref": "#/components/schemas/ModelDefaultParameters"
+          },
+          "reasoning": {
+            "$ref": "#/components/schemas/ModelReasoning"
+          },
           "deprecation_date": {
             "type": [
               "string",
@@ -672,6 +678,79 @@
             "additionalProperties": false
           }
         ]
+      },
+      "ModelDefaultParameters": {
+        "type": "object",
+        "properties": {
+          "temperature": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "top_p": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "top_k": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "frequency_penalty": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "presence_penalty": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "repetition_penalty": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "description": "Sampling values the runtime applies when a request omits them; null or absent means not published."
+      },
+      "ModelReasoning": {
+        "type": "object",
+        "properties": {
+          "supported_efforts": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 32
+            },
+            "minItems": 1,
+            "description": "reasoning_effort values the model accepts, lowest first."
+          },
+          "default_effort": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 32,
+            "description": "Effort applied when a request omits reasoning_effort."
+          }
+        },
+        "required": [
+          "supported_efforts",
+          "default_effort"
+        ],
+        "additionalProperties": false,
+        "description": "Reasoning effort levels; absent for models without them."
       },
       "ServiceTierPricingPolicy": {
         "type": "object",
@@ -1070,6 +1149,12 @@
               "$ref": "#/components/schemas/ModelParameterDescriptor"
             }
           },
+          "default_parameters": {
+            "$ref": "#/components/schemas/ModelDefaultParameters"
+          },
+          "reasoning": {
+            "$ref": "#/components/schemas/ModelReasoning"
+          },
           "deprecation_date": {
             "type": [
               "string",
@@ -1267,6 +1352,20 @@
             "type": "string",
             "pattern": "^-?\\d+$"
           },
+          "payment_method": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "auto_top_up": {
+            "$ref": "#/components/schemas/AutoTopUp"
+          },
+          "top_up_pending": {
+            "type": "boolean",
+            "description": "Whether a saved-card top-up is still waiting for Stripe; clients can poll until it settles."
+          },
+          "billing_portal": {
+            "type": "boolean",
+            "description": "Whether the Stripe billing portal has invoices and billing details to show."
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -1282,8 +1381,175 @@
           "organization_id",
           "mode",
           "balance",
+          "payment_method",
+          "auto_top_up",
+          "top_up_pending",
+          "billing_portal",
           "created_at",
           "updated_at"
+        ],
+        "additionalProperties": false
+      },
+      "PaymentMethod": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "brand": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The card brand, such as visa; null when Stripe could not be reached."
+          },
+          "last4": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The last four digits of the card; null when Stripe could not be reached."
+          },
+          "exp_month": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 12
+          },
+          "exp_year": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "brand",
+          "last4",
+          "exp_month",
+          "exp_year"
+        ],
+        "additionalProperties": false,
+        "description": "The saved card used for top-ups and auto top-up."
+      },
+      "AutoTopUp": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "threshold": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^-?\\d+$"
+          },
+          "amount": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^-?\\d+$"
+          },
+          "failure": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stripe's reason when the latest auto top-up charge failed, which turned auto top-up off."
+          }
+        },
+        "required": [
+          "enabled",
+          "threshold",
+          "amount",
+          "failure"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateBillingAccount": {
+        "type": "object",
+        "properties": {
+          "auto_top_up": {
+            "$ref": "#/components/schemas/UpdateAutoTopUp"
+          }
+        },
+        "required": [
+          "auto_top_up"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateAutoTopUp": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Charge the saved card whenever the balance falls below the threshold."
+          },
+          "threshold": {
+            "type": "string",
+            "pattern": "^-?\\d+$",
+            "description": "Top up when the balance falls below this integer nano-USD amount.",
+            "example": "10000000000"
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^-?\\d+$",
+            "description": "The integer nano-USD amount each top-up adds.",
+            "example": "50000000000"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PaymentMethodSession": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The Stripe billing portal, for invoices and billing details."
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "CardSetup": {
+        "type": "object",
+        "properties": {
+          "client_secret": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Client secret of a card-only Stripe SetupIntent."
+          },
+          "publishable_key": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Stripe publishable key that loads Stripe.js."
+          }
+        },
+        "required": [
+          "client_secret",
+          "publishable_key"
+        ],
+        "additionalProperties": false
+      },
+      "SaveCard": {
+        "type": "object",
+        "properties": {
+          "setup_intent_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "The SetupIntent that Stripe.js confirmed."
+          }
+        },
+        "required": [
+          "setup_intent_id"
         ],
         "additionalProperties": false
       },
@@ -1350,8 +1616,16 @@
               "stripe_dispute",
               "generation_settlement_batch",
               "openrouter_payment",
-              "operator"
+              "operator",
+              "stripe_invoice"
             ]
+          },
+          "stripe_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The Stripe Checkout Session, invoice, refund or dispute behind the transaction."
           },
           "period_start": {
             "type": [
@@ -1389,6 +1663,7 @@
           "amount",
           "balance_after",
           "source_type",
+          "stripe_id",
           "period_start",
           "period_end",
           "generation_count",
@@ -1396,20 +1671,33 @@
         ],
         "additionalProperties": false
       },
-      "TopUpCheckout": {
+      "TopUp": {
         "type": "object",
         "properties": {
-          "checkout_url": {
+          "status": {
             "type": "string",
+            "enum": [
+              "paid",
+              "processing",
+              "checkout"
+            ],
+            "description": "paid when the card was charged, processing while Stripe confirms it, checkout when payment continues at checkout_url."
+          },
+          "checkout_url": {
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uri"
           }
         },
         "required": [
+          "status",
           "checkout_url"
         ],
         "additionalProperties": false
       },
-      "CreateTopUpCheckout": {
+      "CreateTopUp": {
         "type": "object",
         "properties": {
           "amount": {
@@ -1417,6 +1705,20 @@
             "pattern": "^-?\\d+$",
             "description": "The top-up amount in integer nano-USD.",
             "example": "50000000000"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "card",
+              "checkout"
+            ],
+            "description": "card charges the saved card; checkout opens Stripe Checkout. Defaults to card when one is saved."
+          },
+          "idempotency_key": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774",
+            "description": "A key for one top-up attempt; retrying it returns the first result instead of charging again."
           }
         },
         "required": [
@@ -2145,6 +2447,24 @@
           "name"
         ],
         "additionalProperties": false
+      },
+      "PlaygroundCredential": {
+        "type": "object",
+        "properties": {
+          "secret": {
+            "type": "string",
+            "pattern": "^grad_[A-Za-z0-9_-]{43}$"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "secret",
+          "expires_at"
+        ]
       },
       "TraceGenerationList": {
         "type": "object",
@@ -5512,70 +5832,11 @@
     "parameters": {}
   },
   "paths": {
-    "/api/v1/models": {
-      "get": {
-        "operationId": "listModels",
-        "tags": [
-          "Models"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ],
-              "description": "Return the supported external pricing catalog instead of hosted models. This feed retains the legacy model-property shape without type. External prices are estimates and cached in API memory for five minutes."
-            },
-            "required": false,
-            "description": "Return the supported external pricing catalog instead of hosted models. This feed retains the legacy model-property shape without type. External prices are estimates and cached in API memory for five minutes.",
-            "name": "external",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The public catalog of supported exact models and prices.",
-            "headers": {
-              "Cache-Control": {
-                "description": "Caches hosted models for 15 seconds with stale-while-revalidate, or external models for 60 seconds.",
-                "schema": {
-                  "type": "string"
-                }
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/components/schemas/ModelList"
-                    },
-                    {
-                      "$ref": "#/components/schemas/ExternalModelList"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "The requested model catalog is unavailable.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/organizations/{organization_id}/billing": {
       "get": {
         "operationId": "getBillingAccount",
+        "summary": "Get billing account",
+        "description": "Gets the organization's balance and auto top-up settings.",
         "tags": [
           "Billing"
         ],
@@ -5633,11 +5894,105 @@
             }
           }
         }
+      },
+      "patch": {
+        "operationId": "updateBillingAccount",
+        "summary": "Update billing account",
+        "description": "Changes the organization's auto top-up settings.",
+        "tags": [
+          "Billing"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "organization_id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBillingAccount"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The billing account with its new auto top-up settings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingAccount"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication is required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller cannot manage billing.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The billing account was not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The organization is not prepaid, or auto top-up was turned on without a saved card.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The auto top-up settings are invalid.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/organizations/{organization_id}/balance-transactions": {
       "get": {
         "operationId": "listBalanceTransactions",
+        "summary": "List balance transactions",
+        "description": "Lists changes to the organization's balance.",
         "tags": [
           "Billing"
         ],
@@ -5732,131 +6087,11 @@
         }
       }
     },
-    "/api/v1/organizations/{organization_id}/billing/top-ups": {
-      "post": {
-        "operationId": "createTopUpCheckout",
-        "tags": [
-          "Billing"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
-            },
-            "required": true,
-            "name": "organization_id",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateTopUpCheckout"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "A Stripe-hosted Checkout Session for this top-up.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TopUpCheckout"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication is required.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The caller cannot manage billing.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "The organization was not found.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "The organization does not use prepaid billing.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Stripe Checkout is unavailable.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/me": {
-      "get": {
-        "operationId": "getCurrentUser",
-        "tags": [
-          "Session"
-        ],
-        "responses": {
-          "200": {
-            "description": "The current user and their visible customer organizations.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CurrentUser"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No valid human session is present.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/organizations/{organization_id}": {
       "patch": {
         "operationId": "updateOrganization",
+        "summary": "Update organization",
+        "description": "Changes the organization's settings.",
         "tags": [
           "Organizations"
         ],
@@ -5949,6 +6184,8 @@
     "/api/v1/organizations": {
       "post": {
         "operationId": "createOrganization",
+        "summary": "Create organization",
+        "description": "Creates an organization.",
         "tags": [
           "Organizations"
         ],
@@ -6009,6 +6246,8 @@
     "/api/v1/organizations/{organization_id}/members": {
       "get": {
         "operationId": "listMembers",
+        "summary": "List members",
+        "description": "Lists the organization's members.",
         "tags": [
           "Members"
         ],
@@ -6081,6 +6320,8 @@
     "/api/v1/organizations/{organization_id}/members/{user_id}": {
       "patch": {
         "operationId": "updateMember",
+        "summary": "Update member",
+        "description": "Changes a member's role.",
         "tags": [
           "Members"
         ],
@@ -6171,6 +6412,8 @@
       },
       "delete": {
         "operationId": "removeMember",
+        "summary": "Remove member",
+        "description": "Removes a member from the organization.",
         "tags": [
           "Members"
         ],
@@ -6246,6 +6489,8 @@
     "/api/v1/organizations/{organization_id}/invitations": {
       "get": {
         "operationId": "listInvitations",
+        "summary": "List invitations",
+        "description": "Lists the organization's pending invitations.",
         "tags": [
           "Members"
         ],
@@ -6316,6 +6561,8 @@
       },
       "post": {
         "operationId": "createInvitations",
+        "summary": "Create invitations",
+        "description": "Invites people to the organization by email.",
         "tags": [
           "Members"
         ],
@@ -6418,6 +6665,8 @@
     "/api/v1/organizations/{organization_id}/invitations/{invitation_id}/resend": {
       "post": {
         "operationId": "resendInvitation",
+        "summary": "Resend invitation",
+        "description": "Resends an invitation email.",
         "tags": [
           "Members"
         ],
@@ -6510,6 +6759,8 @@
     "/api/v1/organizations/{organization_id}/invitations/{invitation_id}": {
       "delete": {
         "operationId": "revokeInvitation",
+        "summary": "Revoke invitation",
+        "description": "Revokes a pending invitation.",
         "tags": [
           "Members"
         ],
@@ -6582,130 +6833,11 @@
         }
       }
     },
-    "/api/v1/invitations/preview": {
-      "post": {
-        "operationId": "previewInvitation",
-        "tags": [
-          "Members"
-        ],
-        "description": "Describes an invitation link. The token is the credential.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/InvitationToken"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The invitation's state.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvitationPreview"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Invalid request.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/invitations/accept": {
-      "post": {
-        "operationId": "acceptInvitation",
-        "tags": [
-          "Members"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/InvitationToken"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The organization you joined.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CurrentOrganization"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication required.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The invitation is for a different email address.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "You are already a member.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Invalid request.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/workspaces/{workspace_id}/usage": {
       "get": {
         "operationId": "getUsageSummary",
+        "summary": "Get usage summary",
+        "description": "Gets the workspace's inference usage and spend.",
         "tags": [
           "Usage"
         ],
@@ -6900,6 +7032,8 @@
     "/api/v1/workspaces/{workspace_id}": {
       "patch": {
         "operationId": "updateWorkspace",
+        "summary": "Update workspace",
+        "description": "Changes the workspace's settings.",
         "tags": [
           "Workspaces"
         ],
@@ -6990,6 +7124,8 @@
       },
       "delete": {
         "operationId": "deleteWorkspace",
+        "summary": "Archive workspace",
+        "description": "Archives a workspace.",
         "tags": [
           "Workspaces"
         ],
@@ -7065,6 +7201,8 @@
     "/api/v1/organizations/{organization_id}/workspaces": {
       "get": {
         "operationId": "listWorkspaces",
+        "summary": "List workspaces",
+        "description": "Lists the organization's workspaces.",
         "tags": [
           "Workspaces"
         ],
@@ -7117,6 +7255,8 @@
       },
       "post": {
         "operationId": "createWorkspace",
+        "summary": "Create workspace",
+        "description": "Creates a workspace.",
         "tags": [
           "Workspaces"
         ],
@@ -7209,6 +7349,8 @@
     "/api/v1/workspaces/{workspace_id}/api-keys": {
       "get": {
         "operationId": "listApiKeys",
+        "summary": "List API keys",
+        "description": "Lists the workspace's API keys.",
         "tags": [
           "API keys"
         ],
@@ -7279,6 +7421,8 @@
       },
       "post": {
         "operationId": "createApiKey",
+        "summary": "Create API key",
+        "description": "Creates an API key for inference.",
         "tags": [
           "API keys"
         ],
@@ -7376,9 +7520,91 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspace_id}/playground-credentials": {
+      "post": {
+        "operationId": "createPlaygroundCredential",
+        "tags": [
+          "API keys"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "A one-hour inference key for the console playground. Each call rotates the member's single playground key, which is not listed with the workspace keys.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Prevents storage of the one-time secret.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaygroundCredential"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication is required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The workspace cannot be used.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The workspace was not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Serving state is unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspace_id}/api-keys/{api_key_id}": {
       "delete": {
         "operationId": "revokeApiKey",
+        "summary": "Revoke API key",
+        "description": "Revokes an API key.",
         "tags": [
           "API keys"
         ],
@@ -7454,6 +7680,8 @@
     "/api/v1/workspaces/{workspace_id}/generations": {
       "get": {
         "operationId": "listGenerations",
+        "summary": "List generations",
+        "description": "Lists the workspace's inference requests.",
         "tags": [
           "Generations"
         ],
@@ -7787,6 +8015,8 @@
     "/api/v1/workspaces/{workspace_id}/generations/{generation_id}": {
       "get": {
         "operationId": "getGeneration",
+        "summary": "Get generation",
+        "description": "Gets one inference request.",
         "tags": [
           "Generations"
         ],
@@ -7879,6 +8109,8 @@
     "/api/v1/workspaces/{workspace_id}/training-runs": {
       "post": {
         "operationId": "startTrainingRun",
+        "summary": "Start training run",
+        "description": "Starts training a task.",
         "tags": [
           "Training"
         ],
@@ -7979,6 +8211,8 @@
       },
       "get": {
         "operationId": "listTrainingRuns",
+        "summary": "List training runs",
+        "description": "Lists the workspace's training runs.",
         "tags": [
           "Training"
         ],
@@ -8073,6 +8307,8 @@
     "/api/v1/workspaces/{workspace_id}/training-runs/{run_id}": {
       "delete": {
         "operationId": "cancelTrainingRun",
+        "summary": "Cancel training run",
+        "description": "Cancels a training run.",
         "tags": [
           "Training"
         ],
@@ -8156,6 +8392,8 @@
       },
       "get": {
         "operationId": "getTrainingRun",
+        "summary": "Get training run",
+        "description": "Gets a training run.",
         "tags": [
           "Training"
         ],
@@ -8248,6 +8486,8 @@
     "/api/v1/workspaces/{workspace_id}/tasks": {
       "get": {
         "operationId": "listTasks",
+        "summary": "List tasks",
+        "description": "Lists the workspace's tasks.",
         "tags": [
           "Training"
         ],
@@ -8330,6 +8570,8 @@
     "/api/v1/workspaces/{workspace_id}/tasks/{task}": {
       "get": {
         "operationId": "getTask",
+        "summary": "Get task",
+        "description": "Gets a task.",
         "tags": [
           "Training"
         ],
@@ -8420,6 +8662,8 @@
       },
       "patch": {
         "operationId": "updateTask",
+        "summary": "Update task",
+        "description": "Changes a task's settings.",
         "tags": [
           "Training"
         ],
@@ -8521,6 +8765,8 @@
     "/api/v1/workspaces/{workspace_id}/training-runs/{run_id}/events": {
       "get": {
         "operationId": "listTrainingRunEvents",
+        "summary": "List training run events",
+        "description": "Lists a training run's progress events.",
         "tags": [
           "Training"
         ],
@@ -8636,6 +8882,8 @@
     "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions": {
       "get": {
         "operationId": "listTaskVersions",
+        "summary": "List task versions",
+        "description": "Lists a task's trained versions.",
         "tags": [
           "Training"
         ],
@@ -8728,6 +8976,8 @@
     "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/evaluation": {
       "get": {
         "operationId": "getEvaluationResults",
+        "summary": "Get evaluation results",
+        "description": "Gets a task version's evaluation results.",
         "tags": [
           "Training"
         ],
@@ -8830,6 +9080,8 @@
     "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/adapter": {
       "get": {
         "operationId": "getAdapterDownload",
+        "summary": "Download adapter",
+        "description": "Gets a download link for a task version's adapter.",
         "tags": [
           "Training"
         ],
@@ -8932,6 +9184,8 @@
     "/api/v1/workspaces/{workspace_id}/tasks/{task}/production": {
       "put": {
         "operationId": "promoteTaskVersion",
+        "summary": "Promote task version",
+        "description": "Sets which task version serves requests.",
         "tags": [
           "Training"
         ],
@@ -9036,8 +9290,8 @@
         "tags": [
           "Inference"
         ],
-        "summary": "Answer named questions with native SystemOne inference",
-        "description": "Served by the Rust gateway at /v1/systemone (also /systemone). Requires an exact hosted model and a workspace API key. Supports choice, noul and score questions over text or structured state. No streaming or generated output tokens; only the default service tier is implemented.",
+        "summary": "SystemOne",
+        "description": "Answers choice, noul and score questions about text or structured state. Also served at /systemone.",
         "security": [
           {
             "InferenceBearer": []
@@ -9097,9 +9351,9 @@
         "tags": [
           "Inference"
         ],
-        "summary": "Create a chat completion",
+        "summary": "Chat Completions",
         "externalDocs": {
-          "description": "Upstream protocol reference. Gradiated supports the fields and model capabilities documented here, not every upstream feature.",
+          "description": "Upstream API reference",
           "url": "https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create"
         },
         "security": [
@@ -9110,7 +9364,7 @@
             "InferenceApiKey": []
           }
         ],
-        "description": "OpenAI Chat Completions compatible inference. max_tokens and max_completion_tokens are mutually exclusive. Requires an exact hosted model and a workspace API key. Supported parameters depend on the model catalog. Also available at /chat/completions.",
+        "description": "OpenAI-compatible chat completions. Also served at /chat/completions.",
         "requestBody": {
           "required": true,
           "content": {
@@ -9168,9 +9422,9 @@
         "tags": [
           "Inference"
         ],
-        "summary": "Create a message",
+        "summary": "Messages",
         "externalDocs": {
-          "description": "Upstream protocol reference. Gradiated supports the fields and model capabilities documented here, not every upstream feature.",
+          "description": "Upstream API reference",
           "url": "https://platform.claude.com/docs/en/api/messages/create"
         },
         "security": [
@@ -9181,7 +9435,7 @@
             "InferenceApiKey": []
           }
         ],
-        "description": "Anthropic Messages compatible inference, translated by the gateway. Requires an exact hosted model and a workspace API key. Supported parameters depend on the model catalog. Also available at /messages.",
+        "description": "Anthropic-compatible messages. Also served at /messages.",
         "requestBody": {
           "required": true,
           "content": {
@@ -9239,9 +9493,9 @@
         "tags": [
           "Inference"
         ],
-        "summary": "Create a response",
+        "summary": "Responses",
         "externalDocs": {
-          "description": "Upstream protocol reference. Gradiated supports the fields and model capabilities documented here, not every upstream feature.",
+          "description": "Upstream API reference",
           "url": "https://developers.openai.com/api/reference/resources/responses/methods/create"
         },
         "security": [
@@ -9252,7 +9506,7 @@
             "InferenceApiKey": []
           }
         ],
-        "description": "OpenAI Responses compatible inference. Stateless requests only: store=true, background=true, previous_response_id, conversation and prompt references are unsupported. Requires an exact hosted model and a workspace API key. Supported parameters depend on the model catalog. Also available at /responses.",
+        "description": "OpenAI-compatible responses. Only stateless requests are supported. Also served at /responses.",
         "requestBody": {
           "required": true,
           "content": {
@@ -9310,9 +9564,9 @@
         "tags": [
           "Inference"
         ],
-        "summary": "Count message input tokens",
+        "summary": "Count tokens",
         "externalDocs": {
-          "description": "Upstream protocol reference. Gradiated supports the fields and model capabilities documented here, not every upstream feature.",
+          "description": "Upstream API reference",
           "url": "https://platform.claude.com/docs/en/api/messages/count_tokens"
         },
         "security": [
@@ -9323,7 +9577,7 @@
             "InferenceApiKey": []
           }
         ],
-        "description": "Count tokens using the selected model's tokenizer without generating a completion. Requires an exact hosted model and a workspace API key. Supported parameters depend on the model catalog. Also available at /messages/count_tokens.",
+        "description": "Counts the input tokens of a Messages request. Also served at /messages/count_tokens.",
         "requestBody": {
           "required": true,
           "content": {
@@ -9375,7 +9629,7 @@
         "tags": [
           "Models"
         ],
-        "summary": "List inference models",
+        "summary": "List models",
         "security": [
           {
             "InferenceBearer": []
@@ -9384,43 +9638,7 @@
             "InferenceApiKey": []
           }
         ],
-        "description": "Authenticated gateway catalog with exact model IDs, readiness, capabilities and pricing. /models and /v1/models are aliases. This differs from the management catalog at /api/v1/models.",
-        "responses": {
-          "200": {
-            "description": "Inference model catalog.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InferenceModelList"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid workspace API key."
-          },
-          "503": {
-            "description": "Runtime, deployment, or gateway dependency unavailable."
-          }
-        }
-      }
-    },
-    "/models": {
-      "get": {
-        "operationId": "listInferenceModelsAlias",
-        "tags": [
-          "Models"
-        ],
-        "summary": "List inference models",
-        "security": [
-          {
-            "InferenceBearer": []
-          },
-          {
-            "InferenceApiKey": []
-          }
-        ],
-        "description": "Authenticated gateway catalog with exact model IDs, readiness, capabilities and pricing. /models and /v1/models are aliases. This differs from the management catalog at /api/v1/models.",
+        "description": "Lists the models you can call, with prices and capabilities. Also served at /models.",
         "responses": {
           "200": {
             "description": "Inference model catalog.",

@@ -104,7 +104,9 @@ impl Protocol {
                         GatewayError::invalid_request(None)
                     })?;
 
-                serde_json::to_vec(&output.body).map_err(|_| GatewayError::invalid_request(None))
+                let mut body = output.body;
+                without_reasoning_details(&mut body);
+                serde_json::to_vec(&body).map_err(|_| GatewayError::invalid_request(None))
             }
         }
     }
@@ -327,6 +329,39 @@ fn without_reasoning(response: &mut Value) {
             }
         }
     }
+}
+
+/// The translator carries another provider's opaque reasoning state, such as
+/// OpenAI's encrypted reasoning, into Chat messages. Our runtimes cannot use it,
+/// and it is not ours to forward.
+fn without_reasoning_details(body: &mut Value) {
+    let Some(messages) = body.get_mut("messages").and_then(Value::as_array_mut) else {
+        return;
+    };
+
+    for message in messages.iter_mut() {
+        if let Some(fields) = message.as_object_mut() {
+            fields.remove("reasoning_details");
+        }
+    }
+
+    // A turn that held only that state would otherwise reach the runtime as an
+    // empty, completed assistant turn.
+    messages.retain(|message| !is_empty_assistant_turn(message));
+}
+
+fn is_empty_assistant_turn(message: &Value) -> bool {
+    let blank = |field: &str| match message.get(field) {
+        None | Some(Value::Null) => true,
+        Some(Value::String(text)) => text.is_empty(),
+        Some(Value::Array(items)) => items.is_empty(),
+        Some(_) => false,
+    };
+
+    message["role"] == "assistant"
+        && ["content", "tool_calls", "reasoning", "reasoning_content"]
+            .into_iter()
+            .all(blank)
 }
 
 /// Anthropic rejects empty text blocks when a client sends the turn back.
@@ -610,6 +645,49 @@ mod tests {
         assert_eq!(translated["messages"][1]["content"], "hello");
         assert_eq!(translated["stream"], true);
         assert_eq!(translated["service_tier"], "fast");
+    }
+
+    #[test]
+    fn responses_requests_drop_another_providers_encrypted_reasoning() {
+        let body = json!({
+            "model": "model-a",
+            "input": [
+                {"role": "user", "content": "hello"},
+                {"type": "reasoning", "id": "rs_1", "summary": [], "encrypted_content": "gAAAA-secret"},
+                {"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": "hi"}]},
+                {"role": "user", "content": "again"}
+            ]
+        });
+        let translated = serde_json::from_slice::<Value>(
+            &Protocol::OpenAiResponses.translate_request(&body).unwrap(),
+        )
+        .unwrap();
+        assert!(!translated.to_string().contains("gAAAA-secret"));
+        assert_eq!(translated["messages"][1]["role"], "assistant");
+        assert_eq!(translated["messages"][1]["content"], "hi");
+    }
+
+    #[test]
+    fn responses_requests_drop_turns_that_held_only_encrypted_reasoning() {
+        let body = json!({
+            "model": "model-a",
+            "input": [
+                {"role": "user", "content": "hello"},
+                {"type": "reasoning", "id": "rs_1", "summary": [], "encrypted_content": "gAAAA-secret"},
+                {"role": "user", "content": "again"}
+            ]
+        });
+        let translated = serde_json::from_slice::<Value>(
+            &Protocol::OpenAiResponses.translate_request(&body).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            translated["messages"],
+            json!([
+                {"role": "user", "content": "hello"},
+                {"role": "user", "content": "again"}
+            ])
+        );
     }
 
     #[test]

@@ -66,5 +66,16 @@ export const createGlm53FlashModelConfiguration = () =>
           ],
         },
       ],
+      // generation_config.json and the model card (reasoning_effort defaults to max).
+      default_parameters: {
+        temperature: 1,
+        top_p: 0.95,
+        frequency_penalty: 0,
+        presence_penalty: 0,
+      },
+      reasoning: {
+        supported_efforts: ["low", "high", "max"],
+        default_effort: "max",
+      },
     },
   }) satisfies CatalogModelInput;

@@ -51,7 +51,7 @@ class WorkflowFilterTest(unittest.TestCase):
         for path in (
             "product/inference/gpu/host-agent.py",
             "product/inference/images/gpu-base/download-runtime.py",
-            "product/inference/tailscale/install-tailscale.py",
+            "product/inference/host/gradiated_host/enroll.py",
         ):
             with self.subTest(path=path):
                 self.assertTrue(triggers(workflow, path))

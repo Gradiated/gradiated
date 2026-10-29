@@ -87,7 +87,8 @@ test("settings rename the selected scopes, persist on reload, and preserve input
   });
   await organizationInput.fill("Research");
   await page.getByRole("button", { name: "Save changes" }).click();
-  await expect(page.getByRole("alert")).toContainText("Try again");
+  // Save errors are toasts.
+  await expect(page.getByText(/Try again/)).toBeVisible();
   await expect(organizationInput).toHaveValue("Research");
   expect(organization.name).toBe("Example organization");
   await page.getByRole("button", { name: "Save changes" }).click();

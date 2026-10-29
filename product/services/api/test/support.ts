@@ -69,6 +69,7 @@ export const apiKeyRecord: ApiKeyRecord = {
   name: "Production",
   expiresAt: null,
   revokedAt: null,
+  hidden: false,
   createdBy: user.id,
   createdAt: now,
   updatedAt: now,
@@ -100,6 +101,10 @@ export const billingAccountRecord: BillingAccountRecord = {
   mode: "prepaid",
   stripeCustomerId: null,
   balance: 100_000_000_000n,
+  stripePaymentMethodId: null,
+  autoTopUpEnabled: false,
+  autoTopUpThreshold: null,
+  autoTopUpAmount: null,
   createdAt: now,
   updatedAt: now,
 };
@@ -189,8 +194,18 @@ export const createTestApp = ({
     ...overrides,
     services: {
       waitlist: service("waitlist"),
-      billingPayments: service("billingPayments"),
-      catalogBilling: service("catalogBilling"),
+      // Billing responses read card details and the last failure; tests override them.
+      billingPayments: {
+        ...service("billingPayments"),
+        describeCard:
+          services.billingPayments?.describeCard ?? (async () => null),
+      },
+      catalogBilling: {
+        ...service("catalogBilling"),
+        topUpStatus:
+          services.catalogBilling?.topUpStatus ??
+          (async () => ({ pending: false, autoTopUpFailure: null })),
+      },
       members: service("members"),
       organizations: service("organizations"),
       usage: service("usage"),
@@ -269,4 +284,17 @@ export const validationProblem = {
   status: 422,
   code: "validation_failed",
   type: "validation",
+};
+
+// An in-memory stand-in for the Valkey cache of Stripe card details.
+export const cardDetailsCache = () => {
+  const values = new Map<string, string>();
+
+  return {
+    values,
+    get: async (key: string) => values.get(key) ?? null,
+    set: async (key: string, value: string) => {
+      values.set(key, value);
+    },
+  };
 };

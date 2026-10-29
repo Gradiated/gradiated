@@ -27,13 +27,13 @@ import { versionsForTask } from "@/store/fine-tuning-views";
 export const trainingKey = (workspace: string) =>
   ["training", workspace] as const;
 
-export const useTasks = () => {
+export const useTasks = ({ enabled = true }: { enabled?: boolean } = {}) => {
   const { workspaceId } = useProductContext();
 
   return useQuery({
     queryKey: [...trainingKey(workspaceId), "tasks"],
     queryFn: ({ signal }) => listTasks(workspaceId, signal),
-    enabled: Boolean(workspaceId),
+    enabled: enabled && Boolean(workspaceId),
     staleTime: 300_000,
     refetchInterval: 300_000,
     refetchOnWindowFocus: "always",

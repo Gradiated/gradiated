@@ -336,6 +336,86 @@ describe("workspaces and API keys", () => {
     });
   });
 
+  describe("createPlaygroundCredential", () => {
+    it("creates an hour-long key that members cannot see", async () => {
+      const admin = await membership("admin");
+      const memberId = await seedUser(testDatabase.database);
+      await testDatabase.database.insert(organizationMembers).values({
+        organizationId: admin.organizationId,
+        userId: memberId,
+        role: "member",
+        status: "active",
+      });
+      const before = Date.now();
+
+      const { apiKeyId, secret, expiresAt } =
+        await service.createPlaygroundCredential(memberId, admin.workspaceId);
+
+      expect(secret).toMatch(/^grad_/);
+      expect(await storedKey(apiKeyId)).toMatchObject({
+        name: "Playground",
+        hidden: true,
+        createdBy: memberId,
+        expiresAt,
+        digest: createHash("sha256").update(secret).digest(),
+      });
+      expect(expiresAt.getTime()).toBeGreaterThanOrEqual(
+        before + 60 * 60 * 1000,
+      );
+      expect(expiresAt.getTime()).toBeLessThanOrEqual(
+        Date.now() + 60 * 60 * 1000,
+      );
+      await expect(
+        service.listApiKeys(admin.userId, admin.workspaceId),
+      ).resolves.toEqual([]);
+    });
+
+    it("rotates one key per member and workspace", async () => {
+      const { userId, organizationId, workspaceId } = await membership("admin");
+      const otherWorkspace = await seedWorkspace(testDatabase.database, {
+        organizationId,
+      });
+
+      const first = await service.createPlaygroundCredential(
+        userId,
+        workspaceId,
+      );
+      const second = await service.createPlaygroundCredential(
+        userId,
+        workspaceId,
+      );
+      const elsewhere = await service.createPlaygroundCredential(
+        userId,
+        otherWorkspace,
+      );
+
+      expect(second.apiKeyId).toBe(first.apiKeyId);
+      expect(second.secret).not.toBe(first.secret);
+      expect(elsewhere.apiKeyId).not.toBe(first.apiKeyId);
+      expect(await storedKey(first.apiKeyId)).toMatchObject({
+        digest: createHash("sha256").update(second.secret).digest(),
+        expiresAt: second.expiresAt,
+      });
+      const hidden = await testDatabase.database
+        .select()
+        .from(apiKeys)
+        .where(eq(apiKeys.workspaceId, workspaceId));
+      expect(hidden).toHaveLength(1);
+    });
+
+    it("forbids credentials in an archived workspace", async () => {
+      const { userId, workspaceId } = await membership("admin");
+      await archive(workspaceId);
+
+      await expect(
+        service.createPlaygroundCredential(userId, workspaceId),
+      ).rejects.toMatchObject({
+        code: "forbidden",
+        message: expect.stringMatching(/^The playground is unavailable/),
+      });
+    });
+  });
+
   describe("revokeApiKey", () => {
     const createKey = async () => {
       const access = await membership("admin");

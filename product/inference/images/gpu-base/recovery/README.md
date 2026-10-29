@@ -6,7 +6,6 @@ available when no host bundle works. Normal host releases do not change them.
 The recovery `ping`, `fence`, `claim`, and `configure` APIs and their disk state
 remain supported by current controllers and host bundles indefinitely.
 
-For a deliberate base update, run `python3 tools/gpu/refresh-recovery.py`, review
-the source changes, and qualify the base image before separately pinning it.
-The base supplies `desmondd` beside this code. Changing system/CUDA compatibility
-also requires a deliberate `base-id` change.
+CI runs the host agent tests against this copy, so it stays compatible with
+hosts that still run it. It is not copied into the GPU base image. Changing
+system/CUDA compatibility requires a deliberate `base-id` change.

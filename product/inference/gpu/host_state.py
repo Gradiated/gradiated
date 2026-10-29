@@ -7,10 +7,8 @@ import uuid
 
 HOST_FILES = {'host-agent.py', 'desmondd', 'base-id'}
 PLATFORM_HOST_FILES = HOST_FILES | {
-    'bootstrap.py', 'supervise.py', 'host_state.py', 'host_bundle.py',
-    'runtime-launch', 'fetch-runtime', 'download-runtime', 'install-tailscale.py',
-    'control-listener.py', 'forward-control.py', 'run-tailscale.sh',
-    'start-tailscale.sh', 'run-control.sh', 'start-control.sh',
+    'supervise.py', 'host_state.py', 'host_bundle.py',
+    'runtime-launch', 'fetch-runtime', 'download-runtime',
 }
 PLATFORM_ONLY = Path('/etc/gradiated/platform-only')
 

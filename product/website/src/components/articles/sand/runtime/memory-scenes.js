@@ -467,13 +467,9 @@ export const MEMORY_SCENES = (() => {
     );
     const phaseLabels = [];
     for (const scene of ["stored-answer"]) {
-      const phase = label(
-        root,
-        220,
-        17,
-        "Read ADDR 0",
-        { class: "memory-label" },
-      );
+      const phase = label(root, 220, 17, "Read ADDR 0", {
+        class: "memory-label",
+      });
       show(
         phase,
         scene,

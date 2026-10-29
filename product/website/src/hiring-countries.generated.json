@@ -1,0 +1,428 @@
+{
+  "source": {
+    "commit": "6b532d7f652bf45bce6a69188a3f9e8442ea501e",
+    "repository": "PostHog/posthog.com"
+  },
+  "countries": [
+    {
+      "name": "Afghanistan",
+      "code": "AF",
+      "reason": "timezone"
+    },
+    {
+      "name": "Antarctica",
+      "code": "AQ",
+      "reason": "timezone"
+    },
+    {
+      "name": "Armenia",
+      "code": "AM",
+      "reason": "timezone"
+    },
+    {
+      "name": "Australia",
+      "code": "AU",
+      "reason": "timezone"
+    },
+    {
+      "name": "Azerbaijan",
+      "code": "AZ",
+      "reason": "timezone"
+    },
+    {
+      "name": "Bahrain",
+      "code": "BH",
+      "reason": "timezone"
+    },
+    {
+      "name": "Bangladesh",
+      "code": "BD",
+      "reason": "timezone"
+    },
+    {
+      "name": "Belarus",
+      "code": "BY",
+      "reason": "timezone"
+    },
+    {
+      "name": "Belgium",
+      "code": "BE",
+      "reason": "high-cost"
+    },
+    {
+      "name": "Bhutan",
+      "code": "BT",
+      "reason": "timezone"
+    },
+    {
+      "name": "Bolivia",
+      "code": "BO",
+      "reason": "high-cost"
+    },
+    {
+      "name": "Brazil",
+      "code": "BR",
+      "reason": "contractors"
+    },
+    {
+      "name": "Brunei",
+      "code": "BN",
+      "reason": "timezone"
+    },
+    {
+      "name": "Cambodia",
+      "code": "KH",
+      "reason": "timezone"
+    },
+    {
+      "name": "China",
+      "code": "CN",
+      "reason": "timezone"
+    },
+    {
+      "name": "Comoros",
+      "code": "KM",
+      "reason": "timezone"
+    },
+    {
+      "name": "Cuba",
+      "code": "CU",
+      "reason": "sanctions"
+    },
+    {
+      "name": "Denmark",
+      "code": "DK",
+      "reason": "high-cost"
+    },
+    {
+      "name": "Djibouti",
+      "code": "DJ",
+      "reason": "timezone"
+    },
+    {
+      "name": "Eritrea",
+      "code": "ER",
+      "reason": "timezone"
+    },
+    {
+      "name": "Ethiopia",
+      "code": "ET",
+      "reason": "timezone"
+    },
+    {
+      "name": "Fiji",
+      "code": "FJ",
+      "reason": "timezone"
+    },
+    {
+      "name": "France",
+      "code": "FR",
+      "reason": "high-cost"
+    },
+    {
+      "name": "French Polynesia",
+      "code": "PF",
+      "reason": "timezone"
+    },
+    {
+      "name": "Georgia",
+      "code": "GE",
+      "reason": "timezone"
+    },
+    {
+      "name": "Iceland",
+      "code": "IS",
+      "reason": "high-cost"
+    },
+    {
+      "name": "India",
+      "code": "IN",
+      "reason": "timezone"
+    },
+    {
+      "name": "Indonesia",
+      "code": "ID",
+      "reason": "timezone"
+    },
+    {
+      "name": "Iran",
+      "code": "IR",
+      "reason": "sanctions"
+    },
+    {
+      "name": "Iraq",
+      "code": "IQ",
+      "reason": "timezone"
+    },
+    {
+      "name": "Italy",
+      "code": "IT",
+      "reason": "high-cost"
+    },
+    {
+      "name": "Japan",
+      "code": "JP",
+      "reason": "timezone"
+    },
+    {
+      "name": "Jordan",
+      "code": "JO",
+      "reason": "timezone"
+    },
+    {
+      "name": "Kazakhstan",
+      "code": "KZ",
+      "reason": "timezone"
+    },
+    {
+      "name": "Kenya",
+      "code": "KE",
+      "reason": "timezone"
+    },
+    {
+      "name": "Kiribati",
+      "code": "KI",
+      "reason": "timezone"
+    },
+    {
+      "name": "Kuwait",
+      "code": "KW",
+      "reason": "timezone"
+    },
+    {
+      "name": "Kyrgyzstan",
+      "code": "KG",
+      "reason": "timezone"
+    },
+    {
+      "name": "Laos",
+      "code": "LA",
+      "reason": "timezone"
+    },
+    {
+      "name": "Luxembourg",
+      "code": "LU",
+      "reason": "high-cost"
+    },
+    {
+      "name": "Madagascar",
+      "code": "MG",
+      "reason": "timezone"
+    },
+    {
+      "name": "Malaysia",
+      "code": "MY",
+      "reason": "timezone"
+    },
+    {
+      "name": "Maldives",
+      "code": "MV",
+      "reason": "timezone"
+    },
+    {
+      "name": "Mauritius",
+      "code": "MU",
+      "reason": "timezone"
+    },
+    {
+      "name": "Mongolia",
+      "code": "MN",
+      "reason": "timezone"
+    },
+    {
+      "name": "Myanmar",
+      "code": "MM",
+      "reason": "timezone"
+    },
+    {
+      "name": "Nauru",
+      "code": "NR",
+      "reason": "timezone"
+    },
+    {
+      "name": "Nepal",
+      "code": "NP",
+      "reason": "timezone"
+    },
+    {
+      "name": "New Caledonia",
+      "code": "NC",
+      "reason": "timezone"
+    },
+    {
+      "name": "New Zealand",
+      "code": "NZ",
+      "reason": "timezone"
+    },
+    {
+      "name": "North Korea",
+      "code": "KP",
+      "reason": "sanctions"
+    },
+    {
+      "name": "Oman",
+      "code": "OM",
+      "reason": "timezone"
+    },
+    {
+      "name": "Pakistan",
+      "code": "PK",
+      "reason": "timezone"
+    },
+    {
+      "name": "Papua New Guinea",
+      "code": "PG",
+      "reason": "timezone"
+    },
+    {
+      "name": "Philippines",
+      "code": "PH",
+      "reason": "timezone"
+    },
+    {
+      "name": "Qatar",
+      "code": "QA",
+      "reason": "timezone"
+    },
+    {
+      "name": "Russia",
+      "code": "RU",
+      "reason": "sanctions"
+    },
+    {
+      "name": "Samoa",
+      "code": "WS",
+      "reason": "timezone"
+    },
+    {
+      "name": "Saudi Arabia",
+      "code": "SA",
+      "reason": "timezone"
+    },
+    {
+      "name": "Seychelles",
+      "code": "SC",
+      "reason": "timezone"
+    },
+    {
+      "name": "Singapore",
+      "code": "SG",
+      "reason": "timezone"
+    },
+    {
+      "name": "Solomon Islands",
+      "code": "SB",
+      "reason": "timezone"
+    },
+    {
+      "name": "Somalia",
+      "code": "SO",
+      "reason": "timezone"
+    },
+    {
+      "name": "South Korea",
+      "code": "KR",
+      "reason": "timezone"
+    },
+    {
+      "name": "Sri Lanka",
+      "code": "LK",
+      "reason": "timezone"
+    },
+    {
+      "name": "Sweden",
+      "code": "SE",
+      "reason": "high-cost"
+    },
+    {
+      "name": "Switzerland",
+      "code": "CH",
+      "reason": "high-cost"
+    },
+    {
+      "name": "Syria",
+      "code": "SY",
+      "reason": "sanctions"
+    },
+    {
+      "name": "Taiwan",
+      "code": "TW",
+      "reason": "timezone"
+    },
+    {
+      "name": "Tajikistan",
+      "code": "TJ",
+      "reason": "timezone"
+    },
+    {
+      "name": "Tanzania",
+      "code": "TZ",
+      "reason": "timezone"
+    },
+    {
+      "name": "Thailand",
+      "code": "TH",
+      "reason": "timezone"
+    },
+    {
+      "name": "Timor-Leste",
+      "code": "TL",
+      "reason": "timezone"
+    },
+    {
+      "name": "Tonga",
+      "code": "TO",
+      "reason": "timezone"
+    },
+    {
+      "name": "Turkey",
+      "code": "TR",
+      "reason": "timezone"
+    },
+    {
+      "name": "Turkmenistan",
+      "code": "TM",
+      "reason": "timezone"
+    },
+    {
+      "name": "Tuvalu",
+      "code": "TV",
+      "reason": "timezone"
+    },
+    {
+      "name": "Uganda",
+      "code": "UG",
+      "reason": "timezone"
+    },
+    {
+      "name": "United Arab Emirates",
+      "code": "AE",
+      "reason": "timezone"
+    },
+    {
+      "name": "Uruguay",
+      "code": "UY",
+      "reason": "contractors"
+    },
+    {
+      "name": "Uzbekistan",
+      "code": "UZ",
+      "reason": "timezone"
+    },
+    {
+      "name": "Vanuatu",
+      "code": "VU",
+      "reason": "timezone"
+    },
+    {
+      "name": "Vietnam",
+      "code": "VN",
+      "reason": "timezone"
+    },
+    {
+      "name": "Yemen",
+      "code": "YE",
+      "reason": "timezone"
+    }
+  ]
+}

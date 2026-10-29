@@ -26,9 +26,9 @@ export const formatPageTitle = (title: string): string =>
 
 const pageMetadata: Record<string, PageMetadataContent> = {
   "/": {
-    title: "Inference research lab",
+    title: "Run open models",
     description:
-      "Gradiated builds software and hardware to provide the most affordable open-model inference.",
+      "Run open models through one API. Gradiated works across software, training, chips, and data centers to make them more capable and affordable.",
   },
   "/about/": {
     title: "About",
@@ -68,7 +68,7 @@ const pageMetadata: Record<string, PageMetadataContent> = {
   "/careers/": {
     title: "Careers",
     description:
-      "Explore open roles in inference software and silicon at Gradiated.",
+      "Join Gradiated to make open-model inference more efficient across models, software, systems, and silicon.",
   },
   "/notes/": {
     title: "Notes",

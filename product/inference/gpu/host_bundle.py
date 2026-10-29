@@ -123,7 +123,6 @@ def stage_host(agent, pin, epoch):
         return
     agent.host_staging = digest
     downloader = Path(__file__).resolve().with_name('download-runtime')
-    if not downloader.is_file():downloader = Path('/opt/gradiated/bin/download-runtime')
 
     def stage():
         try:

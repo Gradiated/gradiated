@@ -26,6 +26,7 @@ export const DownloadAdapterDialog = ({
   const { workspaceId } = useProductContext();
   const download = useMutation({
     mutationFn: () => getAdapterDownload(workspaceId, version.task, version.id),
+    meta: { errorMessage: "The adapter could not be downloaded." },
     onSuccess: ({ url }) => {
       const link = document.createElement("a");
       link.href = url;
@@ -63,11 +64,6 @@ export const DownloadAdapterDialog = ({
             )
           </dd>
         </dl>
-        {download.error ? (
-          <p role="alert" className="text-sm text-destructive">
-            {download.error.message}
-          </p>
-        ) : null}
         <DialogFooter>
           <Button
             disabled={download.isPending}

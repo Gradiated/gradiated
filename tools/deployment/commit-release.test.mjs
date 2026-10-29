@@ -171,6 +171,21 @@ test("rejects pre-staged unrelated changes and makes matching releases a no-op",
   );
 });
 
+test("commits every manifest the release rewrites", async () => {
+  const { IMAGES } = await import("./update-release.mjs");
+  const committed = readFileSync(script, "utf8")
+    .match(/  infra\/[^\n]+/g)
+    .map((line) => line.trim());
+  const workloads = "infra/environments/prod/us-east-1/kubernetes/workloads";
+  const rewritten = [
+    ...IMAGES.flatMap(({ manifests }) =>
+      manifests.map((file) => path.posix.normalize(`${workloads}/${file}`)),
+    ),
+    "infra/environments/prod/us-east-1/kubernetes/gpu-inference/controller.yaml",
+  ];
+  for (const file of rewritten) assert.ok(committed.includes(file), file);
+});
+
 test("retries a rejected push without creating another release commit", (t) => {
   const f = fixture(t);
   f.change();

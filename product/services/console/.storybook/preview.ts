@@ -7,6 +7,10 @@ import { handlers } from "../src/stories/handlers";
 
 const preview: Preview = {
   parameters: { layout: "fullscreen", msw: handlers },
+  // Screenshot capture waits for this marker, set after any play function.
+  afterEach: ({ canvasElement }) => {
+    canvasElement.dataset.storyPlayed = "true";
+  },
   loaders: [
     mswLoader(async () => {
       const worker = setupWorker();

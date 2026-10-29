@@ -1,19 +1,18 @@
 import NiceModal from "@ebay/nice-modal-react";
-import {
-  QueryClient,
-  QueryClientProvider,
-  useIsFetching,
-} from "@tanstack/react-query";
+import { QueryClientProvider, useIsFetching } from "@tanstack/react-query";
 import { createMemoryHistory, RouterProvider } from "@tanstack/react-router";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, userEvent, within, waitFor } from "storybook/test";
 import { useState } from "react";
 
 import { Toaster } from "@/components/ui/sonner";
+import { createStoryQueryClient } from "@/stories/query-client";
 import { createConsoleRouter } from "@/router";
 import {
   acmeAdmin,
   acmeMember,
+  billingHandlers,
+  billingLoadingHandlers,
   handlersFor,
   invitationHandlers,
   invitationPreview,
@@ -22,6 +21,8 @@ import {
   newOrganizationHandlers,
   onboardingCompanyUser,
   onboardingPersonalUser,
+  playgroundHandlers,
+  playgroundUnavailableHandlers,
 } from "./handlers";
 
 const Ready = () => {
@@ -31,9 +32,7 @@ const Ready = () => {
 };
 
 const Page = ({ path }: { path: string }) => {
-  const [queryClient] = useState(
-    () => new QueryClient({ defaultOptions: { queries: { retry: false } } }),
-  );
+  const [queryClient] = useState(() => createStoryQueryClient());
   const [router] = useState(() =>
     createConsoleRouter(createMemoryHistory({ initialEntries: [path] })),
   );
@@ -54,7 +53,6 @@ const meta = {
   component: Page,
   render: (args) => <Page key={args.path} {...args} />,
   play: async ({ canvasElement, parameters }) => {
-    delete canvasElement.dataset.storyPlayed;
     const canvas = within(canvasElement);
     await canvas.findByRole("heading", { level: 1 }, { timeout: 10000 });
 
@@ -149,6 +147,37 @@ const meta = {
       });
     }
 
+    if (
+      parameters.playground === "conversation" ||
+      parameters.playground === "unavailable"
+    ) {
+      const message = await canvas.findByRole("textbox", { name: "Message" });
+      await waitFor(() => expect(message).toBeEnabled());
+      await userEvent.type(message, "Write a haiku about fast inference.");
+      await userEvent.click(
+        canvas.getByRole("button", { name: "Send message" }),
+      );
+    }
+
+    if (parameters.playground === "conversation") {
+      await canvas.findByText(/to first token/, {}, { timeout: 10000 });
+      await canvas.findByText(/before the thought ends/);
+    }
+
+    if (parameters.playground === "unavailable") {
+      await canvas.findByText(
+        "The playground is unavailable in an archived workspace or a suspended organization.",
+      );
+    }
+
+    if (parameters.playground === "models") {
+      const model = await canvas.findByRole("combobox", { name: "Model" });
+      await waitFor(() => expect(model).toBeEnabled());
+      await userEvent.click(model);
+      await body.findByRole("group", { name: "Your models" });
+      await body.findByRole("option", { name: "support-assistant" });
+    }
+
     if (parameters.taskDetail === "trace") {
       await userEvent.click(
         await canvas.findByRole("button", { name: "storybook-trace" }),
@@ -178,7 +207,9 @@ const meta = {
         expect(
           canvasElement.ownerDocument.body.querySelector(".animate-pulse"),
         ).toBeNull();
-        expect(body.queryAllByRole("alert")).toHaveLength(0);
+        expect(body.queryAllByRole("alert")).toHaveLength(
+          parameters.playground === "unavailable" ? 1 : 0,
+        );
       },
       { timeout: 10000 },
     );
@@ -208,8 +239,6 @@ const meta = {
         expect(icon?.complete && icon.naturalWidth > 0).toBe(true);
       });
     }
-
-    canvasElement.dataset.storyPlayed = "true";
   },
 } satisfies Meta<typeof Page>;
 
@@ -223,6 +252,23 @@ export const CreateApiKey: Story = {
   parameters: { createApiKey: true },
 };
 export const Models: Story = { args: { path: "/models" } };
+export const Playground: Story = {
+  args: { path: "/playground" },
+  parameters: { msw: playgroundHandlers },
+};
+export const PlaygroundConversation: Story = {
+  args: { path: "/playground" },
+  parameters: { playground: "conversation", msw: playgroundHandlers },
+};
+export const PlaygroundUnavailable: Story = {
+  args: { path: "/playground" },
+  tags: ["request-failure"],
+  parameters: { playground: "unavailable", msw: playgroundUnavailableHandlers },
+};
+export const PlaygroundModels: Story = {
+  args: { path: "/playground" },
+  parameters: { playground: "models", msw: playgroundHandlers },
+};
 export const Usage: Story = { args: { path: "/usage" } };
 export const Logs: Story = { args: { path: "/logs" } };
 export const LogDetails: Story = {
@@ -230,6 +276,63 @@ export const LogDetails: Story = {
   parameters: { logDetail: true },
 };
 export const Billing: Story = { args: { path: "/billing" } };
+export const BillingLoading: Story = {
+  args: { path: "/billing" },
+  parameters: { msw: billingLoadingHandlers },
+};
+export const BillingWithoutCard: Story = {
+  args: { path: "/billing" },
+  parameters: {
+    msw: billingHandlers({
+      payment_method: null,
+      auto_top_up: {
+        enabled: false,
+        threshold: null,
+        amount: null,
+        failure: null,
+      },
+    }),
+  },
+};
+export const BillingAutoTopUpOff: Story = {
+  args: { path: "/billing" },
+  parameters: {
+    msw: billingHandlers({
+      auto_top_up: {
+        enabled: false,
+        threshold: null,
+        amount: null,
+        failure: null,
+      },
+    }),
+  },
+};
+export const BillingMastercard: Story = {
+  args: { path: "/billing" },
+  parameters: {
+    msw: billingHandlers({
+      payment_method: {
+        brand: "mastercard",
+        last4: "4444",
+        exp_month: 3,
+        exp_year: 2027,
+      },
+    }),
+  },
+};
+export const BillingAutoTopUpFailed: Story = {
+  args: { path: "/billing" },
+  parameters: {
+    msw: billingHandlers({
+      auto_top_up: {
+        enabled: false,
+        threshold: "10000000000",
+        amount: "50000000000",
+        failure: "Your card was declined.",
+      },
+    }),
+  },
+};
 export const BillingAsMember: Story = {
   args: { path: "/billing" },
   parameters: { msw: handlersFor(acmeMember) },

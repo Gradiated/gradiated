@@ -12,6 +12,7 @@ import {
   DocsCodeBlock,
   DocsInlineCode,
 } from "../components/docs/DocsCodeBlock";
+import { methodComponents } from "../components/method";
 import { methodPages } from "../method";
 import type { MethodSlug } from "../method";
 import { storyAt } from "../library-stories";
@@ -55,7 +56,7 @@ export const MethodReadingPage = ({
             tags={["Method", page.section]}
             title={page.title}
           >
-            <Content />
+            <Content components={methodComponents} />
           </Reading>
         </Module>
       </Band>

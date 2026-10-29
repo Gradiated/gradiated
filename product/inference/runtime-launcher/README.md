@@ -67,16 +67,9 @@ Hugging Face retains downloaded revisions; only runtime archives have bounded
 automatic eviction. Treat retained files as disposable acceleration, never as
 the only copy of an artifact.
 
-For a compatible helper update on an already enrolled host, install the reviewed
-`fetch-runtime` script at `/opt/gradiated/bin/fetch-runtime` and create the cache
-with:
-
-```sh
-install -d -m 700 -o downloader -g downloader /var/cache/gradiated/runtime-bundles
-```
-
-Replace the helper atomically while no pre-start download is running; no scheduler
-agent or provider pod restart is needed.
+`fetch-runtime` ships in the host bundle and runs from the active bundle's
+directory, so it changes with a host bundle release. The GPU base image creates
+its cache, `/var/cache/gradiated/runtime-bundles`, owned by `downloader`.
 
 The downloader accepts only content-addressed S3 release URLs. It verifies
 the digest before using `bsdtar` to extract the trusted archive.

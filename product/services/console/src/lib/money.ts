@@ -1,9 +1,12 @@
-export const NANO_USD_PER_USD = 1_000_000_000n;
+import {
+  MAX_TOP_UP_NANO_USD,
+  MIN_TOP_UP_NANO_USD,
+  NANO_USD_PER_CENT,
+  NANO_USD_PER_USD,
+} from "@gradiated/contracts";
 
-const NANO_USD_PER_CENT = NANO_USD_PER_USD / 100n;
-
-export const MIN_TOP_UP_NANO_USD = 5n * NANO_USD_PER_USD;
-export const MAX_TOP_UP_NANO_USD = 10_000n * NANO_USD_PER_USD;
+// The API's limits, so the dialogs reject what the server would.
+export { MAX_TOP_UP_NANO_USD, MIN_TOP_UP_NANO_USD, NANO_USD_PER_USD };
 
 export const USD_AMOUNT_PATTERN = /^(\d+)(?:\.(\d{1,2}))?$/;
 
@@ -17,4 +20,27 @@ export const parseUsdToNanoUsd = (value: string): bigint => {
     BigInt(dollars) * NANO_USD_PER_USD +
     BigInt(cents.padEnd(2, "0")) * NANO_USD_PER_CENT
   );
+};
+
+export const formatNanoUsdInput = (nanoUsd: string): string => {
+  const amount = BigInt(nanoUsd);
+  const dollars = amount / NANO_USD_PER_USD;
+  const cents = (amount % NANO_USD_PER_USD) / NANO_USD_PER_CENT;
+
+  return cents === 0n
+    ? dollars.toString()
+    : `${dollars}.${cents.toString().padStart(2, "0")}`;
+};
+
+// A typed USD amount within [minimum, MAX_TOP_UP_NANO_USD], or null.
+export const parseUsdAmount = (
+  value: string,
+  minimum: bigint = MIN_TOP_UP_NANO_USD,
+): bigint | null => {
+  const trimmed = value.trim();
+  if (!USD_AMOUNT_PATTERN.test(trimmed)) return null;
+
+  const amount = parseUsdToNanoUsd(trimmed);
+
+  return amount >= minimum && amount <= MAX_TOP_UP_NANO_USD ? amount : null;
 };

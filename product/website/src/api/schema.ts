@@ -11,6 +11,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
+    /**
+     * List models
+     * @description Lists the models you can use for inference.
+     */
     get: operations["listModels"];
     put?: never;
     post?: never;
@@ -27,9 +31,77 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
+    /**
+     * Get billing account
+     * @description Gets the organization's balance and auto top-up settings.
+     */
     get: operations["getBillingAccount"];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Update billing account
+     * @description Changes the organization's auto top-up settings.
+     */
+    patch: operations["updateBillingAccount"];
+    trace?: never;
+  };
+  "/api/v1/organizations/{organization_id}/billing/payment-method-sessions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create billing portal session
+     * @description Opens the Stripe billing portal for invoices, receipts and billing details.
+     */
+    post: operations["createPaymentMethodSession"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/organizations/{organization_id}/billing/card-setups": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Start card entry
+     * @description Creates a card-only Stripe SetupIntent for entering a card in the console.
+     */
+    post: operations["createCardSetup"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/organizations/{organization_id}/billing/card": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Save card
+     * @description Saves the card from a confirmed SetupIntent as the organization's card for top-ups and auto top-up.
+     */
+    post: operations["saveCard"];
     delete?: never;
     options?: never;
     head?: never;
@@ -43,6 +115,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
+    /**
+     * List balance transactions
+     * @description Lists changes to the organization's balance.
+     */
     get: operations["listBalanceTransactions"];
     put?: never;
     post?: never;
@@ -61,7 +137,11 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    post: operations["createTopUpCheckout"];
+    /**
+     * Create top-up
+     * @description Adds funds by charging the saved card, or through Stripe Checkout.
+     */
+    post: operations["createTopUp"];
     delete?: never;
     options?: never;
     head?: never;
@@ -75,6 +155,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
+    /**
+     * Get current user
+     * @description Gets the signed-in user and the organizations they belong to.
+     */
     get: operations["getCurrentUser"];
     put?: never;
     post?: never;
@@ -97,6 +181,10 @@ export interface paths {
     delete?: never;
     options?: never;
     head?: never;
+    /**
+     * Update organization
+     * @description Changes the organization's settings.
+     */
     patch: operations["updateOrganization"];
     trace?: never;
   };
@@ -109,6 +197,10 @@ export interface paths {
     };
     get?: never;
     put?: never;
+    /**
+     * Create organization
+     * @description Creates an organization.
+     */
     post: operations["createOrganization"];
     delete?: never;
     options?: never;
@@ -123,6 +215,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
+    /**
+     * List members
+     * @description Lists the organization's members.
+     */
     get: operations["listMembers"];
     put?: never;
     post?: never;
@@ -142,9 +238,17 @@ export interface paths {
     get?: never;
     put?: never;
     post?: never;
+    /**
+     * Remove member
+     * @description Removes a member from the organization.
+     */
     delete: operations["removeMember"];
     options?: never;
     head?: never;
+    /**
+     * Update member
+     * @description Changes a member's role.
+     */
     patch: operations["updateMember"];
     trace?: never;
   };
@@ -155,8 +259,16 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
+    /**
+     * List invitations
+     * @description Lists the organization's pending invitations.
+     */
     get: operations["listInvitations"];
     put?: never;
+    /**
+     * Create invitations
+     * @description Invites people to the organization by email.
+     */
     post: operations["createInvitations"];
     delete?: never;
     options?: never;
@@ -173,6 +285,10 @@ export interface paths {
     };
     get?: never;
     put?: never;
+    /**
+     * Resend invitation
+     * @description Resends an invitation email.
+     */
     post: operations["resendInvitation"];
     delete?: never;
     options?: never;
@@ -190,6 +306,10 @@ export interface paths {
     get?: never;
     put?: never;
     post?: never;
+    /**
+     * Revoke invitation
+     * @description Revokes a pending invitation.
+     */
     delete: operations["revokeInvitation"];
     options?: never;
     head?: never;
@@ -205,7 +325,10 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** @description Describes an invitation link. The token is the credential. */
+    /**
+     * Preview invitation
+     * @description Gets the organization an invitation link is for.
+     */
     post: operations["previewInvitation"];
     delete?: never;
     options?: never;
@@ -222,6 +345,10 @@ export interface paths {
     };
     get?: never;
     put?: never;
+    /**
+     * Accept invitation
+     * @description Joins the organization from an invitation link.
+     */
     post: operations["acceptInvitation"];
     delete?: never;
     options?: never;
@@ -236,6 +363,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
+    /**
+     * Get usage summary
+     * @description Gets the workspace's inference usage and spend.
+     */
     get: operations["getUsageSummary"];
     put?: never;
     post?: never;
@@ -255,9 +386,17 @@ export interface paths {
     get?: never;
     put?: never;
     post?: never;
+    /**
+     * Archive workspace
+     * @description Archives a workspace.
+     */
     delete: operations["deleteWorkspace"];
     options?: never;
     head?: never;
+    /**
+     * Update workspace
+     * @description Changes the workspace's settings.
+     */
     patch: operations["updateWorkspace"];
     trace?: never;
   };
@@ -268,8 +407,16 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
+    /**
+     * List workspaces
+     * @description Lists the organization's workspaces.
+     */
     get: operations["listWorkspaces"];
     put?: never;
+    /**
+     * Create workspace
+     * @description Creates a workspace.
+     */
     post: operations["createWorkspace"];
     delete?: never;
     options?: never;
@@ -284,9 +431,33 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
+    /**
+     * List API keys
+     * @description Lists the workspace's API keys.
+     */
     get: operations["listApiKeys"];
     put?: never;
+    /**
+     * Create API key
+     * @description Creates an API key for inference.
+     */
     post: operations["createApiKey"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace_id}/playground-credentials": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations["createPlaygroundCredential"];
     delete?: never;
     options?: never;
     head?: never;
@@ -303,6 +474,10 @@ export interface paths {
     get?: never;
     put?: never;
     post?: never;
+    /**
+     * Revoke API key
+     * @description Revokes an API key.
+     */
     delete: operations["revokeApiKey"];
     options?: never;
     head?: never;
@@ -316,6 +491,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
+    /**
+     * List generations
+     * @description Lists the workspace's inference requests.
+     */
     get: operations["listGenerations"];
     put?: never;
     post?: never;
@@ -332,6 +511,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
+    /**
+     * Get generation
+     * @description Gets one inference request.
+     */
     get: operations["getGeneration"];
     put?: never;
     post?: never;
@@ -348,8 +531,16 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
+    /**
+     * List training runs
+     * @description Lists the workspace's training runs.
+     */
     get: operations["listTrainingRuns"];
     put?: never;
+    /**
+     * Start training run
+     * @description Starts training a task.
+     */
     post: operations["startTrainingRun"];
     delete?: never;
     options?: never;
@@ -364,9 +555,17 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
+    /**
+     * Get training run
+     * @description Gets a training run.
+     */
     get: operations["getTrainingRun"];
     put?: never;
     post?: never;
+    /**
+     * Cancel training run
+     * @description Cancels a training run.
+     */
     delete: operations["cancelTrainingRun"];
     options?: never;
     head?: never;
@@ -380,6 +579,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
+    /**
+     * List tasks
+     * @description Lists the workspace's tasks.
+     */
     get: operations["listTasks"];
     put?: never;
     post?: never;
@@ -396,12 +599,20 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
+    /**
+     * Get task
+     * @description Gets a task.
+     */
     get: operations["getTask"];
     put?: never;
     post?: never;
     delete?: never;
     options?: never;
     head?: never;
+    /**
+     * Update task
+     * @description Changes a task's settings.
+     */
     patch: operations["updateTask"];
     trace?: never;
   };
@@ -412,6 +623,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
+    /**
+     * List training run events
+     * @description Lists a training run's progress events.
+     */
     get: operations["listTrainingRunEvents"];
     put?: never;
     post?: never;
@@ -428,6 +643,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
+    /**
+     * List task versions
+     * @description Lists a task's trained versions.
+     */
     get: operations["listTaskVersions"];
     put?: never;
     post?: never;
@@ -444,6 +663,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
+    /**
+     * Get evaluation results
+     * @description Gets a task version's evaluation results.
+     */
     get: operations["getEvaluationResults"];
     put?: never;
     post?: never;
@@ -460,6 +683,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
+    /**
+     * Download adapter
+     * @description Gets a download link for a task version's adapter.
+     */
     get: operations["getAdapterDownload"];
     put?: never;
     post?: never;
@@ -477,6 +704,10 @@ export interface paths {
       cookie?: never;
     };
     get?: never;
+    /**
+     * Promote task version
+     * @description Sets which task version serves requests.
+     */
     put: operations["promoteTaskVersion"];
     post?: never;
     delete?: never;
@@ -495,8 +726,8 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Answer named questions with native SystemOne inference
-     * @description Served by the Rust gateway at /v1/systemone (also /systemone). Requires an exact hosted model and a workspace API key. Supports choice, noul and score questions over text or structured state. No streaming or generated output tokens; only the default service tier is implemented.
+     * SystemOne
+     * @description Answers choice, noul and score questions about text or structured state. Also served at /systemone.
      */
     post: operations["systemOne"];
     delete?: never;
@@ -515,8 +746,8 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Create a chat completion
-     * @description OpenAI Chat Completions compatible inference. max_tokens and max_completion_tokens are mutually exclusive. Requires an exact hosted model and a workspace API key. Supported parameters depend on the model catalog. Also available at /chat/completions.
+     * Chat Completions
+     * @description OpenAI-compatible chat completions. Also served at /chat/completions.
      */
     post: operations["chatCompletions"];
     delete?: never;
@@ -535,8 +766,8 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Create a message
-     * @description Anthropic Messages compatible inference, translated by the gateway. Requires an exact hosted model and a workspace API key. Supported parameters depend on the model catalog. Also available at /messages.
+     * Messages
+     * @description Anthropic-compatible messages. Also served at /messages.
      */
     post: operations["createMessage"];
     delete?: never;
@@ -555,8 +786,8 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Create a response
-     * @description OpenAI Responses compatible inference. Stateless requests only: store=true, background=true, previous_response_id, conversation and prompt references are unsupported. Requires an exact hosted model and a workspace API key. Supported parameters depend on the model catalog. Also available at /responses.
+     * Responses
+     * @description OpenAI-compatible responses. Only stateless requests are supported. Also served at /responses.
      */
     post: operations["createResponse"];
     delete?: never;
@@ -575,8 +806,8 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Count message input tokens
-     * @description Count tokens using the selected model's tokenizer without generating a completion. Requires an exact hosted model and a workspace API key. Supported parameters depend on the model catalog. Also available at /messages/count_tokens.
+     * Count tokens
+     * @description Counts the input tokens of a Messages request. Also served at /messages/count_tokens.
      */
     post: operations["countMessageTokens"];
     delete?: never;
@@ -593,30 +824,10 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * List inference models
-     * @description Authenticated gateway catalog with exact model IDs, readiness, capabilities and pricing. /models and /v1/models are aliases. This differs from the management catalog at /api/v1/models.
+     * List models
+     * @description Lists the models you can call, with prices and capabilities. Also served at /models.
      */
     get: operations["listInferenceModels"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/models": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * List inference models
-     * @description Authenticated gateway catalog with exact model IDs, readiness, capabilities and pricing. /models and /v1/models are aliases. This differs from the management catalog at /api/v1/models.
-     */
-    get: operations["listInferenceModelsAlias"];
     put?: never;
     post?: never;
     delete?: never;
@@ -740,6 +951,8 @@ export interface components {
       passthrough_parameters: {
         [key: string]: components["schemas"]["ModelParameterDescriptor"];
       };
+      default_parameters?: components["schemas"]["ModelDefaultParameters"];
+      reasoning?: components["schemas"]["ModelReasoning"];
       /**
        * Format: date-time
        * @example 2026-08-16T12:00:00.000Z
@@ -802,6 +1015,22 @@ export interface components {
           /** @enum {string} */
           type: "unknown";
         };
+    /** @description Sampling values the runtime applies when a request omits them; null or absent means not published. */
+    ModelDefaultParameters: {
+      temperature?: number | null;
+      top_p?: number | null;
+      top_k?: number | null;
+      frequency_penalty?: number | null;
+      presence_penalty?: number | null;
+      repetition_penalty?: number | null;
+    };
+    /** @description Reasoning effort levels; absent for models without them. */
+    ModelReasoning: {
+      /** @description reasoning_effort values the model accepts, lowest first. */
+      supported_efforts: string[];
+      /** @description Effort applied when a request omits reasoning_effort. */
+      default_effort: string | null;
+    };
     ServiceTierPricingPolicy: {
       service_tier: components["schemas"]["ServiceTier"];
       price_multiplier_numerator: number;
@@ -921,6 +1150,8 @@ export interface components {
       passthrough_parameters: {
         [key: string]: components["schemas"]["ModelParameterDescriptor"];
       };
+      default_parameters?: components["schemas"]["ModelDefaultParameters"];
+      reasoning?: components["schemas"]["ModelReasoning"];
       /**
        * Format: date-time
        * @example 2026-08-16T12:00:00.000Z
@@ -978,6 +1209,12 @@ export interface components {
       /** @enum {string} */
       mode: "prepaid" | "invoiced";
       balance: string;
+      payment_method: components["schemas"]["PaymentMethod"];
+      auto_top_up: components["schemas"]["AutoTopUp"];
+      /** @description Whether a saved-card top-up is still waiting for Stripe; clients can poll until it settles. */
+      top_up_pending: boolean;
+      /** @description Whether the Stripe billing portal has invoices and billing details to show. */
+      billing_portal: boolean;
       /**
        * Format: date-time
        * @example 2026-08-16T12:00:00.000Z
@@ -988,6 +1225,56 @@ export interface components {
        * @example 2026-08-16T12:00:00.000Z
        */
       updated_at: string;
+    };
+    /** @description The saved card used for top-ups and auto top-up. */
+    PaymentMethod: {
+      /** @description The card brand, such as visa; null when Stripe could not be reached. */
+      brand: string | null;
+      /** @description The last four digits of the card; null when Stripe could not be reached. */
+      last4: string | null;
+      exp_month: number | null;
+      exp_year: number | null;
+    } | null;
+    AutoTopUp: {
+      enabled: boolean;
+      threshold: string | null;
+      amount: string | null;
+      /** @description Stripe's reason when the latest auto top-up charge failed, which turned auto top-up off. */
+      failure: string | null;
+    };
+    UpdateBillingAccount: {
+      auto_top_up: components["schemas"]["UpdateAutoTopUp"];
+    };
+    UpdateAutoTopUp: {
+      /** @description Charge the saved card whenever the balance falls below the threshold. */
+      enabled?: boolean;
+      /**
+       * @description Top up when the balance falls below this integer nano-USD amount.
+       * @example 10000000000
+       */
+      threshold?: string;
+      /**
+       * @description The integer nano-USD amount each top-up adds.
+       * @example 50000000000
+       */
+      amount?: string;
+    };
+    PaymentMethodSession: {
+      /**
+       * Format: uri
+       * @description The Stripe billing portal, for invoices and billing details.
+       */
+      url: string;
+    };
+    CardSetup: {
+      /** @description Client secret of a card-only Stripe SetupIntent. */
+      client_secret: string;
+      /** @description Stripe publishable key that loads Stripe.js. */
+      publishable_key: string;
+    };
+    SaveCard: {
+      /** @description The SetupIntent that Stripe.js confirmed. */
+      setup_intent_id: string;
     };
     BalanceTransactionList: {
       data: components["schemas"]["BalanceTransaction"][];
@@ -1022,7 +1309,10 @@ export interface components {
         | "stripe_dispute"
         | "generation_settlement_batch"
         | "openrouter_payment"
-        | "operator";
+        | "operator"
+        | "stripe_invoice";
+      /** @description The Stripe Checkout Session, invoice, refund or dispute behind the transaction. */
+      stripe_id: string | null;
       /**
        * Format: date-time
        * @example 2026-08-16T12:00:00.000Z
@@ -1040,16 +1330,32 @@ export interface components {
        */
       created_at: string;
     };
-    TopUpCheckout: {
+    TopUp: {
+      /**
+       * @description paid when the card was charged, processing while Stripe confirms it, checkout when payment continues at checkout_url.
+       * @enum {string}
+       */
+      status: "paid" | "processing" | "checkout";
       /** Format: uri */
-      checkout_url: string;
+      checkout_url: string | null;
     };
-    CreateTopUpCheckout: {
+    CreateTopUp: {
       /**
        * @description The top-up amount in integer nano-USD.
        * @example 50000000000
        */
       amount: string;
+      /**
+       * @description card charges the saved card; checkout opens Stripe Checkout. Defaults to card when one is saved.
+       * @enum {string}
+       */
+      method?: "card" | "checkout";
+      /**
+       * Format: uuid
+       * @description A key for one top-up attempt; retrying it returns the first result instead of charging again.
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      idempotency_key?: string;
     };
     CurrentUser: {
       /**
@@ -1316,6 +1622,14 @@ export interface components {
        * @example 2026-08-16T12:00:00.000Z
        */
       expires_at?: string | null;
+    };
+    PlaygroundCredential: {
+      secret: string;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      expires_at: string;
     };
     TraceGenerationList: {
       data: components["schemas"]["TraceGeneration"][];
@@ -2607,6 +2921,282 @@ export interface operations {
       };
     };
   };
+  updateBillingAccount: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        organization_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateBillingAccount"];
+      };
+    };
+    responses: {
+      /** @description The billing account with its new auto top-up settings. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BillingAccount"];
+        };
+      };
+      /** @description Authentication is required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The caller cannot manage billing. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The billing account was not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The organization is not prepaid, or auto top-up was turned on without a saved card. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The auto top-up settings are invalid. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  createPaymentMethodSession: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        organization_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The Stripe billing portal for the organization. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PaymentMethodSession"];
+        };
+      };
+      /** @description Authentication is required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The caller cannot manage billing. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The organization was not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The organization does not use prepaid billing or has no billing history yet. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Stripe is unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  createCardSetup: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        organization_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The SetupIntent client secret and Stripe publishable key. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CardSetup"];
+        };
+      };
+      /** @description Authentication is required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The caller cannot manage billing. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The organization was not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The organization does not use prepaid billing. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Stripe or card entry is unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  saveCard: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        organization_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SaveCard"];
+      };
+    };
+    responses: {
+      /** @description The billing account with the saved card. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BillingAccount"];
+        };
+      };
+      /** @description Authentication is required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The caller cannot manage billing. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The organization was not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The SetupIntent was not confirmed for this organization, or billing is not prepaid. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Stripe or card entry is unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
   listBalanceTransactions: {
     parameters: {
       query?: {
@@ -2670,7 +3260,7 @@ export interface operations {
       };
     };
   };
-  createTopUpCheckout: {
+  createTopUp: {
     parameters: {
       query?: never;
       header?: never;
@@ -2681,21 +3271,30 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["CreateTopUpCheckout"];
+        "application/json": components["schemas"]["CreateTopUp"];
       };
     };
     responses: {
-      /** @description A Stripe-hosted Checkout Session for this top-up. */
+      /** @description The card was charged, or Checkout is ready to pay. */
       201: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["TopUpCheckout"];
+          "application/json": components["schemas"]["TopUp"];
         };
       };
       /** @description Authentication is required. */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The saved card was declined. */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -2721,7 +3320,7 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
-      /** @description The organization does not use prepaid billing. */
+      /** @description The organization does not use prepaid billing, or another payment is in progress. */
       409: {
         headers: {
           [name: string]: unknown;
@@ -3870,6 +4469,66 @@ export interface operations {
       };
       /** @description The request body is invalid. */
       422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Serving state is unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  createPlaygroundCredential: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description A one-hour inference key for the console playground. Each call rotates the member's single playground key, which is not listed with the workspace keys. */
+      201: {
+        headers: {
+          /** @description Prevents storage of the one-time secret. */
+          "Cache-Control"?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PlaygroundCredential"];
+        };
+      };
+      /** @description Authentication is required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The workspace cannot be used. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The workspace was not found. */
+      404: {
         headers: {
           [name: string]: unknown;
         };
@@ -5332,40 +5991,6 @@ export interface operations {
     };
   };
   listInferenceModels: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Inference model catalog. */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["InferenceModelList"];
-        };
-      };
-      /** @description Missing or invalid workspace API key. */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Runtime, deployment, or gateway dependency unavailable. */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  listInferenceModelsAlias: {
     parameters: {
       query?: never;
       header?: never;

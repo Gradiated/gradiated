@@ -56,20 +56,17 @@ so ops-mcp cannot open a shell on an enrolled host. After the bootstrap returns,
 the pod re-authenticates with the one-time `tag:gpu-inference` key, and ops-mcp
 waits for the bootstrap identity to leave its netmap before revoking that key.
 
-Enrollment never uses public SSH. A running host keeps its provider settings and
-reservation. An existing host agent is checked without replacing active model
-processes. An uninitialized host must have the verified GPU base implementation
-and idle GPUs. Other running pods require an explicitly authorized reset.
-Stopped pods use the immutable `GPU_BASE_IMAGE`; enrollment credentials are
-supplied over SSH, never in a provider configuration update.
-For a platform-only base, configure `GPU_HOST_BOOTSTRAP_SHA256` with a published
-host release marked `bootstrapVersion: 1`. Ops MCP signs a short-lived download
-grant; the SSH installer independently verifies the archive and its base ID,
-installs the initial host version, and retains an on-disk recovery seed. The Ops
-MCP IAM role requires read access only to content-addressed bundle objects.
-An absent bootstrap pin supports previously published bases with enrollment
-already installed. New platform-only bases require the pin before enrollment.
-The bootstrap clears its credentials from the process environment. Runtime
+Enrollment never uses public SSH. ops-mcp runs `gradiated-host enroll` on the pod
+with a typed JSON payload on stdin (`product/packages/gpu-hosts/src/enrollment.ts`); the GPU base
+image validates it against the JSON Schema a test keeps equal to the zod types.
+A running pod must already be on the approved `GPU_BASE_IMAGE` with idle GPUs;
+other running pods require an explicitly authorized reset. Stopped pods are
+re-imaged to `GPU_BASE_IMAGE`; credentials are supplied over SSH, never in a
+provider configuration update. `GPU_HOST_BOOTSTRAP_SHA256` pins the host bundle
+enrollment installs. Ops MCP signs a short-lived download grant; the pod verifies
+the archive and its base ID, installs it and keeps an on-disk recovery copy. The
+Ops MCP IAM role requires read access only to content-addressed bundle objects.
+The pod removes its bootstrap key from the process environment at start. Runtime
 bundles use temporary private download grants; GPUs receive no AWS or Kubernetes
 credentials. Enrollment keys are one-time GPU-tagged Tailscale keys, revoked
 after bootstrap. Management keys are host-specific and stay in AWS and root-owned

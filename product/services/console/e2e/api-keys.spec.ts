@@ -69,9 +69,8 @@ test("a failed revoke shows the problem and keeps the key active", async ({
   );
   await revoke(page, keyName);
 
-  await expect(page.getByRole("alert")).toContainText(
-    "The key store is unavailable.",
-  );
+  // Action errors are toasts.
+  await expect(page.getByText("The key store is unavailable.")).toBeVisible();
   await expect(row).toContainText("Active");
 });
 

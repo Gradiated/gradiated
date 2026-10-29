@@ -1,7 +1,11 @@
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { describe, expect, it } from "vitest";
 import { createApp, publicOpenApiDocument } from "../src/app.js";
-import { createOpenApiDocument, unservedDependencies } from "../src/openapi.js";
+import {
+  createOpenApiDocument,
+  createOpenApiDocuments,
+  unservedDependencies,
+} from "../src/openapi.js";
 import type { ApiEnvironment } from "../src/types.js";
 
 const addRoute = (app: OpenAPIHono<ApiEnvironment>, path: string) => {
@@ -55,5 +59,37 @@ describe("internal API documentation boundary", () => {
         (path) => path === "/api/internal" || path.startsWith("/api/internal/"),
       ),
     ).toEqual([]);
+  });
+
+  it("keeps console-only operations in the client contract only", async () => {
+    const operationIds = (document: ReturnType<typeof createOpenApiDocument>) =>
+      Object.values(document.paths ?? {}).flatMap((item) =>
+        Object.values(item ?? {}).flatMap((operation) =>
+          typeof operation === "object" && "operationId" in operation
+            ? [operation.operationId]
+            : [],
+        ),
+      );
+    const consoleOperations = [
+      "createTopUp",
+      "createPaymentMethodSession",
+      "getCurrentUser",
+      "previewInvitation",
+      "acceptInvitation",
+    ];
+    const documents = createOpenApiDocuments();
+    const served = await (
+      await createApp(unservedDependencies()).request("/api/openapi.json")
+    ).json();
+
+    expect(operationIds(documents.client)).toEqual(
+      expect.arrayContaining(consoleOperations),
+    );
+    for (const document of [documents.public, served]) {
+      expect(operationIds(document)).not.toEqual(
+        expect.arrayContaining([expect.toBeOneOf(consoleOperations)]),
+      );
+      expect(operationIds(document)).toContain("getBillingAccount");
+    }
   });
 });

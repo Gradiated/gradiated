@@ -62,3 +62,13 @@ export const tierPriceRows = (
       },
     ];
   });
+
+export const tierLabel = (policy: ServiceTierPricingPolicy): string => {
+  const name =
+    policy.service_tier.charAt(0).toUpperCase() + policy.service_tier.slice(1);
+  if (policy.price_change_percent === 0) return name;
+
+  const sign = policy.price_change_percent > 0 ? "+" : "";
+
+  return `${name} (${sign}${policy.price_change_percent}%)`;
+};

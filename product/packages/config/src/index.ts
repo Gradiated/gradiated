@@ -22,6 +22,7 @@ const EnvironmentFieldsSchema = z.object({
   RESEND_API_KEY: z.string().trim().min(1).optional(),
   STRIPE_SECRET_KEY: z.string().min(1).optional(),
   STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
+  STRIPE_PUBLISHABLE_KEY: z.string().min(1).optional(),
   TRUSTED_ORIGINS: z
     .string()
     .default("http://localhost:3000,http://127.0.0.1:3000")

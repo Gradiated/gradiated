@@ -23,10 +23,15 @@ import {
 
 const apiKeysPath = `/api/v1/workspaces/${workspaceId}/api-keys`;
 const apiKeyPath = `${apiKeysPath}/${apiKeyId}`;
+const playgroundCredentialsPath = `/api/v1/workspaces/${workspaceId}/playground-credentials`;
 
 const operations: {
   name: string;
-  method: "createApiKey" | "listApiKeys" | "revokeApiKey";
+  method:
+    | "createApiKey"
+    | "createPlaygroundCredential"
+    | "listApiKeys"
+    | "revokeApiKey";
   send: (app: TestApp) => Response | Promise<Response>;
 }[] = [
   {
@@ -38,6 +43,11 @@ const operations: {
     name: "list",
     method: "listApiKeys",
     send: (app) => app.request(apiKeysPath),
+  },
+  {
+    name: "create a playground credential",
+    method: "createPlaygroundCredential",
+    send: (app) => app.request(playgroundCredentialsPath, { method: "POST" }),
   },
   {
     name: "revoke",
@@ -126,6 +136,35 @@ describe("API-key routes", () => {
       ],
       next_cursor: null,
     });
+  });
+
+  it("returns a playground credential without caching it", async () => {
+    const expiresAt = new Date("2027-01-01T01:00:00.000Z");
+    const received: unknown[] = [];
+    const app = createTestApp({
+      auth: authenticated,
+      services: {
+        workspaces: {
+          createPlaygroundCredential: async (...input) => {
+            received.push(input);
+
+            return { apiKeyId, secret: apiKeySecret, expiresAt };
+          },
+        },
+      },
+    });
+
+    const response = await app.request(playgroundCredentialsPath, {
+      method: "POST",
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    await expect(response.json()).resolves.toEqual({
+      secret: apiKeySecret,
+      expires_at: expiresAt.toISOString(),
+    });
+    expect(received).toEqual([[user.id, workspaceId]]);
   });
 
   it("revokes a key with an empty 204 response", async () => {

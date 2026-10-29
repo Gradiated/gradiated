@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { CreateTopUpCheckoutSchema } from "../src/index.js";
+import { CreateTopUpSchema } from "../src/index.js";
 
-describe("CreateTopUpCheckoutSchema", () => {
+describe("CreateTopUpSchema", () => {
   it.each(["5000000000", "10000000000000"])("accepts %s nano-USD", (amount) => {
-    expect(CreateTopUpCheckoutSchema.safeParse({ amount }).success).toBe(true);
+    expect(CreateTopUpSchema.safeParse({ amount }).success).toBe(true);
   });
 
   it.each([
@@ -13,7 +13,7 @@ describe("CreateTopUpCheckoutSchema", () => {
     ["a fraction of a cent", "5000000001"],
     ["a negative amount", "-5000000000"],
   ])("rejects %s", (_, amount) => {
-    const result = CreateTopUpCheckoutSchema.safeParse({ amount });
+    const result = CreateTopUpSchema.safeParse({ amount });
 
     expect(result.success).toBe(false);
     expect(result.error?.issues).toContainEqual(
@@ -24,7 +24,7 @@ describe("CreateTopUpCheckoutSchema", () => {
   it.each(["abc", "1.5", ""])(
     "returns issues without throwing for %j",
     (amount) => {
-      const result = CreateTopUpCheckoutSchema.safeParse({ amount });
+      const result = CreateTopUpSchema.safeParse({ amount });
 
       expect(result.success).toBe(false);
       expect(result.error?.issues).toContainEqual(

@@ -14,15 +14,19 @@ import {
 } from "@gradiated/contracts/model-catalog";
 import type { createExternalModelCatalog } from "../catalog/external-models.js";
 
+import { consoleOnly } from "../http/audience.js";
 import type { ApiEnvironment } from "../types.js";
 
 const MODEL_CATALOG_CACHE_CONTROL =
   "public, max-age=15, s-maxage=15, stale-while-revalidate=15";
 
 const listModelsRoute = createRoute({
+  ...consoleOnly,
   method: "get",
   path: "/api/v1/models",
   operationId: "listModels",
+  summary: "List models",
+  description: "Lists the models you can use for inference.",
   tags: ["Models"],
   request: {
     query: z.object({

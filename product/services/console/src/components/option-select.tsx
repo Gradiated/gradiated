@@ -13,6 +13,7 @@ export interface Option<Value extends string> {
   value: Value;
   label: string;
   disabled?: boolean;
+  group?: string;
 }
 
 const findOption = <Value extends string>(

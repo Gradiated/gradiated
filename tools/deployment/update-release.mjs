@@ -8,7 +8,7 @@ const REGISTRY = "873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod";
 const IMAGES_START = "# deployment-images:start";
 const IMAGES_END = "# deployment-images:end";
 // Each released image: the metadata key that records it and the manifests that run it.
-const IMAGES = [
+export const IMAGES = [
   {
     name: "product",
     metadataKey: "productImage",
@@ -20,6 +20,7 @@ const IMAGES = [
       "worker.yaml",
       "temporal-worker.yaml",
       "../operations/ops-mcp/workload.yaml",
+      "../gpu-inference/gpu-fleet.yaml",
     ],
   },
   { name: "gateway", metadataKey: "gatewayImage", manifests: ["gateway.yaml"] },

@@ -27,10 +27,17 @@ def selected(name, paths, force=False):
 
 
 class SubcheckSelectionTest(unittest.TestCase):
+    def test_fleet_operator_changes_run_the_rejoin_test(self):
+        for path in ("product/services/gpu-fleet/src/rollout.ts", "product/packages/gpu-hosts/src/tailscale.ts",
+                     "product/packages/control/src/index.ts", "product/pnpm-lock.yaml",
+                     "product/inference/host/gradiated_host/tailscale.py"):
+            with self.subTest(path=path):
+                self.assertTrue(selected("gpu", [path])["rejoin"])
+
     def test_gpu_schema_helper_skips_controller_and_configuration(self):
         self.assertEqual(
             selected("gpu", ["tools/security/check_gpu_inference.py"]),
-            {"controller": False, "configuration": False, "manifests": True},
+            {"controller": False, "configuration": False, "image": False, "rejoin": False, "manifests": True},
         )
 
     def test_gpu_manifest_changes_validate_configuration_without_controller_build(self):
@@ -42,7 +49,7 @@ class SubcheckSelectionTest(unittest.TestCase):
     def test_controller_source_does_not_fetch_unrelated_operator_schemas(self):
         self.assertEqual(
             selected("gpu", ["tools/virtual-kubelet/cmd/gpu-controller/main.go"]),
-            {"controller": True, "configuration": False, "manifests": False},
+            {"controller": True, "configuration": False, "image": False, "rejoin": False, "manifests": False},
         )
 
     def test_gpu_inventory_selects_renderer_and_host_runtime_consumers(self):
@@ -51,18 +58,23 @@ class SubcheckSelectionTest(unittest.TestCase):
         self.assertTrue(result["configuration"])
         self.assertTrue(selected("kubernetes", ["product/inference/gpu/runtimes.json"])["observability"])
 
+    def test_host_bundle_inputs_select_the_gpu_base_image_checks(self):
+        for path in ("product/inference/runtime-launcher/main.cpp", "product/inference/bundles/host/Dockerfile",
+                     "product/inference/images/gpu-base/Dockerfile", "product/inference/gpu/host-agent.py"):
+            self.assertTrue(selected("gpu", [path])["image"], path)
+        self.assertFalse(selected("gpu", ["tools/virtual-kubelet/cmd/gpu-controller/main.go"])["image"])
+
     def test_gateway_timeout_keeps_cross_file_host_agent_coverage(self):
         self.assertTrue(selected("gpu", [KUBE + "workloads/gateway.yaml"])["controller"])
 
     def test_inference_application_changes_check_service_ownership_and_sync_policy(self):
-        for app in ("inference-hosts", "inference-network"):
-            path = KUBE + f"platform/{app}.yaml"
-            self.assertEqual(selected("gpu", [path]),
-                             {"controller": False, "configuration": True, "manifests": True})
-            self.assertTrue(selected("kubernetes", [path])["tailscale"])
+        path = KUBE + "platform/inference-network.yaml"
+        self.assertEqual(selected("gpu", [path]),
+                         {"controller": False, "configuration": True, "image": False, "rejoin": False, "manifests": True})
+        self.assertTrue(selected("kubernetes", [path])["tailscale"])
 
     def test_gpu_changes_skip_temporal_browser_and_database_fixtures(self):
-        result = selected("kubernetes", [KUBE + "gpu-inference/kev.yaml"])
+        result = selected("kubernetes", [KUBE + "gpu-inference/models/kev/kev.yaml"])
         self.assertTrue(result["observability"])
         for check in ("temporal_ui", "metabase", "argocd", "logs", "tailscale"):
             self.assertFalse(result[check], check)
@@ -160,7 +172,7 @@ class RelevantActionIntegrationTest(unittest.TestCase):
     def test_push_uses_git_range_without_pr_lookup(self):
         result, outputs = self.run_action("push", fail_lookup=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(json.loads(outputs["checks"]), {"controller": False, "configuration": False, "manifests": True})
+        self.assertEqual(json.loads(outputs["checks"]), {"controller": False, "configuration": False, "image": False, "rejoin": False, "manifests": True})
 
     def test_manual_dispatch_selects_all(self):
         result, outputs = self.run_action("workflow_dispatch", fail_lookup=True)

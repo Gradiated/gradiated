@@ -85,7 +85,7 @@ jobs:
       website: ${{ steps.plan.outputs.website }}
       tooling: ${{ steps.plan.outputs.tooling }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - id: relevant
@@ -112,14 +112,14 @@ jobs:
     runs-on: depot-ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: jdx/mise-action@v4.2.3
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
       - name: Install Rust check components
         if: needs.changes.outputs.rust == 'true'
         run: rustup component add rustfmt clippy
       - name: Restore Rust build cache
         if: needs.changes.outputs.rust == 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |
             ~/.cargo/registry
@@ -150,8 +150,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
-      - uses: jdx/mise-action@v4.2.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
       - run: pnpm install --frozen-lockfile
         working-directory: product
       - run: pnpm --filter gradiated-com test
@@ -166,8 +166,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
-      - uses: jdx/mise-action@v4.2.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
       - run: node --test tools/deployment/*.test.mjs tools/github-apps/*.test.mjs tools/images/*.test.mjs
       - run: pnpm install --frozen-lockfile
         working-directory: product
@@ -183,10 +183,10 @@ jobs:
     runs-on: depot-ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: jdx/mise-action@v4.2.3
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
       - name: Restore Rust build cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |
             ~/.cargo/registry
@@ -228,7 +228,7 @@ jobs:
     runs-on: depot-ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Install native toolchain
         if: needs.changes.outputs.native_cpp == 'true'
         run: |
@@ -250,7 +250,7 @@ jobs:
           PYTHONDONTWRITEBYTECODE: "1"
         run: python3 -m unittest -v test_report_status
 
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
         if: needs.changes.outputs.native_kev == 'true'
       - name: Run Kev runtime CPU unit tests
         if: needs.changes.outputs.native_kev == 'true'
@@ -270,10 +270,10 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: jdx/mise-action@v4.2.3
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
       - name: Restore Rust build cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |
             ~/.cargo/registry
@@ -299,7 +299,7 @@ jobs:
           --outputFile.junit=../../../.agents/runtime/gateway-integration.xml
       - name: Upload integration results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: gateway-runtime-integration
           path: .agents/runtime/gateway-integration.xml
@@ -315,10 +315,10 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: jdx/mise-action@v4.2.3
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
       - name: Restore Rust build cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |
             ~/.cargo/registry
@@ -346,7 +346,7 @@ jobs:
           --outputFile.junit=../../../.agents/runtime/proxy-e2e.xml
       - name: Upload end-to-end results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: proxy-e2e
           path: |
@@ -362,10 +362,10 @@ jobs:
     runs-on: depot-ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: jdx/mise-action@v4.2.3
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
       - name: Restore Rust build cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |
             ~/.cargo/registry
@@ -401,11 +401,11 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: jdx/mise-action@v4.2.3
-      - uses: depot/setup-action@v1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
+      - uses: depot/setup-action@91bc8495a33ebfc504ffc89e5674379ccf23c29c # v1.7.2
       - name: Restore Rust build cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |
             ~/.cargo/registry
@@ -424,7 +424,7 @@ jobs:
       # Both runtime images carry their weights, so nothing is downloaded at run
       # time. Depot caches the layers, so an unchanged Dockerfile rebuilds nothing.
       - name: Build the CPU LLM runtime
-        uses: depot/build-push-action@v1
+        uses: depot/build-push-action@98e78adca7817480b8185f474a400b451d74e287 # v1.18.0
         with:
           project: ${{ vars.DEPOT_PROJECT_ID }}
           context: product/inference/runtimes/vllm
@@ -433,7 +433,7 @@ jobs:
           load: true
           tags: gradiated/vllm-cpu:ci
       - name: Build the CPU decision runtime
-        uses: depot/build-push-action@v1
+        uses: depot/build-push-action@98e78adca7817480b8185f474a400b451d74e287 # v1.18.0
         with:
           project: ${{ vars.DEPOT_PROJECT_ID }}
           context: product/inference/runtimes/kev
@@ -451,7 +451,7 @@ jobs:
           --outputFile.junit=../../../.agents/runtime/inference-e2e.xml
       - name: Upload inference E2E results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: inference-e2e
           path: .agents/runtime/inference-e2e.xml
@@ -465,8 +465,8 @@ jobs:
     runs-on: depot-ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: jdx/mise-action@v4.2.3
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
       - run: pnpm install --frozen-lockfile
         working-directory: product
       - name: Build browser-test dependencies

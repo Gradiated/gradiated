@@ -25,7 +25,11 @@ export const IMAGES = [
   },
   { name: "gateway", metadataKey: "gatewayImage", manifests: ["gateway.yaml"] },
   { name: "proxy", metadataKey: "proxyImage", manifests: ["proxy.yaml"] },
-  { name: "collector", metadataKey: "collectorImage", manifests: ["collector.yaml"] },
+  {
+    name: "collector",
+    metadataKey: "collectorImage",
+    manifests: ["collector.yaml"],
+  },
 ];
 
 const repository = (name) => `${REGISTRY}/${name}`;
@@ -79,7 +83,11 @@ export async function updateRelease(options) {
   const digests = Object.fromEntries(
     IMAGES.map(({ name }) => [
       name,
-      requireMatch(`${name} digest`, options.digests?.[name], /^sha256:[0-9a-f]{64}$/),
+      requireMatch(
+        `${name} digest`,
+        options.digests?.[name],
+        /^sha256:[0-9a-f]{64}$/,
+      ),
     ]),
   );
   const root = path.resolve(options.root);
@@ -105,7 +113,28 @@ export async function updateRelease(options) {
 
   let metadata = await readFile(metadataPath, "utf8");
   metadata = replaceMetadataValue(metadata, "sourceRevision", sourceSha);
-  metadata = replaceMetadataValue(metadata, "consoleRevision", sourceSha);
+  metadata = replaceMetadataValue(
+    metadata,
+    "consoleRevision",
+    requireMatch(
+      "console SHA",
+      options.consoleSha ?? sourceSha,
+      /^[0-9a-f]{40}$/,
+    ),
+  );
+  if (options.deploymentRunId !== undefined) {
+    const runId = requireMatch(
+      "deployment run ID",
+      options.deploymentRunId,
+      /^[1-9][0-9]{0,19}$/,
+    );
+    metadata = /^  deploymentRunId:/m.test(metadata)
+      ? replaceMetadataValue(metadata, "deploymentRunId", runId)
+      : metadata.replace(
+          /^(  sourceRevision: .*\n)/m,
+          `$1  deploymentRunId: "${runId}"\n`,
+        );
+  }
   for (const { name, metadataKey } of IMAGES) {
     metadata = replaceMetadataValue(
       metadata,
@@ -126,10 +155,17 @@ export async function updateRelease(options) {
   }
 
   if (options.gpuControllerDigest) {
-    const digest = requireMatch("GPU controller digest", options.gpuControllerDigest, /^sha256:[0-9a-f]{64}$/);
+    const digest = requireMatch(
+      "GPU controller digest",
+      options.gpuControllerDigest,
+      /^sha256:[0-9a-f]{64}$/,
+    );
     const file = path.join(workloads, "../gpu-inference/controller.yaml");
     const contents = await readFile(file, "utf8");
-    await writeFile(file, replaceImageReference(contents, repository("product"), digest, file));
+    await writeFile(
+      file,
+      replaceImageReference(contents, repository("product"), digest, file),
+    );
   }
 
   await writeFile(kustomizationPath, kustomization);
@@ -141,6 +177,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   await updateRelease({
     root: argumentsByName.root,
     sourceSha: argumentsByName["source-sha"],
+    consoleSha: argumentsByName["console-sha"],
+    deploymentRunId: argumentsByName["deployment-run-id"],
     gpuControllerDigest: argumentsByName["gpu-controller-digest"],
     digests: Object.fromEntries(
       IMAGES.map(({ name }) => [name, argumentsByName[`${name}-digest`]]),

@@ -15,6 +15,7 @@ import {
   type TrainingEngine,
   ObjectStorage,
   deleteArchivedTasks,
+  deleteRetiredTrainingSchedules,
   type ControlDatabase,
   type ContentStore,
 } from "@gradiated/control";
@@ -55,6 +56,7 @@ export const runTrainingWorker = async (input: {
           readRun: createTrainingRunStore(input.database).get,
         }),
         deleteArchivedTasks(input.database, engine),
+        deleteRetiredTrainingSchedules(input.database, engine),
       ]);
       const failed = results.find((result) => result.status === "rejected");
       if (failed) throw failed.reason;

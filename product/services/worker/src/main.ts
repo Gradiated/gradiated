@@ -1,6 +1,7 @@
 import {
   createClickHouseRuntimeClient,
   createControlDatabase,
+  createCatalogService,
   createWorkspaceApiKeyService,
   createContentStore,
   createDeploymentStore,
@@ -290,6 +291,7 @@ if (process.env.GPU_KUBERNETES_NAMESPACE) {
     }),
   );
   const request = createKubernetesRequest(signal);
+  const catalog = createCatalogService(database);
   supervisors.push(
     supervise({
       loop: "kubernetes_qualification",
@@ -316,10 +318,20 @@ if (process.env.GPU_KUBERNETES_NAMESPACE) {
                 "select pg_try_advisory_lock(hashtext('gpu-qualification-v1')) as locked",
               );
               locked = result.rows[0]?.locked === true;
-              if (locked)
-                await qualifyKubernetesPod(namespace, request, (input) =>
-                  runSdkQualification(input, signal),
+              if (locked) {
+                const models = await catalog.listModels();
+                const availableModelIds = new Set(
+                  models
+                    .filter((model) => model.status === "available")
+                    .map((model) => model.id),
                 );
+                await qualifyKubernetesPod(
+                  namespace,
+                  request,
+                  availableModelIds,
+                  (input) => runSdkQualification(input, signal),
+                );
+              }
             } finally {
               if (locked)
                 await client

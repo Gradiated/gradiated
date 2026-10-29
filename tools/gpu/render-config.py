@@ -50,6 +50,7 @@ def rollout(name, model, runtimes):
         raise ValueError('The model identity label is reserved')
     if model['replicas'] < 1 or model['progress_deadline_seconds'] < 1:
         raise ValueError('Serving replicas and deadlines must be positive')
+    paused = model.get('autoscaling', {}).get('paused_replicas')
     runtime = runtimes[model['runtime']]
     if runtime.get('kind') == 'training':
         raise ValueError('Training runtimes cannot serve a Rollout')
@@ -67,8 +68,9 @@ def rollout(name, model, runtimes):
         pod['affinity'] = model['affinity']
     return {
         'apiVersion': 'argoproj.io/v1alpha1', 'kind': 'Rollout',
-        'metadata': {'name': name, 'namespace': 'gpu-inference'},
-        'spec': {'replicas': model['replicas'], 'progressDeadlineSeconds': model['progress_deadline_seconds'],
+        'metadata': {'name': name, 'namespace': 'gpu-inference',
+                     **({'annotations': {'gradiated.com/paused-replicas': str(paused)}} if paused is not None else {})},
+        'spec': {'replicas': paused if paused is not None else model['replicas'], 'progressDeadlineSeconds': model['progress_deadline_seconds'],
                  'progressDeadlineAbort': True,
                  'strategy': {'canary': {'maxSurge': 1, 'maxUnavailable': 0, 'steps': [
                      {'setWeight': 50}, {'analysis': {'templates': [{'templateName': 'sdk-qualification'}], 'args': [
@@ -86,6 +88,12 @@ def autoscaler(name, model, runtime):
         raise ValueError('Autoscaling maximum must cover the minimum replicas')
     if type(target) not in (int, float) or not 0 < target < float('inf'):
         raise ValueError('Autoscaling concurrency target must be finite and positive')
+    annotations = {'argocd.argoproj.io/sync-options': 'SkipDryRunOnMissingResource=true'}
+    if 'paused_replicas' in settings:
+        paused = settings['paused_replicas']
+        if type(paused) is not int or not 0 <= paused <= maximum:
+            raise ValueError('Paused replicas must be an integer within the scaling bounds')
+        annotations['autoscaling.keda.sh/paused-replicas'] = str(paused)
     selector = 'namespace="gradiated",model=' + json.dumps(runtime['model_id'])
     health = 'gradiated:autoscaling_demand{service="gateway"}'
     fresh = f'({health} and (timestamp({health}) > time() - 45))'
@@ -97,8 +105,7 @@ def autoscaler(name, model, runtime):
     }
     return {
         'apiVersion': 'keda.sh/v1alpha1', 'kind': 'ScaledObject',
-        'metadata': {'name': name, 'namespace': 'gpu-inference', 'annotations': {
-            'argocd.argoproj.io/sync-options': 'SkipDryRunOnMissingResource=true'}},
+        'metadata': {'name': name, 'namespace': 'gpu-inference', 'annotations': annotations},
         'spec': {
             'scaleTargetRef': {'apiVersion': 'argoproj.io/v1alpha1', 'kind': 'Rollout', 'name': name},
             'pollingInterval': 15, 'minReplicaCount': model['replicas'], 'maxReplicaCount': maximum,

@@ -113,7 +113,7 @@ export const AutoTopUpDialog = ({
 
         <fieldset
           disabled={!enabled}
-          className="grid grid-cols-2 gap-4 transition-opacity disabled:opacity-50"
+          className="grid grid-cols-1 gap-4 transition-opacity disabled:opacity-50 sm:grid-cols-2"
         >
           <Field data-invalid={enabled && touched && thresholdValue === null}>
             <FieldLabel htmlFor="auto-top-up-threshold">

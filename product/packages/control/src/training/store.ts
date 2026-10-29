@@ -342,6 +342,42 @@ export const createTrainingStore = (database: ControlDatabase) => {
       return rows.map((row) => VersionRecordSchema.parse(row.version));
     },
 
+    async clearTrainingScheduleForBases(taskId: string, baseIds: string[]) {
+      const patch = TaskRecordSchema.pick({
+        trainingSchedule: true,
+        updatedAt: true,
+      }).parse({
+        trainingSchedule: null,
+        updatedAt: new Date(),
+      });
+      await database
+        .update(tasks)
+        .set(patch)
+        .where(
+          and(
+            eq(tasks.id, UuidSchema.parse(taskId)),
+            inArray(tasks.baseModelId, baseIds),
+          ),
+        );
+    },
+
+    async tasksForTrainingBases(baseIds: string[], after?: string) {
+      const rows = await database
+        .select({ id: tasks.id })
+        .from(tasks)
+        .where(
+          and(
+            inArray(tasks.baseModelId, baseIds),
+            isNotNull(tasks.trainingSchedule),
+            after ? gt(tasks.id, UuidSchema.parse(after)) : undefined,
+          ),
+        )
+        .orderBy(asc(tasks.id))
+        .limit(100);
+
+      return UuidSchema.array().parse(rows.map((row) => row.id));
+    },
+
     async admissionContext(
       target: string | { workspaceId: string; name: string },
     ) {

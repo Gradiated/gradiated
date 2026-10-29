@@ -10,3 +10,13 @@ test("autoscaled model monitoring follows the HPA instead of the bootstrap count
  assert.equal(result.spec.groups[0].rules.find(r=>r.record==="gradiated_model_minimum_replicas").expr,"vector(1)");
  assert.equal(result.spec.groups[0].rules[0].expr,'max(kube_horizontalpodautoscaler_status_desired_replicas{namespace="gpu-inference",horizontalpodautoscaler="keda-hpa-test"}) or vector(1)');
 });
+
+test("paused KEDA replicas override bootstrap and HPA counts",()=>{
+ const scaler={kind:"ScaledObject",metadata:{name:"test",namespace:"gpu-inference",annotations:{"autoscaling.keda.sh/paused-replicas":"0"}},spec:{scaleTargetRef:{kind:"Rollout",name:"test"}}};
+ const rules=modelReplicaRules([rollout("a/b",2),scaler]).spec.groups[0].rules;
+ assert.deepEqual(rules.map(rule=>rule.expr),["vector(0)","vector(0)"]);
+ for(const paused of ["-1","1.5","NaN","",0,"9007199254740992"]){
+  scaler.metadata.annotations["autoscaling.keda.sh/paused-replicas"]=paused;
+  assert.throws(()=>modelReplicaRules([rollout("a/b",2),scaler]),/Invalid paused/);
+ }
+});

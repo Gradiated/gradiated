@@ -12,12 +12,24 @@ if [[ "$jobs" != "$gated" ]]; then
   exit 1
 fi
 
+select_scopes() {
+  local scoped
+  scoped="$(cat)"
+  if [[ "$scoped" == *product/pnpm-lock.yaml* && -n "${BASE:-}" ]]; then
+    if git cat-file -e "${BASE}^{commit}" 2>/dev/null || git fetch --no-tags --depth=1 origin "$BASE"; then
+      python3 -m pip install --quiet PyYAML==6.0.3 >&2
+      scoped="$(printf '%s\n' "$scoped" | python3 "$GITHUB_ACTION_PATH/../product-changes/lockfiles.py")"
+    fi
+  fi
+  printf '%s\n' "$scoped" | python3 "$GITHUB_ACTION_PATH/select.py" "$SCOPES" "$WORKFLOW"
+}
+
 if [[ "$EVENT" != pull_request ]]; then
   echo relevant=true >>"$GITHUB_OUTPUT"
   if [[ -n "${SCOPES:-}" ]]; then
     if [[ "$EVENT" == push && -n "${BEFORE:-}" && "$BEFORE" != 0000000000000000000000000000000000000000 ]]; then
       git diff --name-only --no-renames "$BEFORE" "$HEAD" |
-        python3 "$GITHUB_ACTION_PATH/select.py" "$SCOPES" "$WORKFLOW"
+        select_scopes
     else
       python3 "$GITHUB_ACTION_PATH/select.py" "$SCOPES" "$WORKFLOW" --force
     fi
@@ -34,8 +46,7 @@ mapfile -t patterns < <(yq '.on.push.paths[]' "$WORKFLOW")
 changed=$(gh api --paginate "repos/$REPOSITORY/pulls/$PULL_REQUEST/files" \
   --jq '.[] | .filename, (.previous_filename // empty)')
 if [[ -n "${SCOPES:-}" ]]; then
-  printf '%s\n' "$changed" |
-    python3 "$GITHUB_ACTION_PATH/select.py" "$SCOPES" "$WORKFLOW"
+  printf '%s\n' "$changed" | select_scopes
 fi
 mapfile -t files <<<"$changed"
 

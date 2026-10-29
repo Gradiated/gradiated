@@ -10,8 +10,9 @@ rows; full attention slots remain unchanged. The GPU regression reproduces the
 long-prompt failure on the pinned upstream runtime (upstream issue #53982).
 The remaining dependencies are version-pinned and hash-locked; the lock uses a seven-day release cutoff.
 
-The entrypoint serves the pinned GLM model revision with tensor parallelism 2,
-FP8 KV cache, the GLM tool/reasoning parsers, and the existing startup
+The entrypoint serves `dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4` at revision
+`745aac2ff0f10acf961f396df3f9418598aa7327` with tensor parallelism 1,
+four active decode sequences, two MTP draft tokens, FP8 KV cache, the GLM tool/reasoning parsers, and the existing startup
 qualification supervisor. `RUNTIME_PORT` is the loopback inference port;
 `WARMUP_PORT` exposes readiness only after cold-shape and concurrency checks
 finish. Desmond should use that readiness endpoint. `HF_HOME` selects the
@@ -23,9 +24,62 @@ cache is required. The cache is disposable: a host reset can remove it, and the
 next rollout downloads it again before admission opens. Leave enough disk space
 for the checkpoint and retained revisions; use the Hugging Face cache tools to
 remove unused revisions while preserving weights used by running processes.
-The job reserves 400 GiB of host RAM. First startup can also include
+The job reserves 224 GiB of host RAM. First startup can also include
 GPU-kernel compilation and autotuning.
 The runtime launcher sets `GRADIATED_RUNTIME_ROOT`.
+
+The immutable stock release remains available for rollback. Dealign has a separate
+catalog identity, `dealignai/glm-5.3-flash-uncensored`; its modified base
+weights do not qualify existing stock-model LoRA adapters. A release selecting
+Dealign must omit `adapters`, `lora_enabled`, and the LoRA environment settings.
+Publishing this bundle does not change the selected production runtime: pin a
+qualified release in `gpu/runtimes.json` and the GPU `models.json` to roll it out.
+The worker waits for the catalog model to become available before SDK
+qualification, so a slower catalog rollout does not reject the runtime process.
+
+On a B300, 60-second synthetic runs with 1,024 generated tokens measured median
+per-request decode rates of 161, 188 and 186 TPS with one, two and three draft
+tokens, respectively, at concurrency one. Two drafts measured 147 TPS at
+concurrency two and 107 TPS at concurrency four. The longer-prompt concurrency-one
+run measured 179 TPS median and 169 TPS minimum across ten requests. Two drafts and one simultaneous decode meet the measured 150 TPS target.
+The selected production setting is four simultaneous decodes per GPU, favoring
+capacity at approximately 107 TPS per request. Remeasure for other prompt
+lengths and workloads. Under the selected 16 CPU / 224 GiB limits, a three-minute
+concurrency-four run completed 75 requests without errors at 107 TPS median per
+request and 416 aggregate TPS. An 8,036–8,041-token prompt run completed 20
+requests without errors at 88 TPS median per request.
+
+`--max-num-seqs 4` limits simultaneous decoding; additional HTTP requests can
+queue. Add TP1 replicas to increase simultaneous serving capacity.
+The production target is eight TP1 replicas at concurrency four, with 16 CPU and
+224 GiB host RAM per replica. Cold-weight loading and startup qualification
+peaked at 188 GiB under those cgroup limits. Eight replicas fit as four on the
+4-GPU B300 host and four beside DeepSeek on the 8-GPU B300 host, after stock GLM
+drains. Placement permits several replicas per host.
+Require node affinity to instance IDs `01a0f19d-1ff3-7613-8cbf-81b693c0f0d4`
+and `01a0fbf7-5276-700b-903b-7e04da150ed6`. Host
+`01a0fbf8-06fc-7658-96e1-ae72f7dba135` is user-owned capacity and must not be
+used for this deployment or further experiments, even if it is uncordoned.
+
+The startup supervisor checks bursts through concurrency sixteen, including
+queue completion within its timeout.
+
+Retire stock GLM only after the new deployment passes production verification.
+`autoscaling.paused_replicas: 0` renders KEDA's paused-replica annotation, which
+sets the old Rollout to zero while retaining its immutable rollback profile.
+Retiring the base also requires marking its trained adapters unavailable;
+retain their artifacts and training history.
+
+Reproduce the initial concurrency screen against an isolated test runtime:
+
+```sh
+mkdir -p .agents/runtime/glm-dealign
+python3 infra/environments/prod/runpod/deepseek-v4-1-flash/benchmark.py \
+  --url http://127.0.0.1:28085 \
+  --model dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4 \
+  --label glm-dealign-tp1-mtp2 --concurrency 1,2,4 --tokens 512 \
+  --output .agents/runtime/glm-dealign/concurrency.json
+```
 
 The pinned chat template recognizes `reasoning_effort: "low"` and `"high"`;
 omitting the field or using another value selects its maximum reasoning budget.
@@ -54,8 +108,10 @@ GRADIATED_GLM_GPU_TEST=1 /bundle/python/bin/python3 product/inference/runtimes/g
 The test covers prompt positions through 1,047,000 and checks full attention,
 a one-block side cache, disabled mapping, and padded batch tokens.
 
-When LoRA is enabled, the entrypoint restricts wrappers to the trained attention
-projections. GLM KDA packs q/k/v together with three untrained gate branches;
+The immutable stock release (runtime `glm-e74e88f23ba1`) restricts LoRA wrappers
+to the trained attention projections. The Dealign entrypoint rejects
+`LORA_ENABLED=true`; the following adapter qualification applies to the stock
+release only. GLM KDA packs q/k/v together with three untrained gate branches;
 MLA packs q_a and kv_a together. The pinned runtime needs these packing maps to
 apply every PEFT projection, rather than silently ignoring fused modules. Gate
 branches stay unwrapped because their sliced inputs are not contiguous and the

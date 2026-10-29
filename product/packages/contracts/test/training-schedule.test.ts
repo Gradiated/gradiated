@@ -37,7 +37,6 @@ it("handles disabled, invalid and impossible schedules", () => {
 
 it("separates training bases from comparison-only hosted and frontier models", () => {
   expect(TRAINING_BASE_MODELS.map(({ id }) => id)).toEqual([
-    "z-ai/glm-5.3-flash",
     "Qwen/Qwen3-0.6B",
     "Qwen/Qwen3-1.7B",
     "Qwen/Qwen3-4B",
@@ -62,4 +61,19 @@ it("rejects Kev as a comparison model in task updates", async () => {
     UpdateTaskSchema.safeParse({ comparison_model_id: "Qwen/Qwen3-0.6B" })
       .success,
   ).toBe(true);
+});
+
+it("preserves saved Dealign judge IDs while offering the renamed model", async () => {
+  const { EvaluationJudgeSchema } = await import("../src/training.js");
+  const { modelSupportedUses, modelDisplayName } =
+    await import("../src/model-catalog.js");
+  const legacy = "dealignai/glm-5.3-flash-uncensored-nvfp4";
+  const renamed = "dealignai/glm-5.3-flash-uncensored";
+
+  expect(EvaluationJudgeSchema.parse(legacy)).toBe(legacy);
+  expect(EvaluationJudgeSchema.parse(renamed)).toBe(renamed);
+  expect(modelSupportedUses(legacy)).toContain("comparison");
+  expect(modelDisplayName(legacy)).toBe("GLM-5.3 Flash Uncensored");
+  expect(COMPARISON_MODELS.map(({ id }) => id)).toContain(renamed);
+  expect(COMPARISON_MODELS.map(({ id }) => id)).not.toContain(legacy);
 });

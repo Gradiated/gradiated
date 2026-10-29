@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm --workspace-root exec turbo run build --filter=@gradiated/contracts --filter=@gradiated/analytics && pnpm build-storybook",
+  "devCommand": "pnpm storybook",
+  "outputDirectory": "storybook-static",
+  "ignoreCommand": "bash .storybook/ignore-build.sh",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }]
+    }
+  ]
+}

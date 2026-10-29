@@ -555,3 +555,48 @@ async fn rollout_sessions_keep_their_revision_when_another_replica_stops_accepti
         }
     }
 }
+
+#[tokio::test]
+async fn a_single_release_uses_all_healthy_accepting_replicas() {
+    use crate::test_support::metadata;
+    use crate::DeploymentRuntimeStatus;
+
+    let mut state = TestServingState::ready();
+    let model = state.model.as_mut().unwrap();
+    let template = model.deployments[0].clone();
+    model.deployments = (0..8)
+        .map(|index| {
+            let mut deployment = template.clone();
+            deployment.id = Uuid::from_u128(100 + index);
+            deployment
+        })
+        .collect();
+    state.statuses = Some(
+        model
+            .deployments
+            .iter()
+            .enumerate()
+            .map(|(index, deployment)| DeploymentRuntimeStatus {
+                schema_version: 1,
+                deployment_id: deployment.id,
+                runtime_revision: deployment.release.runtime_revision.clone(),
+                received_at: metadata().received_at,
+                healthy: index != 6,
+                accepting_requests: index != 7,
+                reason_code: None,
+            })
+            .collect(),
+    );
+    let model = state.model.clone().unwrap();
+    let coordinator = RequestCoordinator::new(Arc::new(state));
+    let mut selected_ids = HashSet::new();
+    for selection in 0..128 {
+        let selected = coordinator
+            .prefer_ready_release(model.clone(), metadata().received_at, Some(selection))
+            .await
+            .unwrap();
+        selected_ids.insert(selected.serving_deployment().unwrap().deployment.id);
+    }
+    let expected: HashSet<_> = (100..106).map(Uuid::from_u128).collect();
+    assert_eq!(selected_ids, expected);
+}

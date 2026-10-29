@@ -95,5 +95,29 @@
       "LORA_DOWNLOAD_HOSTS": "gradiated-prod-model-artifacts-873716897517.s3.us-east-1.amazonaws.com",
       "GRADIATED_API_BASE_URL": "http://127.0.0.1:3004"
     }
+  },
+  "43cdd1187074c633a08bb41babd1298fe3bb85dd8850bb1964d89849a3b63919": {
+    "image": "gradiated/glm-bundle@sha256:43cdd1187074c633a08bb41babd1298fe3bb85dd8850bb1964d89849a3b63919",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v3": "43cdd1187074c633a08bb41babd1298fe3bb85dd8850bb1964d89849a3b63919"
+    },
+    "model_id": "dealignai/glm-5.3-flash-uncensored",
+    "release": {
+      "schema_version": 1,
+      "model_path": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+      "model_revision": "745aac2ff0f10acf961f396df3f9418598aa7327",
+      "tokenizer_path": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+      "tokenizer_revision": "745aac2ff0f10acf961f396df3f9418598aa7327",
+      "runtime_revision": "glm-dealign-43cdd1187074",
+      "runtime_model_name": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4"
+    },
+    "gpus": 1,
+    "cpu": "16",
+    "memory": "224Gi",
+    "startup_timeout": 3600,
+    "warmup": true,
+    "environment": {
+      "TENSOR_PARALLEL_SIZE": "1"
+    }
   }
 }

@@ -2,48 +2,59 @@
 
 ## Release contract
 
-`Product tests` is the production quality gate. A successful run for `main`
-starts `Application deployment`. A manual run can deploy an explicit 40-character
-source commit from `main`. Sources older than the recorded production release are
-skipped before building; ancestry is checked again before writing release state.
-Rollbacks use a new revert commit on `main`, so delayed workflows cannot undo a
-newer deployment.
+`Product tests` is the pre-merge quality gate. It builds changed container images
+and the production console, scans the image archives with Trivy, and retains
+verified artifacts for 30 days. A CRITICAL vulnerability with an available fix
+blocks the PR; HIGH findings are reported. The existing GPU base image policy
+remains report-only. `.trivyignore` still requires a justification and expiry for
+each accepted risk. Scanner and policy changes invalidate prior verification.
 
-The deployment has one source revision and these parallel build outputs:
+A push to `main` starts `Application deployment` immediately. It does not wait
+for another test run, rebuild containers, compile the console, or run vulnerability
+scans. It promotes the artifacts that passed PR CI. Image archives are bound to
+their exact build inputs, verification inputs and archive checksum. Console
+artifacts additionally bind their public build configuration and every output
+file. Only successful runs of the product CI workflow in this repository qualify;
+fork artifacts cannot be promoted. If the merged inputs differ from those tested,
+or the required artifact expired, deployment stops and requires a retested PR.
+It never silently rebuilds an unverified image. An unchanged already-published
+image can be retained without downloading or copying its archive again.
 
-- one product image for the API, worker, and migration commands;
-- one gateway image;
-- one proxy image;
-- one collector image;
-- one static console build.
+Manual runs accept an explicit 40-character source commit from `main`. Release
+metadata records the originating `deploymentRunId`, so recovery inspects that
+run even when the dispatch ref and selected source differ. Sources
+older than the recorded release are skipped; ancestry is checked again before
+writing release state. Rollbacks use a new revert commit on `main`, preserving
+release ordering and making the rollback pass CI.
 
-The workflow tags ECR images with `git-<source-sha>`. ECR tag immutability makes
-the build idempotent. Kubernetes uses only resolved `sha256` image digests.
+Manual application deployment dispatches explicitly publish the console, allowing
+public build configuration changes without forcing backend rollouts. Run Product
+tests on main with the new configuration first to produce the matching verified
+console artifact; deployment continues to download that artifact without building.
 
 ## Deployment order
 
-1. Build the product image, gateway image, proxy image, collector image, and
-   console in parallel.
-2. Push the images to ECR, then scan each pushed digest with Trivy. A CRITICAL
-   vulnerability with a fix available fails the build and stops the release;
-   HIGH findings are reported in the job summary. Reports are kept as 90-day
-   workflow artifacts. Accepted risks go in `.trivyignore`, each with a
-   justification comment and an expiry date. The scan policy and Trivy version
-   come from the workflow revision, not the source commit. GPU base images are
-   scanned in report-only mode.
-3. Upload hashed console assets to the private S3 bucket. Do not upload the live
-   `index.html` file.
-4. Commit the source revision, image digests and console revision directly to
-   `main`, using a token from the Gradiated Release GitHub App. The source has
-   already passed `Product tests`; the generated commit carries `[skip ci]`
-   to avoid starting another build and deployment cycle.
-5. Wait for Argo CD to apply the release, fully promote the API, gateway and proxy
-   Rollouts, and make the remaining worker/collector Deployments available.
-   An explicit Argo gateway image override is preserved and checked for readiness.
-6. Upload `index.html` with revalidation headers.
-7. Invalidate the console CloudFront distribution.
-8. Compare the live root and SPA fallback with the built entry point. Check API
-   readiness.
+1. Resolve the source and compare its actual component inputs with the recorded
+   release. Resolve unchanged image digests and promote changed, CI-verified OCI
+   archives to ECR in parallel with downloading/staging the verified console.
+   Kubernetes uses immutable digests, not mutable deployment tags.
+2. Upload hashed console assets to private S3 without changing live `index.html`.
+   Backend-only releases skip console staging and publication.
+3. Commit the source revision, image digests and actual console revision to
+   `main` with the Gradiated Release app. Generated commits carry `[skip ci]`.
+4. For backend changes, wait for Argo CD to apply the release, fully promote API,
+   gateway and proxy canaries, make worker/collector Deployments available, and
+   pass the checks that require real production (including inference probes and
+   training readiness). Keep an explicit gateway image override where configured.
+5. Publish console `index.html`, invalidate CloudFront, and verify live root,
+   SPA fallback, static branding and API readiness. A frontend-only change skips
+   backend rollout waiting only when the previous backend deployment succeeded;
+   an uncertain or failed prior deployment falls back to checking backend health.
+
+Vercel owns the website and its previews; these application release steps concern
+the customer console and backend services. Build preparation and CI reuse do not
+permit competing production publications: the production concurrency group and
+stale-source checks remain in force.
 
 The release job mints a short-lived token from the Gradiated Release GitHub App
 (`RELEASE_APP_CLIENT_ID` variable, `RELEASE_APP_PRIVATE_KEY` secret in the
@@ -135,7 +146,7 @@ revision before promotion; the zero-replica Deployment is only the template.
 `promote-full` explicitly skips the remaining canary steps, readiness analysis
 Jobs and metric analysis. It preserves pod readiness, zero-unavailable capacity
 constraints and graceful termination, so it cannot make an unready image serve.
-It does not skip building, database migration or the final CI release checks.
+It does not bypass pre-merge CI, database migration or the final production readiness checks.
 Promotion applies to the current candidate, not a permanent fast mode for future
 releases. After full promotion, rollout analysis stops; normal service alerting
 continues. Do not expect the skipped analysis to automatically abort the hotfix.
@@ -186,9 +197,9 @@ healthy. S3 versioning keeps previous entry points for recovery.
   - Gradiated Autotrain Reader (contents read on `autotrain`): runtime builds.
   - Gradiated Argo CD (contents read): the
     `gradiated/prod/gitops/argocd-github-app` repository credential.
-  To rotate a key, generate a new one on the app's settings page, pipe it into
-  the same secret (`gh secret set` or `aws secretsmanager put-secret-value`),
-  then delete the old key. Never keep keys in version control.
+    To rotate a key, generate a new one on the app's settings page, pipe it into
+    the same secret (`gh secret set` or `aws secretsmanager put-secret-value`),
+    then delete the old key. Never keep keys in version control.
 - The `main` ruleset requires one gate per workflow: `Product tests passed`,
   `Kubernetes passed`, `Terraform passed`,
   `Model deployment passed`, `Wizard publish passed`, `Agent quality passed`,
@@ -225,24 +236,35 @@ workflow's own `push.paths` and skips the other jobs when nothing relevant
 changed; the `passed` gate treats skipped jobs as passing. A new job must be
 listed in its workflow's `passed.needs`; the `changes` job fails otherwise.
 
-Product tests further select individual jobs through
-`.github/actions/product-changes/plan.py`. Workspace unit checks include changed
-packages and their dependents; cross-service and Cargo fixture dependencies
-have explicit path scopes. Native runtime, storage, gateway, proxy, product
-browser, website, and tooling checks each have their own scopes. Root manifests,
-lockfiles, toolchain settings, and changes to the test workflow run all checks.
-Leaf package manifests select that workspace and its dependents; deleting a
-workspace manifest runs all checks because the current graph cannot identify its
-former consumers. Changes to the shared relevance action revalidate every caller.
-Manual dispatch also runs every check. Pushes compare the full before/after
-commit range; PRs include both current and previous names of renamed files.
-Documentation and screenshot-only changes skip product checks.
+Product tests select jobs through `.github/actions/product-changes/plan.py`.
+The normal checks target five minutes; expensive Rust, browser, image, native
+runtime and GPU tests target ten minutes and have explicit path scopes. These
+are performance targets; generous failure timeouts only stop runaway jobs. CI workflow,
+shared selector and toolchain changes intentionally validate all affected scopes.
 
-Product Rust build caches include the source commit in their save keys and restore
-the latest cache with matching lockfiles first. This lets successful source changes
-refresh compiled artifacts instead of repeatedly restoring an immutable old build.
-GPU enrollment, GPU base bootstrap, and Tailscale assets copied into the product
-image also trigger Product tests and application release, with tooling checks.
+TypeScript checks are split into bounded parallel groups, with independent Rust
+jobs. Formatting is a separate fast check, including website-only and product
+Markdown changes. The pnpm lockfile selector compares each importer's transitive
+snapshot/integrity closure; a console-only dependency update does not automatically
+select inference or GPU checks. The production console still builds for every
+lockfile change because its immutable artifact includes the complete lockfile.
+Unknown lockfile shapes, missing bases, root
+workspace dependency changes and global lockfile settings conservatively run full
+validation. Workspace dependencies and explicit cross-language fixtures still
+propagate changes to their consumers.
+
+A successful product CI run can prove identical selected checks on a later push.
+The reuse key includes the material merged tree, tool/test definitions and selected
+scope, so changed merge inputs or changed coverage cannot borrow an unrelated
+result. Formatting remains independent; image candidates require a scan proof
+no older than 24 hours when reusing a build in CI. Required aggregate gates always
+report, even for an unchanged round. Restored compilation caches are an optimization,
+not evidence that tests passed. PR jobs restore Rust targets without uploading
+them; only successful main checks populate those compilation caches.
+
+The workflow prints per-shard wall/CPU/RSS measurements. Change Depot machine size
+only after comparing an identified CPU or memory bottleneck on the same workload;
+network/cache transfer and production soak waits do not benefit from more CPUs.
 
 Kubernetes selects its database, observability, Tailscale, Temporal UI/browser,
 Argo authentication, and Loki subchecks from `.github/actions/relevant/kubernetes.json`.
@@ -255,12 +277,18 @@ Manual dispatch, new-branch pushes without a base, workflow changes, shared-acti
 changes, and toolchain changes run every subcheck. Keep scopes in sync with the
 files each validator reads, including shared helpers and cross-file fixtures.
 
-Website builds run in the Product tests PR gate and the separate informative
-Website screenshots workflow. Website-only main-branch changes do not trigger
-Product tests and its downstream application deployment; Vercel owns website
-hosting. The screenshot workflow follows the console Storybook pattern: artifacts
-for all PRs, committed PNGs and before/after comments for same-repository PRs,
-and no pixel-diff failures.
+Website builds run in the Product tests PR gate. Website-only main-branch
+changes do not trigger Product tests and its downstream application deployment;
+Vercel owns website hosting and PR preview links. Console Storybook uses a
+separate `storybook` Vercel project in the Gradiated team, rooted at
+`product/services/console`, with its build
+configuration in `vercel.json` and PR links provided by Vercel's Git integration.
+Preview builds run independently of GitHub Actions. Configure Standard machines
+and on-demand concurrency with one active build per branch for parallel PRs.
+Neither website nor Storybook CI captures or commits screenshots. Local capture
+scripts remain available under `tools/browser/`. The old AWS Storybook custom
+domain is retained as a legacy build until a reviewed DNS/hosting migration;
+use `https://gradiated-storybook-gradiated.vercel.app` and PR preview links for current builds.
 
 Before observability reconciliation, populate the externally managed
 `gradiated/prod/platform/alertmanager-notifications` secret with a

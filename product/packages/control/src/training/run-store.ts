@@ -1,3 +1,7 @@
+import {
+  catalogModel,
+  TRAINING_BASE_MODELS,
+} from "@gradiated/contracts/model-catalog";
 import { and, eq, sql } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 import {
@@ -259,6 +263,12 @@ export const createTrainingRunStore = (database: ControlDatabase) => ({
         .where(eq(taskVersions.trainingRunId, runId));
       const existing = rawExisting && VersionRecordSchema.parse(rawExisting);
       if (existing) return existing.id;
+
+      if (
+        catalogModel(input.baseModelId) &&
+        !TRAINING_BASE_MODELS.some((base) => base.id === input.baseModelId)
+      )
+        throw new Error("The base model has been retired from training.");
 
       const run = await lockRun(tx, runId);
 

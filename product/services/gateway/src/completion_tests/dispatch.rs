@@ -399,3 +399,30 @@ async fn a_rejected_generation_identity_is_logged_before_admission() {
     assert_eq!(failures.len(), 1);
     assert_eq!(failures[0]["fields"]["error_code"], "invalid_model_id");
 }
+
+#[tokio::test]
+async fn identical_sessionless_requests_spread_across_the_fleet() {
+    let request = qualified_request(8);
+    let harness = Harness::new(request.clone(), []);
+    let mut primaries = std::collections::HashSet::new();
+    for generation in 1..=256 {
+        let mut current = request.clone();
+        current.metadata.generation_id = Uuid::from_u128(generation);
+        primaries.insert(harness.service.route(&current).await.unwrap().primary.id);
+    }
+    assert_eq!(primaries.len(), 8);
+}
+
+#[tokio::test]
+async fn an_explicit_session_keeps_its_replica_across_requests() {
+    let mut request = qualified_request(8);
+    request.request.session_id = Some("chat-session".to_owned());
+    let harness = Harness::new(request.clone(), []);
+    let mut primaries = std::collections::HashSet::new();
+    for generation in 1..=256 {
+        let mut current = request.clone();
+        current.metadata.generation_id = Uuid::from_u128(generation);
+        primaries.insert(harness.service.route(&current).await.unwrap().primary.id);
+    }
+    assert_eq!(primaries.len(), 1);
+}

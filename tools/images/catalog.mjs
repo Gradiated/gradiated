@@ -11,7 +11,12 @@ export const catalog = {
     dockerfile: "tools/virtual-kubelet/Dockerfile",
     repository: "gradiated/prod/product",
     target: "",
-    paths: ["tools/virtual-kubelet/go.mod", "tools/virtual-kubelet/go.sum", "tools/virtual-kubelet/cmd/", "tools/virtual-kubelet/Dockerfile"],
+    paths: [
+      "tools/virtual-kubelet/go.mod",
+      "tools/virtual-kubelet/go.sum",
+      "tools/virtual-kubelet/cmd/",
+      "tools/virtual-kubelet/Dockerfile",
+    ],
   },
   "temporal-ui": {
     context: "infra/images/temporal-ui",
@@ -20,6 +25,17 @@ export const catalog = {
     paths: ["infra/images/temporal-ui/"],
   },
   product: {
+    exclude: [
+      "product/services/console/",
+      "product/services/gateway/",
+      "product/services/proxy/",
+      "product/services/collector/",
+      "product/services/api/generated/",
+    ],
+    include: [
+      "product/services/console/package.json",
+      "product/services/gateway/package.json",
+    ],
     context: "product",
     repository: "gradiated/prod/product",
     target: "",

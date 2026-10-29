@@ -8,22 +8,19 @@ export PATH="$root/python/bin:$CUDA_HOME/bin:$PATH"
 export LD_LIBRARY_PATH="$CUDA_HOME/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export VLLM_DEEP_GEMM_WARMUP=relax
 unset PYTHONPATH VLLM_ALLOW_INSECURE_SERIALIZATION VLLM_SERVER_DEV_MODE
-wrapper=()
-lora_arguments=()
 if [[ "${LORA_ENABLED:-false}" == "true" ]]; then
-  export LORA_CACHE_DIR="${GRADIATED_RUNTIME_DIR:?}/lora"
-  wrapper=("$root/python/bin/python3" "$root/lora/launch.py")
-  # Only the trained attention projections; gate branches receive sliced inputs.
-  lora_arguments=(--lora-target-modules in_proj_qkvbfg_a fused_qkv_a_proj q_b_proj kv_b_proj o_proj)
+  echo "Dealign weights require separately qualified adapters; stock GLM adapters are unsupported" >&2
+  exit 64
 fi
 export RUNTIME_URL="http://127.0.0.1:${RUNTIME_PORT:?}"
 : "${WARMUP_PORT:?}"
-exec "${wrapper[@]}" "$root/python/bin/python3" "$root/warmup-supervisor.py" \
-  "$root/python/bin/python3" -m vllm.entrypoints.cli.main serve zai-org/GLM-5.3-Flash \
-  --revision 84c6a6aa9497188e15a635ba793b0f95a79b1033 \
-  --host 127.0.0.1 --port "${RUNTIME_PORT:?}" --served-model-name zai-org/GLM-5.3-Flash \
-  --tensor-parallel-size "${TENSOR_PARALLEL_SIZE:-2}" --max-model-len 1048576 --max-num-seqs 16 \
+exec "$root/python/bin/python3" "$root/warmup-supervisor.py" \
+  "$root/python/bin/python3" -m vllm.entrypoints.cli.main serve dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4 \
+  --revision 745aac2ff0f10acf961f396df3f9418598aa7327 \
+  --host 127.0.0.1 --port "${RUNTIME_PORT:?}" --served-model-name dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4 \
+  --tensor-parallel-size "${TENSOR_PARALLEL_SIZE:-1}" --max-model-len 1048576 --max-num-seqs 4 \
   --gpu-memory-utilization 0.90 --kv-cache-dtype fp8 --block-size 128 \
   --tool-call-parser glm47 --reasoning-parser glm45 --enable-auto-tool-choice \
   --enable-prompt-tokens-details --safetensors-load-strategy prefetch \
-  --safetensors-prefetch-num-threads 8 --scheduling-policy priority "${lora_arguments[@]}"
+  --safetensors-prefetch-num-threads 8 --scheduling-policy priority \
+  --speculative-config '{"method":"mtp","num_speculative_tokens":2}'

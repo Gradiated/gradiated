@@ -8,7 +8,7 @@ export const createGlm53FlashModelConfiguration = () =>
   ({
     id: glm53FlashModelId,
     name: modelDisplayName(glm53FlashModelId),
-    status: "available",
+    status: "unavailable",
     properties: {
       description:
         "GLM-5.3 Flash is a fast reasoning and tool-use model from Z.AI",
@@ -79,3 +79,37 @@ export const createGlm53FlashModelConfiguration = () =>
       },
     },
   }) satisfies CatalogModelInput;
+
+export const createDealignGlm53FlashModelConfiguration = () => {
+  const base = createGlm53FlashModelConfiguration();
+  const id = "dealignai/glm-5.3-flash-uncensored";
+
+  return {
+    ...base,
+    id,
+    name: modelDisplayName(id),
+    status: "available",
+    properties: {
+      ...base.properties,
+      description:
+        "Dealign's weight-modified GLM-5.3 Flash with NVFP4 routed experts and retained reasoning and tool use",
+      released_at: "2026-08-29T00:00:00.000Z",
+      hugging_face_id: "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+      quantization: "nvfp4",
+      input_modalities: base.properties.input_modalities.map((modality) => ({
+        ...modality,
+        pricing: [
+          { type: "prompt", unit: "token", cost: 100 },
+          { type: "cached_prompt", unit: "token", cost: 10 },
+        ],
+      })),
+      output_modalities: base.properties.output_modalities.map((modality) => ({
+        ...modality,
+        pricing: [
+          { type: "completion", unit: "token", cost: 450 },
+          { type: "internal_reasoning", unit: "token", cost: 450 },
+        ],
+      })),
+    },
+  } satisfies CatalogModelInput;
+};

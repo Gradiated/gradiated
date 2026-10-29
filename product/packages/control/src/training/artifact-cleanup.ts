@@ -1,3 +1,7 @@
+import {
+  MODEL_CATALOG,
+  type CatalogEntry,
+} from "@gradiated/contracts/model-catalog";
 import type { ControlDatabase } from "../db/client.js";
 import type { ContentStore } from "../traces/storage.js";
 import { createTrainingStore } from "./store.js";
@@ -51,4 +55,55 @@ export const deleteArchivedTasks = async (
 
   if (errors.length === 1) throw errors[0];
   if (errors.length) throw new AggregateError(errors, "Task cleanup failed.");
+};
+
+export const deleteRetiredTrainingSchedules = async (
+  database: ControlDatabase,
+  engine: Pick<TrainingEngine, "updateSchedule">,
+) => {
+  const retired = (MODEL_CATALOG as readonly CatalogEntry[])
+    .filter(
+      (model) => model.training && !model.supportedUses.includes("training"),
+    )
+    .map((model) => model.id);
+  if (!retired.length) return;
+
+  const store = createTrainingStore(database);
+  const errors: unknown[] = [];
+  let cursor: string | undefined;
+  for (;;) {
+    const ids = await store.tasksForTrainingBases(retired, cursor);
+    for (const id of ids) {
+      try {
+        await engine.updateSchedule(id, null);
+        await store.clearTrainingScheduleForBases(id, retired);
+        const savedSchedule = (
+          row: Awaited<ReturnType<typeof store.admissionContext>>,
+        ) =>
+          row &&
+          !row.workspace.archivedAt &&
+          !retired.includes(row.task.baseModelId ?? "")
+            ? row.task.trainingSchedule
+            : null;
+        let desired = savedSchedule(await store.admissionContext(id));
+        if (desired) {
+          for (;;) {
+            await engine.updateSchedule(id, desired);
+            const latest = savedSchedule(await store.admissionContext(id));
+            if (latest === desired) break;
+            desired = latest;
+          }
+        }
+      } catch (error) {
+        errors.push(error);
+      }
+    }
+    if (ids.length < 100) break;
+    cursor = ids.at(-1);
+  }
+  if (errors.length)
+    throw new AggregateError(
+      errors,
+      "Retired training schedule cleanup failed.",
+    );
 };

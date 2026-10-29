@@ -12,3 +12,7 @@ services/proxy
 # The Dockerfile installs the workspace with the gateway's package manifest.
 services/gateway
 !services/gateway/package.json
+
+# Console assets are built and deployed independently of backend services.
+services/console
+!services/console/package.json

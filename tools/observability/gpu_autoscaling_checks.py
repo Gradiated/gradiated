@@ -9,8 +9,13 @@ def check_gpu_autoscaling(root):
     gpu = kube / 'gpu-inference'
     app = yaml.safe_load((kube / 'platform/gpu-models.yaml').read_text())['spec']['template']['spec']
     assert 'RespectIgnoreDifferences=true' in app['syncPolicy']['syncOptions']
-    assert app['ignoreDifferences'] == [{'group': 'argoproj.io', 'kind': 'Rollout',
-                                        'namespace': 'gpu-inference', 'jsonPointers': ['/spec/replicas']}]
+    # Autoscaling owns replicas only while the model is not explicitly paused.
+    assert app['ignoreDifferences'] == [{
+        'group': 'argoproj.io', 'kind': 'Rollout', 'namespace': 'gpu-inference',
+        'jqPathExpressions': [
+            'select(.metadata.annotations["gradiated.com/paused-replicas"] == null) | .spec.replicas',
+        ],
+    }]
     tests = []
     models = json.loads((gpu / 'models.json').read_text())
     catalogue = json.loads((root / 'product/inference/gpu/runtimes.json').read_text())
@@ -18,7 +23,12 @@ def check_gpu_autoscaling(root):
         rollout, obj = yaml.safe_load_all((gpu / 'models' / name / f'{name}.yaml').read_text())
         spec = obj['spec']
         assert spec['scaleTargetRef'] == {'apiVersion': 'argoproj.io/v1alpha1', 'kind': 'Rollout', 'name': name}
-        assert spec['minReplicaCount'] == rollout['spec']['replicas'] == model['replicas']
+        assert spec['minReplicaCount'] == model['replicas']
+        paused = model['autoscaling'].get('paused_replicas')
+        assert rollout['spec']['replicas'] == (model['replicas'] if paused is None else paused)
+        if paused is not None:
+            assert rollout['metadata']['annotations']['gradiated.com/paused-replicas'] == str(paused)
+            assert obj['metadata']['annotations']['autoscaling.keda.sh/paused-replicas'] == str(paused)
         assert spec['maxReplicaCount'] == model['autoscaling']['max_replicas']
         assert spec['fallback']['replicas'] == model['replicas']
         assert spec['fallback']['behavior'] == 'currentReplicasIfHigher'

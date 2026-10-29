@@ -1,4 +1,4 @@
-import { Fragment } from "react";
+import { Fragment, useEffect } from "react";
 import type { ReactElement } from "react";
 import {
   BrowserRouter,
@@ -42,13 +42,19 @@ const SandJourneyRedirect = (): ReactElement => {
 const LibraryRedirect = (): ReactElement => {
   const { search } = useLocation();
   const destination = new URLSearchParams(search).get("show");
+  const target =
+    destination === "methods" || destination === "handbook"
+      ? "/handbook/"
+      : "/notes/";
 
-  return (
-    <Navigate
-      replace
-      to={destination === "methods" || destination === "handbook" ? "/handbook/" : "/notes/"}
-    />
-  );
+  useEffect(() => {
+    window.location.replace(target);
+  }, [target]);
+
+  /* StaticRouter cannot execute Navigate during prerendering. Render the
+     destination as the fallback so /library/ remains valid HTML, then replace
+     the URL once the browser hydrates. */
+  return target === "/handbook/" ? <HandbookPage /> : <NotesIndexPage />;
 };
 
 export const AppRoutes = (): ReactElement => (

@@ -195,7 +195,13 @@ impl RequestCoordinator {
         }
 
         let releases = available_releases(&model);
-        if releases.len() < 2 {
+        if model
+            .deployments
+            .iter()
+            .filter(|deployment| deployment.status == crate::DeploymentStatus::Available)
+            .count()
+            < 2
+        {
             return Ok(model);
         }
 

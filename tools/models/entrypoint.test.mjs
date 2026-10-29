@@ -139,4 +139,12 @@ console.log(JSON.stringify({ args: process.argv.slice(2), gpus: process.env.CUDA
     "2",
   );
   assert.equal(result.args[result.args.indexOf("--port") + 1], "23456");
+  assert.equal(
+    result.args[result.args.indexOf("serve") + 1],
+    "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+  );
+  assert.equal(
+    result.args[result.args.indexOf("--revision") + 1],
+    "745aac2ff0f10acf961f396df3f9418598aa7327",
+  );
 });

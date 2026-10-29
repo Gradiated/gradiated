@@ -10,7 +10,8 @@ rows; full attention slots remain unchanged. The GPU regression reproduces the
 long-prompt failure on the pinned upstream runtime (upstream issue #53982).
 The remaining dependencies are version-pinned and hash-locked; the lock uses a seven-day release cutoff.
 
-The entrypoint serves the pinned GLM model revision with tensor parallelism 2,
+The entrypoint serves `dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4` at revision
+`745aac2ff0f10acf961f396df3f9418598aa7327` with tensor parallelism 2,
 FP8 KV cache, the GLM tool/reasoning parsers, and the existing startup
 qualification supervisor. `RUNTIME_PORT` is the loopback inference port;
 `WARMUP_PORT` exposes readiness only after cold-shape and concurrency checks
@@ -26,6 +27,13 @@ remove unused revisions while preserving weights used by running processes.
 The job reserves 400 GiB of host RAM. First startup can also include
 GPU-kernel compilation and autotuning.
 The runtime launcher sets `GRADIATED_RUNTIME_ROOT`.
+
+The immutable stock release remains available for rollback. Dealign has a separate
+catalog identity, `dealignai/glm-5.3-flash-uncensored-nvfp4`; its modified base
+weights do not qualify existing stock-model LoRA adapters. A release selecting
+Dealign must omit `adapters`, `lora_enabled`, and the LoRA environment settings.
+Publishing this bundle does not change the selected production runtime: pin a
+qualified release in `gpu/runtimes.json` and the GPU `models.json` to roll it out.
 
 The pinned chat template recognizes `reasoning_effort: "low"` and `"high"`;
 omitting the field or using another value selects its maximum reasoning budget.

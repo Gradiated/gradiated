@@ -19,9 +19,9 @@ fi
 export RUNTIME_URL="http://127.0.0.1:${RUNTIME_PORT:?}"
 : "${WARMUP_PORT:?}"
 exec "${wrapper[@]}" "$root/python/bin/python3" "$root/warmup-supervisor.py" \
-  "$root/python/bin/python3" -m vllm.entrypoints.cli.main serve zai-org/GLM-5.3-Flash \
-  --revision 84c6a6aa9497188e15a635ba793b0f95a79b1033 \
-  --host 127.0.0.1 --port "${RUNTIME_PORT:?}" --served-model-name zai-org/GLM-5.3-Flash \
+  "$root/python/bin/python3" -m vllm.entrypoints.cli.main serve dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4 \
+  --revision 745aac2ff0f10acf961f396df3f9418598aa7327 \
+  --host 127.0.0.1 --port "${RUNTIME_PORT:?}" --served-model-name dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4 \
   --tensor-parallel-size "${TENSOR_PARALLEL_SIZE:-2}" --max-model-len 1048576 --max-num-seqs 16 \
   --gpu-memory-utilization 0.90 --kv-cache-dtype fp8 --block-size 128 \
   --tool-call-parser glm47 --reasoning-parser glm45 --enable-auto-tool-choice \

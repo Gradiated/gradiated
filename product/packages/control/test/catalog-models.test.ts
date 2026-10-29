@@ -35,6 +35,10 @@ describe("model configurations", () => {
   const pinnedPrices: Record<string, { input: number[]; output: number[] }> = {
     "deepseek/deepseek-v4.1-flash": { input: [300, 6], output: [1_200, 1_200] },
     "z-ai/glm-5.3-flash": { input: [75, 15], output: [250, 250] },
+    "dealignai/glm-5.3-flash-uncensored-nvfp4": {
+      input: [75, 15],
+      output: [250, 250],
+    },
     "jaredpalmer/kev-9b": { input: [30, 6], output: [0] },
   };
 
@@ -64,6 +68,7 @@ describe("model configurations", () => {
     expect(catalogModels.map((model) => modelType(model.id))).toEqual([
       "chat",
       "chat",
+      "chat",
       "decision",
     ]);
   });
@@ -80,5 +85,16 @@ describe("model configurations", () => {
       type: "enum",
       values: ["low", "high", "max"],
     });
+  });
+});
+
+it("identifies Dealign weights separately from the stock training base", () => {
+  const model = catalogModels.find(
+    (item) => item.id === "dealignai/glm-5.3-flash-uncensored-nvfp4",
+  );
+
+  expect(model?.properties).toMatchObject({
+    hugging_face_id: "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+    quantization: "nvfp4",
   });
 });

@@ -288,9 +288,19 @@ def main() -> None:
         try:
             response = post("https://api.fireworks.ai/inference/v1/chat/completions", body, fireworks)
         except RuntimeError as error:
-            stats["teacher_error"] += 1
-            print(f"teacher error: {str(error)[:200]}", file=sys.stderr)
-            return None
+            if "top_logprobs" not in body or "HTTP 500" not in str(error):
+                stats["teacher_error"] += 1
+                print(f"teacher error: {str(error)[:200]}", file=sys.stderr)
+                return None
+            # Fireworks returns 500 on many long prompts when top-k is requested; score this sample without top-k.
+            body = {k: v for k, v in body.items() if k != "top_logprobs"}
+            stats["topk_fallback"] += 1
+            try:
+                response = post("https://api.fireworks.ai/inference/v1/chat/completions", body, fireworks)
+            except RuntimeError as error2:
+                stats["teacher_error"] += 1
+                print(f"teacher error: {str(error2)[:200]}", file=sys.stderr)
+                return None
         choice = response["choices"][0]
         for k, v in (response.get("usage") or {}).items():
             if isinstance(v, int):
@@ -315,7 +325,7 @@ def main() -> None:
             for span in spans:
                 if len(span.student_tokens) != 1 or len(span.teacher_tokens) != 1:
                     continue
-                alts = entries[at + span.teacher_tokens.start].get("top_logprobs") or []
+                alts = entries[at + span.teacher_tokens.start].get("top_logprobs") or [] if "top_logprobs" in body else []
                 mapped = {}
                 for alt in alts:
                     qid = qwen.id_of(alt["token"])

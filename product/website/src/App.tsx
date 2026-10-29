@@ -51,10 +51,10 @@ const LibraryRedirect = (): ReactElement => {
     window.location.replace(target);
   }, [target]);
 
-  /* StaticRouter cannot execute Navigate during prerendering. Render the
-     destination as the fallback so /library/ remains valid HTML, then replace
-     the URL once the browser hydrates. */
-  return target === "/handbook/" ? <HandbookPage /> : <NotesIndexPage />;
+  /* The prerenderer only receives the pathname, so its /library/ HTML is the
+     Notes fallback. Keep the first browser render identical regardless of the
+     query string; the effect applies the query-based redirect after hydration. */
+  return <NotesIndexPage />;
 };
 
 const RouteScrollRestoration = (): null => {

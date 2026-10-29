@@ -1,0 +1,38 @@
+import { createElement } from "react";
+import { renderToString } from "react-dom/server";
+import { StaticRouter } from "react-router-dom";
+import { expect, it, vi } from "vitest";
+
+vi.mock("../src/articles", () => ({ articles: [] }));
+vi.mock("../src/careers", () => ({ jobs: [] }));
+vi.mock("../src/pages/DocsNextPage", () => ({
+  DocsNextPage: () => null,
+}));
+vi.mock("../src/pages/ReadingPages", () => ({
+  ArticleReadingPage: () => null,
+}));
+vi.mock("../src/handbook", () => ({
+  handbookPages: [],
+  handbookSections: [],
+}));
+vi.mock("../src/models", () => ({ models: [] }));
+
+import { AppRoutes } from "../src/App";
+
+const renderLibrary = (search = ""): string =>
+  renderToString(
+    createElement(
+      StaticRouter,
+      { location: `/library/${search}` },
+      createElement(AppRoutes),
+    ),
+  );
+
+it("keeps the Library hydration fallback independent of its query string", () => {
+  const fallback = renderLibrary();
+
+  expect(renderLibrary("?show=methods")).toBe(fallback);
+  expect(renderLibrary("?show=handbook")).toBe(fallback);
+  expect(fallback).toContain("gr-library-controls");
+  expect(fallback).not.toContain("gr-handbook-index");
+});

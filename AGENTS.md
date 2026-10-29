@@ -18,6 +18,7 @@ This repository is the complete project state for the research and product-build
 - Use `README.md`, `docs/ARCHITECTURE.md` and `research/README.md` as the orientation map.
 - Use the top-level documents in `docs/` for product architecture, data models and implementation plans; do not encode durable interfaces only in chat or issue comments.
 - Treat `docs/security/policies/` as binding company policy for security, access, change and data handling. Change a policy there by PR, then publish it to Drata.
+- Pin every GitHub Action and reusable workflow to a full-length commit SHA with a version comment, e.g. `uses: actions/checkout@<sha> # v4.4.0`. The Gradiated org requires this, so a tag or branch ref fails the run. Pin new or changed `uses:` lines with [pinact](https://github.com/suzuki-shunsuke/pinact) (`pinact run`); pinact can't pin a branch ref, so switch it to a release tag first. Local `./` actions need no pin.
 - Put browser automation code and dependency declarations in `tools/browser/`.
 - Put temporary profiles, caches, test output, and run logs under `.agents/runtime/`; never commit them.
 - Routine product, infrastructure, and CI work must not create evidence folders, dated reports, task packets, ledgers, or handoff files. Summarize checks in the PR or response. Update an existing README or plan only when behavior, operation, or a useful decision changes. Keep research deliverables only when the research task requires them.

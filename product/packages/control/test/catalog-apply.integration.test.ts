@@ -1,4 +1,6 @@
-import { eq } from "drizzle-orm";
+import { randomUUID } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import { eq, sql } from "drizzle-orm";
 import { ModelPropertiesSchema } from "@gradiated/contracts";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -9,8 +11,8 @@ import {
   legacyModels,
 } from "../src/catalog/models/index.js";
 import { createCatalogService } from "../src/catalog/service.js";
-import { models } from "../src/db/schema/index.js";
-import { modelInput } from "./support/fixtures.js";
+import { models, tasks, workspaces } from "../src/db/schema/index.js";
+import { modelInput, seedMember } from "./support/fixtures.js";
 import { createTestDatabase, type TestDatabase } from "./support/postgres.js";
 
 describe("catalog apply", () => {
@@ -62,7 +64,7 @@ describe("catalog apply", () => {
     expect(stored).toMatchObject({ name: kev!.name, status: kev!.status });
   });
 
-  it("keeps the previous Dealign ID available while exposing the requested public name", async () => {
+  it("retires the previous Dealign ID after the requested model qualifies", async () => {
     const catalog = createCatalogService(testDatabase.database);
     const legacy = legacyModels[0]!;
     await catalog.upsertModel({ ...legacy, status: "unavailable" });
@@ -70,11 +72,7 @@ describe("catalog apply", () => {
     await applyCatalog(testDatabase.database);
 
     const listed = await catalog.listModels();
-    expect(listed).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: legacy.id, status: "available" }),
-      ]),
-    );
+    expect(listed.map((model) => model.id)).not.toContain(legacy.id);
     expect(listed).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -84,6 +82,49 @@ describe("catalog apply", () => {
         }),
       ]),
     );
+  });
+
+  it("moves active saved Dealign selections to the renamed deployment ID", async () => {
+    const legacy = "dealignai/glm-5.3-flash-uncensored-nvfp4";
+    const renamed = "dealignai/glm-5.3-flash-uncensored";
+    const { workspaceId } = await seedMember(testDatabase.database, {
+      role: "admin",
+    });
+    await testDatabase.database
+      .update(workspaces)
+      .set({ defaultJudgeModel: legacy })
+      .where(eq(workspaces.id, workspaceId));
+    const taskId = randomUUID();
+    await testDatabase.database.insert(tasks).values({
+      id: taskId,
+      workspaceId,
+      name: "Rename migration",
+      judgeModelId: legacy,
+      comparisonModelId: legacy,
+    });
+    const migration = await readFile(
+      new URL(
+        "../migrations/0024_retire_stock_glm_adapters.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+
+    await testDatabase.database.execute(sql.raw(migration));
+
+    const [workspace] = await testDatabase.database
+      .select()
+      .from(workspaces)
+      .where(eq(workspaces.id, workspaceId));
+    const [task] = await testDatabase.database
+      .select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
+    expect(workspace?.defaultJudgeModel).toBe(renamed);
+    expect(task).toMatchObject({
+      judgeModelId: renamed,
+      comparisonModelId: renamed,
+    });
   });
 
   it("reports models the catalog does not define without changing them", async () => {

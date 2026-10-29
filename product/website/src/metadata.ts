@@ -59,6 +59,7 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     title: "Library",
     description:
       "Read Gradiated research notes and learn how we work across inference software and hardware.",
+    index: false,
   },
   "/careers/": {
     title: "Careers",

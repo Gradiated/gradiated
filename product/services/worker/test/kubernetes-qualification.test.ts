@@ -30,6 +30,8 @@ const pod = () => ({
   },
 });
 
+const availableModels = new Set(["jaredpalmer/kev-9b"]);
+
 describe("Kubernetes SDK qualification", () => {
   it("gates qualification on runtime readiness and process incarnation", () => {
     const candidate = pod();
@@ -54,12 +56,17 @@ describe("Kubernetes SDK qualification", () => {
       }
       return path.includes("?") ? { items: [current], metadata: {} } : current;
     };
-    await qualifyKubernetesPod("gpu-inference", request, async (input) => {
-      expect(input).toMatchObject({
-        stage: "canary",
-        deploymentIds: [current.metadata.uid],
-      });
-    });
+    await qualifyKubernetesPod(
+      "gpu-inference",
+      request,
+      availableModels,
+      async (input) => {
+        expect(input).toMatchObject({
+          stage: "canary",
+          deploymentIds: [current.metadata.uid],
+        });
+      },
+    );
     expect(patch).toEqual(
       expect.arrayContaining([
         { op: "test", path: "/metadata/uid", value: current.metadata.uid },
@@ -78,10 +85,40 @@ describe("Kubernetes SDK qualification", () => {
       if (method === "PATCH") patched = true;
       return path.includes("?") ? { items: [current], metadata: {} } : current;
     };
-    await qualifyKubernetesPod("gpu-inference", request, async () => {
-      current.status.containerStatuses[0]!.containerID = "runpod://2:200";
-    });
+    await qualifyKubernetesPod(
+      "gpu-inference",
+      request,
+      availableModels,
+      async () => {
+        current.status.containerStatuses[0]!.containerID = "runpod://2:200";
+      },
+    );
     expect(patched).toBe(false);
+  });
+  it("waits for catalog availability without rejecting the runtime incarnation", async () => {
+    const current = pod();
+    let verifications = 0;
+    let patches = 0;
+    const request = async (path: string, method?: string) => {
+      if (method === "PATCH") patches += 1;
+      return path.includes("?") ? { items: [current], metadata: {} } : current;
+    };
+    const verify = async () => {
+      verifications += 1;
+    };
+
+    await qualifyKubernetesPod("gpu-inference", request, new Set(), verify);
+    expect(verifications).toBe(0);
+    expect(patches).toBe(0);
+
+    await qualifyKubernetesPod(
+      "gpu-inference",
+      request,
+      availableModels,
+      verify,
+    );
+    expect(verifications).toBe(1);
+    expect(patches).toBe(1);
   });
   it("records a rejected incarnation without qualifying it", async () => {
     const current = pod();
@@ -93,9 +130,14 @@ describe("Kubernetes SDK qualification", () => {
       }
       return path.includes("?") ? { items: [current], metadata: {} } : current;
     };
-    await qualifyKubernetesPod("gpu-inference", request, async () => {
-      throw new Error("bad model response");
-    });
+    await qualifyKubernetesPod(
+      "gpu-inference",
+      request,
+      availableModels,
+      async () => {
+        throw new Error("bad model response");
+      },
+    );
     expect(patch).toEqual(
       expect.arrayContaining([
         {

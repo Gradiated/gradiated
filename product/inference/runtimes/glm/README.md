@@ -34,6 +34,8 @@ weights do not qualify existing stock-model LoRA adapters. A release selecting
 Dealign must omit `adapters`, `lora_enabled`, and the LoRA environment settings.
 Publishing this bundle does not change the selected production runtime: pin a
 qualified release in `gpu/runtimes.json` and the GPU `models.json` to roll it out.
+The worker waits for the catalog model to become available before SDK
+qualification, so a slower catalog rollout does not reject the runtime process.
 
 On a B300, 60-second synthetic runs with 1,024 generated tokens measured median
 per-request decode rates of 161, 188 and 186 TPS with one, two and three draft

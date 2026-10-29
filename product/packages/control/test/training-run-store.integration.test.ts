@@ -346,6 +346,24 @@ describe("transactional training run store", () => {
     expect(
       await createTrainingStore(db.database).listVersions(own.task.id),
     ).toEqual([]);
+
+    const versionId = randomUUID();
+    await db.database.insert(taskVersions).values({
+      id: versionId,
+      workspaceId: own.workspaceId,
+      taskId: own.task.id,
+      trainingRunId: id,
+      name: "published-before-retirement",
+      baseModelId: base.id,
+      adapter: trainingAdapter,
+      status: "available",
+    });
+    await expect(
+      writes.publish(id, input, trainingAdapter, "available"),
+    ).resolves.toBe(versionId);
+    expect(
+      await createTrainingStore(db.database).listVersions(own.task.id),
+    ).toHaveLength(1);
   });
 
   it("publishes one adapter and event under concurrent retries, including retries after completion", async () => {

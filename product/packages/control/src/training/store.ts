@@ -342,6 +342,25 @@ export const createTrainingStore = (database: ControlDatabase) => {
       return rows.map((row) => VersionRecordSchema.parse(row.version));
     },
 
+    async clearTrainingScheduleForBases(taskId: string, baseIds: string[]) {
+      const patch = TaskRecordSchema.pick({
+        trainingSchedule: true,
+        updatedAt: true,
+      }).parse({
+        trainingSchedule: null,
+        updatedAt: new Date(),
+      });
+      await database
+        .update(tasks)
+        .set(patch)
+        .where(
+          and(
+            eq(tasks.id, UuidSchema.parse(taskId)),
+            inArray(tasks.baseModelId, baseIds),
+          ),
+        );
+    },
+
     async tasksForTrainingBases(baseIds: string[], after?: string) {
       const rows = await database
         .select({ id: tasks.id })
@@ -349,6 +368,7 @@ export const createTrainingStore = (database: ControlDatabase) => {
         .where(
           and(
             inArray(tasks.baseModelId, baseIds),
+            isNotNull(tasks.trainingSchedule),
             after ? gt(tasks.id, UuidSchema.parse(after)) : undefined,
           ),
         )

@@ -249,12 +249,6 @@ export const createTrainingRunStore = (database: ControlDatabase) => ({
     runId = UuidSchema.parse(runId);
     input = TrainingInputSchema.parse(input);
 
-    if (
-      catalogModel(input.baseModelId) &&
-      !TRAINING_BASE_MODELS.some((base) => base.id === input.baseModelId)
-    )
-      throw new Error("The base model has been retired from training.");
-
     return database.transaction(async (tx) => {
       const [rawTask] = await tx
         .select()
@@ -269,6 +263,12 @@ export const createTrainingRunStore = (database: ControlDatabase) => ({
         .where(eq(taskVersions.trainingRunId, runId));
       const existing = rawExisting && VersionRecordSchema.parse(rawExisting);
       if (existing) return existing.id;
+
+      if (
+        catalogModel(input.baseModelId) &&
+        !TRAINING_BASE_MODELS.some((base) => base.id === input.baseModelId)
+      )
+        throw new Error("The base model has been retired from training.");
 
       const run = await lockRun(tx, runId);
 

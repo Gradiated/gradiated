@@ -99,19 +99,24 @@ describe("training artifact cleanup", () => {
     await createCatalogService(db.database).upsertModel(base);
     await db.database
       .update(tasks)
-      .set({ baseModelId: base.id, trainingSchedule: null })
+      .set({ baseModelId: base.id, trainingSchedule: "0 3 * * 1" })
       .where(eq(tasks.id, retired.task.id));
 
     await deleteRetiredTrainingSchedules(db.database, engine);
 
     expect(engine.updateSchedule).toHaveBeenCalledWith(retired.task.id, null);
     expect(engine.updateSchedule).not.toHaveBeenCalledWith(other.task.id, null);
-    expect(
-      await db.database
-        .select()
-        .from(tasks)
-        .where(eq(tasks.id, retired.task.id)),
-    ).toHaveLength(1);
+    const [stored] = await db.database
+      .select()
+      .from(tasks)
+      .where(eq(tasks.id, retired.task.id));
+    expect(stored?.trainingSchedule).toBeNull();
+    engine.updateSchedule.mockClear();
+    await deleteRetiredTrainingSchedules(db.database, engine);
+    expect(engine.updateSchedule).not.toHaveBeenCalledWith(
+      retired.task.id,
+      null,
+    );
   });
 
   it("restores a valid timer when the task changes base during cleanup", async () => {
@@ -136,6 +141,36 @@ describe("training artifact cleanup", () => {
       own.task.id,
       "0 3 * * 1",
     );
+  });
+
+  it("removes a restored timer if the user disables it during restoration", async () => {
+    const own = await seedTrainingTask(db.database);
+    const base = createGlm53FlashModelConfiguration();
+    await createCatalogService(db.database).upsertModel(base);
+    await db.database
+      .update(tasks)
+      .set({ baseModelId: base.id })
+      .where(eq(tasks.id, own.task.id));
+    engine.updateSchedule.mockImplementation(async (id, cron) => {
+      if (id !== own.task.id) return;
+      await db.database
+        .update(tasks)
+        .set(
+          cron === null
+            ? { baseModelId: own.input.baseModelId }
+            : { trainingSchedule: null },
+        )
+        .where(eq(tasks.id, id));
+    });
+
+    await deleteRetiredTrainingSchedules(db.database, engine);
+
+    expect(engine.updateSchedule).toHaveBeenLastCalledWith(own.task.id, null);
+    const [stored] = await db.database
+      .select()
+      .from(tasks)
+      .where(eq(tasks.id, own.task.id));
+    expect(stored?.trainingSchedule).toBeNull();
   });
 
   const archive = (workspaceId: string) =>

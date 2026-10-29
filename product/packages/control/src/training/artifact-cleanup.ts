@@ -76,14 +76,24 @@ export const deleteRetiredTrainingSchedules = async (
     for (const id of ids) {
       try {
         await engine.updateSchedule(id, null);
-        const current = await store.admissionContext(id);
-        if (
-          current?.task.trainingSchedule &&
-          current.task.baseModelId &&
-          !retired.includes(current.task.baseModelId) &&
-          !current.workspace.archivedAt
-        )
-          await engine.updateSchedule(id, current.task.trainingSchedule);
+        await store.clearTrainingScheduleForBases(id, retired);
+        const savedSchedule = (
+          row: Awaited<ReturnType<typeof store.admissionContext>>,
+        ) =>
+          row &&
+          !row.workspace.archivedAt &&
+          !retired.includes(row.task.baseModelId ?? "")
+            ? row.task.trainingSchedule
+            : null;
+        let desired = savedSchedule(await store.admissionContext(id));
+        if (desired) {
+          for (;;) {
+            await engine.updateSchedule(id, desired);
+            const latest = savedSchedule(await store.admissionContext(id));
+            if (latest === desired) break;
+            desired = latest;
+          }
+        }
       } catch (error) {
         errors.push(error);
       }

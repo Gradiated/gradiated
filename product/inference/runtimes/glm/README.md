@@ -56,6 +56,11 @@ The production target is eight TP1 replicas at concurrency four, with 16 CPU and
 peaked at 188 GiB under those cgroup limits. Eight replicas fit as four on the
 4-GPU B300 host and four beside DeepSeek on the 8-GPU B300 host, after stock GLM
 drains. Placement permits several replicas per host.
+Require node affinity to instance IDs `01a0f19d-1ff3-7613-8cbf-81b693c0f0d4`
+and `01a0fbf7-5276-700b-903b-7e04da150ed6`. Host
+`01a0fbf8-06fc-7658-96e1-ae72f7dba135` is user-owned capacity and must not be
+used for this deployment or further experiments, even if it is uncordoned.
+
 
 The startup supervisor checks bursts through concurrency sixteen, including
 queue completion within its timeout.

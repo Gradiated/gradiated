@@ -11,8 +11,8 @@ long-prompt failure on the pinned upstream runtime (upstream issue #53982).
 The remaining dependencies are version-pinned and hash-locked; the lock uses a seven-day release cutoff.
 
 The entrypoint serves `dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4` at revision
-`745aac2ff0f10acf961f396df3f9418598aa7327` with tensor parallelism 2,
-FP8 KV cache, the GLM tool/reasoning parsers, and the existing startup
+`745aac2ff0f10acf961f396df3f9418598aa7327` with tensor parallelism 1,
+one active decode sequence, three MTP draft tokens, FP8 KV cache, the GLM tool/reasoning parsers, and the existing startup
 qualification supervisor. `RUNTIME_PORT` is the loopback inference port;
 `WARMUP_PORT` exposes readiness only after cold-shape and concurrency checks
 finish. Desmond should use that readiness endpoint. `HF_HOME` selects the

@@ -105,7 +105,7 @@ console.log(JSON.stringify({ args: process.argv.slice(2), gpus: process.env.CUDA
   ]);
 });
 
-test("GLM exposes only its assigned pair on a shared GPU host", (t) => {
+test("Dealign serves TP1 on its assigned GPU with bounded decode concurrency", (t) => {
   const root = mkdtempSync(join(tmpdir(), "glm-entrypoint-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   mkdirSync(join(root, "python/bin"), { recursive: true });
@@ -120,7 +120,7 @@ console.log(JSON.stringify({ args: process.argv.slice(2), gpus: process.env.CUDA
 `,
     { mode: 0o755 },
   );
-  const assigned = "GPU-e,GPU-f";
+  const assigned = "GPU-e";
   const result = JSON.parse(
     execFileSync("bash", [join(root, "entrypoint")], {
       encoding: "utf8",
@@ -134,9 +134,14 @@ console.log(JSON.stringify({ args: process.argv.slice(2), gpus: process.env.CUDA
     }),
   );
   assert.equal(result.gpus, assigned);
+  assert.equal(result.args[result.args.indexOf("--max-num-seqs") + 1], "1");
+  assert.deepEqual(
+    JSON.parse(result.args[result.args.indexOf("--speculative-config") + 1]),
+    { method: "mtp", num_speculative_tokens: 3 },
+  );
   assert.equal(
     result.args[result.args.indexOf("--tensor-parallel-size") + 1],
-    "2",
+    "1",
   );
   assert.throws(
     () =>

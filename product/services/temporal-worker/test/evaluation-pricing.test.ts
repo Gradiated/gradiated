@@ -17,11 +17,7 @@ import {
 
 const signal = new AbortController().signal;
 const catalog = {
-  listModels: vi
-    .fn()
-    .mockResolvedValue([
-      { ...createGlm53FlashModelConfiguration(), status: "available" },
-    ]),
+  listModels: vi.fn().mockResolvedValue([createGlm53FlashModelConfiguration()]),
 } as Pick<CatalogService, "listModels">;
 const provider = {
   id: "openai/gpt-6.1-sol",

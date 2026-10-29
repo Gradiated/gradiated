@@ -61,7 +61,6 @@ and `01a0fbf7-5276-700b-903b-7e04da150ed6`. Host
 `01a0fbf8-06fc-7658-96e1-ae72f7dba135` is user-owned capacity and must not be
 used for this deployment or further experiments, even if it is uncordoned.
 
-
 The startup supervisor checks bursts through concurrency sixteen, including
 queue completion within its timeout.
 

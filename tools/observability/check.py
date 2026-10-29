@@ -579,6 +579,24 @@ def main():
         {'model': 'test/model', 'deployment': 'test-deployment'} if expected == 'InferenceDeploymentProbeFailed' else {},
         duration, interval='5s')
 
+    # A recovery shorter than five minutes must not close/reopen the deployment alert.
+    # Failure first fires at 30s, recovers at 35s, recurs at 80s, then recovers at 100s.
+    recovery_success = ' '.join(str(0 if t < 35 else 60 if 65 <= t < 100 else t)
+                                for t in range(0, 406, 5))
+    for duration, expected in [('25s', None), ('30s', probe_alerts[0]),
+                               ('35s', probe_alerts[0]), ('90s', probe_alerts[0]),
+                               ('395s', probe_alerts[0]), ('400s', None)]:
+        scenario('public inference: five-minute recovery hold at ' + duration, [
+            probe_series('gradiated_inference_probe_last_success_timestamp_seconds', recovery_success),
+            probe_series('gradiated_inference_probe_target', '1+0x81'),
+            probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+5x81', '{instance="a"}'),
+            probe_series('gradiated_inference_probe_last_success_timestamp_seconds', '1+5x81',
+                         probe_labels.replace('test-deployment', 'healthy-deployment')),
+            probe_series('gradiated_inference_probe_target', '1+0x81',
+                         probe_labels.replace('test-deployment', 'healthy-deployment')),
+        ], expected, probe_alerts, {'model': 'test/model', 'deployment': 'test-deployment'},
+           duration, interval='5s')
+
     scenario('public inference: missing telemetry', [], 'InferenceProbeMonitoringStalled',
              ['InferenceProbeMonitoringStalled'], eval_time='15s', interval='5s')
     scenario('public inference: replacement leader masks stale failed worker', [

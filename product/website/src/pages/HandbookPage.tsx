@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import type { CSSProperties, ReactElement } from "react";
+import type { ReactElement } from "react";
 import {
   Band,
   Footer,
@@ -8,13 +8,11 @@ import {
   SectionNavigation,
   SectionNavigationFab,
   Substrate,
-  WaferArtwork,
 } from "../components/design";
 import type { SectionNavigationGroup } from "../components/design";
 import { handbookComponents } from "../components/handbook";
 import { handbookPages, handbookSections } from "../handbook";
 import type { HandbookSlug } from "../handbook";
-import { handbookArt, handbookCovers } from "../handbook-visuals";
 import "../styles/index.css";
 
 const navigation: SectionNavigationGroup[] = handbookSections.map((section) => ({
@@ -25,32 +23,6 @@ const navigation: SectionNavigationGroup[] = handbookSections.map((section) => (
   })),
 }));
 
-const HandbookSectionArtwork = ({
-  slug,
-}: {
-  slug: HandbookSlug;
-}): ReactElement => {
-  const art = handbookArt[slug];
-
-  return (
-    <span aria-hidden className="gr-story-well gr-story-cover">
-      {art ? (
-        <span
-          className="gr-story-art"
-          style={
-            {
-              "--art-tall": `url(${art.tall})`,
-              "--art-wide": `url(${art.wide ?? art.tall})`,
-            } as CSSProperties
-          }
-        />
-      ) : (
-        <WaferArtwork options={handbookCovers[slug]} />
-      )}
-    </span>
-  );
-};
-
 const HandbookIndex = (): ReactElement => (
   <>
     <header className="gr-masthead">
@@ -59,14 +31,8 @@ const HandbookIndex = (): ReactElement => (
 
     <div className="gr-handbook-index">
       {handbookSections.map((section) => (
-        <section
-          className="gr-handbook-index-group gr-story"
-          key={section.label}
-        >
-          <div className="gr-handbook-index-visual">
-            <HandbookSectionArtwork slug={section.artSlug} />
-            <h2 className="gr-label">{section.label}</h2>
-          </div>
+        <section className="gr-handbook-index-group" key={section.label}>
+          <h2 className="gr-label">{section.label}</h2>
           <ul>
             {section.pages.map((page) => (
               <li key={page.slug}>

@@ -3864,47 +3864,11 @@
   display: grid;
   grid-template-columns: minmax(13rem, 18rem) minmax(0, 1fr);
   gap: calc(2 * var(--u));
-  align-items: center;
-}
-
-.gr-handbook-index-visual {
-  position: relative;
-  overflow: hidden;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-raise);
-}
-
-/* The Library artwork remains the visual language, but each image belongs to
-   a whole section here rather than pretending to be one topic's card. */
-.gr-handbook-index-group .gr-story-well {
-  width: 100%;
-  height: auto;
-  aspect-ratio: 16 / 9;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-.gr-handbook-index-group .gr-story-art {
-  background-image: var(--art-wide, var(--art-tall));
-}
-
-.gr-handbook-index-visual::after {
-  content: "";
-  position: absolute;
-  inset: 35% 0 0;
-  z-index: 1;
-  background: linear-gradient(to bottom, transparent, rgb(20 18 15 / 72%));
-  pointer-events: none;
+  align-items: start;
 }
 
 .gr-handbook-index-group h2 {
-  position: absolute;
-  inset-inline: var(--u);
-  bottom: calc(0.75 * var(--u));
-  z-index: 2;
   margin: 0;
-  color: white;
-  text-shadow: 0 1px 12px rgb(0 0 0 / 45%);
 }
 
 .gr-handbook-index-group ul {
@@ -3934,23 +3898,10 @@
   text-decoration: underline;
 }
 
-/* The Library's mobile card rule uses a portrait cover. These are compact
-   section markers, so keep them landscape-ish at every non-wide tier. */
-.gr-root:not([data-tier="wide"])
-  .gr-handbook-index-group
-  .gr-story-well {
-  aspect-ratio: 4 / 3;
-}
-
 @media (max-width: 46rem) {
   .gr-handbook-index-group {
-    grid-template-columns: minmax(8rem, 9rem) minmax(0, 1fr);
+    grid-template-columns: 1fr;
     gap: var(--u);
-  }
-
-  .gr-handbook-index-group h2 {
-    inset-inline: calc(0.5 * var(--u));
-    bottom: calc(0.45 * var(--u));
   }
 }
 

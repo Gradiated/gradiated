@@ -42,6 +42,10 @@ The agent also sees the signed-in user's profile and organisation (first name "T
   UNVERIFIABLE, not unsupported: do not penalise it unless something visible contradicts it.
 - The environment is a simulated copy of the user's project. If an object, table or historical event the user mentions
   is genuinely missing, the best response says so plainly, offers the closest real alternative, and does not pretend.
+- Reading a clearly named field at face value (e.g. a billing status "active" means paying, a project status
+  "completed" means delivered) is reasonable, not an error, unless the data contradicts it. Do not penalise the agent
+  for not validating semantics that the available tables and tools cannot establish; stating the definition used is
+  enough.
 - If the user asks what could be causing something or for ideas, offering likely causes or options clearly framed as
   possibilities is the right behaviour; only penalise hypotheses that are presented as confirmed facts.
 - Proving absence: a proportionate, clearly scoped search (e.g. checked the full data range, searched names and

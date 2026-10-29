@@ -72,7 +72,6 @@
 .sand-library-dives {
   margin-top: calc(2 * var(--u));
   padding-top: calc(1.25 * var(--u));
-  border-top: 1px solid var(--color-rule);
 }
 .sand-library-dives > h2 {
   margin: 0 0 var(--u);

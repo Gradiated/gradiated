@@ -95,7 +95,6 @@
 }
 .fab-topic {
   padding: 0.2rem 0.6rem;
-  border: 1px solid #bebcad;
   border-radius: 3px;
   font-size: 0.65rem;
   letter-spacing: 0.1em;
@@ -134,7 +133,6 @@
 }
 .fab-lab-heading {
   text-align: center;
-  border-top: 1px solid var(--fab-line);
   padding: 0.85rem 0 0.8rem;
   font-size: 0.85rem;
   font-weight: 500;

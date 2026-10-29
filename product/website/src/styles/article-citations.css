@@ -25,7 +25,6 @@ sup.article-citation a:focus-visible {
 .article-references.article-references {
   margin-block: 4rem 2rem;
   padding-block-start: 1.5rem;
-  border-block-start: 1px solid var(--fab-line, var(--color-rule, #d9d1c4));
   font-size: 0.9rem;
   line-height: 1.65;
   overflow-wrap: anywhere;

@@ -138,6 +138,21 @@ console.log(JSON.stringify({ args: process.argv.slice(2), gpus: process.env.CUDA
     result.args[result.args.indexOf("--tensor-parallel-size") + 1],
     "2",
   );
+  assert.throws(
+    () =>
+      execFileSync("bash", [join(root, "entrypoint")], {
+        stdio: "pipe",
+        env: {
+          ...process.env,
+          GRADIATED_RUNTIME_ROOT: root,
+          NVIDIA_VISIBLE_DEVICES: assigned,
+          LORA_ENABLED: "true",
+        },
+      }),
+    (error) =>
+      error.status === 64 &&
+      error.stderr.toString().includes("stock GLM adapters are unsupported"),
+  );
   assert.equal(result.args[result.args.indexOf("--port") + 1], "23456");
   assert.equal(
     result.args[result.args.indexOf("serve") + 1],

@@ -62,8 +62,10 @@ GRADIATED_GLM_GPU_TEST=1 /bundle/python/bin/python3 product/inference/runtimes/g
 The test covers prompt positions through 1,047,000 and checks full attention,
 a one-block side cache, disabled mapping, and padded batch tokens.
 
-When LoRA is enabled, the entrypoint restricts wrappers to the trained attention
-projections. GLM KDA packs q/k/v together with three untrained gate branches;
+The immutable stock release (runtime `glm-e74e88f23ba1`) restricts LoRA wrappers
+to the trained attention projections. The Dealign entrypoint rejects
+`LORA_ENABLED=true`; the following adapter qualification applies to the stock
+release only. GLM KDA packs q/k/v together with three untrained gate branches;
 MLA packs q_a and kv_a together. The pinned runtime needs these packing maps to
 apply every PEFT projection, rather than silently ignoring fused modules. Gate
 branches stay unwrapped because their sliced inputs are not contiguous and the

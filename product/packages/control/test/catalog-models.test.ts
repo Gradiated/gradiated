@@ -93,6 +93,7 @@ it("identifies Dealign weights separately from the stock training base", () => {
     (item) => item.id === "dealignai/glm-5.3-flash-uncensored-nvfp4",
   );
 
+  expect(model?.status).toBe("unavailable");
   expect(model?.properties).toMatchObject({
     hugging_face_id: "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
     quantization: "nvfp4",

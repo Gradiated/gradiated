@@ -88,6 +88,7 @@ export const createDealignGlm53FlashModelConfiguration = () => {
     ...base,
     id,
     name: modelDisplayName(id),
+    status: "unavailable",
     properties: {
       ...base.properties,
       description:

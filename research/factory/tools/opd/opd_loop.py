@@ -60,6 +60,8 @@ def main() -> None:
     p.add_argument("--score-args", default="", help="extra opd_sample_score.py arguments, space-separated")
     p.add_argument("--port", default="29541", help="accelerate main process port; distinct per concurrent run")
     p.add_argument("--train-args", default="", help="extra opd_train.py arguments, space-separated")
+    p.add_argument("--judge-via", default="codex", choices=("openai", "codex"),
+                   help="judge transport for checkpoint evals; codex uses the ChatGPT-subscription relay on 127.0.0.1:18777")
     args = p.parse_args()
 
     run = OPD / "runs" / args.name
@@ -112,7 +114,7 @@ def main() -> None:
             with open(run / f"eval-{name}.log", "w") as out:
                 evals[name] = subprocess.Popen(
                     ["python3", "run_eval.py", "data/test_v2.jsonl", "--n", "300", "--seed", "0", "--workers", "8",
-                     "--judge-rpm", "60", "--provider", "vllm", "--model", name, "--base-url", VLLM],
+                     "--judge-rpm", "60", "--judge-via", args.judge_via, "--provider", "vllm", "--model", name, "--base-url", VLLM],
                     cwd=ROOT / "eval", env=env, stdout=out, stderr=subprocess.STDOUT)
             log(run, {"event": "eval_started", "model": name})
 

@@ -259,6 +259,9 @@ export const QWEN_PLACEHOLDER_PRICING = {
   output_nano_usd_per_token: 100,
 } as const;
 
+export const isLegacyModelId = (id: string) =>
+  LEGACY_MODEL_CATALOG.some((model) => model.id === id);
+
 export const catalogModel = (id: string) =>
   MODEL_CATALOG.find((model) => model.id === id) ??
   LEGACY_MODEL_CATALOG.find((model) => model.id === id);

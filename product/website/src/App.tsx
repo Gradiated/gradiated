@@ -57,6 +57,16 @@ const LibraryRedirect = (): ReactElement => {
   return target === "/handbook/" ? <HandbookPage /> : <NotesIndexPage />;
 };
 
+const RouteScrollRestoration = (): null => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [pathname]);
+
+  return null;
+};
+
 export const AppRoutes = (): ReactElement => (
   <Routes>
     {articles.map((article) => (
@@ -130,6 +140,7 @@ export const AppRoutes = (): ReactElement => (
 
 export const App = (): ReactElement => (
   <BrowserRouter>
+    <RouteScrollRestoration />
     <AppRoutes />
   </BrowserRouter>
 );

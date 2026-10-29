@@ -210,6 +210,15 @@ export const MODEL_CATALOG = [
   },
 ] as const satisfies readonly CatalogEntry[];
 
+const LEGACY_MODEL_CATALOG = [
+  {
+    id: "dealignai/glm-5.3-flash-uncensored-nvfp4",
+    displayName: "GLM-5.3 Flash Uncensored",
+    icon: "/model-providers/zai.svg",
+    supportedUses: ["judge", "comparison", "serving"],
+  },
+] as const satisfies readonly CatalogEntry[];
+
 type ModelForUse<
   Use extends ModelUseCase,
   Entry = (typeof MODEL_CATALOG)[number],
@@ -251,7 +260,8 @@ export const QWEN_PLACEHOLDER_PRICING = {
 } as const;
 
 export const catalogModel = (id: string) =>
-  MODEL_CATALOG.find((model) => model.id === id);
+  MODEL_CATALOG.find((model) => model.id === id) ??
+  LEGACY_MODEL_CATALOG.find((model) => model.id === id);
 
 export const modelType = (id: string): "chat" | "decision" => {
   const model: CatalogEntry | undefined = catalogModel(id);
@@ -273,7 +283,7 @@ export const isExternalModelId = (id: string) =>
   /^(openai|anthropic)\/[a-zA-Z0-9._-]+$/.test(id);
 
 export const isEvaluationModelId = (id: string) =>
-  isExternalModelId(id) || COMPARISON_MODELS.some((model) => model.id === id);
+  isExternalModelId(id) || modelSupportedUses(id).includes("comparison");
 
 export const modelProviderIcon = (id: string) =>
   catalogModel(id)?.icon ??

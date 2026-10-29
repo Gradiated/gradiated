@@ -64,7 +64,7 @@ jobs:
           fi
           echo "source_sha=${source_sha}" >> "${GITHUB_OUTPUT}"
 
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
           fetch-depth: 0
@@ -73,7 +73,7 @@ jobs:
         env:
           SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
         run: node tools/deployment/release-order.mjs "$SOURCE_SHA"
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: steps.order.outputs.deploy == 'true'
         with:
           ref: ${{ steps.source.outputs.source_sha }}
@@ -122,10 +122,10 @@ jobs:
     environment: production
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.resolve.outputs.source_sha }}
-      - uses: jdx/mise-action@v4.2.3
+      - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
       - name: Install product dependencies
         working-directory: product
         run: pnpm install --frozen-lockfile
@@ -138,7 +138,7 @@ jobs:
         run: |
           test -n "$VITE_POSTHOG_KEY" || { echo "CONSOLE_POSTHOG_KEY must be set for production analytics" >&2; exit 1; }
           pnpm exec turbo run build --filter=@gradiated/console... --env-mode=loose
-      - uses: aws-actions/configure-aws-credentials@v6.2.3
+      - uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ env.AWS_DEPLOY_ROLE_ARN }}
@@ -169,7 +169,7 @@ jobs:
             --content-type text/html \
             --only-show-errors
       - name: Store console release artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: console-${{ needs.resolve.outputs.source_sha }}
           path: product/services/console/dist
@@ -190,12 +190,12 @@ jobs:
     steps:
       - name: Create release push token
         id: release-token
-        uses: actions/create-github-app-token@v3
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
           permission-contents: write
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
           fetch-depth: 0
@@ -235,18 +235,18 @@ jobs:
     environment: production
     timeout-minutes: 55
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
-      - uses: jdx/mise-action@v4.2.3
-      - uses: aws-actions/configure-aws-credentials@v6.2.3
+      - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
+      - uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ env.AWS_DEPLOY_ROLE_ARN }}
           allowed-account-ids: ${{ env.AWS_ACCOUNT_ID }}
           role-session-name: deploy-wait-${{ github.run_id }}
       - name: Join the tailnet for the Kubernetes API
-        uses: tailscale/github-action@v4
+        uses: tailscale/github-action@99a8333667fff04fdd6cffb46dfd409f8329a7bf # v4.3.0
         with:
           oauth-client-id: ${{ vars.TAILSCALE_CI_CLIENT_ID }}
           audience: ${{ vars.TAILSCALE_CI_AUDIENCE }}
@@ -311,11 +311,11 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Download console release artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: console-${{ needs.resolve.outputs.source_sha }}
           path: console-dist
-      - uses: aws-actions/configure-aws-credentials@v6.2.3
+      - uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ env.AWS_DEPLOY_ROLE_ARN }}

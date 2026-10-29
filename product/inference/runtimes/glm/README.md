@@ -12,7 +12,7 @@ The remaining dependencies are version-pinned and hash-locked; the lock uses a s
 
 The entrypoint serves `dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4` at revision
 `745aac2ff0f10acf961f396df3f9418598aa7327` with tensor parallelism 1,
-one active decode sequence, three MTP draft tokens, FP8 KV cache, the GLM tool/reasoning parsers, and the existing startup
+one active decode sequence, two MTP draft tokens, FP8 KV cache, the GLM tool/reasoning parsers, and the existing startup
 qualification supervisor. `RUNTIME_PORT` is the loopback inference port;
 `WARMUP_PORT` exposes readiness only after cold-shape and concurrency checks
 finish. Desmond should use that readiness endpoint. `HF_HOME` selects the
@@ -34,6 +34,31 @@ weights do not qualify existing stock-model LoRA adapters. A release selecting
 Dealign must omit `adapters`, `lora_enabled`, and the LoRA environment settings.
 Publishing this bundle does not change the selected production runtime: pin a
 qualified release in `gpu/runtimes.json` and the GPU `models.json` to roll it out.
+
+On a B300, 60-second synthetic runs with 1,024 generated tokens measured median
+per-request decode rates of 161, 188 and 186 TPS with one, two and three draft
+tokens, respectively, at concurrency one. Two drafts measured 147 TPS at
+concurrency two and 107 TPS at concurrency four. The longer-prompt concurrency-one
+run measured 179 TPS median and 169 TPS minimum across ten requests. These
+measurements select two drafts and one simultaneous decode per GPU for the
+150 TPS target. Remeasure for other prompt lengths and workloads.
+
+`--max-num-seqs 1` limits simultaneous decoding; additional HTTP requests can
+queue. Add TP1 replicas to increase simultaneous serving capacity. The startup
+supervisor still checks bursts through concurrency sixteen, including queue
+completion within its timeout.
+
+Reproduce the initial concurrency screen against an isolated test runtime:
+
+```sh
+mkdir -p .agents/runtime/glm-dealign
+python3 infra/environments/prod/runpod/deepseek-v4-1-flash/benchmark.py \
+  --url http://127.0.0.1:28085 \
+  --model dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4 \
+  --label glm-dealign-tp1-mtp2 --concurrency 1,2,4 --tokens 512 \
+  --output .agents/runtime/glm-dealign/concurrency.json
+```
+
 
 The pinned chat template recognizes `reasoning_effort: "low"` and `"high"`;
 omitting the field or using another value selects its maximum reasoning budget.

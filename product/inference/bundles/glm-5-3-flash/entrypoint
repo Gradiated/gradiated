@@ -23,4 +23,4 @@ exec "$root/python/bin/python3" "$root/warmup-supervisor.py" \
   --tool-call-parser glm47 --reasoning-parser glm45 --enable-auto-tool-choice \
   --enable-prompt-tokens-details --safetensors-load-strategy prefetch \
   --safetensors-prefetch-num-threads 8 --scheduling-policy priority \
-  --speculative-config '{"method":"mtp","num_speculative_tokens":3}'
+  --speculative-config '{"method":"mtp","num_speculative_tokens":2}'

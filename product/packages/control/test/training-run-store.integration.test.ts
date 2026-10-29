@@ -7,6 +7,7 @@ import {
   trainingRunEvents,
   taskVersions,
 } from "../src/db/schema/index.js";
+import { createGlm53FlashModelConfiguration } from "../src/catalog/models/glm-5-3-flash.js";
 import { createQwenSftModelConfiguration } from "../src/catalog/models/training.js";
 import { createCatalogService } from "../src/catalog/service.js";
 import { createTrainingService } from "../src/training/service.js";
@@ -327,6 +328,24 @@ describe("transactional training run store", () => {
       stage: "failed",
       finishedAt: expect.any(Date),
     });
+  });
+
+  it("rejects publication from a frozen run for the retired stock base", async () => {
+    const own = await seedTrainingTask(db.database);
+    const base = createGlm53FlashModelConfiguration();
+    await createCatalogService(db.database).upsertModel(base);
+    const input = { ...own.input, baseModelId: base.id };
+    const writes = createTrainingRunStore(db.database);
+    const id = randomUUID();
+    await writes.create(id, input);
+    await writes.transition(id, "publishing");
+
+    await expect(
+      writes.publish(id, input, trainingAdapter, "available"),
+    ).rejects.toThrow("retired from training");
+    expect(
+      await createTrainingStore(db.database).listVersions(own.task.id),
+    ).toEqual([]);
   });
 
   it("publishes one adapter and event under concurrent retries, including retries after completion", async () => {

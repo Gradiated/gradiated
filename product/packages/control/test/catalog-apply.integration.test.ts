@@ -11,7 +11,14 @@ import {
   legacyModels,
 } from "../src/catalog/models/index.js";
 import { createCatalogService } from "../src/catalog/service.js";
-import { models, tasks, workspaces } from "../src/db/schema/index.js";
+import {
+  models,
+  tasks,
+  workspaces,
+  trainingRuns,
+  taskVersions,
+} from "../src/db/schema/index.js";
+import { trainingAdapter } from "./support/training.js";
 import { modelInput, seedMember } from "./support/fixtures.js";
 import { createTestDatabase, type TestDatabase } from "./support/postgres.js";
 
@@ -106,6 +113,31 @@ describe("catalog apply", () => {
         judgeModelId: legacy,
         comparisonModelId: legacy,
       });
+      const runId = randomUUID();
+      const versionId = randomUUID();
+      await testDatabase.database.insert(trainingRuns).values({
+        id: runId,
+        taskId,
+        trigger: "manual",
+        stage: "succeeded",
+        baseModelId: "z-ai/glm-5.3-flash",
+        inputCutoff: new Date(),
+        finishedAt: new Date(),
+      });
+      await testDatabase.database.insert(taskVersions).values({
+        id: versionId,
+        workspaceId,
+        taskId,
+        trainingRunId: runId,
+        name: "retired-adapter",
+        baseModelId: "z-ai/glm-5.3-flash",
+        adapter: trainingAdapter,
+        status: "available",
+      });
+      await testDatabase.database
+        .update(tasks)
+        .set({ productionVersionId: versionId })
+        .where(eq(tasks.id, taskId));
       const migration = await readFile(
         new URL(
           "../migrations/0024_retire_stock_glm_adapters.sql",
@@ -125,10 +157,19 @@ describe("catalog apply", () => {
         .from(tasks)
         .where(eq(tasks.id, taskId));
       expect(workspace?.defaultJudgeModel).toBe(renamed);
+      const [version] = await testDatabase.database
+        .select()
+        .from(taskVersions)
+        .where(eq(taskVersions.id, versionId));
+      expect(version).toMatchObject({
+        status: "unavailable",
+        adapter: trainingAdapter,
+      });
       expect(task).toMatchObject({
         judgeModelId: renamed,
         comparisonModelId: renamed,
         trainingSchedule: null,
+        productionVersionId: null,
       });
     },
   );

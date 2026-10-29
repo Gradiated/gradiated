@@ -20,3 +20,9 @@ WHERE "base_model_id" = 'z-ai/glm-5.3-flash' AND "status" = 'available';
 UPDATE "tasks"
 SET "training_schedule" = NULL, "updated_at" = now()
 WHERE "base_model_id" = 'z-ai/glm-5.3-flash' AND "training_schedule" IS NOT NULL;
+--> statement-breakpoint
+UPDATE "tasks"
+SET "production_version_id" = NULL, "updated_at" = now()
+WHERE "production_version_id" IN (
+  SELECT "id" FROM "task_versions" WHERE "base_model_id" = 'z-ai/glm-5.3-flash'
+);

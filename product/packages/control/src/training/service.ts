@@ -176,7 +176,16 @@ export const createTrainingService = (
           "The base model is unavailable for training.",
         );
 
-      const updated = await records.updateTask(task.id, input);
+      const preserveSchedule =
+        input.base_model_id !== undefined &&
+        input.training_schedule === undefined &&
+        task.baseModelId &&
+        catalogModel(task.baseModelId) &&
+        !TRAINING_BASE_MODELS.some((base) => base.id === task.baseModelId);
+      const updated = await records.updateTask(
+        task.id,
+        preserveSchedule ? { ...input, training_schedule: schedule } : input,
+      );
       if (engine || input.training_schedule !== undefined) {
         try {
           if (!engine) throw new Error("Training engine unavailable");

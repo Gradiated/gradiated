@@ -11,6 +11,9 @@ import {
   vi,
 } from "vitest";
 
+import type { TrainingEngine } from "../src/training/types.js";
+import { createTrainingStore } from "../src/training/store.js";
+import { createQwenSftModelConfiguration } from "../src/catalog/models/training.js";
 import { createGlm53FlashModelConfiguration } from "../src/catalog/models/glm-5-3-flash.js";
 import { createCatalogService } from "../src/catalog/service.js";
 import {
@@ -344,6 +347,61 @@ describe("training service", () => {
   });
 
   describe("updateTask", () => {
+    it("preserves the user's schedule when a base change overlaps retirement cleanup", async () => {
+      const owner = await seedMember(db.database, { role: "admin" });
+      const task = await seedTask(owner.workspaceId);
+      const retired = createGlm53FlashModelConfiguration();
+      const supported = createQwenSftModelConfiguration();
+      await createCatalogService(db.database).upsertModel(retired);
+      await createCatalogService(db.database).upsertModel(supported);
+      await db.database
+        .update(tasks)
+        .set({ baseModelId: retired.id, trainingSchedule: "0 3 * * 1" })
+        .where(eq(tasks.id, task.id));
+      let release!: () => void;
+      let entered!: () => void;
+      const gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      const reached = new Promise<void>((resolve) => {
+        entered = resolve;
+      });
+      const engine = {
+        updateSchedule: vi.fn(async () => {}),
+      } as unknown as TrainingEngine;
+      const training = createTrainingService(
+        db.database,
+        store,
+        undefined,
+        engine,
+        async () => {
+          entered();
+          await gate;
+        },
+      );
+      const changing = training.updateTask(
+        owner.userId,
+        owner.workspaceId,
+        task.name,
+        {
+          base_model_id: supported.id,
+          comparison_model_id: "openai/gpt-5",
+        },
+      );
+      await reached;
+      await createTrainingStore(db.database).clearTrainingScheduleForBases(
+        task.id,
+        [retired.id],
+      );
+      release();
+
+      await expect(changing).resolves.toMatchObject({
+        baseModelId: supported.id,
+        trainingSchedule: "0 3 * * 1",
+      });
+      expect(engine.updateSchedule).toHaveBeenCalledWith(task.id, "0 3 * * 1");
+    });
+
     it("rejects a new schedule for a saved retired base without saving it", async () => {
       const owner = await seedMember(db.database, { role: "admin" });
       const task = await seedTask(owner.workspaceId);

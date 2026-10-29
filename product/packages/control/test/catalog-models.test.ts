@@ -36,8 +36,8 @@ describe("model configurations", () => {
     "deepseek/deepseek-v4.1-flash": { input: [300, 6], output: [1_200, 1_200] },
     "z-ai/glm-5.3-flash": { input: [75, 15], output: [250, 250] },
     "dealignai/glm-5.3-flash-uncensored-nvfp4": {
-      input: [75, 15],
-      output: [250, 250],
+      input: [100, 10],
+      output: [450, 450],
     },
     "jaredpalmer/kev-9b": { input: [30, 6], output: [0] },
   };

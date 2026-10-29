@@ -96,6 +96,20 @@ export const createDealignGlm53FlashModelConfiguration = () => {
       released_at: "2026-08-29T00:00:00.000Z",
       hugging_face_id: "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
       quantization: "nvfp4",
+      input_modalities: base.properties.input_modalities.map((modality) => ({
+        ...modality,
+        pricing: [
+          { type: "prompt", unit: "token", cost: 100 },
+          { type: "cached_prompt", unit: "token", cost: 10 },
+        ],
+      })),
+      output_modalities: base.properties.output_modalities.map((modality) => ({
+        ...modality,
+        pricing: [
+          { type: "completion", unit: "token", cost: 450 },
+          { type: "internal_reasoning", unit: "token", cost: 450 },
+        ],
+      })),
     },
   } satisfies CatalogModelInput;
 };

@@ -9,6 +9,7 @@ import type { CatalogBillingService, ModelRecord } from "@gradiated/control";
 import { createRoute, z, type OpenAPIHono } from "@hono/zod-openapi";
 import {
   catalogModel,
+  isLegacyModelId,
   modelSupportedUses,
   modelType,
 } from "@gradiated/contracts/model-catalog";
@@ -66,7 +67,7 @@ type ListedModelRecord = ModelRecord & {
 };
 
 const isListedModel = (record: ModelRecord): record is ListedModelRecord =>
-  record.status !== "retired";
+  record.status !== "retired" && !isLegacyModelId(record.id);
 
 const modelResponse = (record: ListedModelRecord): Model => ({
   id: record.id,

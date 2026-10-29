@@ -82,7 +82,7 @@ export const createGlm53FlashModelConfiguration = () =>
 
 export const createDealignGlm53FlashModelConfiguration = () => {
   const base = createGlm53FlashModelConfiguration();
-  const id = "dealignai/glm-5.3-flash-uncensored-nvfp4";
+  const id = "dealignai/glm-5.3-flash-uncensored";
 
   return {
     ...base,

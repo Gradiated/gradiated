@@ -58,6 +58,8 @@ def main() -> None:
     p.add_argument("--eval-every", type=int, default=5)
     p.add_argument("--base", default="qwen27b-base")
     p.add_argument("--score-args", default="", help="extra opd_sample_score.py arguments, space-separated")
+    p.add_argument("--port", default="29541", help="accelerate main process port; distinct per concurrent run")
+    p.add_argument("--train-args", default="", help="extra opd_train.py arguments, space-separated")
     args = p.parse_args()
 
     run = OPD / "runs" / args.name
@@ -86,9 +88,9 @@ def main() -> None:
         summary = json.loads(batch.with_suffix(".summary.json").read_text())
         log(run, {"event": "round", **summary})
 
-        train = [str(ACCELERATE), "launch", "--num_processes", str(len(args.gpus.split(","))), "--main_process_port", "29541",
+        train = [str(ACCELERATE), "launch", "--num_processes", str(len(args.gpus.split(","))), "--main_process_port", args.port,
                  str(OPD / "opd_train.py"), "--batch", str(batch), "--adapter-out", str(run / "adapters" / f"{k + 1:03d}"),
-                 "--lr", str(args.lr), "--minibatches", str(args.minibatches), "--seed", str(k)]
+                 "--lr", str(args.lr), "--minibatches", str(args.minibatches), "--seed", str(k), *args.train_args.split()]
         if k > 0:
             train += ["--adapter-in", str(run / "adapters" / f"{k:03d}")]
         with open(run / "train.log", "a") as out:

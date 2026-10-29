@@ -57,12 +57,20 @@ def main() -> None:
     p.add_argument("--max-length", type=int, default=34500)
     p.add_argument("--max-grad-norm", type=float, default=1.0)
     p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--shuffle-advantages", action="store_true",
+                   help="control: permute advantages across all scored tokens of the round, keeping their distribution")
     args = p.parse_args()
 
     accelerator = Accelerator()
     rank, world = accelerator.process_index, accelerator.num_processes
     rows = load_rows(args.batch, args.max_length)
     random.Random(args.seed).shuffle(rows)
+    if args.shuffle_advantages:
+        pool = [a for r in rows for a, m in zip(r["advantages"], r["mask"]) if m]
+        random.Random(args.seed + 10_000).shuffle(pool)
+        it = iter(pool)
+        for r in rows:
+            r["advantages"] = [next(it) if m else 0.0 for m in r["mask"]]
 
     model = AutoModelForCausalLM.from_pretrained(MODEL, dtype=torch.bfloat16, attn_implementation="sdpa")
     model.config.use_cache = False

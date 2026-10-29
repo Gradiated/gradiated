@@ -43,6 +43,8 @@ def main() -> None:
     p.add_argument("--samples", type=int, default=8)
     p.add_argument("--max-prompt-tokens", type=int, default=32000)
     p.add_argument("--workers", type=int, default=8)
+    p.add_argument("--same-tokenizer-teacher", default="", help="also score with this same-tokenizer teacher (completions echo)")
+    p.add_argument("--skip-k3-extras", action="store_true", help="skip K3 reasoning and hint scorers")
     p.add_argument("--out", required=True)
     args = p.parse_args()
 
@@ -99,6 +101,15 @@ def main() -> None:
             lo = after[0] + len(think_close)
         return sum(lps[lo:hi]) / max(1, hi - lo)
 
+    def same_tok_mean(prompt_ids: list[int], ids: list[int]) -> float | None:
+        body = {"model": args.same_tokenizer_teacher, "prompt": prompt_ids + ids, "max_tokens": 1, "echo": True, "logprobs": 1}
+        try:
+            d = post("https://api.fireworks.ai/inference/v1/completions", body, fireworks, attempts=2)
+        except RuntimeError:
+            return None
+        lp = d["choices"][0]["logprobs"]["token_logprobs"][len(prompt_ids) : len(prompt_ids) + len(ids)]
+        return sum(x or 0.0 for x in lp) / max(1, len(ids))
+
     def run(pt) -> dict | None:
         tools = openai_tools(pt.tools)
         body = {"model": args.student, "messages": anthropic_to_openai(pt.system, pt.history), "tools": tools,
@@ -112,7 +123,7 @@ def main() -> None:
             return None
         reference = output_from_anthropic_blocks(pt.reference.get("content"))
         schemas = tool_schemas(pt.tools)
-        reasoning = k3_reasoning(pt)
+        reasoning = None if args.skip_k3_extras else k3_reasoning(pt)
         hint = reference["text"] + "".join(f"\n[tool call] {c['name']}({json.dumps(c.get('arguments'), ensure_ascii=False)})"
                                            for c in reference["tool_calls"])
         samples = []
@@ -138,10 +149,14 @@ def main() -> None:
             k3 = k3_mean(pt, output)
             samples.append({"verdict": verdict, "k3_mean": k3, "valid": record["validity"]["valid"],
                             "k3_reasoning": k3_mean(pt, output, "reasoning", reasoning=reasoning) if reasoning else None,
-                            "k3_hint": k3_mean(pt, output, hint=hint),
+                            "k3_hint": None if args.skip_k3_extras else k3_mean(pt, output, hint=hint),
+                            "teacher_same": same_tok_mean(response["prompt_token_ids"], choice["token_ids"]) if args.same_tokenizer_teacher else None,
                             "student_mean": sum(student) / max(1, len(student)),
                             "log_ratio": None if k3 is None else k3 - sum(student) / max(1, len(student)),
                             "tools": [c["name"] for c in output["tool_calls"]], "output": output})
+        for smp in samples:
+            if smp.get("teacher_same") is not None:
+                smp["teacher_same_ratio"] = smp["teacher_same"] - smp["student_mean"]
         return {"point_id": pt.point_id, "stratum": pt.stratum, "samples": samples}
 
     with ThreadPoolExecutor(args.workers) as pool:
@@ -153,7 +168,7 @@ def main() -> None:
 
     single = judge_best = 0.0
     report = {"groups": 0}
-    for key in ("k3_mean", "k3_reasoning", "k3_hint", "log_ratio", "student_mean"):
+    for key in ("k3_mean", "k3_reasoning", "k3_hint", "log_ratio", "student_mean", "teacher_same", "teacher_same_ratio"):
         usable = [[s for s in g["samples"] if s.get("verdict") and s.get(key) is not None] for g in groups]
         usable = [u for u in usable if len(u) >= 2]
         if not usable:

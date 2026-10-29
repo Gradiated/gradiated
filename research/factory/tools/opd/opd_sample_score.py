@@ -174,6 +174,8 @@ def main() -> None:
     p.add_argument("--workers", type=int, default=16)
     p.add_argument("--no-gaps", action="store_true", help="leave template runs between content spans unscored")
     p.add_argument("--weights", default="", help="advantage multipliers by field kind, e.g. name=20,key=5")
+    p.add_argument("--same-tokenizer", action="store_true",
+                   help="teacher shares the student's tokenizer and template: score the exact token ids via completions echo")
     p.add_argument("--out", required=True)
     args = p.parse_args()
 
@@ -210,13 +212,56 @@ def main() -> None:
             position += len(segment.text)
         return ids, offsets
 
-    def score(point, messages, tools, sample) -> dict | None:
+    def score_same_tokenizer(point, ids, logprobs, prompt_ids, text, offsets, tools) -> dict | None:
+        """Standard OPD: the teacher scores the student's exact prompt and sample tokens, so every token is covered."""
+        body = {"model": args.teacher, "prompt": prompt_ids + ids, "max_tokens": 1, "echo": True, "logprobs": 1}
+        try:
+            response = post("https://api.fireworks.ai/inference/v1/completions", body, fireworks)
+        except RuntimeError as error:
+            stats["teacher_error"] += 1
+            print(f"teacher error: {str(error)[:200]}", file=sys.stderr)
+            return None
+        lp = response["choices"][0]["logprobs"]
+        for k, v in (response.get("usage") or {}).items():
+            if isinstance(v, int):
+                usage[f"teacher_{k}"] += v
+        echoed = lp.get("token_ids") or []
+        if echoed[len(prompt_ids) : len(prompt_ids) + len(ids)] != ids:
+            stats["teacher_token_mismatch"] += 1
+            return None
+        teacher = [x if x is not None else 0.0 for x in lp["token_logprobs"][len(prompt_ids) : len(prompt_ids) + len(ids)]]
+        raw = [t - s for t, s in zip(teacher, logprobs)]
+        kind = ["gap"] * len(ids)
+        try:
+            _, fields = parse_qwen_output(text, param_types=param_types(tools))
+            for f in fields:
+                k = f.field.split(".")[-1] if "." in f.field else f.field
+                for i, (a, b) in enumerate(offsets):
+                    if f.start <= a < b <= f.end:
+                        kind[i] = k
+        except (ParseError, ValueError):
+            stats["parse_error_kinds_only"] += 1
+        for i, a in enumerate(raw):
+            field_kl[kind[i]] -= a
+            field_tokens[kind[i]] += 1
+        advantages = [a * weights.get(kind[i], 1.0) for i, a in enumerate(raw)]
+        gap_kl = -sum(a for i, a in enumerate(raw) if kind[i] == "gap")
+        stats["scored"] += 1
+        stats["tokens"] += len(ids)
+        stats["covered"] += len(ids)
+        stats["gap_tokens"] += kind.count("gap")
+        return {"status": "ok", "point_id": point.point_id, "token_ids": ids, "sampler_logprobs": logprobs,
+                "advantages": advantages, "reverse_kl": -sum(raw), "covered": len(ids), "gap_kl": gap_kl}
+
+    def score(point, messages, tools, sample, prompt_ids) -> dict | None:
         ids = sample["token_ids"]
         logprobs = [c["logprob"] for c in sample["logprobs"]["content"]]
         if len(ids) != len(logprobs):
             stats["logprob_length_mismatch"] += 1
             return None
         text, offsets = char_offsets(qwen.pieces(ids))
+        if args.same_tokenizer:
+            return score_same_tokenizer(point, ids, logprobs, prompt_ids, text, offsets, tools)
         try:
             turn, fields = parse_qwen_output(text, param_types=param_types(tools))
             rendering = render_k3_completion(turn, thinking=False)
@@ -300,7 +345,7 @@ def main() -> None:
             stats["samples"] += 1
             if sample["finish_reason"] != "stop":
                 stats["truncated"] += 1
-            record = score(point, messages, tools, sample)
+            record = score(point, messages, tools, sample, prompt_ids)
             if record is not None:
                 record.update({"round": args.round, "prompt_token_ids": prompt_ids, "finish": sample["finish_reason"]})
                 out.append(record)

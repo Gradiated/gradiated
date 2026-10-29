@@ -169,13 +169,6 @@
       "when": 1793214641022,
       "tag": "0023_billing_top_up_charges",
       "breakpoints": true
-    },
-    {
-      "idx": 24,
-      "version": "7",
-      "when": 1793281568448,
-      "tag": "0024_rename_dealign_selections",
-      "breakpoints": true
     }
   ]
 }

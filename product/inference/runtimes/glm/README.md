@@ -59,7 +59,6 @@ python3 infra/environments/prod/runpod/deepseek-v4-1-flash/benchmark.py \
   --output .agents/runtime/glm-dealign/concurrency.json
 ```
 
-
 The pinned chat template recognizes `reasoning_effort: "low"` and `"high"`;
 omitting the field or using another value selects its maximum reasoning budget.
 In particular, `"none"` does not disable reasoning in this template. Use `"low"`

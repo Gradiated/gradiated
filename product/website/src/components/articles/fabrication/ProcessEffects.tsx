@@ -382,19 +382,6 @@ export const CloseupProcessEffects = ({
         : null}
       {wet ? (
         <g>
-          <path
-            d={path(
-              Array.from({ length: 14 }, (_, i) => {
-                const x = Math.min(100, Math.max(0, -12 + progress * 124));
-                const y = (i / 13) * ymax;
-                return [x, y, surface(x, y) + 0.6] as Point;
-              }),
-            )}
-            stroke="#d9edef"
-            strokeWidth="11"
-            opacity=".15"
-            fill="none"
-          />
           {dissolvingSites.map(([x, y], i) => {
             const phase = phaseAt(progress, i);
             const stripping = visit.machine === "strip";

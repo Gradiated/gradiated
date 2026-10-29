@@ -323,7 +323,10 @@ export const fieldOxideProfile = (x: number, growth = 1) => {
   if (growth <= 0) return activeSilicon(x) ? 0 : 1;
 
   const distance = Math.min(
-    ...[2, 40, 60, 98].map((edge) => Math.abs(x - edge)),
+    Math.abs(x - 2),
+    Math.abs(x - 40),
+    Math.abs(x - 60),
+    Math.abs(x - 98),
   );
   const signedDistance = activeSilicon(x) ? distance : -distance;
   const reach = 3 * growth;
@@ -428,16 +431,22 @@ export const resistThickness = (
   mask: MaskId,
   x: number,
   y: number,
+  topHeight?: number,
 ) => {
-  const resist = resistState(state, mask);
+  const amount = state[`${mask}Coat`] * (1 - state[`${mask}Strip`]);
+  if (amount === 0) return 0;
+
+  const retained = maskOpens(mask, x, y) ? 1 - state[`${mask}Develop`] : 1;
+  if (retained === 0) return 0;
 
   return (
     Math.max(
       0,
-      resistTopHeight(state, mask) - materialSurfaceHeight(state, x, y),
+      (topHeight ?? resistTopHeight(state, mask)) -
+        materialSurfaceHeight(state, x, y),
     ) *
-    resist.amount *
-    (maskOpens(mask, x, y) ? 1 - resist.develop : 1)
+    amount *
+    retained
   );
 };
 

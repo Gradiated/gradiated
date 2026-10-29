@@ -731,6 +731,9 @@
   position: relative;
   isolation: isolate;
 }
+.fab-background-graphics {
+  display: contents;
+}
 .fab-opening-destination {
   position: absolute;
   inset: 0;

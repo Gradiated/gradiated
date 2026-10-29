@@ -6,7 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { SectionFab } from "../../design";
 import { ChipLayersArtwork } from "../../sand-library/ChipLayersArtwork";
 import { siliconColours } from "./materials";
@@ -45,6 +45,20 @@ const FabricationMarkup = memo(
   ({ html, className }: { html: string; className?: string }) => (
     <div className={className} dangerouslySetInnerHTML={{ __html: html }} />
   ),
+);
+
+// Keep measured SVGs mounted while an opaque overlay covers their drawings.
+const BackgroundGraphics = memo(
+  ({ children, covered }: { children: ReactNode; covered: boolean }) => (
+    <div
+      className="fab-background-graphics"
+      aria-hidden={covered}
+      inert={covered}
+    >
+      {children}
+    </div>
+  ),
+  (previous, next) => previous.covered && next.covered,
 );
 
 const articleLabels = (
@@ -150,6 +164,8 @@ export const FabricationJourney = () => {
       );
   const camera = patterningCamera(active, transition, from.camera);
   const opening = openingState(active, transition, from.opening);
+  const backgroundCovered =
+    Math.max(opening.destination, workingInverter, wiringOverview) === 1;
   const entering = active === stages.operator && from.opening.entry < 0.99;
   const detailReveal = portion(opening.magnify, 0.3, 1);
   const door =
@@ -250,6 +266,8 @@ export const FabricationJourney = () => {
     let frame = 0;
     let elapsed = 0;
     let transitionElapsed = 0;
+    let drawnProgress = 0;
+    let drawnTransition = 0;
     const duration =
       active === 0 || active === stages.inverter
         ? inverterDuration
@@ -282,12 +300,24 @@ export const FabricationJourney = () => {
         elapsed = 0;
         setInput((value) => 1 - value);
       }
-      setAnimation({
-        index: active,
-        progress: Math.min(1, elapsed / duration),
-        transition: Math.min(1, transitionElapsed / transitionDuration),
-        from: origin,
-      });
+      const nextProgress = Math.min(1, elapsed / duration);
+      const nextTransition = Math.min(
+        1,
+        transitionElapsed / transitionDuration,
+      );
+      if (
+        nextProgress !== drawnProgress ||
+        nextTransition !== drawnTransition
+      ) {
+        drawnProgress = nextProgress;
+        drawnTransition = nextTransition;
+        setAnimation({
+          index: active,
+          progress: nextProgress,
+          transition: nextTransition,
+          from: origin,
+        });
+      }
       if (looping || elapsed < duration) frame = requestAnimationFrame(update);
     };
     const resume = () => {
@@ -465,131 +495,136 @@ export const FabricationJourney = () => {
               aria-label="Fabrication animation"
             >
               <div className="fab-visuals" ref={visualsRef}>
-                <div
-                  className="fab-lab-heading"
-                  style={{ opacity: opening.room }}
-                >
-                  Gradiated’s backyard clean room
-                </div>
-                <div
-                  className="fab-room-host"
-                  style={{ opacity: opening.room }}
-                  aria-hidden={opening.room < 0.01}
-                  inert={opening.room < 0.99}
-                  ref={roomRef}
-                  onFocusCapture={keepPreview}
-                  onBlurCapture={(event) => {
-                    if (
-                      event.relatedTarget &&
-                      !event.currentTarget.contains(event.relatedTarget)
-                    ) {
-                      dismissPreview();
-                    }
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Escape" && previewOpen) {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      closePreview();
-                    }
-                  }}
-                >
-                  <CleanRoom
-                    visit={visit}
-                    state={material}
-                    machinesOpacity={opening.machines}
-                    operatorOpacity={opening.operator}
-                    entry={opening.entry}
-                    held={portion(opening.transfer, 0.94, 1)}
-                    door={door}
-                    doorOpen={doorOpen}
-                    preview={previewOpen ? preview : undefined}
-                    showPreview={showPreview}
-                    hidePreview={hidePreview}
-                    togglePreview={togglePreview}
-                  />
-                  {previewMachine ? (
-                    <div
-                      id="fab-machine-preview"
-                      className={`fab-machine-preview ${previewOpen ? "is-open" : ""}`}
-                      role="region"
-                      aria-labelledby="fab-preview-title"
-                      aria-hidden={!previewOpen}
-                      inert={!previewOpen}
-                      onPointerEnter={keepPreview}
-                      onPointerLeave={hidePreview}
-                    >
-                      <button
-                        aria-label="Close machine preview"
-                        onClick={closePreview}
-                      >
-                        ×
-                      </button>
-                      <span className="fab-preview-source">
-                        Wikipedia preview
-                      </span>
-                      <strong id="fab-preview-title">
-                        {previewMachine.label}
-                      </strong>
-                      <p id="fab-machine-description">
-                        {previewMachine.summary}
-                      </p>
-                      <a
-                        href={`https://en.wikipedia.org/wiki/${previewMachine.wiki}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Read on Wikipedia <span aria-hidden="true">↗</span>
-                      </a>
-                    </div>
-                  ) : null}
-                </div>
-                <div className="fab-observations">
-                  <figure className="fab-wafer-panel" aria-label="Whole wafer">
-                    <div
-                      className="fab-wafer-position"
-                      style={{
-                        opacity: opening.wafer * materialReveal,
-                        transform: openingLayout
-                          ? `translate(${openingLayout.dx * opening.centred}px, ${openingLayout.dy * opening.centred}px) scale(${1 + (openingLayout.scale - 1) * opening.centred})`
-                          : undefined,
-                      }}
-                      aria-hidden={opening.wafer < 0.01}
-                    >
-                      <WholeWafer
-                        index={active}
-                        visit={visit}
-                        state={material}
-                        gloves={opening.gloves}
-                        detail={portion(opening.magnify, 0, 0.3)}
-                      />
-                    </div>
-                  </figure>
-                  <figure
-                    className="fab-detail-panel"
-                    style={{ opacity: detailReveal * materialReveal }}
-                    aria-hidden={detailReveal < 0.01}
-                    inert={detailReveal < 0.99}
-                    aria-label="Enlarged wafer region"
+                <BackgroundGraphics covered={backgroundCovered}>
+                  <div
+                    className="fab-lab-heading"
+                    style={{ opacity: opening.room }}
                   >
-                    {opening.magnify > 0 ? physicalView : null}
-                  </figure>
-                  {opening.magnify > 0 ? (
-                    <WaferMagnification
-                      opacity={portion(opening.magnify, 0.15, 0.35)}
-                      progress={portion(opening.magnify, 0.15, 1)}
-                      corners={[
-                        camera.project([0, 0, surfaceHeights[0]]),
-                        camera.project([0, camera.ymax, surfaceHeights[1]]),
-                      ]}
+                    Gradiated’s backyard clean room
+                  </div>
+                  <div
+                    className="fab-room-host"
+                    style={{ opacity: opening.room }}
+                    aria-hidden={opening.room < 0.01}
+                    inert={opening.room < 0.99}
+                    ref={roomRef}
+                    onFocusCapture={keepPreview}
+                    onBlurCapture={(event) => {
+                      if (
+                        event.relatedTarget &&
+                        !event.currentTarget.contains(event.relatedTarget)
+                      ) {
+                        dismissPreview();
+                      }
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Escape" && previewOpen) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        closePreview();
+                      }
+                    }}
+                  >
+                    <CleanRoom
+                      visit={visit}
+                      state={material}
+                      machinesOpacity={opening.machines}
+                      operatorOpacity={opening.operator}
+                      entry={opening.entry}
+                      held={portion(opening.transfer, 0.94, 1)}
+                      door={door}
+                      doorOpen={doorOpen}
+                      preview={previewOpen ? preview : undefined}
+                      showPreview={showPreview}
+                      hidePreview={hidePreview}
+                      togglePreview={togglePreview}
                     />
-                  ) : null}
-                </div>
-                <WaferTransfer
-                  layout={openingLayout}
-                  progress={opening.transfer}
-                  state={material}
-                />
+                    {previewMachine ? (
+                      <div
+                        id="fab-machine-preview"
+                        className={`fab-machine-preview ${previewOpen ? "is-open" : ""}`}
+                        role="region"
+                        aria-labelledby="fab-preview-title"
+                        aria-hidden={!previewOpen}
+                        inert={!previewOpen}
+                        onPointerEnter={keepPreview}
+                        onPointerLeave={hidePreview}
+                      >
+                        <button
+                          aria-label="Close machine preview"
+                          onClick={closePreview}
+                        >
+                          ×
+                        </button>
+                        <span className="fab-preview-source">
+                          Wikipedia preview
+                        </span>
+                        <strong id="fab-preview-title">
+                          {previewMachine.label}
+                        </strong>
+                        <p id="fab-machine-description">
+                          {previewMachine.summary}
+                        </p>
+                        <a
+                          href={`https://en.wikipedia.org/wiki/${previewMachine.wiki}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Read on Wikipedia <span aria-hidden="true">↗</span>
+                        </a>
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="fab-observations">
+                    <figure
+                      className="fab-wafer-panel"
+                      aria-label="Whole wafer"
+                    >
+                      <div
+                        className="fab-wafer-position"
+                        style={{
+                          opacity: opening.wafer * materialReveal,
+                          transform: openingLayout
+                            ? `translate(${openingLayout.dx * opening.centred}px, ${openingLayout.dy * opening.centred}px) scale(${1 + (openingLayout.scale - 1) * opening.centred})`
+                            : undefined,
+                        }}
+                        aria-hidden={opening.wafer < 0.01}
+                      >
+                        <WholeWafer
+                          index={active}
+                          visit={visit}
+                          state={material}
+                          gloves={opening.gloves}
+                          detail={portion(opening.magnify, 0, 0.3)}
+                        />
+                      </div>
+                    </figure>
+                    <figure
+                      className="fab-detail-panel"
+                      style={{ opacity: detailReveal * materialReveal }}
+                      aria-hidden={detailReveal < 0.01}
+                      inert={detailReveal < 0.99}
+                      aria-label="Enlarged wafer region"
+                    >
+                      {opening.magnify > 0 ? physicalView : null}
+                    </figure>
+                    {opening.magnify > 0 ? (
+                      <WaferMagnification
+                        opacity={portion(opening.magnify, 0.15, 0.35)}
+                        progress={portion(opening.magnify, 0.15, 1)}
+                        corners={[
+                          camera.project([0, 0, surfaceHeights[0]]),
+                          camera.project([0, camera.ymax, surfaceHeights[1]]),
+                        ]}
+                      />
+                    ) : null}
+                  </div>
+                  <WaferTransfer
+                    layout={openingLayout}
+                    progress={opening.transfer}
+                    state={material}
+                  />
+                </BackgroundGraphics>
                 {Math.max(opening.destination, workingInverter) > 0 ? (
                   <div
                     className="fab-opening-destination"

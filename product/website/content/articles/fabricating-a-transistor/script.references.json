@@ -88,12 +88,12 @@
   },
   "dielectric-polishing": {
     "authors": [
-      "Applied Materials"
+      "National Institute of Standards and Technology"
     ],
-    "title": "Applied Materials leads the industry in CMP for 7th year",
-    "publication": "Applied Materials",
-    "year": 2005,
-    "url": "https://ir.appliedmaterials.com/news-releases/news-release-details/applied-materials-leads-industry-cmp-7th-year#:~:text=performance%2Dcritical%20transistor%20steps%20like%20shallow%20trench%20isolation%20and%20pre%2Dmetal%20dielectric%20polishing"
+    "title": "NanoFab Tool: IPEC 472, Chemical Mechanical Polisher (CMP)",
+    "year": 2019,
+    "accessed": "28 October 2026",
+    "url": "https://www.nist.gov/laboratories/tools-instruments/nanofab-tool-ipec-472-chemical-mechanical-polisher-cmp#:~:text=The%20CMP%20removes%20material%20both%20chemically,sub%2Dnanometer%20roughness."
   },
   "etch-selectivity": {
     "authors": [
@@ -138,7 +138,28 @@
     ],
     "title": "Etch essentials: the building blocks of AI era microchips",
     "year": 2024,
-    "url": "https://newsroom.lamresearch.com/etch-essentials-semiconductor-manufacturing#:~:text=Advanced%20process%20technologies%20rely%20more%20on%20dry%20etching,which%20is%20critical%20to%20form%20FinFET%20and%20Gate%2Dall%2Daround%20%28GAA%29%20devices."
+    "url": "https://newsroom.lamresearch.com/etch-essentials-semiconductor-manufacturing#:~:text=During%20plasma%20etch%2C%20physical%20and%20chemical%20etching%20help%20each%20other%20and%20occur%20together.,the%20chemical%20component%20ensures%20volatile%20etch%20byproducts%20form%20and%20can%20be%20pumped%20away."
+  },
+  "nitride-over-oxide": {
+    "authors": [
+      "Donnelly, V. M.",
+      "Kornblit, A."
+    ],
+    "title": "Plasma etching: Yesterday, today, and tomorrow",
+    "publication": "J. Vac. Sci. Technol. A",
+    "volume": "31",
+    "pages": "050825",
+    "year": 2013,
+    "url": "https://pubs.aip.org/avs/jva/article/31/5/050825/244912/Plasma-etching-Yesterday-today-and-tomorrow"
+  },
+  "nitride-etch-recipe": {
+    "authors": [
+      "University of California, Berkeley, Nanofabrication Laboratory"
+    ],
+    "title": "CMOS 200 process, step 12: nitride etch",
+    "year": 2011,
+    "accessed": "28 October 2026",
+    "url": "https://nanolab.berkeley.edu/public/process/baseline/cmos200/Step%2012.htm#:~:text=Nitride%3AOxide%20%3D%2010%3A1"
   },
   "gate-materials": {
     "authors": [
@@ -156,12 +177,12 @@
   },
   "metal-gate-process": {
     "authors": [
-      "Jan, C.-H. et al."
+      "Intel"
     ],
-    "title": "A 32nm SoC platform technology with 2nd generation high-k/metal gate transistors",
-    "publication": "IEEE International Electron Devices Meeting presentation",
-    "year": 2009,
-    "url": "https://www.intel.com/content/dam/doc/technology-brief/32nm-soc-platform-technology-presentation.pdf#page=4"
+    "title": "Making of a Chip: 22nm 3D/Trigate Transistors",
+    "pages": "9–11",
+    "year": 2012,
+    "url": "https://download.intel.com/newsroom/kits/chipmaking/pdfs/Sand-to-Silicon_22nm-Version.pdf#page=9"
   },
   "cmos-fabrication": {
     "authors": [
@@ -183,13 +204,19 @@
     "year": 1963,
     "url": "https://doi.org/10.1109/ISSCC.1963.1157450"
   },
-  "chipmaking-overview": {
+  "process-metrology": {
     "authors": [
-      "ASML"
+      "Sutherland, D.",
+      "Price, D. W.",
+      "Rathert, J.",
+      "O’Leary, I."
     ],
-    "title": "How microchips are made",
-    "accessed": "26 October 2026",
-    "url": "https://www.asml.com/en/technology/all-about-microchips/how-microchips-are-made#:~:text=Microchips%20are%20made%20by%20building%20up%20layers%20of%20interconnected%20patterns,as%20robots%20transport%20their%20precious%20wafers%20from%20machine%20to%20machine."
+    "title": "Practical applications of measurement systems analysis (MSA) for semiconductor process control",
+    "publication": "Automotive Electronics Council Reliability Workshop",
+    "publisher": "KLA",
+    "pages": "slides 7, 10",
+    "year": 2019,
+    "url": "https://www.kla.com/documents/5.3_Practical_Applications_of_MSA_Sutherland_KLA.pdf#page=10"
   },
   "interconnect-layers": {
     "authors": [
@@ -201,26 +228,15 @@
   },
   "oxide-over-aluminium": {
     "authors": [
-      "Senthilkumar, D.",
-      "Shee, K. L. T.",
-      "Rao, B. S. S. C."
+      "Hung, L.-W.",
+      "Nguyen, C."
     ],
-    "title": "Reduction of aluminum fluoride formation during fluorinated plasma etching of dielectric passivation layer over aluminum pad",
-    "publication": "2022 IEEE 24th Electronics Packaging Technology Conference (EPTC)",
-    "pages": "175–178",
-    "year": 2022,
-    "url": "https://doi.org/10.1109/EPTC56328.2022.10013198"
-  },
-  "aluminium-over-oxide": {
-    "authors": [
-      "Chapman, G. H."
-    ],
-    "title": "Plasma etching rates & gases",
-    "publication": "ENSC 495 lecture notes",
-    "publisher": "Simon Fraser University",
-    "pages": "1",
-    "accessed": "26 October 2026",
-    "url": "https://www.sfu.ca/~gchapman/e495/e495l12k.pdf#page=1"
+    "title": "High-Q Low-Impedance MEMS Resonators",
+    "publication": "Technical Report UCB/EECS-2012-218",
+    "publisher": "University of California, Berkeley",
+    "pages": "101, table 4-2",
+    "year": 2012,
+    "url": "https://www2.eecs.berkeley.edu/Pubs/TechRpts/2012/EECS-2012-218.pdf#page=113"
   },
   "device-isolation": {
     "authors": [
@@ -257,17 +273,6 @@
     "year": 1998,
     "url": "https://ir.appliedmaterials.com/news-releases/news-release-details/applied-materials-introduces-nitride550-cvd-process-enable-next#:~:text=Thin%20layers%20of%20nitride%20are%20especially%20useful%20as"
   },
-  "nitride-spacers": {
-    "authors": [
-      "Pradeep, Y. R.",
-      "Yu, J.",
-      "Wu, G. P."
-    ],
-    "title": "Method to form an L-shaped silicon nitride sidewall spacer",
-    "publication": "US patent 6,251,764 B1",
-    "year": 2001,
-    "url": "https://patents.google.com/patent/US6251764B1/en#:~:text=In%20particular%2C%20silicon%20nitride%20sidewall%20spacers"
-  },
   "chip-passivation": {
     "authors": [
       "Sheikholeslami, A."
@@ -276,6 +281,15 @@
     "publication": "Institute for Microelectronics annual review",
     "publisher": "Technische Universität Wien",
     "year": 2006,
-    "url": "https://www.iue.tuwien.ac.at/personal/jb2006/content/staff/Sheikholeslami.html#:~:text=A%20typical%20passivation%20process%20in%20IC%20chips"
+    "url": "https://www.iue.tuwien.ac.at/personal/jb2006/content/staff/Sheikholeslami.html#:~:text=A%20typical%20passivation%20process%20in%20IC%20chips,covered%20by%20a%20layer%20of%20silicon%20nitride.&text=Therefore%2C%20two-dimensional%20investigations,the%20moisture%20barrier%20and%20the%20topmost%20metal%20layer."
+  },
+  "self-aligned-gate": {
+    "authors": [
+      "Wikipedia contributors"
+    ],
+    "title": "Self-aligned gate",
+    "publication": "Wikipedia",
+    "accessed": "28 October 2026",
+    "url": "https://en.wikipedia.org/wiki/Self-aligned_gate"
   }
 }

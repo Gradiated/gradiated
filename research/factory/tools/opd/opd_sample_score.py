@@ -184,6 +184,7 @@ def main() -> None:
     p.add_argument("--workers", type=int, default=16)
     p.add_argument("--no-gaps", action="store_true", help="leave template runs between content spans unscored")
     p.add_argument("--weights", default="", help="advantage multipliers by field kind, e.g. name=20,key=5")
+    p.add_argument("--teacher-vllm", default="", help="same-tokenizer teacher served by vLLM at this base URL (prompt_logprobs)")
     p.add_argument("--topk", type=int, default=0, help="also return the teacher's top-k alternatives at 1:1 aligned positions")
     p.add_argument("--same-tokenizer", action="store_true",
                    help="teacher shares the student's tokenizer and template: score the exact token ids via completions echo")
@@ -225,22 +226,33 @@ def main() -> None:
 
     def score_same_tokenizer(point, ids, logprobs, prompt_ids, text, offsets, tools) -> dict | None:
         """Standard OPD: the teacher scores the student's exact prompt and sample tokens, so every token is covered."""
-        body = {"model": args.teacher, "prompt": prompt_ids + ids, "max_tokens": 1, "echo": True, "logprobs": 1}
-        try:
-            response = post("https://api.fireworks.ai/inference/v1/completions", body, fireworks)
-        except RuntimeError as error:
-            stats["teacher_error"] += 1
-            print(f"teacher error: {str(error)[:200]}", file=sys.stderr)
-            return None
-        lp = response["choices"][0]["logprobs"]
-        for k, v in (response.get("usage") or {}).items():
-            if isinstance(v, int):
-                usage[f"teacher_{k}"] += v
-        echoed = lp.get("token_ids") or []
-        if echoed[len(prompt_ids) : len(prompt_ids) + len(ids)] != ids:
-            stats["teacher_token_mismatch"] += 1
-            return None
-        teacher = [x if x is not None else 0.0 for x in lp["token_logprobs"][len(prompt_ids) : len(prompt_ids) + len(ids)]]
+        if args.teacher_vllm:
+            body = {"model": args.teacher, "prompt": prompt_ids + ids, "max_tokens": 1, "prompt_logprobs": 0}
+            try:
+                response = post(f"{args.teacher_vllm}/completions", body, {})
+            except RuntimeError as error:
+                stats["teacher_error"] += 1
+                print(f"teacher error: {str(error)[:200]}", file=sys.stderr)
+                return None
+            plp = response["choices"][0]["prompt_logprobs"][len(prompt_ids) : len(prompt_ids) + len(ids)]
+            teacher = [(entry or {}).get(str(t), {}).get("logprob", 0.0) for entry, t in zip(plp, ids)]
+        else:
+            body = {"model": args.teacher, "prompt": prompt_ids + ids, "max_tokens": 1, "echo": True, "logprobs": 1}
+            try:
+                response = post("https://api.fireworks.ai/inference/v1/completions", body, fireworks)
+            except RuntimeError as error:
+                stats["teacher_error"] += 1
+                print(f"teacher error: {str(error)[:200]}", file=sys.stderr)
+                return None
+            lp = response["choices"][0]["logprobs"]
+            for k, v in (response.get("usage") or {}).items():
+                if isinstance(v, int):
+                    usage[f"teacher_{k}"] += v
+            echoed = lp.get("token_ids") or []
+            if echoed[len(prompt_ids) : len(prompt_ids) + len(ids)] != ids:
+                stats["teacher_token_mismatch"] += 1
+                return None
+            teacher = [x if x is not None else 0.0 for x in lp["token_logprobs"][len(prompt_ids) : len(prompt_ids) + len(ids)]]
         raw = [t - s for t, s in zip(teacher, logprobs)]
         kind = ["gap"] * len(ids)
         try:

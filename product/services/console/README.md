@@ -45,6 +45,12 @@ sent. Locally, Vite proxies `/v1/` to the
 gateway on port 3002. Storybook mocks the stream; `Pages/Playground*` and
 `Playground/Chat message` stories cover the page and reply states.
 
+Assistant replies render Markdown, including lists, fenced code, quotes and GFM
+tables/task lists. Prompts and reasoning stay literal. Raw HTML is skipped, unsafe
+link protocols are filtered, and images display their alt text without fetching
+remote resources. Copy reply preserves the original Markdown. Formatting stories
+also cover incomplete streaming content and narrow screens.
+
 ## Task training
 
 Task settings offer manual-only, daily, weekly and custom five-field UTC cron

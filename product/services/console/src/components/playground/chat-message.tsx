@@ -1,6 +1,7 @@
 import { Brain, LoaderCircle } from "lucide-react";
 
 import { CopyStateIcon } from "@/components/copy-state-icon";
+import { MessageMarkdown } from "@/components/playground/message-markdown";
 import { Button } from "@/components/ui/button";
 import { copyLabel, useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import {
@@ -39,11 +40,7 @@ const AssistantReply = ({ reply }: { reply: AssistantMessage }) => {
           </p>
         </details>
       ) : null}
-      {reply.content ? (
-        <div className="text-sm leading-6 break-words whitespace-pre-wrap">
-          {reply.content}
-        </div>
-      ) : null}
+      {reply.content ? <MessageMarkdown content={reply.content} /> : null}
       {thinking && !reply.reasoning ? (
         <LoaderCircle
           aria-label="Generating"

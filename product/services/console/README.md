@@ -130,10 +130,10 @@ Dark mode was not inspected in the browser.
 
 Workspace settings expose `default_judge_model` as **Default judge model**. Capture copies it once into a new task’s `judge_model_id`; task settings expose **Judge model** as an independent override. Changing the workspace default affects only subsequently seeded tasks. Existing tasks retain their previous workspace judge during migration. Runs snapshot the task judge at admission.
 
-## Storybook and PR screenshots
+## Storybook previews
 
-Browse the main-branch build at https://storybook.gradiated.com. Run locally from
-`product/`:
+Browse Storybook at https://gradiated-storybook-gradiated.vercel.app; PR comments link to
+the preview for that branch. Run locally from `product/`:
 
 ```sh
 pnpm install --frozen-lockfile
@@ -148,7 +148,7 @@ disabled only for Storybook. Page stories cover sign-in, API keys, models,
 usage, logs, billing, training, and every task-detail tab: Model, Training runs,
 Data, and Settings, plus trace content, test results, and the judge selector. Tab and detail stories
 select the actual tab and open the panel through a play function.
-Add stories under `src/`; screenshot capture discovers every page story automatically.
+Add stories under `src/` so reviewers can inspect them in the PR preview.
 
 Capture PNGs locally from the repository root with the pinned browser runtime:
 
@@ -163,22 +163,27 @@ a fixed date. Each story has an isolated browser context and external requests
 are blocked. Screenshots replace the committed `screenshots/*.png` only after
 all stories render successfully. GitHub's image diff shows changed pages in PRs.
 
-The Storybook workflow builds and captures relevant PRs, uploads artifacts, then
-commits changed PNGs to same-repository PR branches and adds a before/after
-comment. Forks receive downloadable artifacts. Capture and publication jobs are
-informative and never block merging; there is no pixel comparison or approval
-threshold. A separate publication job handles the write key without executing
-PR code. Its bot commits trigger the usual source checks. Screenshot-only commits from
-either the console or website skip both capture workflows, preventing them
-from triggering one another. PNG-only PRs and main-branch PNG-only pushes
-also skip capture. In-flight publishers retry over sibling screenshot commits,
-preserving both sets, and discard captures when source files change.
+Storybook is configured for Vercel in `vercel.json`. The Gradiated team’s
+`storybook` project is connected to `Gradiated/gradiated` with Root
+Directory `product/services/console`, Node.js 22, and access to files outside
+the root directory (the pnpm workspace and shared packages). The build compiles
+contracts and analytics before Storybook and publishes `storybook-static`.
 
-Main-branch builds publish to a private S3 bucket through CloudFront. A successful
-Terraform run also republishes Storybook, so the initial hosting provisioning
-can finish before publication. The `public-ingress` module owns the bucket,
-certificate, distribution, and DNS; `deployment-iam` grants the existing
-production deployment role access. GitHub's production environment applies to
-hosting deployment.
+Vercel's Git integration posts the branch/commit preview link on the PR. These
+builds run independently of GitHub Actions; on-demand concurrency allows previews
+from different branches to run in parallel. Use Standard build machines and
+one active build per branch to avoid paying for superseded previews. The
+project's ignored-build script compares against Vercel's previous deployed SHA,
+so unrelated changes skip deployment while missing history builds conservatively.
+Shared contracts, analytics, workspace lockfile, and toolchain changes rebuild.
+No production API credentials or application environment variables are needed:
+Storybook uses mocked data and disables production analytics.
+
+CI does not capture or commit PNGs. The local capture command above remains
+available for ad hoc checks. The existing AWS-hosted
+`https://storybook.gradiated.com` is the legacy main-branch build; it does not
+show PR changes and stops receiving updates when the old workflow is removed.
+Use the Vercel project's deployment URL for current builds. Moving the custom
+domain requires a separate reviewed DNS/hosting change.
 
 Model display names and provider icon paths live in the shared `@gradiated/contracts/model-catalog`. Selectors and model labels use that metadata, falling back to the exact ID for uncataloged models. Provider SVGs are served locally from `public/model-providers/`; exact IDs remain in API snippets and raw request data.

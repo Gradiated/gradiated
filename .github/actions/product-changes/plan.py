@@ -67,7 +67,6 @@ JOB_PATHS = {
         "product/website/*",
         "product/services/api/generated/openapi.json",
         "product/packages/contracts/*",
-        ".github/workflows/website-screenshots.yml",
         "tools/browser/website_screenshots.py",
     ),
     "tooling": (

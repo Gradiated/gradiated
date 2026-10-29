@@ -56,7 +56,7 @@ Preview the production build:
 pnpm preview
 ```
 
-## PR screenshots
+## Local screenshots
 
 Build the site, then capture its pages and interactions with the existing
 repo-local Playwright runtime:
@@ -75,15 +75,10 @@ training page, and desktop/mobile post-training waitlist drawer. PNGs live in
 reduced motion, isolated profiles, and an empty model catalog fixture. External
 requests are blocked; capture does not log in or submit the waitlist.
 
-The Website screenshots workflow runs on relevant PRs and main-branch pushes,
-uploads captures, and commits them to same-repository PR branches with a
-before/after comment, following the console Storybook workflow. Forks receive
-artifacts. Captures are informative and do not enforce a pixel comparison.
-Screenshot-only commits from either the website or console skip both capture
-workflows, preventing them from triggering one another. In-flight publishers
-retry over sibling screenshot commits, preserving both sets, and discard captures
-when source files change. Production website build and SEO
-checks remain part of the Product tests PR gate.
+Website changes are reviewed through Vercel's PR preview links. CI does not
+capture or commit screenshots; the local command above remains available for
+ad hoc checks. Website build and SEO checks remain part of the Product tests
+PR gate.
 
 ## Deploy with Vercel
 

@@ -255,12 +255,18 @@ Manual dispatch, new-branch pushes without a base, workflow changes, shared-acti
 changes, and toolchain changes run every subcheck. Keep scopes in sync with the
 files each validator reads, including shared helpers and cross-file fixtures.
 
-Website builds run in the Product tests PR gate and the separate informative
-Website screenshots workflow. Website-only main-branch changes do not trigger
-Product tests and its downstream application deployment; Vercel owns website
-hosting. The screenshot workflow follows the console Storybook pattern: artifacts
-for all PRs, committed PNGs and before/after comments for same-repository PRs,
-and no pixel-diff failures.
+Website builds run in the Product tests PR gate. Website-only main-branch
+changes do not trigger Product tests and its downstream application deployment;
+Vercel owns website hosting and PR preview links. Console Storybook uses a
+separate `storybook` Vercel project in the Gradiated team, rooted at
+`product/services/console`, with its build
+configuration in `vercel.json` and PR links provided by Vercel's Git integration.
+Preview builds run independently of GitHub Actions. Configure Standard machines
+and on-demand concurrency with one active build per branch for parallel PRs.
+Neither website nor Storybook CI captures or commits screenshots. Local capture
+scripts remain available under `tools/browser/`. The old AWS Storybook custom
+domain is retained as a legacy build until a reviewed DNS/hosting migration;
+use `https://gradiated-storybook-gradiated.vercel.app` and PR preview links for current builds.
 
 Before observability reconciliation, populate the externally managed
 `gradiated/prod/platform/alertmanager-notifications` secret with a

@@ -42,6 +42,7 @@ def load_rows(paths: list[str], max_length: int) -> list[dict]:
                 "advantages": [0.0 if a is None else a for a in r["advantages"]],
                 "mask": [a is not None for a in r["advantages"]],
                 "old": r["sampler_logprobs"],
+                "topk": {int(k): v for k, v in (r.get("topk") or {}).items()},
             })
     return rows
 
@@ -57,6 +58,8 @@ def main() -> None:
     p.add_argument("--max-length", type=int, default=34500)
     p.add_argument("--max-grad-norm", type=float, default=1.0)
     p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--topk-weight", type=float, default=0.0,
+                   help="weight of forward KL toward the teacher's renormalised top-k at positions that have it")
     p.add_argument("--sft", action="store_true", help="plain cross-entropy on every scored completion token (teacher-written rows)")
     p.add_argument("--epochs", type=int, default=1, help="passes over the rows; with --sft, steps = epochs x minibatches")
     p.add_argument("--shuffle-advantages", action="store_true",
@@ -128,6 +131,17 @@ def main() -> None:
                     ratio = torch.exp(new - torch.tensor(r["old"], device=device))
                     surrogate = torch.minimum(ratio * adv, ratio.clamp(1 - args.clip, 1 + args.clip) * adv)
                 loss = -(surrogate * mask).sum() / max(1, total) * world  # DDP averages gradients over ranks
+                if args.topk_weight and r["topk"]:
+                    pos = torch.tensor(list(r["topk"].keys()), device=device)
+                    width = max(len(v) for v in r["topk"].values())
+                    ids_k = torch.zeros((len(pos), width), dtype=torch.long, device=device)
+                    q = torch.zeros((len(pos), width), device=device)
+                    for row, alts in enumerate(r["topk"].values()):
+                        lps = torch.tensor([lp for _, lp in alts], device=device)
+                        ids_k[row, : len(alts)] = torch.tensor([i for i, _ in alts], device=device)
+                        q[row, : len(alts)] = torch.softmax(lps, dim=0)
+                    cross = -(q * logp[pos].gather(1, ids_k)).sum()
+                    loss = loss + args.topk_weight * cross / max(1, total) * world
                 if dummy:
                     loss = loss * 0.0
                 accelerator.backward(loss)

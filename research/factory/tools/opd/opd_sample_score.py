@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import base64
 import json
+import math
 import os
 import random
 import sys
@@ -91,6 +92,15 @@ class Qwen:
         added = json.loads((QWEN_DIR / "tokenizer.json").read_text())["added_tokens"]
         self.special = {a["id"]: a["content"] for a in added}
         self.bytes_of = byte_decoder()
+
+    def id_of(self, text: str) -> int | None:
+        """Qwen token id whose bytes are exactly this string, or None (special tokens map by content)."""
+        if not hasattr(self, "_special_ids"):
+            self._special_ids = {v: k for k, v in self.special.items()}
+            self._byte_char = {b: c for c, b in self.bytes_of.items()}
+        if text in self._special_ids:
+            return self._special_ids[text]
+        return self.tok.token_to_id("".join(self._byte_char[b] for b in text.encode()))
 
     def pieces(self, ids: list[int]) -> list[bytes]:
         out = []
@@ -174,6 +184,7 @@ def main() -> None:
     p.add_argument("--workers", type=int, default=16)
     p.add_argument("--no-gaps", action="store_true", help="leave template runs between content spans unscored")
     p.add_argument("--weights", default="", help="advantage multipliers by field kind, e.g. name=20,key=5")
+    p.add_argument("--topk", type=int, default=0, help="also return the teacher's top-k alternatives at 1:1 aligned positions")
     p.add_argument("--same-tokenizer", action="store_true",
                    help="teacher shares the student's tokenizer and template: score the exact token ids via completions echo")
     p.add_argument("--out", required=True)
@@ -272,6 +283,7 @@ def main() -> None:
             "model": args.teacher, "messages": messages + [assistant_message(turn)],
             "tools": [restore_required_properties(t) for t in tools], "max_tokens": 1, "echo": True,
             "logprobs": True, "raw_output": True, "chat_template_kwargs": {"thinking": False},
+            **({"top_logprobs": args.topk} if args.topk else {}),
         }
         try:
             response = post("https://api.fireworks.ai/inference/v1/chat/completions", body, fireworks)
@@ -297,6 +309,21 @@ def main() -> None:
             stats["align_error"] += 1
             return None
         content = {i for s in spans for i in s.student_tokens}
+        topk = {}
+        if args.topk:
+            entries = choice["logprobs"]["content"]
+            for span in spans:
+                if len(span.student_tokens) != 1 or len(span.teacher_tokens) != 1:
+                    continue
+                alts = entries[at + span.teacher_tokens.start].get("top_logprobs") or []
+                mapped = {}
+                for alt in alts:
+                    qid = qwen.id_of(alt["token"])
+                    if qid is not None and alt.get("logprob") is not None:
+                        mapped[qid] = max(mapped.get(qid, -1e9), alt["logprob"])
+                if mapped and sum(math.exp(v) for v in mapped.values()) >= 0.5:
+                    topk[span.student_tokens.start] = sorted(mapped.items(), key=lambda kv: -kv[1])
+            stats["topk_positions"] += len(topk)
         if not args.no_gaps:
             spans = with_gaps(spans, len(ids), len(mine))
         raw = token_advantages(spans, logprobs, t_logprobs)
@@ -319,6 +346,7 @@ def main() -> None:
         return {
             "status": "ok", "point_id": point.point_id, "token_ids": ids, "sampler_logprobs": logprobs,
             "advantages": advantages, "reverse_kl": -sum(covered), "covered": len(covered), "gap_kl": gap_kl,
+            "topk": {str(i): v for i, v in topk.items()},
         }
 
     def run_prefix(point) -> list[dict]:

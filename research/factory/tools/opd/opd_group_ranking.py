@@ -45,6 +45,8 @@ def main() -> None:
     p.add_argument("--workers", type=int, default=8)
     p.add_argument("--same-tokenizer-teacher", default="", help="also score with this same-tokenizer teacher (completions echo)")
     p.add_argument("--skip-k3-extras", action="store_true", help="skip K3 reasoning and hint scorers")
+    p.add_argument("--no-k3", action="store_true", help="skip all K3 scoring (judge only)")
+    p.add_argument("--rft-out", default="", help="write one judge-approved sample per prefix as SFT rows (opd_train.py format)")
     p.add_argument("--out", required=True)
     args = p.parse_args()
 
@@ -123,7 +125,7 @@ def main() -> None:
             return None
         reference = output_from_anthropic_blocks(pt.reference.get("content"))
         schemas = tool_schemas(pt.tools)
-        reasoning = None if args.skip_k3_extras else k3_reasoning(pt)
+        reasoning = None if args.skip_k3_extras or args.no_k3 else k3_reasoning(pt)
         hint = reference["text"] + "".join(f"\n[tool call] {c['name']}({json.dumps(c.get('arguments'), ensure_ascii=False)})"
                                            for c in reference["tool_calls"])
         samples = []
@@ -131,12 +133,12 @@ def main() -> None:
             text = choice["message"]["content"] or ""
             try:
                 turn, _ = parse_qwen_output(text, param_types=param_types(tools))
-            except (ParseError, ValueError):
+                output = {"text": turn.content.strip(), "tool_calls": [
+                    {"name": c.name, "arguments": {a.key: (a.text if a.is_string else json.loads(a.text)) for a in c.arguments},
+                     "raw": ""} for c in turn.calls]}
+            except (ParseError, ValueError):  # malformed call or non-string argument that is not valid JSON
                 samples.append({"parse_error": True})
                 continue
-            output = {"text": turn.content.strip(), "tool_calls": [
-                {"name": c.name, "arguments": {a.key: (a.text if a.is_string else json.loads(a.text)) for a in c.arguments},
-                 "raw": ""} for c in turn.calls]}
             record = {"point_id": pt.point_id, "stratum": pt.stratum, "candidate": output, "reference": reference,
                       "finish": choice["finish_reason"], "validity": validity(output, schemas, choice["finish_reason"]),
                       "action_match": action_match(output, reference), "args_similarity": args_similarity(output, reference)}
@@ -146,21 +148,43 @@ def main() -> None:
             except Exception:  # noqa: BLE001
                 verdict = None
             student = [c["logprob"] for c in choice["logprobs"]["content"]]
-            k3 = k3_mean(pt, output)
+            k3 = None if args.no_k3 else k3_mean(pt, output)
             samples.append({"verdict": verdict, "k3_mean": k3, "valid": record["validity"]["valid"],
                             "k3_reasoning": k3_mean(pt, output, "reasoning", reasoning=reasoning) if reasoning else None,
-                            "k3_hint": None if args.skip_k3_extras else k3_mean(pt, output, hint=hint),
+                            "k3_hint": None if args.skip_k3_extras or args.no_k3 else k3_mean(pt, output, hint=hint),
                             "teacher_same": same_tok_mean(response["prompt_token_ids"], choice["token_ids"]) if args.same_tokenizer_teacher else None,
                             "student_mean": sum(student) / max(1, len(student)),
                             "log_ratio": None if k3 is None else k3 - sum(student) / max(1, len(student)),
-                            "tools": [c["name"] for c in output["tool_calls"]], "output": output})
+                            "tools": [c["name"] for c in output["tool_calls"]], "output": output,
+                            "token_ids": choice["token_ids"], "prompt_token_ids": response["prompt_token_ids"]})
         for smp in samples:
             if smp.get("teacher_same") is not None:
                 smp["teacher_same_ratio"] = smp["teacher_same"] - smp["student_mean"]
         return {"point_id": pt.point_id, "stratum": pt.stratum, "samples": samples}
 
+    def safe_run(pt):
+        try:
+            return run(pt)
+        except Exception as error:  # noqa: BLE001 - one bad prefix must not end the batch
+            print(f"prefix {pt.point_id} failed: {type(error).__name__}: {str(error)[:150]}", file=sys.stderr)
+            return None
+
     with ThreadPoolExecutor(args.workers) as pool:
-        groups = [g for g in pool.map(run, points[: args.prefixes]) if g]
+        groups = [g for g in pool.map(safe_run, points[: args.prefixes]) if g]
+    if args.rft_out:
+        rng = random.Random(11)
+        with open(args.rft_out, "w") as f:
+            for g in groups:
+                good = [s for s in g["samples"] if s.get("verdict") in ("better", "equivalent") and s.get("valid") and s.get("token_ids")]
+                if good:
+                    s = rng.choice(good)
+                    n = len(s["token_ids"])
+                    f.write(json.dumps({"status": "ok", "point_id": g["point_id"], "prompt_token_ids": s["prompt_token_ids"],
+                                        "token_ids": s["token_ids"], "advantages": [1.0] * n, "sampler_logprobs": [0.0] * n,
+                                        "covered": n}) + "\n")
+        for g in groups:
+            for s in g["samples"]:
+                s.pop("prompt_token_ids", None)
     Path(args.out).write_text("\n".join(json.dumps(g) for g in groups))
 
     def ok(s):
@@ -187,6 +211,10 @@ def main() -> None:
             report["groups"] = len(usable)
             report["single_sample_ge_rate"] = round(sum(sum(map(ok, u)) / len(u) for u in usable) / len(usable), 3)
             report["judge_best_of_n"] = round(sum(any(map(ok, u)) for u in usable) / len(usable), 3)
+    judged = [[s for s in g["samples"] if s.get("verdict")] for g in groups]
+    judged = [u for u in judged if u]
+    report["judge_only"] = {"groups": len(judged), "single_sample_ge_rate": round(sum(sum(map(ok, u)) / len(u) for u in judged) / len(judged), 3),
+                            "judge_best_of_n": round(sum(any(map(ok, u)) for u in judged) / len(judged), 3)}
     print(json.dumps(report, indent=1))
 
 

@@ -36,7 +36,7 @@ def main():
         'startSsh': False, 'startJupyter': False,
         'env': [{'key': key, 'value': value} for key, value in catalog['env'].items()],
         'allowedCudaVersions': catalog['allowedCudaVersions'],
-        'readme': (f"Gradiated GPU host for {selected['model']}. Select {selected['gpuCount']}x "
+        'readme': selected.get('description') or (f"Gradiated GPU host for {selected['model']}. Select {selected['gpuCount']}x "
                    f"{selected['gpu']}; at least 16 vCPUs and 224 GiB RAM per GPU. "
                    'No network volume or exposed ports. Refresh the single-use Tailscale '
                    'bootstrap secret immediately before creation. Kubernetes installs the model after enrollment.'),

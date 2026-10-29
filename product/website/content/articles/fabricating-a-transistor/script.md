@@ -34,7 +34,7 @@ The intern is handed our wafer.
 
 Let's zoom into one small chunk of the wafer, where we will watch the two transistors take shape. Before we begin, we need a way to control how silicon conducts electricity.
 
-Doping adds small quantities of selected elements, called dopants. Phosphorus, for example, supplies extra mobile electrons which can carry current, producing n-type silicon. Boron produces p-type silicon, where missing electrons, called holes, behave as mobile positive charges and also carry current. Our starting wafer is lightly doped p-type.[@silicon-doping]
+Doping means adding small quantities of selected elements, called dopants. Phosphorus supplies extra electrons that can move through silicon and carry electric current. Electrons have negative charge, so we call this n-type silicon, with n meaning negative. Boron creates gaps where electrons are missing, called holes. As neighbouring electrons move to fill these gaps, the holes effectively move in the opposite direction and behave as positive charges. This is p-type silicon, with p meaning positive. These names describe how current is carried, not the overall charge of the silicon. Our starting wafer is lightly doped p-type.[@silicon-doping]
 
 <!-- scene: layout -->
 
@@ -48,7 +48,11 @@ Our intern will visit `47` processing machines (even in our simplified example) 
 
 ## Prepare the silicon
 
-As shown at the start, we need an n-type and a p-type transistor side by side for our NOT gate. The n-type transistor forms an electron-carrying channel between two n-doped pockets in a p-type silicon body. Its p-type partner forms a hole-carrying channel between p-doped pockets in an n-type body. Our p-type wafer already provides the body for the n-type transistor. To build its p-type partner alongside it, we must first create a large, deep n-type region called an n-well to fully contain the p-type transistor.
+For our NOT gate, we need an n-type and a p-type transistor side by side. Adding small amounts of phosphorus to silicon produces n-type silicon, where electric current is carried mainly by negatively charged electrons. Adding boron produces p-type silicon, where current is carried mainly by positively charged holes, the gaps left by missing electrons. The letters n and p stand for negative and positive.
+
+In an n-type transistor, the gate controls a conducting channel between two n-doped regions called the source and drain. These sit within a p-type body, the surrounding silicon. In a p-type transistor, the channel connects two p-doped regions in an n-type body. Each transistor therefore contains both types of silicon.
+
+Our starting wafer is already p-type, so it provides the body for the n-type transistor. Beside it, we first create a large, deep n-type region called an n-well. This will provide the body for the p-type transistor. We will form both transistors’ source and drain pockets later.
 
 We do this by ion implantation, accelerating electrically charged n-type dopant atoms, such as phosphorus, into the silicon. First, we grow a thin silicon dioxide film by heating the wafer in oxygen. Some silicon is consumed as the oxide grows.
 

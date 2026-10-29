@@ -7,7 +7,7 @@ export type Note = {
   slug: string;
   date: string;
   title: string;
-  description: string;
+  description?: string;
 };
 
 export const notes: Note[] = articles

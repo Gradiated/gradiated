@@ -18,9 +18,9 @@ export const registerSystemOneContract = (app: OpenAPIHono<ApiEnvironment>) => {
     path: "/v1/systemone",
     operationId: "systemOne",
     tags: ["Inference"],
-    summary: "Answer named questions with native SystemOne inference",
+    summary: "SystemOne",
     description:
-      "Served by the Rust gateway at /v1/systemone (also /systemone). Requires an exact hosted model and a workspace API key. Supports choice, noul and score questions over text or structured state. No streaming or generated output tokens; only the default service tier is implemented.",
+      "Answers choice, noul and score questions about text or structured state. Also served at /systemone.",
     security: [{ InferenceBearer: [] }, { InferenceApiKey: [] }],
     request: {
       body: {

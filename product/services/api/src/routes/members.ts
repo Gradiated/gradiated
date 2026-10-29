@@ -27,6 +27,7 @@ import { createRoute, type OpenAPIHono } from "@hono/zod-openapi";
 
 import { invitationUrl, type InvitationSender } from "../email/invitation.js";
 import { requireUser } from "../http/problems.js";
+import { consoleOnly } from "../http/audience.js";
 import type { ApiEnvironment } from "../types.js";
 import { toCurrentOrganization } from "./me.js";
 
@@ -50,6 +51,8 @@ const listMembers = createRoute({
   method: "get",
   path: `${base}/members`,
   operationId: "listMembers",
+  summary: "List members",
+  description: "Lists the organization's members.",
   tags: ["Members"],
   request: { params: OrganizationIdParamsSchema },
   responses: {
@@ -61,6 +64,8 @@ const updateMember = createRoute({
   method: "patch",
   path: `${base}/members/{user_id}`,
   operationId: "updateMember",
+  summary: "Update member",
+  description: "Changes a member's role.",
   tags: ["Members"],
   request: { params: MemberParamsSchema, body: body(UpdateMemberSchema) },
   responses: {
@@ -72,6 +77,8 @@ const removeMember = createRoute({
   method: "delete",
   path: `${base}/members/{user_id}`,
   operationId: "removeMember",
+  summary: "Remove member",
+  description: "Removes a member from the organization.",
   tags: ["Members"],
   request: { params: MemberParamsSchema },
   responses: { 204: { description: "The member was removed." }, ...errors },
@@ -80,6 +87,8 @@ const listInvitations = createRoute({
   method: "get",
   path: `${base}/invitations`,
   operationId: "listInvitations",
+  summary: "List invitations",
+  description: "Lists the organization's pending invitations.",
   tags: ["Members"],
   request: { params: OrganizationIdParamsSchema },
   responses: {
@@ -91,6 +100,8 @@ const createInvitations = createRoute({
   method: "post",
   path: `${base}/invitations`,
   operationId: "createInvitations",
+  summary: "Create invitations",
+  description: "Invites people to the organization by email.",
   tags: ["Members"],
   request: {
     params: OrganizationIdParamsSchema,
@@ -114,6 +125,8 @@ const resendInvitation = createRoute({
   method: "post",
   path: `${base}/invitations/{invitation_id}/resend`,
   operationId: "resendInvitation",
+  summary: "Resend invitation",
+  description: "Resends an invitation email.",
   tags: ["Members"],
   request: { params: InvitationParamsSchema },
   responses: {
@@ -129,16 +142,20 @@ const revokeInvitation = createRoute({
   method: "delete",
   path: `${base}/invitations/{invitation_id}`,
   operationId: "revokeInvitation",
+  summary: "Revoke invitation",
+  description: "Revokes a pending invitation.",
   tags: ["Members"],
   request: { params: InvitationParamsSchema },
   responses: { 204: { description: "The invitation was revoked." }, ...errors },
 });
 const previewInvitation = createRoute({
+  ...consoleOnly,
   method: "post",
   path: "/api/v1/invitations/preview",
   operationId: "previewInvitation",
+  summary: "Preview invitation",
+  description: "Gets the organization an invitation link is for.",
   tags: ["Members"],
-  description: "Describes an invitation link. The token is the credential.",
   request: { body: body(InvitationTokenSchema) },
   responses: {
     200: json(InvitationPreviewSchema, "The invitation's state."),
@@ -146,9 +163,12 @@ const previewInvitation = createRoute({
   },
 });
 const acceptInvitation = createRoute({
+  ...consoleOnly,
   method: "post",
   path: "/api/v1/invitations/accept",
   operationId: "acceptInvitation",
+  summary: "Accept invitation",
+  description: "Joins the organization from an invitation link.",
   tags: ["Members"],
   request: { body: body(InvitationTokenSchema) },
   responses: {

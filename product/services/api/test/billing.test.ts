@@ -1,7 +1,7 @@
 import { ControlServiceError } from "@gradiated/control";
 import { describe, expect, it, vi } from "vitest";
 
-import { BillingPaymentsError } from "../src/billing/top-ups.js";
+import { BillingPaymentsError } from "../src/billing/payments.js";
 import {
   authenticated,
   balanceTransactionRecord,
@@ -20,7 +20,21 @@ import {
 const billingPath = `/api/v1/organizations/${organizationId}/billing`;
 const balanceTransactionsPath = `/api/v1/organizations/${organizationId}/balance-transactions`;
 const topUpsPath = `/api/v1/organizations/${organizationId}/billing/top-ups`;
+const paymentMethodSessionsPath = `/api/v1/organizations/${organizationId}/billing/payment-method-sessions`;
 const webhookPath = "/api/webhooks/stripe";
+
+const patchJson = (app: TestApp, path: string, body: unknown) =>
+  app.request(path, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+const autoTopUp = {
+  enabled: true,
+  threshold: "10000000000",
+  amount: "50000000000",
+};
 
 const billingProviderUnavailable = {
   status: 503,
@@ -64,7 +78,13 @@ describe("billing routes", () => {
     });
     expect(transactions.status).toBe(200);
     await expect(transactions.json()).resolves.toMatchObject({
-      data: [{ amount: "100000000000", balance_after: "100000000000" }],
+      data: [
+        {
+          amount: "100000000000",
+          balance_after: "100000000000",
+          stripe_id: null,
+        },
+      ],
     });
   });
 
@@ -116,10 +136,13 @@ describe("billing routes", () => {
       auth: authenticated,
       services: {
         billingPayments: {
-          createTopUpCheckout: async (input) => {
+          createTopUp: async (input) => {
             received.push(input);
 
-            return { checkoutUrl: "https://checkout.stripe.com/c/pay/test" };
+            return {
+              status: "checkout",
+              checkoutUrl: "https://checkout.stripe.com/c/pay/test",
+            };
           },
         },
       },
@@ -137,7 +160,227 @@ describe("billing routes", () => {
       },
     ]);
     await expect(response.json()).resolves.toEqual({
+      status: "checkout",
       checkout_url: "https://checkout.stripe.com/c/pay/test",
+    });
+  });
+
+  it("charges the saved card when asked to and reports it paid", async () => {
+    const createTopUp = vi.fn(async () => ({
+      status: "paid" as const,
+      checkoutUrl: null,
+    }));
+    const app = createTestApp({
+      auth: authenticated,
+      services: { billingPayments: { createTopUp } },
+    });
+
+    const response = await postJson(app, topUpsPath, {
+      amount: "50000000000",
+      method: "card",
+    });
+
+    expect(response.status).toBe(201);
+    expect(createTopUp).toHaveBeenCalledWith(
+      expect.objectContaining({ method: "card" }),
+    );
+    await expect(response.json()).resolves.toEqual({
+      status: "paid",
+      checkout_url: null,
+    });
+  });
+
+  it("returns the saved card and auto top-up settings", async () => {
+    const app = createTestApp({
+      auth: authenticated,
+      services: {
+        billingPayments: {
+          describeCard: async (paymentMethodId) =>
+            paymentMethodId === "pm_123"
+              ? { brand: "visa", last4: "4242", expMonth: 8, expYear: 2028 }
+              : null,
+        },
+        catalogBilling: {
+          getBillingAccount: async () => ({
+            ...billingAccountRecord,
+            stripePaymentMethodId: "pm_123",
+            autoTopUpEnabled: true,
+            autoTopUpThreshold: 10_000_000_000n,
+            autoTopUpAmount: 50_000_000_000n,
+          }),
+        },
+      },
+    });
+
+    const response = await app.request(billingPath);
+
+    await expect(response.json()).resolves.toMatchObject({
+      payment_method: {
+        brand: "visa",
+        last4: "4242",
+        exp_month: 8,
+        exp_year: 2028,
+      },
+      auto_top_up: { ...autoTopUp, failure: null },
+    });
+  });
+
+  it("shows a saved card without details when Stripe is unreachable", async () => {
+    const app = createTestApp({
+      auth: authenticated,
+      services: {
+        billingPayments: { describeCard: async () => null },
+        catalogBilling: {
+          getBillingAccount: async () => ({
+            ...billingAccountRecord,
+            stripeCustomerId: "cus_123",
+            stripePaymentMethodId: "pm_123",
+          }),
+        },
+      },
+    });
+
+    const response = await app.request(billingPath);
+
+    await expect(response.json()).resolves.toMatchObject({
+      billing_portal: true,
+      payment_method: {
+        brand: null,
+        last4: null,
+        exp_month: null,
+        exp_year: null,
+      },
+    });
+  });
+
+  it("reports the last auto top-up failure while auto top-up is off", async () => {
+    const topUpStatus = vi.fn(async () => ({
+      pending: true,
+      autoTopUpFailure: "Your card was declined.",
+    }));
+    const app = createTestApp({
+      auth: authenticated,
+      services: {
+        catalogBilling: {
+          getBillingAccount: async () => billingAccountRecord,
+          topUpStatus,
+        },
+      },
+    });
+
+    const response = await app.request(billingPath);
+
+    await expect(response.json()).resolves.toMatchObject({
+      auto_top_up: { failure: "Your card was declined." },
+      top_up_pending: true,
+    });
+    expect(topUpStatus).toHaveBeenCalledWith(organizationId);
+  });
+
+  it("updates auto top-up settings", async () => {
+    const updateAutoTopUp = vi.fn(async () => ({
+      ...billingAccountRecord,
+      autoTopUpEnabled: true,
+      autoTopUpThreshold: 10_000_000_000n,
+      autoTopUpAmount: 50_000_000_000n,
+    }));
+    const app = createTestApp({
+      auth: authenticated,
+      services: { catalogBilling: { updateAutoTopUp } },
+    });
+
+    const response = await patchJson(app, billingPath, {
+      auto_top_up: autoTopUp,
+    });
+
+    expect(response.status).toBe(200);
+    expect(updateAutoTopUp).toHaveBeenCalledWith(
+      user.id,
+      organizationId,
+      autoTopUp,
+    );
+    await expect(response.json()).resolves.toMatchObject({
+      auto_top_up: autoTopUp,
+    });
+  });
+
+  it.each([
+    { ...autoTopUp, amount: "4990000000" },
+    { ...autoTopUp, threshold: "-1" },
+    { ...autoTopUp, threshold: "10000000001" },
+    {},
+  ])("rejects invalid auto top-up settings %o", async (settings) => {
+    const updateAutoTopUp = vi.fn();
+    const app = createTestApp({
+      auth: authenticated,
+      services: { catalogBilling: { updateAutoTopUp } },
+    });
+
+    const response = await patchJson(app, billingPath, {
+      auto_top_up: settings,
+    });
+
+    await expectProblem(response, validationProblem);
+    expect(updateAutoTopUp).not.toHaveBeenCalled();
+  });
+
+  it("answers auto top-up without a saved card with 409", async () => {
+    const app = createTestApp({
+      auth: authenticated,
+      services: {
+        catalogBilling: {
+          updateAutoTopUp: failWith(
+            new ControlServiceError("conflict", "Save a card first."),
+          ),
+        },
+      },
+    });
+
+    const response = await patchJson(app, billingPath, {
+      auto_top_up: autoTopUp,
+    });
+
+    expect(response.status).toBe(409);
+  });
+
+  it("creates a payment method session", async () => {
+    const createPaymentMethodSession = vi.fn(async () => ({
+      url: "https://checkout.stripe.com/c/pay/setup",
+    }));
+    const app = createTestApp({
+      auth: authenticated,
+      services: { billingPayments: { createPaymentMethodSession } },
+    });
+
+    const response = await app.request(paymentMethodSessionsPath, {
+      method: "POST",
+    });
+
+    expect(response.status).toBe(201);
+    expect(createPaymentMethodSession).toHaveBeenCalledWith({
+      userId: user.id,
+      userEmail: user.email,
+      organizationId,
+    });
+    await expect(response.json()).resolves.toEqual({
+      url: "https://checkout.stripe.com/c/pay/setup",
+    });
+  });
+
+  it("updates one auto top-up setting", async () => {
+    const updateAutoTopUp = vi.fn(async () => billingAccountRecord);
+    const app = createTestApp({
+      auth: authenticated,
+      services: { catalogBilling: { updateAutoTopUp } },
+    });
+
+    const response = await patchJson(app, billingPath, {
+      auto_top_up: { enabled: false },
+    });
+
+    expect(response.status).toBe(200);
+    expect(updateAutoTopUp).toHaveBeenCalledWith(user.id, organizationId, {
+      enabled: false,
     });
   });
 
@@ -195,6 +438,10 @@ describe("billing routes", () => {
       code: "not_prepaid",
       problem: { status: 409, type: "not-prepaid" },
     },
+    {
+      code: "payment_failed",
+      problem: { status: 402, type: "payment-failed" },
+    },
     { code: "provider_error", problem: billingProviderUnavailable },
     { code: "unavailable", problem: billingProviderUnavailable },
   ] as const)(
@@ -204,9 +451,7 @@ describe("billing routes", () => {
         auth: authenticated,
         services: {
           billingPayments: {
-            createTopUpCheckout: failWith(
-              new BillingPaymentsError(code, "Rejected."),
-            ),
+            createTopUp: failWith(new BillingPaymentsError(code, "Rejected.")),
           },
         },
       });
@@ -226,7 +471,7 @@ describe("billing routes", () => {
         auth: authenticated,
         services: {
           billingPayments: {
-            createTopUpCheckout: failWith(
+            createTopUp: failWith(
               new ControlServiceError(problem.code, "Rejected."),
             ),
           },
@@ -251,10 +496,13 @@ describe("billing routes", () => {
       auth: authenticated,
       services: {
         billingPayments: {
-          createTopUpCheckout: async (input) => {
+          createTopUp: async (input) => {
             received.push(input);
 
-            return { checkoutUrl: "https://checkout.stripe.com/c/pay/test" };
+            return {
+              status: "checkout",
+              checkoutUrl: "https://checkout.stripe.com/c/pay/test",
+            };
           },
         },
       },

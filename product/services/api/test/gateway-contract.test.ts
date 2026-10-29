@@ -61,7 +61,7 @@ describe("gateway API reference", () => {
       expect(operation?.responses?.["200"]).toBeDefined();
     }
 
-    expect(document.paths?.["/models"]?.get).toBeDefined();
+    expect(document.paths).not.toHaveProperty("/models");
     for (const path of [
       "/v1/chat/completions",
       "/v1/messages",
@@ -118,7 +118,7 @@ describe("gateway API reference", () => {
     };
 
     for (const [path, item] of Object.entries(document.paths ?? {})) {
-      if (!path.startsWith("/v1/") && path !== "/models") continue;
+      if (!path.startsWith("/v1/")) continue;
 
       for (const operation of [item.get, item.post]) {
         if (!operation) continue;

@@ -13,6 +13,7 @@ import { apiRateLimit } from "./http/request-limits.js";
 import { requestLogFields, serviceLog } from "./logging.js";
 import { routeLabel, type ApiMetrics } from "./metrics.js";
 import type { DependencyCheck } from "./readiness.js";
+import { isConsoleOnly } from "./http/audience.js";
 import { registerBillingRoutes } from "./routes/billing.js";
 import { registerGatewayContract } from "./routes/gateway-contract.js";
 import { registerHealthRoutes } from "./routes/health.js";
@@ -232,15 +233,38 @@ export const openApiDocument = {
   ],
 };
 
-export const publicOpenApiDocument = (
+export type OpenApiDocument = ReturnType<
+  OpenAPIHono<ApiEnvironment>["getOpenAPI31Document"]
+>;
+
+export const clientOpenApiDocument = (
   app: OpenAPIHono<ApiEnvironment>,
-): ReturnType<OpenAPIHono<ApiEnvironment>["getOpenAPI31Document"]> => {
+): OpenApiDocument => {
   const document = app.getOpenAPI31Document(openApiDocument);
   document.paths = Object.fromEntries(
     Object.entries(document.paths ?? {}).filter(
       ([path]) =>
         path !== "/api/internal" && !path.startsWith("/api/internal/"),
     ),
+  );
+
+  return document;
+};
+
+export const publicOpenApiDocument = (
+  app: OpenAPIHono<ApiEnvironment>,
+): OpenApiDocument => {
+  const document = clientOpenApiDocument(app);
+  document.paths = Object.fromEntries(
+    Object.entries(document.paths ?? {}).flatMap(([path, item]) => {
+      const operations = Object.entries(item ?? {}).filter(
+        ([, operation]) => !isConsoleOnly(operation),
+      );
+
+      return operations.length > 0
+        ? [[path, Object.fromEntries(operations)]]
+        : [];
+    }),
   );
 
   return document;

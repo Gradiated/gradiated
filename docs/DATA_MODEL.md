@@ -309,16 +309,22 @@ The TypeScript API service owns model changes. After a price or status mutation 
 
 One record per organization.
 
-| Field                | Type        | Null | Rules                        |
-| -------------------- | ----------- | ---- | ---------------------------- |
-| `organization_id`    | uuid        | no   | PK and FK `organizations.id` |
-| `mode`               | text        | no   | `prepaid`, `invoiced`        |
-| `stripe_customer_id` | text        | yes  | Unique when present          |
-| `balance`            | bigint      | no   | Signed account position      |
-| `created_at`         | timestamptz | no   | Creation time                |
-| `updated_at`         | timestamptz | no   | Last mutation time           |
+| Field                      | Type        | Null | Rules                                         |
+| -------------------------- | ----------- | ---- | --------------------------------------------- |
+| `organization_id`          | uuid        | no   | PK and FK `organizations.id`                  |
+| `mode`                     | text        | no   | `prepaid`, `invoiced`                         |
+| `stripe_customer_id`       | text        | yes  | Unique when present                           |
+| `balance`                  | bigint      | no   | Signed account position                       |
+| `stripe_payment_method_id` | text        | yes  | Saved card for top-ups and auto top-up        |
+| `auto_top_up_enabled`      | bool        | no   | Default false; prepaid with a saved card only |
+| `auto_top_up_threshold`    | bigint      | yes  | Top up when the balance falls below this      |
+| `auto_top_up_amount`       | bigint      | yes  | Positive amount per auto top-up               |
+| `created_at`               | timestamptz | no   | Creation time                                 |
+| `updated_at`               | timestamptz | no   | Last mutation time                            |
 
 PostgreSQL owns the durable posted balance, while Valkey owns the synchronous balance including terminal usage not yet posted to PostgreSQL. Inference never reads this row. For a prepaid organization, `balance` is its remaining prepaid funds and Stripe top-ups replenish it; a nonpositive value blocks new admission. For an invoiced organization such as OpenRouter, `balance` is its net accounting position: it starts at zero, usage makes it negative, and payments or operator credits move it back toward zero. Invoiced admission ignores this value at launch. Prepaid final in-flight generations may move the balance slightly below zero, and chargebacks or adjustments may also make it negative. An invoiced organization is stopped explicitly with `organizations.status = 'suspended'`, not implicitly through its balance.
+
+An admin enters a card in the console through Stripe's Payment Element, which confirms a card-only SetupIntent; the API then checks that the SetupIntent belongs to the organization, saves its payment method and makes it the Stripe customer's default. Paying a top-up through Checkout also keeps and saves the card. Changing the card replaces it the same way. If the default card changes in Stripe, the `customer.updated` webhook reads the customer's current default from Stripe and copies it here; if the default was removed, it clears the saved card and turns auto top-up off. Only the Stripe customer and payment method IDs are stored: the API reads the card's brand, last four digits and expiry from Stripe when it returns the billing account, caching them in Valkey for 60 seconds, and shows the card as on file without details if Stripe is unreachable. The reason shown after a failed auto top-up is the `failure` of the organization's latest `auto_top_up` card charge.
 
 ### 12. `balance_transactions`
 
@@ -339,7 +345,7 @@ Immutable history of durable balance movements. This is a customer wallet ledger
 | `created_by`       | uuid        | yes  | FK `users.id`; manual credits and adjustments only                          |
 | `created_at`       | timestamptz | no   | Movement time                                                               |
 
-`(source_type, source_id)` is unique and is the idempotency boundary. Initial source types are `stripe_checkout_session`, `stripe_refund`, `stripe_dispute`, `generation_settlement_batch`, `openrouter_payment` and `operator`.
+`(source_type, source_id)` is unique and is the idempotency boundary. Source types are `stripe_checkout_session`, `stripe_invoice`, `stripe_refund`, `stripe_dispute`, `generation_settlement_batch`, `openrouter_payment` and `operator`.
 
 A balance mutation locks the account row, inserts the immutable movement and updates `billing_accounts.balance` in one PostgreSQL transaction. Positive amounts add funds and negative amounts consume funds. Usage is aggregated from launch: every terminal generation belongs to one global settlement slot derived from its Valkey Stream ID. All organizations share that slot. For each organization with nonzero usage in the slot, the PostgreSQL settlement worker posts one `generation_settlement_batch` movement whose negative amount is the sum of its generation charges and whose `generation_count` counts those charged generations. Individual generations remain queryable in ClickHouse. An organization with only zero-charge generations produces no PostgreSQL balance transaction.
 
@@ -377,7 +383,30 @@ The unique `(source_type, source_id)` constraint makes the complete process idem
 
 A slot becomes eligible only after a conservative fixed settlement delay and after the ClickHouse ingestion consumer's contiguous acknowledged Valkey Stream watermark has passed the slot's derived end. Settlement is therefore eventually current by the ingestion delay, settlement delay and polling interval rather than synchronously current. There is no settlement checkpoint, batch manifest, ClickHouse update, cross-database join, routine 24-hour rescan or Kafka topic. A periodic reconciliation query may audit recent ClickHouse totals against PostgreSQL, but it is not the normal cursor path. If one settlement worker can no longer keep up, page the organizations within a slot; shard settlement leadership only after measurements require it.
 
-Stripe owns pending, failed and abandoned Checkout Sessions. The application creates a server-priced Checkout Session carrying the organization identity. A signed successful-payment webhook inserts a `topup` movement keyed by the Checkout Session ID. The handler returns success only after the PostgreSQL transaction commits; Stripe retries failures, and the source uniqueness constraint makes duplicate delivery harmless. Refund and dispute webhooks use their Stripe object IDs in the same way. There is no local top-up-intent or webhook-inbox table.
+Stripe owns pending, failed and abandoned Checkout Sessions. The application creates a server-priced Checkout Session carrying the organization identity, and Checkout creates a paid invoice for it so the Stripe billing portal lists every top-up. A signed successful-payment webhook inserts a `topup` movement keyed by the Checkout Session ID. The handler returns success only after the PostgreSQL transaction commits; Stripe retries failures, and the source uniqueness constraint makes duplicate delivery harmless. Refund and dispute webhooks use their Stripe object IDs in the same way. There is no local top-up-intent or webhook-inbox table.
+
+### 12a. `top_up_charges`
+
+One charge of an organization's saved card, made through a Stripe invoice.
+
+| Field                      | Type        | Null | Rules                                               |
+| -------------------------- | ----------- | ---- | --------------------------------------------------- |
+| `id`                       | uuid        | no   | Primary key; prefix of every Stripe idempotency key |
+| `organization_id`          | uuid        | no   | FK `organizations.id`                               |
+| `reason`                   | text        | no   | `top_up` (an admin paid) or `auto_top_up`           |
+| `status`                   | text        | no   | `pending`, `succeeded`, `failed`                    |
+| `amount`                   | bigint      | no   | Positive amount charged                             |
+| `stripe_customer_id`       | text        | no   | Customer charged                                    |
+| `stripe_payment_method_id` | text        | no   | Payment method charged                              |
+| `stripe_invoice_id`        | text        | yes  | Unique when present                                 |
+| `failure`                  | text        | yes  | Stripe's decline message                            |
+| `created_by`               | uuid        | yes  | FK `users.id`; the admin for `top_up`               |
+| `created_at`               | timestamptz | no   | Claim time                                          |
+| `updated_at`               | timestamptz | no   | Last status change                                  |
+
+An organization has at most one `pending` charge of either reason. A charge creates a draft invoice, records its ID, adds one line item, finalizes it and pays it off-session with the saved card. Each step reuses an idempotency key derived from the row ID, so a retry after a crash or a Stripe outage resumes the same invoice instead of charging twice. A paid invoice posts a `topup` with source `stripe_invoice`, and the `invoice.paid` webhook posts the same source idempotently if the charging process stops first. A decline voids the invoice and marks the row `failed`; for `auto_top_up` it also turns auto top-up off and records Stripe's reason, so a failing card is never retried automatically. Workers retry pending rows older than two minutes and resolve rows older than 23 hours by reading the invoice, before Stripe forgets the idempotency keys. An `invoice.payment_failed` webhook fails a pending row whose payment Stripe accepted and later declined.
+
+Every worker polls accounts with auto top-up enabled. A claim locks the billing account row, reads the operational Valkey balance plus any PostgreSQL credits the gateway has not applied yet, and inserts a `pending` `auto_top_up` row only when that balance is below the threshold and the organization has fewer than `AUTO_TOP_UP_MAX_PER_HOUR` auto top-ups in the last hour. Worker metrics count charges by reason and outcome, the oldest pending charge and rate-limited claims; alerts fire on declined auto top-ups, repeated charge errors, a charge pending for thirty minutes and a rate-limited organization.
 
 ## PostgreSQL-to-Valkey synchronization
 

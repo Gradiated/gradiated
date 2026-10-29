@@ -42,37 +42,35 @@ export const registerGatewayContract = (app: OpenAPIHono<ApiEnvironment>) => {
     {
       path: "/chat/completions",
       operationId: "chatCompletions",
-      summary: "Create a chat completion",
+      summary: "Chat Completions",
       request: chatRequest,
       response: chatResponse,
       streaming: true,
-      description:
-        "OpenAI Chat Completions compatible inference. max_tokens and max_completion_tokens are mutually exclusive.",
+      description: "OpenAI-compatible chat completions.",
     },
     {
       path: "/messages",
       operationId: "createMessage",
-      summary: "Create a message",
+      summary: "Messages",
       request: messagesRequest,
       response: messagesResponse,
       streaming: true,
-      description:
-        "Anthropic Messages compatible inference, translated by the gateway.",
+      description: "Anthropic-compatible messages.",
     },
     {
       path: "/responses",
       operationId: "createResponse",
-      summary: "Create a response",
+      summary: "Responses",
       request: responsesRequest,
       response: responsesResponse,
       streaming: true,
       description:
-        "OpenAI Responses compatible inference. Stateless requests only: store=true, background=true, previous_response_id, conversation and prompt references are unsupported.",
+        "OpenAI-compatible responses. Only stateless requests are supported.",
     },
     {
       path: "/messages/count_tokens",
       operationId: "countMessageTokens",
-      summary: "Count message input tokens",
+      summary: "Count tokens",
       request: messagesRequest
         .omit({ max_tokens: true, stream: true, service_tier: true })
         .openapi("CountMessageTokensRequest"),
@@ -88,8 +86,7 @@ export const registerGatewayContract = (app: OpenAPIHono<ApiEnvironment>) => {
         })
         .openapi("MessageTokenCount"),
       streaming: false,
-      description:
-        "Count tokens using the selected model's tokenizer without generating a completion.",
+      description: "Counts the input tokens of a Messages request.",
     },
   ];
   const references: Record<string, string> = {
@@ -110,12 +107,11 @@ export const registerGatewayContract = (app: OpenAPIHono<ApiEnvironment>) => {
       tags: ["Inference"],
       summary: operation.summary,
       externalDocs: {
-        description:
-          "Upstream protocol reference. Gradiated supports the fields and model capabilities documented here, not every upstream feature.",
+        description: "Upstream API reference",
         url: references[operation.path]!,
       },
       security,
-      description: `${operation.description} Requires an exact hosted model and a workspace API key. Supported parameters depend on the model catalog. Also available at ${operation.path}.`,
+      description: `${operation.description} Also served at ${operation.path}.`,
       request: {
         body: {
           required: true,
@@ -146,25 +142,22 @@ export const registerGatewayContract = (app: OpenAPIHono<ApiEnvironment>) => {
       },
     });
   }
-  for (const path of ["/v1/models", "/models"]) {
-    app.openAPIRegistry.registerPath({
-      method: "get",
-      path,
-      operationId:
-        path === "/models" ? "listInferenceModelsAlias" : "listInferenceModels",
-      tags: ["Models"],
-      summary: "List inference models",
-      security,
-      description:
-        "Authenticated gateway catalog with exact model IDs, readiness, capabilities and pricing. /models and /v1/models are aliases. This differs from the management catalog at /api/v1/models.",
-      responses: {
-        200: {
-          description: "Inference model catalog.",
-          content: { "application/json": { schema: catalogResponse } },
-        },
-        401: errors[401],
-        503: errors[503],
+  app.openAPIRegistry.registerPath({
+    method: "get",
+    path: "/v1/models",
+    operationId: "listInferenceModels",
+    tags: ["Models"],
+    summary: "List models",
+    security,
+    description:
+      "Lists the models you can call, with prices and capabilities. Also served at /models.",
+    responses: {
+      200: {
+        description: "Inference model catalog.",
+        content: { "application/json": { schema: catalogResponse } },
       },
-    });
-  }
+      401: errors[401],
+      503: errors[503],
+    },
+  });
 };

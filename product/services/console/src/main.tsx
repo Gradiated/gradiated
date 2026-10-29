@@ -12,6 +12,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { httpStatus, isClientError } from "@/lib/errors";
+import { toastMutationError } from "@/lib/mutation-errors";
 import { endSession } from "@/lib/session";
 import { router } from "@/router";
 
@@ -36,7 +37,12 @@ const queryFailed = (error: Error, { queryKey }: { queryKey: QueryKey }) => {
 
 const queryClient: QueryClient = new QueryClient({
   queryCache: new QueryCache({ onError: queryFailed }),
-  mutationCache: new MutationCache({ onError: endSessionWhenUnauthorized }),
+  mutationCache: new MutationCache({
+    onError: (error, variables, context, mutation) => {
+      endSessionWhenUnauthorized(error);
+      toastMutationError(error, variables, context, mutation);
+    },
+  }),
   defaultOptions: {
     queries: {
       staleTime: 15_000,

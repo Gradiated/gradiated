@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { KeyRound } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { useCreateApiKey } from "@/api/queries";
 import { CodeSnippet } from "@/components/code-snippet";
@@ -152,7 +153,13 @@ const ConnectApiKey = () => {
         onClick={() =>
           create.mutate(
             { name: "Training" },
-            { onSuccess: (created) => setSecret(created.secret) },
+            {
+              onSuccess: (created) => setSecret(created.secret),
+              onError: (error) =>
+                toast.error(
+                  errorMessage(error, "The API key could not be created."),
+                ),
+            },
           )
         }
       >
@@ -162,11 +169,6 @@ const ConnectApiKey = () => {
       <Link to="/api-keys" className="text-xs text-muted-foreground underline">
         API keys
       </Link>
-      {create.isError ? (
-        <span role="alert" className="text-xs text-destructive">
-          {errorMessage(create.error, "The API key could not be created.")}
-        </span>
-      ) : null}
     </div>
   );
 };

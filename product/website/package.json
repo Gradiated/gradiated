@@ -8,7 +8,7 @@
     "node": ">=22.12.0 <23"
   },
   "scripts": {
-    "api:generate": "openapi-typescript ../services/api/generated/openapi.json -o src/api/schema.ts && prettier --write src/api/schema.ts",
+    "api:generate": "openapi-typescript ../services/api/generated/client-openapi.json -o src/api/schema.ts && prettier --write src/api/schema.ts",
     "dev": "mise exec -- vite",
     "build": "pnpm sync:ashby-jobs && tsc -b && vite build && vite build --ssr src/entry-server.tsx --outDir dist/server && node scripts/prerender.mjs && node scripts/check-seo.mjs",
     "preview": "mise exec -- vite preview",

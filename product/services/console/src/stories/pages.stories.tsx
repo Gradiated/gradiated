@@ -1,19 +1,18 @@
 import NiceModal from "@ebay/nice-modal-react";
-import {
-  QueryClient,
-  QueryClientProvider,
-  useIsFetching,
-} from "@tanstack/react-query";
+import { QueryClientProvider, useIsFetching } from "@tanstack/react-query";
 import { createMemoryHistory, RouterProvider } from "@tanstack/react-router";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, userEvent, within, waitFor } from "storybook/test";
 import { useState } from "react";
 
 import { Toaster } from "@/components/ui/sonner";
+import { createStoryQueryClient } from "@/stories/query-client";
 import { createConsoleRouter } from "@/router";
 import {
   acmeAdmin,
   acmeMember,
+  billingHandlers,
+  billingLoadingHandlers,
   handlersFor,
   invitationHandlers,
   invitationPreview,
@@ -33,9 +32,7 @@ const Ready = () => {
 };
 
 const Page = ({ path }: { path: string }) => {
-  const [queryClient] = useState(
-    () => new QueryClient({ defaultOptions: { queries: { retry: false } } }),
-  );
+  const [queryClient] = useState(() => createStoryQueryClient());
   const [router] = useState(() =>
     createConsoleRouter(createMemoryHistory({ initialEntries: [path] })),
   );
@@ -56,7 +53,6 @@ const meta = {
   component: Page,
   render: (args) => <Page key={args.path} {...args} />,
   play: async ({ canvasElement, parameters }) => {
-    delete canvasElement.dataset.storyPlayed;
     const canvas = within(canvasElement);
     await canvas.findByRole("heading", { level: 1 }, { timeout: 10000 });
 
@@ -243,8 +239,6 @@ const meta = {
         expect(icon?.complete && icon.naturalWidth > 0).toBe(true);
       });
     }
-
-    canvasElement.dataset.storyPlayed = "true";
   },
 } satisfies Meta<typeof Page>;
 
@@ -282,6 +276,63 @@ export const LogDetails: Story = {
   parameters: { logDetail: true },
 };
 export const Billing: Story = { args: { path: "/billing" } };
+export const BillingLoading: Story = {
+  args: { path: "/billing" },
+  parameters: { msw: billingLoadingHandlers },
+};
+export const BillingWithoutCard: Story = {
+  args: { path: "/billing" },
+  parameters: {
+    msw: billingHandlers({
+      payment_method: null,
+      auto_top_up: {
+        enabled: false,
+        threshold: null,
+        amount: null,
+        failure: null,
+      },
+    }),
+  },
+};
+export const BillingAutoTopUpOff: Story = {
+  args: { path: "/billing" },
+  parameters: {
+    msw: billingHandlers({
+      auto_top_up: {
+        enabled: false,
+        threshold: null,
+        amount: null,
+        failure: null,
+      },
+    }),
+  },
+};
+export const BillingMastercard: Story = {
+  args: { path: "/billing" },
+  parameters: {
+    msw: billingHandlers({
+      payment_method: {
+        brand: "mastercard",
+        last4: "4444",
+        exp_month: 3,
+        exp_year: 2027,
+      },
+    }),
+  },
+};
+export const BillingAutoTopUpFailed: Story = {
+  args: { path: "/billing" },
+  parameters: {
+    msw: billingHandlers({
+      auto_top_up: {
+        enabled: false,
+        threshold: "10000000000",
+        amount: "50000000000",
+        failure: "Your card was declined.",
+      },
+    }),
+  },
+};
 export const BillingAsMember: Story = {
   args: { path: "/billing" },
   parameters: { msw: handlersFor(acmeMember) },

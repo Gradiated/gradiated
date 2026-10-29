@@ -54,7 +54,15 @@ export const BALANCE_SOURCE_TYPES = [
   "generation_settlement_batch",
   "openrouter_payment",
   "operator",
+  "stripe_invoice",
 ] as const;
+export const TOP_UP_CHARGE_REASONS = ["top_up", "auto_top_up"] as const;
+export const TOP_UP_CHARGE_STATUSES = [
+  "pending",
+  "succeeded",
+  "failed",
+] as const;
+export const TOP_UP_METHODS = ["card", "checkout"] as const;
 
 export type OrganizationKind = (typeof ORGANIZATION_KINDS)[number];
 export type OrganizationStatus = (typeof ORGANIZATION_STATUSES)[number];
@@ -285,6 +293,18 @@ export const billingAccounts = pgTable(
     mode: text("mode", { enum: BILLING_MODES }).notNull(),
     stripeCustomerId: text("stripe_customer_id"),
     balance: bigint("balance", { mode: "bigint" }).notNull(),
+    stripePaymentMethodId: text("stripe_payment_method_id"),
+    autoTopUpEnabled: boolean("auto_top_up_enabled").default(false).notNull(),
+    autoTopUpThreshold: bigint("auto_top_up_threshold", {
+      mode: "bigint",
+    }),
+    autoTopUpAmount: bigint("auto_top_up_amount", { mode: "bigint" }),
+    // When an admin last saved auto top-up settings; earlier failures are
+    // no longer reported.
+    autoTopUpUpdatedAt: timestamp("auto_top_up_updated_at", {
+      withTimezone: true,
+      mode: "date",
+    }),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
       .defaultNow()
       .notNull(),
@@ -299,6 +319,10 @@ export const billingAccounts = pgTable(
     check(
       "billing_accounts_mode_check",
       sql`${table.mode} in ('prepaid', 'invoiced')`,
+    ),
+    check(
+      "billing_accounts_auto_top_up_check",
+      sql`not ${table.autoTopUpEnabled} or (${table.mode} = 'prepaid' and ${table.stripeCustomerId} is not null and ${table.stripePaymentMethodId} is not null and ${table.autoTopUpThreshold} >= 0 and ${table.autoTopUpAmount} > 0)`,
     ),
   ],
 );
@@ -433,7 +457,7 @@ export const balanceTransactions = pgTable(
     ),
     check(
       "balance_transactions_source_type_check",
-      sql`${table.sourceType} in ('stripe_checkout_session', 'stripe_refund', 'stripe_dispute', 'generation_settlement_batch', 'openrouter_payment', 'operator')`,
+      sql`${table.sourceType} in ('stripe_checkout_session', 'stripe_refund', 'stripe_dispute', 'generation_settlement_batch', 'openrouter_payment', 'operator', 'stripe_invoice')`,
     ),
     check(
       "balance_transactions_amount_nonzero_check",
@@ -447,5 +471,86 @@ export const balanceTransactions = pgTable(
       "balance_transactions_generation_count_check",
       sql`${table.generationCount} is null or ${table.generationCount} > 0`,
     ),
+  ],
+);
+
+export const topUpCharges = pgTable(
+  "top_up_charges",
+  {
+    id: uuid("id").primaryKey(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    reason: text("reason", { enum: TOP_UP_CHARGE_REASONS }).notNull(),
+    status: text("status", { enum: TOP_UP_CHARGE_STATUSES }).notNull(),
+    amount: bigint("amount", { mode: "bigint" }).notNull(),
+    stripeCustomerId: text("stripe_customer_id").notNull(),
+    stripePaymentMethodId: text("stripe_payment_method_id").notNull(),
+    stripeInvoiceId: text("stripe_invoice_id"),
+    failure: text("failure"),
+    requestKey: text("request_key"),
+    createdBy: uuid("created_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("top_up_charges_one_pending_per_organization")
+      .on(table.organizationId)
+      .where(sql`${table.status} = 'pending'`),
+    uniqueIndex("top_up_charges_stripe_invoice_id_unique")
+      .on(table.stripeInvoiceId)
+      .where(sql`${table.stripeInvoiceId} is not null`),
+    uniqueIndex("top_up_charges_organization_request_key_unique")
+      .on(table.organizationId, table.requestKey)
+      .where(sql`${table.requestKey} is not null`),
+    index("top_up_charges_organization_created_at_index").on(
+      table.organizationId,
+      table.createdAt,
+    ),
+    check(
+      "top_up_charges_reason_check",
+      sql`${table.reason} in ('top_up', 'auto_top_up')`,
+    ),
+    check(
+      "top_up_charges_status_check",
+      sql`${table.status} in ('pending', 'succeeded', 'failed')`,
+    ),
+    check("top_up_charges_amount_check", sql`${table.amount} > 0`),
+  ],
+);
+
+// The first method and amount of each keyed top-up request, so a retry repeats
+// that attempt whichever method it asks for.
+export const topUpRequests = pgTable(
+  "top_up_requests",
+  {
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    requestKey: text("request_key").notNull(),
+    method: text("method", { enum: TOP_UP_METHODS }).notNull(),
+    amount: bigint("amount", { mode: "bigint" }).notNull(),
+    // A retried Checkout must resend Stripe the first request's parameters.
+    requestedBy: uuid("requested_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    replacesPaymentMethodId: text("replaces_payment_method_id"),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.organizationId, table.requestKey] }),
+    check(
+      "top_up_requests_method_check",
+      sql`${table.method} in ('card', 'checkout')`,
+    ),
+    check("top_up_requests_amount_check", sql`${table.amount} > 0`),
   ],
 );

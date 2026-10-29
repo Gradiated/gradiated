@@ -19,6 +19,8 @@ const createOrganizationRoute = createRoute({
   method: "post",
   path: "/api/v1/organizations",
   operationId: "createOrganization",
+  summary: "Create organization",
+  description: "Creates an organization.",
   tags: ["Organizations"],
   request: {
     body: {
@@ -51,6 +53,8 @@ const updateOrganizationRoute = createRoute({
   method: "patch",
   path: "/api/v1/organizations/{organization_id}",
   operationId: "updateOrganization",
+  summary: "Update organization",
+  description: "Changes the organization's settings.",
   tags: ["Organizations"],
   request: {
     params: OrganizationIdParamsSchema,

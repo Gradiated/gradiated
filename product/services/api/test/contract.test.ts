@@ -44,9 +44,9 @@ describe("API contract", () => {
     expect(document.components?.schemas).not.toHaveProperty(
       "WizardKeyResponse",
     );
-    expect(document.paths).toHaveProperty("/api/v1/me");
+    expect(document.paths).not.toHaveProperty("/api/v1/me");
     expect(document.paths).toHaveProperty("/api/v1/organizations");
-    expect(document.paths).toHaveProperty("/api/v1/models");
+    expect(document.paths).not.toHaveProperty("/api/v1/models");
     expect(document.paths).toHaveProperty(
       "/api/v1/organizations/{organization_id}/billing",
     );

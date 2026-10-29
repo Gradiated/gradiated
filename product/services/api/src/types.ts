@@ -11,7 +11,7 @@ import type {
   WorkspaceApiKeyService,
 } from "@gradiated/control";
 
-import type { BillingPaymentsService } from "./billing/top-ups.js";
+import type { BillingPaymentsService } from "./billing/payments.js";
 import type { ApiAnalytics } from "./analytics.js";
 
 export interface SessionUser {
@@ -48,6 +48,8 @@ export interface ApiServices {
     | "getBillingAccount"
     | "getManagedBillingAccount"
     | "listBalanceTransactions"
+    | "updateAutoTopUp"
+    | "topUpStatus"
   >;
   organizations: Pick<
     OrganizationService,

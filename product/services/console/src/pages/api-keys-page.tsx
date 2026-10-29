@@ -133,6 +133,7 @@ export const ApiKeysPage = () => {
       revokeApiKey(organizationId, workspaceId, apiKeyId),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: keysQuery.queryKey }),
+    meta: { errorMessage: "The API key could not be revoked." },
   });
 
   const now = new Date();
@@ -178,15 +179,6 @@ export const ApiKeysPage = () => {
         </>
       }
     >
-      {revoke.isError ? (
-        <div
-          role="alert"
-          className="mb-4 rounded-lg border border-destructive/25 bg-destructive/5 px-4 py-3 text-sm text-destructive"
-        >
-          {errorMessage(revoke.error, "The API key could not be revoked.")}
-        </div>
-      ) : null}
-
       <section className="overflow-hidden rounded-lg border bg-card">
         {keys.isLoading ? (
           <div className="grid min-h-48 place-items-center">

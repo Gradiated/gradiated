@@ -11,12 +11,16 @@ import {
 import { createRoute, type OpenAPIHono } from "@hono/zod-openapi";
 
 import { requireUser } from "../http/problems.js";
+import { consoleOnly } from "../http/audience.js";
 import type { ApiEnvironment } from "../types.js";
 
 const getCurrentUserRoute = createRoute({
+  ...consoleOnly,
   method: "get",
   path: "/api/v1/me",
   operationId: "getCurrentUser",
+  summary: "Get current user",
+  description: "Gets the signed-in user and the organizations they belong to.",
   tags: ["Session"],
   responses: {
     200: {

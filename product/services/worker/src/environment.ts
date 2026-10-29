@@ -58,6 +58,19 @@ const environmentSchema = clickHouseRuntimeEnvironmentSchema
       .min(1)
       .max(300)
       .default(10),
+    STRIPE_SECRET_KEY: z.string().min(1).optional(),
+    AUTO_TOP_UP_MAX_PER_HOUR: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(1_000)
+      .default(20),
+    AUTO_TOP_UP_POLL_SECONDS: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(300)
+      .default(10),
     METRICS_PORT: z.coerce.number().int().min(1).max(65_535).default(9_464),
   })
   .superRefine((environment, context) => {

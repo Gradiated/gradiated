@@ -22,3 +22,7 @@ d21c562569af583eadf6e5792c121919d6ecb3d6:research/sol/experiments/gemma4_31b/res
 
 # ClickHouse production service UUID used by a test to refuse deletion; an identifier, not authentication.
 a18b5b3125da03bf6dfb7502cd2e848feb4f6bc4:infra/environments/prod/us-east-1/kubernetes/workloads/recovery/verify.test.mjs:generic-api-key:299
+
+# Fixed UUIDs passed as top-up request keys in tests; identifiers, not credentials. Replaced with randomUUID() in 067efe2.
+12e77e3006b4ed494b40d4cdfe6a7a064522709f:product/packages/control/test/top-up-charges.integration.test.ts:generic-api-key:232
+12e77e3006b4ed494b40d4cdfe6a7a064522709f:product/services/api/test/card-payments.test.ts:generic-api-key:241

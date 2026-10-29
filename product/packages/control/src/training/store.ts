@@ -342,6 +342,22 @@ export const createTrainingStore = (database: ControlDatabase) => {
       return rows.map((row) => VersionRecordSchema.parse(row.version));
     },
 
+    async tasksForTrainingBases(baseIds: string[], after?: string) {
+      const rows = await database
+        .select({ id: tasks.id })
+        .from(tasks)
+        .where(
+          and(
+            inArray(tasks.baseModelId, baseIds),
+            after ? gt(tasks.id, UuidSchema.parse(after)) : undefined,
+          ),
+        )
+        .orderBy(asc(tasks.id))
+        .limit(100);
+
+      return UuidSchema.array().parse(rows.map((row) => row.id));
+    },
+
     async admissionContext(
       target: string | { workspaceId: string; name: string },
     ) {

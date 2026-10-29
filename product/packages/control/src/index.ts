@@ -156,6 +156,7 @@ export { createTraceCleanup } from "./traces/cleanup.js";
 export {
   createTrainingArtifactCleanup,
   deleteArchivedTasks,
+  deleteRetiredTrainingSchedules,
 } from "./training/artifact-cleanup.js";
 
 export {

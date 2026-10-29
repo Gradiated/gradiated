@@ -11,6 +11,7 @@ import {
   vi,
 } from "vitest";
 
+import { createGlm53FlashModelConfiguration } from "../src/catalog/models/glm-5-3-flash.js";
 import { createCatalogService } from "../src/catalog/service.js";
 import {
   tasks,
@@ -343,6 +344,31 @@ describe("training service", () => {
   });
 
   describe("updateTask", () => {
+    it("rejects a new schedule for a saved retired base without saving it", async () => {
+      const owner = await seedMember(db.database, { role: "admin" });
+      const task = await seedTask(owner.workspaceId);
+      const base = createGlm53FlashModelConfiguration();
+      await createCatalogService(db.database).upsertModel(base);
+      await db.database
+        .update(tasks)
+        .set({ baseModelId: base.id, trainingSchedule: null })
+        .where(eq(tasks.id, task.id));
+
+      await expect(
+        service().updateTask(owner.userId, owner.workspaceId, task.name, {
+          training_schedule: "0 3 * * 1",
+        }),
+      ).rejects.toMatchObject({
+        code: "unavailable",
+        message: "The base model is unavailable for training.",
+      });
+      const [stored] = await db.database
+        .select()
+        .from(tasks)
+        .where(eq(tasks.id, task.id));
+      expect(stored?.trainingSchedule).toBeNull();
+    });
+
     it("rejects an unavailable base model", async () => {
       const owner = await seedMember(db.database, { role: "admin" });
       await seedTask(owner.workspaceId);

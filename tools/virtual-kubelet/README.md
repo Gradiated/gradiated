@@ -182,7 +182,9 @@ application but leaves the Rollout serving (`preserveResourcesOnDeletion`):
 ## Model autoscaling
 
 KEDA owns each Rollout's replica count through the standard Kubernetes scale
-API. Argo CD ignores only `spec.replicas`; it still reconciles model releases,
+API. Argo CD ignores `spec.replicas` while autoscaling is active. With an explicit
+`paused_replicas` override, Git owns the paused replica count so a concurrent
+sync cannot restore the bootstrap count after KEDA pauses. Argo still reconciles model releases,
 placement and scaling policy. Set the minimum with `replicas` and the ceiling
 and initial target in `models.json`'s `autoscaling` field, then render the
 manifests. Desmond continues reporting short-lived health directly to the

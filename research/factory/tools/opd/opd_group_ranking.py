@@ -43,6 +43,7 @@ def main() -> None:
     p.add_argument("--samples", type=int, default=8)
     p.add_argument("--max-prompt-tokens", type=int, default=32000)
     p.add_argument("--workers", type=int, default=8)
+    p.add_argument("--seed", type=int, default=7, help="prefix shuffle seed; change it to draw new prefixes")
     p.add_argument("--same-tokenizer-teacher", default="", help="also score with this same-tokenizer teacher (completions echo)")
     p.add_argument("--skip-k3-extras", action="store_true", help="skip K3 reasoning and hint scorers")
     p.add_argument("--no-k3", action="store_true", help="skip all K3 scoring (judge only)")
@@ -53,7 +54,7 @@ def main() -> None:
     with open(args.data) as f:
         conversations = [_clean(json.loads(line), default_id=f"dev:{i}") for i, line in enumerate(f) if line.strip()]
     points = enumerate_points(conversations)
-    random.Random(7).shuffle(points)
+    random.Random(args.seed).shuffle(points)
     judge = OpenAIResponses("gpt-6.1-sol", 120, None)
     options = JudgeOptions("gpt-6.1-sol", reference_faithfulness=False)
     kimi, special = load_k3(HERE)

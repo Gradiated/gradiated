@@ -1,13 +1,10 @@
-"""Judge v3: graded, severity-aware scoring of one PostHog AI rollout in the synthetic environment.
+"""Judge v3 (revision e): graded, severity-aware scoring of one PostHog AI rollout in the synthetic environment.
 
 Runs on fbf8 (PostHog venv path for runner imports). Reuses the runner's trajectory renderer with larger evidence
 budgets. The judge returns five 0-10 dimension scores with short reasons and a list of errors with severity; the
 overall score is a fixed weighted mean, so no single flag can zero a rollout.
 
-    env_judge_v3.py --models qwen opus --tasks <id> ... [--judge gpt-6.1-sol] [--tag v3c]
-
-Checked on 18 rollouts: gpt-6.1-sol twice Spearman 0.95, gpt-6.1-sol vs gpt-6-sol 0.91; same Opus-vs-Qwen
-direction on 9 of 9 tasks in both comparisons (the v2 item rubric zeroed most of these rollouts).
+    judge_v3.py --models qwen opus --tasks <id> <id> ... [--judge gpt-6.1-sol] [--tag v3a]
 """
 from __future__ import annotations
 
@@ -32,6 +29,7 @@ with a correct, useful answer, reached by sound analysis, honestly stated.
 
 ## Project
 {project}
+The agent also sees the signed-in user's profile and organisation (first name "Twin", organisation and project named "Twin <id>"), so addressing the user as Twin or naming the project that way is grounded.
 
 ## User messages (a multi-turn conversation; later messages may react to earlier answers)
 {turns}
@@ -44,6 +42,8 @@ with a correct, useful answer, reached by sound analysis, honestly stated.
   UNVERIFIABLE, not unsupported: do not penalise it unless something visible contradicts it.
 - The environment is a simulated copy of the user's project. If an object, table or historical event the user mentions
   is genuinely missing, the best response says so plainly, offers the closest real alternative, and does not pretend.
+- If the user asks what could be causing something or for ideas, offering likely causes or options clearly framed as
+  possibilities is the right behaviour; only penalise hypotheses that are presented as confirmed facts.
 - Proving absence: a proportionate, clearly scoped search (e.g. checked the full data range, searched names and
   properties) is enough. Do not demand exhaustive proof over every conceivable name or time.
 
@@ -71,7 +71,9 @@ List every concrete error, each with severity:
 Misrepresenting what was found (presenting a substitute as the requested object, hiding a failed lookup, claiming a
 check that was not run) is material. A hypothesis clearly labelled as a hypothesis, or an analysis choice the agent
 states openly (e.g. "I counted users active in the last year"), is at most moderate. For each error say whether a
-later turn corrected it and whether it affects the final answer the user is left with.
+later turn corrected it, whether it affects the final answer the user is left with, and its kind: "wrong" (contradicted
+by the tool results or demonstrably incorrect, e.g. bad arithmetic or timezone conversion, a number that does not match
+the results), "unsupported" (asserted without evidence but not contradicted), or "other".
 
 Calibrate: reserve 9-10 for genuinely excellent work and 0-2 for useless or misleading work. Do not reward length.
 Two rollouts of different quality should get clearly different scores.
@@ -83,7 +85,7 @@ Respond with ONLY a JSON object:
  "analysis": {{"score": <0-10>, "reason": "<one sentence>"}},
  "process": {{"score": <0-10>, "reason": "<one sentence>"}},
  "communication": {{"score": <0-10>, "reason": "<one sentence>"}},
- "errors": [{{"severity": "material|moderate|minor", "turn": <n>, "corrected_later": <true|false>, "affects_final_answer": <true|false>, "what": "<short>"}}],
+ "errors": [{{"severity": "material|moderate|minor", "turn": <n>, "corrected_later": <true|false>, "affects_final_answer": <true|false>, "kind": "wrong|unsupported|other", "what": "<short>"}}],
  "summary": "<two sentences: what the agent did well and what most limits the score>"}}"""
 
 
@@ -117,14 +119,20 @@ def judge(model: str, task_id: str, judge_model: str, tag: str) -> dict:
     d = parse(relay(prompt, judge_model))
     dims = {k: float(d[k]["score"]) for k in WEIGHTS}
     live = [e for e in d.get("errors", []) if e.get("severity") == "material" and not e.get("corrected_later")]
-    final = sum(1 for e in live if e.get("affects_final_answer", True))
-    earlier = len(live) - final
-    cap = 10.0 if final == 0 else 5.0 if final == 1 else 3.0  # material errors in the final answer cap outcome/evidence
+    in_final = [e for e in live if e.get("affects_final_answer", True)]
+    wrong = sum(1 for e in in_final if e.get("kind") != "unsupported")  # "wrong" and "other" (e.g. misrepresentation)
+    unsupported = len(in_final) - wrong
+    earlier = len(live) - len(in_final)
+    cap = 10.0
+    if wrong:
+        cap = 5.0 if wrong == 1 else 3.0
+    if unsupported:
+        cap = min(cap, 7.0 if unsupported == 1 else 5.0)
     for k in ("outcome", "evidence"):
         dims[k] = min(dims[k], cap)
     dims["evidence"] = max(0.0, dims["evidence"] - 1.0 * earlier)  # material slips confined to earlier turns
     d["capped_dims"] = dims
-    d["material_final"], d["material_earlier"] = final, earlier
+    d["material_wrong_final"], d["material_unsupported_final"], d["material_earlier"] = wrong, unsupported, earlier
     d["overall"] = round(sum(WEIGHTS[k] * d["capped_dims"][k] for k in WEIGHTS), 2)
     d["prompt_chars"] = len(prompt)
     os.makedirs(os.path.dirname(out), exist_ok=True)
@@ -148,7 +156,7 @@ def main() -> None:
         errs = [f"{e['severity'][:3]}:{e['what'][:70]}" for e in d.get("errors", [])]
         print(f"{t[:8]} {m:6s} overall={d['overall']:.1f}  {dims}")
         print(f"   errors: {errs[:5]}")
-        print(f"   material final/earlier: {d.get("material_final")}/{d.get("material_earlier")}  target: {d.get("target", "")[:200]}")
+        print(f"   material final/earlier: {d.get("material_wrong_final")}w+{d.get("material_unsupported_final")}u/{d.get("material_earlier")}  target: {d.get("target", "")[:200]}")
         print(f"   summary: {d.get('summary', '')[:260]}")
 
 

@@ -36,7 +36,7 @@ export const MODEL_CATALOG = [
     id: "z-ai/glm-5.3-flash",
     displayName: "GLM-5.3 Flash",
     icon: "/model-providers/zai.svg",
-    supportedUses: ["judge", "training", "comparison", "serving"],
+    supportedUses: ["judge", "comparison", "serving"],
     training: {
       model: "zai-org/GLM-5.3-Flash-BF16",
       revision: "a5b45eb41df6402735dedc900be14a42e8d5e538",

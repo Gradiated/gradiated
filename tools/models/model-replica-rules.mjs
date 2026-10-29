@@ -14,9 +14,12 @@ export const modelReplicaRules=(resources)=>{
   const count=resource.spec?.replicas;
   if(typeof model!=="string"||!model||models.has(model)||!Number.isSafeInteger(count)||count<0)throw new Error("Rollout has invalid or duplicate model identity or replica count");
   const scaler=autoscalers.get(resource.metadata.name);
-  const expr=scaler ? `max(kube_horizontalpodautoscaler_status_desired_replicas{namespace="${scaler.metadata.namespace}",horizontalpodautoscaler="keda-hpa-${scaler.metadata.name}"}) or vector(${count})` : `vector(${count})`;
+  const paused=scaler?.metadata?.annotations?.["autoscaling.keda.sh/paused-replicas"];
+  if(paused!==undefined && (typeof paused!=="string" || !/^(0|[1-9][0-9]*)$/.test(paused) || !Number.isSafeInteger(Number(paused))))throw new Error("Invalid paused replica annotation");
+  const minimum=paused===undefined?count:Number(paused);
+  const expr=paused!==undefined ? `vector(${minimum})` : scaler ? `max(kube_horizontalpodautoscaler_status_desired_replicas{namespace="${scaler.metadata.namespace}",horizontalpodautoscaler="keda-hpa-${scaler.metadata.name}"}) or vector(${count})` : `vector(${count})`;
   models.add(model);rules.push({record:"gradiated_model_desired_replicas",expr,labels:{model,rollout:resource.metadata.name}},
-  {record:"gradiated_model_minimum_replicas",expr:`vector(${count})`,labels:{model,rollout:resource.metadata.name}});
+  {record:"gradiated_model_minimum_replicas",expr:`vector(${minimum})`,labels:{model,rollout:resource.metadata.name}});
  }
  if(!rules.length)throw new Error("No model Rollouts found; refusing to erase desired replicas");
  return {apiVersion:"monitoring.coreos.com/v1",kind:"PrometheusRule",metadata:{name:"gradiated-model-replicas",labels:{release:"observability"},annotations:{"gradiated.com/generated-by":"node tools/models/model-replica-rules.mjs"}},spec:{groups:[{name:"gradiated.models.desired",rules}]}};

@@ -1,3 +1,4 @@
+import { catalogModel } from "@gradiated/contracts/model-catalog";
 import {
   TRAINING_BASE_MODELS,
   type UpdateTask,
@@ -159,7 +160,32 @@ export const createTrainingService = (
           );
       }
 
-      const updated = await records.updateTask(task.id, input);
+      const baseModelId = input.base_model_id ?? task.baseModelId;
+      const schedule =
+        input.training_schedule === undefined
+          ? task.trainingSchedule
+          : input.training_schedule;
+      if (
+        schedule &&
+        baseModelId &&
+        catalogModel(baseModelId) &&
+        !TRAINING_BASE_MODELS.some((base) => base.id === baseModelId)
+      )
+        throw new ControlServiceError(
+          "unavailable",
+          "The base model is unavailable for training.",
+        );
+
+      const preserveSchedule =
+        input.base_model_id !== undefined &&
+        input.training_schedule === undefined &&
+        task.baseModelId &&
+        catalogModel(task.baseModelId) &&
+        !TRAINING_BASE_MODELS.some((base) => base.id === task.baseModelId);
+      const updated = await records.updateTask(
+        task.id,
+        preserveSchedule ? { ...input, training_schedule: schedule } : input,
+      );
       if (engine || input.training_schedule !== undefined) {
         try {
           if (!engine) throw new Error("Training engine unavailable");

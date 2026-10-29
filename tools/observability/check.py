@@ -942,20 +942,13 @@ def main():
         (temp / 'rules.yaml').write_text(yaml.safe_dump({'groups': groups}))
         (temp / 'charts.yaml').write_text(yaml.safe_dump({
             'groups': [{'name': 'dashboard_syntax', 'rules': chart_rules}]}))
-        (temp / 'test-rules.yaml').write_text(yaml.safe_dump({'groups': [g for g in groups if g['name'] != 'gradiated.models.desired']}))
-        (temp / 'tests.yaml').write_text(yaml.safe_dump({
-            'rule_files': ['test-rules.yaml'], 'evaluation_interval': '30s', 'tests': [test for test in tests if test['interval'] not in ('5s', '15m', '1h')]}))
-        (temp / 'slow-tests.yaml').write_text(yaml.safe_dump({
-            'rule_files': ['test-rules.yaml'], 'evaluation_interval': '15m',
-            'tests': [test for test in tests if test['interval'] in ('15m', '1h')]}))
-        (temp / 'fast-tests.yaml').write_text(yaml.safe_dump({
-            'rule_files': ['test-rules.yaml'], 'evaluation_interval': '5s',
-            'tests': [test for test in tests if test['interval'] == '5s']}))
-        subprocess.run([args.promtool, 'test', 'rules', str(temp / 'fast-tests.yaml')], check=True)
         subprocess.run([args.promtool, 'check', 'rules', str(temp / 'rules.yaml'),
                         str(temp / 'charts.yaml')], check=True)
-        subprocess.run([args.promtool, 'test', 'rules', str(temp / 'tests.yaml')], check=True)
-        subprocess.run([args.promtool, 'test', 'rules', str(temp / 'slow-tests.yaml')], check=True)
+        from rule_tests import run_rule_tests
+
+        suites = run_rule_tests(args.promtool,
+            [group for group in groups if group['name'] != 'gradiated.models.desired'], tests, temp)
+        print(f'All {len(tests)} behavioral fixtures passed in {suites} isolated rule suites')
     print(f'Validated {len(alerts)} alert panel links, {len(chart_rules)} chart queries, '
           f'and {len(tests)} behavioral scenarios.')
 

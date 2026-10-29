@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+from lockfiles import expand_lockfile
 from fnmatch import fnmatchcase
 from pathlib import Path
 
@@ -13,6 +14,8 @@ COMMON = (
     ".github/workflows/tests.yml",
     ".github/actions/product-changes/*",
     ".github/actions/relevant/*",
+    ".github/actions/rust-cache/*",
+    "tools/ci/*",
     ".cargo/config.toml",
     "mise.toml",
     "product/package.json",
@@ -106,7 +109,22 @@ def workspaces(root: Path) -> dict[str, tuple[str, dict]]:
     }
 
 
+def unit_matrix(packages):
+    rust = {"@gradiated/credentials", "@gradiated/gateway", "@gradiated/proxy", "@gradiated/collector"}
+    groups = [{"name": name.rsplit("/", 1)[-1], "packages": [name], "rust": True, "target_minutes": 10}
+              for name in packages if name in rust]
+    remaining = [name for name in packages if name not in rust]
+    for name in ("@gradiated/temporal-worker", "@gradiated/control"):
+        if name in remaining:
+            groups.append({"name": name.rsplit("/", 1)[-1], "packages": [name], "rust": False, "target_minutes": 5})
+            remaining.remove(name)
+    for index in range(min(2, len(remaining))):
+        groups.append({"name": f"typescript-{index + 1}", "packages": remaining[index::2], "rust": False, "target_minutes": 5})
+    return {"include": groups}
+
+
 def plan(paths: list[str], root: Path = ROOT, force: bool = False) -> dict:
+    formatting = any(path.startswith("product/") and "/screenshots/" not in path for path in paths)
     paths = [
         path
         for path in paths
@@ -171,7 +189,9 @@ def plan(paths: list[str], root: Path = ROOT, force: bool = False) -> dict:
         job: all_checks or any(matches(path, scopes) for path in paths)
         for job, scopes in JOB_PATHS.items()
     }
+    result["format"] = formatting or all_checks
     result["packages"] = checked
+    result["unit_matrix"] = unit_matrix(checked) if checked else {}
     result["unit"] = bool(checked)
     result["rust"] = bool(
         set(checked)
@@ -183,6 +203,7 @@ def plan(paths: list[str], root: Path = ROOT, force: bool = False) -> dict:
             "@gradiated/control",
         }
     )
+    result["console_build"] = "@gradiated/console" in selected or "tools/deployment/console-artifact.mjs" in paths
     result["website"] |= "gradiated-com" in selected
     result["inference_native"] = any(
         result[key] for key in ("native_cpp", "native_vllm", "native_kev")
@@ -214,9 +235,17 @@ def changed_paths() -> tuple[list[str], bool]:
     return subprocess.check_output(command, text=True, cwd=ROOT).splitlines(), False
 
 
+def plan_changed_paths(paths, base=None, root=ROOT, force=False):
+    result = plan(expand_lockfile(paths, base, root), root=root, force=force)
+    # The production console artifact includes the entire frozen lockfile.
+    # Other checks still use importer closures to avoid unrelated backend/GPU work.
+    result["console_build"] |= "product/pnpm-lock.yaml" in paths
+    return result
+
+
 def main() -> None:
     paths, force = changed_paths()
-    result = plan(paths, force=force)
+    result = plan_changed_paths(paths, os.environ.get("BASE"), force=force)
     print(json.dumps(result, indent=2))
     with open(os.environ["GITHUB_OUTPUT"], "a") as output:
         for key, value in result.items():

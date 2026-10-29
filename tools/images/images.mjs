@@ -18,7 +18,9 @@ export const fingerprint = (name, entries) => {
     throw new Error(image?.disabled ?? `Unknown image: ${name}`);
   const relevant = entries.filter(
     ({ path }) =>
-      matches(path, image.paths) && !matches(path, image.exclude ?? []),
+      matches(path, image.paths) &&
+      (matches(path, image.include ?? []) ||
+        !matches(path, image.exclude ?? [])),
   );
   if (!relevant.length) throw new Error(`No build inputs for ${name}`);
   return createHash("sha256")
@@ -101,10 +103,13 @@ const main = () => {
     emit("matrix", JSON.stringify(plan(JSON.parse(args[0]), args[1])));
   else if (command === "lookup")
     emit("exists", String(awsDigest(args[0], args[1]) !== null));
-  else if (command === "record") {
+  else if (command === "record" || command === "record-digest") {
     const [name, repository, tag, source] = args;
-    const digest = awsDigest(repository, tag);
+    const digest =
+      command === "record-digest" ? tag : awsDigest(repository, tag);
     if (!digest) throw new Error("Published image is missing");
+    if (!/^sha256:[0-9a-f]{64}$/.test(digest))
+      throw new Error("Invalid image digest");
     mkdirSync("image-results", { recursive: true });
     writeFileSync(
       `image-results/${name}.json`,

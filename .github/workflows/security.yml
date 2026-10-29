@@ -1,7 +1,7 @@
 name: Security scans
 
-# Secret scanning blocks merges; Semgrep reports only. Image vulnerability scans run
-# where images are published (build-images.yml) and AWS posture in prowler.yml.
+# Secret and image scanning block merges; image checks run in tests.yml.
+# Semgrep reports only; AWS posture checks run in prowler.yml.
 on:
   pull_request:
   push:
@@ -19,6 +19,7 @@ jobs:
   secrets:
     name: Secret scan
     runs-on: ubuntu-latest
+    # Performance target: 5 minutes; the timeout is only a runaway guard.
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -60,7 +61,8 @@ jobs:
   policy:
     name: Scan policy files
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    # Performance target: 5 minutes; the timeout is only a runaway guard.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -73,6 +75,7 @@ jobs:
   semgrep:
     name: Semgrep (report only)
     runs-on: ubuntu-latest
+    # Performance target: 5 minutes; the timeout is only a runaway guard.
     timeout-minutes: 20
     container:
       image: semgrep/semgrep:1.180.0@sha256:529ee8a277ec8adc5b534d7c74eea0a47e9de21d62852b6ba7ac6ba9566845c3

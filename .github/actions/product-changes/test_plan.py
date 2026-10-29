@@ -3,10 +3,19 @@ import subprocess
 import unittest
 from unittest.mock import patch
 
-from plan import changed_paths, plan
+from plan import changed_paths, plan, plan_changed_paths
 
 
 class ProductChangesTest(unittest.TestCase):
+    @patch("plan.expand_lockfile", return_value=["product/services/temporal-worker/package.json"])
+    def test_backend_lockfile_change_still_builds_the_full_lockfile_console_artifact(self, expand):
+        result = plan_changed_paths(["product/pnpm-lock.yaml"], "base")
+        self.assertTrue(result["console_build"])
+        self.assertFalse(result["inference_native"])
+        self.assertFalse(result["gateway_contract"])
+        self.assertNotIn("@gradiated/console", result["packages"])
+
+
     def test_credentials_change_installs_rust_components(self):
         result = plan(["product/packages/credentials/src/index.ts"])
         self.assertIn("@gradiated/credentials", result["packages"])
@@ -18,7 +27,7 @@ class ProductChangesTest(unittest.TestCase):
         self.assertTrue(result["website"])
         self.assertEqual(result["packages"], [])
         self.assertEqual(
-            [key for key, value in result.items() if value is True], ["website"]
+            [key for key, value in result.items() if value is True], ["website", "format"]
         )
 
     def test_email_change_checks_api_and_browser_without_rust(self):
@@ -115,11 +124,24 @@ class ProductChangesTest(unittest.TestCase):
         for paths in (
             ["docs/DEPLOYMENT.md"],
             ["research/lab/src/lib.rs"],
-            ["product/website/README.md"],
             ["product/services/console/screenshots/login.png"],
             ["product/website/screenshots/training.png"],
         ):
             self.assertFalse(any(plan(paths).values()), paths)
+
+    def test_product_prose_still_receives_a_format_check(self):
+        result = plan(["product/website/README.md"])
+        self.assertTrue(result["format"])
+        self.assertFalse(result["unit"])
+        self.assertFalse(result["website"])
+
+    def test_unit_shards_cover_every_selected_package_once(self):
+        result = plan([], force=True)
+        shards = result["unit_matrix"]["include"]
+        selected = [name for shard in shards for name in shard["packages"]]
+        self.assertEqual(sorted(selected), result["packages"])
+        self.assertLessEqual(len(shards), 8)
+        self.assertTrue(all(shard["target_minutes"] == (10 if shard["rust"] else 5) for shard in shards))
 
     def test_local_launcher_change_runs_tooling_validation(self):
         result = plan(["product/mprocs.yaml"])

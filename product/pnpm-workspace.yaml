@@ -9,6 +9,16 @@ minimumReleaseAge: 10080
 
 # Approved security release-age exceptions for the patched versions only.
 minimumReleaseAgeExclude:
+  # CVE-2026-115905: SDK 1.25.0 contains zip 9.0.5 in the native bridge.
+  - "@temporalio/activity@1.25.0"
+  - "@temporalio/client@1.25.0"
+  - "@temporalio/common@1.25.0"
+  - "@temporalio/core-bridge@1.25.0"
+  - "@temporalio/nexus@1.25.0"
+  - "@temporalio/proto@1.25.0"
+  - "@temporalio/testing@1.25.0"
+  - "@temporalio/worker@1.25.0"
+  - "@temporalio/workflow@1.25.0"
   - "body-parser@2.4.0"
   - "zod@4.6.6"
   # Temporal 1.25.0 carries zip 9.0.5, fixing CVE-2026-115905.

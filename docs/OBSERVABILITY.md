@@ -429,6 +429,13 @@ Run the alert/dashboard checks (requires PyYAML and `promtool`):
 python3 tools/observability/check.py
 ```
 
+Prometheus rule fixtures run in parallel suites containing their asserted alerts
+and the transitive recording-rule dependencies used by each fixture. This avoids
+re-evaluating unrelated rules for long simulated timelines. All fixtures still
+run, and the complete generated rule file and dashboard coverage are validated
+separately. Unknown alert references fail validation.
+
+
 Render the pinned monitoring chart and test notification routing with Helm,
 PyYAML, and `amtool`:
 

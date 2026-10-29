@@ -46,6 +46,8 @@ on:
       - "product/tsconfig.base.json"
       - "product/turbo.json"
       - "mise.toml"
+      - "tools/ci/**"
+      - ".github/actions/rust-cache/**"
       - "tools/images/**"
       - "tools/virtual-kubelet/**"
       - "tools/deployment/**"
@@ -55,6 +57,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
   id-token: write
 
 concurrency:
@@ -68,22 +71,28 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
+      actions: read
     outputs:
-      unit: ${{ steps.plan.outputs.unit }}
+      console_build: ${{ steps.plan.outputs.console_build }}
+      images: ${{ steps.images.outputs.matrix }}
+      image_checks: ${{ steps.images.outputs.required }}
+      format: ${{ steps.plan.outputs.format }}
+      unit: ${{ steps.plan.outputs.unit == 'true' && steps.reuse.outputs.reused != 'true' }}
       packages: ${{ steps.plan.outputs.packages }}
+      unit_matrix: ${{ steps.plan.outputs.unit_matrix }}
       rust: ${{ steps.plan.outputs.rust }}
-      integration: ${{ steps.plan.outputs.integration }}
-      inference_native: ${{ steps.plan.outputs.inference_native }}
-      native_cpp: ${{ steps.plan.outputs.native_cpp }}
-      native_vllm: ${{ steps.plan.outputs.native_vllm }}
-      native_kev: ${{ steps.plan.outputs.native_kev }}
-      gateway_contract: ${{ steps.plan.outputs.gateway_contract }}
-      proxy_e2e: ${{ steps.plan.outputs.proxy_e2e }}
-      backend_storage: ${{ steps.plan.outputs.backend_storage }}
-      inference_e2e: ${{ steps.plan.outputs.inference_e2e }}
-      playwright: ${{ steps.plan.outputs.playwright }}
-      website: ${{ steps.plan.outputs.website }}
-      tooling: ${{ steps.plan.outputs.tooling }}
+      integration: ${{ steps.plan.outputs.integration == 'true' && steps.reuse.outputs.reused != 'true' }}
+      inference_native: ${{ steps.plan.outputs.inference_native == 'true' && steps.reuse.outputs.reused != 'true' }}
+      native_cpp: ${{ steps.plan.outputs.native_cpp == 'true' && steps.reuse.outputs.reused != 'true' }}
+      native_vllm: ${{ steps.plan.outputs.native_vllm == 'true' && steps.reuse.outputs.reused != 'true' }}
+      native_kev: ${{ steps.plan.outputs.native_kev == 'true' && steps.reuse.outputs.reused != 'true' }}
+      gateway_contract: ${{ steps.plan.outputs.gateway_contract == 'true' && steps.reuse.outputs.reused != 'true' }}
+      proxy_e2e: ${{ steps.plan.outputs.proxy_e2e == 'true' && steps.reuse.outputs.reused != 'true' }}
+      backend_storage: ${{ steps.plan.outputs.backend_storage == 'true' && steps.reuse.outputs.reused != 'true' }}
+      inference_e2e: ${{ steps.plan.outputs.inference_e2e == 'true' && steps.reuse.outputs.reused != 'true' }}
+      playwright: ${{ steps.plan.outputs.playwright == 'true' && steps.reuse.outputs.reused != 'true' }}
+      website: ${{ steps.plan.outputs.website == 'true' && steps.reuse.outputs.reused != 'true' }}
+      tooling: ${{ steps.plan.outputs.tooling == 'true' && steps.reuse.outputs.reused != 'true' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -92,6 +101,7 @@ jobs:
         uses: ./.github/actions/relevant
         with:
           workflow: .github/workflows/tests.yml
+      - run: python3 -m pip install --quiet PyYAML==6.0.3
       - id: plan
         name: Select checks and affected workspace packages
         env:
@@ -99,56 +109,196 @@ jobs:
           EVENT: ${{ github.event_name }}
           REPOSITORY: ${{ github.repository }}
           PULL_REQUEST: ${{ github.event.pull_request.number }}
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
           BEFORE: ${{ github.event.before }}
           HEAD: ${{ github.sha }}
         run: python3 .github/actions/product-changes/plan.py
-      - name: Test path selection
-        run: python3 -m unittest discover -s .github/actions/product-changes -v
+      - id: images
+        name: Select changed image inputs
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: node tools/images/verified.mjs select "$BASE" "${{ github.sha }}"
+      - id: reuse
+        name: Find a passing CI round for identical inputs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          PLAN: ${{ toJSON(steps.plan.outputs) }}
+        run: python3 tools/ci/reuse.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ${{ steps.reuse.outputs.artifact }}
+          path: .agents/runtime/product-ci-inputs.json
+          retention-days: 30
+      - name: Test path selection and result reuse
+        run: |
+          python3 -m unittest discover -s .github/actions/product-changes -v
+          python3 -m unittest discover -s tools/ci -p 'test_reuse.py' -v
+
+  console-build:
+    name: Verify production console build
+    needs: changes
+    if: needs.changes.outputs.console_build == 'true' && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch')
+    runs-on: depot-ubuntu-24.04
+    # Performance target: 5 minutes; the timeout is only a runaway guard.
+    timeout-minutes: 30
+    env:
+      VITE_API_URL: https://api.gradiated.com
+      VITE_POSTHOG_KEY: ${{ vars.CONSOLE_POSTHOG_KEY }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - id: prior
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node tools/deployment/console-artifact.mjs find "${{ github.sha }}"
+      - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
+        if: steps.prior.outputs.reused != 'true'
+      - run: pnpm install --frozen-lockfile
+        working-directory: product
+        if: steps.prior.outputs.reused != 'true'
+      - name: Build the production console before merge
+        working-directory: product
+        if: steps.prior.outputs.reused != 'true'
+        run: |
+          test -n "$VITE_POSTHOG_KEY"
+          pnpm exec turbo run build --filter=@gradiated/console... --env-mode=loose
+      - if: steps.prior.outputs.reused != 'true'
+        run: node tools/deployment/console-artifact.mjs record "${{ github.sha }}"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: steps.prior.outputs.reused != 'true'
+        with:
+          name: ${{ steps.prior.outputs.artifact }}
+          path: product/services/console/dist/
+          include-hidden-files: true
+          retention-days: 30
+          if-no-files-found: error
+
+  image-checks:
+    name: Image CI (${{ matrix.name }})
+    needs: changes
+    if: needs.changes.outputs.image_checks == 'true' && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch')
+    runs-on: depot-ubuntu-24.04
+    # Performance target: 5 minutes; the timeout is only a runaway guard.
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.changes.outputs.images) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Find an already verified artifact for identical inputs
+        id: prior
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          IMAGE_NAME: ${{ matrix.name }}
+        run: node tools/images/verified.mjs find "$IMAGE_NAME" "${{ github.sha }}"
+      - uses: depot/setup-action@91bc8495a33ebfc504ffc89e5674379ccf23c29c # v1.7.2
+        if: steps.prior.outputs.reused != 'true'
+      - name: Prepare image output
+        if: steps.prior.outputs.reused != 'true'
+        run: mkdir -p ci-image
+      - name: Build the candidate image
+        if: steps.prior.outputs.reused != 'true'
+        uses: depot/build-push-action@98e78adca7817480b8185f474a400b451d74e287 # v1.18.0
+        with:
+          project: ${{ vars.DEPOT_PROJECT_ID }}
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile || format('{0}/Dockerfile', matrix.context) }}
+          target: ${{ matrix.target }}
+          platforms: linux/amd64
+          outputs: type=oci,dest=ci-image/image.tar
+      - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
+        if: steps.prior.outputs.reused != 'true'
+        with:
+          install_args: trivy
+      - name: Scan the candidate image before merge
+        if: steps.prior.outputs.reused != 'true'
+        env:
+          IMAGE_NAME: ${{ matrix.name }}
+        run: |
+          # Trivy accepts OCI layout directories, not OCI tar archives:
+          # https://trivy.dev/docs/v0.75/guide/target/container_image/#oci-layout
+          layout=$(mktemp -d)
+          trap 'rm -rf "$layout"' EXIT
+          tar -xf ci-image/image.tar -C "$layout"
+          trivy image --quiet --input "$layout" --scanners vuln --severity CRITICAL,HIGH --ignorefile .trivyignore --format json --output image-scan.json
+          gate=()
+          if [[ "$IMAGE_NAME" != gpu-base ]]; then gate=(--enforce); fi
+          python3 tools/security/scan_report.py trivy image-scan.json --name "$IMAGE_NAME" "${gate[@]}" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Bind the verified archive to its source inputs
+        if: steps.prior.outputs.reused != 'true'
+        env:
+          IMAGE_NAME: ${{ matrix.name }}
+        run: node tools/images/verified.mjs record "$IMAGE_NAME" "${{ github.sha }}"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: steps.prior.outputs.reused != 'true'
+        with:
+          name: ${{ steps.prior.outputs.artifact }}
+          path: ci-image/
+          compression-level: 0
+          retention-days: 30
+          if-no-files-found: error
+
+  format:
+    name: Product formatting
+    needs: changes
+    if: needs.changes.outputs.format == 'true'
+    runs-on: depot-ubuntu-24.04
+    # Performance target: 5 minutes; the timeout is only a runaway guard.
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
+      - run: pnpm install --frozen-lockfile
+        working-directory: product
+      - run: pnpm format:check
+        working-directory: product
 
   unit:
-    name: Unit tests
+    name: Unit (${{ matrix.name }})
     needs: changes
     if: needs.changes.outputs.unit == 'true'
     runs-on: depot-ubuntu-24.04
+    # Performance target: ${{ matrix.target_minutes }} minutes; the timeout is only a runaway guard.
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.changes.outputs.unit_matrix) }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
       - name: Install Rust check components
-        if: needs.changes.outputs.rust == 'true'
+        if: matrix.rust
         run: rustup component add rustfmt clippy
-      - name: Restore Rust build cache
-        if: needs.changes.outputs.rust == 'true'
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      - uses: ./.github/actions/rust-cache
+        if: matrix.rust
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            product/services/gateway/target
-            product/services/proxy/target
-            product/services/collector/target
-          key: ${{ runner.os }}-gateway-unit-${{ hashFiles('product/services/gateway/Cargo.lock', 'product/services/proxy/Cargo.lock', 'product/services/collector/Cargo.lock') }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-gateway-unit-${{ hashFiles('product/services/gateway/Cargo.lock', 'product/services/proxy/Cargo.lock', 'product/services/collector/Cargo.lock') }}-
-            ${{ runner.os }}-gateway-unit-
+          scope: unit-${{ matrix.name }}
       - run: pnpm install --frozen-lockfile
         working-directory: product
-      - name: Run affected workspace unit tests and static checks
+      - name: Run this workspace's checks
         working-directory: product
         env:
-          PACKAGES: ${{ needs.changes.outputs.packages }}
-        shell: bash
+          PACKAGES: ${{ toJSON(matrix.packages) }}
         run: |
           mapfile -t filters < <(jq -r '.[] | "--filter=" + .' <<< "$PACKAGES")
-          pnpm turbo run check --env-mode=loose --force "${filters[@]}"
-          pnpm format:check
+          /usr/bin/time -f "CI timing: wall=%e cpu=%P user=%U system=%S max_rss_kb=%M" pnpm turbo run check --env-mode=loose --force "${filters[@]}"
+      - uses: ./.github/actions/rust-cache
+        if: github.ref == 'refs/heads/main' && matrix.rust
+        with:
+          mode: save
+          scope: unit-${{ matrix.name }}
 
   website:
     name: Website build and SEO
     needs: changes
     if: needs.changes.outputs.website == 'true'
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    # Performance target: 5 minutes; the timeout is only a runaway guard.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
@@ -164,7 +314,8 @@ jobs:
     needs: changes
     if: needs.changes.outputs.tooling == 'true'
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    # Performance target: 5 minutes; the timeout is only a runaway guard.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
@@ -181,21 +332,14 @@ jobs:
     needs: changes
     if: needs.changes.outputs.integration == 'true'
     runs-on: depot-ubuntu-24.04
+    # Performance target: 10 minutes; the timeout is only a runaway guard.
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
-      - name: Restore Rust build cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      - uses: ./.github/actions/rust-cache
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            product/services/gateway/target
-          key: ${{ runner.os }}-gateway-integration-${{ hashFiles('product/services/gateway/Cargo.lock') }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-gateway-integration-${{ hashFiles('product/services/gateway/Cargo.lock') }}-
-            ${{ runner.os }}-gateway-integration-
+          scope: gateway-integration
       - name: Start product dependency stack
         working-directory: product
         run: |
@@ -220,12 +364,18 @@ jobs:
         if: always()
         working-directory: product
         run: docker compose down --volumes
+      - uses: ./.github/actions/rust-cache
+        if: github.ref == 'refs/heads/main'
+        with:
+          mode: save
+          scope: gateway-integration
 
   inference-native:
     name: Inference native tests
     needs: changes
     if: needs.changes.outputs.inference_native == 'true'
     runs-on: depot-ubuntu-24.04
+    # Performance target: 10 minutes; the timeout is only a runaway guard.
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -266,25 +416,16 @@ jobs:
     needs: changes
     if: needs.changes.outputs.gateway_contract == 'true'
     runs-on: depot-ubuntu-24.04
+    # Performance target: 10 minutes; the timeout is only a runaway guard.
     timeout-minutes: 15
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
-      - name: Restore Rust build cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      - uses: ./.github/actions/rust-cache
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            product/services/gateway/target
-          key: ${{ runner.os }}-gateway-contract-${{ hashFiles('product/services/gateway/Cargo.lock') }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-gateway-contract-${{ hashFiles('product/services/gateway/Cargo.lock') }}-
-            ${{ runner.os }}-gateway-contract-
-            ${{ runner.os }}-gateway-integration-
-            ${{ runner.os }}-gateway-unit-
+          scope: gateway-contract
       - run: pnpm install --frozen-lockfile
         working-directory: product
       - name: Build actual gateway binary
@@ -311,25 +452,16 @@ jobs:
     needs: changes
     if: needs.changes.outputs.proxy_e2e == 'true'
     runs-on: depot-ubuntu-24.04
+    # Performance target: 10 minutes; the timeout is only a runaway guard.
     timeout-minutes: 15
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
-      - name: Restore Rust build cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      - uses: ./.github/actions/rust-cache
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            product/services/gateway/target
-            product/services/proxy/target
-          key: ${{ runner.os }}-proxy-e2e-${{ hashFiles('product/services/gateway/Cargo.lock', 'product/services/proxy/Cargo.lock') }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-proxy-e2e-${{ hashFiles('product/services/gateway/Cargo.lock', 'product/services/proxy/Cargo.lock') }}-
-            ${{ runner.os }}-proxy-e2e-
-            ${{ runner.os }}-gateway-contract-
+          scope: gateway-contract
       - run: pnpm install --frozen-lockfile
         working-directory: product
       - name: Build the proxy and gateway binaries
@@ -354,31 +486,25 @@ jobs:
             .agents/runtime/proxy-e2e/
           if-no-files-found: ignore
           retention-days: 7
+      - uses: ./.github/actions/rust-cache
+        if: github.ref == 'refs/heads/main'
+        with:
+          mode: save
+          scope: gateway-contract
 
   backend-storage:
     name: Backend storage integration
     needs: changes
     if: needs.changes.outputs.backend_storage == 'true'
     runs-on: depot-ubuntu-24.04
+    # Performance target: 10 minutes; the timeout is only a runaway guard.
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
-      - name: Restore Rust build cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      - uses: ./.github/actions/rust-cache
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            product/services/gateway/target
-            product/services/proxy/target
-            product/services/collector/target
-          key: ${{ runner.os }}-backend-storage-${{ hashFiles('product/services/gateway/Cargo.lock', 'product/services/proxy/Cargo.lock', 'product/services/collector/Cargo.lock') }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-backend-storage-${{ hashFiles('product/services/gateway/Cargo.lock', 'product/services/proxy/Cargo.lock', 'product/services/collector/Cargo.lock') }}-
-            ${{ runner.os }}-backend-storage-
-            ${{ runner.os }}-proxy-e2e-
-            ${{ runner.os }}-gateway-unit-
+          scope: proxy-e2e
       - run: pnpm install --frozen-lockfile
         working-directory: product
       - name: Build backend dependencies
@@ -396,6 +522,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.inference_e2e == 'true'
     runs-on: depot-ubuntu-24.04
+    # Performance target: 10 minutes; the timeout is only a runaway guard.
     timeout-minutes: 20
     permissions:
       contents: read
@@ -404,17 +531,9 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
       - uses: depot/setup-action@91bc8495a33ebfc504ffc89e5674379ccf23c29c # v1.7.2
-      - name: Restore Rust build cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      - uses: ./.github/actions/rust-cache
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            product/services/gateway/target
-          key: ${{ runner.os }}-gateway-contract-${{ hashFiles('product/services/gateway/Cargo.lock') }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-gateway-contract-${{ hashFiles('product/services/gateway/Cargo.lock') }}-
-            ${{ runner.os }}-gateway-contract-
+          scope: gateway-contract
       - run: pnpm install --frozen-lockfile
         working-directory: product
       - name: Build actual gateway binary
@@ -457,12 +576,18 @@ jobs:
           path: .agents/runtime/inference-e2e.xml
           if-no-files-found: ignore
           retention-days: 7
+      - uses: ./.github/actions/rust-cache
+        if: github.ref == 'refs/heads/main'
+        with:
+          mode: save
+          scope: proxy-e2e
 
   playwright:
     name: Playwright tests
     needs: changes
     if: needs.changes.outputs.playwright == 'true'
     runs-on: depot-ubuntu-24.04
+    # Performance target: 10 minutes; the timeout is only a runaway guard.
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -534,6 +659,9 @@ jobs:
     needs:
       [
         changes,
+        image-checks,
+        console-build,
+        format,
         unit,
         website,
         tooling,

@@ -70,6 +70,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.relevant == 'true' && (fromJSON(needs.changes.outputs.checks).controller || fromJSON(needs.changes.outputs.checks).configuration)
     runs-on: ubuntu-24.04
+    # Performance target: 10 minutes; the timeout is only a runaway guard.
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -101,6 +102,8 @@ jobs:
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 tools/virtual-kubelet/host_state_test.py
         if: fromJSON(needs.changes.outputs.checks).controller
+      - run: python3 product/inference/images/gpu-base/tests/image_build_test.py
+        if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 product/inference/gpu/host_bundle_test.py
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 tools/gpu/pin_host_test.py
@@ -121,6 +124,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.relevant == 'true' && fromJSON(needs.changes.outputs.checks).image
     runs-on: depot-ubuntu-24.04
+    # Performance target: 10 minutes; the timeout is only a runaway guard.
     timeout-minutes: 25
     permissions:
       contents: read
@@ -143,6 +147,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.relevant == 'true' && fromJSON(needs.changes.outputs.checks).rejoin
     runs-on: depot-ubuntu-24.04
+    # Performance target: 10 minutes; the timeout is only a runaway guard.
     timeout-minutes: 45
     permissions:
       contents: read
@@ -170,6 +175,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.relevant == 'true' && fromJSON(needs.changes.outputs.checks).manifests
     runs-on: ubuntu-24.04
+    # Performance target: 10 minutes; the timeout is only a runaway guard.
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

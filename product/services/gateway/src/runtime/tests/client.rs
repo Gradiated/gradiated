@@ -607,9 +607,20 @@ async fn each_failure_logs_one_bounded_diagnostic_code() {
 
 #[tokio::test]
 async fn transport_diagnostic_drops_private_url_and_correlates_attempt() {
-    let error = reqwest::Client::new()
-        .get("http://private-runtime.invalid/secret-path")
-        .timeout(Duration::ZERO)
+    // Keep a local TCP listener open without responding: DNS failures must not
+    // race the timeout, and proxy settings must not route this fixture elsewhere.
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let error = reqwest::Client::builder()
+        .no_proxy()
+        .resolve("private-runtime.invalid", address)
+        .build()
+        .unwrap()
+        .get(format!(
+            "http://private-runtime.invalid:{}/secret-path",
+            address.port()
+        ))
+        .timeout(Duration::from_millis(50))
         .send()
         .await
         .unwrap_err();

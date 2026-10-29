@@ -15,10 +15,6 @@ on:
         description: JSON array of catalog image names required by this caller.
         type: string
         default: '["product","gateway","proxy"]'
-      vulnerability_scan:
-        description: "Trivy scan of each published image: enforce (fail on CRITICAL with a fix), report, or skip."
-        type: string
-        default: enforce
     outputs:
       product_digest:
         value: ${{ jobs.resolve.outputs.product_digest }}
@@ -34,6 +30,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
   id-token: write
 
 env:
@@ -56,9 +53,11 @@ jobs:
         run: node tools/images/images.mjs plan "$IMAGES" "$SOURCE_SHA"
 
   build:
+    name: Promote CI image (${{ matrix.name }})
     needs: plan
     runs-on: depot-ubuntu-24.04
     environment: production
+    # Performance target: 10 minutes; the timeout is only a runaway guard.
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -70,86 +69,47 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.source_sha }}
+          fetch-depth: 0
       - uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/gradiated-prod-deployment
           allowed-account-ids: ${{ env.AWS_ACCOUNT_ID }}
-      - id: existing
+      - name: Resolve the passing CI artifact for these exact inputs
+        id: verified
         env:
-          REPOSITORY: ${{ matrix.repository }}
-          IMAGE_TAG: ${{ matrix.tag }}
-        run: node tools/images/images.mjs lookup "$REPOSITORY" "$IMAGE_TAG"
-      - if: steps.existing.outputs.exists != 'true'
-        uses: depot/setup-action@91bc8495a33ebfc504ffc89e5674379ccf23c29c # v1.7.2
-      - if: steps.existing.outputs.exists != 'true'
-        id: ecr
-        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
-      - if: steps.existing.outputs.exists != 'true'
-        uses: depot/build-push-action@98e78adca7817480b8185f474a400b451d74e287 # v1.18.0
-        with:
-          project: ${{ vars.DEPOT_PROJECT_ID }}
-          context: ${{ matrix.context }}
-          file: ${{ matrix.dockerfile || format('{0}/Dockerfile', matrix.context) }}
-          target: ${{ matrix.target }}
-          platforms: linux/amd64
-          push: true
-          tags: ${{ steps.ecr.outputs.registry }}/${{ matrix.repository }}:${{ matrix.tag }}
-      - name: Record resolved digest
-        env:
+          GITHUB_TOKEN: ${{ github.token }}
           IMAGE_NAME: ${{ matrix.name }}
-          REPOSITORY: ${{ matrix.repository }}
-          IMAGE_TAG: ${{ matrix.tag }}
           SOURCE_SHA: ${{ inputs.source_sha }}
-        run: node tools/images/images.mjs record "$IMAGE_NAME" "$REPOSITORY" "$IMAGE_TAG" "$SOURCE_SHA"
-      # Scan the exact published digest; nothing is rebuilt. The scanner, its version and
-      # the accepted risks in .trivyignore come from the workflow revision, so deploying
-      # an older source commit still uses the current policy.
-      - name: Check out the vulnerability scan policy
-        if: inputs.vulnerability_scan != 'skip'
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.sha }}
-          path: .agents/runtime/security-policy
-          sparse-checkout: |
-            .trivyignore
-            mise.toml
-            tools/security/scan_report.py
-          sparse-checkout-cone-mode: false
-          persist-credentials: false
-      - if: inputs.vulnerability_scan != 'skip'
-        uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
-        with:
-          working_directory: .agents/runtime/security-policy
-          install_args: trivy
-      - name: Scan the published image with Trivy
-        if: inputs.vulnerability_scan != 'skip'
-        working-directory: .agents/runtime/security-policy
+        run: node tools/images/verified.mjs fetch "$IMAGE_NAME" "$SOURCE_SHA"
+      - name: Install the image transfer tool
+        if: steps.verified.outputs.publish == 'true'
+        run: |
+          if ! command -v skopeo >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends skopeo
+          fi
+      - if: steps.verified.outputs.publish == 'true'
+        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+      - name: Publish the verified image without rebuilding
+        if: steps.verified.outputs.publish == 'true'
+        env:
+          REPOSITORY: ${{ matrix.repository }}
+          IMAGE_TAG: ${{ steps.verified.outputs.tag }}
+        run: skopeo copy --all --preserve-digests --authfile "$HOME/.docker/config.json" oci-archive:ci-image/image.tar "docker://${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPOSITORY}:${IMAGE_TAG}"
+      - name: Record promoted digest
         env:
           IMAGE_NAME: ${{ matrix.name }}
-          SCAN_MODE: ${{ inputs.vulnerability_scan }}
-        shell: bash
+          REPOSITORY: ${{ matrix.repository }}
+          IMAGE_TAG: ${{ steps.verified.outputs.tag }}
+          EXISTING_DIGEST: ${{ steps.verified.outputs.digest }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
         run: |
-          result="${GITHUB_WORKSPACE}/image-results/${IMAGE_NAME}.json"
-          image="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/$(jq -er .repository "${result}")@$(jq -er .digest "${result}")"
-          mkdir -p reports
-          # Trivy reads ECR credentials from the AWS session configured above.
-          trivy image --quiet --scanners vuln --severity CRITICAL,HIGH --platform linux/amd64 \
-            --ignorefile .trivyignore --format json --output "reports/${IMAGE_NAME}.json" "${image}"
-          gate=()
-          if [[ "${SCAN_MODE}" == "enforce" ]]; then
-            gate=(--enforce)
+          if [[ -n "$EXISTING_DIGEST" ]]; then
+            node tools/images/images.mjs record-digest "$IMAGE_NAME" "$REPOSITORY" "$EXISTING_DIGEST" "$SOURCE_SHA"
+          else
+            node tools/images/images.mjs record "$IMAGE_NAME" "$REPOSITORY" "$IMAGE_TAG" "$SOURCE_SHA"
           fi
-          python3 tools/security/scan_report.py trivy "reports/${IMAGE_NAME}.json" \
-            --name "${IMAGE_NAME}" "${gate[@]}" | tee -a "${GITHUB_STEP_SUMMARY}"
-      - name: Store vulnerability report
-        if: always() && inputs.vulnerability_scan != 'skip'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: ${{ inputs.artifact_prefix }}-trivy-${{ matrix.name }}
-          path: .agents/runtime/security-policy/reports/
-          if-no-files-found: ignore
-          retention-days: 90
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ${{ inputs.artifact_prefix }}-image-${{ matrix.name }}

@@ -12,7 +12,7 @@ import time
 import urllib.request
 import uuid
 
-MODEL = "zai-org/GLM-5.3-Flash"
+MODEL = "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4"
 SHAPES = (32, 2048, 6033, 8192, 16384)
 CONCURRENCIES = (1, 2, 4, 8, 16)
 

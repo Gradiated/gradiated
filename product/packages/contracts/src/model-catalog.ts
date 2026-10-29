@@ -58,6 +58,12 @@ export const MODEL_CATALOG = [
     },
   },
   {
+    id: "dealignai/glm-5.3-flash-uncensored-nvfp4",
+    displayName: "GLM-5.3 Flash Uncensored NVFP4",
+    icon: "/model-providers/zai.svg",
+    supportedUses: ["judge", "comparison", "serving"],
+  },
+  {
     id: "jaredpalmer/kev-9b",
     type: "decision",
     displayName: "Kev 9B",

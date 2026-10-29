@@ -85,7 +85,7 @@ class LaunchTests(unittest.TestCase):
             ):
                 engine_settings(self.command(2), environment, {})
 
-    def test_bundle_entrypoint_keeps_lora_disabled_and_uses_allocation_cache_when_enabled(
+    def test_dealign_bundle_entrypoint_rejects_unqualified_adapters(
         self,
     ):
         with tempfile.TemporaryDirectory() as temporary:
@@ -115,17 +115,21 @@ class LaunchTests(unittest.TestCase):
             if not entrypoint.is_file():
                 entrypoint = Path(__file__).resolve().parents[1] / "entrypoint"
             for enabled in (False, True):
-                subprocess.run(
+                process = subprocess.run(
                     ["bash", str(entrypoint)],
                     env={**environment, "LORA_ENABLED": "true" if enabled else "false"},
-                    check=True,
+                    capture_output=True,
+                    text=True,
                     timeout=10,
                 )
+                if enabled:
+                    self.assertEqual(process.returncode, 64)
+                    self.assertIn("stock GLM adapters are unsupported", process.stderr)
+                    continue
+                self.assertEqual(process.returncode, 0, process.stderr)
                 result = json.loads(capture.read_text())
-                self.assertEqual(result["args"][0].endswith("lora/launch.py"), enabled)
-                self.assertEqual(
-                    result["cache"], str(root / "allocation/lora") if enabled else None
-                )
+                self.assertFalse(result["args"][0].endswith("lora/launch.py"))
+                self.assertIsNone(result["cache"])
                 self.assertEqual(result["mask"], environment["NVIDIA_VISIBLE_DEVICES"])
                 self.assertIn("4", result["args"])
                 self.assertEqual(result["runtime_url"], "http://127.0.0.1:8000")

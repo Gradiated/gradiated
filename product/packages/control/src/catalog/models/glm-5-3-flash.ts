@@ -79,3 +79,23 @@ export const createGlm53FlashModelConfiguration = () =>
       },
     },
   }) satisfies CatalogModelInput;
+
+export const createDealignGlm53FlashModelConfiguration = () => {
+  const base = createGlm53FlashModelConfiguration();
+  const id = "dealignai/glm-5.3-flash-uncensored-nvfp4";
+
+  return {
+    ...base,
+    id,
+    name: modelDisplayName(id),
+    status: "unavailable",
+    properties: {
+      ...base.properties,
+      description:
+        "Dealign's weight-modified GLM-5.3 Flash with NVFP4 routed experts and retained reasoning and tool use",
+      released_at: "2026-08-29T00:00:00.000Z",
+      hugging_face_id: "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+      quantization: "nvfp4",
+    },
+  } satisfies CatalogModelInput;
+};

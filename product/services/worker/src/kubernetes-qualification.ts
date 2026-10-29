@@ -77,6 +77,7 @@ export const runSdkQualification = (
 export const qualifyKubernetesPod = async (
   namespace: string,
   request: (path: string, method?: string, body?: unknown) => Promise<unknown>,
+  availableModelIds: ReadonlySet<string>,
   verify: (input: unknown) => Promise<void>,
 ) => {
   const list = z.object({
@@ -96,7 +97,7 @@ export const qualifyKubernetesPod = async (
   } while (cursor);
   const candidate = values
     .map(qualificationCandidate)
-    .find((c) => c !== undefined);
+    .find((c) => c !== undefined && availableModelIds.has(c.modelId));
   if (!candidate) return;
   const path = `/api/v1/namespaces/${namespace}/pods/${candidate.pod.metadata.name}`;
   let succeeded = true;

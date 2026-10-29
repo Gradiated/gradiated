@@ -18,7 +18,7 @@ exec "$root/python/bin/python3" "$root/warmup-supervisor.py" \
   "$root/python/bin/python3" -m vllm.entrypoints.cli.main serve dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4 \
   --revision 745aac2ff0f10acf961f396df3f9418598aa7327 \
   --host 127.0.0.1 --port "${RUNTIME_PORT:?}" --served-model-name dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4 \
-  --tensor-parallel-size "${TENSOR_PARALLEL_SIZE:-1}" --max-model-len 1048576 --max-num-seqs 1 \
+  --tensor-parallel-size "${TENSOR_PARALLEL_SIZE:-1}" --max-model-len 1048576 --max-num-seqs 4 \
   --gpu-memory-utilization 0.90 --kv-cache-dtype fp8 --block-size 128 \
   --tool-call-parser glm47 --reasoning-parser glm45 --enable-auto-tool-choice \
   --enable-prompt-tokens-details --safetensors-load-strategy prefetch \

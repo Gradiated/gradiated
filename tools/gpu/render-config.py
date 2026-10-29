@@ -86,6 +86,12 @@ def autoscaler(name, model, runtime):
         raise ValueError('Autoscaling maximum must cover the minimum replicas')
     if type(target) not in (int, float) or not 0 < target < float('inf'):
         raise ValueError('Autoscaling concurrency target must be finite and positive')
+    annotations = {'argocd.argoproj.io/sync-options': 'SkipDryRunOnMissingResource=true'}
+    if 'paused_replicas' in settings:
+        paused = settings['paused_replicas']
+        if type(paused) is not int or not 0 <= paused <= maximum:
+            raise ValueError('Paused replicas must be an integer within the scaling bounds')
+        annotations['autoscaling.keda.sh/paused-replicas'] = str(paused)
     selector = 'namespace="gradiated",model=' + json.dumps(runtime['model_id'])
     health = 'gradiated:autoscaling_demand{service="gateway"}'
     fresh = f'({health} and (timestamp({health}) > time() - 45))'
@@ -97,8 +103,7 @@ def autoscaler(name, model, runtime):
     }
     return {
         'apiVersion': 'keda.sh/v1alpha1', 'kind': 'ScaledObject',
-        'metadata': {'name': name, 'namespace': 'gpu-inference', 'annotations': {
-            'argocd.argoproj.io/sync-options': 'SkipDryRunOnMissingResource=true'}},
+        'metadata': {'name': name, 'namespace': 'gpu-inference', 'annotations': annotations},
         'spec': {
             'scaleTargetRef': {'apiVersion': 'argoproj.io/v1alpha1', 'kind': 'Rollout', 'name': name},
             'pollingInterval': 15, 'minReplicaCount': model['replicas'], 'maxReplicaCount': maximum,

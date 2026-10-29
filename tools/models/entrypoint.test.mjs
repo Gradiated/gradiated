@@ -134,7 +134,7 @@ console.log(JSON.stringify({ args: process.argv.slice(2), gpus: process.env.CUDA
     }),
   );
   assert.equal(result.gpus, assigned);
-  assert.equal(result.args[result.args.indexOf("--max-num-seqs") + 1], "1");
+  assert.equal(result.args[result.args.indexOf("--max-num-seqs") + 1], "4");
   assert.deepEqual(
     JSON.parse(result.args[result.args.indexOf("--speculative-config") + 1]),
     { method: "mtp", num_speculative_tokens: 2 },

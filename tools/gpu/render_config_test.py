@@ -288,6 +288,17 @@ class RenderTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 renderer.autoscaler('deepseek', {**model, 'autoscaling': invalid}, runtimes[model['runtime']])
 
+    def test_retired_model_can_pause_at_zero_without_losing_rollback_configuration(self):
+        runtimes = json.loads(renderer.RUNTIMES.read_text())
+        model = json.loads((renderer.GPU / 'models.json').read_text())['glm']
+        model = {**model, 'autoscaling': {**model['autoscaling'], 'paused_replicas': 0}}
+        obj = renderer.autoscaler('glm', model, runtimes[model['runtime']])
+        self.assertEqual(obj['metadata']['annotations']['autoscaling.keda.sh/paused-replicas'], '0')
+        self.assertEqual(obj['spec']['minReplicaCount'], model['replicas'])
+        for value in (-1, True, 0.5, model['autoscaling']['max_replicas'] + 1):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                renderer.autoscaler('glm', {**model, 'autoscaling': {**model['autoscaling'], 'paused_replicas': value}}, runtimes[model['runtime']])
+
     def test_rejects_invalid_names_and_overridden_qualification_identity(self):
         runtimes = json.loads((renderer.ROOT / 'product/inference/gpu/runtimes.json').read_text())
         model = json.loads((renderer.GPU / 'models.json').read_text())['kev']

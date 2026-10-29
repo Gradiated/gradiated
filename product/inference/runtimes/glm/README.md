@@ -12,7 +12,7 @@ The remaining dependencies are version-pinned and hash-locked; the lock uses a s
 
 The entrypoint serves `dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4` at revision
 `745aac2ff0f10acf961f396df3f9418598aa7327` with tensor parallelism 1,
-one active decode sequence, two MTP draft tokens, FP8 KV cache, the GLM tool/reasoning parsers, and the existing startup
+four active decode sequences, two MTP draft tokens, FP8 KV cache, the GLM tool/reasoning parsers, and the existing startup
 qualification supervisor. `RUNTIME_PORT` is the loopback inference port;
 `WARMUP_PORT` exposes readiness only after cold-shape and concurrency checks
 finish. Desmond should use that readiness endpoint. `HF_HOME` selects the
@@ -39,12 +39,25 @@ On a B300, 60-second synthetic runs with 1,024 generated tokens measured median
 per-request decode rates of 161, 188 and 186 TPS with one, two and three draft
 tokens, respectively, at concurrency one. Two drafts measured 147 TPS at
 concurrency two and 107 TPS at concurrency four. The longer-prompt concurrency-one
-run measured 179 TPS median and 169 TPS minimum across ten requests. These
-measurements select two drafts and one simultaneous decode per GPU for the
-150 TPS target. Remeasure for other prompt lengths and workloads.
+run measured 179 TPS median and 169 TPS minimum across ten requests. Two drafts and one simultaneous decode meet the measured 150 TPS target.
+The selected production setting is four simultaneous decodes per GPU, favoring
+capacity at approximately 107 TPS per request. Remeasure for other prompt
+lengths and workloads.
 
-`--max-num-seqs 1` limits simultaneous decoding; additional HTTP requests can
-queue. Add TP1 replicas to increase simultaneous serving capacity. The startup
+`--max-num-seqs 4` limits simultaneous decoding; additional HTTP requests can
+queue. Add TP1 replicas to increase simultaneous serving capacity.
+The production target is eight TP1 replicas at concurrency four, with 16 CPU and
+224 GiB host RAM per replica. Cold-weight loading and startup qualification
+peaked at 188 GiB under those cgroup limits. Eight replicas fit as four on the
+4-GPU B300 host and four beside DeepSeek on the 8-GPU B300 host, after stock GLM
+drains. Placement permits several replicas per host.
+
+Retire stock GLM only after the new deployment passes production verification.
+`autoscaling.paused_replicas: 0` renders KEDA's paused-replica annotation, which
+sets the old Rollout to zero while retaining its immutable rollback profile.
+Retiring the base also requires marking its trained adapters unavailable;
+retain their artifacts and training history.
+The startup
 supervisor still checks bursts through concurrency sixteen, including queue
 completion within its timeout.
 

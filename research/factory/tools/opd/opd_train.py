@@ -57,6 +57,8 @@ def main() -> None:
     p.add_argument("--max-length", type=int, default=34500)
     p.add_argument("--max-grad-norm", type=float, default=1.0)
     p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--sft", action="store_true", help="plain cross-entropy on every scored completion token (teacher-written rows)")
+    p.add_argument("--epochs", type=int, default=1, help="passes over the rows; with --sft, steps = epochs x minibatches")
     p.add_argument("--shuffle-advantages", action="store_true",
                    help="control: permute advantages across all scored tokens of the round, keeping their distribution")
     args = p.parse_args()
@@ -92,7 +94,11 @@ def main() -> None:
     device = accelerator.device
 
     started = time.time()
-    chunks = [rows[i::args.minibatches] for i in range(args.minibatches)]
+    chunks = []
+    for epoch in range(args.epochs):
+        order = rows[:]
+        random.Random(args.seed + epoch).shuffle(order)
+        chunks += [order[i::args.minibatches] for i in range(args.minibatches)]
     log = []
     for step, chunk in enumerate(chunks):
         total = sum(sum(r["mask"]) for r in chunk)  # global count of scored tokens in this minibatch
@@ -115,8 +121,12 @@ def main() -> None:
                 new = logp.gather(1, targets[:, None])[:, 0]
                 adv = torch.tensor(r["advantages"], device=device)
                 mask = torch.tensor(r["mask"], device=device, dtype=torch.float32)
-                ratio = torch.exp(new - torch.tensor(r["old"], device=device))
-                surrogate = torch.minimum(ratio * adv, ratio.clamp(1 - args.clip, 1 + args.clip) * adv)
+                if args.sft:
+                    ratio = torch.ones_like(new)
+                    surrogate = new * adv
+                else:
+                    ratio = torch.exp(new - torch.tensor(r["old"], device=device))
+                    surrogate = torch.minimum(ratio * adv, ratio.clamp(1 - args.clip, 1 + args.clip) * adv)
                 loss = -(surrogate * mask).sum() / max(1, total) * world  # DDP averages gradients over ranks
                 if dummy:
                     loss = loss * 0.0

@@ -78,6 +78,18 @@ describe("training admission", () => {
     },
   );
 
+  it.each(["manual", "automation"] as const)(
+    "rejects %s training on the retired stock GLM base before reading traces",
+    async (trigger) => {
+      row.task.baseModelId = "z-ai/glm-5.3-flash";
+
+      await expect(
+        prepareTraining(database, content, row.task.id, trigger, null),
+      ).rejects.toMatchObject({ code: "training_not_configured" });
+      expect(countTrainingTraces).not.toHaveBeenCalled();
+    },
+  );
+
   it("rejects an active run before reading trace storage", async () => {
     records.activeRun.mockResolvedValue({ id: randomUUID() });
 

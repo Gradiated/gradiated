@@ -1,3 +1,7 @@
+import {
+  catalogModel,
+  TRAINING_BASE_MODELS,
+} from "@gradiated/contracts/model-catalog";
 import type { ControlDatabase } from "../db/client.js";
 import { createTrainingStore } from "./store.js";
 import { ControlServiceError } from "../errors.js";
@@ -39,6 +43,15 @@ export const prepareTraining = async (
     throw new TrainingAdmissionError(
       "training_not_configured",
       "Choose a base model and comparison model before training.",
+    );
+
+  if (
+    catalogModel(task.baseModelId) &&
+    !TRAINING_BASE_MODELS.some((base) => base.id === task.baseModelId)
+  )
+    throw new TrainingAdmissionError(
+      "training_not_configured",
+      "The selected base model is unavailable for training.",
     );
 
   if (

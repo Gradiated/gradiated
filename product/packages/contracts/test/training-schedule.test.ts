@@ -37,7 +37,6 @@ it("handles disabled, invalid and impossible schedules", () => {
 
 it("separates training bases from comparison-only hosted and frontier models", () => {
   expect(TRAINING_BASE_MODELS.map(({ id }) => id)).toEqual([
-    "z-ai/glm-5.3-flash",
     "Qwen/Qwen3-0.6B",
     "Qwen/Qwen3-1.7B",
     "Qwen/Qwen3-4B",

@@ -1,7 +1,7 @@
 import type { ControlDatabase } from "../db/client.js";
 import {
   catalogModels,
-  retiredModels,
+  legacyModels,
   trainingOnlyModels,
 } from "./models/index.js";
 import { createCatalogService, type CatalogModelInput } from "./service.js";
@@ -12,7 +12,7 @@ export const applyCatalog = async (
   database: ControlDatabase,
   definitions: readonly CatalogModelInput[] = [
     ...catalogModels,
-    ...retiredModels,
+    ...legacyModels,
     ...trainingOnlyModels(),
   ],
 ): Promise<{ applied: number; unmanaged: string[] }> => {

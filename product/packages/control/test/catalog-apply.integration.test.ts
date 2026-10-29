@@ -6,7 +6,7 @@ import { applyCatalog } from "../src/catalog/apply.js";
 import {
   catalogModels,
   trainingOnlyModels,
-  retiredModels,
+  legacyModels,
 } from "../src/catalog/models/index.js";
 import { createCatalogService } from "../src/catalog/service.js";
 import { models } from "../src/db/schema/index.js";
@@ -62,15 +62,19 @@ describe("catalog apply", () => {
     expect(stored).toMatchObject({ name: kev!.name, status: kev!.status });
   });
 
-  it("retires the superseded Dealign ID and exposes the requested public name", async () => {
+  it("keeps the previous Dealign ID available while exposing the requested public name", async () => {
     const catalog = createCatalogService(testDatabase.database);
-    const retired = retiredModels[0]!;
-    await catalog.upsertModel({ ...retired, status: "available" });
+    const legacy = legacyModels[0]!;
+    await catalog.upsertModel({ ...legacy, status: "unavailable" });
 
     await applyCatalog(testDatabase.database);
 
     const listed = await catalog.listModels();
-    expect(listed.map((model) => model.id)).not.toContain(retired.id);
+    expect(listed).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: legacy.id, status: "available" }),
+      ]),
+    );
     expect(listed).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

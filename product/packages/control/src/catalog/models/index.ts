@@ -12,11 +12,11 @@ export const catalogModels = [
   createKev9bModelConfiguration(),
 ];
 
-export const retiredModels = [
+export const legacyModels = [
   {
     ...createDealignGlm53FlashModelConfiguration(),
     id: "dealignai/glm-5.3-flash-uncensored-nvfp4",
-    status: "retired" as const,
+    status: "available" as const,
   },
 ];
 

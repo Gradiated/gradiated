@@ -24,7 +24,7 @@ cache is required. The cache is disposable: a host reset can remove it, and the
 next rollout downloads it again before admission opens. Leave enough disk space
 for the checkpoint and retained revisions; use the Hugging Face cache tools to
 remove unused revisions while preserving weights used by running processes.
-The job reserves 400 GiB of host RAM. First startup can also include
+The job reserves 224 GiB of host RAM. First startup can also include
 GPU-kernel compilation and autotuning.
 The runtime launcher sets `GRADIATED_RUNTIME_ROOT`.
 
@@ -42,7 +42,10 @@ concurrency two and 107 TPS at concurrency four. The longer-prompt concurrency-o
 run measured 179 TPS median and 169 TPS minimum across ten requests. Two drafts and one simultaneous decode meet the measured 150 TPS target.
 The selected production setting is four simultaneous decodes per GPU, favoring
 capacity at approximately 107 TPS per request. Remeasure for other prompt
-lengths and workloads.
+lengths and workloads. Under the selected 16 CPU / 224 GiB limits, a three-minute
+concurrency-four run completed 75 requests without errors at 107 TPS median per
+request and 416 aggregate TPS. An 8,036–8,041-token prompt run completed 20
+requests without errors at 88 TPS median per request.
 
 `--max-num-seqs 4` limits simultaneous decoding; additional HTTP requests can
 queue. Add TP1 replicas to increase simultaneous serving capacity.
@@ -52,14 +55,14 @@ peaked at 188 GiB under those cgroup limits. Eight replicas fit as four on the
 4-GPU B300 host and four beside DeepSeek on the 8-GPU B300 host, after stock GLM
 drains. Placement permits several replicas per host.
 
+The startup supervisor checks bursts through concurrency sixteen, including
+queue completion within its timeout.
+
 Retire stock GLM only after the new deployment passes production verification.
 `autoscaling.paused_replicas: 0` renders KEDA's paused-replica annotation, which
 sets the old Rollout to zero while retaining its immutable rollback profile.
 Retiring the base also requires marking its trained adapters unavailable;
 retain their artifacts and training history.
-The startup
-supervisor still checks bursts through concurrency sixteen, including queue
-completion within its timeout.
 
 Reproduce the initial concurrency screen against an isolated test runtime:
 

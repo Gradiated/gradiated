@@ -50,6 +50,7 @@ def rollout(name, model, runtimes):
         raise ValueError('The model identity label is reserved')
     if model['replicas'] < 1 or model['progress_deadline_seconds'] < 1:
         raise ValueError('Serving replicas and deadlines must be positive')
+    paused = model.get('autoscaling', {}).get('paused_replicas')
     runtime = runtimes[model['runtime']]
     if runtime.get('kind') == 'training':
         raise ValueError('Training runtimes cannot serve a Rollout')
@@ -67,8 +68,9 @@ def rollout(name, model, runtimes):
         pod['affinity'] = model['affinity']
     return {
         'apiVersion': 'argoproj.io/v1alpha1', 'kind': 'Rollout',
-        'metadata': {'name': name, 'namespace': 'gpu-inference'},
-        'spec': {'replicas': model['replicas'], 'progressDeadlineSeconds': model['progress_deadline_seconds'],
+        'metadata': {'name': name, 'namespace': 'gpu-inference',
+                     **({'annotations': {'gradiated.com/paused-replicas': str(paused)}} if paused is not None else {})},
+        'spec': {'replicas': paused if paused is not None else model['replicas'], 'progressDeadlineSeconds': model['progress_deadline_seconds'],
                  'progressDeadlineAbort': True,
                  'strategy': {'canary': {'maxSurge': 1, 'maxUnavailable': 0, 'steps': [
                      {'setWeight': 50}, {'analysis': {'templates': [{'templateName': 'sdk-qualification'}], 'args': [

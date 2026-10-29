@@ -134,17 +134,16 @@ impl CompletionService {
                 GatewayError::ServingStateUnavailable
             })?;
 
-        let routing_session = request
-            .request
-            .session_id
-            .clone()
-            .unwrap_or_else(|| request.metadata.generation_id.to_string());
+        let routing_session = request.request.session_id.clone().or_else(|| {
+            (!request.deployment.release.is_system_one())
+                .then(|| request.metadata.generation_id.to_string())
+        });
 
         let availability = order_deployments(RouteInput {
             workspace_id: request.identity.workspace_id,
             model_id: &request.request.model,
             release_digest: &request.served_release_digest,
-            session_id: Some(&routing_session),
+            session_id: routing_session.as_deref(),
             prompt: route_prompt(&request.request),
             deployments: &request.model_deployments,
             statuses: &statuses,

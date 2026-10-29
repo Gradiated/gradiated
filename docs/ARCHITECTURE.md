@@ -362,10 +362,11 @@ An exact model may have multiple available runtime deployments. Each deployment
 sends status to Valkey every second through the private telemetry endpoint. The
 gateway uses fresh status, a shared concurrency lease, and rendezvous hashing to
 select a deployment. An explicit session ID keeps related requests on one
-deployment when it accepts work. Without a session ID, the gateway uses the
+deployment when it accepts work. Without a session ID, LLM requests use the
 generation ID as the routing key so independent calls spread across replicas,
 even when they share a prompt prefix. Retries of a generation retain that key.
-Route keys are scoped to workspace, model and served release. Routing never requires
+SystemOne keeps its state-prefix affinity, excluding questions. Route keys are
+scoped to workspace, model and served release. Routing never requires
 a second rendering of a chat deployment's prompt. The gateway does not queue. It returns
 `429` when all healthy deployments are busy. It returns `503` when no fresh,
 healthy deployment exists. It retries once on another deployment only when no

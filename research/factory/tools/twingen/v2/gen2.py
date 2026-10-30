@@ -52,7 +52,7 @@ import specio  # noqa: E402
 from gen import UTC, iso, stable_seed, uuid7, wh_column, WH_TYPES  # noqa: E402
 from specio import shape_of  # noqa: E402
 
-GEN2_VERSION = "twingen-2.13"
+GEN2_VERSION = "twingen-2.14"
 TWINS = PATHS.TWINS
 FACTS = PATHS.FACTS
 QFACTS = PATHS.QFACTS
@@ -496,6 +496,49 @@ def conversation_pages(spec: dict, facts: dict) -> tuple[list[str], list[str]]:
     return [u for u, _ in urls.most_common(120)], [p_ for p_, _ in paths.most_common(150)]
 
 
+MOBILE_PROPS = ("$app_version", "$app_build", "$app_namespace", "$is_testflight", "$app_name", "$device_manufacturer")
+
+
+def mobile_platform(spec: dict) -> str | None:
+    """rule (r13): "ios"/"android" when the conversation's events carry mobile-app properties and no web pageviews,
+    else None (a mobile app was generated as a web site: $lib=web, desktop OSes, web URLs)."""
+    ev = spec.get("events") or {}
+    if "$pageview" in ev:
+        return None
+    hits, os_names = 0, C.Counter()
+    for info in ev.values():
+        props = info.get("properties") or {}
+        hits += sum(1 for p in MOBILE_PROPS if p in props)
+        for p in ("$os_name", "$os"):
+            for v in (props.get(p) or {}).get("values") or []:
+                os_names[str(v).lower()] += 1
+    if "$screen" in ev:
+        hits += 2
+    if os_names["ios"] + os_names["ipados"] + os_names["android"]:
+        hits += 1
+    if hits < 2:
+        return None
+    return "android" if os_names["android"] > os_names["ios"] + os_names["ipados"] else "ios"
+
+
+FAIL_EV = re.compile(r"(^|[_ .:-])(fail(ed|ure)?|error(ed)?|declined|rejected)([_ .:-]|$)", re.I)
+OK_WORDS = ("succeeded", "success", "successful", "completed", "complete", "created", "sent", "submitted", "started",
+            "paid", "placed")
+
+
+def success_sibling(e: str, names) -> str | None:
+    """'payment_failed' -> 'payment_succeeded' (or completed/created/...) if present in names."""
+    m = FAIL_EV.search(e)
+    if not m:
+        return None
+    stem = (e[:m.start()] + e[m.end():]).strip("_ .:-")
+    for w in OK_WORDS:
+        for cand in (f"{stem}_{w}", f"{stem} {w}", f"{stem}.{w}", f"{w}_{stem}"):
+            if cand in names and cand != e:
+                return cand
+    return None
+
+
 STUB_EVENT = re.compile(r"^(mcp |application )", re.I)
 
 
@@ -678,11 +721,26 @@ class Project2(gen.Project):
                 self.targets[e] = [min(T, 0.2), min(U, 0.2)]
                 self.v2["stub_events_capped"] += 1
 
+    def failure_ratios(self):
+        """rule (r13): without production volume evidence a failure event is a minority of its success sibling
+        (payment_failed 737 vs payment_succeeded 7 was implausible)."""
+        hinted = getattr(self, "_volume_hinted", set())
+        for e in list(self.targets):
+            if e in hinted:
+                continue
+            sib = success_sibling(e, self.targets)
+            if sib and self.targets[e][0] > 0.25 * self.targets[sib][0]:
+                T, U = self.targets[sib]
+                self.targets[e] = [0.1 * T, min(self.targets[e][1], max(0.1 * U, 0.05))]
+                self.v2["failure_events_capped"] += 1
+
     def needs_background_population(self) -> bool:
         """rule (r12): a web project whose conversation names only custom events still has visitors who never do them;
         without background activity every person does every named event ("users who did X vs didn't" inverts)."""
         ev = self.S.get("events") or {}
         if any(e in ev for e in ("$pageview", "$screen", "$autocapture", "Application Opened", "Application opened")):
+            return False
+        if mobile_platform(self.S):
             return False
         if not any(not (info or {}).get("standard") for info in ev.values()):
             return False
@@ -691,6 +749,13 @@ class Project2(gen.Project):
         return not any(k in libs for k in ("ios", "android", "react-native", "flutter"))
 
     def plan(self):
+        mob = mobile_platform(self.S)
+        if mob:  # the base planner detects mobile from $lib values
+            un = self.S.setdefault("unscoped", {})
+            d = un.setdefault("$lib", {"type": "String", "values": [], "more_values": None, "description": None,
+                                        "standard": True, "values_status": None, "sources": {}})
+            d["values"] = [f"posthog-{mob}"] + [v for v in d.get("values") or [] if "web" not in str(v).lower()]
+            self.v2["mobile_platform_" + mob] += 1
         if self.needs_background_population():
             self.S["events"]["$pageview"] = self._blank_event("$pageview", True)
             self.v2["background_pageviews_added"] += 1
@@ -702,6 +767,7 @@ class Project2(gen.Project):
         super().plan()
         self.apply_volumes()
         self.cap_stub_events()
+        self.failure_ratios()
 
     def series_levels(self):
         """event -> (daily level over the last 30 covered days, math, filtered) from production Trends series."""
@@ -818,6 +884,7 @@ class Project2(gen.Project):
             self.targets[e][1] = min(self.targets[e][1], D)
         self.D = max(D, 1.0)
         self.v2["volume_hints_applied"] = changed
+        self._volume_hinted = set(hints_T) | set(hints_U) | set(lower)
         self.v2_info["volume_hint_events"] = sorted(set(hints_T) | set(hints_U) | set(lower))[:50]
 
     # ------------------------------------------------------------------ named entities

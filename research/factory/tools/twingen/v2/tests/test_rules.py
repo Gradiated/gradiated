@@ -323,6 +323,29 @@ class BackgroundPopulation(unittest.TestCase):
         self.assertFalse(project(S={"id": "t", "events": mob}).needs_background_population())
 
 
+class MobileAndFailures(unittest.TestCase):
+    """b10: an iOS app generated with $lib=web and desktop OSes; payment_failed 737 vs payment_succeeded 7."""
+
+    def test_mobile_platform(self):
+        spec = {"events": {"onboarding_step_viewed": {"properties": {"$app_version": {"values": ["2.1"]},
+                                                                     "$os_name": {"values": ["iOS"]}}}}}
+        self.assertEqual(gen2.mobile_platform(spec), "ios")
+        self.assertIsNone(gen2.mobile_platform({"events": {"$pageview": {}, "x": {"properties": {"$app_version": {}}}}}))
+        self.assertIsNone(gen2.mobile_platform({"events": {"x": {"properties": {}}}}))
+
+    def test_success_sibling(self):
+        names = {"payment_failed", "payment_succeeded", "export_error", "export_completed", "login"}
+        self.assertEqual(gen2.success_sibling("payment_failed", names), "payment_succeeded")
+        self.assertEqual(gen2.success_sibling("export_error", names), "export_completed")
+        self.assertIsNone(gen2.success_sibling("login", names))
+
+    def test_failure_ratio(self):
+        p = project(targets={"payment_failed": [737.0, 50.0], "payment_succeeded": [7.0, 5.0]})
+        p.failure_ratios()
+        self.assertEqual(p.targets["payment_succeeded"], [7.0, 5.0])
+        self.assertLessEqual(p.targets["payment_failed"][0], 0.7 + 1e-9)
+
+
 class FunnelDropoff(unittest.TestCase):
     """r1 card 13: funnel seeds walked every person through every step (twin 30->25 vs production 51->34->1->0->0)."""
 

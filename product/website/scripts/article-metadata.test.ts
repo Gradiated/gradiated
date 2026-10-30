@@ -22,6 +22,15 @@ test("frontmatter provides article metadata without reading its body", () => {
   assert.equal(article.collection, "library");
   assert.equal(article.image, "/brand/png/gradiated-mark-dark-1024.png");
 });
+test("articles can omit the visible description", () => {
+  const source = fixture().replace(
+    "description: Example article description.\n",
+    "",
+  );
+  const article = parseArticleMetadata(source, "without-description.mdx");
+  assert.equal(article.description, undefined);
+  assert.equal(article.title, "Example");
+});
 test("draft filtering applies to every article, not a named route", () => {
   const sources = {
     "a.mdx": fixture(),

@@ -31,7 +31,10 @@ for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
     try {
       const {
         rows: [model],
-      } = await pool.query<{ id: string }>("SELECT id FROM models LIMIT 1");
+      } = await pool.query<{ id: string }>(
+        "SELECT id FROM models WHERE id = $1",
+        ["Qwen/Qwen3-0.6B"],
+      );
       await pool.query(
         "INSERT INTO tasks (id, workspace_id, name, base_model_id) VALUES ($1, $2, $3, $4)",
         [taskId, workspace.id, taskName, model!.id],

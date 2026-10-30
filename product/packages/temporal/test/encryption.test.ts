@@ -5,13 +5,13 @@ import {
   ApplicationFailure,
   type Payload,
 } from "@temporalio/common";
-import { loadDataConverter } from "@temporalio/common/lib/internal-non-workflow/data-converter-helpers.js";
 import {
+  loadDataConverter,
   decodeFailure,
   encodeErrorToFailure,
   encodeToPayload,
   decodeOptionalSinglePayload,
-} from "@temporalio/common/lib/internal-non-workflow/codec-helpers.js";
+} from "@temporalio/common/internal/internal-non-workflow";
 import { temporal } from "@temporalio/proto";
 import { describe, expect, it } from "vitest";
 import { createDataConverter, EncryptionCodec } from "../src/index.js";

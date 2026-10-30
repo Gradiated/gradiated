@@ -98,6 +98,13 @@ Manager value with JSON containing `webhook-url` and `webhook-token`.
 Alertmanager reads the token as a Bearer credential. The URL and token must
 never enter Git.
 
+`InferenceDeploymentProbeFailed` keeps firing per model/deployment until its
+failure condition has been absent for five continuous minutes (`keep_firing_for:
+5m`). Brief recoveries therefore stay in the same alert instead of sending
+repeated firing/resolved notifications. Initial detection remains unchanged;
+ongoing failures retain the 15-minute reminder interval. Recovery notifications,
+including for retired targets, wait for this five-minute hold to expire.
+
 The incident.io Alertmanager source pauses timeout resolution while an alert is
 attached to an incident. Unattached alerts have a 48-hour timeout, longer than
 the longest reminder interval (24 hours). Explicit resolved events
@@ -428,6 +435,13 @@ Run the alert/dashboard checks (requires PyYAML and `promtool`):
 ```sh
 python3 tools/observability/check.py
 ```
+
+Prometheus rule fixtures run in parallel suites containing their asserted alerts
+and the transitive recording-rule dependencies used by each fixture. This avoids
+re-evaluating unrelated rules for long simulated timelines. All fixtures still
+run, and the complete generated rule file and dashboard coverage are validated
+separately. Unknown alert references fail validation.
+
 
 Render the pinned monitoring chart and test notification routing with Helm,
 PyYAML, and `amtool`:

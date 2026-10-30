@@ -1,4 +1,6 @@
 import os
+import re
+import time
 from pathlib import Path
 import shlex
 import subprocess
@@ -29,9 +31,16 @@ def build_image(tag, lines, context, timeout=1200):
         dockerfile = Path(directory) / 'Dockerfile'
         dockerfile.write_text('\n'.join(with_mirror(lines)) + '\n')
         try:
-            result = subprocess.run([*BUILD, '--progress=plain', '--platform', 'linux/amd64', '-t', tag,
-                                     '-f', str(dockerfile), str(context)],
-                                    text=True, capture_output=True, timeout=timeout)
+            deadline = time.monotonic() + timeout
+            for attempt in range(2):
+                flags = ['--no-cache'] if attempt else []
+                result = subprocess.run([*BUILD, *flags, '--progress=plain', '--platform', 'linux/amd64', '-t', tag,
+                                         '-f', str(dockerfile), str(context)],
+                                        text=True, capture_output=True, timeout=max(0.001, deadline - time.monotonic()))
+                if not result.returncode or not re.search(r'snapshot .+ does not exist: not found', result.stderr):
+                    break
+                if attempt == 0:
+                    print('Builder cache snapshot is missing; retrying once without cached layers.', flush=True)
         except subprocess.TimeoutExpired as error:
             output = error.stderr.decode(errors='replace') if isinstance(error.stderr, bytes) else error.stderr or ''
             raise AssertionError(f'Building {tag} timed out:\n{output[-5000:]}') from None

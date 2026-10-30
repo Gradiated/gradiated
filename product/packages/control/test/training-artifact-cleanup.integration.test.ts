@@ -1,3 +1,5 @@
+import { createCatalogService } from "../src/catalog/service.js";
+import { createGlm53FlashModelConfiguration } from "../src/catalog/models/glm-5-3-flash.js";
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import {
@@ -19,6 +21,7 @@ import {
 import {
   createTrainingArtifactCleanup,
   deleteArchivedTasks,
+  deleteRetiredTrainingSchedules,
 } from "../src/training/artifact-cleanup.js";
 import type { ContentStore } from "../src/traces/storage.js";
 import { createMemoryContentStore } from "./support/content-store.js";
@@ -45,7 +48,7 @@ describe("training artifact cleanup", () => {
     objects = new Map();
     store = createMemoryContentStore(objects);
     clock = Date.now();
-    engine.updateSchedule.mockClear();
+    engine.updateSchedule.mockReset().mockResolvedValue(undefined);
   });
 
   const seedRun = async (finished = true) => {
@@ -88,6 +91,87 @@ describe("training artifact cleanup", () => {
       objects.set(`runs/${runId}/${key}`, Buffer.from("synthetic"));
     return { ...seed, runId };
   };
+
+  it("removes retired-base Temporal timers while retaining tasks and other bases", async () => {
+    const retired = await seedTrainingTask(db.database);
+    const other = await seedTrainingTask(db.database);
+    const base = createGlm53FlashModelConfiguration();
+    await createCatalogService(db.database).upsertModel(base);
+    await db.database
+      .update(tasks)
+      .set({ baseModelId: base.id, trainingSchedule: "0 3 * * 1" })
+      .where(eq(tasks.id, retired.task.id));
+
+    await deleteRetiredTrainingSchedules(db.database, engine);
+
+    expect(engine.updateSchedule).toHaveBeenCalledWith(retired.task.id, null);
+    expect(engine.updateSchedule).not.toHaveBeenCalledWith(other.task.id, null);
+    const [stored] = await db.database
+      .select()
+      .from(tasks)
+      .where(eq(tasks.id, retired.task.id));
+    expect(stored?.trainingSchedule).toBeNull();
+    engine.updateSchedule.mockClear();
+    await deleteRetiredTrainingSchedules(db.database, engine);
+    expect(engine.updateSchedule).not.toHaveBeenCalledWith(
+      retired.task.id,
+      null,
+    );
+  });
+
+  it("restores a valid timer when the task changes base during cleanup", async () => {
+    const own = await seedTrainingTask(db.database);
+    const base = createGlm53FlashModelConfiguration();
+    await createCatalogService(db.database).upsertModel(base);
+    await db.database
+      .update(tasks)
+      .set({ baseModelId: base.id })
+      .where(eq(tasks.id, own.task.id));
+    engine.updateSchedule.mockImplementation(async (id, cron) => {
+      if (id === own.task.id && cron === null)
+        await db.database
+          .update(tasks)
+          .set({ baseModelId: own.input.baseModelId })
+          .where(eq(tasks.id, id));
+    });
+
+    await deleteRetiredTrainingSchedules(db.database, engine);
+
+    expect(engine.updateSchedule).toHaveBeenCalledWith(
+      own.task.id,
+      "0 3 * * 1",
+    );
+  });
+
+  it("removes a restored timer if the user disables it during restoration", async () => {
+    const own = await seedTrainingTask(db.database);
+    const base = createGlm53FlashModelConfiguration();
+    await createCatalogService(db.database).upsertModel(base);
+    await db.database
+      .update(tasks)
+      .set({ baseModelId: base.id })
+      .where(eq(tasks.id, own.task.id));
+    engine.updateSchedule.mockImplementation(async (id, cron) => {
+      if (id !== own.task.id) return;
+      await db.database
+        .update(tasks)
+        .set(
+          cron === null
+            ? { baseModelId: own.input.baseModelId }
+            : { trainingSchedule: null },
+        )
+        .where(eq(tasks.id, id));
+    });
+
+    await deleteRetiredTrainingSchedules(db.database, engine);
+
+    expect(engine.updateSchedule).toHaveBeenLastCalledWith(own.task.id, null);
+    const [stored] = await db.database
+      .select()
+      .from(tasks)
+      .where(eq(tasks.id, own.task.id));
+    expect(stored?.trainingSchedule).toBeNull();
+  });
 
   const archive = (workspaceId: string) =>
     db.database

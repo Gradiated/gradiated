@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import re
 import shutil
+import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -95,7 +96,8 @@ class RenderTests(unittest.TestCase):
         self.assertEqual(template['source']['path'],
                          str(renderer.MODELS.relative_to(renderer.ROOT)) + '/{{ .model }}')
         self.assertIn('RespectIgnoreDifferences=true', template['syncPolicy']['syncOptions'])
-        self.assertEqual(template['ignoreDifferences'][0]['jsonPointers'], ['/spec/replicas'])
+        self.assertEqual(template['ignoreDifferences'][0]['jqPathExpressions'],
+                         ['select(.metadata.annotations["gradiated.com/paused-replicas"] == null) | .spec.replicas'])
         for name in json.loads((renderer.GPU / 'models.json').read_text()):
             self.assertTrue((renderer.MODELS / name / f'{name}.yaml').exists(), name)
         # Each application prunes what leaves its files: a setting carried over
@@ -287,6 +289,30 @@ class RenderTests(unittest.TestCase):
                         {'max_replicas': 2, 'target_concurrency': float('inf')}):
             with self.assertRaises(ValueError):
                 renderer.autoscaler('deepseek', {**model, 'autoscaling': invalid}, runtimes[model['runtime']])
+
+    def test_retired_model_can_pause_at_zero_without_losing_rollback_configuration(self):
+        runtimes = json.loads(renderer.RUNTIMES.read_text())
+        model = json.loads((renderer.GPU / 'models.json').read_text())['glm']
+        model = {**model, 'autoscaling': {**model['autoscaling'], 'paused_replicas': 0}}
+        obj = renderer.autoscaler('glm', model, runtimes[model['runtime']])
+        self.assertEqual(obj['metadata']['annotations']['autoscaling.keda.sh/paused-replicas'], '0')
+        self.assertEqual(obj['spec']['minReplicaCount'], model['replicas'])
+        rollout = renderer.rollout('glm', model, runtimes)
+        self.assertEqual(rollout['spec']['replicas'], 0)
+        self.assertEqual(rollout['metadata']['annotations']['gradiated.com/paused-replicas'], '0')
+        active = {**model, 'autoscaling': {key: value for key, value in model['autoscaling'].items()
+                                        if key != 'paused_replicas'}}
+        active_rollout = renderer.rollout('glm', active, runtimes)
+        self.assertEqual(active_rollout['spec']['replicas'], model['replicas'])
+        self.assertNotIn('annotations', active_rollout['metadata'])
+        appset = yaml.safe_load(renderer.APPLICATIONS.read_text())
+        expression = appset['spec']['template']['spec']['ignoreDifferences'][0]['jqPathExpressions'][0]
+        for resource, expected in ((rollout, ''), (active_rollout, str(model['replicas']) + '\n')):
+            selected = subprocess.check_output(['jq', '-r', expression], input=json.dumps(resource), text=True)
+            self.assertEqual(selected, expected)
+        for value in (-1, True, 0.5, model['autoscaling']['max_replicas'] + 1):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                renderer.autoscaler('glm', {**model, 'autoscaling': {**model['autoscaling'], 'paused_replicas': value}}, runtimes[model['runtime']])
 
     def test_rejects_invalid_names_and_overridden_qualification_identity(self):
         runtimes = json.loads((renderer.ROOT / 'product/inference/gpu/runtimes.json').read_text())

@@ -111,6 +111,31 @@ describe("model catalog route", () => {
     expect(response.status).toBe(200);
   });
 
+  it("hides the legacy Dealign ID while it remains available for cutover", async () => {
+    const renamed = "dealignai/glm-5.3-flash-uncensored";
+    const app = createTestApp({
+      services: {
+        catalogBilling: {
+          listModels: async () => [
+            { ...modelRecord, id: renamed },
+            {
+              ...modelRecord,
+              id: "dealignai/glm-5.3-flash-uncensored-nvfp4",
+              status: "available",
+            },
+          ],
+        },
+      },
+    });
+
+    const response = await app.request("/api/v1/models");
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      data: [{ id: renamed }],
+    });
+  });
+
   it("leaves retired models out of the catalog", async () => {
     const app = createTestApp({
       services: {

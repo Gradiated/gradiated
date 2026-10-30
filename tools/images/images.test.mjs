@@ -53,7 +53,9 @@ test("Kubernetes configuration changes do not rebuild the application image", ()
     fingerprint("product", base),
     fingerprint("product", [
       ...base,
-      entry("infra/environments/prod/us-east-1/kubernetes/gpu-inference/controller.yaml"),
+      entry(
+        "infra/environments/prod/us-east-1/kubernetes/gpu-inference/controller.yaml",
+      ),
     ]),
   );
 });
@@ -125,8 +127,14 @@ test("application code changes preserve the base image identity", () => {
     "product/inference/images/gpu-base/recovery/host-agent.py",
   ]) {
     assert.equal(
-      fingerprint("gpu-base", [entry("product/inference/images/gpu-base/Dockerfile"), entry(path)]),
-      fingerprint("gpu-base", [entry("product/inference/images/gpu-base/Dockerfile"), entry(path, "100644 blob bbb")]),
+      fingerprint("gpu-base", [
+        entry("product/inference/images/gpu-base/Dockerfile"),
+        entry(path),
+      ]),
+      fingerprint("gpu-base", [
+        entry("product/inference/images/gpu-base/Dockerfile"),
+        entry(path, "100644 blob bbb"),
+      ]),
     );
   }
 });
@@ -135,12 +143,45 @@ test("host releases preserve the base image identity", () => {
   const base = [entry("product/inference/images/gpu-base/Dockerfile")];
   assert.equal(
     fingerprint("gpu-base", base),
-    fingerprint("gpu-base", [...base, entry("product/inference/gpu/host-agent.py")]),
+    fingerprint("gpu-base", [
+      ...base,
+      entry("product/inference/gpu/host-agent.py"),
+    ]),
   );
 });
 
 test("enrollment code and the seed verifier are base image inputs", () => {
   const base = [entry("product/inference/images/gpu-base/Dockerfile")];
-  for (const path of ["product/inference/host/gradiated_host/enroll.py", "product/inference/gpu/host_bundle.py"])
-    assert.notEqual(fingerprint("gpu-base", base), fingerprint("gpu-base", [...base, entry(path)]));
+  for (const path of [
+    "product/inference/host/gradiated_host/enroll.py",
+    "product/inference/gpu/host_bundle.py",
+  ])
+    assert.notEqual(
+      fingerprint("gpu-base", base),
+      fingerprint("gpu-base", [...base, entry(path)]),
+    );
+});
+
+test("console assets and excluded Rust sources do not invalidate backend images", () => {
+  const base = [entry("product/Dockerfile")];
+  for (const path of [
+    "product/services/console/src/page.tsx",
+    "product/services/console/screenshots/page.png",
+    "product/services/gateway/src/main.rs",
+    "product/services/proxy/src/lib.rs",
+  ])
+    assert.equal(
+      fingerprint("product", base),
+      fingerprint("product", [...base, entry(path)]),
+      path,
+    );
+  for (const path of [
+    "product/services/console/package.json",
+    "product/services/gateway/package.json",
+  ])
+    assert.notEqual(
+      fingerprint("product", base),
+      fingerprint("product", [...base, entry(path)]),
+      path,
+    );
 });

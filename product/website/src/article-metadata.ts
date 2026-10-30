@@ -14,7 +14,7 @@ const date = z
 const schema = z
   .object({
     title: z.string().trim().min(1),
-    description: z.string().trim().min(1),
+    description: z.string().trim().min(1).optional(),
     path: z
       .string()
       .regex(

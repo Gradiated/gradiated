@@ -1,0 +1,84 @@
+---
+title: "October 2026: Starting on hard mode"
+path: /notes/2026-10-starting-on-hard-mode/
+category: notes
+status: draft
+publishedAt: "2026-10-23"
+image: /brand/library/mission-wide.webp
+---
+
+## Starting Gradiated
+
+PostHog's going well. _Really_ well. To the point where it's the literal dream to build a company like this for the majority of founders I meet. And yet, I'm now focused on Gradiated, which helps companies run open-weight models. Why mess with a good thing?
+
+To _not_ mess with a good thing.
+
+As PostHog gets bigger, we want to increase the size of the bets we take without sacrificing focus and bandwidth on the core products that customers are paying for today. Yet if we don't build new things, we create a risk that something else will come along and disrupt us.
+
+## The importance of hard mode at the start
+
+I started by doing cold outbound sales myself. This is definitely sales on hard mode, especially given our developer focus - an audience who stereotypically at least _hate_ cold messages from random vendors. There were lots of "easier" options: I could have hired someone to do this, or focused on selling to existing PostHog customers.
+
+The reason I chose to do this manually was that, in the earliest stages, the focus is learning, not scaling. We can have all the confidence in the world about our product strategy _until_ customers tell us otherwise. Cold outbound gives us a quick feedback loop: message potential customers, then see what they do next, if anything.
+
+Within the first couple of days, this led to a big realization: most software teams, especially early on, aren't particularly good at implementing open-weight models instead of frontier ones. Most will take an existing frontier model they're using in their product, swap it out for something like DeepSeek, and then be disappointed by the results.
+
+This changed both our website and the product. We now lead with: start by working with us to get open-weight models working successfully for you, _then_ we can do the clever stuff around GEPA, RL, chips and so on. Right now that means doing forward-deployed work with customers rather than trying to scale too early.
+
+Since making these tweaks, we've found it much easier to get meetings, and the majority of those meetings have turned into deals in our small current sample. We could have wasted months going in the wrong direction without this feedback.
+
+The other meta point is that Josh, ex-PostHog engineer and my cofounder at Gradiated, pushed us to "just sell inference for open-weight models" instead of starting with RL. And it worked. This gets us into the game and starts generating the data customers will later need us to use to train their own models. Consider this your should-be-daily reminder to interact with customers as aggressively as possible unless it directly takes you in the wrong direction. Even SpaceX, focused on making life multiplanetary, started with a relatively simple satellite-launching business.
+
+## What early customer work actually looks like
+
+On product, we've been taking the same approach: our focus is _learning_, not _efficiency_. When a customer wants to work with us, we send an NDA, then deploy Josh as a forward-deployed engineer. Having direct code access gives us exactly the right environment to test new models, instead of asking customers to try things on our behalf. It also forces us to tackle the practical problems ourselves rather than passing off work that should really become a product feature. It's been pleasingly easy to get access like this, partly because of our connection to PostHog. That's also why we take security seriously from day one: we've a reputation to uphold.
+
+For example, the implementation work taught us that you need to adjust prompts for a new model. So we built a labelling suite to get feedback more quickly and concretely than relying on customers to adapt their prompts based on vibes.
+
+## You have to start _really_ small
+
+I want to emphasize just how puny the first customers were. We actually started through an implementation onto one of Josh's side projects - around 700 requests in a day, or only about $0.50 of daily revenue at our prices. I've built a company worth well over $1bn, and _yes_, I was very excited to see this happening. You must take things one practical step at a time.
+
+## What we're working on next
+
+We're seeing customers fall into two buckets, reflecting where they are in their journey with open-weight models. If they're pre-product-market fit, they are more focused on quality. This is rational: if you have no customers, all you care about is figuring out how to get them, no matter the cost. If they already have product-market fit, model costs usually become important very quickly.
+
+We are trying to figure out whether we should land customers early, during the quality phase, where we can give them better tools for developing prompts, or later, during the cost phase, when things like RL or GEPA are far more important.
+
+This has very large implications. Getting in early is a huge competitive advantage, but later is where the money usually ends up. Perhaps we'll do both: ElevenLabs is a great example of a company that managed enterprise sales _and_ product-led growth from the start. Whatever we do, we need an ultra-clear view of our ideal customer profile.
+
+## Building the team
+
+We want to bring across the principles behind what worked at PostHog, not blindly copy its playbooks. PostHog has a wide product, so a wide, flat organization works well. Gradiated's product strategy is deep: from a customer's perspective it should just be a base URL, while we optimize everything down to the hardware and data center level.
+
+That calls for a different structure. We want to work in person as much as possible, and for most of the early team to understand the whole stack, from transistors through to token prediction.
+
+So far:
+
+- I'm finding customers.
+- Josh owns product and customer implementations.
+- Aidan leads our work from model behavior through to chip microarchitecture.
+- Scott runs ops and hiring.
+- Shmo leads brand design.
+- Charley, when she starts a week today, will write about chips, inference and models to build our audience online
+- Tim is acting as a board member
+
+Our top hiring priority now is infrastructure to increase Josh's bandwidth for product work.
+
+## Getting compute is part of building the business
+
+After a recent trip to San Francisco, it became clear how crazy the GPU market is. It's often a case of DMing some rando from X and then transferring millions of dollars to them. It's standard for providers to have uptime guarantees of 85% (!!!!) It _is_ the wild west at the moment.
+
+But access to scarce GPUs cannot be our only advantage. Scarcity will change, and a large balance sheet can always buy more compute. We would rather invest in a fundamental technological advantage: getting more useful work out of every GPU we have.
+
+That may produce slower revenue growth in the short term than simply buying as much compute as possible. We think it gives us a much stronger business in the long term.
+
+## What this means for PostHog
+
+Tim has gradually been running more and more of PostHog over the last couple of years as I've focused more on zero-to-one products, including PostHog AI, self-driving, the desktop app, the support product and our AI research team. We are acknowledging what is already true: Tim is running PostHog, and I am focused on new products.
+
+Gradiated is how we create new products without pulling team members away from the products customers already rely on. It has a separate brand and Slack, and we are using as little internal resource as possible – [more on how that works](https://posthog.com/handbook/gradiated).
+
+That means while Tim focuses on data, data, data at PostHog, I'm doing cold outreach and hiring myself, and Josh is implementing the product for customers as a forward-deployed engineer.
+
+If you're a potential customer or just have any thoughts, I'd love to hear from you: james at you can guess it dot com.

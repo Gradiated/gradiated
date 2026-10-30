@@ -105,7 +105,7 @@ console.log(JSON.stringify({ args: process.argv.slice(2), gpus: process.env.CUDA
   ]);
 });
 
-test("GLM exposes only its assigned pair on a shared GPU host", (t) => {
+test("Dealign serves TP1 on its assigned GPU with bounded decode concurrency", (t) => {
   const root = mkdtempSync(join(tmpdir(), "glm-entrypoint-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   mkdirSync(join(root, "python/bin"), { recursive: true });
@@ -120,7 +120,7 @@ console.log(JSON.stringify({ args: process.argv.slice(2), gpus: process.env.CUDA
 `,
     { mode: 0o755 },
   );
-  const assigned = "GPU-e,GPU-f";
+  const assigned = "GPU-e";
   const result = JSON.parse(
     execFileSync("bash", [join(root, "entrypoint")], {
       encoding: "utf8",
@@ -134,9 +134,37 @@ console.log(JSON.stringify({ args: process.argv.slice(2), gpus: process.env.CUDA
     }),
   );
   assert.equal(result.gpus, assigned);
+  assert.equal(result.args[result.args.indexOf("--max-num-seqs") + 1], "4");
+  assert.deepEqual(
+    JSON.parse(result.args[result.args.indexOf("--speculative-config") + 1]),
+    { method: "mtp", num_speculative_tokens: 2 },
+  );
   assert.equal(
     result.args[result.args.indexOf("--tensor-parallel-size") + 1],
-    "2",
+    "1",
+  );
+  assert.throws(
+    () =>
+      execFileSync("bash", [join(root, "entrypoint")], {
+        stdio: "pipe",
+        env: {
+          ...process.env,
+          GRADIATED_RUNTIME_ROOT: root,
+          NVIDIA_VISIBLE_DEVICES: assigned,
+          LORA_ENABLED: "true",
+        },
+      }),
+    (error) =>
+      error.status === 64 &&
+      error.stderr.toString().includes("stock GLM adapters are unsupported"),
   );
   assert.equal(result.args[result.args.indexOf("--port") + 1], "23456");
+  assert.equal(
+    result.args[result.args.indexOf("serve") + 1],
+    "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+  );
+  assert.equal(
+    result.args[result.args.indexOf("--revision") + 1],
+    "745aac2ff0f10acf961f396df3f9418598aa7327",
+  );
 });

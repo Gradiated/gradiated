@@ -13,13 +13,14 @@ export const mountSandCircuit = (
   let progress = 0;
   let target = 0;
   let clock = 0;
+  let networkClock = 0;
   let previous = 0;
   let visible = false;
   let hovered = false;
   let focused = false;
 
   const render = () => {
-    if (!painter.render(progress, clock)) return;
+    if (!painter.render(progress, clock, networkClock)) return;
 
     host.dataset.morph = progress.toFixed(3);
     host.dataset.ready = "true";
@@ -32,12 +33,12 @@ export const mountSandCircuit = (
     const elapsed = previous ? Math.min((now - previous) / 1000, 0.05) : 0;
     previous = now;
     clock += elapsed;
-    progress += (target - progress) * (1 - Math.exp(-elapsed * 4.5));
+    if (target === 1 && progress > 0.92) networkClock += elapsed;
+    progress += (target - progress) * (1 - Math.exp(-elapsed * 6.5));
     if (Math.abs(target - progress) < 0.001) progress = target;
 
     render();
-    if (!reduced.matches && (progress !== target || progress < 1))
-      frame = requestAnimationFrame(tick);
+    if (!reduced.matches) frame = requestAnimationFrame(tick);
   };
   const schedule = () => {
     if (frame || !visible || document.hidden) return;
@@ -47,6 +48,7 @@ export const mountSandCircuit = (
   };
   const update = () => {
     target = reduced.matches ? 0 : Number(hovered || focused);
+    if (progress === 0) networkClock = 0;
     if (reduced.matches) progress = 0;
     render();
     schedule();

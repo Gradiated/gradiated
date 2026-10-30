@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { createRequire } from "node:module";
 import { spawnSync } from "node:child_process";
@@ -14,17 +14,32 @@ import rehypeHighlight from "rehype-highlight";
 import { all } from "lowlight";
 
 const require = createRequire(import.meta.url);
+const {
+  readReferences,
+  referenceFileFor,
+  articleCitationsPlugin,
+  remarkArticleCitations,
+} = require("./scripts/article-citations.cjs") as {
+  readReferences(path: string): Record<string, unknown>;
+  referenceFileFor(path: string): string;
+  articleCitationsPlugin(): Plugin;
+  remarkArticleCitations: () => (
+    tree: unknown,
+    file: { path?: string },
+  ) => void;
+};
 const { renderPost } = require("./scripts/sand-renderer.cjs") as {
   renderPost(
     source: string,
     template: string,
     scenes: string[],
-    publication?: { publishedThrough: string; footer: string },
+    publication: { publishedThrough: string; footer: string } | undefined,
+    sources: Record<string, unknown>,
   ): string;
 };
 
 const mdxPlugin = mdx({
-  remarkPlugins: [remarkFrontmatter, remarkGfm],
+  remarkPlugins: [remarkFrontmatter, remarkGfm, remarkArticleCitations],
   rehypePlugins: [[rehypeHighlight, { detect: false, languages: all }]],
 });
 
@@ -73,6 +88,7 @@ export default defineConfig(({ command, isSsrBuild, mode }) => {
     },
     plugins: [
       syncAshbyJobs,
+      articleCitationsPlugin(),
       {
         name: "sand-article",
         enforce: "pre",
@@ -88,7 +104,16 @@ export default defineConfig(({ command, isSsrBuild, mode }) => {
           const source = readFileSync(file, "utf8");
           const scenes = JSON.parse(readFileSync(manifest, "utf8"));
           const template = "<!--{{TITLE}}-->{{ARTICLE}}";
-          const complete = renderPost(source, template, scenes);
+          const references = referenceFileFor(file);
+          if (existsSync(references)) this.addWatchFile(references);
+          const sources = readReferences(file);
+          const complete = renderPost(
+            source,
+            template,
+            scenes,
+            undefined,
+            sources,
+          );
           const html =
             command === "serve" || process.env.VERCEL_ENV === "preview"
               ? complete
@@ -97,6 +122,7 @@ export default defineConfig(({ command, isSsrBuild, mode }) => {
                   template,
                   scenes,
                   JSON.parse(readFileSync(publicationFile, "utf8")),
+                  sources,
                 );
           const contents = Array.from(
             html.matchAll(
@@ -125,7 +151,12 @@ export default defineConfig(({ command, isSsrBuild, mode }) => {
         ...mdxPlugin,
         transform(code, id) {
           // MDX strips query strings before filtering, so bypass custom source loaders.
-          if (id.includes("?raw") || id.includes("?sand-article")) return;
+          if (
+            id.includes("?raw") ||
+            id.includes("?sand-article") ||
+            id.includes("?fabrication-article")
+          )
+            return;
           if (typeof mdxPlugin.transform === "function") {
             return mdxPlugin.transform.call(this, code, id);
           }

@@ -298,6 +298,45 @@
   margin: 0;
 }
 
+.sand-journey .scene-text a[href="/sand-to-thought/fabricating-a-transistor/"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 100%;
+  min-height: 48px;
+  padding: 0.8rem 1.1rem;
+  border: 1px solid #713b43;
+  border-radius: 6px;
+  background: #713b43;
+  color: #fff9f0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.45;
+  text-decoration: none;
+}
+
+.sand-journey
+  .scene-text
+  a[href="/sand-to-thought/fabricating-a-transistor/"]::after {
+  content: "→";
+  flex-shrink: 0;
+}
+
+.sand-journey
+  .scene-text
+  a[href="/sand-to-thought/fabricating-a-transistor/"]:hover {
+  background: #562c33;
+  border-color: #562c33;
+}
+
+.sand-journey
+  .scene-text
+  a[href="/sand-to-thought/fabricating-a-transistor/"]:focus-visible {
+  outline: 2px solid #713b43;
+  outline-offset: 4px;
+}
+
 .sand-journey .post-footer {
   min-height: 60vh;
   display: grid;
@@ -400,8 +439,8 @@
 
 .sand-journey .sand-layout {
   display: grid;
-  grid-template-columns: minmax(0, 9rem) minmax(0, 1fr);
-  gap: calc(1.5 * var(--u));
+  grid-template-columns: minmax(0, 8rem) minmax(0, 1fr);
+  gap: var(--u);
   align-items: start;
   max-width: 1440px;
   margin-inline: auto;
@@ -423,7 +462,7 @@
 
 .sand-journey .sand-subsections {
   list-style: none;
-  margin: 0 0 0.5rem 1.5rem;
+  margin: 0 0 0.5rem;
   padding: 0;
 }
 
@@ -488,8 +527,17 @@
   scroll-margin-top: 11vh;
 }
 
+.sand-journey .gr-doc-nav-link {
+  padding-left: 0.9em;
+}
+
+.sand-journey .gr-doc-nav-link::before {
+  display: none;
+}
+
 .sand-journey .gr-doc-nav-link[aria-current] {
   color: var(--color-text);
+  box-shadow: inset 2px 0 0 0 var(--color-text);
 }
 
 .sand-guide-link[aria-current="location"] {

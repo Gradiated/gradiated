@@ -1,3 +1,4 @@
+import { networkFrame, networkPosition } from "./neural-network";
 import { CIRCUIT_ASPECT, crest, makeGrains } from "./sand-circuit-particles";
 import type { Grain } from "./sand-circuit-particles";
 
@@ -20,6 +21,7 @@ export const createSandCanvas = (canvas: HTMLCanvasElement) => {
     points: Grain[],
     eased: number,
     clock: number,
+    networkClock = 0,
   ) => {
     const scale = Math.min(width / 960, height / 600);
     const artWidth = Math.max(width * 0.94, scale * 850);
@@ -30,6 +32,8 @@ export const createSandCanvas = (canvas: HTMLCanvasElement) => {
     const circuitHeight = circuitWidth / CIRCUIT_ASPECT;
     const circuitLeft = (width - circuitWidth) / 2;
     const circuitTop = (height - circuitHeight) / 2;
+
+    const network = eased > 0 ? networkFrame(networkClock) : undefined;
 
     for (const grain of points) {
       let { x, y } = grain.dune;
@@ -44,8 +48,13 @@ export const createSandCanvas = (canvas: HTMLCanvasElement) => {
 
       x = left + x * artWidth;
       y = top + y * artHeight;
-      x += (circuitLeft + grain.circuit.x * circuitWidth - x) * eased;
-      y += (circuitTop + grain.circuit.y * circuitHeight - y) * eased;
+      const point = network
+        ? networkPosition(grain.circuit, network)
+        : grain.circuit;
+      const targetX = point.x;
+      const targetY = point.y;
+      x += (circuitLeft + targetX * circuitWidth - x) * eased;
+      y += (circuitTop + targetY * circuitHeight - y) * eased;
       const ridgeDistance = Math.max(0, grain.dune.y - crest(grain.dune.x));
       const ripple =
         Math.sin(grain.dune.x * 64 + ridgeDistance * 28) * 0.5 + 0.5;
@@ -57,9 +66,9 @@ export const createSandCanvas = (canvas: HTMLCanvasElement) => {
             ? [155, 108, 52]
             : [106, 73, 37];
       const circuitColor = [
-        91 + grain.tone * 30,
-        77 + grain.tone * 25,
-        55 + grain.tone * 20,
+        70 + grain.tone * 30,
+        59 + grain.tone * 25,
+        42 + grain.tone * 20,
       ];
       const color = duneColor.map((value, i) =>
         Math.round(value + (circuitColor[i] - value) * eased),
@@ -76,7 +85,11 @@ export const createSandCanvas = (canvas: HTMLCanvasElement) => {
       context.fill();
     }
   };
-  const render = (progress: number, clock: number): boolean => {
+  const render = (
+    progress: number,
+    clock: number,
+    networkClock = 0,
+  ): boolean => {
     if (!width || !height) return false;
 
     const ratio = Math.min(window.devicePixelRatio || 1, 2);
@@ -96,7 +109,7 @@ export const createSandCanvas = (canvas: HTMLCanvasElement) => {
       context.drawImage(duneCache, 0, 0, width, height);
       paint(context, windGrains, 0, clock);
     } else {
-      paint(context, grains, eased, clock);
+      paint(context, grains, eased, clock, networkClock);
     }
 
     return true;

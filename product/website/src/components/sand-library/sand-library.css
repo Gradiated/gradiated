@@ -29,9 +29,13 @@
   aspect-ratio: 1.8;
 }
 .sand-library-card--lead .sand-library-link {
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-  gap: calc(2 * var(--u));
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: calc(1.5 * var(--u));
   align-items: center;
+}
+.sand-library-card--lead .sand-library-copy {
+  position: relative;
+  top: calc(-0.6 * var(--u));
 }
 .sand-library-copy h2,
 .sand-library-copy h3 {
@@ -65,6 +69,15 @@
   margin-top: 0.2em;
   transition: transform var(--dur-base) var(--ease-response);
 }
+.sand-library-card--lead .sand-library-title {
+  display: block;
+}
+.sand-library-card--lead .sand-library-title svg {
+  display: inline-block;
+  height: 20px;
+  margin: 0 0 0 0.35em;
+  vertical-align: baseline;
+}
 .sand-library-link:hover .sand-library-title svg,
 .sand-library-link:focus-visible .sand-library-title svg {
   transform: translateX(3px);
@@ -88,6 +101,16 @@
   color: #2a191c;
   background: var(--color-kiln-700);
 }
+.sand-library-chip--fpga {
+  color: #343b43;
+  background: linear-gradient(
+    125deg,
+    #c4c8ca 0%,
+    #929a9f 33%,
+    #b1b8bc 57%,
+    #7e888f 100%
+  );
+}
 .sand-library-chip canvas,
 .sand-library-chip-poster {
   position: absolute;
@@ -102,6 +125,9 @@
   .sand-library-card--lead .sand-library-link {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--u);
+  }
+  .sand-library-card--lead .sand-library-copy {
+    top: 0;
   }
   .sand-library-art--overview {
     min-height: 0;

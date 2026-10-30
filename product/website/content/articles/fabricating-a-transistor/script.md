@@ -99,7 +99,7 @@ Annealing heats the wafer so silicon and dopant atoms are “shaken” back into
 
 ## Foundations of the NOT gate
 
-We need thicker insulation around the two transistor sites to help prevent unwanted conduction between neighbouring transistors. We will grow this *field oxide* only where it is needed, using local oxidation of silicon, or LOCOS.[@device-isolation] First, the deposition machine adds silicon nitride, a temporary barrier to oxidation. We keep the existing thin oxide between this film and the silicon.
+We need thicker insulation around the two transistor sites to help prevent unwanted conduction between neighbouring transistors. We will grow this _field oxide_ only where it is needed, using local oxidation of silicon, or LOCOS.[@device-isolation] First, the deposition machine adds silicon nitride, a temporary barrier to oxidation. We keep the existing thin oxide between this film and the silicon.
 
 <!-- scene: isolation-coat -->
 
@@ -142,7 +142,7 @@ The nitride has done its job. We remove it with another etch that leaves the oxi
 
 <!-- scene: pad-oxide-strip -->
 
-A separate oxide etch clears that thin film, ready for fresh *gate oxide*. It also thins the field oxide, which remains around the transistor sites.[@locos-process] We have now used photoresist to define both an implant and a permanent material pattern. We will repeat coating, exposure, development, material processing and stripping as we build the transistors and lay down their wiring.
+A separate oxide etch clears that thin film, ready for fresh _gate oxide_. It also thins the field oxide, which remains around the transistor sites.[@locos-process] We have now used photoresist to define both an implant and a permanent material pattern. We will repeat coating, exposure, development, material processing and stripping as we build the transistors and lay down their wiring.
 
 <!-- scene: oxide -->
 

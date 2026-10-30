@@ -1,8 +1,28 @@
 import { useEffect, useRef } from "react";
 import type { ReactElement } from "react";
 import { makeChipGrains } from "./chip-grains";
+import {
+  fpgaBlocks,
+  fpgaConnections,
+  fpgaRoutes,
+  fpgaTracks,
+  makeFpgaGrains,
+  projectFpga,
+} from "./fpga-grains";
 
-export const ChipLayersArtwork = (): ReactElement => {
+const fpgaColours = [
+  [58, 63, 68],
+  [195, 200, 205],
+  [32, 37, 42],
+  [196, 155, 60],
+  [24, 28, 32],
+];
+
+export const ChipLayersArtwork = ({
+  variant = "chip",
+}: {
+  variant?: "chip" | "fpga";
+}): ReactElement => {
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -10,10 +30,10 @@ export const ChipLayersArtwork = (): ReactElement => {
     const host = hostRef.current;
     const canvas = canvasRef.current;
     const context = canvas?.getContext("2d");
-    const trigger = host?.closest<HTMLAnchorElement>("a");
+    const trigger = host?.closest<HTMLElement>("a, [data-grain-trigger]");
     if (!host || !canvas || !context || !trigger) return;
 
-    const grains = makeChipGrains();
+    const grains = variant === "fpga" ? makeFpgaGrains() : makeChipGrains();
     const bounds = grains.reduce(
       (box, { chip }) => ({
         left: Math.min(box.left, chip.x),
@@ -53,10 +73,16 @@ export const ChipLayersArtwork = (): ReactElement => {
             : grain.surface === 1
               ? ease * 0.2
               : 0;
-        const r = Math.round(35 + grain.shade * 13 + light * 175);
-        const g = Math.round(19 + grain.shade * 8 + light * 147);
-        const b = Math.round(24 + grain.shade * 8 + light * 107);
-        context.fillStyle = `rgba(${r},${g},${b},${0.55 + grain.shade * 0.4})`;
+        let r = 35 + grain.shade * 13 + light * 175;
+        let g = 19 + grain.shade * 8 + light * 147;
+        let b = 24 + grain.shade * 8 + light * 107;
+        if (variant === "fpga") {
+          const [red, green, blue] = fpgaColours[grain.surface];
+          r = 31 + grain.shade * 16 + (red - 31) * ease;
+          g = 36 + grain.shade * 17 + (green - 36) * ease;
+          b = 42 + grain.shade * 19 + (blue - 42) * ease;
+        }
+        context.fillStyle = `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${0.55 + grain.shade * 0.4})`;
         context.beginPath();
         context.arc(x, y, Math.max(0.45, grain.size * scale), 0, Math.PI * 2);
         context.fill();
@@ -141,10 +167,14 @@ export const ChipLayersArtwork = (): ReactElement => {
       reduced.removeEventListener("change", update);
       document.removeEventListener("visibilitychange", schedule);
     };
-  }, []);
+  }, [variant]);
 
   return (
-    <div aria-hidden="true" className="sand-library-chip" ref={hostRef}>
+    <div
+      aria-hidden="true"
+      className={`sand-library-chip${variant === "fpga" ? " sand-library-chip--fpga" : ""}`}
+      ref={hostRef}
+    >
       <svg
         className="sand-library-chip-poster"
         viewBox="0 0 640 400"
@@ -152,16 +182,53 @@ export const ChipLayersArtwork = (): ReactElement => {
         stroke="currentColor"
         strokeWidth="2"
       >
-        <g transform="translate(0 -27.5)">
-          {[0, 1, 2, 3].map((layer) => (
-            <path
-              key={layer}
-              d="M70 250 320 154 570 250 465 290 360 250 215 306Z"
-              transform={`translate(0 ${-layer * 25})`}
-            />
-          ))}
-          <path d="M70 250V280L320 376 570 280V250M320 346V376" />
-        </g>
+        {variant === "fpga" ? (
+          <>
+            {[...fpgaTracks, ...fpgaConnections, ...fpgaRoutes].map(
+              (route, index) => (
+                <polyline
+                  key={`route-${index}`}
+                  points={route
+                    .map(([u, v]) => {
+                      const point = projectFpga(u, v);
+                      return `${point.x},${point.y}`;
+                    })
+                    .join(" ")}
+                />
+              ),
+            )}
+            {fpgaBlocks.map(({ u, v }, index) => (
+              <polygon
+                key={index}
+                points={[
+                  [-0.5, -0.5, 0.25],
+                  [0.5, -0.5, 0.25],
+                  [0.5, -0.5, 0],
+                  [0.5, 0.5, 0],
+                  [-0.5, 0.5, 0],
+                  [-0.5, 0.5, 0.25],
+                ]
+                  .map(([du, dv, z]) => {
+                    const point = projectFpga(u + du, v + dv, z);
+                    return `${point.x},${point.y}`;
+                  })
+                  .join(" ")}
+                fill="#bfc5c9"
+              />
+            ))}
+          </>
+        ) : (
+          <g transform="translate(0 -27.5)">
+            {[0, 1, 2, 3].map((layer) => (
+              <path
+                key={layer}
+                d="M70 250 320 154 570 250 465 290 360 250 215 306Z"
+                transform={`translate(0 ${-layer * 25})`}
+              />
+            ))}
+            <path d="M70 250V280L320 376 570 280V250M320 346V376" />
+          </g>
+        )}
       </svg>
       <canvas ref={canvasRef} />
     </div>

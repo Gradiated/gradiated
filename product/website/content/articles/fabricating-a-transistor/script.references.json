@@ -1,8 +1,6 @@
 {
   "chemical-amplification": {
-    "authors": [
-      "Ito, H."
-    ],
+    "authors": ["Ito, H."],
     "title": "Chemical amplification resists: inception, implementation in device manufacture, and new developments",
     "publication": "J. Polym. Sci. A Polym. Chem.",
     "volume": "41",
@@ -11,10 +9,7 @@
     "url": "https://doi.org/10.1002/pola.10963"
   },
   "euv-electrons": {
-    "authors": [
-      "Kozawa, T.",
-      "Tagawa, S."
-    ],
+    "authors": ["Kozawa, T.", "Tagawa, S."],
     "title": "Image formation in chemically amplified resists upon exposure to extreme ultraviolet radiation",
     "publication": "J. Photopolym. Sci. Technol.",
     "volume": "22",
@@ -38,9 +33,7 @@
     "url": "https://willson.cm.utexas.edu/Research/Sub_Files/Resist_Modeling/Files/Flanagin_Macro_v32_p5337_1999.pdf#page=1"
   },
   "acid-spread": {
-    "authors": [
-      "Soles, C. L."
-    ],
+    "authors": ["Soles, C. L."],
     "title": "Evolution of the deprotection reaction front profile in chemically amplified photoresists",
     "publication": "National Institute of Standards and Technology",
     "year": 2002,
@@ -62,61 +55,46 @@
     "url": "https://www.sciencedirect.com/science/article/abs/pii/0029554X65901291#abstracts:~:text=The%20resulting%20process%20is%20highly%20controlled,silicon%2C%20respectively."
   },
   "lithography-alignment": {
-    "authors": [
-      "van den Hurk, P."
-    ],
+    "authors": ["van den Hurk, P."],
     "title": "Aligning lithography to the nanometer",
     "publication": "ASML",
     "year": 2021,
     "url": "https://www.asml.com/en/company/stories/2021/fellow-simon-mathijssen-aligning-lithography-nanometer#:~:text=an%20optical%20alignment%20sensor,called%20%27alignment%20marks%27.&text=Alignment%20marks%20are%20specially%20designed%20gratings,alongside%20each%20layer%E2%80%99s%20pattern."
   },
   "lithography-overlay": {
-    "authors": [
-      "ASML"
-    ],
+    "authors": ["ASML"],
     "title": "Measuring accuracy",
     "accessed": "26 October 2026",
     "url": "https://www.asml.com/en/technology/lithography-principles/measuring-accuracy#:~:text=YieldStar%20allows%20manufacturers%20to%20track%20key%20production%20parameters,real%2Dtime%20corrections%20to%20the%20manufacturing%20process."
   },
   "polysilicon-doping": {
-    "authors": [
-      "Carleton University, Department of Electronics"
-    ],
+    "authors": ["Carleton University, Department of Electronics"],
     "title": "LPCVD",
     "accessed": "26 October 2026",
     "url": "https://carleton.ca/doe/lpcvd/#:~:text=Polysilicon%20is%20deposited%20from%20silane,using%20either%20phosphine%20or%20diborane."
   },
   "dielectric-polishing": {
-    "authors": [
-      "National Institute of Standards and Technology"
-    ],
+    "authors": ["National Institute of Standards and Technology"],
     "title": "NanoFab Tool: IPEC 472, Chemical Mechanical Polisher (CMP)",
     "year": 2019,
     "accessed": "28 October 2026",
     "url": "https://www.nist.gov/laboratories/tools-instruments/nanofab-tool-ipec-472-chemical-mechanical-polisher-cmp#:~:text=The%20CMP%20removes%20material%20both%20chemically,sub%2Dnanometer%20roughness."
   },
   "etch-selectivity": {
-    "authors": [
-      "Lam Research"
-    ],
+    "authors": ["Lam Research"],
     "title": "Tech brief: all about ALE",
     "accessed": "26 October 2026",
     "url": "https://newsroom.lamresearch.com/Tech-Brief-All-About-ALE#:~:text=Another%20challenge%20is%20that%20the%20etch%20process%20needs%20to%20remove%20the%20targeted%20material,many%20etch%20processes%20require%20very%20high%20selectivity."
   },
   "silicon-element": {
-    "authors": [
-      "Royal Society of Chemistry"
-    ],
+    "authors": ["Royal Society of Chemistry"],
     "title": "Silicon",
     "publication": "Periodic Table",
     "accessed": "26 October 2026",
     "url": "https://periodic-table.rsc.org/element/14/"
   },
   "silicon-doping": {
-    "authors": [
-      "Pearson, G. L.",
-      "Bardeen, J."
-    ],
+    "authors": ["Pearson, G. L.", "Bardeen, J."],
     "title": "Electrical Properties of Pure Silicon and Silicon Alloys Containing Boron and Phosphorus",
     "publication": "Phys. Rev.",
     "volume": "75",
@@ -125,26 +103,19 @@
     "url": "https://journals.aps.org/pr/abstract/10.1103/PhysRev.75.865#abstract:~:text=Electrical%20resistivity%20and%20Hall%20measurements,donor%20level."
   },
   "fab-cleanroom": {
-    "authors": [
-      "Samsung Semiconductor"
-    ],
+    "authors": ["Samsung Semiconductor"],
     "title": "The Invisible Highways: Tracing the Journey Inside a Semiconductor Fab",
     "year": 2025,
     "url": "https://news.samsungsemiconductor.com/global/the-invisible-highways-tracing-the-journey-inside-a-semiconductor-fab/#:~:text=At%20the%20heart%20of%20this%20system,at%20the%20precise%20moment."
   },
   "plasma-etching": {
-    "authors": [
-      "Lam Research"
-    ],
+    "authors": ["Lam Research"],
     "title": "Etch essentials: the building blocks of AI era microchips",
     "year": 2024,
     "url": "https://newsroom.lamresearch.com/etch-essentials-semiconductor-manufacturing#:~:text=During%20plasma%20etch%2C%20physical%20and%20chemical%20etching%20help%20each%20other%20and%20occur%20together.,the%20chemical%20component%20ensures%20volatile%20etch%20byproducts%20form%20and%20can%20be%20pumped%20away."
   },
   "nitride-over-oxide": {
-    "authors": [
-      "Donnelly, V. M.",
-      "Kornblit, A."
-    ],
+    "authors": ["Donnelly, V. M.", "Kornblit, A."],
     "title": "Plasma etching: Yesterday, today, and tomorrow",
     "publication": "J. Vac. Sci. Technol. A",
     "volume": "31",
@@ -162,12 +133,7 @@
     "url": "https://nanolab.berkeley.edu/public/process/baseline/cmos200/Step%2012.htm#:~:text=Nitride%3AOxide%20%3D%2010%3A1"
   },
   "gate-materials": {
-    "authors": [
-      "Bohr, M. T.",
-      "Chau, R. S.",
-      "Ghani, T.",
-      "Mistry, K."
-    ],
+    "authors": ["Bohr, M. T.", "Chau, R. S.", "Ghani, T.", "Mistry, K."],
     "title": "The high-k solution",
     "publication": "IEEE Spectrum",
     "volume": "44",
@@ -176,28 +142,21 @@
     "url": "https://spectrum.ieee.org/the-highk-solution#:~:text=The%20normal%20fabrication%20method%20is%20known%20as,which%20we%20ultimately%20adopted%2C%20as%20too%20much%20of%20a%20departure%20and%20too%20challenging."
   },
   "metal-gate-process": {
-    "authors": [
-      "Intel"
-    ],
+    "authors": ["Intel"],
     "title": "Making of a Chip: 22nm 3D/Trigate Transistors",
     "pages": "9–11",
     "year": 2012,
     "url": "https://download.intel.com/newsroom/kits/chipmaking/pdfs/Sand-to-Silicon_22nm-Version.pdf#page=9"
   },
   "cmos-fabrication": {
-    "authors": [
-      "Schmidt, M. A."
-    ],
+    "authors": ["Schmidt, M. A."],
     "title": "3.155J/6.152J, lecture 18: CMOS",
     "publication": "MIT OpenCourseWare",
     "year": 2005,
     "url": "https://ocw.mit.edu/courses/6-152j-micro-nano-processing-technology-fall-2005/57460d7d1e3ffe8e245f4f2eb3d8f845_lecture18.pdf#page=14"
   },
   "cmos-origin": {
-    "authors": [
-      "Wanlass, F. M.",
-      "Sah, C. T."
-    ],
+    "authors": ["Wanlass, F. M.", "Sah, C. T."],
     "title": "Nanowatt logic using field-effect metal-oxide semiconductor triodes",
     "publication": "IEEE International Solid-State Circuits Conference, Digest of Technical Papers",
     "pages": "32–33",
@@ -205,12 +164,7 @@
     "url": "https://doi.org/10.1109/ISSCC.1963.1157450"
   },
   "process-metrology": {
-    "authors": [
-      "Sutherland, D.",
-      "Price, D. W.",
-      "Rathert, J.",
-      "O’Leary, I."
-    ],
+    "authors": ["Sutherland, D.", "Price, D. W.", "Rathert, J.", "O’Leary, I."],
     "title": "Practical applications of measurement systems analysis (MSA) for semiconductor process control",
     "publication": "Automotive Electronics Council Reliability Workshop",
     "publisher": "KLA",
@@ -219,18 +173,13 @@
     "url": "https://www.kla.com/documents/5.3_Practical_Applications_of_MSA_Sutherland_KLA.pdf#page=10"
   },
   "interconnect-layers": {
-    "authors": [
-      "Zhao, L."
-    ],
+    "authors": ["Zhao, L."],
     "title": "Tech brief: an introduction to interconnects",
     "year": 2017,
     "url": "https://newsroom.lamresearch.com/Tech-Brief-An-Introduction-to-Interconnects#:~:text=Interconnects%20close%20to%20the%20transistors,from%20one%20layer%20to%20the%20next."
   },
   "oxide-over-aluminium": {
-    "authors": [
-      "Hung, L.-W.",
-      "Nguyen, C."
-    ],
+    "authors": ["Hung, L.-W.", "Nguyen, C."],
     "title": "High-Q Low-Impedance MEMS Resonators",
     "publication": "Technical Report UCB/EECS-2012-218",
     "publisher": "University of California, Berkeley",
@@ -239,9 +188,7 @@
     "url": "https://www2.eecs.berkeley.edu/Pubs/TechRpts/2012/EECS-2012-218.pdf#page=113"
   },
   "device-isolation": {
-    "authors": [
-      "Hollauer, C."
-    ],
+    "authors": ["Hollauer, C."],
     "title": "Modeling of thermal oxidation and stress effects, section 1.2: isolation techniques",
     "publication": "PhD thesis",
     "publisher": "Technische Universität Wien",
@@ -249,9 +196,7 @@
     "url": "https://iue.tuwien.ac.at/phd/hollauer/node7.html#:~:text=Local%20Oxidation%20of%20Silicon%20%28LOCOS%29%20is%20the%20traditional%20isolation%20technique.,defines%20the%20active%20areas%20for%20the%20oxidation%20process."
   },
   "cleanroom-filtration": {
-    "authors": [
-      "Wikipedia contributors"
-    ],
+    "authors": ["Wikipedia contributors"],
     "title": "Cleanroom, section: basic construction",
     "publication": "Wikipedia",
     "accessed": "27 October 2026",
@@ -266,17 +211,13 @@
     "url": "https://nanolab.berkeley.edu/public/process/baseline/cmos180/CMOS180_LOCOS.htm#:~:text=NITRIDE%20REMOVAL%20%2F%20PAD%20OXIDE%20REMOVAL"
   },
   "nitride-etch-stop": {
-    "authors": [
-      "Applied Materials"
-    ],
+    "authors": ["Applied Materials"],
     "title": "Applied Materials introduces Nitride550 CVD process to enable next-generation transistor structures",
     "year": 1998,
     "url": "https://ir.appliedmaterials.com/news-releases/news-release-details/applied-materials-introduces-nitride550-cvd-process-enable-next#:~:text=Thin%20layers%20of%20nitride%20are%20especially%20useful%20as"
   },
   "chip-passivation": {
-    "authors": [
-      "Sheikholeslami, A."
-    ],
+    "authors": ["Sheikholeslami, A."],
     "title": "Topography simulation",
     "publication": "Institute for Microelectronics annual review",
     "publisher": "Technische Universität Wien",
@@ -284,27 +225,21 @@
     "url": "https://www.iue.tuwien.ac.at/personal/jb2006/content/staff/Sheikholeslami.html#:~:text=A%20typical%20passivation%20process%20in%20IC%20chips,covered%20by%20a%20layer%20of%20silicon%20nitride.&text=Therefore%2C%20two-dimensional%20investigations,the%20moisture%20barrier%20and%20the%20topmost%20metal%20layer."
   },
   "self-aligned-gate": {
-    "authors": [
-      "Wikipedia contributors"
-    ],
+    "authors": ["Wikipedia contributors"],
     "title": "Self-aligned gate",
     "publication": "Wikipedia",
     "accessed": "28 October 2026",
     "url": "https://en.wikipedia.org/wiki/Self-aligned_gate"
   },
   "chipmaking-scale": {
-    "authors": [
-      "Li, A."
-    ],
+    "authors": ["Li, A."],
     "title": "Six crucial steps in semiconductor manufacturing",
     "publication": "ASML",
     "year": 2023,
     "url": "https://www.asml.com/en/company/stories/2021/semiconductor-manufacturing-process-steps#:~:text=Chips%20are%20made%20up%20of%20dozens%20of%20layers.&text=The%20entire%20process%20of%20creating%20a%20silicon%20wafer%20with%20working%20chips%20consists%20of%20thousands%20of%20steps"
   },
   "chipmaking-layers": {
-    "authors": [
-      "ASML"
-    ],
+    "authors": ["ASML"],
     "title": "How microchips are made",
     "accessed": "29 October 2026",
     "url": "https://www.asml.com/en/technology/all-about-microchips/how-microchips-are-made#:~:text=Modern%20chips%20can%20have%20up%20to%20100%20layers"

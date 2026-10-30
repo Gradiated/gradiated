@@ -66,12 +66,22 @@ export const SandLibraryPage = (): ReactElement => {
                   {deepDives.map((article) => (
                     <article className="sand-library-card" key={article.path}>
                       <a className="sand-library-link" href={article.path}>
-                        <div className="sand-library-art sand-library-art--fabrication">
-                          <ChipLayersArtwork />
+                        <div
+                          className={`sand-library-art sand-library-art--${article.path === "/sand-to-thought/fpga/" ? "fpga" : "fabrication"}`}
+                        >
+                          <ChipLayersArtwork
+                            variant={
+                              article.path === "/sand-to-thought/fpga/"
+                                ? "fpga"
+                                : "chip"
+                            }
+                          />
                         </div>
                         <div className="sand-library-copy">
                           <p className="gr-label">
-                            Fabrication
+                            {article.path === "/sand-to-thought/fpga/"
+                              ? "FPGAs"
+                              : "Fabrication"}
                             {article.status === "draft" ? " · Draft" : ""}
                           </p>
                           <h3 className="sand-library-title">
@@ -82,7 +92,9 @@ export const SandLibraryPage = (): ReactElement => {
                             {article.path ===
                             "/sand-to-thought/fabricating-a-transistor/"
                               ? "Follow a silicon wafer through the machines that build a working NOT gate."
-                              : article.description}
+                              : article.path === "/sand-to-thought/fpga/"
+                                ? "A chip you can reconfigure."
+                                : article.description}
                           </p>
                         </div>
                       </a>

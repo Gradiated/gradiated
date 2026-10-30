@@ -167,7 +167,10 @@ test("MDX articles compile citations and backlinks while docs remain untouched",
       html,
       /href="https:\/\/doi.org\/10.1234\/example" target="_blank" rel="noopener noreferrer"/,
     );
-    assert.match(html, /href="#ref-first" id="cite-first-1" role="doc-biblioref"/);
+    assert.match(
+      html,
+      /href="#ref-first" id="cite-first-1" role="doc-biblioref"/,
+    );
     assert.match(html, /<code>\[@missing\]<\/code>/);
     const untouched = await compile(
       {

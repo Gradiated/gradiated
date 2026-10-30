@@ -28,6 +28,10 @@ import traceback
 sys.path.insert(0, "/opt/posthog-env")
 sys.path.insert(0, "/opt/posthog-env/loader")
 import load_twin as LT  # noqa: E402
+
+# Projects whose conversations show session replay use record most sessions (loop review b10: replay tasks were
+# dropped because the sessions they asked about had no recording at a 50% share).
+LT.RECORDING_SHARE_EVIDENCE = 0.9
 import loader_common as LC  # noqa: E402
 sys.path.insert(0, "/opt/posthog-sft/env-research/twingen/v2")
 import paths as PATHS  # noqa: E402

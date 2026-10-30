@@ -110,3 +110,19 @@ hints × `volume_scale`. Results are aggregates only.
 - The missing active event is in a hard-capped project. Value misses are mostly agent filter literals on page props and taxonomy values on rarely emitted props.
 - Timing for the full run of 1076 projects with 32 workers on a shared box: 702 s wall-clock and 393M events (59 GB). Per project, p50 is 0.25–1.9 s by group. 1059/1076 finished in under 60 s. The largest (4.7M-event, high-DAU clusters with about 100k+ persons) took up to about 650 s under contention. The sample of 50: generation p50 0.2 s, p90 7.3 s, p95 17 s; events p50 16k, p90 588k.
 - Output by group (events p50 / p90): clusters 134k / 4.56M; test_v2 20k / 433k; dev 18k / 624k; train singletons 18k / 674k. 22 projects hit the 5M cap and have `volume_scale < 1`.
+
+## v2 (`v2/`): production situations, not just schemas
+
+v1 is unchanged; v2 runs next to it as separate teams (org prefix `Twin2 `, `loader/teams_v2.jsonl`, tasks in
+`runner/tasks/v2/`).
+
+| step | file | what it does |
+|---|---|---|
+| facts | `v2/facts.py` | Per conversation (`twins/facts_v2/`): every data-read call with its full query and result rows, saved objects read (insight query JSON, notebook markdown, dashboards) with their short ids, object URLs, emails, absolute dates. |
+| query facts | `v2/qfacts.py` (PostHog venv) | HogQL-parses each production SQL (`twins/qfacts_v2/`): table aliases, qualified and unqualified column attribution, literals, type hints, join key pairs, result-column mapping; inverts shape A (projection) and shape B (group count) results into seed rows; Trends series; event volumes. Skips anonymizer-corrupted SQL (`v2/anoncheck.py`). |
+| generator | `v2/gen2.py`, `v2/run_all2.py` | `Project2(gen.Project)`: history extended to production's absolute dates; volume hints from production series and counts; per-event daily dynamics; named persons on one person each with their production events; production objects; warehouse columns merged over spec, same-customer specs and SQL, values by type/name, shared join-key pools, seed rows; filter-consistent seeding (events matching production's exact filters at production's per-date counts, capped); calibration multipliers (`calib_v2/`) and per-twin overrides (`twins/overrides_v2/<twin>.json`). |
+| calibration | `v2/calib.py` | Per-event multipliers from a replay of production reads against the loaded twin (production/twin, geometric median, clamped to 30x per round). |
+| verification | `v2/verify_tasks.py`, `v2/fidelity_compare.py` | Per-task audit, replay checks and status (`runner/tasks/v2/status.json`); v1/v2 fidelity metrics side by side. |
+
+Loader and tasks: `research/factory/tools/posthog_env/` (`load_twin_v2.py`, `load_all_v2.py`, `build_tasks_v2.py`,
+`cleanup_orphans_v2.py`, `team_state.py`).

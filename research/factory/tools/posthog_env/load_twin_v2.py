@@ -146,6 +146,26 @@ class TwinLoaderV2(LT.TwinLoader):
         except Exception:  # noqa: BLE001
             pass
 
+    def issue_remap(self) -> dict[str, str]:
+        """Error-tracking issue ids are global primary keys and the v1 twin of the same conversation already holds the
+        production ids, so ids taken by another team get a v2 UUID (events carry the same remapped id)."""
+        from products.error_tracking.backend.models import ErrorTrackingIssue
+
+        remap = super().issue_remap()
+        ids = [str(i.get("id")) for i in self.objects.get("error_tracking_issues") or [] if i.get("id") is not None]
+        cand = {i: remap.get(i, i) for i in ids}
+        taken = set(str(x) for x in ErrorTrackingIssue.objects.filter(id__in=[v for v in cand.values() if LT.is_uuid(v)])
+                    .exclude(team_id=getattr(self, "_team_id", -1)).values_list("id", flat=True))
+        for i, v in cand.items():
+            if v in taken:
+                remap[i] = str(LT.uuid.uuid5(LT.NS, f"v2:{self.twin_id}:{i}"))
+                self.stats["issues_id_remapped_v1_collision"] = self.stats.get("issues_id_remapped_v1_collision", 0) + 1
+        return remap
+
+    def load_clickhouse(self, team_id: int):
+        self._team_id = team_id
+        return super().load_clickhouse(team_id)
+
     def load_objects(self, team, user):
         O = self.objects
         held = {k: O.pop(k, None) for k in ("insights", "notebooks", "dashboards")}
@@ -263,6 +283,9 @@ def main():
     ap.add_argument("--anchor-date", default=None)
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--remove", type=int, default=None)
+    ap.add_argument("--replace", action="store_true",
+                    help="load into a NEW team and drop the old v2 team in Postgres only (its ClickHouse rows go to "
+                         "orphans_v2.jsonl for one batched cleanup_orphans_v2 run); avoids a per-team ClickHouse mutation")
     a = ap.parse_args()
     if a.remove is not None:
         import boot
@@ -280,8 +303,17 @@ def main():
     else:
         # whole days that keep the shifted "now" at or before the real clock (no future events; drift < 1 day)
         shift = (dt.datetime.now(dt.UTC) - LT.parse_dt(manifest["now_utc"])).days
+    if a.replace:
+        import boot
+
+        boot.init()
+        twin = os.path.basename(pdir.rstrip("/"))
+        old = read_teams_v2().get(twin)
+        if old:
+            remove_team_v2(int(old["team_id"]), clickhouse=False)
+            LC.append_jsonl(TEAMS_V2, {"twin_id": twin, "team_id": old["team_id"], "removed": True, "replaced": True})
     try:
-        TwinLoaderV2(pdir, None, shift, a.force).run()
+        TwinLoaderV2(pdir, None, shift, a.force and not a.replace).run()
     except SystemExit:
         raise
     except Exception:

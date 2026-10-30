@@ -52,6 +52,7 @@ TWINS = "/opt/posthog-sft/env-research/twins"
 FACTS = f"{TWINS}/facts_v2"
 QFACTS = f"{TWINS}/qfacts_v2"
 CLUSTERS = f"{TWINS}/clusters/clusters.jsonl"
+OVERRIDES = f"{TWINS}/overrides_v2"  # per-twin declarative fixes from the repair pass (<twin_id>.json)
 SPECS = f"{TWINS}/specs"
 NULLS = {"", "(null)", "null", "None", "nan", "NaN", "NULL", "\\N"}
 ISO_D = re.compile(r"^(\d{4}-\d\d-\d\d)(?:[ T](\d\d:\d\d(?::\d\d(?:\.\d+)?)?))?(Z|[+-]\d\d:?\d\d)?$")
@@ -60,6 +61,17 @@ MONTH_NAME = re.compile(r"(^|_)(month|period|mon)(_|$)|month_start|_month$|^mont
 MAX_SEED_ROWS_PER_TABLE = 20000
 MAX_EVENT_SEEDS = 200000
 MAX_DUP = 20.0
+
+
+def op_eq(op) -> bool:
+    """HogQL CompareOperationOp values as serialized by qfacts: '==', 'in' (also tolerate enum names)."""
+    o = str(op)
+    return o in ("==", "=", "in", "In") or o.endswith(".Eq") or o.endswith(".In")
+
+
+def op_like(op) -> bool:
+    o = str(op).lower()
+    return o in ("like", "ilike") or o.endswith(".like") or o.endswith(".ilike")
 
 
 def parse_when(s) -> dt.datetime | None:
@@ -126,8 +138,13 @@ class UF:
 
 
 class Project2(gen.Project):
-    def __init__(self, spec, facts=None, qfacts=None, calib=None, member_specs=None, **kw):
+    def __init__(self, spec, facts=None, qfacts=None, calib=None, member_specs=None, overrides=None, **kw):
         super().__init__(spec, **kw)
+        # overrides: {"history_days", "events": {e: multiplier}, "spikes": [{event, from, to, factor}],
+        #             "warehouse": {table: {col: {type, values}}}, "persons": [{email, name, props}], "notes"}
+        self.ovr = overrides or {}
+        if self.ovr.get("history_days"):
+            self.history_override = int(self.ovr["history_days"])
         self.F = facts or {"calls": [], "objects": {}, "emails": {}, "query_dates": [], "url_refs": []}
         self.Q = qfacts or {"dw": {}, "joins": [], "dw_seeds": {}, "event_seeds": [], "entity_literals": [],
                             "volume": [], "series": []}
@@ -236,7 +253,9 @@ class Project2(gen.Project):
             if (nT, nU) != (T, U):
                 changed += 1
                 self.targets[e] = [nT, min(nU, nT)]
-        cal = self.calib.get("events") or {}
+        cal = dict(self.calib.get("events") or {})
+        for e, m in (self.ovr.get("events") or {}).items():
+            cal[e] = cal.get(e, 1.0) * float(m)
         for e, m in cal.items():
             if e in self.targets and m and m > 0:
                 T, U = self.targets[e]
@@ -298,9 +317,8 @@ class Project2(gen.Project):
         for lit in self.Q.get("entity_literals") or []:
             path = lit["path"]
             for l in lit["lit"]:
-                if l.get("op") not in ("==", "=", "in", "In", "CompareOperationOp.Eq", "CompareOperationOp.In"):
-                    if "Eq" not in str(l.get("op")) and "In" not in str(l.get("op")):
-                        continue
+                if not op_eq(l.get("op")):
+                    continue
                 for v in l.get("values") or []:
                     if not isinstance(v, str) or not v:
                         continue
@@ -314,6 +332,10 @@ class Project2(gen.Project):
                         ent_for(name=v)
         for em, _n in sorted((self.F.get("emails") or {}).items(), key=lambda x: -x[1])[:150]:
             ent_for(email=em)
+        for p in self.ovr.get("persons") or []:
+            e = ent_for(p.get("email"), p.get("name"), p.get("distinct_id"), p.get("person_id"))
+            if e is not None:
+                e["props"].update(p.get("props") or {})
         return list(ents.values())
 
     def build_persons(self):
@@ -559,6 +581,15 @@ class Project2(gen.Project):
                     col["type"] = ty if col["type"] == "string" else col["type"]
                 col["values"] = info.get("values") or []
                 col["literals"] = info.get("literals") or []
+        for tn, cols in (self.ovr.get("warehouse") or {}).items():
+            t = out.setdefault(self.canon_table(tn, out), {"columns": {}, "joins": [], "kind": "table", "description": None})
+            for cname, info in cols.items():
+                col = t["columns"].setdefault(cname, {"type": info.get("type") or "string", "origin": "override",
+                                                      "description": None, "spec_type": None})
+                if info.get("type"):
+                    col["type"] = info["type"]
+                if info.get("values"):
+                    col["values"] = list(info["values"])
         for tn, t in out.items():
             if not t["columns"]:
                 for c, ty, _ in gen.infer_columns(tn, [x.get("sql") for x in self.F.get("calls") or [] if x.get("sql")]):
@@ -577,7 +608,7 @@ class Project2(gen.Project):
                     col = p.split(".")[0]
                     for l in lits:
                         vals = l.get("values") or []
-                        if vals and ("Eq" in str(l.get("op")) or str(l.get("op")) in ("==", "=", "in", "In") or "In" == str(l.get("op"))[-2:]):
+                        if vals and op_eq(l.get("op")):
                             fixed.setdefault(col, vals)
                 if s.get("rows"):
                     for r in s["rows"]:
@@ -749,6 +780,14 @@ class Project2(gen.Project):
             if s["event"] in best and best[s["event"]][0] >= score:
                 continue
             best[s["event"]] = (score, pts, L)
+        for sp in self.ovr.get("spikes") or []:
+            e = sp.get("event")
+            a, b = parse_when(sp.get("from") or ""), parse_when(sp.get("to") or sp.get("from") or "")
+            if e in self.ev_counts and a and b:
+                n = (b.date() - a.date()).days + 1
+                pts = [(a.date() + dt.timedelta(days=i), float(sp.get("factor", 3.0)), False) for i in range(n)]
+                before = [(a.date() - dt.timedelta(days=i), 1.0, False) for i in range(28, 0, -1)]
+                best[e] = ((True, 10**6), before + pts + [(b.date() + dt.timedelta(days=1), 1.0, False)], 1)
         for e, (_, pts, L) in best.items():
             d0 = min(d for d, _, _ in pts)
             d1 = max(d for d, _, _ in pts) + dt.timedelta(days=L - 1)
@@ -803,6 +842,9 @@ class Project2(gen.Project):
             ii = np.nonzero(m)[0]
             u = rng.random(len(ii))
             keep[ii[(fac < 1) & (u >= fac)]] = False
+            if keep[ii].sum() < min(3, len(ii)):  # rule: dynamics never wipes out an event (keep its latest rows)
+                keep[ii[np.argsort(ts_us[ii])[-min(3, len(ii)):]]] = True
+                self.v2["dynamics_min_kept"] += 1
             extra = rng.poisson(np.maximum(fac - 1, 0))
             if extra.sum():
                 dup_idx.append(np.repeat(ii, extra))
@@ -851,7 +893,7 @@ class Project2(gen.Project):
             for t, p, lits in s.get("where") or []:
                 for l in lits:
                     vals = l.get("values") or []
-                    if not vals or not ("Eq" in str(l.get("op")) or str(l.get("op")).endswith("In")):
+                    if not vals or not op_eq(l.get("op")):
                         continue
                     if p == "event":
                         ev_lit = vals
@@ -886,6 +928,134 @@ class Project2(gen.Project):
                 if len(rows) >= MAX_EVENT_SEEDS:
                     return rows
         self.v2["event_seed_new_event_names"] = len({r["event"] for r in rows} - known)
+        rows.extend(self.filter_seed_rows(rnd))
+        return rows
+
+    # rule: filter-consistent seeding. Production queries with exact event-property filters that returned data must
+    # find matching events in the twin: inject events with the filter values (Trends: per production date and count;
+    # SQL: inside the query window, production's single number when visible). Capped per query.
+    FILTER_SEED_CAP = 3000
+
+    @staticmethod
+    def _exact_filters(props) -> dict | None:
+        out = {}
+        stack = [props] if isinstance(props, dict) else list(props or [])
+        while stack:
+            p = stack.pop()
+            if not isinstance(p, dict):
+                continue
+            if "values" in p and p.get("type") in ("AND", "OR"):
+                if p.get("type") == "OR" and len(p.get("values") or []) > 1:
+                    stack.append((p.get("values") or [None])[0])
+                else:
+                    stack.extend(p.get("values") or [])
+                continue
+            if p.get("type") not in ("event", None) or not p.get("key"):
+                return None  # person/cohort/group filters cannot be satisfied by event properties
+            op = p.get("operator") or "exact"
+            v = p.get("value")
+            if isinstance(v, list):
+                v = v[0] if v else None
+            if op in ("exact", "is") and v is not None:
+                out[p["key"]] = v
+            elif op == "icontains" and isinstance(v, str):
+                out[p["key"]] = v
+            elif op == "is_set":
+                out.setdefault(p["key"], "1")
+            else:
+                return None
+        return out
+
+    def filter_seed_rows(self, rnd) -> list[dict]:
+        rows = []
+        if not self.n_persons:
+            return rows
+        nowd = self.now
+        for call in self.F.get("calls") or []:
+            sch = call.get("schema")
+            if call.get("is_error") or not isinstance(sch, dict) or not call.get("rows"):
+                continue
+            src = sch.get("source") if sch.get("kind") in ("InsightVizNode", "DataVisualizationNode") else sch
+            if not isinstance(src, dict) or src.get("kind") != "TrendsQuery" or src.get("breakdownFilter"):
+                continue
+            glob_f = self._exact_filters(src.get("properties") or [])
+            ser = src.get("series") or []
+            cols = call.get("cols") or []
+            if glob_f is None or len(cols) != len(ser) + 1:
+                continue
+            for j, sr in enumerate(ser):
+                e = sr.get("event")
+                f = self._exact_filters(sr.get("properties") or [])
+                if not e or f is None or not (f or glob_f) or sr.get("math") not in (None, "total", "dau"):
+                    continue
+                props = {**glob_f, **f}
+                pts = []
+                for r in call["rows"]:
+                    if len(r) != len(cols):
+                        continue
+                    d = parse_when(str(r[0]).split(" ")[0])
+                    v = numv(r[j + 1])
+                    if d and v and v > 0:
+                        pts.append((d, v))
+                tot = sum(v for _, v in pts)
+                if not tot:
+                    continue
+                scale = min(1.0, self.FILTER_SEED_CAP / tot)
+                L = {"day": 1, "week": 7, "month": 30, "hour": 1 / 24}.get(src.get("interval") or "day", 1)
+                for d, v in pts:
+                    k = int(round(v * scale)) or (1 if rnd.random() < v * scale else 0)
+                    for _ in range(k):
+                        when = d + dt.timedelta(seconds=rnd.uniform(0, max(1, L) * 86400 - 1))
+                        if when >= nowd:
+                            when = nowd - dt.timedelta(seconds=rnd.uniform(60, 3600))
+                        rows.append({"event": e, "ts": when, "pi": rnd.randrange(self.n_persons), "props": dict(props)})
+                self.v2["filter_seed_series"] += 1
+        # SQL: event + equality property filters, production non-empty
+        for qc in self.Q.get("calls") or []:
+            if not qc.get("ok") or qc.get("is_error") or qc.get("corrupted"):
+                continue
+            evs = qc.get("events") or []
+            if len(evs) != 1:
+                continue
+            props = {}
+            bad = False
+            for t, p, lits in qc.get("literals") or []:
+                if t != "events":
+                    continue
+                if p.startswith("properties."):
+                    for l in lits:
+                        op = str(l.get("op"))
+                        vals = l.get("values") or []
+                        if vals and op_eq(op):
+                            props[p[len("properties."):]] = vals[0]
+                        elif vals and op_like(op):
+                            v = str(vals[0]).strip("%").replace("%", "")
+                            if v:
+                                props[p[len("properties."):]] = v
+                elif p.startswith("person."):
+                    bad = True
+            if bad or not props:
+                continue
+            call = next((c for c in self.F.get("calls") or [] if c["k"] == qc["k"]), None)
+            if not call or not call.get("rows"):
+                continue
+            n = None
+            if len(call["rows"]) == 1:
+                n = next((numv(x) for x in call["rows"][0] if numv(x) is not None), None)
+            k = int(min(self.FILTER_SEED_CAP, n)) if n and n >= 1 else 25
+            days = (qc.get("window") or {}).get("interval_days") or 30
+            w = qc.get("window") or {}
+            a, b = parse_when(w.get("min_date") or ""), parse_when(w.get("max_date") or "")
+            for _ in range(k):
+                if a and b and b > a:
+                    when = a + dt.timedelta(seconds=rnd.uniform(0, (b - a).total_seconds()))
+                else:
+                    when = nowd - dt.timedelta(seconds=rnd.uniform(60, max(1, days) * 86400))
+                if when >= nowd:
+                    continue
+                rows.append({"event": evs[0], "ts": when, "pi": rnd.randrange(self.n_persons), "props": dict(props)})
+            self.v2["filter_seed_sql"] += 1
+        self.v2["filter_seed_rows"] = len(rows)
         return rows
 
     def seed_table(self, rows, schema):

@@ -35,7 +35,9 @@ def job(args):
         calib = gen2.load_json(os.path.join(calib_dir, f"{t['id']}.json")) if calib_dir else None
         members = [s for s in (gen2.load_json(os.path.join(gen2.SPECS, f"{m}.json")) for m in gen2.cluster_members(cid)) if s] \
             if spec["kind"] == "conversation" else []
-        p = gen2.Project2(spec, facts=facts, qfacts=qf, calib=calib, member_specs=members, seed=0, max_events=max_events)
+        ovr = gen2.load_json(os.path.join(gen2.OVERRIDES, f"{t['id']}.json"))
+        p = gen2.Project2(spec, facts=facts, qfacts=qf, calib=calib, member_specs=members, overrides=ovr, seed=0,
+                          max_events=max_events)
         man = p.run(os.path.join(out_root, t["id"]))
         return {"id": t["id"], "ok": True, "events": man["counts"]["events"], "t": round(time.time() - t0, 1),
                 "v2": {k: v for k, v in man["v2"].items() if isinstance(v, (int, float))}}

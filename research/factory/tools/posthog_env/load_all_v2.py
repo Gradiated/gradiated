@@ -24,10 +24,15 @@ def done_ids():
 
 def one(tid, force):
     os.makedirs(f"{LOADER}/logs/twins_v2", exist_ok=True)
-    cmd = [sys.executable, f"{LOADER}/load_twin_v2.py", tid] + (["--force"] if force else [])
-    with open(f"{LOADER}/logs/twins_v2/{tid}.log", "w") as log:
-        t = time.time()
-        r = subprocess.run(cmd, stdout=log, stderr=subprocess.STDOUT, cwd="/opt/posthog-env/posthog")
+    cmd = [sys.executable, f"{LOADER}/load_twin_v2.py", tid] + (["--replace"] if force else [])
+    t = time.time()
+    for attempt in range(4):  # ClickHouse is shared: back off and retry when the server is at its memory cap
+        logp = f"{LOADER}/logs/twins_v2/{tid}.log"
+        with open(logp, "w") as log:
+            r = subprocess.run(cmd, stdout=log, stderr=subprocess.STDOUT, cwd="/opt/posthog-env/posthog")
+        if r.returncode == 0 or "MEMORY_LIMIT_EXCEEDED" not in open(logp, errors="replace").read():
+            break
+        time.sleep(120 * (attempt + 1))
     return tid, r.returncode, round(time.time() - t, 1)
 
 

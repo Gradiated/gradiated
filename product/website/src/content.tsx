@@ -397,9 +397,11 @@ export const TermsContent = (): ReactNode => (
     <p>
       Gradiated and its licensors own the service, software, branding, and
       documentation. These Terms give you a limited right to use them while your
-      account is active. You must not copy, reverse engineer, resell, or
-      interfere with the service except where the law does not allow us to
-      restrict that activity.
+      account is active. You must not copy, reverse engineer, or interfere with
+      the service. You must not resell the service or inference except where our
+      team has approved the resale in writing, where it is an official
+      integration with Gradiated, or where the law does not allow us to restrict
+      that activity.
     </p>
     <h2>Disclaimers and liability</h2>
     <p>

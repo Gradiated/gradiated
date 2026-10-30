@@ -21,7 +21,9 @@ Assertions read the generated files directly (production-dated events; no loadin
       (optional "min_tiles": n for dashboards, "query_kind": K for insights: the object's real definition)
   {"type": "history", "from": D, "op": ">=", "value": N}    (events on or before D; checks the twin covers D)
   {"type": "distinct", "event": E, "props": {..}, "prop": P, "op": "<=", "value": N}  (distinct values of P)
-  {"type": "session_first_pageview", "op": ">=", "value": share}  (web sessions whose first event is a $pageview)
+  {"type": "session_first_pageview", "op": ">=", "value": share}
+  {"type": "uniq_ratio", "num_event": E, "den_event": E2|null, "op": "<=", "value": r}  (persons doing E / persons
+      doing E2, or any event)  (web sessions whose first event is a $pageview)
 A props value starting with "~" matches as a substring ("~/gamelanding/"). Dates are production dates (YYYY-MM-DD,
 inclusive). Prints one line per assertion and a summary; exit 1 on failure.
 """
@@ -180,6 +182,11 @@ def check(tw: Twin, a: dict) -> tuple[bool, str]:
         pv = [tw.ev[i] == "$pageview" for i in first.values()]
         v = sum(pv) / max(1, len(pv))
         return OPS[a["op"]](v, a["value"]), f"share_first_pageview={v:.2f} of {len(pv)} sessions"
+    if t == "uniq_ratio":
+        num = {tw.pid[i] for i in tw.rows(a["num_event"], None, a.get("from"), a.get("to"))}
+        den = {tw.pid[i] for i in tw.rows(a.get("den_event"), None, a.get("from"), a.get("to"))}
+        r = len(num) / max(1, len(den))
+        return OPS[a["op"]](r, a["value"]), f"uniq_ratio={r:.2f} ({len(num)}/{len(den)})"
     if t == "history":
         v = sum(1 for d in tw.ts if d <= dt.date.fromisoformat(a["from"]))
         return OPS[a["op"]](v, a["value"]), f"events_on_or_before={v}"

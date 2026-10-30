@@ -308,6 +308,21 @@ class ConversationPages(unittest.TestCase):
         self.assertNotIn("/2024/05", paths)
 
 
+class BackgroundPopulation(unittest.TestCase):
+    """b07 card 01: people existed only through the 3 named events, so 765/781 generated photos and 69% paid."""
+
+    def test_custom_only_web_project(self):
+        p = project(S={"id": "t", "events": {"media_gen": {"standard": False, "properties": {}},
+                                             "revenue": {"standard": False, "properties": {}}}})
+        self.assertTrue(p.needs_background_population())
+
+    def test_not_when_pageviews_or_mobile(self):
+        self.assertFalse(project(S={"id": "t", "events": {"$pageview": {"standard": True}, "x": {"standard": False}}})
+                         .needs_background_population())
+        mob = {"x": {"standard": False, "properties": {"$lib": {"values": ["posthog-ios"]}}}}
+        self.assertFalse(project(S={"id": "t", "events": mob}).needs_background_population())
+
+
 class FunnelDropoff(unittest.TestCase):
     """r1 card 13: funnel seeds walked every person through every step (twin 30->25 vs production 51->34->1->0->0)."""
 

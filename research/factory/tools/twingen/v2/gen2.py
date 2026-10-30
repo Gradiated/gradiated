@@ -52,7 +52,7 @@ import specio  # noqa: E402
 from gen import UTC, iso, stable_seed, uuid7, wh_column, WH_TYPES  # noqa: E402
 from specio import shape_of  # noqa: E402
 
-GEN2_VERSION = "twingen-2.12"
+GEN2_VERSION = "twingen-2.13"
 TWINS = PATHS.TWINS
 FACTS = PATHS.FACTS
 QFACTS = PATHS.QFACTS
@@ -678,7 +678,22 @@ class Project2(gen.Project):
                 self.targets[e] = [min(T, 0.2), min(U, 0.2)]
                 self.v2["stub_events_capped"] += 1
 
+    def needs_background_population(self) -> bool:
+        """rule (r12): a web project whose conversation names only custom events still has visitors who never do them;
+        without background activity every person does every named event ("users who did X vs didn't" inverts)."""
+        ev = self.S.get("events") or {}
+        if any(e in ev for e in ("$pageview", "$screen", "$autocapture", "Application Opened", "Application opened")):
+            return False
+        if not any(not (info or {}).get("standard") for info in ev.values()):
+            return False
+        libs = " ".join(str(v) for info in ev.values() for v in
+                        ((info.get("properties") or {}).get("$lib") or {}).get("values") or []).lower()
+        return not any(k in libs for k in ("ios", "android", "react-native", "flutter"))
+
     def plan(self):
+        if self.needs_background_population():
+            self.S["events"]["$pageview"] = self._blank_event("$pageview", True)
+            self.v2["background_pageviews_added"] += 1
         req = self.required_days_v2()
         self.v2_info["required_days_v2"] = req
         if self.history_override is None and req > 85:

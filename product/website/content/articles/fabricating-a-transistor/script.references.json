@@ -291,5 +291,22 @@
     "publication": "Wikipedia",
     "accessed": "28 October 2026",
     "url": "https://en.wikipedia.org/wiki/Self-aligned_gate"
+  },
+  "chipmaking-scale": {
+    "authors": [
+      "Li, A."
+    ],
+    "title": "Six crucial steps in semiconductor manufacturing",
+    "publication": "ASML",
+    "year": 2023,
+    "url": "https://www.asml.com/en/company/stories/2021/semiconductor-manufacturing-process-steps#:~:text=Chips%20are%20made%20up%20of%20dozens%20of%20layers.&text=The%20entire%20process%20of%20creating%20a%20silicon%20wafer%20with%20working%20chips%20consists%20of%20thousands%20of%20steps"
+  },
+  "chipmaking-layers": {
+    "authors": [
+      "ASML"
+    ],
+    "title": "How microchips are made",
+    "accessed": "29 October 2026",
+    "url": "https://www.asml.com/en/technology/all-about-microchips/how-microchips-are-made#:~:text=Modern%20chips%20can%20have%20up%20to%20100%20layers"
   }
 }

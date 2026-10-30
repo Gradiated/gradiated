@@ -361,7 +361,7 @@ The etcher removes exposed metal, leaving the upper connection beneath the photo
 
 We strip the photoresist to reveal the upper wire, which can act as a connection to the greater circuit.
 
-We have repeated the same patterning cycle with different patterns and materials. Real fabrication also needs frequent cleaning and measurements of film thickness, pattern size and alignment.[@locos-process; @process-metrology] In order to simplify our depiction of fabrication we have also left out detailed chemical recipes and refinements.[@cmos-fabrication]
+We have repeated the same patterning cycle with different patterns and materials. Depending on the chip, hundreds to thousands of fabrication steps build dozens of patterned layers, sometimes around a hundred.[@chipmaking-scale; @chipmaking-layers] Real fabrication also needs frequent cleaning and measurements of film thickness, pattern size and alignment.[@locos-process; @process-metrology] In order to simplify our depiction of fabrication we have also left out detailed chemical recipes and refinements.[@cmos-fabrication]
 
 <!-- scene: finish -->
 

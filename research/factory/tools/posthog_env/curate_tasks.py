@@ -88,6 +88,10 @@ builder notes: {notes}
    fix it with twin_overrides if they can, otherwise list it in "twin_defects" (and drop with drop_kind twin_gap if
    it breaks the task). Facts the agent cannot obtain with its tools (e.g. product prices missing from the docs it
    can search) must not be required in grading_notes.
+6c. must_include items are FINDINGS a correct answer reaches ("finds that subscription_updated carries mrr and uses
+   it", "creates the flag rather than describing it"), not exact reference numbers, unless the number follows
+   unambiguously from the twin with the obvious query. Every acceptable variation you list must give a non-empty,
+   sensible answer on THIS twin (check it with a query); never accept a variation that returns nothing.
 7. grading_notes must be checkable against the twin (the agent will see twin data, not production): describe what the
    right answer contains and how to check it (query sketch, object to inspect), acceptable variations, and things
    not required. Don't copy production numbers unless the twin reproduces them.

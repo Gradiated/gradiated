@@ -173,11 +173,14 @@ def extract(rec: dict) -> dict:
             turn += 1
             t = text_of(c)
             user_texts.append(t)
-            ctx_objs = parse_context_objects(t)  # objects the user had open: starting state, with real queries
+            ctx_objs = parse_context_objects(t)  # objects the user had open, with real queries
             for kind in ("insights", "dashboards"):
                 for oid, o in ctx_objs[kind].items():
                     prev = objects[kind].get(oid) or {}
-                    objects[kind][oid] = {**o, **{k: v for k, v in prev.items() if v is not None}}
+                    # context_turn: the turn whose attached context first showed it (an object first shown after
+                    # the production agent created it is the conversation's output, not its starting state)
+                    objects[kind][oid] = {**o, "context_turn": prev.get("context_turn", turn),
+                                          **{k: v for k, v in prev.items() if v is not None}}
             for mm in URL_RE.finditer(t):
                 path = mm.group(2)
                 om = OBJ_IN_PATH.match(path)

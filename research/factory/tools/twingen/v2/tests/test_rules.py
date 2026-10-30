@@ -292,6 +292,22 @@ class GeoAndSessions(unittest.TestCase):
         self.assertIn('"utm_medium":"social"', out.column("properties").to_pylist()[1])
 
 
+class ConversationPages(unittest.TestCase):
+    """b07: tasks dropped because the twin had generic /pricing,/login pages instead of the conversation's /chat,
+    /gamelanding/<id>/play or article slugs; task host example-1.com vs twin host app.<fake>.com."""
+
+    def test_sources(self):
+        spec = {"tasks": [{"text": "users on https://www.example-1.com/chat and https://www.example-1.com/pricing."}]}
+        facts = {"calls": [{"sql": "select count() from events where properties.$pathname like '%/gamelanding/abc/play%'",
+                            "rows": [["/blog/garden-tips", "120"], ["/2024/05", "3"], ["2026-10-01", "4"]]}]}
+        urls, paths = gen2.conversation_pages(spec, facts)
+        self.assertIn("https://www.example-1.com/chat", urls)
+        self.assertIn("https://www.example-1.com/pricing", urls)
+        self.assertIn("/gamelanding/abc/play", paths)
+        self.assertIn("/blog/garden-tips", paths)
+        self.assertNotIn("/2024/05", paths)
+
+
 class FunnelDropoff(unittest.TestCase):
     """r1 card 13: funnel seeds walked every person through every step (twin 30->25 vs production 51->34->1->0->0)."""
 
@@ -373,6 +389,18 @@ class AgentCreatedObjects(unittest.TestCase):
         F = {"calls": [{"k": 0, "turn": 0, "tool": "create_insight"},
                        {"k": 1, "turn": 0, "tool": "read_data", "object": "MADEHERE"}]}
         self.assertEqual(project(F=F)._agent_created(), {"MADEHERE"})
+
+    def test_context_object_after_creation_excluded(self):
+        """b09 card a1b1: the dashboard the production agent created (shown in the next turn's attached context) was
+        pre-loaded; one shown in turn 0's context is starting state."""
+        F = {"created_by_agent": {"upsert_dashboard": [{"turn": 0, "is_error": False}]}, "calls": [],
+             "objects": {"dashboards": {"111": {"from_context": True, "context_turn": 1, "tiles": [{"short_id": "NEWTILE1"}]},
+                                        "222": {"from_context": True, "context_turn": 0, "tiles": []}},
+                         "insights": {"NEWTILE1": {"from_context": True, "context_turn": 1}}}}
+        made = project(F=F)._agent_created()
+        self.assertIn("111", made)
+        self.assertIn("NEWTILE1", made)
+        self.assertNotIn("222", made)
 
     def test_no_creation_no_exclusion(self):
         F = {"calls": [{"k": 0, "turn": 0, "tool": "read_data", "object": "X1234567"}]}

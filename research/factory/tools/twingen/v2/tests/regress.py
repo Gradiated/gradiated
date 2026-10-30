@@ -22,7 +22,8 @@ Assertions read the generated files directly (production-dated events; no loadin
   {"type": "history", "from": D, "op": ">=", "value": N}    (events on or before D; checks the twin covers D)
   {"type": "distinct", "event": E, "props": {..}, "prop": P, "op": "<=", "value": N}  (distinct values of P)
   {"type": "session_first_pageview", "op": ">=", "value": share}  (web sessions whose first event is a $pageview)
-Dates are production dates (YYYY-MM-DD, inclusive). Prints one line per assertion and a summary; exit 1 on failure.
+A props value starting with "~" matches as a substring ("~/gamelanding/"). Dates are production dates (YYYY-MM-DD,
+inclusive). Prints one line per assertion and a summary; exit 1 on failure.
 """
 
 from __future__ import annotations
@@ -104,7 +105,8 @@ class Twin:
                 continue
             if (a and self.ts[i] < a) or (b and self.ts[i] > b):
                 continue
-            if props and any(str(self.p(i).get(k)) != str(v) for k, v in props.items()):
+            if props and any((str(v)[1:] not in str(self.p(i).get(k, ""))) if str(v).startswith("~")
+                             else str(self.p(i).get(k)) != str(v) for k, v in props.items()):
                 continue
             yield i
 

@@ -52,7 +52,7 @@ import specio  # noqa: E402
 from gen import UTC, iso, stable_seed, uuid7, wh_column, WH_TYPES  # noqa: E402
 from specio import shape_of  # noqa: E402
 
-GEN2_VERSION = "twingen-2.11"
+GEN2_VERSION = "twingen-2.12"
 TWINS = PATHS.TWINS
 FACTS = PATHS.FACTS
 QFACTS = PATHS.QFACTS
@@ -461,14 +461,61 @@ def coherent_utm(src: str, mediums: list, campaigns: list) -> tuple[str, str]:
     return med, camp
 
 
+URL_RX = re.compile(r"https?://[A-Za-z0-9.-]+\.[A-Za-z]{2,}(?:/[^\s'\"<>)\]`|,]*)?")
+PATH_CELL = re.compile(r"^/[A-Za-z0-9_\-./%~]{1,150}$")
+SQL_PATH_LIT = re.compile(r"'%?(/[A-Za-z0-9_\-./]{2,120})%?'")
+
+
+def conversation_pages(spec: dict, facts: dict) -> tuple[list[str], list[str]]:
+    """rule (r10): pages the conversation shows (URLs in the user's text, URL/path cells in production results,
+    path fragments in production SQL filters, page breakdowns), so the twin's site has the business's own pages and
+    host instead of a generic SaaS page set. Returns (urls, paths), most evidenced first."""
+    urls: C.Counter = C.Counter()
+    paths: C.Counter = C.Counter()
+    text = "\n".join(t.get("text") or "" for t in spec.get("tasks") or [])
+    for u in URL_RX.findall(text):
+        urls[u.rstrip(".")] += 5
+    for c in (facts or {}).get("calls") or []:
+        for r in (c.get("rows") or [])[:300]:
+            for x in r:
+                x = str(x).strip()
+                if x.startswith(("http://", "https://")) and len(x) < 300 and " " not in x:
+                    urls[x] += 1
+                elif PATH_CELL.match(x) and not re.match(r"^/\d+(/\d+)*$", x):
+                    paths[x] += 1
+        for lit in SQL_PATH_LIT.findall(c.get("sql") or ""):
+            if not re.search(r"[%*]", lit):
+                paths[lit] += 2
+    for (e, prop), dist in trend_breakdown_distributions(facts or {}).items():
+        for v, n in dist.items():
+            v = str(v)
+            if prop in ("$current_url", "$initial_current_url") and v.startswith("http"):
+                urls[v] += n
+            elif prop in ("$pathname", "$initial_pathname") and v.startswith("/"):
+                paths[v] += n
+    return [u for u, _ in urls.most_common(120)], [p_ for p_, _ in paths.most_common(150)]
+
+
 STUB_EVENT = re.compile(r"^(mcp |application )", re.I)
 
 
 class Project2(gen.Project):
     def __init__(self, spec, facts=None, qfacts=None, calib=None, member_specs=None, overrides=None, **kw):
         _null_stats = clean_null_props(spec)
+        # the loaded spec has no user turns; the raw spec file does (pages and value pools need the user's words)
+        _raw = load_json(os.path.join(SPECS, f"{spec['id']}.json")) if spec.get("kind") == "conversation" else None
+        _tasks = (_raw or {}).get("tasks") or spec.get("tasks") or []
+        _urls, _paths = conversation_pages({"tasks": _tasks}, facts or {})
+        if _urls or _paths:  # rule (r10): feed the conversation's pages to the base page pool (via spec values)
+            un = spec.setdefault("unscoped", {})
+            for key, vals in (("$current_url", _urls), ("$pathname", _paths)):
+                d = un.setdefault(key, {"type": "String", "values": [], "more_values": None, "description": None,
+                                        "standard": True, "values_status": None, "sources": {}})
+                d["values"] = list(dict.fromkeys(list(vals) + list(d.get("values") or [])))
+        _null_stats["conversation_urls"] = len(_urls)
+        _null_stats["conversation_paths"] = len(_paths)
         install_pool_hook()
-        _text = "\n".join(t.get("text") or "" for t in (spec.get("tasks") or []))
+        _text = "\n".join(t.get("text") or "" for t in _tasks)
         _keys = valuepools.candidates(spec, shape_of, gen.VOCAB, gen.stem_of)
         _pools, _pool_status = valuepools.get_pools(spec, PATHS.ROOT, _keys, _text) if _keys else ({}, "none")
         activate_pools({k: v for k, v in _pools.items() if k in set(_keys)})
@@ -946,6 +993,11 @@ class Project2(gen.Project):
                 ids.append(str(c["object"]))
             for i in ids:
                 first_seen.setdefault(i, c["turn"])
+        for kind in ("insights", "dashboards"):  # rule (r11): objects first shown in a later turn's attached context
+            for oid, o in ((self.F.get("objects") or {}).get(kind) or {}).items():
+                if o.get("from_context") and o.get("context_turn") is not None:
+                    # attached context arrives with the user message, before the agent acts in that turn
+                    first_seen[str(oid)] = min(first_seen.get(str(oid), 10**6), int(o["context_turn"]) - 0.5)
         for did, d in ((self.F.get("objects") or {}).get("dashboards") or {}).items():
             for t in d.get("tiles") or []:
                 if t.get("short_id"):

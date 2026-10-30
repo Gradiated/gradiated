@@ -44,6 +44,14 @@ NOTES_RULES = """- Task notes. They say what a correct answer should contain and
   list acceptable readings, an answer using that definition or reading is not unsupported or wrong for it.
 - Only require what the tools could supply: do not penalise missing facts that the rollout's tool results show were
   not available (e.g. a price the docs search did not return, data the project does not contain).
+- Empty results. A saved insight, dashboard or query the agent delivers as its answer that returns no rows (or a
+  dashboard whose tiles show nothing) is a material failure unless the agent noticed it and explained why, even when
+  the notes list the approach as acceptable.
+- Reasonable readings. When the user did not fix a unit or entity (person vs account, which event means "customer"),
+  a reasonable choice the agent states openly is not an error.
+- Environment metadata. Do not penalise an agent for not remarking on oddities in object metadata (creation
+  timestamps, first/last seen order) that the user did not ask about. The project may be named "Default project".
+- The notes add checks; they do not replace your own independent review of the rollout for wrong or unsupported claims.
 - Data quality. If the agent correctly points out that data in the project looks implausible or inconsistent (and
   its tool results show it), that is good analysis, not an error, even if the task notes do not mention it.
 """
@@ -54,6 +62,9 @@ s = rep(s, '''                           docs_rules=DOCS_RULES if docs["ran"] el
                            notes_section=NOTES_SECTION.format(notes=json.dumps(tr.get("grading_notes"), ensure_ascii=False,
                                                                                indent=1)[:6000]) if tr.get("grading_notes") else "",
                            notes_rules=NOTES_RULES if tr.get("grading_notes") else "")''')
+s = rep(s, '(first name "Twin", organisation and project named "Twin <id>")',
+        '(first name "Twin"; the project is named "Default project" and the organisation "Default organization",'
+        ' or "Twin <id>" in older runs)')
 s = rep(s, '    d["judge_version"] = "v3g"', '    d["judge_version"] = "v3h"\n    d["grading_notes_used"] = bool(tr.get("grading_notes"))')
 open(out, "w").write(s)
 print("written")

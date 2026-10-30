@@ -506,6 +506,39 @@ def conv_qfacts(f: dict, spec: dict) -> dict:
         src = sch.get("source") if sch.get("kind") in ("InsightVizNode", "DataVisualizationNode") else sch
         if not isinstance(src, dict) or src.get("kind") != "TrendsQuery" or src.get("breakdownFilter"):
             continue
+        secs = trend_sections(call.get("cols") or [], call["rows"])
+        if len(secs) < 2:
+            continue  # not a compare-mode result: handled by the loop below
+        stats["series_compare_results"] += 1
+        interval = src.get("interval") or "day"
+        ser = src.get("series") or []
+        for period, cols, rows in secs:
+            if len(cols) != len(ser) + 1:
+                continue
+            for j, s in enumerate(ser):
+                if s.get("kind") != "EventsNode" or not s.get("event"):
+                    continue
+                pts = []
+                for r in rows:
+                    if len(r) != len(cols):
+                        continue
+                    dd = str(r[0]).split(" ")[0]
+                    v = num(r[j + 1])
+                    if re.match(r"^\d{4}-\d\d-\d\d", dd) and v is not None:
+                        pts.append([dd[:10], v, "partial" in str(r[0])])
+                if len(pts) >= 3:
+                    series.append({"k": call["k"], "event": s["event"], "math": s.get("math") or "total",
+                                   "interval": interval, "filtered": bool(s.get("properties") or src.get("properties")),
+                                   "points": pts, **({"period": "previous"} if period == "previous" else {})})
+    for call in f["calls"]:
+        if len(trend_sections(call.get("cols") or [], call.get("rows") or [])) >= 2:
+            continue
+        sch = call.get("schema")
+        if call.get("is_error") or not isinstance(sch, dict) or not call.get("rows"):
+            continue
+        src = sch.get("source") if sch.get("kind") in ("InsightVizNode", "DataVisualizationNode") else sch
+        if not isinstance(src, dict) or src.get("kind") != "TrendsQuery" or src.get("breakdownFilter"):
+            continue
         ser = src.get("series") or []
         cols = call.get("cols") or []
         if len(cols) != len(ser) + 1:
@@ -529,6 +562,29 @@ def conv_qfacts(f: dict, spec: dict) -> dict:
             "dw": {t: {c: {**v, "types": dict(v["types"]), "values": v["values"][:300]} for c, v in cs.items()} for t, cs in dw.items()},
             "joins": joins, "dw_seeds": dw_seeds, "event_seeds": event_seeds, "entity_literals": entity_literals,
             "volume": volume, "series": series, "stats": dict(stats)}
+
+
+def trend_sections(cols: list, rows: list) -> list[tuple[str, list, list]]:
+    """Split a compare-mode Trends table into ("previous"|"current", header, data rows) sections. A section starts at
+    a one-cell row (or the column header) ending in "period:"; its next row is the header. Returns [] when the table
+    has no such sections."""
+    lines = [list(cols)] + [list(r) for r in rows]
+    out, cur = [], None
+    i = 0
+    while i < len(lines):
+        r = lines[i]
+        lab = str(r[0]).strip().lower() if len(r) == 1 and r else ""
+        if lab.endswith("period:"):
+            cur = ["previous" if lab.startswith("previous") else "current", None, []]
+            out.append(cur)
+            if i + 1 < len(lines):
+                cur[1] = lines[i + 1]
+                i += 2
+                continue
+        elif cur is not None and cur[1] is not None and len(r) == len(cur[1]):
+            cur[2].append(r)
+        i += 1
+    return [(p, h, rs) for p, h, rs in out if h]
 
 
 def main() -> None:

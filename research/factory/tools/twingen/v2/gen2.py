@@ -49,7 +49,7 @@ import specio  # noqa: E402
 from gen import UTC, iso, stable_seed, uuid7, wh_column, WH_TYPES  # noqa: E402
 from specio import shape_of  # noqa: E402
 
-GEN2_VERSION = "twingen-2"
+GEN2_VERSION = "twingen-2.4"
 TWINS = PATHS.TWINS
 FACTS = PATHS.FACTS
 QFACTS = PATHS.QFACTS
@@ -59,7 +59,7 @@ XINDEX = PATHS.XINDEX  # cross-trace objects and warehouse schemas (xindex.py)
 _XI = None
 REF_DASH = re.compile(r"dashboards?[/ #:]*(\d{4,})", re.I)
 REF_NB = re.compile(r"notebooks?/([A-Za-z0-9]{8})\b")
-REF_INS = re.compile(r"insights?/([A-Za-z0-9]{8})\b")
+REF_INS = re.compile(r"insights?/([A-Za-z0-9]{8,12})\b")
 REF_TOKEN = re.compile(r"\b[A-Za-z][A-Za-z0-9_]*_[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*\b")
 
 
@@ -152,8 +152,71 @@ class UF:
         self.p[self.find(a)] = self.find(b)
 
 
+class FilterMix:
+    """rule (r1c): a property known only from query filters samples its usual values and returns a filter value with
+    a minority share (0 when production found none)."""
+
+    def __init__(self, base, values, share, rnd):
+        self.base, self.values, self.share, self.rnd = base, list(values), share, rnd
+
+    def __call__(self, ctx):
+        if self.values and self.share > 0 and self.rnd.random() < self.share:
+            return self.rnd.choice(self.values)
+        return self.base(ctx)
+
+    def __getattr__(self, k):
+        return getattr(self.base, k)
+
+
+def clean_null_props(spec: dict) -> C.Counter:
+    """rule (r2): drop null display strings from spec property values; remove properties that only ever showed null
+    in SQL results (no taxonomy evidence)."""
+    n = C.Counter()
+    secs = [info.get("properties") or {} for info in (spec.get("events") or {}).values()]
+    secs.append(spec.get("unscoped") or {})
+    for sec in secs:
+        for prop in list(sec):
+            d = sec[prop]
+            vals = d.get("values") or []
+            kept = [v for v in vals if str(v).strip() not in NULLS]
+            if len(kept) == len(vals):
+                continue
+            d["values"] = kept
+            n["null_values_dropped"] += len(vals) - len(kept)
+            if not kept and "taxonomy_props" not in (d.get("sources") or {}):
+                del sec[prop]
+                n["null_only_props_removed"] += 1
+    return n
+
+
+def scrub_sampler(smp) -> int:
+    """rule (r2): remove null display strings ("(null)", "None", ...) from a choice sampler; fall back to shape values
+    when nothing is left. Returns the number of choices removed."""
+    if getattr(smp, "mode", None) != "choice" or not getattr(smp, "choices", None):
+        return 0
+    keep = [(c, w) for c, w in zip(smp.choices, smp.weights) if str(c).strip() not in NULLS]
+    removed = len(smp.choices) - len(keep)
+    if not removed:
+        return 0
+    smp.pending = [v for v in (smp.pending or []) if str(v).strip() not in NULLS]
+    if keep:
+        smp.choices, smp.weights = [c for c, _ in keep], [w for _, w in keep]
+        acc, smp._cum = 0.0, []
+        for w in smp.weights:
+            acc += w
+            smp._cum.append(acc)
+    else:
+        smp.choices, smp.weights = [], []
+        smp._setup_shape(None, None)
+    return removed
+
+
+STUB_EVENT = re.compile(r"^(mcp |application )", re.I)
+
+
 class Project2(gen.Project):
     def __init__(self, spec, facts=None, qfacts=None, calib=None, member_specs=None, overrides=None, **kw):
+        _null_stats = clean_null_props(spec)
         super().__init__(spec, **kw)
         # overrides: {"history_days", "events": {e: multiplier}, "spikes": [{event, from, to, factor}],
         #             "warehouse": {table: {col: {type, values}}}, "persons": [{email, name, props}], "notes"}
@@ -166,12 +229,58 @@ class Project2(gen.Project):
         self.calib = calib or {}
         self.member_specs = member_specs or []
         self.v2 = C.Counter()
+        self.v2.update(_null_stats)
         self.v2_info: dict = {}
         raw = load_json(os.path.join(SPECS, f"{spec['id']}.json")) if spec.get("kind") == "conversation" else None
         self.user_text = "\n".join(t.get("text") or "" for t in (raw or {}).get("tasks") or [])
         self.ref_text = self.user_text + "\n" + "\n".join(c.get("sql") or "" for c in self.F.get("calls") or [] if isinstance(c.get("sql"), str))
 
     # ------------------------------------------------------------------ time
+    FILTER_VALUE_SHARE = 0.1
+
+    def zero_filter_values(self) -> set[tuple[str, str]]:
+        """(property, value) pairs that a production SQL equality filter on events returned a count of 0 for."""
+        rows_by_k = {c.get("k"): c.get("rows") for c in self.F.get("calls") or []}
+        out = set()
+        for qc in self.Q.get("calls") or []:
+            rows = rows_by_k.get(qc.get("k"))
+            if not qc.get("ok") or not rows or len(rows) != 1:
+                continue
+            n = next((numv(x) for x in rows[0] if numv(x) is not None), None)
+            if n is None or n >= 1:
+                continue
+            for t, prop, lits in qc.get("literals") or []:
+                if t == "events" and prop.startswith("properties."):
+                    for lit in lits:
+                        if op_eq(lit.get("op")):
+                            out.update((prop[len("properties."):], str(v)) for v in lit.get("values") or [])
+        return out
+
+    def build_event_samplers(self):
+        super().build_event_samplers()
+        for samplers in self.ev_samplers.values():
+            for smp in samplers.values():
+                self.v2["prior_null_choices_scrubbed"] += scrub_sampler(getattr(smp, "base", smp))
+        for smp in (getattr(self, "ctx_samplers", None) or {}).values():
+            self.v2["prior_null_choices_scrubbed"] += scrub_sampler(smp)
+        zero = self.zero_filter_values()
+        for e, samplers in self.ev_samplers.items():
+            props = ((self.S.get("events") or {}).get(e) or {}).get("properties") or {}
+            for prop, d in props.items():
+                if prop not in samplers or d.get("values_status") != "filter_values" or not d.get("values"):
+                    continue
+                pri = getattr(gen, "PRI", {}) or {}
+                prior = ((pri.get("custom_props_common") or {}).get("properties") or {}).get(prop) or \
+                    (pri.get("dollar_props_any") or {}).get(prop)
+                base = gen.Sampler(prop, d.get("type"), [], None, prior, (pri.get("name_shape_priors") or {}).get(shape_of(prop)),
+                                   random.Random(stable_seed(self.S["id"], "fmix", e, prop)), self)
+                vals = [v for v in d["values"] if (prop, str(v)) not in zero]
+                share = self.FILTER_VALUE_SHARE if vals else 0.0
+                samplers[prop] = FilterMix(base, vals, share, random.Random(stable_seed(self.S["id"], "fmixr", e, prop)))
+                self.v2["filter_only_props_mixed"] += 1
+                if len(vals) < len(d["values"]):
+                    self.v2["filter_only_values_zeroed"] += 1
+
     def required_days_v2(self) -> int:
         now = self.now
         best = 0
@@ -189,6 +298,15 @@ class Project2(gen.Project):
             best = max(best, int((v.get("window") or {}).get("interval_days") or 0))
         return best
 
+    def cap_stub_events(self):
+        """rule (r2): invented PostHog-internal stub events stay a trickle unless the evidence names them."""
+        named = self.ref_text.lower() if hasattr(self, "ref_text") else ""
+        for e in list(getattr(self, "invented", [])):
+            if STUB_EVENT.match(e) and e.lower() not in named and e in self.targets:
+                T, U = self.targets[e]
+                self.targets[e] = [min(T, 0.2), min(U, 0.2)]
+                self.v2["stub_events_capped"] += 1
+
     def plan(self):
         req = self.required_days_v2()
         self.v2_info["required_days_v2"] = req
@@ -197,6 +315,7 @@ class Project2(gen.Project):
             self.v2["history_extended"] += 1
         super().plan()
         self.apply_volumes()
+        self.cap_stub_events()
 
     def series_levels(self):
         """event -> (daily level over the last 30 covered days, math, filtered) from production Trends series."""
@@ -206,7 +325,7 @@ class Project2(gen.Project):
             if e not in self.active:
                 continue
             L = {"day": 1, "week": 7, "month": 30, "hour": 1 / 24}.get(s.get("interval"), None)
-            if not L or s.get("math") not in ("total", "dau"):
+            if not L or s.get("math") not in ("total", "dau") or s.get("period") == "previous":
                 continue
             pts = [(parse_when(p[0]), p[1]) for p in s["points"] if not p[2]]
             pts = [(d, v) for d, v in pts if d is not None]
@@ -216,7 +335,9 @@ class Project2(gen.Project):
             recent = [v for d, v in pts if (last - d).days < max(30, 2 * L)]
             level = sum(recent) / max(1, len(recent)) / max(L, 1)
             if s.get("math") == "dau" and L > 1:
-                continue  # weekly/monthly unique users do not give a daily DAU
+                # rule (r1b): weekly/monthly uniques -> daily uniques, sublinear (users return within the period)
+                level = sum(recent) / max(1, len(recent)) / (L ** 0.6)
+                self.v2["dau_from_period_uniques"] += 1
             key = (e, s["math"])
             prev = out.get(key)
             cand = (level, bool(s.get("filtered")), len(pts))
@@ -473,9 +594,39 @@ class Project2(gen.Project):
         self.v2["identity_values_despread"] = despread
 
     # ------------------------------------------------------------------ objects
+    def _agent_created(self) -> set[str]:
+        """rule (r1): ids of insights/dashboards/notebooks first seen at or after a creation call by the production
+        agent and never named in a user turn (they are the conversation's output, not its starting state)."""
+        created_turns = sorted(x["turn"] for v in (self.F.get("created_by_agent") or {}).values() for x in v if not x.get("is_error"))
+        created_turns += [c["turn"] for c in self.F.get("calls") or [] if c.get("tool") == "create_insight" and not c.get("is_error")]
+        if not created_turns:
+            return set()
+        first_create = min(created_turns)
+        first_seen = {}
+        for c in self.F.get("calls") or []:
+            ids = []
+            if c.get("object"):
+                ids.append(str(c["object"]))
+            for i in ids:
+                first_seen.setdefault(i, c["turn"])
+        for did, d in ((self.F.get("objects") or {}).get("dashboards") or {}).items():
+            for t in d.get("tiles") or []:
+                if t.get("short_id"):
+                    first_seen.setdefault(str(t["short_id"]), first_seen.get(str(did), 10**6))
+        text = self.user_text
+        return {i for i, t in first_seen.items() if t >= first_create and i not in text}
+
     def objects(self):
         objs, excluded = super().objects()
-        fo = self.F.get("objects") or {}
+        fo = {k: dict(v) for k, v in (self.F.get("objects") or {}).items()}
+        made = self._agent_created()
+        if made:
+            for kind in ("insights", "notebooks", "dashboards"):
+                for i in list((fo.get(kind) or {}).keys()):
+                    if str(i) in made:
+                        fo[kind].pop(i)
+                        self.v2[f"agent_created_{kind}_skipped"] += 1
+                objs[kind] = [o for o in objs.get(kind, []) if str(o.get("short_id") or o.get("key")) not in made]
         by_key = {kind: {str(o.get("key")): o for o in objs.get(kind, [])} for kind in ("insights", "notebooks", "dashboards")}
         n = C.Counter()
         for sid, fi in (fo.get("insights") or {}).items():
@@ -565,6 +716,11 @@ class Project2(gen.Project):
                                                      "content_markdown": nb.get("content_markdown"), "from_xindex": True})
             have["notebooks"].add(sid)
             n["xindex_notebooks"] += 1
+        for did in sorted(refs["dashboards"] - have["dashboards"]):
+            if did.isdigit():  # rule (r1): a dashboard named by id in the text exists (as a stub) even if never read
+                objs.setdefault("dashboards", []).append({"key": did, "name": None, "dashboard_id": int(did), "text_stub": True})
+                have["dashboards"].add(did)
+                n["text_stub_dashboards"] += 1
         # URL references in the user text whose object the trace never read: create a titled stub with that id
         for r in self.F.get("url_refs") or []:
             kind = {"notebooks": "notebooks", "insights": "insights", "dashboard": "dashboards", "dashboards": "dashboards"}.get(r.get("kind"))
@@ -1004,6 +1160,10 @@ class Project2(gen.Project):
             out[e] = (f, d0)
         return out
 
+    def override_zeroed_events(self) -> set:
+        """Events an override spike sets to factor 0 (curation: the event stops firing from that date)."""
+        return {sp.get("event") for sp in self.ovr.get("spikes") or [] if float(sp.get("factor", 1)) == 0}
+
     def postprocess(self, out_dir):
         path = os.path.join(out_dir, "events.parquet")
         profs = self.profiles()
@@ -1022,6 +1182,7 @@ class Project2(gen.Project):
         keep = np.ones(n0, dtype=bool)
         dup_idx = []
         dyn_events = 0
+        zeroed = self.override_zeroed_events()  # rule (r3): an override that stops an event is not undone
         for e, (f, d0) in profs.items():
             m = events == e
             if not m.any():
@@ -1034,7 +1195,7 @@ class Project2(gen.Project):
             ii = np.nonzero(m)[0]
             u = rng.random(len(ii))
             keep[ii[(fac < 1) & (u >= fac)]] = False
-            if keep[ii].sum() < min(3, len(ii)):  # rule: dynamics never wipes out an event (keep its latest rows)
+            if keep[ii].sum() < min(3, len(ii)) and e not in zeroed:  # rule: dynamics never wipes out an event
                 keep[ii[np.argsort(ts_us[ii])[-min(3, len(ii)):]]] = True
                 self.v2["dynamics_min_kept"] += 1
             extra = rng.poisson(np.maximum(fac - 1, 0))
@@ -1052,7 +1213,7 @@ class Project2(gen.Project):
                                  pa.array([str(uuid.UUID(int=int(x), version=4)) for x in rng.integers(0, 2**63, len(di))] if len(di) else [], pa.string()))
             parts.append(dup)
         if seeds:
-            parts.append(self.seed_table(seeds, tab.schema))
+            parts.append(self.seed_table(seeds, tab.schema, donor_tab=tab))
         out = pa.concat_tables([p.cast(tab.schema) for p in parts], promote_options="none")
         out = out.unify_dictionaries().combine_chunks()
         order = pc.sort_indices(out, sort_keys=[("timestamp", "ascending")])
@@ -1198,11 +1359,23 @@ class Project2(gen.Project):
                 steps.append((sr["event"], f))
             if len(steps) < 2:
                 return rows
-            k = 25
-            for _ in range(k):
+            counts = None  # rule (r1): production step counts ("Total person count" row) set the drop-off
+            for r in call.get("rows") or []:
+                if r and str(r[0]).strip().lower() == "total person count":
+                    vals = [numv(x) for x in r[1:1 + len(steps)]]
+                    if len(vals) == len(steps) and all(v is not None for v in vals) and vals[0] and vals[0] > 0:
+                        counts = vals
+                    break
+            k = 25 if counts is None else max(1, min(60, int(counts[0])))
+            reach = [1.0] * len(steps) if counts is None else [min(1.0, v / counts[0]) for v in counts]
+            if counts is not None:
+                self.v2["sequence_seed_funnel_dropoff"] += 1
+            for i in range(k):
                 pi = rnd.randrange(self.n_persons)
                 t = start + dt.timedelta(seconds=rnd.uniform(0, span * 0.7))
-                for e, f in steps:
+                for j, (e, f) in enumerate(steps):
+                    if i >= round(k * reach[j]):
+                        break
                     rows.append({"event": e, "ts": t, "pi": pi, "props": dict(f)})
                     t = t + dt.timedelta(seconds=rnd.uniform(30, 3600))
             self.v2["sequence_seed_funnels"] += 1
@@ -1342,7 +1515,14 @@ class Project2(gen.Project):
                 continue
             n = None
             if len(call["rows"]) == 1:
-                n = next((numv(x) for x in call["rows"][0] if numv(x) is not None), None)
+                nums = [numv(x) for x in call["rows"][0] if numv(x) is not None]
+                if len(nums) > 1:  # rule (r1c): conditional aggregates, the literals are per-column conditions
+                    self.v2["filter_seed_sql_multi_agg_skipped"] += 1
+                    continue
+                n = nums[0] if nums else None
+            if n is not None and n < 1:  # rule (r1): production found nothing -> seed nothing
+                self.v2["filter_seed_sql_zero_skipped"] += 1
+                continue
             k = int(min(self.FILTER_SEED_CAP, n)) if n and n >= 1 else 25
             days = (qc.get("window") or {}).get("interval_days") or 30
             w = qc.get("window") or {}
@@ -1364,14 +1544,56 @@ class Project2(gen.Project):
         self.v2["filter_seed_rows"] = len(rows)
         return rows
 
-    def seed_table(self, rows, schema):
+    DONOR_SKIP = {"$session_id", "$window_id", "$insert_id", "$uuid", "token", "$time", "$sent_at"}
+
+    def _donors(self, tab, rnd):
+        """rule (r1): seeded events look like organic ones. Per event name up to 50 organic property dicts; $pageview
+        dicts per person; generic $pageview dicts as the fallback."""
+        if tab is None or not tab.num_rows:
+            return {}, {}, []
+        ev = tab.column("event").to_pylist()
+        pr = tab.column("properties").to_pylist()
+        pid = tab.column("person_id").to_pylist()
+        by_ev, by_person_pv, pv = C.defaultdict(list), C.defaultdict(list), []
+        for i in rnd.sample(range(len(ev)), min(len(ev), 60000)):
+            e = ev[i]
+            if len(by_ev[e]) < 50:
+                by_ev[e].append(pr[i])
+            if e == "$pageview":
+                if len(pv) < 400:
+                    pv.append(pr[i])
+                if len(by_person_pv[pid[i]]) < 3:
+                    by_person_pv[pid[i]].append(pr[i])
+        return by_ev, by_person_pv, pv
+
+    def _with_donor(self, props, ev, pid, donors, rnd):
+        by_ev, by_person_pv, pv = donors
+        src = by_ev.get(ev) or by_person_pv.get(pid) or pv
+        if not src:
+            return props
+        try:
+            d = orjson.loads(rnd.choice(src))
+        except Exception:  # noqa: BLE001
+            return props
+        out = {k: v for k, v in d.items() if k not in self.DONOR_SKIP}
+        out.update(props)
+        cu, du = out.get("$current_url"), d.get("$current_url")
+        if isinstance(cu, str) and cu.startswith("/") and isinstance(du, str) and "://" in du:
+            origin = du.split("://", 1)[0] + "://" + du.split("://", 1)[1].split("/", 1)[0]
+            out["$current_url"] = origin + cu
+            out.setdefault("$pathname", cu.split("?")[0])
+        self.v2["seed_donor_props"] += 1
+        return out
+
+    def seed_table(self, rows, schema, donor_tab=None):
         cols = {f.name: [] for f in schema}
         rnd = random.Random(stable_seed(self.S["id"], "seedtab"))
+        donors = self._donors(donor_tab, random.Random(stable_seed(self.S["id"], "donors")))
         for r in rows:
             per = self.persons[r["pi"]]
             ms = int(r["ts"].timestamp() * 1000)
             sid = uuid7(ms - rnd.randint(0, 600000), rnd)
-            props = {"$session_id": sid, "$lib": "web", **r["props"]}
+            props = {"$session_id": sid, "$lib": "web", **self._with_donor(r["props"], r["event"], per["id"], donors, rnd)}
             cols["uuid"].append(str(uuid.UUID(int=rnd.getrandbits(128), version=4)))
             cols["event"].append(r["event"])
             cols["properties"].append(orjson.dumps(props).decode())

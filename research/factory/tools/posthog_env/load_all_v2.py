@@ -32,7 +32,9 @@ def one(tid, force):
         logp = f"{LOADER}/logs/twins_v2/{tid}.log"
         with open(logp, "w") as log:
             r = subprocess.run(cmd, stdout=log, stderr=subprocess.STDOUT, cwd="/opt/posthog-env/posthog")
-        if r.returncode == 0 or "MEMORY_LIMIT_EXCEEDED" not in open(logp, errors="replace").read():
+        txt = open(logp, errors="replace").read()
+        # retry on ClickHouse memory pressure (both the error name and the "Code: 241 ... memory limit exceeded" form)
+        if r.returncode == 0 or not ("MEMORY_LIMIT_EXCEEDED" in txt or "memory limit exceeded" in txt.lower() or "Code: 241" in txt):
             break
         time.sleep(120 * (attempt + 1))
     return tid, r.returncode, round(time.time() - t, 1)

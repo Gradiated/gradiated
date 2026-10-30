@@ -121,7 +121,7 @@ class TwinLoaderV2(LT.TwinLoader):
             if user is None:
                 user = User.objects.create_user(email=email, password=None, first_name="Twin")
             org, _, team = Organization.objects.bootstrap(
-                user, name=f"{PREFIX}{self.twin_id}", team_fields={"name": f"Twin2 {self.twin_id[:12]}", "timezone": tz})
+                user, name=f"{PREFIX}{self.twin_id}", team_fields={"name": "Default project", "timezone": tz})
         return team, True
 
     def _reset_objects(self, team):

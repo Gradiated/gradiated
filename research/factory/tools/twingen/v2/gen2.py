@@ -46,12 +46,13 @@ sys.path.insert(0, os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 import gen  # noqa: E402
 import valuepools  # noqa: E402
+import geo_extra  # noqa: E402
 import paths as PATHS  # noqa: E402
 import specio  # noqa: E402
 from gen import UTC, iso, stable_seed, uuid7, wh_column, WH_TYPES  # noqa: E402
 from specio import shape_of  # noqa: E402
 
-GEN2_VERSION = "twingen-2.8"
+GEN2_VERSION = "twingen-2.11"
 TWINS = PATHS.TWINS
 FACTS = PATHS.FACTS
 QFACTS = PATHS.QFACTS
@@ -340,6 +341,126 @@ def activate_pools(pools: dict) -> None:
         ACTIVE_POOLS[prop] = v
 
 
+GEO_PROPS = ("$geoip_country_code", "$geoip_country_name", "$geoip_continent_code", "$geoip_continent_name",
+             "$geoip_city_name", "$geoip_subdivision_1_name", "$geoip_subdivision_1_code", "$geoip_postal_code",
+             "$geoip_latitude", "$geoip_longitude", "$geoip_time_zone")
+UTM_KEYS = ("utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term")
+
+
+def geo_catalog() -> dict:
+    """code -> catalog tuple (base catalog plus geo_extra)."""
+    out = {c[0]: c for c in gen.catalog.COUNTRIES}
+    for c in geo_extra.EXTRA:
+        out.setdefault(c[0], c)
+    return out
+
+
+BD_COL = re.compile(r"breakdown for the value `([^`]*)`")
+
+
+def breakdown_prop(bd: dict) -> tuple[str | None, str]:
+    """(property, type) of a single-property breakdown, in either schema: breakdown/breakdown_type or the newer
+    breakdowns: [{property, type}]."""
+    bd = bd or {}
+    if isinstance(bd.get("breakdown"), str):
+        return bd["breakdown"], bd.get("breakdown_type") or "event"
+    bs = bd.get("breakdowns") or []
+    if len(bs) == 1 and isinstance(bs[0], dict) and isinstance(bs[0].get("property"), str):
+        return bs[0]["property"], bs[0].get("type") or "event"
+    return None, ""
+
+
+def trend_breakdown_distributions(facts: dict) -> dict:
+    """(event, property) -> {value: count} from production Trends results broken down by an event property (one
+    series): columns "... breakdown for the value `X`", values summed over the rows."""
+    out: dict = {}
+    for c in (facts or {}).get("calls") or []:
+        sch = c.get("schema")
+        if c.get("is_error") or not isinstance(sch, dict) or not c.get("rows"):
+            continue
+        src = sch.get("source") if sch.get("kind") in ("InsightVizNode", "DataVisualizationNode") else sch
+        if not isinstance(src, dict) or src.get("kind") != "TrendsQuery":
+            continue
+        prop, btype = breakdown_prop(src.get("breakdownFilter"))
+        ser = src.get("series") or []
+        if not prop or len(ser) != 1 or not ser[0].get("event") or btype != "event":
+            continue
+        cols = c.get("cols") or []
+        dist: C.Counter = C.Counter()
+        for j, col in enumerate(cols):
+            m = BD_COL.search(str(col))
+            if not m or m.group(1).startswith("$$_posthog_breakdown_other"):
+                continue
+            for r in c["rows"]:
+                if len(r) == len(cols):
+                    v = numv(r[j])
+                    if v and v > 0:
+                        dist[m.group(1)] += v
+        if dist:
+            key = (ser[0]["event"], prop)
+            if key not in out or sum(dist.values()) > sum(out[key].values()):
+                out[key] = dict(dist)
+    return out
+
+
+def geo_tuple(country, rnd) -> dict:
+    """Coherent geo properties for a country code or name (catalog city); {} when the country is unknown."""
+    cat = geo_catalog()
+    v = str(country or "").strip()
+    by_name = {c[1].lower(): k for k, c in cat.items()}
+    code = v.upper() if v.upper() in cat else by_name.get(re.sub(r"^the ", "", v.lower()))
+    if not code:
+        return {}
+    cc = cat[code]
+    city = rnd.choice(cc[5])
+    return {"$geoip_country_code": cc[0], "$geoip_country_name": cc[1], "$geoip_continent_code": cc[2],
+            "$geoip_continent_name": cc[3], "$geoip_city_name": city[0], "$geoip_subdivision_1_name": city[1],
+            "$geoip_subdivision_1_code": city[2], "$geoip_time_zone": city[6]}
+
+
+def production_countries(spec: dict, qf: dict, facts: dict | None = None) -> dict:
+    """code -> weight from production evidence: $geoip_country_code / _name values (spec events, unscoped, person
+    properties; earlier values weigh more, as listed) and grouped production results."""
+    cat = geo_catalog()
+    by_name = {c[1].lower(): k for k, c in cat.items()}
+    by_name.update({"the netherlands": "NL", "united states of america": "US", "usa": "US", "uk": "GB",
+                    "united kingdom": "GB", "czech republic": "CZ", "türkiye": "TR", "viet nam": "VN"})
+    w: C.Counter = C.Counter()
+
+    def add(v, weight):
+        v = str(v).strip()
+        code = v.upper() if v.upper() in cat else by_name.get(v.lower()) or by_name.get(re.sub(r"^the ", "", v.lower()))
+        if code:
+            w[code] += weight
+
+    secs = [info.get("properties") or {} for info in (spec.get("events") or {}).values()]
+    secs += [spec.get("unscoped") or {}, ((spec.get("entities") or {}).get("person") or {}).get("properties") or {}]
+    for sec in secs:
+        for p in ("$geoip_country_code", "$geoip_country_name", "$initial_geoip_country_code", "$initial_geoip_country_name"):
+            for i, v in enumerate((sec.get(p) or {}).get("values") or []):
+                add(v, 1.0 / (1 + i))
+    dists = list(group_distributions(qf or {}).items()) + list(trend_breakdown_distributions(facts or {}).items())
+    for (e, prop), dist in dists:
+        if prop in ("$geoip_country_code", "$geoip_country_name"):
+            tot = sum(dist.values()) or 1
+            for v, c in dist.items():
+                add(v, 5.0 * c / tot)
+    return dict(w)
+
+
+def coherent_utm(src: str, mediums: list, campaigns: list) -> tuple[str, str]:
+    """rule (r8): one source -> one consistent medium and a campaign from that source's own small set."""
+    h = int(hashlib.sha256(src.encode()).hexdigest()[:8], 16)
+    default = gen.catalog.UTM_MEDIUMS.get(src)
+    if mediums:
+        med = default if default in mediums else mediums[h % len(mediums)]
+    else:
+        med = default or "referral"
+    pool = campaigns or gen.catalog.UTM_CAMPAIGNS
+    camp = pool[h % len(pool)]
+    return med, camp
+
+
 STUB_EVENT = re.compile(r"^(mcp |application )", re.I)
 
 
@@ -409,6 +530,30 @@ class Project2(gen.Project):
                 ctx[prop] = SessionAttr(ctx[prop], pr, f"{self.S['id']}:ctx:{prop}")
                 self.v2["attribution_ctx_wrapped"] += 1
 
+    def make_profile(self, rnd):
+        """rule (r8): 85% of visitors get a country from production's own mix (whole geo tuple, coherent)."""
+        p = super().make_profile(rnd)
+        if not hasattr(self, "_geo_mix"):
+            mix = production_countries(self.S, self.Q, self.F)
+            cat = geo_catalog()
+            self._geo_mix = [(cat[k], w) for k, w in sorted(mix.items(), key=lambda kv: -kv[1])]
+            self.v2["geo_production_countries"] = len(self._geo_mix)
+        if self._geo_mix and rnd.random() < 0.85:
+            tot = sum(w for _, w in self._geo_mix)
+            x, acc = rnd.random() * tot, 0.0
+            for cc, w in self._geo_mix:
+                acc += w
+                if x <= acc:
+                    break
+            city = rnd.choice(cc[5])
+            p.update({"$geoip_country_code": cc[0], "$geoip_country_name": cc[1], "$geoip_continent_code": cc[2],
+                      "$geoip_continent_name": cc[3], "$geoip_city_name": city[0], "$geoip_subdivision_1_name": city[1],
+                      "$geoip_subdivision_1_code": city[2], "$geoip_postal_code": city[3],
+                      "$geoip_latitude": round(city[4] + rnd.uniform(-0.05, 0.05), 4),
+                      "$geoip_longitude": round(city[5] + rnd.uniform(-0.05, 0.05), 4), "$geoip_time_zone": city[6],
+                      "$timezone": city[6]})
+        return p
+
     def build_event_samplers(self):
         super().build_event_samplers()
         for samplers in self.ev_samplers.values():
@@ -417,7 +562,27 @@ class Project2(gen.Project):
         for smp in (getattr(self, "ctx_samplers", None) or {}).values():
             self.v2["prior_null_choices_scrubbed"] += scrub_sampler(smp)
         zero = self.zero_filter_values()
+        for samplers in self.ev_samplers.values():  # rule (r8): geo and UTM come from the visitor profile / session
+            for prop in list(samplers):
+                if prop in GEO_PROPS or prop in UTM_KEYS or prop.startswith("$initial_utm_"):
+                    samplers.pop(prop)
+                    self.v2["geo_utm_event_samplers_removed"] += 1
+        ctxs = getattr(self, "ctx_samplers", None) or {}
+        for prop in list(ctxs):
+            if prop in GEO_PROPS or prop in UTM_KEYS:
+                ctxs.pop(prop)
         self._wrap_attribution()
+        # rule (r9): a property the spec records on specific events is not attached to other events by the base
+        # generator's "common props" filler (amount_usd belongs to the revenue event, not to signups)
+        owned = C.defaultdict(set)
+        for e2, info in (self.S.get("events") or {}).items():
+            for p_ in (info.get("properties") or {}):
+                owned[p_].add(e2)
+        for e2, samplers in self.ev_samplers.items():
+            for p_ in list(samplers):
+                if not p_.startswith("$") and owned.get(p_) and e2 not in owned[p_] and not isinstance(samplers[p_], GroupDist):
+                    samplers.pop(p_)
+                    self.v2["foreign_props_removed"] += 1
         for (e, prop), dist in group_distributions(self.Q).items():  # rule (r5): production value distributions
             if e in self.ev_samplers:
                 self.ev_samplers[e][prop] = GroupDist(dist, random.Random(stable_seed(self.S["id"], "gdist", e, prop)))
@@ -1332,6 +1497,57 @@ class Project2(gen.Project):
             out[e] = (f, d0)
         return out
 
+    def coherent_sessions(self, tab):
+        """rule (r8): (1) a session's UTM medium/campaign follow its source (one consistent tuple); (2) web sessions
+        start with their landing $pageview: when another event comes first, the session's first pageview moves to 1 s
+        before it (bounce, entry page and entry UTM metrics need the landing pageview first)."""
+        props = tab.column("properties").to_pylist()
+        mediums = list(self.utm_vals.get("utm_medium") or []) if hasattr(self, "utm_vals") else []
+        campaigns = list(self.utm_vals.get("utm_campaign") or []) if hasattr(self, "utm_vals") else []
+        changed = 0
+        for i, pr in enumerate(props):
+            if pr and '"utm_source"' in pr:
+                d = orjson.loads(pr)
+                src = d.get("utm_source")
+                if isinstance(src, str) and src:
+                    med, camp = coherent_utm(src, mediums, campaigns)
+                    if d.get("utm_medium") != med or d.get("utm_campaign") != camp:
+                        d["utm_medium"], d["utm_campaign"] = med, camp
+                        props[i] = orjson.dumps(d).decode()
+                        changed += 1
+        if changed:
+            tab = tab.set_column(tab.schema.get_field_index("properties"), "properties",
+                                 pa.array(props, tab.schema.field("properties").type))
+        self.v2["utm_tuples_made_coherent"] = changed
+        if not getattr(self, "web", False) or "$session_id" not in tab.schema.names:
+            return tab
+        sid = tab.column("$session_id").to_pylist()
+        ev = tab.column("event").to_pylist()
+        ts = tab.column("timestamp").cast(pa.int64()).to_numpy().copy()
+        first: dict = {}
+        first_pv: dict = {}
+        for i, (s_, e) in enumerate(zip(sid, ev)):
+            if not s_:
+                continue
+            if s_ not in first or ts[i] < ts[first[s_]]:
+                first[s_] = i
+            if e == "$pageview" and (s_ not in first_pv or ts[i] < ts[first_pv[s_]]):
+                first_pv[s_] = i
+        moved = 0
+        for s_, i0 in first.items():
+            j = first_pv.get(s_)
+            if j is not None and j != i0 and ts[j] > ts[i0]:
+                ts[j] = ts[i0] - 1_000_000
+                moved += 1
+        if moved:
+            tab = tab.set_column(tab.schema.get_field_index("timestamp"), "timestamp",
+                                 pa.array(ts, pa.int64()).cast(tab.schema.field("timestamp").type))
+        self.v2["sessions_landing_pageview_moved"] = moved
+        return tab
+
+    def _event_props(self, e: str) -> set:
+        return set((((self.S.get("events") or {}).get(e) or {}).get("properties") or {}).keys())
+
     def override_zeroed_events(self) -> set:
         """Events an override spike sets to factor 0 (curation: the event stops firing from that date)."""
         return {sp.get("event") for sp in self.ovr.get("spikes") or [] if float(sp.get("factor", 1)) == 0}
@@ -1388,6 +1604,7 @@ class Project2(gen.Project):
             parts.append(self.seed_table(seeds, tab.schema, donor_tab=tab))
         out = pa.concat_tables([p.cast(tab.schema) for p in parts], promote_options="none")
         out = out.unify_dictionaries().combine_chunks()
+        out = self.coherent_sessions(out)
         order = pc.sort_indices(out, sort_keys=[("timestamp", "ascending")])
         out = out.take(order)
         pq.write_table(out, path + ".tmp", compression="zstd", row_group_size=100_000)
@@ -1587,7 +1804,8 @@ class Project2(gen.Project):
                 continue
             glob_f = self._exact_filters(src.get("properties") or [])
             bd = src.get("breakdownFilter") or {}
-            bkey = bd.get("breakdown") if isinstance(bd.get("breakdown"), str) else None
+            bkey, _bt = breakdown_prop(bd)
+            bd = bd if (bd.get("breakdown") or bd.get("breakdowns")) else {}
             if bd and bkey and len(src.get("series") or []) == 1 and glob_f is not None:
                 # breakdown columns "<label> breakdown for the value `v`": one seeded series per value
                 sr = src["series"][0]
@@ -1696,6 +1914,9 @@ class Project2(gen.Project):
                 self.v2["filter_seed_sql_zero_skipped"] += 1
                 continue
             k = int(min(self.FILTER_SEED_CAP, n)) if n and n >= 1 else 25
+            # rule (r9): filter properties go only to the query's events that carry them (amount_usd belongs to the
+            # revenue event, not to every event in "event IN (...)")
+            owners = [e for e in evs if props and all(p_ in self._event_props(e) for p_ in props)]
             days = (qc.get("window") or {}).get("interval_days") or 30
             w = qc.get("window") or {}
             a, b = parse_when(w.get("min_date") or ""), parse_when(w.get("max_date") or "")
@@ -1708,8 +1929,9 @@ class Project2(gen.Project):
                     when = nowd - dt.timedelta(seconds=rnd.uniform(60, max(1, days) * 86400))
                 if when >= nowd:
                     continue
-                rows.append({"event": rnd.choice(evs), "ts": when, "pi": person_fixed if person_fixed is not None else rnd.randrange(self.n_persons),
-                             "props": dict(props)})
+                ev_pick = rnd.choice(owners) if owners else rnd.choice(evs)
+                rows.append({"event": ev_pick, "ts": when, "pi": person_fixed if person_fixed is not None else rnd.randrange(self.n_persons),
+                             "props": {k: v for k, v in props.items() if not owners or k in self._event_props(ev_pick)}})
             self.v2["filter_seed_sql"] += 1
             if person_fixed is not None:
                 self.v2["filter_seed_sql_person"] += 1
@@ -1748,6 +1970,10 @@ class Project2(gen.Project):
         except Exception:  # noqa: BLE001
             return props
         out = {k: v for k, v in d.items() if k not in self.DONOR_SKIP}
+        if any(k in GEO_PROPS for k in props):  # rule (r8): a seeded geo value brings its whole coherent tuple
+            for k in GEO_PROPS:
+                out.pop(k, None)
+            out.update(geo_tuple(props.get("$geoip_country_code") or props.get("$geoip_country_name"), rnd))
         out.update(props)
         cu, du = out.get("$current_url"), d.get("$current_url")
         if isinstance(cu, str) and cu.startswith("/") and isinstance(du, str) and "://" in du:

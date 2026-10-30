@@ -20,6 +20,8 @@ Assertions read the generated files directly (production-dated events; no loadin
   {"type": "object", "kind": "insights"|"dashboards"|"notebooks", "id": X, "present": true|false}
       (optional "min_tiles": n for dashboards, "query_kind": K for insights: the object's real definition)
   {"type": "history", "from": D, "op": ">=", "value": N}    (events on or before D; checks the twin covers D)
+  {"type": "distinct", "event": E, "props": {..}, "prop": P, "op": "<=", "value": N}  (distinct values of P)
+  {"type": "session_first_pageview", "op": ">=", "value": share}  (web sessions whose first event is a $pageview)
 Dates are production dates (YYYY-MM-DD, inclusive). Prints one line per assertion and a summary; exit 1 on failure.
 """
 
@@ -79,7 +81,8 @@ class Twin:
 
         t = pq.read_table(f"{d}/events.parquet", columns=["event", "timestamp", "person_id", "properties"])
         self.ev = t.column("event").to_pylist()
-        self.ts = [x.date() for x in t.column("timestamp").to_pylist()]
+        self.ts_full = t.column("timestamp").to_pylist()
+        self.ts = [x.date() for x in self.ts_full]
         self.pid = t.column("person_id").to_pylist()
         self.props = t.column("properties").to_pylist()
         self.objects = json.load(open(f"{d}/objects.json")) if os.path.exists(f"{d}/objects.json") else {}
@@ -162,6 +165,19 @@ def check(tw: Twin, a: dict) -> tuple[bool, str]:
         q = o.get("query_full") or {}
         kind = (q.get("source") or {}).get("kind") if q.get("kind") in ("InsightVizNode", "DataVisualizationNode") else q.get("kind")
         return kind == a["query_kind"], f"query_kind={kind}"
+    if t == "distinct":
+        vals = {str(tw.p(i).get(a["prop"])) for i in tw.rows(a.get("event"), a.get("props"), a.get("from"), a.get("to"))
+                if tw.p(i).get(a["prop"]) not in (None, "")}
+        return OPS[a["op"]](len(vals), a["value"]), f"distinct={len(vals)} {sorted(vals)[:5]}"
+    if t == "session_first_pageview":
+        first = {}
+        for i in range(len(tw.ev)):
+            sid = tw.p(i).get("$session_id") if tw.ev[i] in ("$pageview", "$autocapture", "$pageleave", "$identify") else None
+            if sid and (sid not in first or tw.ts_full[i] < tw.ts_full[first[sid]]):
+                first[sid] = i
+        pv = [tw.ev[i] == "$pageview" for i in first.values()]
+        v = sum(pv) / max(1, len(pv))
+        return OPS[a["op"]](v, a["value"]), f"share_first_pageview={v:.2f} of {len(pv)} sessions"
     if t == "history":
         v = sum(1 for d in tw.ts if d <= dt.date.fromisoformat(a["from"]))
         return OPS[a["op"]](v, a["value"]), f"events_on_or_before={v}"

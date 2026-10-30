@@ -82,6 +82,12 @@ builder notes: {notes}
 6. Drop the task only if it cannot be made into a good task: off-topic or abusive, pure chit-chat, no checkable
    outcome even after pinning, or needs data/systems the twin can't hold. Docs-only questions are kept only if they
    need real product knowledge.
+6b. Generator artefacts are bugs, not traps. If the twin shows something implausible for this business (a value
+   leaked onto unrelated events, a country code that disagrees with the country name, a one-day burst, a population
+   with no baseline, sessions that make no sense), do NOT write it into the grading notes as a trap or a bonus:
+   fix it with twin_overrides if they can, otherwise list it in "twin_defects" (and drop with drop_kind twin_gap if
+   it breaks the task). Facts the agent cannot obtain with its tools (e.g. product prices missing from the docs it
+   can search) must not be required in grading_notes.
 7. grading_notes must be checkable against the twin (the agent will see twin data, not production): describe what the
    right answer contains and how to check it (query sketch, object to inspect), acceptable variations, and things
    not required. Don't copy production numbers unless the twin reproduces them.
@@ -106,6 +112,7 @@ its attached context). Never write a summary or placeholder of a turn.
  "drop_kind": "<only for drop: twin_gap (the twin lacks data/objects the task needs and overrides can't add them) | unfixable | off_topic | chitchat>",
  "twin_gap": "<only for twin_gap: what the generator would need to produce, concretely>",
  "evidence": ["<query you ran -> what it showed>", ...],
+ "twin_defects": ["<implausible generator artefact you noticed, concretely>", ...],
  "turns": ["<turn 0>", ...],
  "edits": [{{"kind": "rewrite_followup|fold_context|pin_definition|remove_turn|fix_premise|anon_fix|other", "turn": <i>, "why": "<short>"}}],
  "grading_notes": {{"must_include": ["..."], "how_to_check": ["..."], "acceptable_variations": ["..."], "not_required": ["..."]}},
@@ -239,9 +246,10 @@ def main() -> None:
         stats[f"decision_{r.get('decision', 'error')}"] += 1
         if r.get("decision") == "drop":
             stats[f"drop_{r.get('drop_kind') or 'unspecified'}"] += 1
+        stats["twin_defects_reported"] += len(r.get("twin_defects") or [])
         for e in r.get("edits") or []:
             stats[f"edit_{e.get('kind')}"] += 1
-        t["curation"] = {k: r.get(k) for k in ("decision", "reason", "drop_kind", "twin_gap", "evidence", "edits", "difficulty",
+        t["curation"] = {k: r.get(k) for k in ("decision", "reason", "drop_kind", "twin_gap", "twin_defects", "evidence", "edits", "difficulty",
                                                 "skills", "model")}
         t["curation"]["n_queries"] = len(r.get("queries_run") or [])
         if r.get("decision") == "drop":

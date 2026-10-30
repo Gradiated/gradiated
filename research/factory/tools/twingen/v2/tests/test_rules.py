@@ -57,6 +57,16 @@ class FilterSeedZero(unittest.TestCase):
         rows = self._proj([["12"]]).filter_seed_rows(random.Random(1))
         self.assertEqual(sum(r["props"].get("utm_source") == "newsletter_x" for r in rows), 12)
 
+    def test_props_only_on_owning_events(self):
+        """b07 card 01: amount_usd > 0 was seeded onto every event of "event IN (gen, signup, revenue)"."""
+        qc = {"k": 0, "ok": True, "events": ["media_gen", "signup", "revenue"], "window": {"interval_days": 7},
+              "literals": [["events", "properties.amount_usd", [{"op": "=", "values": ["5"]}]]]}
+        spec = {"id": "t", "events": {"revenue": {"properties": {"amount_usd": {}}}, "media_gen": {"properties": {}},
+                                      "signup": {"properties": {}}}}
+        p = project(Q={"calls": [qc]}, F={"calls": [{"k": 0, "tool": "execute_sql", "rows": [["40"]]}]}, S=spec)
+        rows = p.filter_seed_rows(random.Random(1))
+        self.assertEqual({r["event"] for r in rows}, {"revenue"})
+
     def test_unknown_count_still_seeds(self):
         rows = self._proj([["a", "b"], ["c", "d"]]).filter_seed_rows(random.Random(1))
         self.assertEqual(len(rows), 25)
@@ -230,6 +240,58 @@ class ValuePools(unittest.TestCase):
             gen2.activate_pools({})
 
 
+class GeoAndSessions(unittest.TestCase):
+    """b07 review: country code 'US' on German/UK rows, no Belgium although production was mostly Belgian; UTM triples
+    like linkedin/email/q3_promo; 30-65% of sessions started with a non-pageview event."""
+
+    def test_catalog_has_extra_countries(self):
+        cat = gen2.geo_catalog()
+        self.assertIn("BE", cat)
+        self.assertIn("US", cat)
+        self.assertEqual(cat["BE"][1], "Belgium")
+
+    def test_production_countries(self):
+        spec = {"events": {"$pageview": {"properties": {"$geoip_country_name": {"values": ["Belgium", "Netherlands"]}}}},
+                "unscoped": {}, "entities": {"person": {"properties": {"$geoip_country_code": {"values": ["BE"]}}}}}
+        mix = gen2.production_countries(spec, {})
+        self.assertGreater(mix["BE"], mix["NL"])
+
+    def test_trend_breakdown_countries(self):
+        """b07 card 02: Belgium 492 / US 17 came from a Trends breakdown result, not from spec values."""
+        F = {"calls": [{"schema": {"kind": "TrendsQuery", "series": [{"event": "$pageview"}],
+                                   "breakdownFilter": {"breakdown": "$geoip_country_name", "breakdown_type": "event"}},
+                        "cols": ["Date range", "Aggregated value for Belgium breakdown for the value `Belgium`",
+                                 "Aggregated value for The Netherlands breakdown for the value `The Netherlands`"],
+                        "rows": [["2026-09-14 to 2026-10-14", "492", "12"]]}]}
+        self.assertEqual(gen2.trend_breakdown_distributions(F), {("$pageview", "$geoip_country_name"): {"Belgium": 492.0, "The Netherlands": 12.0}})
+        mix = gen2.production_countries({"events": {}}, {}, F)
+        self.assertGreater(mix["BE"], 10 * mix["NL"])
+
+    def test_breakdowns_list_schema(self):
+        """b07: newer insights store breakdowns as a list ({"breakdowns": [{"property", "type"}]})."""
+        self.assertEqual(gen2.breakdown_prop({"breakdowns": [{"property": "$geoip_country_name", "type": "event"}]}),
+                         ("$geoip_country_name", "event"))
+        self.assertEqual(gen2.breakdown_prop({"breakdown": "$browser"}), ("$browser", "event"))
+        self.assertEqual(gen2.breakdown_prop({"breakdowns": [{"property": "a"}, {"property": "b"}]}), (None, ""))
+
+    def test_coherent_utm(self):
+        a = gen2.coherent_utm("linkedin", ["email", "social", "cpc"], ["q3", "brand"])
+        self.assertEqual(a, gen2.coherent_utm("linkedin", ["email", "social", "cpc"], ["q3", "brand"]))
+        self.assertEqual(a[0], "social")  # catalog default medium when production uses it
+
+    def test_landing_pageview_first(self):
+        import pyarrow as pa
+        t0 = 1_700_000_000_000_000
+        tab = pa.table({"event": ["$autocapture", "$pageview", "$pageleave"], "$session_id": ["s1", "s1", "s1"],
+                        "timestamp": pa.array([t0, t0 + 5_000_000, t0 + 9_000_000], pa.int64()).cast(pa.timestamp("us", tz="UTC")),
+                        "properties": ["{}", '{"utm_source": "linkedin", "utm_medium": "email"}', "{}"]})
+        p = project(web=True, utm_vals={"utm_medium": ["email", "social"], "utm_campaign": ["q3"]})
+        out = p.coherent_sessions(tab)
+        ts = out.column("timestamp").cast(pa.int64()).to_pylist()
+        self.assertLess(ts[1], ts[0])
+        self.assertIn('"utm_medium":"social"', out.column("properties").to_pylist()[1])
+
+
 class FunnelDropoff(unittest.TestCase):
     """r1 card 13: funnel seeds walked every person through every step (twin 30->25 vs production 51->34->1->0->0)."""
 
@@ -276,6 +338,13 @@ class DonorProperties(unittest.TestCase):
         self.assertEqual(out["$geoip_country_code"], "VN")
         self.assertEqual(out["$browser"], "Chrome")
         self.assertNotIn("$session_id", out)
+
+    def test_seeded_geo_is_coherent(self):
+        """b07: a seeded country name kept the donor's country code (Germany rows coded US)."""
+        out = self.p._with_donor({"$geoip_country_name": "Germany"}, "enrol", "p1",
+                                 ({"enrol": ['{"$geoip_country_code": "US", "$geoip_city_name": "Austin"}']}, {}, []), random.Random(0))
+        self.assertEqual(out["$geoip_country_code"], "DE")
+        self.assertNotEqual(out.get("$geoip_city_name"), "Austin")
 
     def test_relative_url_gets_donor_origin(self):
         out = self.p._with_donor({"$current_url": "/competition?x=1"}, "enrol", "p1", self.donors, random.Random(0))

@@ -40,6 +40,10 @@ NOTES_RULES = """- Task notes. They say what a correct answer should contain and
   cannot be done. The rollout's tool results are the ground truth: where the evidence contradicts a note, follow the
   evidence. Accept the listed acceptable variations; do not penalise what the notes mark as not required. Do not
   penalise a reasonable reading of an earlier turn because a later scripted turn asks for more.
+- Definitions in the notes are binding: when the notes define a term (e.g. "LinkedIn ads = utm_source=linkedin") or
+  list acceptable readings, an answer using that definition or reading is not unsupported or wrong for it.
+- Only require what the tools could supply: do not penalise missing facts that the rollout's tool results show were
+  not available (e.g. a price the docs search did not return, data the project does not contain).
 - Data quality. If the agent correctly points out that data in the project looks implausible or inconsistent (and
   its tool results show it), that is good analysis, not an error, even if the task notes do not mention it.
 """

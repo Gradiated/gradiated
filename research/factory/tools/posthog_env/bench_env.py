@@ -5,7 +5,8 @@ Every arm is a runner model key (runner_common.MODELS: qwen, opus, sonnet55, gpt
 Each arm runs --samples rollouts per task through runner/run_task.py with --reset-team-state track; jobs are
 interleaved sample -> task -> arm so drift hits every arm equally. vLLM arms share the replica port pool; API arms
 (proxy) have their own concurrency cap. Each rollout is judged once with judge v3g (runner/judge_v3/judge_v3g.py,
-docs-grounded; gpt-6.1-sol through the subscription proxy) in a separate pool. Resumable.
+docs-grounded; gpt-6.1-sol through the subscription proxy) in a separate pool; --judge v3h (default) also shows the
+task's curation grading notes when it has them (identical to v3g otherwise). Resumable.
 
     python3 bench_env.py --tag reanon_b1 --tasks runner/tasks/v2_reanon/test.jsonl \
         --arms qwen,opus,sonnet55,gpt-sol,gpt-terra,gpt-luna --samples 3
@@ -43,7 +44,9 @@ sys.path.insert(0, RUNNER)
 import eval_ms as E  # noqa: E402  (statistics helpers; imports llm_proxy and turns the proxy default on)
 
 sys.path.insert(0, f"{RUNNER}/judge_v3")
-import judge_v3g as J  # noqa: E402
+import importlib  # noqa: E402
+
+J = None  # judge module (judge_v3g / judge_v3h), set in main() from --judge
 
 THRESH = 7.5
 VLLM_ARMS_ROOT = "vllm"
@@ -141,11 +144,15 @@ def rollout(args, arm: str, tid: str, k: int, ports: Ports, api_slots: dict) -> 
     return tr
 
 
-def judge(path: str, tr: dict) -> dict:
+def judge(path: str, tr: dict, notes=None) -> dict:
+    ver = J.__name__.replace("judge_", "")
     rec = jload(path)
-    if rec and rec.get("started_at") == tr.get("started_at") and rec.get("overall") is not None:
+    if rec and rec.get("started_at") == tr.get("started_at") and rec.get("overall") is not None \
+            and rec.get("judge_version", "v3g") == ver:
         return rec
-    rec = {"judge": "gpt-6.1-sol", "judge_version": "v3g", "started_at": tr.get("started_at")}
+    if notes:
+        tr = {**tr, "grading_notes": notes}
+    rec = {"judge": "gpt-6.1-sol", "judge_version": ver, "started_at": tr.get("started_at")}
     for _ in range(3):
         try:
             rec.update(J.score_transcript(tr, "gpt-6.1-sol"))
@@ -162,6 +169,7 @@ def run(args, arms: list[str], tasks: list[dict]) -> None:
     ports = Ports(args.ports)
     api_slots = {a: threading.BoundedSemaphore(args.api_concurrency) for a in arms if not is_vllm(a)}
     jq: queue.Queue = queue.Queue()
+    notes = {t["task_id"]: t.get("grading_notes") for t in tasks if t.get("grading_notes")}
     counts: Counter = Counter()
     lock = threading.Lock()
     t0 = time.time()
@@ -173,7 +181,7 @@ def run(args, arms: list[str], tasks: list[dict]) -> None:
             if item is None:
                 return
             arm, tid, k, tr = item
-            rec = judge(f"{args.root}/{arm}/judge/{tid}.s{k}.json", tr)
+            rec = judge(f"{args.root}/{arm}/judge/{tid}.s{k}.json", tr, notes.get(tid))
             with lock:
                 counts["judged" if rec.get("overall") is not None else "judge_error"] += 1
 
@@ -234,7 +242,7 @@ def report(args, arms: list[str], tasks: list[dict]) -> dict:
     tm = {a: {t: statistics.mean(per[a][t][0]) for t in complete} for a in arms}
     pm = {a: {t: statistics.mean(per[a][t][1]) for t in complete} for a in arms}
     rep: dict = {"tag": args.tag, "tasks_file": args.tasks, "samples": args.samples, "arms": arms,
-                 "judge": "v3g gpt-6.1-sol", "tasks": len(ids), "tasks_complete": len(complete),
+                 "judge": f"{J.__name__} gpt-6.1-sol", "tasks": len(ids), "tasks_complete": len(complete),
                  "pass_rule": f"overall >= {THRESH} and no material wrong/unsupported error in the final answer",
                  "arms_summary": {}, "pairs": {}}
     for a in arms:
@@ -291,7 +299,10 @@ def main() -> None:
     ap.add_argument("--wall-s", type=float, default=900)
     ap.add_argument("--max-turns", type=int, default=4)
     ap.add_argument("--report-only", action="store_true")
+    ap.add_argument("--judge", default="v3h", choices=["v3g", "v3h"])
     args = ap.parse_args()
+    global J
+    J = importlib.import_module(f"judge_{args.judge}")
     args.root = f"{RUNNER}/bench/{args.tag}"
     arms = [a for a in args.arms.split(",") if a]
     tasks = [json.loads(x) for x in open(args.tasks) if x.strip()]

@@ -122,6 +122,7 @@ def build_batch(name: str, ids: list[str], split: str, pilot: bool) -> None:
         if pilot and inc:
             sh(["python3", f"{RUNNER}/bench_env.py", "--tag", f"loop_{name}_{ver['combined']}", "--tasks", tf,
                 "--task-ids-file", f"{d}/included.json", "--arms", "gpt-luna,gpt-terra,haiku55", "--samples", "1",
+                "--max-turns", "12", "--wall-s", "1500",
                 "--workers", "15", "--api-concurrency", "5", "--judge-workers", "6"], log, timeout=10800)
     open(f"{d}/READY", "w").write(json.dumps({"tasks": len(tasks), "included": len(inc), "s": round(time.time() - t0)}))
     print(json.dumps({"batch": name, "tasks": len(tasks), "included": len(inc), "s": round(time.time() - t0)}), flush=True)

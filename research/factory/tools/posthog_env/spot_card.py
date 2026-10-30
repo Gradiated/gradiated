@@ -143,15 +143,16 @@ def event_props(t: dict, max_events: int = 6) -> list[str]:
     for e in named:
         esc = e.replace("'", "\\'")
         keys = ch(f"select arrayJoin(JSONExtractKeys(properties)) AS k, count() from events where team_id={tid} "
-                  f"and event='{esc}' group by k order by 2 desc limit 12")
+                  f"and event='{esc}' group by k order by 2 desc limit 60")
+        out.append(f"   all property keys (with counts): {[(k, n) for k, n in keys]}")
         total = ch(f"select count() from events where team_id={tid} and event='{esc}'")
         out.append(f"event {e!r}: total {total}")
-        for k, _n in keys:
-            if str(k).startswith("$") and k not in ("$current_url", "$pathname", "$referring_domain", "$browser", "$os"):
+        for k, _n in keys[:25]:
+            if str(k) in ("$session_id", "$window_id", "$insert_id", "$time", "$sent_at", "token", "$device_id"):
                 continue
             ke = str(k).replace("'", "\\'")
             vals = ch(f"select JSONExtractString(properties, '{ke}') AS v, count() from events where team_id={tid} "
-                      f"and event='{esc}' group by v order by 2 desc limit 8")
+                      f"and event='{esc}' group by v order by 2 desc limit 6")
             out.append(f"   {k}: {vals}")
     return out
 

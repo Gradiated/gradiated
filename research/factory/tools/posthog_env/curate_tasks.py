@@ -28,6 +28,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
@@ -89,14 +90,78 @@ builder notes: {notes}
    "days": n}}. Leave empty if the twin already supports the task.
 
 Respond with ONLY a JSON object:
+## Verifying the twin before you decide
+The twin state above is a summary (top-N lists). Before claiming the twin lacks something (an event, page, property,
+value, person) or that a premise is false, CHECK it: instead of the final JSON you may reply with
+{{"queries": [{{"why": "<what you check>", "sql": "<ClickHouse SELECT>"}}, ...]}} (at most 6). Tables:
+events(team_id, event, timestamp, distinct_id, person_id, properties) and person(team_id, id, properties), where
+properties is a JSON string (use JSONExtractString(properties, 'key'), JSONHas(properties, 'key')). Every query must
+contain `team_id = {{team}}` (it is filled in for you) and should aggregate or LIMIT. You get the results back and can
+ask once more. Every drop with drop_kind twin_gap and every fix_premise edit must cite what you checked in "evidence".
+
+Turns you do not change: write null in "turns" at that position (it is copied from the built task verbatim, with
+its attached context). Never write a summary or placeholder of a turn.
+
 {{"decision": "keep|edit|drop", "reason": "<one sentence>",
  "drop_kind": "<only for drop: twin_gap (the twin lacks data/objects the task needs and overrides can't add them) | unfixable | off_topic | chitchat>",
  "twin_gap": "<only for twin_gap: what the generator would need to produce, concretely>",
+ "evidence": ["<query you ran -> what it showed>", ...],
  "turns": ["<turn 0>", ...],
  "edits": [{{"kind": "rewrite_followup|fold_context|pin_definition|remove_turn|fix_premise|anon_fix|other", "turn": <i>, "why": "<short>"}}],
  "grading_notes": {{"must_include": ["..."], "how_to_check": ["..."], "acceptable_variations": ["..."], "not_required": ["..."]}},
  "twin_overrides": [ ... ],
  "difficulty": "trivial|moderate|hard", "skills": ["sql|trends|funnels|retention|dashboards|insight_edit|taxonomy|docs|recordings|flags|experiments|surveys|warehouse|investigation|other"]}}"""
+
+
+PLACEHOLDER = re.compile(r"^\s*\[(turn \d+ )?(unchanged|same as|original|verbatim)", re.I)
+
+
+def resolve_turns(turns, built: list[str], edits: list[dict]) -> list[str]:
+    """Editor turns -> final turns. null (or a placeholder like "[turn 0 unchanged: ...]") copies the built turn; an
+    edited turn that lost more than half of a built turn's attached context must have an edit entry for that turn."""
+    assert isinstance(turns, list) and turns, "no turns"
+    if all(t is None for t in turns) and len(turns) != len(built):
+        turns = [None] * len(built)
+    out = []
+    edited = {e.get("turn") for e in edits}
+    for i, t in enumerate(turns):
+        if t is None or (isinstance(t, str) and PLACEHOLDER.match(t)):
+            assert i < len(built), f"turn {i} copied but the built task has {len(built)} turns"
+            out.append(built[i])
+            continue
+        assert isinstance(t, str) and t.strip(), f"turn {i} empty"
+        if i < len(built) and len(t) < 0.5 * len(built[i]) and i not in edited and len(built[i]) > 2000:
+            raise AssertionError(f"turn {i} shrank {len(built[i])}->{len(t)} without an edit entry")
+        out.append(t)
+    return out
+
+
+FORBIDDEN = re.compile(r"\b(insert|alter|drop|truncate|create|optimize|system|kill|attach|detach|rename|grant)\b", re.I)
+
+
+def run_queries(qs: list, team: int) -> list[dict]:
+    """Run the editor's verification queries read-only on the twin team (readonly=1, 30 s, 50 rows)."""
+    import urllib.parse
+    import urllib.request
+
+    out = []
+    for q in qs:
+        sql = str((q or {}).get("sql") or "")
+        why = str((q or {}).get("why") or "")[:200]
+        if "{team}" not in sql or FORBIDDEN.search(sql.replace("{team}", "")) or not sql.lstrip().lower().startswith(("select", "with")):
+            out.append({"why": why, "sql": sql[:400], "result": "REJECTED: must be a SELECT containing team_id = {team}"})
+            continue
+        sql = sql.replace("{team}", str(team)).rstrip().rstrip(";")
+        params = {"database": SC.CH_DB, "default_format": "JSONCompact", "readonly": "1", "max_execution_time": "30",
+                  "max_result_rows": "50", "result_overflow_mode": "break", "max_threads": "2"}
+        try:
+            r = urllib.request.urlopen("http://127.0.0.1:8123/?" + urllib.parse.urlencode(params), data=sql.encode(), timeout=60)
+            data = json.loads(r.read()).get("data")
+            res = json.dumps(data, ensure_ascii=False)[:1500]
+        except Exception as ex:  # noqa: BLE001
+            res = f"ERROR {str(ex)[:300]}"
+        out.append({"why": why, "sql": sql[:600], "result": res})
+    return out
 
 
 def clip_turn(t: str, n: int = 6000) -> str:
@@ -114,15 +179,25 @@ def curate_one(task: dict, rec: dict | None, model: str, out_dir: str) -> dict:
     twin = "\n".join(str(x) for x in SC.twin_state(task) + SC.event_props(task))
     prompt = PROMPT.format(mode=task.get("agent_mode") or "product_analytics (default)", turns=turns, notes=notes,
                            reference=ref, twin=SC.clip(twin, 20000))
-    rec_out = {"task_id": task["task_id"], "model": model}
-    for _ in range(3):
+    rec_out = {"task_id": task["task_id"], "model": model, "queries_run": []}
+    convo = prompt
+    rounds = 0
+    for _ in range(5):
         try:
-            text, usage = llm_proxy.judge_complete(prompt, model, None, attempts=6, preamble=False)
+            text, usage = llm_proxy.judge_complete(convo, model, None, attempts=6, preamble=False)
             s, e = text.find("{"), text.rfind("}")
             d = json.loads(text[s:e + 1])
+            if d.get("queries") and "decision" not in d and rounds < 2:
+                rounds += 1
+                res = run_queries(d["queries"][:6], int(task["team_id"]))
+                rec_out["queries_run"] += res
+                convo = (convo + "\n\n## Your queries and their results (round " + str(rounds) + ")\n" +
+                         "\n".join(f"- {r['why']}\n  SQL: {r['sql']}\n  -> {r['result']}" for r in res) +
+                         ("\n\nNow give the final JSON." if rounds >= 2 else "\n\nAsk once more or give the final JSON."))
+                continue
             assert d.get("decision") in ("keep", "edit", "drop")
             if d["decision"] != "drop":
-                assert isinstance(d.get("turns"), list) and d["turns"] and all(isinstance(x, str) and x.strip() for x in d["turns"])
+                d["turns"] = resolve_turns(d.get("turns"), task["turns"], d.get("edits") or [])
             rec_out.update(d)
             rec_out.pop("error", None)
             break
@@ -166,7 +241,9 @@ def main() -> None:
             stats[f"drop_{r.get('drop_kind') or 'unspecified'}"] += 1
         for e in r.get("edits") or []:
             stats[f"edit_{e.get('kind')}"] += 1
-        t["curation"] = {k: r.get(k) for k in ("decision", "reason", "drop_kind", "twin_gap", "edits", "difficulty", "skills", "model")}
+        t["curation"] = {k: r.get(k) for k in ("decision", "reason", "drop_kind", "twin_gap", "evidence", "edits", "difficulty",
+                                                "skills", "model")}
+        t["curation"]["n_queries"] = len(r.get("queries_run") or [])
         if r.get("decision") == "drop":
             t["exclude"] = f"curation: {r.get('reason')}"
         elif r.get("decision") in ("keep", "edit"):

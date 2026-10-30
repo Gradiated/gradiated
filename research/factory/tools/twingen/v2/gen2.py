@@ -24,6 +24,7 @@ Defaults read facts_v2/<id>.json and qfacts_v2/<id>.json next to the specs. Prin
 from __future__ import annotations
 
 import argparse
+import hashlib
 import collections as C
 import datetime as dt
 import json
@@ -44,12 +45,13 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 import gen  # noqa: E402
+import valuepools  # noqa: E402
 import paths as PATHS  # noqa: E402
 import specio  # noqa: E402
 from gen import UTC, iso, stable_seed, uuid7, wh_column, WH_TYPES  # noqa: E402
 from specio import shape_of  # noqa: E402
 
-GEN2_VERSION = "twingen-2.6"
+GEN2_VERSION = "twingen-2.8"
 TWINS = PATHS.TWINS
 FACTS = PATHS.FACTS
 QFACTS = PATHS.QFACTS
@@ -265,12 +267,90 @@ def group_distributions(qf: dict, min_total: float = 20) -> dict:
     return out
 
 
+ATTRIBUTION_PRESENCE = [(re.compile(r"^(\$initial_)?utm_(source|medium|campaign|content|term)$"), 0.2),
+                        (re.compile(r"^(\$initial_)?(gclid|gbraid|wbraid|fbclid|msclkid|ttclid|li_fat_id|gad_source|"
+                                    r"gad_campaignid|dclid|twclid|irclid|mc_cid)$"), 0.05)]
+
+
+def attribution_presence(prop: str) -> float | None:
+    for rx, p in ATTRIBUTION_PRESENCE:
+        if rx.match(prop):
+            return p
+    return None
+
+
+class SessionAttr:
+    """rule (r6): attribution properties (UTM, ad click ids) are set on a minority of sessions and are constant within
+    a session (one landing, one campaign); taxonomy value lists say which values exist, not how often."""
+
+    def __init__(self, base, presence: float, salt: str):
+        self.base, self.presence, self.salt = base, presence, salt
+        self.cache: dict = {}
+
+    def __call__(self, ctx):
+        key = str(ctx.get("session_id") or ctx.get("sid") or id(ctx.get("person")))
+        if key not in self.cache:
+            h = int(hashlib.sha256(f"{self.salt}:{key}".encode()).hexdigest()[:8], 16) / 0xFFFFFFFF
+            self.cache[key] = self.base(ctx) if h < self.presence else None
+            if len(self.cache) > 200000:
+                self.cache.clear()
+        return self.cache[key]
+
+    def __getattr__(self, k):
+        return getattr(self.base, k)
+
+
+ACTIVE_POOLS: dict = {}  # prop -> [[value, weight], ...] for the twin being generated (rule r7, valuepools.py)
+_ORIG_SETUP_SHAPE = None
+
+
+def install_pool_hook() -> None:
+    """Placeholder pools ("<prop>_a", "Prop 1") are replaced by the twin's LLM value pool for that property."""
+    global _ORIG_SETUP_SHAPE
+    import values as V
+
+    if _ORIG_SETUP_SHAPE is not None:
+        return
+    _ORIG_SETUP_SHAPE = V.Sampler._setup_shape
+
+    def _setup_shape(self, prior, shape_prior):
+        pool = ACTIVE_POOLS.get(self.name) if self.type in (None, "String") else None
+        if pool and self.shape not in valuepools.SKIP_SHAPES:
+            self.mode = "choice"
+            self.choices = [v for v, _ in pool]
+            self.weights = [float(w) for _, w in pool]
+            acc, self._cum = 0.0, []
+            for w in self.weights:
+                acc += w
+                self._cum.append(acc)
+            self.jitter = False
+            self.source = "llm_pool"
+            return
+        _ORIG_SETUP_SHAPE(self, prior, shape_prior)
+
+    V.Sampler._setup_shape = _setup_shape
+
+
+def activate_pools(pools: dict) -> None:
+    ACTIVE_POOLS.clear()
+    for k, v in pools.items():
+        scope, prop = k.split("::", 1)
+        if scope == "person" and prop in ACTIVE_POOLS:
+            continue
+        ACTIVE_POOLS[prop] = v
+
+
 STUB_EVENT = re.compile(r"^(mcp |application )", re.I)
 
 
 class Project2(gen.Project):
     def __init__(self, spec, facts=None, qfacts=None, calib=None, member_specs=None, overrides=None, **kw):
         _null_stats = clean_null_props(spec)
+        install_pool_hook()
+        _text = "\n".join(t.get("text") or "" for t in (spec.get("tasks") or []))
+        _keys = valuepools.candidates(spec, shape_of, gen.VOCAB, gen.stem_of)
+        _pools, _pool_status = valuepools.get_pools(spec, PATHS.ROOT, _keys, _text) if _keys else ({}, "none")
+        activate_pools({k: v for k, v in _pools.items() if k in set(_keys)})
         super().__init__(spec, **kw)
         # overrides: {"history_days", "events": {e: multiplier}, "spikes": [{event, from, to, factor}],
         #             "warehouse": {table: {col: {type, values}}}, "persons": [{email, name, props}], "notes"}
@@ -284,6 +364,9 @@ class Project2(gen.Project):
         self.member_specs = member_specs or []
         self.v2 = C.Counter()
         self.v2.update(_null_stats)
+        self.v2["value_pool_candidates"] = len(_keys)
+        self.v2["value_pools_applied"] = sum(1 for k in _keys if k in _pools)
+        self.v2[f"value_pools_{_pool_status}"] += 1
         self.v2_info: dict = {}
         raw = load_json(os.path.join(SPECS, f"{spec['id']}.json")) if spec.get("kind") == "conversation" else None
         self.user_text = "\n".join(t.get("text") or "" for t in (raw or {}).get("tasks") or [])
@@ -310,6 +393,22 @@ class Project2(gen.Project):
                             out.update((prop[len("properties."):], str(v)) for v in lit.get("values") or [])
         return out
 
+    def _wrap_attribution(self):
+        """Apply SessionAttr to attribution properties of every event and context sampler (not GroupDist ones, which
+        carry production's own presence)."""
+        for e, samplers in self.ev_samplers.items():
+            for prop in list(samplers):
+                pr = attribution_presence(prop)
+                if pr is not None and not isinstance(samplers[prop], (GroupDist, SessionAttr)):
+                    samplers[prop] = SessionAttr(samplers[prop], pr, f"{self.S['id']}:{prop}")
+                    self.v2["attribution_props_wrapped"] += 1
+        ctx = getattr(self, "ctx_samplers", None) or {}
+        for prop in list(ctx):
+            pr = attribution_presence(prop)
+            if pr is not None and not isinstance(ctx[prop], SessionAttr):
+                ctx[prop] = SessionAttr(ctx[prop], pr, f"{self.S['id']}:ctx:{prop}")
+                self.v2["attribution_ctx_wrapped"] += 1
+
     def build_event_samplers(self):
         super().build_event_samplers()
         for samplers in self.ev_samplers.values():
@@ -318,6 +417,7 @@ class Project2(gen.Project):
         for smp in (getattr(self, "ctx_samplers", None) or {}).values():
             self.v2["prior_null_choices_scrubbed"] += scrub_sampler(smp)
         zero = self.zero_filter_values()
+        self._wrap_attribution()
         for (e, prop), dist in group_distributions(self.Q).items():  # rule (r5): production value distributions
             if e in self.ev_samplers:
                 self.ev_samplers[e][prop] = GroupDist(dist, random.Random(stable_seed(self.S["id"], "gdist", e, prop)))

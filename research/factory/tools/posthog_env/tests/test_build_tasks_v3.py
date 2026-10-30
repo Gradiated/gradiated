@@ -106,6 +106,18 @@ class DependencyR2(unittest.TestCase):
         self.assertFalse(B.is_docs_call("execute_sql", {"query": "select 1"}))
 
 
+class InitialMode(unittest.TestCase):
+    """b02 review: tasks started in sql mode although production started in product_analytics (spec mode = final)."""
+
+    def test_from_reminder(self):
+        self.assertEqual(B.initial_mode("<system_reminder>Your initial mode is product_analytics.</system_reminder> hi", "sql"),
+                         "product_analytics")
+
+    def test_fallback_to_spec(self):
+        self.assertEqual(B.initial_mode("hi", "sql"), "sql")
+        self.assertIsNone(B.initial_mode("hi", "nonsense"))
+
+
 class Filters(unittest.TestCase):
     def test_capture_placeholder(self):
         """r1 card 09: the whole prompt was a capture placeholder."""

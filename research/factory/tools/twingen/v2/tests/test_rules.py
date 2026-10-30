@@ -175,6 +175,61 @@ class GroupDistributions(unittest.TestCase):
         self.assertNotIn("(none)", out)
 
 
+class Attribution(unittest.TestCase):
+    """b02 review: utm_medium=cpc on 100% of 88k pageviews (taxonomy listed one value, so every event got it)."""
+
+    def test_presence_table(self):
+        self.assertEqual(gen2.attribution_presence("utm_medium"), 0.2)
+        self.assertEqual(gen2.attribution_presence("$initial_utm_source"), 0.2)
+        self.assertEqual(gen2.attribution_presence("gclid"), 0.05)
+        self.assertIsNone(gen2.attribution_presence("plan"))
+
+    def test_minority_and_constant_per_session(self):
+        w = gen2.SessionAttr(lambda ctx: "cpc", 0.2, "t")
+        vals = {sid: w({"session_id": sid}) for sid in range(5000)}
+        share = sum(v == "cpc" for v in vals.values()) / 5000
+        self.assertAlmostEqual(share, 0.2, delta=0.03)
+        self.assertTrue(all(w({"session_id": sid}) == vals[sid] for sid in range(200)))
+
+
+class ValuePools(unittest.TestCase):
+    """b02 review: placeholder values (city_b, "Name 9", gclid_a) in 7 of 10 tasks; agents reported them as bad data."""
+
+    SPEC = {"events": {"quiz_completed": {"properties": {
+        "org_size": {"type": "String", "values": []},
+        "plan": {"type": "String", "values": ["pro"]},
+        "user_id": {"type": "String", "values": []},
+        "score": {"type": "Numeric", "values": []}}}},
+        "unscoped": {}, "entities": {"person": {"properties": {"city": {"type": None, "values": []}}}}}
+
+    def test_candidates(self):
+        keys = gen2.valuepools.candidates(self.SPEC, gen2.shape_of, {}, gen2.gen.stem_of)
+        self.assertIn("quiz_completed::org_size", keys)
+        self.assertIn("person::city", keys)
+        self.assertNotIn("quiz_completed::plan", keys)      # has observed values
+        self.assertNotIn("quiz_completed::user_id", keys)   # id shape: generated ids, not a value pool
+        self.assertNotIn("quiz_completed::score", keys)     # numeric
+
+    def test_placeholder_regex(self):
+        P = gen2.valuepools.PLACEHOLDER
+        for bad in ("org_size_b", "Name 9", "Flow 20", "example company 3", "n/a"):
+            self.assertTrue(P.match(bad), bad)
+        for ok in ("11-50", "Sydney", "pro_annual", "v2.1.0"):
+            self.assertFalse(P.match(ok), ok)
+
+    def test_hook_uses_pool(self):
+        gen2.install_pool_hook()
+        gen2.activate_pools({"quiz_completed::org_size": [["11-50", 5.0], ["51-200", 2.0]]})
+        try:
+            sm = gen2.gen.Sampler("org_size", "String", [], None, None, None, random.Random(1))
+            self.assertEqual(sm.source, "llm_pool")
+            self.assertTrue({sm({}) for _ in range(100)} <= {"11-50", "51-200"})
+            other = gen2.gen.Sampler("color_theme", "String", [], None, None, None, random.Random(1))
+            self.assertNotEqual(other.source, "llm_pool")
+        finally:
+            gen2.activate_pools({})
+
+
 class FunnelDropoff(unittest.TestCase):
     """r1 card 13: funnel seeds walked every person through every step (twin 30->25 vs production 51->34->1->0->0)."""
 

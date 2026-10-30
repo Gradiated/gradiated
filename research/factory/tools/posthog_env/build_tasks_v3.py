@@ -71,6 +71,18 @@ AGENT_MODES = {"product_analytics", "sql", "session_replay", "error_tracking", "
                "flags", "llm_analytics", "sandbox", "user_interview", "customer_analytics"}
 
 
+INITIAL_MODE = re.compile(r"Your initial mode is ([a-z_]+)")
+
+
+def initial_mode(turn0: str, spec_mode: str | None) -> str | None:
+    """The mode the production conversation STARTED in (system reminder in turn 0); the spec's agent_mode is the
+    conversation's final mode, which differs when the agent switched modes."""
+    m = INITIAL_MODE.search(turn0 or "")
+    if m and m.group(1) in AGENT_MODES:
+        return m.group(1)
+    return spec_mode if spec_mode in AGENT_MODES else None
+
+
 def own_text(s: str) -> str:
     """The user's own words: the turn without attached page context, reminders and voice-mode blocks."""
     return CTX.sub(" ", s).strip()
@@ -290,7 +302,7 @@ def main() -> None:
                 "project_id": int(team["project_id"]), "twin_id": team["twin_id"], "conversation_id": cid,
                 "turns": turns, "turns_full": texts, "turn_offset": start, "max_turns": len(turns),
                 "followups": flags, "first_answer_dependent_turn": first_dep,
-                "agent_mode": spec.get("agent_mode") if spec.get("agent_mode") in AGENT_MODES else None,
+                "agent_mode": initial_mode(raw[0], spec.get("agent_mode")),
                 "spec_agent_mode": spec.get("agent_mode"),
                 "env_defaults": {"POSTHOG_LOCAL_DOCS": "1"},
                 "reference_tools": [t.get("tools") for t in tturns],

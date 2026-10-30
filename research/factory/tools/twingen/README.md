@@ -124,5 +124,28 @@ v1 is unchanged; v2 runs next to it as separate teams (org prefix `Twin2 `, `loa
 | calibration | `v2/calib.py` | Per-event multipliers from a replay of production reads against the loaded twin (production/twin, geometric median, clamped to 30x per round). |
 | verification | `v2/verify_tasks.py`, `v2/fidelity_compare.py` | Per-task audit, replay checks and status (`runner/tasks/v2/status.json`); v1/v2 fidelity metrics side by side. |
 
+| cross-trace index | `v2/xindex.py` | Objects (dashboards, insights, notebooks) and warehouse schemas read in any trace, so a conversation that only names a dashboard, notebook or table gets the content another conversation of the customer read. |
+| repair | `v2/repair_overrides.py`, `v2/artefact_check.py` | Replay-driven overrides (missing warehouse columns, history); re-check of the calibration agent's missing-artefact flags. |
+| replay | `v2/replay/` | Read-only replay of production reads against the twin teams (from the /tmp/fid audit). |
+| paths | `v2/paths.py` | Every data location; `TWIN_V2_TRACES`, `TWIN_V2_ROOT` and `TWIN_V2_TAG` select a separate build. |
+
 Loader and tasks: `research/factory/tools/posthog_env/` (`load_twin_v2.py`, `load_all_v2.py`, `build_tasks_v2.py`,
-`cleanup_orphans_v2.py`, `team_state.py`).
+`cleanup_orphans_v2.py`, `team_state.py`, `smoke_v2.sh`). v2 tasks carry `env_defaults` (local docs search on) and
+are run with `--max-turns 0 --reset-team-state`.
+
+### Rebuild from new traces (one command)
+
+```bash
+# re-anonymized traces with the data_all / eval/data layout, built as a separate set of teams and tasks
+/opt/posthog-sft/env-research/twingen/v2/rebuild_v2.sh \
+    --traces /opt/posthog-sft/root_agent/reanon_20261030 --root /opt/posthog-sft/env-research/reanon_20261030 \
+    --tag r1030 --splits test_v2 --workers 2
+```
+
+Steps (`--from`/`--to` run a sub-range): `specs` (v1 extract + cluster into `--root`) → `facts` → `qfacts` → `xindex` →
+`gen` → `load` (org "Twin2r1030 ", `loader/teams_v2_r1030.jsonl`) → `tasks` (`runner/tasks/v2_r1030/`) → `replay`
+(before) → `repair` (calibration + overrides) → `reload` (regenerate, reload changed twins) → `after` (replay, per-task
+`status.json`, v1/v2 comparison). Without `--traces` the current specs and data root are used, e.g.
+`rebuild_v2.sh --from replay --to after` re-runs the repair loop on the current v2 test teams. Afterwards, when nothing
+else runs on the stack: `cd /opt/posthog-env/posthog && .venv/bin/python ../loader/cleanup_orphans_v2.py` (rows of
+replaced teams). Generator priors (`priors/`) and the anonymizer-corruption vocabulary are reused.

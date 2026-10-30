@@ -19,6 +19,7 @@ import traceback
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.dirname(HERE))
+import paths as PATHS  # noqa: E402
 
 
 def job(args):
@@ -49,13 +50,13 @@ def job(args):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--reason", default="test_v2")
-    ap.add_argument("--out", default=os.path.join(os.path.dirname(HERE), "projects_v2"))
+    ap.add_argument("--out", default=PATHS.PROJECTS)
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--max-events", type=int, default=6_000_000)
-    ap.add_argument("--calib-dir")
+    ap.add_argument("--calib-dir", default=None, help="calibration multipliers (e.g. PATHS.CALIB)")
     ap.add_argument("--ids")
     a = ap.parse_args()
-    targets = [json.loads(l) for l in open(os.path.join(os.path.dirname(HERE), "targets.jsonl"))]
+    targets = [json.loads(l) for l in open(PATHS.TARGETS)]
     if a.ids:
         ids = set(a.ids.split(","))
         targets = [t for t in targets if t["id"] in ids]

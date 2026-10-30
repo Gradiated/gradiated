@@ -8,13 +8,15 @@ Pauses launching while free disk < --min-free-gb. Logs per twin under loader/log
 import argparse, concurrent.futures as cf, json, os, shutil, subprocess, sys, time
 
 sys.path.insert(0, "/opt/posthog-env/loader")
+sys.path.insert(0, "/opt/posthog-sft/env-research/twingen/v2")
+import paths as PATHS  # noqa: E402
 LOADER = "/opt/posthog-env/loader"
-PROJ = "/opt/posthog-sft/env-research/twingen/projects_v2"
+PROJ = PATHS.PROJECTS
 
 
 def done_ids():
     out = set()
-    p = f"{LOADER}/teams_v2.jsonl"
+    p = PATHS.TEAMS
     if os.path.exists(p):
         for l in open(p):
             r = json.loads(l)
@@ -44,7 +46,7 @@ def main():
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--ids")
     a = ap.parse_args()
-    tg = [json.loads(l) for l in open("/opt/posthog-sft/env-research/twingen/targets.jsonl")]
+    tg = [json.loads(l) for l in open(PATHS.TARGETS)]
     ids = a.ids.split(",") if a.ids else [t["id"] for t in tg if t.get("reason") == a.group]
     ids = [i for i in ids if os.path.exists(f"{PROJ}/{i}/manifest.json")]
     if not a.force:

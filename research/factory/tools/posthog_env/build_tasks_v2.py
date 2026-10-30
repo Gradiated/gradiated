@@ -10,7 +10,8 @@ Differences from build_tasks.py (v1 files are not touched):
   (numbers, quoted strings, identifiers, names) that first appeared in the production assistant's answers, not in
   earlier user turns. Option A: `turns` stops before the first such follow-up (`turns_full` keeps all, `followups`
   holds the per-turn flags and the evidence kinds);
-- turns whose production SQL was anonymizer-corrupted are listed in `corrupted_sql_turns` (qfacts_v2).
+- turns whose production SQL was anonymizer-corrupted are listed in `corrupted_sql_turns` (qfacts_v2);
+- `env_defaults` {"POSTHOG_LOCAL_DOCS": "1"}: docs search is served by the local docs index for v2 tasks.
 
     python3 build_tasks_v2.py [--splits test_v2,dev]
 Prints counts only.
@@ -25,12 +26,15 @@ import json
 import os
 import re
 from collections import Counter
+import sys
+sys.path.insert(0, "/opt/posthog-sft/env-research/twingen/v2")
+import paths as PATHS  # noqa: E402
 
-TEAMS_V2 = "/opt/posthog-env/loader/teams_v2.jsonl"
-SPECS = "/opt/posthog-sft/env-research/twins/specs"
-QFACTS = "/opt/posthog-sft/env-research/twins/qfacts_v2"
-OUT = "/opt/posthog-env/runner/tasks/v2"
-TRACES = {"test_v2": "/opt/posthog-sft/eval/data/test_v2.jsonl", "dev": "/opt/posthog-sft/root_agent/data_all/dev.jsonl"}
+TEAMS_V2 = PATHS.TEAMS
+SPECS = PATHS.SPECS
+QFACTS = PATHS.QFACTS
+OUT = PATHS.TASKS_DIR
+TRACES = PATHS.trace_files()
 SPLIT_MAP = {"dev": "dev", "test_v2": "test", "train": "train"}
 MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
 MONTH_FULL = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
@@ -226,6 +230,8 @@ def main() -> None:
                 "turns_full": texts, "max_turns": len(texts),
                 "followups": flags, "first_answer_dependent_turn": first_dep,
                 "agent_mode": None, "spec_agent_mode": spec.get("agent_mode"),
+                # run_task.py applies these with os.environ.setdefault (override with POSTHOG_LOCAL_DOCS=0)
+                "env_defaults": {"POSTHOG_LOCAL_DOCS": "1"},
                 "reference_tools": [t.get("tools") for t in tturns],
                 "corrupted_sql_turns": corrupted,
                 "shifted_dates_in_text": n_dates, "rewritten_project_urls": n_urls,

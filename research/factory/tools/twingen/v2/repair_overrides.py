@@ -19,10 +19,12 @@ import json
 import os
 import re
 import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import paths as PATHS  # noqa: E402
 
-OVR = "/opt/posthog-sft/env-research/twins/overrides_v2"
-PROJ = "/opt/posthog-sft/env-research/twingen/projects_v2"
-TEAMS_V2 = "/opt/posthog-env/loader/teams_v2.jsonl"
+OVR = PATHS.OVERRIDES
+PROJ = PATHS.PROJECTS
+TEAMS_V2 = PATHS.TEAMS
 UNRES = re.compile(r"Unable to resolve field: ([A-Za-z_][A-Za-z0-9_]*)")
 
 

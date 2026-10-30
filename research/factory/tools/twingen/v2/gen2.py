@@ -42,18 +42,33 @@ import pyarrow.parquet as pq
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE))
+sys.path.insert(0, HERE)
 import gen  # noqa: E402
+import paths as PATHS  # noqa: E402
 import specio  # noqa: E402
 from gen import UTC, iso, stable_seed, uuid7, wh_column, WH_TYPES  # noqa: E402
 from specio import shape_of  # noqa: E402
 
 GEN2_VERSION = "twingen-2"
-TWINS = "/opt/posthog-sft/env-research/twins"
-FACTS = f"{TWINS}/facts_v2"
-QFACTS = f"{TWINS}/qfacts_v2"
-CLUSTERS = f"{TWINS}/clusters/clusters.jsonl"
-OVERRIDES = f"{TWINS}/overrides_v2"  # per-twin declarative fixes from the repair pass (<twin_id>.json)
-SPECS = f"{TWINS}/specs"
+TWINS = PATHS.TWINS
+FACTS = PATHS.FACTS
+QFACTS = PATHS.QFACTS
+CLUSTERS = PATHS.CLUSTERS
+OVERRIDES = PATHS.OVERRIDES
+XINDEX = PATHS.XINDEX  # cross-trace objects and warehouse schemas (xindex.py)
+_XI = None
+REF_DASH = re.compile(r"dashboards?[/ #:]*(\d{4,})", re.I)
+REF_NB = re.compile(r"notebooks?/([A-Za-z0-9]{8})\b")
+REF_INS = re.compile(r"insights?/([A-Za-z0-9]{8})\b")
+REF_TOKEN = re.compile(r"\b[A-Za-z][A-Za-z0-9_]*_[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*\b")
+
+
+def xindex() -> dict:
+    global _XI
+    if _XI is None:
+        _XI = load_json(XINDEX) or {"dashboards": {}, "insights": {}, "notebooks": {}, "tables": {}}
+    return _XI  # per-twin declarative fixes from the repair pass (<twin_id>.json)
+SPECS = PATHS.SPECS
 NULLS = {"", "(null)", "null", "None", "nan", "NaN", "NULL", "\\N"}
 ISO_D = re.compile(r"^(\d{4}-\d\d-\d\d)(?:[ T](\d\d:\d\d(?::\d\d(?:\.\d+)?)?))?(Z|[+-]\d\d:?\d\d)?$")
 FLAG_NAME = re.compile(r"^(is|has|was|did|can|should)_|_(flag|bool)$|^(active|deleted|churned|won|lost|closed|paid|enabled|verified|converted)$", re.I)
@@ -152,6 +167,9 @@ class Project2(gen.Project):
         self.member_specs = member_specs or []
         self.v2 = C.Counter()
         self.v2_info: dict = {}
+        raw = load_json(os.path.join(SPECS, f"{spec['id']}.json")) if spec.get("kind") == "conversation" else None
+        self.user_text = "\n".join(t.get("text") or "" for t in (raw or {}).get("tasks") or [])
+        self.ref_text = self.user_text + "\n" + "\n".join(c.get("sql") or "" for c in self.F.get("calls") or [] if isinstance(c.get("sql"), str))
 
     # ------------------------------------------------------------------ time
     def required_days_v2(self) -> int:
@@ -468,6 +486,48 @@ class Project2(gen.Project):
             if d.get("description"):
                 o["description"] = d["description"]
             o["tile_short_ids"] = [t.get("short_id") for t in d.get("tiles") or [] if t.get("short_id")]
+        # rule: same-customer completion. Objects referenced by id in the user text or URLs that this trace never read
+        # come from the cross-trace index (another conversation of the customer read them).
+        xi = xindex()
+        have = {k: {str(o.get("short_id") or o.get("key")) for o in objs.get(k, [])} for k in ("insights", "notebooks", "dashboards")}
+        refs = {"dashboards": set(REF_DASH.findall(self.user_text)), "notebooks": set(REF_NB.findall(self.user_text)),
+                "insights": set(REF_INS.findall(self.user_text))}
+        for r in self.F.get("url_refs") or []:
+            k = {"dashboard": "dashboards"}.get(r.get("kind"), r.get("kind"))
+            if k in refs and r.get("id"):
+                refs[k].add(r["id"])
+        for did in sorted(refs["dashboards"] - have["dashboards"]):
+            d = (xi.get("dashboards") or {}).get(did)
+            if not d:
+                continue
+            o = {"key": did, "name": d.get("name"), "description": d.get("description"), "dashboard_id": int(did) if did.isdigit() else None,
+                 "tile_short_ids": [t.get("short_id") for t in d.get("tiles") or [] if t.get("short_id")], "from_xindex": True}
+            objs.setdefault("dashboards", []).append(o)
+            have["dashboards"].add(did)
+            n["xindex_dashboards"] += 1
+            for t in d.get("tiles") or []:
+                if t.get("short_id"):
+                    refs["insights"].add(t["short_id"])
+        for sid in sorted(refs["insights"] - have["insights"]):
+            i = (xi.get("insights") or {}).get(sid)
+            if not i:
+                continue
+            o = {"key": sid, "short_id": sid, "name": i.get("name"), "description": i.get("description"), "from_xindex": True}
+            q = i.get("query")
+            if isinstance(q, dict) and q.get("kind"):
+                o["query_full"] = q if q["kind"] in ("InsightVizNode", "DataVisualizationNode", "DataTableNode") else (
+                    {"kind": "DataVisualizationNode", "source": q} if q["kind"] == "HogQLQuery" else {"kind": "InsightVizNode", "source": q})
+            objs.setdefault("insights", []).append(o)
+            have["insights"].add(sid)
+            n["xindex_insights"] += 1
+        for sid in sorted(refs["notebooks"] - have["notebooks"]):
+            nb = (xi.get("notebooks") or {}).get(sid)
+            if not nb:
+                continue
+            objs.setdefault("notebooks", []).append({"key": sid, "short_id": sid, "title": nb.get("title"),
+                                                     "content_markdown": nb.get("content_markdown"), "from_xindex": True})
+            have["notebooks"].add(sid)
+            n["xindex_notebooks"] += 1
         # URL references in the user text whose object the trace never read: create a titled stub with that id
         for r in self.F.get("url_refs") or []:
             kind = {"notebooks": "notebooks", "insights": "insights", "dashboard": "dashboards", "dashboards": "dashboards"}.get(r.get("kind"))
@@ -590,6 +650,36 @@ class Project2(gen.Project):
                     col["type"] = info["type"]
                 if info.get("values"):
                     col["values"] = list(info["values"])
+        # rule: same-customer schema completion. Tables this conversation names (user text or its SQL) that are
+        # missing, or present only as a thin stub (<= 7 columns), take the richest schema any trace or spec showed.
+        xt = xindex().get("tables") or {}
+        flat = {k.replace(".", "_"): k for k in xt}
+        named = {m.group(0) for m in REF_TOKEN.finditer(self.ref_text)}
+        cand = set()
+        for tok in named:
+            k = tok if tok in xt else flat.get(tok.replace(".", "_"))
+            if k and not k.startswith(("events", "persons", "sessions")):
+                cand.add(k)
+        for tn in list(out) + sorted(cand):
+            k = tn if tn in xt else flat.get(tn.replace(".", "_"))
+            if not k:
+                continue
+            t = out.get(self.canon_table(tn, out))
+            if t is not None and len(t["columns"]) > 7:
+                continue
+            if t is None:
+                if tn not in cand:
+                    continue
+                t = out.setdefault(tn, {"columns": {}, "joins": [], "kind": "table", "description": None})
+                self.v2["xindex_tables_added"] += 1
+            added = 0
+            for fdef in xt[k].get("fields") or []:
+                nm, ty = fdef.get("name"), (fdef.get("type") or "").lower()
+                if nm and nm not in t["columns"] and ty not in ("lazy_table", "virtual_table", "view"):
+                    t["columns"][nm] = {"type": norm_type(ty), "origin": "customer", "description": None, "spec_type": ty}
+                    added += 1
+            if added:
+                self.v2["xindex_table_columns"] += added
         for tn, t in out.items():
             if not t["columns"]:
                 for c, ty, _ in gen.infer_columns(tn, [x.get("sql") for x in self.F.get("calls") or [] if x.get("sql")]):

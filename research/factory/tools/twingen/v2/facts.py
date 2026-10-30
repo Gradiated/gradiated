@@ -22,8 +22,10 @@ import sys
 
 sys.path.insert(0, "/opt/posthog-sft/env-research/twins")
 import twinlib as T  # noqa: E402
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import paths as PATHS  # noqa: E402
 
-OUT = "/opt/posthog-sft/env-research/twins/facts_v2"
+OUT = PATHS.FACTS
 MAX_ROWS = 400
 
 READ_TOOLS = {"execute_sql", "create_insight", "read_data", "list_data", "read_taxonomy", "search",
@@ -253,7 +255,10 @@ def main() -> None:
     stats = C.Counter()
     with open(os.path.join(a.out, "_index.jsonl"), "w") as idx:
         for split in a.splits.split(","):
-            with open(T.FILES[split], encoding="utf-8") as fh:
+            files = PATHS.trace_files()
+            if split not in files:
+                continue
+            with open(files[split], encoding="utf-8") as fh:
                 for line in fh:
                     line = line.strip()
                     if not line:

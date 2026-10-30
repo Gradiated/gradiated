@@ -21,12 +21,14 @@ import json
 import os
 import re
 import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import paths as PATHS  # noqa: E402
 
-FACTS = "/opt/posthog-sft/env-research/twins/facts_v2"
-QFACTS = "/opt/posthog-sft/env-research/twins/qfacts_v2"
-PROJ = "/opt/posthog-sft/env-research/twingen/projects_v2"
-OVR = "/opt/posthog-sft/env-research/twins/overrides_v2"
-CALIB = "/opt/posthog-sft/env-research/twingen/calib_v2"
+FACTS = PATHS.FACTS
+QFACTS = PATHS.QFACTS
+PROJ = PATHS.PROJECTS
+OVR = PATHS.OVERRIDES
+CALIB = PATHS.CALIB
 EXTERNAL_TOOLS = {"scan_replay_vision_sessions": "replay content (vision) needs recording snapshots",
                   "get_replay_vision_quota": "replay vision quota is a production service",
                   "read_billing_tool": "billing is a production service"}
@@ -58,9 +60,9 @@ def direction(vals):
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--replay-dir", default="/tmp/fid2")
-    ap.add_argument("--tasks", default="/opt/posthog-env/runner/tasks/v2/test.jsonl")
-    ap.add_argument("--out", default="/opt/posthog-env/runner/tasks/v2/status.json")
+    ap.add_argument("--replay-dir", default=PATHS.REPLAY_DIR)
+    ap.add_argument("--tasks", default=f"{PATHS.TASKS_DIR}/test.jsonl")
+    ap.add_argument("--out", default=f"{PATHS.TASKS_DIR}/status.json")
     ap.add_argument("--label", default="after")
     a = ap.parse_args()
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -82,6 +84,10 @@ def main() -> None:
     for l in open(os.path.join(a.replay_dir, "calls.jsonl")):
         c = json.loads(l)
         calls[(c["cid"], c["k"])] = c
+    fp = "/opt/posthog-env/runner/tasks/test_flags.json"
+    flags = json.load(open(fp))["tasks"] if os.path.exists(fp) else {}
+    ap_ = os.path.join(os.path.dirname(a.out), "artefacts.json")
+    artefacts = json.load(open(ap_)) if os.path.exists(ap_) else {}
     prev = json.load(open(a.out)) if os.path.exists(a.out) else {}
     out = {"_meta": prev.get("_meta", {}), "tasks": prev.get("tasks", {})}
     counts = C.Counter()
@@ -210,8 +216,22 @@ def main() -> None:
             fixes["override"] = json.load(open(os.path.join(OVR, f"{t['twin_id']}.json"))).get("notes") or True
         if os.path.exists(os.path.join(CALIB, f"{t['twin_id']}.json")):
             fixes["calibrated_events"] = len(json.load(open(os.path.join(CALIB, f"{t['twin_id']}.json"))).get("events") or {})
+        flag = (flags.get(t["task_id"]) or {})
+        art = artefacts.get(t["task_id"])
+        if flag.get("flag") == "trivial":
+            reasons.append("trivial (calibration flag: every reference model scores >= 9)")
+        if flag.get("flag") == "needs-missing-artefact":
+            if art and art.get("provided"):
+                fixes["missing_artefact_now_provided"] = True
+            else:
+                miss = [k for k, v in ((art or {}).get("checks") or {}).items() if not (v["ok"] if isinstance(v, dict) else v)]
+                reasons.append("missing artefact: " + (", ".join(miss) if miss else str(flag.get("artefact"))[:120]))
+                if status == "faithful":
+                    status = "partial"
         rec = out["tasks"].get(t["task_id"]) or {}
         rec.update({"conversation_id": cid, "team_id": t["team_id"], "status": status, "reasons": reasons,
+                    "calib_flag": flag.get("flag"), "calib_reason": flag.get("reason"),
+                    "artefact_check": art,
                     "checks": dict(chk), "failures": fails[:20], "needs": need, "fixes": fixes})
         rec.setdefault("history", {})[a.label] = status
         rec["status_changed"] = prev_status is not None and prev_status != status

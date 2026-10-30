@@ -29,18 +29,20 @@ sys.path.insert(0, "/opt/posthog-env")
 sys.path.insert(0, "/opt/posthog-env/loader")
 import load_twin as LT  # noqa: E402
 import loader_common as LC  # noqa: E402
+sys.path.insert(0, "/opt/posthog-sft/env-research/twingen/v2")
+import paths as PATHS  # noqa: E402
 
-PREFIX = "Twin2 "
+PREFIX = PATHS.PREFIX
 LOADER = LC.LOADER
-TEAMS_V2 = f"{LOADER}/teams_v2.jsonl"
-STATE_V2 = f"{LOADER}/state_v2"
-PROJECTS_V2 = f"{LC.TWINGEN}/projects_v2"
+TEAMS_V2 = PATHS.TEAMS
+STATE_V2 = PATHS.STATE
+PROJECTS_V2 = PATHS.PROJECTS
 os.makedirs(STATE_V2, exist_ok=True)
 
 # v2 paths for the parts of load_twin that write state (module globals; v1 files are never written)
 LT.TEAMS_JSONL = TEAMS_V2
 LT.STATE = STATE_V2
-LT.ORPHANS_JSONL = f"{LOADER}/orphans_v2.jsonl"
+LT.ORPHANS_JSONL = PATHS.ORPHANS
 DATE_Q = re.compile(r"(?<=['\"])(\d{4}-\d\d-\d\d)(?=[ T'\"\\])")
 
 

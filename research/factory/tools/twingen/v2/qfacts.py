@@ -32,10 +32,11 @@ import sys
 sys.path.insert(0, "/opt/posthog-sft/env-research/twins")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import twinlib as T  # noqa: E402
+import paths as PATHS  # noqa: E402
 
-FACTS = "/opt/posthog-sft/env-research/twins/facts_v2"
-OUT = "/opt/posthog-sft/env-research/twins/qfacts_v2"
-SPECS = "/opt/posthog-sft/env-research/twins/specs"
+FACTS = PATHS.FACTS
+OUT = PATHS.QFACTS
+SPECS = PATHS.SPECS
 
 try:
     import anoncheck  # anonymizer-corruption detector (same directory)

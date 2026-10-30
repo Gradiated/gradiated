@@ -20,9 +20,12 @@ import json
 import math
 import os
 import statistics
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import paths as PATHS  # noqa: E402
 
-QFACTS = "/opt/posthog-sft/env-research/twins/qfacts_v2"
-TEAMS_V2 = "/opt/posthog-env/loader/teams_v2.jsonl"
+QFACTS = PATHS.QFACTS
+TEAMS_V2 = PATHS.TEAMS
 LO, HI = 1 / 30, 30.0
 
 

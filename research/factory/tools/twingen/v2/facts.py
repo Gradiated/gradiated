@@ -118,6 +118,45 @@ def parse_dashboard(s: str) -> dict | None:
             "tiles": tiles}
 
 
+CTX_BLOCK = re.compile(r"<attached_context>(.*?)</attached_context>", re.S)
+CTX_FENCE = re.compile(r"Query schema:\s*```(?:json)?\s*(\{.*?\})\s*```", re.S)
+
+
+def _field(block: str, key: str) -> str | None:
+    m = re.search(rf"^#*\s*{re.escape(key)}:\s*(.+)$", block, re.M)
+    return m.group(1).strip() if m else None
+
+
+def parse_context_objects(text: str) -> dict:
+    """Dashboards and insights the user had open (PostHog AI's <attached_context>): names, ids, descriptions and the
+    insights' query schemas, in the shape of read_data results. These are the conversation's starting state."""
+    out = {"insights": {}, "dashboards": {}}
+    for ctx in CTX_BLOCK.findall(text or ""):
+        dash_tiles = []
+        parts = re.split(r"\n(?=Name: )", ctx)
+        head = parts[0]
+        for part in parts[1:]:
+            sid = _field(part, "Insight ID")
+            if not sid:
+                continue
+            q = None
+            m = CTX_FENCE.search(part)
+            if m:
+                try:
+                    q = json.loads(m.group(1))
+                except ValueError:
+                    q = None
+            out["insights"][sid] = {"name": _field(part, "Name"), "short_id": sid, "description": _field(part, "Description"),
+                                    "saved": True, "query": q, "from_context": True}
+            dash_tiles.append({"short_id": sid, "name": _field(part, "Name")})
+        did = _field(head, "Dashboard ID")
+        if did:
+            out["dashboards"][did] = {"name": _field(head, "Dashboard name"), "id": did,
+                                      "description": _field(head, "Description"), "tiles": dash_tiles,
+                                      "from_context": True}
+    return out
+
+
 def extract(rec: dict) -> dict:
     cid = rec["id"]
     uses: dict = {}
@@ -134,6 +173,11 @@ def extract(rec: dict) -> dict:
             turn += 1
             t = text_of(c)
             user_texts.append(t)
+            ctx_objs = parse_context_objects(t)  # objects the user had open: starting state, with real queries
+            for kind in ("insights", "dashboards"):
+                for oid, o in ctx_objs[kind].items():
+                    prev = objects[kind].get(oid) or {}
+                    objects[kind][oid] = {**o, **{k: v for k, v in prev.items() if v is not None}}
             for mm in URL_RE.finditer(t):
                 path = mm.group(2)
                 om = OBJ_IN_PATH.match(path)

@@ -18,6 +18,7 @@ Assertions read the generated files directly (production-dated events; no loadin
   {"type": "funnel", "steps": [E1, E2, ...], "from": D, "to": D, "max_ratio": [r12, r23, ...]}  (step i+1 persons
       <= r * step i persons, persons doing the steps in order)
   {"type": "object", "kind": "insights"|"dashboards"|"notebooks", "id": X, "present": true|false}
+      (optional "min_tiles": n for dashboards, "query_kind": K for insights: the object's real definition)
   {"type": "history", "from": D, "op": ">=", "value": N}    (events on or before D; checks the twin covers D)
 Dates are production dates (YYYY-MM-DD, inclusive). Prints one line per assertion and a summary; exit 1 on failure.
 """
@@ -150,9 +151,17 @@ def check(tw: Twin, a: dict) -> tuple[bool, str]:
         ok = all(reached[k + 1] <= r * reached[k] for k, r in enumerate(a["max_ratio"]) if k + 1 < len(reached))
         return ok and reached[0] > 0, f"funnel={reached}"
     if t == "object":
-        ids = {str(o.get("short_id") or o.get("dashboard_id") or o.get("key")) for o in tw.objects.get(a["kind"], [])}
-        have = str(a["id"]) in ids
-        return have == a["present"], f"present={have}"
+        objs = {str(o.get("short_id") or o.get("dashboard_id") or o.get("key")): o for o in tw.objects.get(a["kind"], [])}
+        have = str(a["id"]) in objs
+        if not have or "query_kind" not in a and "min_tiles" not in a:
+            return have == a["present"], f"present={have}"
+        o = objs[str(a["id"])]
+        if "min_tiles" in a:
+            n = len(o.get("tile_short_ids") or [])
+            return n >= a["min_tiles"], f"tiles={n}"
+        q = o.get("query_full") or {}
+        kind = (q.get("source") or {}).get("kind") if q.get("kind") in ("InsightVizNode", "DataVisualizationNode") else q.get("kind")
+        return kind == a["query_kind"], f"query_kind={kind}"
     if t == "history":
         v = sum(1 for d in tw.ts if d <= dt.date.fromisoformat(a["from"]))
         return OPS[a["op"]](v, a["value"]), f"events_on_or_before={v}"

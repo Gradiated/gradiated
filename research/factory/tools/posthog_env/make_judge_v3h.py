@@ -14,8 +14,8 @@ import sys
 d = sys.argv[1]
 src = open(f"{d}/judge_v3g.py").read()
 out = f"{d}/judge_v3h.py"
-if os.path.exists(out):
-    print("exists")
+if os.path.exists(out) and "--force" not in sys.argv:
+    print("exists (pass --force to regenerate)")
     sys.exit(0)
 
 
@@ -34,10 +34,14 @@ s = rep(s, 'DOCS_SECTION = """', '''NOTES_SECTION = """
 {notes}
 """
 
-NOTES_RULES = """- Task notes. They say what a correct answer should contain and how to check it. Use them to spot missing parts
-  and wrong key facts, but the rollout's tool results are the ground truth: where the evidence contradicts a note,
-  follow the evidence. Accept the listed acceptable variations and do not penalise what the notes mark as not
-  required. Do not penalise a reasonable reading of an earlier turn because a later scripted turn asks for more.
+NOTES_RULES = """- Task notes. They say what a correct answer should contain and how to check it. Go through "must_include" item by
+  item: an item the final answers do not deliver is an error (material when it is the user's main request, moderate
+  otherwise), and a refusal or "I could not find it" does not deliver it unless the tool results show it truly
+  cannot be done. The rollout's tool results are the ground truth: where the evidence contradicts a note, follow the
+  evidence. Accept the listed acceptable variations; do not penalise what the notes mark as not required. Do not
+  penalise a reasonable reading of an earlier turn because a later scripted turn asks for more.
+- Data quality. If the agent correctly points out that data in the project looks implausible or inconsistent (and
+  its tool results show it), that is good analysis, not an error, even if the task notes do not mention it.
 """
 
 DOCS_SECTION = """''')

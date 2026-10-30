@@ -58,7 +58,7 @@ replay() {  # $1 = label
     && PYTHONUNBUFFERED=1 .venv/bin/python $V2/replay/replay_ins.py > "$P_REPLAY_DIR/replay_ins.log" 2>&1 \
     && python3 $V2/replay/classify_sql.py > "$P_REPLAY_DIR/classify.out" && python3 $V2/replay/pertask.py > "$P_REPLAY_DIR/pertask.out" \
     && .venv/bin/python $V2/artefact_check.py 2>/dev/null | tail -1 \
-    && python3 $V2/verify_tasks.py --label "$1" \
+    && python3 $V2/verify_tasks.py --label "$1" $([ "$1" = after ] && echo --final) \
     && python3 $V2/fidelity_compare.py /tmp/fid "$P_REPLAY_DIR" > "$P_REPLAY_DIR/compare_$1.txt")
 }
 run replay && { log "replay (before)"; replay before; }

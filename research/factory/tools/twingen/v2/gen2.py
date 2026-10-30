@@ -344,7 +344,7 @@ class Project2(gen.Project):
                         ent_for(email=v)
                     elif path in ("distinct_id",):
                         ent_for(did=v)
-                    elif path in ("person_id", "person.id") and _is_uuid(v):
+                    elif (path in ("person_id", "person.id") or (lit["table"] == "persons" and path == "id")) and _is_uuid(v):
                         ent_for(pid=v)
                     elif path in ("person.properties.name", "person.properties.$name"):
                         ent_for(name=v)
@@ -389,6 +389,43 @@ class Project2(gen.Project):
             per["entity"] = k
             self.entity_person[k] = pi
         self.v2["named_entities"] = len(self.entity_person)
+
+    def build_groups(self):
+        """rule: group keys and names that production filtered on ($group_N = key, groups.key / properties.name)
+        exist in the twin: the first groups of that type take those keys/names (memberships follow)."""
+        super().build_groups()
+        if not getattr(self, "group_types", None):
+            return
+        by_idx = {idx: name for idx, name, _ in self.group_types}
+        keys_for, names_for = C.defaultdict(list), C.defaultdict(list)
+        for lit in self.Q.get("entity_literals") or []:
+            path, table = lit["path"], lit["table"]
+            vals = [v for l in lit["lit"] if op_eq(l.get("op")) for v in l.get("values") or [] if isinstance(v, (str, int))]
+            m = re.search(r"\$group_(\d)", path)
+            if m:
+                keys_for[int(m.group(1))].extend(str(v) for v in vals)
+            elif table == "groups" and path in ("key", "group_key"):
+                keys_for[0].extend(str(v) for v in vals)
+            elif table == "groups" and path in ("properties.name", "properties.$name"):
+                names_for[0].extend(str(v) for v in vals)
+        n = 0
+        for idx, keys in keys_for.items():
+            if idx not in self.groups:
+                continue
+            name = by_idx[idx]
+            remap = {}
+            for g, k in zip(self.groups[idx], dict.fromkeys(keys)):
+                remap[g["key"]] = k
+                g["key"] = k
+                n += 1
+            for pg in self.person_groups:
+                if pg.get(name) in remap:
+                    pg[name] = remap[pg[name]]
+        for idx, names in names_for.items():
+            for g, nm in zip(self.groups.get(idx) or [], dict.fromkeys(names)):
+                g["props"]["name"] = nm
+                n += 1
+        self.v2["groups_from_filters"] = n
 
     def person_properties(self):
         super().person_properties()
@@ -725,7 +762,72 @@ class Project2(gen.Project):
                             rows.append(d)
                 if len(rows) > MAX_SEED_ROWS_PER_TABLE:
                     break
+        rows.extend(self.literal_rows(tname, tr))
         return rows[:MAX_SEED_ROWS_PER_TABLE]
+
+    def literal_rows(self, tname, tr) -> list[dict]:
+        """rule: warehouse queries that production answered find rows here. For each such uncorrupted query that
+        reads this table, add rows satisfying its literal predicates on this table, and give the columns of its
+        join pairs a shared key per row (the joined table gets the same keys)."""
+        out = []
+        fc = {c["k"]: c for c in self.F.get("calls") or []}
+        for qc in self.Q.get("calls") or []:
+            if not qc.get("ok") or qc.get("is_error") or qc.get("corrupted"):
+                continue
+            tabs = [t for t in qc.get("tables") or [] if self.canon_table(t, {tname: 1}) == tname or t == tname]
+            if not tabs:
+                continue
+            call = fc.get(qc["k"]) or {}
+            n_prod = call.get("n_rows") or len(call.get("rows") or [])
+            if not n_prod:
+                continue
+            k = int(min(50, max(3, n_prod)))
+            preds = C.defaultdict(list)
+            for t, p, lits in qc.get("literals") or []:
+                if t in tabs:
+                    preds[p.split(".")[0]].extend(lits)
+            joins = []
+            for a_, b_ in qc.get("join_pairs") or []:
+                for (t1, c1), (t2, c2) in ((a_, b_), (b_, a_)):
+                    if t1 in tabs:
+                        joins.append(c1)
+            if not preds and not joins:
+                continue
+            for i in range(k):
+                row = {}
+                for col, lits in preds.items():
+                    v = self._satisfy(lits, tr)
+                    if v is not None:
+                        row[col] = v
+                for col in joins:
+                    row[col] = 900000000 + qc["k"] * 1000 + i  # numeric, valid as string or integer key
+                out.append(row)
+            self.v2["wh_literal_rows"] += k
+        return out
+
+    @staticmethod
+    def _satisfy(lits, tr):
+        val = None
+        for l in lits:
+            op = str(l.get("op")).lower()
+            vals = [v for v in l.get("values") or [] if v is not None]
+            if not vals:
+                continue
+            v = vals[0]
+            d = parse_when(v) if isinstance(v, str) else None
+            x = numv(v) if not isinstance(v, bool) else None
+            if op in ("==", "=", "in"):
+                val = tr.choice(vals)
+            elif op in (">", ">="):
+                val = (d + dt.timedelta(days=15)).isoformat() if d else (x * 1.5 + 1 if x is not None else val)
+            elif op in ("<", "<="):
+                val = (d - dt.timedelta(days=15)).isoformat() if d else ((x * 0.5 if x > 0 else x - 1) if x is not None else val)
+            elif op in ("!=", "not in"):
+                if val is None:
+                    val = (x + 1) if x is not None else f"{v}_other"
+            elif op in ("like", "ilike"):
+                val = str(v).replace("%", "")
+        return val
 
     def cast(self, v, ctype):
         if v is None:
@@ -965,6 +1067,15 @@ class Project2(gen.Project):
         ec = pc.value_counts(out.column("event"))
         self.ev_counts = C.Counter({x["values"].as_py(): x["counts"].as_py() for x in ec})
 
+    def _entity_index(self) -> dict:
+        idx = {}
+        for k, pi in getattr(self, "entity_person", {}).items():
+            e = self.entities[k]
+            for v in (e.get("email"), e.get("distinct_id"), e.get("person_id"), e.get("name")):
+                if v:
+                    idx[str(v).lower()] = pi
+        return idx
+
     def event_seed_rows(self) -> list[dict]:
         rows = []
         ent_by = {}
@@ -1052,9 +1163,67 @@ class Project2(gen.Project):
                 out[p["key"]] = v
             elif op == "is_set":
                 out.setdefault(p["key"], "1")
+            elif op == "is_not" and v is not None:
+                sv = str(v).lower()
+                out.setdefault(p["key"], {"true": "false", "false": "true"}.get(sv, f"other_{v}"))
+            elif op in ("is_not_set", "not_icontains", "not_regex", "is_date_after", "is_date_before"):
+                continue  # satisfied by leaving the property unset (or not constrained)
+            elif op in ("gt", "gte", "lt", "lte") and numv(v) is not None:
+                x = numv(v)
+                out[p["key"]] = x + 1 if op.startswith("gt") else max(0, x - 1)
             else:
                 return None
         return out
+
+    def _date_from(self, src) -> dt.datetime:
+        df = str(((src.get("dateRange") or {}).get("date_from")) or "-30d")
+        m = re.match(r"^-(\d+)([hdwmy])", df)
+        if m:
+            n, u = int(m.group(1)), m.group(2)
+            return self.now - dt.timedelta(days=n * {"h": 1 / 24, "d": 1, "w": 7, "m": 30, "y": 365}[u])
+        return parse_when(df) or self.now - dt.timedelta(days=30)
+
+    def sequence_seed_rows(self, src, call, rnd) -> list[dict]:
+        """rule: funnels and retention that production answered need persons doing the steps in order (funnel
+        steps within the window; retention target event then returning events on later periods)."""
+        rows = []
+        start = max(self._date_from(src), self.now - dt.timedelta(days=self.H - 1))
+        span = max(3600.0, (self.now - start).total_seconds() - 3600)
+        if src["kind"] == "FunnelsQuery":
+            steps = []
+            for sr in src.get("series") or []:
+                f = self._exact_filters(sr.get("properties") or [])
+                if not sr.get("event") or f is None:
+                    return rows
+                steps.append((sr["event"], f))
+            if len(steps) < 2:
+                return rows
+            k = 25
+            for _ in range(k):
+                pi = rnd.randrange(self.n_persons)
+                t = start + dt.timedelta(seconds=rnd.uniform(0, span * 0.7))
+                for e, f in steps:
+                    rows.append({"event": e, "ts": t, "pi": pi, "props": dict(f)})
+                    t = t + dt.timedelta(seconds=rnd.uniform(30, 3600))
+            self.v2["sequence_seed_funnels"] += 1
+        else:
+            rf = src.get("retentionFilter") or {}
+            te = (rf.get("targetEntity") or {}).get("id") or (rf.get("targetEntity") or {}).get("name")
+            re_ = (rf.get("returningEntity") or {}).get("id") or (rf.get("returningEntity") or {}).get("name") or te
+            if not isinstance(te, str) or not isinstance(re_, str) or te == "All events":
+                return rows
+            per = {"Day": 1, "Week": 7, "Month": 30, "Hour": 1 / 24}.get(rf.get("period") or "Day", 1)
+            k = 40
+            for _ in range(k):
+                pi = rnd.randrange(self.n_persons)
+                t = start + dt.timedelta(seconds=rnd.uniform(0, span * 0.5))
+                rows.append({"event": te, "ts": t, "pi": pi, "props": {}})
+                for j in range(1, rnd.randint(2, 4)):
+                    t2 = t + dt.timedelta(days=per * j, seconds=rnd.uniform(0, 3600))
+                    if t2 < self.now:
+                        rows.append({"event": re_, "ts": t2, "pi": pi, "props": {}})
+            self.v2["sequence_seed_retention"] += 1
+        return rows
 
     def filter_seed_rows(self, rnd) -> list[dict]:
         rows = []
@@ -1066,9 +1235,46 @@ class Project2(gen.Project):
             if call.get("is_error") or not isinstance(sch, dict) or not call.get("rows"):
                 continue
             src = sch.get("source") if sch.get("kind") in ("InsightVizNode", "DataVisualizationNode") else sch
-            if not isinstance(src, dict) or src.get("kind") != "TrendsQuery" or src.get("breakdownFilter"):
+            if isinstance(src, dict) and src.get("kind") in ("FunnelsQuery", "RetentionQuery"):
+                rows.extend(self.sequence_seed_rows(src, call, rnd))
+                continue
+            if not isinstance(src, dict) or src.get("kind") != "TrendsQuery":
                 continue
             glob_f = self._exact_filters(src.get("properties") or [])
+            bd = src.get("breakdownFilter") or {}
+            bkey = bd.get("breakdown") if isinstance(bd.get("breakdown"), str) else None
+            if bd and bkey and len(src.get("series") or []) == 1 and glob_f is not None:
+                # breakdown columns "<label> breakdown for the value `v`": one seeded series per value
+                sr = src["series"][0]
+                f = self._exact_filters(sr.get("properties") or [])
+                if f is None or not sr.get("event") or sr.get("math") not in (None, "total", "dau"):
+                    continue
+                cols = call.get("cols") or []
+                vals = [re.search(r"for the value `([^`]*)`", str(c)) for c in cols[1:]]
+                pts_all = []
+                for j, m in enumerate(vals):
+                    if not m:
+                        continue
+                    for r in call["rows"]:
+                        if len(r) != len(cols):
+                            continue
+                        d = parse_when(str(r[0]).split(" ")[0])
+                        v = numv(r[j + 1])
+                        if d and v and v > 0:
+                            pts_all.append((d, v, m.group(1)))
+                tot = sum(v for _, v, _ in pts_all)
+                scale = min(1.0, self.FILTER_SEED_CAP / tot) if tot else 0
+                for d, v, bv in pts_all:
+                    k = int(round(v * scale)) or (1 if rnd.random() < v * scale else 0)
+                    for _ in range(k):
+                        when = min(d + dt.timedelta(seconds=rnd.uniform(0, 86399)), nowd - dt.timedelta(seconds=60))
+                        rows.append({"event": sr["event"], "ts": when, "pi": rnd.randrange(self.n_persons),
+                                     "props": {**glob_f, **f, bkey: bv}})
+                if pts_all:
+                    self.v2["filter_seed_breakdowns"] += 1
+                continue
+            if bd:
+                continue
             ser = src.get("series") or []
             cols = call.get("cols") or []
             if glob_f is None or len(cols) != len(ser) + 1:
@@ -1105,10 +1311,11 @@ class Project2(gen.Project):
             if not qc.get("ok") or qc.get("is_error") or qc.get("corrupted"):
                 continue
             evs = qc.get("events") or []
-            if len(evs) != 1:
+            if not evs or len(evs) > 8:
                 continue
             props = {}
             bad = False
+            person_fixed = None
             for t, p, lits in qc.get("literals") or []:
                 if t != "events":
                     continue
@@ -1122,9 +1329,13 @@ class Project2(gen.Project):
                             v = str(vals[0]).strip("%").replace("%", "")
                             if v:
                                 props[p[len("properties."):]] = v
-                elif p.startswith("person."):
-                    bad = True
-            if bad or not props:
+                elif p.startswith("person.") or p in ("distinct_id", "person_id"):
+                    vals = [x for l in lits if op_eq(l.get("op")) for x in l.get("values") or []]
+                    if vals and isinstance(vals[0], str) and str(vals[0]).lower() in self._entity_index():
+                        person_fixed = self._entity_index()[str(vals[0]).lower()]
+                    else:
+                        bad = True
+            if bad or (not props and person_fixed is None):
                 continue
             call = next((c for c in self.F.get("calls") or [] if c["k"] == qc["k"]), None)
             if not call or not call.get("rows"):
@@ -1136,6 +1347,8 @@ class Project2(gen.Project):
             days = (qc.get("window") or {}).get("interval_days") or 30
             w = qc.get("window") or {}
             a, b = parse_when(w.get("min_date") or ""), parse_when(w.get("max_date") or "")
+            if a and b and b == a:  # rule: a single absolute date means that whole day
+                b = a + dt.timedelta(days=1) - dt.timedelta(seconds=1)
             for _ in range(k):
                 if a and b and b > a:
                     when = a + dt.timedelta(seconds=rnd.uniform(0, (b - a).total_seconds()))
@@ -1143,8 +1356,11 @@ class Project2(gen.Project):
                     when = nowd - dt.timedelta(seconds=rnd.uniform(60, max(1, days) * 86400))
                 if when >= nowd:
                     continue
-                rows.append({"event": evs[0], "ts": when, "pi": rnd.randrange(self.n_persons), "props": dict(props)})
+                rows.append({"event": rnd.choice(evs), "ts": when, "pi": person_fixed if person_fixed is not None else rnd.randrange(self.n_persons),
+                             "props": dict(props)})
             self.v2["filter_seed_sql"] += 1
+            if person_fixed is not None:
+                self.v2["filter_seed_sql_person"] += 1
         self.v2["filter_seed_rows"] = len(rows)
         return rows
 

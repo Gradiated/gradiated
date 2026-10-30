@@ -64,6 +64,9 @@ def main() -> None:
     ap.add_argument("--tasks", default=f"{PATHS.TASKS_DIR}/test.jsonl")
     ap.add_argument("--out", default=f"{PATHS.TASKS_DIR}/status.json")
     ap.add_argument("--label", default="after")
+    ap.add_argument("--final", action="store_true",
+                    help="map tasks still broken after the repair loop to partial (some production evidence "
+                         "reproduces) or unrepairable (none does), with the failure kinds as the reason")
     a = ap.parse_args()
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import anoncheck
@@ -198,11 +201,24 @@ def main() -> None:
         if man.get("volume_scale", 1) < 0.99:
             reasons.append(f"volume scaled x{man['volume_scale']:.3f} to fit the event cap")
         prev_status = (out["tasks"].get(t["task_id"]) or {}).get("status")
+        env_denied = sorted({re.sub(r".*access to table `([^`]+)`.*", r"\1", x.get("err") or "") if "access to table" in (x.get("err") or "")
+                             else "ClickHouse dictionary privileges" for x in fails if "AccessDenied" in (x.get("err") or "")})
         if core_fail:
-            # a failure whose only failing evidence is external or anonymized cannot be repaired in the twin
-            only_external = unrep and all(x["kind"] != "sql" for x in fails)
+            # a failure whose only failing evidence is external, env-permission or anonymized cannot be repaired here
+            only_external = (unrep or env_denied) and all(x["kind"] != "sql" or "AccessDenied" in (x.get("err") or "") for x in fails)
             status = "unrepairable" if only_external else "broken"
             reasons = core_fail + reasons
+            if env_denied:
+                reasons.append("environment permission: " + ", ".join(env_denied))
+            if status == "broken" and a.final:
+                reproduced = chk["sql_nonempty"] + chk["insights_nonzero"] + chk["objects_found"]
+                kinds = sorted({f"{x['kind']}:{x['why']}" for x in fails})
+                if reproduced:
+                    status = "partial"
+                    reasons.append("after repair, some production evidence still not reproduced: " + ", ".join(kinds))
+                else:
+                    status = "unrepairable"
+                    reasons.append("not reproduced by any generator rule: " + ", ".join(kinds))
         elif unrep:
             status = "partial"
         elif reasons:

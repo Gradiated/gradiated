@@ -237,6 +237,22 @@ def value_type(v) -> str | None:
     return None
 
 
+WRAPPERS = {"coalesce", "nullif", "ifnull", "tostring", "lower", "upper", "trim", "trimboth", "assumenotnull",
+            "tostringornull", "nullif"}
+
+
+def unwrap_field(e):
+    """Value-preserving wrappers around one field (coalesce(nullIf(f, ''), '(none)'), ifNull(f, x), lower(f)) count as
+    that field for result-column mapping; the wrapped default/display values are handled as nulls downstream."""
+    from posthog.hogql import ast as a
+
+    seen = 0
+    while isinstance(e, a.Call) and e.name.lower() in WRAPPERS and e.args and seen < 6:
+        e = e.args[0]
+        seen += 1
+    return e
+
+
 def analyze_sql(sql: str, known: dict[str, set]) -> dict:
     from posthog.hogql.parser import parse_select
 
@@ -344,6 +360,7 @@ def analyze_sql(sql: str, known: dict[str, set]) -> dict:
         for x in q.select:
             name = x.alias if isinstance(x, a.Alias) else None
             e = x.expr if isinstance(x, a.Alias) else x
+            e = unwrap_field(e)  # coalesce(nullIf(properties.x, ''), '(none)') -> properties.x
             if isinstance(e, a.Field):
                 res = sc.resolve(e.chain)
                 if res:

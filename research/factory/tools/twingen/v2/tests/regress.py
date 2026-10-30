@@ -60,8 +60,15 @@ def regenerate(name: str, ids: list[str], splits: str) -> str:
     csv = ",".join(ids)
     subprocess.run([f"{PH}/.venv/bin/python", f"{V2}/qfacts.py", "--split", splits, "--ids", csv,
                     "--out", f"{root}/twins/qfacts_v2"], cwd=PH, env=env, check=True, capture_output=True)
-    subprocess.run([f"{TG}/.venv/bin/python", f"{V2}/run_all2.py", "--ids", csv, "--workers", "8",
-                    "--out", f"{root}/projects"], env=env, check=True, capture_output=True)
+    import shutil
+
+    for i in ids:  # never evaluate a previous run's output when this generation fails
+        shutil.rmtree(f"{root}/projects/{i}", ignore_errors=True)
+    r = subprocess.run([f"{TG}/.venv/bin/python", f"{V2}/run_all2.py", "--ids", csv, "--workers", "4",
+                        "--out", f"{root}/projects"], env=env, check=True, capture_output=True, text=True)
+    for line in r.stdout.splitlines():
+        if line.startswith("FAIL"):
+            print(f"GENERATION {line[:300]}")
     return f"{root}/projects"
 
 
@@ -175,6 +182,11 @@ def main() -> int:
             if c["conv"] not in full:
                 continue
             d = f"{proj}/{full[c['conv']]}"
+            if not os.path.exists(f"{d}/events.parquet"):
+                n += 1
+                fails += 1
+                print(f"FAIL {c['id']}: generation failed (no output)")
+                continue
             tw = Twin(d)
             for j, asr in enumerate(c["asserts"]):
                 n += 1

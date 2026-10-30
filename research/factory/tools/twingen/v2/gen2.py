@@ -49,7 +49,7 @@ import specio  # noqa: E402
 from gen import UTC, iso, stable_seed, uuid7, wh_column, WH_TYPES  # noqa: E402
 from specio import shape_of  # noqa: E402
 
-GEN2_VERSION = "twingen-2.4"
+GEN2_VERSION = "twingen-2.6"
 TWINS = PATHS.TWINS
 FACTS = PATHS.FACTS
 QFACTS = PATHS.QFACTS
@@ -211,6 +211,60 @@ def scrub_sampler(smp) -> int:
     return removed
 
 
+class GroupDist:
+    """rule (r5): a property's value distribution from a production grouped result (value -> count); null display
+    values mean the property is unset (returns None, so the event omits it)."""
+
+    source = "spec"
+    mode = "groupdist"
+    pending: list = []
+
+    def plan(self, n_calls):  # sampler interface (values.Sampler.plan): nothing to pre-plan
+        return None
+
+    def __init__(self, dist: dict, rnd):
+        self.items = [(None if str(v).strip() in NULLS or str(v).strip() == "(none)" else v, float(c)) for v, c in dist.items()]
+        self.rnd = rnd
+        self.cum, acc = [], 0.0
+        for _, c in self.items:
+            acc += c
+            self.cum.append(acc)
+
+    def __call__(self, ctx):
+        import bisect
+
+        x = self.rnd.random() * self.cum[-1]
+        return self.items[min(len(self.items) - 1, bisect.bisect_left(self.cum, x))][0]
+
+
+def group_distributions(qf: dict, min_total: float = 20) -> dict:
+    """(event, property) -> {value: count} from production grouped results over events (qfacts event_seeds with
+    groups). Dims that the same query filters on are skipped (biased); counts come from the first count aggregate."""
+    out: dict = {}
+    for sd in qf.get("event_seeds") or []:
+        groups = sd.get("groups") or []
+        evs = [e for e in sd.get("events") or [] if isinstance(e, str)]
+        if not groups or not evs:
+            continue
+        filtered = {p for _t, p, _l in sd.get("where") or []}
+        for dim in {k for g in groups for k in (g.get("dims") or {})}:
+            if not dim.startswith("properties.") or dim in filtered:
+                continue
+            dist = C.Counter()
+            for g in groups:
+                cnt = next((v for k, v in (g.get("aggs") or {}).items() if k.startswith("count(") and v is not None), None)
+                if cnt is None or cnt <= 0 or dim not in (g.get("dims") or {}):
+                    continue
+                dist[str((g["dims"] or {})[dim])] += float(cnt)
+            if sum(dist.values()) < min_total:
+                continue
+            for e in evs:
+                prev = out.get((e, dim[len("properties."):]))
+                if prev is None or sum(dist.values()) > sum(prev.values()):
+                    out[(e, dim[len("properties."):])] = dict(dist)
+    return out
+
+
 STUB_EVENT = re.compile(r"^(mcp |application )", re.I)
 
 
@@ -264,10 +318,15 @@ class Project2(gen.Project):
         for smp in (getattr(self, "ctx_samplers", None) or {}).values():
             self.v2["prior_null_choices_scrubbed"] += scrub_sampler(smp)
         zero = self.zero_filter_values()
+        for (e, prop), dist in group_distributions(self.Q).items():  # rule (r5): production value distributions
+            if e in self.ev_samplers:
+                self.ev_samplers[e][prop] = GroupDist(dist, random.Random(stable_seed(self.S["id"], "gdist", e, prop)))
+                self.v2["group_dist_props"] += 1
         for e, samplers in self.ev_samplers.items():
             props = ((self.S.get("events") or {}).get(e) or {}).get("properties") or {}
             for prop, d in props.items():
-                if prop not in samplers or d.get("values_status") != "filter_values" or not d.get("values"):
+                if prop not in samplers or d.get("values_status") != "filter_values" or not d.get("values") \
+                        or isinstance(samplers[prop], GroupDist):
                     continue
                 pri = getattr(gen, "PRI", {}) or {}
                 prior = ((pri.get("custom_props_common") or {}).get("properties") or {}).get(prop) or \
@@ -325,7 +384,9 @@ class Project2(gen.Project):
             if e not in self.active:
                 continue
             L = {"day": 1, "week": 7, "month": 30, "hour": 1 / 24}.get(s.get("interval"), None)
-            if not L or s.get("math") not in ("total", "dau") or s.get("period") == "previous":
+            math_ = s.get("math")
+            if not L or math_ not in ("total", "dau", "weekly_active", "monthly_active", "first_time_for_user") \
+                    or s.get("period") == "previous":
                 continue
             pts = [(parse_when(p[0]), p[1]) for p in s["points"] if not p[2]]
             pts = [(d, v) for d, v in pts if d is not None]
@@ -334,11 +395,22 @@ class Project2(gen.Project):
             last = max(d for d, _ in pts)
             recent = [v for d, v in pts if (last - d).days < max(30, 2 * L)]
             level = sum(recent) / max(1, len(recent)) / max(L, 1)
-            if s.get("math") == "dau" and L > 1:
+            if math_ == "dau" and L > 1:
                 # rule (r1b): weekly/monthly uniques -> daily uniques, sublinear (users return within the period)
                 level = sum(recent) / max(1, len(recent)) / (L ** 0.6)
                 self.v2["dau_from_period_uniques"] += 1
-            key = (e, s["math"])
+            elif math_ in ("weekly_active", "monthly_active"):
+                # rule (r4): rolling WAU/MAU values -> daily uniques with the same sublinear rule
+                W = 7 if math_ == "weekly_active" else 30
+                level = sum(recent) / max(1, len(recent)) / (W ** 0.6)
+                self.v2["dau_from_rolling_active"] += 1
+            elif math_ == "first_time_for_user":
+                # rule (r4): new users per interval -> a floor on daily uniques (each new user is active that day)
+                level = sum(recent) / max(1, len(recent)) / max(L, 1)
+                self.v2["dau_floor_from_new_users"] += 1
+            if math_ != "total":
+                math_ = "dau"
+            key = (e, math_)
             prev = out.get(key)
             cand = (level, bool(s.get("filtered")), len(pts))
             if prev is None or (prev[1] and not cand[1]) or (prev[1] == cand[1] and cand[2] > prev[2]):

@@ -145,6 +145,36 @@ class OverrideZeroed(unittest.TestCase):
         self.assertEqual(p.override_zeroed_events(), {"a"})
 
 
+class GroupDistributions(unittest.TestCase):
+    """r1 card 12: production's breakdown of utm_source on signups (none 114, google 29, ...) was ignored."""
+
+    QF = {"event_seeds": [{"events": ["signup"], "where": [["events", "properties.is_test", []]], "groups": [
+        {"dims": {"properties.utm_source": "(none)"}, "aggs": {"count()": 114}},
+        {"dims": {"properties.utm_source": "google"}, "aggs": {"count()": 29}},
+        {"dims": {"properties.utm_source": "bing"}, "aggs": {"count()": 7}}]}]}
+
+    def test_distribution(self):
+        d = gen2.group_distributions(self.QF)
+        self.assertEqual(d[("signup", "utm_source")], {"(none)": 114.0, "google": 29.0, "bing": 7.0})
+
+    def test_filtered_dim_skipped(self):
+        qf = json.loads(json.dumps(self.QF))
+        qf["event_seeds"][0]["where"] = [["events", "properties.utm_source", []]]
+        self.assertEqual(gen2.group_distributions(qf), {})
+
+    def test_sampler_interface(self):
+        """gen.py calls .plan(n), .source and .pending on every event sampler (missing .plan crashed generation)."""
+        g = gen2.GroupDist({"a": 1}, random.Random(0))
+        self.assertIsNone(g.plan(10))
+        self.assertEqual(g.source, "spec")
+
+    def test_sampler_none_means_unset(self):
+        g = gen2.GroupDist({"(none)": 114, "google": 29, "bing": 7}, random.Random(2))
+        out = C.Counter(g({}) for _ in range(6000))
+        self.assertAlmostEqual(out[None] / 6000, 114 / 150, delta=0.03)
+        self.assertNotIn("(none)", out)
+
+
 class FunnelDropoff(unittest.TestCase):
     """r1 card 13: funnel seeds walked every person through every step (twin 30->25 vs production 51->34->1->0->0)."""
 
@@ -250,6 +280,19 @@ class PeriodUniques(unittest.TestCase):
         lv = project(Q={"series": [s]}, active={"$pageview"}).series_levels()
         level = lv[("$pageview", "dau")][0]
         self.assertAlmostEqual(level, 60000 / 7 ** 0.6, delta=1)
+
+    def test_new_users_weekly_floor(self):
+        """r1 card 14: weekly new visitors (first_time_for_user, ~5k/week) were ignored."""
+        pts = [[f"2026-09-{d:02d}", 5000.0, False] for d in (7, 14, 21, 28)]
+        s = {"event": "$pageview", "math": "first_time_for_user", "interval": "week", "points": pts}
+        lv = project(Q={"series": [s]}, active={"$pageview"}).series_levels()
+        self.assertAlmostEqual(lv[("$pageview", "dau")][0], 5000 / 7, delta=1)
+
+    def test_weekly_active(self):
+        pts = [[f"2026-10-{d:02d}", 7000.0, False] for d in (1, 2, 3, 4)]
+        s = {"event": "$pageview", "math": "weekly_active", "interval": "day", "points": pts}
+        lv = project(Q={"series": [s]}, active={"$pageview"}).series_levels()
+        self.assertAlmostEqual(lv[("$pageview", "dau")][0], 7000 / 7 ** 0.6, delta=1)
 
     def test_previous_period_never_sets_level(self):
         pts = [["2026-07-20", 9.0, False], ["2026-07-27", 9.0, False], ["2026-08-03", 9.0, False]]

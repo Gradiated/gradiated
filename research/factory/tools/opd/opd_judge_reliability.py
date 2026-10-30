@@ -14,7 +14,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 sys.path.insert(0, "/opt/posthog-sft/eval")
 
-from providers import OpenAIResponses  # noqa: E402
+from providers import ProxyJudge  # noqa: E402
 from run_eval import JudgeOptions, judge_record  # noqa: E402
 from sampling import enumerate_points, load_conversations  # noqa: E402
 
@@ -28,7 +28,7 @@ def main() -> None:
     points = {pt.point_id: pt for pt in enumerate_points(load_conversations([args.data]))}
     records = sorted((r for r in map(json.loads, open(args.results)) if "judge" in r and "error" not in r
                       and not r["judge"].get("skipped")), key=lambda r: r["point_id"])[: args.points]
-    judge = OpenAIResponses("gpt-6.1-sol", 120, None)
+    judge = ProxyJudge("gpt-6.1-sol", 120, None)
     options = JudgeOptions("gpt-6.1-sol", reference_faithfulness=False)
 
     def again(r):

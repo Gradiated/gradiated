@@ -12,8 +12,6 @@ import argparse
 import json
 import os
 import sys
-import time
-import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 
 R = "/opt/posthog-env/runner"
@@ -94,18 +92,13 @@ Respond with ONLY a JSON object:
 
 
 def relay(prompt: str, model: str, effort: str | None = None) -> str:
-    body = json.dumps({"prompt": prompt, "model": model, "reasoning_effort": effort}).encode()
-    for attempt in range(8):
-        try:
-            req = urllib.request.Request("http://127.0.0.1:18777/complete", body, {"Content-Type": "application/json"})
-            with urllib.request.urlopen(req, timeout=900) as r:
-                d = json.load(r)
-            if d.get("text"):
-                return d["text"]
-        except Exception:  # noqa: BLE001
-            pass
-        time.sleep(min(60, 3 * 2 ** attempt))
-    raise RuntimeError("relay failed")
+    """Judge call through the CLIProxyAPI subscription proxy (/opt/posthog-env/llm_proxy.py, from
+    research/factory/tools/posthog_env/llm_proxy.py): 8 attempts with backoff, no fallback transport."""
+    if "/opt/posthog-env" not in sys.path:
+        sys.path.insert(0, "/opt/posthog-env")
+    import llm_proxy
+
+    return llm_proxy.judge_complete(prompt, model, effort, attempts=8, limit=False)[0]
 
 
 def parse(text: str) -> dict:

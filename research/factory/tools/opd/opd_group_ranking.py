@@ -26,7 +26,7 @@ sys.path.insert(0, str(HERE))
 from formats import anthropic_to_openai, openai_tools, output_from_anthropic_blocks, tool_schemas  # noqa: E402
 from opd_sample_score import param_types, post  # noqa: E402
 from opd_teacher_agreement import message  # noqa: E402
-from providers import OpenAIResponses, restore_required_properties  # noqa: E402
+from providers import ProxyJudge, restore_required_properties  # noqa: E402
 from run_eval import JudgeOptions, judge_record  # noqa: E402
 from sampling import _clean, enumerate_points  # noqa: E402
 from scoring import action_match, args_similarity, validity  # noqa: E402
@@ -55,7 +55,7 @@ def main() -> None:
         conversations = [_clean(json.loads(line), default_id=f"dev:{i}") for i, line in enumerate(f) if line.strip()]
     points = enumerate_points(conversations)
     random.Random(args.seed).shuffle(points)
-    judge = OpenAIResponses("gpt-6.1-sol", 120, None)
+    judge = ProxyJudge("gpt-6.1-sol", 120, None)
     options = JudgeOptions("gpt-6.1-sol", reference_faithfulness=False)
     kimi, special = load_k3(HERE)
     header = [special["<|open|>"], *kimi.encode_ordinary("message"), *kimi.encode_ordinary(" role"), *kimi.encode_ordinary('="'),

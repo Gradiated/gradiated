@@ -1,0 +1,520 @@
+--- a/opt/posthog-env/agent_driver.py
++++ b/opt/posthog-env/agent_driver.py
+@@ -633,15 +633,52 @@
+         print(f"[driver] docs stub skipped: {e}", file=sys.stderr)
+ 
+ 
++def use_llm_proxy() -> bool:
++    """[PROXY PATCH 2026-10-30] POSTHOG_ENV_LLM_VIA_PROXY=1: OpenAI sub-models, the Anthropic root and the conversation
++    summarizer go through the CLIProxyAPI subscription proxy (/opt/posthog-env/llm_proxy.py) instead of paid API keys.
++    Revert: restore agent_driver.py.before-proxy-20261030."""
++    import llm_proxy
++
++    if not llm_proxy.enabled():
++        return False
++    os.environ.update(llm_proxy.rollout_env())
++    return True
++
++
++def install_submodel_map() -> None:
++    """Map sub-models the subscriptions do not serve (gpt-4.1, gpt-5.2) to the closest proxy model. The recorder keeps
++    the requested name as `model` and the mapped one as `served_model`."""
++    import llm_proxy
++    from ee.hogai.llm import MaxChatOpenAI
++
++    cur_init = MaxChatOpenAI.__init__
++
++    def __init__(self, *args: Any, **kw: Any) -> None:
++        requested = kw.get("model") or kw.get("model_name")
++        mapped = llm_proxy.SUBMODEL_MAP.get(requested)
++        if mapped:
++            kw.pop("model_name", None)
++            kw["model"] = mapped
++        cur_init(self, *args, **kw)
++        if mapped:
++            object.__setattr__(self, "_requested_model", requested)
++
++    MaxChatOpenAI.__init__ = __init__
++
++
+ def install_models(root: str, submodels: str) -> None:
+     """Load keys, boot Django, install the root adapter, sub-model routing and usage tracking."""
+     if root not in ROOT_CHOICES:
+         raise ValueError(root)
+     # Anthropic is used by the production root and by the conversation summarizer (long conversations).
+-    load_key("ANTHROPIC_API_KEY", required=(root in ("anthropic", "opus")))
++    via_proxy = use_llm_proxy()
++    if not via_proxy:
++        load_key("ANTHROPIC_API_KEY", required=(root in ("anthropic", "opus")))
+     if root in ("k3", "k3-reasoning"):
+         load_key("FIREWORKS_API_KEY")
+-    if submodels == "openai":
++    if via_proxy:
++        pass
++    elif submodels == "openai":
+         load_key("OPENAI_API_KEY")
+     else:
+         os.environ.setdefault("OPENAI_API_KEY", "EMPTY")
+@@ -651,6 +688,8 @@
+     _originals()
+     if submodels == "vllm":
+         install_openai_compat(VLLM_BASE_URL, VLLM_MODEL)
++    elif via_proxy:
++        install_submodel_map()
+     if root == "anthropic":
+         mark_anthropic_root()
+     elif root == "opus":
+--- a/opt/posthog-env/runner/runner_common.py
++++ b/opt/posthog-env/runner/runner_common.py
+@@ -223,55 +223,34 @@
+     raise SystemExit(f"{name} missing")
+ 
+ 
+-JUDGE_VIA = os.environ.get("JUDGE_VIA", "codex")  # codex: ChatGPT-subscription relay (default); api: OpenAI API
+-CODEX_RELAY_URL = os.environ.get("CODEX_RELAY_URL", "http://127.0.0.1:18777/complete")
+-_RELAY_SLOTS = None
++JUDGE_VIA = os.environ.get("JUDGE_VIA", "proxy")  # proxy (default; "codex" is a legacy alias): CLIProxyAPI; api: OpenAI API
++RELAY_FALLBACKS = 0  # kept for callers that print it; there is no fallback transport
+ 
+ 
+ def codex_relay_complete(prompt: str, model: str = JUDGE_MODEL, reasoning_effort: str | None = None,
+-                         attempts: int = 6) -> tuple[str, dict]:
+-    """Same request as eval/providers.py CodexRelayJudge (usage is not reported: zero tokens, $0).
+-    At most 8 concurrent calls per process (relay limit)."""
+-    import random
+-    import threading
+-    import time
+-    import urllib.request
+-
+-    global _RELAY_SLOTS
+-    if _RELAY_SLOTS is None:
+-        _RELAY_SLOTS = threading.BoundedSemaphore(int(os.environ.get("CODEX_RELAY_CONCURRENCY", "8")))
+-    body = json.dumps({"prompt": prompt + "\n\nRespond with a single JSON object only.", "model": model,
+-                       "reasoning_effort": reasoning_effort}).encode()
+-    last = ""
+-    for attempt in range(attempts):
+-        with _RELAY_SLOTS:
+-            try:
+-                req = urllib.request.Request(CODEX_RELAY_URL, data=body, headers={"Content-Type": "application/json"})
+-                with urllib.request.urlopen(req, timeout=900) as r:
+-                    d = json.loads(r.read())
+-                if d.get("error"):
+-                    last = str(d["error"])[:200]
+-                else:
+-                    return d["text"], {"model": model, "via": "codex", "input": 0, "cache_read": 0, "cache_write": 0,
+-                                       "output": 0}
+-            except Exception as e:  # noqa: BLE001
+-                last = f"{type(e).__name__}: {str(e)[:200]}"
+-        time.sleep(min(60.0, 2 ** attempt * 2) * (0.75 + 0.5 * random.random()))
+-    raise RuntimeError(f"codex relay failed: {last}")
++                         attempts: int = 8) -> tuple[str, dict]:
++    """Judge/critic call through the CLIProxyAPI subscription proxy (name kept for existing callers). Retried with
++    backoff, no fallback. Usage reports zero tokens ($0, subscription). At most CODEX_RELAY_CONCURRENCY (default 8)
++    concurrent calls per process."""
++    import sys
++
++    if "/opt/posthog-env" not in sys.path:
++        sys.path.insert(0, "/opt/posthog-env")
++    import llm_proxy
++
++    text, _ = llm_proxy.judge_complete(prompt + "\n\nRespond with a single JSON object only.", model,
++                                       reasoning_effort, attempts=attempts)
++    return text, {"model": model, "via": "cliproxy", "input": 0, "cache_read": 0, "cache_write": 0, "output": 0}
+ 
+ 
+-RELAY_FALLBACKS = 0
++proxy_complete = codex_relay_complete
+ 
+ 
+ def openai_complete(prompt: str, model: str = JUDGE_MODEL, reasoning_effort: str | None = None,
+                     attempts: int = 8, timeout: float = 300) -> tuple[str, dict]:
+-    """Judge call: Codex relay first (JUDGE_VIA=codex), OpenAI Responses API as fallback (usage then has via=api)."""
+-    global RELAY_FALLBACKS
+-    if JUDGE_VIA == "codex":
+-        try:
+-            return codex_relay_complete(prompt, model, reasoning_effort)
+-        except Exception:  # noqa: BLE001
+-            RELAY_FALLBACKS += 1
++    """Judge call: the subscription proxy (default), or the paid OpenAI Responses API only with JUDGE_VIA=api."""
++    if JUDGE_VIA != "api":
++        return codex_relay_complete(prompt, model, reasoning_effort, attempts)
+     return openai_api_complete(prompt, model, reasoning_effort, attempts, timeout)
+ 
+ 
+--- a/opt/posthog-env/runner/judge_v3/judge_v3.py
++++ b/opt/posthog-env/runner/judge_v3/judge_v3.py
+@@ -85,18 +85,13 @@
+ 
+ 
+ def relay(prompt: str, model: str, effort: str | None = None) -> str:
+-    body = json.dumps({"prompt": prompt, "model": model, "reasoning_effort": effort}).encode()
+-    for attempt in range(8):
+-        try:
+-            req = urllib.request.Request("http://127.0.0.1:18777/complete", body, {"Content-Type": "application/json"})
+-            with urllib.request.urlopen(req, timeout=900) as r:
+-                d = json.load(r)
+-            if d.get("text"):
+-                return d["text"]
+-        except Exception:  # noqa: BLE001
+-            pass
+-        time.sleep(min(60, 3 * 2 ** attempt))
+-    raise RuntimeError("relay failed")
++    """Judge call through the CLIProxyAPI subscription proxy (/opt/posthog-env/llm_proxy.py): 8 attempts with
++    backoff, no fallback transport. Same prompt as the retired Codex relay (which added the judge preamble)."""
++    if "/opt/posthog-env" not in sys.path:
++        sys.path.insert(0, "/opt/posthog-env")
++    import llm_proxy
++
++    return llm_proxy.judge_complete(prompt, model, effort, attempts=8, limit=False)[0]
+ 
+ 
+ def parse(text: str) -> dict:
+--- a/opt/posthog-env/runner/judge_v3/judge_v3d.py
++++ b/opt/posthog-env/runner/judge_v3/judge_v3d.py
+@@ -94,18 +94,13 @@
+ 
+ 
+ def relay(prompt: str, model: str, effort: str | None = None) -> str:
+-    body = json.dumps({"prompt": prompt, "model": model, "reasoning_effort": effort}).encode()
+-    for attempt in range(8):
+-        try:
+-            req = urllib.request.Request("http://127.0.0.1:18777/complete", body, {"Content-Type": "application/json"})
+-            with urllib.request.urlopen(req, timeout=900) as r:
+-                d = json.load(r)
+-            if d.get("text"):
+-                return d["text"]
+-        except Exception:  # noqa: BLE001
+-            pass
+-        time.sleep(min(60, 3 * 2 ** attempt))
+-    raise RuntimeError("relay failed")
++    """Judge call through the CLIProxyAPI subscription proxy (/opt/posthog-env/llm_proxy.py): 8 attempts with
++    backoff, no fallback transport. Same prompt as the retired Codex relay (which added the judge preamble)."""
++    if "/opt/posthog-env" not in sys.path:
++        sys.path.insert(0, "/opt/posthog-env")
++    import llm_proxy
++
++    return llm_proxy.judge_complete(prompt, model, effort, attempts=8, limit=False)[0]
+ 
+ 
+ def parse(text: str) -> dict:
+--- a/opt/posthog-env/runner/judge_v3/judge_v3f.py
++++ b/opt/posthog-env/runner/judge_v3/judge_v3f.py
+@@ -118,18 +118,13 @@
+ 
+ 
+ def relay(prompt: str, model: str, effort: str | None = None) -> str:
+-    body = json.dumps({"prompt": prompt, "model": model, "reasoning_effort": effort}).encode()
+-    for attempt in range(8):
+-        try:
+-            req = urllib.request.Request("http://127.0.0.1:18777/complete", body, {"Content-Type": "application/json"})
+-            with urllib.request.urlopen(req, timeout=900) as r:
+-                d = json.load(r)
+-            if d.get("text"):
+-                return d["text"]
+-        except Exception:  # noqa: BLE001
+-            pass
+-        time.sleep(min(60, 3 * 2 ** attempt))
+-    raise RuntimeError("relay failed")
++    """Judge call through the CLIProxyAPI subscription proxy (/opt/posthog-env/llm_proxy.py): 8 attempts with
++    backoff, no fallback transport. Same prompt as the retired Codex relay (which added the judge preamble)."""
++    if "/opt/posthog-env" not in sys.path:
++        sys.path.insert(0, "/opt/posthog-env")
++    import llm_proxy
++
++    return llm_proxy.judge_complete(prompt, model, effort, attempts=8, limit=False)[0]
+ 
+ 
+ def parse(text: str) -> dict:
+--- a/opt/posthog-env/runner/judge_v3/judge_v3g.py
++++ b/opt/posthog-env/runner/judge_v3/judge_v3g.py
+@@ -252,18 +252,13 @@
+ 
+ 
+ def relay(prompt: str, model: str, effort: str | None = None) -> str:
+-    body = json.dumps({"prompt": prompt, "model": model, "reasoning_effort": effort}).encode()
+-    for attempt in range(8):
+-        try:
+-            req = urllib.request.Request("http://127.0.0.1:18777/complete", body, {"Content-Type": "application/json"})
+-            with urllib.request.urlopen(req, timeout=900) as r:
+-                d = json.load(r)
+-            if d.get("text"):
+-                return d["text"]
+-        except Exception:  # noqa: BLE001
+-            pass
+-        time.sleep(min(60, 3 * 2 ** attempt))
+-    raise RuntimeError("relay failed")
++    """Judge call through the CLIProxyAPI subscription proxy (/opt/posthog-env/llm_proxy.py): 8 attempts with
++    backoff, no fallback transport. Same prompt as the retired Codex relay (which added the judge preamble)."""
++    if "/opt/posthog-env" not in sys.path:
++        sys.path.insert(0, "/opt/posthog-env")
++    import llm_proxy
++
++    return llm_proxy.judge_complete(prompt, model, effort, attempts=8, limit=False)[0]
+ 
+ 
+ def parse(text: str) -> dict:
+--- a/opt/posthog-env/calib/judge_v3f_c1.py
++++ b/opt/posthog-env/calib/judge_v3f_c1.py
+@@ -114,18 +114,13 @@
+ 
+ 
+ def relay(prompt: str, model: str, effort: str | None = None) -> str:
+-    body = json.dumps({"prompt": prompt, "model": model, "reasoning_effort": effort}).encode()
+-    for attempt in range(8):
+-        try:
+-            req = urllib.request.Request("http://127.0.0.1:18777/complete", body, {"Content-Type": "application/json"})
+-            with urllib.request.urlopen(req, timeout=900) as r:
+-                d = json.load(r)
+-            if d.get("text"):
+-                return d["text"]
+-        except Exception:  # noqa: BLE001
+-            pass
+-        time.sleep(min(60, 3 * 2 ** attempt))
+-    raise RuntimeError("relay failed")
++    """Judge call through the CLIProxyAPI subscription proxy (/opt/posthog-env/llm_proxy.py): 8 attempts with
++    backoff, no fallback transport. Same prompt as the retired Codex relay (which added the judge preamble)."""
++    if "/opt/posthog-env" not in sys.path:
++        sys.path.insert(0, "/opt/posthog-env")
++    import llm_proxy
++
++    return llm_proxy.judge_complete(prompt, model, effort, attempts=8, limit=False)[0]
+ 
+ 
+ def parse(text: str) -> dict:
+--- a/opt/posthog-env/calib/judge_v3f_c2_final.py
++++ b/opt/posthog-env/calib/judge_v3f_c2_final.py
+@@ -118,18 +118,13 @@
+ 
+ 
+ def relay(prompt: str, model: str, effort: str | None = None) -> str:
+-    body = json.dumps({"prompt": prompt, "model": model, "reasoning_effort": effort}).encode()
+-    for attempt in range(8):
+-        try:
+-            req = urllib.request.Request("http://127.0.0.1:18777/complete", body, {"Content-Type": "application/json"})
+-            with urllib.request.urlopen(req, timeout=900) as r:
+-                d = json.load(r)
+-            if d.get("text"):
+-                return d["text"]
+-        except Exception:  # noqa: BLE001
+-            pass
+-        time.sleep(min(60, 3 * 2 ** attempt))
+-    raise RuntimeError("relay failed")
++    """Judge call through the CLIProxyAPI subscription proxy (/opt/posthog-env/llm_proxy.py): 8 attempts with
++    backoff, no fallback transport. Same prompt as the retired Codex relay (which added the judge preamble)."""
++    if "/opt/posthog-env" not in sys.path:
++        sys.path.insert(0, "/opt/posthog-env")
++    import llm_proxy
++
++    return llm_proxy.judge_complete(prompt, model, effort, attempts=8, limit=False)[0]
+ 
+ 
+ def parse(text: str) -> dict:
+--- a/opt/posthog-env/runner/eval_ms.py
++++ b/opt/posthog-env/runner/eval_ms.py
+@@ -39,6 +39,10 @@
+ from concurrent.futures import ThreadPoolExecutor
+ 
+ os.environ.setdefault("CODEX_RELAY_CONCURRENCY", "1")  # loop's critic transport; unused here
++sys.path.insert(0, "/opt/posthog-env")
++import llm_proxy  # noqa: E402
++
++llm_proxy.default_on_for_new_runs()  # [PROXY PATCH 2026-10-30] POSTHOG_ENV_LLM_VIA_PROXY=1 unless set or an old chain
+ sys.path.insert(0, "/opt/posthog-env/correct")
+ import loop as L  # noqa: E402  (PortPool, rollout via run_hint.py, judge v3d scorer, passes)
+ 
+--- a/opt/posthog-env/correct/loop.py
++++ b/opt/posthog-env/correct/loop.py
+@@ -31,6 +31,10 @@
+ from concurrent.futures import ThreadPoolExecutor, as_completed
+ 
+ os.environ.setdefault("CODEX_RELAY_CONCURRENCY", "2")
++sys.path.insert(0, "/opt/posthog-env")
++import llm_proxy  # noqa: E402
++
++llm_proxy.default_on_for_new_runs()  # [PROXY PATCH 2026-10-30] POSTHOG_ENV_LLM_VIA_PROXY=1 unless set or an old chain
+ os.environ.setdefault("RUBRIC_WORKERS", "8")
+ HERE = "/opt/posthog-env/correct"
+ RUNNER = "/opt/posthog-env/runner"
+--- a/opt/posthog-env/rft/sample.py
++++ b/opt/posthog-env/rft/sample.py
+@@ -11,6 +11,10 @@
+ from collections import Counter
+ from concurrent.futures import ThreadPoolExecutor
+ os.environ.setdefault("CODEX_RELAY_CONCURRENCY", "1")
++sys.path.insert(0, "/opt/posthog-env")
++import llm_proxy  # noqa: E402
++
++llm_proxy.default_on_for_new_runs()  # [PROXY PATCH 2026-10-30] POSTHOG_ENV_LLM_VIA_PROXY=1 unless set or an old chain
+ sys.path.insert(0, "/opt/posthog-env/correct")
+ import loop as L  # noqa: E402
+ 
+--- a/opt/posthog-env/runner/run_tasks.py
++++ b/opt/posthog-env/runner/run_tasks.py
+@@ -23,6 +23,10 @@
+ 
+ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+ from runner_common import MODELS, RUNNER, RUNS, TASKS, load_tasks  # noqa: E402
++sys.path.insert(0, "/opt/posthog-env")
++import llm_proxy  # noqa: E402
++
++llm_proxy.default_on_for_new_runs()  # [PROXY PATCH 2026-10-30] POSTHOG_ENV_LLM_VIA_PROXY=1 unless set or an old chain
+ 
+ RETRY_STATUSES = {"infra_error", "crash", "exception"}
+ PH = "/opt/posthog-env/posthog"
+--- a/opt/posthog-env/correct/stats.py
++++ b/opt/posthog-env/correct/stats.py
+@@ -154,7 +154,7 @@
+                    "critic_calls": len(crit),
+                    "critic_regenerations": sum(max(0, (c.get("critic_attempts") or 1) - 1) for c in crit),
+                    "critic_final_notes_with_leak_numbers": sum(1 for c in crit if c.get("leak_numbers")),
+-                   "judge_and_critic_usd": 0.0, "via": "codex relay (subscription)"}
++                   "judge_and_critic_usd": 0.0, "via": "cliproxy (subscription)"}
+     out["hint_splice"] = dict(splice)
+     json.dump(out, open(f"{HERE}/stats.json", "w"), indent=1)  # stats.py [root]
+     print(json.dumps(out, indent=1))
+--- a/opt/posthog-sft/eval/providers.py
++++ b/opt/posthog-sft/eval/providers.py
+@@ -32,6 +32,26 @@
+ KEY_VARS = ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "OPENROUTER_API_KEY")
+ 
+ 
++# ---------------------------------------------------------------------------
++# CLIProxyAPI subscription proxy (127.0.0.1:8317 via an SSH reverse tunnel). Used for OpenAI and Anthropic calls
++# whenever /root/.cliproxy_key exists, unless LLM_VIA_PROXY=0.
++
++PROXY_BASE = os.environ.get("CLIPROXY_BASE_URL", "http://127.0.0.1:8317").rstrip("/")
++PROXY_KEY_FILE = os.environ.get("CLIPROXY_KEY_FILE", "/root/.cliproxy_key")
++JUDGE_PREAMBLE = ("You are being used as an evaluation judge, not as a coding agent. Do not run commands or edit "
++                  "files. Read the task below and reply with only the requested output.\n\n")
++
++
++def proxy_settings() -> tuple[str, str] | None:
++    if os.environ.get("LLM_VIA_PROXY", "1") == "0":
++        return None
++    key = os.environ.get("CLIPROXY_KEY")
++    if not key and os.path.exists(PROXY_KEY_FILE):
++        with open(PROXY_KEY_FILE) as f:
++            key = f.read().strip()
++    return (PROXY_BASE, key) if key else None
++
++
+ def redact(text: str) -> str:
+     for var in KEY_VARS:
+         value = os.environ.get(var)
+@@ -222,9 +242,13 @@
+     def __init__(self, model: str, max_tokens: int = 16384, thinking_budget: int = 10240, effort: str | None = "medium") -> None:
+         import anthropic  # noqa: PLC0415 - only this provider needs the SDK
+ 
+-        if not os.environ.get("ANTHROPIC_API_KEY"):
+-            raise ProviderError("ANTHROPIC_API_KEY is not set")
+-        self.client = anthropic.Anthropic(max_retries=8, timeout=900)
++        proxy = proxy_settings()
++        if proxy:
++            self.client = anthropic.Anthropic(base_url=proxy[0], api_key=proxy[1], max_retries=8, timeout=900)
++        else:
++            if not os.environ.get("ANTHROPIC_API_KEY"):
++                raise ProviderError("ANTHROPIC_API_KEY is not set")
++            self.client = anthropic.Anthropic(max_retries=8, timeout=900)
+         self.model, self.max_tokens, self.thinking_budget, self.effort = model, max_tokens, thinking_budget, effort
+ 
+     def request_kwargs(self, system: Any, history: list[dict], tools: list[dict]) -> tuple[dict, dict]:
+@@ -306,8 +330,13 @@
+ 
+ class OpenAIResponses:
+     def __init__(self, model: str, per_minute: float, reasoning_effort: str | None = None) -> None:
+-        if not os.environ.get("OPENAI_API_KEY"):
+-            raise ProviderError("OPENAI_API_KEY is not set")
++        proxy = proxy_settings()
++        if proxy:
++            self.url, self.key = f"{proxy[0]}/v1/responses", proxy[1]
++        else:
++            if not os.environ.get("OPENAI_API_KEY"):
++                raise ProviderError("OPENAI_API_KEY is not set")
++            self.url, self.key = "https://api.openai.com/v1/responses", os.environ["OPENAI_API_KEY"]
+         self.model, self.reasoning_effort = model, reasoning_effort
+         self.pacer = Pacer(per_minute)
+ 
+@@ -316,8 +345,7 @@
+                                 "text": {"format": {"type": "json_object"}}}
+         if self.reasoning_effort:
+             body["reasoning"] = {"effort": self.reasoning_effort}
+-        data = post_json("https://api.openai.com/v1/responses", body,
+-                         {"Authorization": f"Bearer {os.environ['OPENAI_API_KEY']}"}, timeout=300, attempts=10, pacer=self.pacer)
++        data = post_json(self.url, body, {"Authorization": f"Bearer {self.key}"}, timeout=300, attempts=10, pacer=self.pacer)
+         u = data.get("usage") or {}
+         cached = (u.get("input_tokens_details") or {}).get("cached_tokens", 0) or 0
+         usage = {"input": (u.get("input_tokens") or 0) - cached, "cache_read": cached, "cache_write": 0,
+@@ -326,21 +354,32 @@
+         return text, usage
+ 
+ 
+-class CodexRelayJudge:
+-    """The same judge model through the Codex CLI on a ChatGPT subscription, reached via a localhost relay
+-    (an SSH reverse tunnel to the machine holding the Codex login). Usage is reported as zero tokens."""
++class ProxyJudge:
++    """The judge model through the CLIProxyAPI subscription proxy (chat completions). Same prompt as the retired
++    Codex relay judge; usage is reported as zero tokens (subscription)."""
+ 
+     def __init__(self, model: str, per_minute: float, reasoning_effort: str | None = None) -> None:
++        proxy = proxy_settings()
++        if not proxy:
++            raise ProviderError("CLIProxyAPI key not found (/root/.cliproxy_key) or LLM_VIA_PROXY=0")
++        self.base, self.key = proxy
+         self.model, self.reasoning_effort = model, reasoning_effort
+-        self.url = os.environ.get("CODEX_RELAY_URL", "http://127.0.0.1:18777/complete")
++        self.pacer = Pacer(per_minute)
+ 
+     def complete(self, prompt: str) -> tuple[str, dict]:
+-        body = {"prompt": prompt + "\n\nRespond with a single JSON object only.", "model": self.model,
+-                "reasoning_effort": self.reasoning_effort}
+-        data = post_json(self.url, body, {}, timeout=900, attempts=6)
+-        if data.get("error"):
+-            raise ProviderError(str(data["error"])[:300])
+-        return data["text"], {"input": 0, "cache_read": 0, "cache_write": 0, "output": 0}
++        body: dict[str, Any] = {"model": self.model, "messages": [
++            {"role": "user", "content": JUDGE_PREAMBLE + prompt + "\n\nRespond with a single JSON object only."}]}
++        if self.reasoning_effort:
++            body["reasoning_effort"] = self.reasoning_effort
++        data = post_json(f"{self.base}/v1/chat/completions", body, {"Authorization": f"Bearer {self.key}"},
++                         timeout=900, attempts=8, pacer=self.pacer)
++        text = ((data.get("choices") or [{}])[0].get("message") or {}).get("content") or ""
++        if not text:
++            raise ProviderError("empty judge completion from the proxy")
++        return text, {"input": 0, "cache_read": 0, "cache_write": 0, "output": 0}
++
++
++CodexRelayJudge = ProxyJudge  # legacy name: --judge-via codex now uses the proxy
+ 
+ 
+ class OpenRouterJudge:
+--- a/opt/posthog-sft/eval/run_eval.py
++++ b/opt/posthog-sft/eval/run_eval.py
+@@ -29,7 +29,7 @@
+     AnthropicProvider,
+     Completer,
+     OpenAIResponses,
+-    CodexRelayJudge,
++    ProxyJudge,
+     OpenRouterJudge,
+     Provider,
+     ProviderError,
+@@ -341,7 +341,9 @@
+     jg = parser.add_argument_group("judge")
+     jg.add_argument("--judge-model", default="gpt-6.1-sol")
+     jg.add_argument("--no-judge", action="store_true")
+-    jg.add_argument("--judge-via", choices=("openai", "openrouter", "codex"), default="openai", help="transport for the same judge model")
++    jg.add_argument("--judge-via", choices=("proxy", "openai", "openrouter", "codex"), default="proxy",
++                    help="transport for the same judge model: proxy = CLIProxyAPI subscription proxy (codex is a legacy "
++                         "alias); openai = Responses API (also through the proxy when /root/.cliproxy_key exists)")
+     jg.add_argument("--judge-rpm", type=float, default=60, help="judge requests started per minute; 0 for no pacing")
+     jg.add_argument("--judge-reasoning", default="", help="Responses API reasoning effort for the judge; omitted by default")
+     jg.add_argument("--no-reference-faithfulness", action="store_true", help="skip the faithfulness baseline on the reference")
+@@ -361,7 +363,7 @@
+     else:
+         try:
+             provider = build_provider(args)
+-            judge_cls = {"openrouter": OpenRouterJudge, "codex": CodexRelayJudge}.get(args.judge_via, OpenAIResponses)
++            judge_cls = {"openrouter": OpenRouterJudge, "codex": ProxyJudge, "proxy": ProxyJudge}.get(args.judge_via, OpenAIResponses)
+             judge = None if args.no_judge else judge_cls(args.judge_model, args.judge_rpm, args.judge_reasoning or None)
+         except ProviderError as error:
+             sys.exit(str(error))

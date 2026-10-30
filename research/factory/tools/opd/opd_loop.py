@@ -60,8 +60,8 @@ def main() -> None:
     p.add_argument("--score-args", default="", help="extra opd_sample_score.py arguments, space-separated")
     p.add_argument("--port", default="29541", help="accelerate main process port; distinct per concurrent run")
     p.add_argument("--train-args", default="", help="extra opd_train.py arguments, space-separated")
-    p.add_argument("--judge-via", default="codex", choices=("openai", "codex"),
-                   help="judge transport for checkpoint evals; codex uses the ChatGPT-subscription relay on 127.0.0.1:18777")
+    p.add_argument("--judge-via", default="proxy", choices=("proxy", "openai"),
+                   help="judge transport for checkpoint evals; proxy uses the CLIProxyAPI subscription proxy on 127.0.0.1:8317")
     args = p.parse_args()
 
     run = OPD / "runs" / args.name

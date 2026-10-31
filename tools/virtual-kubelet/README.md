@@ -489,3 +489,22 @@ python3 product/inference/images/gpu-base/tests/e2e_image.py /tmp/gpu-fleet-e2e
 (cd product/services/gpu-fleet && GPU_FLEET_E2E=/tmp/gpu-fleet-e2e pnpm exec vitest run --config vitest.e2e.config.ts)
 ```
 
+
+### Reserving an isolated qualification slot
+
+Before running an unmanaged TP1 test beside serving allocations, use the merged
+`tools/gpu/qualification-slot.py` with `AWS_PROFILE=gradiated-developer` to
+`acquire --node gpu-<instance UUID> --lease .agents/runtime/qualification-lease.json`.
+It requires a Ready, schedulable node with a spare GPU, 16 CPUs and 224 GiB RAM,
+cordons it without evicting existing pods, and requires thirty seconds of stable
+scheduled demand after the cordon, with a two-minute settling deadline. Capacity
+and cordon ownership are rechecked every five seconds. The test must independently verify an unused GPU and hold its host GPU lock,
+impose CPU/RAM limits, use private ports and enforce a cleanup deadline. No provider changes
+are needed. The host reserved for the other workstream is rejected.
+
+The lease file is recovery state. After confirming that the owned test processes
+have stopped and their GPU/cgroup resources are released, run the same tool with
+`release --lease .agents/runtime/qualification-lease.json`. It refuses to uncordon
+a replaced node or a node whose qualification/fleet ownership changed. A command
+failure or lost workspace leaves the node reserved; inspect the recorded owner
+and finish cleanup before releasing it. This does not interrupt serving pods.

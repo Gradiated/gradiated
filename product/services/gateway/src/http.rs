@@ -191,9 +191,18 @@ async fn inference(
     let generation_id = metadata.generation_id;
 
     async {
-        let result = serve(&state, endpoint, metadata, &headers, body).await;
+        let mut is_verification = false;
+        let result = serve(
+            &state,
+            endpoint,
+            metadata,
+            &headers,
+            body,
+            &mut is_verification,
+        )
+        .await;
 
-        finish(&state, endpoint, generation_id, result)
+        finish(&state, endpoint, generation_id, result, is_verification)
     }
     .instrument(crate::diagnostics::request_span(generation_id, &headers))
     .await
@@ -205,12 +214,19 @@ async fn serve(
     metadata: RequestMetadata,
     headers: &HeaderMap,
     body: Result<Bytes, BytesRejection>,
+    is_verification: &mut bool,
 ) -> Result<Response, GatewayError> {
     let body = body.map_err(body_rejection)?;
 
     let ClassifiedRequest { hosted, request } = state
         .coordinator
-        .classify(headers, &body, metadata.received_at, endpoint.protocol)
+        .classify_with_traffic(
+            headers,
+            &body,
+            metadata.received_at,
+            endpoint.protocol,
+            is_verification,
+        )
         .await?;
     crate::session_telemetry::record_body(&request);
     let translated = endpoint.protocol.translate_request(&request)?;
@@ -242,12 +258,14 @@ fn finish(
     endpoint: &Endpoint,
     generation_id: Uuid,
     result: Result<Response, GatewayError>,
+    is_verification: bool,
 ) -> Response {
     let mut response = record(
         state,
         endpoint.route,
         Some(generation_id),
         result,
+        is_verification,
         |error| endpoint.protocol.error_response(error),
     );
 
@@ -263,6 +281,7 @@ fn record(
     route: &'static str,
     generation_id: Option<Uuid>,
     result: Result<Response, GatewayError>,
+    is_verification: bool,
     render: impl FnOnce(GatewayError) -> Response,
 ) -> Response {
     let error_code = match &result {
@@ -281,9 +300,12 @@ fn record(
     };
 
     let response = result.unwrap_or_else(render);
-    state
-        .metrics
-        .record_http(route, response.status().as_u16(), error_code);
+    state.metrics.record_http(
+        route,
+        response.status().as_u16(),
+        error_code,
+        is_verification,
+    );
 
     response
 }
@@ -380,7 +402,14 @@ async fn models(State(state): State<GatewayState>, headers: HeaderMap) -> Respon
             Json(ModelCatalogResponse::from_models(&models, state.compliance)).into_response()
         });
 
-    record(&state, "models", None, result, IntoResponse::into_response)
+    record(
+        &state,
+        "models",
+        None,
+        result,
+        false,
+        IntoResponse::into_response,
+    )
 }
 
 async fn live() -> Json<HealthResponse> {
@@ -480,6 +509,108 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
+    }
+
+    #[tokio::test]
+    async fn authorised_verification_http_failures_keep_their_traffic_class() {
+        for (verification, model_unavailable) in
+            [(false, false), (true, false), (false, true), (true, true)]
+        {
+            let mut state = TestServingState::ready();
+            state.admission_unavailable = true;
+            let model = state.model.as_mut().unwrap();
+            let target = model.deployments[0].id.to_string();
+            if model_unavailable {
+                model.status = crate::model::ModelStatus::Unavailable;
+            }
+            let app = super::support::router_for_with_verification(
+                true,
+                Arc::new(state),
+                Some(crate::test_support::WORKSPACE_ID),
+            );
+            let mut headers = vec![("authorization", "Bearer grad_test")];
+            if verification {
+                headers.push(("x-gradiated-verification-deployment", target.as_str()));
+            }
+            let response = app
+                .clone()
+                .oneshot(json_request(
+                    "/v1/chat/completions",
+                    &headers,
+                    r#"{"model":"model-a","messages":[{"role":"user","content":"Hi"}]}"#,
+                ))
+                .await
+                .unwrap();
+            let expected = if model_unavailable {
+                StatusCode::NOT_FOUND
+            } else {
+                StatusCode::SERVICE_UNAVAILABLE
+            };
+            assert_eq!(response.status(), expected);
+            let response = app
+                .oneshot(
+                    Request::builder()
+                        .uri("/metrics")
+                        .body(Body::empty())
+                        .unwrap(),
+                )
+                .await
+                .unwrap();
+            let body = to_bytes(response.into_body(), 100_000).await.unwrap();
+            let body = std::str::from_utf8(&body).unwrap();
+            let row = body
+                .lines()
+                .find(|line| line.starts_with("gradiated_gateway_http_requests_total{"))
+                .unwrap();
+            let traffic = if verification {
+                "verification"
+            } else {
+                "routed"
+            };
+            assert!(row.contains(&format!("traffic=\"{traffic}\"")), "{row}");
+            assert!(
+                row.contains(&format!("status=\"{}\"", expected.as_u16())),
+                "{row}"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn an_unauthorised_verification_header_cannot_hide_http_failures() {
+        let mut state = TestServingState::ready();
+        let model = state.model.as_mut().unwrap();
+        let target = model.deployments[0].id.to_string();
+        model.status = crate::model::ModelStatus::Unavailable;
+        let app = router_for(true, Arc::new(state));
+        let response = app
+            .clone()
+            .oneshot(json_request(
+                "/v1/chat/completions",
+                &[
+                    ("authorization", "Bearer grad_test"),
+                    ("x-gradiated-verification-deployment", target.as_str()),
+                ],
+                r#"{"model":"model-a","messages":[{"role":"user","content":"Hi"}]}"#,
+            ))
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/metrics")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        let body = to_bytes(response.into_body(), 100_000).await.unwrap();
+        let body = std::str::from_utf8(&body).unwrap();
+        let row = body
+            .lines()
+            .find(|line| line.starts_with("gradiated_gateway_http_requests_total{"))
+            .unwrap();
+        assert!(row.contains("traffic=\"routed\""), "{row}");
     }
 
     #[tokio::test]

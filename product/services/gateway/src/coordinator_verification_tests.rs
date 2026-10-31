@@ -57,6 +57,7 @@ async fn verification_targets_one_healthy_canary_without_customer_fallbacks() {
         )
         .unwrap();
     assert_ne!(customer.deployment.id, canary.id);
+    assert!(!customer.is_verification);
 
     let mut targeted = regular;
     targeted.insert(
@@ -82,6 +83,7 @@ async fn verification_targets_one_healthy_canary_without_customer_fallbacks() {
         )
         .unwrap();
     assert_eq!(verified.deployment.id, canary.id);
+    assert!(verified.is_verification);
     assert_eq!(verified.model_deployments.len(), 1);
 }
 

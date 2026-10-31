@@ -20,6 +20,7 @@ pub(crate) const WORKSPACE_ID: Uuid = Uuid::from_u128(0x0198c36f9b6a700080000000
 pub(crate) const GENERATION_ID: Uuid = Uuid::from_u128(0x0198c36f9b6a70008000000000000004);
 
 pub(crate) struct TestServingState {
+    pub(crate) admission_unavailable: bool,
     pub(crate) credential: Option<GatewayCredential>,
     pub(crate) workspace: Option<GatewayWorkspace>,
     pub(crate) account: Option<GatewayAccount>,
@@ -34,6 +35,7 @@ pub(crate) struct TestServingState {
 impl TestServingState {
     pub(crate) fn ready() -> Self {
         Self {
+            admission_unavailable: false,
             credential: Some(GatewayCredential {
                 api_key_id: API_KEY_ID,
                 organization_id: ORGANIZATION_ID,
@@ -202,6 +204,12 @@ impl ServingState for TestServingState {
         _admitted_at: DateTime<Utc>,
         _config: &GatewayConfig,
     ) -> Result<AdmissionLease, AdmissionError> {
+        if self.admission_unavailable {
+            return Err(AdmissionError::Redis(redis::RedisError::from((
+                redis::ErrorKind::Io,
+                "test admission unavailable",
+            ))));
+        }
         unreachable!("serving-state fixtures never admit")
     }
 

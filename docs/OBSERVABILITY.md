@@ -140,6 +140,19 @@ one-open-incident constraint. Per-deployment alerts and their recovery behavior
 remain intact. Separate failures of the same type inside the window can still
 share a group and do not re-page at the same priority.
 
+Gateway HTTP and terminal-generation counters distinguish normal routed traffic
+from authorised deployment-pinned verification. Critical HTTP/generation failure
+alerts, their panels and canary error checks exclude `traffic="verification"`;
+persistent replica failures retain their probe warning. Normal routed availability
+probes use customer routing and fallback and remain counted. Classification
+requires the configured verification workspace and a valid target header after
+authentication; a caller cannot suppress failure metrics by forging that header.
+Older metrics without a traffic label remain included during mixed-version deployment.
+
+`GatewayRuntimeFailures` requires more than 1% failed completed generations per
+model and deployment over five minutes, at least two failures, sustained for
+thirty seconds. Cancelled generations remain excluded from its denominator.
+
 Public inference probes use Gradiated's internal verification account and normal
 billing admission. HTTP 402 across all probes can mean that this account exhausted
 its prepaid credit; inspect its operational balance before diagnosing GPU failure.

@@ -14,6 +14,7 @@ fn scope(deployment: Uuid) -> GenerationScope<'static> {
         protocol: "openai_chat",
         stream: true,
         service_tier: ServiceTier::Fast,
+        is_verification: false,
     }
 }
 
@@ -119,7 +120,7 @@ fn encoded_families(body: &str) -> BTreeMap<String, (String, BTreeSet<String>)> 
 #[test]
 fn encodes_the_registered_metric_contract() {
     let metrics = GatewayMetrics::new();
-    metrics.record_http("models", 200, "none");
+    metrics.record_http("models", 200, "none", false);
     metrics.set_dependency_ready("valkey", true);
     for (error, _) in admission_errors() {
         reject(&metrics, &error);
@@ -152,7 +153,9 @@ fn encodes_the_registered_metric_contract() {
         (
             "http_requests_total",
             "counter",
-            ["error", "route", "status"].map(str::to_owned).into(),
+            ["error", "route", "status", "traffic"]
+                .map(str::to_owned)
+                .into(),
         ),
         ("admissions_total", "counter", generation_labels.clone()),
         ("admission_rejections_total", "counter", with(&["reason"])),
@@ -160,7 +163,7 @@ fn encodes_the_registered_metric_contract() {
         (
             "generations_total",
             "counter",
-            with(&["cancellation_owner", "error", "status"]),
+            with(&["cancellation_owner", "error", "status", "traffic"]),
         ),
         ("tokens_total", "counter", with(&["kind"])),
         (
@@ -313,7 +316,7 @@ fn output_throughput_needs_elapsed_runtime() {
 #[test]
 fn exposes_generation_dashboard_metrics_without_identity_labels() {
     let metrics = GatewayMetrics::new();
-    metrics.record_http("models", 401, "invalid_api_key");
+    metrics.record_http("models", 401, "invalid_api_key", false);
     metrics.set_dependency_ready("valkey", true);
     let generation =
         metrics.generation_admitted(&scope(Uuid::from_u128(0x0198c36f9b6a70008000000000000001)));
@@ -482,4 +485,28 @@ fn runtime_work_has_a_zero_baseline_before_completion_including_fallbacks() {
     assert!(baseline(Uuid::from_u128(2)));
     generation.served_by(Uuid::from_u128(2));
     assert!(baseline(Uuid::from_u128(2)));
+}
+
+#[test]
+fn terminal_metrics_separate_verification_from_routed_requests() {
+    let metrics = GatewayMetrics::new();
+    for is_verification in [false, true] {
+        let mut scope = scope(Uuid::from_u128(1));
+        scope.is_verification = is_verification;
+        metrics
+            .generation_admitted(&scope)
+            .record_terminal(&terminal(10, Some(1), 100).record());
+    }
+    let body = metrics.encode();
+    let outcomes: Vec<_> = body
+        .lines()
+        .filter(|line| line.starts_with("gradiated_gateway_generations_total{"))
+        .collect();
+    assert_eq!(outcomes.len(), 2);
+    assert!(outcomes
+        .iter()
+        .any(|line| line.contains("traffic=\"verification\"")));
+    assert!(outcomes
+        .iter()
+        .any(|line| line.contains("traffic=\"routed\"")));
 }

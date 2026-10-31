@@ -426,3 +426,29 @@ async fn an_explicit_session_keeps_its_replica_across_requests() {
     }
     assert_eq!(primaries.len(), 1);
 }
+
+#[tokio::test]
+async fn capacity_failures_keep_their_authorised_traffic_class_through_settlement() {
+    for is_verification in [false, true] {
+        let mut request = qualified_request(1);
+        request.is_verification = is_verification;
+        let harness = Harness::new(request, [failure(RuntimeFailureKind::CapacityExceeded)]);
+
+        assert_eq!(
+            harness.complete().await.unwrap_err(),
+            GatewayError::CapacityExceeded
+        );
+        let traffic = if is_verification {
+            "verification"
+        } else {
+            "routed"
+        };
+        assert_eq!(
+            harness.metric("generations_total", &format!("traffic=\"{traffic}\"")),
+            1
+        );
+        let finalized = harness.only_finalized();
+        assert_eq!(finalized["status"], "failed");
+        assert_eq!(finalized["usage"]["charge"], 0);
+    }
+}

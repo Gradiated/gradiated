@@ -33,6 +33,7 @@ pub struct RequestMetadata {
 #[derive(Clone, Debug, PartialEq)]
 pub struct QualifiedRequest {
     pub metadata: RequestMetadata,
+    pub is_verification: bool,
     pub identity: AuthenticatedIdentity,
     pub deployment: GatewayModelDeployment,
     pub model_deployments: Vec<GatewayModelDeployment>,
@@ -51,6 +52,7 @@ pub struct ClassifiedRequest {
 }
 
 pub struct HostedRequest {
+    is_verification: bool,
     cache_key: Option<crate::session_affinity::CacheKey>,
     identity: AuthenticatedIdentity,
     model: GatewayModel,
@@ -65,6 +67,7 @@ impl HostedRequest {
         kind: RequestKind,
     ) -> Result<QualifiedRequest, GatewayError> {
         let Self {
+            is_verification,
             cache_key,
             identity,
             model,
@@ -125,6 +128,7 @@ impl HostedRequest {
 
         Ok(QualifiedRequest {
             metadata,
+            is_verification,
             identity,
             adapter,
             deployment,
@@ -327,6 +331,20 @@ impl RequestCoordinator {
         received_at: DateTime<Utc>,
         protocol: Protocol,
     ) -> Result<ClassifiedRequest, GatewayError> {
+        let mut is_verification = false;
+        self.classify_with_traffic(headers, body, received_at, protocol, &mut is_verification)
+            .await
+    }
+
+    pub(crate) async fn classify_with_traffic(
+        &self,
+        headers: &HeaderMap,
+        body: &[u8],
+        received_at: DateTime<Utc>,
+        protocol: Protocol,
+        is_verification: &mut bool,
+    ) -> Result<ClassifiedRequest, GatewayError> {
+        *is_verification = false;
         // A malformed or unsupported request is a local error on every route, so it
         // is rejected before identity.
         if headers.contains_key(RUNTIME_PRIORITY_HEADER) {
@@ -338,6 +356,24 @@ impl RequestCoordinator {
         let mut cache_key = crate::session_affinity::cache_key(headers, &target.request)?;
 
         let authorization = self.authorize(headers, received_at).await?;
+        let header = "x-gradiated-verification-deployment";
+        let verification_deployment = if headers.contains_key(header) {
+            if self.verification_workspace_id != Some(authorization.identity.workspace_id)
+                || headers.get_all(header).iter().count() != 1
+            {
+                return Err(GatewayError::invalid_request(Some(header)));
+            }
+            Some(
+                headers
+                    .get(header)
+                    .and_then(|value| value.to_str().ok())
+                    .and_then(|value| Uuid::parse_str(value).ok())
+                    .ok_or_else(|| GatewayError::invalid_request(Some(header)))?,
+            )
+        } else {
+            None
+        };
+        *is_verification = verification_deployment.is_some();
 
         let mut model_id = target.model.clone();
         model_id.make_ascii_lowercase();
@@ -397,18 +433,7 @@ impl RequestCoordinator {
             return Err(GatewayError::ModelUnavailable);
         }
 
-        let header = "x-gradiated-verification-deployment";
-        if headers.contains_key(header) {
-            if self.verification_workspace_id != Some(identity.workspace_id)
-                || headers.get_all(header).iter().count() != 1
-            {
-                return Err(GatewayError::invalid_request(Some(header)));
-            }
-            let id = headers
-                .get(header)
-                .and_then(|value| value.to_str().ok())
-                .and_then(|value| Uuid::parse_str(value).ok())
-                .ok_or_else(|| GatewayError::invalid_request(Some(header)))?;
+        if let Some(id) = verification_deployment {
             model.deployments.retain(|deployment| {
                 deployment.id == id && deployment.status != crate::DeploymentStatus::Draining
             });
@@ -447,6 +472,7 @@ impl RequestCoordinator {
 
         Ok(ClassifiedRequest {
             hosted: HostedRequest {
+                is_verification: verification_deployment.is_some(),
                 cache_key,
                 identity,
                 model,

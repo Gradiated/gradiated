@@ -53,6 +53,7 @@ struct Metrics {
 
 #[derive(Clone, Debug, EncodeLabelSet, Eq, Hash, PartialEq)]
 struct HttpRequestLabels {
+    traffic: String,
     route: String,
     status: String,
     error: String,
@@ -87,6 +88,7 @@ struct GenerationOutcomeLabels {
     status: String,
     error: String,
     cancellation_owner: String,
+    traffic: String,
 }
 
 #[derive(Clone, Debug, EncodeLabelSet, Eq, Hash, PartialEq)]
@@ -285,10 +287,22 @@ impl GatewayMetrics {
         }
     }
 
-    pub fn record_http(&self, route: &'static str, status: u16, error: &'static str) {
+    pub fn record_http(
+        &self,
+        route: &'static str,
+        status: u16,
+        error: &'static str,
+        is_verification: bool,
+    ) {
         self.inner
             .http_requests
             .get_or_create(&HttpRequestLabels {
+                traffic: if is_verification {
+                    "verification"
+                } else {
+                    "routed"
+                }
+                .to_owned(),
                 route: route.to_owned(),
                 status: status.to_string(),
                 error: error.to_owned(),
@@ -328,6 +342,7 @@ impl GatewayMetrics {
         AdmittedGenerationMetrics {
             metrics: self.clone(),
             labels,
+            is_verification: scope.is_verification,
         }
     }
 
@@ -390,6 +405,7 @@ pub(crate) struct GenerationScope<'a> {
     pub protocol: &'static str,
     pub stream: bool,
     pub service_tier: ServiceTier,
+    pub is_verification: bool,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -418,6 +434,7 @@ pub(crate) struct TerminalRecord<'a> {
 }
 
 pub(crate) struct AdmittedGenerationMetrics {
+    is_verification: bool,
     metrics: GatewayMetrics,
     labels: GenerationLabels,
 }
@@ -474,6 +491,11 @@ impl AdmittedGenerationMetrics {
             self.metrics.record_capacity_pressure(&labels.model);
         }
 
+        let traffic = if self.is_verification {
+            "verification"
+        } else {
+            "routed"
+        };
         let cancellation_owner = outcome
             .cancellation_owner()
             .map_or("none", CancellationOwner::as_str);
@@ -485,7 +507,7 @@ impl AdmittedGenerationMetrics {
             protocol = %labels.protocol,
             stream = %labels.stream,
             service_tier = %labels.service_tier,
-            status, error_code, cancellation_owner,
+            status, error_code, cancellation_owner, traffic,
             input_tokens = usage.input_tokens(),
             cached_input_tokens = usage.cached_input_tokens(),
             cache_write_tokens = usage.cache_write_tokens(),
@@ -505,6 +527,7 @@ impl AdmittedGenerationMetrics {
                 status: status.to_owned(),
                 error: error_code.to_owned(),
                 cancellation_owner: cancellation_owner.to_owned(),
+                traffic: traffic.to_owned(),
             })
             .inc();
         for (kind, quantity) in [

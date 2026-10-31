@@ -413,6 +413,24 @@ def main():
                                'values': '0+100x30'})
             scenario(alert + ': ' + name, inputs, alert if fires else None, [alert], labels, '3m')
 
+    for traffic, expected in [('verification', None), ('routed', 'GatewaySevereGenerationFailures')]:
+        scenario('severe generation traffic classification: ' + traffic, [
+            {'series': 'gradiated_gateway_generations_total{deployment="bad",status="failed",traffic="' + traffic + '"}', 'values': '0+3x30'},
+            {'series': 'gradiated_gateway_generations_total{deployment="bad",status="succeeded",traffic="routed"}', 'values': '0+1x30'},
+        ] + ([{'series': 'gradiated_gateway_generations_total{deployment="bad",status="succeeded",traffic="verification"}', 'values': '0+10000x30'}] if traffic == 'routed' else []), expected, ['GatewaySevereGenerationFailures'], {'deployment': 'bad'}, '3m')
+
+    for alert, eval_time in [('GatewaySevereErrors', '3m'), ('GatewayHighErrorRate', '10m')]:
+        for traffic, expected in [('verification', None), ('routed', alert)]:
+            scenario('HTTP verification classification: ' + alert + traffic, [
+                {'series': 'gradiated_gateway_http_requests_total{status="503",traffic="' + traffic + '"}', 'values': '0+3x30'},
+                {'series': 'gradiated_gateway_http_requests_total{status="200",traffic="routed"}', 'values': '0+1x30'},
+            ] + ([{'series': 'gradiated_gateway_http_requests_total{status="200",traffic="verification"}', 'values': '0+10000x30'}] if traffic == 'routed' else []), expected, [alert], {}, eval_time)
+
+    scenario('legacy gateway HTTP metrics retain paging', [
+        {'series': 'gradiated_gateway_http_requests_total{status="503"}', 'values': '0+3x30'},
+        {'series': 'gradiated_gateway_http_requests_total{status="200"}', 'values': '0+1x30'},
+    ], 'GatewayHighErrorRate', ['GatewayHighErrorRate'], {}, '10m')
+
     alb_errors = 'PublicLoadBalancerErrors'
     alb_series = 'aws_applicationelb_httpcode_elb_5_xx_count_sum{load_balancer="app/gradiated-prod-public-api/abc"}'
     for name, values, eval_time, fires in [
@@ -667,13 +685,25 @@ def main():
         {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="new",loop="kubernetes_deployment_reconciliation"}', 'values': '1+5x20'},
     ], 'ModelNoReadyReplicas', ['ModelNoReadyReplicas'], {'model': 'test/model'}, '40s', interval='5s')
 
-    for failed, succeeded, expected in [('0+1x60', '0+100x60', 'GatewayRuntimeFailures'),
+    for failed, succeeded, expected in [('0+2x60', '0+100x60', 'GatewayRuntimeFailures'),
                                         ('0+0x60', '0+100x60', None),
                                         ('0 1+0x59', '0+100x60', None)]:
         scenario('per-deployment runtime failures: ' + failed, [
             {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="failed"}', 'values': failed},
             {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="succeeded"}', 'values': succeeded},
             {'series': 'gradiated_gateway_generations_total{model="other/model",deployment="healthy-deployment",status="succeeded"}', 'values': '0+100000x60'},
+        ], expected, ['GatewayRuntimeFailures'], {'model': 'test/model', 'deployment': 'test-deployment'}, '2m', interval='5s')
+
+    for traffic, expected in [('verification', None), ('routed', 'GatewayRuntimeFailures')]:
+        scenario('verification traffic does not page: ' + traffic, [
+            {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="failed",error="capacity_exceeded",traffic="' + traffic + '"}', 'values': '0+2x60'},
+            {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="succeeded",traffic="routed"}', 'values': '0+100x60'},
+        ] + ([{'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="succeeded",traffic="verification"}', 'values': '0+100000x60'}] if traffic == 'routed' else []), expected, ['GatewayRuntimeFailures'], {'model': 'test/model', 'deployment': 'test-deployment'}, '2m', interval='5s')
+
+    for failed, succeeded, expected in [(1, 199, None), (1, 99, None), (2, 98, 'GatewayRuntimeFailures')]:
+        scenario('one-percent runtime failure boundary: ' + str((failed, succeeded)), [
+            {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="failed",traffic="routed"}', 'values': f'0+{failed}x60'},
+            {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="succeeded",traffic="routed"}', 'values': f'0+{succeeded}x60'},
         ], expected, ['GatewayRuntimeFailures'], {'model': 'test/model', 'deployment': 'test-deployment'}, '2m', interval='5s')
 
     route = 'route="/v1/deployment-status"'

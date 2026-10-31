@@ -211,6 +211,7 @@ impl CompletionService {
             protocol: route.primary.release.protocol_label(),
             stream: request.request.stream,
             service_tier: request.request.service_tier,
+            is_verification: request.is_verification,
         };
         let lease = match admission {
             Ok(lease) => lease,

@@ -10,6 +10,10 @@ includes generator workers; over the cap every agent tool call fails ("under hea
 twin estimates its peak (MEM_PER_EVENT x planned events) and waits until cgroup anon + other workers' unfilled
 reservations + its own estimate fit under TWINGEN_MEM_LIMIT_GB (default 105). Reservations are files in
 /dev/shm/twingen_mem, shared by every run_all2 process (loop producer, regress, rebuilds).
+
+Own cgroup (preferred, Josh approved 2026-10-31): when /sys/fs/cgroup/twingen exists (sibling of ClickHouse's
+cgroup, memory.max 400 GiB), run_all2 moves itself there at start; its workers inherit it, ClickHouse no longer
+counts them, and the memory gate is skipped.
 """
 
 from __future__ import annotations
@@ -65,11 +69,33 @@ def rss(pid: int) -> int:
     return 0
 
 
+TWINGEN_CGROUP = os.environ.get("TWINGEN_CGROUP", "/sys/fs/cgroup/twingen")
+
+
+def own_cgroup() -> str:
+    try:
+        return "/sys/fs/cgroup" + open("/proc/self/cgroup").read().strip().split("::", 1)[1]
+    except (OSError, IndexError):
+        return ""
+
+
+def enter_cgroup() -> bool:
+    """Move this process (and so its future workers) into the generator cgroup."""
+    if not os.path.isdir(TWINGEN_CGROUP):
+        return False
+    try:
+        with open(f"{TWINGEN_CGROUP}/cgroup.procs", "w") as f:
+            f.write(str(os.getpid()))
+        return True
+    except OSError:
+        return False
+
+
 def reserve(est: int, log=print) -> str | None:
     """Block until est bytes fit under the limit; returns the reservation file (remove it when done)."""
     stat = ch_cgroup()
-    if stat is None:
-        return None
+    if stat is None or own_cgroup().rstrip("/") != os.path.dirname(stat).rstrip("/"):
+        return None  # not in ClickHouse's cgroup: our memory is not counted against its cap
     limit = float(os.environ.get("TWINGEN_MEM_LIMIT_GB", "105")) * 2**30
     os.makedirs(MEM_DIR, exist_ok=True)
     me = f"{MEM_DIR}/{os.getpid()}.json"
@@ -147,6 +173,8 @@ def main():
     else:
         targets = [t for t in targets if t.get("reason") in a.reason.split(",")]
     os.makedirs(a.out, exist_ok=True)
+    if enter_cgroup():
+        print(f"cgroup: {own_cgroup()}", flush=True)
     ok = fail = ev = 0
     with mp.get_context("spawn").Pool(a.workers) as pool, open(os.path.join(a.out, "_run_log.jsonl"), "a") as log:
         for r in pool.imap_unordered(job, [(t, a.out, a.max_events, a.calib_dir) for t in targets]):

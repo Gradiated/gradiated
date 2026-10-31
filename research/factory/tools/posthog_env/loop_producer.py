@@ -43,6 +43,8 @@ CODE = [f"{V2}/gen2.py", f"{V2}/lint.py", f"{V2}/valuepools.py", f"{TG}/gen.py",
         "/opt/posthog-env/loader/load_twin_v2.py", f"{RUNNER}/spot_card.py"]
 # 3M events per twin: peak worker memory ~27 GB instead of ~55 GB at 6M, so more twins fit under ClickHouse's cap
 MAX_EVENTS = "3000000"
+# generators run in their own cgroup (twingen, 400 GiB), outside ClickHouse's: 12 workers x ~27 GB peak fits
+GEN_WORKERS = "12"
 ENV = {**os.environ, "TWIN_V2_TRACES": TRACES, "TWIN_V2_ROOT": ROOT, "TWIN_V2_TAG": TAG}
 
 
@@ -108,8 +110,8 @@ def build_batch(name: str, ids: list[str], split: str, pilot: bool) -> None:
     csv = ",".join(ids)
     with open(f"{d}/log.txt", "a") as log:
         sh([f"{PH}/.venv/bin/python", f"{V2}/qfacts.py", "--split", split, "--ids", csv], log, cwd=PH)
-        # 4 generator workers; run_all2's memory gate keeps ClickHouse's cgroup under its cap
-        sh([f"{TG}/.venv/bin/python", f"{V2}/run_all2.py", "--ids", csv, "--workers", "4", "--max-events", MAX_EVENTS], log)
+        # run_all2 moves into the twingen cgroup (ClickHouse does not count it); else its memory gate applies
+        sh([f"{TG}/.venv/bin/python", f"{V2}/run_all2.py", "--ids", csv, "--workers", GEN_WORKERS, "--max-events", MAX_EVENTS], log)
         sh([f"{PH}/.venv/bin/python", "../loader/load_all_v2.py", "--ids", csv, "--workers", "2", "--force",
             "--min-free-gb", "60"], log, cwd=PH)
         lint(ids, d, log)
@@ -127,7 +129,7 @@ def build_batch(name: str, ids: list[str], split: str, pilot: bool) -> None:
                                  "--root", ROOT], env=ENV, capture_output=True, text=True).stdout.strip()
             log.write(f"overrides changed: {ch}\n")
             if ch:
-                sh([f"{TG}/.venv/bin/python", f"{V2}/run_all2.py", "--ids", ch, "--workers", "4", "--max-events", MAX_EVENTS], log)
+                sh([f"{TG}/.venv/bin/python", f"{V2}/run_all2.py", "--ids", ch, "--workers", GEN_WORKERS, "--max-events", MAX_EVENTS], log)
                 sh([f"{PH}/.venv/bin/python", "../loader/load_all_v2.py", "--ids", ch, "--workers", "2", "--force",
                     "--min-free-gb", "60"], log, cwd=PH)
                 lint(ids, d, log)

@@ -186,6 +186,16 @@ retrieval with MTP enabled before selecting a release. The native checkpoint
 option retains its applicability and correctness guards; matching at 128-token
 boundaries does not guarantee a reusable state at every boundary. Include
 several warm repeats and changed-prefix controls in qualification.
+`prefix-tail.patch` retains a reachable full-attention tail when the prompt
+length is exactly divisible by the matching unit. Prefix lookup leaves the last
+prompt token for logits; caching only the boundary at the full prompt length
+makes that entry unreachable and forces coarser reuse. With 128-token matching
+and MTP, a 32,768-token prompt should reuse 32,512 tokens. CPU bundle verification
+checks physical and logical boundaries, partial prefill, changed prefixes and
+eviction against the pinned vLLM cache manager. It does not qualify hybrid GPU
+state restoration; require repeated, extended and divergent prompts on an
+isolated GPU before promoting this bundle.
+
 The entrypoint and host profile require a positive divisor of the fixed
 128-token launch block. Qualification of 128 does not establish performance
 or cache correctness for other units.

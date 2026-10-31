@@ -1,0 +1,14 @@
+--- a/v1/core/single_type_kv_cache_manager.py
++++ b/v1/core/single_type_kv_cache_manager.py
+@@ -843,7 +843,10 @@
+         block are intentionally skipped.
+         """
+         hash_block_size = self.block_pool.hash_block_size
+-        boundary_tokens = request.num_prompt_tokens // hash_block_size * hash_block_size
++        # Prefix lookup must leave the final prompt token for logits.
++        boundary_tokens = (
++            max(request.num_prompt_tokens - 1, 0) // hash_block_size * hash_block_size
++        )
+         if boundary_tokens == 0 or boundary_tokens > num_tokens:
+             return
+         if boundary_tokens % self.block_size == 0:

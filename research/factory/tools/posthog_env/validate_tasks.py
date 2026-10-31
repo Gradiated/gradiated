@@ -100,6 +100,9 @@ The twin's data ends at {now} (the agent's "now"; relative windows like "last mo
    (query them); every session id, insight/dashboard/flag id the turns name must exist (objects list,
    session_replay_events). A contradiction a competent agent would notice is at least MINOR; if grading depends on
    it, BROKEN. Curation edits listed (e.g. remove_turn) must be reflected in the turns.
+6f. Numbers: recompute every number the grading notes state, on the twin at the data end, under both a rolling window
+   and PostHog's start-of-day window; if a correct live number falls outside what the notes accept, that is
+   notes_wrong (round 8: notes said ~500/515, live 518/533, and a strict grader could fail the correct answer).
 6d. Minimal-answer test: imagine the shortest correct answer to exactly what the user asked; if a must_include point
    would fail it (a supporting fact or caveat the user did not ask for), that is notes_overspecified.
 7. Difficulty: is it trivial (single lookup, answer in the prompt)? Trivial is allowed if it is a real request; mark it.

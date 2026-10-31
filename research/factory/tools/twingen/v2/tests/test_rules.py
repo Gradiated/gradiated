@@ -583,6 +583,15 @@ class RoundB14Coherence(unittest.TestCase):
         out = p._with_donor({"workflow": "x"}, "$pageleave", "p1", donors, random.Random(0))
         self.assertEqual(out, {"$browser": "Chrome", "workflow": "x"})
 
+    def test_donor_context_from_own_person(self):
+        """round 8: rows added by overrides took another person's country and OS from a same-event donor."""
+        p = project()
+        donors = ({"signup": ['{"$geoip_country_code": "DE", "$os": "Windows", "plan": "pro", "$current_url": "https://x.io/s"}']},
+                  {"p1": ['{"$geoip_country_code": "BR", "$os": "Android", "$current_url": "https://x.io/"}']}, [])
+        out = p._with_donor({}, "signup", "p1", donors, random.Random(0))
+        self.assertEqual((out["$geoip_country_code"], out["$os"], out["plan"], out["$current_url"]),
+                         ("BR", "Android", "pro", "https://x.io/s"))
+
     def test_unscoped_evidence(self):
         p = project(Q={"calls": [{"sql": "select properties.plan_tier from events"}]}, F={}, user_text="")
         self.assertTrue(p.unscoped_evidenced("plan_tier"))

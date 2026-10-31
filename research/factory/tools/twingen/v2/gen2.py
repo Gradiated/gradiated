@@ -2689,7 +2689,12 @@ class Project2(gen.Project):
             for pid in ids:
                 r = random.Random(stable_seed(self.S["id"], "scenario_person", j, pid))
                 if r.random() <= share:
-                    add.setdefault(pid, {}).update(scenario_props(op["props"], r, pid, f"{self.S['id']}:pp{j}"))
+                    vals = scenario_props(op["props"], r, pid, f"{self.S['id']}:pp{j}")
+                    for k, v in list(vals.items()):  # r25: one email per person (round 8: 6 emails on 35 persons)
+                        if "email" in k.lower() and isinstance(v, str) and "@" in v:
+                            fn, ln = r.choice(gen.catalog.FIRST_NAMES), r.choice(gen.catalog.LAST_NAMES)
+                            vals[k] = f"{fn.lower()}.{ln.lower()}{r.randint(1, 999)}@{v.split('@', 1)[1]}"
+                    add.setdefault(pid, {}).update(vals)
         if not add:
             return
 
@@ -2999,16 +3004,22 @@ class Project2(gen.Project):
 
     def _with_donor(self, props, ev, pid, donors, rnd):
         by_ev, by_person_pv, pv = donors
-        src = by_ev.get(ev) or by_person_pv.get(pid) or pv
+        own, same = by_person_pv.get(pid), by_ev.get(ev)
+        src = same or own or pv
         if not src:
             return props
         try:
             d = orjson.loads(rnd.choice(src))
+            # r25: $-context (geo, device, $user_id) comes from this person's own pageview when there is one (round 8:
+            # added rows took another person's country and OS); custom props only ever from a row of the same event
+            ctx = orjson.loads(rnd.choice(own)) if own else d
         except Exception:  # noqa: BLE001
             return props
-        out = {k: v for k, v in d.items() if k not in self.DONOR_SKIP}
-        if src is not by_ev.get(ev):  # r20: another event's row lends only context ($-props), not its custom props
-            out = {k: v for k, v in out.items() if k.startswith("$") and k not in ELEMENT_PROPS}
+        page = ("$current_url", "$pathname", "$title", "$host")
+        out = {k: v for k, v in ctx.items() if k.startswith("$") and k not in ELEMENT_PROPS and k not in self.DONOR_SKIP}
+        if src is same:  # this event's own donor row: its custom props and its page (and elements, for clicks)
+            keep = page + (tuple(ELEMENT_PROPS) if ev in ELEMENT_EVENTS else ())
+            out.update({k: v for k, v in d.items() if (not k.startswith("$") or k in keep) and k not in self.DONOR_SKIP})
         if any(k in GEO_PROPS for k in props):  # rule (r8): a seeded geo value brings its whole coherent tuple
             for k in GEO_PROPS:
                 out.pop(k, None)

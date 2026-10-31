@@ -529,6 +529,7 @@ class RoundB13Artifacts(unittest.TestCase):
         import values
         smp = values.Sampler("email", "String", prior={"values": [["user9@example.com", 5]]})
         self.assertEqual(smp.mode, "person_email")
+        self.assertEqual(smp({"person": {"email": "ana@acme.io"}}), "ana@acme.io")  # a fully built, callable sampler
 
     def test_session_level_and_failed_sql_props_skipped(self):
         import gen

@@ -123,6 +123,48 @@ def refresh_teams(path: str, log=None) -> int:
     return n
 
 
+def regen_pending(d: str, ids: list[str], split: str, log) -> None:
+    """Validator repairs may add twin_overrides (round 6: 28 of 29 repair drops were twin gaps the curator was not
+    allowed to fix). Apply them, regenerate + reload the twins, refresh team ids, then validate the pending tasks
+    again (one repair round, no further regeneration) and merge the verdicts into validated.jsonl."""
+    vf = f"{d}/validated/validated.jsonl"
+    tasks = [json.loads(x) for x in open(vf) if x.strip()]
+    pend = [t for t in tasks if (t.get("validation") or {}).get("verdict") == "PENDING_REGEN"]
+    if not pend:
+        return
+    changed = set()
+    for od in sorted(glob.glob(f"{d}/validated/rev*/overrides")):
+        ch = subprocess.run(["python3", f"{RUNNER}/apply_overrides.py", "--overrides-dir", od, "--root", ROOT], env=ENV,
+                            capture_output=True, text=True).stdout.strip()
+        changed |= {x for x in ch.split(",") if x}
+    log.write(f"regen_pending: {len(pend)} tasks, twins changed: {len(changed)}\n")
+    if changed:
+        csv = ",".join(sorted(changed))
+        sh([f"{TG}/.venv/bin/python", f"{V2}/run_all2.py", "--ids", csv, "--workers", GEN_WORKERS, "--max-events", MAX_EVENTS], log)
+        sh([f"{PH}/.venv/bin/python", "../loader/load_all_v2.py", "--ids", csv, "--workers", "2", "--force",
+            "--min-free-gb", "60"], log, cwd=PH)
+        lint(ids, d, log)
+    pf = f"{d}/validated/pending.jsonl"
+    with open(pf, "w") as f:
+        for t in pend:
+            t = {k: v for k, v in t.items() if k not in ("exclude", "validation", "pending_regen")}
+            f.write(json.dumps(t, ensure_ascii=False) + "\n")
+    refresh_teams(pf, log)
+    refresh_teams(vf, log)
+    sh(["python3", f"{RUNNER}/validate_tasks.py", "--tasks", pf, "--traces", f"{TRACES}/{split}.jsonl",
+        "--out", f"{d}/validated/regen", "--repair", "--repair-rounds", "1", "--lint", f"{d}/lint.jsonl",
+        "--workers", "8"], log, timeout=7200)
+    got = {json.loads(x)["task_id"]: json.loads(x) for x in open(f"{d}/validated/regen/validated.jsonl") if x.strip()}
+    for t in got.values():  # a second PENDING_REGEN is not regenerated again
+        if (t.get("validation") or {}).get("verdict") == "PENDING_REGEN":
+            t["exclude"] = "validator: pending regeneration after second repair"
+    tasks = [got.get(t["task_id"], t) for t in [json.loads(x) for x in open(vf) if x.strip()]]
+    with open(vf, "w") as f:
+        for t in tasks:
+            f.write(json.dumps(t, ensure_ascii=False) + "\n")
+    log.write(f"regen_pending: merged {len(got)} re-validated tasks\n")
+
+
 def lint(ids: list[str], d: str, log) -> None:
     """twingen/v2/lint.py on every generated twin of the batch -> <batch>/lint.jsonl (read by the validator)."""
     dirs = [p for i in ids for p in glob.glob(f"{ROOT}/twingen/projects_v2/{i}*") if os.path.exists(f"{p}/events.parquet")]
@@ -176,6 +218,7 @@ def build_batch(name: str, ids: list[str], split: str, pilot: bool) -> None:
                timeout=10800)
             if os.path.exists(f"{d}/validated/validated.jsonl"):
                 tf = f"{d}/validated/validated.jsonl"
+                regen_pending(d, ids, split, log)
         tasks = [json.loads(x) for x in open(tf)]
         inc = [t for t in tasks if not t.get("exclude")]
         json.dump([t["task_id"] for t in inc], open(f"{d}/included.json", "w"))
@@ -202,10 +245,16 @@ def main() -> None:
                     "rounds only need the audit; benches also compete for ClickHouse)")
     ap.add_argument("--rebuild-ids", default="")
     ap.add_argument("--refresh-teams", default="", help="rewrite team ids in a task file from the loader registry")
+    ap.add_argument("--regen-pending", default="", help="batch name: regenerate + re-validate PENDING_REGEN tasks")
     ap.add_argument("--name", default="")
     a = ap.parse_args()
     if a.setup:
         setup()
+        return
+    if a.regen_pending:
+        d = f"{BATCHES}/{a.regen_pending}"
+        with open(f"{d}/log.txt", "a") as log:
+            regen_pending(d, json.load(open(f"{d}/ids.json")), a.split, log)
         return
     if a.refresh_teams:
         print(json.dumps({"refreshed": refresh_teams(a.refresh_teams)}))

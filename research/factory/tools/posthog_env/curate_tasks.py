@@ -256,8 +256,9 @@ FEEDBACK = """
 
 ## Revision request
 An independent validator audited the version of this task you produced (turns and grading notes below) against the
-twin and found these problems. Fix them by editing the turns and/or grading notes (verify with queries; do not add new
-twin_overrides), or drop the task if it cannot be made sound. Keep everything else that was fine.
+twin and found these problems. Fix them by editing the turns and/or grading notes (verify with queries), and fix
+twin data defects with twin_overrides (the twin is then regenerated and the task validated again) rather than
+dropping; drop only if neither can make the task sound. Keep everything else that was fine.
 Your previous version: {prev}
 Validator findings: {findings}"""
 

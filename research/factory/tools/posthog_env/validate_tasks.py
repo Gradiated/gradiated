@@ -233,11 +233,22 @@ def main() -> None:
                 c = CT.curate_one(base, recs.get(t["conversation_id"]), a.curator_model, f"{rdir}/curated", feedback=fb)
                 if c.get("decision") not in ("keep", "edit") or not c.get("turns"):
                     return t["task_id"], {**t, "repair_gave_up": True}, None
+                if c.get("twin_overrides"):  # data fix: regenerate before validating (loop_producer.regen_pending)
+                    os.makedirs(f"{rdir}/overrides", exist_ok=True)
+                    path = f"{rdir}/overrides/{t['twin_id']}.json"
+                    cur = json.load(open(path)) if os.path.exists(path) else {"twin_id": t["twin_id"],
+                                                                              "shift_days": t.get("shift_days"), "overrides": []}
+                    cur["overrides"] += c["twin_overrides"]
+                    json.dump(cur, open(path, "w"), indent=1)
                 t2 = {**t, "turns": c["turns"], "max_turns": len(c["turns"]), "grading_notes": c.get("grading_notes"),
                       "revised_by_validator": rnd,
                       "curation": {**(t.get("curation") or {}), **{k: c.get(k) for k in (
                           "decision", "reason", "twin_defects", "evidence", "edits", "difficulty") if k in c},
                                    "revision": rnd}}
+                if c.get("twin_overrides"):
+                    t2["pending_regen"] = rnd
+                    return t["task_id"], t2, {"task_id": t["task_id"], "verdict": "PENDING_REGEN",
+                                              "summary": "curator added twin_overrides; validate after regeneration"}
                 return t["task_id"], t2, validate_one(t2, recs.get(t["conversation_id"]), a.model, rdir)
 
             with ThreadPoolExecutor(a.workers) as pool:
@@ -248,6 +259,7 @@ def main() -> None:
                     else:
                         res[tid] = r2
                         stats[f"repair{rnd}_fixed"] += r2.get("verdict") == "SOUND"
+                        stats[f"repair{rnd}_pending_regen"] += r2.get("verdict") == "PENDING_REGEN"
                     for i, t in enumerate(tasks):
                         if t["task_id"] == tid:
                             tasks[i] = t2

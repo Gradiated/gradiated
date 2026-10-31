@@ -13,6 +13,7 @@ import datetime as dt
 import json
 import os
 import random
+import re
 import sys
 import unittest
 
@@ -416,6 +417,18 @@ class Journeys(unittest.TestCase):
         out = project().lifecycle_once(self._tab(rows))
         ev, pid = out.column("event").to_pylist(), out.column("person_id").to_pylist()
         self.assertEqual(sum(1 for i, e in enumerate(ev) if e == "sign_up" and pid[i] == "a"), 1)
+
+class WarehouseValues(unittest.TestCase):
+    """eval_v1 audit: org ids '' / '_other' (no joins), month column 'month_0'..'month_5'."""
+
+    def test_sentinels_and_dates(self):
+        p = project(pre_days=0)
+        tr = random.Random(1)
+        v = p.wh_values("t", "org_id", {"type": "string", "values": ["", "_other", "org_a1", "org_b2"]}, 50, tr, gen2.UF(), {}, {})
+        self.assertTrue(set(v) <= {"org_a1", "org_b2"})
+        m = p.wh_values("t", "month", {"type": "string", "values": []}, 20, tr, gen2.UF(), {}, {})
+        self.assertTrue(all(re.match(r"^\d{4}-\d\d-01$", x) for x in m))
+
 
 class FunnelDropoff(unittest.TestCase):
     """r1 card 13: funnel seeds walked every person through every step (twin 30->25 vs production 51->34->1->0->0)."""

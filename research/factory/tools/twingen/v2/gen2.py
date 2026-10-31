@@ -53,7 +53,7 @@ import specio  # noqa: E402
 from gen import UTC, iso, stable_seed, uuid7, wh_column, WH_TYPES  # noqa: E402
 from specio import shape_of  # noqa: E402
 
-GEN2_VERSION = "twingen-2.17"
+GEN2_VERSION = "twingen-2.18"
 TWINS = PATHS.TWINS
 FACTS = PATHS.FACTS
 QFACTS = PATHS.QFACTS
@@ -619,6 +619,13 @@ def funnel_pairs(facts: dict, names) -> dict:
             if a and b and a != b and a in names and b in names:
                 out.setdefault(b, a)
     return out
+
+
+# rule (r18): display buckets and empties from production result tables are not real warehouse values (an org-id
+# column of '' and '_other' made 100% of joins fail)
+WH_SENTINELS = {"", "_other", "other", "(other)", "$$_posthog_breakdown_other_$$", "$$_posthog_breakdown_null_$$",
+                "(none)", "None", "null", "NULL", "(null)", "None (i.e. no value)"}
+DATE_COL = re.compile(r"(^|_)(date|day|month|week|period|dt|ds)(_|$)|_(at|on)$|^(month|week|day)", re.I)
 
 
 STUB_EVENT = re.compile(r"^(mcp |application )", re.I)
@@ -1630,7 +1637,21 @@ class Project2(gen.Project):
         ctype = col["type"]
         lc = cname.lower()
         obs = [cell(v) for v in col.get("values") or []]
-        obs = [v for v in obs if v is not None]
+        obs = [v for v in obs if v is not None and str(v).strip() not in WH_SENTINELS]  # rule (r18)
+        if ctype == "string" and DATE_COL.search(cname) and not any(v and not ISO_D.match(str(v)) for v in obs):
+            # rule (r18): date-like string columns hold dates, not "<name>_N" placeholders
+            lo = self.now - dt.timedelta(days=self.H + self.pre_days)
+            span = max(1.0, (self.now - lo).total_seconds())
+            out = []
+            for _ in range(n):
+                d = lo + dt.timedelta(seconds=tr.uniform(0, span))
+                if MONTH_NAME.search(cname):
+                    out.append(d.strftime("%Y-%m-01"))
+                elif re.search(r"week", cname, re.I):
+                    out.append((d - dt.timedelta(days=d.weekday())).strftime("%Y-%m-%d"))
+                else:
+                    out.append(d.strftime("%Y-%m-%d"))
+            return out
         lits = []
         for l in col.get("literals") or []:
             lits.extend(x for x in l.get("values") or [] if x is not None and not isinstance(x, (list, dict)))
@@ -1724,7 +1745,7 @@ class Project2(gen.Project):
             else:
                 pre = re.sub(r"[^a-z]", "", root[1].lower().replace("_id", ""))[:4] or "key"
                 pool = [f"{pre}_{stable_seed(self.S['id'], root[0], root[1], i) % 10**10:010d}" for i in range(k)]
-        pool = list(dict.fromkeys([x for x in extra if x] + pool))
+        pool = list(dict.fromkeys([x for x in extra if x and str(x).strip() not in WH_SENTINELS] + pool))
         return pool or ["1"]
 
     # ------------------------------------------------------------------ dynamics and seeds (post-processing)

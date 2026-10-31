@@ -239,10 +239,11 @@ describe("public inference probes", () => {
     const registry = new Registry();
     const metrics = new InferenceProbeMetrics(registry);
     const abort = new AbortController();
-    const probe = vi
-      .fn()
-      .mockRejectedValueOnce(new Error("synthetic failure"))
-      .mockResolvedValue(undefined);
+    let targeted = 0;
+    const probe = vi.fn(async (_replica, _signal, scope) => {
+      if (scope === "deployment" && targeted++ === 0)
+        throw new Error("synthetic failure");
+    });
     const evaluate = vi.fn().mockResolvedValue(1);
     const run = runInferenceProbes({
       eval: evaluate,
@@ -267,6 +268,68 @@ describe("public inference probes", () => {
     expect(await registry.metrics()).not.toContain(
       'deployment="' + deploymentId + '"',
     );
+  });
+
+  it("finishes routed requests before targeting single-slot replicas", async () => {
+    const abort = new AbortController();
+    let started!: () => void;
+    let release!: () => void;
+    const routedStarted = new Promise<void>((resolve) => {
+      started = resolve;
+    });
+    const routedComplete = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const targeted = vi.fn();
+    const run = runInferenceProbes({
+      eval: async () => 1,
+      replicas: async () => [replica, { ...replica, id: randomUUID() }],
+      probe: async (replica, _signal, scope) => {
+        if (scope === "model") {
+          started();
+          await routedComplete;
+        } else targeted(replica.id);
+      },
+      metrics: new InferenceProbeMetrics(new Registry()),
+      signal: abort.signal,
+      onReady: async () => abort.abort(),
+    });
+    await routedStarted;
+    expect(targeted).not.toHaveBeenCalled();
+    release();
+    await run;
+    expect(targeted).toHaveBeenCalledTimes(2);
+  });
+
+  it("gives targeted probes their full deadline after a slow routed phase", async () => {
+    vi.useFakeTimers();
+    const abort = new AbortController();
+    const registry = new Registry();
+    let rendered = "";
+    const run = runInferenceProbes({
+      eval: async () => 1,
+      replicas: async () => [replica],
+      probe: async (_replica, signal) => {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        signal.throwIfAborted();
+      },
+      metrics: new InferenceProbeMetrics(registry),
+      signal: abort.signal,
+      onReady: async () => {
+        rendered = await registry.metrics();
+        abort.abort();
+      },
+    });
+    await vi.advanceTimersByTimeAsync(6001);
+    await run;
+    expect(rendered).toContain(
+      `deployment="${deploymentId}",result="success"} 1`,
+    );
+    expect(rendered).toContain(
+      'gradiated_inference_routed_probe_requests_total{model="test/model",result="success"} 1',
+    );
+    expect(vi.getTimerCount()).toBe(0);
+    expect(getEventListeners(abort.signal, "abort")).toHaveLength(0);
   });
 
   it("probes each replica and each distinct model, keeping their failures separate", async () => {

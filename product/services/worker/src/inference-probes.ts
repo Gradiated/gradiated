@@ -169,7 +169,8 @@ export const runInferenceProbes = async (options: {
   try {
     while (!options.signal.aborted) {
       const start = performance.now();
-      const deadline = createProbeDeadline(options.signal, 4_000);
+      // Discovery and both four-second phases must fit inside the fifteen-second lease.
+      const deadline = createProbeDeadline(options.signal, 12_000);
       const { signal } = deadline;
       try {
         if (Number(await options.eval(probeLeaseScript, lease)) === 1) {
@@ -184,29 +185,31 @@ export const runInferenceProbes = async (options: {
               replicas.map((replica) => [replica.modelId, replica]),
             ).values(),
           ];
-          const targets = [
-            ...replicas.map((replica) => ({
-              replica,
-              scope: "deployment" as const,
-            })),
-            ...models.map((replica) => ({ replica, scope: "model" as const })),
-          ];
-          await Promise.all(
-            targets.map(async ({ replica, scope }) => {
-              const started = performance.now();
-              let succeeded = false;
-              try {
-                await options.probe(replica, signal, scope);
-                succeeded = !signal.aborted;
-              } catch {
-                // SDK errors can contain authentication headers or response bodies.
-              }
-              const duration = (performance.now() - started) / 1000;
-              if (scope === "model")
-                options.metrics.recordRouted(replica, succeeded, duration);
-              else options.metrics.record(replica, succeeded, duration);
-            }),
-          );
+          for (const [scope, targets] of [
+            ["model", models],
+            ["deployment", replicas],
+          ] as const) {
+            signal.throwIfAborted();
+            await Promise.all(
+              targets.map(async (replica) => {
+                const request = createProbeDeadline(signal, 4_000);
+                const started = performance.now();
+                let succeeded = false;
+                try {
+                  await options.probe(replica, request.signal, scope);
+                  succeeded = !request.signal.aborted;
+                } catch {
+                  // SDK errors can contain authentication headers or response bodies.
+                } finally {
+                  request.dispose();
+                }
+                const duration = (performance.now() - started) / 1000;
+                if (scope === "model")
+                  options.metrics.recordRouted(replica, succeeded, duration);
+                else options.metrics.record(replica, succeeded, duration);
+              }),
+            );
+          }
         } else {
           options.metrics.discover([]);
           options.metrics.inventory.set(0);

@@ -103,7 +103,11 @@ model every five seconds, with a fresh random opening prefix, the gateway's
 normal selection and fallback, no SDK retries and a four-second deadline. It is
 critical after fifteen seconds without success and ten seconds of continued
 failure. This is a short-request availability check; long-prefill performance
-needs separate measurements.
+needs separate measurements. Routed checks finish before targeted diagnostics
+begin, so monitoring does not submit overlapping checks to a single-slot
+replica. Each request has its own four-second deadline. The normal pass cadence
+is five seconds; slow phases can extend a pass, bounded by twelve seconds
+including discovery and both phases, within the fifteen-second leader lease.
 
 Targeted probes still exercise every serving replica with fallback disabled, so
 a struggling replica remains visible even when customer routing succeeds.

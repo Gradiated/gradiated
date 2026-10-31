@@ -396,6 +396,22 @@ class Journeys(unittest.TestCase):
         pid = out.column("person_id").to_pylist()
         self.assertEqual(len({pid[i] for i in range(1, 11)}), 10)
 
+    def test_gated_family_member_gets_reach_cap(self):
+        """round 4: a family member failing the root-volume gate was skipped by adopters and not moved by
+        causal_children, reaching 95%+ of persons."""
+        import pyarrow as pa
+        t0 = 1_700_000_000_000_000
+        rows = [("$pageview", f"p{i}", t0 + i) for i in range(200)] + [("cc_video_viewed", "p0", t0 + 999)]
+        rows += [("cc_video_restarted", f"p{i}", t0 + 1000 + i) for i in range(200)]
+        tab = pa.table({"event": [r[0] for r in rows], "person_id": [r[1] for r in rows],
+                        "distinct_id": [r[1] for r in rows], "person_properties": ["{}"] * len(rows),
+                        "$session_id": [f"s{r[1]}" for r in rows], "$window_id": [f"w{r[1]}" for r in rows],
+                        "timestamp": pa.array([r[2] for r in rows], pa.int64()).cast(pa.timestamp("us", tz="UTC"))})
+        out = project().adopters(tab)
+        ev, pid = out.column("event").to_pylist(), out.column("person_id").to_pylist()
+        reach = len({pid[i] for i, e in enumerate(ev) if e == "cc_video_restarted"}) / 200
+        self.assertLessEqual(reach, 0.8)
+
     def test_purchase_keeps_buyer(self):
         """round 3: moving every purchase to a random pageview spread it to 8.5k of 9k persons."""
         rows = [("$pageview", "a", 10), ("$pageview", "b", 50), ("$pageview", "c", 60), ("purchase", "b", 20),

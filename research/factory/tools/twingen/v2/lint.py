@@ -78,13 +78,9 @@ def _pairs(names: set, vol=None) -> list[tuple[str, str, bool]]:
     vol = vol or {}
     out = []
     for e in names:
-        p = gen2.parent_event(e, names)
-        if p:
-            out.append((p, e, True))
-        elif gen2.family_parent(e, names):  # same-prefix family: repeat use is normal, compare persons only
-            f = gen2.family_parent(e, names)
-            if vol.get(f, 0) >= 0.5 * vol.get(e, 0):  # same gate as gen2.causal_children (else: product area)
-                out.append((f, e, False))
+        p = gen2.causal_parent(e, names, vol)  # same rule as the generator
+        if p:  # same-prefix family: repeat use is normal, compare persons only
+            out.append((p, e, bool(gen2.parent_event(e, names))))
     low = {n.lower(): n for n in names}
     chain = [low[c] for c in COMMERCE if c in low]
     out += [(a, b, True) for a, b in zip(chain, chain[1:])]

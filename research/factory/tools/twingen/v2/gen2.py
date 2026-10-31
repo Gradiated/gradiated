@@ -156,6 +156,20 @@ class UF:
         self.p[self.find(a)] = self.find(b)
 
 
+def causal_parent(e: str, names, vol) -> str | None:
+    """The event that causes e: a name-evident parent ('paywall_dismissed' -> 'paywall_shown'), or the family root
+    when the root's volume can carry the member (>= half its events; else the prefix is just a product area).
+    Shared by adopters, causal_children and lint so all three agree (round 4: family members failing the volume gate
+    were skipped by adopters and not moved by causal_children, reaching 95%+ of persons)."""
+    par = parent_event(e, names)
+    if par:
+        return par
+    fam = family_parent(e, names)
+    if fam and vol.get(fam, 0) >= 0.5 * vol.get(e, 0):
+        return fam
+    return None
+
+
 def posthog_flat_name(name: str) -> str:
     """PostHog names a source table '<prefix><source>_<table>'; HogQL also reaches it as '<source>.<prefix>.<table>'
     ('neon.harborview_db.organizations' == 'harborview_dbneon_organizations'). Returns the flat form, lowercased."""
@@ -1949,7 +1963,7 @@ class Project2(gen.Project):
     def adopters(self, tab):
         """rule (r19): a custom event is used by a stable subset of people (feature adopters), not by everyone who is
         active (b12 audit: 23.6k of 23.7k persons fired dozens of custom events). Reach = clip(1.8 * daily uniques /
-        DAU, 0.03, 0.8) for unevidenced custom events; rows of non-adopters move to adopters active that day."""
+        DAU, 0.03, 0.75) for unevidenced custom events; rows of non-adopters move to adopters active that day."""
         if "person_id" not in tab.schema.names:
             return tab
         ev = tab.column("event").to_pylist()
@@ -1959,7 +1973,8 @@ class Project2(gen.Project):
         if P < 30:
             return tab
         names = set(ev)
-        pairs = {e: (parent_event(e, names) or family_parent(e, names)) for e in names}
+        vol = C.Counter(ev)
+        pairs = {e: causal_parent(e, names, vol) for e in names}
         hinted = getattr(self, "_volume_hinted", set())
         ts = tab.column("timestamp").cast(pa.int64()).to_numpy()
         day = (ts // 86_400_000_000).tolist()
@@ -1982,9 +1997,10 @@ class Project2(gen.Project):
             T, U = (self.targets.get(e) or [0.0, 0.0]) if hasattr(self, "targets") else (0.0, 0.0)
             if e in hinted and not U:  # rule (r19b): hinted events use their production uniques when known
                 continue
-            reach = min(0.8, max(0.03, 1.8 * (U or 0.0) / D)) if U else 0.3
+            # cap 0.75 (+5% slack < lint's 80%): a custom event used by nearly everyone is implausible (b12, round 4)
+            reach = min(0.75, max(0.03, 1.8 * (U or 0.0) / D)) if U else 0.3
             k = max(3, int(reach * P))
-            if len(doers) <= k * 1.1:
+            if len(doers) <= k * 1.05:
                 continue
             ranked = [p_ for p_, _ in doers.most_common()]  # heavy users stay adopters
             adopt = set(ranked[:k])
@@ -2021,13 +2037,8 @@ class Project2(gen.Project):
         # funnel's "login" is mostly returning users), and its shape is calibrated by the funnel seeding rule
         pairs: dict = {}
         for e in names:
-            par = parent_event(e, names)
-            if not par:
-                fam = family_parent(e, names)
-                # rule (r19d): a same-prefix family link only when the root's volume can carry the member (round 3:
-                # 1,795 refund_ask_posted onto 40 refund_home_row_viewed rows); otherwise the prefix is a product area
-                if fam and vol[fam] >= 0.5 * vol[e]:
-                    par = fam
+            # rule (r19d): family links need root volume (round 3: 1,795 refund_ask_posted onto 40 root rows)
+            par = causal_parent(e, names, vol)
             if not par and PURCHASE_EV.search(str(e)):  # rule (r19): buyers are visitors
                 par = "$pageview" if "$pageview" in names else ("$screen" if "$screen" in names else None)
             if par and e in getattr(self, "_seq_events", set()):

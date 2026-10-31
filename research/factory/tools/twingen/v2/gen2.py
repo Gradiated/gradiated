@@ -80,6 +80,12 @@ MONTH_NAME = re.compile(r"(^|_)(month|period|mon)(_|$)|month_start|_month$|^mont
 MAX_SEED_ROWS_PER_TABLE = 20000
 MAX_EVENT_SEEDS = 200000
 MAX_DUP = 20.0
+MAX_SCENARIO_ROWS = 200_000
+LIFECYCLE_MAX_REACH = 0.7  # once-per-person events: repeats stop becoming new persons beyond this share
+MOBILE_LIBS = {"posthog-ios": "iOS", "posthog-android": "Android", "posthog-react-native": None, "posthog-flutter": None}
+WEB_ONLY_PROPS = ("$browser", "$browser_version", "$current_url", "$pathname", "$host", "$referrer",
+                  "$referring_domain", "$search_engine", "$raw_user_agent", "$browser_language", "$viewport_height",
+                  "$viewport_width", "$initial_referrer", "$initial_referring_domain")
 
 
 def op_eq(op) -> bool:
@@ -185,6 +191,53 @@ def device_props(d: dict, os_: str, lib: str) -> dict:
         elif isinstance(v, str):
             style = {"ios": "iOS", "android": "Android", "web": "Web"}.get(canon, canon.title())
             out[k] = (style.upper() if v.isupper() and len(v) > 2 else style) if any(c.isupper() for c in v) else canon
+    return out
+
+
+DEV_HOST = re.compile(r"^(https?://)?(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?(/|$)", re.I)
+DEV_HOST_PROPS = ("$current_url", "$host", "$referrer", "$initial_current_url", "$initial_referrer", "$initial_host")
+
+
+def drop_dev_hosts(spec: dict) -> int:
+    """r21: production taxonomy URL values on localhost/127.0.0.1 (developers testing) are dropped from the value
+    pools (round 5: 19% of a twin's pageviews were on 127.0.0.1 and polluted the paths the user asked about)."""
+    n = 0
+    sections = [(spec.get("events") or {}).values(), [{"properties": spec.get("unscoped") or {}}]]
+    for sect in sections:
+        for info in sect:
+            for k in DEV_HOST_PROPS:
+                d = (info.get("properties") or {}).get(k)
+                if not isinstance(d, dict) or not d.get("values"):
+                    continue
+                keep = [v for v in d["values"] if not (isinstance(v, str) and DEV_HOST.match(v))]
+                n += len(d["values"]) - len(keep)
+                d["values"] = keep
+    return n
+
+
+def sample_spec(spec, rnd):
+    """r21 scenario property spec -> one value: {"values": [v, ...] | [[v, weight], ...]}, {"range": [lo, hi],
+    "int": bool}, or a literal."""
+    if isinstance(spec, dict) and spec.get("values"):
+        vals = spec["values"]
+        if all(isinstance(v, list) and len(v) == 2 and isinstance(v[1], (int, float)) for v in vals):
+            return rnd.choices([v[0] for v in vals], [max(0.0, float(v[1])) or 1e-9 for v in vals])[0]
+        return rnd.choice(vals)
+    if isinstance(spec, dict) and isinstance(spec.get("range"), list) and len(spec["range"]) == 2:
+        lo, hi = float(spec["range"][0]), float(spec["range"][1])
+        x = rnd.uniform(lo, hi) if not spec.get("log") or lo <= 0 else math.exp(rnd.uniform(math.log(lo), math.log(hi)))
+        return int(round(x)) if spec.get("int") else round(x, 2)
+    return spec
+
+
+def scenario_props(specs: dict, rnd, person_key=None, salt="") -> dict:
+    """Values for a scenario props dict; specs marked "per_person": true give one stable value per person."""
+    out = {}
+    for k, sp in (specs or {}).items():
+        if isinstance(sp, dict) and sp.get("per_person") and person_key is not None:
+            out[k] = sample_spec(sp, random.Random(stable_seed(salt, k, person_key)))
+        else:
+            out[k] = sample_spec(sp, rnd)
     return out
 
 
@@ -584,7 +637,7 @@ def conversation_pages(spec: dict, facts: dict) -> tuple[list[str], list[str]]:
     text = "\n".join(t.get("text") or "" for t in spec.get("tasks") or [])
     for u in URL_RX.findall(text):
         u = u.rstrip(".").split("?")[0].split("#")[0]  # rule (r19): one visit's query string is not the site
-        host = re.sub(r"^https?://", "", u).split("/")[0].lower()
+        host = re.sub(r"^https?://", "", u).split("/")[0].split(":")[0].lower()  # r21: ports (127.0.0.1:3000)
         if THIRD_PARTY_HOST.search(host):
             continue
         urls[u] += 5
@@ -593,7 +646,7 @@ def conversation_pages(spec: dict, facts: dict) -> tuple[list[str], list[str]]:
             for x in r:
                 x = str(x).strip()
                 if x.startswith(("http://", "https://")) and len(x) < 300 and " " not in x \
-                        and not THIRD_PARTY_HOST.search(re.sub(r"^https?://", "", x).split("/")[0].lower()):
+                        and not THIRD_PARTY_HOST.search(re.sub(r"^https?://", "", x).split("/")[0].split(":")[0].lower()):
                     urls[x.split("#")[0]] += 1
                 elif PATH_CELL.match(x) and not re.match(r"^/\d+(/\d+)*$", x):
                     paths[x] += 1
@@ -755,7 +808,8 @@ PURCHASE_EV = re.compile(r"(^|[_ .:-])(purchase|purchased|order[_ ]completed|ord
                          r"checkout[_ ]completed)([_ .:-]|$)", re.I)
 THIRD_PARTY_HOST = re.compile(r"(^|\.)(github\.com|gitlab\.com|google\.com|notion\.so|figma\.com|stripe\.com|youtube\.com|"
                               r"linkedin\.com|twitter\.com|x\.com|facebook\.com|slack\.com|loom\.com|atlassian\.net|"
-                              r"zendesk\.com|intercom\.io|hubspot\.com|calendly\.com|typeform\.com|chatgpt\.com|openai\.com)$", re.I)
+                              r"zendesk\.com|intercom\.io|hubspot\.com|calendly\.com|typeform\.com|chatgpt\.com|openai\.com|"
+                              r"localhost|127\.0\.0\.1|0\.0\.0\.0)$", re.I)  # r21: dev hosts are not the site
 
 
 STUB_EVENT = re.compile(r"^(mcp |application |deep link opened$)", re.I)
@@ -764,6 +818,7 @@ STUB_EVENT = re.compile(r"^(mcp |application |deep link opened$)", re.I)
 class Project2(gen.Project):
     def __init__(self, spec, facts=None, qfacts=None, calib=None, member_specs=None, overrides=None, **kw):
         _null_stats = clean_null_props(spec)
+        _null_stats["dev_host_values_dropped"] = drop_dev_hosts(spec)
         # the loaded spec has no user turns; the raw spec file does (pages and value pools need the user's words)
         _raw = load_json(os.path.join(SPECS, f"{spec['id']}.json")) if spec.get("kind") == "conversation" else None
         _tasks = (_raw or {}).get("tasks") or spec.get("tasks") or []
@@ -779,19 +834,23 @@ class Project2(gen.Project):
         _ev_names = set((spec.get("events") or {}).keys())
         _spec_paths = [v for k in ("$pathname", "$current_url") for info in (spec.get("events") or {}).values()
                        for v in ((info.get("properties") or {}).get(k) or {}).get("values") or []]
-        if not _urls and not _paths and not _spec_paths and ("$pageview" in _ev_names or not mobile_platform(spec)):
+        _few = 0 < len(set(_urls)) < 5 and not _spec_paths  # r21: one or two URLs became 100% of pageviews
+        if (_few or not _urls and not _paths and not _spec_paths) and ("$pageview" in _ev_names or not mobile_platform(spec)):
             # rule (r17): no pages anywhere in the conversation -> the business's own page set from an LLM (cached)
             _pg, _pg_status = valuepools.get_pages(spec, PATHS.ROOT, "\n".join(t.get("text") or "" for t in _tasks))
             _null_stats[f"llm_pages_{_pg_status}"] = 1
             if _pg.get("paths"):
                 un = spec.setdefault("unscoped", {})
                 host = _pg.get("host") or ""
+                if _few:  # the conversation's own site keeps its host; its URLs stay first (most visited)
+                    host = re.sub(r"^https?://", "", _urls[0]).split("/")[0] or host
                 vals = [f"https://{host}{p_}" for p_, _w in _pg["paths"]] if host else []
                 for key, vs in (("$current_url", vals), ("$pathname", [p_ for p_, _w in _pg["paths"]])):
                     if vs:
                         d = un.setdefault(key, {"type": "String", "values": [], "more_values": None, "description": None,
                                                 "standard": True, "values_status": None, "sources": {}})
-                        d["values"] = list(dict.fromkeys(vs + list(d.get("values") or [])))
+                        d["values"] = list(dict.fromkeys((list(d.get("values") or []) + vs) if _few
+                                                         else (vs + list(d.get("values") or []))))
         install_pool_hook()
         _text = "\n".join(t.get("text") or "" for t in _tasks)
         _keys = valuepools.candidates(spec, shape_of, gen.VOCAB, gen.stem_of)
@@ -1967,6 +2026,7 @@ class Project2(gen.Project):
             tab = self.landing_pageview_first(tab)
         # mobile twins too (round 3: a 343-person app twin skipped these; 200 events reached ~95% of persons)
         tab = self.causal_children(tab)  # adopters ran on the base rows in postprocess
+        tab = self.scenario_event_props(tab)
         tab = self.device_coherence(tab)
         return self.lifecycle_once(tab)
 
@@ -2217,6 +2277,9 @@ class Project2(gen.Project):
                 if e in has_parent:  # rule (r19b): a new person would not have done the parent step
                     keep[i] = False
                     continue
+                if len(doers[e]) >= LIFECYCLE_MAX_REACH * len(first_row):  # r21: signups by 96% of persons
+                    keep[i] = False
+                    continue
                 k = bisect.bisect_left(start_ts, ts[i] - 86_400_000_000)
                 cand = [p_ for _t, p_ in starts[k:k + 200] if p_ not in doers[e]]
                 if not cand:
@@ -2385,7 +2448,128 @@ class Project2(gen.Project):
                     return rows
         self.v2["event_seed_new_event_names"] = len({r["event"] for r in rows} - known)
         rows.extend(self.filter_seed_rows(rnd))
+        rows.extend(self.scenario_seed_rows())
         return rows
+
+    def _window(self, op, default_days=30):
+        a = parse_when(op.get("from") or "") if op.get("from") else None
+        b = parse_when(op.get("to") or "") if op.get("to") else None
+        b = min(b + dt.timedelta(days=1) - dt.timedelta(seconds=1), self.now) if b else self.now
+        a = a or (b - dt.timedelta(days=default_days))
+        return a, max(b, a + dt.timedelta(hours=1))
+
+    def scenario_seed_rows(self) -> list[dict]:
+        """rule (r21): curator scenario overrides that add data (round 5: 16 of 40 tasks were dropped because the twin
+        lacked a specific event, property or ordered journey the request needs).
+          new_event: {"event", "per_day", "from", "to", "persons", "props": {prop: spec}, "lib"}
+          sequence:  {"steps": [E1, ...], "persons", "from", "to", "rates": [1, .6, ...], "gap_minutes": [lo, hi],
+                      "props": {event: {prop: spec}}, "lib"}
+        Persons are a stable random subset (size "persons"); props use sample_spec specs."""
+        rows: list[dict] = []
+        if not self.n_persons:
+            return rows
+        for j, op in enumerate(self.ovr.get("scenario") or []):
+            k = op.get("kind")
+            rnd = random.Random(stable_seed(self.S["id"], "scenario", j))
+            npers = max(1, min(int(op.get("persons") or 50), self.n_persons))
+            pool = rnd.sample(range(self.n_persons), npers)
+            a, b = self._window(op)
+            span = (b - a).total_seconds()
+            lib = {"$lib": op["lib"]} if op.get("lib") else {}
+            if k == "new_event" and op.get("event"):
+                n = int(float(op.get("per_day") or 10) * max(1.0, span / 86400))
+                for _ in range(min(n, MAX_SCENARIO_ROWS)):
+                    pi = rnd.choice(pool)
+                    rows.append({"event": op["event"], "ts": a + dt.timedelta(seconds=rnd.uniform(0, span)), "pi": pi,
+                                 "props": {**lib, **scenario_props(op.get("props"), rnd, pi, f"{self.S['id']}:{j}")}})
+                self.v2["scenario_new_event"] += 1
+            elif k == "sequence" and len(op.get("steps") or []) >= 2:
+                steps = op["steps"]
+                rates = list(op.get("rates") or []) + [1.0] * len(steps)
+                glo, ghi = (op.get("gap_minutes") or [1, 120])[:2]
+                for pi in pool:
+                    t = a + dt.timedelta(seconds=rnd.uniform(0, span * 0.8))
+                    reach = 1.0
+                    for i, e in enumerate(steps):
+                        reach = float(rates[i]) if i else 1.0
+                        if i and rnd.random() > reach:
+                            break
+                        if t > self.now:
+                            break
+                        props = scenario_props((op.get("props") or {}).get(e), rnd, pi, f"{self.S['id']}:{j}:{e}")
+                        rows.append({"event": e, "ts": t, "pi": pi, "props": {**lib, **props}})
+                        t = t + dt.timedelta(minutes=rnd.uniform(float(glo), float(ghi)))
+                    if len(rows) >= MAX_SCENARIO_ROWS:
+                        break
+                self.v2["scenario_sequence"] += 1
+        self.v2["scenario_seed_rows"] = len(rows)
+        return rows
+
+    def scenario_event_props(self, tab):
+        """rule (r21): {"kind": "event_props", "event", "props": {prop: spec}, "share"} sets properties on a share of
+        that event's rows (per_person specs: one value per person, e.g. a book a reader keeps opening)."""
+        ops = [o for o in self.ovr.get("scenario") or [] if o.get("kind") == "event_props" and o.get("event")]
+        if not ops:
+            return tab
+        ev = tab.column("event").to_pylist()
+        pid = tab.column("person_id").to_pylist()
+        props = tab.column("properties").to_pylist()
+        n = 0
+        for j, op in enumerate(ops):
+            rnd = random.Random(stable_seed(self.S["id"], "scenario_props", j))
+            share = float(op.get("share", 1.0))
+            for i, e in enumerate(ev):
+                if e != op["event"] or rnd.random() > share:
+                    continue
+                d = orjson.loads(props[i] or "{}")
+                d.update(scenario_props(op.get("props"), rnd, pid[i], f"{self.S['id']}:p{j}"))
+                props[i] = orjson.dumps(d).decode()
+                n += 1
+        tab = tab.set_column(tab.schema.get_field_index("properties"), "properties",
+                             pa.array(props, tab.schema.field("properties").type))
+        self.v2["scenario_prop_rows"] = n
+        return tab
+
+    def scenario_person_props(self, out_dir):
+        """rule (r21): {"kind": "person_props", "props": {prop: spec}, "share"} on persons and events' person_properties."""
+        ops = [o for o in self.ovr.get("scenario") or [] if o.get("kind") == "person_props" and o.get("props")]
+        pe_path = os.path.join(out_dir, "persons.parquet")
+        if not ops or not os.path.exists(pe_path):
+            return
+        persons = pq.read_table(pe_path)
+        ids = [str(x) for x in persons.column("id").to_pylist()]
+        add: dict = {}
+        for j, op in enumerate(ops):
+            share = float(op.get("share", 1.0))
+            for pid in ids:
+                r = random.Random(stable_seed(self.S["id"], "scenario_person", j, pid))
+                if r.random() <= share:
+                    add.setdefault(pid, {}).update(scenario_props(op["props"], r, pid, f"{self.S['id']}:pp{j}"))
+        if not add:
+            return
+
+        def fix(s_, pid):
+            if pid not in add:
+                return s_
+            d = orjson.loads(s_ or "{}")
+            d.update(add[pid])
+            return orjson.dumps(d).decode()
+
+        persons = persons.set_column(persons.schema.get_field_index("properties"), "properties",
+                                     pa.array([fix(s_, pid) for s_, pid in zip(persons.column("properties").to_pylist(), ids)],
+                                              persons.schema.field("properties").type))
+        pq.write_table(persons, pe_path + ".tmp", compression="zstd")
+        os.replace(pe_path + ".tmp", pe_path)
+        ev_path = os.path.join(out_dir, "events.parquet")
+        tab = pq.read_table(ev_path)
+        if "person_properties" in tab.schema.names:
+            vals = [fix(s_, str(p_)) for s_, p_ in zip(tab.column("person_properties").to_pylist(),
+                                                       tab.column("person_id").to_pylist())]
+            tab = tab.set_column(tab.schema.get_field_index("person_properties"), "person_properties",
+                                 pa.array(vals, tab.schema.field("person_properties").type))
+            pq.write_table(tab, ev_path + ".tmp", compression="zstd", row_group_size=100_000)
+            os.replace(ev_path + ".tmp", ev_path)
+        self.v2["scenario_persons"] = len(add)
 
     # rule: filter-consistent seeding. Production queries with exact event-property filters that returned data must
     # find matching events in the twin: inject events with the filter values (Trends: per production date and count;
@@ -2685,6 +2869,12 @@ class Project2(gen.Project):
                 out.pop(k, None)
             out.update(geo_tuple(props.get("$geoip_country_code") or props.get("$geoip_country_name"), rnd))
         out.update(props)
+        lib = str(out.get("$lib") or "").lower()
+        if lib in MOBILE_LIBS:  # r21: a mobile-SDK row does not inherit a web pageview's browser/page context
+            for k in WEB_ONLY_PROPS:
+                out.pop(k, None)
+            if MOBILE_LIBS[lib] and str(out.get("$os")) not in (MOBILE_LIBS[lib], "iPadOS"):
+                out["$os"] = MOBILE_LIBS[lib]
         cu, du = out.get("$current_url"), d.get("$current_url")
         if isinstance(cu, str) and cu.startswith("/") and isinstance(du, str) and "://" in du:
             origin = du.split("://", 1)[0] + "://" + du.split("://", 1)[1].split("/", 1)[0]
@@ -2853,6 +3043,7 @@ class Project2(gen.Project):
         man = super().run(out_dir)
         self.postprocess(out_dir)
         self.remap_placeholders(out_dir)
+        self.scenario_person_props(out_dir)  # rule (r21)
         man["generator"] = GEN2_VERSION
         man["counts"]["events"] = self.n_events
         man["counts"]["event_names"] = len(self.ev_counts)

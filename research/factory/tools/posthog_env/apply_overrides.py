@@ -7,6 +7,8 @@ loader shifts by shift_days. This converts and merges them into <root>/twins/ove
   spike            -> "spikes": [{event, from, to, factor}] (dates minus shift_days; replaces a spike on the same
                       event and start date)
   history_days     -> "history_days": max(existing, n)
+  new_event / sequence / event_props / person_props -> "scenario": [op, ...] (dates shifted)
+  warehouse_table  -> "warehouse": {table: {column: {type, values}}}
 Records the source ("curation") per entry. Prints the conversation ids changed (for regenerate + reload).
 
     python3 apply_overrides.py --overrides-dir B/curated/overrides --root /opt/posthog-sft/env-research/twins_loop
@@ -17,6 +19,9 @@ import datetime as dt
 import glob
 import json
 import os
+
+
+SCENARIO_KINDS = ("new_event", "sequence", "event_props", "person_props")
 
 
 def shift(d: str, days: int) -> str:
@@ -36,6 +41,17 @@ def merge(cur: dict, ovs: list[dict], shift_days: int) -> dict:
             cur["spikes"] = [x for x in cur.get("spikes") or [] if not (x.get("event") == sp["event"] and x.get("from") == sp["from"])] + [sp]
         elif k == "history_days" and o.get("days"):
             cur["history_days"] = max(int(cur.get("history_days") or 0), int(o["days"]))
+        elif k in SCENARIO_KINDS:  # r21: scenario data the request needs (generator: gen2.scenario_*)
+            op = {kk: v for kk, v in o.items()}
+            for f in ("from", "to"):
+                if op.get(f):
+                    op[f] = shift(op[f], shift_days)
+            op["source"] = "curation"
+            if op not in (cur.get("scenario") or []):
+                cur.setdefault("scenario", []).append(op)
+        elif k == "warehouse_table" and o.get("table") and isinstance(o.get("columns"), dict):
+            wh = cur.setdefault("warehouse", {})
+            wh.setdefault(o["table"], {}).update(o["columns"])
     cur.setdefault("notes", []).append("curation overrides merged")
     return cur
 

@@ -106,9 +106,24 @@ builder notes: {notes}
 7. grading_notes must be checkable against the twin (the agent will see twin data, not production): describe what the
    right answer contains and how to check it (query sketch, object to inspect), acceptable variations, and things
    not required. Don't copy production numbers unless the twin reproduces them.
-8. twin_overrides may only use: {{"kind": "event_multiplier", "event": E, "factor": x}}, {{"kind": "spike",
-   "event": E, "from": "YYYY-MM-DD", "to": "YYYY-MM-DD", "factor": x}} (twin dates), {{"kind": "history_days",
-   "days": n}}. Leave empty if the twin already supports the task.
+8. twin_overrides (twin dates YYYY-MM-DD; the twin is regenerated with them, then checked again). Kinds:
+   {{"kind": "event_multiplier", "event": E, "factor": x}}
+   {{"kind": "spike", "event": E, "from": D, "to": D, "factor": x}}   (factor 0 stops the event in that window)
+   {{"kind": "history_days", "days": n}}
+   {{"kind": "new_event", "event": E, "per_day": n, "from": D, "to": D, "persons": N, "props": {{prop: SPEC}},
+     "lib": "posthog-ios"|"posthog-android"|"web"(optional)}}   an event the request needs that the twin lacks
+   {{"kind": "sequence", "steps": [E1, E2, ...], "persons": N, "from": D, "to": D, "rates": [1, 0.6, 0.35, ...],
+     "gap_minutes": [lo, hi], "props": {{E: {{prop: SPEC}}}}, "lib": ...}}   ordered journeys with realistic drop-off
+   {{"kind": "event_props", "event": E, "props": {{prop: SPEC}}, "share": 0..1}}   properties on an existing event
+   {{"kind": "person_props", "props": {{prop: SPEC}}, "share": 0..1}}   person properties (plan, company, role, ...)
+   {{"kind": "warehouse_table", "table": T, "columns": {{col: {{"type": "string|integer|float|datetime|boolean",
+     "values": [...]}}}}}}   a synced table; key columns named distinct_id/user_id/email/person_id join to persons
+   SPEC = {{"values": [v, ...] or [[v, weight], ...]}} | {{"range": [lo, hi], "int": true, "log": true}} | literal;
+   add "per_person": true for a value that stays fixed per person (a reader's book, a customer's plan).
+   Use them to make the request's premise and the data a correct answer needs real and PLAUSIBLE for this business
+   (realistic volumes, shares and drop-off, values in the business's domain, consistent across related events).
+   Prefer this over dropping with twin_gap. Never add data that hands the agent the answer or makes the task easier
+   than production (no labels that name the conclusion). Leave empty if the twin already supports the task.
 
 Respond with ONLY a JSON object:
 ## Verifying the twin before you decide

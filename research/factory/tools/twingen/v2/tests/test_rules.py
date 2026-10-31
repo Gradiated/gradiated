@@ -566,6 +566,59 @@ class RoundB14Coherence(unittest.TestCase):
         self.assertNotIn("POST", [smp({"person": {}}) for _ in range(30)])  # no other project's HTTP verbs
 
 
+class RoundB15Scenario(unittest.TestCase):
+    """round 5: 16 of 40 tasks dropped as twin gaps (missing events/props/journeys) -> curator scenario overrides;
+    single-URL page pools, localhost pages, example-N.com person emails, signups by 96% of persons."""
+
+    def test_sample_spec(self):
+        r = random.Random(0)
+        self.assertIn(gen2.sample_spec({"values": ["a", "b"]}, r), ("a", "b"))
+        self.assertEqual(gen2.sample_spec({"values": [["a", 1], ["b", 0]]}, r), "a")
+        x = gen2.sample_spec({"range": [20, 2000], "int": True, "log": True}, r)
+        self.assertTrue(isinstance(x, int) and 20 <= x <= 2000)
+        self.assertEqual(gen2.sample_spec("fixed", r), "fixed")
+        a = gen2.scenario_props({"book": {"values": ["x", "y", "z"], "per_person": True}}, r, "p1", "s")
+        b = gen2.scenario_props({"book": {"values": ["x", "y", "z"], "per_person": True}}, random.Random(5), "p1", "s")
+        self.assertEqual(a, b)
+
+    def test_scenario_seed_rows(self):
+        p = project(n_persons=100, ovr={"scenario": [
+            {"kind": "new_event", "event": "option_trade_opened", "per_day": 5, "from": "2023-11-01", "to": "2023-11-10",
+             "persons": 20, "props": {"notionalUsd": {"range": [100, 5000]}}, "lib": "posthog-ios"},
+            {"kind": "sequence", "steps": ["app_opened", "onboarding_started", "onboarding_done"], "persons": 50,
+             "from": "2023-11-01", "to": "2023-11-15", "rates": [1, 0.6, 0.5]}]})
+        rows = p.scenario_seed_rows()
+        opened = [r for r in rows if r["event"] == "option_trade_opened"]
+        self.assertGreater(len(opened), 30)
+        self.assertTrue(all(100 <= r["props"]["notionalUsd"] <= 5000 and r["props"]["$lib"] == "posthog-ios" for r in opened))
+        self.assertLessEqual(len({r["pi"] for r in opened}), 20)
+        seq = C.Counter(r["event"] for r in rows if r["event"] != "option_trade_opened")
+        self.assertEqual(seq["app_opened"], 50)
+        self.assertLess(seq["onboarding_done"], seq["onboarding_started"])
+        by = C.defaultdict(list)
+        for r in rows:
+            by[r["pi"]].append(r)
+        for rs in by.values():
+            ts = [r["ts"] for r in rs if r["event"] != "option_trade_opened"]
+            self.assertEqual(ts, sorted(ts))
+
+    def test_conversation_pages_skip_dev_hosts_with_ports(self):
+        urls, _ = gen2.conversation_pages({"tasks": [{"text": "see http://127.0.0.1:3000/a and https://shop.io/b"}]}, {})
+        self.assertEqual(urls, ["https://shop.io/b"])
+
+    def test_drop_dev_hosts(self):
+        spec = {"events": {"$pageview": {"properties": {"$current_url": {"values": [
+            "http://127.0.0.1:3000/x", "https://shop.io/", "localhost:8000/a"]}}}}, "unscoped": {}}
+        self.assertEqual(gen2.drop_dev_hosts(spec), 2)
+        self.assertEqual(spec["events"]["$pageview"]["properties"]["$current_url"]["values"], ["https://shop.io/"])
+
+    def test_mobile_seed_row_drops_web_context(self):
+        p = project()
+        donors = ({}, {"p1": ['{"$browser": "Chrome", "$os": "Windows", "$current_url": "https://x.io/"}']}, [])
+        out = p._with_donor({"$lib": "posthog-ios"}, "Application Installed", "p1", donors, random.Random(0))
+        self.assertEqual(out, {"$os": "iOS", "$lib": "posthog-ios"})
+
+
 class RoundB12(unittest.TestCase):
     """b12 acceptance audit: everyone fired every custom event, purchases by non-visitors, placeholders, a GitHub PR URL
     and one session URL as the project's pages, campaigns crossed with random sources."""

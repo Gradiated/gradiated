@@ -13,7 +13,7 @@ URL as the project's top page, campaigns crossed with random sources). These che
   placeholder       a property value looks like a generator placeholder (<stem>_a..l, "Name 3", page3, handle1,
                     sub1.sub2.*, "example company 7"), per property with share of rows
   third_party_host  pageviews on hosts that are third-party services (github.com, google docs, notion, ...)
-  url_dominance     one URL with a query string carries > 50% of pageviews
+  url_dominance     one URL carries > 50% of pageviews (n >= 50)
   value_domain      a property whose name is not URL-like holds URLs in >= 30% of rows
   warehouse_duplicate  two warehouse files are one PostHog table ('neon.x.orgs' and 'xneon_orgs')
   warehouse_join    a name-evident warehouse foreign key (<x>_id -> <x>s.id) matches < 50% of the parent's ids
@@ -42,7 +42,8 @@ PLACEHOLDER_PATTERNS = [
 ]
 THIRD_PARTY = re.compile(r"(^|\.)(github\.com|gitlab\.com|google\.com|docs\.google\.com|notion\.so|figma\.com|stripe\.com|"
                          r"youtube\.com|linkedin\.com|twitter\.com|x\.com|facebook\.com|slack\.com|loom\.com|"
-                         r"atlassian\.net|zendesk\.com|intercom\.io|hubspot\.com|calendly\.com|typeform\.com)$", re.I)
+                         r"atlassian\.net|zendesk\.com|intercom\.io|hubspot\.com|calendly\.com|typeform\.com|"
+                         r"localhost|127\.0\.0\.1|0\.0\.0\.0)$", re.I)
 REACH = 0.8  # round 3 audit: checkout_opened at 86% of visitors was implausible and not flagged at 90%
 URL_PROPS = {"$host", "$current_url", "$pathname", "$referrer", "$referring_domain", "$initial_referrer",
              "$initial_referring_domain", "$initial_current_url", "$initial_host", "$initial_pathname", "$prev_pageview_pathname"}
@@ -157,10 +158,9 @@ def lint_project(d: str, max_rows: int = 400000) -> dict:
             pv += 1
             u = d_.get("$current_url")
             if isinstance(u, str):
-                h = re.sub(r"^https?://", "", u).split("/")[0].split("?")[0].lower()
+                h = re.sub(r"^https?://", "", u).split("/")[0].split("?")[0].split(":")[0].lower()
                 hosts[h] += 1
-                if "?" in u:
-                    urls[u] += 1
+                urls[u.split("#")[0]] += 1
         c, src = d_.get("utm_campaign"), d_.get("utm_source")
         if isinstance(c, str) and isinstance(src, str):
             for _ch, crx, srx in CHANNEL:
@@ -184,8 +184,8 @@ def lint_project(d: str, max_rows: int = 400000) -> dict:
             findings.append({"check": "third_party_host", "severity": "material", "detail": f"{h}: {c}/{pv} pageviews"})
     if urls and pv:
         u, c = urls.most_common(1)[0]
-        if c > 0.5 * pv:
-            findings.append({"check": "url_dominance", "severity": "material", "detail": f"{u[:120]}: {c}/{pv} pageviews"})
+        if c > 0.5 * pv and pv >= 50:  # one URL carrying most pageviews (round 5: 100% on one page)
+            findings.append({"check": "url_dominance", "severity": "material" if c > 0.8 * pv else "minor", "detail": f"{u[:120]}: {c}/{pv} pageviews"})
     if camp_tot >= 30 and camp_bad > 0.3 * camp_tot:
         findings.append({"check": "campaign_source", "severity": "minor",
                          "detail": f"{camp_bad}/{camp_tot} rows: campaign names a channel its source contradicts"})

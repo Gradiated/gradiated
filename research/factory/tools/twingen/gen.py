@@ -338,7 +338,9 @@ class Project:
                ("utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term")}
         self.utm_vals = utm
         emails = [e for e in vals.get("email", []) + vals.get("$email", []) if isinstance(e, str) and "@" in e]
-        doms = Counter(e.split("@")[-1].lower() for e in emails)
+        # r21: anonymized domains (example.com, example-3.com) are placeholders, not the customer's user domains
+        doms = Counter(e.split("@")[-1].lower() for e in emails
+                       if not re.fullmatch(r"example(-\d+)?\.(com|org|net)", e.split("@")[-1].lower()))
         self.email_domains = [(d, c) for d, c in doms.most_common(20)] or \
             [(d if d != "company" else f"{self.company}.com", w) for d, w in catalog.EMAIL_DOMAINS]
 

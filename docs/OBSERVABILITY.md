@@ -101,7 +101,7 @@ never enter Git.
 `InferenceModelProbeFailed` measures normal customer routing: one request per
 model every five seconds, with a fresh random opening prefix, the gateway's
 normal selection and fallback, no SDK retries and a four-second deadline. It is
-critical after fifteen seconds without success and ten seconds of continued
+critical after fifteen seconds without success and one minute of continued
 failure. This is a short-request availability check; long-prefill performance
 needs separate measurements. Routed checks finish before targeted diagnostics
 begin, so monitoring does not submit overlapping checks to a single-slot
@@ -150,8 +150,8 @@ authentication; a caller cannot suppress failure metrics by forging that header.
 Older metrics without a traffic label remain included during mixed-version deployment.
 
 `GatewayRuntimeFailures` requires more than 1% failed completed generations per
-model and deployment over five minutes, at least two failures, sustained for
-thirty seconds. Cancelled generations remain excluded from its denominator.
+model and deployment over five minutes, at least five failures, sustained for
+one minute. Cancelled generations remain excluded from its denominator.
 
 Public inference probes use Gradiated's internal verification account and normal
 billing admission. HTTP 402 across all probes can mean that this account exhausted
@@ -497,3 +497,129 @@ than scheduler certificate-renewal metrics. Monitor missing Nodes, Pending pods,
 failed Rollouts, controller availability and desired versus qualified capacity.
 Verify both allowed private traffic and denied GPU-to-cluster destinations after
 network changes; see the [Tailscale guide](../infra/modules/tailscale/README.md).
+
+## Paging policy
+
+Urgent paging has continuous 24-hour schedule coverage, including weekends. Warning
+alerts still enter incident.io as In-hours and remain visible in dashboards and Slack;
+they do not page the responder. The independent Watchdog heartbeat remains Urgent.
+Root use and CloudTrail changes also retain their independent urgent CloudWatch route.
+
+Non-security availability and error conditions must persist at least one minute.
+The explicit immediate exceptions are root-account activity, urgent AWS findings,
+critical Falco detections and generation-finalization failure: these events can
+require containment or billing-data recovery even after the triggering operation ends.
+A persistence timer is not an event-count filter; settlement backpressure therefore
+requires five rejections per minute sustained for a minute rather than keeping a
+single rejection timestamp actionable for five minutes.
+
+A healthy replica prevents a fleet-wide dependency or worker-loop-down page. One
+OOM kill, per-pod retry failures, per-allocation loader telemetry, log-query latency,
+lost redundancy and forecasted capacity pressure are warnings. Critical public
+availability, severe request failures, stuck billing progress and actual near-full
+storage remain enabled. Losing one Loki replica warns; losing all Loki replicas
+for five minutes pages. Metabase database storage is warning-only, independently
+of the product database storage page.
+
+Duplicate inhibition is scoped: no-ready-replica suppresses the routed probe only
+for the same model; severe generation failure suppresses the lower-ratio runtime
+failure only for the same deployment; probe-monitoring loss suppresses only the
+inference-probes worker-loop-down alert. Targets become eligible when their source
+clears. Different models, deployments, other worker loops and security alerts are
+not silenced by these rules. Native incident grouping remains a fixed thirty-minute
+window per alert title, not a global paging quota.
+
+The inventory below covers every rule name that was critical in the reviewed pinned
+production rule set. Duplicate expressions for the same name (the two control-plane
+burn windows and two Loki compactor cases) share the decision. Timing is the `for`
+hold after the expression becomes true, not total detection latency. Expressions,
+charts and their functional tests remain the source of truth; re-review this inventory
+when adding a new critical rule or upgrading the monitoring charts.
+
+| Reviewed alert | Severity | Hold | Decision |
+| --- | --- | --- | --- |
+| `AlertmanagerClusterCrashlooping` | warning | 300s | Restart instability is diagnostic while delivery succeeds; cluster loss and heartbeat failure still page. |
+| `AlertmanagerClusterDown` | critical | 300s | Sustained loss of the Alertmanager cluster threatens paging; independent heartbeat also covers total pipeline loss. |
+| `AlertmanagerClusterFailedToSendAlerts` | critical | 300s | All observed members fail the same integration persistently; actual alert delivery is impaired. |
+| `AlertmanagerConfigInconsistent` | warning | 1200s | Replica configuration discrepancy is diagnostic; failed delivery still pages. |
+| `AlertmanagerFailedReload` | warning | 600s | Last valid config remains in use; broken notification delivery has separate critical and external-heartbeat coverage. |
+| `AlertmanagerMembersInconsistent` | warning | 900s | Cluster membership discrepancy is diagnostic; delivery and cluster failure remain critical. |
+| `ApiDependencyDown` | critical | 2m | Require all observed API replicas to report the dependency unhealthy. |
+| `ApiHighErrorRate` | critical | 5m | Sustained customer HTTP error ratio with a minimum request-volume guard; severe outages have a separate faster rule. |
+| `ApiProbeMissing` | warning | 5m | Missing telemetry alone is diagnostic; independent public availability, deployment loss and external heartbeat retain pages. |
+| `ApiPublicUnavailable` | critical | 2m | External HTTPS request path continuously fails for two minutes. |
+| `ApiSevereErrors` | critical | 1m | At least half of requests/generations fail, with at least five failures, sustained one minute. |
+| `ApiTelemetryMissing` | warning | 5m | Missing telemetry alone is diagnostic; independent public availability, deployment loss and external heartbeat retain pages. |
+| `AwsRootAccountUsed` | critical | 0m | Immediate security event; required on-call response. |
+| `AwsUrgentSecurityFinding` | critical | 0m | Immediate high-severity GuardDuty finding. |
+| `CacheEvictions` | critical | 1m | Valkey contains unsettled charges and leases; eviction risks billing-data loss. |
+| `ConsoleProbeMissing` | warning | 5m | Missing telemetry alone is diagnostic; independent public availability, deployment loss and external heartbeat retain pages. |
+| `ConsoleUnavailable` | critical | 2m | External HTTPS request path continuously fails for two minutes. |
+| `ContainerOOMKilled` | warning | 0s | One restarted container can recover while other replicas serve; availability/error rules page real impact. |
+| `DatabaseStorageLow` | critical | 15m | Product database write-loss risk; optional Metabase storage is a separate warning. |
+| `DeploymentUnavailable` | critical | 2m | Zero available replicas of a required, enabled service for two minutes. |
+| `FalcoCriticalEvents` | critical | 0m | Immediate critical runtime-security detection. |
+| `GatewayDependencyDown` | critical | 2m | Require all observed gateway replicas to report the dependency unhealthy. |
+| `GatewayFinalizationFailure` | critical | 0m | Immediate exception: usage, billing or lease finalization may have lost durable state. |
+| `GatewayGenerationsStuck` | critical | 5m | Active work with no terminal generation for ten minutes, sustained another five minutes. |
+| `GatewayHighErrorRate` | critical | 5m | Sustained customer HTTP error ratio with a minimum request-volume guard; severe outages have a separate faster rule. |
+| `GatewayRuntimeFailures` | critical | 1m | More than 1% failed completed generations, at least five failures per five minutes, for one minute; verification and cancellations excluded. |
+| `GatewaySevereErrors` | critical | 1m | At least half of requests/generations fail, with at least five failures, sustained one minute. |
+| `GatewaySevereGenerationFailures` | critical | 1m | At least half of requests/generations fail, with at least five failures, sustained one minute. |
+| `GatewayTelemetryMissing` | warning | 5m | Missing telemetry alone is diagnostic; independent public availability, deployment loss and external heartbeat retain pages. |
+| `GenerationIngestionStuck` | critical | 1m | Oldest pending ingestion work exceeds five minutes for one minute; billing record progress is blocked. |
+| `InferenceModelProbeFailed` | critical | 1m | Routed success older than fifteen seconds must stay unhealthy for one minute; five-minute recovery hold. |
+| `InferenceProbeMonitoringStalled` | critical | 1m | Monitoring must stay stale or incomplete for one minute; suppress duplicate probe-loop pages. |
+| `KubeAPIDown` | critical | 900s | All API-server scrape targets disappear for fifteen minutes; sustained control-plane blindness/outage. |
+| `KubeAPIErrorBudgetBurn` | critical | 120s | Retain both multi-window severe control-plane error-budget burn rules. |
+| `KubeClientCertificateExpiration` | warning | 300s | One-day certificate warning gives time for daytime rotation; API downtime retains its critical rule. |
+| `KubePersistentVolumeErrors` | warning | 300s | An individual Pending/Failed volume may be unused; deployment availability catches actual service loss. |
+| `KubePersistentVolumeFillingUp` | critical | 60s | Less than 3% writable persistent storage remains for one minute; imminent durable-storage exhaustion. |
+| `KubePersistentVolumeInodesFillingUp` | critical | 60s | Less than 3% writable persistent-volume inodes remain for one minute. |
+| `KubeProxyDown` | critical | 900s | All kube-proxy scrape targets disappear for fifteen minutes; sustained cluster-network risk. |
+| `KubeStateMetricsListErrors` | warning | 900s | Monitoring collector errors are daytime diagnostics; service and pipeline outage signals remain critical. |
+| `KubeStateMetricsShardingMismatch` | warning | 900s | Monitoring collector configuration is a diagnostic, not proof of customer outage. |
+| `KubeStateMetricsShardsMissing` | warning | 900s | Missing monitoring shards are a diagnostic, not proof of customer outage. |
+| `KubeStateMetricsWatchErrors` | warning | 900s | Monitoring collector errors are daytime diagnostics; service and pipeline outage signals remain critical. |
+| `KubeletClientCertificateExpiration` | warning | 0s | One-day certificate warning; node/control-plane outages remain covered. |
+| `KubeletDown` | critical | 900s | No kubelet scrape succeeds across known nodes for fifteen minutes. |
+| `KubeletServerCertificateExpiration` | warning | 0s | One-day certificate warning; node/control-plane outages remain covered. |
+| `LokiCompactorHasNotSuccessfullyRunCompaction` | warning | 3600s | Delayed background compaction is daytime maintenance; storage exhaustion still pages. |
+| `LokiRequestErrors` | critical | 900s | More than 10% Loki server errors sustained fifteen minutes; log service is materially failing. |
+| `LokiRequestLatency` | warning | 900s | Slow log queries alone do not justify waking the production responder. |
+| `LokiRequestPanics` | warning | 0s | A recovered individual panic is diagnostic; persistent request errors and zero replicas still page. |
+| `LokiUnavailable` | critical | 5m | Page only when zero replicas remain; one surviving replica raises a redundancy warning. |
+| `LoraLoaderUnavailable` | warning | 2m | Per-allocation scrape/loader diagnostic; customer errors and availability retain their pages. |
+| `ModelNoReadyReplicas` | critical | 1m | Required model has no fresh healthy replica for one minute; suppress the duplicate routed-probe page. |
+| `NodeFileDescriptorLimit` | warning | 900s | 90% descriptor use is capacity headroom, not demonstrated exhaustion or service failure. |
+| `NodeFilesystemAlmostOutOfFiles` | critical | 3600s | Writable filesystem has less than 3% inodes for an hour. |
+| `NodeFilesystemAlmostOutOfSpace` | critical | 1800s | Writable filesystem has less than 3% space for thirty minutes. |
+| `NodeFilesystemFilesFillingUp` | warning | 3600s | Forecasted inode pressure is daytime work; actual less-than-3% capacity retains its page. |
+| `NodeFilesystemSpaceFillingUp` | warning | 3600s | Forecasted filesystem pressure is daytime work; actual less-than-3% capacity retains its page. |
+| `NodeRAIDDegraded` | warning | 900s | Loss of storage redundancy is daytime repair; actual storage exhaustion and customer failures still page. |
+| `PrometheusBadConfig` | warning | 600s | Failed reload retains the previous valid config; alert evaluation and delivery failures retain pages. |
+| `PrometheusErrorSendingAlertsToAnyAlertmanager` | critical | 900s | Every Alertmanager destination has sustained notification errors. |
+| `PrometheusRemoteStorageFailures` | warning | 900s | Remote archival/export failures do not prove local scrape or alert evaluation failure. |
+| `PrometheusRemoteWriteBehind` | warning | 900s | Delayed remote write is daytime investigation while local alerting operates. |
+| `PrometheusRuleFailures` | critical | 900s | Repeated rule evaluation failures for fifteen minutes can blind required production alerts. |
+| `PrometheusTargetSyncFailure` | warning | 300s | Discovery-sync errors can coexist with working scrapes; investigate during working hours. |
+| `ProxyHighErrorRate` | critical | 2m | Sustained customer HTTP error ratio with a minimum request-volume guard; severe outages have a separate faster rule. |
+| `ProxyProbeMissing` | warning | 5m | Missing telemetry alone is diagnostic; independent public availability, deployment loss and external heartbeat retain pages. |
+| `ProxyPublicUnavailable` | critical | 2m | External HTTPS request path continuously fails for two minutes. |
+| `ProxyTelemetryMissing` | warning | 5m | Missing telemetry alone is diagnostic; independent public availability and external heartbeat retain pages. |
+| `PublicLoadBalancerErrors` | critical | 5m | At least five ELB errors and over 1% failed requests per reporting period for five minutes, rather than a small absolute count. |
+| `SettlementBackpressure` | critical | 1m | At least five admission rejections per minute sustained for one minute; a recovered one-off does not page. |
+| `SettlementLagging` | critical | 2m | Leader settlement lag exceeds five minutes for two minutes. |
+| `SettlementLeaderMissing` | critical | 2m | No settlement leader across the observed worker fleet for two minutes. |
+| `TemporalWorkerUnavailable` | critical | 5m | Enabled Temporal worker deployment has zero available replicas for five minutes. |
+| `TopUpChargeStuckPending` | warning | 5m | An individual charge remaining pending is a payment-reconciliation diagnostic, not proof of fleet-wide downtime. |
+| `WorkerLoopDown` | critical | 2m | No observed worker has the loop running for two minutes; probe-monitoring outage suppresses its duplicate. |
+| `WorkerLoopFailing` | warning | 1m | Per-pod supervised retries can recover or have healthy neighbors; stalled progress remains critical. |
+| `WorkerLoopStalled` | critical | 2m | No worker makes required loop progress for over three minutes, sustained another two minutes; settlement uses its leader. |
+| `WorkerTelemetryMissing` | warning | 5m | Missing telemetry alone is diagnostic; independent public availability, deployment loss and external heartbeat retain pages. |
+| `etcdDatabaseQuotaLowSpace` | critical | 600s | Datastore quota above 95% for ten minutes risks stopping control-plane writes. |
+| `etcdGRPCRequestsSlow` | warning | 600s | Latency degradation without a demonstrated outage is daytime investigation. |
+| `etcdHighFsyncDurations` | warning | 600s | Disk latency degradation is diagnostic; quorum, RPC failures and capacity remain critical. |
+| `etcdHighNumberOfFailedGRPCRequests` | critical | 300s | More than 5% control-plane datastore RPC failures for five minutes. |
+| `etcdInsufficientMembers` | critical | 180s | Insufficient members threaten control-plane quorum. |
+| `etcdNoLeader` | critical | 60s | Control-plane datastore has no leader for one minute. |

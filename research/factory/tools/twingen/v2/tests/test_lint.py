@@ -44,6 +44,12 @@ class TestLint(unittest.TestCase):
         rows = [pv(f"p{i}") for i in range(100)] + [("clicked_cta", f"p{i}", {}) for i in range(60)]
         self.assertNotIn("event_reach", checks(rows))
 
+    def test_lifecycle_reach_is_minor_and_family_counts_by_persons(self):
+        rows = [pv(f"p{i}") for i in range(100)] + [("signed_up", f"p{i}", {}) for i in range(100)]
+        self.assertEqual({f["severity"] for f in checks(rows)["event_reach"]}, {"minor"})
+        rows = [("calc_page_view", f"p{i}", {}) for i in range(30)] + [("calc_run", f"p{i % 30}", {}) for i in range(200)]
+        self.assertNotIn("funnel_order", checks(rows))
+
     def test_ecommerce_funnel_order(self):
         rows = [pv(f"p{i}") for i in range(100)]
         rows += [("add_to_cart", f"p{i}", {}) for i in range(10)] + [("purchase", f"p{i}", {}) for i in range(30)]
@@ -71,6 +77,12 @@ class TestLint(unittest.TestCase):
         c = checks(rows)
         self.assertIn("third_party_host", c)
         self.assertIn("url_dominance", c)
+
+    def test_value_domain(self):
+        rows = [pv(f"p{i}", trigger_status="https://shop.example/pricing", landing_url="https://shop.example/")
+                for i in range(50)]
+        c = checks(rows)
+        self.assertEqual([f["detail"].split(":")[0] for f in c["value_domain"]], ["trigger_status"])
 
     def test_campaign_source(self):
         bad = [pv(f"p{i}", utm_campaign="google_search_brand", utm_source="facebook") for i in range(40)]

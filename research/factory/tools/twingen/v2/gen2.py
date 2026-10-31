@@ -561,6 +561,15 @@ CHILD_OF = [  # (child word, parent words): child volume <= parent volume
     (("created", "saved"), ("opened", "started")),
     (("complete", "completed", "done", "finished"), ("ready", "start", "started", "begin")),
 ]
+URLISH_TOKENS = {"url", "urls", "uri", "host", "hostname", "link", "links", "href", "referrer", "referer", "page", "pathname",
+                 "path", "domain", "site", "website", "homepage", "location", "redirect", "src", "endpoint", "webhook",
+                 "callback", "image", "avatar", "icon", "logo", "origin", "target", "source", "screenshot"}
+
+
+def urlish(name: str) -> bool:
+    """A property name that may hold URLs: its last token is url/host/link/page/referrer/... (not 'linked', 'status')."""
+    toks = [t for t in re.split(r"[^a-z0-9]+", str(name).lower()) if t]
+    return bool(toks) and (toks[-1] in URLISH_TOKENS or toks[-1].endswith("url"))  # '..._url_trigger_status': status
 FAMILY_ROOT = re.compile(r"(^|_)(page_?view(ed)?|viewed|view|opened|open|shown|started|start|landing)$", re.I)
 
 
@@ -1883,8 +1892,7 @@ class Project2(gen.Project):
             tab = tab.set_column(tab.schema.get_field_index("timestamp"), "timestamp",
                                  pa.array(ts, pa.int64()).cast(tab.schema.field("timestamp").type))
         self.v2["sessions_landing_pageview_moved"] = moved
-        tab = self.adopters(tab)
-        tab = self.causal_children(tab)
+        tab = self.causal_children(tab)  # adopters ran on the base rows in postprocess
         return self.lifecycle_once(tab)
 
     def adopters(self, tab):
@@ -1902,7 +1910,6 @@ class Project2(gen.Project):
         names = set(ev)
         pairs = {e: (parent_event(e, names) or family_parent(e, names)) for e in names}
         hinted = getattr(self, "_volume_hinted", set())
-        seq = getattr(self, "_seq_events", set())
         ts = tab.column("timestamp").cast(pa.int64()).to_numpy()
         day = (ts // 86_400_000_000).tolist()
         cols = {c: tab.column(c).to_pylist() for c in ("distinct_id", "person_id", "person_properties", "$session_id",
@@ -1918,10 +1925,12 @@ class Project2(gen.Project):
             by_event[e].append(i)
         moved = 0
         for e, idx in by_event.items():
-            if str(e).startswith("$") or e in hinted or pairs.get(e) or LIFECYCLE_ONCE.match(str(e)) or e in seq:
+            if str(e).startswith("$") or pairs.get(e) or LIFECYCLE_ONCE.match(str(e)):
                 continue
             doers = C.Counter(pid[i] for i in idx)
             T, U = (self.targets.get(e) or [0.0, 0.0]) if hasattr(self, "targets") else (0.0, 0.0)
+            if e in hinted and not U:  # rule (r19b): hinted events use their production uniques when known
+                continue
             reach = min(0.8, max(0.03, 1.8 * (U or 0.0) / D)) if U else 0.3
             k = max(3, int(reach * P))
             if len(doers) <= k * 1.1:
@@ -2021,6 +2030,8 @@ class Project2(gen.Project):
         once = {e for e in set(ev) if isinstance(e, str) and LIFECYCLE_ONCE.match(e)}
         if not once:
             return tab
+        names = set(ev)
+        has_parent = {e for e in once if parent_event(e, names) or family_parent(e, names)}
         pid = tab.column("person_id").to_pylist()
         ts = tab.column("timestamp").cast(pa.int64()).to_numpy().copy()
         first: dict = {}
@@ -2048,6 +2059,9 @@ class Project2(gen.Project):
             if e not in once:
                 continue
             if (e, pid[i]) in seen:
+                if e in has_parent:  # rule (r19b): a new person would not have done the parent step
+                    keep[i] = False
+                    continue
                 k = bisect.bisect_left(start_ts, ts[i] - 86_400_000_000)
                 cand = [p_ for _t, p_ in starts[k:k + 200] if p_ not in doers[e]]
                 if not cand:
@@ -2124,6 +2138,11 @@ class Project2(gen.Project):
             dup = dup.set_column(dup.schema.get_field_index("uuid"), "uuid",
                                  pa.array([str(uuid.UUID(int=int(x), version=4)) for x in rng.integers(0, 2**63, len(di))] if len(di) else [], pa.string()))
             parts.append(dup)
+        if len(parts) > 1 or seeds:  # rule (r19b): reach applies to base rows; seeded rows keep their persons
+            base = pa.concat_tables([p.cast(tab.schema) for p in parts], promote_options="none").combine_chunks()
+            parts = [self.adopters(base)]
+        else:
+            parts = [self.adopters(parts[0].combine_chunks())]
         if seeds:
             parts.append(self.seed_table(seeds, tab.schema, donor_tab=tab))
         out = pa.concat_tables([p.cast(tab.schema) for p in parts], promote_options="none")
@@ -2548,6 +2567,45 @@ class Project2(gen.Project):
         return pa.Table.from_arrays(arrays, schema=schema)
 
     # ------------------------------------------------------------------ driver
+    def drop_url_values(self, ev_path):
+        """rule (r19c): a property whose name is not URL-like never holds page URLs (b12 regress: a replay SDK status
+        property carried the page pool); such values are removed from event properties."""
+        tab = pq.read_table(ev_path)
+        props = tab.column("properties").to_pylist()
+        bad: C.Counter = C.Counter()
+        tot: C.Counter = C.Counter()
+        step = max(1, len(props) // 200000)
+        for i in range(0, len(props), step):
+            try:
+                d_ = orjson.loads(props[i] or "{}")
+            except Exception:  # noqa: BLE001
+                continue
+            for k, v in d_.items():
+                if isinstance(v, str):
+                    tot[k] += 1
+                    if v.startswith(("http://", "https://")) and not urlish(k):
+                        bad[k] += 1
+        keys = {k for k, c in bad.items() if c >= 0.3 * tot[k]}
+        if not keys:
+            return
+        out, n = [], 0
+        for s_ in props:
+            if s_ and any(f'"{k}"' in s_ for k in keys):
+                d_ = orjson.loads(s_)
+                for k in keys:
+                    v = d_.get(k)
+                    if isinstance(v, str) and v.startswith(("http://", "https://")):
+                        del d_[k]
+                        n += 1
+                s_ = orjson.dumps(d_).decode()
+            out.append(s_)
+        tab = tab.set_column(tab.schema.get_field_index("properties"), "properties",
+                             pa.array(out, tab.schema.field("properties").type))
+        pq.write_table(tab, ev_path + ".tmp", compression="zstd", row_group_size=100_000)
+        os.replace(ev_path + ".tmp", ev_path)
+        self.v2["url_values_dropped"] = n
+        self.v2["url_value_props"] = len(keys)
+
     def remap_placeholders(self, out_dir):
         """rule (r19): replace generator placeholder values (<stem>_a, "Tag 3", "example company 7") in events and
         persons with realistic values (one cached LLM call per twin); values the user's own text uses are kept."""
@@ -2581,8 +2639,11 @@ class Project2(gen.Project):
                 for k, v in d_.items():
                     if isinstance(v, str) and valuepools.is_placeholder(k, v) and v not in self.user_text:
                         found[k].add(v)
+        self.drop_url_values(ev_path)  # rule (r19c)
         if not found:
             return
+        tab = pq.read_table(ev_path)
+        props = tab.column("properties").to_pylist()
         mapping, status = valuepools.get_remap(self.S, PATHS.ROOT, {k: sorted(v)[:40] for k, v in found.items()},
                                                self.user_text)
         self.v2[f"placeholder_remap_{status}"] += 1

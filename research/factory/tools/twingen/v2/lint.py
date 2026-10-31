@@ -13,6 +13,7 @@ URL as the project's top page, campaigns crossed with random sources). These che
                     sub1.sub2.*, "example company 7"), per property with share of rows
   third_party_host  pageviews on hosts that are third-party services (github.com, google docs, notion, ...)
   url_dominance     one URL with a query string carries > 50% of pageviews
+  value_domain      a property whose name is not URL-like holds URLs in >= 30% of rows
   campaign_source   utm_campaign names a channel (google/search, facebook/meta, email/newsletter, ...) that its
                     utm_source contradicts in > 30% of rows
 
@@ -41,6 +42,16 @@ THIRD_PARTY = re.compile(r"(^|\.)(github\.com|gitlab\.com|google\.com|docs\.goog
                          r"atlassian\.net|zendesk\.com|intercom\.io|hubspot\.com|calendly\.com|typeform\.com)$", re.I)
 URL_PROPS = {"$host", "$current_url", "$pathname", "$referrer", "$referring_domain", "$initial_referrer",
              "$initial_referring_domain", "$initial_current_url", "$initial_host", "$initial_pathname", "$prev_pageview_pathname"}
+URLISH_TOKENS = {"url", "urls", "uri", "host", "hostname", "link", "links", "href", "referrer", "referer", "page", "pathname",
+                 "path", "domain", "site", "website", "homepage", "location", "redirect", "src", "endpoint", "webhook",
+                 "callback", "image", "avatar", "icon", "logo", "origin", "target", "source", "screenshot"}
+
+
+def urlish(name: str) -> bool:
+    """A property name that may hold URLs: its last token is url/host/link/page/referrer/... (not 'linked', 'status')."""
+    toks = [t for t in re.split(r"[^a-z0-9]+", str(name).lower()) if t]
+    return bool(toks) and (toks[-1] in URLISH_TOKENS or toks[-1].endswith("url"))  # '..._url_trigger_status': status
+URL_VALUE = re.compile(r"^https?://")
 COMMERCE = ["view_item", "add_to_cart", "begin_checkout", "add_payment_info", "purchase"]
 PURCHASE = re.compile(r"(^|[_ .:-])(purchase|purchased|order[_ ]completed|order[_ ]placed|payment[_ ]succeeded|checkout[_ ]completed)"
                       r"([_ .:-]|$)", re.I)
@@ -51,18 +62,25 @@ CHANNEL = [("google", re.compile(r"google|search|sem|cpc|adwords", re.I), re.com
            ("linkedin", re.compile(r"linkedin", re.I), re.compile(r"linkedin", re.I))]
 
 
-def _pairs(names: set) -> list[tuple[str, str]]:
+def _gen2():
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    import gen2  # noqa: E402  (parent_event, family_parent)
+    import gen2  # noqa: E402  (shared name rules: parent_event, family_parent, LIFECYCLE_ONCE)
 
+    return gen2
+
+
+def _pairs(names: set) -> list[tuple[str, str, bool]]:
+    gen2 = _gen2()
     out = []
     for e in names:
-        p = gen2.parent_event(e, names) or gen2.family_parent(e, names)
+        p = gen2.parent_event(e, names)
         if p:
-            out.append((p, e))
+            out.append((p, e, True))
+        elif gen2.family_parent(e, names):  # same-prefix family: repeat use is normal, compare persons only
+            out.append((gen2.family_parent(e, names), e, False))
     low = {n.lower(): n for n in names}
     chain = [low[c] for c in COMMERCE if c in low]
-    out += list(zip(chain, chain[1:]))
+    out += [(a, b, True) for a, b in zip(chain, chain[1:])]
     return out
 
 
@@ -85,11 +103,12 @@ def lint_project(d: str, max_rows: int = 400000) -> dict:
     if len(persons_any) >= 50:
         for e, ps in ev_persons.items():
             if not str(e).startswith("$") and len(ps) > 0.9 * len(persons_any):
-                findings.append({"check": "event_reach", "severity": "material",
+                # one-time lifecycle events (signed_up, first_*): reach reflects the acquisition window (minor)
+                findings.append({"check": "event_reach", "severity": "minor" if _gen2().LIFECYCLE_ONCE.match(str(e)) else "material",
                                  "detail": f"{e!r} reaches {len(ps)}/{len(persons_any)} persons"})
     # funnel_order
-    for parent, child in _pairs(set(ev_count)):
-        if ev_count[child] > 1.1 * ev_count[parent] or len(ev_persons[child]) > 1.1 * len(ev_persons[parent]):
+    for parent, child, by_events in _pairs(set(ev_count)):
+        if (by_events and ev_count[child] > 1.1 * ev_count[parent]) or len(ev_persons[child]) > 1.1 * len(ev_persons[parent]):
             findings.append({"check": "funnel_order", "severity": "material",
                              "detail": f"{child!r} ({ev_count[child]} ev/{len(ev_persons[child])} p) > {parent!r} "
                                        f"({ev_count[parent]} ev/{len(ev_persons[parent])} p)"})
@@ -102,6 +121,7 @@ def lint_project(d: str, max_rows: int = 400000) -> dict:
                                  "detail": f"{e!r} persons {len(ev_persons[e])} > visitors {len(visitors)}"})
     # property scans (sampled rows)
     ph: dict = C.defaultdict(C.Counter)
+    url_vals: C.Counter = C.Counter()
     seen_rows: C.Counter = C.Counter()
     hosts: C.Counter = C.Counter()
     urls: C.Counter = C.Counter()
@@ -119,6 +139,8 @@ def lint_project(d: str, max_rows: int = 400000) -> dict:
             if not isinstance(v, str) or k in ("$session_id", "$window_id", "$device_id", "$insert_id", "token"):
                 continue
             seen_rows[k] += 1
+            if URL_VALUE.match(v) and not urlish(k):
+                url_vals[k] += 1
             for name, rx in PLACEHOLDER_PATTERNS:
                 if rx.search(v):
                     ph[k][name] += 1
@@ -141,10 +163,14 @@ def lint_project(d: str, max_rows: int = 400000) -> dict:
     for k, cnt in ph.items():
         share = sum(cnt.values()) / max(1, seen_rows[k])
         # hosts/URLs: sub1.sub2.* and handle1 are the trace anonymizer's tokens, shared with the task text (minor)
-        anon = k in URL_PROPS and set(cnt) <= {"page_n", "handle_n", "sub_n"}
+        anon = (k in URL_PROPS or urlish(k)) and set(cnt) <= {"page_n", "handle_n", "sub_n"}
         if share >= 0.05:
             findings.append({"check": "placeholder", "severity": "material" if share >= 0.3 and not anon else "minor",
                              "detail": f"{k}: {share:.0%} placeholder-like ({dict(cnt)})"})
+    for k, c in url_vals.items():
+        if c >= 0.3 * max(1, seen_rows[k]) and c >= 5:
+            findings.append({"check": "value_domain", "severity": "material",
+                             "detail": f"{k}: {c}/{seen_rows[k]} values are URLs"})
     for h, c in hosts.items():
         if THIRD_PARTY.search(h) and c >= 0.02 * max(1, pv):
             findings.append({"check": "third_party_host", "severity": "material", "detail": f"{h}: {c}/{pv} pageviews"})

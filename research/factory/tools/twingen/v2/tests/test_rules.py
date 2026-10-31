@@ -418,6 +418,14 @@ class Journeys(unittest.TestCase):
         ev, pid = out.column("event").to_pylist(), out.column("person_id").to_pylist()
         self.assertEqual(sum(1 for i, e in enumerate(ev) if e == "sign_up" and pid[i] == "a"), 1)
 
+    def test_lifecycle_child_repeat_is_dropped(self):
+        """regress f8f5: onboarding completed repeats went to new persons who never started onboarding."""
+        rows = [("onboarding_started", "a", 10), ("onboarding_completed", "a", 50), ("onboarding_completed", "a", 90),
+                ("app_used", "c", 80)]
+        out = project().lifecycle_once(self._tab(rows))
+        ev, pid = out.column("event").to_pylist(), out.column("person_id").to_pylist()
+        self.assertEqual([pid[i] for i, e in enumerate(ev) if e == "onboarding_completed"], ["a"])
+
 class WarehouseValues(unittest.TestCase):
     """eval_v1 audit: org ids '' / '_other' (no joins), month column 'month_0'..'month_5'."""
 
@@ -475,6 +483,7 @@ class RoundB12(unittest.TestCase):
             profiles = staticmethod(lambda: {})
             event_seed_rows = staticmethod(lambda: [])
             override_zeroed_events = staticmethod(lambda: set())
+            adopters = staticmethod(lambda tab: tab)
 
             def coherent_sessions(self, tab):
                 calls.append(tab.num_rows)
@@ -482,6 +491,26 @@ class RoundB12(unittest.TestCase):
 
         gen2.Project2.postprocess(Fake(), d)
         self.assertEqual(calls, [2])
+
+    def test_drop_url_values(self):
+        """regress f8f5: a replay SDK status property carried the page pool (URLs)."""
+        import tempfile
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+
+        self.assertFalse(gen2.urlish("$sdk_debug_replay_linked_flag_trigger_status"))
+        self.assertFalse(gen2.urlish("$sdk_debug_replay_url_trigger_status"))
+        self.assertTrue(gen2.urlish("instance_url"))
+        d = tempfile.mkdtemp(prefix="url_test_")
+        rows = [json.dumps({"trigger_status": "https://a.example/x", "$current_url": "https://a.example/x"})] * 10
+        pq.write_table(pa.table({"properties": rows}), f"{d}/events.parquet")
+
+        class Fake:
+            v2 = C.Counter()
+
+        gen2.Project2.drop_url_values(Fake(), f"{d}/events.parquet")
+        out = [json.loads(x) for x in pq.read_table(f"{d}/events.parquet").column("properties").to_pylist()]
+        self.assertTrue(all("trigger_status" not in x and x["$current_url"] for x in out))
 
     def test_adopters(self):
         import pyarrow as pa

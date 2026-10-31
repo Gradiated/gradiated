@@ -98,12 +98,23 @@ Manager value with JSON containing `webhook-url` and `webhook-token`.
 Alertmanager reads the token as a Bearer credential. The URL and token must
 never enter Git.
 
-`InferenceDeploymentProbeFailed` keeps firing per model/deployment until its
-failure condition has been absent for five continuous minutes (`keep_firing_for:
-5m`). Brief recoveries therefore stay in the same alert instead of sending
-repeated firing/resolved notifications. Initial detection remains unchanged;
-ongoing failures retain the 15-minute reminder interval. Recovery notifications,
-including for retired targets, wait for this five-minute hold to expire.
+`InferenceModelProbeFailed` measures normal customer routing: one request per
+model every five seconds, with a fresh random opening prefix, the gateway's
+normal selection and fallback, no SDK retries and a four-second deadline. It is
+critical after fifteen seconds without success and ten seconds of continued
+failure. This is a short-request availability check; long-prefill performance
+needs separate measurements.
+
+Targeted probes still exercise every serving replica with fallback disabled, so
+a struggling replica remains visible even when customer routing succeeds.
+`InferenceDeploymentProbeFailed` is a warning only after five continuous minutes
+of failing targeted probes. Both alerts retain a five-minute recovery hold to
+avoid flapping. Model alerts repeat every fifteen minutes; replica warnings use
+the normal two-hour warning interval. The worker dashboard shows routed model
+availability separately from targeted replica results.
+`InferenceProbeMonitoringStalled` also pages if a serving model has no routed
+target or success metric on the fresh probe leader, including during a worker
+rollback. Stale gauges from the previous leader cannot satisfy that check.
 
 The incident.io Alertmanager source pauses timeout resolution while an alert is
 attached to an incident. Unattached alerts have a 48-hour timeout, longer than

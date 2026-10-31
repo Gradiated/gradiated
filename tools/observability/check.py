@@ -558,28 +558,28 @@ def main():
         ], expected, ['ModelNoReadyReplicas', 'ModelUnderReplicated', 'ModelScaleUpStalled'],
         {'model': 'test/model'}, duration)
 
-    probe_labels = '{instance="a",model="test/model",deployment="test-deployment"}'
+    probe_labels = '{instance="a",model="test/model"}'
     def probe_series(metric, values, labels=probe_labels):
         return {'series': metric + labels, 'values': values}
 
-    probe_alerts = ['InferenceDeploymentProbeFailed', 'InferenceProbeMonitoringStalled']
+    probe_alerts = ['InferenceModelProbeFailed', 'InferenceProbeMonitoringStalled']
     for name, success, inventory, target, expected, duration in [
         ('healthy', '1+5x30', '1+5x30', '1+0x30', None, '60s'),
-        ('never completed', '0+0x30', '1+5x30', '1+0x30', 'InferenceDeploymentProbeFailed', '30s'),
-        ('stops completing', '1+0x30', '1+5x30', '1+0x30', 'InferenceDeploymentProbeFailed', '30s'),
+        ('never completed', '0+0x30', '1+5x30', '1+0x30', 'InferenceModelProbeFailed', '30s'),
+        ('stops completing', '1+0x30', '1+5x30', '1+0x30', 'InferenceModelProbeFailed', '30s'),
         ('short transient', '1 1 1 16+5x27', '1+5x30', '1+0x30', None, '30s'),
         ('monitor stopped', '1+0x30', '1+0x30', '1+0x30', 'InferenceProbeMonitoringStalled', '35s'),
         ('retired target', '1+0x30', '1+5x30', '1+0x2 stale', None, '60s'),
     ]:
         scenario('public inference: ' + name, [
-            probe_series('gradiated_inference_probe_last_success_timestamp_seconds', success),
-            probe_series('gradiated_inference_probe_target', target),
+            probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', success),
+            probe_series('gradiated_inference_routed_probe_target', target),
             probe_series('gradiated_inference_probe_inventory_timestamp_seconds', inventory, '{instance="a"}'),
         ], expected, probe_alerts,
-        {'model': 'test/model', 'deployment': 'test-deployment'} if expected == 'InferenceDeploymentProbeFailed' else {},
+        {'model': 'test/model'} if expected == 'InferenceModelProbeFailed' else {},
         duration, interval='5s')
 
-    # A recovery shorter than five minutes must not close/reopen the deployment alert.
+    # A recovery shorter than five minutes must not close/reopen the model alert.
     # Failure first fires at 30s, recovers at 35s, recurs at 80s, then recovers at 100s.
     recovery_success = ' '.join(str(0 if t < 35 else 60 if 65 <= t < 100 else t)
                                 for t in range(0, 406, 5))
@@ -587,26 +587,68 @@ def main():
                                ('35s', probe_alerts[0]), ('90s', probe_alerts[0]),
                                ('395s', probe_alerts[0]), ('400s', None)]:
         scenario('public inference: five-minute recovery hold at ' + duration, [
-            probe_series('gradiated_inference_probe_last_success_timestamp_seconds', recovery_success),
-            probe_series('gradiated_inference_probe_target', '1+0x81'),
+            probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', recovery_success),
+            probe_series('gradiated_inference_routed_probe_target', '1+0x81'),
             probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+5x81', '{instance="a"}'),
-            probe_series('gradiated_inference_probe_last_success_timestamp_seconds', '1+5x81',
-                         probe_labels.replace('test-deployment', 'healthy-deployment')),
-            probe_series('gradiated_inference_probe_target', '1+0x81',
-                         probe_labels.replace('test-deployment', 'healthy-deployment')),
-        ], expected, probe_alerts, {'model': 'test/model', 'deployment': 'test-deployment'},
+            probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', '1+5x81',
+                         probe_labels.replace('test/model', 'healthy/model')),
+            probe_series('gradiated_inference_routed_probe_target', '1+0x81',
+                         probe_labels.replace('test/model', 'healthy/model')),
+        ], expected, probe_alerts, {'model': 'test/model'},
            duration, interval='5s')
 
     scenario('public inference: missing telemetry', [], 'InferenceProbeMonitoringStalled',
              ['InferenceProbeMonitoringStalled'], eval_time='15s', interval='5s')
     scenario('public inference: replacement leader masks stale failed worker', [
-        probe_series('gradiated_inference_probe_last_success_timestamp_seconds', '0+0x30'),
-        probe_series('gradiated_inference_probe_target', '1+0x30'),
+        probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', '0+0x30'),
+        probe_series('gradiated_inference_routed_probe_target', '1+0x30'),
         probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+0x30', '{instance="a"}'),
-        probe_series('gradiated_inference_probe_last_success_timestamp_seconds', '1+5x30', probe_labels.replace('"a"', '"b"')),
-        probe_series('gradiated_inference_probe_target', '1+0x30', probe_labels.replace('"a"', '"b"')),
+        probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', '1+5x30', probe_labels.replace('"a"', '"b"')),
+        probe_series('gradiated_inference_routed_probe_target', '1+0x30', probe_labels.replace('"a"', '"b"')),
         probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+5x30', '{instance="b"}'),
     ], None, probe_alerts, eval_time='60s', interval='5s')
+
+    for name, include_target, include_success in [
+        ('missing routed gauges', False, False),
+        ('missing routed target', False, True),
+        ('missing routed success', True, False),
+    ]:
+        inputs = [
+            probe_series('gradiated_inference_probe_target', '1+0x30',
+                         '{instance="a",model="test/model",deployment="test-deployment"}'),
+            probe_series('gradiated_inference_probe_last_success_timestamp_seconds', '1+5x30',
+                         '{instance="a",model="test/model",deployment="test-deployment"}'),
+            probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+5x30', '{instance="a"}'),
+        ]
+        if include_target:
+            inputs.append(probe_series('gradiated_inference_routed_probe_target', '1+0x30'))
+        if include_success:
+            inputs.append(probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', '1+5x30'))
+        scenario('routed monitoring: ' + name, inputs, 'InferenceProbeMonitoringStalled',
+                 probe_alerts, {'model': 'test/model'}, '30s', interval='5s')
+
+    scenario('routed monitoring: rollback cannot use the old leader gauges', [
+        probe_series('gradiated_inference_routed_probe_target', '1+0x30'),
+        probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', '1+5x30'),
+        probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+0x30', '{instance="a"}'),
+        probe_series('gradiated_inference_probe_target', '1+0x30',
+                     '{instance="b",model="test/model",deployment="test-deployment"}'),
+        probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+5x30', '{instance="b"}'),
+    ], 'InferenceProbeMonitoringStalled', probe_alerts, {'model': 'test/model'}, '60s', interval='5s')
+
+    assert alerts['InferenceDeploymentProbeFailed']['labels']['severity'] == 'warning'
+    assert alerts['InferenceModelProbeFailed']['labels']['severity'] == 'critical'
+    for duration, expected in [('30s', None), ('5m', None), ('5m30s', 'InferenceDeploymentProbeFailed')]:
+        scenario('targeted replica warning: ' + duration, [
+            probe_series('gradiated_inference_probe_last_success_timestamp_seconds', '0+0x80',
+                         '{instance="a",model="test/model",deployment="test-deployment"}'),
+            probe_series('gradiated_inference_probe_target', '1+0x80',
+                         '{instance="a",model="test/model",deployment="test-deployment"}'),
+            probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', '1+5x80'),
+            probe_series('gradiated_inference_routed_probe_target', '1+0x80'),
+            probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+5x80', '{instance="a"}'),
+        ], expected, ['InferenceDeploymentProbeFailed', 'InferenceModelProbeFailed'],
+           {'model': 'test/model', 'deployment': 'test-deployment'}, duration, interval='5s')
 
     for ready, expected, duration in [(0, 'ModelNoReadyReplicas', '15s'), (1, 'ModelUnderReplicated', '30s')]:
         scenario('fast capacity alert: ' + expected, [

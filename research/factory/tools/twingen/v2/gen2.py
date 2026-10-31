@@ -1868,8 +1868,14 @@ class Project2(gen.Project):
             tab = tab.set_column(tab.schema.get_field_index("properties"), "properties",
                                  pa.array(props, tab.schema.field("properties").type))
         self.v2["utm_tuples_made_coherent"] = changed
-        if not getattr(self, "web", False) or "$session_id" not in tab.schema.names:
-            return tab
+        if getattr(self, "web", False) and "$session_id" in tab.schema.names:
+            tab = self.landing_pageview_first(tab)
+        # mobile twins too (round 3: a 343-person app twin skipped these; 200 events reached ~95% of persons)
+        tab = self.causal_children(tab)  # adopters ran on the base rows in postprocess
+        return self.lifecycle_once(tab)
+
+    def landing_pageview_first(self, tab):
+        """rule (r8, part 2): web sessions start with their landing $pageview."""
         sid = tab.column("$session_id").to_pylist()
         ev = tab.column("event").to_pylist()
         ts = tab.column("timestamp").cast(pa.int64()).to_numpy().copy()
@@ -1892,8 +1898,7 @@ class Project2(gen.Project):
             tab = tab.set_column(tab.schema.get_field_index("timestamp"), "timestamp",
                                  pa.array(ts, pa.int64()).cast(tab.schema.field("timestamp").type))
         self.v2["sessions_landing_pageview_moved"] = moved
-        tab = self.causal_children(tab)  # adopters ran on the base rows in postprocess
-        return self.lifecycle_once(tab)
+        return tab
 
     def adopters(self, tab):
         """rule (r19): a custom event is used by a stable subset of people (feature adopters), not by everyone who is
@@ -1965,11 +1970,18 @@ class Project2(gen.Project):
         add_to_cart) happens to a person who did its parent earlier, in that session, seconds to minutes later
         (b11: 151 of 184 calculator runs never viewed the calculator page; ordered funnels came out as junk)."""
         names = set(pc.unique(tab.column("event")).to_pylist())
+        vol = C.Counter(tab.column("event").to_pylist())
         # only name-evident causal links: a production funnel's steps are often independent behaviours (an AARRR
         # funnel's "login" is mostly returning users), and its shape is calibrated by the funnel seeding rule
         pairs: dict = {}
         for e in names:
-            par = parent_event(e, names) or family_parent(e, names)
+            par = parent_event(e, names)
+            if not par:
+                fam = family_parent(e, names)
+                # rule (r19d): a same-prefix family link only when the root's volume can carry the member (round 3:
+                # 1,795 refund_ask_posted onto 40 refund_home_row_viewed rows); otherwise the prefix is a product area
+                if fam and vol[fam] >= 0.5 * vol[e]:
+                    par = fam
             if not par and PURCHASE_EV.search(str(e)):  # rule (r19): buyers are visitors
                 par = "$pageview" if "$pageview" in names else ("$screen" if "$screen" in names else None)
             if par and e in getattr(self, "_seq_events", set()):
@@ -1994,6 +2006,9 @@ class Project2(gen.Project):
         for child in order:
             par_rows = sorted(by_event.get(pairs[child], []), key=lambda i: ts[i])
             if not par_rows:
+                continue
+            if pairs[child] in ("$pageview", "$screen"):
+                moved += self._buyer_after_visit(child, par_rows, by_event, ts, cols, now_us, rng)
                 continue
             par_ts = [ts[i] for i in par_rows]
             for i in by_event.get(child, []):
@@ -2021,6 +2036,31 @@ class Project2(gen.Project):
         self.v2["causal_child_rows"] = moved
         self.v2["causal_pairs"] = len(pairs)
         return tab
+
+    @staticmethod
+    def _buyer_after_visit(child, par_rows, by_event, ts, cols, now_us, rng) -> int:
+        """rule (r19d): a purchase keeps its buyer (reach stays as generated); when the buyer has no earlier
+        pageview/screen, the purchase moves to seconds-minutes after their first one; buyers who never visited take a
+        random visit row (round 3: moving every purchase to a random pageview spread it to 8.5k of 9k persons)."""
+        pid = cols["person_id"]
+        first_visit: dict = {}
+        for j in par_rows:  # par_rows sorted by time
+            first_visit.setdefault(pid[j], j)
+        n = 0
+        for i in by_event.get(child, []):
+            j = first_visit.get(pid[i])
+            if j is not None:
+                if ts[j] > ts[i]:
+                    ts[i] = min(ts[j] + rng.randint(5_000_000, 600_000_000), now_us)
+                    n += 1
+                continue
+            j = par_rows[rng.randrange(len(par_rows))]
+            for c in ("distinct_id", "person_id", "person_properties", "$session_id", "$window_id"):
+                if c in cols:
+                    cols[c][i] = cols[c][j]
+            ts[i] = min(ts[j] + rng.randint(5_000_000, 600_000_000), now_us)
+            n += 1
+        return n
 
     def lifecycle_once(self, tab):
         """rule (r16): one-time lifecycle events (sign_up, account_created, *_initial_*, first_*) happen at most once

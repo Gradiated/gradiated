@@ -388,6 +388,34 @@ class Journeys(unittest.TestCase):
             "$window_id": [f"w-{r[1]}" for r in rows], "properties": ['{"$session_id": "s-%s"}' % r[1] for r in rows],
             "timestamp": pa.array([t0 + r[2] * 1_000_000 for r in rows], pa.int64()).cast(pa.timestamp("us", tz="UTC"))})
 
+    def test_family_link_needs_root_volume(self):
+        """round 3: 1,795 refund_ask_posted were pinned onto 40 refund_home_row_viewed rows (a product area, not a
+        causal family)."""
+        rows = [("refund_home_row_viewed", "a", 10)] + [("refund_ask_posted", f"p{i}", 20 + i) for i in range(10)]
+        out = project().causal_children(self._tab(rows))
+        pid = out.column("person_id").to_pylist()
+        self.assertEqual(len({pid[i] for i in range(1, 11)}), 10)
+
+    def test_purchase_keeps_buyer(self):
+        """round 3: moving every purchase to a random pageview spread it to 8.5k of 9k persons."""
+        rows = [("$pageview", "a", 10), ("$pageview", "b", 50), ("$pageview", "c", 60), ("purchase", "b", 20),
+                ("purchase", "x", 70)]
+        out = project().causal_children(self._tab(rows))
+        ev, pid = out.column("event").to_pylist(), out.column("person_id").to_pylist()
+        ts = out.column("timestamp").cast(__import__("pyarrow").int64()).to_pylist()
+        self.assertEqual(pid[3], "b")
+        self.assertGreater(ts[3], ts[1])  # moved after b's first pageview
+        self.assertIn(pid[4], {"a", "b", "c"})  # a buyer who never visited takes a visit row
+
+    def test_mobile_twin_runs_causal_and_lifecycle(self):
+        """round 3: a non-web twin returned from coherent_sessions before causal_children and lifecycle_once."""
+        p = project(web=False)
+        calls = []
+        p.causal_children = lambda t: calls.append("causal") or t
+        p.lifecycle_once = lambda t: calls.append("lifecycle") or t
+        p.coherent_sessions(self._tab([("app_opened", "a", 10)]))
+        self.assertEqual(calls, ["causal", "lifecycle"])
+
     def test_children_follow_parents(self):
         rows = [("calc_page_view", "a", 10), ("calc_page_view", "b", 20), ("calc_run", "c", 30), ("calc_run", "d", 40)]
         p = project()  # family rule: calc_run's parent is calc_page_view

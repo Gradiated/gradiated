@@ -69,15 +69,18 @@ def _gen2():
     return gen2
 
 
-def _pairs(names: set) -> list[tuple[str, str, bool]]:
+def _pairs(names: set, vol=None) -> list[tuple[str, str, bool]]:
     gen2 = _gen2()
+    vol = vol or {}
     out = []
     for e in names:
         p = gen2.parent_event(e, names)
         if p:
             out.append((p, e, True))
         elif gen2.family_parent(e, names):  # same-prefix family: repeat use is normal, compare persons only
-            out.append((gen2.family_parent(e, names), e, False))
+            f = gen2.family_parent(e, names)
+            if vol.get(f, 0) >= 0.5 * vol.get(e, 0):  # same gate as gen2.causal_children (else: product area)
+                out.append((f, e, False))
     low = {n.lower(): n for n in names}
     chain = [low[c] for c in COMMERCE if c in low]
     out += [(a, b, True) for a, b in zip(chain, chain[1:])]
@@ -107,7 +110,7 @@ def lint_project(d: str, max_rows: int = 400000) -> dict:
                 findings.append({"check": "event_reach", "severity": "minor" if _gen2().LIFECYCLE_ONCE.match(str(e)) else "material",
                                  "detail": f"{e!r} reaches {len(ps)}/{len(persons_any)} persons"})
     # funnel_order
-    for parent, child, by_events in _pairs(set(ev_count)):
+    for parent, child, by_events in _pairs(set(ev_count), ev_count):
         if (by_events and ev_count[child] > 1.1 * ev_count[parent]) or len(ev_persons[child]) > 1.1 * len(ev_persons[parent]):
             findings.append({"check": "funnel_order", "severity": "material",
                              "detail": f"{child!r} ({ev_count[child]} ev/{len(ev_persons[child])} p) > {parent!r} "

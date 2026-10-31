@@ -195,7 +195,7 @@ async fn inference(
 
         finish(&state, endpoint, generation_id, result)
     }
-    .instrument(crate::diagnostics::request_span(generation_id))
+    .instrument(crate::diagnostics::request_span(generation_id, &headers))
     .await
 }
 

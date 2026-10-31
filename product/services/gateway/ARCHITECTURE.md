@@ -213,7 +213,16 @@ makes that attempt financially idempotent.
    deserialization.
 5. An oversized request returns `413 payload_too_large` without a Valkey lookup
    or SGLang call.
-6. Request bodies and authorization headers are excluded from access logs.
+6. Request bodies and raw authorization headers are excluded from access logs.
+
+The request span records a fixed, normalized header allowlist for client and
+cache debugging: recognized client family, SDK package/version, bounded
+`cache-control`, `cache-status`/`x-cache`, `age`, content encoding, `accept`,
+`x-vllm-priority`, and presence flags for prompt-cache beta, ETag,
+conditional requests and traceparent. Request and session identifiers are
+stored as truncated SHA-256 hashes. Authentication headers are represented only
+by a redacted final-four-character suffix. Cookies, raw credentials, arbitrary
+custom headers, and header values over the bounded length are omitted.
 
 The generation ID exists before authentication so every internal error can be
 correlated without using a customer identifier. A rejected pre-admission

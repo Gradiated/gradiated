@@ -334,7 +334,8 @@ def analyze_sql(sql: str, known: dict[str, set]) -> dict:
                                     vt = value_type(v)
                                     if vt and not rest:
                                         hints[(t, col)][vt] += 1
-                                if t == "events" and col == "event":
+                                if t == "events" and col == "event" and str(n.op).lower() in ("==", "=", "in", "ilike", "like"):
+                                    # r20: `event NOT IN (...)` names events the query excludes
                                     events_used.update(str(v) for v in vals if isinstance(v, str))
                             elif res is not None and isinstance(rhs, a.Field):
                                 r2 = sc.resolve(rhs.chain)

@@ -156,6 +156,38 @@ class UF:
         self.p[self.find(a)] = self.find(b)
 
 
+ELEMENT_PROPS = {"$el_text", "$elements_chain", "$event_type", "$external_click_url", "$elements"}
+ELEMENT_EVENTS = {"$autocapture", "$rageclick", "$dead_click", "$copy_autocapture"}
+DEVICE_KEYS = ("platform", "os", "os_name", "device_platform", "app_platform", "client_platform", "is_native",
+               "is_mobile", "is_mobile_app")
+DEVICE_KEYS_RX = re.compile(r'"(' + "|".join(DEVICE_KEYS) + r')"')
+WEB_LIBS = {"web", "posthog-js", "js", "posthog-js-lite"}
+
+
+def device_props(d: dict, os_: str, lib: str) -> dict:
+    """r20: platform-like custom props as functions of the row's $os/$lib, in the value's existing style."""
+    low = os_.lower()
+    canon = "ios" if low in ("ios", "ipados") else "android" if low == "android" else None
+    native = bool(lib) and lib.lower() not in WEB_LIBS
+    if canon is None or not native:
+        canon = "web" if (not lib or lib.lower() in WEB_LIBS) else (low or "desktop")
+    out = dict(d)
+    for k in DEVICE_KEYS:
+        if k not in out:
+            continue
+        v = out[k]
+        if k in ("is_native", "is_mobile", "is_mobile_app"):
+            val = native if k == "is_native" else canon in ("ios", "android")
+            out[k] = val if isinstance(v, bool) or v is None else (str(val).lower() if isinstance(v, str) else int(val))
+        elif k in ("os", "os_name"):
+            if os_:
+                out[k] = os_
+        elif isinstance(v, str):
+            style = {"ios": "iOS", "android": "Android", "web": "Web"}.get(canon, canon.title())
+            out[k] = (style.upper() if v.isupper() and len(v) > 2 else style) if any(c.isupper() for c in v) else canon
+    return out
+
+
 def causal_parent(e: str, names, vol) -> str | None:
     """The event that causes e: a name-evident parent ('paywall_dismissed' -> 'paywall_shown'), or the family root
     when the root's volume can carry the member (>= half its events; else the prefix is just a product area).
@@ -884,6 +916,9 @@ class Project2(gen.Project):
                 if not p_.startswith("$") and owned.get(p_) and e2 not in owned[p_] and not isinstance(samplers[p_], GroupDist):
                     samplers.pop(p_)
                     self.v2["foreign_props_removed"] += 1
+                elif p_ in ELEMENT_PROPS and e2 not in ELEMENT_EVENTS:  # r20: $el_text belongs to clicks
+                    samplers.pop(p_)
+                    self.v2["element_props_removed"] += 1
         for (e, prop), dist in group_distributions(self.Q).items():  # rule (r5): production value distributions
             if e in self.ev_samplers:
                 self.ev_samplers[e][prop] = GroupDist(dist, random.Random(stable_seed(self.S["id"], "gdist", e, prop)))
@@ -1932,7 +1967,30 @@ class Project2(gen.Project):
             tab = self.landing_pageview_first(tab)
         # mobile twins too (round 3: a 343-person app twin skipped these; 200 events reached ~95% of persons)
         tab = self.causal_children(tab)  # adopters ran on the base rows in postprocess
+        tab = self.device_coherence(tab)
         return self.lifecycle_once(tab)
+
+    def device_coherence(self, tab):
+        """rule (r20): platform-like custom properties follow the row's device ($os, $lib) instead of an independent
+        draw (round 4: 80% of platform values contradicted $os; is_native=true on web events)."""
+        props = tab.column("properties").to_pylist()
+        n = 0
+        for i, pr in enumerate(props):
+            if not pr or not DEVICE_KEYS_RX.search(pr):
+                continue
+            d = orjson.loads(pr)
+            os_, lib = str(d.get("$os") or ""), str(d.get("$lib") or "")
+            if not os_ and not lib:
+                continue
+            fixed = device_props(d, os_, lib)
+            if fixed != d:
+                props[i] = orjson.dumps(fixed).decode()
+                n += 1
+        if n:
+            tab = tab.set_column(tab.schema.get_field_index("properties"), "properties",
+                                 pa.array(props, tab.schema.field("properties").type))
+        self.v2["device_props_fixed"] = n
+        return tab
 
     def landing_pageview_first(self, tab):
         """rule (r8, part 2): web sessions start with their landing $pageview."""
@@ -2177,6 +2235,13 @@ class Project2(gen.Project):
         self.v2["lifecycle_dupes_reassigned"] = moved
         self.v2["lifecycle_dupes_dropped"] = int((~keep).sum())
         return tab.filter(pa.array(keep))
+
+    def unscoped_evidenced(self, prop: str) -> bool:
+        """r20: an unscoped property goes to the busiest event only when this conversation uses it (production SQL,
+        facts or the user's words); otherwise it stays a definition."""
+        if not hasattr(self, "_evidence_text"):
+            self._evidence_text = json.dumps(self.Q, default=str) + json.dumps(self.F, default=str) + (self.user_text or "")
+        return prop in self._evidence_text
 
     def _event_props(self, e: str) -> set:
         return set((((self.S.get("events") or {}).get(e) or {}).get("properties") or {}).keys())
@@ -2613,6 +2678,8 @@ class Project2(gen.Project):
         except Exception:  # noqa: BLE001
             return props
         out = {k: v for k, v in d.items() if k not in self.DONOR_SKIP}
+        if src is not by_ev.get(ev):  # r20: another event's row lends only context ($-props), not its custom props
+            out = {k: v for k, v in out.items() if k.startswith("$") and k not in ELEMENT_PROPS}
         if any(k in GEO_PROPS for k in props):  # rule (r8): a seeded geo value brings its whole coherent tuple
             for k in GEO_PROPS:
                 out.pop(k, None)

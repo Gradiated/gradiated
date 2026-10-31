@@ -687,7 +687,7 @@ class Project:
             etoks = set(re.split(r"[^a-z0-9]+", e.lower()))
             for p in unscoped:
                 ptoks = set(re.split(r"[^a-z0-9]+", p.lower().lstrip("$"))) - {"id", "at", "type", "name", ""}
-                if e in top_custom or (ptoks & etoks):
+                if ptoks & etoks:  # r20: name evidence only (not "every top-5 custom event")
                     attached_unscoped.add(p)
         fallback_event = max(self.active, key=lambda x: self.targets[x][0]) if self.active else None
         for e, info in list(self.active.items()) + [(n, i) for n, i in self.inactive.items()]:
@@ -713,17 +713,14 @@ class Project:
                     ptoks = set(re.split(r"[^a-z0-9]+", p.lower().lstrip("$"))) - {"id", "at", "type", "name", ""}
                     if p in props or p in ctxset or p in PAGE_PROPS:
                         continue
-                    if e in top_custom or (ptoks & etoks):
+                    if ptoks & etoks:
                         props[p] = d
-                if not info["properties"]:
-                    er = random.Random(stable_seed(S["id"], "cp", e))
-                    for p in er.sample(common_names[:40], k=min(len(common_names[:40]), er.randint(0, 3))):
-                        if p not in props:
-                            props[p] = {"type": common[p]["type"], "values": [], "more_values": None,
-                                        "description": None, "standard": False, "values_status": None, "sources": {}}
+                # r20: no "common props" filler for events without listed properties (round 4: 0-3 random names from
+                # other projects, e.g. 'method' = POST/GET/google, on 1,527 event/prop pairs in 28 of 40 twins)
             if e == fallback_event:
                 for p, d in unscoped.items():
-                    if p not in props and p not in ctxset and p not in PAGE_PROPS and p not in attached_unscoped:
+                    if p not in props and p not in ctxset and p not in PAGE_PROPS and p not in attached_unscoped \
+                            and self.unscoped_evidenced(p):
                         props[p] = d
             samplers = {}
             for p, d in props.items():
@@ -732,6 +729,10 @@ class Project:
                                       PRI["name_shape_priors"].get(shape_of(p)),
                                       random.Random(stable_seed(S["id"], "ep", e, p)), self)
             self.ev_samplers[e] = samplers
+
+    def unscoped_evidenced(self, prop: str) -> bool:
+        """Whether an unscoped property is used by this conversation (Project2 overrides; base: always)."""
+        return True
 
     # ------------------------------------------------------------------ objects needed while generating events
     def prepare_special(self):

@@ -538,6 +538,34 @@ class RoundB13Artifacts(unittest.TestCase):
         self.assertTrue(gen2.STUB_EVENT.match("Deep link opened"))
 
 
+class RoundB14Coherence(unittest.TestCase):
+    """round 4: properties that don't fit their event (filler from other projects, $el_text on views, donor
+    pageview props on seeded rows) and platform values contradicting $os/$lib."""
+
+    def test_device_props(self):
+        f = gen2.device_props
+        self.assertEqual(f({"platform": "iOS", "is_native": True}, "Windows", "web"), {"platform": "Web", "is_native": False})
+        self.assertEqual(f({"platform": "android", "is_native": "false"}, "Android", "posthog-android"),
+                         {"platform": "android", "is_native": "true"})
+        self.assertEqual(f({"platform": "IOS", "os": "x"}, "iOS", "posthog-ios"), {"platform": "IOS", "os": "iOS"})
+
+    def test_donor_other_event_lends_context_only(self):
+        p = project()
+        donors = ({}, {"p1": ['{"$browser": "Chrome", "collection_id": "c1", "$el_text": "Buy"}']}, [])
+        out = p._with_donor({"workflow": "x"}, "$pageleave", "p1", donors, random.Random(0))
+        self.assertEqual(out, {"$browser": "Chrome", "workflow": "x"})
+
+    def test_unscoped_evidence(self):
+        p = project(Q={"calls": [{"sql": "select properties.plan_tier from events"}]}, F={}, user_text="")
+        self.assertTrue(p.unscoped_evidenced("plan_tier"))
+        self.assertFalse(p.unscoped_evidenced("method"))
+
+    def test_custom_string_props_skip_cross_project_values(self):
+        import values
+        smp = values.Sampler("method", "String", prior={"values": [["POST", 4], ["GET", 3]]})
+        self.assertNotIn("POST", [smp({"person": {}}) for _ in range(30)])  # no other project's HTTP verbs
+
+
 class RoundB12(unittest.TestCase):
     """b12 acceptance audit: everyone fired every custom event, purchases by non-visitors, placeholders, a GitHub PR URL
     and one session URL as the project's pages, campaigns crossed with random sources."""

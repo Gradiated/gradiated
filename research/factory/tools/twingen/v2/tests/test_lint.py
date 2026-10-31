@@ -106,6 +106,10 @@ class TestLint(unittest.TestCase):
             pq.write_table(pa.table({"id": ["a"]}), f"{d}/warehouse/{n}.parquet")
         self.assertEqual([f["check"] for f in lint.lint_project(d)["findings"]], ["warehouse_duplicate"])
 
+    def test_lib_os(self):
+        rows = [("$screen", f"p{i}", {"$lib": "posthog-ios", "$os": "Android"}) for i in range(40)]
+        self.assertIn("lib_os", checks(rows))
+
     def test_campaign_source(self):
         bad = [pv(f"p{i}", utm_campaign="google_search_brand", utm_source="facebook") for i in range(40)]
         self.assertIn("campaign_source", checks(bad))

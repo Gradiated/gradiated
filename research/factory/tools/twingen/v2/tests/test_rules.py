@@ -549,6 +549,27 @@ class RoundB14Coherence(unittest.TestCase):
                          {"platform": "android", "is_native": "true"})
         self.assertEqual(f({"platform": "IOS", "os": "x"}, "iOS", "posthog-ios"), {"platform": "IOS", "os": "iOS"})
 
+    def test_channel_referrer(self):
+        d = {"utm_source": "newsletter", "utm_medium": "email", "$referring_domain": "www.google.com", "$search_engine": "google"}
+        gen2.channel_referrer(d)
+        self.assertEqual((d["$referring_domain"], d.get("$search_engine")), ("$direct", None))
+        d = {"utm_source": "google", "utm_medium": "cpc", "$referring_domain": "$direct"}
+        gen2.channel_referrer(d)
+        self.assertEqual((d["$referring_domain"], d["$search_engine"]), ("www.google.com", "google"))
+        d = {"utm_source": "facebook", "utm_medium": "paid_social", "$referrer": "https://www.google.com/"}
+        gen2.channel_referrer(d)
+        self.assertEqual(d["$referring_domain"], "www.facebook.com")
+
+    def test_mobile_tuple(self):
+        d = gen2.mobile_tuple({"$lib": "posthog-ios", "$os": "Android", "$device_manufacturer": "Samsung",
+                               "$device_model": "Pixel 8", "$browser": "Chrome"})
+        self.assertEqual((d["$os"], d["$device_manufacturer"], d["$device_model"]), ("iOS", "Apple", "iPhone 15"))
+        self.assertNotIn("$browser", d)
+        d = gen2.mobile_tuple({"$lib": "posthog-android", "$os": "iOS", "$device_model": "iPhone"})
+        self.assertEqual(d["$os"], "Android")
+        self.assertIn(d["$device_manufacturer"], ("Samsung", "Pixel", "OnePlus"))
+        self.assertEqual(gen2.mobile_tuple({"$lib": "web", "$os": "Windows"}), {"$lib": "web", "$os": "Windows"})
+
     def test_donor_other_event_lends_context_only(self):
         p = project()
         donors = ({}, {"p1": ['{"$browser": "Chrome", "collection_id": "c1", "$el_text": "Buy"}']}, [])

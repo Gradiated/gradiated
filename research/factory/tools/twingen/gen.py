@@ -419,7 +419,9 @@ class Project:
              "$geoip_accuracy_radius": rnd.choice([5, 10, 20, 50, 100]), "$timezone": city[6],
              "$timezone_offset": 0, "$lib": lib, "$lib_version": lv, "$raw_user_agent": ua}
         if dtp != "Desktop":
-            model = rnd.choice(catalog.DEVICES_MOBILE)
+            # r22: the model follows the OS (round 5: Android events with manufacturer "iPhone")
+            model = rnd.choice([m for m in catalog.DEVICES_MOBILE if m.startswith("iPhone") == (os_ == "iOS")]
+                               or catalog.DEVICES_MOBILE)
             p["$device"] = "iPhone" if os_ == "iOS" else "Android"
             p["$device_model"] = model
             p["$device_manufacturer"] = "Apple" if os_ == "iOS" else model.split()[0]

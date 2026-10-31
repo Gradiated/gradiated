@@ -68,7 +68,10 @@ agent mode at start: {mode}
    actually join, values are sensible.
 5. Grading notes: every must_include item is correct on the twin (re-check numbers you can), achievable with the agent's
    tools, not over-specified (open-ended asks use k-of-n), acceptable variations non-empty; no grading on things the
-   user did not ask.
+   user did not ask. A required point stating a product fact (permissions, limits, defaults, pricing, regions) that
+   you cannot confirm, or that depends on org/project settings, or that answers something the user did not ask, is a
+   notes_wrong/notes_overspecified defect: BROKEN (round 5: "only admins can invite" was required; PostHog's default
+   lets any member invite).
 6. Curator defects and lint: start from the two lists above. For every curator-listed defect and every material lint
    finding, decide with a query whether it touches what the user asks about OR data a competent agent would
    naturally look at while answering. If it does, the task is BROKEN (class data_implausible) — even when the

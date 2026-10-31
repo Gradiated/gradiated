@@ -170,6 +170,68 @@ DEVICE_KEYS_RX = re.compile(r'"(' + "|".join(DEVICE_KEYS) + r')"')
 WEB_LIBS = {"web", "posthog-js", "js", "posthog-js-lite"}
 
 
+MOBILE_LIB_RX = re.compile(r'"\$lib":\s*"posthog-(ios|android)"')
+ANDROID_MODELS = ["Samsung Galaxy S23", "Pixel 8", "Samsung Galaxy A54", "OnePlus 11"]
+
+
+SEARCH_DOMAINS = {"google": "www.google.com", "bing": "www.bing.com", "duckduckgo": "duckduckgo.com",
+                  "yahoo": "search.yahoo.com", "baidu": "www.baidu.com", "yandex": "yandex.ru"}
+SOCIAL_DOMAINS = {"facebook": "www.facebook.com", "fb": "www.facebook.com", "instagram": "www.instagram.com",
+                  "ig": "www.instagram.com", "meta": "www.facebook.com", "twitter": "t.co", "x": "t.co",
+                  "linkedin": "www.linkedin.com", "tiktok": "www.tiktok.com", "reddit": "www.reddit.com",
+                  "youtube": "www.youtube.com", "pinterest": "www.pinterest.com"}
+
+
+def channel_referrer(d: dict) -> None:
+    """r22: a page view's referrer agrees with its UTM channel (round 5 audit: newsletter/social UTMs with Google as
+    referrer, paid Google clicks without a search referrer). Edits d in place; only touches rows with utm_source."""
+    src = str(d.get("utm_source") or "").lower()
+    med = str(d.get("utm_medium") or "").lower()
+    key = next((k for k in SEARCH_DOMAINS if k in src), None)
+    soc = next((k for k in SOCIAL_DOMAINS if re.search(rf"(^|[^a-z]){k}([^a-z]|$)", src)), None)
+    if re.search(r"email|newsletter|mail", med + " " + src):
+        dom, engine = "$direct", None
+    elif key and re.search(r"cpc|ppc|paid|search|sem|organic", med or "cpc"):
+        dom, engine = SEARCH_DOMAINS[key], key
+    elif soc:
+        dom, engine = SOCIAL_DOMAINS[soc], None
+    else:
+        return
+    if "$referring_domain" in d or "$referrer" in d or "$search_engine" in d:
+        d["$referring_domain"] = dom
+        d["$referrer"] = "$direct" if dom == "$direct" else f"https://{dom}/"
+        if engine:
+            d["$search_engine"] = engine
+        else:
+            d.pop("$search_engine", None)
+
+
+def mobile_tuple(d: dict) -> dict:
+    """r22: a native SDK fixes the OS and device maker (round 5: posthog-ios events with $os Android, production
+    $lib distributions are drawn per event). The device model follows the OS."""
+    lib = str(d.get("$lib") or "").lower()
+    want = MOBILE_LIBS.get(lib)
+    if not want:
+        return d
+    out = dict(d)
+    if want == "iOS" and out.get("$os") not in ("iOS", "iPadOS"):
+        out["$os"] = "iOS"
+    elif want == "Android" and out.get("$os") != "Android":
+        out["$os"] = "Android"
+    ios = out["$os"] in ("iOS", "iPadOS")
+    if "$device_manufacturer" in out or "$device_model" in out:
+        model = str(out.get("$device_model") or "")
+        if ios != model.startswith("iP"):
+            model = "iPhone 15" if ios else ANDROID_MODELS[sum(map(ord, str(out.get("$device_id") or model))) % len(ANDROID_MODELS)]
+            out["$device_model"] = model
+        out["$device_manufacturer"] = "Apple" if ios else model.split()[0]
+        if "$device" in out:
+            out["$device"] = "iPhone" if ios else "Android"
+    for k in WEB_ONLY_PROPS:
+        out.pop(k, None)
+    return out
+
+
 def device_props(d: dict, os_: str, lib: str) -> dict:
     """r20: platform-like custom props as functions of the row's $os/$lib, in the value's existing style."""
     low = os_.lower()
@@ -2014,8 +2076,10 @@ class Project2(gen.Project):
                 src = d.get("utm_source")
                 if isinstance(src, str) and src:
                     med, camp = coherent_utm(src, mediums, campaigns)
-                    if d.get("utm_medium") != med or d.get("utm_campaign") != camp:
-                        d["utm_medium"], d["utm_campaign"] = med, camp
+                    before = dict(d)
+                    d["utm_medium"], d["utm_campaign"] = med, camp
+                    channel_referrer(d)  # r22: the referrer follows the channel
+                    if d != before:
                         props[i] = orjson.dumps(d).decode()
                         changed += 1
         if changed:
@@ -2036,13 +2100,14 @@ class Project2(gen.Project):
         props = tab.column("properties").to_pylist()
         n = 0
         for i, pr in enumerate(props):
-            if not pr or not DEVICE_KEYS_RX.search(pr):
+            if not pr or not (DEVICE_KEYS_RX.search(pr) or MOBILE_LIB_RX.search(pr)):
                 continue
             d = orjson.loads(pr)
-            os_, lib = str(d.get("$os") or ""), str(d.get("$lib") or "")
+            fixed = mobile_tuple(d)
+            os_, lib = str(fixed.get("$os") or ""), str(fixed.get("$lib") or "")
             if not os_ and not lib:
                 continue
-            fixed = device_props(d, os_, lib)
+            fixed = device_props(fixed, os_, lib)
             if fixed != d:
                 props[i] = orjson.dumps(fixed).decode()
                 n += 1

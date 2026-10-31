@@ -17,6 +17,8 @@ URL as the project's top page, campaigns crossed with random sources). These che
   value_domain      a property whose name is not URL-like holds URLs in >= 30% of rows
   warehouse_duplicate  two warehouse files are one PostHog table ('neon.x.orgs' and 'xneon_orgs')
   warehouse_join    a name-evident warehouse foreign key (<x>_id -> <x>s.id) matches < 50% of the parent's ids
+  lib_os            native SDK rows ($lib posthog-ios/android) whose $os is the other platform (> 5%)
+  channel_referrer  email/newsletter UTM rows carrying a search-engine referrer (> 10%, minor)
   campaign_source   utm_campaign names a channel (google/search, facebook/meta, email/newsletter, ...) that its
                     utm_source contradicts in > 30% of rows
 
@@ -136,6 +138,8 @@ def lint_project(d: str, max_rows: int = 400000) -> dict:
     urls: C.Counter = C.Counter()
     pv = 0
     camp_bad = camp_tot = 0
+    lib_bad = lib_tot = 0
+    ref_bad = ref_tot = 0
     for i in range(0, n, step):
         s = props[i]
         if not s:
@@ -145,7 +149,8 @@ def lint_project(d: str, max_rows: int = 400000) -> dict:
         except ValueError:
             continue
         for k, v in d_.items():
-            if not isinstance(v, str) or k in ("$session_id", "$window_id", "$device_id", "$insert_id", "token"):
+            if not isinstance(v, str) or k in ("$session_id", "$window_id", "$device_id", "$insert_id", "token",
+                                                "$device_model", "$device", "$os_version", "$app_version"):
                 continue
             seen_rows[k] += 1
             if URL_VALUE.match(v) and not urlish(k):
@@ -161,6 +166,14 @@ def lint_project(d: str, max_rows: int = 400000) -> dict:
                 h = re.sub(r"^https?://", "", u).split("/")[0].split("?")[0].split(":")[0].lower()
                 hosts[h] += 1
                 urls[u.split("#")[0]] += 1
+        lib = str(d_.get("$lib") or "")
+        if lib in ("posthog-ios", "posthog-android") and d_.get("$os"):
+            lib_tot += 1
+            lib_bad += (lib == "posthog-ios") != (d_["$os"] in ("iOS", "iPadOS"))
+        med = str(d_.get("utm_medium") or "").lower()
+        if med and ("$search_engine" in d_ or "$referring_domain" in d_):
+            ref_tot += 1
+            ref_bad += bool(re.search(r"email|newsletter", med)) and bool(d_.get("$search_engine"))
         c, src = d_.get("utm_campaign"), d_.get("utm_source")
         if isinstance(c, str) and isinstance(src, str):
             for _ch, crx, srx in CHANNEL:
@@ -186,6 +199,12 @@ def lint_project(d: str, max_rows: int = 400000) -> dict:
         u, c = urls.most_common(1)[0]
         if c > 0.5 * pv and pv >= 50:  # one URL carrying most pageviews (round 5: 100% on one page)
             findings.append({"check": "url_dominance", "severity": "material" if c > 0.8 * pv else "minor", "detail": f"{u[:120]}: {c}/{pv} pageviews"})
+    if lib_tot >= 30 and lib_bad > 0.05 * lib_tot:
+        findings.append({"check": "lib_os", "severity": "material",
+                         "detail": f"{lib_bad}/{lib_tot} native-SDK rows with a $os of the other platform"})
+    if ref_tot >= 30 and ref_bad > 0.1 * ref_tot:
+        findings.append({"check": "channel_referrer", "severity": "minor",
+                         "detail": f"{ref_bad}/{ref_tot} email/newsletter UTM rows with a search-engine referrer"})
     if camp_tot >= 30 and camp_bad > 0.3 * camp_tot:
         findings.append({"check": "campaign_source", "severity": "minor",
                          "detail": f"{camp_bad}/{camp_tot} rows: campaign names a channel its source contradicts"})

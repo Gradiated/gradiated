@@ -91,6 +91,11 @@ builder notes: {notes}
    explain the artefact away or steer around it. If the user attaches an insight/dashboard/query, its events and
    properties must exist on the twin with sensible data (run it); if they don't and overrides can't add them, drop. Facts the agent cannot obtain with its tools (e.g. product prices missing from the docs it
    can search) must not be required in grading_notes.
+6g. Required points answer what the user asked. Caveats the user did not ask about (permissions, plan limits,
+   regions, pricing) go in acceptable_variations or not_required, never in must_include. A required point that
+   states a product fact must be one you verified (the docs the production answer retrieved, or the twin's own
+   org/project settings); if unverified or setting-dependent (e.g. who may invite members depends on the org's
+   members_can_invite), do not require it (round 5: "only admins can invite" was required and is false by default).
 6c. must_include items are FINDINGS a correct answer reaches ("finds that subscription_updated carries mrr and uses
    it", "creates the flag rather than describing it"), not exact reference numbers, unless the number follows
    unambiguously from the twin with the obvious query. Every acceptable variation you list must give a non-empty,

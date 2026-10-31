@@ -114,7 +114,10 @@ value, person) or that a premise is false, CHECK it: instead of the final JSON y
 {{"queries": [{{"why": "<what you check>", "sql": "<ClickHouse SELECT>"}}, ...]}} (at most 6). Tables:
 events(team_id, event, timestamp, distinct_id, person_id, properties), person(team_id, id, properties) and
 session_replay_events(team_id, session_id, distinct_id, min_first_timestamp, max_last_timestamp, first_url, ...)
-(session recordings live ONLY there, not in events), where properties is a JSON string (use JSONExtractString(properties, 'key'), JSONHas(properties, 'key')). Every query must
+(session recordings live ONLY there, not in events), where properties is a JSON string. Data warehouse tables
+are read with warehouse('<table name>') in place of a table (e.g. SELECT count() FROM warehouse('stripe_customers')
+WHERE team_id = {{team}} ... -- keep the team_id condition text, it is checked but not applied to warehouse reads);
+always check warehouse-backed premises (join keys actually join, value domains make sense, columns exist) (use JSONExtractString(properties, 'key'), JSONHas(properties, 'key')). Every query must
 contain `team_id = {{team}}` (it is filled in for you) and should aggregate or LIMIT. You get the results back and can
 ask once more. Every drop with drop_kind twin_gap and every fix_premise edit must cite what you checked in "evidence".
 
@@ -156,6 +159,24 @@ def resolve_turns(turns, built: list[str], edits: list[dict]) -> list[str]:
     return out
 
 
+WH_MACRO = re.compile(r"warehouse\(\s*'([^']+)'\s*\)")
+
+
+def warehouse_urls(team: int) -> dict:
+    rows = SC.pg(f"select name, url_pattern from posthog_datawarehousetable where team_id={int(team)} and deleted is not true")
+    return {r[0]: r[1] for r in rows if len(r) == 2 and r[1].startswith("http")}
+
+
+def expand_warehouse(sql: str, team: int) -> tuple[str, list]:
+    """warehouse('name') -> url('<parquet url>', 'Parquet') for the twin team's warehouse table."""
+    names = WH_MACRO.findall(sql)
+    if not names:
+        return sql, []
+    urls = warehouse_urls(team)
+    missing = [n for n in names if n not in urls]
+    return WH_MACRO.sub(lambda m: f"url('{urls.get(m.group(1), '')}', 'Parquet')", sql), missing
+
+
 FORBIDDEN = re.compile(r"\b(insert|alter|drop|truncate|create|optimize|system|kill|attach|detach|rename|grant)\b", re.I)
 
 
@@ -172,6 +193,10 @@ def run_queries(qs: list, team: int) -> list[dict]:
             out.append({"why": why, "sql": sql[:400], "result": "REJECTED: must be a SELECT containing team_id = {team}"})
             continue
         sql = sql.replace("{team}", str(team)).rstrip().rstrip(";")
+        sql, missing = expand_warehouse(sql, team)
+        if missing:
+            out.append({"why": why, "sql": sql[:400], "result": f"ERROR unknown warehouse table(s): {missing}"})
+            continue
         params = {"database": SC.CH_DB, "default_format": "JSONCompact", "readonly": "1", "max_execution_time": "30",
                   "max_result_rows": "50", "result_overflow_mode": "break", "max_threads": "2"}
         try:

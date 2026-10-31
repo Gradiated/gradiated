@@ -38,5 +38,21 @@ class Queries(unittest.TestCase):
         self.assertTrue(all(r["result"].startswith("REJECTED") for r in res))
 
 
+
+class Warehouse(unittest.TestCase):
+    """eval_v1 audit: the curator never checked warehouse-backed premises (it could not read warehouse tables)."""
+
+    def test_expand(self):
+        orig = CT.warehouse_urls
+        CT.warehouse_urls = lambda team: {"stripe_customers": "http://127.0.0.1:19000/x.parquet"}
+        try:
+            sql, missing = CT.expand_warehouse("SELECT count() FROM warehouse('stripe_customers')", 1)
+            self.assertEqual(sql, "SELECT count() FROM url('http://127.0.0.1:19000/x.parquet', 'Parquet')")
+            self.assertEqual(missing, [])
+            self.assertEqual(CT.expand_warehouse("SELECT 1 FROM warehouse('nope')", 1)[1], ["nope"])
+        finally:
+            CT.warehouse_urls = orig
+
+
 if __name__ == "__main__":
     unittest.main()

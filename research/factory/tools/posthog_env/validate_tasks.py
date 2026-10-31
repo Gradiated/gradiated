@@ -85,6 +85,22 @@ SOUND means: you would report model scores on this task without caveats. Any def
 competent answer passes makes it BROKEN; a real but harmless flaw is MINOR."""
 
 
+def last_json(text: str) -> dict:
+    """The last JSON object with a verdict or queries (round 3: a reply holding two objects failed json.loads)."""
+    dec, found, i = json.JSONDecoder(), None, text.find("{")
+    while i >= 0:
+        try:
+            obj, end = dec.raw_decode(text, i)
+            if isinstance(obj, dict) and ("verdict" in obj or "queries" in obj):
+                found = obj
+            i = text.find("{", end)
+        except ValueError:
+            i = text.find("{", i + 1)
+    if found is None:
+        raise ValueError("no JSON object with verdict/queries")
+    return found
+
+
 LINT: dict = {}  # conversation_id -> [finding] (from loop_producer's lint.jsonl)
 
 
@@ -117,8 +133,7 @@ def validate_one(task: dict, rec: dict | None, model: str, out_dir: str) -> dict
     for _ in range(6):
         try:
             text, _u = llm_proxy.judge_complete(convo, model, None, attempts=6, preamble=False)
-            a, b = text.find("{"), text.rfind("}")
-            d = json.loads(text[a:b + 1])
+            d = last_json(text)
             if d.get("queries") and "verdict" not in d and rounds < 3:
                 rounds += 1
                 res = CT.run_queries(d["queries"][:8], int(task["team_id"]))

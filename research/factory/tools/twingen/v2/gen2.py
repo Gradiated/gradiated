@@ -156,6 +156,40 @@ class UF:
         self.p[self.find(a)] = self.find(b)
 
 
+def posthog_flat_name(name: str) -> str:
+    """PostHog names a source table '<prefix><source>_<table>'; HogQL also reaches it as '<source>.<prefix>.<table>'
+    ('neon.harborview_db.organizations' == 'harborview_dbneon_organizations'). Returns the flat form, lowercased."""
+    parts = name.lower().split(".")
+    if len(parts) == 3:
+        src, pre, tab = parts
+        return f"{pre}{src}_{tab}"
+    return name.lower().replace(".", "_")
+
+
+def name_foreign_keys(tables: dict) -> list[tuple[tuple[str, str], tuple[str, str]]]:
+    """Foreign keys evident from names: <table>.<x>_id -> <other>.id where the other table is named <x>/<x>s
+    (round 3: org_memberships.organization_id held 'orga_...' and organizations.id held 'id_...'; nothing joined)."""
+
+    def plural(w: str) -> set:
+        return {w, w + "s", w + "es", (w[:-1] + "ies") if w.endswith("y") else w}
+
+    out = []
+    for t, tb in tables.items():
+        for c in (tb.get("columns") or {}):
+            m = re.match(r"^(.+?)_?id$", c, re.I)
+            if not m or c.lower() == "id":
+                continue
+            base = m.group(1).lower().rstrip("_")
+            for u, ub in tables.items():
+                if u == t or "id" not in (ub.get("columns") or {}):
+                    continue
+                low = u.lower()
+                if any(low == f or low.endswith("_" + f) for f in plural(base)):
+                    out.append(((t, c), (u, "id")))
+                    break
+    return out
+
+
 class FilterMix:
     """rule (r1c): a property known only from query filters samples its usual values and returns a filter value with
     a minority share (0 when production found none)."""
@@ -1423,6 +1457,10 @@ class Project2(gen.Project):
             tb, cb = self.canon_table(b[0], tables), b[1]
             if ta in tables or tb in tables:
                 uf.union((ta, ca), (tb, cb))
+        for a, b in name_foreign_keys(tables):  # rule (r19e): keys join even when production never joined them
+            if a not in uf.p or uf.find(a) == a:
+                uf.union(a, b)
+                self.v2["warehouse_name_fks"] += 1
         pools: dict = {}
         schema_out = {}
         for tname, tb in tables.items():
@@ -1467,8 +1505,13 @@ class Project2(gen.Project):
         if name in tables:
             return name
         flat = name.replace(".", "_")
+        ph = posthog_flat_name(name)
         for t in tables:
             if t.replace(".", "_") == flat or t.split(".")[-1] == name.split(".")[-1] and len(name.split(".")) > 1:
+                return t
+            # rule (r19e): HogQL's dotted source path and the flat warehouse name are one table (round 3: both were
+            # generated and the loader let the dotted copy, with unrelated keys, overwrite the flat one)
+            if posthog_flat_name(t) == ph:
                 return t
         return name
 

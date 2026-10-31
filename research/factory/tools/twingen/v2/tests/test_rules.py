@@ -466,6 +466,30 @@ class WarehouseValues(unittest.TestCase):
         self.assertTrue(all(re.match(r"^\d{4}-\d\d-01$", x) for x in m))
 
 
+class WarehouseNameKeys(unittest.TestCase):
+    """round 3: org_memberships.organization_id ('orga_...') never matched organizations.id ('id_...')."""
+
+    def test_name_foreign_keys(self):
+        tables = {"hv_db_organizations": {"columns": {"id": {}, "name": {}}},
+                  "hv_db_org_memberships": {"columns": {"organization_id": {}, "user_email": {}}},
+                  "hv_db_applications": {"columns": {"id": {}, "organization_id": {}, "category_id": {}}},
+                  "hv_db_categories": {"columns": {"id": {}}}}
+        fk = set(gen2.name_foreign_keys(tables))
+        self.assertIn((("hv_db_org_memberships", "organization_id"), ("hv_db_organizations", "id")), fk)
+        self.assertIn((("hv_db_applications", "organization_id"), ("hv_db_organizations", "id")), fk)
+        self.assertIn((("hv_db_applications", "category_id"), ("hv_db_categories", "id")), fk)
+        self.assertEqual(len(fk), 3)
+
+    def test_dotted_and_flat_names_are_one_table(self):
+        tables = {"harborview_dbneon_organizations": {}}
+        self.assertEqual(gen2.Project2.canon_table("neon.harborview_db.organizations", tables),
+                         "harborview_dbneon_organizations")
+        self.assertEqual(gen2.Project2.canon_table("harborview_dbneon_organizations", {"neon.harborview_db.organizations": {}}),
+                         "neon.harborview_db.organizations")
+        self.assertEqual(gen2.Project2.canon_table("stripe.acme.charges", {"harborview_dbneon_organizations": {}}),
+                         "stripe.acme.charges")
+
+
 class RoundB12(unittest.TestCase):
     """b12 acceptance audit: everyone fired every custom event, purchases by non-visitors, placeholders, a GitHub PR URL
     and one session URL as the project's pages, campaigns crossed with random sources."""

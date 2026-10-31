@@ -177,12 +177,23 @@ def expand_warehouse(sql: str, team: int) -> tuple[str, list]:
     return WH_MACRO.sub(lambda m: f"url('{urls.get(m.group(1), '')}', 'Parquet')", sql), missing
 
 
+URL_READ = re.compile(r"url\(\s*'([^']*/twins/(\d+)/[^']*)'\s*,\s*'Parquet'\s*\)", re.I)
+
+
+def team_scoped_urls(sql: str, team: int) -> str:
+    """Warehouse parquet has no team_id column, but every query must filter team_id (round 3: validator and curator
+    wrote `url(...) WHERE team_id = N`, ClickHouse rejected it, and three tasks were judged 'warehouse unreadable').
+    Each twin warehouse read becomes a subquery that carries the team id."""
+    return URL_READ.sub(lambda m: f"(SELECT *, {int(m.group(2))} AS team_id FROM url('{m.group(1)}', 'Parquet'))", sql)
+
+
 FORBIDDEN = re.compile(r"\b(insert|alter|drop|truncate|create|optimize|system|kill|attach|detach|rename|grant)\b", re.I)
 
 
 def run_queries(qs: list, team: int) -> list[dict]:
     """Run the editor's verification queries read-only on the twin team (readonly=2: no writes, but table functions such
     as url() for warehouse parquet are allowed; readonly=1 blocked every warehouse read), 30 s, 50 rows."""
+    import urllib.error
     import urllib.parse
     import urllib.request
 
@@ -198,12 +209,16 @@ def run_queries(qs: list, team: int) -> list[dict]:
         if missing:
             out.append({"why": why, "sql": sql[:400], "result": f"ERROR unknown warehouse table(s): {missing}"})
             continue
+        sql = team_scoped_urls(sql, team)
         params = {"database": SC.CH_DB, "default_format": "JSONCompact", "readonly": "2", "max_execution_time": "30",
                   "max_result_rows": "50", "result_overflow_mode": "break", "max_threads": "2"}
         try:
             r = urllib.request.urlopen("http://127.0.0.1:8123/?" + urllib.parse.urlencode(params), data=sql.encode(), timeout=60)
             data = json.loads(r.read()).get("data")
             res = json.dumps(data, ensure_ascii=False)[:1500]
+        except urllib.error.HTTPError as ex:  # ClickHouse's message, so the model can fix its query
+            body = ex.read().decode("utf-8", "replace")
+            res = f"ERROR {ex.code}: {re.sub(r'Stack trace:.*', '', body, flags=re.S).strip()[:400]}"
         except Exception as ex:  # noqa: BLE001
             res = f"ERROR {str(ex)[:300]}"
         out.append({"why": why, "sql": sql[:600], "result": res})

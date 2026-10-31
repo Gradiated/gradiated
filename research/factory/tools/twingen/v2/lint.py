@@ -14,6 +14,8 @@ URL as the project's top page, campaigns crossed with random sources). These che
   third_party_host  pageviews on hosts that are third-party services (github.com, google docs, notion, ...)
   url_dominance     one URL with a query string carries > 50% of pageviews
   value_domain      a property whose name is not URL-like holds URLs in >= 30% of rows
+  warehouse_duplicate  two warehouse files are one PostHog table ('neon.x.orgs' and 'xneon_orgs')
+  warehouse_join    a name-evident warehouse foreign key (<x>_id -> <x>s.id) matches < 50% of the parent's ids
   campaign_source   utm_campaign names a channel (google/search, facebook/meta, email/newsletter, ...) that its
                     utm_source contradicts in > 30% of rows
 
@@ -184,8 +186,34 @@ def lint_project(d: str, max_rows: int = 400000) -> dict:
     if camp_tot >= 30 and camp_bad > 0.3 * camp_tot:
         findings.append({"check": "campaign_source", "severity": "minor",
                          "detail": f"{camp_bad}/{camp_tot} rows: campaign names a channel its source contradicts"})
+    findings += warehouse_joins(d)
     return {"findings": findings, "stats": {"events": n, "persons": len(persons_any), "event_names": len(ev_count),
                                             "pageviews_sampled": pv}}
+
+
+def warehouse_joins(d: str) -> list[dict]:
+    import glob
+
+    import pyarrow.parquet as pq
+
+    files = {os.path.basename(f)[:-8]: f for f in glob.glob(f"{d}/warehouse/*.parquet")}
+    if len(files) < 2:
+        return []
+    out = []
+    flat = C.defaultdict(list)
+    for t in files:
+        flat[_gen2().posthog_flat_name(t)].append(t)
+    for k, ts in flat.items():
+        if len(ts) > 1:  # the loader maps both to one name; the last one wins
+            out.append({"check": "warehouse_duplicate", "severity": "material", "detail": f"{k}: {sorted(ts)}"})
+    cols = {t: {c: {} for c in pq.read_schema(f).names} for t, f in files.items()}
+    for (t, c), (u, k) in _gen2().name_foreign_keys({t: {"columns": cs} for t, cs in cols.items()}):
+        child = {str(x) for x in pq.read_table(files[t], columns=[c]).column(c).to_pylist() if x is not None}
+        parent = {str(x) for x in pq.read_table(files[u], columns=[k]).column(k).to_pylist() if x is not None}
+        if child and len(child & parent) < 0.5 * len(child):
+            out.append({"check": "warehouse_join", "severity": "material",
+                        "detail": f"{t}.{c} -> {u}.{k}: {len(child & parent)}/{len(child)} keys match"})
+    return out
 
 
 def main() -> None:

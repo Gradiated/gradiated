@@ -84,6 +84,22 @@ class TestLint(unittest.TestCase):
         c = checks(rows)
         self.assertEqual([f["detail"].split(":")[0] for f in c["value_domain"]], ["trigger_status"])
 
+    def test_warehouse_join(self):
+        d = twin([pv("p1")])
+        os.makedirs(f"{d}/warehouse")
+        pq.write_table(pa.table({"id": ["id_1", "id_2"]}), f"{d}/warehouse/x_organizations.parquet")
+        pq.write_table(pa.table({"organization_id": ["orga_9", "orga_8"]}), f"{d}/warehouse/x_org_memberships.parquet")
+        self.assertEqual([f["check"] for f in lint.lint_project(d)["findings"]], ["warehouse_join"])
+        pq.write_table(pa.table({"organization_id": ["id_1", "id_2"]}), f"{d}/warehouse/x_org_memberships.parquet")
+        self.assertEqual(lint.lint_project(d)["findings"], [])
+
+    def test_warehouse_duplicate(self):
+        d = twin([pv("p1")])
+        os.makedirs(f"{d}/warehouse")
+        for n in ("neon.hv.orgs", "hvneon_orgs"):
+            pq.write_table(pa.table({"id": ["a"]}), f"{d}/warehouse/{n}.parquet")
+        self.assertEqual([f["check"] for f in lint.lint_project(d)["findings"]], ["warehouse_duplicate"])
+
     def test_campaign_source(self):
         bad = [pv(f"p{i}", utm_campaign="google_search_brand", utm_source="facebook") for i in range(40)]
         self.assertIn("campaign_source", checks(bad))

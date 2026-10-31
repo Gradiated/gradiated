@@ -41,8 +41,14 @@ class TestLint(unittest.TestCase):
     def test_event_reach(self):
         rows = [pv(f"p{i}") for i in range(100)] + [("clicked_cta", f"p{i}", {}) for i in range(95)]
         self.assertIn("event_reach", checks(rows))
+        rows = [pv(f"p{i}") for i in range(100)] + [("clicked_cta", f"p{i}", {}) for i in range(86)]
+        self.assertIn("event_reach", checks(rows))  # round 3: 86% was implausible
         rows = [pv(f"p{i}") for i in range(100)] + [("clicked_cta", f"p{i}", {}) for i in range(60)]
         self.assertNotIn("event_reach", checks(rows))
+
+    def test_repeat_once(self):
+        rows = [pv(f"p{i}") for i in range(100)] + [("trial_converted", f"p{i % 25}", {}) for i in range(400)]
+        self.assertIn("repeat_once", checks(rows))
 
     def test_lifecycle_reach_is_minor_and_family_counts_by_persons(self):
         rows = [pv(f"p{i}") for i in range(100)] + [("signed_up", f"p{i}", {}) for i in range(100)]

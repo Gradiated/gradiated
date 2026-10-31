@@ -446,6 +446,12 @@ class Journeys(unittest.TestCase):
         ev, pid = out.column("event").to_pylist(), out.column("person_id").to_pylist()
         self.assertEqual(sum(1 for i, e in enumerate(ev) if e == "sign_up" and pid[i] == "a"), 1)
 
+    def test_lifecycle_once_names(self):
+        for e in ("trial_converted", "email_verified", "user_email_verified", "account_activated", "signed_up"):
+            self.assertTrue(gen2.LIFECYCLE_ONCE.match(e), e)
+        for e in ("payment_succeeded", "page_verified_badge_shown"):
+            self.assertFalse(gen2.LIFECYCLE_ONCE.match(e), e)
+
     def test_lifecycle_child_repeat_is_dropped(self):
         """regress f8f5: onboarding completed repeats went to new persons who never started onboarding."""
         rows = [("onboarding_started", "a", 10), ("onboarding_completed", "a", 50), ("onboarding_completed", "a", 90),

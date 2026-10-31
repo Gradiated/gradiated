@@ -50,6 +50,9 @@ agent mode at start: {mode}
 ## Twin state summary (top-N lists; verify anything you rely on with queries)
 {twin}
 
+## Twin defects the curator noticed (it may have kept the task anyway; you decide)
+{curator_defects}
+
 ## Mechanical lint findings on this twin (deterministic coherence checks; may or may not touch this task)
 {lint}
 
@@ -66,8 +69,22 @@ agent mode at start: {mode}
 5. Grading notes: every must_include item is correct on the twin (re-check numbers you can), achievable with the agent's
    tools, not over-specified (open-ended asks use k-of-n), acceptable variations non-empty; no grading on things the
    user did not ask.
-6. Lint: for every lint finding above, decide whether it touches data this task or a correct answer depends on
-   (verify with a query). A material lint finding that touches the task is a data_implausible defect: BROKEN.
+6. Curator defects and lint: start from the two lists above. For every curator-listed defect and every material lint
+   finding, decide with a query whether it touches what the user asks about OR data a competent agent would
+   naturally look at while answering. If it does, the task is BROKEN (class data_implausible) — even when the
+   grading notes tolerate or explain it away; notes that steer around an artefact are themselves a defect.
+   SOUND requires showing, with a query, that each such item is irrelevant to this task.
+6b. Plausibility checks an expert reviewer applies (each one touching the task makes it at least MINOR):
+   - a custom event reaching > 80% of active persons; a later step (verified, converted, completed, purchased)
+     with more persons than its earlier step (registered, started, visited); a once-per-person event (signup,
+     conversion, verification) repeated many times per person;
+   - funnel-like steps done in random order;
+   - pageviews on posthog.com/app.posthog.com /project/ paths for a business that is not PostHog; mobile lifecycle
+     (Application *) or mcp* events in a web-only product; session-level $entry_* props on custom events;
+   - placeholder values (userN@example.com, "<prop>_a", "Name 3"), the same email shared by many persons, event
+     email disagreeing with the person's email;
+   - an attached insight/dashboard/query whose events or properties don't exist on the twin, or return nothing.
+   MINOR is not kept: only SOUND tasks are used.
 7. Difficulty: is it trivial (single lookup, answer in the prompt)? Trivial is allowed if it is a real request; mark it.
 
 To check, reply with {{"queries": [{{"why": "...", "sql": "..."}}]}} (at most 8 per round, up to 3 rounds). Tables:
@@ -81,7 +98,8 @@ Final answer, ONLY JSON:
             "grading_notes": "ok|<defect>"}},
  "defects": [{{"class": "{classes}", "what": "<concrete>", "evidence": "<query -> result>"}}],
  "summary": "<one sentence>"}}
-SOUND means: you would report model scores on this task without caveats. Any defect that could change whether a
+SOUND means: you would report model scores on this task without caveats, and an expert auditing the twin data
+behind it would find nothing implausible that the task touches. Any defect that could change whether a
 competent answer passes makes it BROKEN; a real but harmless flaw is MINOR."""
 
 
@@ -127,7 +145,9 @@ def validate_one(task: dict, rec: dict | None, model: str, out_dir: str) -> dict
     prompt = PROMPT.format(mode=task.get("agent_mode") or "product_analytics", turns=turns,
                            notes=json.dumps(task.get("grading_notes"), ensure_ascii=False, indent=1)[:6000],
                            reference=SC.clip(ref, 30000), twin=SC.clip(twin, 20000), classes="|".join(CLASSES),
-                           lint=SC.clip(lint_text(task["conversation_id"]), 4000))
+                           lint=SC.clip(lint_text(task["conversation_id"]), 4000),
+                           curator_defects=SC.clip(json.dumps((task.get("curation") or {}).get("twin_defects") or [],
+                                                              ensure_ascii=False, indent=1), 4000) or "(none)")
     out = {"task_id": task["task_id"], "model": model, "queries_run": []}
     convo, rounds = prompt, 0
     for _ in range(6):

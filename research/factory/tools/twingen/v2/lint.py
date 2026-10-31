@@ -5,7 +5,8 @@ The LLM validator checks that the data a task needs exists; it misses ratio and 
 of loop round b12: purchases 12x checkouts, every person firing every custom event, placeholder values, a GitHub PR
 URL as the project's top page, campaigns crossed with random sources). These checks are mechanical:
 
-  event_reach       a custom event (not $-prefixed) reaches > 90% of the persons who have any event (n >= 50)
+  event_reach       a custom event (not $-prefixed) reaches > 80% of the persons who have any event (n >= 50)
+  repeat_once       a once-per-person event (gen2.LIFECYCLE_ONCE) averages > 1.5 events per person (n >= 20 persons)
   funnel_order      a later step outnumbers its earlier step in events or persons by > 10% (name-evident pairs,
                     e-commerce chain view_item < add_to_cart < begin_checkout < purchase, family roots)
   buyers_vs_visitors  persons with a purchase-like event exceed persons with a $pageview/$screen (web/mobile twins)
@@ -42,6 +43,7 @@ PLACEHOLDER_PATTERNS = [
 THIRD_PARTY = re.compile(r"(^|\.)(github\.com|gitlab\.com|google\.com|docs\.google\.com|notion\.so|figma\.com|stripe\.com|"
                          r"youtube\.com|linkedin\.com|twitter\.com|x\.com|facebook\.com|slack\.com|loom\.com|"
                          r"atlassian\.net|zendesk\.com|intercom\.io|hubspot\.com|calendly\.com|typeform\.com)$", re.I)
+REACH = 0.8  # round 3 audit: checkout_opened at 86% of visitors was implausible and not flagged at 90%
 URL_PROPS = {"$host", "$current_url", "$pathname", "$referrer", "$referring_domain", "$initial_referrer",
              "$initial_referring_domain", "$initial_current_url", "$initial_host", "$initial_pathname", "$prev_pageview_pathname"}
 URLISH_TOKENS = {"url", "urls", "uri", "host", "hostname", "link", "links", "href", "referrer", "referer", "page", "pathname",
@@ -107,10 +109,15 @@ def lint_project(d: str, max_rows: int = 400000) -> dict:
     # event_reach
     if len(persons_any) >= 50:
         for e, ps in ev_persons.items():
-            if not str(e).startswith("$") and len(ps) > 0.9 * len(persons_any):
+            if not str(e).startswith("$") and len(ps) > REACH * len(persons_any):
                 # one-time lifecycle events (signed_up, first_*): reach reflects the acquisition window (minor)
                 findings.append({"check": "event_reach", "severity": "minor" if _gen2().LIFECYCLE_ONCE.match(str(e)) else "material",
                                  "detail": f"{e!r} reaches {len(ps)}/{len(persons_any)} persons"})
+    # repeat_once
+    for e, ps in ev_persons.items():
+        if len(ps) >= 20 and _gen2().LIFECYCLE_ONCE.match(str(e)) and ev_count[e] > 1.5 * len(ps):
+            findings.append({"check": "repeat_once", "severity": "material",
+                             "detail": f"{e!r}: {ev_count[e]} events by {len(ps)} persons"})
     # funnel_order
     for parent, child, by_events in _pairs(set(ev_count), ev_count):
         if (by_events and ev_count[child] > 1.1 * ev_count[parent]) or len(ev_persons[child]) > 1.1 * len(ev_persons[parent]):

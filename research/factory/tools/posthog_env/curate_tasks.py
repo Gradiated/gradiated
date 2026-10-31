@@ -86,7 +86,10 @@ builder notes: {notes}
    leaked onto unrelated events, a country code that disagrees with the country name, a one-day burst, a population
    with no baseline, sessions that make no sense), do NOT write it into the grading notes as a trap or a bonus:
    fix it with twin_overrides if they can, otherwise list it in "twin_defects" (and drop with drop_kind twin_gap if
-   it breaks the task). Facts the agent cannot obtain with its tools (e.g. product prices missing from the docs it
+   it breaks the task). A twin defect that touches what the user asks about, or that a competent agent would
+   naturally query while answering, BREAKS the task: fix it or drop it; never keep the task with grading notes that
+   explain the artefact away or steer around it. If the user attaches an insight/dashboard/query, its events and
+   properties must exist on the twin with sensible data (run it); if they don't and overrides can't add them, drop. Facts the agent cannot obtain with its tools (e.g. product prices missing from the docs it
    can search) must not be required in grading_notes.
 6c. must_include items are FINDINGS a correct answer reaches ("finds that subscription_updated carries mrr and uses
    it", "creates the flag rather than describing it"), not exact reference numbers, unless the number follows

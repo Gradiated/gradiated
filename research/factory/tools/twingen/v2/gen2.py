@@ -663,7 +663,10 @@ CTX_STRIP = re.compile(r"<(attached_context|system_reminder|voice_mode)>.*?</\1>
 
 LIFECYCLE_ONCE = re.compile(r"^(sign[_ ]?up|signed[_ ]?up|user[_ ]signed[_ ]up|sign[_ ]?up[_ ]completed|registration[_ ]completed|"
                             r"account[_ ]created|user[_ ]created|application[_ ]installed|app[_ ]installed|"
-                            r"onboarding[_ ]completed|first[_ ].*|.*[_ ]initial[_ ].*|.*_first_.*)$", re.I)
+                            r"onboarding[_ ]completed|first[_ ].*|.*[_ ]initial[_ ].*|.*_first_.*|"
+                            # round 3: trial_converted ~17x per person, email verified by more people than registered
+                            r"trial[_ ]converted|.*[_ ]email[_ ]verified|email[_ ]verified|email[_ ]confirmed|"
+                            r"account[_ ](activated|verified)|user[_ ](activated|verified))$", re.I)
 PROFILE_KEYS = {"$browser", "$browser_version", "$os", "$os_version", "$device_type", "$screen_width", "$screen_height",
                 "$viewport_width", "$viewport_height", "$browser_language", "$browser_language_prefix", "$lib",
                 "$lib_version", "$raw_user_agent", "$timezone", "$timezone_offset"} | set(GEO_PROPS)

@@ -213,7 +213,17 @@ def clip_turn(t: str, n: int = 6000) -> str:
     return SC.clip(t, n)
 
 
-def curate_one(task: dict, rec: dict | None, model: str, out_dir: str) -> dict:
+FEEDBACK = """
+
+## Revision request
+An independent validator audited the version of this task you produced (turns and grading notes below) against the
+twin and found these problems. Fix them by editing the turns and/or grading notes (verify with queries; do not add new
+twin_overrides), or drop the task if it cannot be made sound. Keep everything else that was fine.
+Your previous version: {prev}
+Validator findings: {findings}"""
+
+
+def curate_one(task: dict, rec: dict | None, model: str, out_dir: str, feedback: dict | None = None) -> dict:
     path = f"{out_dir}/{task['task_id']}.json"
     if os.path.exists(path):
         return json.load(open(path))
@@ -224,7 +234,10 @@ def curate_one(task: dict, rec: dict | None, model: str, out_dir: str) -> dict:
     twin = "\n".join(str(x) for x in SC.twin_state(task) + SC.event_props(task))
     prompt = PROMPT.format(mode=task.get("agent_mode") or "product_analytics (default)", turns=turns, notes=notes,
                            reference=ref, twin=SC.clip(twin, 20000))
-    rec_out = {"task_id": task["task_id"], "model": model, "queries_run": []}
+    if feedback:
+        prompt += FEEDBACK.format(prev=json.dumps(feedback.get("prev"), ensure_ascii=False)[:8000],
+                                  findings=json.dumps(feedback.get("findings"), ensure_ascii=False)[:6000])
+    rec_out = {"task_id": task["task_id"], "model": model, "queries_run": [], "revision": bool(feedback)}
     convo = prompt
     rounds = 0
     for _ in range(5):

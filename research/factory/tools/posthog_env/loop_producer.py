@@ -37,7 +37,7 @@ PH = "/opt/posthog-env/posthog"
 RUNNER = "/opt/posthog-env/runner"
 BATCHES = f"{ROOT}/batches"
 CODE = [f"{V2}/gen2.py", f"{TG}/gen.py", f"{V2}/facts.py", f"{V2}/qfacts.py", f"{RUNNER}/build_tasks_v3.py",
-        f"{RUNNER}/curate_tasks.py", f"{RUNNER}/apply_overrides.py",
+        f"{RUNNER}/curate_tasks.py", f"{RUNNER}/apply_overrides.py", f"{RUNNER}/validate_tasks.py",
         "/opt/posthog-env/loader/load_twin_v2.py", f"{RUNNER}/spot_card.py"]
 ENV = {**os.environ, "TWIN_V2_TRACES": TRACES, "TWIN_V2_ROOT": ROOT, "TWIN_V2_TAG": TAG}
 
@@ -114,6 +114,11 @@ def build_batch(name: str, ids: list[str], split: str, pilot: bool) -> None:
                 sh([f"{PH}/.venv/bin/python", "../loader/load_all_v2.py", "--ids", ch, "--workers", "2", "--force",
                     "--min-free-gb", "60"], log, cwd=PH)
             tf = f"{d}/curated/curated.jsonl"
+            # independent validator (GPT-6.1 Sol, read-only twin queries) with one curator repair round; only SOUND kept
+            sh(["python3", f"{RUNNER}/validate_tasks.py", "--tasks", tf, "--traces", f"{TRACES}/{split}.jsonl",
+                "--out", f"{d}/validated", "--repair"], log, timeout=10800)
+            if os.path.exists(f"{d}/validated/validated.jsonl"):
+                tf = f"{d}/validated/validated.jsonl"
         tasks = [json.loads(x) for x in open(tf)]
         inc = [t for t in tasks if not t.get("exclude")]
         json.dump([t["task_id"] for t in inc], open(f"{d}/included.json", "w"))

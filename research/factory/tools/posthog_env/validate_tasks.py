@@ -1,0 +1,188 @@
+#!/usr/bin/env python3
+"""Validator stage: an independent model audits each curated task against its twin; only SOUND tasks are kept.
+
+The curator (Opus) edits tasks; this validator (a different model, GPT-6.1 Sol by default) checks the result the way
+a careful human reviewer does, with read-only queries against the twin (events, persons, session recordings, data
+warehouse tables via warehouse('name')), and returns
+  verdict   SOUND (measures models correctly as-is) | MINOR (usable but flawed) | BROKEN (would mis-measure)
+  checks    premise / data / warehouse / objects / grading notes / self-containedness, each ok or a defect
+  defects   [{class, what, evidence}]  (class from a fixed list, so drop rates can be tracked per class)
+Only SOUND tasks stay included; others get exclude = "validator: <verdict>: <first defect>". Verdicts are cached per
+task (<out>/<task_id>.json). Prints counts per verdict and per defect class.
+
+    python3 validate_tasks.py --tasks B/curated/curated.jsonl --traces T/train.jsonl --out B/validated
+Writes <out>/validated.jsonl.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
+
+sys.path.insert(0, "/opt/posthog-env/runner")
+sys.path.insert(0, "/opt/posthog-env")
+import curate_tasks as CT  # noqa: E402  (run_queries incl. warehouse macro)
+import llm_proxy  # noqa: E402
+import spot_card as SC  # noqa: E402
+
+CLASSES = ["premise_false", "data_missing", "data_implausible", "warehouse_broken", "object_missing", "object_leak",
+           "notes_wrong", "notes_overspecified", "not_self_contained", "unanswerable_with_tools", "trivial", "other"]
+
+PROMPT = """You audit tasks of a reinforcement-learning environment for PostHog AI (an analytics agent with tools: taxonomy
+reads, HogQL/SQL over events/persons/sessions/recordings/data warehouse, insights, dashboards, notebooks, docs search).
+Each task replays a (curated) user request against a synthetic "twin" PostHog project. Scores of models on this task
+will be reported, so it must measure the model, not the environment. Be strict and concrete; verify, don't assume.
+
+## Task (turns sent to the agent in order; later turns are scripted)
+agent mode at start: {mode}
+{turns}
+
+## Grading notes the judge will use
+{notes}
+
+## Production conversation this task was seeded from (for intent only; the twin is NOT production)
+{reference}
+
+## Twin state summary (top-N lists; verify anything you rely on with queries)
+{twin}
+
+## Your checks
+1. Self-contained: a competent agent seeing only the turns can understand what is asked (no reference to unseen
+   context; names resolve in the twin; scripted follow-ups make sense whatever the agent answered).
+2. Premise: everything the user asserts or assumes is true in the twin (spikes, drops, events, pages, objects,
+   property values, recordings, warehouse rows, date ranges relative to now = the latest data).
+3. Data: the data a correct answer needs exists, is plausible for this business, and is coherent (funnel steps by the
+   same people in order, consistent property combinations, realistic value domains and numeric scales, no placeholders
+   like "<name>_a", "Name 3", "month_0").
+4. Warehouse: if the task touches warehouse tables, read them (warehouse('<name>')): needed columns exist, join keys
+   actually join, values are sensible.
+5. Grading notes: every must_include item is correct on the twin (re-check numbers you can), achievable with the agent's
+   tools, not over-specified (open-ended asks use k-of-n), acceptable variations non-empty; no grading on things the
+   user did not ask.
+6. Difficulty: is it trivial (single lookup, answer in the prompt)? Trivial is allowed if it is a real request; mark it.
+
+To check, reply with {{"queries": [{{"why": "...", "sql": "..."}}]}} (at most 8 per round, up to 3 rounds). Tables:
+events(team_id, event, timestamp, distinct_id, person_id, properties), person(team_id, id, properties),
+session_replay_events(team_id, session_id, distinct_id, min_first_timestamp, ...); warehouse tables via
+warehouse('<name>'). Every query must contain `team_id = {{team}}`. properties are JSON strings (JSONExtractString).
+
+Final answer, ONLY JSON:
+{{"verdict": "SOUND|MINOR|BROKEN", "trivial": true|false,
+ "checks": {{"self_contained": "ok|<defect>", "premise": "ok|<defect>", "data": "ok|<defect>", "warehouse": "ok|n/a|<defect>",
+            "grading_notes": "ok|<defect>"}},
+ "defects": [{{"class": "{classes}", "what": "<concrete>", "evidence": "<query -> result>"}}],
+ "summary": "<one sentence>"}}
+SOUND means: you would report model scores on this task without caveats. Any defect that could change whether a
+competent answer passes makes it BROKEN; a real but harmless flaw is MINOR."""
+
+
+def validate_one(task: dict, rec: dict | None, model: str, out_dir: str) -> dict:
+    path = f"{out_dir}/{task['task_id']}.json"
+    if os.path.exists(path):
+        return json.load(open(path))
+    turns = "\n".join(f"[turn {i}] {SC.clip(t, 6000)}" for i, t in enumerate(task["turns"]))
+    ref = "\n".join(SC.render_trace(rec, len(task["turns"]) + task.get("turn_offset", 0), 800, 2000)) if rec else "(none)"
+    twin = "\n".join(str(x) for x in SC.twin_state(task) + SC.event_props(task))
+    prompt = PROMPT.format(mode=task.get("agent_mode") or "product_analytics", turns=turns,
+                           notes=json.dumps(task.get("grading_notes"), ensure_ascii=False, indent=1)[:6000],
+                           reference=SC.clip(ref, 30000), twin=SC.clip(twin, 20000), classes="|".join(CLASSES))
+    out = {"task_id": task["task_id"], "model": model, "queries_run": []}
+    convo, rounds = prompt, 0
+    for _ in range(6):
+        try:
+            text, _u = llm_proxy.judge_complete(convo, model, None, attempts=6, preamble=False)
+            a, b = text.find("{"), text.rfind("}")
+            d = json.loads(text[a:b + 1])
+            if d.get("queries") and "verdict" not in d and rounds < 3:
+                rounds += 1
+                res = CT.run_queries(d["queries"][:8], int(task["team_id"]))
+                out["queries_run"] += res
+                convo += (f"\n\n## Your queries and results (round {rounds})\n" +
+                          "\n".join(f"- {r['why']}\n  SQL: {r['sql']}\n  -> {r['result']}" for r in res) +
+                          ("\n\nNow give the final JSON." if rounds >= 3 else "\n\nAsk again or give the final JSON."))
+                continue
+            assert d.get("verdict") in ("SOUND", "MINOR", "BROKEN")
+            out.update(d)
+            out.pop("error", None)
+            break
+        except Exception as ex:  # noqa: BLE001
+            out["error"] = f"{type(ex).__name__}: {str(ex)[:200]}"
+    json.dump(out, open(path, "w"), ensure_ascii=False, indent=1)
+    return out
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--tasks", required=True)
+    ap.add_argument("--traces", required=True)
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--model", default="gpt-6.1-sol")
+    ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--repair", action="store_true",
+                    help="send non-SOUND tasks back to the curator with the findings, then validate the revision once")
+    ap.add_argument("--curator-model", default="claude-opus-5-5")
+    a = ap.parse_args()
+    os.makedirs(a.out, exist_ok=True)
+    tasks = [json.loads(x) for x in open(a.tasks) if x.strip()]
+    todo = [t for t in tasks if not t.get("exclude")]
+    want = {t["conversation_id"] for t in todo}
+    recs = {}
+    for line in open(a.traces):
+        r = json.loads(line)
+        if str(r.get("id")) in want:
+            recs[str(r["id"])] = r
+    with ThreadPoolExecutor(a.workers) as pool:
+        res = dict(zip([t["task_id"] for t in todo],
+                       pool.map(lambda t: validate_one(t, recs.get(t["conversation_id"]), a.model, a.out), todo)))
+    stats: Counter = Counter()
+    if a.repair:
+        bad = [t for t in todo if (res.get(t["task_id"]) or {}).get("verdict") in ("MINOR", "BROKEN")]
+        os.makedirs(f"{a.out}/rev1/curated", exist_ok=True)
+
+        def repair(t):
+            r = res[t["task_id"]]
+            fb = {"prev": {"turns": t["turns"], "grading_notes": t.get("grading_notes")},
+                  "findings": {k: r.get(k) for k in ("verdict", "checks", "defects", "summary")}}
+            base = {**t, "turns": t.get("turns_built") or t["turns"]}
+            c = CT.curate_one(base, recs.get(t["conversation_id"]), a.curator_model, f"{a.out}/rev1/curated", feedback=fb)
+            if c.get("decision") not in ("keep", "edit") or not c.get("turns"):
+                return t["task_id"], None, c
+            t2 = {**t, "turns": c["turns"], "max_turns": len(c["turns"]), "grading_notes": c.get("grading_notes"),
+                  "revised_by_validator": True}
+            return t["task_id"], t2, validate_one(t2, recs.get(t["conversation_id"]), a.model, f"{a.out}/rev1")
+
+        with ThreadPoolExecutor(a.workers) as pool:
+            for tid, t2, r2 in pool.map(repair, bad):
+                stats["repair_attempted"] += 1
+                if t2 is None:
+                    stats["repair_dropped_by_curator"] += 1
+                    continue
+                if r2.get("verdict") == "SOUND":
+                    stats["repair_fixed"] += 1
+                res[tid] = r2
+                for i, t in enumerate(tasks):
+                    if t["task_id"] == tid:
+                        tasks[i] = t2
+    with open(f"{a.out}/validated.jsonl", "w") as f:
+        for t in tasks:
+            t = dict(t)
+            r = res.get(t["task_id"])
+            if r is not None:
+                v = r.get("verdict") or "ERROR"
+                stats[f"verdict_{v}"] += 1
+                for d in r.get("defects") or []:
+                    stats[f"class_{d.get('class')}"] += 1
+                t["validation"] = {k: r.get(k) for k in ("verdict", "trivial", "checks", "defects", "summary", "model")}
+                if v != "SOUND":
+                    first = ((r.get("defects") or [{}])[0].get("what") or r.get("summary") or r.get("error") or "")[:160]
+                    t["exclude"] = f"validator: {v}: {first}"
+            f.write(json.dumps(t, ensure_ascii=False) + "\n")
+    print(json.dumps(dict(sorted(stats.items()))))
+
+
+if __name__ == "__main__":
+    main()

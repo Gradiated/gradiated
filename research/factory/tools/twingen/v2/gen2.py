@@ -303,16 +303,21 @@ def scenario_props(specs: dict, rnd, person_key=None, salt="") -> dict:
     return out
 
 
+FAMILY_ROOT_MIN_SHARE = 0.15
+
+
 def causal_parent(e: str, names, vol) -> str | None:
     """The event that causes e: a name-evident parent ('paywall_dismissed' -> 'paywall_shown'), or the family root
-    when the root's volume can carry the member (>= half its events; else the prefix is just a product area).
+    when the root's volume can carry the member (>= 15% of its events; else the prefix is just a product area).
     Shared by adopters, causal_children and lint so all three agree (round 4: family members failing the volume gate
     were skipped by adopters and not moved by causal_children, reaching 95%+ of persons)."""
     par = parent_event(e, names)
     if par:
         return par
     fam = family_parent(e, names)
-    if fam and vol.get(fam, 0) >= 0.5 * vol.get(e, 0):
+    # 0.15: repeat use (calc_run several times per calc_page_view) passes; a product-area prefix (1,795 refund_ask_posted
+    # vs 40 refund_home_row_viewed, 2%) does not (regress b11-0058 failed at 0.5)
+    if fam and vol.get(fam, 0) >= FAMILY_ROOT_MIN_SHARE * vol.get(e, 0):
         return fam
     return None
 

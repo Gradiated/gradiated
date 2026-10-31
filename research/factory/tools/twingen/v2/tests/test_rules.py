@@ -396,6 +396,13 @@ class Journeys(unittest.TestCase):
         pid = out.column("person_id").to_pylist()
         self.assertEqual(len({pid[i] for i in range(1, 11)}), 10)
 
+    def test_repeat_use_family_keeps_link(self):
+        """regress b11-0058: calc_run (several per calc_page_view) must follow calc_page_view."""
+        self.assertEqual(gen2.causal_parent("calc_run", {"calc_run", "calc_page_view"}, {"calc_run": 10, "calc_page_view": 3}),
+                         "calc_page_view")
+        self.assertIsNone(gen2.causal_parent("refund_ask_posted", {"refund_ask_posted", "refund_home_row_viewed"},
+                                             {"refund_ask_posted": 1795, "refund_home_row_viewed": 40}))
+
     def test_gated_family_member_gets_reach_cap(self):
         """round 4: a family member failing the root-volume gate was skipped by adopters and not moved by
         causal_children, reaching 95%+ of persons."""

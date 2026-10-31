@@ -27,6 +27,8 @@ Assertions read the generated files directly (production-dated events; no loadin
   {"type": "per_person", "event": E, "op": "<=", "value": n}  (max events per person)
   {"type": "uniq_ratio", "num_event": E, "den_event": E2|null, "op": "<=", "value": r}  (persons doing E / persons
       doing E2, or any event)  (web sessions whose first event is a $pageview)
+  {"type": "lint", "check": C, "severity": "material"|"minor"|null, "op": "<=", "value": 0}  (lint.py findings of
+      check C on the generated twin)
 A props value starting with "~" matches as a substring ("~/gamelanding/"). Dates are production dates (YYYY-MM-DD,
 inclusive). Prints one line per assertion and a summary; exit 1 on failure.
 """
@@ -92,6 +94,7 @@ class Twin:
         self.pid = t.column("person_id").to_pylist()
         self.props = t.column("properties").to_pylist()
         self.objects = json.load(open(f"{d}/objects.json")) if os.path.exists(f"{d}/objects.json") else {}
+        self.dir = d
         self._pj = {}
 
     def p(self, i: int) -> dict:
@@ -206,6 +209,15 @@ def check(tw: Twin, a: dict) -> tuple[bool, str]:
         c = C.Counter(tw.pid[i] for i in tw.rows(a["event"], None, a.get("from"), a.get("to")))
         v = max(c.values()) if c else 0
         return OPS[a["op"]](v, a["value"]), f"max_per_person={v} over {len(c)} persons"
+    if t == "lint":
+        sys.path.insert(0, V2)
+        import lint
+
+        if not hasattr(tw, "_lint"):
+            tw._lint = lint.lint_project(tw.dir)["findings"]
+        hits = [f for f in tw._lint if f["check"] == a["check"] and (a.get("severity") in (None, f["severity"]))]
+        return OPS[a.get("op", "<=")](len(hits), a.get("value", 0)), f"lint_{a['check']}={len(hits)} " + \
+            "; ".join(f["detail"][:80] for f in hits[:2])
     if t == "history":
         v = sum(1 for d in tw.ts if d <= dt.date.fromisoformat(a["from"]))
         return OPS[a["op"]](v, a["value"]), f"events_on_or_before={v}"

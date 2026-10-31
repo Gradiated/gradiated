@@ -53,7 +53,7 @@ import specio  # noqa: E402
 from gen import UTC, iso, stable_seed, uuid7, wh_column, WH_TYPES  # noqa: E402
 from specio import shape_of  # noqa: E402
 
-GEN2_VERSION = "twingen-2.18"
+GEN2_VERSION = "twingen-2.19"
 TWINS = PATHS.TWINS
 FACTS = PATHS.FACTS
 QFACTS = PATHS.QFACTS
@@ -451,9 +451,35 @@ def production_countries(spec: dict, qf: dict, facts: dict | None = None) -> dic
     return dict(w)
 
 
+CAMPAIGN_CHANNELS = [("google", re.compile(r"google|search|sem\b|cpc|adwords|pmax", re.I), re.compile(r"google|bing|search", re.I)),
+                     ("meta", re.compile(r"facebook|meta|insta|\bfb_|\big_", re.I), re.compile(r"facebook|instagram|meta|\bfb\b|\big\b", re.I)),
+                     ("email", re.compile(r"email|newsletter|drip|mailchimp|klaviyo", re.I), re.compile(r"email|newsletter|mail", re.I)),
+                     ("tiktok", re.compile(r"tiktok", re.I), re.compile(r"tiktok", re.I)),
+                     ("linkedin", re.compile(r"linkedin", re.I), re.compile(r"linkedin", re.I))]
+
+
+def campaign_channel(c: str):
+    for name, crx, _srx in CAMPAIGN_CHANNELS:
+        if crx.search(c or ""):
+            return name
+    return None
+
+
+def campaign_fits(c: str, src: str) -> bool:
+    for _name, crx, srx in CAMPAIGN_CHANNELS:
+        if crx.search(c or ""):
+            return bool(srx.search(src or ""))
+    return False
+
+
 def coherent_utm(src: str, mediums: list, campaigns: list) -> tuple[str, str]:
     """rule (r8): one source -> one consistent medium and a campaign from that source's own small set."""
     h = int(hashlib.sha256(src.encode()).hexdigest()[:8], 16)
+    fitting = [c for c in campaigns if campaign_fits(c, src)]
+    if fitting:  # rule (r19): a campaign that names a channel goes with that channel's source
+        campaigns = fitting
+    elif campaigns:
+        campaigns = [c for c in campaigns if campaign_channel(c) is None] or campaigns
     default = gen.catalog.UTM_MEDIUMS.get(src)
     if mediums:
         med = default if default in mediums else mediums[h % len(mediums)]
@@ -477,13 +503,18 @@ def conversation_pages(spec: dict, facts: dict) -> tuple[list[str], list[str]]:
     paths: C.Counter = C.Counter()
     text = "\n".join(t.get("text") or "" for t in spec.get("tasks") or [])
     for u in URL_RX.findall(text):
-        urls[u.rstrip(".")] += 5
+        u = u.rstrip(".").split("?")[0].split("#")[0]  # rule (r19): one visit's query string is not the site
+        host = re.sub(r"^https?://", "", u).split("/")[0].lower()
+        if THIRD_PARTY_HOST.search(host):
+            continue
+        urls[u] += 5
     for c in (facts or {}).get("calls") or []:
         for r in (c.get("rows") or [])[:300]:
             for x in r:
                 x = str(x).strip()
-                if x.startswith(("http://", "https://")) and len(x) < 300 and " " not in x:
-                    urls[x] += 1
+                if x.startswith(("http://", "https://")) and len(x) < 300 and " " not in x \
+                        and not THIRD_PARTY_HOST.search(re.sub(r"^https?://", "", x).split("/")[0].lower()):
+                    urls[x.split("#")[0]] += 1
                 elif PATH_CELL.match(x) and not re.match(r"^/\d+(/\d+)*$", x):
                     paths[x] += 1
         for lit in SQL_PATH_LIT.findall(c.get("sql") or ""):
@@ -626,6 +657,13 @@ def funnel_pairs(facts: dict, names) -> dict:
 WH_SENTINELS = {"", "_other", "other", "(other)", "$$_posthog_breakdown_other_$$", "$$_posthog_breakdown_null_$$",
                 "(none)", "None", "null", "NULL", "(null)", "None (i.e. no value)"}
 DATE_COL = re.compile(r"(^|_)(date|day|month|week|period|dt|ds)(_|$)|_(at|on)$|^(month|week|day)", re.I)
+
+
+PURCHASE_EV = re.compile(r"(^|[_ .:-])(purchase|purchased|order[_ ]completed|order[_ ]placed|payment[_ ]succeeded|"
+                         r"checkout[_ ]completed)([_ .:-]|$)", re.I)
+THIRD_PARTY_HOST = re.compile(r"(^|\.)(github\.com|gitlab\.com|google\.com|notion\.so|figma\.com|stripe\.com|youtube\.com|"
+                              r"linkedin\.com|twitter\.com|x\.com|facebook\.com|slack\.com|loom\.com|atlassian\.net|"
+                              r"zendesk\.com|intercom\.io|hubspot\.com|calendly\.com|typeform\.com|chatgpt\.com|openai\.com)$", re.I)
 
 
 STUB_EVENT = re.compile(r"^(mcp |application )", re.I)
@@ -1845,8 +1883,72 @@ class Project2(gen.Project):
             tab = tab.set_column(tab.schema.get_field_index("timestamp"), "timestamp",
                                  pa.array(ts, pa.int64()).cast(tab.schema.field("timestamp").type))
         self.v2["sessions_landing_pageview_moved"] = moved
+        tab = self.adopters(tab)
         tab = self.causal_children(tab)
         return self.lifecycle_once(tab)
+
+    def adopters(self, tab):
+        """rule (r19): a custom event is used by a stable subset of people (feature adopters), not by everyone who is
+        active (b12 audit: 23.6k of 23.7k persons fired dozens of custom events). Reach = clip(1.8 * daily uniques /
+        DAU, 0.03, 0.8) for unevidenced custom events; rows of non-adopters move to adopters active that day."""
+        if "person_id" not in tab.schema.names:
+            return tab
+        ev = tab.column("event").to_pylist()
+        pid = tab.column("person_id").to_pylist()
+        persons = list(dict.fromkeys(pid))
+        P = len(persons)
+        if P < 30:
+            return tab
+        names = set(ev)
+        pairs = {e: (parent_event(e, names) or family_parent(e, names)) for e in names}
+        hinted = getattr(self, "_volume_hinted", set())
+        ts = tab.column("timestamp").cast(pa.int64()).to_numpy()
+        day = (ts // 86_400_000_000).tolist()
+        cols = {c: tab.column(c).to_pylist() for c in ("distinct_id", "person_id", "person_properties", "$session_id",
+                                                        "$window_id") if c in tab.schema.names}
+        gcols = {c: tab.column(c).to_pylist() for c in tab.schema.names if c.startswith("$group_")}
+        rows_by_day_person: dict = C.defaultdict(list)
+        for i, (p_, d_) in enumerate(zip(pid, day)):
+            rows_by_day_person[d_].append(i)
+        rng = random.Random(stable_seed(self.S["id"], "adopters"))
+        D = max(float(getattr(self, "D", 1.0) or 1.0), 1.0)
+        by_event: dict = C.defaultdict(list)
+        for i, e in enumerate(ev):
+            by_event[e].append(i)
+        moved = 0
+        for e, idx in by_event.items():
+            if str(e).startswith("$") or e in hinted or pairs.get(e) or LIFECYCLE_ONCE.match(str(e)):
+                continue
+            doers = C.Counter(pid[i] for i in idx)
+            T, U = (self.targets.get(e) or [0.0, 0.0]) if hasattr(self, "targets") else (0.0, 0.0)
+            reach = min(0.8, max(0.03, 1.8 * (U or 0.0) / D)) if U else 0.3
+            k = max(3, int(reach * P))
+            if len(doers) <= k * 1.1:
+                continue
+            ranked = [p_ for p_, _ in doers.most_common()]  # heavy users stay adopters
+            adopt = set(ranked[:k])
+            for i in idx:
+                if pid[i] in adopt:
+                    continue
+                cand = [j for j in rows_by_day_person.get(day[i], ()) if pid[j] in adopt]
+                if not cand:
+                    cand = [j for dd in (day[i] - 1, day[i] + 1, day[i] - 2, day[i] + 2)
+                            for j in rows_by_day_person.get(dd, ()) if pid[j] in adopt]
+                if not cand:
+                    continue
+                j = rng.choice(cand[:200])
+                for c in cols:
+                    cols[c][i] = cols[c][j]
+                for c in gcols:
+                    gcols[c][i] = gcols[c][j]
+                pid[i] = pid[j]
+                moved += 1
+            self.v2["adopter_events"] += 1
+        if moved:
+            for c, vals in {**cols, **gcols}.items():
+                tab = tab.set_column(tab.schema.get_field_index(c), c, pa.array(vals, tab.schema.field(c).type))
+        self.v2["adopter_rows_moved"] = moved
+        return tab
 
     def causal_children(self, tab):
         """rule (r16): a child event (later funnel step, dismissed/completed after shown/started, checkout after
@@ -1858,6 +1960,8 @@ class Project2(gen.Project):
         pairs: dict = {}
         for e in names:
             par = parent_event(e, names) or family_parent(e, names)
+            if not par and PURCHASE_EV.search(str(e)):  # rule (r19): buyers are visitors
+                par = "$pageview" if "$pageview" in names else ("$screen" if "$screen" in names else None)
             if par and e not in pairs and pairs.get(par) != e:
                 pairs[e] = par
         if not pairs:
@@ -2436,9 +2540,86 @@ class Project2(gen.Project):
         return pa.Table.from_arrays(arrays, schema=schema)
 
     # ------------------------------------------------------------------ driver
+    def remap_placeholders(self, out_dir):
+        """rule (r19): replace generator placeholder values (<stem>_a, "Tag 3", "example company 7") in events and
+        persons with realistic values (one cached LLM call per twin); values the user's own text uses are kept."""
+        ev_path, pe_path = os.path.join(out_dir, "events.parquet"), os.path.join(out_dir, "persons.parquet")
+        tab = pq.read_table(ev_path)
+        props = tab.column("properties").to_pylist()
+        pprops = tab.column("person_properties").to_pylist() if "person_properties" in tab.schema.names else None
+        found: dict = C.defaultdict(set)
+        step = max(1, len(props) // 200000)
+        for col in (props, pprops):
+            if col is None:
+                continue
+            for i in range(0, len(col), step):
+                s_ = col[i]
+                if not s_:
+                    continue
+                try:
+                    d_ = orjson.loads(s_)
+                except Exception:  # noqa: BLE001
+                    continue
+                for k, v in d_.items():
+                    if isinstance(v, str) and valuepools.is_placeholder(k, v) and v not in self.user_text:
+                        found[k].add(v)
+        persons = pq.read_table(pe_path) if os.path.exists(pe_path) else None
+        if persons is not None and "properties" in persons.schema.names:
+            for s_ in persons.column("properties").to_pylist():
+                try:
+                    d_ = orjson.loads(s_ or "{}")
+                except Exception:  # noqa: BLE001
+                    continue
+                for k, v in d_.items():
+                    if isinstance(v, str) and valuepools.is_placeholder(k, v) and v not in self.user_text:
+                        found[k].add(v)
+        if not found:
+            return
+        mapping, status = valuepools.get_remap(self.S, PATHS.ROOT, {k: sorted(v)[:40] for k, v in found.items()},
+                                               self.user_text)
+        self.v2[f"placeholder_remap_{status}"] += 1
+        mapping = {k: m for k, m in mapping.items() if m}
+        if not mapping:
+            return
+        needles = re.compile("|".join(re.escape(json.dumps(o, ensure_ascii=False)) for m in mapping.values() for o in m))
+
+        def fix(s_):
+            if not s_ or not needles.search(s_):
+                return s_, False
+            d_ = orjson.loads(s_)
+            ch = False
+            for k, m in mapping.items():
+                v = d_.get(k)
+                if isinstance(v, str) and v in m:
+                    d_[k] = m[v]
+                    ch = True
+            return (orjson.dumps(d_).decode(), True) if ch else (s_, False)
+
+        n = 0
+        for name, col in (("properties", props), ("person_properties", pprops)):
+            if col is None:
+                continue
+            out = []
+            for s_ in col:
+                v, ch = fix(s_)
+                out.append(v)
+                n += ch
+            tab = tab.set_column(tab.schema.get_field_index(name), name, pa.array(out, tab.schema.field(name).type))
+        pq.write_table(tab, ev_path + ".tmp", compression="zstd", row_group_size=100_000)
+        os.replace(ev_path + ".tmp", ev_path)
+        if persons is not None and "properties" in persons.schema.names:
+            out = [fix(s_)[0] for s_ in persons.column("properties").to_pylist()]
+            persons = persons.set_column(persons.schema.get_field_index("properties"), "properties",
+                                         pa.array(out, persons.schema.field("properties").type))
+            pq.write_table(persons, pe_path + ".tmp", compression="zstd")
+            os.replace(pe_path + ".tmp", pe_path)
+        self.v2["placeholder_rows_remapped"] = n
+        self.v2["placeholder_props_remapped"] = len(mapping)
+
     def run(self, out_dir):
         man = super().run(out_dir)
         self.postprocess(out_dir)
+        self.remap_placeholders(out_dir)
         man["generator"] = GEN2_VERSION
         man["counts"]["events"] = self.n_events
         man["counts"]["event_names"] = len(self.ev_counts)

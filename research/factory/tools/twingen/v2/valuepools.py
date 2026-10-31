@@ -166,3 +166,84 @@ def get_pages(spec: dict, root: str, user_text: str, model: str = "gpt-6.1-terra
         return out, "llm"
     except Exception:  # noqa: BLE001
         return {}, "failed"
+
+
+REMAP_PROMPT = """You help build a realistic synthetic copy of a customer's PostHog analytics project. The generator produced
+placeholder values for some properties. Replace each placeholder with a realistic, distinct value this business would
+record for that property (same language/conventions as real tracking data; for PostHog's own $-properties use the real
+formats PostHog SDKs send, e.g. $config_defaults like "2025-05-24" or "unset", gclid like a long Google click id).
+
+Business context (from the customer's own question; may be in any language):
+{context}
+
+Events in the project: {events}
+
+Placeholders per property (JSON): {placeholders}
+
+Respond with ONLY JSON mapping each property to an object {{"<placeholder>": "<realistic value>", ...}}; every
+placeholder must get a distinct value within its property."""
+
+STEM_LETTER = re.compile(r"^([a-z][a-z0-9_]*)_([a-l])$")
+TITLE_NUMBER = re.compile(r"^([A-Z][a-z]+(?: [A-Z][a-z]+)?) (\d{1,2})$")
+EXAMPLE_COMPANY = re.compile(r"^example company \d+$", re.I)
+ORDINAL_WORDS = {"version", "step", "level", "tier", "season", "chapter", "round", "phase", "week", "day", "lesson",
+                 "module", "episode", "part", "stage", "plan", "team", "room", "table", "floor", "gate", "slot"}
+
+
+def _norm(x: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", x.lower())
+
+
+def is_placeholder(prop: str, value: str) -> bool:
+    """Generator placeholder for this property: <stem>_a..l where stem relates to the property name, "<Word> N" where
+    the word relates to it ("Tag 3" for tag_name), or "example company N"."""
+    if not isinstance(value, str):
+        return False
+    p = _norm(prop.lstrip("$"))
+    m = STEM_LETTER.match(value)
+    if m and (_norm(m.group(1)) in p or p in _norm(m.group(1))):
+        return True
+    m = TITLE_NUMBER.match(value)
+    if m and _norm(m.group(1)) and _norm(m.group(1)) in p and _norm(m.group(1)) not in ORDINAL_WORDS:
+        return True
+    return bool(EXAMPLE_COMPANY.match(value))
+
+
+def get_remap(spec: dict, root: str, placeholders: dict, user_text: str, model: str = "gpt-6.1-terra") -> tuple[dict, str]:
+    """Cached {prop: {placeholder: realistic}} for a twin (rule r19)."""
+    if not placeholders:
+        return {}, "none"
+    d = f"{root}/twins/valuepools_v2"
+    path = f"{d}/{spec['id']}.remap.json"
+    cached = {}
+    if os.path.exists(path):
+        try:
+            cached = json.load(open(path))
+        except ValueError:
+            cached = {}
+    missing = {k: [v for v in vs if v not in (cached.get(k) or {})] for k, vs in placeholders.items()}
+    missing = {k: vs for k, vs in missing.items() if vs}
+    if not missing:
+        return cached, "cached"
+    if os.environ.get("TWINGEN_NO_LLM_POOLS") == "1":
+        return cached, "failed"
+    sys.path.insert(0, "/opt/posthog-env")
+    try:
+        import llm_proxy
+
+        events = ", ".join(list((spec.get("events") or {}).keys())[:50])
+        prompt = REMAP_PROMPT.format(context=(user_text or "")[:1500] or "(none)", events=events,
+                                     placeholders=json.dumps(missing, ensure_ascii=False)[:8000])
+        text, _ = llm_proxy.judge_complete(prompt, model, None, attempts=4, preamble=False, limit=False)
+        a, b = text.find("{"), text.rfind("}")
+        got = json.loads(text[a:b + 1])
+        for k, m in got.items():
+            if k in missing and isinstance(m, dict):
+                good = {str(o): str(n) for o, n in m.items() if o in missing[k] and str(n).strip() and not is_placeholder(k, str(n))}
+                cached.setdefault(k, {}).update(good)
+        os.makedirs(d, exist_ok=True)
+        json.dump(cached, open(path + ".tmp", "w"), ensure_ascii=False, indent=1)
+        os.replace(path + ".tmp", path)
+        return cached, "llm"
+    except Exception:  # noqa: BLE001
+        return cached, "failed"

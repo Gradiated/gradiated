@@ -36,7 +36,8 @@ TG = "/opt/posthog-sft/env-research/twingen"
 PH = "/opt/posthog-env/posthog"
 RUNNER = "/opt/posthog-env/runner"
 BATCHES = f"{ROOT}/batches"
-CODE = [f"{V2}/gen2.py", f"{TG}/gen.py", f"{V2}/facts.py", f"{V2}/qfacts.py", f"{RUNNER}/build_tasks_v3.py",
+CODE = [f"{V2}/gen2.py", f"{V2}/lint.py", f"{V2}/valuepools.py", f"{TG}/gen.py", f"{V2}/facts.py", f"{V2}/qfacts.py",
+        f"{RUNNER}/build_tasks_v3.py",
         f"{RUNNER}/curate_tasks.py", f"{RUNNER}/apply_overrides.py", f"{RUNNER}/validate_tasks.py",
         "/opt/posthog-env/loader/load_twin_v2.py", f"{RUNNER}/spot_card.py"]
 ENV = {**os.environ, "TWIN_V2_TRACES": TRACES, "TWIN_V2_ROOT": ROOT, "TWIN_V2_TAG": TAG}
@@ -82,6 +83,18 @@ def pending() -> int:
     return sum(1 for d in glob.glob(f"{BATCHES}/*/") if os.path.exists(f"{d}READY") and not os.path.exists(f"{d}REVIEWED"))
 
 
+def lint(ids: list[str], d: str, log) -> None:
+    """twingen/v2/lint.py on every generated twin of the batch -> <batch>/lint.jsonl (read by the validator)."""
+    dirs = [p for i in ids for p in glob.glob(f"{ROOT}/twingen/projects_v2/{i}*") if os.path.exists(f"{p}/events.parquet")]
+    if not dirs:
+        return
+    r = subprocess.run([f"{TG}/.venv/bin/python", f"{V2}/lint.py", *dirs], env=ENV, capture_output=True, text=True)
+    open(f"{d}/lint.jsonl", "w").write(r.stdout)
+    rows = [json.loads(x) for x in r.stdout.splitlines() if x.strip()]
+    log.write(f"lint: {sum(1 for x in rows if any(f['severity'] == 'material' for f in x.get('findings') or []))}"
+              f"/{len(rows)} twins with material findings\n")
+
+
 def build_batch(name: str, ids: list[str], split: str, pilot: bool) -> None:
     d = f"{BATCHES}/{name}"
     os.makedirs(d, exist_ok=True)
@@ -96,6 +109,7 @@ def build_batch(name: str, ids: list[str], split: str, pilot: bool) -> None:
         sh([f"{TG}/.venv/bin/python", f"{V2}/run_all2.py", "--ids", csv, "--workers", "4"], log)
         sh([f"{PH}/.venv/bin/python", "../loader/load_all_v2.py", "--ids", csv, "--workers", "2", "--force",
             "--min-free-gb", "60"], log, cwd=PH)
+        lint(ids, d, log)
         sh(["python3", f"{RUNNER}/build_tasks_v3.py", "--splits", split, "--ids", csv, "--out", f"{d}/tasks"], log)
         tf = f"{d}/tasks/{'test' if split == 'test_v2' else split}.jsonl"
         if not os.path.exists(tf):
@@ -113,10 +127,11 @@ def build_batch(name: str, ids: list[str], split: str, pilot: bool) -> None:
                 sh([f"{TG}/.venv/bin/python", f"{V2}/run_all2.py", "--ids", ch, "--workers", "4"], log)
                 sh([f"{PH}/.venv/bin/python", "../loader/load_all_v2.py", "--ids", ch, "--workers", "2", "--force",
                     "--min-free-gb", "60"], log, cwd=PH)
+                lint(ids, d, log)
             tf = f"{d}/curated/curated.jsonl"
             # independent validator (GPT-6.1 Sol, read-only twin queries) with one curator repair round; only SOUND kept
             sh(["python3", f"{RUNNER}/validate_tasks.py", "--tasks", tf, "--traces", f"{TRACES}/{split}.jsonl",
-                "--out", f"{d}/validated", "--repair"], log, timeout=10800)
+                "--out", f"{d}/validated", "--repair", "--lint", f"{d}/lint.jsonl"], log, timeout=10800)
             if os.path.exists(f"{d}/validated/validated.jsonl"):
                 tf = f"{d}/validated/validated.jsonl"
         tasks = [json.loads(x) for x in open(tf)]

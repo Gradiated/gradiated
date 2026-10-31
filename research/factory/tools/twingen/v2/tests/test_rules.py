@@ -430,6 +430,47 @@ class WarehouseValues(unittest.TestCase):
         self.assertTrue(all(re.match(r"^\d{4}-\d\d-01$", x) for x in m))
 
 
+class RoundB12(unittest.TestCase):
+    """b12 acceptance audit: everyone fired every custom event, purchases by non-visitors, placeholders, a GitHub PR URL
+    and one session URL as the project's pages, campaigns crossed with random sources."""
+
+    def test_is_placeholder(self):
+        P = gen2.valuepools.is_placeholder
+        self.assertTrue(P("$config_defaults", "config_defaults_c"))
+        self.assertTrue(P("tag_name", "Tag 3"))
+        self.assertTrue(P("provider", "example company 7"))
+        self.assertFalse(P("plan", "pro_annual"))
+        self.assertFalse(P("version", "Version 2"))
+        self.assertFalse(P("tag_name", "Q3 Launch"))
+
+    def test_campaign_fit(self):
+        self.assertTrue(gen2.campaign_fits("search_assinatura_cafe", "google"))
+        self.assertFalse(gen2.campaign_fits("search_assinatura_cafe", "twitter"))
+        self.assertEqual(gen2.coherent_utm("twitter", [], ["search_brand", "spring_launch"])[1], "spring_launch")
+
+    def test_conversation_pages_hygiene(self):
+        spec = {"tasks": [{"text": "see https://github.com/acme/repo/pull/5 and https://sub1.example-1.com/?p=abc&i=2 ok"}]}
+        urls, _ = gen2.conversation_pages(spec, {})
+        self.assertNotIn("https://github.com/acme/repo/pull/5", urls)
+        self.assertIn("https://sub1.example-1.com/", urls)
+
+    def test_adopters(self):
+        import pyarrow as pa
+        t0 = 1_700_000_000_000_000
+        rows = [("feature_used", f"p{i}", t0 + (i % 3) * 86_400_000_000) for i in range(100)]
+        rows += [("$pageview", f"p{i}", t0 + (i % 3) * 86_400_000_000) for i in range(100)]
+        tab = pa.table({"event": [r[0] for r in rows], "person_id": [r[1] for r in rows], "distinct_id": [r[1] for r in rows],
+                        "person_properties": ["{}"] * len(rows), "$session_id": [f"s{r[1]}" for r in rows],
+                        "$window_id": [f"w{r[1]}" for r in rows], "properties": ["{}"] * len(rows),
+                        "timestamp": pa.array([r[2] for r in rows], pa.int64()).cast(pa.timestamp("us", tz="UTC"))})
+        p = project(targets={"feature_used": [20.0, 10.0]}, D=100.0)
+        out = p.adopters(tab)
+        ev, pid = out.column("event").to_pylist(), out.column("person_id").to_pylist()
+        users = {pid[i] for i, e in enumerate(ev) if e == "feature_used"}
+        self.assertLessEqual(len(users), 25)
+        self.assertEqual(ev.count("feature_used"), 100)
+
+
 class FunnelDropoff(unittest.TestCase):
     """r1 card 13: funnel seeds walked every person through every step (twin 30->25 vs production 51->34->1->0->0)."""
 

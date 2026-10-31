@@ -50,6 +50,9 @@ agent mode at start: {mode}
 ## Twin state summary (top-N lists; verify anything you rely on with queries)
 {twin}
 
+## Mechanical lint findings on this twin (deterministic coherence checks; may or may not touch this task)
+{lint}
+
 ## Your checks
 1. Self-contained: a competent agent seeing only the turns can understand what is asked (no reference to unseen
    context; names resolve in the twin; scripted follow-ups make sense whatever the agent answered).
@@ -63,7 +66,9 @@ agent mode at start: {mode}
 5. Grading notes: every must_include item is correct on the twin (re-check numbers you can), achievable with the agent's
    tools, not over-specified (open-ended asks use k-of-n), acceptable variations non-empty; no grading on things the
    user did not ask.
-6. Difficulty: is it trivial (single lookup, answer in the prompt)? Trivial is allowed if it is a real request; mark it.
+6. Lint: for every lint finding above, decide whether it touches data this task or a correct answer depends on
+   (verify with a query). A material lint finding that touches the task is a data_implausible defect: BROKEN.
+7. Difficulty: is it trivial (single lookup, answer in the prompt)? Trivial is allowed if it is a real request; mark it.
 
 To check, reply with {{"queries": [{{"why": "...", "sql": "..."}}]}} (at most 8 per round, up to 3 rounds). Tables:
 events(team_id, event, timestamp, distinct_id, person_id, properties), person(team_id, id, properties),
@@ -80,6 +85,22 @@ SOUND means: you would report model scores on this task without caveats. Any def
 competent answer passes makes it BROKEN; a real but harmless flaw is MINOR."""
 
 
+LINT: dict = {}  # conversation_id -> [finding] (from loop_producer's lint.jsonl)
+
+
+def load_lint(path: str) -> None:
+    for line in open(path):
+        r = json.loads(line)
+        LINT[r["project"][:36]] = r.get("findings") or []
+
+
+def lint_text(conv: str) -> str:
+    f = LINT.get(str(conv)[:36])
+    if f is None:
+        return "(not run)"
+    return "\n".join(f"- [{x['severity']}] {x['check']}: {x['detail']}" for x in f) or "(none)"
+
+
 def validate_one(task: dict, rec: dict | None, model: str, out_dir: str) -> dict:
     path = f"{out_dir}/{task['task_id']}.json"
     if os.path.exists(path):
@@ -89,7 +110,8 @@ def validate_one(task: dict, rec: dict | None, model: str, out_dir: str) -> dict
     twin = "\n".join(str(x) for x in SC.twin_state(task) + SC.event_props(task))
     prompt = PROMPT.format(mode=task.get("agent_mode") or "product_analytics", turns=turns,
                            notes=json.dumps(task.get("grading_notes"), ensure_ascii=False, indent=1)[:6000],
-                           reference=SC.clip(ref, 30000), twin=SC.clip(twin, 20000), classes="|".join(CLASSES))
+                           reference=SC.clip(ref, 30000), twin=SC.clip(twin, 20000), classes="|".join(CLASSES),
+                           lint=SC.clip(lint_text(task["conversation_id"]), 4000))
     out = {"task_id": task["task_id"], "model": model, "queries_run": []}
     convo, rounds = prompt, 0
     for _ in range(6):
@@ -126,7 +148,10 @@ def main() -> None:
                     help="send non-SOUND tasks back to the curator with the findings, then validate the revision once")
     ap.add_argument("--curator-model", default="claude-opus-5-5")
     ap.add_argument("--repair-rounds", type=int, default=2)
+    ap.add_argument("--lint", default="", help="lint.jsonl from twingen/v2/lint.py (one line per project)")
     a = ap.parse_args()
+    if a.lint and os.path.exists(a.lint):
+        load_lint(a.lint)
     os.makedirs(a.out, exist_ok=True)
     tasks = [json.loads(x) for x in open(a.tasks) if x.strip()]
     todo = [t for t in tasks if not t.get("exclude")]

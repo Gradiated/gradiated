@@ -647,6 +647,28 @@ class RoundB15Scenario(unittest.TestCase):
         self.assertEqual(out, {"$os": "iOS", "$lib": "posthog-ios"})
 
 
+class RoundB16(unittest.TestCase):
+    """round 6 audit: RevenueCat rc_* events from the web SDK; /users/<name> pages viewed by thousands."""
+
+    def test_server_events_get_server_lib(self):
+        import pyarrow as pa
+        rows = [("rc_initial_purchase", '{"$lib": "web", "$browser": "Chrome", "$os": "Windows", "product_id": "pro"}'),
+                ("$pageview", '{"$lib": "web", "$browser": "Chrome", "$os": "Windows"}')]
+        tab = pa.table({"event": [r[0] for r in rows], "properties": [r[1] for r in rows]})
+        out = project().device_coherence(tab)
+        a, b = [json.loads(x) for x in out.column("properties").to_pylist()]
+        self.assertEqual(a, {"$lib": "posthog-python", "product_id": "pro"})
+        self.assertEqual(b["$browser"], "Chrome")
+
+    def test_llm_pages_drop_profile_paths(self):
+        out = gen2.valuepools.sane_pages({"host": "app.x.io", "paths": [["/users/sarah-chen", 5], ["/users", 3], ["/pricing", 2]]})
+        self.assertEqual([p for p, _ in out["paths"]], ["/users", "/pricing"])
+
+    def test_entity_pages(self):
+        self.assertTrue(gen2.ENTITY_PAGE.search("https://app.x.io/users/amelia-chen"))
+        self.assertFalse(gen2.ENTITY_PAGE.search("https://app.x.io/pricing"))
+
+
 class RoundB12(unittest.TestCase):
     """b12 acceptance audit: everyone fired every custom event, purchases by non-visitors, placeholders, a GitHub PR URL
     and one session URL as the project's pages, campaigns crossed with random sources."""

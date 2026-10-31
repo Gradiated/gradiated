@@ -128,6 +128,31 @@ class TwinLoaderV2(LT.TwinLoader):
                 user, name=f"{PREFIX}{self.twin_id}", team_fields={"name": "Default project", "timezone": tz})
         return team, True
 
+    def _make_flag(self, team, user, f, key=None, variants=None):
+        """Flags keep their production id when it is free (like dashboards): turns and grading name the flag by id
+        (round 6 audit: 'flag 914273' had become flag 326 in the twin)."""
+        from products.feature_flags.backend.models.feature_flag import FeatureFlag
+
+        fid = f.get("id") if isinstance(f, dict) else None
+        if not isinstance(fid, int) or FeatureFlag._base_manager.filter(id=fid).exists():
+            return super()._make_flag(team, user, f, key=key, variants=variants)
+        mgr = FeatureFlag.objects
+        orig = mgr.create
+
+        def create(**kw):
+            kw.setdefault("id", fid)
+            return orig(**kw)
+
+        mgr.create = create
+        try:
+            obj = super()._make_flag(team, user, f, key=key, variants=variants)
+        finally:
+            del mgr.create
+        if getattr(obj, "id", None) == fid:
+            self.stats.setdefault("flags_prod_id", 0)
+            self.stats["flags_prod_id"] += 1
+        return obj
+
     def _reset_objects(self, team):
         """--force reload: remove the team's objects and warehouse rows before re-creating them."""
         from products.dashboards.backend.models.dashboard import Dashboard

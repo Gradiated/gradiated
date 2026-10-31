@@ -271,6 +271,8 @@ def curate_one(task: dict, rec: dict | None, model: str, out_dir: str, feedback:
     ref = "\n".join(SC.render_trace(rec, len(task["turns"]) + task.get("turn_offset", 0), 1200, 3000)) if rec else "(none)"
     ref = SC.clip(ref, 60000)
     twin = "\n".join(str(x) for x in SC.twin_state(task) + SC.event_props(task))
+    twin += (f"\n\nData ends at {task.get('loaded_now_utc')} (the agent's now).\nTwin PostHog objects (Postgres; use these, "
+             f"not production's, for any object claim):\n" + SC.team_objects(task["team_id"]))
     prompt = PROMPT.format(mode=task.get("agent_mode") or "product_analytics (default)", turns=turns, notes=notes,
                            reference=ref, twin=SC.clip(twin, 20000))
     if feedback:

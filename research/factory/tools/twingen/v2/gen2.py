@@ -81,6 +81,8 @@ MAX_SEED_ROWS_PER_TABLE = 20000
 MAX_EVENT_SEEDS = 200000
 MAX_DUP = 20.0
 MAX_SCENARIO_ROWS = 200_000
+ENTITY_PAGE = re.compile(r"/(users?|roles?|profiles?|members?|accounts?|customers?|u|people|person)/[^/?#]+", re.I)
+SERVER_EVENT = re.compile(r"^(rc_|revenuecat|stripe[_ .:]|webhook|server[_ .:]|backend[_ .:]|cron[_ .:])", re.I)
 LIFECYCLE_MAX_REACH = 0.7  # once-per-person events: repeats stop becoming new persons beyond this share
 MOBILE_LIBS = {"posthog-ios": "iOS", "posthog-android": "Android", "posthog-react-native": None, "posthog-flutter": None}
 WEB_ONLY_PROPS = ("$browser", "$browser_version", "$current_url", "$pathname", "$host", "$referrer",
@@ -890,6 +892,10 @@ class Project2(gen.Project):
         _raw = load_json(os.path.join(SPECS, f"{spec['id']}.json")) if spec.get("kind") == "conversation" else None
         _tasks = (_raw or {}).get("tasks") or spec.get("tasks") or []
         _urls, _paths = conversation_pages({"tasks": _tasks}, facts or {})
+        # r23: entity pages (/users/<name>, /roles/<x>, /profile/<x>) are one person's page, not site-wide (round 6:
+        # /users/amelia-chen viewed by 7,140 of 18k persons); they go last in the pool (lowest weight)
+        _urls = sorted(_urls, key=lambda u: bool(ENTITY_PAGE.search(u)))
+        _paths = sorted(_paths, key=lambda u: bool(ENTITY_PAGE.search(u)))
         if _urls or _paths:  # rule (r10): feed the conversation's pages to the base page pool (via spec values)
             un = spec.setdefault("unscoped", {})
             for key, vals in (("$current_url", _urls), ("$pathname", _paths)):
@@ -2103,11 +2109,20 @@ class Project2(gen.Project):
         """rule (r20): platform-like custom properties follow the row's device ($os, $lib) instead of an independent
         draw (round 4: 80% of platform values contradicted $os; is_native=true on web events)."""
         props = tab.column("properties").to_pylist()
+        ev = tab.column("event").to_pylist()
         n = 0
         for i, pr in enumerate(props):
-            if not pr or not (DEVICE_KEYS_RX.search(pr) or MOBILE_LIB_RX.search(pr)):
+            server = SERVER_EVENT.match(str(ev[i]))
+            if not pr or not (server or DEVICE_KEYS_RX.search(pr) or MOBILE_LIB_RX.search(pr)):
                 continue
             d = orjson.loads(pr)
+            if server:  # r23: RevenueCat/Stripe/webhook events come from a backend SDK (round 6: rc_* from the web SDK)
+                d = {k: v for k, v in d.items() if k not in WEB_ONLY_PROPS and k not in PROFILE_KEYS
+                     and not k.startswith("$device") and k not in ("$os", "$os_version", "$screen_width", "$screen_height")}
+                d["$lib"] = "posthog-python"
+                props[i] = orjson.dumps(d).decode()
+                n += 1
+                continue
             fixed = mobile_tuple(d)
             os_, lib = str(fixed.get("$os") or ""), str(fixed.get("$lib") or "")
             if not os_ and not lib:

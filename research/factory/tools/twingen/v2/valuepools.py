@@ -134,6 +134,7 @@ Respond with ONLY JSON: {{"host": "<host>", "paths": [["/path", weight], ...]}}"
 
 
 POSTHOG_HOST = re.compile(r"(^|\.)posthog\.com$", re.I)
+ENTITY_PATH = re.compile(r"/(users?|roles?|profiles?|members?|accounts?|customers?|u|people|person)/[^/?#]+", re.I)
 POSTHOG_APP_PATH = re.compile(r"^/(project|organization)/\d+")
 
 
@@ -158,7 +159,8 @@ def sane_pages(got: dict) -> dict:
         return {}  # the whole page set describes PostHog's app: regenerate
     if not re.fullmatch(r"[a-z0-9-]+(\.[a-z0-9-]+)+", host):
         host = ""
-    paths = [x for x in got.get("paths") or [] if not POSTHOG_APP_PATH.match(str(x[0]))]
+    # r23: one person's profile page (/users/<name>) is not a site-wide page (round 6: viewed by 5-7k persons)
+    paths = [x for x in got.get("paths") or [] if not POSTHOG_APP_PATH.match(str(x[0])) and not ENTITY_PATH.search(str(x[0]))]
     return {"host": host, "paths": paths} if paths else {}
 
 

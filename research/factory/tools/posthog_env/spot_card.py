@@ -63,6 +63,30 @@ def pg(q: str):
     return [line.split("\t") for line in out.stdout.splitlines() if line]
 
 
+def team_objects(team_id: int, limit: int = 40) -> str:
+    """The twin team's PostHog objects as the agent would read them (round 6 audit: the validator could not see
+    feature-flag filters and passed a rubric copied from production's flag)."""
+    t = int(team_id)
+    q = {
+        "feature flags (id | key | name | active | filters)":
+            f"select id, key, name, active, left(filters::text, 400) from posthog_featureflag where team_id={t} and not deleted order by id limit {limit}",
+        "experiments (id | name | flag key)":
+            f"select e.id, e.name, f.key from posthog_experiment e left join posthog_featureflag f on f.id=e.feature_flag_id where e.team_id={t} order by e.id limit {limit}",
+        "surveys (id | name | type)": f"select id, name, type from posthog_survey where team_id={t} order by created_at limit {limit}",
+        "dashboards (id | name | tiles)":
+            f"select d.id, d.name, (select count(*) from posthog_dashboardtile dt where dt.dashboard_id=d.id) from posthog_dashboard d where d.team_id={t} and not d.deleted order by d.id limit {limit}",
+        "insights (id | short_id | name | derived_name | kind)":
+            f"select id, short_id, name, derived_name, left(coalesce(query->'source'->>'kind', query->>'kind', ''), 40) from posthog_dashboarditem where team_id={t} and not deleted order by id limit {limit}",
+        "organization (members_can_invite)":
+            f"select o.members_can_invite from posthog_organization o join posthog_team tm on tm.organization_id=o.id where tm.id={t}",
+    }
+    out = []
+    for title, sql in q.items():
+        rows = pg(sql)
+        out.append(f"{title}: " + ("(none)" if not rows else "; ".join(" | ".join(r) for r in rows)))
+    return "\n".join(out)
+
+
 def clip(s, n: int) -> str:
     s = s if isinstance(s, str) else json.dumps(s, ensure_ascii=False)
     s = s.strip()

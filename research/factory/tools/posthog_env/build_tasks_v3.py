@@ -109,6 +109,18 @@ def shift_text(s: str, days: int, now: dt.date) -> tuple[str, int, int]:
     return out, n, len(kept)
 
 
+NOW_PHRASE = re.compile(r"((?:current|today'?s?)\s+(?:date|day|time|date and time|datetime)(?:\s+is|:|\s+=)?\s*[^0-9\n]{0,20})"
+                        r"(\d{4}-\d{2}-\d{2})", re.I)
+
+
+def pin_now(s: str, loaded: str) -> str:
+    """The text's stated "current date" is the twin's data end (round 6: the conversation happened 5 days after the
+    data snapshot, so "today is Nov 5" vs data to Oct 30 put "last month" in different months)."""
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", loaded or ""):
+        return s
+    return NOW_PHRASE.sub(lambda m: m.group(1) + loaded, s)
+
+
 def phrases(text: str) -> set[str]:
     w = [x.lower() for x in WORD.findall(text)]
     return {" ".join(w[i:i + 3]) for i in range(len(w) - 2) if not any(t in STOP or len(t) < 3 for t in w[i:i + 3])}
@@ -230,8 +242,10 @@ def main() -> None:
             raw = [t["text"] for t in tturns]
             dups = {i for i in range(1, len(raw)) if own_text(raw[i]) and own_text(raw[i]) == own_text(raw[i - 1])}
             texts, n_dates, n_kept, n_urls = [], 0, 0, 0
+            loaded = str(team.get("loaded_now_utc") or "")[:10]
             for s0 in raw:
                 s, k, kept = shift_text(s0, shift, twin_now)
+                s = pin_now(s, loaded)
                 n_dates += k
                 n_kept += kept
                 s2 = V2.PROJ.sub(f"/project/{team['project_id']}/", s)

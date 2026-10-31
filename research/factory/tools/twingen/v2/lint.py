@@ -39,6 +39,8 @@ PLACEHOLDER_PATTERNS = [
 THIRD_PARTY = re.compile(r"(^|\.)(github\.com|gitlab\.com|google\.com|docs\.google\.com|notion\.so|figma\.com|stripe\.com|"
                          r"youtube\.com|linkedin\.com|twitter\.com|x\.com|facebook\.com|slack\.com|loom\.com|"
                          r"atlassian\.net|zendesk\.com|intercom\.io|hubspot\.com|calendly\.com|typeform\.com)$", re.I)
+URL_PROPS = {"$host", "$current_url", "$pathname", "$referrer", "$referring_domain", "$initial_referrer",
+             "$initial_referring_domain", "$initial_current_url", "$initial_host", "$initial_pathname", "$prev_pageview_pathname"}
 COMMERCE = ["view_item", "add_to_cart", "begin_checkout", "add_payment_info", "purchase"]
 PURCHASE = re.compile(r"(^|[_ .:-])(purchase|purchased|order[_ ]completed|order[_ ]placed|payment[_ ]succeeded|checkout[_ ]completed)"
                       r"([_ .:-]|$)", re.I)
@@ -138,8 +140,10 @@ def lint_project(d: str, max_rows: int = 400000) -> dict:
                     break
     for k, cnt in ph.items():
         share = sum(cnt.values()) / max(1, seen_rows[k])
+        # hosts/URLs: sub1.sub2.* and handle1 are the trace anonymizer's tokens, shared with the task text (minor)
+        anon = k in URL_PROPS and set(cnt) <= {"page_n", "handle_n", "sub_n"}
         if share >= 0.05:
-            findings.append({"check": "placeholder", "severity": "material" if share >= 0.3 else "minor",
+            findings.append({"check": "placeholder", "severity": "material" if share >= 0.3 and not anon else "minor",
                              "detail": f"{k}: {share:.0%} placeholder-like ({dict(cnt)})"})
     for h, c in hosts.items():
         if THIRD_PARTY.search(h) and c >= 0.02 * max(1, pv):

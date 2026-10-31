@@ -454,6 +454,35 @@ class RoundB12(unittest.TestCase):
         self.assertNotIn("https://github.com/acme/repo/pull/5", urls)
         self.assertIn("https://sub1.example-1.com/", urls)
 
+    def test_postprocess_runs_coherence_without_profiles(self):
+        """2.19 regress: postprocess returned early when a twin had no dynamics profiles and no seed rows, so 17 of 33
+        twins skipped coherent_sessions (adopters, causal children, lifecycle_once, landing pageview, UTM tuples)."""
+        import tempfile
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+
+        d = tempfile.mkdtemp(prefix="pp_test_")
+        pq.write_table(pa.table({"event": ["a", "b"], "uuid": ["u1", "u2"], "properties": ["{}", "{}"],
+                                 "timestamp": pa.array([1_700_000_000_000_000, 1_700_000_001_000_000],
+                                                       pa.timestamp("us", tz="UTC"))}), f"{d}/events.parquet")
+        calls = []
+
+        class Fake:
+            S = {"id": "x"}
+            now = dt.datetime(2023, 11, 20, tzinfo=dt.timezone.utc)
+            tz = dt.timezone.utc
+            v2 = C.Counter()
+            profiles = staticmethod(lambda: {})
+            event_seed_rows = staticmethod(lambda: [])
+            override_zeroed_events = staticmethod(lambda: set())
+
+            def coherent_sessions(self, tab):
+                calls.append(tab.num_rows)
+                return tab
+
+        gen2.Project2.postprocess(Fake(), d)
+        self.assertEqual(calls, [2])
+
     def test_adopters(self):
         import pyarrow as pa
         t0 = 1_700_000_000_000_000

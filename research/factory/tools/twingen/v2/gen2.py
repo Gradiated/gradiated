@@ -1902,6 +1902,7 @@ class Project2(gen.Project):
         names = set(ev)
         pairs = {e: (parent_event(e, names) or family_parent(e, names)) for e in names}
         hinted = getattr(self, "_volume_hinted", set())
+        seq = getattr(self, "_seq_events", set())
         ts = tab.column("timestamp").cast(pa.int64()).to_numpy()
         day = (ts // 86_400_000_000).tolist()
         cols = {c: tab.column(c).to_pylist() for c in ("distinct_id", "person_id", "person_properties", "$session_id",
@@ -1917,7 +1918,7 @@ class Project2(gen.Project):
             by_event[e].append(i)
         moved = 0
         for e, idx in by_event.items():
-            if str(e).startswith("$") or e in hinted or pairs.get(e) or LIFECYCLE_ONCE.match(str(e)):
+            if str(e).startswith("$") or e in hinted or pairs.get(e) or LIFECYCLE_ONCE.match(str(e)) or e in seq:
                 continue
             doers = C.Counter(pid[i] for i in idx)
             T, U = (self.targets.get(e) or [0.0, 0.0]) if hasattr(self, "targets") else (0.0, 0.0)
@@ -1962,6 +1963,8 @@ class Project2(gen.Project):
             par = parent_event(e, names) or family_parent(e, names)
             if not par and PURCHASE_EV.search(str(e)):  # rule (r19): buyers are visitors
                 par = "$pageview" if "$pageview" in names else ("$screen" if "$screen" in names else None)
+            if par and e in getattr(self, "_seq_events", set()):
+                continue  # rule (r19b): seeded funnel steps keep their persons
             if par and e not in pairs and pairs.get(par) != e:
                 pairs[e] = par
         if not pairs:
@@ -2075,7 +2078,9 @@ class Project2(gen.Project):
         path = os.path.join(out_dir, "events.parquet")
         profs = self.profiles()
         seeds = self.event_seed_rows()
-        if not profs and not seeds:
+        # no early return without profiles/seeds: the coherence rules in coherent_sessions (landing pageview, UTM
+        # tuples, adopters, causal children, lifecycle_once) apply to every twin (2.19 regress: 17 of 33 skipped them)
+        if not os.path.exists(path):
             return
         tab = pq.read_table(path)
         big = pa.schema([pa.field(f.name, pa.large_string()) if f.type == pa.string() else f for f in tab.schema])
@@ -2267,6 +2272,9 @@ class Project2(gen.Project):
                 steps.append((sr["event"], f))
             if len(steps) < 2:
                 return rows
+            # rule (r19b): seeded steps keep their persons (adopters/causal_children must not reshuffle a production
+            # drop-off; c13 went 51->34->1 in production but 14->6->3->1 after the reach pass)
+            self.__dict__.setdefault("_seq_events", set()).update(e for e, _ in steps)
             counts = None  # rule (r1): production step counts ("Total person count" row) set the drop-off
             for r in call.get("rows") or []:
                 if r and str(r[0]).strip().lower() == "total person count":

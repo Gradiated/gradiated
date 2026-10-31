@@ -60,6 +60,11 @@ class TestLint(unittest.TestCase):
         rows = [pv(f"p{i}", **{"app_version": "Version 2", "quarter": "Q3 2025"}) for i in range(100)]
         self.assertNotIn("placeholder", checks(rows))
 
+    def test_anonymized_hosts_are_minor(self):
+        rows = [pv(f"p{i}", f"https://sub1.sub2.example-1.com/page{i % 4}", **{"$host": "sub1.sub2.example-1.com"})
+                for i in range(100)]
+        self.assertTrue(all(f["severity"] == "minor" for f in checks(rows).get("placeholder", [])))
+
     def test_third_party_host_and_url_dominance(self):
         rows = [pv(f"p{i}", "https://github.com/org/repo/pull/12") for i in range(10)]
         rows += [pv(f"p{i}", "https://shop.example/home?utm_source=x") for i in range(90)]

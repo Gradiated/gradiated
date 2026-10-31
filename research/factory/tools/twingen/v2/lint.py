@@ -17,6 +17,7 @@ URL as the project's top page, campaigns crossed with random sources). These che
   value_domain      a property whose name is not URL-like holds URLs in >= 30% of rows
   warehouse_duplicate  two warehouse files are one PostHog table ('neon.x.orgs' and 'xneon_orgs')
   warehouse_join    a name-evident warehouse foreign key (<x>_id -> <x>s.id) matches < 50% of the parent's ids
+  url_path          pageviews whose $pathname is not the path of $current_url (> 2%)
   lib_os            native SDK rows ($lib posthog-ios/android) whose $os is the other platform (> 5%)
   channel_referrer  email/newsletter UTM rows carrying a search-engine referrer (> 10%, minor)
   campaign_source   utm_campaign names a channel (google/search, facebook/meta, email/newsletter, ...) that its
@@ -139,6 +140,7 @@ def lint_project(d: str, max_rows: int = 400000) -> dict:
     pv = 0
     camp_bad = camp_tot = 0
     lib_bad = lib_tot = 0
+    url_bad = url_tot = 0
     ref_bad = ref_tot = 0
     for i in range(0, n, step):
         s = props[i]
@@ -162,6 +164,10 @@ def lint_project(d: str, max_rows: int = 400000) -> dict:
         if ev[i] == "$pageview":
             pv += 1
             u = d_.get("$current_url")
+            pth = d_.get("$pathname")
+            if isinstance(u, str) and "://" in u and isinstance(pth, str):
+                url_tot += 1
+                url_bad += ("/" + u.split("://", 1)[1].partition("/")[2].split("?")[0].split("#")[0]) != pth
             if isinstance(u, str):
                 h = re.sub(r"^https?://", "", u).split("/")[0].split("?")[0].split(":")[0].lower()
                 hosts[h] += 1
@@ -199,6 +205,9 @@ def lint_project(d: str, max_rows: int = 400000) -> dict:
         u, c = urls.most_common(1)[0]
         if c > 0.5 * pv and pv >= 50:  # one URL carrying most pageviews (round 5: 100% on one page)
             findings.append({"check": "url_dominance", "severity": "material" if c > 0.8 * pv else "minor", "detail": f"{u[:120]}: {c}/{pv} pageviews"})
+    if url_tot >= 30 and url_bad > 0.02 * url_tot:
+        findings.append({"check": "url_path", "severity": "material",
+                         "detail": f"{url_bad}/{url_tot} pageviews whose $pathname disagrees with $current_url"})
     if lib_tot >= 30 and lib_bad > 0.05 * lib_tot:
         findings.append({"check": "lib_os", "severity": "material",
                          "detail": f"{lib_bad}/{lib_tot} native-SDK rows with a $os of the other platform"})

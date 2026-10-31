@@ -279,6 +279,24 @@ def drop_dev_hosts(spec: dict) -> int:
     return n
 
 
+def url_coherent(d: dict, changed) -> dict:
+    """r26: $current_url, $host and $pathname describe one page (round 9: curator overrides set the URL or the path
+    alone, leaving pageviews whose URL and pathname disagree). The changed side wins."""
+    cu, path = d.get("$current_url"), d.get("$pathname")
+    if "$current_url" in changed and isinstance(cu, str) and "://" in cu:
+        rest = cu.split("://", 1)[1]
+        host, _, tail = rest.partition("/")
+        d["$host"] = host
+        d["$pathname"] = "/" + tail.split("?")[0].split("#")[0]
+    elif "$pathname" in changed and isinstance(path, str) and path.startswith("/"):
+        host = d.get("$host")
+        if not host and isinstance(cu, str) and "://" in cu:
+            host = cu.split("://", 1)[1].split("/")[0]
+        if host:
+            d["$current_url"] = f"https://{host}{path}"
+    return d
+
+
 def sample_spec(spec, rnd):
     """r21 scenario property spec -> one value: {"values": [v, ...] | [[v, weight], ...]}, {"range": [lo, hi],
     "int": bool}, or a literal."""
@@ -2639,6 +2657,8 @@ class Project2(gen.Project):
                 d = orjson.loads(props[i] or "{}")
                 vals = scenario_props(specs, r, pid[i], f"{self.S['id']}:p{j}")
                 d.update(vals)
+                if "$current_url" in vals or "$pathname" in vals:
+                    url_coherent(d, vals)
                 if geo:  # a country brings its whole coherent geo tuple (city, timezone, ...)
                     for k in GEO_PROPS:
                         if k not in vals:
@@ -3025,6 +3045,8 @@ class Project2(gen.Project):
                 out.pop(k, None)
             out.update(geo_tuple(props.get("$geoip_country_code") or props.get("$geoip_country_name"), rnd))
         out.update(props)
+        if "$current_url" in props or "$pathname" in props:  # r26
+            url_coherent(out, props)
         lib = str(out.get("$lib") or "").lower()
         if lib in MOBILE_LIBS:  # r21: a mobile-SDK row does not inherit a web pageview's browser/page context
             for k in WEB_ONLY_PROPS:

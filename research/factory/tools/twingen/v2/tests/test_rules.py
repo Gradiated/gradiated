@@ -583,6 +583,13 @@ class RoundB14Coherence(unittest.TestCase):
         out = p._with_donor({"workflow": "x"}, "$pageleave", "p1", donors, random.Random(0))
         self.assertEqual(out, {"$browser": "Chrome", "workflow": "x"})
 
+    def test_url_coherent(self):
+        d = gen2.url_coherent({"$current_url": "https://a.io/play/x?y=1", "$pathname": "/settings", "$host": "b.io"},
+                              {"$current_url": 1})
+        self.assertEqual((d["$host"], d["$pathname"]), ("a.io", "/play/x"))
+        d = gen2.url_coherent({"$current_url": "https://a.io/old", "$pathname": "/new"}, {"$pathname": 1})
+        self.assertEqual(d["$current_url"], "https://a.io/new")
+
     def test_donor_context_from_own_person(self):
         """round 8: rows added by overrides took another person's country and OS from a same-event donor."""
         p = project()

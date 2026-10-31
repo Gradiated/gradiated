@@ -129,11 +129,11 @@ def regen_pending(d: str, ids: list[str], split: str, log) -> None:
     again (one repair round, no further regeneration) and merge the verdicts into validated.jsonl."""
     vf = f"{d}/validated/validated.jsonl"
     tasks = [json.loads(x) for x in open(vf) if x.strip()]
-    pend = [t for t in tasks if (t.get("validation") or {}).get("verdict") == "PENDING_REGEN"]
+    pend = [t for t in tasks if (t.get("validation") or {}).get("verdict") == "PENDING_REGEN" or t.get("pending_regen")]
     if not pend:
         return
     changed = set()
-    for od in sorted(glob.glob(f"{d}/validated/rev*/overrides")):
+    for od in sorted(glob.glob(f"{d}/validated/rev*/overrides") + glob.glob(f"{d}/validated/regen*/rev*/overrides")):
         ch = subprocess.run(["python3", f"{RUNNER}/apply_overrides.py", "--overrides-dir", od, "--root", ROOT], env=ENV,
                             capture_output=True, text=True).stdout.strip()
         changed |= {x for x in ch.split(",") if x}
@@ -151,10 +151,11 @@ def regen_pending(d: str, ids: list[str], split: str, log) -> None:
             f.write(json.dumps(t, ensure_ascii=False) + "\n")
     refresh_teams(pf, log)
     refresh_teams(vf, log)
+    out = f"{d}/validated/regen{len(glob.glob(f'{d}/validated/regen*/')) + 1}"  # fresh dir: no cached verdicts
     sh(["python3", f"{RUNNER}/validate_tasks.py", "--tasks", pf, "--traces", f"{TRACES}/{split}.jsonl",
-        "--out", f"{d}/validated/regen", "--repair", "--repair-rounds", "1", "--lint", f"{d}/lint.jsonl",
+        "--out", out, "--repair", "--repair-rounds", "1", "--lint", f"{d}/lint.jsonl",
         "--workers", "8"], log, timeout=7200)
-    got = {json.loads(x)["task_id"]: json.loads(x) for x in open(f"{d}/validated/regen/validated.jsonl") if x.strip()}
+    got = {json.loads(x)["task_id"]: json.loads(x) for x in open(f"{out}/validated.jsonl") if x.strip()}
     for t in got.values():  # a second PENDING_REGEN is not regenerated again
         if (t.get("validation") or {}).get("verdict") == "PENDING_REGEN":
             t["exclude"] = "validator: pending regeneration after second repair"

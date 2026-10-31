@@ -15,6 +15,7 @@ Records the source ("curation") per entry. Prints the conversation ids changed (
 """
 
 import argparse
+import copy
 import datetime as dt
 import glob
 import json
@@ -29,7 +30,10 @@ def shift(d: str, days: int) -> str:
 
 
 def merge(cur: dict, ovs: list[dict], shift_days: int) -> dict:
-    cur = dict(cur)
+    # deep copy: a shallow copy shared the nested scenario/events containers with the caller's dict, so main()'s
+    # `new != cur` compared two mutated objects and never wrote a second set of overrides (round 8: all 28 repair
+    # overrides were dropped silently)
+    cur = copy.deepcopy(cur)
     for o in ovs:
         k = o.get("kind")
         if k == "event_multiplier" and o.get("event") and o.get("factor") is not None:

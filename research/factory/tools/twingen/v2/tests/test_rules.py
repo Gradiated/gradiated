@@ -196,6 +196,12 @@ class Attribution(unittest.TestCase):
         self.assertEqual(gen2.attribution_presence("gclid"), 0.05)
         self.assertIsNone(gen2.attribution_presence("plan"))
 
+    def test_cache_overflow(self):
+        """eval_v1 build: a twin with >200k sessions crashed with KeyError after the cache cleared itself."""
+        w = gen2.SessionAttr(lambda ctx: "cpc", 1.0, "t")
+        w.cache = {i: None for i in range(200000)}
+        self.assertEqual(w({"session_id": "new"}), "cpc")
+
     def test_minority_and_constant_per_session(self):
         w = gen2.SessionAttr(lambda ctx: "cpc", 0.2, "t")
         vals = {sid: w({"session_id": sid}) for sid in range(5000)}

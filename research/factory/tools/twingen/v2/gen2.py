@@ -291,12 +291,14 @@ class SessionAttr:
 
     def __call__(self, ctx):
         key = str(ctx.get("session_id") or ctx.get("sid") or id(ctx.get("person")))
-        if key not in self.cache:
-            h = int(hashlib.sha256(f"{self.salt}:{key}".encode()).hexdigest()[:8], 16) / 0xFFFFFFFF
-            self.cache[key] = self.base(ctx) if h < self.presence else None
-            if len(self.cache) > 200000:
-                self.cache.clear()
-        return self.cache[key]
+        if key in self.cache:
+            return self.cache[key]
+        h = int(hashlib.sha256(f"{self.salt}:{key}".encode()).hexdigest()[:8], 16) / 0xFFFFFFFF
+        v = self.base(ctx) if h < self.presence else None
+        if len(self.cache) >= 200000:  # bound memory on large twins (clear before storing, never after)
+            self.cache.clear()
+        self.cache[key] = v
+        return v
 
     def __getattr__(self, k):
         return getattr(self.base, k)

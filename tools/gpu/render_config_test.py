@@ -272,6 +272,19 @@ class RenderTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             renderer.rollout('training', {**models['kev'], 'runtime': training}, runtimes)
 
+    def test_model_surge_limit_preserves_availability_and_qualification(self):
+        runtimes = json.loads((renderer.ROOT / 'product/inference/gpu/runtimes.json').read_text())
+        model = json.loads((renderer.GPU / 'models.json').read_text())['glm-dealign']
+        default = renderer.rollout('glm-dealign', {k: v for k, v in model.items() if k != 'max_surge'}, runtimes)
+        configured = renderer.rollout('glm-dealign', {**model, 'max_surge': 2}, runtimes)
+        expected = default['spec']['strategy']['canary']
+        self.assertEqual(expected['maxSurge'], 1)
+        self.assertEqual(configured['spec']['strategy']['canary'], {**expected, 'maxSurge': 2})
+        self.assertEqual(configured['spec']['template'], default['spec']['template'])
+        for invalid in (0, -1, True, 1.5, '2', '20%', None):
+            with self.subTest(invalid=invalid), self.assertRaisesRegex(ValueError, 'max_surge'):
+                renderer.rollout('glm-dealign', {**model, 'max_surge': invalid}, runtimes)
+
     def test_autoscaling_preserves_minimum_and_rejects_invalid_bounds(self):
         runtimes = json.loads((renderer.ROOT / 'product/inference/gpu/runtimes.json').read_text())
         models = json.loads((renderer.GPU / 'models.json').read_text())

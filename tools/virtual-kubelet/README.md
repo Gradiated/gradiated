@@ -152,7 +152,12 @@ catalogue; an unstaged candidate retries while existing replicas keep serving.
 The controller image is built and pinned by the normal application release.
 
 The model configuration names the runtime digest, replica count, deadline and
-placement. The renderer supplies the common canary strategy, qualification,
+placement. Optional `max_surge` is a positive integer, defaulting to one; GLM
+Dealign permits two extra replicas while retaining `maxUnavailable: 0`. Actual
+parallel startup depends on spare GPU, CPU and memory capacity. The current
+fleet fits only one extra full-size GLM replica; a second candidate can remain
+Pending until capacity is released. This ceiling does not provision capacity or
+guarantee two simultaneous starts. The renderer supplies the common canary strategy, qualification,
 service account, drain period and resources from the runtime catalogue. Do not
 edit generated Rollouts directly. Non-inventory fields in controller and RBAC
 manifests remain editable; rendering preserves them. CI checks that generated

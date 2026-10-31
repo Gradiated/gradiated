@@ -50,6 +50,9 @@ def rollout(name, model, runtimes):
         raise ValueError('The model identity label is reserved')
     if model['replicas'] < 1 or model['progress_deadline_seconds'] < 1:
         raise ValueError('Serving replicas and deadlines must be positive')
+    surge = model.get('max_surge', 1)
+    if type(surge) is not int or surge < 1:
+        raise ValueError('Rollout max_surge must be a positive integer')
     paused = model.get('autoscaling', {}).get('paused_replicas')
     runtime = runtimes[model['runtime']]
     if runtime.get('kind') == 'training':
@@ -72,7 +75,7 @@ def rollout(name, model, runtimes):
                      **({'annotations': {'gradiated.com/paused-replicas': str(paused)}} if paused is not None else {})},
         'spec': {'replicas': paused if paused is not None else model['replicas'], 'progressDeadlineSeconds': model['progress_deadline_seconds'],
                  'progressDeadlineAbort': True,
-                 'strategy': {'canary': {'maxSurge': 1, 'maxUnavailable': 0, 'steps': [
+                 'strategy': {'canary': {'maxSurge': surge, 'maxUnavailable': 0, 'steps': [
                      {'setWeight': 50}, {'analysis': {'templates': [{'templateName': 'sdk-qualification'}], 'args': [
                          {'name': 'app', 'value': name},
                          {'name': 'hash', 'valueFrom': {'podTemplateHashValue': 'Latest'}}]}}, {'setWeight': 100}]}},

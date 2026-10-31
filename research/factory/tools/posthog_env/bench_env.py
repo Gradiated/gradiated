@@ -108,7 +108,8 @@ def rollout(args, arm: str, tid: str, k: int, ports: Ports, api_slots: dict) -> 
     for attempt in range(1, 4):
         if os.path.exists(out):
             os.remove(out)
-        cmd = [f"{PH}/.venv/bin/python", f"{RUNNER}/run_task.py", "--tasks", args.tasks, "--task-id", tid,
+        runner_py = "/opt/posthog-env/opd_env/run_task_capture.py" if (args.capture and not vllm) else f"{RUNNER}/run_task.py"
+        cmd = [f"{PH}/.venv/bin/python", runner_py, "--tasks", args.tasks, "--task-id", tid,
                "--model", arm, "--out", out, "--wall-s", str(args.wall_s), "--step-cap", "30",
                "--max-turns", str(args.max_turns), "--reset-team-state", "track"]
         env = dict(os.environ)
@@ -300,6 +301,8 @@ def main() -> None:
     ap.add_argument("--max-turns", type=int, default=4)
     ap.add_argument("--report-only", action="store_true")
     ap.add_argument("--judge", default="v3h", choices=["v3g", "v3h"])
+    ap.add_argument("--capture", action="store_true",
+                    help="API arms run through opd_env/run_task_capture.py (root calls in Qwen format, <out>.cap.jsonl.gz) for SFT")
     args = ap.parse_args()
     global J
     J = importlib.import_module(f"judge_{args.judge}")

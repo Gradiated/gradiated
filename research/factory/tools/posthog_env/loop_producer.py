@@ -88,6 +88,41 @@ def pending() -> int:
     return sum(1 for d in glob.glob(f"{BATCHES}/*/") if os.path.exists(f"{d}READY") and not os.path.exists(f"{d}REVIEWED"))
 
 
+REGISTRY = f"/opt/posthog-env/loader/teams_v2_{TAG}.jsonl"
+
+
+def refresh_teams(path: str, log=None) -> int:
+    """A forced reload creates a NEW team and marks the old one replaced, but task files kept the old team_id, so the
+    validator, audits and benches read the pre-override data (round 6: all 20 override-regenerated twins). Rewrites
+    team_id/project_id/loaded_now_utc/shift_days (and /project/<id>/ in text) from the loader registry."""
+    latest: dict = {}
+    for line in open(REGISTRY):
+        r = json.loads(line)
+        if r.get("removed") or not r.get("twin_id") or not r.get("team_id"):
+            continue
+        latest[r["twin_id"]] = r
+    tasks = [json.loads(x) for x in open(path) if x.strip()]
+    n = 0
+    for t in tasks:
+        r = latest.get(t.get("twin_id"))
+        if not r or int(r["team_id"]) == int(t.get("team_id") or 0):
+            continue
+        old_p, new_p = t.get("project_id"), r.get("project_id") or r["team_id"]
+        for k in ("turns", "turns_built", "grading_notes"):
+            if k in t and t[k] is not None:
+                t[k] = json.loads(json.dumps(t[k], ensure_ascii=False).replace(f"/project/{old_p}/", f"/project/{new_p}/"))
+        t.update({"team_id": int(r["team_id"]), "project_id": int(new_p), "loaded_now_utc": r.get("loaded_now_utc"),
+                  "shift_days": r.get("shift_days", t.get("shift_days"))})
+        n += 1
+    with open(path + ".tmp", "w") as f:
+        for t in tasks:
+            f.write(json.dumps(t, ensure_ascii=False) + "\n")
+    os.replace(path + ".tmp", path)
+    if log:
+        log.write(f"teams refreshed: {n} tasks in {os.path.basename(path)}\n")
+    return n
+
+
 def lint(ids: list[str], d: str, log) -> None:
     """twingen/v2/lint.py on every generated twin of the batch -> <batch>/lint.jsonl (read by the validator)."""
     dirs = [p for i in ids for p in glob.glob(f"{ROOT}/twingen/projects_v2/{i}*") if os.path.exists(f"{p}/events.parquet")]
@@ -134,6 +169,7 @@ def build_batch(name: str, ids: list[str], split: str, pilot: bool) -> None:
                     "--min-free-gb", "60"], log, cwd=PH)
                 lint(ids, d, log)
             tf = f"{d}/curated/curated.jsonl"
+            refresh_teams(tf, log)  # reloads create new teams
             # independent validator (GPT-6.1 Sol, read-only twin queries) with one curator repair round; only SOUND kept
             sh(["python3", f"{RUNNER}/validate_tasks.py", "--tasks", tf, "--traces", f"{TRACES}/{split}.jsonl",
                 "--out", f"{d}/validated", "--repair", "--lint", f"{d}/lint.jsonl", "--workers", "8"], log,
@@ -165,10 +201,14 @@ def main() -> None:
     ap.add_argument("--pilot", action="store_true", help="frontier pilot bench after validation (off: acceptance "
                     "rounds only need the audit; benches also compete for ClickHouse)")
     ap.add_argument("--rebuild-ids", default="")
+    ap.add_argument("--refresh-teams", default="", help="rewrite team ids in a task file from the loader registry")
     ap.add_argument("--name", default="")
     a = ap.parse_args()
     if a.setup:
         setup()
+        return
+    if a.refresh_teams:
+        print(json.dumps({"refreshed": refresh_teams(a.refresh_teams)}))
         return
     if a.rebuild_ids:
         build_batch(a.name or f"fix_{int(time.time())}", a.rebuild_ids.split(","), a.split, a.pilot)

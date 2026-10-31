@@ -181,7 +181,8 @@ FORBIDDEN = re.compile(r"\b(insert|alter|drop|truncate|create|optimize|system|ki
 
 
 def run_queries(qs: list, team: int) -> list[dict]:
-    """Run the editor's verification queries read-only on the twin team (readonly=1, 30 s, 50 rows)."""
+    """Run the editor's verification queries read-only on the twin team (readonly=2: no writes, but table functions such
+    as url() for warehouse parquet are allowed; readonly=1 blocked every warehouse read), 30 s, 50 rows."""
     import urllib.parse
     import urllib.request
 
@@ -197,7 +198,7 @@ def run_queries(qs: list, team: int) -> list[dict]:
         if missing:
             out.append({"why": why, "sql": sql[:400], "result": f"ERROR unknown warehouse table(s): {missing}"})
             continue
-        params = {"database": SC.CH_DB, "default_format": "JSONCompact", "readonly": "1", "max_execution_time": "30",
+        params = {"database": SC.CH_DB, "default_format": "JSONCompact", "readonly": "2", "max_execution_time": "30",
                   "max_result_rows": "50", "result_overflow_mode": "break", "max_threads": "2"}
         try:
             r = urllib.request.urlopen("http://127.0.0.1:8123/?" + urllib.parse.urlencode(params), data=sql.encode(), timeout=60)

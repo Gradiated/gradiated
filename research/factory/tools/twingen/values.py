@@ -98,6 +98,11 @@ class Sampler:
             if c is not None and c != "":
                 vals.append(c)
         src = "spec"
+        if self.shape == "email" and not vals:
+            # round 3: the cross-project prior holds anonymized userN@example.com placeholders, drawn per row; an email
+            # property follows the row's person (anonymous persons have none)
+            self.mode, self.source = "person_email", "shape"
+            return
         if not vals and prior and prior.get("values"):
             pv = [(coerce(v, typ), c) for v, c in prior["values"]]
             pv = [(v, c) for v, c in pv if v is not None and v != ""]

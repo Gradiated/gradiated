@@ -712,7 +712,7 @@ THIRD_PARTY_HOST = re.compile(r"(^|\.)(github\.com|gitlab\.com|google\.com|notio
                               r"zendesk\.com|intercom\.io|hubspot\.com|calendly\.com|typeform\.com|chatgpt\.com|openai\.com)$", re.I)
 
 
-STUB_EVENT = re.compile(r"^(mcp |application )", re.I)
+STUB_EVENT = re.compile(r"^(mcp |application |deep link opened$)", re.I)
 
 
 class Project2(gen.Project):

@@ -64,6 +64,9 @@ CORE_MOBILE_CONTEXT = ["$os", "$os_version", "$device_type", "$device_model", "$
                        "$geoip_country_code", "$geoip_country_name", "$geoip_city_name"]
 SERVER_CONTEXT = ["$lib", "$lib_version", "$geoip_disable"]
 VIRTUAL_PREFIXES = ("$virt_",)
+# session-level properties PostHog computes per session (round 3: $entry_utm_term stamped on custom events)
+SESSION_LEVEL = ("$entry_", "$session_entry_", "$exit_", "$end_")
+FAILED_SOURCES = {"sql_failed"}  # a property only seen in failed SQL is not evidence that events carry it
 # typical per-active-user-day multiplicity for standard events without anchors
 STD_PER_DAU = {"$pageview": 4.0, "$autocapture": 9.0, "$pageleave": 2.5, "$web_vitals": 2.0, "$identify": 1.0,
                "$feature_flag_called": 3.0, "$exception": 1.5, "$rageclick": 1.2, "$dead_click": 1.3,
@@ -670,7 +673,8 @@ class Project:
         std_pri = PRI["std_event_props"]
         common = PRI["custom_props_common"]["properties"]
         common_names = sorted(common, key=lambda k: -common[k]["n_projects"])
-        unscoped = {p: d for p, d in S["unscoped"].items() if not p.startswith(VIRTUAL_PREFIXES)}
+        unscoped = {p: d for p, d in S["unscoped"].items() if not p.startswith(VIRTUAL_PREFIXES + SESSION_LEVEL)
+                    and not (d.get("sources") and set(d["sources"]) <= FAILED_SOURCES)}
         custom_events = [e for e in self.active if not self.active[e]["standard"]]
         top_custom = sorted(custom_events, key=lambda e: -self.targets[e][0])[:5]
         ctxset = set(self.context_props)
@@ -1142,8 +1146,8 @@ class Project:
         n = 0
         for e, info in self.inactive.items():
             srcs = set(info["sources"])
-            if info["standard"] and srcs <= {"taxonomy_list"}:
-                continue  # built-in taxonomy entry, definition only
+            if srcs <= {"taxonomy_list"} and (info["standard"] or not info["properties"]):
+                continue  # built-in taxonomy entry, definition only (round 3: Application */mcp * in web twins)
             nsd = int(info["not_seen_days"] or 30)
             if nsd > 730 or not self.persons:
                 continue

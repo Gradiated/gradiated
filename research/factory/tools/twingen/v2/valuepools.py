@@ -83,7 +83,7 @@ def get_pools(spec: dict, root: str, keys: list[str], user_text: str, model: str
     try:
         import llm_proxy
 
-        events = ", ".join(list((spec.get("events") or {}).keys())[:40])
+        events = ", ".join(business_events(spec, 40))
         prompt = PROMPT.format(context=(user_text or "")[:1500] or "(none)", events=events, props="\n".join(missing))
         text, _ = llm_proxy.judge_complete(prompt, model, None, attempts=4, preamble=False, limit=False)
         s, e = text.find("{"), text.rfind("}")
@@ -129,7 +129,37 @@ events describe (e.g. an AI video generator: /create, /editor/<id>, /gallery, /p
 /calculator, /guides/<slug>). Use concrete realistic slugs/ids instead of placeholders. Also give one plausible host name
 for the app (e.g. app.<brand>.com) using a brand word from the context if there is one, else a neutral invented brand.
 
+The site is the customer's own product, never PostHog's app (no posthog.com host, no /project/<id> paths).
 Respond with ONLY JSON: {{"host": "<host>", "paths": [["/path", weight], ...]}}"""
+
+
+POSTHOG_HOST = re.compile(r"(^|\.)posthog\.com$", re.I)
+POSTHOG_APP_PATH = re.compile(r"^/(project|organization)/\d+")
+
+
+def business_events(spec: dict, n: int) -> list[str]:
+    """The business's own event names for LLM prompts (round 3: the first 50 spec keys were alphabetical $-built-ins
+    from the taxonomy list, so the LLM described PostHog's own app as the customer's site)."""
+    ev = spec.get("events") or {}
+
+    def own(e, info):
+        srcs = set((info or {}).get("sources") or [])
+        return not e.startswith("$") and not (srcs and srcs <= {"taxonomy_list"})
+
+    names = [e for e, i in ev.items() if own(e, i)]
+    rest = [e for e in ("$pageview", "$screen", "$autocapture") if e in ev]
+    return (names + rest)[:n]
+
+
+def sane_pages(got: dict) -> dict:
+    """PostHog's own app is never the customer's site: posthog.com hosts and /project/<n> paths are removed."""
+    host = str(got.get("host") or "").strip().lower()
+    if POSTHOG_HOST.search(host):
+        return {}  # the whole page set describes PostHog's app: regenerate
+    if not re.fullmatch(r"[a-z0-9-]+(\.[a-z0-9-]+)+", host):
+        host = ""
+    paths = [x for x in got.get("paths") or [] if not POSTHOG_APP_PATH.match(str(x[0]))]
+    return {"host": host, "paths": paths} if paths else {}
 
 
 def get_pages(spec: dict, root: str, user_text: str, model: str = "gpt-6.1-terra") -> tuple[dict, str]:
@@ -138,7 +168,9 @@ def get_pages(spec: dict, root: str, user_text: str, model: str = "gpt-6.1-terra
     path = f"{d}/{spec['id']}.pages.json"
     if os.path.exists(path):
         try:
-            return json.load(open(path)), "cached"
+            c = sane_pages(json.load(open(path)))
+            if c:
+                return c, "cached"
         except ValueError:
             pass
     if os.environ.get("TWINGEN_NO_LLM_POOLS") == "1":
@@ -147,18 +179,15 @@ def get_pages(spec: dict, root: str, user_text: str, model: str = "gpt-6.1-terra
     try:
         import llm_proxy
 
-        events = ", ".join(list((spec.get("events") or {}).keys())[:50])
+        events = ", ".join(business_events(spec, 50))
         prompt = PAGES_PROMPT.format(context=(user_text or "")[:1500] or "(none)", events=events)
         text, _ = llm_proxy.judge_complete(prompt, model, None, attempts=4, preamble=False, limit=False)
         a, b = text.find("{"), text.rfind("}")
         got = json.loads(text[a:b + 1])
         paths = [[str(x[0]), float(x[1])] for x in got.get("paths") or [] if isinstance(x, list) and len(x) == 2
                  and str(x[0]).startswith("/") and isinstance(x[1], (int, float)) and x[1] > 0]
-        host = str(got.get("host") or "").strip().lower()
-        if not re.fullmatch(r"[a-z0-9-]+(\.[a-z0-9-]+)+", host):
-            host = ""
-        out = {"host": host, "paths": paths[:40]}
-        if not paths:
+        out = sane_pages({"host": got.get("host"), "paths": paths[:40]})
+        if not out:
             return {}, "failed"
         os.makedirs(d, exist_ok=True)
         json.dump(out, open(path + ".tmp", "w"), ensure_ascii=False, indent=1)
@@ -231,7 +260,7 @@ def get_remap(spec: dict, root: str, placeholders: dict, user_text: str, model: 
     try:
         import llm_proxy
 
-        events = ", ".join(list((spec.get("events") or {}).keys())[:50])
+        events = ", ".join(business_events(spec, 50))
         prompt = REMAP_PROMPT.format(context=(user_text or "")[:1500] or "(none)", events=events,
                                      placeholders=json.dumps(missing, ensure_ascii=False)[:8000])
         text, _ = llm_proxy.judge_complete(prompt, model, None, attempts=4, preamble=False, limit=False)

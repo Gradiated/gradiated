@@ -496,6 +496,31 @@ class WarehouseNameKeys(unittest.TestCase):
                          "stripe.acme.charges")
 
 
+class RoundB13Artifacts(unittest.TestCase):
+    """round 3 audit: posthog.com pages for non-PostHog businesses, Application*/mcp* trickle in web twins,
+    $entry_utm_term on custom events, userN@example.com event emails."""
+
+    def test_business_events_and_sane_pages(self):
+        vp = gen2.valuepools
+        spec = {"events": {"$ai_generation": {"sources": ["taxonomy_list"]}, "Application Opened": {"sources": ["taxonomy_list"]},
+                           "listing_published": {"sources": ["sql"]}, "$pageview": {"sources": ["sql"]}}}
+        self.assertEqual(vp.business_events(spec, 10), ["listing_published", "$pageview"])
+        self.assertEqual(vp.sane_pages({"host": "us.posthog.com", "paths": [["/home", 1]]}), {})
+        self.assertEqual(vp.sane_pages({"host": "app.acme.com", "paths": [["/project/2/insights", 1], ["/pricing", 2]]}),
+                         {"host": "app.acme.com", "paths": [["/pricing", 2]]})
+
+    def test_email_follows_person(self):
+        import values
+        smp = values.Sampler("email", "String", prior={"values": [["user9@example.com", 5]]})
+        self.assertEqual(smp.mode, "person_email")
+
+    def test_session_level_and_failed_sql_props_skipped(self):
+        import gen
+        self.assertTrue("$entry_utm_term".startswith(gen.SESSION_LEVEL))
+        self.assertEqual(gen.FAILED_SOURCES, {"sql_failed"})
+        self.assertTrue(gen2.STUB_EVENT.match("Deep link opened"))
+
+
 class RoundB12(unittest.TestCase):
     """b12 acceptance audit: everyone fired every custom event, purchases by non-visitors, placeholders, a GitHub PR URL
     and one session URL as the project's pages, campaigns crossed with random sources."""

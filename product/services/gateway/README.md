@@ -136,9 +136,26 @@ model identity before returning the requested public model ID.
 ## Deployment routing
 
 The gateway selects an exact served release, then ranks its healthy, accepting
-deployments by rendezvous hash. Session affinity takes precedence; otherwise
-routing uses the opening prompt. Keys include workspace, model, and release
-identity. Routing stores no affinity records or per-deployment concurrency leases.
+deployments by rendezvous hash. Session affinity takes precedence; sessionless
+chat requests hash their opening system/developer and first non-system messages,
+while SystemOne uses its opening state prefix. Keys include workspace, model,
+and release identity. Routing stores no affinity records or per-deployment concurrency leases.
+
+The gateway resolves one affinity key before protocol translation, for both
+release and replica selection. Explicit body `session_id`, header
+`x-gradiated-session-id`, and body `prompt_cache_key` take priority over SDK
+session signals. Claude Code, OpenCode and Codex session headers and structured
+metadata are accepted in the [documented preference order](ARCHITECTURE.md#1-transport-acceptance).
+SDK identifiers are bounded to 256 bytes; body session IDs retain endpoint
+validation (including SystemOne UTF-16 bounds). Invalid explicit overrides return 400;
+malformed optional SDK hints fall back to the next source. Request IDs and
+window IDs do not drive affinity. Logs record the selected source and hash;
+raw identifiers are excluded. Without a usable explicit/SDK key, the gateway
+hashes the opening system/developer and first non-system messages, or the first
+8192 Unicode characters of the raw request body if the opening messages cannot
+be recognized. This fallback is infallible and does not bypass normal API
+validation. Stable placement helps reuse resident vLLM prefix blocks but does
+not guarantee cache hits or change vLLM cache configuration.
 
 Desmond sends `POST /v1/deployment-status` every second. The API checks provider
 ownership and runtime revision, timestamps the report, and writes the release's

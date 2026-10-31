@@ -172,3 +172,53 @@ ingress, IAM, settlement workers, Valkey failover,
 kernel correctness, tokenizer templates, long contexts or sustained load. The
 Rust unit tests and the ignored Valkey tests are also necessary. A green run
 does not certify a vLLM version or GPU type.
+
+## Session diagnostics
+
+`session-telemetry.test.ts` starts an info-level gateway and checks its actual
+terminal JSON logs, correlated by the public generation ID. It exercises the
+OpenAI and Anthropic SDKs, captured OpenCode/Codex header shapes, body/header
+routing precedence, stable identifier hashes across turns, and exclusion of
+unrelated metadata. The other gateways retain their default warning log level.
+
+Loopback-only wire captures with synthetic inputs established these client
+conventions (these are measured versions, not a cross-provider standard):
+
+- OpenAI JS 7.5.0: no session header by default; an explicit Responses
+  `prompt_cache_key` is sent in the JSON body.
+- Anthropic JS 0.131.0: no session header by default; caller-supplied
+  `metadata.user_id` is sent in the body.
+- OpenCode SDK/server 1.19.5, using `@ai-sdk/openai-compatible`: two prompts in
+  one SDK session sent the same `x-opencode-session-id`, `x-session-affinity`,
+  and `x-session-id` to the model endpoint. The SDK's own session URL is an
+  OpenCode control-plane identifier; inspecting that URL alone does not prove
+  which headers the model endpoint receives.
+- Claude Code 2.1.299 (`--bare`): `x-claude-code-session-id` and JSON-encoded
+  `metadata.user_id.session_id` matched.
+- Codex CLI 0.166.0: `session-id`, `thread-id`, `x-client-request-id`, the
+  session/thread members of `x-codex-turn-metadata`, and body
+  `prompt_cache_key`/`client_metadata` identify the session. Window IDs have
+  their own hash. The rest of the metadata, including device IDs and workspace
+  paths, is excluded.
+
+`session-affinity.test.ts` verifies that each accepted SDK source chooses the
+same replica and served release as an equivalent explicit `session_id`, across
+Chat Completions, Responses and Messages. It uses four replicas split between
+two runtime revisions, multiple sessions, and changing prompt suffixes. Rust
+tests check every source pair's precedence, malformed keys, bounded parsing,
+and exclusion of request/window IDs. Existing routing tests cover workspace,
+model and release scoping, health, retries and content-based distribution.
+
+The resolver selects a key once before translation and reuses it for release
+and replica selection. `effective_session_source` records the selected source,
+`content_messages` or `content_prefix_8192` for sessionless chat affinity,
+or `state_prefix` for sessionless SystemOne. A cache hit still requires the same
+token prefix resident on the selected runtime; mock runtime tests establish routing behavior, not GPU
+KV-cache speed or hit rate. No prompt or completion content is retained by the
+wire-capture probes.
+
+`content-affinity.test.ts` checks growing keyless conversations through Chat,
+Messages and Responses across four replicas and two served revisions. It also
+checks malformed optional metadata, explicit-key precedence over changed
+content, the 8192-character fallback, and capacity failover. Distinct opening
+questions still spread across the fleet, while repeated openings stay cache-local.

@@ -342,6 +342,7 @@ fn client_family(user_agent: Option<&str>) -> &'static str {
     let user_agent = user_agent.unwrap_or_default().to_ascii_lowercase();
     [
         ("claude-code", "claude-code"),
+        ("claude-cli/", "claude-code"),
         ("opencode", "opencode"),
         ("codex", "codex"),
         ("codex_cli", "codex"),
@@ -359,20 +360,26 @@ fn client_family(user_agent: Option<&str>) -> &'static str {
 }
 
 fn header_telemetry(headers: &HeaderMap) -> HeaderTelemetry {
-    let user_agent = normalized_header(headers, "user-agent");
+    let user_agent = headers
+        .get("user-agent")
+        .and_then(|value| value.to_str().ok())
+        .filter(|value| value.len() <= 512);
     let stainless_package = normalized_header(headers, "x-stainless-package-version");
     let sdk_version = stainless_package
         .clone()
         .or_else(|| normalized_header(headers, "anthropic-version"));
-    let prompt_cache_requested =
-        normalized_header(headers, "anthropic-beta").is_some_and(|value| {
+    let prompt_cache_requested = headers
+        .get("anthropic-beta")
+        .and_then(|value| value.to_str().ok())
+        .filter(|value| value.len() <= 8192)
+        .is_some_and(|value| {
             value
                 .split(',')
                 .any(|item| item.trim().contains("prompt-caching"))
         });
 
     HeaderTelemetry {
-        client: client_family(user_agent.as_deref()),
+        client: client_family(user_agent),
         sdk_version,
         credential_suffix: secret_suffix(headers),
         cache_control: normalized_cache_control(headers),
@@ -396,7 +403,7 @@ fn header_telemetry(headers: &HeaderMap) -> HeaderTelemetry {
 /// cookies, arbitrary headers, or request bodies.
 pub(crate) fn request_span(generation_id: uuid::Uuid, headers: &HeaderMap) -> tracing::Span {
     let telemetry = header_telemetry(headers);
-    tracing::info_span!("inference_request", service = "gateway", %generation_id,
+    let span = tracing::info_span!("inference_request", service = "gateway", %generation_id,
         organization_id = tracing::field::Empty,
         workspace_id = tracing::field::Empty,
         api_key_id = tracing::field::Empty,
@@ -414,5 +421,26 @@ pub(crate) fn request_span(generation_id: uuid::Uuid, headers: &HeaderMap) -> tr
         traceparent_present = telemetry.traceparent_present,
         content_encoding = telemetry.content_encoding.as_deref().unwrap_or(""),
         accept = telemetry.accept.as_deref().unwrap_or(""),
-        vllm_priority = telemetry.vllm_priority.as_deref().unwrap_or(""))
+        vllm_priority = telemetry.vllm_priority.as_deref().unwrap_or(""),
+        session_headers_present = tracing::field::Empty,
+        opencode_session_hash = tracing::field::Empty,
+        session_affinity_hash = tracing::field::Empty,
+        generic_session_hash = tracing::field::Empty,
+        claude_session_hash = tracing::field::Empty,
+        codex_session_hash = tracing::field::Empty,
+        codex_thread_hash = tracing::field::Empty,
+        client_request_hash = tracing::field::Empty,
+        codex_window_hash = tracing::field::Empty,
+        codex_metadata_session_hash = tracing::field::Empty,
+        codex_metadata_thread_hash = tracing::field::Empty,
+        body_session_hash = tracing::field::Empty,
+        prompt_cache_key_hash = tracing::field::Empty,
+        client_metadata_session_hash = tracing::field::Empty,
+        client_metadata_thread_hash = tracing::field::Empty,
+        anthropic_metadata_session_hash = tracing::field::Empty,
+        effective_session_source = tracing::field::Empty,
+        effective_session_hash = tracing::field::Empty,
+    );
+    crate::session_telemetry::record_headers(&span, headers);
+    span
 }

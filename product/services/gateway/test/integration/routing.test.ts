@@ -195,14 +195,29 @@ it("cannot use a release mismatch for a retry", async () => {
   await instance.settled(response, { status: "failed", charge: 0 });
 });
 
-it("spreads identical sessionless LLM calls across every replica", async () => {
+it("keeps identical sessionless LLM calls cache-local", async () => {
   const instance = await makeCase("vllm", { replicas: 8 });
 
-  for (let index = 0; index < 256; index += 1) {
+  for (let index = 0; index < 8; index += 1) {
     expect((await instance.post()).status).toBe(200);
   }
 
-  expect(instance.runtimes).toHaveLength(8);
+  expect(
+    instance.runtimes.filter((runtime) => runtime.calls.length > 0),
+  ).toHaveLength(1);
+});
+
+it("spreads distinct sessionless conversation openings across the fleet", async () => {
+  const instance = await makeCase("vllm", { replicas: 8 });
+  for (let index = 0; index < 256; index++) {
+    const response = await instance.post({
+      messages: [
+        { role: "system", content: "Common system instructions" },
+        { role: "user", content: `Unique opening question ${index}` },
+      ],
+    });
+    expect(response.status).toBe(200);
+  }
   expect(instance.runtimes.every((runtime) => runtime.calls.length > 0)).toBe(
     true,
   );

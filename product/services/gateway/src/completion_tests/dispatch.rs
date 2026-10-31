@@ -401,7 +401,7 @@ async fn a_rejected_generation_identity_is_logged_before_admission() {
 }
 
 #[tokio::test]
-async fn identical_sessionless_requests_spread_across_the_fleet() {
+async fn identical_sessionless_requests_keep_prefix_affinity() {
     let request = qualified_request(8);
     let harness = Harness::new(request.clone(), []);
     let mut primaries = std::collections::HashSet::new();
@@ -410,7 +410,7 @@ async fn identical_sessionless_requests_spread_across_the_fleet() {
         current.metadata.generation_id = Uuid::from_u128(generation);
         primaries.insert(harness.service.route(&current).await.unwrap().primary.id);
     }
-    assert_eq!(primaries.len(), 8);
+    assert_eq!(primaries.len(), 1);
 }
 
 #[tokio::test]

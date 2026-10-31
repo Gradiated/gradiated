@@ -212,6 +212,7 @@ async fn serve(
         .coordinator
         .classify(headers, &body, metadata.received_at, endpoint.protocol)
         .await?;
+    crate::session_telemetry::record_body(&request);
     let translated = endpoint.protocol.translate_request(&request)?;
     let qualified =
         state

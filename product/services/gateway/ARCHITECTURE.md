@@ -224,6 +224,71 @@ stored as truncated SHA-256 hashes. Authentication headers are represented only
 by a redacted final-four-character suffix. Cookies, raw credentials, arbitrary
 custom headers, and header values over the bounded length are omitted.
 
+Session diagnostics additionally record the presence of a fixed SDK header
+allowlist and hashes of its identifier values: `x-opencode-session-id`,
+`x-session-affinity`, `x-session-id`, `x-claude-code-session-id`, `session-id`,
+`thread-id`, `x-client-request-id`, and `x-codex-window-id`. Only the
+`session_id` and `thread_id` members of `x-codex-turn-metadata` are extracted;
+other metadata is never logged. SDK identifier hashes accept at most 256 bytes; body session IDs retain their
+endpoint-specific length contracts. JSON metadata parsing accepts at most 8192
+bytes. Duplicate SDK session headers
+are reported as present but are not hashed.
+
+Before wire-format translation, the gateway observes only body `session_id`,
+`prompt_cache_key`, `client_metadata.session_id`/`thread_id`, and `session_id`
+inside JSON-encoded `metadata.user_id`. Values are hashed, not retained. It does
+not record the whole metadata object or user identifier. Missing or malformed
+metadata produces no identifier hash and does not change request validation.
+
+`effective_session_source` and `effective_session_hash` describe the affinity
+key selected once, before protocol translation, by `session_affinity::cache_key`.
+The same resolved value chooses both the served release and the runtime replica;
+translation cannot discard or independently change it. Preference order:
+
+1. Body `session_id`.
+2. Header `x-gradiated-session-id`.
+3. Body `prompt_cache_key`.
+4. Headers `x-claude-code-session-id`, `x-opencode-session-id`,
+   `x-session-affinity`, `session-id`, `thread-id`, `x-session-id`, in that order.
+5. Body `client_metadata.session_id`, then `client_metadata.thread_id`.
+6. Header `x-codex-turn-metadata.session_id`, then its `thread_id`.
+7. `session_id` inside JSON-encoded body `metadata.user_id`.
+
+SDK identifiers and prompt cache keys must be nonempty, at most 256 bytes,
+and contain no control characters. Body `session_id` retains endpoint validation:
+Chat uses its scalar-count bound and SystemOne its 256-UTF-16-unit bound.
+Null body fields are absent. An invalid selected explicit override
+(the first three sources) returns 400; malformed, duplicate, or oversized
+optional SDK hints are skipped. The remaining metadata is never an affinity key.
+Request IDs and Codex window IDs are diagnostic only because they can change
+within a conversation. Authenticated workspace, model and release scope the
+replica hash; raw SDK header values are not forwarded as runtime cache keys.
+
+With no usable explicit/SDK key, chat requests derive an affinity key from the
+first system/developer message and the first non-system message, following
+[OpenRouter's opening-message policy](https://openrouter.ai/docs/guides/best-practices/prompt-caching#provider-sticky-routing). Missing system instructions are allowed.
+Chat Completions uses `messages`; Anthropic uses `system` plus `messages`;
+Responses uses `instructions` plus `input` (a string or message array). Later
+turns and request-level generation options do not participate. Object keys are
+canonicalized before streaming into SHA-256, so JSON property order does not
+change the key. Content is not copied into any persistent routing index.
+
+If opening messages cannot be recognized, hash the first **8192 Unicode
+characters** of the raw request body (the entire body if shorter), using a
+separate hash domain. This fallback returns a key without a parsing error; it
+does not relax the API's normal JSON, authentication, model, or schema validation.
+Explicit keys continue to take precedence. The selected key is used for both
+release selection and replica ranking. Workspace/model/release scoping and
+health/capacity fallbacks remain in force.
+
+`effective_session_source` reports `content_messages` or `content_prefix_8192`
+for content-derived keys. SystemOne retains its existing state-prefix routing
+(`state_prefix`) when no session key is supplied. Source and identifier hashes
+are log fields, not Prometheus labels or durable billing fields. Session
+or content affinity does not promise a cache hit: vLLM's prefix cache still
+requires identical prefix tokens resident on that replica. The gateway does
+not synthesize a per-session `cache_salt`.
+
 The generation ID exists before authentication so every internal error can be
 correlated without using a customer identifier. A rejected pre-admission
 request is not a durable generation and does not enter the settlement stream.

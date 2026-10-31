@@ -666,6 +666,20 @@ class RoundB15Scenario(unittest.TestCase):
         self.assertEqual(gen2.drop_dev_hosts(spec), 2)
         self.assertEqual(spec["events"]["$pageview"]["properties"]["$current_url"]["values"], ["https://shop.io/"])
 
+    def test_event_props_device_per_person(self):
+        """round 10: $os_version from an override varied per event (90% of persons on several versions)."""
+        import pyarrow as pa
+        rows = [("$screen", f"p{i % 10}", f"s{i % 50}") for i in range(300)]
+        tab = pa.table({"event": [r[0] for r in rows], "person_id": [r[1] for r in rows], "$session_id": [r[2] for r in rows],
+                        "properties": ["{}"] * len(rows)})
+        p = project(ovr={"scenario": [{"kind": "event_props", "event": "$screen",
+                                       "props": {"$os_version": {"values": [["26.6.2", 5], ["27.0.1", 5], ["18.7.8", 1]]}}}]})
+        ds = [json.loads(x) for x in p.scenario_event_props(tab).column("properties").to_pylist()]
+        by_p = C.defaultdict(set)
+        for r, d in zip(rows, ds):
+            by_p[r[1]].add(d["$os_version"])
+        self.assertTrue(all(len(v) == 1 for v in by_p.values()))
+
     def test_medium_fits(self):
         self.assertTrue(gen2.medium_fits("cpc", "youtube"))
         self.assertTrue(gen2.medium_fits("email", "newsletter"))

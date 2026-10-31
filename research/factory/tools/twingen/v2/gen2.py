@@ -2667,6 +2667,10 @@ class Project2(gen.Project):
         for j, op in enumerate(ops):
             specs = op.get("props") or {}
             geo = any(k in GEO_PROPS for k in specs)
+            # r28: device/app/version props are per person (round 10: $os_version drawn per event from a weighted
+            # list, 90% of persons on more than one iOS version)
+            device = any(k in PROFILE_KEYS or k.startswith(("$device", "$app_")) or k in ("$os_version", "$lib_version")
+                         for k in specs)
             utm = any(k in UTM_KEYS or k.startswith(("$referr", "$initial_")) for k in specs)
             share = float(op.get("share", 1.0))
             for i, e in enumerate(ev):
@@ -2674,7 +2678,7 @@ class Project2(gen.Project):
                     continue
                 # r24: one draw per person (geo, per_person) or per session (everything else), never per event
                 # (round 7: utm_source/medium paired at random, persons switching country between events)
-                unit = pid[i] if geo else (sid[i] or pid[i])
+                unit = pid[i] if (geo or device) else (sid[i] or pid[i])
                 r = random.Random(stable_seed(self.S["id"], "scenario_props", j, unit))
                 if r.random() > share:
                     continue

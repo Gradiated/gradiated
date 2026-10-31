@@ -155,7 +155,25 @@ def lint_text(conv: str) -> str:
     return "\n".join(f"- [{x['severity']}] {x['check']}: {x['detail']}" for x in f) or "(none)"
 
 
-def validate_one(task: dict, rec: dict | None, model: str, out_dir: str) -> dict:
+GATE = """
+
+## You are the FINAL acceptance gate (a second, independent auditor)
+Another validator already passed this task; independent human-grade audits found that it misses about a third of
+real defects. Re-verify everything yourself with queries; do not trust the curation or the earlier verdict. Only a
+task you would report scores on without any caveat is SOUND; anything an expert auditor would call MINOR is MINOR.
+Check in particular (each was a real miss):
+- events or data a curator override added or stopped: their daily/weekly/monthly counts must be continuous up to the
+  data end, without a cliff or a gap where generated events stopped and replacements end early;
+- properties that should be stable per person/device/session ($os_version, $device_type, $app_version, ids such as
+  conversation_id or order_id) must not vary randomly per event, nor be shared by unrelated persons;
+- utm_* values must agree with $referring_domain/$search_engine; $current_url with $pathname; $device_type with $os;
+- every required grading point must be derivable from exactly the source the rubric names (e.g. a summary "of the
+  recordings" may only use events of sessions that have replay rows);
+- numbers in the notes: recompute live at the data end; ids/objects named: check the object list;
+- the shortest correct answer to what the user asked must pass."""
+
+
+def validate_one(task: dict, rec: dict | None, model: str, out_dir: str, extra: str = "", max_rounds: int = 4) -> dict:
     path = f"{out_dir}/{task['task_id']}.json"
     if os.path.exists(path):
         return json.load(open(path))
@@ -170,18 +188,18 @@ def validate_one(task: dict, rec: dict | None, model: str, out_dir: str) -> dict
                            curator_defects=SC.clip(json.dumps((task.get("curation") or {}).get("twin_defects") or [],
                                                               ensure_ascii=False, indent=1), 4000) or "(none)")
     out = {"task_id": task["task_id"], "model": model, "queries_run": []}
-    convo, rounds = prompt, 0
-    for _ in range(8):
+    convo, rounds = prompt + extra, 0
+    for _ in range(max_rounds + 4):
         try:
             text, _u = llm_proxy.judge_complete(convo, model, None, attempts=6, preamble=False)
             d = last_json(text)
-            if d.get("queries") and "verdict" not in d and rounds < 4:
+            if d.get("queries") and "verdict" not in d and rounds < max_rounds:
                 rounds += 1
                 res = CT.run_queries(d["queries"][:8], int(task["team_id"]))
                 out["queries_run"] += res
                 convo += (f"\n\n## Your queries and results (round {rounds})\n" +
                           "\n".join(f"- {r['why']}\n  SQL: {r['sql']}\n  -> {r['result']}" for r in res) +
-                          ("\n\nNow give the final JSON." if rounds >= 4 else "\n\nAsk again or give the final JSON."))
+                          ("\n\nNow give the final JSON." if rounds >= max_rounds else "\n\nAsk again or give the final JSON."))
                 continue
             assert d.get("verdict") in ("SOUND", "MINOR", "BROKEN")
             out.update(d)
@@ -204,6 +222,7 @@ def main() -> None:
                     help="send non-SOUND tasks back to the curator with the findings, then validate the revision once")
     ap.add_argument("--curator-model", default="claude-opus-5-5")
     ap.add_argument("--repair-rounds", type=int, default=2)
+    ap.add_argument("--gate-model", default="", help="second acceptance gate (e.g. claude-opus-5-5) on SOUND tasks")
     ap.add_argument("--lint", default="", help="lint.jsonl from twingen/v2/lint.py (one line per project)")
     a = ap.parse_args()
     if a.lint and os.path.exists(a.lint):
@@ -270,6 +289,16 @@ def main() -> None:
                     for i, t in enumerate(tasks):
                         if t["task_id"] == tid:
                             tasks[i] = t2
+    if a.gate_model:  # second, independent acceptance gate on everything the validator passed
+        passed = [t for t in tasks if (res.get(t["task_id"]) or {}).get("verdict") == "SOUND"]
+        os.makedirs(f"{a.out}/gate", exist_ok=True)
+        with ThreadPoolExecutor(a.workers) as pool:
+            gates = list(pool.map(lambda t: validate_one(t, recs.get(t["conversation_id"]), a.gate_model,
+                                                         f"{a.out}/gate", extra=GATE, max_rounds=6), passed))
+        for t, g in zip(passed, gates):
+            stats[f"gate_{g.get('verdict') or 'ERROR'}"] += 1
+            if g.get("verdict") != "SOUND":
+                res[t["task_id"]] = {**g, "verdict": f"GATE_{g.get('verdict') or 'ERROR'}"}
     with open(f"{a.out}/validated.jsonl", "w") as f:
         for t in tasks:
             t = dict(t)

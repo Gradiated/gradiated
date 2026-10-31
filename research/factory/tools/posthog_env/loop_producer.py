@@ -45,6 +45,9 @@ CODE = [f"{V2}/gen2.py", f"{V2}/lint.py", f"{V2}/valuepools.py", f"{TG}/gen.py",
 MAX_EVENTS = "3000000"
 # generators run in their own cgroup (twingen, 400 GiB), outside ClickHouse's: 12 workers x ~27 GB peak fits
 GEN_WORKERS = "12"
+# second acceptance gate: the independent auditor (Opus) re-checks every task the validator passed (rounds 6-10:
+# the validator passed all audited tasks, auditors found 23-47% with defects)
+GATE_MODEL = "claude-opus-5-5"
 ENV = {**os.environ, "TWIN_V2_TRACES": TRACES, "TWIN_V2_ROOT": ROOT, "TWIN_V2_TAG": TAG}
 
 
@@ -154,7 +157,7 @@ def regen_pending(d: str, ids: list[str], split: str, log) -> None:
     out = f"{d}/validated/regen{len(glob.glob(f'{d}/validated/regen*/')) + 1}"  # fresh dir: no cached verdicts
     sh(["python3", f"{RUNNER}/validate_tasks.py", "--tasks", pf, "--traces", f"{TRACES}/{split}.jsonl",
         "--out", out, "--repair", "--repair-rounds", "1", "--lint", f"{d}/lint.jsonl",
-        "--workers", "8"], log, timeout=7200)
+        "--workers", "8", "--gate-model", GATE_MODEL], log, timeout=7200)
     got = {json.loads(x)["task_id"]: json.loads(x) for x in open(f"{out}/validated.jsonl") if x.strip()}
     for t in got.values():  # a second PENDING_REGEN is not regenerated again
         if (t.get("validation") or {}).get("verdict") == "PENDING_REGEN":
@@ -215,7 +218,7 @@ def build_batch(name: str, ids: list[str], split: str, pilot: bool) -> None:
             refresh_teams(tf, log)  # reloads create new teams
             # independent validator (GPT-6.1 Sol, read-only twin queries) with one curator repair round; only SOUND kept
             sh(["python3", f"{RUNNER}/validate_tasks.py", "--tasks", tf, "--traces", f"{TRACES}/{split}.jsonl",
-                "--out", f"{d}/validated", "--repair", "--lint", f"{d}/lint.jsonl", "--workers", "8"], log,
+                "--out", f"{d}/validated", "--repair", "--lint", f"{d}/lint.jsonl", "--workers", "8", "--gate-model", GATE_MODEL], log,
                timeout=10800)
             if os.path.exists(f"{d}/validated/validated.jsonl"):
                 tf = f"{d}/validated/validated.jsonl"

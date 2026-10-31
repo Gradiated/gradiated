@@ -80,6 +80,44 @@ describe("public inference probes", () => {
     ).rejects.toThrow();
   });
 
+  it.each([undefined, "system_one"] as const)(
+    "uses normal gateway routing for the %s model probe",
+    async (protocol) => {
+      const fetch = vi.fn(async (input: unknown) => {
+        expect(
+          (input as Request).headers.has("x-gradiated-verification-deployment"),
+        ).toBe(false);
+        return Response.json(
+          protocol === "system_one"
+            ? {
+                model: options.modelId,
+                usage: { input_tokens: 10, output_tokens: 0 },
+                answers: { category: { type: "choice", choice: "billing" } },
+              }
+            : completion,
+          { headers: { "x-gradiated-generation-id": randomUUID() } },
+        );
+      });
+      const { deploymentId: _, ...routed } = options;
+      await probeModel({ ...routed, protocol, fetch });
+      expect(fetch).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it("randomizes the opening message on every pass to vary content affinity", async () => {
+    const prefixes: string[] = [];
+    const { deploymentId: _, ...routed } = options;
+    const fetch: typeof globalThis.fetch = async (input) => {
+      const body = await (input as Request).json();
+      prefixes.push(body.messages[0].content);
+      return response(completion);
+    };
+    await probeModel({ ...routed, fetch });
+    await probeModel({ ...routed, fetch });
+    expect(prefixes[0]).toMatch(/^Probe [0-9a-f-]{36}\nHi$/);
+    expect(prefixes[0]).not.toBe(prefixes[1]);
+  });
+
   it("does not retry HTTP failures", async () => {
     const fetch = vi.fn(async () =>
       Response.json({ error: { message: "Failure" } }, { status: 503 }),
@@ -215,7 +253,7 @@ describe("public inference probes", () => {
       onReady: async () => {},
     });
     await vi.advanceTimersByTimeAsync(10_001);
-    expect(probe).toHaveBeenCalledTimes(3);
+    expect(probe).toHaveBeenCalledTimes(6);
     const rendered = await registry.metrics();
     expect(rendered).toContain(
       'deployment="' + deploymentId + '",result="failure"} 1',
@@ -229,6 +267,49 @@ describe("public inference probes", () => {
     expect(await registry.metrics()).not.toContain(
       'deployment="' + deploymentId + '"',
     );
+  });
+
+  it("probes each replica and each distinct model, keeping their failures separate", async () => {
+    const registry = new Registry();
+    const metrics = new InferenceProbeMetrics(registry);
+    const abort = new AbortController();
+    const replicas = [
+      replica,
+      { ...replica, id: randomUUID() },
+      {
+        ...replica,
+        id: randomUUID(),
+        modelId: "other/model",
+      },
+    ];
+    const probe = vi.fn(async (_replica, _signal, scope) => {
+      if (scope === "deployment") throw new Error("synthetic busy replica");
+    });
+    let rendered = "";
+    await runInferenceProbes({
+      eval: async () => 1,
+      replicas: async () => replicas,
+      probe,
+      metrics,
+      signal: abort.signal,
+      onReady: async () => {
+        rendered = await registry.metrics();
+        abort.abort();
+      },
+    });
+    expect(
+      probe.mock.calls.filter((call) => call[2] === "deployment"),
+    ).toHaveLength(3);
+    expect(probe.mock.calls.filter((call) => call[2] === "model")).toHaveLength(
+      2,
+    );
+    expect(rendered).toContain(
+      `deployment="${deploymentId}",result="failure"} 1`,
+    );
+    expect(rendered).toContain(
+      'gradiated_inference_routed_probe_requests_total{model="test/model",result="success"} 1',
+    );
+    expect(await registry.metrics()).not.toContain('model="test/model"');
   });
 
   it("does not discover or probe after cancellation during lease acquisition", async () => {

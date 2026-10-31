@@ -74,7 +74,7 @@ it("standby shutdown preserves the leader lease and a new worker takes over afte
       metrics: new InferenceProbeMetrics(new Registry()),
       onReady: async () => standby.abort(),
     });
-    expect(requests).toBe(1);
+    expect(requests).toBe(2);
     expect(await client.get(key)).toBe(owner);
   } finally {
     leader.abort();
@@ -88,5 +88,5 @@ it("standby shutdown preserves the leader lease and a new worker takes over afte
     metrics: new InferenceProbeMetrics(new Registry()),
     onReady: async () => replacement.abort(),
   });
-  expect(requests).toBe(2);
+  expect(requests).toBe(4);
 });

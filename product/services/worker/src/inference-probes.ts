@@ -13,6 +13,11 @@ export class InferenceProbeMetrics {
   private readonly success: Gauge<Labels>;
   private readonly attempts: Counter<Labels | "result">;
   private readonly latency: Histogram<Labels>;
+  private readonly routedTargets: Gauge<"model">;
+  private readonly routedSuccess: Gauge<"model">;
+  private readonly routedAttempts: Counter<"model" | "result">;
+  private readonly routedLatency: Histogram<"model">;
+  private readonly models = new Set<string>();
   private readonly active = new Map<
     string,
     { model: string; deployment: string }
@@ -49,9 +54,50 @@ export class InferenceProbeMetrics {
       buckets: [0.05, 0.1, 0.25, 0.5, 1, 2, 4],
       registers: [registry],
     });
+    this.routedTargets = new Gauge({
+      name: "gradiated_inference_routed_probe_target",
+      help: "Model included in public inference probes with normal gateway routing.",
+      labelNames: ["model"],
+      registers: [registry],
+    });
+    this.routedSuccess = new Gauge({
+      name: "gradiated_inference_routed_probe_last_success_timestamp_seconds",
+      help: "Latest valid public inference response using normal gateway routing.",
+      labelNames: ["model"],
+      registers: [registry],
+    });
+    this.routedAttempts = new Counter({
+      name: "gradiated_inference_routed_probe_requests_total",
+      help: "Public inference probes using normal gateway routing by model and outcome.",
+      labelNames: ["model", "result"],
+      registers: [registry],
+    });
+    this.routedLatency = new Histogram({
+      name: "gradiated_inference_routed_probe_duration_seconds",
+      help: "Public inference probe duration using normal gateway routing.",
+      labelNames: ["model"],
+      buckets: [0.05, 0.1, 0.25, 0.5, 1, 2, 4],
+      registers: [registry],
+    });
   }
 
   discover(replicas: readonly ModelReplica[]) {
+    const models = new Set(replicas.map((replica) => replica.modelId));
+    for (const model of this.models) {
+      if (models.has(model)) continue;
+
+      this.routedTargets.remove({ model });
+      this.routedSuccess.remove({ model });
+      this.routedLatency.remove({ model });
+      for (const result of ["success", "failure"])
+        this.routedAttempts.remove({ model, result });
+      this.models.delete(model);
+    }
+    for (const model of models) {
+      if (!this.models.has(model)) this.routedSuccess.set({ model }, 0);
+      this.models.add(model);
+      this.routedTargets.set({ model }, 1);
+    }
     const ids = new Set(replicas.map((replica) => replica.id));
     for (const [id, label] of this.active) {
       if (ids.has(id)) continue;
@@ -78,6 +124,16 @@ export class InferenceProbeMetrics {
     this.latency.observe(label, duration);
     if (succeeded) this.success.set(label, Date.now() / 1000);
   }
+
+  recordRouted(replica: ModelReplica, succeeded: boolean, duration: number) {
+    const label = { model: replica.modelId };
+    this.routedAttempts.inc({
+      ...label,
+      result: succeeded ? "success" : "failure",
+    });
+    this.routedLatency.observe(label, duration);
+    if (succeeded) this.routedSuccess.set(label, Date.now() / 1000);
+  }
 }
 
 export const probeLeaseScript = `
@@ -96,7 +152,11 @@ export const runInferenceProbes = async (options: {
     options: { keys: string[]; arguments: string[] },
   ) => Promise<unknown>;
   replicas: () => Promise<readonly ModelReplica[]>;
-  probe: (replica: ModelReplica, signal: AbortSignal) => Promise<void>;
+  probe: (
+    replica: ModelReplica,
+    signal: AbortSignal,
+    scope: "deployment" | "model",
+  ) => Promise<void>;
   metrics: InferenceProbeMetrics;
   beforePass?: () => Promise<void>;
   onReady: (durationSeconds: number) => Promise<void>;
@@ -119,21 +179,32 @@ export const runInferenceProbes = async (options: {
           if (replicas.length) await options.beforePass?.();
           signal.throwIfAborted();
           options.metrics.discover(replicas);
+          const models = [
+            ...new Map(
+              replicas.map((replica) => [replica.modelId, replica]),
+            ).values(),
+          ];
+          const targets = [
+            ...replicas.map((replica) => ({
+              replica,
+              scope: "deployment" as const,
+            })),
+            ...models.map((replica) => ({ replica, scope: "model" as const })),
+          ];
           await Promise.all(
-            replicas.map(async (replica) => {
+            targets.map(async ({ replica, scope }) => {
               const started = performance.now();
               let succeeded = false;
               try {
-                await options.probe(replica, signal);
+                await options.probe(replica, signal, scope);
                 succeeded = !signal.aborted;
               } catch {
                 // SDK errors can contain authentication headers or response bodies.
               }
-              options.metrics.record(
-                replica,
-                succeeded,
-                (performance.now() - started) / 1000,
-              );
+              const duration = (performance.now() - started) / 1000;
+              if (scope === "model")
+                options.metrics.recordRouted(replica, succeeded, duration);
+              else options.metrics.record(replica, succeeded, duration);
             }),
           );
         } else {

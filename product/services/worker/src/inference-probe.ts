@@ -3,20 +3,20 @@ import { TypeSafeClient, choice } from "@typesafe-ai/sdk";
 import OpenAI from "openai";
 import type { ModelVerification } from "./model-verification.js";
 
-export const probeModel = async (
-  options: ModelVerification & { readonly deploymentId: string },
-): Promise<void> => {
+export const probeModel = async (options: ModelVerification): Promise<void> => {
   const targetedFetch: typeof fetch = async (input, init) => {
     const request = new Request(input, init);
-    request.headers.set(
-      "x-gradiated-verification-deployment",
-      options.deploymentId,
-    );
+    if (options.deploymentId)
+      request.headers.set(
+        "x-gradiated-verification-deployment",
+        options.deploymentId,
+      );
     const response = await (options.fetch ?? fetch)(request);
     if (
       response.ok &&
-      (response.headers.get("x-gradiated-verification-deployment") !==
-        options.deploymentId ||
+      ((options.deploymentId &&
+        response.headers.get("x-gradiated-verification-deployment") !==
+          options.deploymentId) ||
         !response.headers.get("x-gradiated-generation-id"))
     )
       throw new Error("Invalid inference probe identity");
@@ -65,7 +65,7 @@ export const probeModel = async (
   const result = await client.chat.completions.create(
     {
       model: options.modelId,
-      messages: [{ role: "user", content: "Hi" }],
+      messages: [{ role: "user", content: `Probe ${randomUUID()}\nHi` }],
       max_tokens: 8,
       temperature: 0,
     },

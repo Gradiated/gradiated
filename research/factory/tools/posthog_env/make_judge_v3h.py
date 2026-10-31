@@ -51,6 +51,8 @@ NOTES_RULES = """- Task notes. They say what a correct answer should contain and
   a reasonable choice the agent states openly is not an error.
 - Environment metadata. Do not penalise an agent for not remarking on oddities in object metadata (creation
   timestamps, first/last seen order) that the user did not ask about. The project may be named "Default project".
+- Tool semantics. Insight IDs of visualizations the agent created in this conversation (conversation artifacts) are
+  valid inputs to dashboard tools; using them is not an error.
 - The notes add checks; they do not replace your own independent review of the rollout for wrong or unsupported claims.
 - Data quality. If the agent correctly points out that data in the project looks implausible or inconsistent (and
   its tool results show it), that is good analysis, not an error, even if the task notes do not mention it.

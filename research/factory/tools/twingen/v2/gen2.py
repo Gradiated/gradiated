@@ -24,6 +24,7 @@ Defaults read facts_v2/<id>.json and qfacts_v2/<id>.json next to the specs. Prin
 from __future__ import annotations
 
 import argparse
+import bisect
 import hashlib
 import collections as C
 import datetime as dt
@@ -52,7 +53,7 @@ import specio  # noqa: E402
 from gen import UTC, iso, stable_seed, uuid7, wh_column, WH_TYPES  # noqa: E402
 from specio import shape_of  # noqa: E402
 
-GEN2_VERSION = "twingen-2.15"
+GEN2_VERSION = "twingen-2.16"
 TWINS = PATHS.TWINS
 FACTS = PATHS.FACTS
 QFACTS = PATHS.QFACTS
@@ -72,7 +73,7 @@ def xindex() -> dict:
         _XI = load_json(XINDEX) or {"dashboards": {}, "insights": {}, "notebooks": {}, "tables": {}}
     return _XI  # per-twin declarative fixes from the repair pass (<twin_id>.json)
 SPECS = PATHS.SPECS
-NULLS = {"", "(null)", "null", "None", "nan", "NaN", "NULL", "\\N"}
+NULLS = {"", "(null)", "null", "None", "nan", "NaN", "NULL", "\\N", "None (i.e. no value)", "(none)", "(empty string)"}
 ISO_D = re.compile(r"^(\d{4}-\d\d-\d\d)(?:[ T](\d\d:\d\d(?::\d\d(?:\.\d+)?)?))?(Z|[+-]\d\d:?\d\d)?$")
 FLAG_NAME = re.compile(r"^(is|has|was|did|can|should)_|_(flag|bool)$|^(active|deleted|churned|won|lost|closed|paid|enabled|verified|converted)$", re.I)
 MONTH_NAME = re.compile(r"(^|_)(month|period|mon)(_|$)|month_start|_month$|^month", re.I)
@@ -525,7 +526,21 @@ CHILD_OF = [  # (child word, parent words): child volume <= parent volume
     (("dismissed", "closed", "clicked", "accepted", "declined"), ("shown", "viewed", "displayed", "opened", "impression")),
     (("completed", "finished", "succeeded", "failed", "abandoned", "submitted"), ("started", "begun", "opened", "initiated")),
     (("created", "saved"), ("opened", "started")),
+    (("complete", "completed", "done", "finished"), ("ready", "start", "started", "begin")),
 ]
+FAMILY_ROOT = re.compile(r"(^|_)(page_?view(ed)?|viewed|view|opened|open|shown|started|start|landing)$", re.I)
+
+
+def family_parent(e: str, names) -> str | None:
+    """Same-prefix family (calc_page_view, calc_run, calc_reset): the family's view/open/start event is the parent of
+    the other members ('calc_run' -> 'calc_page_view')."""
+    if FAMILY_ROOT.search(e) or "_" not in e:
+        return None
+    prefix = e.split("_")[0].lower()
+    roots = [n for n in names if n != e and n.lower().startswith(prefix + "_") and FAMILY_ROOT.search(n)]
+    if not roots:
+        return None
+    return sorted(roots, key=lambda n: (0 if re.search(r"page_?view|viewed?$", n, re.I) else 1, len(n)))[0]
 FUNNEL_PAIRS = [("checkout_started", "add_to_cart"), ("checkout_completed", "checkout_started"),
                 ("order_completed", "checkout_started"), ("purchase_completed", "checkout_started")]
 
@@ -565,6 +580,43 @@ def success_sibling(e: str, names) -> str | None:
             if cand in names and cand != e:
                 return cand
     return None
+
+
+CTX_STRIP = re.compile(r"<(attached_context|system_reminder|voice_mode)>.*?</\1>", re.S)
+
+
+LIFECYCLE_ONCE = re.compile(r"^(sign[_ ]?up|signed[_ ]?up|user[_ ]signed[_ ]up|sign[_ ]?up[_ ]completed|registration[_ ]completed|"
+                            r"account[_ ]created|user[_ ]created|application[_ ]installed|app[_ ]installed|"
+                            r"onboarding[_ ]completed|first[_ ].*|.*[_ ]initial[_ ].*|.*_first_.*)$", re.I)
+PROFILE_KEYS = {"$browser", "$browser_version", "$os", "$os_version", "$device_type", "$screen_width", "$screen_height",
+                "$viewport_width", "$viewport_height", "$browser_language", "$browser_language_prefix", "$lib",
+                "$lib_version", "$raw_user_agent", "$timezone", "$timezone_offset"} | set(GEO_PROPS)
+
+
+def _depth(e: str, pairs: dict) -> int:
+    d, seen = 0, set()
+    while e in pairs and e not in seen:
+        seen.add(e)
+        e = pairs[e]
+        d += 1
+    return d
+
+
+def funnel_pairs(facts: dict, names) -> dict:
+    """child -> parent from production FunnelsQuery steps (consecutive steps, both present in the twin)."""
+    out = {}
+    for c in (facts or {}).get("calls") or []:
+        sch = c.get("schema")
+        if not isinstance(sch, dict):
+            continue
+        src = sch.get("source") if sch.get("kind") in ("InsightVizNode", "DataVisualizationNode") else sch
+        if not isinstance(src, dict) or src.get("kind") != "FunnelsQuery":
+            continue
+        evs = [x.get("event") for x in src.get("series") or []]
+        for a, b in zip(evs, evs[1:]):
+            if a and b and a != b and a in names and b in names:
+                out.setdefault(b, a)
+    return out
 
 
 STUB_EVENT = re.compile(r"^(mcp |application )", re.I)
@@ -651,6 +703,9 @@ class Project2(gen.Project):
     def make_profile(self, rnd):
         """rule (r8): 85% of visitors get a country from production's own mix (whole geo tuple, coherent)."""
         p = super().make_profile(rnd)
+        if p.get("$browser") == "Safari" and p.get("$os") not in ("Mac OS X", "iOS", "iPadOS"):
+            p["$browser"] = "Chrome"  # rule (r16): Safari only on Apple platforms
+            self.v2["safari_off_apple_fixed"] += 1
         if not hasattr(self, "_geo_mix"):
             mix = production_countries(self.S, self.Q, self.F)
             cat = geo_catalog()
@@ -680,6 +735,11 @@ class Project2(gen.Project):
         for smp in (getattr(self, "ctx_samplers", None) or {}).values():
             self.v2["prior_null_choices_scrubbed"] += scrub_sampler(smp)
         zero = self.zero_filter_values()
+        for samplers in self.ev_samplers.values():  # rule (r16): the visitor's device profile owns these keys
+            for prop in list(samplers):
+                if prop in PROFILE_KEYS and not isinstance(samplers[prop], GroupDist):
+                    samplers.pop(prop)
+                    self.v2["profile_key_samplers_removed"] += 1
         for samplers in self.ev_samplers.values():  # rule (r8): geo and UTM come from the visitor profile / session
             for prop in list(samplers):
                 if prop in GEO_PROPS or prop in UTM_KEYS or prop.startswith("$initial_utm_"):
@@ -1135,7 +1195,14 @@ class Project2(gen.Project):
             for t in d.get("tiles") or []:
                 if t.get("short_id"):
                     first_seen.setdefault(str(t["short_id"]), first_seen.get(str(did), 10**6))
-        text = self.user_text
+        # an id counts as named by the user only in the user's own words (attached context stripped) or in context
+        # attached before the first creation (b11: ids shown in a later turn's context counted as "named")
+        raw = load_json(os.path.join(SPECS, f"{self.S['id']}.json")) or {}
+        named = []
+        for t in raw.get("tasks") or []:
+            txt = t.get("text") or ""
+            named.append(txt if int(t.get("turn", 0)) <= first_create else CTX_STRIP.sub(" ", txt))
+        text = "\n".join(named) if named else self.user_text
         return {i for i, t in first_seen.items() if t >= first_create and i not in text}
 
     def objects(self):
@@ -1258,6 +1325,17 @@ class Project2(gen.Project):
                 stub["short_id"] = rid
             objs.setdefault(kind, []).append(stub)
             n[f"url_stub_{kind}"] += 1
+        named_text = self.user_text
+        before = len(objs.get("insights", []))
+        objs["insights"] = [o for o in objs.get("insights", []) if o.get("query_full") or o.get("sources")
+                            or str(o.get("short_id") or o.get("key")) in named_text
+                            or (o.get("name") and str(o.get("name")) in named_text)]
+        n["insights_without_definition_dropped"] += before - len(objs["insights"])  # rule (r16): no placeholder queries
+        if made:  # rule (r15): the cross-trace index must not re-add objects this conversation's agent created
+            for kind in ("insights", "notebooks", "dashboards"):
+                before = len(objs.get(kind, []))
+                objs[kind] = [o for o in objs.get(kind, []) if str(o.get("short_id") or o.get("key")) not in made]
+                n[f"agent_created_{kind}_removed_late"] += before - len(objs[kind])
         self.v2.update(n)
         return objs, excluded
 
@@ -1728,7 +1806,120 @@ class Project2(gen.Project):
             tab = tab.set_column(tab.schema.get_field_index("timestamp"), "timestamp",
                                  pa.array(ts, pa.int64()).cast(tab.schema.field("timestamp").type))
         self.v2["sessions_landing_pageview_moved"] = moved
+        tab = self.causal_children(tab)
+        return self.lifecycle_once(tab)
+
+    def causal_children(self, tab):
+        """rule (r16): a child event (later funnel step, dismissed/completed after shown/started, checkout after
+        add_to_cart) happens to a person who did its parent earlier, in that session, seconds to minutes later
+        (b11: 151 of 184 calculator runs never viewed the calculator page; ordered funnels came out as junk)."""
+        names = set(pc.unique(tab.column("event")).to_pylist())
+        # only name-evident causal links: a production funnel's steps are often independent behaviours (an AARRR
+        # funnel's "login" is mostly returning users), and its shape is calibrated by the funnel seeding rule
+        pairs: dict = {}
+        for e in names:
+            par = parent_event(e, names) or family_parent(e, names)
+            if par and e not in pairs and pairs.get(par) != e:
+                pairs[e] = par
+        if not pairs:
+            return tab
+        ev = tab.column("event").to_pylist()
+        ts = tab.column("timestamp").cast(pa.int64()).to_numpy().copy()
+        cols = {c: tab.column(c).to_pylist() for c in ("distinct_id", "person_id", "person_properties", "$session_id",
+                                                        "$window_id", "properties") if c in tab.schema.names}
+        gcols = {c: tab.column(c).to_pylist() for c in tab.schema.names if c.startswith("$group_")}
+        rng = random.Random(stable_seed(self.S["id"], "causal"))
+        now_us = int((self.now.timestamp() - 1) * 1e6)
+        by_event: dict = C.defaultdict(list)
+        for i, e in enumerate(ev):
+            by_event[e].append(i)
+        moved = 0
+        # parents first (a step's own move happens before its children pick it as parent)
+        order = sorted(pairs, key=lambda e: _depth(e, pairs))
+        for child in order:
+            par_rows = sorted(by_event.get(pairs[child], []), key=lambda i: ts[i])
+            if not par_rows:
+                continue
+            par_ts = [ts[i] for i in par_rows]
+            for i in by_event.get(child, []):
+                k = bisect.bisect_left(par_ts, ts[i])
+                lo = max(0, k - 50)
+                j = par_rows[rng.randrange(lo, k)] if k > 0 else par_rows[rng.randrange(0, min(len(par_rows), 50))]
+                for c in ("distinct_id", "person_id", "person_properties", "$session_id", "$window_id"):
+                    if c in cols:
+                        cols[c][i] = cols[c][j]
+                for c in gcols:
+                    gcols[c][i] = gcols[c][j]
+                ts[i] = min(ts[j] + rng.randint(5_000_000, 600_000_000), now_us)
+                if "properties" in cols and cols["properties"][i] and '"$session_id"' in cols["properties"][i]:
+                    d = orjson.loads(cols["properties"][i])
+                    pj = orjson.loads(cols["properties"][j]) if cols["properties"][j] else {}
+                    for key in ("$session_id", "$window_id", "$current_url", "$pathname", "$host"):
+                        if key in pj:
+                            d[key] = pj[key]
+                    cols["properties"][i] = orjson.dumps(d).decode()
+                moved += 1
+        for c, vals in {**cols, **gcols}.items():
+            tab = tab.set_column(tab.schema.get_field_index(c), c, pa.array(vals, tab.schema.field(c).type))
+        tab = tab.set_column(tab.schema.get_field_index("timestamp"), "timestamp",
+                             pa.array(ts, pa.int64()).cast(tab.schema.field("timestamp").type))
+        self.v2["causal_child_rows"] = moved
+        self.v2["causal_pairs"] = len(pairs)
         return tab
+
+    def lifecycle_once(self, tab):
+        """rule (r16): one-time lifecycle events (sign_up, account_created, *_initial_*, first_*) happen at most once
+        per person (b11: 48% of people signed up repeatedly). Timestamps are kept (production volume series); a repeat
+        goes to a person who is not yet a doer and whose activity starts around that time, else it is dropped."""
+        ev = tab.column("event").to_pylist()
+        once = {e for e in set(ev) if isinstance(e, str) and LIFECYCLE_ONCE.match(e)}
+        if not once:
+            return tab
+        pid = tab.column("person_id").to_pylist()
+        ts = tab.column("timestamp").cast(pa.int64()).to_numpy().copy()
+        first: dict = {}
+        for i, p_ in enumerate(pid):
+            if p_ not in first or ts[i] < first[p_]:
+                first[p_] = ts[i]
+        keep = np.ones(len(ev), dtype=bool)
+        seen = set()
+        cols = {c: tab.column(c).to_pylist() for c in ("distinct_id", "person_id", "person_properties", "$session_id",
+                                                        "$window_id") if c in tab.schema.names}
+        first_row: dict = {}
+        for i in np.argsort(ts, kind="stable"):
+            first_row.setdefault(pid[i], int(i))
+        rng = random.Random(stable_seed(self.S["id"], "lifecycle"))
+        doers: dict = C.defaultdict(set)
+        for i, e in enumerate(ev):
+            if e in once:
+                doers[e].add(pid[i])
+        # persons by first-activity time: a repeat goes to a person who starts being active around that time
+        starts = sorted((first[p_], p_) for p_ in first_row)
+        start_ts = [t_ for t_, _ in starts]
+        moved = 0
+        for i in np.argsort(ts, kind="stable"):
+            e = ev[i]
+            if e not in once:
+                continue
+            if (e, pid[i]) in seen:
+                k = bisect.bisect_left(start_ts, ts[i] - 86_400_000_000)
+                cand = [p_ for _t, p_ in starts[k:k + 200] if p_ not in doers[e]]
+                if not cand:
+                    keep[i] = False  # nobody new around then: drop the repeat
+                    continue
+                q = rng.choice(cand)
+                j = first_row[q]
+                for c in cols:
+                    cols[c][i] = cols[c][j]
+                doers[e].add(q)
+                pid[i] = q
+                moved += 1
+            seen.add((e, pid[i]))
+        for c, vals in cols.items():
+            tab = tab.set_column(tab.schema.get_field_index(c), c, pa.array(vals, tab.schema.field(c).type))
+        self.v2["lifecycle_dupes_reassigned"] = moved
+        self.v2["lifecycle_dupes_dropped"] = int((~keep).sum())
+        return tab.filter(pa.array(keep))
 
     def _event_props(self, e: str) -> set:
         return set((((self.S.get("events") or {}).get(e) or {}).get("properties") or {}).keys())

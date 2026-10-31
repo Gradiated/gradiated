@@ -26,6 +26,12 @@ class Dates(unittest.TestCase):
         self.assertEqual(s, "2026-10-03 | 5\n2026-10-04 | 7")
         self.assertEqual(kept, 0)
 
+    def test_monthly_table_kept(self):
+        """b11 card 10: a monthly result table (all month starts) was shifted to the 18th."""
+        s, n, kept = B.shift_text("mes|usuarios\n2026-08-01|5\n2026-09-01|7\n2026-10-01|9", 17, NOW)
+        self.assertIn("2026-09-01", s)
+        self.assertEqual((n, kept), (0, 3))
+
     def test_month_start_kept_day_dates_shift(self):
         s, n, kept = B.shift_text("where month = '2025-09-01' and day = '2025-09-14'", 11, NOW)
         self.assertIn("'2025-09-01'", s)

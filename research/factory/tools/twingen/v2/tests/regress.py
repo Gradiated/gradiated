@@ -22,6 +22,9 @@ Assertions read the generated files directly (production-dated events; no loadin
   {"type": "history", "from": D, "op": ">=", "value": N}    (events on or before D; checks the twin covers D)
   {"type": "distinct", "event": E, "props": {..}, "prop": P, "op": "<=", "value": N}  (distinct values of P)
   {"type": "session_first_pageview", "op": ">=", "value": share}
+  {"type": "parent_before_child", "parent": E1, "child": E2, "op": ">=", "value": share}  (persons doing E2 who did
+      E1 earlier)
+  {"type": "per_person", "event": E, "op": "<=", "value": n}  (max events per person)
   {"type": "uniq_ratio", "num_event": E, "den_event": E2|null, "op": "<=", "value": r}  (persons doing E / persons
       doing E2, or any event)  (web sessions whose first event is a $pageview)
 A props value starting with "~" matches as a substring ("~/gamelanding/"). Dates are production dates (YYYY-MM-DD,
@@ -187,6 +190,22 @@ def check(tw: Twin, a: dict) -> tuple[bool, str]:
         den = {tw.pid[i] for i in tw.rows(a.get("den_event"), None, a.get("from"), a.get("to"))}
         r = len(num) / max(1, len(den))
         return OPS[a["op"]](r, a["value"]), f"uniq_ratio={r:.2f} ({len(num)}/{len(den)})"
+    if t == "parent_before_child":
+        first_parent = {}
+        for i in tw.rows(a["parent"], None, a.get("from"), a.get("to")):
+            if tw.pid[i] not in first_parent or tw.ts_full[i] < first_parent[tw.pid[i]]:
+                first_parent[tw.pid[i]] = tw.ts_full[i]
+        kids = {}
+        for i in tw.rows(a["child"], None, a.get("from"), a.get("to")):
+            if tw.pid[i] not in kids or tw.ts_full[i] < kids[tw.pid[i]]:
+                kids[tw.pid[i]] = tw.ts_full[i]
+        ok = sum(1 for p_, t_ in kids.items() if p_ in first_parent and first_parent[p_] <= t_)
+        v = ok / max(1, len(kids))
+        return OPS[a["op"]](v, a["value"]), f"share_child_persons_with_prior_parent={v:.2f} of {len(kids)}"
+    if t == "per_person":
+        c = C.Counter(tw.pid[i] for i in tw.rows(a["event"], None, a.get("from"), a.get("to")))
+        v = max(c.values()) if c else 0
+        return OPS[a["op"]](v, a["value"]), f"max_per_person={v} over {len(c)} persons"
     if t == "history":
         v = sum(1 for d in tw.ts if d <= dt.date.fromisoformat(a["from"]))
         return OPS[a["op"]](v, a["value"]), f"events_on_or_before={v}"

@@ -25,6 +25,7 @@ the weakest arm.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import itertools
 import json
 import math
@@ -98,6 +99,17 @@ class Ports:
         self.q.put(p)
 
 
+TEAM_LOCKS: dict = {}
+TEAM_LOCKS_GUARD = threading.Lock()
+
+
+def team_lock(team_id) -> threading.Lock:
+    """One rollout per twin team at a time: concurrent rollouts on one team saw each other's objects (b11: an arm
+    reused another arm's insights) and their state resets could race."""
+    with TEAM_LOCKS_GUARD:
+        return TEAM_LOCKS.setdefault(team_id, threading.Lock())
+
+
 def rollout(args, arm: str, tid: str, k: int, ports: Ports, api_slots: dict) -> dict | None:
     base = f"{args.root}/{arm}"
     out = f"{base}/runs/{tid}/r{k}.json"
@@ -123,6 +135,8 @@ def rollout(args, arm: str, tid: str, k: int, ports: Ports, api_slots: dict) -> 
             api_slots[arm].acquire()
         log = f"{base}/logs/{tid}.r{k}.log"
         os.makedirs(os.path.dirname(log), exist_ok=True)
+        lock = team_lock(TASK_TEAM.get(tid))
+        lock.acquire()
         try:
             with open(log, "a") as lf:
                 lf.write(f"\n=== attempt {attempt} {time.strftime('%H:%M:%S')} ===\n")
@@ -134,6 +148,7 @@ def rollout(args, arm: str, tid: str, k: int, ports: Ports, api_slots: dict) -> 
                     proc.kill()
                     proc.wait()
         finally:
+            lock.release()
             if vllm:
                 ports.release(port)
             else:
@@ -166,7 +181,11 @@ def judge(path: str, tr: dict, notes=None) -> dict:
     return rec
 
 
+TASK_TEAM: dict = {}
+
+
 def run(args, arms: list[str], tasks: list[dict]) -> None:
+    TASK_TEAM.update({t["task_id"]: t.get("team_id") for t in tasks})
     ports = Ports(args.ports)
     api_slots = {a: threading.BoundedSemaphore(args.api_concurrency) for a in arms if not is_vllm(a)}
     jq: queue.Queue = queue.Queue()
@@ -202,6 +221,8 @@ def run(args, arms: list[str], tasks: list[dict]) -> None:
     for t in judges:
         t.start()
     jobs = [(a, t["task_id"], k) for k in range(args.samples) for t in tasks for a in arms]
+    # interleave so one team's rollouts (now serialised per team) are spread over the run
+    jobs.sort(key=lambda j: (j[2], hashlib.sha256(f"{j[1]}:{j[0]}".encode()).hexdigest()))
     with ThreadPoolExecutor(args.workers) as pool:
         list(pool.map(lambda j: job(*j), jobs))
     for _ in judges:

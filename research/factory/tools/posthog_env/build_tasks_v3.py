@@ -92,9 +92,12 @@ def shift_text(s: str, days: int, now: dt.date) -> tuple[str, int, int]:
     """V2.shift_text with month-start ISO dates kept (masked before shifting, restored after)."""
     kept: list[str] = []
 
+    all_iso = V2.ISO.findall(s)
+    monthly = len(all_iso) >= 3 and all(d == "01" for _y, _m, d in all_iso)  # a monthly series: keep month starts
+
     def mask(m):
         quoted = m.start() > 0 and s[m.start() - 1] == "'" and s[m.end():m.end() + 1] == "'"
-        if m.group(3) == "01" and quoted:
+        if m.group(3) == "01" and (quoted or monthly):
             kept.append(m.group(0))
             return f"\x00MS{len(kept) - 1}\x00"
         return m.group(0)

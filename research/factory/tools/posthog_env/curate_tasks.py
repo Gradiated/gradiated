@@ -92,6 +92,14 @@ builder notes: {notes}
    it", "creates the flag rather than describing it"), not exact reference numbers, unless the number follows
    unambiguously from the twin with the obvious query. Every acceptable variation you list must give a non-empty,
    sensible answer on THIS twin (check it with a query); never accept a variation that returns nothing.
+6d. Renaming (anon_fix): a replacement name must keep the same role. If the user names THEIR OWN product or company,
+   do not substitute a name that reads like a customer or another company; write "our product"/"our app" or use the
+   twin's own site/product name as the twin shows it (host, app name). Never introduce a name the twin cannot resolve.
+6f. A turn that begins by answering questions from an earlier conversation the agent never saw gets a one-line
+   preface in the user's voice ("Answers to the questions you asked earlier:"), so it reads as self-contained.
+6e. Open-ended requests ("analyse the project and suggest improvements"): must_include lists the core findings a good
+   answer would reach and says how many of them are required (e.g. "at least 3 of these 5"); do not require every
+   finding of the production answer.
 7. grading_notes must be checkable against the twin (the agent will see twin data, not production): describe what the
    right answer contains and how to check it (query sketch, object to inspect), acceptable variations, and things
    not required. Don't copy production numbers unless the twin reproduces them.

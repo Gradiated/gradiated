@@ -368,6 +368,49 @@ class SiblingOrder(unittest.TestCase):
         self.assertLessEqual(p.targets["$groupidentify"][0], p.targets["$groupidentify"][1])
 
 
+class Journeys(unittest.TestCase):
+    """b11: later funnel steps without earlier ones (151/184 calc runners never viewed the calc page); sign_up repeated
+    and after product use for 48% of people."""
+
+    def _tab(self, rows):
+        import pyarrow as pa
+        t0 = 1_700_000_000_000_000
+        return pa.table({
+            "event": [r[0] for r in rows], "person_id": [r[1] for r in rows], "distinct_id": [r[1] for r in rows],
+            "person_properties": ["{}"] * len(rows), "$session_id": [f"s-{r[1]}" for r in rows],
+            "$window_id": [f"w-{r[1]}" for r in rows], "properties": ['{"$session_id": "s-%s"}' % r[1] for r in rows],
+            "timestamp": pa.array([t0 + r[2] * 1_000_000 for r in rows], pa.int64()).cast(pa.timestamp("us", tz="UTC"))})
+
+    def test_children_follow_parents(self):
+        rows = [("calc_page_view", "a", 10), ("calc_page_view", "b", 20), ("calc_run", "c", 30), ("calc_run", "d", 40)]
+        p = project()  # family rule: calc_run's parent is calc_page_view
+        out = p.causal_children(self._tab(rows))
+        ev, pid = out.column("event").to_pylist(), out.column("person_id").to_pylist()
+        ts = out.column("timestamp").cast(__import__("pyarrow").int64()).to_pylist()
+        viewers = {pid[i]: ts[i] for i, e in enumerate(ev) if e == "calc_page_view"}
+        for i, e in enumerate(ev):
+            if e == "calc_run":
+                self.assertIn(pid[i], viewers)
+                self.assertGreater(ts[i], viewers[pid[i]])
+
+    def test_family_parent(self):
+        names = {"calc_page_view", "calc_run", "calc_reset", "ls_solution_ready", "ls_solution_complete"}
+        self.assertEqual(gen2.family_parent("calc_run", names), "calc_page_view")
+        self.assertIsNone(gen2.family_parent("calc_page_view", names))
+        self.assertEqual(gen2.parent_event("ls_solution_complete", names), "ls_solution_ready")
+
+    def test_lifecycle_repeat_moves_to_new_person(self):
+        rows = [("app_used", "a", 10), ("sign_up", "a", 50), ("sign_up", "a", 90), ("app_used", "c", 80)]
+        out = project().lifecycle_once(self._tab(rows))
+        ev, pid = out.column("event").to_pylist(), out.column("person_id").to_pylist()
+        self.assertEqual(sorted(pid[i] for i, e in enumerate(ev) if e == "sign_up"), ["a", "c"])
+
+    def test_lifecycle_once_keeps_time(self):
+        rows = [("app_used", "a", 10), ("sign_up", "a", 50), ("sign_up", "a", 90), ("sign_up", "b", 5)]
+        out = project().lifecycle_once(self._tab(rows))
+        ev, pid = out.column("event").to_pylist(), out.column("person_id").to_pylist()
+        self.assertEqual(sum(1 for i, e in enumerate(ev) if e == "sign_up" and pid[i] == "a"), 1)
+
 class FunnelDropoff(unittest.TestCase):
     """r1 card 13: funnel seeds walked every person through every step (twin 30->25 vs production 51->34->1->0->0)."""
 
@@ -461,6 +504,10 @@ class AgentCreatedObjects(unittest.TestCase):
         self.assertIn("111", made)
         self.assertIn("NEWTILE1", made)
         self.assertNotIn("222", made)
+
+    def test_null_display_labels(self):
+        """b11: PostHog's display label "None (i.e. no value)" was stored as a literal value."""
+        self.assertIn("None (i.e. no value)", gen2.NULLS)
 
     def test_no_creation_no_exclusion(self):
         F = {"calls": [{"k": 0, "turn": 0, "tool": "read_data", "object": "X1234567"}]}

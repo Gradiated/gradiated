@@ -193,7 +193,8 @@ def run(args, arms: list[str], tasks: list[dict]) -> None:
     counts: Counter = Counter()
     lock = threading.Lock()
     t0 = time.time()
-    n_jobs = len(arms) * len(tasks) * args.samples
+    ns = arm_samples(args)
+    n_jobs = sum(ns[a] for a in arms) * len(tasks)
 
     def judge_worker():
         while True:
@@ -220,7 +221,7 @@ def run(args, arms: list[str], tasks: list[dict]) -> None:
     judges = [threading.Thread(target=judge_worker, daemon=True) for _ in range(args.judge_workers)]
     for t in judges:
         t.start()
-    jobs = [(a, t["task_id"], k) for k in range(args.samples) for t in tasks for a in arms]
+    jobs = [(a, t["task_id"], k) for k in range(max(ns.values())) for t in tasks for a in arms if k < ns[a]]
     # interleave so one team's rollouts (now serialised per team) are spread over the run
     jobs.sort(key=lambda j: (j[2], hashlib.sha256(f"{j[1]}:{j[0]}".encode()).hexdigest()))
     with ThreadPoolExecutor(args.workers) as pool:
@@ -248,7 +249,7 @@ def report(args, arms: list[str], tasks: list[dict]) -> dict:
     for a in arms:
         for tid in ids:
             xs, ps = [], []
-            for k in range(args.samples):
+            for k in range(arm_samples(args)[a]):
                 tr = jload(f"{args.root}/{a}/runs/{tid}/r{k}.json")
                 if tr:
                     meta[a]["status"][tr.get("status")] += 1
@@ -260,7 +261,7 @@ def report(args, arms: list[str], tasks: list[dict]) -> dict:
                     xs.append(rec["overall"])
                     ps.append(E.L.passes(rec, THRESH))
             per[a][tid] = (xs, ps)
-    complete = [t for t in ids if all(len(per[a][t][0]) == args.samples for a in arms)]
+    complete = [t for t in ids if all(len(per[a][t][0]) == arm_samples(args)[a] for a in arms)]
     tm = {a: {t: statistics.mean(per[a][t][0]) for t in complete} for a in arms}
     pm = {a: {t: statistics.mean(per[a][t][1]) for t in complete} for a in arms}
     rep: dict = {"tag": args.tag, "tasks_file": args.tasks, "samples": args.samples, "arms": arms,
@@ -306,6 +307,14 @@ def report(args, arms: list[str], tasks: list[dict]) -> dict:
     return rep
 
 
+def arm_samples(args) -> dict:
+    out = {a: args.samples for a in args.arms.split(",")}
+    for x in filter(None, (args.arm_samples or "").split(",")):
+        a, n = x.split(":")
+        out[a] = int(n)
+    return out
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--tag", required=True)
@@ -313,6 +322,7 @@ def main() -> None:
     ap.add_argument("--arms", required=True, help="comma-separated runner model keys")
     ap.add_argument("--samples", type=int, default=3)
     ap.add_argument("--n", type=int, default=0)
+    ap.add_argument("--arm-samples", default="", help="per-arm sample counts, e.g. opus:1 (others use --samples)")
     ap.add_argument("--task-ids-file", default="", help="optional JSON list of task ids to restrict to")
     ap.add_argument("--workers", type=int, default=40)
     ap.add_argument("--ports", default="18000:6,18010:10,18011:10")

@@ -667,6 +667,266 @@ class HostAgentTest(unittest.TestCase):
                 process.wait()
 
 
+@unittest.skipUnless(hasattr(agent.Agent, 'wait_for_drain'), 'the frozen recovery agent uses a fixed drain')
+class DrainTest(unittest.TestCase):
+    setUp = HostAgentTest.setUp
+    tearDown = HostAgentTest.tearDown
+    request = HostAgentTest.request
+
+    def test_draining_proxy_rejects_all_new_allocation_requests(self):
+        directory = self.root / 'pods' / self.uid
+        directory.mkdir()
+        agent.atomic_json(directory / 'state.json', {'pod': self.pod, 'draining': True})
+        configuration = self.host.proxy_config()
+        self.assertIn(f'location /alloc/{self.uid}/ {{ return 503; }}', configuration)
+        self.assertIn(f'location = /_draining/{self.uid} {{ return 200 "$pid"; }}', configuration)
+        self.assertNotIn(f'proxy_pass http://127.0.0.1:38080/', configuration)
+
+    def test_drain_releases_early_only_when_proxy_confirms_requests_finished(self):
+        self.check_wait([False, False, True], elapsed=2)
+
+    def test_unverifiable_proxy_keeps_the_original_maximum_drain(self):
+        self.check_wait([False] * 660, elapsed=660)
+
+    def test_agent_restart_preserves_the_remaining_deadline(self):
+        self.check_wait([False] * 10, elapsed=10, started=350)
+
+    def test_expired_and_unqualified_drains_do_not_wait(self):
+        self.check_wait([], elapsed=0, started=0)
+        self.check_wait([], elapsed=0, duration=0)
+
+    def test_dead_task_does_not_delay_orphan_cleanup(self):
+        self.check_wait([], elapsed=0, live=False)
+
+    def test_early_drain_does_not_release_a_claim_when_process_cleanup_fails(self):
+        directory = self.root / 'pods' / self.uid
+        directory.mkdir()
+        state = {'pod': self.pod, 'draining': True, 'drain_started_at': 0}
+        agent.atomic_json(directory / 'state.json', state)
+        group = self.root / 'cgroup'
+        group.mkdir()
+        (group / 'cgroup.procs').write_text('1234')
+        clock = [0]
+        def sleep(seconds):
+            clock[0] += seconds
+        with patch.object(self.host, 'wait_for_drain'), patch.object(self.host, 'stop'), \
+                patch.object(agent, 'pod_cgroup', return_value=group), \
+                patch.object(agent.time, 'monotonic', side_effect=lambda: clock[0]), \
+                patch.object(agent.time, 'sleep', side_effect=sleep), \
+                patch.object(self.host, 'refresh_proxy') as refresh:
+            with self.assertRaisesRegex(RuntimeError, 'GPU claim retained'):
+                self.host.drain(self.uid)
+        self.assertEqual(json.loads((directory / 'state.json').read_text()), state)
+        self.assertEqual((group / 'cgroup.kill').read_text(), '1')
+        refresh.assert_not_called()
+
+    def check_wait(self, responses, elapsed, started=1000, duration=660, live=True):
+        clock = [0]
+        def sleep(seconds):
+            clock[0] += seconds
+        with patch.object(agent.time, 'time', return_value=1000), \
+                patch.object(agent.time, 'monotonic', side_effect=lambda: clock[0]), \
+                patch.object(agent.time, 'sleep', side_effect=sleep), \
+                patch.object(agent, 'alive', return_value=live), \
+                patch.object(self.host, 'proxy_drained', side_effect=responses) as drained:
+            self.host.wait_for_drain(self.uid, {'drain_started_at': started, 'drain_seconds': duration})
+        self.assertEqual(clock[0], elapsed)
+        self.assertEqual(drained.call_count, len(responses))
+
+    def test_unavailable_or_invalid_proxy_acknowledgement_is_not_empty(self):
+        import urllib.error
+        for error in (OSError('unavailable'), urllib.error.HTTPError('test', 404, 'missing', {}, None)):
+            with self.subTest(error=error), patch.object(agent.urllib.request, 'build_opener') as opener:
+                opener.return_value.open.side_effect = error
+                self.assertFalse(self.host.proxy_drained(self.uid))
+        for status, body in ((503, b'1'), (200, b'invalid'), (200, b'1234')):
+            with self.subTest(status=status, body=body), patch.object(agent.urllib.request, 'build_opener') as opener:
+                response = opener.return_value.open.return_value.__enter__.return_value
+                response.status, response.read.return_value = status, body
+                self.assertFalse(self.host.proxy_drained(self.uid))
+
+    def test_proxy_drain_requires_its_only_worker_and_a_stable_master(self):
+        proxy = self.root / 'proxy'
+        proxy.mkdir()
+        (proxy / 'nginx.pid').write_text('100')
+        master = self.root / 'proc/100'
+        (master / 'task/100').mkdir(parents=True)
+        children = master / 'task/100/children'
+        children.write_text('200')
+        command = master / 'cmdline'
+        command.write_bytes(b'nginx: master process -c ' + str(self.root / 'nginx.conf').encode())
+        worker = self.root / 'proc/200'
+        worker.mkdir()
+        (worker / 'cmdline').write_bytes(b'nginx: worker process')
+
+        def proc_path(path):
+            return self.root / path.lstrip('/') if str(path).startswith('/proc/') else Path(path)
+
+        with patch.object(agent.urllib.request, 'build_opener') as opener, \
+                patch.object(agent, 'Path', side_effect=proc_path), \
+                patch.object(agent, 'process_birth', return_value='stable') as birth:
+            response = opener.return_value.open.return_value.__enter__.return_value
+            response.status, response.read.return_value = 200, b'200'
+            self.assertTrue(self.host.proxy_drained(self.uid))
+            for value in ('200 201', '', '201'):
+                children.write_text(value)
+                self.assertFalse(self.host.proxy_drained(self.uid))
+            children.write_text('200')
+            birth.side_effect = ['stable', 'stable', 'reused']
+            self.assertFalse(self.host.proxy_drained(self.uid))
+            birth.side_effect = None
+            command.write_bytes(b'unrelated master')
+            self.assertFalse(self.host.proxy_drained(self.uid))
+
+    @unittest.skipUnless(shutil.which('nginx'), 'Nginx is required for the real proxy drain test')
+    def test_real_proxy_preserves_streams_queued_requests_and_partial_uploads(self):
+        import http.client
+        from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+        import threading
+        import time
+        entered = {name: threading.Event() for name in ('stream', 'queued', 'upload')}
+        release = {name: threading.Event() for name in ('stream', 'queued')}
+        failures = []
+
+        class Runtime(BaseHTTPRequestHandler):
+            def do_GET(self):
+                name = self.path.strip('/')
+                if name not in entered:
+                    self.send_response(200)
+                    self.send_header('Content-Length', '0')
+                    self.end_headers()
+                    return
+                entered[name].set()
+                if name == 'queued':
+                    release[name].wait(10)
+                self.send_response(200)
+                self.send_header('Content-Length', '2')
+                self.end_headers()
+                self.wfile.write(b'A')
+                self.wfile.flush()
+                if name == 'stream':
+                    release[name].wait(10)
+                self.wfile.write(b'B')
+
+            def do_POST(self):
+                entered['upload'].set()
+                body = self.rfile.read(2)
+                self.send_response(200)
+                self.send_header('Content-Length', str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            def log_message(self, *args):
+                pass
+
+        runtime = ThreadingHTTPServer(('127.0.0.1', 0), Runtime)
+        runtime.daemon_threads = True
+        thread = threading.Thread(target=runtime.serve_forever, daemon=True)
+        thread.start()
+        task = subprocess.Popen(['sleep', '120'], start_new_session=True)
+        directory = self.root / 'pods' / self.uid
+        directory.mkdir()
+        state = {'pod': self.pod, 'port_base': runtime.server_port, 'task': agent.owner(task),
+                 'drain_started_at': time.time(), 'drain_seconds': agent.REQUEST_DRAIN_SECONDS}
+        agent.atomic_json(directory / 'state.json', state)
+        proxy = self.root / 'proxy'
+        proxy.mkdir()
+        for name in ('body', 'temp'):
+            (proxy / name).mkdir()
+        self.host.refresh_proxy()
+        command = ['nginx', '-c', str(self.root / 'nginx.conf'), '-g',
+                   'daemon off;' + (' user root;' if os.geteuid() == 0 else '')]
+        log = (self.root / 'nginx.log').open('wb')
+        process = subprocess.Popen(command, stdout=log, stderr=log)
+        connections = []
+
+        def connect():
+            connection = http.client.HTTPConnection('127.0.0.1', 8889, timeout=10)
+            connections.append(connection)
+            return connection
+
+        def queued_request():
+            try:
+                connection = connect()
+                connection.request('GET', f'/alloc/{self.uid}/queued')
+                self.assertEqual(connection.getresponse().read(), b'AB')
+            except BaseException as error:
+                failures.append(error)
+
+        try:
+            deadline = time.monotonic() + 5
+            while not agent.health(8889, '/healthz') and time.monotonic() < deadline:
+                self.assertIsNone(process.poll(), (self.root / 'nginx.log').read_text())
+                time.sleep(.02)
+            stream = connect()
+            stream.request('GET', f'/alloc/{self.uid}/stream')
+            stream_response = stream.getresponse()
+            self.assertEqual(stream_response.read(1), b'A')
+            queued = threading.Thread(target=queued_request)
+            queued.start()
+            self.assertTrue(entered['queued'].wait(2))
+            upload = connect()
+            upload.putrequest('POST', f'/alloc/{self.uid}/upload')
+            upload.putheader('Content-Length', '2')
+            upload.endheaders(b'A')
+            self.assertTrue(entered['upload'].wait(2))
+            agent.atomic_json(directory / 'state.json', {**state, 'draining': True})
+            self.host.refresh_proxy()
+            deadline = time.monotonic() + 5
+            while not agent.health(8889, f'/_draining/{self.uid}') and time.monotonic() < deadline:
+                time.sleep(.02)
+            deadline = time.monotonic() + 5
+            while True:
+                rejected = connect()
+                rejected.request('GET', f'/alloc/{self.uid}/new')
+                response = rejected.getresponse()
+                status = response.status
+                response.read()
+                rejected.close()
+                if status == 503 or time.monotonic() >= deadline:
+                    break
+                time.sleep(.02)
+            self.assertEqual(status, 503)
+            self.assertFalse(self.host.proxy_drained(self.uid))
+            restarted = agent.Agent(self.config, self.root)
+            restarted.refresh_proxy()
+            self.assertFalse(restarted.proxy_drained(self.uid))
+            with patch.object(restarted, 'stop') as stop, \
+                    patch.object(agent, 'pod_cgroup', return_value=self.root / 'no-cgroup'):
+                draining = threading.Thread(target=restarted.drain, args=(self.uid,), daemon=True)
+                draining.start()
+                release['stream'].set()
+                self.assertEqual(stream_response.read(), b'B')
+                stop.assert_not_called()
+                self.assertFalse(restarted.proxy_drained(self.uid))
+                release['queued'].set()
+                queued.join(2)
+                self.assertFalse(queued.is_alive())
+                self.assertEqual(failures, [])
+                self.assertFalse(restarted.proxy_drained(self.uid))
+                stop.assert_not_called()
+                self.assertTrue((directory / 'state.json').exists())
+                upload.send(b'B')
+                self.assertEqual(upload.getresponse().read(), b'AB')
+                draining.join(5)
+                self.assertFalse(draining.is_alive())
+                stop.assert_called_once()
+                self.assertFalse((directory / 'state.json').exists())
+        finally:
+            for event in release.values():
+                event.set()
+            for connection in connections:
+                connection.close()
+            process.terminate()
+            process.wait(timeout=5)
+            log.close()
+            runtime.shutdown()
+            runtime.server_close()
+            thread.join(2)
+            task.terminate()
+            task.wait(timeout=5)
+
+
 def fcntl_locked(path):
     with path.open('a') as handle:
         try:

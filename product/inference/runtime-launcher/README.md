@@ -53,7 +53,7 @@ for DeepSeek; extraction took 18 and 39 seconds respectively. An isolated GLM te
 readiness and 19 seconds for each of two cached extractions, including a fresh
 SHA-256 check. The archive cache avoids repeated transfers for unchanged bundles. New bundle digests still need
 one download per host. It does not cache initialized GPU state or shorten the
-11-minute request drain. Keep inference model weights in
+request drain, which is bounded at 11 minutes. Keep inference model weights in
 `/home/runtime/.cache/huggingface`, on node-local disk outside the allocation.
 All three inference jobs share this Hugging Face cache within each host and pin
 model/tokenizer revisions. Missing files download automatically; completed blobs
@@ -159,8 +159,14 @@ localhost control bridge. It cannot access the database or Kubernetes API.
 Readiness requires a healthy runtime and SDK qualification of the current
 process identity. A restarted process must qualify again.
 
-On pod deletion, the host agent withdraws new requests, drains qualified serving
-processes for 660 seconds, then stops their process trees and releases GPU claims.
+On pod deletion, the host agent rejects new allocation requests and reloads the
+host proxy, preserving accepted requests. It stops qualified serving processes
+as soon as the old proxy workers exit, or after a maximum of 660 seconds, then
+verifies their process trees are gone before releasing GPU claims. The proxy
+worker barrier covers queued requests, uploads and response streams, including
+streams to other allocations sharing that host. If the proxy cannot acknowledge
+withdrawal or its workers cannot be verified, the full remaining timeout applies.
+An agent restart preserves the original drain deadline.
 Training Jobs use their own lease and cancellation protocol without that serving
 drain. Provider resets lose host-local state; do not reset an allocated GPU.
 

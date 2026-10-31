@@ -101,6 +101,7 @@ jobs:
           path: product/packages/autotrain
           token: ${{ steps.autotrain-token.outputs.token }}
           persist-credentials: false
+      - run: python3 -m pip install PyYAML==6.0.2
       - run: |
           node --test tools/images/*.test.mjs tools/models/*.test.mjs
           bash product/inference/images/tests/test_launch.sh
@@ -200,13 +201,47 @@ jobs:
           path: model-release/release.json
           retention-days: 30
 
-  # Submission is enabled only after runtime-user, GPU, and recovery qualification.
-  # A published base image does not replace a provider pod.
+  promote-host:
+    name: Record host bundle release
+    needs: runtime
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-24.04
+    environment: production
+    timeout-minutes: 15
+    concurrency:
+      group: host-bundle-promotion
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Create release push token
+        id: release-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ steps.release-token.outputs.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: host-runtime-release
+          path: ${{ runner.temp }}/host-runtime-release
+      - run: python3 -m pip install PyYAML==6.0.2
+      - name: Commit the compatible host bundle pin
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+          HOST_RELEASE: ${{ runner.temp }}/host-runtime-release/release.json
+        run: node tools/models/promote-host.mjs "$HOST_RELEASE"
 
   passed:
     name: Model deployment passed
     if: always()
-    needs: [changes, checks, images, runtime]
+    needs: [changes, checks, images, runtime, promote-host]
     runs-on: ubuntu-latest
     steps:
       - name: Fail when a required job failed

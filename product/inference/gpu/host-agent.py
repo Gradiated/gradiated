@@ -551,7 +551,9 @@ class Agent:
             port = state.get("port_base", 38080)
             _, profile = runtime_profile(self.config, state["pod"])
             if state.get("draining"):
-                lines.append(f"location = /alloc/{uid}/health {{ return 503; }}")
+                lines.append(f'location = /_draining/{uid} {{ return 200 "$pid"; }}')
+                lines.append(f"location /alloc/{uid}/ {{ return 503; }}")
+                continue
             elif profile.get("warmup"):
                 lines.append(f"location = /alloc/{uid}/health {{ proxy_pass http://127.0.0.1:{port + 3}/health; }}")
             if profile.get("adapters"):
@@ -875,15 +877,46 @@ class Agent:
                         "epoch": details.get("runtime", {}), "draining": state.get("draining", False)}
             raise ValueError("Unsupported host operation")
 
+    def proxy_drained(self, uid):
+        # The old Nginx worker owns accepted requests through their final byte,
+        # including uploads, runtime queues and streams. Runtime gauges do not.
+        try:
+            request = urllib.request.Request(f"http://127.0.0.1:8889/_draining/{uid}",
+                                             headers={"Connection": "close"})
+            with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(request, timeout=1) as response:
+                if response.status != 200:
+                    return False
+                worker = int(response.read(32))
+            master = int((self.root / "proxy/nginx.pid").read_text())
+            process = Path(f"/proc/{master}")
+            birth = process_birth(master)
+            command = (process / "cmdline").read_bytes()
+            if not birth or b"nginx: master process" not in command or str(self.root / "nginx.conf").encode() not in command:
+                return False
+            children = {int(pid) for pid in (process / f"task/{master}/children").read_text().split()}
+            # worker_processes is one. Any other child may still own a stream
+            # from before withdrawal, including one to another allocation.
+            return (children == {worker} and process_birth(worker) is not None
+                    and (Path(f"/proc/{worker}") / "cmdline").read_bytes().startswith(b"nginx: worker process")
+                    and process_birth(master) == birth)
+        except (OSError, ValueError, urllib.error.URLError):
+            return False
+
+    def wait_for_drain(self, uid, state):
+        remaining = state["drain_started_at"] + state.get("drain_seconds", REQUEST_DRAIN_SECONDS) - time.time()
+        deadline = time.monotonic() + min(REQUEST_DRAIN_SECONDS, max(0, remaining))
+        while alive(state.get("task")) and time.monotonic() < deadline:
+            if self.proxy_drained(uid):
+                return
+            time.sleep(min(1, max(0, deadline - time.monotonic())))
+
     def drain(self, uid):
         directory = self.root / "pods" / uid
         path = directory / "state.json"
         if not path.exists():
             return
         state = json.loads(path.read_text())
-        # New requests are withdrawn before the existing request drain.
-        if alive(state.get("task")):
-            time.sleep(max(0, state["drain_started_at"] + state.get("drain_seconds", REQUEST_DRAIN_SECONDS) - time.time()))
+        self.wait_for_drain(uid, state)
         self.stop(directory, state)
         group = pod_cgroup(uid)
         if group.exists():

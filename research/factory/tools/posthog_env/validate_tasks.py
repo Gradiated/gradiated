@@ -125,6 +125,7 @@ def main() -> None:
     ap.add_argument("--repair", action="store_true",
                     help="send non-SOUND tasks back to the curator with the findings, then validate the revision once")
     ap.add_argument("--curator-model", default="claude-opus-5-5")
+    ap.add_argument("--repair-rounds", type=int, default=2)
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
     tasks = [json.loads(x) for x in open(a.tasks) if x.strip()]
@@ -140,33 +141,39 @@ def main() -> None:
                        pool.map(lambda t: validate_one(t, recs.get(t["conversation_id"]), a.model, a.out), todo)))
     stats: Counter = Counter()
     if a.repair:
-        bad = [t for t in todo if (res.get(t["task_id"]) or {}).get("verdict") in ("MINOR", "BROKEN")]
-        os.makedirs(f"{a.out}/rev1/curated", exist_ok=True)
+        for rnd in range(1, a.repair_rounds + 1):
+            cur = {t["task_id"]: t for t in tasks}
+            bad = [cur[t["task_id"]] for t in todo
+                   if (res.get(t["task_id"]) or {}).get("verdict") in ("MINOR", "BROKEN") and t["task_id"] in cur
+                   and not cur[t["task_id"]].get("repair_gave_up")]
+            if not bad:
+                break
+            rdir = f"{a.out}/rev{rnd}"
+            os.makedirs(f"{rdir}/curated", exist_ok=True)
 
-        def repair(t):
-            r = res[t["task_id"]]
-            fb = {"prev": {"turns": t["turns"], "grading_notes": t.get("grading_notes")},
-                  "findings": {k: r.get(k) for k in ("verdict", "checks", "defects", "summary")}}
-            base = {**t, "turns": t.get("turns_built") or t["turns"]}
-            c = CT.curate_one(base, recs.get(t["conversation_id"]), a.curator_model, f"{a.out}/rev1/curated", feedback=fb)
-            if c.get("decision") not in ("keep", "edit") or not c.get("turns"):
-                return t["task_id"], None, c
-            t2 = {**t, "turns": c["turns"], "max_turns": len(c["turns"]), "grading_notes": c.get("grading_notes"),
-                  "revised_by_validator": True}
-            return t["task_id"], t2, validate_one(t2, recs.get(t["conversation_id"]), a.model, f"{a.out}/rev1")
+            def repair(t, rdir=rdir):
+                r = res[t["task_id"]]
+                fb = {"prev": {"turns": t["turns"], "grading_notes": t.get("grading_notes")},
+                      "findings": {k: r.get(k) for k in ("verdict", "checks", "defects", "summary")}}
+                base = {**t, "turns": t.get("turns_built") or t["turns"]}
+                c = CT.curate_one(base, recs.get(t["conversation_id"]), a.curator_model, f"{rdir}/curated", feedback=fb)
+                if c.get("decision") not in ("keep", "edit") or not c.get("turns"):
+                    return t["task_id"], {**t, "repair_gave_up": True}, None
+                t2 = {**t, "turns": c["turns"], "max_turns": len(c["turns"]), "grading_notes": c.get("grading_notes"),
+                      "revised_by_validator": rnd}
+                return t["task_id"], t2, validate_one(t2, recs.get(t["conversation_id"]), a.model, rdir)
 
-        with ThreadPoolExecutor(a.workers) as pool:
-            for tid, t2, r2 in pool.map(repair, bad):
-                stats["repair_attempted"] += 1
-                if t2 is None:
-                    stats["repair_dropped_by_curator"] += 1
-                    continue
-                if r2.get("verdict") == "SOUND":
-                    stats["repair_fixed"] += 1
-                res[tid] = r2
-                for i, t in enumerate(tasks):
-                    if t["task_id"] == tid:
-                        tasks[i] = t2
+            with ThreadPoolExecutor(a.workers) as pool:
+                for tid, t2, r2 in pool.map(repair, bad):
+                    stats[f"repair{rnd}_attempted"] += 1
+                    if r2 is None:
+                        stats[f"repair{rnd}_dropped_by_curator"] += 1
+                    else:
+                        res[tid] = r2
+                        stats[f"repair{rnd}_fixed"] += r2.get("verdict") == "SOUND"
+                    for i, t in enumerate(tasks):
+                        if t["task_id"] == tid:
+                            tasks[i] = t2
     with open(f"{a.out}/validated.jsonl", "w") as f:
         for t in tasks:
             t = dict(t)

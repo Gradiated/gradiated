@@ -20,6 +20,7 @@ Prints counts only.
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import glob
 import hashlib
 import json
@@ -94,6 +95,31 @@ def pending() -> int:
 REGISTRY = f"/opt/posthog-env/loader/teams_v2_{TAG}.jsonl"
 
 
+def shift_dates_deep(x, days: int):
+    """Shift ISO dates in every string of a JSON value by `days` (build_tasks_v3.shift_text: month starts in monthly
+    contexts are kept)."""
+    sys.path.insert(0, RUNNER)
+    import build_tasks_v3 as BT  # noqa: E402
+
+    if isinstance(x, str):
+        return BT.shift_text(x, days, dt.date.today())[0]
+    if isinstance(x, list):
+        return [shift_dates_deep(v, days) for v in x]
+    if isinstance(x, dict):
+        return {k: shift_dates_deep(v, days) for k, v in x.items()}
+    return x
+
+
+def reanchor(path: str, log) -> None:
+    """Reload a task set's twins so their data ends 'now' again (twins are not re-anchored at run time: relative windows
+    drift as days pass), then refresh team ids and shift the tasks' text dates with the data."""
+    tasks = [json.loads(x) for x in open(path) if x.strip()]
+    ids = sorted({t["twin_id"] for t in tasks})
+    sh([f"{PH}/.venv/bin/python", "../loader/load_all_v2.py", "--ids", ",".join(ids), "--workers", "2", "--force",
+        "--min-free-gb", "60"], log, cwd=PH)
+    refresh_teams(path, log)
+
+
 def refresh_teams(path: str, log=None) -> int:
     """A forced reload creates a NEW team and marks the old one replaced, but task files kept the old team_id, so the
     validator, audits and benches read the pre-override data (round 6: all 20 override-regenerated twins). Rewrites
@@ -111,9 +137,12 @@ def refresh_teams(path: str, log=None) -> int:
         if not r or int(r["team_id"]) == int(t.get("team_id") or 0):
             continue
         old_p, new_p = t.get("project_id"), r.get("project_id") or r["team_id"]
+        delta = int(r.get("shift_days") or 0) - int(t.get("shift_days") or 0)
         for k in ("turns", "turns_built", "grading_notes"):
             if k in t and t[k] is not None:
                 t[k] = json.loads(json.dumps(t[k], ensure_ascii=False).replace(f"/project/{old_p}/", f"/project/{new_p}/"))
+                if delta:  # re-anchored twin: the text's dates move with the data (clock pinning)
+                    t[k] = shift_dates_deep(t[k], delta)
         t.update({"team_id": int(r["team_id"]), "project_id": int(new_p), "loaded_now_utc": r.get("loaded_now_utc"),
                   "shift_days": r.get("shift_days", t.get("shift_days"))})
         n += 1
@@ -251,10 +280,15 @@ def main() -> None:
     ap.add_argument("--rebuild-ids", default="")
     ap.add_argument("--refresh-teams", default="", help="rewrite team ids in a task file from the loader registry")
     ap.add_argument("--regen-pending", default="", help="batch name: regenerate + re-validate PENDING_REGEN tasks")
+    ap.add_argument("--reanchor", default="", help="task file: reload its twins to now and refresh ids/dates")
     ap.add_argument("--name", default="")
     a = ap.parse_args()
     if a.setup:
         setup()
+        return
+    if a.reanchor:
+        with open(a.reanchor + ".reanchor.log", "a") as log:
+            reanchor(a.reanchor, log)
         return
     if a.regen_pending:
         d = f"{BATCHES}/{a.regen_pending}"

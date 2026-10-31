@@ -13,7 +13,7 @@ use super::{
         valid_finish_reason, Choice, NormalizedCompletionResponse, NormalizedStreamResponse,
         PublicUsage, StreamChoice,
     },
-    client::{next_message, open_events, read_bounded_body, send, Call, RuntimeEvents},
+    client::{next_message, open_events, read_completion_body, send, Call, RuntimeEvents},
     ChunkUsage, ProtocolViolation, RuntimeCompletion, RuntimeEventStream, RuntimeFailure,
     RuntimeFailureKind, RuntimeStreamChunk, RuntimeStreamEvent, SglangClient,
 };
@@ -41,7 +41,7 @@ impl SglangClient {
         let requested_model = call.request.model.clone();
         let accepted = self.send_native(call, input_ids, false).await?;
 
-        let body = read_bounded_body(accepted.response).await?;
+        let body = read_completion_body(accepted.response).await?;
         let completion: NativeTokenResponse =
             serde_json::from_slice(&body).map_err(|_| ProtocolViolation::Json)?;
 

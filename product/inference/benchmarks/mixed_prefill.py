@@ -122,7 +122,7 @@ def request(url, model, length, output_tokens, seed, delay, epoch, protocol="com
                 remaining = request_deadline-(time.monotonic()-started)
                 if remaining <= 0:
                     raise TimeoutError('request deadline exceeded')
-                response.fp.raw._sock.settimeout(min(idle_timeout, remaining))
+                response.fp.raw._sock.settimeout(min(idle_timeout, remaining) if first is not None else remaining)
                 line = response.readline()
                 if not line:
                     break

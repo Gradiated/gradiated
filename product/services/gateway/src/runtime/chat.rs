@@ -5,8 +5,8 @@ use serde_json::{Map, Value};
 
 use super::{
     client::{
-        next_message, one_shot_body, open_events, read_bounded_body, send, Call, ModelNames,
-        RuntimeEvents,
+        next_message, one_shot_body, open_events, read_bounded_body, read_completion_body, send,
+        Call, ModelNames, RuntimeEvents,
     },
     ChunkUsage, ProtocolViolation, RuntimeCompletion, RuntimeEventStream, RuntimeFailure,
     RuntimeStreamChunk, RuntimeStreamEvent, SglangClient,
@@ -25,7 +25,7 @@ impl SglangClient {
         let models = ModelNames::new(&call);
         let response = self.send_chat(call, &models, "application/json").await?;
 
-        let body = read_bounded_body(response).await?;
+        let body = read_completion_body(response).await?;
         normalize_completion(&body, &models)
     }
 

@@ -51,17 +51,15 @@ requests without errors at 88 TPS median per request.
 
 `--max-num-seqs 4` limits simultaneous decoding; additional HTTP requests can
 queue. Add TP1 replicas to increase simultaneous serving capacity.
-The production target is ten uncensored TP1 replicas at concurrency four,
-with 16 CPU and 224 GiB host RAM per replica, plus one stock TP2 replica with
-32 CPU and 400 GiB host RAM. Cold-weight loading and startup qualification of
-the uncensored runtime peaked at 188 GiB under its cgroup limits.
-Kubernetes selects B300 hosts by available GPU, CPU and memory resources;
-uncensored replicas prefer spreading across hosts without a host allowlist.
-Host `01a0fbf8-06fc-7658-96e1-ae72f7dba135` is user-owned capacity and remains
-excluded from this deployment and further experiments, even if it is uncordoned.
-Two uncensored replicas plus one stock replica need four GPUs and 848 GiB host
-RAM. They cannot all fit on the 686 GiB four-GPU host; the scheduler may spread
-them across eligible hosts or leave replicas Pending until resources are available.
+The production target is eight TP1 replicas at concurrency four, with 16 CPU and
+224 GiB host RAM per replica. Cold-weight loading and startup qualification
+peaked at 188 GiB under those cgroup limits. Eight replicas fit as four on the
+4-GPU B300 host and four beside DeepSeek on the 8-GPU B300 host, after stock GLM
+drains. Placement permits several replicas per host.
+Require node affinity to instance IDs `01a0f19d-1ff3-7613-8cbf-81b693c0f0d4`
+and `01a0fbf7-5276-700b-903b-7e04da150ed6`. Host
+`01a0fbf8-06fc-7658-96e1-ae72f7dba135` is user-owned capacity and must not be
+used for this deployment or further experiments, even if it is uncordoned.
 
 The startup supervisor checks bursts through concurrency sixteen, including
 queue completion within its timeout.
@@ -70,10 +68,11 @@ and a pair of prefills alongside a short request when admission limits permit.
 These shapes must run before readiness so MTP batch specializations are compiled
 before serving traffic. Queue limits bound the qualification bursts.
 
-Stock GLM is enabled again in the catalog and runs one replica using its
-immutable rollback profile. Previously retired stock adapters retain their
-artifacts and training history; restoring the base model does not restore their
-availability.
+Retire stock GLM only after the new deployment passes production verification.
+`autoscaling.paused_replicas: 0` renders KEDA's paused-replica annotation, which
+sets the old Rollout to zero while retaining its immutable rollback profile.
+Retiring the base also requires marking its trained adapters unavailable;
+retain their artifacts and training history.
 
 Reproduce the initial concurrency screen against an isolated test runtime:
 
@@ -227,8 +226,10 @@ test host's temporary directory. `--quality-contexts 512,1000000,1000000` extend
 the marker smoke checks to million-token contexts. Smaller-context results do
 not qualify million-token serving.
 
-The default 30-second stream idle limit and 630-second request deadline match
-the production gateway. For a diagnostic run that observes backend completion
+The benchmark allows prefill within the 630-second request deadline and starts
+the 30-second stream idle limit after first output, matching the gateway policy.
+It cannot distinguish an accepted queued request from active prefill.
+For a diagnostic run that observes backend completion
 beyond those limits, set `--response-idle-timeout 690 --request-deadline 900`
 and report it separately. Use a different `--seed-offset` for each timeout mode
 to keep prefix-cache hits from making the production-limit probe artificially fast.

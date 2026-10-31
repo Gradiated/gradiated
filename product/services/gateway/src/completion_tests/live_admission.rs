@@ -185,3 +185,59 @@ async fn live_tp1_both_at_capacity_return_429_after_two_attempts() {
         );
     }
 }
+
+#[tokio::test]
+#[ignore = "requires an isolated TP1 replica and a fresh million-token synthetic chat fixture"]
+async fn live_tp1_million_token_prefill_can_exceed_the_generation_idle_timeout() {
+    use crate::runtime::RuntimeStreamEvent;
+
+    let mut call = live_call();
+    call.request = InferenceRequest::parse(
+        &std::fs::read(std::env::var("GRADIATED_QUEUE_TEST_LONG_REQUEST_FILE").unwrap()).unwrap(),
+    )
+    .unwrap();
+    assert!(call.request.stream);
+    call.effective_output_tokens = 64;
+    call.deadline = Utc::now() + TimeDelta::seconds(630);
+    let started = Instant::now();
+    let mut events = call
+        .stream()
+        .await
+        .unwrap_or_else(|_| panic!("live long stream failed to open"));
+    if std::env::var("GRADIATED_QUEUE_TEST_REQUIRE_FALLBACK").as_deref() == Ok("1") {
+        assert_eq!(call.deployment.id, Uuid::from_u128(2));
+    }
+    let mut first_output = None;
+    let mut usage = None;
+    let mut done = false;
+
+    while let Some(event) = events.next_event().await.unwrap() {
+        match event {
+            RuntimeStreamEvent::Chunk(chunk) => {
+                if chunk.has_usable_output() {
+                    first_output.get_or_insert_with(|| started.elapsed());
+                }
+                if let Some(observed) = chunk.usage() {
+                    usage = Some(observed);
+                }
+            }
+            RuntimeStreamEvent::Done => {
+                done = true;
+                break;
+            }
+        }
+    }
+
+    let usage = usage.unwrap();
+    let first_output = first_output.unwrap().as_secs_f64();
+    assert!(done);
+    assert!(first_output > 30.0);
+    assert!(first_output < 630.0);
+    assert!(usage.input_tokens() >= 1_000_000);
+    assert_eq!(usage.cached_input_tokens(), 0);
+    assert!(usage.output_tokens() > 0);
+    println!(
+        "{}",
+        json!({"ttft_s":first_output,"elapsed_s":started.elapsed().as_secs_f64(),"input_tokens":usage.input_tokens(),"cached_input_tokens":usage.cached_input_tokens(),"output_tokens":usage.output_tokens()})
+    );
+}

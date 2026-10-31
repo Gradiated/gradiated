@@ -175,6 +175,16 @@ provider. Both attempts share one generation ID, deadline, service tier, price
 snapshot, organization lease, and settlement. Invalid requests, protocol errors,
 timeouts, and started streams are not retried.
 
+Before generated output starts, the runtime client waits within the existing
+generation deadline (630 seconds by default). It cannot distinguish an engine
+queue from active prefill. A role-only or empty stream event does not start the
+30-second idle limit; content, reasoning or tool-call output does. After output
+starts, each event read has a 30-second idle limit, and the original generation
+deadline still bounds the entire request. Buffered completions allow the same
+prefill wait before response bytes begin, then retain the 30-second body-read
+idle limit. Rejection bodies retain their short idle limit. Deployment probes
+keep their own four-second total deadline.
+
 For the DeepSeek vLLM runtime, the launch script bounds admission with
 `--max-num-queued-reqs` and `--max-num-queued-tokens`. Size these for the deployment's
 batch capacity and prefill throughput; a token bound below one full-context

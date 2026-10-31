@@ -1,6 +1,7 @@
 mod chat;
 mod client;
 mod native;
+mod progress;
 mod systemone;
 
 use async_trait::async_trait;

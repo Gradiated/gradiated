@@ -15,7 +15,7 @@ spec.loader.exec_module(benchmark)
 
 
 class StreamingMeasurementTests(unittest.TestCase):
-    def measure(self, mode, protocol="completions", idle_timeout=30, first_signal=None):
+    def measure(self, mode, protocol="completions", idle_timeout=30, first_signal=None, request_deadline=630):
         class Handler(http.server.BaseHTTPRequestHandler):
             def log_message(self, *_):
                 pass
@@ -39,12 +39,17 @@ class StreamingMeasurementTests(unittest.TestCase):
                     for event in events:
                         for choice in event.get('choices', []):
                             choice['delta'] = {'reasoning': choice.pop('text')}
-                if mode == 'slow':
+                if mode == 'prefill_stall':
                     time.sleep(.1)
                     return
-                for event in events:
+                if mode == 'prefill':
+                    time.sleep(.1)
+                for index, event in enumerate(events):
                     self.wfile.write(b'data: ' + json.dumps(event).encode() + b'\n\n')
                     self.wfile.flush()
+                    if mode == 'slow' and index == 1:
+                        time.sleep(.1)
+                        return
                     time.sleep(.01)
                 if mode != 'truncated':
                     self.wfile.write(b'data: [DONE]\n\n')
@@ -53,7 +58,7 @@ class StreamingMeasurementTests(unittest.TestCase):
         thread.start()
         try:
             row = benchmark.request(f'http://127.0.0.1:{server.server_port}', 'test', 16, 2, 123, 0, time.monotonic(),
-                                    protocol, ([{'role': 'user', 'content': 'test'}], 16), idle_timeout, 630, first_signal)
+                                    protocol, ([{'role': 'user', 'content': 'test'}], 16), idle_timeout, request_deadline, first_signal)
             if protocol == 'chat':
                 self.assertEqual(server.seen[0], '/v1/chat/completions')
                 self.assertIn('messages', server.seen[1])
@@ -79,6 +84,16 @@ class StreamingMeasurementTests(unittest.TestCase):
 
     def test_production_idle_limit_rejects_a_stalled_stream(self):
         row = self.measure('slow', idle_timeout=.01)
+        self.assertFalse(row['ok'])
+        self.assertIn('timed out', row['error'])
+
+    def test_prefill_can_exceed_the_generation_idle_limit(self):
+        row = self.measure('prefill', idle_timeout=.05)
+        self.assertTrue(row['ok'], row)
+        self.assertGreater(row['ttft_s'], .1)
+
+    def test_total_deadline_still_bounds_prefill(self):
+        row = self.measure('prefill_stall', idle_timeout=.01, request_deadline=.03)
         self.assertFalse(row['ok'])
         self.assertIn('timed out', row['error'])
 

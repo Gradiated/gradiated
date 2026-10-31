@@ -104,8 +104,9 @@ Respond with ONLY a JSON object:
 The twin state above is a summary (top-N lists). Before claiming the twin lacks something (an event, page, property,
 value, person) or that a premise is false, CHECK it: instead of the final JSON you may reply with
 {{"queries": [{{"why": "<what you check>", "sql": "<ClickHouse SELECT>"}}, ...]}} (at most 6). Tables:
-events(team_id, event, timestamp, distinct_id, person_id, properties) and person(team_id, id, properties), where
-properties is a JSON string (use JSONExtractString(properties, 'key'), JSONHas(properties, 'key')). Every query must
+events(team_id, event, timestamp, distinct_id, person_id, properties), person(team_id, id, properties) and
+session_replay_events(team_id, session_id, distinct_id, min_first_timestamp, max_last_timestamp, first_url, ...)
+(session recordings live ONLY there, not in events), where properties is a JSON string (use JSONExtractString(properties, 'key'), JSONHas(properties, 'key')). Every query must
 contain `team_id = {{team}}` (it is filled in for you) and should aggregate or LIMIT. You get the results back and can
 ask once more. Every drop with drop_kind twin_gap and every fix_premise edit must cite what you checked in "evidence".
 
@@ -259,6 +260,9 @@ def main() -> None:
         if r.get("decision") == "drop":
             t["exclude"] = f"curation: {r.get('reason')}"
         elif r.get("decision") in ("keep", "edit"):
+            if str(t.get("exclude") or "").startswith(("docs-only", "reference made no tool")):
+                t["builder_exclude_overridden"] = t.pop("exclude")  # the curator decides soft exclusions
+                t["exclude"] = None
             t["turns_built"] = t["turns"]
             t["turns"] = r["turns"]
             t["max_turns"] = len(r["turns"])

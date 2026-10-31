@@ -117,6 +117,17 @@ def twin_state(t: dict) -> list[str]:
                f"where team_id={tid} and event in ('$pageview', '$screen') group by host, p order by 3 desc limit 25")
     out.append("top pages (host | path | pageviews):")
     out += [f"   {r}" for r in paths]
+    rec_days = ch(f"select toDate(min_first_timestamp) d, count() from (select session_id, min(min_first_timestamp) "
+                  f"min_first_timestamp from session_replay_events where team_id={tid} group by session_id) "
+                  f"group by d order by d desc limit 14")
+    rec_people = ch(f"select distinct_id, count() from (select session_id, any(distinct_id) distinct_id from "
+                    f"session_replay_events where team_id={tid} group by session_id) group by distinct_id "
+                    f"order by 2 desc limit 8")
+    out.append(f"session recordings (session_replay_events) per day, latest 14: {rec_days}")
+    out.append(f"session recordings per distinct_id, top 8: {rec_people}")
+    ptypes = pg(f"select name, property_type from posthog_propertydefinition where team_id={tid} and type=1 "
+                f"and property_type is not null order by name limit 120")
+    out.append(f"event property types as PostHog sees them (HogQL compares by these): {ptypes}")
     dw = pg(f"select name, row_count, left(columns::text, 400) from posthog_datawarehousetable "
             f"where team_id={tid} and deleted is not true")
     out.append(f"warehouse tables ({len(dw)}):")

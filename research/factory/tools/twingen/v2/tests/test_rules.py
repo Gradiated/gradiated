@@ -137,11 +137,13 @@ class StubEvents(unittest.TestCase):
     """b01 card 05: invented "mcp organization switched" was the third-largest event."""
 
     def test_capped_unless_named(self):
-        p = project(invented=["mcp organization switched", "Application opened", "$exception"],
+        p = project(active={"mcp organization switched": {}, "Application opened": {}, "$exception": {}},
+                    invented=["mcp organization switched", "Application opened", "$exception"],
                     targets={"mcp organization switched": [200.0, 50.0], "Application opened": [80.0, 20.0],
                              "$exception": [30.0, 5.0]}, ref_text="please look at application opened")
         p.cap_stub_events()
-        self.assertEqual(p.targets["mcp organization switched"], [0.2, 0.2])
+        self.assertNotIn("mcp organization switched", p.targets)
+        self.assertNotIn("mcp organization switched", p.active)
         self.assertEqual(p.targets["Application opened"], [80.0, 20.0])
         self.assertEqual(p.targets["$exception"], [30.0, 5.0])
 
@@ -344,6 +346,26 @@ class MobileAndFailures(unittest.TestCase):
         p.failure_ratios()
         self.assertEqual(p.targets["payment_succeeded"], [7.0, 5.0])
         self.assertLessEqual(p.targets["payment_failed"][0], 0.7 + 1e-9)
+
+
+class SiblingOrder(unittest.TestCase):
+    """b10: paywall_dismissed 919 vs paywall_shown 61; checkout_started > add_to_cart; $groupidentify 46% of events."""
+
+    def test_parent_event(self):
+        names = {"paywall_shown", "paywall_dismissed", "add_to_cart", "checkout_started", "onboarding_started",
+                 "onboarding_completed"}
+        self.assertEqual(gen2.parent_event("paywall_dismissed", names), "paywall_shown")
+        self.assertEqual(gen2.parent_event("checkout_started", names), "add_to_cart")
+        self.assertEqual(gen2.parent_event("onboarding_completed", names), "onboarding_started")
+        self.assertIsNone(gen2.parent_event("paywall_shown", names))
+
+    def test_caps(self):
+        p = project(targets={"paywall_shown": [61.0, 30.0], "paywall_dismissed": [919.0, 200.0],
+                             "$groupidentify": [800.0, 500.0]}, D=1000.0)
+        p.sibling_order()
+        self.assertLessEqual(p.targets["paywall_dismissed"][0], 61.0)
+        self.assertLessEqual(p.targets["$groupidentify"][1], 300.0)
+        self.assertLessEqual(p.targets["$groupidentify"][0], p.targets["$groupidentify"][1])
 
 
 class FunnelDropoff(unittest.TestCase):

@@ -52,7 +52,7 @@ import specio  # noqa: E402
 from gen import UTC, iso, stable_seed, uuid7, wh_column, WH_TYPES  # noqa: E402
 from specio import shape_of  # noqa: E402
 
-GEN2_VERSION = "twingen-2.14"
+GEN2_VERSION = "twingen-2.15"
 TWINS = PATHS.TWINS
 FACTS = PATHS.FACTS
 QFACTS = PATHS.QFACTS
@@ -521,6 +521,34 @@ def mobile_platform(spec: dict) -> str | None:
     return "android" if os_names["android"] > os_names["ios"] + os_names["ipados"] else "ios"
 
 
+CHILD_OF = [  # (child word, parent words): child volume <= parent volume
+    (("dismissed", "closed", "clicked", "accepted", "declined"), ("shown", "viewed", "displayed", "opened", "impression")),
+    (("completed", "finished", "succeeded", "failed", "abandoned", "submitted"), ("started", "begun", "opened", "initiated")),
+    (("created", "saved"), ("opened", "started")),
+]
+FUNNEL_PAIRS = [("checkout_started", "add_to_cart"), ("checkout_completed", "checkout_started"),
+                ("order_completed", "checkout_started"), ("purchase_completed", "checkout_started")]
+
+
+def parent_event(e: str, names) -> str | None:
+    """'paywall_dismissed' -> 'paywall_shown' when present; 'checkout_started' -> 'add_to_cart'."""
+    low = e.lower()
+    for child, parent in FUNNEL_PAIRS:
+        if low == child and parent in names:
+            return parent
+    for childs, parents in CHILD_OF:
+        for c in childs:
+            m = re.search(rf"(^|[_ .:-]){c}([_ .:-]|$)", low)
+            if not m:
+                continue
+            for p_ in parents:
+                cand = low[:m.start()] + low[m.start():m.end()].replace(c, p_) + low[m.end():]
+                for n in names:
+                    if n.lower() == cand and n != e:
+                        return n
+    return None
+
+
 FAIL_EV = re.compile(r"(^|[_ .:-])(fail(ed|ure)?|error(ed)?|declined|rejected)([_ .:-]|$)", re.I)
 OK_WORDS = ("succeeded", "success", "successful", "completed", "complete", "created", "sent", "submitted", "started",
             "paid", "placed")
@@ -717,9 +745,11 @@ class Project2(gen.Project):
         named = self.ref_text.lower() if hasattr(self, "ref_text") else ""
         for e in list(getattr(self, "invented", [])):
             if STUB_EVENT.match(e) and e.lower() not in named and e in self.targets:
-                T, U = self.targets[e]
-                self.targets[e] = [min(T, 0.2), min(U, 0.2)]
-                self.v2["stub_events_capped"] += 1
+                # rule (r14): PostHog-internal stub events never appear unless the conversation names them
+                self.targets.pop(e, None)
+                self.active.pop(e, None)
+                self.invented.remove(e)
+                self.v2["stub_events_removed"] += 1
 
     def failure_ratios(self):
         """rule (r13): without production volume evidence a failure event is a minority of its success sibling
@@ -733,6 +763,26 @@ class Project2(gen.Project):
                 T, U = self.targets[sib]
                 self.targets[e] = [0.1 * T, min(self.targets[e][1], max(0.1 * U, 0.05))]
                 self.v2["failure_events_capped"] += 1
+
+    def sibling_order(self):
+        """rule (r14): without volume evidence a child event (dismissed, completed, checkout_started) does not exceed
+        its parent (shown, started, add_to_cart): paywall_dismissed 919 vs paywall_shown 61 was implausible.
+        $groupidentify fires at most once per person per day, for a minority of people (was 46% of all events)."""
+        hinted = getattr(self, "_volume_hinted", set())
+        for e in list(self.targets):
+            if e in hinted:
+                continue
+            par = parent_event(e, self.targets)
+            if par and self.targets[e][0] > 0.8 * self.targets[par][0]:
+                T, U = self.targets[par]
+                f = 0.6 if not FAIL_EV.search(e) else 0.1
+                self.targets[e] = [f * T, min(self.targets[e][1], max(f * U, 0.05))]
+                self.v2["child_events_capped"] += 1
+        if "$groupidentify" in self.targets and "$groupidentify" not in hinted:
+            T, U = self.targets["$groupidentify"]
+            U2 = min(U, 0.3 * max(self.D, 1.0))
+            self.targets["$groupidentify"] = [min(T, U2), U2]
+            self.v2["groupidentify_capped"] += 1
 
     def needs_background_population(self) -> bool:
         """rule (r12): a web project whose conversation names only custom events still has visitors who never do them;
@@ -768,6 +818,7 @@ class Project2(gen.Project):
         self.apply_volumes()
         self.cap_stub_events()
         self.failure_ratios()
+        self.sibling_order()
 
     def series_levels(self):
         """event -> (daily level over the last 30 covered days, math, filtered) from production Trends series."""

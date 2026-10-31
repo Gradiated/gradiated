@@ -9,6 +9,7 @@ k=1) on the included tasks, then mark the batch READY. Batches carry the code ve
 
     python3 loop_producer.py --setup                 # once: specs/targets/facts/xindex for the loop root
     python3 loop_producer.py --batches 20 --n 10     # producer loop (stops at --batches or when STOP exists)
+    python3 loop_producer.py --batches 1 --n 40 --name b14   # one acceptance round; may overlap a running round
     python3 loop_producer.py --rebuild-ids a,b --name fixcheck1   # rebuild given conversations with current code
 
 Pacing: at most --max-ahead batches that are READY but not yet REVIEWED (reviewers touch <batch>/REVIEWED).
@@ -105,7 +106,7 @@ def build_batch(name: str, ids: list[str], split: str, pilot: bool) -> None:
     csv = ",".join(ids)
     with open(f"{d}/log.txt", "a") as log:
         sh([f"{PH}/.venv/bin/python", f"{V2}/qfacts.py", "--split", split, "--ids", csv], log, cwd=PH)
-        # 4 generator workers: one large twin can take >60 GB, and ClickHouse counts the container's memory
+        # 4 generator workers; run_all2's memory gate keeps ClickHouse's cgroup under its cap
         sh([f"{TG}/.venv/bin/python", f"{V2}/run_all2.py", "--ids", csv, "--workers", "4"], log)
         sh([f"{PH}/.venv/bin/python", "../loader/load_all_v2.py", "--ids", csv, "--workers", "2", "--force",
             "--min-free-gb", "60"], log, cwd=PH)
@@ -118,7 +119,7 @@ def build_batch(name: str, ids: list[str], split: str, pilot: bool) -> None:
             return
         # curation: LLM editor (edit/drop, grading notes, twin overrides), then regenerate + reload changed twins
         sh(["python3", f"{RUNNER}/curate_tasks.py", "--tasks", tf, "--traces", f"{TRACES}/{split}.jsonl",
-            "--out", f"{d}/curated", "--include-excluded"], log, timeout=7200)
+            "--out", f"{d}/curated", "--include-excluded", "--workers", "8"], log, timeout=7200)
         if os.path.exists(f"{d}/curated/curated.jsonl"):
             ch = subprocess.run(["python3", f"{RUNNER}/apply_overrides.py", "--overrides-dir", f"{d}/curated/overrides",
                                  "--root", ROOT], env=ENV, capture_output=True, text=True).stdout.strip()
@@ -131,7 +132,8 @@ def build_batch(name: str, ids: list[str], split: str, pilot: bool) -> None:
             tf = f"{d}/curated/curated.jsonl"
             # independent validator (GPT-6.1 Sol, read-only twin queries) with one curator repair round; only SOUND kept
             sh(["python3", f"{RUNNER}/validate_tasks.py", "--tasks", tf, "--traces", f"{TRACES}/{split}.jsonl",
-                "--out", f"{d}/validated", "--repair", "--lint", f"{d}/lint.jsonl"], log, timeout=10800)
+                "--out", f"{d}/validated", "--repair", "--lint", f"{d}/lint.jsonl", "--workers", "8"], log,
+               timeout=10800)
             if os.path.exists(f"{d}/validated/validated.jsonl"):
                 tf = f"{d}/validated/validated.jsonl"
         tasks = [json.loads(x) for x in open(tf)]
@@ -156,7 +158,8 @@ def main() -> None:
     ap.add_argument("--split", default="train")
     ap.add_argument("--seed", type=int, default=1030)
     ap.add_argument("--max-ahead", type=int, default=2)
-    ap.add_argument("--no-pilot", action="store_true")
+    ap.add_argument("--pilot", action="store_true", help="frontier pilot bench after validation (off: acceptance "
+                    "rounds only need the audit; benches also compete for ClickHouse)")
     ap.add_argument("--rebuild-ids", default="")
     ap.add_argument("--name", default="")
     a = ap.parse_args()
@@ -164,7 +167,7 @@ def main() -> None:
         setup()
         return
     if a.rebuild_ids:
-        build_batch(a.name or f"fix_{int(time.time())}", a.rebuild_ids.split(","), a.split, not a.no_pilot)
+        build_batch(a.name or f"fix_{int(time.time())}", a.rebuild_ids.split(","), a.split, a.pilot)
         return
     pool = sorted(json.loads(x)["id"] for x in open(f"{TRACES}/{a.split}.jsonl"))
     rng = random.Random(a.seed)
@@ -179,7 +182,8 @@ def main() -> None:
         if not ids:
             break
         k = 1 + len(glob.glob(f"{BATCHES}/b*/"))
-        build_batch(f"b{k:02d}", ids, a.split, not a.no_pilot)
+        # --name lets rounds overlap (the next round generates while the previous one curates and validates)
+        build_batch(a.name or f"b{k:02d}", ids, a.split, a.pilot)
 
 
 if __name__ == "__main__":

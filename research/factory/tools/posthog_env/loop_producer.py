@@ -219,7 +219,8 @@ def build_batch(name: str, ids: list[str], split: str, pilot: bool) -> None:
                timeout=10800)
             if os.path.exists(f"{d}/validated/validated.jsonl"):
                 tf = f"{d}/validated/validated.jsonl"
-                regen_pending(d, ids, split, log)
+                for _ in range(2):  # repairs that add data need regeneration; one pass rarely converges (round 8/9)
+                    regen_pending(d, ids, split, log)
         tasks = [json.loads(x) for x in open(tf)]
         inc = [t for t in tasks if not t.get("exclude")]
         json.dump([t["task_id"] for t in inc], open(f"{d}/included.json", "w"))

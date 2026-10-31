@@ -172,6 +172,10 @@ DEVICE_KEYS_RX = re.compile(r'"(' + "|".join(DEVICE_KEYS) + r')"')
 WEB_LIBS = {"web", "posthog-js", "js", "posthog-js-lite"}
 
 
+DEVICE_CLASH_RX = re.compile(r'"\$device_type":"(Mobile|Tablet)".*"\$os":"(Windows|Mac OS X|macOS|Linux)"|'
+                             r'"\$device_type":"Desktop".*"\$os":"(iOS|Android)"|'
+                             r'"\$os":"(Windows|Mac OS X|macOS|Linux)".*"\$device_type":"(Mobile|Tablet)"|'
+                             r'"\$os":"(iOS|Android)".*"\$device_type":"Desktop"')
 MOBILE_LIB_RX = re.compile(r'"\$lib":\s*"posthog-(ios|android)"')
 ANDROID_MODELS = ["Samsung Galaxy S23", "Pixel 8", "Samsung Galaxy A54", "OnePlus 11"]
 
@@ -277,6 +281,20 @@ def drop_dev_hosts(spec: dict) -> int:
                 n += len(d["values"]) - len(keep)
                 d["values"] = keep
     return n
+
+
+IP_FIRST_OCTET = {"US": [23, 24, 50, 64, 66, 67, 68, 71, 73, 98, 99, 104, 107, 108, 172], "CA": [24, 70, 99, 142, 174],
+                  "GB": [31, 51, 81, 86, 90], "DE": [46, 79, 84, 87, 91], "FR": [78, 82, 86, 88, 90], "BR": [177, 179, 186, 189, 201],
+                  "IN": [49, 103, 106, 117, 122], "AU": [1, 49, 58, 101, 110], "CN": [27, 36, 58, 106, 112]}
+RESERVED_IP = re.compile(r"^(10\.|127\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|192\.0\.2\.|198\.51\.100\.|203\.0\.113\.|0\.)")
+
+
+def person_ip(person_key, country, salt) -> str:
+    """r27: a stable, plausible public IPv4 for a person, first octet typical for their country (round 9: an override
+    gave 140 persons ~25 documentation-range addresses shared across 14 countries)."""
+    r = random.Random(stable_seed(salt, "ip", person_key))
+    first = r.choice(IP_FIRST_OCTET.get(str(country or "").upper(), [5, 31, 37, 41, 45, 62, 77, 80, 85, 95, 109, 185, 188]))
+    return f"{first}.{r.randint(0, 255)}.{r.randint(0, 255)}.{r.randint(1, 254)}"
 
 
 def url_coherent(d: dict, changed) -> dict:
@@ -2150,9 +2168,16 @@ class Project2(gen.Project):
         n = 0
         for i, pr in enumerate(props):
             server = SERVER_EVENT.match(str(ev[i]))
-            if not pr or not (server or DEVICE_KEYS_RX.search(pr) or MOBILE_LIB_RX.search(pr)):
+            if not pr or not (server or DEVICE_KEYS_RX.search(pr) or MOBILE_LIB_RX.search(pr) or DEVICE_CLASH_RX.search(pr)):
                 continue
             d = orjson.loads(pr)
+            orig = dict(d)
+            dt_, os2 = d.get("$device_type"), d.get("$os")
+            if dt_ and os2:  # r27: Mobile+Windows / Desktop+iOS (round 9: 5,965 of 16,799 pageviews in one twin)
+                if os2 in ("iOS", "Android") and dt_ == "Desktop":
+                    d["$device_type"] = "Mobile"
+                elif os2 in ("Windows", "Mac OS X", "macOS", "Linux", "Chrome OS") and dt_ in ("Mobile", "Tablet"):
+                    d["$device_type"] = "Desktop"
             if server:  # r23: RevenueCat/Stripe/webhook events come from a backend SDK (round 6: rc_* from the web SDK)
                 d = {k: v for k, v in d.items() if k not in WEB_ONLY_PROPS and k not in PROFILE_KEYS
                      and not k.startswith("$device") and k not in ("$os", "$os_version", "$screen_width", "$screen_height")}
@@ -2162,10 +2187,9 @@ class Project2(gen.Project):
                 continue
             fixed = mobile_tuple(d)
             os_, lib = str(fixed.get("$os") or ""), str(fixed.get("$lib") or "")
-            if not os_ and not lib:
-                continue
-            fixed = device_props(fixed, os_, lib)
-            if fixed != d:
+            if os_ or lib:
+                fixed = device_props(fixed, os_, lib)
+            if fixed != orig:
                 props[i] = orjson.dumps(fixed).decode()
                 n += 1
         if n:
@@ -2656,6 +2680,8 @@ class Project2(gen.Project):
                     continue
                 d = orjson.loads(props[i] or "{}")
                 vals = scenario_props(specs, r, pid[i], f"{self.S['id']}:p{j}")
+                if "$ip" in vals:  # r27: one plausible public address per person, never documentation ranges
+                    vals["$ip"] = person_ip(pid[i], d.get("$geoip_country_code"), self.S["id"])
                 d.update(vals)
                 if "$current_url" in vals or "$pathname" in vals:
                     url_coherent(d, vals)

@@ -17,6 +17,7 @@ URL as the project's top page, campaigns crossed with random sources). These che
   value_domain      a property whose name is not URL-like holds URLs in >= 30% of rows
   warehouse_duplicate  two warehouse files are one PostHog table ('neon.x.orgs' and 'xneon_orgs')
   warehouse_join    a name-evident warehouse foreign key (<x>_id -> <x>s.id) matches < 50% of the parent's ids
+  reserved_ip       $ip values in documentation/private ranges (> 5%)
   url_path          pageviews whose $pathname is not the path of $current_url (> 2%)
   lib_os            native SDK rows ($lib posthog-ios/android) whose $os is the other platform (> 5%)
   channel_referrer  email/newsletter UTM rows carrying a search-engine referrer (> 10%, minor)
@@ -60,6 +61,7 @@ def urlish(name: str) -> bool:
     toks = [t for t in re.split(r"[^a-z0-9]+", str(name).lower()) if t]
     return bool(toks) and (toks[-1] in URLISH_TOKENS or toks[-1].endswith("url"))  # '..._url_trigger_status': status
 URL_VALUE = re.compile(r"^https?://")
+RESERVED_IP = re.compile(r"^(10\.|127\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|192\.0\.2\.|198\.51\.100\.|203\.0\.113\.|0\.)")
 COMMERCE = ["view_item", "add_to_cart", "begin_checkout", "add_payment_info", "purchase"]
 PURCHASE = re.compile(r"(^|[_ .:-])(purchase|purchased|order[_ ]completed|order[_ ]placed|payment[_ ]succeeded|checkout[_ ]completed)"
                       r"([_ .:-]|$)", re.I)
@@ -141,6 +143,7 @@ def lint_project(d: str, max_rows: int = 400000) -> dict:
     camp_bad = camp_tot = 0
     lib_bad = lib_tot = 0
     url_bad = url_tot = 0
+    ip_bad = ip_tot = 0
     ref_bad = ref_tot = 0
     for i in range(0, n, step):
         s = props[i]
@@ -172,6 +175,10 @@ def lint_project(d: str, max_rows: int = 400000) -> dict:
                 h = re.sub(r"^https?://", "", u).split("/")[0].split("?")[0].split(":")[0].lower()
                 hosts[h] += 1
                 urls[u.split("#")[0]] += 1
+        ip = d_.get("$ip")
+        if isinstance(ip, str) and ip:
+            ip_tot += 1
+            ip_bad += bool(RESERVED_IP.match(ip))
         lib = str(d_.get("$lib") or "")
         if lib in ("posthog-ios", "posthog-android") and d_.get("$os"):
             lib_tot += 1
@@ -205,6 +212,9 @@ def lint_project(d: str, max_rows: int = 400000) -> dict:
         u, c = urls.most_common(1)[0]
         if c > 0.5 * pv and pv >= 50:  # one URL carrying most pageviews (round 5: 100% on one page)
             findings.append({"check": "url_dominance", "severity": "material" if c > 0.8 * pv else "minor", "detail": f"{u[:120]}: {c}/{pv} pageviews"})
+    if ip_tot >= 20 and ip_bad > 0.05 * ip_tot:
+        findings.append({"check": "reserved_ip", "severity": "material",
+                         "detail": f"{ip_bad}/{ip_tot} $ip values in documentation/private ranges"})
     if url_tot >= 30 and url_bad > 0.02 * url_tot:
         findings.append({"check": "url_path", "severity": "material",
                          "detail": f"{url_bad}/{url_tot} pageviews whose $pathname disagrees with $current_url"})

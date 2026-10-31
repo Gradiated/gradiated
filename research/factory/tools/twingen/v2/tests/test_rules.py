@@ -583,6 +583,16 @@ class RoundB14Coherence(unittest.TestCase):
         out = p._with_donor({"workflow": "x"}, "$pageleave", "p1", donors, random.Random(0))
         self.assertEqual(out, {"$browser": "Chrome", "workflow": "x"})
 
+    def test_device_type_follows_os_and_person_ip(self):
+        import pyarrow as pa
+        rows = [("$pageview", '{"$device_type":"Mobile","$os":"Windows","$lib":"web"}'),
+                ("$pageview", '{"$os":"iOS","$device_type":"Desktop","$lib":"web"}')]
+        out = project().device_coherence(pa.table({"event": [r[0] for r in rows], "properties": [r[1] for r in rows]}))
+        self.assertEqual([json.loads(x)["$device_type"] for x in out.column("properties").to_pylist()], ["Desktop", "Mobile"])
+        ip = gen2.person_ip("p1", "CA", "s")
+        self.assertEqual(ip, gen2.person_ip("p1", "CA", "s"))
+        self.assertFalse(gen2.RESERVED_IP.match(ip))
+
     def test_url_coherent(self):
         d = gen2.url_coherent({"$current_url": "https://a.io/play/x?y=1", "$pathname": "/settings", "$host": "b.io"},
                               {"$current_url": 1})

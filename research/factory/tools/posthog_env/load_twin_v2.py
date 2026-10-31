@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import hashlib
 import json
 import os
 import re
@@ -264,6 +265,12 @@ class TwinLoaderV2(LT.TwinLoader):
                 if sid and not Insight.objects.filter(team=team, short_id=sid).exists():
                     kw["short_id"] = sid
                     bump("insights_prod_short_id")
+                    # numeric ids stay stable across reloads (round 9: text and grading named insight 26696, which a
+                    # reload turned into 27135): a deterministic id from twin + short_id in a high range, when free
+                    stable = 50_000_000 + int(hashlib.sha256(f"{self.twin_id}:{sid}".encode()).hexdigest()[:12], 16) % 40_000_000
+                    if not Insight._base_manager.filter(id=stable).exists():
+                        kw["id"] = stable
+                        bump("insights_stable_id")
                 if i.get("query_full"):
                     bump("insights_prod_query")
                 return Insight.objects.create(**kw)

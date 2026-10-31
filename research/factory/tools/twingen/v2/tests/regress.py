@@ -29,7 +29,7 @@ Assertions read the generated files directly (production-dated events; no loadin
       doing E2, or any event)  (web sessions whose first event is a $pageview)
   {"type": "lint", "check": C, "severity": "material"|"minor"|null, "op": "<=", "value": 0}  (lint.py findings of
       check C on the generated twin)
-A props value starting with "~" matches as a substring ("~/gamelanding/"). Dates are production dates (YYYY-MM-DD,
+A props value starting with "~" matches as a substring ("~/gamelanding/"); "*" means the property is present. Dates are production dates (YYYY-MM-DD,
 inclusive). Prints one line per assertion and a summary; exit 1 on failure.
 """
 
@@ -113,7 +113,8 @@ class Twin:
                 continue
             if (a and self.ts[i] < a) or (b and self.ts[i] > b):
                 continue
-            if props and any((str(v)[1:] not in str(self.p(i).get(k, ""))) if str(v).startswith("~")
+            if props and any(self.p(i).get(k) in (None, "") if v == "*"
+                             else (str(v)[1:] not in str(self.p(i).get(k, ""))) if str(v).startswith("~")
                              else str(self.p(i).get(k)) != str(v) for k, v in props.items()):
                 continue
             yield i

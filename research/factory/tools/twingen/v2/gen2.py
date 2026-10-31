@@ -53,7 +53,7 @@ import specio  # noqa: E402
 from gen import UTC, iso, stable_seed, uuid7, wh_column, WH_TYPES  # noqa: E402
 from specio import shape_of  # noqa: E402
 
-GEN2_VERSION = "twingen-2.16"
+GEN2_VERSION = "twingen-2.17"
 TWINS = PATHS.TWINS
 FACTS = PATHS.FACTS
 QFACTS = PATHS.QFACTS
@@ -639,6 +639,22 @@ class Project2(gen.Project):
                 d["values"] = list(dict.fromkeys(list(vals) + list(d.get("values") or [])))
         _null_stats["conversation_urls"] = len(_urls)
         _null_stats["conversation_paths"] = len(_paths)
+        _ev_names = set((spec.get("events") or {}).keys())
+        _spec_paths = [v for k in ("$pathname", "$current_url") for info in (spec.get("events") or {}).values()
+                       for v in ((info.get("properties") or {}).get(k) or {}).get("values") or []]
+        if not _urls and not _paths and not _spec_paths and ("$pageview" in _ev_names or not mobile_platform(spec)):
+            # rule (r17): no pages anywhere in the conversation -> the business's own page set from an LLM (cached)
+            _pg, _pg_status = valuepools.get_pages(spec, PATHS.ROOT, "\n".join(t.get("text") or "" for t in _tasks))
+            _null_stats[f"llm_pages_{_pg_status}"] = 1
+            if _pg.get("paths"):
+                un = spec.setdefault("unscoped", {})
+                host = _pg.get("host") or ""
+                vals = [f"https://{host}{p_}" for p_, _w in _pg["paths"]] if host else []
+                for key, vs in (("$current_url", vals), ("$pathname", [p_ for p_, _w in _pg["paths"]])):
+                    if vs:
+                        d = un.setdefault(key, {"type": "String", "values": [], "more_values": None, "description": None,
+                                                "standard": True, "values_status": None, "sources": {}})
+                        d["values"] = list(dict.fromkeys(vs + list(d.get("values") or [])))
         install_pool_hook()
         _text = "\n".join(t.get("text") or "" for t in _tasks)
         _keys = valuepools.candidates(spec, shape_of, gen.VOCAB, gen.stem_of)

@@ -114,3 +114,55 @@ def pool_for(pools: dict, event: str | None, prop: str) -> list | None:
         if k.split("::", 1)[-1] == prop and not k.startswith("person::"):
             return v
     return None
+
+
+PAGES_PROMPT = """You help build a realistic synthetic copy of a customer's PostHog analytics project. We need the web
+pages this business's site/app actually has, so pageviews look like this product and not a generic SaaS template.
+
+Business context (from the customer's own question to their analytics assistant; may be in any language):
+{context}
+
+Events in the project (most frequent first): {events}
+
+List 15-30 page paths this product would really have (most visited first) with a relative weight, matching what the
+events describe (e.g. an AI video generator: /create, /editor/<id>, /gallery, /pricing; a game wiki: /characters/<slug>,
+/calculator, /guides/<slug>). Use concrete realistic slugs/ids instead of placeholders. Also give one plausible host name
+for the app (e.g. app.<brand>.com) using a brand word from the context if there is one, else a neutral invented brand.
+
+Respond with ONLY JSON: {{"host": "<host>", "paths": [["/path", weight], ...]}}"""
+
+
+def get_pages(spec: dict, root: str, user_text: str, model: str = "gpt-6.1-terra") -> tuple[dict, str]:
+    """Cached LLM page set {"host", "paths"} for a twin whose conversation shows no pages (rule r17)."""
+    d = f"{root}/twins/valuepools_v2"
+    path = f"{d}/{spec['id']}.pages.json"
+    if os.path.exists(path):
+        try:
+            return json.load(open(path)), "cached"
+        except ValueError:
+            pass
+    if os.environ.get("TWINGEN_NO_LLM_POOLS") == "1":
+        return {}, "failed"
+    sys.path.insert(0, "/opt/posthog-env")
+    try:
+        import llm_proxy
+
+        events = ", ".join(list((spec.get("events") or {}).keys())[:50])
+        prompt = PAGES_PROMPT.format(context=(user_text or "")[:1500] or "(none)", events=events)
+        text, _ = llm_proxy.judge_complete(prompt, model, None, attempts=4, preamble=False, limit=False)
+        a, b = text.find("{"), text.rfind("}")
+        got = json.loads(text[a:b + 1])
+        paths = [[str(x[0]), float(x[1])] for x in got.get("paths") or [] if isinstance(x, list) and len(x) == 2
+                 and str(x[0]).startswith("/") and isinstance(x[1], (int, float)) and x[1] > 0]
+        host = str(got.get("host") or "").strip().lower()
+        if not re.fullmatch(r"[a-z0-9-]+(\.[a-z0-9-]+)+", host):
+            host = ""
+        out = {"host": host, "paths": paths[:40]}
+        if not paths:
+            return {}, "failed"
+        os.makedirs(d, exist_ok=True)
+        json.dump(out, open(path + ".tmp", "w"), ensure_ascii=False, indent=1)
+        os.replace(path + ".tmp", path)
+        return out, "llm"
+    except Exception:  # noqa: BLE001
+        return {}, "failed"

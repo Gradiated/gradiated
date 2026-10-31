@@ -14,7 +14,7 @@ if [[ "${LORA_ENABLED:-false}" == "true" ]]; then
 fi
 export RUNTIME_URL="http://127.0.0.1:${RUNTIME_PORT:?}"
 : "${WARMUP_PORT:?}"
-exec "$root/python/bin/python3" "$root/warmup-supervisor.py" \
+arguments=("$root/warmup-supervisor.py" \
   "$root/python/bin/python3" -m vllm.entrypoints.cli.main serve dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4 \
   --revision 745aac2ff0f10acf961f396df3f9418598aa7327 \
   --host 127.0.0.1 --port "${RUNTIME_PORT:?}" --served-model-name dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4 \
@@ -23,4 +23,45 @@ exec "$root/python/bin/python3" "$root/warmup-supervisor.py" \
   --tool-call-parser glm47 --reasoning-parser glm45 --enable-auto-tool-choice \
   --enable-prompt-tokens-details --safetensors-load-strategy prefetch \
   --safetensors-prefetch-num-threads 8 --scheduling-policy priority \
-  --speculative-config '{"method":"mtp","num_speculative_tokens":2}'
+  --middleware gradiated_queue_metrics.QueueMetricsMiddleware \
+  --speculative-config '{"method":"mtp","num_speculative_tokens":2}')
+
+if [[ -n "${GLM_PREFILL_TOKEN_BUDGET:-}" ]]; then
+  [[ "$GLM_PREFILL_TOKEN_BUDGET" =~ ^([4-9]|[1-9][0-9]+)$ ]] || {
+    echo "GLM_PREFILL_TOKEN_BUDGET must be an integer of at least 4" >&2
+    exit 64
+  }
+  arguments+=(--max-num-batched-tokens "$GLM_PREFILL_TOKEN_BUDGET")
+fi
+
+add_integer_limit() {
+  local value="${!1:-}"
+  if [[ -n "$value" ]]; then
+    [[ "$value" =~ ^[1-9][0-9]*$ ]] || {
+      echo "$1 must be a positive integer" >&2
+      exit 64
+    }
+    if [[ -n "${3:-}" ]] && (( ${#value} > ${#3} || value > $3 )); then
+      echo "$1 must be at most $3" >&2
+      exit 64
+    fi
+    arguments+=("$2" "$value")
+  fi
+}
+add_integer_limit GLM_LONG_PREFILL_TOKEN_THRESHOLD --long-prefill-token-threshold 1048576
+add_integer_limit GLM_PREFIX_MATCH_UNIT --prefix-match-unit 128
+if [[ -n "${GLM_PREFIX_MATCH_UNIT:-}" ]] && (( 128 % GLM_PREFIX_MATCH_UNIT != 0 )); then
+  echo "GLM_PREFIX_MATCH_UNIT must divide the 128-token launch block" >&2
+  exit 64
+fi
+add_integer_limit MAX_QUEUED_TOKENS --max-num-queued-tokens
+add_integer_limit MAX_QUEUED_REQUESTS --max-num-queued-reqs
+
+if [[ -n "${GLM_PREFILL_TOKEN_BUDGET:-}${GLM_LONG_PREFILL_TOKEN_THRESHOLD:-}" ]]; then
+  arguments+=(--enable-chunked-prefill)
+fi
+if [[ -n "${GLM_PREFIX_MATCH_UNIT:-}" ]]; then
+  arguments+=(--enable-prefix-caching --enable-mamba-fine-grained-prefix-cache)
+fi
+
+exec "$root/python/bin/python3" "${arguments[@]}"

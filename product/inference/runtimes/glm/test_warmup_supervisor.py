@@ -11,7 +11,10 @@ import urllib.request
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-spec = importlib.util.spec_from_file_location("warmup", Path(__file__).with_name("warmup-supervisor.py"))
+source = Path(__file__).with_name("warmup-supervisor.py")
+if not source.exists():
+    source = Path(__file__).parent.parent / "warmup-supervisor.py"
+spec = importlib.util.spec_from_file_location("warmup", source)
 warmup = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(warmup)
 
@@ -55,7 +58,7 @@ class WarmupTests(unittest.TestCase):
         self.supervisor.probe = probe
         self.assertFalse(self.supervisor.ready())
         self.supervisor.warmup()
-        self.assertEqual(len(calls), 77)
+        self.assertEqual(len(calls), 92)
         self.assertTrue(self.supervisor.ready())
         self.supervisor.child.poll.return_value = 1
         self.assertFalse(self.supervisor.ready())
@@ -66,15 +69,46 @@ class WarmupTests(unittest.TestCase):
 
     def test_all_cold_groups_precede_qualification(self):
         calls = []
-        self.supervisor.probe_group = lambda *args: calls.append(args)
+        def group(*args):
+            calls.append(args)
+            return [{"prompt_tokens": words*2+50, "elapsed_seconds": .001} for words in args[1]]
+        self.supervisor.probe_group = group
         self.supervisor.warmup()
         self.assertEqual([call[0] for call in calls],
-                         ["cold_prompt"] * 5 + ["cold_concurrency"] * 5 +
-                         ["qualify_mixed_prompt"] * 5 + ["qualify_concurrency"] * 5)
+                         ["cold_prompt"] * 6 + ["cold_concurrency"] * 6 + ["cold_mixed_prefills"] +
+                         ["qualify_mixed_prompt"] * 6 + ["qualify_mixed_prefills"] + ["qualify_concurrency"] * 6)
         for phase in ("cold_concurrency", "qualify_concurrency"):
             self.assertEqual([len(shapes) for name, shapes, _ in calls if name == phase],
-                             [1, 2, 4, 8, 16])
+                             [1, 2, 3, 4, 8, 16])
+        self.assertEqual([shapes for name, shapes, _ in calls if name.endswith('mixed_prefills')],
+                         [[8192, 8192, 32], [8192, 8192, 32]])
         self.assertTrue(all(timeout == 25 for name, _, timeout in calls if name.startswith("qualify")))
+
+    def test_qualification_respects_admission_caps(self):
+        self.supervisor.max_queued_requests = 4
+        self.supervisor.max_queued_tokens = 32768
+        calls = []
+        def group(phase, shapes, timeout):
+            calls.append((phase, shapes))
+            return [{'prompt_tokens': words*2+50, 'elapsed_seconds': .001} for words in shapes]
+        self.supervisor.probe_group = group
+        self.supervisor.warmup()
+        self.assertTrue(self.supervisor.ready())
+        for phase, shapes in calls:
+            self.assertLessEqual(len(shapes), 4)
+            if len(shapes) > 1:
+                self.assertLessEqual(sum(words*2+82 for words in shapes), 32768)
+        mixed = [shapes for phase, shapes in calls if phase == 'qualify_mixed_prompt']
+        self.assertEqual(mixed[-1], [16384])
+        self.assertEqual(mixed[0], [32, 32])
+
+    def test_single_request_policy_still_qualifies_all_cold_shapes(self):
+        self.supervisor.max_queued_requests = 1
+        calls = []
+        self.supervisor.probe = lambda words, *_: calls.append(words) or {'prompt_tokens': words*2+50, 'elapsed_seconds': .001}
+        self.supervisor.warmup()
+        self.assertTrue(all(words in calls for words in warmup.SHAPES))
+        self.assertTrue(self.supervisor.ready())
 
     def test_synchronized_concurrency_group_completes(self):
         simultaneous = threading.Barrier(16)

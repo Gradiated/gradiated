@@ -13,12 +13,19 @@ import urllib.request
 import uuid
 
 MODEL = "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4"
-SHAPES = (32, 2048, 6033, 8192, 16384)
-CONCURRENCIES = (1, 2, 4, 8, 16)
+# Cover the ~1K checkpoint reached by ~1.2K-token prompts before readiness.
+SHAPES = (32, 576, 2048, 6033, 8192, 16384)
+CONCURRENCIES = (1, 2, 3, 4, 8, 16)
 
 
 class Supervisor:
-    def __init__(self, command, runtime_url="http://127.0.0.1:8000", timeout=1800):
+    def __init__(self, command, runtime_url="http://127.0.0.1:8000", timeout=1800,
+                 max_queued_tokens=None, max_queued_requests=None):
+        for limit in (max_queued_tokens, max_queued_requests):
+            if limit is not None and (type(limit) is not int or limit < 1):
+                raise ValueError("queue limits must be positive integers")
+        self.max_queued_tokens = max_queued_tokens
+        self.max_queued_requests = max_queued_requests
         self.command = command
         self.runtime_url = runtime_url
         self.deadline = time.monotonic() + timeout
@@ -91,29 +98,45 @@ class Supervisor:
             barrier.wait(timeout=self.remaining(5))
             result = self.probe(words, timeout, 128)
             print(json.dumps({"phase": phase, "concurrency": len(shapes), **result}), flush=True)
+            return result
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(shapes)) as pool:
             futures = [pool.submit(request, words) for words in shapes]
-            for future in futures:
-                future.result()
+            return [future.result() for future in futures]
 
     def warmup(self):
         while not self.health():
             self.remaining(2)
             self.stopping.wait(1)
         # Finish all cold shapes before applying the customer's idle-time budget.
+        prompt_bounds = {}
         for words in SHAPES:
-            self.probe_group("cold_prompt", [words], 180)
-        for concurrency in CONCURRENCIES:
+            result = self.probe_group("cold_prompt", [words], 180)[0]
+            # Each probe starts with a fresh 32-character UUID, whose token count can vary.
+            prompt_bounds[words] = result['prompt_tokens'] + 32
+        maximum = min(self.max_queued_requests or 16, 16)
+        if self.max_queued_tokens is not None:
+            maximum = min(maximum, max(1, self.max_queued_tokens // prompt_bounds[32]))
+        concurrencies = [count for count in CONCURRENCIES if count <= maximum]
+        for concurrency in concurrencies:
             self.probe_group("cold_concurrency", [32] * concurrency, 180)
+        mixed_prefills = [8192, 8192, 32]
+        fits_mixed = maximum >= 3 and (self.max_queued_tokens is None or
+            sum(prompt_bounds[words] for words in mixed_prefills) <= self.max_queued_tokens)
+        if fits_mixed:
+            self.probe_group("cold_mixed_prefills", mixed_prefills, 180)
         for words in SHAPES:
-            self.probe_group("qualify_mixed_prompt", [words, 32], 25)
-        for concurrency in CONCURRENCIES:
+            fits_tokens = self.max_queued_tokens is None or prompt_bounds[words] + prompt_bounds[32] <= self.max_queued_tokens
+            shapes = [words, 32] if maximum >= 2 and fits_tokens else [words]
+            self.probe_group("qualify_mixed_prompt", shapes, 25)
+        if fits_mixed:
+            self.probe_group("qualify_mixed_prefills", mixed_prefills, 25)
+        for concurrency in concurrencies:
             self.probe_group("qualify_concurrency", [32] * concurrency, 25)
         if not self.health():
             raise RuntimeError("runtime unhealthy after warmup")
         self.remaining(1)
         self.qualified.set()
-        print("GLM startup qualification passed through 16k prompt words and concurrency 16", flush=True)
+        print(f"GLM startup qualification passed through 16k prompt words and concurrency {max(concurrencies)}", flush=True)
 
     def stop(self, signum=signal.SIGTERM):
         self.stopping.set()
@@ -186,5 +209,7 @@ def handler(supervisor):
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         raise SystemExit("usage: warmup-supervisor.py command [args...]")
-    raise SystemExit(Supervisor(sys.argv[1:], runtime_url=os.environ.get("RUNTIME_URL", "http://127.0.0.1:8000")).run(
+    raise SystemExit(Supervisor(sys.argv[1:], runtime_url=os.environ.get("RUNTIME_URL", "http://127.0.0.1:8000"),
+        max_queued_tokens=int(os.environ["MAX_QUEUED_TOKENS"]) if os.environ.get("MAX_QUEUED_TOKENS") else None,
+        max_queued_requests=int(os.environ["MAX_QUEUED_REQUESTS"]) if os.environ.get("MAX_QUEUED_REQUESTS") else None).run(
         port=int(os.environ.get("WARMUP_PORT", "8010"))))

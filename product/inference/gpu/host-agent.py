@@ -133,10 +133,20 @@ def runtime_profile(config, pod):
         profile = {**profile, "gpus": count, "cpu": str(4 * count), "memory": f"{64 * count}Gi", "recipe": recipe}
     allowed_environment = {"TENSOR_PARALLEL_SIZE", "MODEL_ID", "LORA_ENABLED", "LORA_BASE_MODEL_REVISION",
         "LORA_GPU_SLOTS", "LORA_CPU_SLOTS", "LORA_MAX_RANK", "LORA_DISK_CACHE_BYTES", "LORA_DOWNLOAD_HOSTS",
-        "GRADIATED_API_BASE_URL", "HOST_IDENTITY_FILE"}
+        "GRADIATED_API_BASE_URL", "HOST_IDENTITY_FILE", "GLM_PREFILL_TOKEN_BUDGET", "GLM_LONG_PREFILL_TOKEN_THRESHOLD", "GLM_PREFIX_MATCH_UNIT",
+        "MAX_QUEUED_TOKENS", "MAX_QUEUED_REQUESTS"}
     extra = profile.get("environment", {})
     if set(extra) - allowed_environment or any(not isinstance(value, str) for value in extra.values()):
         raise ValueError("Unsupported runtime environment")
+    if "GLM_PREFILL_TOKEN_BUDGET" in extra and not re.fullmatch(r"([4-9]|[1-9][0-9]+)", extra["GLM_PREFILL_TOKEN_BUDGET"]):
+        raise ValueError("GLM_PREFILL_TOKEN_BUDGET must be an integer of at least 4")
+    for name in ("GLM_LONG_PREFILL_TOKEN_THRESHOLD", "GLM_PREFIX_MATCH_UNIT", "MAX_QUEUED_TOKENS", "MAX_QUEUED_REQUESTS"):
+        if name in extra and not re.fullmatch(r"[1-9][0-9]*", extra[name]):
+            raise ValueError(f"{name} must be a positive integer")
+    if int(extra.get("GLM_LONG_PREFILL_TOKEN_THRESHOLD", "1")) > 1048576:
+        raise ValueError("GLM_LONG_PREFILL_TOKEN_THRESHOLD cannot exceed the model window")
+    if 128 % int(extra.get("GLM_PREFIX_MATCH_UNIT", "128")):
+        raise ValueError("GLM_PREFIX_MATCH_UNIT must divide the 128-token launch block")
     if extra.get("GRADIATED_API_BASE_URL", "http://127.0.0.1:3004") != "http://127.0.0.1:3004":
         raise ValueError("GPU control traffic must use the private bridge")
     return digest, profile

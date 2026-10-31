@@ -26,7 +26,8 @@ FROM dependencies AS package
 COPY bundles/package.sh /package.sh
 COPY --chmod=755 bundles/glm-5-3-flash/entrypoint /bundle/entrypoint
 COPY runtimes/glm/warmup-supervisor.py /bundle/warmup-supervisor.py
-COPY runtimes/glm/test_mla_lora.py runtimes/glm/test_slot_mapping.py /bundle/glm-tests/
+COPY runtimes/glm/queue_metrics.py /bundle/python/lib/python3.12/site-packages/gradiated_queue_metrics.py
+COPY runtimes/glm/test_mla_lora.py runtimes/glm/test_slot_mapping.py runtimes/glm/test_queue_metrics.py runtimes/glm/test_warmup_supervisor.py /bundle/glm-tests/
 COPY lora/*.py /bundle/lora/
 COPY lora/pyproject.toml lora/vllm_resolver.py /tmp/lora-plugin/
 RUN uv pip install --python /bundle/python/bin/python3 --break-system-packages \

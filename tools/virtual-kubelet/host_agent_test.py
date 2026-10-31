@@ -49,6 +49,43 @@ class HostAgentTest(unittest.TestCase):
     def tearDown(self):
         self.directory.cleanup()
 
+    @unittest.skipIf("recovery" in Path(agent.__file__).parts, "the frozen recovery agent predates prefill budget overrides")
+    def test_prefill_budget_must_allow_at_least_four_sequences(self):
+        digest = 'a' * 64
+        profile = {'image': self.pod['spec']['containers'][0]['image'],
+                   'environment': {'GLM_PREFILL_TOKEN_BUDGET': '2048'}}
+        config = {**self.config, 'runtimes': {digest: profile}}
+        self.assertEqual(agent.runtime_profile(config, self.pod)[1]['environment'],
+                         {'GLM_PREFILL_TOKEN_BUDGET': '2048'})
+        for value in ('0', '1', '2', '3', '-1', '2048 extra', 2048):
+            profile['environment']['GLM_PREFILL_TOKEN_BUDGET'] = value
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                agent.runtime_profile(config, self.pod)
+
+    @unittest.skipIf("recovery" in Path(agent.__file__).parts, "the frozen recovery agent predates queue cap overrides")
+    def test_queue_caps_and_prefill_threshold_are_validated_before_runtime_launch(self):
+        digest = 'a' * 64
+        profile = {'image': self.pod['spec']['containers'][0]['image'],
+                   'environment': {'MAX_QUEUED_TOKENS': '32768', 'MAX_QUEUED_REQUESTS': '4',
+                                   'GLM_LONG_PREFILL_TOKEN_THRESHOLD': '2048', 'GLM_PREFIX_MATCH_UNIT': '128'}}
+        config = {**self.config, 'runtimes': {digest: profile}}
+        self.assertEqual(agent.runtime_profile(config, self.pod)[1], profile)
+        for name in ('MAX_QUEUED_TOKENS', 'MAX_QUEUED_REQUESTS', 'GLM_LONG_PREFILL_TOKEN_THRESHOLD', 'GLM_PREFIX_MATCH_UNIT'):
+            for value in ('0', '-1', '1.5', 'bad', 4):
+                with self.subTest(name=name, value=value):
+                    config['runtimes'][digest] = {**profile, 'environment': {name: value}}
+                    with self.assertRaises(ValueError):
+                        agent.runtime_profile(config, self.pod)
+        config['runtimes'][digest] = {**profile, 'environment': {'GLM_LONG_PREFILL_TOKEN_THRESHOLD': '1048577'}}
+        with self.assertRaises(ValueError):
+            agent.runtime_profile(config, self.pod)
+        for unit in ('3', '256', '1048577', '064', '0128', '08'):
+            config['runtimes'][digest] = {**profile, 'environment': {'GLM_PREFIX_MATCH_UNIT': unit}}
+            with self.subTest(prefix_unit=unit), self.assertRaises(ValueError):
+                agent.runtime_profile(config, self.pod)
+        config['runtimes'][digest] = {**profile, 'environment': {'GLM_PREFIX_MATCH_UNIT': '64'}}
+        self.assertEqual(agent.runtime_profile(config, self.pod)[1]['environment']['GLM_PREFIX_MATCH_UNIT'], '64')
+
     def test_task_and_proxy_imports_preserve_the_bundle_with_explicit_environments(self):
         bundle = self.root / 'bundle'
         bundle.mkdir()

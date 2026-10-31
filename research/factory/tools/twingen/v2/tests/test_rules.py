@@ -640,6 +640,32 @@ class RoundB15Scenario(unittest.TestCase):
         self.assertEqual(gen2.drop_dev_hosts(spec), 2)
         self.assertEqual(spec["events"]["$pageview"]["properties"]["$current_url"]["values"], ["https://shop.io/"])
 
+    def test_medium_fits(self):
+        self.assertTrue(gen2.medium_fits("cpc", "youtube"))
+        self.assertTrue(gen2.medium_fits("email", "newsletter"))
+        self.assertFalse(gen2.medium_fits("email", "youtube"))
+        self.assertFalse(gen2.medium_fits("video", "newsletter"))
+        self.assertFalse(gen2.medium_fits("email", "bing"))
+
+    def test_event_props_per_session_and_person(self):
+        """round 7: event_props drawn per event paired utm_source/medium at random and switched persons' countries."""
+        import pyarrow as pa
+        rows = [("$pageview", f"p{i % 20}", f"s{i % 40}") for i in range(400)]
+        tab = pa.table({"event": [r[0] for r in rows], "person_id": [r[1] for r in rows], "$session_id": [r[2] for r in rows],
+                        "properties": ["{}"] * len(rows)})
+        p = project(ovr={"scenario": [
+            {"kind": "event_props", "event": "$pageview", "share": 0.5, "props": {"utm_source": {"values": ["youtube", "google"]}}},
+            {"kind": "event_props", "event": "$pageview", "share": 1.0, "props": {"$geoip_country_code": {"values": ["CN", "US"]}}}]})
+        out = p.scenario_event_props(tab)
+        ds = [json.loads(x) for x in out.column("properties").to_pylist()]
+        by_s, by_p = C.defaultdict(set), C.defaultdict(set)
+        for r, d in zip(rows, ds):
+            by_s[r[2]].add(d.get("utm_source"))
+            by_p[r[1]].add(d.get("$geoip_country_code"))
+        self.assertTrue(all(len(v) == 1 for v in by_s.values()))
+        self.assertTrue(all(len(v) == 1 for v in by_p.values()))
+        self.assertTrue(all(d.get("$geoip_country_name") for d in ds))
+
     def test_mobile_seed_row_drops_web_context(self):
         p = project()
         donors = ({}, {"p1": ['{"$browser": "Chrome", "$os": "Windows", "$current_url": "https://x.io/"}']}, [])

@@ -674,6 +674,23 @@ def campaign_fits(c: str, src: str) -> bool:
     return False
 
 
+SRC_EMAIL = re.compile(r"email|newsletter|mail|klaviyo|mailchimp|sendgrid|braze|customer\.?io", re.I)
+SRC_SEARCH = re.compile(r"google|bing|duckduckgo|yahoo|baidu|yandex|ecosia", re.I)
+SRC_SOCIAL = re.compile(r"facebook|meta|^fb|instagram|^ig$|linkedin|twitter|^x$|tiktok|reddit|youtube|^yt$|pinterest|snap",
+                        re.I)
+MED_BY_CLASS = {"email": re.compile(r"^(email|e-mail|newsletter|crm)$", re.I),
+                "search": re.compile(r"^(cpc|ppc|paid|paid_search|search|sem|organic)$", re.I),
+                "social": re.compile(r"^(social|paid_social|organic_social|cpc|ppc|paid|video|display|ads?|influencer)$", re.I),
+                "other": re.compile(r"^(referral|affiliate|partner|display|cpc|paid|organic|sponsorship|podcast|qr)$", re.I)}
+
+
+def medium_fits(med: str, src: str) -> bool:
+    """r24: a utm_medium that makes sense for the source's channel (round 7: youtube/email, newsletter/cpc)."""
+    cls = "email" if SRC_EMAIL.search(src) else "search" if SRC_SEARCH.search(src) else \
+        "social" if SRC_SOCIAL.search(src) else "other"
+    return bool(MED_BY_CLASS[cls].match(med.strip()))
+
+
 def coherent_utm(src: str, mediums: list, campaigns: list) -> tuple[str, str]:
     """rule (r8): one source -> one consistent medium and a campaign from that source's own small set."""
     h = int(hashlib.sha256(src.encode()).hexdigest()[:8], 16)
@@ -2077,6 +2094,7 @@ class Project2(gen.Project):
         """rule (r8): (1) a session's UTM medium/campaign follow its source (one consistent tuple); (2) web sessions
         start with their landing $pageview: when another event comes first, the session's first pageview moves to 1 s
         before it (bounce, entry page and entry UTM metrics need the landing pageview first)."""
+        tab = self.scenario_event_props(tab)  # r24: curator values first, so the coherence rules below apply to them
         props = tab.column("properties").to_pylist()
         mediums = list(self.utm_vals.get("utm_medium") or []) if hasattr(self, "utm_vals") else []
         campaigns = list(self.utm_vals.get("utm_campaign") or []) if hasattr(self, "utm_vals") else []
@@ -2087,6 +2105,8 @@ class Project2(gen.Project):
                 src = d.get("utm_source")
                 if isinstance(src, str) and src:
                     med, camp = coherent_utm(src, mediums, campaigns)
+                    if str(d.get("utm_medium")) in getattr(self, "_scenario_mediums", set()):
+                        med = d["utm_medium"]  # r24: a curator-chosen medium for this source stays
                     before = dict(d)
                     d["utm_medium"], d["utm_campaign"] = med, camp
                     channel_referrer(d)  # r22: the referrer follows the channel
@@ -2101,7 +2121,6 @@ class Project2(gen.Project):
             tab = self.landing_pageview_first(tab)
         # mobile twins too (round 3: a 343-person app twin skipped these; 200 events reached ~95% of persons)
         tab = self.causal_children(tab)  # adopters ran on the base rows in postprocess
-        tab = self.scenario_event_props(tab)
         tab = self.device_coherence(tab)
         return self.lifecycle_once(tab)
 
@@ -2594,22 +2613,63 @@ class Project2(gen.Project):
         """rule (r21): {"kind": "event_props", "event", "props": {prop: spec}, "share"} sets properties on a share of
         that event's rows (per_person specs: one value per person, e.g. a book a reader keeps opening)."""
         ops = [o for o in self.ovr.get("scenario") or [] if o.get("kind") == "event_props" and o.get("event")]
+        self._scenario_mediums = set()
         if not ops:
             return tab
         ev = tab.column("event").to_pylist()
         pid = tab.column("person_id").to_pylist()
+        sid = tab.column("$session_id").to_pylist() if "$session_id" in tab.schema.names else [None] * len(ev)
         props = tab.column("properties").to_pylist()
+        person_geo: dict = {}
         n = 0
         for j, op in enumerate(ops):
-            rnd = random.Random(stable_seed(self.S["id"], "scenario_props", j))
+            specs = op.get("props") or {}
+            geo = any(k in GEO_PROPS for k in specs)
+            utm = any(k in UTM_KEYS or k.startswith(("$referr", "$initial_")) for k in specs)
             share = float(op.get("share", 1.0))
             for i, e in enumerate(ev):
-                if e != op["event"] or rnd.random() > share:
+                if e != op["event"]:
+                    continue
+                # r24: one draw per person (geo, per_person) or per session (everything else), never per event
+                # (round 7: utm_source/medium paired at random, persons switching country between events)
+                unit = pid[i] if geo else (sid[i] or pid[i])
+                r = random.Random(stable_seed(self.S["id"], "scenario_props", j, unit))
+                if r.random() > share:
                     continue
                 d = orjson.loads(props[i] or "{}")
-                d.update(scenario_props(op.get("props"), rnd, pid[i], f"{self.S['id']}:p{j}"))
+                vals = scenario_props(specs, r, pid[i], f"{self.S['id']}:p{j}")
+                d.update(vals)
+                if geo:  # a country brings its whole coherent geo tuple (city, timezone, ...)
+                    for k in GEO_PROPS:
+                        if k not in vals:
+                            d.pop(k, None)
+                    d.update(geo_tuple(vals.get("$geoip_country_code") or vals.get("$geoip_country_name"),
+                                       random.Random(stable_seed(self.S["id"], "geo", pid[i]))))
+                    d.update({k: v for k, v in vals.items() if k in GEO_PROPS})
+                if utm and "utm_source" in d:
+                    if "utm_medium" in specs:  # one curator medium per source (not an independent draw)
+                        meds = [v[0] if isinstance(v, list) else v for v in (specs["utm_medium"] or {}).get("values") or []] \
+                            if isinstance(specs["utm_medium"], dict) else [specs["utm_medium"]]
+                        fits = [m for m in meds if medium_fits(str(m), str(d["utm_source"]))]
+                        if fits:  # a curator medium that fits this source's channel, the same one per source
+                            d["utm_medium"] = fits[int(hashlib.sha256(str(d["utm_source"]).encode()).hexdigest()[:8], 16) % len(fits)]
+                            self._scenario_mediums.add(str(d["utm_medium"]))
+                        else:
+                            d.pop("utm_medium", None)
+                    else:
+                        d.pop("utm_medium", None)  # coherent_utm derives it from the source
+                if geo:
+                    person_geo[pid[i]] = {k: d[k] for k in GEO_PROPS if k in d}
                 props[i] = orjson.dumps(d).decode()
                 n += 1
+        if person_geo:  # r24: the person is in that country on all their events (round 7: 36k of 45k persons switched)
+            for i, p_ in enumerate(pid):
+                g = person_geo.get(p_)
+                if g and props[i]:
+                    d = orjson.loads(props[i])
+                    if any(k in d for k in GEO_PROPS) and any(d.get(k) != v for k, v in g.items()):
+                        d.update(g)
+                        props[i] = orjson.dumps(d).decode()
         tab = tab.set_column(tab.schema.get_field_index("properties"), "properties",
                              pa.array(props, tab.schema.field("properties").type))
         self.v2["scenario_prop_rows"] = n

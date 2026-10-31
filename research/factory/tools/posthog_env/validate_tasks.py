@@ -96,6 +96,10 @@ The twin's data ends at {now} (the agent's "now"; relative windows like "last mo
    names, filters, conditions) must match the object list above, not the production reference; any grading claim
    about an object or setting you cannot confirm there or with a query means the task is not SOUND. A date the
    turn states as "today"/"current date" must agree with the data end above (no day/week/month boundary between).
+6e. Attached results and ids: result tables/numbers pasted into a turn must agree with the twin at the data end
+   (query them); every session id, insight/dashboard/flag id the turns name must exist (objects list,
+   session_replay_events). A contradiction a competent agent would notice is at least MINOR; if grading depends on
+   it, BROKEN. Curation edits listed (e.g. remove_turn) must be reflected in the turns.
 6d. Minimal-answer test: imagine the shortest correct answer to exactly what the user asked; if a must_include point
    would fail it (a supporting fact or caveat the user did not ask for), that is notes_overspecified.
 7. Difficulty: is it trivial (single lookup, answer in the prompt)? Trivial is allowed if it is a real request; mark it.

@@ -91,6 +91,11 @@ builder notes: {notes}
    explain the artefact away or steer around it. If the user attaches an insight/dashboard/query, its events and
    properties must exist on the twin with sensible data (run it); if they don't and overrides can't add them, drop. Facts the agent cannot obtain with its tools (e.g. product prices missing from the docs it
    can search) must not be required in grading_notes.
+6h. Attached production results (tables, insight results, numbers pasted as context) must not contradict the twin:
+   keep the definition and either remove the result rows or replace them with values computed on the twin as of
+   its data end. Every id the turns name (insight short id, dashboard/flag/experiment id, session id, person) must
+   exist in the twin (objects list above, session_replay_events): otherwise rewrite it to an existing one, add it
+   with overrides, or drop. A remove_turn edit must actually remove the turn from "turns".
 6g. Required points answer what the user asked. Caveats the user did not ask about (permissions, plan limits,
    regions, pricing) go in acceptable_variations or not_required, never in must_include. A required point that
    states a product fact must be one you verified (the docs the production answer retrieved, or the twin's own
@@ -298,6 +303,13 @@ def curate_one(task: dict, rec: dict | None, model: str, out_dir: str, feedback:
             assert d.get("decision") in ("keep", "edit", "drop")
             if d["decision"] != "drop":
                 d["turns"] = resolve_turns(d.get("turns"), task["turns"], d.get("edits") or [])
+                removes = sum(1 for e in d.get("edits") or [] if e.get("kind") == "remove_turn")
+                if removes and d.get("decision") == "edit" and len(d["turns"] or []) > len(task["turns"]) - removes:
+                    # round 7: a remove_turn edit was listed but the turn stayed (false premise kept in the task)
+                    convo += ("\n\nYour edits list remove_turn but the turns you returned still contain that turn. "
+                              "Return the final JSON again with the turns exactly as the task should be.")
+                    d = None
+                    continue
             rec_out.update(d)
             rec_out.pop("error", None)
             break

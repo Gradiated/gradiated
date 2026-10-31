@@ -331,7 +331,7 @@ def main() -> None:
     ap.add_argument("--wall-s", type=float, default=900)
     ap.add_argument("--max-turns", type=int, default=4)
     ap.add_argument("--report-only", action="store_true")
-    ap.add_argument("--judge", default="v3h", choices=["v3g", "v3h", "v3i"])
+    ap.add_argument("--judge", default="v3i", choices=["v3g", "v3h", "v3i"])
     ap.add_argument("--capture", action="store_true",
                     help="API arms run through opd_env/run_task_capture.py (root calls in Qwen format, <out>.cap.jsonl.gz) for SFT")
     args = ap.parse_args()

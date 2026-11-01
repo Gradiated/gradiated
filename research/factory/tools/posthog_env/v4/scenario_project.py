@@ -34,8 +34,9 @@ SUPPORTED = ("metric_lookup", "trend_breakdown", "funnel_conversion", "retention
              "llm_analytics", "warehouse", "product_howto", "tracking_quality")
 CONTEXT = ("Harbor Reports is a fictional self-service reporting product for individual analysts. Each person owns "
            "one billing account; accounts are not shared teams. Free users can create and export reports; Studio "
-           "subscriptions cost USD 29 per month and include AI summaries. All users in this fixture joined within "
-           "the observation period. Web events carry stable identified user/device context; billing and AI "
+           "subscriptions cost USD 29 per month and include AI summaries. Registered users joined within "
+           "the observation period. Anonymous visitors browse public marketing pages and can abandon signup; "
+           "they have no billing account or email. Web events carry stable user/device context; billing and AI "
            "generation events come from the backend. Subscription renewals are separate invoices, not new signups.")
 
 
@@ -43,11 +44,14 @@ def identifier(seed: int, *parts) -> str:
     return str(uuid.uuid5(uuid.NAMESPACE_URL, ":".join(map(str, ("harbor-reports", seed, *parts)))))
 
 
-def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split: str = "train") -> dict:
+def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split: str = "train",
+          anonymous_ratio: float = 2.0) -> dict:
     if not 1 <= people <= len(FIRST) * len(LAST) or days < 21 or now.tzinfo is None:
         raise ValueError(f"Use 1..{len(FIRST) * len(LAST)} people, at least 21 days, and an aware UTC end time")
     if split not in ("train", "dev", "test"):
         raise ValueError("Unknown split")
+    if not 0 <= anonymous_ratio <= 10:
+        raise ValueError("Anonymous visitor ratio must be between 0 and 10")
     rng = random.Random(seed)
     now = now.astimezone(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
     start = now - dt.timedelta(days=days)
@@ -175,6 +179,43 @@ def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split:
                       "$ai_is_error": False})
                 action("summary_generated", {"report_id": report_id, "request_id": request}, delay=6)
             day += dt.timedelta(days=1)
+    for i in range(round(people * anonymous_ratio)):
+        pid = identifier(seed, "visitor", i)
+        created = start + dt.timedelta(days=rng.randrange(days), hours=rng.randrange(7, 18))
+        source = rng.choices(["google", "newsletter", "referral", "direct"], [35, 20, 20, 25])[0]
+        country, country_name, city = rng.choice(COUNTRIES)
+        pp = {"acquisition_source": source, "country": country, "visitor_type": "anonymous"}
+        person = {"id": pid, "created_at": created, "properties": json.dumps(pp), "is_identified": False, "version": 1}
+        persons.append(person)
+        profile = dict(rng.choices(PROFILES, [55, 30, 15])[0])
+        context = {**profile, "$lib": "web", "$device_id": identifier(seed, "visitor-device", i), "$is_identified": False,
+                   "$geoip_country_code": country, "$geoip_country_name": country_name, "$geoip_city_name": city,
+                   "utm_source": source, "utm_medium": {"google": "cpc", "newsletter": "email", "referral": "referral", "direct": "direct"}[source],
+                   "utm_campaign": {"google": "reporting-search", "newsletter": "analyst-weekly", "referral": "member-referrals", "direct": ""}[source],
+                   "$referrer": "https://www.google.com/" if source == "google" else "$direct",
+                   "$referring_domain": "www.google.com" if source == "google" else "$direct"}
+        offsets = sorted({0, *(rng.randrange(min(15, (now - created).days + 1)) for _ in range(rng.randrange(3)))})
+        attempted = False
+        for offset in offsets:
+            t = created + dt.timedelta(days=offset)
+            sid = identifier(seed, "visitor-session", i, offset)
+            paths = ["/"]
+            if rng.random() < .45:
+                paths.append("/pricing")
+            attempt = not attempted and rng.random() < .12
+            if attempt:
+                paths.append("/signup")
+            for path in paths:
+                context.update({"$current_url": "https://app.harborreports.io" + path,
+                                "$host": "app.harborreports.io", "$pathname": path})
+                t += dt.timedelta(seconds=rng.randint(8, 55))
+                emit("$pageview", t, person, context, sid)
+            if attempt:
+                t += dt.timedelta(seconds=10)
+                emit("signup_started", t, person, context, sid)
+                t += dt.timedelta(seconds=rng.randint(15, 90))
+                emit("signup_abandoned", t, person, context, sid)
+                attempted = True
     events.sort(key=lambda r: (r["timestamp"], r["uuid"]))
     counts = Counter(r["event"] for r in events)
     props = defaultdict(set)
@@ -188,7 +229,8 @@ def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split:
                                           "description": e.replace("_", " "), "generated_count": n} for e, n in sorted(counts.items())],
                    "property_definitions": [{"name": p, "type": 1, "property_type": types[p],
                                              "is_numerical": types[p] == "Numeric"} for p in sorted(set().union(*props.values()))]
-                   + [{"name": p, "type": 2, "property_type": "String"} for p in pp],
+                   + [{"name": p, "type": 2, "property_type": "String"}
+                      for p in sorted({k for person in persons for k in json.loads(person["properties"])})],
                    "event_properties": [{"event": e, "property": p} for e, ps in props.items() for p in sorted(ps)]}
     twin_id = identifier(seed, "project")
     return {"events": events, "persons": persons, "accounts": accounts, "invoices": invoices,
@@ -198,6 +240,7 @@ def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split:
                                                                            {"key": "guided", "rollout_percentage": 50}]}]},
             "manifest": {"spec_id": twin_id, "spec_kind": "synthetic_scenario", "split": split,
                          "now_utc": now.isoformat(), "timezone": "UTC", "platform": "web", "seed": seed,
+                         "registered_people": people, "anonymous_people": len(persons) - people,
                          "history_days": days, "counts": {"events": len(events), "persons": len(persons)},
                          "scenario_context": CONTEXT, "supported_families": SUPPORTED},
             "ground_truth": {"kind": "synthetic", "export_regression": {"from": anomaly_start.isoformat(),
@@ -239,8 +282,9 @@ def main():
     ap.add_argument("--days", type=int, default=90)
     ap.add_argument("--now", required=True)
     ap.add_argument("--split", choices=("train", "dev", "test"), default="train")
+    ap.add_argument("--anonymous-ratio", type=float, default=2.0)
     a = ap.parse_args()
-    data = build(a.seed, dt.datetime.fromisoformat(a.now), a.people, a.days, a.split)
+    data = build(a.seed, dt.datetime.fromisoformat(a.now), a.people, a.days, a.split, a.anonymous_ratio)
     out = write_project(data, a.out)
     print(json.dumps({"project": str(out), **data["manifest"]["counts"]}))
 

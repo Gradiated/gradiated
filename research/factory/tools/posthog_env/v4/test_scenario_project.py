@@ -21,7 +21,11 @@ class ScenarioProject(unittest.TestCase):
             self.assertEqual(r["distinct_id"], r["person_id"])
             props = json.loads(r["properties"])
             if props["$lib"] == "web":
-                self.assertEqual(props["$user_id"], r["person_id"])
+                if props["$is_identified"]:
+                    self.assertEqual(props["$user_id"], r["person_id"])
+                else:
+                    self.assertNotIn("$user_id", props)
+                    self.assertFalse(props["$is_identified"])
                 self.assertEqual(props["$session_id"], r["$session_id"])
 
     def test_web_sessions_have_one_person_and_start_with_pageview(self):
@@ -47,7 +51,7 @@ class ScenarioProject(unittest.TestCase):
 
     def test_billing_joins_and_cost_arithmetic(self):
         accounts = {a["id"]: a for a in self.data["accounts"]}
-        self.assertEqual(len(accounts), len(self.data["persons"]))
+        self.assertEqual(len(accounts), sum(p["is_identified"] for p in self.data["persons"]))
         self.assertEqual(len({x["id"] for x in self.data["invoices"]}), len(self.data["invoices"]))
         for invoice in self.data["invoices"]:
             self.assertEqual(invoice["person_id"], accounts[invoice["account_id"]]["person_id"])
@@ -82,6 +86,21 @@ class ScenarioProject(unittest.TestCase):
             if r["event"] in ("summary_requested", "$ai_generation", "summary_generated"):
                 self.assertIn(r["person_id"], paid)
                 self.assertGreaterEqual(r["timestamp"], paid[r["person_id"]])
+
+    def test_anonymous_visitors_do_not_receive_accounts_or_core_product_events(self):
+        anon = {p["id"] for p in self.data["persons"] if not p["is_identified"]}
+        self.assertEqual(len(anon), 120)
+        self.assertFalse(anon & {a["person_id"] for a in self.data["accounts"]})
+        for r in self.data["events"]:
+            if r["person_id"] in anon:
+                self.assertIn(r["event"], ("$pageview", "signup_started", "signup_abandoned"))
+
+    def test_visitor_ratio_can_reproduce_the_registered_only_control(self):
+        control = build(41, self.now, people=60, days=35, anonymous_ratio=0)
+        self.assertEqual(len(control["persons"]), 60)
+        core = [r for r in self.data["events"] if r["person_id"] in {p["id"] for p in control["persons"]}]
+        self.assertEqual(core, control["events"])
+
 
 
 if __name__ == "__main__":

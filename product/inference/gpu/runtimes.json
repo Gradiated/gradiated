@@ -146,6 +146,7 @@
       "GLM_LONG_PREFILL_TOKEN_THRESHOLD": "2048",
       "GLM_PREFIX_MATCH_UNIT": "128",
       "MAX_QUEUED_REQUESTS": "6"
-    }
+    },
+    "request_memory": "128Gi"
   }
 }

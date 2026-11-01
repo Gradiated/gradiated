@@ -263,7 +263,8 @@ class RenderTests(unittest.TestCase):
             self.assertEqual(pod['spec']['containers'][0]['image'], runtime['image'])
             self.assertEqual(json.loads(pod['metadata']['annotations']['gradiated.com/release']), runtime['release'])
             self.assertFalse(pod['spec']['automountServiceAccountToken'])
-            self.assertEqual(document['spec']['strategy']['canary']['maxUnavailable'], 0)
+            self.assertEqual(document['spec']['strategy']['canary']['maxUnavailable'],
+                             models[name].get('max_unavailable', 0))
             self.assertEqual(document['spec']['strategy']['canary']['steps'][1]['analysis']['templates'],
                              [{'templateName': 'sdk-qualification'}])
         with self.assertRaises(KeyError):
@@ -296,6 +297,26 @@ class RenderTests(unittest.TestCase):
         for invalid in (0, -1, True, 1.5, '2', '20%', None):
             with self.subTest(invalid=invalid), self.assertRaisesRegex(ValueError, 'max_surge'):
                 renderer.rollout('glm-dealign', {**model, 'max_surge': invalid}, runtimes)
+
+    def test_packed_gpu_rollout_can_replace_one_replica_without_a_spare_gpu(self):
+        runtimes = json.loads(renderer.RUNTIMES.read_text())
+        model = json.loads((renderer.GPU / 'models.json').read_text())['glm-dealign']
+        obj = renderer.rollout('glm-dealign', model, runtimes)
+        self.assertEqual(obj['spec']['strategy']['canary']['maxUnavailable'], 1)
+        resources = obj['spec']['template']['spec']['containers'][0]['resources']
+        self.assertEqual(resources['requests']['memory'], '128Gi')
+        self.assertEqual(resources['limits']['memory'], '224Gi')
+        # Standard GLM plus two uncensored replicas fit the new four-GPU host.
+        stock = json.loads((renderer.GPU / 'models.json').read_text())['glm']
+        stock_runtime = runtimes[stock['runtime']]
+        stock_memory = int(stock_runtime.get('request_memory', stock_runtime['memory'])[:-2])
+        self.assertLessEqual(stock_memory + 2 * 128, 686)
+        default = renderer.rollout('glm-dealign', {k: v for k, v in model.items()
+                                                 if k != 'max_unavailable'}, runtimes)
+        self.assertEqual(default['spec']['strategy']['canary']['maxUnavailable'], 0)
+        for invalid in (-1, True, 1.5, '1', '10%', None, model['replicas']):
+            with self.subTest(invalid=invalid), self.assertRaisesRegex(ValueError, 'max_unavailable'):
+                renderer.rollout('glm-dealign', {**model, 'max_unavailable': invalid}, runtimes)
 
     def test_autoscaling_preserves_minimum_and_rejects_invalid_bounds(self):
         runtimes = json.loads((renderer.ROOT / 'product/inference/gpu/runtimes.json').read_text())

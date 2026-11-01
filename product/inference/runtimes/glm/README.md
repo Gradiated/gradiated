@@ -51,15 +51,28 @@ requests without errors at 88 TPS median per request.
 
 `--max-num-seqs 4` limits simultaneous decoding; additional HTTP requests can
 queue. Add TP1 replicas to increase simultaneous serving capacity.
-The production target is eight TP1 replicas at concurrency four, with 16 CPU and
-224 GiB host RAM per replica. Cold-weight loading and startup qualification
-peaked at 188 GiB under those cgroup limits. Eight replicas fit as four on the
-4-GPU B300 host and four beside DeepSeek on the 8-GPU B300 host, after stock GLM
-drains. Placement permits several replicas per host.
-Require node affinity to instance IDs `01a0f19d-1ff3-7613-8cbf-81b693c0f0d4`
-and `01a0fbf7-5276-700b-903b-7e04da150ed6`. Host
+The production target is ten TP1 replicas at concurrency four, with 16 CPU and
+a 224 GiB host RAM limit per replica. Earlier cold-weight loading and startup
+qualification peaked at 188 GiB under those cgroup limits. Placement permits
+several replicas per host. Host
 `01a0fbf8-06fc-7658-96e1-ae72f7dba135` is user-owned capacity and must not be
 used for this deployment or further experiments, even if it is uncordoned.
+
+The current uncensored release requests 128 GiB of host RAM for scheduling and
+retains its 224 GiB cgroup limit. A production reading on 2026-11-01 found
+5.1 GiB anonymous memory and 104.5 GiB file cache for an uncensored replica
+(127.6 GiB lifetime cgroup peak), alongside standard GLM at 12.0 GiB anonymous
+memory and 197.1 GiB file cache (321.2 GiB lifetime peak). These are snapshots,
+not worst-case bounds; the existing limits retain cold-start headroom and the
+kernel can reclaim file cache. The newer four-B300 host advertises 686 GiB:
+standard GLM's 400 GiB request plus two 128 GiB uncensored requests fit at
+656 GiB, whereas two 224 GiB requests did not. Current model configuration
+allows that host as well as the older serving hosts. Ten uncensored replicas
+consume the ten B300s remaining after one standard GLM replica (two GPUs) and
+one DeepSeek replica (four GPUs) on the serving four-, four-, and eight-GPU
+hosts. The uncensored Rollout permits one unavailable replica so a packed
+fleet can replace a replica without an extra GPU; the disruption budget still
+requires eight available replicas. Intentionally cordoned hosts remain excluded.
 
 The startup supervisor checks bursts through concurrency sixteen, including
 queue completion within its timeout.

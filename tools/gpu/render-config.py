@@ -53,6 +53,9 @@ def rollout(name, model, runtimes):
     surge = model.get('max_surge', 1)
     if type(surge) is not int or surge < 1:
         raise ValueError('Rollout max_surge must be a positive integer')
+    unavailable = model.get('max_unavailable', 0)
+    if type(unavailable) is not int or not 0 <= unavailable < model['replicas']:
+        raise ValueError('Rollout max_unavailable must be an integer below replicas')
     paused = model.get('autoscaling', {}).get('paused_replicas')
     runtime = runtimes[model['runtime']]
     if runtime.get('kind') == 'training':
@@ -75,7 +78,7 @@ def rollout(name, model, runtimes):
                      **({'annotations': {'gradiated.com/paused-replicas': str(paused)}} if paused is not None else {})},
         'spec': {'replicas': paused if paused is not None else model['replicas'], 'progressDeadlineSeconds': model['progress_deadline_seconds'],
                  'progressDeadlineAbort': True,
-                 'strategy': {'canary': {'maxSurge': surge, 'maxUnavailable': 0, 'steps': [
+                 'strategy': {'canary': {'maxSurge': surge, 'maxUnavailable': unavailable, 'steps': [
                      {'setWeight': 50}, {'analysis': {'templates': [{'templateName': 'sdk-qualification'}], 'args': [
                          {'name': 'app', 'value': name},
                          {'name': 'hash', 'valueFrom': {'podTemplateHashValue': 'Latest'}}]}}, {'setWeight': 100}]}},

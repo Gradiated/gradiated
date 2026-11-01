@@ -215,6 +215,17 @@ registered-only control. Visitors remain unidentified, have no billing accounts,
 paid-AI events. Their sessions obey the same identity/time invariants. This expands the supported acquisition
 analysis; it does not alter the validator threshold or automatically approve tasks from the new worlds.
 
+`v4/rubric_probe.py` keeps an observed rollout's tool work fixed and replaces only its final answers with a
+shortest user-complete answer, wrong numeric findings, clarification-only text or process-only text. This is a
+synthetic intervention test of the judge, not extra model samples. A failed minimal rewrite requires semantic
+review; an incomplete judge call is not counted as rejection. The probe never receives the rubric when generating
+the minimal answer, and it stores trace/task/source-bound results under the chosen host output directory.
+
+```bash
+python3 rubric_probe.py --trace /path/to/observed/r0.json --tasks /path/to/validated.jsonl \
+  --task-id TASK_ID --out /path/to/ignored/rubric_probe
+```
+
 ### Rebuild from new traces (one command)
 
 ```bash

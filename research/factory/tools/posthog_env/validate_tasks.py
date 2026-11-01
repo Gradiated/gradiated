@@ -238,7 +238,8 @@ def make_repair(a, res: dict, recs: dict, rdir: str, rnd, model: str, extra: str
         if c.get("twin_overrides"):
             t2["pending_regen"] = rnd
             return t["task_id"], t2, {"task_id": t["task_id"], "verdict": "PENDING_REGEN",
-                                      "summary": "curator added twin_overrides; validate after regeneration"}
+                                      "summary": "curator added twin_overrides; validate after regeneration",
+                                      "defects": r.get("defects")}  # keep the finding that triggered the repair
         return t["task_id"], t2, validate_one(t2, recs.get(t["conversation_id"]), model, rdir, extra=extra,
                                               max_rounds=max_rounds)
 

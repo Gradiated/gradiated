@@ -50,6 +50,9 @@ events/persons), and values (realistic domains and magnitudes).
 Explore with {{"queries": [{{"why": "...", "sql": "..."}}]}} (at most 8 per round, up to 5 rounds). Every query must
 contain `team_id = {{team}}`; tables: events(team_id, event, timestamp, distinct_id, person_id, properties),
 person(team_id, id, properties), session_replay_events(team_id, session_id, ...), warehouse('<name>').
+Queries run as ClickHouse SQL, not HogQL. properties is a JSON STRING: use JSONExtractString(properties, '$os')
+or JSONExtractFloat(properties, 'amount'), never properties.$os or properties.amount. Use event-level $session_id
+from JSONExtractString(properties, '$session_id'). Do not assume event-specific columns exist outside properties.
 
 Final answer, ONLY JSON:
 {{"verdict": "CLEAN|MINOR|MATERIAL",
@@ -78,7 +81,7 @@ def audit(base: dict, model: str, out: str) -> dict:
     for _ in range(10):
         try:
             text, _u = llm_proxy.judge_complete(convo, model, None, attempts=2, timeout=120, preamble=False)
-            d = json.loads(text[text.find("{"):text.rfind("}") + 1])
+            d = AC.parse_reply(text, ("queries", "verdict"))
             if d.get("queries") and "verdict" not in d and rounds < 5:
                 rounds += 1
                 qs = [{**q, "sql": normalize_team(q.get("sql", ""), int(base["team_id"]))}

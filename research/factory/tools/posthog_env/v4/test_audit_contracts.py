@@ -7,6 +7,14 @@ import audit_contracts as AC
 
 
 class AuditAdmission(unittest.TestCase):
+    def test_json_replies_can_be_fenced_or_follow_other_objects(self):
+        text = 'Initial {team} query: {"queries": []}\nFinal:\n```json\n{"verdict": "CLEAN", "defects": []}\n```'
+        self.assertEqual(AC.parse_reply(text, ("queries", "verdict"))["verdict"], "CLEAN")
+        self.assertEqual(AC.parse_reply('{"queries":[{"sql":"SELECT \'{team}\'"}]}', ("queries",))["queries"][0]["sql"],
+                         "SELECT '{team}'")
+        with self.assertRaises(ValueError):
+            AC.parse_reply('{"unrelated": 1}', ("verdict",))
+
     def setUp(self):
         self.base = {"twin_id": "synthetic", "team_id": 7, "loaded_now_utc": "2026-11-01", "shift_days": 5}
         self.rec = {"verdict": "CLEAN", "defects": [], "queries_run": [{"result": "[[12]]"}],

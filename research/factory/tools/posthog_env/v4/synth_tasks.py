@@ -183,7 +183,7 @@ def author(base: dict, family: str, difficulty: int, rng, model: str, out_dir: s
     for _ in range(9):
         try:
             text, _u = llm_proxy.judge_complete(convo, model, None, attempts=2, timeout=120, preamble=False)
-            d = json.loads(text[text.find("{"):text.rfind("}") + 1])
+            d = AC.parse_reply(text, ("queries", "turns", "skip"))
             if d.get("queries") and "turns" not in d and rounds < 4:
                 rounds += 1
                 res = CT.run_queries(d["queries"][:8], int(base["team_id"]))

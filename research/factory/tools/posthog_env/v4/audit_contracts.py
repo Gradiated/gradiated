@@ -7,7 +7,22 @@ import json
 
 
 SNAPSHOT_KEYS = ("twin_id", "team_id", "loaded_now_utc", "shift_days")
-AUDIT_VERSION = 2
+AUDIT_VERSION = 3
+
+
+def parse_reply(text: str, keys: tuple[str, ...]) -> dict:
+    decoder, position, found = json.JSONDecoder(), 0, None
+    while (start := text.find("{", position)) >= 0:
+        try:
+            value, end = decoder.raw_decode(text, start)
+            position = end
+            if isinstance(value, dict) and any(k in value for k in keys):
+                found = value
+        except ValueError:
+            position = start + 1
+    if found is None:
+        raise ValueError("No structured model reply with the required keys")
+    return found
 
 
 def snapshot(base: dict) -> dict:

@@ -158,6 +158,9 @@ def author(base: dict, family: str, difficulty: int, rng, model: str, out_dir: s
     prompt = AUTHOR.format(family=family, family_desc=FAMILY_DESC[family], difficulty=difficulty,
                            exemplars="\n".join(f"- {SC.clip(e, 500)}" for e in ex), now=base.get("loaded_now_utc"),
                            twin=SC.clip(twin, 24000), objects=SC.clip(SC.team_objects(base["team_id"]), 4000))
+    if base.get("_avoid"):
+        prompt += ("\n\n## Known minor data defects in this project (do not build the task on these areas)\n" +
+                   "\n".join(f"- {x}" for x in base["_avoid"][:12]))
     if planted:
         prompt += PLANTED_HINT.format(event=planted["event"], where=json.dumps(planted["where"]), factor=planted["factor"],
                                       fr=planted["from"], to=planted["to"],
@@ -211,6 +214,7 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--planted", default="", help="planted.jsonl: planted twins get one investigation task built on it")
     ap.add_argument("--only-planted", action="store_true", help="use only the planted twins")
+    ap.add_argument("--audit", default="", help="audit.jsonl from audit_twins.py: skip MATERIAL twins, avoid minor defects")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     rng = random.Random(a.seed)
@@ -233,6 +237,14 @@ def main() -> None:
                 continue
             bases.setdefault(t["twin_id"], {**t, "team_id": r["team_id"], "project_id": r.get("project_id") or r["team_id"],
                                             "loaded_now_utc": r.get("loaded_now_utc"), "shift_days": r.get("shift_days")})
+    if a.audit:
+        aud = {json.loads(x)["twin_id"]: json.loads(x) for x in open(a.audit)}
+        for tw in list(bases):
+            r = aud.get(tw)
+            if r is None or r.get("verdict") not in ("CLEAN", "MINOR"):
+                bases.pop(tw)  # not audited, failed, or MATERIAL
+            else:
+                bases[tw]["_avoid"] = [d.get("what") for d in r.get("defects") or [] if d.get("severity") == "minor"]
     planted = {json.loads(x)["twin_id"]: json.loads(x) for x in open(a.planted)} if a.planted else {}
     pool = sorted(t for t in bases if t in planted) if a.only_planted else sorted(bases)
     twins = rng.sample(pool, min(a.twins, len(pool)))

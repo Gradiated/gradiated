@@ -118,6 +118,31 @@ class ScenarioProject(unittest.TestCase):
                   and r["timestamp"] >= self.now - dt.timedelta(days=7)]
         self.assertGreater(len(recent), 0)
 
+    def test_export_duration_matches_observed_lifecycle(self):
+        starts, durations = {}, set()
+        for r in self.data["events"]:
+            p = json.loads(r["properties"])
+            key = (r["person_id"], p.get("report_id"))
+            if r["event"] == "report_export_started":
+                starts[key] = r["timestamp"]
+            if r["event"] in ("report_export_succeeded", "report_export_failed"):
+                elapsed_ms = (r["timestamp"] - starts[key]).total_seconds() * 1000
+                self.assertAlmostEqual(elapsed_ms, p["duration_ms"], places=3)
+                durations.add(p["duration_ms"])
+                if r["event"] == "report_export_failed":
+                    self.assertGreaterEqual(p["duration_ms"], 10000)
+        self.assertGreater(len(durations), 10)
+
+    def test_ai_generation_latency_matches_request_completion(self):
+        requests = {}
+        for r in self.data["events"]:
+            p = json.loads(r["properties"])
+            if r["event"] == "summary_requested":
+                requests[p["request_id"]] = r["timestamp"]
+            if r["event"] == "$ai_generation":
+                elapsed = (r["timestamp"] - requests[p["$ai_trace_id"]]).total_seconds()
+                self.assertAlmostEqual(elapsed, p["$ai_latency"], places=6)
+
 
 if __name__ == "__main__":
     unittest.main()

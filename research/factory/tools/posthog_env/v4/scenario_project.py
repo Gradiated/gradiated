@@ -124,8 +124,10 @@ def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split:
                        "$referrer": "https://www.google.com/" if source == "google" else "$direct",
                        "$referring_domain": "www.google.com" if source == "google" else "$direct"}
 
-            def action(event, props=None, delay=10):
+            def action(event, props=None, delay=None):
                 nonlocal t
+                if delay is None:
+                    delay = rng.uniform(2, 18)
                 t += dt.timedelta(seconds=delay)
                 emit(event, t, person, {**session, **(props or {})}, sid)
 
@@ -165,9 +167,11 @@ def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split:
                 action("report_export_started", {"report_id": report_id, "format": "pdf"})
                 regression = t >= anomaly_start and profile == affected
                 failed = rng.random() < (.56 if regression else .035)
+                duration_ms = rng.randint(10000, 16000) if failed else rng.randint(900, 4000)
                 action("report_export_failed" if failed else "report_export_succeeded",
-                       {"report_id": report_id, "format": "pdf", "duration_ms": rng.randint(900, 4000),
-                        "error_code": "render_timeout" if failed else "", "renderer_version": "2.8" if t >= anomaly_start else "2.7"})
+                       {"report_id": report_id, "format": "pdf", "duration_ms": duration_ms,
+                        "error_code": "render_timeout" if failed else "", "renderer_version": "2.8" if t >= anomaly_start else "2.7"},
+                       delay=duration_ms / 1000)
                 if not failed:
                     page("/reports/export/success")
             if plan == "studio" and rng.random() < .7:
@@ -177,15 +181,16 @@ def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split:
                 tokens_in, tokens_out = rng.randint(400, 2600), rng.randint(80, 450)
                 rate = .2 if model == "swift-small" else 2.0
                 cost = round((tokens_in + 4 * tokens_out) * rate / 1e6, 7)
-                emit("$ai_generation", t + dt.timedelta(seconds=2), person,
+                latency = round(rng.uniform(.4, 1.5) if model == "swift-small" else rng.uniform(1.8, 4.5), 3)
+                emit("$ai_generation", t + dt.timedelta(seconds=latency), person,
                      {"$lib": "posthog-python", "account_id": account, "report_id": report_id,
                       "$ai_trace_id": request, "$ai_model": model, "$ai_provider": "harbor-inference",
                       "$ai_input_tokens": tokens_in, "$ai_output_tokens": tokens_out,
                       "$ai_total_cost_usd": cost, "$ai_input_cost_usd": round(tokens_in * rate / 1e6, 7),
                       "$ai_output_cost_usd": round(tokens_out * 4 * rate / 1e6, 7),
-                      "$ai_latency": round(rng.uniform(.4, 1.5) if model == "swift-small" else rng.uniform(1.8, 4.5), 3),
+                      "$ai_latency": latency,
                       "$ai_is_error": False})
-                action("summary_generated", {"report_id": report_id, "request_id": request}, delay=6)
+                action("summary_generated", {"report_id": report_id, "request_id": request}, delay=latency + rng.uniform(.05, .3))
             day += dt.timedelta(days=1)
     for i in range(round(people * anonymous_ratio)):
         pid = identifier(seed, "visitor", i)

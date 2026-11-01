@@ -207,6 +207,14 @@ not achieved results; incomplete or infrastructure-failed rollouts cannot inflat
 worlds before scoring a final evaluation, and report that they share a synthetic product archetype rather than
 claiming generalization to independent real customers.
 
+The first six-task validation kept one SOUND task and rejected five MINOR cases under the existing high-reach
+criterion; all persons in that world were registered users. The next population revision adds anonymous visitors,
+public landing/pricing journeys, abandoned signups and linked pre-signup histories for registrants. `--people`
+counts registered users; `--anonymous-ratio` defaults to two visitors per registered user and can be zero for the
+registered-only control. Visitors remain unidentified, have no billing accounts, and cannot generate product or
+paid-AI events. Their sessions obey the same identity/time invariants. This expands the supported acquisition
+analysis; it does not alter the validator threshold or automatically approve tasks from the new worlds.
+
 ### Rebuild from new traces (one command)
 
 ```bash

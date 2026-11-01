@@ -16,7 +16,7 @@ import json
 import os
 import re
 import sys
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 sys.path.insert(0, "/opt/posthog-env")
 import llm_proxy  # noqa: E402
@@ -105,8 +105,10 @@ def main() -> None:
             if a.limit and len(recs) >= a.limit:
                 break
     with open(a.out, "a") as f, ThreadPoolExecutor(a.workers) as pool:
-        for rec, res in zip(recs, pool.map(classify, recs)):
-            res["split"] = rec["_split"]
+        futs = {pool.submit(classify, r): r for r in recs}
+        for fut in as_completed(futs):  # completion order: one stuck call does not block the rest
+            res = fut.result()
+            res["split"] = futs[fut]["_split"]
             f.write(json.dumps(res) + "\n")
             f.flush()
     rows = [json.loads(x) for x in open(a.out)]

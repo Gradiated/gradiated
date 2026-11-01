@@ -69,7 +69,7 @@ def train(name: str, data: list[str], gpus: str, port: int) -> subprocess.Popen:
 def train_opus(name: str, rows: str) -> subprocess.Popen:
     """Opus chain rows (up to 110k tokens) train with opd_env/train.py on all four free GPUs (as qwen-sft-opus did)."""
     out = f"{OPD}/sft/{name}"
-    cmd = (f"cd {OPD} && TRAIN_ONLY=1 EPOCHS=2 sh sft_k3.sh {name} {rows} a && "
+    cmd = (f"cd {OPD} && TRAIN_ONLY=1 EPOCHS=2 bash sft_k3.sh {name} {rows} a && "
            f"curl -s -X POST localhost:18012/v1/load_lora_adapter -H 'Content-Type: application/json' "
            f"-d '{{\"lora_name\":\"{name}\",\"lora_path\":\"{out}/vllm\"}}'")
     log(f"train {name} (opd_env/train.py, GPUs 0,1,2,7): {rows}")

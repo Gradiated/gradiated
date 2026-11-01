@@ -188,7 +188,9 @@ def author(base: dict, family: str, difficulty: int, rng, model: str, out_dir: s
 
 def verify(rec: dict, team: int) -> tuple[bool, list]:
     """Re-run the reference queries: every one must succeed and at least one must return rows."""
-    qs = [{"why": q.get("purpose", ""), "sql": q.get("sql", "")} for q in rec.get("reference_queries") or []]
+    # the author often writes the literal team id; run_queries requires the {team} placeholder (pilot 1: 20 rejected)
+    qs = [{"why": q.get("purpose", ""), "sql": re.sub(rf"\b{team}\b", "{team}", q.get("sql", ""))
+           if "{team}" not in q.get("sql", "") else q.get("sql", "")} for q in rec.get("reference_queries") or []]
     if not qs:
         return False, []
     res = CT.run_queries(qs, team)

@@ -78,6 +78,11 @@ def stem_of(name):
     return re.sub(r"[^a-z0-9]+", "_", n).strip("_") or "value"
 
 
+TXN_ID = re.compile(r"(transaction|order|payment|invoice|charge|receipt|booking|ticket|submission|purchase|checkout)"
+                    r"[_ ]?(id|number|no|ref)$", re.I)
+UUID_RX = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.I)
+
+
 class Sampler:
     """Callable producing a JSON-ready value for one (event, property). `ctx` is a per-event context dict."""
 
@@ -104,6 +109,16 @@ class Sampler:
         # and leak other projects' literals: custom string props use the shape path (placeholders are remapped to
         # this business by valuepools); $-standard props keep PostHog's own value priors
         str_custom = (typ or "").lower() in ("string", "str") and not str(name).startswith("$")
+        if TXN_ID.search(str(name)) and self.shape == "id":
+            # r31: a transaction-like id is unique per event; production values are emitted once each (v4 pilot: five
+            # transaction ids shared by many people with different amounts)
+            sample = [v for v in vals if isinstance(v, str)]
+            self.id_class = "uuid" if any(UUID_RX.match(v) for v in sample) else "int" if sample and all(
+                v.isdigit() for v in sample) else "prefixed_id"
+            self.mode, self.source = "unique_id", "shape"
+            self.pending = list(dict.fromkeys(vals))[:20]
+            self.p_force = 0.02
+            return
         if not vals and prior and prior.get("values") and self.shape != "email" and not str_custom:
             pv = [(coerce(v, typ), c) for v, c in prior["values"]]
             pv = [(v, c) for v, c in pv if v is not None and v != ""]
@@ -280,6 +295,8 @@ class Sampler:
             return ts.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
         if m == "shape_id":
             return r.choice(self.id_pool)
+        if m == "unique_id":
+            return self._make_id(self.id_class, stem_of(self.name))
         if m == "person_id":
             return ctx["person"]["user_id"]
         if m == "session_id":

@@ -701,6 +701,41 @@ class RoundB15Scenario(unittest.TestCase):
             by[r["pi"]].add(r["props"]["order_id"])
         self.assertTrue(all(len(v) == 1 for v in by.values()) and len({next(iter(v)) for v in by.values()}) == len(by))
 
+    def test_transaction_ids_unique(self):
+        import values
+        smp = values.Sampler("transaction_id", "String", values=["txn_aaa", "txn_bbb", "txn_ccc"])
+        out = [smp({"person": {}}) for _ in range(300)]
+        self.assertEqual(smp.mode, "unique_id")
+        self.assertGreater(len(set(out)), 280)
+
+    def test_page_parents(self):
+        m = gen2.page_parents(["/", "/pricing", "/checkout", "/checkout/success", "/contact", "/contact/thank-you",
+                               "/billing/checkout", "/billing/success", "/blog/post"])
+        self.assertEqual(m["/checkout/success"], "/checkout")
+        self.assertEqual(m["/contact/thank-you"], "/contact")
+        self.assertEqual(m["/billing/success"], "/billing/checkout")
+        self.assertNotIn("/blog/post", m)
+
+    def test_page_flow(self):
+        """v4 pilot: success pages before checkout; random page funnels."""
+        import pyarrow as pa
+        rows = [("s1", "/checkout/success", 10), ("s1", "/checkout", 50),   # wrong order -> moved after
+                ("s2", "/checkout/success", 10),                             # no checkout -> one inserted before
+                ("s3", "/checkout", 5), ("s3", "/checkout/success", 30)]     # fine
+        pv = lambda p: json.dumps({"$pathname": p, "$current_url": "https://shop.io" + p})
+        tab = pa.table({"event": ["$pageview"] * len(rows), "$session_id": [r[0] for r in rows],
+                        "properties": [pv(r[1]) for r in rows], "uuid": [f"u{i}" for i in range(len(rows))],
+                        "timestamp": pa.array([1_700_000_000_000_000 + r[2] * 1_000_000 for r in rows], pa.int64())
+                        .cast(pa.timestamp("us", tz="UTC"))})
+        out = project().page_flow(tab)
+        seq = C.defaultdict(list)
+        for s_, pr, t in sorted(zip(out.column("$session_id").to_pylist(), out.column("properties").to_pylist(),
+                                    out.column("timestamp").to_pylist()), key=lambda r: r[2]):
+            seq[s_].append(json.loads(pr)["$pathname"])
+        self.assertEqual(seq["s1"], ["/checkout", "/checkout/success"])
+        self.assertEqual(seq["s2"], ["/checkout", "/checkout/success"])
+        self.assertEqual(seq["s3"], ["/checkout", "/checkout/success"])
+
     def test_segment_shift(self):
         """v4 planted scenario: only the matching segment changes, only inside the window."""
         import pyarrow as pa

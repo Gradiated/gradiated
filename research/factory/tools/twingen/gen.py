@@ -425,10 +425,11 @@ class Project:
             p["$device"] = "iPhone" if os_ == "iOS" else "Android"
             p["$device_model"] = model
             p["$device_manufacturer"] = "Apple" if os_ == "iOS" else model.split()[0]
-        p["$app_name"] = self.company.title()
-        p["$app_version"] = f"{rnd.randint(1, 4)}.{rnd.randint(0, 20)}.{rnd.randint(0, 9)}"
-        p["$app_build"] = str(rnd.randint(100, 900))
-        p["$app_namespace"] = f"com.{self.company}.app"
+        if lib != "web":  # r31: app metadata only on native-app profiles (v4 pilot: every web person had $app_*)
+            p["$app_name"] = self.company.title()
+            p["$app_version"] = f"{rnd.randint(1, 4)}.{rnd.randint(0, 20)}.{rnd.randint(0, 9)}"
+            p["$app_build"] = str(rnd.randint(100, 900))
+            p["$app_namespace"] = f"com.{self.company}.app"
         p["$locale"] = lang
         p["$network_wifi"] = rnd.random() < 0.7
         return p

@@ -344,6 +344,34 @@ def scenario_props(specs: dict, rnd, person_key=None, salt="") -> dict:
 FAMILY_ROOT_MIN_SHARE = 0.15
 
 
+COMPLETION_PAGE = re.compile(r"(^|[/_-])(success|succeeded|thank[-_]?you|thanks|confirm(ation|ed)?|complete(d)?|done|"
+                             r"welcome|receipt|order[-_]placed)([/_?#.-]|$)", re.I)
+START_PAGE = re.compile(r"(^|[/_-])(checkout|contact|sign[-_]?up|register|payment|pay|cart|basket|onboarding|apply|"
+                        r"application|booking|book|subscribe|upgrade|billing|demo|request)([/_?#.-]|$)", re.I)
+
+
+def page_parents(paths) -> dict:
+    """r31: completion page -> its start page (same or parent section; the deepest matching start page)."""
+    paths = [p for p in dict.fromkeys(paths) if isinstance(p, str) and p.startswith("/")]
+    starts = [p for p in paths if START_PAGE.search(p) and not COMPLETION_PAGE.search(p)]
+    out = {}
+    for p in paths:
+        if not COMPLETION_PAGE.search(p) or not starts:
+            continue
+        segs = [x for x in p.strip("/").split("/") if x]
+        best, best_k = None, -1
+        for st in starts:
+            ss = [x for x in st.strip("/").split("/") if x]
+            k = 0
+            while k < min(len(ss), len(segs)) and ss[k] == segs[k]:
+                k += 1
+            if k > best_k or (k == best_k and best is not None and len(st) > len(best)):
+                best, best_k = st, k
+        if best is not None and (best_k > 0 or len(segs) <= 1):
+            out[p] = best
+    return out
+
+
 def causal_parent(e: str, names, vol) -> str | None:
     """The event that causes e: a name-evident parent ('paywall_dismissed' -> 'paywall_shown'), or the family root
     when the root's volume can carry the member (>= 15% of its events; else the prefix is just a product area).
@@ -2132,6 +2160,7 @@ class Project2(gen.Project):
         before it (bounce, entry page and entry UTM metrics need the landing pageview first)."""
         tab = self.scenario_event_props(tab)  # r24: curator values first, so the coherence rules below apply to them
         tab = self.segment_shifts(tab)  # r30: planted segment-level changes (known ground truth for investigations)
+        tab = self.page_flow(tab)  # r31: completion pages come after their start page in the session
         props = tab.column("properties").to_pylist()
         mediums = list(self.utm_vals.get("utm_medium") or []) if hasattr(self, "utm_vals") else []
         campaigns = list(self.utm_vals.get("utm_campaign") or []) if hasattr(self, "utm_vals") else []
@@ -2732,6 +2761,74 @@ class Project2(gen.Project):
         tab = tab.set_column(tab.schema.get_field_index("properties"), "properties",
                              pa.array(props, tab.schema.field("properties").type))
         self.v2["scenario_prop_rows"] = n
+        return tab
+
+    def page_flow(self, tab):
+        """rule (r31): a completion pageview (success/thank-you/confirmation/welcome) comes after its start page in the
+        same session: moved after it when the start comes later, else a start pageview is inserted 20 s-5 min before
+        (v4 pilot: thank-you pages before contact pages, success before checkout; page funnels were random)."""
+        ev = tab.column("event").to_pylist()
+        idx = [i for i, e in enumerate(ev) if e == "$pageview"]
+        if not idx or "$session_id" not in tab.schema.names:
+            return tab
+        props = tab.column("properties").to_pylist()
+        path = {}
+        for i in idx:
+            pr = props[i]
+            if pr and '"$pathname"' in pr:
+                path[i] = orjson.loads(pr).get("$pathname")
+        parents = page_parents(path.values())
+        if not parents:
+            return tab
+        sid = tab.column("$session_id").to_pylist()
+        ts = tab.column("timestamp").cast(pa.int64()).to_numpy().copy()
+        by_s: dict = C.defaultdict(list)
+        for i, pth in path.items():
+            if sid[i]:
+                by_s[sid[i]].append(i)
+        rnd = random.Random(stable_seed(self.S["id"], "page_flow"))
+        ins: list[tuple[int, int, str]] = []  # (source row, new ts, start path)
+        moved = 0
+        for s_, rows in by_s.items():
+            rows.sort(key=lambda i: ts[i])
+            for i in rows:
+                par = parents.get(path[i])
+                if not par:
+                    continue
+                before = [j for j in rows if path[j] == par and ts[j] < ts[i]]
+                if before:
+                    continue
+                after = [j for j in rows if path[j] == par and ts[j] > ts[i]]
+                if after:
+                    ts[i] = ts[after[0]] + rnd.randint(20_000_000, 300_000_000)
+                    moved += 1
+                else:
+                    ins.append((i, int(ts[i] - rnd.randint(20_000_000, 300_000_000)), par))
+        tab = tab.set_column(tab.schema.get_field_index("timestamp"), "timestamp",
+                             pa.array(ts, pa.int64()).cast(tab.schema.field("timestamp").type))
+        if ins:
+            add = tab.take(pa.array([i for i, _, _ in ins]))
+            newp = []
+            for (i, _t, par), pr in zip(ins, add.column("properties").to_pylist()):
+                d = orjson.loads(pr or "{}")
+                cu = d.get("$current_url")
+                if isinstance(cu, str) and "://" in cu:
+                    d["$current_url"] = cu.split("://", 1)[0] + "://" + cu.split("://", 1)[1].split("/", 1)[0] + par
+                d["$pathname"] = par
+                d.pop("$title", None)
+                newp.append(orjson.dumps(d).decode())
+            add = add.set_column(add.schema.get_field_index("properties"), "properties",
+                                 pa.array(newp, add.schema.field("properties").type))
+            add = add.set_column(add.schema.get_field_index("timestamp"), "timestamp",
+                                 pa.array([t for _, t, _ in ins], pa.int64()).cast(tab.schema.field("timestamp").type))
+            if "uuid" in add.schema.names:
+                add = add.set_column(add.schema.get_field_index("uuid"), "uuid",
+                                     pa.array([str(uuid.UUID(int=rnd.getrandbits(128), version=4)) for _ in ins],
+                                              add.schema.field("uuid").type))
+            tab = pa.concat_tables([tab, add]).combine_chunks()
+        self.v2["page_flow_moved"] = moved
+        self.v2["page_flow_inserted"] = len(ins)
+        self.v2["page_flow_pairs"] = len(parents)
         return tab
 
     def segment_shifts(self, tab):

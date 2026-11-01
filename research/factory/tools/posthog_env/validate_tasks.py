@@ -178,15 +178,17 @@ Check in particular (each was a real miss):
 - the shortest correct answer to what the user asked must pass."""
 
 
-def validate_one(task: dict, rec: dict | None, model: str, out_dir: str, extra: str = "", max_rounds: int = 4) -> dict:
+def validate_one(task: dict, rec: dict | None, model: str, out_dir: str, extra: str = "", max_rounds: int = 4,
+                 required_checks: tuple[str, ...] = ()) -> dict:
     path = f"{out_dir}/{task['task_id']}.json"
     identity = {"version": 2, "task": task, "reference": rec, "model": model, "extra": extra,
-                "max_rounds": max_rounds, "lint": LINT.get(str(task["conversation_id"])[:36])}
+                "max_rounds": max_rounds, "lint": LINT.get(str(task["conversation_id"])[:36]),
+                "required_checks": required_checks}
     key = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
     if os.path.exists(path):
         try:
             cached = json.loads(Path(path).read_text())
-            if cached.get("input_key") == key and validation_complete(cached):
+            if cached.get("input_key") == key and validation_complete(cached) and has_checks(cached, required_checks):
                 return cached
         except (OSError, ValueError):
             pass
@@ -207,7 +209,9 @@ def validate_one(task: dict, rec: dict | None, model: str, out_dir: str, extra: 
                            notes=json.dumps(task.get("grading_notes"), ensure_ascii=False, indent=1)[:6000],
                            reference=SC.clip(ref, 30000), twin=SC.clip(twin, 20000), classes="|".join(CLASSES),
                            lint=SC.clip(lint_text(task["conversation_id"]), 4000),
-                           now=task.get("loaded_now_utc") or "?", objects=SC.clip(SC.team_objects(task["team_id"]), 5000),
+                           now=task.get("loaded_now_utc") or "?",
+                           objects=SC.clip(task["_audit_objects_snapshot"] if "_audit_objects_snapshot" in task
+                                           else SC.team_objects(task["team_id"]), 5000),
                            curator_defects=SC.clip(json.dumps((task.get("curation") or {}).get("twin_defects") or [],
                                                               ensure_ascii=False, indent=1), 4000) or "(none)")
     out = {"task_id": task["task_id"], "model": model, "queries_run": [], "input_key": key}
@@ -230,6 +234,9 @@ def validate_one(task: dict, rec: dict | None, model: str, out_dir: str, extra: 
                 continue
             candidate = {**d, "queries_run": out["queries_run"], "error": None}
             if validation_complete(candidate):
+                if not has_checks(candidate, required_checks):
+                    convo += "\n\nInclude concrete text for these required checks in the checks object: " + ", ".join(required_checks)
+                    continue
                 out.update({k: d[k] for k in ("verdict", "trivial", "checks", "defects", "summary") if k in d})
                 out.pop("error", None)
                 break
@@ -257,6 +264,11 @@ def validation_complete(rec: dict) -> bool:
         return False
     return any(isinstance(r, dict) and isinstance(r.get("result"), str) and r["result"].strip()
                and not r["result"].startswith(("ERROR", "REJECTED")) for r in rec.get("queries_run") or [])
+
+
+def has_checks(rec: dict, required: tuple[str, ...]) -> bool:
+    return not required or isinstance(rec.get("checks"), dict) and all(
+        isinstance(rec["checks"].get(k), str) and rec["checks"][k].strip() for k in required)
 
 
 def make_repair(a, res: dict, recs: dict, rdir: str, rnd, model: str, extra: str, max_rounds: int):

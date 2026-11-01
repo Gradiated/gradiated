@@ -215,6 +215,19 @@ registered-only control. Visitors remain unidentified, have no billing accounts,
 paid-AI events. Their sessions obey the same identity/time invariants. This expands the supported acquisition
 analysis; it does not alter the validator threshold or automatically approve tasks from the new worlds.
 
+Task-level checks also caught constant ten-second export timestamps inconsistent with the recorded durations.
+The generator now uses variable interaction gaps, export timestamps matching `duration_ms`, realistic timeout
+durations and AI completion timestamps matching measured latency. Tests cover both duration relationships.
+For plan-based comparisons, requests or acceptable variants must distinguish event-time plan from the current
+account snapshot; that definition cannot appear only in the rubric. Older frozen worlds are superseded before
+scoring whenever a recipe defect requires rebuilding them.
+
+Independent contract reviews can pass `required_checks` to `validate_one` so a verdict without an explicit
+minimal-answer and contract-match check cannot complete. They can use `_audit_objects_snapshot`, captured before
+benchmark mutations, to review the original object baseline while live read-only queries verify immutable event
+and billing data. Cache identity includes these review inputs. Artifact-creation feasibility in such a review
+is analytical; actual creation still needs root-agent rollout evidence.
+
 `v4/rubric_probe.py` keeps an observed rollout's tool work fixed and replaces only its final answers with a
 shortest user-complete answer, wrong numeric findings, clarification-only text or process-only text. This is a
 synthetic intervention test of the judge, not extra model samples. A failed minimal rewrite requires semantic

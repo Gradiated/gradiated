@@ -60,6 +60,24 @@ class TaskValidation(unittest.TestCase):
         r["verdict"] = "BROKEN"
         self.assertTrue(self.module.validation_complete(r))
 
+    def test_independent_review_uses_frozen_object_context(self):
+        self.module.SC.team_objects = Mock(side_effect=RuntimeError("mutable objects must not be read"))
+        task = {**self.task, "_audit_objects_snapshot": "frozen baseline objects"}
+        with tempfile.TemporaryDirectory() as out:
+            r = self.module.validate_one(task, None, "validator", out)
+        self.assertTrue(self.module.validation_complete(r))
+        self.module.SC.team_objects.assert_not_called()
+
+    def test_required_contract_checks_cannot_be_omitted(self):
+        missing = self.final
+        complete = {**self.final, "checks": {"data": "ok", "minimal_answer": "The minimum correct findings"}}
+        self.proxy.judge_complete.side_effect = [(json.dumps(self.query), {}), (json.dumps(missing), {}),
+                                               (json.dumps(complete), {})]
+        with tempfile.TemporaryDirectory() as out:
+            r = self.module.validate_one(self.task, None, "validator", out, required_checks=("minimal_answer",))
+        self.assertEqual(self.proxy.judge_complete.call_count, 3)
+        self.assertTrue(self.module.has_checks(r, ("minimal_answer",)))
+
 
 if __name__ == "__main__":
     unittest.main()

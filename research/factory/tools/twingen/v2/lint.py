@@ -1,0 +1,270 @@
+#!/usr/bin/env python3
+"""Twin lint: deterministic coherence checks on a generated twin project (events.parquet, persons.parquet).
+
+The LLM validator checks that the data a task needs exists; it misses ratio and plausibility problems (acceptance audit
+of loop round b12: purchases 12x checkouts, every person firing every custom event, placeholder values, a GitHub PR
+URL as the project's top page, campaigns crossed with random sources). These checks are mechanical:
+
+  event_reach       a custom event (not $-prefixed) reaches > 80% of the persons who have any event (n >= 50)
+  repeat_once       a once-per-person event (gen2.LIFECYCLE_ONCE) averages > 1.5 events per person (n >= 20 persons)
+  funnel_order      a later step outnumbers its earlier step in events or persons by > 10% (name-evident pairs,
+                    e-commerce chain view_item < add_to_cart < begin_checkout < purchase, family roots)
+  buyers_vs_visitors  persons with a purchase-like event exceed persons with a $pageview/$screen (web/mobile twins)
+  placeholder       a property value looks like a generator placeholder (<stem>_a..l, "Name 3", page3, handle1,
+                    sub1.sub2.*, "example company 7"), per property with share of rows
+  third_party_host  pageviews on hosts that are third-party services (github.com, google docs, notion, ...)
+  url_dominance     one URL carries > 50% of pageviews (n >= 50)
+  value_domain      a property whose name is not URL-like holds URLs in >= 30% of rows
+  warehouse_duplicate  two warehouse files are one PostHog table ('neon.x.orgs' and 'xneon_orgs')
+  warehouse_join    a name-evident warehouse foreign key (<x>_id -> <x>s.id) matches < 50% of the parent's ids
+  reserved_ip       $ip values in documentation/private ranges (> 5%)
+  url_path          pageviews whose $pathname is not the path of $current_url (> 2%)
+  lib_os            native SDK rows ($lib posthog-ios/android) whose $os is the other platform (> 5%)
+  channel_referrer  email/newsletter UTM rows carrying a search-engine referrer (> 10%, minor)
+  campaign_source   utm_campaign names a channel (google/search, facebook/meta, email/newsletter, ...) that its
+                    utm_source contradicts in > 30% of rows
+
+    python3 lint.py <project dir> [<project dir> ...]     -> one JSON line per project
+lint_project(dir) returns {"findings": [{"check", "severity", "detail"}], "stats": {...}}.
+"""
+
+from __future__ import annotations
+
+import collections as C
+import json
+import os
+import re
+import sys
+
+PLACEHOLDER_PATTERNS = [
+    ("stem_letter", re.compile(r"^[a-z][a-z0-9_]*_[a-l]$")),
+    ("title_number", re.compile(r"^(?!Q[1-4] )(?!Version )[A-Z][a-z]+( [A-Z][a-z]+)? \d{1,2}$")),
+    ("page_n", re.compile(r"(^|/)page\d+(/|$)")),
+    ("handle_n", re.compile(r"(^|[./])handle\d+([./]|$)")),
+    ("sub_n", re.compile(r"(^|\.)sub\d+\.sub\d+\.")),
+    ("example_company", re.compile(r"^example company \d+$", re.I)),
+]
+THIRD_PARTY = re.compile(r"(^|\.)(github\.com|gitlab\.com|google\.com|docs\.google\.com|notion\.so|figma\.com|stripe\.com|"
+                         r"youtube\.com|linkedin\.com|twitter\.com|x\.com|facebook\.com|slack\.com|loom\.com|"
+                         r"atlassian\.net|zendesk\.com|intercom\.io|hubspot\.com|calendly\.com|typeform\.com|"
+                         r"localhost|127\.0\.0\.1|0\.0\.0\.0)$", re.I)
+REACH = 0.8  # round 3 audit: checkout_opened at 86% of visitors was implausible and not flagged at 90%
+URL_PROPS = {"$host", "$current_url", "$pathname", "$referrer", "$referring_domain", "$initial_referrer",
+             "$initial_referring_domain", "$initial_current_url", "$initial_host", "$initial_pathname", "$prev_pageview_pathname"}
+URLISH_TOKENS = {"url", "urls", "uri", "host", "hostname", "link", "links", "href", "referrer", "referer", "page", "pathname",
+                 "path", "domain", "site", "website", "homepage", "location", "redirect", "src", "endpoint", "webhook",
+                 "callback", "image", "avatar", "icon", "logo", "origin", "target", "source", "screenshot"}
+
+
+def urlish(name: str) -> bool:
+    """A property name that may hold URLs: its last token is url/host/link/page/referrer/... (not 'linked', 'status')."""
+    toks = [t for t in re.split(r"[^a-z0-9]+", str(name).lower()) if t]
+    return bool(toks) and (toks[-1] in URLISH_TOKENS or toks[-1].endswith("url"))  # '..._url_trigger_status': status
+URL_VALUE = re.compile(r"^https?://")
+RESERVED_IP = re.compile(r"^(10\.|127\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|192\.0\.2\.|198\.51\.100\.|203\.0\.113\.|0\.)")
+COMMERCE = ["view_item", "add_to_cart", "begin_checkout", "add_payment_info", "purchase"]
+PURCHASE = re.compile(r"(^|[_ .:-])(purchase|purchased|order[_ ]completed|order[_ ]placed|payment[_ ]succeeded|checkout[_ ]completed)"
+                      r"([_ .:-]|$)", re.I)
+CHANNEL = [("google", re.compile(r"google|search|sem|cpc|adwords", re.I), re.compile(r"google|bing|search", re.I)),
+           ("meta", re.compile(r"facebook|meta|insta|fb_|ig_", re.I), re.compile(r"facebook|instagram|meta|fb|ig", re.I)),
+           ("email", re.compile(r"email|newsletter|drip|mailchimp|klaviyo", re.I), re.compile(r"email|newsletter|mail", re.I)),
+           ("tiktok", re.compile(r"tiktok", re.I), re.compile(r"tiktok", re.I)),
+           ("linkedin", re.compile(r"linkedin", re.I), re.compile(r"linkedin", re.I))]
+
+
+def _gen2():
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import gen2  # noqa: E402  (shared name rules: parent_event, family_parent, LIFECYCLE_ONCE)
+
+    return gen2
+
+
+def _pairs(names: set, vol=None) -> list[tuple[str, str, bool]]:
+    gen2 = _gen2()
+    vol = vol or {}
+    out = []
+    for e in names:
+        p = gen2.causal_parent(e, names, vol)  # same rule as the generator
+        if p:  # same-prefix family: repeat use is normal, compare persons only
+            out.append((p, e, bool(gen2.parent_event(e, names))))
+    low = {n.lower(): n for n in names}
+    chain = [low[c] for c in COMMERCE if c in low]
+    out += [(a, b, True) for a, b in zip(chain, chain[1:])]
+    return out
+
+
+def lint_project(d: str, max_rows: int = 400000) -> dict:
+    import pyarrow.parquet as pq
+
+    t = pq.read_table(f"{d}/events.parquet", columns=["event", "person_id", "properties"])
+    n = t.num_rows
+    step = max(1, n // max_rows)
+    ev = t.column("event").to_pylist()
+    pid = t.column("person_id").to_pylist()
+    props = t.column("properties").to_pylist()
+    findings = []
+    persons_any = set(pid)
+    ev_count = C.Counter(ev)
+    ev_persons: dict = C.defaultdict(set)
+    for e, p in zip(ev, pid):
+        ev_persons[e].add(p)
+    # event_reach
+    if len(persons_any) >= 50:
+        for e, ps in ev_persons.items():
+            if not str(e).startswith("$") and len(ps) > REACH * len(persons_any):
+                # one-time lifecycle events (signed_up, first_*): reach reflects the acquisition window (minor)
+                findings.append({"check": "event_reach", "severity": "minor" if _gen2().LIFECYCLE_ONCE.match(str(e)) else "material",
+                                 "detail": f"{e!r} reaches {len(ps)}/{len(persons_any)} persons"})
+    # repeat_once
+    for e, ps in ev_persons.items():
+        if len(ps) >= 20 and _gen2().LIFECYCLE_ONCE.match(str(e)) and ev_count[e] > 1.5 * len(ps):
+            findings.append({"check": "repeat_once", "severity": "material",
+                             "detail": f"{e!r}: {ev_count[e]} events by {len(ps)} persons"})
+    # funnel_order
+    for parent, child, by_events in _pairs(set(ev_count), ev_count):
+        if (by_events and ev_count[child] > 1.1 * ev_count[parent]) or len(ev_persons[child]) > 1.1 * len(ev_persons[parent]):
+            findings.append({"check": "funnel_order", "severity": "material",
+                             "detail": f"{child!r} ({ev_count[child]} ev/{len(ev_persons[child])} p) > {parent!r} "
+                                       f"({ev_count[parent]} ev/{len(ev_persons[parent])} p)"})
+    # buyers vs visitors
+    visitors = ev_persons.get("$pageview", set()) | ev_persons.get("$screen", set())
+    if visitors:
+        for e in ev_count:
+            if PURCHASE.search(str(e)) and len(ev_persons[e]) > 1.05 * len(visitors) and len(ev_persons[e]) >= 20:
+                findings.append({"check": "buyers_vs_visitors", "severity": "material",
+                                 "detail": f"{e!r} persons {len(ev_persons[e])} > visitors {len(visitors)}"})
+    # property scans (sampled rows)
+    ph: dict = C.defaultdict(C.Counter)
+    url_vals: C.Counter = C.Counter()
+    seen_rows: C.Counter = C.Counter()
+    hosts: C.Counter = C.Counter()
+    urls: C.Counter = C.Counter()
+    pv = 0
+    camp_bad = camp_tot = 0
+    lib_bad = lib_tot = 0
+    url_bad = url_tot = 0
+    ip_bad = ip_tot = 0
+    ref_bad = ref_tot = 0
+    for i in range(0, n, step):
+        s = props[i]
+        if not s:
+            continue
+        try:
+            d_ = json.loads(s)
+        except ValueError:
+            continue
+        for k, v in d_.items():
+            if not isinstance(v, str) or k in ("$session_id", "$window_id", "$device_id", "$insert_id", "token",
+                                                "$device_model", "$device", "$os_version", "$app_version"):
+                continue
+            seen_rows[k] += 1
+            if URL_VALUE.match(v) and not urlish(k):
+                url_vals[k] += 1
+            for name, rx in PLACEHOLDER_PATTERNS:
+                if rx.search(v):
+                    ph[k][name] += 1
+                    break
+        if ev[i] == "$pageview":
+            pv += 1
+            u = d_.get("$current_url")
+            pth = d_.get("$pathname")
+            if isinstance(u, str) and "://" in u and isinstance(pth, str):
+                url_tot += 1
+                url_bad += ("/" + u.split("://", 1)[1].partition("/")[2].split("?")[0].split("#")[0]) != pth
+            if isinstance(u, str):
+                h = re.sub(r"^https?://", "", u).split("/")[0].split("?")[0].split(":")[0].lower()
+                hosts[h] += 1
+                urls[u.split("#")[0]] += 1
+        ip = d_.get("$ip")
+        if isinstance(ip, str) and ip:
+            ip_tot += 1
+            ip_bad += bool(RESERVED_IP.match(ip))
+        lib = str(d_.get("$lib") or "")
+        if lib in ("posthog-ios", "posthog-android") and d_.get("$os"):
+            lib_tot += 1
+            lib_bad += (lib == "posthog-ios") != (d_["$os"] in ("iOS", "iPadOS"))
+        med = str(d_.get("utm_medium") or "").lower()
+        if med and ("$search_engine" in d_ or "$referring_domain" in d_):
+            ref_tot += 1
+            ref_bad += bool(re.search(r"email|newsletter", med)) and bool(d_.get("$search_engine"))
+        c, src = d_.get("utm_campaign"), d_.get("utm_source")
+        if isinstance(c, str) and isinstance(src, str):
+            for _ch, crx, srx in CHANNEL:
+                if crx.search(c):
+                    camp_tot += 1
+                    camp_bad += not srx.search(src)
+                    break
+    for k, cnt in ph.items():
+        share = sum(cnt.values()) / max(1, seen_rows[k])
+        # hosts/URLs: sub1.sub2.* and handle1 are the trace anonymizer's tokens, shared with the task text (minor)
+        anon = (k in URL_PROPS or urlish(k)) and set(cnt) <= {"page_n", "handle_n", "sub_n"}
+        if share >= 0.05:
+            findings.append({"check": "placeholder", "severity": "material" if share >= 0.3 and not anon else "minor",
+                             "detail": f"{k}: {share:.0%} placeholder-like ({dict(cnt)})"})
+    for k, c in url_vals.items():
+        if c >= 0.3 * max(1, seen_rows[k]) and c >= 5:
+            findings.append({"check": "value_domain", "severity": "material",
+                             "detail": f"{k}: {c}/{seen_rows[k]} values are URLs"})
+    for h, c in hosts.items():
+        if THIRD_PARTY.search(h) and c >= 0.02 * max(1, pv):
+            findings.append({"check": "third_party_host", "severity": "material", "detail": f"{h}: {c}/{pv} pageviews"})
+    if urls and pv:
+        u, c = urls.most_common(1)[0]
+        if c > 0.5 * pv and pv >= 50:  # one URL carrying most pageviews (round 5: 100% on one page)
+            findings.append({"check": "url_dominance", "severity": "material" if c > 0.8 * pv else "minor", "detail": f"{u[:120]}: {c}/{pv} pageviews"})
+    if ip_tot >= 20 and ip_bad > 0.05 * ip_tot:
+        findings.append({"check": "reserved_ip", "severity": "material",
+                         "detail": f"{ip_bad}/{ip_tot} $ip values in documentation/private ranges"})
+    if url_tot >= 30 and url_bad > 0.02 * url_tot:
+        findings.append({"check": "url_path", "severity": "material",
+                         "detail": f"{url_bad}/{url_tot} pageviews whose $pathname disagrees with $current_url"})
+    if lib_tot >= 30 and lib_bad > 0.05 * lib_tot:
+        findings.append({"check": "lib_os", "severity": "material",
+                         "detail": f"{lib_bad}/{lib_tot} native-SDK rows with a $os of the other platform"})
+    if ref_tot >= 30 and ref_bad > 0.1 * ref_tot:
+        findings.append({"check": "channel_referrer", "severity": "minor",
+                         "detail": f"{ref_bad}/{ref_tot} email/newsletter UTM rows with a search-engine referrer"})
+    if camp_tot >= 30 and camp_bad > 0.3 * camp_tot:
+        findings.append({"check": "campaign_source", "severity": "minor",
+                         "detail": f"{camp_bad}/{camp_tot} rows: campaign names a channel its source contradicts"})
+    findings += warehouse_joins(d)
+    return {"findings": findings, "stats": {"events": n, "persons": len(persons_any), "event_names": len(ev_count),
+                                            "pageviews_sampled": pv}}
+
+
+def warehouse_joins(d: str) -> list[dict]:
+    import glob
+
+    import pyarrow.parquet as pq
+
+    files = {os.path.basename(f)[:-8]: f for f in glob.glob(f"{d}/warehouse/*.parquet")}
+    if len(files) < 2:
+        return []
+    out = []
+    flat = C.defaultdict(list)
+    for t in files:
+        flat[_gen2().posthog_flat_name(t)].append(t)
+    for k, ts in flat.items():
+        if len(ts) > 1:  # the loader maps both to one name; the last one wins
+            out.append({"check": "warehouse_duplicate", "severity": "material", "detail": f"{k}: {sorted(ts)}"})
+    cols = {t: {c: {} for c in pq.read_schema(f).names} for t, f in files.items()}
+    for (t, c), (u, k) in _gen2().name_foreign_keys({t: {"columns": cs} for t, cs in cols.items()}):
+        child = {str(x) for x in pq.read_table(files[t], columns=[c]).column(c).to_pylist() if x is not None}
+        parent = {str(x) for x in pq.read_table(files[u], columns=[k]).column(k).to_pylist() if x is not None}
+        if child and len(child & parent) < 0.5 * len(child):
+            out.append({"check": "warehouse_join", "severity": "material",
+                        "detail": f"{t}.{c} -> {u}.{k}: {len(child & parent)}/{len(child)} keys match"})
+    return out
+
+
+def main() -> None:
+    for d in sys.argv[1:]:
+        try:
+            r = lint_project(d)
+        except Exception as e:  # noqa: BLE001
+            r = {"error": f"{type(e).__name__}: {str(e)[:200]}"}
+        print(json.dumps({"project": os.path.basename(d.rstrip("/")), **r}))
+
+
+if __name__ == "__main__":
+    main()

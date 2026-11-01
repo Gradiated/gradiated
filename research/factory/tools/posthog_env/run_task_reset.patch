@@ -1,0 +1,39 @@
+--- a/runner/run_task.py
++++ b/runner/run_task.py
+@@ -98,6 +98,10 @@
+     ap.add_argument("--wall-s", type=float, default=900)
+     ap.add_argument("--step-cap", type=int, default=30)
+     ap.add_argument("--max-turns", type=int, default=0, help="0: all scripted turns in the task")
++    ap.add_argument("--reset-team-state", nargs="?", const="track", default=None, choices=["track", "sweep"],
++                    help="undo this run's writes to the team at the end (loader/team_state.py RunTracker); "
++                         "'sweep' also first undoes post-baseline state older than --reset-sweep-min-age-h")
++    ap.add_argument("--reset-sweep-min-age-h", type=float, default=2.0)
+     args = ap.parse_args()
+ 
+     task = load_task(args.tasks, args.task_id)
+@@ -114,6 +118,16 @@
+     from products.posthog_ai.backend.models.assistant import Conversation
+ 
+     team = Team.objects.get(id=task["team_id"])
++    reset_tracker, state_reset = None, {}
++    if args.reset_team_state:
++        sys.path.insert(0, "/opt/posthog-env/loader")
++        import team_state as TS
++
++        if args.reset_team_state == "sweep":
++            state_reset["sweep"] = TS.sweep(team.id, args.reset_sweep_min_age_h)
++        reset_tracker = TS.RunTracker(team.id)
++        reset_tracker.install()
++        TS.install_exit_hooks(reset_tracker)
+     user = team.organization.members.order_by("id").first()
+     conversation = Conversation.objects.create(user=user, team=team)
+ 
+@@ -170,6 +184,8 @@
+             for c in calls],
+         "limits": {"wall_s": args.wall_s, "step_cap": args.step_cap, "max_turns": args.max_turns},
+     }
++    if reset_tracker is not None:
++        out["state_reset"] = {**state_reset, **reset_tracker.finish()}
+     os.makedirs(os.path.dirname(args.out), exist_ok=True)
+     opd = [dict(turn=c["turn"], index=i, **c["detail"]) for i, c in enumerate(calls)
+            if c["role"] == "root" and c.get("detail") and c["detail"].get("token_ids") is not None]

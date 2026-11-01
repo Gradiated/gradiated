@@ -1,0 +1,3 @@
+107a108,109
+>     for _k, _v in (task.get("env_defaults") or {}).items():  # per-task env defaults (v2 tasks: local docs); v1 tasks have none
+>         os.environ.setdefault(str(_k), str(_v))

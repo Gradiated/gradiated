@@ -1,0 +1,60 @@
+--- correct/loop.py.before-reset-20261030	2026-10-30 01:41:57.876573707 +0000
++++ correct/loop.py	2026-10-30 11:26:34.437419724 +0000
+@@ -129,6 +129,8 @@
+                "--max-turns", str(args.max_turns)]
+         if hint_path:
+             cmd += ["--hint-file", hint_path]
++        if getattr(args, "reset_team_state", None):  # opt-in, default off
++            cmd += ["--reset-team-state", args.reset_team_state]
+         if args.vllm_model:
+             cmd += ["--vllm-model", args.vllm_model]
+             cmd[cmd.index("--model") + 1] = f"qwen-{args.vllm_model}"
+@@ -490,6 +492,8 @@
+     ap.add_argument("--ports", default="18000:16", help="vLLM replicas port:max_concurrent_rollouts,...")
+     ap.add_argument("--root", default="", help="output directory (default /opt/posthog-env/correct)")
+     ap.add_argument("--control", default="", help="JSON file with live limits: ports, judge, critic")
++    ap.add_argument("--reset-team-state", nargs="?", const="track", default=None, choices=["track", "sweep"],
++                    help="opt-in: pass --reset-team-state MODE to every run_hint/run_task rollout (default off)")
+     args = ap.parse_args()
+     if args.root:
+         HERE = args.root
+--- runner/eval_ms.py.before-reset-20261030	2026-10-29 23:09:01.239829151 +0000
++++ runner/eval_ms.py	2026-10-30 11:26:34.438419716 +0000
+@@ -102,7 +102,8 @@
+ 
+ def run(args, arms: list[tuple[str, str]], tasks: list[dict], root: str) -> None:
+     L.PORTS = L.PortPool(args.ports)
+-    ns = argparse.Namespace(wall_s=args.wall_s, max_turns=args.max_turns, vllm_model="")
++    ns = argparse.Namespace(wall_s=args.wall_s, max_turns=args.max_turns, vllm_model="",
++                            reset_team_state=getattr(args, "reset_team_state", None))
+     jq: queue.Queue = queue.Queue()
+     counts: Counter = Counter()
+     lock = threading.Lock()
+@@ -244,6 +245,8 @@
+     ap.add_argument("--subset-file", default="/tmp/v3e_scores.json")
+     ap.add_argument("--subset-key", default="subst")
+     ap.add_argument("--report-only", action="store_true")
++    ap.add_argument("--reset-team-state", nargs="?", const="track", default=None, choices=["track", "sweep"],
++                    help="opt-in: pass --reset-team-state MODE to every run_hint/run_task rollout (default off)")
+     args = ap.parse_args()
+     arms = []
+     for x in args.arms.split(","):
+--- rft/sample.py.before-reset-20261030	2026-10-30 01:49:59.100020049 +0000
++++ rft/sample.py	2026-10-30 11:26:34.438419716 +0000
+@@ -23,13 +23,15 @@
+ ap.add_argument("--ports", default="18012:12,18000:4")
+ ap.add_argument("--control", default="")
+ ap.add_argument("--judge-workers", type=int, default=6)
++ap.add_argument("--reset-team-state", nargs="?", const="track", default=None, choices=["track", "sweep"],
++                help="opt-in: pass --reset-team-state MODE to every run_hint/run_task rollout (default off)")
+ args = ap.parse_args()
+ if args.control:
+     L.CONTROL_FILE = args.control
+ L.PORTS = L.PortPool(L.control("ports", args.ports))
+ L.V3_SLOTS = threading.BoundedSemaphore(min(6, args.judge_workers))
+ tasks = [json.loads(x) for x in open(args.tasks) if x.strip()]
+-ns = argparse.Namespace(wall_s=900, max_turns=4, vllm_model=args.model)
++ns = argparse.Namespace(wall_s=900, max_turns=4, vllm_model=args.model, reset_team_state=args.reset_team_state)
+ jq, counts, lock, t0 = queue.Queue(), Counter(), threading.Lock(), time.time()
+ n_jobs = len(tasks) * args.k
+ JSL = L.DynLimit("judge", args.judge_workers) if args.control else None

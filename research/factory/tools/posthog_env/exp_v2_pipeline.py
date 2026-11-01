@@ -190,6 +190,11 @@ def main() -> None:
                 and not os.path.exists(f"{R}/ev2_adapters/report.json"):
             ids = f"{E}/eval_ids.json"
             arms = ",".join(["qwen"] + trained)
+            for name in trained:  # training loads each adapter on :18012 only; the eval uses all four servers
+                path = f"{OPD}/sft/{name}/vllm" if name == "ev2-opus" else f"/opt/posthog-env/correct/sft/{name}/vllm"
+                for port in (18000, 18010, 18011, 18012):
+                    sh(f"curl -s -X POST localhost:{port}/v1/load_lora_adapter -H 'Content-Type: application/json' "
+                       f"-d '{{\"lora_name\":\"{name}\",\"lora_path\":\"{path}\"}}'", f"{E}/load_adapters.log")
             sh(f"cd /opt/posthog-env/runner && python3 bench_env.py --tag ev2_adapters "
                f"--tasks /opt/posthog-env/exp_v2/eval_tasks.jsonl "
                f"--task-ids-file {ids} --arms {arms} --samples 3 --max-turns 12 --wall-s 1500 --workers 40 "

@@ -809,6 +809,41 @@ class RoundB16(unittest.TestCase):
         self.assertFalse(gen2.ENTITY_PAGE.search("https://app.x.io/pricing"))
 
 
+class V4Pilot2(unittest.TestCase):  # noqa: D101
+    """v4 pilot 2 twin audit: sessions shared by unrelated persons and device/geo varying per event (rows moved
+    between persons kept their old properties), flat reach, repeated lifecycle starts, mobile events from web."""
+
+    def test_take_context(self):
+        a = json.dumps({"$session_id": "s1", "$os": "Windows", "$geoip_country_code": "US", "plan": "pro"})
+        b = json.dumps({"$session_id": "s9", "$os": "iOS", "$geoip_country_code": "BR"})
+        d = json.loads(gen2.take_context(a, b))
+        self.assertEqual((d["$session_id"], d["$os"], d["$geoip_country_code"], d["plan"]), ("s9", "iOS", "BR", "pro"))
+
+    def test_lifecycle_starts_are_once(self):
+        for e in ("signup_started", "onboarding_started", "trial_started", "profile_setup_started",
+                  "account_deletion_requested"):
+            self.assertTrue(gen2.LIFECYCLE_ONCE.match(e), e)
+        self.assertFalse(gen2.LIFECYCLE_ONCE.match("checkout_started"))
+
+    def test_mobile_events_get_mobile_sdk(self):
+        import pyarrow as pa
+        rows = [("$screen", '{"$lib": "web", "$os": "Mac OS X", "$browser": "Chrome", "$device_id": "d1"}'),
+                ("app_event", '{"$lib": "posthog-flutter", "$os": "Windows", "$device_id": "d2"}'),
+                ("$pageview", '{"$lib": "web", "$os": "Windows", "$browser": "Chrome"}')]
+        out = project().device_coherence(pa.table({"event": [r[0] for r in rows], "properties": [r[1] for r in rows]}))
+        a, b, c = [json.loads(x) for x in out.column("properties").to_pylist()]
+        self.assertIn(a["$os"], ("iOS", "Android"))
+        self.assertIn(a["$lib"], ("posthog-ios", "posthog-android"))
+        self.assertNotIn("$browser", a)
+        self.assertIn(b["$os"], ("iOS", "Android"))
+        self.assertEqual(b["$lib"], "posthog-flutter")
+        self.assertEqual(c["$os"], "Windows")
+
+    def test_posthog_hosts_not_site(self):
+        urls, _ = gen2.conversation_pages({"tasks": [{"text": "see https://us.posthog.com/project/1/insights and https://shop.io/a"}]}, {})
+        self.assertEqual(urls, ["https://shop.io/a"])
+
+
 class RoundB12(unittest.TestCase):
     """b12 acceptance audit: everyone fired every custom event, purchases by non-visitors, placeholders, a GitHub PR URL
     and one session URL as the project's pages, campaigns crossed with random sources."""

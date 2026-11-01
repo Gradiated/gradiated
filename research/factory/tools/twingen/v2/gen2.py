@@ -176,6 +176,9 @@ DEVICE_CLASH_RX = re.compile(r'"\$device_type":"(Mobile|Tablet)".*"\$os":"(Windo
                              r'"\$device_type":"Desktop".*"\$os":"(iOS|Android)"|'
                              r'"\$os":"(Windows|Mac OS X|macOS|Linux)".*"\$device_type":"(Mobile|Tablet)"|'
                              r'"\$os":"(iOS|Android)".*"\$device_type":"Desktop"')
+MOBILE_EVENTS = {"$screen", "Application Opened", "Application Installed", "Application Backgrounded",
+                 "Application Became Active", "Application Updated", "screen_viewed", "Deep link opened"}
+CROSS_LIB_RX = re.compile(r'"\$lib":\s*"posthog-(flutter|react-native)"')
 MOBILE_LIB_RX = re.compile(r'"\$lib":\s*"posthog-(ios|android)"')
 ANDROID_MODELS = ["Samsung Galaxy S23", "Pixel 8", "Samsung Galaxy A54", "OnePlus 11"]
 
@@ -370,6 +373,33 @@ def page_parents(paths) -> dict:
         if best is not None and (best_k > 0 or len(segs) <= 1):
             out[p] = best
     return out
+
+
+CONTEXT_PROPS = {"$session_id", "$window_id", "$device_id", "$user_id", "$device_type", "$device", "$device_model",
+                 "$device_manufacturer", "$app_name", "$app_version", "$app_build", "$app_namespace", "$browser",
+                 "$browser_version", "$browser_language", "$os", "$os_version", "$lib", "$lib_version", "$raw_user_agent",
+                 "$screen_width", "$screen_height", "$viewport_width", "$viewport_height", "$timezone", "$is_identified",
+                 "$geoip_country_code", "$geoip_country_name", "$geoip_continent_code", "$geoip_continent_name",
+                 "$geoip_city_name", "$geoip_subdivision_1_name", "$geoip_subdivision_1_code", "$geoip_postal_code",
+                 "$geoip_latitude", "$geoip_longitude", "$geoip_time_zone"}
+
+
+def take_context(pi, pj):
+    """r32: an event moved to another person takes that person's session, device, SDK and geo from the target row
+    (v4 pilot 2: sessions shared by unrelated persons, device/geo varying per event for one person: rows were moved
+    between persons with their old properties)."""
+    if not pi or not pj:
+        return pi
+    try:
+        d, src = orjson.loads(pi), orjson.loads(pj)
+    except Exception:  # noqa: BLE001
+        return pi
+    for k in CONTEXT_PROPS:
+        if k in src:
+            d[k] = src[k]
+        else:
+            d.pop(k, None)
+    return orjson.dumps(d).decode()
 
 
 def causal_parent(e: str, names, vol) -> str | None:
@@ -915,7 +945,10 @@ LIFECYCLE_ONCE = re.compile(r"^(sign[_ ]?up|signed[_ ]?up|user[_ ]signed[_ ]up|s
                             r"onboarding[_ ]completed|first[_ ].*|.*[_ ]initial[_ ].*|.*_first_.*|"
                             # round 3: trial_converted ~17x per person, email verified by more people than registered
                             r"trial[_ ]converted|.*[_ ]email[_ ]verified|email[_ ]verified|email[_ ]confirmed|"
-                            r"account[_ ](activated|verified)|user[_ ](activated|verified))$", re.I)
+                            r"account[_ ](activated|verified)|user[_ ](activated|verified)|"
+                            # r32: lifecycle starts/requests (signup/onboarding started ~8x per person)
+                            r"(sign[_ ]?up|registration|onboarding|trial|profile[_ ]setup|account[_ ]delet(e|ion))[_ ]"
+                            r"(started|start|begun|requested))$", re.I)
 PROFILE_KEYS = {"$browser", "$browser_version", "$os", "$os_version", "$device_type", "$screen_width", "$screen_height",
                 "$viewport_width", "$viewport_height", "$browser_language", "$browser_language_prefix", "$lib",
                 "$lib_version", "$raw_user_agent", "$timezone", "$timezone_offset"} | set(GEO_PROPS)
@@ -959,7 +992,7 @@ PURCHASE_EV = re.compile(r"(^|[_ .:-])(purchase|purchased|order[_ ]completed|ord
 THIRD_PARTY_HOST = re.compile(r"(^|\.)(github\.com|gitlab\.com|google\.com|notion\.so|figma\.com|stripe\.com|youtube\.com|"
                               r"linkedin\.com|twitter\.com|x\.com|facebook\.com|slack\.com|loom\.com|atlassian\.net|"
                               r"zendesk\.com|intercom\.io|hubspot\.com|calendly\.com|typeform\.com|chatgpt\.com|openai\.com|"
-                              r"localhost|127\.0\.0\.1|0\.0\.0\.0)$", re.I)  # r21: dev hosts are not the site
+                              r"localhost|127\.0\.0\.1|0\.0\.0\.0|posthog\.com|[a-z]+\.posthog\.com)$", re.I)  # r21/r32: not the site
 
 
 STUB_EVENT = re.compile(r"^(mcp |application |deep link opened$)", re.I)
@@ -2198,10 +2231,25 @@ class Project2(gen.Project):
         n = 0
         for i, pr in enumerate(props):
             server = SERVER_EVENT.match(str(ev[i]))
-            if not pr or not (server or DEVICE_KEYS_RX.search(pr) or MOBILE_LIB_RX.search(pr) or DEVICE_CLASH_RX.search(pr)):
+            mobile_ev = ev[i] in MOBILE_EVENTS
+            if not pr or not (server or mobile_ev or DEVICE_KEYS_RX.search(pr) or MOBILE_LIB_RX.search(pr)
+                              or DEVICE_CLASH_RX.search(pr) or CROSS_LIB_RX.search(pr)):
                 continue
             d = orjson.loads(pr)
             orig = dict(d)
+            lib0 = str(d.get("$lib") or "").lower()
+            if (mobile_ev and lib0 in WEB_LIBS) or lib0 in ("posthog-flutter", "posthog-react-native"):
+                # r32: a mobile-only event or a cross-platform mobile SDK runs on iOS/Android (v4 pilot 2: $screen,
+                # Application Opened and flutter events from desktop browsers)
+                mob = d.get("$os") if d.get("$os") in ("iOS", "Android") else \
+                    ("iOS" if int(hashlib.sha256(str(d.get("$device_id") or d.get("$session_id") or i).encode())
+                                  .hexdigest()[:2], 16) % 2 else "Android")
+                d["$os"] = mob
+                if lib0 in WEB_LIBS or not lib0:
+                    d["$lib"] = "posthog-ios" if mob == "iOS" else "posthog-android"
+                d["$device_type"] = "Mobile"
+                for k in WEB_ONLY_PROPS:
+                    d.pop(k, None)
             dt_, os2 = d.get("$device_type"), d.get("$os")
             if dt_ and os2:  # r27: Mobile+Windows / Desktop+iOS (round 9: 5,965 of 16,799 pageviews in one twin)
                 if os2 in ("iOS", "Android") and dt_ == "Desktop":
@@ -2273,7 +2321,7 @@ class Project2(gen.Project):
         ts = tab.column("timestamp").cast(pa.int64()).to_numpy()
         day = (ts // 86_400_000_000).tolist()
         cols = {c: tab.column(c).to_pylist() for c in ("distinct_id", "person_id", "person_properties", "$session_id",
-                                                        "$window_id") if c in tab.schema.names}
+                                                        "$window_id", "properties") if c in tab.schema.names}
         gcols = {c: tab.column(c).to_pylist() for c in tab.schema.names if c.startswith("$group_")}
         rows_by_day_person: dict = C.defaultdict(list)
         for i, (p_, d_) in enumerate(zip(pid, day)):
@@ -2292,11 +2340,15 @@ class Project2(gen.Project):
             if e in hinted and not U:  # rule (r19b): hinted events use their production uniques when known
                 continue
             # cap 0.75 (+5% slack < lint's 80%): a custom event used by nearly everyone is implausible (b12, round 4)
-            reach = min(0.75, max(0.03, 1.8 * (U or 0.0) / D)) if U else 0.3
+            er = random.Random(stable_seed(self.S["id"], "adopt", e))
+            # r32: without production uniques, reach varies by event (v4 pilot 2: 19-59 unrelated events reached exactly
+            # the same number of persons, the same top users)
+            cap = 0.75 * er.uniform(0.55, 1.0)  # per-event cap: capped events no longer share one identical reach
+            reach = min(cap, max(0.03, 1.8 * (U or 0.0) / D)) if U else min(cap, max(0.03, 0.3 * math.exp(er.gauss(0, 0.7))))
             k = max(3, int(reach * P))
             if len(doers) <= k * 1.05:
                 continue
-            ranked = [p_ for p_, _ in doers.most_common()]  # heavy users stay adopters
+            ranked = sorted(doers, key=lambda p_: -doers[p_] * er.uniform(0.3, 1.7))  # mostly heavy users, per event
             adopt = set(ranked[:k])
             for i in idx:
                 if pid[i] in adopt:
@@ -2309,7 +2361,10 @@ class Project2(gen.Project):
                     continue
                 j = rng.choice(cand[:200])
                 for c in cols:
-                    cols[c][i] = cols[c][j]
+                    if c != "properties":
+                        cols[c][i] = cols[c][j]
+                if "properties" in cols:
+                    cols["properties"][i] = take_context(cols["properties"][i], cols["properties"][j])
                 for c in gcols:
                     gcols[c][i] = gcols[c][j]
                 pid[i] = pid[j]
@@ -2372,10 +2427,10 @@ class Project2(gen.Project):
                 for c in gcols:
                     gcols[c][i] = gcols[c][j]
                 ts[i] = min(ts[j] + rng.randint(5_000_000, 600_000_000), now_us)
-                if "properties" in cols and cols["properties"][i] and '"$session_id"' in cols["properties"][i]:
-                    d = orjson.loads(cols["properties"][i])
+                if "properties" in cols and cols["properties"][i]:
+                    d = orjson.loads(take_context(cols["properties"][i], cols["properties"][j]))  # r32
                     pj = orjson.loads(cols["properties"][j]) if cols["properties"][j] else {}
-                    for key in ("$session_id", "$window_id", "$current_url", "$pathname", "$host"):
+                    for key in ("$current_url", "$pathname", "$host"):
                         if key in pj:
                             d[key] = pj[key]
                     cols["properties"][i] = orjson.dumps(d).decode()
@@ -2409,6 +2464,8 @@ class Project2(gen.Project):
             for c in ("distinct_id", "person_id", "person_properties", "$session_id", "$window_id"):
                 if c in cols:
                     cols[c][i] = cols[c][j]
+            if "properties" in cols:
+                cols["properties"][i] = take_context(cols["properties"][i], cols["properties"][j])  # r32
             ts[i] = min(ts[j] + rng.randint(5_000_000, 600_000_000), now_us)
             n += 1
         return n
@@ -2432,7 +2489,7 @@ class Project2(gen.Project):
         keep = np.ones(len(ev), dtype=bool)
         seen = set()
         cols = {c: tab.column(c).to_pylist() for c in ("distinct_id", "person_id", "person_properties", "$session_id",
-                                                        "$window_id") if c in tab.schema.names}
+                                                        "$window_id", "properties") if c in tab.schema.names}
         first_row: dict = {}
         for i in np.argsort(ts, kind="stable"):
             first_row.setdefault(pid[i], int(i))
@@ -2464,7 +2521,10 @@ class Project2(gen.Project):
                 q = rng.choice(cand)
                 j = first_row[q]
                 for c in cols:
-                    cols[c][i] = cols[c][j]
+                    if c != "properties":
+                        cols[c][i] = cols[c][j]
+                if "properties" in cols:
+                    cols["properties"][i] = take_context(cols["properties"][i], cols["properties"][j])  # r32
                 doers[e].add(q)
                 pid[i] = q
                 moved += 1

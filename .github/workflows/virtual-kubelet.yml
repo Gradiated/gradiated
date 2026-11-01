@@ -113,6 +113,11 @@ jobs:
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 tools/gpu/mint_bootstrap_key_test.py
         if: fromJSON(needs.changes.outputs.checks).controller
+      - name: Check isolated GPU reservation and GLM drain safeguards
+        if: fromJSON(needs.changes.outputs.checks).controller
+        run: |
+          python3 tools/gpu/qualification_slot_test.py
+          python3 tools/gpu/reserve_glm_pd_host_test.py
       - run: python3 product/inference/gpu/download_runtime_test.py
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 -m unittest discover -s product/inference/host/tests -p 'test_*.py'

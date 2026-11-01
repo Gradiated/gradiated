@@ -272,6 +272,18 @@ class RenderTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             renderer.rollout('training', {**models['kev'], 'runtime': training}, runtimes)
 
+    def test_model_disruption_budget_protects_all_revision_pods(self):
+        model = json.loads((renderer.GPU / 'models.json').read_text())['glm-dealign']
+        obj = renderer.disruption_budget('glm-dealign', model)
+        self.assertEqual(obj['spec'], {'minAvailable': 8, 'selector': {
+            'matchLabels': {'app.kubernetes.io/name': 'glm-dealign'}}})
+        self.assertEqual(obj['metadata'], {'name': 'glm-dealign', 'namespace': 'gpu-inference'})
+        generated = renderer.render()[renderer.MODELS / 'glm-dealign' / 'glm-dealign.yaml']
+        self.assertEqual([doc for doc in generated if doc['kind'] == 'PodDisruptionBudget'], [obj])
+        for invalid in (0, -1, True, 1.5, '8', '80%', None, 11):
+            with self.subTest(invalid=invalid), self.assertRaisesRegex(ValueError, 'min_available'):
+                renderer.disruption_budget('glm-dealign', {**model, 'min_available': invalid})
+
     def test_model_surge_limit_preserves_availability_and_qualification(self):
         runtimes = json.loads((renderer.ROOT / 'product/inference/gpu/runtimes.json').read_text())
         model = json.loads((renderer.GPU / 'models.json').read_text())['glm-dealign']

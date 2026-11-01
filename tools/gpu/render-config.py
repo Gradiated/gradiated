@@ -83,6 +83,16 @@ def rollout(name, model, runtimes):
                  'template': {'metadata': {'labels': labels, 'annotations': annotations}, 'spec': pod}}}
 
 
+def disruption_budget(name, model):
+    minimum = model['min_available']
+    if type(minimum) is not int or not 1 <= minimum <= model['replicas']:
+        raise ValueError('Model min_available must be an integer between one and replicas')
+    return {'apiVersion': 'policy/v1', 'kind': 'PodDisruptionBudget',
+            'metadata': {'name': name, 'namespace': 'gpu-inference'},
+            'spec': {'minAvailable': minimum,
+                     'selector': {'matchLabels': {'app.kubernetes.io/name': name}}}}
+
+
 def autoscaler(name, model, runtime):
     settings = model['autoscaling']
     maximum = settings['max_replicas']
@@ -218,6 +228,8 @@ def render(retire=()):
             raise ValueError('A model name must be a DNS label of at most 53 characters: ' + repr(name))
         path = MODELS / name / f'{name}.yaml'
         outputs[path] = [rollout(name, model, runtimes)]
+        if 'min_available' in model:
+            outputs[path].append(disruption_budget(name, model))
         if "autoscaling" in model:
             outputs[path].append(autoscaler(name, model, runtimes[model["runtime"]]))
     # A list generator rather than a git directory generator: listing

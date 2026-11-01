@@ -91,6 +91,9 @@ judgment call). Real users of this family asked things like (style only; do not 
      to use beyond what a real user would say. Never state the answer.
    - Everything the request presupposes is true in this data (verified by your queries); relative windows refer to
      the data end above.
+   - For analytical time windows, put explicit calendar boundaries in the user request and reference queries.
+     Avoid today/yesterday/last-N-days and wall-clock SQL functions such as now()/today(): the task may run after
+     midnight. All-time requests are allowed. Dates should read naturally as a user's business question.
    - It needs several dependent steps (except product_howto); it must not be answerable by one obvious lookup.
    - Prefer questions this data answers substantively (a real finding with numbers). A task built around data that
      does not exist (the agent must notice an event is missing and pick a proxy) is allowed only when it is the most
@@ -154,7 +157,7 @@ stable), its size relative to the baseline; acceptable_variations: equivalent se
 
 def author(base: dict, family: str, difficulty: int, rng, model: str, out_dir: str, planted: dict | None = None) -> dict:
     identity = {"audit": AC.cache_key(base, model), "family": family, "difficulty": difficulty,
-                "planted": planted, "avoid": base.get("_avoid"), "version": 2}
+                "planted": planted, "avoid": base.get("_avoid"), "version": 3}
     key = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()[:12]
     path = f"{out_dir}/raw/{key}.json"
     if os.path.exists(path):

@@ -101,6 +101,17 @@ class ScenarioProject(unittest.TestCase):
         core = [r for r in self.data["events"] if r["person_id"] in {p["id"] for p in control["persons"]}]
         self.assertEqual(core, control["events"])
 
+    def test_registered_users_have_a_linked_pre_signup_landing_journey(self):
+        landing, completed = set(), set()
+        for r in self.data["events"]:
+            p = json.loads(r["properties"])
+            if r["event"] == "$pageview" and p.get("$pathname") == "/":
+                landing.add(r["person_id"])
+            if r["event"] == "signup_completed":
+                self.assertIn(r["person_id"], landing)
+                self.assertTrue(p["$is_identified"])
+                completed.add(r["person_id"])
+        self.assertEqual(completed, {p["id"] for p in self.data["persons"] if p["is_identified"]})
 
 
 if __name__ == "__main__":

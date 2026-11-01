@@ -135,9 +135,17 @@ def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split:
                 action("$pageview")
 
             if age == 0:
+                session["$is_identified"] = False
+                session.pop("$user_id", None)
+                session.pop("account_id", None)
+                page("/")
+                if rng.random() < .45:
+                    page("/pricing")
                 page("/signup")
                 action("signup_started")
+                session.update({"$is_identified": True, "$user_id": pid, "account_id": account})
                 action("signup_completed")
+                accounts[-1]["created_at"] = t
                 action("$feature_flag_called", {"$feature_flag": "onboarding-guide", "$feature_flag_response": variant})
                 page("/onboarding")
                 action("onboarding_started")

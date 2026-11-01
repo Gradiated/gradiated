@@ -2131,6 +2131,7 @@ class Project2(gen.Project):
         start with their landing $pageview: when another event comes first, the session's first pageview moves to 1 s
         before it (bounce, entry page and entry UTM metrics need the landing pageview first)."""
         tab = self.scenario_event_props(tab)  # r24: curator values first, so the coherence rules below apply to them
+        tab = self.segment_shifts(tab)  # r30: planted segment-level changes (known ground truth for investigations)
         props = tab.column("properties").to_pylist()
         mediums = list(self.utm_vals.get("utm_medium") or []) if hasattr(self, "utm_vals") else []
         campaigns = list(self.utm_vals.get("utm_campaign") or []) if hasattr(self, "utm_vals") else []
@@ -2732,6 +2733,55 @@ class Project2(gen.Project):
                              pa.array(props, tab.schema.field("properties").type))
         self.v2["scenario_prop_rows"] = n
         return tab
+
+    def segment_shifts(self, tab):
+        """rule (r30): {"kind": "segment_shift", "event": E, "where": {prop: value}, "from": D, "to": D, "factor": f}
+        thins (f < 1) or duplicates (f > 1, same day, jittered time) the rows of E matching `where` inside the window,
+        leaving every other segment unchanged: a planted, exactly known cause for an investigation task."""
+        ops = [o for o in self.ovr.get("scenario") or [] if o.get("kind") == "segment_shift" and o.get("event")]
+        if not ops:
+            return tab
+        ev = tab.column("event").to_pylist()
+        props = tab.column("properties").to_pylist()
+        ts = tab.column("timestamp").cast(pa.int64()).to_numpy()
+        keep = np.ones(len(ev), dtype=bool)
+        dup: list[int] = []
+        for j, op in enumerate(ops):
+            a, b = self._window(op)
+            lo, hi = int(a.timestamp() * 1e6), int(b.timestamp() * 1e6)
+            where = {k: str(v) for k, v in (op.get("where") or {}).items()}
+            f = float(op.get("factor", 0.5))
+            rnd = random.Random(stable_seed(self.S["id"], "segment_shift", j))
+            n = 0
+            for i, e in enumerate(ev):
+                if e != op["event"] or not (lo <= ts[i] <= hi) or not keep[i]:
+                    continue
+                if where:
+                    d = orjson.loads(props[i] or "{}")
+                    if any(str(d.get(k)) != v for k, v in where.items()):
+                        continue
+                n += 1
+                if f < 1 and rnd.random() > f:
+                    keep[i] = False
+                elif f > 1:
+                    dup += [i] * (int(f - 1) + (rnd.random() < (f - 1) % 1))
+            self.v2[f"segment_shift_rows_{j}"] = n
+        parts = [tab.filter(pa.array(keep))]
+        if dup:
+            d_tab = tab.take(pa.array(dup))
+            rnd = random.Random(stable_seed(self.S["id"], "segment_shift_dup"))
+            day = 86_400_000_000
+            nts = [int((t // day) * day + rnd.randint(0, day - 1)) for t in ts[dup]]
+            d_tab = d_tab.set_column(d_tab.schema.get_field_index("timestamp"), "timestamp",
+                                     pa.array(nts, pa.int64()).cast(tab.schema.field("timestamp").type))
+            if "uuid" in d_tab.schema.names:
+                d_tab = d_tab.set_column(d_tab.schema.get_field_index("uuid"), "uuid",
+                                         pa.array([str(uuid.UUID(int=rnd.getrandbits(128), version=4)) for _ in dup],
+                                                  d_tab.schema.field("uuid").type))
+            parts.append(d_tab)
+        self.v2["segment_shift_dropped"] = int((~keep).sum())
+        self.v2["segment_shift_duplicated"] = len(dup)
+        return pa.concat_tables(parts).combine_chunks()
 
     def scenario_person_props(self, out_dir):
         """rule (r21): {"kind": "person_props", "props": {prop: spec}, "share"} on persons and events' person_properties."""

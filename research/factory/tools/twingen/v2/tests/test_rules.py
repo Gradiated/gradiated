@@ -701,6 +701,24 @@ class RoundB15Scenario(unittest.TestCase):
             by[r["pi"]].add(r["props"]["order_id"])
         self.assertTrue(all(len(v) == 1 for v in by.values()) and len({next(iter(v)) for v in by.values()}) == len(by))
 
+    def test_segment_shift(self):
+        """v4 planted scenario: only the matching segment changes, only inside the window."""
+        import pyarrow as pa
+        day = 86_400_000_000
+        t0 = int(dt.datetime(2026, 10, 1, tzinfo=dt.timezone.utc).timestamp() * 1e6)
+        rows = [("checkout", json.dumps({"$browser": "Safari" if i % 2 else "Chrome"}), t0 + (i % 20) * day) for i in range(2000)]
+        tab = pa.table({"event": [r[0] for r in rows], "properties": [r[1] for r in rows], "uuid": [f"u{i}" for i in range(2000)],
+                        "timestamp": pa.array([r[2] for r in rows], pa.int64()).cast(pa.timestamp("us", tz="UTC"))})
+        p = project(ovr={"scenario": [{"kind": "segment_shift", "event": "checkout", "where": {"$browser": "Safari"},
+                                       "from": "2026-10-11", "to": "2026-10-20", "factor": 0.3}]})
+        out = p.segment_shifts(tab)
+        ds = [(json.loads(x)["$browser"], int(t.timestamp()) >= int(dt.datetime(2026, 10, 11, tzinfo=dt.timezone.utc).timestamp()))
+              for x, t in zip(out.column("properties").to_pylist(), out.column("timestamp").to_pylist())]
+        cnt = C.Counter(ds)
+        self.assertEqual(cnt[("Chrome", True)], 500)
+        self.assertEqual(cnt[("Safari", False)], 500)
+        self.assertLess(cnt[("Safari", True)], 200)
+
     def test_medium_fits(self):
         self.assertTrue(gen2.medium_fits("cpc", "youtube"))
         self.assertTrue(gen2.medium_fits("email", "newsletter"))

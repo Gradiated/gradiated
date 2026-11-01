@@ -23,7 +23,7 @@ import json
 import os
 
 
-SCENARIO_KINDS = ("new_event", "sequence", "event_props", "person_props")
+SCENARIO_KINDS = ("new_event", "sequence", "event_props", "person_props", "segment_shift")
 
 
 def shift(d: str, days: int) -> str:

@@ -662,9 +662,18 @@ class Agent:
         if any(container.get(key) for key in ["env", "envFrom", "command", "args", "volumeMounts"]):
             raise ValueError("Runtime execution overrides are unsupported")
         resources = container.get("resources", {})
+        request_memory = profile.get("request_memory", profile["memory"])
+        state_path = self.root / 'pods' / uid / 'state.json'
+        if state_path.exists():
+            admitted = json.loads(state_path.read_text())['pod']
+            admitted_container = admitted['spec']['containers'][0]
+            if admitted['metadata']['uid'] == uid and admitted_container['image'] == container['image']:
+                # A catalogue request change applies to new allocations. Existing
+                # pods retain the request the scheduler admitted until replacement.
+                request_memory = admitted_container['resources']['requests']['memory']
         for kind in ["limits", "requests"]:
             values = resources.get(kind, {})
-            memory = profile.get("request_memory", profile["memory"]) if kind == "requests" else profile["memory"]
+            memory = request_memory if kind == "requests" else profile["memory"]
             if str(values.get("nvidia.com/gpu")) != str(profile["gpus"]) or values.get("cpu") != profile["cpu"] or values.get("memory") != memory:
                 raise ValueError("Runtime resource accounting does not match its profile")
         if spec.get("volumes") or spec.get("initContainers") or spec.get("hostNetwork") or spec.get("hostPID"):

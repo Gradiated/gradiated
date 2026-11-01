@@ -608,6 +608,38 @@ class HostAgentTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.host.assignment(self.pod)
 
+    @unittest.skipIf("recovery" in Path(agent.__file__).parts, "the frozen recovery agent predates admitted request preservation")
+    def test_memory_request_rollout_preserves_reconciliation_and_drain_of_admitted_pods(self):
+        import copy
+        self.config['runtimes'] = {'a' * 64: {
+            'image': self.pod['spec']['containers'][0]['image'], 'model_id': 'kev',
+            'release': self.config['release'], 'gpus': 1, 'cpu': '16', 'memory': '64Gi',
+            'request_memory': '32Gi', 'startup_timeout': 1800}}
+        directory = self.root / 'pods' / self.uid
+        directory.mkdir()
+        agent.atomic_json(directory / 'state.json', {'pod': self.pod})
+        # The admitted pod still requests 48 GiB despite the new 32 GiB profile.
+        with patch.object(self.host, 'ensure_task'), patch.object(self.host, 'refresh_proxy'):
+            self.assertEqual(self.request({'operation': 'create', 'epoch': 1,
+                                           'uid': self.uid, 'pod': self.pod}), {'created': True})
+            with patch.object(agent.threading.Thread, 'start'):
+                self.assertEqual(self.request({'operation': 'delete', 'epoch': 1,
+                                               'uid': self.uid, 'pod': self.pod}), {'deleted': False})
+        self.assertTrue(json.loads((directory / 'state.json').read_text())['draining'])
+        changed = copy.deepcopy(self.pod)
+        changed['spec']['containers'][0]['resources']['requests']['memory'] = '32Gi'
+        with self.assertRaises(ValueError):
+            self.host.validate(changed)
+        fresh = copy.deepcopy(self.pod)
+        fresh['metadata']['uid'] = str(uuid.uuid4())
+        with self.assertRaises(ValueError):
+            self.host.validate(fresh)
+        fresh['spec']['containers'][0]['resources']['requests']['memory'] = '32Gi'
+        self.assertEqual(self.host.validate(fresh), fresh['metadata']['uid'])
+        fresh['spec']['containers'][0]['resources']['limits']['memory'] = '128Gi'
+        with self.assertRaises(ValueError):
+            self.host.validate(fresh)
+
     def test_training_resources_follow_recipe_and_require_training_profile(self):
         self.config['runtimes'] = {'b' * 64: {'kind': 'training', 'image': 'gradiated/training-bundle@sha256:' + 'b' * 64,
             'model_id': 'training', 'release': {}, 'gpus': 1, 'cpu': '4', 'memory': '64Gi', 'startup_timeout': 300}}

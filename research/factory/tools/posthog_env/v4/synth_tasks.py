@@ -88,6 +88,9 @@ judgment call). Real users of this family asked things like (style only; do not 
    - Everything the request presupposes is true in this data (verified by your queries); relative windows refer to
      the data end above.
    - It needs several dependent steps (except product_howto); it must not be answerable by one obvious lookup.
+   - Prefer questions this data answers substantively (a real finding with numbers). A task built around data that
+     does not exist (the agent must notice an event is missing and pick a proxy) is allowed only when it is the most
+     realistic request for this family here; most tasks should have a substantive answer.
    - reference_queries: the minimal set of queries whose results determine a correct answer (they will be re-run).
    - grading_notes are built ONLY from results you have seen: must_include = the findings a correct final answer
      states (phrase each as "the final answer states ..."), with numbers only where they follow unambiguously from the
@@ -252,6 +255,9 @@ def main() -> None:
         rec = author(base, fam, diff, random.Random(f"{a.seed}:{base['twin_id']}:{fam}"), a.model, a.out, planted=pl)
         rec["planted"] = pl
         if rec.get("skip") or not rec.get("turns"):
+            return None, rec
+        if not ((rec.get("grading_notes") or {}).get("must_include")):
+            rec["rejected"] = "no must_include"
             return None, rec
         ok, res = verify(rec, int(base["team_id"]))
         if not ok:

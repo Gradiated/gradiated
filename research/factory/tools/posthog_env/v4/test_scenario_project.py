@@ -113,6 +113,11 @@ class ScenarioProject(unittest.TestCase):
                 completed.add(r["person_id"])
         self.assertEqual(completed, {p["id"] for p in self.data["persons"] if p["is_identified"]})
 
+    def test_registration_continues_into_the_final_week(self):
+        recent = [r for r in self.data["events"] if r["event"] == "signup_completed"
+                  and r["timestamp"] >= self.now - dt.timedelta(days=7)]
+        self.assertGreater(len(recent), 0)
+
 
 if __name__ == "__main__":
     unittest.main()

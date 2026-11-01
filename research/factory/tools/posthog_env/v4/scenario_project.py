@@ -76,7 +76,7 @@ def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split:
         country, country_name, city = rng.choice(COUNTRIES)
         profile = dict(rng.choices(PROFILES, [55, 30, 15])[0])
         variant = "guided" if int(uuid.UUID(pid)) % 2 else "control"
-        created = start + dt.timedelta(days=rng.randrange(days - 7), hours=rng.randrange(7, 16))
+        created = start + dt.timedelta(days=rng.randrange(days), hours=rng.randrange(7, 16))
         activation_rate = {"google": .62, "newsletter": .76, "referral": .84, "direct": .67}[source]
         activated = rng.random() < activation_rate + (.09 if variant == "guided" else 0)
         paid_at = created + dt.timedelta(days=rng.randint(2, 9)) if activated and rng.random() < .27 else None

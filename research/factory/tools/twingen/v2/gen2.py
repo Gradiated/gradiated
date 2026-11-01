@@ -177,7 +177,9 @@ DEVICE_CLASH_RX = re.compile(r'"\$device_type":"(Mobile|Tablet)".*"\$os":"(Windo
                              r'"\$os":"(Windows|Mac OS X|macOS|Linux)".*"\$device_type":"(Mobile|Tablet)"|'
                              r'"\$os":"(iOS|Android)".*"\$device_type":"Desktop"')
 MOBILE_EVENTS = {"$screen", "Application Opened", "Application Installed", "Application Backgrounded",
-                 "Application Became Active", "Application Updated", "screen_viewed", "Deep link opened"}
+                 "Application Became Active", "Application Updated", "screen_viewed", "Deep link opened",
+                 "app_opened", "app_installed", "app_backgrounded"}
+APP_METADATA_RX = re.compile(r'"\$app_(name|version|build|namespace)"')
 CROSS_LIB_RX = re.compile(r'"\$lib":\s*"posthog-(flutter|react-native)"')
 MOBILE_LIB_RX = re.compile(r'"\$lib":\s*"posthog-(ios|android)"')
 ANDROID_MODELS = ["Samsung Galaxy S23", "Pixel 8", "Samsung Galaxy A54", "OnePlus 11"]
@@ -869,8 +871,12 @@ def mobile_platform(spec: dict) -> str | None:
 
 
 CHILD_OF = [  # (child word, parent words): child volume <= parent volume
-    (("dismissed", "closed", "clicked", "accepted", "declined"), ("shown", "viewed", "displayed", "opened", "impression")),
-    (("completed", "finished", "succeeded", "failed", "abandoned", "submitted"), ("started", "begun", "opened", "initiated")),
+    (("submitted", "submit_failed"), ("submit",)),
+    (("submit",), ("visible", "shown", "viewed")),
+    (("dismissed", "closed", "clicked", "pressed", "accepted", "declined"),
+     ("shown", "seen", "viewed", "displayed", "opened", "impression")),
+    (("completed", "finished", "ended", "succeeded", "failed", "abandoned", "submitted"),
+     ("started", "begun", "opened", "initiated")),
     (("created", "saved"), ("opened", "started")),
     (("complete", "completed", "done", "finished"), ("ready", "start", "started", "begin")),
 ]
@@ -2219,9 +2225,10 @@ class Project2(gen.Project):
         if getattr(self, "web", False) and "$session_id" in tab.schema.names:
             tab = self.landing_pageview_first(tab)
         # mobile twins too (round 3: a 343-person app twin skipped these; 200 events reached ~95% of persons)
-        tab = self.causal_children(tab)  # adopters ran on the base rows in postprocess
-        tab = self.device_coherence(tab)
-        return self.lifecycle_once(tab)
+        tab = self.lifecycle_once(tab)
+        tab = self.causal_children(tab)  # align children after lifecycle reassignment
+        tab = self.lifecycle_once(tab, reassign=False)
+        return self.device_coherence(tab)
 
     def device_coherence(self, tab):
         """rule (r20): platform-like custom properties follow the row's device ($os, $lib) instead of an independent
@@ -2233,7 +2240,7 @@ class Project2(gen.Project):
             server = SERVER_EVENT.match(str(ev[i]))
             mobile_ev = ev[i] in MOBILE_EVENTS
             if not pr or not (server or mobile_ev or DEVICE_KEYS_RX.search(pr) or MOBILE_LIB_RX.search(pr)
-                              or DEVICE_CLASH_RX.search(pr) or CROSS_LIB_RX.search(pr)):
+                              or DEVICE_CLASH_RX.search(pr) or CROSS_LIB_RX.search(pr) or APP_METADATA_RX.search(pr)):
                 continue
             d = orjson.loads(pr)
             orig = dict(d)
@@ -2265,6 +2272,9 @@ class Project2(gen.Project):
                 continue
             fixed = mobile_tuple(d)
             os_, lib = str(fixed.get("$os") or ""), str(fixed.get("$lib") or "")
+            if lib.lower() in WEB_LIBS:
+                for key in ("$app_name", "$app_version", "$app_build", "$app_namespace", "$is_testflight"):
+                    fixed.pop(key, None)
             if os_ or lib:
                 fixed = device_props(fixed, os_, lib)
             if fixed != orig:
@@ -2390,13 +2400,14 @@ class Project2(gen.Project):
             par = causal_parent(e, names, vol)
             if not par and PURCHASE_EV.search(str(e)):  # rule (r19): buyers are visitors
                 par = "$pageview" if "$pageview" in names else ("$screen" if "$screen" in names else None)
-            if par and e in getattr(self, "_seq_events", set()):
-                continue  # rule (r19b): seeded funnel steps keep their persons
             if par and e not in pairs and pairs.get(par) != e:
                 pairs[e] = par
         if not pairs:
             return tab
         ev = tab.column("event").to_pylist()
+        protected_uuids = getattr(self, "_seq_row_uuids", set())
+        protected = {i for i, value in enumerate(tab.column("uuid").to_pylist()) if value in protected_uuids} \
+            if protected_uuids and "uuid" in tab.schema.names else set()
         ts = tab.column("timestamp").cast(pa.int64()).to_numpy().copy()
         cols = {c: tab.column(c).to_pylist() for c in ("distinct_id", "person_id", "person_properties", "$session_id",
                                                         "$window_id", "properties") if c in tab.schema.names}
@@ -2414,10 +2425,12 @@ class Project2(gen.Project):
             if not par_rows:
                 continue
             if pairs[child] in ("$pageview", "$screen"):
-                moved += self._buyer_after_visit(child, par_rows, by_event, ts, cols, now_us, rng)
+                moved += self._buyer_after_visit(child, par_rows, by_event, ts, cols, now_us, rng, protected)
                 continue
             par_ts = [ts[i] for i in par_rows]
             for i in by_event.get(child, []):
+                if i in protected:
+                    continue
                 k = bisect.bisect_left(par_ts, ts[i])
                 lo = max(0, k - 50)
                 j = par_rows[rng.randrange(lo, k)] if k > 0 else par_rows[rng.randrange(0, min(len(par_rows), 50))]
@@ -2444,7 +2457,7 @@ class Project2(gen.Project):
         return tab
 
     @staticmethod
-    def _buyer_after_visit(child, par_rows, by_event, ts, cols, now_us, rng) -> int:
+    def _buyer_after_visit(child, par_rows, by_event, ts, cols, now_us, rng, protected=()) -> int:
         """rule (r19d): a purchase keeps its buyer (reach stays as generated); when the buyer has no earlier
         pageview/screen, the purchase moves to seconds-minutes after their first one; buyers who never visited take a
         random visit row (round 3: moving every purchase to a random pageview spread it to 8.5k of 9k persons)."""
@@ -2454,6 +2467,8 @@ class Project2(gen.Project):
             first_visit.setdefault(pid[j], j)
         n = 0
         for i in by_event.get(child, []):
+            if i in protected:
+                continue
             j = first_visit.get(pid[i])
             if j is not None:
                 if ts[j] > ts[i]:
@@ -2470,7 +2485,7 @@ class Project2(gen.Project):
             n += 1
         return n
 
-    def lifecycle_once(self, tab):
+    def lifecycle_once(self, tab, reassign=True):
         """rule (r16): one-time lifecycle events (sign_up, account_created, *_initial_*, first_*) happen at most once
         per person (b11: 48% of people signed up repeatedly). Timestamps are kept (production volume series); a repeat
         goes to a person who is not yet a doer and whose activity starts around that time, else it is dropped."""
@@ -2507,7 +2522,7 @@ class Project2(gen.Project):
             if e not in once:
                 continue
             if (e, pid[i]) in seen:
-                if e in has_parent:  # rule (r19b): a new person would not have done the parent step
+                if not reassign or e in has_parent:  # a new person would not have done the parent step
                     keep[i] = False
                     continue
                 if len(doers[e]) >= LIFECYCLE_MAX_REACH * len(first_row):  # r21: signups by 96% of persons
@@ -3072,7 +3087,7 @@ class Project2(gen.Project):
                 for j, (e, f) in enumerate(steps):
                     if i >= round(k * reach[j]):
                         break
-                    rows.append({"event": e, "ts": t, "pi": pi, "props": dict(f)})
+                    rows.append({"event": e, "ts": t, "pi": pi, "props": dict(f), "preserve_sequence": True})
                     t = t + dt.timedelta(seconds=rnd.uniform(30, 3600))
             self.v2["sequence_seed_funnels"] += 1
         else:
@@ -3316,6 +3331,8 @@ class Project2(gen.Project):
             sid = uuid7(ms - rnd.randint(0, 600000), rnd)
             props = {"$session_id": sid, "$lib": "web", **self._with_donor(r["props"], r["event"], per["id"], donors, rnd)}
             cols["uuid"].append(str(uuid.UUID(int=rnd.getrandbits(128), version=4)))
+            if r.get("preserve_sequence"):
+                self.__dict__.setdefault("_seq_row_uuids", set()).add(cols["uuid"][-1])
             cols["event"].append(r["event"])
             cols["properties"].append(orjson.dumps(props).decode())
             cols["timestamp"].append(int(r["ts"].timestamp() * 1e6))

@@ -78,7 +78,7 @@ def stem_of(name):
     return re.sub(r"[^a-z0-9]+", "_", n).strip("_") or "value"
 
 
-TXN_ID = re.compile(r"(transaction|order|payment|invoice|charge|receipt|booking|ticket|submission|purchase|checkout)"
+TXN_ID = re.compile(r"(transaction|order|payment|invoice|charge|receipt|booking|ticket|submission|purchase|checkout(?:[_ ]session)?)"
                     r"[_ ]?(id|number|no|ref)$", re.I)
 UUID_RX = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.I)
 

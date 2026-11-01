@@ -15,8 +15,12 @@ from __future__ import annotations
 import argparse
 import json
 import os
+from pathlib import Path
 import sys
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+import audit_contracts as AC
+from reference_queries import normalize_team
 
 sys.path.insert(0, "/opt/posthog-env/runner")
 sys.path.insert(0, "/opt/posthog-env")
@@ -59,31 +63,49 @@ confined to something peripheral."""
 def audit(base: dict, model: str, out: str) -> dict:
     path = f"{out}/{base['twin_id']}.json"
     if os.path.exists(path):
-        return json.load(open(path))
+        try:
+            cached = json.loads(Path(path).read_text())
+            if AC.reusable(cached, base, model):
+                return cached
+        except (OSError, ValueError):
+            pass
     twin = "\n".join(str(x) for x in SC.twin_state(base) + SC.event_props(base))
     prompt = PROMPT.format(now=base.get("loaded_now_utc"), twin=SC.clip(twin, 24000),
                            objects=SC.clip(SC.team_objects(base["team_id"]), 3000))
-    rec = {"twin_id": base["twin_id"], "team_id": base["team_id"], "queries_run": [], "model": model}
+    rec = {"twin_id": base["twin_id"], "team_id": base["team_id"], "queries_run": [], "model": model,
+           "snapshot": AC.snapshot(base), "cache_key": AC.cache_key(base, model)}
     convo, rounds = prompt, 0
     for _ in range(10):
         try:
-            text, _u = llm_proxy.judge_complete(convo, model, None, attempts=6, preamble=False)
+            text, _u = llm_proxy.judge_complete(convo, model, None, attempts=2, timeout=120, preamble=False)
             d = json.loads(text[text.find("{"):text.rfind("}") + 1])
             if d.get("queries") and "verdict" not in d and rounds < 5:
                 rounds += 1
-                res = CT.run_queries(d["queries"][:8], int(base["team_id"]))
+                qs = [{**q, "sql": normalize_team(q.get("sql", ""), int(base["team_id"]))}
+                      for q in d["queries"][:8]]
+                res = CT.run_queries(qs, int(base["team_id"]))
                 rec["queries_run"] += res
+                rec["rounds"] = rounds
+                Path(path + ".tmp").write_text(json.dumps(rec, ensure_ascii=False, indent=1))
+                os.replace(path + ".tmp", path)
                 convo += (f"\n\n## Results (round {rounds})\n" +
                           "\n".join(f"- {r['why']}\n  SQL: {r['sql']}\n  -> {r['result']}" for r in res) +
                           ("\n\nNow give the final JSON." if rounds >= 5 else "\n\nQuery more or give the final JSON."))
                 continue
-            if d.get("verdict") in ("CLEAN", "MINOR", "MATERIAL"):
-                rec.update(d)
+            if AC.valid_verdict(d) and AC.completed({**rec, **d, "error": None}):
+                rec.update({k: d[k] for k in ("verdict", "defects", "summary") if k in d})
                 rec.pop("error", None)
                 break
+            convo += "\n\nReturn a consistent verdict and concrete query evidence for every defect. " \
+                     "Query the project before giving a final verdict."
         except Exception as e:  # noqa: BLE001
             rec["error"] = f"{type(e).__name__}: {str(e)[:200]}"
-    json.dump(rec, open(path, "w"), ensure_ascii=False, indent=1)
+            if isinstance(e, RuntimeError):
+                break
+    if not rec.get("verdict"):
+        rec.setdefault("error", "No complete, evidence-backed verdict")
+    Path(path + ".tmp").write_text(json.dumps(rec, ensure_ascii=False, indent=1))
+    os.replace(path + ".tmp", path)
     return rec
 
 
@@ -102,9 +124,11 @@ def main() -> None:
             seen.add(t["twin_id"])
             bases.append(t)
     with ThreadPoolExecutor(a.workers) as pool, open(f"{a.out}/audit.jsonl", "w") as f:
-        for r in pool.map(lambda b: audit(b, a.model, a.out), bases):
-            f.write(json.dumps({k: r.get(k) for k in ("twin_id", "team_id", "verdict", "defects", "summary", "error")},
-                               ensure_ascii=False) + "\n")
+        futures = [pool.submit(audit, b, a.model, a.out) for b in bases]
+        for future in as_completed(futures):
+            r = future.result()
+            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+            f.flush()
     rows = [json.loads(x) for x in open(f"{a.out}/audit.jsonl")]
     print(json.dumps({"twins": len(rows), "verdicts": {v: sum(1 for r in rows if r.get("verdict") == v)
                                                        for v in ("CLEAN", "MINOR", "MATERIAL", None)}}))

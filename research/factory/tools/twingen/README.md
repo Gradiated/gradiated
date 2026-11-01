@@ -133,6 +133,41 @@ Loader and tasks: `research/factory/tools/posthog_env/` (`load_twin_v2.py`, `loa
 `cleanup_orphans_v2.py`, `team_state.py`, `smoke_v2.sh`). v2 tasks carry `env_defaults` (local docs search on) and
 are run with `--max-turns 0 --reset-team-state`.
 
+### Synthesized tasks and difficulty calibration
+
+`posthog_env/v4/` authors new tasks against queried twin data, guided by production intent families. Audit twins
+before authoring; only evidence-backed CLEAN/MINOR audits for the current team and load date may admit a twin.
+Keep `audit_contracts.py` and `reference_queries.py` beside the deployed audit/synthesis scripts. Failed, corrupt,
+legacy, changed-model or changed-load caches are retried. A provider outage remains an incomplete audit, never a
+data-quality verdict. Audit output is flushed in completion order and includes the snapshot and queried evidence.
+Re-audit after every reload; do not reuse a verdict on a replaced team. Author caches also include the snapshot,
+model, planted scenario and known defects. Reference SQL normalization changes only team predicates, preserving
+business numbers, quoted values and comments.
+
+Lifecycle reassignment runs before causal alignment, followed by a non-reassigning duplicate pass and final device
+coherence. This order prevents late lifecycle moves from restoring a web SDK on native-app events or changing
+parents after children have been aligned. Transaction ID sampling includes `checkout_session_id` names.
+
+Count labels and task volume separately from measured difficulty. Use `v4/task_quality.py` on the GPU host to
+report family coverage, independent twin counts and paired Opus/Qwen pass-rate gaps from `bench_env.py` outputs:
+
+```bash
+python3 task_quality.py --tasks /path/to/validated.jsonl --bench /opt/posthog-env/runner/bench/TAG \
+  --student qwen --frontier opus --student-samples 2 --frontier-samples 1
+```
+
+Only SOUND, non-excluded tasks with all expected samples from both arms enter the paired gap. Missing/corrupt
+judgements and infrastructure failures remain incomplete pairs. Repeated samples are averaged within each task;
+the output is descriptive, not a confidence claim. Tune family weights and difficulty on calibration tasks, then
+freeze an evaluation set on disjoint project clusters before running the final model comparison. Preserve the
+independent task audit bar of 14/15 sound; neither author labels nor a large model gap replace that audit.
+
+Synthetic contract and recovery tests need no model or database:
+
+```bash
+python3 -m unittest discover -s research/factory/tools/posthog_env/v4 -p 'test_*.py' -v
+```
+
 ### Rebuild from new traces (one command)
 
 ```bash

@@ -21,10 +21,14 @@ import collections as C
 import hashlib
 import json
 import os
+from pathlib import Path
 import random
 import re
 import sys
 from concurrent.futures import ThreadPoolExecutor
+
+import audit_contracts as AC
+from reference_queries import normalize_team
 
 sys.path.insert(0, "/opt/posthog-env/runner")
 sys.path.insert(0, "/opt/posthog-env")
@@ -149,10 +153,18 @@ stable), its size relative to the baseline; acceptable_variations: equivalent se
 
 
 def author(base: dict, family: str, difficulty: int, rng, model: str, out_dir: str, planted: dict | None = None) -> dict:
-    key = hashlib.sha256(f"{base['twin_id']}:{family}:{difficulty}:{bool(planted)}".encode()).hexdigest()[:12]
+    identity = {"audit": AC.cache_key(base, model), "family": family, "difficulty": difficulty,
+                "planted": planted, "avoid": base.get("_avoid"), "version": 2}
+    key = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()[:12]
     path = f"{out_dir}/raw/{key}.json"
     if os.path.exists(path):
-        return json.load(open(path))
+        try:
+            cached = json.loads(Path(path).read_text())
+            if not cached.get("error") and (cached.get("skip") or cached.get("turns")
+                                           and (cached.get("grading_notes") or {}).get("must_include")):
+                return cached
+        except (OSError, ValueError):
+            pass
     twin = "\n".join(str(x) for x in SC.twin_state(base) + SC.event_props(base))
     ex = exemplars(family, rng) or ["(none)"]
     prompt = AUTHOR.format(family=family, family_desc=FAMILY_DESC[family], difficulty=difficulty,
@@ -170,7 +182,7 @@ def author(base: dict, family: str, difficulty: int, rng, model: str, out_dir: s
     convo, rounds = prompt, 0
     for _ in range(9):
         try:
-            text, _u = llm_proxy.judge_complete(convo, model, None, attempts=6, preamble=False)
+            text, _u = llm_proxy.judge_complete(convo, model, None, attempts=2, timeout=120, preamble=False)
             d = json.loads(text[text.find("{"):text.rfind("}") + 1])
             if d.get("queries") and "turns" not in d and rounds < 4:
                 rounds += 1
@@ -181,19 +193,23 @@ def author(base: dict, family: str, difficulty: int, rng, model: str, out_dir: s
                           ("\n\nNow write the final JSON." if rounds >= 4 else "\n\nQuery more or write the final JSON."))
                 continue
             rec.update(d)
+            rec.pop("error", None)
             break
         except Exception as e:  # noqa: BLE001
             rec["error"] = f"{type(e).__name__}: {str(e)[:200]}"
+            if isinstance(e, RuntimeError):
+                break
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    json.dump(rec, open(path, "w"), ensure_ascii=False, indent=1)
+    Path(path + ".tmp").write_text(json.dumps(rec, ensure_ascii=False, indent=1))
+    os.replace(path + ".tmp", path)
     return rec
 
 
 def verify(rec: dict, team: int) -> tuple[bool, list]:
     """Re-run the reference queries: every one must succeed and at least one must return rows."""
     # the author often writes the literal team id; run_queries requires the {team} placeholder (pilot 1: 20 rejected)
-    qs = [{"why": q.get("purpose", ""), "sql": re.sub(rf"\b{team}\b", "{team}", q.get("sql", ""))
-           if "{team}" not in q.get("sql", "") else q.get("sql", "")} for q in rec.get("reference_queries") or []]
+    qs = [{"why": q.get("purpose", ""), "sql": normalize_team(q.get("sql", ""), team)}
+          for q in rec.get("reference_queries") or []]
     if not qs:
         return False, []
     res = CT.run_queries(qs, team)
@@ -241,7 +257,7 @@ def main() -> None:
         aud = {json.loads(x)["twin_id"]: json.loads(x) for x in open(a.audit)}
         for tw in list(bases):
             r = aud.get(tw)
-            if r is None or r.get("verdict") not in ("CLEAN", "MINOR"):
+            if r is None or not AC.admissible(r, bases[tw]):
                 bases.pop(tw)  # not audited, failed, or MATERIAL
             else:
                 bases[tw]["_avoid"] = [d.get("what") for d in r.get("defects") or [] if d.get("severity") == "minor"]

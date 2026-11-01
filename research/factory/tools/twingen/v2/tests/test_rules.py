@@ -435,9 +435,9 @@ class Journeys(unittest.TestCase):
         p = project(web=False)
         calls = []
         p.causal_children = lambda t: calls.append("causal") or t
-        p.lifecycle_once = lambda t: calls.append("lifecycle") or t
+        p.lifecycle_once = lambda t, **kw: calls.append("dedupe" if kw else "lifecycle") or t
         p.coherent_sessions(self._tab([("app_opened", "a", 10)]))
-        self.assertEqual(calls, ["causal", "lifecycle"])
+        self.assertEqual(calls, ["lifecycle", "causal", "dedupe"])
 
     def test_children_follow_parents(self):
         rows = [("calc_page_view", "a", 10), ("calc_page_view", "b", 20), ("calc_run", "c", 30), ("calc_run", "d", 40)]
@@ -708,6 +708,13 @@ class RoundB15Scenario(unittest.TestCase):
         self.assertEqual(smp.mode, "unique_id")
         self.assertGreater(len(set(out)), 280)
 
+    def test_checkout_session_ids_unique(self):
+        import values
+        smp = values.Sampler("stripe_checkout_session_id", "String", values=["cs_live_a", "cs_live_b"])
+        out = [smp({"person": {}}) for _ in range(300)]
+        self.assertEqual(smp.mode, "unique_id")
+        self.assertEqual(len(set(out)), 300)
+
     def test_page_parents(self):
         m = gen2.page_parents(["/", "/pricing", "/checkout", "/checkout/success", "/contact", "/contact/thank-you",
                                "/billing/checkout", "/billing/success", "/blog/post"])
@@ -807,6 +814,49 @@ class RoundB16(unittest.TestCase):
     def test_entity_pages(self):
         self.assertTrue(gen2.ENTITY_PAGE.search("https://app.x.io/users/amelia-chen"))
         self.assertFalse(gen2.ENTITY_PAGE.search("https://app.x.io/pricing"))
+
+
+class V4Pilot3(unittest.TestCase):
+    def test_only_seeded_rows_are_exempt_from_causal_alignment(self):
+        import pyarrow as pa
+        tab = Journeys()._tab([("flow_started", "a", 10), ("flow_completed", "b", 20),
+                               ("flow_completed", "seed-person", 30)])
+        tab = tab.append_column("uuid", pa.array(["parent", "base", "seed"]))
+        p = project(_seq_events={"flow_started", "flow_completed"}, _seq_row_uuids={"seed"})
+        out = p.causal_children(tab)
+        self.assertEqual(out.column("person_id").to_pylist(), ["a", "a", "seed-person"])
+
+    def test_submission_and_game_steps_have_name_evident_parents(self):
+        names = {"studio_generation_confirmation_visible", "studio_generation_confirmation_submit",
+                 "studio_generation_confirmation_submitted", "studio_generation_confirmation_submit_failed",
+                 "shootout_round_started", "shootout_round_ended", "gate_seen", "gate_pressed"}
+        for child, parent in (("studio_generation_confirmation_submit", "studio_generation_confirmation_visible"),
+                              ("studio_generation_confirmation_submitted", "studio_generation_confirmation_submit"),
+                              ("studio_generation_confirmation_submit_failed", "studio_generation_confirmation_submit"),
+                              ("shootout_round_ended", "shootout_round_started"), ("gate_pressed", "gate_seen")):
+            self.assertEqual(gen2.parent_event(child, names), parent)
+
+    def test_lifecycle_reassignment_does_not_restore_web_sdk_on_installs(self):
+        import pyarrow as pa
+        events = ["app_used", "Application Installed", "Application Installed", "app_used"]
+        props = [json.dumps({"$lib": "web", "$os": "Windows", "$session_id": f"s{i}"}) for i in range(4)]
+        tab = pa.table({"event": events, "person_id": ["a", "a", "a", "c"], "properties": props,
+                        "timestamp": pa.array([10, 50, 90, 80], pa.int64()).cast(pa.timestamp("us", tz="UTC"))})
+        out = project(web=False).coherent_sessions(tab)
+        for event, pr in zip(out.column("event").to_pylist(), out.column("properties").to_pylist()):
+            if event == "Application Installed":
+                d = json.loads(pr)
+                self.assertIn(d["$lib"], ("posthog-ios", "posthog-android"))
+                self.assertIn(d["$os"], ("iOS", "Android"))
+
+    def test_web_rows_drop_native_standard_metadata(self):
+        import pyarrow as pa
+        d = {"$lib": "web", "$os": "Windows", "$app_version": "2.4", "$app_name": "Demo", "release": "2.4"}
+        tab = pa.table({"event": ["custom"], "properties": [json.dumps(d)]})
+        out = json.loads(project().device_coherence(tab).column("properties")[0].as_py())
+        self.assertNotIn("$app_version", out)
+        self.assertNotIn("$app_name", out)
+        self.assertEqual(out["release"], "2.4")
 
 
 class V4Pilot2(unittest.TestCase):  # noqa: D101

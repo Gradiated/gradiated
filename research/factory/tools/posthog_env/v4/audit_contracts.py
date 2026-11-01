@@ -10,18 +10,22 @@ SNAPSHOT_KEYS = ("twin_id", "team_id", "loaded_now_utc", "shift_days")
 AUDIT_VERSION = 3
 
 
-def parse_reply(text: str, keys: tuple[str, ...]) -> dict:
-    decoder, position, found = json.JSONDecoder(), 0, None
+def parse_reply(text: str, keys: tuple[str, ...], prefer_queries: bool = False) -> dict:
+    decoder, position, found, queries = json.JSONDecoder(), 0, None, []
     while (start := text.find("{", position)) >= 0:
         try:
             value, end = decoder.raw_decode(text, start)
             position = end
             if isinstance(value, dict) and any(k in value for k in keys):
                 found = value
+                if isinstance(value.get("queries"), list):
+                    queries.extend(q for q in value["queries"] if isinstance(q, dict) and q.get("sql"))
         except ValueError:
             position = start + 1
     if found is None:
         raise ValueError("No structured model reply with the required keys")
+    if prefer_queries and queries:
+        return {"queries": queries}
     return found
 
 

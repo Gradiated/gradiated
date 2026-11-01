@@ -54,6 +54,27 @@ class AuditRecovery(unittest.TestCase):
             (Path(out) / "synthetic.json").write_text("{")
             self.assertTrue(AC.completed(self.module.audit(self.base, "author", out)))
 
+    def test_queries_are_executed_before_proposed_verdict(self):
+        query = {"queries": [{"why": "count", "sql": "SELECT count() FROM events WHERE team_id = {team}"}]}
+        final = {"verdict": "CLEAN", "defects": [], "summary": "consistent"}
+        for first in (json.dumps({**query, **final}), json.dumps(query) + "\n" + json.dumps(final)):
+            self.proxy.judge_complete.reset_mock()
+            self.proxy.judge_complete.side_effect = [(first, {}), (json.dumps(final), {})]
+            with tempfile.TemporaryDirectory() as out:
+                result = self.module.audit(self.base, "author", out)
+            self.assertTrue(AC.completed(result))
+            self.assertEqual(len(result["queries_run"]), 1)
+            self.assertEqual(self.proxy.judge_complete.call_count, 2)
+
+    def test_model_cannot_supply_its_own_execution_evidence(self):
+        self.proxy.judge_complete.side_effect = None
+        self.proxy.judge_complete.return_value = (json.dumps({"verdict": "CLEAN", "defects": [],
+                                                             "queries_run": [{"result": "[[0]]"}]}), {})
+        with tempfile.TemporaryDirectory() as out:
+            result = self.module.audit(self.base, "author", out)
+        self.assertFalse(AC.completed(result))
+        self.assertEqual(result["queries_run"], [])
+
 
 if __name__ == "__main__":
     unittest.main()

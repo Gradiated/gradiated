@@ -77,13 +77,18 @@ def audit(base: dict, model: str, out: str) -> dict:
                            objects=SC.clip(SC.team_objects(base["team_id"]), 3000))
     if base.get("scenario_context"):
         prompt += "\n\n## Product context\n" + SC.clip(base["scenario_context"], 6000)
+    prompt += ("\n\nYour first reply MUST request verification queries only. The project summary is not a completed "
+               "audit. Request queries using the queries JSON schema above; the harness will execute them and "
+               "return results. Do not invent results or issue a verdict before receiving them.")
     rec = {"twin_id": base["twin_id"], "team_id": base["team_id"], "queries_run": [], "model": model,
            "snapshot": AC.snapshot(base), "cache_key": AC.cache_key(base, model)}
     convo, rounds = prompt, 0
     for _ in range(10):
         try:
             text, _u = llm_proxy.judge_complete(convo, model, None, attempts=2, timeout=120, preamble=False)
-            d = AC.parse_reply(text, ("queries", "verdict"))
+            d = AC.parse_reply(text, ("queries", "verdict"), prefer_queries=rounds < 5)
+            rec.setdefault("responses", []).append({"keys": sorted(d), "proposed_verdict": d.get("verdict"),
+                                                     "valid_verdict": AC.valid_verdict(d)})
             if d.get("queries") and "verdict" not in d and rounds < 5:
                 rounds += 1
                 qs = [{**q, "sql": normalize_team(q.get("sql", ""), int(base["team_id"]))}
@@ -97,12 +102,14 @@ def audit(base: dict, model: str, out: str) -> dict:
                           "\n".join(f"- {r['why']}\n  SQL: {r['sql']}\n  -> {r['result']}" for r in res) +
                           ("\n\nNow give the final JSON." if rounds >= 5 else "\n\nQuery more or give the final JSON."))
                 continue
-            if AC.valid_verdict(d) and AC.completed({**rec, **d, "error": None}):
+            if AC.valid_verdict(d) and AC.completed({**d, "queries_run": rec["queries_run"], "error": None}):
                 rec.update({k: d[k] for k in ("verdict", "defects", "summary") if k in d})
                 rec.pop("error", None)
                 break
             convo += "\n\nReturn a consistent verdict and concrete query evidence for every defect. " \
                      "Query the project before giving a final verdict."
+            Path(path + ".tmp").write_text(json.dumps(rec, ensure_ascii=False, indent=1))
+            os.replace(path + ".tmp", path)
         except Exception as e:  # noqa: BLE001
             rec["error"] = f"{type(e).__name__}: {str(e)[:200]}"
             if isinstance(e, RuntimeError):

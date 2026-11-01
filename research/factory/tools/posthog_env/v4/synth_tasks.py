@@ -179,22 +179,30 @@ def author(base: dict, family: str, difficulty: int, rng, model: str, out_dir: s
         prompt += PLANTED_HINT.format(event=planted["event"], where=json.dumps(planted["where"]), factor=planted["factor"],
                                       fr=planted["from"], to=planted["to"],
                                       state="still ongoing at the data end" if planted.get("ongoing") else "then back to normal")
+    prompt += "\n\nRequest exploration queries in your first response; wait for their executed results before writing the task."
     rec = {"key": key, "twin_id": base["twin_id"], "family": family, "difficulty_target": difficulty,
            "queries_run": [], "model": model}
     convo, rounds = prompt, 0
     for _ in range(9):
         try:
             text, _u = llm_proxy.judge_complete(convo, model, None, attempts=2, timeout=120, preamble=False)
-            d = AC.parse_reply(text, ("queries", "turns", "skip"))
+            d = AC.parse_reply(text, ("queries", "turns", "skip"), prefer_queries=rounds < 4)
             if d.get("queries") and "turns" not in d and rounds < 4:
                 rounds += 1
                 res = CT.run_queries(d["queries"][:8], int(base["team_id"]))
                 rec["queries_run"] += res
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                Path(path + ".tmp").write_text(json.dumps(rec, ensure_ascii=False, indent=1))
+                os.replace(path + ".tmp", path)
                 convo += (f"\n\n## Your queries and results (round {rounds})\n" +
                           "\n".join(f"- {r['why']}\n  SQL: {r['sql']}\n  -> {r['result']}" for r in res) +
                           ("\n\nNow write the final JSON." if rounds >= 4 else "\n\nQuery more or write the final JSON."))
                 continue
-            rec.update(d)
+            if d.get("turns") and not rec["queries_run"]:
+                convo += "\n\nRequest queries first. The harness has not executed any exploration queries yet."
+                continue
+            rec.update({k: d[k] for k in ("turns", "agent_mode", "difficulty", "why_hard", "reference_queries",
+                                          "findings", "grading_notes", "skip") if k in d})
             rec.pop("error", None)
             break
         except Exception as e:  # noqa: BLE001

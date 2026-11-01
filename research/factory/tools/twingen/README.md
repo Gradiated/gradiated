@@ -144,6 +144,13 @@ Re-audit after every reload; do not reuse a verdict on a replaced team. Author c
 model, planted scenario and known defects. Reference SQL normalization changes only team predicates, preserving
 business numbers, quoted values and comments.
 
+Query requests take precedence over proposed verdicts/tasks when a model returns both in one reply or in
+multiple JSON blocks. The harness executes the requests before accepting a final result; model-supplied
+`queries_run` cannot substitute for execution evidence. Task validation likewise requires live query evidence and
+binds successful caches to the full task, reference, model, gate instructions and lint inputs. Deploy
+`validate_tasks.py` beside the v4 helper modules when using it from an isolated runtime directory. Author caches
+preserve harness-owned identities and execution records even if a model emits conflicting metadata.
+
 Lifecycle reassignment runs before causal alignment, followed by a non-reassigning duplicate pass and final device
 coherence. This order prevents late lifecycle moves from restoring a web SDK on native-app events or changing
 parents after children have been aligned. Transaction ID sampling includes `checkout_session_id` names.

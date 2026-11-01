@@ -18,7 +18,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import hashlib
 import os
+from pathlib import Path
 import sys
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
@@ -28,6 +30,9 @@ sys.path.insert(0, "/opt/posthog-env")
 import curate_tasks as CT  # noqa: E402  (run_queries incl. warehouse macro)
 import llm_proxy  # noqa: E402
 import spot_card as SC  # noqa: E402
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "v4"))
+import audit_contracts as AC  # noqa: E402
+from reference_queries import normalize_team  # noqa: E402
 
 CLASSES = ["premise_false", "data_missing", "data_implausible", "warehouse_broken", "object_missing", "object_leak",
            "notes_wrong", "notes_overspecified", "not_self_contained", "unanswerable_with_tools", "trivial", "other"]
@@ -175,8 +180,16 @@ Check in particular (each was a real miss):
 
 def validate_one(task: dict, rec: dict | None, model: str, out_dir: str, extra: str = "", max_rounds: int = 4) -> dict:
     path = f"{out_dir}/{task['task_id']}.json"
+    identity = {"version": 2, "task": task, "reference": rec, "model": model, "extra": extra,
+                "max_rounds": max_rounds, "lint": LINT.get(str(task["conversation_id"])[:36])}
+    key = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
     if os.path.exists(path):
-        return json.load(open(path))
+        try:
+            cached = json.loads(Path(path).read_text())
+            if cached.get("input_key") == key and validation_complete(cached):
+                return cached
+        except (OSError, ValueError):
+            pass
     turns = "\n".join(f"[turn {i}] {SC.clip(t, 6000)}" for i, t in enumerate(task["turns"]))
     if task.get("synth"):  # v4 synthesized task: no production conversation; the author's verified reference instead
         sy = task["synth"]
@@ -197,28 +210,53 @@ def validate_one(task: dict, rec: dict | None, model: str, out_dir: str, extra: 
                            now=task.get("loaded_now_utc") or "?", objects=SC.clip(SC.team_objects(task["team_id"]), 5000),
                            curator_defects=SC.clip(json.dumps((task.get("curation") or {}).get("twin_defects") or [],
                                                               ensure_ascii=False, indent=1), 4000) or "(none)")
-    out = {"task_id": task["task_id"], "model": model, "queries_run": []}
-    convo, rounds = prompt + extra, 0
+    out = {"task_id": task["task_id"], "model": model, "queries_run": [], "input_key": key}
+    convo, rounds = prompt + extra + "\n\nFirst request verification queries only; wait for executed results before a verdict.", 0
     for _ in range(max_rounds + 4):
         try:
-            text, _u = llm_proxy.judge_complete(convo, model, None, attempts=6, preamble=False)
-            d = last_json(text)
+            text, _u = llm_proxy.judge_complete(convo, model, None, attempts=2, timeout=120, preamble=False)
+            d = AC.parse_reply(text, ("queries", "verdict"), prefer_queries=rounds < max_rounds)
             if d.get("queries") and "verdict" not in d and rounds < max_rounds:
                 rounds += 1
-                res = CT.run_queries(d["queries"][:8], int(task["team_id"]))
+                qs = [{**q, "sql": normalize_team(q.get("sql", ""), int(task["team_id"]))}
+                      for q in d["queries"][:8]]
+                res = CT.run_queries(qs, int(task["team_id"]))
                 out["queries_run"] += res
+                Path(path + ".tmp").write_text(json.dumps(out, ensure_ascii=False, indent=1))
+                os.replace(path + ".tmp", path)
                 convo += (f"\n\n## Your queries and results (round {rounds})\n" +
                           "\n".join(f"- {r['why']}\n  SQL: {r['sql']}\n  -> {r['result']}" for r in res) +
                           ("\n\nNow give the final JSON." if rounds >= max_rounds else "\n\nAsk again or give the final JSON."))
                 continue
-            assert d.get("verdict") in ("SOUND", "MINOR", "BROKEN")
-            out.update(d)
-            out.pop("error", None)
-            break
+            candidate = {**d, "queries_run": out["queries_run"], "error": None}
+            if validation_complete(candidate):
+                out.update({k: d[k] for k in ("verdict", "trivial", "checks", "defects", "summary") if k in d})
+                out.pop("error", None)
+                break
+            convo += "\n\nRequest live verification queries, then return a consistent verdict with concrete defects and evidence."
         except Exception as ex:  # noqa: BLE001
             out["error"] = f"{type(ex).__name__}: {str(ex)[:200]}"
-    json.dump(out, open(path, "w"), ensure_ascii=False, indent=1)
+            if isinstance(ex, RuntimeError):
+                break
+    if not out.get("verdict"):
+        out.setdefault("error", "No complete, evidence-backed task verdict")
+    Path(path + ".tmp").write_text(json.dumps(out, ensure_ascii=False, indent=1))
+    os.replace(path + ".tmp", path)
     return out
+
+
+def validation_complete(rec: dict) -> bool:
+    if rec.get("error") or rec.get("verdict") not in ("SOUND", "MINOR", "BROKEN"):
+        return False
+    defects = rec.get("defects")
+    if not isinstance(defects, list) or (rec["verdict"] == "SOUND" and defects):
+        return False
+    if rec["verdict"] != "SOUND" and not defects:
+        return False
+    if any(not isinstance(d, dict) or not d.get("what") or not d.get("evidence") for d in defects):
+        return False
+    return any(isinstance(r, dict) and isinstance(r.get("result"), str) and r["result"].strip()
+               and not r["result"].startswith(("ERROR", "REJECTED")) for r in rec.get("queries_run") or [])
 
 
 def make_repair(a, res: dict, recs: dict, rdir: str, rnd, model: str, extra: str, max_rounds: int):

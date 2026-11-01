@@ -158,7 +158,7 @@ def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split:
                         "error_code": "render_timeout" if failed else "", "renderer_version": "2.8" if t >= anomaly_start else "2.7"})
                 if not failed:
                     page("/reports/export/success")
-            if rng.random() < (.7 if plan == "studio" else .18):
+            if plan == "studio" and rng.random() < .7:
                 request = identifier(seed, "ai", i, day)
                 action("summary_requested", {"report_id": report_id, "request_id": request})
                 model = "swift-small" if rng.random() < .72 else "precise-large"

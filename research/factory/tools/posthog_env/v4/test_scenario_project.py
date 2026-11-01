@@ -74,6 +74,15 @@ class ScenarioProject(unittest.TestCase):
         self.assertEqual(defs["$ai_input_tokens"]["property_type"], "Numeric")
         self.assertTrue(defs["$ai_total_cost_usd"]["is_numerical"])
 
+    def test_ai_summaries_require_an_active_paid_subscription(self):
+        paid = {}
+        for r in self.data["events"]:
+            if r["event"] == "subscription_started":
+                paid[r["person_id"]] = r["timestamp"]
+            if r["event"] in ("summary_requested", "$ai_generation", "summary_generated"):
+                self.assertIn(r["person_id"], paid)
+                self.assertGreaterEqual(r["timestamp"], paid[r["person_id"]])
+
 
 if __name__ == "__main__":
     unittest.main()

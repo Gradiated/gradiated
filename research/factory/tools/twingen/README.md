@@ -194,8 +194,10 @@ Use distinct seeds for train/calibration/holdout worlds and freeze holdout input
 `supported_families` metadata restricts author jobs; an empty capability list admits none. `synth_tasks.py` accepts
 `--registry` for isolated builds and `--families` for a calibration subset, samples families without replacement,
 and defaults to authoring target difficulty 4. These targets remain labels until matched model rollouts measure
-them. The pilot's first world loaded 49,177 events and 700 people with both warehouse tables and its feature flag;
-its independent query audit is still pending, so it is not yet a verified source of high-quality tasks.
+them. The first 700-person world loaded successfully but failed its query audit because Free users could receive
+AI summaries despite the paid-feature description. Summaries now require an active Studio subscription, including
+the backend generation event; a regression test checks this chronology. The rejected dataset/audit are preserved
+on the host. The rebuilt candidate must pass a fresh audit before task authoring or model comparison.
 
 ### Rebuild from new traces (one command)
 

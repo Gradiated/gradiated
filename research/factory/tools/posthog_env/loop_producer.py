@@ -81,11 +81,68 @@ def setup() -> None:
     print(json.dumps({"setup": "ok", "targets": sum(1 for _ in open(f"{ROOT}/twingen/targets.jsonl"))}))
 
 
+HOLDOUT = f"{ROOT}/eval_holdout.json"  # train-split conversations reserved for eval (whole project clusters)
+
+
 def seen_ids() -> set[str]:
     s = set()
     for f in glob.glob(f"{BATCHES}/*/ids.json"):
         s |= set(json.load(open(f)))
+    if os.path.exists(HOLDOUT):  # never train on the eval holdout
+        s |= set(json.load(open(HOLDOUT))["ids"])
     return s
+
+
+def tool_calls() -> dict:
+    return {json.loads(x)["conversation_id"]: json.loads(x).get("n_tool_calls") or 0 for x in open(f"{ROOT}/twins/index.jsonl")}
+
+
+def hard_first(pool: list[str], rng) -> list[str]:
+    """Order conversations so complex ones (more production tool calls) come first: easy conversations give mostly
+    trivial tasks (0-2 tool calls: 80% of sound tasks trivial; 11+: 97% moderate/hard). Weighted shuffle by band."""
+    tc = tool_calls()
+    w = lambda n: 0.3 if n <= 2 else 1.0 if n <= 5 else 1.5 if n <= 10 else 2.0
+    keyed = [(rng.random() ** (1.0 / w(tc.get(c, 0))), c) for c in pool]
+    return [c for _, c in sorted(keyed, reverse=True)]
+
+
+def make_holdout(n: int, seed: int) -> None:
+    """Reserve ~n unseen train conversations for eval, by whole cluster (same customer project), stratified toward
+    moderate/hard: band shares 0-2 15%, 3-5 35%, 6-10 25%, 11+ 25%."""
+    if os.path.exists(HOLDOUT):
+        print(json.dumps({"holdout": "exists"}))
+        return
+    rng = random.Random(seed)
+    tc = tool_calls()
+    seen = seen_ids()
+    pool = [json.loads(x)["id"] for x in open(f"{TRACES}/train.jsonl")]
+    group: dict = {c: c for c in pool}
+    cf = f"{ROOT}/twins/clusters/clusters.jsonl"
+    if os.path.exists(cf):
+        for line in open(cf):
+            m = json.loads(line).get("members") or []
+            for c in m:
+                group[c] = m[0]
+    members: dict = {}
+    for c in pool:
+        members.setdefault(group.get(c, c), []).append(c)
+    groups = [g for g, ms in members.items() if not any(m in seen for m in ms)]
+    band = lambda c: "0-2" if tc.get(c, 0) <= 2 else "3-5" if tc.get(c, 0) <= 5 else "6-10" if tc.get(c, 0) <= 10 else "11+"
+    quota = {"0-2": 0.15 * n, "3-5": 0.35 * n, "6-10": 0.25 * n, "11+": 0.25 * n}
+    rng.shuffle(groups)
+    got: list[str] = []
+    have = {k: 0 for k in quota}
+    for g in groups:
+        ms = members[g]
+        b = band(ms[0])
+        if have[b] + len(ms) > quota[b] + 2:
+            continue
+        got += ms
+        have[b] += len(ms)
+        if len(got) >= n:
+            break
+    json.dump({"ids": got, "bands": have, "seed": seed}, open(HOLDOUT, "w"), indent=1)
+    print(json.dumps({"holdout": len(got), "bands": have}))
 
 
 def pending() -> int:
@@ -280,11 +337,16 @@ def main() -> None:
     ap.add_argument("--rebuild-ids", default="")
     ap.add_argument("--refresh-teams", default="", help="rewrite team ids in a task file from the loader registry")
     ap.add_argument("--regen-pending", default="", help="batch name: regenerate + re-validate PENDING_REGEN tasks")
+    ap.add_argument("--hard-first", action="store_true", help="sample complex conversations first (see hard_first)")
+    ap.add_argument("--make-holdout", type=int, default=0, help="reserve N train conversations for eval (by cluster)")
     ap.add_argument("--reanchor", default="", help="task file: reload its twins to now and refresh ids/dates")
     ap.add_argument("--name", default="")
     a = ap.parse_args()
     if a.setup:
         setup()
+        return
+    if a.make_holdout:
+        make_holdout(a.make_holdout, a.seed)
         return
     if a.reanchor:
         with open(a.reanchor + ".reanchor.log", "a") as log:
@@ -304,6 +366,8 @@ def main() -> None:
     pool = sorted(json.loads(x)["id"] for x in open(f"{TRACES}/{a.split}.jsonl"))
     rng = random.Random(a.seed)
     rng.shuffle(pool)
+    if a.hard_first:
+        pool = hard_first(pool, rng)
     for _ in range(a.batches):
         if os.path.exists(f"{ROOT}/STOP"):
             break

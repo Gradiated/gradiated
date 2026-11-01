@@ -2636,6 +2636,9 @@ class Project2(gen.Project):
                 for pi in pool:
                     t = a + dt.timedelta(seconds=rnd.uniform(0, span * 0.8))
                     reach = 1.0
+                    # r29: one id shared by every step of this journey (order_id, submission_id, ...)
+                    shared = {op["shared_id"]: f"{op['shared_id'].split('_')[0][:4]}_{rnd.getrandbits(40):010x}"} \
+                        if op.get("shared_id") else {}
                     for i, e in enumerate(steps):
                         reach = float(rates[i]) if i else 1.0
                         if i and rnd.random() > reach:
@@ -2643,7 +2646,7 @@ class Project2(gen.Project):
                         if t > self.now:
                             break
                         props = scenario_props((op.get("props") or {}).get(e), rnd, pi, f"{self.S['id']}:{j}:{e}")
-                        rows.append({"event": e, "ts": t, "pi": pi, "props": {**lib, **props}})
+                        rows.append({"event": e, "ts": t, "pi": pi, "props": {**lib, **props, **shared}})
                         t = t + dt.timedelta(minutes=rnd.uniform(float(glo), float(ghi)))
                     if len(rows) >= MAX_SCENARIO_ROWS:
                         break
@@ -2678,7 +2681,12 @@ class Project2(gen.Project):
                     continue
                 # r24: one draw per person (geo, per_person) or per session (everything else), never per event
                 # (round 7: utm_source/medium paired at random, persons switching country between events)
-                unit = pid[i] if (geo or device) else (sid[i] or pid[i])
+                per = op.get("per")  # r29: one draw per entity value (submission_id, workspace, ...), not per event
+                if per and not (geo or device):
+                    pv = orjson.loads(props[i] or "{}").get(per)
+                    unit = f"{per}={pv}" if pv not in (None, "") else (sid[i] or pid[i])
+                else:
+                    unit = pid[i] if (geo or device) else (sid[i] or pid[i])
                 r = random.Random(stable_seed(self.S["id"], "scenario_props", j, unit))
                 if r.random() > share:
                     continue

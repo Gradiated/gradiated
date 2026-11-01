@@ -680,6 +680,27 @@ class RoundB15Scenario(unittest.TestCase):
             by_p[r[1]].add(d["$os_version"])
         self.assertTrue(all(len(v) == 1 for v in by_p.values()))
 
+    def test_event_props_per_entity_and_shared_ids(self):
+        """hard-task failures: one submission's events disagreed on shared values; journeys had no linking id."""
+        import pyarrow as pa
+        rows = [("claim_step", f"p{i % 7}", f"s{i}", json.dumps({"submission_id": f"sub{i % 5}"})) for i in range(100)]
+        tab = pa.table({"event": [r[0] for r in rows], "person_id": [r[1] for r in rows], "$session_id": [r[2] for r in rows],
+                        "properties": [r[3] for r in rows]})
+        p = project(ovr={"scenario": [{"kind": "event_props", "event": "claim_step", "per": "submission_id",
+                                       "props": {"amount": {"range": [10, 9000], "int": True}}}]})
+        ds = [json.loads(x) for x in p.scenario_event_props(tab).column("properties").to_pylist()]
+        by = C.defaultdict(set)
+        for d in ds:
+            by[d["submission_id"]].add(d["amount"])
+        self.assertTrue(all(len(v) == 1 for v in by.values()))
+        p = project(n_persons=50, ovr={"scenario": [{"kind": "sequence", "steps": ["cart", "checkout", "paid"], "persons": 20,
+                                                     "from": "2023-11-01", "to": "2023-11-10", "shared_id": "order_id"}]})
+        rows = p.scenario_seed_rows()
+        by = C.defaultdict(set)
+        for r in rows:
+            by[r["pi"]].add(r["props"]["order_id"])
+        self.assertTrue(all(len(v) == 1 for v in by.values()) and len({next(iter(v)) for v in by.values()}) == len(by))
+
     def test_medium_fits(self):
         self.assertTrue(gen2.medium_fits("cpc", "youtube"))
         self.assertTrue(gen2.medium_fits("email", "newsletter"))

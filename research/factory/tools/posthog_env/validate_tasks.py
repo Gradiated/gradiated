@@ -211,6 +211,40 @@ def validate_one(task: dict, rec: dict | None, model: str, out_dir: str, extra: 
     return out
 
 
+def make_repair(a, res: dict, recs: dict, rdir: str, rnd, model: str, extra: str, max_rounds: int):
+    """Curator repair with the latest findings; a repair that adds twin data waits for regeneration (PENDING_REGEN),
+    otherwise the revision is re-validated by `model` (the validator, or the gate for gate repairs)."""
+
+    def repair(t):
+        r = res[t["task_id"]]
+        fb = {"prev": {"turns": t["turns"], "grading_notes": t.get("grading_notes")},
+              "findings": {k: r.get(k) for k in ("verdict", "checks", "defects", "summary")}}
+        base = {**t, "turns": t.get("turns_built") or t["turns"]}
+        c = CT.curate_one(base, recs.get(t["conversation_id"]), a.curator_model, f"{rdir}/curated", feedback=fb)
+        if c.get("decision") not in ("keep", "edit") or not c.get("turns"):
+            return t["task_id"], {**t, "repair_gave_up": True}, None
+        if c.get("twin_overrides"):  # data fix: regenerate before validating (loop_producer.regen_pending)
+            os.makedirs(f"{rdir}/overrides", exist_ok=True)
+            path = f"{rdir}/overrides/{t['twin_id']}.json"
+            cur = json.load(open(path)) if os.path.exists(path) else {"twin_id": t["twin_id"],
+                                                                      "shift_days": t.get("shift_days"), "overrides": []}
+            cur["overrides"] += c["twin_overrides"]
+            json.dump(cur, open(path, "w"), indent=1)
+        t2 = {**t, "turns": c["turns"], "max_turns": len(c["turns"]), "grading_notes": c.get("grading_notes"),
+              "revised_by_validator": rnd,
+              "curation": {**(t.get("curation") or {}), **{k: c.get(k) for k in (
+                  "decision", "reason", "twin_defects", "evidence", "edits", "difficulty") if k in c},
+                           "revision": rnd}}
+        if c.get("twin_overrides"):
+            t2["pending_regen"] = rnd
+            return t["task_id"], t2, {"task_id": t["task_id"], "verdict": "PENDING_REGEN",
+                                      "summary": "curator added twin_overrides; validate after regeneration"}
+        return t["task_id"], t2, validate_one(t2, recs.get(t["conversation_id"]), model, rdir, extra=extra,
+                                              max_rounds=max_rounds)
+
+    return repair
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--tasks", required=True)
@@ -251,31 +285,7 @@ def main() -> None:
             rdir = f"{a.out}/rev{rnd}"
             os.makedirs(f"{rdir}/curated", exist_ok=True)
 
-            def repair(t, rdir=rdir):
-                r = res[t["task_id"]]
-                fb = {"prev": {"turns": t["turns"], "grading_notes": t.get("grading_notes")},
-                      "findings": {k: r.get(k) for k in ("verdict", "checks", "defects", "summary")}}
-                base = {**t, "turns": t.get("turns_built") or t["turns"]}
-                c = CT.curate_one(base, recs.get(t["conversation_id"]), a.curator_model, f"{rdir}/curated", feedback=fb)
-                if c.get("decision") not in ("keep", "edit") or not c.get("turns"):
-                    return t["task_id"], {**t, "repair_gave_up": True}, None
-                if c.get("twin_overrides"):  # data fix: regenerate before validating (loop_producer.regen_pending)
-                    os.makedirs(f"{rdir}/overrides", exist_ok=True)
-                    path = f"{rdir}/overrides/{t['twin_id']}.json"
-                    cur = json.load(open(path)) if os.path.exists(path) else {"twin_id": t["twin_id"],
-                                                                              "shift_days": t.get("shift_days"), "overrides": []}
-                    cur["overrides"] += c["twin_overrides"]
-                    json.dump(cur, open(path, "w"), indent=1)
-                t2 = {**t, "turns": c["turns"], "max_turns": len(c["turns"]), "grading_notes": c.get("grading_notes"),
-                      "revised_by_validator": rnd,
-                      "curation": {**(t.get("curation") or {}), **{k: c.get(k) for k in (
-                          "decision", "reason", "twin_defects", "evidence", "edits", "difficulty") if k in c},
-                                   "revision": rnd}}
-                if c.get("twin_overrides"):
-                    t2["pending_regen"] = rnd
-                    return t["task_id"], t2, {"task_id": t["task_id"], "verdict": "PENDING_REGEN",
-                                              "summary": "curator added twin_overrides; validate after regeneration"}
-                return t["task_id"], t2, validate_one(t2, recs.get(t["conversation_id"]), a.model, rdir)
+            repair = make_repair(a, res, recs, rdir, rnd, a.model, "", 4)
 
             with ThreadPoolExecutor(a.workers) as pool:
                 for tid, t2, r2 in pool.map(repair, bad):
@@ -299,6 +309,26 @@ def main() -> None:
             stats[f"gate_{g.get('verdict') or 'ERROR'}"] += 1
             if g.get("verdict") != "SOUND":
                 res[t["task_id"]] = {**g, "verdict": f"GATE_{g.get('verdict') or 'ERROR'}"}
+        failed = [t for t in passed if res[t["task_id"]].get("verdict") in ("GATE_MINOR", "GATE_BROKEN")]
+        if a.repair and failed:  # gate findings go back to the curator once; the gate re-checks the revision
+            rdir = f"{a.out}/gate_rev"
+            os.makedirs(f"{rdir}/curated", exist_ok=True)
+            for t in failed:  # the curator sees the gate's findings (strip the GATE_ prefix for the feedback)
+                res[t["task_id"]] = {**res[t["task_id"]], "verdict": res[t["task_id"]]["verdict"][5:]}
+            repair = make_repair(a, res, recs, rdir, "gate", a.gate_model, GATE, 6)
+            with ThreadPoolExecutor(a.workers) as pool:
+                for tid, t2, r2 in pool.map(repair, failed):
+                    stats["gate_repair_attempted"] += 1
+                    if r2 is None:
+                        stats["gate_repair_dropped_by_curator"] += 1
+                        res[tid] = {**res[tid], "verdict": "GATE_" + res[tid]["verdict"]}
+                        continue
+                    v = r2.get("verdict")
+                    stats[f"gate_repair_{v}"] += 1
+                    res[tid] = r2 if v in ("SOUND", "PENDING_REGEN") else {**r2, "verdict": f"GATE_{v or 'ERROR'}"}
+                    for i, t in enumerate(tasks):
+                        if t["task_id"] == tid:
+                            tasks[i] = t2
     with open(f"{a.out}/validated.jsonl", "w") as f:
         for t in tasks:
             t = dict(t)

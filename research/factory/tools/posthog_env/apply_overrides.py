@@ -9,6 +9,7 @@ loader shifts by shift_days. This converts and merges them into <root>/twins/ove
   history_days     -> "history_days": max(existing, n)
   new_event / sequence / event_props / person_props -> "scenario": [op, ...] (dates shifted)
   warehouse_table  -> "warehouse": {table: {column: {type, values}}}
+  person           -> "persons": [{email, name, distinct_id, props}] (a named, active person with that identity)
 Records the source ("curation") per entry. Prints the conversation ids changed (for regenerate + reload).
 
     python3 apply_overrides.py --overrides-dir B/curated/overrides --root /opt/posthog-sft/env-research/twins_loop
@@ -53,6 +54,10 @@ def merge(cur: dict, ovs: list[dict], shift_days: int) -> dict:
             op["source"] = "curation"
             if op not in (cur.get("scenario") or []):
                 cur.setdefault("scenario", []).append(op)
+        elif k == "person" and (o.get("email") or o.get("name") or o.get("distinct_id")):  # a named person the task needs
+            pp = {kk: o[kk] for kk in ("email", "name", "distinct_id", "props") if o.get(kk)}
+            if pp not in (cur.get("persons") or []):
+                cur.setdefault("persons", []).append(pp)
         elif k == "warehouse_table" and o.get("table") and isinstance(o.get("columns"), dict):
             wh = cur.setdefault("warehouse", {})
             wh.setdefault(o["table"], {}).update(o["columns"])

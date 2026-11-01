@@ -222,7 +222,8 @@ def regen_pending(d: str, ids: list[str], split: str, log) -> None:
     if not pend:
         return
     changed = set()
-    for od in sorted(glob.glob(f"{d}/validated/rev*/overrides") + glob.glob(f"{d}/validated/regen*/rev*/overrides")):
+    for od in sorted(glob.glob(f"{d}/validated/rev*/overrides") + glob.glob(f"{d}/validated/regen*/rev*/overrides")
+                     + glob.glob(f"{d}/validated/gate_rev/overrides") + glob.glob(f"{d}/validated/regen*/gate_rev/overrides")):
         ch = subprocess.run(["python3", f"{RUNNER}/apply_overrides.py", "--overrides-dir", od, "--root", ROOT], env=ENV,
                             capture_output=True, text=True).stdout.strip()
         changed |= {x for x in ch.split(",") if x}

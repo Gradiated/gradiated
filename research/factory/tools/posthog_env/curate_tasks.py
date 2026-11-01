@@ -123,8 +123,11 @@ builder notes: {notes}
    {{"kind": "new_event", "event": E, "per_day": n, "from": D, "to": D, "persons": N, "props": {{prop: SPEC}},
      "lib": "posthog-ios"|"posthog-android"|"web"(optional)}}   an event the request needs that the twin lacks
    {{"kind": "sequence", "steps": [E1, E2, ...], "persons": N, "from": D, "to": D, "rates": [1, 0.6, 0.35, ...],
-     "gap_minutes": [lo, hi], "props": {{E: {{prop: SPEC}}}}, "lib": ...}}   ordered journeys with realistic drop-off
-   {{"kind": "event_props", "event": E, "props": {{prop: SPEC}}, "share": 0..1}}   properties on an existing event
+     "gap_minutes": [lo, hi], "props": {{E: {{prop: SPEC}}}}, "lib": ..., "shared_id": "order_id"(optional)}}
+     ordered journeys with realistic drop-off; "shared_id": one generated id on every step of a journey
+   {{"kind": "person", "email": ..., "name": ..., "props": {{...}}}}   a named, active person the request refers to
+   {{"kind": "event_props", "event": E, "props": {{prop: SPEC}}, "share": 0..1, "per": "<id prop>"(optional)}}
+     properties on an existing event; "per": one value per entity (all events with the same submission_id agree)
    {{"kind": "person_props", "props": {{prop: SPEC}}, "share": 0..1}}   person properties (plan, company, role, ...)
    {{"kind": "warehouse_table", "table": T, "columns": {{col: {{"type": "string|integer|float|datetime|boolean",
      "values": [...]}}}}}}   a synced table; key columns named distinct_id/user_id/email/person_id join to persons
@@ -132,6 +135,10 @@ builder notes: {notes}
    add "per_person": true for a value that stays fixed per person (a reader's book, a customer's plan).
    Use them to make the request's premise and the data a correct answer needs real and PLAUSIBLE for this business
    (realistic volumes, shares and drop-off, values in the business's domain, consistent across related events).
+   An override changes only what it names: list EVERY event type a fix must reach (e.g. both $pageview and
+   $pageleave), use share 1.0 for corrections, and fix the cause, not one view of it. Grading notes must not state
+   exact numbers that depend on data an override adds (they are written before regeneration): describe the finding
+   and how to check it with a query instead.
    Prefer this over dropping with twin_gap. Never add data that hands the agent the answer or makes the task easier
    than production (no labels that name the conclusion). Leave empty if the twin already supports the task.
 

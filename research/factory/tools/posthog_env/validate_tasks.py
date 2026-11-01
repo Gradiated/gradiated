@@ -178,7 +178,15 @@ def validate_one(task: dict, rec: dict | None, model: str, out_dir: str, extra: 
     if os.path.exists(path):
         return json.load(open(path))
     turns = "\n".join(f"[turn {i}] {SC.clip(t, 6000)}" for i, t in enumerate(task["turns"]))
-    ref = "\n".join(SC.render_trace(rec, len(task["turns"]) + task.get("turn_offset", 0), 800, 2000)) if rec else "(none)"
+    if task.get("synth"):  # v4 synthesized task: no production conversation; the author's verified reference instead
+        sy = task["synth"]
+        ref = ("(synthesized task written against this twin; there is no production conversation)\n"
+               f"family: {sy.get('family')}; author's findings: {json.dumps(sy.get('findings'), ensure_ascii=False)}\n"
+               "reference queries and results (re-run at build time):\n" +
+               "\n".join(f"- {q.get('purpose')}\n  SQL: {q.get('sql')}\n  -> {r}" for q, r in
+                         zip(sy.get("reference_queries") or [], sy.get("reference_results") or [])))
+    else:
+        ref = "\n".join(SC.render_trace(rec, len(task["turns"]) + task.get("turn_offset", 0), 800, 2000)) if rec else "(none)"
     twin = "\n".join(str(x) for x in SC.twin_state(task) + SC.event_props(task))
     prompt = PROMPT.format(mode=task.get("agent_mode") or "product_analytics", turns=turns,
                            notes=json.dumps(task.get("grading_notes"), ensure_ascii=False, indent=1)[:6000],

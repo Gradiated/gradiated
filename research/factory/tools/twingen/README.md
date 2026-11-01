@@ -199,6 +199,14 @@ AI summaries despite the paid-feature description. Summaries now require an acti
 the backend generation event; a regression test checks this chronology. The rejected dataset/audit are preserved
 on the host. The rebuilt candidate must pass a fresh audit before task authoring or model comparison.
 
+The paid-entitlement revision passed its first live twin audit as CLEAN after 35 executed queries. This admits
+task authoring, not the resulting tasks. A second calibration seed covers the complementary analytical families.
+The working calibration target is at least 12 analytical families and a frontier advantage around 20 percentage
+points in paired task pass rates, while preserving the independent 14/15 task-quality bar. These are targets,
+not achieved results; incomplete or infrastructure-failed rollouts cannot inflate the gap. Reserve unseen seeded
+worlds before scoring a final evaluation, and report that they share a synthetic product archetype rather than
+claiming generalization to independent real customers.
+
 ### Rebuild from new traces (one command)
 
 ```bash

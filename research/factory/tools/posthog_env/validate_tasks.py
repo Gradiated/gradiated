@@ -182,6 +182,8 @@ def validate_one(task: dict, rec: dict | None, model: str, out_dir: str, extra: 
         sy = task["synth"]
         ref = ("(synthesized task written against this twin; there is no production conversation)\n"
                f"family: {sy.get('family')}; author's findings: {json.dumps(sy.get('findings'), ensure_ascii=False)}\n"
+               + (f"planted ground truth (the twin was regenerated with it): {json.dumps(sy['planted'])}\n"
+                  if sy.get("planted") else "") +
                "reference queries and results (re-run at build time):\n" +
                "\n".join(f"- {q.get('purpose')}\n  SQL: {q.get('sql')}\n  -> {r}" for q, r in
                          zip(sy.get("reference_queries") or [], sy.get("reference_results") or [])))

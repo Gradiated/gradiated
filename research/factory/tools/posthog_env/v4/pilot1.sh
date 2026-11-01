@@ -4,7 +4,7 @@ O=/opt/posthog-sft/env-research/v4/pilot1
 L=/opt/posthog-sft/env-research/twins_loop/batches
 T=/opt/posthog-sft/env-research/twins_reanon/traces/train.jsonl
 mkdir -p $O
-until [ "$(wc -l < /opt/posthog-sft/env-research/intent/intents.jsonl)" -ge 3600 ]; do sleep 60; done
+until [ "$(wc -l < /opt/posthog-sft/env-research/intent/intents.jsonl)" -ge 600 ]; do sleep 60; done
 cd /opt/posthog-env/runner
 BASES=$(ls $L/b1[6-9]/validated/validated.jsonl $L/b2[0-2]/validated/validated.jsonl | tr "\n" "," | sed "s/,$//")
 LINTS=$(ls $L/b1[6-9]/lint.jsonl $L/b2[0-2]/lint.jsonl | tr "\n" "," | sed "s/,$//")

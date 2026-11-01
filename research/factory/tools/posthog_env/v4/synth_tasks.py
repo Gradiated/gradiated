@@ -135,8 +135,18 @@ def exemplars(family: str, rng, n: int = 3) -> list[str]:
     return out
 
 
-def author(base: dict, family: str, difficulty: int, rng, model: str, out_dir: str) -> dict:
-    key = hashlib.sha256(f"{base['twin_id']}:{family}:{difficulty}".encode()).hexdigest()[:12]
+PLANTED_HINT = """
+
+## A planted change you must build the task around (ground truth; verify it with queries first)
+Event `{event}` for the segment {where} was multiplied by {factor} from {fr} to {to} ({state}); every other segment is
+unchanged. Write an investigation task whose correct answer discovers this: the user describes only the visible
+symptom (e.g. that `{event}` volume or a conversion that depends on it changed, roughly since when), never the
+segment or the cause. must_include: the change and its timing, the segment responsible (and that other segments are
+stable), its size relative to the baseline; acceptable_variations: equivalent segment descriptions."""
+
+
+def author(base: dict, family: str, difficulty: int, rng, model: str, out_dir: str, planted: dict | None = None) -> dict:
+    key = hashlib.sha256(f"{base['twin_id']}:{family}:{difficulty}:{bool(planted)}".encode()).hexdigest()[:12]
     path = f"{out_dir}/raw/{key}.json"
     if os.path.exists(path):
         return json.load(open(path))
@@ -145,6 +155,10 @@ def author(base: dict, family: str, difficulty: int, rng, model: str, out_dir: s
     prompt = AUTHOR.format(family=family, family_desc=FAMILY_DESC[family], difficulty=difficulty,
                            exemplars="\n".join(f"- {SC.clip(e, 500)}" for e in ex), now=base.get("loaded_now_utc"),
                            twin=SC.clip(twin, 24000), objects=SC.clip(SC.team_objects(base["team_id"]), 4000))
+    if planted:
+        prompt += PLANTED_HINT.format(event=planted["event"], where=json.dumps(planted["where"]), factor=planted["factor"],
+                                      fr=planted["from"], to=planted["to"],
+                                      state="still ongoing at the data end" if planted.get("ongoing") else "then back to normal")
     rec = {"key": key, "twin_id": base["twin_id"], "family": family, "difficulty_target": difficulty,
            "queries_run": [], "model": model}
     convo, rounds = prompt, 0
@@ -190,6 +204,8 @@ def main() -> None:
     ap.add_argument("--model", default="claude-opus-5-5")
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--seed", type=int, default=7)
+    ap.add_argument("--planted", default="", help="planted.jsonl: planted twins get one investigation task built on it")
+    ap.add_argument("--only-planted", action="store_true", help="use only the planted twins")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     rng = random.Random(a.seed)
@@ -212,7 +228,9 @@ def main() -> None:
                 continue
             bases.setdefault(t["twin_id"], {**t, "team_id": r["team_id"], "project_id": r.get("project_id") or r["team_id"],
                                             "loaded_now_utc": r.get("loaded_now_utc"), "shift_days": r.get("shift_days")})
-    twins = rng.sample(sorted(bases), min(a.twins, len(bases)))
+    planted = {json.loads(x)["twin_id"]: json.loads(x) for x in open(a.planted)} if a.planted else {}
+    pool = sorted(t for t in bases if t in planted) if a.only_planted else sorted(bases)
+    twins = rng.sample(pool, min(a.twins, len(pool)))
     fw = family_weights()
     fams, ws = list(fw), [fw[f] for f in fw]
     jobs = []
@@ -222,13 +240,17 @@ def main() -> None:
             f = rng.choices(fams, ws)[0]
             if f not in picked or len(set(fams)) < a.per_twin:
                 picked.append(f)
+        if tw in planted:
+            picked = ["anomaly_investigation"] + [f for f in picked if f != "anomaly_investigation"][:a.per_twin - 1]
         for f in picked:
-            jobs.append((bases[tw], f, rng.choice([3, 3, 4, 4, 5]) if f != "product_howto" else 2))
+            jobs.append((bases[tw], f, rng.choice([3, 3, 4, 4, 5]) if f != "product_howto" else 2,
+                         planted.get(tw) if f == "anomaly_investigation" else None))
     print(json.dumps({"twins": len(twins), "jobs": len(jobs), "families": C.Counter(j[1] for j in jobs)}), flush=True)
 
     def run(job):
-        base, fam, diff = job
-        rec = author(base, fam, diff, random.Random(f"{a.seed}:{base['twin_id']}:{fam}"), a.model, a.out)
+        base, fam, diff, pl = job
+        rec = author(base, fam, diff, random.Random(f"{a.seed}:{base['twin_id']}:{fam}"), a.model, a.out, planted=pl)
+        rec["planted"] = pl
         if rec.get("skip") or not rec.get("turns"):
             return None, rec
         ok, res = verify(rec, int(base["team_id"]))
@@ -245,7 +267,7 @@ def main() -> None:
                              "reason": "synthesized v4", "twin_defects": []},
                 "synth": {"family": fam, "difficulty": rec.get("difficulty"), "why_hard": rec.get("why_hard"),
                           "findings": rec.get("findings"), "reference_queries": rec.get("reference_queries"),
-                          "reference_results": [r["result"] for r in res]}}
+                          "reference_results": [r["result"] for r in res], "planted": rec.get("planted")}}
         return task, rec
 
     stats = C.Counter()

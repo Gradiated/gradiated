@@ -75,6 +75,8 @@ def audit(base: dict, model: str, out: str) -> dict:
     twin = "\n".join(str(x) for x in SC.twin_state(base) + SC.event_props(base))
     prompt = PROMPT.format(now=base.get("loaded_now_utc"), twin=SC.clip(twin, 24000),
                            objects=SC.clip(SC.team_objects(base["team_id"]), 3000))
+    if base.get("scenario_context"):
+        prompt += "\n\n## Product context\n" + SC.clip(base["scenario_context"], 6000)
     rec = {"twin_id": base["twin_id"], "team_id": base["team_id"], "queries_run": [], "model": model,
            "snapshot": AC.snapshot(base), "cache_key": AC.cache_key(base, model)}
     convo, rounds = prompt, 0

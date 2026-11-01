@@ -170,6 +170,8 @@ def author(base: dict, family: str, difficulty: int, rng, model: str, out_dir: s
     prompt = AUTHOR.format(family=family, family_desc=FAMILY_DESC[family], difficulty=difficulty,
                            exemplars="\n".join(f"- {SC.clip(e, 500)}" for e in ex), now=base.get("loaded_now_utc"),
                            twin=SC.clip(twin, 24000), objects=SC.clip(SC.team_objects(base["team_id"]), 4000))
+    if base.get("scenario_context"):
+        prompt += "\n\n## Product context\n" + SC.clip(base["scenario_context"], 6000)
     if base.get("_avoid"):
         prompt += ("\n\n## Known minor data defects in this project (do not build the task on these areas)\n" +
                    "\n".join(f"- {x}" for x in base["_avoid"][:12]))
@@ -218,12 +220,27 @@ def verify(rec: dict, team: int) -> tuple[bool, list]:
     return ok, res
 
 
+def choose_families(base: dict, weights: dict, count: int, rng, requested: set[str]) -> list[str]:
+    allowed = set(base.get("supported_families", FAMILY_DESC))
+    remaining = [f for f in weights if f in allowed and (not requested or f in requested) and weights[f] > 0]
+    picked = []
+    while remaining and len(picked) < count:
+        family = rng.choices(remaining, [weights[f] for f in remaining])[0]
+        picked.append(family)
+        remaining.remove(family)
+    return picked
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", required=True, help="validated.jsonl files of built batches (twins + team ids)")
     ap.add_argument("--twins", type=int, default=10)
     ap.add_argument("--per-twin", type=int, default=5)
     ap.add_argument("--min-events", type=int, default=20000)
+    ap.add_argument("--registry", default="/opt/posthog-env/loader/teams_v2_loop.jsonl")
+    ap.add_argument("--families", default="", help="optional comma-separated calibration families")
+    ap.add_argument("--difficulty", type=int, choices=(3, 4, 5), default=4,
+                    help="authoring target only; benchmark results determine actual difficulty")
     ap.add_argument("--exclude-lint", default="", help="lint.jsonl files: skip twins with material findings")
     ap.add_argument("--model", default="claude-opus-5-5")
     ap.add_argument("--workers", type=int, default=6)
@@ -241,7 +258,7 @@ def main() -> None:
             if any(x.get("severity") == "material" for x in r.get("findings") or []):
                 bad.add(r["project"][:36])
     reg = {}
-    for line in open("/opt/posthog-env/loader/teams_v2_loop.jsonl"):
+    for line in open(a.registry):
         r = json.loads(line)
         if not r.get("removed") and r.get("twin_id"):
             reg[r["twin_id"]] = r
@@ -265,18 +282,16 @@ def main() -> None:
     pool = sorted(t for t in bases if t in planted) if a.only_planted else sorted(bases)
     twins = rng.sample(pool, min(a.twins, len(pool)))
     fw = family_weights()
-    fams, ws = list(fw), [fw[f] for f in fw]
+    requested = set(filter(None, a.families.split(",")))
+    if requested - FAMILY_DESC.keys():
+        raise SystemExit("Unknown task families: " + ",".join(sorted(requested - FAMILY_DESC.keys())))
     jobs = []
     for tw in twins:
-        picked = []
-        while len(picked) < a.per_twin:
-            f = rng.choices(fams, ws)[0]
-            if f not in picked or len(set(fams)) < a.per_twin:
-                picked.append(f)
+        picked = choose_families(bases[tw], fw, a.per_twin, rng, requested)
         if tw in planted:
             picked = ["anomaly_investigation"] + [f for f in picked if f != "anomaly_investigation"][:a.per_twin - 1]
         for f in picked:
-            jobs.append((bases[tw], f, rng.choice([3, 3, 4, 4, 5]) if f != "product_howto" else 2,
+            jobs.append((bases[tw], f, a.difficulty if f != "product_howto" else 2,
                          planted.get(tw) if f == "anomaly_investigation" else None))
     print(json.dumps({"twins": len(twins), "jobs": len(jobs), "families": C.Counter(j[1] for j in jobs)}), flush=True)
 

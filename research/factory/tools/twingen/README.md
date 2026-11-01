@@ -168,6 +168,28 @@ Synthetic contract and recovery tests need no model or database:
 python3 -m unittest discover -s research/factory/tools/posthog_env/v4 -p 'test_*.py' -v
 ```
 
+`v4/scenario_project.py` is a separate, wholly synthetic candidate environment for cases where inherited twins
+cannot pass a data audit. It generates complete journeys for a fictional individual reporting product: stable
+identified people/devices, short multi-page sessions, signup/onboarding, report creation/export, backend billing,
+AI requests with consistent token/cost arithmetic, and joinable account/invoice tables. A named browser/OS segment
+gets an export regression; the segment rotates across seeds. Ground truth is written separately from agent inputs.
+The fixture is not accepted merely because these invariants pass: load it into a separate tagged registry, audit
+it with real queries, then validate authored tasks independently. Session-video, error-log and survey-analysis
+families are not declared supported by this fixture.
+
+```bash
+# twingen venv, on fbf8; --out is the projects directory of a separate TWIN_V2_ROOT
+python3 scenario_project.py --out /path/to/scenario_hill/twingen/projects_v2 --seed 41 \
+  --people 700 --days 90 --now 2026-11-01T00:00:00+00:00 --split train
+```
+
+Use distinct seeds for train/calibration/holdout worlds and freeze holdout inputs before model scoring. The
+`supported_families` metadata restricts author jobs; an empty capability list admits none. `synth_tasks.py` accepts
+`--registry` for isolated builds and `--families` for a calibration subset, samples families without replacement,
+and defaults to authoring target difficulty 4. These targets remain labels until matched model rollouts measure
+them. The pilot's first world loaded 49,177 events and 700 people with both warehouse tables and its feature flag;
+its independent query audit is still pending, so it is not yet a verified source of high-quality tasks.
+
 ### Rebuild from new traces (one command)
 
 ```bash

@@ -156,6 +156,21 @@ class ScenarioProject(unittest.TestCase):
             self.assertGreater(len({t.second for t in times}), 20)
             self.assertLess(sum(t.minute == 0 for t in times), len(times) / 4)
 
+    def test_onboarding_has_report_adoption_delay_and_dropoff(self):
+        onboard, first_report = {}, {}
+        for r in self.data["events"]:
+            if r["event"] == "onboarding_completed":
+                onboard.setdefault(r["person_id"], r["timestamp"])
+            if r["event"] == "report_created":
+                first_report.setdefault(r["person_id"], r["timestamp"])
+        mature = {p: t for p, t in onboard.items() if t < self.now - dt.timedelta(days=14)}
+        delays = [(first_report[p] - t).total_seconds() for p, t in mature.items() if p in first_report]
+        converted = sum(delay <= 7 * 86400 for delay in delays)
+        self.assertGreater(converted, 0)
+        self.assertLess(converted, len(mature))
+        self.assertTrue(any(delay > 86400 for delay in delays))
+        self.assertTrue(set(mature) - set(first_report))
+
 
 if __name__ == "__main__":
     unittest.main()

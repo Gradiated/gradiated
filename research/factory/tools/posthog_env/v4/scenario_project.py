@@ -32,6 +32,20 @@ DOMAINS = ("cedarworks.io", "mapleforge.co", "brightlane.io", "riverstone.design
 SUPPORTED = ("metric_lookup", "trend_breakdown", "funnel_conversion", "retention_engagement", "anomaly_investigation",
              "attribution_marketing", "entity_lookup", "sql_help", "build_insight_dashboard", "flags_experiments",
              "llm_analytics", "warehouse", "product_howto", "tracking_quality")
+TASK_FOCUS = {
+    "anomaly_investigation": "Investigate the export reliability change: onset, affected segment, mix versus within-segment deterioration, and causal limits.",
+    "trend_breakdown": "Analyze historical subscription receipts, then forecast the next 30 days of renewal cash flow at the data cutoff under EXPLICIT no-churn, no-new-sales and unchanged-price assumptions. Verify invoice cadence from history; distinguish a conditional forecast from observed revenue. Do not investigate the export regression.",
+    "sql_help": "Repair a user's SQL that incorrectly averages subgroup or daily p95 latencies. Ask for the exact all-generation percentile, a defensible tail-latency threshold or exceedance count, and explain why subgroup percentile averages cannot recover the global percentile. Use raw AI latency distributions, not export regression or cost-switch analysis.",
+    "attribution_marketing": "Compare acquisition sources using mature person-level signup, paid-conversion and downstream engagement cohorts with explicit observation windows; distinguish volume from quality and unknown acquisition costs.",
+    "funnel_conversion": "Analyze ordered signup, onboarding, first report and first successful export within a fixed mature-cohort window. Quantify actual losses and delayed adoption by experience/device, rather than terminal export failure rates.",
+    "retention_engagement": "Compare mature cohort retention across onboarding or acquisition groups using precise active-event and elapsed-day definitions; distinguish selection/association from causal benefit.",
+    "flags_experiments": "Assess onboarding flag exposure and configuration plus mature conversion outcomes. The USER must explicitly request the assignment-consistency checks, risk differences and approximate 95% uncertainty intervals that the rubric requires. Scope assignment QA to the same eligible cohort unless a full-period audit is explicitly requested. Do not silently require an experiment object or a rollout recommendation unsupported by uncertainty.",
+    "warehouse": "Join accounts, invoices and export outcomes to quantify paying-account reliability and revenue exposure, protecting against invoice/event fanout. Explicitly define current-plan versus event-time classification. Exposure is not demonstrated lost revenue.",
+    "llm_analytics": "Compare model/report-type AI spend and construct a precisely defined fixed-token or report-mix cost counterfactual. Reconcile input/output costs and weighted means; quality equivalence cannot be inferred from cost. Do not make global percentile reconstruction the central request.",
+    "entity_lookup": "Resolve a named analyst, reconstruct their journey and report-level recovery, and compare with an explicitly scoped peer population excluding that analyst. Require exact event dates only if the user explicitly requests a dated timeline.",
+    "tracking_quality": "Audit report-export instrumentation: attempt/outcome matching, identifier coverage, duplicates, time/duration consistency and whether failure-rate denominators are trustworthy. A clean check is a valid finding; do not invent missing data or errors.",
+    "build_insight_dashboard": "Create a persisted dashboard with saved insights for a clear product decision, verifying actual object creation and query semantics. Object construction must be central, not an optional link after a regression answer.",
+}
 CONTEXT = ("Harbor Reports is a fictional self-service reporting product for individual analysts. Each person owns "
            "one billing account; accounts are not shared teams. Free users can create and export reports; Studio "
            "subscriptions cost USD 29 per month and include AI summaries. Registered users joined within "
@@ -83,6 +97,10 @@ def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split:
         created = arrival((start + dt.timedelta(days=rng.randrange(days))).date())
         activation_rate = {"google": .62, "newsletter": .76, "referral": .84, "direct": .67}[source]
         activated = rng.random() < activation_rate + (.09 if variant == "guided" else 0)
+        report_wait = rng.choices((0, 1, None), (55, 30, 15))[0]
+        if report_wait == 1:
+            report_wait = rng.randint(1, 14)
+        report_ready_at = created + dt.timedelta(days=report_wait) if report_wait is not None else None
         paid_at = created + dt.timedelta(days=rng.randint(2, 9)) if activated and rng.random() < .27 else None
         if paid_at and paid_at >= now:
             paid_at = None
@@ -162,6 +180,11 @@ def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split:
                     day += dt.timedelta(days=1)
                     continue
             page("/reports")
+            # Completing onboarding does not guarantee immediate product adoption. Some people defer their
+            # first report or never create one; subsequent visits can also end after browsing the dashboard.
+            if report_ready_at is None or t < report_ready_at or rng.random() < .22:
+                day += dt.timedelta(days=1)
+                continue
             report_id = identifier(seed, "report", i, day)
             page("/reports/new")
             action("report_create_started", {"report_id": report_id})
@@ -259,7 +282,7 @@ def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split:
                          "now_utc": now.isoformat(), "timezone": "UTC", "platform": "web", "seed": seed,
                          "registered_people": people, "anonymous_people": len(persons) - people,
                          "history_days": days, "counts": {"events": len(events), "persons": len(persons)},
-                         "scenario_context": CONTEXT, "supported_families": SUPPORTED},
+                         "scenario_context": CONTEXT, "supported_families": SUPPORTED, "family_focus": TASK_FOCUS},
             "ground_truth": {"kind": "synthetic", "export_regression": {"from": anomaly_start.isoformat(),
                              "segment": {"$browser": affected["$browser"], "$os": affected["$os"]}, "baseline_failure_probability": .035,
                              "changed_failure_probability": .56}, "onboarding": {"guided_probability_uplift": .09}}}

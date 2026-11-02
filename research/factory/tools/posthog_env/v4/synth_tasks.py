@@ -164,7 +164,8 @@ stable), its size relative to the baseline; acceptable_variations: equivalent se
 
 def author(base: dict, family: str, difficulty: int, rng, model: str, out_dir: str, planted: dict | None = None) -> dict:
     identity = {"audit": AC.cache_key(base, model), "family": family, "difficulty": difficulty,
-                "planted": planted, "avoid": base.get("_avoid"), "version": 5}
+                "planted": planted, "avoid": base.get("_avoid"),
+                "focus": (base.get("family_focus") or {}).get(family), "version": 6}
     key = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()[:12]
     path = f"{out_dir}/raw/{key}.json"
     if os.path.exists(path):
@@ -182,6 +183,12 @@ def author(base: dict, family: str, difficulty: int, rng, model: str, out_dir: s
                            twin=SC.clip(twin, 24000), objects=SC.clip(SC.team_objects(base["team_id"]), 4000))
     if base.get("scenario_context"):
         prompt += "\n\n## Product context\n" + SC.clip(base["scenario_context"], 6000)
+    if (focus := (base.get("family_focus") or {}).get(family)):
+        prompt += ("\n\n## Analytical scope for this family\n" + SC.clip(focus, 4000) +
+                   "\nVerify the premise and all answers independently. This is a scope, not a finding. "
+                   "Do not fall back to the same export-regression investigation used by another family. "
+                   "The user request must explicitly ask for every mandatory grading point; optional audit checks "
+                   "belong in not_required. Skip if this scope cannot be grounded in the available data.")
     if base.get("_avoid"):
         prompt += ("\n\n## Known minor data defects in this project (do not build the task on these areas)\n" +
                    "\n".join(f"- {x}" for x in base["_avoid"][:12]))

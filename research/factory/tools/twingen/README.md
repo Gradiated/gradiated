@@ -184,6 +184,16 @@ The fixture is not accepted merely because these invariants pass: load it into a
 it with real queries, then validate authored tasks independently. Session-video, error-log and survey-analysis
 families are not declared supported by this fixture.
 
+Onboarding completion is separate from report adoption: users may create a report immediately, defer for days,
+never create one, or end later visits after browsing. Tests require observed delay and drop-off in mature cohorts.
+This replaces a lossless, narrowly timed onboarding-to-report transition caught by task validation.
+The manifest's `family_focus` scopes guide distinct analytical work: renewal cash-flow forecasting, global-quantile
+SQL repair, exposure uncertainty, acquisition, retention, funnels, billing exposure and other product workflows.
+Pass this mapping into author base records. It is part of author cache identity; scopes are questions to verify,
+not supplied findings. Review semantic breadth across the batch: distinct family labels and reseeded counts alone
+do not establish distinct workflows. Exact assignment audits, timelines and invoice counts cannot be mandatory
+unless the user explicitly asks for them.
+
 ```bash
 # twingen venv, on fbf8; --out is the projects directory of a separate TWIN_V2_ROOT
 python3 scenario_project.py --out /path/to/scenario_hill/twingen/projects_v2 --seed 41 \

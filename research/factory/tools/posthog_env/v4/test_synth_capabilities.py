@@ -51,6 +51,22 @@ class FamilyCapabilities(unittest.TestCase):
         self.assertEqual(rec["queries_run"][0]["result"], "[[12]]")
         self.assertEqual(proxy.judge_complete.call_count, 2)
 
+    def test_changed_analytical_scope_cannot_reuse_prior_authored_task(self):
+        q = {"queries": [{"why": "verify", "sql": "SELECT count() FROM events WHERE team_id={team}"}]}
+        task = {"turns": ["Compare the reporting cohorts."], "grading_notes": {"must_include": ["findings"]}}
+        self.module.llm_proxy.judge_complete = Mock(side_effect=[(json.dumps(q), {}), (json.dumps(task), {})] * 2)
+        self.module.CT.run_queries = Mock(return_value=[{"why": "verify", "sql": "scoped", "result": "[[12]]"}])
+        self.module.SC.twin_state = self.module.SC.event_props = lambda _: []
+        self.module.SC.team_objects = lambda _: "none"
+        self.module.SC.clip = lambda value, _: value
+        base = {"twin_id": "synthetic", "team_id": 7, "family_focus": {"warehouse": "invoice exposure"}}
+        with tempfile.TemporaryDirectory() as out, patch.object(self.module, "exemplars", return_value=[]):
+            first = self.module.author(base, "warehouse", 4, random.Random(1), "author", out)
+            second = self.module.author({**base, "family_focus": {"warehouse": "renewal forecast"}},
+                                        "warehouse", 4, random.Random(1), "author", out)
+        self.assertNotEqual(first["key"], second["key"])
+        self.assertEqual(self.module.llm_proxy.judge_complete.call_count, 4)
+
 
 if __name__ == "__main__":
     unittest.main()

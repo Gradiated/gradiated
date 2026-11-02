@@ -104,6 +104,10 @@ judgment call). Real users of this family asked things like (style only; do not 
      obvious query (give tolerances); acceptable_variations = other reasonable readings and their (non-empty) results;
      not_required = things a good answer may skip. Required points answer what the user asked; no unverified product
      facts.
+   - Before finalizing, derive the shortest fully correct answer to each user turn. Every must_include point must
+     be necessary for that answer or explicitly requested. Move optional investigative detail to not_required.
+     For example, a period-level user journey summary does not require enumerating each event's exact date unless
+     the user asks for a dated timeline. Do not grade query choice, extra breakdowns or verbosity as correctness.
    - For changing attributes such as subscription plan, distinguish event-time values from the current account
      snapshot. If that choice changes the answer, state the business definition explicitly in the user request
      or verify and accept both interpretations. Never hide a current-snapshot requirement only in the rubric.
@@ -160,7 +164,7 @@ stable), its size relative to the baseline; acceptable_variations: equivalent se
 
 def author(base: dict, family: str, difficulty: int, rng, model: str, out_dir: str, planted: dict | None = None) -> dict:
     identity = {"audit": AC.cache_key(base, model), "family": family, "difficulty": difficulty,
-                "planted": planted, "avoid": base.get("_avoid"), "version": 4}
+                "planted": planted, "avoid": base.get("_avoid"), "version": 5}
     key = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()[:12]
     path = f"{out_dir}/raw/{key}.json"
     if os.path.exists(path):

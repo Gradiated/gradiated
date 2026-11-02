@@ -143,6 +143,19 @@ class ScenarioProject(unittest.TestCase):
                 elapsed = (r["timestamp"] - requests[p["$ai_trace_id"]]).total_seconds()
                 self.assertAlmostEqual(elapsed, p["$ai_latency"], places=6)
 
+    def test_session_arrivals_are_not_synchronized_to_clock_boundaries(self):
+        entries = {}
+        for r in self.data["events"]:
+            if r["$session_id"] and r["event"] == "$pageview":
+                entries.setdefault(r["$session_id"], r)
+        for path in ("/", "/reports"):
+            times = [r["timestamp"] for r in entries.values()
+                     if json.loads(r["properties"])["$pathname"] == path]
+            self.assertGreater(len(times), 30)
+            self.assertGreater(len({t.minute for t in times}), 20)
+            self.assertGreater(len({t.second for t in times}), 20)
+            self.assertLess(sum(t.minute == 0 for t in times), len(times) / 4)
+
 
 if __name__ == "__main__":
     unittest.main()

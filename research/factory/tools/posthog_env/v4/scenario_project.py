@@ -59,6 +59,10 @@ def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split:
     anomaly_start = now - dt.timedelta(days=14)
     affected = PROFILES[(seed + 2) % len(PROFILES)]
 
+    def arrival(day):
+        # Sample the full intraday interval: rounding to hours/minutes creates artificial traffic spikes.
+        return dt.datetime.combine(day, dt.time(), UTC) + dt.timedelta(seconds=rng.randrange(7 * 3600, 19 * 3600))
+
     def emit(event, time, person, props, sid=None):
         p = dict(props)
         if sid:
@@ -76,7 +80,7 @@ def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split:
         country, country_name, city = rng.choice(COUNTRIES)
         profile = dict(rng.choices(PROFILES, [55, 30, 15])[0])
         variant = "guided" if int(uuid.UUID(pid)) % 2 else "control"
-        created = start + dt.timedelta(days=rng.randrange(days), hours=rng.randrange(7, 16))
+        created = arrival((start + dt.timedelta(days=rng.randrange(days))).date())
         activation_rate = {"google": .62, "newsletter": .76, "referral": .84, "direct": .67}[source]
         activated = rng.random() < activation_rate + (.09 if variant == "guided" else 0)
         paid_at = created + dt.timedelta(days=rng.randint(2, 9)) if activated and rng.random() < .27 else None
@@ -115,7 +119,7 @@ def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split:
             if age and rng.random() > activity:
                 day += dt.timedelta(days=1)
                 continue
-            t = created if age == 0 else dt.datetime.combine(day, dt.time(rng.randrange(7, 19), rng.randrange(60)), UTC)
+            t = created if age == 0 else arrival(day)
             sid = identifier(seed, "session", i, day)
             plan = "studio" if paid_at and t >= paid_at else "free"
             session = {**context, "plan": plan, "utm_source": source, "utm_medium": medium,
@@ -194,7 +198,7 @@ def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split:
             day += dt.timedelta(days=1)
     for i in range(round(people * anonymous_ratio)):
         pid = identifier(seed, "visitor", i)
-        created = start + dt.timedelta(days=rng.randrange(days), hours=rng.randrange(7, 18))
+        created = arrival((start + dt.timedelta(days=rng.randrange(days))).date())
         source = rng.choices(["google", "newsletter", "referral", "direct"], [35, 20, 20, 25])[0]
         country, country_name, city = rng.choice(COUNTRIES)
         pp = {"acquisition_source": source, "country": country, "visitor_type": "anonymous"}
@@ -210,7 +214,7 @@ def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split:
         offsets = sorted({0, *(rng.randrange(min(15, (now - created).days + 1)) for _ in range(rng.randrange(3)))})
         attempted = False
         for offset in offsets:
-            t = created + dt.timedelta(days=offset)
+            t = created if offset == 0 else arrival(created.date() + dt.timedelta(days=offset))
             sid = identifier(seed, "visitor-session", i, offset)
             paths = ["/"]
             if rng.random() < .45:

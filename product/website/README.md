@@ -119,7 +119,9 @@ files directly. `vercel.json` redirects old docs routes to their current routes.
 - `src/docs/` contains the public MDX documentation.
 - `content/articles/*.mdx` is the source of truth for articles and their metadata.
 - `src/articles.ts` discovers articles and filters drafts by build mode.
-- `src/pages/ReadingPages.tsx` renders articles and Handbook in the shared site shell, including the guide’s journey layout.
+- `src/pages/ReadingPages.tsx` renders articles in the shared site shell,
+  including the guide's journey layout.
+- `src/pages/HandbookPage.tsx` renders the Handbook index and individual pages.
 - `src/content.tsx` contains legacy shared content, including the Thesis body.
 - `public/` contains files served without transformation.
 - `public/.well-known/security.txt` is the RFC 9116 security contact. The build

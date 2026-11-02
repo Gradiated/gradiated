@@ -26,8 +26,10 @@ curation metadata; dropped tasks keep exclude="curation: <reason>"). Twin overri
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
+from pathlib import Path
 import re
 import sys
 from collections import Counter
@@ -275,10 +277,17 @@ Your previous version: {prev}
 Validator findings: {findings}"""
 
 
+def curation_complete(record: dict) -> bool:
+    if record.get("error") or record.get("decision") not in ("keep", "edit", "drop"):
+        return False
+    if record["decision"] == "drop":
+        return True
+    turns = record.get("turns")
+    return isinstance(turns, list) and bool(turns) and all(isinstance(t, str) and t.strip() for t in turns)
+
+
 def curate_one(task: dict, rec: dict | None, model: str, out_dir: str, feedback: dict | None = None) -> dict:
     path = f"{out_dir}/{task['task_id']}.json"
-    if os.path.exists(path):
-        return json.load(open(path))
     turns = "\n".join(f"[turn {i}] {clip_turn(t)}" for i, t in enumerate(task["turns"]))
     notes = json.dumps({k: v for k, v in (task.get("quality") or {}).items()}, ensure_ascii=False)
     ref = "\n".join(SC.render_trace(rec, len(task["turns"]) + task.get("turn_offset", 0), 1200, 3000)) if rec else "(none)"
@@ -291,7 +300,18 @@ def curate_one(task: dict, rec: dict | None, model: str, out_dir: str, feedback:
     if feedback:
         prompt += FEEDBACK.format(prev=json.dumps(feedback.get("prev"), ensure_ascii=False)[:8000],
                                   findings=json.dumps(feedback.get("findings"), ensure_ascii=False)[:6000])
-    rec_out = {"task_id": task["task_id"], "model": model, "queries_run": [], "revision": bool(feedback)}
+    # Include both complete inputs and the rendered live context. Same-ID rebuilds or model/feedback changes
+    # must not reuse edits, grading notes or overrides from a different task/world.
+    identity = {"version": 1, "task": task, "reference": rec, "model": model, "feedback": feedback, "prompt": prompt}
+    key = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
+    if os.path.exists(path):
+        try:
+            cached = json.loads(Path(path).read_text())
+            if cached.get("input_key") == key and curation_complete(cached):
+                return cached
+        except (OSError, ValueError, AttributeError):
+            pass
+    rec_out = {"task_id": task["task_id"], "model": model, "queries_run": [], "revision": bool(feedback), "input_key": key}
     convo = prompt
     rounds = 0
     for _ in range(5):
@@ -317,12 +337,14 @@ def curate_one(task: dict, rec: dict | None, model: str, out_dir: str, feedback:
                               "Return the final JSON again with the turns exactly as the task should be.")
                     d = None
                     continue
-            rec_out.update(d)
+            rec_out.update({k: v for k, v in d.items()
+                            if k not in ("task_id", "model", "queries_run", "revision", "input_key")})
             rec_out.pop("error", None)
             break
         except Exception as ex:  # noqa: BLE001
             rec_out["error"] = f"{type(ex).__name__}: {str(ex)[:200]}"
-    json.dump(rec_out, open(path, "w"), ensure_ascii=False, indent=1)
+    Path(path + ".tmp").write_text(json.dumps(rec_out, ensure_ascii=False, indent=1))
+    os.replace(path + ".tmp", path)
     return rec_out
 
 

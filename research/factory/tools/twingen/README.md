@@ -211,6 +211,11 @@ held-out traces. Validator lint context and cache identity use the backing twin 
 a clustered project cannot silently lose its material findings. These intake fixes do not change an already
 frozen evaluation or its deployed runtime.
 
+Curator caches are reusable only for complete results matching the full task, source reference, model, repair
+feedback and rendered live twin/object context. Changed inputs, corrupt records and prior provider errors retry;
+cache publication is atomic. Model responses cannot replace the harness task/model identity or executed-query
+evidence. This prevents same-name rebuilds from applying another task version's edits, grading notes or overrides.
+
 ```bash
 # twingen venv, on fbf8; --out is the projects directory of a separate TWIN_V2_ROOT
 python3 scenario_project.py --out /path/to/scenario_hill/twingen/projects_v2 --seed 41 \

@@ -5819,7 +5819,7 @@
    before the documentation starts. The account block stays — it is not a
    duplicate of anything below it. */
 @media (max-width: 60rem) {
-  .gr-doc-nav {
+  .gr-doc-side .gr-doc-nav {
     display: none;
   }
 }

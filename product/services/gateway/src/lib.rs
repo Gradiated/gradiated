@@ -5,6 +5,7 @@ mod cache;
 mod catalog;
 mod completion;
 mod config;
+mod content_affinity;
 mod coordinator;
 mod deployment;
 mod diagnostics;
@@ -24,6 +25,8 @@ pub mod routing;
 pub mod runtime;
 mod service_tier;
 mod serving_state;
+mod session_affinity;
+mod session_telemetry;
 mod systemone;
 #[cfg(test)]
 mod test_support;

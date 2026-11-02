@@ -1,4 +1,5 @@
 const { Marked } = require("marked");
+const { createCitations } = require("./article-citations.cjs");
 const HTML_ENTITIES = {
   "&": "&amp;",
   "<": "&lt;",
@@ -9,10 +10,11 @@ const HTML_ENTITIES = {
 const escapeHtml = (value) =>
   String(value).replace(/[&<>"']/g, (character) => HTML_ENTITIES[character]);
 
-function createMarkdown() {
+function createMarkdown(sources) {
+  const citations = createCitations(sources);
   const definitions = new Map();
   const references = new Map();
-  const markdown = new Marked({ gfm: true });
+  const markdown = new Marked({ gfm: true }, citations.markedExtension);
 
   markdown.use({
     extensions: [
@@ -86,7 +88,7 @@ function createMarkdown() {
     },
   });
 
-  return { markdown, definitions, references };
+  return { markdown, definitions, references, citations };
 }
 
 function parseScript(tokens) {
@@ -232,8 +234,9 @@ function renderFootnotes(markdown, definitions, references, publication) {
   return notes;
 }
 
-function renderPost(source, template, expectedScenes, publication) {
-  const { markdown, definitions, references } = createMarkdown();
+function renderPost(source, template, expectedScenes, publication, sources) {
+  const { markdown, definitions, references, citations } =
+    createMarkdown(sources);
   const tokens = markdown.lexer(source);
   const { title, intro, scenes, footer } = parseScript(tokens);
 
@@ -258,6 +261,7 @@ function renderPost(source, template, expectedScenes, publication) {
     publication ? markdown.lexer(publication.footer) : footer,
   );
   const notes = renderFootnotes(markdown, definitions, references, publication);
+  const bibliography = citations.renderBibliography();
   const article = [
     `<header class="post-header" id="sand-introduction">`,
     titleHTML,
@@ -267,6 +271,7 @@ function renderPost(source, template, expectedScenes, publication) {
     '<footer class="post-footer">',
     footerHTML,
     ...notes,
+    ...(bibliography ? [bibliography] : []),
     "</footer>",
   ].join("\n");
   for (const placeholder of ["{{TITLE}}", "{{ARTICLE}}"]) {

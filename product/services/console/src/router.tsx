@@ -153,6 +153,15 @@ const workspaceSettingsRoute = createRoute({
   ),
 });
 
+const workspacePrivacySettingsRoute = createRoute({
+  getParentRoute: () => settingsRoute,
+  path: "workspace/privacy",
+  component: lazyRouteComponent(
+    () => import("@/pages/settings/workspace-privacy-settings-page"),
+    "WorkspacePrivacySettingsPage",
+  ),
+});
+
 const organizationSettingsRoute = createRoute({
   getParentRoute: () => settingsRoute,
   path: "organization",
@@ -187,6 +196,7 @@ const routeTree = rootRoute.addChildren([
   settingsRoute.addChildren([
     settingsIndexRoute,
     workspaceSettingsRoute,
+    workspacePrivacySettingsRoute,
     organizationSettingsRoute,
     membersSettingsRoute,
   ]),

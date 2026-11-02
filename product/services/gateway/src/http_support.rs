@@ -41,6 +41,14 @@ impl ModelRuntime for UnusedRuntime {
 }
 
 pub(super) fn router_for(ready: bool, serving_state: Arc<TestServingState>) -> Router {
+    router_for_with_verification(ready, serving_state, None)
+}
+
+pub(super) fn router_for_with_verification(
+    ready: bool,
+    serving_state: Arc<TestServingState>,
+    verification_workspace: Option<uuid::Uuid>,
+) -> Router {
     let test_config = GatewayConfig::for_tests();
     let config = Arc::new(test_config.clone());
     let completions = CompletionService::new(
@@ -49,7 +57,8 @@ pub(super) fn router_for(ready: bool, serving_state: Arc<TestServingState>) -> R
         ModelTokenizer::new().unwrap(),
         config,
     );
-    let coordinator = RequestCoordinator::new(serving_state);
+    let coordinator =
+        RequestCoordinator::new(serving_state).with_verification_workspace(verification_workspace);
 
     router(GatewayState::new(
         Arc::new(FixedReadiness(ready)),

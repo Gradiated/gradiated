@@ -8,7 +8,7 @@ export const createGlm53FlashModelConfiguration = () =>
   ({
     id: glm53FlashModelId,
     name: modelDisplayName(glm53FlashModelId),
-    status: "unavailable",
+    status: "available",
     properties: {
       description:
         "GLM-5.3 Flash is a fast reasoning and tool-use model from Z.AI",

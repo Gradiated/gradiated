@@ -3853,58 +3853,6 @@
   margin: 0;
 }
 
-/* Handbook opens as an index, not as a chapter. The chapter navigation only
-   appears after a reader chooses a topic. */
-.gr-handbook-index {
-  display: grid;
-  gap: calc(2.5 * var(--u));
-}
-
-.gr-handbook-index-group {
-  display: grid;
-  grid-template-columns: minmax(13rem, 18rem) minmax(0, 1fr);
-  gap: calc(2 * var(--u));
-  align-items: start;
-}
-
-.gr-handbook-index-group h2 {
-  margin: 0;
-}
-
-.gr-handbook-index-group ul {
-  display: grid;
-  gap: calc(0.45 * var(--u));
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.gr-handbook-index-group a {
-  display: inline-block;
-  padding-block: calc(0.15 * var(--u));
-  color: var(--color-text);
-  font-family: var(--font-title);
-  font-size: var(--text-card);
-  font-weight: 500;
-  line-height: 1.2;
-  letter-spacing: var(--tracking-heading);
-  text-decoration: none;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.2em;
-}
-
-.gr-handbook-index-group a:hover,
-.gr-handbook-index-group a:focus-visible {
-  text-decoration: underline;
-}
-
-@media (max-width: 46rem) {
-  .gr-handbook-index-group {
-    grid-template-columns: 1fr;
-    gap: var(--u);
-  }
-}
-
 /* -- tables ---------------------------------------------------------------- */
 
 /* Scrolls inside its own box. A wide table must never make the PAGE scroll

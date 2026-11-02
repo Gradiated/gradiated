@@ -74,9 +74,14 @@ qualification. Keep enough spare GPU capacity to start the replacement while
 the old replica remains available. The verifier runs on an EKS CPU node and
 needs only permission to read GPU pod status.
 
-Deleting a previously qualified inference pod withdraws new traffic, allows
-existing requests eleven minutes to finish, stops its processes, and verifies
-that its cgroup is empty before releasing GPU claims. Unqualified canaries and
+Deleting a previously qualified inference pod rejects new allocation requests
+and gracefully reloads the host proxy. Once the old proxy workers finish their
+accepted requests, it stops the model processes; eleven minutes is the maximum
+drain, rather than a fixed sleep. Queued requests, uploads and response streams
+keep those workers alive. Because the proxy is shared, an older stream to another
+allocation can also delay release. Missing proxy acknowledgement or unreadable
+worker state retains the remaining timeout, including after an agent restart.
+Cleanup verifies that its cgroup is empty before releasing GPU claims. Unqualified canaries and
 training pods stop without that inference drain. Kubernetes pod deletion is
 completed after host cleanup; it does not add another grace period. Failed
 cleanup retains the claim. Training data and per-pod LoRA caches are removed
@@ -147,7 +152,12 @@ catalogue; an unstaged candidate retries while existing replicas keep serving.
 The controller image is built and pinned by the normal application release.
 
 The model configuration names the runtime digest, replica count, deadline and
-placement. The renderer supplies the common canary strategy, qualification,
+placement. Optional `max_surge` is a positive integer, defaulting to one; GLM
+Dealign permits two extra replicas while retaining `maxUnavailable: 0`. Actual
+parallel startup depends on spare GPU, CPU and memory capacity. The current
+fleet fits only one extra full-size GLM replica; a second candidate can remain
+Pending until capacity is released. This ceiling does not provision capacity or
+guarantee two simultaneous starts. The renderer supplies the common canary strategy, qualification,
 service account, drain period and resources from the runtime catalogue. Do not
 edit generated Rollouts directly. Non-inventory fields in controller and RBAC
 manifests remain editable; rendering preserves them. CI checks that generated
@@ -292,7 +302,23 @@ requires replacement capacity; a provider reset requires deliberate enrollment.
 
 Model deployment publishes a `host` bundle alongside runtime bundles. Its
 `host-runtime-release` artifact contains `release.json` with the archive digest
-and base compatibility ID. Host bundles contain the agent, enrollment and state
+and base compatibility ID. After successful publication from main, the release
+GitHub App commits the compatible host bundle pin and its generated copies to
+main, as it does for application image versions. Argo CD syncs the pin and the
+fleet operator updates hosts in place. No second pull request is needed.
+Manual host pins, including rollbacks, persist across unrelated model releases
+until shipped host software changes or an explicit pin change supersedes them.
+Verification-only changes, release tooling, documentation, unrelated image-catalog
+edits and base-image-only changes do not lift that hold. An archive discarded
+during the manual override remains held even if its build inputs change; select
+it explicitly to restore it. A new host fix must produce a different archive.
+Promotion rejects stale host build inputs and incompatible base IDs, retries
+concurrent Git pushes by regenerating on current main, and preserves the provider
+image and its digest. Release cache keys and stale-build checks include the model
+deployment workflow and shared build configuration, so packaging changes rebuild
+and verify the artifact. Verification-only workflow changes still retain manual
+rollback pins. A base image migration still needs an explicit pin change.
+Host bundles contain the agent, enrollment and state
 helpers, Desmond, runtime launcher and downloader. The base contains platform
 dependencies, the pinned Tailscale binaries and `gradiated-host`, which runs
 Tailscale, the private control bridge and the launcher; it has no SSH server.
@@ -463,3 +489,22 @@ python3 product/inference/images/gpu-base/tests/e2e_image.py /tmp/gpu-fleet-e2e
 (cd product/services/gpu-fleet && GPU_FLEET_E2E=/tmp/gpu-fleet-e2e pnpm exec vitest run --config vitest.e2e.config.ts)
 ```
 
+
+### Reserving an isolated qualification slot
+
+Before running an unmanaged TP1 test beside serving allocations, use the merged
+`tools/gpu/qualification-slot.py` with `AWS_PROFILE=gradiated-developer` to
+`acquire --node gpu-<instance UUID> --lease .agents/runtime/qualification-lease.json`.
+It requires a Ready, schedulable node with a spare GPU, 16 CPUs and 224 GiB RAM,
+cordons it without evicting existing pods, and requires thirty seconds of stable
+scheduled demand after the cordon, with a two-minute settling deadline. Capacity
+and cordon ownership are rechecked every five seconds. The test must independently verify an unused GPU and hold its host GPU lock,
+impose CPU/RAM limits, use private ports and enforce a cleanup deadline. No provider changes
+are needed. The host reserved for the other workstream is rejected.
+
+The lease file is recovery state. After confirming that the owned test processes
+have stopped and their GPU/cgroup resources are released, run the same tool with
+`release --lease .agents/runtime/qualification-lease.json`. It refuses to uncordon
+a replaced node or a node whose qualification/fleet ownership changed. A command
+failure or lost workspace leaves the node reserved; inspect the recorded owner
+and finish cleanup before releasing it. This does not interrupt serving pods.

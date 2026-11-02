@@ -33,6 +33,7 @@ pub struct RequestMetadata {
 #[derive(Clone, Debug, PartialEq)]
 pub struct QualifiedRequest {
     pub metadata: RequestMetadata,
+    pub is_verification: bool,
     pub identity: AuthenticatedIdentity,
     pub deployment: GatewayModelDeployment,
     pub model_deployments: Vec<GatewayModelDeployment>,
@@ -51,6 +52,8 @@ pub struct ClassifiedRequest {
 }
 
 pub struct HostedRequest {
+    is_verification: bool,
+    cache_key: Option<crate::session_affinity::CacheKey>,
     identity: AuthenticatedIdentity,
     model: GatewayModel,
     adapter: Option<crate::PrivateAdapter>,
@@ -60,11 +63,12 @@ impl HostedRequest {
     fn qualify(
         self,
         metadata: RequestMetadata,
-        headers: &HeaderMap,
         body: &[u8],
         kind: RequestKind,
     ) -> Result<QualifiedRequest, GatewayError> {
         let Self {
+            is_verification,
+            cache_key,
             identity,
             model,
             adapter,
@@ -79,9 +83,8 @@ impl HostedRequest {
             decision.model.clone_from(&model.id);
         }
 
-        if request.session_id.is_none() {
-            request.session_id = session_header(headers)?;
-        }
+        request.session_id = cache_key.as_ref().map(|key| key.value.clone());
+        crate::session_telemetry::record_effective(cache_key.as_ref(), request.decision.is_some());
 
         let ServingDeployment {
             deployment,
@@ -125,6 +128,7 @@ impl HostedRequest {
 
         Ok(QualifiedRequest {
             metadata,
+            is_verification,
             identity,
             adapter,
             deployment,
@@ -176,12 +180,12 @@ impl RequestCoordinator {
     pub fn qualify(
         &self,
         metadata: RequestMetadata,
-        headers: &HeaderMap,
+        _headers: &HeaderMap,
         hosted: HostedRequest,
         body: &[u8],
         kind: RequestKind,
     ) -> Result<QualifiedRequest, GatewayError> {
-        hosted.qualify(metadata, headers, body, kind)
+        hosted.qualify(metadata, body, kind)
     }
 
     async fn prefer_ready_release(
@@ -327,6 +331,20 @@ impl RequestCoordinator {
         received_at: DateTime<Utc>,
         protocol: Protocol,
     ) -> Result<ClassifiedRequest, GatewayError> {
+        let mut is_verification = false;
+        self.classify_with_traffic(headers, body, received_at, protocol, &mut is_verification)
+            .await
+    }
+
+    pub(crate) async fn classify_with_traffic(
+        &self,
+        headers: &HeaderMap,
+        body: &[u8],
+        received_at: DateTime<Utc>,
+        protocol: Protocol,
+        is_verification: &mut bool,
+    ) -> Result<ClassifiedRequest, GatewayError> {
+        *is_verification = false;
         // A malformed or unsupported request is a local error on every route, so it
         // is rejected before identity.
         if headers.contains_key(RUNTIME_PRIORITY_HEADER) {
@@ -335,8 +353,27 @@ impl RequestCoordinator {
 
         let target = parse_target(body)?;
         protocol.validate_request(&target.request)?;
+        let mut cache_key = crate::session_affinity::cache_key(headers, &target.request)?;
 
         let authorization = self.authorize(headers, received_at).await?;
+        let header = "x-gradiated-verification-deployment";
+        let verification_deployment = if headers.contains_key(header) {
+            if self.verification_workspace_id != Some(authorization.identity.workspace_id)
+                || headers.get_all(header).iter().count() != 1
+            {
+                return Err(GatewayError::invalid_request(Some(header)));
+            }
+            Some(
+                headers
+                    .get(header)
+                    .and_then(|value| value.to_str().ok())
+                    .and_then(|value| Uuid::parse_str(value).ok())
+                    .ok_or_else(|| GatewayError::invalid_request(Some(header)))?,
+            )
+        } else {
+            None
+        };
+        *is_verification = verification_deployment.is_some();
 
         let mut model_id = target.model.clone();
         model_id.make_ascii_lowercase();
@@ -396,18 +433,7 @@ impl RequestCoordinator {
             return Err(GatewayError::ModelUnavailable);
         }
 
-        let header = "x-gradiated-verification-deployment";
-        if headers.contains_key(header) {
-            if self.verification_workspace_id != Some(identity.workspace_id)
-                || headers.get_all(header).iter().count() != 1
-            {
-                return Err(GatewayError::invalid_request(Some(header)));
-            }
-            let id = headers
-                .get(header)
-                .and_then(|value| value.to_str().ok())
-                .and_then(|value| Uuid::parse_str(value).ok())
-                .ok_or_else(|| GatewayError::invalid_request(Some(header)))?;
+        if let Some(id) = verification_deployment {
             model.deployments.retain(|deployment| {
                 deployment.id == id && deployment.status != crate::DeploymentStatus::Draining
             });
@@ -418,18 +444,25 @@ impl RequestCoordinator {
             deployment.status = crate::DeploymentStatus::Available;
         }
 
-        let session = target
-            .request
-            .get("session_id")
-            .and_then(Value::as_str)
-            .map(str::to_owned)
-            .map_or_else(|| session_header(headers), |session| Ok(Some(session)))?;
-        let selection = session.map_or_else(
+        if cache_key.is_none()
+            && !model
+                .deployments
+                .iter()
+                .any(|deployment| deployment.release.is_system_one())
+        {
+            cache_key = Some(crate::content_affinity::content_key(
+                &target.request,
+                body,
+                protocol,
+            ));
+        }
+
+        let selection = cache_key.as_ref().map_or_else(
             || Uuid::now_v7().as_u128(),
             |session| {
                 let mut hash = Sha256::new();
                 hash.update(identity.workspace_id.as_bytes());
-                hash.update(session.as_bytes());
+                hash.update(session.value.as_bytes());
                 u128::from_be_bytes(hash.finalize()[..16].try_into().expect("SHA-256 prefix"))
             },
         );
@@ -439,6 +472,8 @@ impl RequestCoordinator {
 
         Ok(ClassifiedRequest {
             hosted: HostedRequest {
+                is_verification: verification_deployment.is_some(),
+                cache_key,
                 identity,
                 model,
                 adapter,
@@ -569,21 +604,6 @@ fn listed_release_digest(model: &GatewayModel) -> Option<String> {
             None
         }
     }
-}
-
-fn session_header(headers: &HeaderMap) -> Result<Option<String>, GatewayError> {
-    let Some(value) = headers.get("x-gradiated-session-id") else {
-        return Ok(None);
-    };
-
-    let value = value
-        .to_str()
-        .map_err(|_| GatewayError::invalid_request(Some("session_id")))?;
-    if value.is_empty() || value.len() > 256 {
-        return Err(GatewayError::invalid_request(Some("session_id")));
-    }
-
-    Ok(Some(value.to_owned()))
 }
 
 fn effective_output_tokens(

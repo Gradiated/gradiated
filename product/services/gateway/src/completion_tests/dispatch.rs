@@ -401,7 +401,7 @@ async fn a_rejected_generation_identity_is_logged_before_admission() {
 }
 
 #[tokio::test]
-async fn identical_sessionless_requests_spread_across_the_fleet() {
+async fn identical_sessionless_requests_keep_prefix_affinity() {
     let request = qualified_request(8);
     let harness = Harness::new(request.clone(), []);
     let mut primaries = std::collections::HashSet::new();
@@ -410,7 +410,7 @@ async fn identical_sessionless_requests_spread_across_the_fleet() {
         current.metadata.generation_id = Uuid::from_u128(generation);
         primaries.insert(harness.service.route(&current).await.unwrap().primary.id);
     }
-    assert_eq!(primaries.len(), 8);
+    assert_eq!(primaries.len(), 1);
 }
 
 #[tokio::test]
@@ -425,4 +425,30 @@ async fn an_explicit_session_keeps_its_replica_across_requests() {
         primaries.insert(harness.service.route(&current).await.unwrap().primary.id);
     }
     assert_eq!(primaries.len(), 1);
+}
+
+#[tokio::test]
+async fn capacity_failures_keep_their_authorised_traffic_class_through_settlement() {
+    for is_verification in [false, true] {
+        let mut request = qualified_request(1);
+        request.is_verification = is_verification;
+        let harness = Harness::new(request, [failure(RuntimeFailureKind::CapacityExceeded)]);
+
+        assert_eq!(
+            harness.complete().await.unwrap_err(),
+            GatewayError::CapacityExceeded
+        );
+        let traffic = if is_verification {
+            "verification"
+        } else {
+            "routed"
+        };
+        assert_eq!(
+            harness.metric("generations_total", &format!("traffic=\"{traffic}\"")),
+            1
+        );
+        let finalized = harness.only_finalized();
+        assert_eq!(finalized["status"], "failed");
+        assert_eq!(finalized["usage"]["charge"], 0);
+    }
 }

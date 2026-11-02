@@ -20,7 +20,11 @@ def check_gpu_autoscaling(root):
     models = json.loads((gpu / 'models.json').read_text())
     catalogue = json.loads((root / 'product/inference/gpu/runtimes.json').read_text())
     for name, model in models.items():
-        rollout, obj = yaml.safe_load_all((gpu / 'models' / name / f'{name}.yaml').read_text())
+        documents = [doc for doc in yaml.safe_load_all((gpu / 'models' / name / f'{name}.yaml').read_text()) if doc]
+        # Model manifests also contain policy resources such as disruption budgets.
+        # Select exactly one of each autoscaling resource regardless of document order.
+        rollout, = [doc for doc in documents if doc['kind'] == 'Rollout']
+        obj, = [doc for doc in documents if doc['kind'] == 'ScaledObject']
         spec = obj['spec']
         assert spec['scaleTargetRef'] == {'apiVersion': 'argoproj.io/v1alpha1', 'kind': 'Rollout', 'name': name}
         assert spec['minReplicaCount'] == model['replicas']

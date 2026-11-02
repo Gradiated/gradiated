@@ -388,12 +388,12 @@ if (environment.INFERENCE_PROBE_BASE_URL) {
                   previous.apiKey.id,
                 );
             },
-            probe: (replica, probeSignal) =>
+            probe: (replica, probeSignal, scope) =>
               probeModel({
                 apiKey: issued!.secret,
                 baseURL,
                 modelId: replica.modelId,
-                deploymentId: replica.id,
+                ...(scope === "deployment" ? { deploymentId: replica.id } : {}),
                 protocol: replica.release.protocol,
                 signal: probeSignal,
               }),

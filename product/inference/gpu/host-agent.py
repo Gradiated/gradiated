@@ -133,10 +133,20 @@ def runtime_profile(config, pod):
         profile = {**profile, "gpus": count, "cpu": str(4 * count), "memory": f"{64 * count}Gi", "recipe": recipe}
     allowed_environment = {"TENSOR_PARALLEL_SIZE", "MODEL_ID", "LORA_ENABLED", "LORA_BASE_MODEL_REVISION",
         "LORA_GPU_SLOTS", "LORA_CPU_SLOTS", "LORA_MAX_RANK", "LORA_DISK_CACHE_BYTES", "LORA_DOWNLOAD_HOSTS",
-        "GRADIATED_API_BASE_URL", "HOST_IDENTITY_FILE"}
+        "GRADIATED_API_BASE_URL", "HOST_IDENTITY_FILE", "GLM_PREFILL_TOKEN_BUDGET", "GLM_LONG_PREFILL_TOKEN_THRESHOLD", "GLM_PREFIX_MATCH_UNIT",
+        "MAX_QUEUED_TOKENS", "MAX_QUEUED_REQUESTS"}
     extra = profile.get("environment", {})
     if set(extra) - allowed_environment or any(not isinstance(value, str) for value in extra.values()):
         raise ValueError("Unsupported runtime environment")
+    if "GLM_PREFILL_TOKEN_BUDGET" in extra and not re.fullmatch(r"([4-9]|[1-9][0-9]+)", extra["GLM_PREFILL_TOKEN_BUDGET"]):
+        raise ValueError("GLM_PREFILL_TOKEN_BUDGET must be an integer of at least 4")
+    for name in ("GLM_LONG_PREFILL_TOKEN_THRESHOLD", "GLM_PREFIX_MATCH_UNIT", "MAX_QUEUED_TOKENS", "MAX_QUEUED_REQUESTS"):
+        if name in extra and not re.fullmatch(r"[1-9][0-9]*", extra[name]):
+            raise ValueError(f"{name} must be a positive integer")
+    if int(extra.get("GLM_LONG_PREFILL_TOKEN_THRESHOLD", "1")) > 1048576:
+        raise ValueError("GLM_LONG_PREFILL_TOKEN_THRESHOLD cannot exceed the model window")
+    if 128 % int(extra.get("GLM_PREFIX_MATCH_UNIT", "128")):
+        raise ValueError("GLM_PREFIX_MATCH_UNIT must divide the 128-token launch block")
     if extra.get("GRADIATED_API_BASE_URL", "http://127.0.0.1:3004") != "http://127.0.0.1:3004":
         raise ValueError("GPU control traffic must use the private bridge")
     return digest, profile
@@ -541,7 +551,9 @@ class Agent:
             port = state.get("port_base", 38080)
             _, profile = runtime_profile(self.config, state["pod"])
             if state.get("draining"):
-                lines.append(f"location = /alloc/{uid}/health {{ return 503; }}")
+                lines.append(f'location = /_draining/{uid} {{ return 200 "$pid"; }}')
+                lines.append(f"location /alloc/{uid}/ {{ return 503; }}")
+                continue
             elif profile.get("warmup"):
                 lines.append(f"location = /alloc/{uid}/health {{ proxy_pass http://127.0.0.1:{port + 3}/health; }}")
             if profile.get("adapters"):
@@ -650,9 +662,18 @@ class Agent:
         if any(container.get(key) for key in ["env", "envFrom", "command", "args", "volumeMounts"]):
             raise ValueError("Runtime execution overrides are unsupported")
         resources = container.get("resources", {})
+        request_memory = profile.get("request_memory", profile["memory"])
+        state_path = self.root / 'pods' / uid / 'state.json'
+        if state_path.exists():
+            admitted = json.loads(state_path.read_text())['pod']
+            admitted_container = admitted['spec']['containers'][0]
+            if admitted['metadata']['uid'] == uid and admitted_container['image'] == container['image']:
+                # A catalogue request change applies to new allocations. Existing
+                # pods retain the request the scheduler admitted until replacement.
+                request_memory = admitted_container['resources']['requests']['memory']
         for kind in ["limits", "requests"]:
             values = resources.get(kind, {})
-            memory = profile.get("request_memory", profile["memory"]) if kind == "requests" else profile["memory"]
+            memory = request_memory if kind == "requests" else profile["memory"]
             if str(values.get("nvidia.com/gpu")) != str(profile["gpus"]) or values.get("cpu") != profile["cpu"] or values.get("memory") != memory:
                 raise ValueError("Runtime resource accounting does not match its profile")
         if spec.get("volumes") or spec.get("initContainers") or spec.get("hostNetwork") or spec.get("hostPID"):
@@ -865,15 +886,46 @@ class Agent:
                         "epoch": details.get("runtime", {}), "draining": state.get("draining", False)}
             raise ValueError("Unsupported host operation")
 
+    def proxy_drained(self, uid):
+        # The old Nginx worker owns accepted requests through their final byte,
+        # including uploads, runtime queues and streams. Runtime gauges do not.
+        try:
+            request = urllib.request.Request(f"http://127.0.0.1:8889/_draining/{uid}",
+                                             headers={"Connection": "close"})
+            with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(request, timeout=1) as response:
+                if response.status != 200:
+                    return False
+                worker = int(response.read(32))
+            master = int((self.root / "proxy/nginx.pid").read_text())
+            process = Path(f"/proc/{master}")
+            birth = process_birth(master)
+            command = (process / "cmdline").read_bytes()
+            if not birth or b"nginx: master process" not in command or str(self.root / "nginx.conf").encode() not in command:
+                return False
+            children = {int(pid) for pid in (process / f"task/{master}/children").read_text().split()}
+            # worker_processes is one. Any other child may still own a stream
+            # from before withdrawal, including one to another allocation.
+            return (children == {worker} and process_birth(worker) is not None
+                    and (Path(f"/proc/{worker}") / "cmdline").read_bytes().startswith(b"nginx: worker process")
+                    and process_birth(master) == birth)
+        except (OSError, ValueError, urllib.error.URLError):
+            return False
+
+    def wait_for_drain(self, uid, state):
+        remaining = state["drain_started_at"] + state.get("drain_seconds", REQUEST_DRAIN_SECONDS) - time.time()
+        deadline = time.monotonic() + min(REQUEST_DRAIN_SECONDS, max(0, remaining))
+        while alive(state.get("task")) and time.monotonic() < deadline:
+            if self.proxy_drained(uid):
+                return
+            time.sleep(min(1, max(0, deadline - time.monotonic())))
+
     def drain(self, uid):
         directory = self.root / "pods" / uid
         path = directory / "state.json"
         if not path.exists():
             return
         state = json.loads(path.read_text())
-        # New requests are withdrawn before the existing request drain.
-        if alive(state.get("task")):
-            time.sleep(max(0, state["drain_started_at"] + state.get("drain_seconds", REQUEST_DRAIN_SECONDS) - time.time()))
+        self.wait_for_drain(uid, state)
         self.stop(directory, state)
         group = pod_cgroup(uid)
         if group.exists():

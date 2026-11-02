@@ -10,7 +10,10 @@ import {
 import { pathToFileURL } from "node:url";
 import { awsDigest, plan } from "../images/images.mjs";
 
-const shared = [
+export const shared = [
+  ".github/workflows/model-deployment.yml",
+  "product/inference/.dockerignore",
+  "product/inference/bundles/build.hcl",
   "product/inference/bundles/package.sh",
   "product/inference/images/gpu-base/base-id",
   "tools/models/release.mjs",
@@ -58,7 +61,14 @@ export const inputDigest = (baseImage, tree) => {
     .update(JSON.stringify({ baseImage, tree }))
     .digest("hex");
 };
-export const manifest = ({ source, baseImage, baseId, digest, bucket, bundle }) => {
+export const manifest = ({
+  source,
+  baseImage,
+  baseId,
+  digest,
+  bucket,
+  bundle,
+}) => {
   if (!/^[0-9a-f]{40}$/.test(source))
     throw new Error("Invalid source revision");
   if (!/^[0-9a-f]{64}$/.test(digest)) throw new Error("Invalid bundle digest");
@@ -87,7 +97,7 @@ const fileDigest = async (file) => {
   return hash.digest("hex");
 };
 
-const releaseKey = (bundle, source, baseImage) => {
+export const releaseKey = (bundle, source, baseImage, root = process.cwd()) => {
   if (!Object.hasOwn(bundles, bundle))
     throw new Error(`Unknown bundle ${bundle}`);
   if (!/^[0-9a-f]{40}$/.test(source))
@@ -95,7 +105,7 @@ const releaseKey = (bundle, source, baseImage) => {
   const tree = execFileSync(
     "git",
     ["ls-tree", "-r", source, "--", ...shared, ...bundles[bundle]],
-    { encoding: "utf8" },
+    { encoding: "utf8", cwd: root },
   );
   return `releases/${bundle}/${inputDigest(baseImage, tree)}.json`;
 };

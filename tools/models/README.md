@@ -47,8 +47,13 @@ selecting model bundles that no longer carry their own `runtime-launch`.
 The controller stages new bundles without disturbing active processes. Argo
 Rollouts uses one surge replica and zero unavailable replicas. The worker runs
 production SDK qualification against the new process incarnation before it is
-Ready; the analysis Job checks that qualification before promotion. Keep spare
-capacity for the replacement. Previously qualified replicas drain for eleven
+Ready; the analysis Job checks that qualification before promotion. Model-specific
+surge and unavailable settings control replacement on packed fleets. Existing
+allocations retain their admitted RAM requests when the catalogue changes its
+scheduling request; new allocations must match the new request, and all
+allocations must still match the pinned CPU, GPU and memory limits. Install a
+host bundle supporting admitted-request preservation before changing an active
+release's RAM request. Previously qualified replicas drain for eleven
 minutes before their GPU claims are released.
 
 Base-image updates affect new provider pods only. Update existing host tools over

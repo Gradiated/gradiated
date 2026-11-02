@@ -79,6 +79,8 @@ describe("model configurations", () => {
     );
     const properties = ModelPropertiesInputSchema.parse(glm?.properties);
 
+    expect(glm?.status).toBe("available");
+
     expect(
       properties.output_modalities[0]?.supported_parameters.reasoning_effort,
     ).toEqual({

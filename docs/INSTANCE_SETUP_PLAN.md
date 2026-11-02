@@ -119,6 +119,22 @@ and making it available to gateway routing. Argo analysis checks that qualificat
 before promotion. Previously qualified pods drain existing requests before GPU
 claims are released. Keep enough spare capacity for the replacement replica.
 
+For the explicitly authorized GLM PD experiment on the two-B300 host
+`gpu-01a19170-d2a0-74ca-b317-d87d69988e4b`, first run
+`python3 tools/gpu/reserve-glm-pd-host.py` to inspect the reservation plan. After
+the helper is merged and the operator authorizes reducing serving capacity, run
+it with `--apply --lease .agents/runtime/glm-pd-host-lease.json`. Wait for Argo to
+sync the generated `glm-dealign` disruption budget with `minAvailable: 8` first.
+The helper requires its live UID and observed status, a healthy, stable
+ten-replica rollout and eight other qualified Ready replicas,
+cordons only that host, and evicts its two pinned GLM pods through their normal
+drain and disruption budgets. It waits up to 15 minutes for both pod UIDs to
+disappear before checking the free two-GPU experiment capacity; it never changes
+the provider reservation or shortens request draining. Once experiment processes
+have stopped and both GPUs are verified free, release the owned cordon with
+`python3 tools/gpu/qualification-slot.py release --lease .agents/runtime/glm-pd-host-lease.json`.
+Preserve the lease for recovery if cordon ownership changes or release fails.
+
 Training uses Kubernetes Jobs and the same host agent. Temporal owns attempts,
 leases, artifact grants and cleanup. The gateway still uses the PostgreSQL
 inventory and existing KV-cache routing; it does not need to know the scheduler.

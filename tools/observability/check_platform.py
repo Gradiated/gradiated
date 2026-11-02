@@ -64,6 +64,32 @@ def main():
                         f'{parameter["name"]}={parameter["value"]}']
         output = subprocess.check_output(command, text=True)
         resources = [resource for resource in yaml.safe_load_all(output) if resource]
+        upstream_alerts = [rule for resource in resources if resource['kind'] == 'PrometheusRule'
+                           for group in resource['spec']['groups'] for rule in group['rules']
+                           if 'alert' in rule]
+        for name, override in source['helm']['valuesObject']['customRules'].items():
+            matching = [rule for rule in upstream_alerts if rule['alert'] == name]
+            assert matching, f'Paging override does not match a rendered alert: {name}'
+            assert all(rule['labels']['severity'] == override['severity'] for rule in matching), name
+        loki_source = yaml.safe_load((APPLICATION.parent / 'loki.yaml').read_text())['spec']['source']
+        loki_values = temporary / 'loki-values.yaml'
+        loki_values.write_text(yaml.safe_dump(loki_source['helm']['valuesObject']))
+        loki_output = subprocess.check_output([
+            'helm', 'template', 'loki', loki_source['chart'], '--repo', loki_source['repoURL'],
+            '--version', loki_source['targetRevision'], '--namespace', 'observability',
+            '-f', str(loki_values),
+        ], text=True)
+        loki_alerts = [rule for resource in yaml.safe_load_all(loki_output)
+                       if resource and resource['kind'] == 'PrometheusRule'
+                       for group in resource['spec']['groups'] for rule in group['rules']
+                       if 'alert' in rule]
+        for name, override in loki_source['helm']['valuesObject']['monitoring']['alerts']['overrides'].items():
+            matching = [rule for rule in loki_alerts if rule['alert'] == name]
+            assert matching, f'Loki paging override does not match a rendered alert: {name}'
+            assert all(rule['labels']['severity'] == override['severity'] for rule in matching), name
+        from paging_checks import check_critical_persistence
+
+        check_critical_persistence(upstream_alerts + loki_alerts)
         grafana = next(resource for resource in resources if resource['kind'] == 'Deployment'
                        and resource['metadata']['name'] == 'observability-grafana')
         assert grafana['spec']['strategy'] == {'type': 'Recreate', 'rollingUpdate': None}
@@ -87,7 +113,8 @@ def main():
             ('incident-webhook', 'GpuRolloutBlocked', 'gpu-inference', 'warning'),
             ('incident-webhook', 'GpuHostServiceMissing', 'tailscale-inference', 'warning'),
             ('incident-webhook', 'WorkerLoopStalled', 'gradiated', 'critical'),
-            ('incident-webhook', 'InferenceDeploymentProbeFailed', 'gradiated', 'critical'),
+            ('incident-webhook', 'InferenceDeploymentProbeFailed', 'gradiated', 'warning'),
+            ('incident-webhook', 'InferenceModelProbeFailed', 'gradiated', 'critical'),
             ('incident-webhook', 'ModelUnderReplicated', 'gradiated', 'warning'),
             ('incident-webhook', 'GatewayHighErrorRate', 'gradiated', 'critical'),
             ('incident-webhook', 'ProxyHighErrorRate', 'gradiated', 'critical'),

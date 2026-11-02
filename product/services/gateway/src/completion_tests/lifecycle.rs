@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use axum::http::HeaderMap;
 use futures_util::{FutureExt, StreamExt};
 
 use super::{super::*, support::*};
@@ -208,7 +209,7 @@ async fn generation_tasks_keep_request_identity_after_the_handler_returns() {
 
     let mut handles = Vec::new();
     for id in [Uuid::from_u128(1), Uuid::from_u128(2)] {
-        let span = crate::diagnostics::request_span(id);
+        let span = crate::diagnostics::request_span(id, &HeaderMap::new());
         span.record("workspace_id", tracing::field::display(id));
         let active = tasks.enter().unwrap();
         handles.push(span.in_scope(|| {

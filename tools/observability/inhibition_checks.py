@@ -50,6 +50,12 @@ def check_inhibitions(binary, configuration, directory):
             'instance_id': 'test-host', 'severity': 'warning', 'service': 'inference'}
     node = {'alertname': 'KubeNodeNotReady', 'node': 'gpu-test-host',
             'severity': 'warning', 'service': 'kube-state-metrics'}
+    monitor = {'alertname': 'InferenceProbeMonitoringStalled', 'service': 'worker', 'severity': 'critical'}
+    capacity = {'alertname': 'ModelNoReadyReplicas', 'model': 'test/model', 'severity': 'critical'}
+    severe = {'alertname': 'GatewaySevereGenerationFailures', 'deployment': 'test-a', 'severity': 'critical'}
+    loop = {'alertname': 'WorkerLoopDown', 'loop': 'inference_probes', 'service': 'worker', 'severity': 'critical'}
+    probe = {'alertname': 'InferenceModelProbeFailed', 'model': 'test/model', 'severity': 'critical'}
+    runtime = {'alertname': 'GatewayRuntimeFailures', 'deployment': 'test-a', 'severity': 'critical'}
     cases = [
         ('matching recovery job', generic, True),
         ('different recovery job', {**generic, 'job_name': 'restore-postgres-check-b'}, False),
@@ -61,6 +67,12 @@ def check_inhibitions(binary, configuration, directory):
         ('other GPU node', {**node, 'node': 'gpu-other-host'}, False),
         ('CPU node', {**node, 'node': 'cpu-node'}, False),
         ('critical node alert', {**node, 'severity': 'critical', 'pod': 'other-exporter'}, False),
+        ('probe loop duplicate', loop, True),
+        ('other worker loop', {**loop, 'loop': 'settlement'}, False),
+        ('same unavailable model', probe, True),
+        ('other unavailable model', {**probe, 'model': 'other/model'}, False),
+        ('same failing deployment', runtime, True),
+        ('other failing deployment', {**runtime, 'deployment': 'test-b'}, False),
     ]
     with (Path(directory) / 'alertmanager.log').open('w') as log:
         process = subprocess.Popen([
@@ -69,7 +81,8 @@ def check_inhibitions(binary, configuration, directory):
         ], stdout=log, stderr=log)
         try:
             wait_for(lambda: request('/api/v2/status'), lambda result: bool(result))
-            request('/api/v2/alerts', [{'labels': source}, {'labels': host}] +
+            sources = [source, host, monitor, capacity, severe]
+            request('/api/v2/alerts', [{'labels': labels} for labels in sources] +
                     [{'labels': labels} for _, labels, _ in cases])
 
             def verified(alerts):
@@ -81,11 +94,11 @@ def check_inhibitions(binary, configuration, directory):
 
             wait_for(lambda: request('/api/v2/alerts'), verified)
             request('/api/v2/alerts', [{'labels': labels, 'endsAt': '2000-01-01T00:00:01Z',
-                                      'startsAt': '2000-01-01T00:00:00Z'} for labels in [source, host]])
+                                      'startsAt': '2000-01-01T00:00:00Z'} for labels in sources])
             wait_for(lambda: request('/api/v2/alerts'),
                      lambda alerts: all(any(alert['labels'] == labels and
                                             not alert['status']['inhibitedBy'] for alert in alerts)
-                                        for labels in [generic, node]))
+                                        for labels in [generic, node, loop, probe, runtime]))
         finally:
             process.terminate()
             try:
@@ -93,4 +106,4 @@ def check_inhibitions(binary, configuration, directory):
             except subprocess.TimeoutExpired:
                 process.kill()
                 process.wait(timeout=5)
-    print(f'Validated {len(cases)} recovery/node inhibition cases and source resolution')
+    print(f'Validated {len(cases)} inhibition cases and source resolution')

@@ -36,6 +36,12 @@ def main():
     groups = [g for name in ('prometheus-rules.yaml', 'logging-prometheus-rules.yaml', 'controller-prometheus-rules.yaml', 'autoscaling-prometheus-rules.yaml', 'model-replica-rules.yaml', 'data-store-prometheus-rules.yaml', 'security-prometheus-rules.yaml', 'recovery-prometheus-rules.yaml')
               for g in yaml.safe_load((OBS / name).read_text())['spec']['groups']]
     alerts = {rule['alert']: rule for group in groups for rule in group['rules'] if 'alert' in rule}
+    from paging_checks import check_critical_persistence
+
+    check_critical_persistence(alerts.values())
+    for name in ('ModelNoReadyReplicas', 'InferenceModelProbeFailed',
+                 'InferenceProbeMonitoringStalled', 'GatewayRuntimeFailures'):
+        assert alerts[name]['for'] == '1m', f'{name} must tolerate a sub-minute interruption'
     for name, rule in alerts.items():
         annotations = rule['annotations']
         url = urlparse(annotations['panel_url'])
@@ -92,6 +98,33 @@ def main():
                             'exp_annotations': annotations}] if alert == expected else []})
         tests.append({'name': name, 'interval': interval, 'input_series': inputs,
                       'alert_rule_test': cases})
+
+    for name, metric, label in [
+        ('ApiDependencyDown', 'gradiated_api_dependency_ready', 'dependency="postgres"'),
+        ('GatewayDependencyDown', 'gradiated_gateway_dependency_ready', 'dependency="valkey"'),
+        ('WorkerLoopDown', 'gradiated_worker_loop_up', 'loop="generation_ingestion"'),
+    ]:
+        for healthy in [0, 1]:
+            scenario(f'{name}: healthy neighbor {healthy}', [
+                {'series': metric + '{instance="a",' + label + '}', 'values': '0+0x40'},
+                {'series': metric + '{instance="b",' + label + '}', 'values': f'{healthy}+0x40'},
+            ], name if not healthy else None, [name], dict([label.replace('"', '').split('=')]))
+
+    for ready, expected in [(0, 'LokiUnavailable'), (1, 'LokiRedundancyDegraded'), (2, None)]:
+        scenario('Loki availability: ' + str(ready), [
+            {'series': 'kube_statefulset_status_replicas_ready{namespace="observability",statefulset="loki"}',
+             'values': f'{ready}+0x40'},
+        ], expected, ['LokiUnavailable', 'LokiRedundancyDegraded'],
+           {'namespace': 'observability', 'statefulset': 'loki'})
+
+    for failures in [2, 5]:
+        scenario('runtime failure sample floor: ' + str(failures), [
+            {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="failed"}',
+             'values': f'0 0 {failures}+0x60'},
+            {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="succeeded"}',
+             'values': '0 0 20+0x60'},
+        ], 'GatewayRuntimeFailures' if failures == 5 else None, ['GatewayRuntimeFailures'],
+           {'model': 'test/model', 'deployment': 'test-deployment'}, '2m', interval='5s')
 
     lora_labels = {'job': 'lora-loaders', 'instance': 'test:1', 'deployment': 'test-a'}
     def lora_series(metric, values, job='lora-loaders', deployment='test-a'):
@@ -413,15 +446,40 @@ def main():
                                'values': '0+100x30'})
             scenario(alert + ': ' + name, inputs, alert if fires else None, [alert], labels, '3m')
 
+    for traffic, expected in [('verification', None), ('routed', 'GatewaySevereGenerationFailures')]:
+        scenario('severe generation traffic classification: ' + traffic, [
+            {'series': 'gradiated_gateway_generations_total{deployment="bad",status="failed",traffic="' + traffic + '"}', 'values': '0+3x30'},
+            {'series': 'gradiated_gateway_generations_total{deployment="bad",status="succeeded",traffic="routed"}', 'values': '0+1x30'},
+        ] + ([{'series': 'gradiated_gateway_generations_total{deployment="bad",status="succeeded",traffic="verification"}', 'values': '0+10000x30'}] if traffic == 'routed' else []), expected, ['GatewaySevereGenerationFailures'], {'deployment': 'bad'}, '3m')
+
+    for alert, eval_time in [('GatewaySevereErrors', '3m'), ('GatewayHighErrorRate', '10m')]:
+        for traffic, expected in [('verification', None), ('routed', alert)]:
+            scenario('HTTP verification classification: ' + alert + traffic, [
+                {'series': 'gradiated_gateway_http_requests_total{status="503",traffic="' + traffic + '"}', 'values': '0+3x30'},
+                {'series': 'gradiated_gateway_http_requests_total{status="200",traffic="routed"}', 'values': '0+1x30'},
+            ] + ([{'series': 'gradiated_gateway_http_requests_total{status="200",traffic="verification"}', 'values': '0+10000x30'}] if traffic == 'routed' else []), expected, [alert], {}, eval_time)
+
+    scenario('legacy gateway HTTP metrics retain paging', [
+        {'series': 'gradiated_gateway_http_requests_total{status="503"}', 'values': '0+3x30'},
+        {'series': 'gradiated_gateway_http_requests_total{status="200"}', 'values': '0+1x30'},
+    ], 'GatewayHighErrorRate', ['GatewayHighErrorRate'], {}, '10m')
+
     alb_errors = 'PublicLoadBalancerErrors'
     alb_series = 'aws_applicationelb_httpcode_elb_5_xx_count_sum{load_balancer="app/gradiated-prod-public-api/abc"}'
-    for name, values, eval_time, fires in [
-        ('sustained ALB 5xx', '6+0x20', '3m', True),
-        ('below threshold', '4+0x20', '3m', False),
-        ('one-minute spike', '6 6 stale', '3m', False),
-        ('no errors reported', None, '3m', False),
+    for name, values, requests, eval_time, fires in [
+        ('sustained ALB 5xx', '6+0x20', 150, '6m', True),
+        ('below count threshold', '4+0x20', 150, '6m', False),
+        ('small error fraction at high volume', '6+0x20', 1000, '6m', False),
+        ('exactly one percent', '5+0x20', 500, '6m', False),
+        ('just over one percent', '5+0x20', 495, '6m', True),
+        ('ELB failures with no target requests', '6+0x20', None, '6m', True),
+        ('one-minute spike', '6 6 stale', 150, '6m', False),
+        ('no errors reported', None, 150, '6m', False),
     ]:
         inputs = [] if values is None else [{'series': alb_series, 'values': values}]
+        if requests is not None:
+            inputs.append({'series': 'aws_applicationelb_request_count_sum{load_balancer="app/gradiated-prod-public-api/abc"}',
+                           'values': f'{requests}+0x20'})
         scenario('public load balancer: ' + name, inputs, alb_errors if fires else None,
                  [alb_errors], eval_time=eval_time)
 
@@ -558,57 +616,98 @@ def main():
         ], expected, ['ModelNoReadyReplicas', 'ModelUnderReplicated', 'ModelScaleUpStalled'],
         {'model': 'test/model'}, duration)
 
-    probe_labels = '{instance="a",model="test/model",deployment="test-deployment"}'
+    probe_labels = '{instance="a",model="test/model"}'
     def probe_series(metric, values, labels=probe_labels):
         return {'series': metric + labels, 'values': values}
 
-    probe_alerts = ['InferenceDeploymentProbeFailed', 'InferenceProbeMonitoringStalled']
+    probe_alerts = ['InferenceModelProbeFailed', 'InferenceProbeMonitoringStalled']
     for name, success, inventory, target, expected, duration in [
         ('healthy', '1+5x30', '1+5x30', '1+0x30', None, '60s'),
-        ('never completed', '0+0x30', '1+5x30', '1+0x30', 'InferenceDeploymentProbeFailed', '30s'),
-        ('stops completing', '1+0x30', '1+5x30', '1+0x30', 'InferenceDeploymentProbeFailed', '30s'),
+        ('never completed', '0+0x30', '1+5x30', '1+0x30', 'InferenceModelProbeFailed', '80s'),
+        ('stops completing', '1+0x30', '1+5x30', '1+0x30', 'InferenceModelProbeFailed', '80s'),
         ('short transient', '1 1 1 16+5x27', '1+5x30', '1+0x30', None, '30s'),
-        ('monitor stopped', '1+0x30', '1+0x30', '1+0x30', 'InferenceProbeMonitoringStalled', '35s'),
+        ('monitor stopped', '1+0x30', '1+0x30', '1+0x30', 'InferenceProbeMonitoringStalled', '85s'),
         ('retired target', '1+0x30', '1+5x30', '1+0x2 stale', None, '60s'),
     ]:
         scenario('public inference: ' + name, [
-            probe_series('gradiated_inference_probe_last_success_timestamp_seconds', success),
-            probe_series('gradiated_inference_probe_target', target),
+            probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', success),
+            probe_series('gradiated_inference_routed_probe_target', target),
             probe_series('gradiated_inference_probe_inventory_timestamp_seconds', inventory, '{instance="a"}'),
         ], expected, probe_alerts,
-        {'model': 'test/model', 'deployment': 'test-deployment'} if expected == 'InferenceDeploymentProbeFailed' else {},
+        {'model': 'test/model'} if expected == 'InferenceModelProbeFailed' else {},
         duration, interval='5s')
 
-    # A recovery shorter than five minutes must not close/reopen the deployment alert.
-    # Failure first fires at 30s, recovers at 35s, recurs at 80s, then recovers at 100s.
-    recovery_success = ' '.join(str(0 if t < 35 else 60 if 65 <= t < 100 else t)
-                                for t in range(0, 406, 5))
-    for duration, expected in [('25s', None), ('30s', probe_alerts[0]),
-                               ('35s', probe_alerts[0]), ('90s', probe_alerts[0]),
-                               ('395s', probe_alerts[0]), ('400s', None)]:
+    # A recovery shorter than five minutes must not close/reopen the model alert.
+    recovery_success = ' '.join(str(0 if t < 90 else 100 if 115 <= t < 205 else t)
+                                for t in range(0, 511, 5))
+    for duration, expected in [('75s', None), ('80s', probe_alerts[0]),
+                               ('90s', probe_alerts[0]), ('200s', probe_alerts[0]),
+                               ('500s', probe_alerts[0]), ('505s', None)]:
         scenario('public inference: five-minute recovery hold at ' + duration, [
-            probe_series('gradiated_inference_probe_last_success_timestamp_seconds', recovery_success),
-            probe_series('gradiated_inference_probe_target', '1+0x81'),
-            probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+5x81', '{instance="a"}'),
-            probe_series('gradiated_inference_probe_last_success_timestamp_seconds', '1+5x81',
-                         probe_labels.replace('test-deployment', 'healthy-deployment')),
-            probe_series('gradiated_inference_probe_target', '1+0x81',
-                         probe_labels.replace('test-deployment', 'healthy-deployment')),
-        ], expected, probe_alerts, {'model': 'test/model', 'deployment': 'test-deployment'},
+            probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', recovery_success),
+            probe_series('gradiated_inference_routed_probe_target', '1+0x103'),
+            probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+5x103', '{instance="a"}'),
+            probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', '1+5x103',
+                         probe_labels.replace('test/model', 'healthy/model')),
+            probe_series('gradiated_inference_routed_probe_target', '1+0x103',
+                         probe_labels.replace('test/model', 'healthy/model')),
+        ], expected, probe_alerts, {'model': 'test/model'},
            duration, interval='5s')
 
     scenario('public inference: missing telemetry', [], 'InferenceProbeMonitoringStalled',
-             ['InferenceProbeMonitoringStalled'], eval_time='15s', interval='5s')
+             ['InferenceProbeMonitoringStalled'], eval_time='65s', interval='5s')
     scenario('public inference: replacement leader masks stale failed worker', [
-        probe_series('gradiated_inference_probe_last_success_timestamp_seconds', '0+0x30'),
-        probe_series('gradiated_inference_probe_target', '1+0x30'),
+        probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', '0+0x30'),
+        probe_series('gradiated_inference_routed_probe_target', '1+0x30'),
         probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+0x30', '{instance="a"}'),
-        probe_series('gradiated_inference_probe_last_success_timestamp_seconds', '1+5x30', probe_labels.replace('"a"', '"b"')),
-        probe_series('gradiated_inference_probe_target', '1+0x30', probe_labels.replace('"a"', '"b"')),
+        probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', '1+5x30', probe_labels.replace('"a"', '"b"')),
+        probe_series('gradiated_inference_routed_probe_target', '1+0x30', probe_labels.replace('"a"', '"b"')),
         probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+5x30', '{instance="b"}'),
     ], None, probe_alerts, eval_time='60s', interval='5s')
 
-    for ready, expected, duration in [(0, 'ModelNoReadyReplicas', '15s'), (1, 'ModelUnderReplicated', '30s')]:
+    for name, include_target, include_success in [
+        ('missing routed gauges', False, False),
+        ('missing routed target', False, True),
+        ('missing routed success', True, False),
+    ]:
+        inputs = [
+            probe_series('gradiated_inference_probe_target', '1+0x30',
+                         '{instance="a",model="test/model",deployment="test-deployment"}'),
+            probe_series('gradiated_inference_probe_last_success_timestamp_seconds', '1+5x30',
+                         '{instance="a",model="test/model",deployment="test-deployment"}'),
+            probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+5x30', '{instance="a"}'),
+        ]
+        if include_target:
+            inputs.append(probe_series('gradiated_inference_routed_probe_target', '1+0x30'))
+        if include_success:
+            inputs.append(probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', '1+5x30'))
+        scenario('routed monitoring: ' + name, inputs, 'InferenceProbeMonitoringStalled',
+                 probe_alerts, {'model': 'test/model'}, '65s', interval='5s')
+
+    scenario('routed monitoring: rollback cannot use the old leader gauges', [
+        probe_series('gradiated_inference_routed_probe_target', '1+0x30'),
+        probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', '1+5x30'),
+        probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+0x30', '{instance="a"}'),
+        probe_series('gradiated_inference_probe_target', '1+0x30',
+                     '{instance="b",model="test/model",deployment="test-deployment"}'),
+        probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+5x30', '{instance="b"}'),
+    ], 'InferenceProbeMonitoringStalled', probe_alerts, {'model': 'test/model'}, '90s', interval='5s')
+
+    assert alerts['InferenceDeploymentProbeFailed']['labels']['severity'] == 'warning'
+    assert alerts['InferenceModelProbeFailed']['labels']['severity'] == 'critical'
+    for duration, expected in [('30s', None), ('5m', None), ('5m30s', 'InferenceDeploymentProbeFailed')]:
+        scenario('targeted replica warning: ' + duration, [
+            probe_series('gradiated_inference_probe_last_success_timestamp_seconds', '0+0x80',
+                         '{instance="a",model="test/model",deployment="test-deployment"}'),
+            probe_series('gradiated_inference_probe_target', '1+0x80',
+                         '{instance="a",model="test/model",deployment="test-deployment"}'),
+            probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', '1+5x80'),
+            probe_series('gradiated_inference_routed_probe_target', '1+0x80'),
+            probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+5x80', '{instance="a"}'),
+        ], expected, ['InferenceDeploymentProbeFailed', 'InferenceModelProbeFailed'],
+           {'model': 'test/model', 'deployment': 'test-deployment'}, duration, interval='5s')
+
+    for ready, expected, duration in [(0, 'ModelNoReadyReplicas', '60s'), (1, 'ModelUnderReplicated', '30s')]:
         scenario('fast capacity alert: ' + expected, [
             {'series': 'gradiated_model_desired_replicas{model="test/model"}', 'values': '2+0x20'},
             {'series': 'gradiated_model_minimum_replicas{model="test/model"}', 'values': '2+0x20'},
@@ -623,15 +722,27 @@ def main():
         {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="old",loop="kubernetes_deployment_reconciliation"}', 'values': '1+0x20'},
         {'series': 'gradiated_worker_model_ready_replicas{instance="new",model="test/model"}', 'values': '0+0x20'},
         {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="new",loop="kubernetes_deployment_reconciliation"}', 'values': '1+5x20'},
-    ], 'ModelNoReadyReplicas', ['ModelNoReadyReplicas'], {'model': 'test/model'}, '40s', interval='5s')
+    ], 'ModelNoReadyReplicas', ['ModelNoReadyReplicas'], {'model': 'test/model'}, '90s', interval='5s')
 
-    for failed, succeeded, expected in [('0+1x60', '0+100x60', 'GatewayRuntimeFailures'),
+    for failed, succeeded, expected in [('0+2x60', '0+100x60', 'GatewayRuntimeFailures'),
                                         ('0+0x60', '0+100x60', None),
                                         ('0 1+0x59', '0+100x60', None)]:
         scenario('per-deployment runtime failures: ' + failed, [
             {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="failed"}', 'values': failed},
             {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="succeeded"}', 'values': succeeded},
             {'series': 'gradiated_gateway_generations_total{model="other/model",deployment="healthy-deployment",status="succeeded"}', 'values': '0+100000x60'},
+        ], expected, ['GatewayRuntimeFailures'], {'model': 'test/model', 'deployment': 'test-deployment'}, '2m', interval='5s')
+
+    for traffic, expected in [('verification', None), ('routed', 'GatewayRuntimeFailures')]:
+        scenario('verification traffic does not page: ' + traffic, [
+            {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="failed",error="capacity_exceeded",traffic="' + traffic + '"}', 'values': '0+2x60'},
+            {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="succeeded",traffic="routed"}', 'values': '0+100x60'},
+        ] + ([{'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="succeeded",traffic="verification"}', 'values': '0+100000x60'}] if traffic == 'routed' else []), expected, ['GatewayRuntimeFailures'], {'model': 'test/model', 'deployment': 'test-deployment'}, '2m', interval='5s')
+
+    for failed, succeeded, expected in [(1, 199, None), (1, 99, None), (2, 98, 'GatewayRuntimeFailures')]:
+        scenario('one-percent runtime failure boundary: ' + str((failed, succeeded)), [
+            {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="failed",traffic="routed"}', 'values': f'0+{failed}x60'},
+            {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="succeeded",traffic="routed"}', 'values': f'0+{succeeded}x60'},
         ], expected, ['GatewayRuntimeFailures'], {'model': 'test/model', 'deployment': 'test-deployment'}, '2m', interval='5s')
 
     route = 'route="/v1/deployment-status"'
@@ -663,7 +774,6 @@ def main():
 
     for alert, metric in [
         ('GatewayFinalizationFailure', 'gradiated_gateway_last_finalization_failure_timestamp_seconds'),
-        ('SettlementBackpressure', 'gradiated_gateway_last_settlement_backpressure_timestamp_seconds'),
     ]:
         for name, values, eval_time, fires in [
             ('first event before first scrape', '60+0x30', '2m', True),
@@ -673,6 +783,18 @@ def main():
         ]:
             scenario(alert + ': ' + name, [{'series': metric, 'values': values}],
                      alert if fires else None, [alert], eval_time=eval_time)
+
+    for name, values, fires in [
+        ('sustained rejection', '0+1x60', True),
+        ('single rejection', '0 1+0x59', False),
+        ('short burst', '0 10+0x59', False),
+        ('no rejection', '0+0x60', False),
+    ]:
+        scenario('settlement backpressure: ' + name, [
+            {'series': 'gradiated_gateway_admission_rejections_total{reason="settlement_backlog"}',
+             'values': values},
+        ], 'SettlementBackpressure' if fires else None, ['SettlementBackpressure'],
+           eval_time='2m', interval='5s')
 
     app_alert = 'ApplicationReconciliationFailed'
     for name, health, sync, auto, fires in [
@@ -755,7 +877,7 @@ def main():
 
     # Each threshold applies only to its own instance, and the cache alerts ignore
     # samples CloudWatch omits when a count is zero.
-    data_store_alerts = ['DatabaseStorageLow', 'DatabaseConnectionsHigh', 'DatabaseCpuHigh',
+    data_store_alerts = ['DatabaseStorageLow', 'MetabaseDatabaseStorageLow', 'DatabaseConnectionsHigh', 'DatabaseCpuHigh',
                          'DatabaseMemoryLow', 'CacheNearStorageLimit', 'CacheNearEcpuLimit',
                          'CacheThrottling', 'CacheEvictions', 'DataStoreMetricsMissing']
     def rds(metric, instance, values):
@@ -788,7 +910,7 @@ def main():
         ('healthy', {}, None, None),
         ('product storage low', {'free_storage_space_minimum:gradiated-prod': f'{4 * gib}+0x40'}, 'DatabaseStorageLow', {'dbinstance_identifier': 'gradiated-prod'}),
         ('Metabase uses its own storage threshold', {'free_storage_space_minimum:gradiated-prod-metabase': f'{4 * gib}+0x40'}, None, None),
-        ('Metabase storage low', {'free_storage_space_minimum:gradiated-prod-metabase': f'{gib // 2}+0x40'}, 'DatabaseStorageLow', {'dbinstance_identifier': 'gradiated-prod-metabase'}),
+        ('Metabase storage low', {'free_storage_space_minimum:gradiated-prod-metabase': f'{gib // 2}+0x40'}, 'MetabaseDatabaseStorageLow', {'dbinstance_identifier': 'gradiated-prod-metabase'}),
         ('product connections high', {'database_connections_maximum:gradiated-prod': '400+0x40'}, 'DatabaseConnectionsHigh', {'dbinstance_identifier': 'gradiated-prod'}),
         ('product memory low', {'freeable_memory_minimum:gradiated-prod': f'{200 * 2**20}+0x40'}, 'DatabaseMemoryLow', {'dbinstance_identifier': 'gradiated-prod'}),
         ('cache storage high', {'bytes_used_for_cache_maximum:None': '9e9+0x40'}, 'CacheNearStorageLimit', {'cluster_id': 'gradiated-prod'}),

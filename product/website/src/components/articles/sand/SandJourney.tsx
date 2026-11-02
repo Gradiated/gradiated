@@ -107,7 +107,7 @@ export const SandJourney = (): ReactElement => {
         </SectionFab>
         <div className="sand-main">
           <figure
-            aria-label="Sand grains form a dune and rearrange into a logic circuit on hover or keyboard focus."
+            aria-label="Sand grains form a dune, then gather into a neural network on hover or keyboard focus. Each layer’s sand rearranges in turn."
             className="sand-cover"
             tabIndex={0}
           >

@@ -29,6 +29,7 @@ export interface GatewayOptions {
   readonly generationTimeoutSeconds: number;
   readonly logName: string;
   readonly settlementBacklogLimit?: number;
+  readonly logLevel?: "warn" | "info";
   readonly leaseFinalizationMarginSeconds?: number;
   readonly expiredLeaseCleanupGraceSeconds?: number;
 }
@@ -83,7 +84,7 @@ export class GatewayProcess {
         ),
         GATEWAY_BROWSER_ORIGINS: BROWSER_ORIGIN,
         SGLANG_API_KEY: options.runtimeToken,
-        RUST_LOG: "warn",
+        RUST_LOG: options.logLevel ?? "warn",
         AWS_EC2_METADATA_DISABLED: "true",
         HF_HUB_OFFLINE: "1",
       },

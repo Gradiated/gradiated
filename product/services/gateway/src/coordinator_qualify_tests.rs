@@ -135,7 +135,7 @@ async fn a_body_session_id_wins_over_the_headers() {
 }
 
 #[tokio::test]
-async fn only_the_gradiated_session_header_is_read() {
+async fn a_generic_sdk_session_header_is_used() {
     let mut headers = headers(&WORKSPACE_KEY);
     headers.insert("x-session-id", HeaderValue::from_static("generic"));
     let request = qualify(
@@ -147,7 +147,7 @@ async fn only_the_gradiated_session_header_is_read() {
     .await
     .unwrap();
 
-    assert_eq!(request.request.session_id, None);
+    assert_eq!(request.request.session_id.as_deref(), Some("generic"));
 }
 
 #[tokio::test]

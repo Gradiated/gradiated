@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import type { ReactElement } from "react";
 import {
   Band,
@@ -29,20 +28,11 @@ const HandbookIndex = (): ReactElement => (
       <h1 className="gr-masthead-title">Handbook</h1>
     </header>
 
-    <div className="gr-handbook-index">
-      {handbookSections.map((section) => (
-        <section className="gr-handbook-index-group" key={section.label}>
-          <h2 className="gr-label">{section.label}</h2>
-          <ul>
-            {section.pages.map((page) => (
-              <li key={page.slug}>
-                <Link to={`/handbook/${page.slug}/`}>{page.pageTitle}</Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
-    </div>
+    <SectionNavigation
+      ariaLabel="Handbook topics"
+      current=""
+      groups={navigation}
+    />
   </>
 );
 

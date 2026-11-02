@@ -1092,7 +1092,7 @@
   grid-template-columns: calc(4 * var(--u)) minmax(0, 1fr);
 }
 
-@media (max-width: 959px) {
+@media (max-width: 1159px) {
   [data-tier="wide"] .gr-nav--with-guide .gr-nav-links,
   [data-tier="wide"] .gr-nav--with-guide .gr-nav-actions,
   [data-tier="wide"] .gr-nav--with-guide ~ .gr-nav-panel {

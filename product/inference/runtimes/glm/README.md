@@ -51,18 +51,35 @@ requests without errors at 88 TPS median per request.
 
 `--max-num-seqs 4` limits simultaneous decoding; additional HTTP requests can
 queue. Add TP1 replicas to increase simultaneous serving capacity.
-The production target is eight TP1 replicas at concurrency four, with 16 CPU and
-224 GiB host RAM per replica. Cold-weight loading and startup qualification
-peaked at 188 GiB under those cgroup limits. Eight replicas fit as four on the
-4-GPU B300 host and four beside DeepSeek on the 8-GPU B300 host, after stock GLM
-drains. Placement permits several replicas per host.
-Require node affinity to instance IDs `01a0f19d-1ff3-7613-8cbf-81b693c0f0d4`
-and `01a0fbf7-5276-700b-903b-7e04da150ed6`. Host
+The production target is ten TP1 replicas at concurrency four, with 16 CPU and
+a 224 GiB host RAM limit per replica. Earlier cold-weight loading and startup
+qualification peaked at 188 GiB under those cgroup limits. Placement permits
+several replicas per host. Host
 `01a0fbf8-06fc-7658-96e1-ae72f7dba135` is user-owned capacity and must not be
 used for this deployment or further experiments, even if it is uncordoned.
 
+The current uncensored release requests 128 GiB of host RAM for scheduling and
+retains its 224 GiB cgroup limit. A production reading on 2026-11-01 found
+5.1 GiB anonymous memory and 104.5 GiB file cache for an uncensored replica
+(127.6 GiB lifetime cgroup peak), alongside standard GLM at 12.0 GiB anonymous
+memory and 197.1 GiB file cache (321.2 GiB lifetime peak). These are snapshots,
+not worst-case bounds; the existing limits retain cold-start headroom and the
+kernel can reclaim file cache. The newer four-B300 host advertises 686 GiB:
+standard GLM's 400 GiB request plus two 128 GiB uncensored requests fit at
+656 GiB, whereas two 224 GiB requests did not. Current model configuration
+allows that host as well as the older serving hosts. Ten uncensored replicas
+consume the ten B300s remaining after one standard GLM replica (two GPUs) and
+one DeepSeek replica (four GPUs) on the serving four-, four-, and eight-GPU
+hosts. The uncensored Rollout permits one unavailable replica so a packed
+fleet can replace a replica without an extra GPU; the disruption budget still
+requires eight available replicas. Intentionally cordoned hosts remain excluded.
+
 The startup supervisor checks bursts through concurrency sixteen, including
 queue completion within its timeout.
+It explicitly warms active occupancies one through four, including three,
+and a pair of prefills alongside a short request when admission limits permit.
+These shapes must run before readiness so MTP batch specializations are compiled
+before serving traffic. Queue limits bound the qualification bursts.
 
 Retire stock GLM only after the new deployment passes production verification.
 `autoscaling.paused_replicas: 0` renders KEDA's paused-replica annotation, which
@@ -153,3 +170,123 @@ runtime: the LoRA-disabled, same-process, fresh-cache control itself showed mean
 differences of 0.47-0.55 and maxima of 1.52-2.25 on repeated long requests.
 This control does not establish adapter task quality or bitwise determinism;
 those require separate evaluation.
+
+For isolated mixed-context tests, `GLM_PREFILL_TOKEN_BUDGET=2048` adds
+`--enable-chunked-prefill --max-num-batched-tokens 2048` to the bundle entrypoint.
+The variable must be an integer of at least four, matching the sequence limit. When unset, vLLM retains its scheduler
+defaults; the pinned runtime on a single B300 selects chunked prefill with a
+16,384-token budget. This setting changes the prefill token budget, not the
+four-sequence limit. Keep test runtimes outside production routing and compare
+against the same model revision, GPU, MTP settings, and concurrency.
+
+`GLM_LONG_PREFILL_TOKEN_THRESHOLD=2048` instead caps each request's prefill
+contribution per scheduler iteration. Leave `GLM_PREFILL_TOKEN_BUDGET` unset to
+keep the pinned B300 default total budget of 16,384, or set it explicitly to
+16,384. The per-request cap leaves batch budget for new short prefills when
+sequence capacity is available. The pinned scheduler applies this cap even to
+a lone long request, so measure its long-context TTFT and throughput cost.
+The value must be positive and no larger than the 1,048,576-token model window;
+unset keeps the per-request cap disabled. Admission still depends on the
+four-sequence capacity and queue policy.
+
+`GLM_PREFIX_MATCH_UNIT=128` enables prefix caching and forwards
+`--prefix-match-unit 128` together with the native
+`--enable-mamba-fine-grained-prefix-cache` checkpoint option. This controls prefix matching independently of the
+physical cache page size: `--block-size 128` alone does not establish 128-token
+reuse for the hybrid attention/state cache. Qualify the actual cached-token
+counts, repeated and extended prefixes, divergent prefixes, and long-context
+retrieval with MTP enabled before selecting a release. The native checkpoint
+option retains its applicability and correctness guards; matching at 128-token
+boundaries does not guarantee a reusable state at every boundary. Include
+several warm repeats and changed-prefix controls in qualification.
+`prefix-tail.patch` retains a reachable full-attention tail when the prompt
+length is exactly divisible by the matching unit. Prefix lookup leaves the last
+prompt token for logits; caching only the boundary at the full prompt length
+makes that entry unreachable and forces coarser reuse. With 128-token matching
+and MTP, a 32,768-token prompt should reuse 32,512 tokens. CPU bundle verification
+checks physical and logical boundaries, partial prefill, changed prefixes and
+eviction against the pinned vLLM cache manager. It does not qualify hybrid GPU
+state restoration; require repeated, extended and divergent prompts on an
+isolated GPU before promoting this bundle.
+
+The entrypoint and host profile require a positive divisor of the fixed
+128-token launch block. Qualification of 128 does not establish performance
+or cache correctness for other units.
+Unset preserves the
+pinned runtime's matching policy.
+
+The mixed-context benchmark sends one long synthetic chat prompt followed by
+six short prompts at 250 ms intervals, with 256 generated tokens per request.
+A second ordering waits for three short streams to emit their first tokens before injecting the long prompt,
+so the test also measures prefill interference with active decodes.
+It prepares the fixtures before timing, measures their chat-template token counts
+through `/tokenize`, checks exact returned usage and complete streams, and records TTFT, client SSE
+event gaps, per-request decode rate, and aggregate output throughput. MTP can
+emit several tokens in one SSE event, so event gaps are not per-token latency.
+The workload uses seeded synthetic service logs and tests scheduling and streaming,
+not semantic quality. Each request has a distinct seeded prefix to avoid shared-prefix
+cache hits. `--protocol completions` selects random-token prompts for diagnostics.
+`--quality-smoke` also checks retrieval of known markers placed at the start,
+middle, and end of 512/32K/128K contexts; it records correctness separately from
+latency measurements. The host agent accepts the budget in the pinned runtime profile environment; changing
+a Kubernetes container environment directly remains unsupported.
+
+```sh
+python3 product/inference/benchmarks/mixed_prefill.py \
+  --url http://127.0.0.1:28100 --label baseline \
+  --long-tokens 32768,131072 --repeats 3 --quality-smoke \
+  --output .agents/runtime/glm-mixed-baseline.json
+```
+
+For million-token interference, test `--long-tokens 1000000,1047552` with
+`--output-tokens 1024`. The second prompt size plus output budget exactly fills
+`--max-model-len 1048576`. Run the benchmark using the bundle's Python and pass
+`--tokenizer-path` pointing to the verified model snapshot to prepare long chat
+fixtures efficiently. The benchmark validates the local token count against the
+runtime's `/tokenize` response. `--fixture-cache` reuses those exact prepared
+fixtures across server restarts. Keep that cache under `.agents/runtime/` or the
+test host's temporary directory. `--quality-contexts 512,1000000,1000000` extends
+the marker smoke checks to million-token contexts. Smaller-context results do
+not qualify million-token serving.
+
+The benchmark allows prefill within the 630-second request deadline and starts
+the 30-second stream idle limit after first output, matching the gateway policy.
+It cannot distinguish an accepted queued request from active prefill.
+For a diagnostic run that observes backend completion
+beyond those limits, set `--response-idle-timeout 690 --request-deadline 900`
+and report it separately. Use a different `--seed-offset` for each timeout mode
+to keep prefix-cache hits from making the production-limit probe artificially fast.
+
+`MAX_QUEUED_TOKENS` and `MAX_QUEUED_REQUESTS` are optional positive integer
+admission limits in the runtime profile environment. Unset preserves unlimited
+frontend admission. The token threshold counts full prompt lengths of requests
+still in prefill, including running prefills; it excludes requests already
+decoding. Partial prefill progress and prefix-cache hits do not reduce that count
+until prefill finishes. The pinned runtime checks the existing backlog, so the
+next admitted request can overshoot the threshold. This is backpressure, not a
+maximum input length. Rejections are HTTP 503 before generation, eligible for the
+gateway's zero-usage capacity retry on another replica. Requests already accepted
+or streaming cannot safely be replayed to hide a slow queue.
+
+The native request limit counts running plus waiting requests. With four
+active sequences, `MAX_QUEUED_REQUESTS=6` permits two additional requests when
+all four slots are occupied. It is not a strict waiting-only limit: more than
+two can wait if fewer than four requests are running. It imposes no queue-age
+bound. Leave `MAX_QUEUED_TOKENS` unset for the request-count-only policy.
+The gateway retries a zero-usage capacity rejection on one other replica and
+returns HTTP 429 if both reject; accepted requests do not gain that failover.
+A pinned four-second inference probe must still complete on its own replica.
+
+The `/metrics` endpoint also exports `gradiated_runtime_prefill_backlog_prompt_tokens`,
+`gradiated_runtime_inflight_requests`, the configured queue limits (`-1` means
+unlimited), and `gradiated_runtime_queue_telemetry_available`. These use the exact
+frontend counters read by admission, alongside vLLM's native running/waiting and
+latency metrics. No request content or per-request labels are exposed.
+
+Startup qualification bounds its concurrency and mixed-prompt bursts to the
+configured admission limits, while retaining all cold single-prompt shapes.
+The default policy still checks concurrency sixteen. Test overload rejection
+and replica failover separately; an intentional 503 is not a passing inference
+probe. Production inference probes pin a deployment and require a complete
+8-token response to `Hi` within four seconds, so they cannot be rescued by routing
+their check to another deployment.

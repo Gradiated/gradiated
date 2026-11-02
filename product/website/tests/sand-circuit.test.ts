@@ -132,3 +132,22 @@ it("unmount removes listeners, observers and pending animation frames", () => {
   expect(resizeObserver.disconnect).toHaveBeenCalledOnce();
   expect(intersectionObserver.disconnect).toHaveBeenCalledOnce();
 });
+
+it("keeps sweeping the network after the hover morph finishes and freezes its clock offscreen", () => {
+  intersect([{ isIntersecting: true }]);
+  trigger.dispatchEvent(new Event("mouseenter"));
+  for (let time = 100; time <= 4100; time += 50) tick(time);
+
+  expect(host.dataset.morph).toBe("1.000");
+  expect(frames.size).toBe(1);
+  const before = painter.render.mock.calls.at(-1) as unknown as number[];
+  tick(4150);
+  const after = painter.render.mock.calls.at(-1) as unknown as number[];
+  expect(after[2]).toBeGreaterThan(before[2]);
+
+  intersect([{ isIntersecting: false }]);
+  intersect([{ isIntersecting: true }]);
+  tick(20000);
+  const resumed = painter.render.mock.calls.at(-1) as unknown as number[];
+  expect(resumed[2]).toBe(after[2]);
+});

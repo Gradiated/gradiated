@@ -134,16 +134,11 @@ impl CompletionService {
                 GatewayError::ServingStateUnavailable
             })?;
 
-        let routing_session = request.request.session_id.clone().or_else(|| {
-            (!request.deployment.release.is_system_one())
-                .then(|| request.metadata.generation_id.to_string())
-        });
-
         let availability = order_deployments(RouteInput {
             workspace_id: request.identity.workspace_id,
             model_id: &request.request.model,
             release_digest: &request.served_release_digest,
-            session_id: routing_session.as_deref(),
+            session_id: request.request.session_id.as_deref(),
             prompt: route_prompt(&request.request),
             deployments: &request.model_deployments,
             statuses: &statuses,
@@ -216,6 +211,7 @@ impl CompletionService {
             protocol: route.primary.release.protocol_label(),
             stream: request.request.stream,
             service_tier: request.request.service_tier,
+            is_verification: request.is_verification,
         };
         let lease = match admission {
             Ok(lease) => lease,

@@ -24,6 +24,8 @@ import { NotesIndexPage } from "./pages/LibraryIndexPage";
 import { HandbookPage } from "./pages/HandbookPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { ArticleReadingPage } from "./pages/ReadingPages";
+import { SandLibraryPage } from "./pages/SandLibraryPage";
+import { SAND_TO_THOUGHT_URL } from "./urls";
 import { StylePage } from "./pages/StylePage";
 import { TrainingPage } from "./pages/TrainingPage";
 import { ArtworkGeneratorPage } from "./pages/ArtworkGeneratorPage";
@@ -51,18 +53,23 @@ const LibraryRedirect = (): ReactElement => {
     window.location.replace(target);
   }, [target]);
 
-  /* The prerenderer only receives the pathname, so its /library/ HTML is the
-     Notes fallback. Keep the first browser render identical regardless of the
-     query string; the effect applies the query-based redirect after hydration. */
+  /* Keep any served fallback stable until the query-based redirect runs. */
   return <NotesIndexPage />;
 };
 
 const RouteScrollRestoration = (): null => {
-  const { pathname } = useLocation();
+  const { hash, pathname } = useLocation();
 
   useEffect(() => {
+    if (hash) {
+      document
+        .getElementById(decodeURIComponent(hash.slice(1)))
+        ?.scrollIntoView({ block: "start" });
+      return;
+    }
+
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-  }, [pathname]);
+  }, [hash, pathname]);
 
   return null;
 };
@@ -82,6 +89,7 @@ export const AppRoutes = (): ReactElement => (
     <Route element={<HomePage />} path="/" />
     <Route element={<AboutPage />} path="/about/" />
     <Route element={<LibraryRedirect />} path="/library/" />
+    <Route element={<SandLibraryPage />} path={SAND_TO_THOUGHT_URL} />
     <Route
       element={<SandJourneyRedirect />}
       path="/library/how-to-get-an-answer-out-of-sand/"

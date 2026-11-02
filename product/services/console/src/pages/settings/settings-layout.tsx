@@ -6,7 +6,10 @@ import { ConsolePage } from "@/pages/console-page";
 const NAV_GROUPS = [
   {
     heading: "Workspace",
-    links: [{ to: "/settings/workspace", label: "General" }],
+    links: [
+      { to: "/settings/workspace", label: "General" },
+      { to: "/settings/workspace/privacy", label: "Privacy" },
+    ],
   },
   {
     heading: "Organization",
@@ -48,6 +51,7 @@ const SettingsNav = () => (
             <Link
               key={link.to}
               to={link.to}
+              activeOptions={{ exact: true }}
               className="rounded-full border bg-card px-3 py-1.5 text-sm whitespace-nowrap transition-colors hover:bg-accent data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground md:rounded-md md:border-0 md:bg-transparent md:px-2.5 md:data-[status=active]:bg-sidebar-accent md:data-[status=active]:font-medium md:data-[status=active]:text-foreground"
             >
               {link.label}

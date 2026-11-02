@@ -68,6 +68,12 @@ def check_rollouts(root):
                      series(counter, '0+96x8', status=success)], 1)
                 case('high ratio with fewer than three failures is allowed',
                      [series(counter, '0+0.5x8', status=failure)], 0)
+                if stream or service == 'gateway':
+                    case('verification failures cannot reject candidate',
+                         [series(counter, '0+10x8', status=failure, traffic='verification')], 0)
+                    case('routed failures still reject candidate', [
+                         series(counter, '0+10x8', status=failure, traffic='routed'),
+                         series(counter, '0+100000x8', status=success, traffic='verification')], 1)
                 case('stable errors do not contaminate candidate',
                      [series(counter, '0+10x8', status=failure, rollout_revision='stable')], 0)
                 if not stream:

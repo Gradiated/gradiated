@@ -16,6 +16,7 @@ use reqwest::{header, redirect::Policy, Certificate, Identity, RequestBuilder, R
 use thiserror::Error;
 
 use super::{
+    progress::{ProgressStream, RESPONSE_IDLE_TIMEOUT},
     FailureCause, ModelRuntime, ProtocolViolation, RuntimeCompletion, RuntimeEventStream,
     RuntimeFailure,
 };
@@ -25,7 +26,6 @@ use crate::{
 };
 
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
-const RESPONSE_IDLE_TIMEOUT: Duration = Duration::from_secs(30);
 const MAX_RESPONSE_BYTES: usize = 8_000_000;
 const MAX_STREAM_EVENT_BYTES: usize = 1_000_000;
 
@@ -221,8 +221,6 @@ impl ModelRuntime for SglangClient {
         .await
     }
 
-    /// The deadline bounds only opening the stream. The caller holds it for
-    /// the events that follow.
     async fn stream(
         &self,
         deployment: &GatewayModelDeployment,
@@ -231,6 +229,7 @@ impl ModelRuntime for SglangClient {
         request_deadline: DateTime<Utc>,
     ) -> Result<Box<dyn RuntimeEventStream>, RuntimeFailure> {
         let remaining = remaining_until(request_deadline)?;
+        let deadline = tokio::time::Instant::now() + remaining;
         let (transport, call) = Call::route(deployment, request, effective_output_tokens, true)?;
 
         within(remaining, async move {
@@ -241,6 +240,9 @@ impl ModelRuntime for SglangClient {
             }
         })
         .await
+        .map(|inner| {
+            Box::new(ProgressStream::new(inner, deadline)) as Box<dyn super::RuntimeEventStream>
+        })
     }
 }
 
@@ -310,7 +312,15 @@ pub(super) async fn send(request: RequestBuilder) -> Result<Response, RuntimeFai
     request.send().await.map_err(RuntimeFailure::from_transport)
 }
 
-pub(super) async fn read_bounded_body(mut response: Response) -> Result<Vec<u8>, RuntimeFailure> {
+pub(super) async fn read_bounded_body(response: Response) -> Result<Vec<u8>, RuntimeFailure> {
+    read_body(response, false).await
+}
+
+pub(super) async fn read_completion_body(response: Response) -> Result<Vec<u8>, RuntimeFailure> {
+    read_body(response, true).await
+}
+
+async fn read_body(mut response: Response, allow_prefill: bool) -> Result<Vec<u8>, RuntimeFailure> {
     let declared = response.content_length();
     if declared.is_some_and(|length| length > MAX_RESPONSE_BYTES as u64) {
         return Err(RuntimeFailure::too_large(FailureCause::DeclaredTooLarge));
@@ -318,10 +328,14 @@ pub(super) async fn read_bounded_body(mut response: Response) -> Result<Vec<u8>,
 
     let mut body = Vec::with_capacity(declared.unwrap_or(0) as usize);
     loop {
-        let chunk = tokio::time::timeout(RESPONSE_IDLE_TIMEOUT, response.chunk())
-            .await
-            .map_err(|_| RuntimeFailure::idle())?
-            .map_err(RuntimeFailure::interrupted)?;
+        let chunk = if allow_prefill && body.is_empty() {
+            response.chunk().await
+        } else {
+            tokio::time::timeout(RESPONSE_IDLE_TIMEOUT, response.chunk())
+                .await
+                .map_err(|_| RuntimeFailure::idle())?
+        }
+        .map_err(RuntimeFailure::interrupted)?;
         let Some(chunk) = chunk else {
             return Ok(body);
         };
@@ -356,9 +370,7 @@ pub(super) fn open_events(response: Response) -> Result<RuntimeEvents, RuntimeFa
 pub(super) async fn next_message(
     events: &mut RuntimeEvents,
 ) -> Result<Option<String>, RuntimeFailure> {
-    let event = tokio::time::timeout(RESPONSE_IDLE_TIMEOUT, events.next())
-        .await
-        .map_err(|_| RuntimeFailure::idle())?;
+    let event = events.next().await;
     let Some(event) = event else {
         return Ok(None);
     };

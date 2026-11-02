@@ -62,9 +62,16 @@ const RouteScrollRestoration = (): null => {
 
   useEffect(() => {
     if (hash) {
-      document
-        .getElementById(decodeURIComponent(hash.slice(1)))
-        ?.scrollIntoView({ block: "start" });
+      let targetId: string;
+
+      try {
+        targetId = decodeURIComponent(hash.slice(1));
+      } catch {
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        return;
+      }
+
+      document.getElementById(targetId)?.scrollIntoView({ block: "start" });
       return;
     }
 

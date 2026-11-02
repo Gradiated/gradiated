@@ -250,6 +250,12 @@ Its new output directory contains the task file, task IDs and a manifest binding
 explicit model/sample/timeout/judge protocol. Preserve this manifest before the first rollout; changes require a
 new evaluation version. Recipe or quality failures are not model failures and cannot contribute to the final gap.
 
+When the comparator and primary judge share a model, preregister a secondary judge before scoring.
+`v4/rejudge.py` applies that judge to the same observed rollouts, omitting root arm/model/provider metadata while
+preserving tool evidence, answers and task grading notes. It binds caches to the trace, task, judge and script;
+missing or failed judgements remain incomplete. Its paired report measures judge sensitivity, not new model
+samples. Answer style may still reveal model identity, so omitted labels do not establish perfect blinding.
+
 `v4/rubric_probe.py` keeps an observed rollout's tool work fixed and replaces only its final answers with a
 shortest user-complete answer, wrong numeric findings, clarification-only text or process-only text. This is a
 synthetic intervention test of the judge, not extra model samples. A failed minimal rewrite requires semantic

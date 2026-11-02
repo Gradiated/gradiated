@@ -1,0 +1,114 @@
+--- a/model_gateway/src/middleware/concurrency.rs
++++ b/model_gateway/src/middleware/concurrency.rs
+@@ -25,0 +26 @@
++use http_body_util::BodyExt as _;
+@@ -170,0 +172,15 @@
++// Drain refused HTTP/1 uploads so a proxy can receive the native shed response.
++// Use the configured request timeout so supported slow uploads are not cut short.
++async fn refuse_request(request: Request<Body>, response: Response, timeout: Duration) -> Response {
++    let mut body = request.into_body();
++    let _ = tokio::time::timeout(timeout, async {
++        while let Some(frame) = body.frame().await {
++            if frame.is_err() {
++                break;
++            }
++        }
++    })
++    .await;
++    response
++}
++
+@@ -197,0 +214,2 @@
++    let drain_timeout = Duration::from_secs(app_state.context.router_config.request_timeout_secs);
++
+@@ -201 +219 @@
+-        return shed_response(
++        return refuse_request(request, shed_response(
+@@ -205 +223 @@
+-        );
++        ), drain_timeout).await;
+@@ -212 +230 @@
+-        return shed_response(
++        return refuse_request(request, shed_response(
+@@ -216 +234 @@
+-        );
++        ), drain_timeout).await;
+@@ -233,0 +252 @@
++            drop(slot);
+@@ -237 +256 @@
+-            shed_response(
++            refuse_request(request, shed_response(
+@@ -241 +260 @@
+-            )
++            ), drain_timeout).await
+@@ -796 +815,69 @@
+-}
++    #[tokio::test]
++    async fn refused_upload_is_drained_and_preserves_native_error() {
++        use std::sync::atomic::AtomicUsize;
++        use futures::StreamExt;
++        let seen = Arc::new(AtomicUsize::new(0));
++        let counter = seen.clone();
++        let chunks = futures::stream::iter([
++            Ok::<_, std::io::Error>(Bytes::from_static(b"not-json")),
++            Ok(Bytes::from_static(b"still-not-json")),
++        ]).inspect(move |_| { counter.fetch_add(1, Ordering::SeqCst); });
++        let response = refuse_request(
++            echo_request(Body::from_stream(chunks)),
++            shed_response(StatusCode::TOO_MANY_REQUESTS, "admission_queue_full", "full"),
++            Duration::from_secs(30),
++        ).await;
++        assert_eq!(seen.load(Ordering::SeqCst), 2);
++        assert_eq!(response.status(), StatusCode::TOO_MANY_REQUESTS);
++        assert_eq!(response.headers()[RETRY_AFTER], "2");
++        let body = axum::body::to_bytes(response.into_body(), 4096).await.unwrap();
++        let value: serde_json::Value = serde_json::from_slice(&body).unwrap();
++        assert_eq!(value["error"]["code"], "admission_queue_full");
++    }
++
++    #[tokio::test(start_paused = true)]
++    async fn refused_stalled_upload_has_a_bounded_drain() {
++        let body = Body::from_stream(futures::stream::pending::<Result<Bytes, std::io::Error>>());
++        let started = tokio::time::Instant::now();
++        let response = refuse_request(echo_request(body), shed_response(
++            StatusCode::TOO_MANY_REQUESTS, "admission_queue_full", "full",
++        ), Duration::from_secs(7)).await;
++        assert_eq!(response.status(), StatusCode::TOO_MANY_REQUESTS);
++        assert_eq!(started.elapsed(), Duration::from_secs(7));
++    }
++
++    #[tokio::test(start_paused = true)]
++    async fn expired_queue_slot_is_released_before_draining_upload() {
++        let bucket = Arc::new(TokenBucket::new(1, 0));
++        let queue = Arc::new(AdmissionQueue::new(1, Duration::from_secs(1)));
++        let held = TokenPermit::try_acquire(bucket.clone(), 1.0).unwrap();
++        let app = echo_app(test_app_state(bucket, Some(queue.clone())));
++        let body = Body::from_stream(futures::stream::pending::<Result<Bytes, std::io::Error>>());
++        let request = tokio::spawn(app.oneshot(echo_request(body)));
++        wait_for_slots(&queue, 0).await;
++        tokio::time::advance(Duration::from_secs(1)).await;
++        tokio::task::yield_now().await;
++        assert_eq!(queue.slots.available_permits(), 1);
++        assert!(!request.is_finished());
++        tokio::time::advance(Duration::from_secs(5)).await;
++        assert_eq!(request.await.unwrap().unwrap().status(), StatusCode::SERVICE_UNAVAILABLE);
++        drop(held);
++    }
++
++    #[tokio::test(start_paused = true)]
++    async fn refused_upload_can_take_longer_than_five_seconds() {
++        let chunks = futures::stream::once(async {
++            tokio::time::sleep(Duration::from_secs(6)).await;
++            Ok::<_, std::io::Error>(Bytes::from_static(b"late-body"))
++        });
++        let started = tokio::time::Instant::now();
++        let response = refuse_request(
++            echo_request(Body::from_stream(chunks)),
++            shed_response(StatusCode::TOO_MANY_REQUESTS, "admission_queue_full", "full"),
++            Duration::from_secs(30),
++        ).await;
++        assert_eq!(response.status(), StatusCode::TOO_MANY_REQUESTS);
++        assert_eq!(started.elapsed(), Duration::from_secs(6));
++    }
++
++}

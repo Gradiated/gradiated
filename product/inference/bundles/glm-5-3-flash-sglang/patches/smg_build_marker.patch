@@ -1,0 +1,10 @@
+--- a/bindings/python/src/lib.rs
++++ b/bindings/python/src/lib.rs
+@@ -2024,6 +2024,7 @@
+ 
+ #[pymodule]
+ fn smg_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
++    m.add("GRADIATED_REFUSED_UPLOAD_DRAIN_VERSION", 1)?;
+     observability::metrics::register_jemalloc_as_global_allocator();
+     // The process-level TLS crypto provider, installed once when the module
+     // is imported: every HTTP client a binding builds takes it, whether or

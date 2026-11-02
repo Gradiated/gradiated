@@ -27,7 +27,13 @@ runtime. The package does not select the experimental W4A4 backend.
 
 ## Admission and ports
 
-Official SMG 1.13.0 owns the loopback frontend. A single backend URL, disabled
+SMG 1.13.0 owns the loopback frontend. Its Python wheel is rebuilt from pinned
+source `91b3e0c440f9ab7971aa3ba48b049d951bd963de` with a guarded HTTP upload
+rejection fix. A refused request drains its body within the configured request
+timeout (900 seconds for this runtime) before returning the native error, so
+supported slow uploads do not become early-close broken-pipe 502s in NGINX. Expired queue slots are released before that drain.
+The compiled extension exports a build marker checked in the actual archive.
+The patch adds no scheduler or admission queue. A single backend URL, disabled
 router retries, 16 active permits, two queued requests, a 60-second queue timeout,
 and disabled token-bucket rate limiting bound admission. A permit lasts through
 the response body. Queue-full responses are HTTP 429; queue expiry returns

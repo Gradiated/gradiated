@@ -42,6 +42,12 @@ def verify(root):
     from sglang.srt.configs.glm5_next import Glm5NextConfig
     from sglang.srt.server_args import ServerArgs
     from smg.launch_router import Router, parse_router_args
+    from smg.smg_rs import GRADIATED_REFUSED_UPLOAD_DRAIN_VERSION
+    if GRADIATED_REFUSED_UPLOAD_DRAIN_VERSION != 1:
+        raise RuntimeError('Native SMG upload rejection fix is missing')
+    smg_manifest = json.loads((root / 'smg-patches.json').read_text())
+    if smg_manifest['upstream_sha'] != '91b3e0c440f9ab7971aa3ba48b049d951bd963de':
+        raise RuntimeError('Qualified SMG source pin changed')
     if Router is None:
         raise RuntimeError('Compiled official SMG extension unavailable')
     site = Path(sglang.__file__).parent.parent

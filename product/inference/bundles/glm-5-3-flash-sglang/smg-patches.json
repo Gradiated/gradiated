@@ -1,0 +1,18 @@
+{
+  "upstream_sha": "91b3e0c440f9ab7971aa3ba48b049d951bd963de",
+  "source_sha256": "884b9e21d0efaa403fd307c413c7dd82306b1f5d72536314e2d115b805fe8c58",
+  "files": [
+    {
+      "path": "model_gateway/src/middleware/concurrency.rs",
+      "patch": "smg_refused_upload.patch",
+      "original_sha256": "571d40c39a6139a15c6a8bf599f0c1cb01542b1b7ecba321725823bc64750daa",
+      "overlay_sha256": "9201773d588843b136e5f9e9dadd986956ff62a8ad14193f57db360bb6c37094"
+    },
+    {
+      "path": "bindings/python/src/lib.rs",
+      "patch": "smg_build_marker.patch",
+      "original_sha256": "94d19004b80ff3e6140e676187a72211381e29f042bb27021732e965964229c5",
+      "overlay_sha256": "319f3d83c0c0276935ac4694f5b97b8f786582b7cf98c4228c4ef822832b4e36"
+    }
+  ]
+}

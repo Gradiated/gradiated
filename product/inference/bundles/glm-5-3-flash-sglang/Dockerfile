@@ -29,7 +29,35 @@ COPY bundles/glm-5-3-flash-sglang/artifacts.json bundles/glm-5-3-flash-sglang/fe
 RUN /bundle/python/bin/python3 /tmp/flashinfer-seed/fetch-artifacts.py --output /bundle/flashinfer-artifacts \
     && cp /tmp/flashinfer-seed/artifacts.json /bundle/artifacts.json
 
-FROM dependencies AS package
+FROM rust:1.98.0-bookworm@sha256:82150a52ec202c1b14d7817e14516c392bb7f5cfebd88f1ed531cb37ebd39922 AS smg-rust
+
+FROM dependencies AS smg-compiler
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential pkg-config libssl-dev protobuf-compiler libprotobuf-dev \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=smg-rust /usr/local/cargo /usr/local/cargo
+COPY --from=smg-rust /usr/local/rustup /usr/local/rustup
+ENV CARGO_HOME=/usr/local/cargo RUSTUP_HOME=/usr/local/rustup RUSTUP_TOOLCHAIN=1.98.0 \
+    PATH=/usr/local/cargo/bin:$PATH CARGO_BUILD_JOBS=2
+ADD --checksum=sha256:884b9e21d0efaa403fd307c413c7dd82306b1f5d72536314e2d115b805fe8c58 \
+    https://codeload.github.com/smg-project/smg/tar.gz/91b3e0c440f9ab7971aa3ba48b049d951bd963de /tmp/smg.tar.gz
+COPY bundles/glm-5-3-flash-sglang/smg-build-requirements.txt /tmp/smg-build-requirements.txt
+COPY bundles/glm-5-3-flash-sglang/smg-patches.json /tmp/sglang-patches/
+RUN uv pip install --python /bundle/python/bin/python3 --break-system-packages \
+      --no-deps --require-hashes -r /tmp/smg-build-requirements.txt \
+    && mkdir /src-smg && tar -xzf /tmp/smg.tar.gz -C /src-smg --strip-components=1 \
+    && /bundle/python/bin/python3 /tmp/sglang-patches/apply-patches.py /src-smg /tmp/sglang-patches --manifest smg-patches.json
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    --mount=type=cache,target=/src-smg/target \
+    cd /src-smg && cargo test --locked --release -p smg --lib middleware::concurrency::tests \
+    && cd bindings/python \
+    && /bundle/python/bin/maturin build --locked --release --interpreter /bundle/python/bin/python3 --compatibility linux --out /smg-wheels \
+    && uv pip install --python /bundle/python/bin/python3 --break-system-packages --reinstall --no-deps /smg-wheels/smg-*.whl \
+    && uv pip uninstall --python /bundle/python/bin/python3 --break-system-packages maturin \
+    && uv pip check --python /bundle/python/bin/python3 \
+    && cp /tmp/sglang-patches/smg-patches.json /bundle/smg-patches.json
+
+FROM smg-compiler AS package
 COPY bundles/package.sh /package.sh
 COPY --chmod=755 bundles/glm-5-3-flash-sglang/entrypoint /bundle/entrypoint
 COPY bundles/glm-5-3-flash-sglang/model-config.json bundles/glm-5-3-flash-sglang/patches.json /bundle/

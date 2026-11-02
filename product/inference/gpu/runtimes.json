@@ -172,5 +172,29 @@
     "environment": {
       "TENSOR_PARALLEL_SIZE": "2"
     }
+  },
+  "cfe71c482790ecaeb19aa073201e28bd5f4fce70b4291c5e8ec73bdd2382e4d9": {
+    "image": "gradiated/glm-sglang-bundle@sha256:cfe71c482790ecaeb19aa073201e28bd5f4fce70b4291c5e8ec73bdd2382e4d9",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v3": "cfe71c482790ecaeb19aa073201e28bd5f4fce70b4291c5e8ec73bdd2382e4d9"
+    },
+    "model_id": "dealignai/glm-5.3-flash-uncensored-sglang-canary",
+    "release": {
+      "schema_version": 1,
+      "model_path": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+      "model_revision": "745aac2ff0f10acf961f396df3f9418598aa7327",
+      "tokenizer_path": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+      "tokenizer_revision": "745aac2ff0f10acf961f396df3f9418598aa7327",
+      "runtime_revision": "glm-dealign-sglang-cfe71c482790",
+      "runtime_model_name": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4"
+    },
+    "gpus": 2,
+    "cpu": "32",
+    "memory": "400Gi",
+    "startup_timeout": 3600,
+    "warmup": true,
+    "environment": {
+      "TENSOR_PARALLEL_SIZE": "2"
+    }
   }
 }

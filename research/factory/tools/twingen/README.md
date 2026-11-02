@@ -228,6 +228,21 @@ benchmark mutations, to review the original object baseline while live read-only
 and billing data. Cache identity includes these review inputs. Artifact-creation feasibility in such a review
 is analytical; actual creation still needs root-agent rollout evidence.
 
+`v4/contract_review.py` makes the separate 15-candidate contract review reproducible. It samples gated tasks
+deterministically across families without reading model scores, freezes object baselines, and requires concrete
+minimal-answer and contract-match checks from fresh live queries. Its 14/15 bar does not waive existing validation
+rules. Run it before final model scoring, wrapped in an absolute-deadline timeout; a known data defect can be
+supplied explicitly with `--known-data-issue`. A failed review rejects that candidate lineage, not the campaign.
+
+```bash
+timeout 3600 python3 contract_review.py --tasks /path/to/gated/validated.jsonl \
+  --out /path/to/ignored/contracts --model gpt-6.1-terra --deadline 2026-11-02T04:00:00+00:00
+```
+
+A subsequent twin audit also detected hourly public arrivals and a narrow seconds range for returning sessions.
+Arrival times now sample the full daytime interval, including minutes and seconds; anonymous revisits have fresh
+arrival times. Tests check both public and product entry distributions. These checks do not replace a live audit.
+
 `v4/rubric_probe.py` keeps an observed rollout's tool work fixed and replaces only its final answers with a
 shortest user-complete answer, wrong numeric findings, clarification-only text or process-only text. This is a
 synthetic intervention test of the judge, not extra model samples. A failed minimal rewrite requires semantic

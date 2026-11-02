@@ -238,6 +238,26 @@ AI summaries despite the paid-feature description. Summaries now require an acti
 the backend generation event; a regression test checks this chronology. The rejected dataset/audit are preserved
 on the host. The rebuilt candidate must pass a fresh audit before task authoring or model comparison.
 
+`v4/training_pool.py` plans a separate correction-training pool: by default 20 training worlds (240 task
+candidates) and two development worlds (24 candidates), all using new seeds. It rotates three substantive
+question scopes per analytical family, population/history sizes, and moderate/hard authoring targets. Latest
+person properties cannot establish historical onboarding assignment: requests use immutable flag exposure
+records instead. These are candidate counts and intended difficulty, not acceptance or measured hardness.
+Generate only on the data host, using a separate loader tag and no replacement of evaluation teams:
+
+```bash
+python3 training_pool.py --out /path/to/training_pool --generate --first-seed 1101
+```
+
+Every world still needs a fresh live data audit and every task a primary validator plus independent gate.
+Before publishing training-ready tasks, independently review 30 accepted contracts (at least 28 SOUND),
+inspect semantic near-clones, and calibrate on separate development tasks. Keep the frozen 24-case evaluation
+and its worlds out of training, corrections, hints and checkpoint selection. These worlds still share a reporting
+product archetype; seed variation does not establish product diversity. The existing correction loop implements
+expert-guided student retries with hints removed before SFT, a DAgger-style approximation rather than textbook
+expert-action labeling at every learner state. Compare the resulting adapter with a fresh base run using the
+same harness and budgets; earlier correction-SFT experiments found drift could mimic learning.
+
 The paid-entitlement revision passed its first live twin audit as CLEAN after 35 executed queries. This admits
 task authoring, not the resulting tasks. A second calibration seed covers the complementary analytical families.
 The working calibration target is at least 12 analytical families and a frontier advantage around 20 percentage

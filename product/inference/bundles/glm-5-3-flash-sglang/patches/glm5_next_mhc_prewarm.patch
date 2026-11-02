@@ -1,0 +1,50 @@
+--- a/sglang/srt/models/glm5_next.py
++++ b/sglang/srt/models/glm5_next.py
+@@ -1929,0 +1930,45 @@
++            Glm5NextForConditionalGeneration._prewarm_mhc_kernels(self, is_nextn=is_nextn)
++
++    def _prewarm_mhc_kernels(self, is_nextn: bool = False) -> None:
++        if (
++            getattr(self, "_mhc_prewarmed_at_load", False)
++            or getattr(self, "encoder_only", False)
++            or not self.config.mhc
++            or not envs.SGLANG_OPT_USE_TILELANG_MHC_PRE.get()
++        ):
++            return
++        layers = (
++            [getattr(self.model, "decoder", None)]
++            if is_nextn
++            else self.model.layers
++        )
++        layer = next((m for m in layers if isinstance(m, Glm5NextDecoderLayer)), None)
++        if layer is None or not layer.hc_attn_fn.is_cuda:
++            return
++        from sglang.kernels.ops.layernorm.mhc import get_mhc_pre_token_count_representatives
++        from sglang.srt.runtime_context import get_schedule
++
++        schedule = get_schedule()
++        maximum = schedule.chunked_prefill_size
++        if maximum is None or maximum <= 0:
++            maximum = schedule.max_prefill_tokens
++        buckets = get_mhc_pre_token_count_representatives(
++            maximum, layer.config.hc_mult * layer.hidden_size
++        )
++        with torch.inference_mode():
++            for tokens in buckets:
++                layer.hc_attn_pre(
++                    torch.zeros(
++                        (tokens, layer.config.hc_mult * layer.hidden_size),
++                        dtype=torch.bfloat16,
++                        device=layer.hc_attn_fn.device,
++                    ),
++                    layer.input_layernorm.weight.data,
++                    layer.input_layernorm.variance_epsilon,
++                )
++        torch.cuda.synchronize()
++        # Release startup-only tensors before SGLang sizes the KV pool.
++        torch.cuda.empty_cache()
++        get_parallel().tp_group.barrier()
++        self._mhc_prewarmed_at_load = True
++        logger.info("GLM MHC prewarm at load: %d n_splits buckets", len(buckets))
+@@ -1936,0 +1982 @@
++        Glm5NextForConditionalGeneration._prewarm_mhc_kernels(self, is_nextn=is_nextn)

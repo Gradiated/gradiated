@@ -12,10 +12,16 @@ Prefill CUDA graphs are disabled; decode graphs remain enabled. Prefix caching
 uses the native pinned SGLang configuration. Actual resolved pool geometry must
 be recorded during GPU qualification.
 
-Three source patches preserve the measured configuration: gate/up global-scale
+Three compatibility patches preserve the measured configuration: gate/up global-scale
 folding before Marlin conversion, the corresponding ModelOpt dispatch, and the
 GLM NextN quantization guard. Their input and output SHA-256 digests are checked
-at build time. The downstream Marlin scale representation is lossy; these patches
+at build time. A fourth guarded patch warms GLM mHC prenorm kernels over the
+native token-count buckets during weight loading, before KV-pool sizing and
+readiness. It uses the loaded GLM boundary and real normalization weights, runs
+once for the target and MTP decoder, and synchronizes TP ranks after releasing
+startup tensors. This moves the known mHC shape compilations into startup instead of
+leaving them on the active decode path. GPU qualification of each built artifact is still
+required. The downstream Marlin scale representation is lossy; the compatibility patches
 and the shared checkpoint do not establish bit-exact equivalence to another
 runtime. The package does not select the experimental W4A4 backend.
 

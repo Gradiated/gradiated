@@ -194,6 +194,12 @@ not supplied findings. Review semantic breadth across the batch: distinct family
 do not establish distinct workflows. Exact assignment audits, timelines and invoice counts cannot be mandatory
 unless the user explicitly asks for them.
 
+Scope tasks to what the instrumented lifecycle supports. Onboarding experience is assigned after registration,
+so an experience-segmented onboarding funnel starts at completed signup. Entity investigations can compare
+observed engagement and account chronology; they cannot treat a world with no report retries as a meaningful
+same-report recovery benchmark. Re-author rejected tasks around supported observations and revalidate them;
+do not change frozen data or waive the rejecting gate to retain a task.
+
 ```bash
 # twingen venv, on fbf8; --out is the projects directory of a separate TWIN_V2_ROOT
 python3 scenario_project.py --out /path/to/scenario_hill/twingen/projects_v2 --seed 41 \

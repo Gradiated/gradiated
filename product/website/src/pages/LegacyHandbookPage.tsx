@@ -37,7 +37,10 @@ export const LegacyHandbookPage = ({
         ))}
       </nav>
       <div className="handbook-content">
-        <Link className="eyebrow inline-flex items-center gap-2" to="/handbook/">
+        <Link
+          className="eyebrow inline-flex items-center gap-2"
+          to="/handbook/"
+        >
           <ArrowLeft aria-hidden="true" className="h-3 w-3" strokeWidth={1.5} />
           Handbook
         </Link>

@@ -14,13 +14,15 @@ import { handbookPages, handbookSections } from "../handbook";
 import type { HandbookSlug } from "../handbook";
 import "../styles/index.css";
 
-const navigation: SectionNavigationGroup[] = handbookSections.map((section) => ({
-  heading: section.label,
-  items: section.pages.map((page) => ({
-    href: `/handbook/${page.slug}/`,
-    label: page.pageTitle,
-  })),
-}));
+const navigation: SectionNavigationGroup[] = handbookSections.map(
+  (section) => ({
+    heading: section.label,
+    items: section.pages.map((page) => ({
+      href: `/handbook/${page.slug}/`,
+      label: page.pageTitle,
+    })),
+  }),
+);
 
 const HandbookIndex = (): ReactElement => (
   <>

@@ -308,6 +308,10 @@ class RenderTests(unittest.TestCase):
             self.assertEqual(annotations['gradiated.com/model-id'], private['model_id'])
             self.assertEqual(annotations['gradiated.com/serving-model-id'], public_id)
             self.assertEqual(annotations['gradiated.com/serving-mode'], mode)
+            scaler = renderer.autoscaler('candidate', {**candidate, 'serving_mode': mode}, private)
+            for trigger in scaler['spec']['triggers']:
+                self.assertIn('model=' + json.dumps(public_id), trigger['metadata']['query'])
+                self.assertNotIn(private['model_id'], trigger['metadata']['query'])
         for unsafe in (
                 {k: v for k, v in candidate.items() if k != 'serving_mode'},
                 {k: v for k, v in candidate.items() if k != 'serving_model_id'},

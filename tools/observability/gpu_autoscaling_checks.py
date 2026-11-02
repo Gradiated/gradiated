@@ -45,7 +45,7 @@ def check_gpu_autoscaling(root):
         for trigger in triggers.values():
             assert trigger['metricType'] == 'AverageValue'
             assert trigger['metadata']['ignoreNullValues'] == 'false'
-        model_id = catalogue[model['runtime']]['model_id']
+        model_id = model.get('serving_model_id', catalogue[model['runtime']]['model_id'])
 
         def series(metric, values, pod='a', **labels):
             labels = {'namespace': 'gradiated', 'pod': pod, **labels}

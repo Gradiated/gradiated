@@ -157,7 +157,7 @@ def autoscaler(name, model, runtime):
         if type(paused) is not int or not 0 <= paused <= maximum:
             raise ValueError('Paused replicas must be an integer within the scaling bounds')
         annotations['autoscaling.keda.sh/paused-replicas'] = str(paused)
-    selector = 'namespace="gradiated",model=' + json.dumps(runtime['model_id'])
+    selector = 'namespace="gradiated",model=' + json.dumps(model.get('serving_model_id', runtime['model_id']))
     health = 'gradiated:autoscaling_demand{service="gateway"}'
     fresh = f'({health} and (timestamp({health}) > time() - 45))'
     idle = f'(0 * sum({health}))'

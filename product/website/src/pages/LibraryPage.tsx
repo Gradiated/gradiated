@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import type { ReactElement } from "react";
 import { articles } from "../articles";
-import { methodPages } from "../method";
+import { handbookPages } from "../handbook";
 
 export const LibraryPage = (): ReactElement => (
   <main className="notes library">
@@ -27,20 +27,19 @@ export const LibraryPage = (): ReactElement => (
     </section>
     <section
       className="library-section library-handbook"
-      aria-labelledby="method-heading"
+      aria-labelledby="handbook-heading"
     >
-      <h2 id="method-heading">Method</h2>
+      <h2 id="handbook-heading">Handbook</h2>
       <div className="post-list">
-        {methodPages.map((page) => (
+        {handbookPages.map((page) => (
           <Link
             className="post-row"
             key={page.slug}
-            to={`/library/method/${page.slug}/`}
+            to={`/handbook/${page.slug}/`}
           >
             <span>{page.section}</span>
             <div>
               <h2>{page.title}</h2>
-              <p>{page.indexDescription}</p>
             </div>
             <ArrowUpRight
               aria-hidden="true"

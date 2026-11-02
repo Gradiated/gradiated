@@ -6,13 +6,13 @@ import { libraryStories } from "../../library-stories";
  * thumbnail row.
  *
  * ONE CATALOGUE, which is the point of this file. It used to build its own
- * from `notes` and `methodPages` — a different set from the one the Library
+ * from `notes` and `handbookPages` — a different set from the one the Library
  * page renders, which reads the MDX articles as well. So the newest piece on
  * the site, the Carat article, was missing from the navigation entirely while
  * appearing first on the Library index. Two sources for one list is how that
  * happens; there is one now.
  *
- * It cost two 404s before this, too: the method rows were written out by hand
+ * It cost two 404s before this, too: the handbook rows were written out by hand
  * against /library/handbook/ and carried on pointing there after that half
  * became /library/method/.
  *
@@ -34,7 +34,7 @@ export type LibraryEntry = {
   gradient: string;
   href: string;
   /** Which collection in the Library it belongs to. */
-  kind: "method" | "note";
+  kind: "handbook" | "note";
   title: string;
 };
 

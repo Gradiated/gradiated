@@ -8,6 +8,38 @@
   "trailingSlash": true,
   "redirects": [
     {
+      "source": "/library/",
+      "has": [
+        {
+          "type": "query",
+          "key": "show",
+          "value": "(?:methods|handbook)"
+        }
+      ],
+      "destination": "/handbook/",
+      "permanent": true
+    },
+    {
+      "source": "/library/",
+      "destination": "/notes/",
+      "permanent": true
+    },
+    {
+      "source": "/methods/",
+      "destination": "/handbook/",
+      "permanent": true
+    },
+    {
+      "source": "/methods/:slug/",
+      "destination": "/handbook/:slug/",
+      "permanent": true
+    },
+    {
+      "source": "/library/method/:slug/",
+      "destination": "/handbook/:slug/",
+      "permanent": true
+    },
+    {
       "source": "/subprocessors-security/",
       "destination": "/subprocessors/",
       "permanent": true

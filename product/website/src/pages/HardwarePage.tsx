@@ -19,12 +19,12 @@ import "../styles/index.css";
    this row cannot drift from the Library or point at something that moved.
 
    The same card, not a second one that looks like it: this row used to be
-   built from `Cards`, which gave it an image well the Method page had no
+   built from `Cards`, which gave it an image well the Handbook page had no
    image for. */
 const PIECES = [
   storyAt("/library/gemma-inference-engine/"),
   storyAt("/notes/our-thesis/"),
-  storyAt("/library/method/mission/"),
+  storyAt("/handbook/mission/"),
 ].filter((story): story is NonNullable<typeof story> => story !== undefined);
 
 export const HardwarePage = (): ReactElement => (

@@ -91,11 +91,11 @@ export const Reading = ({
     <article className="gr-read">
       {/* Back to the index first: the reader who wants it wants it before
           they start, not after they finish. */}
-      <a className="gr-read-back gr-label" href="/library/">
+      <a className="gr-read-back gr-label" href="/notes/">
         <span aria-hidden className="gr-read-back-arrow">
           <Arrow />
         </span>
-        Library
+        Notes
       </a>
 
       <div className="gr-read-grid">

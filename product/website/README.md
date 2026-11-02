@@ -119,7 +119,9 @@ files directly. `vercel.json` redirects old docs routes to their current routes.
 - `src/docs/` contains the public MDX documentation.
 - `content/articles/*.mdx` is the source of truth for articles and their metadata.
 - `src/articles.ts` discovers articles and filters drafts by build mode.
-- `src/pages/ReadingPages.tsx` renders articles and Methods in the shared site shell, including the guide’s journey layout.
+- `src/pages/ReadingPages.tsx` renders articles in the shared site shell,
+  including the guide's journey layout.
+- `src/pages/HandbookPage.tsx` renders the Handbook index and individual pages.
 - `src/content.tsx` contains legacy shared content, including the Thesis body.
 - `public/` contains files served without transformation.
 - `public/.well-known/security.txt` is the RFC 9116 security contact. The build
@@ -272,7 +274,7 @@ Set `VITE_CONSOLE_BASE_URL` at build time to override this destination.
 The semiconductor guide lives at `/sand-to-thought/`, with its own top navigation
 link immediately after Library. The old `/library/how-to-get-an-answer-out-of-sand/`
 address redirects to it, preserving section fragments. Library contains Notes and
-Methods. Article subjects (`category`) remain separate from their collection.
+Handbook. Article subjects (`category`) remain separate from their collection.
 
 The guide opens with the animated dune-to-circuit artwork and continues directly
 into the illustrated article. Its contents list is generated from the script’s

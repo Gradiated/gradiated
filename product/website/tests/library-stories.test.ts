@@ -28,13 +28,11 @@ Article body.
   ),
 }));
 
-vi.mock("../src/method", () => ({
-  methodPages: [
-    { slug: "mission", title: "Mission", indexDescription: "Our mission." },
-  ],
+vi.mock("../src/handbook", () => ({
+  handbookPages: [{ slug: "mission", title: "Mission" }],
 }));
 
-it("keeps Library articles of every subject in the Notes filter", () => {
+it("keeps published writing of every subject in Notes", () => {
   expect(
     libraryStories
       .filter((story) => story.kind === "note")
@@ -42,13 +40,13 @@ it("keeps Library articles of every subject in the Notes filter", () => {
   ).toEqual(["/library/example/", "/library/hardware-example/"]);
 });
 
-it("keeps the guide outside the Library and Methods in their own filter", () => {
+it("keeps the guide outside Notes and Handbook in their own collection", () => {
   expect(
     libraryStories.some((story) => story.href === "/sand-to-thought/"),
   ).toBe(false);
   expect(
     libraryStories
-      .filter((story) => story.kind === "method")
+      .filter((story) => story.kind === "handbook")
       .map((story) => story.href),
-  ).toEqual(["/library/method/mission/"]);
+  ).toEqual(["/handbook/mission/"]);
 });

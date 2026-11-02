@@ -1,17 +1,17 @@
 import type { ComponentType } from "react";
-import BrandContent from "./method/brand.mdx";
-import GoToMarketContent from "./method/getting-out-the-gate.mdx";
-import InPersonContent from "./method/in-person.mdx";
-import MissionContent from "./method/mission.mdx";
-import PrioritiesContent from "./method/priorities.mdx";
-import ProductContent from "./method/product.mdx";
-import SequencingContent from "./method/sequencing-and-depth.mdx";
-import SpendingCompanyMoneyContent from "./method/spending-company-money.mdx";
-import ValuesContent from "./method/values.mdx";
-import PeopleContent from "./method/what-we-look-for.mdx";
-import WorkingWithPostHogContent from "./method/working-with-posthog.mdx";
+import BrandContent from "./handbook/brand.mdx";
+import GoToMarketContent from "./handbook/getting-out-the-gate.mdx";
+import InPersonContent from "./handbook/in-person.mdx";
+import MissionContent from "./handbook/mission.mdx";
+import PrioritiesContent from "./handbook/priorities.mdx";
+import ProductContent from "./handbook/product.mdx";
+import SequencingContent from "./handbook/sequencing-and-depth.mdx";
+import SpendingCompanyMoneyContent from "./handbook/spending-company-money.mdx";
+import ValuesContent from "./handbook/values.mdx";
+import PeopleContent from "./handbook/what-we-look-for.mdx";
+import WorkingWithPostHogContent from "./handbook/working-with-posthog.mdx";
 
-export type MethodSlug =
+export type HandbookSlug =
   | "mission"
   | "product"
   | "sequencing-and-depth"
@@ -24,123 +24,142 @@ export type MethodSlug =
   | "brand"
   | "working-with-posthog";
 
-export type MethodPageDefinition = {
+export type HandbookPageDefinition = {
   Content: ComponentType<{ components?: Record<string, unknown> }>;
   description: string;
-  indexDescription: string;
   pageTitle: string;
   section: string;
-  slug: MethodSlug;
+  slug: HandbookSlug;
   title: string;
 };
 
-export const methodPages: MethodPageDefinition[] = [
+export const handbookPages: HandbookPageDefinition[] = [
   {
     slug: "mission",
-    section: "Mission",
+    section: "Foundations",
     title: "Affordable and open intelligence",
     pageTitle: "Mission",
     description: "The mission of Gradiated.",
-    indexDescription: "More intelligence for less energy, open to everyone.",
     Content: MissionContent,
   },
   {
     slug: "product",
-    section: "Product",
+    section: "Product and engineering",
     title: "What we’re building",
     pageTitle: "What we’re building",
     description: "What Gradiated is building and who it is for.",
-    indexDescription: "Inference for long-running work.",
     Content: ProductContent,
   },
   {
     slug: "sequencing-and-depth",
-    section: "Product",
+    section: "Product and engineering",
     title: "Sequencing and depth",
     pageTitle: "Sequencing and depth",
     description: "How Gradiated sequences product development and goes deep.",
-    indexDescription: "Start in software. Go down the stack.",
     Content: SequencingContent,
   },
   {
     slug: "priorities",
-    section: "Engineering",
+    section: "Product and engineering",
     title: "Priorities",
     pageTitle: "Priorities",
     description: "How Gradiated prioritizes engineering changes.",
-    indexDescription: "Reliable inference first. Then optimize aggressively.",
     Content: PrioritiesContent,
   },
   {
     slug: "in-person",
-    section: "People",
+    section: "How we work",
     title: "In person",
     pageTitle: "In person",
     description: "Why Gradiated works in person.",
-    indexDescription: "Hard problems benefit from shared context.",
     Content: InPersonContent,
   },
   {
     slug: "what-we-look-for",
-    section: "People",
+    section: "How we work",
     title: "What we look for",
     pageTitle: "What we look for",
     description: "What Gradiated looks for in people.",
-    indexDescription: "Agency, optimism, and exceptional ability.",
     Content: PeopleContent,
   },
   {
     slug: "working-with-posthog",
-    section: "Company",
+    section: "How we work",
     title: "Working with PostHog",
     pageTitle: "Working with PostHog",
     description: "How Gradiated and PostHog work together.",
-    indexDescription: "Share the foundations. Build the company independently.",
     Content: WorkingWithPostHogContent,
   },
   {
     slug: "spending-company-money",
-    section: "Company",
+    section: "How we work",
     title: "Spending company money",
     pageTitle: "Spending company money",
     description: "How Gradiated handles expenses and company spending.",
-    indexDescription: "Use judgement. Make the value and the expense legible.",
     Content: SpendingCompanyMoneyContent,
   },
   {
     slug: "getting-out-the-gate",
-    section: "Go to market",
+    section: "Going to market",
     title: "Getting out the gate",
     pageTitle: "Getting out the gate",
     description: "How Gradiated gets out the gate.",
-    indexDescription: "Win the first users by being meaningfully better.",
     Content: GoToMarketContent,
   },
   {
     slug: "values",
-    section: "Values",
+    section: "Foundations",
     title: "Values",
     pageTitle: "Values",
     description: "The values of Gradiated.",
-    indexDescription: "Figure it out. Do the hard thing. Primitive first.",
     Content: ValuesContent,
   },
   {
     slug: "brand",
-    section: "Market",
+    section: "Going to market",
     title: "Brand",
     pageTitle: "Brand",
     description: "The Gradiated brand principles.",
-    indexDescription: "Everything is considered.",
     Content: BrandContent,
   },
 ];
 
-export const methodSections = methodPages.reduce<
-  Array<{ label: string; pages: MethodPageDefinition[] }>
->((sections, page) => {
-  const current = sections.at(-1);
-  if (current?.label === page.section) current.pages.push(page);
-  else sections.push({ label: page.section, pages: [page] });
-  return sections;
-}, []);
+const handbookSectionOrder: Array<{
+  artSlug: HandbookSlug;
+  label: string;
+  slugs: HandbookSlug[];
+}> = [
+  {
+    artSlug: "mission",
+    label: "Foundations",
+    slugs: ["mission", "values"],
+  },
+  {
+    artSlug: "sequencing-and-depth",
+    label: "Product and engineering",
+    slugs: ["product", "sequencing-and-depth", "priorities"],
+  },
+  {
+    artSlug: "in-person",
+    label: "How we work",
+    slugs: [
+      "in-person",
+      "what-we-look-for",
+      "working-with-posthog",
+      "spending-company-money",
+    ],
+  },
+  {
+    artSlug: "getting-out-the-gate",
+    label: "Going to market",
+    slugs: ["getting-out-the-gate", "brand"],
+  },
+];
+
+export const handbookSections = handbookSectionOrder.map((section) => ({
+  artSlug: section.artSlug,
+  label: section.label,
+  pages: section.slugs.map((slug) =>
+    handbookPages.find((page) => page.slug === slug)!,
+  ),
+}));

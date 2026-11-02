@@ -72,10 +72,12 @@ const SiteHeader = (): ReactElement => {
     ? "careers"
     : location.pathname.startsWith("/docs")
       ? "docs"
-      : location.pathname.startsWith("/library") ||
-          location.pathname.startsWith("/notes")
-        ? "library"
-        : "home";
+      : location.pathname.startsWith("/handbook")
+        ? "handbook"
+        : location.pathname.startsWith("/library") ||
+            location.pathname.startsWith("/notes")
+          ? "notes"
+          : "home";
 
   return (
     <header
@@ -111,10 +113,16 @@ const SiteHeader = (): ReactElement => {
             Docs
           </Link>
           <Link
-            className={`transition-colors hover:text-accent max-[850px]:hidden ${active === "library" ? "text-ink" : "text-muted"}`}
-            to="/library/"
+            className={`transition-colors hover:text-accent max-[850px]:hidden ${active === "notes" ? "text-ink" : "text-muted"}`}
+            to="/notes/"
           >
-            Library
+            Notes
+          </Link>
+          <Link
+            className={`transition-colors hover:text-accent max-[850px]:hidden ${active === "handbook" ? "text-ink" : "text-muted"}`}
+            to="/handbook/"
+          >
+            Handbook
           </Link>
           <Link
             className={`transition-colors hover:text-accent max-[850px]:hidden ${active === "careers" ? "text-ink" : "text-muted"}`}
@@ -163,7 +171,8 @@ const SiteHeader = (): ReactElement => {
           {[
             { label: "Home", to: "/" },
             { label: "Docs", to: "/docs/" },
-            { label: "Library", to: "/library/" },
+            { label: "Notes", to: "/notes/" },
+            { label: "Handbook", to: "/handbook/" },
             { label: "Careers", to: "/careers/" },
           ].map((item) => (
             <Link

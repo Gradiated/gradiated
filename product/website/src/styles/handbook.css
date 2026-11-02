@@ -1,7 +1,7 @@
 /* -- code ------------------------------------------------------------------
    The shared block's dark-ground palette outranks the system's syntax rules. */
 
-.gr-prose .docs-code-block:has(> pre.gr-method-code) {
+.gr-prose .docs-code-block:has(> pre.gr-handbook-code) {
   --code-fg: var(--color-code-text);
   --code-muted: var(--color-code-muted);
   --code-accent: var(--color-code-keyword);
@@ -10,7 +10,7 @@
   --code-deletion: var(--color-code-keyword);
 }
 
-.gr-prose pre.gr-method-code {
+.gr-prose pre.gr-handbook-code {
   padding-inline-end: calc(3.5 * var(--u));
 }
 

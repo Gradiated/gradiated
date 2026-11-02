@@ -1,3 +1,4 @@
+import { Fragment, useEffect } from "react";
 import type { ReactElement } from "react";
 import {
   BrowserRouter,
@@ -8,7 +9,7 @@ import {
 } from "react-router-dom";
 import { articles } from "./articles";
 import { jobs } from "./careers";
-import { methodPages } from "./method";
+import { handbookPages } from "./handbook";
 import { models } from "./models";
 import { ModelsPage } from "./pages/ModelsPage";
 import { ModelDetailPage } from "./pages/ModelDetailPage";
@@ -19,9 +20,10 @@ import { HomePage } from "./pages/HomePage";
 import { InferencePage } from "./pages/InferencePage";
 import { LEGAL, LegalPage } from "./pages/LegalPages";
 import type { LegalSlug } from "./pages/LegalPages";
-import { LibraryIndexPage } from "./pages/LibraryIndexPage";
+import { NotesIndexPage } from "./pages/LibraryIndexPage";
+import { HandbookPage } from "./pages/HandbookPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
-import { ArticleReadingPage, MethodReadingPage } from "./pages/ReadingPages";
+import { ArticleReadingPage } from "./pages/ReadingPages";
 import { SandLibraryPage } from "./pages/SandLibraryPage";
 import { SAND_TO_THOUGHT_URL } from "./urls";
 import { StylePage } from "./pages/StylePage";
@@ -39,6 +41,46 @@ const SandJourneyRedirect = (): ReactElement => {
   return <Navigate replace to={`/sand-to-thought/${hash}`} />;
 };
 
+const LibraryRedirect = (): ReactElement => {
+  const { search } = useLocation();
+  const destination = new URLSearchParams(search).get("show");
+  const target =
+    destination === "methods" || destination === "handbook"
+      ? "/handbook/"
+      : "/notes/";
+
+  useEffect(() => {
+    window.location.replace(target);
+  }, [target]);
+
+  /* Keep any served fallback stable until the query-based redirect runs. */
+  return <NotesIndexPage />;
+};
+
+const RouteScrollRestoration = (): null => {
+  const { hash, pathname } = useLocation();
+
+  useEffect(() => {
+    if (hash) {
+      let targetId: string;
+
+      try {
+        targetId = decodeURIComponent(hash.slice(1));
+      } catch {
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        return;
+      }
+
+      document.getElementById(targetId)?.scrollIntoView({ block: "start" });
+      return;
+    }
+
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [hash, pathname]);
+
+  return null;
+};
+
 export const AppRoutes = (): ReactElement => (
   <Routes>
     {articles.map((article) => (
@@ -53,16 +95,15 @@ export const AppRoutes = (): ReactElement => (
         giving it the old nav and the old footer. */}
     <Route element={<HomePage />} path="/" />
     <Route element={<AboutPage />} path="/about/" />
-    <Route element={<LibraryIndexPage />} path="/library/" />
+    <Route element={<LibraryRedirect />} path="/library/" />
     <Route element={<SandLibraryPage />} path={SAND_TO_THOUGHT_URL} />
     <Route
       element={<SandJourneyRedirect />}
       path="/library/how-to-get-an-answer-out-of-sand/"
     />
-    <Route
-      element={<LibraryIndexPage initialFilter="notes" />}
-      path="/notes/"
-    />
+    <Route element={<NotesIndexPage />} path="/notes/" />
+    <Route element={<HandbookPage />} path="/handbook/" />
+    <Route element={<Navigate replace to="/handbook/" />} path="/methods/" />
     <Route element={<CareersIndexPage />} path="/careers/" />
     {jobs.map((job) => (
       <Route
@@ -71,12 +112,21 @@ export const AppRoutes = (): ReactElement => (
         path={`/careers/${job.slug}/`}
       />
     ))}
-    {methodPages.map((page) => (
-      <Route
-        element={<MethodReadingPage slug={page.slug} />}
-        key={page.slug}
-        path={`/library/method/${page.slug}/`}
-      />
+    {handbookPages.map((page) => (
+      <Fragment key={page.slug}>
+        <Route
+          element={<HandbookPage slug={page.slug} />}
+          path={`/handbook/${page.slug}/`}
+        />
+        <Route
+          element={<Navigate replace to={`/handbook/${page.slug}/`} />}
+          path={`/methods/${page.slug}/`}
+        />
+        <Route
+          element={<Navigate replace to={`/handbook/${page.slug}/`} />}
+          path={`/library/method/${page.slug}/`}
+        />
+      </Fragment>
     ))}
     <Route element={<DocsNextPage />} path="/docs/*" />
     {Object.keys(LEGAL).map((slug) => (
@@ -105,6 +155,7 @@ export const AppRoutes = (): ReactElement => (
 
 export const App = (): ReactElement => (
   <BrowserRouter>
+    <RouteScrollRestoration />
     <AppRoutes />
   </BrowserRouter>
 );

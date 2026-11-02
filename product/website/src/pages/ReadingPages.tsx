@@ -12,9 +12,6 @@ import {
   DocsCodeBlock,
   DocsInlineCode,
 } from "../components/docs/DocsCodeBlock";
-import { methodComponents } from "../components/method";
-import { methodPages } from "../method";
-import type { MethodSlug } from "../method";
 import { storyAt } from "../library-stories";
 import "../styles/index.css";
 
@@ -29,43 +26,6 @@ const on = (date: string) =>
     month: "short",
     year: "numeric",
   });
-
-/* PLACEHOLDER date. Method carries none, so every handbook piece shows the
-   same one — the field wants adding to method.tsx. */
-const METHOD_DATE = "2026-09-09";
-
-export const MethodReadingPage = ({
-  slug,
-}: {
-  slug: MethodSlug;
-}): ReactElement => {
-  const page = methodPages.find((candidate) => candidate.slug === slug)!;
-  const Content = page.Content;
-
-  return (
-    <Substrate>
-      <Nav />
-      <Band>
-        <Module className="gr-module--top" index={0}>
-          <Reading
-            byline={on(METHOD_DATE)}
-            bylineDateTime={METHOD_DATE}
-            art={storyAt(`/library/method/${slug}/`)?.art?.tall}
-            cover={storyAt(`/library/method/${slug}/`)?.cover}
-            lede={page.indexDescription}
-            tags={["Method", page.section]}
-            title={page.title}
-          >
-            <Content components={methodComponents} />
-          </Reading>
-        </Module>
-      </Band>
-      <Band>
-        <Footer index={1} />
-      </Band>
-    </Substrate>
-  );
-};
 
 export const ArticleReadingPage = ({
   article,

@@ -20,7 +20,7 @@ export const ArticlePage = ({
   if (!Content) throw new Error(`Missing article component: ${article.file}`);
   return (
     <main className="article">
-      <Link className="eyebrow article-back-link" to="/library/">
+      <Link className="eyebrow article-back-link" to="/notes/">
         <ArrowLeft aria-hidden="true" className="h-3 w-3" strokeWidth={1.5} />
         <span>Library</span>
       </Link>

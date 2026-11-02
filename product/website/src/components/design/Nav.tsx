@@ -2,10 +2,8 @@ import { CONSOLE_BASE_URL, SAND_TO_THOUGHT_URL } from "../../urls";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactElement } from "react";
 import { articles } from "../../articles";
-import { library } from "./library";
 import { models } from "../../models";
 import { ModelArt } from "./ModelArt";
-import { WaferArtwork } from "./WaferArtwork";
 import { Arrow } from "./icons";
 import { NAV_LOGO_ASPECT, NavLogo } from "./NavLogo";
 
@@ -27,18 +25,12 @@ import { NAV_LOGO_ASPECT, NavLogo } from "./NavLogo";
  * to be measured against its trigger and clamped to the bar's span so a
  * right-edge item could not push it off. A band has no such problem.
  *
- * THE LIBRARY PANEL ALSO LISTS THE WRITING. Cards say what the section is;
- * the list says what is actually in it, newest first, across both halves —
- * notes and handbook pieces. It comes from ./library, which reads the real
- * catalogue rather than restating it. The list is a sample, not an index —
- * three rows and a way through to all of it.
- *
  * PANELS ARE CARDS. Each entry is a media well with a label under it, so a
  * panel is a small gallery rather than a list of descriptions. The wells are
  * empty until real media exists; an entry with `image` set fills its own. The
  * panel's width is not configured — the cards are fixed-width grid columns, so
  * the content measures to whatever its card count needs and the morph reads
- * the difference. Product's four and Library's two size themselves.
+ * the difference.
  *
  * THE SHEET. Below `wide` there is no room for four items, two actions and a
  * panel, so navigation becomes a full-screen sheet with the same cards stacked
@@ -87,14 +79,8 @@ type NavItem = {
     intro?: string;
     /** Appends the model list beside the cards. */
     models?: boolean;
-    /** Appends the writing list beside the cards. */
-    writing?: boolean;
   };
 };
-
-/** A sample, not an index — the link under it goes to the whole thing.
- *  `library` is already newest-first. */
-const LATEST = library.slice(0, 3);
 
 const hasGuide = articles.some(
   (article) => article.collection === "sand-to-thought",
@@ -129,31 +115,8 @@ const NAV_ITEMS: NavItem[] = [
      yet — one card is not a gallery, and the shared panel only earns its
      complexity where there is a set to move between. */
   { href: "/hardware/", label: "Hardware" },
-  {
-    href: "/library/",
-    label: "Library",
-    panel: {
-      writing: true,
-      cards: [
-        {
-          video: "frontier-notes",
-          label: "Notes",
-          body: "Frontier notes on inference, systems and hardware.",
-          /* The Library filtered to one half, not a separate page — the
-             filter is in the URL so it can be linked to. */
-          href: "/library/?show=notes",
-        },
-        {
-          image: "/brand/nav/handbook.jpg",
-          label: "Methods",
-          body: "How we operate, and why.",
-          /* Was /library/handbook/brand/, which main deleted along with
-             HandbookPage — a dead link in the nav. The handbook is Method now. */
-          href: "/library/?show=methods",
-        },
-      ],
-    },
-  },
+  { href: "/notes/", label: "Notes" },
+  { href: "/handbook/", label: "Handbook" },
   ...(hasGuide
     ? [{ href: SAND_TO_THOUGHT_URL, label: "Sand to Thought" }]
     : []),
@@ -175,14 +138,8 @@ const CLOSE_DELAY_MS = 120;
  *  the drawer would stay mounted for ever waiting for the event. */
 const SHEET_OUT_MS = 240;
 
-/** The latest pieces, and the way to the rest of them.
- *
- *  The same list in the panel and the drawer, like Card below — the two were
- *  the same markup written twice until the drawer needed it as well, which is
- *  how a list ends up with different dates in two places. */
 /** The models with pages, beside the Product cards — marks in a grid, the
- *  way the Library panel carries its writing. Same list in the panel and the
- *  sheet, same reason as WritingList. */
+ *  same list in the panel and the sheet. */
 const ModelsList = ({
   onEnter,
 }: {
@@ -215,63 +172,6 @@ const ModelsList = ({
         </li>
       ))}
     </ul>
-  </div>
-);
-
-const WritingList = ({
-  onEnter,
-}: {
-  /** Feeds the panel's one travelling highlight, like the cards do. */
-  onEnter?: (node: HTMLElement) => void;
-}): ReactElement => (
-  <div className="gr-nav-writing">
-    <p className="gr-label gr-nav-writing-title">Latest writing</p>
-    <ul>
-      {LATEST.map((note) => (
-        <li key={note.href}>
-          <a
-            className="gr-nav-note"
-            href={note.href}
-            onPointerEnter={(event) => onEnter?.(event.currentTarget)}
-          >
-            <div
-              aria-hidden
-              className="gr-nav-note-thumb"
-              style={{
-                backgroundImage: note.art
-                  ? `url(${note.art})`
-                  : note.cover
-                    ? undefined
-                    : `var(${note.gradient})`,
-                backgroundPosition: note.art
-                  ? "50% 50%"
-                  : `${note.coverAt} 50%`,
-              }}
-            >
-              {!note.art && note.cover ? (
-                <WaferArtwork options={note.cover} />
-              ) : null}
-            </div>
-            <span className="gr-nav-note-text">
-              <span className="gr-nav-note-name">
-                <span className="gr-nav-note-name-text">{note.title}</span>
-                <Arrow />
-              </span>
-              {note.date ? (
-                <time className="gr-nav-note-date" dateTime={note.dateTime}>
-                  {note.date}
-                </time>
-              ) : null}
-            </span>
-          </a>
-        </li>
-      ))}
-    </ul>
-
-    <a className="gr-link gr-nav-writing-all" href="/library/">
-      See all writing
-      <Arrow />
-    </a>
   </div>
 );
 
@@ -625,12 +525,9 @@ export const Nav = (): ReactElement => {
 
               {/* Spans the width two more cards would have taken, so a panel
                   with a list is the same width as one without — the morph
-                  between Product and Library changes height, not span. */}
+                  between items changes height, not span. */}
               {item.panel.models ? (
                 <ModelsList onEnter={highlightCard} />
-              ) : null}
-              {item.panel.writing ? (
-                <WritingList onEnter={highlightCard} />
               ) : null}
             </div>
           ) : null,
@@ -670,7 +567,6 @@ export const Nav = (): ReactElement => {
                   {/* Under the cards here, where the panel sets it beside
                       them: there is no second column in a drawer. */}
                   {item.panel?.models ? <ModelsList /> : null}
-                  {item.panel?.writing ? <WritingList /> : null}
                 </section>
               ))}
 

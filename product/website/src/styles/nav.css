@@ -938,7 +938,7 @@
 /* The way out of a sample. Aligned to the rows' text column rather than the
    thumbnails, so it reads as the end of the list and not as another row. */
 /* The card titles' type, not the body's. This is a peer of "Notes" and
-   "Methods" — a way into the same set — and it was reading as a caption
+   "Handbook" — a way into the same set — and it was reading as a caption
    because it inherited Barlow at body size. */
 .gr-nav-writing-all {
   margin-block-start: var(--u);
@@ -1092,7 +1092,7 @@
   grid-template-columns: calc(4 * var(--u)) minmax(0, 1fr);
 }
 
-@media (max-width: 959px) {
+@media (max-width: 1159px) {
   [data-tier="wide"] .gr-nav--with-guide .gr-nav-links,
   [data-tier="wide"] .gr-nav--with-guide .gr-nav-actions,
   [data-tier="wide"] .gr-nav--with-guide ~ .gr-nav-panel {

@@ -45,7 +45,7 @@ class SecondaryJudge(unittest.TestCase):
                 p.write_text(json.dumps({"model": arm, "status": "ok", "messages": [{"content": answer}]}))
             args = ["rejudge", "--tasks", str(root / "tasks.jsonl"), "--bench", str(root / "bench"), "--out",
                     str(root / "secondary"), "--judge-model", "independent-judge", "--student-samples", "1"]
-            with patch("sys.argv", args), patch("rejudge.importlib.import_module", return_value=judge), patch("builtins.print"):
+            with patch("sys.argv", args), patch("builtins.print"), patch("rejudge.importlib.import_module", return_value=judge):
                 main()
                 main()
             self.assertEqual(judge.score_transcript.call_count, 2)

@@ -234,7 +234,7 @@ describe("public inference probes", () => {
     },
   );
 
-  it("probes every five seconds despite failures and cleans up the lease and retired metrics", async () => {
+  it("keeps model checks at five seconds and deployment attempts at sixty seconds despite failures", async () => {
     vi.useFakeTimers();
     const registry = new Registry();
     const metrics = new InferenceProbeMetrics(registry);
@@ -253,8 +253,13 @@ describe("public inference probes", () => {
       signal: abort.signal,
       onReady: async () => {},
     });
-    await vi.advanceTimersByTimeAsync(10_001);
-    expect(probe).toHaveBeenCalledTimes(6);
+    await vi.advanceTimersByTimeAsync(120_001);
+    expect(probe.mock.calls.filter((call) => call[2] === "model")).toHaveLength(
+      25,
+    );
+    expect(
+      probe.mock.calls.filter((call) => call[2] === "deployment"),
+    ).toHaveLength(3);
     const rendered = await registry.metrics();
     expect(rendered).toContain(
       'deployment="' + deploymentId + '",result="failure"} 1',
@@ -298,7 +303,7 @@ describe("public inference probes", () => {
     expect(targeted).not.toHaveBeenCalled();
     release();
     await run;
-    expect(targeted).toHaveBeenCalledTimes(2);
+    expect(targeted).toHaveBeenCalledTimes(1);
   });
 
   it("gives targeted probes their full deadline after a slow routed phase", async () => {
@@ -333,6 +338,7 @@ describe("public inference probes", () => {
   });
 
   it("probes each replica and each distinct model, keeping their failures separate", async () => {
+    vi.useFakeTimers();
     const registry = new Registry();
     const metrics = new InferenceProbeMetrics(registry);
     const abort = new AbortController();
@@ -349,7 +355,7 @@ describe("public inference probes", () => {
       if (scope === "deployment") throw new Error("synthetic busy replica");
     });
     let rendered = "";
-    await runInferenceProbes({
+    const run = runInferenceProbes({
       eval: async () => 1,
       replicas: async () => replicas,
       probe,
@@ -357,22 +363,78 @@ describe("public inference probes", () => {
       signal: abort.signal,
       onReady: async () => {
         rendered = await registry.metrics();
-        abort.abort();
       },
     });
+    await vi.advanceTimersByTimeAsync(55_001);
+    abort.abort();
+    await run;
     expect(
       probe.mock.calls.filter((call) => call[2] === "deployment"),
     ).toHaveLength(3);
     expect(probe.mock.calls.filter((call) => call[2] === "model")).toHaveLength(
-      2,
+      24,
     );
     expect(rendered).toContain(
       `deployment="${deploymentId}",result="failure"} 1`,
     );
     expect(rendered).toContain(
-      'gradiated_inference_routed_probe_requests_total{model="test/model",result="success"} 1',
+      'gradiated_inference_routed_probe_requests_total{model="test/model",result="success"} 12',
     );
     expect(await registry.metrics()).not.toContain('model="test/model"');
+  });
+
+  it("stagger-checks every deployment each minute without resetting existing schedules on inventory changes", async () => {
+    vi.useFakeTimers();
+    const abort = new AbortController();
+    const initial = Array.from({ length: 14 }, (_, index) => ({
+      ...replica,
+      id: `replica-${String(index).padStart(2, "0")}`,
+    }));
+    const added = { ...replica, id: "replica-new" };
+    let inventory = initial;
+    const started = performance.now();
+    const attempts: { id: string; time: number }[] = [];
+    const models: number[] = [];
+    const run = runInferenceProbes({
+      eval: async () => 1,
+      replicas: async () => [...inventory].reverse(),
+      probe: async (replica, _signal, scope) => {
+        const time = performance.now() - started;
+        if (scope === "deployment") attempts.push({ id: replica.id, time });
+        else models.push(time);
+      },
+      metrics: new InferenceProbeMetrics(new Registry()),
+      signal: abort.signal,
+      onReady: async () => {},
+    });
+    await vi.advanceTimersByTimeAsync(59_999);
+    expect(new Set(attempts.map(({ id }) => id)).size).toBe(14);
+    expect(attempts).toHaveLength(14);
+    for (let time = 0; time < 60_000; time += 5_000)
+      expect(
+        attempts.filter((attempt) => attempt.time === time).length,
+      ).toBeLessThanOrEqual(2);
+
+    inventory = [...initial.slice(1), added];
+    await vi.advanceTimersByTimeAsync(120_000);
+    abort.abort();
+    await run;
+    expect(attempts.filter(({ id }) => id === initial[0]!.id)).toHaveLength(1);
+    for (const { id } of initial.slice(1)) {
+      const times = attempts
+        .filter((attempt) => attempt.id === id)
+        .map(({ time }) => time);
+      expect(times).toHaveLength(3);
+      expect(times[1]! - times[0]!).toBe(60_000);
+      expect(times[2]! - times[1]!).toBe(60_000);
+    }
+    const additions = attempts.filter(({ id }) => id === added.id);
+    expect(additions).toHaveLength(2);
+    expect(additions[0]!.time).toBeLessThan(120_000);
+    expect(additions[1]!.time - additions[0]!.time).toBe(60_000);
+    expect(models).toEqual(
+      Array.from({ length: 36 }, (_, index) => index * 5_000),
+    );
   });
 
   it("does not discover or probe after cancellation during lease acquisition", async () => {
@@ -394,6 +456,29 @@ describe("public inference probes", () => {
     ).rejects.toThrow();
     expect(replicas).not.toHaveBeenCalled();
     expect(probe).not.toHaveBeenCalled();
+  });
+
+  it("preserves discovery grace across inventories without reporting a successful probe", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1_000_000);
+    const registry = new Registry();
+    const metrics = new InferenceProbeMetrics(registry);
+    metrics.discover([replica]);
+    await vi.advanceTimersByTimeAsync(60_000);
+    metrics.discover([replica]);
+    const label = `{model="${replica.modelId}",deployment="${replica.id}"}`;
+    expect(await registry.metrics()).toContain(
+      `gradiated_inference_probe_discovered_timestamp_seconds${label} 1000`,
+    );
+    expect(await registry.metrics()).toContain(
+      `gradiated_inference_probe_last_success_timestamp_seconds${label} 0`,
+    );
+    metrics.discover([]);
+    expect(await registry.metrics()).not.toContain(label);
+    metrics.discover([replica]);
+    expect(await registry.metrics()).toContain(
+      `gradiated_inference_probe_discovered_timestamp_seconds${label} 1060`,
+    );
   });
 
   it("standby workers do not issue requests or keep a fresh inventory", async () => {

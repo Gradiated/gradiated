@@ -109,12 +109,21 @@ replica. Each request has its own four-second deadline. The normal pass cadence
 is five seconds; slow phases can extend a pass, bounded by twelve seconds
 including discovery and both phases, within the fifteen-second leader lease.
 
-Targeted probes still exercise every serving replica with fallback disabled, so
-a struggling replica remains visible even when customer routing succeeds.
-`InferenceDeploymentProbeFailed` is a warning only after five continuous minutes
-of failing targeted probes. Both alerts retain a five-minute recovery hold to
-avoid flapping. Model alerts repeat every fifteen minutes; replica warnings use
-the normal two-hour warning interval. The worker dashboard shows routed model
+Targeted probes exercise every serving replica once per sixty seconds with
+fallback disabled, staggered across twelve five-second passes to avoid a fleet-wide
+burst. Newly discovered replicas receive a slot within sixty seconds; retired
+replicas leave the schedule. Failed attempts wait for their next scheduled slot,
+without immediate retries. As with model checks, these are nominal cadences:
+slow requests, discovery failures or leader failover can delay checks.
+A struggling replica remains visible even when customer routing succeeds.
+`InferenceDeploymentProbeFailed` allows seventy-five seconds since the last
+success to cover the minute cadence, request deadline and scrape delay. It is a
+warning after that condition persists for one minute: about two minutes and
+fifteen seconds since the last success, allowing two minute-spaced attempts.
+Newly discovered deployments receive the same grace before the warning timer
+starts, so an unprobed replica does not warn early. Both alerts retain a
+five-minute recovery hold to avoid flapping. Model alerts repeat every fifteen
+minutes; replica warnings use the normal two-hour warning interval. The worker dashboard shows routed model
 availability separately from targeted replica results.
 `InferenceProbeMonitoringStalled` also pages if a serving model has no routed
 target or success metric on the fresh probe leader, including during a worker

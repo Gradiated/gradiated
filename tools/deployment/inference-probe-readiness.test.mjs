@@ -32,7 +32,7 @@ test("detects stopped monitoring separately from failed inference", () => {
     /discovery/,
   );
   assert.throws(
-    () => checkInferenceProbeReadiness([observation(80)], 100),
+    () => checkInferenceProbeReadiness([observation(24)], 100),
     /successful public inference/,
   );
   assert.throws(() => checkInferenceProbeReadiness([], 100), /discovery/);
@@ -120,4 +120,12 @@ test("rejects malformed inventory", async () => {
       /Invalid serving inference inventory/,
     );
   }
+});
+
+test("accepts minute-spaced deployment successes with deadline and scrape allowance", () => {
+  assert.equal(checkInferenceProbeReadiness([observation(25)], 100).size, 1);
+  assert.throws(
+    () => checkInferenceProbeReadiness([observation(24)], 100),
+    /successful public inference/,
+  );
 });

@@ -10,6 +10,7 @@ type Labels = (typeof labels)[number];
 export class InferenceProbeMetrics {
   readonly inventory: Gauge;
   private readonly targets: Gauge<Labels>;
+  private readonly discovered: Gauge<Labels>;
   private readonly success: Gauge<Labels>;
   private readonly attempts: Counter<Labels | "result">;
   private readonly latency: Histogram<Labels>;
@@ -32,6 +33,12 @@ export class InferenceProbeMetrics {
     this.targets = new Gauge({
       name: "gradiated_inference_probe_target",
       help: "Serving deployment included in public inference probes.",
+      labelNames: labels,
+      registers: [registry],
+    });
+    this.discovered = new Gauge({
+      name: "gradiated_inference_probe_discovered_timestamp_seconds",
+      help: "When the current probe leader first discovered a serving deployment.",
       labelNames: labels,
       registers: [registry],
     });
@@ -103,6 +110,7 @@ export class InferenceProbeMetrics {
       if (ids.has(id)) continue;
 
       this.targets.remove(label);
+      this.discovered.remove(label);
       this.success.remove(label);
       this.latency.remove(label);
       for (const result of ["success", "failure"])
@@ -111,7 +119,11 @@ export class InferenceProbeMetrics {
     }
     for (const replica of replicas) {
       const label = { model: replica.modelId, deployment: replica.id };
-      if (!this.active.has(replica.id)) this.success.set(label, 0);
+      if (!this.active.has(replica.id)) {
+        this.success.set(label, 0);
+        this.discovered.set(label, Date.now() / 1000);
+      }
+
       this.active.set(replica.id, label);
       this.targets.set(label, 1);
     }
@@ -166,6 +178,11 @@ export const runInferenceProbes = async (options: {
     keys: ["gradiated:inference-probes:leader"],
     arguments: [randomUUID()],
   };
+  const modelIntervalMs = 5_000;
+  const deploymentIntervalMs = 60_000;
+  const deploymentSlots = deploymentIntervalMs / modelIntervalMs;
+  const deploymentSchedule = new Map<string, number>();
+
   try {
     while (!options.signal.aborted) {
       const start = performance.now();
@@ -180,6 +197,38 @@ export const runInferenceProbes = async (options: {
           if (replicas.length) await options.beforePass?.();
           signal.throwIfAborted();
           options.metrics.discover(replicas);
+          const now = performance.now();
+          const active = new Set(replicas.map((replica) => replica.id));
+          for (const id of deploymentSchedule.keys()) {
+            if (!active.has(id)) deploymentSchedule.delete(id);
+          }
+
+          const ordered = [...replicas].sort((a, b) =>
+            a.id.localeCompare(b.id),
+          );
+          for (const [index, replica] of ordered.entries()) {
+            if (!deploymentSchedule.has(replica.id))
+              deploymentSchedule.set(
+                replica.id,
+                now +
+                  Math.floor((index * deploymentSlots) / ordered.length) *
+                    modelIntervalMs,
+              );
+          }
+
+          const due = replicas.filter(
+            (replica) => deploymentSchedule.get(replica.id)! <= now,
+          );
+          for (const replica of due) {
+            const scheduled = deploymentSchedule.get(replica.id)!;
+            deploymentSchedule.set(
+              replica.id,
+              scheduled +
+                (Math.floor((now - scheduled) / deploymentIntervalMs) + 1) *
+                  deploymentIntervalMs,
+            );
+          }
+
           const models = [
             ...new Map(
               replicas.map((replica) => [replica.modelId, replica]),
@@ -187,7 +236,7 @@ export const runInferenceProbes = async (options: {
           ];
           for (const [scope, targets] of [
             ["model", models],
-            ["deployment", replicas],
+            ["deployment", due],
           ] as const) {
             signal.throwIfAborted();
             await Promise.all(
@@ -211,6 +260,7 @@ export const runInferenceProbes = async (options: {
             );
           }
         } else {
+          deploymentSchedule.clear();
           options.metrics.discover([]);
           options.metrics.inventory.set(0);
         }
@@ -219,7 +269,7 @@ export const runInferenceProbes = async (options: {
         deadline.dispose();
       }
       await sleep(
-        Math.max(0, 5_000 - (performance.now() - start)),
+        Math.max(0, modelIntervalMs - (performance.now() - start)),
         options.signal,
       );
     }

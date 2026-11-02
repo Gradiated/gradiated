@@ -36,7 +36,7 @@ export const checkInferenceProbeReadiness = (
   const result = new Map();
   for (const [id, model] of targets) {
     const timestamp = successes.get(id) ?? 0;
-    if (!timestamp || now - timestamp > 10)
+    if (!timestamp || now - timestamp > 75)
       throw new Error(
         `No fresh successful public inference for ${model} on ${id}`,
       );
@@ -124,12 +124,12 @@ if (
         },
       );
       const current = checkInferenceProbeReadiness(observations);
-      const advancing =
+      const stable =
         previous.size === current.size &&
         [...current].every(
-          ([id, timestamp]) => previous.has(id) && timestamp > previous.get(id),
+          ([id, timestamp]) => previous.has(id) && timestamp >= previous.get(id),
         );
-      consecutive = advancing ? consecutive + 1 : 1;
+      consecutive = stable ? consecutive + 1 : 1;
       previous = current;
       console.log(
         `Public inference probes: ${current.size} serving deployments, ${consecutive}/3 fresh samples`,

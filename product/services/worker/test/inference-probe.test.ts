@@ -20,7 +20,7 @@ const options = {
 const response = (body: unknown, acknowledged = deploymentId) =>
   Response.json(body, {
     headers: {
-      "x-gradiated-verification-deployment": acknowledged,
+      "x-gradiated-deployment-id": acknowledged,
       "x-gradiated-generation-id": randomUUID(),
     },
   });
@@ -45,7 +45,7 @@ describe("public inference probes", () => {
     const fetch = vi.fn(async (input: unknown) => {
       const request = input as Request;
       expect(request.url).toBe("https://gateway.test/v1/chat/completions");
-      expect(request.headers.get("x-gradiated-verification-deployment")).toBe(
+      expect(request.headers.get("x-gradiated-deployment-id")).toBe(
         deploymentId,
       );
       expect(await request.json()).toMatchObject({
@@ -85,7 +85,7 @@ describe("public inference probes", () => {
     async (protocol) => {
       const fetch = vi.fn(async (input: unknown) => {
         expect(
-          (input as Request).headers.has("x-gradiated-verification-deployment"),
+          (input as Request).headers.has("x-gradiated-deployment-id"),
         ).toBe(false);
         return Response.json(
           protocol === "system_one"
@@ -219,7 +219,7 @@ describe("public inference probes", () => {
           return new Response(body, {
             headers: {
               "content-type": "application/json",
-              "x-gradiated-verification-deployment": deploymentId,
+              "x-gradiated-deployment-id": deploymentId,
               "x-gradiated-generation-id": randomUUID(),
             },
           });

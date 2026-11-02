@@ -7,15 +7,12 @@ export const probeModel = async (options: ModelVerification): Promise<void> => {
   const targetedFetch: typeof fetch = async (input, init) => {
     const request = new Request(input, init);
     if (options.deploymentId)
-      request.headers.set(
-        "x-gradiated-verification-deployment",
-        options.deploymentId,
-      );
+      request.headers.set("x-gradiated-deployment-id", options.deploymentId);
     const response = await (options.fetch ?? fetch)(request);
     if (
       response.ok &&
       ((options.deploymentId &&
-        response.headers.get("x-gradiated-verification-deployment") !==
+        response.headers.get("x-gradiated-deployment-id") !==
           options.deploymentId) ||
         !response.headers.get("x-gradiated-generation-id"))
     )

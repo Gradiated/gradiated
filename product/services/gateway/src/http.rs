@@ -34,14 +34,19 @@ use crate::{
 const MAX_REQUEST_BYTES: usize = 32_000_000;
 const GENERATION_ID_HEADER: HeaderName = HeaderName::from_static("x-gradiated-generation-id");
 const SERVICE_TIER_HEADER: HeaderName = HeaderName::from_static("x-gradiated-service-tier");
+const DEPLOYMENT_ID_HEADER: HeaderName = HeaderName::from_static("x-gradiated-deployment-id");
 const STREAM_KEEP_ALIVE: Duration = Duration::from_secs(10);
 
 pub fn browser_cors(origins: Vec<HeaderValue>) -> CorsLayer {
     CorsLayer::new()
         .allow_origin(AllowOrigin::list(origins))
         .allow_methods([Method::GET, Method::POST])
-        .allow_headers([AUTHORIZATION, CONTENT_TYPE])
-        .expose_headers([GENERATION_ID_HEADER, SERVICE_TIER_HEADER])
+        .allow_headers([AUTHORIZATION, CONTENT_TYPE, DEPLOYMENT_ID_HEADER])
+        .expose_headers([
+            GENERATION_ID_HEADER,
+            SERVICE_TIER_HEADER,
+            DEPLOYMENT_ID_HEADER,
+        ])
         .max_age(Duration::from_secs(3600))
 }
 
@@ -228,6 +233,13 @@ async fn serve(
             is_verification,
         )
         .await?;
+    if matches!(endpoint.operation, Operation::CountTokens)
+        && headers.contains_key(&DEPLOYMENT_ID_HEADER)
+    {
+        return Err(GatewayError::invalid_request(Some(
+            "x-gradiated-deployment-id",
+        )));
+    }
     crate::session_telemetry::record_body(&request);
     let translated = endpoint.protocol.translate_request(&request)?;
     let qualified =
@@ -235,19 +247,17 @@ async fn serve(
             .coordinator
             .qualify(metadata, headers, hosted, &translated, endpoint.kind)?;
 
-    let verification_deployment = headers
-        .contains_key("x-gradiated-verification-deployment")
-        .then_some(qualified.deployment.id);
+    let targeted = headers.contains_key(&DEPLOYMENT_ID_HEADER);
+    let deployment_id = qualified.deployment.id;
     let mut response = match endpoint.operation {
         Operation::Complete => complete(state, endpoint.protocol, qualified).await,
         Operation::CountTokens => count_tokens(state, &qualified).await,
     }?;
 
-    if let Some(id) = verification_deployment {
-        response.headers_mut().insert(
-            "x-gradiated-verification-deployment",
-            generation_id_header(id),
-        );
+    if targeted {
+        response
+            .headers_mut()
+            .insert(DEPLOYMENT_ID_HEADER, generation_id_header(deployment_id));
     }
 
     Ok(response)
@@ -530,7 +540,7 @@ mod tests {
             );
             let mut headers = vec![("authorization", "Bearer grad_test")];
             if verification {
-                headers.push(("x-gradiated-verification-deployment", target.as_str()));
+                headers.push(("x-gradiated-deployment-id", target.as_str()));
             }
             let response = app
                 .clone()
@@ -576,7 +586,28 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn an_unauthorised_verification_header_cannot_hide_http_failures() {
+    async fn token_count_cannot_acknowledge_a_replica_target() {
+        for path in ["/v1/messages/count_tokens", "/messages/count_tokens"] {
+            let state = TestServingState::ready();
+            let id = state.model.as_ref().unwrap().deployments[0].id.to_string();
+            let response = router_for(true, Arc::new(state))
+                .oneshot(json_request(
+                    path,
+                    &[
+                        ("authorization", "Bearer grad_test"),
+                        ("x-gradiated-deployment-id", id.as_str()),
+                    ],
+                    r#"{"model":"model-a","messages":[{"role":"user","content":"Hi"}]}"#,
+                ))
+                .await
+                .unwrap();
+            assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+            assert!(!response.headers().contains_key(&DEPLOYMENT_ID_HEADER));
+        }
+    }
+
+    #[tokio::test]
+    async fn an_ordinary_targeted_request_cannot_hide_http_failures() {
         let mut state = TestServingState::ready();
         let model = state.model.as_mut().unwrap();
         let target = model.deployments[0].id.to_string();
@@ -588,13 +619,13 @@ mod tests {
                 "/v1/chat/completions",
                 &[
                     ("authorization", "Bearer grad_test"),
-                    ("x-gradiated-verification-deployment", target.as_str()),
+                    ("x-gradiated-deployment-id", target.as_str()),
                 ],
                 r#"{"model":"model-a","messages":[{"role":"user","content":"Hi"}]}"#,
             ))
             .await
             .unwrap();
-        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
         let response = app
             .oneshot(
                 Request::builder()
@@ -644,7 +675,7 @@ mod tests {
                     .header("access-control-request-method", "POST")
                     .header(
                         "access-control-request-headers",
-                        "authorization,content-type",
+                        "authorization,content-type,x-gradiated-deployment-id",
                     )
                     .body(Body::empty())
                     .unwrap(),
@@ -655,6 +686,10 @@ mod tests {
             allowed.headers()["access-control-allow-origin"],
             "https://gradiated.com"
         );
+        assert!(allowed.headers()["access-control-allow-headers"]
+            .to_str()
+            .unwrap()
+            .contains("x-gradiated-deployment-id"));
 
         let exposed = app
             .clone()
@@ -676,6 +711,7 @@ mod tests {
             .unwrap();
         assert!(exposed_headers.contains("x-gradiated-generation-id"));
         assert!(exposed_headers.contains("x-gradiated-service-tier"));
+        assert!(exposed_headers.contains("x-gradiated-deployment-id"));
 
         let denied = app
             .oneshot(

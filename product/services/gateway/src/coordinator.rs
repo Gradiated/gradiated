@@ -356,11 +356,14 @@ impl RequestCoordinator {
         let mut cache_key = crate::session_affinity::cache_key(headers, &target.request)?;
 
         let authorization = self.authorize(headers, received_at).await?;
-        let header = "x-gradiated-verification-deployment";
-        let verification_deployment = if headers.contains_key(header) {
-            if self.verification_workspace_id != Some(authorization.identity.workspace_id)
-                || headers.get_all(header).iter().count() != 1
-            {
+        let header = "x-gradiated-deployment-id";
+        if headers.contains_key("x-gradiated-verification-deployment") {
+            return Err(GatewayError::invalid_request(Some(header)));
+        }
+        let verification = headers.contains_key(header)
+            && self.verification_workspace_id == Some(authorization.identity.workspace_id);
+        let deployment_target = if headers.contains_key(header) {
+            if headers.get_all(header).iter().count() != 1 {
                 return Err(GatewayError::invalid_request(Some(header)));
             }
             Some(
@@ -373,7 +376,7 @@ impl RequestCoordinator {
         } else {
             None
         };
-        *is_verification = verification_deployment.is_some();
+        *is_verification = verification;
 
         let mut model_id = target.model.clone();
         model_id.make_ascii_lowercase();
@@ -433,7 +436,7 @@ impl RequestCoordinator {
             return Err(GatewayError::ModelUnavailable);
         }
 
-        if let Some(id) = verification_deployment {
+        if let Some(id) = deployment_target {
             model.deployments.retain(|deployment| {
                 deployment.id == id && deployment.status != crate::DeploymentStatus::Draining
             });
@@ -472,7 +475,7 @@ impl RequestCoordinator {
 
         Ok(ClassifiedRequest {
             hosted: HostedRequest {
-                is_verification: verification_deployment.is_some(),
+                is_verification: verification,
                 cache_key,
                 identity,
                 model,

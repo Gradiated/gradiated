@@ -27,7 +27,7 @@ export const checkQualificationIsolation = async (
     logName: `qualification-isolation-${crypto.randomUUID()}`,
   });
   const client = new Client(gateway.url, 130_000);
-  const header = { "x-gradiated-verification-deployment": target.id };
+  const header = { "x-gradiated-deployment-id": target.id };
   try {
     for (let index = 0; index < 3; index += 1) {
       const ordinary = await client.post(instance.path, {
@@ -40,12 +40,12 @@ export const checkQualificationIsolation = async (
     expect(instance.runtimes[0]!.calls).toHaveLength(3);
     expect(instance.runtimes[1]!.calls).toHaveLength(0);
 
-    const rejected = await client.post(instance.path, {
+    const wrongModel = await client.post(outsider.path, {
       headers: { ...outsider.headers, ...header },
-      json: body,
+      json: outsider.body(),
     });
-    expect(rejected.status, rejected.text).toBe(400);
-    expect(instance.totalCalls()).toBe(3);
+    expect(wrongModel.status, wrongModel.text).toBe(404);
+    await outsider.expectNotDispatched();
 
     const verified = await client.post(instance.path, {
       headers: { ...instance.headers, ...header },

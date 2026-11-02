@@ -29,17 +29,14 @@ export const verifyModel = async (options: ModelVerification) => {
   const verifiedFetch: typeof fetch = async (input, init) => {
     const request = new Request(input, init);
     if (options.deploymentId)
-      request.headers.set(
-        "x-gradiated-verification-deployment",
-        options.deploymentId,
-      );
+      request.headers.set("x-gradiated-deployment-id", options.deploymentId);
     const response = await (options.fetch ?? fetch)(request, {
       signal: AbortSignal.any([request.signal, options.signal]),
     });
     if (response.ok) {
       if (
         options.deploymentId &&
-        response.headers.get("x-gradiated-verification-deployment") !==
+        response.headers.get("x-gradiated-deployment-id") !==
           options.deploymentId
       )
         throw new Error("Gateway did not acknowledge the target allocation");

@@ -58,12 +58,10 @@ describe("production SDK verification", () => {
       fetch: async (input) => {
         const request = input as Request;
         expect(request.url).toBe("https://gateway.test/v1/systemone");
-        expect(request.headers.get("x-gradiated-verification-deployment")).toBe(
-          id,
-        );
+        expect(request.headers.get("x-gradiated-deployment-id")).toBe(id);
         expect((await request.json()).model).toBe("test/model");
         const result = response(decision);
-        result.headers.set("x-gradiated-verification-deployment", id);
+        result.headers.set("x-gradiated-deployment-id", id);
         return result;
       },
     });
@@ -81,10 +79,7 @@ describe("production SDK verification", () => {
           fetch: async () => {
             const result = response(decision);
             if (acknowledged)
-              result.headers.set(
-                "x-gradiated-verification-deployment",
-                acknowledged,
-              );
+              result.headers.set("x-gradiated-deployment-id", acknowledged);
             return result;
           },
         }),
@@ -128,9 +123,7 @@ describe("production SDK verification", () => {
         ...options(),
         fetch: async (input) => {
           const request = input as Request;
-          expect(
-            request.headers.has("x-gradiated-verification-deployment"),
-          ).toBe(false);
+          expect(request.headers.has("x-gradiated-deployment-id")).toBe(false);
           const body = await request.json();
           calls++;
           if (!body.stream)

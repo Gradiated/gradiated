@@ -135,6 +135,22 @@ model identity before returning the requested public model ID.
 
 ## Deployment routing
 
+An authenticated workspace can pin a request to one serving replica with
+`x-gradiated-deployment-id: <UUID>`. This is the model-deployment record ID,
+currently the Kubernetes Pod UID, not a Kubernetes Deployment name or provider
+pod ID. The replica must belong to the requested model and have a fresh, healthy,
+accepting runtime status. An isolated deployment can be selected explicitly;
+draining and unknown targets are rejected. The request has no replica fallback,
+and a successful response echoes the same header. Normal workspace authorization,
+model access, billing, concurrency limits and production telemetry still apply.
+Requests without the header continue using normal routing. Token-count endpoints
+reject the selector because they do not dispatch generation to a replica.
+
+Automated SDK checks use the same header with a short-lived key in the configured
+internal verification workspace. Targeted requests authenticated to that workspace
+retain verification telemetry; other workspaces retain normal production telemetry.
+The retired `x-gradiated-verification-deployment` header is rejected.
+
 The gateway selects an exact served release, then ranks its healthy, accepting
 deployments by rendezvous hash. Session affinity takes precedence; sessionless
 chat requests hash their opening system/developer and first non-system messages,

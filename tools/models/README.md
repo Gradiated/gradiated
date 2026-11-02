@@ -93,16 +93,17 @@ keeps its deployment row unavailable for normal routing. An older worker ignores
 the mapping and cannot publish the private identity into the uncensored pool.
 The private runtime identity remains unchanged when promoting the canary.
 
-Test it with an authorized verification-workspace API key and the existing
-`x-gradiated-verification-deployment` header containing the canary Pod UID. The
-SDK verifier creates and revokes its own short-lived key. Ordinary customer keys
-cannot use this header. Verify that the response echoes the target UID; a targeted
-request does not fall back to the production pool, and draining targets are rejected.
+Test it with a normal workspace API key and
+`x-gradiated-deployment-id` containing the canary Pod UID. The response must echo
+that UID; a targeted request does not fall back to the production pool. Normal
+billing, limits and model access apply, and draining targets are rejected.
+Automated SDK checks use the same header with their own short-lived key in the
+configured verification workspace, which identifies verification traffic.
 
 ```sh
 curl https://api.gradiated.com/v1/chat/completions \
-  -H "Authorization: Bearer ${GRADIATED_VERIFICATION_API_KEY:?}" \
-  -H "x-gradiated-verification-deployment: ${CANARY_POD_UID:?}" \
+  -H "Authorization: Bearer ${GRADIATED_API_KEY:?}" \
+  -H "x-gradiated-deployment-id: ${CANARY_POD_UID:?}" \
   -H 'Content-Type: application/json' \
   -d '{"model":"dealignai/glm-5.3-flash-uncensored","stream":true,"messages":[{"role":"user","content":"Compute 13 times 17."}],"max_tokens":256}'
 ```

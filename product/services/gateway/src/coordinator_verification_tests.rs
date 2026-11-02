@@ -4,30 +4,6 @@ use crate::test_support::{metadata, TestServingState, WORKSPACE_ID};
 use crate::DeploymentStatus;
 
 #[tokio::test]
-async fn only_the_configured_workspace_can_target_a_deployment() {
-    for workspace in [None, Some(Uuid::nil())] {
-        let state = TestServingState::ready();
-        let id = state.model.as_ref().unwrap().deployments[0].id;
-        let coordinator =
-            RequestCoordinator::new(Arc::new(state)).with_verification_workspace(workspace);
-        let mut request_headers = headers(&WORKSPACE_KEY);
-        request_headers.insert(
-            "x-gradiated-verification-deployment",
-            id.to_string().parse().unwrap(),
-        );
-        assert!(coordinator
-            .classify(
-                &request_headers,
-                CHAT_BODY,
-                metadata().received_at,
-                Protocol::OpenAiChat
-            )
-            .await
-            .is_err());
-    }
-}
-
-#[tokio::test]
 async fn verification_targets_one_healthy_canary_without_customer_fallbacks() {
     let mut state = TestServingState::ready();
     let model = state.model.as_mut().unwrap();
@@ -61,7 +37,7 @@ async fn verification_targets_one_healthy_canary_without_customer_fallbacks() {
 
     let mut targeted = regular;
     targeted.insert(
-        "x-gradiated-verification-deployment",
+        "x-gradiated-deployment-id",
         canary.id.to_string().parse().unwrap(),
     );
     let classified = coordinator
@@ -100,10 +76,7 @@ async fn missing_draining_and_malformed_targets_fail_closed() {
         let coordinator = RequestCoordinator::new(Arc::new(state))
             .with_verification_workspace(Some(WORKSPACE_ID));
         let mut request_headers = headers(&WORKSPACE_KEY);
-        request_headers.insert(
-            "x-gradiated-verification-deployment",
-            target.parse().unwrap(),
-        );
+        request_headers.insert("x-gradiated-deployment-id", target.parse().unwrap());
         assert!(coordinator
             .classify(
                 &request_headers,
@@ -123,8 +96,8 @@ async fn duplicate_targets_are_rejected_even_for_the_verification_workspace() {
     let coordinator =
         RequestCoordinator::new(Arc::new(state)).with_verification_workspace(Some(WORKSPACE_ID));
     let mut request_headers = headers(&WORKSPACE_KEY);
-    request_headers.append("x-gradiated-verification-deployment", id.parse().unwrap());
-    request_headers.append("x-gradiated-verification-deployment", id.parse().unwrap());
+    request_headers.append("x-gradiated-deployment-id", id.parse().unwrap());
+    request_headers.append("x-gradiated-deployment-id", id.parse().unwrap());
     assert!(coordinator
         .classify(
             &request_headers,
@@ -134,4 +107,120 @@ async fn duplicate_targets_are_rejected_even_for_the_verification_workspace() {
         )
         .await
         .is_err());
+}
+
+#[tokio::test]
+async fn deployment_id_targets_an_isolated_replica_as_normal_workspace_traffic() {
+    for workspace in [None, Some(Uuid::nil())] {
+        let mut state = TestServingState::ready();
+        let deployment = &mut state.model.as_mut().unwrap().deployments[0];
+        deployment.status = DeploymentStatus::Unavailable;
+        let id = deployment.id;
+        let state = Arc::new(state);
+        let coordinator =
+            RequestCoordinator::new(state.clone()).with_verification_workspace(workspace);
+        let mut request_headers = headers(&WORKSPACE_KEY);
+        request_headers.insert("x-gradiated-deployment-id", id.to_string().parse().unwrap());
+        let mut internal_verification = true;
+        let classified = coordinator
+            .classify_with_traffic(
+                &request_headers,
+                CHAT_BODY,
+                metadata().received_at,
+                Protocol::OpenAiChat,
+                &mut internal_verification,
+            )
+            .await
+            .unwrap();
+        assert!(!internal_verification);
+        let request = coordinator
+            .qualify(
+                metadata(),
+                &request_headers,
+                classified.hosted,
+                CHAT_BODY,
+                RequestKind::Chat,
+            )
+            .unwrap();
+        assert_eq!(request.deployment.id, id);
+        assert_eq!(request.model_deployments.len(), 1);
+        assert!(!request.is_verification);
+        assert_eq!(
+            state.model.as_ref().unwrap().deployments[0].status,
+            DeploymentStatus::Unavailable
+        );
+    }
+}
+
+#[tokio::test]
+async fn public_deployment_targets_reject_invalid_duplicate_and_retired_headers() {
+    for values in [
+        vec!["not-a-uuid"],
+        vec!["00000000-0000-0000-0000-000000000000"; 2],
+    ] {
+        let coordinator = RequestCoordinator::new(Arc::new(TestServingState::ready()));
+        let mut request_headers = headers(&WORKSPACE_KEY);
+        for value in values {
+            request_headers.append("x-gradiated-deployment-id", value.parse().unwrap());
+        }
+        assert!(coordinator
+            .classify(
+                &request_headers,
+                CHAT_BODY,
+                metadata().received_at,
+                Protocol::OpenAiChat
+            )
+            .await
+            .is_err());
+    }
+    for headers_to_send in [
+        vec!["x-gradiated-verification-deployment"],
+        vec![
+            "x-gradiated-deployment-id",
+            "x-gradiated-verification-deployment",
+        ],
+    ] {
+        let state = TestServingState::ready();
+        let id = state.model.as_ref().unwrap().deployments[0].id.to_string();
+        let coordinator = RequestCoordinator::new(Arc::new(state))
+            .with_verification_workspace(Some(WORKSPACE_ID));
+        let mut request_headers = headers(&WORKSPACE_KEY);
+        for header in headers_to_send {
+            request_headers.insert(header, id.parse().unwrap());
+        }
+        assert!(coordinator
+            .classify(
+                &request_headers,
+                CHAT_BODY,
+                metadata().received_at,
+                Protocol::OpenAiChat
+            )
+            .await
+            .is_err());
+    }
+}
+
+#[tokio::test]
+async fn public_deployment_target_cannot_select_missing_or_draining_replicas() {
+    for draining in [false, true] {
+        let mut state = TestServingState::ready();
+        let id = if draining {
+            state.model.as_mut().unwrap().deployments[0].status = DeploymentStatus::Draining;
+            state.model.as_ref().unwrap().deployments[0].id
+        } else {
+            Uuid::nil()
+        };
+        let coordinator = RequestCoordinator::new(Arc::new(state));
+        let mut request_headers = headers(&WORKSPACE_KEY);
+        request_headers.insert("x-gradiated-deployment-id", id.to_string().parse().unwrap());
+        assert!(coordinator
+            .classify(
+                &request_headers,
+                CHAT_BODY,
+                metadata().received_at,
+                Protocol::OpenAiChat
+            )
+            .await
+            .is_err());
+    }
 }

@@ -125,3 +125,6 @@ product/inference/build/
 .agents/skills/
 .claude/skills/
 skills-lock.json
+
+# Written by scripts/sync-ashby-jobs.ts
+product/website/public/ashby-jobs.sha256

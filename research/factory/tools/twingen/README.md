@@ -243,6 +243,13 @@ A subsequent twin audit also detected hourly public arrivals and a narrow second
 Arrival times now sample the full daytime interval, including minutes and seconds; anonymous revisits have fresh
 arrival times. Tests check both public and product entry distributions. These checks do not replace a live audit.
 
+`v4/freeze_eval.py` admits a final comparison only after the independent 14/15 review, two disjoint test worlds,
+12 analytical families and primary/gate query proofs. It verifies raw-data hashes and exact reviewed task versions,
+excludes independently reviewed quality failures, and retains all remaining gated tasks without score inputs.
+Its new output directory contains the task file, task IDs and a manifest binding the data, review, gate proofs and
+explicit model/sample/timeout/judge protocol. Preserve this manifest before the first rollout; changes require a
+new evaluation version. Recipe or quality failures are not model failures and cannot contribute to the final gap.
+
 `v4/rubric_probe.py` keeps an observed rollout's tool work fixed and replaces only its final answers with a
 shortest user-complete answer, wrong numeric findings, clarification-only text or process-only text. This is a
 synthetic intervention test of the judge, not extra model samples. A failed minimal rewrite requires semantic

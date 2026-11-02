@@ -116,6 +116,35 @@ Run supervisor tests with:
 python3 -m unittest discover -s product/inference/runtimes/glm -p 'test_warmup*.py'
 ```
 
+### Structured-output failures
+
+GLM's generation configuration treats `<|user|>` (154827) as a stop token,
+alongside `<|endoftext|>` and `<|observation|>`. XGrammar must accept a configured
+stop token only once its grammar permits completion. A runtime error during an
+already-started stream can surface as a gateway `ProtocolViolation`; inspect the
+allocation's `runtime.log` to find the original rejection.
+
+The bundle adds grammar-state diagnostics to XGrammar's existing rejection log:
+`grammar_complete`, `grammar_terminated`, `configured_stop_token`,
+`processed_tokens`, `block_size`, `token_offset`, and `caller`. These distinguish
+a missing stop-token override from premature termination and help locate a
+speculative mask-generation failure. They do not record schemas, prompts,
+generated text, or additional token sequences. Acceptance, masking, and rollback
+behavior are unchanged.
+
+With the pinned runtime installed, run the CPU checks with:
+
+```sh
+GRADIATED_REQUIRE_GLM_GRAMMAR=1 python3 -m unittest discover \
+  -s product/inference/runtimes/glm -p 'test_grammar_diagnostics.py'
+```
+
+The tests inject an incomplete grammar and a missing stop override to verify the
+diagnostics, then check successful termination and speculative rollback. They
+do not reproduce a naturally occurring serving failure. Promoting the bundle
+requires the existing qualification and rollout workflow. Do not treat a grammar
+rejection as successful completion or remove output constraints to hide it.
+
 On an explicitly allocated test GPU, run the side-cache regression with:
 
 ```sh

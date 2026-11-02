@@ -1,0 +1,27 @@
+--- a/v1/structured_output/backend_xgrammar.py
++++ b/v1/structured_output/backend_xgrammar.py
+@@ -4,2 +4,3 @@
+ import json
++import sys
+ from dataclasses import dataclass, field
+@@ -165,3 +166,3 @@
+             return True
+-        for token in tokens:
++        for offset, token in enumerate(tokens):
+             if not self.matcher.accept_token(token):
+@@ -169,5 +170,14 @@
+                     "Failed to advance FSM for request %s "
+-                    "for tokens %s. Please file an issue.",
++                    "for tokens %s. grammar_complete=%s grammar_terminated=%s "
++                    "configured_stop_token=%s processed_tokens=%d "
++                    "block_size=%d token_offset=%d caller=%s. Please file an issue.",
+                     request_id,
+                     token,
++                    self.matcher.is_completed(),
++                    self.matcher.is_terminated(),
++                    token in self.matcher.stop_token_ids,
++                    self.num_processed_tokens,
++                    len(tokens),
++                    offset,
++                    sys._getframe(1).f_code.co_name,
+                 )

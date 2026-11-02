@@ -222,8 +222,7 @@ async fn serve(
     is_verification: &mut bool,
 ) -> Result<Response, GatewayError> {
     let body = body.map_err(body_rejection)?;
-
-    let ClassifiedRequest { hosted, request } = state
+    let classified = state
         .coordinator
         .classify_with_traffic(
             headers,
@@ -232,13 +231,18 @@ async fn serve(
             endpoint.protocol,
             is_verification,
         )
-        .await?;
+        .await;
+    crate::diagnostics::body::record("client_request", &body, None);
+    let ClassifiedRequest { hosted, request } = classified?;
     if matches!(endpoint.operation, Operation::CountTokens)
         && headers.contains_key(&DEPLOYMENT_ID_HEADER)
     {
         return Err(GatewayError::invalid_request(Some(
             "x-gradiated-deployment-id",
         )));
+    }
+    if body.len() > 1_048_576 {
+        crate::diagnostics::body::record_value("client_request", &request, None);
     }
     crate::session_telemetry::record_body(&request);
     let translated = endpoint.protocol.translate_request(&request)?;
@@ -297,6 +301,13 @@ fn record(
     let error_code = match &result {
         Ok(_) => "none",
         Err(error) => {
+            crate::diagnostics::body::record_value(
+                "client_error",
+                &serde_json::json!({
+                    "error": {"code": error.code(), "type": error.error_type(), "param": error.param(), "message": error.message()}
+                }),
+                Some(error.status().as_u16()),
+            );
             limited_warn!(
                 generation_id = generation_id.map(tracing::field::display),
                 route,
@@ -336,6 +347,7 @@ async fn complete(
             service_tier,
         } => {
             let body = protocol.translate_response(result.into_response())?;
+            crate::diagnostics::body::record_value("client_response", &body, Some(200));
             (Json(body).into_response(), service_tier)
         }
         CompletionResponse::Streaming {
@@ -358,7 +370,9 @@ async fn count_tokens(
 ) -> Result<Response, GatewayError> {
     let count = state.completions.count_tokens(qualified).await?;
 
-    Ok(Json(serde_json::json!({ "input_tokens": count })).into_response())
+    let body = serde_json::json!({ "input_tokens": count });
+    crate::diagnostics::body::record_value("client_response", &body, Some(200));
+    Ok(Json(body).into_response())
 }
 
 fn sse_response(
@@ -366,10 +380,37 @@ fn sse_response(
     stream: impl Stream<Item = StreamItem> + Send + 'static,
 ) -> Response {
     let mut renderer = protocol.stream_renderer();
+    let mut diagnostic_frames = 0;
+    let diagnostic_span = tracing::Span::current();
     let events = stream.flat_map(move |item| {
+        let _entered = diagnostic_span.enter();
+        let terminal = match &item {
+            StreamItem::Error(_) | StreamItem::Done => true,
+            StreamItem::Chunk(value) => {
+                value.get("usage").is_some_and(|v| !v.is_null())
+                    && value
+                        .get("choices")
+                        .and_then(serde_json::Value::as_array)
+                        .is_some_and(Vec::is_empty)
+            }
+        };
+        let frames = renderer.render(item);
+        if diagnostic_frames == 0 || terminal {
+            for frame in &frames {
+                if diagnostic_frames == 8 {
+                    break;
+                }
+
+                crate::diagnostics::body::record(
+                    "client_response_frame",
+                    frame.data.as_bytes(),
+                    Some(200),
+                );
+                diagnostic_frames += 1;
+            }
+        }
         futures_util::stream::iter(
-            renderer
-                .render(item)
+            frames
                 .into_iter()
                 .map(|frame| Ok::<_, axum::Error>(Event::from(frame))),
         )
@@ -1024,3 +1065,7 @@ mod tests {
 #[cfg(test)]
 #[path = "http_support.rs"]
 mod support;
+
+#[cfg(test)]
+#[path = "http_diagnostics_tests.rs"]
+mod diagnostics_tests;

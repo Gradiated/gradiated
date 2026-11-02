@@ -180,6 +180,7 @@ impl StreamStop {
             phase = "stream", reason,
             failure_kind = ?failure.map(RuntimeFailure::kind),
             transport = failure.and_then(RuntimeFailure::transport_code),
+            diagnostic_code = failure.map(RuntimeFailure::diagnostic_code),
             usable_output_delivered = progress.first_token_at.is_some(),
             elapsed_ms = (Utc::now() - started_at).num_milliseconds().max(0),
             "generation stream terminated abnormally");

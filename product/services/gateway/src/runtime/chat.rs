@@ -44,6 +44,7 @@ impl SglangClient {
             normalizer: ChatStreamNormalizer::new(models),
             phase: Phase::Streaming,
             pending: None,
+            terminal_diagnostics: 0,
         };
         if let Ok(first) = tokio::time::timeout(STREAM_ADMISSION_PEEK, stream.next_event()).await {
             stream.pending = first?;
@@ -61,6 +62,7 @@ impl SglangClient {
         let body = call
             .request
             .into_upstream_body_for_model(call.output_tokens, Some(&models.runtime));
+        crate::diagnostics::body::record_value("runtime_request", &body, None);
         let body = serde_json::to_vec(&body).map_err(|_| ProtocolViolation::Json)?;
 
         let upstream = self
@@ -91,6 +93,7 @@ struct ChatEventStream {
     normalizer: ChatStreamNormalizer,
     phase: Phase,
     pending: Option<RuntimeStreamEvent>,
+    terminal_diagnostics: u8,
 }
 
 enum Phase {
@@ -114,6 +117,49 @@ impl RuntimeEventStream for ChatEventStream {
             .await?
             .ok_or(ProtocolViolation::FrameOrder)?;
 
+        let first = self.normalizer.identity.is_none();
+        if first && data != "[DONE]" {
+            crate::diagnostics::body::record(
+                "runtime_response_first_frame",
+                data.as_bytes(),
+                Some(200),
+            );
+        }
+
+        let result = self.observe_data(&data);
+        match &result {
+            Err(failure) => {
+                crate::diagnostics::body::record(
+                    "runtime_response_invalid_frame",
+                    data.as_bytes(),
+                    Some(200),
+                );
+                crate::diagnostics::limited_warn!(
+                    diagnostic_code = failure.diagnostic_code(),
+                    phase = "response_frame",
+                    "runtime response frame rejected"
+                );
+            }
+            Ok(Some(RuntimeStreamEvent::Chunk(chunk)))
+                if (chunk.is_terminal_usage() || chunk.finish_reason().is_some())
+                    && self.terminal_diagnostics < 2 =>
+            {
+                crate::diagnostics::body::record(
+                    "runtime_response_terminal_frame",
+                    data.as_bytes(),
+                    Some(200),
+                );
+                self.terminal_diagnostics += 1;
+            }
+            _ => {}
+        }
+
+        result
+    }
+}
+
+impl ChatEventStream {
+    fn observe_data(&mut self, data: &str) -> Result<Option<RuntimeStreamEvent>, RuntimeFailure> {
         match (&self.phase, data == "[DONE]") {
             (Phase::AwaitingDone, true) => {
                 self.phase = Phase::Done;
@@ -121,7 +167,7 @@ impl RuntimeEventStream for ChatEventStream {
             }
             (Phase::Streaming, false) => {
                 if self.normalizer.identity.is_none() {
-                    if let Ok(rejection) = serde_json::from_str::<StreamRejection>(&data) {
+                    if let Ok(rejection) = serde_json::from_str::<StreamRejection>(data) {
                         if rejection.error.code == 503
                             && rejection.error.kind == "SERVICE_UNAVAILABLE"
                         {

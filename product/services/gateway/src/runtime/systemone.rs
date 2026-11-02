@@ -2,7 +2,7 @@ use serde::Serialize;
 use serde_json::{json, Map, Number, Value};
 
 use super::{
-    client::{read_bounded_body, send, Call, ModelNames},
+    client::{read_bounded_body, rejected_response, send, Call, ModelNames},
     ProtocolViolation, RuntimeCompletion, RuntimeFailure, SglangClient,
 };
 use crate::{
@@ -35,7 +35,7 @@ impl SglangClient {
         let response = send(upstream).await?;
         let status = response.status();
         if !status.is_success() {
-            return Err(RuntimeFailure::rejected(status, NormalizedUsage::zero()));
+            return Err(rejected_response(response).await);
         }
 
         let body = read_bounded_body(response).await?;

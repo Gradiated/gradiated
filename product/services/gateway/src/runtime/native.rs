@@ -13,7 +13,10 @@ use super::{
         valid_finish_reason, Choice, NormalizedCompletionResponse, NormalizedStreamResponse,
         PublicUsage, StreamChoice,
     },
-    client::{next_message, open_events, read_completion_body, send, Call, RuntimeEvents},
+    client::{
+        next_message, open_events, read_completion_body, rejected_response, send, Call,
+        RuntimeEvents,
+    },
     ChunkUsage, ProtocolViolation, RuntimeCompletion, RuntimeEventStream, RuntimeFailure,
     RuntimeFailureKind, RuntimeStreamChunk, RuntimeStreamEvent, SglangClient,
 };
@@ -96,7 +99,7 @@ impl SglangClient {
         let response = send(upstream).await?;
         let status = response.status();
         if !status.is_success() {
-            return Err(RuntimeFailure::rejected(status, NormalizedUsage::zero()));
+            return Err(rejected_response(response).await);
         }
 
         Ok(Accepted {
@@ -353,21 +356,53 @@ impl NativeEventStream {
                         .await?
                         .filter(|data| data != "[DONE]")
                         .ok_or(ProtocolViolation::FrameOrder)?;
-                    let frame: NativeFrame =
-                        serde_json::from_str(&data).map_err(|_| ProtocolViolation::Json)?;
+                    if self.output_tokens == 0 {
+                        crate::diagnostics::body::record(
+                            "runtime_response_first_frame",
+                            data.as_bytes(),
+                            Some(200),
+                        );
+                    }
+                    let frame: NativeFrame = serde_json::from_str(&data).map_err(|_| {
+                        crate::diagnostics::body::record(
+                            "runtime_response_invalid_frame",
+                            data.as_bytes(),
+                            Some(200),
+                        );
+                        ProtocolViolation::Json
+                    })?;
+                    if matches!(frame, NativeFrame::Terminal(_)) {
+                        crate::diagnostics::body::record(
+                            "runtime_response_terminal_frame",
+                            data.as_bytes(),
+                            Some(200),
+                        );
+                    }
 
                     match frame {
                         NativeFrame::Token(token) => {
                             self.phase = Phase::Streaming { sent_role };
 
-                            if let Some(content) = self.decode(token)? {
+                            if let Some(content) = self.decode(token).inspect_err(|_| {
+                                crate::diagnostics::body::record(
+                                    "runtime_response_invalid_frame",
+                                    data.as_bytes(),
+                                    Some(200),
+                                );
+                            })? {
                                 let chunk = self.content_chunk(content, !sent_role)?;
                                 self.phase = Phase::Streaming { sent_role: true };
                                 return Ok(Some(RuntimeStreamEvent::Chunk(chunk)));
                             }
                         }
                         NativeFrame::Terminal(terminal) => {
-                            let (finish, usage) = self.finish(terminal)?;
+                            let (finish, usage) = self.finish(terminal).inspect_err(|_| {
+                                crate::diagnostics::body::record(
+                                    "runtime_response_invalid_frame",
+                                    data.as_bytes(),
+                                    Some(200),
+                                );
+                            })?;
                             self.phase = Phase::Finished(usage);
                             return Ok(Some(RuntimeStreamEvent::Chunk(finish)));
                         }

@@ -1,4 +1,6 @@
 //! Bounded warning volume during outages. Counters and HTTP responses are never sampled.
+pub(crate) mod body;
+
 use std::{
     sync::Mutex,
     time::{Duration, Instant},

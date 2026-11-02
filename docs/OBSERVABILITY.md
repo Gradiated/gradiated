@@ -67,6 +67,40 @@ with suppressed counts on the next emitted event of that severity; metrics remai
 unsampled. Gateway terminal events include generation UUID, token categories,
 outcome and timing, before billing finalization. Finalization errors are separate.
 
+The gateway emits `inference_body` events containing redacted JSON in the `body`
+field. `stage` distinguishes the incoming client request, effective runtime request,
+runtime response, client response/error and selected response frames; `http_status`
+is included when known. Requests retain recognized API field names, nesting,
+numeric/boolean operational settings and recognized control strings. Prompt/content fields, credentials, tool definitions
+and arguments, schemas, metadata, token IDs, logprobs, media and other payload
+containers are replaced by `[redacted]`. Unknown string values are redacted too. Request stages use a separate list of
+request controls at exact permitted ancestor paths; retained field names must
+use their canonical spelling. Retained enum strings and derived error hints require stage-specific full
+paths as well. Response scalars also require exact protocol paths,
+so metadata containers nested below payload data do not retain numeric content.
+Response-shaped counters, timestamps, and validation metadata
+in requests are redacted rather than treated as trusted response metadata.
+Unrecognized field names become `_redacted_key_N`; their values are redacted,
+including numeric/boolean values and nested containers. Opaque body IDs and unverified
+model strings are redacted regardless of their apparent format; trusted request,
+model and deployment correlation remains in the existing lifecycle telemetry.
+Error messages are replaced with
+a redaction marker and a derived reason category, never retained verbatim. These
+categories are diagnostic hints, not authoritative validation codes.
+
+Each diagnostic is bounded to 16 KiB of redacted JSON, 256 visited values, depth
+12, 64 fields per object and 32 items per array. Original byte bodies larger than
+1 MiB, invalid JSON and duplicate keys produce size/parse summaries without raw
+content. Larger client requests that classify successfully still log their
+redacted parsed envelope, without reparsing the raw body. Truncation is explicit.
+Streaming logs first and terminal metadata plus a rejected frame, rather than
+every token; public stream logging is capped
+at eight frames. No full stream is buffered. Error-body reads for native/SystemOne
+are limited to 64 KiB and 250ms so diagnostics cannot indefinitely delay a retry.
+Raw HTTP headers and transport URLs are excluded; existing safe header telemetry
+and authenticated request spans provide correlation. Stream warnings also carry
+the stable protocol `diagnostic_code`. Logs retain the existing 30-day retention.
+
 Loki has verified EKS collection; external Runpod runtime collection is not yet
 connected. The runtime dashboard links to gateway diagnostics and must not be
 interpreted as proof that GPU/engine logs or engine-internal metrics are present.

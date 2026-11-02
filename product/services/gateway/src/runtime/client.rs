@@ -103,6 +103,11 @@ impl SglangClient {
         path: &str,
         body: impl Into<reqwest::Body>,
     ) -> RequestBuilder {
+        let body = body.into();
+        if let Some(bytes) = body.as_bytes() {
+            crate::diagnostics::body::record("runtime_request", bytes, None);
+        }
+
         let request = self
             .client
             .post(endpoint(deployment, path))
@@ -312,6 +317,27 @@ pub(super) async fn send(request: RequestBuilder) -> Result<Response, RuntimeFai
     request.send().await.map_err(RuntimeFailure::from_transport)
 }
 
+pub(super) async fn rejected_response(mut response: Response) -> RuntimeFailure {
+    let status = response.status();
+    if tracing::enabled!(tracing::Level::INFO) {
+        let read = async {
+            let mut body = Vec::new();
+            while let Ok(Some(chunk)) = response.chunk().await {
+                if body.len() + chunk.len() > 65_536 {
+                    return;
+                }
+
+                body.extend_from_slice(&chunk);
+            }
+            crate::diagnostics::body::record("runtime_response", &body, Some(status.as_u16()));
+        };
+        // Diagnostics must not hold up a capacity retry for an unresponsive error body.
+        let _ = tokio::time::timeout(Duration::from_millis(250), read).await;
+    }
+
+    RuntimeFailure::rejected(status, crate::NormalizedUsage::zero())
+}
+
 pub(super) async fn read_bounded_body(response: Response) -> Result<Vec<u8>, RuntimeFailure> {
     read_body(response, false).await
 }
@@ -321,6 +347,7 @@ pub(super) async fn read_completion_body(response: Response) -> Result<Vec<u8>, 
 }
 
 async fn read_body(mut response: Response, allow_prefill: bool) -> Result<Vec<u8>, RuntimeFailure> {
+    let status = response.status().as_u16();
     let declared = response.content_length();
     if declared.is_some_and(|length| length > MAX_RESPONSE_BYTES as u64) {
         return Err(RuntimeFailure::too_large(FailureCause::DeclaredTooLarge));
@@ -337,6 +364,7 @@ async fn read_body(mut response: Response, allow_prefill: bool) -> Result<Vec<u8
         }
         .map_err(RuntimeFailure::interrupted)?;
         let Some(chunk) = chunk else {
+            crate::diagnostics::body::record("runtime_response", &body, Some(status));
             return Ok(body);
         };
 

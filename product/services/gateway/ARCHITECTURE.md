@@ -44,7 +44,7 @@ The gateway does not contain:
 - model aliases or silent parameter translation;
 - GPU provisioning or a fleet controller;
 - parallel or post-output request retries;
-- prompt, completion, arbitrary request-body, or credential persistence;
+- raw prompt, completion, unredacted request-body, or credential persistence;
 - a second cache, durable queue, reservation ledger, or in-progress database.
 
 ## Design principles
@@ -947,12 +947,22 @@ for inference logs.
 They must not contain:
 
 - raw or digested API keys;
-- prompts, completions, message counts that reveal content, or request bodies;
+- prompts, completions, or unredacted request bodies;
 - private SGLang URLs or secret references;
 - raw upstream response or error bodies.
 
-Failure diagnostics are emitted at lifecycle boundaries, not for tokens or successful
-requests. Routing failures include candidate counts by exclusion reason (including
+The `inference_body` diagnostic retains a bounded redacted JSON envelope for
+client and effective runtime requests, buffered responses, public errors and
+selected streaming frames. Sensitive payload values are replaced in place;
+recognized API keys, structure, numeric/boolean operational settings and known
+control enums remain. Unknown field names and their values are redacted, as are
+unknown free-form strings. The shared redactor also removes
+credentials, schema/tool payloads, media, encoded tokens and echoed error input.
+Malformed/oversized bodies produce summaries without content. See
+[`docs/OBSERVABILITY.md`](../../../docs/OBSERVABILITY.md) for limits and stages.
+
+Failure diagnostics are emitted at lifecycle boundaries, not per token. Routing
+failures include candidate counts by exclusion reason (including
 missing/stale status, release/revision mismatch and capacity); runtime attempts
 include deployment ID, attempt, upstream HTTP status, bounded transport/failure
 class, elapsed time and retry selection. Streaming failures after response startup

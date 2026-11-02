@@ -95,7 +95,7 @@ impl GatewayError {
         }
     }
 
-    fn error_type(&self) -> &'static str {
+    pub(crate) fn error_type(&self) -> &'static str {
         match self {
             Self::InvalidApiKey | Self::ProviderKeyRequired => "authentication_error",
             Self::WorkspaceArchived | Self::OrganizationSuspended => "permission_error",

@@ -116,13 +116,35 @@ Run supervisor tests with:
 python3 -m unittest discover -s product/inference/runtimes/glm -p 'test_warmup*.py'
 ```
 
-### Structured-output failures
+### Structured-output stop tokens
 
 GLM's generation configuration treats `<|user|>` (154827) as a stop token,
-alongside `<|endoftext|>` and `<|observation|>`. XGrammar must accept a configured
-stop token only once its grammar permits completion. A runtime error during an
-already-started stream can surface as a gateway `ProtocolViolation`; inspect the
-allocation's `runtime.log` to find the original rejection.
+alongside `<|endoftext|>` and `<|observation|>`. XGrammar's compiler must know all
+of them, as well as the request matcher. Inferring compiler stop tokens from
+the tokenizer alone supplies only `<|endoftext|>`. With a mixed vocabulary, a
+mask can then allow an extra stop token as unfinished JSON string content,
+while the matcher rejects it as a premature stop. vLLM aborts the stream; the
+gateway can report that runtime error as `ProtocolViolation`.
+
+`grammar-stop-tokens.patch` supplies the union of the model generation config's
+EOS IDs and the tokenizer's EOS ID to the compiler. It handles list and scalar
+EOS configs and retains valid stopping after grammar completion. The CPU
+regression uses a synthetic mixed vocabulary to reproduce the mask/matcher
+disagreement without weights or a GPU, including speculative rollback.
+
+Against a private runtime, the following sends three synthetic requests capped
+at 96 output tokens each. The ordinary-string control succeeds on the affected
+runtime; schemas requiring `<|user|>` or `<|observation|>` string content trigger
+an internal error. The script returns a nonzero status if any request fails.
+
+```sh
+timeout 60 python3 product/inference/runtimes/glm/reproduce_stop_tokens.py \
+  --url "$RUNTIME_URL"
+```
+
+The script's `--mask-extra-stops` option is a diagnostic control that suppresses
+the extra EOS tokens for those synthetic requests only. It changes their stop
+semantics and is not a customer-request policy.
 
 The bundle adds grammar-state diagnostics to XGrammar's existing rejection log:
 `grammar_complete`, `grammar_terminated`, `configured_stop_token`,
@@ -136,13 +158,12 @@ With the pinned runtime installed, run the CPU checks with:
 
 ```sh
 GRADIATED_REQUIRE_GLM_GRAMMAR=1 python3 -m unittest discover \
-  -s product/inference/runtimes/glm -p 'test_grammar_diagnostics.py'
+  -s product/inference/runtimes/glm -p 'test_grammar*.py'
 ```
 
-The tests inject an incomplete grammar and a missing stop override to verify the
-diagnostics, then check successful termination and speculative rollback. They
-do not reproduce a naturally occurring serving failure. Promoting the bundle
-requires the existing qualification and rollout workflow. Do not treat a grammar
+The diagnostic tests also inject an incomplete grammar and a missing stop
+override to distinguish these causes in logs. Promoting the bundle requires
+the existing qualification and rollout workflow. Do not treat a grammar
 rejection as successful completion or remove output constraints to hide it.
 
 On an explicitly allocated test GPU, run the side-cache regression with:

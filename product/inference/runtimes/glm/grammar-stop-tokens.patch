@@ -1,0 +1,18 @@
+--- a/v1/structured_output/backend_xgrammar.py
++++ b/v1/structured_output/backend_xgrammar.py
+@@ -42,0 +43,10 @@
++        # Compiler masks and request matchers must agree on model stop tokens.
++        generation_config = self.vllm_config.model_config.try_get_generation_config()
++        eos_token_ids = generation_config.get("eos_token_id") or []
++        if isinstance(eos_token_ids, int):
++            eos_token_ids = [eos_token_ids]
++        model_stop_token_ids = set(eos_token_ids)
++        if self.tokenizer.eos_token_id is not None:
++            model_stop_token_ids.add(self.tokenizer.eos_token_id)
++        stop_token_ids = sorted(model_stop_token_ids)
++
+@@ -46,2 +55,0 @@
+-            stop_token_ids = [self.tokenizer.eos_token_id]
+-
+@@ -64,0 +73 @@
++                stop_token_ids=stop_token_ids or None,

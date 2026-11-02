@@ -52,7 +52,9 @@ CONTEXT = ("Harbor Reports is a fictional self-service reporting product for ind
            "the observation period. Anonymous visitors browse public marketing pages and can abandon signup; "
            "they have no billing account or email. Web events carry stable user/device context; billing and AI "
            "generation events come from the backend. Subscription renewals are separate invoices, not new signups. "
-           "Member referrals originate from tagged links on community.harborreports.io.")
+           "Member referrals originate from tagged links on community.harborreports.io. Person/account "
+           "acquisition_source is first-touch attribution; event UTM and referrer fields describe the current "
+           "visit. Returning visits may be direct or arrive through a different channel.")
 
 
 def identifier(seed: int, *parts) -> str:
@@ -63,6 +65,20 @@ def referral_context(source: str) -> dict:
     domain = {"google": "www.google.com", "referral": "community.harborreports.io"}.get(source)
     return {"$referrer": f"https://{domain}/" if domain else "$direct",
             "$referring_domain": domain or "$direct"}
+
+
+def visit_context(seed: int, person_id: str, session_key, first_source: str, first: bool) -> dict:
+    source = first_source
+    if not first:
+        value = int(uuid.UUID(identifier(seed, "visit-source", person_id, session_key)))
+        bucket = value % 100
+        source = "direct" if bucket < 60 else first_source if bucket < 85 else (
+            "google", "newsletter", "referral", "direct")[(value >> 8) % 4]
+    return {"utm_source": source,
+            "utm_medium": {"google": "cpc", "newsletter": "email", "referral": "referral", "direct": "direct"}[source],
+            "utm_campaign": {"google": "reporting-search", "newsletter": "analyst-weekly",
+                             "referral": "member-referrals", "direct": ""}[source],
+            **referral_context(source)}
 
 
 def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split: str = "train",
@@ -97,7 +113,6 @@ def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split:
         pid, account = identifier(seed, "person", i), identifier(seed, "account", i)
         name = FIRST[i % len(FIRST)] + " " + LAST[i // len(FIRST)]
         source = rng.choices(["google", "newsletter", "referral", "direct"], [35, 20, 20, 25])[0]
-        medium = {"google": "cpc", "newsletter": "email", "referral": "referral", "direct": "direct"}[source]
         country, country_name, city = rng.choice(COUNTRIES)
         profile = dict(rng.choices(PROFILES, [55, 30, 15])[0])
         variant = "guided" if int(uuid.UUID(pid)) % 2 else "control"
@@ -147,10 +162,7 @@ def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split:
             t = created if age == 0 else arrival(day)
             sid = identifier(seed, "session", i, day)
             plan = "studio" if paid_at and t >= paid_at else "free"
-            session = {**context, "plan": plan, "utm_source": source, "utm_medium": medium,
-                       "utm_campaign": {"google": "reporting-search", "newsletter": "analyst-weekly",
-                                        "referral": "member-referrals", "direct": ""}[source],
-                       **referral_context(source)}
+            session = {**context, "plan": plan, **visit_context(seed, pid, day, source, first=age == 0)}
 
             def action(event, props=None, delay=None):
                 nonlocal t
@@ -236,12 +248,11 @@ def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split:
         profile = dict(rng.choices(PROFILES, [55, 30, 15])[0])
         context = {**profile, "$lib": "web", "$device_id": identifier(seed, "visitor-device", i), "$is_identified": False,
                    "$geoip_country_code": country, "$geoip_country_name": country_name, "$geoip_city_name": city,
-                   "utm_source": source, "utm_medium": {"google": "cpc", "newsletter": "email", "referral": "referral", "direct": "direct"}[source],
-                   "utm_campaign": {"google": "reporting-search", "newsletter": "analyst-weekly", "referral": "member-referrals", "direct": ""}[source],
-                   **referral_context(source)}
+                   **visit_context(seed, pid, 0, source, first=True)}
         offsets = sorted({0, *(rng.randrange(min(15, (now - created).days + 1)) for _ in range(rng.randrange(3)))})
         attempted = False
         for offset in offsets:
+            context.update(visit_context(seed, pid, offset, source, first=offset == 0))
             t = created if offset == 0 else arrival(created.date() + dt.timedelta(days=offset))
             sid = identifier(seed, "visitor-session", i, offset)
             paths = ["/"]
@@ -273,8 +284,12 @@ def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split:
     definitions = {"event_definitions": [{"name": e, "last_seen_at": max(r["timestamp"] for r in events if r["event"] == e).isoformat(),
                                           "description": e.replace("_", " "), "generated_count": n} for e, n in sorted(counts.items())],
                    "property_definitions": [{"name": p, "type": 1, "property_type": types[p],
-                                             "is_numerical": types[p] == "Numeric"} for p in sorted(set().union(*props.values()))]
-                   + [{"name": p, "type": 2, "property_type": "String"}
+                                             "is_numerical": types[p] == "Numeric",
+                                             **({"description": "Current-visit attribution; not the person's first-touch channel."}
+                                                if p in ("utm_source", "utm_medium", "utm_campaign", "$referrer", "$referring_domain") else {})}
+                                            for p in sorted(set().union(*props.values()))]
+                   + [{"name": p, "type": 2, "property_type": "String",
+                       **({"description": "First-touch acquisition source, fixed at registration."} if p == "acquisition_source" else {})}
                       for p in sorted({k for person in persons for k in json.loads(person["properties"])})],
                    "event_properties": [{"event": e, "property": p} for e, ps in props.items() for p in sorted(ps)]}
     twin_id = identifier(seed, "project")

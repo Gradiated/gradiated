@@ -261,7 +261,12 @@ same harness and budgets; earlier correction-SFT experiments found drift could m
 The first training-pool early contract review passed only 9/15 despite the initial gates. All six failures
 concerned systematic referral UTM tags with direct referrer fields. Member referrals now have a coherent
 community URL/domain on registered and anonymous journeys. This repair consumes no random draws; a regression
-snapshot verifies that all other event/business values stay unchanged. Preserve previous worlds and proofs.
+snapshot verifies that all non-attribution event/business values stay unchanged. A fresh audit of the first
+repair also caught first-touch tags being repeated on every returning session. Person/account acquisition
+now stays first-touch while the five event UTM/referrer fields describe the current visit. Visit channels vary
+deterministically without consuming the journey RNG; property descriptions make the distinction explicit.
+First-touch cohorts can remain unchanged, but changed session-attribution reference results require re-authoring.
+Smoke-audit two repaired worlds before expanding the revised population. Preserve previous worlds and proofs.
 Load repaired training worlds under a new tag, audit them afresh, re-execute all reused reference queries and
 repeat task validation. Changed reference results require re-authoring, not silent reuse of old answers. Frozen
 evaluation inputs remain unchanged and the known limitation must be reported when interpreting them.

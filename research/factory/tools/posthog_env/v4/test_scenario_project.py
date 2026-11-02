@@ -25,17 +25,30 @@ class ScenarioProject(unittest.TestCase):
                 identified.add(props["$is_identified"])
         self.assertEqual(identified, {True, False})
 
-    def test_referral_repair_preserves_all_other_business_data(self):
+    def test_attribution_repair_preserves_non_attribution_business_data(self):
         data = build(41, self.now, people=60, days=35)
         for row in data["events"]:
             props = json.loads(row["properties"])
-            props.pop("$referrer", None)
-            props.pop("$referring_domain", None)
+            for key in ("$referrer", "$referring_domain", "utm_source", "utm_medium", "utm_campaign"):
+                props.pop(key, None)
             row["properties"] = json.dumps(props, sort_keys=True)
-        value = {k: data[k] for k in ("events", "persons", "accounts", "invoices", "definitions", "objects", "ground_truth")}
+        value = {k: data[k] for k in ("events", "persons", "accounts", "invoices", "objects", "ground_truth")}
         digest = hashlib.sha256(json.dumps(value, sort_keys=True, default=str).encode()).hexdigest()
-        # Snapshot of the pre-repair world, with only the two referral fields removed.
-        self.assertEqual(digest, "b42ec158236f1c2cb4a3e7afa8397d00b4a3f7e65ffa1710990d761b8211a7bb")
+        # Pre-repair business snapshot with five visit-attribution fields removed.
+        self.assertEqual(digest, "53a1a4b83dcfbf6aa91747fbc06e6f1a03993beedc77f73cfe8af34b23b041a7")
+
+    def test_first_touch_is_stable_but_return_visits_have_their_own_channels(self):
+        sessions = defaultdict(set)
+        person_channels = defaultdict(set)
+        for row in self.data["events"]:
+            p = json.loads(row["properties"])
+            if row["event"] == "signup_completed":
+                self.assertEqual(p["utm_source"], json.loads(row["person_properties"])["acquisition_source"])
+            if row["$session_id"] and "utm_source" in p:
+                sessions[row["$session_id"]].add(p["utm_source"])
+                person_channels[row["person_id"]].add(p["utm_source"])
+        self.assertTrue(all(len(channels) == 1 for channels in sessions.values()))
+        self.assertGreater(sum(len(channels) > 1 for channels in person_channels.values()), 20)
 
     def test_reproducible_and_no_future_or_pre_signup_events(self):
         self.assertEqual(self.data, build(41, self.now, people=60, days=35))

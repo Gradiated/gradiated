@@ -283,7 +283,11 @@ def curation_complete(record: dict) -> bool:
     if record["decision"] == "drop":
         return True
     turns = record.get("turns")
-    return isinstance(turns, list) and bool(turns) and all(isinstance(t, str) and t.strip() for t in turns)
+    notes = record.get("grading_notes")
+    required = notes.get("must_include") if isinstance(notes, dict) else None
+    return (isinstance(turns, list) and bool(turns) and all(isinstance(t, str) and t.strip() for t in turns)
+            and isinstance(required, list) and bool(required)
+            and all(isinstance(point, str) and point.strip() for point in required))
 
 
 def curate_one(task: dict, rec: dict | None, model: str, out_dir: str, feedback: dict | None = None) -> dict:

@@ -12,7 +12,8 @@ from unittest.mock import Mock, patch
 class CuratorCache(unittest.TestCase):
     def setUp(self):
         proxy, sc = types.ModuleType("llm_proxy"), types.ModuleType("spot_card")
-        self.answer = {"decision": "keep", "turns": ["Compare the reporting cohorts."], "reason": "grounded"}
+        self.answer = {"decision": "keep", "turns": ["Compare the reporting cohorts."], "reason": "grounded",
+                       "grading_notes": {"must_include": ["The final answer compares the verified cohorts."]}}
         proxy.judge_complete = Mock(return_value=(json.dumps(self.answer), {}))
         sc.twin_state = Mock(return_value=["synthetic world"])
         sc.event_props = Mock(return_value=[])
@@ -36,7 +37,9 @@ class CuratorCache(unittest.TestCase):
             self.module.curate_one(self.task, None, "curator", out)
             path.write_text(json.dumps({**r, "error": "provider unavailable"}))
             self.module.curate_one(self.task, None, "curator", out)
-        self.assertEqual(self.proxy.judge_complete.call_count, 3)
+            path.write_text(json.dumps({**r, "grading_notes": {}}))
+            self.module.curate_one(self.task, None, "curator", out)
+        self.assertEqual(self.proxy.judge_complete.call_count, 4)
 
     def test_task_model_reference_and_feedback_changes_invalidate_same_id(self):
         with tempfile.TemporaryDirectory() as out:

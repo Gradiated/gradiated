@@ -199,6 +199,10 @@ so an experience-segmented onboarding funnel starts at completed signup. Entity 
 observed engagement and account chronology; they cannot treat a world with no report retries as a meaningful
 same-report recovery benchmark. Re-author rejected tasks around supported observations and revalidate them;
 do not change frozen data or waive the rejecting gate to retain a task.
+Do not use occupation-based peer cohorts without recorded role data, or benchmark an artificially invariant
+report-count/day relationship. An individual billing-support investigation can instead reconcile named account
+invoices, payment-event chronology and paid-feature usage, distinguishing renewal cadence from duplicate IDs
+and internal model costs from subscription charges. This still requires a verified substantive premise.
 
 ```bash
 # twingen venv, on fbf8; --out is the projects directory of a separate TWIN_V2_ROOT

@@ -258,6 +258,20 @@ expert-guided student retries with hints removed before SFT, a DAgger-style appr
 expert-action labeling at every learner state. Compare the resulting adapter with a fresh base run using the
 same harness and budgets; earlier correction-SFT experiments found drift could mimic learning.
 
+The first training-pool early contract review passed only 9/15 despite the initial gates. All six failures
+concerned systematic referral UTM tags with direct referrer fields. Member referrals now have a coherent
+community URL/domain on registered and anonymous journeys. This repair consumes no random draws; a regression
+snapshot verifies that all other event/business values stay unchanged. Preserve previous worlds and proofs.
+Load repaired training worlds under a new tag, audit them afresh, re-execute all reused reference queries and
+repeat task validation. Changed reference results require re-authoring, not silent reuse of old answers. Frozen
+evaluation inputs remain unchanged and the known limitation must be reported when interpreting them.
+
+For mixed author models, put `synth.author_model` on every task and run `contract_review.py --model
+gpt-6.1-terra --alternate-model gpt-6.1-sol --min-per-author 3`. The review uses Sol for Terra-authored tasks
+and Terra for other authors, binds reviewer assignment in the selection manifest, and samples author strata
+as well as families. This preserves independent review when authoring is routed to a faster model; changing
+only a transport model while retaining a Sol cache identity is invalid.
+
 The paid-entitlement revision passed its first live twin audit as CLEAN after 35 executed queries. This admits
 task authoring, not the resulting tasks. A second calibration seed covers the complementary analytical families.
 The working calibration target is at least 12 analytical families and a frontier advantage around 20 percentage

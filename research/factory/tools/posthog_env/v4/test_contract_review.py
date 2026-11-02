@@ -1,6 +1,6 @@
 import unittest
 
-from contract_review import select
+from contract_review import review_model, select
 
 
 class ContractSelection(unittest.TestCase):
@@ -21,6 +21,19 @@ class ContractSelection(unittest.TestCase):
             select(tasks, 15, 7)
         with self.assertRaises(ValueError):
             select(self.tasks + self.tasks[:1], 15, 7)
+
+    def test_mixed_authors_are_covered_and_reviewed_by_a_different_model(self):
+        tasks = [{**t, "synth": {**t["synth"], "author_model": "terra" if i < 4 else "sol"}}
+                 for i, t in enumerate(self.tasks)]
+        selected = select(tasks, 15, 7, min_per_author=3)
+        for model in ("sol", "terra"):
+            self.assertGreaterEqual(sum(t["synth"]["author_model"] == model for t in selected), 3)
+        for task in selected:
+            self.assertNotEqual(review_model(task, "terra", "sol"), task["synth"]["author_model"])
+        with self.assertRaises(ValueError):
+            select(tasks, 15, 7, min_per_author=5)
+        with self.assertRaises(ValueError):
+            review_model(self.tasks[0], "terra", "sol")
 
 
 if __name__ == "__main__":

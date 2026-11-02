@@ -1,7 +1,9 @@
 import datetime as dt
+import hashlib
 import json
 import unittest
 from collections import defaultdict
+from urllib.parse import urlparse
 
 from scenario_project import build
 
@@ -11,6 +13,29 @@ class ScenarioProject(unittest.TestCase):
     def setUpClass(cls):
         cls.now = dt.datetime(2026, 11, 1, tzinfo=dt.timezone.utc)
         cls.data = build(41, cls.now, people=60, days=35)
+
+    def test_referral_context_is_coherent_for_registered_and_anonymous_visitors(self):
+        identified = set()
+        for row in self.data["events"]:
+            props = json.loads(row["properties"])
+            if props.get("utm_source") == "referral":
+                self.assertEqual(props["utm_medium"], "referral")
+                self.assertEqual(urlparse(props["$referrer"]).hostname, props["$referring_domain"])
+                self.assertEqual(props["$referring_domain"], "community.harborreports.io")
+                identified.add(props["$is_identified"])
+        self.assertEqual(identified, {True, False})
+
+    def test_referral_repair_preserves_all_other_business_data(self):
+        data = build(41, self.now, people=60, days=35)
+        for row in data["events"]:
+            props = json.loads(row["properties"])
+            props.pop("$referrer", None)
+            props.pop("$referring_domain", None)
+            row["properties"] = json.dumps(props, sort_keys=True)
+        value = {k: data[k] for k in ("events", "persons", "accounts", "invoices", "definitions", "objects", "ground_truth")}
+        digest = hashlib.sha256(json.dumps(value, sort_keys=True, default=str).encode()).hexdigest()
+        # Snapshot of the pre-repair world, with only the two referral fields removed.
+        self.assertEqual(digest, "b42ec158236f1c2cb4a3e7afa8397d00b4a3f7e65ffa1710990d761b8211a7bb")
 
     def test_reproducible_and_no_future_or_pre_signup_events(self):
         self.assertEqual(self.data, build(41, self.now, people=60, days=35))

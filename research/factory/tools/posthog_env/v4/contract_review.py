@@ -28,8 +28,19 @@ feasibility is analytical in this review; do not pretend to create anything. The
 baseline captured before model scoring; do not use artifacts from concurrent model runs as preexisting objects."""
 
 
-def select(tasks: list[dict], count: int, seed: int) -> list[dict]:
-    if count < 1:
+def review_model(task: dict, default: str, alternate: str | None = None) -> str:
+    if alternate is None:
+        return default
+    author = (task.get("synth") or {}).get("author_model")
+    if not author:
+        raise ValueError("Independent-author review requires explicit author_model provenance")
+    if alternate == default:
+        raise ValueError("Alternate reviewer must differ from the default")
+    return alternate if author == default else default
+
+
+def select(tasks: list[dict], count: int, seed: int, min_per_author: int = 0) -> list[dict]:
+    if count < 1 or min_per_author < 0:
         raise ValueError("Review count must be positive")
     ids = [t["task_id"] for t in tasks]
     if len(ids) != len(set(ids)):
@@ -46,6 +57,21 @@ def select(tasks: list[dict], count: int, seed: int) -> list[dict]:
         raise ValueError("Review count must cover every candidate family")
     rng = random.Random(seed)
     chosen = [rng.choice(groups[f]) for f in sorted(groups)]
+    if min_per_author:
+        authors = {}
+        for task in candidates:
+            author = task.get("synth", {}).get("author_model")
+            if not author:
+                raise ValueError("Author-stratified review requires author_model provenance")
+            authors.setdefault(author, []).append(task)
+        for author, rows in sorted(authors.items()):
+            if len(rows) < min_per_author:
+                raise ValueError("Insufficient candidates for the requested author stratum")
+            have = sum(t.get("synth", {}).get("author_model") == author for t in chosen)
+            remaining = [t for t in rows if t not in chosen]
+            chosen.extend(rng.sample(remaining, max(0, min_per_author - have)))
+        if len(chosen) > count:
+            raise ValueError("Review count cannot cover both family and author strata")
     rest = [t for t in candidates if t not in chosen]
     rng.shuffle(rest)
     return (chosen + rest)[:count]
@@ -60,6 +86,8 @@ def main():
     ap.add_argument("--required", type=int, default=14)
     ap.add_argument("--seed", type=int, default=20261102)
     ap.add_argument("--known-data-issue", default="")
+    ap.add_argument("--alternate-model", help="review tasks authored by --model with this different reviewer")
+    ap.add_argument("--min-per-author", type=int, default=0)
     ap.add_argument("--deadline", required=True, help="aware ISO UTC deadline; also wrap process in timeout")
     a = ap.parse_args()
     deadline = dt.datetime.fromisoformat(a.deadline)
@@ -68,13 +96,16 @@ def main():
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     import validate_tasks as v
     tasks = [json.loads(l) for f in a.tasks.split(",") for l in Path(f).read_text().splitlines() if l.strip()]
-    selected = select(tasks, a.count, a.seed)
+    selected = select(tasks, a.count, a.seed, a.min_per_author)
+    models = {t["task_id"]: review_model(t, a.model, a.alternate_model) for t in selected}
     a.out.mkdir(parents=True, exist_ok=True)
     (a.out / "reviews").mkdir(exist_ok=True)
     manifest = {"seed": a.seed, "model": a.model, "required": a.required,
                 "known_data_issue": a.known_data_issue,
                 "task_hashes": {t["task_id"]: hashlib.sha256(json.dumps(t, sort_keys=True).encode()).hexdigest()
                                 for t in selected}}
+    if a.alternate_model or a.min_per_author:
+        manifest.update(review_models=models, min_per_author=a.min_per_author)
     path = a.out / "selection.json"
     if path.exists() and json.loads(path.read_text()) != manifest:
         raise ValueError("Preserve prior selection: use a new review directory for changed inputs")
@@ -95,9 +126,10 @@ def main():
         task = dict(t)
         task.pop("validation", None)
         task["_audit_objects_snapshot"] = objects[str(t["team_id"])]
-        r = v.validate_one(task, None, a.model, str(a.out / "reviews"), extra=extra, max_rounds=5,
+        r = v.validate_one(task, None, models[t["task_id"]], str(a.out / "reviews"), extra=extra, max_rounds=5,
                            required_checks=("minimal_answer", "contract_match"))
         return {"task_id": t["task_id"], "family": t.get("synth", {}).get("family"),
+                "review_model": models[t["task_id"]], "author_model": t.get("synth", {}).get("author_model"),
                 "verdict": r.get("verdict"), "error": r.get("error"),
                 "contract_checks": v.has_checks(r, ("minimal_answer", "contract_match")),
                 "query_count": len(r.get("queries_run", []))}

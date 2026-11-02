@@ -51,11 +51,18 @@ CONTEXT = ("Harbor Reports is a fictional self-service reporting product for ind
            "subscriptions cost USD 29 per month and include AI summaries. Registered users joined within "
            "the observation period. Anonymous visitors browse public marketing pages and can abandon signup; "
            "they have no billing account or email. Web events carry stable user/device context; billing and AI "
-           "generation events come from the backend. Subscription renewals are separate invoices, not new signups.")
+           "generation events come from the backend. Subscription renewals are separate invoices, not new signups. "
+           "Member referrals originate from tagged links on community.harborreports.io.")
 
 
 def identifier(seed: int, *parts) -> str:
     return str(uuid.uuid5(uuid.NAMESPACE_URL, ":".join(map(str, ("harbor-reports", seed, *parts)))))
+
+
+def referral_context(source: str) -> dict:
+    domain = {"google": "www.google.com", "referral": "community.harborreports.io"}.get(source)
+    return {"$referrer": f"https://{domain}/" if domain else "$direct",
+            "$referring_domain": domain or "$direct"}
 
 
 def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split: str = "train",
@@ -143,8 +150,7 @@ def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split:
             session = {**context, "plan": plan, "utm_source": source, "utm_medium": medium,
                        "utm_campaign": {"google": "reporting-search", "newsletter": "analyst-weekly",
                                         "referral": "member-referrals", "direct": ""}[source],
-                       "$referrer": "https://www.google.com/" if source == "google" else "$direct",
-                       "$referring_domain": "www.google.com" if source == "google" else "$direct"}
+                       **referral_context(source)}
 
             def action(event, props=None, delay=None):
                 nonlocal t
@@ -232,8 +238,7 @@ def build(seed: int, now: dt.datetime, people: int = 700, days: int = 90, split:
                    "$geoip_country_code": country, "$geoip_country_name": country_name, "$geoip_city_name": city,
                    "utm_source": source, "utm_medium": {"google": "cpc", "newsletter": "email", "referral": "referral", "direct": "direct"}[source],
                    "utm_campaign": {"google": "reporting-search", "newsletter": "analyst-weekly", "referral": "member-referrals", "direct": ""}[source],
-                   "$referrer": "https://www.google.com/" if source == "google" else "$direct",
-                   "$referring_domain": "www.google.com" if source == "google" else "$direct"}
+                   **referral_context(source)}
         offsets = sorted({0, *(rng.randrange(min(15, (now - created).days + 1)) for _ in range(rng.randrange(3)))})
         attempted = False
         for offset in offsets:

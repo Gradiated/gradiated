@@ -204,6 +204,13 @@ report-count/day relationship. An individual billing-support investigation can i
 invoices, payment-event chronology and paid-feature usage, distinguishing renewal cadence from duplicate IDs
 and internal model costs from subscription charges. This still requires a verified substantive premise.
 
+The legacy batch producer now fails closed on nonzero stage exits, lint/override failures and missing task,
+curation or validation outputs. A rebuild withdraws the old `READY` marker immediately and publishes a new marker
+atomically only after all required stages succeed. Training setup explicitly indexes `train,dev`, excluding
+held-out traces. Validator lint context and cache identity use the backing twin ID, so non-canonical members of
+a clustered project cannot silently lose its material findings. These intake fixes do not change an already
+frozen evaluation or its deployed runtime.
+
 ```bash
 # twingen venv, on fbf8; --out is the projects directory of a separate TWIN_V2_ROOT
 python3 scenario_project.py --out /path/to/scenario_hill/twingen/projects_v2 --seed 41 \

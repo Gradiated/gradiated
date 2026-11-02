@@ -58,6 +58,7 @@ def sh(cmd: list[str], log, cwd: str | None = None, timeout: float = 7200) -> in
     p = subprocess.run(cmd, cwd=cwd, env=ENV, stdout=log, stderr=subprocess.STDOUT, timeout=timeout)
     log.write(f"[rc={p.returncode}]\n")
     log.flush()
+    p.check_returncode()
     return p.returncode
 
 
@@ -75,10 +76,11 @@ def version() -> dict:
 def setup() -> None:
     os.makedirs(BATCHES, exist_ok=True)
     with open(f"{ROOT}/setup.log", "a") as log:
-        assert sh(["python3", "-I", f"{V2}/build_specs.py", "--splits", "train,dev"], log) == 0
-        assert sh(["python3", "-I", f"{V2}/facts.py", "--splits", "train,dev"], log) == 0
-        assert sh(["python3", "-I", f"{V2}/xindex.py"], log) == 0
-    print(json.dumps({"setup": "ok", "targets": sum(1 for _ in open(f"{ROOT}/twingen/targets.jsonl"))}))
+        sh(["python3", "-I", f"{V2}/build_specs.py", "--splits", "train,dev"], log)
+        sh(["python3", "-I", f"{V2}/facts.py", "--splits", "train,dev"], log)
+        sh(["python3", "-I", f"{V2}/xindex.py", "--splits", "train,dev"], log)
+    with open(f"{ROOT}/twingen/targets.jsonl") as targets:
+        print(json.dumps({"setup": "ok", "targets": sum(1 for _ in targets)}))
 
 
 HOLDOUT = f"{ROOT}/eval_holdout.json"  # train-split conversations reserved for eval (whole project clusters)
@@ -225,7 +227,7 @@ def regen_pending(d: str, ids: list[str], split: str, log) -> None:
     for od in sorted(glob.glob(f"{d}/validated/rev*/overrides") + glob.glob(f"{d}/validated/regen*/rev*/overrides")
                      + glob.glob(f"{d}/validated/gate_rev/overrides") + glob.glob(f"{d}/validated/regen*/gate_rev/overrides")):
         ch = subprocess.run(["python3", f"{RUNNER}/apply_overrides.py", "--overrides-dir", od, "--root", ROOT], env=ENV,
-                            capture_output=True, text=True).stdout.strip()
+                            capture_output=True, text=True, check=True, timeout=7200).stdout.strip()
         changed |= {x for x in ch.split(",") if x}
     log.write(f"regen_pending: {len(pend)} tasks, twins changed: {len(changed)}\n")
     if changed:
@@ -261,7 +263,8 @@ def lint(ids: list[str], d: str, log) -> None:
     dirs = [p for i in ids for p in glob.glob(f"{ROOT}/twingen/projects_v2/{i}*") if os.path.exists(f"{p}/events.parquet")]
     if not dirs:
         return
-    r = subprocess.run([f"{TG}/.venv/bin/python", f"{V2}/lint.py", *dirs], env=ENV, capture_output=True, text=True)
+    r = subprocess.run([f"{TG}/.venv/bin/python", f"{V2}/lint.py", *dirs], env=ENV, capture_output=True, text=True,
+                       check=True, timeout=7200)
     open(f"{d}/lint.jsonl", "w").write(r.stdout)
     rows = [json.loads(x) for x in r.stdout.splitlines() if x.strip()]
     log.write(f"lint: {sum(1 for x in rows if any(f['severity'] == 'material' for f in x.get('findings') or []))}"
@@ -271,9 +274,16 @@ def lint(ids: list[str], d: str, log) -> None:
 def build_batch(name: str, ids: list[str], split: str, pilot: bool) -> None:
     d = f"{BATCHES}/{name}"
     os.makedirs(d, exist_ok=True)
-    json.dump(ids, open(f"{d}/ids.json", "w"))
+    # A rebuild is not ready merely because an older attempt published this marker.
+    try:
+        os.unlink(f"{d}/READY")
+    except FileNotFoundError:
+        pass
+    with open(f"{d}/ids.json", "w") as ids_file:
+        json.dump(ids, ids_file)
     ver = version()
-    json.dump(ver, open(f"{d}/version.json", "w"))
+    with open(f"{d}/version.json", "w") as version_file:
+        json.dump(ver, version_file)
     t0 = time.time()
     csv = ",".join(ids)
     with open(f"{d}/log.txt", "a") as log:
@@ -286,15 +296,15 @@ def build_batch(name: str, ids: list[str], split: str, pilot: bool) -> None:
         sh(["python3", f"{RUNNER}/build_tasks_v3.py", "--splits", split, "--ids", csv, "--out", f"{d}/tasks"], log)
         tf = f"{d}/tasks/{'test' if split == 'test_v2' else split}.jsonl"
         if not os.path.exists(tf):
-            log.write("no task file\n")
-            open(f"{d}/READY", "w").write(json.dumps({"tasks": 0, "s": round(time.time() - t0)}))
-            return
+            raise FileNotFoundError(f"Task construction produced no task file: {tf}")
         # curation: LLM editor (edit/drop, grading notes, twin overrides), then regenerate + reload changed twins
         sh(["python3", f"{RUNNER}/curate_tasks.py", "--tasks", tf, "--traces", f"{TRACES}/{split}.jsonl",
             "--out", f"{d}/curated", "--include-excluded", "--workers", "8"], log, timeout=7200)
+        if not os.path.exists(f"{d}/curated/curated.jsonl"):
+            raise FileNotFoundError("Curation produced no curated task file")
         if os.path.exists(f"{d}/curated/curated.jsonl"):
             ch = subprocess.run(["python3", f"{RUNNER}/apply_overrides.py", "--overrides-dir", f"{d}/curated/overrides",
-                                 "--root", ROOT], env=ENV, capture_output=True, text=True).stdout.strip()
+                                 "--root", ROOT], env=ENV, capture_output=True, text=True, check=True, timeout=7200).stdout.strip()
             log.write(f"overrides changed: {ch}\n")
             if ch:
                 sh([f"{TG}/.venv/bin/python", f"{V2}/run_all2.py", "--ids", ch, "--workers", GEN_WORKERS, "--max-events", MAX_EVENTS], log)
@@ -307,13 +317,17 @@ def build_batch(name: str, ids: list[str], split: str, pilot: bool) -> None:
             sh(["python3", f"{RUNNER}/validate_tasks.py", "--tasks", tf, "--traces", f"{TRACES}/{split}.jsonl",
                 "--out", f"{d}/validated", "--repair", "--lint", f"{d}/lint.jsonl", "--workers", "8", "--gate-model", GATE_MODEL], log,
                timeout=10800)
+            if not os.path.exists(f"{d}/validated/validated.jsonl"):
+                raise FileNotFoundError("Validation produced no validated task file")
             if os.path.exists(f"{d}/validated/validated.jsonl"):
                 tf = f"{d}/validated/validated.jsonl"
                 for _ in range(2):  # repairs that add data need regeneration; one pass rarely converges (round 8/9)
                     regen_pending(d, ids, split, log)
-        tasks = [json.loads(x) for x in open(tf)]
+        with open(tf) as task_file:
+            tasks = [json.loads(x) for x in task_file]
         inc = [t for t in tasks if not t.get("exclude")]
-        json.dump([t["task_id"] for t in inc], open(f"{d}/included.json", "w"))
+        with open(f"{d}/included.json", "w") as included_file:
+            json.dump([t["task_id"] for t in inc], included_file)
         sh(["python3", f"{RUNNER}/spot_card.py", "--tasks", tf, "--traces", f"{TRACES}/{split}.jsonl",
             "--status", "/nonexistent", "--out", f"{d}/cards", "--sample", "1000", "--seed", "0"], log)
         if pilot and inc:
@@ -321,7 +335,9 @@ def build_batch(name: str, ids: list[str], split: str, pilot: bool) -> None:
                 "--task-ids-file", f"{d}/included.json", "--arms", "gpt-luna,gpt-terra,haiku55", "--samples", "1",
                 "--max-turns", "12", "--wall-s", "1500",
                 "--workers", "15", "--api-concurrency", "5", "--judge-workers", "6"], log, timeout=10800)
-    open(f"{d}/READY", "w").write(json.dumps({"tasks": len(tasks), "included": len(inc), "s": round(time.time() - t0)}))
+    with open(f"{d}/READY.tmp", "w") as ready:
+        ready.write(json.dumps({"tasks": len(tasks), "included": len(inc), "s": round(time.time() - t0)}))
+    os.replace(f"{d}/READY.tmp", f"{d}/READY")
     print(json.dumps({"batch": name, "tasks": len(tasks), "included": len(inc), "s": round(time.time() - t0)}), flush=True)
 
 

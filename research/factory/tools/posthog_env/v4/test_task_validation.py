@@ -45,6 +45,22 @@ class TaskValidation(unittest.TestCase):
             self.module.validate_one(changed, None, "validator", out)
         self.assertEqual(self.proxy.judge_complete.call_count, 4)
 
+    def test_cluster_member_uses_backing_twin_lint_and_binds_its_cache(self):
+        task = {**self.task, "twin_id": "backing-project"}
+        self.module.LINT = {"backing-project": [{"severity": "material", "check": "identity",
+                                               "detail": "Inconsistent report identities"}]}
+        self.proxy.judge_complete.side_effect = [(json.dumps(self.query), {}), (json.dumps(self.final), {})] * 2
+        with tempfile.TemporaryDirectory() as out:
+            self.module.validate_one(task, None, "validator", out)
+            self.assertIn("Inconsistent report identities", self.proxy.judge_complete.call_args_list[0].args[0])
+            self.module.LINT[task["conversation_id"]] = [{"severity": "material", "check": "unrelated",
+                                                         "detail": "Another project"}]
+            self.module.validate_one(task, None, "validator", out)
+            self.assertEqual(self.proxy.judge_complete.call_count, 2)
+            self.module.LINT["backing-project"][0]["detail"] = "Changed backing-world finding"
+            self.module.validate_one(task, None, "validator", out)
+        self.assertEqual(self.proxy.judge_complete.call_count, 4)
+
     def test_model_evidence_without_execution_is_not_accepted(self):
         self.proxy.judge_complete.side_effect = None
         self.proxy.judge_complete.return_value = (json.dumps({**self.final, "queries_run": [{"result": "[[0]]"}]}), {})

@@ -144,7 +144,7 @@ def last_json(text: str) -> dict:
     return found
 
 
-LINT: dict = {}  # conversation_id -> [finding] (from loop_producer's lint.jsonl)
+LINT: dict = {}  # backing project/twin ID -> [finding] (from loop_producer's lint.jsonl)
 
 
 def load_lint(path: str) -> None:
@@ -181,8 +181,9 @@ Check in particular (each was a real miss):
 def validate_one(task: dict, rec: dict | None, model: str, out_dir: str, extra: str = "", max_rounds: int = 4,
                  required_checks: tuple[str, ...] = ()) -> dict:
     path = f"{out_dir}/{task['task_id']}.json"
+    lint_id = str(task.get("twin_id") or task["conversation_id"])[:36]
     identity = {"version": 2, "task": task, "reference": rec, "model": model, "extra": extra,
-                "max_rounds": max_rounds, "lint": LINT.get(str(task["conversation_id"])[:36]),
+                "max_rounds": max_rounds, "lint": LINT.get(lint_id),
                 "required_checks": required_checks}
     key = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
     if os.path.exists(path):
@@ -208,7 +209,7 @@ def validate_one(task: dict, rec: dict | None, model: str, out_dir: str, extra: 
     prompt = PROMPT.format(mode=task.get("agent_mode") or "product_analytics", turns=turns,
                            notes=json.dumps(task.get("grading_notes"), ensure_ascii=False, indent=1)[:6000],
                            reference=SC.clip(ref, 30000), twin=SC.clip(twin, 20000), classes="|".join(CLASSES),
-                           lint=SC.clip(lint_text(task["conversation_id"]), 4000),
+                           lint=SC.clip(lint_text(lint_id), 4000),
                            now=task.get("loaded_now_utc") or "?",
                            objects=SC.clip(task["_audit_objects_snapshot"] if "_audit_objects_snapshot" in task
                                            else SC.team_objects(task["team_id"]), 5000),

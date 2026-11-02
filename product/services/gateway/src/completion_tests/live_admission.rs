@@ -62,6 +62,7 @@ fn live_call() -> RuntimeCall {
         deadline: Utc::now() + TimeDelta::seconds(4),
         deployment: primary,
         fallbacks: vec![fallback],
+        attempts: 0,
     }
 }
 

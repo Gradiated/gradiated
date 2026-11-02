@@ -17,6 +17,7 @@ pub(super) struct RuntimeCall {
     pub(super) deadline: DateTime<Utc>,
     pub(super) deployment: GatewayModelDeployment,
     pub(super) fallbacks: Vec<GatewayModelDeployment>,
+    pub(super) attempts: u8,
 }
 
 impl RuntimeCall {
@@ -53,23 +54,25 @@ impl RuntimeCall {
         F: Future<Output = Result<T, RuntimeFailure>>,
     {
         let started = Instant::now();
+        self.attempts += 1;
         let failure = match send(self.attempt()).await {
             Ok(response) => return Ok(response),
             Err(failure) => failure,
         };
 
         let fallback = self.retry_target(&failure);
-        self.log_failure(&failure, 1, started, fallback.is_some());
+        self.log_failure(&failure, self.attempts, started, fallback.is_some());
         let Some(fallback) = fallback else {
             return Err(failure);
         };
 
         self.deployment = fallback;
         let started = Instant::now();
+        self.attempts += 1;
         let result = send(self.attempt()).await;
 
         if let Err(failure) = &result {
-            self.log_failure(failure, 2, started, false);
+            self.log_failure(failure, self.attempts, started, false);
         }
 
         result
@@ -86,7 +89,8 @@ impl RuntimeCall {
     }
 
     fn retry_target(&mut self, failure: &RuntimeFailure) -> Option<GatewayModelDeployment> {
-        let retryable = failure.usage() == NormalizedUsage::zero()
+        let retryable = self.attempts < 2
+            && failure.usage() == NormalizedUsage::zero()
             && matches!(
                 failure.kind(),
                 RuntimeFailureKind::Unavailable | RuntimeFailureKind::CapacityExceeded
@@ -96,6 +100,21 @@ impl RuntimeCall {
         }
 
         self.take_fallback(failure.kind())
+    }
+
+    pub(super) fn retry_stream_target(
+        &mut self,
+        failure: &RuntimeFailure,
+        started: Instant,
+    ) -> bool {
+        let fallback = self.retry_target(failure);
+        self.log_failure(failure, self.attempts, started, fallback.is_some());
+        let Some(fallback) = fallback else {
+            return false;
+        };
+
+        self.deployment = fallback;
+        true
     }
 
     fn log_failure(&self, failure: &RuntimeFailure, attempt: u8, started: Instant, retry: bool) {

@@ -268,6 +268,151 @@ async fn drain_stream(frames: &[String]) -> Result<(), RuntimeFailure> {
 }
 
 #[tokio::test]
+async fn rejects_sglang_queue_abort_before_opening_the_stream() {
+    let runtime = MockRuntime::builder()
+        .sse(
+            CHAT,
+            &[data(&json!({
+                "error": {
+                    "message": "private queue detail",
+                    "type": "SERVICE_UNAVAILABLE",
+                    "code": 503
+                }
+            }))],
+        )
+        .start()
+        .await;
+    let result = client()
+        .stream(
+            &runtime.renamed_deployment(),
+            streaming_request(),
+            32,
+            deadline(5),
+        )
+        .await;
+    let Err(failure) = result else {
+        panic!("queue rejection must fail before returning a stream");
+    };
+
+    assert_eq!(failure.kind(), RuntimeFailureKind::CapacityExceeded);
+    assert_eq!(failure.usage(), crate::NormalizedUsage::zero());
+}
+
+#[tokio::test]
+async fn admission_peek_is_bounded_and_preserves_a_fragmented_first_event() {
+    use futures_util::StreamExt;
+    use std::{convert::Infallible, sync::Arc, time::Duration};
+
+    let release = Arc::new(tokio::sync::Notify::new());
+    let first = data(&chunk(json!({"content": "hello"}), None));
+    let split = first.len() / 2;
+    let prefix = first[..split].to_owned();
+    let suffix = first[split..].to_owned()
+        + &data(&chunk(json!({}), Some("stop")))
+        + &data(&terminal_usage())
+        + DONE;
+    let server_release = release.clone();
+    let runtime = MockRuntime::builder()
+        .route(
+            CHAT,
+            axum::routing::post(move || {
+                let prefix = prefix.clone();
+                let suffix = suffix.clone();
+                let release = server_release.clone();
+                async move {
+                    let chunks = futures_util::stream::once(async { Ok::<_, Infallible>(prefix) })
+                        .chain(futures_util::stream::once(async move {
+                            release.notified().await;
+                            Ok::<_, Infallible>(suffix)
+                        }));
+                    (
+                        [(header::CONTENT_TYPE, "text/event-stream")],
+                        axum::body::Body::from_stream(chunks),
+                    )
+                }
+            }),
+        )
+        .start()
+        .await;
+    let opened = tokio::time::timeout(
+        Duration::from_secs(2),
+        client().stream(
+            &runtime.renamed_deployment(),
+            streaming_request(),
+            32,
+            deadline(5),
+        ),
+    )
+    .await;
+    let mut stream = opened
+        .expect("headers must not wait for the first complete event")
+        .unwrap();
+    release.notify_one();
+
+    let first = expect_chunk(stream.next_event().await.unwrap()).into_response();
+    assert_eq!(first["choices"][0]["delta"]["content"], "hello");
+    while stream.next_event().await.unwrap().is_some() {}
+}
+
+#[tokio::test]
+async fn retains_usage_on_a_first_frame_rejection_to_prevent_retry() {
+    let runtime = MockRuntime::builder()
+        .sse(
+            CHAT,
+            &[data(&json!({
+                "error": {"type": "SERVICE_UNAVAILABLE", "code": 503},
+                "usage": {"prompt_tokens": 10, "completion_tokens": 1, "total_tokens": 11}
+            }))],
+        )
+        .start()
+        .await;
+    let result = client()
+        .stream(
+            &runtime.renamed_deployment(),
+            streaming_request(),
+            32,
+            deadline(5),
+        )
+        .await;
+    let Err(failure) = result else {
+        panic!("reported work must not be discarded");
+    };
+
+    assert_eq!(failure.kind(), RuntimeFailureKind::CapacityExceeded);
+    assert_eq!(failure.usage().input_tokens(), 10);
+    assert_eq!(failure.usage().output_tokens(), 1);
+}
+
+#[tokio::test]
+async fn does_not_reclassify_a_queue_error_after_output_as_an_open_failure() {
+    let runtime = MockRuntime::builder()
+        .sse(
+            CHAT,
+            &[
+                data(&chunk(json!({"reasoning_content": "working"}), None)),
+                data(&json!({"error": {"type": "SERVICE_UNAVAILABLE", "code": 503}})),
+            ],
+        )
+        .start()
+        .await;
+    let mut stream = client()
+        .stream(
+            &runtime.renamed_deployment(),
+            streaming_request(),
+            32,
+            deadline(5),
+        )
+        .await
+        .unwrap();
+
+    assert!(expect_chunk(stream.next_event().await.unwrap()).has_usable_output());
+    assert_eq!(
+        stream.next_event().await.unwrap_err().kind(),
+        RuntimeFailureKind::ProtocolViolation
+    );
+}
+
+#[tokio::test]
 async fn rejects_an_untrustworthy_stream() {
     let text = chunk(json!({"content": "hi"}), None);
     let mut other_id = text.clone();

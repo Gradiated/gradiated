@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root="${GRADIATED_RUNTIME_ROOT:?}"
+export CUDA_VISIBLE_DEVICES="${NVIDIA_VISIBLE_DEVICES:?Host agent must assign GPU UUIDs}"
+export CUDA_HOME="$root/python/lib/python3.12/site-packages/nvidia/cu13"
+export CUDA_PATH="$CUDA_HOME"
+export PATH="$root/python/bin:$CUDA_HOME/bin:$PATH"
+export LD_LIBRARY_PATH="$CUDA_HOME/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export CPATH="$root/python/include/python3.12${CPATH:+:$CPATH}"
+unset PYTHONPATH PYTHONHOME LD_PRELOAD FLASHINFER_CUBIN_CHECKSUM_DISABLED
+export SGLANG_ENABLE_HEALTH_ENDPOINT_GENERATION=0
+export TOKENIZERS_PARALLELISM=false
+cache="${XDG_CACHE_HOME:-$HOME/.cache}/glm-sglang"
+export FLASHINFER_WORKSPACE_BASE="$cache/flashinfer"
+export FLASHINFER_CUBIN_DIR="$cache/flashinfer-cubins/0.7.2"
+export SGLANG_CACHE_DIR="$cache/sglang"
+export SGLANG_JIT_CACHE_DIR="$cache/jit"
+export TORCH_EXTENSIONS_DIR="$cache/torch-extensions"
+export CUDA_CACHE_PATH="$cache/cuda"
+mkdir -p "$FLASHINFER_WORKSPACE_BASE" "$SGLANG_CACHE_DIR" "$SGLANG_JIT_CACHE_DIR" "$TORCH_EXTENSIONS_DIR" "$CUDA_CACHE_PATH"
+"$root/python/bin/python3" "$root/glm-sglang/artifact-cache.py" "$root" "$FLASHINFER_CUBIN_DIR"
+exec "$root/python/bin/python3" "$root/glm-sglang/launch.py"

@@ -29,6 +29,7 @@ export interface GatewayOptions {
   readonly generationTimeoutSeconds: number;
   readonly logName: string;
   readonly settlementBacklogLimit?: number;
+  readonly verificationWorkspaceId?: string;
   readonly logLevel?: "warn" | "info";
   readonly leaseFinalizationMarginSeconds?: number;
   readonly expiredLeaseCleanupGraceSeconds?: number;
@@ -63,6 +64,12 @@ export class GatewayProcess {
       stdio: ["ignore", log, log],
       env: {
         PATH: process.env.PATH ?? "",
+        ...(options.verificationWorkspaceId
+          ? {
+              GATEWAY_VERIFICATION_WORKSPACE_ID:
+                options.verificationWorkspaceId,
+            }
+          : {}),
         VALKEY_URL: options.redisUrl,
         DATABASE_URL: options.databaseUrl,
         GATEWAY_RECORD_CACHE_TTL_SECONDS: String(RECORD_CACHE_TTL_SECONDS),

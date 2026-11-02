@@ -273,6 +273,94 @@ class RenderTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             renderer.rollout('training', {**models['kev'], 'runtime': training}, runtimes)
 
+    def test_explicit_canary_keeps_primary_and_pauses_after_qualification(self):
+        runtimes = json.loads((renderer.ROOT / 'product/inference/gpu/runtimes.json').read_text())
+        primary = json.loads((renderer.GPU / 'models.json').read_text())['glm-dealign']
+        candidate = {**primary, 'replicas': 1, 'min_available': 1, 'max_unavailable': 0,
+                     'max_surge': 1, 'canary_for': 'glm-dealign'}
+        obj = renderer.rollout('glm-dealign-canary', candidate, runtimes)
+        self.assertEqual(obj['spec']['replicas'], 1)
+        self.assertEqual(obj['spec']['template']['metadata']['annotations']['gradiated.com/canary-of'],
+                         'glm-dealign')
+        steps = obj['spec']['strategy']['canary']['steps']
+        self.assertIn('analysis', steps[1])
+        self.assertEqual(steps[2], {'pause': {}})
+        self.assertEqual(steps[3], {'setWeight': 100})
+        self.assertNotIn('gradiated.com/canary-of',
+                         renderer.rollout('glm-dealign', primary, runtimes)['spec']['template']['metadata']['annotations'])
+        for parent in ('', '../bad', 'glm-dealign-canary', True, None):
+            with self.subTest(parent=parent), self.assertRaisesRegex(ValueError, 'canary_for'):
+                renderer.rollout('glm-dealign-canary', {**candidate, 'canary_for': parent}, runtimes)
+
+    def test_isolated_canary_preserves_private_runtime_identity_and_public_mapping(self):
+        runtimes = json.loads(renderer.RUNTIMES.read_text())
+        primary = json.loads((renderer.GPU / 'models.json').read_text())['glm-dealign']
+        private = copy.deepcopy(runtimes[primary['runtime']])
+        public_id = private['model_id']
+        private['model_id'] += '-sglang-canary'
+        runtimes['private'] = private
+        candidate = {**primary, 'runtime': 'private', 'canary_for': 'glm-dealign',
+                     'serving_model_id': public_id, 'serving_mode': 'qualification'}
+        renderer.validate_canaries({'glm-dealign': primary, 'candidate': candidate}, runtimes)
+        for mode in ('qualification', 'production'):
+            obj = renderer.rollout('candidate', {**candidate, 'serving_mode': mode}, runtimes)
+            annotations = obj['spec']['template']['metadata']['annotations']
+            self.assertEqual(annotations['gradiated.com/model-id'], private['model_id'])
+            self.assertEqual(annotations['gradiated.com/serving-model-id'], public_id)
+            self.assertEqual(annotations['gradiated.com/serving-mode'], mode)
+        for unsafe in (
+                {k: v for k, v in candidate.items() if k != 'serving_mode'},
+                {k: v for k, v in candidate.items() if k != 'serving_model_id'},
+                {**candidate, 'serving_model_id': private['model_id']}):
+            with self.subTest(unsafe=unsafe), self.assertRaises(ValueError):
+                renderer.rollout('candidate', unsafe, runtimes)
+        for mode in ('invalid', None, True):
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                renderer.rollout('candidate', {**candidate, 'serving_mode': mode}, runtimes)
+        for field in ('gradiated.com/model-id', 'gradiated.com/serving-model-id',
+                      'gradiated.com/serving-mode', 'gradiated.com/canary-of'):
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                renderer.rollout('candidate', {**candidate, 'annotations': {field: 'spoof'}}, runtimes)
+        for mapping in ('other/model', '', None):
+            with self.subTest(mapping=mapping), self.assertRaises(ValueError):
+                renderer.validate_canaries({'glm-dealign': primary, 'candidate': {
+                    **candidate, 'serving_model_id': mapping}}, runtimes)
+        with self.assertRaises(ValueError):
+            renderer.rollout('primary', {**primary, 'serving_mode': 'qualification'}, runtimes)
+        with self.assertRaises(ValueError):
+            renderer.rollout('primary', {**primary, 'serving_model_id': public_id}, runtimes)
+        self.assertNotIn('gradiated.com/serving-mode', renderer.rollout(
+            'glm-dealign', primary, runtimes)['spec']['template']['metadata']['annotations'])
+
+    def test_single_canary_replaces_itself_within_its_gpu_budget(self):
+        runtimes = json.loads(renderer.RUNTIMES.read_text())
+        model = json.loads((renderer.GPU / 'models.json').read_text())['glm-dealign']
+        candidate = {**model, 'replicas': 1, 'max_surge': 0, 'max_unavailable': 1,
+                     'canary_for': 'glm-dealign'}
+        obj = renderer.rollout('candidate', candidate, runtimes)
+        strategy = obj['spec']['strategy']['canary']
+        self.assertEqual((strategy['maxSurge'], strategy['maxUnavailable']), (0, 1))
+        self.assertEqual((obj['spec']['replicas'] + strategy['maxSurge']), 1)
+        with self.assertRaisesRegex(ValueError, 'both be zero'):
+            renderer.rollout('candidate', {**candidate, 'max_unavailable': 0}, runtimes)
+        with self.assertRaisesRegex(ValueError, 'max_surge'):
+            renderer.rollout('primary', {k: v for k, v in candidate.items() if k != 'canary_for'}, runtimes)
+
+    def test_canary_catalogue_rejects_unknown_chained_and_different_models(self):
+        runtimes = {'old': {'model_id': 'a/model'}, 'new': {'model_id': 'a/model'},
+                    'other': {'model_id': 'a/other'}}
+        primary = {'runtime': 'old'}
+        candidate = {'runtime': 'new', 'canary_for': 'primary'}
+        renderer.validate_canaries({'primary': primary, 'candidate': candidate}, runtimes)
+        for models in (
+                {'candidate': candidate},
+                {'primary': primary, 'candidate': {**candidate, 'canary_for': 'candidate'}},
+                {'primary': primary, 'candidate': {**candidate, 'runtime': 'other'}},
+                {'primary': primary, 'candidate': candidate,
+                 'nested': {'runtime': 'new', 'canary_for': 'candidate'}}):
+            with self.subTest(models=models), self.assertRaises(ValueError):
+                renderer.validate_canaries(models, runtimes)
+
     def test_model_disruption_budget_protects_all_revision_pods(self):
         model = json.loads((renderer.GPU / 'models.json').read_text())['glm-dealign']
         obj = renderer.disruption_budget('glm-dealign', model)

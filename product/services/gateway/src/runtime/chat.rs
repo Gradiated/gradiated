@@ -12,10 +12,12 @@ use super::{
     RuntimeStreamChunk, RuntimeStreamEvent, SglangClient,
 };
 use crate::{model::MAX_SAFE_INTEGER, NormalizedUsage};
+use std::time::Duration;
 
 const CHAT_COMPLETIONS: &str = "v1/chat/completions";
 const MAX_RESPONSE_TEXT_CHARS: usize = 300;
 const MAX_FINISH_REASON_CHARS: usize = 100;
+const STREAM_ADMISSION_PEEK: Duration = Duration::from_secs(1);
 
 impl SglangClient {
     pub(super) async fn complete_chat(
@@ -37,11 +39,17 @@ impl SglangClient {
         let response = self.send_chat(call, &models, "text/event-stream").await?;
 
         let events = open_events(response)?;
-        Ok(Box::new(ChatEventStream {
+        let mut stream = ChatEventStream {
             events,
             normalizer: ChatStreamNormalizer::new(models),
             phase: Phase::Streaming,
-        }))
+            pending: None,
+        };
+        if let Ok(first) = tokio::time::timeout(STREAM_ADMISSION_PEEK, stream.next_event()).await {
+            stream.pending = first?;
+        }
+
+        Ok(Box::new(stream))
     }
 
     async fn send_chat(
@@ -82,6 +90,7 @@ struct ChatEventStream {
     events: RuntimeEvents,
     normalizer: ChatStreamNormalizer,
     phase: Phase,
+    pending: Option<RuntimeStreamEvent>,
 }
 
 enum Phase {
@@ -93,6 +102,10 @@ enum Phase {
 #[async_trait]
 impl RuntimeEventStream for ChatEventStream {
     async fn next_event(&mut self) -> Result<Option<RuntimeStreamEvent>, RuntimeFailure> {
+        if let Some(event) = self.pending.take() {
+            return Ok(Some(event));
+        }
+
         if matches!(self.phase, Phase::Done) {
             return Ok(None);
         }
@@ -107,6 +120,26 @@ impl RuntimeEventStream for ChatEventStream {
                 Ok(Some(RuntimeStreamEvent::Done))
             }
             (Phase::Streaming, false) => {
+                if self.normalizer.identity.is_none() {
+                    if let Ok(rejection) = serde_json::from_str::<StreamRejection>(&data) {
+                        if rejection.error.code == 503
+                            && rejection.error.kind == "SERVICE_UNAVAILABLE"
+                        {
+                            let usage = rejection
+                                .usage
+                                .map(UpstreamUsage::normalize)
+                                .transpose()?
+                                .unwrap_or_else(NormalizedUsage::zero);
+
+                            // SGLang reports queue admission rejection inside an HTTP 200 stream.
+                            return Err(RuntimeFailure::rejected(
+                                reqwest::StatusCode::SERVICE_UNAVAILABLE,
+                                usage,
+                            ));
+                        }
+                    }
+                }
+
                 let chunk = self.normalizer.normalize(data.as_bytes())?;
                 if chunk.is_terminal_usage() {
                     self.phase = Phase::AwaitingDone;
@@ -117,6 +150,20 @@ impl RuntimeEventStream for ChatEventStream {
             _ => Err(ProtocolViolation::FrameOrder.into()),
         }
     }
+}
+
+#[derive(Deserialize)]
+struct StreamRejection {
+    error: StreamRejectionError,
+    #[serde(default)]
+    usage: Option<UpstreamUsage>,
+}
+
+#[derive(Deserialize)]
+struct StreamRejectionError {
+    code: u16,
+    #[serde(rename = "type")]
+    kind: String,
 }
 
 pub(super) fn normalize_completion(

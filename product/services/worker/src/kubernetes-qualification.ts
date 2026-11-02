@@ -49,7 +49,9 @@ export const qualificationCandidate = (value: unknown) => {
     return;
   }
   const parsed = ModelDeploymentReleaseSchema.safeParse(release);
-  const modelId = annotations["gradiated.com/model-id"];
+  const modelId =
+    annotations["gradiated.com/serving-model-id"] ??
+    annotations["gradiated.com/model-id"];
   if (!parsed.success || !modelId) return;
   return { pod, incarnation, modelId, release: parsed.data };
 };

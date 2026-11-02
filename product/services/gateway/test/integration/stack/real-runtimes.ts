@@ -6,9 +6,57 @@ import type { LocalDocker } from "./docker.js";
 export interface RealRuntime {
   readonly baseUrl: string;
   readonly model: string;
+  readonly authorization?: string;
+  readonly runtimeRevision?: string;
+  readonly modelRevision?: string;
 }
 
-export type RealRuntimes = Partial<Record<RuntimeKind, RealRuntime>>;
+export type RealRuntimeKind = RuntimeKind | "sglang";
+export type RealRuntimes = Partial<Record<RealRuntimeKind, RealRuntime>>;
+
+export const isRealRuntimeKind = (value: string): value is RealRuntimeKind =>
+  value === "vllm" || value === "kev" || value === "sglang";
+
+export const externalSglang = (environment: NodeJS.ProcessEnv): RealRuntime => {
+  const value = environment.GATEWAY_REAL_RUNTIME_URL_SGLANG;
+  const model = environment.GATEWAY_REAL_SGLANG_MODEL;
+  const runtimeRevision = environment.GATEWAY_REAL_SGLANG_RUNTIME_REVISION;
+  const modelRevision = environment.GATEWAY_REAL_SGLANG_MODEL_REVISION;
+  if (
+    !value ||
+    !model?.trim() ||
+    !runtimeRevision?.trim() ||
+    !modelRevision?.trim()
+  ) {
+    throw new Error(
+      "SGLang requires explicit loopback URL, served model, runtime revision and model revision",
+    );
+  }
+
+  const url = new URL(value);
+  if (
+    url.protocol !== "http:" ||
+    !["127.0.0.1", "localhost", "[::1]"].includes(url.hostname) ||
+    url.username ||
+    url.password ||
+    url.search ||
+    url.hash ||
+    url.pathname !== "/"
+  ) {
+    throw new Error(
+      "SGLang integration requires a loopback HTTP runtime origin",
+    );
+  }
+
+  const key = environment.GATEWAY_REAL_SGLANG_API_KEY;
+  return {
+    baseUrl: url.origin,
+    model,
+    runtimeRevision,
+    modelRevision,
+    ...(key ? { authorization: `Bearer ${key}` } : {}),
+  };
+};
 
 interface RuntimeImage {
   readonly image: string;
@@ -178,8 +226,30 @@ const awaitReady = async (
 /** GATEWAY_REAL_RUNTIME_URL_VLLM or _KEV points at a server that is already running. */
 export const startRealRuntime = async (
   docker: LocalDocker,
-  kind: RuntimeKind,
+  kind: RealRuntimeKind,
 ): Promise<RealRuntime> => {
+  if (kind === "sglang") {
+    const runtime = externalSglang(process.env);
+    const response = await fetch(`${runtime.baseUrl}/v1/models`, {
+      headers: runtime.authorization
+        ? { Authorization: runtime.authorization }
+        : {},
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!response.ok) {
+      throw new Error(`SGLang catalog returned HTTP ${response.status}`);
+    }
+
+    const catalog = (await response.json()) as {
+      data?: { id?: string }[];
+    };
+    if (!catalog.data?.some((entry) => entry.id === runtime.model)) {
+      throw new Error("SGLang does not advertise the configured served model");
+    }
+
+    return runtime;
+  }
+
   const spec = REAL_RUNTIMES[kind];
   const existing =
     process.env[`GATEWAY_REAL_RUNTIME_URL_${kind.toUpperCase()}`];

@@ -17,6 +17,7 @@ pub(super) struct StreamProgress {
     terminal_usage_seen: bool,
     pub(super) terminal_response: Option<serde_json::Value>,
     first_token_at: Option<DateTime<Utc>>,
+    frame_delivered: bool,
 }
 
 impl StreamProgress {
@@ -27,6 +28,7 @@ impl StreamProgress {
             terminal_usage_seen: false,
             terminal_response: None,
             first_token_at: None,
+            frame_delivered: false,
         }
     }
 
@@ -109,9 +111,17 @@ impl StreamProgress {
     }
 
     fn delivered(&mut self, usable_output: bool) {
+        self.frame_delivered = true;
         if usable_output {
             self.first_token_at.get_or_insert_with(Utc::now);
         }
+    }
+
+    pub(super) fn can_retry_before_any_frame(&self) -> bool {
+        !self.frame_delivered
+            && self.usage == NormalizedUsage::zero()
+            && self.finish_reason.is_none()
+            && !self.terminal_usage_seen
     }
 
     pub(super) fn into_terminal(self, stop: StreamStop) -> GenerationTerminal {

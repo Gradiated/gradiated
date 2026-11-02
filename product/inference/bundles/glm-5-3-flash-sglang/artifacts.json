@@ -1,0 +1,191 @@
+{
+  "flashinfer_version": "0.7.2",
+  "repository": "https://edge.urm.nvidia.com/artifactory/sw-kernelinferencelibrary-public-generic-local/",
+  "files": [
+    {
+      "path": "2d6a5a029eefcc388ec0ceb87efb55d8bcce5c3c/fmha/trtllm-gen/checksums.txt",
+      "sha256": "d79b5c51fc8597fac57dae0da4afa114fb2014575e4ec3df099ad856d97cabc3",
+      "size": 6532703
+    },
+    {
+      "path": "2d6a5a029eefcc388ec0ceb87efb55d8bcce5c3c/fmha/trtllm-gen/include/flashInferMetaInfo.h",
+      "sha256": "892b5a755dde041ec97eacd1ba2156643977cc8e34d882a108a7e45096c0fae4",
+      "size": 15683295
+    },
+    {
+      "path": "35cb99413a3ebce2e87a03fc04196e528e22c8d5/batched_gemm-fdba669-7e3d0a6/checksums.txt",
+      "sha256": "66b467a012dcefadbb56c993796397d81d2768a70b3dcd6235fe9e125b07971f",
+      "size": 1644159
+    },
+    {
+      "path": "35cb99413a3ebce2e87a03fc04196e528e22c8d5/batched_gemm-fdba669-7e3d0a6/include/flashinferMetaInfo.h",
+      "sha256": "8e3f9a5fa470a1b9612ec2f590739ee6e63e6564e4b06114c7d83703fa390f62",
+      "size": 30496325
+    },
+    {
+      "path": "35cb99413a3ebce2e87a03fc04196e528e22c8d5/batched_gemm-fdba669-7e3d0a6/include/trtllmGen_bmm_export/BatchedGemmEnums.h",
+      "sha256": "7f98e312d92f24fbdddda72fa6539c667ac614e58d7ebbd3a37bd5afef97ef4d",
+      "size": 2154
+    },
+    {
+      "path": "35cb99413a3ebce2e87a03fc04196e528e22c8d5/batched_gemm-fdba669-7e3d0a6/include/trtllmGen_bmm_export/BatchedGemmInterface.h",
+      "sha256": "9e2b1c10cc265d2d2c66039c4dc506e3f4e5185c8e3dc8f533f2ef76cb7babf2",
+      "size": 50037
+    },
+    {
+      "path": "35cb99413a3ebce2e87a03fc04196e528e22c8d5/batched_gemm-fdba669-7e3d0a6/include/trtllmGen_bmm_export/BatchedGemmOptions.h",
+      "sha256": "88e81d1e04850f58f506e0a112bb2439253840e758146843b71fde504150caa1",
+      "size": 37024
+    },
+    {
+      "path": "35cb99413a3ebce2e87a03fc04196e528e22c8d5/batched_gemm-fdba669-7e3d0a6/include/trtllmGen_bmm_export/Enums.h",
+      "sha256": "1c946127eda8a5da66520d6d5433583659135ec7b09765189adb7ba6c4f171b9",
+      "size": 10137
+    },
+    {
+      "path": "35cb99413a3ebce2e87a03fc04196e528e22c8d5/batched_gemm-fdba669-7e3d0a6/include/trtllmGen_bmm_export/GemmGatedActOptions.h",
+      "sha256": "f6798b8426642c2b4a55fa1f75a623690b46979f110da871f1db02b17086963a",
+      "size": 10792
+    },
+    {
+      "path": "35cb99413a3ebce2e87a03fc04196e528e22c8d5/batched_gemm-fdba669-7e3d0a6/include/trtllmGen_bmm_export/GemmOptions.h",
+      "sha256": "60b5f26de86c68657eb55e09af297deaaaaa21f73d34c06d47332c1f5fc9b0a8",
+      "size": 106537
+    },
+    {
+      "path": "35cb99413a3ebce2e87a03fc04196e528e22c8d5/batched_gemm-fdba669-7e3d0a6/include/trtllmGen_bmm_export/KernelParams.h",
+      "sha256": "529bd0c68ce51fa5797239e57cd930f87d6c832051d3754c54b167a118d04aa9",
+      "size": 43895
+    },
+    {
+      "path": "35cb99413a3ebce2e87a03fc04196e528e22c8d5/batched_gemm-fdba669-7e3d0a6/include/trtllmGen_bmm_export/KernelParamsDecl.h",
+      "sha256": "6c32b9043f831c53410c4d89d81715eb5d55eb77c94e4ecdf0f5e0a794c00ad1",
+      "size": 27662
+    },
+    {
+      "path": "35cb99413a3ebce2e87a03fc04196e528e22c8d5/batched_gemm-fdba669-7e3d0a6/include/trtllmGen_bmm_export/KernelTraits.h",
+      "sha256": "fc061482bb4a845eae48f8897d239e0dd20d05a6369acab013554f1f7254b67a",
+      "size": 33097
+    },
+    {
+      "path": "35cb99413a3ebce2e87a03fc04196e528e22c8d5/batched_gemm-fdba669-7e3d0a6/include/trtllmGen_bmm_export/TmaDescriptor.h",
+      "sha256": "d453f62c88a951f43cc012e256ed547bbd9b58f753cd8ef8ca0d623a66cb8a93",
+      "size": 11686
+    },
+    {
+      "path": "35cb99413a3ebce2e87a03fc04196e528e22c8d5/batched_gemm-fdba669-7e3d0a6/include/trtllmGen_bmm_export/trtllm/gen/CommonUtils.h",
+      "sha256": "df88f6473302e3015f026077a9282882d4a0308e4e3cfbd839f77c68f0fd7b32",
+      "size": 2034
+    },
+    {
+      "path": "35cb99413a3ebce2e87a03fc04196e528e22c8d5/batched_gemm-fdba669-7e3d0a6/include/trtllmGen_bmm_export/trtllm/gen/CudaArchDecl.h",
+      "sha256": "3b212477300e65b8c0eceab533ee0086381187a31132f12ea3a64bed84d48392",
+      "size": 3452
+    },
+    {
+      "path": "35cb99413a3ebce2e87a03fc04196e528e22c8d5/batched_gemm-fdba669-7e3d0a6/include/trtllmGen_bmm_export/trtllm/gen/CudaKernelLauncher.h",
+      "sha256": "523268d53dc4db4f6bd615a68d5b79b9e94f04287f741907473c338905523214",
+      "size": 6905
+    },
+    {
+      "path": "35cb99413a3ebce2e87a03fc04196e528e22c8d5/batched_gemm-fdba669-7e3d0a6/include/trtllmGen_bmm_export/trtllm/gen/DtypeDecl.h",
+      "sha256": "15ae1fca7d1bd0b85decb42b28920b8882c93da2c09669d490ca01019a574009",
+      "size": 10947
+    },
+    {
+      "path": "35cb99413a3ebce2e87a03fc04196e528e22c8d5/batched_gemm-fdba669-7e3d0a6/include/trtllmGen_bmm_export/trtllm/gen/MmaDecl.h",
+      "sha256": "335573ee5ba020e94e852dcad40f7e0e21f506640c98ca316fd3c10e472771f5",
+      "size": 3994
+    },
+    {
+      "path": "35cb99413a3ebce2e87a03fc04196e528e22c8d5/batched_gemm-fdba669-7e3d0a6/include/trtllmGen_bmm_export/trtllm/gen/SfLayoutDecl.h",
+      "sha256": "0c33699c7c40a3569a6ba87b313c1206bf1cb9293814c8d5d926c339e3bf6369",
+      "size": 3892
+    },
+    {
+      "path": "35cb99413a3ebce2e87a03fc04196e528e22c8d5/batched_gemm-fdba669-7e3d0a6/include/trtllmGen_bmm_export/trtllm/gen/SparsityDecl.h",
+      "sha256": "22eddbf8b0b4d27265d33a33a41f8724f8a8e20e27e2c2ce2c631496c9bd6bf3",
+      "size": 4525
+    },
+    {
+      "path": "7b1fc253cd6237950e76310873f4acf4d97a3904/gemm-b738138-25754e6/checksums.txt",
+      "sha256": "ca9d4f956f3fb63bff3066db88fa7ccf08b00f4b0b2751cc14ba72454fd01638",
+      "size": 35809
+    },
+    {
+      "path": "7b1fc253cd6237950e76310873f4acf4d97a3904/gemm-b738138-25754e6/include/flashinferMetaInfo.h",
+      "sha256": "48c820eea4733f576a1ca4c98e5e7f65bea1bba611954a079036974929688178",
+      "size": 637175
+    },
+    {
+      "path": "7b1fc253cd6237950e76310873f4acf4d97a3904/gemm-b738138-25754e6/include/trtllmGen_gemm_export/Enums.h",
+      "sha256": "da72ea76460918f0ce3c61f20c09dcb2ea363eb6835eef62871b79fc560c3f31",
+      "size": 10009
+    },
+    {
+      "path": "7b1fc253cd6237950e76310873f4acf4d97a3904/gemm-b738138-25754e6/include/trtllmGen_gemm_export/GemmInterface.h",
+      "sha256": "6f16ee3cb0934b9f7217c93581b25c671f77ecf2ac5e6d5a07a217967e969ebf",
+      "size": 30033
+    },
+    {
+      "path": "7b1fc253cd6237950e76310873f4acf4d97a3904/gemm-b738138-25754e6/include/trtllmGen_gemm_export/GemmOptions.h",
+      "sha256": "42d83bb5d84282dc2f256061a212c906189f2a142c45bdbef0201c248d2247a6",
+      "size": 97069
+    },
+    {
+      "path": "7b1fc253cd6237950e76310873f4acf4d97a3904/gemm-b738138-25754e6/include/trtllmGen_gemm_export/KernelParams.h",
+      "sha256": "856121c09864ea045a282d27011fa33073fd6b6a39642281615a36943154cbcb",
+      "size": 18069
+    },
+    {
+      "path": "7b1fc253cd6237950e76310873f4acf4d97a3904/gemm-b738138-25754e6/include/trtllmGen_gemm_export/KernelParamsDecl.h",
+      "sha256": "70d590831a89611612a44dca27bd4ff41bc6c46a8d47fdbad5da0074a6d8ea13",
+      "size": 13918
+    },
+    {
+      "path": "7b1fc253cd6237950e76310873f4acf4d97a3904/gemm-b738138-25754e6/include/trtllmGen_gemm_export/KernelTraits.h",
+      "sha256": "74d9392ba63a95d84d04e8b1f2f6b492e3a8fcfd1af020ff05cde055ca53569a",
+      "size": 32312
+    },
+    {
+      "path": "7b1fc253cd6237950e76310873f4acf4d97a3904/gemm-b738138-25754e6/include/trtllmGen_gemm_export/TmaDescriptor.h",
+      "sha256": "a20abf313134e6962ab628ca2f98a24905fdd355bc21d1574d7a7ef706c3b718",
+      "size": 11171
+    },
+    {
+      "path": "7b1fc253cd6237950e76310873f4acf4d97a3904/gemm-b738138-25754e6/include/trtllmGen_gemm_export/trtllm/gen/CommonUtils.h",
+      "sha256": "eaf747e545f360714e079b6a53a7fa24253d3e6ef4be22b0cf678bc6376bd038",
+      "size": 2033
+    },
+    {
+      "path": "7b1fc253cd6237950e76310873f4acf4d97a3904/gemm-b738138-25754e6/include/trtllmGen_gemm_export/trtllm/gen/CudaArchDecl.h",
+      "sha256": "21ddc39bc9b20c66820ef9563b5a988bb379b7a3712c8bcb8f8bcebdc1340d0f",
+      "size": 3455
+    },
+    {
+      "path": "7b1fc253cd6237950e76310873f4acf4d97a3904/gemm-b738138-25754e6/include/trtllmGen_gemm_export/trtllm/gen/CudaKernelLauncher.h",
+      "sha256": "557b222f51317f65ebbaaa153ed5cd3ca9a62d40cc8f77d8b4687c62ec56f773",
+      "size": 6572
+    },
+    {
+      "path": "7b1fc253cd6237950e76310873f4acf4d97a3904/gemm-b738138-25754e6/include/trtllmGen_gemm_export/trtllm/gen/DtypeDecl.h",
+      "sha256": "eea156207722f5f6e0b05136afe7dfd5eff51031de8714b7dca3bac0633103e1",
+      "size": 10723
+    },
+    {
+      "path": "7b1fc253cd6237950e76310873f4acf4d97a3904/gemm-b738138-25754e6/include/trtllmGen_gemm_export/trtllm/gen/MmaDecl.h",
+      "sha256": "b9fe0131a0885c57a696381b5e59a07c3a7f5d12adbf3f04e509222fe4a40cf3",
+      "size": 3958
+    },
+    {
+      "path": "7b1fc253cd6237950e76310873f4acf4d97a3904/gemm-b738138-25754e6/include/trtllmGen_gemm_export/trtllm/gen/SfLayoutDecl.h",
+      "sha256": "6e5b43913b894146125ba2a294dc4e64e844e5e3cfe2d5cb9a59f887faba24d4",
+      "size": 3918
+    },
+    {
+      "path": "7b1fc253cd6237950e76310873f4acf4d97a3904/gemm-b738138-25754e6/include/trtllmGen_gemm_export/trtllm/gen/SparsityDecl.h",
+      "sha256": "1e03fe3c60bb68ce999c48fe3b2085ffc352cbb31d29dd82921a5393d27dfbca",
+      "size": 4549
+    }
+  ]
+}

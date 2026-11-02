@@ -1,0 +1,61 @@
+{
+  "quantization_config": {
+    "config_groups": {
+      "group_0": {
+        "input_activations": null,
+        "output_activations": null,
+        "targets": ["Linear"],
+        "weights": {
+          "dynamic": false,
+          "group_size": 16,
+          "num_bits": 4,
+          "symmetric": true,
+          "type": "float"
+        }
+      }
+    },
+    "ignore": [
+      "lm_head",
+      "model.language_model.embed_tokens",
+      "*.self_attn.in_proj_qkvbfg_a",
+      "*.self_attn.q_proj",
+      "*.self_attn.k_proj",
+      "*.self_attn.v_proj",
+      "*.self_attn.b_proj",
+      "*.self_attn.f_a_proj",
+      "*.self_attn.g_a_proj",
+      "*.self_attn.f_b_proj",
+      "*.self_attn.g_b_proj",
+      "*.self_attn.fused_qkv_a_proj",
+      "*.self_attn.q_a_proj",
+      "*.self_attn.kv_a_proj_with_mqa",
+      "*.self_attn.q_b_proj",
+      "*.self_attn.kv_b_proj",
+      "*.self_attn.indexer.wk_weights_proj",
+      "*.self_attn.indexer.wk",
+      "*.self_attn.indexer.weights_proj",
+      "*.self_attn.indexer.wq_b",
+      "*.self_attn.o_proj",
+      "*.mlp.gate",
+      "*.mlp.gate_up_proj",
+      "*.mlp.down_proj",
+      "*.mlp.shared_experts.gate_up_proj",
+      "*.mlp.shared_experts.down_proj",
+      "*.mlp.shared_experts.gate_proj",
+      "*.mlp.shared_experts.up_proj",
+      "*.mlp.gate_proj",
+      "*.mlp.up_proj",
+      "*.eh_proj",
+      "model.visual.*",
+      "*.self_attn.qkv_proj",
+      "*.self_attn.fused_qkvbfg_a_proj",
+      "*.self_attn.fused_bfg_a_proj",
+      "*.self_attn.fused_fg_b_proj",
+      "*.self_attn.fused_qkv_a_proj_with_mqa"
+    ],
+    "kv_cache_scheme": null,
+    "producer": { "name": "modelopt", "version": "0.45.0" },
+    "quant_algo": "NVFP4",
+    "quant_method": "modelopt"
+  }
+}

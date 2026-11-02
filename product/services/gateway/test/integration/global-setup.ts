@@ -9,11 +9,15 @@ import {
   GatewayProcess,
   GENERATION_TIMEOUT_SECONDS,
 } from "./gateway-process.js";
-import { isRuntimeKind, type RuntimeKind } from "./mock-runtimes/server.js";
 import { freePort } from "./ports.js";
 import { LocalDocker } from "./stack/docker.js";
 import { startPostgres } from "./stack/postgres.js";
-import { startRealRuntime, type RealRuntimes } from "./stack/real-runtimes.js";
+import {
+  isRealRuntimeKind,
+  startRealRuntime,
+  type RealRuntimeKind,
+  type RealRuntimes,
+} from "./stack/real-runtimes.js";
 import { startValkey } from "./stack/valkey.js";
 
 export interface Stack {
@@ -38,14 +42,16 @@ declare module "vitest" {
 }
 
 /** GATEWAY_REAL_RUNTIME names the real runtimes to start, such as "vllm,kev". */
-const enabledRealRuntimes = (): RuntimeKind[] =>
+const enabledRealRuntimes = (): RealRuntimeKind[] =>
   (process.env.GATEWAY_REAL_RUNTIME ?? "")
     .split(",")
     .map((name) => name.trim())
     .filter((name) => name !== "")
     .map((name) => {
-      if (!isRuntimeKind(name)) {
-        throw new Error(`Unknown real runtime "${name}"; expected vllm or kev`);
+      if (!isRealRuntimeKind(name)) {
+        throw new Error(
+          `Unknown real runtime "${name}"; expected vllm, kev or sglang`,
+        );
       }
 
       return name;

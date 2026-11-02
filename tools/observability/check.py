@@ -616,6 +616,34 @@ def main():
         ], expected, ['ModelNoReadyReplicas', 'ModelUnderReplicated', 'ModelScaleUpStalled'],
         {'model': 'test/model'}, duration)
 
+    for name, ready, expected, duration in [
+        ('canary warming while primary is healthy', 10, None, '19m'),
+        ('canary never arrives', 10, 'ModelScaleUpStalled', '21m'),
+        ('total serving capacity below floor', 9, 'ModelUnderReplicated', '1m'),
+        ('nine primary plus one canary meets aggregate floor', 10, None, '19m'),
+        ('nine primary plus one canary still misses desired total', 10, 'ModelScaleUpStalled', '21m'),
+        ('canary qualified', 11, None, '21m'),
+    ]:
+        scenario('explicit canary: ' + name, [
+            {'series': 'gradiated_model_desired_replicas{model="test/model",rollout="primary"}', 'values': '10+0x80'},
+            {'series': 'gradiated_model_minimum_replicas{model="test/model",rollout="primary"}', 'values': '10+0x80'},
+            {'series': 'gradiated_model_desired_replicas{model="test/model",rollout="candidate"}', 'values': '1+0x80'},
+            {'series': 'gradiated_model_minimum_replicas{model="test/model",rollout="candidate"}', 'values': '0+0x80'},
+            {'series': 'gradiated_worker_model_ready_replicas{instance="a",model="test/model"}', 'values': f'{ready}+0x80'},
+            {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="a",loop="kubernetes_deployment_reconciliation"}', 'values': '1+30x80'},
+        ], expected, ['ModelNoReadyReplicas', 'ModelUnderReplicated', 'ModelScaleUpStalled'],
+        {'model': 'test/model'}, duration)
+
+    scenario('isolated qualification adds no production capacity demand', [
+        {'series': 'gradiated_model_desired_replicas{model="test/model",rollout="primary"}', 'values': '10+0x80'},
+        {'series': 'gradiated_model_minimum_replicas{model="test/model",rollout="primary"}', 'values': '10+0x80'},
+        {'series': 'gradiated_model_desired_replicas{model="test/model",rollout="qualification"}', 'values': '0+0x80'},
+        {'series': 'gradiated_model_minimum_replicas{model="test/model",rollout="qualification"}', 'values': '0+0x80'},
+        {'series': 'gradiated_worker_model_ready_replicas{instance="a",model="test/model"}', 'values': '10+0x80'},
+        {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="a",loop="kubernetes_deployment_reconciliation"}', 'values': '1+30x80'},
+    ], None, ['ModelNoReadyReplicas', 'ModelUnderReplicated', 'ModelScaleUpStalled'],
+    {'model': 'test/model'}, '21m')
+
     probe_labels = '{instance="a",model="test/model"}'
     def probe_series(metric, values, labels=probe_labels):
         return {'series': metric + labels, 'values': values}

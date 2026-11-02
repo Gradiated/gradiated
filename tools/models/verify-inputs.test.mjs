@@ -66,6 +66,26 @@ test("GPU launcher changes verify only the host bundle", () => {
 });
 
 test("host agent and staging changes verify only the host bundle", () => {
-  for (const path of ["product/inference/gpu/host-agent.py", "product/inference/runtime-launcher/supervise.cpp", "product/inference/gpu/download-runtime.py"])
+  for (const path of [
+    "product/inference/gpu/host-agent.py",
+    "product/inference/runtime-launcher/supervise.cpp",
+    "product/inference/gpu/download-runtime.py",
+  ])
     assert.deepEqual(bundlesToVerify([path]), ["host"]);
+});
+
+test("SGLang GLM bundle and helper changes verify only that runtime", () => {
+  for (const input of [
+    "product/inference/bundles/glm-5-3-flash-sglang/entrypoint",
+    "product/inference/runtimes/glm-sglang/service.py",
+  ]) {
+    assert.deepEqual(bundlesToVerify([input]), ["glm-5-3-flash-sglang"]);
+  }
+});
+
+test("shared GLM warmup changes verify both GLM runtimes", () => {
+  assert.deepEqual(
+    bundlesToVerify(["product/inference/runtimes/glm/warmup-supervisor.py"]),
+    ["glm-5-3-flash", "glm-5-3-flash-sglang"],
+  );
 });

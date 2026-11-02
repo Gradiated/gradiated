@@ -3,7 +3,13 @@ mod settlement;
 mod stream;
 mod tasks;
 
-use std::{cmp, future::Future, panic::AssertUnwindSafe, sync::Arc};
+use std::{
+    cmp,
+    future::Future,
+    panic::AssertUnwindSafe,
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 use chrono::Utc;
 use futures_util::{stream as stream_util, FutureExt};
@@ -29,6 +35,7 @@ use crate::{
 };
 
 const STREAM_CHANNEL_CAPACITY: usize = 8;
+const STREAM_STARTUP_GRACE: Duration = Duration::from_secs(1);
 
 #[derive(Clone)]
 pub struct CompletionService {
@@ -390,6 +397,7 @@ impl Generation {
             deadline: self.lease.request_deadline(),
             deployment: self.route.primary,
             fallbacks: self.route.fallbacks,
+            attempts: 0,
         };
 
         let settlement = GenerationSettlement {
@@ -452,40 +460,100 @@ impl Generation {
 
     async fn stream(
         self,
-        mut started: oneshot::Sender<Result<(), GatewayError>>,
+        started: oneshot::Sender<Result<(), GatewayError>>,
         events: mpsc::Sender<StreamItem>,
         mut shutdown: watch::Receiver<bool>,
     ) {
         let (mut call, mut settlement) = self.start();
 
-        let opened = tokio::select! {
-            result = call.stream() => result,
-            _ = started.closed() => Err(FailedGeneration::cancelled(CancellationOwner::Client)),
-            _ = force_shutdown_requested(&mut shutdown) => Err(FailedGeneration::cancelled(CancellationOwner::Server)),
+        let mut attempt_started = Instant::now();
+        let mut started = Some(started);
+        let opened = {
+            let opening = call.stream();
+            tokio::pin!(opening);
+            tokio::select! {
+                result = &mut opening => result,
+                _ = started.as_mut().expect("startup sender exists").closed() => Err(FailedGeneration::cancelled(CancellationOwner::Client)),
+                _ = force_shutdown_requested(&mut shutdown) => Err(FailedGeneration::cancelled(CancellationOwner::Server)),
+                _ = tokio::time::sleep(STREAM_STARTUP_GRACE) => {
+                    // A runtime can withhold HTTP headers throughout prefill; let SSE keepalives start.
+                    let sent = started.take().expect("startup sender exists").send(Ok(()));
+                    if sent.is_err() {
+                        Err(FailedGeneration::cancelled(CancellationOwner::Client))
+                    } else {
+                        tokio::select! {
+                            result = opening => result,
+                            _ = events.closed() => Err(FailedGeneration::cancelled(CancellationOwner::Client)),
+                            _ = force_shutdown_requested(&mut shutdown) => Err(FailedGeneration::cancelled(CancellationOwner::Server)),
+                        }
+                    }
+                }
+            }
         };
         settlement.metrics.served_by(call.deployment.id);
 
         let mut runtime_stream = match opened {
             Ok(runtime_stream) => runtime_stream,
             Err(failed) => {
-                let _ = started.send(Err(settlement.settle_failure(failed).await));
+                let error = settlement.settle_failure(failed).await;
+                if let Some(started) = started {
+                    let _ = started.send(Err(error));
+                } else {
+                    let _ = events.send(StreamItem::Error(error)).await;
+                }
                 return;
             }
         };
 
-        if started.send(Ok(())).is_err() {
-            drop(runtime_stream);
-            settlement
-                .settle_failure(FailedGeneration::cancelled(CancellationOwner::Client))
-                .await;
-            return;
+        if let Some(started) = started {
+            if started.send(Ok(())).is_err() {
+                drop(runtime_stream);
+                settlement
+                    .settle_failure(FailedGeneration::cancelled(CancellationOwner::Client))
+                    .await;
+                return;
+            }
         }
 
         let mut progress = StreamProgress::new();
-        let relay = progress.relay(&mut runtime_stream, &events, &mut shutdown, call.deadline);
-        let stop = unless_panicked(call.generation_id, relay)
-            .await
-            .unwrap_or(StreamStop::Panicked);
+        let stop = loop {
+            let relay = progress.relay(&mut runtime_stream, &events, &mut shutdown, call.deadline);
+            let stop = unless_panicked(call.generation_id, relay)
+                .await
+                .unwrap_or(StreamStop::Panicked);
+            let retry = match &stop {
+                StreamStop::RuntimeFailed(failure)
+                    if failure.kind() == crate::RuntimeFailureKind::CapacityExceeded
+                        && progress.can_retry_before_any_frame() =>
+                {
+                    call.retry_stream_target(failure, attempt_started)
+                }
+                _ => false,
+            };
+            if !retry {
+                break stop;
+            }
+
+            drop(runtime_stream);
+            attempt_started = Instant::now();
+            let reopened = tokio::select! {
+                result = call.stream() => result,
+                _ = events.closed() => Err(FailedGeneration::cancelled(CancellationOwner::Client)),
+                _ = force_shutdown_requested(&mut shutdown) => Err(FailedGeneration::cancelled(CancellationOwner::Server)),
+            };
+            settlement.metrics.served_by(call.deployment.id);
+            match reopened {
+                Ok(stream) => {
+                    runtime_stream = stream;
+                    progress = StreamProgress::new();
+                }
+                Err(failed) => {
+                    let error = settlement.settle_failure(failed).await;
+                    let _ = events.send(StreamItem::Error(error)).await;
+                    return;
+                }
+            }
+        };
         stop.warn_if_abnormal(&call, &progress, settlement.started_at);
         drop(runtime_stream);
 

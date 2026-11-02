@@ -53,8 +53,14 @@ export const readKubernetesDeployments = (items: unknown[]) =>
         id: pod.metadata.uid,
         name: pod.metadata.name,
         instanceId,
-        modelId: annotations["gradiated.com/model-id"],
+        modelId:
+          annotations["gradiated.com/serving-model-id"] ??
+          annotations["gradiated.com/model-id"],
         release,
+        servingEnabled:
+          annotations["gradiated.com/serving-mode"] === "production" ||
+          (!Object.hasOwn(annotations, "gradiated.com/serving-model-id") &&
+            annotations["gradiated.com/serving-mode"] === undefined),
         qualified:
           annotations["gradiated.com/qualified"] === "true" &&
           pod.status.phase === "Running" &&

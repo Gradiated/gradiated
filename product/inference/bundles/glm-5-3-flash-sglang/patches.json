@@ -1,0 +1,23 @@
+{
+  "upstream_sha": "f171859219b54e1dad45dda60028034490836974",
+  "files": [
+    {
+      "path": "sglang/srt/layers/quantization/modelopt_quant.py",
+      "original_sha256": "f3a0d4cca0bd92ad16f8f598c80091b18d019fd76664c7a5311d516675e860e8",
+      "overlay_sha256": "00f54cb23010460c302e782842616e7a46f6c7ce6b04cb2048bde5ff3aa2f0bd",
+      "patch": "modelopt_quant.patch"
+    },
+    {
+      "path": "sglang/srt/layers/quantization/marlin_utils_fp4.py",
+      "original_sha256": "544b8f5f3025bf13c44dd196bd68de31093a9195ddf775c1bce24e52d7e1b94b",
+      "overlay_sha256": "198498b803f4bc486c685f2e2d56e40d803a408bcee1ef01f478fe896f4250e5",
+      "patch": "marlin_utils_fp4.patch"
+    },
+    {
+      "path": "sglang/srt/models/deepseek_nextn.py",
+      "original_sha256": "d45c1dd04505facf25279056cbf75b7898f06bcb533c464d35f254f8aff692ab",
+      "overlay_sha256": "bf045d51b8d473fd5cfa750ac40fc0dd1f9e32d42532def087f8beec41fabe52",
+      "patch": "deepseek_nextn.patch"
+    }
+  ]
+}

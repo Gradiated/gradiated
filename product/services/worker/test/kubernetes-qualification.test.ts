@@ -46,6 +46,50 @@ describe("Kubernetes SDK qualification", () => {
     candidate.status.containerStatuses[0]!.containerID = "runpod://2:200";
     expect(qualificationCandidate(candidate)).toBeDefined();
   });
+  it("qualifies the mapped public identity while legacy private identity remains absent from the catalog", async () => {
+    const current = pod();
+    current.metadata.annotations["gradiated.com/model-id"] = "private/canary";
+    current.metadata.annotations["gradiated.com/serving-mode"] =
+      "qualification";
+    let verified: unknown;
+    let patches = 0;
+    const request = async (path: string, method?: string) => {
+      if (method === "PATCH") patches += 1;
+      return path.includes("?") ? { items: [current], metadata: {} } : current;
+    };
+    const verify = async (input: unknown) => {
+      verified = input;
+    };
+    await qualifyKubernetesPod(
+      "gpu-inference",
+      request,
+      availableModels,
+      verify,
+    );
+    expect(verified).toBeUndefined();
+    expect(patches).toBe(0);
+
+    current.metadata.annotations["gradiated.com/serving-model-id"] =
+      "jaredpalmer/kev-9b";
+    expect(qualificationCandidate(current)?.modelId).toBe("jaredpalmer/kev-9b");
+    await qualifyKubernetesPod(
+      "gpu-inference",
+      request,
+      availableModels,
+      verify,
+    );
+    expect(verified).toMatchObject({
+      modelId: "jaredpalmer/kev-9b",
+      deploymentIds: [current.metadata.uid],
+    });
+    expect(patches).toBe(1);
+    expect(current.metadata.annotations["gradiated.com/model-id"]).toBe(
+      "private/canary",
+    );
+    current.metadata.annotations["gradiated.com/serving-model-id"] = "";
+    expect(qualificationCandidate(current)).toBeUndefined();
+  });
+
   it("publishes only the UID and process that passed the SDK", async () => {
     const current = pod();
     let patch: unknown;

@@ -1,0 +1,16 @@
+{
+  "model": "dealignai/glm-5.3-flash-uncensored",
+  "primary": "glm-dealign",
+  "name": "glm-dealign-sglang",
+  "bundle": "glm-5-3-flash-sglang",
+  "checkpoint": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+  "checkpoint_revision": "745aac2ff0f10acf961f396df3f9418598aa7327",
+  "instance_id": "01a19170-d2a0-74ca-b317-d87d69988e4b",
+  "gpus": 2,
+  "cpu": "32",
+  "memory": "400Gi",
+  "active_requests": 16,
+  "queued_requests": 2,
+  "queue_timeout_seconds": 60,
+  "runtime_model": "dealignai/glm-5.3-flash-uncensored-sglang-canary"
+}

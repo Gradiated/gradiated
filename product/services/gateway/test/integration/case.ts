@@ -87,12 +87,25 @@ export class Case {
     readonly model: string,
     readonly runtimeModel: string,
     readonly runtimes: Runtime[],
+    runtimeRevision?: string,
+    modelRevision?: string,
   ) {
     this.redis = connections.redis;
     this.database = connections.database;
     this.http = connections.http;
     this.path = kind === "kev" ? "/v1/systemone" : "/v1/chat/completions";
-    this.release = release(kind, model, runtimeModel);
+    this.release = {
+      ...release(kind, model, runtimeModel),
+      ...(runtimeRevision ? { runtime_revision: runtimeRevision } : {}),
+      ...(modelRevision
+        ? {
+            model_path: runtimeModel,
+            model_revision: modelRevision,
+            tokenizer_path: runtimeModel,
+            tokenizer_revision: modelRevision,
+          }
+        : {}),
+    };
     this.digest = `sha256:${createHash("sha256").update(JSON.stringify(this.release)).digest("hex")}`;
     this.deployments = runtimes.map((runtime, index) => ({
       id: crypto.randomUUID(),
@@ -123,7 +136,15 @@ export class Case {
         await Runtime.start(kind, runtimeModel, runtimeToken, upstream),
       );
     }
-    const instance = new Case(connections, kind, model, runtimeModel, runtimes);
+    const instance = new Case(
+      connections,
+      kind,
+      model,
+      runtimeModel,
+      runtimes,
+      options.runtimeRevision,
+      options.modelRevision,
+    );
 
     // The tenant exists in PostgreSQL. The gateway caches what it reads, so no
     // test seeds Valkey: that would hide a query this suite is here to exercise.
@@ -323,6 +344,27 @@ export class Case {
     }
   }
 
+  async ready(
+    matches: (entry: JsonObject) => boolean = () => true,
+  ): Promise<JsonObject> {
+    return eventually(
+      async () => {
+        const response = await this.http.get("/v1/models", {
+          headers: this.headers,
+        });
+        if (response.status !== 200)
+          throw new Error("catalog readiness request failed");
+        const data = response.json().data;
+        if (!Array.isArray(data)) throw new Error("catalog has no model list");
+        const entry = data.map(object).find((model) => model.id === this.model);
+
+        return entry?.is_ready === true && matches(entry) ? entry : undefined;
+      },
+      5000,
+      "new deployment never became ready through the gateway catalog",
+    );
+  }
+
   body(changes: JsonObject = {}): JsonObject {
     const base: JsonObject =
       this.kind === "kev"
@@ -461,6 +503,8 @@ export interface CaseOptions {
   replicas?: number;
   upstream?: Upstream;
   gatewayUrl?: string;
+  runtimeRevision?: string;
+  modelRevision?: string;
 }
 
 type MakeCase = (kind: RuntimeKind, options?: CaseOptions) => Promise<Case>;

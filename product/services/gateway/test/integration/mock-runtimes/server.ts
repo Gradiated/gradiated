@@ -17,7 +17,7 @@ import { profile as kevProfile } from "./kev.js";
 import type { RuntimeProfile, StreamEvents } from "./profile.js";
 import { profile as vllmProfile } from "./vllm.js";
 
-const BODY_LIMIT = 1024 * 1024;
+const BODY_LIMIT = 32_000_000;
 const GATE_TIMEOUT_MS = 8000;
 const STALL_LIMIT_MS = 5000;
 const DISCONNECT_CODES = new Set([
@@ -26,6 +26,15 @@ const DISCONNECT_CODES = new Set([
   "ERR_STREAM_DESTROYED",
   "ERR_STREAM_WRITE_AFTER_END",
 ]);
+
+class UpstreamRejection extends Error {
+  constructor(
+    readonly status: number,
+    readonly body: Buffer,
+  ) {
+    super(`real runtime rejected with HTTP ${status}`);
+  }
+}
 const PROFILES: Record<RuntimeKind, RuntimeProfile> = {
   kev: kevProfile,
   vllm: vllmProfile,
@@ -103,7 +112,13 @@ const plan = (options: PlanOptions = {}): Plan => ({
  * real model produced.
  */
 export type Upstream =
-  { kind: "synthetic" } | { kind: "proxy"; baseUrl: string; model: string };
+  | { kind: "synthetic" }
+  | {
+      kind: "proxy";
+      baseUrl: string;
+      model: string;
+      authorization?: string;
+    };
 
 export const SYNTHETIC: Upstream = { kind: "synthetic" };
 
@@ -147,6 +162,8 @@ export class Runtime {
   resolutionStatus = 200;
   readonly headers: IncomingHttpHeaders[] = [];
   readonly errors: string[] = [];
+  upstreamCancelled = 0;
+  upstreamResponses = 0;
   readonly url: string;
 
   readonly #profile: RuntimeProfile;
@@ -228,6 +245,10 @@ export class Runtime {
       const accepted = await this.#accept(request, response);
       if (accepted) await this.#respond(request, response, accepted);
     } catch (error) {
+      if (error instanceof UpstreamRejection) {
+        return reply(response, error.status, error.body);
+      }
+
       if (isDisconnect(error)) return; // Deliberate cancellation and fault tests close sockets.
 
       this.errors.push(error instanceof Error ? error.message : String(error));
@@ -309,13 +330,13 @@ export class Runtime {
     const upstream = this.#upstream;
     if (body.stream) {
       return upstream.kind === "proxy"
-        ? await this.#relay(upstream.baseUrl, response, body, plan)
+        ? await this.#relay(upstream, response, body, plan)
         : this.#stream(response, body, plan);
     }
 
     const result =
       upstream.kind === "proxy"
-        ? await this.#forward(upstream.baseUrl, body)
+        ? await this.#forward(upstream, body)
         : this.#profile.response(body, plan.cached);
     plan.mutateBody?.(result);
 
@@ -340,43 +361,77 @@ export class Runtime {
     reply(response, 200, Buffer.from(JSON.stringify(result)));
   }
 
-  async #forward(baseUrl: string, body: JsonObject): Promise<JsonObject> {
-    const response = await fetch(`${baseUrl}${this.#profile.path}`, {
+  async #forward(
+    upstream: Extract<Upstream, { kind: "proxy" }>,
+    body: JsonObject,
+  ): Promise<JsonObject> {
+    const response = await fetch(`${upstream.baseUrl}${this.#profile.path}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(upstream.authorization
+          ? { Authorization: upstream.authorization }
+          : {}),
+      },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(120_000),
     });
     const text = await response.text();
     if (!response.ok) {
-      throw new Error(
-        `real runtime returned ${response.status}: ${text.slice(0, 400)}`,
-      );
+      throw new UpstreamRejection(response.status, Buffer.from(text));
     }
     return object(JSON.parse(text));
   }
 
   /** Relay the real runtime's SSE body byte for byte, so framing is the runtime's own. */
   async #relay(
-    baseUrl: string,
+    upstream: Extract<Upstream, { kind: "proxy" }>,
     response: ServerResponse,
     body: JsonObject,
     plan: Plan,
   ): Promise<void> {
-    const source = await fetch(`${baseUrl}${this.#profile.path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(120_000),
-    });
-    if (!source.ok || !source.body) {
-      throw new Error(`real runtime returned ${source.status} for a stream`);
-    }
-    response.writeHead(200, {
-      "Content-Type": source.headers.get("content-type") ?? "text/event-stream",
-      Connection: "close",
-    });
+    const disconnected = new AbortController();
+    const abort = (): void => {
+      if (!response.writableEnded) {
+        this.upstreamCancelled += 1;
+        disconnected.abort();
+      }
+    };
+    response.once("close", abort);
+
     try {
+      const source = await fetch(`${upstream.baseUrl}${this.#profile.path}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(upstream.authorization
+            ? { Authorization: upstream.authorization }
+            : {}),
+        },
+        body: JSON.stringify(body),
+        signal: AbortSignal.any([
+          disconnected.signal,
+          AbortSignal.timeout(120_000),
+        ]),
+      });
+      this.upstreamResponses += 1;
+      if (!source.ok) {
+        return reply(
+          response,
+          source.status,
+          Buffer.from(await source.arrayBuffer()),
+        );
+      }
+      if (!source.body) {
+        throw new Error("real runtime returned no stream body");
+      }
+
+      response.writeHead(200, {
+        "Content-Type":
+          source.headers.get("content-type") ?? "text/event-stream",
+        Connection: "close",
+      });
+      response.flushHeaders();
       const reader = source.body.getReader();
       for (
         let read = await reader.read();
@@ -387,8 +442,12 @@ export class Runtime {
       }
       response.end();
     } catch (error) {
-      if (!isDisconnect(error)) this.errors.push(String(error));
+      if (!disconnected.signal.aborted && !isDisconnect(error)) {
+        this.errors.push(String(error));
+      }
       response.socket?.destroy();
+    } finally {
+      response.off("close", abort);
     }
   }
 

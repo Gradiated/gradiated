@@ -18,13 +18,14 @@ export const KubernetesDeploymentSchema = z.object({
   modelId: z.string().min(1),
   release: ModelDeploymentReleaseSchema,
   qualified: z.boolean(),
+  servingEnabled: z.boolean().default(true),
   draining: z.boolean(),
 });
 
 export type KubernetesDeployment = z.infer<typeof KubernetesDeploymentSchema>;
 
 export interface KubernetesDeploymentView {
-  running(): Promise<readonly KubernetesDeployment[]>;
+  running(): Promise<readonly z.input<typeof KubernetesDeploymentSchema>[]>;
   isGone(id: string): Promise<boolean>;
 }
 
@@ -76,7 +77,7 @@ export const createKubernetesDeploymentStore = (database: ControlDatabase) => ({
           modelId: pod.modelId,
           status: pod.draining
             ? "draining"
-            : pod.qualified
+            : pod.qualified && pod.servingEnabled
               ? "available"
               : "unavailable",
           provider: host.provider,

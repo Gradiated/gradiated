@@ -212,6 +212,7 @@ fn runtime_call(fallbacks: &[&GatewayModelDeployment]) -> RuntimeCall {
             .iter()
             .map(|deployment| (*deployment).clone())
             .collect(),
+        attempts: 0,
     }
 }
 

@@ -129,6 +129,110 @@ async fn a_stream_that_fails_to_open_retries_on_the_fallback() {
 }
 
 #[tokio::test]
+async fn a_late_first_capacity_event_retries_before_any_customer_frame() {
+    let harness = Harness::new(
+        streaming_request(2),
+        [
+            Script::Stream(vec![Err(RuntimeFailure::new(
+                RuntimeFailureKind::CapacityExceeded,
+            ))]),
+            successful_stream(),
+        ],
+    );
+    let items = harness.stream().await.unwrap();
+
+    assert_eq!(items.last(), Some(&StreamItem::Done));
+    assert_eq!(harness.journal.dispatches().len(), 2);
+    assert_eq!(harness.only_finalized()["status"], "succeeded");
+}
+
+#[tokio::test]
+async fn late_capacity_fallback_logs_the_global_second_attempt() {
+    let logs = Logs::default();
+    let _guard = logs.start();
+    let harness = Harness::new(
+        streaming_request(3),
+        [
+            Script::Stream(vec![Err(RuntimeFailure::new(
+                RuntimeFailureKind::CapacityExceeded,
+            ))]),
+            failure(RuntimeFailureKind::Unavailable),
+            successful_stream(),
+        ],
+    );
+    let items = harness.stream().await.unwrap();
+
+    assert_eq!(
+        items.last(),
+        Some(&StreamItem::Error(GatewayError::RuntimeUnavailable))
+    );
+    assert_eq!(harness.journal.dispatches().len(), 2);
+    let events = logs.events();
+    let attempts = logged(&events, "dispatch");
+    assert_eq!(attempts.len(), 2);
+    assert_eq!(attempts[0]["fields"]["attempt"], 1);
+    assert_eq!(attempts[1]["fields"]["attempt"], 2);
+    assert_eq!(attempts[1]["fields"]["retry_selected"], false);
+}
+
+#[tokio::test]
+async fn late_capacity_cannot_create_a_third_runtime_attempt() {
+    for first in [
+        failure(RuntimeFailureKind::CapacityExceeded),
+        Script::Stream(vec![Err(RuntimeFailure::new(
+            RuntimeFailureKind::CapacityExceeded,
+        ))]),
+    ] {
+        let harness = Harness::new(
+            streaming_request(3),
+            [
+                first,
+                Script::Stream(vec![Err(RuntimeFailure::new(
+                    RuntimeFailureKind::CapacityExceeded,
+                ))]),
+                successful_stream(),
+            ],
+        );
+        let items = harness.stream().await.unwrap();
+
+        assert_eq!(
+            items.last(),
+            Some(&StreamItem::Error(GatewayError::CapacityExceeded))
+        );
+        assert_eq!(harness.journal.dispatches().len(), 2);
+        assert_eq!(harness.only_finalized()["status"], "failed");
+    }
+}
+
+#[tokio::test]
+async fn role_frames_and_reported_work_prevent_late_capacity_retry() {
+    let cases = [
+        vec![
+            content("", None),
+            Err(RuntimeFailure::new(RuntimeFailureKind::CapacityExceeded)),
+        ],
+        vec![Err(RuntimeFailure::with_usage(
+            RuntimeFailureKind::CapacityExceeded,
+            usage(10, 0, 1),
+        ))],
+    ];
+    for events in cases {
+        let harness = Harness::new(
+            streaming_request(2),
+            [Script::Stream(events), successful_stream()],
+        );
+        let items = harness.stream().await.unwrap();
+
+        assert_eq!(
+            items.last(),
+            Some(&StreamItem::Error(GatewayError::CapacityExceeded))
+        );
+        assert_eq!(harness.journal.dispatches().len(), 1);
+        assert_eq!(harness.only_finalized()["status"], "failed");
+    }
+}
+
+#[tokio::test]
 async fn a_stream_that_fails_to_open_without_a_fallback_returns_the_settled_error() {
     let harness = Harness::new(
         streaming_request(1),

@@ -39,3 +39,8 @@ target "verify-host" {
   context    = "."
   dockerfile = "product/inference/bundles/host/Dockerfile"
 }
+
+target "verify-glm-5-3-flash-sglang" {
+  inherits = ["bundle"]
+  dockerfile = "bundles/glm-5-3-flash-sglang/Dockerfile"
+}

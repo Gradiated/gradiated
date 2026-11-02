@@ -45,6 +45,11 @@ export const bundles = {
     "product/inference/runtimes/glm",
     "product/inference/lora",
   ],
+  "glm-5-3-flash-sglang": [
+    "product/inference/bundles/glm-5-3-flash-sglang",
+    "product/inference/runtimes/glm-sglang",
+    "product/inference/runtimes/glm/warmup-supervisor.py",
+  ],
   "deepseek-v4-1-flash": [
     "product/inference/bundles/deepseek-v4-1-flash",
     "product/inference/images/deepseek-v4-1-flash/start.sh",

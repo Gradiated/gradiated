@@ -1,0 +1,28 @@
+--- a/sglang/srt/layers/quantization/marlin_utils_fp4.py
++++ b/sglang/srt/layers/quantization/marlin_utils_fp4.py
+@@ -547,0 +548,20 @@
++def _fold_nvfp4_w13_global_scales(block_scales, global_scales, num_shards, param_dtype):
++    """Fold separate checkpoint globals before Marlin's lossy scale encoding."""
++    if global_scales.ndim == 1:
++        return block_scales, global_scales
++    if global_scales.ndim != 2 or global_scales.shape[1] != num_shards:
++        raise ValueError("Unexpected NVFP4 gate/up global scale shape")
++    if not torch.isfinite(global_scales).all() or (global_scales < 0).any():
++        raise ValueError("NVFP4 global scales must be finite and non-negative")
++    experts, rows, groups = block_scales.shape
++    if global_scales.shape[0] != experts or rows % num_shards:
++        raise ValueError("NVFP4 gate/up scale dimensions do not match")
++    globals_fp32 = global_scales.float()
++    shared = globals_fp32.amax(dim=1)
++    denominator = torch.where(shared > 0, shared, torch.ones_like(shared))
++    ratios = globals_fp32 / denominator[:, None]
++    folded = block_scales.float().reshape(experts, num_shards, rows // num_shards, groups)
++    folded = folded * ratios[:, :, None, None]
++    return folded.reshape(experts, rows, groups).contiguous(), shared
++
++
+@@ -574,0 +595,4 @@
++
++    w13_scale, w13_global_scale = _fold_nvfp4_w13_global_scales(
++        w13_scale, w13_global_scale, num_shards, param_dtype
++    )

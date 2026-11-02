@@ -64,6 +64,52 @@ describe("Kubernetes deployment ownership", () => {
       status: "available",
       serviceUrl: `http://gpu-${host.id}.tailscale-inference.svc.cluster.local:8888/alloc/${pod.id}`,
     });
+    for (const qualified of [false, true]) {
+      await store.reconcile({
+        running: async () => [{ ...pod, qualified, servingEnabled: false }],
+        isGone: async () => false,
+      });
+      expect((await rows())[0]?.status).toBe("unavailable");
+    }
+    await store.reconcile({
+      running: async () => [
+        { ...pod, qualified: true, servingEnabled: false, draining: true },
+      ],
+      isGone: async () => false,
+    });
+    expect((await rows())[0]?.status).toBe("draining");
+    await store.reconcile({
+      running: async () => [{ ...pod, qualified: true, servingEnabled: true }],
+      isGone: async () => false,
+    });
+    expect((await rows())[0]?.status).toBe("available");
+    const privateModelId = `${model.id}-sglang-canary`;
+    const privatePodId = randomUUID();
+    await store.reconcile({
+      running: async () => [
+        { ...pod, modelId: privateModelId, qualified: true },
+        { ...pod, id: privatePodId, modelId: privateModelId, qualified: true },
+      ],
+      isGone: async () => false,
+    });
+    expect((await rows())[0]).toMatchObject({
+      modelId: model.id,
+      status: "unavailable",
+    });
+    expect(
+      await database.database
+        .select()
+        .from(modelDeployments)
+        .where(eq(modelDeployments.id, privatePodId)),
+    ).toHaveLength(0);
+    await store.reconcile({
+      running: async () => [{ ...pod, qualified: true, servingEnabled: false }],
+      isGone: async () => false,
+    });
+    expect((await rows())[0]).toMatchObject({
+      modelId: model.id,
+      status: "unavailable",
+    });
     await store.reconcile({
       running: async () => [
         { ...pod, modelId: "missing-model", qualified: true },

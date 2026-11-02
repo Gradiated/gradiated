@@ -61,6 +61,78 @@ describe("Kubernetes inference deployment discovery", () => {
     ).toMatchObject({ draining: true });
   });
 
+  it.each([
+    [undefined, true],
+    ["production", true],
+    ["qualification", false],
+    ["unknown", false],
+    ["", false],
+  ])(
+    "keeps SDK readiness independent of serving mode %s",
+    (mode, servingEnabled) => {
+      const candidate = pod();
+      candidate.metadata.annotations["gradiated.com/qualified"] = "true";
+      if (mode !== undefined)
+        candidate.metadata.annotations["gradiated.com/serving-mode"] = mode;
+
+      expect(readKubernetesDeployments([candidate])[0]).toMatchObject({
+        qualified: true,
+        servingEnabled,
+      });
+      candidate.status.conditions[0]!.status = "False";
+      expect(readKubernetesDeployments([candidate])[0]).toMatchObject({
+        qualified: false,
+        servingEnabled,
+      });
+    },
+  );
+
+  it("maps a private runtime identity to a public serving model without enabling qualification traffic", () => {
+    const candidate = pod();
+    candidate.metadata.annotations["gradiated.com/model-id"] = "private/canary";
+    candidate.metadata.annotations["gradiated.com/serving-model-id"] =
+      "public/model";
+    candidate.metadata.annotations["gradiated.com/serving-mode"] =
+      "qualification";
+    candidate.metadata.annotations["gradiated.com/qualified"] = "true";
+    expect(readKubernetesDeployments([candidate])[0]).toMatchObject({
+      modelId: "public/model",
+      qualified: true,
+      servingEnabled: false,
+    });
+    delete candidate.metadata.annotations["gradiated.com/serving-mode"];
+    expect(readKubernetesDeployments([candidate])[0]).toMatchObject({
+      modelId: "public/model",
+      qualified: true,
+      servingEnabled: false,
+    });
+    candidate.metadata.annotations["gradiated.com/serving-mode"] = "unknown";
+    expect(readKubernetesDeployments([candidate])[0]).toMatchObject({
+      modelId: "public/model",
+      qualified: true,
+      servingEnabled: false,
+    });
+    candidate.metadata.annotations["gradiated.com/serving-mode"] = "production";
+    expect(readKubernetesDeployments([candidate])[0]).toMatchObject({
+      modelId: "public/model",
+      qualified: true,
+      servingEnabled: true,
+    });
+    expect(candidate.metadata.annotations["gradiated.com/model-id"]).toBe(
+      "private/canary",
+    );
+    candidate.metadata.annotations["gradiated.com/serving-model-id"] = "";
+    expect(readKubernetesDeployments([candidate])).toEqual([]);
+    delete candidate.metadata.annotations["gradiated.com/serving-model-id"];
+    delete candidate.metadata.annotations["gradiated.com/serving-mode"];
+    expect(readKubernetesDeployments([candidate])[0]).toMatchObject({
+      servingEnabled: true,
+    });
+    expect(readKubernetesDeployments([candidate])[0]?.modelId).toBe(
+      "private/canary",
+    );
+  });
+
   it("reads all pages before deciding that a deployment disappeared", async () => {
     const first = pod(),
       second = pod();

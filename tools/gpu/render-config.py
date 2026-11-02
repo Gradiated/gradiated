@@ -50,19 +50,55 @@ def rollout(name, model, runtimes):
         raise ValueError('The model identity label is reserved')
     if model['replicas'] < 1 or model['progress_deadline_seconds'] < 1:
         raise ValueError('Serving replicas and deadlines must be positive')
+    parent = model.get('canary_for')
+    if 'canary_for' in model and (not isinstance(parent, str) or parent == name
+                                  or not re.fullmatch(r'[a-z](?:[a-z0-9-]*[a-z0-9])?', parent)):
+        raise ValueError('canary_for must name a distinct primary model resource')
     surge = model.get('max_surge', 1)
-    if type(surge) is not int or surge < 1:
-        raise ValueError('Rollout max_surge must be a positive integer')
+    if type(surge) is not int or surge < (0 if parent else 1):
+        raise ValueError('Rollout max_surge must be positive unless an explicit canary can become unavailable')
     unavailable = model.get('max_unavailable', 0)
-    if type(unavailable) is not int or not 0 <= unavailable < model['replicas']:
-        raise ValueError('Rollout max_unavailable must be an integer below replicas')
+    maximum = model['replicas'] if parent else model['replicas'] - 1
+    if type(unavailable) is not int or not 0 <= unavailable <= maximum:
+        raise ValueError('Rollout max_unavailable exceeds the replica availability bound')
+    if surge == 0 and unavailable == 0:
+        raise ValueError('Rollout max_surge and max_unavailable cannot both be zero')
     paused = model.get('autoscaling', {}).get('paused_replicas')
+    reserved = {'gradiated.com/canary-of', 'gradiated.com/model-id',
+                'gradiated.com/serving-model-id', 'gradiated.com/serving-mode'}
+    if reserved.intersection(model.get('annotations', {})):
+        raise ValueError('Model identity and serving annotations are reserved')
+    if 'serving_model_id' in model and 'serving_mode' not in model:
+        raise ValueError('A serving model mapping requires explicit serving_mode')
+    mode = model.get('serving_mode', 'production')
+    if mode not in ('production', 'qualification'):
+        raise ValueError('serving_mode must be production or qualification')
+    if ('serving_model_id' in model or mode == 'qualification') and not parent:
+        raise ValueError('Serving identity mapping and qualification require an explicit canary')
+    if 'serving_model_id' in model and (not isinstance(model['serving_model_id'], str) or not model['serving_model_id'].strip()):
+        raise ValueError('serving_model_id must be a nonempty model ID')
     runtime = runtimes[model['runtime']]
+    if mode == 'qualification' and ('serving_model_id' not in model
+                                    or runtime['model_id'] == model['serving_model_id']):
+        raise ValueError('Qualification requires a public mapping and a distinct private runtime model ID')
     if runtime.get('kind') == 'training':
         raise ValueError('Training runtimes cannot serve a Rollout')
     labels = {'app.kubernetes.io/name': name, **model.get('labels', {})}
     annotations = {**model.get('annotations', {}), 'gradiated.com/model-id': runtime['model_id'],
                    'gradiated.com/release': json.dumps(runtime['release'], separators=(',', ':'))}
+    if parent:
+        annotations['gradiated.com/canary-of'] = parent
+        annotations['gradiated.com/serving-model-id'] = model.get('serving_model_id', runtime['model_id'])
+        annotations['gradiated.com/serving-mode'] = mode
+    steps = [
+        {'setWeight': 50},
+        {'analysis': {'templates': [{'templateName': 'sdk-qualification'}], 'args': [
+            {'name': 'app', 'value': name},
+            {'name': 'hash', 'valueFrom': {'podTemplateHashValue': 'Latest'}}]}}
+    ]
+    if parent:
+        steps.append({'pause': {}})
+    steps.append({'setWeight': 100})
     limits = {'cpu': runtime['cpu'], 'memory': runtime['memory'], 'nvidia.com/gpu': str(runtime['gpus'])}
     pod = {
         'serviceAccountName': 'model-runtime', 'automountServiceAccountToken': False,
@@ -78,12 +114,23 @@ def rollout(name, model, runtimes):
                      **({'annotations': {'gradiated.com/paused-replicas': str(paused)}} if paused is not None else {})},
         'spec': {'replicas': paused if paused is not None else model['replicas'], 'progressDeadlineSeconds': model['progress_deadline_seconds'],
                  'progressDeadlineAbort': True,
-                 'strategy': {'canary': {'maxSurge': surge, 'maxUnavailable': unavailable, 'steps': [
-                     {'setWeight': 50}, {'analysis': {'templates': [{'templateName': 'sdk-qualification'}], 'args': [
-                         {'name': 'app', 'value': name},
-                         {'name': 'hash', 'valueFrom': {'podTemplateHashValue': 'Latest'}}]}}, {'setWeight': 100}]}},
+                 'strategy': {'canary': {'maxSurge': surge, 'maxUnavailable': unavailable, 'steps': steps}},
                  'selector': {'matchLabels': labels},
                  'template': {'metadata': {'labels': labels, 'annotations': annotations}, 'spec': pod}}}
+
+
+def validate_canaries(models, runtimes):
+    for name, model in models.items():
+        if 'canary_for' not in model:
+            continue
+        parent_name = model['canary_for']
+        if not isinstance(parent_name, str) or parent_name == name or parent_name not in models:
+            raise ValueError('canary_for must name an existing distinct primary model resource')
+        parent = models[parent_name]
+        if 'canary_for' in parent:
+            raise ValueError('A canary_for target cannot itself be a canary')
+        if model.get('serving_model_id', runtimes[model['runtime']]['model_id']) != parent.get('serving_model_id', runtimes[parent['runtime']]['model_id']):
+            raise ValueError('A canary must serve the same model ID as its primary')
 
 
 def disruption_budget(name, model):
@@ -224,7 +271,9 @@ def render(retire=()):
                    'data': {'pins.json': json.dumps(pins, indent=2) + '\n'}}]
     outputs = {GPU / 'controller.yaml': controller, GPU / 'rbac.yaml': rbac, GPU / 'credentials.yaml': credentials,
                GPU / 'gpu-fleet-pins.yaml': fleet_pins}
-    for name, model in json.loads((GPU / 'models.json').read_text()).items():
+    models = json.loads((GPU / 'models.json').read_text())
+    validate_canaries(models, runtimes)
+    for name, model in models.items():
         # The name becomes a directory and the gpu-model-<name> application,
         # which must stay a 63-character label.
         if len(name) > 53 or not re.fullmatch(r'[a-z](?:[a-z0-9-]*[a-z0-9])?', name):

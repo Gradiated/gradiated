@@ -12,6 +12,7 @@ def check_gpu_autoscaling(root):
     # Autoscaling owns replicas only while the model is not explicitly paused.
     assert app['ignoreDifferences'] == [{
         'group': 'argoproj.io', 'kind': 'Rollout', 'namespace': 'gpu-inference',
+        'jsonPointers': ['/spec/paused'],
         'jqPathExpressions': [
             'select(.metadata.annotations["gradiated.com/paused-replicas"] == null) | .spec.replicas',
         ],

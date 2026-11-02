@@ -135,6 +135,50 @@ have stopped and both GPUs are verified free, release the owned cordon with
 `python3 tools/gpu/qualification-slot.py release --lease .agents/runtime/glm-pd-host-lease.json`.
 Preserve the lease for recovery if cordon ownership changes or release fails.
 
+### Manual model rollout pauses and GPU-size changes
+
+Use Argo Rollouts to inspect, pause, promote and abort a model rollout. The model
+ApplicationSet preserves `/spec/paused`, so Argo CD self-healing does not undo an
+operator pause. Resume a manual pause by clearing only `spec.paused`. Use
+`promote` only at an explicit pause step: promoting during analysis can advance
+past that analysis, and `--full` skips all remaining analysis and pause steps.
+A pause controls revision progression; it does not freeze HPA scaling or replace
+the model configuration in Git.
+
+```sh
+kubectl argo rollouts get rollout glm-dealign-sglang -n gpu-inference
+kubectl argo rollouts pause glm-dealign-sglang -n gpu-inference
+kubectl patch rollout glm-dealign-sglang -n gpu-inference --type merge -p '{"spec":{"paused":false}}'
+# Advance only when stopped at an explicit pause step.
+kubectl argo rollouts promote glm-dealign-sglang -n gpu-inference
+kubectl argo rollouts abort glm-dealign-sglang -n gpu-inference
+```
+
+A one-GPU to two-GPU migration is a capacity migration as well as an image
+update. A two-GPU pod needs both GPUs, its CPU request and its memory request on
+one eligible node. Free GPUs on different nodes cannot satisfy it. Changing ten
+one-GPU replicas to ten two-GPU replicas doubles the requested GPUs; the same
+GPU footprint instead requires five two-GPU replicas.
+
+Keep the vLLM and SGLang Rollouts separate during this migration. Qualify the
+existing two-GPU canary first. Before each expansion, select two co-located
+vLLM allocations on a host that can fit the complete SGLang resource request,
+arrange their normal drain through reviewed placement and replica changes, and
+wait for their allocations to be released before adding one SGLang replica.
+Check that remaining qualified capacity is sufficient throughout warmup. Do not
+rely on a replica-count reduction to select a particular pair: Kubernetes may
+choose pods on different hosts. Respect existing host exclusions and other models.
+
+Pause at the intended initial exposure and observe routed availability, runtime
+failures, TTFT, decode throughput and capacity rejections for at least 20 minutes
+before the next manual promotion. Argo's replica weight is not an exact request
+percentage for this gateway: routing uses direct pod endpoints and rendezvous
+hashing, and mixed one-GPU/two-GPU pods have different capacity. A failed analysis
+must remain a rollout failure; do not bypass it with full promotion. Argo abort
+restores that Rollout's previous ReplicaSet, not replicas removed from a separate
+Rollout, so a migration rollback must also restore the reviewed replica and
+placement configuration with enough free capacity.
+
 Training uses Kubernetes Jobs and the same host agent. Temporal owns attempts,
 leases, artifact grants and cleanup. The gateway still uses the PostgreSQL
 inventory and existing KV-cache routing; it does not need to know the scheduler.

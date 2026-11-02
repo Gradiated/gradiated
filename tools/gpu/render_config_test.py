@@ -98,6 +98,7 @@ class RenderTests(unittest.TestCase):
         self.assertIn('RespectIgnoreDifferences=true', template['syncPolicy']['syncOptions'])
         self.assertEqual(template['ignoreDifferences'][0]['jqPathExpressions'],
                          ['select(.metadata.annotations["gradiated.com/paused-replicas"] == null) | .spec.replicas'])
+        self.assertEqual(template['ignoreDifferences'][0]['jsonPointers'], ['/spec/paused'])
         for name in json.loads((renderer.GPU / 'models.json').read_text()):
             self.assertTrue((renderer.MODELS / name / f'{name}.yaml').exists(), name)
         # Each application prunes what leaves its files: a setting carried over

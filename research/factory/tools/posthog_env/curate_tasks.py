@@ -344,11 +344,18 @@ def curate_one(task: dict, rec: dict | None, model: str, out_dir: str, feedback:
             rec_out.update({k: v for k, v in d.items()
                             if k not in ("task_id", "model", "queries_run", "revision", "input_key")})
             rec_out.pop("error", None)
+            if not curation_complete(rec_out):
+                convo += ("\n\nYour result is incomplete. For keep/edit, return nonempty final turns and a "
+                          "grading_notes object with nonempty must_include findings. Otherwise return an explicit "
+                          "drop decision and reason. Do not return a partially specified task.")
+                raise ValueError("Incomplete curator task or grading contract")
             break
         except Exception as ex:  # noqa: BLE001
             rec_out["error"] = f"{type(ex).__name__}: {str(ex)[:200]}"
     Path(path + ".tmp").write_text(json.dumps(rec_out, ensure_ascii=False, indent=1))
     os.replace(path + ".tmp", path)
+    if not curation_complete(rec_out):
+        raise RuntimeError(f"Curator did not produce a complete result; failed record saved at {path}")
     return rec_out
 
 

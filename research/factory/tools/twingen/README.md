@@ -215,6 +215,9 @@ Curator caches are reusable only for complete results matching the full task, so
 feedback and rendered live twin/object context. Changed inputs, corrupt records and prior provider errors retry;
 cache publication is atomic. Model responses cannot replace the harness task/model identity or executed-query
 evidence. This prevents same-name rebuilds from applying another task version's edits, grading notes or overrides.
+Fresh curator responses must satisfy the same completeness rule before returning to callers. Incomplete outputs
+request correction; exhausted attempts preserve a failed record and raise, so producers and repairs cannot apply
+an unfinished task merely because it was not read from cache.
 
 ```bash
 # twingen venv, on fbf8; --out is the projects directory of a separate TWIN_V2_ROOT

@@ -84,6 +84,28 @@ class CuratorCache(unittest.TestCase):
         self.assertEqual(r["queries_run"], real)
         self.assertFalse(r["revision"])
 
+    def test_incomplete_fresh_result_retries_before_return(self):
+        incomplete = {"decision": "keep", "turns": self.task["turns"], "grading_notes": {}}
+        self.proxy.judge_complete.side_effect = [(json.dumps(incomplete), {}), (json.dumps(self.answer), {})]
+        with tempfile.TemporaryDirectory() as out:
+            r = self.module.curate_one(self.task, None, "curator", out)
+        self.assertTrue(self.module.curation_complete(r))
+        self.assertEqual(self.proxy.judge_complete.call_count, 2)
+        self.assertIn("Your result is incomplete", self.proxy.judge_complete.call_args.args[0])
+
+    def test_exhausted_incomplete_result_fails_stage_and_can_retry_later(self):
+        self.proxy.judge_complete.return_value = (json.dumps({"decision": "keep", "turns": self.task["turns"]}), {})
+        with tempfile.TemporaryDirectory() as out:
+            with self.assertRaises(RuntimeError):
+                self.module.curate_one(self.task, None, "curator", out)
+            failed = json.loads((Path(out) / "synthetic.json").read_text())
+            self.assertTrue(failed.get("error"))
+            self.assertFalse(self.module.curation_complete(failed))
+            self.proxy.judge_complete.return_value = (json.dumps(self.answer), {})
+            recovered = self.module.curate_one(self.task, None, "curator", out)
+        self.assertTrue(self.module.curation_complete(recovered))
+        self.assertEqual(self.proxy.judge_complete.call_count, 6)
+
 
 if __name__ == "__main__":
     unittest.main()

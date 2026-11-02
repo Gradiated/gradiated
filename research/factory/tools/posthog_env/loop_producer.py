@@ -184,14 +184,25 @@ def refresh_teams(path: str, log=None) -> int:
     validator, audits and benches read the pre-override data (round 6: all 20 override-regenerated twins). Rewrites
     team_id/project_id/loaded_now_utc/shift_days (and /project/<id>/ in text) from the loader registry."""
     latest: dict = {}
-    for line in open(REGISTRY):
-        r = json.loads(line)
-        if r.get("removed") or not r.get("twin_id") or not r.get("team_id"):
-            continue
-        latest[r["twin_id"]] = r
-    tasks = [json.loads(x) for x in open(path) if x.strip()]
+    removed: set[str] = set()
+    with open(REGISTRY) as registry:
+        for line in registry:
+            r = json.loads(line)
+            twin = r.get("twin_id")
+            if not twin:
+                continue
+            if r.get("removed"):
+                latest.pop(twin, None)
+                removed.add(twin)
+            elif r.get("team_id"):
+                latest[twin] = r
+                removed.discard(twin)
+    with open(path) as task_file:
+        tasks = [json.loads(x) for x in task_file if x.strip()]
     n = 0
     for t in tasks:
+        if t.get("twin_id") in removed:
+            raise ValueError(f"No active loaded team for removed twin {t['twin_id']}")
         r = latest.get(t.get("twin_id"))
         if not r or int(r["team_id"]) == int(t.get("team_id") or 0):
             continue

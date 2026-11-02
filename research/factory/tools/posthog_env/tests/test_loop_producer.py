@@ -97,6 +97,40 @@ class ProducerReadiness(unittest.TestCase):
                         producer.build_batch("batch", ["synthetic"], "train", False)
                 self.assertFalse((batch / "READY").exists())
 
+    def test_registry_tombstone_aborts_refresh_without_partial_task_rewrite(self):
+        for tombstone in ({"twin_id": "removed", "removed": True},
+                          {"twin_id": "removed", "team_id": 20, "removed": True}):
+            with self.subTest(tombstone=tombstone), tempfile.TemporaryDirectory() as tmp:
+                registry, tasks = Path(tmp) / "registry.jsonl", Path(tmp) / "tasks.jsonl"
+                rows = [{"twin_id": "valid", "team_id": 32}, {"twin_id": "removed", "team_id": 20}, tombstone]
+                registry.write_text("".join(json.dumps(r) + "\n" for r in rows))
+                tasks.write_text("".join(json.dumps(t) + "\n" for t in (
+                    {"task_id": "a", "twin_id": "valid", "team_id": 10},
+                    {"task_id": "b", "twin_id": "removed", "team_id": 11})))
+                original = tasks.read_bytes()
+                with patch.object(producer, "REGISTRY", str(registry)), self.assertRaises(ValueError):
+                    producer.refresh_teams(str(tasks))
+                self.assertEqual(tasks.read_bytes(), original)
+                self.assertFalse(Path(str(tasks) + ".tmp").exists())
+
+    def test_successful_registration_after_tombstone_restores_new_team(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            registry, tasks = Path(tmp) / "registry.jsonl", Path(tmp) / "tasks.jsonl"
+            rows = [{"twin_id": "world", "team_id": 11}, {"twin_id": "world", "removed": True},
+                    {"twin_id": "world", "team_id": 23, "project_id": 23, "shift_days": 0,
+                     "loaded_now_utc": "2026-11-02T00:00:00Z"}]
+            registry.write_text("".join(json.dumps(r) + "\n" for r in rows))
+            tasks.write_text(json.dumps({"task_id": "a", "twin_id": "world", "team_id": 11, "project_id": 11,
+                                        "shift_days": 0, "turns": ["Review /project/11/ on 2026-10-01"]}) + "\n")
+            with patch.object(producer, "REGISTRY", str(registry)):
+                self.assertEqual(producer.refresh_teams(str(tasks)), 1)
+            result = json.loads(tasks.read_text())
+            self.assertEqual(result["team_id"], 23)
+            self.assertEqual(result["project_id"], 23)
+            self.assertEqual(result["loaded_now_utc"], "2026-11-02T00:00:00Z")
+            self.assertIn("/project/23/", result["turns"][0])
+            self.assertIn("2026-10-01", result["turns"][0])
+
 
 if __name__ == "__main__":
     unittest.main()

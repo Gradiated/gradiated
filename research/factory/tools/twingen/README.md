@@ -219,6 +219,10 @@ Fresh curator responses must satisfy the same completeness rule before returning
 request correction; exhausted attempts preserve a failed record and raise, so producers and repairs cannot apply
 an unfinished task merely because it was not read from cache.
 
+When refreshing task teams, loader-registry removal records invalidate earlier active entries. Refresh fails
+without rewriting the task file if a task's latest registry state is removed; a later successful registration
+restores the mapping. This prevents a failed replacement or explicit removal from retaining a deleted team ID.
+
 ```bash
 # twingen venv, on fbf8; --out is the projects directory of a separate TWIN_V2_ROOT
 python3 scenario_project.py --out /path/to/scenario_hill/twingen/projects_v2 --seed 41 \

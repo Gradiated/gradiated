@@ -196,10 +196,18 @@ pod is selected or another replica fails, stop expansion and restore the previou
 reviewed replica counts; do not force-delete requests or drain another pair.
 Remove owned deletion-cost annotations from surviving pods when a stage ends.
 
-The first expansion keeps six vLLM replicas and the original SGLang replica
-serving throughout warmup. Complete both replacements' SDK qualification and
-gateway checks before the final pair. At a completed explicit pause, promote
-the already-tested revision to finish its template migration before a later replica-count-only expansion.
+The first expansion keeps six vLLM replicas serving throughout warmup. A
+placement-template change can also restart the original SGLang replica. Before
+syncing a placement change, manually pause SGLang until the new HPA bounds and
+Rollout replica count are observed, then resume revision progression; Git does
+not directly own the live replica count while the HPA is active.
+
+A previous revision pinned to one two-GPU host may become Pending if the new
+revision occupies that host. Complete the new revision's SDK analysis and
+targeted gateway checks, then promote only its completed explicit pause to
+release the old pending pod and finish the template migration. Verify every
+resulting replica is SDK-qualified and test the new host allocations before
+the later replica-count-only expansion.
 Never use full promotion to skip analysis. Once four SGLang and four vLLM are
 Ready, leave the rollout manually paused and retain its replica/HPA caps.
 Aborting SGLang does not recreate vLLM replicas removed from the other Rollout;

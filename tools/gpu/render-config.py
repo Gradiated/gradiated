@@ -137,6 +137,14 @@ def disruption_budget(name, model):
     minimum = model['min_available']
     if type(minimum) is not int or not 1 <= minimum <= model['replicas']:
         raise ValueError('Model min_available must be an integer between one and replicas')
+    settings = model.get('autoscaling', {})
+    if 'paused_replicas' in settings:
+        paused = settings['paused_replicas']
+        if type(paused) is not int or not 0 <= paused <= settings['max_replicas']:
+            raise ValueError('Paused replicas must be an integer within the scaling bounds')
+        # A retired or deliberately reduced pool cannot meet its active floor.
+        # Keep the configured minimum intact so removing the pause restores it.
+        minimum = min(minimum, paused)
     return {'apiVersion': 'policy/v1', 'kind': 'PodDisruptionBudget',
             'metadata': {'name': name, 'namespace': 'gpu-inference'},
             'spec': {'minAvailable': minimum,

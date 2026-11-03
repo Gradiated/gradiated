@@ -376,17 +376,40 @@ class RenderTests(unittest.TestCase):
         for replicas, minimum in ((10, 8), (6, 6), (4, 4), (3, 2)):
             with self.subTest(replicas=replicas, minimum=minimum):
                 obj = renderer.disruption_budget('glm-dealign', {
-                    **model, 'replicas': replicas, 'min_available': minimum})
+                    **model, 'replicas': replicas, 'min_available': minimum,
+                    'autoscaling': {k: v for k, v in model['autoscaling'].items()
+                                    if k != 'paused_replicas'}})
                 self.assertEqual(obj['spec'], {'minAvailable': minimum, 'selector': selector})
                 self.assertEqual(obj['metadata'], {
                     'name': 'glm-dealign', 'namespace': 'gpu-inference'})
         obj = renderer.disruption_budget('glm-dealign', model)
-        self.assertEqual(obj['spec'], {'minAvailable': model['min_available'], 'selector': selector})
+        self.assertEqual(obj['spec'], {'minAvailable': min(model['min_available'], model['autoscaling'].get(
+            'paused_replicas', model['replicas'])), 'selector': selector})
         generated = renderer.render()[renderer.MODELS / 'glm-dealign' / 'glm-dealign.yaml']
         self.assertEqual([doc for doc in generated if doc['kind'] == 'PodDisruptionBudget'], [obj])
         for invalid in (0, -1, True, 1.5, '8', '80%', None, model['replicas'] + 1):
             with self.subTest(invalid=invalid), self.assertRaisesRegex(ValueError, 'min_available'):
                 renderer.disruption_budget('glm-dealign', {**model, 'min_available': invalid})
+
+    def test_paused_disruption_budget_follows_retirement_and_restores_on_rollback(self):
+        models = json.loads((renderer.GPU / 'models.json').read_text())
+        model = models['glm-dealign']
+        for paused, minimum in ((0, 0), (1, 1), (2, 2)):
+            with self.subTest(paused=paused):
+                candidate = {**model, 'autoscaling': {
+                    **model['autoscaling'], 'paused_replicas': paused}}
+                self.assertEqual(renderer.disruption_budget('glm-dealign', candidate)
+                                 ['spec']['minAvailable'], minimum)
+        active = {**model, 'autoscaling': {key: value for key, value in
+                  model['autoscaling'].items() if key != 'paused_replicas'}}
+        self.assertEqual(renderer.disruption_budget('glm-dealign', active)
+                         ['spec']['minAvailable'], 2)
+        self.assertEqual(renderer.disruption_budget('glm-dealign-sglang',
+                         models['glm-dealign-sglang'])['spec']['minAvailable'], 4)
+        for invalid in (-1, True, 0.5, '0', None, 3):
+            with self.subTest(paused=invalid), self.assertRaisesRegex(ValueError, 'Paused replicas'):
+                renderer.disruption_budget('glm-dealign', {**model, 'autoscaling': {
+                    **model['autoscaling'], 'paused_replicas': invalid}})
 
     def test_model_surge_limit_preserves_availability_and_qualification(self):
         runtimes = json.loads((renderer.ROOT / 'product/inference/gpu/runtimes.json').read_text())

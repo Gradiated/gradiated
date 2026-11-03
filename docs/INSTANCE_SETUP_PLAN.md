@@ -206,7 +206,9 @@ After the five-plus-two trial, the final vLLM pair can be retired by setting
 `python3 tools/gpu/render-config.py` and
 `node tools/models/model-replica-rules.mjs`. This sets both
 the Rollout count and the KEDA pause to zero, preventing autoscaling from
-restoring vLLM. Keep the two-replica rollback configuration and leave SGLang
+restoring vLLM. Rendering also caps its disruption-budget minimum at the paused
+replica count (zero when retired); removing the override restores the configured
+two-pod budget. Keep the two-replica rollback configuration and leave SGLang
 capped and manually paused at five replicas. Let accepted vLLM requests drain
 normally; verify all five SGLang allocations remain qualified and public
 gateway requests succeed. Removing the pause override restores the reviewed

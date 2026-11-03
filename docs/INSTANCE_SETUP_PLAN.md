@@ -217,6 +217,24 @@ commands again and include the replica-rule changes in the rollback PR. With
 vLLM retired, the production SGLang pool carries the five-replica alert floor;
 restoring vLLM restores its baseline floor and the canary warmup semantics.
 
+To use the final freed GPU pair beside normal GLM, add the separate
+`glm-dealign-sglang-sixth` Rollout on host
+`01a19221-df83-721d-a7f9-85495b591fb1`. Its pinned resource-profile identity reuses
+the exact verified SGLang bundle and served release through the catalogue's
+per-base `bundles` mapping, with a 256 GiB memory request and the same 400 GiB
+hard limit. Do not change the existing five-replica runtime profile or template.
+Normal GLM plus this allocation request 64 CPU, 656 GiB and four GPUs, within
+that host's 85 CPU, 686 GiB and four-GPU allocatable capacity. Check the provider
+cgroup memory limit and usage, not host-wide `/proc/meminfo`, for headroom.
+Existing SGLang process-group peaks were below 16 GiB on the sampled eight-GPU
+host; validate this new allocation's startup, cgroup peak/OOM counters and long
+requests before admitting normal traffic. Begin with `serving_mode:
+qualification`, target it through `x-gradiated-deployment-id`, then promote only
+that Rollout to production after SDK and public gateway checks pass. Keep the
+five existing allocations serving and their manual pause intact throughout.
+The runtime profile ID is a scheduling identity; the archive remains pinned to
+its separate SHA-256 in `bundles`, and the served release remains unchanged.
+
 Before each vLLM reduction, identify the qualified, co-located pods
 by UID and set their `controller.kubernetes.io/pod-deletion-cost` annotation to
 `-10000`, retaining the other pods' default cost. Require all current pods to be

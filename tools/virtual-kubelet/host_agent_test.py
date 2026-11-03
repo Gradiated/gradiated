@@ -640,6 +640,31 @@ class HostAgentTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.host.validate(fresh)
 
+    @unittest.skipUnless(hasattr(agent, 'runtime_bundle'), 'requires per-base bundles')
+    def test_distinct_resource_profiles_share_bundle_and_preserve_existing_requests(self):
+        import copy
+        original = agent.runtime_profile(self.config, self.pod)[1]
+        compact = {**copy.deepcopy(original),
+                   'image': 'gradiated/kev-bundle@sha256:' + 'b' * 64,
+                   'request_memory': '32Gi'}
+        self.host.config = {**self.config, 'runtimes': {
+            'a' * 64: original, 'b' * 64: compact}}
+        candidate = copy.deepcopy(self.pod)
+        candidate['metadata']['uid'] = str(uuid.uuid4())
+        candidate['spec']['containers'][0]['image'] = compact['image']
+        candidate['spec']['containers'][0]['resources']['requests']['memory'] = '32Gi'
+        self.assertEqual(self.host.validate(candidate), candidate['metadata']['uid'])
+        self.assertEqual(self.host.validate(self.pod), self.uid)
+        self.assertEqual(agent.runtime_bundle(original), agent.runtime_bundle(compact))
+        self.assertEqual(agent.runtime_bundle(compact), 'a' * 64)
+        candidate['spec']['containers'][0]['resources']['requests']['memory'] = '48Gi'
+        with self.assertRaises(ValueError):
+            self.host.validate(candidate)
+        candidate['spec']['containers'][0]['resources']['requests']['memory'] = '32Gi'
+        candidate['spec']['containers'][0]['resources']['limits']['memory'] = '128Gi'
+        with self.assertRaises(ValueError):
+            self.host.validate(candidate)
+
     def test_training_resources_follow_recipe_and_require_training_profile(self):
         self.config['runtimes'] = {'b' * 64: {'kind': 'training', 'image': 'gradiated/training-bundle@sha256:' + 'b' * 64,
             'model_id': 'training', 'release': {}, 'gpus': 1, 'cpu': '4', 'memory': '64Gi', 'startup_timeout': 300}}

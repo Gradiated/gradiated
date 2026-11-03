@@ -156,6 +156,29 @@ describe("external adapter validation", () => {
       validateAdapterFiles(partial.config, partial.weights, base, 2, 0),
     ).rejects.toThrow("outside the base model");
   });
+  it("rejects headers above the serving limit before reading metadata", async () => {
+    const { config } = adapterFiles(base);
+    const headerSize = 100_000_001;
+    const prefix = Buffer.alloc(8);
+    prefix.writeBigUInt64LE(BigInt(headerSize));
+    const reads: number[] = [];
+    await expect(
+      validate(
+        config,
+        {
+          sizeBytes: headerSize + 16,
+          read: async (offset, length) => {
+            reads.push(offset);
+            expect(length).toBe(8);
+            return prefix;
+          },
+        },
+        base,
+        { layerCount: 1, expertCount: 0 },
+      ),
+    ).rejects.toThrow("Invalid safetensors header");
+    expect(reads).toEqual([0]);
+  });
   it("caps dimensions before reading tensor data", async () => {
     const header = Buffer.from(
       JSON.stringify({

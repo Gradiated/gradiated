@@ -479,7 +479,8 @@ Configuration reads are capped at 1 MiB with a 10-second deadline and same-origi
 Hugging Face redirects; the uploader never supplies the trusted layer or expert counts.
 Both indexed 2-D and fused 3-D expert tensors are supported; fused tensors must
 match the base expert count, and mixed expert layouts are rejected. Tensor
-dimensions follow the runtime's 1,000,000-element-per-dimension limit.
+dimensions follow the runtime's 1,000,000-element-per-dimension limit. Safetensors
+headers follow serving's 100,000,000-byte limit within the total 256 MiB file cap.
 CPU parity tests run representative fixtures through the actual Python serving
 validator as well as upload validation, including malformed JSON and expert coverage.
 Raw inputs live under `uploads/<upload_id>/` and are deleted after publication.

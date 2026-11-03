@@ -26,6 +26,15 @@ const ConfigSchema = z
   })
   .passthrough();
 
+const TensorSchema = z.object({
+  dtype: z.enum(["F16", "BF16", "F32"]),
+  shape: z.array(z.number().int().positive().max(1_000_000)).min(2).max(3),
+  data_offsets: z.tuple([
+    z.number().int().nonnegative(),
+    z.number().int().positive(),
+  ]),
+});
+
 const parseAdapterJson = (bytes: Uint8Array) => {
   const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   const value: unknown = JSON.parse(text, (_key: string, item: unknown) => {
@@ -114,7 +123,7 @@ export const validateAdapterFiles = async (
   if (
     !Number.isSafeInteger(headerSize) ||
     headerSize < 2 ||
-    headerSize > 1024 * 1024 ||
+    headerSize > 100_000_000 ||
     headerSize + 8 >= weights.sizeBytes
   )
     throw new Error("Invalid safetensors header.");
@@ -145,19 +154,7 @@ export const validateAdapterFiles = async (
       throw new Error("Adapter layer is outside the base model.");
 
     layers.add(layer);
-    const tensor = z
-      .object({
-        dtype: z.enum(["F16", "BF16", "F32"]),
-        shape: z
-          .array(z.number().int().positive().max(1_000_000))
-          .min(2)
-          .max(3),
-        data_offsets: z.tuple([
-          z.number().int().nonnegative(),
-          z.number().int().positive(),
-        ]),
-      })
-      .parse(tensors[name]);
+    const tensor = TensorSchema.parse(tensors[name]);
     const [start, end] = tensor.data_offsets;
     const width = tensor.dtype === "F32" ? 4 : 2;
     const isA = tensorName[3] === "A";

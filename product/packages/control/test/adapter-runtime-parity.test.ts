@@ -113,6 +113,23 @@ it.each([
     accepted: true,
   },
   {
+    name: "indexed MoE header above 1 MiB",
+    layerCount: 2,
+    expertCount: 4096,
+    files: () => {
+      const fixture = adapterFiles(
+        base,
+        2,
+        Array.from({ length: 4096 }, (_, index) => index),
+      );
+      expect(Number(fixture.weights.readBigUInt64LE())).toBeGreaterThan(
+        1024 * 1024,
+      );
+      return fixture;
+    },
+    accepted: true,
+  },
+  {
     name: "missing expert coverage",
     layerCount: 2,
     expertCount: 2,
@@ -300,4 +317,5 @@ it.each([
       await rm(directory, { recursive: true, force: true });
     }
   },
+  30_000,
 );

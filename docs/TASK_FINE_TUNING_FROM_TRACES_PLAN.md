@@ -459,7 +459,7 @@ Both use a shared dialog for a workspace-unique version name, base model, immuta
 40-character checkpoint revision, PEFT adapter_config.json and
 adapter_model.safetensors. Configs are capped at 64 KiB and weights at 256 MiB.
 The config can suggest a base model but the user supplies the exact checkpoint.
-New upload-created tasks have automatic training disabled.
+New upload-created tasks inherit the workspace default judge and have automatic training disabled.
 
 Admins create a workspace-scoped model-upload resource, receive one-hour signed
 PUT grants bound to declared file lengths, then PUT its version resource to

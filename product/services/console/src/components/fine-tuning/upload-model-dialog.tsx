@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -31,6 +32,11 @@ import {
 } from "@/components/ui/dialog";
 import type { TaskRow } from "@/store/fine-tuning-types";
 
+const AdapterMetadataSchema = z.object({
+  base_model_name_or_path: z.string().min(1),
+  revision: z.string().nullish(),
+});
+
 export const UploadModelDialog = ({
   task,
   onClose,
@@ -48,7 +54,7 @@ export const UploadModelDialog = ({
   const [baseModel, setBaseModel] = useState(task?.base_model_id ?? "");
   const [revision, setRevision] = useState("");
   const [files, setFiles] = useState<File[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [progress, setProgress] = useState("Uploading files…");
   const config = files.find((file) => file.name === "adapter_config.json");
@@ -58,7 +64,7 @@ export const UploadModelDialog = ({
   const canEdit = canManageOrganization(selectedOrganization);
 
   const selectFiles = async (incoming: File[]) => {
-    setError(null);
+    setFileError(null);
     if (
       incoming.some(
         (file) =>
@@ -67,7 +73,7 @@ export const UploadModelDialog = ({
           ),
       )
     ) {
-      setError(
+      setFileError(
         "Choose adapter_config.json and adapter_model.safetensors from your PEFT adapter folder.",
       );
       return;
@@ -79,10 +85,35 @@ export const UploadModelDialog = ({
           file.size > (file.name.endsWith(".json") ? 65536 : MAX_ADAPTER_BYTES),
       )
     ) {
-      setError(
+      setFileError(
         "Config must be under 64 KB and weights under 256 MB. Files must not be empty.",
       );
       return;
+    }
+    const configFile = incoming.find(
+      (file) => file.name === "adapter_config.json",
+    );
+    if (configFile) {
+      try {
+        const metadata = AdapterMetadataSchema.parse(
+          JSON.parse(await configFile.text()),
+        );
+        if (metadata.revision && /^[0-9a-f]{40}$/.test(metadata.revision))
+          setRevision(metadata.revision);
+
+        const match = models.data?.data.find(
+          (model) =>
+            model.id === metadata.base_model_name_or_path ||
+            (catalogModel(model.id) as CatalogEntry | undefined)?.training
+              ?.model === metadata.base_model_name_or_path,
+        );
+        if (match) setBaseModel(match.id);
+      } catch {
+        setFileError(
+          "The adapter config must contain valid JSON with a base model name.",
+        );
+        return;
+      }
     }
     setFiles((current) => [
       ...current.filter(
@@ -90,63 +121,34 @@ export const UploadModelDialog = ({
       ),
       ...incoming,
     ]);
-    const configFile = incoming.find(
-      (file) => file.name === "adapter_config.json",
-    );
-    if (configFile) {
-      try {
-        const parsed: unknown = JSON.parse(await configFile.text());
-        if (
-          typeof parsed === "object" &&
-          parsed !== null &&
-          "revision" in parsed &&
-          typeof parsed.revision === "string" &&
-          /^[0-9a-f]{40}$/.test(parsed.revision)
-        )
-          setRevision(parsed.revision);
-        if (
-          typeof parsed === "object" &&
-          parsed !== null &&
-          "base_model_name_or_path" in parsed &&
-          typeof parsed.base_model_name_or_path === "string"
-        ) {
-          const match = models.data?.data.find(
-            (model) =>
-              model.id === parsed.base_model_name_or_path ||
-              (catalogModel(model.id) as CatalogEntry | undefined)?.training
-                ?.model === parsed.base_model_name_or_path,
-          );
-          if (match) setBaseModel(match.id);
-        }
-      } catch {
-        setError("The adapter config must contain valid JSON.");
-      }
-    }
   };
+  const draft = CreateModelUploadSchema.safeParse({
+    task: task?.name ?? taskName.trim(),
+    create_task: !task,
+    name: name.trim(),
+    base_model_id: baseModel,
+    base_model_revision: revision.trim(),
+    config_size: config?.size,
+    weights_size: weights?.size,
+  });
+
   const upload = useMutation({
     mutationFn: async () => {
-      if (!canEdit || !config || !weights)
+      if (!canEdit || !config || !weights || !draft.success || fileError)
         throw new Error("Choose both adapter files to continue.");
 
-      const body = CreateModelUploadSchema.parse({
-        task: task?.name ?? taskName.trim(),
-        create_task: !task,
-        name: name.trim(),
-        base_model_id: baseModel,
-        base_model_revision: revision.trim(),
-        config_size: config.size,
-        weights_size: weights.size,
-      });
       setProgress("Uploading files…");
-      const grant = await createModelUpload(workspaceId, body);
+      const grant = await createModelUpload(workspaceId, draft.data);
       await Promise.all(
-        [
-          [grant.config_url, config],
-          [grant.weights_url, weights],
-        ].map(async ([url, file]) => {
-          const response = await fetch(url as string, {
+        (
+          [
+            [grant.config_url, config],
+            [grant.weights_url, weights],
+          ] as const
+        ).map(async ([url, file]) => {
+          const response = await fetch(url, {
             method: "PUT",
-            body: file as File,
+            body: file,
             credentials: "omit",
           });
           if (!response.ok)
@@ -165,17 +167,7 @@ export const UploadModelDialog = ({
       onClose();
       void navigate({ to: "/tasks/$taskId", params: { taskId: version.task } });
     },
-    onError: (failure) => setError(failure.message),
   });
-  const valid = CreateModelUploadSchema.safeParse({
-    task: task?.name ?? taskName.trim(),
-    create_task: !task,
-    name: name.trim(),
-    base_model_id: baseModel,
-    base_model_revision: revision.trim(),
-    config_size: config?.size,
-    weights_size: weights?.size,
-  }).success;
 
   return (
     <Dialog
@@ -213,7 +205,7 @@ export const UploadModelDialog = ({
           className="space-y-5"
           onSubmit={(event) => {
             event.preventDefault();
-            if (valid) upload.mutate();
+            if (draft.success && !fileError) upload.mutate();
           }}
         >
           <fieldset
@@ -241,7 +233,7 @@ export const UploadModelDialog = ({
                   placeholder="e.g. support-triage-v1"
                   value={name}
                   maxLength={200}
-                  pattern="[a-zA-Z0-9][a-zA-Z0-9._-]*"
+                  pattern={"[a-zA-Z0-9][a-zA-Z0-9._\\-]*"}
                   onChange={(event) => setName(event.target.value)}
                   required
                 />
@@ -338,13 +330,23 @@ export const UploadModelDialog = ({
                 renderOption={ModelOption}
                 placeholder="Select the model you fine-tuned"
                 className="w-full"
+                disabled={
+                  models.isPending || Boolean(models.error) || upload.isPending
+                }
               />
               <p className="text-xs text-muted-foreground">
                 Must match the base checkpoint used to train your adapter.
               </p>
               {models.error && (
                 <p role="alert" className="text-xs text-destructive">
-                  Could not load base models. Reopen this dialog to retry.
+                  Could not load base models.{" "}
+                  <button
+                    type="button"
+                    className="underline"
+                    onClick={() => void models.refetch()}
+                  >
+                    Try again
+                  </button>
                 </p>
               )}
             </div>
@@ -368,9 +370,9 @@ export const UploadModelDialog = ({
             Your adapter stays private to this workspace. Uploading saves a new
             version; serving is enabled after compatibility qualification.
           </div>
-          {error && (
+          {(fileError || upload.error) && (
             <p role="alert" className="text-sm text-destructive">
-              {error}
+              {fileError ?? upload.error?.message}
             </p>
           )}
           <DialogFooter className="flex flex-col-reverse justify-end gap-2 border-t pt-4 sm:flex-row">
@@ -384,7 +386,12 @@ export const UploadModelDialog = ({
             </Button>
             <Button
               type="submit"
-              disabled={!valid || !canEdit || upload.isPending}
+              disabled={
+                !draft.success ||
+                Boolean(fileError) ||
+                !canEdit ||
+                upload.isPending
+              }
             >
               {upload.isPending ? (
                 <Loader2 className="size-4 animate-spin" />

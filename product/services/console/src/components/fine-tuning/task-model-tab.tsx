@@ -139,10 +139,10 @@ const CurrentVersion = ({
   onAction: (action: VersionAction) => void;
 }) => (
   <section className="rounded-xl border bg-card shadow-sm">
-    <div className="flex items-start justify-between gap-4 px-5 py-4">
+    <div className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <h2 className="font-mono text-lg font-semibold tracking-[-0.02em]">
+          <h2 className="break-all font-mono text-lg font-semibold tracking-[-0.02em]">
             {version.is_production ? task.name : version.name}
           </h2>
           {version.is_production ? (
@@ -167,7 +167,7 @@ const CurrentVersion = ({
           <VersionMeta version={version} />
         </p>
       </div>
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex shrink-0 flex-wrap items-center gap-2">
         {!version.is_production ? (
           <Button
             size="sm"

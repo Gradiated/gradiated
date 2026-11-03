@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { createModelUploads } from "../src/training/uploads.js";
 import { createTrainingStore } from "../src/training/store.js";
 import { createTrainingArtifactCleanup } from "../src/training/artifact-cleanup.js";
-import { modelUploads } from "../src/db/schema/index.js";
+import { modelUploads, workspaces } from "../src/db/schema/index.js";
 import { createTestDatabase, type TestDatabase } from "./support/postgres.js";
 import { seedTrainingTask } from "./support/training.js";
 import { seedMember } from "./support/fixtures.js";
@@ -141,6 +141,10 @@ describe("model uploads", () => {
   });
   it("creates a task atomically and disables automatic training", async () => {
     const { member, stage, service, body } = await setup();
+    await db.database
+      .update(workspaces)
+      .set({ defaultJudgeModel: "Qwen/Qwen3-0.6B" })
+      .where(eq(workspaces.id, member.workspaceId));
     const upload = await stage({
       ...body,
       create_task: true,
@@ -159,6 +163,7 @@ describe("model uploads", () => {
     );
     expect(result.task.name).toBe("new-task");
     expect(result.task.trainingSchedule).toBeNull();
+    expect(result.task.judgeModelId).toBe("Qwen/Qwen3-0.6B");
   });
   it("rejects cross-workspace completion, non-admin uploads, invalid weights and expired sessions", async () => {
     const { member, stage, service, body, objects } = await setup();

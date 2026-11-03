@@ -28,11 +28,19 @@ const setup = async (page: Page, role = "admin") => {
   let uploaded = false;
   let received: Record<string, unknown> | undefined;
   let uploads = 0;
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error")
+      errors.push(`${message.text()} (${message.location().url})`);
+  });
   await page.route("**/*", async (route) => {
     const url = new URL(route.request().url());
     if (url.hostname !== "127.0.0.1") return route.abort();
     const path = url.pathname;
     const json = (body: unknown) => route.fulfill({ json: body });
+    if (path.startsWith("/array/"))
+      return route.fulfill({ contentType: "application/javascript", body: "" });
     if (path.startsWith("/flags") || path.startsWith("/decide"))
       return json({
         featureFlags: { training: true },
@@ -113,7 +121,7 @@ const setup = async (page: Page, role = "admin") => {
     if (path.startsWith("/api/")) return json({ data: [] });
     return route.continue();
   });
-  return { received: () => received, uploads: () => uploads };
+  return { received: () => received, uploads: () => uploads, errors };
 };
 const selectFiles = async (page: Page) => {
   await page.getByLabel("Choose adapter files").setInputFiles([
@@ -173,6 +181,7 @@ for (const mobile of [false, true]) {
       base_model_id: task.base_model_id,
     });
     expect(state.uploads()).toBe(2);
+    expect(state.errors).toEqual([]);
   });
 }
 

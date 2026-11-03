@@ -4,7 +4,7 @@ import { v7 as uuidv7 } from "uuid";
 import {
   CreateModelUploadSchema,
   UuidSchema,
-  DEFAULT_EVALUATION_JUDGE,
+  EvaluationJudgeSchema,
   type TaskVersionAdapter,
 } from "@gradiated/contracts";
 import type { ControlDatabase } from "../db/client.js";
@@ -103,6 +103,17 @@ export const createModelUploadStore = (database: ControlDatabase) => ({
         );
 
       if (input.create_task) {
+        const [workspace] = await tx
+          .select({ judge: workspaces.defaultJudgeModel })
+          .from(workspaces)
+          .where(eq(workspaces.id, workspaceId));
+        if (!workspace)
+          throw new ControlServiceError(
+            "not_found",
+            "The workspace was not found.",
+          );
+
+        const judgeModelId = EvaluationJudgeSchema.parse(workspace.judge);
         const [created] = await tx
           .insert(tasks)
           .values(
@@ -112,7 +123,7 @@ export const createModelUploadStore = (database: ControlDatabase) => ({
               name: input.task,
               baseModelId: input.base_model_id,
               comparisonModelId: null,
-              judgeModelId: DEFAULT_EVALUATION_JUDGE,
+              judgeModelId,
               productionVersionId: null,
               trainingSchedule: null,
             }),

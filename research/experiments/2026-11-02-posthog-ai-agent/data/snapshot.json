@@ -1,0 +1,518 @@
+{
+  "captured_utc": "2026-11-03T10:57:56Z",
+  "evidence": "Measured aggregates exported on host; no prompts, traces, rawpersonrecords or credentials. Live results are point-in-time snapshots.",
+  "morning": {
+    "primary_metrics": {
+      "qwen": {
+        "completed_judged_cases": 24,
+        "planned_cases": 24,
+        "passed": 8,
+        "pass_rate": 0.3333333333333333,
+        "mean_score": 5.925
+      },
+      "qwen-hilltrain3-am-sft-e84-v1": {
+        "completed_judged_cases": 24,
+        "planned_cases": 24,
+        "passed": 9,
+        "pass_rate": 0.375,
+        "mean_score": 6.1375
+      },
+      "qwen-hilltrain3-am-opd-procedure-e84-v1": {
+        "completed_judged_cases": 24,
+        "planned_cases": 24,
+        "passed": 4,
+        "pass_rate": 0.16666666666666666,
+        "mean_score": 5.779166666666667
+      },
+      "qwen-hilltrain3-am-opd-contract-e84-v1": {
+        "completed_judged_cases": 24,
+        "planned_cases": 24,
+        "passed": 5,
+        "pass_rate": 0.20833333333333334,
+        "mean_score": 5.479166666666667
+      }
+    },
+    "paired_vs_fresh_base": {
+      "qwen-hilltrain3-am-sft-e84-v1": {
+        "complete_paired_cases": 24,
+        "pass_rate_difference_vs_fresh_base": 0.041666666666666664,
+        "wins": 2,
+        "losses": 1,
+        "family_cluster_bootstrap_CI95": [
+          -0.08333333333333333,
+          0.16666666666666666
+        ],
+        "families_represented": 12
+      },
+      "qwen-hilltrain3-am-opd-procedure-e84-v1": {
+        "complete_paired_cases": 24,
+        "pass_rate_difference_vs_fresh_base": -0.16666666666666666,
+        "wins": 1,
+        "losses": 5,
+        "family_cluster_bootstrap_CI95": [
+          -0.2916666666666667,
+          -0.041666666666666664
+        ],
+        "families_represented": 12
+      },
+      "qwen-hilltrain3-am-opd-contract-e84-v1": {
+        "complete_paired_cases": 24,
+        "pass_rate_difference_vs_fresh_base": -0.125,
+        "wins": 2,
+        "losses": 5,
+        "family_cluster_bootstrap_CI95": [
+          -0.2916666666666667,
+          0.041666666666666664
+        ],
+        "families_represented": 12
+      }
+    },
+    "rollout_status": {
+      "qwen": {
+        "ok": 24
+      },
+      "qwen-hilltrain3-am-sft-e84-v1": {
+        "ok": 24
+      },
+      "qwen-hilltrain3-am-opd-procedure-e84-v1": {
+        "ok": 24
+      },
+      "qwen-hilltrain3-am-opd-contract-e84-v1": {
+        "ok": 24
+      }
+    },
+    "restoration": {
+      "qwen": {
+        "observed_runs": 24,
+        "unclean_or_missing": 0
+      },
+      "qwen-hilltrain3-am-sft-e84-v1": {
+        "observed_runs": 24,
+        "unclean_or_missing": 0
+      },
+      "qwen-hilltrain3-am-opd-procedure-e84-v1": {
+        "observed_runs": 24,
+        "unclean_or_missing": 0
+      },
+      "qwen-hilltrain3-am-opd-contract-e84-v1": {
+        "observed_runs": 24,
+        "unclean_or_missing": 0
+      }
+    },
+    "training": {
+      "sft": {
+        "at": 1793669968.5395308,
+        "checkpoint": "/opt/posthog-sft/env-research/rl_train_dagger_v1/train_v3/morning_study_v1/sft/adapter",
+        "steps": 24,
+        "planned_steps": 24,
+        "returncode": "adopted_not_child_exit_code_unavailable",
+        "training_rows_used": 600,
+        "completion_tokens_used": 294739,
+        "data_sha256": "26c128eae3cce2b081f51429d4902ef7a4b47d7458a5764b3eaa8411ae8d1018",
+        "partial_budget": false
+      },
+      "opd_procedure": {
+        "at": 1793672048.6836348,
+        "checkpoint": "/opt/posthog-sft/env-research/rl_train_dagger_v1/train_v3/morning_study_v1/opd_procedure/adapter",
+        "steps": 24,
+        "planned_steps": 24,
+        "returncode": 0,
+        "training_rows_used": 318,
+        "completion_tokens_used": 173136,
+        "data_sha256": "1d125260b63ee97a441e4f7083534c4458f866b821e8ec473b8dcc236148c8bc",
+        "partial_budget": false
+      },
+      "opd_contract": {
+        "at": 1793674128.1460762,
+        "checkpoint": "/opt/posthog-sft/env-research/rl_train_dagger_v1/train_v3/morning_study_v1/opd_contract/adapter",
+        "steps": 24,
+        "planned_steps": 24,
+        "returncode": 0,
+        "training_rows_used": 318,
+        "completion_tokens_used": 173136,
+        "data_sha256": "c6a40eed8e7b5205ea835cff61f9ebe1a9bf9f176d6473fa3748181589a2b523",
+        "partial_budget": false
+      }
+    },
+    "SFT_data": {
+      "frozen_at": 1793666721.311147,
+      "source_clean_trajectories": 313,
+      "represented_trajectories": 313,
+      "represented_canonical_tasks": 147,
+      "rows": 600,
+      "input_and_target_tokens": 29222117,
+      "completion_tokens": 294739,
+      "max_sequence": 125851,
+      "rows_sha256": "26c128eae3cce2b081f51429d4902ef7a4b47d7458a5764b3eaa8411ae8d1018",
+      "source_manifest_sha256": "ba03b656d562af1df97db29b60dd78ee999a04225270e10d7b48a91abe461e44",
+      "family_row_counts": {
+        "sql_help": 34,
+        "funnel_conversion": 79,
+        "tracking_quality": 30,
+        "attribution_marketing": 74,
+        "anomaly_investigation": 35,
+        "entity_lookup": 53,
+        "llm_analytics": 65,
+        "trend_breakdown": 74,
+        "warehouse": 53,
+        "build_insight_dashboard": 35,
+        "retention_engagement": 43,
+        "flags_experiments": 25
+      },
+      "selection": "Every clean trajectory contributes its first recorded root decision; deterministic late/middle decisions added up to30Mtotalinputtokens/600rows. Complete selected calls, no sequence truncation. This is NOT training on every call of every trajectory. No heldout score used."
+    },
+    "OPD_data": {
+      "at": 1793668880.590713,
+      "rows_each_variant": 318,
+      "episodes": 59,
+      "canonical_tasks": 34,
+      "completion_tokens_each": 173136,
+      "input_tokens_each": 17295994,
+      "mean_raw_replay_abs_delta": 0.009068358092338184,
+      "files": {
+        "opd_procedure": "1d125260b63ee97a441e4f7083534c4458f866b821e8ec473b8dcc236148c8bc",
+        "opd_contract": "c6a40eed8e7b5205ea835cff61f9ebe1a9bf9f176d6473fa3748181589a2b523"
+      },
+      "planned_rollouts": 96,
+      "observed_completed": 59,
+      "scoring_incomplete": 0,
+      "same_student_rows_both_variants": true,
+      "no_teacher_privilege_in_student_inputs": true
+    },
+    "opus": {
+      "measured": false,
+      "reason": "Existing native subscriptionprobe429RetryAfter beyondmorningdeadline; no paidfallback/modelsubstitution"
+    },
+    "limits": [
+      "24taskinstances/12workflows/2worlds/oneproduct; one sample each",
+      "FrozenH0usesoldattributionrecipe with known realism limits, preservedratherthanrewrittenafterprior scores",
+      "Modeljudgeuncertainty, nothumantruth; secondaryTerra sensitivity",
+      "Partialbudget/failedarm/missingpair explicitly reported, not modelFAIL",
+      "No external stronger-modelOPD or Opus gap without actual evidence"
+    ]
+  },
+  "final_collection": {
+    "trajectories": 314,
+    "unique_tasks": 148,
+    "rows": 3854,
+    "completion_tokens": 1538093,
+    "firsttry_trajectories": 177,
+    "corrected_trajectories": 137,
+    "pending": 0,
+    "scanned_terminal_episodes": 636
+  },
+  "fresh_sol": {
+    "metrics": {
+      "primary": {
+        "completed": 24,
+        "planned": 24,
+        "passed": 21,
+        "rate": 0.875,
+        "mean_score": 9.1125
+      },
+      "secondary_terra": {
+        "completed": 24,
+        "planned": 24,
+        "passed": 22,
+        "rate": 0.9166666666666666,
+        "mean_score": 9.358333333333334
+      }
+    },
+    "status": {
+      "ok": 24
+    },
+    "unclean_resets": 0
+  },
+  "judge_agreement": {
+    "at": 1793679085.6091475,
+    "scope": "Same96traces, primarySol versus secondaryTerra; no model resampling.",
+    "arms": {
+      "qwen": {
+        "cases": 24,
+        "primary_passes": 8,
+        "secondary_passes": 6,
+        "pass_agreement": 0.9166666666666666,
+        "pass_disagreements": 2,
+        "mean_absolute_score_difference": 0.40416666666666673,
+        "cohen_kappa": 0.7999999999999999
+      },
+      "qwen-hilltrain3-am-sft-e84-v1": {
+        "cases": 24,
+        "primary_passes": 9,
+        "secondary_passes": 8,
+        "pass_agreement": 0.9583333333333334,
+        "pass_disagreements": 1,
+        "mean_absolute_score_difference": 0.3916666666666668,
+        "cohen_kappa": 0.9090909090909092
+      },
+      "qwen-hilltrain3-am-opd-procedure-e84-v1": {
+        "cases": 24,
+        "primary_passes": 4,
+        "secondary_passes": 4,
+        "pass_agreement": 1.0,
+        "pass_disagreements": 0,
+        "mean_absolute_score_difference": 0.6375,
+        "cohen_kappa": 1.0
+      },
+      "qwen-hilltrain3-am-opd-contract-e84-v1": {
+        "cases": 24,
+        "primary_passes": 5,
+        "secondary_passes": 5,
+        "pass_agreement": 1.0,
+        "pass_disagreements": 0,
+        "mean_absolute_score_difference": 0.3333333333333333,
+        "cohen_kappa": 1.0
+      }
+    }
+  },
+  "early_contract_review": {
+    "tasks": 15,
+    "sound": 9,
+    "required": 14,
+    "quality_bar_met": false
+  },
+  "routing_pilot": {
+    "luna_author": {
+      "attempted": 4,
+      "accepted": 1,
+      "summed_seconds": 965.262629122939,
+      "seconds_per_accepted": 965.262629122939
+    },
+    "terra_author": {
+      "attempted": 4,
+      "accepted": 4,
+      "summed_seconds": 745.0114214245696,
+      "seconds_per_accepted": 186.2528553561424
+    },
+    "swap_validation_only": {
+      "attempted": 4,
+      "accepted": 4,
+      "summed_seconds": 537.2062973519787,
+      "seconds_per_accepted": 134.30157433799468
+    }
+  },
+  "extra_epochs": {
+    "TRAINING_READY.json": {
+      "at": 1793700362.3478422,
+      "total_epochs": 3,
+      "additional_steps": 48,
+      "next": "Evaluate epochs1/2/3 on dev only, not final H0. No gain claim from training loss."
+    },
+    "A_RESTORED.json": {
+      "at": 1793700524.3712854,
+      "controller_pid": 3416009
+    },
+    "first_epoch": {
+      "completed_steps": 24,
+      "last_loss": 0.2573845088481903,
+      "training_elapsed_s": 3219,
+      "all_loss_grad_finite": true
+    },
+    "additional_epochs": {
+      "completed_steps": 48,
+      "last_loss": 0.2116393744945526,
+      "training_elapsed_s": 6322,
+      "all_loss_grad_finite": true
+    }
+  },
+  "epoch_development": {
+    "status": "partial_not_comparable_across_unmatched_subsets",
+    "metrics": {
+      "qwen": {
+        "completed_root_runs": 6,
+        "status": {
+          "ok": 6
+        },
+        "judged": 6,
+        "planned": 18,
+        "passes": 3,
+        "mean_score": 5.883333333333333
+      },
+      "qwen-hilltrain3-am-sft-e84-v1": {
+        "completed_root_runs": 10,
+        "status": {
+          "ok": 10
+        },
+        "judged": 10,
+        "planned": 18,
+        "passes": 3,
+        "mean_score": 5.62
+      },
+      "qwen-hilltrain3-sft-epoch2-e84-v1": {
+        "completed_root_runs": 7,
+        "status": {
+          "ok": 7
+        },
+        "judged": 7,
+        "planned": 18,
+        "passes": 0,
+        "mean_score": 4.7
+      },
+      "qwen-hilltrain3-sft-epoch3-e84-v1": {
+        "completed_root_runs": 10,
+        "status": {
+          "ok": 10
+        },
+        "judged": 10,
+        "planned": 18,
+        "passes": 2,
+        "mean_score": 5.16
+      }
+    },
+    "complete_all_arm_tasks": 0,
+    "common_task_passes": {
+      "qwen": 0,
+      "qwen-hilltrain3-am-sft-e84-v1": 0,
+      "qwen-hilltrain3-sft-epoch2-e84-v1": 0,
+      "qwen-hilltrain3-sft-epoch3-e84-v1": 0
+    }
+  },
+  "underfed_eval": {
+    "at": 1793702873.8672085,
+    "window_seconds": 60.16110110282898,
+    "ports": {
+      "18100": {
+        "output_tps": 0.0,
+        "mean_running": 0.0,
+        "mean_waiting": 0.0,
+        "completed_requests": 0.0,
+        "mean_e2e_s": null,
+        "inverse_mean_request_time_per_output_token_tps": null
+      },
+      "18101": {
+        "output_tps": 87.7311070317463,
+        "mean_running": 1.1666666666666667,
+        "mean_waiting": 0.0,
+        "completed_requests": 15.0,
+        "mean_e2e_s": 4.622679360707601,
+        "inverse_mean_request_time_per_output_token_tps": 64.88590173758544
+      }
+    },
+    "scope": "Read-only actual mixed currentevaluation traffic. DirectB requests bypassgateway activecounter. RequestTPOTinverse is derived, not aggregateTPS or capacitylimit."
+  },
+  "refed_collection": {
+    "at": 1793703466.111831,
+    "window_s": 180.42919874191284,
+    "ports": {
+      "18100": {
+        "output_tps": 549.0519311217652,
+        "mean_running": 12.166666666666666,
+        "mean_waiting": 0.3611111111111111
+      },
+      "18101": {
+        "output_tps": 456.09580142132353,
+        "mean_running": 11.444444444444445,
+        "mean_waiting": 0.0
+      }
+    },
+    "fleet_tps": 1005.1477325430888,
+    "limits": "Actualmixedcollection+evaluationtraffic, observationalcomparedto88TPSunderfedwindow; notmatchedcausalspeedup."
+  },
+  "adapter_application": {
+    "at": 1793702874.468578,
+    "public_synthetic_tokens": 15,
+    "base_repeat_max_abs_delta": 0.0,
+    "adapters": {
+      "hilltrain3-am-sft-e84-v1": {
+        "finite": true,
+        "max_abs_logprob_difference_vs_base": 0.09510517120361328,
+        "mean_abs_logprob_difference_vs_base": 0.03219302672271927
+      },
+      "hilltrain3-sft-epoch2-e84-v1": {
+        "finite": true,
+        "max_abs_logprob_difference_vs_base": 0.23444795608520508,
+        "mean_abs_logprob_difference_vs_base": 0.04710114973907669
+      },
+      "hilltrain3-sft-epoch3-e84-v1": {
+        "finite": true,
+        "max_abs_logprob_difference_vs_base": 0.2036287784576416,
+        "mean_abs_logprob_difference_vs_base": 0.06728925470573206
+      }
+    },
+    "scope": "Same-public-prefix scoring validates distinct adapter application; not heldout or capability evidence. Runs after telemetry window."
+  },
+  "deepseek": {
+    "status": "running",
+    "metrics": null,
+    "initial_attempt": "24infrastructureerrors; no passrate",
+    "repair": "Omit unsupportedparallel_tool_calls flag; native tools remain. Publictoolsmoke and realtaskintegration passed.",
+    "usage_snapshot": {
+      "root_requests": 189,
+      "models": [
+        "deepseek/deepseek-v4.1-flash-1017"
+      ],
+      "providers": {
+        "BaseTen": 184,
+        "Modal": 5
+      },
+      "root_api_cost_usd": 0.695743148
+    }
+  },
+  "sources": {
+    "/opt/posthog-sft/env-research/rl_train_dagger_v1/train_v3/morning_study_v1/MORNING_RESULTS.json": {
+      "sha256": "1b486d3d222e68822b63bc6147cd942ea4cd1955b9770e87ffde8bd729a67bbf",
+      "mtime_utc": "2026-11-03T04:10:27Z"
+    },
+    "/opt/posthog-sft/env-research/rl_train_dagger_v1/train_v3/overnight_sft_v1/FINAL.json": {
+      "sha256": "c559d2fd8e3b91ce75205f45de4ae181cced78a8b4d109a6a804944cbc8e5541",
+      "mtime_utc": "2026-11-03T04:11:10Z"
+    },
+    "/opt/posthog-sft/env-research/rl_train_dagger_v1/train_v3/sol_comparison_followup_v1/RESULTS.json": {
+      "sha256": "e062757dfb8907f4d1125bf75740b616c546b5932b970a38f0722f10ae39fa38",
+      "mtime_utc": "2026-11-03T09:09:56Z"
+    },
+    "/opt/posthog-sft/env-research/rl_train_dagger_v1/early_contract15/review/summary.json": {
+      "sha256": "bfb96c415da457d4b59dbde3b89f1a47083a6670c33ea2e8d6cb52d8d0298ffc",
+      "mtime_utc": "2026-11-02T12:40:21Z"
+    },
+    "/opt/posthog-sft/env-research/rl_train_dagger_v1/routing_pilot/summary.json": {
+      "sha256": "b5daeca2499bb93ad73d259d68db81d22e64ba993cbdc45cf38c064181eddb94",
+      "mtime_utc": "2026-11-02T12:49:05Z"
+    },
+    "/opt/posthog-sft/env-research/rl_train_dagger_v1/train_v3/morning_study_v1/evaluation/judge_agreement.json": {
+      "sha256": "732f446c204603614f2d13ce42ca8f52e8a06f54f89f05e45d6d41b2ee19acca",
+      "mtime_utc": "2026-11-03T04:11:25Z"
+    },
+    "/opt/posthog-sft/env-research/rl_train_dagger_v1/train_v3/sft_epochs_followup_v1/TRAINING_READY.json": {
+      "sha256": "82d6663bebb03815545dfba2990c5df3978664c5ef2d5338577a5cc9c036a1a9",
+      "mtime_utc": "2026-11-03T10:06:02Z"
+    },
+    "/opt/posthog-sft/env-research/rl_train_dagger_v1/train_v3/sft_epochs_followup_v1/A_RESTORED.json": {
+      "sha256": "b21c2767d45fa15c7c2df701942fe0379006650af3973b5a47046679e05578a6",
+      "mtime_utc": "2026-11-03T10:08:44Z"
+    },
+    "/opt/posthog-sft/env-research/rl_train_dagger_v1/train_v3/morning_study_v1/sft/progress.json": {
+      "sha256": "b390e3fa318519c6c7319b756db04dbffc637175e118645b7da2d1fa569b19ba",
+      "mtime_utc": "2026-11-03T01:39:23Z"
+    },
+    "/opt/posthog-sft/env-research/rl_train_dagger_v1/train_v3/sft_epochs_followup_v1/training/progress.json": {
+      "sha256": "cf3bf1c6fa7d267da526d75a021ec4cffcdecb80d561fffd1d870bd2ab49b81a",
+      "mtime_utc": "2026-11-03T10:05:50Z"
+    },
+    "/opt/posthog-sft/env-research/rl_train_dagger_v1/train_v3/sft_epochs_followup_v1/serving_telemetry_latest.json": {
+      "sha256": "2b3350d0dc9e80197406b5ad5abbe55d0dc48c510d59ae103dffd676f5b0ac8a",
+      "mtime_utc": "2026-11-03T10:47:53Z"
+    },
+    "/opt/posthog-sft/env-research/rl_train_dagger_v1/train_v3/throughput_feed_v1/first_telemetry.json": {
+      "sha256": "3247d01210c20237721824788f0ee1faa48c7d456698067009463cbdee40e762",
+      "mtime_utc": "2026-11-03T10:57:46Z"
+    },
+    "/opt/posthog-sft/env-research/rl_train_dagger_v1/train_v3/sft_epochs_followup_v1/lora_public_application_check.json": {
+      "sha256": "f79a1e28c21a3c1902bdb8c662a97b2ca8112d75c72d425bde97a66427ffdac7",
+      "mtime_utc": "2026-11-03T10:47:54Z"
+    }
+  },
+  "feed_quality_checkpoint": {
+    "captured_utc": "2026-11-03T11:02:55Z",
+    "trajectories_total": 324,
+    "prior_trajectories": 314,
+    "new_verified": 10,
+    "unique_tasks": 157,
+    "qa_pending": 0,
+    "completed_chains": 13,
+    "active_chains": 80,
+    "blocked_worlds": 0,
+    "source": "/opt/posthog-sft/env-research/rl_train_dagger_v1/train_v3/throughput_feed_v1/quality/live_manifest.json",
+    "source_sha256": "38b109cddfd1d865d3eb445adae5186f40491383de048235d85aa76388712e4c"
+  }
+}

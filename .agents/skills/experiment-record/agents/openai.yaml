@@ -1,0 +1,4 @@
+interface:
+  display_name: "Experiment Record"
+  short_description: "Keep experiment evidence ready for later writing"
+  default_prompt: "Use $experiment-record to start or update a dated experiment folder with methods, results, data, charts, failures, and key learnings as we work."

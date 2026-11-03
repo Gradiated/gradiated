@@ -13,6 +13,8 @@ DATA = ROOT / 'data'
 FIG = ROOT / 'figures'
 FIG.mkdir(exist_ok=True)
 snapshot = json.loads((DATA / 'snapshot.json').read_text())
+deepseek_path = DATA / 'deepseek_result.json'
+deepseek = json.loads(deepseek_path.read_text()) if deepseek_path.exists() else None
 plt.rcParams.update({'font.size': 10, 'axes.spines.top': False, 'axes.spines.right': False,
                      'svg.hashsalt': 'posthog-ai-agent', 'svg.fonttype': 'none'})
 
@@ -50,16 +52,25 @@ mapping = [
     ('OPD: contract', 'qwen-hilltrain3-am-opd-contract-e84-v1', 'qwen-hilltrain3-am-opd-contract-e84-v1'),
     ('Fresh Sol', None, None),
 ]
+if deepseek:
+    mapping.insert(-1, ('DeepSeek Flash 1017', None, None))
 evaluation_rows = []
 primary = []
 secondary = []
 for label, key, secondary_key in mapping:
-    p = snapshot['morning']['primary_metrics'][key]['passed'] if key else snapshot['fresh_sol']['metrics']['primary']['passed']
-    s = snapshot['judge_agreement']['arms'][secondary_key]['secondary_passes'] if secondary_key else snapshot['fresh_sol']['metrics']['secondary_terra']['passed']
+    if key:
+        p = snapshot['morning']['primary_metrics'][key]['passed']
+        s = snapshot['judge_agreement']['arms'][secondary_key]['secondary_passes']
+        run = 'morning'
+    else:
+        reference = deepseek if label == 'DeepSeek Flash 1017' else snapshot['fresh_sol']
+        p = reference['metrics']['primary']['passed']
+        s = reference['metrics']['secondary_terra']['passed']
+        run = 'deepseek_repaired_v2' if label == 'DeepSeek Flash 1017' else 'fresh_sol_followup'
     primary.append(p)
     secondary.append(s)
     for judge, count in [('Sol v3i', p), ('Terra v3i', s)]:
-        evaluation_rows.append({'run': 'morning' if key else 'fresh_sol_followup', 'model': label, 'split': 'frozen_final', 'judge': judge, 'passed': count, 'judged': 24, 'planned': 24, 'samples_per_task': 1})
+        evaluation_rows.append({'run': run, 'model': label, 'split': 'frozen_final', 'judge': judge, 'passed': count, 'judged': 24, 'planned': 24, 'samples_per_task': 1})
 with (DATA / 'evaluation_results.csv').open('w') as f:
     w = csv.DictWriter(f, fieldnames=list(evaluation_rows[0]), lineterminator='\n')
     w.writeheader()

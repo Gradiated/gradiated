@@ -8,8 +8,8 @@ they are not a contemporaneous log of every command.
 
 **Current status:** the first SFT/OPD comparison is complete. Two additional
 SFT epochs have completed, and development evaluation is in progress. A fresh
-Sol reference run is complete. DeepSeek's repaired OpenRouter benchmark and a
-new bounded throughput/collection run are in progress. Do not present partial
+Sol reference run and DeepSeek's repaired OpenRouter benchmark are complete.
+A new bounded throughput/collection run is in progress. Do not present partial
 development counts as an epoch ranking.
 
 ## Question and strongest result so far
@@ -342,9 +342,30 @@ not initially reproduce the real harness payload, which was a process mistake.
 **Repair:** omit that unsupported flag only in the isolated DeepSeek adapter;
 retain native tools and all task/judge limits. The same public test succeeds
 without the flag, a repaired real task completed with clean tracked restoration,
-and a new versioned benchmark is running. Original negatives are preserved.
-Model/provider/request usage metadata is captured; a complete DeepSeek pass
-rate and final cost are still pending in this snapshot.
+and a new versioned benchmark completed. Original negatives are preserved.
+
+**Measured result (Nov 3, about 11:20 UTC):** primary Sol judge **8/24 (33.3%)**,
+mean score 6.85; secondary Terra **11/24 (45.8%)**, mean score 7.079. All 24 runs
+were `ok`, with zero unclean tracked restorations. The judges agreed on 21/24
+pass decisions. Versus fresh Qwen under the primary judge, DeepSeek gained
+three passes and lost three: net zero, workflow-cluster bootstrap 95% interval
+[-16.7, +16.7] percentage points. Under Terra the absolute counts are 11/24
+versus Qwen's 6/24. Do not collapse the judge-sensitive comparison into a
+general superiority claim. Sol's fresh reference remains substantially higher
+at 21/24 primary and 22/24 secondary.
+
+**Cost and route:** 370 completed root-model requests, 24,176,646 reported
+prompt tokens (including cache usage) and 427,970 completion tokens. OpenRouter
+reported **$1.3630 root-model cost**: 351 responses from BaseTen and 19 from
+Modal, all for the exact requested model. This excludes public/integration
+smokes, subscription helper/judge work, and GPU/wall-time costs. Reasoning was
+high with provider-default temperature, whereas Qwen used T=0.7; native model
+paths also differ. Equal turn/wall budgets are not identical inference settings.
+
+The completed aggregate is separately timestamped in
+[`data/deepseek_result.json`](data/deepseek_result.json); the original
+`snapshot.json` retains its earlier in-progress state rather than silently
+rewriting history. The pass-count CSV and figure incorporate the completed run.
 
 ### E15 · Nov 3 follow-up · Feed both replicas during development evaluation
 
@@ -417,7 +438,9 @@ task mixes and window lengths; not a matched causal speedup.
 - [`data/snapshot.json`](data/snapshot.json): captured aggregates, source-file
   hashes/locations, exact model/data budgets, uncertainty, and partial statuses.
 - [`data/evaluation_results.csv`](data/evaluation_results.csv): complete original
-  final comparison plus fresh Sol, separated by judge and run.
+  final comparison plus fresh Sol and repaired DeepSeek, separated by judge and run.
+- [`data/deepseek_result.json`](data/deepseek_result.json): completed DeepSeek
+  judging, paired comparison, provider usage/cost, source hashes, and settings.
 - [`data/sft_loss.csv`](data/sft_loss.csv): all 72 optimizer-step measurements.
 - [`data/throughput_windows.csv`](data/throughput_windows.csv): recent measured
   serving windows with their different workloads and durations.
@@ -434,7 +457,7 @@ It is internal evidence, not automatically cleared for public release. Review
 internal paths/model labels and any provider-sensitive details before writing
 a public post. No post was drafted or published as part of this work.
 
-**Next updates:** complete the epoch development comparison; record the repaired
-DeepSeek result and cost; measure new collection's clean yield, repetition,
+**Next updates:** complete the epoch development comparison; measure new
+collection's clean yield, repetition,
 and evaluation contention; append decisions to E13–E15 without overwriting
 their original attempts. Use `$experiment-record` to keep this folder current.

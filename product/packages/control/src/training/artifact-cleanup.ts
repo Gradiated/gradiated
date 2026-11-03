@@ -33,8 +33,12 @@ export const createTrainingArtifactCleanup = (
       );
       if (!upload) return;
 
-      const page = await objects.list(`runs/${upload.id}/`, { limit: 1000 });
-      if (page.keys.length) await objects.delete(page.keys);
+      const [outputs, inputs] = await Promise.all([
+        objects.list(`runs/${upload.id}/`, { limit: 1000 }),
+        objects.list(`uploads/${upload.id}/`, { limit: 1000 }),
+      ]);
+      const keys = [...inputs.keys, ...outputs.keys].slice(0, 1000);
+      if (keys.length) await objects.delete(keys);
       else await uploads.delete(upload.id);
       return;
     }

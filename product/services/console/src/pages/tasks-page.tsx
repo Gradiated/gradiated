@@ -1,3 +1,4 @@
+import { latestVersionEvaluation } from "@/store/fine-tuning-views";
 import { UploadModelDialog } from "@/components/fine-tuning/upload-model-dialog";
 import { useTrainingMutation } from "@/hooks/use-training";
 import { Plus } from "lucide-react";
@@ -219,7 +220,7 @@ const TaskRowView = ({
 }) => {
   const run = task.latest_run;
   const uploaded = task.latest_version?.training_run_id === null;
-  const summary = uploaded ? null : run?.evaluation;
+  const summary = latestVersionEvaluation(task);
   const version = task.latest_version?.name ?? run?.version_name;
 
   return (

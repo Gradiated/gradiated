@@ -472,6 +472,10 @@ working disk use is bounded to roughly twice the 256 MiB input cap. Temporary fi
 are removed after success and failure. Neither weights nor archives are collected
 into whole-file buffers. The published row never points at a key
 covered by the browser's write grants. Completion retries return the same version.
+Raw inputs live under `uploads/<upload_id>/` and are deleted after publication.
+The staging prefix expires current and noncurrent input versions after one day,
+covering failed deletes, abandoned uploads and writes arriving before grants expire.
+Published output archives and the upload row are retained for workspace cleanup.
 Only synthetic fixtures are used in tests. Raw model bytes and signed grants must
 never be logged. Expired unfinished uploads and archived workspace artifacts use
 the existing worker cleanup loop.

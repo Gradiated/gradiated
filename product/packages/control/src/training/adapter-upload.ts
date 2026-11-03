@@ -73,12 +73,19 @@ export const validateAdapterFiles = async (
   const tensors = z
     .record(z.string(), z.unknown())
     .parse(JSON.parse((await weights.read(8, headerSize)).toString("utf8")));
+  const targetModules = new Set(
+    config.target_modules.map((module) => module.split(".").at(-1)),
+  );
   const ranges: [number, number, number, number][] = [];
   const names = Object.keys(tensors).filter((name) => name !== "__metadata__");
   if (!names.length) throw new Error("The adapter contains no tensors.");
 
   for (const name of names) {
-    if (!/\.lora_[AB](?:\.default)?\.weight$/.test(name))
+    const tensorName =
+      /^(?:[a-zA-Z0-9_]+\.)*layers\.(\d+)\.(.+)\.lora_([AB])\.weight$/.exec(
+        name,
+      );
+    if (!tensorName)
       throw new Error("Only LoRA A/B weight tensors are supported.");
 
     const tensor = z
@@ -96,7 +103,7 @@ export const validateAdapterFiles = async (
       .parse(tensors[name]);
     const [start, end] = tensor.data_offsets;
     const width = tensor.dtype === "F32" ? 4 : 2;
-    const isA = /\.lora_A(?:\.default)?\.weight$/.test(name);
+    const isA = tensorName[3] === "A";
     const pair = name.replace(
       isA ? ".lora_A" : ".lora_B",
       isA ? ".lora_B" : ".lora_A",
@@ -110,11 +117,8 @@ export const validateAdapterFiles = async (
         "Adapter tensor ranks, pairs or sizes do not match the config.",
       );
 
-    const moduleName = name
-      .replace(/\.lora_[AB](?:\.default)?\.weight$/, "")
-      .split(".")
-      .at(-1);
-    if (!moduleName || !config.target_modules.includes(moduleName))
+    const moduleName = tensorName[2]!.split(".").at(-1);
+    if (!moduleName || !targetModules.has(moduleName))
       throw new Error("Tensor target modules do not match the config.");
 
     if (end > weights.sizeBytes - headerSize - 8)

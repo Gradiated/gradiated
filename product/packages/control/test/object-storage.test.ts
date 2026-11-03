@@ -180,3 +180,21 @@ it("uploads from a file stream with a fixed length and checksum and closes it on
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+it("deletes only the requested staging keys and rejects partial deletion failures", async () => {
+  const storage = new ObjectStorage("objects");
+  const keys = [
+    "uploads/id/adapter_config.json",
+    "uploads/id/adapter_model.safetensors",
+  ];
+  send.mockResolvedValueOnce({});
+  await storage.delete(keys);
+  expect(send.mock.calls[0]![0].input).toMatchObject({
+    Bucket: "objects",
+    Delete: { Objects: keys.map((Key) => ({ Key })), Quiet: true },
+  });
+  send.mockResolvedValueOnce({
+    Errors: [{ Key: keys[0], Code: "AccessDenied" }],
+  });
+  await expect(storage.delete(keys)).rejects.toThrow("Object deletion failed");
+});

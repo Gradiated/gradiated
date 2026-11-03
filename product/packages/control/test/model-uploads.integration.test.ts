@@ -48,6 +48,9 @@ describe("model uploads", () => {
       putFile: vi.fn(async (key: string, path: string) => {
         objects.set(key, await readFile(path));
       }),
+      delete: vi.fn(async (keys: string[]) => {
+        for (const key of keys) objects.delete(key);
+      }),
       uri: (key: string) => `s3://test/${key}`,
     };
     const service = createModelUploads(db.database, storage);
@@ -67,9 +70,9 @@ describe("model uploads", () => {
         member.workspaceId,
         input,
       );
-      objects.set(`runs/${upload.id}/upload/adapter_config.json`, files.config);
+      objects.set(`uploads/${upload.id}/adapter_config.json`, files.config);
       objects.set(
-        `runs/${upload.id}/upload/adapter_model.safetensors`,
+        `uploads/${upload.id}/adapter_model.safetensors`,
         files.weights,
       );
       return upload;
@@ -87,6 +90,10 @@ describe("model uploads", () => {
     expect(result.version.trainingRunId).toBeNull();
     expect(result.version.status).toBe("unavailable");
     expect(result.version.adapter.rank).toBe(2);
+    expect(objects.has(`uploads/${upload.id}/adapter_config.json`)).toBe(false);
+    expect(objects.has(`uploads/${upload.id}/adapter_model.safetensors`)).toBe(
+      false,
+    );
     await expect(
       stat(storage.downloadFile.mock.calls[0]![1]),
     ).rejects.toMatchObject({ code: "ENOENT" });
@@ -97,10 +104,12 @@ describe("model uploads", () => {
       `/output/${result.version.adapter.sha256}/`,
     );
     expect(
-      storage.signUpload.mock.calls.every(([key]) => key.includes("/upload/")),
+      storage.signUpload.mock.calls.every(([key]) =>
+        key.startsWith("uploads/"),
+      ),
     ).toBe(true);
     objects.set(
-      `runs/${upload.id}/upload/adapter_model.safetensors`,
+      `uploads/${upload.id}/adapter_model.safetensors`,
       Buffer.from("replaced"),
     );
     expect(
@@ -112,6 +121,31 @@ describe("model uploads", () => {
     );
     expect(tasks[0]?.latestVersion?.id).toBe(result.version.id);
     expect(tasks[0]?.latestRun).toBeNull();
+  });
+  it("keeps publication successful when staging deletion fails and retries it on completion", async () => {
+    const { member, stage, service, storage, objects } = await setup();
+    const upload = await stage();
+    storage.delete.mockRejectedValueOnce(
+      new Error("Temporary storage failure"),
+    );
+    const first = await service.complete(
+      member.userId,
+      member.workspaceId,
+      upload.id,
+    );
+    expect(objects.has(`uploads/${upload.id}/adapter_model.safetensors`)).toBe(
+      true,
+    );
+    const retried = await service.complete(
+      member.userId,
+      member.workspaceId,
+      upload.id,
+    );
+    expect(retried.version.id).toBe(first.version.id);
+    expect(objects.has(`uploads/${upload.id}/adapter_model.safetensors`)).toBe(
+      false,
+    );
+    expect(storage.putFile).toHaveBeenCalledOnce();
   });
   it("waits for downloads to settle before cleaning files after a failure", async () => {
     const { member, stage, service, storage } = await setup();
@@ -177,7 +211,7 @@ describe("model uploads", () => {
       service.create(viewer.userId, viewer.workspaceId, body),
     ).rejects.toMatchObject({ code: "forbidden" });
     objects.set(
-      `runs/${upload.id}/upload/adapter_model.safetensors`,
+      `uploads/${upload.id}/adapter_model.safetensors`,
       Buffer.alloc(body.weights_size),
     );
     await expect(
@@ -214,6 +248,11 @@ describe("model uploads", () => {
       createMemoryContentStore(objects),
     );
     await cleanup();
+    expect(
+      [...objects.keys()].some((key) =>
+        key.startsWith(`uploads/${second.id}/`),
+      ),
+    ).toBe(false);
     expect(
       [...objects.keys()].some((key) => key.startsWith(`runs/${second.id}/`)),
     ).toBe(false);

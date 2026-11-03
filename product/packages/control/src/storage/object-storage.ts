@@ -2,6 +2,7 @@ import { createReadStream } from "node:fs";
 import { open } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import {
+  DeleteObjectsCommand,
   GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
@@ -79,6 +80,19 @@ export class ObjectStorage {
       chunks.push(chunk);
     });
     return Buffer.concat(chunks, sizeBytes);
+  };
+
+  delete = async (keys: string[]) => {
+    if (!keys.length) return;
+
+    const result = await this.client.send(
+      new DeleteObjectsCommand({
+        Bucket: this.bucket,
+        Delete: { Objects: keys.map((Key) => ({ Key })), Quiet: true },
+      }),
+      { abortSignal: AbortSignal.timeout(10_000) },
+    );
+    if (result.Errors?.length) throw new Error("Object deletion failed.");
   };
 
   downloadFile = async (

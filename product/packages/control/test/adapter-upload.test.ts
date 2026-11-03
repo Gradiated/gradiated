@@ -73,6 +73,49 @@ describe("external adapter validation", () => {
     ])
       await expect(validateAdapterFiles(config, data, base)).rejects.toThrow();
   });
+  it("rejects tensor names the serving runtime cannot materialize", async () => {
+    const { config, weights } = adapterFiles(base);
+    const size = Number(weights.readBigUInt64LE());
+    const rewrite = (convert: (name: string) => string) => {
+      const original = JSON.parse(weights.subarray(8, 8 + size).toString());
+      const header = Buffer.from(
+        JSON.stringify(
+          Object.fromEntries(
+            Object.entries(original).map(([name, value]) => [
+              convert(name),
+              value,
+            ]),
+          ),
+        ),
+      );
+      const prefix = Buffer.alloc(8);
+      prefix.writeBigUInt64LE(BigInt(header.length));
+      return Buffer.concat([prefix, header, weights.subarray(8 + size)]);
+    };
+    await expect(
+      validateAdapterFiles(
+        config,
+        rewrite((name) =>
+          name.replace(/\.lora_([AB])\.weight$/, ".lora_$1.default.weight"),
+        ),
+        base,
+      ),
+    ).rejects.toThrow("Only LoRA A/B");
+    await expect(
+      validateAdapterFiles(
+        config,
+        rewrite((name) => name.replace("layers.0.", "")),
+        base,
+      ),
+    ).rejects.toThrow("Only LoRA A/B");
+    await expect(
+      validateAdapterFiles(
+        config,
+        rewrite((name) => name.replace("base_model.", "base-model.")),
+        base,
+      ),
+    ).rejects.toThrow("Only LoRA A/B");
+  });
   it("rejects NaN and infinity in adapter tensors", async () => {
     const { config, weights } = adapterFiles(base);
     const headerSize = Number(weights.readBigUInt64LE());

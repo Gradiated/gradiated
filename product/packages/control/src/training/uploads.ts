@@ -25,7 +25,7 @@ export const createModelUploads = (
   database: ControlDatabase,
   storage?: Pick<
     ObjectStorage,
-    "signUpload" | "read" | "downloadFile" | "putFile" | "uri"
+    "signUpload" | "read" | "downloadFile" | "putFile" | "delete" | "uri"
   >,
 ) => {
   let validating = false;
@@ -40,6 +40,17 @@ export const createModelUploads = (
 
     return storage;
   };
+  const discardInputs = async (id: string) => {
+    try {
+      await requireStorage().delete([
+        `uploads/${id}/adapter_config.json`,
+        `uploads/${id}/adapter_model.safetensors`,
+      ]);
+    } catch {
+      // The staging lifecycle expires leftovers and late PUTs after one day.
+    }
+  };
+
   return {
     async create(
       userId: string,
@@ -66,7 +77,7 @@ export const createModelUploads = (
         throw new ControlServiceError("not_found", "The task was not found.");
 
       const upload = await uploads.create(workspaceId, input);
-      const prefix = `runs/${upload.id}/upload`;
+      const prefix = `uploads/${upload.id}`;
       return {
         id: upload.id,
         config_url: await objects.signUpload(
@@ -100,6 +111,7 @@ export const createModelUploads = (
             "not_found",
             "The version was not found.",
           );
+        await discardInputs(id);
         return { task, version };
       }
       if (Date.now() - upload.createdAt.getTime() > 3600_000)
@@ -121,7 +133,7 @@ export const createModelUploads = (
         const weightsPath = join(directory, "adapter_model.safetensors");
         const archivePath = join(directory, "adapter.tar.gz");
         const { input } = upload;
-        const prefix = `runs/${id}/upload`;
+        const prefix = `uploads/${id}`;
         let config: Uint8Array;
         let weightsSize: number;
         try {
@@ -198,6 +210,7 @@ export const createModelUploads = (
           rank,
           base_model_revision: input.base_model_revision,
         });
+        await discardInputs(id);
         const task = await records.getTask(workspaceId, input.task);
         if (!task)
           throw new ControlServiceError("not_found", "The task was not found.");

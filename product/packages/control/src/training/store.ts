@@ -22,6 +22,7 @@ import {
   UuidSchema,
   WorkspaceSchema,
 } from "@gradiated/contracts";
+import { ModelRecordSchema } from "../catalog/records.js";
 import type { ControlDatabase } from "../db/client.js";
 import {
   models,
@@ -116,11 +117,22 @@ export const createTrainingStore = (database: ControlDatabase) => {
 
     async getModel(modelId: string) {
       const [row] = await database
-        .select({ id: models.id, status: models.status })
+        .select({
+          id: models.id,
+          status: models.status,
+          properties: models.properties,
+        })
         .from(models)
         .where(eq(models.id, ModelSchema.shape.id.parse(modelId)));
 
-      return row && ModelSchema.pick({ id: true, status: true }).parse(row);
+      return (
+        row &&
+        ModelRecordSchema.pick({
+          id: true,
+          status: true,
+          properties: true,
+        }).parse(row)
+      );
     },
 
     async updateTask(taskId: string, value: z.input<typeof UpdateTaskSchema>) {

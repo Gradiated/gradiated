@@ -53,7 +53,15 @@ describe("model uploads", () => {
       }),
       uri: (key: string) => `s3://test/${key}`,
     };
-    const service = createModelUploads(db.database, storage);
+    const loadBaseConfiguration = vi.fn(async () => ({
+      layerCount: 1,
+      expertCount: 0,
+    }));
+    const service = createModelUploads(
+      db.database,
+      storage,
+      loadBaseConfiguration,
+    );
     const files = adapterFiles(member.input.baseModelId);
     const body = {
       task: member.task.name,
@@ -77,7 +85,16 @@ describe("model uploads", () => {
       );
       return upload;
     };
-    return { member, objects, service, files, body, stage, storage };
+    return {
+      member,
+      objects,
+      service,
+      files,
+      body,
+      stage,
+      storage,
+      loadBaseConfiguration,
+    };
   };
   it("publishes a private version without a training run and completes idempotently", async () => {
     const { member, stage, service, objects, storage } = await setup();
@@ -121,6 +138,41 @@ describe("model uploads", () => {
     );
     expect(tasks[0]?.latestVersion?.id).toBe(result.version.id);
     expect(tasks[0]?.latestRun).toBeNull();
+  });
+  it("checks coverage against the immutable base revision before publishing", async () => {
+    const {
+      member,
+      stage,
+      service,
+      storage,
+      body,
+      loadBaseConfiguration,
+      files,
+      objects,
+    } = await setup();
+    const spoofedConfig = Buffer.from(
+      JSON.stringify({
+        ...JSON.parse(files.config.toString()),
+        num_hidden_layers: 1,
+      }),
+    );
+    const upload = await stage({ ...body, config_size: spoofedConfig.length });
+    objects.set(`uploads/${upload.id}/adapter_config.json`, spoofedConfig);
+    loadBaseConfiguration.mockResolvedValueOnce({
+      layerCount: 2,
+      expertCount: 0,
+    });
+    await expect(
+      service.complete(member.userId, member.workspaceId, upload.id),
+    ).rejects.toMatchObject({ code: "conflict" });
+    expect(loadBaseConfiguration).toHaveBeenCalledWith(
+      body.base_model_id,
+      body.base_model_revision,
+    );
+    expect(storage.putFile).not.toHaveBeenCalled();
+    expect(
+      await createTrainingStore(db.database).listVersions(member.task.id),
+    ).toEqual([]);
   });
   it("keeps publication successful when staging deletion fails and retries it on completion", async () => {
     const { member, stage, service, storage, objects } = await setup();

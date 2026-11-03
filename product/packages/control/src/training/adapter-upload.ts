@@ -3,8 +3,10 @@ import { Readable, Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { createReadStream, createWriteStream } from "node:fs";
 import { createHash } from "node:crypto";
+import { TextDecoder } from "node:util";
 import type { FileHandle } from "node:fs/promises";
 import { z } from "zod";
+import type { BaseModelConfiguration } from "./base-model-configuration.js";
 
 const ConfigSchema = z
   .object({
@@ -23,6 +25,42 @@ const ConfigSchema = z
     auto_mapping: z.null().optional(),
   })
   .passthrough();
+
+const parseAdapterJson = (bytes: Uint8Array) => {
+  const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  const value: unknown = JSON.parse(text, (_key: string, item: unknown) => {
+    if (typeof item === "number" && !Number.isFinite(item))
+      throw new Error("Non-finite JSON number.");
+    return item;
+  });
+  // JSON.parse discards duplicate keys; inspect the original property tokens too.
+  const containers: (Set<string> | null)[] = [];
+  for (let index = 0; index < text.length; index++) {
+    const character = text[index];
+    if (character === "{") containers.push(new Set());
+    else if (character === "[") containers.push(null);
+    else if (character === "}" || character === "]") containers.pop();
+    else if (character === '"') {
+      let end = index + 1;
+      while (end < text.length) {
+        if (text[end] === "\\") end += 2;
+        else if (text[end] === '"') break;
+        else end++;
+      }
+      let next = end + 1;
+      while (/\s/.test(text[next] ?? "") && next < text.length) next++;
+      const keys = containers.at(-1);
+      if (keys && text[next] === ":") {
+        const key = JSON.parse(text.slice(index, end + 1)) as string;
+        if (keys.has(key)) throw new Error("Duplicate JSON key.");
+
+        keys.add(key);
+      }
+      index = end;
+    }
+  }
+  return value;
+};
 
 export const adapterFileReader = (file: FileHandle, sizeBytes: number) => ({
   sizeBytes,
@@ -48,10 +86,21 @@ export const validateAdapterFiles = async (
   configBytes: Uint8Array,
   weights: ReturnType<typeof adapterFileReader>,
   baseModel: string,
+  baseConfiguration: BaseModelConfiguration,
 ) => {
-  const config = ConfigSchema.parse(
-    JSON.parse(Buffer.from(configBytes).toString("utf8")),
-  );
+  const layerCount = z
+    .number()
+    .int()
+    .min(1)
+    .max(4096)
+    .parse(baseConfiguration.layerCount);
+  const expertCount = z
+    .number()
+    .int()
+    .min(0)
+    .max(4096)
+    .parse(baseConfiguration.expertCount);
+  const config = ConfigSchema.parse(parseAdapterJson(configBytes));
   if (config.base_model_name_or_path !== baseModel)
     throw new Error(
       "The adapter config does not match the selected base model.",
@@ -72,10 +121,12 @@ export const validateAdapterFiles = async (
 
   const tensors = z
     .record(z.string(), z.unknown())
-    .parse(JSON.parse((await weights.read(8, headerSize)).toString("utf8")));
+    .parse(parseAdapterJson(await weights.read(8, headerSize)));
   const targetModules = new Set(
     config.target_modules.map((module) => module.split(".").at(-1)),
   );
+  const layers = new Set<number>();
+  const expertCoverage = new Map<string, Set<number>>();
   const ranges: [number, number, number, number][] = [];
   const names = Object.keys(tensors).filter((name) => name !== "__metadata__");
   if (!names.length) throw new Error("The adapter contains no tensors.");
@@ -88,12 +139,17 @@ export const validateAdapterFiles = async (
     if (!tensorName)
       throw new Error("Only LoRA A/B weight tensors are supported.");
 
+    const layer = Number(tensorName[1]);
+    if (layer >= layerCount)
+      throw new Error("Adapter layer is outside the base model.");
+
+    layers.add(layer);
     const tensor = z
       .object({
         dtype: z.enum(["F16", "BF16", "F32"]),
         shape: z.tuple([
-          z.number().int().positive(),
-          z.number().int().positive(),
+          z.number().int().positive().max(1_000_000),
+          z.number().int().positive().max(1_000_000),
         ]),
         data_offsets: z.tuple([
           z.number().int().nonnegative(),
@@ -121,6 +177,18 @@ export const validateAdapterFiles = async (
     if (!moduleName || !targetModules.has(moduleName))
       throw new Error("Tensor target modules do not match the config.");
 
+    const expertName = /(?:^|\.)experts\.(\d+)\./.exec(tensorName[2]!);
+    if (expertName) {
+      const expert = Number(expertName[1]);
+      if (expert >= expertCount)
+        throw new Error("Adapter expert is outside the base model.");
+
+      const key = `${layer}/${moduleName}`;
+      const indices = expertCoverage.get(key) ?? new Set<number>();
+      indices.add(expert);
+      expertCoverage.set(key, indices);
+    }
+
     if (end > weights.sizeBytes - headerSize - 8)
       throw new Error("Tensor exceeds the file bounds.");
 
@@ -132,6 +200,14 @@ export const validateAdapterFiles = async (
           : 0x7f80;
     ranges.push([start, end, width, mask]);
   }
+  if (layers.size !== layerCount)
+    throw new Error("Incomplete adapter layer coverage.");
+
+  if (
+    [...expertCoverage.values()].some((indices) => indices.size !== expertCount)
+  )
+    throw new Error("Incomplete adapter expert coverage.");
+
   ranges.sort((a, b) => a[0] - b[0]);
   let offset = 0;
   for (const [start, end] of ranges) {

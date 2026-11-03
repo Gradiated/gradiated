@@ -17,6 +17,8 @@ const validateAdapterFiles = (
   config: Uint8Array,
   weights: Buffer,
   model: string,
+  layerCount = 1,
+  expertCount = 0,
 ) =>
   validate(
     config,
@@ -25,6 +27,7 @@ const validateAdapterFiles = (
       read: async (offset, length) => weights.subarray(offset, offset + length),
     },
     model,
+    { layerCount, expertCount },
   );
 
 describe("external adapter validation", () => {
@@ -116,6 +119,76 @@ describe("external adapter validation", () => {
       ),
     ).rejects.toThrow("Only LoRA A/B");
   });
+  it("requires every base layer and rejects out-of-range layers", async () => {
+    const full = adapterFiles(base, 2);
+    expect(
+      (await validateAdapterFiles(full.config, full.weights, base, 2)).r,
+    ).toBe(2);
+    const partial = adapterFiles(base);
+    await expect(
+      validateAdapterFiles(partial.config, partial.weights, base, 2),
+    ).rejects.toThrow("Incomplete adapter layer coverage");
+    const outOfRange = Buffer.from(partial.weights);
+    const size = Number(outOfRange.readBigUInt64LE());
+    const header = outOfRange
+      .subarray(8, 8 + size)
+      .toString()
+      .replaceAll("layers.0.", "layers.2.");
+    outOfRange.write(header, 8);
+    await expect(
+      validateAdapterFiles(partial.config, outOfRange, base, 2),
+    ).rejects.toThrow("outside the base model");
+  });
+  it("requires complete expert coverage and rejects expert indices outside the base", async () => {
+    const full = adapterFiles(base, 2, [0, 1]);
+    expect(
+      (await validateAdapterFiles(full.config, full.weights, base, 2, 2)).r,
+    ).toBe(2);
+    const partial = adapterFiles(base, 2, [0]);
+    await expect(
+      validateAdapterFiles(partial.config, partial.weights, base, 2, 2),
+    ).rejects.toThrow("Incomplete adapter expert coverage");
+    const outOfRange = adapterFiles(base, 1, [2]);
+    await expect(
+      validateAdapterFiles(outOfRange.config, outOfRange.weights, base, 1, 2),
+    ).rejects.toThrow("outside the base model");
+    await expect(
+      validateAdapterFiles(partial.config, partial.weights, base, 2, 0),
+    ).rejects.toThrow("outside the base model");
+  });
+  it("caps dimensions before reading tensor data", async () => {
+    const header = Buffer.from(
+      JSON.stringify({
+        "base_model.model.layers.0.self_attn.q_proj.lora_A.weight": {
+          dtype: "F32",
+          shape: [2, 1000001],
+          data_offsets: [0, 8000008],
+        },
+        "base_model.model.layers.0.self_attn.q_proj.lora_B.weight": {
+          dtype: "F32",
+          shape: [1000001, 2],
+          data_offsets: [8000008, 16000016],
+        },
+      }),
+    );
+    const prefix = Buffer.alloc(8);
+    prefix.writeBigUInt64LE(BigInt(header.length));
+    await expect(
+      validate(
+        adapterFiles(base).config,
+        {
+          sizeBytes: 8 + header.length + 16000016,
+          read: async (offset) => {
+            if (offset === 0) return prefix;
+            if (offset === 8) return header;
+            throw new Error("Tensor payload must not be read.");
+          },
+        },
+        base,
+        { layerCount: 1, expertCount: 0 },
+      ),
+    ).rejects.toThrow("1000000");
+  });
   it("rejects NaN and infinity in adapter tensors", async () => {
     const { config, weights } = adapterFiles(base);
     const headerSize = Number(weights.readBigUInt64LE());
@@ -176,22 +249,39 @@ describe("external adapter validation", () => {
       peak = Math.max(peak, process.memoryUsage().rss);
     }, 10);
     try {
-      const dimensions = Math.floor((MAX_ADAPTER_BYTES - 4096) / 16);
-      const payloadSize = dimensions * 16;
-      const header = Buffer.from(
-        JSON.stringify({
-          "base_model.model.layers.0.self_attn.q_proj.lora_A.weight": {
-            dtype: "F32",
-            shape: [2, dimensions],
-            data_offsets: [0, payloadSize / 2],
-          },
-          "base_model.model.layers.0.self_attn.q_proj.lora_B.weight": {
-            dtype: "F32",
-            shape: [dimensions, 2],
-            data_offsets: [payloadSize / 2, payloadSize],
-          },
-        }),
+      const layerCount = 32;
+      const dimensions = Math.floor(
+        (MAX_ADAPTER_BYTES - 32768) / (16 * layerCount),
       );
+      const bytesPerLayer = dimensions * 16;
+      const payloadSize = bytesPerLayer * layerCount;
+      const tensors = Object.fromEntries(
+        Array.from({ length: layerCount }, (_, layer) => [
+          [
+            `base_model.model.layers.${layer}.self_attn.q_proj.lora_A.weight`,
+            {
+              dtype: "F32",
+              shape: [2, dimensions],
+              data_offsets: [
+                layer * bytesPerLayer,
+                layer * bytesPerLayer + bytesPerLayer / 2,
+              ],
+            },
+          ],
+          [
+            `base_model.model.layers.${layer}.self_attn.q_proj.lora_B.weight`,
+            {
+              dtype: "F32",
+              shape: [dimensions, 2],
+              data_offsets: [
+                layer * bytesPerLayer + bytesPerLayer / 2,
+                (layer + 1) * bytesPerLayer,
+              ],
+            },
+          ],
+        ]).flat(),
+      );
+      const header = Buffer.from(JSON.stringify(tensors));
       const prefix = Buffer.alloc(8);
       prefix.writeBigUInt64LE(BigInt(header.length));
       const path = join(directory, "weights");
@@ -209,10 +299,15 @@ describe("external adapter validation", () => {
 
         const sizeBytes = payloadSize + header.length + 8;
         expect(sizeBytes).toBeLessThanOrEqual(MAX_ADAPTER_BYTES);
-        expect(sizeBytes).toBeGreaterThan(MAX_ADAPTER_BYTES - 4096);
+        expect(sizeBytes).toBeGreaterThan(MAX_ADAPTER_BYTES - 32768);
         const reader = adapterFileReader(file, sizeBytes);
         expect(
-          (await validate(adapterFiles(base).config, reader, base)).r,
+          (
+            await validate(adapterFiles(base).config, reader, base, {
+              layerCount,
+              expertCount: 0,
+            })
+          ).r,
         ).toBe(2);
         const artifact = await adapterArchive(
           adapterFiles(base).config,

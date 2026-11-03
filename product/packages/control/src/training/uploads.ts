@@ -18,6 +18,10 @@ import {
   adapterFileReader,
   validateAdapterFiles,
 } from "./adapter-upload.js";
+import {
+  readBaseModelConfiguration,
+  type BaseModelConfiguration,
+} from "./base-model-configuration.js";
 import { createTrainingStore } from "./store.js";
 import { createModelUploadStore } from "./upload-store.js";
 
@@ -27,6 +31,10 @@ export const createModelUploads = (
     ObjectStorage,
     "signUpload" | "read" | "downloadFile" | "putFile" | "delete" | "uri"
   >,
+  loadBaseConfiguration: (
+    repository: string,
+    revision: string,
+  ) => Promise<BaseModelConfiguration> = readBaseModelConfiguration,
 ) => {
   let validating = false;
   const uploads = createModelUploadStore(database);
@@ -133,6 +141,22 @@ export const createModelUploads = (
         const weightsPath = join(directory, "adapter_model.safetensors");
         const archivePath = join(directory, "adapter.tar.gz");
         const { input } = upload;
+        const model = await records.getModel(input.base_model_id);
+        if (!model)
+          throw new ControlServiceError(
+            "not_found",
+            "The base model was not found.",
+          );
+
+        const baseRepository =
+          (catalogModel(input.base_model_id) as CatalogEntry | undefined)
+            ?.training?.model ??
+          model.properties.hugging_face_id ??
+          model.id;
+        const baseConfiguration = await loadBaseConfiguration(
+          baseRepository,
+          input.base_model_revision,
+        );
         const prefix = `uploads/${id}`;
         let config: Uint8Array;
         let weightsSize: number;
@@ -181,14 +205,14 @@ export const createModelUploads = (
             await validateAdapterFiles(
               config,
               adapterFileReader(weightsFile, weightsSize),
-              (catalogModel(input.base_model_id) as CatalogEntry | undefined)
-                ?.training?.model ?? input.base_model_id,
+              baseRepository,
+              baseConfiguration,
             )
           ).r;
         } catch {
           throw new ControlServiceError(
             "conflict",
-            "Invalid LoRA adapter. Check the base model, config, tensor pairs, rank and safetensors format.",
+            "Invalid LoRA adapter. Check the base model, config, complete layer/expert coverage, tensor pairs, rank and safetensors format.",
           );
         } finally {
           await weightsFile.close();

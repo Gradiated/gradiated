@@ -1,3 +1,4 @@
+import { readFile, writeFile, stat } from "node:fs/promises";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
 import { createModelUploads } from "../src/training/uploads.js";
@@ -30,9 +31,23 @@ describe("model uploads", () => {
           throw new Error("Read failed");
         return bytes;
       },
-      put: async (key: string, bytes: Uint8Array) => {
-        objects.set(key, Buffer.from(bytes));
-      },
+      downloadFile: vi.fn(
+        async (
+          key: string,
+          destination: string,
+          options: { maxBytes: number },
+        ) => {
+          const bytes = objects.get(key);
+          if (!bytes || bytes.length > options.maxBytes)
+            throw new Error("Read failed");
+
+          await writeFile(destination, bytes, { flag: "wx" });
+          return bytes.length;
+        },
+      ),
+      putFile: vi.fn(async (key: string, path: string) => {
+        objects.set(key, await readFile(path));
+      }),
       uri: (key: string) => `s3://test/${key}`,
     };
     const service = createModelUploads(db.database, storage);
@@ -72,6 +87,12 @@ describe("model uploads", () => {
     expect(result.version.trainingRunId).toBeNull();
     expect(result.version.status).toBe("unavailable");
     expect(result.version.adapter.rank).toBe(2);
+    await expect(
+      stat(storage.downloadFile.mock.calls[0]![1]),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(stat(storage.putFile.mock.calls[0]![1])).rejects.toMatchObject(
+      { code: "ENOENT" },
+    );
     expect(result.version.adapter.artifact_uri).toContain(
       `/output/${result.version.adapter.sha256}/`,
     );
@@ -91,6 +112,32 @@ describe("model uploads", () => {
     );
     expect(tasks[0]?.latestVersion?.id).toBe(result.version.id);
     expect(tasks[0]?.latestRun).toBeNull();
+  });
+  it("waits for downloads to settle before cleaning files after a failure", async () => {
+    const { member, stage, service, storage } = await setup();
+    const upload = await stage();
+    vi.spyOn(storage, "read").mockRejectedValueOnce(
+      new Error("Config unavailable"),
+    );
+    const download = storage.downloadFile.getMockImplementation()!;
+    storage.downloadFile.mockImplementationOnce(async (...args) => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      return download(...args);
+    });
+    await expect(
+      service.complete(member.userId, member.workspaceId, upload.id),
+    ).rejects.toMatchObject({ code: "conflict" });
+    await expect(
+      storage.downloadFile.mock.results[0]!.value,
+    ).resolves.toBeGreaterThan(0);
+    await expect(
+      stat(storage.downloadFile.mock.calls[0]![1]),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+    expect(storage.putFile).not.toHaveBeenCalled();
+    expect(
+      (await service.complete(member.userId, member.workspaceId, upload.id))
+        .version.id,
+    ).toBe(upload.id);
   });
   it("creates a task atomically and disables automatic training", async () => {
     const { member, stage, service, body } = await setup();

@@ -109,3 +109,74 @@ it("replaces an existing object's tag set", async () => {
     Tagging: { TagSet: [{ Key: "retention", Value: "90d" }] },
   });
 });
+
+it("streams a download to disk and enforces its read limit", async () => {
+  const { mkdtemp, readFile, rm } = await import("node:fs/promises");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const directory = await mkdtemp(join(tmpdir(), "object-download-test-"));
+  const cancelled = vi.fn();
+  const response = () => ({
+    Body: {
+      transformToWebStream: () =>
+        new ReadableStream({
+          start(controller) {
+            controller.enqueue(Buffer.from("abc"));
+            controller.enqueue(Buffer.from("def"));
+            controller.close();
+          },
+          cancel: cancelled,
+        }),
+    },
+  });
+  try {
+    send.mockResolvedValue(response());
+    const storage = new ObjectStorage("objects");
+    const path = join(directory, "download");
+    expect(await storage.downloadFile("key", path, { maxBytes: 6 })).toBe(6);
+    expect(await readFile(path, "utf8")).toBe("abcdef");
+    send.mockResolvedValue(response());
+    await expect(
+      storage.downloadFile("key", join(directory, "oversize"), { maxBytes: 4 }),
+    ).rejects.toThrow("read limit");
+    expect(await readFile(join(directory, "oversize"), "utf8")).toBe("abc");
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+it("uploads from a file stream with a fixed length and checksum and closes it on failure", async () => {
+  const { mkdtemp, writeFile, rm } = await import("node:fs/promises");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const directory = await mkdtemp(join(tmpdir(), "object-upload-test-"));
+  try {
+    const path = join(directory, "archive");
+    await writeFile(path, "abcdef");
+    const sha256 = createHash("sha256").update("abcdef").digest("hex");
+    let body: import("node:fs").ReadStream | undefined;
+    send.mockImplementationOnce(async (command) => {
+      expect(command.input.ContentLength).toBe(6);
+      expect(command.input.ChecksumSHA256).toBe(
+        Buffer.from(sha256, "hex").toString("base64"),
+      );
+      body = command.input.Body;
+      const chunks: Buffer[] = [];
+      for await (const chunk of body!) chunks.push(chunk as Buffer);
+      expect(Buffer.concat(chunks).toString()).toBe("abcdef");
+    });
+    const storage = new ObjectStorage("objects");
+    await storage.putFile("key", path, { sizeBytes: 6, sha256 });
+    expect(body!.destroyed).toBe(true);
+    send.mockImplementationOnce(async (command) => {
+      body = command.input.Body;
+      throw new Error("Storage failed");
+    });
+    await expect(
+      storage.putFile("key", path, { sizeBytes: 6, sha256 }),
+    ).rejects.toThrow("Storage failed");
+    expect(body!.destroyed).toBe(true);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});

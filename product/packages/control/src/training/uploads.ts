@@ -1,4 +1,6 @@
-import { createHash } from "node:crypto";
+import { mkdtemp, open, rm } from "node:fs/promises";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 import {
   CreateModelUploadSchema,
   type CreateModelUpload,
@@ -11,13 +13,20 @@ import { requireWorkspaceEditor } from "../access.js";
 import type { ControlDatabase } from "../db/client.js";
 import { ControlServiceError } from "../errors.js";
 import type { ObjectStorage } from "../storage/object-storage.js";
-import { adapterArchive, validateAdapterFiles } from "./adapter-upload.js";
+import {
+  adapterArchive,
+  adapterFileReader,
+  validateAdapterFiles,
+} from "./adapter-upload.js";
 import { createTrainingStore } from "./store.js";
 import { createModelUploadStore } from "./upload-store.js";
 
 export const createModelUploads = (
   database: ControlDatabase,
-  storage?: Pick<ObjectStorage, "signUpload" | "read" | "put" | "uri">,
+  storage?: Pick<
+    ObjectStorage,
+    "signUpload" | "read" | "downloadFile" | "putFile" | "uri"
+  >,
 ) => {
   let validating = false;
   const uploads = createModelUploadStore(database);
@@ -106,22 +115,38 @@ export const createModelUploads = (
         );
 
       validating = true;
+      let directory: string | undefined;
       try {
+        directory = await mkdtemp(join(tmpdir(), "gradiated-adapter-"));
+        const weightsPath = join(directory, "adapter_model.safetensors");
+        const archivePath = join(directory, "adapter.tar.gz");
         const { input } = upload;
         const prefix = `runs/${id}/upload`;
         let config: Uint8Array;
-        let weights: Uint8Array;
+        let weightsSize: number;
         try {
-          [config, weights] = await Promise.all([
+          const [configResult, weightsResult] = await Promise.allSettled([
             objects.read(`${prefix}/adapter_config.json`, {
               maxBytes: input.config_size,
               timeoutMs: 30_000,
             }),
-            objects.read(`${prefix}/adapter_model.safetensors`, {
-              maxBytes: input.weights_size,
-              timeoutMs: 120_000,
-            }),
+            objects.downloadFile(
+              `${prefix}/adapter_model.safetensors`,
+              weightsPath,
+              {
+                maxBytes: input.weights_size,
+                timeoutMs: 120_000,
+              },
+            ),
           ]);
+          if (
+            configResult.status === "rejected" ||
+            weightsResult.status === "rejected"
+          )
+            throw new Error("Adapter download failed.");
+
+          config = configResult.value;
+          weightsSize = weightsResult.value;
         } catch {
           throw new ControlServiceError(
             "conflict",
@@ -130,7 +155,7 @@ export const createModelUploads = (
         }
         if (
           config.length !== input.config_size ||
-          weights.length !== input.weights_size
+          weightsSize !== input.weights_size
         )
           throw new ControlServiceError(
             "conflict",
@@ -138,28 +163,38 @@ export const createModelUploads = (
           );
 
         let rank: number;
+        const weightsFile = await open(weightsPath, "r");
         try {
-          rank = validateAdapterFiles(
-            config,
-            weights,
-            (catalogModel(input.base_model_id) as CatalogEntry | undefined)
-              ?.training?.model ?? input.base_model_id,
+          rank = (
+            await validateAdapterFiles(
+              config,
+              adapterFileReader(weightsFile, weightsSize),
+              (catalogModel(input.base_model_id) as CatalogEntry | undefined)
+                ?.training?.model ?? input.base_model_id,
+            )
           ).r;
         } catch {
           throw new ControlServiceError(
             "conflict",
             "Invalid LoRA adapter. Check the base model, config, tensor pairs, rank and safetensors format.",
           );
+        } finally {
+          await weightsFile.close();
         }
-        const archive = await adapterArchive(config, weights);
-        const sha256 = createHash("sha256").update(archive).digest("hex");
+        const archive = await adapterArchive(
+          config,
+          weightsPath,
+          weightsSize,
+          archivePath,
+        );
+        const { sha256 } = archive;
         const key = `runs/${id}/output/${sha256}/adapter.tar.gz`;
-        await objects.put(key, archive);
+        await objects.putFile(key, archivePath, archive);
         const version = await uploads.publish(workspaceId, id, {
           format: "peft_lora",
           artifact_uri: objects.uri(key),
           sha256,
-          size_bytes: archive.length,
+          size_bytes: archive.sizeBytes,
           rank,
           base_model_revision: input.base_model_revision,
         });
@@ -168,7 +203,11 @@ export const createModelUploads = (
           throw new ControlServiceError("not_found", "The task was not found.");
         return { task, version };
       } finally {
-        validating = false;
+        try {
+          if (directory) await rm(directory, { recursive: true, force: true });
+        } finally {
+          validating = false;
+        }
       }
     },
   };

@@ -465,7 +465,12 @@ Admins create a workspace-scoped model-upload resource, receive one-hour signed
 PUT grants bound to declared file lengths, then PUT its version resource to
 validate and publish. Completion checks access again, validates sizes, config,
 tensor pairs, ranks and offsets, and constructs a canonical tar.gz archive in a
-separate content-addressed output key. The published row never points at a key
+separate content-addressed output key. Weights are spooled to a private temporary
+directory, validated in 64 KiB reads, and archived through a gzip/hash pipeline to
+a file before streaming that file to S3. One validation runs per API process;
+working disk use is bounded to roughly twice the 256 MiB input cap. Temporary files
+are removed after success and failure. Neither weights nor archives are collected
+into whole-file buffers. The published row never points at a key
 covered by the browser's write grants. Completion retries return the same version.
 Only synthetic fixtures are used in tests. Raw model bytes and signed grants must
 never be logged. Expired unfinished uploads and archived workspace artifacts use

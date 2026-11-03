@@ -1,5 +1,9 @@
 import { createGzip } from "node:zlib";
-import { Readable } from "node:stream";
+import { Readable, Transform } from "node:stream";
+import { pipeline } from "node:stream/promises";
+import { createReadStream, createWriteStream } from "node:fs";
+import { createHash } from "node:crypto";
+import type { FileHandle } from "node:fs/promises";
 import { z } from "zod";
 
 const ConfigSchema = z
@@ -20,9 +24,29 @@ const ConfigSchema = z
   })
   .passthrough();
 
-export const validateAdapterFiles = (
+export const adapterFileReader = (file: FileHandle, sizeBytes: number) => ({
+  sizeBytes,
+  read: async (offset: number, length: number): Promise<Buffer> => {
+    const bytes = Buffer.alloc(length);
+    let received = 0;
+    while (received < length) {
+      const result = await file.read(
+        bytes,
+        received,
+        length - received,
+        offset + received,
+      );
+      if (!result.bytesRead) throw new Error("Adapter file was truncated.");
+
+      received += result.bytesRead;
+    }
+    return bytes;
+  },
+});
+
+export const validateAdapterFiles = async (
   configBytes: Uint8Array,
-  weights: Uint8Array,
+  weights: ReturnType<typeof adapterFileReader>,
   baseModel: string,
 ) => {
   const config = ConfigSchema.parse(
@@ -33,27 +57,23 @@ export const validateAdapterFiles = (
       "The adapter config does not match the selected base model.",
     );
 
-  const bytes = Buffer.from(
-    weights.buffer,
-    weights.byteOffset,
-    weights.byteLength,
-  );
-  if (bytes.length < 10)
+  if (weights.sizeBytes < 10)
     throw new Error("The safetensors file is empty or invalid.");
 
+  const bytes = await weights.read(0, 8);
   const headerSize = Number(bytes.readBigUInt64LE());
   if (
     !Number.isSafeInteger(headerSize) ||
     headerSize < 2 ||
     headerSize > 1024 * 1024 ||
-    headerSize + 8 >= bytes.length
+    headerSize + 8 >= weights.sizeBytes
   )
     throw new Error("Invalid safetensors header.");
 
   const tensors = z
     .record(z.string(), z.unknown())
-    .parse(JSON.parse(bytes.subarray(8, 8 + headerSize).toString("utf8")));
-  const ranges: [number, number][] = [];
+    .parse(JSON.parse((await weights.read(8, headerSize)).toString("utf8")));
+  const ranges: [number, number, number, number][] = [];
   const names = Object.keys(tensors).filter((name) => name !== "__metadata__");
   if (!names.length) throw new Error("The adapter contains no tensors.");
 
@@ -97,25 +117,16 @@ export const validateAdapterFiles = (
     if (!moduleName || !config.target_modules.includes(moduleName))
       throw new Error("Tensor target modules do not match the config.");
 
-    const dataStart = 8 + headerSize + start;
-    if (end > bytes.length - headerSize - 8)
+    if (end > weights.sizeBytes - headerSize - 8)
       throw new Error("Tensor exceeds the file bounds.");
 
-    for (let offset = 0; offset < end - start; offset += width) {
-      const value =
-        width === 4
-          ? bytes.readUInt32LE(dataStart + offset)
-          : bytes.readUInt16LE(dataStart + offset);
-      const mask =
-        tensor.dtype === "F32"
-          ? 0x7f800000
-          : tensor.dtype === "F16"
-            ? 0x7c00
-            : 0x7f80;
-      if ((value & mask) === mask)
-        throw new Error("Adapter contains non-finite tensor values.");
-    }
-    ranges.push([start, end]);
+    const mask =
+      tensor.dtype === "F32"
+        ? 0x7f800000
+        : tensor.dtype === "F16"
+          ? 0x7c00
+          : 0x7f80;
+    ranges.push([start, end, width, mask]);
   }
   ranges.sort((a, b) => a[0] - b[0]);
   let offset = 0;
@@ -125,40 +136,74 @@ export const validateAdapterFiles = (
 
     offset = end;
   }
-  if (offset !== bytes.length - headerSize - 8)
+  if (offset !== weights.sizeBytes - headerSize - 8)
     throw new Error("Invalid tensor data length.");
+
+  for (const [start, end, width, mask] of ranges) {
+    for (let offset = 0; offset < end - start; offset += 64 * 1024) {
+      const chunk = await weights.read(
+        8 + headerSize + start + offset,
+        Math.min(64 * 1024, end - start - offset),
+      );
+      for (let index = 0; index < chunk.length; index += width) {
+        const value =
+          width === 4 ? chunk.readUInt32LE(index) : chunk.readUInt16LE(index);
+        if ((value & mask) === mask)
+          throw new Error("Adapter contains non-finite tensor values.");
+      }
+    }
+  }
 
   return config;
 };
 
 export const adapterArchive = async (
   config: Uint8Array,
-  weights: Uint8Array,
+  weightsPath: string,
+  weightsSize: number,
+  destination: string,
 ) => {
-  const parts: Uint8Array[] = [];
-  for (const [name, data] of [
-    ["adapter_config.json", config],
-    ["adapter_model.safetensors", weights],
-  ] as const) {
-    const header = Buffer.alloc(512);
-    header.write(name);
-    header.write("0000644\0", 100);
-    header.write("0000000\0", 108);
-    header.write("0000000\0", 116);
-    header.write(data.length.toString(8).padStart(11, "0") + "\0", 124);
-    header.write("00000000000\0", 136);
-    header.fill(32, 148, 156);
-    header.write("0", 156);
-    header.write("ustar\0", 257);
-    header.write("00", 263);
-    const checksum = header.reduce((sum, byte) => sum + byte, 0);
-    header.write(checksum.toString(8).padStart(6, "0") + "\0 ", 148);
-    parts.push(header, data, Buffer.alloc((512 - (data.length % 512)) % 512));
-  }
-  parts.push(Buffer.alloc(1024));
-  const compressed = Readable.from(parts).pipe(createGzip({ level: 1 }));
-  const chunks: Buffer[] = [];
-  for await (const chunk of compressed) chunks.push(chunk as Buffer);
+  const parts = async function* () {
+    for (const [name, size] of [
+      ["adapter_config.json", config.length],
+      ["adapter_model.safetensors", weightsSize],
+    ] as const) {
+      const header = Buffer.alloc(512);
+      header.write(name);
+      header.write("0000644\0", 100);
+      header.write("0000000\0", 108);
+      header.write("0000000\0", 116);
+      header.write(size.toString(8).padStart(11, "0") + "\0", 124);
+      header.write("00000000000\0", 136);
+      header.fill(32, 148, 156);
+      header.write("0", 156);
+      header.write("ustar\0", 257);
+      header.write("00", 263);
+      const checksum = header.reduce((sum, byte) => sum + byte, 0);
+      header.write(checksum.toString(8).padStart(6, "0") + "\0 ", 148);
+      yield header;
+      if (name === "adapter_config.json") yield config;
+      else yield* createReadStream(weightsPath, { highWaterMark: 64 * 1024 });
+      yield Buffer.alloc((512 - (size % 512)) % 512);
+    }
+    yield Buffer.alloc(1024);
+  };
+  const hash = createHash("sha256");
+  let sizeBytes = 0;
+  const digest = new Transform({
+    transform(chunk: Buffer, _encoding, callback) {
+      hash.update(chunk);
+      sizeBytes += chunk.length;
+      callback(null, chunk);
+    },
+  });
+  await pipeline(
+    Readable.from(parts()),
+    createGzip({ level: 1 }),
+    digest,
+    createWriteStream(destination, { flags: "wx" }),
+    { signal: AbortSignal.timeout(120_000) },
+  );
 
-  return Buffer.concat(chunks);
+  return { sha256: hash.digest("hex"), sizeBytes };
 };

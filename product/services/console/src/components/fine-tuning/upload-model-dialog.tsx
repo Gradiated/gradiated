@@ -98,8 +98,11 @@ export const UploadModelDialog = ({
         const metadata = AdapterMetadataSchema.parse(
           JSON.parse(await configFile.text()),
         );
-        if (metadata.revision && /^[0-9a-f]{40}$/.test(metadata.revision))
-          setRevision(metadata.revision);
+        setRevision(
+          metadata.revision && /^[0-9a-f]{40}$/.test(metadata.revision)
+            ? metadata.revision
+            : "",
+        );
 
         const match = models.data?.data.find(
           (model) =>

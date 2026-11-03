@@ -219,6 +219,28 @@ export const FilesSelected: Story = {
     await fillUpload(canvasElement);
   },
 };
+export const ConfigReplacedWithoutRevision: Story = {
+  play: async ({ canvasElement }) => {
+    const dialog = await fillUpload(canvasElement);
+    await expect(dialog.getByLabelText("Base checkpoint revision")).toHaveValue(
+      "a".repeat(40),
+    );
+    await userEvent.upload(
+      dialog.getByLabelText("Choose adapter files"),
+      new File(
+        [JSON.stringify({ base_model_name_or_path: task.base_model_id })],
+        "adapter_config.json",
+        { type: "application/json" },
+      ),
+    );
+    await waitFor(() =>
+      expect(dialog.getByLabelText("Base checkpoint revision")).toHaveValue(""),
+    );
+    await expect(
+      dialog.getByRole("button", { name: "Create task & upload" }),
+    ).toBeDisabled();
+  },
+};
 export const Uploading: Story = {
   parameters: { msw: uploadHandlers({ phase: "uploading" }) },
   play: async ({ canvasElement }) => {

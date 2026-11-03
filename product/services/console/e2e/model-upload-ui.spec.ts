@@ -227,3 +227,54 @@ test("workspace members cannot upload models", async ({ page }) => {
     page.getByRole("button", { name: "Upload version", exact: true }),
   ).toBeDisabled();
 });
+
+for (const revision of [undefined, null, "main"]) {
+  test(`replacing config clears the stale revision when the next revision is ${String(revision)}`, async ({
+    page,
+  }) => {
+    await setup(page);
+    await page.goto(`/tasks/${task.name}`);
+    await page
+      .getByRole("button", { name: "Upload version", exact: true })
+      .click();
+    await page.getByLabel("Version name", { exact: true }).fill(version.name);
+    const picker = page.getByLabel("Choose adapter files");
+    await picker.setInputFiles([
+      {
+        name: "adapter_config.json",
+        mimeType: "application/json",
+        buffer: Buffer.from(
+          JSON.stringify({
+            base_model_name_or_path: task.base_model_id,
+            revision: "a".repeat(40),
+          }),
+        ),
+      },
+      {
+        name: "adapter_model.safetensors",
+        mimeType: "application/octet-stream",
+        buffer: Buffer.alloc(32, 1),
+      },
+    ]);
+    await expect(page.getByLabel("Base checkpoint revision")).toHaveValue(
+      "a".repeat(40),
+    );
+    await picker.setInputFiles({
+      name: "adapter_config.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(
+        JSON.stringify({
+          base_model_name_or_path: task.base_model_id,
+          revision,
+        }),
+      ),
+    });
+    await expect(page.getByLabel("Base checkpoint revision")).toHaveValue("");
+    const submit = page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Upload version", exact: true });
+    await expect(submit).toBeDisabled();
+    await page.getByLabel("Base checkpoint revision").fill("b".repeat(40));
+    await expect(submit).toBeEnabled();
+  });
+}

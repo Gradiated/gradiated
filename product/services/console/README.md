@@ -149,7 +149,8 @@ usage, logs, billing, training, and every task-detail tab: Model, Training runs,
 Data, and Settings, plus trace content, test results, and the judge selector. Tab and detail stories
 select the actual tab and open the panel through a play function.
 Training → Model upload covers new and existing tasks, partial/selected files,
-uploading, validating, invalid files/config, transfer and validation errors,
+uploading, validating, invalid files/config, config replacement without a revision,
+transfer and validation errors,
 model-catalog retry, and uploaded versions awaiting qualification, including mobile.
 Stories drive the actual form and mock only network boundaries.
 Add stories under `src/` so reviewers can inspect them in the PR preview.

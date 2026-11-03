@@ -1,0 +1,13 @@
+run,model,split,judge,passed,judged,planned,samples_per_task
+morning,Base Qwen,frozen_final,Sol v3i,8,24,24,1
+morning,Base Qwen,frozen_final,Terra v3i,6,24,24,1
+morning,SFT: 1 epoch,frozen_final,Sol v3i,9,24,24,1
+morning,SFT: 1 epoch,frozen_final,Terra v3i,8,24,24,1
+morning,OPD: procedure,frozen_final,Sol v3i,4,24,24,1
+morning,OPD: procedure,frozen_final,Terra v3i,4,24,24,1
+morning,OPD: contract,frozen_final,Sol v3i,5,24,24,1
+morning,OPD: contract,frozen_final,Terra v3i,5,24,24,1
+deepseek_repaired_v2,DeepSeek Flash 1017,frozen_final,Sol v3i,8,24,24,1
+deepseek_repaired_v2,DeepSeek Flash 1017,frozen_final,Terra v3i,11,24,24,1
+fresh_sol_followup,Fresh Sol,frozen_final,Sol v3i,21,24,24,1
+fresh_sol_followup,Fresh Sol,frozen_final,Terra v3i,22,24,24,1

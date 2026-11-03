@@ -1,0 +1,76 @@
+{
+  "captured_utc": "2026-11-03T11:20:51Z",
+  "model": "deepseek/deepseek-v4.1-flash-1017",
+  "version": "repaired_v2",
+  "metrics": {
+    "primary": {
+      "completed": 24,
+      "planned": 24,
+      "passed": 8,
+      "rate": 0.3333333333333333,
+      "mean_score": 6.85
+    },
+    "secondary_terra": {
+      "completed": 24,
+      "planned": 24,
+      "passed": 11,
+      "rate": 0.4583333333333333,
+      "mean_score": 7.079166666666667
+    }
+  },
+  "status": {
+    "ok": 24
+  },
+  "unclean_resets": 0,
+  "judge_agreement": {
+    "cases": 24,
+    "pass_decisions_agree": 21
+  },
+  "paired_primary_vs_fresh_qwen": {
+    "cases": 24,
+    "wins": 3,
+    "losses": 3,
+    "difference": 0,
+    "family_cluster_CI95": [
+      -0.16666666666666666,
+      0.16666666666666666
+    ]
+  },
+  "root_usage": {
+    "completed_root_requests": 370,
+    "providers": {
+      "BaseTen": 351,
+      "Modal": 19
+    },
+    "cost_usd": 1.363020256,
+    "prompt_tokens": 24176646,
+    "completion_tokens": 427970,
+    "scope": "OpenRouter-reported root calls only; excludespublic/integration probes, subscriptionhelpers/judges, wall/GPUcosts. Prompttokensinclude cache usage."
+  },
+  "settings": {
+    "reasoning_effort": "high",
+    "max_completion_tokens": 32768,
+    "samples_per_task": 1,
+    "max_turns": 12,
+    "wall_s": 1200,
+    "temperature": "Providerdefault, notcontrolledidenticallytoQwenT0.7",
+    "native_tools": true
+  },
+  "original_failure_preserved": "v1all24infra_error from unsupportedparallel_tool_calls flag, not0%passrate",
+  "sources": {
+    "/opt/posthog-sft/env-research/rl_train_dagger_v1/train_v3/deepseek_or_benchmark_v2/RESULTS.json": {
+      "sha256": "b4ad03836597503f663fab56666536127bde9296dfe491a8eb7399ee8a0b319f"
+    },
+    "/opt/posthog-sft/env-research/rl_train_dagger_v1/train_v3/deepseek_or_benchmark_v2/protocol.json": {
+      "sha256": "ba2099d5dde7ab73299c3675b08b0b3498280682aef816822d7045ba4513eff2"
+    },
+    "/opt/posthog-sft/env-research/rl_train_dagger_v1/train_v3/deepseek_or_benchmark_v2/openrouter_usage.jsonl": {
+      "sha256": "23e5fcf2961f238a987c61593e2717ad49ca209f7eb9d4b71ac459751dbaea0d"
+    }
+  },
+  "limits": [
+    "Different models use their canonical native tool paths; one sample/task, two synthetic worlds, one product.",
+    "Primary Sol and secondary Terra judge the same observed DeepSeek traces.",
+    "No Opus substitution and no heldout-guided training."
+  ]
+}

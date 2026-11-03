@@ -1,0 +1,117 @@
+{
+  "at": 1793707174.6952229,
+  "development_only": true,
+  "metrics": {
+    "qwen": {
+      "judged": 18,
+      "planned": 18,
+      "passed": 5,
+      "pass_rate": 0.2777777777777778,
+      "mean_score": 4.9222222222222225,
+      "status": {
+        "ok": 18
+      }
+    },
+    "qwen-hilltrain3-am-sft-e84-v1": {
+      "judged": 18,
+      "planned": 18,
+      "passed": 4,
+      "pass_rate": 0.2222222222222222,
+      "mean_score": 5.388888888888889,
+      "status": {
+        "ok": 18
+      }
+    },
+    "qwen-hilltrain3-sft-epoch2-e84-v1": {
+      "judged": 18,
+      "planned": 18,
+      "passed": 3,
+      "pass_rate": 0.16666666666666666,
+      "mean_score": 5.372222222222223,
+      "status": {
+        "ok": 18
+      }
+    },
+    "qwen-hilltrain3-sft-epoch3-e84-v1": {
+      "judged": 18,
+      "planned": 18,
+      "passed": 5,
+      "pass_rate": 0.2777777777777778,
+      "mean_score": 5.616666666666666,
+      "status": {
+        "ok": 18
+      }
+    }
+  },
+  "do_not_compare_absolute_rates_to_different_final_tasks": true,
+  "failure": null,
+  "captured_utc": "2026-11-03T12:01:34Z",
+  "paired_vs_base": {
+    "epoch1": {
+      "complete_paired_tasks": 18,
+      "wins": 2,
+      "losses": 3,
+      "ties": 13,
+      "pass_rate_difference": -0.05555555555555555,
+      "workflow_cluster_bootstrap_CI95": [
+        -0.2777777777777778,
+        0.2
+      ],
+      "workflow_clusters": 11
+    },
+    "epoch2": {
+      "complete_paired_tasks": 18,
+      "wins": 0,
+      "losses": 2,
+      "ties": 16,
+      "pass_rate_difference": -0.1111111111111111,
+      "workflow_cluster_bootstrap_CI95": [
+        -0.3333333333333333,
+        0
+      ],
+      "workflow_clusters": 11
+    },
+    "epoch3": {
+      "complete_paired_tasks": 18,
+      "wins": 2,
+      "losses": 2,
+      "ties": 14,
+      "pass_rate_difference": 0,
+      "workflow_cluster_bootstrap_CI95": [
+        -0.2222222222222222,
+        0.21052631578947367
+      ],
+      "workflow_clusters": 11
+    }
+  },
+  "restoration": {
+    "base": {
+      "runs": 18,
+      "unclean_or_missing": 0
+    },
+    "epoch1": {
+      "runs": 18,
+      "unclean_or_missing": 0
+    },
+    "epoch2": {
+      "runs": 18,
+      "unclean_or_missing": 0
+    },
+    "epoch3": {
+      "runs": 18,
+      "unclean_or_missing": 0
+    }
+  },
+  "judge": "Sol v3i; no secondary development rejudge in this run",
+  "sources": {
+    "/opt/posthog-sft/env-research/rl_train_dagger_v1/train_v3/sft_epochs_followup_v1/dev_evaluation/RESULTS.json": "11b9fe80e4e7e6c75f6c204d6b1f5d66f0e1b287630ef52f1e2e88d79a621785",
+    "/opt/posthog-sft/env-research/rl_train_dagger_v1/train_v3/sft_epochs_followup_v1/dev_evaluation/protocol.json": "632bc58078d851687a3a4cd78a3f3c0fa99125bb04cb231ebbe40032432c19e0",
+    "/opt/posthog-sft/env-research/rl_train_dagger_v1/train_v3/dev/tasks.jsonl": "2300e1b9a3c5b131af3e9788da8097e698e43d3d53b4e5e73fcf2b33fae0481a"
+  },
+  "limits": [
+    "Development-only same18tasks/2worlds, one sample each, small model-judged set.",
+    "No direct absolute-rate comparison to different24finaltasks.",
+    "All threeepochs repeat same600 selectedcalls; not allretainedtrajectorycalls.",
+    "No epochcheckpoint promotion or final-H0 retuning from these results."
+  ]
+}

@@ -166,10 +166,14 @@ export class ObjectStorage {
       { expiresIn: options.expiresIn },
     );
 
-  signUpload = (key: string, expiresIn: number) =>
+  signUpload = (key: string, expiresIn: number, sizeBytes?: number) =>
     getSignedUrl(
       this.client,
-      new PutObjectCommand({ Bucket: this.bucket, Key: key }),
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        ...(sizeBytes === undefined ? {} : { ContentLength: sizeBytes }),
+      }),
       { expiresIn },
     );
 

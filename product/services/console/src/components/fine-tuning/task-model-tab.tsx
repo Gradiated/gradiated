@@ -45,7 +45,13 @@ const VersionMeta = ({ version }: { version: VersionView }) => (
     {new Date(version.created_at).toLocaleDateString(undefined, {
       dateStyle: "medium",
     })}{" "}
-    · {version.run?.dataset?.train.toLocaleString() ?? "—"} training examples
+    ·{" "}
+    {version.training_run_id
+      ? `${version.run?.dataset?.train.toLocaleString() ?? "—"} training examples`
+      : "Uploaded"}
+    {version.status === "unavailable"
+      ? " · Awaiting serving qualification"
+      : ""}
   </>
 );
 

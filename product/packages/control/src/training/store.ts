@@ -194,9 +194,25 @@ export const createTrainingStore = (database: ControlDatabase) => {
         }),
       );
 
+      const latestVersions = VersionRecordSchema.array().parse(
+        await database
+          .selectDistinctOn([taskVersions.taskId])
+          .from(taskVersions)
+          .where(eq(taskVersions.workspaceId, id))
+          .orderBy(
+            asc(taskVersions.taskId),
+            desc(taskVersions.createdAt),
+            desc(taskVersions.id),
+          ),
+      );
+      const versionsByTask = new Map(
+        latestVersions.map((version) => [version.taskId, version]),
+      );
+
       return rows.map((task) => ({
         ...task,
         latestRun: byTask.get(task.id) ?? null,
+        latestVersion: versionsByTask.get(task.id) ?? null,
       }));
     },
 

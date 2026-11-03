@@ -129,3 +129,22 @@ export const getEvaluationResults = (
       },
     ),
   );
+
+export const createModelUpload = (
+  workspace_id: string,
+  body: components["schemas"]["CreateModelUpload"],
+) =>
+  requireData(
+    api.POST("/api/v1/workspaces/{workspace_id}/model-uploads", {
+      params: { path: { workspace_id } },
+      body,
+    }),
+  );
+
+export const completeModelUpload = (workspace_id: string, upload_id: string) =>
+  requireData(
+    api.PUT(
+      "/api/v1/workspaces/{workspace_id}/model-uploads/{upload_id}/version",
+      { params: { path: { workspace_id, upload_id } } },
+    ),
+  );

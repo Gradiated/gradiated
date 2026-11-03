@@ -403,7 +403,7 @@ test("direct task reload initializes flags, edits schedules and opens held-out r
     "Cost",
     "Speed",
     "Quality",
-    "Last trained",
+    "Last updated",
   ]);
   await expect(tasksTable.locator("tbody tr")).toHaveCount(5);
   await expect(tasksTable.locator("tbody")).toHaveText("");

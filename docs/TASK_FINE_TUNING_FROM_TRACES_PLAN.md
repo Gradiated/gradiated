@@ -450,3 +450,31 @@ Pool GPU choice/count, numeric capacity limits, serving prices, artifact retenti
 and production quality thresholds remain release inputs to determine from actual
 workload and hardware evidence. This planning change implements none of the
 hosting or promotion behavior above.
+
+## External LoRA model uploads
+
+The Training page has an Add model action which creates a task together with its
+first uploaded adapter version. An existing task has an Upload version action.
+Both use a shared dialog for a workspace-unique version name, base model, immutable
+40-character checkpoint revision, PEFT adapter_config.json and
+adapter_model.safetensors. Configs are capped at 64 KiB and weights at 256 MiB.
+The config can suggest a base model but the user supplies the exact checkpoint.
+New upload-created tasks have automatic training disabled.
+
+Admins create a workspace-scoped model-upload resource, receive one-hour signed
+PUT grants bound to declared file lengths, then PUT its version resource to
+validate and publish. Completion checks access again, validates sizes, config,
+tensor pairs, ranks and offsets, and constructs a canonical tar.gz archive in a
+separate content-addressed output key. The published row never points at a key
+covered by the browser's write grants. Completion retries return the same version.
+Only synthetic fixtures are used in tests. Raw model bytes and signed grants must
+never be logged. Expired unfinished uploads and archived workspace artifacts use
+the existing worker cleanup loop.
+
+Externally uploaded versions have no training_run_id. They appear in task lists
+and version history as Uploaded, without synthetic training runs or evaluations.
+The initial version status is unavailable, matching trained versions; uploading
+alone does not qualify serving. The existing serving qualification boundary,
+private hosting grants and exact base revision checks apply before use/promotion.
+The API needs S3 upload/read/write permissions and KMS encryption permissions;
+the artifacts bucket permits signed browser PUTs from the hosted and local console.

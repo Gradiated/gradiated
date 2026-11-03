@@ -1,3 +1,5 @@
+import { UploadModelDialog } from "@/components/fine-tuning/upload-model-dialog";
+import { Upload } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import {
@@ -82,6 +84,8 @@ const TaskPageBody = () => {
   const navigate = useNavigate({ from: "/tasks/$taskId" });
   const query = useTask(taskId);
   const task = query.data;
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const { canEdit } = useTrainingMutation(taskId);
   const [tab, setTab] = useState<TabKey>(traceId ? "traces" : "model");
   const [versionAction, setVersionAction] = useState<VersionAction | null>(
     null,
@@ -111,7 +115,19 @@ const TaskPageBody = () => {
     <ConsolePage
       page="tasks"
       title={task.name}
-      actions={<TrainButton task={task} />}
+      actions={
+        <div className="flex flex-wrap items-center gap-2">
+          <TrainButton task={task} />
+          <Button
+            variant="outline"
+            disabled={!canEdit}
+            onClick={() => setUploadOpen(true)}
+          >
+            <Upload className="size-4" />
+            Upload version
+          </Button>
+        </div>
+      }
       back={
         <Link
           to="/tasks"
@@ -148,6 +164,9 @@ const TaskPageBody = () => {
         </TabsContent>
       </OptionTabs>
 
+      {uploadOpen ? (
+        <UploadModelDialog task={task} onClose={() => setUploadOpen(false)} />
+      ) : null}
       {versionAction ? (
         <VersionActionDialog
           task={task}

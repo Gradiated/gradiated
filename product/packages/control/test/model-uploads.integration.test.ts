@@ -1,0 +1,175 @@
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { eq } from "drizzle-orm";
+import { createModelUploads } from "../src/training/uploads.js";
+import { createTrainingStore } from "../src/training/store.js";
+import { createTrainingArtifactCleanup } from "../src/training/artifact-cleanup.js";
+import { modelUploads } from "../src/db/schema/index.js";
+import { createTestDatabase, type TestDatabase } from "./support/postgres.js";
+import { seedTrainingTask } from "./support/training.js";
+import { seedMember } from "./support/fixtures.js";
+import { adapterFiles } from "./support/adapter-upload.js";
+import { createMemoryContentStore } from "./support/content-store.js";
+
+describe("model uploads", () => {
+  let db: TestDatabase;
+  beforeAll(async () => {
+    db = await createTestDatabase();
+  });
+  afterAll(() => db.dispose());
+
+  const setup = async () => {
+    const member = await seedTrainingTask(db.database);
+    const objects = new Map<string, Buffer>();
+    const storage = {
+      signUpload: vi.fn(
+        async (key: string) => `https://storage.invalid/${key}`,
+      ),
+      read: async (key: string, options: { maxBytes: number }) => {
+        const bytes = objects.get(key);
+        if (!bytes || bytes.length > options.maxBytes)
+          throw new Error("Read failed");
+        return bytes;
+      },
+      put: async (key: string, bytes: Uint8Array) => {
+        objects.set(key, Buffer.from(bytes));
+      },
+      uri: (key: string) => `s3://test/${key}`,
+    };
+    const service = createModelUploads(db.database, storage);
+    const files = adapterFiles(member.input.baseModelId);
+    const body = {
+      task: member.task.name,
+      create_task: false,
+      name: "triage-v1",
+      base_model_id: member.input.baseModelId,
+      base_model_revision: "a".repeat(40),
+      config_size: files.config.length,
+      weights_size: files.weights.length,
+    };
+    const stage = async (input = body) => {
+      const upload = await service.create(
+        member.userId,
+        member.workspaceId,
+        input,
+      );
+      objects.set(`runs/${upload.id}/upload/adapter_config.json`, files.config);
+      objects.set(
+        `runs/${upload.id}/upload/adapter_model.safetensors`,
+        files.weights,
+      );
+      return upload;
+    };
+    return { member, objects, service, files, body, stage, storage };
+  };
+  it("publishes a private version without a training run and completes idempotently", async () => {
+    const { member, stage, service, objects, storage } = await setup();
+    const upload = await stage();
+    const result = await service.complete(
+      member.userId,
+      member.workspaceId,
+      upload.id,
+    );
+    expect(result.version.trainingRunId).toBeNull();
+    expect(result.version.status).toBe("unavailable");
+    expect(result.version.adapter.rank).toBe(2);
+    expect(result.version.adapter.artifact_uri).toContain(
+      `/output/${result.version.adapter.sha256}/`,
+    );
+    expect(
+      storage.signUpload.mock.calls.every(([key]) => key.includes("/upload/")),
+    ).toBe(true);
+    objects.set(
+      `runs/${upload.id}/upload/adapter_model.safetensors`,
+      Buffer.from("replaced"),
+    );
+    expect(
+      (await service.complete(member.userId, member.workspaceId, upload.id))
+        .version.id,
+    ).toBe(result.version.id);
+    const tasks = await createTrainingStore(db.database).listTasks(
+      member.workspaceId,
+    );
+    expect(tasks[0]?.latestVersion?.id).toBe(result.version.id);
+    expect(tasks[0]?.latestRun).toBeNull();
+  });
+  it("creates a task atomically and disables automatic training", async () => {
+    const { member, stage, service, body } = await setup();
+    const upload = await stage({
+      ...body,
+      create_task: true,
+      task: "new-task",
+    });
+    expect(
+      await createTrainingStore(db.database).getTask(
+        member.workspaceId,
+        "new-task",
+      ),
+    ).toBeUndefined();
+    const result = await service.complete(
+      member.userId,
+      member.workspaceId,
+      upload.id,
+    );
+    expect(result.task.name).toBe("new-task");
+    expect(result.task.trainingSchedule).toBeNull();
+  });
+  it("rejects cross-workspace completion, non-admin uploads, invalid weights and expired sessions", async () => {
+    const { member, stage, service, body, objects } = await setup();
+    const upload = await stage();
+    const outsider = await seedMember(db.database, { role: "admin" });
+    await expect(
+      service.complete(outsider.userId, outsider.workspaceId, upload.id),
+    ).rejects.toMatchObject({ code: "not_found" });
+    const viewer = await seedMember(db.database, { role: "member" });
+    await expect(
+      service.create(viewer.userId, viewer.workspaceId, body),
+    ).rejects.toMatchObject({ code: "forbidden" });
+    objects.set(
+      `runs/${upload.id}/upload/adapter_model.safetensors`,
+      Buffer.alloc(body.weights_size),
+    );
+    await expect(
+      service.complete(member.userId, member.workspaceId, upload.id),
+    ).rejects.toMatchObject({ code: "conflict" });
+    await db.database
+      .update(modelUploads)
+      .set({ createdAt: new Date(Date.now() - 7200_000) })
+      .where(eq(modelUploads.id, upload.id));
+    await expect(
+      service.complete(member.userId, member.workspaceId, upload.id),
+    ).rejects.toThrow("expired");
+  });
+  it("rejects duplicate task and version names and cleans abandoned artifacts", async () => {
+    const { member, stage, service, body, objects } = await setup();
+    await expect(
+      service.create(member.userId, member.workspaceId, {
+        ...body,
+        create_task: true,
+      }),
+    ).rejects.toMatchObject({ code: "conflict" });
+    const first = await stage();
+    await service.complete(member.userId, member.workspaceId, first.id);
+    const second = await stage();
+    await expect(
+      service.complete(member.userId, member.workspaceId, second.id),
+    ).rejects.toMatchObject({ code: "conflict" });
+    await db.database
+      .update(modelUploads)
+      .set({ createdAt: new Date(Date.now() - 86400_000) })
+      .where(eq(modelUploads.id, second.id));
+    const cleanup = createTrainingArtifactCleanup(
+      db.database,
+      createMemoryContentStore(objects),
+    );
+    await cleanup();
+    expect(
+      [...objects.keys()].some((key) => key.startsWith(`runs/${second.id}/`)),
+    ).toBe(false);
+    await cleanup();
+    expect(
+      [...objects.keys()].some((key) =>
+        key.startsWith(`runs/${first.id}/output/`),
+      ),
+    ).toBe(true);
+  });
+});

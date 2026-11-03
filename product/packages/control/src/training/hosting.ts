@@ -31,7 +31,7 @@ export const createAdapterHostingService = (
       const adapter = row.version.adapter;
       const download = await downloads.sign(
         adapter.artifact_uri,
-        row.version.trainingRunId,
+        row.version.trainingRunId ?? row.version.id,
         adapter.size_bytes,
         adapter.sha256,
       );

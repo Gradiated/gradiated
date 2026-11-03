@@ -226,6 +226,9 @@ const app = createApp({
       adapterDownloads,
       trainingEngine.engine,
       validateEvaluationModel,
+      environment.TRAINING_ARTIFACTS_BUCKET
+        ? new ObjectStorage(environment.TRAINING_ARTIFACTS_BUCKET)
+        : undefined,
     ),
   },
 });

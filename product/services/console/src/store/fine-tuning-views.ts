@@ -8,7 +8,9 @@ export const versionsForTask = (
   const byId = new Map(runs.map((run) => [run.id, run]));
 
   return versions.map((version) => {
-    const run = byId.get(version.training_run_id);
+    const run = version.training_run_id
+      ? byId.get(version.training_run_id)
+      : undefined;
 
     return { ...version, run, summary: run?.evaluation ?? null };
   });

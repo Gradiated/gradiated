@@ -1,0 +1,22 @@
+{
+  "captured_utc": "2026-11-03T11:23:19Z",
+  "status": "partial",
+  "split": "development",
+  "planned_tasks_per_arm": 18,
+  "planned_total_runs": 72,
+  "completed_total_runs": 50,
+  "arms": {
+    "base": {"completed": 15, "judged": 15, "passed": 4, "execution_status": {"ok": 15}},
+    "epoch1": {"completed": 13, "judged": 13, "passed": 3, "execution_status": {"ok": 13}},
+    "epoch2": {"completed": 11, "judged": 11, "passed": 2, "execution_status": {"ok": 11}},
+    "epoch3": {"completed": 11, "judged": 11, "passed": 2, "execution_status": {"ok": 11}}
+  },
+  "all_arm_complete_subset": {
+    "tasks": 6,
+    "passed": {"base": 2, "epoch1": 1, "epoch2": 1, "epoch3": 1},
+    "limits": "Small completion-selected conditional subset, not a random sample or final ranking."
+  },
+  "evidence": "Derived on host from actual r0 rollouts and Sol v3i judge files using canonical pass_result; no new samples.",
+  "source_benchmark": "/opt/posthog-env/runner/bench/hill_train3_sft_epochs_dev_v1",
+  "limits": "Unmatched per-arm subsets are not comparable rates. Do not compare development absolute rates with the different frozen final tasks."
+}

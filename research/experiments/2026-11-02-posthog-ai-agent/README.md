@@ -325,6 +325,14 @@ comparison includes base plus epochs 1/2/3 (72 planned runs). It remains partial
 in the saved snapshot; unmatched subsets must not be ranked. The already-used
 final holdout will not be used to select these follow-up checkpoints.
 
+**Development checkpoint, 2026-11-03 11:23 UTC:** 50/72 runs completed, all
+with status `ok`. Base is 4/15, epoch 1 is 3/13, and epochs 2/3 are each 2/11
+on their currently judged, different subsets. Only six tasks are complete
+across every arm: base 2/6 and each SFT epoch 1/6. This small completion-selected
+subset shows no benefit yet and is not a final ranking. See the separately
+timestamped [development progress](data/epoch_dev_progress.json).
+
+
 ### E14 · Nov 3 follow-up · DeepSeek V4.1 Flash 1017 via OpenRouter
 
 **New authorization:** the user explicitly permitted OpenRouter for this run,

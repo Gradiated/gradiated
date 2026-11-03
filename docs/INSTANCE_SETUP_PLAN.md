@@ -201,6 +201,20 @@ and vLLM at two, with disruption-budget minima of four and two respectively.
 This gives SGLang roughly five sevenths of uniformly distributed routing keys;
 observe actual request share and hold until the next explicit authorization.
 
+After the five-plus-two trial, the final vLLM pair can be retired by setting
+`glm-dealign.autoscaling.paused_replicas` to `0`, then running
+`python3 tools/gpu/render-config.py` and
+`node tools/models/model-replica-rules.mjs`. This sets both
+the Rollout count and the KEDA pause to zero, preventing autoscaling from
+restoring vLLM. Keep the two-replica rollback configuration and leave SGLang
+capped and manually paused at five replicas. Let accepted vLLM requests drain
+normally; verify all five SGLang allocations remain qualified and public
+gateway requests succeed. Removing the pause override restores the reviewed
+two-replica vLLM configuration if rollback is needed; run both rendering
+commands again and include the replica-rule changes in the rollback PR. With
+vLLM retired, the production SGLang pool carries the five-replica alert floor;
+restoring vLLM restores its baseline floor and the canary warmup semantics.
+
 Before each vLLM reduction, identify the qualified, co-located pods
 by UID and set their `controller.kubernetes.io/pod-deletion-cost` annotation to
 `-10000`, retaining the other pods' default cost. Require all current pods to be

@@ -278,7 +278,9 @@ class RenderTests(unittest.TestCase):
         runtimes = json.loads((renderer.ROOT / 'product/inference/gpu/runtimes.json').read_text())
         primary = json.loads((renderer.GPU / 'models.json').read_text())['glm-dealign']
         candidate = {**primary, 'replicas': 1, 'min_available': 1, 'max_unavailable': 0,
-                     'max_surge': 1, 'canary_for': 'glm-dealign'}
+                     'max_surge': 1, 'canary_for': 'glm-dealign',
+                     'autoscaling': {k: v for k, v in primary['autoscaling'].items()
+                                     if k != 'paused_replicas'}}
         obj = renderer.rollout('glm-dealign-canary', candidate, runtimes)
         self.assertEqual(obj['spec']['replicas'], 1)
         self.assertEqual(obj['spec']['template']['metadata']['annotations']['gradiated.com/canary-of'],
@@ -341,7 +343,9 @@ class RenderTests(unittest.TestCase):
         runtimes = json.loads(renderer.RUNTIMES.read_text())
         model = json.loads((renderer.GPU / 'models.json').read_text())['glm-dealign']
         candidate = {**model, 'replicas': 1, 'max_surge': 0, 'max_unavailable': 1,
-                     'canary_for': 'glm-dealign'}
+                     'canary_for': 'glm-dealign',
+                     'autoscaling': {k: v for k, v in model['autoscaling'].items()
+                                     if k != 'paused_replicas'}}
         obj = renderer.rollout('candidate', candidate, runtimes)
         strategy = obj['spec']['strategy']['canary']
         self.assertEqual((strategy['maxSurge'], strategy['maxUnavailable']), (0, 1))

@@ -21,6 +21,23 @@ export const modelReplicaRules = (resources) => {
       )
       .map((resource) => [resource.spec.scaleTargetRef.name, resource]),
   );
+  const requestedReplicas = (resource) => {
+    const scaler = autoscalers.get(resource.metadata.name);
+    const paused =
+      scaler?.metadata?.annotations?.["autoscaling.keda.sh/paused-replicas"];
+    if (
+      paused !== undefined &&
+      (typeof paused !== "string" ||
+        !/^(0|[1-9][0-9]*)$/.test(paused) ||
+        !Number.isSafeInteger(Number(paused)))
+    )
+      throw new Error("Invalid paused replica annotation");
+    return {
+      scaler,
+      paused,
+      requested: paused === undefined ? resource.spec.replicas : Number(paused),
+    };
+  };
   for (const resource of resources) {
     if (resource?.kind !== "Rollout") continue;
     const annotations = resource.spec?.template?.metadata?.annotations ?? {};
@@ -76,19 +93,19 @@ export const modelReplicaRules = (resources) => {
         );
       models.add(model);
     }
-    const scaler = autoscalers.get(resource.metadata.name);
-    const paused =
-      scaler?.metadata?.annotations?.["autoscaling.keda.sh/paused-replicas"];
-    if (
-      paused !== undefined &&
-      (typeof paused !== "string" ||
-        !/^(0|[1-9][0-9]*)$/.test(paused) ||
-        !Number.isSafeInteger(Number(paused)))
-    )
-      throw new Error("Invalid paused replica annotation");
-    const requested = paused === undefined ? count : Number(paused);
+    const { scaler, paused, requested } = requestedReplicas(resource);
     const isolated = mode === "qualification";
-    const minimum = canary ? 0 : requested;
+    // A production replacement becomes the serving floor once its primary is
+    // intentionally scaled to zero. Qualification-only capacity never counts.
+    const retiredPrimary =
+      canary &&
+      requestedReplicas(
+        rollouts.find(
+          (item) =>
+            item.metadata.name === annotations["gradiated.com/canary-of"],
+        ),
+      ).requested === 0;
+    const minimum = isolated || (canary && !retiredPrimary) ? 0 : requested;
     const expr = isolated
       ? "vector(0)"
       : paused !== undefined

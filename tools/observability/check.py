@@ -634,6 +634,18 @@ def main():
         ], expected, ['ModelNoReadyReplicas', 'ModelUnderReplicated', 'ModelScaleUpStalled'],
         {'model': 'test/model'}, duration)
 
+    for ready in range(1, 6):
+        scenario(f'sole production replacement ready {ready} of five', [
+            {'series': 'gradiated_model_desired_replicas{model="test/model",rollout="primary"}', 'values': '0+0x80'},
+            {'series': 'gradiated_model_minimum_replicas{model="test/model",rollout="primary"}', 'values': '0+0x80'},
+            {'series': 'gradiated_model_desired_replicas{model="test/model",rollout="candidate"}', 'values': '5+0x80'},
+            {'series': 'gradiated_model_minimum_replicas{model="test/model",rollout="candidate"}', 'values': '5+0x80'},
+            {'series': 'gradiated_worker_model_ready_replicas{instance="a",model="test/model"}', 'values': f'{ready}+0x80'},
+            {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="a",loop="kubernetes_deployment_reconciliation"}', 'values': '1+30x80'},
+        ], 'ModelUnderReplicated' if ready < 5 else None,
+        ['ModelNoReadyReplicas', 'ModelUnderReplicated', 'ModelScaleUpStalled'],
+        {'model': 'test/model'}, '1m')
+
     scenario('isolated qualification adds no production capacity demand', [
         {'series': 'gradiated_model_desired_replicas{model="test/model",rollout="primary"}', 'values': '10+0x80'},
         {'series': 'gradiated_model_minimum_replicas{model="test/model",rollout="primary"}', 'values': '10+0x80'},

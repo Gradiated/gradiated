@@ -135,6 +135,62 @@ test("canary warmup does not raise the established minimum serving floor", () =>
   );
 });
 
+test("a production canary inherits the serving floor when its primary is retired", () => {
+  const primary = rollout("a/b", 2);
+  primary.metadata.name = "primary";
+  const candidate = rollout("a/b", 5);
+  candidate.metadata.name = "candidate";
+  const annotations = candidate.spec.template.metadata.annotations;
+  annotations["gradiated.com/canary-of"] = "primary";
+  annotations["gradiated.com/serving-mode"] = "production";
+  const scaler = {
+    kind: "ScaledObject",
+    metadata: {
+      name: "primary",
+      namespace: "gpu-inference",
+      annotations: { "autoscaling.keda.sh/paused-replicas": "0" },
+    },
+    spec: { scaleTargetRef: { kind: "Rollout", name: "primary" } },
+  };
+  const minima = (resources) =>
+    modelReplicaRules(resources)
+      .spec.groups[0].rules.filter(
+        (rule) => rule.record === "gradiated_model_minimum_replicas",
+      )
+      .map((rule) => [rule.labels.rollout, rule.expr]);
+  for (const resources of [
+    [primary, candidate, scaler],
+    [candidate, scaler, primary],
+  ]) {
+    assert.deepEqual(
+      new Map(minima(resources)),
+      new Map([
+        ["primary", "vector(0)"],
+        ["candidate", "vector(5)"],
+      ]),
+    );
+  }
+  // A zero Rollout count without KEDA is also a retired primary.
+  assert.deepEqual(
+    minima([{ ...primary, spec: { ...primary.spec, replicas: 0 } }, candidate]),
+    [
+      ["primary", "vector(0)"],
+      ["candidate", "vector(5)"],
+    ],
+  );
+  annotations["gradiated.com/serving-mode"] = "qualification";
+  assert.deepEqual(minima([primary, candidate, scaler]), [
+    ["primary", "vector(0)"],
+    ["candidate", "vector(0)"],
+  ]);
+  annotations["gradiated.com/serving-mode"] = "production";
+  delete scaler.metadata.annotations["autoscaling.keda.sh/paused-replicas"];
+  assert.deepEqual(minima([primary, candidate, scaler]), [
+    ["primary", "vector(2)"],
+    ["candidate", "vector(0)"],
+  ]);
+});
+
 test("isolated qualification does not request production serving capacity", () => {
   const primary = rollout("a/b", 10);
   primary.metadata.name = "primary";

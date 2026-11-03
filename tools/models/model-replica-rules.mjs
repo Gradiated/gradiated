@@ -105,7 +105,35 @@ export const modelReplicaRules = (resources) => {
             item.metadata.name === annotations["gradiated.com/canary-of"],
         ),
       ).requested === 0;
-    const minimum = isolated || (canary && !retiredPrimary) ? 0 : requested;
+    const productionReplacements = retiredPrimary
+      ? rollouts.filter((item) => {
+          const metadata = item.spec.template.metadata.annotations;
+          return (
+            metadata["gradiated.com/canary-of"] ===
+              annotations["gradiated.com/canary-of"] &&
+            (metadata["gradiated.com/serving-mode"] ?? "production") ===
+              "production" &&
+            requestedReplicas(item).requested > 0
+          );
+        })
+      : [];
+    let minimum = isolated || (canary && !retiredPrimary) ? 0 : requested;
+    if (!isolated && productionReplacements.length > 1) {
+      // Split production pools preserve their reviewed aggregate availability
+      // budget while an additional replacement warms up. A sole replacement
+      // continues to carry the full serving floor even without a PDB.
+      const budget = resources.find(
+        (item) =>
+          item?.kind === "PodDisruptionBudget" &&
+          item.metadata.name === resource.metadata.name,
+      );
+      if (budget) {
+        const floor = budget.spec?.minAvailable;
+        if (!Number.isSafeInteger(floor) || floor < 0 || floor > requested)
+          throw new Error("Invalid production replacement disruption floor");
+        minimum = floor;
+      }
+    }
     const expr = isolated
       ? "vector(0)"
       : paused !== undefined

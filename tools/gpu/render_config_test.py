@@ -432,7 +432,7 @@ class RenderTests(unittest.TestCase):
             'cpu': '32', 'memory': '256Gi', 'nvidia.com/gpu': '2'})
         self.assertEqual(container['resources']['limits']['memory'], '400Gi')
         self.assertEqual(isolated['spec']['template']['metadata']['annotations']
-                         ['gradiated.com/serving-mode'], 'qualification')
+                         ['gradiated.com/serving-mode'], 'production')
         self.assertEqual(isolated['spec']['template']['spec']['nodeSelector']
                          ['gradiated.com/instance-id'],
                          '01a19221-df83-721d-a7f9-85495b591fb1')

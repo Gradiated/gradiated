@@ -142,8 +142,12 @@ ApplicationSet preserves `/spec/paused`, so Argo CD self-healing does not undo a
 operator pause. Resume a manual pause by clearing only `spec.paused`. Use
 `promote` only at an explicit pause step: promoting during analysis can advance
 past that analysis, and `--full` skips all remaining analysis and pause steps.
-A pause controls revision progression; it does not freeze HPA scaling or replace
-the model configuration in Git.
+A pause controls revision progression and does not freeze the HPA's desired
+replica count. A manually paused completed Rollout can nevertheless leave its
+ReplicaSet below that desired count. For replica-count-only expansion, resume
+within the reviewed HPA caps until the target pods are created, then pause again.
+Verify actual pod readiness and SDK qualification before treating the desired
+count as serving capacity. Keep the model configuration and scaling caps in Git.
 
 ```sh
 kubectl argo rollouts get rollout glm-dealign-sglang -n gpu-inference

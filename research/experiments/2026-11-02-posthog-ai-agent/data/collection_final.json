@@ -1,0 +1,43 @@
+{
+  "final": {
+    "at": 1793714038.1827118,
+    "trajectories_total": 391,
+    "prior_trajectories": 314,
+    "new_verified": 77,
+    "unique_tasks": 193,
+    "pending": 0,
+    "stopped_owned_groups": [],
+    "no_automatic_training": true,
+    "resident_services_preserved": true
+  },
+  "quality": {
+    "trajectories": 391,
+    "unique_tasks": 193,
+    "rows": 4883,
+    "completion_tokens": 1954363,
+    "firsttry_trajectories": 220,
+    "corrected_trajectories": 171,
+    "pending": 0,
+    "rejected_counts": {
+      "actual_guidance_answer_leak_or_uncertain": 65,
+      "audit_infrastructure_or_integrity_error": 1,
+      "canonical_task_trace_quota": 11,
+      "long_context_bucket_not_default_ready": 1,
+      "secondary_judge_disagreement_withheld": 2
+    },
+    "limits": "Multiple traces per canonical task are practice variation, not new skills. No training or learning gain claimed. Seed88 prior V1-guidance-audited; additions actual-visible-hint V2. Secondary5pct is a spotcheck, not gold-standard agreement."
+  },
+  "manifest_sha256": "d2e55a8b25068f635af28ac7daaf6ac67a749d3ae9d00594c418acbf4ef03a27",
+  "protocol_sha256": "04a94359d51e9b283fde432233613f2724da864081ca04a09c0fccab5877c416",
+  "source": "throughput_feed_v1/quality/live_manifest.json",
+  "verified_at": 1793714076.384929,
+  "cleanup": {
+    "owned_group_members_remaining": 0,
+    "resident_health_http": {
+      "18100": 200,
+      "18101": 200,
+      "18110": 200
+    },
+    "checked_separately": true
+  }
+}

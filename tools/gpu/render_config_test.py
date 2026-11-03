@@ -368,13 +368,19 @@ class RenderTests(unittest.TestCase):
 
     def test_model_disruption_budget_protects_all_revision_pods(self):
         model = json.loads((renderer.GPU / 'models.json').read_text())['glm-dealign']
+        selector = {'matchLabels': {'app.kubernetes.io/name': 'glm-dealign'}}
+        for replicas, minimum in ((10, 8), (6, 6), (4, 4), (3, 2)):
+            with self.subTest(replicas=replicas, minimum=minimum):
+                obj = renderer.disruption_budget('glm-dealign', {
+                    **model, 'replicas': replicas, 'min_available': minimum})
+                self.assertEqual(obj['spec'], {'minAvailable': minimum, 'selector': selector})
+                self.assertEqual(obj['metadata'], {
+                    'name': 'glm-dealign', 'namespace': 'gpu-inference'})
         obj = renderer.disruption_budget('glm-dealign', model)
-        self.assertEqual(obj['spec'], {'minAvailable': 8, 'selector': {
-            'matchLabels': {'app.kubernetes.io/name': 'glm-dealign'}}})
-        self.assertEqual(obj['metadata'], {'name': 'glm-dealign', 'namespace': 'gpu-inference'})
+        self.assertEqual(obj['spec'], {'minAvailable': model['min_available'], 'selector': selector})
         generated = renderer.render()[renderer.MODELS / 'glm-dealign' / 'glm-dealign.yaml']
         self.assertEqual([doc for doc in generated if doc['kind'] == 'PodDisruptionBudget'], [obj])
-        for invalid in (0, -1, True, 1.5, '8', '80%', None, 11):
+        for invalid in (0, -1, True, 1.5, '8', '80%', None, model['replicas'] + 1):
             with self.subTest(invalid=invalid), self.assertRaisesRegex(ValueError, 'min_available'):
                 renderer.disruption_budget('glm-dealign', {**model, 'min_available': invalid})
 

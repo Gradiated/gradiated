@@ -169,16 +169,41 @@ Check that remaining qualified capacity is sufficient throughout warmup. Do not
 rely on a replica-count reduction to select a particular pair: Kubernetes may
 choose pods on different hosts. Respect existing host exclusions and other models.
 
-For the first production trial, retain all ten vLLM replicas and enable only the
-qualified two-GPU SGLang replica. Keep its replica count and autoscaling maximum
-at one, and leave its indefinite post-analysis pause in place. With all eleven
-replicas accepting, the gateway assigns roughly one eleventh of uniformly
-distributed routing keys to SGLang; prefix affinity and load can change the actual
-request share. Observe the measured share rather than treating Argo's replica
-weight as a traffic percentage. Do not advance this trial until the operator
-explicitly authorizes the next stage. Keep the qualified, non-serving revision
-as the stable revision so abort removes SGLang from normal routing while vLLM
-capacity remains available.
+The SGLang migration keeps the combined footprint at twelve B300 GPUs. The
+first serving trial used one two-GPU SGLang replica alongside ten one-GPU vLLM
+replicas. Expand to three SGLang plus six vLLM, then four plus four. The first
+expansion replaces the four co-located vLLM replicas on the four-B300 host;
+the final expansion replaces one co-located pair on the eight-B300 host. The
+final stage gives SGLang roughly half of uniformly distributed routing keys; prefix affinity and load can change the measured request share.
+Keep each runtime's autoscaling maximum at its reviewed stage count. Hold the
+four-plus-four stage until the operator explicitly authorizes further migration.
+
+SGLang placement is restricted to the original two-B300 host, the four-B300 host
+`01a0f19d-1ff3-7613-8cbf-81b693c0f0d4`, and the eight-B300 host
+`01a0fbf7-5276-700b-903b-7e04da150ed6`. Two SGLang replicas fit the four-B300
+host's 64 CPU and 896 GiB; one fits beside DeepSeek and two remaining vLLM
+replicas on the eight-B300 host. Do not place a second 400 GiB SGLang allocation
+beside the normal GLM allocation on its 686 GiB host, or use the excluded host.
+
+Before each vLLM reduction, identify the qualified, co-located pods
+by UID and set their `controller.kubernetes.io/pod-deletion-cost` annotation to
+`-10000`, retaining the other pods' default cost. Require all current pods to be
+Ready and the ReplicaSet identity unchanged immediately before the scale-down.
+Deletion cost guides selection; it is not a hard placement guarantee. Observe
+which UIDs terminate, wait for normal request drain and allocation release, and
+verify the intended host capacity is free before proceeding. If a different
+pod is selected or another replica fails, stop expansion and restore the previous
+reviewed replica counts; do not force-delete requests or drain another pair.
+Remove owned deletion-cost annotations from surviving pods when a stage ends.
+
+The first expansion keeps six vLLM replicas and the original SGLang replica
+serving throughout warmup. Complete both replacements' SDK qualification and
+gateway checks before the final pair. At a completed explicit pause, promote
+the already-tested revision to finish its template migration before a later replica-count-only expansion.
+Never use full promotion to skip analysis. Once four SGLang and four vLLM are
+Ready, leave the rollout manually paused and retain its replica/HPA caps.
+Aborting SGLang does not recreate vLLM replicas removed from the other Rollout;
+rollback must also restore the previous reviewed placement and replica counts.
 
 Pause at the intended initial exposure and observe routed availability, runtime
 failures, TTFT, decode throughput and capacity rejections for at least 20 minutes

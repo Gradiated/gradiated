@@ -169,6 +169,17 @@ Check that remaining qualified capacity is sufficient throughout warmup. Do not
 rely on a replica-count reduction to select a particular pair: Kubernetes may
 choose pods on different hosts. Respect existing host exclusions and other models.
 
+For the first production trial, retain all ten vLLM replicas and enable only the
+qualified two-GPU SGLang replica. Keep its replica count and autoscaling maximum
+at one, and leave its indefinite post-analysis pause in place. With all eleven
+replicas accepting, the gateway assigns roughly one eleventh of uniformly
+distributed routing keys to SGLang; prefix affinity and load can change the actual
+request share. Observe the measured share rather than treating Argo's replica
+weight as a traffic percentage. Do not advance this trial until the operator
+explicitly authorizes the next stage. Keep the qualified, non-serving revision
+as the stable revision so abort removes SGLang from normal routing while vLLM
+capacity remains available.
+
 Pause at the intended initial exposure and observe routed availability, runtime
 failures, TTFT, decode throughput and capacity rejections for at least 20 minutes
 before the next manual promotion. Argo's replica weight is not an exact request

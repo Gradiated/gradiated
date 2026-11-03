@@ -1,38 +1,47 @@
 ---
 name: experiment-record
-description: Start or maintain a research experiment record with methods, results, data, charts, failures, and learnings for later writing. Use when the user asks to document an experiment as it develops, rather than draft or publish a blog post.
+description: Keep conversation traces, a thin experiment summary, and supporting data or charts in a dated research folder for later writing. Use when the user asks to record an experiment as it develops, rather than draft or publish a post.
 ---
 
 # Experiment record
 
-Keep a factual working record that someone can later turn into a post. Do not
-write marketing copy or publish anything unless asked.
+Keep the actual conversation as the record someone can later turn into a post.
+Do not replace it with a long reconstructed narrative or publish it unless asked.
 
 ## Start
 
 - Look for an existing record for this work before creating another.
 - Use `research/experiments/YYYY-MM-DD-short-name/`, dated by the experiment's
   start date. Keep that folder stable as work continues across days.
-- Begin with `README.md`. Add `data/` and `figures/` only when there are useful
-  artifacts to put there. Link the record from `research/experiments/README.md`.
-- Capture the question, hypothesis, baseline, setup, data, metrics, evaluation
-  protocol, resource/time constraints, and what would change the decision.
-  Record what actually ran, including revisions and deviations.
+- Put conversation exports in `traces/`: readable Markdown and structured
+  JSONL when available, plus a small coverage/provenance manifest. Use the
+  conversation's stable thread ID and item IDs to avoid duplicate exports.
+- Keep the experiment's `README.md` to a few bullets: question/setup, current
+  result and caveat, and links to the traces and useful data/charts.
+- Add `data/` and `figures/` only for useful supporting artifacts. The top-level
+  `research/experiments/README.md` describes the convention; do not add per-run
+  log entries or a status index there.
 
 ## Keep it current
 
-While working on the requested experiment, update the same record after a
-meaningful run, failure, methodological change, or decision, and before handing
-the work back. Do not add an entry for every tool call. A simple structure is:
+After meaningful progress, extend or refresh the same conversation export and
+update the few summary bullets if needed. Keep failures, questions, corrections,
+and superseded attempts in the transcript instead of curating only successes.
+Do not add a prose log entry for every tool call.
 
-1. **Overview:** question, current status, strongest supported result.
-2. **Setup and method:** enough detail to interpret or reproduce the work.
-3. **Experiment log:** date/run ID, hypothesis, change, measurement, result,
-   decision, and an evidence link. Keep failed and superseded attempts visible.
-4. **Results and artifacts:** small CSV/JSON summaries and linked figures.
-5. **Learnings and limits:** supported conclusions, competing explanations,
-   uncertainty, and open questions.
-6. **Next steps:** pending runs and the next discriminating experiment.
+Export a bounded snapshot so reading/exporting the thread does not recursively
+include the export itself forever. Paginate to the recorded high-water position,
+recover truncated messages when supported, and state the cutoff and missing
+coverage. Never call a reconstructed summary a full transcript. A T3 deep link
+is not automatically public or accessible outside that T3 instance.
+
+Include visible user/assistant messages. Keep hidden reasoning, system/developer
+prompts, secrets, and restricted customer/tool payloads out. Redact credentials
+and authentication links; record redaction categories/counts without the values.
+For T3, infer speaker from the message type: delivered user messages can have
+`createdBy: null`, so the creator field alone is not a reliable role label.
+When tools expose only activity summaries or raw bodies cannot be exported,
+keep labeled activity metadata rather than inventing or implying complete logs.
 
 Separate measurements, derived values, estimates, and hypotheses. Preserve
 denominators, units, model/hardware/data scope, comparison conditions, and
@@ -40,10 +49,9 @@ judge/sample uncertainty. Never turn an infrastructure failure into a model
 failure, a throughput window into a causal speedup, or training loss into a
 capability gain. Mark partial or historically reconstructed results clearly.
 
-Keep compact, decision-relevant artifacts and enough provenance to locate the
-source: revision, run/manifest path, hash, capture time, and chart-generation
-command where useful. Preserve prior versions when a repair changes a result.
-Avoid copying large raw logs or duplicating another maintained report; link it.
+Keep enough provenance to locate the source: thread/run/item IDs, capture time,
+coverage, artifact hashes, and chart-generation command where useful. Preserve
+prior results when a repair changes them. Avoid duplicating maintained reports.
 
 Apply the experiment's data-handling rules before exporting anything. Prefer
 approved aggregates; leave restricted prompts, traces, customer records,

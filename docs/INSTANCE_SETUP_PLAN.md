@@ -177,10 +177,11 @@ The SGLang migration keeps the combined footprint at twelve B300 GPUs. The
 first serving trial used one two-GPU SGLang replica alongside ten one-GPU vLLM
 replicas. Expand to three SGLang plus six vLLM, then four plus four. The first
 expansion replaces the four co-located vLLM replicas on the four-B300 host;
-the final expansion replaces one co-located pair on the eight-B300 host. The
-final stage gives SGLang roughly half of uniformly distributed routing keys; prefix affinity and load can change the measured request share.
-Keep each runtime's autoscaling maximum at its reviewed stage count. Hold the
-four-plus-four stage until the operator explicitly authorizes further migration.
+the next expansion replaces one co-located pair on the eight-B300 host. The
+four-plus-four stage gives SGLang roughly half of uniformly distributed routing
+keys; prefix affinity and load can change the measured request share.
+Keep each runtime's autoscaling maximum at its reviewed stage count. Hold each
+stage until the operator explicitly authorizes further migration.
 
 SGLang placement is restricted to the original two-B300 host, the four-B300 host
 `01a0f19d-1ff3-7613-8cbf-81b693c0f0d4`, and the eight-B300 host
@@ -188,6 +189,17 @@ SGLang placement is restricted to the original two-B300 host, the four-B300 host
 host's 64 CPU and 896 GiB; one fits beside DeepSeek and two remaining vLLM
 replicas on the eight-B300 host. Do not place a second 400 GiB SGLang allocation
 beside the normal GLM allocation on its 686 GiB host, or use the excluded host.
+
+After the four-plus-four trial, one further pair migration gives five SGLang
+plus two vLLM replicas within the same twelve-GPU footprint. Replace the two
+remaining vLLM allocations on the eight-B300 host with a second SGLang replica.
+DeepSeek plus two SGLang replicas request 96 CPU, 1200 GiB and eight GPUs,
+within that host's 171 CPU, 1389 GiB and eight-GPU allocatable capacity. Keep
+both vLLM replicas beside normal GLM on its four-GPU host; another SGLang
+allocation there would exceed the current memory requests. Cap SGLang at five
+and vLLM at two, with disruption-budget minima of four and two respectively.
+This gives SGLang roughly five sevenths of uniformly distributed routing keys;
+observe actual request share and hold until the next explicit authorization.
 
 Before each vLLM reduction, identify the qualified, co-located pods
 by UID and set their `controller.kubernetes.io/pod-deletion-cost` annotation to
@@ -212,8 +224,8 @@ targeted gateway checks, then promote only its completed explicit pause to
 release the old pending pod and finish the template migration. Verify every
 resulting replica is SDK-qualified and test the new host allocations before
 the later replica-count-only expansion.
-Never use full promotion to skip analysis. Once four SGLang and four vLLM are
-Ready, leave the rollout manually paused and retain its replica/HPA caps.
+Never use full promotion to skip analysis. Once all replicas at the authorized
+stage are Ready, leave the rollout manually paused and retain its replica/HPA caps.
 Aborting SGLang does not recreate vLLM replicas removed from the other Rollout;
 rollback must also restore the previous reviewed placement and replica counts.
 

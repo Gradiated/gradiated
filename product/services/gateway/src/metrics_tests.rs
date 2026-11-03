@@ -510,3 +510,24 @@ fn terminal_metrics_separate_verification_from_routed_requests() {
         .iter()
         .any(|line| line.contains("traffic=\"routed\"")));
 }
+
+#[test]
+fn routing_capacity_metrics_separate_verification_from_routed_requests() {
+    let metrics = GatewayMetrics::new();
+    metrics.routing_capacity_rejected("test-model", false);
+    metrics.routing_capacity_rejected("test-model", true);
+    metrics.routing_capacity_rejected("test-model", false);
+
+    let body = metrics.encode();
+    let lines: Vec<_> = body
+        .lines()
+        .filter(|line| line.starts_with("gradiated_gateway_routing_capacity_rejections_total{"))
+        .collect();
+    assert_eq!(lines.len(), 2);
+    assert!(lines
+        .iter()
+        .any(|line| line.contains("traffic=\"routed\"") && line.ends_with(" 2")));
+    assert!(lines
+        .iter()
+        .any(|line| line.contains("traffic=\"verification\"") && line.ends_with(" 1")));
+}

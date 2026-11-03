@@ -806,9 +806,71 @@ def main():
 
     for traffic, expected in [('verification', None), ('routed', 'GatewayRuntimeFailures')]:
         scenario('verification traffic does not page: ' + traffic, [
-            {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="failed",error="capacity_exceeded",traffic="' + traffic + '"}', 'values': '0+2x60'},
+            {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="failed",error="runtime_unavailable",traffic="' + traffic + '"}', 'values': '0+2x60'},
             {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="succeeded",traffic="routed"}', 'values': '0+100x60'},
         ] + ([{'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="succeeded",traffic="verification"}', 'values': '0+100000x60'}] if traffic == 'routed' else []), expected, ['GatewayRuntimeFailures'], {'model': 'test/model', 'deployment': 'test-deployment'}, '2m', interval='5s')
+
+    for alert, labels, ratio, window, succeeded in [
+        ('GatewayRuntimeFailures', {'model': 'test/model', 'deployment': 'bad'}, 2, '2m', 100),
+        ('GatewaySevereGenerationFailures', {'deployment': 'bad'}, 3, '3m', 1),
+    ]:
+        prefix = 'gradiated_gateway_generations_total{model="test/model",deployment="bad",traffic="routed",'
+        capacity = {'series': prefix + 'status="failed",error="capacity_exceeded"}', 'values': '0+10000x60'}
+        success = {'series': prefix + 'status="succeeded"}', 'values': f'0+{succeeded}x60'}
+        scenario(alert + ' ignores capacity rejections', [capacity, success], None, [alert], labels, window, interval='5s')
+        scenario(alert + ' capacity cannot dilute real faults', [capacity, success,
+            {'series': prefix + 'status="failed",error="runtime_unavailable"}', 'values': f'0+{ratio}x60'},
+        ], alert, [alert], labels, window, interval='5s')
+
+    for source in ['routing', 'runtime', 'streaming']:
+        for rejected, succeeded, expected in [(4, 96, None), (5, 95, None),
+                (6, 94, 'GatewayCapacityRejections'), (100, 0, 'GatewayCapacityRejections')]:
+            for traffic in ['routed', 'verification', None]:
+                traffic_label = ',traffic="' + traffic + '"' if traffic else ''
+                metric = ('gradiated_gateway_routing_capacity_rejections_total{model="test/model"'
+                          if source == 'routing' else
+                          'gradiated_gateway_generations_total{model="test/model",deployment="bad",status="failed",error="capacity_exceeded",stream="' + str(source == 'streaming').lower() + '"')
+                scenario('capacity ratio: ' + str((source, rejected, traffic)), [
+                    {'series': metric + traffic_label + '}', 'values': f'0+{rejected}x60'},
+                    {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="good",status="succeeded",traffic="routed"}', 'values': f'0+{succeeded}x60'},
+                    {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="verified",status="succeeded",traffic="verification"}', 'values': '0+100000x60'},
+                    {'series': 'gradiated_gateway_http_requests_total{route="chat_completions",status="200",error="none",traffic="routed"}', 'values': '0+100000x60'},
+                ], None if traffic == 'verification' else expected,
+                   ['GatewayCapacityRejections'], eval_time='2m', interval='5s')
+
+    scenario('routing and terminal capacity requests combine once', [
+        {'series': 'gradiated_gateway_routing_capacity_rejections_total{model="test/model",traffic="routed"}', 'values': '0+3x60'},
+        {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="bad",status="failed",error="capacity_exceeded",traffic="routed"}', 'values': '0+3x60'},
+        {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="good",status="succeeded",traffic="routed"}', 'values': '0+94x60'},
+    ], 'GatewayCapacityRejections', ['GatewayCapacityRejections'], eval_time='2m', interval='5s')
+    scenario('HTTP 429 and terminal outcome are not counted twice', [
+        {'series': 'gradiated_gateway_http_requests_total{route="chat_completions",status="429",error="capacity_exceeded",traffic="routed"}', 'values': '0+4x60'},
+        {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="bad",status="failed",error="capacity_exceeded",traffic="routed"}', 'values': '0+4x60'},
+        {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="good",status="succeeded",traffic="routed"}', 'values': '0+96x60'},
+    ], None, ['GatewayCapacityRejections'], eval_time='2m', interval='5s')
+    scenario('other rate limits and faults are not capacity rejections', [
+        {'series': 'gradiated_gateway_http_requests_total{route="chat_completions",status="429",error="concurrency_exceeded",traffic="routed"}', 'values': '0+100x60'},
+        {'series': 'gradiated_gateway_admission_rejections_total{model="test/model",deployment="bad",reason="concurrency_exceeded"}', 'values': '0+100x60'},
+        {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="bad",status="failed",error="runtime_unavailable",traffic="routed"}', 'values': '0+100x60'},
+    ], None, ['GatewayCapacityRejections'], eval_time='2m', interval='5s')
+
+    for name, values, eval_time, expected in [
+        ('one rejection stays quiet', '0 1+0x59', '2m', None),
+        ('below sample floor', '0 0 4+0x58', '2m', None),
+        ('sample floor', '0 0 5+0x58', '2m', 'GatewayCapacityRejections'),
+        ('brief burst', '0+6x60', '30s', None),
+        ('recovery', '0+6x24 144+0x96', '10m', None),
+    ]:
+        scenario('capacity rejection persistence: ' + name, [
+            {'series': 'gradiated_gateway_routing_capacity_rejections_total{model="test/model",traffic="routed"}', 'values': values},
+        ], expected, ['GatewayCapacityRejections'], eval_time=eval_time, interval='5s')
+
+    for values in [None, '0+0x60']:
+        inputs = [{'series': 'gradiated_gateway_generations_total{model="test/model",deployment="good",status="succeeded",traffic="routed"}', 'values': '0+10x60'}]
+        if values:
+            inputs.append({'series': 'gradiated_gateway_routing_capacity_rejections_total{model="test/model",traffic="routed"}', 'values': values})
+        scenario('capacity rejection idle or missing: ' + str(values), inputs,
+                 None, ['GatewayCapacityRejections'], eval_time='2m', interval='5s')
 
     for failed, succeeded, expected in [(1, 199, None), (1, 99, None), (2, 98, 'GatewayRuntimeFailures')]:
         scenario('one-percent runtime failure boundary: ' + str((failed, succeeded)), [

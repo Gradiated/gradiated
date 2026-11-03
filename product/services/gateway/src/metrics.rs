@@ -26,7 +26,7 @@ struct Metrics {
     registry: Registry,
     http_requests: CounterFamily<HttpRequestLabels>,
     admissions: CounterFamily<GenerationLabels>,
-    routing_capacity_rejections: CounterFamily<ModelLabels>,
+    routing_capacity_rejections: CounterFamily<ModelTrafficLabels>,
     capacity_rejection_timestamp_seconds: GaugeFamily<ModelLabels>,
     admission_rejections: CounterFamily<AdmissionRejectionLabels>,
     active_generations: GaugeFamily<GenerationLabels>,
@@ -72,6 +72,12 @@ struct GenerationLabels {
 #[derive(Clone, Debug, EncodeLabelSet, Eq, Hash, PartialEq)]
 struct ModelLabels {
     model: String,
+}
+
+#[derive(Clone, Debug, EncodeLabelSet, Eq, Hash, PartialEq)]
+struct ModelTrafficLabels {
+    model: String,
+    traffic: String,
 }
 
 #[derive(Clone, Debug, EncodeLabelSet, Eq, Hash, PartialEq)]
@@ -355,13 +361,19 @@ impl GatewayMetrics {
             .set(Utc::now().timestamp());
     }
 
-    pub(crate) fn routing_capacity_rejected(&self, model: &str) {
+    pub(crate) fn routing_capacity_rejected(&self, model: &str, is_verification: bool) {
         self.record_capacity_pressure(model);
 
         self.inner
             .routing_capacity_rejections
-            .get_or_create(&ModelLabels {
+            .get_or_create(&ModelTrafficLabels {
                 model: model.to_owned(),
+                traffic: if is_verification {
+                    "verification"
+                } else {
+                    "routed"
+                }
+                .to_owned(),
             })
             .inc();
     }

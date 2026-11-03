@@ -194,7 +194,25 @@ Older metrics without a traffic label remain included during mixed-version deplo
 
 `GatewayRuntimeFailures` requires more than 1% failed completed generations per
 model and deployment over five minutes, at least five failures, sustained for
-one minute. Cancelled generations remain excluded from its denominator.
+one minute. Capacity rejections (`error="capacity_exceeded"`) are excluded from
+both the failure count and denominator, including in
+`GatewaySevereGenerationFailures` and their dashboard panels. Cancelled
+generations remain excluded from the runtime failure denominator. Terminal
+records retain their original outcomes for accounting.
+
+`GatewayCapacityRejections` is a separate warning when more than 5% of completed
+or capacity-rejected inference requests encounter `capacity_exceeded` over five
+minutes, with at least five rejections, sustained for one minute. The numerator
+combines terminal capacity outcomes with routing capacity rejections; the
+denominator combines all terminal generations with routing capacity rejections.
+These are disjoint populations: routing rejections never admit a generation,
+and terminal outcomes count once after retries. This includes capacity errors
+emitted inside an HTTP 200 SSE stream as well as returned HTTP 429s. The ratio
+is service-wide; model/deployment dashboard filters do not apply to this panel.
+Authorised verification traffic and other rate limits (such as workspace
+concurrency limits) are excluded. Routing rejection counters label verification
+traffic separately; older counters without that label remain included during
+mixed-version deployment.
 
 Public inference probes use Gradiated's internal verification account and normal
 billing admission. HTTP 402 across all probes can mean that this account exhausted
@@ -606,9 +624,10 @@ when adding a new critical rule or upgrading the monitoring charts.
 | `GatewayFinalizationFailure` | critical | 0m | Immediate exception: usage, billing or lease finalization may have lost durable state. |
 | `GatewayGenerationsStuck` | critical | 5m | Active work with no terminal generation for ten minutes, sustained another five minutes. |
 | `GatewayHighErrorRate` | critical | 5m | Sustained customer HTTP error ratio with a minimum request-volume guard; severe outages have a separate faster rule. |
-| `GatewayRuntimeFailures` | critical | 1m | More than 1% failed completed generations, at least five failures per five minutes, for one minute; verification and cancellations excluded. |
+| `GatewayRuntimeFailures` | critical | 1m | More than 1% failed completed generations, at least five failures per five minutes, for one minute; capacity rejections, verification and cancellations excluded. |
+| `GatewayCapacityRejections` | warning | 1m | More than 5% of completed or capacity-rejected inference requests encounter capacity_exceeded over five minutes, with at least five rejections; includes in-stream errors, excludes verification and other rate limits. |
 | `GatewaySevereErrors` | critical | 1m | At least half of requests/generations fail, with at least five failures, sustained one minute. |
-| `GatewaySevereGenerationFailures` | critical | 1m | At least half of requests/generations fail, with at least five failures, sustained one minute. |
+| `GatewaySevereGenerationFailures` | critical | 1m | At least half of generations fail, with at least five failures, sustained one minute; capacity rejections and verification excluded. |
 | `GatewayTelemetryMissing` | warning | 5m | Missing telemetry alone is diagnostic; independent public availability, deployment loss and external heartbeat retain pages. |
 | `GenerationIngestionStuck` | critical | 1m | Oldest pending ingestion work exceeds five minutes for one minute; billing record progress is blocked. |
 | `InferenceModelProbeFailed` | critical | 1m | Routed success older than fifteen seconds must stay unhealthy for one minute; five-minute recovery hold. |

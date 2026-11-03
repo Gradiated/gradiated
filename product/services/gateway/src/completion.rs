@@ -162,6 +162,7 @@ impl CompletionService {
                         .map_or(request.request.model.as_str(), |adapter| {
                             adapter.base_model_id.as_str()
                         }),
+                    request.is_verification,
                 );
 
                 (diagnostics, GatewayError::CapacityExceeded)

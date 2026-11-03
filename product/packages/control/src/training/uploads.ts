@@ -201,18 +201,24 @@ export const createModelUploads = (
         let rank: number;
         const weightsFile = await open(weightsPath, "r");
         try {
-          rank = (
-            await validateAdapterFiles(
-              config,
-              adapterFileReader(weightsFile, weightsSize),
-              baseRepository,
-              baseConfiguration,
-            )
-          ).r;
+          const validated = await validateAdapterFiles(
+            config,
+            adapterFileReader(weightsFile, weightsSize),
+            baseRepository,
+            baseConfiguration,
+          );
+          if (
+            typeof validated.revision === "string" &&
+            /^[0-9a-f]{40}$/.test(validated.revision) &&
+            validated.revision !== input.base_model_revision
+          )
+            throw new Error("Adapter checkpoint revision mismatch.");
+
+          rank = validated.r;
         } catch {
           throw new ControlServiceError(
             "conflict",
-            "Invalid LoRA adapter. Check the base model, config, complete layer/expert coverage, tensor pairs, rank and safetensors format.",
+            "Invalid LoRA adapter. Check the base model and checkpoint revision, config, complete layer/expert coverage, tensor pairs, rank and safetensors format.",
           );
         } finally {
           await weightsFile.close();

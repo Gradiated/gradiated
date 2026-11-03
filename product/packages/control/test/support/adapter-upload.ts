@@ -1,7 +1,7 @@
 export const adapterFiles = (
   baseModel: string,
   layerCount = 1,
-  expertIndices?: readonly number[],
+  expertIndices?: readonly number[] | number,
 ) => {
   const config = Buffer.from(
     JSON.stringify({
@@ -14,11 +14,15 @@ export const adapterFiles = (
       bias: "none",
     }),
   );
-  const indices = expertIndices ?? [null];
+  const fusedCount =
+    typeof expertIndices === "number" ? expertIndices : undefined;
+  const indices =
+    typeof expertIndices === "number" ? [null] : (expertIndices ?? [null]);
+  const tensorBytes = 32 * (fusedCount ?? 1);
   const paths = Array.from({ length: layerCount }, (_, layer) =>
     indices.map((expert, ordinal) => ({
-      path: `base_model.model.layers.${layer}.${expert === null ? "self_attn.q_proj" : `mlp.experts.${expert}.down_proj`}`,
-      offset: (layer * indices.length + ordinal) * 64,
+      path: `base_model.model.layers.${layer}.${fusedCount ? "mlp.experts.down_proj" : expert === null ? "self_attn.q_proj" : `mlp.experts.${expert}.down_proj`}`,
+      offset: (layer * indices.length + ordinal) * tensorBytes * 2,
     })),
   ).flat();
   const tensors = Object.fromEntries(
@@ -26,14 +30,18 @@ export const adapterFiles = (
       .map(({ path, offset }) => [
         [
           `${path}.lora_A.weight`,
-          { dtype: "F32", shape: [2, 4], data_offsets: [offset, offset + 32] },
+          {
+            dtype: "F32",
+            shape: fusedCount ? [fusedCount, 2, 4] : [2, 4],
+            data_offsets: [offset, offset + tensorBytes],
+          },
         ],
         [
           `${path}.lora_B.weight`,
           {
             dtype: "F32",
-            shape: [4, 2],
-            data_offsets: [offset + 32, offset + 64],
+            shape: fusedCount ? [fusedCount, 4, 2] : [4, 2],
+            data_offsets: [offset + tensorBytes, offset + tensorBytes * 2],
           },
         ],
       ])
@@ -44,6 +52,10 @@ export const adapterFiles = (
   length.writeBigUInt64LE(BigInt(header.length));
   return {
     config,
-    weights: Buffer.concat([length, header, Buffer.alloc(64 * paths.length)]),
+    weights: Buffer.concat([
+      length,
+      header,
+      Buffer.alloc(tensorBytes * 2 * paths.length),
+    ]),
   };
 };

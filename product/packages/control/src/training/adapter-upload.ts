@@ -126,7 +126,8 @@ export const validateAdapterFiles = async (
     config.target_modules.map((module) => module.split(".").at(-1)),
   );
   const layers = new Set<number>();
-  const expertCoverage = new Map<string, Set<number>>();
+  const expertCoverage = new Map<string, Set<number> | null>();
+  const expertLayouts = new Set<string>();
   const ranges: [number, number, number, number][] = [];
   const names = Object.keys(tensors).filter((name) => name !== "__metadata__");
   if (!names.length) throw new Error("The adapter contains no tensors.");
@@ -147,10 +148,10 @@ export const validateAdapterFiles = async (
     const tensor = z
       .object({
         dtype: z.enum(["F16", "BF16", "F32"]),
-        shape: z.tuple([
-          z.number().int().positive().max(1_000_000),
-          z.number().int().positive().max(1_000_000),
-        ]),
+        shape: z
+          .array(z.number().int().positive().max(1_000_000))
+          .min(2)
+          .max(3),
         data_offsets: z.tuple([
           z.number().int().nonnegative(),
           z.number().int().positive(),
@@ -165,9 +166,10 @@ export const validateAdapterFiles = async (
       isA ? ".lora_B" : ".lora_A",
     );
     if (
-      tensor.shape[isA ? 0 : 1] !== config.r ||
+      tensor.shape[tensor.shape.length - (isA ? 2 : 1)] !== config.r ||
       !(pair in tensors) ||
-      end - start !== tensor.shape[0] * tensor.shape[1] * width
+      end - start !==
+        tensor.shape.reduce((size, dimension) => size * dimension, width)
     )
       throw new Error(
         "Adapter tensor ranks, pairs or sizes do not match the config.",
@@ -178,15 +180,27 @@ export const validateAdapterFiles = async (
       throw new Error("Tensor target modules do not match the config.");
 
     const expertName = /(?:^|\.)experts\.(\d+)\./.exec(tensorName[2]!);
-    if (expertName) {
-      const expert = Number(expertName[1]);
-      if (expert >= expertCount)
+    const fused = tensor.shape.length === 3;
+    if (expertName || fused) {
+      expertLayouts.add(fused ? "3d" : "2d");
+      if (!expertCount)
         throw new Error("Adapter expert is outside the base model.");
 
       const key = `${layer}/${moduleName}`;
-      const indices = expertCoverage.get(key) ?? new Set<number>();
-      indices.add(expert);
-      expertCoverage.set(key, indices);
+      if (fused) {
+        if (tensor.shape[0] !== expertCount)
+          throw new Error(
+            "Fused adapter expert count does not match the base model.",
+          );
+        expertCoverage.set(key, null);
+      } else {
+        const expert = Number(expertName![1]);
+        if (expert >= expertCount)
+          throw new Error("Adapter expert is outside the base model.");
+        const indices = expertCoverage.get(key) ?? new Set<number>();
+        indices.add(expert);
+        expertCoverage.set(key, indices);
+      }
     }
 
     if (end > weights.sizeBytes - headerSize - 8)
@@ -204,9 +218,14 @@ export const validateAdapterFiles = async (
     throw new Error("Incomplete adapter layer coverage.");
 
   if (
-    [...expertCoverage.values()].some((indices) => indices.size !== expertCount)
+    [...expertCoverage.values()].some(
+      (indices) => indices !== null && indices.size !== expertCount,
+    )
   )
     throw new Error("Incomplete adapter expert coverage.");
+
+  if (expertLayouts.size > 1)
+    throw new Error("Mixed adapter expert layouts are unsupported.");
 
   ranges.sort((a, b) => a[0] - b[0]);
   let offset = 0;

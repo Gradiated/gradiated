@@ -459,6 +459,7 @@ Both use a shared dialog for a workspace-unique version name, base model, immuta
 40-character checkpoint revision, PEFT adapter_config.json and
 adapter_model.safetensors. Configs are capped at 64 KiB and weights at 256 MiB.
 The config can suggest a base model but the user supplies the exact checkpoint.
+An immutable revision declared in the config must match the submitted checkpoint.
 New upload-created tasks inherit the workspace default judge and have automatic training disabled.
 
 Admins create a workspace-scoped model-upload resource, receive one-hour signed
@@ -476,7 +477,9 @@ Layer and MoE expert coverage are checked against the selected repository's `con
 submitted immutable revision, including `text_config` for multimodal models.
 Configuration reads are capped at 1 MiB with a 10-second deadline and same-origin
 Hugging Face redirects; the uploader never supplies the trusted layer or expert counts.
-Tensor dimensions follow the runtime's 1,000,000-element-per-dimension limit.
+Both indexed 2-D and fused 3-D expert tensors are supported; fused tensors must
+match the base expert count, and mixed expert layouts are rejected. Tensor
+dimensions follow the runtime's 1,000,000-element-per-dimension limit.
 CPU parity tests run representative fixtures through the actual Python serving
 validator as well as upload validation, including malformed JSON and expert coverage.
 Raw inputs live under `uploads/<upload_id>/` and are deleted after publication.

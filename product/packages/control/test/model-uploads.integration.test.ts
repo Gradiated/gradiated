@@ -139,6 +139,39 @@ describe("model uploads", () => {
     expect(tasks[0]?.latestVersion?.id).toBe(result.version.id);
     expect(tasks[0]?.latestRun).toBeNull();
   });
+  it.each([
+    { revision: "a".repeat(40), accepted: true },
+    { revision: "b".repeat(40), accepted: false },
+    { revision: "main", accepted: true },
+    { revision: null, accepted: true },
+  ])(
+    "checks declared checkpoint revision $revision before publication",
+    async ({ revision, accepted }) => {
+      const { member, stage, service, storage, body, files, objects } =
+        await setup();
+      const config = Buffer.from(
+        JSON.stringify({ ...JSON.parse(files.config.toString()), revision }),
+      );
+      const upload = await stage({ ...body, config_size: config.length });
+      objects.set(`uploads/${upload.id}/adapter_config.json`, config);
+      const completion = service.complete(
+        member.userId,
+        member.workspaceId,
+        upload.id,
+      );
+      if (accepted) {
+        expect((await completion).version.adapter.base_model_revision).toBe(
+          body.base_model_revision,
+        );
+      } else {
+        await expect(completion).rejects.toMatchObject({ code: "conflict" });
+        expect(storage.putFile).not.toHaveBeenCalled();
+        expect(
+          await createTrainingStore(db.database).listVersions(member.task.id),
+        ).toEqual([]);
+      }
+    },
+  );
   it("checks coverage against the immutable base revision before publishing", async () => {
     const {
       member,

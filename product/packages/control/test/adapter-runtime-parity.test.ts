@@ -37,6 +37,42 @@ const splitExpertCoverage = () => {
   weights.write(header, 8);
   return { ...fixture, weights };
 };
+const fusedFiles = (change?: "rank" | "bytes" | "mixed" | "dense") => {
+  const fixture = adapterFiles(base, 2, change === "mixed" ? 1 : 2);
+  const size = Number(fixture.weights.readBigUInt64LE());
+  const tensors = JSON.parse(fixture.weights.subarray(8, 8 + size).toString());
+  if (change === "rank")
+    Object.values<{ shape: number[] }>(tensors)[0]!.shape[1] = 3;
+  if (change === "bytes")
+    Object.values<{ data_offsets: number[] }>(tensors)[0]!.data_offsets[1] = 32;
+  if (change === "mixed" || change === "dense") {
+    for (const [name, value] of Object.entries(tensors)) {
+      if (!name.includes("layers.1.")) continue;
+      const tensor = value as { shape: number[] };
+      // Keep byte count and rank valid while changing the second layer's layout.
+      const width = change === "mixed" ? 4 : 8;
+      tensor.shape = name.includes("lora_A") ? [2, width] : [width, 2];
+      delete tensors[name];
+      tensors[
+        name.replace(
+          "mlp.experts.",
+          change === "mixed" ? "mlp.experts.0." : "mlp.",
+        )
+      ] = tensor;
+    }
+  }
+  const header = Buffer.from(JSON.stringify(tensors));
+  const prefix = Buffer.alloc(8);
+  prefix.writeBigUInt64LE(BigInt(header.length));
+  return {
+    ...fixture,
+    weights: Buffer.concat([
+      prefix,
+      header,
+      fixture.weights.subarray(8 + size),
+    ]),
+  };
+};
 const runtime = fileURLToPath(
   new URL("../../../inference/lora", import.meta.url),
 );
@@ -97,6 +133,50 @@ it.each([
     files: () => adapterFiles(base, 1, [0]),
     accepted: false,
   },
+  ...[
+    {
+      name: "complete fused experts",
+      expertCount: 2,
+      files: () => fusedFiles(),
+      accepted: true,
+    },
+    {
+      name: "fused expert count mismatch",
+      expertCount: 3,
+      files: () => fusedFiles(),
+      accepted: false,
+    },
+    {
+      name: "fused experts on a dense base",
+      expertCount: 0,
+      files: () => fusedFiles(),
+      accepted: false,
+    },
+    {
+      name: "fused rank mismatch",
+      expertCount: 2,
+      files: () => fusedFiles("rank"),
+      accepted: false,
+    },
+    {
+      name: "fused byte count mismatch",
+      expertCount: 2,
+      files: () => fusedFiles("bytes"),
+      accepted: false,
+    },
+    {
+      name: "mixed indexed and fused expert layouts",
+      expertCount: 1,
+      files: () => fusedFiles("mixed"),
+      accepted: false,
+    },
+    {
+      name: "dense modules alongside fused experts",
+      expertCount: 2,
+      files: () => fusedFiles("dense"),
+      accepted: true,
+    },
+  ].map((scenario) => ({ ...scenario, layerCount: 2 })),
   {
     name: "duplicate config keys",
     layerCount: 1,

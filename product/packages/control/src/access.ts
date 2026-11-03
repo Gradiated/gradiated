@@ -1,10 +1,11 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, or, sql } from "drizzle-orm";
 
 import type { ControlDatabase } from "./db/client.js";
 import {
   organizationMembers,
   organizations,
   workspaces,
+  users,
   type OrganizationRole,
   type OrganizationStatus,
 } from "./db/schema/index.js";
@@ -17,12 +18,12 @@ export type Membership = {
 
 type MembershipKey = { userId: string; organizationId: string };
 
-const membershipColumns = {
-  role: organizationMembers.role,
-  organizationStatus: organizations.status,
-};
+export const verifiedStaff = (userId: string) => sql<boolean>`exists (
+  select 1 from ${users} where ${users.id} = ${userId}
+    and ${users.isStaff} = true and ${users.emailVerified} = true
+)`;
 
-export const activeCustomerMember = ({
+export const customerAccess = ({
   userId,
   organizationId,
 }: {
@@ -30,26 +31,42 @@ export const activeCustomerMember = ({
   organizationId?: string | undefined;
 }) =>
   and(
-    eq(organizationMembers.userId, userId),
     organizationId === undefined
       ? undefined
-      : eq(organizationMembers.organizationId, organizationId),
-    eq(organizationMembers.status, "active"),
+      : eq(organizations.id, organizationId),
     eq(organizations.kind, "customer"),
+    or(
+      verifiedStaff(userId),
+      and(
+        eq(organizationMembers.userId, userId),
+        eq(organizationMembers.status, "active"),
+      ),
+    ),
   );
+
+export const customerRole = (userId: string) =>
+  sql<OrganizationRole>`case when ${verifiedStaff(userId)} then 'admin' else ${organizationMembers.role} end`;
+
+const membershipColumns = (userId: string) => ({
+  role: customerRole(userId),
+  organizationStatus: organizations.status,
+});
 
 export const findMembership = async (
   database: ControlDatabase,
   key: MembershipKey,
 ): Promise<Membership | undefined> => {
   const [membership] = await database
-    .select(membershipColumns)
-    .from(organizationMembers)
-    .innerJoin(
-      organizations,
-      eq(organizations.id, organizationMembers.organizationId),
+    .select(membershipColumns(key.userId))
+    .from(organizations)
+    .leftJoin(
+      organizationMembers,
+      and(
+        eq(organizations.id, organizationMembers.organizationId),
+        eq(organizationMembers.userId, key.userId),
+      ),
     )
-    .where(activeCustomerMember(key))
+    .where(customerAccess(key))
     .limit(1);
 
   return membership;
@@ -82,20 +99,23 @@ export const requireWorkspaceMembership = async (
   workspace: typeof workspaces.$inferSelect;
 }> => {
   const [row] = await database
-    .select({ ...membershipColumns, workspace: workspaces })
-    .from(organizationMembers)
-    .innerJoin(
-      organizations,
-      eq(organizations.id, organizationMembers.organizationId),
+    .select({ ...membershipColumns(key.userId), workspace: workspaces })
+    .from(organizations)
+    .leftJoin(
+      organizationMembers,
+      and(
+        eq(organizations.id, organizationMembers.organizationId),
+        eq(organizationMembers.userId, key.userId),
+      ),
     )
     .innerJoin(
       workspaces,
       and(
-        eq(workspaces.organizationId, organizationMembers.organizationId),
+        eq(workspaces.organizationId, organizations.id),
         eq(workspaces.id, key.workspaceId),
       ),
     )
-    .where(activeCustomerMember(key))
+    .where(customerAccess(key))
     .limit(1);
   if (!row) {
     throw new ControlServiceError(

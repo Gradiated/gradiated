@@ -14,6 +14,7 @@ import {
   Plus,
   WalletCards,
   Settings,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
@@ -135,7 +136,7 @@ export const AppSidebar = ({
       submitLabel: "Create organization",
       emptyMessage: "Enter an organization name.",
       submit: async (name) => {
-        organizationCreated(await createOrganization({ name }));
+        await organizationCreated(await createOrganization({ name }));
       },
     });
 
@@ -210,6 +211,16 @@ export const AppSidebar = ({
       </SidebarContent>
 
       <SidebarFooter>
+        {user?.is_staff && user.email_verified ? (
+          <NavSection
+            group={{
+              label: "Staff",
+              items: [
+                { to: "/admin", label: "Admin portal", icon: ShieldCheck },
+              ],
+            }}
+          />
+        ) : null}
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton

@@ -46,6 +46,10 @@ export const registerMeRoutes = (
       name: user.name,
       email: user.email,
       email_verified: user.emailVerified,
+      is_staff: user.isStaff === true,
+      impersonated_by: user.impersonatedBy ?? null,
+      impersonation_expires_at:
+        user.impersonationExpiresAt?.toISOString() ?? null,
       company_email_domain: companyEmailDomain(user),
       image_url: user.image,
       created_at: user.createdAt.toISOString(),

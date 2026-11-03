@@ -36,6 +36,15 @@ export const CurrentUserSchema = z
     name: NameSchema,
     email: z.email(),
     email_verified: z.boolean(),
+    impersonated_by: UuidSchema.nullable().describe(
+      "The staff actor when viewing the console as another user.",
+    ),
+    impersonation_expires_at: TimestampSchema.nullable().describe(
+      "The server-enforced impersonation deadline, or null outside impersonation.",
+    ),
+    is_staff: z
+      .boolean()
+      .describe("Whether the user may access the staff portal."),
     company_email_domain: EmailDomainSchema.nullable().describe(
       "The verified email domain this user may offer for automatic joining, or null for personal and unverified addresses.",
     ),

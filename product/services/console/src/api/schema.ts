@@ -168,6 +168,46 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/admin/impersonations": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * View the console as a customer user
+     * @description Verified staff may create a short-lived customer session. The original staff session is retained for returning.
+     */
+    post: operations["startImpersonation"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/impersonations/stop": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Return to the original staff session
+     * @description Deletes the impersonation session and restores the original staff session.
+     */
+    post: operations["stopImpersonation"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/organizations/{organization_id}": {
     parameters: {
       query?: never;
@@ -186,6 +226,50 @@ export interface paths {
      * @description Changes the organization's settings.
      */
     patch: operations["updateOrganization"];
+    trace?: never;
+  };
+  "/api/v1/admin/organizations": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Search customer organizations
+     * @description Returns a bounded page of customer organizations for verified staff, ordered by creation time and ID.
+     */
+    get: operations["listStaffOrganizations"];
+    put?: never;
+    /**
+     * Prepare a customer organization
+     * @description Staff create an organization and remain an admin to configure its workspace and invite customers.
+     */
+    post: operations["createStaffOrganization"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/organizations/{organization_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get a customer organization
+     * @description Loads a single customer organization for verified staff without expanding the session bootstrap payload.
+     */
+    get: operations["getStaffOrganization"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
     trace?: never;
   };
   "/api/v1/organizations": {
@@ -1367,6 +1451,20 @@ export interface components {
       /** Format: email */
       email: string;
       email_verified: boolean;
+      /**
+       * Format: uuid
+       * @description The staff actor when viewing the console as another user.
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      impersonated_by: string | null;
+      /**
+       * Format: date-time
+       * @description The server-enforced impersonation deadline, or null outside impersonation.
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      impersonation_expires_at: string | null;
+      /** @description Whether the user may access the staff portal. */
+      is_staff: boolean;
       /** @description The verified email domain this user may offer for automatic joining, or null for personal and unverified addresses. */
       company_email_domain: string | null;
       /** Format: uri */
@@ -1400,6 +1498,20 @@ export interface components {
     };
     /** @enum {string} */
     OrganizationRole: "admin" | "member";
+    ImpersonationResult: {
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      user_id: string;
+    };
+    ImpersonationInput: {
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      user_id: string;
+    };
     UpdateOrganization: {
       name?: string;
       /** @description Must match the caller's verified company email domain, or null to stop automatic joining. */
@@ -3369,6 +3481,122 @@ export interface operations {
       };
     };
   };
+  startImpersonation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ImpersonationInput"];
+      };
+    };
+    responses: {
+      /** @description Session switched. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ImpersonationResult"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Staff access or target denied. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description User not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid target. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  stopImpersonation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Session switched. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ImpersonationResult"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Staff access or target denied. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description User not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid target. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
   updateOrganization: {
     parameters: {
       query?: never;
@@ -3430,6 +3658,182 @@ export interface operations {
         };
       };
       /** @description Invalid organization update. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  listStaffOrganizations: {
+    parameters: {
+      query?: {
+        /** @description Case-insensitive organization name substring. */
+        search?: string;
+        /** @description Maximum organizations per page. */
+        limit?: number;
+        /** @description Number of matching organizations to skip. */
+        offset?: number | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Matching organizations. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            data: components["schemas"]["CurrentOrganization"][];
+            /** @description Whether another page exists. */
+            has_more: boolean;
+          };
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Staff required. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid query. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  createStaffOrganization: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateOrganization"];
+      };
+    };
+    responses: {
+      /** @description The organization and its launch defaults were created atomically. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Organization"];
+        };
+      };
+      /** @description No valid human session is present. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Staff access required. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The request body is invalid. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Serving state is unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  getStaffOrganization: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        organization_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Customer organization. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CurrentOrganization"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Staff required. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Organization not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid organization ID. */
       422: {
         headers: {
           [name: string]: unknown;

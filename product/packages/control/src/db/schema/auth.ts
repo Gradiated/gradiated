@@ -25,6 +25,7 @@ export const users = pgTable(
     id: uuid("id").primaryKey(),
     name: text("name").notNull(),
     email: text("email").notNull(),
+    isStaff: boolean("is_staff").default(false).notNull(),
     emailVerified: boolean("email_verified").default(false).notNull(),
     image: text("image_url"),
     ...timestamps,
@@ -42,6 +43,10 @@ export const sessions = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     token: text("token").notNull(),
+    impersonatedBy: uuid("impersonated_by").references(() => users.id, {
+      onDelete: "cascade",
+    }),
+    impersonatorSessionId: uuid("impersonator_session_id"),
     expiresAt: timestamp("expires_at", {
       withTimezone: true,
       mode: "date",

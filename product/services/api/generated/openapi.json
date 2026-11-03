@@ -1746,6 +1746,28 @@
           "email_verified": {
             "type": "boolean"
           },
+          "impersonated_by": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774",
+            "description": "The staff actor when viewing the console as another user."
+          },
+          "impersonation_expires_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z",
+            "description": "The server-enforced impersonation deadline, or null outside impersonation."
+          },
+          "is_staff": {
+            "type": "boolean",
+            "description": "Whether the user may access the staff portal."
+          },
           "company_email_domain": {
             "type": [
               "string",
@@ -1779,6 +1801,9 @@
           "name",
           "email",
           "email_verified",
+          "impersonated_by",
+          "impersonation_expires_at",
+          "is_staff",
           "company_email_domain",
           "image_url",
           "created_at",
@@ -1843,6 +1868,33 @@
           "admin",
           "member"
         ]
+      },
+      "ImpersonationResult": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          }
+        },
+        "required": [
+          "user_id"
+        ]
+      },
+      "ImpersonationInput": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          }
+        },
+        "required": [
+          "user_id"
+        ],
+        "additionalProperties": false
       },
       "UpdateOrganization": {
         "type": "object",

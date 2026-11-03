@@ -62,3 +62,8 @@ export const requireOk = async (
 
   throw new ApiError(response.status, error);
 };
+
+export const needsStaffSessionRecovery = (error: unknown) =>
+  error instanceof ApiError &&
+  error.status === 401 &&
+  error.code === "staff_session_recovery_required";

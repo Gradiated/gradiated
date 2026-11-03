@@ -8,6 +8,7 @@ import { analytics } from "@/lib/analytics";
 import { identifyUser } from "@/lib/feature-flags";
 import { queryKeys } from "@/lib/query-keys";
 import type { LoginSearch } from "@/lib/login-search";
+import { announceSessionChange } from "@/lib/session-sync";
 import { endSession } from "@/lib/session";
 
 export type SignOutResult = "signed-out" | "failed";
@@ -37,6 +38,7 @@ export const useSession = () => {
       return "failed";
     }
 
+    announceSessionChange();
     await endSession(queryClient, router, search);
 
     return "signed-out";

@@ -6,6 +6,7 @@ import {
 import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 
+import { StaffSessionRecoveryRequired } from "../auth/errors.js";
 import { BillingPaymentsError } from "../billing/payments.js";
 import type { ApiEnvironment, SessionUser } from "../types.js";
 
@@ -39,6 +40,14 @@ export const problems = {
     status: 401,
     detail: "A valid human session is required for this operation.",
     code: "unauthenticated",
+  },
+  staffSessionRecovery: {
+    type: problemType("staff-session-recovery-required"),
+    title: "Staff session recovery required",
+    status: 401,
+    detail:
+      "The impersonation ended. Restore the retained staff session before continuing.",
+    code: "staff_session_recovery_required",
   },
   forbidden: (detail: string): ProblemBody => ({
     type: problemType("forbidden"),
@@ -217,6 +226,9 @@ export const requireUser = async (context: {
   try {
     user = await context.get("resolveUser")();
   } catch (error) {
+    if (error instanceof StaffSessionRecoveryRequired)
+      throw new ApiProblem(problems.staffSessionRecovery);
+
     throw new ApiProblem(
       problems.unavailable("The session store is unavailable."),
       error,

@@ -69,6 +69,7 @@ export interface OrganizationService {
   listForUser(
     userId: string,
     organizationId?: string,
+    page?: { search: string; limit: number; offset: number },
   ): Promise<UserOrganization[]>;
   createForUser(userId: string, name: string): Promise<CreatedOrganization>;
   ensurePersonalForUser(
@@ -147,7 +148,9 @@ export const createOrganizationService = (
   const listForUser = async (
     userId: string,
     organizationId?: string,
-  ): Promise<UserOrganization[]> => records.listForUser(userId, organizationId);
+    page?: { search: string; limit: number; offset: number },
+  ): Promise<UserOrganization[]> =>
+    records.listForUser(userId, organizationId, page);
 
   const ensurePersonalForUser = async (userId: string, name = "Personal") => {
     const [existing] = await listForUser(userId);

@@ -26,6 +26,7 @@ export const user: SessionUser = {
   name: "Ada Lovelace",
   email: "ada@example.com",
   emailVerified: true,
+  isStaff: false,
   image: null,
   createdAt: new Date("2026-08-16T12:00:00.000Z"),
 };

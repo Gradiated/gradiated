@@ -1746,6 +1746,28 @@
           "email_verified": {
             "type": "boolean"
           },
+          "impersonated_by": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774",
+            "description": "The staff actor when viewing the console as another user."
+          },
+          "impersonation_expires_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z",
+            "description": "The server-enforced impersonation deadline, or null outside impersonation."
+          },
+          "is_staff": {
+            "type": "boolean",
+            "description": "Whether the user may access the staff portal."
+          },
           "company_email_domain": {
             "type": [
               "string",
@@ -1779,6 +1801,9 @@
           "name",
           "email",
           "email_verified",
+          "impersonated_by",
+          "impersonation_expires_at",
+          "is_staff",
           "company_email_domain",
           "image_url",
           "created_at",
@@ -1843,6 +1868,33 @@
           "admin",
           "member"
         ]
+      },
+      "ImpersonationResult": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          }
+        },
+        "required": [
+          "user_id"
+        ]
+      },
+      "ImpersonationInput": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          }
+        },
+        "required": [
+          "user_id"
+        ],
+        "additionalProperties": false
       },
       "UpdateOrganization": {
         "type": "object",
@@ -6554,6 +6606,142 @@
         }
       }
     },
+    "/api/v1/admin/impersonations": {
+      "post": {
+        "x-gradiated-audience": "console",
+        "operationId": "startImpersonation",
+        "summary": "View the console as a customer user",
+        "description": "Verified staff may create a short-lived customer session. The original staff session is retained for returning.",
+        "tags": [
+          "Session"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImpersonationInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session switched.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImpersonationResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Staff access or target denied.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid target.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/impersonations/stop": {
+      "post": {
+        "x-gradiated-audience": "console",
+        "operationId": "stopImpersonation",
+        "summary": "Return to the original staff session",
+        "description": "Deletes the impersonation session and restores the original staff session.",
+        "tags": [
+          "Session"
+        ],
+        "responses": {
+          "200": {
+            "description": "Session switched.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImpersonationResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Staff access or target denied.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid target.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/organizations/{organization_id}": {
       "patch": {
         "operationId": "updateOrganization",
@@ -6637,6 +6825,264 @@
           },
           "422": {
             "description": "Invalid organization update.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/organizations": {
+      "get": {
+        "x-gradiated-audience": "console",
+        "operationId": "listStaffOrganizations",
+        "summary": "Search customer organizations",
+        "description": "Returns a bounded page of customer organizations for verified staff, ordered by creation time and ID.",
+        "tags": [
+          "Organizations"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 200,
+              "default": "",
+              "description": "Case-insensitive organization name substring."
+            },
+            "required": false,
+            "description": "Case-insensitive organization name substring.",
+            "name": "search",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "Maximum organizations per page."
+            },
+            "required": false,
+            "description": "Maximum organizations per page.",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 10000000,
+              "default": 0,
+              "description": "Number of matching organizations to skip."
+            },
+            "required": false,
+            "description": "Number of matching organizations to skip.",
+            "name": "offset",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching organizations.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CurrentOrganization"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "Whether another page exists."
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "has_more"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Staff required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid query.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createStaffOrganization",
+        "summary": "Prepare a customer organization",
+        "description": "Staff create an organization and remain an admin to configure its workspace and invite customers.",
+        "tags": [
+          "Organizations"
+        ],
+        "x-gradiated-audience": "console",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrganization"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The organization and its launch defaults were created atomically.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Organization"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid human session is present.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Staff access required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The request body is invalid.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Serving state is unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/organizations/{organization_id}": {
+      "get": {
+        "x-gradiated-audience": "console",
+        "operationId": "getStaffOrganization",
+        "summary": "Get a customer organization",
+        "description": "Loads a single customer organization for verified staff without expanding the session bootstrap payload.",
+        "tags": [
+          "Organizations"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "organization_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer organization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentOrganization"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Staff required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Organization not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid organization ID.",
             "content": {
               "application/problem+json": {
                 "schema": {

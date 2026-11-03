@@ -63,11 +63,12 @@ The first four tables are generated and owned by Better Auth. We map its logical
 | `name`           | text        | no   | Bounded display name                  |
 | `email`          | text        | no   | Normalized; unique case-insensitively |
 | `email_verified` | boolean     | no   | Default false                         |
+| `is_staff`       | boolean     | no   | Default false; controlled staff portal access |
 | `image_url`      | text        | yes  | Profile image URL                     |
 | `created_at`     | timestamptz | no   | Creation time                         |
 | `updated_at`     | timestamptz | no   | Last mutation time                    |
 
-Do not add a global application role. Authorization belongs to organization membership. Active organization members can access every workspace in their organization.
+Verified `is_staff` users can administer all customer organizations without membership rows. Other users require active organization membership to access its workspaces. Staff status is not writable through public authentication or profile APIs. Impersonation uses the target user’s memberships and records its staff actor separately.
 
 ### 2. `sessions`
 
@@ -77,6 +78,8 @@ Do not add a global application role. Authorization belongs to organization memb
 | `user_id`    | uuid        | no   | FK `users.id`               |
 | `token`      | text        | no   | Unique; Better Auth-managed |
 | `expires_at` | timestamptz | no   | Session expiry              |
+| `impersonated_by` | uuid | yes | Staff actor; FK `users.id`, cascade on deletion |
+| `impersonator_session_id` | uuid | yes | Original staff session; revalidated during impersonation |
 | `ip_address` | inet        | yes  | Better Auth-managed         |
 | `user_agent` | text        | yes  | Bounded                     |
 | `created_at` | timestamptz | no   | Creation time               |

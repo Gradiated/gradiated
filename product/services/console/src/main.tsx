@@ -1,3 +1,4 @@
+import { SessionSync } from "@/components/session-sync";
 import { Toaster } from "@/components/ui/sonner";
 import NiceModal from "@ebay/nice-modal-react";
 import {
@@ -11,6 +12,8 @@ import { RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
+import { needsStaffSessionRecovery } from "@/api/client";
+import { getCurrentUser } from "@/api/queries";
 import { httpStatus, isClientError } from "@/lib/errors";
 import { toastMutationError } from "@/lib/mutation-errors";
 import { endSession } from "@/lib/session";
@@ -20,15 +23,19 @@ import "./styles.css";
 
 const MAX_QUERY_RETRIES = 3;
 
-const endSessionWhenUnauthorized = (error: Error) => {
-  if (httpStatus(error) === 401) void endSession(queryClient, router);
+const handleUnauthorized = (error: Error) => {
+  if (needsStaffSessionRecovery(error)) {
+    void getCurrentUser().catch((failure: unknown) => {
+      if (httpStatus(failure) === 401) void endSession(queryClient, router);
+    });
+  } else if (httpStatus(error) === 401) void endSession(queryClient, router);
 };
 
 const queryFailed = (error: Error, { queryKey }: { queryKey: QueryKey }) => {
   const status = httpStatus(error);
 
   if (status === 401) {
-    void endSession(queryClient, router);
+    handleUnauthorized(error);
     return;
   }
 
@@ -39,7 +46,7 @@ const queryClient: QueryClient = new QueryClient({
   queryCache: new QueryCache({ onError: queryFailed }),
   mutationCache: new MutationCache({
     onError: (error, variables, context, mutation) => {
-      endSessionWhenUnauthorized(error);
+      handleUnauthorized(error);
       toastMutationError(error, variables, context, mutation);
     },
   }),
@@ -59,6 +66,7 @@ if (!rootElement) throw new Error("The console needs a #root element.");
 createRoot(rootElement).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
+      <SessionSync />
       <NiceModal.Provider>
         <RouterProvider router={router} />
         <Toaster />

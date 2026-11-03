@@ -21,6 +21,7 @@ import { registerMeRoutes } from "./routes/me.js";
 import { registerModelRoutes } from "./routes/models.js";
 import { createExternalModelCatalog } from "./catalog/external-models.js";
 import { registerMemberRoutes } from "./routes/members.js";
+import { registerImpersonationRoutes } from "./routes/impersonation.js";
 import { registerOrganizationRoutes } from "./routes/organizations.js";
 import { registerUsageRoutes } from "./routes/usage.js";
 import { registerWaitlistRoutes } from "./routes/waitlist.js";
@@ -139,6 +140,7 @@ export const createApp = ({
     payments: services.billingPayments,
   });
   registerMeRoutes(app, services.organizations);
+  registerImpersonationRoutes(app, auth);
   registerOrganizationRoutes(app, services.organizations);
   registerMemberRoutes(app, {
     members: services.members,

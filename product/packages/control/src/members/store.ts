@@ -7,7 +7,7 @@ import {
   UuidSchema,
   type InvitationPreview,
 } from "@gradiated/contracts";
-import { activeCustomerOrganization } from "../access.js";
+import { activeCustomerOrganization, verifiedStaff } from "../access.js";
 import type { ControlDatabase } from "../db/client.js";
 
 type Transaction = Parameters<Parameters<ControlDatabase["transaction"]>[0]>[0];
@@ -19,6 +19,7 @@ import {
   users,
   type OrganizationRole,
 } from "../db/schema/index.js";
+import { ControlServiceError } from "../errors.js";
 import { sha256Digest } from "../secrets.js";
 
 const INVITATION_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
@@ -124,6 +125,7 @@ export const createMemberStore = (database: ControlDatabase) => {
     organizationId: string,
     actorId: string,
     change: (transaction: Transaction) => Promise<unknown>,
+    removingAdminId?: string,
   ) =>
     database.transaction(async (transaction) => {
       const admins = await transaction
@@ -138,7 +140,24 @@ export const createMemberStore = (database: ControlDatabase) => {
         )
         .orderBy(asc(organizationMembers.userId))
         .for("update");
-      if (!admins.some((admin) => admin.userId === actorId)) return false;
+      const [actor] = await transaction
+        .select({ staff: verifiedStaff(actorId) })
+        .from(users)
+        .where(eq(users.id, actorId));
+      const isStaff = actor
+        ? z.object({ staff: z.boolean() }).parse(actor).staff
+        : false;
+      if (!isStaff && !admins.some((admin) => admin.userId === actorId))
+        return false;
+      if (
+        removingAdminId &&
+        admins.length === 1 &&
+        admins[0]?.userId === removingAdminId
+      )
+        throw new ControlServiceError(
+          "conflict",
+          "Keep at least one organization admin.",
+        );
 
       await change(transaction);
 
@@ -187,14 +206,18 @@ export const createMemberStore = (database: ControlDatabase) => {
       userId: string,
       role: OrganizationRole,
     ) {
-      return asAdmin(organizationId, actorId, (transaction) =>
-        transaction
-          .update(organizationMembers)
-          .set({
-            role: OrganizationRoleSchema.parse(role),
-            updatedAt: new Date(),
-          })
-          .where(memberKey(organizationId, userId)),
+      return asAdmin(
+        organizationId,
+        actorId,
+        (transaction) =>
+          transaction
+            .update(organizationMembers)
+            .set({
+              role: OrganizationRoleSchema.parse(role),
+              updatedAt: new Date(),
+            })
+            .where(memberKey(organizationId, userId)),
+        role === "admin" ? undefined : userId,
       );
     },
 
@@ -203,25 +226,30 @@ export const createMemberStore = (database: ControlDatabase) => {
       actorId: string,
       userId: string,
     ) {
-      return asAdmin(organizationId, actorId, async (transaction) => {
-        await transaction
-          .delete(organizationMembers)
-          .where(memberKey(organizationId, userId));
+      return asAdmin(
+        organizationId,
+        actorId,
+        async (transaction) => {
+          await transaction
+            .delete(organizationMembers)
+            .where(memberKey(organizationId, userId));
 
-        // Admins cannot see playground keys, so removal revokes them.
-        const revokedAt = new Date();
-        await transaction
-          .update(apiKeys)
-          .set({ revokedAt, updatedAt: revokedAt })
-          .where(
-            and(
-              eq(apiKeys.organizationId, organizationId),
-              eq(apiKeys.createdBy, userId),
-              eq(apiKeys.hidden, true),
-              isNull(apiKeys.revokedAt),
-            ),
-          );
-      });
+          // Admins cannot see playground keys, so removal revokes them.
+          const revokedAt = new Date();
+          await transaction
+            .update(apiKeys)
+            .set({ revokedAt, updatedAt: revokedAt })
+            .where(
+              and(
+                eq(apiKeys.organizationId, organizationId),
+                eq(apiKeys.createdBy, userId),
+                eq(apiKeys.hidden, true),
+                isNull(apiKeys.revokedAt),
+              ),
+            );
+        },
+        userId,
+      );
     },
 
     async organizationName(organizationId: string) {

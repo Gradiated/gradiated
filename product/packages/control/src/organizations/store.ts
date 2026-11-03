@@ -15,7 +15,11 @@ import {
   users,
   workspaces,
 } from "../db/schema/index.js";
-import { activeCustomerMember, activeCustomerOrganization } from "../access.js";
+import {
+  customerAccess,
+  customerRole,
+  activeCustomerOrganization,
+} from "../access.js";
 import { ControlServiceError } from "../errors.js";
 
 const OrganizationRecordSchema = CurrentOrganizationSchema.pick({
@@ -39,24 +43,31 @@ const SignupEmailSchema = z.object({
   emailVerified: z.boolean(),
 });
 
-const organizationColumns = {
+const organizationColumns = (userId: string) => ({
   id: organizations.id,
   name: organizations.name,
   status: organizations.status,
-  role: organizationMembers.role,
+  role: customerRole(userId),
   defaultWorkspaceId: workspaces.id,
   autoJoinDomain: organizations.autoJoinDomain,
   onboardedAt: organizations.onboardedAt,
-};
+});
 
 export const createOrganizationStore = (database: ControlDatabase) => {
-  const listForUser = async (userId: string, organizationId?: string) => {
-    const rows = await database
-      .select(organizationColumns)
-      .from(organizationMembers)
-      .innerJoin(
-        organizations,
-        eq(organizations.id, organizationMembers.organizationId),
+  const listForUser = async (
+    userId: string,
+    organizationId?: string,
+    page?: { search: string; limit: number; offset: number },
+  ) => {
+    const query = database
+      .select(organizationColumns(userId))
+      .from(organizations)
+      .leftJoin(
+        organizationMembers,
+        and(
+          eq(organizations.id, organizationMembers.organizationId),
+          eq(organizationMembers.userId, userId),
+        ),
       )
       .innerJoin(
         workspaces,
@@ -65,8 +76,26 @@ export const createOrganizationStore = (database: ControlDatabase) => {
           eq(workspaces.isDefault, true),
         ),
       )
-      .where(activeCustomerMember({ userId, organizationId }))
+      .where(
+        and(
+          customerAccess({ userId, organizationId }),
+          !organizationId && !page
+            ? and(
+                eq(organizationMembers.userId, userId),
+                eq(organizationMembers.status, "active"),
+              )
+            : undefined,
+          page?.search
+            ? sql`strpos(lower(${organizations.name}), lower(${page.search})) > 0`
+            : undefined,
+        ),
+      )
       .orderBy(asc(organizations.createdAt), asc(organizations.id));
+    const rows = page
+      ? await query.limit(page.limit).offset(page.offset)
+      : organizationId
+        ? await query.limit(1)
+        : await query;
 
     return rows.map((row) => OrganizationRecordSchema.parse(row));
   };

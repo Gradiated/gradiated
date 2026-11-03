@@ -7,6 +7,7 @@ export type ServiceLogFields = {
   workspace_id?: string | undefined;
   api_key_id?: string | undefined;
   user_id?: string | undefined;
+  actor_user_id?: string | undefined;
   context_source?: "authenticated_session_requested_resource";
   method?: string;
   route?: string;
@@ -88,6 +89,7 @@ export const createServiceLogger = (
       "workspace_id",
       "api_key_id",
       "user_id",
+      "actor_user_id",
       "allocation_id",
       "deployment_id",
     ] as const) {

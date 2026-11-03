@@ -4,6 +4,7 @@ import { ArrowRight, LoaderCircle } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
 import { updateOrganization, type CurrentUser } from "@/api/queries";
+import { ImpersonationBanner } from "@/components/impersonation-banner";
 import { AuthCard } from "@/components/auth-card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -52,13 +53,16 @@ export const OnboardingPage = () => {
   if (!organization) return <Navigate to="/models" />;
 
   return (
-    <AuthCard>
-      <OrganizationSetup
-        user={user}
-        organization={organization}
-        onSignOut={() => void signOut()}
-      />
-    </AuthCard>
+    <>
+      <ImpersonationBanner user={user} />
+      <AuthCard>
+        <OrganizationSetup
+          user={user}
+          organization={organization}
+          onSignOut={() => void signOut()}
+        />
+      </AuthCard>
+    </>
   );
 };
 

@@ -81,6 +81,18 @@ test("Carat is published with the requested date; Thesis uses the same schema", 
   assert.equal(thesis.path, "/notes/our-thesis/");
 });
 
+test("the October progress note is included in production", () => {
+  const source = readFileSync(
+    new URL("../content/articles/new-post.mdx", import.meta.url),
+    "utf8",
+  );
+  const article = parseArticleMetadata(source, "October progress note");
+
+  assert.equal(article.path, "/notes/2026-10-starting-on-hard-mode/");
+  assert.equal(article.status, "published");
+  assert.equal(buildArticleRegistry({ note: source }, false).length, 1);
+});
+
 test("existing articles default to the Library and hardware remains a subject", () => {
   assert.equal(parseArticleMetadata(fixture(), "legacy").category, "notes");
   assert.equal(parseArticleMetadata(fixture(), "legacy").layout, "reading");

@@ -13,12 +13,12 @@ export const SlaContent = (): ReactElement => (
     </p>
     <h2>Our uptime target and commitment</h2>
     <p>
-      Our general operating target is 99.99% monthly uptime for production
-      inference. The contractual commitment under this SLA is 99.9%, with usage
+      Our general operating target is 99.9% monthly uptime for production
+      inference. The contractual commitment under this SLA is 99.5%, with usage
       credits determined by the thresholds below.
     </p>
     <p>
-      We commit to 99.9% monthly uptime for each production model served through
+      We commit to 99.5% monthly uptime for each production model served through
       the Gradiated inference API. This SLA covers direct paying customers,
       including prepaid and invoiced accounts. Free services, models expressly
       marked beta or experimental, training, the website and the console are
@@ -58,11 +58,11 @@ export const SlaContent = (): ReactElement => (
       </thead>
       <tbody>
         <tr>
-          <td>99.9% or higher</td>
+          <td>99.5% or higher</td>
           <td>None</td>
         </tr>
         <tr>
-          <td>99% to below 99.9%</td>
+          <td>99% to below 99.5%</td>
           <td>5%</td>
         </tr>
         <tr>

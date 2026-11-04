@@ -105,7 +105,7 @@ const TaskPageBody = () => {
     return (
       <ConsolePage page="tasks" title="Task not found">
         <Link to="/tasks" className="text-sm text-muted-foreground underline">
-          Back to tasks
+          Back to models
         </Link>
       </ConsolePage>
     );
@@ -134,7 +134,7 @@ const TaskPageBody = () => {
           className="mb-4 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="size-3.5" />
-          Tasks
+          Models
         </Link>
       }
     >

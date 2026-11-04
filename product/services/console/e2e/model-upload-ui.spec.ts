@@ -158,7 +158,7 @@ for (const mobile of [false, true]) {
     await expect(
       page.getByRole("button", { name: "Create task & upload" }),
     ).toBeDisabled();
-    await page.getByLabel("Task name", { exact: true }).fill(task.name);
+    await page.getByLabel("Model name", { exact: true }).fill(task.name);
     await page.getByLabel("Version name", { exact: true }).fill(version.name);
     await selectFiles(page, mobile ? 2 : 32);
     await page.getByLabel("Base checkpoint revision").fill("a".repeat(40));
@@ -194,7 +194,7 @@ test("uploads another version from an existing task and rejects unsupported file
   await page
     .getByRole("button", { name: "Upload version", exact: true })
     .click();
-  await expect(page.getByLabel("Task name", { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("Model name", { exact: true })).toHaveCount(0);
   await page.getByLabel("Choose adapter files").setInputFiles({
     name: "model.bin",
     mimeType: "application/octet-stream",

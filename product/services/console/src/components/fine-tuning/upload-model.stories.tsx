@@ -166,7 +166,7 @@ const selectFiles = async (
 const fillUpload = async (canvasElement: HTMLElement, existing = false) => {
   const dialog = await openUpload(canvasElement, existing);
   if (!existing)
-    await userEvent.type(dialog.getByLabelText("Task name"), task.name);
+    await userEvent.type(dialog.getByLabelText("Model name"), task.name);
   await userEvent.type(dialog.getByLabelText("Version name"), version.name);
   await selectFiles(dialog);
   await waitFor(() =>
@@ -202,7 +202,7 @@ export const ExistingTaskEmpty: Story = {
   parameters: { msw: uploadHandlers({ existing: true }) },
   play: async ({ canvasElement }) => {
     const dialog = await openUpload(canvasElement, true);
-    await expect(dialog.queryByLabelText("Task name")).toBeNull();
+    await expect(dialog.queryByLabelText("Model name")).toBeNull();
   },
 };
 export const ConfigOnly: Story = {

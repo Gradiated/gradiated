@@ -227,7 +227,7 @@ export const UploadModelDialog = ({
             <div className={task ? "" : "grid gap-4 sm:grid-cols-2"}>
               {!task && (
                 <div className="space-y-2">
-                  <Label htmlFor="upload-task">Task name</Label>
+                  <Label htmlFor="upload-task">Model name</Label>
                   <Input
                     id="upload-task"
                     placeholder="e.g. support-triage"

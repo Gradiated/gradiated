@@ -546,7 +546,7 @@ test("version page renders the delivered report, its files and actions", async (
     page.getByRole("link", { name: "Try in playground" }),
   ).toHaveAttribute("href", /model=support-triage/);
   await expect(page.getByRole("button", { name: "Add files" })).toHaveCount(0);
-  await expect(page.getByRole("alert")).toHaveCount(0);
+  await expect(page.getByText(/report\.md has/)).toHaveCount(0);
 
   await page.getByRole("button", { name: "Download metrics.csv" }).click();
   await expect.poll(() => calls.downloads).toContain("metrics.csv");
@@ -561,9 +561,7 @@ test("staff add files and see report problems", async ({ page }) => {
   );
   await page.goto(`/tasks/${task.name}/versions/${version.id}`);
 
-  await expect(page.getByRole("alert")).toContainText(
-    "report.md has 1 problem",
-  );
+  await expect(page.getByText("report.md has 1 problem")).toBeVisible();
   await page.getByLabel("Add files").setInputFiles({
     name: "notes.md",
     mimeType: "text/markdown",

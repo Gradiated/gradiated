@@ -318,10 +318,7 @@ const VersionReport = ({
           ) : report.data ? (
             <div className="flex flex-col gap-4">
               {canManageFiles && report.data.errors.length ? (
-                <div
-                  role="alert"
-                  className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3.5 text-amber-950"
-                >
+                <div className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3.5 text-amber-950">
                   <TriangleAlert
                     aria-hidden
                     className="mt-0.5 size-4 shrink-0 text-amber-700"

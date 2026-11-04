@@ -195,3 +195,241 @@ it("requires authentication to rename an organization", async () => {
   );
   await expectProblem(response, unauthenticatedProblem);
 });
+
+describe("staff organization provisioning", () => {
+  it.each([
+    ["anonymous", anonymous, 401],
+    ["customer", authenticated, 403],
+    [
+      "unverified staff",
+      {
+        ...authenticated,
+        resolveSession: async () => ({
+          ...user,
+          isStaff: true,
+          emailVerified: false,
+        }),
+      },
+      403,
+    ],
+  ] as const)("denies %s before provisioning", async (_name, auth, status) => {
+    let called = false;
+    const app = createTestApp({
+      auth,
+      services: {
+        organizations: {
+          createForUser: async () => {
+            called = true;
+            return createdOrganization;
+          },
+        },
+      },
+    });
+    const response = await postJson(app, "/api/v1/admin/organizations", {
+      name: "Customer",
+    });
+    expect(response.status).toBe(status);
+    expect(called).toBe(false);
+  });
+
+  it("allows verified staff to prepare an organization with normal admin membership", async () => {
+    const received: unknown[] = [];
+    const app = createTestApp({
+      auth: {
+        ...authenticated,
+        resolveSession: async () => ({ ...user, isStaff: true }),
+      },
+      services: {
+        organizations: {
+          createForUser: async (userId, name) => {
+            received.push({ userId, name });
+            return { ...createdOrganization, name };
+          },
+        },
+      },
+    });
+    const response = await postJson(app, "/api/v1/admin/organizations", {
+      name: " Customer ",
+    });
+    expect(response.status).toBe(201);
+    expect(received).toEqual([{ userId: user.id, name: "Customer" }]);
+    await expect(response.json()).resolves.toMatchObject({
+      name: "Customer",
+      role: "admin",
+      default_workspace_id: workspaceId,
+    });
+  });
+
+  it("does not allow staff privilege to be supplied in the request", async () => {
+    const response = await postJson(
+      createTestApp({ auth: authenticated }),
+      "/api/v1/admin/organizations",
+      { name: "Customer", is_staff: true },
+    );
+    expect(response.status).toBe(422);
+  });
+});
+
+describe("staff organization search", () => {
+  const staff = {
+    ...authenticated,
+    resolveSession: async () => ({ ...user, isStaff: true }),
+  };
+
+  it.each([
+    anonymous,
+    authenticated,
+    {
+      ...staff,
+      resolveSession: async () => ({
+        ...user,
+        isStaff: true,
+        emailVerified: false,
+      }),
+    },
+  ])("denies unauthorized listing", async (auth) => {
+    const response = await createTestApp({ auth }).request(
+      "/api/v1/admin/organizations",
+    );
+    expect([401, 403]).toContain(response.status);
+  });
+
+  it("passes validated search and pagination to storage and bounds the response", async () => {
+    const received: unknown[] = [];
+    const app = createTestApp({
+      auth: staff,
+      services: {
+        organizations: {
+          listForUser: async (...args) => {
+            received.push(args);
+            return [
+              organizationSummary,
+              organizationSummary,
+              organizationSummary,
+            ];
+          },
+        },
+      },
+    });
+    const response = await app.request(
+      "/api/v1/admin/organizations?search=%20Acme%20&limit=2&offset=20",
+    );
+    expect(response.status).toBe(200);
+    expect(received).toEqual([
+      [user.id, undefined, { search: "Acme", limit: 3, offset: 20 }],
+    ]);
+    const body = await response.json();
+    expect(body.data).toHaveLength(2);
+    expect(body.has_more).toBe(true);
+  });
+
+  it.each([
+    "limit=0",
+    "limit=101",
+    "offset=-1",
+    "offset=1.5",
+    "search=" + "x".repeat(201),
+  ])("rejects invalid query %s", async (query) => {
+    const response = await createTestApp({ auth: staff }).request(
+      "/api/v1/admin/organizations?" + query,
+    );
+    expect(response.status).toBe(422);
+  });
+});
+
+describe("staff organization details", () => {
+  it("loads just the requested organization for verified staff", async () => {
+    const received: unknown[] = [];
+    const app = createTestApp({
+      auth: {
+        ...authenticated,
+        resolveSession: async () => ({ ...user, isStaff: true }),
+      },
+      services: {
+        organizations: {
+          listForUser: async (...args) => {
+            received.push(args);
+            return [organizationSummary];
+          },
+        },
+      },
+    });
+    const response = await app.request(
+      `/api/v1/admin/organizations/${organizationSummary.id}`,
+    );
+    expect(response.status).toBe(200);
+    expect(received).toEqual([[user.id, organizationSummary.id]]);
+    await expect(response.json()).resolves.toMatchObject({
+      id: organizationSummary.id,
+      name: organizationSummary.name,
+    });
+  });
+
+  it.each([
+    [anonymous, 401],
+    [authenticated, 403],
+    [
+      {
+        ...authenticated,
+        resolveSession: async () => ({
+          ...user,
+          isStaff: true,
+          emailVerified: false,
+        }),
+      },
+      403,
+    ],
+    [
+      {
+        ...authenticated,
+        resolveSession: async () => ({
+          ...user,
+          isStaff: true,
+          impersonatedBy: user.id,
+        }),
+      },
+      403,
+    ],
+  ] as const)(
+    "denies organization details without verified, non-impersonated staff access",
+    async (auth, status) => {
+      let queried = false;
+      const app = createTestApp({
+        auth,
+        services: {
+          organizations: {
+            listForUser: async () => {
+              queried = true;
+              return [organizationSummary];
+            },
+          },
+        },
+      });
+      expect(
+        (
+          await app.request(
+            `/api/v1/admin/organizations/${organizationSummary.id}`,
+          )
+        ).status,
+      ).toBe(status);
+      expect(queried).toBe(false);
+    },
+  );
+
+  it("reports a missing customer organization", async () => {
+    const app = createTestApp({
+      auth: {
+        ...authenticated,
+        resolveSession: async () => ({ ...user, isStaff: true }),
+      },
+      services: { organizations: { listForUser: async () => [] } },
+    });
+    expect(
+      (
+        await app.request(
+          `/api/v1/admin/organizations/${organizationSummary.id}`,
+        )
+      ).status,
+    ).toBe(404);
+  });
+});

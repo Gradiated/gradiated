@@ -8,7 +8,14 @@ import {
 import { toast } from "sonner";
 
 import type { components, operations } from "./schema";
-import { api, requireData, requireOk } from "./client";
+import { switchConsoleIdentity } from "@/lib/session-sync";
+import {
+  api,
+  ApiError,
+  needsStaffSessionRecovery,
+  requireData,
+  requireOk,
+} from "./client";
 
 export type CurrentUser = components["schemas"]["CurrentUser"];
 export type Organization = components["schemas"]["Organization"];
@@ -41,11 +48,54 @@ export type GenerationLog = Extract<
   { id: string }
 >;
 
-export const getCurrentUser = () => requireData(api.GET("/api/v1/me"));
+let staffRecovery: Promise<CurrentUser> | undefined;
+
+export const getCurrentUser = async (): Promise<CurrentUser> => {
+  try {
+    return await requireData(api.GET("/api/v1/me"));
+  } catch (error) {
+    if (!needsStaffSessionRecovery(error)) throw error;
+
+    staffRecovery ??= (async () => {
+      try {
+        await stopImpersonation();
+      } catch (restoreError) {
+        if (!(restoreError instanceof ApiError) || restoreError.status !== 401)
+          throw restoreError;
+        // Another tab may already have restored the shared cookie.
+      }
+      const user = await requireData(api.GET("/api/v1/me"));
+      switchConsoleIdentity("/admin");
+      return user;
+    })().finally(() => {
+      staffRecovery = undefined;
+    });
+
+    return staffRecovery;
+  }
+};
+
+export const startImpersonation = (userId: string) =>
+  requireData(
+    api.POST("/api/v1/admin/impersonations", { body: { user_id: userId } }),
+  );
+export const stopImpersonation = () =>
+  requireData(api.POST("/api/v1/admin/impersonations/stop"));
 
 export const createOrganization = (
   body: components["schemas"]["CreateOrganization"],
 ) => requireData(api.POST("/api/v1/organizations", { body }));
+
+export const getStaffOrganization = (organizationId: string) =>
+  requireData(
+    api.GET("/api/v1/admin/organizations/{organization_id}", {
+      params: { path: { organization_id: organizationId } },
+    }),
+  );
+
+export const createStaffOrganization = (
+  body: components["schemas"]["CreateOrganization"],
+) => requireData(api.POST("/api/v1/admin/organizations", { body }));
 
 export const updateOrganization = (
   organizationId: string,
@@ -433,3 +483,10 @@ export const externalModelsQuery = () =>
       ),
     staleTime: 5 * 60 * 1000,
   });
+
+export const listStaffOrganizations = (search: string, offset: number) =>
+  requireData(
+    api.GET("/api/v1/admin/organizations", {
+      params: { query: { search, offset, limit: 20 } },
+    }),
+  );

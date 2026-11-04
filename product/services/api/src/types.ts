@@ -19,6 +19,9 @@ export interface SessionUser {
   name: string;
   email: string;
   emailVerified: boolean;
+  isStaff: boolean;
+  impersonatedBy?: string | null;
+  impersonationExpiresAt?: Date | null;
   image: string | null;
   createdAt: Date;
 }

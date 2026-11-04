@@ -4,6 +4,7 @@ import { ArrowRight, LoaderCircle } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 
 import { updateOrganization, type CurrentUser } from "@/api/queries";
+import { ImpersonationBanner } from "@/components/impersonation-banner";
 import { AuthCard } from "@/components/auth-card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -68,14 +69,17 @@ export const OnboardingPage = () => {
     );
 
   return (
-    <AuthCard>
-      <OrganizationSetup
-        user={user}
-        organization={organization}
-        engineer={next === "engineer"}
-        onSignOut={() => void signOut()}
-      />
-    </AuthCard>
+    <>
+      <ImpersonationBanner user={user} />
+      <AuthCard>
+        <OrganizationSetup
+          user={user}
+          organization={organization}
+          engineer={next === "engineer"}
+          onSignOut={() => void signOut()}
+        />
+      </AuthCard>
+    </>
   );
 };
 

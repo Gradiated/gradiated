@@ -103,8 +103,9 @@ OAuth registration is stateless; hashed token families persist on a single-write
 PVC with refresh rotation, revocation and a fixed 30-day authorization lifetime.
 Argo reconciles the service under `operations/` through `platform/ops-mcp.yaml`.
 
-Future administrative operations belong here as individually scoped tools, rather
-than a generic admin UI or command executor. Reads require no server-side action
+Future infrastructure administrative operations belong here as individually scoped
+tools, rather than a generic admin UI or command executor. Customer organization
+support uses the staff console described below. Reads require no server-side action
 confirmation. Writes must enforce authorization and, when required by the action,
 a human approval bound to the exact proposed operation before execution. MCP
 annotations and agent instructions describe this policy but cannot enforce it.
@@ -620,3 +621,70 @@ change. See the [instance setup plan](INSTANCE_SETUP_PLAN.md).
 
 The architecture is intentionally narrow until production evidence requires
 another boundary.
+
+## Staff administration and customer setup
+
+Verified users with `users.is_staff = true` can open `/admin` in the console.
+The portal lists every customer organization, including suspended organizations,
+and links to organization details, users and invitations.
+Staff have effective admin access across customer organizations without needing
+membership rows. Customer authorization remains membership-based. The shared
+control-plane access predicates read the current database staff flag and verified
+email state; revocation removes global access on subsequent requests. Existing
+restrictions on suspended organizations, archived workspaces and removing the
+last organization admin still apply.
+
+The staff organization table uses `GET /api/v1/admin/organizations` for
+case-insensitive literal name search and bounded `limit`/`offset` pagination.
+It defaults to 20 rows and caps requests at 100, returning `has_more` rather
+than counting all matches. Search and pagination run in PostgreSQL, with a
+stable creation-time/ID ordering. The endpoint requires verified staff access.
+`GET /api/v1/me` includes only actual organization memberships, including for
+staff; it never expands the bootstrap to every customer. Organization details
+use the verified-staff `GET /api/v1/admin/organizations/{organization_id}` lookup,
+which selects at most one organization without requiring membership.
+
+The staff-only `POST /api/v1/admin/organizations` creates the existing customer
+aggregate: a default workspace, prepaid billing account with no signup credit,
+and an admin membership for its creator. Customer identities are created through
+verified sign-in; pending invitations reserve organization access before signup.
+The staff creator remains a visible member until another admin removes them.
+
+From an organization's users view, staff can impersonate a verified customer.
+`POST /api/v1/admin/impersonations` starts a separate Better Auth session with a
+15-minute expiry and the staff actor and original session IDs attached. The
+original session is retained in a signed HttpOnly cookie using Better Auth's
+cookie helpers. The console clears its selected scope and reloads on identity
+changes, displays a viewing-as banner with the server-provided expiry countdown,
+and provides a return-to-staff action. The console automatically returns to the
+staff session at expiry. Requests also enforce an absolute 15-minute limit from
+impersonation creation, so session refreshes cannot extend access. Identity
+switches and sign-out notify other console tabs through BroadcastChannel and an
+opaque local-storage revision. Other tabs clear cached identity and workspace
+state and reload; focus/visibility checks catch changes missed while suspended.
+The synchronization messages contain no authentication tokens or user content.
+On a cold load after expiry, the unauthorized code
+`staff_session_recovery_required` distinguishes a valid retained staff session
+from ordinary sign-out. The console restores that
+session through the stop endpoint, reads the current user again, and reloads all
+tabs. Failed mutations are never replayed as staff. Revoked or signed-out staff
+sessions do not qualify for recovery.
+`POST /api/v1/admin/impersonations/stop` deletes the active impersonation session
+and restores the original session, including when the impersonation has expired.
+Ordinary sign-out revokes both the impersonation and retained staff sessions and
+expires the return cookie; signing out cannot leave privileged access restorable.
+Staff targets, self-impersonation and nested impersonation are rejected. Both
+session-changing endpoints use Better Auth origin/CSRF checks. Only these two
+impersonation operations are exposed; no generic user-administration endpoints
+are enabled.
+
+Each impersonated request revalidates the staff actor and original session;
+revoking either invalidates impersonation, including for Better Auth operations.
+The impersonated user receives their own tenant permissions and no staff rights.
+Application request logs include both `user_id` and `actor_user_id`, and session
+switches emit dedicated events without session tokens or customer content.
+
+Migration `0025_staff_users` defaults users to non-staff; `0026_staff_impersonation`
+adds the session attribution fields. Staff grants and revocations use the approved
+database access process. There is no self-service staff mutation API; Better Auth
+marks `isStaff` and impersonation metadata as `input: false`.

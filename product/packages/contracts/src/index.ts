@@ -179,3 +179,8 @@ export {
 export * from "./training-dataset.js";
 
 export * from "./training-recipe.js";
+
+export {
+  ImpersonationInputSchema,
+  ImpersonationResultSchema,
+} from "./impersonation.js";

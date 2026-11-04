@@ -191,6 +191,81 @@ test("a production canary inherits the serving floor when its primary is retired
   ]);
 });
 
+test("split replacement pools preserve their aggregate PDB floor during sixth warmup", () => {
+  const primary = rollout("a/b", 0);
+  primary.metadata.name = "primary";
+  const main = rollout("a/b", 5);
+  main.metadata.name = "main";
+  main.spec.template.metadata.annotations["gradiated.com/canary-of"] =
+    "primary";
+  const sixth = rollout("a/b", 1);
+  sixth.metadata.name = "sixth";
+  sixth.spec.template.metadata.annotations["gradiated.com/canary-of"] =
+    "primary";
+  const budgets = [
+    {
+      kind: "PodDisruptionBudget",
+      metadata: { name: "main" },
+      spec: { minAvailable: 4 },
+    },
+    {
+      kind: "PodDisruptionBudget",
+      metadata: { name: "sixth" },
+      spec: { minAvailable: 1 },
+    },
+  ];
+  const minima = (items) =>
+    new Map(
+      modelReplicaRules(items)
+        .spec.groups[0].rules.filter(
+          (rule) => rule.record === "gradiated_model_minimum_replicas",
+        )
+        .map((rule) => [rule.labels.rollout, rule.expr]),
+    );
+  for (const items of [
+    [primary, main, sixth, ...budgets],
+    [...budgets, sixth, main, primary],
+  ])
+    assert.deepEqual(
+      minima(items),
+      new Map([
+        ["primary", "vector(0)"],
+        ["main", "vector(4)"],
+        ["sixth", "vector(1)"],
+      ]),
+    );
+  sixth.spec.template.metadata.annotations["gradiated.com/serving-mode"] =
+    "qualification";
+  assert.deepEqual(
+    minima([primary, main, sixth, ...budgets]),
+    new Map([
+      ["primary", "vector(0)"],
+      ["main", "vector(5)"],
+      ["sixth", "vector(0)"],
+    ]),
+  );
+  sixth.spec.template.metadata.annotations["gradiated.com/serving-mode"] =
+    "production";
+  primary.spec.replicas = 2;
+  assert.deepEqual(
+    minima([primary, main, sixth, ...budgets]),
+    new Map([
+      ["primary", "vector(2)"],
+      ["main", "vector(0)"],
+      ["sixth", "vector(0)"],
+    ]),
+  );
+  primary.spec.replicas = 0;
+  assert.equal(minima([primary, main, sixth]).get("main"), "vector(5)");
+  for (const invalid of [-1, 2, "50%", null]) {
+    budgets[1].spec.minAvailable = invalid;
+    assert.throws(
+      () => minima([primary, main, sixth, ...budgets]),
+      /disruption floor/,
+    );
+  }
+});
+
 test("isolated qualification does not request production serving capacity", () => {
   const primary = rollout("a/b", 10);
   primary.metadata.name = "primary";

@@ -232,6 +232,12 @@ requests before admitting normal traffic. Begin with `serving_mode:
 qualification`, target it through `x-gradiated-deployment-id`, then promote only
 that Rollout to production after SDK and public gateway checks pass. Keep the
 five existing allocations serving and their manual pause intact throughout.
+The sixth is promoted separately after those gates; a serving-mode template
+change replaces only its allocation and requires fresh incarnation qualification.
+When both replacement pools serve production and vLLM is retired, their reviewed
+PDB minima (four plus one) form the five-replica serving alert floor, while their
+desired counts total six. This preserves the established serving floor during
+the sixth allocation's replacement and still pages if capacity drops below five.
 The runtime profile ID is a scheduling identity; the archive remains pinned to
 its separate SHA-256 in `bundles`, and the served release remains unchanged.
 

@@ -176,6 +176,20 @@
       "when": 1793282169087,
       "tag": "0024_retire_stock_glm_adapters",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1793664000000,
+      "tag": "0025_staff_users",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1793723787433,
+      "tag": "0026_staff_impersonation",
+      "breakpoints": true
     }
   ]
 }

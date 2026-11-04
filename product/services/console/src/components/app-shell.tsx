@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import type { CurrentUser, Workspace } from "@/api/queries";
+import { ImpersonationBanner } from "@/components/impersonation-banner";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,7 +46,8 @@ export const AppShell = ({
     | "playground"
     | "tasks"
     | "usage"
-    | "settings";
+    | "settings"
+    | "admin";
   pageTitle: string;
   children: ReactNode;
 }) => {
@@ -84,6 +86,7 @@ export const AppShell = ({
         onSignOut={onSignOut}
       />
       <SidebarInset>
+        <ImpersonationBanner user={user} />
         <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />

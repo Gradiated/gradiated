@@ -284,6 +284,45 @@ describe("organization members and invitations", () => {
     expect(await members.listInvitations(admin, organizationId)).toEqual([]);
   });
 
+  it("hands a prepared workspace to an invited customer admin without creating another organization", async () => {
+    const staffId = await seedUser(db.database);
+    const prepared = await organizations.createForUser(
+      staffId,
+      "Prepared Customer",
+    );
+    const workspaceService = createWorkspaceApiKeyService(db.database);
+    await workspaceService.updateWorkspace(
+      staffId,
+      prepared.defaultWorkspaceId,
+      { name: "Customer Production" },
+    );
+    const email = `${randomUUID()}@customer.test`;
+    await members.createInvitations(staffId, prepared.id, {
+      emails: [email],
+      role: "admin",
+    });
+
+    const person = await invitee(email);
+    const joined = await organizations.ensureForNewUser(person);
+
+    expect(joined).toMatchObject({
+      id: prepared.id,
+      role: "admin",
+      onboardingCompleted: true,
+    });
+    expect(await organizations.listForUser(person.id)).toHaveLength(1);
+    expect(
+      await workspaceService.listWorkspaces(person.id, prepared.id, false),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: prepared.defaultWorkspaceId,
+          name: "Customer Production",
+        }),
+      ]),
+    );
+  });
+
   it("accepts every pending invitation at signup", async () => {
     const person = await invitee();
     const organizationIds: string[] = [];

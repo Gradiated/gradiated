@@ -14,6 +14,7 @@ export const requestLogFields = (context: Context<ApiEnvironment>) => {
     ...(user
       ? {
           user_id: user.id,
+          actor_user_id: user.impersonatedBy ?? user.id,
           organization_id: context.req.param("organization_id"),
           workspace_id: context.req.param("workspace_id"),
           api_key_id: context.req.param("api_key_id"),

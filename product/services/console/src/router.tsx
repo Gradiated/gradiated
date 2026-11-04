@@ -182,8 +182,28 @@ const membersSettingsRoute = createRoute({
   ),
 });
 
+const adminRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/admin",
+  component: lazyRouteComponent(
+    () => import("@/pages/admin-page"),
+    "AdminPage",
+  ),
+});
+
+const adminOrganizationRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/admin/organizations/$organizationId",
+  component: lazyRouteComponent(
+    () => import("@/pages/admin-organization-page"),
+    "AdminOrganizationPage",
+  ),
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
+  adminRoute,
+  adminOrganizationRoute,
   loginRoute,
   invitationAcceptRoute,
   onboardingRoute,

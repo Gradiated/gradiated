@@ -66,6 +66,9 @@ describe("current user route", () => {
       name: user.name,
       email: user.email,
       email_verified: true,
+      impersonation_expires_at: null as string | null,
+      impersonated_by: null,
+      is_staff: false,
       company_email_domain: "example.com",
       image_url: null,
       created_at: "2026-08-16T12:00:00.000Z",
@@ -82,4 +85,17 @@ describe("current user route", () => {
       ],
     });
   });
+});
+
+it("reports staff access from the resolved session", async () => {
+  const app = createTestApp({
+    auth: {
+      ...authenticated,
+      resolveSession: async () => ({ ...user, isStaff: true }),
+    },
+    services: { organizations: { listForUser: async () => [] } },
+  });
+  const response = await app.request("/api/v1/me");
+  expect(response.status).toBe(200);
+  await expect(response.json()).resolves.toMatchObject({ is_staff: true });
 });

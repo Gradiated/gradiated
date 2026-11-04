@@ -646,6 +646,24 @@ def main():
         ['ModelNoReadyReplicas', 'ModelUnderReplicated', 'ModelScaleUpStalled'],
         {'model': 'test/model'}, '1m')
 
+    for name, ready, expected, duration in [
+        ('sixth warming beside five serving', 5, None, '19m'),
+        ('replacement falls below aggregate budget', 4, 'ModelUnderReplicated', '1m'),
+        ('sixth is serving', 6, None, '21m'),
+        ('sixth fails to arrive', 5, 'ModelScaleUpStalled', '21m'),
+    ]:
+        scenario('split replacement capacity: ' + name, [
+            {'series': 'gradiated_model_desired_replicas{model="test/model",rollout="retired"}', 'values': '0+0x80'},
+            {'series': 'gradiated_model_minimum_replicas{model="test/model",rollout="retired"}', 'values': '0+0x80'},
+            {'series': 'gradiated_model_desired_replicas{model="test/model",rollout="main"}', 'values': '5+0x80'},
+            {'series': 'gradiated_model_minimum_replicas{model="test/model",rollout="main"}', 'values': '4+0x80'},
+            {'series': 'gradiated_model_desired_replicas{model="test/model",rollout="sixth"}', 'values': '1+0x80'},
+            {'series': 'gradiated_model_minimum_replicas{model="test/model",rollout="sixth"}', 'values': '1+0x80'},
+            {'series': 'gradiated_worker_model_ready_replicas{instance="a",model="test/model"}', 'values': f'{ready}+0x80'},
+            {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="a",loop="kubernetes_deployment_reconciliation"}', 'values': '1+30x80'},
+        ], expected, ['ModelNoReadyReplicas', 'ModelUnderReplicated', 'ModelScaleUpStalled'],
+        {'model': 'test/model'}, duration)
+
     scenario('isolated qualification adds no production capacity demand', [
         {'series': 'gradiated_model_desired_replicas{model="test/model",rollout="primary"}', 'values': '10+0x80'},
         {'series': 'gradiated_model_minimum_replicas{model="test/model",rollout="primary"}', 'values': '10+0x80'},

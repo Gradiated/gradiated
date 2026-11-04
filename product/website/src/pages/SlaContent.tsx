@@ -29,8 +29,8 @@ export const SlaContent = (): ReactElement => (
       For service before November 4, 2026, the prior SLA applies: the operating
       target was 99.99%, the contractual commitment was 99.9%, and the 5% usage
       credit band was 99% to below 99.9%. Uptime of 99.9% or higher earned no
-      credit. All other measurement rules, credit bands and claim terms were
-      the same. For November 2026, we apply the prior 99.9% commitment and credit
+      credit. All other measurement rules, credit bands and claim terms were the
+      same. For November 2026, we apply the prior 99.9% commitment and credit
       threshold for the entire month; the 99.5% commitment and credit threshold
       apply starting with December 2026.
     </p>

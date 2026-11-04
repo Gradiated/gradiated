@@ -70,7 +70,9 @@ account operations are disabled in production and isolated from real session
 queries and workspace selection.
 
 The wizard is a clickable preview of getting a human forward deployed engineer
-working async: set up Slack/GitHub, complete the mutual NDA and start a project.
+working async: a short introduction, mutual NDA details, Slack/GitHub setup and
+the final project review. The introduction explains self-serve setup without a
+sales call and a real human working with the customer’s codebase in Slack.
 The final review includes an optional context note; there is no project
 questionnaire before setup. Setup uses the console account pages’ centered card,
 Inter typography, logo, form controls and full-width action layout. The website

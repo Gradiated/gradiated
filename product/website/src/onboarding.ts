@@ -12,6 +12,7 @@ export const mutualNda = {
 } as const;
 
 export const onboardingSchema = z.object({
+  introduced: z.boolean().default(false),
   context: z.string().max(3000).default(""),
   name: z.string().max(100).default(""),
   email: z.string().max(200).default(""),
@@ -70,14 +71,6 @@ export const counterpartyDetails = (draft: OnboardingDraft) => ({
 });
 
 export const firstIncompleteStep = (draft: OnboardingDraft): number | null => {
-  if (
-    !draft.company.trim() ||
-    !z.email().safeParse(draft.email.trim()).success ||
-    !draft.repository.trim() ||
-    (draft.channel === "slack" && !draft.slack.trim())
-  )
-    return 0;
-
   const signer = counterpartyDetails(draft);
 
   if (
@@ -87,6 +80,14 @@ export const firstIncompleteStep = (draft: OnboardingDraft): number | null => {
     !signer.title.trim() ||
     !z.email().safeParse(signer.email.trim()).success
   )
+    return 0;
+
+  if (
+    !draft.company.trim() ||
+    !z.email().safeParse(draft.email.trim()).success ||
+    !draft.repository.trim() ||
+    (draft.channel === "slack" && !draft.slack.trim())
+  )
     return 1;
 
   return null;
@@ -94,6 +95,7 @@ export const firstIncompleteStep = (draft: OnboardingDraft): number | null => {
 
 export const exampleOnboarding = (): OnboardingDraft => ({
   ...emptyOnboarding(),
+  introduced: true,
   context:
     "We're building a support agent. It answers questions well, but sometimes calls the wrong tool when updating an order. We'd like to fix that, then see if we can run it on a cheaper model.",
   name: "Alex Morgan",

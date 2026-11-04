@@ -34,7 +34,7 @@ import {
 import "../styles/index.css";
 import "../styles/onboarding.css";
 
-const steps = ["Slack & GitHub", "Mutual NDA", "Get to work"];
+const steps = ["Mutual NDA", "Slack & GitHub", "Get to work"];
 type UpdateDraft = (values: Partial<OnboardingDraft>) => void;
 
 const loadDraft = (account: OnboardingAccount): OnboardingDraft => {
@@ -101,8 +101,7 @@ const TeamStep = ({
 }) => (
   <>
     <StepTitle title="Set up Slack & GitHub.">
-      Your forward deployed engineer is a real human. Work together async in
-      Slack.
+      A shared channel for the conversation. Repository access for the work.
     </StepTitle>
     <Field
       label="GitHub repository"
@@ -491,7 +490,7 @@ const GetStartedWorkflow = ({
   useEffect(() => {
     headingRef.current?.focus({ preventScroll: true });
     window.scrollTo({ top: 0, behavior: "instant" });
-  }, [draft.step, draft.submitted]);
+  }, [draft.step, draft.submitted, draft.introduced]);
 
   useEffect(() => {
     if (ndaOpen) dialogRef.current?.showModal();
@@ -519,7 +518,28 @@ const GetStartedWorkflow = ({
               />
             </Link>
           </header>
-          {draft.submitted ? (
+          {!draft.introduced ? (
+            <main className="gs-main" ref={headingRef} tabIndex={-1}>
+              <StepTitle title="Let’s get you set up with a forward deployed engineer.">
+                Self-serve. No sales call.
+              </StepTitle>
+              <p className="gs-introduction">
+                A real human from our team will join you in Slack and work with
+                your codebase to get more out of your models.
+              </p>
+              <div className="gs-actions">
+                <button
+                  type="button"
+                  className="gr-button gr-button--main gs-primary"
+                  onClick={() =>
+                    patch({ introduced: true, submitted: false, step: 0 })
+                  }
+                >
+                  Get started <ArrowRight size={15} />
+                </button>
+              </div>
+            </main>
+          ) : draft.submitted ? (
             <ProjectPreview
               draft={draft}
               onEdit={() => patch({ submitted: false, step: 2 })}
@@ -586,7 +606,11 @@ const GetStartedWorkflow = ({
               >
                 {draft.step === 0 && (
                   <>
-                    <TeamStep draft={draft} patch={patch} />
+                    <AccessStep
+                      draft={draft}
+                      patch={patch}
+                      onNda={() => setNdaOpen(true)}
+                    />
                     {demo && (
                       <button
                         className="gs-text-button gs-example"
@@ -600,13 +624,7 @@ const GetStartedWorkflow = ({
                     )}
                   </>
                 )}
-                {draft.step === 1 && (
-                  <AccessStep
-                    draft={draft}
-                    patch={patch}
-                    onNda={() => setNdaOpen(true)}
-                  />
-                )}
+                {draft.step === 1 && <TeamStep draft={draft} patch={patch} />}
                 {draft.step === 2 && (
                   <ReviewStep
                     draft={draft}

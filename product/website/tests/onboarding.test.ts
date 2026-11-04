@@ -46,23 +46,23 @@ describe("local preview drafts", () => {
       slack: "",
     };
     expect(firstIncompleteStep(emailFallback)).toBeNull();
-    expect(firstIncompleteStep({ ...emailFallback, repository: "" })).toBe(0);
+    expect(firstIncompleteStep({ ...emailFallback, repository: "" })).toBe(1);
   });
 
   it("requires Slack details on the preferred path and the actual NDA signer fields", () => {
-    expect(firstIncompleteStep({ ...exampleOnboarding(), slack: "" })).toBe(0);
+    expect(firstIncompleteStep({ ...exampleOnboarding(), slack: "" })).toBe(1);
     expect(
       firstIncompleteStep({ ...exampleOnboarding(), signerTitle: "" }),
-    ).toBe(1);
+    ).toBe(0);
     expect(
       firstIncompleteStep({ ...exampleOnboarding(), legalAddress: "" }),
-    ).toBe(1);
+    ).toBe(0);
     expect(
       firstIncompleteStep({
         ...exampleOnboarding(),
         signerEmail: "not-an-email",
       }),
-    ).toBe(1);
+    ).toBe(0);
   });
 
   it("round trips progress and the handoff through browser storage", () => {
@@ -72,13 +72,22 @@ describe("local preview drafts", () => {
     );
   });
 
-  it("starts at Slack and GitHub with an empty optional note", () => {
+  it("shows the introduction first and checks NDA details before connection details", () => {
     expect(emptyOnboarding()).toMatchObject({
+      introduced: false,
       step: 0,
       email: "",
       context: "",
       submitted: false,
     });
+    expect(firstIncompleteStep(emptyOnboarding())).toBe(0);
+    expect(
+      firstIncompleteStep({
+        ...exampleOnboarding(),
+        signerTitle: "",
+        repository: "",
+      }),
+    ).toBe(0);
   });
 
   it("rejects invalid stored steps", () => {

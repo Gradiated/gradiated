@@ -1,0 +1,70 @@
+{
+  "scope": "Descriptive primary-judge aggregate, not independent causal explanation",
+  "arms": {
+    "dsnov4-final-base": {
+      "cases": 24,
+      "mean_dimension_scores": {
+        "outcome": 6.625,
+        "evidence": 6.416666666666667,
+        "analysis": 5.916666666666667,
+        "process": 6.458333333333333,
+        "communication": 6.833333333333333
+      },
+      "cases_with_material_wrong_final": 13,
+      "cases_with_material_unsupported_final": 4,
+      "final_answer_delivers": 24
+    },
+    "dsnov4-sol_sft": {
+      "cases": 24,
+      "mean_dimension_scores": {
+        "outcome": 6.333333333333333,
+        "evidence": 6.291666666666667,
+        "analysis": 5.875,
+        "process": 5.583333333333333,
+        "communication": 6.291666666666667
+      },
+      "cases_with_material_wrong_final": 12,
+      "cases_with_material_unsupported_final": 5,
+      "final_answer_delivers": 22
+    },
+    "dsnov4-rs_round1": {
+      "cases": 24,
+      "mean_dimension_scores": {
+        "outcome": 6.833333333333333,
+        "evidence": 7,
+        "analysis": 6.25,
+        "process": 6.291666666666667,
+        "communication": 7.083333333333333
+      },
+      "cases_with_material_wrong_final": 11,
+      "cases_with_material_unsupported_final": 2,
+      "final_answer_delivers": 24
+    },
+    "gpt-sol": {
+      "cases": 24,
+      "mean_dimension_scores": {
+        "outcome": 9.708333333333334,
+        "evidence": 10,
+        "analysis": 9.958333333333334,
+        "process": 8.458333333333334,
+        "communication": 8.833333333333334
+      },
+      "cases_with_material_wrong_final": 2,
+      "cases_with_material_unsupported_final": 0,
+      "final_answer_delivers": 24
+    },
+    "sonnet55": {
+      "cases": 24,
+      "mean_dimension_scores": {
+        "outcome": 8.916666666666666,
+        "evidence": 8.875,
+        "analysis": 8.791666666666666,
+        "process": 8.916666666666666,
+        "communication": 8.708333333333334
+      },
+      "cases_with_material_wrong_final": 1,
+      "cases_with_material_unsupported_final": 1,
+      "final_answer_delivers": 24
+    }
+  }
+}

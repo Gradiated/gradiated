@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, userEvent, within, waitFor } from "storybook/test";
 import { delay, http, HttpResponse } from "msw";
 import type { components } from "@/api/schema";
-import { StoryPage } from "@/stories/story-page";
+import { Page } from "@/stories/page-story";
 import { qwen3_0_6b } from "@/stories/base-model-configs";
 import { handlers } from "@/stories/handlers";
 
@@ -212,11 +212,11 @@ const fillUpload = async (canvasElement: HTMLElement, existing = false) => {
 
 const meta = {
   title: "Pages/Training/Blocks/Model upload",
-  component: StoryPage,
-  render: (args) => <StoryPage key={args.path} {...args} />,
+  component: Page,
+  render: (args, { id }) => <Page key={id} {...args} />,
   args: { path: "/tasks" },
   parameters: { msw: uploadHandlers() },
-} satisfies Meta<typeof StoryPage>;
+} satisfies Meta<typeof Page>;
 export default meta;
 type Story = StoryObj<typeof meta>;
 

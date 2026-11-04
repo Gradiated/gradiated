@@ -27,6 +27,9 @@ export const Toaster = (props: ToasterProps) => (
         title: "text-sm font-medium",
         description: "mt-1 text-xs leading-5 text-muted-foreground",
         icon: "mt-0.5 shrink-0",
+        content: "min-w-0 flex-1",
+        actionButton:
+          "shrink-0 self-center whitespace-nowrap rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium hover:bg-muted",
       },
     }}
     {...props}

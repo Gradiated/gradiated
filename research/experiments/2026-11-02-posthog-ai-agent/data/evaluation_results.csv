@@ -7,7 +7,9 @@ morning,OPD: procedure,frozen_final,Sol v3i,4,24,24,1
 morning,OPD: procedure,frozen_final,Terra v3i,4,24,24,1
 morning,OPD: contract,frozen_final,Sol v3i,5,24,24,1
 morning,OPD: contract,frozen_final,Terra v3i,5,24,24,1
-deepseek_repaired_v2,DeepSeek Flash 1017,frozen_final,Sol v3i,8,24,24,1
-deepseek_repaired_v2,DeepSeek Flash 1017,frozen_final,Terra v3i,11,24,24,1
+deepseek_repaired_v2,DeepSeek 1017 (OpenRouter),frozen_final,Sol v3i,8,24,24,1
+deepseek_repaired_v2,DeepSeek 1017 (OpenRouter),frozen_final,Terra v3i,11,24,24,1
+deepseek_local_v3,DeepSeek 1017 (local),frozen_final,Sol v3i,12,24,24,1
+deepseek_local_v3,DeepSeek 1017 (local),frozen_final,Terra v3i,10,24,24,1
 fresh_sol_followup,Fresh Sol,frozen_final,Sol v3i,21,24,24,1
 fresh_sol_followup,Fresh Sol,frozen_final,Terra v3i,22,24,24,1

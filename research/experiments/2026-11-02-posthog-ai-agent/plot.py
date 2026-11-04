@@ -15,6 +15,8 @@ FIG.mkdir(exist_ok=True)
 snapshot = json.loads((DATA / 'snapshot.json').read_text())
 deepseek_path = DATA / 'deepseek_result.json'
 deepseek = json.loads(deepseek_path.read_text()) if deepseek_path.exists() else None
+local_path = DATA / 'deepseek_local_result.json'
+local_deepseek = json.loads(local_path.read_text()) if local_path.exists() else None
 plt.rcParams.update({'font.size': 10, 'axes.spines.top': False, 'axes.spines.right': False,
                      'svg.hashsalt': 'posthog-ai-agent', 'svg.fonttype': 'none'})
 
@@ -53,7 +55,9 @@ mapping = [
     ('Fresh Sol', None, None),
 ]
 if deepseek:
-    mapping.insert(-1, ('DeepSeek Flash 1017', None, None))
+    mapping.insert(-1, ('DeepSeek 1017 (OpenRouter)', None, None))
+if local_deepseek:
+    mapping.insert(-1, ('DeepSeek 1017 (local)', None, None))
 evaluation_rows = []
 primary = []
 secondary = []
@@ -63,10 +67,17 @@ for label, key, secondary_key in mapping:
         s = snapshot['judge_agreement']['arms'][secondary_key]['secondary_passes']
         run = 'morning'
     else:
-        reference = deepseek if label == 'DeepSeek Flash 1017' else snapshot['fresh_sol']
-        p = reference['metrics']['primary']['passed']
-        s = reference['metrics']['secondary_terra']['passed']
-        run = 'deepseek_repaired_v2' if label == 'DeepSeek Flash 1017' else 'fresh_sol_followup'
+        if label == 'DeepSeek 1017 (local)':
+            reference = local_deepseek['metrics']['deepseek-v41-flash-1017-local']
+            run = 'deepseek_local_v3'
+        elif label == 'DeepSeek 1017 (OpenRouter)':
+            reference = deepseek['metrics']
+            run = 'deepseek_repaired_v2'
+        else:
+            reference = snapshot['fresh_sol']['metrics']
+            run = 'fresh_sol_followup'
+        p = reference['primary']['passed']
+        s = reference['secondary_terra']['passed']
     primary.append(p)
     secondary.append(s)
     for judge, count in [('Sol v3i', p), ('Terra v3i', s)]:
@@ -75,16 +86,16 @@ with (DATA / 'evaluation_results.csv').open('w') as f:
     w = csv.DictWriter(f, fieldnames=list(evaluation_rows[0]), lineterminator='\n')
     w.writeheader()
     w.writerows(evaluation_rows)
-fig, ax = plt.subplots(figsize=(10, 4.8), layout='constrained')
+fig, ax = plt.subplots(figsize=(12, 4.8), layout='constrained')
 x = list(range(len(mapping)))
 for offset, counts, label, color in [(-.19, primary, 'Primary: Sol judge', '#2166c5'), (.19, secondary, 'Secondary: Terra judge', '#85b7a6')]:
     bars = ax.bar([i + offset for i in x], [p / 24 * 100 for p in counts], width=.36, label=label, color=color)
     ax.bar_label(bars, labels=[f'{p}/24' for p in counts], padding=3, fontsize=9)
-ax.set(xticks=x, xticklabels=[r[0] for r in mapping], ylabel='Passed tasks (%)', ylim=(0, 108), title='Same frozen 24 tasks; one rollout per task and model')
+ax.set(xticks=x, xticklabels=[r[0].replace(' (', '\n(') for r in mapping], ylabel='Passed tasks (%)', ylim=(0, 108), title='Same frozen 24 tasks; one rollout per task and model')
 ax.legend(frameon=False, loc='upper left')
 ax.yaxis.grid(alpha=.18)
 ax.set_axisbelow(True)
-fig.text(.5, -.025, 'Terra rejudges the same traces. Small synthetic holdout; native model paths differ. Opus unavailable.', ha='center', fontsize=9, color='#667085')
+fig.text(.5, -.025, 'Terra rejudges the same traces. Small synthetic holdout; native paths/settings differ and runs were not simultaneous. Opus and Sonnet 5.5 unavailable.', ha='center', fontsize=9, color='#667085')
 save(fig, 'pass-rates')
 
 under = snapshot['underfed_eval']

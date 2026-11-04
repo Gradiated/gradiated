@@ -1,0 +1,299 @@
+{
+  "study": "DeepSeek 1017 Sol-teacher SFT versus rejection-sampling SFT, Nov3-4 overnight",
+  "captured_at_utc": "2026-11-04T08:05:21Z",
+  "outcome": "Training CUDA out-of-memory; no completed adapter or capability evaluation",
+  "model_revision": "1bae0e1088993b9b82de08f59de5be5a34e42170",
+  "planned_train_collection": {
+    "tasks": 64,
+    "workflows": 12,
+    "Sol_samples": 64,
+    "DeepSeek_samples": 192
+  },
+  "trace_quality": {
+    "criterion": "PrimarySol and secondaryTerra passing, clean root/reset; native-token checks beforeSFT",
+    "counts": {
+      "hill_dsnov4_train_round0|gpt-sol|accepted": 60,
+      "hill_dsnov4_train_round0|gpt-sol|rejected": 2,
+      "hill_dsnov4_train_round0|dsnov4-base-chat|accepted": 84,
+      "hill_dsnov4_train_round0|dsnov4-base-chat|rejected": 15,
+      "hill_dsnov4_dev_base|dsnov4-base-chat|accepted": 7,
+      "hill_dsnov4_dev_base|gpt-sol|accepted": 16
+    },
+    "counts_are_trajectories_not_unique_tasks": true
+  },
+  "frozen_data": {
+    "sol_sft": {
+      "rows": 26,
+      "unique_tasks": 26,
+      "families": {
+        "anomaly_investigation": 3,
+        "attribution_marketing": 3,
+        "build_insight_dashboard": 3,
+        "entity_lookup": 2,
+        "flags_experiments": 2,
+        "funnel_conversion": 2,
+        "llm_analytics": 2,
+        "retention_engagement": 2,
+        "sql_help": 2,
+        "tracking_quality": 2,
+        "trend_breakdown": 2,
+        "warehouse": 1
+      },
+      "input_tokens": 1681135,
+      "assistant_tokens": 70550,
+      "scope": "Final append-compatible phase perpassingtrajectory; full earlierprefix retained asmaskedinput; earliermodephases untrained. JSONargumentwhitespace/keyorder canonicalizedwithoutchangingvalues; actualstudentOPD sidecars separate."
+    },
+    "rs_round1": {
+      "rows": 26,
+      "unique_tasks": 26,
+      "families": {
+        "anomaly_investigation": 3,
+        "attribution_marketing": 3,
+        "build_insight_dashboard": 3,
+        "entity_lookup": 2,
+        "flags_experiments": 2,
+        "funnel_conversion": 2,
+        "llm_analytics": 2,
+        "retention_engagement": 2,
+        "sql_help": 2,
+        "tracking_quality": 2,
+        "trend_breakdown": 2,
+        "warehouse": 1
+      },
+      "input_tokens": 1785671,
+      "assistant_tokens": 99501,
+      "scope": "Final append-compatible phase perpassingtrajectory; full earlierprefix retained asmaskedinput; earliermodephases untrained. JSONargumentwhitespace/keyorder canonicalizedwithoutchangingvalues; actualstudentOPD sidecars separate."
+    },
+    "dev": {
+      "rows": 6,
+      "unique_tasks": 6,
+      "families": {
+        "anomaly_investigation": 1,
+        "attribution_marketing": 1,
+        "build_insight_dashboard": 1,
+        "flags_experiments": 1,
+        "funnel_conversion": 1,
+        "llm_analytics": 1
+      },
+      "input_tokens": 384358,
+      "assistant_tokens": 15026,
+      "scope": "Final append-compatible phase perpassingtrajectory; full earlierprefix retained asmaskedinput; earliermodephases untrained. JSONargumentwhitespace/keyorder canonicalizedwithoutchangingvalues; actualstudentOPD sidecars separate."
+    }
+  },
+  "training": {
+    "attempted": "Sol SFT only",
+    "rank": 8,
+    "alpha": 16,
+    "peak_lr": 5e-05,
+    "planned_epochs": 1,
+    "planned_steps": 7,
+    "completed_optimizer_steps": 3,
+    "saved_examples": 12,
+    "planned_examples": 26,
+    "epoch_fraction": 0.46153846153846156,
+    "steps": [
+      {
+        "at": 1793754350.624062,
+        "event": "step",
+        "variant": "sol_sft",
+        "step": 1,
+        "planned_steps": 7,
+        "rows": 4,
+        "loss": 0.3594190254807472,
+        "grad_norm": 0.08174454420804977,
+        "learning_rate": 1.25e-05,
+        "elapsed_s": 571.1549949645996,
+        "peak_gpu_gb": [
+          233.2411675453186,
+          233.46197700500488,
+          235.6228814125061,
+          236.0366234779358
+        ]
+      },
+      {
+        "at": 1793754960.5683024,
+        "event": "step",
+        "variant": "sol_sft",
+        "step": 2,
+        "planned_steps": 7,
+        "rows": 8,
+        "loss": 0.398735910654068,
+        "grad_norm": 0.07445511966943741,
+        "learning_rate": 4.752422169756048e-05,
+        "elapsed_s": 1181.0993738174438,
+        "peak_gpu_gb": [
+          244.93780183792114,
+          245.3018388748169,
+          248.09702110290527,
+          248.24514484405518
+        ]
+      },
+      {
+        "at": 1793755580.4196193,
+        "event": "step",
+        "variant": "sol_sft",
+        "step": 3,
+        "planned_steps": 7,
+        "rows": 12,
+        "loss": 0.43572140485048294,
+        "grad_norm": 0.06972146779298782,
+        "learning_rate": 4.058724504646834e-05,
+        "elapsed_s": 1800.9507098197937,
+        "peak_gpu_gb": [
+          249.39900588989258,
+          249.9023985862732,
+          252.89017868041992,
+          253.15367794036865
+        ]
+      }
+    ],
+    "partial_adapter_sha256": "064c1615a2756ce735ccfbd25befda14c2ee39741356627432dd64d55805f4c1",
+    "RS_training_started": false,
+    "completed_training": false
+  },
+  "failure": {
+    "where": "Backward on14thexample; first13microbatchesfinished,12examplesincorporatedin3savedupdates",
+    "requested_gib": 21.66,
+    "free_gib": 7.66,
+    "reserved_unallocated_gib": 28.53,
+    "active_allocated_gib": 230.63,
+    "diagnosis": "Hyperconnection broadcast [70973,4,4,5120] float32 is23257415680bytes, exactly matchingfailedrequest. Fragmentationmaycontribute.",
+    "evidence_type": "ObservedOOM + analyticalallocationidentity; proposedGPUfixunqualified"
+  },
+  "proposed_fix": {
+    "operation": "einsum('sij,sid->sjd',comb,residual.float())",
+    "broadcast_temporary_gib": 21.65924072265625,
+    "contraction_output_gib": 5.4148101806640625,
+    "cpu_cases": [
+      {
+        "dtype": "torch.float32",
+        "shape": [
+          7,
+          4,
+          13
+        ],
+        "output_relative_l2": 0.0,
+        "gradient_relative_l2": 8.837994869281829e-08,
+        "max_output_abs_delta": 0.0,
+        "max_gradient_abs_delta": 9.5367431640625e-07
+      },
+      {
+        "dtype": "torch.float32",
+        "shape": [
+          23,
+          4,
+          127
+        ],
+        "output_relative_l2": 4.7968168104262077e-08,
+        "gradient_relative_l2": 1.337425885594712e-07,
+        "max_output_abs_delta": 9.5367431640625e-07,
+        "max_gradient_abs_delta": 5.7220458984375e-06
+      },
+      {
+        "dtype": "torch.float32",
+        "shape": [
+          3,
+          4,
+          5120
+        ],
+        "output_relative_l2": 4.471780812309589e-08,
+        "gradient_relative_l2": 6.070171139072045e-07,
+        "max_output_abs_delta": 9.5367431640625e-07,
+        "max_gradient_abs_delta": 0.00014495849609375
+      },
+      {
+        "dtype": "torch.bfloat16",
+        "shape": [
+          7,
+          4,
+          13
+        ],
+        "output_relative_l2": 0.0,
+        "gradient_relative_l2": 2.9146121960366145e-08,
+        "max_output_abs_delta": 0.0,
+        "max_gradient_abs_delta": 9.5367431640625e-07
+      },
+      {
+        "dtype": "torch.bfloat16",
+        "shape": [
+          23,
+          4,
+          127
+        ],
+        "output_relative_l2": 1.3716999092139304e-07,
+        "gradient_relative_l2": 8.008006346926777e-08,
+        "max_output_abs_delta": 3.0517578125e-05,
+        "max_gradient_abs_delta": 7.62939453125e-06
+      },
+      {
+        "dtype": "torch.bfloat16",
+        "shape": [
+          3,
+          4,
+          5120
+        ],
+        "output_relative_l2": 2.2955035094973653e-10,
+        "gradient_relative_l2": 2.6038364353553334e-07,
+        "max_output_abs_delta": 1.1920928955078125e-07,
+        "max_gradient_abs_delta": 4.57763671875e-05
+      }
+    ],
+    "full_length_GPU_backward_test": false,
+    "no_training_resumed_after_deadline": true
+  },
+  "public_prefix_parity": {
+    "at": 1793753699.9675674,
+    "cases": [
+      {
+        "name": "short",
+        "n": 22,
+        "mean_abs_logprob_delta": 0.2152041563221432
+      },
+      {
+        "name": "compressed_context",
+        "n": 6918,
+        "mean_abs_logprob_delta": 0.004480813086899604
+      },
+      {
+        "name": "long_context",
+        "n": 36818,
+        "mean_abs_logprob_delta": 0.000839470136393116
+      }
+    ],
+    "scope": "Public raw-prefix teacher-forced check; not bitexact or task-quality proof"
+  },
+  "fresh_test_preparation": {
+    "worlds": 4,
+    "authored_attempts": 48,
+    "gated": 45,
+    "independent_sound": 43,
+    "independent_required": 42,
+    "raw_invariant_violations": 0,
+    "final24_selected": false,
+    "model_rollouts": 0
+  },
+  "sonnet55": {
+    "at": 1793768429.6145856,
+    "requested_model": "claude-sonnet-5-5",
+    "scope": "One native subscription availability check after prior Retry-After; public request, no paid fallback",
+    "http_status": 200,
+    "actual_model": "claude-sonnet-5-5",
+    "available": true
+  },
+  "capability_results": null,
+  "cleanup": {
+    "resident_healthy": true,
+    "owned_campaign_jobs_remaining": 0,
+    "resident_preserved": true,
+    "other_gpu_trial_modified": false,
+    "recurring_automation_enabled": false
+  },
+  "operational_failure": "Controllers exited afterOOM ratherthanexecutingarecoverylineage; no recoverybefore08UTCdeadline. Overnightresultsgoalnotmet. Firststepqualificationdidnotcoverworstcasebackwardmemory.",
+  "limits": [
+    "Single synthetic product archetype;12workflows",
+    "Finalappend-compatiblephase supervision, all earlierprefixretained asmaskedinput",
+    "Matched26canonicalrequests perinitialvariant; token totalsdiffer",
+    "Trainingloss and infra failure imply no capability gain/loss",
+    "ExistingconversationJSONLcutoffunchanged; thisfileisapprovedaggregateonly"
+  ]
+}

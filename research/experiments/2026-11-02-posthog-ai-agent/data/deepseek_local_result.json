@@ -1,0 +1,437 @@
+{
+  "at": 1793731477.0992074,
+  "metrics": {
+    "deepseek-v41-flash-1017-local": {
+      "primary": {
+        "completed": 24,
+        "planned": 24,
+        "passed": 12,
+        "rate": 0.5,
+        "mean_score": 7.445833333333334
+      },
+      "secondary_terra": {
+        "completed": 24,
+        "planned": 24,
+        "passed": 10,
+        "rate": 0.4166666666666667,
+        "mean_score": 7.0875
+      }
+    },
+    "sonnet55": {
+      "primary": {
+        "completed": 0,
+        "planned": 24,
+        "passed": 0,
+        "rate": null,
+        "mean_score": null
+      },
+      "secondary_terra": {
+        "completed": 0,
+        "planned": 24,
+        "passed": 0,
+        "rate": null,
+        "mean_score": null
+      }
+    }
+  },
+  "status": {
+    "deepseek-v41-flash-1017-local": {
+      "ok": 24
+    },
+    "sonnet55": {}
+  },
+  "restoration": {
+    "deepseek-v41-flash-1017-local": {
+      "observed": 24,
+      "unclean_or_missing": 0
+    },
+    "sonnet55": {
+      "observed": 0,
+      "unclean_or_missing": 0
+    }
+  },
+  "failure_present": false,
+  "no_training": true,
+  "server_preserved_for_user_planned_training": true,
+  "limits": [
+    "One sample/task; two synthetic worlds, one product archetype.",
+    "Earlier Qwen and Sol runs preserved controls, not fresh simultaneous rollouts.",
+    "OpenRouter high-reasoning/default temperature differs from local template default and T=.7.",
+    "No selection/tuning of checkpoints using these scores.",
+    "Known attribution-realism limitations of original final recipe remain; data unchanged."
+  ],
+  "paired_vs_qwen_primary": {
+    "tasks": 24,
+    "families": 12,
+    "wins": 5,
+    "losses": 1,
+    "ties": 18,
+    "difference_pp": 16.666666666666664,
+    "family_cluster_bootstrap_95ci_pp": [
+      4.166666666666666,
+      29.166666666666668
+    ],
+    "bootstrap_repeats": 20000,
+    "bootstrap_seed": 0,
+    "limits": "Descriptive small synthetic holdout; oldQwen traces, not new simultaneous control; sharedjudge uncertainty. Bootstrap conditions on observed outcomes; it excludes within-task rollout and judge variation. Exact paired sign test is not significant at0.05.",
+    "exact_mcnemar_two_sided_p": 0.21875
+  },
+  "judge_agreement": {
+    "agreed": 20,
+    "total": 24
+  },
+  "families": {
+    "anomaly_investigation": {
+      "tasks": 2,
+      "deepseek_primary_passes": 2,
+      "deepseek_secondary_passes": 0,
+      "qwen_primary_passes": 1
+    },
+    "attribution_marketing": {
+      "tasks": 2,
+      "deepseek_primary_passes": 1,
+      "deepseek_secondary_passes": 1,
+      "qwen_primary_passes": 1
+    },
+    "build_insight_dashboard": {
+      "tasks": 2,
+      "deepseek_primary_passes": 1,
+      "deepseek_secondary_passes": 1,
+      "qwen_primary_passes": 1
+    },
+    "entity_lookup": {
+      "tasks": 2,
+      "deepseek_primary_passes": 0,
+      "deepseek_secondary_passes": 0,
+      "qwen_primary_passes": 0
+    },
+    "flags_experiments": {
+      "tasks": 2,
+      "deepseek_primary_passes": 1,
+      "deepseek_secondary_passes": 1,
+      "qwen_primary_passes": 0
+    },
+    "funnel_conversion": {
+      "tasks": 2,
+      "deepseek_primary_passes": 0,
+      "deepseek_secondary_passes": 1,
+      "qwen_primary_passes": 0
+    },
+    "llm_analytics": {
+      "tasks": 2,
+      "deepseek_primary_passes": 2,
+      "deepseek_secondary_passes": 2,
+      "qwen_primary_passes": 1
+    },
+    "retention_engagement": {
+      "tasks": 2,
+      "deepseek_primary_passes": 0,
+      "deepseek_secondary_passes": 0,
+      "qwen_primary_passes": 0
+    },
+    "sql_help": {
+      "tasks": 2,
+      "deepseek_primary_passes": 2,
+      "deepseek_secondary_passes": 2,
+      "qwen_primary_passes": 2
+    },
+    "tracking_quality": {
+      "tasks": 2,
+      "deepseek_primary_passes": 0,
+      "deepseek_secondary_passes": 0,
+      "qwen_primary_passes": 0
+    },
+    "trend_breakdown": {
+      "tasks": 2,
+      "deepseek_primary_passes": 1,
+      "deepseek_secondary_passes": 1,
+      "qwen_primary_passes": 1
+    },
+    "warehouse": {
+      "tasks": 2,
+      "deepseek_primary_passes": 2,
+      "deepseek_secondary_passes": 1,
+      "qwen_primary_passes": 1
+    }
+  },
+  "protocol_sha256": "f11321f12a886848e7af9cc1fe05891d9c4589c19a4b95f40e887ec7d1930c54",
+  "task_sha256": "23a07a82b838dec80b7f427d18240b05d21fcbeb10d38babb523a22617fc1ff4",
+  "checkpoint_revision": "1bae0e1088993b9b82de08f59de5be5a34e42170",
+  "case_outcomes": [
+    {
+      "task_id": "v4-06197f063c88",
+      "family": "tracking_quality",
+      "deepseek_primary": false,
+      "deepseek_secondary": false,
+      "qwen_primary": false,
+      "deepseek_primary_score": 6.7,
+      "deepseek_secondary_score": 5.7,
+      "elapsed_s": 133
+    },
+    {
+      "task_id": "v4-3045730948bf",
+      "family": "trend_breakdown",
+      "deepseek_primary": true,
+      "deepseek_secondary": true,
+      "qwen_primary": true,
+      "deepseek_primary_score": 8.3,
+      "deepseek_secondary_score": 8,
+      "elapsed_s": 90.9
+    },
+    {
+      "task_id": "v4-3942d9ffda5d",
+      "family": "llm_analytics",
+      "deepseek_primary": true,
+      "deepseek_secondary": true,
+      "qwen_primary": false,
+      "deepseek_primary_score": 7.7,
+      "deepseek_secondary_score": 8.6,
+      "elapsed_s": 93.8
+    },
+    {
+      "task_id": "v4-41030b6b405e",
+      "family": "funnel_conversion",
+      "deepseek_primary": false,
+      "deepseek_secondary": false,
+      "qwen_primary": false,
+      "deepseek_primary_score": 6.8,
+      "deepseek_secondary_score": 6.6,
+      "elapsed_s": 260.3
+    },
+    {
+      "task_id": "v4-4c1c4b974ddf",
+      "family": "flags_experiments",
+      "deepseek_primary": true,
+      "deepseek_secondary": true,
+      "qwen_primary": false,
+      "deepseek_primary_score": 8.9,
+      "deepseek_secondary_score": 8.7,
+      "elapsed_s": 140.1
+    },
+    {
+      "task_id": "v4-5a826b1948d3",
+      "family": "attribution_marketing",
+      "deepseek_primary": false,
+      "deepseek_secondary": false,
+      "qwen_primary": true,
+      "deepseek_primary_score": 6,
+      "deepseek_secondary_score": 5.7,
+      "elapsed_s": 90.6
+    },
+    {
+      "task_id": "v4-5e93eb2a1411",
+      "family": "llm_analytics",
+      "deepseek_primary": true,
+      "deepseek_secondary": true,
+      "qwen_primary": true,
+      "deepseek_primary_score": 8,
+      "deepseek_secondary_score": 7.7,
+      "elapsed_s": 76.8
+    },
+    {
+      "task_id": "v4-6b6eea3b69ee",
+      "family": "attribution_marketing",
+      "deepseek_primary": true,
+      "deepseek_secondary": true,
+      "qwen_primary": false,
+      "deepseek_primary_score": 8.5,
+      "deepseek_secondary_score": 7.9,
+      "elapsed_s": 85.7
+    },
+    {
+      "task_id": "v4-7b622f2d1120",
+      "family": "retention_engagement",
+      "deepseek_primary": false,
+      "deepseek_secondary": false,
+      "qwen_primary": false,
+      "deepseek_primary_score": 5.1,
+      "deepseek_secondary_score": 5.1,
+      "elapsed_s": 108.9
+    },
+    {
+      "task_id": "v4-7f3ea4b7101d",
+      "family": "trend_breakdown",
+      "deepseek_primary": false,
+      "deepseek_secondary": false,
+      "qwen_primary": false,
+      "deepseek_primary_score": 5.5,
+      "deepseek_secondary_score": 5.9,
+      "elapsed_s": 65
+    },
+    {
+      "task_id": "v4-89e3e3f155fd",
+      "family": "tracking_quality",
+      "deepseek_primary": false,
+      "deepseek_secondary": false,
+      "qwen_primary": false,
+      "deepseek_primary_score": 6.7,
+      "deepseek_secondary_score": 6.4,
+      "elapsed_s": 99
+    },
+    {
+      "task_id": "v4-90f1e612d683",
+      "family": "sql_help",
+      "deepseek_primary": true,
+      "deepseek_secondary": true,
+      "qwen_primary": true,
+      "deepseek_primary_score": 9.5,
+      "deepseek_secondary_score": 9.4,
+      "elapsed_s": 26.4
+    },
+    {
+      "task_id": "v4-b0af7bd4c7e6",
+      "family": "entity_lookup",
+      "deepseek_primary": false,
+      "deepseek_secondary": false,
+      "qwen_primary": false,
+      "deepseek_primary_score": 5.7,
+      "deepseek_secondary_score": 6,
+      "elapsed_s": 64.9
+    },
+    {
+      "task_id": "v4-b0b72fa19d92",
+      "family": "build_insight_dashboard",
+      "deepseek_primary": true,
+      "deepseek_secondary": true,
+      "qwen_primary": true,
+      "deepseek_primary_score": 9.1,
+      "deepseek_secondary_score": 8.4,
+      "elapsed_s": 154.1
+    },
+    {
+      "task_id": "v4-baec29726316",
+      "family": "retention_engagement",
+      "deepseek_primary": false,
+      "deepseek_secondary": false,
+      "qwen_primary": false,
+      "deepseek_primary_score": 6.6,
+      "deepseek_secondary_score": 6.1,
+      "elapsed_s": 95.1
+    },
+    {
+      "task_id": "v4-c5e0705c0a07",
+      "family": "build_insight_dashboard",
+      "deepseek_primary": false,
+      "deepseek_secondary": false,
+      "qwen_primary": false,
+      "deepseek_primary_score": 5.8,
+      "deepseek_secondary_score": 5.8,
+      "elapsed_s": 162
+    },
+    {
+      "task_id": "v4-c6f24b2a1c3a",
+      "family": "funnel_conversion",
+      "deepseek_primary": false,
+      "deepseek_secondary": true,
+      "qwen_primary": false,
+      "deepseek_primary_score": 6.9,
+      "deepseek_secondary_score": 7.6,
+      "elapsed_s": 152.9
+    },
+    {
+      "task_id": "v4-ca11587a879b",
+      "family": "sql_help",
+      "deepseek_primary": true,
+      "deepseek_secondary": true,
+      "qwen_primary": true,
+      "deepseek_primary_score": 9.6,
+      "deepseek_secondary_score": 9.8,
+      "elapsed_s": 29.6
+    },
+    {
+      "task_id": "v4-cd9f69000810",
+      "family": "anomaly_investigation",
+      "deepseek_primary": true,
+      "deepseek_secondary": false,
+      "qwen_primary": true,
+      "deepseek_primary_score": 7.8,
+      "deepseek_secondary_score": 5.7,
+      "elapsed_s": 87.3
+    },
+    {
+      "task_id": "v4-df25970fe397",
+      "family": "warehouse",
+      "deepseek_primary": true,
+      "deepseek_secondary": false,
+      "qwen_primary": true,
+      "deepseek_primary_score": 8.5,
+      "deepseek_secondary_score": 7.5,
+      "elapsed_s": 59.8
+    },
+    {
+      "task_id": "v4-f0bdf0c642a0",
+      "family": "anomaly_investigation",
+      "deepseek_primary": true,
+      "deepseek_secondary": false,
+      "qwen_primary": false,
+      "deepseek_primary_score": 8.6,
+      "deepseek_secondary_score": 5.9,
+      "elapsed_s": 78.8
+    },
+    {
+      "task_id": "v4-f3fc32c7b1eb",
+      "family": "flags_experiments",
+      "deepseek_primary": false,
+      "deepseek_secondary": false,
+      "qwen_primary": false,
+      "deepseek_primary_score": 6.9,
+      "deepseek_secondary_score": 6.3,
+      "elapsed_s": 124.8
+    },
+    {
+      "task_id": "v4-f68536cbbfc8",
+      "family": "entity_lookup",
+      "deepseek_primary": false,
+      "deepseek_secondary": false,
+      "qwen_primary": false,
+      "deepseek_primary_score": 6.7,
+      "deepseek_secondary_score": 6.8,
+      "elapsed_s": 81.4
+    },
+    {
+      "task_id": "v4-f6d8b2907fd4",
+      "family": "warehouse",
+      "deepseek_primary": true,
+      "deepseek_secondary": true,
+      "qwen_primary": false,
+      "deepseek_primary_score": 8.8,
+      "deepseek_secondary_score": 8.5,
+      "elapsed_s": 64.4
+    }
+  ],
+  "server_healthy_checked_http": 200,
+  "sonnet55_availability": {
+    "http_status": 429,
+    "retry_after_s": 41535,
+    "measured": false
+  },
+  "runtime_setup": {
+    "measured": "Exact checkpoint loaded with forced safetensors prefetch; real dev integration completed114.6s, root API errors0 and reset unresolved0 before final24.",
+    "final_config": {
+      "gpus": [
+        3,
+        4,
+        5,
+        6
+      ],
+      "tensor_parallel_size": 4,
+      "max_num_seqs": 8,
+      "max_num_batched_tokens": 4096,
+      "cuda_graphs": "stock",
+      "temperature": 0.7,
+      "max_completion_tokens": 32768,
+      "native_tools": true,
+      "model_context_limit": 200000
+    },
+    "preserved_negatives": [
+      "Cached September release rejected as wrong version before evaluation.",
+      "Exact checkpoint network-volume quota exceeded; resumed missing shards across owned public-weight scratch locations.",
+      "15min and45min lazy-loading attempts did not reach readiness.",
+      "Worker stacks showed expert-copy mmap page-read stalls on FUSE; forced prefetch subsequently reached readiness.",
+      "First full request caused an unlogged engine exit; all resulting connection-error rollouts preserved as incomplete infrastructure.",
+      "Eager-mode initialization failed with a closed worker pipe; no scores."
+    ],
+    "causal_limits": "Final healthy configuration also removed temporary stack-dump observer and restored stock CUDA graphs. These changes were not isolated; engine-exit cause is not established.",
+    "cleanup": "Evaluator exited; resident DeepSeek health200, preserved for user-planned training; no training launched."
+  }
+}

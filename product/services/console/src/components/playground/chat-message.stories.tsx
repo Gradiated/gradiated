@@ -41,7 +41,7 @@ const Conversation = ({ messages }: { messages: PlaygroundMessage[] }) => (
 );
 
 const meta = {
-  title: "Playground/Chat message",
+  title: "Pages/Playground/Blocks/Chat message",
   component: Conversation,
 } satisfies Meta<typeof Conversation>;
 

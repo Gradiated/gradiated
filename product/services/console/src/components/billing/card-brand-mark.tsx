@@ -105,14 +105,14 @@ export const cardLabel = (
     ? `${cardBrandName(card.brand)} ${style === "long" ? "ending in" : "••••"} ${card.last4}`
     : "Card on file";
 
-// The muted strip that shows a saved card, or a stand-in, inside dialogs.
+// The muted strip that shows a saved card inside dialogs.
 export const SavedCardSummary = ({
   card,
   prefix,
   className,
   children,
 }: {
-  card: { brand: string | null; last4: string | null } | null;
+  card: { brand: string | null; last4: string | null };
   prefix?: string;
   className?: string;
   children?: ReactNode;
@@ -123,16 +123,8 @@ export const SavedCardSummary = ({
       className,
     )}
   >
-    {card ? (
-      <>
-        <CardBrandMark brand={card.brand} />
-        {prefix ? `${prefix} ${cardLabel(card)}` : cardLabel(card)}
-      </>
-    ) : (
-      <span className="text-muted-foreground">
-        You&apos;ll enter your card details on Stripe.
-      </span>
-    )}
+    <CardBrandMark brand={card.brand} />
+    {prefix ? `${prefix} ${cardLabel(card)}` : cardLabel(card)}
     {children}
   </div>
 );

@@ -22,7 +22,8 @@ def main():
         raw = response.read(1024 * 1024 + 1)
     if len(raw) > 1024 * 1024:
         raise ValueError("Oversized base configuration")
-    config = json.loads(raw)["text_config"]
+    document = json.loads(raw)
+    config = document.get("text_config", document)
     layers = config["num_hidden_layers"]
     input_size = config["q_lora_rank"]
     output_size = config["num_attention_heads"] * config["head_dim"]
@@ -30,7 +31,7 @@ def main():
     for layer in range(layers):
         for side, shape in (("A", [1, input_size]), ("B", [output_size, 1])):
             size = 2 * shape[0] * shape[1]
-            name = f"base_model.model.layers.{layer}.self_attn.q_b_proj.lora_{side}.weight"
+            name = f"base_model.model.layers.{layer}.attn.wq_b.lora_{side}.weight"
             header[name] = {"dtype": "BF16", "shape": shape,
                             "data_offsets": [offset, offset + size]}
             offset += size
@@ -39,7 +40,7 @@ def main():
     args.output.mkdir(parents=True, exist_ok=True)
     adapter = {"base_model_name_or_path": repo, "revision": revision,
                "peft_type": "LORA", "task_type": "CAUSAL_LM", "r": 1,
-               "lora_alpha": 1, "lora_dropout": 0.0, "target_modules": ["q_b_proj"],
+               "lora_alpha": 1, "lora_dropout": 0.0, "target_modules": ["wq_b"],
                "bias": "none", "inference_mode": True, "use_dora": False,
                "fan_in_fan_out": False}
     (args.output / "adapter_config.json").write_text(json.dumps(adapter, indent=2) + "\n")

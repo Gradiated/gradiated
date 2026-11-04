@@ -261,11 +261,7 @@ export const ConfigReplacedWithoutRevision: Story = {
         { type: "application/json" },
       ),
     );
-    await waitFor(() =>
-      expect(dialog.getByRole("status")).toHaveTextContent(
-        "Training checkpoint is unknown.",
-      ),
-    );
+    await dialog.findByText("Unknown", { exact: true });
     await expect(
       dialog.getByRole("button", { name: "Create task & upload" }),
     ).toBeEnabled();

@@ -81,27 +81,20 @@ export const AdapterLayerMap = ({
       </div>
     );
 
-  const adaptedLayers = [...adapted.values()].flatMap((layers) => [...layers]);
-  const layerCount = Math.max(
-    base?.layerCount ?? 0,
-    adaptedLayers.length ? Math.max(...adaptedLayers) + 1 : 0,
-  );
-  if (!layerCount) return null;
+  const modules = base?.modules;
+  if (!base || !modules) return null;
 
-  const rows = [
-    ...new Set([...(base?.modules?.keys() ?? []), ...adapted.keys()]),
-  ];
+  const layerCount = base.layerCount;
+  const touched = new Set(
+    [...adapted.values()].flatMap((layers) => [...layers]),
+  ).size;
+
+  const rows = [...new Set([...modules.keys(), ...adapted.keys()])];
   const labels = rows.map(shortName);
   const label = (index: number) =>
     labels.filter((name) => name === labels[index]).length > 1
       ? (rows[index] ?? "")
       : (labels[index] ?? "");
-  const touched = new Set(adaptedLayers).size;
-  const note = !base
-    ? "The base model's structure isn't available, so this shows only the layers the adapter changes."
-    : !base.modules
-      ? "The module layout for this architecture isn't known, so only adapted modules are shown."
-      : null;
 
   return (
     <figure className="space-y-2">
@@ -112,12 +105,10 @@ export const AdapterLayerMap = ({
             <span className="size-2 rounded-[2px] bg-[#6e7f31]" />
             Adapted
           </span>
-          {base?.modules ? (
-            <span className="flex items-center gap-1">
-              <span className="size-2 rounded-[2px] bg-muted-foreground/20" />
-              Not adapted
-            </span>
-          ) : null}
+          <span className="flex items-center gap-1">
+            <span className="size-2 rounded-[2px] bg-muted-foreground/20" />
+            Not adapted
+          </span>
         </span>
       </figcaption>
       <div
@@ -130,7 +121,7 @@ export const AdapterLayerMap = ({
         }}
       >
         {rows.map((module, row) => {
-          const present = base?.modules?.get(module);
+          const present = modules.get(module);
           const covered = adapted.get(module);
 
           return [
@@ -147,7 +138,7 @@ export const AdapterLayerMap = ({
               return (
                 <span
                   key={`${module}-${layer}`}
-                  title={`${module}, layer ${layer}: ${isAdapted ? "adapted" : exists ? "not adapted" : base?.modules ? "not in this layer" : "unknown"}`}
+                  title={`${module}, layer ${layer}: ${isAdapted ? "adapted" : exists ? "not adapted" : "not in this layer"}`}
                   className={cn(
                     "h-2.5",
                     layerCount <= 48 && "rounded-[1px]",
@@ -172,9 +163,6 @@ export const AdapterLayerMap = ({
           <span>{layerCount - 1}</span>
         </span>
       </div>
-      {note ? (
-        <p className="text-[11px] text-muted-foreground">{note}</p>
-      ) : null}
     </figure>
   );
 };

@@ -257,11 +257,10 @@ export const UploadModelDialog = ({
     },
   });
   const revisionIsImmutable = /^[0-9a-f]{40}$/.test(revision);
-  const checkpointWarning = !revisionIsImmutable
-    ? "Training checkpoint is unknown. Results may differ."
-    : expectedRevision && revision !== expectedRevision
-      ? "Trained on a different checkpoint. Results may differ."
-      : null;
+  const checkpointDiffers =
+    revisionIsImmutable &&
+    Boolean(expectedRevision) &&
+    revision !== expectedRevision;
 
   const adapterDetails = [
     ["Rank", metadata?.r],
@@ -488,29 +487,46 @@ export const UploadModelDialog = ({
                       Checkpoint
                     </dt>
                     <dd className="mt-1">
-                      {revision && huggingFaceRepo ? (
-                        <a
-                          href={`https://huggingface.co/${huggingFaceRepo}/tree/${revision}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          title={revision}
-                          className="inline-flex items-center gap-1 font-mono text-xs underline decoration-border underline-offset-4 hover:decoration-foreground"
-                        >
-                          {revisionIsImmutable
-                            ? revision.slice(0, 12)
-                            : revision}
-                          <ArrowUpRight aria-hidden className="size-3" />
-                        </a>
-                      ) : (
+                      {!revisionIsImmutable ? (
                         <span
-                          className={
+                          className="inline-flex items-center gap-1.5 text-amber-700 dark:text-amber-400"
+                          title={
                             revision
-                              ? "font-mono text-xs"
-                              : "text-muted-foreground"
+                              ? `Recorded as "${revision}", which is not a fixed commit. Results may differ.`
+                              : "The adapter config does not record its training checkpoint. Results may differ."
                           }
                         >
-                          {revision || "Not recorded"}
+                          <TriangleAlert aria-hidden className="size-3.5" />
+                          Unknown
                         </span>
+                      ) : (
+                        <>
+                          {huggingFaceRepo ? (
+                            <a
+                              href={`https://huggingface.co/${huggingFaceRepo}/tree/${revision}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              title={revision}
+                              className="inline-flex items-center gap-1 font-mono text-xs underline decoration-border underline-offset-4 hover:decoration-foreground"
+                            >
+                              {revision.slice(0, 12)}
+                              <ArrowUpRight aria-hidden className="size-3" />
+                            </a>
+                          ) : (
+                            <span
+                              className="font-mono text-xs"
+                              title={revision}
+                            >
+                              {revision.slice(0, 12)}
+                            </span>
+                          )}
+                          {checkpointDiffers ? (
+                            <span className="mt-1 flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-400">
+                              <TriangleAlert aria-hidden className="size-3.5" />
+                              Not the checkpoint we serve
+                            </span>
+                          ) : null}
+                        </>
                       )}
                     </dd>
                   </div>
@@ -528,18 +544,6 @@ export const UploadModelDialog = ({
                     loading={baseStructure.isLoading}
                   />
                 ) : null}
-                {checkpointWarning && (
-                  <p
-                    role="status"
-                    className="flex items-start gap-1.5 text-xs text-amber-700 dark:text-amber-400"
-                  >
-                    <TriangleAlert
-                      aria-hidden
-                      className="mt-px size-3.5 shrink-0"
-                    />
-                    {checkpointWarning}
-                  </p>
-                )}
               </div>
             )}
             {models.error && (

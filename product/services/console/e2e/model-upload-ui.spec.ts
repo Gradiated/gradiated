@@ -279,9 +279,9 @@ for (const revision of [undefined, null, "main"]) {
         buffer: Buffer.alloc(32, 1),
       },
     ]);
-    await expect(page.getByRole("status")).toContainText(
-      "different checkpoint",
-    );
+    await expect(
+      page.getByText("Not the checkpoint we serve", { exact: true }),
+    ).toBeVisible();
     await expect(
       page.getByRole("link", { name: "a".repeat(12) }),
     ).toHaveAttribute(
@@ -298,9 +298,9 @@ for (const revision of [undefined, null, "main"]) {
         }),
       ),
     });
-    await expect(page.getByRole("status")).toHaveText(
-      "Training checkpoint is unknown. Results may differ.",
-    );
+    await expect(
+      page.getByRole("dialog").getByText("Unknown", { exact: true }),
+    ).toBeVisible();
     const submit = page
       .getByRole("dialog")
       .getByRole("button", { name: "Upload version", exact: true });
@@ -355,14 +355,10 @@ test("shows detected adapter details without model or revision fields", async ({
     dialog.getByRole("img", { name: "Adapter covers 1 of 28 layers" }),
   ).toBeVisible();
   await expect(detail("Size")).toHaveText(/^\d+ KB$/);
-  await expect(detail("Checkpoint")).toHaveText("Not recorded");
+  await expect(detail("Checkpoint")).toHaveText("Unknown");
   await expect(
     dialog.getByRole("textbox", { name: "Base checkpoint revision" }),
   ).toHaveCount(0);
-  await expect(dialog.getByText("Not recorded", { exact: true })).toBeVisible();
-  await expect(dialog.getByRole("status")).toHaveText(
-    "Training checkpoint is unknown. Results may differ.",
-  );
 });
 
 test("model dropdown scrolls with the mouse wheel", async ({ page }) => {

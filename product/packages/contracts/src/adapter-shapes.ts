@@ -79,5 +79,24 @@ export const adapterProjectionShapes = (
     }
     return shapes;
   }
+  if (config.model_type === "deepseek_v41_text") {
+    const head = DimensionSchema.parse(config.head_dim);
+    const kvHeads = DimensionSchema.parse(config.num_key_value_heads);
+    const qRank = DimensionSchema.parse(config.q_lora_rank);
+    const oRank = DimensionSchema.parse(config.o_lora_rank);
+    const oGroups = DimensionSchema.parse(config.o_groups);
+    const expert = DimensionSchema.parse(config.moe_intermediate_size);
+    for (let layer = 0; layer < config.num_hidden_layers; layer++) {
+      add(layer, "attn.wq_a", qRank, hidden);
+      add(layer, "attn.wq_b", heads * head, qRank);
+      add(layer, "attn.wkv", kvHeads * head, hidden);
+      add(layer, "attn.wo_a", oGroups * oRank, (heads * head) / oGroups);
+      add(layer, "attn.wo_b", hidden, oGroups * oRank);
+      add(layer, "ffn.shared_experts.w1", expert, hidden);
+      add(layer, "ffn.shared_experts.w2", hidden, expert);
+      add(layer, "ffn.shared_experts.w3", expert, hidden);
+    }
+    return shapes;
+  }
   return undefined;
 };

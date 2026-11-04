@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import {
+  deepseek_v4_1_flash,
   glm_5_3_flash,
   qwen3_0_6b,
   qwen3_32b,
@@ -102,13 +103,22 @@ export const ManyLayers = story(
   { ...qwen3_32b, num_hidden_layers: 128 },
   tensors(range(0, 128), attention),
 );
-export const UnknownBaseStructure = story(
-  undefined,
-  tensors(range(0, 40), ["self_attn.q_b_proj"]),
+export const DeepSeekQueryProjection = story(
+  deepseek_v4_1_flash,
+  tensors(range(0, 40), ["attn.wq_b"]),
 );
-export const UnknownModuleLayout = story(
-  { num_hidden_layers: 61, model_type: "deepseek_v4" },
-  tensors(range(0, 20), ["self_attn.q_b_proj"]),
+export const DeepSeekAttentionAndSharedExperts = story(
+  deepseek_v4_1_flash,
+  tensors(range(0, 40), [
+    "attn.wq_a",
+    "attn.wq_b",
+    "attn.wkv",
+    "attn.wo_a",
+    "attn.wo_b",
+    "ffn.shared_experts.w1",
+    "ffn.shared_experts.w2",
+    "ffn.shared_experts.w3",
+  ]),
 );
 export const Loading: Story = {
   render: () => (

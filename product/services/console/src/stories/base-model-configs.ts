@@ -76,3 +76,15 @@ export const glm_5_3_flash = {
   qk_nope_head_dim: 256,
   v_head_dim: 256,
 };
+export const deepseek_v4_1_flash = {
+  model_type: "deepseek_v41_text",
+  hidden_size: 5120,
+  num_hidden_layers: 40,
+  num_attention_heads: 64,
+  num_key_value_heads: 1,
+  head_dim: 512,
+  q_lora_rank: 1280,
+  o_lora_rank: 1024,
+  o_groups: 8,
+  moe_intermediate_size: 2304,
+};

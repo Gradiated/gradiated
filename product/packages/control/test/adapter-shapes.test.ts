@@ -65,6 +65,34 @@ describe("serving adapter dimensions", () => {
       "1/self_attn.o_proj": [4, 4],
     });
   });
+  it("derives DeepSeek V4.1 low-rank attention and shared experts", () => {
+    const shapes = adapterProjectionShapes({
+      model_type: "deepseek_v41_text",
+      hidden_size: 5120,
+      num_hidden_layers: 40,
+      num_attention_heads: 64,
+      num_key_value_heads: 1,
+      head_dim: 512,
+      q_lora_rank: 1280,
+      o_lora_rank: 1024,
+      o_groups: 8,
+      moe_intermediate_size: 2304,
+    });
+
+    // Matches the tensors in deepseek-ai/DeepSeek-V4.1-Flash at dba1be0.
+    expect(shapes).toMatchObject({
+      "39/attn.wq_a": [1280, 5120],
+      "39/attn.wq_b": [32768, 1280],
+      "39/attn.wkv": [512, 5120],
+      "39/attn.wo_a": [8192, 4096],
+      "39/attn.wo_b": [5120, 8192],
+      "39/ffn.shared_experts.w1": [2304, 5120],
+      "39/ffn.shared_experts.w2": [5120, 2304],
+      "39/ffn.shared_experts.w3": [2304, 5120],
+    });
+    expect(Object.keys(shapes ?? {})).toHaveLength(320);
+  });
+
   it("does not assume unknown architectures are supported", () => {
     expect(
       adapterProjectionShapes({ ...qwen, model_type: "unknown" }),

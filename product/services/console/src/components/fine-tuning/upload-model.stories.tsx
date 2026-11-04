@@ -3,6 +3,7 @@ import { expect, userEvent, within, waitFor } from "storybook/test";
 import { delay, http, HttpResponse } from "msw";
 import type { components } from "@/api/schema";
 import { StoryPage } from "@/stories/story-page";
+import { qwen3_0_6b } from "@/stories/base-model-configs";
 import { handlers } from "@/stories/handlers";
 
 const task = {
@@ -57,6 +58,10 @@ const uploadHandlers = ({
           ),
         ]
       : []),
+    http.get(
+      "https://huggingface.co/:owner/:repo/resolve/:revision/config.json",
+      () => HttpResponse.json(qwen3_0_6b),
+    ),
     http.get("/api/v1/workspaces/:workspaceId/tasks", () =>
       HttpResponse.json({
         data:

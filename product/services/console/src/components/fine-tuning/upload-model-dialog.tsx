@@ -39,6 +39,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { TaskRow } from "@/store/fine-tuning-types";
+import {
+  AdapterLayerMap,
+  adapterLayerModules,
+  baseModelStructure,
+  type LayerModules,
+} from "@/components/fine-tuning/adapter-layer-map";
 import { errorMessage } from "@/lib/errors";
 import { slugifyTaskInput } from "@/lib/task-slug";
 
@@ -76,7 +82,7 @@ export const UploadModelDialog = ({
   > | null>(null);
   const [tensorDetails, setTensorDetails] = useState<{
     precision: string;
-    layers: number;
+    modules: LayerModules;
   } | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -200,18 +206,13 @@ export const UploadModelDialog = ({
               ),
             ),
           ];
-          const layers = new Set(
-            tensors
-              .map(([key]) => /(?:^|\.)layers\.(\d+)\./.exec(key)?.[1])
-              .filter((value) => value !== undefined),
-          );
           setTensorDetails({
             precision: precisions
               .map((dtype) =>
                 dtype === "F16" ? "FP16" : dtype === "F32" ? "FP32" : dtype,
               )
               .join(" / "),
-            layers: layers.size,
+            modules: adapterLayerModules(tensors.map(([key]) => key)),
           });
         }
       } catch {
@@ -236,8 +237,25 @@ export const UploadModelDialog = ({
     weights_size: weights?.size,
   });
 
-  const expectedRevision = (catalogModel(baseModel) as CatalogEntry | undefined)
-    ?.training?.revision;
+  const training = (catalogModel(baseModel) as CatalogEntry | undefined)
+    ?.training;
+  const expectedRevision = training?.revision;
+  const baseRepository = training?.model ?? baseModel;
+  const baseStructure = useQuery({
+    queryKey: ["base-model-structure", baseRepository, expectedRevision],
+    enabled: Boolean(baseRepository && expectedRevision),
+    staleTime: Infinity,
+    retry: false,
+    queryFn: async ({ signal }) => {
+      const response = await fetch(
+        `https://huggingface.co/${baseRepository}/resolve/${expectedRevision}/config.json`,
+        { signal },
+      );
+      if (!response.ok) throw new Error("Base model config is unavailable.");
+
+      return baseModelStructure(await response.json()) ?? null;
+    },
+  });
   const revisionIsImmutable = /^[0-9a-f]{40}$/.test(revision);
   const checkpointWarning = !revisionIsImmutable
     ? "Training checkpoint is unknown. Results may differ."
@@ -249,7 +267,6 @@ export const UploadModelDialog = ({
     ["Rank", metadata?.r],
     ["Alpha", metadata?.lora_alpha],
     ["Precision", tensorDetails?.precision],
-    ["Layers", tensorDetails?.layers],
     ["Size", weights && fileSize(weights.size)],
   ].filter((detail): detail is [string, string | number] => Boolean(detail[1]));
   const huggingFaceRepo = /^[\w.-]+\/[\w.-]+$/.test(
@@ -457,8 +474,8 @@ export const UploadModelDialog = ({
             </div>
             {config && metadata && baseModel && (
               <div className="space-y-3 border-t pt-4">
-                <dl className="grid grid-cols-3 gap-x-6 gap-y-3 text-sm sm:grid-cols-5">
-                  <div className="col-span-3">
+                <dl className="grid grid-cols-4 gap-x-6 gap-y-3 text-sm">
+                  <div className="col-span-4 sm:col-span-2">
                     <dt className="text-xs text-muted-foreground">
                       Base model
                     </dt>
@@ -466,7 +483,7 @@ export const UploadModelDialog = ({
                       <ModelOption {...modelOption(baseModel)} />
                     </dd>
                   </div>
-                  <div className="col-span-3 sm:col-span-2">
+                  <div className="col-span-4 sm:col-span-2">
                     <dt className="text-xs text-muted-foreground">
                       Checkpoint
                     </dt>
@@ -503,24 +520,13 @@ export const UploadModelDialog = ({
                       <dd className="mt-1 tabular-nums">{value}</dd>
                     </div>
                   ))}
-                  {metadata.target_modules && (
-                    <div className="col-span-3 sm:col-span-5">
-                      <dt className="text-xs text-muted-foreground">
-                        Target modules
-                      </dt>
-                      <dd className="mt-1.5 flex flex-wrap gap-1">
-                        {metadata.target_modules.map((module) => (
-                          <code
-                            key={module}
-                            className="rounded bg-muted px-1.5 py-0.5 text-xs"
-                          >
-                            {module}
-                          </code>
-                        ))}
-                      </dd>
-                    </div>
-                  )}
                 </dl>
+                {tensorDetails?.modules.size ? (
+                  <AdapterLayerMap
+                    adapted={tensorDetails.modules}
+                    base={baseStructure.data ?? undefined}
+                  />
+                ) : null}
                 {checkpointWarning && (
                   <p
                     role="status"

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { adapterProjectionShapes } from "../src/training/adapter-shapes.js";
+import { adapterProjectionShapes } from "@gradiated/contracts/adapter-shapes";
 import { validateAdapterFiles } from "../src/training/adapter-upload.js";
 import { adapterFiles } from "./support/adapter-upload.js";
 

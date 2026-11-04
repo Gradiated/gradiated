@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { qwen3_0_6b } from "../src/stories/base-model-configs";
 
 test.setTimeout(60_000);
 test.use({ actionTimeout: 20_000 });
@@ -36,6 +37,11 @@ const setup = async (page: Page, role = "admin") => {
   });
   await page.route("**/*", async (route) => {
     const url = new URL(route.request().url());
+    if (
+      url.hostname === "huggingface.co" &&
+      url.pathname.endsWith("/config.json")
+    )
+      return route.fulfill({ json: qwen3_0_6b });
     if (url.hostname !== "127.0.0.1") return route.abort();
     const path = url.pathname;
     const json = (body: unknown) => route.fulfill({ json: body });
@@ -345,7 +351,9 @@ test("shows detected adapter details without model or revision fields", async ({
       .getByRole("definition");
   await expect(detail("Rank")).toHaveText("1");
   await expect(detail("Precision")).toHaveText("BF16");
-  await expect(detail("Layers")).toHaveText("1");
+  await expect(
+    dialog.getByRole("img", { name: "Adapter covers 1 of 28 layers" }),
+  ).toBeVisible();
   await expect(detail("Size")).toHaveText(/^\d+ KB$/);
   await expect(detail("Checkpoint")).toHaveText("Not recorded");
   await expect(

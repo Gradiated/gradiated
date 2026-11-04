@@ -2,7 +2,7 @@ import { z } from "zod";
 import {
   adapterProjectionShapes,
   type ProjectionShapes,
-} from "./adapter-shapes.js";
+} from "@gradiated/contracts/adapter-shapes";
 import { ControlServiceError } from "../errors.js";
 
 const LayerCountSchema = z.number().int().min(1).max(4096);

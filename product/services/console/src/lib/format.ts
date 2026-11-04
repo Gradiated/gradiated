@@ -76,3 +76,8 @@ export const formatRatio = (
     label: `${factor >= 10 ? Math.round(factor) : factor.toFixed(1)}× ${isGood ? good : bad}`,
   };
 };
+
+export const formatFileSize = (bytes: number) =>
+  bytes < 1024 ** 2
+    ? `${Math.max(1, Math.ceil(bytes / 1024))} KB`
+    : `${(bytes / 1024 ** 2).toFixed(1)} MB`;

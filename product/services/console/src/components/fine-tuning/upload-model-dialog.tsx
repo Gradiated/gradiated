@@ -46,6 +46,7 @@ import {
   type LayerModules,
 } from "@/components/fine-tuning/adapter-layer-map";
 import { errorMessage } from "@/lib/errors";
+import { formatFileSize } from "@/lib/format";
 import { slugifyTaskInput } from "@/lib/task-slug";
 
 const AdapterMetadataSchema = z.object({
@@ -55,11 +56,6 @@ const AdapterMetadataSchema = z.object({
   lora_alpha: z.number().positive().optional(),
   target_modules: z.array(z.string()).optional(),
 });
-
-const fileSize = (bytes: number) =>
-  bytes < 1024 ** 2
-    ? `${Math.ceil(bytes / 1024)} KB`
-    : `${(bytes / 1024 ** 2).toFixed(1)} MB`;
 
 export const UploadModelDialog = ({
   task,
@@ -266,7 +262,7 @@ export const UploadModelDialog = ({
     ["Rank", metadata?.r],
     ["Alpha", metadata?.lora_alpha],
     ["Precision", tensorDetails?.precision],
-    ["Size", weights && fileSize(weights.size)],
+    ["Size", weights && formatFileSize(weights.size)],
   ].filter((detail): detail is [string, string | number] => Boolean(detail[1]));
   const huggingFaceRepo = /^[\w.-]+\/[\w.-]+$/.test(
     metadata?.base_model_name_or_path ?? "",
@@ -453,7 +449,7 @@ export const UploadModelDialog = ({
                       {file.name}
                     </span>
                     <span className="shrink-0 text-muted-foreground">
-                      {fileSize(file.size)}
+                      {formatFileSize(file.size)}
                     </span>
                     <button
                       type="button"

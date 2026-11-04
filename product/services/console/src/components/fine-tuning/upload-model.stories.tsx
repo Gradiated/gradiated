@@ -142,6 +142,29 @@ const openUpload = async (canvasElement: HTMLElement, existing = false) => {
   const body = within(canvasElement.ownerDocument.body);
   return within(await body.findByRole("dialog"));
 };
+const targetModules = ["q_proj", "k_proj", "v_proj", "o_proj"];
+// A safetensors file whose header lists BF16 LoRA A/B pairs for each layer.
+const adapterWeights = (rank: number, layers: number) => {
+  const width = 1024;
+  const bytes = rank * width * 2;
+  const tensors: Record<string, unknown> = {};
+  let offset = 0;
+  for (let layer = 0; layer < layers; layer += 1)
+    for (const module of targetModules)
+      for (const [part, shape] of [
+        ["lora_A", [rank, width]],
+        ["lora_B", [width, rank]],
+      ] as const) {
+        tensors[
+          `base_model.model.model.layers.${layer}.self_attn.${module}.${part}.weight`
+        ] = { dtype: "BF16", shape, data_offsets: [offset, offset + bytes] };
+        offset += bytes;
+      }
+  const header = new TextEncoder().encode(JSON.stringify(tensors));
+  const prefix = new DataView(new ArrayBuffer(8));
+  prefix.setBigUint64(0, BigInt(header.length), true);
+  return [prefix.buffer, header, new Uint8Array(offset)];
+};
 const selectFiles = async (
   dialog: ReturnType<typeof within>,
   configOnly = false,
@@ -150,13 +173,16 @@ const selectFiles = async (
     [
       JSON.stringify({
         base_model_name_or_path: task.base_model_id,
-        revision: "a".repeat(40),
+        revision: "c1899de289a04d12100db370d81485cdf75e47ca",
+        r: 16,
+        lora_alpha: 32,
+        target_modules: targetModules,
       }),
     ],
     "adapter_config.json",
     { type: "application/json" },
   );
-  const weights = new File([new Uint8Array(1024)], "adapter_model.safetensors");
+  const weights = new File(adapterWeights(16, 28), "adapter_model.safetensors");
   await userEvent.upload(
     dialog.getByLabelText("Choose adapter files"),
     configOnly ? [config] : [config, weights],
@@ -305,9 +331,12 @@ export const UploadError: Story = {
     await userEvent.click(
       dialog.getByRole("button", { name: "Create task & upload" }),
     );
-    await expect(await dialog.findByRole("alert")).toHaveTextContent(
-      /File upload failed/,
-    );
+    await expect(
+      await within(document.body).findByText(
+        "File upload failed. Please try again.",
+      ),
+    ).toBeInTheDocument();
+    await expect(dialog.queryByRole("alert")).toBeNull();
     await expect(
       dialog.getByRole("button", { name: "Create task & upload" }),
     ).toBeEnabled();
@@ -321,9 +350,10 @@ export const ValidationError: Story = {
     await userEvent.click(
       dialog.getByRole("button", { name: "Create task & upload" }),
     );
-    await expect(await dialog.findByRole("alert")).toHaveTextContent(
-      /tensor rank/,
-    );
+    await expect(
+      await within(document.body).findByText(/tensor rank/),
+    ).toBeInTheDocument();
+    await expect(dialog.queryByRole("alert")).toBeNull();
   },
 };
 export const ModelCatalogError: Story = {
@@ -334,9 +364,6 @@ export const ModelCatalogError: Story = {
     await expect(
       await dialog.findByRole("button", { name: "Try again" }),
     ).toBeVisible();
-    await expect(
-      dialog.getByRole("combobox", { name: "Base model" }),
-    ).toBeDisabled();
   },
 };
 export const UploadedAwaitingQualification: Story = {

@@ -2,7 +2,14 @@ import { z } from "zod";
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Check, FileCheck2, Loader2, Upload, X } from "lucide-react";
+import {
+  Check,
+  FileCheck2,
+  Loader2,
+  TriangleAlert,
+  Upload,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   MAX_ADAPTER_BYTES,
@@ -31,6 +38,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { TaskRow } from "@/store/fine-tuning-types";
+import { errorMessage } from "@/lib/errors";
 import { slugifyTaskInput } from "@/lib/task-slug";
 
 const AdapterMetadataSchema = z.object({
@@ -40,6 +48,11 @@ const AdapterMetadataSchema = z.object({
   lora_alpha: z.number().positive().optional(),
   target_modules: z.array(z.string()).optional(),
 });
+
+const fileSize = (bytes: number) =>
+  bytes < 1024 ** 2
+    ? `${Math.ceil(bytes / 1024)} KB`
+    : `${(bytes / 1024 ** 2).toFixed(1)} MB`;
 
 export const UploadModelDialog = ({
   task,
@@ -231,6 +244,19 @@ export const UploadModelDialog = ({
       ? "Trained on a different checkpoint. Results may differ."
       : null;
 
+  const known = (parts: (string | false | null | undefined)[]) =>
+    parts.filter((part): part is string => Boolean(part));
+  const adapterFacts = known([
+    !!metadata?.r && `Rank ${metadata.r}`,
+    !!metadata?.lora_alpha && `Alpha ${metadata.lora_alpha}`,
+    tensorDetails?.precision,
+  ]);
+  const weightFacts = known([
+    !!tensorDetails?.layers &&
+      `${tensorDetails.layers} ${tensorDetails.layers === 1 ? "layer" : "layers"}`,
+    weights && fileSize(weights.size),
+  ]);
+
   const upload = useMutation({
     mutationFn: async () => {
       if (!canEdit || !config || !weights || !draft.success || fileError)
@@ -266,6 +292,8 @@ export const UploadModelDialog = ({
       onClose();
       void navigate({ to: "/tasks/$taskId", params: { taskId: version.task } });
     },
+    onError: (error) =>
+      toast.error(errorMessage(error, "The model could not be uploaded.")),
   });
 
   return (
@@ -276,13 +304,13 @@ export const UploadModelDialog = ({
       }}
     >
       <DialogContent
-        className="max-h-[90dvh] overflow-y-auto sm:max-w-xl"
+        className="max-h-[90dvh] gap-4 overflow-y-auto p-5 pb-0 sm:max-w-xl sm:gap-5 sm:p-6"
         onInteractOutside={(event) => {
           if (upload.isPending) event.preventDefault();
         }}
       >
         <DialogHeader>
-          <div className="mb-2 flex size-10 items-center justify-center rounded-xl border bg-muted/50">
+          <div className="mb-2 hidden size-10 items-center justify-center rounded-xl border bg-muted/50 sm:flex">
             <Upload className="size-5 text-muted-foreground" />
           </div>
           <DialogTitle>
@@ -371,23 +399,31 @@ export const UploadModelDialog = ({
                   if (!upload.isPending)
                     void selectFiles(Array.from(event.dataTransfer.files));
                 }}
-                className={`flex w-full flex-col items-center rounded-lg border border-dashed px-4 py-6 text-center transition-colors hover:border-foreground/40 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${dragging ? "border-primary bg-muted" : "border-border"}`}
+                className={`flex w-full rounded-lg border border-dashed px-4 transition-colors ${config && weights ? "items-center gap-3 py-3 text-left" : "flex-col items-center py-5 text-center sm:py-6"} hover:border-foreground/40 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${dragging ? "border-primary bg-muted" : "border-border"}`}
               >
                 {config && weights ? (
-                  <FileCheck2 className="mb-2 size-6 text-[#6e7f31]" />
+                  <>
+                    <FileCheck2 className="size-5 shrink-0 text-[#6e7f31]" />
+                    <span className="flex-1 text-sm font-medium">
+                      Adapter files ready
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Replace
+                    </span>
+                  </>
                 ) : (
-                  <Upload className="mb-2 size-6 text-muted-foreground" />
+                  <>
+                    <Upload className="mb-2 size-6 text-muted-foreground" />
+                    <span className="text-sm font-medium">
+                      Drop your adapter files here
+                    </span>
+                    <span className="mt-1 text-xs text-muted-foreground">
+                      or click to browse · safetensors + JSON · up to{" "}
+                      {MAX_ADAPTER_BYTES / 1024 ** 2} MiB · rank up to{" "}
+                      {MAX_UPLOADED_ADAPTER_RANK}
+                    </span>
+                  </>
                 )}
-                <span className="text-sm font-medium">
-                  {config && weights
-                    ? "Adapter files ready"
-                    : "Drop your adapter files here"}
-                </span>
-                <span className="mt-1 text-xs text-muted-foreground">
-                  or click to browse · safetensors + JSON · up to{" "}
-                  {MAX_ADAPTER_BYTES / 1024 ** 2} MiB · rank up to{" "}
-                  {MAX_UPLOADED_ADAPTER_RANK}
-                </span>
               </button>
               <div className="space-y-1.5">
                 {files.map((file) => (
@@ -400,9 +436,7 @@ export const UploadModelDialog = ({
                       {file.name}
                     </span>
                     <span className="shrink-0 text-muted-foreground">
-                      {file.size < 1024 * 1024
-                        ? `${Math.ceil(file.size / 1024)} KB`
-                        : `${(file.size / 1024 / 1024).toFixed(1)} MB`}
+                      {fileSize(file.size)}
                     </span>
                     <button
                       type="button"
@@ -421,61 +455,69 @@ export const UploadModelDialog = ({
               </div>
             </div>
             {config && metadata && baseModel && (
-              <div className="border-t pt-4">
-                <dl className="grid grid-cols-[6rem_minmax(0,1fr)] items-baseline gap-x-4 gap-y-2 text-xs">
-                  <dt className="text-muted-foreground">Base model</dt>
+              <dl className="divide-y border-t text-xs">
+                <div className="flex items-center justify-between gap-4 py-2">
+                  <dt className="shrink-0 text-muted-foreground">Base model</dt>
                   <dd className="min-w-0">
                     <ModelOption {...modelOption(baseModel)} />
                   </dd>
-                  <dt className="text-muted-foreground">Adapter</dt>
-                  <dd className="flex flex-wrap gap-x-3 gap-y-1">
-                    {metadata.r && <span>Rank {metadata.r}</span>}
-                    {tensorDetails?.precision && (
-                      <span>{tensorDetails.precision}</span>
-                    )}
-                    {!!tensorDetails?.layers && (
-                      <span>
-                        {tensorDetails.layers}{" "}
-                        {tensorDetails.layers === 1 ? "layer" : "layers"}
-                      </span>
-                    )}
-                    {weights && (
-                      <span>{(weights.size / 1024 ** 2).toFixed(1)} MiB</span>
-                    )}
-                  </dd>
+                </div>
+                {(
+                  [
+                    ["Adapter", adapterFacts],
+                    ["Weights", weightFacts],
+                  ] as const
+                ).map(
+                  ([label, facts]) =>
+                    facts.length > 0 && (
+                      <div
+                        key={label}
+                        className="flex items-center justify-between gap-4 py-2"
+                      >
+                        <dt className="shrink-0 text-muted-foreground">
+                          {label}
+                        </dt>
+                        <dd className="text-right tabular-nums">
+                          {facts.join(" · ")}
+                        </dd>
+                      </div>
+                    ),
+                )}
+                {metadata.target_modules && (
+                  <div className="flex items-center justify-between gap-4 py-2">
+                    <dt className="shrink-0 text-muted-foreground">Targets</dt>
+                    <dd
+                      className="min-w-0 truncate font-mono text-[11px]"
+                      title={metadata.target_modules.join(", ")}
+                    >
+                      {metadata.target_modules.join(", ")}
+                    </dd>
+                  </div>
+                )}
+                <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-1.5 py-2">
                   <dt className="text-muted-foreground">Checkpoint</dt>
                   <dd
-                    className="min-w-0 truncate font-mono"
+                    className={`truncate text-right ${revision ? "font-mono text-[11px]" : "text-muted-foreground"}`}
                     title={revision || undefined}
                   >
                     {revisionIsImmutable
                       ? revision.slice(0, 12)
                       : revision || "Not recorded"}
                   </dd>
-                  {metadata.target_modules && (
-                    <>
-                      <dt className="text-muted-foreground">Targets</dt>
-                      <dd className="min-w-0 break-words font-mono">
-                        {metadata.target_modules.join(", ")}
-                      </dd>
-                    </>
+                  {checkpointWarning && (
+                    <dd
+                      role="status"
+                      className="col-span-2 flex items-start gap-1.5 text-amber-700 dark:text-amber-400"
+                    >
+                      <TriangleAlert
+                        aria-hidden
+                        className="mt-px size-3.5 shrink-0"
+                      />
+                      {checkpointWarning}
+                    </dd>
                   )}
-                  {metadata.lora_alpha && (
-                    <>
-                      <dt className="text-muted-foreground">Alpha</dt>
-                      <dd>{metadata.lora_alpha}</dd>
-                    </>
-                  )}
-                </dl>
-                {checkpointWarning && (
-                  <p
-                    role="status"
-                    className="mt-3 text-xs text-amber-700 dark:text-amber-400"
-                  >
-                    {checkpointWarning}
-                  </p>
-                )}
-              </div>
+                </div>
+              </dl>
             )}
             {models.error && (
               <p role="alert" className="text-xs text-destructive">
@@ -490,12 +532,20 @@ export const UploadModelDialog = ({
               </p>
             )}
           </fieldset>
-          {(fileError || upload.error) && (
+          {fileError && (
             <p role="alert" className="text-sm text-destructive">
-              {fileError ?? upload.error?.message}
+              {fileError}
             </p>
           )}
-          <DialogFooter className="flex flex-col-reverse justify-end gap-2 border-t pt-4 sm:flex-row">
+          {upload.isPending && (
+            <p
+              role="status"
+              className="text-center text-xs text-muted-foreground"
+            >
+              Keep this window open while your adapter uploads.
+            </p>
+          )}
+          <DialogFooter className="sticky bottom-0 z-10 -mx-5 flex justify-end gap-2 border-t bg-card px-5 py-4 sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:pb-0">
             <Button
               type="button"
               variant="outline"
@@ -506,6 +556,7 @@ export const UploadModelDialog = ({
             </Button>
             <Button
               type="submit"
+              className="flex-1 sm:flex-none"
               disabled={
                 !draft.success ||
                 Boolean(fileError) ||
@@ -525,14 +576,6 @@ export const UploadModelDialog = ({
                   : "Create task & upload"}
             </Button>
           </DialogFooter>
-          {upload.isPending && (
-            <p
-              role="status"
-              className="text-center text-xs text-muted-foreground"
-            >
-              Keep this window open while your adapter uploads.
-            </p>
-          )}
         </form>
       </DialogContent>
     </Dialog>

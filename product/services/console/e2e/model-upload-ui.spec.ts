@@ -332,9 +332,10 @@ test("shows detected adapter details without model or revision fields", async ({
     dialog.getByText("Adapter details", { exact: true }),
   ).toHaveCount(0);
   await selectFiles(page, 1);
-  await expect(dialog.getByText("Rank 1", { exact: true })).toBeVisible();
-  await expect(dialog.getByText("BF16", { exact: true })).toBeVisible();
-  await expect(dialog.getByText("1 layer", { exact: true })).toBeVisible();
+  await expect(
+    dialog.getByText("Rank 1 · BF16", { exact: true }),
+  ).toBeVisible();
+  await expect(dialog.getByText(/^1 layer · \d+ KB$/)).toBeVisible();
   await expect(
     dialog.getByRole("textbox", { name: "Base checkpoint revision" }),
   ).toHaveCount(0);

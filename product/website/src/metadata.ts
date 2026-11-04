@@ -166,7 +166,7 @@ const pageMetadata: Record<string, PageMetadataContent> = {
   "/sla/": {
     title: "Service Level Agreement",
     description:
-      "Read Gradiated’s 99.9% inference uptime commitment, service credits and claims process.",
+      "Read Gradiated’s 99.5% inference uptime commitment, service credits and claims process.",
   },
   "/acceptable-use/": {
     title: "Acceptable use",

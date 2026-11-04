@@ -20,10 +20,8 @@
 // stale numbers are better than no deploy.
 
 import { createHash } from "node:crypto";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { pathToFileURL } from "node:url";
+import { readFile, writeFile } from "node:fs/promises";
+import ts from "typescript";
 
 declare const process: {
   env: Record<string, string | undefined>;
@@ -49,26 +47,89 @@ const FILES = {
   currencies: ["currency", "currencyData"],
 } as const;
 
-/** Downloads PostHog's data files and imports them as modules. */
-const fetchPostHogData = async (): Promise<Record<string, unknown>> => {
-  const dir = await mkdtemp(join(tmpdir(), "posthog-compensation-"));
-  try {
-    const data: Record<string, unknown> = {};
-    for (const [key, [file, exportName]] of Object.entries(FILES)) {
-      const response = await fetch(`${SOURCE}/${file}.ts`);
-      if (!response.ok) throw new Error(`${file}.ts: HTTP ${response.status}`);
-      const path = join(dir, `${file}.ts`);
-      await writeFile(path, await response.text());
-      const module = await import(pathToFileURL(path).href);
-      if (module[exportName] === undefined) {
-        throw new Error(`${file}.ts no longer exports ${exportName}`);
-      }
-      data[key] = module[exportName];
-    }
-    return data;
-  } finally {
-    await rm(dir, { recursive: true, force: true });
+/* The downloaded files are parsed, never run: only plain literals (objects,
+   arrays, strings, numbers) are accepted, so code in them can't execute
+   during our build. */
+
+/** Converts a literal expression to a value, rejecting anything else. */
+const literalValue = (node: ts.Expression, file: string): unknown => {
+  if (ts.isParenthesizedExpression(node) || ts.isAsExpression(node)) {
+    return literalValue(node.expression, file);
   }
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+    return node.text;
+  }
+  if (ts.isNumericLiteral(node)) return Number(node.text);
+  if (
+    ts.isPrefixUnaryExpression(node) &&
+    node.operator === ts.SyntaxKind.MinusToken &&
+    ts.isNumericLiteral(node.operand)
+  ) {
+    return -Number(node.operand.text);
+  }
+  if (node.kind === ts.SyntaxKind.TrueKeyword) return true;
+  if (node.kind === ts.SyntaxKind.FalseKeyword) return false;
+  if (node.kind === ts.SyntaxKind.NullKeyword) return null;
+  if (ts.isArrayLiteralExpression(node)) {
+    return node.elements.map((element) => literalValue(element, file));
+  }
+  if (ts.isObjectLiteralExpression(node)) {
+    const object: Record<string, unknown> = {};
+    for (const property of node.properties) {
+      if (
+        !ts.isPropertyAssignment(property) ||
+        !(
+          ts.isIdentifier(property.name) ||
+          ts.isStringLiteral(property.name) ||
+          ts.isNumericLiteral(property.name)
+        )
+      ) {
+        throw new Error(`${file}.ts has a property that isn't plain data`);
+      }
+      object[property.name.text] = literalValue(property.initializer, file);
+    }
+    return object;
+  }
+  throw new Error(
+    `${file}.ts has a ${ts.SyntaxKind[node.kind]} where data was expected`,
+  );
+};
+
+/** Reads `export const <name> = <literal>` from a file's source text. */
+const parseExport = (
+  source: string,
+  file: string,
+  exportName: string,
+): unknown => {
+  const sourceFile = ts.createSourceFile(
+    `${file}.ts`,
+    source,
+    ts.ScriptTarget.Latest,
+  );
+  for (const statement of sourceFile.statements) {
+    if (!ts.isVariableStatement(statement)) continue;
+    for (const declaration of statement.declarationList.declarations) {
+      if (
+        ts.isIdentifier(declaration.name) &&
+        declaration.name.text === exportName &&
+        declaration.initializer
+      ) {
+        return literalValue(declaration.initializer, file);
+      }
+    }
+  }
+  throw new Error(`${file}.ts no longer exports ${exportName}`);
+};
+
+/** Downloads PostHog's data files and reads the data out of them. */
+const fetchPostHogData = async (): Promise<Record<string, unknown>> => {
+  const data: Record<string, unknown> = {};
+  for (const [key, [file, exportName]] of Object.entries(FILES)) {
+    const response = await fetch(`${SOURCE}/${file}.ts`);
+    if (!response.ok) throw new Error(`${file}.ts: HTTP ${response.status}`);
+    data[key] = parseExport(await response.text(), file, exportName);
+  }
+  return data;
 };
 
 let generated: string;

@@ -380,10 +380,6 @@ export const UploadModelDialog = ({
               </p>
             </div>
           </fieldset>
-          <div className="rounded-lg bg-muted/50 px-4 py-3 text-xs leading-5 text-muted-foreground">
-            Your adapter stays private to this workspace. Uploading saves a new
-            version; serving is enabled after compatibility qualification.
-          </div>
           {(fileError || upload.error) && (
             <p role="alert" className="text-sm text-destructive">
               {fileError ?? upload.error?.message}

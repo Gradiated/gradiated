@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
+  ArrowUpRight,
   Check,
   FileCheck2,
   Loader2,
@@ -244,18 +245,18 @@ export const UploadModelDialog = ({
       ? "Trained on a different checkpoint. Results may differ."
       : null;
 
-  const known = (parts: (string | false | null | undefined)[]) =>
-    parts.filter((part): part is string => Boolean(part));
-  const adapterFacts = known([
-    !!metadata?.r && `Rank ${metadata.r}`,
-    !!metadata?.lora_alpha && `Alpha ${metadata.lora_alpha}`,
-    tensorDetails?.precision,
-  ]);
-  const weightFacts = known([
-    !!tensorDetails?.layers &&
-      `${tensorDetails.layers} ${tensorDetails.layers === 1 ? "layer" : "layers"}`,
-    weights && fileSize(weights.size),
-  ]);
+  const adapterDetails = [
+    ["Rank", metadata?.r],
+    ["Alpha", metadata?.lora_alpha],
+    ["Precision", tensorDetails?.precision],
+    ["Layers", tensorDetails?.layers],
+    ["Size", weights && fileSize(weights.size)],
+  ].filter((detail): detail is [string, string | number] => Boolean(detail[1]));
+  const huggingFaceRepo = /^[\w.-]+\/[\w.-]+$/.test(
+    metadata?.base_model_name_or_path ?? "",
+  )
+    ? metadata?.base_model_name_or_path
+    : undefined;
 
   const upload = useMutation({
     mutationFn: async () => {
@@ -455,69 +456,84 @@ export const UploadModelDialog = ({
               </div>
             </div>
             {config && metadata && baseModel && (
-              <dl className="divide-y border-t text-xs">
-                <div className="flex items-center justify-between gap-4 py-2">
-                  <dt className="shrink-0 text-muted-foreground">Base model</dt>
-                  <dd className="min-w-0">
-                    <ModelOption {...modelOption(baseModel)} />
-                  </dd>
-                </div>
-                {(
-                  [
-                    ["Adapter", adapterFacts],
-                    ["Weights", weightFacts],
-                  ] as const
-                ).map(
-                  ([label, facts]) =>
-                    facts.length > 0 && (
-                      <div
-                        key={label}
-                        className="flex items-center justify-between gap-4 py-2"
-                      >
-                        <dt className="shrink-0 text-muted-foreground">
-                          {label}
-                        </dt>
-                        <dd className="text-right tabular-nums">
-                          {facts.join(" · ")}
-                        </dd>
-                      </div>
-                    ),
-                )}
-                {metadata.target_modules && (
-                  <div className="flex items-center justify-between gap-4 py-2">
-                    <dt className="shrink-0 text-muted-foreground">Targets</dt>
-                    <dd
-                      className="min-w-0 truncate font-mono text-[11px]"
-                      title={metadata.target_modules.join(", ")}
-                    >
-                      {metadata.target_modules.join(", ")}
+              <div className="space-y-3 border-t pt-4">
+                <dl className="grid grid-cols-3 gap-x-6 gap-y-3 text-sm sm:grid-cols-5">
+                  <div className="col-span-3">
+                    <dt className="text-xs text-muted-foreground">
+                      Base model
+                    </dt>
+                    <dd className="mt-1">
+                      <ModelOption {...modelOption(baseModel)} />
                     </dd>
                   </div>
-                )}
-                <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-1.5 py-2">
-                  <dt className="text-muted-foreground">Checkpoint</dt>
-                  <dd
-                    className={`truncate text-right ${revision ? "font-mono text-[11px]" : "text-muted-foreground"}`}
-                    title={revision || undefined}
-                  >
-                    {revisionIsImmutable
-                      ? revision.slice(0, 12)
-                      : revision || "Not recorded"}
-                  </dd>
-                  {checkpointWarning && (
-                    <dd
-                      role="status"
-                      className="col-span-2 flex items-start gap-1.5 text-amber-700 dark:text-amber-400"
-                    >
-                      <TriangleAlert
-                        aria-hidden
-                        className="mt-px size-3.5 shrink-0"
-                      />
-                      {checkpointWarning}
+                  <div className="col-span-3 sm:col-span-2">
+                    <dt className="text-xs text-muted-foreground">
+                      Checkpoint
+                    </dt>
+                    <dd className="mt-1">
+                      {revision && huggingFaceRepo ? (
+                        <a
+                          href={`https://huggingface.co/${huggingFaceRepo}/tree/${revision}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          title={revision}
+                          className="inline-flex items-center gap-1 font-mono text-xs underline decoration-border underline-offset-4 hover:decoration-foreground"
+                        >
+                          {revisionIsImmutable
+                            ? revision.slice(0, 12)
+                            : revision}
+                          <ArrowUpRight aria-hidden className="size-3" />
+                        </a>
+                      ) : (
+                        <span
+                          className={
+                            revision
+                              ? "font-mono text-xs"
+                              : "text-muted-foreground"
+                          }
+                        >
+                          {revision || "Not recorded"}
+                        </span>
+                      )}
                     </dd>
+                  </div>
+                  {adapterDetails.map(([label, value]) => (
+                    <div key={label}>
+                      <dt className="text-xs text-muted-foreground">{label}</dt>
+                      <dd className="mt-1 tabular-nums">{value}</dd>
+                    </div>
+                  ))}
+                  {metadata.target_modules && (
+                    <div className="col-span-3 sm:col-span-5">
+                      <dt className="text-xs text-muted-foreground">
+                        Target modules
+                      </dt>
+                      <dd className="mt-1.5 flex flex-wrap gap-1">
+                        {metadata.target_modules.map((module) => (
+                          <code
+                            key={module}
+                            className="rounded bg-muted px-1.5 py-0.5 text-xs"
+                          >
+                            {module}
+                          </code>
+                        ))}
+                      </dd>
+                    </div>
                   )}
-                </div>
-              </dl>
+                </dl>
+                {checkpointWarning && (
+                  <p
+                    role="status"
+                    className="flex items-start gap-1.5 text-xs text-amber-700 dark:text-amber-400"
+                  >
+                    <TriangleAlert
+                      aria-hidden
+                      className="mt-px size-3.5 shrink-0"
+                    />
+                    {checkpointWarning}
+                  </p>
+                )}
+              </div>
             )}
             {models.error && (
               <p role="alert" className="text-xs text-destructive">

@@ -276,6 +276,12 @@ for (const revision of [undefined, null, "main"]) {
     await expect(page.getByRole("status")).toContainText(
       "different checkpoint",
     );
+    await expect(
+      page.getByRole("link", { name: "a".repeat(12) }),
+    ).toHaveAttribute(
+      "href",
+      `https://huggingface.co/${task.base_model_id}/tree/${"a".repeat(40)}`,
+    );
     await picker.setInputFiles({
       name: "adapter_config.json",
       mimeType: "application/json",
@@ -332,10 +338,16 @@ test("shows detected adapter details without model or revision fields", async ({
     dialog.getByText("Adapter details", { exact: true }),
   ).toHaveCount(0);
   await selectFiles(page, 1);
-  await expect(
-    dialog.getByText("Rank 1 · BF16", { exact: true }),
-  ).toBeVisible();
-  await expect(dialog.getByText(/^1 layer · \d+ KB$/)).toBeVisible();
+  const detail = (label: string) =>
+    dialog
+      .locator("dl > div")
+      .filter({ has: page.getByRole("term").getByText(label, { exact: true }) })
+      .getByRole("definition");
+  await expect(detail("Rank")).toHaveText("1");
+  await expect(detail("Precision")).toHaveText("BF16");
+  await expect(detail("Layers")).toHaveText("1");
+  await expect(detail("Size")).toHaveText(/^\d+ KB$/);
+  await expect(detail("Checkpoint")).toHaveText("Not recorded");
   await expect(
     dialog.getByRole("textbox", { name: "Base checkpoint revision" }),
   ).toHaveCount(0);

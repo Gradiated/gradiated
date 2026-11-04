@@ -7,6 +7,19 @@ import {
 import { parseLoginSearch } from "@/lib/login-search";
 
 describe("post-account engineer onboarding", () => {
+  it("preserves a valid organization selection and drops invalid IDs", () => {
+    const organization = "0198ae59-294a-73a9-9d2f-962449d34226";
+    expect(parseOnboardingSearch({ next: "engineer", organization })).toEqual({
+      next: "engineer",
+      organization,
+    });
+    expect(
+      parseOnboardingSearch({
+        next: "engineer",
+        organization: "https://example.com",
+      }),
+    ).toEqual({ next: "engineer" });
+  });
   it("only accepts the fixed engineer destination", () => {
     expect(parseLoginSearch({ next: "engineer" })).toEqual({
       next: "engineer",

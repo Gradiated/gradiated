@@ -13,6 +13,7 @@ export const mutualNda = {
 
 export const onboardingSchema = z.object({
   introduced: z.boolean().default(false),
+  ndaDocumentId: z.string().max(100).nullable().default(null),
   context: z.string().max(3000).default(""),
   name: z.string().max(100).default(""),
   email: z.string().max(200).default(""),

@@ -34,10 +34,21 @@ import { LoadFailed } from "@/pages/console-page";
 import { useWorkspaceSelection } from "@/store/workspace-selection";
 
 export const OnboardingPage = () => {
-  const { next } = useSearch({ from: "/onboarding" });
+  const { next, organization: requestedOrganization } = useSearch({
+    from: "/onboarding",
+  });
   const { user, signOut } = useSession();
   const me = useCurrentUser();
-  const organization = organizationToOnboard(user);
+  const selected = requestedOrganization
+    ? user?.organizations.find(
+        (row) => row.id === requestedOrganization && row.status === "active",
+      )
+    : undefined;
+  const organization = requestedOrganization
+    ? selected?.role === "admin" && !selected.onboarding_completed
+      ? selected
+      : undefined
+    : organizationToOnboard(user);
 
   if (me.isError && httpStatus(me.error) !== 401)
     return (
@@ -61,7 +72,11 @@ export const OnboardingPage = () => {
     return next === "engineer" ? (
       <EngineerHandoff
         organizationId={
-          user.organizations.find((row) => row.status === "active")?.id
+          requestedOrganization
+            ? selected?.id
+            : user.organizations.length === 1
+              ? user.organizations[0]?.id
+              : undefined
         }
       />
     ) : (

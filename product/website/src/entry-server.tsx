@@ -24,6 +24,7 @@ export const getSeoPages = () =>
   [
     ...new Set([
       ...getIndexablePaths(),
+      "/get-started/",
       ...articles.map((article) => article.path),
     ]),
   ].map((path) => ({

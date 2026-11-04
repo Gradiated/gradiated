@@ -2,8 +2,21 @@ import { parseEnvironment, type Environment } from "@gradiated/config";
 import { z } from "@hono/zod-openapi";
 
 const PortSchema = z.coerce.number().int().min(1).max(65_535);
+const OptionalPandaDocSetting = z.preprocess(
+  (value) => (typeof value === "string" && !value.trim() ? undefined : value),
+  z.string().trim().min(1).optional(),
+);
 
 const ApiOnlyEnvironmentSchema = z.object({
+  PANDADOC_API_KEY: OptionalPandaDocSetting,
+  PANDADOC_NDA_TEMPLATE_ID: z
+    .string()
+    .trim()
+    .min(1)
+    .default("bTmxaYhTaU2tQ28fLhVrHn"),
+  PANDADOC_NDA_TEMPLATE_VERSION: OptionalPandaDocSetting,
+  PANDADOC_NDA_DATE_FIELD: OptionalPandaDocSetting,
+  PANDADOC_NDA_ENABLED: z.enum(["true", "false"]).default("false"),
   POSTHOG_KEY: z
     .string()
     .optional()

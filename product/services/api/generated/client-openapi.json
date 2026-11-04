@@ -1994,6 +1994,92 @@
         ],
         "additionalProperties": false
       },
+      "NdaDocument": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The PandaDoc document ID, not a signing-session credential."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "preparing",
+              "ready",
+              "completed",
+              "unavailable"
+            ],
+            "description": "Authoritative provider status; completed requires all required participants."
+          },
+          "details": {
+            "$ref": "#/components/schemas/NdaDetails"
+          },
+          "customer_completed": {
+            "type": "boolean",
+            "description": "Whether the customer recipient has finished; this alone does not complete a two-party NDA."
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "details",
+          "customer_completed"
+        ]
+      },
+      "NdaDetails": {
+        "type": "object",
+        "properties": {
+          "company": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "The counterparty's legal company name."
+          },
+          "address": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000,
+            "description": "The counterparty's company address."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "The authorized customer signer's full name."
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "The customer signer's title."
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 200,
+            "format": "email",
+            "description": "The signer email, which must match the authenticated verified account."
+          }
+        },
+        "required": [
+          "company",
+          "address",
+          "name",
+          "title",
+          "email"
+        ],
+        "additionalProperties": false
+      },
+      "NdaSigningSession": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id"
+        ]
+      },
       "MemberList": {
         "type": "object",
         "properties": {
@@ -7145,6 +7231,326 @@
           },
           "503": {
             "description": "Serving state is unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/organizations/{organization_id}/nda-documents": {
+      "post": {
+        "x-gradiated-audience": "console",
+        "operationId": "createNdaDocument",
+        "tags": [
+          "NDA documents"
+        ],
+        "summary": "Prepare a mutual NDA",
+        "description": "Creates an NDA from the approved PandaDoc template for the signed-in signer. No email is sent.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The organization whose admin is signing the NDA."
+            },
+            "required": true,
+            "description": "The organization whose admin is signing the NDA.",
+            "name": "organization_id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NdaDetails"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The NDA is being prepared.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NdaDocument"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "A signed-in user is required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The verified signer must manage this organization.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The NDA is not available to this user and organization.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The document is not ready for this operation.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid NDA details.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Embedded signing is not configured or the provider is unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/organizations/{organization_id}/nda-documents/{document_id}": {
+      "get": {
+        "x-gradiated-audience": "console",
+        "operationId": "getNdaDocument",
+        "tags": [
+          "NDA documents"
+        ],
+        "summary": "Verify mutual NDA status",
+        "description": "Reads the authoritative PandaDoc status, bound to the current signer, organization and template version. Completed means all required signers finished.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The organization whose admin is signing the NDA."
+            },
+            "required": true,
+            "description": "The organization whose admin is signing the NDA.",
+            "name": "organization_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,100}$",
+              "description": "The NDA's PandaDoc document ID."
+            },
+            "required": true,
+            "description": "The NDA's PandaDoc document ID.",
+            "name": "document_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The verified document status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NdaDocument"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "A signed-in user is required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The verified signer must manage this organization.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The NDA is not available to this user and organization.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The document is not ready for this operation.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid NDA details.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Embedded signing is not configured or the provider is unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/organizations/{organization_id}/nda-documents/{document_id}/signing-sessions": {
+      "post": {
+        "x-gradiated-audience": "console",
+        "operationId": "createNdaSigningSession",
+        "tags": [
+          "NDA documents"
+        ],
+        "summary": "Open embedded NDA signing",
+        "description": "Silently sends a ready draft and creates a 15-minute signing session only for the verified signed-in signer. No signing email is sent.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The organization whose admin is signing the NDA."
+            },
+            "required": true,
+            "description": "The organization whose admin is signing the NDA.",
+            "name": "organization_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,100}$",
+              "description": "The NDA's PandaDoc document ID."
+            },
+            "required": true,
+            "description": "The NDA's PandaDoc document ID.",
+            "name": "document_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "A short-lived PandaDoc session; do not log or persist it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NdaSigningSession"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "A signed-in user is required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The verified signer must manage this organization.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The NDA is not available to this user and organization.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The document is not ready for this operation.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid NDA details.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Embedded signing is not configured or the provider is unavailable.",
             "content": {
               "application/problem+json": {
                 "schema": {

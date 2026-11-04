@@ -292,6 +292,66 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/organizations/{organization_id}/nda-documents": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Prepare a mutual NDA
+     * @description Creates an NDA from the approved PandaDoc template for the signed-in signer. No email is sent.
+     */
+    post: operations["createNdaDocument"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/organizations/{organization_id}/nda-documents/{document_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Verify mutual NDA status
+     * @description Reads the authoritative PandaDoc status, bound to the current signer, organization and template version. Completed means all required signers finished.
+     */
+    get: operations["getNdaDocument"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/organizations/{organization_id}/nda-documents/{document_id}/signing-sessions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Open embedded NDA signing
+     * @description Silently sends a ready draft and creates a 15-minute signing session only for the verified signed-in signer. No signing email is sent.
+     */
+    post: operations["createNdaSigningSession"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/organizations/{organization_id}/members": {
     parameters: {
       query?: never;
@@ -1550,6 +1610,36 @@ export interface components {
     };
     CreateOrganization: {
       name: string;
+    };
+    NdaDocument: {
+      /** @description The PandaDoc document ID, not a signing-session credential. */
+      id: string;
+      /**
+       * @description Authoritative provider status; completed requires all required participants.
+       * @enum {string}
+       */
+      status: "preparing" | "ready" | "completed" | "unavailable";
+      details: components["schemas"]["NdaDetails"];
+      /** @description Whether the customer recipient has finished; this alone does not complete a two-party NDA. */
+      customer_completed: boolean;
+    };
+    NdaDetails: {
+      /** @description The counterparty's legal company name. */
+      company: string;
+      /** @description The counterparty's company address. */
+      address: string;
+      /** @description The authorized customer signer's full name. */
+      name: string;
+      /** @description The customer signer's title. */
+      title: string;
+      /**
+       * Format: email
+       * @description The signer email, which must match the authenticated verified account.
+       */
+      email: string;
+    };
+    NdaSigningSession: {
+      session_id: string;
     };
     MemberList: {
       data: components["schemas"]["Member"][];
@@ -3885,6 +3975,245 @@ export interface operations {
         };
       };
       /** @description Serving state is unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  createNdaDocument: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description The organization whose admin is signing the NDA. */
+        organization_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["NdaDetails"];
+      };
+    };
+    responses: {
+      /** @description The NDA is being prepared. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NdaDocument"];
+        };
+      };
+      /** @description A signed-in user is required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The verified signer must manage this organization. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The NDA is not available to this user and organization. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The document is not ready for this operation. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid NDA details. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Embedded signing is not configured or the provider is unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  getNdaDocument: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description The organization whose admin is signing the NDA. */
+        organization_id: string;
+        /** @description The NDA's PandaDoc document ID. */
+        document_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The verified document status. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NdaDocument"];
+        };
+      };
+      /** @description A signed-in user is required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The verified signer must manage this organization. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The NDA is not available to this user and organization. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The document is not ready for this operation. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid NDA details. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Embedded signing is not configured or the provider is unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  createNdaSigningSession: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description The organization whose admin is signing the NDA. */
+        organization_id: string;
+        /** @description The NDA's PandaDoc document ID. */
+        document_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description A short-lived PandaDoc session; do not log or persist it. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NdaSigningSession"];
+        };
+      };
+      /** @description A signed-in user is required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The verified signer must manage this organization. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The NDA is not available to this user and organization. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The document is not ready for this operation. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid NDA details. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Embedded signing is not configured or the provider is unavailable. */
       503: {
         headers: {
           [name: string]: unknown;

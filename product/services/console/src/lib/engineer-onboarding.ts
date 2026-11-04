@@ -1,9 +1,16 @@
 import { invitationPath, type LoginSearch } from "./login-search";
+import { z } from "zod";
 
 export const parseOnboardingSearch = (
   search: Record<string, unknown>,
-): { next?: "engineer" } =>
-  search.next === "engineer" ? { next: "engineer" } : {};
+): { next?: "engineer"; organization?: string } => {
+  const organization = z.uuid().safeParse(search.organization);
+
+  return {
+    ...(search.next === "engineer" ? { next: "engineer" as const } : {}),
+    ...(organization.success ? { organization: organization.data } : {}),
+  };
+};
 
 export const engineerOnboardingUrl = (
   organizationId?: string,

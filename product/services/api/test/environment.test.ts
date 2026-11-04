@@ -12,6 +12,17 @@ const baseEnvironment = {
 };
 
 describe("API environment", () => {
+  it("leaves embedded NDA signing disabled when PandaDoc credentials are absent or blank", () => {
+    const environment = parseApiEnvironment({
+      ...baseEnvironment,
+      PANDADOC_API_KEY: "",
+      PANDADOC_NDA_TEMPLATE_VERSION: " ",
+    });
+    expect(environment.PANDADOC_NDA_ENABLED).toBe("false");
+    expect(environment.PANDADOC_API_KEY).toBeUndefined();
+    expect(environment.PANDADOC_NDA_TEMPLATE_VERSION).toBeUndefined();
+    expect(environment.PANDADOC_NDA_TEMPLATE_ID).toBe("bTmxaYhTaU2tQ28fLhVrHn");
+  });
   it("applies the API-only defaults", () => {
     expect(parseApiEnvironment(baseEnvironment)).toMatchObject({
       METRICS_PORT: 9_464,

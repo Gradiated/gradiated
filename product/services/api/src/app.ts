@@ -23,6 +23,8 @@ import { createExternalModelCatalog } from "./catalog/external-models.js";
 import { registerMemberRoutes } from "./routes/members.js";
 import { registerImpersonationRoutes } from "./routes/impersonation.js";
 import { registerOrganizationRoutes } from "./routes/organizations.js";
+import { registerNdaDocumentRoutes } from "./routes/nda-documents.js";
+import type { PandaDocNda } from "./legal/pandadoc.js";
 import { registerUsageRoutes } from "./routes/usage.js";
 import { registerWaitlistRoutes } from "./routes/waitlist.js";
 import { registerWizardRoutes } from "./routes/wizard.js";
@@ -39,6 +41,7 @@ import type { InvitationSender } from "./email/invitation.js";
 import type { WaitlistWelcomeSender } from "./email/waitlist-welcome.js";
 
 export interface AppDependencies {
+  ndaDocuments?: PandaDocNda | undefined;
   analytics?: import("./analytics.js").ApiAnalytics;
   allowedOrigins: string[];
   auth: AuthService;
@@ -53,6 +56,7 @@ export interface AppDependencies {
 }
 
 export const createApp = ({
+  ndaDocuments,
   analytics,
   allowedOrigins,
   auth,
@@ -104,6 +108,10 @@ export const createApp = ({
   app.use("/api/*", apiRateLimit());
   app.use("/api/v1/waitlist", apiRateLimit(10));
   app.use(
+    "/api/v1/organizations/:organization_id/nda-documents",
+    apiRateLimit(10),
+  );
+  app.use(
     "/api/*",
     bodyLimit({
       maxSize: 1024 * 1024,
@@ -142,6 +150,7 @@ export const createApp = ({
   registerMeRoutes(app, services.organizations);
   registerImpersonationRoutes(app, auth);
   registerOrganizationRoutes(app, services.organizations);
+  registerNdaDocumentRoutes(app, services.organizations, ndaDocuments);
   registerMemberRoutes(app, {
     members: services.members,
     organizations: services.organizations,

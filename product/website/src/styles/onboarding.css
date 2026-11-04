@@ -195,6 +195,43 @@
   font-size: 14px;
   line-height: 1.7;
 }
+.gs-auth-container--signing {
+  max-width: 800px;
+}
+.gs-signing-embed {
+  min-height: 650px;
+  margin-top: 24px;
+}
+.gs-signing-embed iframe {
+  display: block;
+  width: 100%;
+  border: 0;
+}
+.gs-signing-demo {
+  padding: 24px;
+  background: #f7f6f2;
+  border-radius: 8px;
+}
+.gs-signing-demo h2 {
+  margin: 16px 0 8px;
+  font-size: 20px;
+  font-weight: 600;
+}
+.gs-signing-demo > .gs-primary {
+  margin-top: 24px;
+}
+.gs-signing .gs-signing-back,
+.gs-signing .gs-signing-check {
+  margin-top: 24px;
+}
+.gs-signing-check {
+  margin-right: 24px;
+}
+.gs-signed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .gs-step-title h1 {
   font: 700 24px/1.3 var(--font-body);
   letter-spacing: -0.025em;

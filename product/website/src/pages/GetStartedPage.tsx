@@ -25,7 +25,8 @@ import {
   onboardingSchema,
 } from "../onboarding";
 import type { OnboardingDraft, OnboardingAccount } from "../onboarding";
-import { getCurrentUser } from "../api/queries";
+import { getCurrentUser, type CurrentUser } from "../api/queries";
+import { NdaSigning } from "../components/NdaSigning";
 import {
   ENGINEER_SIGNUP_URL,
   ENGINEER_ORGANIZATION_SETUP_URL,
@@ -52,7 +53,7 @@ const loadDraft = (account: OnboardingAccount): OnboardingDraft => {
       return { ...draft, step: incomplete, submitted: false };
     }
 
-    return draft;
+    return { ...draft, step: 0, submitted: false };
   } catch {
     return reuseAccount(emptyOnboarding(), account);
   }
@@ -207,9 +208,7 @@ const AccessStep = ({
     <button type="button" className="gs-text-button" onClick={onNda}>
       Preview pre-filled NDA <ArrowRight size={13} />
     </button>
-    <p className="gs-note">
-      Both parties review and sign. Signature dates are added at signing.
-    </p>
+    <p className="gs-note">You’ll review the full NDA and sign here next.</p>
   </>
 );
 
@@ -261,7 +260,7 @@ const ReviewStep = ({
         {draft.channel === "slack" ? "Slack" : "email"}
       </li>
       <li>
-        <span>2</span>Sign the mutual NDA and approve GitHub access
+        <span>2</span>Approve GitHub access
       </li>
       <li>
         <span>3</span>
@@ -357,6 +356,10 @@ const AccountSignupPreview = ({ resume }: { resume: boolean }) => {
 };
 
 const AccountOnboarding = () => {
+  const [search, setSearch] = useSearchParams();
+  const [organizations, setOrganizations] = useState<
+    CurrentUser["organizations"]
+  >([]);
   const [account, setAccount] = useState<OnboardingAccount | null>(null);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -372,22 +375,27 @@ const AccountOnboarding = () => {
         const requestedOrganization = new URLSearchParams(
           window.location.search,
         ).get("organization");
-        const organization = requestedOrganization
-          ? user.organizations.find(
-              (row) =>
-                row.id === requestedOrganization && row.status === "active",
-            )
-          : user.organizations.find((row) => row.status === "active");
-        const pending = user.organizations.find(
-          (row) => row.role === "admin" && !row.onboarding_completed,
+        const memberships = user.organizations.filter(
+          (row) => row.status === "active",
         );
-
-        if (pending) {
-          window.location.replace(ENGINEER_ORGANIZATION_SETUP_URL);
+        if (!requestedOrganization && memberships.length > 1) {
+          setOrganizations(memberships);
           return;
         }
+        const organization = requestedOrganization
+          ? memberships.find((row) => row.id === requestedOrganization)
+          : memberships[0];
         if (!organization) {
           setError(true);
+          return;
+        }
+        if (
+          organization.role === "admin" &&
+          !organization.onboarding_completed
+        ) {
+          const destination = new URL(ENGINEER_ORGANIZATION_SETUP_URL);
+          destination.searchParams.set("organization", organization.id);
+          window.location.replace(destination.toString());
           return;
         }
 
@@ -407,7 +415,13 @@ const AccountOnboarding = () => {
           "status" in cause &&
           cause.status === 401
         ) {
-          window.location.replace(ENGINEER_SIGNUP_URL);
+          const recoverStaff =
+            "code" in cause && cause.code === "staff_session_recovery_required";
+          window.location.replace(
+            recoverStaff
+              ? ENGINEER_ORGANIZATION_SETUP_URL
+              : ENGINEER_SIGNUP_URL,
+          );
           return;
         }
 
@@ -425,6 +439,38 @@ const AccountOnboarding = () => {
         key={account.userId + ":" + account.organizationId}
         account={account}
       />
+    );
+
+  if (organizations.length > 1)
+    return (
+      <div className="gr-root gs-root">
+        <div className="gs-auth-shell">
+          <main className="gs-main gs-auth-container">
+            <StepTitle title="Choose your organization.">
+              Which team is this engineer for?
+            </StepTitle>
+            <Field label="Organization">
+              <select
+                defaultValue=""
+                onChange={(event) => {
+                  const next = new URLSearchParams(search);
+                  next.set("organization", event.target.value);
+                  setSearch(next);
+                }}
+              >
+                <option value="" disabled>
+                  Choose an organization
+                </option>
+                {organizations.map((row) => (
+                  <option key={row.id} value={row.id}>
+                    {row.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </main>
+        </div>
+      </div>
     );
 
   return (
@@ -453,7 +499,10 @@ const AccountOnboarding = () => {
             )}
           </>
         ) : (
-          <p role="status">Loading your account…</p>
+          <>
+            <h1>Set up your engineer.</h1>
+            <p role="status">Loading your account…</p>
+          </>
         )}
       </main>
     </div>
@@ -470,10 +519,29 @@ const GetStartedWorkflow = ({
   const [draft, setDraft] = useState(() => loadDraft(account));
   const [saved, setSaved] = useState(true);
   const [ndaOpen, setNdaOpen] = useState(false);
+  const [signingOpen, setSigningOpen] = useState(false);
+  const [ndaVerified, setNdaVerified] = useState(false);
   const headingRef = useRef<HTMLElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const patch: UpdateDraft = (values) =>
-    setDraft((current) => ({ ...current, ...values }));
+  const patch: UpdateDraft = (values) => {
+    const ndaFields = [
+      "legalName",
+      "legalAddress",
+      "signerName",
+      "signerTitle",
+      "signerEmail",
+    ] as const;
+    const changesNda = ndaFields.some(
+      (key) => key in values && values[key] !== draft[key],
+    );
+    if (changesNda) setNdaVerified(false);
+
+    setDraft((current) => ({
+      ...current,
+      ...values,
+      ...(changesNda ? { ndaDocumentId: null } : {}),
+    }));
+  };
 
   useEffect(() => {
     document.title = draft.submitted
@@ -490,7 +558,7 @@ const GetStartedWorkflow = ({
   useEffect(() => {
     headingRef.current?.focus({ preventScroll: true });
     window.scrollTo({ top: 0, behavior: "instant" });
-  }, [draft.step, draft.submitted, draft.introduced]);
+  }, [draft.step, draft.submitted, draft.introduced, signingOpen]);
 
   useEffect(() => {
     if (ndaOpen) dialogRef.current?.showModal();
@@ -507,7 +575,9 @@ const GetStartedWorkflow = ({
       <div
         className={`gs-auth-shell${draft.submitted ? " gs-auth-shell--project" : ""}`}
       >
-        <div className="gs-auth-container">
+        <div
+          className={`gs-auth-container${signingOpen ? " gs-auth-container--signing" : ""}`}
+        >
           <header className="gs-header">
             <Link to="/" aria-label="Gradiated home" className="gs-logo">
               <img
@@ -542,6 +612,7 @@ const GetStartedWorkflow = ({
           ) : draft.submitted ? (
             <ProjectPreview
               draft={draft}
+              demo={demo}
               onEdit={() => patch({ submitted: false, step: 2 })}
               onNda={() => setNdaOpen(true)}
             />
@@ -562,7 +633,11 @@ const GetStartedWorkflow = ({
                     >
                       <button
                         type="button"
-                        disabled={index > draft.step}
+                        disabled={
+                          index > draft.step ||
+                          (index > 0 && !ndaVerified) ||
+                          signingOpen
+                        }
                         onClick={() => patch({ step: index })}
                         aria-current={index === draft.step ? "step" : undefined}
                       >
@@ -580,85 +655,114 @@ const GetStartedWorkflow = ({
                   Progress won’t be saved
                 </p>
               )}
-              <form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  if (draft.step === 2) {
-                    const incomplete = firstIncompleteStep(draft);
+              {signingOpen ? (
+                <NdaSigning
+                  organizationId={account.organizationId}
+                  details={counterpartyDetails(draft)}
+                  initialDocumentId={draft.ndaDocumentId}
+                  demo={demo}
+                  onDocument={(id) => patch({ ndaDocumentId: id })}
+                  onComplete={(id) => {
+                    setNdaVerified(true);
+                    setSigningOpen(false);
+                    patch({ ndaDocumentId: id, step: 1 });
+                  }}
+                  onBack={() => setSigningOpen(false)}
+                />
+              ) : (
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    if (draft.step === 0) {
+                      setSigningOpen(true);
+                      return;
+                    }
+                    if (draft.step === 2) {
+                      const incomplete = firstIncompleteStep(draft);
 
-                    patch(
-                      incomplete === null
-                        ? { submitted: true, step: 3 }
-                        : { step: incomplete },
-                    );
-                  } else
-                    patch({
-                      step: draft.step + 1,
-                      ...(draft.step === 0
-                        ? {
-                            legalName: draft.legalName || draft.company,
-                            signerName: draft.signerName ?? draft.name,
-                            signerEmail: draft.signerEmail ?? draft.email,
-                          }
-                        : {}),
-                    });
-                }}
-              >
-                {draft.step === 0 && (
-                  <>
-                    <AccessStep
+                      patch(
+                        incomplete === null && ndaVerified
+                          ? { submitted: true, step: 3 }
+                          : { step: incomplete ?? 0 },
+                      );
+                    } else
+                      patch({
+                        step: draft.step + 1,
+                        ...(draft.step === 0
+                          ? {
+                              legalName: draft.legalName || draft.company,
+                              signerName: draft.signerName ?? draft.name,
+                              signerEmail: draft.signerEmail ?? draft.email,
+                            }
+                          : {}),
+                      });
+                  }}
+                >
+                  {draft.step === 0 && (
+                    <>
+                      <AccessStep
+                        draft={draft}
+                        patch={patch}
+                        onNda={() => setNdaOpen(true)}
+                      />
+                      {demo && (
+                        <button
+                          className="gs-text-button gs-example"
+                          type="button"
+                          onClick={() => {
+                            setNdaVerified(false);
+                            setDraft(
+                              reuseAccount(exampleOnboarding(), account),
+                            );
+                          }}
+                        >
+                          Fill with an example <ArrowRight size={13} />
+                        </button>
+                      )}
+                    </>
+                  )}
+                  {draft.step === 1 && <TeamStep draft={draft} patch={patch} />}
+                  {draft.step === 2 && (
+                    <ReviewStep
                       draft={draft}
                       patch={patch}
-                      onNda={() => setNdaOpen(true)}
+                      onEdit={() => patch({ step: 0 })}
                     />
-                    {demo && (
+                  )}
+                  <div className="gs-actions">
+                    <button
+                      type="submit"
+                      className="gr-button gr-button--main gs-primary"
+                    >
+                      {draft.step === 0
+                        ? "Review & sign NDA"
+                        : draft.step === 2
+                          ? "Start project"
+                          : "Continue"}
+                      <ArrowRight size={15} />
+                    </button>
+                    {draft.step > 0 && (
                       <button
-                        className="gs-text-button gs-example"
                         type="button"
-                        onClick={() =>
-                          setDraft(reuseAccount(exampleOnboarding(), account))
-                        }
+                        className="gs-back"
+                        onClick={() => patch({ step: draft.step - 1 })}
                       >
-                        Fill with an example <ArrowRight size={13} />
+                        <ArrowLeft size={14} /> Back
                       </button>
                     )}
-                  </>
-                )}
-                {draft.step === 1 && <TeamStep draft={draft} patch={patch} />}
-                {draft.step === 2 && (
-                  <ReviewStep
-                    draft={draft}
-                    patch={patch}
-                    onEdit={() => patch({ step: 0 })}
-                  />
-                )}
-                <div className="gs-actions">
-                  <button
-                    type="submit"
-                    className="gr-button gr-button--main gs-primary"
-                  >
-                    {draft.step === 2 ? "Start project" : "Continue"}
-                    <ArrowRight size={15} />
-                  </button>
-                  {draft.step > 0 && (
-                    <button
-                      type="button"
-                      className="gs-back"
-                      onClick={() => patch({ step: draft.step - 1 })}
-                    >
-                      <ArrowLeft size={14} /> Back
-                    </button>
-                  )}
-                </div>
-              </form>
+                  </div>
+                </form>
+              )}
               <div className="gs-account-identity">
                 Signed in as {account.email} ·{" "}
                 <button
                   type="button"
                   className="gs-text-button"
-                  onClick={() =>
-                    setDraft(reuseAccount(emptyOnboarding(), account))
-                  }
+                  onClick={() => {
+                    setNdaVerified(false);
+                    setSigningOpen(false);
+                    setDraft(reuseAccount(emptyOnboarding(), account));
+                  }}
                 >
                   Start over
                 </button>
@@ -776,10 +880,12 @@ const GetStartedWorkflow = ({
 
 const ProjectPreview = ({
   draft,
+  demo,
   onEdit,
   onNda,
 }: {
   draft: OnboardingDraft;
+  demo: boolean;
   onEdit: () => void;
   onNda: () => void;
 }) => {
@@ -838,10 +944,11 @@ const ProjectPreview = ({
             <div>
               <LockKeyhole size={19} />
               <div>
-                <h3>Sign the mutual NDA</h3>
+                <h3>Mutual NDA completed</h3>
                 <p>
-                  {draft.legalName} and {mutualNda.company} · both signatures
-                  pending
+                  {demo
+                    ? "Demo signing complete · no agreement executed"
+                    : `${draft.legalName} and ${mutualNda.company} · completed in PandaDoc`}
                 </p>
                 <button
                   type="button"
@@ -856,7 +963,7 @@ const ProjectPreview = ({
               <Code2 size={19} />
               <div>
                 <h3>Approve GitHub access</h3>
-                <p>{draft.repository} · after the NDA is signed</p>
+                <p>{draft.repository} · access pending</p>
                 <button
                   type="button"
                   className="gs-text-button"
@@ -1015,7 +1122,11 @@ const ProjectPreview = ({
             </div>
             <div>
               <dt>Status</dt>
-              <dd>Awaiting both signatures</dd>
+              <dd>
+                {demo
+                  ? "Demo signing complete · not legally signed"
+                  : "Completed in PandaDoc"}
+              </dd>
             </div>
             <div>
               <dt>GitHub</dt>
@@ -1033,7 +1144,7 @@ const ProjectPreview = ({
           <button type="button" className="gs-text-button" onClick={onNda}>
             Review pre-filled NDA <ArrowRight size={13} />
           </button>
-          <p>After signing, approve access to the selected repository.</p>
+          <p>Approve access to the selected repository.</p>
           <button
             type="button"
             className="gs-text-button"

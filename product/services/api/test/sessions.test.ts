@@ -23,6 +23,15 @@ const publicRoutes = new Set([
 ]);
 
 const validInputs: Record<string, { query?: string; body?: unknown }> = {
+  "POST /api/v1/organizations/:organization_id/nda-documents": {
+    body: {
+      company: "Example Inc.",
+      address: "123 Example Street",
+      name: "Ada Lovelace",
+      title: "CEO",
+      email: "ada@example.com",
+    },
+  },
   "POST /api/v1/workspaces/:workspace_id/training-runs": {
     body: { task_id: "0198ae70-0e61-7a51-9d5c-2f4b5e6a7b8c" },
   },
@@ -65,6 +74,7 @@ const validInputs: Record<string, { query?: string; body?: unknown }> = {
 };
 
 const pathParameters: Record<string, string> = {
+  document_id: "example-nda",
   organization_id: organizationId,
   workspace_id: workspaceId,
   api_key_id: apiKeyId,

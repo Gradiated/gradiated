@@ -4,6 +4,7 @@ import { createApiAnalytics, createSignupHandler } from "./analytics.js";
 import { createEvaluationModelValidator } from "./catalog/evaluation-models.js";
 import { createTrainingEngine } from "./training/engine.js";
 import { serve } from "@hono/node-server";
+import { createPandaDocNda } from "./legal/pandadoc.js";
 import { createGpuControlApp } from "./gpu-control.js";
 import {
   createTopUpChargeStore,
@@ -187,6 +188,18 @@ const validateEvaluationModel = createEvaluationModelValidator(
 );
 
 const app = createApp({
+  ndaDocuments:
+    environment.PANDADOC_NDA_ENABLED === "true" &&
+    environment.PANDADOC_API_KEY &&
+    environment.PANDADOC_NDA_TEMPLATE_ID &&
+    environment.PANDADOC_NDA_TEMPLATE_VERSION
+      ? createPandaDocNda({
+          apiKey: environment.PANDADOC_API_KEY,
+          templateId: environment.PANDADOC_NDA_TEMPLATE_ID,
+          templateVersion: environment.PANDADOC_NDA_TEMPLATE_VERSION,
+          dateField: environment.PANDADOC_NDA_DATE_FIELD,
+        })
+      : undefined,
   analytics,
   externalModels,
   allowedOrigins: trustedOrigins,

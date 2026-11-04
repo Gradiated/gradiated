@@ -31,7 +31,17 @@ export const requireData = async <T>(
     error && typeof error === "object" && "detail" in error
       ? String(error.detail)
       : `Request failed with status ${response.status}.`;
-  const requestError = new Error(detail) as Error & { status?: number };
+  const requestError = new Error(detail) as Error & {
+    status?: number;
+    code?: string;
+  };
   requestError.status = response.status;
+  if (
+    error &&
+    typeof error === "object" &&
+    "code" in error &&
+    typeof error.code === "string"
+  )
+    requestError.code = error.code;
   throw requestError;
 };

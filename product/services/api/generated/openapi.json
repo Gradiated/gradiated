@@ -1994,6 +1994,92 @@
         ],
         "additionalProperties": false
       },
+      "NdaDocument": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The PandaDoc document ID, not a signing-session credential."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "preparing",
+              "ready",
+              "completed",
+              "unavailable"
+            ],
+            "description": "Authoritative provider status; completed requires all required participants."
+          },
+          "details": {
+            "$ref": "#/components/schemas/NdaDetails"
+          },
+          "customer_completed": {
+            "type": "boolean",
+            "description": "Whether the customer recipient has finished; this alone does not complete a two-party NDA."
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "details",
+          "customer_completed"
+        ]
+      },
+      "NdaDetails": {
+        "type": "object",
+        "properties": {
+          "company": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "The counterparty's legal company name."
+          },
+          "address": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000,
+            "description": "The counterparty's company address."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "The authorized customer signer's full name."
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "The customer signer's title."
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 200,
+            "format": "email",
+            "description": "The signer email, which must match the authenticated verified account."
+          }
+        },
+        "required": [
+          "company",
+          "address",
+          "name",
+          "title",
+          "email"
+        ],
+        "additionalProperties": false
+      },
+      "NdaSigningSession": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id"
+        ]
+      },
       "MemberList": {
         "type": "object",
         "properties": {

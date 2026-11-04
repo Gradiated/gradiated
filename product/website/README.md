@@ -59,6 +59,12 @@ sign-in and organization setup return to the wizard. The console's optional
 and gradiated.com in production). Only the fixed `next=engineer` destination is
 accepted; invitation acceptance keeps priority.
 
+Accounts with multiple active organizations choose explicitly before starting a
+draft; the selected ID is preserved through console organization setup. Recoverable
+staff-session failures return through the console recovery path rather than
+ordinary sign-in. `/get-started/` is prerendered with noindex metadata so direct
+deployed links and login handoffs resolve without a client-side navigation first.
+
 Name, email and company come from the account, rather than new wizard questions.
 Drafts are scoped to the user and organization. NDA signer fields stay editable
 because the signer may be someone else. The local preview hands the entered
@@ -81,21 +87,19 @@ In the demo, **Fill with an example** fills in
 synthetic details so the whole flow can be explored without entering personal
 information. **Start over** clears the local draft.
 
-The wizard stores progress only in this browser’s local storage. Account creation
-and identity reuse follow the existing product flow; the wizard does not send
-messages, prepare or sign contracts, grant repository access, ingest traces, run
-experiments or take payments. Engineer assignment, Slack Connect coordination,
-the approved NDA template with
-electronic signing, and scoped access approval would need implementation for
-the live flow. Scope, pricing and experiment approval remain explicit steps
-with the engineer.
+The local demo stores progress only in this browser and simulates signing. Account
+creation and identity reuse follow the existing product flow. The optional live
+NDA integration below creates and verifies PandaDoc documents; it is disabled by
+default. Slack messages/invites, GitHub access, engineer assignment, trace ingestion,
+experiments and payments are not implemented. Scope, pricing and experiment
+approval remain explicit steps with the engineer.
 
 The NDA field mapping follows the current [PostHog mutual NDA template](https://docs.google.com/document/d/1K-1ErUrHbvNs8ed8CXSQIuA0xJdg55sC/edit)
 read from Drive. The customer supplies legal company name, address, signer name,
 signer title and signer email. PostHog Inc., James Hawkins (Co-CEO), and the
 PostHog address from the template are pre-filled. Signatures and dates must be
 captured by the signing service; a typed name here is not a signature. The
-prototype previews these details only and does not copy or modify the agreement.
+local signing demo previews these details only and does not execute an agreement.
 Fetch the current template when implementing signing rather than storing a local
 contract copy. Its restrictions on AI use of confidential material and software
 modification require separate written permission before that work begins.
@@ -105,6 +109,84 @@ channel; customers can explicitly select email only when their team cannot use
 Slack. Repository access and Slack invitations are pending actions in the preview,
 not completed integrations. Private repository access waits for both NDA
 signatures.
+
+#### Embedded PandaDoc NDA signing
+
+The provided template is [Gradiated mutual NDA](https://app.pandadoc.com/a/#/templates/bTmxaYhTaU2tQ28fLhVrHn).
+The template ID is configured by default; its actual role/field mapping has not
+been inspected in an authenticated PandaDoc session or tested against the live
+API. PandaDoc account access alone does not supply API credentials or prove that
+the workspace has embedded-signing/API entitlement.
+
+The NDA details form opens an on-page review/signing step. In DEV account preview,
+**Simulate signing** advances the demo without calling PandaDoc or collecting any
+signature. In the live flow, the backend creates a document, waits for draft
+readiness, sends with `silent: true` to suppress signing emails, and creates a
+15-minute session for the verified signed-in signer. The browser loads PandaDoc's
+official `pandadoc-signing` component. Signing events only trigger a status check;
+the API must report `document.completed`, a completed customer recipient, and a
+filled customer signature field before the UI advances. Merely signing one side while
+another required signer is pending does not unlock the next step.
+
+Backend configuration (never put these credentials in `VITE_` variables):
+
+| Setting | Value |
+| --- | --- |
+| `PANDADOC_NDA_ENABLED` | `false` by default; enable only after template approval and sandbox verification |
+| `PANDADOC_API_KEY` | Server-side PandaDoc API key from the same workspace as the template |
+| `PANDADOC_NDA_TEMPLATE_ID` | Defaults to `bTmxaYhTaU2tQ28fLhVrHn`; use a separate test template for sandbox testing |
+| `PANDADOC_NDA_TEMPLATE_VERSION` | Required explicit approved revision; bump when legal content changes |
+| `PANDADOC_NDA_DATE_FIELD` | Optional exact date-field Merge Field name, e.g. `Agreement.Date`; filled from server time at document creation, not a claim of signing time |
+
+An engineer with infrastructure access can add these settings to the existing
+API Secrets Manager JSON `gradiated/prod/product/api` in `us-east-1`, preserving
+existing values. No key has been uploaded by this PR. Validate the production
+workspace's API entitlement and use separate sandbox credentials for tests.
+
+Required PandaDoc template setup before enabling:
+
+- A role named exactly `Customer`, with a required signature field and automatic
+  actual customer signing date. The customer must sign in to Gradiated using the
+  same verified email as the signer and have organization admin access. This
+  first integration does not grant a signing session for a different person's
+  email; that person must authenticate themselves.
+- Variables `Customer.Company`, `Customer.Address`, `Customer.Name`,
+  `Customer.Title`, `Customer.Email`, `PostHog.Company`, `PostHog.Signer`, and
+  `PostHog.Title` where the API-populated values belong. Match the exact names,
+  or update the mapping deliberately. Date fields use Merge Field names instead.
+- Confirm the intended pre-executed PostHog signature/acceptance arrangement with
+  the authorized company signer. Pre-filled names or API date values are not
+  signatures. The API does not forge or pre-fill signature fields. If a PostHog
+  signing role is still required, PandaDoc stays pending until it is completed;
+  an unassigned required role or per-document approval workflow needs attention.
+- Verify the full approved NDA text is shown and that the resulting completed
+  PDF and PandaDoc signature certificate/audit trail contain the intended parties,
+  signatures, dates, and exact agreement. Keep the completed legal record in
+  PandaDoc under the company's retention/access policy. Record IDs and ownership
+  metadata live in PandaDoc; there is no new local contract database in this PR.
+
+The API binds documents to the organization, creator, signer email and template
+revision through provider-side metadata, checks active organization admin access,
+and checks the customer signature field. The browser retains only the document
+ID for reopening; short-lived signing sessions are not persisted. Reloads require
+reverification. Editing signer/company details invalidates the current document
+selection and requires a new signature. Provider failures never count as signing.
+Document creation is not automatically retried, to avoid silently producing
+duplicate contracts after an uncertain network response; check PandaDoc for an
+existing draft before creating another copy if the initial response was lost.
+
+Before rollout, test create → silent send → embedded session → all-parties
+completion with a sandbox key; customer-only completion while countersigning is
+pending; wrong/missing signature fields; unauthorized/cross-organization access;
+changed signer details; expired session recovery; missing credentials; provider
+outage; reload/resume; and signed-record retention. GitHub's eventual backend
+integration must independently verify the NDA document's current status and
+ownership before granting code access; frontend state is never that authorization.
+
+References: [embedded signing](https://developers.pandadoc.com/docs/embedded-signing),
+[silent send](https://developers.pandadoc.com/reference/send-document),
+[field/date prefill](https://developers.pandadoc.com/docs/prefill-fields),
+and [document details](https://developers.pandadoc.com/reference/document-details).
 
 #### GitHub App setup for the reviewing engineer
 
@@ -161,9 +243,10 @@ Before enabling the live flow:
    deliveries. Handle installation creation/deletion/suspension and
    `installation_repositories` changes, and recheck current access before work.
    Treat a request awaiting organization-owner approval as pending, not connected.
-7. Complete mutual NDA signing before requesting installation access to private
-   repositories. The current signature-page preview is not a signed NDA; the
-   live flow needs signing and step reordering before repository connection.
+7. Configure and verify the embedded NDA integration above before requesting
+   installation access to private repositories. The NDA is now the first step;
+   the local signing simulation is not a signed agreement. Check NDA completion
+   again on the backend before authorizing a live repository connection.
 8. Test existing Google/GitHub/email login, a separate customer organization,
    selected repositories, an already-installed app, a user who requires admin
    approval, forged callback IDs/state, cross-customer installation binding,

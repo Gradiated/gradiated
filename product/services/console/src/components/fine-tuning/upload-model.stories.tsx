@@ -206,7 +206,7 @@ const fillUpload = async (canvasElement: HTMLElement, existing = false) => {
 };
 
 const meta = {
-  title: "Components/Training/Model upload",
+  title: "Pages/Training/Blocks/Model upload",
   component: StoryPage,
   render: (args) => <StoryPage key={args.path} {...args} />,
   args: { path: "/tasks" },

@@ -6,6 +6,7 @@ import { createHash } from "node:crypto";
 import { TextDecoder } from "node:util";
 import type { FileHandle } from "node:fs/promises";
 import { z } from "zod";
+import { MAX_UPLOADED_ADAPTER_RANK } from "@gradiated/contracts";
 import type { BaseModelConfiguration } from "./base-model-configuration.js";
 
 const ConfigSchema = z
@@ -13,7 +14,7 @@ const ConfigSchema = z
     peft_type: z.literal("LORA"),
     task_type: z.literal("CAUSAL_LM"),
     base_model_name_or_path: z.string().min(1),
-    r: z.number().int().min(1).max(256),
+    r: z.number().int().min(1).max(MAX_UPLOADED_ADAPTER_RANK),
     lora_alpha: z.number().positive(),
     target_modules: z.array(z.string().min(1)).min(1),
     use_dora: z.literal(false).optional(),

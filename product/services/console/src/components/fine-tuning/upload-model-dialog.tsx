@@ -6,6 +6,7 @@ import { Check, FileCheck2, Loader2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   MAX_ADAPTER_BYTES,
+  MAX_UPLOADED_ADAPTER_RANK,
   CreateModelUploadSchema,
 } from "@gradiated/contracts";
 import {
@@ -35,6 +36,7 @@ import type { TaskRow } from "@/store/fine-tuning-types";
 const AdapterMetadataSchema = z.object({
   base_model_name_or_path: z.string().min(1),
   revision: z.string().nullish(),
+  r: z.number().int().positive().optional(),
 });
 
 export const UploadModelDialog = ({
@@ -98,6 +100,13 @@ export const UploadModelDialog = ({
         const metadata = AdapterMetadataSchema.parse(
           JSON.parse(await configFile.text()),
         );
+        if (metadata.r && metadata.r > MAX_UPLOADED_ADAPTER_RANK) {
+          setFileError(
+            `Adapter rank ${metadata.r} exceeds the maximum supported upload rank of ${MAX_UPLOADED_ADAPTER_RANK}.`,
+          );
+          return;
+        }
+
         setRevision(
           metadata.revision && /^[0-9a-f]{40}$/.test(metadata.revision)
             ? metadata.revision
@@ -287,7 +296,8 @@ export const UploadModelDialog = ({
                     : "Drop your adapter files here"}
                 </span>
                 <span className="mt-1 text-xs text-muted-foreground">
-                  or click to browse · safetensors + JSON · up to 256 MB
+                  or click to browse · safetensors + JSON · up to 256 MB · rank
+                  up to {MAX_UPLOADED_ADAPTER_RANK}
                 </span>
               </button>
               <div className="space-y-1.5">

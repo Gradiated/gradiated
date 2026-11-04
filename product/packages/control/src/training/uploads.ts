@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import {
   CreateModelUploadSchema,
+  MAX_UPLOADED_ADAPTER_RANK,
   type CreateModelUpload,
 } from "@gradiated/contracts";
 import {
@@ -218,7 +219,7 @@ export const createModelUploads = (
         } catch {
           throw new ControlServiceError(
             "conflict",
-            "Invalid LoRA adapter. Check the base model and checkpoint revision, config, complete layer/expert coverage, tensor pairs, rank and safetensors format.",
+            `Invalid LoRA adapter. Check the base model and checkpoint revision, config, complete layer/expert coverage, tensor pairs, rank (maximum ${MAX_UPLOADED_ADAPTER_RANK}) and safetensors format.`,
           );
         } finally {
           await weightsFile.close();

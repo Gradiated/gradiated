@@ -123,7 +123,7 @@ const setup = async (page: Page, role = "admin") => {
   });
   return { received: () => received, uploads: () => uploads, errors };
 };
-const selectFiles = async (page: Page) => {
+const selectFiles = async (page: Page, rank = 2) => {
   await page.getByLabel("Choose adapter files").setInputFiles([
     {
       name: "adapter_config.json",
@@ -131,6 +131,7 @@ const selectFiles = async (page: Page) => {
       buffer: Buffer.from(
         JSON.stringify({
           peft_type: "LORA",
+          r: rank,
           base_model_name_or_path: task.base_model_id,
         }),
       ),
@@ -159,7 +160,7 @@ for (const mobile of [false, true]) {
     ).toBeDisabled();
     await page.getByLabel("Task name", { exact: true }).fill(task.name);
     await page.getByLabel("Version name", { exact: true }).fill(version.name);
-    await selectFiles(page);
+    await selectFiles(page, mobile ? 2 : 32);
     await page.getByLabel("Base checkpoint revision").fill("a".repeat(40));
     await expect(page.getByText("Adapter files ready")).toBeVisible();
     const dialog = page.getByRole("dialog");
@@ -278,3 +279,27 @@ for (const revision of [undefined, null, "main"]) {
     await expect(submit).toBeEnabled();
   });
 }
+
+test("rejects an adapter above rank 32 before uploading", async ({ page }) => {
+  const state = await setup(page);
+  await page.goto("/tasks");
+  await page.getByRole("button", { name: "Add model", exact: true }).click();
+  await page.getByLabel("Choose adapter files").setInputFiles({
+    name: "adapter_config.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(
+      JSON.stringify({
+        base_model_name_or_path: task.base_model_id,
+        r: 33,
+      }),
+    ),
+  });
+  await expect(page.getByRole("alert")).toHaveText(
+    "Adapter rank 33 exceeds the maximum supported upload rank of 32.",
+  );
+  await expect(
+    page.getByRole("button", { name: "Create task & upload" }),
+  ).toBeDisabled();
+  expect(state.uploads()).toBe(0);
+  expect(state.errors).toEqual([]);
+});

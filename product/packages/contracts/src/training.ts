@@ -443,6 +443,7 @@ export const EvaluationResultsSchema = z
   .max(64)
   .openapi("EvaluationResults");
 
+export const MAX_UPLOADED_ADAPTER_RANK = 32;
 export const MAX_ADAPTER_BYTES = 256 * 1024 * 1024;
 export const CreateModelUploadSchema = z
   .strictObject({

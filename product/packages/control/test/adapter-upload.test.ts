@@ -31,6 +31,19 @@ const validateAdapterFiles = (
   );
 
 describe("external adapter validation", () => {
+  it.each([1, 8, 16, 32])("accepts upload rank %i", async (rank) => {
+    const { config, weights } = adapterFiles(base, 1, undefined, rank);
+    expect((await validateAdapterFiles(config, weights, base)).r).toBe(rank);
+  });
+  it.each([33, 64, 256])(
+    "rejects upload rank %i above the cap",
+    async (rank) => {
+      const { config, weights } = adapterFiles(base, 1, undefined, rank);
+      await expect(
+        validateAdapterFiles(config, weights, base),
+      ).rejects.toThrow();
+    },
+  );
   it("accepts paired LoRA tensors and constructs a deterministic two-file archive", async () => {
     const { config, weights } = adapterFiles(base);
     expect((await validateAdapterFiles(config, weights, base)).r).toBe(2);

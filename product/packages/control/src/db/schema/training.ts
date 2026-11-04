@@ -206,3 +206,39 @@ export const modelUploads = pgTable("model_uploads", {
     onDelete: "set null",
   }),
 });
+
+export const TASK_VERSION_FILE_STATUSES = ["pending", "ready"] as const;
+
+export const taskVersionFiles = pgTable(
+  "task_version_files",
+  {
+    id: uuid("id").primaryKey(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    versionId: uuid("version_id")
+      .notNull()
+      .references(() => taskVersions.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    contentType: text("content_type").notNull(),
+    sizeBytes: bigint("size_bytes", { mode: "number" }).notNull(),
+    status: text("status", { enum: TASK_VERSION_FILE_STATUSES }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+    completedAt: timestamp("completed_at", {
+      withTimezone: true,
+      mode: "date",
+    }),
+  },
+  (table) => [
+    check(
+      "task_version_files_status_check",
+      sql`${table.status} in (${inList(TASK_VERSION_FILE_STATUSES)})`,
+    ),
+    uniqueIndex("task_version_files_ready_name_unique")
+      .on(table.versionId, table.name)
+      .where(sql`${table.status} = 'ready'`),
+    index("task_version_files_version_index").on(table.versionId),
+  ],
+);

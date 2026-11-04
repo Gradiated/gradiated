@@ -1,4 +1,5 @@
 import type { ObjectStorage } from "../storage/object-storage.js";
+import { createVersionFiles } from "./version-files.js";
 import { createModelUploads } from "./uploads.js";
 import { catalogModel } from "@gradiated/contracts/model-catalog";
 import {
@@ -81,6 +82,7 @@ export const createTrainingService = (
 
   return {
     uploads: createModelUploads(database, uploadStorage),
+    files: createVersionFiles(database, uploadStorage),
     async startRun(userId: string, workspaceId: string, taskId: string) {
       await requireWorkspaceEditor(database, { userId, workspaceId });
       const task = await records.getTaskById(workspaceId, taskId);

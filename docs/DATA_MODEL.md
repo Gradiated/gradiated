@@ -870,3 +870,16 @@ the upload row and is idempotent. `task_versions.training_run_id` is nullable fo
 external adapters; those versions use `runs/<version_id>/output/<sha256>/adapter.tar.gz`
 and have no evaluation. Their initial serving status is `unavailable`. The upload
 intent is retained for artifact cleanup even after its version or task is deleted.
+
+### Version files
+
+`task_version_files` holds the files delivered with a task version: its `report.md`
+training report and any data files, images or exports the report references. Each
+row has an ID, workspace FK, version FK (cascade), a flat file name, content type,
+declared size, `pending`/`ready` status and creation and completion times. Staff
+reserve a file and receive a one-hour signed PUT to `version-files/<version_id>/<file_id>`
+in the training artifacts bucket; completion checks the object's size, marks it
+`ready` and replaces any ready file with the same name on that version, deleting
+the replaced object. A partial unique index keeps one ready file per version and
+name. Workspace members list, read (text files up to 2 MiB, served by the API) and
+download ready files.

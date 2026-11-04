@@ -487,3 +487,61 @@ export const ModelUploadPathSchema = WorkspacePathSchema.extend({
   upload_id: UuidSchema,
 });
 export type CreateModelUpload = z.infer<typeof CreateModelUploadSchema>;
+
+export const MAX_VERSION_FILE_BYTES = 100 * 1024 * 1024;
+export const MAX_VERSION_FILE_CONTENT_BYTES = 2 * 1024 * 1024;
+export const VERSION_REPORT_FILE = "report.md";
+
+export const VersionFileNameSchema = z
+  .string()
+  .regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/)
+  .describe(
+    "File name within the version, such as report.md or eval-samples.csv. Reports reference data files by this name.",
+  );
+export const TaskVersionFileSchema = z
+  .object({
+    id: UuidSchema,
+    name: VersionFileNameSchema,
+    content_type: z.string().min(1).max(200),
+    size_bytes: CountSchema,
+    created_at: TimestampSchema,
+  })
+  .openapi("TaskVersionFile");
+export const TaskVersionFileListSchema = z
+  .object({ data: z.array(TaskVersionFileSchema) })
+  .openapi("TaskVersionFileList");
+export const CreateTaskVersionFileSchema = z
+  .object({
+    name: VersionFileNameSchema,
+    size_bytes: z.number().int().positive().max(MAX_VERSION_FILE_BYTES),
+    content_type: z
+      .string()
+      .min(1)
+      .max(200)
+      .default("application/octet-stream"),
+  })
+  .openapi("CreateTaskVersionFile");
+export const TaskVersionFileUploadSchema = z
+  .object({
+    id: UuidSchema,
+    upload_url: z.url().describe("Signed URL to PUT the file's bytes to."),
+    expires_at: TimestampSchema,
+  })
+  .openapi("TaskVersionFileUpload");
+export const TaskVersionFilePathSchema = TaskVersionPathSchema.extend({
+  file_id: UuidSchema,
+});
+export const TaskVersionFileContentSchema = z
+  .object({
+    name: VersionFileNameSchema,
+    content_type: z.string(),
+    content: z.string().describe("UTF-8 text of the file."),
+  })
+  .openapi("TaskVersionFileContent");
+export const TaskVersionFileDownloadSchema = z
+  .object({
+    url: z.url().describe("Short-lived signed URL for the file."),
+    expires_at: TimestampSchema,
+  })
+  .openapi("TaskVersionFileDownload");
+export type CreateTaskVersionFile = z.infer<typeof CreateTaskVersionFileSchema>;

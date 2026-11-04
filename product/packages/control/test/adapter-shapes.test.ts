@@ -117,12 +117,12 @@ describe("serving adapter dimensions", () => {
       "not supported",
     );
   });
-  it("rejects incomplete configured target-module coverage", async () => {
+  it("rejects configured target modules that have no tensors", async () => {
     await expect(
       check(adapterProjectionShapes(qwen)!, {
         target_modules: ["q_proj", "k_proj"],
       }),
-    ).rejects.toThrow("coverage");
+    ).rejects.toThrow("no tensors");
   });
   it.each([
     "use_rslora",

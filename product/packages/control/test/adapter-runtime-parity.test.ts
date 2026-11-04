@@ -99,11 +99,11 @@ it.each([
     accepted: true,
   },
   {
-    name: "missing dense layers",
+    name: "a subset of dense layers",
     layerCount: 2,
     expertCount: 0,
     files: () => adapterFiles(base, 1),
-    accepted: false,
+    accepted: true,
   },
   {
     name: "complete expert layers",

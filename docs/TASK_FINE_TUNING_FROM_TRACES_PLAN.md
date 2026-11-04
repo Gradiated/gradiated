@@ -465,7 +465,7 @@ New upload-created tasks inherit the workspace default judge and have automatic 
 Admins create a workspace-scoped model-upload resource, receive one-hour signed
 PUT grants bound to declared file lengths, then PUT its version resource to
 validate and publish. Completion checks access again, validates sizes, config,
-tensor pairs, ranks, offsets and complete layer and expert coverage, and constructs a canonical tar.gz archive in a
+tensor pairs, ranks, offsets, shapes and expert coverage, and constructs a canonical tar.gz archive in a
 separate content-addressed output key. Weights are spooled to a private temporary
 directory, validated in 64 KiB reads, and archived through a gzip/hash pipeline to
 a file before streaming that file to S3. One validation runs per API process;
@@ -473,7 +473,8 @@ working disk use is bounded to roughly twice the 512 MiB input cap. Temporary fi
 are removed after success and failure. Neither weights nor archives are collected
 into whole-file buffers. The published row never points at a key
 covered by the browser's write grants. Completion retries return the same version.
-Layer and MoE expert coverage are checked against the selected repository's `config.json` at the
+Adapters may cover any subset of layers, as vLLM and SGLang leave unadapted layers on the base
+weights. Layer range, module shapes and MoE expert coverage are checked against the selected repository's `config.json` at the
 submitted immutable revision, including `text_config` for multimodal models.
 Configuration reads are capped at 1 MiB with a 10-second deadline and same-origin
 Hugging Face redirects; the uploader never supplies the trusted layer or expert counts.

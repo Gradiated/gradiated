@@ -132,15 +132,15 @@ describe("external adapter validation", () => {
       ),
     ).rejects.toThrow("Only LoRA A/B");
   });
-  it("requires every base layer and rejects out-of-range layers", async () => {
+  it("accepts a subset of base layers and rejects out-of-range layers", async () => {
     const full = adapterFiles(base, 2);
     expect(
       (await validateAdapterFiles(full.config, full.weights, base, 2)).r,
     ).toBe(2);
     const partial = adapterFiles(base);
-    await expect(
-      validateAdapterFiles(partial.config, partial.weights, base, 2),
-    ).rejects.toThrow("Incomplete adapter layer coverage");
+    expect(
+      (await validateAdapterFiles(partial.config, partial.weights, base, 2)).r,
+    ).toBe(2);
     const outOfRange = Buffer.from(partial.weights);
     const size = Number(outOfRange.readBigUInt64LE());
     const header = outOfRange

@@ -224,7 +224,7 @@ describe("model uploads", () => {
     loadBaseConfiguration.mockResolvedValueOnce({
       layerCount: 2,
       expertCount: 0,
-      projectionShapes: { "0/self_attn.q_proj": [4, 4] as const },
+      projectionShapes: { "0/self_attn.q_proj": [8, 8] as const },
     });
     await expect(
       service.complete(member.userId, member.workspaceId, upload.id),

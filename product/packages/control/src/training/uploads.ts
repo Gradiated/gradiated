@@ -232,7 +232,7 @@ export const createModelUploads = (
         } catch {
           throw new ControlServiceError(
             "conflict",
-            `Invalid LoRA adapter. Check the base model and checkpoint revision, config, complete layer/expert coverage, tensor pairs, rank (maximum ${MAX_UPLOADED_ADAPTER_RANK}) and safetensors format.`,
+            `Invalid LoRA adapter. Check the base model and checkpoint revision, config, expert coverage, tensor pairs, rank (maximum ${MAX_UPLOADED_ADAPTER_RANK}) and safetensors format.`,
           );
         } finally {
           await weightsFile.close();

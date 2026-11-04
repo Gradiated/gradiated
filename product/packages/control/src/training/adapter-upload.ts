@@ -24,8 +24,17 @@ const ConfigSchema = z
     lora_bias: z.literal(false).optional(),
     fan_in_fan_out: z.literal(false).optional(),
     layer_replication: z.null().optional(),
-    layers_to_transform: z.null().optional(),
-    layers_pattern: z.null().optional(),
+    layers_to_transform: z
+      .union([
+        z.number().int().nonnegative(),
+        z.array(z.number().int().nonnegative()),
+      ])
+      .nullable()
+      .optional(),
+    layers_pattern: z
+      .union([z.string(), z.array(z.string())])
+      .nullable()
+      .optional(),
     modules_to_save: z.null().optional(),
     bias: z.literal("none"),
     rank_pattern: z.record(z.string(), z.never()).optional(),
@@ -143,8 +152,7 @@ export const validateAdapterFiles = async (
   const targetModules = new Set(
     config.target_modules.map((module) => module.split(".").at(-1)),
   );
-  const layers = new Set<number>();
-  const projections = new Set<string>();
+  const modules = new Set<string>();
   const expertCoverage = new Map<string, Set<number> | null>();
   const expertLayouts = new Set<string>();
   const ranges: [number, number, number, number][] = [];
@@ -163,7 +171,6 @@ export const validateAdapterFiles = async (
     if (layer >= layerCount)
       throw new Error("Adapter layer is outside the base model.");
 
-    layers.add(layer);
     const tensor = TensorSchema.parse(tensors[name]);
     const [start, end] = tensor.data_offsets;
     const width = tensor.dtype === "F32" ? 4 : 2;
@@ -182,6 +189,7 @@ export const validateAdapterFiles = async (
         "Adapter tensor ranks, pairs or sizes do not match the config.",
       );
 
+    modules.add(tensorName[2]!);
     const moduleName = tensorName[2]!.split(".").at(-1);
     if (!moduleName || !targetModules.has(moduleName))
       throw new Error("Tensor target modules do not match the config.");
@@ -200,7 +208,6 @@ export const validateAdapterFiles = async (
         throw new Error(
           "Adapter tensor dimensions do not match the serving checkpoint.",
         );
-      projections.add(key);
     }
 
     const expertName = /(?:^|\.)experts\.(\d+)\./.exec(tensorName[2]!);
@@ -238,17 +245,11 @@ export const validateAdapterFiles = async (
           : 0x7f80;
     ranges.push([start, end, width, mask]);
   }
-  if (baseConfiguration.projectionShapes) {
-    for (const key of Object.keys(baseConfiguration.projectionShapes)) {
-      if (targetModules.has(key.split(".").at(-1)!) && !projections.has(key))
-        throw new Error(
-          "Adapter target module coverage is incomplete for the serving checkpoint.",
-        );
-    }
-  }
-
-  if (layers.size !== layerCount)
-    throw new Error("Incomplete adapter layer coverage.");
+  const adaptedModules = new Set(
+    [...modules].map((module) => module.split(".").at(-1)),
+  );
+  if ([...targetModules].some((module) => !adaptedModules.has(module)))
+    throw new Error("Adapter target modules have no tensors.");
 
   if (
     [...expertCoverage.values()].some(

@@ -19,7 +19,6 @@ import { useProductContext } from "@/hooks/use-product-context";
 import { trainingKey } from "@/hooks/use-training";
 import { canManageOrganization } from "@/lib/roles";
 import { ModelOption, modelOption } from "@/components/model-label";
-import { OptionCombobox } from "@/components/option-combobox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,11 +31,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { TaskRow } from "@/store/fine-tuning-types";
+import { slugifyTaskInput } from "@/lib/task-slug";
 
 const AdapterMetadataSchema = z.object({
   base_model_name_or_path: z.string().min(1),
-  revision: z.string().nullish(),
+  revision: z.string().max(300).nullish(),
   r: z.number().int().positive().optional(),
+  lora_alpha: z.number().positive().optional(),
+  target_modules: z.array(z.string()).optional(),
 });
 
 export const UploadModelDialog = ({
@@ -55,6 +57,13 @@ export const UploadModelDialog = ({
   const [name, setName] = useState("");
   const [baseModel, setBaseModel] = useState(task?.base_model_id ?? "");
   const [revision, setRevision] = useState("");
+  const [metadata, setMetadata] = useState<z.infer<
+    typeof AdapterMetadataSchema
+  > | null>(null);
+  const [tensorDetails, setTensorDetails] = useState<{
+    precision: string;
+    layers: number;
+  } | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [fileError, setFileError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -96,6 +105,9 @@ export const UploadModelDialog = ({
       (file) => file.name === "adapter_config.json",
     );
     if (configFile) {
+      setRevision("");
+      setBaseModel("");
+      setMetadata(null);
       try {
         const metadata = AdapterMetadataSchema.parse(
           JSON.parse(await configFile.text()),
@@ -107,24 +119,89 @@ export const UploadModelDialog = ({
           return;
         }
 
-        setRevision(
-          metadata.revision && /^[0-9a-f]{40}$/.test(metadata.revision)
-            ? metadata.revision
-            : "",
-        );
+        setRevision(metadata.revision ?? "");
 
-        const match = models.data?.data.find(
+        const catalog = models.data ?? (await models.refetch()).data;
+        if (!catalog) {
+          setFileError("Could not load supported base models. Try again.");
+          return;
+        }
+        const match = catalog.data.find(
           (model) =>
             model.id === metadata.base_model_name_or_path ||
             (catalogModel(model.id) as CatalogEntry | undefined)?.training
-              ?.model === metadata.base_model_name_or_path,
+              ?.model === metadata.base_model_name_or_path ||
+            model.properties?.hugging_face_id ===
+              metadata.base_model_name_or_path,
         );
-        if (match) setBaseModel(match.id);
+        if (!match) {
+          setFileError(
+            "The adapter config does not identify a supported base model. Export it with its original Hugging Face base model repository.",
+          );
+          return;
+        }
+        if (task && match.id !== task.base_model_id) {
+          setFileError(
+            "The adapter base model does not match this model's existing versions.",
+          );
+          return;
+        }
+        setBaseModel(match.id);
+        setMetadata(metadata);
       } catch {
         setFileError(
           "The adapter config must contain valid JSON with a base model name.",
         );
         return;
+      }
+    }
+    const weightsFile = incoming.find(
+      (file) => file.name === "adapter_model.safetensors",
+    );
+    if (weightsFile) {
+      setTensorDetails(null);
+      try {
+        const prefix = new DataView(
+          await weightsFile.slice(0, 8).arrayBuffer(),
+        );
+        const headerBytes = Number(prefix.getBigUint64(0, true));
+        if (
+          headerBytes > 0 &&
+          headerBytes <= 1024 * 1024 &&
+          headerBytes + 8 <= weightsFile.size
+        ) {
+          const header = z
+            .record(z.string(), z.unknown())
+            .parse(
+              JSON.parse(await weightsFile.slice(8, 8 + headerBytes).text()),
+            );
+          const tensors = Object.entries(header).filter(
+            ([key]) => key !== "__metadata__",
+          );
+          const precisions = [
+            ...new Set(
+              tensors.map(
+                ([, value]) =>
+                  z.object({ dtype: z.string() }).parse(value).dtype,
+              ),
+            ),
+          ];
+          const layers = new Set(
+            tensors
+              .map(([key]) => /(?:^|\.)layers\.(\d+)\./.exec(key)?.[1])
+              .filter((value) => value !== undefined),
+          );
+          setTensorDetails({
+            precision: precisions
+              .map((dtype) =>
+                dtype === "F16" ? "FP16" : dtype === "F32" ? "FP32" : dtype,
+              )
+              .join(" / "),
+            layers: layers.size,
+          });
+        }
+      } catch {
+        setTensorDetails(null);
       }
     }
     setFiles((current) => [
@@ -134,15 +211,25 @@ export const UploadModelDialog = ({
       ...incoming,
     ]);
   };
-  const draft = CreateModelUploadSchema.safeParse({
+  const draft = CreateModelUploadSchema.omit({
+    base_model_revision: true,
+  }).safeParse({
     task: task?.name ?? taskName.trim(),
     create_task: !task,
     name: name.trim(),
     base_model_id: baseModel,
-    base_model_revision: revision.trim(),
     config_size: config?.size,
     weights_size: weights?.size,
   });
+
+  const expectedRevision = (catalogModel(baseModel) as CatalogEntry | undefined)
+    ?.training?.revision;
+  const revisionIsImmutable = /^[0-9a-f]{40}$/.test(revision);
+  const checkpointWarning = !revisionIsImmutable
+    ? "Training checkpoint is unknown. Results may differ."
+    : expectedRevision && revision !== expectedRevision
+      ? "Trained on a different checkpoint. Results may differ."
+      : null;
 
   const upload = useMutation({
     mutationFn: async () => {
@@ -167,14 +254,14 @@ export const UploadModelDialog = ({
             throw new Error("File upload failed. Please try again.");
         }),
       );
-      setProgress("Validating adapter…");
+      setProgress("Checking adapter compatibility…");
       return completeModelUpload(workspaceId, grant.id);
     },
     onSuccess: async (version) => {
       await client.invalidateQueries({ queryKey: trainingKey(workspaceId) });
       toast.success("Model version uploaded", {
         description:
-          "Your adapter is saved. Serving will be available after qualification.",
+          "Adapter compatibility checks passed. Your model version is saved.",
       });
       onClose();
       void navigate({ to: "/tasks/$taskId", params: { taskId: version.task } });
@@ -209,7 +296,7 @@ export const UploadModelDialog = ({
                 .
               </>
             ) : (
-              "Bring your own LoRA adapter. Create a task to keep its versions together."
+              "Bring your own LoRA adapter."
             )}
           </DialogDescription>
         </DialogHeader>
@@ -233,7 +320,9 @@ export const UploadModelDialog = ({
                     placeholder="e.g. support-triage"
                     value={taskName}
                     maxLength={256}
-                    onChange={(event) => setTaskName(event.target.value)}
+                    onChange={(event) =>
+                      setTaskName(slugifyTaskInput(event.target.value))
+                    }
                     required
                   />
                 </div>
@@ -246,12 +335,11 @@ export const UploadModelDialog = ({
                   value={name}
                   maxLength={200}
                   pattern={"[a-zA-Z0-9][a-zA-Z0-9._\\-]*"}
-                  onChange={(event) => setName(event.target.value)}
+                  onChange={(event) =>
+                    setName(slugifyTaskInput(event.target.value))
+                  }
                   required
                 />
-                <p className="text-xs text-muted-foreground">
-                  A unique name for this model in your workspace.
-                </p>
               </div>
             </div>
             <div className="space-y-2">
@@ -332,53 +420,75 @@ export const UploadModelDialog = ({
                 ))}
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>Base model</Label>
-              <OptionCombobox
-                label="Base model"
-                value={baseModel}
-                onValueChange={setBaseModel}
-                options={(models.data?.data ?? []).map((model) =>
-                  modelOption(model.id),
-                )}
-                renderOption={ModelOption}
-                placeholder="Select the model you fine-tuned"
-                className="w-full"
-                disabled={
-                  models.isPending || Boolean(models.error) || upload.isPending
-                }
-              />
-              <p className="text-xs text-muted-foreground">
-                Must match the base checkpoint used to train your adapter.
-              </p>
-              {models.error && (
-                <p role="alert" className="text-xs text-destructive">
-                  Could not load base models.{" "}
-                  <button
-                    type="button"
-                    className="underline"
-                    onClick={() => void models.refetch()}
+            {config && metadata && baseModel && (
+              <div className="border-t pt-4">
+                <dl className="grid grid-cols-[6rem_minmax(0,1fr)] items-baseline gap-x-4 gap-y-2 text-xs">
+                  <dt className="text-muted-foreground">Base model</dt>
+                  <dd className="min-w-0">
+                    <ModelOption {...modelOption(baseModel)} />
+                  </dd>
+                  <dt className="text-muted-foreground">Adapter</dt>
+                  <dd className="flex flex-wrap gap-x-3 gap-y-1">
+                    {metadata.r && <span>Rank {metadata.r}</span>}
+                    {tensorDetails?.precision && (
+                      <span>{tensorDetails.precision}</span>
+                    )}
+                    {!!tensorDetails?.layers && (
+                      <span>
+                        {tensorDetails.layers}{" "}
+                        {tensorDetails.layers === 1 ? "layer" : "layers"}
+                      </span>
+                    )}
+                    {weights && (
+                      <span>{(weights.size / 1024 ** 2).toFixed(1)} MiB</span>
+                    )}
+                  </dd>
+                  <dt className="text-muted-foreground">Checkpoint</dt>
+                  <dd
+                    className="min-w-0 truncate font-mono"
+                    title={revision || undefined}
                   >
-                    Try again
-                  </button>
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="upload-revision">Base checkpoint revision</Label>
-              <Input
-                id="upload-revision"
-                className="font-mono text-xs"
-                placeholder="40-character Hugging Face commit SHA"
-                value={revision}
-                onChange={(event) => setRevision(event.target.value)}
-                pattern="[0-9a-f]{40}"
-                required
-              />
-              <p className="text-xs text-muted-foreground">
-                The exact revision your adapter was trained against.
+                    {revisionIsImmutable
+                      ? revision.slice(0, 12)
+                      : revision || "Not recorded"}
+                  </dd>
+                  {metadata.target_modules && (
+                    <>
+                      <dt className="text-muted-foreground">Targets</dt>
+                      <dd className="min-w-0 break-words font-mono">
+                        {metadata.target_modules.join(", ")}
+                      </dd>
+                    </>
+                  )}
+                  {metadata.lora_alpha && (
+                    <>
+                      <dt className="text-muted-foreground">Alpha</dt>
+                      <dd>{metadata.lora_alpha}</dd>
+                    </>
+                  )}
+                </dl>
+                {checkpointWarning && (
+                  <p
+                    role="status"
+                    className="mt-3 text-xs text-amber-700 dark:text-amber-400"
+                  >
+                    {checkpointWarning}
+                  </p>
+                )}
+              </div>
+            )}
+            {models.error && (
+              <p role="alert" className="text-xs text-destructive">
+                Could not load supported models.{" "}
+                <button
+                  type="button"
+                  className="underline"
+                  onClick={() => void models.refetch()}
+                >
+                  Try again
+                </button>
               </p>
-            </div>
+            )}
           </fieldset>
           {(fileError || upload.error) && (
             <p role="alert" className="text-sm text-destructive">

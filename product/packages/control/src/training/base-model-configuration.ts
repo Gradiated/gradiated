@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  adapterProjectionShapes,
+  type ProjectionShapes,
+} from "./adapter-shapes.js";
 import { ControlServiceError } from "../errors.js";
 
 const LayerCountSchema = z.number().int().min(1).max(4096);
@@ -14,6 +18,7 @@ const DocumentSchema = z
 export type BaseModelConfiguration = {
   layerCount: number;
   expertCount: number;
+  projectionShapes?: ProjectionShapes;
 };
 const repository = z
   .string()
@@ -77,7 +82,11 @@ export const readBaseModelConfiguration = async (
       const config = ConfigurationSchema.parse(
         document.text_config ?? document,
       );
+      const projectionShapes = adapterProjectionShapes(
+        document.text_config ?? document,
+      );
       return {
+        ...(projectionShapes ? { projectionShapes } : {}),
         layerCount: config.num_hidden_layers,
         expertCount:
           config.n_routed_experts === undefined

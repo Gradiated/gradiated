@@ -5,7 +5,13 @@ import type { TaskVersionRecord } from "./records.js";
 import { createTrainingStore } from "./store.js";
 
 export const requireLoadableAdapter = (version: TaskVersionRecord) => {
-  if (!version.adapter.base_model_revision || version.adapter.size_bytes <= 0)
+  if (
+    !(
+      version.adapter.validated_base_model_revision ??
+      version.adapter.base_model_revision
+    ) ||
+    version.adapter.size_bytes <= 0
+  )
     throw new ControlServiceError(
       "unavailable",
       "The adapter needs a recorded base revision and a non-empty archive.",

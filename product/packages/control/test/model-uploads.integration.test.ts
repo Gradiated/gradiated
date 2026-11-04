@@ -9,6 +9,7 @@ import { createTestDatabase, type TestDatabase } from "./support/postgres.js";
 import { seedTrainingTask } from "./support/training.js";
 import { seedMember } from "./support/fixtures.js";
 import { adapterFiles } from "./support/adapter-upload.js";
+import type { BaseModelConfiguration } from "../src/training/base-model-configuration.js";
 import { createMemoryContentStore } from "./support/content-store.js";
 
 describe("model uploads", () => {
@@ -19,7 +20,7 @@ describe("model uploads", () => {
   afterAll(() => db.dispose());
 
   const setup = async () => {
-    const member = await seedTrainingTask(db.database);
+    const member = await seedTrainingTask(db.database, "Qwen/Qwen3-0.6B");
     const objects = new Map<string, Buffer>();
     const storage = {
       signUpload: vi.fn(
@@ -53,10 +54,13 @@ describe("model uploads", () => {
       }),
       uri: (key: string) => `s3://test/${key}`,
     };
-    const loadBaseConfiguration = vi.fn(async () => ({
-      layerCount: 1,
-      expertCount: 0,
-    }));
+    const loadBaseConfiguration = vi.fn(
+      async (): Promise<BaseModelConfiguration> => ({
+        layerCount: 1,
+        expertCount: 0,
+        projectionShapes: { "0/self_attn.q_proj": [4, 4] as const },
+      }),
+    );
     const service = createModelUploads(
       db.database,
       storage,
@@ -140,38 +144,64 @@ describe("model uploads", () => {
     expect(tasks[0]?.latestRun).toBeNull();
   });
   it.each([
-    { revision: "a".repeat(40), accepted: true },
-    { revision: "b".repeat(40), accepted: false },
-    { revision: "main", accepted: true },
-    { revision: null, accepted: true },
+    "c1899de289a04d12100db370d81485cdf75e47ca",
+    "b".repeat(40),
+    "main",
+    null,
   ])(
-    "checks declared checkpoint revision $revision before publication",
-    async ({ revision, accepted }) => {
-      const { member, stage, service, storage, body, files, objects } =
-        await setup();
+    "preserves declared revision %s without trusting the submitted hint",
+    async (revision) => {
+      const { member, stage, service, body, files, objects } = await setup();
       const config = Buffer.from(
         JSON.stringify({ ...JSON.parse(files.config.toString()), revision }),
       );
       const upload = await stage({ ...body, config_size: config.length });
       objects.set(`uploads/${upload.id}/adapter_config.json`, config);
-      const completion = service.complete(
+      const { version } = await service.complete(
         member.userId,
         member.workspaceId,
         upload.id,
       );
-      if (accepted) {
-        expect((await completion).version.adapter.base_model_revision).toBe(
-          body.base_model_revision,
-        );
-      } else {
-        await expect(completion).rejects.toMatchObject({ code: "conflict" });
-        expect(storage.putFile).not.toHaveBeenCalled();
-        expect(
-          await createTrainingStore(db.database).listVersions(member.task.id),
-        ).toEqual([]);
-      }
+      expect(version.adapter.validated_base_model_revision).toBe(
+        "c1899de289a04d12100db370d81485cdf75e47ca",
+      );
+      expect(version.adapter.base_model_revision).toBe(
+        typeof revision === "string" && /^[0-9a-f]{40}$/.test(revision)
+          ? revision
+          : undefined,
+      );
+      expect(version.adapter.declared_base_model_revision).toBe(
+        revision ?? undefined,
+      );
+      expect(version.status).toBe("unavailable");
     },
   );
+  it("rejects matching revision metadata with incompatible serving tensor dimensions", async () => {
+    const { member, stage, service, loadBaseConfiguration } = await setup();
+    const upload = await stage();
+    loadBaseConfiguration.mockResolvedValueOnce({
+      layerCount: 1,
+      expertCount: 0,
+      projectionShapes: { "0/self_attn.q_proj": [8, 8] },
+    });
+    await expect(
+      service.complete(member.userId, member.workspaceId, upload.id),
+    ).rejects.toMatchObject({ code: "conflict" });
+    expect(
+      await createTrainingStore(db.database).listVersions(member.task.id),
+    ).toEqual([]);
+  });
+  it("rejects publication when serving shape validation is unavailable", async () => {
+    const { member, stage, service, loadBaseConfiguration } = await setup();
+    const upload = await stage();
+    loadBaseConfiguration.mockResolvedValueOnce({
+      layerCount: 1,
+      expertCount: 0,
+    } as never);
+    await expect(
+      service.complete(member.userId, member.workspaceId, upload.id),
+    ).rejects.toMatchObject({ code: "unavailable" });
+  });
   it("checks coverage against the immutable base revision before publishing", async () => {
     const {
       member,
@@ -194,13 +224,14 @@ describe("model uploads", () => {
     loadBaseConfiguration.mockResolvedValueOnce({
       layerCount: 2,
       expertCount: 0,
+      projectionShapes: { "0/self_attn.q_proj": [4, 4] as const },
     });
     await expect(
       service.complete(member.userId, member.workspaceId, upload.id),
     ).rejects.toMatchObject({ code: "conflict" });
     expect(loadBaseConfiguration).toHaveBeenCalledWith(
       body.base_model_id,
-      body.base_model_revision,
+      "c1899de289a04d12100db370d81485cdf75e47ca",
     );
     expect(storage.putFile).not.toHaveBeenCalled();
     expect(

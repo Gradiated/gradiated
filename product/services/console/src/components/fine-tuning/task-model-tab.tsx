@@ -49,6 +49,14 @@ const VersionMeta = ({ version }: { version: VersionView }) => (
     {version.training_run_id
       ? `${version.run?.dataset?.train.toLocaleString() ?? "—"} training examples`
       : "Uploaded"}
+    {version.adapter.validated_base_model_revision &&
+    !version.adapter.base_model_revision
+      ? " · Training checkpoint unverified"
+      : version.adapter.validated_base_model_revision &&
+          version.adapter.base_model_revision !==
+            version.adapter.validated_base_model_revision
+        ? " · Different training checkpoint"
+        : ""}
     {version.status === "unavailable"
       ? " · Awaiting serving qualification"
       : ""}

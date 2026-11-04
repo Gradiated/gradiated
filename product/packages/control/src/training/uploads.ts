@@ -149,15 +149,28 @@ export const createModelUploads = (
             "The base model was not found.",
           );
 
+        const supported = (
+          catalogModel(input.base_model_id) as CatalogEntry | undefined
+        )?.training;
+        if (!supported)
+          throw new ControlServiceError(
+            "unavailable",
+            "This model does not yet have a supported LoRA upload validation profile.",
+          );
         const baseRepository =
-          (catalogModel(input.base_model_id) as CatalogEntry | undefined)
-            ?.training?.model ??
-          model.properties.hugging_face_id ??
-          model.id;
+          supported.model ?? model.properties.hugging_face_id ?? model.id;
         const baseConfiguration = await loadBaseConfiguration(
           baseRepository,
-          input.base_model_revision,
+          supported.revision,
         );
+        if (
+          !baseConfiguration.projectionShapes ||
+          !Object.keys(baseConfiguration.projectionShapes).length
+        )
+          throw new ControlServiceError(
+            "unavailable",
+            "Tensor shape validation is not available for this serving architecture. No model version was published.",
+          );
         const prefix = `uploads/${id}`;
         let config: Uint8Array;
         let weightsSize: number;
@@ -200,6 +213,7 @@ export const createModelUploads = (
           );
 
         let rank: number;
+        let declaredRevision: string | undefined;
         const weightsFile = await open(weightsPath, "r");
         try {
           const validated = await validateAdapterFiles(
@@ -210,10 +224,9 @@ export const createModelUploads = (
           );
           if (
             typeof validated.revision === "string" &&
-            /^[0-9a-f]{40}$/.test(validated.revision) &&
-            validated.revision !== input.base_model_revision
+            validated.revision.length <= 300
           )
-            throw new Error("Adapter checkpoint revision mismatch.");
+            declaredRevision = validated.revision;
 
           rank = validated.r;
         } catch {
@@ -239,7 +252,13 @@ export const createModelUploads = (
           sha256,
           size_bytes: archive.sizeBytes,
           rank,
-          base_model_revision: input.base_model_revision,
+          ...(declaredRevision
+            ? { declared_base_model_revision: declaredRevision }
+            : {}),
+          ...(declaredRevision && /^[0-9a-f]{40}$/.test(declaredRevision)
+            ? { base_model_revision: declaredRevision }
+            : {}),
+          validated_base_model_revision: supported.revision,
         });
         await discardInputs(id);
         const task = await records.getTask(workspaceId, input.task);

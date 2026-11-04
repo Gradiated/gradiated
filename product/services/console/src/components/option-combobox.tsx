@@ -44,7 +44,7 @@ export const OptionCombobox = <Value extends string>({
   const groups = [...new Set(options.map((option) => option.group))];
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover modal open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           type="button"
@@ -70,7 +70,7 @@ export const OptionCombobox = <Value extends string>({
             aria-label={`Search ${label.toLowerCase()}`}
             placeholder="Search models…"
           />
-          <CommandList>
+          <CommandList className="max-h-[min(18rem,var(--radix-popover-content-available-height))] overscroll-contain">
             <CommandEmpty>No models found.</CommandEmpty>
             {groups.map((group) => (
               <CommandGroup

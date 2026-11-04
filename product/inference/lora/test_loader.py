@@ -356,6 +356,17 @@ class LoaderTests(unittest.TestCase):
             self.loader.register_metadata(spec)
         self.assertEqual(self.fetches, 0)
 
+    def test_validated_serving_revision_preserves_declared_training_provenance(self):
+        spec = grant(self.payload)
+        spec["version"]["adapter"]["base_model_revision"] = "different-training-revision"
+        spec["version"]["adapter"]["validated_base_model_revision"] = self.config["base_model_revision"]
+        name = self.loader.register_metadata(spec)
+        self.assertEqual(self.loader.entries[name]["spec"]["version"]["adapter"]["base_model_revision"], "different-training-revision")
+        spec["version"]["adapter"]["validated_base_model_revision"] = "wrong-serving-revision"
+        with self.assertRaises(ValueError):
+            self.loader.register_metadata(spec)
+        self.assertEqual(self.fetches, 0)
+
     def test_startup_preloads_only_up_to_native_cpu_count(self):
         specs = [grant(self.payload) for _ in range(3)]
         names = {spec["version"]["name"]: spec for spec in specs}

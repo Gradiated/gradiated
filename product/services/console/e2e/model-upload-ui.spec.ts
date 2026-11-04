@@ -124,6 +124,23 @@ const setup = async (page: Page, role = "admin") => {
   return { received: () => received, uploads: () => uploads, errors };
 };
 const selectFiles = async (page: Page, rank = 2) => {
+  const bytes = rank * 4 * 2;
+  const header = Buffer.from(
+    JSON.stringify({
+      "base_model.model.layers.0.self_attn.q_proj.lora_A.weight": {
+        dtype: "BF16",
+        shape: [rank, 4],
+        data_offsets: [0, bytes],
+      },
+      "base_model.model.layers.0.self_attn.q_proj.lora_B.weight": {
+        dtype: "BF16",
+        shape: [4, rank],
+        data_offsets: [bytes, 2 * bytes],
+      },
+    }),
+  );
+  const prefix = Buffer.alloc(8);
+  prefix.writeBigUInt64LE(BigInt(header.length));
   await page.getByLabel("Choose adapter files").setInputFiles([
     {
       name: "adapter_config.json",
@@ -139,7 +156,7 @@ const selectFiles = async (page: Page, rank = 2) => {
     {
       name: "adapter_model.safetensors",
       mimeType: "application/octet-stream",
-      buffer: Buffer.alloc(32, 1),
+      buffer: Buffer.concat([prefix, header, Buffer.alloc(2 * bytes)]),
     },
   ]);
 };
@@ -161,7 +178,6 @@ for (const mobile of [false, true]) {
     await page.getByLabel("Model name", { exact: true }).fill(task.name);
     await page.getByLabel("Version name", { exact: true }).fill(version.name);
     await selectFiles(page, mobile ? 2 : 32);
-    await page.getByLabel("Base checkpoint revision").fill("a".repeat(40));
     await expect(page.getByText("Adapter files ready")).toBeVisible();
     const dialog = page.getByRole("dialog");
     const box = await dialog.boundingBox();
@@ -181,6 +197,7 @@ for (const mobile of [false, true]) {
       name: version.name,
       base_model_id: task.base_model_id,
     });
+    expect(state.received()).not.toHaveProperty("base_model_revision");
     expect(state.uploads()).toBe(2);
     expect(state.errors).toEqual([]);
   });
@@ -205,7 +222,6 @@ test("uploads another version from an existing task and rejects unsupported file
   );
   await selectFiles(page);
   await page.getByLabel("Version name", { exact: true }).fill(version.name);
-  await page.getByLabel("Base checkpoint revision").fill("b".repeat(40));
   await page
     .getByRole("button", { name: "Upload version", exact: true })
     .last()
@@ -257,8 +273,8 @@ for (const revision of [undefined, null, "main"]) {
         buffer: Buffer.alloc(32, 1),
       },
     ]);
-    await expect(page.getByLabel("Base checkpoint revision")).toHaveValue(
-      "a".repeat(40),
+    await expect(page.getByRole("status")).toContainText(
+      "different checkpoint",
     );
     await picker.setInputFiles({
       name: "adapter_config.json",
@@ -270,12 +286,12 @@ for (const revision of [undefined, null, "main"]) {
         }),
       ),
     });
-    await expect(page.getByLabel("Base checkpoint revision")).toHaveValue("");
+    await expect(page.getByRole("status")).toHaveText(
+      "Training checkpoint is unknown. Results may differ.",
+    );
     const submit = page
       .getByRole("dialog")
       .getByRole("button", { name: "Upload version", exact: true });
-    await expect(submit).toBeDisabled();
-    await page.getByLabel("Base checkpoint revision").fill("b".repeat(40));
     await expect(submit).toBeEnabled();
   });
 }
@@ -302,4 +318,71 @@ test("rejects an adapter above rank 32 before uploading", async ({ page }) => {
   ).toBeDisabled();
   expect(state.uploads()).toBe(0);
   expect(state.errors).toEqual([]);
+});
+
+test("shows detected adapter details without model or revision fields", async ({
+  page,
+}) => {
+  await setup(page);
+  await page.goto("/tasks");
+  await page.getByRole("button", { name: "Add model", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByRole("combobox")).toHaveCount(0);
+  await expect(
+    dialog.getByText("Adapter details", { exact: true }),
+  ).toHaveCount(0);
+  await selectFiles(page, 1);
+  await expect(dialog.getByText("Rank 1", { exact: true })).toBeVisible();
+  await expect(dialog.getByText("BF16", { exact: true })).toBeVisible();
+  await expect(dialog.getByText("1 layer", { exact: true })).toBeVisible();
+  await expect(
+    dialog.getByRole("textbox", { name: "Base checkpoint revision" }),
+  ).toHaveCount(0);
+  await expect(dialog.getByText("Not recorded", { exact: true })).toBeVisible();
+  await expect(dialog.getByRole("status")).toHaveText(
+    "Training checkpoint is unknown. Results may differ.",
+  );
+});
+
+test("model dropdown scrolls with the mouse wheel", async ({ page }) => {
+  await setup(page);
+  await page.route("**/api/v1/models?external=true", (route) =>
+    route.fulfill({
+      json: {
+        data: Array.from({ length: 24 }, (_, index) => ({
+          id: `test/model-${index}`,
+          name: `External model ${index}`,
+          status: "available",
+        })),
+      },
+    }),
+  );
+  await page.goto(`/tasks/${task.name}?tab=settings`);
+  await page.getByRole("tab", { name: "Settings", exact: true }).click();
+  await page
+    .getByRole("combobox", { name: "Comparison model", exact: true })
+    .click();
+  const list = page.locator("[cmdk-list]");
+  await expect(
+    page.getByRole("option", { name: "External model 23" }),
+  ).toHaveCount(1);
+  await list.hover();
+  await page.mouse.wheel(0, 500);
+  await expect
+    .poll(() => list.evaluate((element) => element.scrollTop))
+    .toBeGreaterThan(0);
+});
+
+test("slugifies model and version names as they are typed", async ({
+  page,
+}) => {
+  await setup(page);
+  await page.goto("/tasks");
+  await page.getByRole("button", { name: "Add model", exact: true }).click();
+  const model = page.getByLabel("Model name", { exact: true });
+  const version = page.getByLabel("Version name", { exact: true });
+  await model.pressSequentially("Support Triage!");
+  await version.pressSequentially("Support Triage V1!");
+  await expect(model).toHaveValue("support-triage");
+  await expect(version).toHaveValue("support-triage-v1");
 });

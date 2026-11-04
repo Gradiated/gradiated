@@ -1850,8 +1850,8 @@ export interface components {
       create_task: boolean;
       name: string;
       base_model_id: string;
-      /** @description Immutable Hugging Face base checkpoint commit. */
-      base_model_revision: string;
+      /** @description Legacy hint; the uploaded config determines declared training provenance. */
+      base_model_revision?: string;
       config_size: number;
       weights_size: number;
     };
@@ -1889,8 +1889,11 @@ export interface components {
       sha256: string;
       size_bytes: number;
       rank: number;
-      /** @description Immutable base checkpoint revision used to train this adapter. */
+      /** @description Immutable training checkpoint declared in the adapter config, when known. */
       base_model_revision?: string;
+      declared_base_model_revision?: string;
+      /** @description Supported base checkpoint used for deterministic tensor validation; this is not proof of training provenance. */
+      validated_base_model_revision?: string;
     };
     StartTrainingRunResponse: {
       /**

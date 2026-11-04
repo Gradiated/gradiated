@@ -14,10 +14,18 @@ const ConfigSchema = z
     peft_type: z.literal("LORA"),
     task_type: z.literal("CAUSAL_LM"),
     base_model_name_or_path: z.string().min(1),
+    revision: z.string().max(300).nullish(),
     r: z.number().int().min(1).max(MAX_UPLOADED_ADAPTER_RANK),
     lora_alpha: z.number().positive(),
     target_modules: z.array(z.string().min(1)).min(1),
     use_dora: z.literal(false).optional(),
+    use_rslora: z.literal(false).optional(),
+    use_qalora: z.literal(false).optional(),
+    lora_bias: z.literal(false).optional(),
+    fan_in_fan_out: z.literal(false).optional(),
+    layer_replication: z.null().optional(),
+    layers_to_transform: z.null().optional(),
+    layers_pattern: z.null().optional(),
     modules_to_save: z.null().optional(),
     bias: z.literal("none"),
     rank_pattern: z.record(z.string(), z.never()).optional(),
@@ -136,6 +144,7 @@ export const validateAdapterFiles = async (
     config.target_modules.map((module) => module.split(".").at(-1)),
   );
   const layers = new Set<number>();
+  const projections = new Set<string>();
   const expertCoverage = new Map<string, Set<number> | null>();
   const expertLayouts = new Set<string>();
   const ranges: [number, number, number, number][] = [];
@@ -177,6 +186,23 @@ export const validateAdapterFiles = async (
     if (!moduleName || !targetModules.has(moduleName))
       throw new Error("Tensor target modules do not match the config.");
 
+    if (baseConfiguration.projectionShapes) {
+      const key = `${layer}/${tensorName[2]}`;
+      const expected = baseConfiguration.projectionShapes[key];
+      if (!expected)
+        throw new Error(
+          "Adapter target module is not supported by this serving model.",
+        );
+      if (
+        tensor.shape.length !== 2 ||
+        tensor.shape[isA ? 1 : 0] !== expected[isA ? 1 : 0]
+      )
+        throw new Error(
+          "Adapter tensor dimensions do not match the serving checkpoint.",
+        );
+      projections.add(key);
+    }
+
     const expertName = /(?:^|\.)experts\.(\d+)\./.exec(tensorName[2]!);
     const fused = tensor.shape.length === 3;
     if (expertName || fused) {
@@ -212,6 +238,15 @@ export const validateAdapterFiles = async (
           : 0x7f80;
     ranges.push([start, end, width, mask]);
   }
+  if (baseConfiguration.projectionShapes) {
+    for (const key of Object.keys(baseConfiguration.projectionShapes)) {
+      if (targetModules.has(key.split(".").at(-1)!) && !projections.has(key))
+        throw new Error(
+          "Adapter target module coverage is incomplete for the serving checkpoint.",
+        );
+    }
+  }
+
   if (layers.size !== layerCount)
     throw new Error("Incomplete adapter layer coverage.");
 

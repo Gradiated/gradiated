@@ -40,7 +40,7 @@ describe("model upload routes", () => {
       services: { training: { uploads: { create, complete: vi.fn() } } },
     });
     for (const patch of [
-      { weights_size: 268435457 },
+      { weights_size: 536870913 },
       { config_size: 65537 },
       { base_model_revision: "main" },
       { task: ".." },

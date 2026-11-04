@@ -2696,7 +2696,7 @@
           "base_model_revision": {
             "type": "string",
             "pattern": "^[0-9a-f]{40}$",
-            "description": "Immutable Hugging Face base checkpoint commit."
+            "description": "Legacy hint; the uploaded config determines declared training provenance."
           },
           "config_size": {
             "type": "integer",
@@ -2713,7 +2713,6 @@
           "task",
           "name",
           "base_model_id",
-          "base_model_revision",
           "config_size",
           "weights_size"
         ],
@@ -2806,7 +2805,16 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 300,
-            "description": "Immutable base checkpoint revision used to train this adapter."
+            "description": "Immutable training checkpoint declared in the adapter config, when known."
+          },
+          "declared_base_model_revision": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "validated_base_model_revision": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{40}$",
+            "description": "Supported base checkpoint used for deterministic tensor validation; this is not proof of training provenance."
           }
         },
         "required": [

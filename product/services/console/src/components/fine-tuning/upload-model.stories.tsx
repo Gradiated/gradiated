@@ -222,9 +222,6 @@ export const FilesSelected: Story = {
 export const ConfigReplacedWithoutRevision: Story = {
   play: async ({ canvasElement }) => {
     const dialog = await fillUpload(canvasElement);
-    await expect(dialog.getByLabelText("Base checkpoint revision")).toHaveValue(
-      "a".repeat(40),
-    );
     await userEvent.upload(
       dialog.getByLabelText("Choose adapter files"),
       new File(
@@ -234,11 +231,13 @@ export const ConfigReplacedWithoutRevision: Story = {
       ),
     );
     await waitFor(() =>
-      expect(dialog.getByLabelText("Base checkpoint revision")).toHaveValue(""),
+      expect(dialog.getByRole("status")).toHaveTextContent(
+        "Training checkpoint is unknown.",
+      ),
     );
     await expect(
       dialog.getByRole("button", { name: "Create task & upload" }),
-    ).toBeDisabled();
+    ).toBeEnabled();
   },
 };
 export const Uploading: Story = {
@@ -262,7 +261,9 @@ export const Validating: Story = {
       dialog.getByRole("button", { name: "Create task & upload" }),
     );
     await expect(
-      await dialog.findByRole("button", { name: "Validating adapter…" }),
+      await dialog.findByRole("button", {
+        name: "Checking adapter compatibility…",
+      }),
     ).toBeDisabled();
   },
 };

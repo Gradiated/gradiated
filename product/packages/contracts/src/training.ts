@@ -87,7 +87,15 @@ export const TaskVersionAdapterSchema = z
       .max(300)
       .optional()
       .describe(
-        "Immutable base checkpoint revision used to train this adapter.",
+        "Immutable training checkpoint declared in the adapter config, when known.",
+      ),
+    declared_base_model_revision: z.string().max(300).optional(),
+    validated_base_model_revision: z
+      .string()
+      .regex(/^[0-9a-f]{40}$/)
+      .optional()
+      .describe(
+        "Supported base checkpoint used for deterministic tensor validation; this is not proof of training provenance.",
       ),
   })
   .openapi("TaskVersionAdapter");
@@ -459,7 +467,10 @@ export const CreateModelUploadSchema = z
     base_model_revision: z
       .string()
       .regex(/^[0-9a-f]{40}$/)
-      .describe("Immutable Hugging Face base checkpoint commit."),
+      .optional()
+      .describe(
+        "Legacy hint; the uploaded config determines declared training provenance.",
+      ),
     config_size: z.number().int().min(2).max(65536),
     weights_size: z.number().int().positive().max(MAX_ADAPTER_BYTES),
   })

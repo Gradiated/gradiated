@@ -11,6 +11,7 @@ import {
 import { ApiKeysPage } from "@/pages/api-keys-page";
 import { BillingPage } from "@/pages/billing-page";
 import { parseLoginSearch } from "@/lib/login-search";
+import { parseOnboardingSearch } from "@/lib/engineer-onboarding";
 import { LoginPage } from "@/pages/login-page";
 import { ModelsPage } from "@/pages/models-page";
 import { OnboardingPage } from "@/pages/onboarding-page";
@@ -47,6 +48,7 @@ const invitationAcceptRoute = createRoute({
 const onboardingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/onboarding",
+  validateSearch: parseOnboardingSearch,
   component: OnboardingPage,
 });
 

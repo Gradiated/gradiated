@@ -42,6 +42,137 @@ configuration to run Vite with Node 22.
 
 Vite uses its default development port. Open `http://localhost:5173`.
 
+### Self-serve onboarding prototype
+
+The homepage’s **Get started** action opens `/get-started/` after the existing
+console account flow in production. In local development, both homepage actions
+open `/get-started/?preview=signup`: the existing console sign-in and organization
+setup pages appear before the wizard. Run both the console (`pnpm --filter
+@gradiated/console dev`) and website (`pnpm --filter gradiated-com dev`) servers.
+The local demo simulates Google/GitHub sign-in and provides an **Open demo sign-in
+link** button for email, without OAuth requests, email delivery or a running API.
+The page reads the signed-in user through the existing
+generated API client, sends guests to `/login?next=engineer`, and sends unfinished
+organizations to `/onboarding?next=engineer`. The existing Google/GitHub/magic-link
+sign-in and organization setup return to the wizard. The console's optional
+`VITE_WEBSITE_URL` sets the return host (defaults to localhost:5173 in development
+and gradiated.com in production). Only the fixed `next=engineer` destination is
+accepted; invitation acceptance keeps priority.
+
+Name, email and company come from the account, rather than new wizard questions.
+Drafts are scoped to the user and organization. NDA signer fields stay editable
+because the signer may be someone else. The local preview hands the entered
+account details back from the console only after organization setup, checking
+the message origin and source frame. `/get-started/?preview=account` resumes a
+completed preview account in the same tab; without one, it also starts at account
+creation. A new homepage click always starts at account creation. All simulated
+account operations are disabled in production and isolated from real session
+queries and workspace selection.
+
+The wizard is a clickable preview of getting a human forward deployed engineer
+working async: set up Slack/GitHub, complete the mutual NDA and start a project.
+The final review includes an optional context note; there is no project
+questionnaire before setup. Setup uses the console account pages’ centered card,
+Inter typography, logo, form controls and full-width action layout. The website
+serves the same product logo and a local Inter Latin font with its license.
+In the demo, **Fill with an example** fills in
+synthetic details so the whole flow can be explored without entering personal
+information. **Start over** clears the local draft.
+
+The wizard stores progress only in this browser’s local storage. Account creation
+and identity reuse follow the existing product flow; the wizard does not send
+messages, prepare or sign contracts, grant repository access, ingest traces, run
+experiments or take payments. Engineer assignment, Slack Connect coordination,
+the approved NDA template with
+electronic signing, and scoped access approval would need implementation for
+the live flow. Scope, pricing and experiment approval remain explicit steps
+with the engineer.
+
+The NDA field mapping follows the current [PostHog mutual NDA template](https://docs.google.com/document/d/1K-1ErUrHbvNs8ed8CXSQIuA0xJdg55sC/edit)
+read from Drive. The customer supplies legal company name, address, signer name,
+signer title and signer email. PostHog Inc., James Hawkins (Co-CEO), and the
+PostHog address from the template are pre-filled. Signatures and dates must be
+captured by the signing service; a typed name here is not a signature. The
+prototype previews these details only and does not copy or modify the agreement.
+Fetch the current template when implementing signing rather than storing a local
+contract copy. Its restrictions on AI use of confidential material and software
+modification require separate written permission before that work begins.
+
+A selected GitHub repository is required. Slack Connect is the default working
+channel; customers can explicitly select email only when their team cannot use
+Slack. Repository access and Slack invitations are pending actions in the preview,
+not completed integrations. Private repository access waits for both NDA
+signatures.
+
+#### GitHub App setup for the reviewing engineer
+
+This PR is a local onboarding prototype. No GitHub App private key is required
+to run or review it. The repository field and demo account are not proof of a
+GitHub installation. There is no installation callback, webhook handler or
+server-side repository verification in this PR. Keep the live connection
+unavailable until those are implemented and configured; never use a browser
+checkbox or local-storage value as authorization.
+
+Reuse the existing **Gradiated** GitHub App (`gradiated`), which currently powers
+GitHub login. The owner has confirmed public visibility and configured
+read-only Contents permission. Verify these settings during implementation.
+The customer installation URL is
+`https://github.com/apps/gradiated/installations/new`.
+
+Before enabling the live flow:
+
+1. Check whether an existing private key for this exact app is already available
+   in the production secret store. Reuse it if suitable. The OAuth client secret
+   used for login is not an app private key. A new PEM has been downloaded by the
+   app owner but has not been uploaded; obtain it through an approved secure
+   channel only if no suitable existing key is available. Never attach it to the
+   PR, paste it in chat, commit it or put it in a `VITE_` environment variable.
+2. The API's existing ExternalSecret imports
+   `gradiated/prod/product/github-auth` from AWS Secrets Manager in `us-east-1`
+   (`infra/environments/prod/us-east-1/kubernetes/workloads/api-secret.yaml`).
+   An engineer with access should add the PEM under `GITHUB_APP_PRIVATE_KEY`,
+   preserving existing `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` values.
+   This is a proposed new backend setting, not one currently consumed by the
+   API. Add environment parsing and private-key configuration as part of the
+   implementation. Missing configuration must disable repository connection
+   without breaking existing GitHub login. Use a separate test app/key for local
+   development rather than copying production credentials to a laptop.
+3. Preserve the existing Better Auth login callback. Add a backend installation
+   setup URL in the app registration and enable Redirect on update. Alternatively,
+   if choosing OAuth during installation, implement its callback deliberately:
+   GitHub disables the separate setup URL in that mode. Do not toggle this option
+   on the current login app without testing the existing sign-in journey.
+4. Add authenticated, organization-authorized connection endpoints using the
+   generated API contract. Bind a short-lived, single-use state to the signed-in
+   Gradiated user and organization. Verify GitHub identity through app user
+   authorization and check the installation belongs to this app and is accessible
+   to that GitHub user. Do not trust a returned `installation_id`, state alone,
+   an email match, or an installation webhook as proof of customer ownership.
+5. Authenticate on the backend as the app installation, check it is active with
+   the required Contents permission, and list the repositories actually granted
+   to it. Save the verified installation/repository IDs against the authorized
+   Gradiated organization. Replace the manual repository field with Connect
+   GitHub and a verified repository selection. Enable Continue only from the
+   server-confirmed state and enforce that condition again on the backend.
+6. Configure an HTTPS webhook endpoint and a separate random webhook secret in
+   backend secret storage. Verify signatures; handle duplicate and out-of-order
+   deliveries. Handle installation creation/deletion/suspension and
+   `installation_repositories` changes, and recheck current access before work.
+   Treat a request awaiting organization-owner approval as pending, not connected.
+7. Complete mutual NDA signing before requesting installation access to private
+   repositories. The current signature-page preview is not a signed NDA; the
+   live flow needs signing and step reordering before repository connection.
+8. Test existing Google/GitHub/email login, a separate customer organization,
+   selected repositories, an already-installed app, a user who requires admin
+   approval, forged callback IDs/state, cross-customer installation binding,
+   revoked repository access, suspension/uninstallation and missing credentials.
+   Deploy and validate this backend integration before activating the live CTA.
+
+References: [installation setup URL and spoofing warning](https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/about-the-setup-url),
+[app installation authentication](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation),
+[user installation/repository checks](https://docs.github.com/en/rest/apps/installations),
+and [app registration settings](https://docs.github.com/en/apps/maintaining-github-apps/modifying-a-github-app-registration).
+
 ## Build
 
 Run the type check and production build:

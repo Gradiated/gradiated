@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Navigate, useNavigate } from "@tanstack/react-router";
+import { Navigate, useNavigate, useSearch } from "@tanstack/react-router";
 import { ArrowRight, LoaderCircle } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 import { updateOrganization, type CurrentUser } from "@/api/queries";
 import { AuthCard } from "@/components/auth-card";
@@ -23,10 +23,17 @@ import {
   suggestedOrganizationName,
 } from "@/lib/onboarding";
 import { queryKeys } from "@/lib/query-keys";
+import { engineerOnboardingUrl } from "@/lib/engineer-onboarding";
+import {
+  completeEngineerPreview,
+  isEngineerPreview,
+  saveEngineerPreviewOrganization,
+} from "@/lib/engineer-preview";
 import { LoadFailed } from "@/pages/console-page";
 import { useWorkspaceSelection } from "@/store/workspace-selection";
 
 export const OnboardingPage = () => {
+  const { next } = useSearch({ from: "/onboarding" });
   const { user, signOut } = useSession();
   const me = useCurrentUser();
   const organization = organizationToOnboard(user);
@@ -49,16 +56,51 @@ export const OnboardingPage = () => {
       </main>
     );
 
-  if (!organization) return <Navigate to="/models" />;
+  if (!organization)
+    return next === "engineer" ? (
+      <EngineerHandoff
+        organizationId={
+          user.organizations.find((row) => row.status === "active")?.id
+        }
+      />
+    ) : (
+      <Navigate to="/models" />
+    );
 
   return (
     <AuthCard>
       <OrganizationSetup
         user={user}
         organization={organization}
+        engineer={next === "engineer"}
         onSignOut={() => void signOut()}
       />
     </AuthCard>
+  );
+};
+
+const EngineerHandoff = ({
+  organizationId,
+}: {
+  organizationId: string | undefined;
+}) => {
+  useEffect(() => {
+    if (isEngineerPreview()) {
+      completeEngineerPreview();
+      return;
+    }
+
+    window.location.replace(engineerOnboardingUrl(organizationId));
+  }, [organizationId]);
+
+  return (
+    <main className="grid min-h-svh place-items-center">
+      {isEngineerPreview() ? (
+        <p>Your demo account is ready.</p>
+      ) : (
+        <LoaderCircle className="size-5 animate-spin" />
+      )}
+    </main>
   );
 };
 
@@ -66,10 +108,12 @@ const OrganizationSetup = ({
   user,
   organization,
   onSignOut,
+  engineer,
 }: {
   user: CurrentUser;
   organization: CurrentUser["organizations"][number];
   onSignOut: () => void;
+  engineer: boolean;
 }) => {
   const domain = user.company_email_domain;
   const [name, setName] = useState(suggestedOrganizationName(domain));
@@ -81,12 +125,21 @@ const OrganizationSetup = ({
 
   const save = useMutation({
     mutationFn: () =>
-      updateOrganization(organization.id, {
-        name: name.trim(),
-        ...(domain ? { auto_join_domain: autoJoin ? domain : null } : {}),
-        onboarding_completed: true,
-      }),
+      isEngineerPreview()
+        ? Promise.resolve(
+            saveEngineerPreviewOrganization(name.trim(), autoJoin),
+          )
+        : updateOrganization(organization.id, {
+            name: name.trim(),
+            ...(domain ? { auto_join_domain: autoJoin ? domain : null } : {}),
+            onboarding_completed: true,
+          }),
     onSuccess: async (updated) => {
+      if (isEngineerPreview()) {
+        completeEngineerPreview();
+        return;
+      }
+
       client.setQueryData<CurrentUser>(
         queryKeys.me,
         (current) =>
@@ -99,6 +152,11 @@ const OrganizationSetup = ({
       );
       selectOrganization(updated.id);
       selectWorkspace(updated.default_workspace_id);
+      if (engineer) {
+        window.location.assign(engineerOnboardingUrl(updated.id));
+        return;
+      }
+
       await navigate({ to: "/models", search: { welcome: true } });
     },
   });

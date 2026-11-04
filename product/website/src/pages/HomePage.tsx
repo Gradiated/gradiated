@@ -1,4 +1,4 @@
-import { CONSOLE_BASE_URL } from "../urls";
+import { CONSOLE_BASE_URL, ENGINEER_ENTRY_PATH } from "../urls";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { CSSProperties, ReactElement, ReactNode } from "react";
@@ -22,6 +22,7 @@ import {
 } from "../components/design";
 import { libraryStories } from "../library-stories";
 import "../styles/index.css";
+import "../styles/onboarding.css";
 
 /**
  * The homepage.
@@ -54,18 +55,25 @@ export const HomePage = (): ReactElement => (
         <div className="gr-fold-centred">
           <h1 className="gr-display gr-home-title">
             <span className="gr-hero-line">
-              <Reveal by="word">The cheapest way to run</Reveal>{" "}
+              <Reveal by="word">Your forward deployed</Reveal>{" "}
             </span>
             <span className="gr-hero-line">
-              <Reveal by="word" from={5}>
-                open-source models.
+              <Reveal by="word" from={3}>
+                engineer.
               </Reveal>
             </span>
           </h1>
+          <p className="gr-home-engineer">
+            A real human to work on the AI in your product. Set up here. Work
+            async in Slack.
+          </p>
           <div className="gr-home-actions">
-            <a className="gr-button gr-button--main" href={CONSOLE_BASE_URL}>
-              Get API Key <Arrow />
-            </a>
+            <Link
+              className="gr-button gr-button--main"
+              to={ENGINEER_ENTRY_PATH}
+            >
+              Get started <Arrow />
+            </Link>
             <Link className="gr-button gr-button--secondary" to="/docs/">
               View Docs <Arrow />
             </Link>
@@ -119,10 +127,13 @@ export const HomePage = (): ReactElement => (
             models today
           </h2>
           <div className="gr-home-actions">
-            <a className="gr-button gr-button--main" href={CONSOLE_BASE_URL}>
-              Get API Key
+            <Link
+              className="gr-button gr-button--main"
+              to={ENGINEER_ENTRY_PATH}
+            >
+              Get started
               <Arrow />
-            </a>
+            </Link>
           </div>
         </div>
       </Module>

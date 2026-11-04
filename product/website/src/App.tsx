@@ -17,6 +17,7 @@ import { CareersIndexPage, JobDetailPage } from "./pages/CareersPages";
 import { DocsNextPage } from "./pages/DocsNextPage";
 import { HardwarePage } from "./pages/HardwarePage";
 import { HomePage } from "./pages/HomePage";
+import { GetStartedPage } from "./pages/GetStartedPage";
 import { InferencePage } from "./pages/InferencePage";
 import { LEGAL, LegalPage } from "./pages/LegalPages";
 import type { LegalSlug } from "./pages/LegalPages";
@@ -94,6 +95,7 @@ export const AppRoutes = (): ReactElement => (
         every other page on the design system. The legacy layout is what was
         giving it the old nav and the old footer. */}
     <Route element={<HomePage />} path="/" />
+    <Route element={<GetStartedPage />} path="/get-started/" />
     <Route element={<AboutPage />} path="/about/" />
     <Route element={<LibraryRedirect />} path="/library/" />
     <Route element={<SandLibraryPage />} path={SAND_TO_THOUGHT_URL} />

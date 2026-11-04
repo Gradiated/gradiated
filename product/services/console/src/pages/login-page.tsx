@@ -8,7 +8,12 @@ import { z } from "zod";
 
 import { previewInvitation } from "@/api/queries";
 import { authClient } from "@/auth";
-import { invitationPath } from "@/lib/login-search";
+import { signInCallbacks } from "@/lib/engineer-onboarding";
+import {
+  beginEngineerPreview,
+  engineerPreviewOrganizationPath,
+  isEngineerPreview,
+} from "@/lib/engineer-preview";
 import { analytics } from "@/lib/analytics";
 import { Brand } from "@/components/brand";
 import { GitHubIcon, GoogleIcon } from "@/components/icons";
@@ -39,21 +44,10 @@ const SOCIAL_PROVIDERS = [
 
 type SocialProvider = (typeof SOCIAL_PROVIDERS)[number]["provider"];
 
-const callbackUrl = (path: string) =>
-  new URL(path, window.location.origin).toString();
-
-const signInCallbacks = (invitation: string | undefined) => {
-  const next = invitation ? invitationPath(invitation) : undefined;
-
-  return {
-    callbackURL: callbackUrl(next ?? "/api-keys"),
-    newUserCallbackURL: callbackUrl(next ?? "/onboarding"),
-    errorCallbackURL: callbackUrl("/login"),
-  };
-};
-
 export const LoginPage = () => {
-  const { invitation } = useSearch({ from: "/login" });
+  const demo = isEngineerPreview();
+  const search = useSearch({ from: "/login" });
+  const { invitation } = search;
   const preview = useQuery({
     queryKey: ["invitation", invitation],
     queryFn: () => previewInvitation(invitation ?? ""),
@@ -83,6 +77,12 @@ export const LoginPage = () => {
   }, [callbackError]);
 
   const submit = async (values: LoginValues) => {
+    if (demo) {
+      beginEngineerPreview(values.email);
+      setSentTo(values.email);
+      return;
+    }
+
     analytics.track("sign_in_started", { method: "magic_link" });
     const failed = () =>
       form.setError("root", {
@@ -92,7 +92,7 @@ export const LoginPage = () => {
     try {
       const result = await authClient.signIn.magicLink({
         email: values.email,
-        ...signInCallbacks(invitation),
+        ...signInCallbacks(search, window.location.origin),
       });
       if (result.error) {
         logSignInFailure("magic_link", result.error);
@@ -108,6 +108,12 @@ export const LoginPage = () => {
   };
 
   const signInWithSocial = async (provider: SocialProvider, label: string) => {
+    if (demo) {
+      beginEngineerPreview("alex@acme.example", "Alex Morgan");
+      window.location.assign(engineerPreviewOrganizationPath);
+      return;
+    }
+
     const failed = () => {
       setSocialPending(null);
       form.setError("root", {
@@ -121,7 +127,7 @@ export const LoginPage = () => {
     try {
       const result = await authClient.signIn.social({
         provider,
-        ...signInCallbacks(invitation),
+        ...signInCallbacks(search, window.location.origin),
       });
       if (result?.error) {
         logSignInFailure(provider, result.error);
@@ -194,8 +200,25 @@ export const LoginPage = () => {
                     <MailCheck className="mx-auto mb-3 size-6" />
                     <p className="font-medium">Check your email</p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      We sent a sign-in link to {sentTo}.
+                      {demo
+                        ? "No email is sent in this preview. Continue with " +
+                          sentTo +
+                          "."
+                        : "We sent a sign-in link to " + sentTo + "."}
                     </p>
+                    {demo && (
+                      <Button
+                        className="mt-3 w-full"
+                        type="button"
+                        onClick={() =>
+                          window.location.assign(
+                            engineerPreviewOrganizationPath,
+                          )
+                        }
+                      >
+                        Open demo sign-in link
+                      </Button>
+                    )}
                     <Button
                       className="mt-3"
                       onClick={() => setSentTo(null)}

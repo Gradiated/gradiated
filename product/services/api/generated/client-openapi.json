@@ -2706,7 +2706,7 @@
           "weights_size": {
             "type": "integer",
             "exclusiveMinimum": 0,
-            "maximum": 268435456
+            "maximum": 536870912
           }
         },
         "required": [

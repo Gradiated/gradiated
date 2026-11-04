@@ -457,7 +457,7 @@ The Training page has an Add model action which creates a task together with its
 first uploaded adapter version. An existing task has an Upload version action.
 Both use a shared dialog for a workspace-unique version name, base model, immutable
 40-character checkpoint revision, PEFT adapter_config.json and
-adapter_model.safetensors. Configs are capped at 64 KiB and weights at 256 MiB.
+adapter_model.safetensors. Configs are capped at 64 KiB and weights at 512 MiB.
 The config can suggest a base model but the user supplies the exact checkpoint.
 An immutable revision declared in the config must match the submitted checkpoint.
 New upload-created tasks inherit the workspace default judge and have automatic training disabled.
@@ -469,7 +469,7 @@ tensor pairs, ranks, offsets and complete layer and expert coverage, and constru
 separate content-addressed output key. Weights are spooled to a private temporary
 directory, validated in 64 KiB reads, and archived through a gzip/hash pipeline to
 a file before streaming that file to S3. One validation runs per API process;
-working disk use is bounded to roughly twice the 256 MiB input cap. Temporary files
+working disk use is bounded to roughly twice the 512 MiB input cap. Temporary files
 are removed after success and failure. Neither weights nor archives are collected
 into whole-file buffers. The published row never points at a key
 covered by the browser's write grants. Completion retries return the same version.
@@ -480,7 +480,7 @@ Hugging Face redirects; the uploader never supplies the trusted layer or expert 
 Both indexed 2-D and fused 3-D expert tensors are supported; fused tensors must
 match the base expert count, and mixed expert layouts are rejected. Tensor
 dimensions follow the runtime's 1,000,000-element-per-dimension limit. Safetensors
-headers follow serving's 100,000,000-byte limit within the total 256 MiB file cap.
+headers follow serving's 100,000,000-byte limit within the total 512 MiB file cap.
 CPU parity tests run representative fixtures through the actual Python serving
 validator as well as upload validation, including malformed JSON and expert coverage.
 Raw inputs live under `uploads/<upload_id>/` and are deleted after publication.

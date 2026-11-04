@@ -285,7 +285,7 @@ describe("external adapter validation", () => {
       peak = Math.max(peak, process.memoryUsage().rss);
     }, 10);
     try {
-      const layerCount = 32;
+      const layerCount = 64;
       const dimensions = Math.floor(
         (MAX_ADAPTER_BYTES - 32768) / (16 * layerCount),
       );

@@ -6,6 +6,7 @@ import {
 } from "../src/model-catalog.js";
 import { UpdateWorkspaceSchema } from "../src/workspaces.js";
 import {
+  CreateModelUploadSchema,
   EvaluationJudgeSchema,
   UpdateTaskSchema,
   TrainingRunEventSchema,
@@ -269,4 +270,29 @@ it.each([
     UpdateWorkspaceSchema.parse({ default_judge_model: id })
       .default_judge_model,
   ).toBe(id);
+});
+
+describe("model upload file sizes", () => {
+  const upload = {
+    task: "support-triage",
+    create_task: true,
+    name: "triage-v1",
+    base_model_id: "Qwen/Qwen3-0.6B",
+    base_model_revision: "a".repeat(40),
+    config_size: 1024,
+    weights_size: 512 * 1024 * 1024,
+  };
+
+  it("accepts weights up to 512 MiB", () => {
+    expect(CreateModelUploadSchema.safeParse(upload).success).toBe(true);
+  });
+
+  it("rejects weights exceeding 512 MiB", () => {
+    expect(
+      CreateModelUploadSchema.safeParse({
+        ...upload,
+        weights_size: upload.weights_size + 1,
+      }).success,
+    ).toBe(false);
+  });
 });

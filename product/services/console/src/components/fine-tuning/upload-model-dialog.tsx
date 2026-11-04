@@ -88,7 +88,7 @@ export const UploadModelDialog = ({
       )
     ) {
       setFileError(
-        "Config must be under 64 KB and weights under 256 MB. Files must not be empty.",
+        `Config must be at most 64 KiB and weights at most ${MAX_ADAPTER_BYTES / 1024 ** 2} MiB. Files must not be empty.`,
       );
       return;
     }
@@ -296,8 +296,9 @@ export const UploadModelDialog = ({
                     : "Drop your adapter files here"}
                 </span>
                 <span className="mt-1 text-xs text-muted-foreground">
-                  or click to browse · safetensors + JSON · up to 256 MB · rank
-                  up to {MAX_UPLOADED_ADAPTER_RANK}
+                  or click to browse · safetensors + JSON · up to{" "}
+                  {MAX_ADAPTER_BYTES / 1024 ** 2} MiB · rank up to{" "}
+                  {MAX_UPLOADED_ADAPTER_RANK}
                 </span>
               </button>
               <div className="space-y-1.5">

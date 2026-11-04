@@ -36,6 +36,8 @@ const user = {
 } satisfies components["schemas"]["CurrentUser"];
 
 type CurrentUser = components["schemas"]["CurrentUser"];
+
+export const staffUser = { ...user, is_staff: true } satisfies CurrentUser;
 type CurrentOrganization = CurrentUser["organizations"][number];
 
 const acmeUser = (

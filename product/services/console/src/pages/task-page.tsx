@@ -2,27 +2,17 @@ import { UploadModelDialog } from "@/components/fine-tuning/upload-model-dialog"
 import { Upload } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import {
-  Link,
-  useNavigate,
-  useParams,
-  useSearch,
-} from "@tanstack/react-router";
+import { Link, useParams } from "@tanstack/react-router";
 import { ArrowLeft, RotateCw } from "lucide-react";
 import { useState } from "react";
 
 import { TaskModelTab } from "@/components/fine-tuning/task-model-tab";
-import { TaskRunsTab } from "@/components/fine-tuning/task-runs-tab";
-import { TaskSettingsTab } from "@/components/fine-tuning/task-settings-tab";
-import { TaskTracesTab } from "@/components/fine-tuning/task-traces-tab";
 import { TrainingGate } from "@/components/fine-tuning/training-gate";
 import {
   VersionActionDialog,
   type VersionAction,
 } from "@/components/fine-tuning/version-actions";
-import { TabsContent } from "@/components/ui/tabs";
 import { ConsolePage } from "@/pages/console-page";
-import { OptionTabs, type Option } from "@/components/option-select";
 import {
   useTask,
   useTaskHistory,
@@ -32,15 +22,6 @@ import { isTerminalStage, type TaskRow } from "@/store/fine-tuning-types";
 import { Button } from "@/components/ui/button";
 import { QueryState } from "@/components/fine-tuning/query-state";
 import { useProductContext } from "@/hooks/use-product-context";
-
-const TABS = [
-  { value: "model", label: "Model" },
-  { value: "runs", label: "Training runs" },
-  { value: "traces", label: "Data" },
-  { value: "settings", label: "Settings" },
-] as const satisfies readonly Option<string>[];
-
-type TabKey = (typeof TABS)[number]["value"];
 
 export const TaskPage = () => {
   const { taskId } = useParams({ from: "/tasks/$taskId" });
@@ -55,11 +36,6 @@ export const TaskPage = () => {
 const TaskLoadingState = ({ name }: { name: string }) => (
   <ConsolePage page="tasks" title={name}>
     <div role="status" aria-label="Loading task" className="space-y-6">
-      <div className="flex gap-4 border-b pb-2">
-        {TABS.map(({ value }) => (
-          <Skeleton key={value} className="h-10 w-28" />
-        ))}
-      </div>
       <div className="space-y-4 rounded-xl border bg-card p-5">
         <Skeleton className="h-8 w-64 max-w-full" />
         <Skeleton className="h-4 w-80 max-w-full" />
@@ -80,13 +56,10 @@ const ScopedTaskPage = () => {
 
 const TaskPageBody = () => {
   const { taskId } = useParams({ from: "/tasks/$taskId" });
-  const { traceId } = useSearch({ from: "/tasks/$taskId" });
-  const navigate = useNavigate({ from: "/tasks/$taskId" });
   const query = useTask(taskId);
   const task = query.data;
   const [uploadOpen, setUploadOpen] = useState(false);
   const { canEdit } = useTrainingMutation(taskId);
-  const [tab, setTab] = useState<TabKey>(traceId ? "traces" : "model");
   const [versionAction, setVersionAction] = useState<VersionAction | null>(
     null,
   );
@@ -117,7 +90,6 @@ const TaskPageBody = () => {
       title={task.name}
       actions={
         <div className="flex flex-wrap items-center gap-2">
-          <TrainButton task={task} />
           <Button
             variant="outline"
             disabled={!canEdit}
@@ -138,31 +110,7 @@ const TaskPageBody = () => {
         </Link>
       }
     >
-      <OptionTabs
-        value={traceId ? "traces" : tab}
-        options={TABS}
-        onValueChange={(value) => {
-          setTab(value);
-          if (traceId) void navigate({ search: {}, resetScroll: false });
-        }}
-      >
-        <TabsContent value="model">
-          <TaskModelTab
-            task={task}
-            onVersionAction={setVersionAction}
-            onShowRuns={() => setTab("runs")}
-          />
-        </TabsContent>
-        <TabsContent value="runs">
-          <TaskRunsTab task={task} onVersionAction={setVersionAction} />
-        </TabsContent>
-        <TabsContent value="traces">
-          <TaskTracesTab task={task} />
-        </TabsContent>
-        <TabsContent value="settings">
-          <TaskSettingsTab task={task} />
-        </TabsContent>
-      </OptionTabs>
+      <TaskModelTab task={task} onVersionAction={setVersionAction} />
 
       {uploadOpen ? (
         <UploadModelDialog task={task} onClose={() => setUploadOpen(false)} />
@@ -178,7 +126,8 @@ const TaskPageBody = () => {
   );
 };
 
-const TrainButton = ({ task }: { task: TaskRow }) => {
+// Hidden while models are delivered by the Gradiated team.
+export const TrainButton = ({ task }: { task: TaskRow }) => {
   const history = useTaskHistory(task);
   const { start, canEdit } = useTrainingMutation(task.name);
   const [acceptedId, setAcceptedId] = useState<string | null>(null);

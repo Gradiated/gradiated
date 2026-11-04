@@ -148,3 +148,60 @@ export const completeModelUpload = (workspace_id: string, upload_id: string) =>
       { params: { path: { workspace_id, upload_id } } },
     ),
   );
+
+type VersionPath = { workspace_id: string; task: string; version_id: string };
+type VersionFilePath = VersionPath & { file_id: string };
+
+export const listVersionFiles = (path: VersionPath, signal?: AbortSignal) =>
+  requireData(
+    api.GET(
+      "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/files",
+      { params: { path }, signal: signal ?? null },
+    ),
+  );
+
+export const createVersionFile = (
+  path: VersionPath,
+  body: components["schemas"]["CreateTaskVersionFile"],
+) =>
+  requireData(
+    api.POST(
+      "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/files",
+      { params: { path }, body },
+    ),
+  );
+
+export const completeVersionFile = (path: VersionFilePath) =>
+  requireData(
+    api.PUT(
+      "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/files/{file_id}",
+      { params: { path } },
+    ),
+  );
+
+export const deleteVersionFile = (path: VersionFilePath) =>
+  requireOk(
+    api.DELETE(
+      "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/files/{file_id}",
+      { params: { path } },
+    ),
+  );
+
+export const getVersionFileContent = (
+  path: VersionFilePath,
+  signal?: AbortSignal,
+) =>
+  requireData(
+    api.GET(
+      "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/files/{file_id}/content",
+      { params: { path }, signal: signal ?? null },
+    ),
+  );
+
+export const getVersionFileDownload = (path: VersionFilePath) =>
+  requireData(
+    api.GET(
+      "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/files/{file_id}/download",
+      { params: { path } },
+    ),
+  );

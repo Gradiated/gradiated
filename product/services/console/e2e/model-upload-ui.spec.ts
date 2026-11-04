@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { qwen3_0_6b } from "../src/stories/base-model-configs";
+import { sampleReport, sampleReportData } from "../src/stories/report-fixture";
 
 test.setTimeout(60_000);
 test.use({ actionTimeout: 20_000 });
@@ -361,7 +362,8 @@ test("shows detected adapter details without model or revision fields", async ({
   ).toHaveCount(0);
 });
 
-test("model dropdown scrolls with the mouse wheel", async ({ page }) => {
+// The task page hides its training runs, data and settings tabs while models are delivered by hand.
+test.skip("model dropdown scrolls with the mouse wheel", async ({ page }) => {
   await setup(page);
   await page.route("**/api/v1/models?external=true", (route) =>
     route.fulfill({
@@ -402,4 +404,187 @@ test("slugifies model and version names as they are typed", async ({
   await version.pressSequentially("Support Triage V1!");
   await expect(model).toHaveValue("support-triage");
   await expect(version).toHaveValue("support-triage-v1");
+});
+
+const deliveredVersion = {
+  ...version,
+  status: "available",
+  is_production: true,
+  adapter: {
+    format: "peft_lora",
+    artifact_uri: "s3://test/adapter.tar.gz",
+    sha256: "a".repeat(64),
+    size_bytes: 1024 * 1024,
+    rank: 2,
+    validated_base_model_revision: "c1899de289a04d12100db370d81485cdf75e47ca",
+  },
+};
+
+const versionFiles = async (
+  page: Page,
+  files: Record<string, string>,
+  { staff = false, versions = [deliveredVersion] } = {},
+) => {
+  const entries = Object.entries(files).map(([name, content], index) => ({
+    id: `00000000-0000-4000-8000-0000000001${String(index).padStart(2, "0")}`,
+    name,
+    content_type: name.endsWith(".md") ? "text/markdown" : "text/csv",
+    size_bytes: content.length,
+    created_at: version.created_at,
+    content,
+  }));
+  const calls = { downloads: [] as string[], created: [] as unknown[] };
+  await page.route(/\/api\/v1\/me$/, (route) =>
+    route.fulfill({
+      json: {
+        id: "test-user",
+        email: "test@example.invalid",
+        email_verified: true,
+        is_staff: staff,
+        name: "Test User",
+        organizations: [
+          {
+            id: "test-org",
+            name: "Test workspace",
+            role: "admin",
+            status: "active",
+            default_workspace_id: workspace,
+            auto_join_domain: null,
+            onboarding_completed: true,
+          },
+        ],
+      },
+    }),
+  );
+  await page.route(/\/tasks\/support-triage\/versions$/, (route) =>
+    route.fulfill({ json: { data: versions, next_cursor: null } }),
+  );
+  await page.route(/\/versions\/[^/]+\/files(\/.*)?$/, (route) => {
+    const path = new URL(route.request().url()).pathname;
+    const method = route.request().method();
+    const file = entries.find((entry) => path.includes(entry.id));
+    if (path.endsWith("/files") && method === "GET")
+      return route.fulfill({
+        json: { data: entries.map(({ content: _content, ...rest }) => rest) },
+      });
+    if (path.endsWith("/files") && method === "POST") {
+      calls.created.push(route.request().postDataJSON());
+      return route.fulfill({
+        status: 201,
+        json: {
+          id: "00000000-0000-4000-8000-000000000999",
+          upload_url: `${new URL(route.request().url()).origin}/storage/report`,
+          expires_at: "2026-11-03T13:00:00Z",
+        },
+      });
+    }
+    if (method === "PUT")
+      return route.fulfill({
+        json: {
+          id: "00000000-0000-4000-8000-000000000999",
+          name: "notes.md",
+          content_type: "text/markdown",
+          size_bytes: 5,
+          created_at: version.created_at,
+        },
+      });
+    if (path.endsWith("/content") && file)
+      return route.fulfill({
+        json: {
+          name: file.name,
+          content_type: file.content_type,
+          content: file.content,
+        },
+      });
+    if (path.endsWith("/download") && file) {
+      calls.downloads.push(file.name);
+      return route.fulfill({
+        json: {
+          url: `${new URL(route.request().url()).origin}/storage/${file.name}`,
+          expires_at: "2026-11-03T13:00:00Z",
+        },
+      });
+    }
+    return route.fulfill({ status: 404, json: { detail: "Not found" } });
+  });
+
+  return calls;
+};
+
+test("version page renders the delivered report, its files and actions", async ({
+  page,
+}) => {
+  await setup(page);
+  const calls = await versionFiles(page, {
+    "report.md": sampleReport,
+    ...sampleReportData,
+  });
+  await page.goto(`/tasks/${task.name}/versions/${version.id}`);
+
+  await expect(
+    page.getByRole("heading", { level: 1, name: version.name }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Refund and billing routing, round two"),
+  ).toBeVisible();
+  await expect(page.getByText("72%", { exact: true })).toBeVisible();
+  await expect(page.getByText("Win rate by category")).toBeVisible();
+  await expect(
+    page.getByRole("cell", { name: "Charged twice for my October invoice" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("navigation", { name: "On this page" }).getByRole("link"),
+  ).toHaveText([
+    "What changed",
+    "Results",
+    "Training",
+    "Examples",
+    "Next steps",
+  ]);
+  await expect(page.getByRole("button", { name: "Promoted" })).toBeDisabled();
+  await expect(
+    page.getByRole("link", { name: "Try in playground" }),
+  ).toHaveAttribute("href", /model=support-triage/);
+  await expect(page.getByRole("button", { name: "Add files" })).toHaveCount(0);
+  await expect(page.getByRole("alert")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Download metrics.csv" }).click();
+  await expect.poll(() => calls.downloads).toContain("metrics.csv");
+});
+
+test("staff add files and see report problems", async ({ page }) => {
+  await setup(page);
+  const calls = await versionFiles(
+    page,
+    { "report.md": '{% callout type="tip" %}Hi{% /callout %}' },
+    { staff: true },
+  );
+  await page.goto(`/tasks/${task.name}/versions/${version.id}`);
+
+  await expect(page.getByRole("alert")).toContainText(
+    "report.md has 1 problem",
+  );
+  await page.getByLabel("Add files").setInputFiles({
+    name: "notes.md",
+    mimeType: "text/markdown",
+    buffer: Buffer.from("hello"),
+  });
+  await expect(page.getByText("notes.md added.")).toBeVisible();
+  expect(calls.created).toEqual([
+    { name: "notes.md", size_bytes: 5, content_type: "text/markdown" },
+  ]);
+});
+
+test("version page without a report offers promotion", async ({ page }) => {
+  await setup(page);
+  await versionFiles(
+    page,
+    {},
+    { versions: [{ ...deliveredVersion, is_production: false }] },
+  );
+  await page.goto(`/tasks/${task.name}/versions/${version.id}`);
+
+  await expect(page.getByText("No report for this version yet")).toBeVisible();
+  await page.getByRole("button", { name: "Promote", exact: true }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
 });

@@ -5,7 +5,10 @@ import { useTasks } from "@/hooks/use-training";
 import { useFeatureFlag } from "@/lib/feature-flags";
 import { playgroundModels } from "@/lib/playground";
 
-export const usePlaygroundModels = () => {
+export const usePlaygroundModels = (version?: {
+  name: string;
+  task: string;
+}) => {
   const training = useFeatureFlag("training") === true;
   const hosted = useQuery(modelsQuery());
   const tasks = useTasks({ enabled: training });
@@ -14,6 +17,7 @@ export const usePlaygroundModels = () => {
     models: playgroundModels(
       hosted.data?.data ?? [],
       training ? (tasks.data?.data ?? []) : [],
+      version,
     ),
     hosted,
     settled: hosted.isSuccess && (!training || tasks.isSuccess),

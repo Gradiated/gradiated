@@ -74,6 +74,9 @@ const playgroundRoute = createRoute({
     ...(typeof search.model === "string" && search.model
       ? { model: search.model }
       : {}),
+    ...(typeof search.task === "string" && search.task
+      ? { task: search.task }
+      : {}),
   }),
   component: lazyRouteComponent(
     () => import("@/pages/playground-page"),
@@ -99,6 +102,15 @@ const taskRoute = createRoute({
       : {}),
   }),
   component: lazyRouteComponent(() => import("@/pages/task-page"), "TaskPage"),
+});
+
+const versionRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/tasks/$taskId/versions/$versionId",
+  component: lazyRouteComponent(
+    () => import("@/pages/version-page"),
+    "VersionPage",
+  ),
 });
 
 const billingRoute = createRoute({
@@ -210,6 +222,7 @@ const routeTree = rootRoute.addChildren([
   playgroundRoute,
   tasksRoute,
   taskRoute,
+  versionRoute,
   billingRoute,
   usageRoute,
   logsRoute,

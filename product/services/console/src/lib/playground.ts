@@ -185,10 +185,12 @@ const capabilities = (model: Model | undefined): ModelCapabilities => {
   };
 };
 
-// A task is callable by its name once it has a production version.
+// A task is callable by its name once it has a production version; any version
+// is callable by its own name, so a linked version is added alongside its task.
 export const playgroundModels = (
   hosted: readonly Model[],
   tasks: readonly TaskRow[],
+  version?: { name: string; task: string },
 ): PlaygroundModel[] => [
   ...hosted
     .filter(
@@ -214,6 +216,23 @@ export const playgroundModels = (
     .map((task) => ({
       id: task.name,
       label: task.name,
+      iconId: task.base_model_id ?? task.name,
+      source: "workspace" as const,
+      available: true,
+      capabilities: capabilities(
+        hosted.find((model) => model.id === task.base_model_id),
+      ),
+    })),
+  ...tasks
+    .filter(
+      (task) =>
+        version?.task === task.name &&
+        version.name !== task.name &&
+        !hosted.some((model) => model.id === version.name),
+    )
+    .map((task) => ({
+      id: version!.name,
+      label: version!.name,
       iconId: task.base_model_id ?? task.name,
       source: "workspace" as const,
       available: true,

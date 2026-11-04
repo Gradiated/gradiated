@@ -28,7 +28,8 @@ const evaluation = {
   error_rate: 0,
 };
 
-test("direct task reload initializes flags, edits schedules and opens held-out results", async ({
+// The task page hides its training runs, data and settings tabs while models are delivered by hand.
+test.skip("direct task reload initializes flags, edits schedules and opens held-out results", async ({
   page,
 }) => {
   let schedule: string | null = null;
@@ -426,7 +427,8 @@ test("direct task reload initializes flags, edits schedules and opens held-out r
 });
 
 for (const initialRows of [0, 35]) {
-  test(`Data automatically loads older traces with ${initialRows} initial rows and retries failures`, async ({
+  // The task page hides its training runs, data and settings tabs while models are delivered by hand.
+  test.skip(`Data automatically loads older traces with ${initialRows} initial rows and retries failures`, async ({
     page,
   }) => {
     const requests: (string | null)[] = [];

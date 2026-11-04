@@ -559,14 +559,6 @@ export const UploadModelDialog = ({
               {fileError}
             </p>
           )}
-          {upload.isPending && (
-            <p
-              role="status"
-              className="text-center text-xs text-muted-foreground"
-            >
-              Keep this window open while your adapter uploads.
-            </p>
-          )}
           <DialogFooter className="sticky bottom-0 z-10 -mx-5 flex justify-end gap-2 border-t bg-card px-5 py-4 sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:pb-0">
             <Button
               type="button"

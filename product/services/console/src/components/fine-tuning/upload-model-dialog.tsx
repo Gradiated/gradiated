@@ -525,6 +525,7 @@ export const UploadModelDialog = ({
                   <AdapterLayerMap
                     adapted={tensorDetails.modules}
                     base={baseStructure.data ?? undefined}
+                    loading={baseStructure.isLoading}
                   />
                 ) : null}
                 {checkpointWarning && (

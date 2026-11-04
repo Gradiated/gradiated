@@ -106,3 +106,19 @@ export const UnknownBaseStructure = story(
   undefined,
   tensors(range(0, 40), ["self_attn.q_b_proj"]),
 );
+export const UnknownModuleLayout = story(
+  { num_hidden_layers: 61, model_type: "deepseek_v4" },
+  tensors(range(0, 20), ["self_attn.q_b_proj"]),
+);
+export const Loading: Story = {
+  render: () => (
+    <div className="min-h-screen bg-background p-8">
+      <div className="max-w-[33rem]">
+        <AdapterLayerMap
+          adapted={new Map([["self_attn.q_proj", new Set([0])]])}
+          loading
+        />
+      </div>
+    </div>
+  ),
+};

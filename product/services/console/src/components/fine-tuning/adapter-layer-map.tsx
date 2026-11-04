@@ -1,6 +1,7 @@
 import { adapterProjectionShapes } from "@gradiated/contracts/adapter-shapes";
 import { z } from "zod";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 // Module path (e.g. self_attn.q_proj) to the layer indices it appears in.
@@ -66,10 +67,20 @@ const shortName = (module: string) => module.split(".").at(-1) ?? module;
 export const AdapterLayerMap = ({
   adapted,
   base,
+  loading = false,
 }: {
   adapted: LayerModules;
   base?: BaseModelStructure | undefined;
+  loading?: boolean;
 }) => {
+  if (loading)
+    return (
+      <div className="space-y-2">
+        <span className="text-xs text-muted-foreground">Layers</span>
+        <Skeleton className="h-24 w-full" />
+      </div>
+    );
+
   const adaptedLayers = [...adapted.values()].flatMap((layers) => [...layers]);
   const layerCount = Math.max(
     base?.layerCount ?? 0,
@@ -86,6 +97,11 @@ export const AdapterLayerMap = ({
       ? (rows[index] ?? "")
       : (labels[index] ?? "");
   const touched = new Set(adaptedLayers).size;
+  const note = !base
+    ? "The base model's structure isn't available, so this shows only the layers the adapter changes."
+    : !base.modules
+      ? "The module layout for this architecture isn't known, so only adapted modules are shown."
+      : null;
 
   return (
     <figure className="space-y-2">
@@ -126,13 +142,12 @@ export const AdapterLayerMap = ({
             </span>,
             ...Array.from({ length: layerCount }, (_, layer) => {
               const isAdapted = covered?.has(layer) ?? false;
-              const exists =
-                isAdapted || (present?.has(layer) ?? !base?.modules);
+              const exists = isAdapted || (present?.has(layer) ?? false);
 
               return (
                 <span
                   key={`${module}-${layer}`}
-                  title={`${module}, layer ${layer}: ${isAdapted ? "adapted" : exists ? "not adapted" : "not in this layer"}`}
+                  title={`${module}, layer ${layer}: ${isAdapted ? "adapted" : exists ? "not adapted" : base?.modules ? "not in this layer" : "unknown"}`}
                   className={cn(
                     "h-2.5",
                     layerCount <= 48 && "rounded-[1px]",
@@ -157,6 +172,9 @@ export const AdapterLayerMap = ({
           <span>{layerCount - 1}</span>
         </span>
       </div>
+      {note ? (
+        <p className="text-[11px] text-muted-foreground">{note}</p>
+      ) : null}
     </figure>
   );
 };

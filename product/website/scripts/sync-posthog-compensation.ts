@@ -2,6 +2,7 @@
 // compensation calculator into src/posthog-compensation.generated.json, and
 // its hash into public/posthog-compensation.sha256 for the weekly check.
 
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
 
@@ -125,19 +126,20 @@ const parseExport = (source: string, file: string, name: string): unknown => {
 };
 
 // One commit for every file, so a push to master mid-sync can't mix versions.
-const masterCommit = async (): Promise<string> => {
-  const response = await fetch(
-    `https://api.github.com/repos/${REPO}/commits/master`,
-    { headers: { Accept: "application/vnd.github.sha" } },
+// git ls-remote isn't subject to the GitHub API's unauthenticated rate limit.
+const masterCommit = (): string => {
+  const result = spawnSync(
+    "git",
+    ["ls-remote", `https://github.com/${REPO}`, "refs/heads/master"],
+    { encoding: "utf8", timeout: 30_000 },
   );
-  if (!response.ok) throw new Error(`master: HTTP ${response.status}`);
-  const sha = (await response.text()).trim();
-  if (!/^[0-9a-f]{40}$/.test(sha)) throw new Error("master: no commit SHA");
+  const sha = /^[0-9a-f]{40}/.exec(result.stdout ?? "")?.[0];
+  if (!sha) throw new Error(`master: ${result.stderr || "no commit SHA"}`);
   return sha;
 };
 
 const fetchPostHogData = async (): Promise<Record<string, unknown>> => {
-  const sha = await masterCommit();
+  const sha = masterCommit();
   const data: Record<string, unknown> = {};
   for (const [key, [file, name]] of Object.entries(FILES)) {
     const response = await fetch(

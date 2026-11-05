@@ -6,6 +6,7 @@ import type { Kubernetes } from "./kubernetes.js";
 
 const MODEL_LABEL = "app.kubernetes.io/name";
 const QUALIFIED_RUNTIME = "gradiated.com/qualified-runtime";
+const QUALIFICATION_ERROR = "gradiated.com/qualification-error";
 // KEDA scales the target to this count and stops autoscaling while it is set.
 export const PAUSED_REPLICAS = "autoscaling.keda.sh/paused-replicas";
 const GPU_RESOURCE = "nvidia.com/gpu";
@@ -55,6 +56,9 @@ const podSchema = z.object({
           }),
         )
         .nullish(),
+      containerStatuses: z
+        .array(z.object({ containerID: z.string().nullish() }))
+        .nullish(),
     })
     .nullish(),
 });
@@ -71,6 +75,9 @@ export type ClusterPod = {
   // Since when the scheduler has found no node for it.
   unschedulableSince?: string;
   qualifiedRuntime?: string;
+  // SDK qualification rejected the running container. The worker never
+  // retries that container, so the pod cannot become Ready until it restarts.
+  qualificationFailed: boolean;
 };
 
 // An unreadable pod fails the whole read: dropping it would make a serving
@@ -98,6 +105,7 @@ export const clusterPod = (item: unknown): ClusterPod | undefined => {
   const condition = (type: string) =>
     status?.conditions?.find((entry) => entry.type === type);
   const scheduled = condition("PodScheduled");
+  const incarnation = status?.containerStatuses?.[0]?.containerID;
   return {
     name: metadata.name,
     uid: metadata.uid,
@@ -129,6 +137,10 @@ export const clusterPod = (item: unknown): ClusterPod | undefined => {
     ...(metadata.annotations?.[QUALIFIED_RUNTIME] && {
       qualifiedRuntime: metadata.annotations[QUALIFIED_RUNTIME],
     }),
+    qualificationFailed: Boolean(
+      incarnation &&
+      metadata.annotations?.[QUALIFICATION_ERROR] === incarnation,
+    ),
   };
 };
 

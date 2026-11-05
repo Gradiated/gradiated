@@ -587,10 +587,12 @@ export const createRollouts = (deps: RolloutDependencies) => {
     },
 
     // Every serving pod is in the baseline, so each must be Ready with a
-    // qualified runtime before the update starts.
+    // qualified runtime before the update starts. A pod whose running
+    // container failed SDK qualification is not loading and never becomes
+    // Ready, so it neither holds the update nor joins the baseline.
     Apply: async ({ host }, rollout) => {
       const serving = (await cluster.podsOn(host.spec.instanceId)).filter(
-        (pod) => pod.model && !pod.terminating,
+        (pod) => pod.model && !pod.terminating && !pod.qualificationFailed,
       );
       if (serving.some((pod) => !pod.ready || !pod.qualifiedRuntime))
         return {

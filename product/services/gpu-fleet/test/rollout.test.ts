@@ -512,7 +512,29 @@ describe("pods as the virtual kubelet publishes them", () => {
       terminating: false,
       gpus: 4,
       qualifiedRuntime: `${DEEPSEEK}:1`,
+      qualificationFailed: false,
     });
+  });
+
+  it("reads a qualification error only for the running container", () => {
+    const pod = virtualKubeletPod(
+      "kev",
+      "kev-86bc8f5569-tkp42",
+      `gpu-${FIRST}`,
+      false,
+    );
+    const failed = (error: string) =>
+      clusterPod({
+        ...pod,
+        metadata: {
+          ...pod.metadata,
+          annotations: { "gradiated.com/qualification-error": error },
+        },
+      })?.qualificationFailed;
+
+    expect(failed("runpod://4242:2026-10-23T09:12:44Z")).toBe(true);
+    expect(failed("runpod://4242:2026-10-22T08:00:00Z")).toBe(false);
+    expect(clusterPod(pod)?.qualificationFailed).toBe(false);
   });
 
   // Three 8-GPU B300 hosts, each of the two serving hosts running one
@@ -943,6 +965,38 @@ describe("in-place bundle update", () => {
     );
     const uid = fleet.podsOn(FIRST)[0]!.metadata.uid;
     expect(Object.keys(rollout(fleet, FIRST)?.baseline ?? {})).toEqual([uid]);
+  });
+
+  it("does not wait for a serving pod whose running container failed qualification", async () => {
+    const { fleet, pod } = bundleFleet();
+    fleet.notReady.add(pod);
+    const item = fleet.kube.objects.get(`${PODS}/${pod}`) as any;
+    item.metadata.annotations["gradiated.com/qualification-error"] =
+      "runpod://4242:2026-10-23T09:12:44Z";
+
+    await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () => rollout(fleet, FIRST)?.result === "Succeeded",
+    );
+
+    expect(fleet.sim(FIRST)).toMatchObject({ bundle: NEW_BUNDLE });
+    expect(rollout(fleet, FIRST)?.baseline).toEqual({});
+  });
+
+  it("still waits when the qualification error names an earlier container", async () => {
+    const { fleet, pod } = bundleFleet();
+    fleet.notReady.add(pod);
+    const item = fleet.kube.objects.get(`${PODS}/${pod}`) as any;
+    item.metadata.annotations["gradiated.com/qualification-error"] =
+      "runpod://4242:2026-10-22T08:00:00Z";
+    const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+
+    await run(fleet, pinned, () => rollout(fleet, FIRST)?.step === "Apply");
+    await run(fleet, pinned, () => false, {}, 10);
+
+    expect(rollout(fleet, FIRST)).toMatchObject({ step: "Apply" });
+    expect(fleet.host(FIRST).status?.rollout?.bundle).toBeUndefined();
   });
 
   it("fails and holds the fleet when the host rejects the bundle", async () => {

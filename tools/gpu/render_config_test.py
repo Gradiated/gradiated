@@ -323,6 +323,26 @@ class RenderTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             renderer.rollout('training', {**models['kev'], 'runtime': training}, runtimes)
 
+    def test_direct_rolling_update_has_no_observation_pause_and_retains_sdk_gate(self):
+        models = json.loads((renderer.GPU / 'models.json').read_text())
+        runtimes = json.loads(renderer.RUNTIMES.read_text())
+        model = {key: value for key, value in models['glm-dealign-sglang-h200'].items()
+                 if key != 'rolling_update'}
+        default = renderer.rollout('glm-dealign-sglang-h200', model, runtimes)
+        self.assertEqual(default['spec']['strategy']['canary']['steps'][0], {'setWeight': 50})
+        candidate = renderer.rollout('glm-dealign-sglang-h200',
+                                    {**model, 'rolling_update': True}, runtimes)
+        strategy = candidate['spec']['strategy']['canary']
+        self.assertEqual(strategy['steps'], [
+            {'setWeight': 100}, default['spec']['strategy']['canary']['steps'][1]])
+        self.assertEqual(strategy['maxSurge'], 0)
+        self.assertEqual(strategy['maxUnavailable'], 1)
+        self.assertEqual(candidate['spec']['template'], default['spec']['template'])
+        for invalid in (0, 1, 'true', None):
+            with self.subTest(invalid=invalid), self.assertRaisesRegex(ValueError, 'rolling_update'):
+                renderer.rollout('glm-dealign-sglang-h200',
+                                 {**model, 'rolling_update': invalid}, runtimes)
+
     def test_explicit_canary_keeps_primary_and_pauses_after_qualification(self):
         runtimes = json.loads((renderer.ROOT / 'product/inference/gpu/runtimes.json').read_text())
         primary = json.loads((renderer.GPU / 'models.json').read_text())['glm-dealign']

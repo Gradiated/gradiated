@@ -92,15 +92,19 @@ def rollout(name, model, runtimes):
         annotations['gradiated.com/canary-of'] = parent
         annotations['gradiated.com/serving-model-id'] = model.get('serving_model_id', runtime['model_id'])
         annotations['gradiated.com/serving-mode'] = mode
+    rolling = model.get('rolling_update', False)
+    if type(rolling) is not bool:
+        raise ValueError('rolling_update must be a boolean')
     steps = [
-        {'setWeight': 50},
+        {'setWeight': 100 if rolling else 50},
         {'analysis': {'templates': [{'templateName': 'sdk-qualification'}], 'args': [
             {'name': 'app', 'value': name},
             {'name': 'hash', 'valueFrom': {'podTemplateHashValue': 'Latest'}}]}}
     ]
-    if parent:
+    if parent and not rolling:
         steps.append({'pause': {}})
-    steps.append({'setWeight': 100})
+    if not rolling:
+        steps.append({'setWeight': 100})
     limits = {'cpu': runtime['cpu'], 'memory': runtime['memory'], 'nvidia.com/gpu': str(runtime['gpus'])}
     pod = {
         'serviceAccountName': 'model-runtime', 'automountServiceAccountToken': False,

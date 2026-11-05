@@ -165,7 +165,13 @@ parallel startup depends on spare GPU, CPU and memory capacity. The current
 fleet fits only one extra full-size GLM replica; a second candidate can remain
 Pending until capacity is released. This ceiling does not provision capacity or
 guarantee two simultaneous starts. The renderer supplies the common canary strategy, qualification,
-service account, drain period and resources from the runtime catalogue. Do not
+service account, drain period and resources from the runtime catalogue.
+`rolling_update: true` moves directly to the target revision without an
+observation canary or manual pause. Per-pod SDK qualification still gates
+readiness, and the rollout retains its final SDK analysis. The H200 FP8 rollout
+uses this mode with five replicas, `max_surge: 0` and `max_unavailable: 1`, so
+it replaces one replica at a time while keeping four available. Other models
+retain the existing canary strategy by default. Do not
 edit generated Rollouts directly. Non-inventory fields in controller and RBAC
 manifests remain editable; rendering preserves them. CI checks that generated
 fields match the inputs. Remove a retired host Service or model Rollout explicitly after draining

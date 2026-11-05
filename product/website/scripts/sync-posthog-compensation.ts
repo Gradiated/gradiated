@@ -1,7 +1,3 @@
-// Runs at the start of `pnpm build`. Copies the data behind PostHog's
-// compensation calculator into src/posthog-compensation.generated.json, and
-// its hash into public/posthog-compensation.sha256 for the weekly check.
-
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
@@ -32,10 +28,8 @@ const FILES = {
 
 const ESCAPES: Record<string, string> = { n: "\n", r: "\r", t: "\t" };
 
-// The files are PostHog's code, so they're parsed rather than imported: only
-// plain literals are accepted, and nothing in them runs during our build.
-// Vercel's ignored-build step runs this before installing packages, so it
-// can't use a parser package.
+// Parsed, not imported, so nothing in PostHog's files runs here. Vercel's
+// ignored-build step runs this before installing packages: no parser package.
 const parseExport = (source: string, file: string, name: string): unknown => {
   const start = new RegExp(`export\\s+const\\s+${name}\\b[^=]*=`).exec(source);
   if (!start) throw new Error(`${file}.ts no longer exports ${name}`);

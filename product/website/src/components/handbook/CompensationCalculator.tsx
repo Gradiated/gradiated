@@ -14,7 +14,6 @@ const steps: Record<string, number[]> = compensation.steps;
 const currencies: Record<string, number> = compensation.currencies;
 const locations: Location[] = compensation.locations;
 
-/* PostHog's top level isn't one we use. */
 const HIDDEN_LEVELS = new Set(["Director"]);
 const levels = Object.entries(
   compensation.levels as Record<string, number>,

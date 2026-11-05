@@ -1,9 +1,7 @@
 name: PostHog compensation data
 
-# The Compensation handbook page's calculator uses PostHog's compensation
-# data, pulled from the posthog.com repo when the website builds. Every Monday
-# this compares PostHog's current data with the data the live site was built
-# from and, if they differ, triggers the website's Vercel deploy hook.
+# Redeploys the website when PostHog's compensation data differs from what the
+# live site was built from.
 
 on:
   schedule:

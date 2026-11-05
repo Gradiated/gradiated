@@ -27,6 +27,7 @@ import {
 import type { OnboardingDraft, OnboardingAccount } from "../onboarding";
 import { getCurrentUser, type CurrentUser } from "../api/queries";
 import { NdaSigning } from "../components/NdaSigning";
+import { SlackConnectInvite } from "../components/SlackConnectInvite";
 import {
   ENGINEER_SIGNUP_URL,
   ENGINEER_ORGANIZATION_SETUP_URL,
@@ -96,9 +97,13 @@ const accessLabel = (draft: OnboardingDraft) =>
 const TeamStep = ({
   draft,
   patch,
+  organizationId,
+  demo,
 }: {
   draft: OnboardingDraft;
   patch: UpdateDraft;
+  organizationId: string;
+  demo: boolean;
 }) => (
   <>
     <StepTitle title="Set up Slack & GitHub.">
@@ -117,18 +122,12 @@ const TeamStep = ({
       />
     </Field>
     {draft.channel === "slack" && (
-      <Field
-        label="Slack workspace"
-        hint="We’ll arrange a joint Slack Connect channel. Slack is our preferred way to work."
-      >
-        <input
-          required
-          value={draft.slack}
-          maxLength={200}
-          onChange={(event) => patch({ slack: event.target.value })}
-          placeholder="your-team.slack.com"
-        />
-      </Field>
+      <SlackConnectInvite
+        draft={draft}
+        organizationId={organizationId}
+        demo={demo}
+        onInvited={patch}
+      />
     )}
     <label className="gs-email-fallback">
       <input
@@ -240,7 +239,14 @@ const ReviewStep = ({
         <dt>Channel</dt>
         <dd>
           {draft.channel === "slack"
-            ? "Shared Slack channel · " + draft.slack
+            ? draft.slackStatus === "not_sent"
+              ? "Slack invitation not sent yet"
+              : "#" +
+                draft.slack +
+                " · " +
+                (draft.slackStatus === "joined"
+                  ? "connected"
+                  : "invitation sent")
             : "Email fallback · Slack unavailable"}
         </dd>
       </div>
@@ -516,11 +522,18 @@ const GetStartedWorkflow = ({
   account: OnboardingAccount;
   demo?: boolean;
 }) => {
-  const [draft, setDraft] = useState(() => loadDraft(account));
+  const [search] = useSearchParams();
+  const previewSlack =
+    import.meta.env.DEV && demo && search.get("step") === "slack";
+  const [draft, setDraft] = useState(() => {
+    const current = loadDraft(account);
+
+    return previewSlack ? { ...current, introduced: true, step: 1 } : current;
+  });
   const [saved, setSaved] = useState(true);
   const [ndaOpen, setNdaOpen] = useState(false);
   const [signingOpen, setSigningOpen] = useState(false);
-  const [ndaVerified, setNdaVerified] = useState(false);
+  const [ndaVerified, setNdaVerified] = useState(previewSlack);
   const headingRef = useRef<HTMLElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const patch: UpdateDraft = (values) => {
@@ -719,7 +732,14 @@ const GetStartedWorkflow = ({
                       )}
                     </>
                   )}
-                  {draft.step === 1 && <TeamStep draft={draft} patch={patch} />}
+                  {draft.step === 1 && (
+                    <TeamStep
+                      draft={draft}
+                      patch={patch}
+                      organizationId={account.organizationId}
+                      demo={demo}
+                    />
+                  )}
                   {draft.step === 2 && (
                     <ReviewStep
                       draft={draft}
@@ -981,27 +1001,18 @@ const ProjectPreview = ({
                 </h3>
                 <p>
                   {draft.channel === "slack"
-                    ? draft.slack +
-                      " · a Slack Connect invitation needs workspace approval."
+                    ? draft.slackStatus === "not_sent"
+                      ? "Return to setup to send your Slack invitation."
+                      : "#" +
+                        draft.slack +
+                        " · " +
+                        (draft.slackStatus === "joined"
+                          ? "connected"
+                          : "invitation sent; acceptance pending")
                     : "We’ll use " +
                       draft.email +
                       ". Slack remains our preferred way to work."}
                 </p>
-                {draft.channel === "slack" && (
-                  <button
-                    type="button"
-                    className="gs-text-button"
-                    onClick={() =>
-                      setNotice(
-                        "The live flow arranges a Slack Connect invitation for " +
-                          draft.slack +
-                          ". Nothing is sent in this preview.",
-                      )
-                    }
-                  >
-                    Preview Slack Connect invite <ArrowRight size={13} />
-                  </button>
-                )}
                 <button
                   type="button"
                   className="gs-text-button gs-intro-button"
@@ -1134,7 +1145,14 @@ const ProjectPreview = ({
               <dt>Channel</dt>
               <dd>
                 {draft.channel === "slack"
-                  ? draft.slack + " · joint channel pending"
+                  ? draft.slackStatus === "not_sent"
+                    ? "Slack invitation not sent yet"
+                    : "#" +
+                      draft.slack +
+                      " · " +
+                      (draft.slackStatus === "joined"
+                        ? "connected"
+                        : "acceptance pending")
                   : "Email fallback · Slack unavailable"}
               </dd>
             </div>

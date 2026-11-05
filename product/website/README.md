@@ -90,7 +90,8 @@ information. **Start over** clears the local draft.
 The local demo stores progress only in this browser and simulates signing. Account
 creation and identity reuse follow the existing product flow. The optional live
 NDA integration below creates and verifies PandaDoc documents; it is disabled by
-default. Slack messages/invites, GitHub access, engineer assignment, trace ingestion,
+default. Slack Connect invitations are implemented behind their own configuration
+switch below. Slack messages, GitHub access, engineer assignment, trace ingestion,
 experiments and payments are not implemented. Scope, pricing and experiment
 approval remain explicit steps with the engineer.
 
@@ -107,8 +108,51 @@ modification require separate written permission before that work begins.
 A selected GitHub repository is required. Slack Connect is the default working
 channel; customers can explicitly select email only when their team cannot use
 Slack. Repository access and Slack invitations are pending actions in the preview,
-not completed integrations. Private repository access waits for both NDA
+with live Slack invitations available after configuration. Private repository access waits for both NDA
 signatures.
+
+#### Automatic Slack Connect invitations
+
+The Slack step creates a private `ext-<company>-gradiated` channel, adds the
+configured Gradiated engineers, and emails a Slack Connect invitation to the
+verified signed-in organization admin. Customers accept it from their workspace;
+their admin may also need to approve it. Setup can continue while acceptance is
+pending. Email remains the fallback when Slack is unavailable.
+
+The console-only `POST /api/v1/organizations/{organization_id}/slack-invitations`
+requires admin membership, a verified account email, and a provider-confirmed
+completed NDA belonging to that user and organization. The client cannot supply
+another recipient. The generated API client is used by the website. DEV previews
+simulate the invitation and create no Slack resources; use
+`/get-started/?preview=account&step=slack` to preview this step directly.
+
+One-time setup before enabling real invitations:
+
+1. Create an internal Slack app using `product/services/api/slack-app-manifest.json`
+   and install it in Gradiated's workspace. Grant
+   bot scopes `groups:write`, `groups:read`, and `conversations.connect:write`.
+   Reinstall after changing scopes. Confirm the workspace's Slack Connect plan,
+   invitation permissions, and admin approval rules with its owner.
+2. Configure server-only `SLACK_BOT_TOKEN`, comma-separated Gradiated engineer
+   member IDs in `SLACK_ENGINEER_USER_IDS`, and `SLACK_CONNECT_ENABLED=true`.
+   Production values belong in the existing API secret configuration; preserve
+   its other entries. No Slack token was configured or invitation sent here.
+3. Test with an authorized external recipient: channel creation, engineer
+   membership, invitation delivery/acceptance, workspace approval restrictions,
+   and retry behavior. Do not enable production until this passes.
+
+Retries reuse a private channel only when its purpose contains the exact
+Gradiated organization ID. A name collision or a creation interrupted before
+that marker was saved needs operator review; no stranger is invited to an
+existing unrelated channel. Mutating Slack calls are never retried automatically
+after an uncertain response. An explicit retry can resend an invitation; pending
+invite errors remain errors rather than being reported as delivered. The browser
+keeps its last acknowledged invite result for display, not as proof of current
+membership. Joined status is reported only when Slack confirms existing
+membership; there is no webhook-driven acceptance tracking in this change.
+
+See Slack's [channel creation](https://docs.slack.dev/reference/methods/conversations.create/)
+and [email invitations](https://docs.slack.dev/reference/methods/conversations.inviteShared/).
 
 #### Embedded PandaDoc NDA signing
 

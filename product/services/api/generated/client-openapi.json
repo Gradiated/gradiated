@@ -2080,6 +2080,38 @@
           "session_id"
         ]
       },
+      "SlackInvitation": {
+        "type": "object",
+        "properties": {
+          "channel_id": {
+            "type": "string",
+            "description": "The dedicated channel in Gradiated's workspace."
+          },
+          "channel_name": {
+            "type": "string",
+            "description": "The shared customer channel name."
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "The verified account email invited to Slack Connect."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "invited",
+              "joined"
+            ],
+            "description": "Invited remains pending customer acceptance and any workspace approvals."
+          }
+        },
+        "required": [
+          "channel_id",
+          "channel_name",
+          "email",
+          "status"
+        ]
+      },
       "MemberList": {
         "type": "object",
         "properties": {
@@ -7551,6 +7583,113 @@
           },
           "503": {
             "description": "Embedded signing is not configured or the provider is unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/organizations/{organization_id}/slack-invitations": {
+      "post": {
+        "x-gradiated-audience": "console",
+        "operationId": "createSlackInvitation",
+        "tags": [
+          "Slack invitations"
+        ],
+        "summary": "Invite the signed-in customer to a dedicated Slack Connect channel",
+        "description": "Requires an active verified organization admin and completed NDA. Creates or reuses the private customer channel, adds Gradiated engineers, and emails a Slack Connect invitation. Customer acceptance and workspace approval may still be required.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The customer organization."
+            },
+            "required": true,
+            "description": "The customer organization.",
+            "name": "organization_id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nda_document_id": {
+                    "type": "string",
+                    "pattern": "^[a-zA-Z0-9_-]{1,100}$",
+                    "description": "The completed NDA for this organization and signed-in user."
+                  }
+                },
+                "required": [
+                  "nda_document_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Slack confirmed the invitation or existing membership.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SlackInvitation"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The request is unauthorized, incomplete, invalid, or unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The request is unauthorized, incomplete, invalid, or unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request is unauthorized, incomplete, invalid, or unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The request is unauthorized, incomplete, invalid, or unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The request is unauthorized, incomplete, invalid, or unavailable.",
             "content": {
               "application/problem+json": {
                 "schema": {

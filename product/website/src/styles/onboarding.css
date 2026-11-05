@@ -202,6 +202,25 @@
   min-height: 650px;
   margin-top: 24px;
 }
+.gs-slack-invite {
+  margin: 28px 0;
+}
+.gs-slack-invite h2 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+.gs-slack-invite p {
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.gs-slack-invite p[role="status"] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.gs-slack-invite .gr-button {
+  margin: 12px 0;
+}
 .gs-signing-embed iframe {
   display: block;
   width: 100%;

@@ -49,8 +49,8 @@ describe("local preview drafts", () => {
     expect(firstIncompleteStep({ ...emailFallback, repository: "" })).toBe(1);
   });
 
-  it("requires Slack details on the preferred path and the actual NDA signer fields", () => {
-    expect(firstIncompleteStep({ ...exampleOnboarding(), slack: "" })).toBe(1);
+  it("allows Slack acceptance to remain pending while requiring actual NDA signer fields", () => {
+    expect(firstIncompleteStep({ ...exampleOnboarding(), slack: "" })).toBeNull();
     expect(
       firstIncompleteStep({ ...exampleOnboarding(), signerTitle: "" }),
     ).toBe(0);

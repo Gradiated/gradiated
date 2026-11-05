@@ -12,6 +12,27 @@ const baseEnvironment = {
 };
 
 describe("API environment", () => {
+  it("keeps Slack Connect disabled by default and validates configured engineer IDs", () => {
+    expect(
+      parseApiEnvironment({ ...baseEnvironment, SLACK_BOT_TOKEN: "" }),
+    ).toMatchObject({
+      SLACK_CONNECT_ENABLED: "false",
+      SLACK_BOT_TOKEN: undefined,
+      SLACK_ENGINEER_USER_IDS: [],
+    });
+    expect(
+      parseApiEnvironment({
+        ...baseEnvironment,
+        SLACK_ENGINEER_USER_IDS: "U123, W456",
+      }).SLACK_ENGINEER_USER_IDS,
+    ).toEqual(["U123", "W456"]);
+    expect(() =>
+      parseApiEnvironment({
+        ...baseEnvironment,
+        SLACK_ENGINEER_USER_IDS: "not-a-member-id",
+      }),
+    ).toThrow();
+  });
   it("leaves embedded NDA signing disabled when PandaDoc credentials are absent or blank", () => {
     const environment = parseApiEnvironment({
       ...baseEnvironment,

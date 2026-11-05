@@ -20,6 +20,7 @@ export const onboardingSchema = z.object({
   company: z.string().max(200).default(""),
   channel: z.enum(["slack", "email"]).default("slack"),
   slack: z.string().max(200).default(""),
+  slackStatus: z.enum(["not_sent", "invited", "joined"]).default("not_sent"),
   legalName: z.string().max(200).default(""),
   legalAddress: z.string().max(1000).default(""),
   signerName: z.string().max(100).nullable().default(null),
@@ -58,6 +59,9 @@ export const reuseAccount = (
   email: account.email,
   company: account.company,
   legalName: draft.legalName || account.company,
+  ...(draft.email !== account.email || draft.company !== account.company
+    ? { slack: "", slackStatus: "not_sent" as const }
+    : {}),
 });
 
 export const emptyOnboarding = (): OnboardingDraft =>
@@ -86,8 +90,7 @@ export const firstIncompleteStep = (draft: OnboardingDraft): number | null => {
   if (
     !draft.company.trim() ||
     !z.email().safeParse(draft.email.trim()).success ||
-    !draft.repository.trim() ||
-    (draft.channel === "slack" && !draft.slack.trim())
+    !draft.repository.trim()
   )
     return 1;
 
@@ -102,7 +105,7 @@ export const exampleOnboarding = (): OnboardingDraft => ({
   name: "Alex Morgan",
   email: "alex@acme.example",
   company: "Acme",
-  slack: "acme.slack.com",
+  slack: "",
   legalName: "Acme, Inc.",
   legalAddress: "123 Example Street\nSan Francisco, CA 94105",
   signerName: "Alex Morgan",

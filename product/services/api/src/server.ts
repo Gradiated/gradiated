@@ -5,6 +5,7 @@ import { createEvaluationModelValidator } from "./catalog/evaluation-models.js";
 import { createTrainingEngine } from "./training/engine.js";
 import { serve } from "@hono/node-server";
 import { createPandaDocNda } from "./legal/pandadoc.js";
+import { createSlackConnect } from "./slack/connect.js";
 import { createGpuControlApp } from "./gpu-control.js";
 import {
   createTopUpChargeStore,
@@ -188,6 +189,15 @@ const validateEvaluationModel = createEvaluationModelValidator(
 );
 
 const app = createApp({
+  slackConnect:
+    environment.SLACK_CONNECT_ENABLED === "true" &&
+    environment.SLACK_BOT_TOKEN &&
+    environment.SLACK_ENGINEER_USER_IDS.length
+      ? createSlackConnect({
+          token: environment.SLACK_BOT_TOKEN,
+          engineerUserIds: environment.SLACK_ENGINEER_USER_IDS,
+        })
+      : undefined,
   ndaDocuments:
     environment.PANDADOC_NDA_ENABLED === "true" &&
     environment.PANDADOC_API_KEY &&

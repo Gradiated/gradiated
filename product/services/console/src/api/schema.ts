@@ -352,6 +352,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/organizations/{organization_id}/slack-invitations": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Invite the signed-in customer to a dedicated Slack Connect channel
+     * @description Requires an active verified organization admin and completed NDA. Creates or reuses the private customer channel, adds Gradiated engineers, and emails a Slack Connect invitation. Customer acceptance and workspace approval may still be required.
+     */
+    post: operations["createSlackInvitation"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/organizations/{organization_id}/members": {
     parameters: {
       query?: never;
@@ -1640,6 +1660,22 @@ export interface components {
     };
     NdaSigningSession: {
       session_id: string;
+    };
+    SlackInvitation: {
+      /** @description The dedicated channel in Gradiated's workspace. */
+      channel_id: string;
+      /** @description The shared customer channel name. */
+      channel_name: string;
+      /**
+       * Format: email
+       * @description The verified account email invited to Slack Connect.
+       */
+      email: string;
+      /**
+       * @description Invited remains pending customer acceptance and any workspace approvals.
+       * @enum {string}
+       */
+      status: "invited" | "joined";
     };
     MemberList: {
       data: components["schemas"]["Member"][];
@@ -4214,6 +4250,81 @@ export interface operations {
         };
       };
       /** @description Embedded signing is not configured or the provider is unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  createSlackInvitation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description The customer organization. */
+        organization_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": {
+          /** @description The completed NDA for this organization and signed-in user. */
+          nda_document_id: string;
+        };
+      };
+    };
+    responses: {
+      /** @description Slack confirmed the invitation or existing membership. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SlackInvitation"];
+        };
+      };
+      /** @description The request is unauthorized, incomplete, invalid, or unavailable. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The request is unauthorized, incomplete, invalid, or unavailable. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The request is unauthorized, incomplete, invalid, or unavailable. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The request is unauthorized, incomplete, invalid, or unavailable. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The request is unauthorized, incomplete, invalid, or unavailable. */
       503: {
         headers: {
           [name: string]: unknown;

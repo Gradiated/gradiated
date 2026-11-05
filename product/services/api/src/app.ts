@@ -25,6 +25,8 @@ import { registerImpersonationRoutes } from "./routes/impersonation.js";
 import { registerOrganizationRoutes } from "./routes/organizations.js";
 import { registerNdaDocumentRoutes } from "./routes/nda-documents.js";
 import type { PandaDocNda } from "./legal/pandadoc.js";
+import { registerSlackInvitationRoutes } from "./routes/slack-invitations.js";
+import type { SlackConnect } from "./slack/connect.js";
 import { registerUsageRoutes } from "./routes/usage.js";
 import { registerWaitlistRoutes } from "./routes/waitlist.js";
 import { registerWizardRoutes } from "./routes/wizard.js";
@@ -41,6 +43,7 @@ import type { InvitationSender } from "./email/invitation.js";
 import type { WaitlistWelcomeSender } from "./email/waitlist-welcome.js";
 
 export interface AppDependencies {
+  slackConnect?: SlackConnect | undefined;
   ndaDocuments?: PandaDocNda | undefined;
   analytics?: import("./analytics.js").ApiAnalytics;
   allowedOrigins: string[];
@@ -56,6 +59,7 @@ export interface AppDependencies {
 }
 
 export const createApp = ({
+  slackConnect,
   ndaDocuments,
   analytics,
   allowedOrigins,
@@ -108,6 +112,10 @@ export const createApp = ({
   app.use("/api/*", apiRateLimit());
   app.use("/api/v1/waitlist", apiRateLimit(10));
   app.use(
+    "/api/v1/organizations/:organization_id/slack-invitations",
+    apiRateLimit(5),
+  );
+  app.use(
     "/api/v1/organizations/:organization_id/nda-documents",
     apiRateLimit(10),
   );
@@ -151,6 +159,12 @@ export const createApp = ({
   registerImpersonationRoutes(app, auth);
   registerOrganizationRoutes(app, services.organizations);
   registerNdaDocumentRoutes(app, services.organizations, ndaDocuments);
+  registerSlackInvitationRoutes(
+    app,
+    services.organizations,
+    slackConnect,
+    ndaDocuments,
+  );
   registerMemberRoutes(app, {
     members: services.members,
     organizations: services.organizations,

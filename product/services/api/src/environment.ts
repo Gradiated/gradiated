@@ -8,6 +8,18 @@ const OptionalPandaDocSetting = z.preprocess(
 );
 
 const ApiOnlyEnvironmentSchema = z.object({
+  SLACK_CONNECT_ENABLED: z.enum(["true", "false"]).default("false"),
+  SLACK_BOT_TOKEN: OptionalPandaDocSetting,
+  SLACK_ENGINEER_USER_IDS: z
+    .string()
+    .default("")
+    .transform((value) =>
+      value
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean),
+    )
+    .pipe(z.array(z.string().regex(/^[UW][A-Z0-9]+$/)).max(20)),
   PANDADOC_API_KEY: OptionalPandaDocSetting,
   PANDADOC_NDA_TEMPLATE_ID: z
     .string()

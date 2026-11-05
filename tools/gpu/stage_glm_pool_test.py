@@ -122,6 +122,14 @@ class B200Staging(H200Staging):
         with self.assertRaisesRegex(ValueError, 'H200 profile requires'):
             self.stage(gpu='h200')
 
+    def test_staged_runtime_declares_its_launcher_active_request_limit(self):
+        models, runtimes = self.stage()
+        self.assertEqual(runtimes[models[self.name]['runtime']]['active_requests'], 8)
+        renderer = importlib.util.spec_from_file_location('render_config', Path(stage.__file__).with_name('render-config.py'))
+        render = importlib.util.module_from_spec(renderer)
+        renderer.loader.exec_module(render)
+        render.validate_active_requests({self.name: models[self.name]}, runtimes, render.glm_sglang_profiles())
+
 
 if __name__ == '__main__':
     unittest.main()

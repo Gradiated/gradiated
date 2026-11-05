@@ -679,9 +679,12 @@ Valkey key: `deployment-status:{<served_release_digest>}`. This is a hash. The
 field is `deployment_id`. The value is one closed status document.
 
 The document contains `deployment_id`, `runtime_revision`, `received_at`,
-`healthy`, `accepting_requests`, and `reason_code`.
+`healthy`, `accepting_requests`, `reason_code` and an optional `active_requests`.
 `accepting_requests` reports runtime safety only: KV pressure and draining.
-It is not a concurrency limit. The engine owns admission.
+`active_requests` reports the concurrent request limit that the engine itself
+enforces, 1 to 4,096, from the runtime's `runtimes.json` entry. The gateway uses
+it only as a routing weight; it never admits or rejects a request by it. The
+gateway enforces no deployment concurrency limit. The engine owns admission.
 The reader ignores unknown fields so a newer producer cannot break an older
 gateway. A malformed document drops only its own deployment.
 Desmond sends it every second. The ingest service checks provider ownership and

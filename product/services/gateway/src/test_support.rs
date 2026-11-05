@@ -190,6 +190,7 @@ impl ServingState for TestServingState {
                 received_at: metadata().received_at,
                 healthy: true,
                 accepting_requests: true,
+                active_requests: None,
                 reason_code: None,
             })
             .into_iter()

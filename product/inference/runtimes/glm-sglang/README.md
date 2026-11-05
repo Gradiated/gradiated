@@ -36,7 +36,9 @@ SMG, prefix caching, readiness, metrics, cancellation and drain lifecycle.
 The initial H200 limits are four active requests, two queued requests, a
 4,096-token prefill budget, 85% static device memory, and decode graphs through
 batch four. SMG, SGLang, warmup admission and exported capacity metrics use the
-same four-request limit. The host profile requests and limits 32 CPU and
+same four-request limit. The runtime's `runtimes.json` entry declares the same
+`active_requests` for gateway routing weights; `tools/gpu/render-config.py`
+rejects an entry whose value differs from its launcher profile. The host profile requests and limits 32 CPU and
 320 GiB of system RAM, fitting the first pod's provider-reported 377 GB before
 enrollment measures its cgroup allowance. Each replica reserves both H200s.
 The 1M context setting remains a configured bound, not measured evidence of

@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 import argparse
 import hashlib
+import importlib.util
 import json
 import re
+import sys
 from pathlib import Path
 import uuid
 
@@ -131,6 +133,44 @@ def validate_canaries(models, runtimes):
             raise ValueError('A canary_for target cannot itself be a canary')
         if model.get('serving_model_id', runtimes[model['runtime']]['model_id']) != parent.get('serving_model_id', runtimes[parent['runtime']]['model_id']):
             raise ValueError('A canary must serve the same model ID as its primary')
+
+
+GLM_SGLANG_CONFIG = ROOT / 'product/inference/runtimes/glm-sglang/config.py'
+
+
+def glm_sglang_profiles():
+    spec = importlib.util.spec_from_file_location('glm_sglang_config', GLM_SGLANG_CONFIG)
+    config = importlib.util.module_from_spec(spec)
+    # Rendering must not leave bytecode beside the launcher source.
+    written, sys.dont_write_bytecode = sys.dont_write_bytecode, True
+    try:
+        spec.loader.exec_module(config)
+    finally:
+        sys.dont_write_bytecode = written
+    return config.PROFILES
+
+
+def validate_active_requests(models, runtimes, profiles):
+    # Desmond reports this limit and the gateway weights routing by it, so it
+    # must be the limit the runtime enforces. A declared value that drifted from
+    # the launcher is how the earlier maximum_concurrency field went wrong.
+    for key, runtime in runtimes.items():
+        limit = runtime.get('active_requests')
+        if 'active_requests' in runtime and (type(limit) is not int or not 1 <= limit <= 4096):
+            raise ValueError(f'Runtime release {key} active_requests must be an integer from 1 to 4096')
+    for name, model in models.items():
+        runtime = runtimes[model['runtime']]
+        if not runtime['image'].startswith('gradiated/glm-sglang-bundle@'):
+            continue
+        product = model['node_selector'].get('nvidia.com/gpu.product')
+        selected = runtime.get('environment', {}).get('GLM_SGLANG_PROFILE')
+        matching = [profile for profile_name, profile in profiles.items()
+                    if profile_name == selected or (selected is None and profile['gpu_product'] == product)]
+        if len(matching) != 1:
+            raise ValueError(f'Model {name} has no single GLM SGLang profile for its GPU')
+        if runtime.get('active_requests') != matching[0]['active_requests']:
+            raise ValueError(f'Model {name} runtime active_requests must equal its launcher profile, '
+                             f'{matching[0]["active_requests"]}')
 
 
 def disruption_budget(name, model):
@@ -281,6 +321,7 @@ def render(retire=()):
                GPU / 'gpu-fleet-pins.yaml': fleet_pins}
     models = json.loads((GPU / 'models.json').read_text())
     validate_canaries(models, runtimes)
+    validate_active_requests(models, runtimes, glm_sglang_profiles())
     for name, model in models.items():
         # The name becomes a directory and the gpu-model-<name> application,
         # which must stay a 63-character label.

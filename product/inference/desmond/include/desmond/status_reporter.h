@@ -19,6 +19,8 @@ struct StatusReporterConfig {
   std::string token;
   std::string deployment_id;
   std::string runtime_revision;
+  // The runtime's concurrent request limit; the gateway weights routing by it.
+  std::optional<std::uint32_t> active_requests;
   std::chrono::seconds interval{1};
   std::chrono::milliseconds request_timeout{2000};
 };

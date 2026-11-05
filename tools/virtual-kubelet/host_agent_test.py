@@ -682,6 +682,28 @@ class HostAgentTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.host.validate(pod)
 
+    @unittest.skipIf("recovery" in Path(agent.__file__).parts, "the frozen recovery agent predates weighted routing")
+    def test_reporter_environment_carries_the_runtime_active_request_limit(self):
+        profile = {'model_id': 'glm', 'release': {'runtime_revision': 'glm-a', 'model_revision': 'rev'}}
+        reporting = agent.reporter_environment(profile, self.uid, 38080, '/usr/bin')
+        self.assertNotIn('DESMOND_ACTIVE_REQUESTS', reporting)
+        self.assertEqual(reporting['DESMOND_RUNTIME_PORT'], '38080')
+        reporting = agent.reporter_environment({**profile, 'active_requests': 16, 'warmup': True}, self.uid, 38080, '/usr/bin')
+        self.assertEqual(reporting['DESMOND_ACTIVE_REQUESTS'], '16')
+        self.assertEqual(reporting['DESMOND_RUNTIME_PORT'], '38083')
+
+    @unittest.skipIf("recovery" in Path(agent.__file__).parts, "the frozen recovery agent predates weighted routing")
+    def test_runtime_active_request_limit_must_be_a_bounded_integer(self):
+        digest = 'a' * 64
+        image = self.pod['spec']['containers'][0]['image']
+        config = {**self.config, 'runtimes': {digest: {'image': image, 'active_requests': 4}}}
+        self.assertEqual(agent.runtime_profile(config, self.pod)[1]['active_requests'], 4)
+        # Desmond refuses these, and a reporter that cannot start takes its pod down.
+        for value in (0, 4097, '4', 4.0, True, None):
+            config['runtimes'][digest]['active_requests'] = value
+            with self.assertRaises(ValueError):
+                agent.runtime_profile(config, self.pod)
+
     def test_training_readiness_uses_the_trainer_without_a_reporter(self):
         self.config['runtimes'] = {'b' * 64: {'kind': 'training', 'image': 'gradiated/training-bundle@sha256:' + 'b' * 64,
             'model_id': 'training', 'release': {}, 'gpus': 1, 'cpu': '4', 'memory': '64Gi', 'startup_timeout': 300}}

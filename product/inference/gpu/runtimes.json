@@ -213,6 +213,7 @@
       "runtime_model_name": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4"
     },
     "gpus": 2,
+    "active_requests": 16,
     "cpu": "32",
     "memory": "400Gi",
     "startup_timeout": 3600,
@@ -237,6 +238,7 @@
       "runtime_model_name": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4"
     },
     "gpus": 2,
+    "active_requests": 16,
     "cpu": "32",
     "memory": "400Gi",
     "startup_timeout": 3600,
@@ -262,6 +264,7 @@
       "runtime_model_name": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4"
     },
     "gpus": 2,
+    "active_requests": 4,
     "cpu": "32",
     "memory": "320Gi",
     "startup_timeout": 3600,
@@ -287,6 +290,7 @@
       "runtime_model_name": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4"
     },
     "gpus": 2,
+    "active_requests": 8,
     "cpu": "32",
     "memory": "320Gi",
     "startup_timeout": 3600,

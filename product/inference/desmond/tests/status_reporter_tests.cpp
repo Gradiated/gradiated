@@ -44,6 +44,20 @@ DESMOND_TEST(status_reporter_uploads_snapshot_with_bearer_token) {
   CHECK(contains(reporter.prometheus(), "desmond_status_uploaded_total 1\n"));
 }
 
+DESMOND_TEST(status_reporter_reports_the_active_request_limit) {
+  RecordingServer ingest;
+  std::ostringstream log;
+  auto config = config_for(ingest);
+  config.active_requests = 16;
+  desmond::StatusReporter reporter(config, log);
+
+  reporter.update(DeploymentStatus::accepting);
+
+  REQUIRE(eventually([&] { return ingest.log().size() >= 1; }));
+  CHECK(contains(ingest.log().requests().front().body,
+                 "\"accepting_requests\":true,\"active_requests\":16,\"reason_code\":null}"));
+}
+
 DESMOND_TEST(status_reporter_accepts_any_2xx_reply) {
   RecordingServer ingest;
   ingest.respond_with(200);

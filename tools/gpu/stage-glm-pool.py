@@ -62,7 +62,8 @@ def stage(models, runtimes, pins, hosts, release, source, instances, replicas=1,
         'release': {'schema_version': 1, 'model_path': CHECKPOINT, 'model_revision': REVISION,
                     'tokenizer_path': CHECKPOINT, 'tokenizer_revision': REVISION,
                     'runtime_revision': f'glm-{gpu}-{digest[:12]}', 'runtime_model_name': CHECKPOINT},
-        'gpus': 2, 'cpu': '32', 'memory': f'{memory}Gi', 'startup_timeout': 3600, 'warmup': True,
+        'gpus': 2, 'active_requests': pool['active_requests'],
+        'cpu': '32', 'memory': f'{memory}Gi', 'startup_timeout': 3600, 'warmup': True,
         # Host agents reject GLM_SGLANG_PROFILE; the runtime selects the profile from the assigned GPUs.
         'environment': {'TENSOR_PARALLEL_SIZE': '2'},
     }

@@ -40,6 +40,8 @@ const fixture = (t) => {
       "product/inference/bundles/host/Dockerfile",
       "product/inference/gpu/runtimes.json",
       "product/inference/gpu/host-agent.py",
+      // render-config.py checks GLM SGLang runtime limits against the launcher.
+      "product/inference/runtimes/glm-sglang/config.py",
       "product/inference/images/gpu-base/base-id",
       "infra/environments/prod/us-east-1/kubernetes/gpu-inference",
       "infra/environments/prod/us-east-1/kubernetes/platform/gpu-models.yaml",

@@ -41,6 +41,23 @@ describe("DeploymentStatusReportSchema", () => {
     ).toEqual(statusReport);
   });
 
+  it("keeps the active request limit and rejects one out of range", () => {
+    expect(
+      DeploymentStatusReportSchema.parse({
+        ...statusReport,
+        active_requests: 16,
+      }),
+    ).toEqual({ ...statusReport, active_requests: 16 });
+    for (const active_requests of [0, 4_097, 1.5, "16"]) {
+      expect(
+        DeploymentStatusReportSchema.safeParse({
+          ...statusReport,
+          active_requests,
+        }).success,
+      ).toBe(false);
+    }
+  });
+
   it("rejects a reason code outside snake case", () => {
     expect(
       DeploymentStatusReportSchema.safeParse({

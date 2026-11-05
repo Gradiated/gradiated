@@ -78,8 +78,17 @@ gateway intersects them with fresh status. It uses a session ID when present.
 Otherwise, it hashes the first 4,096 actual input token IDs for token transports,
 or the first 16 KiB of serialized chat messages or SystemOne state. Prompt
 types have separate hash domains; every key includes workspace, model and
-served-release identity. Rendezvous hashing
+served-release identity. Weighted rendezvous hashing
 gives one stable candidate order. A mismatch or missing route is an error.
+
+Each candidate's weight is its share of first choices. A candidate whose status
+reports `active_requests` shares, with the other reporters, the fraction of
+candidates that report, in proportion to their limits. A candidate that does not
+report keeps the equal share 1/N. With no reports every share is 1/N, and the
+order is exactly the unweighted hash order. The release choice and the replica
+choice within the chosen release use the same rule. The replica choice sees only
+its own release, so while a release is part way through reporting its silent
+replicas get their release's equal share rather than exactly 1/N of the model.
 
 ### Native SystemOne contract
 
@@ -867,9 +876,9 @@ response, trace, or metric.
 
 Every exact model maps to independent runtime deployment candidates. Desmond
 sends status every second. The gateway rejects stale, unhealthy, draining, or
-not-accepting candidates. It uses rendezvous hashing for stable placement. It
-does not queue and it does not enforce a concurrency limit: the engine owns
-admission.
+not-accepting candidates. It uses rendezvous hashing, weighted by each
+runtime's reported `active_requests`, for stable placement. It does not queue
+and it does not enforce a concurrency limit: the engine owns admission.
 
 A model is ready when at least one fresh healthy deployment reports status. The
 catalog publishes no capacity limit. A malformed status document drops only its

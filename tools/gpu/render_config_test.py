@@ -254,6 +254,40 @@ class RenderTests(unittest.TestCase):
                 self.assertIn(gpu / 'models/controller/controller.yaml', outputs)
                 self.assertEqual(outputs[gpu / 'controller.yaml'][1]['kind'], 'Deployment')
 
+    def test_glm_sglang_runtimes_declare_their_launcher_active_request_limit(self):
+        models = json.loads((renderer.GPU / 'models.json').read_text())
+        runtimes = json.loads(renderer.RUNTIMES.read_text())
+        profiles = renderer.glm_sglang_profiles()
+        renderer.validate_active_requests(models, runtimes, profiles)
+        h200 = models['glm-dealign-sglang-h200']['runtime']
+        b300 = models['glm-dealign-sglang']['runtime']
+        self.assertEqual((runtimes[b300]['active_requests'], runtimes[h200]['active_requests']), (16, 4))
+
+        for runtime, change, message in [
+                (h200, 16, 'equal its launcher profile, 4'),
+                (b300, None, 'equal its launcher profile, 16'),
+                (b300, 0, 'integer from 1 to 4096'),
+                (b300, '16', 'integer from 1 to 4096'),
+                (b300, True, 'integer from 1 to 4096')]:
+            changed = copy.deepcopy(runtimes)
+            if change is None:
+                del changed[runtime]['active_requests']
+            else:
+                changed[runtime]['active_requests'] = change
+            with self.subTest(change=change), self.assertRaisesRegex(ValueError, message):
+                renderer.validate_active_requests(models, changed, profiles)
+
+        # Without an explicit profile, the GPU the model is placed on selects it.
+        changed = copy.deepcopy(runtimes)
+        del changed[h200]['environment']['GLM_SGLANG_PROFILE']
+        renderer.validate_active_requests(models, changed, profiles)
+        placed = copy.deepcopy(models)
+        placed['glm-dealign-sglang-h200']['node_selector']['nvidia.com/gpu.product'] = 'A100'
+        with self.assertRaisesRegex(ValueError, 'no single GLM SGLang profile'):
+            renderer.validate_active_requests(placed, changed, profiles)
+        # Other runtimes do not need a limit; their replicas keep an equal share.
+        self.assertNotIn('active_requests', runtimes[models['kev']['runtime']])
+
     def test_rollout_uses_catalogue_resources_and_qualification(self):
         runtimes = json.loads((renderer.ROOT / 'product/inference/gpu/runtimes.json').read_text())
         models = json.loads((renderer.GPU / 'models.json').read_text())

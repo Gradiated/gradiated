@@ -113,7 +113,7 @@ signatures.
 
 #### Automatic Slack Connect invitations
 
-The Slack step creates a private `ext-<company>-gradiated` channel, adds the
+The Slack step creates a public `ext-<company>-gradiated` channel, adds the
 configured Gradiated engineers, and emails a Slack Connect invitation to the
 verified signed-in organization admin. Customers accept it from their workspace;
 their admin may also need to approve it. Setup can continue while acceptance is
@@ -130,7 +130,7 @@ One-time setup before enabling real invitations:
 
 1. Create an internal Slack app using `product/services/api/slack-app-manifest.json`
    and install it in Gradiated's workspace. Grant
-   bot scopes `groups:write`, `groups:read`, and `conversations.connect:write`.
+   bot scopes `channels:manage`, `channels:read`, and `conversations.connect:write`.
    Reinstall after changing scopes. Confirm the workspace's Slack Connect plan,
    invitation permissions, and admin approval rules with its owner.
 2. Configure server-only `SLACK_BOT_TOKEN`, comma-separated Gradiated engineer
@@ -141,7 +141,7 @@ One-time setup before enabling real invitations:
    membership, invitation delivery/acceptance, workspace approval restrictions,
    and retry behavior. Do not enable production until this passes.
 
-Retries reuse a private channel only when its purpose contains the exact
+Retries reuse a public channel only when its purpose contains the exact
 Gradiated organization ID. A name collision or a creation interrupted before
 that marker was saved needs operator review; no stranger is invited to an
 existing unrelated channel. Mutating Slack calls are never retried automatically

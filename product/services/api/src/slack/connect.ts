@@ -22,6 +22,7 @@ const channelSchema = z.object({
   id: z.string().regex(/^[CG][A-Z0-9]+$/),
   name: z.string(),
   is_archived: z.boolean().optional(),
+  is_private: z.boolean().optional(),
   purpose: z.object({ value: z.string() }).optional(),
 });
 
@@ -45,16 +46,26 @@ export const createSlackConnect = (
 ) => {
   const call = async (method: string, body: Record<string, unknown>) => {
     try {
-      const response = await request(`https://slack.com/api/${method}`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${configuration.token}`,
-          "Content-Type": "application/json; charset=utf-8",
+      const listing = method === "conversations.list";
+      const query = listing
+        ? "?" +
+          new URLSearchParams(
+            Object.entries(body).map(([key, value]) => [key, String(value)]),
+          )
+        : "";
+      const response = await request(
+        `https://slack.com/api/${method}${query}`,
+        {
+          method: listing ? "GET" : "POST",
+          headers: {
+            Authorization: `Bearer ${configuration.token}`,
+            "Content-Type": "application/json; charset=utf-8",
+          },
+          ...(listing ? {} : { body: JSON.stringify(body) }),
+          redirect: "error",
+          signal: AbortSignal.timeout(15_000),
         },
-        body: JSON.stringify(body),
-        redirect: "error",
-        signal: AbortSignal.timeout(15_000),
-      });
+      );
       if (!response.ok) throw new Error("Slack unavailable");
 
       return z
@@ -106,12 +117,18 @@ export const createSlackConnect = (
       const purpose = `Gradiated customer organization: ${input.organizationId}`;
       const created = await call("conversations.create", {
         name,
-        is_private: true,
+        is_private: false,
       });
       let channel: z.infer<typeof channelSchema>;
 
       if (created.ok) {
         channel = channelSchema.parse(created.channel);
+        if (channel.is_private)
+          throw new ApiProblem(
+            problems.conflict(
+              "Slack returned a private channel. Gradiated needs to check it before inviting anyone.",
+            ),
+          );
         requireSuccess(
           await call("conversations.setPurpose", {
             channel: channel.id,
@@ -123,7 +140,7 @@ export const createSlackConnect = (
         let found: z.infer<typeof channelSchema> | undefined;
         for (let page = 0; page < 50; page++) {
           const listed = await call("conversations.list", {
-            types: "private_channel",
+            types: "public_channel",
             exclude_archived: true,
             limit: 200,
             ...(cursor ? { cursor } : {}),
@@ -141,6 +158,7 @@ export const createSlackConnect = (
             (item) =>
               item.name === name &&
               !item.is_archived &&
+              !item.is_private &&
               item.purpose?.value === purpose,
           );
           if (found) break;

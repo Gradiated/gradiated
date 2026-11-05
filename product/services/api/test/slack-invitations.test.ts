@@ -26,7 +26,7 @@ const ready = () =>
     .mockResolvedValueOnce(response({ ok: true, invite_id: "I123456" }));
 
 describe("Slack Connect", () => {
-  it("creates a private organization-bound channel, adds the engineer, and invites the verified email", async () => {
+  it("creates a public organization-bound channel, adds the engineer, and invites the verified email", async () => {
     const request = ready();
     expect(
       await createSlackConnect(configuration, request).invite(input),
@@ -45,7 +45,7 @@ describe("Slack Connect", () => {
     ]);
     expect(JSON.parse(String(request.mock.calls[0]?.[1]?.body))).toEqual({
       name: channel.name,
-      is_private: true,
+      is_private: false,
     });
     expect(JSON.parse(String(request.mock.calls[1]?.[1]?.body))).toEqual({
       channel: channel.id,
@@ -82,6 +82,35 @@ describe("Slack Connect", () => {
     await expect(
       createSlackConnect(configuration, request).invite(input),
     ).resolves.toMatchObject({ status: "invited" });
+    expect(request.mock.calls[1]?.[1]?.method).toBe("GET");
+    expect(
+      new URL(String(request.mock.calls[1]?.[0])).searchParams.get("types"),
+    ).toBe("public_channel");
+  });
+
+  it("does not reuse a private channel even if it carries the organization marker", async () => {
+    const request = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(response({ ok: false, error: "name_taken" }))
+      .mockResolvedValueOnce(
+        response({
+          ok: true,
+          channels: [
+            {
+              ...channel,
+              is_private: true,
+              purpose: {
+                value: `Gradiated customer organization: ${organizationId}`,
+              },
+            },
+          ],
+        }),
+      );
+
+    await expect(
+      createSlackConnect(configuration, request).invite(input),
+    ).rejects.toMatchObject({ problem: { status: 409 } });
+    expect(request).toHaveBeenCalledTimes(2);
   });
 
   it("does not invite anyone to a colliding channel belonging to another customer", async () => {
@@ -143,14 +172,12 @@ const setup = (
   } = {},
 ) => {
   const slackConnect = {
-    invite: vi
-      .fn()
-      .mockResolvedValue({
-        channel_id: channel.id,
-        channel_name: channel.name,
-        email: user.email,
-        status: "invited",
-      }),
+    invite: vi.fn().mockResolvedValue({
+      channel_id: channel.id,
+      channel_name: channel.name,
+      email: user.email,
+      status: "invited",
+    }),
   };
   const ndaDocuments = nda(options.status);
   const app = createTestApp({

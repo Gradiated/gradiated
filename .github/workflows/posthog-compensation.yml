@@ -29,8 +29,6 @@ jobs:
       - name: Compare PostHog's data with the live site
         id: check
         working-directory: product/website
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set +e

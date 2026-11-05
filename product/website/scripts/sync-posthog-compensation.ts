@@ -128,14 +128,7 @@ const parseExport = (source: string, file: string, name: string): unknown => {
 const masterCommit = async (): Promise<string> => {
   const response = await fetch(
     `https://api.github.com/repos/${REPO}/commits/master`,
-    {
-      headers: {
-        Accept: "application/vnd.github.sha",
-        ...(process.env.GITHUB_TOKEN
-          ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` }
-          : {}),
-      },
-    },
+    { headers: { Accept: "application/vnd.github.sha" } },
   );
   if (!response.ok) throw new Error(`master: HTTP ${response.status}`);
   const sha = (await response.text()).trim();

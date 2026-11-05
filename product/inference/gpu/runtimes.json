@@ -245,5 +245,30 @@
       "TENSOR_PARALLEL_SIZE": "2"
     },
     "request_memory": "256Gi"
+  },
+  "b59381affd94e48a1b477c23be905ffb2213b47f199c35749b01f625a970be86": {
+    "image": "gradiated/glm-sglang-bundle@sha256:61c08034c719091931ced7c8b9569615a015993b3a0c36d1f6ec35006a1c3f4b",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v3": "61c08034c719091931ced7c8b9569615a015993b3a0c36d1f6ec35006a1c3f4b"
+    },
+    "model_id": "dealignai/glm-5.3-flash-uncensored-sglang-h200",
+    "release": {
+      "schema_version": 1,
+      "model_path": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+      "model_revision": "745aac2ff0f10acf961f396df3f9418598aa7327",
+      "tokenizer_path": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+      "tokenizer_revision": "745aac2ff0f10acf961f396df3f9418598aa7327",
+      "runtime_revision": "glm-h200-61c08034c719",
+      "runtime_model_name": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4"
+    },
+    "gpus": 2,
+    "cpu": "32",
+    "memory": "320Gi",
+    "startup_timeout": 3600,
+    "warmup": true,
+    "environment": {
+      "TENSOR_PARALLEL_SIZE": "2",
+      "GLM_SGLANG_PROFILE": "h200-tp2"
+    }
   }
 }

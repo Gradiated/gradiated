@@ -14,6 +14,8 @@ spec.loader.exec_module(stage)
 class H200Staging(unittest.TestCase):
     def setUp(self):
         self.models = json.loads((stage.GPU / 'models.json').read_text())
+        # Exercise staging from the B300-only catalogue, independent of a committed H200 pool.
+        self.models.pop(stage.NAME, None)
         self.runtimes = json.loads((stage.ROOT / 'product/inference/gpu/runtimes.json').read_text())
         self.pins = json.loads((stage.GPU / 'pins.json').read_text())
         self.hosts = [host for host in yaml.safe_load_all((stage.GPU / 'hosts.yaml').read_text()) if host]

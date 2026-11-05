@@ -1,0 +1,214 @@
+/* /library/ — the magazine's editorial register. Scale contrast, rules
+   and caps do the editorial work; everything resolves from the system
+   tokens. */
+
+/* -- masthead --------------------------------------------------------------- */
+
+.gr-mag-masthead {
+  padding-top: var(--space-5);
+  margin-bottom: var(--space-6);
+}
+
+.gr-mag-title {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-title);
+  font-size: clamp(64px, 9vw, 140px);
+  font-weight: 650;
+  line-height: 0.95;
+  letter-spacing: var(--tracking-hero);
+}
+
+/* -- series ----------------------------------------------------------------- */
+
+.gr-mag-series {
+  display: grid;
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
+}
+
+.gr-mag-series-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.gr-mag-series-title {
+  margin: 0;
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-emphasis);
+}
+
+.gr-mag-series-dek {
+  margin: 0;
+  font-size: var(--text-ui);
+  color: var(--color-text-muted);
+  max-width: 44ch;
+}
+
+/* -- features: two columns, art over copy --------------------------------- */
+
+.gr-mag-features {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.gr-mag-feature-link {
+  display: grid;
+  gap: var(--space-3);
+  color: inherit;
+  text-decoration: none;
+}
+
+.gr-mag-feature-art {
+  /* The journey artworks position layers absolutely; this frame must
+     be their containing block or they escape onto the module. */
+  position: relative;
+  aspect-ratio: 3 / 2;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--color-rule);
+  background: var(--color-panel);
+  display: grid;
+}
+
+.gr-mag-feature-art > * {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gr-mag-super {
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.gr-mag-feature-title {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-title);
+  font-size: clamp(22px, 2vw, 30px);
+  font-weight: 650;
+  line-height: 1.1;
+}
+
+.gr-mag-feature-title .gr-arrow {
+  flex: none;
+  translate: 0 0.1em;
+}
+
+.gr-mag-feature-link:hover .gr-arrow {
+  translate: 0.15em 0.1em;
+}
+
+.gr-mag-feature-link:hover .gr-arrow-shaft {
+  stroke-dashoffset: 0;
+}
+
+.gr-mag-feature-dek {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-body);
+  line-height: var(--leading-body, 1.55);
+  color: var(--color-text-muted);
+  max-width: 48ch;
+}
+
+.gr-mag-meta {
+  margin: 0;
+  font-family: var(--font-code);
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* -- the index -------------------------------------------------------------- */
+
+.gr-mag-index {
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--color-text);
+  padding-top: var(--space-3);
+  margin-bottom: var(--space-7);
+}
+
+.gr-mag-index .gr-mag-series-title {
+  margin-bottom: var(--space-3);
+}
+
+.gr-mag-row {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  column-gap: var(--space-4);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--color-rule);
+  color: inherit;
+  text-decoration: none;
+}
+
+.gr-mag-row-meta {
+  font-family: var(--font-code);
+  font-size: 12px;
+  color: var(--color-text-muted);
+  padding-top: 0.35em;
+}
+
+.gr-mag-row-title {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  font-family: var(--font-title);
+  font-size: clamp(19px, 1.8vw, 24px);
+  font-weight: 600;
+}
+
+.gr-mag-row:hover .gr-arrow {
+  translate: 0.15em 0;
+}
+
+.gr-mag-row:hover .gr-arrow-shaft {
+  stroke-dashoffset: 0;
+}
+
+.gr-mag-row-dek {
+  grid-column: 2;
+  margin-top: calc(0.3 * var(--u));
+  font-size: var(--text-ui);
+  color: var(--color-text-muted);
+  max-width: 62ch;
+}
+
+/* -- narrow ----------------------------------------------------------------- */
+
+@media (max-width: 60rem) {
+  .gr-mag-masthead {
+    padding-top: 0;
+  }
+}
+
+@media (max-width: 52rem) {
+  .gr-mag-features {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gr-mag-row {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: calc(0.2 * var(--u));
+  }
+
+  .gr-mag-row-dek {
+    grid-column: 1;
+  }
+}

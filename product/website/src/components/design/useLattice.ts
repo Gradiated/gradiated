@@ -27,10 +27,12 @@ import { useEffect, useRef, useState } from "react";
    384px module inside 108px margins. `compact` fills it: 24 units hit U_MAX at
    624, which is where mid begins. */
 const TIERS = [
-  { minWidth: 900, moduleU: 48, name: "wide" },
-  { minWidth: 620, moduleU: 36, name: "mid" },
-  { minWidth: 432, moduleU: 24, name: "compact" },
-  { minWidth: 0, moduleU: 16, name: "narrow" },
+  { margin: 24, minWidth: 900, moduleU: 48, name: "wide" },
+  { margin: 24, minWidth: 620, moduleU: 36, name: "mid" },
+  /* Phone tiers: 20px a side. The module quantises to whole units, so
+     the real gutter is the leftover split — ~27px on a 390 viewport. */
+  { margin: 20, minWidth: 432, moduleU: 24, name: "compact" },
+  { margin: 20, minWidth: 0, moduleU: 16, name: "narrow" },
 ] as const;
 
 export type Tier = (typeof TIERS)[number]["name"];
@@ -70,7 +72,7 @@ const EMPTY: Lattice = {
 
 export const resolveLattice = (width: number): Lattice => {
   const tier = TIERS.find(({ minWidth }) => width >= minWidth) ?? TIERS.at(-1)!;
-  const usable = width - MIN_MARGIN * 2;
+  const usable = width - (tier.margin ?? MIN_MARGIN) * 2;
   const u = Math.min(U_MAX, Math.max(U_MIN, Math.floor(usable / tier.moduleU)));
 
   return {

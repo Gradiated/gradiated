@@ -1,0 +1,115 @@
+/* ---------------------------------------------------------------------------
+   rhythm — the homepage's vertical rhythm on phones, enforced.
+
+   Three steps (tokens.css): --rhythm-element, --rhythm-sub,
+   --rhythm-section. This sheet loads LAST and its selectors carry the
+   shell root, so no section's bespoke spacing (vh paddings, negative
+   margins, one-off multiples) survives on a phone. Desktop is untouched
+   here; it gets the same treatment in its own pass.
+
+   The cinematic stages (value fold, chip fold) are scroll-driven and
+   keep their own heights; the rhythm governs the joins around them.
+   ------------------------------------------------------------------------- */
+
+@media (max-width: 60rem) {
+  /* -- sections: every module meets its neighbour across one section gap,
+        half carried by each side --------------------------------------- */
+  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-module:not(.gr-module--fold) {
+    padding-block: calc(var(--rhythm-section) / 2);
+  }
+
+  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-module.gr-products-module {
+    padding-block-start: 0;
+  }
+
+  /* -- hero ----------------------------------------------------------------
+        page lead, then title -> CTAs (element), then the argument (sub) */
+  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-fold-left {
+    padding-block: calc(1.5 * var(--u)) var(--rhythm-sub);
+  }
+
+  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-fold-left .gr-home-actions {
+    margin-block-start: var(--rhythm-element);
+  }
+
+  /* -- the argument and the product cards ---------------------------------
+        prelude -> rule -> cards: element either side of the rule = sub */
+  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-products-prelude {
+    margin-block-end: var(--rhythm-element);
+  }
+
+  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-products-rule {
+    margin: 0 0 var(--rhythm-element);
+  }
+
+  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-product-grid {
+    row-gap: 0;
+  }
+
+  /* inside a card: title -> description -> visual -> copy, all element */
+  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-product-card {
+    row-gap: var(--rhythm-element);
+  }
+
+  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-product-head,
+  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-product-visual,
+  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-product-copy {
+    margin: 0;
+  }
+
+  /* card -> card: element either side of the rule = sub */
+  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-product-card + .gr-product-card {
+    margin-block-start: var(--rhythm-element);
+    padding-block-start: var(--rhythm-element);
+  }
+
+  /* -- the marquee: a section after the cards; caption -> row = element */
+  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-marquee {
+    padding: var(--rhythm-section) 0 0;
+  }
+
+  /* the lane keeps 8px above its tiles for their shadows; the caption
+     gives that back so the visual gap is one element */
+  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-marquee-title {
+    margin: 0 0 calc(var(--rhythm-element) - 8px);
+  }
+
+  /* -- the machine (loop) section ----------------------------------------- */
+  /* half a section above (the module before carries the other half); a
+     whole one below, because the value stage that follows has no lead */
+  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-machine {
+    padding-block: calc(var(--rhythm-section) / 2) var(--rhythm-section);
+  }
+
+  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-loop {
+    padding-block: 0;
+  }
+
+  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-loop-grid {
+    row-gap: var(--rhythm-sub);
+    padding-block: 0;
+  }
+
+  /* the tab switcher labels its title: element, inside a sub-gapped grid */
+  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-machine-toggle {
+    margin-block-end: calc(var(--rhythm-element) - var(--rhythm-sub));
+  }
+
+  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-loop-controls,
+  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-loop-stack,
+  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-loop-copy,
+  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-inf .gr-loop-stack,
+  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-inf-slider {
+    margin: 0;
+  }
+
+  /* -- latest news: head -> cards = element; cards -> closing card = section;
+        closing card -> footer = section (the module halves carry it) ------ */
+  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-news-head {
+    margin-block-end: var(--rhythm-element);
+  }
+
+  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-home-cta {
+    margin-block: var(--rhythm-section) 0;
+  }
+}

@@ -1302,7 +1302,7 @@
 .gr-fold::after {
   content: "";
   position: absolute;
-  inset-inline: calc(50% - 50vw);
+  inset-inline: calc(50% - var(--bleed-w, 100vw) / 2);
   bottom: 0;
   height: calc(7 * var(--u));
   background: linear-gradient(
@@ -2075,11 +2075,11 @@
    narrow pair, an even pair, a row of three. Promoting a piece changes the
    column it sits in, never what the card contains.                           */
 
-/* Clears the floating nav and then some. The nav is absolutely positioned, so
-   it occupies no space and the first module would otherwise start 12px under
-   it; the frame leaves 80px of air between the bar and the first line. */
+/* RELAUNCH: the floating top bar is retired — the rail shell carries
+   navigation — so the old nav clearance is dead space. The page keeps
+   a breath of lead and no more. */
 .gr-module--top {
-  padding-block-start: calc(var(--u) + var(--nav-h) + 3.33 * var(--u));
+  padding-block-start: calc(2.5 * var(--u));
 }
 
 /* The frame's masthead: label, then the page's name at twice the section
@@ -2257,7 +2257,8 @@
 }
 
 .gr-root .gr-masthead-title {
-  margin-block: calc(0.37 * var(--u)) 0;
+  /* No lead: every page's content starts on the module's top line. */
+  margin-block: 0;
   font-family: var(--font-title);
   font-size: calc(2 * var(--text-heading));
   font-weight: 500;
@@ -2461,10 +2462,13 @@
 /* 304 : 672 with a 104px gutter in the frame — a narrower apparatus column
    and a wider gap than the index's, so the reading column is unmistakably the
    page and the left is unmistakably beside it. */
+/* RELAUNCH: the apparatus column shrank wholesale — the cover is a
+   thumbnail beside the prose now, not a poster, and the section list
+   hangs off it. */
 .gr-read-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 2.21fr);
-  gap: calc(4.33 * var(--u));
+  grid-template-columns: minmax(0, 0.65fr) minmax(0, 2.6fr);
+  gap: calc(6 * var(--u));
   align-items: start;
 }
 
@@ -2535,13 +2539,14 @@
 
 .gr-read-sections {
   display: grid;
-  margin-block-start: calc(3.33 * var(--u));
+  margin-block-start: calc(1.5 * var(--u));
 }
 
 .gr-read-section {
-  padding: 0.55em 0 0.55em 0.9em;
+  position: relative;
+  padding: 0.55em 0 0.55em 1.1em;
   color: var(--color-text-muted);
-  font-size: var(--text-note);
+  font-size: 13px;
   line-height: 1.3;
   text-decoration: none;
   transition: color var(--dur-spring) var(--ease-spring);
@@ -2552,12 +2557,28 @@
   color: var(--color-text);
 }
 
-/* A rule in the gutter marks where the reader is. Weight AND the rule, never
-   colour alone — colour alone is the one distinction some readers cannot
-   see. */
+/* A square chip in the gutter marks where the reader is — the same die
+   the doc rail lights, in the content theme's interaction colour. The
+   chip AND the ink shift, never colour alone — colour alone is the one
+   distinction some readers cannot see. */
+.gr-read-section::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  translate: 0 -50%;
+  width: 7px;
+  height: 7px;
+  background: transparent;
+  transition: background var(--dur-fast) var(--ease-response);
+}
+
 .gr-read-section[aria-current] {
-  color: var(--color-text);
-  box-shadow: inset 2px 0 0 0 var(--color-text);
+  color: var(--color-interactive);
+}
+
+.gr-read-section[aria-current]::before {
+  background: var(--color-interactive);
 }
 
 /* ~68px. The largest type in the system, and it earns it: on a reading page
@@ -2595,9 +2616,59 @@
   letter-spacing: var(--tracking-heading);
 }
 
+/* RELAUNCH, PHONES ONLY: every page's content starts on one 1.5u lead.
+   Desktop keeps its own leads untouched. */
 @media (max-width: 60rem) {
+  .gr-root .gr-module.gr-module--top,
+  .gr-root .gr-module:has(.gr-models-head),
+  .gr-root .gr-module--model {
+    padding-block-start: calc(1.5 * var(--u));
+  }
+
+  .gr-root .gr-models-head {
+    padding-block-start: 0;
+  }
+
+  /* PADDING, not margin: a margin here collapses through the page root
+     and the sheet, shifting the sheet down and exposing the ink menu
+     layer behind it as a black band. */
+  .gr-root .gr-module--fold {
+    margin-block-start: 0;
+    padding-block-start: calc(1.5 * var(--u));
+  }
+
+  /* Out-specifies the narrow tier's own hero padding rule. */
+  .gr-root[data-tier]:not([data-tier="wide"]) .gr-fold .gr-page-hero,
+  .gr-root[data-tier]:not([data-tier="wide"]) .gr-module .gr-page-hero {
+    padding-block-start: 0;
+  }
+
+  .gr-root .gr-fold:not(:has(.gr-fold-centred)) {
+    min-height: 0;
+    align-content: start;
+  }
+
   .gr-read-grid {
     grid-template-columns: minmax(0, 1fr);
+    /* The desktop aside gap is a column gutter; stacked, it is a hole. */
+    gap: calc(1.5 * var(--u));
+  }
+
+  /* The desktop clamp bottoms out at ~44px, which six-wraps a long
+     title on a phone. */
+  .gr-read-title {
+    font-size: clamp(1.75rem, 8vw, 2.4rem);
+  }
+
+  .gr-root .gr-read-lede {
+    font-size: var(--text-lede);
+  }
+
+  /* Triple-scoped: the base rule sits LATER in this file at equal
+     specificity and would win otherwise. */
+  .gr-root .gr-job-top .gr-job-title {
+    /* Sized so "Infrastructure" holds one line on the phone module. */
+    font-size: clamp(1.5rem, 6.8vw, 2.1rem);
   }
 
   .gr-read-side {
@@ -2777,8 +2848,8 @@
 .gr-careers-hero-field {
   position: absolute;
   inset: 0;
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
+  width: var(--bleed-w, 100vw);
+  margin-left: calc(50% - var(--bleed-w, 100vw) / 2);
 }
 
 .gr-careers-hero {
@@ -2798,7 +2869,8 @@
 
 .gr-root .gr-careers-head .gr-masthead-title {
   margin-block-start: 0;
-  max-width: 10ch;
+  /* Two lines: "Come make AI / use less energy." */
+  max-width: 17ch;
   margin-inline: auto;
   line-height: 0.92;
   font-size: calc(var(--text-masthead) * 0.88);
@@ -3015,12 +3087,11 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   column-gap: calc(1.5 * var(--u));
   align-items: start;
-  /* Full bleed: the collage takes the whole viewport, with its own
-     gutters, while the module around it stays on the band. */
+  /* RELAUNCH: no longer full-bleed — inside the rail shell's sheet a
+     100vw layer overhangs the rail's width and escapes the module.
+     The collage keeps to the same bounds as every other section. */
   box-sizing: border-box;
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
-  padding-inline: clamp(24px, 6vw, 110px);
+  width: 100%;
   /* Extra lead under the interlude before the collage begins. */
   padding-top: calc(4 * var(--u));
 }
@@ -3041,7 +3112,7 @@
 .gr-root .gr-careers-board-title {
   position: absolute;
   top: calc(4 * var(--u));
-  left: calc(50% - 50vw + clamp(24px, 6vw, 110px));
+  left: 0;
   margin: 0;
   max-width: 9ch;
   font-family: var(--font-title);
@@ -3179,9 +3250,11 @@
     display: flex;
     align-items: flex-start;
     gap: calc(1.75 * var(--u));
-    width: 100vw;
-    margin-left: calc(50% - 50vw);
-    padding-inline: calc(1 * var(--u));
+    width: var(--bleed-w, 100vw);
+    margin-left: calc(50% - var(--bleed-w, 100vw) / 2);
+    /* The first card starts on the module's left edge — the gutter,
+       not the sheet edge; the row scrolls off the right. */
+    padding-inline: calc((var(--bleed-w, 100vw) - var(--module-w)) / 2);
     padding-top: calc(0.5 * var(--u));
     overflow-x: auto;
     scroll-snap-type: x mandatory;
@@ -3219,6 +3292,18 @@
 
   .gr-careers-print-well {
     grid-template-rows: 1fr;
+  }
+
+  /* One print shape for the whole row — the high-low card's (1130 x
+     1304); the art cover-crops into it until the mobile set arrives. */
+  .gr-careers-print-frame {
+    aspect-ratio: 1130 / 1304;
+  }
+
+  .gr-careers-print-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .gr-careers-print-caption span {
@@ -3439,7 +3524,9 @@
      top border; suppressing that border to tidy the section stack took the
      separator with it, and the head ran straight into the body. It belongs to
      the head, so it lives here now and cannot be lost that way again. */
-  margin-block: calc(1.6 * var(--u)) calc(2.6 * var(--u));
+  /* No lead above: the posting's content starts on the module's top
+     line like every page; the rule below stays. */
+  margin-block: 0 calc(2.6 * var(--u));
   padding-block-end: calc(2.2 * var(--u));
   border-block-end: 1px solid var(--color-rule);
 }
@@ -3727,11 +3814,19 @@
    are already the system's. What follows is what the reference pages need on
    top: a sidebar, a wider measure, tables, and real syntax highlighting.     */
 
+/* RELAUNCH: the contents moved into the site rail (doc mode), so the
+   doc is one readable column — no page draws .gr-doc-side any more. */
 .gr-doc {
   display: grid;
-  grid-template-columns: minmax(0, 14em) minmax(0, 1fr);
-  gap: calc(4 * var(--u));
+  grid-template-columns: minmax(0, 1fr);
+  /* The reading column sits centred in its module, not stranded left. */
+  justify-items: center;
   align-items: start;
+}
+
+.gr-doc-main {
+  width: 100%;
+  max-width: 68ch;
 }
 
 .gr-doc-side {
@@ -3811,9 +3906,10 @@
   float: right;
   margin: 0 0 var(--u) var(--u);
   padding: 0.5em 0.9em;
-  border: 1px solid var(--color-interactive);
-  border-radius: 999px;
-  background: none;
+  border: 1px solid var(--color-rule);
+  /* A button, not a switch: it takes the system corner. */
+  border-radius: var(--radius);
+  background: var(--color-panel);
   color: var(--color-text);
   font-family: var(--font-caps);
   font-size: var(--text-caps);
@@ -4902,6 +4998,58 @@
   padding-block: calc(var(--nav-h) + var(--u));
 }
 
+/* The relaunch hero: left-aligned, no stage. The title wraps to three
+   lines on its own measure and the prelude follows straight under. */
+.gr-fold-left {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  align-content: start;
+  text-align: left;
+  padding-block: calc(4 * var(--u)) calc(3.5 * var(--u));
+}
+
+.gr-fold-left .gr-home-title {
+  max-width: 13ch;
+  margin: 0;
+  font-weight: 700;
+}
+
+.gr-home-title-narrow {
+  display: none;
+}
+
+/* Left-aligned under the statement, like the statement. */
+.gr-fold-left .gr-home-actions {
+  justify-content: flex-start;
+}
+
+.gr-fold:has(.gr-fold-left) {
+  min-height: 0;
+}
+
+/* Phones: a size at which "open-source" holds a line on the module. */
+@media (max-width: 60rem) {
+  .gr-root .gr-fold-left {
+    padding-block: calc(1.5 * var(--u)) calc(2.5 * var(--u));
+  }
+
+  /* Larger, ON the module — no bleed into the gutters. 3rem is the
+     size at which "open source" still holds one line at 272px. */
+  .gr-root .gr-fold-left .gr-home-title {
+    font-size: 3rem;
+    max-width: none;
+  }
+
+  .gr-home-title-wide {
+    display: none;
+  }
+
+  .gr-home-title-narrow {
+    display: inline;
+  }
+}
+
 /* Items fill the column and the TEXT centres inside them. `justify-items:
    center` looks like the way to centre this and is a trap: it sizes each item
    to its own content, so the title and the standfirst sized to their widest
@@ -4933,7 +5081,7 @@
  * down to a size that fits it. The breaks are a decision about a wide screen;
  * on a narrow one the sentence reflows and the type can be as large as the
  * page can carry. */
-.gr-root:not([data-tier="wide"]) .gr-home-title .gr-hero-line {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-home-title .gr-hero-line {
   display: inline;
 }
 
@@ -4944,7 +5092,7 @@
  * they became inline. The separator belongs to the inline state, so it is
  * added here rather than in the markup, where it would put a stray space
  * inside every hero on the site. */
-.gr-root:not([data-tier="wide"])
+.gr-root[data-tier]:not([data-tier="wide"])
   .gr-home-title
   .gr-hero-line
   + .gr-hero-line::before {
@@ -4974,7 +5122,7 @@
    the standfirst follows by the same ratio so the pair keeps its proportion —
    28px against a 117px title is right, against 56px it shouted. The measure
    is in ch, so the two-line break survives the resize on its own. */
-.gr-root:not([data-tier="wide"]) .gr-fold-centred .gr-home-lede {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-fold-centred .gr-home-lede {
   font-size: calc(0.875 * var(--text-lede-display));
 }
 
@@ -4990,6 +5138,17 @@
 .gr-home-products {
   position: relative;
   z-index: 1;
+}
+
+/* Just below the hero: the products module keeps its foot, not its
+   4.5u lead. */
+.gr-products-module {
+  padding-block-start: 0;
+}
+
+/* No seam between the statement and its argument. */
+.gr-products-module::before {
+  display: none;
 }
 
 /* The prelude: the argument the cards resolve, as flowing prose — two
@@ -5012,6 +5171,16 @@
   text-wrap: pretty;
   orphans: 3;
   widows: 3;
+}
+
+/* On a phone the balancer rebalances WHOLE LINES short — three ragged
+   tail lines read as the column not using its width. Greedy wrap. */
+@media (max-width: 60rem) {
+  .gr-products-prelude p {
+    /* 'wrap' (greedy), not 'normal' — normal is not a text-wrap value
+       and the declaration drops silently. */
+    text-wrap: wrap;
+  }
 }
 
 /* The invitation reads as a link at a glance: Aegean, the palette's blue,
@@ -5040,19 +5209,13 @@
   }
 }
 
-/* Each word arrives on its own delay once the block is seen — the value
-   fold's gesture at paragraph scale. */
+/* RELAUNCH: the per-word blur stream is retired — it read as choppy
+   rather than finessed. The prose stands; the spans remain so the
+   markup is unchanged. */
 .gr-stream-word {
-  opacity: 0.08;
-  filter: blur(5px);
-  transition:
-    opacity 0.5s ease var(--w-delay, 0s),
-    filter 0.5s ease var(--w-delay, 0s);
-}
-
-.gr-stream--on .gr-stream-word {
   opacity: 1;
   filter: none;
+  transition: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -5373,8 +5536,11 @@
   .gr-product-grid {
     grid-template-columns: minmax(0, 1fr);
   }
+  /* A rule between the stacked cards, with equal air either side. */
   .gr-product-card + .gr-product-card {
-    margin-block-start: calc(1.5 * var(--u));
+    margin-block-start: calc(2 * var(--u));
+    padding-block-start: calc(2 * var(--u));
+    border-top: 1px solid var(--color-rule);
   }
   .gr-inference-example pre {
     font-size: 0.6875rem;
@@ -5441,20 +5607,20 @@
    and once nothing is cropped there is nothing to say it about — left in, it
    would wash the bottom of a panel that is fully visible.                  */
 
-.gr-root:not([data-tier="wide"]) .gr-fold {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-fold {
   min-height: 0;
   grid-template-rows: auto auto;
   overflow: visible;
 }
 
-.gr-root:not([data-tier="wide"]) .gr-fold::after {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-fold::after {
   display: none;
 }
 
 /* The hero's top padding only has to clear the floating bar here, not centre
    a hero in a screen. */
-.gr-root:not([data-tier="wide"]) .gr-fold .gr-page-hero {
-  padding-block: calc(var(--nav-h) + 2 * var(--u)) calc(1.5 * var(--u));
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-fold .gr-page-hero {
+  padding-block: 0 /* RELAUNCH: the top bar is retired */ calc(1.5 * var(--u));
 }
 
 /* -- mobile: the live meters stack ---------------------------------------
@@ -5465,7 +5631,7 @@
    costs a line of height and buys the switch a column of its own — and the
    two readings are a pair, so reading them down is no worse than across.   */
 
-.gr-root:not([data-tier="wide"]) .gr-cost-meters {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-cost-meters {
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: baseline;
@@ -5473,11 +5639,11 @@
   row-gap: calc(0.3 * var(--u));
 }
 
-.gr-root:not([data-tier="wide"]) .gr-cost-meter:nth-of-type(1) {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-cost-meter:nth-of-type(1) {
   grid-area: 1 / 1;
 }
 
-.gr-root:not([data-tier="wide"]) .gr-cost-meter:nth-of-type(2) {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-cost-meter:nth-of-type(2) {
   grid-area: 2 / 1;
 }
 
@@ -5487,7 +5653,7 @@
  * nothing — a control sitting in the gap between two lines of type. Sharing
  * the first line gives it something to line up with, and it has its own label
  * so there is a real baseline to use rather than a synthesised one. */
-.gr-root:not([data-tier="wide"]) .gr-cost-switch {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-cost-switch {
   grid-area: 1 / 2;
   align-self: baseline;
 }
@@ -5501,7 +5667,7 @@
    The action also stops centring: under a single stacked column there is no
    centre for it to be on, only a left edge that everything else shares.     */
 
-.gr-root:not([data-tier="wide"]) .gr-module:not(.gr-module--fold) {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-module:not(.gr-module--fold) {
   padding-block: calc(2.5 * var(--u));
 }
 
@@ -5517,15 +5683,15 @@
  * above rather than losing to it. Less air than the desktop's 80px: that was
  * measured under a bar on a 1152px page, and the same gap on a phone is a
  * third of the screen before anything is said. */
-.gr-root:not([data-tier="wide"]) .gr-module.gr-module--top {
-  padding-block-start: calc(var(--nav-h) + 2 * var(--u));
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-module.gr-module--top {
+  padding-block-start: calc(2.5 * var(--u));
 }
 
-.gr-root:not([data-tier="wide"]) .gr-module--fold + .gr-module {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-module--fold + .gr-module {
   padding-block-start: calc(1.5 * var(--u));
 }
 
-.gr-root:not([data-tier="wide"]) .gr-features-action {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-features-action {
   justify-content: flex-start;
   margin-block-start: calc(1.25 * var(--u));
 }
@@ -5537,7 +5703,7 @@
  * that row is `auto`, and a canvas has no intrinsic height, so the panel
  * collapsed to just its meters. A viewport fraction rather than a unit
  * multiple: this is a picture being given a share of the screen. */
-.gr-root:not([data-tier="wide"]) .gr-cost-field {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-cost-field {
   min-height: 52dvh;
 }
 
@@ -5551,7 +5717,7 @@
  *
  * So it becomes what the other heroes already are here: one column, in
  * reading order, flush to the band. */
-.gr-root:not([data-tier="wide"]) .gr-page-hero--beside {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-page-hero--beside {
   grid-template-columns: minmax(0, 1fr);
   grid-template-areas:
     "media"
@@ -5564,7 +5730,7 @@
 
 /* Back to spanning its row, and capped so a tall object cannot take the whole
    screen before the sentence that explains it. */
-.gr-root:not([data-tier="wide"]) /* The diagram's optical placement, by the vertex rule: splayed open, the
+.gr-root[data-tier]:not([data-tier="wide"]) /* The diagram's optical placement, by the vertex rule: splayed open, the
    casing's top-left vertex sits a touch above the R of "Runs" — the
    diagram's real height (casing top vertex to solder bottom vertex) then
    hangs centred against the text column instead of sagging below it. */
@@ -5578,7 +5744,7 @@
   margin-block-end: var(--u);
 }
 
-.gr-root:not([data-tier="wide"]) .gr-page-hero--beside .gr-page-hero-lede {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-page-hero--beside .gr-page-hero-lede {
   max-width: none;
 }
 
@@ -5601,16 +5767,16 @@
    So on one column they take a ratio of their own again, and go two across —
    six tiles in one column is a screen and a half of wells.              */
 
-.gr-root:not([data-tier="wide"]) .gr-pair {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-pair {
   grid-template-columns: minmax(0, 1fr);
   gap: calc(2 * var(--u));
 }
 
-.gr-root:not([data-tier="wide"]) .gr-pair .gr-cards {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-pair .gr-cards {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.gr-root:not([data-tier="wide"]) .gr-pair .gr-cards .gr-card-media {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-pair .gr-cards .gr-card-media {
   height: auto;
   aspect-ratio: var(--cover-ratio);
 }
@@ -5632,7 +5798,7 @@
  * keeps the portrait from dominating its half. Stacked, there is nothing
  * beside it to be narrower than, so the same 85% reads as a panel inset from
  * the page for no reason. Full width, like the showpiece in the fold. */
-.gr-root:not([data-tier="wide"]) .gr-reel {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-reel {
   width: 100%;
 }
 
@@ -5647,7 +5813,7 @@
   display: none;
 }
 
-.gr-root:not([data-tier="wide"]) .gr-fab {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-fab {
   position: fixed;
   inset-block-end: calc(1.25 * var(--u));
   inset-inline-end: calc(1.25 * var(--u));
@@ -5765,7 +5931,7 @@
  * Both directions at --dur-fast: the exit can afford to be quick because the
  * footer arriving is the reader's own doing, and the return has to be quick
  * or the button appears to lag behind the scroll that brought it back. */
-.gr-root:not([data-tier="wide"]) .gr-fab {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-fab {
   transition:
     opacity var(--dur-fast) var(--ease-response),
     translate var(--dur-fast) var(--ease-response);
@@ -5786,7 +5952,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .gr-root:not([data-tier="wide"]) .gr-fab {
+  .gr-root[data-tier]:not([data-tier="wide"]) .gr-fab {
     transition: none;
   }
 }
@@ -5846,7 +6012,7 @@
  * the cards beside each other are different widths. Below the wide tier they
  * are not — they stack, or sit two-up at equal widths — so the constraint is
  * gone and the well can be the same shape as every other cover. */
-.gr-root:not([data-tier="wide"]) .gr-story-well {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-story-well {
   height: auto;
   aspect-ratio: var(--cover-ratio);
 }
@@ -5862,11 +6028,11 @@
  * 2u for both, which is also more air than either had: a story is a picture
  * with a title and a standfirst under it, and at 24px the next picture starts
  * before the last one has finished being read. */
-.gr-root:not([data-tier="wide"]) .gr-story-row {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-story-row {
   row-gap: calc(2 * var(--u));
 }
 
-.gr-root:not([data-tier="wide"]) .gr-story-row + .gr-story-row {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-story-row + .gr-story-row {
   margin-block-start: calc(2 * var(--u));
 }
 
@@ -5958,7 +6124,9 @@
   align-items: center;
   text-align: center;
   padding: clamp(64px, 8vw, 120px) var(--u);
-  margin-block-start: calc(2 * var(--u));
+  /* Clear air under the three news cards before the closing card, and
+     under the card itself before the footer's rule. */
+  margin-block: calc(5 * var(--u)) calc(2.5 * var(--u));
   border-radius: var(--radius);
   background-color: var(--color-panel);
 }
@@ -6605,4 +6773,40 @@
   .gr-root .gr-apply-form {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* RELAUNCH, PHONES ONLY — the one lead. Declared last so it outranks the
+   narrow tier's own module padding above; every page's content starts
+   1.5u under the strip. Desktop leads are untouched. */
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-module.gr-module--top,
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-module:has(.gr-models-head),
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-module.gr-module--model {
+  padding-block-start: calc(1.5 * var(--u));
+}
+
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-models-head {
+  padding-block-start: 0;
+}
+
+/* The products module's phone-tier lead is retired too: the argument
+   sits just under the hero's buttons. */
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-module.gr-products-module {
+  padding-block-start: 0;
+}
+
+/* RELAUNCH: page titles are bold. One rule for the H1 tier — the page
+   heroes (inference, training, careers), the index mastheads (notes),
+   the doc titles (handbook, docs, legal) — so no page's title carries
+   its own weight. */
+.gr-root .gr-hero,
+.gr-root .gr-masthead-title,
+.gr-root .gr-doc-main h1 {
+  font-weight: 700;
+}
+
+/* The careers title holds two lines on a phone too: 38px is the largest
+   size at which "use less energy." fits the 272px module. */
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-careers-head .gr-masthead-title {
+  font-size: 38px;
+  max-width: none;
 }

@@ -73,7 +73,12 @@
   --radius-3xl: 1.5rem;
   --radius-full: 9999px;
 
-  --radius: var(--radius-xl);
+  /* The relaunch setting: 5px, between md and lg. The old xl matched the
+     product console's corners; the new system is sharper — silicon, not
+     soap. The console follows when the shared package lands. */
+  --radius-brand: 0.3125rem;
+
+  --radius: var(--radius-brand);
 
   /* ONE SHAPE FOR EVERY COVER.
    *
@@ -412,6 +417,52 @@
   --entrance-module-stagger: 165ms;
   --entrance-rise: calc(0.5 * var(--u));
 
+  /* -- spacing -------------------------------------------------------------
+     THE UNIT IS THE PARAMETER. Everything spatial derives from --u (above):
+     these are the system's named steps, so layout speaks a vocabulary
+     rather than ad-hoc multiples. Compose rarer sizes from the unit
+     directly, but prefer a step where one fits.                             */
+
+  --space-1: calc(0.25 * var(--u)); /*  6px at full unit */
+  --space-2: calc(0.5 * var(--u));  /* 12px */
+  --space-3: calc(0.75 * var(--u)); /* 18px */
+  --space-4: var(--u);              /* 24px — the unit itself */
+  --space-5: calc(1.5 * var(--u));  /* 36px */
+  --space-6: calc(2 * var(--u));    /* 48px */
+  --space-7: calc(3 * var(--u));    /* 72px */
+  --space-8: calc(4 * var(--u));    /* 96px */
+
+  /* -- vertical rhythm -----------------------------------------------------
+     Three steps, and only three. Every gap on a page is one of them:
+       element     title -> copy, label -> content
+       sub-section blocks within a section
+       section     between sections
+     A gap that is none of these is a bug, not a design decision.          */
+
+  --rhythm-element: calc(1.5 * var(--u));
+  --rhythm-sub: calc(3 * var(--u));
+  --rhythm-section: calc(6 * var(--u));
+
+  /* -- icons ---------------------------------------------------------------
+     Lucide geometry in the Gradiated voice: butt caps and miter joins (a
+     system with no round corners draws no round strokes), one hairline
+     weight, sized in em so icons track the type they sit beside. The Icon
+     component and .gr-icon in base.css read these.                          */
+
+  --icon-stroke: 1.5;
+  --icon-size: 1em;
+
+  /* -- charts --------------------------------------------------------------
+     shadcn/Recharts' integration surface: the categorical order the chart
+     layer binds to. One engine on the stack (Recharts); these five are the
+     series sequence everywhere.                                             */
+
+  --chart-1: var(--color-cloud-blue);
+  --chart-2: var(--color-hw-teal);
+  --chart-3: var(--color-cloud-pink);
+  --chart-4: var(--color-energy-yellow);
+  --chart-5: var(--color-cloud-lavender);
+
   /* -- roles ---------------------------------------------------------------
      Named after the chip metaphor, not after generic surfaces, so the tokens
      teach the system to whoever reads them next. Components reference ROLES,
@@ -421,30 +472,26 @@
      --color-emphasis is reserved for the colour edition (attic earth in the
      brand palette: diagram and output emphasis).                              */
 
-  /* These ARE taupe, spelled out rather than referenced, because this block
-     is the no-attribute state: it renders before any script runs and before
-     themes.css has anything to match. Keep the two in step — themes.css
-     restates the same values so taupe also works as a section. */
-  --color-substrate: var(--color-taupe-200);
-  --color-module: var(--color-taupe-100);
-  --color-grid: var(--color-taupe-350);
-  --color-rule: var(--color-taupe-350);
-  --color-text: var(--color-dark-000);
-  --color-text-muted: var(--color-dark-100);
-  /* grove-600 measures 5.51:1 on this ground — past AA for normal text, which
-     is what lets interaction be olive at text size. grove-400 is 2.93:1 and is
-     therefore a FILL and large-text value only; using it for a link would
-     fail. That split is the one in the brand note: olive indicates
-     interaction, and it must not become decoration. */
-  --color-interactive: var(--color-grove-600);
-  --color-interactive-fill: var(--color-grove-500);
+  /* The no-attribute state IS the relaunch light set: it renders before any
+     script runs and before themes.css has anything to match. Keep the two in
+     step — themes.css restates the same values under [data-theme="light"]. */
+  --color-substrate: var(--color-zinc-50);
+  --color-module: var(--color-energy-light);
+  --color-grid: var(--color-zinc-200);
+  --color-rule: var(--color-zinc-200);
+  --color-text: var(--color-zinc-950);
+  --color-text-muted: var(--color-zinc-600);
+  /* Cloud owns interaction. Aubergine measures ~10.8:1 on zinc-50 — well past
+     AA at text size; lavender is the fill-and-large-text value. */
+  --color-interactive: var(--color-cloud-aubergine);
+  --color-interactive-fill: var(--color-cloud-lavender);
 
   /* The surface of things that float ABOVE the page — the nav panel, the
      sheet. It cannot be --color-module: a dropdown over a module-coloured
      hero would then be the same colour as what it covers and read as a hole
      rather than a card. This is the one surface that is deliberately outside
      the substrate/module pair, because its job is to sit on top of either. */
-  --color-overlay: var(--color-light-000);
+  --color-overlay: var(--color-energy-light);
 
   /* A surface raised off a module and still part of it: the lit half of the
      tier explorer, and the small controls that sit on the page — filter pills,
@@ -459,29 +506,28 @@
      Every theme defines it against its OWN module, which is the whole point:
      these surfaces carry text in --color-text, and a fixed white one left that
      text unreadable the moment the theme went dark. */
-  --color-panel: var(--color-light-000);
+  --color-panel: var(--color-zinc-100);
 
-  /* Taupe earth: emphasis in diagrams and output, never body copy — 3.62:1 is
-     large-text only. Reserved. */
-  --color-emphasis: var(--color-taupe-500);
+  /* Energy owns emphasis: diagram and output accents, never body copy. */
+  --color-emphasis: var(--color-energy-red);
 
   /* The ink that sits ON --color-text: a filled tab, an active rail item. */
-  --color-inverse: var(--color-light-000);
+  --color-inverse: var(--color-zinc-50);
 
-  /* Buttons follow the theme — see the note in themes.css. These are
-     taupe's. */
-  --color-button-main: var(--color-dark-000);
-  --color-button-main-ink: var(--color-light-000);
-  --color-button-secondary: var(--color-taupe-300);
-  --color-button-secondary-ink: var(--color-dark-000);
+  /* Buttons follow the theme — see the note in themes.css. These are the
+     light set's. */
+  --color-button-main: var(--color-zinc-950);
+  --color-button-main-ink: var(--color-zinc-50);
+  --color-button-secondary: var(--color-zinc-200);
+  --color-button-secondary-ink: var(--color-zinc-950);
 
   /* Every theme carries one gradient: the footer wordmark paints itself with
      it, and the logo lights up into it on hover. A theme sets the two STOPS
      and the background is composed here, so nothing has to restate the angle
      and nothing has to parse a gradient string to recover its colours.
      Terrace is Taupe's. */
-  --gradient-from: var(--gradient-terrace-from);
-  --gradient-to: var(--gradient-terrace-to);
+  --gradient-from: var(--gradient-circuit-from);
+  --gradient-to: var(--gradient-circuit-to);
   --gradient-theme: linear-gradient(
     90deg,
     var(--gradient-from) 0%,

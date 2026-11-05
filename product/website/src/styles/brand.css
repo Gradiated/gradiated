@@ -118,6 +118,60 @@
   --color-aegean-500: #407486;
   --color-aegean-400: #73959f;
 
+  /* ========================================================================
+     THE RELAUNCH PALETTE (approved 2 Nov 2026).
+
+     Zinc carries every neutral — Tailwind's scale, adopted whole so we never
+     feel the need to mint new greys. Three chromatic families sit on it:
+     HARDWARE (silicon and PCB greens), ENERGY (warm light), CLOUD (violets
+     and blues). The logo never takes any of these: marks are monochrome.
+
+     Each family colour has three temperaments (hue -16 / base / +16 with
+     chroma x0.75 / x1 / x1.25); the base values live here, temperaments are
+     derived in code where needed. The ramps above this block are the LEGACY
+     palette, kept for the articles and sections not yet reskinned.          */
+
+  --color-zinc-50: #fafafa;
+  --color-zinc-100: #f4f4f5;
+  --color-zinc-200: #e4e4e7;
+  --color-zinc-300: #d4d4d8;
+  --color-zinc-400: #a1a1aa;
+  --color-zinc-500: #71717a;
+  --color-zinc-600: #52525b;
+  --color-zinc-700: #3f3f46;
+  --color-zinc-800: #27272a;
+  --color-zinc-900: #18181b;
+  --color-zinc-950: #09090b;
+
+  /* Hardware — silicon, wiring and the PCB. */
+  --color-hw-green-deep: #1d4b38;
+  --color-hw-teal: #09b99e;
+  --color-hw-green: #4cbd79;
+  --color-hw-pcb: #65c132;
+  --color-hw-green-pale: #c9e89f;
+
+  /* Energy — warm tones; white is light itself. */
+  --color-energy-red: #e4504e;
+  --color-energy-yellow: #f4ce56;
+  --color-energy-light: #ffffff;
+  --color-energy-sand: #efe3c3;
+
+  /* Cloud — violets and blues. */
+  --color-cloud-aubergine: #472f96;
+  --color-cloud-blue: #2a55e4;
+  --color-cloud-azure: #009fd9;
+  --color-cloud-lavender: #a28fe9;
+  --color-cloud-pink: #f66ae2;
+  --color-cloud-sky: #8ed3f2;
+  --color-cloud-ice: #dce7f5;
+
+  /* The relaunch gradient pair: aubergine into PCB green. */
+  --gradient-circuit-from: var(--color-cloud-aubergine);
+  --gradient-circuit-to: var(--color-hw-pcb);
+  /* And the dark theme's: lavender into hardware green. */
+  --gradient-circuit-dark-from: var(--color-cloud-lavender);
+  --gradient-circuit-dark-to: var(--color-hw-green);
+
   /* Code — the syntax palette, carried over from the live site rather than
      re-derived. It sits apart from the families above because a code block is
      always dark whatever the theme, so these are chosen against one warm

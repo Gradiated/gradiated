@@ -132,6 +132,43 @@ const masterCommit = (): string => {
   return sha;
 };
 
+const isNumberMap = (value: unknown, check: (v: unknown) => boolean) =>
+  typeof value === "object" &&
+  value !== null &&
+  !Array.isArray(value) &&
+  Object.keys(value).length > 0 &&
+  Object.values(value).every(check);
+const isNumber = (v: unknown): boolean => typeof v === "number" && v > 0;
+
+// The calculator assumes this shape; a build keeps the committed copy rather
+// than publish data that would break the page.
+const checkShape = (data: Record<string, unknown>): void => {
+  const { benchmarks, levels, steps, locations, currencies } = data;
+  const problems = [
+    !isNumberMap(benchmarks, isNumber) && "benchmarks",
+    !isNumberMap(levels, isNumber) && "levels",
+    !isNumberMap(currencies, isNumber) && "currencies",
+    !isNumberMap(
+      steps,
+      (v) => Array.isArray(v) && v.length === 2 && v.every(isNumber),
+    ) && "steps",
+    !(
+      Array.isArray(locations) &&
+      locations.length > 0 &&
+      locations.every(
+        (l) =>
+          typeof l?.country === "string" &&
+          typeof l?.area === "string" &&
+          isNumber(l?.locationFactor) &&
+          (l?.currency === undefined || typeof l.currency === "string"),
+      )
+    ) && "locations",
+  ].filter(Boolean);
+  if (problems.length > 0) {
+    throw new Error(`unexpected shape for ${problems.join(", ")}`);
+  }
+};
+
 const fetchPostHogData = async (): Promise<Record<string, unknown>> => {
   const sha = masterCommit();
   const data: Record<string, unknown> = {};
@@ -142,6 +179,7 @@ const fetchPostHogData = async (): Promise<Record<string, unknown>> => {
     if (!response.ok) throw new Error(`${file}.ts: HTTP ${response.status}`);
     data[key] = parseExport(await response.text(), file, name);
   }
+  checkShape(data);
   return data;
 };
 

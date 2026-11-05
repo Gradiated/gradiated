@@ -82,14 +82,21 @@ export const CompensationCalculator = ({
   const [role, setRole] = useState(
     benchmarks[initialRole] ? initialRole : Object.keys(benchmarks)[0],
   );
-  const [country, setCountry] = useState("United States");
+  const [country, setCountry] = useState(
+    countries.includes("United States") ? "United States" : countries[0],
+  );
   const [area, setArea] = useState("San Francisco, California");
-  const [level, setLevel] = useState("Senior");
-  const [step, setStep] = useState("Established");
+  const [level, setLevel] = useState(
+    levels.some(([name]) => name === "Senior") ? "Senior" : levels[0][0],
+  );
+  const [step, setStep] = useState(
+    steps.Established ? "Established" : Object.keys(steps)[0],
+  );
 
   const location =
     locations.find((l) => l.country === country && l.area === area) ??
-    locations.find((l) => l.country === country)!;
+    locations.find((l) => l.country === country) ??
+    locations[0];
   const levelModifier =
     levels.find(([name]) => name === level)?.[1] ?? levels[0][1];
   const [stepLow, stepHigh] = steps[step];

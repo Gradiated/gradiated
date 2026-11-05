@@ -7,7 +7,7 @@ import threading
 import time
 import urllib.request
 
-from config import MODEL, commands
+from config import MODEL, commands, validate_hardware
 
 
 def backend_ready(port):
@@ -34,6 +34,7 @@ def stop_children(children):
 
 def run(environment=os.environ):
     config, backend, router = commands(environment)
+    validate_hardware(environment)
     stopping = threading.Event()
     for sig in [signal.SIGTERM, signal.SIGINT]:
         signal.signal(sig, lambda *_: stopping.set())

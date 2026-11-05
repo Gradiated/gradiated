@@ -1,4 +1,4 @@
-# GLM Flash PCP2 runtime
+# GLM Flash SGLang runtime
 
 `bundles/glm-5-3-flash-sglang` packages SGLang source
 `f171859219b54e1dad45dda60028034490836974`, CPython 3.12.13, and the
@@ -11,6 +11,39 @@ shortest-prefill-first scheduling, and 64 decode rounds between prefill steps.
 Prefill CUDA graphs are disabled; decode graphs remain enabled. Prefix caching
 uses the native pinned SGLang configuration. Actual resolved pool geometry must
 be recorded during GPU qualification.
+
+## H200 TP2 profile
+
+The same archive also carries `GLM_SGLANG_PROFILE=h200-tp2`. The default
+`b300-pcp2` profile retains the B300 launch settings above. The service checks
+both assigned GPU names before starting the backend and refuses a mismatched
+profile. H200 enrollment and placement retain the `H200` product identity;
+GH200 is not accepted as H200.
+
+H200 uses TP2 without prefill context parallelism, Marlin W4A16 experts, and
+`flashmla_kv` for both DSA prefill and decode with FP8 KV. This matches the
+[pinned SGLang Hopper FP8 backend resolution](https://github.com/sgl-project/sglang/blob/f171859219b54e1dad45dda60028034490836974/python/sglang/srt/arg_groups/overrides.py).
+It does not use the B300 profile's explicit `trtllm` sparse attention. GLM's
+four-token pooled index uses a logical page size of 256, giving FlashMLA its
+required 64 physical slots. H200 retains two MTP draft steps, the parsers,
+SMG, prefix caching, readiness, metrics, cancellation and drain lifecycle.
+
+The initial H200 limits are four active requests, two queued requests, a
+4,096-token prefill budget, 85% static device memory, and decode graphs through
+batch four. SMG, SGLang, warmup admission and exported capacity metrics use the
+same four-request limit. The host profile requests and limits 32 CPU and
+320 GiB of system RAM, fitting the first pod's provider-reported 377 GB before
+enrollment measures its cgroup allowance. Each replica reserves both H200s.
+The 1M context setting remains a configured bound, not measured evidence of
+1M-token residency or latency. Record actual KV/recurrent pool capacity and
+qualify the longest supported requests on H200 before production promotion.
+
+Source inspection and CPU checks establish a candidate launch path, not GPU
+qualification. No H200 startup, numerical quality, long-context capacity or
+throughput result is claimed here. In particular, the full GLM NoPE/pooled-index
+FlashMLA and MTP paths must pass on the actual packaged runtime. See
+[H200 deployment preparation](../../../../docs/INSTANCE_SETUP_PLAN.md#h200-tp2-alongside-b300)
+for enrollment, staging, qualification, promotion and rollback.
 
 Three compatibility patches preserve the measured configuration: gate/up global-scale
 folding before Marlin conversion, the corresponding ModelOpt dispatch, and the

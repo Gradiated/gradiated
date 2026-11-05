@@ -8,7 +8,10 @@
       "pattern": "^100\\.(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$"
     },
     "gpu_count": { "type": "integer", "minimum": 1, "maximum": 8 },
-    "gpu_product": { "type": "string", "enum": ["B300", "RTX-PRO-6000"] },
+    "gpu_product": {
+      "type": "string",
+      "enum": ["B300", "H200", "RTX-PRO-6000"]
+    },
     "cpu": { "type": "integer", "minimum": 1, "maximum": 512 },
     "memory_gib": { "type": "integer", "minimum": 1, "maximum": 4096 },
     "promotion": { "type": "boolean" }

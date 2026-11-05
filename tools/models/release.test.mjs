@@ -37,3 +37,15 @@ test("release records distinguish host bundles from model runtimes", () => {
   assert.equal(record.bootstrapVersion, 1);
   assert.throws(() => manifest({bundle:"unknown", source:"c".repeat(40), baseImage, baseId:"base-v1", digest:"d".repeat(64), bucket:"test-artifacts"}), /Unknown bundle/);
 });
+
+test("SGLang release records identify available hardware launch profiles", () => {
+  const record = manifest({
+    bundle: "glm-5-3-flash-sglang",
+    source: "c".repeat(40),
+    baseImage,
+    baseId: "base-v1",
+    digest: "d".repeat(64),
+    bucket: "test-artifacts",
+  });
+  assert.deepEqual(record.runtimeProfiles, ["b300-pcp2", "h200-tp2"]);
+});

@@ -96,6 +96,8 @@ jobs:
           NODE_PATH="$RUNNER_TEMP/rules/node_modules" node tools/models/model-replica-rules.mjs --check
       - run: python3 tools/gpu/render_config_test.py
         if: fromJSON(needs.changes.outputs.checks).configuration
+      - run: python3 -m unittest discover -s tools/gpu -p '*h200*test.py'
+        if: fromJSON(needs.changes.outputs.checks).configuration
       - name: Install the proxy for drain integration tests
         if: fromJSON(needs.changes.outputs.checks).controller
         run: sudo apt-get update -qq && sudo apt-get install -y nginx

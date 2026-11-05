@@ -48,7 +48,8 @@ def stage(models, runtimes, pins, hosts, release, source, instances, replicas=1,
 
     runtime_id = hashlib.sha256(f'{digest}:h200-tp2'.encode()).hexdigest()
     runtime = {
-        'image': f'gradiated/glm-sglang-bundle@sha256:{digest}',
+        # Host agents reject a catalogue whose image digest differs from its runtime key.
+        'image': f'gradiated/glm-sglang-bundle@sha256:{runtime_id}',
         'bundles': {release['baseId']: digest}, 'model_id': RUNTIME_MODEL,
         'release': {'schema_version': 1, 'model_path': CHECKPOINT, 'model_revision': REVISION,
                     'tokenizer_path': CHECKPOINT, 'tokenizer_revision': REVISION,

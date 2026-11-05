@@ -172,23 +172,23 @@ export const HeroBeam = (): ReactElement => {
          teal -> plum -> red is a walk around the brand's wheel, where the
          three-stop version cycled primaries and read like a test card. All
          five are live tokens — retune brand.css and the beam follows. */
-      /* The settled cycle, chosen by eye against the live page:
-         kiln-300 -> grove-600 -> aegean-500 -> taupe-400 -> kiln-500.
+      /* The relaunch cycle, settled in the lab against the new system:
+         yellow -> teal -> azure -> sky -> red.
 
-         Its two structural properties are worth keeping on purpose. The wrap
-         seam is kiln-500 -> kiln-300 — adjacent rungs of one ramp — so the
-         warm passage plays as a single swell across the cycle's join. And
-         taupe-400 is the one leg that nearly matches the limestone ground,
-         which acts as the breath between waves rather than a flicker.
+         The structural properties of the original survive the recolour.
+         The wrap seam is red -> yellow — the energy family's own rungs —
+         so the warm passage still plays as one swell across the join.
+         And sky is the leg that sits nearest the zinc ground, the breath
+         between waves rather than a flicker.
 
-         The uniform names (hot/warm/olive/cool/plum) are the five SEATS of
-         the cycle, named for the palette that first sat in them — not for
-         what sits there now. Rename them only with the shader. */
-      gl.uniform3fv(uHot, at("--color-kiln-300", "#e9b748"));
-      gl.uniform3fv(uWarm, at("--color-grove-600", "#5e6043"));
-      gl.uniform3fv(uOlive, at("--color-aegean-500", "#407486"));
-      gl.uniform3fv(uCool, at("--color-taupe-400", "#c8c1b4"));
-      gl.uniform3fv(uPlum, at("--color-kiln-500", "#be5e31"));
+         The uniform names (hot/warm/olive/cool/plum) are the five SEATS
+         of the cycle, named for the palette that first sat in them — not
+         for what sits there now. Rename them only with the shader. */
+      gl.uniform3fv(uHot, at("--color-energy-yellow", "#f4ce56"));
+      gl.uniform3fv(uWarm, at("--color-hw-teal", "#09b99e"));
+      gl.uniform3fv(uOlive, at("--color-cloud-azure", "#009fd9"));
+      gl.uniform3fv(uCool, at("--color-cloud-sky", "#8ed3f2"));
+      gl.uniform3fv(uPlum, at("--color-energy-red", "#e4504e"));
     };
 
     let width = 0;

@@ -20,11 +20,6 @@
       "permanent": true
     },
     {
-      "source": "/library/",
-      "destination": "/notes/",
-      "permanent": true
-    },
-    {
       "source": "/methods/",
       "destination": "/handbook/",
       "permanent": true

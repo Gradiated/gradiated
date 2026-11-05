@@ -79,7 +79,7 @@ describe("model configurations", () => {
     );
     const properties = ModelPropertiesInputSchema.parse(glm?.properties);
 
-    expect(glm?.status).toBe("available");
+    expect(glm?.status).toBe("unavailable");
 
     expect(
       properties.output_modalities[0]?.supported_parameters.reasoning_effort,

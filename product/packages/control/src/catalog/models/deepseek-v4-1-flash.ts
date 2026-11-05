@@ -10,7 +10,7 @@ export const createDeepseekV41FlashModelConfiguration = () =>
   ({
     id: deepseekV41FlashModelId,
     name: modelDisplayName(deepseekV41FlashModelId),
-    status: "available",
+    status: "unavailable",
     properties: {
       description:
         "DeepSeek V4.1 Flash with TP4 and DSpark speculative decoding.",

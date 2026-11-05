@@ -145,11 +145,9 @@ const TeamStep = ({
 const AccessStep = ({
   draft,
   patch,
-  onNda,
 }: {
   draft: OnboardingDraft;
   patch: UpdateDraft;
-  onNda: () => void;
 }) => (
   <>
     <StepTitle title="Your mutual NDA.">
@@ -204,10 +202,6 @@ const AccessStep = ({
         placeholder="Street address, city, state / region, postal code, country"
       />
     </Field>
-    <button type="button" className="gs-text-button" onClick={onNda}>
-      Preview pre-filled NDA <ArrowRight size={13} />
-    </button>
-    <p className="gs-note">You’ll review the full NDA and sign here next.</p>
   </>
 );
 
@@ -711,11 +705,7 @@ const GetStartedWorkflow = ({
                 >
                   {draft.step === 0 && (
                     <>
-                      <AccessStep
-                        draft={draft}
-                        patch={patch}
-                        onNda={() => setNdaOpen(true)}
-                      />
+                      <AccessStep draft={draft} patch={patch} />
                       {demo && (
                         <button
                           className="gs-text-button gs-example"

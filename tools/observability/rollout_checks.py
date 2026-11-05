@@ -74,6 +74,14 @@ def check_rollouts(root):
                     case('routed failures still reject candidate', [
                          series(counter, '0+10x8', status=failure, traffic='routed'),
                          series(counter, '0+100000x8', status=success, traffic='verification')], 1)
+                if stream:
+                    case('runtime capacity rejections cannot reject candidate',
+                         [series(counter, '0+10x8', status=failure, error='capacity_exceeded'),
+                          series(counter, '0+10x8', status=success, error='none')], 0)
+                    case('other generation failures still reject candidate', [
+                         series(counter, '0+10x8', status=failure, error='runtime_unavailable'),
+                         series(counter, '0+100000x8', status=failure, error='capacity_exceeded'),
+                         series(counter, '0+10x8', status=success, error='none')], 1)
                 case('stable errors do not contaminate candidate',
                      [series(counter, '0+10x8', status=failure, rollout_revision='stable')], 0)
                 if not stream:

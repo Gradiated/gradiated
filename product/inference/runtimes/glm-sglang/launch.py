@@ -7,7 +7,7 @@ from pathlib import Path
 import sys
 import urllib.request
 
-from config import ACTIVE_REQUESTS, QUEUED_REQUESTS, QUEUE_TIMEOUT_SECONDS, settings
+from config import ACTIVE_REQUESTS, QUEUED_REQUESTS, QUEUE_TIMEOUT_SECONDS, detect_profile, settings
 
 root = Path(__file__).resolve().parents[1]
 base_path = root / 'warmup-base.py'
@@ -105,7 +105,7 @@ def handler(supervisor, config):
 
 
 def main(environment=os.environ):
-    config = settings(environment)
+    config = settings(detect_profile(environment))
     original = base.handler
     base.handler = lambda supervisor: handler(supervisor, config)
     try:

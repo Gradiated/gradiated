@@ -18,7 +18,8 @@ PROFILES = {
     'b200-pcp2': {'gpu_product': 'B200', 'active_requests': 8,
                   'prefill_tokens': 16384, 'dsa_backend': 'trtllm', 'context_parallel': True},
     'h200-tp2': {'gpu_product': 'H200', 'active_requests': 4,
-                 'prefill_tokens': 4096, 'dsa_backend': 'flashmla_kv', 'context_parallel': False},
+                 'prefill_tokens': 4096, 'dsa_backend': 'fa3', 'dsa_prefill': 'flashmla_sparse', 'kv_dtype': 'bfloat16',
+                 'context_parallel': False},
 }
 
 
@@ -49,11 +50,30 @@ def settings(environment):
             'profile': profile, **PROFILES[profile]}
 
 
+GPU_PROFILES = {'B300': 'b300-pcp2', 'H200': 'h200-tp2'}
+
+
+def gpu_names(environment):
+    return subprocess.run(['nvidia-smi', '--id=' + environment['NVIDIA_VISIBLE_DEVICES'],
+                           '--query-gpu=name', '--format=csv,noheader'],
+                          capture_output=True, text=True, check=True, timeout=30).stdout.splitlines()
+
+
+def detect_profile(environment):
+    # Host agents reject unlisted runtime environment variables, so a runtime may
+    # arrive without GLM_SGLANG_PROFILE; select it from the assigned GPUs instead.
+    if environment.get('GLM_SGLANG_PROFILE'):
+        return environment
+    names = gpu_names(environment)
+    products = {product for name in names for product in GPU_PROFILES if re.search(r'\b' + product + r'\b', name)}
+    if not names or len(products) != 1:
+        raise ValueError('Assigned GPUs do not match a GLM SGLang hardware profile')
+    return {**environment, 'GLM_SGLANG_PROFILE': GPU_PROFILES[products.pop()]}
+
+
 def validate_hardware(environment):
     config = settings(environment)
-    names = subprocess.run(['nvidia-smi', '--id=' + environment['NVIDIA_VISIBLE_DEVICES'],
-                            '--query-gpu=name', '--format=csv,noheader'],
-                           capture_output=True, text=True, check=True, timeout=30).stdout.splitlines()
+    names = gpu_names(environment)
     if len(names) != 2 or any(not re.search(r'\b' + config['gpu_product'] + r'\b', name) for name in names):
         raise ValueError('Assigned GPUs do not match the selected GLM SGLang hardware profile')
 
@@ -71,8 +91,8 @@ def commands(environment):
                '--ep-size', '1', '--moe-dense-tp-size', '2', '--quantization', 'modelopt_fp4',
                '--json-model-override-args', json.dumps(model_config, separators=(',', ':')),
                '--moe-runner-backend', 'marlin', '--disable-shared-experts-fusion',
-               '--dsa-prefill-backend', config['dsa_backend'], '--dsa-decode-backend', config['dsa_backend'],
-               '--kv-cache-dtype', 'fp8_e4m3', '--max-running-requests', str(config['active_requests']),
+               '--dsa-prefill-backend', config.get('dsa_prefill', config['dsa_backend']), '--dsa-decode-backend', config['dsa_backend'],
+               '--kv-cache-dtype', config.get('kv_dtype', 'fp8_e4m3'), '--max-running-requests', str(config['active_requests']),
                '--chunked-prefill-size', str(config['prefill_tokens']), '--max-prefill-tokens', str(config['prefill_tokens']),
                '--context-length', '1048576', '--mem-fraction-static', '0.85',
                '--cuda-graph-max-bs-decode', str(config['active_requests']), '--speculative-algorithm', 'EAGLE',

@@ -57,11 +57,11 @@ class Configuration(unittest.TestCase):
         environment = {**self.environment, 'GLM_SGLANG_PROFILE': 'h200-tp2'}
         settings, backend, router = config.commands(environment)
         self.assertEqual(settings['gpu_product'], 'H200')
-        for flag, value in [('--dsa-prefill-backend', 'flashmla_kv'), ('--dsa-decode-backend', 'flashmla_kv'),
+        for flag, value in [('--dsa-prefill-backend', 'flashmla_sparse'), ('--dsa-decode-backend', 'fa3'),
                             ('--max-running-requests', '4'), ('--cuda-graph-max-bs-decode', '4'),
                             ('--chunked-prefill-size', '4096'), ('--max-prefill-tokens', '4096'),
                             ('--page-size', '256'), ('--tp-size', '2'), ('--moe-runner-backend', 'marlin'),
-                            ('--kv-cache-dtype', 'fp8_e4m3')]:
+                            ('--kv-cache-dtype', 'bfloat16')]:
             self.assertEqual(backend[backend.index(flag) + 1], value)
         self.assertNotIn('--enable-prefill-cp', backend)
         self.assertNotIn('--attn-cp-size', backend)
@@ -104,6 +104,19 @@ class Configuration(unittest.TestCase):
                     with self.assertRaisesRegex(ValueError, 'Assigned GPUs'):
                         config.validate_hardware(environment)
                 self.assertIn('--id=GPU-a,GPU-b', run.call_args.args[0])
+
+    def test_profile_is_detected_from_assigned_gpus_when_unset(self):
+        for names, expected in [('NVIDIA H200\nNVIDIA H200\n', 'h200-tp2'), ('NVIDIA B300 SXM6 AC\nNVIDIA B300 SXM6 AC\n', 'b300-pcp2')]:
+            with self.subTest(names=names), patch.object(config.subprocess, 'run', return_value=SimpleNamespace(stdout=names)):
+                self.assertEqual(config.detect_profile(self.environment)['GLM_SGLANG_PROFILE'], expected)
+        for names in ['NVIDIA GH200\nNVIDIA GH200\n', 'NVIDIA H200\nNVIDIA B300\n', '']:
+            with self.subTest(names=names), patch.object(config.subprocess, 'run', return_value=SimpleNamespace(stdout=names)):
+                with self.assertRaisesRegex(ValueError, 'hardware profile'):
+                    config.detect_profile(self.environment)
+        with patch.object(config.subprocess, 'run') as run:
+            explicit = {**self.environment, 'GLM_SGLANG_PROFILE': 'h200-tp2'}
+            self.assertIs(config.detect_profile(explicit), explicit)
+            run.assert_not_called()
 
     def test_python_entrypoint_has_no_shell_or_external_router(self):
         _, backend, router = config.commands(self.environment)

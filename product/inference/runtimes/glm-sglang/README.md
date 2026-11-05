@@ -20,9 +20,14 @@ both assigned GPU names before starting the backend and refuses a mismatched
 profile. H200 enrollment and placement retain the `H200` product identity;
 GH200 is not accepted as H200.
 
-H200 uses TP2 without prefill context parallelism, Marlin W4A16 experts, and
-`flashmla_kv` for both DSA prefill and decode with FP8 KV. This matches the
-[pinned SGLang Hopper FP8 backend resolution](https://github.com/sgl-project/sglang/blob/f171859219b54e1dad45dda60028034490836974/python/sglang/srt/arg_groups/overrides.py).
+H200 uses TP2 without prefill context parallelism, Marlin W4A16 experts, a
+bfloat16 KV cache, `flashmla_sparse` DSA prefill (FA3 for pooled indices on
+SM90) and `fa3` DSA decode. This is SGLang's Hopper bfloat16 default. The FP8
+KV options do not work for GLM's pooled index (`index_kpool > 1`):
+`flashmla_kv` fails CUDA graph capture, and TileLang with FP8 KV starts but
+generates only token 0. Measured on a 2x H200 canary on 2026-11-05: correct
+answers at about 93-178 tokens/s for one request; bfloat16 KV halves KV
+capacity relative to FP8.
 It does not use the B300 profile's explicit `trtllm` sparse attention. GLM's
 four-token pooled index uses a logical page size of 256, giving FlashMLA its
 required 64 physical slots. H200 retains two MTP draft steps, the parsers,

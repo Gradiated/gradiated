@@ -57,6 +57,7 @@ class Lifecycle(unittest.TestCase):
 
     def test_wrong_hardware_never_starts_a_backend(self):
         with patch.object(service, 'commands', return_value=({}, [], [])), \
+             patch.object(service, 'detect_profile', side_effect=lambda environment: environment), \
              patch.object(service, 'validate_hardware', side_effect=ValueError('Assigned GPUs')), \
              patch.object(service.subprocess, 'Popen') as start:
             with self.assertRaisesRegex(ValueError, 'Assigned GPUs'):

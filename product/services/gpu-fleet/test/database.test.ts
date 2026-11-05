@@ -23,7 +23,9 @@ describe("the PostgreSQL credential", () => {
     );
 
     expect(credential.resolve()).toBeUndefined();
+    expect(credential.database()).toBeUndefined();
     url = "postgres://first";
+    expect(credential.database()).toBe("postgres://first");
     expect((await credential.resolve()!([], () => {})).inserted).toEqual([
       "postgres://first",
     ]);
@@ -31,6 +33,7 @@ describe("the PostgreSQL credential", () => {
     expect(opened).toEqual(["postgres://first"]);
 
     url = "postgres://rotated";
+    expect(credential.database()).toBe("postgres://rotated");
     expect((await credential.resolve()!([], () => {})).inserted).toEqual([
       "postgres://rotated",
     ]);

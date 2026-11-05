@@ -67,6 +67,7 @@ export type ClusterPod = {
   name: string;
   uid: string;
   model?: string;
+  modelId?: string;
   training: boolean;
   node?: string;
   ready: boolean;
@@ -106,9 +107,13 @@ export const clusterPod = (item: unknown): ClusterPod | undefined => {
     status?.conditions?.find((entry) => entry.type === type);
   const scheduled = condition("PodScheduled");
   const incarnation = status?.containerStatuses?.[0]?.containerID;
+  const modelId =
+    metadata.annotations?.["gradiated.com/serving-model-id"] ??
+    metadata.annotations?.["gradiated.com/model-id"];
   return {
     name: metadata.name,
     uid: metadata.uid,
+    ...(modelId && { modelId }),
     ...(metadata.labels?.[MODEL_LABEL] &&
       metadata.ownerReferences?.some(
         (owner) => owner.kind === "ReplicaSet",

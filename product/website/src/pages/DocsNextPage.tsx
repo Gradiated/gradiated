@@ -268,7 +268,6 @@ const DocsBody = (): ReactElement => {
       <Band>
         <Module className="gr-module--top" index={0}>
           <div className="gr-doc">
-
             {/* The sidebar's mobile form. Router links, like the sidebar's —
                 an <a href> here reloads the document. Hidden above the wide
                 tier, where the sticky sidebar does this job. */}

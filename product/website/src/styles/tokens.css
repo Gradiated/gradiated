@@ -424,13 +424,13 @@
      directly, but prefer a step where one fits.                             */
 
   --space-1: calc(0.25 * var(--u)); /*  6px at full unit */
-  --space-2: calc(0.5 * var(--u));  /* 12px */
+  --space-2: calc(0.5 * var(--u)); /* 12px */
   --space-3: calc(0.75 * var(--u)); /* 18px */
-  --space-4: var(--u);              /* 24px — the unit itself */
-  --space-5: calc(1.5 * var(--u));  /* 36px */
-  --space-6: calc(2 * var(--u));    /* 48px */
-  --space-7: calc(3 * var(--u));    /* 72px */
-  --space-8: calc(4 * var(--u));    /* 96px */
+  --space-4: var(--u); /* 24px — the unit itself */
+  --space-5: calc(1.5 * var(--u)); /* 36px */
+  --space-6: calc(2 * var(--u)); /* 48px */
+  --space-7: calc(3 * var(--u)); /* 72px */
+  --space-8: calc(4 * var(--u)); /* 96px */
 
   /* -- vertical rhythm -----------------------------------------------------
      Three steps, and only three. Every gap on a page is one of them:

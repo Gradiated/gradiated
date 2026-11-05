@@ -14,11 +14,15 @@
 @media (max-width: 60rem) {
   /* -- sections: every module meets its neighbour across one section gap,
         half carried by each side --------------------------------------- */
-  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-module:not(.gr-module--fold) {
+  .gr-rail-sheet
+    .gr-root[data-tier]:not([data-tier="wide"])
+    .gr-module:not(.gr-module--fold) {
     padding-block: calc(var(--rhythm-section) / 2);
   }
 
-  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-module.gr-products-module {
+  .gr-rail-sheet
+    .gr-root[data-tier]:not([data-tier="wide"])
+    .gr-module.gr-products-module {
     padding-block-start: 0;
   }
 
@@ -28,13 +32,18 @@
     padding-block: calc(1.5 * var(--u)) var(--rhythm-sub);
   }
 
-  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-fold-left .gr-home-actions {
+  .gr-rail-sheet
+    .gr-root[data-tier]:not([data-tier="wide"])
+    .gr-fold-left
+    .gr-home-actions {
     margin-block-start: var(--rhythm-element);
   }
 
   /* -- the argument and the product cards ---------------------------------
         prelude -> rule -> cards: element either side of the rule = sub */
-  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-products-prelude {
+  .gr-rail-sheet
+    .gr-root[data-tier]:not([data-tier="wide"])
+    .gr-products-prelude {
     margin-block-end: var(--rhythm-element);
   }
 
@@ -58,7 +67,10 @@
   }
 
   /* card -> card: element either side of the rule = sub */
-  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-product-card + .gr-product-card {
+  .gr-rail-sheet
+    .gr-root[data-tier]:not([data-tier="wide"])
+    .gr-product-card
+    + .gr-product-card {
     margin-block-start: var(--rhythm-element);
     padding-block-start: var(--rhythm-element);
   }
@@ -91,14 +103,19 @@
   }
 
   /* the tab switcher labels its title: element, inside a sub-gapped grid */
-  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-machine-toggle {
+  .gr-rail-sheet
+    .gr-root[data-tier]:not([data-tier="wide"])
+    .gr-machine-toggle {
     margin-block-end: calc(var(--rhythm-element) - var(--rhythm-sub));
   }
 
   .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-loop-controls,
   .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-loop-stack,
   .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-loop-copy,
-  .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-inf .gr-loop-stack,
+  .gr-rail-sheet
+    .gr-root[data-tier]:not([data-tier="wide"])
+    .gr-inf
+    .gr-loop-stack,
   .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-inf-slider {
     margin: 0;
   }

@@ -95,7 +95,11 @@ export const AppRoutes = (): ReactElement => (
   <Routes>
     {articles.map((article) => (
       <Route
-        element={<Shelled><ArticleReadingPage article={article} /></Shelled>}
+        element={
+          <Shelled>
+            <ArticleReadingPage article={article} />
+          </Shelled>
+        }
         key={article.path}
         path={article.path}
       />
@@ -103,22 +107,79 @@ export const AppRoutes = (): ReactElement => (
     {/* No SiteLayout: the homepage carries its own Nav and Footer now, like
         every other page on the design system. The legacy layout is what was
         giving it the old nav and the old footer. */}
-    <Route element={<Shelled><HomePage /></Shelled>} path="/" />
-    <Route element={<SystemPage />} path="/design" />
-    <Route element={<Shelled><AboutPage /></Shelled>} path="/about/" />
-    <Route element={<Shelled><LibraryPage /></Shelled>} path="/library/" />
-    <Route element={<Shelled><SandLibraryPage /></Shelled>} path={SAND_TO_THOUGHT_URL} />
     <Route
-      element={<Shelled><SandJourneyRedirect /></Shelled>}
+      element={
+        <Shelled>
+          <HomePage />
+        </Shelled>
+      }
+      path="/"
+    />
+    <Route element={<SystemPage />} path="/design" />
+    <Route
+      element={
+        <Shelled>
+          <AboutPage />
+        </Shelled>
+      }
+      path="/about/"
+    />
+    <Route
+      element={
+        <Shelled>
+          <LibraryPage />
+        </Shelled>
+      }
+      path="/library/"
+    />
+    <Route
+      element={
+        <Shelled>
+          <SandLibraryPage />
+        </Shelled>
+      }
+      path={SAND_TO_THOUGHT_URL}
+    />
+    <Route
+      element={
+        <Shelled>
+          <SandJourneyRedirect />
+        </Shelled>
+      }
       path="/library/how-to-get-an-answer-out-of-sand/"
     />
-    <Route element={<Shelled><NotesIndexPage /></Shelled>} path="/notes/" />
-    <Route element={<Shelled><HandbookPage /></Shelled>} path="/handbook/" />
+    <Route
+      element={
+        <Shelled>
+          <NotesIndexPage />
+        </Shelled>
+      }
+      path="/notes/"
+    />
+    <Route
+      element={
+        <Shelled>
+          <HandbookPage />
+        </Shelled>
+      }
+      path="/handbook/"
+    />
     <Route element={<Navigate replace to="/handbook/" />} path="/methods/" />
-    <Route element={<Shelled><CareersIndexPage /></Shelled>} path="/careers/" />
+    <Route
+      element={
+        <Shelled>
+          <CareersIndexPage />
+        </Shelled>
+      }
+      path="/careers/"
+    />
     {jobs.map((job) => (
       <Route
-        element={<Shelled><JobDetailPage job={job} /></Shelled>}
+        element={
+          <Shelled>
+            <JobDetailPage job={job} />
+          </Shelled>
+        }
         key={job.slug}
         path={`/careers/${job.slug}/`}
       />
@@ -126,7 +187,11 @@ export const AppRoutes = (): ReactElement => (
     {handbookPages.map((page) => (
       <Fragment key={page.slug}>
         <Route
-          element={<Shelled><HandbookPage slug={page.slug} /></Shelled>}
+          element={
+            <Shelled>
+              <HandbookPage slug={page.slug} />
+            </Shelled>
+          }
           path={`/handbook/${page.slug}/`}
         />
         <Route
@@ -139,28 +204,92 @@ export const AppRoutes = (): ReactElement => (
         />
       </Fragment>
     ))}
-    <Route element={<Shelled><DocsNextPage /></Shelled>} path="/docs/*" />
+    <Route
+      element={
+        <Shelled>
+          <DocsNextPage />
+        </Shelled>
+      }
+      path="/docs/*"
+    />
     {Object.keys(LEGAL).map((slug) => (
       <Route
-        element={<Shelled><LegalPage slug={slug as LegalSlug} /></Shelled>}
+        element={
+          <Shelled>
+            <LegalPage slug={slug as LegalSlug} />
+          </Shelled>
+        }
         key={`legal-${slug}`}
         path={`/${slug}/`}
       />
     ))}
-    <Route element={<Shelled><InferencePage /></Shelled>} path="/inference/" />
-    <Route element={<Shelled><TrainingPage /></Shelled>} path="/training/" />
-    <Route element={<Shelled><HardwarePage /></Shelled>} path="/hardware/" />
-    <Route element={<Shelled><ArtworkGeneratorPage /></Shelled>} path="/artwork-generator/" />
-    <Route element={<Shelled><ModelsPage /></Shelled>} path="/models/" />
+    <Route
+      element={
+        <Shelled>
+          <InferencePage />
+        </Shelled>
+      }
+      path="/inference/"
+    />
+    <Route
+      element={
+        <Shelled>
+          <TrainingPage />
+        </Shelled>
+      }
+      path="/training/"
+    />
+    <Route
+      element={
+        <Shelled>
+          <HardwarePage />
+        </Shelled>
+      }
+      path="/hardware/"
+    />
+    <Route
+      element={
+        <Shelled>
+          <ArtworkGeneratorPage />
+        </Shelled>
+      }
+      path="/artwork-generator/"
+    />
+    <Route
+      element={
+        <Shelled>
+          <ModelsPage />
+        </Shelled>
+      }
+      path="/models/"
+    />
     {models.map((model) => (
       <Route
-        element={<Shelled><ModelDetailPage model={model} /></Shelled>}
+        element={
+          <Shelled>
+            <ModelDetailPage model={model} />
+          </Shelled>
+        }
         key={model.slug}
         path={`/models/${model.slug}/`}
       />
     ))}
-    <Route element={<Shelled><StylePage /></Shelled>} path="/style/" />
-    <Route element={<Shelled><NotFoundPage /></Shelled>} path="*" />
+    <Route
+      element={
+        <Shelled>
+          <StylePage />
+        </Shelled>
+      }
+      path="/style/"
+    />
+    <Route
+      element={
+        <Shelled>
+          <NotFoundPage />
+        </Shelled>
+      }
+      path="*"
+    />
   </Routes>
 );
 

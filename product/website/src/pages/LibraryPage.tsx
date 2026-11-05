@@ -48,37 +48,36 @@ export const LibraryPage = (): ReactElement => {
             {/* -- the opening series ----------------------------------- */}
             <section aria-label="Sand to Thought" className="gr-mag-series">
               <div className="gr-mag-features">
-              {sandSeries.map((article) => (
-                <article className="gr-mag-feature" key={article.path}>
-                  <a className="gr-mag-feature-link" href={article.path}>
-                    <div className="gr-mag-feature-art">
-                      {article.path === "/sand-to-thought/" ? (
-                        <SandCircuitArtwork />
-                      ) : (
-                        <ChipLayersArtwork variant="chip" />
-                      )}
-                    </div>
-                    <div className="gr-mag-feature-copy">
-                      <p className="gr-mag-super">Sand to Thought</p>
-                      <h3 className="gr-mag-feature-title">
-                        {article.title} <Arrow />
-                      </h3>
-                      {article.description && (
-                        <p className="gr-mag-feature-dek">
-                          {article.description}
+                {sandSeries.map((article) => (
+                  <article className="gr-mag-feature" key={article.path}>
+                    <a className="gr-mag-feature-link" href={article.path}>
+                      <div className="gr-mag-feature-art">
+                        {article.path === "/sand-to-thought/" ? (
+                          <SandCircuitArtwork />
+                        ) : (
+                          <ChipLayersArtwork variant="chip" />
+                        )}
+                      </div>
+                      <div className="gr-mag-feature-copy">
+                        <p className="gr-mag-super">Sand to Thought</p>
+                        <h3 className="gr-mag-feature-title">
+                          {article.title} <Arrow />
+                        </h3>
+                        {article.description && (
+                          <p className="gr-mag-feature-dek">
+                            {article.description}
+                          </p>
+                        )}
+                        <p className="gr-mag-meta">
+                          {kind(article.layout)} ·{" "}
+                          {monthYear(article.publishedAt)}
                         </p>
-                      )}
-                      <p className="gr-mag-meta">
-                        {kind(article.layout)} ·{" "}
-                        {monthYear(article.publishedAt)}
-                      </p>
-                    </div>
-                  </a>
-                </article>
-              ))}
+                      </div>
+                    </a>
+                  </article>
+                ))}
               </div>
             </section>
-
           </Module>
         </Band>
         <Band>

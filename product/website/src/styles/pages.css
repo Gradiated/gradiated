@@ -5744,7 +5744,9 @@
   margin-block-end: var(--u);
 }
 
-.gr-root[data-tier]:not([data-tier="wide"]) .gr-page-hero--beside .gr-page-hero-lede {
+.gr-root[data-tier]:not([data-tier="wide"])
+  .gr-page-hero--beside
+  .gr-page-hero-lede {
   max-width: none;
 }
 
@@ -6806,7 +6808,9 @@
 
 /* The careers title holds two lines on a phone too: 38px is the largest
    size at which "use less energy." fits the 272px module. */
-.gr-root[data-tier]:not([data-tier="wide"]) .gr-careers-head .gr-masthead-title {
+.gr-root[data-tier]:not([data-tier="wide"])
+  .gr-careers-head
+  .gr-masthead-title {
   font-size: 38px;
   max-width: none;
 }

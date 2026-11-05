@@ -259,11 +259,7 @@ const tileLuminance = (hex: string): number => {
    WHITE — never its brand colour. A model of ours with no mark wears
    its initial in our face. (The texture pass joins with the shared
    package; the lab renders these over EnergyField stills.) */
-const ModelTile = ({
-  color,
-  icon,
-  name,
-}: Model): ReactElement => (
+const ModelTile = ({ color, icon, name }: Model): ReactElement => (
   <span className="gr-rail-model-tile" style={{ background: color }}>
     {icon ? (
       <img alt="" src={icon} style={{ filter: "brightness(0) invert(1)" }} />
@@ -282,9 +278,7 @@ const ModelTile = ({
 
 const SectionReveal = ({ section }: { section: Section }): ReactElement => (
   <>
-    {section.title && (
-      <h2 className="gr-rail-under-title">{section.title}</h2>
-    )}
+    {section.title && <h2 className="gr-rail-under-title">{section.title}</h2>}
     {section.cards && (
       <div className="gr-rail-under-cards">
         {section.cards.map((card) => (
@@ -428,9 +422,14 @@ export const RailShell = ({
           {shown && (
             <nav className="gr-rail-docnav" data-leaving={leaving || undefined}>
               {shown.groups.map((group, index) => (
-                <div className="gr-rail-docnav-group" key={group.heading ?? index}>
+                <div
+                  className="gr-rail-docnav-group"
+                  key={group.heading ?? index}
+                >
                   {group.heading && (
-                    <span className="gr-rail-docnav-title">{group.heading}</span>
+                    <span className="gr-rail-docnav-title">
+                      {group.heading}
+                    </span>
                   )}
                   {group.items.map((item) =>
                     item.href.startsWith("#") ? (
@@ -482,7 +481,11 @@ export const RailShell = ({
           </a>
         </aside>
 
-        <div aria-hidden={!active} className="gr-rail-under" key={peek ?? "none"}>
+        <div
+          aria-hidden={!active}
+          className="gr-rail-under"
+          key={peek ?? "none"}
+        >
           {active && <SectionReveal section={active} />}
         </div>
       </div>
@@ -513,17 +516,17 @@ export const RailShell = ({
           </a>
         </div>
         <div className="gr-rail-strip-bottom">
-        <RailThemeToggle />
-        <button
-          aria-expanded={menu}
-          aria-label={menu ? "Close menu" : "Open menu"}
-          className="gr-rail-burger"
-          onClick={() => setMenu((open) => !open)}
-          type="button"
-        >
-          <span className="gr-rail-burger-bar" />
-          <span className="gr-rail-burger-bar" />
-        </button>
+          <RailThemeToggle />
+          <button
+            aria-expanded={menu}
+            aria-label={menu ? "Close menu" : "Open menu"}
+            className="gr-rail-burger"
+            onClick={() => setMenu((open) => !open)}
+            type="button"
+          >
+            <span className="gr-rail-burger-bar" />
+            <span className="gr-rail-burger-bar" />
+          </button>
         </div>
       </div>
       <div className="gr-rail-menu">

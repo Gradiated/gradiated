@@ -51,10 +51,14 @@ export const HomePage = (): ReactElement => (
             {/* Two readings of one line: desktop keeps the hyphen, the phone
                 drops it so the words wrap on the module without a split. */}
             <span className="gr-home-title-wide">
-              <Reveal by="word">The cheapest way to run open-source models.</Reveal>
+              <Reveal by="word">
+                The cheapest way to run open-source models.
+              </Reveal>
             </span>
             <span className="gr-home-title-narrow">
-              <Reveal by="word">The cheapest way to run open source models.</Reveal>
+              <Reveal by="word">
+                The cheapest way to run open source models.
+              </Reveal>
             </span>
           </h1>
           <div className="gr-home-actions">

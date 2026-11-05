@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { ReactElement } from "react";
 import { Navigate } from "react-router-dom";
 import {
@@ -57,10 +58,12 @@ export const HandbookPage = ({
 
   /* /handbook/ opens on the first entry where the rail shows the
      contents (desktop); on a phone the rail is a strip, so the index
-     page IS the contents and stays. */
-  const wide =
-    typeof window !== "undefined" &&
-    window.matchMedia("(min-width: 60rem)").matches;
+     page IS the contents and stays. The viewport is read after mount
+     so the first client render matches the server's (the index). */
+  const [wide, setWide] = useState(false);
+  useEffect(() => {
+    setWide(window.matchMedia("(min-width: 60rem)").matches);
+  }, []);
   if (!page && wide) {
     const first = handbookSections[0]?.pages[0];
     if (first) {

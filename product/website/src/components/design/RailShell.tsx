@@ -211,8 +211,10 @@ const SECTIONS: readonly Section[] = [
 
 /* Light / dark, in the rail. Storage is read after mount (the stored
    value is unknowable on the server), and a choice lands on EVERY
-   .gr-root — the shell's and the page's — the moment it is made. */
-const RailThemeToggle = (): ReactElement => {
+   .gr-root — the shell's and the page's — the moment it is made. The
+   shell owns the state: the rail and the phone strip each draw a
+   toggle, and both must agree across a breakpoint change. */
+const useRailTheme = (): [ThemeId, (next: ThemeId) => void] => {
   const [theme, setTheme] = useState<ThemeId>("taupe");
   useEffect(() => {
     /* Substrate applies the stored theme to the PAGE root on mount; the
@@ -224,20 +226,30 @@ const RailThemeToggle = (): ReactElement => {
       .querySelectorAll<HTMLElement>(".gr-root")
       .forEach((root) => applyTheme(root, stored));
   }, []);
-  const choose = (next: ThemeId) => {
+  const choose = useCallback((next: ThemeId) => {
     setTheme(next);
     storeTheme(next);
     document
       .querySelectorAll<HTMLElement>(".gr-root")
       .forEach((root) => applyTheme(root, next));
-  };
+  }, []);
+  return [theme, choose];
+};
+
+const RailThemeToggle = ({
+  theme,
+  onChoose,
+}: {
+  theme: ThemeId;
+  onChoose: (next: ThemeId) => void;
+}): ReactElement => {
   const dark = theme === "dark";
   /* One icon, showing the theme you would switch TO. */
   return (
     <button
       aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}
       className="gr-rail-theme"
-      onClick={() => choose(dark ? "taupe" : "dark")}
+      onClick={() => onChoose(dark ? "taupe" : "dark")}
       type="button"
     >
       <Icon glyph={dark ? Sun : Moon} />
@@ -362,6 +374,7 @@ export const RailShell = ({
      off), but its reveal carries the posters — those only load once the
      menu has actually been opened. */
   const [menuTouched, setMenuTouched] = useState(false);
+  const [theme, chooseTheme] = useRailTheme();
   /* `doc` drives the rail's geometry (width, wordmark, nav). `shown`
      is what the doc chrome renders — it outlives `doc` by one exit
      animation, so leaving doc mode plays a choreography instead of a
@@ -479,7 +492,7 @@ export const RailShell = ({
               Log in
             </a>
           </nav>
-          <RailThemeToggle />
+          <RailThemeToggle onChoose={chooseTheme} theme={theme} />
           <a className="gr-rail-cta" href={BOOKING_URL}>
             Book a Call <Arrow />
           </a>
@@ -495,7 +508,7 @@ export const RailShell = ({
       </div>
 
       {/* LAYER 2 — the routed page, on the sheet. */}
-      <main className="gr-rail-sheet">
+      <main className="gr-rail-sheet" inert={menu}>
         <RailDocContext.Provider value={registerDoc}>
           <RailBackContext.Provider value={setBack}>
             {children}
@@ -520,7 +533,7 @@ export const RailShell = ({
           </a>
         </div>
         <div className="gr-rail-strip-bottom">
-          <RailThemeToggle />
+          <RailThemeToggle onChoose={chooseTheme} theme={theme} />
           <button
             aria-expanded={menu}
             aria-label={menu ? "Close menu" : "Open menu"}

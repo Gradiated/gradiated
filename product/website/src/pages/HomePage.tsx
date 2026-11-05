@@ -55,16 +55,16 @@ export const HomePage = (): ReactElement => (
         <div className="gr-fold-centred">
           <h1 className="gr-display gr-home-title">
             <span className="gr-hero-line">
-              <Reveal by="word">Get more out of AI models,</Reveal>{" "}
+              <Reveal by="word">Run any AI model in production,</Reveal>{" "}
             </span>
             <span className="gr-hero-line">
               <Reveal by="word" from={6}>
-                benchmark and try open source,
+                benchmark, or post train your own
               </Reveal>{" "}
             </span>
             <span className="gr-hero-line">
-              <Reveal by="word" from={11}>
-                or post train your own.
+              <Reveal by="word" from={12}>
+                based on your traffic.
               </Reveal>
             </span>
           </h1>

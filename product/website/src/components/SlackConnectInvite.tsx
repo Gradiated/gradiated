@@ -184,12 +184,6 @@ export const SlackConnectInvite = ({
           Preview only · no channel or invitation is created.
         </p>
       )}
-      {demo && livePreview && (
-        <p className="gs-note">
-          Live Slack test · creates a public channel and emails a real
-          invitation.
-        </p>
-      )}
       {error && (
         <p role="alert" className="gs-note">
           {error}

@@ -205,6 +205,28 @@
 .gs-slack-invite {
   margin: 28px 0;
 }
+.gs-github-install {
+  margin: 28px 0;
+}
+.gs-github-install h2 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+.gs-github-install p {
+  line-height: 1.6;
+}
+.gs-github-install .gr-button {
+  margin: 12px 0;
+}
+.gs-github-install .gs-text-button {
+  display: block;
+  margin: 12px 0;
+}
+.gs-github-install p[role="status"] {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
 .gs-slack-invite h2 {
   font-size: 18px;
   margin-bottom: 10px;

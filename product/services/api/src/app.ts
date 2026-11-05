@@ -27,6 +27,8 @@ import { registerNdaDocumentRoutes } from "./routes/nda-documents.js";
 import type { PandaDocNda } from "./legal/pandadoc.js";
 import { registerSlackInvitationRoutes } from "./routes/slack-invitations.js";
 import type { SlackConnect } from "./slack/connect.js";
+import { registerGithubInstallationRoutes } from "./routes/github-installations.js";
+import type { GithubInstallations } from "./github/installations.js";
 import { registerUsageRoutes } from "./routes/usage.js";
 import { registerWaitlistRoutes } from "./routes/waitlist.js";
 import { registerWizardRoutes } from "./routes/wizard.js";
@@ -43,6 +45,7 @@ import type { InvitationSender } from "./email/invitation.js";
 import type { WaitlistWelcomeSender } from "./email/waitlist-welcome.js";
 
 export interface AppDependencies {
+  githubInstallations?: GithubInstallations | undefined;
   slackConnect?: SlackConnect | undefined;
   ndaDocuments?: PandaDocNda | undefined;
   analytics?: import("./analytics.js").ApiAnalytics;
@@ -59,6 +62,7 @@ export interface AppDependencies {
 }
 
 export const createApp = ({
+  githubInstallations,
   slackConnect,
   ndaDocuments,
   analytics,
@@ -159,6 +163,13 @@ export const createApp = ({
   registerImpersonationRoutes(app, auth);
   registerOrganizationRoutes(app, services.organizations);
   registerNdaDocumentRoutes(app, services.organizations, ndaDocuments);
+  registerGithubInstallationRoutes(
+    app,
+    services.organizations,
+    auth,
+    githubInstallations,
+    ndaDocuments,
+  );
   registerSlackInvitationRoutes(
     app,
     services.organizations,

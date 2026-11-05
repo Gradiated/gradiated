@@ -29,6 +29,11 @@ import { getCurrentUser, type CurrentUser } from "../api/queries";
 import { NdaSigning } from "../components/NdaSigning";
 import { SlackConnectInvite } from "../components/SlackConnectInvite";
 import {
+  GithubAppInstall,
+  type GithubInstallation,
+} from "../components/GithubAppInstall";
+import { getGithubInstallations } from "../api/github";
+import {
   ENGINEER_SIGNUP_URL,
   ENGINEER_ORGANIZATION_SETUP_URL,
   ENGINEER_PREVIEW_SIGNUP_URL,
@@ -92,35 +97,34 @@ const StepTitle = ({
 const ndaLabel = () => "Mutual NDA with PostHog Inc.";
 
 const accessLabel = (draft: OnboardingDraft) =>
-  draft.repository || "GitHub repository";
+  draft.githubAccount
+    ? `GitHub app installed · ${draft.githubAccount}`
+    : "GitHub app installation required";
 
 const TeamStep = ({
   draft,
   patch,
   organizationId,
   demo,
+  onGithubVerified,
 }: {
   draft: OnboardingDraft;
   patch: UpdateDraft;
   organizationId: string;
   demo: boolean;
+  onGithubVerified: (installation: GithubInstallation | null) => void;
 }) => (
   <>
     <StepTitle title="Set up Slack & GitHub.">
       A shared channel for the conversation. Repository access for the work.
     </StepTitle>
-    <Field
-      label="GitHub repository"
-      hint="We’ll request access to this repo after the NDA is signed."
-    >
-      <input
-        required
-        value={draft.repository}
-        maxLength={300}
-        onChange={(event) => patch({ repository: event.target.value })}
-        placeholder="your-org/your-repository"
-      />
-    </Field>
+    <GithubAppInstall
+      organizationId={organizationId}
+      ndaDocumentId={draft.ndaDocumentId}
+      demo={demo}
+      company={draft.company}
+      onVerified={onGithubVerified}
+    />
     {draft.channel === "slack" && (
       <SlackConnectInvite
         draft={draft}
@@ -260,7 +264,7 @@ const ReviewStep = ({
         {draft.channel === "slack" ? "Slack" : "email"}
       </li>
       <li>
-        <span>2</span>Approve GitHub access
+        <span>2</span>Review your codebase together
       </li>
       <li>
         <span>3</span>
@@ -294,6 +298,18 @@ const readPreviewAccount = (): OnboardingAccount | null => {
 export const GetStartedPage = () => {
   const [search] = useSearchParams();
   const mode = search.get("preview");
+  if (search.get("github_authorized") === "1")
+    return (
+      <div className="gr-root gs-root">
+        <main className="gs-account-gate">
+          <h1>Return to setup</h1>
+          <p>
+            Return to the original tab to check your GitHub installation. You
+            can close this tab.
+          </p>
+        </main>
+      </div>
+    );
 
   return import.meta.env.DEV && (mode === "signup" || mode === "account") ? (
     <AccountSignupPreview key={mode} resume={mode === "account"} />
@@ -528,6 +544,9 @@ const GetStartedWorkflow = ({
   const [ndaOpen, setNdaOpen] = useState(false);
   const [signingOpen, setSigningOpen] = useState(false);
   const [ndaVerified, setNdaVerified] = useState(previewSlack);
+  const [githubVerified, setGithubVerified] = useState(false);
+  const [checkingGithub, setCheckingGithub] = useState(false);
+  const [githubError, setGithubError] = useState("");
   const headingRef = useRef<HTMLElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const patch: UpdateDraft = (values) => {
@@ -541,7 +560,10 @@ const GetStartedWorkflow = ({
     const changesNda = ndaFields.some(
       (key) => key in values && values[key] !== draft[key],
     );
-    if (changesNda) setNdaVerified(false);
+    if (changesNda) {
+      setNdaVerified(false);
+      setGithubVerified(false);
+    }
 
     setDraft((current) => ({
       ...current,
@@ -641,6 +663,7 @@ const GetStartedWorkflow = ({
                         disabled={
                           index > draft.step ||
                           (index > 0 && !ndaVerified) ||
+                          (index > 1 && !githubVerified) ||
                           signingOpen
                         }
                         onClick={() => patch({ step: index })}
@@ -676,11 +699,47 @@ const GetStartedWorkflow = ({
                 />
               ) : (
                 <form
-                  onSubmit={(event) => {
+                  onSubmit={async (event) => {
                     event.preventDefault();
                     if (draft.step === 0) {
                       setSigningOpen(true);
                       return;
+                    }
+                    if (draft.step > 0) {
+                      if (!githubVerified || !draft.githubInstallationId)
+                        return;
+
+                      if (!demo) {
+                        setCheckingGithub(true);
+                        setGithubError("");
+                        try {
+                          const result = await getGithubInstallations(
+                            account.organizationId,
+                            draft.ndaDocumentId!,
+                            draft.githubInstallationId,
+                          );
+                          if (
+                            !result.installations.some(
+                              (item) => item.id === draft.githubInstallationId,
+                            )
+                          ) {
+                            setGithubVerified(false);
+                            setGithubError(
+                              "GitHub access changed. Return to the installation step and check again.",
+                            );
+                            return;
+                          }
+                        } catch (error) {
+                          setGithubError(
+                            error instanceof Error
+                              ? error.message
+                              : "Could not verify GitHub.",
+                          );
+                          return;
+                        } finally {
+                          setCheckingGithub(false);
+                        }
+                      }
                     }
                     if (draft.step === 2) {
                       const incomplete = firstIncompleteStep(draft);
@@ -712,6 +771,7 @@ const GetStartedWorkflow = ({
                           type="button"
                           onClick={() => {
                             setNdaVerified(false);
+                            setGithubVerified(false);
                             setDraft(
                               reuseAccount(exampleOnboarding(), account),
                             );
@@ -728,6 +788,16 @@ const GetStartedWorkflow = ({
                       patch={patch}
                       organizationId={account.organizationId}
                       demo={demo}
+                      onGithubVerified={(installation) => {
+                        setGithubVerified(installation !== null);
+                        if (installation)
+                          patch({
+                            githubInstallationId: installation.id,
+                            githubAccount: installation.account,
+                            githubRepositoryCount:
+                              installation.repository_count,
+                          });
+                      }}
                     />
                   )}
                   {draft.step === 2 && (
@@ -741,12 +811,17 @@ const GetStartedWorkflow = ({
                     <button
                       type="submit"
                       className="gr-button gr-button--main gs-primary"
+                      disabled={
+                        draft.step > 0 && (!githubVerified || checkingGithub)
+                      }
                     >
-                      {draft.step === 0
-                        ? "Review & sign NDA"
-                        : draft.step === 2
-                          ? "Start project"
-                          : "Continue"}
+                      {checkingGithub
+                        ? "Checking GitHub…"
+                        : draft.step === 0
+                          ? "Review & sign NDA"
+                          : draft.step === 2
+                            ? "Start project"
+                            : "Continue"}
                       <ArrowRight size={15} />
                     </button>
                     {draft.step > 0 && (
@@ -759,6 +834,11 @@ const GetStartedWorkflow = ({
                       </button>
                     )}
                   </div>
+                  {githubError && (
+                    <p role="alert" className="gs-note">
+                      {githubError}
+                    </p>
+                  )}
                 </form>
               )}
               <div className="gs-account-identity">
@@ -768,6 +848,7 @@ const GetStartedWorkflow = ({
                   className="gs-text-button"
                   onClick={() => {
                     setNdaVerified(false);
+                    setGithubVerified(false);
                     setSigningOpen(false);
                     setDraft(reuseAccount(emptyOnboarding(), account));
                   }}
@@ -970,14 +1051,14 @@ const ProjectPreview = ({
             <div>
               <Code2 size={19} />
               <div>
-                <h3>Approve GitHub access</h3>
-                <p>{draft.repository} · access pending</p>
+                <h3>GitHub app installed</h3>
+                <p>{accessLabel(draft)}</p>
                 <button
                   type="button"
                   className="gs-text-button"
                   onClick={() => setTab("access")}
                 >
-                  View access request <ArrowRight size={13} />
+                  View GitHub connection <ArrowRight size={13} />
                 </button>
               </div>
             </div>
@@ -1129,7 +1210,7 @@ const ProjectPreview = ({
             </div>
             <div>
               <dt>GitHub</dt>
-              <dd>{draft.repository} · access pending</dd>
+              <dd>{accessLabel(draft)}</dd>
             </div>
             <div>
               <dt>Channel</dt>
@@ -1150,20 +1231,7 @@ const ProjectPreview = ({
           <button type="button" className="gs-text-button" onClick={onNda}>
             Review pre-filled NDA <ArrowRight size={13} />
           </button>
-          <p>Approve access to the selected repository.</p>
-          <button
-            type="button"
-            className="gs-text-button"
-            onClick={() =>
-              setNotice(
-                "Your engineer will request access to " +
-                  draft.repository +
-                  " once both parties have signed. Nothing is connected in this preview.",
-              )
-            }
-          >
-            Preview GitHub access request <ArrowRight size={14} />
-          </button>
+          <p>{accessLabel(draft)}</p>
           <p className="gs-note">
             Code changes and use of private data in models require separate
             written approval.

@@ -2080,6 +2080,54 @@
           "session_id"
         ]
       },
+      "GithubInstallations": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "authorization_required",
+              "not_installed",
+              "installed"
+            ],
+            "description": "Installed requires an active Gradiated installation and accessible repositories."
+          },
+          "installations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GithubInstallation"
+            }
+          }
+        },
+        "required": [
+          "status",
+          "installations"
+        ]
+      },
+      "GithubInstallation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "The verified Gradiated GitHub App installation ID."
+          },
+          "account": {
+            "type": "string",
+            "description": "The GitHub account where the customer installed Gradiated."
+          },
+          "repository_count": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "Repositories accessible to both this GitHub user and the app installation."
+          }
+        },
+        "required": [
+          "id",
+          "account",
+          "repository_count"
+        ]
+      },
       "SlackInvitation": {
         "type": "object",
         "properties": {
@@ -7583,6 +7631,114 @@
           },
           "503": {
             "description": "Embedded signing is not configured or the provider is unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/organizations/{organization_id}/github-installations": {
+      "get": {
+        "x-gradiated-audience": "console",
+        "operationId": "getGithubInstallations",
+        "tags": [
+          "GitHub installations"
+        ],
+        "summary": "Verify the customer's Gradiated GitHub App installation",
+        "description": "Uses the signed-in customer's linked GitHub App user authorization to check active installations, Contents access and accessible repositories. Requires a completed NDA and organization admin membership. Callback IDs and browser state are never proof of installation.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The authorized Gradiated organization."
+            },
+            "required": true,
+            "description": "The authorized Gradiated organization.",
+            "name": "organization_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,100}$",
+              "description": "The completed NDA bound to this user and organization."
+            },
+            "required": true,
+            "description": "The completed NDA bound to this user and organization.",
+            "name": "nda_document_id",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "An installation to recheck; never trusted without GitHub verification."
+            },
+            "required": false,
+            "description": "An installation to recheck; never trusted without GitHub verification.",
+            "name": "installation_id",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GitHub-confirmed current installation state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GithubInstallations"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized, incomplete, invalid or unavailable verification.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Unauthorized, incomplete, invalid or unavailable verification.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Unauthorized, incomplete, invalid or unavailable verification.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unauthorized, incomplete, invalid or unavailable verification.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unauthorized, incomplete, invalid or unavailable verification.",
             "content": {
               "application/problem+json": {
                 "schema": {

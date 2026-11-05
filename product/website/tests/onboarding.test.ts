@@ -10,6 +10,14 @@ import {
 } from "../src/onboarding";
 
 describe("local preview drafts", () => {
+  it("does not treat a legacy repository entry as an app installation", () => {
+    const draft = onboardingSchema.parse({
+      ...exampleOnboarding(),
+      githubInstallationId: null,
+      repository: "acme/legacy",
+    });
+    expect(firstIncompleteStep(draft)).toBe(1);
+  });
   it("stores a separate Slack recipient without changing the NDA signer", () => {
     const draft = onboardingSchema.parse({
       ...exampleOnboarding(),
@@ -49,14 +57,16 @@ describe("local preview drafts", () => {
       accountStorageKey({ ...account, organizationId: "org-2" }),
     );
   });
-  it("requires a repository even when Slack is unavailable", () => {
+  it("requires a GitHub installation even when Slack is unavailable", () => {
     const emailFallback = {
       ...exampleOnboarding(),
       channel: "email" as const,
       slack: "",
     };
     expect(firstIncompleteStep(emailFallback)).toBeNull();
-    expect(firstIncompleteStep({ ...emailFallback, repository: "" })).toBe(1);
+    expect(
+      firstIncompleteStep({ ...emailFallback, githubInstallationId: null }),
+    ).toBe(1);
   });
 
   it("allows Slack acceptance to remain pending while requiring actual NDA signer fields", () => {
@@ -97,7 +107,7 @@ describe("local preview drafts", () => {
       firstIncompleteStep({
         ...exampleOnboarding(),
         signerTitle: "",
-        repository: "",
+        githubInstallationId: null,
       }),
     ).toBe(0);
   });

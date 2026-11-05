@@ -23,6 +23,9 @@ const publicRoutes = new Set([
 ]);
 
 const validInputs: Record<string, { query?: string; body?: unknown }> = {
+  "GET /api/v1/organizations/:organization_id/github-installations": {
+    query: "nda_document_id=test-document",
+  },
   "POST /api/v1/organizations/:organization_id/slack-invitations": {
     body: { nda_document_id: "test-document" },
   },

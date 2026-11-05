@@ -2080,6 +2080,54 @@
           "session_id"
         ]
       },
+      "GithubInstallations": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "authorization_required",
+              "not_installed",
+              "installed"
+            ],
+            "description": "Installed requires an active Gradiated installation and accessible repositories."
+          },
+          "installations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GithubInstallation"
+            }
+          }
+        },
+        "required": [
+          "status",
+          "installations"
+        ]
+      },
+      "GithubInstallation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "The verified Gradiated GitHub App installation ID."
+          },
+          "account": {
+            "type": "string",
+            "description": "The GitHub account where the customer installed Gradiated."
+          },
+          "repository_count": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "Repositories accessible to both this GitHub user and the app installation."
+          }
+        },
+        "required": [
+          "id",
+          "account",
+          "repository_count"
+        ]
+      },
       "SlackInvitation": {
         "type": "object",
         "properties": {

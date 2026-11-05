@@ -8,6 +8,7 @@ const OptionalPandaDocSetting = z.preprocess(
 );
 
 const ApiOnlyEnvironmentSchema = z.object({
+  GITHUB_INSTALLATIONS_ENABLED: z.enum(["true", "false"]).default("false"),
   SLACK_CONNECT_ENABLED: z.enum(["true", "false"]).default("false"),
   SLACK_BOT_TOKEN: OptionalPandaDocSetting,
   SLACK_ENGINEER_USER_IDS: z

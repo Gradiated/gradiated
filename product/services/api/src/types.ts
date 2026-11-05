@@ -38,6 +38,7 @@ export interface ApiEnvironment {
 }
 
 export interface AuthService {
+  githubAccessToken?(headers: Headers): Promise<string | null>;
   handler(request: Request): Promise<Response>;
   resolveSession(headers: Headers): Promise<SessionUser | null>;
 }

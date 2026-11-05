@@ -352,6 +352,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/organizations/{organization_id}/github-installations": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Verify the customer's Gradiated GitHub App installation
+     * @description Uses the signed-in customer's linked GitHub App user authorization to check active installations, Contents access and accessible repositories. Requires a completed NDA and organization admin membership. Callback IDs and browser state are never proof of installation.
+     */
+    get: operations["getGithubInstallations"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/organizations/{organization_id}/slack-invitations": {
     parameters: {
       query?: never;
@@ -1660,6 +1680,22 @@ export interface components {
     };
     NdaSigningSession: {
       session_id: string;
+    };
+    GithubInstallations: {
+      /**
+       * @description Installed requires an active Gradiated installation and accessible repositories.
+       * @enum {string}
+       */
+      status: "authorization_required" | "not_installed" | "installed";
+      installations: components["schemas"]["GithubInstallation"][];
+    };
+    GithubInstallation: {
+      /** @description The verified Gradiated GitHub App installation ID. */
+      id: number;
+      /** @description The GitHub account where the customer installed Gradiated. */
+      account: string;
+      /** @description Repositories accessible to both this GitHub user and the app installation. */
+      repository_count: number;
     };
     SlackInvitation: {
       /** @description The dedicated channel in Gradiated's workspace. */
@@ -4250,6 +4286,79 @@ export interface operations {
         };
       };
       /** @description Embedded signing is not configured or the provider is unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  getGithubInstallations: {
+    parameters: {
+      query: {
+        /** @description The completed NDA bound to this user and organization. */
+        nda_document_id: string;
+        /** @description An installation to recheck; never trusted without GitHub verification. */
+        installation_id?: number;
+      };
+      header?: never;
+      path: {
+        /** @description The authorized Gradiated organization. */
+        organization_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description GitHub-confirmed current installation state. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GithubInstallations"];
+        };
+      };
+      /** @description Unauthorized, incomplete, invalid or unavailable verification. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Unauthorized, incomplete, invalid or unavailable verification. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Unauthorized, incomplete, invalid or unavailable verification. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Unauthorized, incomplete, invalid or unavailable verification. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Unauthorized, incomplete, invalid or unavailable verification. */
       503: {
         headers: {
           [name: string]: unknown;

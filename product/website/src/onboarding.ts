@@ -28,7 +28,9 @@ export const onboardingSchema = z.object({
   signerName: z.string().max(100).nullable().default(null),
   signerTitle: z.string().max(100).default(""),
   signerEmail: z.string().max(200).nullable().default(null),
-  repository: z.string().max(300).default(""),
+  githubInstallationId: z.number().int().positive().nullable().default(null),
+  githubAccount: z.string().max(200).default(""),
+  githubRepositoryCount: z.number().int().nonnegative().default(0),
   step: z.number().int().min(0).max(3).default(0),
   submitted: z.boolean().default(false),
 });
@@ -92,7 +94,7 @@ export const firstIncompleteStep = (draft: OnboardingDraft): number | null => {
   if (
     !draft.company.trim() ||
     !z.email().safeParse(draft.email.trim()).success ||
-    !draft.repository.trim()
+    !draft.githubInstallationId
   )
     return 1;
 
@@ -113,5 +115,7 @@ export const exampleOnboarding = (): OnboardingDraft => ({
   signerName: "Alex Morgan",
   signerTitle: "CTO",
   signerEmail: "alex@acme.example",
-  repository: "acme/support-agent",
+  githubInstallationId: 1,
+  githubAccount: "acme",
+  githubRepositoryCount: 1,
 });

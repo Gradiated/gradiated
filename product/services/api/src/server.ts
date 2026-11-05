@@ -6,6 +6,7 @@ import { createTrainingEngine } from "./training/engine.js";
 import { serve } from "@hono/node-server";
 import { createPandaDocNda } from "./legal/pandadoc.js";
 import { createSlackConnect } from "./slack/connect.js";
+import { createGithubInstallations } from "./github/installations.js";
 import { createGpuControlApp } from "./gpu-control.js";
 import {
   createTopUpChargeStore,
@@ -189,6 +190,12 @@ const validateEvaluationModel = createEvaluationModelValidator(
 );
 
 const app = createApp({
+  githubInstallations:
+    environment.GITHUB_INSTALLATIONS_ENABLED === "true" &&
+    environment.GITHUB_CLIENT_ID &&
+    environment.GITHUB_CLIENT_SECRET
+      ? createGithubInstallations()
+      : undefined,
   slackConnect:
     environment.SLACK_CONNECT_ENABLED === "true" &&
     environment.SLACK_BOT_TOKEN &&

@@ -125,6 +125,26 @@ export const createAuthService = (
   });
 
   return {
+    githubAccessToken: async (headers) => {
+      if (!configuration.github) return null;
+
+      try {
+        const accounts = await auth.api.listUserAccounts({ headers });
+        const github = accounts.filter(
+          (account) => account.providerId === "github",
+        );
+        if (github.length !== 1) return null;
+
+        const result = await auth.api.getAccessToken({
+          headers,
+          body: { accountId: github[0]!.id },
+        });
+
+        return result.accessToken;
+      } catch {
+        return null;
+      }
+    },
     handler: (request) => auth.handler(request),
     resolveSession: async (headers) => {
       const result = await auth.api

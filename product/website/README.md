@@ -105,7 +105,8 @@ Fetch the current template when implementing signing rather than storing a local
 contract copy. Its restrictions on AI use of confidential material and software
 modification require separate written permission before that work begins.
 
-A selected GitHub repository is required. Slack Connect is the default working
+A verified GitHub App installation is required. Repositories are selected on
+GitHub during installation; there is no repository text field. Slack Connect is the default working
 channel; customers can explicitly select email only when their team cannot use
 Slack. Repository access and Slack invitations are pending actions in the preview,
 with live Slack invitations available after configuration. Private repository access waits for both NDA
@@ -266,12 +267,10 @@ and [document details](https://developers.pandadoc.com/reference/document-detail
 
 #### GitHub App setup for the reviewing engineer
 
-This PR is a local onboarding prototype. No GitHub App private key is required
-to run or review it. The repository field and demo account are not proof of a
-GitHub installation. There is no installation callback, webhook handler or
-server-side repository verification in this PR. Keep the live connection
-unavailable until those are implemented and configured; never use a browser
-checkbox or local-storage value as authorization.
+The activation step opens the app installer and requires a verified installation
+before Continue is enabled. The local demo includes an explicitly labelled
+**Simulate completed installation** action. That action does not install the app
+or grant repository access, and is never used as live verification.
 
 Reuse the existing **Gradiated** GitHub App (`gradiated`), which currently powers
 GitHub login. The owner has confirmed public visibility and configured
@@ -279,55 +278,52 @@ read-only Contents permission. Verify these settings during implementation.
 The customer installation URL is
 `https://github.com/apps/gradiated/installations/new`.
 
-Before enabling the live flow:
+Live verification uses the existing GitHub App OAuth login credentials rather
+than an app private key. Enable `GITHUB_INSTALLATIONS_ENABLED=true` on the API
+only after the checks below. Better Auth selects the signed-in user's single
+linked GitHub account and refreshes its user access token server-side. Customers
+who signed up by Google/email authorize GitHub through Better Auth's linking
+flow; its existing state validation, trusted origins and same-email linking
+policy remain in effect. The original login callback is unchanged.
 
-1. Check whether an existing private key for this exact app is already available
-   in the production secret store. Reuse it if suitable. The OAuth client secret
-   used for login is not an app private key. A new PEM has been downloaded by the
-   app owner but has not been uploaded; obtain it through an approved secure
-   channel only if no suitable existing key is available. Never attach it to the
-   PR, paste it in chat, commit it or put it in a `VITE_` environment variable.
-2. The API's existing ExternalSecret imports
-   `gradiated/prod/product/github-auth` from AWS Secrets Manager in `us-east-1`
-   (`infra/environments/prod/us-east-1/kubernetes/workloads/api-secret.yaml`).
-   An engineer with access should add the PEM under `GITHUB_APP_PRIVATE_KEY`,
-   preserving existing `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` values.
-   This is a proposed new backend setting, not one currently consumed by the
-   API. Add environment parsing and private-key configuration as part of the
-   implementation. Missing configuration must disable repository connection
-   without breaking existing GitHub login. Use a separate test app/key for local
-   development rather than copying production credentials to a laptop.
-3. Preserve the existing Better Auth login callback. Add a backend installation
-   setup URL in the app registration and enable Redirect on update. Alternatively,
-   if choosing OAuth during installation, implement its callback deliberately:
-   GitHub disables the separate setup URL in that mode. Do not toggle this option
-   on the current login app without testing the existing sign-in journey.
-4. Add authenticated, organization-authorized connection endpoints using the
-   generated API contract. Bind a short-lived, single-use state to the signed-in
-   Gradiated user and organization. Verify GitHub identity through app user
-   authorization and check the installation belongs to this app and is accessible
-   to that GitHub user. Do not trust a returned `installation_id`, state alone,
-   an email match, or an installation webhook as proof of customer ownership.
-5. Authenticate on the backend as the app installation, check it is active with
-   the required Contents permission, and list the repositories actually granted
-   to it. Save the verified installation/repository IDs against the authorized
-   Gradiated organization. Replace the manual repository field with Connect
-   GitHub and a verified repository selection. Enable Continue only from the
-   server-confirmed state and enforce that condition again on the backend.
-6. Configure an HTTPS webhook endpoint and a separate random webhook secret in
-   backend secret storage. Verify signatures; handle duplicate and out-of-order
-   deliveries. Handle installation creation/deletion/suspension and
-   `installation_repositories` changes, and recheck current access before work.
-   Treat a request awaiting organization-owner approval as pending, not connected.
-7. Configure and verify the embedded NDA integration above before requesting
-   installation access to private repositories. The NDA is now the first step;
-   the local signing simulation is not a signed agreement. Check NDA completion
-   again on the backend before authorizing a live repository connection.
-8. Test existing Google/GitHub/email login, a separate customer organization,
-   selected repositories, an already-installed app, a user who requires admin
-   approval, forged callback IDs/state, cross-customer installation binding,
-   revoked repository access, suspension/uninstallation and missing credentials.
-   Deploy and validate this backend integration before activating the live CTA.
+The console-only generated-client endpoint
+`GET /api/v1/organizations/{organization_id}/github-installations` requires a
+verified active organization admin and a current completed NDA bound to that
+user and organization. It calls GitHub's `/user/installations` endpoint, filters
+to the `gradiated` app, rejects suspended installations or missing Contents
+permission, and checks `/user/installations/{id}/repositories` for at least one
+repository accessible to both that user and the app. Customers select among
+verified GitHub accounts if needed. Returning to the setup tab triggers a check;
+Continue and Start project recheck the selected installation on the backend.
+Callback IDs, email matches and stored browser flags are never proof.
+
+Installation verification is stateless. The draft records the last verified
+installation ID/account for display; it is not a persisted organization binding
+or authorization for background work. Before implementing code access for an
+engineer/worker, persist the authorized organization-to-installation binding,
+configure app-installation credentials and signed lifecycle webhooks, and recheck
+current permissions before accessing code. Those background integrations are
+outside this prototype; no repository contents are fetched here.
+
+Before production rollout:
+
+1. Verify `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` in the existing
+   `gradiated/prod/product/github-auth` secret belong to this GitHub App, not an
+   unrelated OAuth app. Preserve the existing credentials and login settings.
+   Verify `GITHUB_INSTALLATIONS_ENABLED` and PandaDoc settings on the API; missing
+   configuration fails closed without breaking sign-in. Never expose credentials
+   through frontend environment variables.
+2. Test existing Google/GitHub/email login and same-account linking; a separate
+   customer's app installation; selected repositories; owner approval pending;
+   wrong app, forged IDs, suspension, uninstallation and repository revocation.
+   Confirm the authenticated GitHub API checks succeed with this app's user
+   tokens. Local demo checks are simulated because local GitHub OAuth credentials
+   and the product database are not configured here.
+3. Reuse an existing app private key if suitable when implementing background
+   repository access. The previously downloaded PEM has not been uploaded.
+   An engineer with infrastructure access must handle that credential and any
+   webhook secret through backend secret storage; never attach them to the PR
+   or put them in a browser configuration.
 
 References: [installation setup URL and spoofing warning](https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/about-the-setup-url),
 [app installation authentication](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation),

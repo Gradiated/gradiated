@@ -1,15 +1,5 @@
-// Is the live site built from PostHog's current compensation data?
-//
-// Re-runs the compensation sync, then compares the
-// public/posthog-compensation.sha256 it writes with the one the live site
-// serves. Exits like `git diff --quiet`:
-//   0  unchanged: nothing to redeploy
-//   1  changed (or the live site has no hash yet): redeploy
-//   2  could not tell (GitHub or the site unreachable)
-//
-// Used by vercel.json's ignoreCommand, so a deploy hook build is not skipped
-// when only PostHog's data changed, and by
-// .github/workflows/posthog-compensation.yml, which triggers that deploy hook.
+// Exits like `git diff --quiet`, as Vercel's ignoreCommand expects: 0 unchanged,
+// 1 changed or no live hash yet, 2 couldn't tell.
 
 import { spawnSync } from "node:child_process";
 import { readFile } from "node:fs/promises";

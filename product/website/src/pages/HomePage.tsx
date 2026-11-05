@@ -59,6 +59,11 @@ export const HomePage = (): ReactElement => (
             </span>
             <span className="gr-hero-line">
               <Reveal by="word" from={6}>
+                benchmark and try open source,
+              </Reveal>{" "}
+            </span>
+            <span className="gr-hero-line">
+              <Reveal by="word" from={11}>
                 or post train your own.
               </Reveal>
             </span>

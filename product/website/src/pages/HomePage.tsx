@@ -55,18 +55,14 @@ export const HomePage = (): ReactElement => (
         <div className="gr-fold-centred">
           <h1 className="gr-display gr-home-title">
             <span className="gr-hero-line">
-              <Reveal by="word">Your forward deployed</Reveal>{" "}
+              <Reveal by="word">Get more out of AI models,</Reveal>{" "}
             </span>
             <span className="gr-hero-line">
-              <Reveal by="word" from={3}>
-                engineer.
+              <Reveal by="word" from={6}>
+                or post train your own.
               </Reveal>
             </span>
           </h1>
-          <p className="gr-home-engineer">
-            A real human to work on the AI in your product. Set up here. Work
-            async in Slack.
-          </p>
           <div className="gr-home-actions">
             <Link
               className="gr-button gr-button--main"

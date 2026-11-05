@@ -614,13 +614,6 @@
   line-height: 1.7;
   margin-bottom: 16px;
 }
-.gr-home-engineer {
-  max-width: 39ch;
-  text-align: center;
-  font-size: clamp(15px, 1.3vw, 19px);
-  line-height: 1.5;
-  margin: 22px auto 0 !important;
-}
 @media (max-width: 600px) {
   .gs-auth-shell {
     padding: 24px;

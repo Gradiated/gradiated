@@ -20,21 +20,43 @@ both assigned GPU names before starting the backend and refuses a mismatched
 profile. H200 enrollment and placement retain the `H200` product identity;
 GH200 is not accepted as H200.
 
-H200 uses TP2 without prefill context parallelism, Marlin W4A16 experts, a
-bfloat16 KV cache, `flashmla_sparse` DSA prefill (FA3 for pooled indices on
-SM90) and `fa3` DSA decode. This is SGLang's Hopper bfloat16 default. The FP8
-KV options do not work for GLM's pooled index (`index_kpool > 1`):
-`flashmla_kv` fails CUDA graph capture, and TileLang with FP8 KV starts but
-generates only token 0. Measured on a 2x H200 canary on 2026-11-05: correct
-answers at about 93-178 tokens/s for one request; bfloat16 KV halves KV
-capacity relative to FP8.
-It does not use the B300 profile's explicit `trtllm` sparse attention. GLM's
-four-token pooled index uses a logical page size of 256, giving FlashMLA its
-required 64 physical slots. H200 retains two MTP draft steps, the parsers,
-SMG, prefix caching, readiness, metrics, cancellation and drain lifecycle.
+H200 uses TP2 without prefill context parallelism, Marlin W4A16 experts,
+FP8 E4M3 KV, `flashmla_sparse_q8` DSA prefill and TileLang decode. It does not
+use Blackwell's `trtllm` sparse attention. GLM's four-token pooled index uses
+a logical page size of 256, giving FlashMLA its required 64 physical slots.
 
-The initial H200 limits are four active requests, two queued requests, a
-4,096-token prefill budget, 85% static device memory, and decode graphs through
+H200 retains MTP using three draft steps and four verification tokens. The
+previous two-step/three-token FP8 configuration produced repetitive incorrect
+output under CUDA graph replay. Disabling graph padding avoided the short-case
+corruption but fell back to slow eager execution for unsupported batch sizes.
+Four verification tokens satisfy TP2 graph alignment for batch sizes one through
+four, avoiding the failing padded path without disabling graphs or speculation.
+This is a qualified launch configuration, not a repair of the upstream replay bug.
+
+GLM prefix reuse needs both full-attention KV and recurrent-state checkpoints.
+The H200 profile uses a recurrent-to-full-cache memory budget ratio of 1.8;
+leaving the default at 0.9 reduced recurrent slots and destroyed cache reuse in
+the deeper-MTP benchmark. At 0.85 static memory, the balanced FP8/MTP candidate
+allocated 1,419,776 KV tokens and 77 recurrent slots versus 842,496 tokens and
+63 slots for BF16/MTP. It passed 25 synthetic correctness checks including
+14K-token cached prefixes and four concurrent requests. In the final two warm
+synthetic trials (~46K input/512 output, concurrency four), it delivered
+238–243 aggregate output tokens/s and 123–125 per-request decode tokens/s;
+the BF16 control's final warm trial delivered 254 and 128, respectively.
+These are one-host, ordered synthetic comparisons, not production capacity
+or general numerical-quality qualification. The 0.90 launch setting below must
+also pass the same checks and observed-memory verification before promotion.
+
+Six input/output-hash-guarded overlays adapt upstream
+[SGLang PR #44217](https://github.com/sgl-project/sglang/pull/44217) at
+`6b1ac36a9bf8cd1958f17c9937c85d86cbdc1c91` to the pinned source. They let
+Q8 prefill and TileLang decode share raw 512-dimensional NoPE FP8 KV rows,
+including KPool live-tail indices. They do not use the incompatible packed,
+scaled FlashMLA KV layout. The original quantization and mHC overlays remain.
+B200/B300 retain their existing attention backends and MTP settings.
+
+The H200 limits are four active requests, two queued requests, a
+4,096-token prefill budget, 90% static device memory, and decode graphs through
 batch four. SMG, SGLang, warmup admission and exported capacity metrics use the
 same four-request limit. The runtime's `runtimes.json` entry declares the same
 `active_requests` for gateway routing weights; `tools/gpu/render-config.py`
@@ -45,10 +67,9 @@ The 1M context setting remains a configured bound, not measured evidence of
 1M-token residency or latency. Record actual KV/recurrent pool capacity and
 qualify the longest supported requests on H200 before production promotion.
 
-Source inspection and CPU checks establish a candidate launch path, not GPU
-qualification. No H200 startup, numerical quality, long-context capacity or
-throughput result is claimed here. In particular, the full GLM NoPE/pooled-index
-FlashMLA and MTP paths must pass on the actual packaged runtime. See
+CPU build checks and the synthetic GPU smoke do not qualify general numerical
+quality, long-context capacity or production throughput. The actual packaged
+runtime must pass deployment qualification before promotion. See
 [H200 deployment preparation](../../../../docs/INSTANCE_SETUP_PLAN.md#h200-tp2-alongside-b300)
 for enrollment, staging, qualification, promotion and rollback.
 

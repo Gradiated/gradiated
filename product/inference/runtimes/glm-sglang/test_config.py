@@ -32,7 +32,8 @@ class Configuration(unittest.TestCase):
                            ('--max-running-requests', '16'), ('--chunked-prefill-size', '16384'),
                            ('--max-prefill-tokens', '16384'), ('--prefill-decode-interval', '64'),
                            ('--speculative-num-steps', '2'), ('--speculative-num-draft-tokens', '3'),
-                           ('--revision', config.REVISION), ('--schedule-policy', 'shortest-prefill-first')]:
+                           ('--revision', config.REVISION), ('--mem-fraction-static', '0.85'),
+                           ('--schedule-policy', 'shortest-prefill-first')]:
             self.assertEqual(backend[backend.index(key) + 1], value)
         self.assertNotIn('--max-queued-requests', backend)
         self.assertNotIn('--disable-radix-cache', backend)
@@ -57,11 +58,13 @@ class Configuration(unittest.TestCase):
         environment = {**self.environment, 'GLM_SGLANG_PROFILE': 'h200-tp2'}
         settings, backend, router = config.commands(environment)
         self.assertEqual(settings['gpu_product'], 'H200')
-        for flag, value in [('--dsa-prefill-backend', 'flashmla_sparse'), ('--dsa-decode-backend', 'fa3'),
+        for flag, value in [('--dsa-prefill-backend', 'flashmla_sparse_q8'), ('--dsa-decode-backend', 'tilelang'),
                             ('--max-running-requests', '4'), ('--cuda-graph-max-bs-decode', '4'),
                             ('--chunked-prefill-size', '4096'), ('--max-prefill-tokens', '4096'),
                             ('--page-size', '256'), ('--tp-size', '2'), ('--moe-runner-backend', 'marlin'),
-                            ('--kv-cache-dtype', 'bfloat16')]:
+                            ('--kv-cache-dtype', 'fp8_e4m3'), ('--speculative-num-steps', '3'),
+                            ('--speculative-num-draft-tokens', '4'), ('--speculative-algorithm', 'EAGLE'),
+                            ('--mem-fraction-static', '0.9'), ('--mamba-full-memory-ratio', '1.8')]:
             self.assertEqual(backend[backend.index(flag) + 1], value)
         self.assertNotIn('--enable-prefill-cp', backend)
         self.assertNotIn('--attn-cp-size', backend)

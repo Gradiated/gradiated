@@ -1,0 +1,29 @@
+--- a/sglang/srt/configs/model_config.py
++++ b/sglang/srt/configs/model_config.py
+@@ -213,6 +213,26 @@
+             "HYV4ForCausalLMNextN",
+         )
+         and _hf_attr(config, "index_topk") is not None
++    )
++
++
++def is_q8_raw_fp8_nope_layout(
++    *,
++    prefill_backend: Optional[str],
++    decode_backend: Optional[str],
++    kv_lora_rank: int,
++    qk_rope_head_dim: int,
++) -> bool:
++    """Whether Q8 prefill and TileLang decode can share raw 512-byte FP8 rows.
++
++    This checks consumers and geometry, not the model name. Callers validate
++    dtype, device and incompatible serving options separately.
++    """
++    return (
++        prefill_backend == "flashmla_sparse_q8"
++        and decode_backend == "tilelang"
++        and kv_lora_rank == 512
++        and qk_rope_head_dim == 0
+     )
+ 
+ 

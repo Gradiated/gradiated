@@ -18,7 +18,8 @@ PROFILES = {
     'b200-pcp2': {'gpu_product': 'B200', 'active_requests': 8,
                   'prefill_tokens': 16384, 'dsa_backend': 'trtllm', 'context_parallel': True},
     'h200-tp2': {'gpu_product': 'H200', 'active_requests': 4,
-                 'prefill_tokens': 4096, 'dsa_backend': 'fa3', 'dsa_prefill': 'flashmla_sparse', 'kv_dtype': 'bfloat16',
+                 'prefill_tokens': 4096, 'dsa_backend': 'tilelang', 'dsa_prefill': 'flashmla_sparse_q8', 'kv_dtype': 'fp8_e4m3',
+                 'speculative_steps': 3, 'mamba_memory_ratio': 1.8, 'memory_fraction': 0.90,
                  'context_parallel': False},
 }
 
@@ -94,15 +95,18 @@ def commands(environment):
                '--dsa-prefill-backend', config.get('dsa_prefill', config['dsa_backend']), '--dsa-decode-backend', config['dsa_backend'],
                '--kv-cache-dtype', config.get('kv_dtype', 'fp8_e4m3'), '--max-running-requests', str(config['active_requests']),
                '--chunked-prefill-size', str(config['prefill_tokens']), '--max-prefill-tokens', str(config['prefill_tokens']),
-               '--context-length', '1048576', '--mem-fraction-static', '0.85',
-               '--cuda-graph-max-bs-decode', str(config['active_requests']), '--speculative-algorithm', 'EAGLE',
-               '--speculative-num-steps', '2', '--speculative-eagle-topk', '1',
-               '--speculative-num-draft-tokens', '3', '--reasoning-parser', 'glm45',
+               '--context-length', '1048576', '--mem-fraction-static', str(config.get('memory_fraction', 0.85)),
+               '--cuda-graph-max-bs-decode', str(config['active_requests']), '--reasoning-parser', 'glm45',
                '--tool-call-parser', 'glm47', '--enable-metrics', '--enable-cache-report',
                '--random-seed', '42', '--host', '127.0.0.1', '--port', str(config['backend']),
                '--cuda-graph-backend-prefill', 'disabled',
                '--schedule-policy', 'shortest-prefill-first', '--prefill-decode-interval', '64',
                '--prefill-decode-interval-min-bs', '0']
+    steps = config.get('speculative_steps', 2)
+    backend += ['--speculative-algorithm', 'EAGLE', '--speculative-num-steps', str(steps),
+                '--speculative-eagle-topk', '1', '--speculative-num-draft-tokens', str(steps + 1)]
+    if 'mamba_memory_ratio' in config:
+        backend += ['--mamba-full-memory-ratio', str(config['mamba_memory_ratio'])]
     if config['context_parallel']:
         backend += ['--attn-cp-size', '2', '--enable-prefill-cp', '--cp-strategy', 'interleave']
     else:

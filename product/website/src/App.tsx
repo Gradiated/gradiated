@@ -44,22 +44,6 @@ const SandJourneyRedirect = (): ReactElement => {
   return <Navigate replace to={`/sand-to-thought/${hash}`} />;
 };
 
-const LibraryRedirect = (): ReactElement => {
-  const { search } = useLocation();
-  const destination = new URLSearchParams(search).get("show");
-  const target =
-    destination === "methods" || destination === "handbook"
-      ? "/handbook/"
-      : "/notes/";
-
-  useEffect(() => {
-    window.location.replace(target);
-  }, [target]);
-
-  /* Keep any served fallback stable until the query-based redirect runs. */
-  return <NotesIndexPage />;
-};
-
 const RouteScrollRestoration = (): null => {
   const { hash, pathname } = useLocation();
 

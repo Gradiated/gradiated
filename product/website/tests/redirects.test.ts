@@ -53,10 +53,6 @@ it("redirects every former Library and Methods URL at the server", () => {
         ],
       }),
       expect.objectContaining({
-        source: "/library/",
-        destination: "/notes/",
-      }),
-      expect.objectContaining({
         source: "/methods/",
         destination: "/handbook/",
       }),

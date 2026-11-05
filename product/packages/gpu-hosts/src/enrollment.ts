@@ -31,7 +31,7 @@ export const enrollmentResultSchema = z.strictObject({
   version: z.literal(1),
   tailscale_ip: tailnetAddress,
   gpu_count: z.int().min(1).max(8),
-  gpu_product: z.enum(["B300", "RTX-PRO-6000"]),
+  gpu_product: z.enum(["B200", "B300", "H200", "RTX-PRO-6000"]),
   cpu: z.int().min(1).max(512),
   memory_gib: z.int().min(1).max(4096),
   promotion: z.boolean(),
@@ -44,9 +44,9 @@ export const enrollmentPayload = (
   instance: { readonly sku: string },
   fields: Omit<EnrollmentPayload, "version">,
 ): EnrollmentPayload => {
-  if (!/^\d+x .*(B300|RTX PRO 6000)/.test(instance.sku))
+  if (!/^\d+x .*\b(B200|B300|H200|RTX PRO 6000)\b/.test(instance.sku))
     throw new Error(
-      "GPU enrollment supports the qualified B300 and RTX PRO 6000 hosts",
+      "GPU enrollment supports B200, B300, H200 and RTX PRO 6000 hosts",
     );
   return enrollmentPayloadSchema.parse({ version: 1, ...fields });
 };

@@ -123,6 +123,9 @@ def runtime_profile(config, pod):
     profile = profiles.get(digest)
     if not profile or profile["image"] != image:
         raise ValueError("Unsupported runtime release")
+    active_requests = profile.get("active_requests")
+    if "active_requests" in profile and (type(active_requests) is not int or not 1 <= active_requests <= 4096):
+        raise ValueError("Runtime active_requests must be an integer from 1 to 4096")
     if profile.get("kind") == "training":
         recipe = json.loads(pod["metadata"].get("annotations", {}).get("gradiated.com/training-recipe", "{}"))
         if not isinstance(recipe, dict):
@@ -134,10 +137,12 @@ def runtime_profile(config, pod):
     allowed_environment = {"TENSOR_PARALLEL_SIZE", "MODEL_ID", "LORA_ENABLED", "LORA_BASE_MODEL_REVISION",
         "LORA_GPU_SLOTS", "LORA_CPU_SLOTS", "LORA_MAX_RANK", "LORA_DISK_CACHE_BYTES", "LORA_DOWNLOAD_HOSTS",
         "GRADIATED_API_BASE_URL", "HOST_IDENTITY_FILE", "GLM_PREFILL_TOKEN_BUDGET", "GLM_LONG_PREFILL_TOKEN_THRESHOLD", "GLM_PREFIX_MATCH_UNIT",
-        "MAX_QUEUED_TOKENS", "MAX_QUEUED_REQUESTS"}
+        "MAX_QUEUED_TOKENS", "MAX_QUEUED_REQUESTS", "GLM_SGLANG_PROFILE"}
     extra = profile.get("environment", {})
     if set(extra) - allowed_environment or any(not isinstance(value, str) for value in extra.values()):
         raise ValueError("Unsupported runtime environment")
+    if extra.get("GLM_SGLANG_PROFILE", "b300-pcp2") not in {"b300-pcp2", "b200-pcp2", "h200-tp2"}:
+        raise ValueError("Unsupported GLM SGLang profile")
     if "GLM_PREFILL_TOKEN_BUDGET" in extra and not re.fullmatch(r"([4-9]|[1-9][0-9]+)", extra["GLM_PREFILL_TOKEN_BUDGET"]):
         raise ValueError("GLM_PREFILL_TOKEN_BUDGET must be an integer of at least 4")
     for name in ("GLM_LONG_PREFILL_TOKEN_THRESHOLD", "GLM_PREFIX_MATCH_UNIT", "MAX_QUEUED_TOKENS", "MAX_QUEUED_REQUESTS"):
@@ -155,6 +160,25 @@ def runtime_profile(config, pod):
 HUB_API = "https://huggingface.co/api/models"
 CACHE_MARKER = ".gradiated-last-used"
 UNUSED_WEIGHT_FORMATS = (".bin", ".pt", ".pth", ".ckpt", ".gguf", ".h5", ".msgpack", ".onnx")
+
+
+def reporter_environment(profile, uid, base, path):
+    reporting = {
+        "PATH": path, "DESMOND_DEPLOYMENT_ID": uid,
+        "DESMOND_RELEASE": profile["release"]["runtime_revision"],
+        "DESMOND_MODEL": profile["model_id"],
+        "DESMOND_MODEL_REVISION": profile["release"]["model_revision"],
+        "DESMOND_RUNTIME_HOST": "127.0.0.1",
+        "DESMOND_RUNTIME_PORT": str(base + 3 if profile.get("warmup") else base),
+        "DESMOND_INGRESS_PORT": "8889", "DESMOND_CONTROL_HOST": "127.0.0.1",
+        "DESMOND_CONTROL_PORT": str(base + 1), "DESMOND_STATUS_HOST": "127.0.0.1",
+        "DESMOND_STATUS_PORT": "3004",
+        "DESMOND_CONTROL_TOKEN_FILE": "/etc/gradiated/runtime-access.token",
+    }
+    # The gateway weights routing by the runtime's concurrent request limit.
+    if "active_requests" in profile:
+        reporting["DESMOND_ACTIVE_REQUESTS"] = str(profile["active_requests"])
+    return reporting
 
 
 def hf_home(config, profile):
@@ -401,20 +425,8 @@ def task(uid, stopping):
                                environment, directory / "runtime.log")
             atomic_json(directory / "runtime.json", {"runtime": owner(model)})
             if profile.get("kind") != "training":
-                reporting = {
-                    "PATH": environment["PATH"], "DESMOND_DEPLOYMENT_ID": uid,
-                    "DESMOND_RELEASE": profile["release"]["runtime_revision"],
-                    "DESMOND_MODEL": profile["model_id"],
-                    "DESMOND_MODEL_REVISION": profile["release"]["model_revision"],
-                    "DESMOND_RUNTIME_HOST": "127.0.0.1",
-                    "DESMOND_RUNTIME_PORT": str(base + 3 if profile.get("warmup") else base),
-                    "DESMOND_INGRESS_PORT": "8889", "DESMOND_CONTROL_HOST": "127.0.0.1",
-                    "DESMOND_CONTROL_PORT": str(base + 1), "DESMOND_STATUS_HOST": "127.0.0.1",
-                    "DESMOND_STATUS_PORT": "3004",
-                    "DESMOND_CONTROL_TOKEN_FILE": "/etc/gradiated/runtime-access.token",
-                }
                 reporter = spawn_user("desmond", [str(Path(__file__).resolve().with_name("desmondd")), "--observe"],
-                                      reporting, directory / "desmond.log")
+                                      reporter_environment(profile, uid, base, environment["PATH"]), directory / "desmond.log")
                 atomic_json(directory / "runtime.json", {
                     "runtime": owner(model), "reporter": owner(reporter), "started_at": time.time(),
                 })

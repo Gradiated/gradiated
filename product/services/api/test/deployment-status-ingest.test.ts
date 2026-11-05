@@ -58,6 +58,19 @@ describe("deployment status ingestion", () => {
     expect(reportStatus).toHaveBeenCalledWith("runpod", payload);
   });
 
+  it("passes the runtime active request limit to the status service", async () => {
+    const reportStatus = vi.fn(async () => undefined);
+    const payload = { ...report(), active_requests: 4 };
+
+    const response = await send(
+      createIngestApp({ report: reportStatus }),
+      JSON.stringify(payload),
+    );
+
+    expect(response.status).toBe(204);
+    expect(reportStatus).toHaveBeenCalledWith("runpod", payload);
+  });
+
   it("rejects malformed JSON", async () => {
     const response = await send(createIngestApp(), "{");
 

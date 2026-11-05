@@ -49,6 +49,21 @@ class Lifecycle(unittest.TestCase):
                 launch.full_kv_pressure(text)
         self.assertEqual(launch.full_kv_pressure('sglang:full_token_usage{model="a } b"} 0.25 123'), .25)
 
+    def test_h200_metrics_report_the_h200_admission_limit(self):
+        with patch.object(launch.urllib.request, 'urlopen', side_effect=[
+                Response(b'sglang:full_token_usage 0.3\n'), Response(b'smg_http_requests_total 1\n')]):
+            result = launch.metrics({'backend': 18084, 'metrics': 18085, 'active_requests': 4}).decode()
+        self.assertIn('gradiated_runtime_active_request_limit 4', result)
+
+    def test_wrong_hardware_never_starts_a_backend(self):
+        with patch.object(service, 'commands', return_value=({}, [], [])), \
+             patch.object(service, 'detect_profile', side_effect=lambda environment: environment), \
+             patch.object(service, 'validate_hardware', side_effect=ValueError('Assigned GPUs')), \
+             patch.object(service.subprocess, 'Popen') as start:
+            with self.assertRaisesRegex(ValueError, 'Assigned GPUs'):
+                service.run({})
+        start.assert_not_called()
+
     def test_warmup_concurrency_bounded_by_front_active_capacity(self):
         self.assertEqual(max(launch.base.CONCURRENCIES), 16)
         supervisor = launch.base.Supervisor(['unused'], max_queued_requests=18)

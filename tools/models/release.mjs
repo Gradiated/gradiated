@@ -86,6 +86,9 @@ export const manifest = ({
   return {
     ...(bundle === undefined ? {} : { bundle }),
     ...(bundle === "host" ? { bootstrapVersion: 1 } : {}),
+    ...(bundle === "glm-5-3-flash-sglang"
+      ? { runtimeProfiles: ["b300-pcp2", "h200-tp2", "b200-pcp2"] }
+      : {}),
     source,
     baseImage,
     baseId,

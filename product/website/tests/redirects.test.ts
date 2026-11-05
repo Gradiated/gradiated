@@ -34,7 +34,7 @@ it("keeps the Library hydration fallback independent of its query string", () =>
 
   expect(renderLibrary("?show=methods")).toBe(fallback);
   expect(renderLibrary("?show=handbook")).toBe(fallback);
-  expect(fallback).toContain("gr-library-controls");
+  expect(fallback).toContain("gr-mag-masthead");
   expect(fallback).not.toContain("gr-handbook-index");
 });
 

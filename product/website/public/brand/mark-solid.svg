@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <title>Gradiated mark</title>
+  <!-- The chip mark from Logo.tsx, filled solid: an alpha mask for shader and
+       compositing work. Keep the path in sync with Logo.tsx. -->
+  <path d="M31.7539 31.7539H0V0H31.7539V31.7539ZM6.70605 11.8359V20.9824H12.2314V25.4375H18.332L25.0469 18.7227V14.9004L20.8887 14.8945L16.1523 19.9023H12.2314V11.8359H25.0469V6.31445H12.2314L6.70605 11.8359Z" fill="#000"/>
+</svg>

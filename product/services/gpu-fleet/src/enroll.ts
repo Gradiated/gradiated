@@ -43,8 +43,21 @@ export type EnrollmentDependencies = {
   apiEndpoint: string;
 };
 
-const sku = (host: GpuHost) =>
-  `${host.spec.inventory.gpuCount}x ${host.spec.inventory.gpuProduct === "B300" ? "NVIDIA B300" : "NVIDIA RTX PRO 6000"}`;
+const SKU_PRODUCTS: Record<string, string> = {
+  B200: "NVIDIA B200",
+  B300: "NVIDIA B300",
+  H200: "NVIDIA H200",
+  "RTX-PRO-6000": "NVIDIA RTX PRO 6000",
+};
+
+const sku = (host: GpuHost) => {
+  const product = SKU_PRODUCTS[host.spec.inventory.gpuProduct];
+  if (!product)
+    throw new Error(
+      `Unsupported GPU product ${host.spec.inventory.gpuProduct}`,
+    );
+  return `${host.spec.inventory.gpuCount}x ${product}`;
+};
 
 export const createEnrollment = (deps: EnrollmentDependencies) => ({
   pod: (host: GpuHost) => deps.runpod.pod(host.spec.provider.podId),

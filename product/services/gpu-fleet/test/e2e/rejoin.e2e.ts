@@ -181,6 +181,7 @@ describe.skipIf(!files)("a GPU host rejoining after a re-image", () => {
         ping,
         pins: async () => pinned,
         enrollment: async () => enrollment,
+        modelStatuses: async () => new Map(),
         mode: "act",
         leading: () => true,
         identity: "gpu-fleet-e2e",

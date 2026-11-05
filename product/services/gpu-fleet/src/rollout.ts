@@ -57,6 +57,9 @@ export type RolloutDependencies = {
   pins: () => Promise<Pins>;
   // Undefined while RunPod and Tailscale access is unavailable; asked again each pass.
   enrollment: () => Promise<Enrollment | undefined>;
+  modelStatuses: () => Promise<
+    ReadonlyMap<string, "available" | "unavailable" | "retired">
+  >;
   // observe: in-place bundle updates run, nothing that drains or re-images does.
   mode: "observe" | "act";
   leading: () => boolean;
@@ -586,16 +589,45 @@ export const createRollouts = (deps: RolloutDependencies) => {
       return { done: true };
     },
 
-    // Every serving pod is in the baseline, so each must be Ready with a
-    // qualified runtime before the update starts.
     Apply: async ({ host }, rollout) => {
-      const serving = (await cluster.podsOn(host.spec.instanceId)).filter(
-        (pod) => pod.model && !pod.terminating,
+      const livePods = async () =>
+        (await cluster.podsOn(host.spec.instanceId)).filter(
+          (pod) => pod.model && !pod.terminating,
+        );
+      let pods = await livePods();
+      const needsCatalog = pods.some(
+        (pod) => !pod.ready && !pod.qualificationFailed && pod.modelId,
+      );
+      const statuses = needsCatalog ? await deps.modelStatuses() : undefined;
+      if (needsCatalog) pods = await livePods();
+
+      const serving = pods.filter(
+        (pod) =>
+          pod.ready ||
+          (!pod.qualificationFailed &&
+            (!pod.modelId || statuses?.get(pod.modelId) !== "unavailable")),
       );
       if (serving.some((pod) => !pod.ready || !pod.qualifiedRuntime))
         return {
           stay: "Waiting for every serving pod on the host to be Ready",
         };
+
+      const excluded = pods.filter(
+        (pod) =>
+          !pod.ready &&
+          pod.modelId &&
+          statuses?.get(pod.modelId) === "unavailable",
+      );
+      if (excluded.length)
+        deps.log({
+          event: "gpu_bundle_unavailable_models_excluded",
+          instance_id: host.spec.instanceId,
+          bundle: rollout.target.bundle.sha256,
+          pods: excluded.map((pod) => ({
+            uid: pod.uid,
+            model_id: pod.modelId,
+          })),
+        });
 
       const baseline = Object.fromEntries(
         serving.map((pod) => [pod.uid, pod.qualifiedRuntime!]),

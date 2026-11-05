@@ -11,7 +11,7 @@ export const credentialedSync = <Database>(
 ) => {
   let current: { url: string; connection: Connection<Database> } | undefined;
 
-  const resolve = (): SyncFleet | undefined => {
+  const database = (): Database | undefined => {
     const url = readUrl();
     if (!url) return undefined;
 
@@ -19,12 +19,17 @@ export const credentialedSync = <Database>(
       void current?.connection.close().catch(() => undefined);
       current = { url, connection: connect(url) };
     }
-    return sync(current.connection.database);
+    return current.connection.database;
+  };
+
+  const resolve = (): SyncFleet | undefined => {
+    const value = database();
+    return value === undefined ? undefined : sync(value);
   };
 
   const close = async () => {
     await current?.connection.close().catch(() => undefined);
   };
 
-  return { resolve, close };
+  return { resolve, database, close };
 };

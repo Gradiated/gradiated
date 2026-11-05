@@ -104,6 +104,112 @@ MFA every 12 hours; Tailscale records each session. The
 [RunPod guide](../infra/environments/prod/runpod/README.md#shell-access-and-recovery)
 describes recovery and moving existing hosts.
 
+## H200 TP2 alongside B300
+
+H200 GLM capacity is a separate `glm-dealign-sglang-h200` Rollout for the same
+public uncensored model, alongside the existing B300 Rollouts. It has a distinct
+runtime profile, H200 node selector and an explicit instance allowlist. The
+existing B300 runtime pins, placement, replica counts and fleet image pin do not
+need to change. Do not label H200 nodes as B300 or reuse the 400 GiB B300 request.
+The candidate launch settings and their unmeasured limits are in the
+[runtime README](../product/inference/runtimes/glm-sglang/README.md#h200-tp2-profile).
+
+1. Merge the preparation changes and let the product deployment install the
+   expanded ops-MCP enrollment contract and the GPU platform's H200 CRD enum.
+   Model deployment publishes a new `glm-5-3-flash-sglang` archive whose release
+   record lists `h200-tp2` in `runtimeProfiles`. Publishing it does not select it
+   for any existing B300 Rollout. Retain the current fleet image pin: a new base
+   image is not required on the already-rented H200 pods.
+2. Each new pod needs its own fresh single-use `tag:gpu-bootstrap` key. First
+   verify it is online as `gpu-bootstrap-<pod ID>`. A reused or expired key can
+   leave the container running without a usable tailnet identity. Recover that
+   bootstrap login inside the running pod; changing its provider environment,
+   image or ports resets it and can lose the reservation. Never paste keys into
+   chat or Git. If there is no working shell, obtain explicit authorization
+   before using registration's provider-reset option.
+3. Pods rented with the older pinned base image have an enrollment module that
+   recognizes only B300 and RTX PRO 6000. Once the bootstrap identity is online,
+   an administrator can prepare it from a merged commit without a provider
+   reset. Fetch `origin/main`, use the full merged SHA containing H200 support,
+   review the dry run, then apply:
+
+   ```sh
+   git fetch origin main
+   python3 tools/gpu/prepare-enrollment.py --gpu H200 --pod s0j3lwoqorm674 --source "$MERGED_SOURCE_SHA"
+   python3 tools/gpu/prepare-enrollment.py --gpu H200 --pod s0j3lwoqorm674 --source "$MERGED_SOURCE_SHA" --apply
+   ```
+
+   The helper uses administrator Tailscale SSH, including its normal MFA
+   checkpoint. It requires the matching bootstrap identity, exactly two idle
+   H200 GPUs and no existing enrollment. It atomically updates only `enroll.py`
+   and the result schema, retaining `.before-h200` backups. It does not restart
+   processes or touch provider settings. A newly built image already contains
+   these files. To undo preparation before enrollment, restore those two backups
+   over the same administrator SSH path. After enrollment, leave the host's
+   software intact and roll back model placement instead.
+4. Use the private `register_instance` path above with `reset_running_pod: false`.
+   Commit each returned measured `GpuHost`, render its permissions and secret
+   projection, and verify the Node is Ready. Do not invent instance UUIDs,
+   memory budgets or management-secret references from the provider pod ID.
+5. Download the published SGLang `release.json`. Its source must include the H200
+   profile; an existing B300-only archive is rejected. Stage one H200 replica
+   using the registered instance UUIDs, initially choosing only the first host:
+
+   ```sh
+   python3 tools/gpu/stage-glm-pool.py --gpu h200 "$RELEASE_JSON" "$BUNDLE_SOURCE_SHA" --instances "$H200_INSTANCE_UUID"
+   python3 tools/gpu/stage-glm-pool.py --gpu h200 "$RELEASE_JSON" "$BUNDLE_SOURCE_SHA" --instances "$H200_INSTANCE_UUID" --write
+   python3 tools/gpu/render-config.py
+   node tools/models/model-replica-rules.mjs
+   ```
+
+   Review and merge the generated runtime catalogue, model catalogue, H200
+   Rollout, controller ConfigMap, model ApplicationSet and replica-alert rules.
+   The helper validates committed RunPod H200 inventory with two GPUs, at least
+   32 CPU and 320 GiB of allocatable RAM. It creates one replica with no surge,
+   an HPA cap of one, and `serving_mode: qualification`. The separate private
+   runtime model ID keeps that pool out of public routing. B300 definitions are
+   preserved, including other canaries for the same public model.
+6. On H200, require cold-cache model load and warmup, no kernel/Marlin/FlashMLA
+   errors, SDK qualification of the exact process incarnation, streaming and
+   tools, reasoning, prefix-cache reuse, mixed and long prompts, cancellation,
+   queue-full/expiry behavior, concurrency four and normal drain. Record GPU
+   memory and pool capacities, TTFT and decode rate. CPU tests and successful
+   manifest rendering do not satisfy this gate. Inspect model loads that die
+   before readiness; do not bypass warmup or SDK analysis to admit them.
+7. After those checks pass, rerun the same staging command with `--promote --write`,
+   render both manifests and alert rules again, and review the production-mode
+   change. Promotion requires the exact previously staged model and runtime.
+   It maps qualified H200 endpoints to the existing public model, so the gateway
+   can route across both GPU pools. Argo's manual pause and SDK analysis still
+   apply; never use full promotion to skip them. Observe the initial exposure
+   for at least 20 minutes before expanding.
+
+To stage all three hosts for isolated qualification, supply all three registered
+UUIDs to `--instances` and `--replicas 3` on the initial staging call; otherwise
+leave replicas at one. Later changes to the allowlist, replica/HPA caps, runtime
+or resources require an explicit reviewed catalogue edit and regeneration: the
+helper refuses to overwrite a different existing deployment. Recheck capacity
+and qualify each new process. Keep both GPU pools until routed H200 availability
+and performance are measured; H200 capacity does not justify retiring B300s.
+
+Rollback H200 public exposure by changing only its `serving_mode` to
+`qualification` and regenerating. To stop the H200 workload, set only its
+`autoscaling.paused_replicas` to `0`, render, and wait for the normal request drain.
+Keep its manifests, immutable runtime, enrolled hosts and provider reservations
+for inspection and retry. A new runtime can be staged as another isolated
+revision through an explicit reviewed edit. Neither rollback nor qualification
+should reset or terminate a RunPod pod.
+
+## B200 alongside B300
+
+B200 GLM capacity is a separate `glm-dealign-sglang-b200` Rollout for the same
+public uncensored model, staged and promoted exactly like the H200 pool above
+with `--gpu B200` for enrollment preparation and `--gpu b200` for staging. B200
+is Blackwell, so its `b200-pcp2` profile keeps the B300 launch settings and
+halves the admission limit to eight requests for its smaller HBM. It requests
+320 GiB of host RAM and never changes B300 pins, placement or replica counts.
+Record the measured pool capacity before raising that limit.
+
 ## Deploy and verify a model
 
 Update its pinned bundle and release metadata in the GPU runtime catalogue and

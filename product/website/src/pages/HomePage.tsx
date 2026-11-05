@@ -5,10 +5,7 @@ import type { CSSProperties, ReactElement, ReactNode } from "react";
 import {
   Arrow,
   Band,
-  BottomHaze,
   Footer,
-  HeroBeam,
-  HeroBeamRaw,
   HomeFlow,
   InferenceFlow,
   LoopSection,
@@ -46,25 +43,22 @@ export const HomePage = (): ReactElement => (
     <Nav />
 
     <Band>
+      {/* RELAUNCH: the hero is the statement, left-aligned on the page
+          ground, with the argument directly beneath it — no beams, no
+          centred stage. */}
       <Module bleed className="gr-module--fold" index={0}>
-        {/* Both beams, layered: the colour field breathes underneath and the
-            glyph field is inked over it — the engine's language drawn on the
-            hero's light. Same wrapper, same cone, so they register. */}
-        <HeroBeam />
-        <HeroBeamRaw />
-        <div className="gr-fold-centred">
+        <div className="gr-fold-left">
           <h1 className="gr-display gr-home-title">
-            <span className="gr-hero-line">
-              <Reveal by="word">Run any AI model in production,</Reveal>{" "}
+            {/* Two readings of one line: desktop keeps the hyphen, the phone
+                drops it so the words wrap on the module without a split. */}
+            <span className="gr-home-title-wide">
+              <Reveal by="word">
+                The cheapest way to run open-source models.
+              </Reveal>
             </span>
-            <span className="gr-hero-line">
-              <Reveal by="word" from={6}>
-                benchmark, or post train your own
-              </Reveal>{" "}
-            </span>
-            <span className="gr-hero-line">
-              <Reveal by="word" from={12}>
-                based on your traffic.
+            <span className="gr-home-title-narrow">
+              <Reveal by="word">
+                The cheapest way to run open source models.
               </Reveal>
             </span>
           </h1>
@@ -146,7 +140,6 @@ export const HomePage = (): ReactElement => (
 
     {/* Figma 509:645 — the fixed haze over the viewport's bottom edge;
         it sits out the hero and fades in past the first fold */}
-    <BottomHaze />
   </Substrate>
 );
 

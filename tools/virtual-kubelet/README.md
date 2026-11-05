@@ -151,6 +151,13 @@ remain unchanged until their pods drain. Select the runtime and placement in `gp
 catalogue; an unstaged candidate retries while existing replicas keep serving.
 The controller image is built and pinned by the normal application release.
 
+The host agent accepts `GLM_SGLANG_PROFILE` values `b300-pcp2`, `b200-pcp2`, and
+`h200-tp2` from the runtime catalogue. It validates these profiles when rebuilding
+the proxy for existing pods as well as before launching new ones, so a bundle
+update must support every active runtime's environment. Configuration tests check
+the current catalogue against the host agent; an incompatible agent can crash
+at startup and trigger the launcher's bundle rollback without restarting models.
+
 The model configuration names the runtime digest, replica count, deadline and
 placement. Optional `max_surge` is a positive integer, defaulting to one; GLM
 Dealign permits two extra replicas while retaining `maxUnavailable: 0`. Actual
@@ -180,6 +187,7 @@ namespaces it deploys into, but the operator can cordon nodes only once
 
 Removing a model is explicit, because deleting its directory deletes its
 application but leaves the Rollout serving (`preserveResourcesOnDeletion`):
+
 1. Withdraw the model from traffic.
 2. Remove it from `models.json` and delete `gpu-inference/models/<model>/` in
    the same change, render and merge.
@@ -430,6 +438,30 @@ no other host starts until the pins change or someone sets the
 restarts only that host. A host on the old image keeps its old bundle until it
 is re-imaged.
 
+Before an in-place bundle update, every Ready model pod must have a qualified
+runtime and enters the protected baseline for verification and soak. Non-Ready
+pods whose current containers failed SDK qualification do not block the update.
+Neither do non-Ready pods whose models are explicitly `unavailable` in the live
+PostgreSQL catalog: the worker intentionally skips SDK qualification for those
+models, and the gateway rejects their customer requests. The operator resolves
+catalog identity from `gradiated.com/serving-model-id`, falling back to
+`gradiated.com/model-id`; the Rollout's name is not the catalog identity.
+
+Enabled models still wait for readiness and qualification. Missing identities,
+unknown models and retired models retain the default wait; a catalog read error
+leaves `Apply` unchanged and is retried. After reading the catalog, the operator
+reads pods again so a newly Ready pod joins the baseline. Every Ready pod stays
+protected regardless of model availability or qualification-error annotations.
+Serial host order, failure holds and image rollout behavior are unchanged. This
+allows host maintenance while a model is disabled without changing its catalog
+status, fabricating a qualification result, or restarting model processes.
+Existing installations must reapply the reviewed
+[`gpu-fleet-db-bootstrap.yaml`](../../infra/environments/prod/us-east-1/kubernetes/operations/gpu-fleet-db-bootstrap.yaml)
+job before deploying this catalog-aware gate, to grant the fleet role read access
+to `models`. Confirm the grants and remove the temporary bootstrap resources as
+described in the operations guide. The operator reuses its rotating PostgreSQL
+credential and needs no additional Kubernetes or AWS permissions.
+
 Only the leader acts, and it checks its lease before every side effect. Status
 writes carry the `GpuHost`'s resourceVersion, so a deposed leader's write fails.
 An enrollment records who started it and when; a new leader waits until that run
@@ -488,7 +520,6 @@ by `e2e_image.py` contains `/etc/gradiated/test-control-server`, without which
 python3 product/inference/images/gpu-base/tests/e2e_image.py /tmp/gpu-fleet-e2e
 (cd product/services/gpu-fleet && GPU_FLEET_E2E=/tmp/gpu-fleet-e2e pnpm exec vitest run --config vitest.e2e.config.ts)
 ```
-
 
 ### Reserving an isolated qualification slot
 

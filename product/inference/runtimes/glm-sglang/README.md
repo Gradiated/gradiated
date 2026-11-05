@@ -1,16 +1,68 @@
-# GLM Flash PCP2 runtime
+# GLM Flash SGLang runtime
 
 `bundles/glm-5-3-flash-sglang` packages SGLang source
 `f171859219b54e1dad45dda60028034490836974`, CPython 3.12.13, and the
 hash-locked Linux x86_64 dependencies. It serves
 `dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4` at revision
-`745aac2ff0f10acf961f396df3f9418598aa7327` using two B300 GPUs.
+`745aac2ff0f10acf961f396df3f9418598aa7327` using two B300 GPUs by default.
 The profile uses TP2/PCP2 with interleaved context parallelism, Marlin W4A16
 experts, two MTP draft steps, FP8 KV, a 16,384-token prefill budget,
 shortest-prefill-first scheduling, and 64 decode rounds between prefill steps.
 Prefill CUDA graphs are disabled; decode graphs remain enabled. Prefix caching
 uses the native pinned SGLang configuration. Actual resolved pool geometry must
 be recorded during GPU qualification.
+
+## H200 TP2 profile
+
+The same archive also carries `GLM_SGLANG_PROFILE=h200-tp2`. The default
+`b300-pcp2` profile retains the B300 launch settings above. The service checks
+both assigned GPU names before starting the backend and refuses a mismatched
+profile. H200 enrollment and placement retain the `H200` product identity;
+GH200 is not accepted as H200.
+
+H200 uses TP2 without prefill context parallelism, Marlin W4A16 experts, a
+bfloat16 KV cache, `flashmla_sparse` DSA prefill (FA3 for pooled indices on
+SM90) and `fa3` DSA decode. This is SGLang's Hopper bfloat16 default. The FP8
+KV options do not work for GLM's pooled index (`index_kpool > 1`):
+`flashmla_kv` fails CUDA graph capture, and TileLang with FP8 KV starts but
+generates only token 0. Measured on a 2x H200 canary on 2026-11-05: correct
+answers at about 93-178 tokens/s for one request; bfloat16 KV halves KV
+capacity relative to FP8.
+It does not use the B300 profile's explicit `trtllm` sparse attention. GLM's
+four-token pooled index uses a logical page size of 256, giving FlashMLA its
+required 64 physical slots. H200 retains two MTP draft steps, the parsers,
+SMG, prefix caching, readiness, metrics, cancellation and drain lifecycle.
+
+The initial H200 limits are four active requests, two queued requests, a
+4,096-token prefill budget, 85% static device memory, and decode graphs through
+batch four. SMG, SGLang, warmup admission and exported capacity metrics use the
+same four-request limit. The runtime's `runtimes.json` entry declares the same
+`active_requests` for gateway routing weights; `tools/gpu/render-config.py`
+rejects an entry whose value differs from its launcher profile. The host profile requests and limits 32 CPU and
+320 GiB of system RAM, fitting the first pod's provider-reported 377 GB before
+enrollment measures its cgroup allowance. Each replica reserves both H200s.
+The 1M context setting remains a configured bound, not measured evidence of
+1M-token residency or latency. Record actual KV/recurrent pool capacity and
+qualify the longest supported requests on H200 before production promotion.
+
+Source inspection and CPU checks establish a candidate launch path, not GPU
+qualification. No H200 startup, numerical quality, long-context capacity or
+throughput result is claimed here. In particular, the full GLM NoPE/pooled-index
+FlashMLA and MTP paths must pass on the actual packaged runtime. See
+[H200 deployment preparation](../../../../docs/INSTANCE_SETUP_PLAN.md#h200-tp2-alongside-b300)
+for enrollment, staging, qualification, promotion and rollback.
+
+## B200 PCP2 profile
+
+The `b200-pcp2` profile serves the same checkpoint on two B200 GPUs and is
+selected from the assigned GPU names, like the other profiles.
+B200 (SM100) and B300 (SM103) share the Blackwell kernels; the pinned SGLang
+selects `trtllm` DSA for any compute capability 10 or later. The profile keeps
+every B300 launch setting except the admission limit: eight active requests,
+with decode graphs through batch eight, because each B200 has about two thirds
+of a B300's HBM. Hardware validation refuses B300 and GB200 GPUs for this
+profile and B200 GPUs for the B300 profile. No B200 startup, capacity or
+throughput result is claimed here; qualify it as described for H200.
 
 Three compatibility patches preserve the measured configuration: gate/up global-scale
 folding before Marlin conversion, the corresponding ModelOpt dispatch, and the

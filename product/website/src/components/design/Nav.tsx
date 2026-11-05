@@ -243,7 +243,13 @@ const Card = ({
   );
 };
 
-export const Nav = (): ReactElement => {
+/* RELAUNCH: the top bar is retired — the RailShell (App-level) is the
+   site's navigation now. Pages still call <Nav /> everywhere, so it
+   renders nothing rather than forcing a 20-file edit before the page
+   rejig; the full component is kept below for reference until then. */
+export const Nav = (): null => null;
+
+const LegacyNav = (): ReactElement => {
   const [active, setActive] = useState<number | null>(null);
   /** The active content's height; the band supplies its own width. */
   const [height, setHeight] = useState<number | null>(null);

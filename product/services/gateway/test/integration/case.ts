@@ -318,6 +318,9 @@ export class Case {
 
   async status(
     overrides: Partial<Omit<DeploymentRuntimeStatus, "deployment_id">> = {},
+    each: (
+      index: number,
+    ) => Partial<Omit<DeploymentRuntimeStatus, "deployment_id">> = () => ({}),
   ): Promise<void> {
     const values: Omit<DeploymentRuntimeStatus, "deployment_id"> = {
       schema_version: 1,
@@ -329,7 +332,7 @@ export class Case {
       ...overrides,
     };
 
-    for (const deployment of this.deployments) {
+    for (const [index, deployment] of this.deployments.entries()) {
       const digest = `sha256:${createHash("sha256").update(JSON.stringify(deployment.release)).digest("hex")}`;
       await this.redis.hSet(
         `deployment-status:{${digest}}`,
@@ -338,6 +341,7 @@ export class Case {
           ...values,
           runtime_revision: deployment.release.runtime_revision,
           ...overrides,
+          ...each(index),
           deployment_id: deployment.id,
         }),
       );

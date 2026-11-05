@@ -85,6 +85,12 @@ class GpuHostCrdTest(unittest.TestCase):
     def test_committed_hosts_are_admitted(self):
         self.kubectl('apply', '--dry-run=server', '-f', str(GPU / 'hosts.yaml'))
 
+    def test_two_h200_host_is_admitted(self):
+        self.apply(self.host(**{'inventory.gpuProduct': 'H200', 'inventory.gpuCount': 2}))
+
+    def test_two_b200_host_is_admitted(self):
+        self.apply(self.host(**{'inventory.gpuProduct': 'B200', 'inventory.gpuCount': 2}))
+
     def test_name_must_match_the_instance(self):
         document = self.host()
         document['metadata']['name'] = 'gpu-' + str(uuid.uuid4())

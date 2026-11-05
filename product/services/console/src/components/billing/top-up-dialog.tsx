@@ -98,7 +98,7 @@ export const TopUpDialog = ({
         toast.error("Payment declined", {
           description: message,
           action: {
-            label: "Pay with another card",
+            label: "Use another card",
             onClick: () => submit("checkout"),
           },
         });
@@ -157,15 +157,17 @@ export const TopUpDialog = ({
           ) : null}
         </Field>
 
-        <SavedCardSummary card={card}>
-          <button
-            type="button"
-            className="ml-auto shrink-0 font-medium underline underline-offset-4 hover:text-foreground/80"
-            onClick={onChangeCard}
-          >
-            {card ? "Change" : "Add card"}
-          </button>
-        </SavedCardSummary>
+        {card ? (
+          <SavedCardSummary card={card}>
+            <button
+              type="button"
+              className="ml-auto shrink-0 font-medium underline underline-offset-4 hover:text-foreground/80"
+              onClick={onChangeCard}
+            >
+              Change
+            </button>
+          </SavedCardSummary>
+        ) : null}
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>

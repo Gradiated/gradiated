@@ -71,6 +71,22 @@ def verify(root):
     assert front.max_concurrent_requests == 16 and front.queue_size == 2
     assert front.queue_timeout_secs == 60 and front.rate_limit_tokens_per_second == 0
     assert front.worker_urls == ['http://127.0.0.1:28084'] and front.disable_retries
+    _, hopper_backend, hopper_router = commands({**env, 'GLM_SGLANG_PROFILE': 'h200-tp2'})
+    hopper = parser.parse_args(hopper_backend[3:])
+    assert hopper.tp_size == 2 and not hopper.enable_prefill_cp
+    assert hopper.dsa_prefill_backend == 'flashmla_sparse' and hopper.dsa_decode_backend == 'fa3'
+    assert hopper.kv_cache_dtype == 'bfloat16'
+    assert hopper.page_size == 256 and hopper.moe_runner_backend == 'marlin'
+    assert hopper.max_running_requests == hopper.cuda_graph_max_bs_decode == 4
+    assert hopper.chunked_prefill_size == hopper.max_prefill_tokens == 4096
+    hopper_front = parse_router_args(hopper_router[3:])
+    assert hopper_front.max_concurrent_requests == 4 and hopper_front.queue_size == 2
+    _, b200_backend, b200_router = commands({**env, 'GLM_SGLANG_PROFILE': 'b200-pcp2'})
+    b200 = parser.parse_args(b200_backend[3:])
+    assert b200.tp_size == 2 and b200.enable_prefill_cp and b200.attn_cp_size == 2
+    assert b200.dsa_prefill_backend == b200.dsa_decode_backend == 'trtllm'
+    assert b200.max_running_requests == b200.cuda_graph_max_bs_decode == 8
+    assert parse_router_args(b200_router[3:]).max_concurrent_requests == 8
     assert compileall.compile_dir(site / 'sglang', quiet=1)
     assert compileall.compile_dir(root / 'glm-sglang', quiet=1)
     temporary.cleanup()

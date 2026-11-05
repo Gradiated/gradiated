@@ -1,0 +1,340 @@
+{
+  "schema_version": 1,
+  "captured_at_utc": "2026-11-04T16:01:18Z",
+  "evidence": "Measured synthetic agent-environment pilot; recovery after preserved overnight failure",
+  "model": {
+    "repository": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+    "revision": "1bae0e1088993b9b82de08f59de5be5a34e42170",
+    "mode": "chat / thinking disabled",
+    "placement": "TP4 on four existing GPUs; other four GPUs protected"
+  },
+  "training": {
+    "sol_sft": {
+      "epochs": 1.0,
+      "optimizer_updates": 7,
+      "rows": 26,
+      "completed": true,
+      "cpu_activation_offload": true,
+      "rank": 8,
+      "alpha": 16,
+      "peak_learning_rate": 5e-05,
+      "initialization": "Exact base, independent restart per arm",
+      "input_tokens": 1681135,
+      "supervised_assistant_tokens": 70550,
+      "families": {
+        "anomaly_investigation": 3,
+        "attribution_marketing": 3,
+        "build_insight_dashboard": 3,
+        "entity_lookup": 2,
+        "flags_experiments": 2,
+        "funnel_conversion": 2,
+        "llm_analytics": 2,
+        "retention_engagement": 2,
+        "sql_help": 2,
+        "tracking_quality": 2,
+        "trend_breakdown": 2,
+        "warehouse": 1
+      },
+      "dataset_sha256": "f90363e0a696cd4b221e6ec171544e475307d8d322c2e0c9a66fbc6196f1200e",
+      "served_adapter_sha256": "111ff869d316c320919ec8e8779c99343132e94d68526ae981d0273264813eaa",
+      "retention": "Final append-compatible phase supervised, earlier history retained as masked input; canonical native chat targets"
+    },
+    "rs_round1": {
+      "epochs": 1.0,
+      "optimizer_updates": 7,
+      "rows": 26,
+      "completed": true,
+      "cpu_activation_offload": true,
+      "rank": 8,
+      "alpha": 16,
+      "peak_learning_rate": 5e-05,
+      "initialization": "Exact base, independent restart per arm",
+      "input_tokens": 1785671,
+      "supervised_assistant_tokens": 99501,
+      "families": {
+        "anomaly_investigation": 3,
+        "attribution_marketing": 3,
+        "build_insight_dashboard": 3,
+        "entity_lookup": 2,
+        "flags_experiments": 2,
+        "funnel_conversion": 2,
+        "llm_analytics": 2,
+        "retention_engagement": 2,
+        "sql_help": 2,
+        "tracking_quality": 2,
+        "trend_breakdown": 2,
+        "warehouse": 1
+      },
+      "dataset_sha256": "c297cc6322cd5bb782259d46556ab13126a7d7a770a76e10ffd81012a4b4227c",
+      "served_adapter_sha256": "52ff2f27f3c3b67be793626fffa5158b10a8890690274d80b495a34403c28bb7",
+      "retention": "Final append-compatible phase supervised, earlier history retained as masked input; canonical native chat targets"
+    }
+  },
+  "test": {
+    "tasks": 24,
+    "families": 12,
+    "worlds": 4,
+    "roots": 120,
+    "samples_per_task_arm": 1,
+    "task_sha256": "c534c7c55fe022fb24cc62d619019c792c0aba482ca20a86956f14a8726a9d8c",
+    "all_roots_ok": true,
+    "root_errors": 0,
+    "unclean_resets": 0,
+    "proof_files_reverified": 431,
+    "harness_hashes_reverified": true,
+    "arms": {
+      "dsnov4-final-base": {
+        "planned": 24,
+        "primary_judged": 24,
+        "primary_passed": 8,
+        "secondary_judged": 24,
+        "secondary_passed": 9,
+        "judge_agreement": 23,
+        "judge_paired": 24
+      },
+      "dsnov4-rs_round1": {
+        "planned": 24,
+        "primary_judged": 24,
+        "primary_passed": 12,
+        "secondary_judged": 24,
+        "secondary_passed": 12,
+        "judge_agreement": 24,
+        "judge_paired": 24
+      },
+      "dsnov4-sol_sft": {
+        "planned": 24,
+        "primary_judged": 24,
+        "primary_passed": 10,
+        "secondary_judged": 24,
+        "secondary_passed": 9,
+        "judge_agreement": 23,
+        "judge_paired": 24
+      },
+      "gpt-sol": {
+        "planned": 24,
+        "primary_judged": 24,
+        "primary_passed": 22,
+        "secondary_judged": 24,
+        "secondary_passed": 23,
+        "judge_agreement": 23,
+        "judge_paired": 24
+      },
+      "sonnet55": {
+        "planned": 24,
+        "primary_judged": 24,
+        "primary_passed": 22,
+        "secondary_judged": 24,
+        "secondary_passed": 22,
+        "judge_agreement": 22,
+        "judge_paired": 24
+      }
+    },
+    "paired_vs_base": {},
+    "sonnet_identity": "claude-sonnet-5-5, native subscription, adaptive thinking",
+    "no_checkpoint_selection_using_test": true
+  },
+  "zero_update_control": {
+    "purpose": "Post-launch sensitivity diagnostic; preserve original baseline results separately",
+    "dev": {
+      "planned": 18,
+      "primary_judged": 18,
+      "primary_passed": 7,
+      "secondary_judged": 18,
+      "secondary_passed": 8
+    },
+    "test": {
+      "planned": 24,
+      "primary_judged": 24,
+      "primary_passed": 11,
+      "secondary_judged": 24,
+      "secondary_passed": 11
+    },
+    "test_RS_vs_zero": {
+      "primary": {
+        "win": 6,
+        "tie": 13,
+        "loss": 5
+      },
+      "secondary": {
+        "win": 4,
+        "tie": 17,
+        "loss": 3
+      }
+    },
+    "limits": "Exact zero LoRA update; serving-path and sampling variation remain possible. Public repeated-base probabilities also vary; no LoRA fault established."
+  },
+  "seeded_dev_repetitions": {
+    "at": 1793805370.3153036,
+    "scope": "Twoadditionalfixed-root-seedDEVrollouts/task/arm; nottrainingdata, notnewtasktypes; keptseparatefromoriginalunseededsingle-sampleDEV",
+    "planned_tasks": 18,
+    "planned_roots": 72,
+    "root_status": {
+      "dsnov4-base-replication|ok": 36,
+      "dsnov4-RS-replication|ok": 36
+    },
+    "invalid_counts": {},
+    "seed_verification": {
+      "direct_metadata_verified": 67,
+      "prepared_seed_only_early_process": 5
+    },
+    "judges": {
+      "primary": {
+        "paired_complete_tasks": 18,
+        "planned_tasks": 18,
+        "base_passed": 10,
+        "RS_passed": 17,
+        "rollouts_per_arm": 36,
+        "base_task_mean": 0.2777777777777778,
+        "RS_task_mean": 0.4722222222222222,
+        "RS_minus_base_pp": 19.444444444444443,
+        "task_wins": 6,
+        "task_losses": 1,
+        "task_ties": 11
+      },
+      "secondary": {
+        "paired_complete_tasks": 18,
+        "planned_tasks": 18,
+        "base_passed": 11,
+        "RS_passed": 18,
+        "rollouts_per_arm": 36,
+        "base_task_mean": 0.3055555555555556,
+        "RS_task_mean": 0.5,
+        "RS_minus_base_pp": 19.444444444444443,
+        "task_wins": 6,
+        "task_losses": 1,
+        "task_ties": 11
+      }
+    },
+    "limits": [
+      "Task-averagedpairedcompleteanalysis; missing/infra/invalidnotmodelFAIL",
+      "Commonrootseedstreams; helpersandlowprecisionbackendcanremainvariable",
+      "Same2syntheticworlds/12families; these72rolloutsarenot72independenttasks",
+      "No model/checkpointselectionfromfinaltest; no additionaltrainingupdate"
+    ],
+    "complete": true
+  },
+  "interpretation": [
+    "Original fresh test: base 8/24, Sol SFT 10/24, RS SFT 12/24, GPT Sol 22/24, Sonnet 5.5 22/24.",
+    "Zero-update test control 11/24 is close to trained RS 12/24; reliable learning gain is not established.",
+    "Sol demonstrations and rejection-sampled student demonstrations both use SFT. Label quantities differ; not an isolated algorithm comparison.",
+    "Only one trained RS round. The second rejection-sampling round (RS2 training run) was skipped by the preregistered time cutoff; RS1 completed seven optimizer updates.",
+    "New updated-student TRAIN rollouts are separately audited; they are not another training run."
+  ],
+  "limits": [
+    "Small task sample and clustered synthetic worlds, one reporting-product archetype.",
+    "DeepSeek chat mode differs from Sonnet adaptive thinking; not equal inference budgets.",
+    "Teacher data and student data have different tokens/actions despite matched 26 requests.",
+    "Seeded repeats are additional samples of 18 DEV tasks, not additional independent task types.",
+    "Original earlier 24-task benchmark and current fresh 24-task benchmark are different datasets; do not pool absolute rates."
+  ],
+  "training_coverage": {
+    "scope": "TRAIN-only coverage analysis, not new sampling or capability evaluation",
+    "candidate_tasks": 64,
+    "teacher_double_judge_accepted_unique_tasks": 60,
+    "student_double_judge_accepted_unique_tasks": 44,
+    "shared_accepted_tasks": 41,
+    "matched_training_tasks": 26,
+    "teacher_accepted_without_any_double_accepted_student_sample": 19,
+    "teacher_only_families": {
+      "warehouse": 2,
+      "sql_help": 2,
+      "attribution_marketing": 3,
+      "anomaly_investigation": 3,
+      "funnel_conversion": 2,
+      "build_insight_dashboard": 1,
+      "retention_engagement": 1,
+      "tracking_quality": 2,
+      "llm_analytics": 1,
+      "flags_experiments": 2
+    },
+    "not_used_in_matched_training": 19,
+    "caveat": "No double-accepted student sample is not proof of inability; incomplete, judge-sensitive and sampled failures must be distinguished. Matching both arms on successful tasks can exclude expert-only coverage.",
+    "hypothesis": "Broader teacher SFT including validated expert-only requests may teach additional analytical behaviors; not tested in these two matched 26-task runs."
+  },
+  "updated_student_reserve": {
+    "rows": 21,
+    "eligible_distinct_trajectories": 28,
+    "unique_tasks": 21,
+    "families": {
+      "anomaly_investigation": 2,
+      "attribution_marketing": 1,
+      "build_insight_dashboard": 2,
+      "entity_lookup": 3,
+      "flags_experiments": 2,
+      "funnel_conversion": 3,
+      "llm_analytics": 1,
+      "retention_engagement": 2,
+      "sql_help": 1,
+      "tracking_quality": 1,
+      "trend_breakdown": 2,
+      "warehouse": 1
+    },
+    "input_tokens": 1504493,
+    "assistant_tokens": 91381,
+    "rejected_counts": {
+      "not_double_judge_accepted": 36
+    },
+    "hashes": {
+      "rows": "29c1f2548d99020610206ec06ddf8d4371a309915b035dd13267abf454854878",
+      "metadata": "d5d3f78f3a691454f32cd4f7872499a9479918990b419651efa66c3584f5fffb",
+      "protocol": "b76ff3ef2493bf6ab59bfa3d5ea4ecca7bbeb3c642a665dca50d01ff63d3383d",
+      "freezer": "d49b23e065dc3ecc97a761f0005210f2a19546d0163a6ebe8e724dbe1ac93a20",
+      "encoder": "57c9388ec3eea600b327f623a5255c8608aa79bc8d663adad151dd6cd561d883"
+    },
+    "checks": [
+      "Sol+Terra pass bound to actual task/root/primary hashes",
+      "Clean reset/no root errors/complete finishes",
+      "Exact served student prompt tokens and finite aligned sampled-token logprobs",
+      "No grading-note inclusion, triple identical tool loop, overlength or duplicate prior frozen rows",
+      "TRAIN team/task IDs disjoint DEV and TEST"
+    ],
+    "representation": "Canonical native chat targets, final append-compatible phase supervised; earlier phases masked; not full all-call SFT or full-vocabulary teacher distributions",
+    "training_launched": false
+  },
+  "thinking_mode_diagnostic": {
+    "scope": "Post-test hypothesis diagnostic on four fixed DEV tasks, one sample per mode, untrained base model only. No TEST rerun or checkpoint selection.",
+    "selection": "Four first lexical families, hash-selected requests without performance scores",
+    "arms": {
+      "dsnov4-base-thinking": {
+        "tasks": 4,
+        "primary_passed": 3,
+        "secondary_passed": 3,
+        "mean_elapsed_s": 144.75,
+        "reasoning_chars_total": 114270,
+        "clean_roots": 4
+      },
+      "dsnov4-base-chat-check": {
+        "tasks": 4,
+        "primary_passed": 3,
+        "secondary_passed": 2,
+        "mean_elapsed_s": 78.925,
+        "reasoning_chars_total": 0,
+        "clean_roots": 4
+      }
+    },
+    "interpretation": "Native thinking works and retained reasoning is observed. Primary pass counts tied 3/4; secondary favored thinking 3/4 versus 2/4, with about1.8x higher mean elapsed time. Tiny mixed DEV evidence, not a general finding that thinking never helps.",
+    "protocol_sha256": "5453034b40c372e347bd38b12618af1f6b6846c92f21d3b4f3a27f0eea299583"
+  },
+  "terminal_integrity": {
+    "at": 1793808064.0210469,
+    "remaining_owned_group_members": [],
+    "resident_health_verified": true,
+    "protected_gpus": [
+      0,
+      1,
+      2,
+      7
+    ],
+    "no_new_training_after_initial_arms": true
+  },
+  "reserve_integrity": {
+    "rows": 21,
+    "unique_tasks": 21,
+    "new_canonical_requests_vs_initial26": 14,
+    "max_sequence_tokens": 97554,
+    "data_hashes_reverified": true,
+    "rows_unique": true,
+    "not_distinct_new_skills": true,
+    "no_training": true
+  }
+}

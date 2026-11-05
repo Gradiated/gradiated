@@ -3,11 +3,13 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { SectionFab } from "../../design";
+import { useRailDocNav } from "../../design/RailShell";
 import { ChipLayersArtwork } from "../../sand-library/ChipLayersArtwork";
 import { siliconColours } from "./materials";
 import { CleanRoom, WholeWafer } from "./FabricationLab";
@@ -433,6 +435,26 @@ export const FabricationJourney = () => {
     />
   );
 
+  /* The site rail carries the article's contents — doc mode, like the
+     sand journey and the handbook. */
+  const railGroups = useMemo(
+    () => [
+      {
+        items: chapters.map(({ id, label }) => ({
+          href: `#${id}`,
+          label,
+        })),
+      },
+    ],
+    [],
+  );
+  useRailDocNav({
+    title: "Sand to Thought",
+    current: activeChapter ? `#${activeChapter.id}` : "",
+    groups: railGroups,
+    backHref: "/library/",
+  });
+
   return (
     <article
       className="fab-article"
@@ -440,25 +462,6 @@ export const FabricationJourney = () => {
       style={{ "--fab-silicon": siliconColours.top } as CSSProperties}
     >
       <div className="fab-layout">
-        <aside className="fab-side gr-doc-side">
-          {articleLabels}
-          <nav aria-label="Article contents" className="gr-doc-nav">
-            <div className="gr-doc-nav-group">
-              {chapters.map((chapter) => (
-                <a
-                  className="gr-doc-nav-link"
-                  href={`#${chapter.id}`}
-                  key={chapter.id}
-                  aria-current={
-                    activeChapter?.id === chapter.id ? "location" : undefined
-                  }
-                >
-                  {chapter.label}
-                </a>
-              ))}
-            </div>
-          </nav>
-        </aside>
         <SectionFab label="Article contents">
           <div className="fab-menu-labels">{articleLabels}</div>
           {chapters.map((chapter) => (

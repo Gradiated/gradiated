@@ -152,7 +152,8 @@ retain verification telemetry; other workspaces retain normal production telemet
 The retired `x-gradiated-verification-deployment` header is rejected.
 
 The gateway selects an exact served release, then ranks its healthy, accepting
-deployments by rendezvous hash. Session affinity takes precedence; sessionless
+deployments by rendezvous hash, weighted by each runtime's reported
+`active_requests` (replicas that do not report keep an equal share). Session affinity takes precedence; sessionless
 chat requests hash their opening system/developer and first non-system messages,
 while SystemOne uses its opening state prefix. Keys include workspace, model,
 and release identity. Routing stores no affinity records or per-deployment concurrency leases.

@@ -27,8 +27,8 @@
   height: calc(100dvh + var(--book-run, 0px));
   /* Both edges of the full-bleed pull, so the run is as wide as the shell it
      contains and nothing overflows the page horizontally. */
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
+  width: var(--bleed-w, 100vw);
+  margin-left: calc(50% - var(--bleed-w, 100vw) / 2);
 }
 
 .gr-book {

@@ -54,9 +54,9 @@ const FAMILIES = [
 
 /** Put the theme on the root. */
 const applyToPage = (theme: string) => {
-  const root = document.querySelector<HTMLElement>(".gr-root");
-  if (!root) return;
-  root.dataset.theme = theme;
+  document.querySelectorAll<HTMLElement>(".gr-root").forEach((root) => {
+    root.dataset.theme = theme;
+  });
 };
 
 export const ThemeGallery = (): ReactElement => {

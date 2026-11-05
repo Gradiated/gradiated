@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ComponentType, ReactElement } from "react";
 import { Band, Footer, Module, Nav, Substrate } from "../components/design";
+import { useRailDocNav } from "../components/design/RailShell";
 import {
   AcceptableUseContent,
   DpaContent,
@@ -89,6 +90,26 @@ export const LegalPage = ({ slug }: { slug: LegalSlug }): ReactElement => {
     return () => observer.disconnect();
   }, [slug]);
 
+  /* The site rail carries the policy's sections — doc mode, like the
+     handbook. The page draws no sidebar of its own. */
+  const railGroups = useMemo(
+    () => [
+      {
+        items: sections.map((section) => ({
+          href: `#${section.id}`,
+          label: section.text,
+        })),
+      },
+    ],
+    [sections],
+  );
+  useRailDocNav({
+    title,
+    current: active ? `#${active}` : "",
+    groups: railGroups,
+    backHref: "/",
+  });
+
   return (
     <Substrate>
       <Nav />
@@ -102,24 +123,6 @@ export const LegalPage = ({ slug }: { slug: LegalSlug }): ReactElement => {
           </header>
 
           <div className="gr-doc">
-            <aside className="gr-doc-side">
-              {/* Absent rather than empty on a policy with no headings. */}
-              {sections.length > 1 ? (
-                <nav aria-label="Sections" className="gr-doc-nav">
-                  {sections.map((section) => (
-                    <a
-                      aria-current={section.id === active ? "page" : undefined}
-                      className="gr-doc-nav-link"
-                      href={`#${section.id}`}
-                      key={section.id}
-                    >
-                      {section.text}
-                    </a>
-                  ))}
-                </nav>
-              ) : null}
-            </aside>
-
             <article className="gr-doc-main gr-prose">
               <Content />
             </article>

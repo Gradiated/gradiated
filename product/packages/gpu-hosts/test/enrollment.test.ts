@@ -66,7 +66,9 @@ describe("GPU enrollment contract", () => {
         { ...instance, sku: "8x NVIDIA H100 80GB HBM3" },
         fields,
       ),
-    ).toThrow("qualified B300 and RTX PRO 6000");
+    ).toThrow(
+      "GPU enrollment supports B200, B300, H200 and RTX PRO 6000 hosts",
+    );
     expect(() =>
       enrollmentPayload(instance, { ...fields, api_endpoint: "10.40.1.1" }),
     ).toThrow();
@@ -81,6 +83,45 @@ describe("GPU enrollment contract", () => {
     expect(command).not.toMatch(/private|tskey/);
     expect(JSON.parse(input!)).toEqual(payload);
     expect(timeout).toBe(30 * 60 * 1000);
+  });
+
+  it("enrolls a two-H200 host without treating it as a B300", async () => {
+    const payload = enrollmentPayload(
+      { ...instance, sku: "2x NVIDIA H200" },
+      fields,
+    );
+    const inventory = { ...result, gpu_count: 2, gpu_product: "H200" };
+    await expect(
+      enroll(
+        vi.fn<RunSsh>(async () => JSON.stringify(inventory)),
+        target,
+        payload,
+      ),
+    ).resolves.toEqual(inventory);
+    expect(() =>
+      enrollmentPayload({ ...instance, sku: "2x NVIDIA GH200" }, fields),
+    ).toThrow();
+    expect(() =>
+      enrollmentPayload({ ...instance, sku: "2x NVIDIA H2000" }, fields),
+    ).toThrow();
+  });
+
+  it("enrolls a two-B200 host without treating it as a B300", async () => {
+    const payload = enrollmentPayload(
+      { ...instance, sku: "2x NVIDIA B200" },
+      fields,
+    );
+    const inventory = { ...result, gpu_count: 2, gpu_product: "B200" };
+    await expect(
+      enroll(
+        vi.fn<RunSsh>(async () => JSON.stringify(inventory)),
+        target,
+        payload,
+      ),
+    ).resolves.toEqual(inventory);
+    expect(() =>
+      enrollmentPayload({ ...instance, sku: "2x NVIDIA GB200" }, fields),
+    ).toThrow();
   });
 
   it("rejects a malformed result without echoing it", async () => {

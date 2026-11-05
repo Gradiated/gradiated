@@ -394,6 +394,7 @@ async fn a_rollout_keeps_a_healthy_release_until_its_replacement_is_ready() {
                     healthy: ready,
                     accepting_requests: ready
                         && (deployment.release.runtime_revision == "old" || new_accepting),
+                    active_requests: None,
                     reason_code: None,
                 })
                 .collect(),
@@ -457,6 +458,7 @@ async fn a_partial_replacement_does_not_reduce_the_serving_pool() {
                         } else {
                             index - 2 < new_accepting
                         },
+                        active_requests: None,
                         reason_code: None,
                     }
                 })
@@ -511,6 +513,7 @@ async fn rollout_sessions_keep_their_revision_when_another_replica_stops_accepti
                 received_at: metadata().received_at,
                 healthy: true,
                 accepting_requests: true,
+                active_requests: None,
                 reason_code: None,
             })
             .collect(),
@@ -530,6 +533,7 @@ async fn rollout_sessions_keep_their_revision_when_another_replica_stops_accepti
                 received_at: metadata().received_at,
                 healthy: true,
                 accepting_requests: deployment.id != Uuid::from_u128(100),
+                active_requests: None,
                 reason_code: None,
             })
             .collect(),
@@ -583,6 +587,7 @@ async fn a_single_release_uses_all_healthy_accepting_replicas() {
                 received_at: metadata().received_at,
                 healthy: index != 6,
                 accepting_requests: index != 7,
+                active_requests: None,
                 reason_code: None,
             })
             .collect(),
@@ -599,4 +604,86 @@ async fn a_single_release_uses_all_healthy_accepting_replicas() {
     }
     let expected: HashSet<_> = (100..106).map(Uuid::from_u128).collect();
     assert_eq!(selected_ids, expected);
+}
+
+#[tokio::test]
+async fn release_choice_follows_the_reported_active_request_limits() {
+    use crate::test_support::metadata;
+    use crate::DeploymentRuntimeStatus;
+
+    let mut state = TestServingState::ready();
+    let model = state.model.as_mut().unwrap();
+    let template = model.deployments[0].clone();
+    // One large replica on one runtime and three small ones on another, like a
+    // B300 serving beside an H200 pool.
+    model.deployments = (0..4)
+        .map(|index| {
+            let mut deployment = template.clone();
+            deployment.id = Uuid::from_u128(100 + index);
+            deployment.release.runtime_revision =
+                if index == 0 { "large" } else { "small" }.to_owned();
+            deployment
+        })
+        .collect();
+    let statuses = |weighted: bool| {
+        model
+            .deployments
+            .iter()
+            .map(|deployment| DeploymentRuntimeStatus {
+                schema_version: 1,
+                deployment_id: deployment.id,
+                runtime_revision: deployment.release.runtime_revision.clone(),
+                received_at: metadata().received_at,
+                healthy: true,
+                accepting_requests: true,
+                active_requests: weighted.then_some(
+                    if deployment.release.runtime_revision == "large" {
+                        16
+                    } else {
+                        4
+                    },
+                ),
+                reason_code: None,
+            })
+            .collect::<Vec<_>>()
+    };
+    let (weighted, unweighted) = (statuses(true), statuses(false));
+    state.statuses = Some(weighted);
+    let model = state.model.clone().unwrap();
+    let coordinator = RequestCoordinator::new(Arc::new(state));
+    let mut equal = TestServingState::ready();
+    equal.model = Some(model.clone());
+    equal.statuses = Some(unweighted);
+    let equal = RequestCoordinator::new(Arc::new(equal));
+
+    let selections = 4_000_u32;
+    let mut large = [0_u32; 2];
+    for selection in 0..selections {
+        for (count, coordinator) in large.iter_mut().zip([&coordinator, &equal]) {
+            let selected = coordinator
+                .prefer_ready_release(
+                    model.clone(),
+                    metadata().received_at,
+                    Some(selection.into()),
+                )
+                .await
+                .unwrap();
+            if selected.serving_deployment().unwrap().deployment.id == Uuid::from_u128(100) {
+                *count += 1;
+            }
+        }
+    }
+
+    // 16 / (16 + 4 + 4 + 4) = 0.571 with limits; one in four without them.
+    let share = |count: u32| f64::from(count) / f64::from(selections);
+    assert!(
+        (0.53..0.61).contains(&share(large[0])),
+        "{}",
+        share(large[0])
+    );
+    assert!(
+        (0.21..0.29).contains(&share(large[1])),
+        "{}",
+        share(large[1])
+    );
 }

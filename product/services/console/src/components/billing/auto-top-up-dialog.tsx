@@ -73,11 +73,7 @@ export const AutoTopUpDialog = ({
         billingAccountQuery(account.organization_id).queryKey,
         updated,
       );
-      toast.success(
-        updated.auto_top_up.enabled
-          ? "Auto top-up is on."
-          : "Auto top-up is off.",
-      );
+      toast.success("Auto top-up updated.");
       onOpenChange(false);
     },
     meta: { errorMessage: "Auto top-up could not be saved." },

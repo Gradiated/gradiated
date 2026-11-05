@@ -4,8 +4,10 @@ from http import HTTPStatus
 import importlib.util
 import os
 from pathlib import Path
-from types import SimpleNamespace
+import sys
+from types import ModuleType, SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 
 def source_root():
@@ -72,6 +74,32 @@ class SourceContract(unittest.TestCase):
         self.assertIn('full_num_used = full_capacity - (full_available_size + full_evictable_size)', text)
         self.assertIn('full_token_usage = full_num_used / full_capacity', text)
         self.assertIn('stats.full_token_usage = self.full_token_usage', text)
+
+    def test_native_hopper_fp8_backend_resolution_accepts_the_h200_profile(self):
+        tree = ast.parse((self.root / 'srt/arg_groups/overrides.py').read_text())
+        methods = [node for node in tree.body if isinstance(node, ast.FunctionDef)
+                   and node.name in ['_dsa_split_backend_resolution', '_check_dsa_backend_constraints']]
+        for node in methods:
+            node.decorator_list = []
+        module = ast.Module(body=[ast.ImportFrom(module='__future__', names=[ast.alias(name='annotations')], level=0),
+                                 *methods], type_ignores=[])
+        model = SimpleNamespace(architectures=['Glm5NextForConditionalGeneration'])
+        namespace = {'model_config_of': lambda view: SimpleNamespace(hf_config=model),
+                     '_DEEPSEEK_FAMILY_ARCHS': {model.architectures[0]},
+                     'get_platform': lambda: SimpleNamespace(is_npu=False, is_xpu=False, is_hip=False),
+                     'logger': SimpleNamespace(warning=lambda *args: None)}
+        exec(compile(ast.fix_missing_locations(module), 'pinned-hopper-resolution', 'exec'), namespace)
+        model_config = ModuleType('sglang.srt.configs.model_config')
+        model_config.is_deepseek_dsa = lambda config: True
+        torch = ModuleType('torch')
+        torch.cuda = SimpleNamespace(get_device_capability=lambda: (9, 0))
+        view = SimpleNamespace(kv_cache_dtype='fp8_e4m3', dsa_prefill_backend=None,
+                               dsa_decode_backend=None, enable_hisparse=False)
+        with patch.dict(sys.modules, {'sglang.srt.configs.model_config': model_config, 'torch': torch}):
+            resolved = namespace['_dsa_split_backend_resolution'](view)
+            self.assertEqual(resolved, {'dsa_prefill_backend': 'flashmla_kv', 'dsa_decode_backend': 'flashmla_kv'})
+            view.dsa_prefill_backend = view.dsa_decode_backend = 'flashmla_kv'
+            self.assertEqual(namespace['_dsa_split_backend_resolution'](view), {})
 
 
 if __name__ == '__main__':

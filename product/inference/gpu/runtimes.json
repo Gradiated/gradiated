@@ -213,6 +213,7 @@
       "runtime_model_name": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4"
     },
     "gpus": 2,
+    "active_requests": 16,
     "cpu": "32",
     "memory": "400Gi",
     "startup_timeout": 3600,
@@ -237,6 +238,7 @@
       "runtime_model_name": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4"
     },
     "gpus": 2,
+    "active_requests": 16,
     "cpu": "32",
     "memory": "400Gi",
     "startup_timeout": 3600,
@@ -245,5 +247,56 @@
       "TENSOR_PARALLEL_SIZE": "2"
     },
     "request_memory": "256Gi"
+  },
+  "b59381affd94e48a1b477c23be905ffb2213b47f199c35749b01f625a970be86": {
+    "image": "gradiated/glm-sglang-bundle@sha256:b59381affd94e48a1b477c23be905ffb2213b47f199c35749b01f625a970be86",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v3": "61c08034c719091931ced7c8b9569615a015993b3a0c36d1f6ec35006a1c3f4b"
+    },
+    "model_id": "dealignai/glm-5.3-flash-uncensored-sglang-h200",
+    "release": {
+      "schema_version": 1,
+      "model_path": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+      "model_revision": "745aac2ff0f10acf961f396df3f9418598aa7327",
+      "tokenizer_path": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+      "tokenizer_revision": "745aac2ff0f10acf961f396df3f9418598aa7327",
+      "runtime_revision": "glm-h200-61c08034c719",
+      "runtime_model_name": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4"
+    },
+    "gpus": 2,
+    "active_requests": 4,
+    "cpu": "32",
+    "memory": "320Gi",
+    "startup_timeout": 3600,
+    "warmup": true,
+    "environment": {
+      "TENSOR_PARALLEL_SIZE": "2",
+      "GLM_SGLANG_PROFILE": "h200-tp2"
+    }
+  },
+  "cdded47c1a89f609b0679a2673f8ed978c1aa1564d69ac088d7c92d13144f6fa": {
+    "image": "gradiated/glm-sglang-bundle@sha256:cdded47c1a89f609b0679a2673f8ed978c1aa1564d69ac088d7c92d13144f6fa",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v3": "98504ece9ea980e66012089f6f3d03217600d4d51cf240e98677cb1b97e27feb"
+    },
+    "model_id": "dealignai/glm-5.3-flash-uncensored-sglang-b200",
+    "release": {
+      "schema_version": 1,
+      "model_path": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+      "model_revision": "745aac2ff0f10acf961f396df3f9418598aa7327",
+      "tokenizer_path": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+      "tokenizer_revision": "745aac2ff0f10acf961f396df3f9418598aa7327",
+      "runtime_revision": "glm-b200-98504ece9ea9",
+      "runtime_model_name": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4"
+    },
+    "gpus": 2,
+    "active_requests": 8,
+    "cpu": "32",
+    "memory": "320Gi",
+    "startup_timeout": 3600,
+    "warmup": true,
+    "environment": {
+      "TENSOR_PARALLEL_SIZE": "2"
+    }
   }
 }

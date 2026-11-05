@@ -49,6 +49,7 @@ const engine = (
     ping: fleet.ping,
     pins: async () => pinned,
     enrollment: async () => fleet.enrollment,
+    modelStatuses: async () => new Map(),
     mode: "act",
     leading: () => true,
     identity: "gpu-fleet-a",
@@ -512,7 +513,42 @@ describe("pods as the virtual kubelet publishes them", () => {
       terminating: false,
       gpus: 4,
       qualifiedRuntime: `${DEEPSEEK}:1`,
+      qualificationFailed: false,
     });
+  });
+
+  it("reads a qualification error only for the running container", () => {
+    const pod = virtualKubeletPod(
+      "kev",
+      "kev-86bc8f5569-tkp42",
+      `gpu-${FIRST}`,
+      false,
+    );
+    const failed = (error: string) =>
+      clusterPod({
+        ...pod,
+        metadata: {
+          ...pod.metadata,
+          annotations: { "gradiated.com/qualification-error": error },
+        },
+      })?.qualificationFailed;
+
+    expect(failed("runpod://4242:2026-10-23T09:12:44Z")).toBe(true);
+    expect(failed("runpod://4242:2026-10-22T08:00:00Z")).toBe(false);
+    expect(clusterPod(pod)?.qualificationFailed).toBe(false);
+  });
+
+  it("resolves the catalog identity from annotations, including an explicit empty mapping", () => {
+    const pod = virtualKubeletPod("kev", "kev-test", `gpu-${FIRST}`);
+    const annotations = pod.metadata.annotations as Record<string, string>;
+    annotations["gradiated.com/model-id"] = "private/kev";
+    expect(clusterPod(pod)?.modelId).toBe("private/kev");
+
+    annotations["gradiated.com/serving-model-id"] = "jaredpalmer/kev-9b";
+    expect(clusterPod(pod)?.modelId).toBe("jaredpalmer/kev-9b");
+
+    annotations["gradiated.com/serving-model-id"] = "";
+    expect(clusterPod(pod)?.modelId).toBeUndefined();
   });
 
   // Three 8-GPU B300 hosts, each of the two serving hosts running one
@@ -943,6 +979,228 @@ describe("in-place bundle update", () => {
     );
     const uid = fleet.podsOn(FIRST)[0]!.metadata.uid;
     expect(Object.keys(rollout(fleet, FIRST)?.baseline ?? {})).toEqual([uid]);
+  });
+
+  it("does not wait for a serving pod whose running container failed qualification", async () => {
+    const { fleet, pod } = bundleFleet();
+    fleet.notReady.add(pod);
+    const item = fleet.kube.objects.get(`${PODS}/${pod}`) as any;
+    item.metadata.annotations["gradiated.com/qualification-error"] =
+      "runpod://4242:2026-10-23T09:12:44Z";
+
+    await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () => rollout(fleet, FIRST)?.result === "Succeeded",
+    );
+
+    expect(fleet.sim(FIRST)).toMatchObject({ bundle: NEW_BUNDLE });
+    expect(rollout(fleet, FIRST)?.baseline).toEqual({});
+  });
+
+  it("updates past an unready unavailable model without qualification or pod restarts", async () => {
+    const { fleet, pod } = bundleFleet();
+    fleet.notReady.add(pod);
+    const item = fleet.kube.objects.get(`${PODS}/${pod}`) as any;
+    item.metadata.annotations["gradiated.com/model-id"] = "jaredpalmer/kev-9b";
+    delete item.metadata.annotations["gradiated.com/qualified-runtime"];
+    const events = await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () => rollout(fleet, FIRST)?.result === "Succeeded",
+      {
+        modelStatuses: async () =>
+          new Map([["jaredpalmer/kev-9b", "unavailable"]]),
+      },
+    );
+
+    expect(rollout(fleet, FIRST)?.baseline).toEqual({});
+    expect(fleet.sim(FIRST)).toMatchObject({ bundle: NEW_BUNDLE, resets: 0 });
+    expect(fleet.podsOn(FIRST).map((item) => item.metadata.name)).toEqual([
+      pod,
+    ]);
+    expect(events).toContainEqual({
+      event: "gpu_bundle_unavailable_models_excluded",
+      instance_id: FIRST,
+      bundle: NEW_BUNDLE,
+      pods: [{ uid: item.metadata.uid, model_id: "jaredpalmer/kev-9b" }],
+    });
+  });
+
+  it.each(["available", "retired", undefined] as const)(
+    "keeps waiting for an unready pod when its catalog status is %s",
+    async (status) => {
+      const { fleet, pod } = bundleFleet();
+      fleet.notReady.add(pod);
+      const item = fleet.kube.objects.get(`${PODS}/${pod}`) as any;
+      item.metadata.annotations["gradiated.com/model-id"] =
+        "jaredpalmer/kev-9b";
+      const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+      const overrides = {
+        modelStatuses: async () =>
+          new Map(status ? [["jaredpalmer/kev-9b", status]] : []),
+      };
+      await run(
+        fleet,
+        pinned,
+        () => rollout(fleet, FIRST)?.step === "Apply",
+        overrides,
+      );
+      await run(fleet, pinned, () => false, overrides, 10);
+
+      expect(rollout(fleet, FIRST)?.step).toBe("Apply");
+      expect(fleet.sim(FIRST).bundle).toBe(OLD_BUNDLE);
+    },
+  );
+
+  it("leaves Apply unchanged if the catalog cannot be read, then retries the read", async () => {
+    const { fleet, pod } = bundleFleet();
+    fleet.notReady.add(pod);
+    const item = fleet.kube.objects.get(`${PODS}/${pod}`) as any;
+    item.metadata.annotations["gradiated.com/model-id"] = "jaredpalmer/kev-9b";
+    const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+    const overrides = {
+      modelStatuses: async () => {
+        throw new Error("catalog unavailable");
+      },
+    };
+    await run(
+      fleet,
+      pinned,
+      () => rollout(fleet, FIRST)?.step === "Apply",
+      overrides,
+    );
+    await run(fleet, pinned, () => false, overrides, 10);
+    expect(rollout(fleet, FIRST)).toMatchObject({
+      step: "Apply",
+      lastError: "catalog unavailable",
+    });
+    expect(fleet.sim(FIRST).bundle).toBe(OLD_BUNDLE);
+
+    await run(
+      fleet,
+      pinned,
+      () => rollout(fleet, FIRST)?.result === "Succeeded",
+      {
+        modelStatuses: async () =>
+          new Map([["jaredpalmer/kev-9b", "unavailable"]]),
+      },
+    );
+    expect(fleet.sim(FIRST)).toMatchObject({ bundle: NEW_BUNDLE, resets: 0 });
+  });
+
+  it("uses the serving model identity rather than the Rollout name or private identity", async () => {
+    const { fleet, pod } = bundleFleet();
+    fleet.notReady.add(pod);
+    const item = fleet.kube.objects.get(`${PODS}/${pod}`) as any;
+    item.metadata.annotations["gradiated.com/model-id"] = "private/kev";
+    item.metadata.annotations["gradiated.com/serving-model-id"] =
+      "jaredpalmer/kev-9b";
+    const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+    const overrides = {
+      modelStatuses: async () =>
+        new Map([
+          ["private/kev", "available" as const],
+          ["jaredpalmer/kev-9b", "unavailable" as const],
+        ]),
+    };
+    await run(
+      fleet,
+      pinned,
+      () => rollout(fleet, FIRST)?.result === "Succeeded",
+      overrides,
+    );
+    expect(rollout(fleet, FIRST)?.baseline).toEqual({});
+    expect(fleet.sim(FIRST).bundle).toBe(NEW_BUNDLE);
+  });
+
+  it("still protects a Ready unavailable model even with a qualification error", async () => {
+    const { fleet, pod } = bundleFleet();
+    const item = fleet.kube.objects.get(`${PODS}/${pod}`) as any;
+    item.metadata.annotations["gradiated.com/model-id"] = "jaredpalmer/kev-9b";
+    item.metadata.annotations["gradiated.com/qualification-error"] =
+      "runpod://4242:2026-10-23T09:12:44Z";
+    const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+    const overrides = {
+      modelStatuses: async () =>
+        new Map([["jaredpalmer/kev-9b", "unavailable" as const]]),
+    };
+    await run(
+      fleet,
+      pinned,
+      () => rollout(fleet, FIRST)?.step === "Soak",
+      overrides,
+    );
+    expect(rollout(fleet, FIRST)?.baseline).toHaveProperty(item.metadata.uid);
+
+    fleet.kube.objects.delete(`${PODS}/${pod}`);
+    await run(
+      fleet,
+      pinned,
+      () => rollout(fleet, FIRST)?.result === "Failed",
+      overrides,
+    );
+    expect(rollout(fleet, FIRST)?.lastError).toBe(
+      "A serving pod restarted or left the host during the bundle update",
+    );
+  });
+
+  it("still waits for qualification of a Ready unavailable model", async () => {
+    const { fleet, pod } = bundleFleet();
+    const item = fleet.kube.objects.get(`${PODS}/${pod}`) as any;
+    item.metadata.annotations["gradiated.com/model-id"] = "jaredpalmer/kev-9b";
+    const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+    const overrides = {
+      modelStatuses: async () =>
+        new Map([["jaredpalmer/kev-9b", "unavailable" as const]]),
+    };
+    await run(
+      fleet,
+      pinned,
+      () => rollout(fleet, FIRST)?.step === "Apply",
+      overrides,
+    );
+    delete item.metadata.annotations["gradiated.com/qualified-runtime"];
+    await engine(fleet, pinned, overrides).rollouts.pass();
+    expect(rollout(fleet, FIRST)?.step).toBe("Apply");
+    expect(fleet.sim(FIRST).bundle).toBe(OLD_BUNDLE);
+  });
+
+  it("rechecks readiness after reading the catalog and protects a pod that became Ready", async () => {
+    const { fleet, pod } = bundleFleet();
+    fleet.notReady.add(pod);
+    const item = fleet.kube.objects.get(`${PODS}/${pod}`) as any;
+    item.metadata.annotations["gradiated.com/model-id"] = "jaredpalmer/kev-9b";
+    const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+    const overrides = {
+      modelStatuses: async () => {
+        fleet.notReady.delete(pod);
+        await fleet.observe();
+        return new Map([["jaredpalmer/kev-9b", "unavailable" as const]]);
+      },
+    };
+    await run(
+      fleet,
+      pinned,
+      () => rollout(fleet, FIRST)?.result === "Succeeded",
+      overrides,
+    );
+    expect(rollout(fleet, FIRST)?.baseline).toHaveProperty(item.metadata.uid);
+  });
+
+  it("still waits when the qualification error names an earlier container", async () => {
+    const { fleet, pod } = bundleFleet();
+    fleet.notReady.add(pod);
+    const item = fleet.kube.objects.get(`${PODS}/${pod}`) as any;
+    item.metadata.annotations["gradiated.com/qualification-error"] =
+      "runpod://4242:2026-10-22T08:00:00Z";
+    const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+
+    await run(fleet, pinned, () => rollout(fleet, FIRST)?.step === "Apply");
+    await run(fleet, pinned, () => false, {}, 10);
+
+    expect(rollout(fleet, FIRST)).toMatchObject({ step: "Apply" });
+    expect(fleet.host(FIRST).status?.rollout?.bundle).toBeUndefined();
   });
 
   it("fails and holds the fleet when the host rejects the bundle", async () => {

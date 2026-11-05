@@ -1,6 +1,7 @@
 import { memo, useMemo, useRef } from "react";
 import type { ReactElement } from "react";
 import { SectionFab } from "../../design";
+import { useRailDocNav } from "../../design/RailShell";
 import { SandCircuitArtwork } from "../../design/SandCircuitArtwork";
 import article, {
   contents,
@@ -50,49 +51,38 @@ export const SandJourney = (): ReactElement => {
 
   useSandAnimation(hostRef);
 
+  /* The site rail carries the guide's contents — the journey is the
+     doc mode's richest case: chapters with live subsections unfolding
+     under the active one, tracked by the scroll spy. */
+  const railGroups = useMemo(
+    () => [
+      {
+        items: chapters.flatMap(({ id, label }) => [
+          { href: `#${id}`, label },
+          ...(active === id
+            ? (subsections[id] ?? [])
+                .filter((section) => section.id !== id)
+                .map((section) => ({
+                  href: `#${section.id}`,
+                  label: section.label,
+                  sub: true,
+                }))
+            : []),
+        ]),
+      },
+    ],
+    [active, subsections],
+  );
+  useRailDocNav({
+    title: "Sand to Thought",
+    current: `#${activeSection ?? active ?? ""}`,
+    groups: railGroups,
+    backHref: "/library/",
+  });
+
   return (
     <article className="sand-journey" ref={hostRef}>
       <div className="sand-layout">
-        <aside className="sand-side gr-doc-side">
-          <nav aria-label="Guide contents" className="gr-doc-nav">
-            <div className="gr-doc-nav-group">
-              <p className="gr-doc-nav-heading gr-label">Sand to Thought</p>
-              {chapters.map(({ id, label }) => (
-                <div className="sand-chapter" key={id}>
-                  <a
-                    aria-current={active === id ? "location" : undefined}
-                    className="gr-doc-nav-link"
-                    href={`#${id}`}
-                  >
-                    {label}
-                  </a>
-                  {active === id && subsections[id]?.length ? (
-                    <ul
-                      className="sand-subsections"
-                      aria-label={`${label} sections`}
-                    >
-                      {subsections[id].map((section) => (
-                        <li key={section.id}>
-                          <a
-                            aria-current={
-                              activeSection === section.id
-                                ? "location"
-                                : undefined
-                            }
-                            className="sand-subsection-link"
-                            href={`#${section.id}`}
-                          >
-                            {section.label}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          </nav>
-        </aside>
         <SectionFab label="Guide contents">
           {chapters.map(({ id, label }) => (
             <a

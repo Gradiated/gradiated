@@ -233,17 +233,27 @@ impl RequestCoordinator {
                 .collect();
             let accepting_count = healthy_deployment_count(&candidates, &accepting, now);
             if accepting_count > 0 {
-                eligible.extend(model.deployments.iter().enumerate().filter_map(
-                    |(candidate, deployment)| {
-                        (deployment.served_release_digest().ok().as_ref() == Some(&digest)
-                            && healthy_deployment_count(
-                                std::slice::from_ref(deployment),
-                                &accepting,
-                                now,
-                            ) > 0)
-                            .then_some(candidate)
-                    },
-                ));
+                eligible.extend(
+                    model
+                        .deployments
+                        .iter()
+                        .enumerate()
+                        .filter(|(_, deployment)| {
+                            deployment.served_release_digest().ok().as_ref() == Some(&digest)
+                                && healthy_deployment_count(
+                                    std::slice::from_ref(*deployment),
+                                    &accepting,
+                                    now,
+                                ) > 0
+                        })
+                        .map(|(candidate, deployment)| {
+                            let active_requests = accepting
+                                .iter()
+                                .find(|status| status.deployment_id == deployment.id)
+                                .and_then(|status| status.active_requests);
+                            (candidate, active_requests)
+                        }),
+                );
                 if ready > most_ready {
                     most_ready = ready;
                     selected = Some(index);
@@ -253,22 +263,43 @@ impl RequestCoordinator {
 
         if let Some(mut index) = selected {
             if let Some(selection) = selection {
-                index = *eligible
+                let candidates: Vec<_> = eligible
                     .iter()
-                    .filter(|candidate| {
+                    .filter(|(candidate, _)| {
                         same_model_release(
                             &model.deployments[index],
-                            &model.deployments[**candidate],
+                            &model.deployments[*candidate],
                         )
                     })
-                    .max_by_key(|candidate| {
+                    .collect();
+                let weights = crate::routing::route_weights(
+                    candidates
+                        .iter()
+                        .map(|(_, active_requests)| *active_requests),
+                );
+                index = candidates
+                    .iter()
+                    .zip(weights)
+                    .map(|((candidate, _), weight)| {
+                        let id = model.deployments[*candidate].id;
                         let mut hash = Sha256::new();
                         hash.update(selection.to_be_bytes());
-                        hash.update(model.deployments[**candidate].id.as_bytes());
+                        hash.update(id.as_bytes());
                         let score: [u8; 32] = hash.finalize().into();
-                        (score, model.deployments[**candidate].id)
+                        (
+                            crate::routing::weighted_score(&score, weight),
+                            score,
+                            id,
+                            *candidate,
+                        )
                     })
-                    .expect("selected release has an accepting replica");
+                    .max_by(|left, right| {
+                        left.0
+                            .total_cmp(&right.0)
+                            .then_with(|| (left.1, left.2).cmp(&(right.1, right.2)))
+                    })
+                    .expect("selected release has an accepting replica")
+                    .3;
             }
             model.deployments[..=index].rotate_right(1);
         }

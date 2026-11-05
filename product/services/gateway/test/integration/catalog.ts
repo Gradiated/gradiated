@@ -30,6 +30,7 @@ export interface DeploymentRuntimeStatus {
   readonly received_at: string;
   readonly healthy: boolean;
   readonly accepting_requests: boolean;
+  readonly active_requests?: number;
   readonly reason_code: string | null;
 }
 

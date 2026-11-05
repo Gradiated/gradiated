@@ -7,7 +7,7 @@ from pathlib import Path
 import sys
 import urllib.request
 
-from config import ACTIVE_REQUESTS, QUEUED_REQUESTS, QUEUE_TIMEOUT_SECONDS, settings
+from config import ACTIVE_REQUESTS, QUEUED_REQUESTS, QUEUE_TIMEOUT_SECONDS, detect_profile, settings
 
 root = Path(__file__).resolve().parents[1]
 base_path = root / 'warmup-base.py'
@@ -77,7 +77,7 @@ def metrics(config):
     pressure = full_kv_pressure(texts[0])
     chunks = [namespace_metrics(texts[0], 'sglang:'), namespace_metrics(texts[1], 'smg_')]
     for name, value, help_text in [
-        ('gradiated_runtime_active_request_limit', ACTIVE_REQUESTS, 'SMG requests holding an active permit.'),
+        ('gradiated_runtime_active_request_limit', config.get('active_requests', ACTIVE_REQUESTS), 'SMG requests holding an active permit.'),
         ('gradiated_runtime_waiting_request_limit', QUEUED_REQUESTS, 'SMG requests waiting for a permit.'),
         ('gradiated_runtime_queue_timeout_seconds', QUEUE_TIMEOUT_SECONDS, 'Native SMG maximum queue age.'),
         ('vllm:kv_cache_usage_perc', pressure, 'Compatibility alias: maximum native SGLang non-evictable full-attention KV usage ratio.'),
@@ -105,14 +105,14 @@ def handler(supervisor, config):
 
 
 def main(environment=os.environ):
-    config = settings(environment)
+    config = settings(detect_profile(environment))
     original = base.handler
     base.handler = lambda supervisor: handler(supervisor, config)
     try:
         supervisor = Supervisor([sys.executable, str(root / 'glm-sglang/service.py')],
             runtime_url=f"http://127.0.0.1:{config['front']}",
             timeout=int(environment.get('RUNTIME_STARTUP_TIMEOUT_SECONDS', '3600')),
-            max_queued_requests=ACTIVE_REQUESTS + QUEUED_REQUESTS)
+            max_queued_requests=config['active_requests'] + QUEUED_REQUESTS)
         return supervisor.run(port=config['warmup'])
     finally:
         base.handler = original

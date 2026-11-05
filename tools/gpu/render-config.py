@@ -101,8 +101,6 @@ def rollout(name, model, runtimes):
             {'name': 'app', 'value': name},
             {'name': 'hash', 'valueFrom': {'podTemplateHashValue': 'Latest'}}]}}
     ]
-    if parent and not rolling:
-        steps.append({'pause': {}})
     if not rolling:
         steps.append({'setWeight': 100})
     limits = {'cpu': runtime['cpu'], 'memory': runtime['memory'], 'nvidia.com/gpu': str(runtime['gpus'])}

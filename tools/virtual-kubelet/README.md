@@ -166,8 +166,9 @@ fleet fits only one extra full-size GLM replica; a second candidate can remain
 Pending until capacity is released. This ceiling does not provision capacity or
 guarantee two simultaneous starts. The renderer supplies the common canary strategy, qualification,
 service account, drain period and resources from the runtime catalogue.
-`rolling_update: true` moves directly to the target revision without an
-observation canary or manual pause. Per-pod SDK qualification still gates
+Rollouts have no manual pause: the default canary moves to half weight, runs
+SDK analysis and then completes. `rolling_update: true` moves directly to the
+target revision without that half-weight canary. Per-pod SDK qualification still gates
 readiness, and the rollout retains its final SDK analysis. The H200 FP8 rollout
 uses this mode with five replicas, `max_surge: 0` and `max_unavailable: 1`, so
 it replaces one replica at a time while keeping four available. Other models

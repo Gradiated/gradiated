@@ -343,7 +343,7 @@ class RenderTests(unittest.TestCase):
                 renderer.rollout('glm-dealign-sglang-h200',
                                  {**model, 'rolling_update': invalid}, runtimes)
 
-    def test_explicit_canary_keeps_primary_and_pauses_after_qualification(self):
+    def test_explicit_canary_keeps_primary_and_promotes_after_qualification(self):
         runtimes = json.loads((renderer.ROOT / 'product/inference/gpu/runtimes.json').read_text())
         primary = json.loads((renderer.GPU / 'models.json').read_text())['glm-dealign']
         candidate = {**primary, 'replicas': 1, 'min_available': 1, 'max_unavailable': 0,
@@ -356,8 +356,7 @@ class RenderTests(unittest.TestCase):
                          'glm-dealign')
         steps = obj['spec']['strategy']['canary']['steps']
         self.assertIn('analysis', steps[1])
-        self.assertEqual(steps[2], {'pause': {}})
-        self.assertEqual(steps[3], {'setWeight': 100})
+        self.assertEqual(steps[2:], [{'setWeight': 100}])
         self.assertNotIn('gradiated.com/canary-of',
                          renderer.rollout('glm-dealign', primary, runtimes)['spec']['template']['metadata']['annotations'])
         for parent in ('', '../bad', 'glm-dealign-canary', True, None):
@@ -480,36 +479,25 @@ class RenderTests(unittest.TestCase):
                 renderer.disruption_budget('glm-dealign', {**model, 'autoscaling': {
                     **model['autoscaling'], 'paused_replicas': invalid}})
 
-    def test_sixth_sglang_reuses_bundle_without_replacing_the_serving_pool(self):
+    def test_b300_sglang_pool_reuses_the_verified_bundle_with_a_compact_memory_request(self):
         models = json.loads((renderer.GPU / 'models.json').read_text())
         runtimes = json.loads(renderer.RUNTIMES.read_text())
-        main = models['glm-dealign-sglang']
-        sixth = models['glm-dealign-sglang-sixth']
-        original = runtimes[main['runtime']]
-        compact = runtimes[sixth['runtime']]
-        self.assertNotEqual(main['runtime'], sixth['runtime'])
-        self.assertEqual(compact['bundles'], original['bundles'])
-        self.assertEqual(compact['release'], original['release'])
-        self.assertEqual(compact['environment'], original['environment'])
-        active = renderer.rollout('glm-dealign-sglang', main, runtimes)
-        isolated = renderer.rollout('glm-dealign-sglang-sixth', sixth, runtimes)
-        self.assertEqual(active['spec']['replicas'], 5)
-        self.assertEqual(active['spec']['template']['spec']['containers'][0]
-                         ['resources']['requests']['memory'], '400Gi')
-        container = isolated['spec']['template']['spec']['containers'][0]
+        pool = models['glm-dealign-sglang']
+        self.assertNotIn('glm-dealign-sglang-sixth', models)
+        compact = runtimes[pool['runtime']]
+        verified = runtimes['e03fa7dd3c69f312122fffadff3a468aa9a447ab809eb6074ecfa662dc390122']
+        self.assertEqual(compact['bundles'], verified['bundles'])
+        self.assertEqual(compact['release'], verified['release'])
+        self.assertEqual(compact['environment'], verified['environment'])
+        rollout = renderer.rollout('glm-dealign-sglang', pool, runtimes)
+        self.assertEqual(rollout['spec']['replicas'], 5)
+        container = rollout['spec']['template']['spec']['containers'][0]
         self.assertEqual(container['resources']['requests'], {
             'cpu': '32', 'memory': '256Gi', 'nvidia.com/gpu': '2'})
         self.assertEqual(container['resources']['limits']['memory'], '400Gi')
-        self.assertEqual(isolated['spec']['template']['metadata']['annotations']
-                         ['gradiated.com/serving-mode'], 'production')
-        self.assertEqual(isolated['spec']['template']['spec']['nodeSelector']
-                         ['gradiated.com/instance-id'],
-                         '01a19221-df83-721d-a7f9-85495b591fb1')
-        normal = runtimes[models['glm']['runtime']]
-        self.assertLessEqual(int(normal['cpu']) + int(compact['cpu']), 85)
-        self.assertLessEqual(int(normal['memory'][:-2]) +
-                             int(compact['request_memory'][:-2]), 686)
-        self.assertEqual(normal['gpus'] + compact['gpus'], 4)
+        # Two replicas fit one four-GPU B300 host (85 CPU, 686 GiB allocatable).
+        self.assertLessEqual(2 * int(compact['cpu']), 85)
+        self.assertLessEqual(2 * int(compact['request_memory'][:-2]), 686)
 
     def test_model_surge_limit_preserves_availability_and_qualification(self):
         runtimes = json.loads((renderer.ROOT / 'product/inference/gpu/runtimes.json').read_text())

@@ -10,8 +10,8 @@ declare const process: {
   exit(code: number): never;
 };
 
-const SOURCE =
-  "https://raw.githubusercontent.com/PostHog/posthog.com/master/src/components/CompensationCalculator/compensation_data";
+const REPO = "PostHog/posthog.com";
+const DATA_PATH = "src/components/CompensationCalculator/compensation_data";
 const OUTPUT = new URL(
   "../src/posthog-compensation.generated.json",
   import.meta.url,
@@ -124,10 +124,32 @@ const parseExport = (source: string, file: string, name: string): unknown => {
   return value();
 };
 
+// One commit for every file, so a push to master mid-sync can't mix versions.
+const masterCommit = async (): Promise<string> => {
+  const response = await fetch(
+    `https://api.github.com/repos/${REPO}/commits/master`,
+    {
+      headers: {
+        Accept: "application/vnd.github.sha",
+        ...(process.env.GITHUB_TOKEN
+          ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` }
+          : {}),
+      },
+    },
+  );
+  if (!response.ok) throw new Error(`master: HTTP ${response.status}`);
+  const sha = (await response.text()).trim();
+  if (!/^[0-9a-f]{40}$/.test(sha)) throw new Error("master: no commit SHA");
+  return sha;
+};
+
 const fetchPostHogData = async (): Promise<Record<string, unknown>> => {
+  const sha = await masterCommit();
   const data: Record<string, unknown> = {};
   for (const [key, [file, name]] of Object.entries(FILES)) {
-    const response = await fetch(`${SOURCE}/${file}.ts`);
+    const response = await fetch(
+      `https://raw.githubusercontent.com/${REPO}/${sha}/${DATA_PATH}/${file}.ts`,
+    );
     if (!response.ok) throw new Error(`${file}.ts: HTTP ${response.status}`);
     data[key] = parseExport(await response.text(), file, name);
   }

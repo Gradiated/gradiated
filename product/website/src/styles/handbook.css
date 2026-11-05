@@ -275,9 +275,6 @@ img.gr-pill__avatar {
 .gr-comp-calc {
   display: grid;
   gap: 1.2em;
-  padding: 1.1em;
-  border: 1px solid var(--color-rule);
-  border-radius: var(--radius);
 }
 
 .gr-comp-calc__fields {
@@ -311,12 +308,7 @@ img.gr-pill__avatar {
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 0.2em 1em;
-  padding-block: 0.4em;
-  border-top: 1px solid var(--color-rule);
-}
-
-.gr-comp-calc__formula > div:first-child {
-  border-top: 0;
+  padding-block: 0.25em;
 }
 
 .gr-root .gr-comp-calc__formula dt,
@@ -325,6 +317,8 @@ img.gr-pill__avatar {
 }
 
 .gr-comp-calc__formula > .gr-comp-calc__total {
+  margin-top: 0.4em;
+  padding-top: 0.5em;
   border-top: 2px solid var(--color-text);
   font-weight: 500;
 }

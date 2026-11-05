@@ -623,10 +623,10 @@ const GetStartedWorkflow = ({
           <header className="gs-header">
             <Link to="/" aria-label="Gradiated home" className="gs-logo">
               <img
-                src="/brand/gradiated-full.svg"
+                src="/brand/gradiated-wordmark.svg"
                 alt="Gradiated"
-                width="1258"
-                height="288"
+                width="10788"
+                height="1193"
               />
             </Link>
           </header>

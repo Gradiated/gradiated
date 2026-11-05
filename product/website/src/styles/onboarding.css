@@ -69,8 +69,8 @@
 }
 .gs-logo img {
   display: block;
-  height: 28px;
-  width: auto;
+  height: auto;
+  width: 128px;
 }
 .gs-main,
 .gs-project {

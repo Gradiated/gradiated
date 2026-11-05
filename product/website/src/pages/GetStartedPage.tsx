@@ -44,6 +44,17 @@ import "../styles/onboarding.css";
 const steps = ["Mutual NDA", "Slack & GitHub", "Get to work"];
 type UpdateDraft = (values: Partial<OnboardingDraft>) => void;
 
+const OnboardingHelp = ({ step }: { step: string }) => (
+  <p className="gs-help">
+    Stuck?{" "}
+    <a
+      href={`mailto:help@gradiated.com?subject=${encodeURIComponent(`Help with Gradiated setup: ${step}`)}`}
+    >
+      Email us
+    </a>
+  </p>
+);
+
 const loadDraft = (account: OnboardingAccount): OnboardingDraft => {
   try {
     const result = onboardingSchema.safeParse(
@@ -307,6 +318,7 @@ export const GetStartedPage = () => {
             Return to the original tab to check your GitHub installation. You
             can close this tab.
           </p>
+          <OnboardingHelp step="GitHub authorization" />
         </main>
       </div>
     );
@@ -367,6 +379,7 @@ const AccountSignupPreview = ({ resume }: { resume: boolean }) => {
         src={ENGINEER_PREVIEW_SIGNUP_URL}
         sandbox="allow-scripts allow-same-origin allow-forms"
       />
+      <OnboardingHelp step="Create an account" />
     </div>
   );
 };
@@ -484,6 +497,7 @@ const AccountOnboarding = () => {
                 ))}
               </select>
             </Field>
+            <OnboardingHelp step="Choose an organization" />
           </main>
         </div>
       </div>
@@ -520,6 +534,7 @@ const AccountOnboarding = () => {
             <p role="status">Loading your account…</p>
           </>
         )}
+        <OnboardingHelp step="Account setup" />
       </main>
     </div>
   );
@@ -858,6 +873,15 @@ const GetStartedWorkflow = ({
               </div>
             </main>
           )}
+          <OnboardingHelp
+            step={
+              !draft.introduced
+                ? "Get an engineer"
+                : draft.submitted
+                  ? "Project setup"
+                  : steps[draft.step] ?? "Project setup"
+            }
+          />
         </div>
       </div>
 

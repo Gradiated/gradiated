@@ -93,6 +93,22 @@
   font-size: 13px;
   overflow-wrap: anywhere;
 }
+.gs-help {
+  margin: 20px 0 0;
+  color: var(--color-text-muted);
+  text-align: center;
+  font-size: 13px;
+}
+.gs-help a {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.gs-account-preview > .gs-help {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 12px 24px;
+}
 .gs-account-identity .gs-text-button {
   display: inline;
   font-size: inherit;

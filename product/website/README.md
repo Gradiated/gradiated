@@ -113,10 +113,10 @@ signatures.
 #### Embedded PandaDoc NDA signing
 
 The provided template is [Gradiated mutual NDA](https://app.pandadoc.com/a/#/templates/bTmxaYhTaU2tQ28fLhVrHn).
-The template ID is configured by default; its actual role/field mapping has not
-been inspected in an authenticated PandaDoc session or tested against the live
-API. PandaDoc account access alone does not supply API credentials or prove that
-the workspace has embedded-signing/API entitlement.
+The template ID is configured by default. Sandbox API inspection confirmed the
+`Customer` role and its signature field. A sandbox draft was created, but the
+customer text fields have no Merge Field names yet, so pre-filling and embedded
+signing still require template setup and end-to-end verification.
 
 The NDA details form opens an on-page review/signing step. In DEV account preview,
 **Simulate signing** advances the demo without calling PandaDoc or collecting any
@@ -150,10 +150,15 @@ Required PandaDoc template setup before enabling:
   same verified email as the signer and have organization admin access. This
   first integration does not grant a signing session for a different person's
   email; that person must authenticate themselves.
-- Variables `Customer.Company`, `Customer.Address`, `Customer.Name`,
+- Text-field Merge Field names `Customer.Company`, `Customer.Address`, `Customer.Name`,
   `Customer.Title`, `Customer.Email`, `PostHog.Company`, `PostHog.Signer`, and
   `PostHog.Title` where the API-populated values belong. Match the exact names,
-  or update the mapping deliberately. Date fields use Merge Field names instead.
+  or update the mapping deliberately. The API supplies both field values and
+  variables with these names. The current template uses `Customer_Name` for the
+  company, `Customer_Signatory_Name` for the signer, `Customer_Signatory_Title`
+  for the title, `Customer_Address`, and `Customer_Email`; configure their Merge
+  Field names separately from those field IDs. The PostHog date field already
+  uses `Agreement.Date`; set `PANDADOC_NDA_DATE_FIELD=Agreement.Date` to fill it.
 - Confirm the intended pre-executed PostHog signature/acceptance arrangement with
   the authorized company signer. Pre-filled names or API date values are not
   signatures. The API does not forge or pre-fill signature fields. If a PostHog

@@ -206,12 +206,10 @@ export const NdaSigning = ({
     <section className="gs-signing" aria-labelledby="signing-title">
       <div className="gs-step-title">
         <h1 id="signing-title">Review & sign your NDA.</h1>
-        <p>Sign here in Gradiated. No email step.</p>
       </div>
       {demo ? (
         <>
           <div className="gs-signing-demo">
-            <span className="gs-label">SIGNING PREVIEW · NOT A CONTRACT</span>
             <h2>Mutual NDA</h2>
             <p>{details.company} × PostHog Inc.</p>
             <dl className="gs-summary">

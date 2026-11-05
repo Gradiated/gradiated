@@ -278,15 +278,18 @@ export const createPandaDocNda = (
             name,
             value,
           })),
-          ...(configuration.dateField
-            ? {
-                fields: {
+          fields: {
+            ...Object.fromEntries(
+              Object.entries(values).map(([name, value]) => [name, { value }]),
+            ),
+            ...(configuration.dateField
+              ? {
                   [configuration.dateField]: {
                     value: new Date().toISOString(),
                   },
-                },
-              }
-            : {}),
+                }
+              : {}),
+          },
           metadata: {
             gradiated_purpose: "mutual-nda",
             gradiated_organization_id: owner.organizationId,

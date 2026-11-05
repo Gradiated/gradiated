@@ -67,6 +67,16 @@ describe("PandaDoc NDA", () => {
       recipients: [{ email: user.email, role: "Customer" }],
     });
     expect(body.metadata.gradiated_organization_id).toBe(organizationId);
+    expect(body.fields).toMatchObject({
+      "Customer.Company": { value: details.company },
+      "Customer.Address": { value: details.address },
+      "Customer.Name": { value: details.name },
+      "Customer.Title": { value: details.title },
+      "Customer.Email": { value: details.email },
+      "PostHog.Company": { value: "PostHog Inc." },
+      "PostHog.Signer": { value: "James Hawkins" },
+      "PostHog.Title": { value: "Co-CEO" },
+    });
     expect(body.fields["Agreement.Date"].value).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     expect(body.tokens).toContainEqual({
       name: "Customer.Company",

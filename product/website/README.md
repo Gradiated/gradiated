@@ -130,7 +130,7 @@ unless the local live preview is enabled; use
 
 For real invitations from that local preview, set `SLACK_CONNECT_PREVIEW=true`
 in the ignored repository-root `.env`, alongside the bot token and engineer IDs,
-then restart the website dev server. The button reads **Send real Slack invite**.
+then restart the website dev server. The button reads **Send Slack invite**.
 It uses the same Slack integration through a dev-only, same-origin localhost
 bridge. Loading the page never sends an invitation, and old simulated success
 states are reset when live mode is enabled. Live preview requests are validated

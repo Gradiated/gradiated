@@ -160,9 +160,7 @@ export const SlackConnectInvite = ({
               ? "Sending invite…"
               : checkingPreview
                 ? "Loading…"
-                : livePreview
-                  ? "Send real Slack invite"
-                  : "Send Slack invite"}
+                : "Send Slack invite"}
           </button>
         </>
       ) : (

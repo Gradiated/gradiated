@@ -13,6 +13,7 @@ import remarkFrontmatter from "remark-frontmatter";
 import rehypeHighlight from "rehype-highlight";
 import { all } from "lowlight";
 import { ndaSandbox } from "./scripts/nda-sandbox";
+import { slackPreview } from "./scripts/slack-preview";
 
 const require = createRequire(import.meta.url);
 const {
@@ -89,6 +90,7 @@ export default defineConfig(({ command, isSsrBuild, mode }) => {
     },
     plugins: [
       ndaSandbox(),
+      slackPreview(),
       syncAshbyJobs,
       articleCitationsPlugin(),
       {

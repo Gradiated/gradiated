@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { z } from "zod";
 import { createSlackInvitation } from "../api/slack";
@@ -17,6 +17,36 @@ export const SlackConnectInvite = ({
 }) => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [livePreview, setLivePreview] = useState(false);
+  const [checkingPreview, setCheckingPreview] = useState(
+    import.meta.env.DEV && demo,
+  );
+  const callbacks = useRef({ onInvited, draft });
+  callbacks.current = { onInvited, draft };
+
+  useEffect(() => {
+    if (!import.meta.env.DEV || !demo) return;
+
+    let cancelled = false;
+    void fetch("/__slack-preview/")
+      .then(async (response) => (response.ok ? response.json() : null))
+      .then((configuration) => {
+        if (cancelled) return;
+
+        const enabled = configuration?.enabled === true;
+        setLivePreview(enabled);
+        if (enabled && callbacks.current.draft.slackDeliveryMode !== "live")
+          callbacks.current.onInvited({ slackStatus: "not_sent" });
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setCheckingPreview(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [demo]);
   const recipient = (draft.slackEmail ?? draft.email).trim().toLowerCase();
   const validRecipient = z.email().safeParse(recipient).success;
   const slug =
@@ -32,15 +62,40 @@ export const SlackConnectInvite = ({
     draft.slackStatus === "not_sent" ? `ext-${slug}-gradiated` : draft.slack;
 
   const send = async () => {
-    if (busy || !validRecipient) return;
+    if (busy || checkingPreview || !validRecipient) return;
     setBusy(true);
     setError("");
     try {
-      if (demo) {
+      if (demo && !livePreview) {
         onInvited({
           slack: channel,
           slackEmail: recipient,
           slackStatus: "invited",
+          slackDeliveryMode: "simulated",
+        });
+        return;
+      }
+      if (demo && livePreview) {
+        const response = await fetch("/__slack-preview/invitations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            organizationId,
+            company: draft.company,
+            email: recipient,
+          }),
+        });
+        const result = await response.json();
+        if (!response.ok)
+          throw new Error(
+            result.error ?? "The Slack invitation could not be confirmed.",
+          );
+
+        onInvited({
+          slack: result.channel_name,
+          slackEmail: result.email,
+          slackStatus: result.status,
+          slackDeliveryMode: "live",
         });
         return;
       }
@@ -56,6 +111,7 @@ export const SlackConnectInvite = ({
         slack: result.channel_name,
         slackEmail: result.email,
         slackStatus: result.status,
+        slackDeliveryMode: "live",
       });
     } catch (error) {
       setError(
@@ -97,16 +153,22 @@ export const SlackConnectInvite = ({
           <button
             type="button"
             className="gr-button"
-            disabled={busy || !validRecipient}
+            disabled={busy || checkingPreview || !validRecipient}
             onClick={() => void send()}
           >
-            {busy ? "Sending invite…" : "Send Slack invite"}
+            {busy
+              ? "Sending invite…"
+              : checkingPreview
+                ? "Loading…"
+                : livePreview
+                  ? "Send real Slack invite"
+                  : "Send Slack invite"}
           </button>
         </>
       ) : (
         <p role="status">
           <CheckCircle2 size={16} />{" "}
-          {demo
+          {demo && !livePreview
             ? "Preview: invite sent"
             : draft.slackStatus === "joined"
               ? "Already connected"
@@ -119,9 +181,15 @@ export const SlackConnectInvite = ({
           ? "Slack is our preferred way to work."
           : "Accept the invitation in Slack or your inbox. Your workspace may require admin approval. You can continue below."}
       </p>
-      {demo && (
+      {demo && !livePreview && (
         <p className="gs-note">
           Preview only · no channel or invitation is created.
+        </p>
+      )}
+      {demo && livePreview && (
+        <p className="gs-note">
+          Live Slack test · creates a public channel and emails a real
+          invitation.
         </p>
       )}
       {error && (

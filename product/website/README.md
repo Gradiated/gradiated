@@ -123,9 +123,20 @@ pending. Email remains the fallback when Slack is unavailable.
 The console-only `POST /api/v1/organizations/{organization_id}/slack-invitations`
 requires admin membership, a verified account email, and a provider-confirmed
 completed NDA belonging to that user and organization. The API validates and
-normalizes the chosen recipient independently of NDA signer verification. The generated API client is used by the website. DEV previews
-simulate the invitation and create no Slack resources; use
+normalizes the chosen recipient independently of NDA signer verification. The
+generated API client is used by the website. DEV previews simulate invitations
+unless the local live preview is enabled; use
 `/get-started/?preview=account&step=slack` to preview this step directly.
+
+For real invitations from that local preview, set `SLACK_CONNECT_PREVIEW=true`
+in the ignored repository-root `.env`, alongside the bot token and engineer IDs,
+then restart the website dev server. The button reads **Send real Slack invite**.
+It uses the same Slack integration through a dev-only, same-origin localhost
+bridge. Loading the page never sends an invitation, and old simulated success
+states are reset when live mode is enabled. Live preview requests are validated
+and limited to five per minute. This test bridge bypasses production account/NDA
+authorization for local testing and is absent from production builds; the real
+activation flow continues to require its authenticated API and completed NDA.
 
 One-time setup before enabling real invitations:
 
@@ -137,7 +148,9 @@ One-time setup before enabling real invitations:
 2. Configure server-only `SLACK_BOT_TOKEN`, comma-separated Gradiated engineer
    member IDs in `SLACK_ENGINEER_USER_IDS`, and `SLACK_CONNECT_ENABLED=true`.
    Production values belong in the existing API secret configuration; preserve
-   its other entries. No Slack token was configured or invitation sent here.
+   its other entries. Production secrets are not configured by this PR. An
+   authorized local integration test confirmed public-channel creation, engineer
+   membership, and an external invitation; the user confirmed it worked.
 3. Test with an authorized external recipient: channel creation, engineer
    membership, invitation delivery/acceptance, workspace approval restrictions,
    and retry behavior. Do not enable production until this passes.

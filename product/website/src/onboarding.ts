@@ -21,6 +21,7 @@ export const onboardingSchema = z.object({
   channel: z.enum(["slack", "email"]).default("slack"),
   slack: z.string().max(200).default(""),
   slackEmail: z.string().max(200).nullable().default(null),
+  slackDeliveryMode: z.enum(["simulated", "live"]).nullable().default(null),
   slackStatus: z.enum(["not_sent", "invited", "joined"]).default("not_sent"),
   legalName: z.string().max(200).default(""),
   legalAddress: z.string().max(1000).default(""),

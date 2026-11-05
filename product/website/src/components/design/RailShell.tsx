@@ -140,13 +140,13 @@ const SECTIONS: readonly Section[] = [
         title: "Training",
         blurb: "Automatic fine-tuning from your traffic.",
         href: "/training/",
-        image: "/brand/nav/training.png",
+        image: "/brand/nav/training.webp",
       },
       {
         title: "Inference",
         blurb: "Open-model inference, pay based on your latency requirement.",
         href: "/inference/",
-        image: "/brand/nav/inference.png",
+        image: "/brand/nav/inference.webp",
       },
     ],
     models: [
@@ -175,25 +175,25 @@ const SECTIONS: readonly Section[] = [
         title: "Careers",
         blurb: "Come make AI use less energy.",
         href: "/careers/",
-        image: "/brand/nav/careers.png",
+        image: "/brand/nav/careers.webp",
       },
       {
         title: "Handbook",
         blurb: "How we operate, and why.",
         href: "/handbook/",
-        image: "/brand/nav/handbook.png",
+        image: "/brand/nav/handbook.webp",
       },
       {
         title: "Notes",
         blurb: "Notes on inference systems.",
         href: "/notes/",
-        image: "/brand/nav/notes.png",
+        image: "/brand/nav/notes.webp",
       },
       {
         title: "About",
         blurb: "AI research lab in Cambridge, UK.",
         href: "/about/",
-        image: "/brand/nav/about.png",
+        image: "/brand/nav/about.webp",
       },
     ],
   },
@@ -358,6 +358,10 @@ export const RailShell = ({
   const [menu, setMenu] = useState(false);
   /* Product opens by default: the menu lands on the offer, not a list. */
   const [menuOpen, setMenuOpen] = useState<string | null>("product");
+  /* The menu is always mounted (it is the base layer the sheet slides
+     off), but its reveal carries the posters — those only load once the
+     menu has actually been opened. */
+  const [menuTouched, setMenuTouched] = useState(false);
   /* `doc` drives the rail's geometry (width, wordmark, nav). `shown`
      is what the doc chrome renders — it outlives `doc` by one exit
      animation, so leaving doc mode plays a choreography instead of a
@@ -521,7 +525,10 @@ export const RailShell = ({
             aria-expanded={menu}
             aria-label={menu ? "Close menu" : "Open menu"}
             className="gr-rail-burger"
-            onClick={() => setMenu((open) => !open)}
+            onClick={() => {
+              setMenuTouched(true);
+              setMenu((open) => !open);
+            }}
             type="button"
           >
             <span className="gr-rail-burger-bar" />
@@ -529,7 +536,7 @@ export const RailShell = ({
           </button>
         </div>
       </div>
-      <div className="gr-rail-menu">
+      <div className="gr-rail-menu" inert={!menu}>
         <nav>
           {SECTIONS.map((section, index) => (
             <div className="gr-rail-menu-item" key={section.id}>
@@ -547,7 +554,7 @@ export const RailShell = ({
                   >
                     {section.label} <Arrow />
                   </button>
-                  {menuOpen === section.id && (
+                  {menuTouched && menuOpen === section.id && (
                     <div className="gr-rail-menu-reveal">
                       <SectionReveal section={section} />
                     </div>
@@ -560,6 +567,10 @@ export const RailShell = ({
               )}
             </div>
           ))}
+          <div className="gr-rail-menu-item">
+            <hr className="gr-rail-menu-rule" />
+            <a href={CONSOLE_BASE_URL}>Log in</a>
+          </div>
           <a className="gr-rail-menu-cta" href={BOOKING_URL}>
             Book a Call
           </a>

@@ -63,7 +63,8 @@ def stage(models, runtimes, pins, hosts, release, source, instances, replicas=1,
                     'tokenizer_path': CHECKPOINT, 'tokenizer_revision': REVISION,
                     'runtime_revision': f'glm-{gpu}-{digest[:12]}', 'runtime_model_name': CHECKPOINT},
         'gpus': 2, 'cpu': '32', 'memory': f'{memory}Gi', 'startup_timeout': 3600, 'warmup': True,
-        'environment': {'TENSOR_PARALLEL_SIZE': '2', 'GLM_SGLANG_PROFILE': profile},
+        # Host agents reject GLM_SGLANG_PROFILE; the runtime selects the profile from the assigned GPUs.
+        'environment': {'TENSOR_PARALLEL_SIZE': '2'},
     }
     candidate = {
         'runtime': runtime_id, 'replicas': replicas, 'min_available': max(1, replicas - 1),

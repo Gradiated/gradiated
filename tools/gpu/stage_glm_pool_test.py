@@ -54,7 +54,8 @@ class H200Staging(unittest.TestCase):
         self.assertEqual(candidate['node_selector']['nvidia.com/gpu.product'], self.PRODUCT)
         self.assertEqual(candidate['autoscaling']['target_concurrency'], self.ACTIVE)
         runtime = runtimes[candidate['runtime']]
-        self.assertEqual(runtime['environment']['GLM_SGLANG_PROFILE'], self.PROFILE)
+        # Host agents reject unlisted environment variables, so the profile is detected from the GPUs.
+        self.assertEqual(runtime['environment'], {'TENSOR_PARALLEL_SIZE': '2'})
         self.assertEqual(runtime['model_id'], f'{stage.MODEL}-sglang-{self.GPU}')
         self.assertEqual(runtime['memory'], '320Gi')
         self.assertNotEqual(candidate['runtime'], self.release['sha256'])
@@ -102,7 +103,7 @@ class CommittedPools(unittest.TestCase):
     def test_generalised_helper_reproduces_the_committed_h200_runtime_key(self):
         runtimes = json.loads((stage.ROOT / 'product/inference/gpu/runtimes.json').read_text())
         h200 = [(key, runtime) for key, runtime in runtimes.items()
-                if runtime.get('environment', {}).get('GLM_SGLANG_PROFILE') == 'h200-tp2']
+                if runtime.get('model_id') == f'{stage.MODEL}-sglang-h200']
         self.assertTrue(h200)
         for key, runtime in h200:
             bundle, = runtime['bundles'].values()

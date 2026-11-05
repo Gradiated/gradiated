@@ -50,7 +50,7 @@ def settings(environment):
             'profile': profile, **PROFILES[profile]}
 
 
-GPU_PROFILES = {'B300': 'b300-pcp2', 'H200': 'h200-tp2'}
+GPU_PROFILES = {'B200': 'b200-pcp2', 'B300': 'b300-pcp2', 'H200': 'h200-tp2'}
 
 
 def gpu_names(environment):

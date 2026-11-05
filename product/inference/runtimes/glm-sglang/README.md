@@ -52,7 +52,8 @@ for enrollment, staging, qualification, promotion and rollback.
 
 ## B200 PCP2 profile
 
-`GLM_SGLANG_PROFILE=b200-pcp2` serves the same checkpoint on two B200 GPUs.
+The `b200-pcp2` profile serves the same checkpoint on two B200 GPUs and is
+selected from the assigned GPU names, like the other profiles.
 B200 (SM100) and B300 (SM103) share the Blackwell kernels; the pinned SGLang
 selects `trtllm` DSA for any compute capability 10 or later. The profile keeps
 every B300 launch setting except the admission limit: eight active requests,

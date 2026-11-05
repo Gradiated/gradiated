@@ -106,10 +106,12 @@ class Configuration(unittest.TestCase):
                 self.assertIn('--id=GPU-a,GPU-b', run.call_args.args[0])
 
     def test_profile_is_detected_from_assigned_gpus_when_unset(self):
-        for names, expected in [('NVIDIA H200\nNVIDIA H200\n', 'h200-tp2'), ('NVIDIA B300 SXM6 AC\nNVIDIA B300 SXM6 AC\n', 'b300-pcp2')]:
+        for names, expected in [('NVIDIA H200\nNVIDIA H200\n', 'h200-tp2'), ('NVIDIA B300 SXM6 AC\nNVIDIA B300 SXM6 AC\n', 'b300-pcp2'),
+                                ('NVIDIA B200\nNVIDIA B200\n', 'b200-pcp2')]:
             with self.subTest(names=names), patch.object(config.subprocess, 'run', return_value=SimpleNamespace(stdout=names)):
                 self.assertEqual(config.detect_profile(self.environment)['GLM_SGLANG_PROFILE'], expected)
-        for names in ['NVIDIA GH200\nNVIDIA GH200\n', 'NVIDIA H200\nNVIDIA B300\n', '']:
+        for names in ['NVIDIA GH200\nNVIDIA GH200\n', 'NVIDIA H200\nNVIDIA B300\n', 'NVIDIA GB200\nNVIDIA GB200\n',
+                      'NVIDIA B200\nNVIDIA B300\n', '']:
             with self.subTest(names=names), patch.object(config.subprocess, 'run', return_value=SimpleNamespace(stdout=names)):
                 with self.assertRaisesRegex(ValueError, 'hardware profile'):
                     config.detect_profile(self.environment)

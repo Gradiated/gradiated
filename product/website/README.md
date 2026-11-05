@@ -113,10 +113,12 @@ signatures.
 #### Embedded PandaDoc NDA signing
 
 The provided template is [Gradiated mutual NDA](https://app.pandadoc.com/a/#/templates/bTmxaYhTaU2tQ28fLhVrHn).
-The template ID is configured by default. Sandbox API inspection confirmed the
-`Customer` role and its signature field. A sandbox draft was created, but the
-customer text fields have no Merge Field names yet, so pre-filling and embedded
-signing still require template setup and end-to-end verification.
+The template ID is configured by default. A sandbox check against the actual
+template verified all five customer Merge Fields, the agreement date, customer
+signature assignment, silent send, signing-session creation, and browser loading
+through the official embedded-signing SDK. No signature was collected; completed
+signature verification and the full authenticated onboarding flow still need
+end-to-end validation. Credentials were used only from the ignored local `.env`.
 
 The NDA details form opens an on-page review/signing step. In DEV account preview,
 **Simulate signing** advances the demo without calling PandaDoc or collecting any

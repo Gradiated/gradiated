@@ -35,7 +35,7 @@ const PandaDocEmbed = ({
 
         signing = new Signing(
           id,
-          { sessionId, width: "100%", height: "650px" },
+          { sessionId, height: 650 },
           { region: "com" },
         );
         signing.on("document.completed", onVerify);

@@ -33,7 +33,12 @@ const providerDocument = (status = "document.draft", overrides = {}) => ({
     gradiated_user_id: user.id,
     gradiated_template_id: configuration.templateId,
     gradiated_template_version: configuration.templateVersion,
-    gradiated_details: JSON.stringify(details),
+    ...Object.fromEntries(
+      Object.entries(details).flatMap(([field, value]) => [
+        [`gradiated_${field}_parts`, "1"],
+        [`gradiated_${field}_0`, value],
+      ]),
+    ),
   },
   recipients: [{ email: user.email, has_completed: false }],
   fields: [
@@ -105,6 +110,44 @@ describe("PandaDoc NDA", () => {
       recipient: user.email,
       lifetime: 900,
     });
+  });
+
+  it("round-trips long Unicode details within PandaDoc's metadata value limit", async () => {
+    const longDetails = {
+      ...details,
+      company: "Company ".repeat(25).trim(),
+      address: "🏠 office ".repeat(100).trim(),
+    };
+    const request = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(json(providerDocument("document.uploaded")));
+    const provider = createPandaDocNda(configuration, request);
+    await provider.create(owner, longDetails);
+    const body = JSON.parse(String(request.mock.calls[0]?.[1]?.body));
+
+    for (const value of Object.values(body.metadata))
+      expect(Array.from(String(value)).length).toBeLessThanOrEqual(100);
+
+    request.mockResolvedValueOnce(
+      json(
+        providerDocument("document.draft", {
+          metadata: body.metadata,
+        }),
+      ),
+    );
+    expect((await provider.read(owner, "test-document")).details).toEqual(
+      longDetails,
+    );
+  });
+
+  it("rejects incomplete details metadata", async () => {
+    const document = providerDocument();
+    delete (document.metadata as Record<string, unknown>).gradiated_company_0;
+    const request = vi.fn<typeof fetch>().mockResolvedValue(json(document));
+
+    await expect(
+      createPandaDocNda(configuration, request).read(owner, "test-document"),
+    ).rejects.toMatchObject({ problem: { status: 404 } });
   });
 
   it("keeps completion pending until all required signers finish", async () => {

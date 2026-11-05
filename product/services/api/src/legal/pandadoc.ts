@@ -82,6 +82,44 @@ const ProviderDocumentSchema = z.object({
 export type NdaDetails = z.infer<typeof NdaDetailsSchema>;
 type Owner = { organizationId: string; userId: string; email: string };
 
+// PandaDoc limits each metadata value to 100 characters.
+const encodeDetails = (details: NdaDetails) =>
+  Object.fromEntries(
+    Object.entries(details).flatMap(([field, value]) => {
+      const characters = Array.from(value);
+      const chunks = Array.from(
+        { length: Math.ceil(characters.length / 100) },
+        (_, index) => characters.slice(index * 100, (index + 1) * 100).join(""),
+      );
+
+      return [
+        [`gradiated_${field}_parts`, String(chunks.length)],
+        ...chunks.map((chunk, index) => [`gradiated_${field}_${index}`, chunk]),
+      ];
+    }),
+  );
+
+const decodeDetails = (metadata: Record<string, unknown>) =>
+  Object.fromEntries(
+    Object.keys(NdaDetailsSchema.shape).map((field) => {
+      const count = Number(metadata[`gradiated_${field}_parts`]);
+
+      if (!Number.isInteger(count) || count < 1 || count > 10)
+        throw new Error("Invalid NDA details metadata");
+
+      const chunks = Array.from({ length: count }, (_, index) => {
+        const chunk = metadata[`gradiated_${field}_${index}`];
+
+        if (typeof chunk !== "string")
+          throw new Error("Incomplete NDA details metadata");
+
+        return chunk;
+      });
+
+      return [field, chunks.join("")];
+    }),
+  );
+
 export interface PandaDocConfiguration {
   apiKey: string;
   templateId: string;
@@ -152,7 +190,7 @@ export const createPandaDocNda = (
 
     let storedDetails: unknown;
     try {
-      storedDetails = JSON.parse(String(metadata.gradiated_details));
+      storedDetails = decodeDetails(metadata);
     } catch {
       throw new ApiProblem(problems.notFound("NDA document not found."));
     }
@@ -296,7 +334,7 @@ export const createPandaDocNda = (
             gradiated_user_id: owner.userId,
             gradiated_template_id: configuration.templateId,
             gradiated_template_version: configuration.templateVersion,
-            gradiated_details: JSON.stringify(details),
+            ...encodeDetails(details),
           },
         }),
       );

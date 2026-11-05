@@ -57,6 +57,48 @@ const json = (value: unknown) =>
 const collection = `/api/v1/organizations/${organizationId}/nda-documents`;
 
 describe("PandaDoc NDA", () => {
+  it("does not retry a conflicting document creation", async () => {
+    const request = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ id: "test-document", status: "document.uploaded" }),
+          { status: 409 },
+        ),
+      );
+
+    await expect(
+      createPandaDocNda(configuration, request).create(owner, details),
+    ).rejects.toMatchObject({ problem: { status: 503 } });
+    expect(request).toHaveBeenCalledOnce();
+  });
+
+  it("waits through PandaDoc's processing conflict before reading a new document", async () => {
+    const request = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: "test-document",
+            status: "document.uploaded",
+          }),
+          { status: 409 },
+        ),
+      )
+      .mockResolvedValueOnce(json(providerDocument()));
+
+    expect(
+      await createPandaDocNda(configuration, request).read(
+        owner,
+        "test-document",
+      ),
+    ).toMatchObject({ status: "ready" });
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(
+      request.mock.calls.every(([, options]) => options?.method === "GET"),
+    ).toBe(true);
+  });
+
   it("creates a customer-specific document without sending email and fills the configured date", async () => {
     const request = vi
       .fn<typeof fetch>()

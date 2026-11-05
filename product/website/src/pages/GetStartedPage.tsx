@@ -568,9 +568,7 @@ const GetStartedWorkflow = ({
   return (
     <div className="gr-root gs-root" data-theme="taupe">
       <div className="gs-prototype">
-        {demo
-          ? "Prototype · demo account · nothing is sent or connected"
-          : "Prototype · nothing is sent or connected"}
+        {demo ? "Prototype · demo account" : "Prototype"}
       </div>
       <div
         className={`gs-auth-shell${draft.submitted ? " gs-auth-shell--project" : ""}`}

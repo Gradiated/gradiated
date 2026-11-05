@@ -131,7 +131,11 @@ export const createPandaDocNda = (
   configuration: PandaDocConfiguration,
   request: typeof fetch = fetch,
 ) => {
-  const call = async (path: string, body?: unknown) => {
+  const call = async (
+    path: string,
+    body?: unknown,
+    attempt = 0,
+  ): Promise<unknown> => {
     try {
       const response = await request(
         `https://api.pandadoc.com/public/v1${path}`,
@@ -150,11 +154,26 @@ export const createPandaDocNda = (
       if (response.status === 404)
         throw new ApiProblem(problems.notFound("NDA document not found."));
 
+      const text = await response.text();
+      const result = text ? (JSON.parse(text) as unknown) : {};
+
+      if (
+        response.status === 409 &&
+        body === undefined &&
+        attempt < 10 &&
+        typeof result === "object" &&
+        result !== null &&
+        "status" in result &&
+        result.status === "document.uploaded"
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        return call(path, undefined, attempt + 1);
+      }
+
       if (!response.ok) throw new Error("PandaDoc request failed");
 
-      const text = await response.text();
-
-      return text ? (JSON.parse(text) as unknown) : {};
+      return result;
     } catch (error) {
       if (error instanceof ApiProblem) throw error;
 

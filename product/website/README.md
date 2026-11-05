@@ -122,7 +122,18 @@ end-to-end validation. Credentials were used only from the ignored local `.env`.
 
 The NDA details form opens an on-page review/signing step. In DEV account preview,
 **Simulate signing** advances the demo without calling PandaDoc or collecting any
-signature. In the live flow, the backend creates a document, waits for draft
+signature unless local sandbox signing is configured. To use the real signing
+window inside the preview, add `PANDADOC_SANDBOX_PREVIEW=true` and
+`PANDADOC_SANDBOX_SIGNER_EMAIL` to the ignored repository-root `.env`, alongside
+the sandbox key and template configuration, then restart the website dev server.
+Use a test address in the sandbox key owner's allowed domain. The dev-only Vite
+middleware binds to same-origin localhost requests, substitutes that sandbox
+email, and checks the document's `[DEV]` marker before silently sending it. It
+holds document access in memory and only advances after provider-confirmed
+completion. It is absent from production builds; production still uses the
+authenticated API. No credentials are exposed through `VITE_` settings.
+
+In the live flow, the backend creates a document, waits for draft
 readiness, sends with `silent: true` to suppress signing emails, and creates a
 15-minute session for the verified signed-in signer. The browser loads PandaDoc's
 official `pandadoc-signing` component. Signing events only trigger a status check;

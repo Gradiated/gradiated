@@ -15,6 +15,23 @@ const sameDetails = (first: NdaDetails, second: NdaDetails) =>
   first.title.trim() === second.title.trim() &&
   first.email.trim().toLowerCase() === second.email.trim().toLowerCase();
 
+const sandboxRequest = async (path: string, body: unknown) => {
+  const response = await fetch(`/__nda-sandbox${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const result = (await response.json()) as {
+    document: NdaDocument;
+    session_id?: string;
+    error?: string;
+  };
+  if (!response.ok)
+    throw new Error(result.error ?? "Sandbox signing is unavailable.");
+
+  return result;
+};
+
 const PandaDocEmbed = ({
   sessionId,
   onVerify,
@@ -84,15 +101,33 @@ export const NdaSigning = ({
   onComplete: (documentId: string) => void;
   onBack: () => void;
 }) => {
-  const [documentId, setDocumentId] = useState(initialDocumentId);
+  const [documentId, setDocumentId] = useState(demo ? null : initialDocumentId);
   const [document, setDocument] = useState<NdaDocument | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [demoSigned, setDemoSigned] = useState(false);
+  const [sandboxEmail, setSandboxEmail] = useState("");
   const active = useRef(true);
   const callbacks = useRef({ onComplete, onDocument, details });
   callbacks.current = { onComplete, onDocument, details };
+
+  useEffect(() => {
+    if (!import.meta.env.DEV || !demo) return;
+
+    let cancelled = false;
+    void fetch("/__nda-sandbox/")
+      .then(async (response) => (response.ok ? response.json() : null))
+      .then((configuration) => {
+        if (!cancelled && configuration?.enabled)
+          setSandboxEmail(configuration.signer_email);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [demo]);
 
   useEffect(() => {
     active.current = true;
@@ -102,11 +137,18 @@ export const NdaSigning = ({
   }, []);
 
   const verify = useCallback(async () => {
-    if (!documentId || demo) return null;
+    if (!documentId || (demo && !sandboxEmail)) return null;
 
-    const current = await getNdaDocument(organizationId, documentId);
+    const current = demo
+      ? (await sandboxRequest("/status", { document_id: documentId })).document
+      : await getNdaDocument(organizationId, documentId);
     if (!active.current) return null;
-    if (!sameDetails(current.details, callbacks.current.details))
+    if (
+      !sameDetails(current.details, {
+        ...callbacks.current.details,
+        email: demo ? current.details.email : callbacks.current.details.email,
+      })
+    )
       throw new Error(
         "The NDA details have changed. Return to your details and prepare a new copy.",
       );
@@ -118,10 +160,15 @@ export const NdaSigning = ({
     }
 
     return current;
-  }, [organizationId, documentId, demo]);
+  }, [organizationId, documentId, demo, sandboxEmail]);
 
   useEffect(() => {
-    if (!documentId || demo || document?.status === "completed") return;
+    if (
+      !documentId ||
+      (demo && !sandboxEmail) ||
+      document?.status === "completed"
+    )
+      return;
 
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
@@ -144,7 +191,7 @@ export const NdaSigning = ({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [documentId, demo, document?.status, verify]);
+  }, [documentId, demo, sandboxEmail, document?.status, verify]);
 
   const open = async () => {
     if (busy) return;
@@ -152,6 +199,23 @@ export const NdaSigning = ({
     setError("");
 
     try {
+      if (demo && sandboxEmail) {
+        const result = await sandboxRequest("/session", {
+          details,
+          document_id: documentId,
+        });
+        if (!active.current) return;
+
+        setDocumentId(result.document.id);
+        setDocument(result.document);
+        callbacks.current.onDocument(result.document.id);
+        if (result.document.status === "completed")
+          callbacks.current.onComplete(result.document.id);
+        else setSessionId(result.session_id ?? null);
+
+        return;
+      }
+
       let current = documentId
         ? await getNdaDocument(organizationId, documentId)
         : await createNdaDocument(organizationId, details);
@@ -207,7 +271,7 @@ export const NdaSigning = ({
       <div className="gs-step-title">
         <h1 id="signing-title">Review & sign your NDA.</h1>
       </div>
-      {demo ? (
+      {demo && !sandboxEmail ? (
         <>
           <div className="gs-signing-demo">
             <h2>Mutual NDA</h2>
@@ -247,6 +311,7 @@ export const NdaSigning = ({
         </>
       ) : (
         <>
+          {demo && <p className="gs-note">Sandbox signer: {sandboxEmail}</p>}
           {document?.status === "completed" ? (
             <p role="status" className="gs-signed">
               <CheckCircle2 size={18} /> NDA completed.

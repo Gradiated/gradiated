@@ -49,6 +49,25 @@ class HostAgentTest(unittest.TestCase):
     def tearDown(self):
         self.directory.cleanup()
 
+    @unittest.skipIf("recovery" in Path(agent.__file__).parts, "the frozen recovery agent predates SGLang profiles")
+    def test_sglang_hardware_profiles_are_validated_and_allow_proxy_rebuilds(self):
+        digest = 'a' * 64
+        profile = {'image': self.pod['spec']['containers'][0]['image'], 'warmup': True,
+                   'environment': {'GLM_SGLANG_PROFILE': 'h200-tp2'}}
+        self.host.config['runtimes'] = {digest: profile}
+        for name in ('b300-pcp2', 'b200-pcp2', 'h200-tp2'):
+            with self.subTest(profile=name):
+                profile['environment']['GLM_SGLANG_PROFILE'] = name
+                self.assertEqual(agent.runtime_profile(self.host.config, self.pod)[1], profile)
+                with patch.object(self.host, 'states', return_value=[{'pod': self.pod, 'port_base': 38080}]):
+                    configuration = self.host.proxy_config()
+                self.assertIn(f'location /alloc/{self.uid}/', configuration)
+                self.assertIn('proxy_pass http://127.0.0.1:38083/health;', configuration)
+        for name in ('', 'h200', 'unknown', 'h200-tp2 extra', 4, None):
+            profile['environment']['GLM_SGLANG_PROFILE'] = name
+            with self.subTest(invalid_profile=name), self.assertRaises(ValueError):
+                agent.runtime_profile(self.host.config, self.pod)
+
     @unittest.skipIf("recovery" in Path(agent.__file__).parts, "the frozen recovery agent predates prefill budget overrides")
     def test_prefill_budget_must_allow_at_least_four_sequences(self):
         digest = 'a' * 64

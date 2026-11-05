@@ -151,6 +151,13 @@ remain unchanged until their pods drain. Select the runtime and placement in `gp
 catalogue; an unstaged candidate retries while existing replicas keep serving.
 The controller image is built and pinned by the normal application release.
 
+The host agent accepts `GLM_SGLANG_PROFILE` values `b300-pcp2`, `b200-pcp2`, and
+`h200-tp2` from the runtime catalogue. It validates these profiles when rebuilding
+the proxy for existing pods as well as before launching new ones, so a bundle
+update must support every active runtime's environment. Configuration tests check
+the current catalogue against the host agent; an incompatible agent can crash
+at startup and trigger the launcher's bundle rollback without restarting models.
+
 The model configuration names the runtime digest, replica count, deadline and
 placement. Optional `max_surge` is a positive integer, defaulting to one; GLM
 Dealign permits two extra replicas while retaining `maxUnavailable: 0`. Actual

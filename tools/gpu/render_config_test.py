@@ -5,6 +5,7 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -17,6 +18,20 @@ spec.loader.exec_module(renderer)
 
 
 class RenderTests(unittest.TestCase):
+    def test_host_agent_accepts_every_catalogued_runtime_environment(self):
+        root = renderer.ROOT / 'product/inference/gpu'
+        with patch.object(sys, 'path', [str(root), *sys.path]):
+            spec = importlib.util.spec_from_file_location('catalog_host_agent', root / 'host-agent.py')
+            host_agent = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(host_agent)
+        runtimes = json.loads((root / 'runtimes.json').read_text())
+        for digest, profile in runtimes.items():
+            with self.subTest(runtime=digest):
+                pod = {'metadata': {'annotations': {}},
+                       'spec': {'containers': [{'image': profile['image']}]}}
+                selected, _ = host_agent.runtime_profile({'runtimes': runtimes}, pod)
+                self.assertEqual(selected, digest)
+
     def setUp(self):
         self.definition = yaml.safe_load((renderer.GPU / 'gpuhost-crd.yaml').read_text())
         self.hosts = [item for item in yaml.safe_load_all((renderer.GPU / 'hosts.yaml').read_text()) if item]

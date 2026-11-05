@@ -137,10 +137,12 @@ def runtime_profile(config, pod):
     allowed_environment = {"TENSOR_PARALLEL_SIZE", "MODEL_ID", "LORA_ENABLED", "LORA_BASE_MODEL_REVISION",
         "LORA_GPU_SLOTS", "LORA_CPU_SLOTS", "LORA_MAX_RANK", "LORA_DISK_CACHE_BYTES", "LORA_DOWNLOAD_HOSTS",
         "GRADIATED_API_BASE_URL", "HOST_IDENTITY_FILE", "GLM_PREFILL_TOKEN_BUDGET", "GLM_LONG_PREFILL_TOKEN_THRESHOLD", "GLM_PREFIX_MATCH_UNIT",
-        "MAX_QUEUED_TOKENS", "MAX_QUEUED_REQUESTS"}
+        "MAX_QUEUED_TOKENS", "MAX_QUEUED_REQUESTS", "GLM_SGLANG_PROFILE"}
     extra = profile.get("environment", {})
     if set(extra) - allowed_environment or any(not isinstance(value, str) for value in extra.values()):
         raise ValueError("Unsupported runtime environment")
+    if extra.get("GLM_SGLANG_PROFILE", "b300-pcp2") not in {"b300-pcp2", "b200-pcp2", "h200-tp2"}:
+        raise ValueError("Unsupported GLM SGLang profile")
     if "GLM_PREFILL_TOKEN_BUDGET" in extra and not re.fullmatch(r"([4-9]|[1-9][0-9]+)", extra["GLM_PREFILL_TOKEN_BUDGET"]):
         raise ValueError("GLM_PREFILL_TOKEN_BUDGET must be an integer of at least 4")
     for name in ("GLM_LONG_PREFILL_TOKEN_THRESHOLD", "GLM_PREFIX_MATCH_UNIT", "MAX_QUEUED_TOKENS", "MAX_QUEUED_REQUESTS"):

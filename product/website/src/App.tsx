@@ -44,7 +44,6 @@ const SandJourneyRedirect = (): ReactElement => {
   return <Navigate replace to={`/sand-to-thought/${hash}`} />;
 };
 
-
 const RouteScrollRestoration = (): null => {
   const { hash, pathname } = useLocation();
 

@@ -12,7 +12,7 @@ from . import files, schema, seed
 from .paths import AGENT_PORT, DESMOND, DOWNLOADER, Layout
 from .tailscale import BOOTSTRAP_TAG, INFERENCE_TAG, Tailscale, tags
 
-PRODUCTS = {'B300': 'B300', 'H200': 'H200', 'RTX PRO 6000': 'RTX-PRO-6000'}
+PRODUCTS = {'B200': 'B200', 'B300': 'B300', 'H200': 'H200', 'RTX PRO 6000': 'RTX-PRO-6000'}
 
 
 # Its messages never include payload values, which hold credentials.
@@ -68,7 +68,7 @@ def inventory(layout):
     products = {product for name in names for marker, product in PRODUCTS.items()
                 if re.search(r'\b' + re.escape(marker) + r'\b', name)}
     if not names or len(set(names)) != 1 or len(products) != 1:
-        raise EnrollmentError('Enrollment needs a homogeneous B300, H200 or RTX PRO 6000 GPU set')
+        raise EnrollmentError('Enrollment needs a homogeneous B200, B300, H200 or RTX PRO 6000 GPU set')
     quota = (layout.cgroup / 'cpu.max').read_text().split()
     cpu = os.cpu_count() if quota[0] == 'max' else int(quota[0]) // int(quota[1])
     limit = (layout.cgroup / 'memory.max').read_text().strip()

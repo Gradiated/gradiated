@@ -44,6 +44,7 @@ export type EnrollmentDependencies = {
 };
 
 const SKU_PRODUCTS: Record<string, string> = {
+  B200: "NVIDIA B200",
   B300: "NVIDIA B300",
   H200: "NVIDIA H200",
   "RTX-PRO-6000": "NVIDIA RTX PRO 6000",

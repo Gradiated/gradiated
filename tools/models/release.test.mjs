@@ -47,5 +47,5 @@ test("SGLang release records identify available hardware launch profiles", () =>
     digest: "d".repeat(64),
     bucket: "test-artifacts",
   });
-  assert.deepEqual(record.runtimeProfiles, ["b300-pcp2", "h200-tp2"]);
+  assert.deepEqual(record.runtimeProfiles, ["b300-pcp2", "h200-tp2", "b200-pcp2"]);
 });

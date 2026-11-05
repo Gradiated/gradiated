@@ -80,6 +80,12 @@ def verify(root):
     assert hopper.chunked_prefill_size == hopper.max_prefill_tokens == 4096
     hopper_front = parse_router_args(hopper_router[3:])
     assert hopper_front.max_concurrent_requests == 4 and hopper_front.queue_size == 2
+    _, b200_backend, b200_router = commands({**env, 'GLM_SGLANG_PROFILE': 'b200-pcp2'})
+    b200 = parser.parse_args(b200_backend[3:])
+    assert b200.tp_size == 2 and b200.enable_prefill_cp and b200.attn_cp_size == 2
+    assert b200.dsa_prefill_backend == b200.dsa_decode_backend == 'trtllm'
+    assert b200.max_running_requests == b200.cuda_graph_max_bs_decode == 8
+    assert parse_router_args(b200_router[3:]).max_concurrent_requests == 8
     assert compileall.compile_dir(site / 'sglang', quiet=1)
     assert compileall.compile_dir(root / 'glm-sglang', quiet=1)
     temporary.cleanup()

@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-spec = importlib.util.spec_from_file_location('prepare_h200', Path(__file__).with_name('prepare-h200-enrollment.py'))
+spec = importlib.util.spec_from_file_location('prepare_enrollment', Path(__file__).with_name('prepare-enrollment.py'))
 prepare = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(prepare)
 
@@ -23,7 +23,7 @@ class BootstrapPreparation(unittest.TestCase):
         (self.package / 'enrollment-result.schema.json').write_text('{}\n')
         (self.root / 'etc/gradiated').mkdir(parents=True)
         (self.root / 'etc/gradiated/tailscale.json').write_text('{"pod":"h200pod"}')
-        self.document = {'pod': 'h200pod', 'source': 'a' * 40,
+        self.document = {'pod': 'h200pod', 'source': 'a' * 40, 'product': 'H200',
                          'files': {'enroll.py': 'H200 = True\n', 'enrollment-result.schema.json': '{"new":true}\n'}}
 
     def run_remote(self, names='NVIDIA H200\nNVIDIA H200\n', busy=''):
@@ -34,7 +34,7 @@ class BootstrapPreparation(unittest.TestCase):
         with patch('pathlib.Path', side_effect=path), patch('os.geteuid', return_value=0), \
              patch('sys.stdin', io.StringIO(json.dumps(self.document))), \
              patch('subprocess.check_output', side_effect=[names, busy]), contextlib.redirect_stdout(io.StringIO()):
-            exec(compile(prepare.REMOTE, 'h200-preparation', 'exec'), {})
+            exec(compile(prepare.REMOTE, 'bootstrap-preparation', 'exec'), {})
 
     def test_prepares_only_enrollment_files_with_backups_and_is_idempotent(self):
         self.run_remote()
@@ -49,6 +49,18 @@ class BootstrapPreparation(unittest.TestCase):
             with self.subTest(names=names, busy=busy), self.assertRaises(SystemExit):
                 self.run_remote(names, busy)
             self.assertEqual((self.package / 'enroll.py').read_text(), 'OLD = True\n')
+
+    def test_b200_preparation_requires_b200_gpus(self):
+        self.document['product'] = 'B200'
+        for names in ['NVIDIA H200\nNVIDIA H200\n', 'NVIDIA GB200\nNVIDIA GB200\n', 'NVIDIA B300\nNVIDIA B300\n']:
+            with self.subTest(names=names), self.assertRaisesRegex(SystemExit, 'B200'):
+                self.run_remote(names)
+        self.run_remote('NVIDIA B200\nNVIDIA B200\n')
+        self.assertEqual((self.package / 'enroll.py.before-b200').read_text(), 'OLD = True\n')
+
+    def test_refuses_unsupported_product_before_reading_source(self):
+        with self.assertRaisesRegex(ValueError, 'Unsupported'):
+            prepare.payload('pod', 'a' * 40, 'B300')
 
     def test_refuses_already_enrolled_or_wrong_bootstrap_identity(self):
         (self.root / 'etc/gradiated/kubelet.json').write_text('{}')

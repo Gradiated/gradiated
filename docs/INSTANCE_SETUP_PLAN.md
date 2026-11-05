@@ -135,8 +135,8 @@ The candidate launch settings and their unmeasured limits are in the
 
    ```sh
    git fetch origin main
-   python3 tools/gpu/prepare-h200-enrollment.py --pod s0j3lwoqorm674 --source "$MERGED_SOURCE_SHA"
-   python3 tools/gpu/prepare-h200-enrollment.py --pod s0j3lwoqorm674 --source "$MERGED_SOURCE_SHA" --apply
+   python3 tools/gpu/prepare-enrollment.py --gpu H200 --pod s0j3lwoqorm674 --source "$MERGED_SOURCE_SHA"
+   python3 tools/gpu/prepare-enrollment.py --gpu H200 --pod s0j3lwoqorm674 --source "$MERGED_SOURCE_SHA" --apply
    ```
 
    The helper uses administrator Tailscale SSH, including its normal MFA
@@ -156,8 +156,8 @@ The candidate launch settings and their unmeasured limits are in the
    using the registered instance UUIDs, initially choosing only the first host:
 
    ```sh
-   python3 tools/gpu/stage-glm-h200.py "$RELEASE_JSON" "$BUNDLE_SOURCE_SHA" --instances "$H200_INSTANCE_UUID"
-   python3 tools/gpu/stage-glm-h200.py "$RELEASE_JSON" "$BUNDLE_SOURCE_SHA" --instances "$H200_INSTANCE_UUID" --write
+   python3 tools/gpu/stage-glm-pool.py --gpu h200 "$RELEASE_JSON" "$BUNDLE_SOURCE_SHA" --instances "$H200_INSTANCE_UUID"
+   python3 tools/gpu/stage-glm-pool.py --gpu h200 "$RELEASE_JSON" "$BUNDLE_SOURCE_SHA" --instances "$H200_INSTANCE_UUID" --write
    python3 tools/gpu/render-config.py
    node tools/models/model-replica-rules.mjs
    ```
@@ -199,6 +199,16 @@ Keep its manifests, immutable runtime, enrolled hosts and provider reservations
 for inspection and retry. A new runtime can be staged as another isolated
 revision through an explicit reviewed edit. Neither rollback nor qualification
 should reset or terminate a RunPod pod.
+
+## B200 alongside B300
+
+B200 GLM capacity is a separate `glm-dealign-sglang-b200` Rollout for the same
+public uncensored model, staged and promoted exactly like the H200 pool above
+with `--gpu B200` for enrollment preparation and `--gpu b200` for staging. B200
+is Blackwell, so its `b200-pcp2` profile keeps the B300 launch settings and
+halves the admission limit to eight requests for its smaller HBM. It requests
+320 GiB of host RAM and never changes B300 pins, placement or replica counts.
+Record the measured pool capacity before raising that limit.
 
 ## Deploy and verify a model
 

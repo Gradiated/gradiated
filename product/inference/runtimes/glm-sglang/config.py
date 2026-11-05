@@ -14,6 +14,9 @@ QUEUE_TIMEOUT_SECONDS = 60
 PROFILES = {
     'b300-pcp2': {'gpu_product': 'B300', 'active_requests': ACTIVE_REQUESTS,
                   'prefill_tokens': 16384, 'dsa_backend': 'trtllm', 'context_parallel': True},
+    # Same Blackwell kernels as B300 with about two thirds of the HBM, so half the active requests.
+    'b200-pcp2': {'gpu_product': 'B200', 'active_requests': 8,
+                  'prefill_tokens': 16384, 'dsa_backend': 'trtllm', 'context_parallel': True},
     'h200-tp2': {'gpu_product': 'H200', 'active_requests': 4,
                  'prefill_tokens': 4096, 'dsa_backend': 'flashmla_kv', 'context_parallel': False},
 }

@@ -68,6 +68,22 @@ class Configuration(unittest.TestCase):
         self.assertEqual(router[router.index('--max-concurrent-requests') + 1], '4')
         self.assertEqual(router[router.index('--queue-size') + 1], '2')
 
+    def test_b200_keeps_blackwell_attention_with_a_smaller_admission_limit(self):
+        environment = {**self.environment, 'GLM_SGLANG_PROFILE': 'b200-pcp2'}
+        settings, backend, router = config.commands(environment)
+        _, b300, _ = config.commands(self.environment)
+        self.assertEqual(settings['gpu_product'], 'B200')
+        for flag, value in [('--dsa-prefill-backend', 'trtllm'), ('--dsa-decode-backend', 'trtllm'),
+                            ('--max-running-requests', '8'), ('--cuda-graph-max-bs-decode', '8'),
+                            ('--chunked-prefill-size', '16384'), ('--attn-cp-size', '2')]:
+            self.assertEqual(backend[backend.index(flag) + 1], value)
+        self.assertIn('--enable-prefill-cp', backend)
+        self.assertNotIn('--page-size', backend)
+        limits = {'--max-running-requests', '--cuda-graph-max-bs-decode'}
+        strip = lambda args: [a for i, a in enumerate(args) if a not in limits and (i == 0 or args[i - 1] not in limits)]
+        self.assertEqual(strip(backend), strip(b300))
+        self.assertEqual(router[router.index('--max-concurrent-requests') + 1], '8')
+
     def test_profile_validation_does_not_silently_fall_back(self):
         with self.assertRaisesRegex(ValueError, 'Unknown'):
             config.commands({**self.environment, 'GLM_SGLANG_PROFILE': 'h200'})
@@ -75,7 +91,11 @@ class Configuration(unittest.TestCase):
                                        ('NVIDIA B300\nNVIDIA B300\n', 'b300-pcp2', True),
                                        ('NVIDIA H200\nNVIDIA H200\n', 'b300-pcp2', False),
                                        ('NVIDIA B300\nNVIDIA B300\n', 'h200-tp2', False),
-                                       ('NVIDIA GH200\nNVIDIA GH200\n', 'h200-tp2', False)]:
+                                       ('NVIDIA GH200\nNVIDIA GH200\n', 'h200-tp2', False),
+                                       ('NVIDIA B200\nNVIDIA B200\n', 'b200-pcp2', True),
+                                       ('NVIDIA B200\nNVIDIA B200\n', 'b300-pcp2', False),
+                                       ('NVIDIA B300\nNVIDIA B300\n', 'b200-pcp2', False),
+                                       ('NVIDIA GB200\nNVIDIA GB200\n', 'b200-pcp2', False)]:
             with self.subTest(names=names, profile=profile), patch.object(config.subprocess, 'run', return_value=SimpleNamespace(stdout=names)) as run:
                 environment = {**self.environment, 'GLM_SGLANG_PROFILE': profile}
                 if valid:

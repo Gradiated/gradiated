@@ -4,7 +4,7 @@
 `f171859219b54e1dad45dda60028034490836974`, CPython 3.12.13, and the
 hash-locked Linux x86_64 dependencies. It serves
 `dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4` at revision
-`745aac2ff0f10acf961f396df3f9418598aa7327` using two B300 GPUs.
+`745aac2ff0f10acf961f396df3f9418598aa7327` using two B300 GPUs by default.
 The profile uses TP2/PCP2 with interleaved context parallelism, Marlin W4A16
 experts, two MTP draft steps, FP8 KV, a 16,384-token prefill budget,
 shortest-prefill-first scheduling, and 64 decode rounds between prefill steps.
@@ -44,6 +44,17 @@ throughput result is claimed here. In particular, the full GLM NoPE/pooled-index
 FlashMLA and MTP paths must pass on the actual packaged runtime. See
 [H200 deployment preparation](../../../../docs/INSTANCE_SETUP_PLAN.md#h200-tp2-alongside-b300)
 for enrollment, staging, qualification, promotion and rollback.
+
+## B200 PCP2 profile
+
+`GLM_SGLANG_PROFILE=b200-pcp2` serves the same checkpoint on two B200 GPUs.
+B200 (SM100) and B300 (SM103) share the Blackwell kernels; the pinned SGLang
+selects `trtllm` DSA for any compute capability 10 or later. The profile keeps
+every B300 launch setting except the admission limit: eight active requests,
+with decode graphs through batch eight, because each B200 has about two thirds
+of a B300's HBM. Hardware validation refuses B300 and GB200 GPUs for this
+profile and B200 GPUs for the B300 profile. No B200 startup, capacity or
+throughput result is claimed here; qualify it as described for H200.
 
 Three compatibility patches preserve the measured configuration: gate/up global-scale
 folding before Marlin conversion, the corresponding ModelOpt dispatch, and the

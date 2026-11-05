@@ -13,6 +13,7 @@
     "playwright.task-ui.config.ts",
     "e2e",
     "src/api/schema.ts",
-    "src/stories/base-model-configs.ts"
+    "src/stories/base-model-configs.ts",
+    "src/stories/report-fixture.ts"
   ]
 }

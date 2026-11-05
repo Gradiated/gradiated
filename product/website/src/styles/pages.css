@@ -4923,7 +4923,8 @@
 .gr-fold-centred .gr-home-title {
   max-width: 100%;
   margin: 0;
-  font-size: clamp(3.25rem, 7vw, 6rem);
+  font-size: clamp(2.5rem, 5.5vw, 4.75rem);
+  text-wrap: balance;
 }
 
 /* The authored breaks come off on a phone.

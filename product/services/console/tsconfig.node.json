@@ -12,6 +12,7 @@
     "playwright.config.ts",
     "playwright.task-ui.config.ts",
     "e2e",
-    "src/api/schema.ts"
+    "src/api/schema.ts",
+    "src/stories/base-model-configs.ts"
   ]
 }

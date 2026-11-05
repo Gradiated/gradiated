@@ -2,9 +2,6 @@ import { useId, useState } from "react";
 import type { ReactElement } from "react";
 import compensation from "../../posthog-compensation.generated.json";
 
-/* PostHog's calculator, with PostHog's data (scripts/sync-posthog-compensation.ts).
-   Salary = San Francisco benchmark x location factor x level x step. */
-
 type Location = {
   country: string;
   area: string;
@@ -30,14 +27,18 @@ const areasIn = (country: string): string[] =>
     .map((l) => l.area)
     .sort();
 
-const formatPay = (usd: number, currency = "USD"): string => {
-  const code = currencies[currency] ? currency : "USD";
-  return new Intl.NumberFormat("en-US", {
+const hasRate = (currency?: string): currency is string =>
+  currency !== undefined && currencies[currency] !== undefined;
+
+// Without a rate, show an unambiguous "USD" rather than a "$" that could be
+// read as a local dollar or peso.
+const formatPay = (usd: number, currency?: string): string =>
+  new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: code,
+    currency: hasRate(currency) ? currency : "USD",
+    currencyDisplay: hasRate(currency) ? "symbol" : "code",
     maximumFractionDigits: 0,
-  }).format(Math.round(usd * (currencies[code] ?? 1)));
-};
+  }).format(Math.round(usd * (hasRate(currency) ? currencies[currency] : 1)));
 
 const Select = ({
   label,
@@ -167,6 +168,13 @@ export const CompensationCalculator = ({
           </dd>
         </div>
       </dl>
+
+      {location.currency && !hasRate(location.currency) ? (
+        <p className="gr-comp-calc__note">
+          Shown in US dollars, because PostHog's data has no exchange rate for{" "}
+          {location.currency}.
+        </p>
+      ) : null}
 
       {role.includes("Engineer") && role !== "Support Engineer" ? (
         <p className="gr-comp-calc__note">

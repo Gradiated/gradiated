@@ -13,9 +13,10 @@ const create = createRoute({
   path: "/api/v1/organizations/{organization_id}/slack-invitations",
   operationId: "createSlackInvitation",
   tags: ["Slack invitations"],
-  summary: "Invite the signed-in customer to a dedicated Slack Connect channel",
+  summary:
+    "Invite the customer's chosen email to a dedicated Slack Connect channel",
   description:
-    "Requires an active verified organization admin and completed NDA. Creates or reuses the private customer channel, adds Gradiated engineers, and emails a Slack Connect invitation. Customer acceptance and workspace approval may still be required.",
+    "Requires an active verified organization admin and completed NDA. Creates or reuses the public customer channel, adds Gradiated engineers, and emails a Slack Connect invitation to the chosen recipient. The Slack email may differ from the NDA signer. Customer acceptance and workspace approval may still be required.",
   request: {
     params: z.object({
       organization_id: z.uuid().describe("The customer organization."),
@@ -25,6 +26,16 @@ const create = createRoute({
       content: {
         "application/json": {
           schema: z.strictObject({
+            email: z
+              .string()
+              .trim()
+              .toLowerCase()
+              .email()
+              .max(200)
+              .optional()
+              .describe(
+                "The Slack invitation recipient; defaults to the signed-in account email, independently of the NDA signer.",
+              ),
             nda_document_id: z
               .string()
               .regex(/^[a-zA-Z0-9_-]{1,100}$/)
@@ -100,7 +111,7 @@ export const registerSlackInvitationRoutes = (
       await provider.invite({
         organizationId: organization_id,
         company: organization.name,
-        email: user.email,
+        email: context.req.valid("json").email ?? user.email,
       }),
       201,
     );

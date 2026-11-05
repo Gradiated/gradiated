@@ -115,14 +115,15 @@ signatures.
 
 The Slack step creates a public `ext-<company>-gradiated` channel, adds the
 configured Gradiated engineers, and emails a Slack Connect invitation to the
-verified signed-in organization admin. Customers accept it from their workspace;
+recipient chosen by the organization admin. The editable Slack email defaults to
+the account email and can differ from the NDA signer. Customers accept it from their workspace;
 their admin may also need to approve it. Setup can continue while acceptance is
 pending. Email remains the fallback when Slack is unavailable.
 
 The console-only `POST /api/v1/organizations/{organization_id}/slack-invitations`
 requires admin membership, a verified account email, and a provider-confirmed
-completed NDA belonging to that user and organization. The client cannot supply
-another recipient. The generated API client is used by the website. DEV previews
+completed NDA belonging to that user and organization. The API validates and
+normalizes the chosen recipient independently of NDA signer verification. The generated API client is used by the website. DEV previews
 simulate the invitation and create no Slack resources; use
 `/get-started/?preview=account&step=slack` to preview this step directly.
 

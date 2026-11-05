@@ -10,6 +10,16 @@ import {
 } from "../src/onboarding";
 
 describe("local preview drafts", () => {
+  it("stores a separate Slack recipient without changing the NDA signer", () => {
+    const draft = onboardingSchema.parse({
+      ...exampleOnboarding(),
+      signerEmail: "legal@acme.example",
+      slackEmail: "engineering@acme.example",
+    });
+    expect(draft.slackEmail).toBe("engineering@acme.example");
+    expect(counterpartyDetails(draft).email).toBe("legal@acme.example");
+    expect(emptyOnboarding().slackEmail).toBeNull();
+  });
   it("allows setup to finish with no project description or context note", () => {
     expect(
       firstIncompleteStep({ ...exampleOnboarding(), context: "" }),
@@ -50,7 +60,9 @@ describe("local preview drafts", () => {
   });
 
   it("allows Slack acceptance to remain pending while requiring actual NDA signer fields", () => {
-    expect(firstIncompleteStep({ ...exampleOnboarding(), slack: "" })).toBeNull();
+    expect(
+      firstIncompleteStep({ ...exampleOnboarding(), slack: "" }),
+    ).toBeNull();
     expect(
       firstIncompleteStep({ ...exampleOnboarding(), signerTitle: "" }),
     ).toBe(0);

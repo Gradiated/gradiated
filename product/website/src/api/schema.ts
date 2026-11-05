@@ -362,8 +362,8 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Invite the signed-in customer to a dedicated Slack Connect channel
-     * @description Requires an active verified organization admin and completed NDA. Creates or reuses the private customer channel, adds Gradiated engineers, and emails a Slack Connect invitation. Customer acceptance and workspace approval may still be required.
+     * Invite the customer's chosen email to a dedicated Slack Connect channel
+     * @description Requires an active verified organization admin and completed NDA. Creates or reuses the public customer channel, adds Gradiated engineers, and emails a Slack Connect invitation to the chosen recipient. The Slack email may differ from the NDA signer. Customer acceptance and workspace approval may still be required.
      */
     post: operations["createSlackInvitation"];
     delete?: never;
@@ -1668,7 +1668,7 @@ export interface components {
       channel_name: string;
       /**
        * Format: email
-       * @description The verified account email invited to Slack Connect.
+       * @description The recipient email selected by the organization admin for Slack Connect.
        */
       email: string;
       /**
@@ -4273,6 +4273,11 @@ export interface operations {
     requestBody: {
       content: {
         "application/json": {
+          /**
+           * Format: email
+           * @description The Slack invitation recipient; defaults to the signed-in account email, independently of the NDA signer.
+           */
+          email?: string;
           /** @description The completed NDA for this organization and signed-in user. */
           nda_document_id: string;
         };

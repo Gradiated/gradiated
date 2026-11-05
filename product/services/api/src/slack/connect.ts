@@ -9,7 +9,9 @@ export const SlackInvitationSchema = z
     channel_name: z.string().describe("The shared customer channel name."),
     email: z
       .email()
-      .describe("The verified account email invited to Slack Connect."),
+      .describe(
+        "The recipient email selected by the organization admin for Slack Connect.",
+      ),
     status: z
       .enum(["invited", "joined"])
       .describe(

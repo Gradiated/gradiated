@@ -229,16 +229,40 @@ describe("Slack invitation route", () => {
     },
   );
 
-  it("rejects arbitrary recipient emails", async () => {
-    const { app, slackConnect } = setup();
+  it("invites the chosen Slack email while verifying the NDA with the signed-in signer", async () => {
+    const { app, slackConnect, ndaDocuments } = setup();
     expect(
       (
         await postJson(app, collection, {
           nda_document_id: "test-document",
-          email: "other@example.com",
+          email: "  Other@Example.com  ",
         })
       ).status,
-    ).toBe(422);
-    expect(slackConnect.invite).not.toHaveBeenCalled();
+    ).toBe(201);
+    expect(slackConnect.invite).toHaveBeenCalledWith({
+      organizationId,
+      company: organizationSummary.name,
+      email: "other@example.com",
+    });
+    expect(ndaDocuments.read).toHaveBeenCalledWith(
+      { organizationId, userId: user.id, email: user.email },
+      "test-document",
+    );
   });
+
+  it.each(["", "not-an-email", "a".repeat(201) + "@example.com"])(
+    "rejects an invalid Slack recipient: %s",
+    async (email) => {
+      const { app, slackConnect } = setup();
+      expect(
+        (
+          await postJson(app, collection, {
+            nda_document_id: "test-document",
+            email,
+          })
+        ).status,
+      ).toBe(422);
+      expect(slackConnect.invite).not.toHaveBeenCalled();
+    },
+  );
 });

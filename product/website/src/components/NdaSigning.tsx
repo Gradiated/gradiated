@@ -108,6 +108,10 @@ export const NdaSigning = ({
   const [error, setError] = useState("");
   const [demoSigned, setDemoSigned] = useState(false);
   const [sandboxEmail, setSandboxEmail] = useState("");
+  const [configurationReady, setConfigurationReady] = useState(
+    !import.meta.env.DEV || !demo,
+  );
+  const openedAutomatically = useRef(false);
   const active = useRef(true);
   const callbacks = useRef({ onComplete, onDocument, details });
   callbacks.current = { onComplete, onDocument, details };
@@ -122,7 +126,10 @@ export const NdaSigning = ({
         if (!cancelled && configuration?.enabled)
           setSandboxEmail(configuration.signer_email);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setConfigurationReady(true);
+      });
 
     return () => {
       cancelled = true;
@@ -193,7 +200,7 @@ export const NdaSigning = ({
     };
   }, [documentId, demo, sandboxEmail, document?.status, verify]);
 
-  const open = async () => {
+  const open = useCallback(async () => {
     if (busy) return;
     setBusy(true);
     setError("");
@@ -258,7 +265,19 @@ export const NdaSigning = ({
     } finally {
       if (active.current) setBusy(false);
     }
-  };
+  }, [busy, demo, sandboxEmail, documentId, organizationId, details]);
+
+  useEffect(() => {
+    if (
+      !configurationReady ||
+      openedAutomatically.current ||
+      (demo && !sandboxEmail)
+    )
+      return;
+
+    openedAutomatically.current = true;
+    void open();
+  }, [configurationReady, demo, sandboxEmail, open]);
 
   const verifyCompletion = useCallback(() => {
     void verify().catch(() =>
@@ -271,7 +290,9 @@ export const NdaSigning = ({
       <div className="gs-step-title">
         <h1 id="signing-title">Review & sign your NDA.</h1>
       </div>
-      {demo && !sandboxEmail ? (
+      {!configurationReady ? (
+        <p role="status">Preparing your NDA…</p>
+      ) : demo && !sandboxEmail ? (
         <>
           <div className="gs-signing-demo">
             <h2>Mutual NDA</h2>
@@ -320,16 +341,18 @@ export const NdaSigning = ({
             <p role="status">You’ve signed. Waiting for PostHog’s signature.</p>
           ) : sessionId ? (
             <PandaDocEmbed sessionId={sessionId} onVerify={verifyCompletion} />
-          ) : (
+          ) : error ? (
             <button
               type="button"
               className="gr-button gs-primary"
               disabled={busy}
               onClick={() => void open()}
             >
-              {busy ? "Preparing your NDA…" : "Open NDA for signing"}
+              {busy ? "Preparing your NDA…" : "Try again"}
               <ArrowRight size={15} />
             </button>
+          ) : (
+            <p role="status">Preparing your NDA…</p>
           )}
           {documentId && (
             <button

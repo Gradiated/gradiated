@@ -42,8 +42,8 @@ class KimiStageTests(unittest.TestCase):
         self.assertEqual(set(expression['values']), staging.INSTANCES)
         self.assertEqual((runtime['gpus'], runtime['cpu'], runtime['memory']), (8, '80', '1024Gi'))
         self.assertEqual(runtime['hf_home'], '/var/lib/kimi-k31/hf')
-        self.assertEqual(runtime['active_requests'], 4)
-        self.assertEqual(model['autoscaling']['target_concurrency'], 4)
+        self.assertEqual(runtime['active_requests'], 5)
+        self.assertEqual(model['autoscaling']['target_concurrency'], 5)
         runtime_spec = importlib.util.spec_from_file_location('kimi_runtime_config',
             staging.ROOT / 'product/inference/runtimes/kimi-k31/config.py')
         runtime_config = importlib.util.module_from_spec(runtime_spec)
@@ -71,7 +71,7 @@ class KimiStageTests(unittest.TestCase):
         models['kimi-k31-pro']['replicas'] = 2
         with self.assertRaisesRegex(ValueError, 'deployment differs'):
             self.stage(models=models)
-        runtimes[self.digest]['active_requests'] = 5
+        runtimes[self.digest]['active_requests'] = 6
         with self.assertRaisesRegex(ValueError, 'immutable definition'):
             self.stage(runtimes=runtimes)
 

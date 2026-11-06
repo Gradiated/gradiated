@@ -1,8 +1,8 @@
 # Kimi K3.1 Pro throughput probe
 
 This closed-loop probe tests aggregate throughput while requiring every request
-to complete and the **median request** to decode at least 80 output tokens/s
-(tokens after the first, over time after the first token). Each round also
+to complete and the **median request** to decode at least `--floor-tps` output
+tokens/s (default 80; tokens after the first, over time after the first token). Each round also
 records the slowest and p05 stream rates. It generates deterministic
 synthetic 2K, 8K and 32K text-token fixtures using the pinned checkpoint's custom
 Hugging Face tokenizer and `tiktoken.model`. Actual chat prompt counts come from response usage; chat control
@@ -108,9 +108,27 @@ python product/inference/benchmarks/kimi-k31/probe.py \
 `--sampling-seed`, `--frequency-penalty` and `--presence-penalty` add request
 sampling parameters; `--seed` only generates and orders fixtures. Qualify an
 admission limit with two separate passing runs at that concurrency, one with
-default sampling and one with `--sampling-seed 42 --frequency-penalty .2
---presence-penalty .2`. Penalties lower DFLASH acceptance, so the penalty run
-is usually the limiting one.
+default sampling and one with seeded penalties, using the floor that the
+runtime README sets for that limit. Penalties lower DFLASH acceptance, so the
+penalty run is usually the limiting one. For the current five-request runtime
+with its 65 TPS floor, every one of these six runs must pass:
+
+```sh
+# Fresh --seed per run keeps every trial cold; repeated trials reuse fixtures.
+failed=0
+for arm in default penalty; do for seed in 1 2 3; do
+  extra="" base=100
+  [ "$arm" = penalty ] && extra="--sampling-seed 42 --frequency-penalty .2 --presence-penalty .2" base=200
+  python product/inference/benchmarks/kimi-k31/probe.py \
+    --base-url http://127.0.0.1:30000 --label qualify-c5-$arm-$seed \
+    --protocol generate --tokenizer-path /var/lib/kimi-k31/checkpoint \
+    --concurrency 5 --fixtures-per-class 5 --warmups 0 --trials 1 \
+    --seed $((base + seed)) \
+    --temperature 1 --top-p .95 --reasoning-effort max --floor-tps 65 $extra \
+    --output .agents/runtime/kimi-k31/qualify-c5-$arm-$seed.json || failed=1
+done; done
+test "$failed" = 0  # nonzero if any of the six runs failed
+```
 
 Use labels and separate output files for repeated same-workload A/B/A/B/A arms;
 `--config-json` records the exact non-secret launch flags and hardware/runtime

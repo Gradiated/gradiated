@@ -14,7 +14,7 @@ CHECKPOINT = 'moonshotai/Kimi-K3.1-Pro'
 REVISION = 'd9e99b0792a5e93b78ea9bea62a68167e36ddd9e'
 INSTANCES = {'01a0fbf8-06fc-7658-96e1-ae72f7dba135'}
 BUCKET = 'gradiated-prod-model-artifacts-873716897517'
-ACTIVE_REQUESTS = 4
+ACTIVE_REQUESTS = 5
 
 
 def stage(models, runtimes, pins, hosts, release, source):

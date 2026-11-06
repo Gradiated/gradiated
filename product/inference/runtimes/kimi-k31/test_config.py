@@ -25,7 +25,7 @@ class Configuration(unittest.TestCase):
         for flag, value in [('--model-path', config.MODEL), ('--revision', config.REVISION),
                             ('--tp-size', '8'), ('--reasoning-parser', 'kimi_k3'),
                             ('--tool-call-parser', 'kimi_k3'), ('--mem-fraction-static', '0.85'),
-                            ('--max-running-requests', '4'), ('--cuda-graph-max-bs-decode', '4'),
+                            ('--max-running-requests', '5'), ('--cuda-graph-max-bs-decode', '5'),
                             ('--context-length', '1048576'), ('--chunked-prefill-size', '8192'),
                             ('--mamba-full-memory-ratio', '0.45'), ('--prefill-decode-interval', '0')]:
             self.assertEqual(backend[backend.index(flag) + 1], value)
@@ -34,8 +34,8 @@ class Configuration(unittest.TestCase):
         self.assertNotIn('--quantization', backend)
         self.assertEqual(backend[backend.index('--moe-runner-backend') + 1], 'flashinfer_mxfp4')
         self.assertEqual(backend[backend.index('--flashinfer-mxfp4-moe-precision') + 1], 'default')
-        self.assertEqual(settings['active_requests'], 4)
-        self.assertEqual(router[router.index('--max-concurrent-requests') + 1], '4')
+        self.assertEqual(settings['active_requests'], 5)
+        self.assertEqual(router[router.index('--max-concurrent-requests') + 1], '5')
         self.assertNotIn('--enable-cache-report', backend)
         self.assertNotIn('--disable-radix-cache', backend)
         self.assertEqual(settings['backend'], 18084)

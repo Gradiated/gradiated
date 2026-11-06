@@ -1,11 +1,17 @@
 import type { ComponentType } from "react";
 import BrandContent from "./handbook/brand.mdx";
+import CompensationContent from "./handbook/compensation.mdx";
+import FeedbackContent from "./handbook/feedback.mdx";
 import GoToMarketContent from "./handbook/getting-out-the-gate.mdx";
+import HiringContent from "./handbook/hiring.mdx";
 import InPersonContent from "./handbook/in-person.mdx";
 import MissionContent from "./handbook/mission.mdx";
+import OnboardingContent from "./handbook/onboarding.mdx";
 import PrioritiesContent from "./handbook/priorities.mdx";
 import ProductContent from "./handbook/product.mdx";
 import SequencingContent from "./handbook/sequencing-and-depth.mdx";
+import ShareOptionsContent from "./handbook/share-options.mdx";
+import SideGigsContent from "./handbook/side-gigs.mdx";
 import SpendingCompanyMoneyContent from "./handbook/spending-company-money.mdx";
 import ValuesContent from "./handbook/values.mdx";
 import PeopleContent from "./handbook/what-we-look-for.mdx";
@@ -19,6 +25,12 @@ export type HandbookSlug =
   | "in-person"
   | "what-we-look-for"
   | "spending-company-money"
+  | "hiring"
+  | "onboarding"
+  | "compensation"
+  | "share-options"
+  | "feedback"
+  | "side-gigs"
   | "getting-out-the-gate"
   | "values"
   | "brand"
@@ -99,6 +111,54 @@ export const handbookPages: HandbookPageDefinition[] = [
     Content: SpendingCompanyMoneyContent,
   },
   {
+    slug: "hiring",
+    section: "People",
+    title: "Hiring",
+    pageTitle: "Hiring",
+    description: "How Gradiated hires.",
+    Content: HiringContent,
+  },
+  {
+    slug: "onboarding",
+    section: "People",
+    title: "Onboarding",
+    pageTitle: "Onboarding",
+    description: "How new people start at Gradiated.",
+    Content: OnboardingContent,
+  },
+  {
+    slug: "compensation",
+    section: "People",
+    title: "Compensation",
+    pageTitle: "Compensation",
+    description: "How Gradiated sets pay.",
+    Content: CompensationContent,
+  },
+  {
+    slug: "share-options",
+    section: "People",
+    title: "Share options",
+    pageTitle: "Share options",
+    description: "How share options work for Gradiated people.",
+    Content: ShareOptionsContent,
+  },
+  {
+    slug: "feedback",
+    section: "People",
+    title: "Feedback",
+    pageTitle: "Feedback",
+    description: "How Gradiated gives and receives feedback.",
+    Content: FeedbackContent,
+  },
+  {
+    slug: "side-gigs",
+    section: "People",
+    title: "Side gigs",
+    pageTitle: "Side gigs",
+    description: "How Gradiated thinks about side gigs and side projects.",
+    Content: SideGigsContent,
+  },
+  {
     slug: "getting-out-the-gate",
     section: "Going to market",
     title: "Getting out the gate",
@@ -147,6 +207,18 @@ const handbookSectionOrder: Array<{
       "what-we-look-for",
       "working-with-posthog",
       "spending-company-money",
+    ],
+  },
+  {
+    artSlug: "in-person",
+    label: "People",
+    slugs: [
+      "hiring",
+      "onboarding",
+      "compensation",
+      "share-options",
+      "feedback",
+      "side-gigs",
     ],
   },
   {

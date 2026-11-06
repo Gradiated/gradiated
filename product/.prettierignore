@@ -17,8 +17,9 @@ inference/bundles/kimi-k31-pro/patches/*manifest.json
 services/console/.storybook/public/mockServiceWorker.js
 services/console/storybook-static/
 
-# Generated Ashby data and vendored React Bits sources retain their source format.
+# Generated Ashby and PostHog compensation data and vendored React Bits sources retain their source format.
 website/src/ashby-jobs.generated.ts
+website/src/posthog-compensation.generated.json
 website/src/components/design/GradientASCII.tsx
 website/src/components/design/Noise.tsx
 website/src/components/design/ReflectiveCard.tsx

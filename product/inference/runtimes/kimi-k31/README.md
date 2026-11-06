@@ -123,12 +123,14 @@ this complete five-request profile. The optimization target is
 maximum measured aggregate throughput while the median admitted stream decodes
 at least 65 generated tokens/s under the qualified prompt and concurrency mix.
 Record TTFT and queueing separately; do not count cached prompt tokens as decode
-throughput. Initial tuning and deployment use only the reserved 8xB300 host
-`01a0fbf8-06fc-7658-96e1-ae72f7dba135` (RunPod `dv31b4wrd2yc8n`), with one
-Kimi replica. The other 8xB300 host, `01a0fbf7-5276-700b-903b-7e04da150ed6`,
-continues serving GLM uncensored and is outside Kimi's active placement. Preserve
-its processes and configuration, and every other production runtime and replica
-count. Expanding Kimi to a second node is a separate deployment change.
+throughput. Tuning used the reserved 8xB300 host
+`01a0fbf8-06fc-7658-96e1-ae72f7dba135` (RunPod `dv31b4wrd2yc8n`). The pool runs
+one replica on each of the two 8xB300 hosts, `01a0fbf8` and
+`01a0fbf7-5276-700b-903b-7e04da150ed6`. Both carry the `gradiated.com/kimi-k31`
+reservation taint. `01a0fbf7` previously served GLM uncensored, so merge this
+placement only after GLM uncensored has enough capacity on other B300
+deployments and its pods have drained from `01a0fbf7`. The taint only blocks new
+pods and does not evict running ones.
 
 The public model starts unavailable and advertises text input only. Its initial
 release uses the existing Chat transport and omits `tokenizer_mode`; SGLang owns
@@ -161,12 +163,11 @@ merging. Promote this model's catalog status to `available` in that deployment
 change; the gateway requires it for targeted SDK qualification, while normal
 routing remains closed until the worker qualifies the deployment.
 
-The initial pool has one host and uses every GPU on it. Its explicit
-`allow_single_replica_unavailable` update policy drains the old Kimi replica
-before starting its replacement, so Kimi has a planned availability gap during
-an update. Other models retain their existing availability policies. Add a
-second qualified replica in a separate deployment change before requiring
-continuous Kimi availability across runtime updates.
+The pool has two replicas, one per host, each using every GPU on its host
+(`replicas` and `max_replicas` are both two). An update replaces one replica at a
+time: the PodDisruptionBudget keeps one available, and the surge pod waits until
+the old replica frees its host. Kimi capacity halves during an update rather than
+dropping to zero.
 
 References: [model](https://huggingface.co/moonshotai/Kimi-K3.1-Pro),
 [official SGLang cookbook](https://docs.sglang.io/cookbook/autoregressive/Moonshotai/Kimi-K3.1-Pro),

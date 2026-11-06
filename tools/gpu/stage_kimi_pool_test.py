@@ -21,6 +21,7 @@ class KimiStageTests(unittest.TestCase):
                         'baseId': self.base, 'baseImage': 'example/base@sha256:' + 'c' * 64,
                         'url': f's3::https://{staging.BUCKET}.s3.us-east-1.amazonaws.com/bundles/sha256/{self.digest}.tar.gz'}
         self.hosts = [{'spec': {'instanceId': instance, 'provider': {'name': 'runpod'},
+                                'extraTaints': [dict(staging.RESERVATION)],
                                'inventory': {'gpuProduct': 'B300', 'gpuCount': 8, 'cpu': 97, 'memoryGiB': 1389}}}
                       for instance in sorted(staging.INSTANCES)]
 
@@ -36,8 +37,10 @@ class KimiStageTests(unittest.TestCase):
         self.assertEqual(models['other'], self.models['other'])
         self.assertEqual(runtimes['existing'], self.runtimes['existing'])
         model, runtime = models['kimi-k31-pro'], runtimes[self.digest]
-        self.assertEqual((model['replicas'], model['max_surge'], model['max_unavailable']), (1, 0, 1))
-        self.assertTrue(model['allow_single_replica_unavailable'])
+        self.assertEqual(len(staging.INSTANCES), 2)
+        self.assertEqual((model['replicas'], model['min_available'], model['max_surge'], model['max_unavailable']), (2, 1, 1, 1))
+        self.assertEqual(model['autoscaling']['max_replicas'], 2)
+        self.assertNotIn('allow_single_replica_unavailable', model)
         expression = model['affinity']['nodeAffinity']['requiredDuringSchedulingIgnoredDuringExecution']['nodeSelectorTerms'][0]['matchExpressions'][0]
         self.assertEqual(set(expression['values']), staging.INSTANCES)
         self.assertEqual((runtime['gpus'], runtime['cpu'], runtime['memory']), (8, '80', '1024Gi'))
@@ -60,6 +63,13 @@ class KimiStageTests(unittest.TestCase):
                 self.stage(release={**self.release, **update})
         with self.assertRaises(ValueError):
             self.stage(hosts=[])
+        for index in range(len(self.hosts)):
+            with self.subTest(missing=index), self.assertRaises(ValueError):
+                self.stage(hosts=self.hosts[:index] + self.hosts[index + 1:])
+            hosts = copy.deepcopy(self.hosts)
+            hosts[index]['spec']['extraTaints'] = []
+            with self.subTest(untainted=index), self.assertRaisesRegex(ValueError, 'reservation taint'):
+                self.stage(hosts=hosts)
         for field, value in [('gpuProduct', 'H200'), ('gpuCount', 4), ('cpu', 79), ('memoryGiB', 1023)]:
             hosts = copy.deepcopy(self.hosts)
             hosts[0]['spec']['inventory'][field] = value
@@ -68,7 +78,7 @@ class KimiStageTests(unittest.TestCase):
 
     def test_existing_definitions_cannot_be_silently_replaced(self):
         models, runtimes = self.stage()
-        models['kimi-k31-pro']['replicas'] = 2
+        models['kimi-k31-pro']['replicas'] = 3
         with self.assertRaisesRegex(ValueError, 'deployment differs'):
             self.stage(models=models)
         runtimes[self.digest]['active_requests'] = 6

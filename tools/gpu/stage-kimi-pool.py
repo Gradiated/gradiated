@@ -12,7 +12,9 @@ GPU = ROOT / 'infra/environments/prod/us-east-1/kubernetes/gpu-inference'
 MODEL = 'moonshotai/kimi-k3.1-pro'
 CHECKPOINT = 'moonshotai/Kimi-K3.1-Pro'
 REVISION = 'd9e99b0792a5e93b78ea9bea62a68167e36ddd9e'
-INSTANCES = {'01a0fbf8-06fc-7658-96e1-ae72f7dba135'}
+INSTANCES = {'01a0fbf7-5276-700b-903b-7e04da150ed6', '01a0fbf8-06fc-7658-96e1-ae72f7dba135'}
+REPLICAS = len(INSTANCES)
+RESERVATION = {'key': 'gradiated.com/kimi-k31', 'value': 'reserved', 'effect': 'NoSchedule'}
 BUCKET = 'gradiated-prod-model-artifacts-873716897517'
 ACTIVE_REQUESTS = 5
 
@@ -37,7 +39,9 @@ def stage(models, runtimes, pins, hosts, release, source):
         if (host.get('provider', {}).get('name') != 'runpod' or capacity.get('gpuProduct') != 'B300'
                 or capacity.get('gpuCount') != 8 or capacity.get('cpu', 0) < 80
                 or capacity.get('memoryGiB', 0) < 1024):
-            raise ValueError('The Kimi host needs committed 8xB300, 80 CPU and 1024 GiB inventory')
+            raise ValueError('Each Kimi host needs committed 8xB300, 80 CPU and 1024 GiB inventory')
+        if RESERVATION not in host.get('extraTaints', []):
+            raise ValueError('Each Kimi host must carry the Kimi reservation taint')
     runtime = {
         'image': f'gradiated/kimi-k31-bundle@sha256:{digest}',
         'bundles': {base: digest}, 'model_id': MODEL,
@@ -50,9 +54,10 @@ def stage(models, runtimes, pins, hosts, release, source):
         'environment': {'TENSOR_PARALLEL_SIZE': '8'},
     }
     candidate = {
-        'runtime': digest, 'replicas': 1, 'min_available': 1,
-        'progress_deadline_seconds': 10800, 'max_surge': 0, 'max_unavailable': 1,
-        'allow_single_replica_unavailable': True,
+        # One replica per reserved host; a rollout replaces one host at a time and the
+        # surge pod waits for a free host, so one replica keeps serving throughout.
+        'runtime': digest, 'replicas': REPLICAS, 'min_available': REPLICAS - 1,
+        'progress_deadline_seconds': 10800, 'max_surge': 1, 'max_unavailable': 1,
         'node_selector': {'gradiated.com/provider': 'runpod', 'nvidia.com/gpu.product': 'B300',
                           'nvidia.com/gpu.count': '8'},
         'extra_tolerations': [{'key': 'gradiated.com/kimi-k31', 'operator': 'Equal',
@@ -60,7 +65,7 @@ def stage(models, runtimes, pins, hosts, release, source):
         'affinity': {'nodeAffinity': {'requiredDuringSchedulingIgnoredDuringExecution': {
             'nodeSelectorTerms': [{'matchExpressions': [{'key': 'gradiated.com/instance-id',
                                                          'operator': 'In', 'values': sorted(INSTANCES)}]}]}}},
-        'autoscaling': {'max_replicas': 1, 'target_concurrency': ACTIVE_REQUESTS},
+        'autoscaling': {'max_replicas': REPLICAS, 'target_concurrency': ACTIVE_REQUESTS},
     }
     if 'kimi-k31-pro' in models and models['kimi-k31-pro'] != candidate:
         raise ValueError('Existing Kimi deployment differs; review replacement explicitly')
@@ -70,7 +75,7 @@ def stage(models, runtimes, pins, hosts, release, source):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Stage qualified Kimi on its reserved 8xB300 host.')
+    parser = argparse.ArgumentParser(description='Stage qualified Kimi on its reserved 8xB300 hosts.')
     parser.add_argument('release', type=Path)
     parser.add_argument('source', help='exact qualified source revision')
     parser.add_argument('--write', action='store_true')

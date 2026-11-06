@@ -350,12 +350,15 @@ def replica_rules(pools):
     rules = []
     for name, pool in pools.items():
         serving = pool['mode'] == 'production' and pool['maximum']
+        # A rollout may take max_unavailable replicas below the floor while it
+        # replaces them, but a pool with a floor always needs one ready replica.
+        minimum = max(pool['floor'] - pool.get('max_unavailable', 0), min(pool['floor'], 1)) if serving else 0
         labels = {'model': pool['model'], 'rollout': name}
         rules += [
             {'record': 'gradiated_model_desired_replicas', 'labels': dict(labels),
              'expr': f'{desired_replicas(name)} or vector({pool["floor"]})' if serving else 'vector(0)'},
             {'record': 'gradiated_model_minimum_replicas', 'labels': dict(labels),
-             'expr': f'vector({pool["floor"] if serving else 0})'}]
+             'expr': f'vector({minimum})'}]
     return {'apiVersion': 'monitoring.coreos.com/v1', 'kind': 'PrometheusRule',
             'metadata': {'name': 'gradiated-model-replicas', 'labels': {'release': 'observability'}},
             'spec': {'groups': [{'name': 'gradiated.models.desired', 'rules': rules}]}}

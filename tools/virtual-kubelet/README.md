@@ -300,7 +300,9 @@ Kimi helpers in `tools/gpu/` stage and promote their pools this way.
 
 Alerts use the rendered floors and the Rollouts' requested counts. No ready
 replica of a model with a positive floor alerts after one minute, and falling
-below the floor after thirty seconds. Requested capacity that stays unready for
+below the floor after thirty seconds. A pool's alert floor allows the
+`max_unavailable` replicas a rollout replaces at once, but never drops below one
+replica, so a one-at-a-time replacement does not warn. Requested capacity that stays unready for
 twenty minutes, including a scale-up from zero, has a separate warning.
 
 ## Rollout alerts

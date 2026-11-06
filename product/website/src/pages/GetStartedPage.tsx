@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import {
   emptyOnboarding,
-  exampleOnboarding,
   accountStorageKey,
   onboardingAccountSchema,
   reuseAccount,
@@ -778,24 +777,7 @@ const GetStartedWorkflow = ({
                   }}
                 >
                   {draft.step === 0 && (
-                    <>
-                      <AccessStep draft={draft} patch={patch} />
-                      {demo && (
-                        <button
-                          className="gs-text-button gs-example"
-                          type="button"
-                          onClick={() => {
-                            setNdaVerified(false);
-                            setGithubVerified(false);
-                            setDraft(
-                              reuseAccount(exampleOnboarding(), account),
-                            );
-                          }}
-                        >
-                          Fill with an example <ArrowRight size={13} />
-                        </button>
-                      )}
-                    </>
+                    <AccessStep draft={draft} patch={patch} />
                   )}
                   {draft.step === 1 && (
                     <TeamStep

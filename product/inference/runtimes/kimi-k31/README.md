@@ -156,10 +156,18 @@ pending models cannot take the reservation. The host inventory declares the
 taint for virtual kubelet creation and reconciliation. Kimi's generated
 Rollout alone adds the matching explicit toleration.
 
-Each host has one replica, so reimaging a host leaves the other replica serving.
-Host reimage admission must still fail closed before cordon, surge or drain when
-it would leave Kimi with no replica. Do not bypass fleet availability checks to
-make maintenance proceed.
+Both Kimi hosts are full: each runs one replica on all eight GPUs, and no other
+eligible 8xB300 host exists. The fleet rollout checks relocation capacity
+before cordoning a host for re-image, so it blocks on either Kimi host and
+re-images neither. Both replicas keep serving, but a GPU-base pin cannot reach
+these hosts on its own. Re-imaging one needs separately arranged, qualified spare
+capacity or an authorized Kimi planned-downtime procedure. Do not bypass fleet
+availability checks to make maintenance proceed. Kimi's weights are staged by
+hand in `/var/lib/kimi-k31` (checkpoint, draft and an `hf` cache of snapshot
+symlinks owned by `runtime`), not in the host-managed Hugging Face cache, because
+the 1.5 TB checkpoint does not fit the host agent's cache eviction budget beside
+a second copy. A re-imaged host loses that directory, so the weights must be
+staged again before its replica can start.
 
 After GPU qualification and immutable release publication, preview the placement
 with `python3 tools/gpu/stage-kimi-pool.py RELEASE_JSON QUALIFIED_SOURCE_SHA`.

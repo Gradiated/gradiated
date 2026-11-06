@@ -66,14 +66,26 @@ ordinary sign-in. `/get-started/` is prerendered with noindex metadata so direct
 deployed links and login handoffs resolve without a client-side navigation first.
 
 Name, email and company come from the account, rather than new wizard questions.
-Drafts are scoped to the user and organization. NDA signer fields stay editable
-because the signer may be someone else. The local preview hands the entered
+Drafts are scoped to the user and organization. The NDA signer email is fixed
+to the signed-in account; signing requires a verified organization admin.
+To use another email, sign in with that account. Legacy drafts naming another
+email discard the old NDA reference rather than attempting to sign as that person.
+The local preview hands the entered
 account details back from the console only after organization setup, checking
 the message origin and source frame. `/get-started/?preview=account` resumes a
 completed preview account in the same tab; without one, it also starts at account
 creation. A new homepage click always starts at account creation. All simulated
 account operations are disabled in production and isolated from real session
 queries and workspace selection.
+
+Reloading restores the saved step, notes and completed confirmation. Live visits
+recheck the saved NDA with PandaDoc and recheck GitHub access before restoring
+the final review or confirmation. Incomplete signing returns to the NDA step;
+revoked GitHub access returns to installation. A provider outage preserves the
+draft and offers a retry. These checks use saved provider references from this
+browser; clearing storage or switching devices does not recover them. Staff
+impersonation cannot create/read NDA documents, open signing sessions or send
+Slack invitations.
 
 The wizard is a clickable preview of getting a human forward deployed engineer
 working async: a short introduction, mutual NDA details, Slack/GitHub setup and

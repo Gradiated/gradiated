@@ -197,6 +197,13 @@ export const registerSlackInvitationRoutes = (
   app.openapi(create, async (context) => {
     context.header("Cache-Control", "no-store");
     const user = await requireUser(context);
+    if ("impersonatedBy" in user && user.impersonatedBy)
+      throw new ApiProblem(
+        problems.forbidden(
+          "Leave impersonation before sending Slack invitations.",
+        ),
+      );
+
     const { organization_id } = context.req.valid("param");
     const memberships = await organizations.listForUser(user.id);
     const organization = memberships.find(

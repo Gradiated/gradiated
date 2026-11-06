@@ -451,6 +451,7 @@ describe("Slack invitation route", () => {
     { role: "member" as const, expected: 403 },
     { status: "ready", expected: 409 },
     { configured: false, expected: 503 },
+    { impersonated: true, expected: 403 },
   ])(
     "does not send when authorization or setup is incomplete: %j",
     async ({ expected, ...options }) => {

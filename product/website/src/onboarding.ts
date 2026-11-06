@@ -61,6 +61,11 @@ export const reuseAccount = (
   ...draft,
   name: account.name,
   email: account.email,
+  signerEmail: account.email,
+  ...((draft.signerEmail ?? draft.email).trim().toLowerCase() !==
+  account.email.trim().toLowerCase()
+    ? { ndaDocumentId: null, step: 0, submitted: false }
+    : {}),
   company: account.company,
   legalName: draft.legalName || account.company,
   ...(draft.email !== account.email || draft.company !== account.company
@@ -99,6 +104,65 @@ export const firstIncompleteStep = (draft: OnboardingDraft): number | null => {
     return 1;
 
   return null;
+};
+
+export const restoreOnboardingDraft = (
+  value: unknown,
+  account: OnboardingAccount,
+): OnboardingDraft => {
+  const parsed = onboardingSchema.safeParse(value);
+  const draft = reuseAccount(
+    parsed.success ? parsed.data : emptyOnboarding(),
+    account,
+  );
+  const incomplete = firstIncompleteStep(draft);
+  if (!draft.ndaDocumentId) return { ...draft, step: 0, submitted: false };
+  if (incomplete !== null && draft.step > incomplete)
+    return { ...draft, step: incomplete, submitted: false };
+
+  return draft;
+};
+
+export const verifyOnboardingResume = async (
+  draft: OnboardingDraft,
+  providers: {
+    readNda: () => Promise<{ status: string }>;
+    githubInstalled: (installationId: number) => Promise<boolean>;
+  },
+) => {
+  const unverified = { ndaVerified: false, githubVerified: false };
+  if (
+    !draft.ndaDocumentId ||
+    (await providers.readNda()).status !== "completed"
+  )
+    return { ...unverified, draft: { ...draft, step: 0, submitted: false } };
+
+  if (firstIncompleteStep(draft) === 0)
+    return {
+      ndaVerified: true,
+      githubVerified: false,
+      draft: { ...draft, step: 0, submitted: false },
+    };
+
+  if (draft.step >= 2 || draft.submitted) {
+    if (
+      !draft.githubInstallationId ||
+      !(await providers.githubInstalled(draft.githubInstallationId))
+    )
+      return {
+        ndaVerified: true,
+        githubVerified: false,
+        draft: { ...draft, step: 1, submitted: false },
+      };
+
+    return { ndaVerified: true, githubVerified: true, draft };
+  }
+
+  return {
+    ndaVerified: true,
+    githubVerified: false,
+    draft: { ...draft, step: 1 },
+  };
 };
 
 export const exampleOnboarding = (): OnboardingDraft => ({

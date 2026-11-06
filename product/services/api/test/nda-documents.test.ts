@@ -340,6 +340,35 @@ describe("NDA document authorization", () => {
       401,
     );
   });
+  it.each([
+    { method: "POST", suffix: "", body: details },
+    { method: "GET", suffix: "/test-document", body: null },
+    { method: "POST", suffix: "/test-document/signing-sessions", body: {} },
+  ])(
+    "rejects impersonation before calling PandaDoc: $method $suffix",
+    async ({ method, suffix, body }) => {
+      Object.values(provider).forEach((callback) => callback.mockClear());
+      const response = await app({
+        ...authenticated,
+        resolveSession: async () => ({
+          ...user,
+          impersonatedBy: "staff-reviewer",
+        }),
+      }).request(collection + suffix, {
+        method,
+        ...(body === null
+          ? {}
+          : {
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(body),
+            }),
+      });
+      expect(response.status).toBe(403);
+      Object.values(provider).forEach((callback) =>
+        expect(callback).not.toHaveBeenCalled(),
+      );
+    },
+  );
   it("requires organization management access", async () => {
     expect(
       (

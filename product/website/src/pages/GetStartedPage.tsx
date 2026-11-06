@@ -9,7 +9,8 @@ import {
   reuseAccount,
   firstIncompleteStep,
   counterpartyDetails,
-  onboardingSchema,
+  restoreOnboardingDraft,
+  verifyOnboardingResume,
 } from "../onboarding";
 import type { OnboardingDraft, OnboardingAccount } from "../onboarding";
 import { getCurrentUser, type CurrentUser } from "../api/queries";
@@ -20,6 +21,7 @@ import {
   type GithubInstallation,
 } from "../components/GithubAppInstall";
 import { getGithubInstallations } from "../api/github";
+import { getNdaDocument } from "../api/nda";
 import { sendSlackOnboardingNotes } from "../api/slack";
 import {
   ENGINEER_SIGNUP_URL,
@@ -45,20 +47,10 @@ const OnboardingHelp = ({ step }: { step: string }) => (
 
 const loadDraft = (account: OnboardingAccount): OnboardingDraft => {
   try {
-    const result = onboardingSchema.safeParse(
+    return restoreOnboardingDraft(
       JSON.parse(localStorage.getItem(accountStorageKey(account)) ?? "{}"),
+      account,
     );
-    if (!result.success) return reuseAccount(emptyOnboarding(), account);
-
-    const draft = reuseAccount(result.data, account);
-
-    const incomplete = firstIncompleteStep(draft);
-
-    if (incomplete !== null && draft.step > incomplete) {
-      return { ...draft, step: incomplete, submitted: false };
-    }
-
-    return { ...draft, step: 0, submitted: false };
   } catch {
     return reuseAccount(emptyOnboarding(), account);
   }
@@ -185,13 +177,16 @@ const AccessStep = ({
         />
       </Field>
     </div>
-    <Field label="Signer’s email">
+    <Field
+      label="Signer’s email"
+      hint="The signer must be the signed-in organization admin. To use a different email, sign in with that account."
+    >
       <input
         required
         type="email"
         value={draft.signerEmail ?? draft.email}
         maxLength={200}
-        onChange={(event) => patch({ signerEmail: event.target.value })}
+        readOnly
         placeholder="signer@company.com"
       />
     </Field>
@@ -552,14 +547,67 @@ const GetStartedWorkflow = ({
   });
   const [saved, setSaved] = useState(true);
   const [signingOpen, setSigningOpen] = useState(false);
-  const [ndaVerified, setNdaVerified] = useState(previewSlack);
-  const [githubVerified, setGithubVerified] = useState(false);
+  const [ndaVerified, setNdaVerified] = useState(
+    previewSlack || (demo && !!draft.ndaDocumentId),
+  );
+  const [githubVerified, setGithubVerified] = useState(
+    demo && draft.step >= 2 && !!draft.githubInstallationId,
+  );
   const [checkingGithub, setCheckingGithub] = useState(false);
   const [githubError, setGithubError] = useState("");
   const [sendingNotes, setSendingNotes] = useState(false);
   const [notesError, setNotesError] = useState("");
   const notesRequest = useRef<{ key: string; id: string } | null>(null);
   const headingRef = useRef<HTMLElement>(null);
+  const initialDraft = useRef(draft);
+  const [resumeBusy, setResumeBusy] = useState(!demo && !!draft.ndaDocumentId);
+  const [resumeError, setResumeError] = useState("");
+  const [resumeAttempt, setResumeAttempt] = useState(0);
+
+  useEffect(() => {
+    const saved = initialDraft.current;
+    if (demo || !saved.ndaDocumentId) return;
+
+    let active = true;
+    setResumeBusy(true);
+    setResumeError("");
+    void verifyOnboardingResume(saved, {
+      readNda: () =>
+        getNdaDocument(account.organizationId, saved.ndaDocumentId!),
+      githubInstalled: async (id) => {
+        const result = await getGithubInstallations(
+          account.organizationId,
+          saved.ndaDocumentId!,
+          id,
+        );
+        return result.installations.some(
+          (installation) => installation.id === id,
+        );
+      },
+    })
+      .then((restored) => {
+        if (!active) return;
+
+        setNdaVerified(restored.ndaVerified);
+        setGithubVerified(restored.githubVerified);
+        setDraft(restored.draft);
+      })
+      .catch((error) => {
+        if (active)
+          setResumeError(
+            error instanceof Error
+              ? error.message
+              : "Could not restore your setup. Please retry.",
+          );
+      })
+      .finally(() => {
+        if (active) setResumeBusy(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [account.organizationId, demo, resumeAttempt]);
   const patch: UpdateDraft = (values) => {
     const ndaFields = [
       "legalName",
@@ -598,7 +646,14 @@ const GetStartedWorkflow = ({
   useEffect(() => {
     headingRef.current?.focus({ preventScroll: true });
     window.scrollTo({ top: 0, behavior: "instant" });
-  }, [draft.step, draft.submitted, draft.introduced, signingOpen]);
+  }, [
+    draft.step,
+    draft.submitted,
+    draft.introduced,
+    signingOpen,
+    resumeBusy,
+    resumeError,
+  ]);
 
   return (
     <div className="gr-root gs-root" data-theme="taupe">
@@ -619,7 +674,24 @@ const GetStartedWorkflow = ({
               />
             </Link>
           </header>
-          {!draft.introduced ? (
+          {resumeBusy || resumeError ? (
+            <main className="gs-main" ref={headingRef} tabIndex={-1}>
+              {resumeBusy ? (
+                <p role="status">Restoring your setup…</p>
+              ) : (
+                <>
+                  <p role="alert">{resumeError}</p>
+                  <button
+                    type="button"
+                    className="gr-button gs-primary"
+                    onClick={() => setResumeAttempt((attempt) => attempt + 1)}
+                  >
+                    Try again
+                  </button>
+                </>
+              )}
+            </main>
+          ) : !draft.introduced ? (
             <main className="gs-main" ref={headingRef} tabIndex={-1}>
               <StepTitle title="Let’s get you set up with a forward deployed engineer.">
                 Self-serve. No sales call.
@@ -935,7 +1007,7 @@ const GetStartedWorkflow = ({
               </div>
             </main>
           )}
-          {!draft.submitted && (
+          {(!draft.submitted || resumeBusy || resumeError) && (
             <OnboardingHelp
               step={
                 !draft.introduced

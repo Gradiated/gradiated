@@ -123,6 +123,11 @@ export const registerNdaDocumentRoutes = (
     organizationId: string,
   ) => {
     const user = await requireUser(context);
+    if ("impersonatedBy" in user && user.impersonatedBy)
+      throw new ApiProblem(
+        problems.forbidden("Leave impersonation before accessing NDA signing."),
+      );
+
     const memberships = await organizations.listForUser(user.id);
 
     if (

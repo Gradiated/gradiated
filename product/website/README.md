@@ -121,6 +121,12 @@ the account email and can differ from the NDA signer. Customers accept it from t
 their admin may also need to approve it. Setup can continue while acceptance is
 pending. Email remains the fallback when Slack is unavailable.
 
+If the proposed name is already in use by another organization, the Slack step
+reveals an editable channel name and lets the customer retry. Names must use the
+`ext-<team>-gradiated` format, contain lowercase letters, numbers and hyphens,
+and be at most 80 characters. The API and local preview validate replacements;
+existing channels are still reused only after their organization marker matches.
+
 The console-only `POST /api/v1/organizations/{organization_id}/slack-invitations`
 requires admin membership, a verified account email, and a provider-confirmed
 completed NDA belonging to that user and organization. The API validates and

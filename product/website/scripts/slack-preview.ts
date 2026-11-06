@@ -9,12 +9,19 @@ type Provider = {
     organizationId: string;
     company: string;
     email: string;
+    channelName?: string;
   }): Promise<Invitation>;
 };
 const inputSchema = z.strictObject({
   organizationId: z.uuid(),
   company: z.string().trim().min(1).max(200),
   email: z.string().trim().toLowerCase().email().max(200),
+  channelName: z
+    .string()
+    .trim()
+    .max(80)
+    .regex(/^ext-[a-z0-9]+(?:-[a-z0-9]+)*-gradiated$/)
+    .optional(),
 });
 
 export const slackPreview = (): Plugin => ({
@@ -65,13 +72,11 @@ export const slackPreview = (): Plugin => ({
       const now = Date.now();
       while (attempts.length && attempts[0]! < now - 60_000) attempts.shift();
       if (attempts.length >= 5) {
-        res
-          .writeHead(429)
-          .end(
-            JSON.stringify({
-              error: "Wait a minute before trying another Slack invitation.",
-            }),
-          );
+        res.writeHead(429).end(
+          JSON.stringify({
+            error: "Wait a minute before trying another Slack invitation.",
+          }),
+        );
         return;
       }
       attempts.push(now);
@@ -103,15 +108,13 @@ export const slackPreview = (): Plugin => ({
         res.end(JSON.stringify(invitation));
       } catch (error) {
         const problem = (error as { problem?: { detail?: string } }).problem;
-        res
-          .writeHead(503)
-          .end(
-            JSON.stringify({
-              error:
-                problem?.detail ??
-                "Could not send the Slack invitation. Check the address and try again.",
-            }),
-          );
+        res.writeHead(503).end(
+          JSON.stringify({
+            error:
+              problem?.detail ??
+              "Could not send the Slack invitation. Check the address and try again.",
+          }),
+        );
       }
     });
   },

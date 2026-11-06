@@ -4382,6 +4382,8 @@ export interface operations {
     requestBody: {
       content: {
         "application/json": {
+          /** @description A customer channel name such as ext-example-team-gradiated. */
+          channel_name?: string;
           /**
            * Format: email
            * @description The Slack invitation recipient; defaults to the signed-in account email, independently of the NDA signer.

@@ -4,10 +4,15 @@ export const createSlackInvitation = (
   organizationId: string,
   ndaDocumentId: string,
   email: string,
+  channelName?: string,
 ) =>
   requireData(
     api.POST("/api/v1/organizations/{organization_id}/slack-invitations", {
       params: { path: { organization_id: organizationId } },
-      body: { nda_document_id: ndaDocumentId, email },
+      body: {
+        nda_document_id: ndaDocumentId,
+        email,
+        ...(channelName ? { channel_name: channelName } : {}),
+      },
     }),
   );

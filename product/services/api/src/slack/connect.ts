@@ -1,6 +1,13 @@
 import { z } from "@hono/zod-openapi";
 import { ApiProblem, problems } from "../http/problems.js";
 
+export const SlackChannelNameSchema = z
+  .string()
+  .trim()
+  .max(80)
+  .regex(/^ext-[a-z0-9]+(?:-[a-z0-9]+)*-gradiated$/)
+  .describe("A customer channel name such as ext-example-team-gradiated.");
+
 export const SlackInvitationSchema = z
   .object({
     channel_id: z
@@ -114,8 +121,12 @@ export const createSlackConnect = (
       organizationId: string;
       company: string;
       email: string;
+      channelName?: string;
     }) {
-      const name = slackChannelName(input.company);
+      const name =
+        input.channelName === undefined
+          ? slackChannelName(input.company)
+          : SlackChannelNameSchema.parse(input.channelName);
       const purpose = `Gradiated customer organization: ${input.organizationId}`;
       const created = await call("conversations.create", {
         name,
@@ -171,7 +182,7 @@ export const createSlackConnect = (
         if (!found)
           throw new ApiProblem(
             problems.conflict(
-              "That Slack channel name is already in use. Gradiated needs to check it before inviting anyone.",
+              "That Slack channel name is already in use. Choose a different name.",
             ),
           );
 

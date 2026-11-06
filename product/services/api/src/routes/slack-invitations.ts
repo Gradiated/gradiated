@@ -4,7 +4,11 @@ import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi";
 import { consoleOnly } from "../http/audience.js";
 import { ApiProblem, problems, requireUser } from "../http/problems.js";
 import type { PandaDocNda } from "../legal/pandadoc.js";
-import { SlackInvitationSchema, type SlackConnect } from "../slack/connect.js";
+import {
+  SlackChannelNameSchema,
+  SlackInvitationSchema,
+  type SlackConnect,
+} from "../slack/connect.js";
 import type { ApiEnvironment } from "../types.js";
 
 const create = createRoute({
@@ -26,6 +30,7 @@ const create = createRoute({
       content: {
         "application/json": {
           schema: z.strictObject({
+            channel_name: SlackChannelNameSchema.optional(),
             email: z
               .string()
               .trim()
@@ -112,6 +117,9 @@ export const registerSlackInvitationRoutes = (
         organizationId: organization_id,
         company: organization.name,
         email: context.req.valid("json").email ?? user.email,
+        ...(context.req.valid("json").channel_name === undefined
+          ? {}
+          : { channelName: context.req.valid("json").channel_name! }),
       }),
       201,
     );

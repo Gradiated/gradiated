@@ -17,6 +17,7 @@ export const SlackConnectInvite = ({
 }) => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [customChannel, setCustomChannel] = useState<string | null>(null);
   const [livePreview, setLivePreview] = useState(false);
   const [checkingPreview, setCheckingPreview] = useState(
     import.meta.env.DEV && demo,
@@ -59,10 +60,15 @@ export const SlackConnectInvite = ({
       .slice(0, 66)
       .replace(/-$/g, "") || "customer";
   const channel =
-    draft.slackStatus === "not_sent" ? `ext-${slug}-gradiated` : draft.slack;
+    draft.slackStatus === "not_sent"
+      ? (customChannel ?? `ext-${slug}-gradiated`)
+      : draft.slack;
+  const validChannel =
+    /^ext-[a-z0-9]+(?:-[a-z0-9]+)*-gradiated$/.test(channel) &&
+    channel.length <= 80;
 
   const send = async () => {
-    if (busy || checkingPreview || !validRecipient) return;
+    if (busy || checkingPreview || !validRecipient || !validChannel) return;
     setBusy(true);
     setError("");
     try {
@@ -83,6 +89,7 @@ export const SlackConnectInvite = ({
             organizationId,
             company: draft.company,
             email: recipient,
+            ...(customChannel === null ? {} : { channelName: channel }),
           }),
         });
         const result = await response.json();
@@ -106,6 +113,7 @@ export const SlackConnectInvite = ({
         organizationId,
         draft.ndaDocumentId,
         recipient,
+        customChannel === null ? undefined : channel,
       );
       onInvited({
         slack: result.channel_name,
@@ -114,6 +122,11 @@ export const SlackConnectInvite = ({
         slackDeliveryMode: "live",
       });
     } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message.includes("channel name is already in use")
+      )
+        setCustomChannel(channel);
       setError(
         error instanceof Error
           ? error.message
@@ -146,14 +159,49 @@ export const SlackConnectInvite = ({
       </label>
       {draft.slackStatus === "not_sent" ? (
         <>
+          {customChannel !== null && (
+            <label className="gs-field">
+              <span>Slack channel name</span>
+              <input
+                type="text"
+                maxLength={80}
+                value={customChannel}
+                disabled={busy}
+                onChange={(event) => {
+                  setCustomChannel(event.target.value);
+                  setError("");
+                }}
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                aria-describedby="slack-channel-hint"
+              />
+              <small id="slack-channel-hint">
+                Use ext-your-team-gradiated with lowercase letters, numbers and
+                hyphens.
+              </small>
+            </label>
+          )}
           <p>
             We’ll create <strong>#{channel}</strong> and invite{" "}
             <strong>{recipient}</strong>.
           </p>
+          {customChannel === null && (
+            <button
+              type="button"
+              className="gs-text-button"
+              disabled={busy}
+              onClick={() => setCustomChannel(channel)}
+            >
+              Change channel name
+            </button>
+          )}
           <button
             type="button"
             className="gr-button"
-            disabled={busy || checkingPreview || !validRecipient}
+            disabled={
+              busy || checkingPreview || !validRecipient || !validChannel
+            }
             onClick={() => void send()}
           >
             {busy

@@ -26,6 +26,36 @@ const ready = () =>
     .mockResolvedValueOnce(response({ ok: true, invite_id: "I123456" }));
 
 describe("Slack Connect", () => {
+  it("can retry a collision with a different name without sharing the unrelated channel", async () => {
+    const replacement = { ...channel, name: "ext-example-team-gradiated" };
+    const request = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(response({ ok: false, error: "name_taken" }))
+      .mockResolvedValueOnce(
+        response({
+          ok: true,
+          channels: [{ ...channel, purpose: { value: "Another customer" } }],
+        }),
+      )
+      .mockResolvedValueOnce(response({ ok: true, channel: replacement }))
+      .mockResolvedValueOnce(response({ ok: true }))
+      .mockResolvedValueOnce(response({ ok: true }))
+      .mockResolvedValueOnce(response({ ok: true, invite_id: "I123456" }));
+    const provider = createSlackConnect(configuration, request);
+    await expect(provider.invite(input)).rejects.toMatchObject({
+      problem: { status: 409 },
+    });
+    expect(request).toHaveBeenCalledTimes(2);
+
+    await expect(
+      provider.invite({ ...input, channelName: replacement.name }),
+    ).resolves.toMatchObject({ channel_name: replacement.name });
+    expect(JSON.parse(String(request.mock.calls[2]?.[1]?.body))).toEqual({
+      name: replacement.name,
+      is_private: false,
+    });
+  });
+
   it("creates a public organization-bound channel, adds the engineer, and invites the verified email", async () => {
     const request = ready();
     expect(
@@ -196,6 +226,38 @@ const setup = (
 };
 
 describe("Slack invitation route", () => {
+  it("passes a proposed replacement channel name to the provider", async () => {
+    const { app, slackConnect } = setup();
+    const result = await postJson(app, collection, {
+      nda_document_id: "test-document",
+      channel_name: "ext-example-team-gradiated",
+    });
+    expect(result.status).toBe(201);
+    expect(slackConnect.invite).toHaveBeenCalledWith({
+      ...input,
+      company: organizationSummary.name,
+      channelName: "ext-example-team-gradiated",
+    });
+  });
+
+  it.each([
+    "general",
+    "ext-Example-gradiated",
+    "ext-example_other-gradiated",
+    `ext-${"a".repeat(70)}-gradiated`,
+  ])("rejects an invalid replacement channel: %s", async (channel_name) => {
+    const { app, slackConnect } = setup();
+    expect(
+      (
+        await postJson(app, collection, {
+          nda_document_id: "test-document",
+          channel_name,
+        })
+      ).status,
+    ).toBe(422);
+    expect(slackConnect.invite).not.toHaveBeenCalled();
+  });
+
   it("derives the company and email from authenticated membership, after verifying the NDA", async () => {
     const { app, slackConnect, ndaDocuments } = setup();
     const result = await postJson(app, collection, {

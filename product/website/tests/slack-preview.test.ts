@@ -18,14 +18,12 @@ type Handler = (request: unknown, response: unknown) => Promise<void>;
 
 const setup = () => {
   let handler: Handler | undefined;
-  const invite = vi
-    .fn()
-    .mockResolvedValue({
-      channel_id: "C123",
-      channel_name: "ext-example-gradiated",
-      email: input.email,
-      status: "invited",
-    });
+  const invite = vi.fn().mockResolvedValue({
+    channel_id: "C123",
+    channel_name: "ext-example-gradiated",
+    email: input.email,
+    status: "invited",
+  });
   const ssrLoadModule = vi
     .fn()
     .mockResolvedValue({ createSlackConnect: () => ({ invite }) });
@@ -43,7 +41,7 @@ const setup = () => {
   const request = async (
     method: string,
     url: string,
-    body = input,
+    body: unknown = input,
     origin = "http://localhost:5173",
   ) => {
     const result = { status: 200, body: "" };
@@ -122,5 +120,22 @@ describe("local live Slack preview", () => {
         .status,
     ).toBe(503);
     expect(invite).not.toHaveBeenCalled();
+  });
+
+  it("forwards a valid replacement channel name without weakening organization binding", async () => {
+    const { request, invite } = setup();
+    expect(
+      (
+        await request("POST", "/invitations", {
+          ...input,
+          channelName: "ext-example-team-gradiated",
+        })
+      ).status,
+    ).toBe(200);
+    expect(invite).toHaveBeenCalledWith({
+      ...input,
+      channelName: "ext-example-team-gradiated",
+      organizationId: `local-preview:${organizationId}`,
+    });
   });
 });

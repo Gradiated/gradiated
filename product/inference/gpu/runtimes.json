@@ -419,7 +419,7 @@
     },
     "gpus": 8,
     "cpu": "80",
-    "memory": "1024Gi",
+    "memory": "1000Gi",
     "active_requests": 5,
     "hf_home": "/var/lib/kimi-k31/hf",
     "startup_timeout": 7200,

@@ -47,7 +47,7 @@ class KimiStageTests(unittest.TestCase):
         # The host reservation places Kimi; the pool names no hosts.
         self.assertEqual((pool['gpu'], pool['gpu_count'], pool['reservation']), ('B300', 8, 'kimi-k31'))
         self.assertNotIn('affinity', pool)
-        self.assertEqual((runtime['gpus'], runtime['cpu'], runtime['memory']), (8, '80', '1024Gi'))
+        self.assertEqual((runtime['gpus'], runtime['cpu'], runtime['memory']), (8, '80', '1000Gi'))
         self.assertEqual(runtime['hf_home'], '/var/lib/kimi-k31/hf')
         self.assertEqual(runtime['active_requests'], 5)
         runtime_spec = importlib.util.spec_from_file_location('kimi_runtime_config',

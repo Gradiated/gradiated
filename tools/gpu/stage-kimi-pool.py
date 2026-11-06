@@ -48,7 +48,8 @@ def stage(models, runtimes, pins, hosts, release, source):
                     'tokenizer_path': CHECKPOINT, 'tokenizer_revision': REVISION,
                     'runtime_revision': f'kimi-k31-{digest[:12]}',
                     'runtime_model_name': CHECKPOINT},
-        'gpus': 8, 'cpu': '80', 'memory': '1024Gi', 'active_requests': ACTIVE_REQUESTS,
+        # Not 1024Gi: Kubernetes stores that as 1Ti, which the host agent rejects.
+        'gpus': 8, 'cpu': '80', 'memory': '1000Gi', 'active_requests': ACTIVE_REQUESTS,
         'hf_home': '/var/lib/kimi-k31/hf', 'startup_timeout': 7200, 'warmup': True,
         'environment': {'TENSOR_PARALLEL_SIZE': '8'},
     }

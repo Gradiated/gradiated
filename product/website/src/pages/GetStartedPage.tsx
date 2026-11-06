@@ -254,7 +254,7 @@ const ReviewStep = ({
     <h3 className="gs-next-heading">What happens next</h3>
     <ol className="gs-next-list">
       <li>
-        <span>1</span>Meet your engineer in{" "}
+        <span>1</span>Meet your researcher in{" "}
         {draft.channel === "slack" ? "Slack" : "email"}
       </li>
       <li>

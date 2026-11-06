@@ -32,6 +32,7 @@ import {
   type GithubInstallation,
 } from "../components/GithubAppInstall";
 import { getGithubInstallations } from "../api/github";
+import { sendSlackOnboardingNotes } from "../api/slack";
 import {
   ENGINEER_SIGNUP_URL,
   ENGINEER_ORGANIZATION_SETUP_URL,
@@ -281,7 +282,14 @@ const ReviewStep = ({
         Pick a test case together
       </li>
     </ol>
-    <Field label="Anything else you’d like us to know or have as context? (optional)">
+    <Field
+      label="Anything else you’d like us to know or have as context? (optional)"
+      hint={
+        draft.channel === "slack" && draft.slackStatus !== "not_sent"
+          ? "We’ll share these in your Slack channel as notes from onboarding when you start the project."
+          : undefined
+      }
+    >
       <textarea
         rows={4}
         maxLength={3000}
@@ -561,6 +569,9 @@ const GetStartedWorkflow = ({
   const [githubVerified, setGithubVerified] = useState(false);
   const [checkingGithub, setCheckingGithub] = useState(false);
   const [githubError, setGithubError] = useState("");
+  const [sendingNotes, setSendingNotes] = useState(false);
+  const [notesError, setNotesError] = useState("");
+  const notesRequest = useRef<{ key: string; id: string } | null>(null);
   const headingRef = useRef<HTMLElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const patch: UpdateDraft = (values) => {
@@ -715,6 +726,7 @@ const GetStartedWorkflow = ({
                 <form
                   onSubmit={async (event) => {
                     event.preventDefault();
+                    if (checkingGithub || sendingNotes) return;
                     if (draft.step === 0) {
                       setSigningOpen(true);
                       return;
@@ -761,6 +773,69 @@ const GetStartedWorkflow = ({
                     }
                     if (draft.step === 2) {
                       const incomplete = firstIncompleteStep(draft);
+                      const notes = draft.context.trim();
+                      if (
+                        incomplete === null &&
+                        ndaVerified &&
+                        notes &&
+                        draft.channel === "slack" &&
+                        draft.slackStatus !== "not_sent" &&
+                        (!demo || draft.slackDeliveryMode === "live")
+                      ) {
+                        setSendingNotes(true);
+                        setNotesError("");
+                        const key = JSON.stringify([
+                          account.organizationId,
+                          draft.slack,
+                          notes,
+                        ]);
+                        if (notesRequest.current?.key !== key)
+                          notesRequest.current = {
+                            key,
+                            id: crypto.randomUUID(),
+                          };
+                        try {
+                          if (demo) {
+                            const response = await fetch(
+                              "/__slack-preview/messages",
+                              {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                  organizationId: account.organizationId,
+                                  channelName: draft.slack,
+                                  email: account.email,
+                                  notes,
+                                  requestId: notesRequest.current.id,
+                                }),
+                              },
+                            );
+                            const result = await response.json();
+                            if (!response.ok || result.status !== "sent")
+                              throw new Error(
+                                result.error ??
+                                  "Slack did not confirm your notes. Check the channel before retrying.",
+                              );
+                          } else {
+                            await sendSlackOnboardingNotes(
+                              account.organizationId,
+                              draft.ndaDocumentId!,
+                              draft.slack,
+                              notes,
+                              notesRequest.current.id,
+                            );
+                          }
+                        } catch (error) {
+                          setNotesError(
+                            error instanceof Error
+                              ? error.message
+                              : "Could not send your notes to Slack. Your note is still saved here.",
+                          );
+                          return;
+                        } finally {
+                          setSendingNotes(false);
+                        }
+                      }
 
                       patch(
                         incomplete === null && ndaVerified
@@ -814,18 +889,20 @@ const GetStartedWorkflow = ({
                     <button
                       type="submit"
                       className="gr-button gr-button--main gs-primary"
-                      disabled={checkingGithub}
+                      disabled={checkingGithub || sendingNotes}
                       aria-describedby={
                         githubError ? "gs-github-error" : undefined
                       }
                     >
-                      {checkingGithub
-                        ? "Checking GitHub…"
-                        : draft.step === 0
-                          ? "Review & sign NDA"
-                          : draft.step === 2
-                            ? "Start project"
-                            : "Continue"}
+                      {sendingNotes
+                        ? "Sending notes…"
+                        : checkingGithub
+                          ? "Checking GitHub…"
+                          : draft.step === 0
+                            ? "Review & sign NDA"
+                            : draft.step === 2
+                              ? "Start project"
+                              : "Continue"}
                       <ArrowRight size={15} />
                     </button>
                     {draft.step > 0 && (
@@ -841,6 +918,11 @@ const GetStartedWorkflow = ({
                   {githubError && (
                     <p id="gs-github-error" role="alert" className="gs-note">
                       {githubError}
+                    </p>
+                  )}
+                  {notesError && (
+                    <p role="alert" className="gs-note">
+                      {notesError}
                     </p>
                   )}
                 </form>
@@ -868,7 +950,7 @@ const GetStartedWorkflow = ({
                 ? "Get an engineer"
                 : draft.submitted
                   ? "Project setup"
-                  : steps[draft.step] ?? "Project setup"
+                  : (steps[draft.step] ?? "Project setup")
             }
           />
         </div>

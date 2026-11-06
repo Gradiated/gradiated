@@ -7750,6 +7750,143 @@
         }
       }
     },
+    "/api/v1/organizations/{organization_id}/slack-messages": {
+      "post": {
+        "x-gradiated-audience": "console",
+        "operationId": "createSlackOnboardingMessage",
+        "tags": [
+          "Slack invitations"
+        ],
+        "summary": "Send the signed-in user's onboarding notes to their organization's Slack channel",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The customer organization."
+            },
+            "required": true,
+            "description": "The customer organization.",
+            "name": "organization_id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nda_document_id": {
+                    "type": "string",
+                    "pattern": "^[a-zA-Z0-9_-]{1,100}$",
+                    "description": "The completed NDA belonging to this user and organization."
+                  },
+                  "channel_name": {
+                    "type": "string",
+                    "maxLength": 80,
+                    "pattern": "^ext-[a-z0-9]+(?:-[a-z0-9]+)*-gradiated$",
+                    "description": "A customer channel name such as ext-example-team-gradiated."
+                  },
+                  "notes": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 3000,
+                    "description": "The notes entered by the user during onboarding."
+                  },
+                  "request_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Stable message identifier reused for a manual retry of these notes."
+                  }
+                },
+                "required": [
+                  "nda_document_id",
+                  "channel_name",
+                  "notes",
+                  "request_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Slack confirmed the message.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "sent"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Notes could not be sent or the request is unauthorized.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Notes could not be sent or the request is unauthorized.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Notes could not be sent or the request is unauthorized.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Notes could not be sent or the request is unauthorized.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Notes could not be sent or the request is unauthorized.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/organizations/{organization_id}/slack-invitations": {
       "post": {
         "x-gradiated-audience": "console",

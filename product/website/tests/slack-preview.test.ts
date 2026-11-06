@@ -24,9 +24,10 @@ const setup = () => {
     email: input.email,
     status: "invited",
   });
+  const postNotes = vi.fn().mockResolvedValue({ status: "sent" });
   const ssrLoadModule = vi
     .fn()
-    .mockResolvedValue({ createSlackConnect: () => ({ invite }) });
+    .mockResolvedValue({ createSlackConnect: () => ({ invite, postNotes }) });
   const use = vi.fn((_path: string, middleware: Handler) => {
     handler = middleware;
   });
@@ -69,10 +70,31 @@ const setup = () => {
     return result;
   };
 
-  return { request, invite, use, ssrLoadModule };
+  return { request, invite, postNotes, use, ssrLoadModule };
 };
 
 describe("local live Slack preview", () => {
+  it("posts notes only after an explicit same-origin request with the preview organization marker", async () => {
+    const { request, postNotes, invite } = setup();
+    const notes = {
+      organizationId,
+      email: input.email,
+      channelName: "ext-example-gradiated",
+      notes: "Context",
+      requestId: organizationId,
+    };
+    expect(
+      (await request("POST", "/messages", notes, "http://untrusted.example"))
+        .status,
+    ).toBe(403);
+    expect(postNotes).not.toHaveBeenCalled();
+    expect((await request("POST", "/messages", notes)).status).toBe(200);
+    expect(postNotes).toHaveBeenCalledWith({
+      ...notes,
+      organizationId: `local-preview:${organizationId}`,
+    });
+    expect(invite).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
     vi.mocked(loadEnv).mockReturnValue({ ...settings });
   });

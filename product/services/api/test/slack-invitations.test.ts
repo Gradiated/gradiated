@@ -26,6 +26,97 @@ const ready = () =>
     .mockResolvedValueOnce(response({ ok: true, invite_id: "I123456" }));
 
 describe("Slack Connect", () => {
+  it("labels onboarding notes with their author and posts user text without interpreting mentions", async () => {
+    const notes =
+      "Please investigate <!channel> and <https://example.com|this link>.";
+    const request = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        response({
+          ok: true,
+          channels: [
+            {
+              ...channel,
+              purpose: {
+                value: `Gradiated customer organization: ${organizationId}`,
+              },
+            },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(response({ ok: true, ts: "123.456" }));
+    await expect(
+      createSlackConnect(configuration, request).postNotes({
+        organizationId,
+        channelName: channel.name,
+        email: user.email,
+        notes,
+        requestId: organizationId,
+      }),
+    ).resolves.toEqual({ status: "sent" });
+    const body = JSON.parse(String(request.mock.calls[1]?.[1]?.body));
+    expect(body.channel).toBe(channel.id);
+    expect(body.client_msg_id).toBe(organizationId);
+    expect(body.blocks).toEqual([
+      {
+        type: "section",
+        text: {
+          type: "plain_text",
+          text: `Notes submitted during Gradiated onboarding by ${user.email}`,
+        },
+      },
+      { type: "section", text: { type: "plain_text", text: notes } },
+    ]);
+    expect(body.unfurl_links).toBe(false);
+  });
+
+  it("never posts notes to a channel belonging to another customer", async () => {
+    const request = vi.fn<typeof fetch>().mockResolvedValueOnce(
+      response({
+        ok: true,
+        channels: [{ ...channel, purpose: { value: "Another customer" } }],
+      }),
+    );
+    await expect(
+      createSlackConnect(configuration, request).postNotes({
+        organizationId,
+        channelName: channel.name,
+        email: user.email,
+        notes: "Private context",
+        requestId: organizationId,
+      }),
+    ).rejects.toMatchObject({ problem: { status: 403 } });
+    expect(request).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not report notes as delivered when Slack rejects them", async () => {
+    const request = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        response({
+          ok: true,
+          channels: [
+            {
+              ...channel,
+              purpose: {
+                value: `Gradiated customer organization: ${organizationId}`,
+              },
+            },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(response({ ok: false, error: "missing_scope" }));
+    await expect(
+      createSlackConnect(configuration, request).postNotes({
+        organizationId,
+        channelName: channel.name,
+        email: user.email,
+        notes: "Context",
+        requestId: organizationId,
+      }),
+    ).rejects.toMatchObject({ problem: { status: 503 } });
+    expect(request).toHaveBeenCalledTimes(2);
+  });
   it("can retry a collision with a different name without sharing the unrelated channel", async () => {
     const replacement = { ...channel, name: "ext-example-team-gradiated" };
     const request = vi
@@ -199,9 +290,11 @@ const setup = (
     role?: "admin" | "member";
     status?: string;
     configured?: boolean;
+    impersonated?: boolean;
   } = {},
 ) => {
   const slackConnect = {
+    postNotes: vi.fn().mockResolvedValue({ status: "sent" }),
     invite: vi.fn().mockResolvedValue({
       channel_id: channel.id,
       channel_name: channel.name,
@@ -211,7 +304,12 @@ const setup = (
   };
   const ndaDocuments = nda(options.status);
   const app = createTestApp({
-    auth: authenticated,
+    auth: options.impersonated
+      ? {
+          ...authenticated,
+          resolveSession: async () => ({ ...user, impersonatedBy: user.id }),
+        }
+      : authenticated,
     slackConnect: options.configured === false ? undefined : slackConnect,
     ndaDocuments,
     services: {
@@ -226,6 +324,80 @@ const setup = (
 };
 
 describe("Slack invitation route", () => {
+  it("posts onboarding notes using authenticated author identity after verifying the NDA", async () => {
+    const { app, slackConnect, ndaDocuments } = setup();
+    const result = await postJson(
+      app,
+      `/api/v1/organizations/${organizationId}/slack-messages`,
+      {
+        nda_document_id: "test-document",
+        channel_name: channel.name,
+        notes: "  Useful context  ",
+        request_id: organizationId,
+      },
+    );
+    expect(result.status).toBe(201);
+    expect(slackConnect.postNotes).toHaveBeenCalledWith({
+      organizationId,
+      email: user.email,
+      channelName: channel.name,
+      notes: "Useful context",
+      requestId: organizationId,
+    });
+    expect(ndaDocuments.read).toHaveBeenCalledWith(
+      { organizationId, userId: user.id, email: user.email },
+      "test-document",
+    );
+  });
+
+  it.each([
+    { role: "member" as const, expected: 403 },
+    { status: "ready", expected: 409 },
+    { configured: false, expected: 503 },
+    { impersonated: true, expected: 403 },
+  ])(
+    "blocks onboarding notes without authorization or completed NDA: %j",
+    async ({ expected, ...options }) => {
+      const { app, slackConnect } = setup(options);
+      expect(
+        (
+          await postJson(
+            app,
+            `/api/v1/organizations/${organizationId}/slack-messages`,
+            {
+              nda_document_id: "test-document",
+              channel_name: channel.name,
+              notes: "Context",
+              request_id: organizationId,
+            },
+          )
+        ).status,
+      ).toBe(expected);
+      expect(slackConnect.postNotes).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(["", " ", "a".repeat(3001)])(
+    "rejects empty or oversized onboarding notes",
+    async (notes) => {
+      const { app, slackConnect } = setup();
+      expect(
+        (
+          await postJson(
+            app,
+            `/api/v1/organizations/${organizationId}/slack-messages`,
+            {
+              nda_document_id: "test-document",
+              channel_name: channel.name,
+              notes,
+              request_id: organizationId,
+            },
+          )
+        ).status,
+      ).toBe(422);
+      expect(slackConnect.postNotes).not.toHaveBeenCalled();
+    },
+  );
   it("passes a proposed replacement channel name to the provider", async () => {
     const { app, slackConnect } = setup();
     const result = await postJson(app, collection, {

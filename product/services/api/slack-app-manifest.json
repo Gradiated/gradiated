@@ -5,7 +5,12 @@
   },
   "oauth_config": {
     "scopes": {
-      "bot": ["channels:read", "channels:manage", "conversations.connect:write"]
+      "bot": [
+        "channels:read",
+        "channels:manage",
+        "conversations.connect:write",
+        "chat:write"
+      ]
     }
   },
   "settings": {

@@ -127,6 +127,20 @@ reveals an editable channel name and lets the customer retry. Names must use the
 and be at most 80 characters. The API and local preview validate replacements;
 existing channels are still reused only after their organization marker matches.
 
+When **Start project** is clicked, nonempty final notes are posted to the chosen
+Slack channel with the label **Notes submitted during Gradiated onboarding by
+<account email>**. Text uses Slack plain-text blocks so user-entered mentions and
+links are not interpreted. The `slack-messages` endpoint requires a verified
+organization admin and completed NDA, rejects impersonation, and verifies the
+channel's organization marker before posting. It reports success only after
+Slack confirms the message. Failures keep the user on the final form with their
+notes intact. A stable `client_msg_id` is reused on manual retries within that
+page session; this is not a durable exactly-once delivery record. There are no
+automatic retries. Notes remain in the local draft when email fallback is
+selected or no Slack invitation has been sent; email delivery of these notes is
+not implemented. Explicit local live previews also post notes on **Start
+project**; ordinary demos simulate completion without sending a message.
+
 The console-only `POST /api/v1/organizations/{organization_id}/slack-invitations`
 requires admin membership, a verified account email, and a provider-confirmed
 completed NDA belonging to that user and organization. The API validates and
@@ -149,7 +163,9 @@ One-time setup before enabling real invitations:
 
 1. Create an internal Slack app using `product/services/api/slack-app-manifest.json`
    and install it in Gradiated's workspace. Grant
-   bot scopes `channels:manage`, `channels:read`, and `conversations.connect:write`.
+   bot scopes `channels:manage`, `channels:read`, `conversations.connect:write`,
+   and `chat:write`. Existing installations must add `chat:write` in **OAuth &
+   Permissions** and reinstall the app to enable posting onboarding notes.
    Reinstall after changing scopes. Confirm the workspace's Slack Connect plan,
    invitation permissions, and admin approval rules with its owner.
 2. Configure server-only `SLACK_BOT_TOKEN`, comma-separated Gradiated engineer
@@ -220,13 +236,13 @@ this code change.
 
 Backend configuration (never put these credentials in `VITE_` variables):
 
-| Setting | Value |
-| --- | --- |
-| `PANDADOC_NDA_ENABLED` | `false` by default; enable only after template approval and sandbox verification |
-| `PANDADOC_API_KEY` | Server-side PandaDoc API key from the same workspace as the template |
-| `PANDADOC_NDA_TEMPLATE_ID` | Defaults to `bTmxaYhTaU2tQ28fLhVrHn`; use a separate test template for sandbox testing |
-| `PANDADOC_NDA_TEMPLATE_VERSION` | Required explicit approved revision; bump when legal content changes |
-| `PANDADOC_NDA_DATE_FIELD` | Optional exact date-field Merge Field name, e.g. `Agreement.Date`; filled from server time at document creation, not a claim of signing time |
+| Setting                         | Value                                                                                                                                        |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PANDADOC_NDA_ENABLED`          | `false` by default; enable only after template approval and sandbox verification                                                             |
+| `PANDADOC_API_KEY`              | Server-side PandaDoc API key from the same workspace as the template                                                                         |
+| `PANDADOC_NDA_TEMPLATE_ID`      | Defaults to `bTmxaYhTaU2tQ28fLhVrHn`; use a separate test template for sandbox testing                                                       |
+| `PANDADOC_NDA_TEMPLATE_VERSION` | Required explicit approved revision; bump when legal content changes                                                                         |
+| `PANDADOC_NDA_DATE_FIELD`       | Optional exact date-field Merge Field name, e.g. `Agreement.Date`; filled from server time at document creation, not a claim of signing time |
 
 An engineer with infrastructure access can add these settings to the existing
 API Secrets Manager JSON `gradiated/prod/product/api` in `us-east-1`, preserving

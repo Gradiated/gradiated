@@ -372,6 +372,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/organizations/{organization_id}/slack-messages": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Send the signed-in user's onboarding notes to their organization's Slack channel */
+    post: operations["createSlackOnboardingMessage"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/organizations/{organization_id}/slack-invitations": {
     parameters: {
       query?: never;
@@ -4359,6 +4376,93 @@ export interface operations {
         };
       };
       /** @description Unauthorized, incomplete, invalid or unavailable verification. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  createSlackOnboardingMessage: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description The customer organization. */
+        organization_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": {
+          /** @description The completed NDA belonging to this user and organization. */
+          nda_document_id: string;
+          /** @description A customer channel name such as ext-example-team-gradiated. */
+          channel_name: string;
+          /** @description The notes entered by the user during onboarding. */
+          notes: string;
+          /**
+           * Format: uuid
+           * @description Stable message identifier reused for a manual retry of these notes.
+           */
+          request_id: string;
+        };
+      };
+    };
+    responses: {
+      /** @description Slack confirmed the message. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            /** @enum {string} */
+            status: "sent";
+          };
+        };
+      };
+      /** @description Notes could not be sent or the request is unauthorized. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Notes could not be sent or the request is unauthorized. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Notes could not be sent or the request is unauthorized. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Notes could not be sent or the request is unauthorized. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Notes could not be sent or the request is unauthorized. */
       503: {
         headers: {
           [name: string]: unknown;

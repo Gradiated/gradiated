@@ -116,7 +116,90 @@ export const createSlackConnect = (
     );
   };
 
+  const findOwnedChannel = async (organizationId: string, name: string) => {
+    const purpose = `Gradiated customer organization: ${organizationId}`;
+    let cursor = "";
+    let found: z.infer<typeof channelSchema> | undefined;
+    for (let page = 0; page < 50; page++) {
+      const listed = await call("conversations.list", {
+        types: "public_channel",
+        exclude_archived: true,
+        limit: 200,
+        ...(cursor ? { cursor } : {}),
+      });
+      requireSuccess(listed);
+      const result = z
+        .object({
+          channels: z.array(channelSchema),
+          response_metadata: z
+            .object({ next_cursor: z.string().optional() })
+            .optional(),
+        })
+        .parse(listed);
+      found = result.channels.find(
+        (item) =>
+          item.name === name &&
+          !item.is_archived &&
+          !item.is_private &&
+          item.purpose?.value === purpose,
+      );
+      if (found) break;
+
+      cursor = result.response_metadata?.next_cursor ?? "";
+      if (!cursor) break;
+    }
+    return found;
+  };
+
   return {
+    async postNotes(input: {
+      organizationId: string;
+      channelName: string;
+      email: string;
+      notes: string;
+      requestId: string;
+    }) {
+      const name = SlackChannelNameSchema.parse(input.channelName);
+      const notes = z.string().trim().min(1).max(3000).parse(input.notes);
+      const channel = await findOwnedChannel(input.organizationId, name);
+      if (!channel)
+        throw new ApiProblem(
+          problems.forbidden(
+            "Could not verify this organization's Slack channel. Your notes have not been sent.",
+          ),
+        );
+
+      const result = await call("chat.postMessage", {
+        channel: channel.id,
+        client_msg_id: z.uuid().parse(input.requestId),
+        blocks: [
+          {
+            type: "section",
+            text: {
+              type: "plain_text",
+              text: `Notes submitted during Gradiated onboarding by ${input.email}`,
+            },
+          },
+          { type: "section", text: { type: "plain_text", text: notes } },
+        ],
+        unfurl_links: false,
+        unfurl_media: false,
+      });
+      if (!result.ok && result.error === "missing_scope")
+        throw new ApiProblem(
+          problems.unavailable(
+            "Gradiated needs to enable Slack message permissions before your notes can be sent. Your note is still saved here.",
+          ),
+        );
+      if (!result.ok || typeof result.ts !== "string")
+        throw new ApiProblem(
+          problems.unavailable(
+            "Slack did not confirm your notes. Check the channel before retrying; the message may have been sent.",
+          ),
+        );
+
+      return { status: "sent" as const };
+    },
     async invite(input: {
       organizationId: string;
       company: string;
@@ -149,36 +232,7 @@ export const createSlackConnect = (
           }),
         );
       } else if (created.error === "name_taken") {
-        let cursor = "";
-        let found: z.infer<typeof channelSchema> | undefined;
-        for (let page = 0; page < 50; page++) {
-          const listed = await call("conversations.list", {
-            types: "public_channel",
-            exclude_archived: true,
-            limit: 200,
-            ...(cursor ? { cursor } : {}),
-          });
-          requireSuccess(listed);
-          const result = z
-            .object({
-              channels: z.array(channelSchema),
-              response_metadata: z
-                .object({ next_cursor: z.string().optional() })
-                .optional(),
-            })
-            .parse(listed);
-          found = result.channels.find(
-            (item) =>
-              item.name === name &&
-              !item.is_archived &&
-              !item.is_private &&
-              item.purpose?.value === purpose,
-          );
-          if (found) break;
-
-          cursor = result.response_metadata?.next_cursor ?? "";
-          if (!cursor) break;
-        }
+        const found = await findOwnedChannel(input.organizationId, name);
         if (!found)
           throw new ApiProblem(
             problems.conflict(

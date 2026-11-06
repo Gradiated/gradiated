@@ -5,6 +5,13 @@ import type { components } from "../src/api/schema";
 
 type Invitation = components["schemas"]["SlackInvitation"];
 type Provider = {
+  postNotes(input: {
+    organizationId: string;
+    channelName: string;
+    email: string;
+    notes: string;
+    requestId: string;
+  }): Promise<{ status: "sent" }>;
   invite(input: {
     organizationId: string;
     company: string;
@@ -22,6 +29,16 @@ const inputSchema = z.strictObject({
     .max(80)
     .regex(/^ext-[a-z0-9]+(?:-[a-z0-9]+)*-gradiated$/)
     .optional(),
+});
+const notesSchema = z.strictObject({
+  organizationId: z.uuid(),
+  channelName: z
+    .string()
+    .max(80)
+    .regex(/^ext-[a-z0-9]+(?:-[a-z0-9]+)*-gradiated$/),
+  email: z.email().max(200),
+  notes: z.string().trim().min(1).max(3000),
+  requestId: z.uuid(),
 });
 
 export const slackPreview = (): Plugin => ({
@@ -63,7 +80,7 @@ export const slackPreview = (): Plugin => ({
       }
       if (
         req.method !== "POST" ||
-        req.url !== "/invitations" ||
+        !["/invitations", "/messages"].includes(req.url ?? "") ||
         req.headers.origin !== `http://${host}`
       ) {
         res.writeHead(403).end("{}");
@@ -84,9 +101,11 @@ export const slackPreview = (): Plugin => ({
         let body = "";
         for await (const chunk of req) {
           body += chunk.toString();
-          if (body.length > 3000) throw new Error("Request too large");
+          if (body.length > 20000) throw new Error("Request too large");
         }
-        const input = inputSchema.parse(JSON.parse(body));
+        const parsed = JSON.parse(body);
+        if (req.url === "/messages") notesSchema.parse(parsed);
+        else inputSchema.parse(parsed);
         if (!provider) {
           const integration = await server.ssrLoadModule(
             fileURLToPath(
@@ -101,6 +120,16 @@ export const slackPreview = (): Plugin => ({
             engineerUserIds,
           });
         }
+        if (req.url === "/messages") {
+          const input = notesSchema.parse(parsed);
+          const result = await provider!.postNotes({
+            ...input,
+            organizationId: `local-preview:${input.organizationId}`,
+          });
+          res.end(JSON.stringify(result));
+          return;
+        }
+        const input = inputSchema.parse(parsed);
         const invitation = await provider!.invite({
           ...input,
           organizationId: `local-preview:${input.organizationId}`,

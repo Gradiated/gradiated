@@ -29,6 +29,14 @@ const validInputs: Record<string, { query?: string; body?: unknown }> = {
   "POST /api/v1/organizations/:organization_id/slack-invitations": {
     body: { nda_document_id: "test-document" },
   },
+  "POST /api/v1/organizations/:organization_id/slack-messages": {
+    body: {
+      nda_document_id: "test-document",
+      channel_name: "ext-example-gradiated",
+      notes: "Context",
+      request_id: organizationId,
+    },
+  },
   "POST /api/v1/organizations/:organization_id/nda-documents": {
     body: {
       company: "Example Inc.",

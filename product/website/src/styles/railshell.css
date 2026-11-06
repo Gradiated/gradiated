@@ -12,7 +12,10 @@
   --rail-panel: #18181b;
   --rail-under-pad: clamp(40px, 6vw, 120px);
   --rail-under-gap: clamp(24px, 3vw, 56px);
-  --rail-content: calc(500px + var(--rail-under-gap));
+  /* Poster cards shrink with the viewport HEIGHT so a reveal fits a
+     laptop screen whole rather than scrolling inside the drawer. */
+  --rail-card: clamp(140px, calc((100vh - 600px) / 1.3), 250px);
+  --rail-content: calc(2 * var(--rail-card) + var(--rail-under-gap));
   --rail-shift: min(
     calc(var(--rail-content) + 2 * var(--rail-under-pad)),
     calc(100vw - var(--rail-w) - 120px)
@@ -353,7 +356,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 64px var(--rail-under-pad);
+  padding: clamp(32px, 6vh, 64px) var(--rail-under-pad);
   color: #fafafa;
   /* Taller reveals scroll internally — stretching the base shifts the
      nav under the cursor and oscillates the peek. */
@@ -364,8 +367,8 @@
 /* Doubled scope: the shell root is a .gr-root (for tokens), so the
    site's own heading resets reach in here and win on specificity. */
 .gr-rail-root .gr-rail-under-title {
-  margin: 0 0 40px;
-  max-width: 16ch;
+  margin: 0 0 clamp(20px, 4vh, 40px);
+  max-width: min(16ch, var(--rail-content));
   font-family: var(--font-title);
   font-size: clamp(26px, 2.6vw, 40px);
   font-weight: 650;
@@ -375,7 +378,7 @@
 
 .gr-rail-under-cards {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 250px));
+  grid-template-columns: repeat(2, minmax(0, var(--rail-card)));
   gap: var(--rail-under-gap);
 }
 
@@ -464,12 +467,12 @@
   border: none;
   border-top: 1px solid #27272a;
   max-width: var(--rail-content);
-  margin: clamp(32px, 5vh, 56px) 0 0;
+  margin: clamp(24px, 5vh, 56px) 0 0;
 }
 
 .gr-rail-models-lede {
   align-self: flex-start;
-  margin: clamp(20px, 3vh, 32px) 0 18px;
+  margin: clamp(16px, 3vh, 32px) 0 18px;
   font-family: var(--font-title);
   font-size: 20px;
   font-weight: 500;
@@ -478,7 +481,7 @@
 
 .gr-rail-models {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 250px));
+  grid-template-columns: repeat(2, minmax(0, var(--rail-card)));
   gap: 20px var(--rail-under-gap);
 }
 

@@ -148,6 +148,15 @@ disabled only for Storybook. Page stories cover sign-in, API keys, models,
 usage, logs, billing, training, and every task-detail tab: Model, Training runs,
 Data, and Settings, plus trace content, test results, and the judge selector. Tab and detail stories
 select the actual tab and open the panel through a play function.
+Uploaded LoRA adapters support ranks 1–8. The form rejects higher ranks before
+transfer, and server validation enforces the same cap. Serving remains subject to
+the deployment’s qualified rank limit.
+
+Training → Model upload covers new and existing tasks, partial/selected files,
+uploading, validating, invalid files/config, config replacement without a revision,
+transfer and validation errors,
+model-catalog retry, and uploaded versions awaiting qualification, including mobile.
+Stories drive the actual form and mock only network boundaries.
 Add stories under `src/` so reviewers can inspect them in the PR preview.
 
 Capture PNGs locally from the repository root with the pinned browser runtime:
@@ -162,6 +171,14 @@ Capture uses Chromium at 1440×1000, UTC, en-US, light theme, reduced motion, an
 a fixed date. Each story has an isolated browser context and external requests
 are blocked. Screenshots replace the committed `screenshots/*.png` only after
 all stories render successfully. GitHub's image diff shows changed pages in PRs.
+
+To verify only upload stories without replacing other screenshots, build Storybook
+and run from the repository root:
+
+```sh
+uv run --locked --project tools/browser python tools/browser/storybook_screenshots.py \
+  --story-prefix training-model-upload-- --output .agents/runtime/model-upload-stories
+```
 
 Storybook is configured for Vercel in `vercel.json`. The Gradiated team’s
 `storybook` project is connected to `Gradiated/gradiated` with Root

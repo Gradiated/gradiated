@@ -83,6 +83,11 @@ export const unservedDependencies = (): AppDependencies => ({
       content: unserved("traces.content"),
     },
     training: {
+      uploads: {
+        configuration: unserved("training.uploads.configuration"),
+        create: unserved("training.uploads.create"),
+        complete: unserved("training.uploads.complete"),
+      },
       startRun: unserved("training.startRun"),
       cancelRun: unserved("training.cancelRun"),
       listTasks: unserved("training.listTasks"),

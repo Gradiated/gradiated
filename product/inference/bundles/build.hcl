@@ -44,3 +44,8 @@ target "verify-glm-5-3-flash-sglang" {
   inherits = ["bundle"]
   dockerfile = "bundles/glm-5-3-flash-sglang/Dockerfile"
 }
+
+target "verify-kimi-k31-pro" {
+  inherits = ["bundle"]
+  dockerfile = "bundles/kimi-k31-pro/Dockerfile"
+}

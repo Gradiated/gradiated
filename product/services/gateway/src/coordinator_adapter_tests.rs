@@ -41,10 +41,13 @@ async fn production_and_exact_version_resolve_to_the_same_pinned_identity() {
     assert_eq!(production.request.model, adapter.model_id());
     assert_eq!(exact.adapter, production.adapter);
     assert_eq!(exact.pricing, production.pricing);
-    assert_eq!(exact.deployment.release.lora_enabled, Some(true));
+    assert_eq!(
+        exact.local_capacity().deployment.release.lora_enabled,
+        Some(true)
+    );
     assert_ne!(
-        adapter.served_digest(&exact.served_release_digest),
-        exact.served_release_digest
+        adapter.served_digest(&exact.local_capacity().release_digest),
+        exact.local_capacity().release_digest
     );
     assert_eq!(
         *state.requested_models.lock().unwrap(),
@@ -69,7 +72,7 @@ async fn rejects_other_workspaces_and_missing_versions() {
 }
 
 #[tokio::test]
-async fn never_falls_back_to_an_unqualified_base_deployment() {
+async fn an_adapter_without_qualified_deployments_degrades_to_its_base_model() {
     for mismatch in ["disabled", "revision", "native", "system_one"] {
         let mut state = state();
         let release = &mut state.model.as_mut().unwrap().deployments[0].release;
@@ -79,11 +82,29 @@ async fn never_falls_back_to_an_unqualified_base_deployment() {
             "native" => release.runtime_revision = "native-test".to_owned(),
             _ => release.protocol = Some(crate::RuntimeProtocol::SystemOne),
         }
-        assert_eq!(
-            private_request(Arc::new(state), "task-a-v1").await.err(),
-            Some(GatewayError::ModelUnavailable),
-            "{mismatch}"
-        );
+        let base_deployment = state.model.as_ref().unwrap().deployments[0].id;
+        let result = private_request(Arc::new(state), "task-a-v1").await;
+
+        match mismatch {
+            // The base model serves the request through the chat protocol, without the adapter.
+            "disabled" | "revision" => {
+                let request = result.unwrap();
+                assert_eq!(request.local, None, "{mismatch}");
+                assert_eq!(
+                    request.base.unwrap().deployment.id,
+                    base_deployment,
+                    "{mismatch}"
+                );
+                assert_eq!(request.request.model, "task-a-v1");
+                assert!(request.adapter.is_some());
+            }
+            // A deployment that cannot serve chat is not base capacity either.
+            _ => assert_eq!(
+                result.err(),
+                Some(GatewayError::ModelUnavailable),
+                "{mismatch}"
+            ),
+        }
     }
 }
 
@@ -98,7 +119,7 @@ async fn rejects_private_names_that_collide_with_public_catalog_models() {
 }
 
 #[tokio::test]
-async fn accepts_only_the_explicitly_qualified_training_revision() {
+async fn serves_the_adapter_only_on_its_qualified_training_revision() {
     for training_revision in ["bf16-training", "unqualified"] {
         let mut state = state();
         state.adapter.as_mut().unwrap().base_model_revision = training_revision.to_owned();
@@ -111,15 +132,21 @@ async fn accepts_only_the_explicitly_qualified_training_revision() {
             let request = result.unwrap();
             assert_eq!(
                 request
+                    .local_capacity()
                     .deployment
                     .release
                     .lora_base_model_revision
                     .as_deref(),
                 Some("bf16-training")
             );
-            assert_ne!(request.deployment.release.model_revision, "bf16-training");
+            assert_ne!(
+                request.local_capacity().deployment.release.model_revision,
+                "bf16-training"
+            );
         } else {
-            assert_eq!(result.err(), Some(GatewayError::ModelUnavailable));
+            let request = result.unwrap();
+            assert_eq!(request.local, None);
+            assert!(request.base.is_some());
         }
     }
 }

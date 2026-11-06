@@ -54,6 +54,9 @@
 #   commit, as does a Codex review's commit_id. "failed" and "running" do not
 #   count. A review with findings is a COMMENTED review whose inline comments
 #   start with a P0/P1/P2 badge image (`![P1 Badge](...)`).
+#   Versioned `codex-review-receipt:v1` clean issue comments also count when
+#   trusted bot identity/edit history and an unambiguous PR commit match are
+#   verified, with no inline P0/P1 finding on that commit.
 # - Graphite (graphite-app, app id 158384): a "Graphite / AI Reviews" check run
 #   with conclusion "success" on any PR commit. Graphite reports "skipped" when
 #   a PR is too large; that does not count. Its findings are COMMENTED reviews
@@ -188,6 +191,7 @@ jobs:
     # posts the status while the ruleset expects it from GitHub Actions.
     permissions:
       statuses: write
+      contents: read
     concurrency:
       # One key per PR for every event type, so evaluations run one at a time
       # and a stale "pending" cannot overwrite a newer "success".
@@ -229,6 +233,17 @@ jobs:
                 echo "skip=true" >> "$GITHUB_OUTPUT" ;;
             esac
           fi
+      - name: Load trusted receipt parser
+        if: steps.requester.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WORKFLOW_SHA: ${{ github.workflow_sha }}
+        run: |
+          set -euo pipefail
+          # Execute only the parser co-located with this trusted workflow revision.
+          [[ "$WORKFLOW_SHA" =~ ^[0-9a-f]{40}$ ]]
+          gh api "repos/$REPO/contents/tools/ci/codex_receipts.py?ref=$WORKFLOW_SHA" \
+            --jq .content | base64 --decode > codex_receipts.py
       - name: Evaluate AI reviews
         if: steps.requester.outputs.skip != 'true'
         env:
@@ -250,24 +265,32 @@ jobs:
           # Codex: its summary comment and every earlier version of it (the
           # edit history) carry codex-review-state:v1; a "completed" state names
           # the reviewed commit. Codex reviews with findings also name it. The
-          # summary comment is posted when the PR opens, so it is always among
-          # the first 100 comments.
-          gh api graphql -F owner="${REPO%/*}" -F name="${REPO#*/}" -F pr="$pr" -f query='
-            query($owner: String!, $name: String!, $pr: Int!) {
+          # Receipt-format reviews are separate comments, so read every page.
+          gh api graphql --paginate -F owner="${REPO%/*}" -F name="${REPO#*/}" -F pr="$pr" -f query='
+            query($owner: String!, $name: String!, $pr: Int!, $endCursor: String) {
               repository(owner: $owner, name: $name) {
                 pullRequest(number: $pr) {
-                  comments(first: 100) {
+                  comments(first: 100, after: $endCursor) {
+                    pageInfo { hasNextPage endCursor }
                     nodes {
                       author { __typename login }
                       body
-                      userContentEdits(first: 100) { nodes { editor { login } diff } }
+                      userContentEdits(first: 100) {
+                        pageInfo { hasNextPage }
+                        nodes { editor { __typename login } diff }
+                      }
                     }
                   }
                 }
               }
-            }' --jq '[.data.repository.pullRequest.comments.nodes[]
-              | select(.author.__typename == "Bot" and .author.login == "chatgpt-codex-connector")]' > codex.json
+            }' --jq '.data.repository.pullRequest.comments.nodes[]
+              | select(.author.__typename == "Bot" and .author.login == "chatgpt-codex-connector")' | jq -s . > codex.json
+          gh api --paginate "repos/$REPO/pulls/$pr/comments" \
+            --jq '.[] | {review: .pull_request_review_id, login: .user.login, reply: .in_reply_to_id,
+                         commit: .original_commit_id, body}' | jq -s . > comments.json
+          python3 codex_receipts.py codex.json commits.txt comments.json > codex_receipts.txt
           {
+            cat codex_receipts.txt
             gh api --paginate "repos/$REPO/pulls/$pr/reviews" \
               --jq '.[] | select(.user.login == "chatgpt-codex-connector[bot]") | .commit_id'
             jq -r '.[]
@@ -347,6 +370,7 @@ jobs:
           gh api --paginate "repos/$REPO/pulls/$pr/comments" \
             --jq '.[] | {review: .pull_request_review_id, login: .user.login, reply: .in_reply_to_id,
                          commit: .original_commit_id, body}' | jq -s . > comments.json
+          python3 codex_receipts.py codex.json commits.txt comments.json > codex_receipts.txt
           gh api --paginate "repos/$REPO/issues/$pr/comments" \
             --jq '.[] | {login: .user.login, body}' | jq -s . > issue_comments.json
           gh api graphql -F owner="${REPO%/*}" -F name="${REPO#*/}" -F pr="$pr" -f query='
@@ -368,6 +392,7 @@ jobs:
           # (a) Codex passing commits: a completed "no findings" marker, or a
           # Codex review without P0/P1 comments. The newest PR commit wins.
           {
+            cat codex_receipts.txt
             jq -r '.[]
               | .body, (.userContentEdits.nodes[] | select(.editor.login == "chatgpt-codex-connector") | .diff // empty)
               | capture("codex-review-state:v1 (?<s>\\{.*\\}) -->").s

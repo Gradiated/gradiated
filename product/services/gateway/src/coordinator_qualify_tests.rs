@@ -39,7 +39,10 @@ async fn qualifies_the_complete_pre_admission_request() {
     assert_eq!(request.pricing.prompt(), 150);
     assert_eq!(request.pricing.cached_prompt(), 75);
     assert_eq!(request.pricing.completion(), 300);
-    assert!(request.served_release_digest.starts_with("sha256:"));
+    assert!(request
+        .local_capacity()
+        .release_digest
+        .starts_with("sha256:"));
     assert_eq!(
         *state.calls.lock().unwrap(),
         ["credential", "workspace", "account", "model"]
@@ -403,13 +406,21 @@ async fn a_rollout_keeps_a_healthy_release_until_its_replacement_is_ready() {
         let qualified = qualify_chat(Arc::new(state), CHAT_BODY).await.unwrap();
         if expected_revision != "either" {
             assert_eq!(
-                qualified.deployment.release.runtime_revision,
+                qualified
+                    .local_capacity()
+                    .deployment
+                    .release
+                    .runtime_revision,
                 expected_revision
             );
         }
         assert_eq!(
-            qualified.served_release_digest,
-            qualified.deployment.served_release_digest().unwrap()
+            qualified.local_capacity().release_digest,
+            qualified
+                .local_capacity()
+                .deployment
+                .served_release_digest()
+                .unwrap()
         );
         assert_eq!(qualified.request.model, "model-a");
     }

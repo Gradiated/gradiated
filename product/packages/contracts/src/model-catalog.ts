@@ -27,10 +27,20 @@ export type CatalogEntry = {
 
 export const MODEL_CATALOG = [
   {
+    id: "moonshotai/kimi-k3.1-pro",
+    displayName: "Kimi K3.1 Pro",
+    icon: null,
+    supportedUses: ["judge", "comparison", "serving"],
+  },
+  {
     id: "deepseek/deepseek-v4.1-flash",
     displayName: "DeepSeek V4.1 Flash",
     icon: "/model-providers/deepseek.svg",
     supportedUses: ["judge", "comparison", "serving"],
+    training: {
+      model: "deepseek-ai/DeepSeek-V4.1-Flash",
+      revision: "dba1be0a40aa45a94ad051997016db3960a90277",
+    },
   },
   {
     id: "z-ai/glm-5.3-flash",
@@ -60,6 +70,12 @@ export const MODEL_CATALOG = [
   {
     id: "dealignai/glm-5.3-flash-uncensored",
     displayName: "GLM-5.3 Flash Uncensored",
+    icon: "/model-providers/zai.svg",
+    supportedUses: ["judge", "comparison", "serving"],
+  },
+  {
+    id: "z-ai/glm-5.3",
+    displayName: "GLM-5.3",
     icon: "/model-providers/zai.svg",
     supportedUses: ["judge", "comparison", "serving"],
   },

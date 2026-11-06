@@ -1,0 +1,168 @@
+--- a/sglang/srt/speculative/dflash_worker_v2.py
++++ b/sglang/srt/speculative/dflash_worker_v2.py
+@@ -94,6 +94,7 @@
+ from sglang.srt.speculative.dflash_info import DFlashVerifyInput
+ from sglang.srt.speculative.dflash_info_v2 import DFlashDraftInputV2
+ from sglang.srt.speculative.dflash_sim_acc import SimAccLenRing
++from sglang.srt.speculative.seeded_dflash import seeded_dflash_uniforms
+ from sglang.srt.speculative.dflash_utils import (
+     _get_or_create_chain_verify_buffers,
+     apply_dflash_simulated_acceptance,
+@@ -1282,6 +1283,8 @@
+ 
+     def _graph_proposal_unusable(self, sampling_info) -> bool:
+         """Whether this batch needs the eager selector (greedy-only megakernel head)."""
++        if getattr(sampling_info, "sampling_seed", None) is not None:
++            return True
+         if not isinstance(self._draft_sampler, _MegakernelSelectorDraftSampler):
+             return False
+         if self._draft_sampler.sampling_enabled or _is_all_greedy(sampling_info):
+@@ -1929,7 +1932,11 @@
+         tokens, q_rows = self.selector.sample_path(
+             candidate_ids=candidate_ids,
+             scores=scores,
+-            uniforms=torch.rand(bs, num_pred, dtype=torch.float32, device=device),
++            uniforms=seeded_dflash_uniforms(
++                stock=torch.rand(bs, num_pred, dtype=torch.float32, device=device),
++                seeds=getattr(sampling_info, "sampling_seed", None),
++                positions=getattr(sampling_info, "dflash_seed_positions", None), stream=0,
++            ),
+             temperatures=temperatures,
+             greedy_mask=greedy_mask,
+         )
+@@ -3345,6 +3352,14 @@
+ 
+     def _validate_phase1_sampling_support(self, batch: ScheduleBatch) -> None:
+         sampling_info = batch.sampling_info
++        explicit_seed = any(req.sampling_params.sampling_seed is not None for req in batch.reqs)
++        if explicit_seed:
++            if sampling_info is None or getattr(sampling_info, "sampling_seed", None) is None:
++                raise RuntimeError("Seeded DFLASH requires materialized per-request sampling seeds.")
++            if self._block_verification or megakernel_enabled():
++                raise RuntimeError("Seeded DFLASH supports sequential non-megakernel verification only.")
++            if self.selector is None or not self._selector_sampling_enabled:
++                raise RuntimeError("Seeded DFLASH requires the DFlash2 sampling selector.")
+         if sampling_info is None or sampling_info.is_all_greedy:
+             return
+         if self.selector is not None:
+@@ -3598,6 +3613,8 @@
+ 
+         block_ids = self._draft_block_ids_buf[:bs]
+         prefix_lens = batch.seq_lens
++        if batch.sampling_info is not None:
++            batch.sampling_info.dflash_seed_positions = prefix_lens
+         positions_2d = self._draft_block_positions_buf[:bs]
+         verify_out_cache_loc_2d = self._draft_verify_out_cache_loc_buf[:bs]
+         if self._use_triton_prepare_block:
+--- a/sglang/kernels/ops/speculative/dspark/dspark_accept.py
++++ b/sglang/kernels/ops/speculative/dspark/dspark_accept.py
+@@ -17,6 +17,7 @@
+     _get_or_create_chain_verify_buffers,
+     build_speculative_verify_target_probs,
+ )
++from sglang.srt.speculative.seeded_dflash import seeded_dflash_uniforms
+ from sglang.srt.utils import is_npu
+ 
+ _is_npu = is_npu()
+@@ -139,6 +140,19 @@
+         (bs, uniform_width), dtype=torch.float32, device=device
+     )
+     uniform_samples_final = torch.rand((bs,), dtype=torch.float32, device=device)
++    seeds = getattr(sampling_info, "sampling_seed", None)
++    if seeds is not None:
++        if block_verification or _is_npu:
++            raise RuntimeError("Seeded DFLASH requires sequential CUDA verification.")
++        positions = getattr(sampling_info, "dflash_seed_positions", None)
++        uniform_samples = seeded_dflash_uniforms(
++            stock=uniform_samples, seeds=seeds, positions=positions, stream=1,
++        )
++        # The kernel chooses the variate at the actual residual/bonus position.
++        uniform_samples_final = seeded_dflash_uniforms(
++            stock=torch.rand((bs, verify_num_draft_tokens), dtype=torch.float32, device=device),
++            seeds=seeds, positions=positions, stream=2,
++        )
+     sampling_fn = chain_speculative_sampling_triton
+     if block_verification:
+         # Startup validation rejects NPU, whose sampler has no block mode.
+--- a/sglang/kernels/ops/speculative/reject_sampling.py
++++ b/sglang/kernels/ops/speculative/reject_sampling.py
+@@ -21,6 +21,8 @@
+     stride_idx_s,
+     stride_uni_b,
+     stride_uni_s,
++    stride_final_b,
++    stride_final_s,
+     stride_tp_b,
+     stride_tp_s,
+     stride_tp_v,
+@@ -163,7 +165,9 @@
+ 
+     # Final Sampling
+     all_drafts_accepted = num_accept == NUM_SLOTS - 1
+-    coin_final = tl.load(UniformSamplesFinal + pid)
++    coin_final = tl.load(
++        UniformSamplesFinal + pid * stride_final_b + num_accept * stride_final_s
++    )
+ 
+     tp_base_ptr = TargetProbs + (pid * stride_tp_b) + (cur_prob_row * stride_tp_s)
+     # DraftProbs has only num_steps rows (TargetProbs has num_steps + 1). When
+@@ -280,6 +284,9 @@
+         retrive_index.stride(1),
+         uniform_samples.stride(0),
+         uniform_samples.stride(1),
++        uniform_samples_for_final_sampling.stride(0),
++        (uniform_samples_for_final_sampling.stride(1)
++         if uniform_samples_for_final_sampling.ndim == 2 else 0),
+         target_probs.stride(0),
+         target_probs.stride(1),
+         target_probs.stride(2),
+--- /dev/null
++++ b/sglang/srt/speculative/seeded_dflash.py
+@@ -0,0 +1,47 @@
++"""Counter-based DFLASH variates; candidate-only pending GPU qualification."""
++from __future__ import annotations
++
++import torch
++
++
++def _dflash_mul32(a: torch.Tensor, b: int):
++    # Same overflow-free 32-bit multiplication as DSpark markov_sample._mul32.
++    product_lo = a * (b & 0xFFFF)
++    product_hi = a * (b >> 16)
++    high = (product_hi + (product_lo >> 16)) >> 16
++    low = (((product_hi & 0xFFFF) << 16) + product_lo) & 0xFFFFFFFF
++    return high, low
++
++
++def seeded_dflash_uniforms(*, stock, seeds, positions, stream: int):
++    """Use Philox4x32-10(seed64, absolute position, stream) for seeded rows.
++
++    Stream0 proposes, stream1 accepts, stream2 samples residual/bonus. Positions
++    are absolute model token positions, matching the normal sampler's convention.
++    Caller supplies stock random draws; negative sentinel rows retain those.
++    No data-dependent CPU predicate, global generator reset, or batch-row key.
++    """
++    if seeds is None:
++        return stock
++    if positions is None:
++        raise ValueError("Seeded DFLASH requires absolute sampling positions.")
++    if stock.ndim != 2 or seeds.ndim != 1 or positions.ndim != 1:
++        raise ValueError("Seeded DFLASH uniform shape mismatch.")
++    if stock.shape[0] != seeds.numel() or positions.numel() != seeds.numel():
++        raise ValueError("Seeded DFLASH seed/position row mismatch.")
++    absolute = positions.to(torch.int64)[:, None] + torch.arange(
++        stock.shape[1], dtype=torch.int64, device=stock.device
++    )[None, :]
++    c0, c1 = absolute & 0xFFFFFFFF, (absolute >> 32) & 0xFFFFFFFF
++    c2, c3 = torch.full_like(c0, stream), torch.zeros_like(c0)
++    k0 = seeds.to(torch.int64)[:, None] & 0xFFFFFFFF
++    k1 = (seeds.to(torch.int64)[:, None] >> 32) & 0xFFFFFFFF
++    for _ in range(10):
++        hi_b, lo_b = _dflash_mul32(c2, 0xCD9E8D57)
++        hi_a, lo_a = _dflash_mul32(c0, 0xD2511F53)
++        c0, c1, c2, c3 = hi_b ^ c1 ^ k0, lo_b, hi_a ^ c3 ^ k1, lo_a
++        k0 = (k0 + 0x9E3779B9) & 0xFFFFFFFF
++        k1 = (k1 + 0xBB67AE85) & 0xFFFFFFFF
++    # Exactly representable float32 lattice in [0,1), like torch.rand.
++    seeded = (c0 >> 8).to(torch.float32) * (2.0 ** -24)
++    return torch.where(seeds[:, None] >= 0, seeded, stock)

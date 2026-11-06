@@ -1,4 +1,5 @@
 export {
+  OpenRouterModelIdSchema,
   OrganizationIdParamsSchema,
   TimestampSchema,
   UuidSchema,

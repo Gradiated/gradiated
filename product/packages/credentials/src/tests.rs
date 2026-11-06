@@ -39,7 +39,7 @@ async fn reads_current_version_and_observes_manual_rotation() {
         for slot in ["primary", "secondary", "error"]
             .into_iter()
             .cycle()
-            .take(6)
+            .take(9)
         {
             let (mut stream, _) = listener.accept().await.unwrap();
             let mut request = Vec::new();
@@ -108,7 +108,8 @@ async fn reads_current_version_and_observes_manual_rotation() {
         .build();
     let loader = CredentialLoader::new(Client::from_conf(config));
 
-    for provider in [Provider::OpenAi, Provider::Anthropic] {
+    let providers = [Provider::OpenAi, Provider::Anthropic, Provider::OpenRouter];
+    for provider in providers {
         let (first, concurrent) = tokio::join!(loader.load(provider), loader.load(provider));
         assert_eq!(first.unwrap(), "first-key");
         assert_eq!(concurrent.unwrap(), "first-key");
@@ -117,6 +118,7 @@ async fn reads_current_version_and_observes_manual_rotation() {
         let cache = match provider {
             Provider::OpenAi => &loader.openai,
             Provider::Anthropic => &loader.anthropic,
+            Provider::OpenRouter => &loader.openrouter,
         };
         cache.lock().await.as_mut().unwrap().expires_at = Instant::now();
         assert_eq!(loader.load(provider).await.unwrap(), "next-key");
@@ -128,11 +130,7 @@ async fn reads_current_version_and_observes_manual_rotation() {
     }
 
     for (i, request) in server.await.unwrap().into_iter().enumerate() {
-        let provider = if i < 3 {
-            Provider::OpenAi
-        } else {
-            Provider::Anthropic
-        };
+        let provider = providers[i / 3];
 
         assert_eq!(request["SecretId"], provider.secret_id());
         assert_eq!(request["VersionStage"], "AWSCURRENT");
@@ -141,5 +139,9 @@ async fn reads_current_version_and_observes_manual_rotation() {
     assert_eq!(
         Provider::Anthropic.secret_id(),
         "gradiated/prod/providers/anthropic"
+    );
+    assert_eq!(
+        Provider::OpenRouter.secret_id(),
+        "gradiated/prod/providers/openrouter"
     );
 }

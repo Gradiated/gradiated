@@ -13,7 +13,7 @@ const credentials = new CredentialLoader();
 const apiKey = await credentials.load("openai");
 ```
 
-The TypeScript provider type is `"openai" | "anthropic"`. Add
+The TypeScript provider type is `"openai" | "anthropic" | "openrouter"`. Add
 `"@gradiated/credentials": "workspace:*"` to a service's dependencies before use.
 You can pass a configured `SecretsManagerClient` to the constructor.
 
@@ -38,6 +38,9 @@ Change `activeSlot` to select it. The selected key takes effect when the five-mi
 service to pick it up immediately. If a
 service keeps a provider client, reload its key or restart the service before
 revoking the old key. Keep one loader per service so calls share the cache.
+
+The gateway loads the OpenRouter key on each OpenRouter attempt, so a slot change
+takes effect within the cache lifetime without a restart.
 
 The Temporal worker loads these keys before training allocation and when calling
 the selected comparison or judge provider. Production uses Secrets Manager; local

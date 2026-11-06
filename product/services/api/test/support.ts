@@ -164,6 +164,9 @@ export const modelRecord: ModelRecord = {
   name: "Kimi K3",
   status: "available",
   properties: modelProperties,
+  openrouterModelId: null,
+  tokenizerPath: null,
+  tokenizerRevision: null,
   createdAt: now,
   updatedAt: now,
 };

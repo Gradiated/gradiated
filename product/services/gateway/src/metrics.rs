@@ -27,6 +27,9 @@ struct Metrics {
     http_requests: CounterFamily<HttpRequestLabels>,
     admissions: CounterFamily<GenerationLabels>,
     routing_capacity_rejections: CounterFamily<ModelTrafficLabels>,
+    capacity_fallbacks: CounterFamily<CapacityFallbackLabels>,
+    session_routes: CounterFamily<SessionRouteLabels>,
+    upstream_cost_nano_usd: CounterFamily<GenerationLabels>,
     capacity_rejection_timestamp_seconds: GaugeFamily<ModelLabels>,
     admission_rejections: CounterFamily<AdmissionRejectionLabels>,
     active_generations: GaugeFamily<GenerationLabels>,
@@ -78,6 +81,20 @@ struct ModelLabels {
 struct ModelTrafficLabels {
     model: String,
     traffic: String,
+}
+
+#[derive(Clone, Debug, EncodeLabelSet, Eq, Hash, PartialEq)]
+struct CapacityFallbackLabels {
+    model: String,
+    capacity: String,
+    reason: String,
+    traffic: String,
+}
+
+#[derive(Clone, Debug, EncodeLabelSet, Eq, Hash, PartialEq)]
+struct SessionRouteLabels {
+    model: String,
+    outcome: String,
 }
 
 #[derive(Clone, Debug, EncodeLabelSet, Eq, Hash, PartialEq)]
@@ -151,6 +168,24 @@ impl GatewayMetrics {
                 &mut registry,
                 "routing_capacity_rejections",
                 "Qualified requests rejected because every healthy runtime was at capacity.",
+                CounterFamily::default(),
+            ),
+            capacity_fallbacks: registered(
+                &mut registry,
+                "capacity_fallbacks",
+                "Generations moved to other capacity before any output, by destination and reason.",
+                CounterFamily::default(),
+            ),
+            session_routes: registered(
+                &mut registry,
+                "session_routes",
+                "Generations placed on a local replica, by whether the session kept its replica.",
+                CounterFamily::default(),
+            ),
+            upstream_cost_nano_usd: registered(
+                &mut registry,
+                "upstream_cost_nano_usd",
+                "What external capacity reported charging Gradiated, in integer nano-USD.",
                 CounterFamily::default(),
             ),
             capacity_rejection_timestamp_seconds: registered(
@@ -303,12 +338,7 @@ impl GatewayMetrics {
         self.inner
             .http_requests
             .get_or_create(&HttpRequestLabels {
-                traffic: if is_verification {
-                    "verification"
-                } else {
-                    "routed"
-                }
-                .to_owned(),
+                traffic: traffic(is_verification).to_owned(),
                 route: route.to_owned(),
                 status: status.to_string(),
                 error: error.to_owned(),
@@ -352,7 +382,7 @@ impl GatewayMetrics {
         }
     }
 
-    fn record_capacity_pressure(&self, model: &str) {
+    pub(crate) fn record_capacity_pressure(&self, model: &str) {
         self.inner
             .capacity_rejection_timestamp_seconds
             .get_or_create(&ModelLabels {
@@ -368,14 +398,27 @@ impl GatewayMetrics {
             .routing_capacity_rejections
             .get_or_create(&ModelTrafficLabels {
                 model: model.to_owned(),
-                traffic: if is_verification {
-                    "verification"
-                } else {
-                    "routed"
-                }
-                .to_owned(),
+                traffic: traffic(is_verification).to_owned(),
             })
             .inc();
+    }
+
+    pub(crate) fn session_routed(&self, model: &str, outcome: &str) {
+        self.inner
+            .session_routes
+            .get_or_create(&SessionRouteLabels {
+                model: model.to_owned(),
+                outcome: outcome.to_owned(),
+            })
+            .inc();
+    }
+
+    pub(crate) fn capacity(&self, model: &str, is_verification: bool) -> CapacityMetrics {
+        CapacityMetrics {
+            metrics: self.clone(),
+            model: model.to_owned(),
+            is_verification,
+        }
     }
 
     pub fn set_dependency_ready(&self, dependency: &'static str, ready: bool) {
@@ -411,9 +454,87 @@ impl Default for GatewayMetrics {
     }
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum Capacity {
+    Local,
+    Adapter,
+    OpenRouter,
+}
+
+impl Capacity {
+    pub(crate) fn as_str(self) -> &'static str {
+        match self {
+            Self::Local => "local",
+            Self::Adapter => "adapter",
+            Self::OpenRouter => "openrouter",
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum FallbackReason {
+    NoDeployment,
+    Unavailable,
+    AtCapacity,
+    CapacityExceeded,
+    AttemptFailed,
+}
+
+impl FallbackReason {
+    pub(crate) fn as_str(self) -> &'static str {
+        match self {
+            Self::NoDeployment => "no_deployment",
+            Self::Unavailable => "unavailable",
+            Self::AtCapacity => "at_capacity",
+            Self::CapacityExceeded => "capacity_exceeded",
+            Self::AttemptFailed => "attempt_failed",
+        }
+    }
+
+    fn is_capacity(self) -> bool {
+        matches!(self, Self::AtCapacity | Self::CapacityExceeded)
+    }
+}
+
+/// Records each move to other capacity when it happens, since saturation of our
+/// own capacity is the autoscaling signal even when another capacity serves.
+#[derive(Clone)]
+pub(crate) struct CapacityMetrics {
+    metrics: GatewayMetrics,
+    model: String,
+    is_verification: bool,
+}
+
+impl CapacityMetrics {
+    pub(crate) fn fell_back(&self, to: Capacity, reason: FallbackReason) {
+        if reason.is_capacity() {
+            self.metrics.record_capacity_pressure(&self.model);
+        }
+
+        self.metrics
+            .inner
+            .capacity_fallbacks
+            .get_or_create(&CapacityFallbackLabels {
+                model: self.model.clone(),
+                capacity: to.as_str().to_owned(),
+                reason: reason.as_str().to_owned(),
+                traffic: traffic(self.is_verification).to_owned(),
+            })
+            .inc();
+    }
+}
+
+fn traffic(is_verification: bool) -> &'static str {
+    if is_verification {
+        "verification"
+    } else {
+        "routed"
+    }
+}
+
 pub(crate) struct GenerationScope<'a> {
     pub model: &'a str,
-    pub deployment: Uuid,
+    pub deployment: String,
     pub protocol: &'static str,
     pub stream: bool,
     pub service_tier: ServiceTier,
@@ -443,6 +564,9 @@ pub(crate) struct TerminalRecord<'a> {
     pub usage: NormalizedUsage,
     pub charge_nano_usd: u64,
     pub timing: &'a GenerationTiming,
+    pub capacity: Capacity,
+    pub fallback_reason: Option<FallbackReason>,
+    pub upstream_cost_nano_usd: Option<u64>,
 }
 
 pub(crate) struct AdmittedGenerationMetrics {
@@ -452,9 +576,9 @@ pub(crate) struct AdmittedGenerationMetrics {
 }
 
 impl AdmittedGenerationMetrics {
-    pub(crate) fn prepare_deployment(&self, deployment: Uuid) {
+    pub(crate) fn prepare_deployment(&self, deployment: String) {
         let labels = GenerationLabels {
-            deployment: deployment.to_string(),
+            deployment,
             ..self.labels.clone()
         };
         drop(
@@ -465,8 +589,7 @@ impl AdmittedGenerationMetrics {
         );
     }
 
-    pub(crate) fn served_by(&mut self, deployment: Uuid) {
-        let deployment = deployment.to_string();
+    pub(crate) fn served_by(&mut self, deployment: String) {
         if self.labels.deployment == deployment {
             return;
         }
@@ -490,6 +613,9 @@ impl AdmittedGenerationMetrics {
             usage,
             charge_nano_usd,
             timing,
+            capacity,
+            fallback_reason,
+            upstream_cost_nano_usd,
         } = *record;
         let received_at = timing.received_at();
         let started_at = timing.started_at();
@@ -503,11 +629,7 @@ impl AdmittedGenerationMetrics {
             self.metrics.record_capacity_pressure(&labels.model);
         }
 
-        let traffic = if self.is_verification {
-            "verification"
-        } else {
-            "routed"
-        };
+        let traffic = traffic(self.is_verification);
         let cancellation_owner = outcome
             .cancellation_owner()
             .map_or("none", CancellationOwner::as_str);
@@ -520,6 +642,9 @@ impl AdmittedGenerationMetrics {
             stream = %labels.stream,
             service_tier = %labels.service_tier,
             status, error_code, cancellation_owner, traffic,
+            capacity = capacity.as_str(),
+            fallback_reason = fallback_reason.map(FallbackReason::as_str),
+            upstream_cost_nano_usd,
             input_tokens = usage.input_tokens(),
             cached_input_tokens = usage.cached_input_tokens(),
             cache_write_tokens = usage.cache_write_tokens(),
@@ -561,6 +686,12 @@ impl AdmittedGenerationMetrics {
             .calculated_charge_nano_usd
             .get_or_create(labels)
             .inc_by(charge_nano_usd);
+        if let Some(cost) = upstream_cost_nano_usd {
+            metrics
+                .upstream_cost_nano_usd
+                .get_or_create(labels)
+                .inc_by(cost);
+        }
         metrics
             .input_tokens_per_generation
             .get_or_create(labels)
@@ -667,7 +798,7 @@ impl From<&GenerationScope<'_>> for GenerationLabels {
     fn from(scope: &GenerationScope<'_>) -> Self {
         Self {
             model: scope.model.to_owned(),
-            deployment: scope.deployment.to_string(),
+            deployment: scope.deployment.clone(),
             protocol: scope.protocol.to_owned(),
             stream: scope.stream.to_string(),
             service_tier: scope.service_tier.as_str().to_owned(),

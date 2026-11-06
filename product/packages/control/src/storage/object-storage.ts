@@ -1,5 +1,8 @@
+import { createReadStream } from "node:fs";
+import { open } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import {
+  DeleteObjectsCommand,
   GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
@@ -35,7 +38,7 @@ export class ObjectStorage {
   private consume = async (
     key: string,
     { maxBytes, timeoutMs = 120_000, versionId }: ObjectReadOptions,
-    receive: (chunk: Uint8Array) => void,
+    receive: (chunk: Uint8Array) => void | Promise<void>,
   ) => {
     const response = await this.client.send(
       new GetObjectCommand({
@@ -60,7 +63,7 @@ export class ObjectStorage {
         sizeBytes += chunk.value.length;
         if (sizeBytes > maxBytes) throw new Error("Object exceeds read limit.");
 
-        receive(chunk.value);
+        await receive(chunk.value);
       }
     } finally {
       await reader.cancel();
@@ -77,6 +80,56 @@ export class ObjectStorage {
       chunks.push(chunk);
     });
     return Buffer.concat(chunks, sizeBytes);
+  };
+
+  delete = async (keys: string[]) => {
+    if (!keys.length) return;
+
+    const result = await this.client.send(
+      new DeleteObjectsCommand({
+        Bucket: this.bucket,
+        Delete: { Objects: keys.map((Key) => ({ Key })), Quiet: true },
+      }),
+      { abortSignal: AbortSignal.timeout(10_000) },
+    );
+    if (result.Errors?.length) throw new Error("Object deletion failed.");
+  };
+
+  downloadFile = async (
+    key: string,
+    destination: string,
+    options: ObjectReadOptions,
+  ) => {
+    const file = await open(destination, "wx");
+    try {
+      return await this.consume(key, options, (chunk) => file.writeFile(chunk));
+    } finally {
+      await file.close();
+    }
+  };
+
+  putFile = async (
+    key: string,
+    path: string,
+    artifact: { sizeBytes: number; sha256: string },
+  ) => {
+    const body = createReadStream(path, { highWaterMark: 64 * 1024 });
+    try {
+      await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: body,
+          ContentLength: artifact.sizeBytes,
+          ChecksumSHA256: Buffer.from(artifact.sha256, "hex").toString(
+            "base64",
+          ),
+        }),
+        { abortSignal: AbortSignal.timeout(120_000) },
+      );
+    } finally {
+      body.destroy();
+    }
   };
 
   checksum = async (key: string, options: ObjectReadOptions) => {
@@ -166,10 +219,14 @@ export class ObjectStorage {
       { expiresIn: options.expiresIn },
     );
 
-  signUpload = (key: string, expiresIn: number) =>
+  signUpload = (key: string, expiresIn: number, sizeBytes?: number) =>
     getSignedUrl(
       this.client,
-      new PutObjectCommand({ Bucket: this.bucket, Key: key }),
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        ...(sizeBytes === undefined ? {} : { ContentLength: sizeBytes }),
+      }),
       { expiresIn },
     );
 

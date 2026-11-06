@@ -143,8 +143,16 @@ export const promoteHost = ({ source, releaseFile, root = process.cwd() }) => {
       }
     }
     const payloadChanged =
-      !sameInputs(pinChange, source, hostPayloadInputs) ||
-      packageStage(pinChange) !== packageStage(source);
+      !sameInputs(pinChange, source, [
+        ...hostPayloadInputs,
+        ...catalog["gpu-base"].paths,
+      ]) || packageStage(pinChange) !== packageStage(source);
+    if (previous && !payloadChanged)
+      return {
+        promoted: false,
+        reason: "host payload and base inputs unchanged",
+      };
+
     const supersedesPin = previous
       ? ancestor(previous, source)
       : ancestor(pinChange, source) &&

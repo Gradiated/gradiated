@@ -1,0 +1,28 @@
+{
+  "upstream_sha": "afcd7d6b487a9cbe73e25941971b4cc107e6f9ae",
+  "image_amd64_digest": "sha256:4a098ad7414702a2271296ac148854448d10710ec3554ac93b57ef194999305a",
+  "scope": "DFLASH non-overlap committed-output and candidate-prefix frequency/presence correction; fail-closed unsupported sampling; target MXFP4 unchanged",
+  "limitations": [
+    "Nonzero frequency/presence penalties require --disable-overlap-schedule; overlap CPU history is stale",
+    "Request seed, min_p, repetition_penalty and min_new_tokens remain unsupported and are rejected",
+    "Nonzero penalties rebuild counts from full output history and perform O(batch * block * vocab) arithmetic; no speedup claim",
+    "No seeded target-only verifier or GPU-side penalty history implemented"
+  ],
+  "qualification": "CPU synthetic sequential oracle; target-GPU and production qualification required before integration",
+  "files": [
+    {
+      "path": "sglang/srt/speculative/dflash_utils.py",
+      "patch": "dflash-prefix-penalties.patch",
+      "original_sha256": "a07f8fca25f1495dd6bd355d4ed15729e0d2eb1dfdfe58fe564ccaa06dc6f588",
+      "overlay_sha256": "6fc39639455b4359cc6e82c4fe1818bd761b32c3b19681401d7c8042d02c4942",
+      "patch_sha256": "f2956bc4029d9ded00129075e83f7c9ee57eea9a8f2dea45ba069081a23a625d"
+    },
+    {
+      "path": "sglang/srt/speculative/dflash_worker_v2.py",
+      "patch": "dflash-worker-guards.patch",
+      "original_sha256": "429f0827c79bc17cd8d733d0bc2d685f953bef3e056e6319ffe0449d644b3a83",
+      "overlay_sha256": "b842b39e938f45bb0949bf794a21bedb397c4de3bf5910ac17035f4311b40bd2",
+      "patch_sha256": "cbb40ff22460a7f92df927d73baba6512555d8fc7262fa4f183f228615d11443"
+    }
+  ]
+}

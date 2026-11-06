@@ -271,13 +271,15 @@ for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
       );
       await page.getByRole("button", { name: "Download", exact: true }).click();
       await page
-        .getByRole("button", { name: "adapter.tar.gz", exact: true })
+        .getByRole("dialog")
+        .getByRole("button", { name: "Download", exact: true })
         .click();
       await expect(page.getByText("Storage unavailable")).toBeVisible();
       failDownload = false;
       const downloaded = page.waitForEvent("download");
       await page
-        .getByRole("button", { name: "adapter.tar.gz", exact: true })
+        .getByRole("dialog")
+        .getByRole("button", { name: "Download", exact: true })
         .click();
       expect((await downloaded).suggestedFilename()).toBe("adapter.tar.gz");
       await page.keyboard.press("Escape");

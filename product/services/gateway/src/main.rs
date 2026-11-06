@@ -3,8 +3,8 @@ use std::{error::Error, future::IntoFuture, process::ExitCode, sync::Arc, time::
 use axum::http::HeaderValue;
 use gradiated_gateway::{
     browser_cors, router, CompletionService, DependencyReadiness, GatewayConfig, GatewayState,
-    ModelTokenizer, PostgresReader, RequestCoordinator, RuntimeTlsConfig, SglangClient,
-    ValkeyServingState,
+    ModelTokenizer, OpenRouterClient, PostgresReader, RequestCoordinator, RuntimeTlsConfig,
+    SglangClient, ValkeyServingState,
 };
 use tokio::signal::unix::{signal, Signal, SignalKind};
 use tracing::{error, info, warn};
@@ -99,6 +99,10 @@ async fn run() -> Result<(), Failure> {
         tokenizer,
         Arc::new(config.clone()),
     );
+    let openrouter = OpenRouterClient::connect(&config.openrouter)
+        .await
+        .map_err(at(Stage::Runtime))?;
+    let completions = completions.with_external_capacity(Arc::new(openrouter));
 
     let app =
         application(&config, serving_state, completions.clone()).map_err(at(Stage::Application))?;

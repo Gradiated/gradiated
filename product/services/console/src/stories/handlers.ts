@@ -287,7 +287,7 @@ const run = {
   finished_at: "2026-09-01T12:20:00Z",
 } satisfies components["schemas"]["TrainingRun"];
 
-const version = {
+export const version = {
   id: run.version_id,
   name: "support-assistant-v1",
   task: task.name,

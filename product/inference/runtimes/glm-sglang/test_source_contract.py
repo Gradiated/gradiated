@@ -84,13 +84,23 @@ class SourceContract(unittest.TestCase):
         module = ast.Module(body=[ast.ImportFrom(module='__future__', names=[ast.alias(name='annotations')], level=0),
                                  *methods], type_ignores=[])
         model = SimpleNamespace(architectures=['Glm5NextForConditionalGeneration'])
-        namespace = {'model_config_of': lambda view: SimpleNamespace(hf_config=model),
+        namespace = {'model_config_of': lambda view: SimpleNamespace(
+                         hf_config=model, kv_lora_rank=512, qk_rope_head_dim=0),
                      '_DEEPSEEK_FAMILY_ARCHS': {model.architectures[0]},
                      'get_platform': lambda: SimpleNamespace(is_npu=False, is_xpu=False, is_hip=False),
                      'logger': SimpleNamespace(warning=lambda *args: None)}
         exec(compile(ast.fix_missing_locations(module), 'pinned-hopper-resolution', 'exec'), namespace)
         model_config = ModuleType('sglang.srt.configs.model_config')
         model_config.is_deepseek_dsa = lambda config: True
+        config_tree = ast.parse((self.root / 'srt/configs/model_config.py').read_text())
+        helper = next(node for node in config_tree.body if isinstance(node, ast.FunctionDef)
+                      and node.name == 'is_q8_raw_fp8_nope_layout')
+        helper_module = ast.Module(body=[
+            ast.ImportFrom(module='__future__', names=[ast.alias(name='annotations')], level=0),
+            helper], type_ignores=[])
+        helpers = {}
+        exec(compile(ast.fix_missing_locations(helper_module), 'pinned-raw-fp8-layout', 'exec'), helpers)
+        model_config.is_q8_raw_fp8_nope_layout = helpers['is_q8_raw_fp8_nope_layout']
         torch = ModuleType('torch')
         torch.cuda = SimpleNamespace(get_device_capability=lambda: (9, 0))
         view = SimpleNamespace(kv_cache_dtype='fp8_e4m3', dsa_prefill_backend=None,
@@ -100,6 +110,17 @@ class SourceContract(unittest.TestCase):
             self.assertEqual(resolved, {'dsa_prefill_backend': 'flashmla_kv', 'dsa_decode_backend': 'flashmla_kv'})
             view.dsa_prefill_backend = view.dsa_decode_backend = 'flashmla_kv'
             self.assertEqual(namespace['_dsa_split_backend_resolution'](view), {})
+            view.dsa_prefill_backend = 'flashmla_sparse_q8'
+            view.dsa_decode_backend = 'tilelang'
+            self.assertEqual(namespace['_dsa_split_backend_resolution'](view), {})
+            view.dcp_size = 2
+            with self.assertRaisesRegex(ValueError, 'dcp-size'):
+                namespace['_dsa_split_backend_resolution'](view)
+            view.dcp_size = 1
+            torch.cuda.get_device_capability = lambda: (10, 0)
+            with self.assertRaisesRegex(ValueError, 'SM90'):
+                namespace['_dsa_split_backend_resolution'](view)
+
 
 
 if __name__ == '__main__':

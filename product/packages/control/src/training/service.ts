@@ -1,3 +1,5 @@
+import type { ObjectStorage } from "../storage/object-storage.js";
+import { createModelUploads } from "./uploads.js";
 import { catalogModel } from "@gradiated/contracts/model-catalog";
 import {
   TRAINING_BASE_MODELS,
@@ -36,6 +38,7 @@ export const createTrainingService = (
   downloads?: AdapterDownloads,
   engine?: TrainingEngine,
   validateEvaluationModel?: (id: string) => Promise<void>,
+  uploadStorage?: ObjectStorage,
 ) => {
   const records = createTrainingStore(database);
 
@@ -77,6 +80,7 @@ export const createTrainingService = (
   };
 
   return {
+    uploads: createModelUploads(database, uploadStorage),
     async startRun(userId: string, workspaceId: string, taskId: string) {
       await requireWorkspaceEditor(database, { userId, workspaceId });
       const task = await records.getTaskById(workspaceId, taskId);
@@ -266,6 +270,8 @@ export const createTrainingService = (
           "Evaluation storage is not configured.",
         );
 
+      if (!version.trainingRunId) throw notFound("evaluation");
+
       return downloads.results(version.trainingRunId);
     },
 
@@ -287,7 +293,7 @@ export const createTrainingService = (
 
       return downloads.sign(
         version.adapter.artifact_uri,
-        version.trainingRunId,
+        version.trainingRunId ?? version.id,
         version.adapter.size_bytes,
         version.adapter.sha256,
       );

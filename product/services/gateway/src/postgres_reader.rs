@@ -99,7 +99,13 @@ select json_build_object(
     'organization_id', organization_id,
     'workspace_id', workspace_id,
     'expires_at', expires_at,
-    'revoked_at', revoked_at
+    'revoked_at', revoked_at,
+    'openrouter_channel', exists (
+      select 1 from organizations
+      where organizations.id = api_keys.organization_id
+        and organizations.kind = 'distribution_channel'
+        and organizations.name = 'OpenRouter'
+    )
   )::text
 from api_keys
 where digest = $1";
@@ -112,7 +118,7 @@ select case when task_versions.id is null then 'null' else json_build_object(
     'status', task_versions.status,
     'size_bytes', task_versions.adapter->'size_bytes',
     'base_model_id', task_versions.base_model_id,
-    'base_model_revision', coalesce(task_versions.adapter->>'base_model_revision', ''),
+    'base_model_revision', coalesce(task_versions.adapter->>'validated_base_model_revision', task_versions.adapter->>'base_model_revision', ''),
     'sha256', task_versions.adapter->>'sha256'
 )::text end
 from (
@@ -143,6 +149,9 @@ select json_build_object(
     'name', models.name,
     'status', models.status,
     'properties', models.properties,
+    'openrouter_model_id', models.openrouter_model_id,
+    'tokenizer', case when models.tokenizer_path is null or models.tokenizer_revision is null then null
+      else json_build_object('path', models.tokenizer_path, 'revision', models.tokenizer_revision) end,
     'deployments', coalesce(
       (
         select json_agg(

@@ -124,8 +124,13 @@ describe("training routes", () => {
       finishedAt: at,
     };
     const listTasks = vi.fn(async () => [
-      { ...task, latestRun },
-      { ...task, id: "0198ae50-94d8-7d4d-a8be-9f9b44b8c775", latestRun: null },
+      { ...task, latestRun, latestVersion: null },
+      {
+        ...task,
+        id: "0198ae50-94d8-7d4d-a8be-9f9b44b8c775",
+        latestRun: null,
+        latestVersion: null,
+      },
     ]);
     const app = createTestApp({
       auth: authenticated,

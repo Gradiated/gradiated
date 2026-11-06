@@ -106,11 +106,11 @@ describes recovery and moving existing hosts.
 
 ## H200 TP2 alongside B300
 
-H200 GLM capacity is a separate `glm-dealign-sglang-h200` Rollout for the same
-public uncensored model, alongside the existing B300 Rollouts. It has a distinct
-runtime profile, H200 node selector and an explicit instance allowlist. The
-existing B300 runtime pins, placement, replica counts and fleet image pin do not
-need to change. Do not label H200 nodes as B300 or reuse the 400 GiB B300 request.
+H200 GLM capacity is a separate `glm-dealign-sglang-h200` pool of the public
+uncensored model in `models.json`, listed after the B300 pool so it fills after
+it. It has a distinct runtime profile and GPU type; the scheduler places it on
+any unreserved H200 pair. The existing B300 runtime pins, placement, slots and
+fleet image pin do not need to change. Do not label H200 nodes as B300 or reuse the 400 GiB B300 request.
 The candidate launch settings and their unmeasured limits are in the
 [runtime README](../product/inference/runtimes/glm-sglang/README.md#h200-tp2-profile).
 
@@ -152,23 +152,21 @@ The candidate launch settings and their unmeasured limits are in the
    projection, and verify the Node is Ready. Do not invent instance UUIDs,
    memory budgets or management-secret references from the provider pod ID.
 5. Download the published SGLang `release.json`. Its source must include the H200
-   profile; an existing B300-only archive is rejected. Stage one H200 replica
-   using the registered instance UUIDs, initially choosing only the first host:
+   profile; an existing B300-only archive is rejected. Stage one H200 replica:
 
    ```sh
-   python3 tools/gpu/stage-glm-pool.py --gpu h200 "$RELEASE_JSON" "$BUNDLE_SOURCE_SHA" --instances "$H200_INSTANCE_UUID"
-   python3 tools/gpu/stage-glm-pool.py --gpu h200 "$RELEASE_JSON" "$BUNDLE_SOURCE_SHA" --instances "$H200_INSTANCE_UUID" --write
+   python3 tools/gpu/stage-glm-pool.py --gpu h200 "$RELEASE_JSON" "$BUNDLE_SOURCE_SHA"
+   python3 tools/gpu/stage-glm-pool.py --gpu h200 "$RELEASE_JSON" "$BUNDLE_SOURCE_SHA" --write
    python3 tools/gpu/render-config.py
-   node tools/models/model-replica-rules.mjs
    ```
 
    Review and merge the generated runtime catalogue, model catalogue, H200
    Rollout, controller ConfigMap, model ApplicationSet and replica-alert rules.
-   The helper validates committed RunPod H200 inventory with two GPUs, at least
-   32 CPU and 320 GiB of allocatable RAM. It creates one replica with no surge,
-   an HPA cap of one, and `serving_mode: qualification`. The separate private
-   runtime model ID keeps that pool out of public routing. B300 definitions are
-   preserved, including other canaries for the same public model.
+   The helper requires enough unreserved RunPod H200 pairs with at least 32 CPU
+   and 320 GiB of allocatable RAM. It adds a qualification pool with a fixed
+   replica count and no surge. The separate private runtime model ID keeps that
+   pool out of public routing. The B300 pool is unchanged. A pool of the same
+   name must be removed first.
 6. On H200, require cold-cache model load and warmup, no kernel/Marlin/FlashMLA
    errors, SDK qualification of the exact process incarnation, streaming and
    tools, reasoning, prefix-cache reuse, mixed and long prompts, cancellation,
@@ -177,38 +175,35 @@ The candidate launch settings and their unmeasured limits are in the
    manifest rendering do not satisfy this gate. Inspect model loads that die
    before readiness; do not bypass warmup or SDK analysis to admit them.
 7. After those checks pass, rerun the same staging command with `--promote --write`,
-   render both manifests and alert rules again, and review the production-mode
-   change. Promotion requires the exact previously staged model and runtime.
-   It maps qualified H200 endpoints to the existing public model, so the gateway
-   can route across both GPU pools. Argo's manual pause and SDK analysis still
-   apply; never use full promotion to skip them. Observe the initial exposure
-   for at least 20 minutes before expanding.
+   render again, and review the production change. Promotion requires the exact
+   previously staged pool and runtime. It turns the staged count into the pool's
+   `max_replicas`, so the gateway routes across both GPU pools in proportion to
+   their slots and the pool scales on demand after the B300 pool is full. SDK analysis still applies, and the rollout
+   proceeds to full weight automatically once it passes; never use full
+   promotion to skip it. Observe the initial exposure for at least 20 minutes
+   before expanding.
 
-To stage all three hosts for isolated qualification, supply all three registered
-UUIDs to `--instances` and `--replicas 3` on the initial staging call; otherwise
-leave replicas at one. Later changes to the allowlist, replica/HPA caps, runtime
-or resources require an explicit reviewed catalogue edit and regeneration: the
-helper refuses to overwrite a different existing deployment. Recheck capacity
-and qualify each new process. Keep both GPU pools until routed H200 availability
-and performance are measured; H200 capacity does not justify retiring B300s.
+To qualify several hosts at once, pass `--replicas` on the initial staging call;
+otherwise leave it at one. Later changes to the maximum, runtime or resources
+require an explicit reviewed catalogue edit and regeneration: the helper refuses
+to overwrite a different existing pool. Recheck capacity and qualify each new
+process.
 
-Rollback H200 public exposure by changing only its `serving_mode` to
-`qualification` and regenerating. To stop the H200 workload, set only its
-`autoscaling.paused_replicas` to `0`, render, and wait for the normal request drain.
-Keep its manifests, immutable runtime, enrolled hosts and provider reservations
-for inspection and retry. A new runtime can be staged as another isolated
-revision through an explicit reviewed edit. Neither rollback nor qualification
-should reset or terminate a RunPod pod.
+To stop the H200 pool, set only its `max_replicas` to `0`, render, and wait for
+the normal request drain. Keep its manifests, immutable runtime, enrolled hosts
+and provider reservations for inspection and retry; restoring `max_replicas`
+brings it back. Neither rollback nor qualification should reset or terminate a
+RunPod pod.
 
 ## B200 alongside B300
 
-B200 GLM capacity is a separate `glm-dealign-sglang-b200` Rollout for the same
+B200 GLM capacity is a separate `glm-dealign-sglang-b200` pool of the same
 public uncensored model, staged and promoted exactly like the H200 pool above
 with `--gpu B200` for enrollment preparation and `--gpu b200` for staging. B200
-is Blackwell, so its `b200-pcp2` profile keeps the B300 launch settings and
-halves the admission limit to eight requests for its smaller HBM. It requests
-320 GiB of host RAM and never changes B300 pins, placement or replica counts.
-Record the measured pool capacity before raising that limit.
+is Blackwell, so its `b200-pcp2` profile keeps the B300 launch settings with six
+slots, half of B300's, for its smaller HBM. It requests 320 GiB of host RAM and
+never changes the B300 pool. Record the measured pool capacity before raising
+that limit.
 
 ## Deploy and verify a model
 
@@ -225,29 +220,14 @@ and making it available to gateway routing. Argo analysis checks that qualificat
 before promotion. Previously qualified pods drain existing requests before GPU
 claims are released. Keep enough spare capacity for the replacement replica.
 
-For the explicitly authorized GLM PD experiment on the two-B300 host
-`gpu-01a19170-d2a0-74ca-b317-d87d69988e4b`, first run
-`python3 tools/gpu/reserve-glm-pd-host.py` to inspect the reservation plan. After
-the helper is merged and the operator authorizes reducing serving capacity, run
-it with `--apply --lease .agents/runtime/glm-pd-host-lease.json`. Wait for Argo to
-sync the generated `glm-dealign` disruption budget with `minAvailable: 8` first.
-The helper requires its live UID and observed status, a healthy, stable
-ten-replica rollout and eight other qualified Ready replicas,
-cordons only that host, and evicts its two pinned GLM pods through their normal
-drain and disruption budgets. It waits up to 15 minutes for both pod UIDs to
-disappear before checking the free two-GPU experiment capacity; it never changes
-the provider reservation or shortens request draining. Once experiment processes
-have stopped and both GPUs are verified free, release the owned cordon with
-`python3 tools/gpu/qualification-slot.py release --lease .agents/runtime/glm-pd-host-lease.json`.
-Preserve the lease for recovery if cordon ownership changes or release fails.
-
 ### Manual model rollout pauses and GPU-size changes
 
-Use Argo Rollouts to inspect, pause, promote and abort a model rollout. The model
+Model rollouts have no pause step: each proceeds to full weight once its SDK
+analysis passes. Use Argo Rollouts to inspect, pause and abort one. The model
 ApplicationSet preserves `/spec/paused`, so Argo CD self-healing does not undo an
-operator pause. Resume a manual pause by clearing only `spec.paused`. Use
-`promote` only at an explicit pause step: promoting during analysis can advance
-past that analysis, and `--full` skips all remaining analysis and pause steps.
+operator pause. Resume a manual pause by clearing only `spec.paused`. Do not use
+`promote`: during analysis it advances past that analysis, and `--full` skips all
+remaining analysis.
 A pause controls revision progression and does not freeze the HPA's desired
 replica count. A manually paused completed Rollout can nevertheless leave its
 ReplicaSet below that desired count. For replica-count-only expansion, resume
@@ -259,8 +239,6 @@ count as serving capacity. Keep the model configuration and scaling caps in Git.
 kubectl argo rollouts get rollout glm-dealign-sglang -n gpu-inference
 kubectl argo rollouts pause glm-dealign-sglang -n gpu-inference
 kubectl patch rollout glm-dealign-sglang -n gpu-inference --type merge -p '{"spec":{"paused":false}}'
-# Advance only when stopped at an explicit pause step.
-kubectl argo rollouts promote glm-dealign-sglang -n gpu-inference
 kubectl argo rollouts abort glm-dealign-sglang -n gpu-inference
 ```
 
@@ -270,120 +248,22 @@ one eligible node. Free GPUs on different nodes cannot satisfy it. Changing ten
 one-GPU replicas to ten two-GPU replicas doubles the requested GPUs; the same
 GPU footprint instead requires five two-GPU replicas.
 
-Keep the vLLM and SGLang Rollouts separate during this migration. Qualify the
-existing two-GPU canary first. Before each expansion, select two co-located
-vLLM allocations on a host that can fit the complete SGLang resource request,
-arrange their normal drain through reviewed placement and replica changes, and
-wait for their allocations to be released before adding one SGLang replica.
-Check that remaining qualified capacity is sufficient throughout warmup. Do not
-rely on a replica-count reduction to select a particular pair: Kubernetes may
-choose pods on different hosts. Respect existing host exclusions and other models.
+The uncensored model's migration from vLLM to SGLang is complete and the vLLM
+Rollout is retired. The B300 SGLang pool `glm-dealign-sglang` is placed on any
+unreserved B300 host; the scheduler fills each host by its free GPU pairs. Its
+runtime profile reuses the verified SGLang bundle through the catalogue's
+per-base `bundles` mapping, with a 256 GiB memory request and a 400 GiB hard
+limit, so two replicas fit a four-GPU B300 host (85 CPU, 686 GiB). Check the
+provider cgroup memory limit and usage, not host-wide `/proc/meminfo`, for
+headroom.
 
-The SGLang migration keeps the combined footprint at twelve B300 GPUs. The
-first serving trial used one two-GPU SGLang replica alongside ten one-GPU vLLM
-replicas. Expand to three SGLang plus six vLLM, then four plus four. The first
-expansion replaces the four co-located vLLM replicas on the four-B300 host;
-the next expansion replaces one co-located pair on the eight-B300 host. The
-four-plus-four stage gives SGLang roughly half of uniformly distributed routing
-keys; prefix affinity and load can change the measured request share.
-Keep each runtime's autoscaling maximum at its reviewed stage count. Hold each
-stage until the operator explicitly authorizes further migration.
-
-SGLang placement is restricted to the original two-B300 host, the four-B300 host
-`01a0f19d-1ff3-7613-8cbf-81b693c0f0d4`, and the eight-B300 host
-`01a0fbf7-5276-700b-903b-7e04da150ed6`. Two SGLang replicas fit the four-B300
-host's 64 CPU and 896 GiB; one fits beside DeepSeek and two remaining vLLM
-replicas on the eight-B300 host. Do not place a second 400 GiB SGLang allocation
-beside the normal GLM allocation on its 686 GiB host, or use the excluded host.
-
-After the four-plus-four trial, one further pair migration gives five SGLang
-plus two vLLM replicas within the same twelve-GPU footprint. Replace the two
-remaining vLLM allocations on the eight-B300 host with a second SGLang replica.
-DeepSeek plus two SGLang replicas request 96 CPU, 1200 GiB and eight GPUs,
-within that host's 171 CPU, 1389 GiB and eight-GPU allocatable capacity. Keep
-both vLLM replicas beside normal GLM on its four-GPU host; another SGLang
-allocation there would exceed the current memory requests. Cap SGLang at five
-and vLLM at two, with disruption-budget minima of four and two respectively.
-This gives SGLang roughly five sevenths of uniformly distributed routing keys;
-observe actual request share and hold until the next explicit authorization.
-
-After the five-plus-two trial, the final vLLM pair can be retired by setting
-`glm-dealign.autoscaling.paused_replicas` to `0`, then running
-`python3 tools/gpu/render-config.py` and
-`node tools/models/model-replica-rules.mjs`. This sets both
-the Rollout count and the KEDA pause to zero, preventing autoscaling from
-restoring vLLM. Rendering also caps its disruption-budget minimum at the paused
-replica count (zero when retired); removing the override restores the configured
-two-pod budget. Keep the two-replica rollback configuration and leave SGLang
-capped and manually paused at five replicas. Let accepted vLLM requests drain
-normally; verify all five SGLang allocations remain qualified and public
-gateway requests succeed. Removing the pause override restores the reviewed
-two-replica vLLM configuration if rollback is needed; run both rendering
-commands again and include the replica-rule changes in the rollback PR. With
-vLLM retired, the production SGLang pool carries the five-replica alert floor;
-restoring vLLM restores its baseline floor and the canary warmup semantics.
-
-To use the final freed GPU pair beside normal GLM, add the separate
-`glm-dealign-sglang-sixth` Rollout on host
-`01a19221-df83-721d-a7f9-85495b591fb1`. Its pinned resource-profile identity reuses
-the exact verified SGLang bundle and served release through the catalogue's
-per-base `bundles` mapping, with a 256 GiB memory request and the same 400 GiB
-hard limit. Do not change the existing five-replica runtime profile or template.
-Normal GLM plus this allocation request 64 CPU, 656 GiB and four GPUs, within
-that host's 85 CPU, 686 GiB and four-GPU allocatable capacity. Check the provider
-cgroup memory limit and usage, not host-wide `/proc/meminfo`, for headroom.
-Existing SGLang process-group peaks were below 16 GiB on the sampled eight-GPU
-host; validate this new allocation's startup, cgroup peak/OOM counters and long
-requests before admitting normal traffic. Begin with `serving_mode:
-qualification`, target it through `x-gradiated-deployment-id`, then promote only
-that Rollout to production after SDK and public gateway checks pass. Keep the
-five existing allocations serving and their manual pause intact throughout.
-The sixth is promoted separately after those gates; a serving-mode template
-change replaces only its allocation and requires fresh incarnation qualification.
-When both replacement pools serve production and vLLM is retired, their reviewed
-PDB minima (four plus one) form the five-replica serving alert floor, while their
-desired counts total six. This preserves the established serving floor during
-the sixth allocation's replacement and still pages if capacity drops below five.
-The runtime profile ID is a scheduling identity; the archive remains pinned to
-its separate SHA-256 in `bundles`, and the served release remains unchanged.
-
-Before each vLLM reduction, identify the qualified, co-located pods
-by UID and set their `controller.kubernetes.io/pod-deletion-cost` annotation to
-`-10000`, retaining the other pods' default cost. Require all current pods to be
-Ready and the ReplicaSet identity unchanged immediately before the scale-down.
-Deletion cost guides selection; it is not a hard placement guarantee. Observe
-which UIDs terminate, wait for normal request drain and allocation release, and
-verify the intended host capacity is free before proceeding. If a different
-pod is selected or another replica fails, stop expansion and restore the previous
-reviewed replica counts; do not force-delete requests or drain another pair.
-Remove owned deletion-cost annotations from surviving pods when a stage ends.
-
-The first expansion keeps six vLLM replicas serving throughout warmup. A
-placement-template change can also restart the original SGLang replica. Before
-syncing a placement change, manually pause SGLang until the new HPA bounds and
-Rollout replica count are observed, then resume revision progression; Git does
-not directly own the live replica count while the HPA is active.
-
-A previous revision pinned to one two-GPU host may become Pending if the new
-revision occupies that host. Complete the new revision's SDK analysis and
-targeted gateway checks, then promote only its completed explicit pause to
-release the old pending pod and finish the template migration. Verify every
-resulting replica is SDK-qualified and test the new host allocations before
-the later replica-count-only expansion.
-Never use full promotion to skip analysis. Once all replicas at the authorized
-stage are Ready, leave the rollout manually paused and retain its replica/HPA caps.
-Aborting SGLang does not recreate vLLM replicas removed from the other Rollout;
-rollback must also restore the previous reviewed placement and replica counts.
-
-Pause at the intended initial exposure and observe routed availability, runtime
-failures, TTFT, decode throughput and capacity rejections for at least 20 minutes
-before the next manual promotion. Argo's replica weight is not an exact request
+To hold an initial exposure, pause the Rollout manually and observe routed
+availability, runtime failures, TTFT, decode throughput and capacity rejections
+for at least 20 minutes before resuming. Argo's replica weight is not an exact request
 percentage for this gateway: routing uses direct pod endpoints and rendezvous
-hashing, and mixed one-GPU/two-GPU pods have different capacity. A failed analysis
-must remain a rollout failure; do not bypass it with full promotion. Argo abort
-restores that Rollout's previous ReplicaSet, not replicas removed from a separate
-Rollout, so a migration rollback must also restore the reviewed replica and
-placement configuration with enough free capacity.
+hashing weighted by each replica's slots. A failed analysis must remain a
+rollout failure; do not bypass it with full promotion. Argo abort restores that
+Rollout's previous ReplicaSet, not replicas of another pool.
 
 Training uses Kubernetes Jobs and the same host agent. Temporal owns attempts,
 leases, artifact grants and cleanup. The gateway still uses the PostgreSQL

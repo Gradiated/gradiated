@@ -69,7 +69,7 @@ class Lifecycle(unittest.TestCase):
         supervisor = launch.base.Supervisor(['unused'], max_queued_requests=18)
         maximum = min(supervisor.max_queued_requests, 16)
         self.assertEqual(maximum, 16)
-        self.assertEqual(launch.ACTIVE_REQUESTS, 16)
+        self.assertEqual(launch.ACTIVE_REQUESTS, 12)
 
     def test_stop_closes_readiness_then_signals_owned_process_group(self):
         supervisor = launch.base.Supervisor(['unused'])

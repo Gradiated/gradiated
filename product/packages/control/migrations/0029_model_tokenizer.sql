@@ -1,0 +1,3 @@
+ALTER TABLE "models" ADD COLUMN "tokenizer_path" text;--> statement-breakpoint
+ALTER TABLE "models" ADD COLUMN "tokenizer_revision" text;--> statement-breakpoint
+ALTER TABLE "models" ADD CONSTRAINT "models_tokenizer_check" CHECK (("models"."tokenizer_path" is null and "models"."tokenizer_revision" is null) or ("models"."tokenizer_path" is not null and "models"."tokenizer_revision" is not null and char_length("models"."tokenizer_path") between 1 and 300 and "models"."tokenizer_revision" ~ '^[0-9a-f]{40}$'));

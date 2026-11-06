@@ -298,5 +298,134 @@
     "environment": {
       "TENSOR_PARALLEL_SIZE": "2"
     }
+  },
+  "cbf354100b8b0d73c31f51727d92f14e186c7db65d81c2c577a1d8f16391f15f": {
+    "image": "gradiated/glm-sglang-bundle@sha256:cbf354100b8b0d73c31f51727d92f14e186c7db65d81c2c577a1d8f16391f15f",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v3": "f4e267011c2cef63645b17c54acfa93b916de194d9f2faaa1df1e5eeb5ffe757"
+    },
+    "model_id": "dealignai/glm-5.3-flash-uncensored-sglang-h200",
+    "release": {
+      "schema_version": 1,
+      "model_path": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+      "model_revision": "745aac2ff0f10acf961f396df3f9418598aa7327",
+      "tokenizer_path": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+      "tokenizer_revision": "745aac2ff0f10acf961f396df3f9418598aa7327",
+      "runtime_revision": "glm-h200-f4e267011c2c",
+      "runtime_model_name": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4"
+    },
+    "gpus": 2,
+    "active_requests": 4,
+    "cpu": "32",
+    "memory": "320Gi",
+    "startup_timeout": 3600,
+    "warmup": true,
+    "environment": {
+      "TENSOR_PARALLEL_SIZE": "2",
+      "GLM_SGLANG_PROFILE": "h200-tp2"
+    }
+  },
+  "722c94c59f6f547caffed55435ba0dcb648ad358c6599cd9706bd06ae7e2de26": {
+    "image": "gradiated/glm-sglang-bundle@sha256:722c94c59f6f547caffed55435ba0dcb648ad358c6599cd9706bd06ae7e2de26",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v3": "42929de1e28594b21c22712546dfef1147e92d909717b4bebec1631836307fda"
+    },
+    "model_id": "dealignai/glm-5.3-flash-uncensored-sglang-canary",
+    "release": {
+      "schema_version": 1,
+      "model_path": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+      "model_revision": "745aac2ff0f10acf961f396df3f9418598aa7327",
+      "tokenizer_path": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+      "tokenizer_revision": "745aac2ff0f10acf961f396df3f9418598aa7327",
+      "runtime_revision": "glm-dealign-sglang-42929de1e285",
+      "runtime_model_name": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4"
+    },
+    "gpus": 2,
+    "active_requests": 12,
+    "cpu": "32",
+    "memory": "400Gi",
+    "startup_timeout": 3600,
+    "warmup": true,
+    "environment": {
+      "TENSOR_PARALLEL_SIZE": "2"
+    },
+    "request_memory": "256Gi"
+  },
+  "7007251e193889840b1eadd3bf399bbdd8ed8040e7b52c93da54244f61ba6e57": {
+    "image": "gradiated/glm-sglang-bundle@sha256:7007251e193889840b1eadd3bf399bbdd8ed8040e7b52c93da54244f61ba6e57",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v3": "42929de1e28594b21c22712546dfef1147e92d909717b4bebec1631836307fda"
+    },
+    "model_id": "dealignai/glm-5.3-flash-uncensored-sglang-b200",
+    "release": {
+      "schema_version": 1,
+      "model_path": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+      "model_revision": "745aac2ff0f10acf961f396df3f9418598aa7327",
+      "tokenizer_path": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+      "tokenizer_revision": "745aac2ff0f10acf961f396df3f9418598aa7327",
+      "runtime_revision": "glm-b200-42929de1e285",
+      "runtime_model_name": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4"
+    },
+    "gpus": 2,
+    "active_requests": 6,
+    "cpu": "32",
+    "memory": "320Gi",
+    "startup_timeout": 3600,
+    "warmup": true,
+    "environment": {
+      "TENSOR_PARALLEL_SIZE": "2"
+    }
+  },
+  "130effe43b67d8059ab1a284ba5715eeee67a5288cc0715b40ab01a2177faed5": {
+    "image": "gradiated/glm-sglang-bundle@sha256:130effe43b67d8059ab1a284ba5715eeee67a5288cc0715b40ab01a2177faed5",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v3": "42929de1e28594b21c22712546dfef1147e92d909717b4bebec1631836307fda"
+    },
+    "model_id": "dealignai/glm-5.3-flash-uncensored-sglang-h200",
+    "release": {
+      "schema_version": 1,
+      "model_path": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+      "model_revision": "745aac2ff0f10acf961f396df3f9418598aa7327",
+      "tokenizer_path": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+      "tokenizer_revision": "745aac2ff0f10acf961f396df3f9418598aa7327",
+      "runtime_revision": "glm-h200-42929de1e285",
+      "runtime_model_name": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4"
+    },
+    "gpus": 2,
+    "active_requests": 3,
+    "cpu": "32",
+    "memory": "320Gi",
+    "startup_timeout": 3600,
+    "warmup": true,
+    "environment": {
+      "TENSOR_PARALLEL_SIZE": "2",
+      "GLM_SGLANG_PROFILE": "h200-tp2"
+    }
+  },
+  "d25d7c28cd765cf901fd8b0177573235879126338d7c2fec68647649e7f5056f": {
+    "image": "gradiated/kimi-k31-bundle@sha256:d25d7c28cd765cf901fd8b0177573235879126338d7c2fec68647649e7f5056f",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v3": "d25d7c28cd765cf901fd8b0177573235879126338d7c2fec68647649e7f5056f"
+    },
+    "model_id": "moonshotai/kimi-k3.1-pro",
+    "release": {
+      "schema_version": 1,
+      "model_path": "moonshotai/Kimi-K3.1-Pro",
+      "model_revision": "d9e99b0792a5e93b78ea9bea62a68167e36ddd9e",
+      "tokenizer_path": "moonshotai/Kimi-K3.1-Pro",
+      "tokenizer_revision": "d9e99b0792a5e93b78ea9bea62a68167e36ddd9e",
+      "runtime_revision": "kimi-k31-d25d7c28cd76",
+      "runtime_model_name": "moonshotai/Kimi-K3.1-Pro"
+    },
+    "gpus": 8,
+    "cpu": "80",
+    "memory": "1000Gi",
+    "active_requests": 5,
+    "hf_home": "/var/lib/kimi-k31/hf",
+    "startup_timeout": 7200,
+    "warmup": true,
+    "environment": {
+      "TENSOR_PARALLEL_SIZE": "8"
+    }
   }
 }

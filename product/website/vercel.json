@@ -4,7 +4,7 @@
   "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm build",
   "outputDirectory": "dist",
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . && node scripts/ashby-jobs-unchanged.ts",
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . && node scripts/ashby-jobs-unchanged.ts && node scripts/posthog-compensation-unchanged.ts",
   "trailingSlash": true,
   "redirects": [
     {
@@ -17,11 +17,6 @@
         }
       ],
       "destination": "/handbook/",
-      "permanent": true
-    },
-    {
-      "source": "/library/",
-      "destination": "/notes/",
       "permanent": true
     },
     {

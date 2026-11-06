@@ -158,7 +158,6 @@ export const taskVersions = pgTable(
       .notNull()
       .references(() => tasks.id, { onDelete: "cascade" }),
     trainingRunId: uuid("training_run_id")
-      .notNull()
       .unique()
       .references(() => trainingRuns.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
@@ -191,3 +190,19 @@ export const taskVersions = pgTable(
     index("task_versions_task_created_index").on(table.taskId, table.createdAt),
   ],
 );
+
+export const modelUploads = pgTable("model_uploads", {
+  id: uuid("id").primaryKey(),
+  workspaceId: uuid("workspace_id")
+    .notNull()
+    .references(() => workspaces.id, { onDelete: "cascade" }),
+  input: jsonb("input")
+    .$type<import("@gradiated/contracts").CreateModelUpload>()
+    .notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+    .defaultNow()
+    .notNull(),
+  versionId: uuid("version_id").references(() => taskVersions.id, {
+    onDelete: "set null",
+  }),
+});

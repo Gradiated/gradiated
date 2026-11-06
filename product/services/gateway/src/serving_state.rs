@@ -19,6 +19,7 @@ use crate::{
     postgres_reader::{
         AccountRecord, BalanceTransaction, LedgerPosition, PostgresError, PostgresReader,
     },
+    session_routing::{Placed, PlacementOutcome, PlacementRequest, RouteLease, SESSION_LIFETIME},
     valkey_auth::{ValkeyIamCredentials, ValkeyIamError},
     FinalizationError, FinalizationOutcome, GatewayConfig, GenerationProperties, ValkeyIamConfig,
 };
@@ -42,6 +43,14 @@ const APPLY_BALANCE_TRANSACTIONS_V1: &str = concat!(
 const MARK_ACCOUNT_REFRESHED_V1: &str = concat!(
     include_str!("scripts/prelude.lua"),
     include_str!("scripts/mark_account_refreshed_v1.lua")
+);
+const PLACE_ROUTE_V1: &str = concat!(
+    include_str!("scripts/prelude.lua"),
+    include_str!("scripts/place_route_v1.lua")
+);
+const CLAIM_ROUTE_V1: &str = concat!(
+    include_str!("scripts/prelude.lua"),
+    include_str!("scripts/claim_route_v1.lua")
 );
 
 /// Every settlement key shares this hash tag, so one script can touch them all.
@@ -106,6 +115,15 @@ pub trait ServingState: Send + Sync {
         organization_id: Uuid,
         properties: &GenerationProperties,
     ) -> Result<FinalizationOutcome, FinalizationError>;
+
+    async fn place_route(
+        &self,
+        request: &PlacementRequest<'_>,
+    ) -> Result<Placed, ServingStateError>;
+
+    async fn claim_route(&self, lease: &RouteLease) -> Result<(), ServingStateError>;
+
+    async fn release_route(&self, lease: &RouteLease) -> Result<(), ServingStateError>;
 }
 
 #[derive(Clone)]
@@ -116,6 +134,8 @@ pub struct ValkeyServingState {
     ensure_account_script: Script,
     apply_balance_script: Script,
     mark_refreshed_script: Script,
+    place_route_script: Script,
+    claim_route_script: Script,
     database: PostgresReader,
     record_cache_ttl: Duration,
     record_loads: SingleFlight<String>,
@@ -159,6 +179,8 @@ impl ValkeyServingState {
             ensure_account_script: Script::new(ENSURE_ACCOUNT_V1),
             apply_balance_script: Script::new(APPLY_BALANCE_TRANSACTIONS_V1),
             mark_refreshed_script: Script::new(MARK_ACCOUNT_REFRESHED_V1),
+            place_route_script: Script::new(PLACE_ROUTE_V1),
+            claim_route_script: Script::new(CLAIM_ROUTE_V1),
             database,
             record_cache_ttl,
             record_loads: SingleFlight::default(),
@@ -672,6 +694,68 @@ impl ServingState for ValkeyServingState {
         )
         .await
     }
+    async fn place_route(
+        &self,
+        request: &PlacementRequest<'_>,
+    ) -> Result<Placed, ServingStateError> {
+        let mut script = self.place_route_script.prepare_invoke();
+        script.key(request.session_key());
+        for key in request.lease_keys() {
+            script.key(key);
+        }
+        script
+            .arg(request.generation_id.to_string())
+            .arg(request.now.timestamp_millis())
+            .arg(request.lease_expires_at.timestamp_millis())
+            .arg(SESSION_LIFETIME.as_millis() as u64);
+        for deployment_id in request.candidates {
+            script
+                .arg(deployment_id.to_string())
+                .arg(request.limit(*deployment_id));
+        }
+
+        let (index, outcome): (usize, i64) =
+            script.invoke_async(&mut self.connection.clone()).await?;
+        let deployment_id = index
+            .checked_sub(1)
+            .and_then(|index| request.candidates.get(index).copied());
+        match (deployment_id, PlacementOutcome::from_script(outcome)) {
+            (Some(deployment_id), Some(outcome)) => Ok(Placed {
+                deployment_id,
+                outcome,
+            }),
+            _ => Err(ServingStateError::UnexpectedPlacement),
+        }
+    }
+
+    async fn claim_route(&self, lease: &RouteLease) -> Result<(), ServingStateError> {
+        let _: i64 = self
+            .claim_route_script
+            .prepare_invoke()
+            .key(lease.session_key())
+            .key(lease.lease_key())
+            .arg(lease.generation_id.to_string())
+            .arg(lease.deployment_id.to_string())
+            .arg(Utc::now().timestamp_millis())
+            .arg(lease.expires_at.timestamp_millis())
+            .arg(SESSION_LIFETIME.as_millis() as u64)
+            .invoke_async(&mut self.connection.clone())
+            .await?;
+
+        Ok(())
+    }
+
+    async fn release_route(&self, lease: &RouteLease) -> Result<(), ServingStateError> {
+        let _: i64 = self
+            .query(
+                redis::cmd("ZREM")
+                    .arg(lease.lease_key())
+                    .arg(lease.generation_id.to_string()),
+            )
+            .await?;
+
+        Ok(())
+    }
 }
 
 #[derive(Clone)]
@@ -802,6 +886,8 @@ pub enum ServingStateError {
     Postgres(#[from] PostgresError),
     #[error("gateway account balance watermark is missing or malformed")]
     InvalidBalanceWatermark,
+    #[error("route placement returned an unknown candidate or outcome")]
+    UnexpectedPlacement,
 }
 
 impl ServingStateError {
@@ -814,6 +900,7 @@ impl ServingStateError {
                     | "APPLY_BALANCE_TRANSACTIONS_V1"
                     | "MARK_ACCOUNT_REFRESHED_V1",
                 ) => "account_script_rejected",
+                Some("PLACE_ROUTE_V1" | "CLAIM_ROUTE_V1") => "route_script_rejected",
                 _ => "redis",
             },
             Self::UnexpectedPingResponse => "unexpected_ping",
@@ -825,6 +912,7 @@ impl ServingStateError {
             Self::MalformedDigest => "malformed_digest",
             Self::Postgres(_) => "postgres",
             Self::InvalidBalanceWatermark => "invalid_balance_watermark",
+            Self::UnexpectedPlacement => "unexpected_placement",
         }
     }
 

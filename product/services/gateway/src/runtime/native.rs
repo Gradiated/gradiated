@@ -247,6 +247,7 @@ impl NativeTokenResponse {
             response,
             finish_reason: self.finish_reason,
             usage,
+            upstream_cost_nano_usd: None,
         })
     }
 }
@@ -445,6 +446,7 @@ impl NativeEventStream {
             finish_reason: None,
             usable_output,
             usage: Some(ChunkUsage::Running(self.last_usage)),
+            upstream_cost_nano_usd: None,
         })
     }
 
@@ -466,12 +468,14 @@ impl NativeEventStream {
             finish_reason: Some(terminal.finish_reason),
             usable_output: false,
             usage: None,
+            upstream_cost_nano_usd: None,
         };
         let usage = RuntimeStreamChunk {
             response: self.envelope(Vec::new(), Some(usage.into()))?,
             finish_reason: None,
             usable_output: false,
             usage: Some(ChunkUsage::Terminal(usage)),
+            upstream_cost_nano_usd: None,
         };
 
         Ok((finish, usage))

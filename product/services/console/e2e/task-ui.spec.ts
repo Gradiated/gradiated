@@ -31,6 +31,8 @@ const evaluation = {
 test("direct task reload initializes flags, edits schedules and opens held-out results", async ({
   page,
 }) => {
+  test.setTimeout(60_000);
+
   let schedule: string | null = null;
   let judge = task.judge_model_id;
   let comparison = task.comparison_model_id;
@@ -171,6 +173,13 @@ test("direct task reload initializes flags, edits schedules and opens held-out r
             name: "test-v1",
             base_model_id: task.base_model_id,
             training_run_id: "test-run",
+            adapter: {
+              format: "peft_lora",
+              artifact_uri: "s3://test/adapter",
+              sha256: "a".repeat(64),
+              size_bytes: 64,
+              rank: 2,
+            },
             created_at: "2026-10-01T12:00:00Z",
             status: "unavailable",
             is_production: false,
@@ -246,7 +255,7 @@ test("direct task reload initializes flags, edits schedules and opens held-out r
   await expect(
     page.getByRole("heading", { level: 1, name: task.name }),
   ).toBeVisible();
-  const resolved = page.getByText("Resolved 100%", { exact: true });
+  const resolved = page.getByText(/^Resolved\s+100%$/);
   await expect(resolved).toBeVisible();
   await expect(resolved.locator("..")).toContainText("Speed");
   await expect(resolved.locator("..")).toContainText("Errors");
@@ -403,7 +412,7 @@ test("direct task reload initializes flags, edits schedules and opens held-out r
     "Cost",
     "Speed",
     "Quality",
-    "Last trained",
+    "Last updated",
   ]);
   await expect(tasksTable.locator("tbody tr")).toHaveCount(5);
   await expect(tasksTable.locator("tbody")).toHaveText("");

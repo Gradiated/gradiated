@@ -1,0 +1,18 @@
+{
+  "upstream_sha": "afcd7d6b487a9cbe73e25941971b4cc107e6f9ae",
+  "requires": [
+    "cache-accounting-manifest.json"
+  ],
+  "scope": "Fused CUDA Philox variates with unchanged CPU reference and sampling semantics",
+  "reference_candidate_sha256": "257d5dc44c3881cf7f79e7b14308da54b06da7105336a7e7dea3a87c6ee4b13d",
+  "qualification": "Production helper must pass component equivalence, capture/replay and full-model release qualification before promotion",
+  "files": [
+    {
+      "path": "sglang/srt/speculative/seeded_dflash.py",
+      "original_sha256": "a560fbc2bd235917267b09f34b707d48e89dfd4365f418ac79e82ded1da614f7",
+      "overlay_sha256": "902384372b6a59676c425f5faf4ea427878bb04c408d249efc0263e2daa0d802"
+    }
+  ],
+  "patch": "dflash-fused-philox.patch",
+  "patch_sha256": "e7187081671c599763a31049eaf509939b3746501ef9463c3273c250b33afe5d"
+}

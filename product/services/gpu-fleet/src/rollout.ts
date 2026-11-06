@@ -15,9 +15,14 @@ import type { Metrics } from "./metrics.js";
 import type { Observation } from "./observe.js";
 import type { Pins } from "./pins.js";
 import { planHost, target, type HostFacts, type Plan } from "./plan.js";
+import { placementFits, POD_NAMESPACE, type PlacedPod } from "./placement.js";
 
 // What a pass knows of a host: the planner's facts and its GPU use.
-type Facts = HostFacts & { usedGpus: number; servingGpus: number[] };
+type Facts = HostFacts & {
+  usedGpus: number;
+  servingWorkloads: ClusterPod[];
+  residentWorkloads: ClusterPod[];
+};
 
 const MINUTE = 60_000;
 
@@ -50,6 +55,12 @@ export const DEFAULT_LIMITS = {
 
 export type Limits = typeof DEFAULT_LIMITS;
 
+// Models whose replica on a host being re-imaged is retired rather than moved:
+// OpenRouter serves them while the host is down, so one replica may be
+// unavailable, as long as another is Ready elsewhere. Every other model must
+// fit on another host first.
+export const RETIRE_ON_REIMAGE: ReadonlySet<string> = new Set(["kimi-k31-pro"]);
+
 export type RolloutDependencies = {
   api: Kubernetes;
   cluster: Cluster;
@@ -69,6 +80,7 @@ export type RolloutDependencies = {
   metrics: Metrics;
   now?: () => Date;
   limits?: Partial<Limits>;
+  retireOnReimage?: ReadonlySet<string>;
 };
 
 export class LeadershipLost extends Error {}
@@ -81,7 +93,7 @@ type Outcome =
   | { block: string };
 
 type Step = (
-  facts: HostFacts,
+  facts: Facts,
   rollout: Rollout,
   record: (set: Partial<Rollout>) => Promise<Rollout>,
 ) => Promise<Outcome>;
@@ -111,7 +123,13 @@ export const createRollouts = (deps: RolloutDependencies) => {
   const limits = { ...DEFAULT_LIMITS, ...deps.limits };
   const now = deps.now ?? (() => new Date());
   const { cluster, metrics } = deps;
+  const retired = deps.retireOnReimage ?? RETIRE_ON_REIMAGE;
+  // The replicas a surge entry waits for elsewhere: a retired model keeps
+  // its count less the replicas on this host; a moved model keeps all of them.
+  const kept = ({ replicas, extra }: { replicas: number; extra: number }) =>
+    extra < 0 ? replicas + extra : replicas;
   let enrollment: Enrollment | undefined;
+  let currentFacts: Facts[] = [];
 
   const ensureLeading = () => {
     if (!deps.leading()) throw new LeadershipLost("The lease was lost");
@@ -194,33 +212,117 @@ export const createRollouts = (deps: RolloutDependencies) => {
       trainingPods: live.filter((item) => item.training).length,
       pods: live.length,
       usedGpus: live.reduce((sum, item) => sum + item.gpus, 0),
-      servingGpus: live.filter((item) => item.model).map((item) => item.gpus),
+      servingWorkloads: live.filter((item) => item.model),
+      residentWorkloads: pods,
     };
   };
 
   // Whether a blocked host's serving pods would fit on the other Ready,
   // schedulable hosts with the same GPU product, largest first. Autoscaling
   // that only fills GPUs never makes a blocked host try again.
-  const roomFor = (blocked: Facts, all: Facts[]) => {
+  const relocationGap = (blocked: Facts, all: Facts[]) => {
     const { gpuProduct } = blocked.host.spec.inventory;
+    const residents: PlacedPod[] = all.flatMap((other) =>
+      other.residentWorkloads.map((pod) => ({
+        ...pod,
+        node: other.node ?? {},
+      })),
+    );
     const free = all
       .filter(
         (other) =>
-          other !== blocked &&
+          other.host.spec.instanceId !== blocked.host.spec.instanceId &&
           other.node?.ready &&
           !other.node.unschedulable &&
           other.host.spec.inventory.gpuProduct === gpuProduct,
       )
-      .map((other) => other.host.spec.inventory.gpuCount - other.usedGpus);
-    return [...blocked.servingGpus]
-      .sort((a, b) => b - a)
-      .every((need) => {
-        const index = free.findIndex((gpus) => gpus >= need);
-        if (index < 0) return false;
-        free[index]! -= need;
-        return true;
-      });
+      .map((other) => ({
+        node: other.node!,
+        gpus: other.host.spec.inventory.gpuCount - other.usedGpus,
+      }));
+    let attempts = 4096;
+    let exhausted = false;
+    let missingModel = blocked.servingWorkloads[0]?.model;
+    const assign = (remaining: ClusterPod[]): boolean => {
+      if (!remaining.length) return true;
+      if (--attempts < 0 || remaining.length > 256) {
+        exhausted = true;
+        return false;
+      }
+
+      const choices = remaining
+        .map((pod, index) => ({
+          pod,
+          index,
+          destinations: free.filter(
+            (other) =>
+              other.gpus >= pod.gpus &&
+              placementFits(pod.placement, other.node, {
+                labels: pod.labels ?? {},
+                namespace: pod.namespace ?? POD_NAMESPACE,
+                residents,
+              }),
+          ),
+        }))
+        .sort(
+          (a, b) =>
+            a.destinations.length - b.destinations.length ||
+            b.pod.gpus - a.pod.gpus,
+        );
+      const { pod, index, destinations } = choices[0]!;
+      missingModel = pod.model;
+      for (const destination of destinations) {
+        destination.gpus -= pod.gpus;
+        residents.push({ ...pod, node: destination.node });
+        const fits = assign(
+          remaining.filter((_, position) => position !== index),
+        );
+        residents.pop();
+        destination.gpus += pod.gpus;
+        if (fits) return true;
+        if (exhausted) return false;
+      }
+      return false;
+    };
+    // A retired model needs no room, but every replica it keeps on other
+    // hosts must be Ready and qualified (as Surge requires), and it must keep
+    // at least one, or the host could never proceed.
+    for (const model of new Set(
+      blocked.servingWorkloads
+        .map((pod) => pod.model)
+        .filter((model): model is string => !!model && retired.has(model)),
+    )) {
+      const elsewhere = all
+        .filter(
+          (other) =>
+            other.host.spec.instanceId !== blocked.host.spec.instanceId,
+        )
+        .flatMap((other) => other.residentWorkloads)
+        .filter((pod) => pod.model === model && !pod.terminating);
+      const qualified = elsewhere.filter(
+        (pod) => pod.ready && pod.qualifiedRuntime !== undefined,
+      ).length;
+      if (!elsewhere.length)
+        return `Retiring this host's ${model} replicas would leave none`;
+      if (qualified < elsewhere.length)
+        return `Every other ${model} replica must be Ready before retiring this host's`;
+    }
+    if (
+      assign(
+        blocked.servingWorkloads.filter(
+          (pod) => !pod.model || !retired.has(pod.model),
+        ),
+      )
+    )
+      return undefined;
+
+    return exhausted
+      ? "Relocation capacity search limit reached; existing replicas preserved"
+      : `No capacity for a replacement ${missingModel} replica`;
   };
+
+  const roomFor = (blocked: Facts, all: Facts[]) =>
+    relocationGap(blocked, all) === undefined;
 
   const retryAfter = (rollout: Rollout) =>
     Math.min(
@@ -294,9 +396,15 @@ export const createRollouts = (deps: RolloutDependencies) => {
   const steps: Record<string, Step> = {
     // A pod can be bound while the node is being cordoned, so the next step
     // is decided from the pods on the node once nothing more can land there.
-    Cordon: async ({ host }, rollout) => {
+    Cordon: async (facts, rollout) => {
+      const { host } = facts;
       if (await runningTraining(host, rollout))
         return { block: "A training job runs on the host" };
+
+      if (rollout.kind === "reimage") {
+        const gap = relocationGap(facts, currentFacts);
+        if (gap) return { block: gap };
+      }
 
       await act(() => cluster.cordon(host.spec.instanceId));
       if (await runningTraining(host, rollout))
@@ -326,14 +434,37 @@ export const createRollouts = (deps: RolloutDependencies) => {
         ([model]) => !surge.some((entry) => entry.model === model),
       );
       if (added.length) {
-        for (const [model, extra] of added)
-          surge.push({ model, replicas: await cluster.replicas(model), extra });
+        for (const [model, count] of added)
+          surge.push({
+            model,
+            replicas: await cluster.replicas(model),
+            extra: retired.has(model) ? -count : count,
+          });
         return { stay: "Recording each model's replica count", set: { surge } };
       }
 
+      // A retired model scales down only while the replicas it keeps are
+      // Ready elsewhere, and only after its pods here are marked to go first.
+      for (const entry of surge) {
+        if (entry.extra >= 0) continue;
+        if (kept(entry) < 1)
+          return {
+            block: `Retiring this host's ${entry.model} replicas would leave none`,
+          };
+        const scaled = await cluster.modelPods(entry.model);
+        if (readyElsewhere(scaled, host) < kept(entry))
+          return {
+            stay: `Waiting for another Ready ${entry.model} replica before retiring this one`,
+          };
+        for (const pod of await cluster.podsOn(host.spec.instanceId))
+          if (pod.model === entry.model && !pod.terminating)
+            await act(() => cluster.removeFirst(pod));
+      }
       for (const { model, replicas, extra } of surge)
         await act(() => cluster.pauseScaling(model, replicas + extra));
-      for (const { model, replicas } of surge) {
+      for (const entry of surge) {
+        const { model, extra } = entry;
+        const replicas = kept(entry);
         const modelPods = await cluster.modelPods(model);
         const stuck = modelPods.find(
           (pod) =>
@@ -341,7 +472,7 @@ export const createRollouts = (deps: RolloutDependencies) => {
             now().getTime() - Date.parse(pod.unschedulableSince || "0") >=
               limits.unschedulable,
         );
-        if (stuck)
+        if (stuck && extra >= 0)
           return { block: `No capacity for a replacement ${model} replica` };
         if (readyElsewhere(modelPods, host) < replicas)
           return {
@@ -353,17 +484,22 @@ export const createRollouts = (deps: RolloutDependencies) => {
 
     Drain: async ({ host }, rollout) => {
       const surge = rollout.surge ?? [];
-      for (const { model, replicas } of surge)
-        if (readyElsewhere(await cluster.modelPods(model), host) < replicas)
-          return { stay: `Replacement ${model} replicas are not all Ready` };
+      for (const entry of surge)
+        if (
+          readyElsewhere(await cluster.modelPods(entry.model), host) <
+          kept(entry)
+        )
+          return {
+            stay: `Replacement ${entry.model} replicas are not all Ready`,
+          };
 
       const remaining = (await cluster.podsOn(host.spec.instanceId)).filter(
         (pod) => pod.model,
       );
       for (const pod of remaining)
         if (!pod.terminating) await act(() => cluster.removeFirst(pod));
-      for (const { model, replicas } of surge)
-        await act(() => cluster.pauseScaling(model, replicas));
+      for (const entry of surge)
+        await act(() => cluster.pauseScaling(entry.model, kept(entry)));
       if (remaining.length)
         return { stay: `Removing ${remaining.length} pods from the host` };
 
@@ -888,6 +1024,7 @@ export const createRollouts = (deps: RolloutDependencies) => {
     });
     const { hosts } = parseHosts(await deps.api.list(GPU_HOSTS));
     const all = await Promise.all(hosts.map(facts));
+    currentFacts = all;
     const time = now().getTime();
 
     // A blocked rollout keeps the fleet waiting for its host, so the order

@@ -61,7 +61,9 @@ export const VersionEvaluation = ({ version }: { version: VersionView }) => {
     </>
   ) : (
     <p className="text-sm text-muted-foreground">
-      Evaluation not available yet.
+      {version.training_run_id
+        ? "Evaluation not available yet."
+        : "This adapter was uploaded externally. Evaluation results are not available."}
     </p>
   );
 };

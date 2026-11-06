@@ -31,8 +31,10 @@ separate account and receive per-pod scratch space and exclusive GPU UUIDs.
 ## Deploy a release
 
 Publication does not change production routes. Pin the verified runtime in
-`product/inference/gpu/runtimes.json` and select its digest in
+`product/inference/gpu/runtimes.json` and select its digest in a pool in
 `infra/environments/prod/us-east-1/kubernetes/gpu-inference/models.json`.
+[Pools, slots and autoscaling](../virtual-kubelet/README.md#pools-slots-and-autoscaling)
+describes that file.
 
 Each release lists a bundle per GPU base in `bundles`, keyed by base ID and
 taken from the `release.json` of the runtime job that built it. A host runs the
@@ -61,90 +63,43 @@ Tailscale SSH and verify compatibility rather than resetting a GPU reservation.
 See [instance setup](../../docs/INSTANCE_SETUP_PLAN.md) and
 [RunPod execution](../virtual-kubelet/README.md) for the supported runtime contract.
 
-## GLM SGLang canary
+## Stage a new pool
 
-The `glm-5-3-flash-sglang` bundle is a separate, pinned PCP2 runtime. Publishing
-it does not replace `glm-dealign` or send production traffic to SGLang. Its
-source, native admission limits, metrics and required GPU qualification are
-specified in [the runtime README](../../product/inference/runtimes/glm-sglang/README.md).
-
-After the source PR passes checks and review, deploy and verify the updated worker
-and gateway before staging the model. The normal model workflow publishes the
-immutable runtime release record. Stage that record with the qualified source
-revision; the command previews changes by default:
+A new runtime or GPU type starts as a qualification pool: a fixed replica count
+under a private runtime model ID, which passes SDK qualification but is never
+routed. The GLM SGLang bundle's source, admission limits, metrics and GPU
+qualification are specified in
+[the runtime README](../../product/inference/runtimes/glm-sglang/README.md).
+Stage an uncensored GLM pool for H200 or B200 from its runtime release record;
+the command previews by default:
 
 ```sh
-node tools/models/stage-glm-sglang-canary.mjs RELEASE_JSON QUALIFIED_SOURCE_SHA
-node tools/models/stage-glm-sglang-canary.mjs RELEASE_JSON QUALIFIED_SOURCE_SHA --write
+python3 tools/gpu/stage-glm-pool.py --gpu h200 RELEASE_JSON SOURCE_SHA --replicas 1
+python3 tools/gpu/stage-glm-pool.py --gpu h200 RELEASE_JSON SOURCE_SHA --replicas 1 --write
 python3 tools/gpu/render-config.py
-node tools/models/model-replica-rules.mjs
 ```
 
-Review and merge the generated catalog and manifests through a PR. The initial
-`glm-dealign-sglang` Rollout has one replica, two GPUs, no surge, a fixed maximum
-of one replica, and placement on the existing two-B300 host. The ten-replica vLLM
-primary remains unchanged. **The first deployment is isolated from ordinary
-production requests**, including after warmup and SDK qualification succeed.
-
-Its immutable runtime uses a private model identity that is not registered in
-the public catalog. The reserved `serving-model-id` annotation maps it to the
-uncensored public model for the new worker, while `serving-mode: qualification`
-keeps its deployment row unavailable for normal routing. An older worker ignores
-the mapping and cannot publish the private identity into the uncensored pool.
-The private runtime identity remains unchanged when promoting the canary.
-
-Test it with a normal workspace API key and
-`x-gradiated-deployment-id` containing the canary Pod UID. The response must echo
-that UID; a targeted request does not fall back to the production pool. Normal
-billing, limits and model access apply, and draining targets are rejected.
-Automated SDK checks use the same header with their own short-lived key in the
-configured verification workspace, which identifies verification traffic.
+Review and merge the catalog and manifests through a PR. Test the staged pod
+with a normal workspace API key and `x-gradiated-deployment-id` set to its Pod
+UID; the response echoes that UID, and a pinned request never falls back.
+Normal billing, limits and model access apply.
 
 ```sh
 curl https://api.gradiated.com/v1/chat/completions \
   -H "Authorization: Bearer ${GRADIATED_API_KEY:?}" \
-  -H "x-gradiated-deployment-id: ${CANARY_POD_UID:?}" \
+  -H "x-gradiated-deployment-id: ${POD_UID:?}" \
   -H 'Content-Type: application/json' \
   -d '{"model":"dealignai/glm-5.3-flash-uncensored","stream":true,"messages":[{"role":"user","content":"Compute 13 times 17."}],"max_tokens":256}'
 ```
 
-Exercise cold 500K/1M prompts, mixed short/long traffic, cache accounting, tools,
-cancellation, bounded queuing and failover through the gateway before promotion.
-Then stage a **separate reviewed promotion**:
-
-```sh
-node tools/models/stage-glm-sglang-canary.mjs RELEASE_JSON QUALIFIED_SOURCE_SHA --promote --write
-python3 tools/gpu/render-config.py
-node tools/models/model-replica-rules.mjs
-```
-
-Promotion requires the exact previously staged isolated canary and immutable
-runtime. It changes `serving_mode` to `production`; it does not increase replicas
-or replace the primary. The Pod template change can replace the one canary, which
-must qualify again before serving. Its update pauses after SDK analysis. Argo
-skips step execution on initial creation; isolation and the replica/GPU/placement
-bounds enforce the initial test stage. Argo weights apply within this Rollout,
-not between the vLLM and SGLang pools.
-
-Qualification-only replicas contribute zero to production desired and minimum
-counts. After promotion, the optional canary contributes one desired and zero
-minimum replicas. The minimum aggregates both Rollouts: nine primary replicas
-plus one production canary satisfies the floor of ten. A missing production
-canary triggers the existing twenty-minute scale-up-stalled warning. Check each
-Rollout during the soak; the aggregate floor does not assert ten healthy vLLM
-replicas.
-
-Keep the production canary for at least thirty minutes after successful SDK and
-real-gateway checks. Inspect errors, cancellations, cache accounting, TTFT tails,
-per-stream decode speed and native queue depth. Increase by one two-GPU instance
-per reviewed stage, qualify and soak before removing corresponding vLLM capacity.
-Do not infer capacity from a finite burst or expand automatically after the first
-canary. Preserve the existing vLLM release for rollback.
-
-To withdraw the canary, set its `autoscaling.paused_replicas` to `0`, render, and
-merge that change. Keep the primary unchanged. Removing the Argo application alone
-does not stop retained resources. The staging command refuses to overwrite an
-existing canary, private runtime definition or intentional rollback silently.
+Exercise long prompts, mixed traffic, cache accounting, tools, cancellation and
+failover through the gateway. Then promote the exact staged pool in a separate
+reviewed change, rerunning the command with `--promote --write` and rendering.
+Promotion turns the staged count into the pool's `max_replicas` and adds it to
+the end of the model's fill order; the model's `min_slots` decides whether it
+keeps a floor. Removing the pool, or setting `max_replicas: 0`, withdraws it.
+A pool with the same name must be removed before a different release is staged
+under it.
 
 ## Internal monitoring billing
 

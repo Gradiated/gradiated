@@ -2,7 +2,7 @@
 
 These tests run the real gateway binary against disposable dependencies. The
 default suite uses only the CPU, without model downloads, cloud credentials or
-production endpoints. An explicit SGLang option connects to a resident runtime
+production endpoints, except the opt-in live OpenRouter tests. An explicit SGLang option connects to a resident runtime
 through a loopback forward; it does not allocate or launch a GPU runtime.
 
 ```text
@@ -52,7 +52,8 @@ these constants.
 | `assertions.ts`       | Public error and propagation assertions.                              |
 | `admission.ts`        | Gated requests that hold admission slots.                             |
 | `chat.ts`             | The official chat client and checked stream chunks.                   |
-| `mock-runtimes/`      | The Kev and vLLM wire profiles and the scripted fault server.         |
+| `mock-runtimes/`      | The Kev, vLLM and OpenRouter wire profiles and the fault server.      |
+| `adapter-versions.ts` | Private adapter versions and LoRA-enabled deployments for a case.     |
 | `http-client.ts`      | A raw HTTP client for repeated headers, large bodies and cut streams. |
 | `eventually.ts`       | Polling and timeouts.                                                 |
 | `json.ts`, `ports.ts` | JSON guards and loopback port probes.                                 |
@@ -64,6 +65,39 @@ responses, raw terminal stream events, and SDK stream helpers against the durabl
 settled charge, including cached input, service tiers, free models, cache writes,
 and reasoning. Anthropic's final-message helper drops extension fields; its
 `streamEvent` callback is the tested path for reading cost.
+
+## OpenRouter capacity
+
+`openrouter-capacity.test.ts` starts its own gateway with `OPENROUTER_API_KEY`
+and `OPENROUTER_BASE_URL` pointed at a loopback OpenRouter mock, so each case
+controls OpenRouter in the test process. `mock-runtimes/openrouter.ts` reproduces
+the measured OpenRouter wire shape: `gen-` IDs, provider names, `cost`,
+`reasoning_details`, a usage frame that repeats the finish reason, reasoning
+counts above completion counts and SSE keepalive comments. The mock rejects a
+request without privacy routing, opaque `user` and `session_id` values or the
+platform key. A case maps its model with `openRouterModel` and can have no
+deployments with `replicas: 0`.
+
+The file covers serving with no deployments, unhealthy and saturated capacity,
+local success, pre-output failure in both modes, both capacities failing, the
+shared deadline, partial-stream failure, cancellation, Messages, Responses and
+the official SDKs, catalog-priced billing against a higher upstream cost,
+balance, status, pins, OpenRouter's own and other channel traffic, listing and
+adapter degradation.
+Every assertion also checks that no OpenRouter detail reaches the caller.
+
+`openrouter-live.test.ts` runs a few of these cases against the live API with
+`meta-llama/llama-3.1-8b-instruct`, which has several ZDR providers and costs
+about $0.00001 a request. It runs only when `OPENROUTER_LIVE_API_KEY` is set:
+
+```sh
+OPENROUTER_LIVE_API_KEY=... pnpm --filter @gradiated/gateway exec vitest run \
+  test/integration/openrouter-live.test.ts
+```
+
+CI sets it from the `OPENROUTER_CI_API_KEY` Actions secret and fails without it,
+except on fork and Dependabot runs, which get no secrets. Locally, the
+`OPENROUTER_API_KEY` in `gradiated/dev/env` works.
 
 ## Run the suite
 

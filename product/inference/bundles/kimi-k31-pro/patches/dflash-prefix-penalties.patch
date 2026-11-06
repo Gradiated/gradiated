@@ -1,0 +1,108 @@
+--- a/sglang/srt/speculative/dflash_utils.py
++++ b/sglang/srt/speculative/dflash_utils.py
+@@ -1,5 +1,6 @@
+ from __future__ import annotations
+ 
++import copy
+ import logging
+ from collections.abc import Sequence
+ from dataclasses import dataclass
+@@ -301,6 +302,78 @@
+                 dtype=next_token_logits.dtype,
+             )
+         get_logits_3d().add_(logit_bias[:, None, :])
++
++
++def apply_dflash_output_penalties(
++    *,
++    next_token_logits: torch.Tensor,
++    candidates: torch.Tensor,
++    sampling_info: Any,
++    reqs: Sequence[Req],
++) -> None:
++    """Apply full output-history penalties to non-overlap DFLASH verify rows.
++
++    DFLASH does not update penaltylib's committed-output counters. Reconstruct
++    them from CPU-authoritative request history, then extend each verify row
++    with its own draft prefix. Request validation excludes overlap, whose CPU
++    history deliberately lags the GPU. The default path does no tensor work.
++    """
++    active = any(
++        req.sampling_params.frequency_penalty != 0
++        or req.sampling_params.presence_penalty != 0
++        for req in reqs
++    )
++    if not active:
++        apply_dflash_verify_logits_adjustments(
++            next_token_logits=next_token_logits,
++            sampling_info=sampling_info,
++            draft_token_num=candidates.shape[1],
++        )
++        return
++    if sampling_info is None:
++        raise ValueError("DFLASH output penalties require sampling_info.")
++    if candidates.ndim != 2 or next_token_logits.ndim != 2:
++        raise ValueError("DFLASH output penalties require 2D tensors.")
++    bs, block_size = candidates.shape
++    if len(reqs) != bs or next_token_logits.shape[0] != bs * block_size:
++        raise ValueError("DFLASH output penalty row count mismatch.")
++    if candidates.device != next_token_logits.device:
++        raise ValueError("DFLASH candidates and logits must share a device.")
++
++    # Preserve custom processors, grammar and logit bias, while excluding stale
++    # penaltylib state and any snapshot of it from the normal adjustment helper.
++    clean_sampling = copy.copy(sampling_info)
++    clean_sampling.penalizer_orchestrator = None
++    clean_sampling.acc_linear_penalties = None
++    clean_sampling.acc_additive_penalties = None
++    clean_sampling.acc_scaling_penalties = None
++    apply_dflash_verify_logits_adjustments(
++        next_token_logits=next_token_logits,
++        sampling_info=clean_sampling,
++        draft_token_num=block_size,
++    )
++    logits = next_token_logits.view(bs, block_size, -1)
++    counts = torch.zeros((bs, logits.shape[-1]), device=logits.device, dtype=torch.float32)
++    # Non-overlap scheduler has settled every previous accepted block into
++    # output_ids, including candidates[:, 0], the already-committed anchor.
++    for row, req in enumerate(reqs):
++        history = torch.tensor(req.output_ids, device=logits.device, dtype=torch.int64)
++        counts[row].scatter_add_(0, history, torch.ones_like(history, dtype=counts.dtype))
++    frequency = torch.tensor(
++        [req.sampling_params.frequency_penalty for req in reqs],
++        device=logits.device, dtype=torch.float32,
++    )[:, None]
++    presence = torch.tensor(
++        [req.sampling_params.presence_penalty for req in reqs],
++        device=logits.device, dtype=torch.float32,
++    )[:, None]
++    # Slot zero predicts from committed history; slot j predicts after consuming
++    # draft candidates[1:j+1]. Never count the anchor twice.
++    for slot in range(block_size):
++        if slot:
++            counts.scatter_add_(1, candidates[:, slot:slot + 1], torch.ones_like(frequency))
++        adjustment = counts * frequency + (counts != 0) * presence
++        logits[:, slot, :].sub_(adjustment.to(dtype=logits.dtype))
+ 
+ 
+ def _get_or_create_chain_verify_buffers(
+@@ -1357,4 +1430,19 @@
+     if enable_overlap and req.return_hidden_states:
+         return "DFLASH speculative decoding does not support return_hidden_states yet."
+ 
++    params = req.sampling_params
++    if enable_overlap and (params.frequency_penalty != 0 or params.presence_penalty != 0):
++        return "DFLASH frequency/presence penalties require overlap scheduling disabled."
++    if params.sampling_seed is not None:
++        return "DFLASH speculative decoding does not support request seed yet."
++    if params.min_p > 0:
++        return "DFLASH speculative decoding does not support min_p yet."
++    if params.repetition_penalty != 1.0:
++        return "DFLASH speculative decoding does not support repetition_penalty yet."
++    if params.min_new_tokens > 0:
++        return "DFLASH speculative decoding does not support min_new_tokens yet."
++    greedy = params.top_k == 1 or params.temperature == 0
++    if not greedy and not is_dflash_sampling_verify_available():
++        return "DFLASH non-greedy verification is unavailable; refusing to change the requested sampling distribution."
++
+     return None

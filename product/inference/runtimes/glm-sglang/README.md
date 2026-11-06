@@ -20,23 +20,45 @@ both assigned GPU names before starting the backend and refuses a mismatched
 profile. H200 enrollment and placement retain the `H200` product identity;
 GH200 is not accepted as H200.
 
-H200 uses TP2 without prefill context parallelism, Marlin W4A16 experts, a
-bfloat16 KV cache, `flashmla_sparse` DSA prefill (FA3 for pooled indices on
-SM90) and `fa3` DSA decode. This is SGLang's Hopper bfloat16 default. The FP8
-KV options do not work for GLM's pooled index (`index_kpool > 1`):
-`flashmla_kv` fails CUDA graph capture, and TileLang with FP8 KV starts but
-generates only token 0. Measured on a 2x H200 canary on 2026-11-05: correct
-answers at about 93-178 tokens/s for one request; bfloat16 KV halves KV
-capacity relative to FP8.
-It does not use the B300 profile's explicit `trtllm` sparse attention. GLM's
-four-token pooled index uses a logical page size of 256, giving FlashMLA its
-required 64 physical slots. H200 retains two MTP draft steps, the parsers,
-SMG, prefix caching, readiness, metrics, cancellation and drain lifecycle.
+H200 uses TP2 without prefill context parallelism, Marlin W4A16 experts,
+FP8 E4M3 KV, `flashmla_sparse_q8` DSA prefill and TileLang decode. It does not
+use Blackwell's `trtllm` sparse attention. GLM's four-token pooled index uses
+a logical page size of 256, giving FlashMLA its required 64 physical slots.
 
-The initial H200 limits are four active requests, two queued requests, a
-4,096-token prefill budget, 85% static device memory, and decode graphs through
-batch four. SMG, SGLang, warmup admission and exported capacity metrics use the
-same four-request limit. The runtime's `runtimes.json` entry declares the same
+H200 retains MTP using three draft steps and four verification tokens. The
+previous two-step/three-token FP8 configuration produced repetitive incorrect
+output under CUDA graph replay. Disabling graph padding avoided the short-case
+corruption but fell back to slow eager execution for unsupported batch sizes.
+Four verification tokens satisfy TP2 graph alignment for batch sizes one through
+four, avoiding the failing padded path without disabling graphs or speculation.
+This is a qualified launch configuration, not a repair of the upstream replay bug.
+
+GLM prefix reuse needs both full-attention KV and recurrent-state checkpoints.
+The H200 profile uses a recurrent-to-full-cache memory budget ratio of 1.8;
+leaving the default at 0.9 reduced recurrent slots and destroyed cache reuse in
+the deeper-MTP benchmark. At 0.85 static memory, the balanced FP8/MTP candidate
+allocated 1,419,776 KV tokens and 77 recurrent slots versus 842,496 tokens and
+63 slots for BF16/MTP. It passed 25 synthetic correctness checks including
+14K-token cached prefixes and four concurrent requests. In the final two warm
+synthetic trials (~46K input/512 output, concurrency four), it delivered
+238–243 aggregate output tokens/s and 123–125 per-request decode tokens/s;
+the BF16 control's final warm trial delivered 254 and 128, respectively.
+These are one-host, ordered synthetic comparisons, not production capacity
+or general numerical-quality qualification. The 0.90 launch setting below must
+also pass the same checks and observed-memory verification before promotion.
+
+Six input/output-hash-guarded overlays adapt upstream
+[SGLang PR #44217](https://github.com/sgl-project/sglang/pull/44217) at
+`6b1ac36a9bf8cd1958f17c9937c85d86cbdc1c91` to the pinned source. They let
+Q8 prefill and TileLang decode share raw 512-dimensional NoPE FP8 KV rows,
+including KPool live-tail indices. They do not use the incompatible packed,
+scaled FlashMLA KV layout. The original quantization and mHC overlays remain.
+B200/B300 retain their existing attention backends and MTP settings.
+
+The H200 limits are three active requests, two queued requests, a
+4,096-token prefill budget, 90% static device memory, and decode graphs through
+batch three. SMG, SGLang, warmup admission and exported capacity metrics use the
+same three-request limit. The runtime's `runtimes.json` entry declares the same
 `active_requests` for gateway routing weights; `tools/gpu/render-config.py`
 rejects an entry whose value differs from its launcher profile. The host profile requests and limits 32 CPU and
 320 GiB of system RAM, fitting the first pod's provider-reported 377 GB before
@@ -45,10 +67,9 @@ The 1M context setting remains a configured bound, not measured evidence of
 1M-token residency or latency. Record actual KV/recurrent pool capacity and
 qualify the longest supported requests on H200 before production promotion.
 
-Source inspection and CPU checks establish a candidate launch path, not GPU
-qualification. No H200 startup, numerical quality, long-context capacity or
-throughput result is claimed here. In particular, the full GLM NoPE/pooled-index
-FlashMLA and MTP paths must pass on the actual packaged runtime. See
+CPU build checks and the synthetic GPU smoke do not qualify general numerical
+quality, long-context capacity or production throughput. The actual packaged
+runtime must pass deployment qualification before promotion. See
 [H200 deployment preparation](../../../../docs/INSTANCE_SETUP_PLAN.md#h200-tp2-alongside-b300)
 for enrollment, staging, qualification, promotion and rollback.
 
@@ -58,8 +79,8 @@ The `b200-pcp2` profile serves the same checkpoint on two B200 GPUs and is
 selected from the assigned GPU names, like the other profiles.
 B200 (SM100) and B300 (SM103) share the Blackwell kernels; the pinned SGLang
 selects `trtllm` DSA for any compute capability 10 or later. The profile keeps
-every B300 launch setting except the admission limit: eight active requests,
-with decode graphs through batch eight, because each B200 has about two thirds
+every B300 launch setting except the admission limit: six active requests,
+with decode graphs through batch six, because each B200 has about two thirds
 of a B300's HBM. Hardware validation refuses B300 and GB200 GPUs for this
 profile and B200 GPUs for the B300 profile. No B200 startup, capacity or
 throughput result is claimed here; qualify it as described for H200.
@@ -86,14 +107,14 @@ timeout (900 seconds for this runtime) before returning the native error, so
 supported slow uploads do not become early-close broken-pipe 502s in NGINX. Expired queue slots are released before that drain.
 The compiled extension exports a build marker checked in the actual archive.
 The patch adds no scheduler or admission queue. A single backend URL, disabled
-router retries, 16 active permits, two queued requests, a 60-second queue timeout,
+router retries, 12 active permits, two queued requests, a 10-second queue timeout,
 and disabled token-bucket rate limiting bound admission. A permit lasts through
 the response body. Queue-full responses are HTTP 429; queue expiry returns
 HTTP 503. Requests already holding a permit may still wait inside SGLang for
 scheduling or KV capacity; the frontend queue timeout does not bound that wait.
 The gateway retains responsibility for failover between replicas.
 
-The SGLang backend has 16 running slots and no separate native queue cap.
+The SGLang backend has 12 running slots and no separate native queue cap.
 Its native queue limit is applied during intake before scheduling: a cap of two
 can reject an idle burst after its first two requests, despite available running
 slots. The official frontend avoids that intake failure while bounding total
@@ -121,7 +142,7 @@ No custom admission queue or scheduler is installed.
 The service starts SGLang, waits for its health and exact served-model identity,
 then starts SMG. Its native `/readiness` endpoint must confirm a healthy
 registered worker; `/health` is only router process liveness. The shared GLM supervisor qualifies cold prompt shapes, mixed
-requests, and concurrency through 16 using the real OpenAI endpoint. Readiness
+requests, and concurrency up to the profile's active plus queued limit using the real OpenAI endpoint. Readiness
 stays closed until those checks pass and closes before termination signals are
 forwarded. A component exit shuts down the other component. The runtime launcher
 and host agent retain their existing process-tree and cgroup cleanup guards.

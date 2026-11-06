@@ -8,7 +8,9 @@ implemented.
 
 This plan owns proxy scope, topology and build order. It supersedes earlier
 proposals for platform-funded provider calls, task-owned fallback settings and
-a relay inside the gateway. Supporting transport rules are in
+a relay inside the gateway. The one platform-funded call is the gateway's
+[OpenRouter capacity](../product/services/gateway/ARCHITECTURE.md#external-capacity-openrouter)
+for a mapped catalog model, which the proxy sees as an ordinary hosted request. Supporting transport rules are in
 [GW-01 through GW-05](TASK_FINE_TUNING_GATEWAY_CONTRACT.md).
 
 ## Decisions

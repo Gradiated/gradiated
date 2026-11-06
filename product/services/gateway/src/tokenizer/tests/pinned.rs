@@ -7,7 +7,7 @@ use crate::{
 
 fn pinned(repository: &str, revision: &str) -> QualifiedRequest {
     let mut qualified = qualified(Some(64));
-    let release = &mut qualified.deployment.release;
+    let release = &mut qualified.local_capacity_mut().deployment.release;
     release.model_path = repository.to_owned();
     release.model_revision = revision.to_owned();
     release.tokenizer_path = repository.to_owned();
@@ -120,7 +120,11 @@ async fn loads_and_renders_the_pinned_deepseek_v4_release() {
     );
     qualified.max_context_tokens = 262_144;
     qualified.max_prompt_tokens = 262_080;
-    qualified.deployment.release.tokenizer_mode = Some(TokenizerMode::DeepseekV4);
+    qualified
+        .local_capacity_mut()
+        .deployment
+        .release
+        .tokenizer_mode = Some(TokenizerMode::DeepseekV4);
     qualified.request.messages = vec![
         json!({"role": "system", "content": "Be concise."}),
         json!({"role": "user", "content": "Hello"}),

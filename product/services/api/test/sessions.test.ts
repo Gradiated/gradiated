@@ -39,6 +39,17 @@ const validInputs: Record<string, { query?: string; body?: unknown }> = {
       email: "ada@example.com",
     },
   },
+  "POST /api/v1/workspaces/:workspace_id/model-uploads": {
+    body: {
+      task: "triage",
+      create_task: true,
+      name: "triage-v1",
+      base_model_id: "Qwen/Qwen3-0.6B",
+      base_model_revision: "a".repeat(40),
+      config_size: 200,
+      weights_size: 500,
+    },
+  },
   "POST /api/v1/workspaces/:workspace_id/training-runs": {
     body: { task_id: "0198ae70-0e61-7a51-9d5c-2f4b5e6a7b8c" },
   },
@@ -86,6 +97,7 @@ const pathParameters: Record<string, string> = {
   workspace_id: workspaceId,
   api_key_id: apiKeyId,
   generation_id: "0198ae70-0e61-7a51-9d5c-2f4b5e6a7b8c",
+  upload_id: "0198ae70-0e61-7a51-9d5c-2f4b5e6a7b8c",
   version_id: "0198ae70-0e61-7a51-9d5c-2f4b5e6a7b8e",
   run_id: "0198ae70-0e61-7a51-9d5c-2f4b5e6a7b8d",
   task: "support-triage",

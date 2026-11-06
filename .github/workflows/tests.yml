@@ -130,9 +130,10 @@ jobs:
           name: ${{ steps.reuse.outputs.artifact }}
           path: .agents/runtime/product-ci-inputs.json
           retention-days: 30
-      - name: Test path selection and result reuse
+      - name: Test path selection, result reuse, and Rust caching
         run: |
           python3 -m unittest discover -s .github/actions/product-changes -v
+          python3 .github/actions/rust-cache/test_cache.py
           python3 -m unittest discover -s tools/ci -p 'test_reuse.py' -v
 
   console-build:

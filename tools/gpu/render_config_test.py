@@ -333,6 +333,16 @@ class RenderTests(unittest.TestCase):
             with self.subTest(change=change), self.assertRaisesRegex(ValueError, message):
                 renderer.validate_active_requests(models, changed, profiles)
 
+        # A rebuilt bundle must declare the launcher's current limit, not its predecessor's.
+        rebuilt = copy.deepcopy(runtimes)
+        rebuilt['rebuilt-b300'] = runtimes[b300]
+        repinned = copy.deepcopy(models)
+        repinned['glm-dealign-sglang']['runtime'] = 'rebuilt-b300'
+        with self.assertRaisesRegex(ValueError, 'equal its launcher profile, 12'):
+            renderer.validate_active_requests(repinned, rebuilt, profiles)
+        rebuilt['rebuilt-b300'] = {**runtimes[b300], 'active_requests': 12}
+        renderer.validate_active_requests(repinned, rebuilt, profiles)
+
         # Without an explicit profile, the GPU the model is placed on selects it.
         changed = copy.deepcopy(runtimes)
         del changed[h200]['environment']['GLM_SGLANG_PROFILE']
@@ -663,6 +673,17 @@ class RenderTests(unittest.TestCase):
                         {'max_replicas': 2, 'target_concurrency': float('inf')}):
             with self.assertRaises(ValueError):
                 renderer.autoscaler('deepseek', {**model, 'autoscaling': invalid}, runtimes[model['runtime']])
+        # Without a target, the model scales on its runtime's enforced limit; a runtime
+        # that declares no limit needs an explicit target.
+        sglang = models['glm-dealign-sglang']
+        self.assertNotIn('target_concurrency', sglang['autoscaling'])
+        limit = runtimes[sglang['runtime']]['active_requests']
+        derived = renderer.autoscaler('glm-dealign-sglang', sglang, runtimes[sglang['runtime']])
+        explicit = renderer.autoscaler('glm-dealign-sglang', {**sglang, 'autoscaling': {
+            **sglang['autoscaling'], 'target_concurrency': limit}}, runtimes[sglang['runtime']])
+        self.assertEqual(derived, explicit)
+        with self.assertRaisesRegex(ValueError, 'concurrency target'):
+            renderer.autoscaler('deepseek', {**model, 'autoscaling': {'max_replicas': 2}}, runtimes[model['runtime']])
 
     def test_retired_model_can_pause_at_zero_without_losing_rollback_configuration(self):
         runtimes = json.loads(renderer.RUNTIMES.read_text())

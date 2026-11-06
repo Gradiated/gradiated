@@ -2,6 +2,7 @@
 import argparse
 import copy
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 import re
@@ -16,9 +17,16 @@ CHECKPOINT = 'dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4'
 REVISION = '745aac2ff0f10acf961f396df3f9418598aa7327'
 BUCKET = 'gradiated-prod-model-artifacts-873716897517'
 POOLS = {
-    'h200': {'product': 'H200', 'profile': 'h200-tp2', 'memory_gib': 320, 'active_requests': 4},
-    'b200': {'product': 'B200', 'profile': 'b200-pcp2', 'memory_gib': 320, 'active_requests': 8},
+    'h200': {'product': 'H200', 'profile': 'h200-tp2', 'memory_gib': 320},
+    'b200': {'product': 'B200', 'profile': 'b200-pcp2', 'memory_gib': 320},
 }
+
+
+def launcher_profiles():
+    spec = importlib.util.spec_from_file_location('render_config', Path(__file__).with_name('render-config.py'))
+    render = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(render)
+    return render.glm_sglang_profiles()
 
 
 def name(gpu):
@@ -62,7 +70,7 @@ def stage(models, runtimes, pins, hosts, release, source, instances, replicas=1,
         'release': {'schema_version': 1, 'model_path': CHECKPOINT, 'model_revision': REVISION,
                     'tokenizer_path': CHECKPOINT, 'tokenizer_revision': REVISION,
                     'runtime_revision': f'glm-{gpu}-{digest[:12]}', 'runtime_model_name': CHECKPOINT},
-        'gpus': 2, 'active_requests': pool['active_requests'],
+        'gpus': 2, 'active_requests': launcher_profiles()[profile]['active_requests'],
         'cpu': '32', 'memory': f'{memory}Gi', 'startup_timeout': 3600, 'warmup': True,
         # Host agents reject GLM_SGLANG_PROFILE; the runtime selects the profile from the assigned GPUs.
         'environment': {'TENSOR_PARALLEL_SIZE': '2'},
@@ -76,7 +84,7 @@ def stage(models, runtimes, pins, hosts, release, source, instances, replicas=1,
         'affinity': {'nodeAffinity': {'requiredDuringSchedulingIgnoredDuringExecution': {
             'nodeSelectorTerms': [{'matchExpressions': [{'key': 'gradiated.com/instance-id',
                                                          'operator': 'In', 'values': sorted(instances)}]}]}}},
-        'autoscaling': {'max_replicas': replicas, 'target_concurrency': pool['active_requests']},
+        'autoscaling': {'max_replicas': replicas},
     }
     existing = models.get(name(gpu))
     isolated = {**candidate, 'serving_mode': 'qualification'}

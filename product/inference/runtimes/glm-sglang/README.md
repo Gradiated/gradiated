@@ -55,10 +55,10 @@ including KPool live-tail indices. They do not use the incompatible packed,
 scaled FlashMLA KV layout. The original quantization and mHC overlays remain.
 B200/B300 retain their existing attention backends and MTP settings.
 
-The H200 limits are four active requests, two queued requests, a
+The H200 limits are three active requests, two queued requests, a
 4,096-token prefill budget, 90% static device memory, and decode graphs through
-batch four. SMG, SGLang, warmup admission and exported capacity metrics use the
-same four-request limit. The runtime's `runtimes.json` entry declares the same
+batch three. SMG, SGLang, warmup admission and exported capacity metrics use the
+same three-request limit. The runtime's `runtimes.json` entry declares the same
 `active_requests` for gateway routing weights; `tools/gpu/render-config.py`
 rejects an entry whose value differs from its launcher profile. The host profile requests and limits 32 CPU and
 320 GiB of system RAM, fitting the first pod's provider-reported 377 GB before
@@ -79,8 +79,8 @@ The `b200-pcp2` profile serves the same checkpoint on two B200 GPUs and is
 selected from the assigned GPU names, like the other profiles.
 B200 (SM100) and B300 (SM103) share the Blackwell kernels; the pinned SGLang
 selects `trtllm` DSA for any compute capability 10 or later. The profile keeps
-every B300 launch setting except the admission limit: eight active requests,
-with decode graphs through batch eight, because each B200 has about two thirds
+every B300 launch setting except the admission limit: six active requests,
+with decode graphs through batch six, because each B200 has about two thirds
 of a B300's HBM. Hardware validation refuses B300 and GB200 GPUs for this
 profile and B200 GPUs for the B300 profile. No B200 startup, capacity or
 throughput result is claimed here; qualify it as described for H200.
@@ -107,14 +107,14 @@ timeout (900 seconds for this runtime) before returning the native error, so
 supported slow uploads do not become early-close broken-pipe 502s in NGINX. Expired queue slots are released before that drain.
 The compiled extension exports a build marker checked in the actual archive.
 The patch adds no scheduler or admission queue. A single backend URL, disabled
-router retries, 16 active permits, two queued requests, a 60-second queue timeout,
+router retries, 12 active permits, two queued requests, a 60-second queue timeout,
 and disabled token-bucket rate limiting bound admission. A permit lasts through
 the response body. Queue-full responses are HTTP 429; queue expiry returns
 HTTP 503. Requests already holding a permit may still wait inside SGLang for
 scheduling or KV capacity; the frontend queue timeout does not bound that wait.
 The gateway retains responsibility for failover between replicas.
 
-The SGLang backend has 16 running slots and no separate native queue cap.
+The SGLang backend has 12 running slots and no separate native queue cap.
 Its native queue limit is applied during intake before scheduling: a cap of two
 can reject an idle burst after its first two requests, despite available running
 slots. The official frontend avoids that intake failure while bounding total
@@ -142,7 +142,7 @@ No custom admission queue or scheduler is installed.
 The service starts SGLang, waits for its health and exact served-model identity,
 then starts SMG. Its native `/readiness` endpoint must confirm a healthy
 registered worker; `/health` is only router process liveness. The shared GLM supervisor qualifies cold prompt shapes, mixed
-requests, and concurrency through 16 using the real OpenAI endpoint. Readiness
+requests, and concurrency up to the profile's active plus queued limit using the real OpenAI endpoint. Readiness
 stays closed until those checks pass and closes before termination signals are
 forwarded. A component exit shuts down the other component. The runtime launcher
 and host agent retain their existing process-tree and cgroup cleanup guards.

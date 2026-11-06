@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { isDeepStrictEqual } from "node:util";
 import { resolve, dirname } from "node:path";
@@ -11,6 +12,19 @@ export const plan = JSON.parse(
   ),
 );
 const bucket = "gradiated-prod-model-artifacts-873716897517";
+// The launcher profile owns the limit the runtime enforces and Desmond reports.
+export const activeRequests = () =>
+  JSON.parse(
+    execFileSync(
+      "python3",
+      [
+        "-c",
+        "import importlib.util, json, sys; sys.dont_write_bytecode = True; spec = importlib.util.spec_from_file_location('render', sys.argv[1]); render = importlib.util.module_from_spec(spec); spec.loader.exec_module(render); print(json.dumps(render.glm_sglang_profiles()['b300-pcp2']['active_requests']))",
+        resolve(root, "tools/gpu/render-config.py"),
+      ],
+      { encoding: "utf8" },
+    ),
+  );
 
 export const stageCanary = ({
   models,
@@ -64,6 +78,7 @@ export const stageCanary = ({
       runtime_model_name: plan.checkpoint,
     },
     gpus: plan.gpus,
+    active_requests: activeRequests(),
     cpu: plan.cpu,
     memory: plan.memory,
     startup_timeout: 3600,
@@ -85,7 +100,7 @@ export const stageCanary = ({
       "nvidia.com/gpu.product": "B300",
       "gradiated.com/instance-id": plan.instance_id,
     },
-    autoscaling: { max_replicas: 1, target_concurrency: plan.active_requests },
+    autoscaling: { max_replicas: 1 },
   };
   const existing = models[plan.name];
   const isolated = { ...candidate, serving_mode: "qualification" };

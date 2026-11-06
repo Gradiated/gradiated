@@ -8,16 +8,16 @@ MODEL = 'dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4'
 REVISION = '745aac2ff0f10acf961f396df3f9418598aa7327'
 SGLANG_SOURCE = 'f171859219b54e1dad45dda60028034490836974'
 SMG_VERSION = '1.13.0'
-ACTIVE_REQUESTS = 16
+ACTIVE_REQUESTS = 12
 QUEUED_REQUESTS = 2
 QUEUE_TIMEOUT_SECONDS = 60
 PROFILES = {
     'b300-pcp2': {'gpu_product': 'B300', 'active_requests': ACTIVE_REQUESTS,
                   'prefill_tokens': 16384, 'dsa_backend': 'trtllm', 'context_parallel': True},
     # Same Blackwell kernels as B300 with about two thirds of the HBM, so half the active requests.
-    'b200-pcp2': {'gpu_product': 'B200', 'active_requests': 8,
+    'b200-pcp2': {'gpu_product': 'B200', 'active_requests': 6,
                   'prefill_tokens': 16384, 'dsa_backend': 'trtllm', 'context_parallel': True},
-    'h200-tp2': {'gpu_product': 'H200', 'active_requests': 4,
+    'h200-tp2': {'gpu_product': 'H200', 'active_requests': 3,
                  'prefill_tokens': 4096, 'dsa_backend': 'tilelang', 'dsa_prefill': 'flashmla_sparse_q8', 'kv_dtype': 'fp8_e4m3',
                  'speculative_steps': 3, 'mamba_memory_ratio': 1.8, 'memory_fraction': 0.90,
                  'context_parallel': False},

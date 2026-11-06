@@ -30,13 +30,14 @@ test("stages only one two-GPU canary and preserves the primary", () => {
   assert.equal(candidate.replicas, 1);
   assert.equal(candidate.max_surge, 0);
   assert.equal(candidate.max_unavailable, 1);
-  assert.equal(candidate.autoscaling.max_replicas, 1);
+  assert.deepEqual(candidate.autoscaling, { max_replicas: 1 });
   assert.equal(
     candidate.node_selector["gradiated.com/instance-id"],
     plan.instance_id,
   );
   const runtime = result.runtimes[digest];
   assert.equal(runtime.gpus, 2);
+  assert.equal(runtime.active_requests, 12);
   assert.equal((candidate.replicas + candidate.max_surge) * runtime.gpus, 2);
   assert.equal(runtime.release.model_revision, plan.checkpoint_revision);
   assert.equal(runtime.release.protocol, undefined);

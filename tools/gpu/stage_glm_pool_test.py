@@ -13,7 +13,7 @@ spec.loader.exec_module(stage)
 
 
 class H200Staging(unittest.TestCase):
-    GPU, PRODUCT, PROFILE, ACTIVE = 'h200', 'H200', 'h200-tp2', 4
+    GPU, PRODUCT, PROFILE, ACTIVE = 'h200', 'H200', 'h200-tp2', 3
 
     def setUp(self):
         self.name = stage.name(self.GPU)
@@ -52,8 +52,10 @@ class H200Staging(unittest.TestCase):
         candidate = models[self.name]
         self.assertEqual(candidate['serving_mode'], 'qualification')
         self.assertEqual(candidate['node_selector']['nvidia.com/gpu.product'], self.PRODUCT)
-        self.assertEqual(candidate['autoscaling']['target_concurrency'], self.ACTIVE)
+        # KEDA scales on the runtime's declared limit, which comes from the launcher profile.
+        self.assertEqual(candidate['autoscaling'], {'max_replicas': 1})
         runtime = runtimes[candidate['runtime']]
+        self.assertEqual(runtime['active_requests'], self.ACTIVE)
         # Host agents reject unlisted environment variables, so the profile is detected from the GPUs.
         self.assertEqual(runtime['environment'], {'TENSOR_PARALLEL_SIZE': '2'})
         self.assertEqual(runtime['model_id'], f'{stage.MODEL}-sglang-{self.GPU}')
@@ -113,7 +115,7 @@ class CommittedPools(unittest.TestCase):
 
 
 class B200Staging(H200Staging):
-    GPU, PRODUCT, PROFILE, ACTIVE = 'b200', 'B200', 'b200-pcp2', 8
+    GPU, PRODUCT, PROFILE, ACTIVE = 'b200', 'B200', 'b200-pcp2', 6
 
     def test_b200_pool_is_separate_from_h200(self):
         models, runtimes = self.stage()
@@ -124,7 +126,7 @@ class B200Staging(H200Staging):
 
     def test_staged_runtime_declares_its_launcher_active_request_limit(self):
         models, runtimes = self.stage()
-        self.assertEqual(runtimes[models[self.name]['runtime']]['active_requests'], 8)
+        self.assertEqual(runtimes[models[self.name]['runtime']]['active_requests'], self.ACTIVE)
         renderer = importlib.util.spec_from_file_location('render_config', Path(stage.__file__).with_name('render-config.py'))
         render = importlib.util.module_from_spec(renderer)
         renderer.loader.exec_module(render)

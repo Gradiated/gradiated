@@ -9,8 +9,5 @@
   "gpus": 2,
   "cpu": "32",
   "memory": "400Gi",
-  "active_requests": 16,
-  "queued_requests": 2,
-  "queue_timeout_seconds": 60,
   "runtime_model": "dealignai/glm-5.3-flash-uncensored-sglang-canary"
 }

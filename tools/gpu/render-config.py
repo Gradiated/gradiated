@@ -207,6 +207,15 @@ def glm_sglang_profiles():
     return config.PROFILES
 
 
+# Pinned GLM SGLang bundles built before the launcher's current limits, with the
+# limits they enforce. Remove an entry once its model pins a rebuilt bundle.
+BUILT_ACTIVE_REQUESTS = {
+    '7fd1e7b6b4c406c615e5542a32a00abf14f16829e2e3b95163c9c85ce93dc162': 16,
+    'cdded47c1a89f609b0679a2673f8ed978c1aa1564d69ac088d7c92d13144f6fa': 8,
+    'cbf354100b8b0d73c31f51727d92f14e186c7db65d81c2c577a1d8f16391f15f': 4,
+}
+
+
 def validate_active_requests(models, runtimes, profiles):
     # Desmond reports this limit and the gateway weights routing by it, so it
     # must be the limit the runtime enforces. A declared value that drifted from
@@ -225,9 +234,9 @@ def validate_active_requests(models, runtimes, profiles):
                     if profile_name == selected or (selected is None and profile['gpu_product'] == product)]
         if len(matching) != 1:
             raise ValueError(f'Model {name} has no single GLM SGLang profile for its GPU')
-        if runtime.get('active_requests') != matching[0]['active_requests']:
-            raise ValueError(f'Model {name} runtime active_requests must equal its launcher profile, '
-                             f'{matching[0]["active_requests"]}')
+        enforced = BUILT_ACTIVE_REQUESTS.get(model['runtime'], matching[0]['active_requests'])
+        if runtime.get('active_requests') != enforced:
+            raise ValueError(f'Model {name} runtime active_requests must equal its launcher profile, {enforced}')
 
 
 def disruption_budget(name, model):
@@ -251,7 +260,8 @@ def disruption_budget(name, model):
 def autoscaler(name, model, runtime):
     settings = model['autoscaling']
     maximum = settings['max_replicas']
-    target = settings['target_concurrency']
+    # Scale on the runtime's enforced limit unless a model sets its own target.
+    target = settings.get('target_concurrency', runtime.get('active_requests'))
     if type(maximum) is not int or maximum < model['replicas']:
         raise ValueError('Autoscaling maximum must cover the minimum replicas')
     if type(target) not in (int, float) or not 0 < target < float('inf'):

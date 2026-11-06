@@ -60,7 +60,8 @@ pub struct ExternalRequest {
     pub price_cap: PriceCap,
 }
 
-/// The most OpenRouter may charge per token, in nano-USD: what the caller pays us.
+/// What the caller pays us per token, in nano-USD; OpenRouter is capped at this
+/// unless the model accepts a hardcoded overpay.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct PriceCap {
     pub prompt: u64,

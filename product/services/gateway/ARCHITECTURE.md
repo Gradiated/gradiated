@@ -908,10 +908,13 @@ Qualification sets the request's external capacity only when all hold:
   treated as OpenRouter's until the record cache refreshes it;
 - no `x-gradiated-deployment-id` pin, which keeps its exact deployment;
 - no qualified parameter that OpenRouter does not understand
-  (`openrouter::UNSUPPORTED_PARAMETERS`, such as `chat_template_kwargs`).
-  Qualification already removed every parameter the model does not advertise.
-  OpenRouter ignores unknown parameters rather than rejecting them, so a
-  request carrying an excluded one stays on our capacity.
+  (`openrouter::UNSUPPORTED_PARAMETERS`, such as `chat_template_kwargs`), and
+  none that the mapped OpenRouter model omits from its `supported_parameters`
+  (`openrouter::MODEL_UNSUPPORTED_PARAMETERS`: `parallel_tool_calls` for
+  `moonshotai/kimi-k3.1-pro`). Qualification already removed every parameter the
+  model does not advertise. OpenRouter ignores unknown parameters rather than
+  rejecting them, and `require_parameters` finds no provider for an omitted one,
+  so a request carrying an excluded one stays on our capacity.
 
 Authentication, workspace/account checks, the prepaid balance check and the
 Valkey admission script, including organization concurrency, run unchanged
@@ -987,7 +990,13 @@ and `user` and `session_id` as per-workspace SHA-256 values that carry no
 Gradiated identifier. `max_price` is the request's captured catalog prompt and completion
 prices in USD per million tokens (completion is the lower of the completion and
 reasoning prices, which OpenRouter bills alike), so OpenRouter routes only to
-providers that cost no more than the caller pays. `max_price` has no
+providers that cost no more than the caller pays. The one exception is
+`openrouter::MODEL_MAX_PRICE_PERCENT`, a hardcoded operator-approved overpay:
+`moonshotai/kimi-k3.1-pro` uses 120% of the captured prices, because no allowed
+zero-retention provider serves it at catalog price. Its fallback can therefore
+cost up to 20% more than the request pays us. The percentage applies to the
+request's service-tier price, so flex requests stay below every provider and
+get no fallback. `max_price` has no
 cached-input field and OpenRouter ignores unknown ones, so a provider's
 cache-read rate can exceed the catalog's cached price; Gradiated accepts that
 difference rather than restricting providers further. It carries no runtime priority

@@ -278,7 +278,8 @@ need no OpenRouter key, are billed at catalog prices and see no OpenRouter
 identity. The rules are in [ARCHITECTURE.md](ARCHITECTURE.md#external-capacity-openrouter).
 `OPENROUTER_BASE_URL` accepts HTTPS, or HTTP on a loopback host for tests.
 Every OpenRouter request requires zero data retention and no data collection,
-and caps the provider price at the model's own catalog price; if OpenRouter
+and caps the provider price at the model's own catalog price (Kimi K3.1 Pro
+alone accepts up to 120% of it); if OpenRouter
 cannot serve, the caller gets our own capacity's answer.
 
 The gateway uses `OPENROUTER_API_KEY` when it is set, as local runs and tests do.

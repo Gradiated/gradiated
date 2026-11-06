@@ -234,6 +234,24 @@ async fn sends_the_mapped_model_with_privacy_routing_and_only_the_platform_key()
 }
 
 #[tokio::test]
+async fn kimi_may_pay_openrouter_up_to_a_fifth_more_than_we_charge() {
+    let mock = mock_json(StatusCode::OK, json!({})).await;
+    let mut kimi = chat();
+    kimi.model = ExternalModel::openrouter("moonshotai/kimi-k3.1-pro");
+    kimi.price_cap = PriceCap {
+        prompt: 1_800,
+        completion: 9_000,
+    };
+
+    let _ = client(&mock).await.complete(kimi).await;
+
+    let recorded = mock.requests();
+    let price = &recorded[0].body["provider"]["max_price"];
+    assert!((price["prompt"].as_f64().unwrap() - 2.16).abs() < 1e-9);
+    assert!((price["completion"].as_f64().unwrap() - 10.8).abs() < 1e-9);
+}
+
+#[tokio::test]
 async fn a_buffered_response_carries_only_public_fields_and_our_identity() {
     let mock = mock_json(StatusCode::OK, completion()).await;
 

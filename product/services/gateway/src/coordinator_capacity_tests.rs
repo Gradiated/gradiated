@@ -217,6 +217,47 @@ async fn a_parameter_openrouter_would_ignore_keeps_the_request_local() {
 }
 
 #[tokio::test]
+async fn a_parameter_the_mapped_openrouter_model_omits_keeps_the_request_local() {
+    let kimi = |deployments, mapping: &str| {
+        let mut state = mapped(deployments);
+        let model = state.model.as_mut().unwrap();
+        model.openrouter_model_id = Some(mapping.to_owned());
+        model.properties.passthrough_parameters.insert(
+            "parallel_tool_calls".to_owned(),
+            ModelParameterDescriptor::Unknown,
+        );
+        state
+    };
+    let body = br#"{"model":"model-a","messages":[{}],"parallel_tool_calls":false}"#;
+
+    assert_eq!(
+        qualify(kimi(0, "moonshotai/kimi-k3.1-pro"), body)
+            .await
+            .err(),
+        Some(GatewayError::RuntimeUnavailable)
+    );
+    assert_eq!(
+        qualify(kimi(1, "moonshotai/kimi-k3.1-pro"), body)
+            .await
+            .unwrap()
+            .external,
+        None
+    );
+    assert_eq!(
+        qualify(kimi(0, MAPPING), body).await.unwrap().external,
+        Some(ExternalModel::openrouter(MAPPING))
+    );
+    let supported = br#"{"model":"model-a","messages":[{}],"temperature":0.2}"#;
+    assert_eq!(
+        qualify(kimi(0, "moonshotai/kimi-k3.1-pro"), supported)
+            .await
+            .unwrap()
+            .external,
+        Some(ExternalModel::openrouter("moonshotai/kimi-k3.1-pro"))
+    );
+}
+
+#[tokio::test]
 async fn a_newly_advertised_parameter_is_sent_to_openrouter() {
     let mut state = mapped(0);
     state

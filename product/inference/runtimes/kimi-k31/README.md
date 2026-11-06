@@ -132,7 +132,18 @@ placement only after GLM uncensored has enough capacity on other B300
 deployments and its pods have drained from `01a0fbf7`. The taint only blocks new
 pods and does not evict running ones.
 
-The public model starts unavailable and advertises text input only. Its initial
+The public model is available and advertises text input only. It maps to
+OpenRouter's `moonshotai/kimi-k3.1-pro`, so the gateway serves it through
+OpenRouter while no Kimi deployment is live, and through Kimi deployments once
+they qualify. Prices are $1.80 per million input tokens, $0.18 per million cached
+input tokens and $9.00 per million output tokens. OpenRouter fallback for Kimi may cost up
+to 20% more than we charge (a $2.16 input and $10.80 output cap, hardcoded in
+the gateway's OpenRouter client), because no allowed zero-retention provider
+serves it at $1.80/$9.00. The allowance applies to what the request
+pays us, so flex requests (0.7x) cap at $1.51/$7.56 and get no OpenRouter
+fallback. There is no separate
+cache-write price: the gateway adds a cache-write price on top of input, so
+cache writes are charged at the input rate. Its initial
 release uses the existing Chat transport and omits `tokenizer_mode`; SGLang owns
 prompt rendering, tokenization and usage, so this deployment needs no gateway
 tokenizer change. The checkpoint ships a tiktoken vocabulary rather than a
@@ -140,28 +151,24 @@ Hugging Face chat template or `tokenizer.json`; a future token-ID transport
 would need a qualified native encoder. Image support must be qualified before
 expanding the catalog.
 
-Keep `gradiated.com/kimi-k31=reserved:NoSchedule` on the Kimi Node so other
-pending models cannot take this reservation. The host inventory declares the
+Keep `gradiated.com/kimi-k31=reserved:NoSchedule` on both Kimi hosts so other
+pending models cannot take the reservation. The host inventory declares the
 taint for virtual kubelet creation and reconciliation. Kimi's generated
-Rollout alone adds the matching explicit toleration. Do not add this taint to
-the first eight-GPU host, which continues to serve GLM traffic.
+Rollout alone adds the matching explicit toleration.
 
-The reserved singleton has no relocation destination under its current placement.
-Host reimage admission must fail closed before cordon, surge or drain when no
-compatible capacity exists, preserving the serving replica. Before a future
-GPU-base image pin can reimage this host, arrange separately authorized,
-qualified capacity with a reviewed placement change, or a separately authorized
-Kimi-only planned downtime procedure. Do not widen placement onto the GLM host
-or bypass fleet availability checks to make maintenance proceed.
+Each host has one replica, so reimaging a host leaves the other replica serving.
+Host reimage admission must still fail closed before cordon, surge or drain when
+it would leave Kimi with no replica. Do not bypass fleet availability checks to
+make maintenance proceed.
 
 After GPU qualification and immutable release publication, preview the placement
 with `python3 tools/gpu/stage-kimi-pool.py RELEASE_JSON QUALIFIED_SOURCE_SHA`.
-The helper accepts only the second host's committed measured inventory and
+The helper accepts only the two reserved hosts' committed measured inventory and
 preserves every existing model and runtime. Add `--write`, render the GPU
 configuration and replica rules, and review the generated Kimi resources before
-merging. Promote this model's catalog status to `available` in that deployment
-change; the gateway requires it for targeted SDK qualification, while normal
-routing remains closed until the worker qualifies the deployment.
+merging. The catalog status is already `available`; normal routing to the Kimi
+deployments stays closed until the worker qualifies them, and OpenRouter serves
+Kimi until then.
 
 The pool has two replicas, one per host, each using every GPU on its host
 (`replicas` and `max_replicas` are both two). An update replaces one replica at a

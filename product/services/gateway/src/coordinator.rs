@@ -163,11 +163,11 @@ impl HostedRequest {
             .parameters
             .retain(|name, _| model.properties.parameter(name).is_some());
 
-        let external = external.filter(|_| {
+        let external = external.filter(|external| {
             request
                 .parameters
                 .keys()
-                .all(|name| openrouter_supports_parameter(name))
+                .all(|name| openrouter_supports_parameter(external.id(), name))
         });
         if local.is_none() && base.is_none() && external.is_none() {
             return Err(no_capacity(&model, adapter.is_some()));

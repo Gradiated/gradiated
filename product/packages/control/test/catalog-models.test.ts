@@ -44,8 +44,8 @@ describe("model configurations", () => {
     },
     "jaredpalmer/kev-9b": { input: [30, 6], output: [0] },
     "moonshotai/kimi-k3.1-pro": {
-      input: [2_000, 2_000],
-      output: [10_000, 10_000],
+      input: [1_800, 180],
+      output: [9_000, 9_000],
     },
   };
 
@@ -72,6 +72,7 @@ describe("model configurations", () => {
       "dealignai/glm-5.3-flash-uncensored": null,
       "dealignai/glm-5.3-flash-uncensored-nvfp4": null,
       "jaredpalmer/kev-9b": undefined,
+      "moonshotai/kimi-k3.1-pro": "moonshotai/kimi-k3.1-pro",
     });
     for (const mapping of Object.values(mappings)) {
       if (typeof mapping === "string") OpenRouterModelIdSchema.parse(mapping);
@@ -129,12 +130,15 @@ describe("model configurations", () => {
   });
 });
 
-it("keeps Kimi unavailable until qualification and advertises its exact reasoning contract", () => {
+it("offers Kimi with an OpenRouter fallback and advertises its exact reasoning contract", () => {
   const model = catalogModels.find(
     (item) => item.id === "moonshotai/kimi-k3.1-pro",
   );
 
-  expect(model?.status).toBe("unavailable");
+  expect(model?.status).toBe("available");
+  expect(
+    model && "openrouterModelId" in model ? model.openrouterModelId : undefined,
+  ).toBe("moonshotai/kimi-k3.1-pro");
   expect(model?.properties).toMatchObject({
     hugging_face_id: "moonshotai/Kimi-K3.1-Pro",
     quantization: "mxfp4",

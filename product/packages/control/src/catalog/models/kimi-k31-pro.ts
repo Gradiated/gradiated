@@ -8,7 +8,9 @@ export const createKimiK31ProModelConfiguration = () =>
   ({
     id: kimiK31ProModelId,
     name: modelDisplayName(kimiK31ProModelId),
-    status: "unavailable",
+    status: "available",
+    // Checked 2026-11-06: OpenRouter's entry has this model's Hugging Face ID.
+    openrouterModelId: "moonshotai/kimi-k3.1-pro",
     properties: {
       description:
         "Moonshot AI's Kimi K3.1 Pro with MXFP4 routed experts, reasoning and tool use.",
@@ -23,8 +25,8 @@ export const createKimiK31ProModelConfiguration = () =>
             max_context_length: { value: 1_048_576, unit: "token" },
           },
           pricing: [
-            { type: "prompt", unit: "token", cost: 2_000 },
-            { type: "cached_prompt", unit: "token", cost: 2_000 },
+            { type: "prompt", unit: "token", cost: 1_800 },
+            { type: "cached_prompt", unit: "token", cost: 180 },
           ],
         },
       ],
@@ -48,8 +50,8 @@ export const createKimiK31ProModelConfiguration = () =>
             reasoning_effort: { type: "enum", values: ["low", "high", "max"] },
           },
           pricing: [
-            { type: "completion", unit: "token", cost: 10_000 },
-            { type: "internal_reasoning", unit: "token", cost: 10_000 },
+            { type: "completion", unit: "token", cost: 9_000 },
+            { type: "internal_reasoning", unit: "token", cost: 9_000 },
           ],
         },
       ],

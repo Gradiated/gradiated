@@ -17,9 +17,9 @@ use super::{
         record_rejection, remaining_until, send, within, RuntimeEvents, CONNECT_TIMEOUT,
     },
     progress::ProgressStream,
-    ChunkUsage, ExternalCapacity, ExternalModel, ExternalRequest, FailureCause, ProtocolViolation,
-    RuntimeClientError, RuntimeCompletion, RuntimeEventStream, RuntimeFailure, RuntimeFailureKind,
-    RuntimeStreamChunk, RuntimeStreamEvent,
+    ChunkUsage, ExternalCapacity, ExternalModel, ExternalRequest, FailureCause, PriceCap,
+    ProtocolViolation, RuntimeClientError, RuntimeCompletion, RuntimeEventStream, RuntimeFailure,
+    RuntimeFailureKind, RuntimeStreamChunk, RuntimeStreamEvent,
 };
 use crate::{config::OpenRouterConfig, model::MAX_SAFE_INTEGER, NormalizedUsage};
 use gradiated_credentials::{CredentialLoader, Provider};
@@ -32,8 +32,36 @@ const MAX_PROVIDER_NAME_CHARS: usize = 100;
 /// rejects them, so a request carrying one stays on our capacity.
 const UNSUPPORTED_PARAMETERS: [&str; 1] = ["chat_template_kwargs"];
 
-pub fn supports_parameter(name: &str) -> bool {
+/// Advertised parameters a specific OpenRouter model does not list in its
+/// `supported_parameters`. With `require_parameters` no provider would match, so a
+/// request carrying one stays on our capacity.
+const MODEL_UNSUPPORTED_PARAMETERS: [(&str, &[&str]); 1] =
+    [("moonshotai/kimi-k3.1-pro", &["parallel_tool_calls"])];
+
+/// Models for which we accept paying OpenRouter more than the caller pays us, as a
+/// percentage of our price. Every other model caps OpenRouter at our price.
+const MODEL_MAX_PRICE_PERCENT: [(&str, u64); 1] = [("moonshotai/kimi-k3.1-pro", 120)];
+
+/// The most OpenRouter may charge per token for this model.
+fn max_price(model_id: &str, cap: PriceCap) -> PriceCap {
+    let percent = MODEL_MAX_PRICE_PERCENT
+        .iter()
+        .find(|(model, _)| *model == model_id)
+        .map_or(100, |(_, percent)| *percent);
+    let scale = |price: u64| {
+        u64::try_from(u128::from(price) * u128::from(percent) / 100).unwrap_or(u64::MAX)
+    };
+    PriceCap {
+        prompt: scale(cap.prompt),
+        completion: scale(cap.completion),
+    }
+}
+
+pub fn supports_parameter(model_id: &str, name: &str) -> bool {
     !UNSUPPORTED_PARAMETERS.contains(&name)
+        && !MODEL_UNSUPPORTED_PARAMETERS
+            .iter()
+            .any(|(model, names)| *model == model_id && names.contains(&name))
 }
 
 #[derive(Clone)]
@@ -167,9 +195,10 @@ impl OpenRouterClient {
             .as_deref()
             .map(|session| scoped_hash(workspace_id, session));
 
+        let max_price = max_price(model.id(), price_cap);
         let mut body = request.into_external_body(output_tokens, model.id());
         // Every request routes only to zero-retention endpoints that collect no data
-        // and charge no more than the caller pays us.
+        // and charge no more than the caller pays us, or the model's accepted overpay.
         body.insert(
             "provider".to_owned(),
             json!({
@@ -177,8 +206,8 @@ impl OpenRouterClient {
                 "require_parameters": true,
                 "zdr": true,
                 "max_price": {
-                    "prompt": usd_per_million(price_cap.prompt),
-                    "completion": usd_per_million(price_cap.completion),
+                    "prompt": usd_per_million(max_price.prompt),
+                    "completion": usd_per_million(max_price.completion),
                 },
             }),
         );

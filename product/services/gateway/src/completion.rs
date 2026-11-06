@@ -18,7 +18,7 @@ use tokio::sync::{mpsc, oneshot, watch};
 use uuid::Uuid;
 
 use self::{
-    dispatch::RuntimeCall,
+    dispatch::{CapacityPlan, LocalTier, RuntimeCall, Target},
     settlement::{
         Delivery, FailedGeneration, GenerationEnd, GenerationSettlement, GenerationTerminal,
     },
@@ -26,12 +26,14 @@ use self::{
     tasks::{force_shutdown_requested, ActiveGeneration, GenerationTasks},
 };
 use crate::{
-    metrics::{AdmittedGenerationMetrics, GenerationScope},
+    coordinator::LocalCapacity,
+    metrics::{AdmittedGenerationMetrics, CapacityMetrics, FallbackReason, GenerationScope},
     protocol::StreamItem,
-    routing::{order_deployments, RoutePrompt},
-    AdmissionLease, BoundedRequest, CancellationOwner, GatewayConfig, GatewayError, GatewayMetrics,
-    GenerationIdentity, InferenceRequest, ModelRuntime, ModelTokenizer, QualifiedRequest, Route,
-    RouteAvailability, RouteInput, ServiceTier, ServingState,
+    routing::{order_deployments, RouteDiagnostics, RoutePrompt},
+    AdmissionLease, BoundedRequest, CancellationOwner, ExternalCapacity, GatewayConfig,
+    GatewayError, GatewayMetrics, GenerationIdentity, InferenceRequest, ModelRuntime,
+    ModelTokenizer, QualifiedRequest, Route, RouteAvailability, RouteInput, ServiceTier,
+    ServingState,
 };
 
 const STREAM_CHANNEL_CAPACITY: usize = 8;
@@ -42,6 +44,7 @@ pub struct CompletionService {
     tokenizer: ModelTokenizer,
     serving_state: Arc<dyn ServingState>,
     runtime: Arc<dyn ModelRuntime>,
+    external: Option<Arc<dyn ExternalCapacity>>,
     config: Arc<GatewayConfig>,
     tasks: GenerationTasks,
     metrics: GatewayMetrics,
@@ -58,10 +61,16 @@ impl CompletionService {
             tokenizer,
             serving_state,
             runtime,
+            external: None,
             config,
             tasks: GenerationTasks::new(),
             metrics: GatewayMetrics::new(),
         }
+    }
+
+    pub fn with_external_capacity(mut self, external: Arc<dyn ExternalCapacity>) -> Self {
+        self.external = Some(external);
+        self
     }
 
     pub fn metrics(&self) -> GatewayMetrics {
@@ -95,8 +104,8 @@ impl CompletionService {
         let streaming = qualified.request.stream;
         let service_tier = qualified.request.service_tier;
         let qualified = self.bound(qualified).await?;
-        let route = self.route(&qualified).await?;
-        let generation = self.admit(qualified, route).await?;
+        let plan = self.plan(&qualified).await?;
+        let generation = self.admit(qualified, plan).await?;
 
         if streaming {
             let result = self.stream(active, generation).await?;
@@ -118,7 +127,11 @@ impl CompletionService {
     }
 
     async fn bound(&self, qualified: QualifiedRequest) -> Result<QualifiedRequest, GatewayError> {
-        if qualified.deployment.release.sends_token_ids() {
+        if qualified
+            .local
+            .as_ref()
+            .is_some_and(|local| local.deployment.release.sends_token_ids())
+        {
             let BoundedRequest { qualified, .. } = self.tokenizer.enforce(qualified).await?;
 
             return Ok(qualified);
@@ -129,10 +142,60 @@ impl CompletionService {
         Ok(qualified)
     }
 
-    async fn route(&self, request: &QualifiedRequest) -> Result<Route, GatewayError> {
+    async fn plan(&self, request: &QualifiedRequest) -> Result<CapacityPlan, GatewayError> {
+        let external = request.external.clone().filter(|_| self.external.is_some());
+
+        let local = match &request.local {
+            Some(local) => self.route(request, local).await?.map(|route| LocalTier {
+                route,
+                served_release_digest: served_release_digest(request, local),
+                adapter: request.adapter.is_some(),
+            }),
+            None => Err(Unroutable::absent(request)),
+        };
+        let base = match &request.base {
+            Some(base) => self
+                .route(request, base)
+                .await?
+                .map(|route| LocalTier {
+                    route,
+                    served_release_digest: base.release_digest.clone(),
+                    adapter: false,
+                })
+                .ok(),
+            None => None,
+        };
+
+        let plan = match (local, base) {
+            (Ok(tier), degraded) => CapacityPlan {
+                degraded,
+                ..CapacityPlan::local(tier)
+            },
+            (Err(unroutable), Some(base)) => CapacityPlan {
+                reason: Some(unroutable.reason),
+                ..CapacityPlan::local(base)
+            },
+            (Err(unroutable), None) => {
+                return match external {
+                    Some(model) => Ok(CapacityPlan::external(model, unroutable.reason)),
+                    None => Err(unroutable.reject(request, &self.metrics)),
+                };
+            }
+        };
+
+        Ok(CapacityPlan { external, ..plan })
+    }
+
+    /// The outer error is a serving-state failure; the inner one means this
+    /// capacity cannot take the request now.
+    async fn route(
+        &self,
+        request: &QualifiedRequest,
+        capacity: &LocalCapacity,
+    ) -> Result<Result<Route, Unroutable>, GatewayError> {
         let statuses = self
             .serving_state
-            .deployment_statuses(&request.served_release_digest)
+            .deployment_statuses(&capacity.release_digest)
             .await
             .map_err(|error| {
                 crate::diagnostics::limited_warn!(generation_id = %request.metadata.generation_id,
@@ -144,50 +207,40 @@ impl CompletionService {
         let availability = order_deployments(RouteInput {
             workspace_id: request.identity.workspace_id,
             model_id: &request.request.model,
-            release_digest: &request.served_release_digest,
+            release_digest: &capacity.release_digest,
             session_id: request.request.session_id.as_deref(),
             prompt: route_prompt(&request.request),
-            deployments: &request.model_deployments,
+            deployments: &capacity.deployments,
             statuses: &statuses,
             now: Utc::now(),
         });
 
-        let (diagnostics, error) = match availability {
-            RouteAvailability::Ready(route) => return Ok(route),
-            RouteAvailability::AtCapacity(diagnostics) => {
-                self.metrics.routing_capacity_rejected(
-                    request
-                        .adapter
-                        .as_ref()
-                        .map_or(request.request.model.as_str(), |adapter| {
-                            adapter.base_model_id.as_str()
-                        }),
-                    request.is_verification,
-                );
-
-                (diagnostics, GatewayError::CapacityExceeded)
-            }
-            RouteAvailability::Unavailable(diagnostics) => {
-                (diagnostics, GatewayError::RuntimeUnavailable)
-            }
+        let unroutable = match availability {
+            RouteAvailability::Ready(route) => return Ok(Ok(route)),
+            RouteAvailability::AtCapacity(diagnostics) => Unroutable {
+                reason: FallbackReason::AtCapacity,
+                error: GatewayError::CapacityExceeded,
+                diagnostics: Some(diagnostics),
+            },
+            RouteAvailability::Unavailable(diagnostics) => Unroutable {
+                reason: FallbackReason::Unavailable,
+                error: GatewayError::RuntimeUnavailable,
+                diagnostics: Some(diagnostics),
+            },
         };
 
-        diagnostics.warn(request.metadata.generation_id, &request.request.model);
-        Err(error)
+        Ok(Err(unroutable))
     }
 
     async fn admit(
         &self,
         request: QualifiedRequest,
-        route: Route,
+        plan: CapacityPlan,
     ) -> Result<Generation, GatewayError> {
         let generation_identity = GenerationIdentity::authenticated(
             &request.identity,
             request.request.model.clone(),
-            request.adapter.as_ref().map_or_else(
-                || request.served_release_digest.clone(),
-                |adapter| adapter.served_digest(&request.served_release_digest),
-            ),
+            plan.target.served_release_digest(),
         )
         .map_err(|error| {
             crate::diagnostics::limited_error!(generation_id = %request.metadata.generation_id,
@@ -209,14 +262,9 @@ impl CompletionService {
             .await;
 
         let scope = GenerationScope {
-            model: request
-                .adapter
-                .as_ref()
-                .map_or(request.request.model.as_str(), |adapter| {
-                    adapter.base_model_id.as_str()
-                }),
-            deployment: route.primary.id,
-            protocol: route.primary.release.protocol_label(),
+            model: metric_model(&request),
+            deployment: plan.target.metric_label(),
+            protocol: plan.target.protocol_label(),
             stream: request.request.stream,
             service_tier: request.request.service_tier,
             is_verification: request.is_verification,
@@ -230,15 +278,23 @@ impl CompletionService {
         };
 
         let metrics = self.metrics.generation_admitted(&scope);
+        let capacity = self
+            .metrics
+            .capacity(metric_model(&request), request.is_verification);
+        if let Some(reason) = plan.reason {
+            capacity.fell_back(plan.target.capacity(), reason);
+        }
 
         Ok(Generation {
             request,
-            route,
+            plan,
             generation_identity,
             lease,
             serving_state: self.serving_state.clone(),
             runtime: self.runtime.clone(),
+            external: self.external.clone(),
             metrics,
+            capacity,
         })
     }
 
@@ -318,6 +374,55 @@ async fn unless_panicked<T>(
     result.ok()
 }
 
+/// Metrics name an adapter's base model, which keeps their labels bounded.
+fn metric_model(request: &QualifiedRequest) -> &str {
+    request
+        .adapter
+        .as_ref()
+        .map_or(request.request.model.as_str(), |adapter| {
+            adapter.base_model_id.as_str()
+        })
+}
+
+fn served_release_digest(request: &QualifiedRequest, local: &LocalCapacity) -> String {
+    request.adapter.as_ref().map_or_else(
+        || local.release_digest.clone(),
+        |adapter| adapter.served_digest(&local.release_digest),
+    )
+}
+
+struct Unroutable {
+    reason: FallbackReason,
+    error: GatewayError,
+    diagnostics: Option<RouteDiagnostics>,
+}
+
+impl Unroutable {
+    fn absent(request: &QualifiedRequest) -> Self {
+        Self {
+            reason: FallbackReason::NoDeployment,
+            error: if request.adapter.is_some() {
+                GatewayError::ModelUnavailable
+            } else {
+                GatewayError::RuntimeUnavailable
+            },
+            diagnostics: None,
+        }
+    }
+
+    fn reject(self, request: &QualifiedRequest, metrics: &GatewayMetrics) -> GatewayError {
+        if self.reason == FallbackReason::AtCapacity {
+            metrics.routing_capacity_rejected(metric_model(request), request.is_verification);
+        }
+
+        if let Some(diagnostics) = self.diagnostics {
+            diagnostics.warn(request.metadata.generation_id, &request.request.model);
+        }
+
+        self.error
+    }
+}
+
 fn route_prompt(request: &InferenceRequest) -> RoutePrompt<'_> {
     if let Some(decision) = &request.decision {
         return RoutePrompt::DecisionState(&decision.state);
@@ -367,12 +472,14 @@ impl CompletionResult {
 /// exactly one settlement, whichever way it ends.
 struct Generation {
     request: QualifiedRequest,
-    route: Route,
+    plan: CapacityPlan,
     generation_identity: GenerationIdentity,
     lease: AdmissionLease,
     serving_state: Arc<dyn ServingState>,
     runtime: Arc<dyn ModelRuntime>,
+    external: Option<Arc<dyn ExternalCapacity>>,
     metrics: AdmittedGenerationMetrics,
+    capacity: CapacityMetrics,
 }
 
 impl Generation {
@@ -383,6 +490,7 @@ impl Generation {
     fn start(self) -> (RuntimeCall, GenerationSettlement) {
         let QualifiedRequest {
             metadata,
+            identity,
             request,
             effective_output_tokens,
             pricing,
@@ -392,13 +500,16 @@ impl Generation {
 
         let call = RuntimeCall {
             runtime: self.runtime,
+            external_runtime: self.external,
             generation_id: metadata.generation_id,
+            workspace_id: identity.workspace_id,
             request,
             effective_output_tokens,
             deadline: self.lease.request_deadline(),
-            deployment: self.route.primary,
-            fallbacks: self.route.fallbacks,
+            plan: self.plan,
+            local_attempts: 0,
             attempts: 0,
+            capacity_metrics: self.capacity,
         };
 
         let settlement = GenerationSettlement {
@@ -411,10 +522,12 @@ impl Generation {
             started_at,
             streamed: call.request.stream,
             metrics: self.metrics,
+            capacity: call.plan.target.capacity(),
+            fallback_reason: call.plan.reason,
         };
 
-        for fallback in &call.fallbacks {
-            settlement.metrics.prepare_deployment(fallback.id);
+        for target in call.plan.later_labels() {
+            settlement.metrics.prepare_deployment(target);
         }
 
         (call, settlement)
@@ -432,7 +545,7 @@ impl Generation {
             _ = &mut cancellation => Err(FailedGeneration::cancelled(CancellationOwner::Client)),
             _ = force_shutdown_requested(&mut shutdown) => Err(FailedGeneration::cancelled(CancellationOwner::Server)),
         };
-        settlement.metrics.served_by(call.deployment.id);
+        settlement.served_by(&call);
 
         let completion = match dispatched {
             Ok(completion) => completion,
@@ -443,6 +556,7 @@ impl Generation {
             end: GenerationEnd::finished(completion.finish_reason().to_owned(), call.generation_id),
             usage: completion.usage(),
             delivery: Delivery::Buffered,
+            upstream_cost_nano_usd: completion.upstream_cost_nano_usd(),
         };
         let settled = settlement.settle(terminal).await?;
 
@@ -491,7 +605,7 @@ impl Generation {
                 }
             }
         };
-        settlement.metrics.served_by(call.deployment.id);
+        settlement.served_by(&call);
 
         let mut runtime_stream = match opened {
             Ok(runtime_stream) => runtime_stream,
@@ -522,16 +636,7 @@ impl Generation {
             let stop = unless_panicked(call.generation_id, relay)
                 .await
                 .unwrap_or(StreamStop::Panicked);
-            let retry = match &stop {
-                StreamStop::RuntimeFailed(failure)
-                    if failure.kind() == crate::RuntimeFailureKind::CapacityExceeded
-                        && progress.can_retry_before_any_frame() =>
-                {
-                    call.retry_stream_target(failure, attempt_started)
-                }
-                _ => false,
-            };
-            if !retry {
+            if !stop.fall_back(&mut call, &progress, attempt_started, settlement.started_at) {
                 break stop;
             }
 
@@ -542,7 +647,7 @@ impl Generation {
                 _ = events.closed() => Err(FailedGeneration::cancelled(CancellationOwner::Client)),
                 _ = force_shutdown_requested(&mut shutdown) => Err(FailedGeneration::cancelled(CancellationOwner::Server)),
             };
-            settlement.metrics.served_by(call.deployment.id);
+            settlement.served_by(&call);
             match reopened {
                 Ok(stream) => {
                     runtime_stream = stream;
@@ -555,7 +660,17 @@ impl Generation {
                 }
             }
         };
-        stop.warn_if_abnormal(&call, &progress, settlement.started_at);
+        stop.warn_if_abnormal(
+            &call,
+            &call.plan.target,
+            &progress,
+            settlement.started_at,
+            None,
+        );
+        if matches!(stop, StreamStop::ClientGone) && matches!(call.plan.target, Target::External(_))
+        {
+            progress.collect_final_usage(&mut runtime_stream).await;
+        }
         drop(runtime_stream);
 
         let client_gone = matches!(stop, StreamStop::ClientGone);

@@ -46,7 +46,13 @@ impl ModelTokenizer {
     }
 
     async fn encode(&self, qualified: &QualifiedRequest) -> Result<Vec<u32>, GatewayError> {
-        let release = &qualified.deployment.release;
+        // Without a deployment of the model there is no pinned tokenizer to count with.
+        let release = qualified
+            .local
+            .as_ref()
+            .or(qualified.base.as_ref())
+            .map(|local| &local.deployment.release)
+            .ok_or(GatewayError::ModelUnavailable)?;
         let tokenizer = self
             .tokenizer(release)
             .await

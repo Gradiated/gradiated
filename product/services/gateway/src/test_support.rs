@@ -42,6 +42,7 @@ impl TestServingState {
                 workspace_id: WORKSPACE_ID,
                 expires_at: None,
                 revoked_at: None,
+                openrouter_channel: Some(false),
             }),
             workspace: Some(GatewayWorkspace {
                 organization_id: ORGANIZATION_ID,

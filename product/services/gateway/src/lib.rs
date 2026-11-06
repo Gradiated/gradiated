@@ -40,7 +40,7 @@ pub use coordinator::RequestCoordinator;
 pub use http::{browser_cors, router, GatewayState};
 pub use postgres_reader::PostgresReader;
 pub use readiness::DependencyReadiness;
-pub use runtime::{RuntimeTlsConfig, SglangClient};
+pub use runtime::{OpenRouterClient, RuntimeTlsConfig, SglangClient};
 pub use serving_state::ValkeyServingState;
 pub use tokenizer::ModelTokenizer;
 
@@ -71,8 +71,8 @@ pub(crate) use model::{
 pub(crate) use request::{InferenceRequest, OutputTokenLimit, RequestKind};
 pub(crate) use routing::{healthy_deployment_count, Route, RouteAvailability, RouteInput};
 pub(crate) use runtime::{
-    ModelRuntime, RuntimeCompletion, RuntimeEventStream, RuntimeFailure, RuntimeFailureKind,
-    RuntimeStreamChunk, RuntimeStreamEvent,
+    ExternalCapacity, ExternalModel, ExternalRequest, ModelRuntime, RuntimeCompletion,
+    RuntimeEventStream, RuntimeFailure, RuntimeFailureKind, RuntimeStreamChunk, RuntimeStreamEvent,
 };
 pub(crate) use service_tier::ServiceTier;
 pub(crate) use serving_state::ServingState;

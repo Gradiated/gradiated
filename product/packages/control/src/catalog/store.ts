@@ -32,6 +32,7 @@ export const createCatalogStore = (
     const record = ModelRecordSchema.parse({
       ...input,
       properties,
+      openrouterModelId: input.openrouterModelId ?? null,
       createdAt: now,
       updatedAt: now,
     });
@@ -45,6 +46,7 @@ export const createCatalogStore = (
           name: record.name,
           status: record.status,
           properties: record.properties,
+          openrouterModelId: record.openrouterModelId,
           updatedAt: now,
         },
       })

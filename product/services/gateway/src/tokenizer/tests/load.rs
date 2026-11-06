@@ -15,7 +15,7 @@ use crate::{
 #[tokio::test]
 async fn concurrent_requests_share_one_compiled_tokenizer() {
     let qualified = qualified(None);
-    let release = &qualified.deployment.release;
+    let release = &qualified.local_capacity().deployment.release;
     let registry = ModelTokenizer::seeded(release, chat_tokenizer());
 
     let (first, second) = tokio::join!(registry.tokenizer(release), registry.tokenizer(release));
@@ -29,7 +29,7 @@ async fn concurrent_requests_share_one_compiled_tokenizer() {
 async fn a_cached_release_loads_without_the_hub_api_and_a_missing_template_is_optional() {
     let hub = Hub::answering(StatusCode::NOT_FOUND).await;
     let qualified = qualified(None);
-    hub.cache_release(&qualified.deployment.release);
+    hub.cache_release(&qualified.local_capacity().deployment.release);
 
     let count = hub.tokenizer.count(&qualified).await;
 
@@ -50,7 +50,10 @@ async fn a_failed_load_is_logged_once_and_retried_only_after_a_backoff() {
 
     let failed = hub.tokenizer.count(&qualified).await;
     let attempts = hub.requests();
-    let backing_off = hub.tokenizer.decoder(&qualified.deployment.release).await;
+    let backing_off = hub
+        .tokenizer
+        .decoder(&qualified.local_capacity().deployment.release)
+        .await;
 
     assert_eq!(failed, Err(GatewayError::ServingStateUnavailable));
     assert!(attempts > 0);
@@ -60,7 +63,7 @@ async fn a_failed_load_is_logged_once_and_retried_only_after_a_backoff() {
     assert_eq!(events.len(), 1);
     assert_eq!(events[0]["fields"]["error_code"], "hub");
 
-    let key = TokenizerRelease::from(&qualified.deployment.release);
+    let key = TokenizerRelease::from(&qualified.local_capacity().deployment.release);
     let slot = hub.tokenizer.loaded.lock().unwrap()[&key].clone();
     *slot.failed_at.lock().unwrap() = Instant::now().checked_sub(LOAD_RETRY_BACKOFF);
 
@@ -80,4 +83,14 @@ async fn a_hub_that_never_answers_times_out() {
 
     assert_eq!(count, Err(GatewayError::ServingStateUnavailable));
     assert_eq!(logs.events()[0]["fields"]["error_code"], "timeout");
+}
+
+#[tokio::test]
+async fn a_model_without_a_deployment_has_no_tokenizer_to_count_with() {
+    let mut qualified = qualified(None);
+    qualified.local = None;
+
+    let count = ModelTokenizer::new().unwrap().count(&qualified).await;
+
+    assert_eq!(count, Err(GatewayError::ModelUnavailable));
 }

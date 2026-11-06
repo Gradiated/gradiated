@@ -91,8 +91,8 @@ impl Tenant {
             .unwrap();
         client
             .execute(
-                "insert into models (id, name, status, properties)
-                 values ($1, $2, 'available', $3::text::jsonb)",
+                "insert into models (id, name, status, properties, openrouter_model_id)
+                 values ($1, $2, 'available', $3::text::jsonb, 'author/reader-test')",
                 &[&model_id, &model.name, &record["properties"].to_string()],
             )
             .await
@@ -197,6 +197,7 @@ async fn a_model_deserializes_into_the_type_the_gateway_serves() {
 
     assert_eq!(model.id, tenant.model_id);
     assert_eq!(model.deployments.len(), 1);
+    assert_eq!(model.openrouter_model(), Some("author/reader-test"));
     model
         .properties
         .validate_for_serving()
@@ -220,6 +221,38 @@ async fn a_credential_and_its_workspace_deserialize_together() {
         serde_json::from_str(&record).expect("the query should build the served shape");
     assert_eq!(credential.workspace_id, tenant.workspace_id);
     assert_eq!(credential.organization_id, tenant.organization_id);
+    assert_eq!(credential.openrouter_channel, Some(false));
+
+    let organization = tenant.organization_id.to_string();
+    let rename = |kind: &str, name: &str| {
+        format!(
+            "update organizations set kind = '{kind}', name = '{name}' where id = '{organization}'"
+        )
+    };
+    for (kind, name, expected) in [
+        ("distribution_channel", "OpenRouter", true),
+        ("distribution_channel", "Another channel", false),
+        ("customer", "OpenRouter", false),
+    ] {
+        reader
+            .client()
+            .await
+            .unwrap()
+            .batch_execute(&rename(kind, name))
+            .await
+            .unwrap();
+        let record = reader
+            .credential_json(&tenant.digest)
+            .await
+            .unwrap()
+            .unwrap();
+        let credential: GatewayCredential = serde_json::from_str(&record).unwrap();
+        assert_eq!(
+            credential.openrouter_channel,
+            Some(expected),
+            "{kind} {name}"
+        );
+    }
 
     let record = reader
         .workspace_json(credential.workspace_id)

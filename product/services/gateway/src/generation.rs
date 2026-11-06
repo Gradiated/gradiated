@@ -443,6 +443,14 @@ impl GenerationIdentity {
         })
     }
 
+    /// The release that actually served. Our own digests are always well formed;
+    /// a malformed one keeps the admitted identity rather than corrupting the event.
+    pub(crate) fn serve_release(&mut self, served_release_digest: String) {
+        if valid_release_digest(&served_release_digest) {
+            self.served_release_digest = served_release_digest;
+        }
+    }
+
     #[cfg(test)]
     pub fn new(
         _external_id: Option<std::convert::Infallible>,

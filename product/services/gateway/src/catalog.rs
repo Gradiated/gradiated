@@ -17,6 +17,7 @@ const NANO_USD_SCALE: u64 = 1_000_000_000;
 pub struct CatalogModel {
     pub model: GatewayModel,
     pub healthy_deployments: u64,
+    pub external_capacity: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -67,7 +68,7 @@ impl<'a> ProviderModel<'a> {
         let properties = &model.properties;
         let released_at = properties.released_at.as_ref()?;
         let is_ready = match model.status {
-            ModelStatus::Available => catalog.healthy_deployments > 0,
+            ModelStatus::Available => catalog.healthy_deployments > 0 || catalog.external_capacity,
             ModelStatus::Unavailable => false,
             ModelStatus::Retired => return None,
         };
@@ -78,7 +79,7 @@ impl<'a> ProviderModel<'a> {
             .filter(|deployment| deployment.validate().is_ok())
             .collect::<Vec<_>>();
 
-        if valid_deployments.is_empty() {
+        if valid_deployments.is_empty() && !catalog.external_capacity {
             return None;
         }
 
@@ -96,7 +97,12 @@ impl<'a> ProviderModel<'a> {
                 region,
             })
             .collect::<Vec<_>>();
-        let deployment_region = single_country(&datacenters);
+        // Another provider may serve the request, so no residency can be promised.
+        let deployment_region = if catalog.external_capacity {
+            None
+        } else {
+            single_country(&datacenters)
+        };
 
         Some(Self {
             schema_version: PROVIDER_SCHEMA_VERSION,
@@ -298,6 +304,7 @@ mod tests {
         let models = [CatalogModel {
             model,
             healthy_deployments,
+            external_capacity: false,
         }];
         let compliance = ProviderCompliance {
             zdr: true,

@@ -99,7 +99,13 @@ select json_build_object(
     'organization_id', organization_id,
     'workspace_id', workspace_id,
     'expires_at', expires_at,
-    'revoked_at', revoked_at
+    'revoked_at', revoked_at,
+    'openrouter_channel', exists (
+      select 1 from organizations
+      where organizations.id = api_keys.organization_id
+        and organizations.kind = 'distribution_channel'
+        and organizations.name = 'OpenRouter'
+    )
   )::text
 from api_keys
 where digest = $1";
@@ -143,6 +149,7 @@ select json_build_object(
     'name', models.name,
     'status', models.status,
     'properties', models.properties,
+    'openrouter_model_id', models.openrouter_model_id,
     'deployments', coalesce(
       (
         select json_agg(

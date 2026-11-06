@@ -81,15 +81,23 @@ export class Case {
   readonly http: Client;
   creditedBalance = BALANCE;
 
+  readonly openRouterModel: string | null;
+  readonly organizationKind: OrganizationKind;
+  readonly organizationName: string;
+
   private constructor(
     connections: Connections,
     readonly kind: RuntimeKind,
     readonly model: string,
     readonly runtimeModel: string,
     readonly runtimes: Runtime[],
-    runtimeRevision?: string,
-    modelRevision?: string,
+    options: CaseOptions,
   ) {
+    const { runtimeRevision, modelRevision } = options;
+    this.openRouterModel = options.openRouterModel ?? null;
+    this.organizationKind = options.organizationKind ?? "customer";
+    this.organizationName =
+      options.organizationName ?? `case-${this.organization}`;
     this.redis = connections.redis;
     this.database = connections.database;
     this.http = connections.http;
@@ -142,16 +150,19 @@ export class Case {
       model,
       runtimeModel,
       runtimes,
-      options.runtimeRevision,
-      options.modelRevision,
+      options,
     );
 
     // The tenant exists in PostgreSQL. The gateway caches what it reads, so no
     // test seeds Valkey: that would hide a query this suite is here to exercise.
     await database.query(
       `insert into organizations (id, kind, name, status)
-       values ($1, 'customer', $2, 'active')`,
-      [instance.organization, `case-${instance.organization}`],
+       values ($1, $2, $3, 'active')`,
+      [
+        instance.organization,
+        instance.organizationKind,
+        instance.organizationName,
+      ],
     );
     await database.query(
       `insert into billing_accounts (organization_id, mode, balance)
@@ -279,16 +290,18 @@ export class Case {
 
   async publish(): Promise<void> {
     await this.database.query(
-      `insert into models (id, name, status, properties)
-       values ($1, $2, $3, $4)
+      `insert into models (id, name, status, properties, openrouter_model_id)
+       values ($1, $2, $3, $4, $5)
        on conflict (id) do update
        set name = excluded.name, status = excluded.status,
-           properties = excluded.properties, updated_at = now()`,
+           properties = excluded.properties,
+           openrouter_model_id = excluded.openrouter_model_id, updated_at = now()`,
       [
         this.model,
         this.record.name,
         this.record.status,
         JSON.stringify(this.record.properties),
+        this.openRouterModel,
       ],
     );
     await this.database.query(
@@ -503,8 +516,15 @@ export class Case {
   }
 }
 
+export type OrganizationKind = "customer" | "distribution_channel";
+
 export interface CaseOptions {
   replicas?: number;
+  /** Maps the case's model to this OpenRouter model. */
+  openRouterModel?: string;
+  organizationKind?: OrganizationKind;
+  /** OpenRouter's own organization is the distribution channel named "OpenRouter". */
+  organizationName?: string;
   upstream?: Upstream;
   gatewayUrl?: string;
   runtimeRevision?: string;

@@ -18,9 +18,24 @@ pub struct GatewayModel {
     pub status: ModelStatus,
     pub properties: GatewayModelProperties,
     pub deployments: Vec<GatewayModelDeployment>,
+    #[serde(default)]
+    pub openrouter_model_id: Option<String>,
 }
 
 impl GatewayModel {
+    /// The exact OpenRouter model that can serve this one. A malformed mapping is
+    /// ignored rather than trusted, so it can never route to a different variant.
+    pub fn openrouter_model(&self) -> Option<&str> {
+        let id = self.openrouter_model_id.as_deref()?;
+        if valid_openrouter_model_id(id) {
+            return Some(id);
+        }
+
+        crate::diagnostics::limited_warn!(model_id = %self.id,
+            error_code = "invalid_openrouter_model_id", "model's OpenRouter mapping is ignored");
+        None
+    }
+
     pub fn serving_deployment(&self) -> Result<ServingDeployment<'_>, ServingDeploymentError> {
         let deployment = self
             .deployments
@@ -38,6 +53,26 @@ impl GatewayModel {
             release_digest,
         })
     }
+}
+
+/// `author/slug` without a `:variant` suffix or a `~` moving alias: both name a
+/// different routing variant or a model that can change underneath the mapping.
+pub(crate) fn valid_openrouter_model_id(id: &str) -> bool {
+    let segment = |value: &str| {
+        !value.is_empty()
+            && value
+                .bytes()
+                .next()
+                .is_some_and(|first| first.is_ascii_lowercase() || first.is_ascii_digit())
+            && value.bytes().all(|byte| {
+                byte.is_ascii_lowercase() || byte.is_ascii_digit() || b"._-".contains(&byte)
+            })
+    };
+
+    id.len() <= 200
+        && id
+            .split_once('/')
+            .is_some_and(|(author, slug)| segment(author) && segment(slug))
 }
 
 #[derive(Debug, PartialEq)]
@@ -462,6 +497,46 @@ mod tests {
 
     fn range(min: f64, max: f64) -> ModelParameterDescriptor {
         ModelParameterDescriptor::Range { min, max }
+    }
+
+    #[test]
+    fn an_openrouter_mapping_names_one_exact_model() {
+        for valid in [
+            "z-ai/glm-5.3-flash",
+            "deepseek/deepseek-v4.1-flash",
+            "meta-llama/llama_4.1",
+        ] {
+            assert!(valid_openrouter_model_id(valid), "{valid}");
+        }
+
+        for invalid in [
+            "",
+            "z-ai",
+            "z-ai/",
+            "/glm-5.3-flash",
+            "z-ai/glm-5.3-flash:free",
+            "z-ai/glm-5.3-flash:nitro",
+            "~z-ai/glm-latest",
+            "Z-AI/GLM-5.3-Flash",
+            "z-ai/glm/5.3",
+            "z-ai/-glm",
+            "z-ai/glm 5.3",
+            &format!("z-ai/{}", "a".repeat(200)),
+        ] {
+            assert!(!valid_openrouter_model_id(invalid), "{invalid}");
+        }
+    }
+
+    #[test]
+    fn a_malformed_mapping_is_absent_rather_than_trusted() {
+        let mut model = test_support::model(true);
+        assert_eq!(model.openrouter_model(), None);
+
+        model.openrouter_model_id = Some("z-ai/glm-5.3-flash".to_owned());
+        assert_eq!(model.openrouter_model(), Some("z-ai/glm-5.3-flash"));
+
+        model.openrouter_model_id = Some("z-ai/glm-5.3-flash:free".to_owned());
+        assert_eq!(model.openrouter_model(), None);
     }
 
     #[test]

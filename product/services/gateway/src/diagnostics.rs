@@ -47,13 +47,24 @@ impl LogBudget {
 }
 
 // One fixed-size budget per call site and process. No user-controlled keys or growing maps.
+// Tests run concurrently in one process, so each test thread has a budget of its own.
 macro_rules! limited {
     ($level:expr, $($fields:tt)*) => {{
+        #[cfg(not(test))]
         static BUDGET: std::sync::LazyLock<std::sync::Mutex<$crate::diagnostics::LogBudget>> =
             std::sync::LazyLock::new(Default::default);
+        #[cfg(test)]
+        thread_local! {
+            static BUDGET: std::sync::Mutex<$crate::diagnostics::LogBudget> = Default::default();
+        }
 
         if tracing::enabled!($level) {
-            if let Some(suppressed_events) = $crate::diagnostics::LogBudget::take_now(&BUDGET) {
+            #[cfg(not(test))]
+            let taken = $crate::diagnostics::LogBudget::take_now(&BUDGET);
+            #[cfg(test)]
+            let taken = BUDGET.with($crate::diagnostics::LogBudget::take_now);
+
+            if let Some(suppressed_events) = taken {
                 tracing::event!($level, suppressed_events, $($fields)*);
             }
         }

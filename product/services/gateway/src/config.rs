@@ -1,5 +1,6 @@
 use std::{env, fmt, net::SocketAddr, time::Duration};
 
+use axum::http::Uri;
 use serde::Deserialize;
 use thiserror::Error;
 use validator::Validate;
@@ -8,6 +9,7 @@ use crate::{catalog::ProviderCompliance, model::MAX_SAFE_INTEGER};
 
 /// The official SDKs time out after 600 seconds.
 const MAX_REQUEST_SECONDS: u64 = 630;
+const DEFAULT_OPENROUTER_BASE_URL: &str = "https://openrouter.ai/api/v1";
 
 #[cfg(test)]
 const MINIMAL_ENVIRONMENT: [(&str, &str); 3] = [
@@ -39,6 +41,25 @@ pub struct GatewayConfig {
 
     pub sglang_api_key: Option<String>,
     pub verification_workspace_id: Option<uuid::Uuid>,
+    pub openrouter: OpenRouterConfig,
+}
+
+/// Gradiated's own OpenRouter account; never a customer's key, never sent to a runtime.
+#[derive(Clone, Eq, PartialEq)]
+pub struct OpenRouterConfig {
+    /// Without one, the key is the active slot of the `providers/openrouter` secret.
+    pub api_key: Option<String>,
+    pub base_url: String,
+}
+
+impl fmt::Debug for OpenRouterConfig {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("OpenRouterConfig")
+            .field("api_key", &self.api_key.as_ref().map(|_| "<redacted>"))
+            .field("base_url", &self.base_url)
+            .finish()
+    }
 }
 
 impl GatewayConfig {
@@ -121,6 +142,7 @@ impl fmt::Debug for GatewayConfig {
                 "sglang_api_key",
                 &self.sglang_api_key.as_ref().map(|_| REDACTED),
             )
+            .field("openrouter", &self.openrouter)
             .finish()
     }
 }
@@ -130,6 +152,7 @@ impl TryFrom<Environment> for GatewayConfig {
 
     fn try_from(environment: Environment) -> Result<Self, ConfigError> {
         let valkey_iam = environment.valkey_iam()?;
+        let openrouter = environment.openrouter()?;
         let browser_origins = environment
             .browser_origins
             .as_deref()
@@ -161,6 +184,7 @@ impl TryFrom<Environment> for GatewayConfig {
             valkey_iam,
             sglang_api_key: environment.sglang_api_key.filter(|value| !value.is_empty()),
             verification_workspace_id: environment.gateway_verification_workspace_id,
+            openrouter,
         })
     }
 }
@@ -234,9 +258,33 @@ struct Environment {
     valkey_iam_user: Option<String>,
 
     sglang_api_key: Option<String>,
+
+    openrouter_api_key: Option<String>,
+    openrouter_base_url: Option<String>,
 }
 
 impl Environment {
+    fn openrouter(&self) -> Result<OpenRouterConfig, ConfigError> {
+        let base_url = self
+            .openrouter_base_url
+            .as_deref()
+            .filter(|url| !url.is_empty())
+            .unwrap_or(DEFAULT_OPENROUTER_BASE_URL)
+            .trim_end_matches('/')
+            .to_owned();
+        if !secure_or_loopback(&base_url) {
+            return Err(ConfigError::OpenRouterBaseUrl);
+        }
+
+        Ok(OpenRouterConfig {
+            api_key: self
+                .openrouter_api_key
+                .clone()
+                .filter(|key| !key.is_empty()),
+            base_url,
+        })
+    }
+
     fn valkey_iam(&self) -> Result<Option<ValkeyIamConfig>, ConfigError> {
         let (cache_name, region, user) = match (
             &self.valkey_iam_cache_name,
@@ -268,6 +316,19 @@ pub struct ValkeyIamConfig {
     pub cache_name: String,
     pub region: String,
     pub user: String,
+}
+
+/// Plain HTTP is accepted only for a loopback test double.
+fn secure_or_loopback(url: &str) -> bool {
+    let Ok(uri) = url.parse::<Uri>() else {
+        return false;
+    };
+
+    match (uri.scheme_str(), uri.host()) {
+        (Some("https"), Some(_)) => true,
+        (Some("http"), Some(host)) => matches!(host, "127.0.0.1" | "localhost" | "[::1]"),
+        _ => false,
+    }
 }
 
 fn default_bind_address() -> SocketAddr {
@@ -314,6 +375,8 @@ pub enum ConfigError {
     IncompleteValkeyIam,
     #[error("Valkey IAM configuration values must not be empty")]
     EmptyValkeyIam,
+    #[error("OPENROUTER_BASE_URL must be an HTTPS URL, or HTTP on a loopback host")]
+    OpenRouterBaseUrl,
 }
 
 #[cfg(test)]
@@ -378,6 +441,54 @@ mod tests {
         assert_eq!(config.database_ca_bundle_path, None);
         assert!(config.compliance().zdr);
         assert!(!config.compliance().hipaa);
+    }
+
+    #[test]
+    fn the_openrouter_key_comes_from_the_environment_or_else_the_provider_secret() {
+        let production = minimal_with(&[]).unwrap().openrouter;
+        assert_eq!(production.api_key, None);
+        assert_eq!(production.base_url, DEFAULT_OPENROUTER_BASE_URL);
+        assert_eq!(
+            minimal_with(&[("OPENROUTER_API_KEY", "")])
+                .unwrap()
+                .openrouter
+                .api_key,
+            None
+        );
+
+        let local = minimal_with(&[
+            ("OPENROUTER_API_KEY", "platform-key"),
+            ("OPENROUTER_BASE_URL", "http://127.0.0.1:4100/api/v1/"),
+        ])
+        .unwrap();
+        assert_eq!(
+            local.openrouter,
+            OpenRouterConfig {
+                api_key: Some("platform-key".to_owned()),
+                base_url: "http://127.0.0.1:4100/api/v1".to_owned(),
+            }
+        );
+        assert_eq!(local.sglang_api_key, None);
+    }
+
+    #[test]
+    fn openrouter_capacity_rejects_an_insecure_url() {
+        for url in [
+            "http://openrouter.ai/api/v1",
+            "ftp://127.0.0.1/api",
+            "not a url",
+        ] {
+            assert!(
+                matches!(
+                    minimal_with(&[
+                        ("OPENROUTER_API_KEY", "platform-key"),
+                        ("OPENROUTER_BASE_URL", url),
+                    ]),
+                    Err(ConfigError::OpenRouterBaseUrl)
+                ),
+                "{url}"
+            );
+        }
     }
 
     #[test]
@@ -452,11 +563,17 @@ mod tests {
                 "rediss://default:valkey-secret@valkey.internal:6379",
             ),
             ("SGLANG_API_KEY", "runtime-secret"),
+            ("OPENROUTER_API_KEY", "platform-secret"),
         ])
         .expect("the environment parses");
         let debug = format!("{config:?}");
 
-        for secret in ["db-secret", "valkey-secret", "runtime-secret"] {
+        for secret in [
+            "db-secret",
+            "valkey-secret",
+            "runtime-secret",
+            "platform-secret",
+        ] {
             assert!(!debug.contains(secret), "{secret} leaked into {debug}");
         }
     }

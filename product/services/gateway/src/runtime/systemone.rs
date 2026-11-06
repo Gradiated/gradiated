@@ -45,6 +45,7 @@ impl SglangClient {
             response,
             usage,
             finish_reason: "stop".to_owned(),
+            upstream_cost_nano_usd: None,
         })
     }
 }

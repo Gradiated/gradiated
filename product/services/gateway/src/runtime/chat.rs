@@ -256,6 +256,7 @@ pub(super) fn normalize_completion(
         response: serde_json::to_value(response).map_err(|_| ProtocolViolation::Json)?,
         finish_reason,
         usage,
+        upstream_cost_nano_usd: None,
     })
 }
 
@@ -337,11 +338,12 @@ impl ChatStreamNormalizer {
             finish_reason,
             usable_output,
             usage,
+            upstream_cost_nano_usd: None,
         })
     }
 }
 
-fn valid_response_id(id: &str) -> bool {
+pub(super) fn valid_response_id(id: &str) -> bool {
     !id.is_empty() && id.chars().count() <= MAX_RESPONSE_TEXT_CHARS
 }
 
@@ -396,7 +398,7 @@ pub(super) struct StreamChoice {
 
 impl StreamChoice {
     /// Text, reasoning or a tool call. Role-only and empty deltas are not output.
-    fn has_usable_output(&self) -> bool {
+    pub(super) fn has_usable_output(&self) -> bool {
         let text = |name: &str| {
             self.delta
                 .get(name)

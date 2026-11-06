@@ -16,9 +16,10 @@ use crate::{
     model::{ModelStatus, ServingDeployment, ServingDeploymentError, TextOutputModality},
     protocol::Protocol,
     request::parse_target,
+    runtime::openrouter_supports_parameter,
     serving_state::{ServingState, ServingStateError},
-    CatalogModel, GatewayError, GatewayModel, GatewayModelDeployment, InferenceRequest,
-    RequestKind,
+    CatalogModel, ExternalModel, GatewayError, GatewayModel, GatewayModelDeployment,
+    InferenceRequest, RequestKind,
 };
 
 /// A runtime scheduling hint that only internal callers may set.
@@ -35,15 +36,52 @@ pub struct QualifiedRequest {
     pub metadata: RequestMetadata,
     pub is_verification: bool,
     pub identity: AuthenticatedIdentity,
-    pub deployment: GatewayModelDeployment,
-    pub model_deployments: Vec<GatewayModelDeployment>,
-    pub served_release_digest: String,
+    pub local: Option<LocalCapacity>,
+    /// For an adapter, the base model's deployments, which serve it without the adapter.
+    pub base: Option<LocalCapacity>,
+    pub external: Option<ExternalModel>,
     pub max_context_tokens: u64,
     pub max_prompt_tokens: u64,
     pub effective_output_tokens: u64,
     pub pricing: CapturedPricing,
     pub request: InferenceRequest,
     pub adapter: Option<crate::PrivateAdapter>,
+}
+
+#[cfg(test)]
+impl QualifiedRequest {
+    pub(crate) fn local_capacity(&self) -> &LocalCapacity {
+        self.local.as_ref().expect("the request has local capacity")
+    }
+
+    pub(crate) fn local_capacity_mut(&mut self) -> &mut LocalCapacity {
+        self.local.as_mut().expect("the request has local capacity")
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct LocalCapacity {
+    pub deployment: GatewayModelDeployment,
+    pub deployments: Vec<GatewayModelDeployment>,
+    pub release_digest: String,
+}
+
+impl LocalCapacity {
+    /// `None` when the model has no available deployment.
+    fn of(model: &GatewayModel) -> Result<Option<Self>, GatewayError> {
+        match model.serving_deployment() {
+            Ok(ServingDeployment {
+                deployment,
+                release_digest,
+            }) => Ok(Some(Self {
+                deployment: deployment.clone(),
+                deployments: model.deployments.clone(),
+                release_digest,
+            })),
+            Err(ServingDeploymentError::Missing) => Ok(None),
+            Err(error) => Err(inconsistent_state(error.diagnostic_code())),
+        }
+    }
 }
 
 pub struct ClassifiedRequest {
@@ -56,6 +94,8 @@ pub struct HostedRequest {
     cache_key: Option<crate::session_affinity::CacheKey>,
     identity: AuthenticatedIdentity,
     model: GatewayModel,
+    base: Option<GatewayModel>,
+    external: Option<ExternalModel>,
     adapter: Option<crate::PrivateAdapter>,
 }
 
@@ -71,6 +111,8 @@ impl HostedRequest {
             cache_key,
             identity,
             model,
+            base,
+            external,
             adapter,
         } = self;
 
@@ -86,15 +128,19 @@ impl HostedRequest {
         request.session_id = cache_key.as_ref().map(|key| key.value.clone());
         crate::session_telemetry::record_effective(cache_key.as_ref(), request.decision.is_some());
 
-        let ServingDeployment {
-            deployment,
-            release_digest,
-        } = model
-            .serving_deployment()
-            .map_err(|error| inconsistent_state(error.diagnostic_code()))?;
-        let deployment = deployment.clone();
+        let local = LocalCapacity::of(&model)?;
+        let base = base
+            .map(|base| LocalCapacity::of(&base))
+            .transpose()?
+            .flatten();
+        if local.is_none() && base.is_none() && external.is_none() {
+            return Err(no_capacity(&model, adapter.is_some()));
+        }
 
-        if request.decision.is_some() != deployment.release.is_system_one() {
+        let system_one = local
+            .as_ref()
+            .is_some_and(|local| local.deployment.release.is_system_one());
+        if request.decision.is_some() != system_one {
             return Err(GatewayError::unsupported_parameter("model"));
         }
 
@@ -117,6 +163,16 @@ impl HostedRequest {
             .parameters
             .retain(|name, _| model.properties.parameter(name).is_some());
 
+        let external = external.filter(|_| {
+            request
+                .parameters
+                .keys()
+                .all(|name| openrouter_supports_parameter(name))
+        });
+        if local.is_none() && base.is_none() && external.is_none() {
+            return Err(no_capacity(&model, adapter.is_some()));
+        }
+
         let effective_output_tokens = effective_output_tokens(&request, output)?;
         let input = model.properties.text_input();
         let pricing = CapturedPricing::for_service_tier(
@@ -131,21 +187,56 @@ impl HostedRequest {
             is_verification,
             identity,
             adapter,
-            deployment,
-            served_release_digest: release_digest,
+            local,
+            base,
+            external,
             max_context_tokens: input.supported_inputs.max_context_length.value,
             max_prompt_tokens: input.supported_inputs.max_prompt_length.value,
             effective_output_tokens,
             pricing,
             request,
-            model_deployments: model.deployments,
         })
+    }
+}
+
+/// OpenRouter can serve a model only through its explicit mapping, and never
+/// SystemOne, OpenRouter's own traffic or a request pinned to a deployment.
+fn external_model(
+    model: &GatewayModel,
+    from_openrouter: bool,
+    pinned: bool,
+) -> Option<ExternalModel> {
+    let eligible = !from_openrouter
+        && !pinned
+        && !model
+            .deployments
+            .iter()
+            .any(|deployment| deployment.release.is_system_one());
+
+    eligible
+        .then(|| model.openrouter_model())
+        .flatten()
+        .map(ExternalModel::openrouter)
+}
+
+/// Keeps the errors that predate external capacity; only a mapped model may have
+/// no deployments by design.
+fn no_capacity(model: &GatewayModel, adapter: bool) -> GatewayError {
+    if adapter {
+        GatewayError::ModelUnavailable
+    } else if model.openrouter_model_id.is_some() && model.deployments.is_empty() {
+        GatewayError::RuntimeUnavailable
+    } else {
+        inconsistent_state(ServingDeploymentError::Missing.diagnostic_code())
     }
 }
 
 struct Authorization {
     identity: AuthenticatedIdentity,
     funds_hosted: bool,
+    /// OpenRouter resells this capacity and fails over itself; serving its traffic
+    /// through OpenRouter could route a request back to us.
+    from_openrouter: bool,
 }
 
 impl Authorization {
@@ -312,9 +403,9 @@ impl RequestCoordinator {
         headers: &HeaderMap,
         requested_at: DateTime<Utc>,
     ) -> Result<Vec<CatalogModel>, GatewayError> {
-        self.authorize(headers, requested_at)
-            .await?
-            .into_hosted_identity()?;
+        let authorization = self.authorize(headers, requested_at).await?;
+        let from_openrouter = authorization.from_openrouter;
+        authorization.into_hosted_identity()?;
 
         let models = self
             .serving_state
@@ -348,6 +439,7 @@ impl RequestCoordinator {
                     &statuses,
                     requested_at,
                 ),
+                external_capacity: external_model(&model, from_openrouter, false).is_some(),
                 model,
             });
         }
@@ -445,7 +537,19 @@ impl RequestCoordinator {
             adapter = Some(resolved);
         }
         let mut model = model.ok_or(GatewayError::ModelNotFound)?;
+        let from_openrouter = authorization.from_openrouter;
         let identity = authorization.into_hosted_identity()?;
+        let pinned = deployment_target.is_some();
+        let external = external_model(&model, from_openrouter, pinned);
+        // An adapter that cannot be served falls back to its base model without it;
+        // a pinned request keeps its exact deployment instead.
+        let base = (adapter.is_some() && !pinned).then(|| {
+            let mut base = model.clone();
+            base.deployments.retain(|deployment| {
+                !deployment.release.is_system_one() && !deployment.release.sends_token_ids()
+            });
+            base
+        });
         if let Some(adapter) = &adapter {
             model.deployments.retain(|deployment| {
                 deployment.release.lora_enabled == Some(true)
@@ -458,7 +562,7 @@ impl RequestCoordinator {
                     && !deployment.release.is_system_one()
                     && !deployment.release.sends_token_ids()
             });
-            if model.deployments.is_empty() {
+            if model.deployments.is_empty() && base.is_none() {
                 return Err(GatewayError::ModelUnavailable);
             }
         }
@@ -503,6 +607,13 @@ impl RequestCoordinator {
         let model = self
             .prefer_ready_release(model, received_at, Some(selection))
             .await?;
+        let base = match base {
+            Some(base) => Some(
+                self.prefer_ready_release(base, received_at, Some(selection))
+                    .await?,
+            ),
+            None => None,
+        };
 
         Ok(ClassifiedRequest {
             hosted: HostedRequest {
@@ -510,6 +621,8 @@ impl RequestCoordinator {
                 cache_key,
                 identity,
                 model,
+                base,
+                external,
                 adapter,
             },
             request: target.request,
@@ -528,6 +641,9 @@ impl RequestCoordinator {
             .await
             .map_err(state_unavailable("credential_read"))?
             .ok_or(GatewayError::InvalidApiKey)?;
+        // A record cached before the field existed may be OpenRouter's, so it is
+        // treated as OpenRouter's until the cache refreshes it.
+        let from_openrouter = credential.openrouter_channel != Some(false);
         let identity = authenticate_credential(credential, received_at)?;
 
         tracing::Span::current()
@@ -562,6 +678,7 @@ impl RequestCoordinator {
         Ok(Authorization {
             identity,
             funds_hosted: account.funds_hosted_requests(),
+            from_openrouter,
         })
     }
 }
@@ -684,3 +801,7 @@ mod verification_tests;
 #[cfg(test)]
 #[path = "coordinator_adapter_tests.rs"]
 mod adapter_tests;
+
+#[cfg(test)]
+#[path = "coordinator_capacity_tests.rs"]
+mod capacity_tests;

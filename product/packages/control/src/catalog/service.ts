@@ -16,6 +16,8 @@ export interface CatalogService {
     name: string;
     status: ModelRecord["status"];
     properties: ModelPropertiesInput;
+    /** Omitted means OpenRouter cannot serve the model. */
+    openrouterModelId?: string | null;
   }): Promise<ModelRecord>;
   upsertModelDeployment(input: {
     id: string;

@@ -34,7 +34,11 @@ async fn admits_dispatches_and_settles_before_returning_the_response() {
 #[tokio::test]
 async fn chat_dispatch_does_not_depend_on_local_template_or_context_estimates() {
     let mut request = qualified_request(1);
-    request.deployment.release.tokenizer_path = "missing/local-artifact".to_owned();
+    request
+        .local_capacity_mut()
+        .deployment
+        .release
+        .tokenizer_path = "missing/local-artifact".to_owned();
     request.max_prompt_tokens = 0;
     request.max_context_tokens = 1;
     request
@@ -201,19 +205,17 @@ fn placed(id: u128, provider: &str, fault_domain: &str) -> GatewayModelDeploymen
 fn runtime_call(fallbacks: &[&GatewayModelDeployment]) -> RuntimeCall {
     let request = qualified_request(1);
 
-    RuntimeCall {
-        runtime: Arc::new(ScriptedRuntime::new([], Journal::default())),
-        generation_id: request.metadata.generation_id,
-        request: request.request,
-        effective_output_tokens: request.effective_output_tokens,
-        deadline: Utc::now(),
-        deployment: placed(1, "a", "x"),
-        fallbacks: fallbacks
+    RuntimeCall::local(
+        Arc::new(ScriptedRuntime::new([], Journal::default())),
+        request.request,
+        request.effective_output_tokens,
+        Utc::now(),
+        placed(1, "a", "x"),
+        fallbacks
             .iter()
             .map(|deployment| (*deployment).clone())
             .collect(),
-        attempts: 0,
-    }
+    )
 }
 
 #[test]
@@ -226,11 +228,11 @@ fn a_full_runtime_falls_back_to_another_fault_domain_whatever_its_provider() {
 
     let mut call = runtime_call(&[&same_fault_domain, &same_provider, &other_provider]);
 
-    assert_eq!(
-        call.take_fallback(RuntimeFailureKind::CapacityExceeded),
-        Some(same_provider)
-    );
-    assert_eq!(call.fallbacks.len(), 2);
+    assert!(call
+        .fall_back(RuntimeFailureKind::CapacityExceeded, true)
+        .is_some());
+    assert_eq!(call.deployment(), &same_provider);
+    assert_eq!(call.plan.fallbacks.len(), 2);
 }
 
 #[test]
@@ -242,16 +244,16 @@ fn an_unavailable_runtime_also_falls_back_to_another_provider() {
     } = fallbacks();
 
     let mut call = runtime_call(&[&same_fault_domain, &same_provider, &other_provider]);
-    assert_eq!(
-        call.take_fallback(RuntimeFailureKind::Unavailable),
-        Some(other_provider)
-    );
+    assert!(call
+        .fall_back(RuntimeFailureKind::Unavailable, true)
+        .is_some());
+    assert_eq!(call.deployment(), &other_provider);
 
     let mut call = runtime_call(&[&same_fault_domain, &same_provider]);
-    assert_eq!(
-        call.take_fallback(RuntimeFailureKind::Unavailable),
-        Some(same_provider)
-    );
+    assert!(call
+        .fall_back(RuntimeFailureKind::Unavailable, true)
+        .is_some());
+    assert_eq!(call.deployment(), &same_provider);
 }
 
 #[tokio::test]
@@ -409,7 +411,17 @@ async fn identical_sessionless_requests_keep_prefix_affinity() {
     for generation in 1..=256 {
         let mut current = request.clone();
         current.metadata.generation_id = Uuid::from_u128(generation);
-        primaries.insert(harness.service.route(&current).await.unwrap().primary.id);
+        primaries.insert(
+            harness
+                .service
+                .route(&current, current.local_capacity())
+                .await
+                .unwrap()
+                .ok()
+                .unwrap()
+                .primary
+                .id,
+        );
     }
     assert_eq!(primaries.len(), 1);
 }
@@ -423,7 +435,17 @@ async fn an_explicit_session_keeps_its_replica_across_requests() {
     for generation in 1..=256 {
         let mut current = request.clone();
         current.metadata.generation_id = Uuid::from_u128(generation);
-        primaries.insert(harness.service.route(&current).await.unwrap().primary.id);
+        primaries.insert(
+            harness
+                .service
+                .route(&current, current.local_capacity())
+                .await
+                .unwrap()
+                .ok()
+                .unwrap()
+                .primary
+                .id,
+        );
     }
     assert_eq!(primaries.len(), 1);
 }

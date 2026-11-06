@@ -1,6 +1,10 @@
 # Builds every Rust service. The build context is the service's own directory, and
 # the target stage names the service: `--target gateway`, `--target proxy` or
-# `--target collector`.
+# `--target collector`. A service with a path dependency on packages/credentials
+# passes it as `--build-context credentials=product/packages/credentials`; this
+# empty stage stands in for it otherwise.
+FROM scratch AS credentials
+
 FROM rust:1.97-bookworm@sha256:0e2bcaef56d041a486784e54104a81aebe0da44bd03019bd70bc0401e42e4a97 AS chef
 
 RUN cargo install cargo-chef --version 0.1.78 --locked
@@ -9,12 +13,14 @@ WORKDIR /app
 
 FROM chef AS planner
 
+COPY --from=credentials / /packages/credentials/
 COPY . .
 
 RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS build
 
+COPY --from=credentials / /packages/credentials/
 COPY --from=planner /app/recipe.json recipe.json
 
 RUN cargo chef cook --locked --release --recipe-path recipe.json

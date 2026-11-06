@@ -55,6 +55,43 @@ describe("model catalog", () => {
     expect((await storedModel(input.id))?.properties).toEqual(normalized);
   });
 
+  it("stores, replaces and clears an OpenRouter mapping", async () => {
+    const input = modelInput();
+
+    const created = await catalog.upsertModel(input);
+    expect(created.openrouterModelId).toBeNull();
+
+    const mapped = await catalog.upsertModel({
+      ...input,
+      openrouterModelId: "author/model-a",
+    });
+    expect(mapped.openrouterModelId).toBe("author/model-a");
+    expect((await storedModel(input.id))?.openrouterModelId).toBe(
+      "author/model-a",
+    );
+
+    const cleared = await catalog.upsertModel(input);
+    expect(cleared.openrouterModelId).toBeNull();
+    expect((await storedModel(input.id))?.openrouterModelId).toBeNull();
+  });
+
+  it("refuses an OpenRouter variant in the record and in the table", async () => {
+    const input = modelInput();
+
+    await expect(
+      catalog.upsertModel({ ...input, openrouterModelId: "author/model:free" }),
+    ).rejects.toBeInstanceOf(ZodError);
+    await expect(
+      testDatabase.database.insert(models).values({
+        id: `${input.id}-raw`,
+        name: "Raw",
+        status: "available",
+        properties: ModelPropertiesInputSchema.parse(input.properties),
+        openrouterModelId: "author/model:free",
+      }),
+    ).rejects.toThrow();
+  });
+
   it("updates the name, status and properties of an existing model", async () => {
     const input = modelInput();
     const created = await catalog.upsertModel(input);

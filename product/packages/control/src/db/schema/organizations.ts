@@ -334,6 +334,8 @@ export const models = pgTable(
     name: text("name").notNull(),
     status: text("status", { enum: MODEL_STATUSES }).notNull(),
     properties: jsonb("properties").$type<ModelProperties>().notNull(),
+    // The exact OpenRouter model that serves this one when our deployments cannot.
+    openrouterModelId: text("openrouter_model_id"),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
       .defaultNow()
       .notNull(),
@@ -342,6 +344,10 @@ export const models = pgTable(
       .notNull(),
   },
   (table) => [
+    check(
+      "models_openrouter_model_id_check",
+      sql`${table.openrouterModelId} ~ '^[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*$' and char_length(${table.openrouterModelId}) <= 200`,
+    ),
     check(
       "models_id_length_check",
       sql`char_length(${table.id}) between 1 and 200`,

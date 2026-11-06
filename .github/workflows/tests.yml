@@ -207,6 +207,7 @@ jobs:
           project: ${{ vars.DEPOT_PROJECT_ID }}
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile || format('{0}/Dockerfile', matrix.context) }}
+          build-contexts: ${{ matrix.buildContexts }}
           target: ${{ matrix.target }}
           platforms: linux/amd64
           outputs: type=oci,dest=ci-image/image.tar
@@ -432,8 +433,16 @@ jobs:
         run: cargo build --locked --manifest-path product/services/gateway/Cargo.toml
       - name: Pull disposable serving-state image
         run: docker pull valkey/valkey:8.1.9-alpine3.24
-      - name: Exercise gateway against Kev and vLLM HTTP peers
+      # Fork and Dependabot runs get no secrets, so they skip the live OpenRouter tests.
+      - name: Require the live OpenRouter key
+        if: github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]')
+        env:
+          OPENROUTER_LIVE_API_KEY: ${{ secrets.OPENROUTER_CI_API_KEY }}
+        run: test -n "$OPENROUTER_LIVE_API_KEY" || { echo "::error::The OPENROUTER_CI_API_KEY Actions secret is not set"; exit 1; }
+      - name: Exercise gateway against Kev, vLLM and OpenRouter peers
         working-directory: product
+        env:
+          OPENROUTER_LIVE_API_KEY: ${{ secrets.OPENROUTER_CI_API_KEY }}
         run: >-
           pnpm --filter @gradiated/gateway exec vitest run
           --reporter=default --reporter=junit

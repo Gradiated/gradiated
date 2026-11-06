@@ -11,6 +11,8 @@ export const createDeepseekV41FlashModelConfiguration = () =>
     id: deepseekV41FlashModelId,
     name: modelDisplayName(deepseekV41FlashModelId),
     status: "unavailable",
+    // Checked 2026-11-05: OpenRouter's entry has this model's Hugging Face ID.
+    openrouterModelId: "deepseek/deepseek-v4.1-flash",
     properties: {
       description:
         "DeepSeek V4.1 Flash with TP4 and DSpark speculative decoding.",

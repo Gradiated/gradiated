@@ -14,6 +14,9 @@ repository.
 The gateway is one Rust service with one purpose: authenticate, qualify, admit,
 and execute exact-model Chat Completions or native SystemOne, then record terminal usage
 in Valkey. It is not a general-purpose API gateway or a model-routing platform.
+Its one external capacity is Gradiated's own OpenRouter account, which serves an
+explicitly mapped catalog model when our deployments cannot; see
+[External capacity](#external-capacity-openrouter).
 
 ## Goals
 
@@ -27,6 +30,8 @@ in Valkey. It is not a general-purpose API gateway or a model-routing platform.
   normalize SGLang overload responses;
 - select one healthy deployment with stable rendezvous hashing;
 - leave deployment admission to the engine and retry one safe failed attempt;
+- serve a mapped catalog model through OpenRouter, at catalog prices, when our
+  capacity is unavailable, saturated or fails before output;
 - preserve streaming backpressure and stop upstream work on cancellation;
 - calculate charges from authoritative usage and admission-time prices;
 - atomically consume the in-flight lease, debit the operational balance, and
@@ -40,7 +45,8 @@ The gateway does not contain:
 - PostgreSQL or ClickHouse clients;
 - customer, workspace, API-key, model, or billing CRUD;
 - Stripe or OpenRouter onboarding workflows;
-- cross-model routing or provider discovery;
+- cross-model routing or provider discovery; OpenRouter serves only the exact
+  model a catalog row maps;
 - model aliases or silent parameter translation;
 - GPU provisioning or a fleet controller;
 - parallel or post-output request retries;
@@ -127,7 +133,9 @@ in-flight lease is the sole terminal idempotency token.
 
 Missing, malformed, inconsistent, or unavailable serving state rejects the
 request. The gateway does not fall back to another datastore, a stale local
-copy, a second model, or unbilled execution.
+copy, a second model, or unbilled execution. OpenRouter capacity is not such a
+fallback: it serves the same exact model, after the same authentication,
+qualification and admission, under the same single settlement.
 
 ## Process and component model
 
@@ -376,10 +384,11 @@ admission; other omitted parameters retain the pinned runtime/model defaults.
 3. Strictly deserialize `GatewayModel` and its closed `ModelProperties`.
 4. Require `model.id` to equal the normalized request model exactly.
 5. Reject `unavailable` or `retired` models for inference.
-6. Read the model's projected `deployments` array from that same
-   `GatewayModel` value.
+6. Read the model's projected `deployments` array and optional
+   `openrouter_model_id` from that same `GatewayModel` value.
 7. Select the first valid `available` deployment in projection order; reject a
-   missing, malformed, or empty route set.
+   malformed one. A model without one qualifies only when OpenRouter may serve
+   it; otherwise the existing `503 serving_state_unavailable` applies.
 8. Read the text output modality's `supported_parameters` and the model's
    request-scoped `passthrough_parameters` maps.
 9. Validate every advertised non-envelope top-level field against its
@@ -617,15 +626,18 @@ The client adds only the private authentication configured for that deployment.
 It applies bounded connection, response-header, idle, and total-generation
 timeouts. `started_at` is recorded when the generation is dispatched.
 
-The gateway never automatically retries an inference request. A lost response
-does not prove that SGLang failed to execute it, so retrying could duplicate GPU
-work and billing.
+A lost response does not prove that SGLang failed to execute it, so another
+replica is tried only after the runtime refused the work, as described in
+[Runtime overload and exact dispatch](#runtime-overload-and-exact-dispatch).
+A mapped model may then move to OpenRouter under the
+[external capacity](#external-capacity-openrouter) rules. Every attempt bills
+under the one settlement, so no attempt duplicates a charge.
 
 The gateway waits for SGLang response headers before committing public
 streaming headers. If SGLang rejects the request for runtime overload, the
 gateway normalizes the response to `429 capacity_exceeded`. A post-admission
 overload performs normal zero-charge terminal finalization before returning
-the error. It never tries another deployment.
+the error.
 
 ### 11. Non-streaming response
 
@@ -841,8 +853,10 @@ access checks as Chat Completions but does not create a lease.
 2. Enumerate exact IDs from the bounded `gateway-model-ids` Valkey set; do not
    use `KEYS` or an unbounded Valkey scan.
 3. Fetch each corresponding `GatewayModel` and its deployment status hash.
-4. Exclude retired, malformed, or missing-deployment models.
-5. Set `is_ready = true` when at least one deployment has fresh healthy status.
+4. Exclude retired, malformed, or missing-deployment models, unless OpenRouter
+   may serve the model for the caller.
+5. Set `is_ready = true` when at least one deployment has fresh healthy status,
+   or when the model is available and OpenRouter may serve it for the caller.
 6. Include explicitly staged unavailable models with `is_ready = false` so the
    OpenRouter monitor can observe them without sending inference traffic.
 7. Report healthy installed concurrency in the root `capacity` array. Include
@@ -872,6 +886,135 @@ The gateway reads the optional upstream credential from the fixed
 AWS Secrets Manager directly. The secret never appears in a model projection, error
 response, trace, or metric.
 
+## External capacity (OpenRouter)
+
+Catalog membership decides billing; a mapping decides whether OpenRouter may
+serve. `models.openrouter_model_id` names the exact OpenRouter `author/slug` of
+the same model. A `:variant` suffix or `~` moving alias is refused by the
+database, the Zod record and the gateway. A mapped model can serve with zero
+deployments; an unmapped one keeps every existing failure.
+
+### Eligibility
+
+Qualification sets the request's external capacity only when all hold:
+
+- the model is `available` and mapped, and none of its deployments is SystemOne;
+- the request is Chat (Chat Completions, Messages or Responses), not SystemOne;
+- the caller is not OpenRouter's own organization, the `distribution_channel`
+  named `OpenRouter`. OpenRouter resells our capacity and fails over itself;
+  sending its traffic to OpenRouter could route a request back to us, and its
+  `/v1/models` view lists only our own capacity. Other distribution channels are
+  served like customers. A credential record cached before this flag existed is
+  treated as OpenRouter's until the record cache refreshes it;
+- no `x-gradiated-deployment-id` pin, which keeps its exact deployment;
+- no qualified parameter that OpenRouter does not understand
+  (`openrouter::UNSUPPORTED_PARAMETERS`, such as `chat_template_kwargs`).
+  Qualification already removed every parameter the model does not advertise.
+  OpenRouter ignores unknown parameters rather than rejecting them, so a
+  request carrying an excluded one stays on our capacity.
+
+Authentication, workspace/account checks, the prepaid balance check and the
+Valkey admission script, including organization concurrency, run unchanged
+before any attempt. Fallback never bypasses them.
+
+### Attempt order
+
+All attempts share the one request deadline and the one admission lease:
+
+1. Our deployments, routed as before. A healthy, accepting route is tried
+   first, with the existing replica retry: one more replica when the runtime
+   refused the work with no usage (any refusal before a stream, capacity only
+   once a stream is open).
+2. For a private adapter, its recorded base model's chat deployments, without
+   the adapter (see below).
+3. OpenRouter, once.
+
+Planning skips straight to OpenRouter when our route is unhealthy, saturated or
+absent. After an attempt fails, the next capacity is tried only when no frame
+reached the caller, the failure is not `invalid_request`, and at least one
+second of the shared deadline remains. A full-deadline timeout therefore ends
+the request with its existing server cancellation. There are at most two local
+attempts and one OpenRouter attempt; OpenRouter is never retried and never
+routes back to our capacity. Once any frame reached the caller, existing stream
+failure handling applies and nothing else serves the request.
+
+### Billing
+
+The caller is billed from the captured catalog prices for the usage of the
+attempt that ended the request, exactly once. Usage reported by an abandoned
+attempt, which delivered nothing, is not billed. OpenRouter's reported
+`usage.cost` is never used for the charge, and Gradiated absorbs the
+difference. OpenRouter reports usage only in its final frame: a stream the
+caller leaves after the finish reason is still read for up to two seconds to
+bill that frame; one left mid-answer bills zero, as runtime usage after the last
+snapshot is never estimated. OpenRouter can report more reasoning than
+completion tokens; reasoning is capped at `completion_tokens`, the total it bills.
+
+### Transparency
+
+The OpenRouter client parses OpenRouter's wire format and returns the same
+normalized Chat shape as our runtimes, so Messages and Responses translation is
+unchanged. Responses carry the requested public model, a `chatcmpl-<generation>`
+ID, only `role`, `content`, `refusal`, `tool_calls` and `reasoning_content`
+message fields, our normalized usage and the catalog `usage.cost`. Provider
+names, `gen-` IDs, `reasoning_details`, `native_finish_reason`, upstream cost,
+headers and error bodies never reach the caller. OpenRouter's repeated finish
+reason in its usage frame is dropped, and that frame becomes our choiceless
+terminal usage chunk. A response naming another model, a stream with two
+generation IDs, inconsistent usage or a missing final usage frame is a protocol
+failure. An `error` object in a 200 response or stream frame is a failure.
+
+OpenRouter statuses map to our errors: 400 and 422 are `invalid_request`; 429,
+503 and 529 are `capacity_exceeded`; every other status, including our own
+401, 402 and 403, is `runtime_unavailable`. A 400 whose message names the mapped
+model means OpenRouter no longer lists it. That is our mapping's fault, so it is
+`runtime_unavailable` and logs `openrouter_model_rejected`.
+
+### Requests sent
+
+The body holds the qualified fields, `model` set to the mapping, the effective
+output limit, `provider: {data_collection: "deny", require_parameters: true,
+zdr: true}` on every request, context compression disabled,
+and `user` and `session_id` as per-workspace SHA-256 values that carry no
+Gradiated identifier. It carries no runtime priority or private usage option.
+The client has its own HTTP connection pool without the runtime TLS identity and
+sends only the platform key: in production the active slot of the
+`providers/openrouter` secret, read per attempt through the shared credential
+loader. A key that cannot be loaded fails the attempt as `runtime_unavailable`. Providers are restricted on the key in OpenRouter,
+not in the gateway, and the account also enforces zero data retention.
+
+### Private adapters
+
+Adapter availability takes priority over adapter fidelity. When no LoRA
+deployment of an adapter's base revision can serve, or its attempt fails before
+output, the request is served by the base model's chat-protocol deployments
+without the adapter, then by OpenRouter when the base model is mapped. Native
+token-ID and SystemOne deployments are not base capacity. A pinned request does
+not degrade. The response keeps the adapter's public name and the base model's
+catalog prices.
+
+### Records
+
+Settlement's `served_release_digest` names what actually served: the adapter
+digest for an adapter deployment, the base release digest when the base model
+served an adapter's request, and `sha256({"capacity":"openrouter","model":<id>})`
+for OpenRouter. The generation event schema is unchanged. The terminal log adds
+`capacity`, `fallback_reason` and `upstream_cost_nano_usd`; an
+`openrouter_usage` log line carries OpenRouter's generation ID, provider and
+cost for reconciliation. Metrics label OpenRouter's deployment `openrouter`.
+`capacity_fallbacks_total{model,capacity,reason,traffic}` counts moves when they
+happen, and `upstream_cost_nano_usd_total` sums OpenRouter's reported cost.
+Saturation of our capacity still records
+`capacity_rejection_timestamp_seconds`, the autoscaling signal, when OpenRouter
+serves instead.
+
+### Listing
+
+`/v1/models` lists a mapped model as ready for a caller OpenRouter may serve,
+with no deployments required. It then publishes no `deployment_region`, because
+the request may be served outside our datacenters. Count-tokens needs a pinned
+tokenizer and returns `model_unavailable` for a model with no deployment.
+
 ## Runtime overload and exact dispatch
 
 Every exact model maps to independent runtime deployment candidates. Desmond
@@ -888,7 +1031,8 @@ One request can use at most two sequential runtime attempts. A retry requires
 an availability or capacity failure, no usable output, time on the shared
 deadline, and another deployment for the same release. The second attempt
 prefers another fault domain. A started public stream is never retried. Both
-attempts use one generation ID and one settlement.
+attempts use one generation ID and one settlement. A mapped model may add one
+OpenRouter attempt after them, under the same rules.
 
 Per-organization concurrency remains separate and is always enforced by the
 Valkey admission script before generation dispatch. It limits customer

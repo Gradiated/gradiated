@@ -55,10 +55,12 @@ export const catalog = {
   gateway: {
     context: "product/services/gateway",
     dockerfile: "product/services/rust-service.Dockerfile",
+    buildContexts: "credentials=product/packages/credentials",
     repository: "gradiated/prod/gateway",
     target: "gateway",
     paths: [
       "product/services/gateway/",
+      "product/packages/credentials/",
       "product/services/rust-service.Dockerfile",
     ],
   },

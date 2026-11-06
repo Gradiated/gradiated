@@ -613,7 +613,7 @@ export const catalogResponse = z
           is_ready: z
             .boolean()
             .describe(
-              "Whether a healthy deployment can currently accept inference requests.",
+              "Whether the model can currently accept inference requests.",
             ),
           hugging_face_id: z
             .string()

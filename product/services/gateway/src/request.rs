@@ -156,6 +156,32 @@ impl InferenceRequest {
         Value::Object(parameters)
     }
 
+    /// The OpenRouter body has no runtime priority or private usage options:
+    /// OpenRouter always reports usage once, in its final frame.
+    pub(crate) fn into_external_body(
+        self,
+        effective_output_tokens: u64,
+        model_id: &str,
+    ) -> Map<String, Value> {
+        let limit_name = self
+            .output_token_limit()
+            .map_or("max_completion_tokens", OutputTokenLimit::parameter_name);
+
+        let Self {
+            messages,
+            stream,
+            mut parameters,
+            ..
+        } = self;
+
+        parameters.insert("model".to_owned(), Value::String(model_id.to_owned()));
+        parameters.insert("messages".to_owned(), Value::Array(messages));
+        parameters.insert("stream".to_owned(), Value::Bool(stream));
+        parameters.insert(limit_name.to_owned(), Value::from(effective_output_tokens));
+
+        parameters
+    }
+
     fn validate_request(&self) -> Result<(), GatewayError> {
         <Self as Validate>::validate(self).map_err(|_| GatewayError::invalid_request(None))?;
 
@@ -362,6 +388,44 @@ mod tests {
         let body = request.into_upstream_body_for_model(1_024, None);
 
         assert_eq!(body["max_completion_tokens"], 1_024);
+    }
+
+    #[test]
+    fn an_external_body_keeps_qualified_fields_and_drops_runtime_controls() {
+        let request = InferenceRequest::parse(
+            br#"{
+                "model":"public/model",
+                "messages":[{"role":"user","content":"hello"}],
+                "stream":true,
+                "service_tier":"fast",
+                "session_id":"customer-session",
+                "max_tokens":32,
+                "temperature":0.25
+            }"#,
+        )
+        .unwrap();
+
+        let body = request.into_external_body(32, "author/model");
+
+        assert_eq!(body["model"], "author/model");
+        assert_eq!(body["messages"][0]["content"], "hello");
+        assert_eq!(body["stream"], true);
+        assert_eq!(body["max_tokens"], 32);
+        assert_eq!(body["temperature"], 0.25);
+        for field in [
+            "priority",
+            "stream_options",
+            "service_tier",
+            "session_id",
+            "max_completion_tokens",
+        ] {
+            assert!(!body.contains_key(field), "{field}");
+        }
+
+        let defaulted = InferenceRequest::parse(br#"{"model":"m","messages":[{}]}"#)
+            .unwrap()
+            .into_external_body(1_024, "author/model");
+        assert_eq!(defaulted["max_completion_tokens"], 1_024);
     }
 
     #[test]

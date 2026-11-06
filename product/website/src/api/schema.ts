@@ -2794,7 +2794,7 @@ export interface components {
         created: number;
         /** @description Human-readable model description. */
         description: string;
-        /** @description Whether a healthy deployment can currently accept inference requests. */
+        /** @description Whether the model can currently accept inference requests. */
         is_ready: boolean;
         /** @description Upstream Hugging Face model identifier, when published. */
         hugging_face_id?: string;

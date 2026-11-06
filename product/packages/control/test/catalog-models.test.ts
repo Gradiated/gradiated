@@ -1,8 +1,11 @@
-import { ModelPropertiesInputSchema } from "@gradiated/contracts";
+import {
+  ModelPropertiesInputSchema,
+  OpenRouterModelIdSchema,
+} from "@gradiated/contracts";
 import { modelType } from "@gradiated/contracts/model-catalog";
 import { describe, expect, it } from "vitest";
 
-import { catalogModels } from "../src/catalog/models/index.js";
+import { catalogModels, legacyModels } from "../src/catalog/models/index.js";
 import { createKev9bModelConfiguration } from "../src/catalog/models/kev-9b.js";
 
 const prices = (model: { properties: unknown }) => {
@@ -53,6 +56,37 @@ describe("model configurations", () => {
       input: pinned.input.map(({ cost }) => cost),
       output: pinned.output.map(({ cost }) => cost),
     }).toEqual(pinnedPrices[model.id]);
+  });
+
+  it("maps only verified exact models to OpenRouter", () => {
+    const mappings = Object.fromEntries(
+      [...catalogModels, ...legacyModels].map((model) => [
+        model.id,
+        "openrouterModelId" in model ? model.openrouterModelId : undefined,
+      ]),
+    );
+
+    expect(mappings).toEqual({
+      "deepseek/deepseek-v4.1-flash": "deepseek/deepseek-v4.1-flash",
+      "z-ai/glm-5.3-flash": "z-ai/glm-5.3-flash",
+      "dealignai/glm-5.3-flash-uncensored": null,
+      "dealignai/glm-5.3-flash-uncensored-nvfp4": null,
+      "jaredpalmer/kev-9b": undefined,
+    });
+    for (const mapping of Object.values(mappings)) {
+      if (typeof mapping === "string") OpenRouterModelIdSchema.parse(mapping);
+    }
+  });
+
+  it("rejects an OpenRouter variant or moving alias as a mapping", () => {
+    for (const mapping of [
+      "z-ai/glm-5.3-flash:free",
+      "~z-ai/glm-latest",
+      "Z-AI/GLM-5.3-Flash",
+      "glm-5.3-flash",
+    ]) {
+      expect(OpenRouterModelIdSchema.safeParse(mapping).success).toBe(false);
+    }
   });
 
   it("advertises Kev 9B as a decision model that cannot generate", () => {

@@ -1,3 +1,4 @@
+mod capacity;
 mod dispatch;
 mod lifecycle;
 mod live_admission;

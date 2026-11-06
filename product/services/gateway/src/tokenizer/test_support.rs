@@ -21,6 +21,8 @@ use tokenizers::{
 };
 use uuid::Uuid;
 
+use crate::coordinator::LocalCapacity;
+
 use super::{
     compiled::CompiledTokenizer,
     registry::{TOKENIZER_CONFIG_FILE, TOKENIZER_FILE},
@@ -62,9 +64,13 @@ pub(super) fn qualified(max_tokens: Option<u64>) -> QualifiedRequest {
             organization_id: test_support::ORGANIZATION_ID,
             workspace_id: test_support::WORKSPACE_ID,
         },
-        deployment: routing::fixtures::deployment(0),
-        model_deployments: Vec::new(),
-        served_release_digest: "sha256:test".to_owned(),
+        local: Some(LocalCapacity {
+            deployment: routing::fixtures::deployment(0),
+            deployments: Vec::new(),
+            release_digest: "sha256:test".to_owned(),
+        }),
+        base: None,
+        external: None,
         max_context_tokens: 10,
         max_prompt_tokens: 8,
         effective_output_tokens: max_tokens.unwrap_or(4),

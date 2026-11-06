@@ -251,14 +251,16 @@ async fn serve(
             .coordinator
             .qualify(metadata, headers, hosted, &translated, endpoint.kind)?;
 
-    let targeted = headers.contains_key(&DEPLOYMENT_ID_HEADER);
-    let deployment_id = qualified.deployment.id;
+    let pinned = headers
+        .contains_key(&DEPLOYMENT_ID_HEADER)
+        .then(|| qualified.local.as_ref().map(|local| local.deployment.id))
+        .flatten();
     let mut response = match endpoint.operation {
         Operation::Complete => complete(state, endpoint.protocol, qualified).await,
         Operation::CountTokens => count_tokens(state, &qualified).await,
     }?;
 
-    if targeted {
+    if let Some(deployment_id) = pinned {
         response
             .headers_mut()
             .insert(DEPLOYMENT_ID_HEADER, generation_id_header(deployment_id));

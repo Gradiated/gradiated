@@ -5507,7 +5507,7 @@
                 },
                 "is_ready": {
                   "type": "boolean",
-                  "description": "Whether a healthy deployment can currently accept inference requests."
+                  "description": "Whether the model can currently accept inference requests."
                 },
                 "hugging_face_id": {
                   "type": "string",

@@ -45,6 +45,8 @@ const fixture = (t) => {
       "product/inference/images/gpu-base/base-id",
       "infra/environments/prod/us-east-1/kubernetes/gpu-inference",
       "infra/environments/prod/us-east-1/kubernetes/platform/gpu-models.yaml",
+      // Rendering also writes the per-pool replica targets for the alerts.
+      "infra/environments/prod/us-east-1/kubernetes/workloads/observability/model-replica-rules.yaml",
       "infra/environments/prod/us-east-1/kubernetes/operations/ops-mcp/workload.yaml",
       "infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml",
       "infra/environments/prod/runpod/templates.json",

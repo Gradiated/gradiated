@@ -7,7 +7,6 @@ on:
       - ".github/workflows/virtual-kubelet.yml"
       - "tools/virtual-kubelet/**"
       - "tools/gpu/**"
-      - "tools/models/model-replica-rules.mjs"
       - "infra/environments/prod/us-east-1/kubernetes/workloads/observability/model-replica-rules.yaml"
       - "tools/security/check_gpu_inference.py"
       - "tools/security/check_tailscale_inference.py"
@@ -89,11 +88,6 @@ jobs:
       - run: python3 -m pip install PyYAML==6.0.2
       - run: python3 tools/gpu/render-config.py --check
         if: fromJSON(needs.changes.outputs.checks).configuration
-      - name: Check the model replica alert rules match the model Rollouts
-        if: fromJSON(needs.changes.outputs.checks).configuration
-        run: |
-          npm install --silent --no-save --prefix "$RUNNER_TEMP/rules" yaml@2.9.0
-          NODE_PATH="$RUNNER_TEMP/rules/node_modules" node tools/models/model-replica-rules.mjs --check
       - run: python3 tools/gpu/render_config_test.py
         if: fromJSON(needs.changes.outputs.checks).configuration
       - run: python3 tools/gpu/stage_glm_pool_test.py && python3 tools/gpu/stage_kimi_pool_test.py && python3 tools/gpu/prepare_enrollment_test.py
@@ -115,11 +109,9 @@ jobs:
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 tools/gpu/mint_bootstrap_key_test.py
         if: fromJSON(needs.changes.outputs.checks).controller
-      - name: Check isolated GPU reservation and GLM drain safeguards
+      - name: Check isolated GPU reservation safeguards
         if: fromJSON(needs.changes.outputs.checks).controller
-        run: |
-          python3 tools/gpu/qualification_slot_test.py
-          python3 tools/gpu/reserve_glm_pd_host_test.py
+        run: python3 tools/gpu/qualification_slot_test.py
       - run: python3 product/inference/gpu/download_runtime_test.py
         if: fromJSON(needs.changes.outputs.checks).controller
       - run: python3 -m unittest discover -s product/inference/host/tests -p 'test_*.py'

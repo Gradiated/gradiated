@@ -616,63 +616,45 @@ def main():
         ], expected, ['ModelNoReadyReplicas', 'ModelUnderReplicated', 'ModelScaleUpStalled'],
         {'model': 'test/model'}, duration)
 
+    alerts_checked = ['ModelNoReadyReplicas', 'ModelUnderReplicated', 'ModelScaleUpStalled']
+    worker_fresh = {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="a",loop="kubernetes_deployment_reconciliation"}',
+                    'values': '1+30x80'}
+
+    def pools(*targets, ready=None):
+        """Per-pool desired and minimum replicas for one model, as the renderer records them."""
+        series = []
+        for rollout, desired, minimum in targets:
+            series += [{'series': f'gradiated_model_desired_replicas{{model="test/model",rollout="{rollout}"}}', 'values': f'{desired}+0x80'},
+                       {'series': f'gradiated_model_minimum_replicas{{model="test/model",rollout="{rollout}"}}', 'values': f'{minimum}+0x80'}]
+        if ready is not None:
+            series.append({'series': 'gradiated_worker_model_ready_replicas{instance="a",model="test/model"}', 'values': f'{ready}+0x80'})
+        return series + [worker_fresh]
+
+    # The floor fills pools in order, so one model's minimum can span pools.
     for name, ready, expected, duration in [
-        ('canary warming while primary is healthy', 10, None, '19m'),
-        ('canary never arrives', 10, 'ModelScaleUpStalled', '21m'),
-        ('total serving capacity below floor', 9, 'ModelUnderReplicated', '1m'),
-        ('nine primary plus one canary meets aggregate floor', 10, None, '19m'),
-        ('nine primary plus one canary still misses desired total', 10, 'ModelScaleUpStalled', '21m'),
-        ('canary qualified', 11, None, '21m'),
+        ('both pools at their floor', 7, None, '21m'),
+        ('the second pool loses its floor replica', 6, 'ModelUnderReplicated', '1m'),
+        ('overflow pool warming above the floor', 7, None, '19m'),
+        ('overflow pool never arrives', 7, 'ModelScaleUpStalled', '21m'),
+        ('overflow pool serving', 9, None, '21m'),
     ]:
-        scenario('explicit canary: ' + name, [
-            {'series': 'gradiated_model_desired_replicas{model="test/model",rollout="primary"}', 'values': '10+0x80'},
-            {'series': 'gradiated_model_minimum_replicas{model="test/model",rollout="primary"}', 'values': '10+0x80'},
-            {'series': 'gradiated_model_desired_replicas{model="test/model",rollout="candidate"}', 'values': '1+0x80'},
-            {'series': 'gradiated_model_minimum_replicas{model="test/model",rollout="candidate"}', 'values': '0+0x80'},
-            {'series': 'gradiated_worker_model_ready_replicas{instance="a",model="test/model"}', 'values': f'{ready}+0x80'},
-            {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="a",loop="kubernetes_deployment_reconciliation"}', 'values': '1+30x80'},
-        ], expected, ['ModelNoReadyReplicas', 'ModelUnderReplicated', 'ModelScaleUpStalled'],
-        {'model': 'test/model'}, duration)
+        overflow = 2 if name.startswith('overflow') else 0
+        scenario('pooled capacity: ' + name, pools(('b300', 5, 5), ('h200', 2, 2), ('spill', overflow, 0), ready=ready),
+                 expected, alerts_checked, {'model': 'test/model'}, duration)
 
-    for ready in range(1, 6):
-        scenario(f'sole production replacement ready {ready} of five', [
-            {'series': 'gradiated_model_desired_replicas{model="test/model",rollout="primary"}', 'values': '0+0x80'},
-            {'series': 'gradiated_model_minimum_replicas{model="test/model",rollout="primary"}', 'values': '0+0x80'},
-            {'series': 'gradiated_model_desired_replicas{model="test/model",rollout="candidate"}', 'values': '5+0x80'},
-            {'series': 'gradiated_model_minimum_replicas{model="test/model",rollout="candidate"}', 'values': '5+0x80'},
-            {'series': 'gradiated_worker_model_ready_replicas{instance="a",model="test/model"}', 'values': f'{ready}+0x80'},
-            {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="a",loop="kubernetes_deployment_reconciliation"}', 'values': '1+30x80'},
-        ], 'ModelUnderReplicated' if ready < 5 else None,
-        ['ModelNoReadyReplicas', 'ModelUnderReplicated', 'ModelScaleUpStalled'],
-        {'model': 'test/model'}, '1m')
-
-    for name, ready, expected, duration in [
-        ('sixth warming beside five serving', 5, None, '19m'),
-        ('replacement falls below aggregate budget', 4, 'ModelUnderReplicated', '1m'),
-        ('sixth is serving', 6, None, '21m'),
-        ('sixth fails to arrive', 5, 'ModelScaleUpStalled', '21m'),
+    # A model whose floor is zero scales from zero on demand without paging.
+    for name, desired, ready, expected, duration in [
+        ('idle at zero', 0, None, None, '21m'),
+        ('first replica warming', 1, None, None, '19m'),
+        ('first replica never arrives', 1, None, 'ModelScaleUpStalled', '21m'),
+        ('first replica serving', 1, 1, None, '21m'),
     ]:
-        scenario('split replacement capacity: ' + name, [
-            {'series': 'gradiated_model_desired_replicas{model="test/model",rollout="retired"}', 'values': '0+0x80'},
-            {'series': 'gradiated_model_minimum_replicas{model="test/model",rollout="retired"}', 'values': '0+0x80'},
-            {'series': 'gradiated_model_desired_replicas{model="test/model",rollout="main"}', 'values': '5+0x80'},
-            {'series': 'gradiated_model_minimum_replicas{model="test/model",rollout="main"}', 'values': '4+0x80'},
-            {'series': 'gradiated_model_desired_replicas{model="test/model",rollout="sixth"}', 'values': '1+0x80'},
-            {'series': 'gradiated_model_minimum_replicas{model="test/model",rollout="sixth"}', 'values': '1+0x80'},
-            {'series': 'gradiated_worker_model_ready_replicas{instance="a",model="test/model"}', 'values': f'{ready}+0x80'},
-            {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="a",loop="kubernetes_deployment_reconciliation"}', 'values': '1+30x80'},
-        ], expected, ['ModelNoReadyReplicas', 'ModelUnderReplicated', 'ModelScaleUpStalled'],
-        {'model': 'test/model'}, duration)
+        scenario('scale from zero: ' + name, pools(('pool', desired, 0), ready=ready),
+                 expected, alerts_checked, {'model': 'test/model'}, duration)
 
-    scenario('isolated qualification adds no production capacity demand', [
-        {'series': 'gradiated_model_desired_replicas{model="test/model",rollout="primary"}', 'values': '10+0x80'},
-        {'series': 'gradiated_model_minimum_replicas{model="test/model",rollout="primary"}', 'values': '10+0x80'},
-        {'series': 'gradiated_model_desired_replicas{model="test/model",rollout="qualification"}', 'values': '0+0x80'},
-        {'series': 'gradiated_model_minimum_replicas{model="test/model",rollout="qualification"}', 'values': '0+0x80'},
-        {'series': 'gradiated_worker_model_ready_replicas{instance="a",model="test/model"}', 'values': '10+0x80'},
-        {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="a",loop="kubernetes_deployment_reconciliation"}', 'values': '1+30x80'},
-    ], None, ['ModelNoReadyReplicas', 'ModelUnderReplicated', 'ModelScaleUpStalled'],
-    {'model': 'test/model'}, '21m')
+    scenario('qualification and switched-off pools add no capacity demand',
+             pools(('serving', 10, 10), ('qualification', 0, 0), ('off', 0, 0), ready=10),
+             None, alerts_checked, {'model': 'test/model'}, '21m')
 
     probe_labels = '{instance="a",model="test/model"}'
     def probe_series(metric, values, labels=probe_labels):

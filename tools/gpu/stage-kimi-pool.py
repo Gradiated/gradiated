@@ -12,9 +12,9 @@ GPU = ROOT / 'infra/environments/prod/us-east-1/kubernetes/gpu-inference'
 MODEL = 'moonshotai/kimi-k3.1-pro'
 CHECKPOINT = 'moonshotai/Kimi-K3.1-Pro'
 REVISION = 'd9e99b0792a5e93b78ea9bea62a68167e36ddd9e'
-INSTANCES = {'01a0fbf7-5276-700b-903b-7e04da150ed6', '01a0fbf8-06fc-7658-96e1-ae72f7dba135'}
-REPLICAS = len(INSTANCES)
-RESERVATION = {'key': 'gradiated.com/kimi-k31', 'value': 'reserved', 'effect': 'NoSchedule'}
+# Kimi runs one TP8 replica on each 8xB300 host reserved for it in hosts.yaml.
+REPLICAS = 2
+RESERVATION = {'key': 'gradiated.com/reserved', 'value': 'kimi-k31', 'effect': 'NoSchedule'}
 BUCKET = 'gradiated-prod-model-artifacts-873716897517'
 ACTIVE_REQUESTS = 5
 
@@ -32,16 +32,15 @@ def stage(models, runtimes, pins, hosts, release, source):
         raise ValueError('Release must support the pinned GPU base')
     if release.get('url') != f's3::https://{BUCKET}.s3.us-east-1.amazonaws.com/bundles/sha256/{digest}.tar.gz':
         raise ValueError('Archive path must match the release digest')
-    inventory = {item['spec']['instanceId']: item['spec'] for item in hosts if item}
-    for instance in sorted(INSTANCES):
-        host = inventory.get(instance, {})
+    reserved = [item['spec'] for item in hosts if item and RESERVATION in item['spec'].get('extraTaints', [])]
+    if len(reserved) != REPLICAS:
+        raise ValueError(f'Expected {REPLICAS} hosts carrying the Kimi reservation taint, one per replica')
+    for host in reserved:
         capacity = host.get('inventory', {})
         if (host.get('provider', {}).get('name') != 'runpod' or capacity.get('gpuProduct') != 'B300'
                 or capacity.get('gpuCount') != 8 or capacity.get('cpu', 0) < 80
                 or capacity.get('memoryGiB', 0) < 1024):
             raise ValueError('Each Kimi host needs committed 8xB300, 80 CPU and 1024 GiB inventory')
-        if RESERVATION not in host.get('extraTaints', []):
-            raise ValueError('Each Kimi host must carry the Kimi reservation taint')
     runtime = {
         'image': f'gradiated/kimi-k31-bundle@sha256:{digest}',
         'bundles': {base: digest}, 'model_id': MODEL,
@@ -53,25 +52,19 @@ def stage(models, runtimes, pins, hosts, release, source):
         'hf_home': '/var/lib/kimi-k31/hf', 'startup_timeout': 7200, 'warmup': True,
         'environment': {'TENSOR_PARALLEL_SIZE': '8'},
     }
+    # One replica per reserved host, both kept warm. A rollout replaces one host
+    # at a time and the surge pod waits for a free host, so one keeps serving.
     candidate = {
-        # One replica per reserved host; a rollout replaces one host at a time and the
-        # surge pod waits for a free host, so one replica keeps serving throughout.
-        'runtime': digest, 'replicas': REPLICAS, 'min_available': REPLICAS - 1,
-        'progress_deadline_seconds': 10800, 'max_surge': 1, 'max_unavailable': 1,
-        'node_selector': {'gradiated.com/provider': 'runpod', 'nvidia.com/gpu.product': 'B300',
-                          'nvidia.com/gpu.count': '8'},
-        'extra_tolerations': [{'key': 'gradiated.com/kimi-k31', 'operator': 'Equal',
-                               'value': 'reserved', 'effect': 'NoSchedule'}],
-        'affinity': {'nodeAffinity': {'requiredDuringSchedulingIgnoredDuringExecution': {
-            'nodeSelectorTerms': [{'matchExpressions': [{'key': 'gradiated.com/instance-id',
-                                                         'operator': 'In', 'values': sorted(INSTANCES)}]}]}}},
-        'autoscaling': {'max_replicas': REPLICAS, 'target_concurrency': ACTIVE_REQUESTS},
+        'min_slots': REPLICAS * ACTIVE_REQUESTS,
+        'pools': {'kimi-k31-pro': {
+            'runtime': digest, 'gpu': 'B300', 'gpu_count': 8, 'reservation': RESERVATION['value'],
+            'max_replicas': REPLICAS, 'progress_deadline_seconds': 10800, 'max_surge': 1, 'max_unavailable': 1}},
     }
-    if 'kimi-k31-pro' in models and models['kimi-k31-pro'] != candidate:
+    if MODEL in models and models[MODEL] != candidate:
         raise ValueError('Existing Kimi deployment differs; review replacement explicitly')
     if digest in runtimes and runtimes[digest] != runtime:
         raise ValueError('Runtime digest already has another immutable definition')
-    return {**copy.deepcopy(models), 'kimi-k31-pro': candidate}, {**copy.deepcopy(runtimes), digest: runtime}
+    return {**copy.deepcopy(models), MODEL: candidate}, {**copy.deepcopy(runtimes), digest: runtime}
 
 
 def main():
@@ -89,8 +82,9 @@ def main():
     if args.write:
         runtimes_path.write_text(json.dumps(runtimes, indent=2) + '\n')
         models_path.write_text(json.dumps(models, indent=2) + '\n')
-    model = models['kimi-k31-pro']
-    print(json.dumps({'write': args.write, 'model': model, 'runtime': runtimes[model['runtime']]}, indent=2))
+    model = models[MODEL]
+    print(json.dumps({'write': args.write, 'model': model,
+                      'runtime': runtimes[model['pools']['kimi-k31-pro']['runtime']]}, indent=2))
 
 
 if __name__ == '__main__':

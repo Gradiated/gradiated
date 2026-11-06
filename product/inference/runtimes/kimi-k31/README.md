@@ -126,8 +126,8 @@ Record TTFT and queueing separately; do not count cached prompt tokens as decode
 throughput. Tuning used the reserved 8xB300 host
 `01a0fbf8-06fc-7658-96e1-ae72f7dba135` (RunPod `dv31b4wrd2yc8n`). The pool runs
 one replica on each of the two 8xB300 hosts, `01a0fbf8` and
-`01a0fbf7-5276-700b-903b-7e04da150ed6`. Both carry the `gradiated.com/kimi-k31`
-reservation taint. `01a0fbf7` previously served GLM uncensored, so merge this
+`01a0fbf7-5276-700b-903b-7e04da150ed6`. Both carry the `kimi-k31` host
+reservation. `01a0fbf7` previously served GLM uncensored, so merge this
 placement only after GLM uncensored has enough capacity on other B300
 deployments and its pods have drained from `01a0fbf7`. The taint only blocks new
 pods and does not evict running ones.
@@ -151,10 +151,11 @@ Hugging Face chat template or `tokenizer.json`; a future token-ID transport
 would need a qualified native encoder. Image support must be qualified before
 expanding the catalog.
 
-Keep `gradiated.com/kimi-k31=reserved:NoSchedule` on both Kimi hosts so other
-pending models cannot take the reservation. The host inventory declares the
-taint for virtual kubelet creation and reconciliation. Kimi's generated
-Rollout alone adds the matching explicit toleration.
+Both Kimi hosts carry the `gradiated.com/reserved=kimi-k31:NoSchedule`
+reservation, so other pending models cannot take them. The host inventory
+declares the taint for virtual kubelet creation and reconciliation. Kimi's pool
+names the `kimi-k31` reservation, so its generated Rollout alone tolerates the
+taint and is confined to the reserved hosts.
 
 Both Kimi hosts are full: each runs one replica on all eight GPUs, and no other
 eligible 8xB300 host exists. The fleet rollout checks relocation capacity
@@ -171,15 +172,16 @@ staged again before its replica can start.
 
 After GPU qualification and immutable release publication, preview the placement
 with `python3 tools/gpu/stage-kimi-pool.py RELEASE_JSON QUALIFIED_SOURCE_SHA`.
-The helper accepts only the two reserved hosts' committed measured inventory and
-preserves every existing model and runtime. Add `--write`, render the GPU
-configuration and replica rules, and review the generated Kimi resources before
-merging. The catalog status is already `available`; normal routing to the Kimi
+The helper requires exactly two hosts carrying the reservation, each with
+committed 8xB300 inventory, and preserves every existing model and runtime. It
+keeps both replicas warm with ten `min_slots`. Add `--write`, render the GPU
+configuration, and review the generated Kimi resources before merging. The
+catalog status is already `available`; normal routing to the Kimi
 deployments stays closed until the worker qualifies them, and OpenRouter serves
 Kimi until then.
 
 The pool has two replicas, one per host, each using every GPU on its host
-(`replicas` and `max_replicas` are both two). An update replaces one replica at a
+(ten `min_slots` at five slots each, and `max_replicas` two). An update replaces one replica at a
 time: the PodDisruptionBudget keeps one available, and the surge pod waits until
 the old replica frees its host. Kimi capacity halves during an update rather than
 dropping to zero.

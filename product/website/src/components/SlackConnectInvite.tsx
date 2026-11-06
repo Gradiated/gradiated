@@ -186,16 +186,6 @@ export const SlackConnectInvite = ({
             We’ll create <strong>#{channel}</strong> and invite{" "}
             <strong>{recipient}</strong>.
           </p>
-          {customChannel === null && (
-            <button
-              type="button"
-              className="gs-text-button"
-              disabled={busy}
-              onClick={() => setCustomChannel(channel)}
-            >
-              Change channel name
-            </button>
-          )}
           <button
             type="button"
             className="gr-button"

@@ -1,18 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  CheckCircle2,
-  CircleDashed,
-  Code2,
-  LockKeyhole,
-  MessageSquare,
-  Plus,
-  X,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import {
   emptyOnboarding,
   accountStorageKey,
@@ -20,7 +9,6 @@ import {
   reuseAccount,
   firstIncompleteStep,
   counterpartyDetails,
-  mutualNda,
   onboardingSchema,
 } from "../onboarding";
 import type { OnboardingDraft, OnboardingAccount } from "../onboarding";
@@ -563,7 +551,6 @@ const GetStartedWorkflow = ({
     return previewSlack ? { ...current, introduced: true, step: 1 } : current;
   });
   const [saved, setSaved] = useState(true);
-  const [ndaOpen, setNdaOpen] = useState(false);
   const [signingOpen, setSigningOpen] = useState(false);
   const [ndaVerified, setNdaVerified] = useState(previewSlack);
   const [githubVerified, setGithubVerified] = useState(false);
@@ -573,7 +560,6 @@ const GetStartedWorkflow = ({
   const [notesError, setNotesError] = useState("");
   const notesRequest = useRef<{ key: string; id: string } | null>(null);
   const headingRef = useRef<HTMLElement>(null);
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const patch: UpdateDraft = (values) => {
     const ndaFields = [
       "legalName",
@@ -599,7 +585,7 @@ const GetStartedWorkflow = ({
 
   useEffect(() => {
     document.title = draft.submitted
-      ? "Your engineer | Gradiated preview"
+      ? "Setup complete | Gradiated"
       : "Get a forward deployed engineer | Gradiated";
     try {
       localStorage.setItem(accountStorageKey(account), JSON.stringify(draft));
@@ -614,19 +600,12 @@ const GetStartedWorkflow = ({
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [draft.step, draft.submitted, draft.introduced, signingOpen]);
 
-  useEffect(() => {
-    if (ndaOpen) dialogRef.current?.showModal();
-    else dialogRef.current?.close();
-  }, [ndaOpen]);
-
   return (
     <div className="gr-root gs-root" data-theme="taupe">
       <div className="gs-prototype">
         {demo ? "Prototype · demo account" : "Prototype"}
       </div>
-      <div
-        className={`gs-auth-shell${draft.submitted ? " gs-auth-shell--project" : ""}`}
-      >
+      <div className="gs-auth-shell">
         <div
           className={`gs-auth-container${signingOpen ? " gs-auth-container--signing" : ""}`}
         >
@@ -662,12 +641,24 @@ const GetStartedWorkflow = ({
               </div>
             </main>
           ) : draft.submitted ? (
-            <ProjectPreview
-              draft={draft}
-              demo={demo}
-              onEdit={() => patch({ submitted: false, step: 2 })}
-              onNda={() => setNdaOpen(true)}
-            />
+            <main
+              className="gs-main gs-confirmation"
+              ref={headingRef}
+              tabIndex={-1}
+              aria-label="Setup complete"
+            >
+              <p>
+                Thank you, we've got everything we need. One of our researchers
+                will have a look into your project now and will suggest a plan
+                on Slack with you as soon as possible, likely within a working
+                day!
+              </p>
+              <p>
+                If in the meantime you want to chat or tell us anything, feel
+                free to hop into the slack channel we just set up with you and
+                invite some colleagues to it.
+              </p>
+            </main>
           ) : (
             <main className="gs-main" ref={headingRef} tabIndex={-1}>
               <nav className="gs-progress" aria-label="Setup steps">
@@ -944,398 +935,17 @@ const GetStartedWorkflow = ({
               </div>
             </main>
           )}
-          <OnboardingHelp
-            step={
-              !draft.introduced
-                ? "Get an engineer"
-                : draft.submitted
-                  ? "Project setup"
+          {!draft.submitted && (
+            <OnboardingHelp
+              step={
+                !draft.introduced
+                  ? "Get an engineer"
                   : (steps[draft.step] ?? "Project setup")
-            }
-          />
+              }
+            />
+          )}
         </div>
       </div>
-
-      <dialog
-        ref={dialogRef}
-        className="gs-dialog"
-        onCancel={() => setNdaOpen(false)}
-        onClick={(event) => {
-          if (event.target === event.currentTarget) setNdaOpen(false);
-        }}
-        aria-labelledby="nda-title"
-      >
-        <button
-          type="button"
-          className="gs-dialog-close"
-          onClick={() => setNdaOpen(false)}
-          aria-label="Close NDA preview"
-        >
-          <X size={20} />
-        </button>
-        <span className="gs-label">SIGNATURE PAGE · PREVIEW</span>
-        <h2 id="nda-title">Mutual NDA</h2>
-        <div className="gs-nda-parties">
-          <section>
-            <h3>Your company</h3>
-            <dl className="gs-summary">
-              <div>
-                <dt>Company</dt>
-                <dd>
-                  {counterpartyDetails(draft).company || "Legal company name"}
-                </dd>
-              </div>
-              <div>
-                <dt>Name</dt>
-                <dd>
-                  {counterpartyDetails(draft).name || "Signer’s full name"}
-                </dd>
-              </div>
-              <div>
-                <dt>Title</dt>
-                <dd>{counterpartyDetails(draft).title || "Signer’s title"}</dd>
-              </div>
-              <div>
-                <dt>Address</dt>
-                <dd className="gs-address">
-                  {counterpartyDetails(draft).address || "Company address"}
-                </dd>
-              </div>
-              <div>
-                <dt>Email</dt>
-                <dd>{counterpartyDetails(draft).email || "Signer’s email"}</dd>
-              </div>
-              <div>
-                <dt>Signature</dt>
-                <dd>Awaiting signature</dd>
-              </div>
-              <div>
-                <dt>Date</dt>
-                <dd>Added at signing</dd>
-              </div>
-            </dl>
-          </section>
-          <section>
-            <h3>PostHog · pre-filled</h3>
-            <dl className="gs-summary">
-              <div>
-                <dt>Company</dt>
-                <dd>{mutualNda.company}</dd>
-              </div>
-              <div>
-                <dt>Name</dt>
-                <dd>{mutualNda.signer}</dd>
-              </div>
-              <div>
-                <dt>Title</dt>
-                <dd>{mutualNda.title}</dd>
-              </div>
-              <div>
-                <dt>Address</dt>
-                <dd className="gs-address">{mutualNda.address}</dd>
-              </div>
-              <div>
-                <dt>Signature</dt>
-                <dd>Awaiting signature</dd>
-              </div>
-              <div>
-                <dt>Date</dt>
-                <dd>Added at signing</dd>
-              </div>
-            </dl>
-          </section>
-        </div>
-        <p>
-          Signature details only. The live flow sends the full mutual NDA for
-          review and e-signing.
-        </p>
-
-        <button
-          type="button"
-          className="gr-button gr-button--main"
-          onClick={() => setNdaOpen(false)}
-        >
-          Done <Check size={14} />
-        </button>
-      </dialog>
     </div>
-  );
-};
-
-const ProjectPreview = ({
-  draft,
-  demo,
-  onEdit,
-  onNda,
-}: {
-  draft: OnboardingDraft;
-  demo: boolean;
-  onEdit: () => void;
-  onNda: () => void;
-}) => {
-  const [tab, setTab] = useState<"steps" | "engineer" | "access">("steps");
-  const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<string[]>([]);
-  const [sampleAdded, setSampleAdded] = useState(false);
-  const [notice, setNotice] = useState("");
-
-  return (
-    <main className="gs-project">
-      <div className="gs-project-top">
-        <span className="gs-label">{draft.company} × GRADIATED</span>
-        <button type="button" className="gs-text-button" onClick={onEdit}>
-          Edit setup
-        </button>
-      </div>
-      <div className="gs-project-title">
-        <h1>Your setup is ready.</h1>
-        <p>
-          Next: meet your engineer in{" "}
-          {draft.channel === "slack" ? "Slack" : "email"}.
-        </p>
-      </div>
-      <nav className="gs-project-tabs" aria-label="Project sections">
-        {(
-          [
-            ["steps", "Next steps"],
-            ["engineer", "Your engineer"],
-            ["access", "NDA & access"],
-          ] as const
-        ).map(([id, label]) => (
-          <button
-            type="button"
-            key={id}
-            aria-current={tab === id ? "page" : undefined}
-            onClick={() => {
-              setTab(id);
-              setNotice("");
-            }}
-          >
-            {label}
-          </button>
-        ))}
-      </nav>
-      {tab === "steps" && (
-        <>
-          <div className="gs-work-items">
-            <div className="is-complete">
-              <CheckCircle2 size={19} />
-              <div>
-                <h3>Setup details ready</h3>
-                <p>{draft.context || draft.company + " · " + draft.email}</p>
-              </div>
-            </div>
-            <div>
-              <LockKeyhole size={19} />
-              <div>
-                <h3>Mutual NDA completed</h3>
-                <p>
-                  {demo
-                    ? "Demo signing complete · no agreement executed"
-                    : `${draft.legalName} and ${mutualNda.company} · completed in PandaDoc`}
-                </p>
-                <button
-                  type="button"
-                  className="gs-text-button"
-                  onClick={onNda}
-                >
-                  Review pre-filled NDA <ArrowRight size={13} />
-                </button>
-              </div>
-            </div>
-            <div>
-              <Code2 size={19} />
-              <div>
-                <h3>GitHub app installed</h3>
-                <p>{accessLabel(draft)}</p>
-                <button
-                  type="button"
-                  className="gs-text-button"
-                  onClick={() => setTab("access")}
-                >
-                  View GitHub connection <ArrowRight size={13} />
-                </button>
-              </div>
-            </div>
-            <div>
-              <MessageSquare size={19} />
-              <div>
-                <h3>
-                  {draft.channel === "slack"
-                    ? "Set up the joint Slack channel"
-                    : "Email fallback · Slack unavailable"}
-                </h3>
-                <p>
-                  {draft.channel === "slack"
-                    ? draft.slackStatus === "not_sent"
-                      ? "Return to setup to send your Slack invitation."
-                      : "#" +
-                        draft.slack +
-                        " · " +
-                        (draft.slackStatus === "joined"
-                          ? "connected"
-                          : "invitation sent; acceptance pending")
-                    : "We’ll use " +
-                      draft.email +
-                      ". Slack remains our preferred way to work."}
-                </p>
-                <button
-                  type="button"
-                  className="gs-text-button gs-intro-button"
-                  onClick={() => setTab("engineer")}
-                >
-                  Meet your engineer <ArrowRight size={13} />
-                </button>
-              </div>
-            </div>
-            <div>
-              <CircleDashed size={19} />
-              <div>
-                <h3>Pick a test case together</h3>
-                <p>Then test changes against that baseline.</p>
-              </div>
-            </div>
-          </div>
-          <details className="gs-sample">
-            <summary>Bring an example</summary>
-            <p>One input. What happened. What you expected.</p>
-            <button
-              type="button"
-              className="gs-text-button"
-              onClick={() => setSampleAdded(!sampleAdded)}
-            >
-              {sampleAdded ? <Check size={14} /> : <Plus size={14} />}
-              {sampleAdded ? "Remove demo example" : "Add a demo example"}
-            </button>
-            {sampleAdded && (
-              <div className="gs-example-result">
-                <span className="gs-label">DEMO EXAMPLE</span>
-                <p>
-                  <strong>Input</strong> “Change my shipping address.”
-                </p>
-                <p>
-                  <strong>Actual</strong> Generic instructions; no tool call.
-                </p>
-                <p>
-                  <strong>Expected</strong> Look up the order, check its status,
-                  then call the update tool.
-                </p>
-              </div>
-            )}
-          </details>
-        </>
-      )}
-      {tab === "engineer" && (
-        <section className="gs-engineer-view">
-          <div className="gs-message">
-            <span className="gs-avatar">
-              <Code2 size={18} />
-            </span>
-            <div>
-              <span className="gs-label">EXAMPLE INTRODUCTION</span>
-              <p>
-                Hi {draft.name.split(" ")[0]} — can you share one input, the
-                answer you got, and what you expected? I’ll use that as our
-                first test.
-              </p>
-            </div>
-          </div>
-          {messages.map((body, index) => (
-            <div className="gs-message" key={index}>
-              <span className="gs-avatar">{draft.name.slice(0, 1)}</span>
-              <div>
-                <span className="gs-label">YOU · PREVIEW</span>
-                <p>{body}</p>
-              </div>
-            </div>
-          ))}
-          <form
-            className="gs-message-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (!message.trim()) return;
-              setMessages((current) => [...current, message.trim()]);
-              setMessage("");
-              setNotice("Preview only. Nothing sent.");
-            }}
-          >
-            <Field label="Reply">
-              <textarea
-                required
-                rows={3}
-                maxLength={2000}
-                value={message}
-                onChange={(event) => setMessage(event.target.value)}
-                placeholder="Here’s one that failed…"
-              />
-            </Field>
-            <button type="submit" className="gr-button gr-button--main">
-              Preview reply <ArrowRight size={14} />
-            </button>
-          </form>
-          <p className="gs-note">
-            In the live service, you’ll talk in{" "}
-            {draft.channel === "slack" ? "Slack" : "email"}.
-          </p>
-        </section>
-      )}
-      {tab === "access" && (
-        <section className="gs-access-view">
-          <dl className="gs-summary">
-            <div>
-              <dt>NDA</dt>
-              <dd>
-                {ndaLabel()} · {draft.legalName}
-              </dd>
-            </div>
-            <div>
-              <dt>Signer</dt>
-              <dd>
-                {counterpartyDetails(draft).name} ·{" "}
-                {counterpartyDetails(draft).title}
-              </dd>
-            </div>
-            <div>
-              <dt>Status</dt>
-              <dd>
-                {demo
-                  ? "Demo signing complete · not legally signed"
-                  : "Completed in PandaDoc"}
-              </dd>
-            </div>
-            <div>
-              <dt>GitHub</dt>
-              <dd>{accessLabel(draft)}</dd>
-            </div>
-            <div>
-              <dt>Channel</dt>
-              <dd>
-                {draft.channel === "slack"
-                  ? draft.slackStatus === "not_sent"
-                    ? "Slack invitation not sent yet"
-                    : "#" +
-                      draft.slack +
-                      " · " +
-                      (draft.slackStatus === "joined"
-                        ? "connected"
-                        : "acceptance pending")
-                  : "Email fallback · Slack unavailable"}
-              </dd>
-            </div>
-          </dl>
-          <button type="button" className="gs-text-button" onClick={onNda}>
-            Review pre-filled NDA <ArrowRight size={13} />
-          </button>
-          <p>{accessLabel(draft)}</p>
-          <p className="gs-note">
-            Code changes and use of private data in models require separate
-            written approval.
-          </p>
-        </section>
-      )}
-      <p className="gs-live-notice" role="status">
-        {notice}
-      </p>
-    </main>
   );
 };

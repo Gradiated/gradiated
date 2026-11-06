@@ -83,9 +83,10 @@ The final review includes an optional context note; there is no project
 questionnaire before setup. Setup uses the console account pages’ centered card,
 Inter typography, logo, form controls and full-width action layout. The website
 serves the same product logo and a local Inter Latin font with its license.
-In the demo, **Fill with an example** fills in
-synthetic details so the whole flow can be explored without entering personal
-information. **Start over** clears the local draft.
+**Start over** clears the local draft. After **Start project**, the page shows
+only a thank-you note explaining that a researcher will suggest a plan in Slack,
+likely within a working day. The former project tabs and preview workspace have
+been removed.
 
 The local demo stores progress only in this browser and simulates signing. Account
 creation and identity reuse follow the existing product flow. The optional live

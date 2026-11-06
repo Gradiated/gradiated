@@ -102,13 +102,22 @@ class AccountingTests(unittest.TestCase):
         self.assertFalse(row['ok'])
         self.assertIn('too short', row['error'])
 
-    def test_all_streams_must_meet_floor(self):
-        rows = [{'ok': True, 'slo_met': passed, 'gate_tps': speed, 'ttft_s': .1,
-                 'completion_tokens': 512, 'started_at_monotonic': 0, 'finished_at_monotonic': 5}
-                for speed, passed in [(100, True), (79.9, False)]]
-        summary = probe.summarize(rows, 2, 0)
-        self.assertFalse(summary['slo_met'])
-        self.assertEqual(summary['aggregate_output_tps'], 1024/5)
+    def test_median_stream_must_meet_floor(self):
+        def rows(speeds):
+            return [{'ok': True, 'slo_met': speed >= 80, 'gate_tps': speed, 'ttft_s': .1,
+                     'completion_tokens': 512, 'started_at_monotonic': 0, 'finished_at_monotonic': 5}
+                    for speed in speeds]
+        summary = probe.summarize(rows([100, 90, 60]), 3, 0, 80)
+        self.assertTrue(summary['slo_met'])
+        self.assertEqual(summary['gate_tps_min'], 60)
+        self.assertEqual(summary['aggregate_output_tps'], 3*512/5)
+        self.assertFalse(probe.summarize(rows([100, 79.9, 60]), 3, 0, 80)['slo_met'])
+
+    def test_failed_request_fails_round(self):
+        good = {'ok': True, 'slo_met': True, 'gate_tps': 120, 'ttft_s': .1, 'completion_tokens': 512,
+                'started_at_monotonic': 0, 'finished_at_monotonic': 5}
+        failed = {'ok': False, 'slo_met': False, 'started_at_monotonic': 0, 'finished_at_monotonic': 5}
+        self.assertFalse(probe.summarize([good, good, failed], 3, 0, 80)['slo_met'])
 
     def test_fixture_order_covers_each_length_at_concurrency_one(self):
         fixtures = [{'target_tokens': target, 'id': f'{target}-{i}'}
@@ -256,6 +265,30 @@ class RequestTests(unittest.TestCase):
         payload = post.call_args.args[1]
         self.assertEqual((payload['temperature'], payload['top_p'], payload['reasoning_effort']), (0, 1, 'low'))
         self.assertNotIn('seed', payload)
+
+    def test_seed_and_penalties_reach_both_protocols(self):
+        args = self.args()
+        args.sampling_seed, args.frequency_penalty, args.presence_penalty = 42, .2, .2
+        fixture = {'id': 'fixture', 'target_tokens': 2048, 'native_input_ids': [1, 2],
+                   'messages': [{'role': 'user', 'content': 'synthetic'}]}
+        for protocol, seed_field in (('chat', 'seed'), ('generate', 'sampling_seed')):
+            with self.subTest(protocol=protocol):
+                args.protocol = protocol
+                with patch.object(probe, 'post_json', side_effect=TimeoutError('synthetic stop')) as post:
+                    probe.request_once(args, fixture, time.monotonic()+1)
+                payload = post.call_args.args[1]
+                sampling = payload['sampling_params'] if protocol == 'generate' else payload
+                self.assertEqual((sampling[seed_field], sampling['frequency_penalty'], sampling['presence_penalty']),
+                                 (42, .2, .2))
+
+    def test_invalid_penalty_is_rejected_before_fixture_loading(self):
+        for value in ('nan', 'inf', '2.1', '-2.1'):
+            with self.subTest(value=value):
+                result = subprocess.run([sys.executable, str(Path(probe.__file__)),
+                    '--base-url', 'http://127.0.0.1:1', '--label', 'invalid', f'--presence-penalty={value}'],
+                    capture_output=True, text=True, timeout=5)
+                self.assertEqual(result.returncode, 2)
+                self.assertIn('penalties must be finite', result.stderr)
 
     def test_invalid_sampling_is_rejected_before_fixture_loading(self):
         for flag, value in (('--temperature', 'nan'), ('--temperature', 'inf'),

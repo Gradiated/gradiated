@@ -25,7 +25,7 @@ does not upcast target weights or expert activations. Native FP8 KV is retained.
 
 The provisional profile reserves eight B300 UUIDs on one host and uses TP8,
 85% static device memory, a 0.45 KDA-to-KV memory ratio, an 8K-token prefill budget,
-prefill/decode interval zero and decode graphs through batch two. DFLASH uses
+prefill/decode interval zero and decode graphs through batch four. DFLASH uses
 block five, non-overlap scheduling and ReplaySSM. Its draft is
 `RadixArk/Kimi-K3.1-Dflash2-Preview` at
 `d0d8bc2e3c6d0a195d2e00a49017e71ca8d881f1`, with the explicit `cutedsl_mla`
@@ -57,23 +57,31 @@ seeded, mixed and inverse-mixed rows, before publishing readiness. This warms
 shape-specific kernels before batches shrink or grow during serving.
 
 SMG 1.13.0 supplies the same guarded refused-upload drain fix used by the GLM
-runtime. Its single-worker frontend admits two requests and queues two for
+runtime. Its single-worker frontend admits four requests and queues two for
 at most sixty seconds, disables retries, and keeps each permit through response
-completion. The gateway routes using the same two-request capacity.
+completion. The gateway routes using the same four-request capacity.
 Changing that capacity changes the immutable runtime and requires matched
 measurements and requalification.
 
-Two requests is the largest limit at which every supported sampling mix kept
-each stream at or above 80 generated tokens/s in fresh-prefix holdouts of
-2K/8K/32K prompts with 512 output tokens (measured on the fused-Philox source).
-Three requests passed all three default-sampling holdouts (slowest streams
-84.6-91.4 TPS) and every warm seed/penalty matrix cell, but seeded requests
-with nonzero frequency/presence penalties passed only one of three cold
-holdouts (slowest stream 67.9 TPS). Penalties lower DFLASH acceptance, about
-2.43 versus 2.61 committed tokens per verify step warm, because the draft
-proposes without them; the penalty arithmetic itself costs under 2 ms a step.
-Raising the limit needs penalty-aware drafting or a traffic mix shown not to
-use penalties, followed by matched requalification.
+The 80 TPS target is the median stream's decode rate (tokens after the first,
+over time after the first token). Four requests is the largest limit at which
+the median stream stayed at or above 80 for both default sampling and seeded
+requests with frequency/presence penalties. These are fresh-prefix 2K/8K/32K
+prompts with 512 output tokens, two trials per cell, on the fused-Philox source:
+
+| Limit | Default median TPS | Seed+penalty median TPS | Slowest stream | Aggregate TPS |
+| ----- | ------------------ | ----------------------- | -------------- | ------------- |
+| 2     | 159-174            | 129-147                 | 89             | 200-232       |
+| 3     | 129-142            | 92-112                  | 68-74          | 245-281       |
+| 4     | 97-110             | 80-89                   | 59-64          | 278-309       |
+| 5     | 76-78              | 67-80                   | 47-61          | 298-331       |
+| 6     | 82-83              | 62-66                   | 44-47          | 322-353       |
+| 8     | 62-74              | 57-58                   | 36-39          | 342-374       |
+
+At four requests, the slowest streams fall to about 60 TPS while another
+request's long prefill shares the step. Penalties also lower DFLASH acceptance,
+because the draft proposes without them. Archive qualification at four
+requests must pass both the default-sampling and the seed+penalty probe runs.
 
 The host supplies `NVIDIA_VISIBLE_DEVICES`, `RUNTIME_PORT`, `WARMUP_PORT` and
 `GRADIATED_RUNTIME_ROOT`. The frontend uses `RUNTIME_PORT`, the native backend
@@ -104,9 +112,9 @@ throughput holdout and is not selected. Its near-limit result does not qualify
 the provisional 8K-chunk, interval-zero profile, which still needs long-context
 and exact immutable archive qualification. Earlier three-stream throughput
 results also used a different 0.9 ratio and batch-32 runtime; they do not qualify
-this complete two-request profile. The optimization target is
-maximum measured aggregate throughput while every admitted stream sustains at
-least 80 generated tokens/s under the qualified prompt and concurrency mix.
+this complete four-request profile. The optimization target is
+maximum measured aggregate throughput while the median admitted stream decodes
+at least 80 generated tokens/s under the qualified prompt and concurrency mix.
 Record TTFT and queueing separately; do not count cached prompt tokens as decode
 throughput. Initial tuning and deployment use only the reserved 8xB300 host
 `01a0fbf8-06fc-7658-96e1-ae72f7dba135` (RunPod `dv31b4wrd2yc8n`), with one

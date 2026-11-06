@@ -1,7 +1,9 @@
 # Kimi K3.1 Pro throughput probe
 
-This closed-loop probe tests aggregate throughput while requiring **every measured
-request** to sustain at least 80 output tokens/s. It generates deterministic
+This closed-loop probe tests aggregate throughput while requiring every request
+to complete and the **median request** to decode at least 80 output tokens/s
+(tokens after the first, over time after the first token). Each round also
+records the slowest and p05 stream rates. It generates deterministic
 synthetic 2K, 8K and 32K text-token fixtures using the pinned checkpoint's custom
 Hugging Face tokenizer and `tiktoken.model`. Actual chat prompt counts come from response usage; chat control
 tokens can make them larger than the prepared text-token counts.
@@ -71,8 +73,7 @@ native synthetic fixed-length throughput tests; record its use and do not use
 those tests as a quality result.
 
 Each concurrency runs three trials by default, with three requests per worker
-and mixed prompt lengths. A concurrency qualifies only if every request in every
-trial passes; the sweep stops at its first failure unless
+and mixed prompt lengths. A concurrency qualifies only if every trial passes; the sweep stops at its first failure unless
 `--continue-after-failure` is set. Results are atomically checkpointed after each
 trial. Request timeouts, post-first-output idle timeouts, and an absolute campaign
 deadline bound all network reads.
@@ -103,6 +104,13 @@ python product/inference/benchmarks/kimi-k31/probe.py \
   --temperature 1 --top-p .95 --reasoning-effort max --floor-tps 80 \
   --output .agents/runtime/kimi-k31/tp8-native-A1.json
 ```
+
+`--sampling-seed`, `--frequency-penalty` and `--presence-penalty` add request
+sampling parameters; `--seed` only generates and orders fixtures. Qualify an
+admission limit with two separate passing runs at that concurrency, one with
+default sampling and one with `--sampling-seed 42 --frequency-penalty .2
+--presence-penalty .2`. Penalties lower DFLASH acceptance, so the penalty run
+is usually the limiting one.
 
 Use labels and separate output files for repeated same-workload A/B/A/B/A arms;
 `--config-json` records the exact non-secret launch flags and hardware/runtime

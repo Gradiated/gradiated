@@ -49,18 +49,9 @@ export const HomePage = (): ReactElement => (
       <Module bleed className="gr-module--fold" index={0}>
         <div className="gr-fold-left">
           <h1 className="gr-display gr-home-title">
-            {/* Two readings of one line: desktop keeps the hyphen, the phone
-                drops it so the words wrap on the module without a split. */}
-            <span className="gr-home-title-wide">
-              <Reveal by="word">
-                The cheapest way to run open-source models.
-              </Reveal>
-            </span>
-            <span className="gr-home-title-narrow">
-              <Reveal by="word">
-                The cheapest way to run open source models.
-              </Reveal>
-            </span>
+            <Reveal by="word">
+              Get more out of your AI models in production. Or train your own.
+            </Reveal>
           </h1>
           <div className="gr-home-actions">
             <Link

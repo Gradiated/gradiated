@@ -71,7 +71,7 @@ pub(crate) use model::{
 pub(crate) use request::{InferenceRequest, OutputTokenLimit, RequestKind};
 pub(crate) use routing::{healthy_deployment_count, Route, RouteAvailability, RouteInput};
 pub(crate) use runtime::{
-    ExternalCapacity, ExternalModel, ExternalRequest, ModelRuntime, RuntimeCompletion,
+    ExternalCapacity, ExternalModel, ExternalRequest, ModelRuntime, PriceCap, RuntimeCompletion,
     RuntimeEventStream, RuntimeFailure, RuntimeFailureKind, RuntimeStreamChunk, RuntimeStreamEvent,
 };
 pub(crate) use service_tier::ServiceTier;

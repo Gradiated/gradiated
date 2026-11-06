@@ -10,9 +10,9 @@ use uuid::Uuid;
 use super::{settlement::FailedGeneration, unless_panicked};
 use crate::{
     metrics::{Capacity, CapacityMetrics, FallbackReason},
-    ExternalCapacity, ExternalModel, ExternalRequest, GatewayModelDeployment, InferenceRequest,
-    ModelRuntime, NormalizedUsage, Route, RuntimeCompletion, RuntimeEventStream, RuntimeFailure,
-    RuntimeFailureKind,
+    ExternalCapacity, ExternalModel, ExternalRequest, GatewayError, GatewayModelDeployment,
+    InferenceRequest, ModelRuntime, NormalizedUsage, PriceCap, Route, RuntimeCompletion,
+    RuntimeEventStream, RuntimeFailure, RuntimeFailureKind,
 };
 
 /// An attempt with less time than this left would only spend the deadline.
@@ -27,6 +27,8 @@ pub(super) struct CapacityPlan {
     pub(super) external: Option<ExternalModel>,
     /// Why `target` is not the preferred local capacity.
     pub(super) reason: Option<FallbackReason>,
+    /// What our own capacity answered, which the caller gets if OpenRouter cannot serve.
+    pub(super) own_error: Option<GatewayError>,
 }
 
 pub(super) struct LocalTier {
@@ -57,16 +59,22 @@ impl CapacityPlan {
             degraded: None,
             external: None,
             reason: None,
+            own_error: None,
         }
     }
 
-    pub(super) fn external(model: ExternalModel, reason: FallbackReason) -> Self {
+    pub(super) fn external(
+        model: ExternalModel,
+        reason: FallbackReason,
+        own_error: GatewayError,
+    ) -> Self {
         Self {
             target: Target::External(model),
             fallbacks: Vec::new(),
             degraded: None,
             external: None,
             reason: Some(reason),
+            own_error: Some(own_error),
         }
     }
 }
@@ -135,6 +143,7 @@ pub(super) struct RuntimeCall {
     pub(super) request: InferenceRequest,
     pub(super) effective_output_tokens: u64,
     pub(super) deadline: DateTime<Utc>,
+    pub(super) price_cap: PriceCap,
     pub(super) plan: CapacityPlan,
     pub(super) local_attempts: u8,
     pub(super) attempts: u8,
@@ -230,9 +239,10 @@ impl RuntimeCall {
         F: Future<Output = Result<T, RuntimeFailure>>,
     {
         match unless_panicked(self.generation_id, self.dispatch_with_fallback(send)).await {
-            Some(result) => {
-                result.map_err(|failure| FailedGeneration::from_runtime_failure(&failure))
-            }
+            Some(result) => result.map_err(|failure| match self.own_error(failure.kind()) {
+                Some(error) => FailedGeneration::failed(error, failure.usage()),
+                None => FailedGeneration::from_runtime_failure(&failure),
+            }),
             None => Err(FailedGeneration::panicked()),
         }
     }
@@ -310,6 +320,7 @@ impl RuntimeCall {
                     request,
                     output_tokens: self.effective_output_tokens,
                     deadline: self.deadline,
+                    price_cap: self.price_cap,
                 },
             },
         }
@@ -335,6 +346,10 @@ impl RuntimeCall {
             return None;
         }
 
+        if matches!(self.plan.target, Target::External(_)) {
+            self.plan.own_error = Some(failure.public_error());
+        }
+
         let reason = if failure == RuntimeFailureKind::CapacityExceeded {
             FallbackReason::CapacityExceeded
         } else {
@@ -345,6 +360,18 @@ impl RuntimeCall {
         self.plan.reason = Some(reason);
 
         Some(self.plan.target.capacity())
+    }
+
+    /// OpenRouter's failure before output never reaches the caller: they get the
+    /// answer our own capacity gave. A missed deadline stays a timeout.
+    pub(super) fn own_error(&self, failure: RuntimeFailureKind) -> Option<GatewayError> {
+        if !matches!(self.plan.target, Target::External(_))
+            || failure == RuntimeFailureKind::TimedOut
+        {
+            return None;
+        }
+
+        self.plan.own_error.clone()
     }
 
     /// A request the runtime called invalid is the caller's to fix, and a shared
@@ -442,6 +469,11 @@ impl RuntimeCall {
                 degraded: None,
                 external: None,
                 reason: None,
+                own_error: None,
+            },
+            price_cap: PriceCap {
+                prompt: 0,
+                completion: 0,
             },
             local_attempts: 0,
             attempts: 0,

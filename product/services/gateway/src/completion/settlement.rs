@@ -142,6 +142,13 @@ impl FailedGeneration {
         }
     }
 
+    pub(super) fn failed(error: GatewayError, usage: NormalizedUsage) -> Self {
+        Self {
+            end: Unsuccessful::Failed(error),
+            usage,
+        }
+    }
+
     pub(super) fn panicked() -> Self {
         Self {
             end: Unsuccessful::Failed(GatewayError::RuntimeUnavailable),

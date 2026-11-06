@@ -11,6 +11,7 @@ import {
   type DeploymentRuntimeStatus,
   type ModelRecord,
   type Release,
+  type TokenPrices,
 } from "./catalog.js";
 import { CHAT_PROMPT } from "./chat.js";
 import { eventually } from "./eventually.js";
@@ -124,7 +125,7 @@ export class Case {
       service_url: runtime.url,
       release: this.release,
     }));
-    this.record = modelRecord(kind);
+    this.record = modelRecord(kind, options.prices);
   }
 
   static async create(
@@ -522,6 +523,7 @@ export interface CaseOptions {
   replicas?: number;
   /** Maps the case's model to this OpenRouter model. */
   openRouterModel?: string;
+  prices?: TokenPrices;
   organizationKind?: OrganizationKind;
   /** OpenRouter's own organization is the distribution channel named "OpenRouter". */
   organizationName?: string;

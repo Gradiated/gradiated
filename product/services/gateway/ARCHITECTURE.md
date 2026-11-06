@@ -938,6 +938,12 @@ attempts and one OpenRouter attempt; OpenRouter is never retried and never
 routes back to our capacity. Once any frame reached the caller, existing stream
 failure handling applies and nothing else serves the request.
 
+When OpenRouter fails before any frame reached the caller, the caller gets the
+answer our own capacity gave: `capacity_exceeded` when it was saturated or
+refused for load, `runtime_unavailable` when it had no deployment or failed, as
+if OpenRouter had not been tried. A deadline timeout stays a server
+cancellation, and a failure after output keeps its stream failure.
+
 ### Billing
 
 The caller is billed from the captured catalog prices for the usage of the
@@ -964,19 +970,28 @@ terminal usage chunk. A response naming another model, a stream with two
 generation IDs, inconsistent usage or a missing final usage frame is a protocol
 failure. An `error` object in a 200 response or stream frame is a failure.
 
-OpenRouter statuses map to our errors: 400 and 422 are `invalid_request`; 429,
-503 and 529 are `capacity_exceeded`; every other status, including our own
-401, 402 and 403, is `runtime_unavailable`. A 400 whose message names the mapped
-model means OpenRouter no longer lists it. That is our mapping's fault, so it is
-`runtime_unavailable` and logs `openrouter_model_rejected`.
+OpenRouter statuses classify the attempt for logs and metrics: 400 and 422 are
+`invalid_request`; 429, 503 and 529 are `capacity_exceeded`; every other status,
+including our own 401, 402 and 403 and its 404 when no provider matches the
+request's preferences, is `runtime_unavailable`. A 400 whose message names the
+mapped model means OpenRouter no longer lists it; it is `runtime_unavailable`
+and logs `openrouter_model_rejected`. None of these reaches the caller, which
+gets our own capacity's answer as above.
 
 ### Requests sent
 
 The body holds the qualified fields, `model` set to the mapping, the effective
 output limit, `provider: {data_collection: "deny", require_parameters: true,
-zdr: true}` on every request, context compression disabled,
+zdr: true, max_price}` on every request, context compression disabled,
 and `user` and `session_id` as per-workspace SHA-256 values that carry no
-Gradiated identifier. It carries no runtime priority or private usage option.
+Gradiated identifier. `max_price` is the request's captured catalog prompt and completion
+prices in USD per million tokens (completion is the lower of the completion and
+reasoning prices, which OpenRouter bills alike), so OpenRouter routes only to
+providers that cost no more than the caller pays. `max_price` has no
+cached-input field and OpenRouter ignores unknown ones, so a provider's
+cache-read rate can exceed the catalog's cached price; Gradiated accepts that
+difference rather than restricting providers further. It carries no runtime priority
+or private usage option.
 The client has its own HTTP connection pool without the runtime TLS identity and
 sends only the platform key: in production the active slot of the
 `providers/openrouter` secret, read per attempt through the shared credential

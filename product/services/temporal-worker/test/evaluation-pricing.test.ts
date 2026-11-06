@@ -103,7 +103,11 @@ it("loads provider prices from the API and uses our hosted rates without a worke
   );
   const load = createEvaluationPricing(catalog, send);
   const result = await load("z-ai/glm-5.3-flash", provider.id, signal);
-  expect(result.fine_tuned).toMatchObject(pricing.fine_tuned!);
+  expect(result.fine_tuned).toMatchObject({
+    model_id: "z-ai/glm-5.3-flash",
+    source: "hosted_catalog",
+    rates: { prompt: 150 / 1e9, completion: 500 / 1e9 },
+  });
   expect(result.comparison?.rates.prompt).toBe(0.000002);
   await load("z-ai/glm-5.3-flash", provider.id, signal);
   expect(send).toHaveBeenCalledTimes(2);

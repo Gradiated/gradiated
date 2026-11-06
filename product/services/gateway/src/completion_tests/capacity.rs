@@ -204,12 +204,12 @@ async fn the_local_replica_retry_comes_before_openrouter_and_attempts_stay_bound
 }
 
 #[tokio::test]
-async fn when_every_capacity_fails_the_last_failure_is_returned_and_settled_once() {
+async fn when_openrouter_also_fails_the_caller_gets_our_own_failure_settled_once() {
     let harness = Harness::new(
         mapped_request(1),
-        [failure(RuntimeFailureKind::Unavailable)],
+        [failure(RuntimeFailureKind::CapacityExceeded)],
     )
-    .openrouter([failure(RuntimeFailureKind::CapacityExceeded)]);
+    .openrouter([failure(RuntimeFailureKind::Unavailable)]);
 
     assert_eq!(
         harness.complete().await.unwrap_err(),
@@ -230,6 +230,52 @@ async fn when_every_capacity_fails_the_last_failure_is_returned_and_settled_once
     assert_eq!(finalized["usage"]["charge"], 0);
     assert_eq!(finalized["outcome"]["error_code"], "capacity_exceeded");
     assert_eq!(finalized["served_release_digest"], openrouter_digest());
+}
+
+#[tokio::test]
+async fn openrouter_finding_no_provider_answers_as_our_capacity_would_have() {
+    let saturated = Harness::new(mapped_request(1), [])
+        .openrouter([failure(RuntimeFailureKind::Unavailable)])
+        .local_status(|status| status.accepting_requests = false);
+    assert_eq!(
+        saturated.complete().await.unwrap_err(),
+        GatewayError::CapacityExceeded
+    );
+
+    let without_deployments = Harness::new(mapped_request(0), [])
+        .openrouter([failure(RuntimeFailureKind::CapacityExceeded)]);
+    assert_eq!(
+        without_deployments.complete().await.unwrap_err(),
+        GatewayError::RuntimeUnavailable
+    );
+
+    let streamed = Harness::new(mapped_request(1).streamed(), [])
+        .openrouter([failure(RuntimeFailureKind::Unavailable)])
+        .local_status(|status| status.accepting_requests = false);
+    assert_eq!(
+        streamed.stream().await.err(),
+        Some(GatewayError::CapacityExceeded)
+    );
+}
+
+#[tokio::test]
+async fn an_openrouter_stream_failing_before_any_frame_answers_with_our_failure() {
+    let harness = Harness::new(mapped_request(1).streamed(), [])
+        .openrouter([Script::Stream(vec![Err(RuntimeFailure::new(
+            RuntimeFailureKind::Interrupted,
+        ))])])
+        .local_status(|status| status.accepting_requests = false);
+
+    let items = harness.stream().await.unwrap();
+
+    assert_eq!(
+        items.last(),
+        Some(&StreamItem::Error(GatewayError::CapacityExceeded))
+    );
+    assert_eq!(
+        harness.only_finalized()["outcome"]["error_code"],
+        "capacity_exceeded"
+    );
 }
 
 #[tokio::test]
@@ -427,11 +473,12 @@ async fn a_stream_that_delivered_output_is_never_spliced_with_another() {
 
 #[tokio::test]
 async fn an_openrouter_stream_failing_after_output_keeps_the_stream_failure() {
-    let harness =
-        Harness::new(mapped_request(0).streamed(), []).openrouter([Script::Stream(vec![
+    let harness = Harness::new(mapped_request(1).streamed(), [])
+        .openrouter([Script::Stream(vec![
             content("partial", None),
             Err(RuntimeFailure::new(RuntimeFailureKind::Interrupted)),
-        ])]);
+        ])])
+        .local_status(|status| status.accepting_requests = false);
 
     let items = harness.stream().await.unwrap();
 

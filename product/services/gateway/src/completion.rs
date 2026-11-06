@@ -177,7 +177,11 @@ impl CompletionService {
             },
             (Err(unroutable), None) => {
                 return match external {
-                    Some(model) => Ok(CapacityPlan::external(model, unroutable.reason)),
+                    Some(model) => Ok(CapacityPlan::external(
+                        model,
+                        unroutable.reason,
+                        unroutable.error,
+                    )),
                     None => Err(unroutable.reject(request, &self.metrics)),
                 };
             }
@@ -506,6 +510,7 @@ impl Generation {
             request,
             effective_output_tokens,
             deadline: self.lease.request_deadline(),
+            price_cap: pricing.price_cap(),
             plan: self.plan,
             local_attempts: 0,
             attempts: 0,
@@ -675,7 +680,7 @@ impl Generation {
 
         let client_gone = matches!(stop, StreamStop::ClientGone);
         let terminal_response = progress.terminal_response.take();
-        let settled = settlement.settle(progress.into_terminal(stop)).await;
+        let settled = settlement.settle(progress.into_terminal(stop, &call)).await;
         if client_gone {
             return;
         }

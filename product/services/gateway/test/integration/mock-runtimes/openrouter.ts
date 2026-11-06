@@ -46,14 +46,23 @@ export const validate = (body: JsonObject, model: string): void => {
     throw new Error("exactly one positive output limit is required");
   }
 
+  const provider = isJsonObject(body.provider) ? body.provider : {};
+  const { max_price: maxPrice, ...privacy } = provider;
   if (
-    !same(body.provider, {
+    !same(privacy, {
       data_collection: "deny",
       require_parameters: true,
       zdr: true,
     })
   ) {
     throw new Error("privacy routing preferences are required");
+  }
+  if (
+    !isJsonObject(maxPrice) ||
+    typeof maxPrice.prompt !== "number" ||
+    typeof maxPrice.completion !== "number"
+  ) {
+    throw new Error("a price cap is required");
   }
   if (!same(body.plugins, [{ id: "context-compression", enabled: false }])) {
     throw new Error("context compression must be disabled");

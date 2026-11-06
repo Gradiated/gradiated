@@ -156,10 +156,15 @@ impl StreamProgress {
             && !self.terminal_usage_seen
     }
 
-    pub(super) fn into_terminal(self, stop: StreamStop) -> GenerationTerminal {
+    pub(super) fn into_terminal(self, stop: StreamStop, call: &RuntimeCall) -> GenerationTerminal {
+        let own_error = stop
+            .failure_kind()
+            .filter(|_| !self.frame_delivered)
+            .and_then(|kind| call.own_error(kind));
+
         GenerationTerminal {
             delivery: self.delivery(),
-            end: stop.into_end(),
+            end: own_error.map_or_else(|| stop.into_end(), GenerationEnd::failed),
             usage: self.usage,
             upstream_cost_nano_usd: self.upstream_cost_nano_usd,
         }

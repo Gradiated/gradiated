@@ -126,6 +126,11 @@ describe("OpenRouter capacity", () => {
     expect(openRouter.calls).toHaveLength(1);
     const sent = openRouter.calls[0]!;
     expect(sent.model).toBe(OPENROUTER_MODEL);
+    // The catalog's 10 and 20 nano-USD a token, in USD per million tokens.
+    expect(object(sent.provider).max_price).toEqual({
+      prompt: 0.01,
+      completion: 0.02,
+    });
     expect(sent.messages).toEqual(instance.body().messages);
     expect(openRouter.headers[0]!.authorization).toBe(`Bearer ${PLATFORM_KEY}`);
     expect(JSON.stringify(openRouter.headers[0])).not.toContain(instance.key);
@@ -310,6 +315,23 @@ describe("OpenRouter capacity", () => {
     });
   });
 
+  it("answers as our saturated capacity would when OpenRouter has no provider", async () => {
+    const instance = await mapped();
+    await instance.status({ accepting_requests: false });
+    // OpenRouter's answer when no endpoint matches the routing preferences.
+    openRouter.enqueue({ status: 404 });
+
+    const response = await instance.post();
+
+    expectRejected(response, { code: "capacity_exceeded" });
+    expectNoUpstreamDetail(response.text);
+    await instance.settled(response, {
+      status: "failed",
+      charge: 0,
+      releaseDigest: OPENROUTER_DIGEST,
+    });
+  });
+
   it("keeps a partial local stream failure without splicing OpenRouter output", async () => {
     const instance = await mapped();
     instance.runtimes[0]!.enqueue({ fault: "partial_disconnect" });
@@ -391,7 +413,7 @@ describe("OpenRouter wire handling", () => {
     },
   );
 
-  it("turns an error in OpenRouter's first event into our own status", async () => {
+  it("answers an error in OpenRouter's first event with our own status", async () => {
     const instance = await mapped({ replicas: 0 });
     openRouter.enqueue({
       mutateEvents: (events) => {
@@ -407,7 +429,8 @@ describe("OpenRouter wire handling", () => {
       json: instance.body({ stream: true }),
     });
 
-    expectRejected(response, { code: "capacity_exceeded" });
+    // With no deployment of ours, the model is unavailable whatever OpenRouter said.
+    expectRejected(response, { code: "runtime_unavailable" });
     expect(response.text).not.toContain("PRIVATE_UPSTREAM_DETAIL");
     await instance.settled(response, {
       status: "failed",

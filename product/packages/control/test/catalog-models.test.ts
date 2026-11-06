@@ -37,7 +37,7 @@ describe("model configurations", () => {
 
   const pinnedPrices: Record<string, { input: number[]; output: number[] }> = {
     "deepseek/deepseek-v4.1-flash": { input: [300, 6], output: [1_200, 1_200] },
-    "z-ai/glm-5.3-flash": { input: [75, 15], output: [250, 250] },
+    "z-ai/glm-5.3-flash": { input: [150, 30], output: [500, 500] },
     "dealignai/glm-5.3-flash-uncensored": {
       input: [100, 10],
       output: [450, 450],
@@ -118,7 +118,7 @@ describe("model configurations", () => {
     );
     const properties = ModelPropertiesInputSchema.parse(glm?.properties);
 
-    expect(glm?.status).toBe("unavailable");
+    expect(glm?.status).toBe("available");
 
     expect(
       properties.output_modalities[0]?.supported_parameters.reasoning_effort,

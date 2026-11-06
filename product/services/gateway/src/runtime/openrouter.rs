@@ -159,6 +159,7 @@ impl OpenRouterClient {
             model,
             request,
             output_tokens,
+            price_cap,
             ..
         } = request;
         let session = request
@@ -167,10 +168,19 @@ impl OpenRouterClient {
             .map(|session| scoped_hash(workspace_id, session));
 
         let mut body = request.into_external_body(output_tokens, model.id());
-        // Every request routes only to zero-retention endpoints that collect no data.
+        // Every request routes only to zero-retention endpoints that collect no data
+        // and charge no more than the caller pays us.
         body.insert(
             "provider".to_owned(),
-            json!({"data_collection": "deny", "require_parameters": true, "zdr": true}),
+            json!({
+                "data_collection": "deny",
+                "require_parameters": true,
+                "zdr": true,
+                "max_price": {
+                    "prompt": usd_per_million(price_cap.prompt),
+                    "completion": usd_per_million(price_cap.completion),
+                },
+            }),
         );
         // Context compression is on by default for small-context endpoints and
         // would silently drop the middle of a prompt.
@@ -188,6 +198,10 @@ impl OpenRouterClient {
 
         Value::Object(body)
     }
+}
+
+fn usd_per_million(nano_usd_per_token: u64) -> f64 {
+    nano_usd_per_token as f64 / 1_000.0
 }
 
 /// An opaque per-workspace value: OpenRouter isolates abuse controls by `user`

@@ -57,6 +57,14 @@ pub struct ExternalRequest {
     pub request: InferenceRequest,
     pub output_tokens: u64,
     pub deadline: DateTime<Utc>,
+    pub price_cap: PriceCap,
+}
+
+/// The most OpenRouter may charge per token, in nano-USD: what the caller pays us.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct PriceCap {
+    pub prompt: u64,
+    pub completion: u64,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -219,6 +227,20 @@ pub enum RuntimeFailureKind {
     ResponseTooLarge,
     ProtocolViolation,
     Interrupted,
+}
+
+impl RuntimeFailureKind {
+    pub fn public_error(self) -> GatewayError {
+        match self {
+            Self::InvalidRequest => GatewayError::invalid_request(None),
+            Self::CapacityExceeded => GatewayError::CapacityExceeded,
+            Self::Unavailable
+            | Self::TimedOut
+            | Self::ResponseTooLarge
+            | Self::ProtocolViolation
+            | Self::Interrupted => GatewayError::RuntimeUnavailable,
+        }
+    }
 }
 
 #[derive(Clone, Debug, Error, Eq, PartialEq)]
@@ -548,12 +570,7 @@ impl RuntimeFailure {
     pub fn gateway_error(&self) -> GatewayError {
         match self.kind {
             RuntimeFailureKind::InvalidRequest => GatewayError::invalid_request(self.parameter()),
-            RuntimeFailureKind::CapacityExceeded => GatewayError::CapacityExceeded,
-            RuntimeFailureKind::Unavailable
-            | RuntimeFailureKind::TimedOut
-            | RuntimeFailureKind::ResponseTooLarge
-            | RuntimeFailureKind::ProtocolViolation
-            | RuntimeFailureKind::Interrupted => GatewayError::RuntimeUnavailable,
+            kind => kind.public_error(),
         }
     }
 }

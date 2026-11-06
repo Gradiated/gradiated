@@ -14,8 +14,8 @@ use super::support::{data, deadline, expect_chunk, MockRuntime, DONE};
 use crate::{
     config::OpenRouterConfig,
     runtime::{
-        ExternalCapacity, ExternalModel, ExternalRequest, OpenRouterClient, RuntimeEventStream,
-        RuntimeStreamEvent,
+        ExternalCapacity, ExternalModel, ExternalRequest, OpenRouterClient, PriceCap,
+        RuntimeEventStream, RuntimeStreamEvent,
     },
     InferenceRequest, NormalizedUsage, RuntimeFailureKind,
 };
@@ -64,6 +64,10 @@ fn request(body: Value) -> ExternalRequest {
         request,
         output_tokens: 64,
         deadline: deadline(10),
+        price_cap: PriceCap {
+            prompt: 150,
+            completion: 1_200,
+        },
     }
 }
 
@@ -208,7 +212,12 @@ async fn sends_the_mapped_model_with_privacy_routing_and_only_the_platform_key()
     assert_eq!(body["temperature"], 0.5);
     assert_eq!(
         body["provider"],
-        json!({"data_collection": "deny", "require_parameters": true, "zdr": true})
+        json!({
+            "data_collection": "deny",
+            "require_parameters": true,
+            "zdr": true,
+            "max_price": {"prompt": 0.15, "completion": 1.2}
+        })
     );
     assert_eq!(
         body["plugins"],

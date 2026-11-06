@@ -69,6 +69,16 @@ impl CapturedPricing {
         })
     }
 
+    /// OpenRouter bills reasoning as completion, so the cap is the lower of the two.
+    pub(crate) fn price_cap(&self) -> crate::PriceCap {
+        crate::PriceCap {
+            prompt: self.prompt,
+            completion: self
+                .internal_reasoning
+                .map_or(self.completion, |reasoning| reasoning.min(self.completion)),
+        }
+    }
+
     #[cfg(test)]
     pub fn prompt(&self) -> u64 {
         self.prompt
@@ -869,6 +879,24 @@ mod tests {
             ],
         )
         .unwrap()
+    }
+
+    #[test]
+    fn openrouter_may_charge_no_more_than_the_caller_pays() {
+        assert_eq!(
+            prices().price_cap(),
+            crate::PriceCap {
+                prompt: 10,
+                completion: 5
+            }
+        );
+        assert_eq!(
+            fixtures::token_prices(30, 6, 1_200).price_cap(),
+            crate::PriceCap {
+                prompt: 30,
+                completion: 1_200
+            }
+        );
     }
 
     fn caller() -> AuthenticatedIdentity {

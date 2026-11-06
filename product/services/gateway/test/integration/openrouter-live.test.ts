@@ -19,6 +19,9 @@ const API_KEY = process.env.OPENROUTER_LIVE_API_KEY;
 // the small output limits.
 const LIVE_MODEL = "meta-llama/llama-3.1-8b-instruct";
 const LIMIT = 60_000;
+// Nano-USD per token, above every ZDR provider's price for the model, so the
+// price cap the gateway sends leaves OpenRouter something to route to.
+const PRICES = { prompt: 400, completion: 400 };
 
 const { makeCase } = useCases();
 
@@ -27,14 +30,14 @@ const digest = (model: string): string =>
     .update(JSON.stringify({ capacity: "openrouter", model }))
     .digest("hex")}`;
 
-// The test catalog's prices, in nano-USD per token.
+// The case's catalog prices; cached prompt tokens keep the test catalog's 2.
 const charge = (usage: JsonObject): number => {
   const cached = Number(object(usage.prompt_tokens_details).cached_tokens ?? 0);
 
   return (
-    (Number(usage.prompt_tokens) - cached) * 10 +
+    (Number(usage.prompt_tokens) - cached) * PRICES.prompt +
     cached * 2 +
-    Number(usage.completion_tokens) * 20
+    Number(usage.completion_tokens) * PRICES.completion
   );
 };
 
@@ -67,6 +70,7 @@ describe.skipIf(!API_KEY)("live OpenRouter capacity", () => {
     makeCase("vllm", {
       gatewayUrl: gateway.url,
       openRouterModel: LIVE_MODEL,
+      prices: PRICES,
       ...options,
     });
 
@@ -203,6 +207,38 @@ describe.skipIf(!API_KEY)("live OpenRouter capacity", () => {
         status: "failed",
         charge: 0,
         releaseDigest: digest(missing),
+      });
+    },
+    LIMIT,
+  );
+  it.each([
+    {
+      name: "no deployments",
+      replicas: 0,
+      code: "runtime_unavailable" as const,
+    },
+    {
+      name: "saturated capacity",
+      replicas: 1,
+      code: "capacity_exceeded" as const,
+    },
+  ])(
+    "answers as our $name would when no provider is under our price",
+    async ({ replicas, code }) => {
+      const instance = await mapped({
+        replicas,
+        prices: { prompt: 1, completion: 1 },
+      });
+      if (replicas > 0) await instance.status({ accepting_requests: false });
+
+      const response = await instance.post();
+
+      expectRejected(response, { code });
+      expectNoUpstreamDetail(response.text);
+      await instance.settled(response, {
+        status: "failed",
+        charge: 0,
+        releaseDigest: digest(LIVE_MODEL),
       });
     },
     LIMIT,

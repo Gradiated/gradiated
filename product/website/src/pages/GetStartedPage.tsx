@@ -720,8 +720,12 @@ const GetStartedWorkflow = ({
                       return;
                     }
                     if (draft.step > 0) {
-                      if (!githubVerified || !draft.githubInstallationId)
+                      if (!githubVerified || !draft.githubInstallationId) {
+                        setGithubError(
+                          "Install the Gradiated GitHub app and select at least one repository before continuing. If installation needs approval, ask your GitHub organization owner to approve it.",
+                        );
                         return;
+                      }
 
                       if (!demo) {
                         setCheckingGithub(true);
@@ -787,13 +791,15 @@ const GetStartedWorkflow = ({
                       demo={demo}
                       onGithubVerified={(installation) => {
                         setGithubVerified(installation !== null);
-                        if (installation)
+                        if (installation) {
+                          setGithubError("");
                           patch({
                             githubInstallationId: installation.id,
                             githubAccount: installation.account,
                             githubRepositoryCount:
                               installation.repository_count,
                           });
+                        }
                       }}
                     />
                   )}
@@ -808,8 +814,9 @@ const GetStartedWorkflow = ({
                     <button
                       type="submit"
                       className="gr-button gr-button--main gs-primary"
-                      disabled={
-                        draft.step > 0 && (!githubVerified || checkingGithub)
+                      disabled={checkingGithub}
+                      aria-describedby={
+                        githubError ? "gs-github-error" : undefined
                       }
                     >
                       {checkingGithub
@@ -832,7 +839,7 @@ const GetStartedWorkflow = ({
                     )}
                   </div>
                   {githubError && (
-                    <p role="alert" className="gs-note">
+                    <p id="gs-github-error" role="alert" className="gs-note">
                       {githubError}
                     </p>
                   )}

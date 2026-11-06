@@ -204,7 +204,12 @@ class RenderTests(unittest.TestCase):
         role = next(d for d in resources if d['kind'] == 'ClusterRole' and d['metadata']['name'] == 'gpu-controller-nodes')
         updates = [rule for rule in role['rules'] if 'nodes' in rule['resources'] and 'update' in rule['verbs']]
         self.assertEqual(len(updates), 1)
-        self.assertEqual(set(updates[0]['resourceNames']), {host['metadata']['name'] for host in self.hosts})
+        # Hosts being retired keep their node access until --retire drops it with their key.
+        listed = {host['metadata']['name'] for host in self.hosts}
+        credentials = list(yaml.safe_load_all((renderer.GPU / 'credentials.yaml').read_text()))
+        retained = {'gpu-' + entry['secretKey'] for entry in credentials[1]['spec']['data']}
+        self.assertLessEqual(listed, set(updates[0]['resourceNames']))
+        self.assertLessEqual(set(updates[0]['resourceNames']) - listed, retained)
         policies = list(yaml.safe_load_all((renderer.GPU / 'gpu-fleet.yaml').read_text()))
         restricted = next(d for d in policies if d['kind'] == 'ValidatingAdmissionPolicy'
                           and d['metadata']['name'] == 'gpu-fleet-node-updates')

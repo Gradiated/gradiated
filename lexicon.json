@@ -69,6 +69,10 @@
     {
       "name": "kev",
       "definition": "The pinned jaredpalmer/kev-9b model and its native runtime, served only through the gateway's POST /v1/systemone dispatch and never through Chat Completions."
+    },
+    {
+      "name": "GPU reservation",
+      "definition": "Allocated provider GPU capacity held by a running provider pod; stopping, resetting, re-imaging or changing provider settings can release it."
     }
   ]
 }

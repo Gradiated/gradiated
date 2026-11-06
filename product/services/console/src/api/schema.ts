@@ -608,6 +608,66 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace_id}/adapter-configurations/{model_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get adapter configuration
+     * @description Gets the pinned base checkpoint dimensions used to validate an adapter.
+     */
+    get: operations["getAdapterConfiguration"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace_id}/model-uploads": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create model upload
+     * @description Creates a workspace-scoped upload for PEFT LoRA config and safetensors files. Grants expire after one hour.
+     */
+    post: operations["createModelUpload"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace_id}/model-uploads/{upload_id}/version": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Complete model upload
+     * @description Validates adapter files and creates a model version. Retries return the same version. Serving remains disabled until qualification.
+     */
+    put: operations["completeModelUpload"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/workspaces/{workspace_id}/training-runs": {
     parameters: {
       query?: never;
@@ -1788,6 +1848,83 @@ export interface components {
       } | null;
       canonical?: unknown;
     };
+    AdapterConfiguration: {
+      /** @description Number of transformer layers. */
+      layerCount: number;
+      /** @description Routed experts per layer. */
+      expertCount: number;
+      /** @description Output and input dimensions keyed by layer and module. */
+      projectionShapes?: {
+        [key: string]: [number, number];
+      };
+    };
+    ModelUpload: {
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      id: string;
+      /** Format: uri */
+      config_url: string;
+      /** Format: uri */
+      weights_url: string;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      expires_at: string;
+    };
+    CreateModelUpload: {
+      task: string;
+      /** @default false */
+      create_task: boolean;
+      name: string;
+      base_model_id: string;
+      /** @description Legacy hint; the uploaded config determines declared training provenance. */
+      base_model_revision?: string;
+      config_size: number;
+      weights_size: number;
+    };
+    TaskVersion: {
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      id: string;
+      name: string;
+      task: string;
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      training_run_id: string | null;
+      base_model_id: string;
+      adapter: components["schemas"]["TaskVersionAdapter"];
+      /**
+       * @description Durable serving eligibility. Available versions may be called or promoted after serving validation; this does not indicate runtime health or adapter cache residency.
+       * @enum {string}
+       */
+      status: "available" | "unavailable";
+      is_production: boolean;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      created_at: string;
+    };
+    TaskVersionAdapter: {
+      /** @enum {string} */
+      format: "peft_lora";
+      artifact_uri: string;
+      sha256: string;
+      size_bytes: number;
+      rank: number;
+      /** @description Immutable training checkpoint declared in the adapter config, when known. */
+      base_model_revision?: string;
+      declared_base_model_revision?: string;
+      /** @description Supported base checkpoint used for deterministic tensor validation; this is not proof of training provenance. */
+      validated_base_model_revision?: string;
+    };
     StartTrainingRunResponse: {
       /**
        * Format: uuid
@@ -1807,6 +1944,34 @@ export interface components {
       data: components["schemas"]["TaskListItem"][];
     };
     TaskListItem: components["schemas"]["Task"] & {
+      /** @description Latest model version, including externally uploaded adapters. */
+      latest_version?: {
+        /**
+         * Format: uuid
+         * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+         */
+        id: string;
+        name: string;
+        task: string;
+        /**
+         * Format: uuid
+         * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+         */
+        training_run_id: string | null;
+        base_model_id: string;
+        adapter: components["schemas"]["TaskVersionAdapter"];
+        /**
+         * @description Durable serving eligibility. Available versions may be called or promoted after serving validation; this does not indicate runtime health or adapter cache residency.
+         * @enum {string}
+         */
+        status: "available" | "unavailable";
+        is_production: boolean;
+        /**
+         * Format: date-time
+         * @example 2026-08-16T12:00:00.000Z
+         */
+        created_at: string;
+      } | null;
       /** @description Latest training run by creation time, with its own recorded evaluation and published version name. */
       latest_run: components["schemas"]["TrainingRun"] &
         ({
@@ -2132,43 +2297,6 @@ export interface components {
         };
     TaskVersionList: {
       data: components["schemas"]["TaskVersion"][];
-    };
-    TaskVersion: {
-      /**
-       * Format: uuid
-       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
-       */
-      id: string;
-      name: string;
-      task: string;
-      /**
-       * Format: uuid
-       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
-       */
-      training_run_id: string;
-      base_model_id: string;
-      adapter: components["schemas"]["TaskVersionAdapter"];
-      /**
-       * @description Durable serving eligibility. Available versions may be called or promoted after serving validation; this does not indicate runtime health or adapter cache residency.
-       * @enum {string}
-       */
-      status: "available" | "unavailable";
-      is_production: boolean;
-      /**
-       * Format: date-time
-       * @example 2026-08-16T12:00:00.000Z
-       */
-      created_at: string;
-    };
-    TaskVersionAdapter: {
-      /** @enum {string} */
-      format: "peft_lora";
-      artifact_uri: string;
-      sha256: string;
-      size_bytes: number;
-      rank: number;
-      /** @description Immutable base checkpoint revision used to train this adapter. */
-      base_model_revision?: string;
     };
     EvaluationResults: (
       | {
@@ -5186,6 +5314,241 @@ export interface operations {
       };
     };
   };
+  getAdapterConfiguration: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+        /** @description Exact catalog base model ID. */
+        model_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Pinned checkpoint structure. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdapterConfiguration"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not allowed. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Upload conflict or invalid adapter. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  createModelUpload: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateModelUpload"];
+      };
+    };
+    responses: {
+      /** @description Private file upload grants. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ModelUpload"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not allowed. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Upload conflict or invalid adapter. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  completeModelUpload: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+        upload_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Uploaded model version. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TaskVersion"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not allowed. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Upload conflict or invalid adapter. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
   listTrainingRuns: {
     parameters: {
       query?: {
@@ -5229,6 +5592,15 @@ export interface operations {
       };
       /** @description Not found. */
       404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Upload conflict or invalid adapter. */
+      409: {
         headers: {
           [name: string]: unknown;
         };
@@ -5384,6 +5756,15 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
+      /** @description Upload conflict or invalid adapter. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
       /** @description Invalid request parameters or body. */
       422: {
         headers: {
@@ -5443,6 +5824,15 @@ export interface operations {
       };
       /** @description Not found. */
       404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Upload conflict or invalid adapter. */
+      409: {
         headers: {
           [name: string]: unknown;
         };
@@ -5517,6 +5907,15 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
+      /** @description Upload conflict or invalid adapter. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
       /** @description Invalid request parameters or body. */
       422: {
         headers: {
@@ -5578,6 +5977,15 @@ export interface operations {
       };
       /** @description Not found. */
       404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Upload conflict or invalid adapter. */
+      409: {
         headers: {
           [name: string]: unknown;
         };
@@ -5657,6 +6065,15 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
+      /** @description Upload conflict or invalid adapter. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
       /** @description Invalid request parameters or body. */
       422: {
         headers: {
@@ -5728,6 +6145,15 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
+      /** @description Upload conflict or invalid adapter. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
       /** @description Invalid request parameters or body. */
       422: {
         headers: {
@@ -5789,6 +6215,15 @@ export interface operations {
       };
       /** @description Not found. */
       404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Upload conflict or invalid adapter. */
+      409: {
         headers: {
           [name: string]: unknown;
         };
@@ -5865,6 +6300,15 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
+      /** @description Upload conflict or invalid adapter. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
       /** @description Invalid request parameters or body. */
       422: {
         headers: {
@@ -5927,6 +6371,15 @@ export interface operations {
       };
       /** @description Not found. */
       404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Upload conflict or invalid adapter. */
+      409: {
         headers: {
           [name: string]: unknown;
         };
@@ -5999,6 +6452,15 @@ export interface operations {
       };
       /** @description Not found. */
       404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Upload conflict or invalid adapter. */
+      409: {
         headers: {
           [name: string]: unknown;
         };

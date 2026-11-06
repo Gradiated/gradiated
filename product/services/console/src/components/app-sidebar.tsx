@@ -213,6 +213,7 @@ export const AppSidebar = ({
       <SidebarFooter>
         {user?.is_staff && user.email_verified ? (
           <NavSection
+            className="px-0"
             group={{
               label: "Staff",
               items: [
@@ -324,11 +325,17 @@ const FlaggedNavSection = ({
   group: NavGroup;
 }) => (useFeatureFlag(flag) === true ? <NavSection group={group} /> : null);
 
-const NavSection = ({ group }: { group: NavGroup }) => {
+const NavSection = ({
+  group,
+  className,
+}: {
+  group: NavGroup;
+  className?: string;
+}) => {
   const matchRoute = useMatchRoute();
 
   return (
-    <SidebarGroup>
+    <SidebarGroup className={className}>
       <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>

@@ -841,7 +841,8 @@ and recovery checkpoints have typed payloads; trainer observations carry an
 extensible name, message, metrics and details. Observations cannot authorize
 workflow transitions. See [the run contract](TASK_FINE_TUNING_RUN_CONTRACT.md).
 
-`task_versions` reference their workspace, task and training run. Composite
+`task_versions` reference their workspace, task and optional training run. External
+adapters have no training run. Composite
 foreign keys require that the workspace owns the task and that the run belongs
 to that same task. Each run produces at most one version; version names are
 workspace-unique. Adapter metadata records an immutable URI, digest, byte size,
@@ -873,3 +874,12 @@ configuration, not stored adapter properties. The loader reuses existing task
 version metadata and checks it against the host's local configuration. Signed
 download URLs are temporary grants and are not persisted on versions. See
 [the implementation stack](LORA_HOSTING_PR_STACK.md).
+
+### External adapter uploads
+
+`model_uploads` stores an ID, workspace FK, validated upload intent JSON, creation
+time and nullable published version FK. Grants last one hour. Publication locks
+the upload row and is idempotent. `task_versions.training_run_id` is nullable for
+external adapters; those versions use `runs/<version_id>/output/<sha256>/adapter.tar.gz`
+and have no evaluation. Their initial serving status is `unavailable`. The upload
+intent is retained for artifact cleanup even after its version or task is deleted.

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import functools
 import json
 import tempfile
@@ -24,8 +25,20 @@ class QuietHandler(SimpleHTTPRequestHandler):
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--story-prefix", default="", help="Capture only story IDs starting with this prefix"
+    )
+    parser.add_argument(
+        "--output", type=Path, default=SCREENSHOTS, help="PNG output directory"
+    )
+    args = parser.parse_args()
+
     entries = json.loads((DIST / "index.json").read_text())["entries"]
-    stories = [entry for entry in entries.values() if entry["type"] == "story"]
+    stories = [
+        entry for entry in entries.values()
+        if entry["type"] == "story" and entry["id"].startswith(args.story_prefix)
+    ]
     if not stories:
         raise RuntimeError("No stories found in the Storybook build")
 
@@ -99,11 +112,11 @@ def main() -> None:
                 context.close()
             browser.close()
 
-            SCREENSHOTS.mkdir(exist_ok=True)
-            for old in SCREENSHOTS.glob("*.png"):
+            args.output.mkdir(parents=True, exist_ok=True)
+            for old in args.output.glob(f"{args.story_prefix}*.png"):
                 old.unlink()
             for captured in Path(staging).glob("*.png"):
-                (SCREENSHOTS / captured.name).write_bytes(captured.read_bytes())
+                (args.output / captured.name).write_bytes(captured.read_bytes())
     finally:
         server.shutdown()
         server.server_close()

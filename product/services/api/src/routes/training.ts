@@ -1,6 +1,10 @@
 import { changedFields } from "@gradiated/analytics";
-import { createRoute, type OpenAPIHono } from "@hono/zod-openapi";
+import { z, createRoute, type OpenAPIHono } from "@hono/zod-openapi";
 import {
+  CreateModelUploadSchema,
+  ModelUploadSchema,
+  ModelUploadPathSchema,
+  TaskVersionSchema,
   StartTrainingRunResponseSchema,
   StartTrainingRunSchema,
   PromoteVersionSchema,
@@ -35,6 +39,10 @@ import type { ApiEnvironment } from "../types.js";
 
 const base = "/api/v1/workspaces/{workspace_id}";
 const errors = {
+  409: {
+    description: "Upload conflict or invalid adapter.",
+    content: problemContent,
+  },
   401: { description: "Authentication required.", content: problemContent },
   403: { description: "Not allowed.", content: problemContent },
   404: { description: "Not found.", content: problemContent },
@@ -47,6 +55,81 @@ const errors = {
 const json = <Schema>(schema: Schema, description: string) => ({
   description,
   content: { "application/json": { schema } },
+});
+
+const adapterConfiguration = createRoute({
+  method: "get",
+  path: `${base}/adapter-configurations/{model_id}`,
+  operationId: "getAdapterConfiguration",
+  summary: "Get adapter configuration",
+  description:
+    "Gets the pinned base checkpoint dimensions used to validate an adapter.",
+  tags: ["Training"],
+  request: {
+    params: WorkspacePathSchema.extend({
+      model_id: z.string().min(1).describe("Exact catalog base model ID."),
+    }),
+  },
+  responses: {
+    200: json(
+      z
+        .object({
+          layerCount: z
+            .number()
+            .int()
+            .min(1)
+            .max(4096)
+            .describe("Number of transformer layers."),
+          expertCount: z
+            .number()
+            .int()
+            .min(0)
+            .max(4096)
+            .describe("Routed experts per layer."),
+          projectionShapes: z
+            .record(z.string(), z.tuple([z.number(), z.number()]).readonly())
+            .optional()
+            .describe("Output and input dimensions keyed by layer and module."),
+        })
+        .openapi("AdapterConfiguration"),
+      "Pinned checkpoint structure.",
+    ),
+    ...errors,
+  },
+});
+const createUpload = createRoute({
+  method: "post",
+  path: `${base}/model-uploads`,
+  operationId: "createModelUpload",
+  summary: "Create model upload",
+  description:
+    "Creates a workspace-scoped upload for PEFT LoRA config and safetensors files. Grants expire after one hour.",
+  tags: ["Training"],
+  request: {
+    params: WorkspacePathSchema,
+    body: {
+      required: true,
+      content: { "application/json": { schema: CreateModelUploadSchema } },
+    },
+  },
+  responses: {
+    201: json(ModelUploadSchema, "Private file upload grants."),
+    ...errors,
+  },
+});
+const completeUpload = createRoute({
+  method: "put",
+  path: `${base}/model-uploads/{upload_id}/version`,
+  operationId: "completeModelUpload",
+  summary: "Complete model upload",
+  description:
+    "Validates adapter files and creates a model version. Retries return the same version. Serving remains disabled until qualification.",
+  tags: ["Training"],
+  request: { params: ModelUploadPathSchema },
+  responses: {
+    200: json(TaskVersionSchema, "Uploaded model version."),
+    ...errors,
+  },
 });
 
 const listTasks = createRoute({
@@ -265,6 +348,33 @@ export const registerTrainingRoutes = (
   app: OpenAPIHono<ApiEnvironment>,
   training: TrainingService,
 ) => {
+  app.openapi(adapterConfiguration, async (c) => {
+    const user = await requireUser(c);
+    const { workspace_id, model_id } = c.req.valid("param");
+    return c.json(
+      await training.uploads.configuration(user.id, workspace_id, model_id),
+      200,
+    );
+  });
+  app.openapi(createUpload, async (c) => {
+    const user = await requireUser(c);
+    const { workspace_id } = c.req.valid("param");
+    c.header("Cache-Control", "no-store");
+    return c.json(
+      await training.uploads.create(user.id, workspace_id, c.req.valid("json")),
+      201,
+    );
+  });
+  app.openapi(completeUpload, async (c) => {
+    const user = await requireUser(c);
+    const { workspace_id, upload_id } = c.req.valid("param");
+    const { task, version } = await training.uploads.complete(
+      user.id,
+      workspace_id,
+      upload_id,
+    );
+    return c.json(versionResponse(task, version), 200);
+  });
   app.openapi(startRun, async (c) => {
     const user = await requireUser(c);
     const p = c.req.valid("param");
@@ -303,6 +413,9 @@ export const registerTrainingRoutes = (
       {
         data: tasks.map((task) => ({
           ...taskResponse(task),
+          latest_version: task.latestVersion
+            ? versionResponse(task, task.latestVersion)
+            : null,
           latest_run: task.latestRun
             ? {
                 ...runResponse(task.latestRun),

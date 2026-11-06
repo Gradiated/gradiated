@@ -87,7 +87,15 @@ export const TaskVersionAdapterSchema = z
       .max(300)
       .optional()
       .describe(
-        "Immutable base checkpoint revision used to train this adapter.",
+        "Immutable training checkpoint declared in the adapter config, when known.",
+      ),
+    declared_base_model_revision: z.string().max(300).optional(),
+    validated_base_model_revision: z
+      .string()
+      .regex(/^[0-9a-f]{40}$/)
+      .optional()
+      .describe(
+        "Supported base checkpoint used for deterministic tensor validation; this is not proof of training provenance.",
       ),
   })
   .openapi("TaskVersionAdapter");
@@ -257,7 +265,7 @@ export const TaskVersionSchema = z
     id: UuidSchema,
     name: z.string(),
     task: z.string(),
-    training_run_id: UuidSchema,
+    training_run_id: UuidSchema.nullable(),
     base_model_id: ModelIdSchema,
     adapter: TaskVersionAdapterSchema,
     status: z
@@ -364,6 +372,9 @@ export const TrainingRunEventsQuerySchema = z.object({
 });
 
 export const TaskListItemSchema = TaskSchema.extend({
+  latest_version: TaskVersionSchema.nullable()
+    .optional()
+    .describe("Latest model version, including externally uploaded adapters."),
   latest_run: TrainingRunSchema.extend({ version_name: z.string().nullable() })
     .nullable()
     .describe(
@@ -439,3 +450,40 @@ export const EvaluationResultsSchema = z
   .min(1)
   .max(64)
   .openapi("EvaluationResults");
+
+export const MAX_UPLOADED_ADAPTER_RANK = 8;
+export const MAX_ADAPTER_BYTES = 512 * 1024 * 1024;
+export const CreateModelUploadSchema = z
+  .strictObject({
+    task: TaskNameSchema,
+    create_task: z.boolean().default(false),
+    name: z
+      .string()
+      .trim()
+      .min(1)
+      .max(200)
+      .regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/),
+    base_model_id: ModelIdSchema,
+    base_model_revision: z
+      .string()
+      .regex(/^[0-9a-f]{40}$/)
+      .optional()
+      .describe(
+        "Legacy hint; the uploaded config determines declared training provenance.",
+      ),
+    config_size: z.number().int().min(2).max(65536),
+    weights_size: z.number().int().positive().max(MAX_ADAPTER_BYTES),
+  })
+  .openapi("CreateModelUpload");
+export const ModelUploadSchema = z
+  .object({
+    id: UuidSchema,
+    config_url: z.url(),
+    weights_url: z.url(),
+    expires_at: TimestampSchema,
+  })
+  .openapi("ModelUpload");
+export const ModelUploadPathSchema = WorkspacePathSchema.extend({
+  upload_id: UuidSchema,
+});
+export type CreateModelUpload = z.infer<typeof CreateModelUploadSchema>;

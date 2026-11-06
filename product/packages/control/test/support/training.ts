@@ -15,14 +15,19 @@ export const trainingAdapter: TaskVersionAdapter = {
   rank: 16,
 };
 
-export const seedTrainingTask = async (database: ControlDatabase) => {
+export const seedTrainingTask = async (
+  database: ControlDatabase,
+  baseModelId?: string,
+) => {
   const member = await seedMember(database, { role: "admin" });
   await database
     .update(workspaces)
     .set({ traceCaptureEnabled: true })
     .where(eq(workspaces.id, member.workspaceId));
 
-  const model = await createCatalogService(database).upsertModel(modelInput());
+  const model = await createCatalogService(database).upsertModel(
+    modelInput(baseModelId ? { id: baseModelId } : {}),
+  );
   const [task] = await database
     .insert(tasks)
     .values({

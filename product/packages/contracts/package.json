@@ -19,6 +19,10 @@
     "./training-schedule": {
       "types": "./dist/training-schedule.d.ts",
       "default": "./dist/training-schedule.js"
+    },
+    "./adapter-shapes": {
+      "types": "./dist/adapter-shapes.d.ts",
+      "default": "./dist/adapter-shapes.js"
     }
   },
   "scripts": {

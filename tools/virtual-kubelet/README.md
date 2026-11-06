@@ -398,7 +398,13 @@ one at a time, and records each host's progress in `status.rollout` of its
   (`autoscaling.keda.sh/paused-replicas`) and wait until the replacements are
   Ready on other hosts; mark the host's pods to be removed first
   (`controller.kubernetes.io/pod-deletion-cost`) and lower the count again, so no
-  model ever has fewer Ready replicas than it had; resume KEDA; re-image the pod
+  model ever has fewer Ready replicas than it had. A model listed in
+  `RETIRE_ON_REIMAGE` (`product/services/gpu-fleet/src/rollout.ts`; today only
+  `kimi-k31-pro`, which OpenRouter serves meanwhile) is not moved: once its
+  other replicas are Ready elsewhere, its pods on the host are marked first and
+  its count lowered by that many, and the host blocks if that would leave the
+  model with no replica. Such a model needs no room elsewhere to proceed. Resume
+  KEDA; re-image the pod
   through RunPod with a single-use bootstrap key; wait for
   `gpu-bootstrap-<pod>`; free the `gpu-<instance id>` name; run
   `gradiated-host enroll`; wait for promotion and claim the exact name; wait until

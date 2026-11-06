@@ -55,6 +55,12 @@ export const DEFAULT_LIMITS = {
 
 export type Limits = typeof DEFAULT_LIMITS;
 
+// Models whose replica on a host being re-imaged is retired rather than moved:
+// OpenRouter serves them while the host is down, so one replica may be
+// unavailable, as long as another is Ready elsewhere. Every other model must
+// fit on another host first.
+export const RETIRE_ON_REIMAGE: ReadonlySet<string> = new Set(["kimi-k31-pro"]);
+
 export type RolloutDependencies = {
   api: Kubernetes;
   cluster: Cluster;
@@ -74,6 +80,7 @@ export type RolloutDependencies = {
   metrics: Metrics;
   now?: () => Date;
   limits?: Partial<Limits>;
+  retireOnReimage?: ReadonlySet<string>;
 };
 
 export class LeadershipLost extends Error {}
@@ -116,6 +123,11 @@ export const createRollouts = (deps: RolloutDependencies) => {
   const limits = { ...DEFAULT_LIMITS, ...deps.limits };
   const now = deps.now ?? (() => new Date());
   const { cluster, metrics } = deps;
+  const retired = deps.retireOnReimage ?? RETIRE_ON_REIMAGE;
+  // The replicas a surge entry waits for elsewhere: a retired model keeps
+  // its count less the replicas on this host; a moved model keeps all of them.
+  const kept = ({ replicas, extra }: { replicas: number; extra: number }) =>
+    extra < 0 ? replicas + extra : replicas;
   let enrollment: Enrollment | undefined;
   let currentFacts: Facts[] = [];
 
@@ -272,7 +284,37 @@ export const createRollouts = (deps: RolloutDependencies) => {
       }
       return false;
     };
-    if (assign(blocked.servingWorkloads)) return undefined;
+    // A retired model needs no room, but every replica it keeps on other
+    // hosts must be Ready and qualified (as Surge requires), and it must keep
+    // at least one, or the host could never proceed.
+    for (const model of new Set(
+      blocked.servingWorkloads
+        .map((pod) => pod.model)
+        .filter((model): model is string => !!model && retired.has(model)),
+    )) {
+      const elsewhere = all
+        .filter(
+          (other) =>
+            other.host.spec.instanceId !== blocked.host.spec.instanceId,
+        )
+        .flatMap((other) => other.residentWorkloads)
+        .filter((pod) => pod.model === model && !pod.terminating);
+      const qualified = elsewhere.filter(
+        (pod) => pod.ready && pod.qualifiedRuntime !== undefined,
+      ).length;
+      if (!elsewhere.length)
+        return `Retiring this host's ${model} replicas would leave none`;
+      if (qualified < elsewhere.length)
+        return `Every other ${model} replica must be Ready before retiring this host's`;
+    }
+    if (
+      assign(
+        blocked.servingWorkloads.filter(
+          (pod) => !pod.model || !retired.has(pod.model),
+        ),
+      )
+    )
+      return undefined;
 
     return exhausted
       ? "Relocation capacity search limit reached; existing replicas preserved"
@@ -392,14 +434,37 @@ export const createRollouts = (deps: RolloutDependencies) => {
         ([model]) => !surge.some((entry) => entry.model === model),
       );
       if (added.length) {
-        for (const [model, extra] of added)
-          surge.push({ model, replicas: await cluster.replicas(model), extra });
+        for (const [model, count] of added)
+          surge.push({
+            model,
+            replicas: await cluster.replicas(model),
+            extra: retired.has(model) ? -count : count,
+          });
         return { stay: "Recording each model's replica count", set: { surge } };
       }
 
+      // A retired model scales down only while the replicas it keeps are
+      // Ready elsewhere, and only after its pods here are marked to go first.
+      for (const entry of surge) {
+        if (entry.extra >= 0) continue;
+        if (kept(entry) < 1)
+          return {
+            block: `Retiring this host's ${entry.model} replicas would leave none`,
+          };
+        const scaled = await cluster.modelPods(entry.model);
+        if (readyElsewhere(scaled, host) < kept(entry))
+          return {
+            stay: `Waiting for another Ready ${entry.model} replica before retiring this one`,
+          };
+        for (const pod of await cluster.podsOn(host.spec.instanceId))
+          if (pod.model === entry.model && !pod.terminating)
+            await act(() => cluster.removeFirst(pod));
+      }
       for (const { model, replicas, extra } of surge)
         await act(() => cluster.pauseScaling(model, replicas + extra));
-      for (const { model, replicas } of surge) {
+      for (const entry of surge) {
+        const { model, extra } = entry;
+        const replicas = kept(entry);
         const modelPods = await cluster.modelPods(model);
         const stuck = modelPods.find(
           (pod) =>
@@ -407,7 +472,7 @@ export const createRollouts = (deps: RolloutDependencies) => {
             now().getTime() - Date.parse(pod.unschedulableSince || "0") >=
               limits.unschedulable,
         );
-        if (stuck)
+        if (stuck && extra >= 0)
           return { block: `No capacity for a replacement ${model} replica` };
         if (readyElsewhere(modelPods, host) < replicas)
           return {
@@ -419,17 +484,22 @@ export const createRollouts = (deps: RolloutDependencies) => {
 
     Drain: async ({ host }, rollout) => {
       const surge = rollout.surge ?? [];
-      for (const { model, replicas } of surge)
-        if (readyElsewhere(await cluster.modelPods(model), host) < replicas)
-          return { stay: `Replacement ${model} replicas are not all Ready` };
+      for (const entry of surge)
+        if (
+          readyElsewhere(await cluster.modelPods(entry.model), host) <
+          kept(entry)
+        )
+          return {
+            stay: `Replacement ${entry.model} replicas are not all Ready`,
+          };
 
       const remaining = (await cluster.podsOn(host.spec.instanceId)).filter(
         (pod) => pod.model,
       );
       for (const pod of remaining)
         if (!pod.terminating) await act(() => cluster.removeFirst(pod));
-      for (const { model, replicas } of surge)
-        await act(() => cluster.pauseScaling(model, replicas));
+      for (const entry of surge)
+        await act(() => cluster.pauseScaling(entry.model, kept(entry)));
       if (remaining.length)
         return { stay: `Removing ${remaining.length} pods from the host` };
 

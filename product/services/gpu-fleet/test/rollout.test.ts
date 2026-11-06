@@ -302,6 +302,98 @@ describe("rolling re-image", () => {
     },
   );
 
+  it("retires one replica of an opted-in model when no host has room, never all of them", async () => {
+    const fleet = simulateFleet(
+      [
+        { instanceId: FIRST, podId: "zhimpngvqyotuj", gpus: 1 },
+        { instanceId: SECOND, podId: "dv31b4wrd2yc8n", gpus: 1 },
+      ],
+      [{ name: "kev", gpus: 1, replicas: 2 }],
+    );
+    fleet.place("kev", FIRST);
+    fleet.place("kev", SECOND);
+
+    const events = await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () =>
+        [FIRST, SECOND].every(
+          (id) => rollout(fleet, id)?.result === "Succeeded",
+        ) && fleet.ready("kev") === 2,
+      { retireOnReimage: new Set(["kev"]) },
+    );
+
+    expect(started(events)).toEqual([FIRST, SECOND]);
+    for (const id of [FIRST, SECOND]) {
+      expect(fleet.sim(id)).toMatchObject({
+        image: NEW_IMAGE,
+        bundle: NEW_BUNDLE,
+        state: "enrolled",
+        resets: 1,
+      });
+      expect(fleet.node(id).spec?.unschedulable).toBeFalsy();
+    }
+    // One replica is down while its host is re-imaged; the other always serves.
+    expect(fleet.violations.length).toBeGreaterThan(0);
+    expect(
+      fleet.violations.every((violation) =>
+        violation.endsWith("kev had 1 Ready replicas"),
+      ),
+    ).toBe(true);
+    expect(fleet.ready("kev")).toBe(2);
+    expect(
+      fleet.scaledObject("kev").metadata.annotations?.[PAUSED_REPLICAS],
+    ).toBeUndefined();
+  });
+
+  it("does not retire the only replica of an opted-in model", async () => {
+    const fleet = simulateFleet(
+      [
+        { instanceId: FIRST, podId: "zhimpngvqyotuj", gpus: 1 },
+        { instanceId: SECOND, podId: "dv31b4wrd2yc8n", gpus: 1 },
+      ],
+      [
+        { name: "kev", gpus: 1, replicas: 1 },
+        { name: "glm", gpus: 1, replicas: 1 },
+      ],
+    );
+    fleet.place("kev", FIRST);
+    fleet.place("glm", SECOND);
+
+    await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () => rollout(fleet, FIRST)?.result === "Blocked",
+      { retireOnReimage: new Set(["kev"]) },
+    );
+
+    expect(rollout(fleet, FIRST)).toMatchObject({
+      result: "Blocked",
+      lastError: "Retiring this host's kev replicas would leave none",
+    });
+    expect(fleet.sim(FIRST)).toMatchObject({ image: OLD_IMAGE, resets: 0 });
+    expect(fleet.violations).toEqual([]);
+    expect(fleet.ready("kev")).toBe(1);
+
+    // Nothing changes, so the blocked host is not cordoned or retried again.
+    const blockedAt = fleet.kube.calls.length;
+    const events = await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () => false,
+      { retireOnReimage: new Set(["kev"]) },
+      40,
+    );
+    expect(started(events)).toEqual([]);
+    expect(
+      fleet.kube.calls
+        .slice(blockedAt)
+        .filter(
+          (call) => call.method === "PATCH" && call.path.startsWith(NODES),
+        ),
+    ).toEqual([]);
+  });
+
   it("retries a blocked host only once its pods fit on another host", async () => {
     const fleet = simulateFleet(
       [

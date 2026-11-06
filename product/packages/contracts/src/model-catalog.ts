@@ -27,6 +27,12 @@ export type CatalogEntry = {
 
 export const MODEL_CATALOG = [
   {
+    id: "moonshotai/kimi-k3.1-pro",
+    displayName: "Kimi K3.1 Pro",
+    icon: null,
+    supportedUses: ["judge", "comparison", "serving"],
+  },
+  {
     id: "deepseek/deepseek-v4.1-flash",
     displayName: "DeepSeek V4.1 Flash",
     icon: "/model-providers/deepseek.svg",

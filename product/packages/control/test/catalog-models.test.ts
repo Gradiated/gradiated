@@ -40,6 +40,10 @@ describe("model configurations", () => {
       output: [450, 450],
     },
     "jaredpalmer/kev-9b": { input: [30, 6], output: [0] },
+    "moonshotai/kimi-k3.1-pro": {
+      input: [2_000, 2_000],
+      output: [10_000, 10_000],
+    },
   };
 
   it.each(catalogModels)("pins the nano-USD prices of $id", (model) => {
@@ -70,6 +74,7 @@ describe("model configurations", () => {
       "chat",
       "chat",
       "decision",
+      "chat",
     ]);
   });
 
@@ -87,6 +92,30 @@ describe("model configurations", () => {
       type: "enum",
       values: ["low", "high", "max"],
     });
+  });
+});
+
+it("keeps Kimi unavailable until qualification and advertises its exact reasoning contract", () => {
+  const model = catalogModels.find(
+    (item) => item.id === "moonshotai/kimi-k3.1-pro",
+  );
+
+  expect(model?.status).toBe("unavailable");
+  expect(model?.properties).toMatchObject({
+    hugging_face_id: "moonshotai/Kimi-K3.1-Pro",
+    quantization: "mxfp4",
+    input_modalities: [{ type: "text" }],
+    reasoning: {
+      supported_efforts: ["low", "high", "max"],
+      default_effort: "max",
+    },
+    output_modalities: [
+      {
+        supported_parameters: {
+          reasoning_effort: { type: "enum", values: ["low", "high", "max"] },
+        },
+      },
+    ],
   });
 });
 

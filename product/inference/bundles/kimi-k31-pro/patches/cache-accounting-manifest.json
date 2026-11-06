@@ -1,0 +1,14 @@
+{
+  "upstream_sha": "afcd7d6b487a9cbe73e25941971b4cc107e6f9ae",
+  "frozen_input_manifest_sha256": "b4a31808444d19237481d4aba7c846bb2a6ae4470d0f2a24739aaae26685d6e7",
+  "scope": "Kimi generation stub cached-token accounting; headers/body/stream and batch clamp to reported prompt, other encodings preserved",
+  "patch": "cache-accounting.patch",
+  "patch_sha256": "2ec2c5f508ff44e23c6f19a700b1a7db49db1cba3bb3dc0961dd88f5555bcd4d",
+  "files": [
+    {
+      "path": "sglang/srt/entrypoints/openai/serving_chat.py",
+      "original_sha256": "8f9d688e7112fd24d807121f1a8178d378199b3e599ed82919b025c275bb34a7",
+      "overlay_sha256": "e2013cd861a0399269c4643ea69b9b1d1b6180aa8aab893c6a23e98391df91a6"
+    }
+  ]
+}

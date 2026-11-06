@@ -4,12 +4,14 @@ import {
   createGlm53FlashModelConfiguration,
 } from "./glm-5-3-flash.js";
 import { createKev9bModelConfiguration } from "./kev-9b.js";
+import { createKimiK31ProModelConfiguration } from "./kimi-k31-pro.js";
 
 export const catalogModels = [
   createDeepseekV41FlashModelConfiguration(),
   createGlm53FlashModelConfiguration(),
   createDealignGlm53FlashModelConfiguration(),
   createKev9bModelConfiguration(),
+  createKimiK31ProModelConfiguration(),
 ];
 
 export const legacyModels = [

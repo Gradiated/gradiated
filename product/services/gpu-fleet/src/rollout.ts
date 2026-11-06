@@ -15,9 +15,14 @@ import type { Metrics } from "./metrics.js";
 import type { Observation } from "./observe.js";
 import type { Pins } from "./pins.js";
 import { planHost, target, type HostFacts, type Plan } from "./plan.js";
+import { placementFits, POD_NAMESPACE, type PlacedPod } from "./placement.js";
 
 // What a pass knows of a host: the planner's facts and its GPU use.
-type Facts = HostFacts & { usedGpus: number; servingGpus: number[] };
+type Facts = HostFacts & {
+  usedGpus: number;
+  servingWorkloads: ClusterPod[];
+  residentWorkloads: ClusterPod[];
+};
 
 const MINUTE = 60_000;
 
@@ -81,7 +86,7 @@ type Outcome =
   | { block: string };
 
 type Step = (
-  facts: HostFacts,
+  facts: Facts,
   rollout: Rollout,
   record: (set: Partial<Rollout>) => Promise<Rollout>,
 ) => Promise<Outcome>;
@@ -112,6 +117,7 @@ export const createRollouts = (deps: RolloutDependencies) => {
   const now = deps.now ?? (() => new Date());
   const { cluster, metrics } = deps;
   let enrollment: Enrollment | undefined;
+  let currentFacts: Facts[] = [];
 
   const ensureLeading = () => {
     if (!deps.leading()) throw new LeadershipLost("The lease was lost");
@@ -194,33 +200,87 @@ export const createRollouts = (deps: RolloutDependencies) => {
       trainingPods: live.filter((item) => item.training).length,
       pods: live.length,
       usedGpus: live.reduce((sum, item) => sum + item.gpus, 0),
-      servingGpus: live.filter((item) => item.model).map((item) => item.gpus),
+      servingWorkloads: live.filter((item) => item.model),
+      residentWorkloads: pods,
     };
   };
 
   // Whether a blocked host's serving pods would fit on the other Ready,
   // schedulable hosts with the same GPU product, largest first. Autoscaling
   // that only fills GPUs never makes a blocked host try again.
-  const roomFor = (blocked: Facts, all: Facts[]) => {
+  const relocationGap = (blocked: Facts, all: Facts[]) => {
     const { gpuProduct } = blocked.host.spec.inventory;
+    const residents: PlacedPod[] = all.flatMap((other) =>
+      other.residentWorkloads.map((pod) => ({
+        ...pod,
+        node: other.node ?? {},
+      })),
+    );
     const free = all
       .filter(
         (other) =>
-          other !== blocked &&
+          other.host.spec.instanceId !== blocked.host.spec.instanceId &&
           other.node?.ready &&
           !other.node.unschedulable &&
           other.host.spec.inventory.gpuProduct === gpuProduct,
       )
-      .map((other) => other.host.spec.inventory.gpuCount - other.usedGpus);
-    return [...blocked.servingGpus]
-      .sort((a, b) => b - a)
-      .every((need) => {
-        const index = free.findIndex((gpus) => gpus >= need);
-        if (index < 0) return false;
-        free[index]! -= need;
-        return true;
-      });
+      .map((other) => ({
+        node: other.node!,
+        gpus: other.host.spec.inventory.gpuCount - other.usedGpus,
+      }));
+    let attempts = 4096;
+    let exhausted = false;
+    let missingModel = blocked.servingWorkloads[0]?.model;
+    const assign = (remaining: ClusterPod[]): boolean => {
+      if (!remaining.length) return true;
+      if (--attempts < 0 || remaining.length > 256) {
+        exhausted = true;
+        return false;
+      }
+
+      const choices = remaining
+        .map((pod, index) => ({
+          pod,
+          index,
+          destinations: free.filter(
+            (other) =>
+              other.gpus >= pod.gpus &&
+              placementFits(pod.placement, other.node, {
+                labels: pod.labels ?? {},
+                namespace: pod.namespace ?? POD_NAMESPACE,
+                residents,
+              }),
+          ),
+        }))
+        .sort(
+          (a, b) =>
+            a.destinations.length - b.destinations.length ||
+            b.pod.gpus - a.pod.gpus,
+        );
+      const { pod, index, destinations } = choices[0]!;
+      missingModel = pod.model;
+      for (const destination of destinations) {
+        destination.gpus -= pod.gpus;
+        residents.push({ ...pod, node: destination.node });
+        const fits = assign(
+          remaining.filter((_, position) => position !== index),
+        );
+        residents.pop();
+        destination.gpus += pod.gpus;
+        if (fits) return true;
+        if (exhausted) return false;
+      }
+      return false;
+    };
+    if (assign(blocked.servingWorkloads)) return undefined;
+
+    return exhausted
+      ? "Relocation capacity search limit reached; existing replicas preserved"
+      : `No capacity for a replacement ${missingModel} replica`;
   };
+
+  const roomFor = (blocked: Facts, all: Facts[]) =>
+    relocationGap(blocked, all) === undefined;
 
   const retryAfter = (rollout: Rollout) =>
     Math.min(
@@ -294,9 +354,15 @@ export const createRollouts = (deps: RolloutDependencies) => {
   const steps: Record<string, Step> = {
     // A pod can be bound while the node is being cordoned, so the next step
     // is decided from the pods on the node once nothing more can land there.
-    Cordon: async ({ host }, rollout) => {
+    Cordon: async (facts, rollout) => {
+      const { host } = facts;
       if (await runningTraining(host, rollout))
         return { block: "A training job runs on the host" };
+
+      if (rollout.kind === "reimage") {
+        const gap = relocationGap(facts, currentFacts);
+        if (gap) return { block: gap };
+      }
 
       await act(() => cluster.cordon(host.spec.instanceId));
       if (await runningTraining(host, rollout))
@@ -888,6 +954,7 @@ export const createRollouts = (deps: RolloutDependencies) => {
     });
     const { hosts } = parseHosts(await deps.api.list(GPU_HOSTS));
     const all = await Promise.all(hosts.map(facts));
+    currentFacts = all;
     const time = now().getTime();
 
     // A blocked rollout keeps the fleet waiting for its host, so the order

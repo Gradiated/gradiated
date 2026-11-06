@@ -83,9 +83,22 @@ test("SGLang GLM bundle and helper changes verify only that runtime", () => {
   }
 });
 
-test("shared GLM warmup changes verify both GLM runtimes", () => {
+test("shared warmup changes verify GLM and Kimi runtimes", () => {
   assert.deepEqual(
     bundlesToVerify(["product/inference/runtimes/glm/warmup-supervisor.py"]),
-    ["glm-5-3-flash", "glm-5-3-flash-sglang"],
+    ["glm-5-3-flash", "glm-5-3-flash-sglang", "kimi-k31-pro"],
+  );
+});
+
+test("Kimi changes verify its isolated runtime and shared SMG fixes verify both users", () => {
+  assert.deepEqual(
+    bundlesToVerify(["product/inference/runtimes/kimi-k31/config.py"]),
+    ["kimi-k31-pro"],
+  );
+  assert.deepEqual(
+    bundlesToVerify([
+      "product/inference/bundles/glm-5-3-flash-sglang/smg-patches.json",
+    ]),
+    ["glm-5-3-flash-sglang", "kimi-k31-pro"],
   );
 });

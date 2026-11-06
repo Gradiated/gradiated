@@ -170,6 +170,47 @@ class RenderTests(unittest.TestCase):
             with self.subTest(documents=documents), self.assertRaises(ValueError):
                 renderer.inventory(documents)
 
+    def test_host_reservation_taints_are_projected_only_when_declared(self):
+        document = self.host()
+        baseline, _ = renderer.inventory([document])
+        self.assertNotIn('extra_taints', baseline[0])
+        taint = {'key': 'gradiated.com/kimi-k31', 'value': 'reserved', 'effect': 'NoSchedule'}
+        document['spec']['extraTaints'] = [taint]
+        configured, _ = renderer.inventory([document])
+        self.assertEqual(configured, [{**baseline[0], 'extra_taints': [taint]}])
+        document['spec']['extraTaints'] = []
+        self.assertEqual(renderer.inventory([document])[0], baseline)
+        invalid = [None, {}, True, 'bad', [None], [{**taint, 'operator': 'Equal'}], [taint, taint],
+                   [{**taint, 'key': 'gradiated.com/gpu'}], [{**taint, 'key': ''}],
+                   [{**taint, 'key': 'node.kubernetes.io/not-ready'}],
+                   [{**taint, 'key': 'node.cloudprovider.kubernetes.io/uninitialized'}],
+                   [{**taint, 'effect': 'NoExecute'}], [{**taint, 'value': None}],
+                   [{k: v for k, v in taint.items() if k != 'value'}],
+                   [{**taint, 'key': 'a/b/c'}], [{**taint, 'key': 'x' * 64}],
+                   [{**taint, 'value': 'bad value'}], [{**taint, 'value': 'x' * 64}],
+                   [{**taint, 'key': f'example.com/reservation-{i}'} for i in range(17)]]
+        for extra in invalid:
+            with self.subTest(extra=extra), self.assertRaisesRegex(ValueError, 'extraTaints'):
+                renderer.inventory([{**document, 'spec': {**document['spec'], 'extraTaints': extra}}])
+        schema = self.definition['spec']['versions'][0]['schema']['openAPIV3Schema']['properties']['spec']['properties']['extraTaints']
+        self.assertEqual(schema['x-kubernetes-list-type'], 'map')
+        self.assertEqual(schema['maxItems'], 16)
+        self.assertEqual(schema['x-kubernetes-list-map-keys'], ['key'])
+        self.assertEqual(schema['items']['required'], ['key', 'value', 'effect'])
+        self.assertEqual(schema['items']['properties']['effect']['enum'], ['NoSchedule'])
+
+    def test_node_reservation_reconciliation_retains_named_controller_access(self):
+        resources = list(yaml.safe_load_all((renderer.GPU / 'rbac.yaml').read_text()))
+        role = next(d for d in resources if d['kind'] == 'ClusterRole' and d['metadata']['name'] == 'gpu-controller-nodes')
+        updates = [rule for rule in role['rules'] if 'nodes' in rule['resources'] and 'update' in rule['verbs']]
+        self.assertEqual(len(updates), 1)
+        self.assertEqual(set(updates[0]['resourceNames']), {host['metadata']['name'] for host in self.hosts})
+        policies = list(yaml.safe_load_all((renderer.GPU / 'gpu-fleet.yaml').read_text()))
+        restricted = next(d for d in policies if d['kind'] == 'ValidatingAdmissionPolicy'
+                          and d['metadata']['name'] == 'gpu-fleet-node-updates')
+        self.assertEqual(restricted['spec']['matchConditions'], [{'name': 'gpu-fleet',
+            'expression': "request.userInfo.username == 'system:serviceaccount:gpu-inference:gpu-fleet'"}])
+
     def test_argo_never_deletes_the_crd_or_a_gpuhost(self):
         options = self.definition['metadata']['annotations']['argocd.argoproj.io/sync-options'].split(',')
         self.assertIn('Delete=false', options)
@@ -511,6 +552,79 @@ class RenderTests(unittest.TestCase):
         for invalid in (0, -1, True, 1.5, '2', '20%', None):
             with self.subTest(invalid=invalid), self.assertRaisesRegex(ValueError, 'max_surge'):
                 renderer.rollout('glm-dealign', {**model, 'max_surge': invalid}, runtimes)
+
+    def test_extra_tolerations_only_extend_the_target_model(self):
+        runtimes = json.loads(renderer.RUNTIMES.read_text())
+        models = json.loads((renderer.GPU / 'models.json').read_text())
+        model = models['glm-dealign']
+        stock = renderer.rollout('dedicated-model', model, runtimes)
+        reservation = {'key': 'gradiated.com/kimi-k31', 'operator': 'Equal',
+                       'value': 'reserved', 'effect': 'NoSchedule'}
+        configured = renderer.rollout('dedicated-model', {**model, 'extra_tolerations': [reservation]}, runtimes)
+        expected = copy.deepcopy(stock)
+        expected['spec']['template']['spec']['tolerations'].append(reservation)
+        self.assertEqual(configured, expected)
+        empty = renderer.rollout('dedicated-model', {**model, 'extra_tolerations': []}, runtimes)
+        self.assertEqual(yaml.safe_dump(empty, sort_keys=False), yaml.safe_dump(stock, sort_keys=False))
+        for name, definition in models.items():
+            if 'extra_tolerations' in definition:
+                continue
+            generated = renderer.MODELS / name / f'{name}.yaml'
+            saved = next(yaml.safe_load_all(generated.read_text()))
+            self.assertEqual(yaml.safe_dump(renderer.rollout(name, definition, runtimes), sort_keys=False),
+                             yaml.safe_dump(saved, sort_keys=False))
+
+    def test_single_replica_unavailability_requires_a_narrow_explicit_opt_in(self):
+        runtimes = json.loads(renderer.RUNTIMES.read_text())
+        model = json.loads((renderer.GPU / 'models.json').read_text())['glm-dealign']
+        base = {k: v for k, v in model.items() if k not in ('canary_for', 'autoscaling')}
+        configured = {**base, 'replicas': 1, 'max_surge': 0, 'max_unavailable': 1,
+                      'allow_single_replica_unavailable': True}
+        obj = renderer.rollout('single-model', configured, runtimes)
+        self.assertEqual((obj['spec']['replicas'], obj['spec']['strategy']['canary']['maxSurge'],
+                          obj['spec']['strategy']['canary']['maxUnavailable']), (1, 0, 1))
+        unchanged = renderer.rollout('default-model', {**base, 'allow_single_replica_unavailable': False}, runtimes)
+        self.assertEqual(unchanged, renderer.rollout('default-model', base, runtimes))
+        for invalid in ({'replicas': 2}, {'replicas': True}, {'max_surge': 1}, {'max_surge': False},
+                        {'max_unavailable': 0}, {'max_unavailable': True}, {'canary_for': 'glm-dealign'},
+                        {'allow_single_replica_unavailable': None}, {'allow_single_replica_unavailable': 1},
+                        {'allow_single_replica_unavailable': 'true'}):
+            with self.subTest(invalid=invalid), self.assertRaisesRegex(ValueError, 'allow_single_replica_unavailable'):
+                renderer.rollout('single-model', {**configured, **invalid}, runtimes)
+        with self.assertRaisesRegex(ValueError, 'max_surge'):
+            renderer.rollout('single-model', {k: v for k, v in configured.items()
+                                            if k != 'allow_single_replica_unavailable'}, runtimes)
+
+    def test_extra_tolerations_reject_wildcards_overrides_and_invalid_shapes(self):
+        runtimes = json.loads(renderer.RUNTIMES.read_text())
+        model = json.loads((renderer.GPU / 'models.json').read_text())['glm-dealign']
+        good = {'key': 'gradiated.com/kimi-k31', 'operator': 'Equal',
+                'value': 'reserved', 'effect': 'NoSchedule'}
+        invalid = [None, {}, True, 'bad', [None], [[]], ['bad'], [good, good],
+                   [{**good, 'key': 'gradiated.com/gpu'}], [{**good, 'key': ''}],
+                   [{**good, 'operator': 'Exists'}], [{**good, 'operator': None}],
+                   [{**good, 'effect': 'NoExecute'}], [{**good, 'effect': ''}],
+                   [{**good, 'tolerationSeconds': 1}], [{k: v for k, v in good.items() if k != 'value'}],
+                   [{**good, 'key': 'a/b/c'}], [{**good, 'key': 'bad prefix/value'}],
+                   [{**good, 'key': 'UPPER.invalid/key'}], [{**good, 'key': 'prefix/-bad'}],
+                   [{**good, 'key': 'x' * 64}], [{**good, 'value': 'bad value'}],
+                   [{**good, 'value': 'x' * 64}], [{**good, 'value': None}]]
+        for extra in invalid:
+            with self.subTest(extra=extra), self.assertRaisesRegex(ValueError, 'extra_tolerations'):
+                renderer.rollout('dedicated-model', {**model, 'extra_tolerations': extra}, runtimes)
+
+    def test_model_reservations_cannot_tolerate_cordon_or_lifecycle_taints(self):
+        runtimes = json.loads(renderer.RUNTIMES.read_text())
+        model = json.loads((renderer.GPU / 'models.json').read_text())['glm-dealign']
+        for key in ['node.kubernetes.io/unschedulable', 'node.kubernetes.io/not-ready',
+                    'node.kubernetes.io/unreachable', 'node.kubernetes.io/disk-pressure',
+                    'node.kubernetes.io/memory-pressure', 'node.kubernetes.io/pid-pressure',
+                    'node.kubernetes.io/network-unavailable', 'node.kubernetes.io/future-lifecycle',
+                    'node.cloudprovider.kubernetes.io/uninitialized']:
+            for value in ['', 'true']:
+                toleration = {'key': key, 'operator': 'Equal', 'value': value, 'effect': 'NoSchedule'}
+                with self.subTest(key=key, value=value), self.assertRaisesRegex(ValueError, 'extra_tolerations'):
+                    renderer.rollout('dedicated-model', {**model, 'extra_tolerations': [toleration]}, runtimes)
 
     def test_packed_gpu_rollout_can_replace_one_replica_without_a_spare_gpu(self):
         runtimes = json.loads(renderer.RUNTIMES.read_text())

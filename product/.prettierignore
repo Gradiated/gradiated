@@ -10,6 +10,9 @@ inference/build/
 **/playwright-report/
 packages/autotrain/
 
+# Hash-pinned overlay manifests retain their recorded artifact bytes.
+inference/bundles/kimi-k31-pro/patches/*manifest.json
+
 # MSW-generated service worker.
 services/console/.storybook/public/mockServiceWorker.js
 services/console/storybook-static/

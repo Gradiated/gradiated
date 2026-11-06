@@ -34,15 +34,65 @@ def inventory(documents):
             raise ValueError('GpuHost instance and pod IDs must be unique')
         pods.add(spec['provider']['podId'])
         capacity = spec['inventory']
+        extra_taints = host_taints(spec)
         hosts.append({'instance_id': instance,
                       'endpoint': f'http://gpu-{instance}.tailscale-inference.svc.cluster.local:8888/_kubelet',
                       'token_file': f'/var/run/gradiated-host-keys/{instance}',
                       'gpu_count': capacity['gpuCount'], 'cpu': capacity['cpu'],
-                      'memory_gib': capacity['memoryGiB'], 'gpu_product': capacity['gpuProduct']})
+                      'memory_gib': capacity['memoryGiB'], 'gpu_product': capacity['gpuProduct'],
+                      **({'extra_taints': extra_taints} if extra_taints else {})})
         secrets.append({'secretKey': instance, 'remoteRef': dict(spec['managementSecret'])})
     if not hosts:
         raise ValueError('GPU inventory cannot be empty')
     return hosts, secrets
+
+
+def valid_label_key(key):
+    label = r'[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,61}[A-Za-z0-9])?'
+    dns_label = r'[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?'
+    parts = key.split('/')
+    return (len(parts) <= 2 and re.fullmatch(label, parts[-1]) is not None
+            and (len(parts) == 1 or (len(parts[0]) <= 253
+                 and all(re.fullmatch(dns_label, segment) for segment in parts[0].split('.')))))
+
+
+def host_taints(spec):
+    taints = spec.get('extraTaints', [])
+    if not isinstance(taints, list) or len(taints) > 16:
+        raise ValueError('GpuHost extraTaints must be a list of at most 16 reservations')
+    keys = {'gradiated.com/gpu'}
+    label = r'[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,61}[A-Za-z0-9])?'
+    for item in taints:
+        if (not isinstance(item, dict) or set(item) != {'key', 'value', 'effect'}
+                or not all(isinstance(value, str) for value in item.values())
+                or item['effect'] != 'NoSchedule' or not valid_label_key(item['key'])
+                or item['key'].startswith(('node.kubernetes.io/', 'node.cloudprovider.kubernetes.io/'))
+                or (item['value'] and not re.fullmatch(label, item['value'])) or item['key'] in keys):
+            raise ValueError('GpuHost extraTaints require unique explicit key/value NoSchedule reservations')
+        keys.add(item['key'])
+    return [dict(item) for item in taints]
+
+
+def model_tolerations(model):
+    extra = model.get('extra_tolerations', [])
+    if not isinstance(extra, list):
+        raise ValueError('Model extra_tolerations must be a list')
+    tolerations = [{'key': 'gradiated.com/gpu', 'operator': 'Equal', 'value': 'true', 'effect': 'NoSchedule'}]
+    keys = {'gradiated.com/gpu'}
+    label = r'[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,61}[A-Za-z0-9])?'
+    for item in extra:
+        if (not isinstance(item, dict) or set(item) != {'key', 'operator', 'value', 'effect'}
+                or not all(isinstance(value, str) for value in item.values())
+                or item['operator'] != 'Equal' or item['effect'] != 'NoSchedule'):
+            raise ValueError('Model extra_tolerations require explicit key/value Equal NoSchedule entries')
+        if (not valid_label_key(item['key'])
+                or item['key'].startswith(('node.kubernetes.io/', 'node.cloudprovider.kubernetes.io/'))
+                or (item['value'] and not re.fullmatch(label, item['value']))
+                or item['key'] in keys):
+            raise ValueError('Model extra_tolerations contain an invalid, reserved or duplicate key/value')
+        keys.add(item['key'])
+        tolerations.append(dict(item))
+    return tolerations
 
 
 def rollout(name, model, runtimes):
@@ -57,10 +107,15 @@ def rollout(name, model, runtimes):
                                   or not re.fullmatch(r'[a-z](?:[a-z0-9-]*[a-z0-9])?', parent)):
         raise ValueError('canary_for must name a distinct primary model resource')
     surge = model.get('max_surge', 1)
-    if type(surge) is not int or surge < (0 if parent else 1):
-        raise ValueError('Rollout max_surge must be positive unless an explicit canary can become unavailable')
     unavailable = model.get('max_unavailable', 0)
-    maximum = model['replicas'] if parent else model['replicas'] - 1
+    single_unavailable = model.get('allow_single_replica_unavailable', False)
+    if type(single_unavailable) is not bool or (single_unavailable and
+            (parent or type(model['replicas']) is not int or model['replicas'] != 1 or type(surge) is not int or surge != 0
+             or type(unavailable) is not int or unavailable != 1)):
+        raise ValueError('allow_single_replica_unavailable requires one primary replica, max_surge 0 and max_unavailable 1')
+    if type(surge) is not int or surge < (0 if parent or single_unavailable else 1):
+        raise ValueError('Rollout max_surge must be positive unless an explicit canary can become unavailable')
+    maximum = model['replicas'] if parent or single_unavailable else model['replicas'] - 1
     if type(unavailable) is not int or not 0 <= unavailable <= maximum:
         raise ValueError('Rollout max_unavailable exceeds the replica availability bound')
     if surge == 0 and unavailable == 0:
@@ -107,7 +162,7 @@ def rollout(name, model, runtimes):
     pod = {
         'serviceAccountName': 'model-runtime', 'automountServiceAccountToken': False,
         'terminationGracePeriodSeconds': 750, 'nodeSelector': model['node_selector'],
-        'tolerations': [{'key': 'gradiated.com/gpu', 'operator': 'Equal', 'value': 'true', 'effect': 'NoSchedule'}],
+        'tolerations': model_tolerations(model),
         'containers': [{'name': 'runtime', 'image': runtime['image'], 'resources': {
             'requests': {**limits, 'memory': runtime.get('request_memory', runtime['memory'])}, 'limits': limits}}]}
     if 'affinity' in model:

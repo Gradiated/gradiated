@@ -32,10 +32,28 @@ test("release binds the source, base and content-addressed private bundle", () =
 });
 
 test("release records distinguish host bundles from model runtimes", () => {
-  const record = manifest({bundle:"host", source:"c".repeat(40), baseImage, baseId:"base-v1", digest:"d".repeat(64), bucket:"test-artifacts"});
+  const record = manifest({
+    bundle: "host",
+    source: "c".repeat(40),
+    baseImage,
+    baseId: "base-v1",
+    digest: "d".repeat(64),
+    bucket: "test-artifacts",
+  });
   assert.equal(record.bundle, "host");
   assert.equal(record.bootstrapVersion, 1);
-  assert.throws(() => manifest({bundle:"unknown", source:"c".repeat(40), baseImage, baseId:"base-v1", digest:"d".repeat(64), bucket:"test-artifacts"}), /Unknown bundle/);
+  assert.throws(
+    () =>
+      manifest({
+        bundle: "unknown",
+        source: "c".repeat(40),
+        baseImage,
+        baseId: "base-v1",
+        digest: "d".repeat(64),
+        bucket: "test-artifacts",
+      }),
+    /Unknown bundle/,
+  );
 });
 
 test("SGLang release records identify available hardware launch profiles", () => {
@@ -47,5 +65,21 @@ test("SGLang release records identify available hardware launch profiles", () =>
     digest: "d".repeat(64),
     bucket: "test-artifacts",
   });
-  assert.deepEqual(record.runtimeProfiles, ["b300-pcp2", "h200-tp2", "b200-pcp2"]);
+  assert.deepEqual(record.runtimeProfiles, [
+    "b300-pcp2",
+    "h200-tp2",
+    "b200-pcp2",
+  ]);
+});
+
+test("Kimi release records identify the isolated eight-B300 profile", () => {
+  const record = manifest({
+    bundle: "kimi-k31-pro",
+    source: "c".repeat(40),
+    baseImage,
+    baseId: "base-v1",
+    digest: "d".repeat(64),
+    bucket: "test-artifacts",
+  });
+  assert.deepEqual(record.runtimeProfiles, ["b300-tp8"]);
 });

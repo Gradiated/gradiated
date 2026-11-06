@@ -1,0 +1,35 @@
+--- a/sglang/srt/speculative/dflash_utils.py
++++ b/sglang/srt/speculative/dflash_utils.py
+@@ -24,7 +24,7 @@
+ )
+ from sglang.srt.managers.schedule_batch import Req
+ from sglang.srt.model_executor.runner_utils.pool import borrow_graph_pool
+-from sglang.srt.runtime_context import get_spec
++from sglang.srt.runtime_context import get_exec, get_parallel, get_spec
+ from sglang.srt.speculative.spec_utils import sample_simulated_acc_len
+ from sglang.srt.utils import is_npu
+ 
+@@ -1434,7 +1434,22 @@
+     if enable_overlap and (params.frequency_penalty != 0 or params.presence_penalty != 0):
+         return "DFLASH frequency/presence penalties require overlap scheduling disabled."
+     if params.sampling_seed is not None:
+-        return "DFLASH speculative decoding does not support request seed yet."
++        # Experimental admission is narrower than the generic DFLASH path.
++        # Selector and materialized-seed checks also run in the worker before
++        # either target prefill sampling or target verification can execute.
++        if enable_overlap:
++            return "Seeded DFLASH experiment requires overlap scheduling disabled."
++        parallel, spec = get_parallel(), get_spec()
++        if parallel.tp_size != 8 or parallel.pp_size != 1:
++            return "Seeded DFLASH experiment requires TP8 and PP1."
++        if spec.speculative_num_draft_tokens not in (5, 8):
++            return "Seeded DFLASH experiment requires block size 5 or 8."
++        if spec.speculative_use_block_verification:
++            return "Seeded DFLASH experiment requires sequential verification."
++        if get_exec().kernel.enable_nvidia_megakernel:
++            return "Seeded DFLASH experiment does not support NVIDIA megakernels."
++        if not is_dflash_sampling_verify_available():
++            return "Seeded DFLASH experiment requires CUDA sampling verification."
+     if params.min_p > 0:
+         return "DFLASH speculative decoding does not support min_p yet."
+     if params.repetition_penalty != 1.0:

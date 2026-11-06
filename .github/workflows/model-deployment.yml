@@ -20,6 +20,7 @@ on:
       - product/inference/runtimes/kev/adapter.py
       - product/inference/runtimes/glm/**
       - product/inference/runtimes/glm-sglang/**
+      - product/inference/runtimes/kimi-k31/**
       - product/inference/lora/**
       - product/inference/runtime-launcher/**
       - tools/images/**

@@ -96,6 +96,32 @@ choice within the chosen release use the same rule. The replica choice sees only
 its own release, so while a release is part way through reporting its silent
 replicas get their release's equal share rather than exactly 1/N of the model.
 
+### Session placement
+
+The rendezvous order is the candidate list; after it, one atomic Valkey script
+(`place_route_v1.lua`) picks the replica, before admission. Each session's
+replica is stored at `route-session:{release}:<route key>` for 30 minutes from
+its last request, and each replica's in-flight generations are leases in
+`route-leases:{release}:<deployment>`, scored by lease expiry. Both use the
+release's hash tag, like its deployment statuses.
+
+- A session stays on its stored replica while that replica is a candidate and
+  holds fewer leases than its reported `active_requests`, so it keeps its prompt
+  cache.
+- A new session, one whose replica is no longer a candidate, or one whose replica
+  is full goes to the candidate with the smallest share of its slots in use.
+  Ties keep rendezvous order, so idle replicas still take new sessions in
+  proportion to their limits. Without a limit from every candidate it goes to
+  the one with the fewest leases. The session is then stored on that replica.
+- A fallback attempt moves the lease and the session to the replica it falls back
+  to (`claim_route_v1.lua`). OpenRouter capacity takes no lease.
+- A generation releases its lease when it ends, whichever way; a lease whose
+  gateway exits expires with the admission lease. Placement and routing reads
+  have no fallback: if Valkey fails, the request fails as admission would.
+
+`gradiated_gateway_session_routes_total{outcome}` counts `kept`, `placed`,
+`moved` and `spilled` placements.
+
 ### Native SystemOne contract
 
 `systemone.rs` validates the closed request envelope and rejects duplicate JSON
@@ -1046,9 +1072,9 @@ A malformed pin is ignored.
 
 Every exact model maps to independent runtime deployment candidates. Desmond
 sends status every second. The gateway rejects stale, unhealthy, draining, or
-not-accepting candidates. It uses rendezvous hashing, weighted by each
-runtime's reported `active_requests`, for stable placement. It does not queue
-and it does not enforce a concurrency limit: the engine owns admission.
+not-accepting candidates. Session placement keeps each session on one replica
+while it has a free slot and puts new sessions on the least-utilized replica. It does
+not queue and it does not enforce a concurrency limit: the engine owns admission.
 
 A model is ready when at least one fresh healthy deployment reports status. The
 catalog publishes no capacity limit. A malformed status document drops only its

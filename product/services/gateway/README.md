@@ -160,7 +160,11 @@ deployments by rendezvous hash, weighted by each runtime's reported
 `active_requests` (replicas that do not report keep an equal share). Session affinity takes precedence; sessionless
 chat requests hash their opening system/developer and first non-system messages,
 while SystemOne uses its opening state prefix. Keys include workspace, model,
-and release identity. Routing stores no affinity records or per-deployment concurrency leases.
+and release identity. That order is the candidate list for
+[session placement](ARCHITECTURE.md#session-placement): Valkey stores each
+session's replica for 30 minutes and a lease per in-flight generation on each
+replica, so a session stays on its replica while it has a free slot and new or
+displaced sessions go to the least-utilized replica.
 
 The gateway resolves one affinity key before protocol translation, for both
 release and replica selection. Explicit body `session_id`, header

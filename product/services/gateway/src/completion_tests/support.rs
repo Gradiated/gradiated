@@ -327,6 +327,17 @@ pub(super) struct RecordingServingState {
     pub(super) admission_error: Mutex<Option<AdmissionError>>,
     pub(super) finalizations: Mutex<VecDeque<FinalizationResult>>,
     pub(super) finalized: Mutex<Vec<Value>>,
+    /// The candidate placement picks; the first candidate when unset.
+    pub(super) placed: Mutex<Option<Uuid>>,
+    pub(super) placement_error: Mutex<Option<ServingStateError>>,
+    pub(super) routes: Mutex<Vec<RouteStep>>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) enum RouteStep {
+    Place(Vec<Uuid>),
+    Claim(Uuid),
+    Release(Uuid),
 }
 
 impl RecordingServingState {
@@ -344,6 +355,9 @@ impl RecordingServingState {
             admission_error: Mutex::new(None),
             finalizations: Mutex::new(VecDeque::new()),
             finalized: Mutex::new(Vec::new()),
+            placed: Mutex::new(None),
+            placement_error: Mutex::new(None),
+            routes: Mutex::new(Vec::new()),
         }
     }
 }
@@ -446,6 +460,45 @@ impl ServingState for RecordingServingState {
         }
 
         outcome
+    }
+    async fn place_route(
+        &self,
+        request: &crate::session_routing::PlacementRequest<'_>,
+    ) -> Result<crate::session_routing::Placed, ServingStateError> {
+        self.routes
+            .lock()
+            .unwrap()
+            .push(RouteStep::Place(request.candidates.to_vec()));
+        if let Some(error) = self.placement_error.lock().unwrap().take() {
+            return Err(error);
+        }
+
+        Ok(crate::session_routing::Placed {
+            deployment_id: self.placed.lock().unwrap().unwrap_or(request.candidates[0]),
+            outcome: crate::session_routing::PlacementOutcome::Placed,
+        })
+    }
+
+    async fn claim_route(
+        &self,
+        lease: &crate::session_routing::RouteLease,
+    ) -> Result<(), ServingStateError> {
+        self.routes
+            .lock()
+            .unwrap()
+            .push(RouteStep::Claim(lease.deployment_id));
+        Ok(())
+    }
+
+    async fn release_route(
+        &self,
+        lease: &crate::session_routing::RouteLease,
+    ) -> Result<(), ServingStateError> {
+        self.routes
+            .lock()
+            .unwrap()
+            .push(RouteStep::Release(lease.deployment_id));
+        Ok(())
     }
 }
 

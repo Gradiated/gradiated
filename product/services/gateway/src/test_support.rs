@@ -223,6 +223,27 @@ impl ServingState for TestServingState {
     ) -> Result<FinalizationOutcome, FinalizationError> {
         unreachable!("serving-state fixtures never finalize")
     }
+
+    async fn place_route(
+        &self,
+        _request: &crate::session_routing::PlacementRequest<'_>,
+    ) -> Result<crate::session_routing::Placed, ServingStateError> {
+        unreachable!("serving-state fixtures never route")
+    }
+
+    async fn claim_route(
+        &self,
+        _lease: &crate::session_routing::RouteLease,
+    ) -> Result<(), ServingStateError> {
+        unreachable!("serving-state fixtures never route")
+    }
+
+    async fn release_route(
+        &self,
+        _lease: &crate::session_routing::RouteLease,
+    ) -> Result<(), ServingStateError> {
+        unreachable!("serving-state fixtures never route")
+    }
 }
 
 pub(crate) fn model(streaming: bool) -> GatewayModel {

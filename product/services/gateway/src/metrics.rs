@@ -28,6 +28,7 @@ struct Metrics {
     admissions: CounterFamily<GenerationLabels>,
     routing_capacity_rejections: CounterFamily<ModelTrafficLabels>,
     capacity_fallbacks: CounterFamily<CapacityFallbackLabels>,
+    session_routes: CounterFamily<SessionRouteLabels>,
     upstream_cost_nano_usd: CounterFamily<GenerationLabels>,
     capacity_rejection_timestamp_seconds: GaugeFamily<ModelLabels>,
     admission_rejections: CounterFamily<AdmissionRejectionLabels>,
@@ -88,6 +89,12 @@ struct CapacityFallbackLabels {
     capacity: String,
     reason: String,
     traffic: String,
+}
+
+#[derive(Clone, Debug, EncodeLabelSet, Eq, Hash, PartialEq)]
+struct SessionRouteLabels {
+    model: String,
+    outcome: String,
 }
 
 #[derive(Clone, Debug, EncodeLabelSet, Eq, Hash, PartialEq)]
@@ -167,6 +174,12 @@ impl GatewayMetrics {
                 &mut registry,
                 "capacity_fallbacks",
                 "Generations moved to other capacity before any output, by destination and reason.",
+                CounterFamily::default(),
+            ),
+            session_routes: registered(
+                &mut registry,
+                "session_routes",
+                "Generations placed on a local replica, by whether the session kept its replica.",
                 CounterFamily::default(),
             ),
             upstream_cost_nano_usd: registered(
@@ -386,6 +399,16 @@ impl GatewayMetrics {
             .get_or_create(&ModelTrafficLabels {
                 model: model.to_owned(),
                 traffic: traffic(is_verification).to_owned(),
+            })
+            .inc();
+    }
+
+    pub(crate) fn session_routed(&self, model: &str, outcome: &str) {
+        self.inner
+            .session_routes
+            .get_or_create(&SessionRouteLabels {
+                model: model.to_owned(),
+                outcome: outcome.to_owned(),
             })
             .inc();
     }

@@ -26,6 +26,7 @@ pub mod runtime;
 mod service_tier;
 mod serving_state;
 mod session_affinity;
+mod session_routing;
 mod session_telemetry;
 mod systemone;
 #[cfg(test)]

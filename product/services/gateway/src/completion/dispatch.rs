@@ -7,9 +7,10 @@ use std::{
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
-use super::{settlement::FailedGeneration, unless_panicked};
+use super::{route_lease::HeldRoute, settlement::FailedGeneration, unless_panicked};
 use crate::{
     metrics::{Capacity, CapacityMetrics, FallbackReason},
+    routing::RoutePlacement,
     ExternalCapacity, ExternalModel, ExternalRequest, GatewayError, GatewayModelDeployment,
     InferenceRequest, ModelRuntime, NormalizedUsage, PriceCap, Route, RuntimeCompletion,
     RuntimeEventStream, RuntimeFailure, RuntimeFailureKind,
@@ -23,6 +24,8 @@ const MAX_LOCAL_ATTEMPTS: u8 = 2;
 pub(super) struct CapacityPlan {
     pub(super) target: Target,
     pub(super) fallbacks: Vec<GatewayModelDeployment>,
+    /// Placement inputs for the local tier `target` and `fallbacks` came from.
+    pub(super) placement: Option<RoutePlacement>,
     pub(super) degraded: Option<LocalTier>,
     pub(super) external: Option<ExternalModel>,
     /// Why `target` is not the preferred local capacity.
@@ -38,24 +41,25 @@ pub(super) struct LocalTier {
 }
 
 impl LocalTier {
-    fn split(self) -> (Target, Vec<GatewayModelDeployment>) {
+    fn split(self) -> (Target, Vec<GatewayModelDeployment>, RoutePlacement) {
         let target = Target::Local {
             deployment: self.route.primary,
             served_release_digest: self.served_release_digest,
             adapter: self.adapter,
         };
 
-        (target, self.route.fallbacks)
+        (target, self.route.fallbacks, self.route.placement)
     }
 }
 
 impl CapacityPlan {
     pub(super) fn local(tier: LocalTier) -> Self {
-        let (target, fallbacks) = tier.split();
+        let (target, fallbacks, placement) = tier.split();
 
         Self {
             target,
             fallbacks,
+            placement: Some(placement),
             degraded: None,
             external: None,
             reason: None,
@@ -71,6 +75,7 @@ impl CapacityPlan {
         Self {
             target: Target::External(model),
             fallbacks: Vec::new(),
+            placement: None,
             degraded: None,
             external: None,
             reason: Some(reason),
@@ -145,6 +150,7 @@ pub(super) struct RuntimeCall {
     pub(super) deadline: DateTime<Utc>,
     pub(super) price_cap: PriceCap,
     pub(super) plan: CapacityPlan,
+    pub(super) route: Option<HeldRoute>,
     pub(super) local_attempts: u8,
     pub(super) attempts: u8,
     pub(super) capacity_metrics: CapacityMetrics,
@@ -191,12 +197,16 @@ impl CapacityPlan {
     fn move_to_next_tier(&mut self, local_attempt_left: bool) -> bool {
         let next = match self.degraded.take() {
             Some(tier) if local_attempt_left => {
-                let (target, fallbacks) = tier.split();
+                let (target, fallbacks, placement) = tier.split();
                 self.fallbacks = fallbacks;
+                self.placement = Some(placement);
                 target
             }
             _ => match self.external.take() {
-                Some(model) => Target::External(model),
+                Some(model) => {
+                    self.placement = None;
+                    Target::External(model)
+                }
                 None => return false,
             },
         };
@@ -204,6 +214,33 @@ impl CapacityPlan {
         self.target = next;
 
         true
+    }
+
+    pub(super) fn local_candidates(&self) -> Vec<Uuid> {
+        match &self.target {
+            Target::Local { deployment, .. } => std::iter::once(deployment.id)
+                .chain(self.fallbacks.iter().map(|fallback| fallback.id))
+                .collect(),
+            Target::External(_) => Vec::new(),
+        }
+    }
+
+    /// The old target becomes the first fallback.
+    pub(super) fn promote(&mut self, deployment_id: Uuid) {
+        let Target::Local { deployment, .. } = &mut self.target else {
+            return;
+        };
+        let Some(index) = self
+            .fallbacks
+            .iter()
+            .position(|fallback| fallback.id == deployment_id)
+        else {
+            return;
+        };
+
+        std::mem::swap(deployment, &mut self.fallbacks[index]);
+        let previous = self.fallbacks.remove(index);
+        self.fallbacks.insert(0, previous);
     }
 
     /// Metric labels of every capacity the generation may still move to.
@@ -281,6 +318,22 @@ impl RuntimeCall {
 
             if next.is_none() {
                 return Err(failure);
+            }
+            self.follow_route().await;
+        }
+    }
+
+    pub(super) async fn follow_route(&mut self) {
+        let Some(route) = self.route.as_mut() else {
+            return;
+        };
+
+        match (&self.plan.target, &self.plan.placement) {
+            (Target::Local { deployment, .. }, Some(placement)) => {
+                route.move_to(deployment.id, placement).await;
+            }
+            _ => {
+                self.route = None;
             }
         }
     }
@@ -466,6 +519,7 @@ impl RuntimeCall {
                     adapter: false,
                 },
                 fallbacks,
+                placement: None,
                 degraded: None,
                 external: None,
                 reason: None,
@@ -475,6 +529,7 @@ impl RuntimeCall {
                 prompt: 0,
                 completion: 0,
             },
+            route: None,
             local_attempts: 0,
             attempts: 0,
             capacity_metrics: crate::GatewayMetrics::new().capacity("model-a", false),

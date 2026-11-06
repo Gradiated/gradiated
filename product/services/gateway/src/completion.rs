@@ -1,4 +1,5 @@
 mod dispatch;
+mod route_lease;
 mod settlement;
 mod stream;
 mod tasks;
@@ -19,6 +20,7 @@ use uuid::Uuid;
 
 use self::{
     dispatch::{CapacityPlan, LocalTier, RuntimeCall, Target},
+    route_lease::HeldRoute,
     settlement::{
         Delivery, FailedGeneration, GenerationEnd, GenerationSettlement, GenerationTerminal,
     },
@@ -30,6 +32,7 @@ use crate::{
     metrics::{AdmittedGenerationMetrics, CapacityMetrics, FallbackReason, GenerationScope},
     protocol::StreamItem,
     routing::{order_deployments, RouteDiagnostics, RoutePrompt},
+    session_routing::{PlacementRequest, RouteLease},
     AdmissionLease, BoundedRequest, CancellationOwner, ExternalCapacity, GatewayConfig,
     GatewayError, GatewayMetrics, GenerationIdentity, InferenceRequest, ModelRuntime,
     ModelTokenizer, QualifiedRequest, Route, RouteAvailability, RouteInput, ServiceTier,
@@ -104,8 +107,9 @@ impl CompletionService {
         let streaming = qualified.request.stream;
         let service_tier = qualified.request.service_tier;
         let qualified = self.bound(qualified).await?;
-        let plan = self.plan(&qualified).await?;
-        let generation = self.admit(qualified, plan).await?;
+        let mut plan = self.plan(&qualified).await?;
+        let route = self.place(&qualified, &mut plan).await?;
+        let generation = self.admit(qualified, plan, route).await?;
 
         if streaming {
             let result = self.stream(active, generation).await?;
@@ -236,10 +240,65 @@ impl CompletionService {
         Ok(Err(unroutable))
     }
 
+    async fn place(
+        &self,
+        request: &QualifiedRequest,
+        plan: &mut CapacityPlan,
+    ) -> Result<Option<HeldRoute>, GatewayError> {
+        let Some(placement) = plan.placement.clone() else {
+            return Ok(None);
+        };
+        let candidates = plan.local_candidates();
+        if candidates.is_empty() {
+            return Ok(None);
+        }
+
+        let now = cmp::max(Utc::now(), request.metadata.received_at);
+        let lease_expires_at = AdmissionLease::new(
+            request.metadata.generation_id,
+            request.metadata.received_at,
+            now,
+            &self.config,
+        )?
+        .lease_expires_at();
+        let placed = self
+            .serving_state
+            .place_route(&PlacementRequest {
+                placement: &placement,
+                candidates: &candidates,
+                generation_id: request.metadata.generation_id,
+                now,
+                lease_expires_at,
+            })
+            .await
+            .map_err(|error| {
+                crate::diagnostics::limited_warn!(generation_id = %request.metadata.generation_id,
+                    model_id = %request.request.model, phase = "route_placement",
+                    error_code = error.diagnostic_code(), "routing dependency failed");
+                GatewayError::ServingStateUnavailable
+            })?;
+
+        plan.promote(placed.deployment_id);
+        self.metrics
+            .session_routed(metric_model(request), placed.outcome.as_str());
+
+        Ok(Some(HeldRoute::new(
+            self.serving_state.clone(),
+            RouteLease {
+                release_digest: placement.release_digest,
+                route_key: placement.route_key,
+                deployment_id: placed.deployment_id,
+                generation_id: request.metadata.generation_id,
+                expires_at: lease_expires_at,
+            },
+        )))
+    }
+
     async fn admit(
         &self,
         request: QualifiedRequest,
         plan: CapacityPlan,
+        route: Option<HeldRoute>,
     ) -> Result<Generation, GatewayError> {
         let generation_identity = GenerationIdentity::authenticated(
             &request.identity,
@@ -292,6 +351,7 @@ impl CompletionService {
         Ok(Generation {
             request,
             plan,
+            route,
             generation_identity,
             lease,
             serving_state: self.serving_state.clone(),
@@ -477,6 +537,7 @@ impl CompletionResult {
 struct Generation {
     request: QualifiedRequest,
     plan: CapacityPlan,
+    route: Option<HeldRoute>,
     generation_identity: GenerationIdentity,
     lease: AdmissionLease,
     serving_state: Arc<dyn ServingState>,
@@ -512,6 +573,7 @@ impl Generation {
             deadline: self.lease.request_deadline(),
             price_cap: pricing.price_cap(),
             plan: self.plan,
+            route: self.route,
             local_attempts: 0,
             attempts: 0,
             capacity_metrics: self.capacity,
@@ -646,6 +708,7 @@ impl Generation {
             }
 
             drop(runtime_stream);
+            call.follow_route().await;
             attempt_started = Instant::now();
             let reopened = tokio::select! {
                 result = call.stream() => result,

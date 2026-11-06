@@ -22,6 +22,14 @@ pub enum RoutePrompt<'a> {
 pub struct Route {
     pub primary: GatewayModelDeployment,
     pub fallbacks: Vec<GatewayModelDeployment>,
+    pub(crate) placement: RoutePlacement,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RoutePlacement {
+    pub(crate) release_digest: String,
+    pub(crate) route_key: [u8; 32],
+    pub(crate) limits: HashMap<Uuid, Option<u32>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -228,6 +236,10 @@ pub fn order_deployments(input: RouteInput<'_>) -> RouteAvailability {
             (weighted_score(&hash, weight), hash, *deployment)
         })
         .collect();
+    let limits = accepting
+        .iter()
+        .map(|(deployment, status)| (deployment.id, status.active_requests))
+        .collect();
     ranked.sort_by(|left, right| {
         right
             .0
@@ -245,6 +257,11 @@ pub fn order_deployments(input: RouteInput<'_>) -> RouteAvailability {
     RouteAvailability::Ready(Route {
         primary,
         fallbacks: ordered.collect(),
+        placement: RoutePlacement {
+            release_digest: release_digest.to_owned(),
+            route_key,
+            limits,
+        },
     })
 }
 

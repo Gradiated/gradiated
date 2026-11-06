@@ -317,11 +317,12 @@ class RenderTests(unittest.TestCase):
         renderer.validate_active_requests(models, runtimes, profiles)
         h200 = models['glm-dealign-sglang-h200']['runtime']
         b300 = models['glm-dealign-sglang']['runtime']
-        self.assertEqual((runtimes[b300]['active_requests'], runtimes[h200]['active_requests']), (16, 4))
+        self.assertEqual((runtimes[b300]['active_requests'], runtimes[h200]['active_requests']), (12, 3))
 
         for runtime, change, message in [
-                (h200, 16, 'equal its launcher profile, 4'),
-                (b300, None, 'equal its launcher profile, 16'),
+                (h200, 4, 'equal its launcher profile, 3'),
+                (b300, 16, 'equal its launcher profile, 12'),
+                (b300, None, 'equal its launcher profile, 12'),
                 (b300, 0, 'integer from 1 to 4096'),
                 (b300, '16', 'integer from 1 to 4096'),
                 (b300, True, 'integer from 1 to 4096')]:
@@ -332,16 +333,6 @@ class RenderTests(unittest.TestCase):
                 changed[runtime]['active_requests'] = change
             with self.subTest(change=change), self.assertRaisesRegex(ValueError, message):
                 renderer.validate_active_requests(models, changed, profiles)
-
-        # A rebuilt bundle must declare the launcher's current limit, not its predecessor's.
-        rebuilt = copy.deepcopy(runtimes)
-        rebuilt['rebuilt-b300'] = runtimes[b300]
-        repinned = copy.deepcopy(models)
-        repinned['glm-dealign-sglang']['runtime'] = 'rebuilt-b300'
-        with self.assertRaisesRegex(ValueError, 'equal its launcher profile, 12'):
-            renderer.validate_active_requests(repinned, rebuilt, profiles)
-        rebuilt['rebuilt-b300'] = {**runtimes[b300], 'active_requests': 12}
-        renderer.validate_active_requests(repinned, rebuilt, profiles)
 
         # Without an explicit profile, the GPU the model is placed on selects it.
         changed = copy.deepcopy(runtimes)
@@ -530,15 +521,17 @@ class RenderTests(unittest.TestCase):
                 renderer.disruption_budget('glm-dealign', {**model, 'autoscaling': {
                     **model['autoscaling'], 'paused_replicas': invalid}})
 
-    def test_b300_sglang_pool_reuses_the_verified_bundle_with_a_compact_memory_request(self):
+    def test_b300_sglang_pool_keeps_its_compact_memory_request_on_the_rebuilt_bundle(self):
         models = json.loads((renderer.GPU / 'models.json').read_text())
         runtimes = json.loads(renderer.RUNTIMES.read_text())
         pool = models['glm-dealign-sglang']
         self.assertNotIn('glm-dealign-sglang-sixth', models)
         compact = runtimes[pool['runtime']]
         verified = runtimes['e03fa7dd3c69f312122fffadff3a468aa9a447ab809eb6074ecfa662dc390122']
-        self.assertEqual(compact['bundles'], verified['bundles'])
-        self.assertEqual(compact['release'], verified['release'])
+        # The rebuilt bundle serves the same model revision with the same launch environment.
+        self.assertNotEqual(compact['bundles'], verified['bundles'])
+        self.assertEqual({k: v for k, v in compact['release'].items() if k != 'runtime_revision'},
+                         {k: v for k, v in verified['release'].items() if k != 'runtime_revision'})
         self.assertEqual(compact['environment'], verified['environment'])
         rollout = renderer.rollout('glm-dealign-sglang', pool, runtimes)
         self.assertEqual(rollout['spec']['replicas'], 5)

@@ -10,24 +10,11 @@ import { queryKeys } from "@/lib/query-keys";
 import type { LoginSearch } from "@/lib/login-search";
 import { announceSessionChange } from "@/lib/session-sync";
 import { endSession } from "@/lib/session";
-import {
-  clearEngineerPreview,
-  engineerPreviewLoginPath,
-  getEngineerPreviewUser,
-  isEngineerPreview,
-} from "@/lib/engineer-preview";
 
 export type SignOutResult = "signed-out" | "failed";
 
 export const useCurrentUser = () =>
-  useQuery({
-    queryKey: isEngineerPreview()
-      ? [...queryKeys.me, "engineer-preview"]
-      : queryKeys.me,
-    queryFn: isEngineerPreview()
-      ? () => Promise.resolve(getEngineerPreviewUser())
-      : getCurrentUser,
-  });
+  useQuery({ queryKey: queryKeys.me, queryFn: getCurrentUser });
 
 export const useSession = () => {
   const queryClient = useQueryClient();
@@ -35,16 +22,10 @@ export const useSession = () => {
   const me = useCurrentUser();
 
   useEffect(() => {
-    if (me.data && !isEngineerPreview()) identifyUser(me.data);
+    if (me.data) identifyUser(me.data);
   }, [me.data]);
 
   const signOut = async (search?: LoginSearch): Promise<SignOutResult> => {
-    if (isEngineerPreview()) {
-      clearEngineerPreview();
-      window.location.assign(engineerPreviewLoginPath);
-      return "signed-out";
-    }
-
     if (me.data) analytics.track("sign_out_clicked", { user_id: me.data.id });
 
     const failureStatus = await authClient.signOut().then(

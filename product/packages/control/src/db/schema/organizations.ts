@@ -22,6 +22,7 @@ import {
   type EvaluationJudge,
   type ModelDeploymentRelease,
   type ModelProperties,
+  type OrganizationMetadata,
 } from "@gradiated/contracts";
 
 import { users } from "./auth.js";
@@ -86,6 +87,10 @@ export const organizations = pgTable(
       withTimezone: true,
       mode: "date",
     }),
+    metadata: jsonb("metadata")
+      .$type<OrganizationMetadata>()
+      .default({ schema_version: 1 })
+      .notNull(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
       .defaultNow()
       .notNull(),

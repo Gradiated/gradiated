@@ -1,5 +1,6 @@
 import { z } from "@hono/zod-openapi";
 import { ApiProblem, problems } from "../http/problems.js";
+import { serviceLog } from "../logging.js";
 
 export const SlackChannelNameSchema = z
   .string()
@@ -29,11 +30,21 @@ export const SlackInvitationSchema = z
 
 const channelSchema = z.object({
   id: z.string().regex(/^[CG][A-Z0-9]+$/),
-  name: z.string(),
+  name: z.string().min(1).max(80),
   is_archived: z.boolean().optional(),
   is_private: z.boolean().optional(),
-  purpose: z.object({ value: z.string() }).optional(),
 });
+
+const SlackResponseSchema = z
+  .object({ ok: z.boolean(), error: z.string().optional() })
+  .passthrough();
+
+const EXPECTED_SLACK_ERRORS = new Set([
+  "already_in_channel",
+  "channel_not_found",
+  "name_taken",
+]);
+const READ_METHODS = new Set(["conversations.info"]);
 
 export const slackChannelName = (company: string) => {
   const slug =
@@ -54,40 +65,66 @@ export const createSlackConnect = (
   request: typeof fetch = fetch,
 ) => {
   const call = async (method: string, body: Record<string, unknown>) => {
-    try {
-      const listing = method === "conversations.list";
-      const query = listing
-        ? "?" +
-          new URLSearchParams(
-            Object.entries(body).map(([key, value]) => [key, String(value)]),
-          )
-        : "";
-      const response = await request(
-        `https://slack.com/api/${method}${query}`,
-        {
-          method: listing ? "GET" : "POST",
-          headers: {
-            Authorization: `Bearer ${configuration.token}`,
-            "Content-Type": "application/json; charset=utf-8",
-          },
-          ...(listing ? {} : { body: JSON.stringify(body) }),
-          redirect: "error",
-          signal: AbortSignal.timeout(15_000),
-        },
-      );
-      if (!response.ok) throw new Error("Slack unavailable");
-
-      return z
-        .object({ ok: z.boolean(), error: z.string().optional() })
-        .passthrough()
-        .parse(await response.json());
-    } catch {
-      throw new ApiProblem(
+    const warn = (reason: string, status?: number) =>
+      serviceLog("warn", "provider_request_failed", {
+        dependency: "slack",
+        route: method,
+        reason,
+        ...(status === undefined ? {} : { status }),
+      });
+    const unavailable = () =>
+      new ApiProblem(
         problems.unavailable(
           "Could not confirm the Slack request. Try again shortly; no automatic retry was sent.",
         ),
       );
+
+    const reading = READ_METHODS.has(method);
+    const query = reading
+      ? "?" +
+        new URLSearchParams(
+          Object.entries(body).map(([key, value]) => [key, String(value)]),
+        )
+      : "";
+    let response: Response;
+    try {
+      response = await request(`https://slack.com/api/${method}${query}`, {
+        method: reading ? "GET" : "POST",
+        headers: {
+          Authorization: `Bearer ${configuration.token}`,
+          "Content-Type": "application/json; charset=utf-8",
+        },
+        ...(reading ? {} : { body: JSON.stringify(body) }),
+        redirect: "error",
+        signal: AbortSignal.timeout(15_000),
+      });
+    } catch (error) {
+      warn(
+        error instanceof Error && error.name === "TimeoutError"
+          ? "timeout"
+          : "network",
+      );
+      throw unavailable();
     }
+
+    if (!response.ok) {
+      warn("http_error", response.status);
+      throw unavailable();
+    }
+
+    const parsed = SlackResponseSchema.safeParse(
+      await response.json().catch(() => undefined),
+    );
+    if (!parsed.success) {
+      warn("invalid_response", response.status);
+      throw unavailable();
+    }
+
+    const { error } = parsed.data;
+    if (!parsed.data.ok && !EXPECTED_SLACK_ERRORS.has(error ?? ""))
+      warn(error && /^[a-z0-9_]{1,64}$/.test(error) ? error : "unknown_error");
+
+    return parsed.data;
   };
   const requireSuccess = (response: {
     ok: boolean;
@@ -116,61 +153,79 @@ export const createSlackConnect = (
     );
   };
 
-  const findOwnedChannel = async (organizationId: string, name: string) => {
-    const purpose = `Gradiated customer organization: ${organizationId}`;
-    let cursor = "";
-    let found: z.infer<typeof channelSchema> | undefined;
-    for (let page = 0; page < 50; page++) {
-      const listed = await call("conversations.list", {
-        types: "public_channel",
-        exclude_archived: true,
-        limit: 200,
-        ...(cursor ? { cursor } : {}),
-      });
-      requireSuccess(listed);
-      const result = z
-        .object({
-          channels: z.array(channelSchema),
-          response_metadata: z
-            .object({ next_cursor: z.string().optional() })
-            .optional(),
-        })
-        .parse(listed);
-      found = result.channels.find(
-        (item) =>
-          item.name === name &&
-          !item.is_archived &&
-          !item.is_private &&
-          item.purpose?.value === purpose,
-      );
-      if (found) break;
-
-      cursor = result.response_metadata?.next_cursor ?? "";
-      if (!cursor) break;
-    }
-    return found;
-  };
-
   return {
+    async findChannel(channelId: string) {
+      const result = await call("conversations.info", { channel: channelId });
+      if (!result.ok && result.error === "channel_not_found") return undefined;
+
+      requireSuccess(result);
+      const channel = channelSchema.parse(result.channel);
+
+      return channel.is_archived || channel.is_private ? undefined : channel;
+    },
+
+    async createChannel(name: string) {
+      const created = await call("conversations.create", {
+        name: SlackChannelNameSchema.parse(name),
+        is_private: false,
+      });
+      if (!created.ok && created.error === "name_taken")
+        return { status: "name_taken" as const };
+
+      requireSuccess(created);
+      const channel = channelSchema.parse(created.channel);
+      if (channel.is_private)
+        throw new ApiProblem(
+          problems.conflict(
+            "Slack returned a private channel. Gradiated needs to check it before inviting anyone.",
+          ),
+        );
+
+      return { status: "created" as const, channel };
+    },
+
+    async labelChannel(channelId: string, organizationId: string) {
+      await call("conversations.setPurpose", {
+        channel: channelId,
+        purpose: `Gradiated customer organization: ${organizationId}`,
+      }).catch(() => undefined);
+    },
+
+    async inviteMembers(channelId: string, email: string) {
+      for (const user of configuration.engineerUserIds) {
+        const added = await call("conversations.invite", {
+          channel: channelId,
+          users: user,
+        });
+        if (added.error !== "already_in_channel") requireSuccess(added);
+      }
+
+      const invitation = await call("conversations.inviteShared", {
+        channel: channelId,
+        emails: [email],
+        external_limited: true,
+      });
+      const joined = invitation.error === "already_in_channel";
+      if (!joined) requireSuccess(invitation);
+      if (!joined && typeof invitation.invite_id !== "string")
+        throw new ApiProblem(
+          problems.unavailable(
+            "Slack did not confirm an invitation. Check before sending another.",
+          ),
+        );
+
+      return joined ? ("joined" as const) : ("invited" as const);
+    },
+
     async postNotes(input: {
-      organizationId: string;
-      channelName: string;
+      channelId: string;
       email: string;
       notes: string;
       requestId: string;
     }) {
-      const name = SlackChannelNameSchema.parse(input.channelName);
       const notes = z.string().trim().min(1).max(3000).parse(input.notes);
-      const channel = await findOwnedChannel(input.organizationId, name);
-      if (!channel)
-        throw new ApiProblem(
-          problems.forbidden(
-            "Could not verify this organization's Slack channel. Your notes have not been sent.",
-          ),
-        );
-
       const result = await call("chat.postMessage", {
-        channel: channel.id,
+        channel: input.channelId,
         client_msg_id: z.uuid().parse(input.requestId),
         blocks: [
           {
@@ -185,95 +240,12 @@ export const createSlackConnect = (
         unfurl_links: false,
         unfurl_media: false,
       });
-      if (!result.ok && result.error === "missing_scope")
-        throw new ApiProblem(
-          problems.unavailable(
-            "Gradiated needs to enable Slack message permissions before your notes can be sent. Your note is still saved here.",
-          ),
-        );
       if (!result.ok || typeof result.ts !== "string")
         throw new ApiProblem(
-          problems.unavailable(
-            "Slack did not confirm your notes. Check the channel before retrying; the message may have been sent.",
-          ),
+          problems.unavailable("Slack did not confirm the onboarding notes."),
         );
 
       return { status: "sent" as const };
-    },
-    async invite(input: {
-      organizationId: string;
-      company: string;
-      email: string;
-      channelName?: string;
-    }) {
-      const name =
-        input.channelName === undefined
-          ? slackChannelName(input.company)
-          : SlackChannelNameSchema.parse(input.channelName);
-      const purpose = `Gradiated customer organization: ${input.organizationId}`;
-      const created = await call("conversations.create", {
-        name,
-        is_private: false,
-      });
-      let channel: z.infer<typeof channelSchema>;
-
-      if (created.ok) {
-        channel = channelSchema.parse(created.channel);
-        if (channel.is_private)
-          throw new ApiProblem(
-            problems.conflict(
-              "Slack returned a private channel. Gradiated needs to check it before inviting anyone.",
-            ),
-          );
-        requireSuccess(
-          await call("conversations.setPurpose", {
-            channel: channel.id,
-            purpose,
-          }),
-        );
-      } else if (created.error === "name_taken") {
-        const found = await findOwnedChannel(input.organizationId, name);
-        if (!found)
-          throw new ApiProblem(
-            problems.conflict(
-              "That Slack channel name is already in use. Choose a different name.",
-            ),
-          );
-
-        channel = found;
-      } else {
-        requireSuccess(created);
-        throw new Error("Unreachable");
-      }
-
-      for (const user of configuration.engineerUserIds) {
-        const added = await call("conversations.invite", {
-          channel: channel.id,
-          users: user,
-        });
-        if (added.error !== "already_in_channel") requireSuccess(added);
-      }
-
-      const invitation = await call("conversations.inviteShared", {
-        channel: channel.id,
-        emails: [input.email],
-        external_limited: true,
-      });
-      const joined = invitation.error === "already_in_channel";
-      if (!joined) requireSuccess(invitation);
-      if (!joined && typeof invitation.invite_id !== "string")
-        throw new ApiProblem(
-          problems.unavailable(
-            "Slack did not confirm an invitation. Check before sending another.",
-          ),
-        );
-
-      return SlackInvitationSchema.parse({
-        channel_id: channel.id,
-        channel_name: channel.name,
-        email: input.email,
-        status: joined ? "joined" : "invited",
-      });
     },
   };
 };

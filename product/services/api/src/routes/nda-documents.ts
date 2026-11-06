@@ -1,10 +1,15 @@
 import { problemContent } from "@gradiated/contracts";
-import type { OrganizationService } from "@gradiated/control";
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi";
 import { consoleOnly } from "../http/audience.js";
-import { ApiProblem, problems, requireUser } from "../http/problems.js";
+import {
+  recordCompletedNda,
+  requireOnboardingAdmin,
+  type OnboardingOrganizations,
+} from "../http/onboarding-access.js";
+import { ApiProblem, problems } from "../http/problems.js";
 import {
   NdaDetailsSchema,
+  NdaDocumentIdSchema,
   NdaDocumentSchema,
   type PandaDocNda,
 } from "../legal/pandadoc.js";
@@ -16,10 +21,7 @@ const params = z.object({
     .describe("The organization whose admin is signing the NDA."),
 });
 const documentParams = params.extend({
-  document_id: z
-    .string()
-    .regex(/^[a-zA-Z0-9_-]{1,100}$/)
-    .describe("The NDA's PandaDoc document ID."),
+  document_id: NdaDocumentIdSchema.describe("The NDA's PandaDoc document ID."),
 });
 const errors = {
   401: {
@@ -54,7 +56,7 @@ const create = createRoute({
   tags: ["NDA documents"],
   summary: "Prepare a mutual NDA",
   description:
-    "Creates an NDA from the approved PandaDoc template for the signed-in signer. No email is sent.",
+    "Creates a draft NDA from the approved PandaDoc template for the signed-in signer. Nothing is sent until signing opens.",
   request: {
     params,
     body: {
@@ -78,7 +80,7 @@ const read = createRoute({
   tags: ["NDA documents"],
   summary: "Verify mutual NDA status",
   description:
-    "Reads the authoritative PandaDoc status, bound to the current signer, organization and template version. Completed means all required signers finished.",
+    "Reads the authoritative PandaDoc status, bound to the current signer, organization and template version. Completed means all required signers finished, and records the organization's NDA for later onboarding steps.",
   request: { params: documentParams },
   responses: {
     200: {
@@ -96,7 +98,7 @@ const session = createRoute({
   tags: ["NDA documents"],
   summary: "Open embedded NDA signing",
   description:
-    "Silently sends a ready draft and creates a 15-minute signing session only for the verified signed-in signer. No signing email is sent.",
+    "Sends a ready draft through PandaDoc, which emails the signer a copy of the document, then creates a 15-minute embedded signing session only for the verified signed-in signer.",
   request: { params: documentParams },
   responses: {
     201: {
@@ -115,34 +117,18 @@ const session = createRoute({
 
 export const registerNdaDocumentRoutes = (
   app: OpenAPIHono<ApiEnvironment>,
-  organizations: Pick<OrganizationService, "listForUser">,
+  organizations: OnboardingOrganizations,
   provider?: PandaDocNda,
 ) => {
   const authorize = async (
-    context: Parameters<typeof requireUser>[0],
+    context: Parameters<typeof requireOnboardingAdmin>[0],
     organizationId: string,
   ) => {
-    const user = await requireUser(context);
-    if ("impersonatedBy" in user && user.impersonatedBy)
-      throw new ApiProblem(
-        problems.forbidden("Leave impersonation before accessing NDA signing."),
-      );
-
-    const memberships = await organizations.listForUser(user.id);
-
-    if (
-      !user.emailVerified ||
-      !memberships.some(
-        (row) =>
-          row.id === organizationId &&
-          row.status === "active" &&
-          row.role === "admin",
-      )
-    )
-      throw new ApiProblem(
-        problems.forbidden("A verified organization admin must sign the NDA."),
-      );
-
+    const { owner } = await requireOnboardingAdmin(
+      context,
+      organizations,
+      organizationId,
+    );
     if (!provider)
       throw new ApiProblem(
         problems.unavailable(
@@ -150,33 +136,35 @@ export const registerNdaDocumentRoutes = (
         ),
       );
 
-    return { userId: user.id, email: user.email, organizationId };
+    return { owner, provider };
   };
 
   app.openapi(create, async (context) => {
     context.header("Cache-Control", "no-store");
-    const owner = await authorize(
+    const { owner, provider } = await authorize(
       context,
       context.req.valid("param").organization_id,
     );
 
     return context.json(
-      await provider!.create(owner, context.req.valid("json")),
+      await provider.create(owner, context.req.valid("json")),
       201,
     );
   });
   app.openapi(read, async (context) => {
     context.header("Cache-Control", "no-store");
     const { organization_id, document_id } = context.req.valid("param");
-    const owner = await authorize(context, organization_id);
+    const { owner, provider } = await authorize(context, organization_id);
+    const document = await provider.read(owner, document_id);
+    await recordCompletedNda(organizations, provider, owner, document);
 
-    return context.json(await provider!.read(owner, document_id), 200);
+    return context.json(document, 200);
   });
   app.openapi(session, async (context) => {
     context.header("Cache-Control", "no-store");
     const { organization_id, document_id } = context.req.valid("param");
-    const owner = await authorize(context, organization_id);
+    const { owner, provider } = await authorize(context, organization_id);
 
-    return context.json(await provider!.session(owner, document_id), 201);
+    return context.json(await provider.session(owner, document_id), 201);
   });
 };

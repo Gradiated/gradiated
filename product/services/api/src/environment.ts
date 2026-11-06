@@ -8,6 +8,10 @@ const OptionalPandaDocSetting = z.preprocess(
 );
 
 const ApiOnlyEnvironmentSchema = z.object({
+  ENGINEER_ONBOARDING_NOTIFY_EMAIL: z.preprocess(
+    (value) => (typeof value === "string" && !value.trim() ? undefined : value),
+    z.string().trim().toLowerCase().pipe(z.email()).optional(),
+  ),
   GITHUB_INSTALLATIONS_ENABLED: z.enum(["true", "false"]).default("false"),
   SLACK_CONNECT_ENABLED: z.enum(["true", "false"]).default("false"),
   SLACK_BOT_TOKEN: OptionalPandaDocSetting,
@@ -30,6 +34,17 @@ const ApiOnlyEnvironmentSchema = z.object({
   PANDADOC_NDA_TEMPLATE_VERSION: OptionalPandaDocSetting,
   PANDADOC_NDA_DATE_FIELD: OptionalPandaDocSetting,
   PANDADOC_NDA_ENABLED: z.enum(["true", "false"]).default("false"),
+  PANDADOC_NDA_COUNTERSIGNER_COMPANY: z
+    .string()
+    .trim()
+    .min(1)
+    .default("PostHog Inc."),
+  PANDADOC_NDA_COUNTERSIGNER_NAME: z
+    .string()
+    .trim()
+    .min(1)
+    .default("James Hawkins"),
+  PANDADOC_NDA_COUNTERSIGNER_TITLE: z.string().trim().min(1).default("Co-CEO"),
   POSTHOG_KEY: z
     .string()
     .optional()

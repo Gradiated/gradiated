@@ -303,7 +303,7 @@ export interface paths {
     put?: never;
     /**
      * Prepare a mutual NDA
-     * @description Creates an NDA from the approved PandaDoc template for the signed-in signer. No email is sent.
+     * @description Creates a draft NDA from the approved PandaDoc template for the signed-in signer. Nothing is sent until signing opens.
      */
     post: operations["createNdaDocument"];
     delete?: never;
@@ -321,7 +321,7 @@ export interface paths {
     };
     /**
      * Verify mutual NDA status
-     * @description Reads the authoritative PandaDoc status, bound to the current signer, organization and template version. Completed means all required signers finished.
+     * @description Reads the authoritative PandaDoc status, bound to the current signer, organization and template version. Completed means all required signers finished, and records the organization's NDA for later onboarding steps.
      */
     get: operations["getNdaDocument"];
     put?: never;
@@ -343,7 +343,7 @@ export interface paths {
     put?: never;
     /**
      * Open embedded NDA signing
-     * @description Silently sends a ready draft and creates a 15-minute signing session only for the verified signed-in signer. No signing email is sent.
+     * @description Sends a ready draft through PandaDoc, which emails the signer a copy of the document, then creates a 15-minute embedded signing session only for the verified signed-in signer.
      */
     post: operations["createNdaSigningSession"];
     delete?: never;
@@ -361,28 +361,11 @@ export interface paths {
     };
     /**
      * Verify the customer's Gradiated GitHub App installation
-     * @description Uses the signed-in customer's linked GitHub App user authorization to check active installations, Contents access and accessible repositories. Requires a completed NDA and organization admin membership. Callback IDs and browser state are never proof of installation.
+     * @description Uses the signed-in customer's linked GitHub App user authorization to check active installations, Contents access and accessible repositories. Requires a recorded NDA and organization admin membership. Callback IDs and browser state are never proof of installation.
      */
     get: operations["getGithubInstallations"];
     put?: never;
     post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/v1/organizations/{organization_id}/slack-messages": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Send the signed-in user's onboarding notes to their organization's Slack channel */
-    post: operations["createSlackOnboardingMessage"];
     delete?: never;
     options?: never;
     head?: never;
@@ -399,10 +382,47 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Invite the customer's chosen email to a dedicated Slack Connect channel
-     * @description Requires an active verified organization admin and completed NDA. Creates or reuses the public customer channel, adds Gradiated engineers, and emails a Slack Connect invitation to the chosen recipient. The Slack email may differ from the NDA signer. Customer acceptance and workspace approval may still be required.
+     * Invite the customer's chosen email to the organization's Slack Connect channel
+     * @description Requires an active verified organization admin and a recorded NDA. Each organization has one channel: the first request creates it, and later requests re-invite into the stored channel and ignore channel_name. The Slack email may differ from the NDA signer. One invitation is sent per organization every 10 minutes. Customer acceptance and workspace approval may still be required.
      */
     post: operations["createSlackInvitation"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/organizations/{organization_id}/engineer-onboarding": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Read the organization's engineer onboarding progress */
+    get: operations["getEngineerOnboarding"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/organizations/{organization_id}/engineer-onboarding/submission": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Start the organization's engineering project
+     * @description Requires a recorded NDA and rechecks the GitHub installation. Records the submission once per organization, posts nonempty notes to the organization's Slack channel when contact_channel is slack, and notifies Gradiated. A repeated submission returns the existing state with 200 and sends nothing.
+     */
+    post: operations["submitEngineerOnboarding"];
     delete?: never;
     options?: never;
     head?: never;
@@ -1677,9 +1697,15 @@ export interface components {
        */
       status: "preparing" | "ready" | "completed" | "unavailable";
       details: components["schemas"]["NdaDetails"];
+      /**
+       * Format: date-time
+       * @description When PandaDoc recorded every required signature.
+       */
+      completed_at: string | null;
       /** @description Whether the customer recipient has finished; this alone does not complete a two-party NDA. */
       customer_completed: boolean;
     };
+    /** @description The signer details bound to the document; null while PandaDoc is still preparing it. */
     NdaDetails: {
       /** @description The counterparty's legal company name. */
       company: string;
@@ -1694,7 +1720,7 @@ export interface components {
        * @description The signer email, which must match the authenticated verified account.
        */
       email: string;
-    };
+    } | null;
     NdaSigningSession: {
       session_id: string;
     };
@@ -1711,6 +1737,11 @@ export interface components {
       id: number;
       /** @description The GitHub account where the customer installed Gradiated. */
       account: string;
+      /**
+       * @description Whether the installation covers all or selected repositories.
+       * @enum {string}
+       */
+      repository_selection: "all" | "selected";
       /** @description Repositories accessible to both this GitHub user and the app installation. */
       repository_count: number;
     };
@@ -1729,6 +1760,66 @@ export interface components {
        * @enum {string}
        */
       status: "invited" | "joined";
+    };
+    EngineerOnboarding: {
+      /** @description The organization's completed NDA, once PandaDoc confirms it. */
+      nda: {
+        /** @description The completed PandaDoc document. */
+        document_id: string;
+        /**
+         * Format: date-time
+         * @example 2026-08-16T12:00:00.000Z
+         */
+        signed_at: string;
+      } | null;
+      /** @description The organization's Slack Connect channel. */
+      slack: {
+        channel_id: string;
+        channel_name: string;
+        /**
+         * @description Active once Slack confirmed an invitation.
+         * @enum {string}
+         */
+        status: "pending" | "active";
+        /** Format: email */
+        invited_email: string | null;
+        /**
+         * Format: date-time
+         * @example 2026-08-16T12:00:00.000Z
+         */
+        invited_at: string | null;
+      } | null;
+      /** @description GitHub App installations recorded at submission. */
+      github_installations: {
+        id: number;
+        account: string;
+        /** @enum {string} */
+        repository_selection: "all" | "selected";
+      }[];
+      /**
+       * @description How the customer prefers Gradiated engineers to contact them.
+       * @enum {string|null}
+       */
+      contact_channel: "slack" | "email" | null;
+      /**
+       * Format: date-time
+       * @description When the organization started its project; null until submitted.
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      submitted_at: string | null;
+    };
+    EngineerOnboardingSubmission: {
+      /**
+       * @description How the customer prefers Gradiated engineers to contact them.
+       * @enum {string}
+       */
+      contact_channel: "slack" | "email";
+      /** @description The installation to verify with GitHub before submitting. */
+      github_installation_id: number;
+      /** @description Optional context for Gradiated engineers. Delivered with the submission and not stored. */
+      notes?: string;
+      /** @description A completed NDA for this organization and signed-in user. Needed only until the organization's NDA is recorded. */
+      nda_document_id?: string;
     };
     MemberList: {
       data: components["schemas"]["Member"][];
@@ -4315,9 +4406,9 @@ export interface operations {
   };
   getGithubInstallations: {
     parameters: {
-      query: {
-        /** @description The completed NDA bound to this user and organization. */
-        nda_document_id: string;
+      query?: {
+        /** @description A completed NDA for this organization and signed-in user. Needed only until the organization's NDA is recorded. */
+        nda_document_id?: string;
         /** @description An installation to recheck; never trusted without GitHub verification. */
         installation_id?: number;
       };
@@ -4386,93 +4477,6 @@ export interface operations {
       };
     };
   };
-  createSlackOnboardingMessage: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description The customer organization. */
-        organization_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": {
-          /** @description The completed NDA belonging to this user and organization. */
-          nda_document_id: string;
-          /** @description A customer channel name such as ext-example-team-gradiated. */
-          channel_name: string;
-          /** @description The notes entered by the user during onboarding. */
-          notes: string;
-          /**
-           * Format: uuid
-           * @description Stable message identifier reused for a manual retry of these notes.
-           */
-          request_id: string;
-        };
-      };
-    };
-    responses: {
-      /** @description Slack confirmed the message. */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": {
-            /** @enum {string} */
-            status: "sent";
-          };
-        };
-      };
-      /** @description Notes could not be sent or the request is unauthorized. */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": components["schemas"]["Problem"];
-        };
-      };
-      /** @description Notes could not be sent or the request is unauthorized. */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": components["schemas"]["Problem"];
-        };
-      };
-      /** @description Notes could not be sent or the request is unauthorized. */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": components["schemas"]["Problem"];
-        };
-      };
-      /** @description Notes could not be sent or the request is unauthorized. */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": components["schemas"]["Problem"];
-        };
-      };
-      /** @description Notes could not be sent or the request is unauthorized. */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": components["schemas"]["Problem"];
-        };
-      };
-    };
-  };
   createSlackInvitation: {
     parameters: {
       query?: never;
@@ -4486,15 +4490,15 @@ export interface operations {
     requestBody: {
       content: {
         "application/json": {
-          /** @description A customer channel name such as ext-example-team-gradiated. */
+          /** @description A name for a new channel; ignored once the organization has one. */
           channel_name?: string;
           /**
            * Format: email
            * @description The Slack invitation recipient; defaults to the signed-in account email, independently of the NDA signer.
            */
           email?: string;
-          /** @description The completed NDA for this organization and signed-in user. */
-          nda_document_id: string;
+          /** @description A completed NDA for this organization and signed-in user. Needed only until the organization's NDA is recorded. */
+          nda_document_id?: string;
         };
       };
     };
@@ -4508,7 +4512,7 @@ export interface operations {
           "application/json": components["schemas"]["SlackInvitation"];
         };
       };
-      /** @description The request is unauthorized, incomplete, invalid, or unavailable. */
+      /** @description A signed-in user is required. */
       401: {
         headers: {
           [name: string]: unknown;
@@ -4517,7 +4521,7 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
-      /** @description The request is unauthorized, incomplete, invalid, or unavailable. */
+      /** @description A verified organization admin is required. */
       403: {
         headers: {
           [name: string]: unknown;
@@ -4526,7 +4530,7 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
-      /** @description The request is unauthorized, incomplete, invalid, or unavailable. */
+      /** @description nda_required: the NDA is not recorded. slack_channel_name_taken: a new channel name is already in use. */
       409: {
         headers: {
           [name: string]: unknown;
@@ -4535,7 +4539,7 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
-      /** @description The request is unauthorized, incomplete, invalid, or unavailable. */
+      /** @description Invalid request. */
       422: {
         headers: {
           [name: string]: unknown;
@@ -4544,7 +4548,147 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
-      /** @description The request is unauthorized, incomplete, invalid, or unavailable. */
+      /** @description slack_invitation_cooldown: this organization was invited recently; see Retry-After. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Slack is not configured or did not confirm the request. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  getEngineerOnboarding: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description The customer organization. */
+        organization_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The recorded onboarding state. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["EngineerOnboarding"];
+        };
+      };
+      /** @description A signed-in user is required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description A verified organization admin is required. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description A provider is not configured or unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  submitEngineerOnboarding: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description The customer organization. */
+        organization_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["EngineerOnboardingSubmission"];
+      };
+    };
+    responses: {
+      /** @description The organization had already submitted. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["EngineerOnboarding"];
+        };
+      };
+      /** @description The submission was recorded. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["EngineerOnboarding"];
+        };
+      };
+      /** @description A signed-in user is required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description A verified organization admin is required. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description nda_required, github_authorization_required, github_installation_unverified or slack_channel_required; conflict when the installation belongs to another organization. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid submission. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description A provider is not configured or unavailable. */
       503: {
         headers: {
           [name: string]: unknown;

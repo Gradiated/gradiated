@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { readGithubAccessToken } from "../src/auth/service.js";
 import { createGithubInstallations } from "../src/github/installations.js";
 import {
   authenticated,
@@ -7,13 +8,18 @@ import {
   organizationSummary,
   user,
 } from "./support.js";
-import type { PandaDocNda } from "../src/legal/pandadoc.js";
+import {
+  ndaProvider,
+  onboardingOrganizations,
+  recordedNda,
+} from "./onboarding-support.js";
 
 const installation = {
   id: 42,
   app_slug: "gradiated",
   account: { login: "example" },
   suspended_at: null,
+  repository_selection: "selected",
   permissions: { contents: "read" },
 };
 const json = (body: unknown) => new Response(JSON.stringify(body));
@@ -30,7 +36,14 @@ describe("GitHub installation verification", () => {
       await createGithubInstallations(request).list("secret-user-token"),
     ).toEqual({
       status: "installed",
-      installations: [{ id: 42, account: "example", repository_count: 3 }],
+      installations: [
+        {
+          id: 42,
+          account: "example",
+          repository_selection: "selected",
+          repository_count: 3,
+        },
+      ],
     });
     expect(String(request.mock.calls[1]?.[0])).toContain(
       "/user/installations/42/repositories",
@@ -97,10 +110,64 @@ describe("GitHub installation verification", () => {
   });
 });
 
-const url = `/api/v1/organizations/${organizationId}/github-installations?nda_document_id=test-document`;
+describe("GitHub access token", () => {
+  const headers = new Headers();
+  const api = (
+    accounts: { id: string; providerId: string }[] | Error,
+    token: { accessToken?: string } | Error = { accessToken: "user-token" },
+  ) => ({
+    listUserAccounts: vi.fn(async () => {
+      if (accounts instanceof Error) throw accounts;
+
+      return accounts;
+    }),
+    getAccessToken: vi.fn(async () => {
+      if (token instanceof Error) throw token;
+
+      return token;
+    }),
+  });
+
+  it("asks for authorization only when no GitHub account is linked", async () => {
+    const unlinked = api([{ id: "account-1", providerId: "google" }]);
+    expect(await readGithubAccessToken(unlinked, headers)).toBeNull();
+    expect(unlinked.getAccessToken).not.toHaveBeenCalled();
+
+    const linked = api([{ id: "account-2", providerId: "github" }]);
+    expect(await readGithubAccessToken(linked, headers)).toBe("user-token");
+    expect(linked.getAccessToken).toHaveBeenCalledWith({
+      headers,
+      body: { accountId: "account-2" },
+    });
+  });
+
+  it.each([
+    api(new Error("database unavailable")),
+    api(
+      [{ id: "account-2", providerId: "github" }],
+      new Error("refresh failed"),
+    ),
+  ])("surfaces account and refresh failures", async (failing) => {
+    await expect(readGithubAccessToken(failing, headers)).rejects.toThrow();
+  });
+
+  it("rejects an ambiguous pair of linked GitHub accounts", async () => {
+    await expect(
+      readGithubAccessToken(
+        api([
+          { id: "account-1", providerId: "github" },
+          { id: "account-2", providerId: "github" },
+        ]),
+        headers,
+      ),
+    ).rejects.toMatchObject({ problem: { status: 409 } });
+  });
+});
+
+const url = `/api/v1/organizations/${organizationId}/github-installations?`;
 const setup = (
   role: "admin" | "member" = "admin",
-  ndaStatus = "completed",
+  ndaStatus = "recorded",
   token: string | null = "token",
 ) => {
   const list = vi.fn().mockResolvedValue({
@@ -108,18 +175,19 @@ const setup = (
     installations: [{ id: 42, account: "example", repository_count: 1 }],
   });
   const githubAccessToken = vi.fn().mockResolvedValue(token);
-  const read = vi.fn().mockResolvedValue({ status: ndaStatus });
+  const nda = ndaProvider(ndaStatus === "recorded" ? "completed" : ndaStatus);
   const app = createTestApp({
     auth: { ...authenticated, githubAccessToken },
     githubInstallations: { list },
-    ndaDocuments: { read } as unknown as PandaDocNda,
+    ndaDocuments: nda,
     services: {
-      organizations: {
-        listForUser: async () => [{ ...organizationSummary, role }],
-      },
+      organizations: onboardingOrganizations(
+        ndaStatus === "recorded" ? { nda: recordedNda } : {},
+        { ...organizationSummary, role },
+      ),
     },
   });
-  return { app, list, githubAccessToken, read };
+  return { app, list, githubAccessToken, read: nda.read };
 };
 
 describe("GitHub installation route", () => {
@@ -135,18 +203,26 @@ describe("GitHub installation route", () => {
     expect((await app.request(url)).status).toBe(403);
     expect(githubAccessToken).not.toHaveBeenCalled();
   });
-  it("binds NDA verification to the signed-in organization admin", async () => {
+  it("uses the organization's recorded NDA", async () => {
     const { app, list, read } = setup();
     expect((await app.request(url + "&installation_id=42")).status).toBe(200);
+    expect(read).not.toHaveBeenCalled();
+    expect(list).toHaveBeenCalledWith("token", 42);
+  });
+
+  it("binds an unrecorded NDA to the signed-in organization admin", async () => {
+    const { app, read } = setup("admin", "completed");
+    expect(
+      (await app.request(url + "&nda_document_id=test-document")).status,
+    ).toBe(200);
     expect(read).toHaveBeenCalledWith(
       { userId: user.id, email: user.email, organizationId },
       "test-document",
     );
-    expect(list).toHaveBeenCalledWith("token", 42);
   });
 
   it("requires GitHub authorization without exposing a token to the browser", async () => {
-    const { app, list } = setup("admin", "completed", null);
+    const { app, list } = setup("admin", "recorded", null);
     const result = await app.request(url);
     expect(await result.json()).toEqual({
       status: "authorization_required",
@@ -156,13 +232,20 @@ describe("GitHub installation route", () => {
   });
 
   it.each([
-    { role: "member" as const, nda: "completed", status: 403 },
+    { role: "member" as const, nda: "recorded", status: 403 },
     { role: "admin" as const, nda: "ready", status: 409 },
   ])("does not call GitHub before admin and NDA checks pass", async (input) => {
     const { app, list, githubAccessToken } = setup(input.role, input.nda);
     expect((await app.request(url)).status).toBe(input.status);
     expect(list).not.toHaveBeenCalled();
     expect(githubAccessToken).not.toHaveBeenCalled();
+  });
+
+  it("reports a token lookup failure as unavailable instead of asking to reconnect", async () => {
+    const { app, githubAccessToken, list } = setup();
+    githubAccessToken.mockRejectedValueOnce(new Error("refresh failed"));
+    expect((await app.request(url)).status).toBe(503);
+    expect(list).not.toHaveBeenCalled();
   });
 
   it("fails closed when GitHub verification is not configured", async () => {

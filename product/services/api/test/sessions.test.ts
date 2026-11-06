@@ -23,20 +23,13 @@ const publicRoutes = new Set([
 ]);
 
 const validInputs: Record<string, { query?: string; body?: unknown }> = {
-  "GET /api/v1/organizations/:organization_id/github-installations": {
-    query: "nda_document_id=test-document",
-  },
   "POST /api/v1/organizations/:organization_id/slack-invitations": {
-    body: { nda_document_id: "test-document" },
+    body: {},
   },
-  "POST /api/v1/organizations/:organization_id/slack-messages": {
-    body: {
-      nda_document_id: "test-document",
-      channel_name: "ext-example-gradiated",
-      notes: "Context",
-      request_id: organizationId,
+  "POST /api/v1/organizations/:organization_id/engineer-onboarding/submission":
+    {
+      body: { contact_channel: "email", github_installation_id: 42 },
     },
-  },
   "POST /api/v1/organizations/:organization_id/nda-documents": {
     body: {
       company: "Example Inc.",

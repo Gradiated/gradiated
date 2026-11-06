@@ -1,11 +1,16 @@
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 
 import {
   CurrentOrganizationSchema,
   EmailDomainSchema,
+  OrganizationMetadataSchema,
+  OrganizationNdaSchema,
+  OrganizationOnboardingSchema,
   UpdateOrganizationSchema,
   UuidSchema,
+  type OrganizationNda,
+  type OrganizationOnboarding,
   type UpdateOrganization,
 } from "@gradiated/contracts";
 import type { ControlDatabase } from "../db/client.js";
@@ -53,7 +58,40 @@ const organizationColumns = (userId: string) => ({
   onboardedAt: organizations.onboardedAt,
 });
 
+const MetadataRowSchema = z
+  .object({ metadata: OrganizationMetadataSchema })
+  .transform(({ metadata }) => metadata.onboarding ?? {});
+
+const onboardingPath = sql`${organizations.metadata} -> 'onboarding'`;
+
 export const createOrganizationStore = (database: ControlDatabase) => {
+  const readOnboarding = async (organizationId: string) => {
+    const [row] = await database
+      .select({ metadata: organizations.metadata })
+      .from(organizations)
+      .where(eq(organizations.id, organizationId));
+
+    return row ? MetadataRowSchema.parse(row) : undefined;
+  };
+
+  const mergeOnboarding = async (
+    organizationId: string,
+    patch: OrganizationOnboarding,
+    condition: SQL,
+  ) => {
+    const value = JSON.stringify(OrganizationOnboardingSchema.parse(patch));
+    const rows = await database
+      .update(organizations)
+      .set({
+        metadata: sql`jsonb_set(${organizations.metadata}, '{onboarding}', coalesce(${onboardingPath}, '{}'::jsonb) || ${value}::jsonb)`,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(organizations.id, organizationId), condition))
+      .returning({ metadata: organizations.metadata });
+
+    return rows[0] ? MetadataRowSchema.parse(rows[0]) : undefined;
+  };
+
   const listForUser = async (
     userId: string,
     organizationId?: string,
@@ -102,6 +140,39 @@ export const createOrganizationStore = (database: ControlDatabase) => {
 
   return {
     listForUser,
+    readOnboarding,
+
+    async recordOnboardingNda(organizationId: string, nda: OrganizationNda) {
+      const parsed = OrganizationNdaSchema.parse(nda);
+      const recorded = await mergeOnboarding(
+        organizationId,
+        { nda: parsed },
+        sql`(${onboardingPath} -> 'nda' ->> 'template_version') is distinct from ${parsed.template_version}`,
+      );
+
+      return recorded ?? readOnboarding(organizationId);
+    },
+
+    async submitOnboarding(
+      organizationId: string,
+      submission: Required<
+        Pick<
+          OrganizationOnboarding,
+          "submitted_at" | "submitted_by" | "contact_channel"
+        >
+      >,
+    ) {
+      const submitted = await mergeOnboarding(
+        organizationId,
+        submission,
+        sql`(${onboardingPath} ->> 'submitted_at') is null`,
+      );
+      if (submitted) return { submitted: true, onboarding: submitted };
+
+      const onboarding = await readOnboarding(organizationId);
+
+      return onboarding && { submitted: false, onboarding };
+    },
 
     async findUser(userId: string) {
       const [user] = await database

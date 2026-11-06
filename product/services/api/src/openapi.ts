@@ -22,6 +22,7 @@ export const unservedDependencies = (): AppDependencies => ({
   metrics: new ApiMetrics({ collectProcessMetrics: false }),
   sendInvitation: unserved("sendInvitation"),
   sendWaitlistWelcome: unserved("sendWaitlistWelcome"),
+  notifyEngineerOnboarding: unserved("notifyEngineerOnboarding"),
   services: {
     waitlist: { join: unserved("waitlist.join") },
     billingPayments: {
@@ -61,6 +62,21 @@ export const unservedDependencies = (): AppDependencies => ({
       listForUser: unserved("organizations.listForUser"),
       updateForUser: unserved("organizations.updateForUser"),
       createForUser: unserved("organizations.createForUser"),
+      getOnboarding: unserved("organizations.getOnboarding"),
+      recordOnboardingNda: unserved("organizations.recordOnboardingNda"),
+      submitOnboarding: unserved("organizations.submitOnboarding"),
+    },
+    integrations: {
+      list: unserved("integrations.list"),
+      findSlackChannel: unserved("integrations.findSlackChannel"),
+      recordSlackChannel: unserved("integrations.recordSlackChannel"),
+      claimSlackInvitation: unserved("integrations.claimSlackInvitation"),
+      releaseSlackInvitation: unserved("integrations.releaseSlackInvitation"),
+      activate: unserved("integrations.activate"),
+      revoke: unserved("integrations.revoke"),
+      recordGithubInstallation: unserved(
+        "integrations.recordGithubInstallation",
+      ),
     },
     traces: {
       list: unserved("traces.list"),

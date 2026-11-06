@@ -12,8 +12,6 @@ import remarkGfm from "remark-gfm";
 import remarkFrontmatter from "remark-frontmatter";
 import rehypeHighlight from "rehype-highlight";
 import { all } from "lowlight";
-import { ndaSandbox } from "./scripts/nda-sandbox";
-import { slackPreview } from "./scripts/slack-preview";
 
 const require = createRequire(import.meta.url);
 const {
@@ -73,6 +71,11 @@ const syncAshbyJobs: Plugin = {
 
 export default defineConfig(({ command, isSsrBuild, mode }) => {
   const env = loadEnv(mode, process.cwd(), "VITE_");
+  const apiProxyUrl =
+    process.env.WEBSITE_API_PROXY_URL ?? "http://127.0.0.1:3001";
+  const consoleOrigin = new URL(
+    env.VITE_CONSOLE_BASE_URL || "http://localhost:3000",
+  ).origin;
   if (
     process.env.VERCEL_ENV === "production" &&
     !env.VITE_POSTHOG_KEY?.trim()
@@ -89,8 +92,6 @@ export default defineConfig(({ command, isSsrBuild, mode }) => {
       ),
     },
     plugins: [
-      ndaSandbox(),
-      slackPreview(),
       syncAshbyJobs,
       articleCitationsPlugin(),
       {
@@ -175,10 +176,10 @@ export default defineConfig(({ command, isSsrBuild, mode }) => {
       proxy: {
         "/api/": {
           changeOrigin: true,
-          headers: { origin: "http://localhost:3000" },
-          target: "http://127.0.0.1:3001",
+          headers: { origin: consoleOrigin },
+          target: apiProxyUrl,
         },
-        "/health": "http://127.0.0.1:3001",
+        "/health": apiProxyUrl,
       },
     },
     build: {

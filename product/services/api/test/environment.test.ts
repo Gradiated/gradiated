@@ -44,6 +44,19 @@ describe("API environment", () => {
     expect(environment.PANDADOC_NDA_TEMPLATE_VERSION).toBeUndefined();
     expect(environment.PANDADOC_NDA_TEMPLATE_ID).toBe("bTmxaYhTaU2tQ28fLhVrHn");
   });
+  it("defaults the NDA countersigner and accepts an override", () => {
+    expect(parseApiEnvironment(baseEnvironment)).toMatchObject({
+      PANDADOC_NDA_COUNTERSIGNER_COMPANY: "PostHog Inc.",
+      PANDADOC_NDA_COUNTERSIGNER_NAME: "James Hawkins",
+      PANDADOC_NDA_COUNTERSIGNER_TITLE: "Co-CEO",
+    });
+    expect(
+      parseApiEnvironment({
+        ...baseEnvironment,
+        PANDADOC_NDA_COUNTERSIGNER_NAME: " Grace Hopper ",
+      }).PANDADOC_NDA_COUNTERSIGNER_NAME,
+    ).toBe("Grace Hopper");
+  });
   it("applies the API-only defaults", () => {
     expect(parseApiEnvironment(baseEnvironment)).toMatchObject({
       METRICS_PORT: 9_464,

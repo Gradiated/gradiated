@@ -25,11 +25,6 @@ import {
 } from "@/lib/onboarding";
 import { queryKeys } from "@/lib/query-keys";
 import { engineerOnboardingUrl } from "@/lib/engineer-onboarding";
-import {
-  completeEngineerPreview,
-  isEngineerPreview,
-  saveEngineerPreviewOrganization,
-} from "@/lib/engineer-preview";
 import { LoadFailed } from "@/pages/console-page";
 import { useWorkspaceSelection } from "@/store/workspace-selection";
 
@@ -44,11 +39,7 @@ export const OnboardingPage = () => {
         (row) => row.id === requestedOrganization && row.status === "active",
       )
     : undefined;
-  const organization = requestedOrganization
-    ? selected?.role === "admin" && !selected.onboarding_completed
-      ? selected
-      : undefined
-    : organizationToOnboard(user);
+  const organization = organizationToOnboard(user, requestedOrganization);
 
   if (me.isError && httpStatus(me.error) !== 401)
     return (
@@ -104,21 +95,12 @@ const EngineerHandoff = ({
   organizationId: string | undefined;
 }) => {
   useEffect(() => {
-    if (isEngineerPreview()) {
-      completeEngineerPreview();
-      return;
-    }
-
     window.location.replace(engineerOnboardingUrl(organizationId));
   }, [organizationId]);
 
   return (
     <main className="grid min-h-svh place-items-center">
-      {isEngineerPreview() ? (
-        <p>Your demo account is ready.</p>
-      ) : (
-        <LoaderCircle className="size-5 animate-spin" />
-      )}
+      <LoaderCircle className="size-5 animate-spin" />
     </main>
   );
 };
@@ -144,21 +126,12 @@ const OrganizationSetup = ({
 
   const save = useMutation({
     mutationFn: () =>
-      isEngineerPreview()
-        ? Promise.resolve(
-            saveEngineerPreviewOrganization(name.trim(), autoJoin),
-          )
-        : updateOrganization(organization.id, {
-            name: name.trim(),
-            ...(domain ? { auto_join_domain: autoJoin ? domain : null } : {}),
-            onboarding_completed: true,
-          }),
+      updateOrganization(organization.id, {
+        name: name.trim(),
+        ...(domain ? { auto_join_domain: autoJoin ? domain : null } : {}),
+        onboarding_completed: true,
+      }),
     onSuccess: async (updated) => {
-      if (isEngineerPreview()) {
-        completeEngineerPreview();
-        return;
-      }
-
       client.setQueryData<CurrentUser>(
         queryKeys.me,
         (current) =>

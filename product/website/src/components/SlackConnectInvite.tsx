@@ -1,136 +1,84 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { z } from "zod";
+import type { EngineerOnboarding } from "../api/engineer-onboarding";
 import { createSlackInvitation } from "../api/slack";
-import type { OnboardingDraft } from "../onboarding";
+import {
+  ndaReference,
+  slackInvitationProblem,
+  slackInvited,
+} from "../onboarding";
+import type { OnboardingAccount, OnboardingDraft } from "../onboarding";
 
-export const SlackConnectInvite = ({
-  draft,
-  organizationId,
-  demo,
-  onInvited,
-}: {
-  draft: OnboardingDraft;
-  organizationId: string;
-  demo: boolean;
-  onInvited: (values: Partial<OnboardingDraft>) => void;
-}) => {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [customChannel, setCustomChannel] = useState<string | null>(null);
-  const [livePreview, setLivePreview] = useState(false);
-  const [checkingPreview, setCheckingPreview] = useState(
-    import.meta.env.DEV && demo,
-  );
-  const callbacks = useRef({ onInvited, draft });
-  callbacks.current = { onInvited, draft };
+const channelPattern = /^ext-[a-z0-9]+(?:-[a-z0-9]+)*-gradiated$/;
 
-  useEffect(() => {
-    if (!import.meta.env.DEV || !demo) return;
-
-    let cancelled = false;
-    void fetch("/__slack-preview/")
-      .then(async (response) => (response.ok ? response.json() : null))
-      .then((configuration) => {
-        if (cancelled) return;
-
-        const enabled = configuration?.enabled === true;
-        setLivePreview(enabled);
-        if (enabled && callbacks.current.draft.slackDeliveryMode !== "live")
-          callbacks.current.onInvited({ slackStatus: "not_sent" });
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setCheckingPreview(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [demo]);
-  const recipient = (draft.slackEmail ?? draft.email).trim().toLowerCase();
-  const validRecipient = z.email().safeParse(recipient).success;
+const proposedChannel = (company: string) => {
   const slug =
-    draft.company
+    company
       .normalize("NFKD")
-      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[̀-ͯ]/g, "")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "")
       .slice(0, 66)
       .replace(/-$/g, "") || "customer";
+
+  return `ext-${slug}-gradiated`;
+};
+
+export const SlackConnectInvite = ({
+  account,
+  server,
+  draft,
+  patch,
+  onInvited,
+}: {
+  account: OnboardingAccount;
+  server: EngineerOnboarding;
+  draft: OnboardingDraft;
+  patch: (values: Partial<OnboardingDraft>) => void;
+  onInvited: () => Promise<void>;
+}) => {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const recipient = (draft.slackEmail ?? account.email).trim().toLowerCase();
+  const validRecipient = z.email().safeParse(recipient).success;
+  const renaming = !server.slack && draft.slackChannelName !== null;
   const channel =
-    draft.slackStatus === "not_sent"
-      ? (customChannel ?? `ext-${slug}-gradiated`)
-      : draft.slack;
-  const validChannel =
-    /^ext-[a-z0-9]+(?:-[a-z0-9]+)*-gradiated$/.test(channel) &&
-    channel.length <= 80;
+    server.slack?.channel_name ??
+    draft.slackChannelName ??
+    proposedChannel(account.company);
+  const validChannel = channelPattern.test(channel) && channel.length <= 80;
+  const sent =
+    slackInvited(server) &&
+    server.slack?.invited_email?.toLowerCase() === recipient;
 
   const send = async () => {
-    if (busy || checkingPreview || !validRecipient || !validChannel) return;
+    if (busy || !validRecipient || !validChannel) return;
+
     setBusy(true);
     setError("");
     try {
-      if (demo && !livePreview) {
-        onInvited({
-          slack: channel,
-          slackEmail: recipient,
-          slackStatus: "invited",
-          slackDeliveryMode: "simulated",
-        });
-        return;
-      }
-      if (demo && livePreview) {
-        const response = await fetch("/__slack-preview/invitations", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            organizationId,
-            company: draft.company,
-            email: recipient,
-            ...(customChannel === null ? {} : { channelName: channel }),
-          }),
-        });
-        const result = await response.json();
-        if (!response.ok)
-          throw new Error(
-            result.error ?? "The Slack invitation could not be confirmed.",
-          );
-
-        onInvited({
-          slack: result.channel_name,
-          slackEmail: result.email,
-          slackStatus: result.status,
-          slackDeliveryMode: "live",
-        });
-        return;
-      }
-      if (!draft.ndaDocumentId)
-        throw new Error("Complete the mutual NDA first.");
-
-      const result = await createSlackInvitation(
-        organizationId,
-        draft.ndaDocumentId,
-        recipient,
-        customChannel === null ? undefined : channel,
-      );
-      onInvited({
-        slack: result.channel_name,
-        slackEmail: result.email,
-        slackStatus: result.status,
-        slackDeliveryMode: "live",
+      await createSlackInvitation(account.organizationId, {
+        email: recipient,
+        channelName: renaming ? channel : undefined,
+        ndaDocumentId: ndaReference(server, draft),
       });
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message.includes("channel name is already in use")
-      )
-        setCustomChannel(channel);
+      await onInvited();
+    } catch (cause) {
+      const code =
+        cause instanceof Error && "code" in cause
+          ? String(cause.code)
+          : undefined;
+      const problem = slackInvitationProblem(code);
+      if (problem?.renameChannel) patch({ slackChannelName: channel });
+
       setError(
-        error instanceof Error
-          ? error.message
-          : "Could not send the Slack invitation. You can continue and try again later.",
+        problem?.message ??
+          (cause instanceof Error
+            ? cause.message
+            : "Could not send the Slack invitation. You can continue and try again later."),
       );
     } finally {
       setBusy(false);
@@ -145,30 +93,31 @@ export const SlackConnectInvite = ({
         <input
           type="email"
           maxLength={200}
-          value={draft.slackEmail ?? draft.email}
+          value={draft.slackEmail ?? account.email}
           disabled={busy}
           onChange={(event) => {
             setError("");
-            onInvited({
-              slackEmail: event.target.value,
-              slackStatus: "not_sent",
-            });
+            patch({ slackEmail: event.target.value });
           }}
           autoComplete="email"
         />
       </label>
-      {draft.slackStatus === "not_sent" ? (
+      {sent ? (
+        <p role="status">
+          <CheckCircle2 size={16} /> Invite sent · #{channel}
+        </p>
+      ) : (
         <>
-          {customChannel !== null && (
+          {renaming && (
             <label className="gs-field">
               <span>Slack channel name</span>
               <input
                 type="text"
                 maxLength={80}
-                value={customChannel}
+                value={channel}
                 disabled={busy}
                 onChange={(event) => {
-                  setCustomChannel(event.target.value);
+                  patch({ slackChannelName: event.target.value });
                   setError("");
                 }}
                 autoCapitalize="none"
@@ -183,45 +132,24 @@ export const SlackConnectInvite = ({
             </label>
           )}
           <p>
-            We’ll create <strong>#{channel}</strong> and invite{" "}
-            <strong>{recipient}</strong>.
+            We’ll {server.slack ? "use" : "create"} <strong>#{channel}</strong>{" "}
+            and invite <strong>{recipient}</strong>.
           </p>
           <button
             type="button"
             className="gr-button"
-            disabled={
-              busy || checkingPreview || !validRecipient || !validChannel
-            }
+            disabled={busy || !validRecipient || !validChannel}
             onClick={() => void send()}
           >
-            {busy
-              ? "Sending invite…"
-              : checkingPreview
-                ? "Loading…"
-                : "Send Slack invite"}
+            {busy ? "Sending invite…" : "Send Slack invite"}
           </button>
         </>
-      ) : (
-        <p role="status">
-          <CheckCircle2 size={16} />{" "}
-          {demo && !livePreview
-            ? "Preview: invite sent"
-            : draft.slackStatus === "joined"
-              ? "Already connected"
-              : "Invite sent"}{" "}
-          · #{channel}
-        </p>
       )}
       <p className="gs-note">
-        {draft.slackStatus === "not_sent"
-          ? "Slack is our preferred way to work."
-          : "Accept the invitation in Slack or your inbox. Your workspace may require admin approval. You can continue below."}
+        {sent
+          ? "Accept the invitation in Slack or your inbox. Your workspace may require admin approval. You can continue below."
+          : "Slack is our preferred way to work."}
       </p>
-      {demo && !livePreview && (
-        <p className="gs-note">
-          Preview only · no channel or invitation is created.
-        </p>
-      )}
       {error && (
         <p role="alert" className="gs-note">
           {error}

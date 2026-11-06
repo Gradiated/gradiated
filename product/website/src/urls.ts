@@ -6,16 +6,10 @@ export const CONSOLE_BASE_URL =
 
 export const SAND_TO_THOUGHT_URL = "/sand-to-thought/library/";
 
-export const ENGINEER_ENTRY_PATH = import.meta.env.DEV
-  ? "/get-started/?preview=signup"
-  : "/get-started/";
+export const ENGINEER_ENTRY_PATH = "/get-started/";
 
 export const ENGINEER_SIGNUP_URL = new URL(
   "/login?next=engineer",
-  CONSOLE_BASE_URL,
-).toString();
-export const ENGINEER_PREVIEW_SIGNUP_URL = new URL(
-  "/login?next=engineer&preview=engineer",
   CONSOLE_BASE_URL,
 ).toString();
 export const ENGINEER_ORGANIZATION_SETUP_URL = new URL(

@@ -11,6 +11,11 @@ export const GithubInstallationSchema = z
     account: z
       .string()
       .describe("The GitHub account where the customer installed Gradiated."),
+    repository_selection: z
+      .enum(["all", "selected"])
+      .describe(
+        "Whether the installation covers all or selected repositories.",
+      ),
     repository_count: z
       .number()
       .int()
@@ -37,6 +42,7 @@ const installationSchema = z.object({
   app_slug: z.string(),
   account: z.object({ login: z.string() }).nullable(),
   suspended_at: z.string().nullable(),
+  repository_selection: z.enum(["all", "selected"]),
   permissions: z.object({ contents: z.string().optional() }),
 });
 
@@ -113,6 +119,7 @@ export const createGithubInstallations = (request: typeof fetch = fetch) => {
           installations.push({
             id: installation.id,
             account: installation.account.login,
+            repository_selection: installation.repository_selection,
             repository_count: repositories.total_count,
           });
         }

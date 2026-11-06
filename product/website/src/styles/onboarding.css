@@ -8,7 +8,7 @@
 
 .gs-root {
   --color-substrate: #efeee9;
-  --color-module: #ffffff;
+  --color-module: var(--color-light-000);
   --color-text: #171714;
   --color-text-muted: #686760;
   --color-rule: #deddd6;
@@ -43,16 +43,9 @@
   outline: 3px solid rgb(143 141 131 / 50%);
   outline-offset: 1px;
 }
-.gs-prototype {
-  padding: 7px 20px;
-  background: #303321;
-  color: #fff;
-  text-align: center;
-  font: 10px/1.5 var(--font-body);
-}
 .gs-auth-shell {
   display: flex;
-  min-height: calc(100svh - 29px);
+  min-height: 100svh;
   align-items: center;
   justify-content: center;
   padding: 40px 24px;
@@ -72,13 +65,12 @@
   height: auto;
   width: 128px;
 }
-.gs-main,
-.gs-project {
+.gs-main {
   min-width: 0;
   padding: 36px;
   border: 1px solid var(--color-rule);
   border-radius: 12px;
-  background: #fff;
+  background: var(--color-module);
   box-shadow:
     0 20px 25px -5px rgb(0 0 0 / 5%),
     0 8px 10px -6px rgb(0 0 0 / 5%);
@@ -107,11 +99,6 @@
   text-decoration: underline;
   text-underline-offset: 4px;
 }
-.gs-account-preview > .gs-help {
-  flex-shrink: 0;
-  margin: 0;
-  padding: 12px 24px;
-}
 .gs-account-identity .gs-text-button {
   display: inline;
   font-size: inherit;
@@ -133,18 +120,6 @@
 }
 .gs-account-gate h1 {
   font: 700 24px/1.3 var(--font-body);
-}
-.gs-account-preview {
-  height: 100svh;
-  display: flex;
-  flex-direction: column;
-}
-.gs-signup-frame {
-  display: block;
-  width: 100%;
-  min-height: 0;
-  flex: 1;
-  border: 0;
 }
 .gs-root .gs-text-button {
   display: inline-flex;
@@ -192,7 +167,7 @@
   min-width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #efeee9;
+  background: var(--color-substrate);
 }
 .gs-progress .is-current button {
   color: var(--color-text);
@@ -200,8 +175,8 @@
 }
 .gs-progress .is-current button > span:first-child,
 .gs-progress .is-done button > span:first-child {
-  background: #171714;
-  color: #faf9f6;
+  background: var(--color-interactive);
+  color: var(--color-inverse);
 }
 .gs-progress button:disabled {
   opacity: 0.55;
@@ -266,19 +241,6 @@
   display: block;
   width: 100%;
   border: 0;
-}
-.gs-signing-demo {
-  padding: 24px;
-  background: #f7f6f2;
-  border-radius: 8px;
-}
-.gs-signing-demo h2 {
-  margin: 16px 0 8px;
-  font-size: 20px;
-  font-weight: 600;
-}
-.gs-signing-demo > .gs-primary {
-  margin-top: 24px;
 }
 .gs-signing .gs-signing-back,
 .gs-signing .gs-signing-check {
@@ -361,13 +323,9 @@
 }
 .gs-email-fallback input {
   margin: 3px 0 0;
-  accent-color: #171714;
+  accent-color: var(--color-interactive);
   width: 15px;
   height: 15px;
-}
-.gs-example {
-  margin-top: 16px;
-  font-size: 12px !important;
 }
 .gs-root .gs-note {
   margin-top: 20px;
@@ -385,8 +343,8 @@
 .gs-root .gr-button {
   justify-content: center;
   border-radius: 6px;
-  background: #171714;
-  color: #faf9f6;
+  background: var(--color-interactive);
+  color: var(--color-inverse);
   font-family: var(--font-body);
   font-weight: 500;
   font-size: 14px;
@@ -464,211 +422,20 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #efeee9;
+  background: var(--color-substrate);
   color: var(--color-text-muted);
   font-size: 11px;
-}
-.gs-label {
-  font-size: 10px;
-  line-height: 1.6;
-  letter-spacing: 0.04em;
-}
-.gs-dialog {
-  width: min(500px, calc(100vw - 32px));
-  max-height: 85svh;
-  padding: 36px;
-  border: 1px solid var(--color-rule);
-  border-radius: 12px;
-  background: #fff;
-  color: var(--color-text);
-}
-.gs-dialog::backdrop {
-  background: rgb(23 23 20 / 45%);
-}
-.gs-dialog h2 {
-  font: 700 24px/1.3 var(--font-body);
-  margin: 12px 0;
-  letter-spacing: -0.025em;
-}
-.gs-dialog p {
-  font-size: 13px;
-  line-height: 1.7;
-  margin: 14px 0 24px;
-}
-.gs-root .gs-dialog-close {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  padding: 5px;
-  background: none;
-  border: 0;
-  color: var(--color-text);
-}
-.gs-nda-parties h3 {
-  font-size: 14px;
-  font-weight: 600;
-  margin: 24px 0 12px;
-}
-.gs-nda-parties .gs-summary {
-  margin: 0 0 24px;
-  gap: 8px;
-}
-.gs-address {
-  white-space: pre-line;
-}
-.gs-auth-shell--project .gs-auth-container {
-  max-width: 600px;
-}
-.gs-project-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 16px;
-}
-.gs-project-title h1 {
-  font: 700 24px/1.3 var(--font-body);
-  letter-spacing: -0.025em;
-}
-.gs-project-title p {
-  margin-top: 8px;
-  font-size: 14px;
-  color: var(--color-text-muted);
-}
-.gs-project-tabs {
-  display: flex;
-  gap: 24px;
-  margin: 28px 0;
-  border-bottom: 1px solid var(--color-rule);
-}
-.gs-root .gs-project-tabs button {
-  padding: 0 0 12px;
-  background: none;
-  border: 0;
-  color: var(--color-text-muted);
-  font-size: 13px;
-  margin-bottom: -1px;
-  border-bottom: 2px solid transparent;
-}
-.gs-root .gs-project-tabs button[aria-current] {
-  color: var(--color-text);
-  border-bottom-color: #171714;
-}
-.gs-work-items {
-  display: grid;
-  gap: 24px;
-}
-.gs-work-items > div {
-  display: flex;
-  gap: 14px;
-  align-items: flex-start;
-}
-.gs-work-items > div > svg {
-  margin-top: 2px;
-  color: var(--color-text-muted);
-}
-.gs-work-items > .is-complete > svg {
-  color: var(--color-text);
-}
-.gs-work-items h3 {
-  margin: 0 0 6px;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.4;
-}
-.gs-work-items p {
-  font-size: 13px;
-  line-height: 1.7;
-  color: var(--color-text-muted);
-  white-space: pre-wrap;
-}
-.gs-work-items .gs-text-button {
-  margin-top: 7px;
-  font-size: 12px;
-}
-.gs-root .gs-intro-button {
-  display: flex;
-}
-.gs-sample {
-  margin-top: 28px;
-  font-size: 13px;
-}
-.gs-sample summary {
-  cursor: pointer;
-  font-weight: 500;
-}
-.gs-sample p {
-  font-size: 13px;
-  line-height: 1.7;
-  margin-top: 12px;
-}
-.gs-sample .gs-text-button {
-  margin-top: 12px;
-  font-size: 12px;
-}
-.gs-example-result {
-  margin-top: 20px;
-  padding: 16px;
-  background: #efeee9;
-  border-radius: 6px;
-}
-.gs-example-result strong {
-  display: block;
-  font-weight: 500;
-  font-size: 12px;
-}
-.gs-avatar {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  flex-shrink: 0;
-  border-radius: 8px;
-  background: #efeee9;
-  color: var(--color-text);
-}
-.gs-message {
-  display: flex;
-  gap: 14px;
-  padding: 0 0 24px;
-}
-.gs-message p {
-  margin-top: 8px;
-  font-size: 14px;
-  line-height: 1.7;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-.gs-message-form {
-  margin-top: 12px;
-}
-.gs-message-form .gs-field {
-  margin-bottom: 12px;
-}
-.gs-live-notice {
-  margin-top: 20px;
-  font-size: 12px;
-  line-height: 1.6;
-}
-.gs-access-view > p {
-  font-size: 14px;
-  line-height: 1.7;
-  margin-bottom: 16px;
 }
 @media (max-width: 600px) {
   .gs-auth-shell {
     padding: 24px;
   }
-  .gs-main,
-  .gs-project {
+  .gs-main {
     padding: 24px;
   }
   .gs-field-pair {
     grid-template-columns: 1fr;
     gap: 0;
-  }
-  .gs-dialog {
-    padding: 28px 24px;
   }
   .gs-progress ol {
     gap: 10px;
@@ -676,9 +443,6 @@
   .gs-progress button {
     font-size: 10px;
     gap: 4px;
-  }
-  .gs-project-tabs {
-    gap: 20px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

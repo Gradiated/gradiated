@@ -19,7 +19,6 @@ import {
 } from "../components/design";
 import { libraryStories } from "../library-stories";
 import "../styles/index.css";
-import "../styles/onboarding.css";
 
 /**
  * The homepage.
@@ -49,17 +48,23 @@ export const HomePage = (): ReactElement => (
       <Module bleed className="gr-module--fold" index={0}>
         <div className="gr-fold-left">
           <h1 className="gr-display gr-home-title">
-            <Reveal by="word">
-              Get more out of your AI models in production. Or train your own.
-            </Reveal>
+            {/* Two readings of one line: desktop keeps the hyphen, the phone
+                drops it so the words wrap on the module without a split. */}
+            <span className="gr-home-title-wide">
+              <Reveal by="word">
+                The cheapest way to run open-source models.
+              </Reveal>
+            </span>
+            <span className="gr-home-title-narrow">
+              <Reveal by="word">
+                The cheapest way to run open source models.
+              </Reveal>
+            </span>
           </h1>
           <div className="gr-home-actions">
-            <Link
-              className="gr-button gr-button--main"
-              to={ENGINEER_ENTRY_PATH}
-            >
-              Get started <Arrow />
-            </Link>
+            <a className="gr-button gr-button--main" href={CONSOLE_BASE_URL}>
+              Get API Key <Arrow />
+            </a>
             <Link className="gr-button gr-button--secondary" to="/docs/">
               View Docs <Arrow />
             </Link>
@@ -113,13 +118,10 @@ export const HomePage = (): ReactElement => (
             models today
           </h2>
           <div className="gr-home-actions">
-            <Link
-              className="gr-button gr-button--main"
-              to={ENGINEER_ENTRY_PATH}
-            >
-              Get started
+            <a className="gr-button gr-button--main" href={CONSOLE_BASE_URL}>
+              Get API Key
               <Arrow />
-            </Link>
+            </a>
           </div>
         </div>
       </Module>
@@ -209,8 +211,8 @@ const products = [
       "Evaluations built around your tasks",
       "Served through the same API",
     ],
-    action: "Contact us to set up",
-    href: "https://cal.com/jsgradiated/30min",
+    action: "Get started",
+    href: ENGINEER_ENTRY_PATH,
   },
 ] as const;
 
@@ -335,7 +337,7 @@ const HomeProducts = (): ReactElement => (
           text: "So then, why do most teams that try open weight models just end up switching back? In our experience we've seen that teams tend to switch their base models but don't optimize any of their other parameters. And models can be temperamental, to say the least. This leads to performance regressions and the inevitable switch back.",
         },
         {
-          text: "At Gradiated we start by proxying your calls to and from any model. As we do this, we collect your real production traces. We benchmark open models against them, show you before-and-afters, and tune your prompts to your preferences until the open model matches or beats what you run now. All that with significant cost savings.",
+          text: "At Gradiated we start with your real production traces. We benchmark open models against them, show you before-and-afters, and tune your prompts to your preferences until the open model matches or beats what you run now. All that with significant cost savings.",
         },
         {
           text: "We then continue the cycle and ensure an automated RL loop keeps your models getting better over time.",

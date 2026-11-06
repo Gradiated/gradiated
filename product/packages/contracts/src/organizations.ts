@@ -45,3 +45,31 @@ export const OrganizationSchema = z
 
 export type CreateOrganization = z.infer<typeof CreateOrganizationSchema>;
 export type Organization = z.infer<typeof OrganizationSchema>;
+
+export const ContactChannelSchema = z
+  .enum(["slack", "email"])
+  .describe("How the customer prefers Gradiated engineers to contact them.");
+export type ContactChannel = z.infer<typeof ContactChannelSchema>;
+
+export const OrganizationNdaSchema = z.strictObject({
+  document_id: z.string().regex(/^[a-zA-Z0-9_-]{1,100}$/),
+  template_version: z.string().min(1).max(200),
+  signed_at: TimestampSchema,
+});
+export type OrganizationNda = z.infer<typeof OrganizationNdaSchema>;
+
+export const OrganizationOnboardingSchema = z.strictObject({
+  nda: OrganizationNdaSchema.optional(),
+  submitted_at: TimestampSchema.optional(),
+  submitted_by: UuidSchema.optional(),
+  contact_channel: ContactChannelSchema.optional(),
+});
+export type OrganizationOnboarding = z.infer<
+  typeof OrganizationOnboardingSchema
+>;
+
+export const OrganizationMetadataSchema = z.strictObject({
+  schema_version: z.literal(1),
+  onboarding: OrganizationOnboardingSchema.optional(),
+});
+export type OrganizationMetadata = z.infer<typeof OrganizationMetadataSchema>;

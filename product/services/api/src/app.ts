@@ -24,6 +24,7 @@ import { registerMemberRoutes } from "./routes/members.js";
 import { registerImpersonationRoutes } from "./routes/impersonation.js";
 import { registerOrganizationRoutes } from "./routes/organizations.js";
 import { registerNdaDocumentRoutes } from "./routes/nda-documents.js";
+import { registerEngineerOnboardingRoutes } from "./routes/engineer-onboarding.js";
 import type { PandaDocNda } from "./legal/pandadoc.js";
 import { registerSlackInvitationRoutes } from "./routes/slack-invitations.js";
 import type { SlackConnect } from "./slack/connect.js";
@@ -43,6 +44,7 @@ import type {
 } from "./types.js";
 import type { InvitationSender } from "./email/invitation.js";
 import type { WaitlistWelcomeSender } from "./email/waitlist-welcome.js";
+import type { EngineerOnboardingNotifier } from "./email/engineer-onboarding.js";
 
 export interface AppDependencies {
   githubInstallations?: GithubInstallations | undefined;
@@ -57,9 +59,17 @@ export interface AppDependencies {
   metrics: ApiMetrics;
   sendInvitation: InvitationSender;
   sendWaitlistWelcome: WaitlistWelcomeSender;
+  notifyEngineerOnboarding: EngineerOnboardingNotifier;
   services: ApiServices;
   externalModels?: ReturnType<typeof createExternalModelCatalog>;
 }
+
+const ONBOARDING_RATE_LIMITS = [
+  ["engineer-onboarding", 60],
+  ["nda-documents", 60],
+  ["slack-invitations", 5],
+  ["github-installations", 30],
+] as const;
 
 export const createApp = ({
   githubInstallations,
@@ -74,6 +84,7 @@ export const createApp = ({
   metrics,
   sendInvitation,
   sendWaitlistWelcome,
+  notifyEngineerOnboarding,
   services,
   externalModels = createExternalModelCatalog(),
 }: AppDependencies) => {
@@ -115,13 +126,18 @@ export const createApp = ({
 
   app.use("/api/*", apiRateLimit());
   app.use("/api/v1/waitlist", apiRateLimit(10));
+  for (const [path, limit] of ONBOARDING_RATE_LIMITS)
+    app.use(
+      `/api/v1/organizations/:organization_id/${path}/*`,
+      apiRateLimit(limit),
+    );
   app.use(
-    "/api/v1/organizations/:organization_id/slack-invitations",
+    "/api/v1/organizations/:organization_id/nda-documents/:document_id/signing-sessions",
     apiRateLimit(5),
   );
   app.use(
-    "/api/v1/organizations/:organization_id/nda-documents",
-    apiRateLimit(10),
+    "/api/v1/organizations/:organization_id/engineer-onboarding/submission",
+    apiRateLimit(5),
   );
   app.use(
     "/api/*",
@@ -170,12 +186,16 @@ export const createApp = ({
     githubInstallations,
     ndaDocuments,
   );
-  registerSlackInvitationRoutes(
-    app,
-    services.organizations,
-    slackConnect,
-    ndaDocuments,
-  );
+  registerSlackInvitationRoutes(app, services, slackConnect, ndaDocuments);
+  registerEngineerOnboardingRoutes(app, {
+    organizations: services.organizations,
+    integrations: services.integrations,
+    auth,
+    notify: notifyEngineerOnboarding,
+    nda: ndaDocuments,
+    slack: slackConnect,
+    github: githubInstallations,
+  });
   registerMemberRoutes(app, {
     members: services.members,
     organizations: services.organizations,
@@ -247,7 +267,7 @@ export const openApiDocument = {
     title: "Gradiated API",
     version: "0.1.0",
     description:
-      "The Gradiated API covers inference, model discovery, workspaces, billing, API keys and usage. Inference endpoints use workspace API keys (Authorization: Bearer or x-api-key). These keys do not authorize workspace administration. Protected management endpoints require a signed-in user session and the appropriate organization role; management API keys are not currently supported. Management request bodies are limited to 1 MiB (413 if exceeded). Management per-IP limits are 300 requests/minute, or 10/minute for waitlist signups, per API process. Rate-limited requests return 429 with Retry-After. Stripe webhooks are excluded from the IP rate limits.",
+      "The Gradiated API covers inference, model discovery, workspaces, billing, API keys and usage. Inference endpoints use workspace API keys (Authorization: Bearer or x-api-key). These keys do not authorize workspace administration. Protected management endpoints require a signed-in user session and the appropriate organization role; management API keys are not currently supported. Management request bodies are limited to 1 MiB (413 if exceeded). Management per-IP limits are 300 requests/minute, or 10/minute for waitlist signups, per API process. Engineer onboarding routes have lower per-route limits. Rate-limited requests return 429 with Retry-After. Stripe webhooks are excluded from the IP rate limits.",
   },
   servers: [{ url: "/", description: "Current origin" }],
   tags: [

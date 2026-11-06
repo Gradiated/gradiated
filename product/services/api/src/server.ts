@@ -22,6 +22,7 @@ import {
   createAdapterHostingService,
   ObjectStorage,
   createDeploymentStatusService,
+  createIntegrationService,
   createMemberService,
   createOrganizationService,
   createProfilingWriter,
@@ -53,6 +54,10 @@ import {
   createResendInvitationSender,
   type InvitationMessage,
 } from "./email/invitation.js";
+import {
+  createLoggingEngineerOnboardingNotifier,
+  createResendEngineerOnboardingNotifier,
+} from "./email/engineer-onboarding.js";
 import { createTestMailbox } from "./email/test-mailbox.js";
 import {
   createLoggingWaitlistWelcomeSender,
@@ -118,6 +123,7 @@ const createEmailSenders = () => {
       sendInvitation: async ({ email, url }: InvitationMessage) =>
         invitationLinks.send(email, url),
       sendWaitlistWelcome: createLoggingWaitlistWelcomeSender(),
+      notifyEngineerOnboarding: createLoggingEngineerOnboardingNotifier(),
       authTestMailbox: {
         takeMagicLink: magicLinks.take,
         takeOtp: otpCodes.take,
@@ -136,11 +142,22 @@ const createEmailSenders = () => {
       ...resend,
       consoleUrl: environment.CONSOLE_URL,
     }),
+    notifyEngineerOnboarding: environment.ENGINEER_ONBOARDING_NOTIFY_EMAIL
+      ? createResendEngineerOnboardingNotifier({
+          ...resend,
+          to: environment.ENGINEER_ONBOARDING_NOTIFY_EMAIL,
+        })
+      : createLoggingEngineerOnboardingNotifier(),
   };
 };
 
-const { sendInvitation, sendWaitlistWelcome, authTestMailbox, ...authEmail } =
-  createEmailSenders();
+const {
+  sendInvitation,
+  sendWaitlistWelcome,
+  notifyEngineerOnboarding,
+  authTestMailbox,
+  ...authEmail
+} = createEmailSenders();
 
 const auth = createAuthService(database, {
   ...authEmail,
@@ -215,6 +232,11 @@ const app = createApp({
           templateId: environment.PANDADOC_NDA_TEMPLATE_ID,
           templateVersion: environment.PANDADOC_NDA_TEMPLATE_VERSION,
           dateField: environment.PANDADOC_NDA_DATE_FIELD,
+          countersigner: {
+            company: environment.PANDADOC_NDA_COUNTERSIGNER_COMPANY,
+            name: environment.PANDADOC_NDA_COUNTERSIGNER_NAME,
+            title: environment.PANDADOC_NDA_COUNTERSIGNER_TITLE,
+          },
         })
       : undefined,
   analytics,
@@ -227,6 +249,7 @@ const app = createApp({
   metrics,
   sendInvitation,
   sendWaitlistWelcome,
+  notifyEngineerOnboarding,
   services: {
     billingPayments:
       stripe && environment.STRIPE_WEBHOOK_SECRET
@@ -245,6 +268,7 @@ const app = createApp({
         : unavailableBillingPaymentsService(),
     catalogBilling,
     members: createMemberService(database),
+    integrations: createIntegrationService(database),
     organizations,
     usage: createUsageService(database, clickhouse),
     waitlist: createWaitlistService(database),

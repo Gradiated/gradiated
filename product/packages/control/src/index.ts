@@ -111,6 +111,14 @@ export {
 } from "./organizations/service.js";
 export { companyEmailDomain } from "./organizations/email-domains.js";
 export {
+  createIntegrationService,
+  type GithubIntegrationRecord,
+  type IntegrationRecord,
+  type IntegrationService,
+  type SlackIntegrationRecord,
+  type SlackInvitationClaim,
+} from "./integrations/service.js";
+export {
   createMemberService,
   type InvitationAcceptor,
   type InvitationRecord,

@@ -1,5 +1,6 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createPandaDocNda } from "../src/legal/pandadoc.js";
+import { onboardingOrganizations, recordedNda } from "./onboarding-support.js";
 import {
   authenticated,
   anonymous,
@@ -22,6 +23,11 @@ const configuration = {
   templateId: "test-template",
   templateVersion: "v1",
   dateField: "Agreement.Date",
+  countersigner: {
+    company: "Example Countersigner Inc.",
+    name: "Grace Hopper",
+    title: "Rear Admiral",
+  },
 };
 const owner = { organizationId, userId: user.id, email: user.email };
 const providerDocument = (status = "document.draft", overrides = {}) => ({
@@ -55,6 +61,11 @@ const json = (value: unknown) =>
     headers: { "Content-Type": "application/json" },
   });
 const collection = `/api/v1/organizations/${organizationId}/nda-documents`;
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+});
 
 describe("PandaDoc NDA", () => {
   it("does not retry a conflicting document creation", async () => {
@@ -99,7 +110,55 @@ describe("PandaDoc NDA", () => {
     ).toBe(true);
   });
 
-  it("creates a customer-specific document without sending email and fills the configured date", async () => {
+  it("reports a document PandaDoc is still preparing after a bounded wait", async () => {
+    vi.useFakeTimers();
+    const request = vi.fn<typeof fetch>(
+      async () =>
+        new Response(
+          JSON.stringify({ id: "test-document", status: "document.uploaded" }),
+          { status: 409 },
+        ),
+    );
+    const pending = createPandaDocNda(configuration, request).read(
+      owner,
+      "test-document",
+    );
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    await expect(pending).resolves.toEqual({
+      id: "test-document",
+      status: "preparing",
+      details: null,
+      completed_at: null,
+      customer_completed: false,
+    });
+    expect(request.mock.calls.length).toBeLessThanOrEqual(20);
+  });
+
+  it("does not open signing for a document PandaDoc is still preparing", async () => {
+    vi.useFakeTimers();
+    const request = vi.fn<typeof fetch>(
+      async () =>
+        new Response(JSON.stringify({ status: "document.uploaded" }), {
+          status: 409,
+        }),
+    );
+    const pending = createPandaDocNda(configuration, request).session(
+      owner,
+      "test-document",
+    );
+    const rejection = expect(pending).rejects.toMatchObject({
+      problem: { status: 409 },
+    });
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    await rejection;
+    expect(
+      request.mock.calls.every(([url]) => String(url).endsWith("/details")),
+    ).toBe(true);
+  });
+
+  it("creates a customer-specific draft with the configured date and countersigner", async () => {
     const request = vi
       .fn<typeof fetch>()
       .mockResolvedValue(json(providerDocument("document.uploaded")));
@@ -120,9 +179,9 @@ describe("PandaDoc NDA", () => {
       "Customer.Name": { value: details.name },
       "Customer.Title": { value: details.title },
       "Customer.Email": { value: details.email },
-      "PostHog.Company": { value: "PostHog Inc." },
-      "PostHog.Signer": { value: "James Hawkins" },
-      "PostHog.Title": { value: "Co-CEO" },
+      "PostHog.Company": { value: "Example Countersigner Inc." },
+      "PostHog.Signer": { value: "Grace Hopper" },
+      "PostHog.Title": { value: "Rear Admiral" },
     });
     expect(body.fields["Agreement.Date"].value).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     expect(body.tokens).toContainEqual({
@@ -132,7 +191,7 @@ describe("PandaDoc NDA", () => {
     expect(JSON.stringify(body)).not.toContain(configuration.apiKey);
   });
 
-  it("enables email notifications and creates a short-lived session for the signed-in signer", async () => {
+  it("sends the draft with PandaDoc email notifications and creates a short-lived session for the signed-in signer", async () => {
     const request = vi
       .fn<typeof fetch>()
       .mockResolvedValueOnce(json(providerDocument()))
@@ -151,23 +210,6 @@ describe("PandaDoc NDA", () => {
     expect(JSON.parse(String(request.mock.calls[2]?.[1]?.body))).toEqual({
       recipient: user.email,
       lifetime: 900,
-    });
-  });
-
-  it("keeps sandbox delivery silent when explicitly configured", async () => {
-    const request = vi
-      .fn<typeof fetch>()
-      .mockResolvedValueOnce(json(providerDocument()))
-      .mockResolvedValueOnce(new Response(null, { status: 204 }))
-      .mockResolvedValueOnce(json({ id: "temporary-session" }));
-    const provider = createPandaDocNda(
-      { ...configuration, silent: true },
-      request,
-    );
-    await provider.session(owner, "test-document");
-
-    expect(JSON.parse(String(request.mock.calls[1]?.[1]?.body))).toEqual({
-      silent: true,
     });
   });
 
@@ -226,11 +268,13 @@ describe("PandaDoc NDA", () => {
       json(
         providerDocument("document.completed", {
           recipients: [{ email: user.email, has_completed: true }],
+          date_completed: "2026-08-16T12:00:00Z",
         }),
       ),
     );
     expect(await provider.read(owner, "test-document")).toMatchObject({
       status: "completed",
+      completed_at: "2026-08-16T12:00:00.000Z",
     });
   });
 
@@ -300,7 +344,8 @@ describe("PandaDoc NDA", () => {
     ).rejects.toMatchObject({ problem: { status: 503 } });
   });
 
-  it("returns a safe unavailable error without leaking the provider response or API key", async () => {
+  it("returns a safe unavailable error and logs only the provider status", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
     const request = vi
       .fn<typeof fetch>()
       .mockResolvedValue(
@@ -314,25 +359,43 @@ describe("PandaDoc NDA", () => {
         detail: "NDA signing is temporarily unavailable. Please retry.",
       },
     });
+
+    const lines = log.mock.calls.map(([line]) => JSON.parse(String(line)));
+    expect(lines).toContainEqual(
+      expect.objectContaining({
+        level: "warn",
+        event: "provider_request_failed",
+        dependency: "pandadoc",
+        status: 401,
+      }),
+    );
+    expect(JSON.stringify(lines)).not.toContain("sensitive provider response");
+    expect(JSON.stringify(lines)).not.toContain(configuration.apiKey);
   });
 });
 
 describe("NDA document authorization", () => {
   const provider = {
+    templateVersion: "v1",
     create: vi.fn(async () => ({
       id: "test-document",
       status: "preparing" as const,
       details,
+      completed_at: null,
       customer_completed: false,
     })),
     read: vi.fn(),
     session: vi.fn(),
   };
-  const app = (auth = authenticated, membership = organizationSummary) =>
+  const app = (
+    auth = authenticated,
+    membership = organizationSummary,
+    organizations = onboardingOrganizations({}, membership),
+  ) =>
     createTestApp({
       auth,
       ndaDocuments: provider,
-      services: { organizations: { listForUser: async () => [membership] } },
+      services: { organizations },
     });
 
   it("requires a human session", async () => {
@@ -347,7 +410,9 @@ describe("NDA document authorization", () => {
   ])(
     "rejects impersonation before calling PandaDoc: $method $suffix",
     async ({ method, suffix, body }) => {
-      Object.values(provider).forEach((callback) => callback.mockClear());
+      [provider.create, provider.read, provider.session].forEach((callback) =>
+        callback.mockClear(),
+      );
       const response = await app({
         ...authenticated,
         resolveSession: async () => ({
@@ -364,7 +429,7 @@ describe("NDA document authorization", () => {
             }),
       });
       expect(response.status).toBe(403);
-      Object.values(provider).forEach((callback) =>
+      [provider.create, provider.read, provider.session].forEach((callback) =>
         expect(callback).not.toHaveBeenCalled(),
       );
     },
@@ -410,5 +475,44 @@ describe("NDA document authorization", () => {
     expect(response.status).toBe(201);
     expect(response.headers.get("Cache-Control")).toBe("no-store");
     expect(provider.create).toHaveBeenLastCalledWith(owner, details);
+  });
+
+  it("records the organization's NDA once PandaDoc confirms completion", async () => {
+    const organizations = onboardingOrganizations();
+    provider.read.mockResolvedValueOnce({
+      id: "test-document",
+      status: "completed",
+      details,
+      completed_at: recordedNda.signed_at,
+      customer_completed: true,
+    });
+    const response = await app(
+      authenticated,
+      organizationSummary,
+      organizations,
+    ).request(`${collection}/test-document`);
+
+    expect(response.status).toBe(200);
+    expect(organizations.recordOnboardingNda).toHaveBeenCalledWith(
+      user.id,
+      organizationId,
+      recordedNda,
+    );
+  });
+
+  it("does not record an NDA that is still awaiting signatures", async () => {
+    const organizations = onboardingOrganizations();
+    provider.read.mockResolvedValueOnce({
+      id: "test-document",
+      status: "ready",
+      details,
+      completed_at: null,
+      customer_completed: true,
+    });
+    await app(authenticated, organizationSummary, organizations).request(
+      `${collection}/test-document`,
+    );
+
+    expect(organizations.recordOnboardingNda).not.toHaveBeenCalled();
   });
 });

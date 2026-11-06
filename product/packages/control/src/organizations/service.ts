@@ -1,7 +1,11 @@
 import { v7 as uuidv7 } from "uuid";
 
 import {
+  ContactChannelSchema,
   UpdateOrganizationSchema,
+  type ContactChannel,
+  type OrganizationNda,
+  type OrganizationOnboarding,
   type UpdateOrganization,
 } from "@gradiated/contracts";
 import { companyEmailDomain } from "./email-domains.js";
@@ -77,7 +81,24 @@ export interface OrganizationService {
     name?: string | undefined,
   ): Promise<UserOrganization>;
   ensureForNewUser(user: SignupUser): Promise<UserOrganization>;
+  getOnboarding(
+    userId: string,
+    organizationId: string,
+  ): Promise<OrganizationOnboarding>;
+  recordOnboardingNda(
+    userId: string,
+    organizationId: string,
+    nda: OrganizationNda,
+  ): Promise<OrganizationOnboarding>;
+  submitOnboarding(
+    userId: string,
+    organizationId: string,
+    contactChannel: ContactChannel,
+  ): Promise<{ submitted: boolean; onboarding: OrganizationOnboarding }>;
 }
+
+const organizationNotFound = () =>
+  new ControlServiceError("not_found", "The organization was not found.");
 
 export const createOrganizationService = (
   database: ControlDatabase,
@@ -231,6 +252,37 @@ export const createOrganizationService = (
     },
 
     ensurePersonalForUser,
+
+    async getOnboarding(userId, organizationId) {
+      await requireOrganizationAdmin(database, { userId, organizationId });
+
+      const onboarding = await records.readOnboarding(organizationId);
+      if (!onboarding) throw organizationNotFound();
+
+      return onboarding;
+    },
+
+    async recordOnboardingNda(userId, organizationId, nda) {
+      await requireOrganizationAdmin(database, { userId, organizationId });
+
+      const onboarding = await records.recordOnboardingNda(organizationId, nda);
+      if (!onboarding) throw organizationNotFound();
+
+      return onboarding;
+    },
+
+    async submitOnboarding(userId, organizationId, contactChannel) {
+      await requireOrganizationAdmin(database, { userId, organizationId });
+
+      const result = await records.submitOnboarding(organizationId, {
+        submitted_at: new Date().toISOString(),
+        submitted_by: userId,
+        contact_channel: ContactChannelSchema.parse(contactChannel),
+      });
+      if (!result) throw organizationNotFound();
+
+      return result;
+    },
 
     async ensureForNewUser(user) {
       const joinedId =

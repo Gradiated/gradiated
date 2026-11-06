@@ -3,7 +3,7 @@
   "info": {
     "title": "Gradiated API",
     "version": "0.1.0",
-    "description": "The Gradiated API covers inference, model discovery, workspaces, billing, API keys and usage. Inference endpoints use workspace API keys (Authorization: Bearer or x-api-key). These keys do not authorize workspace administration. Protected management endpoints require a signed-in user session and the appropriate organization role; management API keys are not currently supported. Management request bodies are limited to 1 MiB (413 if exceeded). Management per-IP limits are 300 requests/minute, or 10/minute for waitlist signups, per API process. Rate-limited requests return 429 with Retry-After. Stripe webhooks are excluded from the IP rate limits."
+    "description": "The Gradiated API covers inference, model discovery, workspaces, billing, API keys and usage. Inference endpoints use workspace API keys (Authorization: Bearer or x-api-key). These keys do not authorize workspace administration. Protected management endpoints require a signed-in user session and the appropriate organization role; management API keys are not currently supported. Management request bodies are limited to 1 MiB (413 if exceeded). Management per-IP limits are 300 requests/minute, or 10/minute for waitlist signups, per API process. Engineer onboarding routes have lower per-route limits. Rate-limited requests return 429 with Retry-After. Stripe webhooks are excluded from the IP rate limits."
   },
   "servers": [
     {
@@ -2014,6 +2014,14 @@
           "details": {
             "$ref": "#/components/schemas/NdaDetails"
           },
+          "completed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "When PandaDoc recorded every required signature."
+          },
           "customer_completed": {
             "type": "boolean",
             "description": "Whether the customer recipient has finished; this alone does not complete a two-party NDA."
@@ -2023,11 +2031,15 @@
           "id",
           "status",
           "details",
+          "completed_at",
           "customer_completed"
         ]
       },
       "NdaDetails": {
-        "type": "object",
+        "type": [
+          "object",
+          "null"
+        ],
         "properties": {
           "company": {
             "type": "string",
@@ -2067,7 +2079,8 @@
           "title",
           "email"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "The signer details bound to the document; null while PandaDoc is still preparing it."
       },
       "NdaSigningSession": {
         "type": "object",
@@ -2116,6 +2129,14 @@
             "type": "string",
             "description": "The GitHub account where the customer installed Gradiated."
           },
+          "repository_selection": {
+            "type": "string",
+            "enum": [
+              "all",
+              "selected"
+            ],
+            "description": "Whether the installation covers all or selected repositories."
+          },
           "repository_count": {
             "type": "integer",
             "exclusiveMinimum": 0,
@@ -2125,6 +2146,7 @@
         "required": [
           "id",
           "account",
+          "repository_selection",
           "repository_count"
         ]
       },
@@ -2159,6 +2181,167 @@
           "email",
           "status"
         ]
+      },
+      "EngineerOnboarding": {
+        "type": "object",
+        "properties": {
+          "nda": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "document_id": {
+                "type": "string",
+                "description": "The completed PandaDoc document."
+              },
+              "signed_at": {
+                "type": "string",
+                "format": "date-time",
+                "example": "2026-08-16T12:00:00.000Z"
+              }
+            },
+            "required": [
+              "document_id",
+              "signed_at"
+            ],
+            "description": "The organization's completed NDA, once PandaDoc confirms it."
+          },
+          "slack": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "channel_id": {
+                "type": "string"
+              },
+              "channel_name": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "active"
+                ],
+                "description": "Active once Slack confirmed an invitation."
+              },
+              "invited_email": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "email"
+              },
+              "invited_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "example": "2026-08-16T12:00:00.000Z"
+              }
+            },
+            "required": [
+              "channel_id",
+              "channel_name",
+              "status",
+              "invited_email",
+              "invited_at"
+            ],
+            "description": "The organization's Slack Connect channel."
+          },
+          "github_installations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                },
+                "account": {
+                  "type": "string"
+                },
+                "repository_selection": {
+                  "type": "string",
+                  "enum": [
+                    "all",
+                    "selected"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "account",
+                "repository_selection"
+              ]
+            },
+            "description": "GitHub App installations recorded at submission."
+          },
+          "contact_channel": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "slack",
+              "email",
+              null
+            ],
+            "description": "How the customer prefers Gradiated engineers to contact them."
+          },
+          "submitted_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z",
+            "description": "When the organization started its project; null until submitted."
+          }
+        },
+        "required": [
+          "nda",
+          "slack",
+          "github_installations",
+          "contact_channel",
+          "submitted_at"
+        ]
+      },
+      "EngineerOnboardingSubmission": {
+        "type": "object",
+        "properties": {
+          "contact_channel": {
+            "type": "string",
+            "enum": [
+              "slack",
+              "email"
+            ],
+            "description": "How the customer prefers Gradiated engineers to contact them."
+          },
+          "github_installation_id": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "The installation to verify with GitHub before submitting."
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 3000,
+            "description": "Optional context for Gradiated engineers. Delivered with the submission and not stored."
+          },
+          "nda_document_id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_-]{1,100}$",
+            "description": "A completed NDA for this organization and signed-in user. Needed only until the organization's NDA is recorded."
+          }
+        },
+        "required": [
+          "contact_channel",
+          "github_installation_id"
+        ],
+        "additionalProperties": false
       },
       "MemberList": {
         "type": "object",

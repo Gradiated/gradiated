@@ -2,6 +2,7 @@ import type { HttpBindings } from "@hono/node-server";
 
 import type {
   CatalogBillingService,
+  IntegrationService,
   MemberService,
   OrganizationService,
   UsageService,
@@ -57,8 +58,14 @@ export interface ApiServices {
   >;
   organizations: Pick<
     OrganizationService,
-    "listForUser" | "createForUser" | "updateForUser"
+    | "listForUser"
+    | "createForUser"
+    | "updateForUser"
+    | "getOnboarding"
+    | "recordOnboardingNda"
+    | "submitOnboarding"
   >;
+  integrations: IntegrationService;
   members: MemberService;
   usage: UsageService;
   traces: TraceService;

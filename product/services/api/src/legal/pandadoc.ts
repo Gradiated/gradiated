@@ -1,5 +1,13 @@
 import { z } from "@hono/zod-openapi";
 import { ApiProblem, problems } from "../http/problems.js";
+import { serviceLog } from "../logging.js";
+
+export const NdaDocumentIdSchema = z
+  .string()
+  .regex(/^[a-zA-Z0-9_-]{1,100}$/)
+  .describe(
+    "A completed NDA for this organization and signed-in user. Needed only until the organization's NDA is recorded.",
+  );
 
 export const NdaDetailsSchema = z
   .strictObject({
@@ -49,7 +57,13 @@ export const NdaDocumentSchema = z
       .describe(
         "Authoritative provider status; completed requires all required participants.",
       ),
-    details: NdaDetailsSchema,
+    details: NdaDetailsSchema.nullable().describe(
+      "The signer details bound to the document; null while PandaDoc is still preparing it.",
+    ),
+    completed_at: z.iso
+      .datetime({ offset: true })
+      .nullable()
+      .describe("When PandaDoc recorded every required signature."),
     customer_completed: z
       .boolean()
       .describe(
@@ -61,6 +75,7 @@ export const NdaDocumentSchema = z
 const ProviderDocumentSchema = z.object({
   id: z.string().regex(/^[a-zA-Z0-9_-]{1,100}$/),
   status: z.string(),
+  date_completed: z.string().nullish(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   recipients: z
     .array(
@@ -80,6 +95,7 @@ const ProviderDocumentSchema = z.object({
 });
 
 export type NdaDetails = z.infer<typeof NdaDetailsSchema>;
+export type NdaDocument = z.infer<typeof NdaDocumentSchema>;
 type Owner = { organizationId: string; userId: string; email: string };
 
 // PandaDoc limits each metadata value to 100 characters.
@@ -125,71 +141,111 @@ export interface PandaDocConfiguration {
   templateId: string;
   templateVersion: string;
   dateField?: string | undefined;
-  silent?: boolean;
+  countersigner: { company: string; name: string; title: string };
 }
+
+const PREPARING_DEADLINE_MS = 10_000;
+const PREPARING_RETRY_MS = 500;
+const preparing = Symbol("preparing");
+
+const isUploading = (result: unknown) =>
+  typeof result === "object" &&
+  result !== null &&
+  "status" in result &&
+  result.status === "document.uploaded";
 
 export const createPandaDocNda = (
   configuration: PandaDocConfiguration,
   request: typeof fetch = fetch,
 ) => {
-  const call = async (
-    path: string,
-    body?: unknown,
-    attempt = 0,
-  ): Promise<unknown> => {
+  const unavailable = (reason: string, status?: number) => {
+    serviceLog("warn", "provider_request_failed", {
+      dependency: "pandadoc",
+      reason,
+      ...(status === undefined ? {} : { status }),
+    });
+
+    return new ApiProblem(
+      problems.unavailable(
+        "NDA signing is temporarily unavailable. Please retry.",
+      ),
+    );
+  };
+
+  const send = async (path: string, body?: unknown, timeoutMs = 15_000) => {
+    let response: Response;
     try {
-      const response = await request(
-        `https://api.pandadoc.com/public/v1${path}`,
-        {
-          method: body === undefined ? "GET" : "POST",
-          headers: {
-            Authorization: `API-Key ${configuration.apiKey}`,
-            "Content-Type": "application/json",
-          },
-          ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-          signal: AbortSignal.timeout(15_000),
-          redirect: "error",
+      response = await request(`https://api.pandadoc.com/public/v1${path}`, {
+        method: body === undefined ? "GET" : "POST",
+        headers: {
+          Authorization: `API-Key ${configuration.apiKey}`,
+          "Content-Type": "application/json",
         },
-      );
-
-      if (response.status === 404)
-        throw new ApiProblem(problems.notFound("NDA document not found."));
-
-      const text = await response.text();
-      const result = text ? (JSON.parse(text) as unknown) : {};
-
-      if (
-        response.status === 409 &&
-        body === undefined &&
-        attempt < 10 &&
-        typeof result === "object" &&
-        result !== null &&
-        "status" in result &&
-        result.status === "document.uploaded"
-      ) {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        return call(path, undefined, attempt + 1);
-      }
-
-      if (!response.ok) throw new Error("PandaDoc request failed");
-
-      return result;
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+        signal: AbortSignal.timeout(timeoutMs),
+        redirect: "error",
+      });
     } catch (error) {
-      if (error instanceof ApiProblem) throw error;
-
-      throw new ApiProblem(
-        problems.unavailable(
-          "NDA signing is temporarily unavailable. Please retry.",
-        ),
+      throw unavailable(
+        error instanceof Error && error.name === "TimeoutError"
+          ? "timeout"
+          : "network",
       );
+    }
+
+    if (response.status === 404) {
+      serviceLog("warn", "provider_request_failed", {
+        dependency: "pandadoc",
+        reason: "not_found",
+        status: 404,
+      });
+      throw new ApiProblem(problems.notFound("NDA document not found."));
+    }
+
+    let result: unknown;
+    try {
+      const text = await response.text();
+      result = text ? (JSON.parse(text) as unknown) : {};
+    } catch {
+      throw unavailable("invalid_response", response.status);
+    }
+
+    return { status: response.status, ok: response.ok, result };
+  };
+
+  const call = async (path: string, body: unknown) => {
+    const response = await send(path, body);
+    if (!response.ok) throw unavailable("http_error", response.status);
+
+    return response.result;
+  };
+
+  const readDetails = async (id: string) => {
+    const deadline = Date.now() + PREPARING_DEADLINE_MS;
+    const path = `/documents/${encodeURIComponent(id)}/details`;
+
+    for (;;) {
+      const response = await send(
+        path,
+        undefined,
+        Math.max(1, Math.min(15_000, deadline - Date.now())),
+      );
+      if (response.ok) return response.result;
+
+      if (response.status !== 409 || !isUploading(response.result))
+        throw unavailable("http_error", response.status);
+
+      if (Date.now() + PREPARING_RETRY_MS >= deadline) return preparing;
+
+      await new Promise((resolve) => setTimeout(resolve, PREPARING_RETRY_MS));
     }
   };
 
   const inspect = async (owner: Owner, id: string) => {
-    const result = ProviderDocumentSchema.safeParse(
-      await call(`/documents/${encodeURIComponent(id)}/details`),
-    );
+    const provided = await readDetails(id);
+    if (provided === preparing) return preparing;
+
+    const result = ProviderDocumentSchema.safeParse(provided);
 
     if (!result.success)
       throw new ApiProblem(
@@ -272,7 +328,17 @@ export const createPandaDocNda = (
   };
 
   const read = async (owner: Owner, id: string) => {
-    const { document, details } = await inspect(owner, id);
+    const inspected = await inspect(owner, id);
+    if (inspected === preparing)
+      return NdaDocumentSchema.parse({
+        id,
+        status: "preparing",
+        details: null,
+        completed_at: null,
+        customer_completed: false,
+      });
+
+    const { document, details } = inspected;
     const customerCompleted =
       document.recipients?.some(
         (recipient) =>
@@ -290,10 +356,18 @@ export const createPandaDocNda = (
             ? "ready"
             : "unavailable";
 
+    const completedAt = Date.parse(document.date_completed ?? "");
+
     return NdaDocumentSchema.parse({
       id: document.id,
       status,
       details,
+      completed_at:
+        status === "completed"
+          ? new Date(
+              Number.isNaN(completedAt) ? Date.now() : completedAt,
+            ).toISOString()
+          : null,
       customer_completed: customerCompleted,
     });
   };
@@ -316,9 +390,9 @@ export const createPandaDocNda = (
         "Customer.Name": details.name,
         "Customer.Title": details.title,
         "Customer.Email": details.email,
-        "PostHog.Company": "PostHog Inc.",
-        "PostHog.Signer": "James Hawkins",
-        "PostHog.Title": "Co-CEO",
+        "PostHog.Company": configuration.countersigner.company,
+        "PostHog.Signer": configuration.countersigner.name,
+        "PostHog.Title": configuration.countersigner.title,
       };
       const result = ProviderDocumentSchema.safeParse(
         await call("/documents", {
@@ -370,16 +444,25 @@ export const createPandaDocNda = (
         id: result.data.id,
         status: "preparing",
         details,
+        completed_at: null,
         customer_completed: false,
       });
     },
     read,
+    templateVersion: configuration.templateVersion,
     async session(owner: Owner, id: string) {
-      const { document } = await inspect(owner, id);
+      const inspected = await inspect(owner, id);
+      if (inspected === preparing)
+        throw new ApiProblem(
+          problems.conflict(
+            "The NDA is still being prepared. Refresh its status shortly.",
+          ),
+        );
 
+      const { document } = inspected;
       if (document.status === "document.draft")
         await call(`/documents/${encodeURIComponent(id)}/send`, {
-          silent: configuration.silent ?? false,
+          silent: false,
         });
       else if (!["document.sent", "document.viewed"].includes(document.status))
         throw new ApiProblem(

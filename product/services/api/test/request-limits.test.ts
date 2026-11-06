@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { createTestApp } from "./support.js";
+import { createTestApp, organizationId } from "./support.js";
 
 const ip = "192.0.2.1";
 const signup = {
@@ -86,6 +86,36 @@ describe("API request limits", () => {
       signature: "test",
     });
   });
+
+  it.each([
+    { method: "GET", path: "nda-documents/test-document", limit: 60 },
+    { method: "POST", path: "nda-documents", limit: 60 },
+    {
+      method: "POST",
+      path: "nda-documents/test-document/signing-sessions",
+      limit: 5,
+    },
+    { method: "POST", path: "slack-invitations", limit: 5 },
+    { method: "GET", path: "engineer-onboarding", limit: 60 },
+    { method: "POST", path: "engineer-onboarding/submission", limit: 5 },
+    { method: "GET", path: "github-installations", limit: 30 },
+  ])(
+    "limits engineer onboarding route $method $path per IP",
+    async ({ method, path, limit }) => {
+      const app = createTestApp();
+      const request = (address = ip) =>
+        app.request(`/api/v1/organizations/${organizationId}/${path}`, {
+          method,
+          headers: { "x-forwarded-for": address },
+        });
+
+      for (let i = 0; i < limit; i++)
+        expect((await request()).status).not.toBe(429);
+
+      expect((await request()).status).toBe(429);
+      expect((await request("192.0.2.2")).status).not.toBe(429);
+    },
+  );
 
   it.each([false, true])(
     "rejects oversized bodies before waitlist service work (declared length: %s)",

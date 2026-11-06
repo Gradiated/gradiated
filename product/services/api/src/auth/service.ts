@@ -17,6 +17,7 @@ import {
 } from "./errors.js";
 
 import type { MagicLinkSender, OtpCodeSender } from "../email/auth-messages.js";
+import { ApiProblem, problems } from "../http/problems.js";
 import type { AuthService } from "../types.js";
 
 export interface AuthConfiguration {
@@ -35,6 +36,39 @@ export interface AuthConfiguration {
   sendOtp: OtpCodeSender;
   trustedOrigins: string[];
 }
+
+type GithubAccountApi = {
+  listUserAccounts(input: {
+    headers: Headers;
+  }): Promise<{ id: string; providerId: string }[]>;
+  getAccessToken(input: {
+    headers: Headers;
+    body: { accountId: string };
+  }): Promise<{ accessToken?: string | undefined }>;
+};
+
+export const readGithubAccessToken = async (
+  api: GithubAccountApi,
+  headers: Headers,
+) => {
+  const accounts = await api.listUserAccounts({ headers });
+  const github = accounts.filter((account) => account.providerId === "github");
+  if (!github[0]) return null;
+
+  if (github.length > 1)
+    throw new ApiProblem(
+      problems.conflict(
+        "More than one GitHub account is linked to this user. Contact Gradiated to unlink one.",
+      ),
+    );
+
+  const result = await api.getAccessToken({
+    headers,
+    body: { accountId: github[0].id },
+  });
+
+  return result.accessToken ?? null;
+};
 
 const DEVELOPMENT_TRUSTED_ORIGINS = [
   "http://localhost:5173",
@@ -125,26 +159,8 @@ export const createAuthService = (
   });
 
   return {
-    githubAccessToken: async (headers) => {
-      if (!configuration.github) return null;
-
-      try {
-        const accounts = await auth.api.listUserAccounts({ headers });
-        const github = accounts.filter(
-          (account) => account.providerId === "github",
-        );
-        if (github.length !== 1) return null;
-
-        const result = await auth.api.getAccessToken({
-          headers,
-          body: { accountId: github[0]!.id },
-        });
-
-        return result.accessToken;
-      } catch {
-        return null;
-      }
-    },
+    githubAccessToken: async (headers) =>
+      configuration.github ? readGithubAccessToken(auth.api, headers) : null,
     handler: (request) => auth.handler(request),
     resolveSession: async (headers) => {
       const result = await auth.api

@@ -1,0 +1,118 @@
+# API
+
+The TypeScript HTTP API for the console and website. Routes are authored with
+described Zod schemas and generate the OpenAPI document and browser clients.
+
+## Engineer onboarding
+
+The website's `/get-started/` flow uses organization-owned routes. Each
+requires a verified active organization admin, rejects staff impersonation and
+returns `Cache-Control: no-store`. Local development calls the same providers:
+set the switches and keys below in the repository-root `.env` and run the
+`api`, `console` and `website` mprocs processes, with test credentials.
+Production credentials belong in the API secret `gradiated/prod/product/api`
+(`us-east-1`); preserve its other entries and never use a `VITE_` variable.
+
+| Route (under `/api/v1/organizations/{organization_id}`) | Purpose                                                                             | Limit per minute |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------- | ---------------- |
+| `GET engineer-onboarding`                               | Recorded NDA, Slack channel, GitHub installations, contact channel, submission time | 60               |
+| `POST engineer-onboarding/submission`                   | Starts the project once                                                             | 5                |
+| `POST nda-documents`, `GET`/`POST …/signing-sessions`   | PandaDoc document and embedded signing                                              | 60; sessions 5   |
+| `POST slack-invitations`                                | Creates the channel and sends a Slack Connect invite                                | 5                |
+| `GET github-installations`                              | Lists the user's verified Gradiated installations                                   | 30               |
+
+The submission requires a recorded NDA, rechecks the chosen GitHub installation
+with the user's token, and requires a Slack channel when `contact_channel` is
+`slack`. It records the submission once; a repeat returns the current state with
+200 and sends nothing. The first submission posts nonempty notes to the Slack
+channel and emails the team. Notes are not stored. Conflicts carry a `code`:
+`nda_required`, `github_authorization_required`, `github_installation_unverified`
+or `slack_channel_required`.
+
+Progress is stored in `organizations.metadata.onboarding` (NDA, submission,
+contact channel) and the `integrations` table (Slack channel, GitHub
+installations); see [DATA_MODEL.md](../../../docs/DATA_MODEL.md).
+
+| Setting                            | Value                                                                            |
+| ---------------------------------- | -------------------------------------------------------------------------------- |
+| `ENGINEER_ONBOARDING_NOTIFY_EMAIL` | Optional team address for submissions, sent through Resend; unset logs a warning |
+
+### PandaDoc mutual NDA
+
+| Setting                                           | Value                                                                |
+| ------------------------------------------------- | -------------------------------------------------------------------- |
+| `PANDADOC_NDA_ENABLED`                            | `true` only after the checks below                                   |
+| `PANDADOC_API_KEY`                                | Key from the workspace that owns the template                        |
+| `PANDADOC_NDA_TEMPLATE_ID`                        | Defaults to the approved template; use a separate template for tests |
+| `PANDADOC_NDA_TEMPLATE_VERSION`                   | Approved revision; change it when the legal text changes             |
+| `PANDADOC_NDA_DATE_FIELD`                         | Optional date Merge Field, for example `Agreement.Date`              |
+| `PANDADOC_NDA_COUNTERSIGNER_{COMPANY,NAME,TITLE}` | Pre-filled PostHog party details                                     |
+
+The API creates the document, waits for draft readiness, sends it and opens a
+15-minute embedded signing session for the signed-in signer. `details` is null
+while PandaDoc prepares the document. Reading a completed document records it
+as the organization's NDA, replaced only for a new template version. The
+countersigner settings fill the PostHog party (defaults: PostHog Inc., James
+Hawkins, Co-CEO). Document creation is not retried automatically; after an uncertain
+response, check PandaDoc for a draft before creating another.
+
+Template setup:
+
+1. A role named `Customer` with a required signature field and signing date.
+2. Text Merge Fields `Customer.Company`, `Customer.Address`, `Customer.Name`,
+   `Customer.Title`, `Customer.Email`, `PostHog.Company`, `PostHog.Signer` and
+   `PostHog.Title`.
+3. Agree the PostHog countersignature arrangement with the authorized signer.
+   The API never fills a signature field.
+4. In the template recipient permissions, enable **Email a PDF on completion**.
+   In **Recipient experience → Document completion**, enable completion emails
+   with the PDF attached.
+
+Before enabling, test with a sandbox key: create, send, embedded signing,
+completion with all parties, a pending countersignature, changed signer
+details, an expired session, cross-organization access and a provider outage.
+
+### Slack Connect
+
+| Setting                   | Value                                        |
+| ------------------------- | -------------------------------------------- |
+| `SLACK_CONNECT_ENABLED`   | `true` only after the checks below           |
+| `SLACK_BOT_TOKEN`         | Bot token of the internal Slack app          |
+| `SLACK_ENGINEER_USER_IDS` | Comma-separated member IDs added to channels |
+
+Create an internal app from `slack-app-manifest.json` and install it in the
+Gradiated workspace with the bot scopes `channels:manage`, `channels:read`,
+`conversations.connect:write` and `chat:write`. Reinstall after changing
+scopes. Confirm the workspace's Slack Connect plan and approval rules with its
+owner.
+
+`POST …/slack-invitations` creates one public `ext-<team>-gradiated` channel
+per organization, adds the engineers and emails a Slack Connect invitation.
+Later invitations reuse the organization's channel and ignore `channel_name`.
+A taken name returns 409 `slack_channel_name_taken`. An organization may send
+one invitation per 10 minutes; sooner returns 429 `slack_invitation_cooldown`
+with `Retry-After`. Submission notes are posted as plain-text blocks. Mutating
+Slack calls are not retried automatically.
+
+Before enabling, test channel creation, engineer membership, invitation
+delivery and acceptance, and an explicit retry with an authorized external
+recipient.
+
+### GitHub App installation
+
+Set `GITHUB_INSTALLATIONS_ENABLED=true`. Verification reuses the **Gradiated**
+GitHub App (`gradiated`) OAuth credentials in `gradiated/prod/product/github-auth`;
+confirm they belong to that app. The app needs read-only Contents permission.
+Customers install it from `https://github.com/apps/gradiated/installations/new`.
+
+`GET …/github-installations` uses the signed-in user's linked GitHub token to
+list installations of the app, rejects suspended installations or those
+without Contents access, and requires at least one repository the user and app
+can both reach. Each item reports `repository_selection` (`all` or `selected`).
+The submission records the verified installation as an organization
+integration. It is not yet an authorization for background repository access,
+which needs installation credentials and lifecycle webhooks.
+
+Before enabling, test Google, GitHub and email sign-in with account linking,
+selected repositories, a pending owner approval, suspension, uninstallation and
+repository revocation.

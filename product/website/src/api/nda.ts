@@ -1,7 +1,7 @@
 import type { components } from "./schema";
 import { api, requireData } from "./client";
 
-export type NdaDetails = components["schemas"]["NdaDetails"];
+export type NdaDetails = NonNullable<components["schemas"]["NdaDetails"]>;
 export type NdaDocument = components["schemas"]["NdaDocument"];
 
 export const createNdaDocument = (

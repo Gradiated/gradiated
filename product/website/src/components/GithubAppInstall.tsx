@@ -1,50 +1,44 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createAuthClient } from "better-auth/react";
 import { CheckCircle2, ExternalLink } from "lucide-react";
 import { getGithubInstallations } from "../api/github";
-import { productApiBaseUrl } from "../api/client";
+import { authClient } from "../api/auth";
 import type { components } from "../api/schema";
+import type { VerifiedInstallation } from "../onboarding";
 
-export type GithubInstallation = components["schemas"]["GithubInstallation"];
-const authClient = createAuthClient({ baseURL: productApiBaseUrl });
+type GithubInstallation = components["schemas"]["GithubInstallation"];
 
 export const GithubAppInstall = ({
   organizationId,
   ndaDocumentId,
-  demo,
-  company,
+  saved,
   onVerified,
 }: {
   organizationId: string;
-  ndaDocumentId: string | null;
-  demo: boolean;
-  company: string;
-  onVerified: (installation: GithubInstallation | null) => void;
+  ndaDocumentId?: string;
+  saved: VerifiedInstallation | null;
+  onVerified: (installation: VerifiedInstallation | null) => void;
 }) => {
   const [busy, setBusy] = useState(false);
   const [opened, setOpened] = useState(false);
-  const [status, setStatus] = useState("not_installed");
+  const [status, setStatus] = useState(saved ? "installed" : "not_installed");
   const [installations, setInstallations] = useState<GithubInstallation[]>([]);
-  const [selected, setSelected] = useState<GithubInstallation | null>(null);
+  const [selected, setSelected] = useState<VerifiedInstallation | null>(saved);
   const [error, setError] = useState("");
   const [authorizationUrl, setAuthorizationUrl] = useState("");
   const callback = useRef(onVerified);
   callback.current = onVerified;
+  const savedInstallation = useRef(saved);
   const active = useRef(true);
 
   const check = useCallback(
     async (id?: number) => {
-      callback.current(null);
-      if (demo || !ndaDocumentId) return;
-
       setBusy(true);
       setError("");
       try {
-        const result = await getGithubInstallations(
-          organizationId,
+        const result = await getGithubInstallations(organizationId, {
           ndaDocumentId,
-          id,
-        );
+          installationId: id,
+        });
         if (!active.current) return;
 
         setStatus(result.status);
@@ -56,6 +50,7 @@ export const GithubAppInstall = ({
       } catch (error) {
         if (active.current) {
           setSelected(null);
+          callback.current(null);
           setError(
             error instanceof Error ? error.message : "Could not check GitHub.",
           );
@@ -64,28 +59,27 @@ export const GithubAppInstall = ({
         if (active.current) setBusy(false);
       }
     },
-    [organizationId, ndaDocumentId, demo],
+    [organizationId, ndaDocumentId],
   );
 
   useEffect(() => {
     active.current = true;
-    callback.current(null);
-    if (!demo) void check();
+    void check(savedInstallation.current?.id);
 
     return () => {
       active.current = false;
     };
-  }, [check, demo]);
+  }, [check]);
 
   useEffect(() => {
-    if (!opened || demo) return;
+    if (!opened) return;
 
     const focus = () => {
       void check();
     };
     window.addEventListener("focus", focus);
     return () => window.removeEventListener("focus", focus);
-  }, [opened, demo, check]);
+  }, [opened, check]);
 
   const authorize = async () => {
     const popup = window.open("about:blank", "_blank");
@@ -138,31 +132,10 @@ export const GithubAppInstall = ({
       </a>
       {selected ? (
         <p role="status">
-          <CheckCircle2 size={16} /> {demo ? "Preview: installed" : "Installed"}{" "}
-          · {selected.account} · {selected.repository_count}{" "}
+          <CheckCircle2 size={16} /> Installed · {selected.account} ·{" "}
+          {selected.repository_count}{" "}
           {selected.repository_count === 1 ? "repository" : "repositories"}
         </p>
-      ) : demo ? (
-        <>
-          <button
-            type="button"
-            className="gs-text-button"
-            onClick={() => {
-              const installation = {
-                id: 1,
-                account: company,
-                repository_count: 1,
-              };
-              setSelected(installation);
-              callback.current(installation);
-            }}
-          >
-            Simulate completed installation
-          </button>
-          <p className="gs-note">
-            Installation checks are simulated in this preview.
-          </p>
-        </>
       ) : (
         <>
           {status === "authorization_required" && (

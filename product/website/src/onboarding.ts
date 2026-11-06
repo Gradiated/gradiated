@@ -1,38 +1,22 @@
 import { z } from "zod";
+import type {
+  EngineerOnboarding,
+  EngineerOnboardingSubmission,
+} from "./api/engineer-onboarding";
+import type { CurrentUser } from "./api/queries";
 
-export const onboardingStorageKey = "gradiated-onboarding-preview-v3";
-
-export const mutualNda = {
-  templateUrl:
-    "https://docs.google.com/document/d/1K-1ErUrHbvNs8ed8CXSQIuA0xJdg55sC/edit",
-  company: "PostHog Inc.",
-  signer: "James Hawkins",
-  title: "Co-CEO",
-  address: "PostHog Inc., 2261 Market Street #4008\nSan Francisco, CA 94114",
-} as const;
+export const onboardingStorageKey = "gradiated-engineer-onboarding-v2";
 
 export const onboardingSchema = z.object({
-  introduced: z.boolean().default(false),
-  ndaDocumentId: z.string().max(100).nullable().default(null),
-  context: z.string().max(3000).default(""),
-  name: z.string().max(100).default(""),
-  email: z.string().max(200).default(""),
-  company: z.string().max(200).default(""),
-  channel: z.enum(["slack", "email"]).default("slack"),
-  slack: z.string().max(200).default(""),
-  slackEmail: z.string().max(200).nullable().default(null),
-  slackDeliveryMode: z.enum(["simulated", "live"]).nullable().default(null),
-  slackStatus: z.enum(["not_sent", "invited", "joined"]).default("not_sent"),
   legalName: z.string().max(200).default(""),
   legalAddress: z.string().max(1000).default(""),
   signerName: z.string().max(100).nullable().default(null),
   signerTitle: z.string().max(100).default(""),
-  signerEmail: z.string().max(200).nullable().default(null),
-  githubInstallationId: z.number().int().positive().nullable().default(null),
-  githubAccount: z.string().max(200).default(""),
-  githubRepositoryCount: z.number().int().nonnegative().default(0),
-  step: z.number().int().min(0).max(3).default(0),
-  submitted: z.boolean().default(false),
+  ndaDocumentId: z.string().max(100).nullable().default(null),
+  channel: z.enum(["slack", "email"]).default("slack"),
+  slackEmail: z.string().max(200).nullable().default(null),
+  slackChannelName: z.string().max(80).nullable().default(null),
+  context: z.string().max(3000).default(""),
 });
 
 export type OnboardingDraft = z.infer<typeof onboardingSchema>;
@@ -47,6 +31,12 @@ export const onboardingAccountSchema = z.object({
 
 export type OnboardingAccount = z.infer<typeof onboardingAccountSchema>;
 
+export type VerifiedInstallation = {
+  id: number;
+  account: string;
+  repository_count: number;
+};
+
 export const accountStorageKey = (account: OnboardingAccount) =>
   onboardingStorageKey +
   ":" +
@@ -54,132 +44,204 @@ export const accountStorageKey = (account: OnboardingAccount) =>
   ":" +
   encodeURIComponent(account.organizationId);
 
-export const reuseAccount = (
-  draft: OnboardingDraft,
-  account: OnboardingAccount,
-): OnboardingDraft => ({
-  ...draft,
-  name: account.name,
-  email: account.email,
-  signerEmail: account.email,
-  ...((draft.signerEmail ?? draft.email).trim().toLowerCase() !==
-  account.email.trim().toLowerCase()
-    ? { ndaDocumentId: null, step: 0, submitted: false }
-    : {}),
-  company: account.company,
-  legalName: draft.legalName || account.company,
-  ...(draft.email !== account.email || draft.company !== account.company
-    ? { slack: "", slackStatus: "not_sent" as const }
-    : {}),
-});
-
 export const emptyOnboarding = (): OnboardingDraft =>
   onboardingSchema.parse({});
 
-export const counterpartyDetails = (draft: OnboardingDraft) => ({
-  company: draft.legalName,
-  name: draft.signerName ?? draft.name,
-  title: draft.signerTitle ?? "",
-  address: draft.legalAddress ?? "",
-  email: draft.signerEmail ?? draft.email,
+export const restoreOnboardingDraft = (value: unknown): OnboardingDraft => {
+  const parsed = onboardingSchema.safeParse(value);
+
+  return parsed.success ? parsed.data : emptyOnboarding();
+};
+
+export const counterpartyDetails = (
+  draft: OnboardingDraft,
+  account: OnboardingAccount,
+) => ({
+  company: draft.legalName || account.company,
+  name: draft.signerName ?? account.name,
+  title: draft.signerTitle,
+  address: draft.legalAddress,
+  email: account.email,
 });
 
-export const firstIncompleteStep = (draft: OnboardingDraft): number | null => {
-  const signer = counterpartyDetails(draft);
+const ndaFields = [
+  "legalName",
+  "legalAddress",
+  "signerName",
+  "signerTitle",
+] as const;
 
-  if (
-    !signer.company.trim() ||
-    !signer.address.trim() ||
-    !signer.name.trim() ||
-    !signer.title.trim() ||
-    !z.email().safeParse(signer.email.trim()).success
-  )
-    return 0;
-
-  if (
-    !draft.company.trim() ||
-    !z.email().safeParse(draft.email.trim()).success ||
-    !draft.githubInstallationId
-  )
-    return 1;
-
-  return null;
-};
-
-export const restoreOnboardingDraft = (
-  value: unknown,
-  account: OnboardingAccount,
-): OnboardingDraft => {
-  const parsed = onboardingSchema.safeParse(value);
-  const draft = reuseAccount(
-    parsed.success ? parsed.data : emptyOnboarding(),
-    account,
-  );
-  const incomplete = firstIncompleteStep(draft);
-  if (!draft.ndaDocumentId) return { ...draft, step: 0, submitted: false };
-  if (incomplete !== null && draft.step > incomplete)
-    return { ...draft, step: incomplete, submitted: false };
-
-  return draft;
-};
-
-export const verifyOnboardingResume = async (
+export const changesNda = (
   draft: OnboardingDraft,
-  providers: {
-    readNda: () => Promise<{ status: string }>;
-    githubInstalled: (installationId: number) => Promise<boolean>;
-  },
-) => {
-  const unverified = { ndaVerified: false, githubVerified: false };
-  if (
-    !draft.ndaDocumentId ||
-    (await providers.readNda()).status !== "completed"
-  )
-    return { ...unverified, draft: { ...draft, step: 0, submitted: false } };
+  values: Partial<OnboardingDraft>,
+) => ndaFields.some((key) => key in values && values[key] !== draft[key]);
 
-  if (firstIncompleteStep(draft) === 0)
-    return {
-      ndaVerified: true,
-      githubVerified: false,
-      draft: { ...draft, step: 0, submitted: false },
-    };
+export const ndaReference = (
+  server: EngineerOnboarding,
+  draft: OnboardingDraft,
+) => (server.nda ? undefined : (draft.ndaDocumentId ?? undefined));
 
-  if (draft.step >= 2 || draft.submitted) {
-    if (
-      !draft.githubInstallationId ||
-      !(await providers.githubInstalled(draft.githubInstallationId))
-    )
-      return {
-        ndaVerified: true,
-        githubVerified: false,
-        draft: { ...draft, step: 1, submitted: false },
-      };
+export type OnboardingView = "introduction" | "steps" | "complete";
 
-    return { ndaVerified: true, githubVerified: true, draft };
-  }
+export const resumeView = (server: EngineerOnboarding): OnboardingView =>
+  server.submitted_at ? "complete" : server.nda ? "steps" : "introduction";
+
+export const resumeStep = (server: EngineerOnboarding) => (server.nda ? 1 : 0);
+
+export const stepLocked = (
+  index: number,
+  step: number,
+  unlocked: { nda: boolean; github: boolean },
+) =>
+  index > step ||
+  (index > 0 && !unlocked.nda) ||
+  (index > 1 && !unlocked.github);
+
+export type SubmitAction = "sign" | "github_required" | "advance" | "finish";
+
+export const submitAction = (
+  step: number,
+  {
+    ndaSigned,
+    installation,
+  }: { ndaSigned: boolean; installation: VerifiedInstallation | null },
+): SubmitAction => {
+  if (step === 0) return ndaSigned ? "advance" : "sign";
+
+  if (!installation) return "github_required";
+
+  return step === 2 ? "finish" : "advance";
+};
+
+export const slackInvited = (server: EngineerOnboarding) =>
+  server.slack?.status === "active";
+
+export const engineerSubmission = (
+  server: EngineerOnboarding,
+  draft: OnboardingDraft,
+  installation: VerifiedInstallation,
+): EngineerOnboardingSubmission => {
+  const notes = draft.context.trim();
+  const ndaDocumentId = ndaReference(server, draft);
 
   return {
-    ndaVerified: true,
-    githubVerified: false,
-    draft: { ...draft, step: 1 },
+    contact_channel: draft.channel,
+    github_installation_id: installation.id,
+    ...(notes ? { notes } : {}),
+    ...(ndaDocumentId ? { nda_document_id: ndaDocumentId } : {}),
   };
 };
 
-export const exampleOnboarding = (): OnboardingDraft => ({
-  ...emptyOnboarding(),
-  introduced: true,
-  context:
-    "We're building a support agent. It answers questions well, but sometimes calls the wrong tool when updating an order. We'd like to fix that, then see if we can run it on a cheaper model.",
-  name: "Alex Morgan",
-  email: "alex@acme.example",
-  company: "Acme",
-  slack: "",
-  legalName: "Acme, Inc.",
-  legalAddress: "123 Example Street\nSan Francisco, CA 94105",
-  signerName: "Alex Morgan",
-  signerTitle: "CTO",
-  signerEmail: "alex@acme.example",
-  githubInstallationId: 1,
-  githubAccount: "acme",
-  githubRepositoryCount: 1,
-});
+const submitProblems: Record<string, { step: number; message: string }> = {
+  nda_required: {
+    step: 0,
+    message: "Your mutual NDA is not complete. Review and sign it again.",
+  },
+  github_authorization_required: {
+    step: 1,
+    message: "Authorize GitHub so we can verify your installation.",
+  },
+  github_installation_unverified: {
+    step: 1,
+    message:
+      "GitHub did not confirm the selected installation. Check its repository access and try again.",
+  },
+  slack_channel_required: {
+    step: 1,
+    message: "Send the Slack invitation, or choose email instead.",
+  },
+};
+
+export const submitProblem = (code: string | undefined) =>
+  code ? submitProblems[code] : undefined;
+
+export const slackInvitationProblem = (code: string | undefined) => {
+  if (code === "slack_channel_name_taken")
+    return {
+      message: "That channel name is already in use. Choose another name.",
+      renameChannel: true,
+    };
+
+  if (code === "slack_invitation_cooldown")
+    return {
+      message:
+        "We just sent a Slack invitation. You can send another in about 10 minutes.",
+      renameChannel: false,
+    };
+
+  return undefined;
+};
+
+export const channelSummary = (
+  server: EngineerOnboarding,
+  draft: OnboardingDraft,
+) => {
+  if (draft.channel === "email") return "Email fallback · Slack unavailable";
+
+  if (!server.slack || !slackInvited(server))
+    return "Slack invitation not sent yet";
+
+  return `#${server.slack.channel_name} · invitation sent`;
+};
+
+export const confirmationMessage = (
+  server: EngineerOnboarding,
+  email: string,
+) => {
+  const meantime = "If in the meantime you want to chat or tell us anything, ";
+
+  if (
+    server.contact_channel !== "slack" ||
+    !server.slack ||
+    !slackInvited(server)
+  )
+    return {
+      plan: `Thank you, we've got everything we need. One of our researchers will have a look into your project now and will email a plan to ${email} as soon as possible, likely within a working day!`,
+      followUp: meantime + "email us at help@gradiated.com.",
+    };
+
+  return {
+    plan: "Thank you, we've got everything we need. One of our researchers will have a look into your project now and will suggest a plan on Slack with you as soon as possible, likely within a working day!",
+    followUp:
+      meantime +
+      `hop into #${server.slack.channel_name} and invite some colleagues to it. If you haven't joined yet, accept the Slack invitation we sent to ${server.slack.invited_email ?? email}.`,
+  };
+};
+
+type Membership = CurrentUser["organizations"][number];
+
+export type AccountChoice =
+  | { kind: "pick"; organizations: Membership[] }
+  | { kind: "missing" }
+  | { kind: "setup"; organizationId: string }
+  | { kind: "ready"; account: OnboardingAccount };
+
+export const chooseAccount = (
+  user: CurrentUser,
+  requestedOrganizationId: string | null,
+): AccountChoice => {
+  const memberships = user.organizations.filter(
+    (row) => row.status === "active",
+  );
+  if (!requestedOrganizationId && memberships.length > 1)
+    return { kind: "pick", organizations: memberships };
+
+  const organization = requestedOrganizationId
+    ? memberships.find((row) => row.id === requestedOrganizationId)
+    : memberships[0];
+  if (!organization) return { kind: "missing" };
+
+  if (organization.role === "admin" && !organization.onboarding_completed)
+    return { kind: "setup", organizationId: organization.id };
+
+  return {
+    kind: "ready",
+    account: {
+      userId: user.id,
+      organizationId: organization.id,
+      name: user.name,
+      email: user.email,
+      company: organization.name,
+    },
+  };
+};

@@ -1,13 +1,17 @@
 import { problemContent } from "@gradiated/contracts";
-import type { OrganizationService } from "@gradiated/control";
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi";
 import {
   GithubInstallationsSchema,
   type GithubInstallations,
 } from "../github/installations.js";
 import { consoleOnly } from "../http/audience.js";
-import { ApiProblem, problems, requireUser } from "../http/problems.js";
-import type { PandaDocNda } from "../legal/pandadoc.js";
+import {
+  requireOnboardingAdmin,
+  requireRecordedNda,
+  type OnboardingOrganizations,
+} from "../http/onboarding-access.js";
+import { ApiProblem, problems } from "../http/problems.js";
+import { NdaDocumentIdSchema, type PandaDocNda } from "../legal/pandadoc.js";
 import type { ApiEnvironment, AuthService } from "../types.js";
 
 const read = createRoute({
@@ -18,7 +22,7 @@ const read = createRoute({
   tags: ["GitHub installations"],
   summary: "Verify the customer's Gradiated GitHub App installation",
   description:
-    "Uses the signed-in customer's linked GitHub App user authorization to check active installations, Contents access and accessible repositories. Requires a completed NDA and organization admin membership. Callback IDs and browser state are never proof of installation.",
+    "Uses the signed-in customer's linked GitHub App user authorization to check active installations, Contents access and accessible repositories. Requires a recorded NDA and organization admin membership. Callback IDs and browser state are never proof of installation.",
   request: {
     params: z.object({
       organization_id: z
@@ -26,10 +30,7 @@ const read = createRoute({
         .describe("The authorized Gradiated organization."),
     }),
     query: z.object({
-      nda_document_id: z
-        .string()
-        .regex(/^[a-zA-Z0-9_-]{1,100}$/)
-        .describe("The completed NDA bound to this user and organization."),
+      nda_document_id: NdaDocumentIdSchema.optional(),
       installation_id: z.coerce
         .number()
         .int()
@@ -60,37 +61,19 @@ const read = createRoute({
 
 export const registerGithubInstallationRoutes = (
   app: OpenAPIHono<ApiEnvironment>,
-  organizations: Pick<OrganizationService, "listForUser">,
+  organizations: OnboardingOrganizations,
   auth: AuthService,
   provider?: GithubInstallations,
   nda?: PandaDocNda,
 ) => {
   app.openapi(read, async (context) => {
     context.header("Cache-Control", "no-store");
-    const user = await requireUser(context);
-    if ("impersonatedBy" in user && user.impersonatedBy)
-      throw new ApiProblem(
-        problems.forbidden(
-          "Leave impersonation before connecting a GitHub identity.",
-        ),
-      );
     const { organization_id } = context.req.valid("param");
-    const memberships = await organizations.listForUser(user.id);
-    if (
-      !user.emailVerified ||
-      !memberships.some(
-        (item) =>
-          item.id === organization_id &&
-          item.status === "active" &&
-          item.role === "admin",
-      )
-    )
-      throw new ApiProblem(
-        problems.forbidden(
-          "A verified organization admin must connect GitHub.",
-        ),
-      );
-
+    const { owner } = await requireOnboardingAdmin(
+      context,
+      organizations,
+      organization_id,
+    );
     if (!provider || !nda || !auth.githubAccessToken)
       throw new ApiProblem(
         problems.unavailable(
@@ -99,16 +82,26 @@ export const registerGithubInstallationRoutes = (
       );
 
     const query = context.req.valid("query");
-    const document = await nda.read(
-      { userId: user.id, email: user.email, organizationId: organization_id },
+    await requireRecordedNda(
+      organizations,
+      nda,
+      owner,
+      "connecting GitHub",
       query.nda_document_id,
     );
-    if (document.status !== "completed")
-      throw new ApiProblem(
-        problems.conflict("Complete your mutual NDA before connecting GitHub."),
-      );
 
-    const token = await auth.githubAccessToken(context.req.raw.headers);
+    const token = await auth
+      .githubAccessToken(context.req.raw.headers)
+      .catch((error: unknown) => {
+        if (error instanceof ApiProblem) throw error;
+
+        throw new ApiProblem(
+          problems.unavailable(
+            "Could not read your GitHub authorization. Try again shortly.",
+          ),
+          error,
+        );
+      });
     if (!token)
       return context.json(
         { status: "authorization_required" as const, installations: [] },

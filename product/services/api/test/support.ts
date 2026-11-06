@@ -209,6 +209,7 @@ export const createTestApp = ({
       },
       members: service("members"),
       organizations: service("organizations"),
+      integrations: service("integrations"),
       usage: service("usage"),
       traces: service("traces"),
       training: service("training"),

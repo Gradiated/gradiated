@@ -10,7 +10,7 @@ SGLANG_SOURCE = 'f171859219b54e1dad45dda60028034490836974'
 SMG_VERSION = '1.13.0'
 ACTIVE_REQUESTS = 12
 QUEUED_REQUESTS = 2
-QUEUE_TIMEOUT_SECONDS = 60
+QUEUE_TIMEOUT_SECONDS = 10
 PROFILES = {
     'b300-pcp2': {'gpu_product': 'B300', 'active_requests': ACTIVE_REQUESTS,
                   'prefill_tokens': 16384, 'dsa_backend': 'trtllm', 'context_parallel': True},

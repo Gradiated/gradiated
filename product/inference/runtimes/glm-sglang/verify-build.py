@@ -70,7 +70,7 @@ def verify(root):
     assert native.speculative_num_draft_tokens == 3 and native.prefill_decode_interval == 64
     front = parse_router_args(router[3:])
     assert front.max_concurrent_requests == 12 and front.queue_size == 2
-    assert front.queue_timeout_secs == 60 and front.rate_limit_tokens_per_second == 0
+    assert front.queue_timeout_secs == 10 and front.rate_limit_tokens_per_second == 0
     assert front.worker_urls == ['http://127.0.0.1:28084'] and front.disable_retries
     _, hopper_backend, hopper_router = commands({**env, 'GLM_SGLANG_PROFILE': 'h200-tp2'})
     hopper = parser.parse_args(hopper_backend[3:])

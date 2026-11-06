@@ -13,7 +13,7 @@ DRAFT_MODEL = 'RadixArk/Kimi-K3.1-Dflash2-Preview'
 DRAFT_REVISION = 'd0d8bc2e3c6d0a195d2e00a49017e71ca8d881f1'
 ACTIVE_REQUESTS = 5
 QUEUED_REQUESTS = 2
-QUEUE_TIMEOUT_SECONDS = 60
+QUEUE_TIMEOUT_SECONDS = 10
 
 
 def cuda_visible_devices(environment):

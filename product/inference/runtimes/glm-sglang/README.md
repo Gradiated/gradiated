@@ -107,7 +107,7 @@ timeout (900 seconds for this runtime) before returning the native error, so
 supported slow uploads do not become early-close broken-pipe 502s in NGINX. Expired queue slots are released before that drain.
 The compiled extension exports a build marker checked in the actual archive.
 The patch adds no scheduler or admission queue. A single backend URL, disabled
-router retries, 12 active permits, two queued requests, a 60-second queue timeout,
+router retries, 12 active permits, two queued requests, a 10-second queue timeout,
 and disabled token-bucket rate limiting bound admission. A permit lasts through
 the response body. Queue-full responses are HTTP 429; queue expiry returns
 HTTP 503. Requests already holding a permit may still wait inside SGLang for

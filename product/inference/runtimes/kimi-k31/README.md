@@ -58,7 +58,7 @@ shape-specific kernels before batches shrink or grow during serving.
 
 SMG 1.13.0 supplies the same guarded refused-upload drain fix used by the GLM
 runtime. Its single-worker frontend admits five requests and queues two for
-at most sixty seconds, disables retries, and keeps each permit through response
+at most ten seconds, disables retries, and keeps each permit through response
 completion. The gateway routes using the same five-request capacity.
 Changing that capacity changes the immutable runtime and requires matched
 measurements and requalification.

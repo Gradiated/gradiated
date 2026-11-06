@@ -40,7 +40,7 @@ class Configuration(unittest.TestCase):
         self.assertNotIn('--disaggregation-mode', backend)
         self.assertNotIn('--disable-flashinfer-autotune', backend)
         for key, value in [('--max-concurrent-requests', '12'), ('--queue-size', '2'),
-                           ('--queue-timeout-secs', '60'), ('--rate-limit-tokens-per-second', '0')]:
+                           ('--queue-timeout-secs', '10'), ('--rate-limit-tokens-per-second', '0')]:
             self.assertEqual(router[router.index(key) + 1], value)
         self.assertIn('--disable-retries', router)
         self.assertEqual(settings['backend'], 18084)

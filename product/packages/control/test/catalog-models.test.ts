@@ -93,6 +93,7 @@ describe("model configurations", () => {
   });
 
   it("advertises Kev 9B as a decision model that cannot generate", () => {
+    expect(createKev9bModelConfiguration().status).toBe("available");
     expect(modelType(createKev9bModelConfiguration().id)).toBe("decision");
     const [output] =
       createKev9bModelConfiguration().properties.output_modalities;

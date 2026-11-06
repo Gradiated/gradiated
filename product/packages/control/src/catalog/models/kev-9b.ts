@@ -9,7 +9,7 @@ export const createKev9bModelConfiguration = () =>
   ({
     id: kev9bModelId,
     name: modelDisplayName(kev9bModelId),
-    status: "unavailable",
+    status: "available",
     properties: {
       description:
         "Kev 9B answers typed questions about structured state, returning calibrated choices, probabilities and scores instead of generated text",

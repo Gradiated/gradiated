@@ -1,11 +1,50 @@
+We have three values. They ask a lot of people on purpose, because the stack we work on is deep, the team is small, and the market won't wait for us. They also pull against each other sometimes, and we say where below.
+
 ## Figure it out yourself
 
-For us to win, we need to go deep. That means _you_ need to go deep! We are friendly, but unnecessary handholding robs you of the ability to learn. Default to doing things yourself.
+You own your work completely, and that includes working out how to do it.
 
-## Do the hard thing.
+Nobody here has the whole stack in their head. Kernels, runtimes, schedulers, hardware, and the customers on the other end are each a field of their own, and the only way to get good at all of them is to wrestle with them yourself. Someone handing you an answer gets you the answer. It doesn't get you the understanding, so the next time you hit something similar you're stuck again.
 
-As work is increasingly commoditized by AI, the only work worth doing is that which is hard. The winner in our market is the one is willing to go the furthest.
+So we expect extremely high ownership. Read the code, check the repo and the docs, run the experiment, and form a view before you ask anyone. When you take something on, you finish it, including the dull parts nobody asked for. If you hit a wall, the problem is still yours until you've found someone better placed to own it and they've agreed.
 
-## Primitive first.
+This doesn't mean working alone. Ask once you've made a real attempt and can ask a specific question. Asking for context is always welcome: why something is built the way it is, what's been tried, who knows the area. What we don't do:
 
-We are _ always_ open minded about whatever it takes to improve tokens per joule.
+- Post "how do I do X?" five minutes after starting
+- Wait to be told what to work on next
+- Hand back a half-solved problem for someone else to finish
+
+We're friendly, and we'll always make time for a good question. We just won't hand-hold, because it robs you of the part that makes you good.
+
+This has costs. People will sometimes spend a day solving something a teammate already solved, or go down a dead end that one message would have avoided. We accept that, because what you learn compounds and the shortcut doesn't. It also means this isn't the right place for people who do their best work with clear instructions and close support, and that's fine.
+
+## Do the hard thing
+
+As AI makes routine work cheap, the work worth doing is the work that's hard.
+
+Anything easy, someone else will do tomorrow, and increasingly a model will do it for close to nothing. That's as true for us as for anyone. A config change, a thin wrapper around someone else's engine or a benchmark win on a friendly workload won't stay valuable for long. What lasts in inference is depth: understanding the problem further down than anyone else and doing the work that follows from it. The winner in our market is the one who is willing to go the furthest.
+
+Hard isn't the same as complicated. Doing the hard thing means picking the problem that actually matters, rather than the comfortable one next to it. Often the hard thing is simple to describe and miserable to do. What it looks like when we get it wrong:
+
+- Solving an adjacent, easier problem because the real one is intimidating
+- Choosing the benchmark or workload we already know we'll win on
+- Calling something done because it works, when we know it's nowhere near the bound
+- Adding complexity to look clever, which is easy and just looks hard
+
+This is where our values pull against each other. Going further down the stack means taking risks, and our customers' inference has to keep working while we do. When the two conflict, [reliability comes first](/handbook/priorities/). We take the risk in experiments and on our own time, never on a customer's production traffic.
+
+## Primitive first
+
+We reason from the physics, not from what everyone else does.
+
+Our mission is measured in tokens per joule, which means the real constraints are energy, bytes moved and arithmetic. Most of the conventions in inference are only a few years old. Plenty were inherited from training stacks or from whatever a GPU vendor shipped by default, and nobody has gone back to check whether they still make sense. Starting from first principles is how we find the gaps.
+
+In practice, we start from the theoretical bound for a workload on a piece of hardware and ask why we aren't there yet. Every layer between that bound and what we actually get has to justify itself. We'll consider any approach that moves tokens per joule, whether that's a different chip, runtime, model or numeric representation. That includes going back on our own earlier decisions when the evidence changes.
+
+What we don't do:
+
+- Use something because everyone uses it
+- Copy another lab's design without understanding why it works
+- Dismiss an idea because it's unusual, or adopt one because it's fashionable
+
+First principles are expensive. Working out a problem from the bottom takes longer than copying a known answer, and sometimes we'll arrive back at the conventional choice. When we do, at least we'll know _why_ it's right, and we'll know exactly what would have to change for it to stop being right.

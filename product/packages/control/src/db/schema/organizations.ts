@@ -336,6 +336,10 @@ export const models = pgTable(
     properties: jsonb("properties").$type<ModelProperties>().notNull(),
     // The exact OpenRouter model that serves this one when our deployments cannot.
     openrouterModelId: text("openrouter_model_id"),
+    // The Hugging Face tokenizer, at an immutable revision, that counts tokens
+    // when no deployment supplies one.
+    tokenizerPath: text("tokenizer_path"),
+    tokenizerRevision: text("tokenizer_revision"),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
       .defaultNow()
       .notNull(),
@@ -347,6 +351,10 @@ export const models = pgTable(
     check(
       "models_openrouter_model_id_check",
       sql`${table.openrouterModelId} ~ '^[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*$' and char_length(${table.openrouterModelId}) <= 200`,
+    ),
+    check(
+      "models_tokenizer_check",
+      sql`(${table.tokenizerPath} is null and ${table.tokenizerRevision} is null) or (${table.tokenizerPath} is not null and ${table.tokenizerRevision} is not null and char_length(${table.tokenizerPath}) between 1 and 300 and ${table.tokenizerRevision} ~ '^[0-9a-f]{40}$')`,
     ),
     check(
       "models_id_length_check",

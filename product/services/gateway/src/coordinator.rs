@@ -40,6 +40,8 @@ pub struct QualifiedRequest {
     /// For an adapter, the base model's deployments, which serve it without the adapter.
     pub base: Option<LocalCapacity>,
     pub external: Option<ExternalModel>,
+    /// The model's own tokenizer, for counting when no deployment supplies one.
+    pub tokenizer: Option<crate::PinnedTokenizer>,
     pub max_context_tokens: u64,
     pub max_prompt_tokens: u64,
     pub effective_output_tokens: u64,
@@ -190,6 +192,10 @@ impl HostedRequest {
             local,
             base,
             external,
+            tokenizer: model
+                .tokenizer
+                .clone()
+                .filter(crate::PinnedTokenizer::valid),
             max_context_tokens: input.supported_inputs.max_context_length.value,
             max_prompt_tokens: input.supported_inputs.max_prompt_length.value,
             effective_output_tokens,

@@ -74,6 +74,12 @@ export const MODEL_CATALOG = [
     supportedUses: ["judge", "comparison", "serving"],
   },
   {
+    id: "z-ai/glm-5.3",
+    displayName: "GLM-5.3",
+    icon: "/model-providers/zai.svg",
+    supportedUses: ["judge", "comparison", "serving"],
+  },
+  {
     id: "jaredpalmer/kev-9b",
     type: "decision",
     displayName: "Kev 9B",

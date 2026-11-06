@@ -1036,8 +1036,11 @@ serves instead.
 
 `/v1/models` lists a mapped model as ready for a caller OpenRouter may serve,
 with no deployments required. It then publishes no `deployment_region`, because
-the request may be served outside our datacenters. Count-tokens needs a pinned
-tokenizer and returns `model_unavailable` for a model with no deployment.
+the request may be served outside our datacenters. Count-tokens uses the
+selected deployment's tokenizer. A model with no deployment counts with its own
+pin, `models.tokenizer_path` at the 40-character commit
+`models.tokenizer_revision`; a model with neither returns `model_unavailable`.
+A malformed pin is ignored.
 
 ## Runtime overload and exact dispatch
 

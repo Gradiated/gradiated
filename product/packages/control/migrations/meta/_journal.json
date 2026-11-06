@@ -204,6 +204,13 @@
       "when": 1793968725667,
       "tag": "0028_model_uploads",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1793981552109,
+      "tag": "0029_model_tokenizer",
+      "breakpoints": true
     }
   ]
 }

@@ -71,6 +71,7 @@ pub(super) fn qualified(max_tokens: Option<u64>) -> QualifiedRequest {
         }),
         base: None,
         external: None,
+        tokenizer: None,
         max_context_tokens: 10,
         max_prompt_tokens: 8,
         effective_output_tokens: max_tokens.unwrap_or(4),

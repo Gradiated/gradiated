@@ -165,6 +165,8 @@ export const modelRecord: ModelRecord = {
   status: "available",
   properties: modelProperties,
   openrouterModelId: null,
+  tokenizerPath: null,
+  tokenizerRevision: null,
   createdAt: now,
   updatedAt: now,
 };

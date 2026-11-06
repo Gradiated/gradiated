@@ -472,6 +472,7 @@ pub(super) fn qualified_request(deployment_count: u128) -> QualifiedRequest {
         }),
         base: None,
         external: None,
+        tokenizer: None,
         max_context_tokens: 8_192,
         max_prompt_tokens: 7_168,
         effective_output_tokens: 1_024,

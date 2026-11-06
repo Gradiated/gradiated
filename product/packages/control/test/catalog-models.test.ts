@@ -47,6 +47,7 @@ describe("model configurations", () => {
       input: [1_800, 180],
       output: [9_000, 9_000],
     },
+    "z-ai/glm-5.3": { input: [1_400, 260], output: [4_400, 4_400] },
   };
 
   it.each(catalogModels)("pins the nano-USD prices of $id", (model) => {
@@ -73,6 +74,7 @@ describe("model configurations", () => {
       "dealignai/glm-5.3-flash-uncensored-nvfp4": null,
       "jaredpalmer/kev-9b": undefined,
       "moonshotai/kimi-k3.1-pro": "moonshotai/kimi-k3.1-pro",
+      "z-ai/glm-5.3": "z-ai/glm-5.3",
     });
     for (const mapping of Object.values(mappings)) {
       if (typeof mapping === "string") OpenRouterModelIdSchema.parse(mapping);
@@ -109,6 +111,7 @@ describe("model configurations", () => {
       "chat",
       "chat",
       "decision",
+      "chat",
       "chat",
     ]);
   });

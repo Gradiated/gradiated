@@ -86,7 +86,13 @@ impl ModelTokenizer {
         &self,
         release: &ModelDeploymentRelease,
     ) -> Result<Arc<CompiledTokenizer>, ModelTokenizerError> {
-        let key = TokenizerRelease::from(release);
+        self.tokenizer_for(TokenizerRelease::from(release)).await
+    }
+
+    pub(super) async fn tokenizer_for(
+        &self,
+        key: TokenizerRelease,
+    ) -> Result<Arc<CompiledTokenizer>, ModelTokenizerError> {
         let slot = self
             .loaded
             .lock()
@@ -169,8 +175,8 @@ impl ModelTokenizer {
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub(super) struct TokenizerRelease {
-    path: String,
-    revision: String,
+    pub(super) path: String,
+    pub(super) revision: String,
     mode: Option<TokenizerMode>,
 }
 
@@ -180,6 +186,16 @@ impl From<&ModelDeploymentRelease> for TokenizerRelease {
             path: release.tokenizer_path.clone(),
             revision: release.tokenizer_revision.clone(),
             mode: release.tokenizer_mode,
+        }
+    }
+}
+
+impl From<&crate::PinnedTokenizer> for TokenizerRelease {
+    fn from(pin: &crate::PinnedTokenizer) -> Self {
+        Self {
+            path: pin.path.clone(),
+            revision: pin.revision.clone(),
+            mode: None,
         }
     }
 }

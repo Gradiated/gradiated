@@ -20,6 +20,26 @@ pub struct GatewayModel {
     pub deployments: Vec<GatewayModelDeployment>,
     #[serde(default)]
     pub openrouter_model_id: Option<String>,
+    /// The tokenizer to count with when no deployment supplies one.
+    #[serde(default)]
+    pub tokenizer: Option<PinnedTokenizer>,
+}
+
+/// A Hugging Face tokenizer at an immutable revision.
+#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+pub struct PinnedTokenizer {
+    pub path: String,
+    pub revision: String,
+}
+
+impl PinnedTokenizer {
+    /// A malformed pin is ignored rather than trusted, like the OpenRouter mapping.
+    pub fn valid(&self) -> bool {
+        let bounded = |value: &str| !value.is_empty() && value.len() <= 300;
+        bounded(&self.path)
+            && self.revision.len() == 40
+            && self.revision.bytes().all(|byte| byte.is_ascii_hexdigit())
+    }
 }
 
 impl GatewayModel {

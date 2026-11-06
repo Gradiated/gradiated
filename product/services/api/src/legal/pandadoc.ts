@@ -125,6 +125,7 @@ export interface PandaDocConfiguration {
   templateId: string;
   templateVersion: string;
   dateField?: string | undefined;
+  silent?: boolean;
 }
 
 export const createPandaDocNda = (
@@ -378,7 +379,7 @@ export const createPandaDocNda = (
 
       if (document.status === "document.draft")
         await call(`/documents/${encodeURIComponent(id)}/send`, {
-          silent: true,
+          silent: configuration.silent ?? false,
         });
       else if (!["document.sent", "document.viewed"].includes(document.status))
         throw new ApiProblem(

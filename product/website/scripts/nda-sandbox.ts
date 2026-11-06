@@ -78,6 +78,7 @@ export const ndaSandbox = (): Plugin => ({
             templateId: env.PANDADOC_NDA_TEMPLATE_ID,
             templateVersion: env.PANDADOC_NDA_TEMPLATE_VERSION,
             dateField: env.PANDADOC_NDA_DATE_FIELD,
+            silent: true,
           });
         }
         let id =

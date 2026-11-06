@@ -193,12 +193,24 @@ completion. It is absent from production builds; production still uses the
 authenticated API. No credentials are exposed through `VITE_` settings.
 
 In the live flow, the backend creates a document, waits for draft
-readiness, sends with `silent: true` to suppress signing emails, and creates a
+readiness, sends with `silent: false` to allow PandaDoc emails, and creates a
 15-minute session for the verified signed-in signer. The browser loads PandaDoc's
 official `pandadoc-signing` component. Signing events only trigger a status check;
 the API must report `document.completed`, a completed customer recipient, and a
 filled customer signature field before the UI advances. Merely signing one side while
 another required signer is pending does not unlock the next step.
+
+For completed-copy delivery, enable **Email a PDF on completion** in the NDA
+template's recipient permissions. In workspace **Recipient experience → Document
+completion**, enable **Email recipients when a document is completed** and
+**Attach a PDF of the completed document**. Verify these settings on the existing
+template and a newly created NDA before rollout; workspace defaults alone may
+only apply to new templates. PandaDoc sends the completed copy when all required
+parties finish, even if the user has closed Gradiated. Non-silent delivery also
+sends an initial signing email; signing remains embedded in the activation flow.
+The local sandbox bridge explicitly retains `silent: true` and does not test
+email delivery. Previously silent documents are not retroactively emailed by
+this code change.
 
 Backend configuration (never put these credentials in `VITE_` variables):
 

@@ -132,7 +132,7 @@ describe("PandaDoc NDA", () => {
     expect(JSON.stringify(body)).not.toContain(configuration.apiKey);
   });
 
-  it("silently prepares a draft and creates a short-lived session for the signed-in signer", async () => {
+  it("enables email notifications and creates a short-lived session for the signed-in signer", async () => {
     const request = vi
       .fn<typeof fetch>()
       .mockResolvedValueOnce(json(providerDocument()))
@@ -146,11 +146,28 @@ describe("PandaDoc NDA", () => {
       String(request.mock.calls[1]?.[0]).endsWith("/test-document/send"),
     ).toBe(true);
     expect(JSON.parse(String(request.mock.calls[1]?.[1]?.body))).toEqual({
-      silent: true,
+      silent: false,
     });
     expect(JSON.parse(String(request.mock.calls[2]?.[1]?.body))).toEqual({
       recipient: user.email,
       lifetime: 900,
+    });
+  });
+
+  it("keeps sandbox delivery silent when explicitly configured", async () => {
+    const request = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(json(providerDocument()))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(json({ id: "temporary-session" }));
+    const provider = createPandaDocNda(
+      { ...configuration, silent: true },
+      request,
+    );
+    await provider.session(owner, "test-document");
+
+    expect(JSON.parse(String(request.mock.calls[1]?.[1]?.body))).toEqual({
+      silent: true,
     });
   });
 

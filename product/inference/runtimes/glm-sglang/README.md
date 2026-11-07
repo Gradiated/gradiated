@@ -148,6 +148,24 @@ forwarded. A component exit shuts down the other component. The runtime launcher
 and host agent retain their existing process-tree and cgroup cleanup guards.
 The host proxy drains accepted HTTP streams before terminating the bundle.
 
+Qualification runs in one of three modes, logged as `{"qualification": ...}` and
+exported as `gradiated_runtime_startup_qualification{mode="..."} 1`:
+
+- `full`: cold groups at 180 s, then the mixed-prompt groups and any cold
+  concurrency or mixed-prefill group that took longer than 25 s, at 25 s. A
+  passing full run writes a record under
+  `$XDG_CACHE_HOME/glm-sglang/qualification/`, keyed by the bundle digest, the
+  hardware profile settings, the assigned GPU UUIDs, names and driver, the
+  shapes and the queue limits.
+- `short`: a record younger than seven days matches, so only the 25 s groups run.
+- `short_to_full`: the short pass failed or a group was more than twice its
+  recorded latency plus 1 s slower, so the full qualification ran and rewrote the
+  record.
+
+Without a bundle digest or readable GPU inventory, every start runs `full` and
+writes no record. Shutdown or the startup deadline during a short pass still ends
+startup.
+
 Desmond uses the warmup port for `/health` and `/metrics`. The metrics response
 retains native `sglang:*` and `smg_*` series, avoiding duplicate Python process
 series. It also exposes explicit frontend active, waiting, and queue-age limits.

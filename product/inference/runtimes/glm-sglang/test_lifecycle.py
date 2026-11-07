@@ -3,6 +3,7 @@ import io
 import json
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -40,6 +41,35 @@ class Lifecycle(unittest.TestCase):
         self.assertIn('vllm:kv_cache_usage_perc 0.7', result)
         self.assertIn('Compatibility alias:', result)
         self.assertIn('gradiated_runtime_waiting_request_limit 2', result)
+
+    def test_metrics_report_startup_qualification_mode(self):
+        backend = b'sglang:full_token_usage{rank="0"} 0.2\n'
+        for mode in (None, 'full', 'short', 'short_to_full'):
+            with self.subTest(mode=mode), patch.object(launch.urllib.request, 'urlopen',
+                                                       side_effect=[Response(backend), Response(b'')]):
+                result = launch.metrics({'backend': 18084, 'metrics': 18085}, mode).decode()
+                if mode is None:
+                    self.assertNotIn('gradiated_runtime_startup_qualification', result)
+                else:
+                    self.assertIn(f'gradiated_runtime_startup_qualification{{mode="{mode}"}} 1', result)
+
+    def test_qualification_identity_and_record_directory(self):
+        config = {'root': Path('/pods/a'), 'front': 18080, 'warmup': 18083, 'backend': 18084, 'metrics': 18085,
+                  'profile': 'b300-pcp2', 'active_requests': 12}
+        moved = {**config, 'root': Path('/pods/b'), 'front': 28080, 'warmup': 28083, 'backend': 28084, 'metrics': 28085}
+        with tempfile.TemporaryDirectory() as directory:
+            bundle = Path(directory)
+            self.assertIsNone(launch.qualification_identity(config, bundle))
+            (bundle / '.bundle-sha256').write_text('not-a-digest\n')
+            self.assertIsNone(launch.qualification_identity(config, bundle))
+            (bundle / '.bundle-sha256').write_text('a' * 64 + '\n')
+            identity = launch.qualification_identity(config, bundle)
+            self.assertEqual(identity, {'bundle': 'a' * 64, 'config': {'profile': 'b300-pcp2', 'active_requests': 12}})
+            self.assertEqual(launch.qualification_identity(moved, bundle), identity)
+            json.dumps(identity)
+        self.assertEqual(launch.qualification_records({'XDG_CACHE_HOME': '/home/runtime/.cache'}),
+                         Path('/home/runtime/.cache/glm-sglang/qualification'))
+        self.assertEqual(launch.qualification_records({'HOME': '/tmp/h'}), Path('/tmp/h/.cache/glm-sglang/qualification'))
 
     def test_missing_bad_pressure_never_becomes_zero(self):
         for text in ['', 'sglang:token_usage 0.5', 'sglang:full_token_usage NaN',

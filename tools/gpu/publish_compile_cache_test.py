@@ -61,6 +61,13 @@ class CompileCacheArchive(unittest.TestCase):
                     with self.assertRaises(ValueError):
                         publish.inspect(path)
 
+    def test_packaging_loads_from_a_lone_copy_on_a_host(self):
+        # A copy at /root/publish-compile-cache.py has no repository above it.
+        source = Path(__file__).with_name('publish-compile-cache.py').read_text()
+        namespace = {'__file__': '/publish-compile-cache.py', '__name__': 'lone'}
+        exec(compile(source, '/publish-compile-cache.py', 'exec'), namespace)
+        self.assertTrue(callable(namespace['package']))
+
     def test_pin_adds_the_cache_for_the_pinned_base_only_to_named_runtimes(self):
         runtimes = {'a' * 64: {'bundles': {'base': 'b' * 64}}, 'c' * 64: {'bundles': {'base': 'd' * 64}}}
         updated = publish.pin(runtimes, ['a' * 64], 'base', 'e' * 64)

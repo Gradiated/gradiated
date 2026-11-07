@@ -35,9 +35,11 @@ NAME = re.compile(r'[A-Za-z0-9][A-Za-z0-9._-]*')
 EXCLUDED_TOP = {'gradiated', 'huggingface'}
 EXCLUDED_PARTS = {'qualification'}
 BUCKET = 'gradiated-prod-model-artifacts-873716897517'
-ROOT = Path(__file__).resolve().parents[2]
-RUNTIMES = ROOT / 'product/inference/gpu/runtimes.json'
-PINS = ROOT / 'infra/environments/prod/us-east-1/kubernetes/gpu-inference/pins.json'
+
+
+def repository():
+    # Packaging runs from a lone copy on a host, so resolve the checkout only to publish.
+    return Path(__file__).resolve().parents[2]
 
 
 def package(output, directories, cache=CACHE):
@@ -107,8 +109,10 @@ def pin(runtimes, keys, base, digest):
 def publish(archive_path, keys, write, profile='gradiated-developer'):
     tops = inspect(archive_path)
     digest = hashlib.sha256(Path(archive_path).read_bytes()).hexdigest()
-    base = json.loads(PINS.read_text())['hostBundle']['baseId']
-    runtimes = json.loads(RUNTIMES.read_text())
+    root = repository()
+    runtimes_path = root / 'product/inference/gpu/runtimes.json'
+    base = json.loads((root / 'infra/environments/prod/us-east-1/kubernetes/gpu-inference/pins.json').read_text())['hostBundle']['baseId']
+    runtimes = json.loads(runtimes_path.read_text())
     updated = pin(runtimes, keys, base, digest)
     key = f'bundles/sha256/{digest}.tar.gz'
     if write:
@@ -117,7 +121,7 @@ def publish(archive_path, keys, write, profile='gradiated-developer'):
         if not exists:
             subprocess.run(['aws', '--profile', profile, 's3', 'cp', str(archive_path), f's3://{BUCKET}/{key}',
                             '--only-show-errors'], check=True)
-        RUNTIMES.write_text(json.dumps(updated, indent=2) + '\n')
+        runtimes_path.write_text(json.dumps(updated, indent=2) + '\n')
     return {'write': write, 'digest': digest, 'base': base, 'directories': tops, 'runtimes': keys,
             'size_bytes': Path(archive_path).stat().st_size,
             'next': 'python3 tools/gpu/render-config.py; review and commit' if write else 'rerun with --write'}

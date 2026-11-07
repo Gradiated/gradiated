@@ -352,6 +352,69 @@ def runtime_bundle(profile):
     return bundle
 
 
+def runtime_compile_cache(profile):
+    """The compile cache archive pinned for this host's base, or None.
+
+    A cache holds the kernels a qualified host compiled for one bundle: Triton,
+    TorchInductor, CUDA and runtime JIT output. A new host otherwise spends most
+    of its first start compiling them."""
+    caches = profile.get("compile_caches", {})
+    if not isinstance(caches, dict) or not all(isinstance(cache, str) and re.fullmatch(r"[0-9a-f]{64}", cache)
+                                               for cache in caches.values()):
+        raise ValueError(f"Runtime release {profile['image']} has an invalid compile cache")
+    return caches.get(BASE_ID.read_text().strip())
+
+
+# The runtime's own cache root, which every pod on a host shares. Cached builds
+# record absolute paths and timestamps, so a seed must land at this path with
+# its timestamps.
+RUNTIME_CACHE = Path("/home/runtime/.cache")
+UNSEEDED = {"gradiated", "huggingface"}
+
+
+def seed_compile_cache(profile, log, root=ROOT, cache=RUNTIME_CACHE, user="runtime"):
+    """Copy a staged compile cache into the runtime cache without replacing anything there.
+
+    Best effort: a missing or unusable seed only means the runtime compiles."""
+    digest = runtime_compile_cache(profile)
+    if digest is None:
+        return
+    source = root / "bundles" / digest
+    marker = source / ".bundle-sha256"
+    if source.is_symlink() or marker.is_symlink() or not marker.is_file() or marker.read_text().strip() != digest:
+        log(f"compile cache {digest[:12]} is not staged")
+        return
+    for directory, names, files in os.walk(source):
+        for name in [*names, *files]:
+            if (Path(directory) / name).is_symlink():
+                raise ValueError("Compile cache contains a link")
+    entries = sorted(path.name for path in source.iterdir() if path.name != ".bundle-sha256")
+    if any(name in UNSEEDED or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", name) for name in entries):
+        raise ValueError("Compile cache holds an unexpected directory")
+    account = pwd.getpwnam(user)
+    seeded_directory = runtime_directory(account, ".cache", "gradiated", "compile-caches", home=str(cache.parent))
+    try:
+        # Concurrent pod starts copy one at a time, so a runtime never reads a half-copied file.
+        with runtime_file(account, seeded_directory, ".lock") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            try:
+                os.stat(digest, dir_fd=seeded_directory)
+                return
+            except FileNotFoundError:
+                pass
+            started = time.monotonic()
+            subprocess.run(["/usr/bin/setpriv", f"--reuid={user}", f"--regid={user}", "--init-groups",
+                            "--inh-caps=-all", "--ambient-caps=-all", "--no-new-privs",
+                            "cp", "-R", "--no-dereference", "--preserve=mode,timestamps", "--update=none", "--",
+                            *(str(source / name) for name in entries), str(cache)],
+                           check=True, timeout=600, stdin=subprocess.DEVNULL,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+            runtime_file(account, seeded_directory, digest).close()
+            log(f"seeded compile cache {digest[:12]} in {time.monotonic() - started:.1f}s")
+    finally:
+        os.close(seeded_directory)
+
+
 def host_tool(name):
     return Path(__file__).resolve().with_name(name)
 
@@ -402,6 +465,10 @@ def task(uid, stopping):
             prepare_model_cache(config, profile, directory, lambda: host_pods(config, uid), log)
         except Exception as error:
             log(f"Skipped eviction: {error}")
+        try:
+            seed_compile_cache(profile, lambda message: cache_log.write(f"compile-cache: {message}\n"))
+        except Exception as error:
+            cache_log.write(f"compile-cache: skipped: {type(error).__name__}\n")
     model = reporter = None
     try:
         with ExitStack() as stack:
@@ -512,6 +579,8 @@ class Agent:
             base = BASE_ID.read_text().strip()
             profiles = [*self.config.get('runtimes', {}).values(), *self.catalogue_wanted.values(), *(profile for _, profile in active)]
             protected.update(profile['bundles'][base] for profile in profiles if base in profile.get('bundles', {}))
+            protected.update(profile['compile_caches'][base] for profile in profiles
+                             if isinstance(profile.get('compile_caches'), dict) and base in profile['compile_caches'])
             retired = []
             unknown_processes = False
             for directory in (self.root / 'pods').iterdir():
@@ -735,6 +804,7 @@ class Agent:
             bundles = profile.get('bundles')
             if not isinstance(bundles, dict) or not all(isinstance(bundle, str) and re.fullmatch('[0-9a-f]{64}', bundle) for bundle in bundles.values()):
                 raise ValueError('Invalid pinned runtime catalogue')
+            runtime_compile_cache(profile)
             # A release with no bundle for this host's base cannot run here.
             if BASE_ID.read_text().strip() in bundles and (profile.get('kind') == 'training' or profile['gpus'] <= len(gpu_pool(self.config))):
                 wanted[digest] = profile
@@ -772,6 +842,20 @@ class Agent:
                         atomic_json(self.config_path, updated)
                     self.config = updated
                     self.catalogue_ready = True
+                # Compile caches stage after activation: they only speed up first
+                # starts, so neither their download nor a failure holds back the catalogue.
+                fd = os.open(log_path, os.O_WRONLY | os.O_CREAT | os.O_APPEND | os.O_NOFOLLOW, 0o600)
+                with os.fdopen(fd, 'ab') as log:
+                    for digest in sorted({runtime_compile_cache(profile) for profile in wanted.values()} - {None}):
+                        marker = self.root / 'bundles' / digest / '.bundle-sha256'
+                        if marker.exists() and marker.read_text().strip() == digest:
+                            continue
+                        try:
+                            subprocess.run(['runuser', '-u', 'downloader', '--', str(host_tool('fetch-runtime')),
+                                f's3::https://gradiated-prod-model-artifacts-873716897517.s3.us-east-1.amazonaws.com/bundles/sha256/{digest}.tar.gz',
+                                digest, str(self.root / 'bundles' / digest)], stdout=log, stderr=log, check=True, timeout=1800)
+                        except (OSError, subprocess.SubprocessError) as error:
+                            log.write(f'Compile cache {digest[:12]} staging failed: {type(error).__name__}\n'.encode())
             except Exception as error:
                 with self.lock:
                     if self.catalogue_task == task:

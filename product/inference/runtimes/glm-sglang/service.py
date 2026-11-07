@@ -1,3 +1,4 @@
+import http.client
 import json
 import os
 import signal
@@ -51,7 +52,10 @@ def run(environment=os.environ):
             try:
                 if backend_ready(config['backend']):
                     break
-            except (OSError, TimeoutError):
+            # Until SGLang binds its HTTP port, the OS can hand that ephemeral
+            # port to one of its internal sockets, which answers in another
+            # protocol. Any malformed reply only means not ready yet.
+            except (OSError, TimeoutError, http.client.HTTPException, ValueError):
                 pass
             stopping.wait(1)
         if stopping.is_set():

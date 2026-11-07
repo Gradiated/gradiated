@@ -415,6 +415,13 @@ def validate_bundles(runtimes, base_id):
             raise ValueError(f'Runtime release {key} needs a bundles map from base ID to bundle digest')
         if base_id not in bundles:
             raise ValueError(f'Runtime release {key} has no bundle for the pinned base {base_id}')
+        # Optional kernels a qualified host compiled for each bundle; hosts seed
+        # them before a first start and compile anything missing.
+        caches = runtime.get('compile_caches', {})
+        if (not isinstance(caches, dict) or
+                not all(base in bundles and isinstance(digest, str) and re.fullmatch('[0-9a-f]{64}', digest)
+                        for base, digest in caches.items())):
+            raise ValueError(f'Runtime release {key} compile_caches must map its bundle base IDs to archive digests')
 
 
 def pinned_copies(pins):

@@ -352,6 +352,33 @@ replacement, bootstrap checks and downloader checks. These simulate process and
 storage failures without releasing GPU reservations. Physical host loss still
 requires replacement capacity; a provider reset requires deliberate enrollment.
 
+## Compile caches
+
+A runtime's first start on a host spends most of its time compiling kernels.
+Measured on a B300 TP2 GLM SGLang replica, a cold first start took 1688 s,
+against 365 s restarting with the same cache: about 410 s compiling inside
+weight loading, 650 s inside FlashInfer autotune and 200 s on the first
+qualification requests.
+
+`compile_caches` in a `runtimes.json` entry pins, per base, the SHA-256 of an
+archive of `/home/runtime/.cache` directories (Triton, TorchInductor, CUDA and
+runtime JIT output) taken from a host that qualified that exact bundle. Hosts
+stage it like a bundle, after the catalogue activates, so a missing or failed
+download never delays one. Before each pod starts, the host agent copies the
+staged archive into `/home/runtime/.cache` as the runtime user, once per
+archive and under a lock, keeping timestamps and never replacing files already
+there. Cached builds record absolute paths and timestamps, so the archive is
+only useful at that path with those timestamps: restored that way, the GLM
+first start above took 392 s. A failure is logged to the pod's `runtime.log`
+and the runtime compiles as before.
+
+`tools/gpu/publish-compile-cache.py package` builds the archive on the host,
+without links, locks, model weights or qualification records, with readable
+modes. `publish` checks it, uploads it to the bundle bucket and pins it.
+The archive is code every host running that release executes, so publish only
+from a production host serving that bundle, and review the pin like a bundle.
+The renderer requires each pinned cache's base to have a bundle.
+
 ## Host software bundles
 
 Model deployment publishes a `host` bundle alongside runtime bundles. Its

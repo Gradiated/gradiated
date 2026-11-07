@@ -90,7 +90,7 @@ jobs:
         if: fromJSON(needs.changes.outputs.checks).configuration
       - run: python3 tools/gpu/render_config_test.py
         if: fromJSON(needs.changes.outputs.checks).configuration
-      - run: python3 tools/gpu/stage_glm_pool_test.py && python3 tools/gpu/stage_kimi_pool_test.py && python3 tools/gpu/prepare_enrollment_test.py
+      - run: python3 tools/gpu/stage_glm_pool_test.py && python3 tools/gpu/stage_kimi_pool_test.py && python3 tools/gpu/prepare_enrollment_test.py && python3 tools/gpu/publish_compile_cache_test.py
         if: fromJSON(needs.changes.outputs.checks).configuration
       - name: Install the proxy for drain integration tests
         if: fromJSON(needs.changes.outputs.checks).controller

@@ -503,6 +503,112 @@ class HostAgentTest(unittest.TestCase):
         # The oldest directory survives only because it is this base's bundle.
         self.assertEqual({path.name for path in bundles.iterdir()}, {letter * 64 for letter in 'bef'})
 
+    @unittest.skipUnless(hasattr(agent, 'runtime_compile_cache'), 'the frozen recovery agent predates compile caches')
+    def test_compile_cache_stages_after_activation_and_its_failure_never_blocks(self):
+        release, bundle, cache = '9' * 64, 'b' * 64, 'd' * 64
+        fetched, ready_at_cache = [], []
+
+        def fetch(command, **kwargs):
+            digest, destination = command[-2], Path(command[-1])
+            fetched.append(digest)
+            if digest == cache:
+                ready_at_cache.append(self.host.catalogue_ready)
+                raise subprocess.CalledProcessError(1, command)
+            destination.mkdir(parents=True)
+            (destination / '.bundle-sha256').write_text(digest)
+
+        profile = {'image': 'gradiated/kev-bundle@sha256:' + release, 'bundles': {'test-base': bundle},
+                   'compile_caches': {'test-base': cache, 'old-base': 'e' * 64}, 'model_id': 'kev',
+                   'release': self.config['release'], 'gpus': 1, 'cpu': '16', 'memory': '64Gi'}
+        with patch.object(agent.subprocess, 'run', side_effect=fetch):
+            self.request({'operation': 'configure', 'epoch': 1, 'runtimes': {release: profile}})
+            self.wait_for_catalogue()
+            import time
+            deadline = time.monotonic() + 2
+            while len(fetched) < 2 and time.monotonic() < deadline: time.sleep(.01)
+        self.assertEqual(fetched, [bundle, cache])
+        self.assertEqual(ready_at_cache, [True])
+        self.assertIn(b'Compile cache dddddddddddd staging failed', (self.root / 'bundle-download.log').read_bytes())
+        for invalid in ({'test-base': '../escape'}, ['d' * 64], {'test-base': 7}):
+            with self.subTest(caches=invalid), self.assertRaises(ValueError):
+                self.request({'operation': 'configure', 'epoch': 2,
+                              'runtimes': {release: {**profile, 'compile_caches': invalid}}})
+
+    @unittest.skipUnless(hasattr(agent, 'runtime_compile_cache'), 'the frozen recovery agent predates compile caches')
+    def test_cleanup_keeps_pinned_compile_caches(self):
+        import os
+        bundles = self.root / 'bundles'
+        bundles.mkdir()
+        for index, letter in enumerate('bcdef'):
+            path = bundles / (letter * 64)
+            path.mkdir()
+            (path / '.bundle-sha256').write_text(path.name)
+            os.utime(path, (index, index))
+        self.config['runtimes'] = {'9' * 64: {'image': 'gradiated/kev-bundle@sha256:' + '9' * 64,
+                                              'bundles': {'test-base': 'e' * 64},
+                                              'compile_caches': {'test-base': 'b' * 64}}}
+        self.host.housekeep(10 * 86400)
+        # The oldest directory survives only because it is the pinned compile cache;
+        # of the unused ones, the two newest stay.
+        self.assertEqual({path.name for path in bundles.iterdir()}, {letter * 64 for letter in 'bdef'})
+
+    @unittest.skipUnless(hasattr(agent, 'seed_compile_cache'), 'the frozen recovery agent predates compile caches')
+    def test_compile_cache_seeds_once_keeps_timestamps_and_never_replaces_host_files(self):
+        import os, pwd
+        user = pwd.getpwuid(os.getuid()).pw_name
+        home = self.root / 'home'
+        cache = home / '.cache'
+        cache.mkdir(parents=True)
+        digest = 'd' * 64
+        source = self.root / 'bundles' / digest
+        (source / 'glm-sglang/jit').mkdir(parents=True)
+        (source / 'triton/ab').mkdir(parents=True)
+        (source / 'glm-sglang/jit/kernel.so').write_bytes(b'compiled')
+        (source / 'triton/ab/kernel.cubin').write_bytes(b'cubin')
+        (source / '.bundle-sha256').write_text(digest)
+        os.utime(source / 'glm-sglang/jit/kernel.so', (1000, 1000))
+        (cache / 'triton/ab').mkdir(parents=True)
+        (cache / 'triton/ab/kernel.cubin').write_bytes(b'host compiled')
+        profile = {'image': 'x@sha256:' + '9' * 64, 'compile_caches': {'test-base': digest}}
+        copies, messages = [], []
+        real_run = subprocess.run
+
+        def run(command, **kwargs):
+            # CI is not root, so run the copy itself without dropping privileges.
+            copies.append(command)
+            return real_run(command[command.index('cp'):], **kwargs)
+
+        with patch.object(agent, 'RUNTIME_CACHE', cache), patch.object(agent.subprocess, 'run', side_effect=run):
+            agent.seed_compile_cache(profile, messages.append, root=self.root, cache=cache, user=user)
+            agent.seed_compile_cache(profile, messages.append, root=self.root, cache=cache, user=user)
+        self.assertEqual(len(copies), 1)
+        self.assertIn('--update=none', copies[0])
+        self.assertEqual((cache / 'glm-sglang/jit/kernel.so').read_bytes(), b'compiled')
+        self.assertEqual((cache / 'glm-sglang/jit/kernel.so').stat().st_mtime, 1000)
+        self.assertEqual((cache / 'triton/ab/kernel.cubin').read_bytes(), b'host compiled')
+        self.assertTrue((cache / 'gradiated/compile-caches' / digest).is_file())
+        self.assertTrue(messages[0].startswith('seeded compile cache dddddddddddd'))
+
+        messages.clear()
+        agent.seed_compile_cache({**profile, 'compile_caches': {'test-base': 'f' * 64}}, messages.append,
+                                 root=self.root, cache=cache, user=user)
+        self.assertEqual(messages, ['compile cache ffffffffffff is not staged'])
+        self.assertIsNone(agent.seed_compile_cache({'image': 'x'}, messages.append, root=self.root, cache=cache, user=user))
+        for planted in ('link', 'gradiated'):
+            with self.subTest(planted=planted):
+                bad = 'c' * 64
+                folder = self.root / 'bundles' / bad
+                shutil.rmtree(folder, ignore_errors=True)
+                (folder / 'triton').mkdir(parents=True)
+                (folder / '.bundle-sha256').write_text(bad)
+                if planted == 'link':
+                    (folder / 'triton/escape').symlink_to('/etc')
+                else:
+                    (folder / 'gradiated').mkdir()
+                with self.assertRaises(ValueError):
+                    agent.seed_compile_cache({**profile, 'compile_caches': {'test-base': bad}}, messages.append,
+                                             root=self.root, cache=cache, user=user)
+
     def test_registered_bundle_waits_for_staging_without_creating_state(self):
         digest = 'b' * 64
         pod = json.loads(json.dumps(self.pod))

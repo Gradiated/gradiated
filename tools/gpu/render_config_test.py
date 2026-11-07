@@ -76,6 +76,10 @@ class RenderTests(unittest.TestCase):
                                  ({base: '../escape'}, 'needs a bundles map'), (None, 'needs a bundles map'), ({}, 'needs a bundles map')):
             with self.subTest(bundles=bundles), self.assertRaisesRegex(ValueError, message):
                 renderer.validate_bundles({**runtimes, release: {**runtimes[release], 'bundles': bundles}}, base)
+        renderer.validate_bundles({**runtimes, release: {**runtimes[release], 'compile_caches': {base: 'c' * 64}}}, base)
+        for caches in ({base: '../escape'}, {'other-base': 'c' * 64}, ['c' * 64], {base: None}):
+            with self.subTest(caches=caches), self.assertRaisesRegex(ValueError, 'compile_caches'):
+                renderer.validate_bundles({**runtimes, release: {**runtimes[release], 'compile_caches': caches}}, base)
         with tempfile.TemporaryDirectory() as directory:
             catalogue = Path(directory) / 'runtimes.json'
             catalogue.write_text(json.dumps({**runtimes, release: {**runtimes[release], 'bundles': {'older-base': 'a' * 64}}}))

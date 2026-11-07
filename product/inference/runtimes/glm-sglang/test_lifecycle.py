@@ -94,6 +94,29 @@ class Lifecycle(unittest.TestCase):
                 service.run({})
         start.assert_not_called()
 
+    def test_foreign_reply_on_backend_port_waits_instead_of_failing_startup(self):
+        # Before SGLang binds its HTTP port, another protocol can answer there.
+        replies = iter([service.http.client.BadStatusLine('\x00'), ValueError('bad JSON'),
+                        ConnectionResetError(), True])
+        def ready(port):
+            reply = next(replies)
+            if isinstance(reply, BaseException):
+                raise reply
+            return reply
+        started = []
+        def popen(command):
+            started.append(command)
+            return FakeChild(None if command == ['backend'] else 0)
+        with patch.object(service, 'commands', return_value=({'backend': 48084}, ['backend'], ['router'])), \
+             patch.object(service, 'detect_profile', side_effect=lambda environment: environment), \
+             patch.object(service, 'validate_hardware'), \
+             patch.object(service, 'backend_ready', side_effect=ready), \
+             patch.object(service.threading.Event, 'wait', return_value=False), \
+             patch.object(service.subprocess, 'Popen', side_effect=popen):
+            with self.assertRaisesRegex(RuntimeError, 'SGLang or SMG exited'):
+                service.run({})
+        self.assertEqual(started, [['backend'], ['router']])
+
     def test_warmup_concurrency_bounded_by_front_active_capacity(self):
         self.assertEqual(max(launch.base.CONCURRENCIES), 16)
         supervisor = launch.base.Supervisor(['unused'], max_queued_requests=18)

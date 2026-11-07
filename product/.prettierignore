@@ -23,3 +23,5 @@ website/src/posthog-compensation.generated.json
 website/src/components/design/GradientASCII.tsx
 website/src/components/design/Noise.tsx
 website/src/components/design/ReflectiveCard.tsx
+# Verbatim FlashInfer autotune output, hashed in its manifest.
+inference/runtimes/glm-sglang/autotune/sm103/

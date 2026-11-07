@@ -186,6 +186,19 @@ fetches verify all 37 public NVIDIA TRTLLM FMHA/BMM/GEMM checksum manifests and
 headers against the pinned FlashInfer 0.7.2 hashes. Startup verifies and atomically
 seeds these files into a writable versioned cubin directory before GPU ranks
 start. This avoids concurrent downloads of large headers on a fresh pod.
+
+The bundle also carries FlashInfer autotune results for the B300 profile in
+`autotune/`, tuned on a production host. A host's first start otherwise spends
+5-11 minutes tuning; the tactics are the same on every B300 host because the
+cache key covers only model and parallel settings and the file's metadata covers
+library versions and the GPU. `autotune-seed.py` fills a tuning directory only
+when no rank has a file there, never blocks startup, and leaves a host's own
+results in place. FlashInfer ignores a seed whose metadata disagrees with the
+running libraries, so a stale seed costs only the tuning it would have saved.
+`test_autotune_seed.py` fails when the pinned FlashInfer or CUTLASS DSL version
+changes: refresh the seeds from
+`$XDG_CACHE_HOME/glm-sglang/sglang/flashinfer/autotune/` on a host running the
+new bundle, or delete them.
 Individual cubins remain subject to FlashInfer's native checksum-verified
 on-demand downloads; the bundle is not an offline-complete cubin distribution.
 Qualify a cold writable cache on B300 hardware, including long-context and mixed

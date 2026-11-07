@@ -9,8 +9,7 @@ export const createKimiK31ProModelConfiguration = () =>
     id: kimiK31ProModelId,
     name: modelDisplayName(kimiK31ProModelId),
     status: "available",
-    // Checked 2026-11-06: OpenRouter's entry has this model's Hugging Face ID.
-    openrouterModelId: "moonshotai/kimi-k3.1-pro",
+    openrouterModelId: null,
     properties: {
       description:
         "Moonshot AI's Kimi K3.1 Pro with MXFP4 routed experts, reasoning and tool use.",

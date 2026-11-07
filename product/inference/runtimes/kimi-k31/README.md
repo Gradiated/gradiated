@@ -132,16 +132,12 @@ placement only after GLM uncensored has enough capacity on other B300
 deployments and its pods have drained from `01a0fbf7`. The taint only blocks new
 pods and does not evict running ones.
 
-The public model is available and advertises text input only. It maps to
-OpenRouter's `moonshotai/kimi-k3.1-pro`, so the gateway serves it through
-OpenRouter while no Kimi deployment is live, and through Kimi deployments once
-they qualify. Prices are $1.80 per million input tokens, $0.18 per million cached
-input tokens and $9.00 per million output tokens. OpenRouter fallback for Kimi may cost up
-to 20% more than we charge (a $2.16 input and $10.80 output cap, hardcoded in
-the gateway's OpenRouter client), because no allowed zero-retention provider
-serves it at $1.80/$9.00. The allowance applies to what the request
-pays us, so flex requests (0.7x) cap at $1.51/$7.56 and get no OpenRouter
-fallback. There is no separate
+The public model is available and advertises text input only. OpenRouter capacity
+is disabled in its catalog configuration (`openrouterModelId: null`), so the
+gateway serves Kimi only through qualified local deployments. If local capacity
+is unavailable, requests receive the existing capacity errors. Prices are $1.80
+per million input tokens, $0.18 per million cached input tokens and $9.00 per
+million output tokens. There is no separate
 cache-write price: the gateway adds a cache-write price on top of input, so
 cache writes are charged at the input rate. Its initial
 release uses the existing Chat transport and omits `tokenizer_mode`; SGLang owns
@@ -177,8 +173,8 @@ committed 8xB300 inventory, and preserves every existing model and runtime. It
 keeps both replicas warm with ten `min_slots`. Add `--write`, render the GPU
 configuration, and review the generated Kimi resources before merging. The
 catalog status is already `available`; normal routing to the Kimi
-deployments stays closed until the worker qualifies them, and OpenRouter serves
-Kimi until then.
+deployments stays closed until the worker qualifies them. With OpenRouter
+capacity disabled, Kimi cannot serve requests until local qualification succeeds.
 
 The pool has two replicas, one per host, each using every GPU on its host
 (ten `min_slots` at five slots each, and `max_replicas` two). An update replaces one replica at a

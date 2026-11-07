@@ -55,11 +55,9 @@ export const DEFAULT_LIMITS = {
 
 export type Limits = typeof DEFAULT_LIMITS;
 
-// Models whose replica on a host being re-imaged is retired rather than moved:
-// OpenRouter serves them while the host is down, so one replica may be
-// unavailable, as long as another is Ready elsewhere. Every other model must
-// fit on another host first.
-export const RETIRE_ON_REIMAGE: ReadonlySet<string> = new Set(["kimi-k31-pro"]);
+// Opting in permits retiring a replica without relocating it. Keep local-only
+// models out of this set so re-imaging preserves their serving capacity.
+export const RETIRE_ON_REIMAGE: ReadonlySet<string> = new Set();
 
 export type RolloutDependencies = {
   api: Kubernetes;

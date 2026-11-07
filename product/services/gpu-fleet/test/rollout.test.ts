@@ -302,6 +302,35 @@ describe("rolling re-image", () => {
     },
   );
 
+  it("preserves both local Kimi replicas when re-imaging has no replacement capacity", async () => {
+    const fleet = simulateFleet(
+      [
+        { instanceId: FIRST, podId: "zhimpngvqyotuj", gpus: 8 },
+        { instanceId: SECOND, podId: "dv31b4wrd2yc8n", gpus: 8 },
+      ],
+      [{ name: "kimi-k31-pro", gpus: 8, replicas: 2 }],
+    );
+    fleet.place("kimi-k31-pro", FIRST);
+    fleet.place("kimi-k31-pro", SECOND);
+
+    await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () => rollout(fleet, FIRST)?.result === "Blocked",
+    );
+
+    expect(rollout(fleet, FIRST)).toMatchObject({
+      result: "Blocked",
+      lastError: "No capacity for a replacement kimi-k31-pro replica",
+    });
+    expect(fleet.ready("kimi-k31-pro")).toBe(2);
+    for (const id of [FIRST, SECOND]) {
+      expect(fleet.sim(id)).toMatchObject({ image: OLD_IMAGE, resets: 0 });
+      expect(fleet.node(id).spec?.unschedulable).not.toBe(true);
+    }
+    expect(fleet.violations).toEqual([]);
+  });
+
   it("retires one replica of an opted-in model when no host has room, never all of them", async () => {
     const fleet = simulateFleet(
       [

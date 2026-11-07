@@ -192,8 +192,8 @@ requires the configured verification workspace and a valid target header after
 authentication; a caller cannot suppress failure metrics by forging that header.
 Older metrics without a traffic label remain included during mixed-version deployment.
 
-`GatewayRuntimeFailures` requires more than 1% failed completed generations per
-model and deployment over five minutes, at least five failures, sustained for
+`GatewayRuntimeFailures` requires more than 5% failed completed generations per
+model and deployment over three minutes, at least 20 failures, sustained for
 one minute. Capacity rejections (`error="capacity_exceeded"`) are excluded from
 both the failure count and denominator, including in
 `GatewaySevereGenerationFailures` and their dashboard panels. Cancelled
@@ -624,7 +624,7 @@ when adding a new critical rule or upgrading the monitoring charts.
 | `GatewayFinalizationFailure` | critical | 0m | Immediate exception: usage, billing or lease finalization may have lost durable state. |
 | `GatewayGenerationsStuck` | critical | 5m | Active work with no terminal generation for ten minutes, sustained another five minutes. |
 | `GatewayHighErrorRate` | critical | 5m | Sustained customer HTTP error ratio with a minimum request-volume guard; severe outages have a separate faster rule. |
-| `GatewayRuntimeFailures` | critical | 1m | More than 1% failed completed generations, at least five failures per five minutes, for one minute; capacity rejections, verification and cancellations excluded. |
+| `GatewayRuntimeFailures` | critical | 1m | More than 5% failed completed generations, at least 20 failures per three minutes, for one minute; capacity rejections, verification and cancellations excluded. |
 | `GatewayCapacityRejections` | warning | 1m | More than 5% of completed or capacity-rejected inference requests encounter capacity_exceeded over five minutes, with at least five rejections; includes in-stream errors, excludes verification and other rate limits. |
 | `GatewaySevereErrors` | critical | 1m | At least half of requests/generations fail, with at least five failures, sustained one minute. |
 | `GatewaySevereGenerationFailures` | critical | 1m | At least half of generations fail, with at least five failures, sustained one minute; capacity rejections and verification excluded. |

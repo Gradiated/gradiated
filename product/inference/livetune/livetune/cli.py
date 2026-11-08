@@ -636,15 +636,20 @@ def main(argv: list[str] | None = None) -> int:
             nonlocal seen
             mtime = Path(args.policy).stat().st_mtime
             if mtime != seen:
-                seen = mtime
                 try:
                     reloaded = load_policy(args.policy, server, args.allow_scope_mismatch)
-                    controller.replace_policy(reloaded)
+                    # Announce the version before adopting the rules, so a replica never runs a policy
+                    # under another policy's version; if this fails, nothing has changed yet.
                     if acting:
                         server.apply({"policy_version": reloaded.version})
+                    controller.replace_policy(reloaded)
+                    seen = mtime
                     log({"t": time.time(), "policy_reloaded": args.policy, "version": reloaded.version})
-                except (SystemExit, ValueError, OSError) as exc:
+                except (SystemExit, ValueError) as exc:
+                    seen = mtime  # an invalid or out-of-scope file stays invalid until it is republished
                     log({"t": time.time(), "policy_rejected": str(exc)})
+                except OSError as exc:
+                    log({"t": time.time(), "policy_reload_retry": str(exc)})  # transient: try again next window
             return server.scrape()
 
         control.run(controller, scrape, apply, window, interval_s=args.interval, log=log)

@@ -1009,7 +1009,7 @@ class TraceTest(unittest.TestCase):
             self.assertLessEqual(len(files), 2)
             records = list(trace.read([tmp]))
             self.assertTrue(records and records[-1].t == 1011.0)
-            self.assertEqual(list(trace.read([tmp], since=1011.0))[0].prompt_tokens, 2000)
+            self.assertEqual(list(trace.read([tmp], since=1011.0 - 3.05))[0].prompt_tokens, 2000)  # filtered by start time
 
     def test_summary_describes_the_mix_and_arrivals_keep_families(self):
         from livetune import trace
@@ -1819,3 +1819,15 @@ class AbortTimingAndPrewarmTest(unittest.TestCase):
         arrival = types.SimpleNamespace(at=0.0, cached_tokens=10, family=None, ancestors=(), shared_tokens=0)
         with self.assertRaises(RuntimeError):
             asyncio.run(loadgen._prewarm(session, "http://x", [arrival], [list(range(20))]))
+
+
+class WindowStartTest(unittest.TestCase):
+    def test_a_window_holds_requests_that_started_in_it(self):
+        from livetune import trace
+
+        with tempfile.TemporaryDirectory() as tmp:
+            writer = trace.Writer(tmp)
+            writer.write(_record(1000.0, ttft_s=1.0, decode_s=1.0))  # started at 998
+            writer.write(dataclasses_replace(_record(1000.0), server_s=1800.0))  # a long one that started at -800
+            writer.close()
+            self.assertEqual(len(list(trace.read([tmp], since=900.0))), 1)

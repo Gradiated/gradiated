@@ -55,6 +55,12 @@ class Record:
     multimodal: bool = False  # images or embeddings, which replay cannot send
 
     @property
+    def started(self) -> float:
+        """When the request reached the scheduler: completion minus its whole server time."""
+        elapsed = self.server_s if self.server_s is not None else sum(x or 0.0 for x in (self.ttft_s, self.decode_s))
+        return self.t - elapsed
+
+    @property
     def decode_tps(self) -> float | None:
         return (self.output_tokens - 1) / self.decode_s if self.decode_s and self.output_tokens > 1 else None
 
@@ -168,6 +174,7 @@ def _alive(pid: int) -> bool:
 
 
 def read(paths: Iterable[str | Path], since: float = 0.0) -> Iterator[Record]:
+    """Records of requests that started at or after ``since``, so a window holds only its own workload."""
     for path in paths:
         path = Path(path)
         files = sorted(path.glob("trace-*.jsonl")) if path.is_dir() else [path]
@@ -176,7 +183,7 @@ def read(paths: Iterable[str | Path], since: float = 0.0) -> Iterator[Record]:
                 for line in handle:
                     if line.strip():
                         record = Record.from_json(line)
-                        if record.t >= since:
+                        if record.started >= since:
                             yield record
 
 
@@ -335,10 +342,10 @@ def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
 
     def elapsed(r: Record) -> float:
         # The whole server time; ttft + decode leaves out a request aborted between launch and first token.
-        return r.server_s if r.server_s is not None else sum(x or 0.0 for x in (r.ttft_s, r.decode_s))
+        return r.t - r.started
 
     def started(r: Record) -> float:
-        return r.t - elapsed(r)
+        return r.started
 
     # A request aborted before its first token never ran on the GPU; one aborted later did, for the
     # tokens it produced, which replay reproduces by generating exactly that many.

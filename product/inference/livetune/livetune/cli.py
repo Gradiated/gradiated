@@ -84,7 +84,8 @@ def replay(args: argparse.Namespace, server: Server) -> None:
     failures: list[BaseException] = []
     thread = None
     if not args.static:
-        controller = control.Controller(policy, startup=startup)
+        # Seeded from readback, so the first rule changes only what differs and starts no variant cooldown.
+        controller = control.Controller(policy, startup=startup, applied=dict(server.livetune_state()["settings"]))
 
         def log(event: dict[str, Any]) -> None:
             event["wall"] = time.time()
@@ -230,7 +231,8 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "control":
         policy = load_policy(args.policy, server, args.allow_scope_mismatch)
         acting = args.mode == "act"
-        controller = control.Controller(policy, startup=server.livetune_state()["startup"], judge_changes=acting)
+        live = server.livetune_state()
+        controller = control.Controller(policy, startup=live["startup"], applied=dict(live["settings"]), judge_changes=acting)
         apply = server.apply if acting else (lambda settings: None)
         control.run(controller, server.scrape, apply, window, interval_s=args.interval, log=_appender(args.log))
     return 0

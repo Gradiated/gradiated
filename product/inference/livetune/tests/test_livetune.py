@@ -265,12 +265,16 @@ class ControllerTest(unittest.TestCase):
 
     def test_variant_switches_need_longer_dwell_and_cooldown(self):
         policy = Policy(Slo(50, 5), (Rule("light", 4, math.inf, {"forward_variant": 1}), Rule("busy", math.inf, math.inf, {"forward_variant": 0})))
-        ctl = control.Controller(policy, dwell=1, cooldown_s=0, variant_dwell=3, variant_cooldown_s=100, smoothing=1.0, probation_s=1e9)
-        self.assertEqual(ctl.step(_window(2), 0).rule, "light")
+        ctl = control.Controller(policy, dwell=1, cooldown_s=0, variant_dwell=3, variant_cooldown_s=100, smoothing=1.0, probation_s=1, demand_decay=0,
+                                 applied={"forward_variant": 1})
+        # The server already runs variant 1, so the initial rule switches nothing and starts no cooldown.
+        self.assertEqual(ctl.step(_window(2), 0).settings, {})
         self.assertIsNone(ctl.step(_window(10), 5))
-        self.assertIsNone(ctl.step(_window(10), 10))
-        self.assertIsNone(ctl.step(_window(10), 15))  # dwell met, variant cooldown (from t=0) not
-        self.assertEqual(ctl.step(_window(10), 105).rule, "busy")
+        self.assertIsNone(ctl.step(_window(10), 10))  # dwell 2 of 3
+        self.assertEqual(ctl.step(_window(10), 15).rule, "busy")
+        for t in (20, 25, 30):
+            self.assertIsNone(ctl.step(_window(2), t))  # dwell met, variant cooldown (from t=15) not
+        self.assertEqual(ctl.step(_window(2), 115).rule, "light")
 
     def test_forget_reapplies_full_rule(self):
         ctl = control.Controller(_policy(), smoothing=1.0)

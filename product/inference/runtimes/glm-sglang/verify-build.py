@@ -40,6 +40,10 @@ def verify(root):
             raise RuntimeError('Native FlashInfer cannot read bundled artifact')
     import sglang
     from sglang.srt.configs.glm5_next import Glm5NextConfig
+    plugins = {entry.name: entry.value for entry in importlib.metadata.entry_points(group='sglang.srt.plugins')}
+    if plugins.get('livetune') != 'livetune.sglang_plugin:register':
+        raise RuntimeError('Live settings plugin is not registered with SGLang')
+    import livetune.sglang_plugin  # noqa: F401
     from sglang.srt.server_args import ServerArgs
     from smg.launch_router import Router, parse_router_args
     from smg.smg_rs import GRADIATED_REFUSED_UPLOAD_DRAIN_VERSION

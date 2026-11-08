@@ -22,6 +22,7 @@ on:
       - product/inference/runtimes/glm-sglang/**
       - product/inference/runtimes/kimi-k31/**
       - product/inference/lora/**
+      - product/inference/livetune/**
       - product/inference/runtime-launcher/**
       - tools/images/**
       - tools/models/**

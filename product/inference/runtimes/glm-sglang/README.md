@@ -205,6 +205,15 @@ Qualify a cold writable cache on B300 hardware, including long-context and mixed
 shapes, before promotion. The cache path can be shared across allocations using
 the same pinned runtime and must remain writable by the runtime user.
 
+The bundle installs the live settings plugin from
+[`product/inference/livetune`](../../livetune/README.md). SGLang loads it in every
+scheduler through its plugin entry point. It adds `max_running_requests`,
+`chunked_prefill_size` and `max_prefill_tokens` to `/set_internal_state`, bounded
+by the startup flags, and reports them under `internal_states[].livetune` in
+`/server_info`. Live forward-variant switching stays disabled. Nothing changes a
+setting unless a caller asks, and no controller runs in this runtime yet.
+`verify-build.py` checks that the entry point is registered.
+
 The Docker verification stage extracts the actual archive, imports its pinned
 binaries, checks source patch digests, compiles Python sources, parses both native
 CLIs, and verifies seeded artifacts through FlashInfer's loader with downloads

@@ -16,6 +16,10 @@ RUN mkdir /src && tar -xzf /tmp/sglang.tar.gz -C /src --strip-components=1 \
     && uv pip install --python /bundle/python/bin/python3 --break-system-packages \
        --no-deps --no-build-isolation /src/python \
     && rm -rf /src /tmp/sglang.tar.gz
+COPY livetune /tmp/livetune
+RUN uv pip install --python /bundle/python/bin/python3 --break-system-packages \
+       --no-deps --no-build-isolation /tmp/livetune \
+    && rm -rf /tmp/livetune
 COPY bundles/glm-5-3-flash-sglang/patches /tmp/sglang-patches/patches
 COPY bundles/glm-5-3-flash-sglang/patches.json bundles/glm-5-3-flash-sglang/apply-patches.py /tmp/sglang-patches/
 RUN /bundle/python/bin/python3 /tmp/sglang-patches/apply-patches.py /bundle/python/lib/python3.12/site-packages /tmp/sglang-patches \

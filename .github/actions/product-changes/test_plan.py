@@ -83,6 +83,13 @@ class ProductChangesTest(unittest.TestCase):
         self.assertFalse(result["native_cpp"])
         self.assertFalse(result["native_vllm"])
 
+    def test_livetune_change_runs_only_its_unit_tests(self):
+        result = plan(["product/inference/livetune/livetune/controller.py"])
+        self.assertTrue(result["native_livetune"])
+        self.assertTrue(result["inference_native"])
+        self.assertFalse(result["native_cpp"])
+        self.assertFalse(result["gateway_contract"])
+
     def test_root_dependency_and_workflow_changes_run_all_checks(self):
         for path in (
             "product/pnpm-lock.yaml",

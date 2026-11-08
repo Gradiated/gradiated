@@ -48,6 +48,7 @@ export const bundles = {
   "glm-5-3-flash-sglang": [
     "product/inference/bundles/glm-5-3-flash-sglang",
     "product/inference/runtimes/glm-sglang",
+    "product/inference/livetune",
     "product/inference/runtimes/glm/warmup-supervisor.py",
   ],
   "kimi-k31-pro": [

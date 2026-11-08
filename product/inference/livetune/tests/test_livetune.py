@@ -258,6 +258,31 @@ class ControllerTest(unittest.TestCase):
         self.assertEqual(ctl.step(_window(8), 5).settings, {})
         self.assertEqual(ctl.step(_window(30), 10).rule, "c")  # not held behind a probation of "b"
 
+    def test_probation_runs_from_when_the_change_went_live(self):
+        ctl = control.Controller(_policy(), dwell=1, cooldown_s=0, probation_s=30, smoothing=1.0)
+        ctl.step(_window(2), 0)
+        ctl.step(_window(2), 5)
+        self.assertEqual(ctl.step(_window(10), 10).rule, "busy")
+        ctl.applied_at(50)  # a slow apply (a variant recapture) finished at t=50
+        self.assertIsNone(ctl.step(_window(10, tps=20), 55))
+        self.assertIsNone(ctl.step(_window(10, tps=20), 75))  # 25 s after going live: still on probation
+        self.assertEqual(ctl.step(_window(10, tps=20), 85).reason, "rollback from busy")
+
+    def test_run_loop_takes_a_fresh_baseline_after_applying_a_change(self):
+        ctl = control.Controller(_policy(), smoothing=1.0)
+        scraped, pairs = [], []
+
+        def scrape():
+            scraped.append(len(scraped))
+            return scraped[-1]
+
+        def window_of(a, b):
+            pairs.append((a, b))
+            return _window(2)
+
+        control.run(ctl, scrape, lambda settings: settings, window_of, stop=lambda: len(scraped) > 3, clock=lambda: 0.0, sleep=lambda s: None)
+        self.assertEqual(pairs[:2], [(0, 1), (2, 3)])  # scrape 2 is the post-apply baseline
+
     def test_a_window_without_a_per_request_rate_cannot_pass_probation(self):
         ctl = control.Controller(_policy(), smoothing=1.0)
         unfinished = metrics.Window(5, 10, 0, 5, 5000, 1000, 0, None, 1.0)
@@ -370,7 +395,7 @@ class ControllerTest(unittest.TestCase):
             return scraped[-1]
 
         control.run(ctl, scrape, apply, lambda a, b: _window(2), log=events.append,
-                    stop=lambda: len(scraped) > 3, clock=lambda: 0.0, sleep=lambda s: None)
+                    stop=lambda: len(scraped) > 4, clock=lambda: 0.0, sleep=lambda s: None)
         self.assertEqual(events[0]["action"]["settings"], {"max_running_requests": 8})
         self.assertEqual([e.get("reconciled") for e in events[1:]], [{"max_running_requests": 8}, None])
         self.assertEqual(live["max_running_requests"], 8)

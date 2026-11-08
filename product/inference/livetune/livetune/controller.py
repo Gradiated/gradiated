@@ -54,9 +54,18 @@ class Controller:
     _deferred_windows: int = 0
     _last_change: float = float("-inf")
     _last_variant_change: float = float("-inf")
+    _decided_at: float = float("-inf")
     _probation: _Probation | None = None
     _recent_slo: list[bool] = field(default_factory=list)
     _penalties: dict[str, float] = field(default_factory=dict)
+
+    def applied_at(self, now: float) -> None:
+        """The last change is live as of now: its probation and cooldowns run from here, not from the decision."""
+        self._last_change = now
+        if self._last_variant_change > float("-inf") and self._last_variant_change >= self._decided_at:
+            self._last_variant_change = now
+        if self._probation is not None and self._probation.rule == self.current:
+            self._probation.started, self._probation.verdicts = now, []
 
     def forget(self) -> None:
         self.current, self.applied, self._probation = None, {}, None
@@ -184,7 +193,7 @@ class Controller:
         if VARIANT_KEY in diff:
             self._last_variant_change = now
         slo_before = all(self._recent_slo[-3:]) if self._recent_slo else bool(verdict)
-        self.current, self._last_change = rule.name, now
+        self.current, self._last_change, self._decided_at = rule.name, now, now
         self._candidate, self._candidate_windows, self._deferred_windows = None, 0, 0
         self.applied.update(settings)
         # Only a change that sent something can be judged; a rule with the same settings is not one.
@@ -222,15 +231,21 @@ def run(
                 # A failed scrape loses one window; the next good scrape starts a fresh one.
                 log({"t": clock(), "wall": wall(), "error": f"{type(exc).__name__}: {exc}"})
                 current = None
-            if current is not None and previous is not None:
-                _step(controller, window_of(previous, current), apply, log, clock(), wall())
+            if current is not None and previous is not None and _step(controller, window_of(previous, current), apply, log, clock(), wall()):
+                # A change just went live: judge it from a fresh baseline, not a window spanning the transition.
+                controller.applied_at(clock())
+                try:
+                    current = scrape()
+                except Exception:
+                    current = None
         if current is None:
             sleep(interval_s)
         previous = current
 
 
 def _step(controller: Controller, win: Window, apply: Callable[[dict[str, Any]], dict[str, Any] | None],
-          log: Callable[[dict[str, Any]], None], now: float, wall: float) -> None:
+          log: Callable[[dict[str, Any]], None], now: float, wall: float) -> bool:
+    """Process one window; True when a change was applied."""
     action = controller.step(win, now)
     # Stamped before applying, so an event belongs to the window it started in however long the apply takes.
     event: dict[str, Any] = {
@@ -247,6 +262,7 @@ def _step(controller: Controller, win: Window, apply: Callable[[dict[str, Any]],
     }
     if action is not None:
         event["action"] = {"rule": action.rule, "settings": action.settings, "reason": action.reason}
+    changed = False
     if controller.current is not None:
         # Re-assert the whole rule every window: a restarted server comes back on its startup
         # settings, and apply sends only what differs from the live state.
@@ -260,6 +276,8 @@ def _step(controller: Controller, win: Window, apply: Callable[[dict[str, Any]],
         else:
             if action is not None:
                 event["action"]["apply_s"] = round(time.monotonic() - started, 3)
+                changed = bool(action.settings)
             elif sent:
                 event["reconciled"] = sent
     log(event)
+    return changed

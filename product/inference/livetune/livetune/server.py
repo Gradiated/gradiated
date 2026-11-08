@@ -114,7 +114,14 @@ class Server:
         # A variant switch completes only once the scheduler drains, so poll for it.
         deadline = time.monotonic() + (timeout if VARIANT_KEY in settings else 0)
         while True:
-            states = self.livetune_states()
+            try:
+                states = self.livetune_states()
+            except OSError:
+                # The scheduler answers nothing while it recaptures graphs, which takes tens of seconds.
+                if time.monotonic() >= deadline:
+                    raise
+                time.sleep(1.0)
+                continue
             mismatched = {
                 index: {k: (v, state.get("settings", {}).get(k)) for k, v in settings.items() if state.get("settings", {}).get(k) != v}
                 for index, state in enumerate(states)

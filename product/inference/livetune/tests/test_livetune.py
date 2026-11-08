@@ -340,6 +340,12 @@ class LoadSummaryTest(unittest.TestCase):
         self.assertEqual((summary["tps_per_user_p50"], summary["ttft_p90"]), (100.0, 0.5))
         self.assertEqual(summary["output_tps"], 7.0)
 
+    def test_percentiles_use_nearest_rank(self):
+        result = loadgen.PhaseResult(loadgen.Phase(10, 100, 50, 10.0))
+        result.requests = [loadgen.RequestRecord(0.0, ttft=float(i), tokens=2, decode_tps=float(i)) for i in range(1, 11)]
+        summary = result.summary()
+        self.assertEqual((summary["ttft_p90"], summary["tps_per_user_p10"], summary["ttft_p50"]), (9.0, 1.0, 5.0))
+
     def test_tokens_streamed_before_an_error_still_count(self):
         result = loadgen.PhaseResult(loadgen.Phase(1, 100, 50, 10.0))
         result.requests = [loadgen.RequestRecord(0.0, tokens=30, error="ClientPayloadError")]

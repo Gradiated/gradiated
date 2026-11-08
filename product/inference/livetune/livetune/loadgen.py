@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import math
 import random
 import statistics
 import time
@@ -41,7 +42,8 @@ class PhaseResult:
         tokens = sum(r.tokens for r in self.requests)
 
         def pct(values: list[float], q: float) -> float | None:
-            return values[min(len(values) - 1, int(q * len(values)))] if values else None
+            # Nearest-rank percentile: the smallest value with at least q of the samples at or below it.
+            return values[max(math.ceil(q * len(values)) - 1, 0)] if values else None
 
         return {
             "phase": asdict(self.phase),

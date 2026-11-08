@@ -44,10 +44,21 @@ def _appender(path: str | None, mode: str = "a"):
     return write
 
 
+def load_policy(path: str, server: Server, allow_scope_mismatch: bool) -> Policy:
+    policy = Policy.load(path)
+    expected, actual = policy.provenance.get("scope"), server.fingerprint()
+    if expected is None and not allow_scope_mismatch:
+        raise SystemExit(f"{path} records no tuning scope; rebuild it with `livetune policy`, or pass --allow-scope-mismatch")
+    if expected is not None and expected != actual and not allow_scope_mismatch:
+        differs = {k: (expected.get(k), actual.get(k)) for k in set(expected) | set(actual) if expected.get(k) != actual.get(k)}
+        raise SystemExit(f"{path} was tuned for a different server (policy, live): {differs}; pass --allow-scope-mismatch to override")
+    return policy
+
+
 def replay(args: argparse.Namespace, server: Server) -> None:
     import threading
 
-    policy = Policy.load(args.policy)
+    policy = load_policy(args.policy, server, args.allow_scope_mismatch)
     write = _appender(args.out)
     startup = server.livetune_state()["startup"]
     server.apply(startup)
@@ -122,6 +133,8 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--policy", required=True)
     r.add_argument("--static", action="store_true", help="hold the startup settings instead of running the controller")
     r.add_argument("--interval", type=float, default=5.0)
+    for name in ("control", "replay"):
+        sub.choices[name].add_argument("--allow-scope-mismatch", action="store_true", help="use a policy tuned on a different model, layout or GPU")
     t = sub.choices["tune"]
     t.add_argument("--profiles", required=True)
     t.add_argument("--grid", required=True)
@@ -174,20 +187,20 @@ def main(argv: list[str] | None = None) -> int:
             ]
         finally:
             server.apply(start)
-        policy = tune.build_policy(results, slo, {"tuned_at": time.time(), "url": args.url, "startup": start}, start)
+        policy = tune.build_policy(results, slo, {"tuned_at": time.time(), "url": args.url, "scope": server.fingerprint()}, start)
         Path(args.out).write_text(policy.to_json())
         print(policy.to_json())
     elif args.command == "policy":
         slo = Slo(args.slo_tps, args.slo_ttft)
         trials = [json.loads(line) for line in Path(args.trials).read_text().splitlines() if line.strip()]
         start = server.livetune_state()["startup"]
-        policy = tune.build_policy(tune.best_from_trials(trials, slo, start), slo, {"trials": args.trials, "startup": start}, start)
+        policy = tune.build_policy(tune.best_from_trials(trials, slo, start), slo, {"trials": args.trials, "scope": server.fingerprint()}, start)
         Path(args.out).write_text(policy.to_json())
         print(policy.to_json())
     elif args.command == "replay":
         replay(args, server)
     elif args.command == "control":
-        policy = Policy.load(args.policy)
+        policy = load_policy(args.policy, server, args.allow_scope_mismatch)
         controller = control.Controller(policy)
         apply = server.apply if args.mode == "act" else (lambda settings: None)
         control.run(controller, server.scrape, apply, window, interval_s=args.interval, log=_appender(args.log))

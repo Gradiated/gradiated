@@ -96,6 +96,9 @@ async def _one(session: Any, url: str, ids: list[int], output_tokens: int, recor
                 if not line.startswith("data:") or line == "data: [DONE]":
                     continue
                 payload = json.loads(line[5:])
+                if "error" in payload:
+                    record.error = f"stream error: {str(payload['error'])[:200]}"
+                    return
                 now = time.perf_counter()
                 tokens = payload.get("meta_info", {}).get("completion_tokens", record.tokens + 1)
                 if tokens > record.tokens:

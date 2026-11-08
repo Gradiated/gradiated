@@ -340,6 +340,20 @@ class TuneTest(unittest.TestCase):
                 self.assertEqual(policy.select(beyond).settings, start)
 
 
+class PolicyScopeTest(unittest.TestCase):
+    def test_policy_from_a_different_server_is_refused_unless_overridden(self):
+        scope = {"model_path": "a", "tp_size": 4, "gpu": "B300"}
+        live = types.SimpleNamespace(fingerprint=lambda: {**scope, "gpu": "H200"})
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "policy.json"
+            path.write_text(Policy(_policy().slo, _policy().rules, {"scope": scope}).to_json())
+            with self.assertRaises(SystemExit):
+                cli.load_policy(str(path), live, False)
+            self.assertEqual(cli.load_policy(str(path), live, True).rules[0].name, "light")
+            same = types.SimpleNamespace(fingerprint=lambda: dict(scope))
+            self.assertEqual(cli.load_policy(str(path), same, False).rules[0].name, "light")
+
+
 class LoadSummaryTest(unittest.TestCase):
     def test_requests_cut_at_the_deadline_count_tokens_but_not_latency(self):
         result = loadgen.PhaseResult(loadgen.Phase(2, 100, 50, 10.0))

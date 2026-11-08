@@ -206,6 +206,17 @@ class Arrival:
     shared_tokens: int
     family: str | None
     temperature: float | None
+    seconds: float = 0.0  # recorded server time, first scheduling to completion
+
+
+def concurrency(schedule: Sequence[Arrival], q: float = 0.9) -> int:
+    """The q-quantile of requests in flight over the schedule, as the server saw them."""
+    events = sorted([(a.at, 1) for a in schedule] + [(a.at + a.seconds, -1) for a in schedule])
+    level, levels = 0, []
+    for _, step in events:
+        level += step
+        levels.append(level)
+    return max(int(_pct(levels, q) or 1), 1)
 
 
 def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
@@ -238,6 +249,7 @@ def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
                 shared_tokens=min(lengths[found[0]], r.prompt_tokens) if found else 0,
                 family=found[0] if found else None,
                 temperature=r.temperature,
+                seconds=sum(x or 0.0 for x in (r.ttft_s, r.decode_s)) / speed,
             )
         )
     return sorted(out, key=lambda a: a.at)

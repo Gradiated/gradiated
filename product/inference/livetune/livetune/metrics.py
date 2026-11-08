@@ -13,9 +13,10 @@ PROMPT_TOKENS = "sglang:prompt_tokens_total"
 GENERATION_TOKENS = "sglang:generation_tokens_total"
 CACHED_TOKENS = "sglang:cached_tokens_total"
 REQUESTS = "sglang:num_requests_total"
-# One observation per finished request, (finish - first token) / (tokens - 1): the same per-user
-# rate loadgen measures, so live SLO verdicts and tuning agree. Token-level ITL would weight fast,
-# long streams by their token counts.
+# One observation per finished request, (tokens - 1) / (finish - first token): the per-user rate
+# loadgen measures, timed on the server so it does not depend on stream chunking. Token-level ITL
+# would weight fast, long streams by their token counts. With speculative decoding the first step
+# can emit several tokens, so this reads slightly above the client's figure.
 REQUEST_TPOT = "sglang:request_time_per_output_token_seconds"
 TTFT = "sglang:time_to_first_token_seconds"
 QUEUE_TIME = "sglang:queue_time_seconds"

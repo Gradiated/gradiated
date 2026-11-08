@@ -17,6 +17,9 @@ class Profile:
     prompt_tokens: int
     output_tokens: int
     shared_prefix: float = 0.0
+    # Open-loop load has no fixed user count, so a running cap may always bind; users is then the
+    # demand the traffic produced, which places the policy rule where that traffic lands.
+    open_loop: bool = False
 
     def phase(self, seconds: float) -> Phase:
         return Phase(self.users, self.prompt_tokens, self.output_tokens, seconds, self.shared_prefix, self.name)
@@ -42,12 +45,15 @@ Measure = Callable[[Profile, dict[str, Any]], dict[str, Any]]
 
 
 def trace_profile(arrivals: Sequence[Any]) -> dict[str, Any]:
-    """One profile standing for a recorded trace; open-loop load has no user count, so no cap is ruled out."""
+    """One profile standing for a recorded trace, placed at the demand the trace produced."""
+    from livetune.trace import concurrency
+
     if not arrivals:
         raise ValueError("the trace has no requests")
     return {
         "name": "trace",
-        "users": 1 << 30,
+        "users": concurrency(arrivals),
+        "open_loop": True,
         "prompt_tokens": int(statistics.median(a.prompt_tokens for a in arrivals)),
         "output_tokens": int(statistics.median(a.output_tokens for a in arrivals)),
         "shared_prefix": round(sum(a.shared_tokens for a in arrivals) / max(sum(a.prompt_tokens for a in arrivals), 1), 3),
@@ -56,7 +62,7 @@ def trace_profile(arrivals: Sequence[Any]) -> dict[str, Any]:
 
 def binding(knob: str, value: Any, profile: Profile) -> bool:
     # A running cap at or above the closed-loop user count never limits anything.
-    return knob != "max_running_requests" or value < profile.users
+    return knob != "max_running_requests" or profile.open_loop or value < profile.users
 
 
 def merged(summaries: Sequence[Mapping[str, Any]]) -> dict[str, Any]:

@@ -643,7 +643,7 @@ class LoadSummaryTest(unittest.TestCase):
         summary = result.summary()
         self.assertEqual((summary["ttft_p90"], summary["tps_per_user_p10"], summary["ttft_p50"]), (9.0, 1.0, 5.0))
 
-    def test_decode_rate_matches_sglangs_per_request_formula(self):
+    def test_decode_rate_excludes_tokens_that_arrived_with_the_first_chunk(self):
         import asyncio
 
         clock = iter([0.0, 1.0, 2.0])
@@ -671,7 +671,7 @@ class LoadSummaryTest(unittest.TestCase):
             asyncio.run(loadgen._one(session, "http://x", [1], 10, record))
         finally:
             loadgen.time.perf_counter = saved
-        self.assertEqual((record.tokens, record.decode_tps), (10, 4.5))  # (10 - 1) / 2 s, as SGLang computes it
+        self.assertEqual((record.tokens, record.decode_tps), (10, 3.0))  # the 6 tokens after the first chunk, over 2 s
         chunks[:] = [{"meta_info": {"completion_tokens": 10}}]
         clock = iter([0.0])
         single = loadgen.RequestRecord(0.0)
@@ -1194,20 +1194,22 @@ class RolloutTest(unittest.TestCase):
         from livetune import rollout
 
         scope = {"gpu": "B300"}
-        replica = types.SimpleNamespace(fingerprint=lambda: scope, scrape=lambda: metrics.parse("", 0.0))
+        replica = types.SimpleNamespace(url="replica", fingerprint=lambda: scope, scrape=lambda: metrics.parse("", 0.0),
+                                        livetune_state=lambda: {"settings": dict(STARTUP)})
         production = types.SimpleNamespace(fingerprint=lambda: scope)
         with tempfile.TemporaryDirectory() as tmp:
             stage_policy = Path(tmp, "stage.json")
             stage_policy.write_text("previous")
             args = argparse.Namespace(stage_url="replica", peers="peer", stage_policy=str(stage_policy), stage_seconds=0, interval=0,
-                                      slo_tps=80, slo_ttft=10)
+                                      slo_tps=80, slo_ttft=10, stage_apply_s=0)
             saved = cli.Server
             cli.Server = lambda url: replica
             try:
                 verdict = cli.stage(args, production, _policy())
             finally:
                 cli.Server = saved
-            self.assertEqual((verdict.decision, stage_policy.read_text()), ("inconclusive", "previous"))
+            # The replica never reported the candidate's settings, so nothing was measured or promoted.
+            self.assertEqual((verdict.decision, verdict.reason, stage_policy.read_text()), ("inconclusive", "the staged replica did not apply the candidate", "previous"))
 
 
 class ReplayIsolationTest(unittest.TestCase):
@@ -1233,7 +1235,7 @@ class ReplayIsolationTest(unittest.TestCase):
         server = types.SimpleNamespace(
             url="http://x", livetune_state=lambda: {"startup": {"max_running_requests": 64}}, fingerprint=lambda: {},
             apply=lambda settings: calls.append(("apply", dict(settings))), flush_cache=lambda: calls.append(("flush",)))
-        arrivals = [types.SimpleNamespace(at=0.0, prompt_tokens=2000, output_tokens=8, shared_tokens=0, family=None, temperature=0.7)]
+        arrivals = [types.SimpleNamespace(at=0.0, prompt_tokens=2000, output_tokens=8, shared_tokens=0, family=None, temperature=0.7, seconds=1.0)]
         saved = loadgen.run_arrivals
 
         async def fake(url, schedule, prompts, name="trace"):
@@ -1288,3 +1290,23 @@ class RolloutEvidenceTest(unittest.TestCase):
             finally:
                 cli.Server = saved
             self.assertEqual((verdict.decision, "peer" in verdict.reason, stage_policy.read_text()), ("inconclusive", True, "previous"))
+
+
+class OpenLoopProfileTest(unittest.TestCase):
+    def test_a_trace_policy_rule_sits_at_the_demand_the_trace_produced(self):
+        from livetune import trace
+
+        schedule = [trace.Arrival(at=i * 0.5, prompt_tokens=2000, output_tokens=256, shared_tokens=0, family=None, temperature=0.7, seconds=10.0)
+                    for i in range(100)]
+        profile = tune.trace_profile(schedule)
+        self.assertEqual((profile["users"], profile["open_loop"]), (20, True))  # a request every 0.5 s lasting 10 s
+        self.assertTrue(tune.binding("max_running_requests", 64, tune.Profile(**profile)))  # open loop: any cap may bind
+        result = {"profile": profile, "settings": {"max_running_requests": 16}, "summary": {}}
+        policy = tune.build_policy([result], Slo(80, 10), {}, {"max_running_requests": 64})
+        self.assertEqual(policy.select(Shape(20, 2000)).name, "trace")
+
+    def test_the_stage_recognises_a_replica_running_a_tuned_rule(self):
+        policy = Policy(Slo(80, 10), (Rule("trace", 25, 2500, {"max_running_requests": 16}), Rule("unmeasured", math.inf, math.inf, {"max_running_requests": 64})))
+        running = lambda settings: types.SimpleNamespace(livetune_state=lambda: {"settings": settings})
+        self.assertTrue(cli._runs_candidate(running({**STARTUP, "max_running_requests": 16}), policy))
+        self.assertFalse(cli._runs_candidate(running(dict(STARTUP)), policy))

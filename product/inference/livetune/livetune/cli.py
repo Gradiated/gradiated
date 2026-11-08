@@ -250,6 +250,27 @@ def _watch(servers: list[Server], seconds: float, interval: float) -> list[list[
     return windows
 
 
+def _runs_candidate(server: Server, policy: Policy) -> bool:
+    """Whether the server's live settings are one of the policy's tuned rules (not a startup fallback)."""
+    live = server.livetune_state().get("settings", {})
+    startup = policy.rules[-1].settings
+    candidates = [rule.settings for rule in policy.rules if rule.settings != startup]
+    return any(all(live.get(key) == value for key, value in settings.items()) for settings in candidates)
+
+
+def _wait_applied(server: Server, policy: Policy, timeout_s: float, interval_s: float) -> bool:
+    deadline = time.monotonic() + timeout_s
+    while True:
+        try:
+            if _runs_candidate(server, policy):
+                return True
+        except Exception:
+            pass
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(interval_s)
+
+
 def stage(args: argparse.Namespace, production: Server, policy: Policy) -> rollout.Verdict:
     """Run a candidate on one production replica beside its peers; restore the replica's policy unless it is promoted."""
     replica = Server(args.stage_url)
@@ -265,8 +286,15 @@ def stage(args: argparse.Namespace, production: Server, policy: Policy) -> rollo
     _publish(args.stage_policy, policy.to_json())
     verdict = None
     try:
+        # The scope ignores live settings, so an unchanged replica would match its peers: measure
+        # only once the replica reports a candidate rule live, and only if it still does at the end.
+        if not _wait_applied(replica, policy, args.stage_apply_s, args.interval):
+            verdict = rollout.Verdict("inconclusive", "the staged replica did not apply the candidate", rollout.Side.of([], slo), rollout.Side.of([], slo))
+            return verdict
         watched = _watch([replica, *peers], args.stage_seconds, args.interval)
         verdict = rollout.judge(watched[0], [w for side in watched[1:] for w in side], slo)
+        if verdict.decision == "promote" and not _runs_candidate(replica, policy):
+            verdict = rollout.Verdict("inconclusive", "the staged replica left the candidate during the stage", verdict.stage, verdict.peers)
         return verdict
     finally:
         if verdict is None or verdict.decision != "promote":
@@ -391,6 +419,7 @@ def main(argv: list[str] | None = None) -> int:
     im.add_argument("--stage-policy", help="the policy file the staged replica's controller reads")
     im.add_argument("--peers", default="", help="comma-separated production replicas to compare against")
     im.add_argument("--stage-seconds", type=float, default=1800)
+    im.add_argument("--stage-apply-s", type=float, default=180, help="how long the staged controller may take to apply the candidate")
     c = sub.choices["control"]
     c.add_argument("--policy", required=True)
     c.add_argument("--interval", type=float, default=5.0)

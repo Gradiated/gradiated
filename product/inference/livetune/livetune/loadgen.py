@@ -100,6 +100,7 @@ async def _one(session: Any, url: str, ids: list[int], output_tokens: int, recor
         "stream": True,
     }
     first = last = None
+    first_tokens = 0
     try:
         async with session.post(f"{url}/generate", json=body) as response:
             if response.status != 200:
@@ -119,16 +120,17 @@ async def _one(session: Any, url: str, ids: list[int], output_tokens: int, recor
                     if first is None:
                         first = now
                         record.ttft = now - record.start
+                        # A chunk can carry several tokens (stream_interval, speculative decoding);
+                        # only tokens after the first chunk have a measured decode time.
+                        first_tokens = tokens
                     last, record.tokens = now, tokens
     except asyncio.CancelledError:
         raise
     except Exception as exc:  # network errors are data, not crashes
         record.error = f"{type(exc).__name__}: {exc}"
     finally:
-        # SGLang's per-request histogram uses the same formula, so tuning and live control agree,
-        # though speculative decoding's multi-token first chunk makes it read slightly high.
-        if first is not None and record.tokens > 1 and last > first:
-            record.decode_tps = (record.tokens - 1) / (last - first)
+        if first is not None and record.tokens > first_tokens and last > first:
+            record.decode_tps = (record.tokens - first_tokens) / (last - first)
 
 
 async def run_phase(url: str, phase: Phase, prompts: PromptSource, phase_index: int = 0) -> PhaseResult:
@@ -162,9 +164,12 @@ async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource,
     """Open loop: each recorded request arrives at its own time, whatever the server is doing."""
     import aiohttp
 
+    from livetune.trace import concurrency
+
     span = max((a.at for a in arrivals), default=0.0)
     phase = Phase(
-        users=0,
+        # Open loop has no user count; the demand the trace produced stands in for it.
+        users=concurrency(arrivals) if arrivals else 0,
         prompt_tokens=int(statistics.median(a.prompt_tokens for a in arrivals)) if arrivals else 0,
         output_tokens=int(statistics.median(a.output_tokens for a in arrivals)) if arrivals else 0,
         seconds=span,

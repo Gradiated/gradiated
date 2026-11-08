@@ -150,6 +150,22 @@ def _segments(args: argparse.Namespace, prompts: loadgen.PromptSource) -> list[A
     return [lambda phase=phase, index=index: asyncio_phase(args.url, phase, prompts, index) for index, phase in enumerate(phases)]
 
 
+def _replay_measured(server: Server, arrivals: list[trace.Arrival], ids: list[list[int]], name: str) -> dict[str, Any]:
+    """Replay a trace once and summarise it, judging the SLO on every request it sent."""
+    import asyncio
+
+    loadgen.prewarm(server.url, arrivals, ids)
+    unstreamed = any(not getattr(a, "stream", True) for a in arrivals)
+    before = server.scrape() if unstreamed else None
+    summary = asyncio.run(loadgen.run_arrivals(server.url, arrivals, ids, name=name, warm=False)).summary()
+    if unstreamed:
+        # The client cannot time a non-streaming response; the server's per-request histograms cover
+        # every request. They are coarser than client timing near the SLO.
+        served = window(before, server.scrape())
+        summary = {**summary, "tps_per_user_p50": served.tps_per_user, "ttft_p90": served.ttft_p90, "slo_from": "server"}
+    return summary
+
+
 def tune_policy(
     server: Server,
     slo: Slo,
@@ -181,15 +197,7 @@ def tune_policy(
         server.flush_cache()
         if arrivals is not None:
             # Every candidate meets the same recorded traffic, arriving at its recorded times.
-            loadgen.prewarm(server.url, arrivals, trace_ids)
-            unstreamed = any(not getattr(a, "stream", True) for a in arrivals)
-            before = server.scrape() if unstreamed else None
-            summary = asyncio.run(loadgen.run_arrivals(server.url, arrivals, trace_ids, name=profile.name, warm=False)).summary()
-            if unstreamed:
-                # The client cannot time a non-streaming response; the server's per-request histograms
-                # cover every request. They are coarser than client timing near the SLO.
-                served = window(before, server.scrape())
-                summary = {**summary, "tps_per_user_p50": served.tps_per_user, "ttft_p90": served.ttft_p90, "slo_from": "server"}
+            summary = _replay_measured(server, arrivals, trace_ids, profile.name)
         else:
             if warmup:
                 loadgen.run(server.url, [profile.phase(warmup)], prompts, log=lambda _: None)
@@ -243,7 +251,7 @@ def variant_eval(args: argparse.Namespace, server: Server) -> dict[str, Any]:
             for label in ("variant", "stock", "variant", "stock"):
                 server.apply({VARIANT_KEY: variant_id if label == "variant" else stock_id})
                 server.flush_cache()
-                runs[label].append(asyncio.run(loadgen.run_arrivals(server.url, arrivals, ids, name=label)).summary())
+                runs[label].append(_replay_measured(server, arrivals, ids, label))
             merged = {label: tune.merged(summaries) for label, summaries in runs.items()}
             report["performance"] = merged
             if args.slo_tps is not None and args.slo_ttft is not None:
@@ -265,7 +273,7 @@ def improve(args: argparse.Namespace, server: Server) -> None:
     write = _appender(str(out / "improve.jsonl"))
     while True:
         started = time.time()
-        report = advise(argparse.Namespace(seconds=args.advise_seconds, interval=args.interval, trace_dir=args.trace_dir), server)
+        report = advise(argparse.Namespace(seconds=args.advise_seconds, interval=args.interval, trace_dir=args.trace_dir, close_s=args.close_s), server)
         entry: dict[str, Any] = {"t": started, "proposals": report["proposals"], "grid": report["grid"]}
         differs = _scope_differences(server.fingerprint(), canary.fingerprint())
         # A record is written when its request finishes, so a window that ended just now would miss its
@@ -474,7 +482,11 @@ def advise(args: argparse.Namespace, server: Server) -> dict[str, Any]:
         previous = current
     after_state = server.livetune_state()
     after = _batch_counters(server)
-    records = list(trace.read([args.trace_dir], since=started_wall)) if args.trace_dir else []
+    # The traffic mix comes from a closed window as long as this one, ending close_s ago, so requests
+    # still running now (the long ones) are not missing from it.
+    close_s = getattr(args, "close_s", 600.0)
+    closed_until = time.time() - close_s
+    records = list(trace.read([args.trace_dir], since=closed_until - (time.time() - started_wall), until=closed_until)) if args.trace_dir else []
     batches = trace.batch_deltas(before, after)
     evidence = advisor.Evidence(
         windows=windows,
@@ -562,6 +574,7 @@ def main(argv: list[str] | None = None) -> int:
     a.add_argument("--interval", type=float, default=5.0)
     a.add_argument("--trace-dir", help="the server's LIVETUNE_TRACE_DIR, for the traffic mix")
     a.add_argument("--out", help="write the report here as well")
+    a.add_argument("--close-s", type=float, default=600, help="the traffic mix is read from a window ending this long ago, so its requests have finished")
     ve = sub.choices["variant-eval"]
     ve.add_argument("--variant", required=True, help="a Python file defining install(model, patch, ctx)")
     ve.add_argument("--name", required=True)

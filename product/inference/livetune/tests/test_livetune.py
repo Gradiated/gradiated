@@ -1310,7 +1310,7 @@ class ReplayIsolationTest(unittest.TestCase):
 
         sent = []
 
-        async def fake(url, schedule, prompts, name="trace", warm=True):
+        async def fake(url, schedule, prompts, name="trace", warm=True, server_stops=False):
             calls.append(("replay",))
             sent.append([list(ids) for ids in prompts])
             result = loadgen.PhaseResult(loadgen.Phase(0, 2000, 8, 1.0))
@@ -2213,6 +2213,112 @@ class InFlightWarmupTest(unittest.TestCase):
         self.assertEqual((summary["completed"], summary["ttft_p90"], summary["output_tps"]), (1, 0.5, 10.0))
 
 
+def _response(chunks=None, payload=None):
+    class Response:
+        status = 200
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *exc):
+            return False
+
+        async def json(self):
+            return payload
+
+        @property
+        async def content(self):
+            for chunk in chunks or []:
+                yield f"data: {json.dumps(chunk)}".encode()
+
+    return Response()
+
+
+class ReplayStopTest(unittest.TestCase):
+    def test_the_server_finishes_a_replayed_early_stop_at_its_recorded_length(self):
+        from livetune import sglang_plugin
+
+        class FINISH_LENGTH:
+            def __init__(self, length):
+                self.length = length
+
+        saved = sglang_plugin._FINISH_LENGTH
+        sglang_plugin._FINISH_LENGTH = FINISH_LENGTH
+        try:
+            # A speculative step accepted three tokens past the stop.
+            req = types.SimpleNamespace(finished_reason=None, finished_len=None, output_ids=[1] * 8,
+                                        sampling_params=types.SimpleNamespace(custom_params={"livetune_stop_after": 5}))
+            sglang_plugin._replay_stop(None, req)
+            self.assertEqual((req.finished_reason.length, req.finished_len), (5, 5))
+            short = types.SimpleNamespace(finished_reason=None, finished_len=None, output_ids=[1] * 4,
+                                          sampling_params=types.SimpleNamespace(custom_params={"livetune_stop_after": 5}))
+            plain = types.SimpleNamespace(finished_reason=None, finished_len=None, output_ids=[1] * 9,
+                                          sampling_params=types.SimpleNamespace(custom_params=None))
+            for untouched in (short, plain):
+                sglang_plugin._replay_stop(None, untouched)
+                self.assertIsNone(untouched.finished_reason)
+        finally:
+            sglang_plugin._FINISH_LENGTH = saved
+
+    def test_with_server_stops_the_client_asks_for_the_stop_and_reads_to_the_end(self):
+        import asyncio
+
+        bodies = []
+        chunks = [{"meta_info": {"completion_tokens": n}} for n in (1, 4, 7)]
+        session = types.SimpleNamespace(post=lambda url, json: bodies.append(json) or _response(chunks))
+        record = loadgen.RequestRecord(0.0)
+        asyncio.run(loadgen._one(session, "http://x", [1], 6, record, max_new_tokens=512, server_stop=True))
+        params = bodies[0]["sampling_params"]
+        self.assertEqual((params["max_new_tokens"], params["custom_params"], record.tokens), (512, {"livetune_stop_after": 6}, 7))
+        unstreamed = []
+        session = types.SimpleNamespace(post=lambda url, json: unstreamed.append(json) or _response(payload={"meta_info": {"completion_tokens": 6}}))
+        asyncio.run(loadgen._one(session, "http://x", [1], 6, loadgen.RequestRecord(0.0), stream=False, max_new_tokens=512, server_stop=True))
+        self.assertEqual(unstreamed[0]["sampling_params"]["max_new_tokens"], 512)  # the declared budget, stopped by the server
+
+    def test_non_streaming_responses_take_the_servers_own_timings(self):
+        import asyncio
+
+        meta = {"completion_tokens": 40, "first_token_latency": 0.8, "decode_throughput": 61.0}
+        session = types.SimpleNamespace(post=lambda url, json: _response(payload={"meta_info": meta}))
+        record = loadgen.RequestRecord(0.0)
+        asyncio.run(loadgen._one(session, "http://x", [1], 40, record, stream=False))
+        self.assertEqual((record.ttft, record.decode_tps, record.untimed), (0.8, 61.0, False))
+
+    def test_speculative_servers_without_replay_stops_refuse_early_stops(self):
+        from livetune import trace
+
+        early = trace.Arrival(at=0.0, prompt_tokens=100, output_tokens=7, shared_tokens=0, family=None, temperature=None, max_new_tokens=512)
+        speculative = types.SimpleNamespace(livetune_states=lambda: [{"settings": {"stream_interval": 1}}],
+                                            info=lambda: {"speculative_algorithm": "EAGLE"})
+        with self.assertRaises(SystemExit):
+            cli._refuse_chunked_early_stops(speculative, [early])
+        stopping = types.SimpleNamespace(livetune_states=lambda: [{"settings": {"stream_interval": 8}, "replay_stops": True}],
+                                         info=lambda: {"speculative_algorithm": "EAGLE"})
+        cli._refuse_chunked_early_stops(stopping, [early])
+
+    def test_untimed_responses_beside_warmups_leave_the_slo_unmeasured(self):
+        from livetune import trace
+
+        arrivals = [trace.Arrival(at=0.0, prompt_tokens=100, output_tokens=7, shared_tokens=0, family=None, temperature=None,
+                                  stream=False, warmup=True),
+                    trace.Arrival(at=1.0, prompt_tokens=100, output_tokens=7, shared_tokens=0, family=None, temperature=None, stream=False)]
+        server = types.SimpleNamespace(url="http://x", livetune_states=lambda: [{"settings": {}}], scrape=lambda: None, info=lambda: {})
+
+        async def fake(url, schedule, prompts, name="trace", warm=True, server_stops=False):
+            result = loadgen.PhaseResult(loadgen.Phase(0, 100, 7, 1.0))
+            result.requests = [loadgen.RequestRecord(0.0, tokens=7, warmup=True), loadgen.RequestRecord(1.0, tokens=7, untimed=True)]
+            return result
+
+        saved = (loadgen.run_arrivals, loadgen.prewarm)
+        loadgen.run_arrivals, loadgen.prewarm = fake, lambda *a: None
+        try:
+            summary = cli._replay_measured(server, arrivals, [[1], [1]], "trace")
+        finally:
+            loadgen.run_arrivals, loadgen.prewarm = saved
+        self.assertEqual((summary["tps_per_user_p50"], summary["ttft_p90"]), (None, None))
+        self.assertIn("warm-ups", summary["slo_from"])
+
+
 class QuietLogTest(unittest.TestCase):
     def test_uneventful_windows_are_logged_as_a_heartbeat_and_actions_always(self):
         logged, now = [], [0.0]
@@ -2264,9 +2370,9 @@ class ServerSideSloTest(unittest.TestCase):
                                           seconds=1.0, cached_tokens=0, priority=None, stream=False)]
         saved = loadgen.run_arrivals
 
-        async def fake(url, schedule, prompts, name="trace", warm=True):
+        async def fake(url, schedule, prompts, name="trace", warm=True, server_stops=False):
             result = loadgen.PhaseResult(loadgen.Phase(0, 2000, 8, 1.0))
-            result.requests = [loadgen.RequestRecord(0.0, tokens=8)]
+            result.requests = [loadgen.RequestRecord(0.0, tokens=8, untimed=True)]  # no --enable-metrics timings
             return result
 
         loadgen.run_arrivals = fake

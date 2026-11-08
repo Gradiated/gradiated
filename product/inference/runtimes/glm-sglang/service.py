@@ -20,7 +20,7 @@ def backend_ready(port):
     return MODEL in [row.get('id') for row in models.get('data', [])]
 
 
-LIVETUNE_MODES = {'off', 'observe', 'act'}
+LIVETUNE_MODES = {'off', 'observe', 'act', 'canary'}
 CONTROLLER_BACKOFF_SECONDS = (30, 600)
 CONTROLLER_CONFIG_ERROR = 78  # livetune.cli.CONFIG_ERROR
 
@@ -30,13 +30,17 @@ def livetune(environment, config):
 
     Off by default. observe records traffic and logs what the bundle's policy would change; act also
     applies it. The policy ships in the bundle per hardware profile, so a change to it is a reviewed
-    bundle release; a profile without one records traffic and runs no controller.
+    bundle release; a profile without one records traffic and runs no controller. canary serves
+    replayed production traffic for tuning: it ends each replayed early stop at its recorded length,
+    and records and changes nothing.
     """
     mode = environment.get('LIVETUNE_MODE', 'off')
     if mode not in LIVETUNE_MODES:
-        raise ValueError('LIVETUNE_MODE must be off, observe or act')
+        raise ValueError('LIVETUNE_MODE must be off, observe, act or canary')
     if mode == 'off':
         return None, {}
+    if mode == 'canary':
+        return None, {'LIVETUNE_REPLAY_STOPS': '1'}
     cache = Path(environment.get('XDG_CACHE_HOME') or Path(environment.get('HOME', '/home/runtime')) / '.cache')
     backend_environment = {'LIVETUNE_TRACE_DIR': str(cache / 'glm-sglang' / 'livetune' / 'trace')}
     policy = Path(config['root']) / 'glm-sglang' / 'livetune' / f"{config['profile']}.json"

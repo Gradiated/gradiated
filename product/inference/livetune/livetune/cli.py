@@ -151,16 +151,31 @@ def replay(args: argparse.Namespace, server: Server) -> None:
         server.apply(startup)
 
 
+def _server_stops(server: Server) -> bool:
+    """Whether every scheduler finishes a replayed early stop itself, at its recorded length."""
+    try:
+        states = server.livetune_states()
+    except Exception:
+        return False
+    return bool(states) and all(state.get("replay_stops") for state in states)
+
+
 def _refuse_chunked_early_stops(server: Server, arrivals: Sequence[trace.Arrival], policy: Policy | None = None) -> None:
     """A trace replay that would decode past early stops measures every candidate on more work than
-    production did, so it is refused rather than measured."""
+    production did, so it is refused rather than measured. A server with replay stops ends each one
+    exactly; otherwise the client cuts the stream, which overruns when a chunk carries several
+    tokens: a stream interval above 1, or speculative decoding accepting a run."""
+    if _server_stops(server):
+        return
     intervals = [int(state.get("settings", {}).get("stream_interval") or 1) for state in server.livetune_states()]
     # A controller replaying the trace may switch to any rule's interval mid-run.
     intervals += [int(rule.settings["stream_interval"]) for rule in (policy.rules if policy else ()) if "stream_interval" in rule.settings]
-    chunked = trace.chunked_early_stops(arrivals, max(intervals, default=1))
+    info = getattr(server, "info", None)
+    speculative = bool(info and (info() or {}).get("speculative_algorithm"))
+    chunked = trace.chunked_early_stops(arrivals, max(intervals, default=1), speculative)
     if chunked:
-        raise SystemExit(f"{chunked} streaming requests stopped early and would stream in chunks of more than one token; "
-                         "replay would decode past their recorded output. Replay with stream_interval 1.")
+        raise SystemExit(f"{chunked} streaming requests stopped early and would arrive in chunks of more than one token; "
+                         "replay would decode past their recorded output. Replay on a server with LIVETUNE_REPLAY_STOPS=1.")
 
 
 def _segments(args: argparse.Namespace, prompts: loadgen.PromptSource, server: Server, policy: Policy | None = None) -> list[Any]:
@@ -183,7 +198,8 @@ def _segments(args: argparse.Namespace, prompts: loadgen.PromptSource, server: S
         # From an empty cache, then the recorded initial state: a previous replay's prefixes must not linger.
         server.flush_cache()
         loadgen.prewarm(args.url, arrivals, ids)
-        return [lambda: asyncio.run(loadgen.run_arrivals(args.url, arrivals, ids, warm=False)).summary()]
+        stops = _server_stops(server)
+        return [lambda: asyncio.run(loadgen.run_arrivals(args.url, arrivals, ids, warm=False, server_stops=stops)).summary()]
     phases = [loadgen.Phase(**p) for p in json.loads(Path(args.phases).read_text())]
     return [lambda phase=phase, index=index: asyncio_phase(args.url, phase, prompts, index) for index, phase in enumerate(phases)]
 
@@ -196,10 +212,14 @@ def _replay_measured(server: Server, arrivals: list[trace.Arrival], ids: list[li
     loadgen.prewarm(server.url, arrivals, ids)
     unstreamed = any(not getattr(a, "stream", True) for a in arrivals)
     before = server.scrape() if unstreamed else None
-    summary = asyncio.run(loadgen.run_arrivals(server.url, arrivals, ids, name=name, warm=False)).summary()
-    if unstreamed:
-        # The client cannot time a non-streaming response; the server's per-request histograms cover
-        # every request. They are coarser than client timing near the SLO.
+    summary = asyncio.run(loadgen.run_arrivals(server.url, arrivals, ids, name=name, warm=False,
+                                               server_stops=_server_stops(server))).summary()
+    if summary.get("untimed"):
+        # Non-streaming responses came back without the server's per-request timings (no
+        # --enable-metrics). The server's histograms cover every request, warm-ups included, so
+        # with warm-ups in the replay they cannot judge only the window.
+        if any(getattr(a, "warmup", False) for a in arrivals):
+            return {**summary, "tps_per_user_p50": None, "ttft_p90": None, "slo_from": "unmeasurable: untimed responses beside warm-ups"}
         served = window(before, server.scrape())
         summary = {**summary, "tps_per_user_p50": served.tps_per_user, "ttft_p90": served.ttft_p90, "slo_from": "server"}
     return summary

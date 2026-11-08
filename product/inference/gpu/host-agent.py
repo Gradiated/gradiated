@@ -143,8 +143,8 @@ def runtime_profile(config, pod):
         raise ValueError("Unsupported runtime environment")
     if extra.get("GLM_SGLANG_PROFILE", "b300-pcp2") not in {"b300-pcp2", "b200-pcp2", "h200-tp2"}:
         raise ValueError("Unsupported GLM SGLang profile")
-    if extra.get("LIVETUNE_MODE", "off") not in {"off", "observe", "act"}:
-        raise ValueError("LIVETUNE_MODE must be off, observe or act")
+    if extra.get("LIVETUNE_MODE", "off") not in {"off", "observe", "act", "canary"}:
+        raise ValueError("LIVETUNE_MODE must be off, observe, act or canary")
     if "GLM_PREFILL_TOKEN_BUDGET" in extra and not re.fullmatch(r"([4-9]|[1-9][0-9]+)", extra["GLM_PREFILL_TOKEN_BUDGET"]):
         raise ValueError("GLM_PREFILL_TOKEN_BUDGET must be an integer of at least 4")
     for name in ("GLM_LONG_PREFILL_TOKEN_THRESHOLD", "GLM_PREFIX_MATCH_UNIT", "MAX_QUEUED_TOKENS", "MAX_QUEUED_REQUESTS"):

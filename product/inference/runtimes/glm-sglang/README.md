@@ -194,6 +194,11 @@ The bundle installs the livetune SGLang plugin (`product/inference/livetune`).
   stream interval, queue limit). Caps never exceed their startup values, so the
   SMG limits and decode graph sizes stay valid.
 
+- `canary`: for a server that only replayed production traffic reaches
+  (`livetune improve --canary`). SGLang ends each replayed early stop at its
+  recorded length, exactly, even under speculative decoding; nothing is recorded
+  or changed.
+
 The controller is a third child of the service. Its exit never stops SGLang or
 SMG; the service restarts it after 30 s, doubling to 10 minutes while it keeps
 failing. It logs every change and a heartbeat every 5 minutes. A policy is part

@@ -72,6 +72,14 @@ class LivetuneContract(unittest.TestCase):
         self.assertTrue({'decode_runner', 'eager_runner'} <= set(drop))
         self.assertIn('model_runner', inspect.signature(cuda_graph_setup.recapture_elastic_cuda_graph).parameters)
 
+    def test_replay_stops_finish_requests_the_way_sglang_does(self):
+        from sglang.srt.managers import schedule_batch
+        from sglang.srt.sampling import sampling_params
+
+        self.assertIn('new_accepted_len', inspect.signature(schedule_batch.Req.update_finish_state).parameters)
+        self.assertIn('length', inspect.signature(schedule_batch.FINISH_LENGTH).parameters)
+        self.assertIn('custom_params', inspect.signature(sampling_params.SamplingParams).parameters)
+
     def test_scheduler_and_model_runner_attributes_the_plugin_reads(self):
         import re
         from pathlib import Path

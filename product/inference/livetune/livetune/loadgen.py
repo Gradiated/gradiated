@@ -30,6 +30,7 @@ class RequestRecord:
     error: str | None = None
     cut: bool = False
     warmup: bool = False  # loads the server as production was loaded; never measured
+    untimed: bool = False  # a non-streaming response without the server's per-request timings
 
 
 @dataclass
@@ -53,6 +54,7 @@ class PhaseResult:
             "phase": asdict(self.phase),
             "completed": len(done),
             "errors": sum(r.error is not None for r in measured),
+            "untimed": sum(r.untimed for r in done),
             "tps_per_user_p50": statistics.median(rates) if rates else None,
             "tps_per_user_p10": pct(rates, 0.1),
             "ttft_p50": pct(ttfts, 0.5),
@@ -107,16 +109,21 @@ class PromptSource:
 
 async def _one(session: Any, url: str, ids: list[int], output_tokens: int, record: RequestRecord, temperature: float = 0.7,
                priority: int | None = None, seed: int | None = None, sampling: dict[str, float] | None = None, logprobs: int = -1,
-               stream: bool = True, logprob_start: int = -1, max_new_tokens: int | None = None, hidden_states: bool = False) -> None:
-    # Declared limit as production sent it (admission and KV headroom use it); the request is cut off
-    # after the observed output_tokens, as the client or a stop condition did in production.
-    # A non-streaming request cannot be cut off mid-way, so it asks for exactly what it produced.
-    budget = max(max_new_tokens or output_tokens, output_tokens) if stream else output_tokens
+               stream: bool = True, logprob_start: int = -1, max_new_tokens: int | None = None, hidden_states: bool = False,
+               server_stop: bool = False) -> None:
+    # Declared limit as production sent it (admission and KV headroom use it). An early stop is
+    # reproduced at the observed output_tokens: by the server where it supports replay stops,
+    # exactly; otherwise by cutting the stream, which a non-streaming request cannot do, so it asks
+    # for exactly what it produced.
+    declared = max(max_new_tokens or output_tokens, output_tokens)
+    budget = declared if stream or server_stop else output_tokens
     body: dict[str, Any] = {
         "input_ids": ids,
         "sampling_params": {"max_new_tokens": budget, "temperature": temperature, "ignore_eos": True},
         "stream": stream,
     }
+    if server_stop and budget > output_tokens:
+        body["sampling_params"]["custom_params"] = {"livetune_stop_after": output_tokens}
     if hidden_states:
         body["return_hidden_states"] = True
     if priority is not None:
@@ -138,9 +145,14 @@ async def _one(session: Any, url: str, ids: list[int], output_tokens: int, recor
                 record.error = f"http {response.status}: {(await response.text())[:200]}"
                 return
             if not stream:
-                # One response at the end: no first-token time or decode rate, but the same server work.
+                # One response at the end. With --enable-metrics SGLang reports its own first-token
+                # latency and decode rate for the request, so it is judged like a streamed one.
                 payload = await response.json()
-                record.tokens = int(payload.get("meta_info", {}).get("completion_tokens", 0))
+                meta = payload.get("meta_info", {})
+                record.tokens = int(meta.get("completion_tokens", 0))
+                record.ttft = meta.get("first_token_latency")
+                record.decode_tps = meta.get("decode_throughput")
+                record.untimed = record.ttft is None
                 return
             async for raw in response.content:
                 line = raw.decode().strip()
@@ -160,7 +172,7 @@ async def _one(session: Any, url: str, ids: list[int], output_tokens: int, recor
                         # only tokens after the first chunk have a measured decode time.
                         first_tokens = tokens
                     last, record.tokens = now, tokens
-                    if budget > output_tokens and tokens >= output_tokens:
+                    if budget > output_tokens and tokens >= output_tokens and not server_stop:
                         break  # closing the stream aborts the request, as the recorded stop did
     except asyncio.CancelledError:
         raise
@@ -275,8 +287,11 @@ def prewarm(url: str, arrivals: Sequence[Any], ids_for: Sequence[list[int]]) -> 
 
 
 async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource | Sequence[list[int]], name: str = "trace",
-                       warm: bool = True) -> PhaseResult:
-    """Open loop: each recorded request arrives at its own time, whatever the server is doing."""
+                       warm: bool = True, server_stops: bool = False) -> PhaseResult:
+    """Open loop: each recorded request arrives at its own time, whatever the server is doing.
+
+    With server_stops, early-stopped requests are finished by the server at their recorded length.
+    """
     import aiohttp
 
     from livetune.trace import concurrency, observed_cache_hit
@@ -311,7 +326,7 @@ async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource 
             await _one(session, url, ids, arrival.output_tokens, record, temperature, getattr(arrival, "priority", None), None,
                        getattr(arrival, "sampling", None), getattr(arrival, "logprobs", -1),
                        getattr(arrival, "stream", True), getattr(arrival, "logprob_start", -1), getattr(arrival, "max_new_tokens", None),
-                       getattr(arrival, "hidden_states", False))
+                       getattr(arrival, "hidden_states", False), server_stops)
 
         await asyncio.gather(*(send(a, ids) for a, ids in zip(arrivals, ids_for)))
     # Every request runs to completion, so the phase lasts until the last one finishes.

@@ -135,6 +135,10 @@ class LiveTuning(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'LIVETUNE_MODE'):
                 service.livetune({'LIVETUNE_MODE': 'on'}, self.config(root))
 
+    def test_a_canary_ends_replayed_stops_and_records_nothing(self):
+        with tempfile.TemporaryDirectory() as root:
+            self.assertEqual(service.livetune({'LIVETUNE_MODE': 'canary'}, self.config(root)), (None, {'LIVETUNE_REPLAY_STOPS': '1'}))
+
     def test_a_profile_without_a_policy_records_traffic_and_runs_no_controller(self):
         with tempfile.TemporaryDirectory() as root:
             command, environment = service.livetune({'LIVETUNE_MODE': 'act', 'XDG_CACHE_HOME': '/c'}, self.config(root))

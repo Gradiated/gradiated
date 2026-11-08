@@ -72,7 +72,7 @@ class HostAgentTest(unittest.TestCase):
     def test_live_tuning_mode_is_validated(self):
         profile = {'image': self.pod['spec']['containers'][0]['image'], 'environment': {}}
         self.host.config['runtimes'] = {'a' * 64: profile}
-        for mode in ('off', 'observe', 'act'):
+        for mode in ('off', 'observe', 'act', 'canary'):
             profile['environment']['LIVETUNE_MODE'] = mode
             with self.subTest(mode=mode):
                 self.assertEqual(agent.runtime_profile(self.host.config, self.pod)[1], profile)

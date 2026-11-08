@@ -19,6 +19,11 @@ _SCHEDULER = "sglang.srt.managers.scheduler.Scheduler"
 _MODEL_RUNNER = "sglang.srt.model_executor.model_runner.ModelRunner"
 _STREAMER = "sglang.srt.managers.scheduler_components.output_streamer.SchedulerOutputStreamer"
 _TIME_STATS = "sglang.srt.observability.req_time_stats.SchedulerReqTimeStats"
+_REQ = "sglang.srt.managers.schedule_batch.Req"
+# A replayed request that stopped early in production carries its recorded length here, and the
+# server finishes it at exactly that many tokens: a client cutting the stream would see the stop
+# only at a chunk boundary, and speculative decoding can accept several tokens past it.
+REPLAY_STOP_KEY = "livetune_stop_after"
 
 
 class NoUsableVariant(RuntimeError):
@@ -303,6 +308,7 @@ class LiveTuner:
             "page_size": self.page_size,
             "pp_micro_batch_startup": self.pp_micro_batch_startup,
             "live_variants": _live_variants(),
+            "replay_stops": _replay_stops(),
             "startup_variant": self.startup_variant,
             "runtime": self.runtime,
             "telemetry": telemetry.readback() if (telemetry := _TELEMETRY.get("rank0")) else None,
@@ -594,6 +600,28 @@ def _record_finished(result: Any, streamer: Any, *args: Any, **kwargs: Any) -> A
     return result
 
 
+def _replay_stops() -> bool:
+    # Canaries that replay traffic enable it; production never pays the per-step hook.
+    return os.environ.get("LIVETUNE_REPLAY_STOPS") == "1"
+
+
+_FINISH_LENGTH: Any = None
+
+
+def _replay_stop(result: Any, req: Any, *args: Any, **kwargs: Any) -> Any:
+    global _FINISH_LENGTH
+    if req.finished_reason is None:
+        params = getattr(req.sampling_params, "custom_params", None)
+        stop = params.get(REPLAY_STOP_KEY) if params else None
+        if stop and len(req.output_ids) >= stop:
+            if _FINISH_LENGTH is None:
+                from sglang.srt.managers.schedule_batch import FINISH_LENGTH as _FINISH_LENGTH
+            # finished_len trims tokens a speculative step accepted past the stop, as SGLang does for stop tokens.
+            req.finished_reason = _FINISH_LENGTH(length=stop)
+            req.finished_len = stop
+    return result
+
+
 def _keep_first_entry(result: Any, stats: Any, *args: Any, **kwargs: Any) -> Any:
     if not getattr(stats, "livetune_first_entry", 0.0):
         stats.livetune_first_entry = stats.wait_queue_entry_time
@@ -689,3 +717,5 @@ def register() -> None:
     HookRegistry.register(f"{_SCHEDULER}.process_batch_result", _record_batch, HookType.AFTER)
     HookRegistry.register(f"{_TIME_STATS}.set_wait_queue_entry_time", _keep_first_entry, HookType.AFTER)
     HookRegistry.register(f"{_TIME_STATS}.reset_prefill_retry_time", _forget_first_entry, HookType.AFTER)
+    if _replay_stops():
+        HookRegistry.register(f"{_REQ}.update_finish_state", _replay_stop, HookType.AFTER)

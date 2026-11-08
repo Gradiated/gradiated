@@ -378,19 +378,21 @@ def _first_lookup(r: Record) -> float:
     return (r.queue_s or 0.0) if not r.retractions else 0.0
 
 
-def chunked_early_stops(arrivals: Sequence[Arrival], stream_interval: int) -> int:
+def chunked_early_stops(arrivals: Sequence[Arrival], stream_interval: int, speculative: bool = False) -> int:
     """Streaming requests that stopped early and would stream in chunks of several tokens.
 
     Replay ignores EOS and closes the stream at the recorded output, but it sees that output only at
     a chunk boundary, so it decodes past it; production stopped exactly. Those requests do more work
     in replay than they did in production. SGLang sends the first token alone whatever the interval,
-    so a one-token stop is cut off exactly.
+    so a one-token stop is cut off exactly. Speculative decoding can accept several tokens in one
+    step, so on a speculative server every later chunk may overrun.
     """
     def early(a: Arrival) -> bool:
         declared = getattr(a, "max_new_tokens", None)
         return bool(getattr(a, "stream", True) and declared and 1 < a.output_tokens < declared)
 
-    return sum(1 for a in arrivals if early(a) and int(getattr(a, "sampling", {}).get("stream_interval", stream_interval)) > 1)
+    return sum(1 for a in arrivals
+               if early(a) and (speculative or int(getattr(a, "sampling", {}).get("stream_interval", stream_interval)) > 1))
 
 
 def _warmup(r: Record, since_wall: float) -> Record:

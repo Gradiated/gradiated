@@ -371,6 +371,9 @@ def _schedule_policy(scheduler: Any, name: str) -> Any:
     )
 
 
+# SGLang's defaults; a request that differs is recorded and replayed with the same values.
+_SAMPLING_DEFAULTS = {"top_p": 1.0, "top_k": -1, "min_p": 0.0, "repetition_penalty": 1.0, "frequency_penalty": 0.0, "presence_penalty": 0.0}
+
 _FINISH_NAMES = {"FINISH_LENGTH": "length", "FINISH_ABORT": "abort", "FINISH_MATCHED_TOKEN": "stop", "FINISH_MATCHED_STR": "stop", "FINISHED_MATCHED_REGEX": "stop"}
 
 
@@ -418,6 +421,9 @@ class Telemetry:
             session=getattr(req, "session_id", None) is not None,
             families=self.keys.families(ids),
             cached_family=self.keys.digest(ids, cached_pages) if cached_pages else None,
+            sampling={key: float(getattr(params, key)) for key, default in _SAMPLING_DEFAULTS.items()
+                      if getattr(params, key, default) not in (None, default)},
+            logprobs=int(getattr(getattr(req, "logprob", None), "top_logprobs_num", 0) or 0) if getattr(req, "return_logprob", False) else -1,
         )
 
     def on_finish(self, req: Any) -> None:

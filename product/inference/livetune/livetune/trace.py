@@ -45,6 +45,8 @@ class Record:
     session: bool = False
     families: tuple[str, ...] = ()  # keyed prefix hashes at FAMILY_DEPTHS that the prompt reaches
     cached_family: str | None = None  # keyed hash of the cached prefix
+    sampling: dict[str, float] = field(default_factory=dict)  # sampling parameters that differ from SGLang's defaults
+    logprobs: int = -1  # -1 none; otherwise logprobs were requested, with this many top alternatives
 
     @property
     def decode_tps(self) -> float | None:
@@ -102,7 +104,8 @@ class Writer:
 
     def __init__(self, directory: str | Path, max_bytes: int = 64 << 20, keep: int = 8, flush_s: float = 1.0) -> None:
         self.directory = Path(directory)
-        self.directory.mkdir(parents=True, exist_ok=True)
+        # Records are Confidential usage data: the directory and files are for the owner only.
+        self.directory.mkdir(mode=0o700, parents=True, exist_ok=True)
         self.max_bytes, self.keep, self.flush_s = max_bytes, keep, flush_s
         self.written = 0
         self._open()
@@ -110,7 +113,7 @@ class Writer:
     def _open(self) -> None:
         # Names sort in write order, which retention and readers rely on.
         self.path = self.directory / f"trace-{time.strftime('%Y%m%dT%H%M%S')}-{os.getpid()}-{self.written:012d}.jsonl"
-        self.handle = self.path.open("a", buffering=1 << 16)
+        self.handle = os.fdopen(os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600), "a", buffering=1 << 16)
         self.bytes, self.last_flush = 0, time.monotonic()
 
     def write(self, record: Record) -> None:
@@ -260,7 +263,9 @@ class Arrival:
     seconds: float = 0.0  # recorded server time, first scheduling to completion
     cached_tokens: int = 0  # what production actually hit, for the cache-hit guard of a tuned rule
     priority: int | None = None
-    ancestors: tuple[tuple[int, str], ...] = ()  # (depth, key) of every shared family depth, shallowest first
+    ancestors: tuple[tuple[int, str], ...] = ()
+    sampling: dict[str, float] = field(default_factory=dict)
+    logprobs: int = -1  # (depth, key) of every shared family depth, shallowest first
 
 
 def replay_gaps(records: Sequence[Record]) -> dict[str, int]:
@@ -352,6 +357,8 @@ def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
                 cached_tokens=r.cached_tokens,
                 priority=r.priority,
                 ancestors=ancestors,
+                sampling=dict(r.sampling),
+                logprobs=r.logprobs,
             )
         )
     return sorted(out, key=lambda a: a.at)

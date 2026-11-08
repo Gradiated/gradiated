@@ -73,6 +73,9 @@ class Verdict:
 
 def judge(stock: Sample, stock_again: Sample, variant: Sample) -> Verdict:
     own, theirs = agreement(stock, stock_again), agreement(stock, variant)
+    stock_bad = sum(not math.isfinite(v) for sample in (stock, stock_again) for row in sample.logprobs for v in row)
+    if stock_bad:
+        return Verdict(False, (f"stock produced {stock_bad} non-finite logprobs, so its probabilities cannot anchor the gate",), own, theirs)
     unusable = [f"stock {key} {getattr(own, key):.2f} below {floor}" for key, floor in BASELINE_FLOOR.items() if getattr(own, key) < floor]
     if unusable:
         return Verdict(False, ("stock does not repeat itself well enough to judge a variant: " + "; ".join(unusable),), own, theirs)

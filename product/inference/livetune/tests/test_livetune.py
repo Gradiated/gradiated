@@ -1588,3 +1588,34 @@ class ReplayDeterminismTest(unittest.TestCase):
         schedule = trace.arrivals([_record(100.0, ttft_s=0.5, decode_s=9.5), _record(120.0, ttft_s=0.5, decode_s=9.5)], speed=4.0)
         self.assertEqual([a.at for a in schedule], [0.0, 5.0])
         self.assertEqual({a.seconds for a in schedule}, {10.0})
+
+
+class RequestModeAndPrivacyTest(unittest.TestCase):
+    def test_trace_files_and_directory_are_owner_only(self):
+        from livetune import trace
+
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp, "trace")
+            writer = trace.Writer(directory)
+            writer.write(_record(100.0))
+            writer.close()
+            self.assertEqual(oct(directory.stat().st_mode & 0o777), "0o700")
+            self.assertEqual({oct(p.stat().st_mode & 0o777) for p in directory.glob("trace-*.jsonl")}, {"0o600"})
+
+    def test_sampling_and_logprob_settings_are_replayed(self):
+        from livetune import trace
+
+        record = dataclasses_replace(_record(100.0), sampling={"top_p": 0.9, "top_k": 40.0}, logprobs=5)
+        arrival = trace.arrivals([record])[0]
+        self.assertEqual((arrival.sampling, arrival.logprobs), ({"top_p": 0.9, "top_k": 40.0}, 5))
+        self.assertEqual(trace.Record.from_json(record.to_json()), record)
+
+    def test_non_finite_stock_logprobs_fail_the_gate(self):
+        from livetune import gate
+
+        rows = [[1, 2, 3, 4, 5, 6, 7, 8, 9]] * 4
+        stock = gate.Sample(rows, [[-1.0] * 9] * 3 + [[-1.0] * 8 + [float("nan")]])
+        clean = gate.Sample(rows, [[-1.0] * 9] * 4)
+        verdict = gate.judge(stock, clean, clean)
+        self.assertFalse(verdict.passed)
+        self.assertIn("non-finite", verdict.reasons[0])

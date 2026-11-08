@@ -104,7 +104,7 @@ class PromptSource:
 
 
 async def _one(session: Any, url: str, ids: list[int], output_tokens: int, record: RequestRecord, temperature: float = 0.7,
-               priority: int | None = None, seed: int | None = None) -> None:
+               priority: int | None = None, seed: int | None = None, sampling: dict[str, float] | None = None, logprobs: int = -1) -> None:
     body: dict[str, Any] = {
         "input_ids": ids,
         "sampling_params": {"max_new_tokens": output_tokens, "temperature": temperature, "ignore_eos": True},
@@ -114,6 +114,11 @@ async def _one(session: Any, url: str, ids: list[int], output_tokens: int, recor
         body["priority"] = priority  # recorded admission priority, so priority scheduling is replayed too
     if seed is not None:
         body["sampling_params"]["sampling_seed"] = seed
+    for key, value in (sampling or {}).items():
+        body["sampling_params"][key] = int(value) if key == "top_k" else value
+    if logprobs >= 0:
+        body["return_logprob"] = True
+        body["top_logprobs_num"] = logprobs
     first = last = None
     first_tokens = 0
     try:
@@ -209,7 +214,8 @@ async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource 
             result.requests.append(record)
             temperature = 0.7 if arrival.temperature is None else arrival.temperature
             # A fixed seed per arrival, so sampled requests generate the same tokens in every replay.
-            await _one(session, url, ids, arrival.output_tokens, record, temperature, getattr(arrival, "priority", None), seed)
+            await _one(session, url, ids, arrival.output_tokens, record, temperature, getattr(arrival, "priority", None), seed,
+                       getattr(arrival, "sampling", None), getattr(arrival, "logprobs", -1))
 
         await asyncio.gather(*(send(a, ids, index) for index, (a, ids) in enumerate(zip(arrivals, ids_for))))
     # Every request runs to completion, so the phase lasts until the last one finishes.

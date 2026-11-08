@@ -199,20 +199,39 @@ async def run_phase(url: str, phase: Phase, prompts: PromptSource, phase_index: 
 def warm_prefixes(arrivals: Sequence[Any], ids_for: Sequence[list[int]]) -> list[list[int]]:
     """Prefixes production already had cached when the window began.
 
-    A request whose recorded hit no earlier request in the window explains hit something cached
-    before it; prewarming exactly that prefix reproduces the hit from a flushed cache.
+    A request whose recorded hit no request in the window explains hit something cached before it;
+    prewarming exactly that prefix reproduces the hit from a flushed cache. Another request explains
+    a hit only if, in production, its prefill finished before this one looked up the cache: arriving
+    earlier is not enough while it is still queued.
     """
+    def keys(arrival: Any) -> list[tuple[int, str]]:
+        own = [(arrival.shared_tokens, arrival.family)] if arrival.family else []
+        return [(depth, key) for depth, key in getattr(arrival, "ancestors", ())] + own
+
+    def scheduled(arrival: Any) -> float:
+        value = getattr(arrival, "scheduled_s", None)
+        return arrival.at if value is None else value
+
+    def prefilled(arrival: Any) -> float:
+        value = getattr(arrival, "prefilled_s", None)
+        return arrival.at if value is None else value
+
+    order = sorted(range(len(arrivals)), key=lambda i: scheduled(arrivals[i]))
+    ready = sorted(range(len(arrivals)), key=lambda i: prefilled(arrivals[i]))
     covered: dict[str, int] = {}
     warm = []
-    for arrival, ids in sorted(zip(arrivals, ids_for), key=lambda pair: pair[0].at):
+    done = 0
+    for i in order:
+        arrival, ids = arrivals[i], ids_for[i]
+        # Every prefix a request shares, ancestors included, is cached once its prefill finishes.
+        while done < len(ready) and prefilled(arrivals[ready[done]]) <= scheduled(arrival) and ready[done] != i:
+            other = arrivals[ready[done]]
+            for depth, key in keys(other):
+                covered[key] = max(covered.get(key, 0), min(depth, other.shared_tokens))
+            done += 1
         cached = min(getattr(arrival, "cached_tokens", 0), len(ids))
-        keys = [(depth, key) for depth, key in getattr(arrival, "ancestors", ())] + ([(arrival.shared_tokens, arrival.family)] if arrival.family else [])
-        explained = any(covered.get(key, 0) >= cached for _, key in keys)
-        if cached and not explained:
+        if cached and not any(covered.get(key, 0) >= cached for _, key in keys(arrival)):
             warm.append(ids[:cached])
-        # Once a request has run, every prefix it shares, ancestors included, is cached for later ones.
-        for depth, key in keys:
-            covered[key] = max(covered.get(key, 0), min(depth, arrival.shared_tokens))
     return warm
 
 

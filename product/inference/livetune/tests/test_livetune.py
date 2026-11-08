@@ -901,6 +901,29 @@ class PluginTest(unittest.TestCase):
         self.assertEqual(len(self.recaptures), 2)  # the switch to "good", then its restore
         self.assertIn("illegal memory access", state["recent_errors"][-1]["error"])
 
+    def test_ranks_vote_on_the_install_before_any_of_them_recaptures(self):
+        votes = []
+
+        def agree(ok):
+            votes.append(ok)
+            return False if len(votes) == 1 else ok  # another rank failed its install
+
+        with tempfile.TemporaryDirectory() as tmp:
+            good = variants.register(tmp, "good", "def install(model, patch, ctx):\n    patch(model, 'value', 2)\n")
+            os.environ["LIVETUNE_VARIANTS_DIR"] = tmp
+            try:
+                self.tuner._all_ranks_agree = agree
+                self.tuner.apply("forward_variant", good)
+                self.tuner.on_idle()
+            finally:
+                del os.environ["LIVETUNE_VARIANTS_DIR"]
+        # Nobody recaptured the failed variant: the first recapture is the fallback's, after its own vote.
+        self.assertEqual(votes[:2], [True, True])
+        self.assertEqual(len(self.recaptures), 1)
+        state = self.tuner.readback()
+        self.assertEqual((self.model.value, state["settings"]["forward_variant"]), (1, 0))  # back on stock
+        self.assertIn("another tensor-parallel rank", state["recent_errors"][-1]["error"])
+
     def test_scheduler_stops_when_no_variant_can_be_restored(self):
         def recapture(runner):
             raise RuntimeError("CUDA context poisoned")
@@ -1251,6 +1274,13 @@ class ReplayIsolationTest(unittest.TestCase):
             trace.arrivals([_record(100.0), _record(101.0, constrained=True)])
         schedule = trace.arrivals([_record(100.0, priority=3), _record(101.0)])
         self.assertEqual(sorted(a.priority is not None for a in schedule), [False, True])
+
+    def test_a_trace_profile_uses_the_per_request_means_the_controller_observes(self):
+        from livetune import trace
+
+        records = [_record(100.0 + i, prompt=64000 if i == 9 else 1000) for i in range(10)]
+        profile = tune.trace_profile(trace.arrivals(records))
+        self.assertEqual(profile["prompt_tokens"], 7300)  # the median would be 1,000
 
     def test_a_trace_rules_cache_guard_comes_from_recorded_hits(self):
         from livetune import advisor, trace
@@ -1770,6 +1800,27 @@ class BudgetAndPrewarmTest(unittest.TestCase):
         ids = [list(range(i * 100, i * 100 + 100)) for i in range(3)]
         warm = loadgen.warm_prefixes([a, b, c], ids)
         self.assertEqual(warm, [ids[0][:40]])  # c's hit is explained by b, earlier in the window
+
+
+    def test_an_earlier_request_still_queued_does_not_explain_a_hit(self):
+        from livetune import trace
+
+        # b arrived first but waited 5s in the queue; c looked up the cache at 2s and hit 60 tokens.
+        b = trace.Arrival(at=1.0, prompt_tokens=100, output_tokens=1, shared_tokens=60, family="f", temperature=None,
+                          scheduled_s=6.0, prefilled_s=6.5)
+        c = trace.Arrival(at=2.0, prompt_tokens=100, output_tokens=1, shared_tokens=60, family="f", temperature=None,
+                          cached_tokens=60, scheduled_s=2.0, prefilled_s=2.2)
+        ids = [list(range(100)), list(range(100))]
+        self.assertEqual(loadgen.warm_prefixes([b, c], ids), [ids[1][:60]])  # c's hit came from before the window
+        prefilled = dataclasses_replace(b, scheduled_s=1.0, prefilled_s=1.5)
+        self.assertEqual(loadgen.warm_prefixes([prefilled, c], ids), [])
+
+    def test_arrivals_carry_production_lookup_and_prefill_times(self):
+        from livetune import trace
+
+        record = dataclasses_replace(_record(110.0), queue_s=2.0, ttft_s=3.0, server_s=10.0)
+        arrival = trace.arrivals([record], speed=4.0)[0]
+        self.assertEqual((arrival.at, arrival.scheduled_s, arrival.prefilled_s), (0.0, 2.0, 3.0))
 
 
 class ReplayCutoffTest(unittest.TestCase):

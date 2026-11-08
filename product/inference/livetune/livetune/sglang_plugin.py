@@ -190,7 +190,9 @@ class LiveTuner:
         raise NoUsableVariant(f"variant {variant_id} failed and neither {previous} nor stock could be restored") from error
 
     def _try_variant(self, variant_id: int) -> Exception | None:
-        # Install and graph recapture succeed together on every rank, or the attempt fails.
+        # Install and graph recapture succeed together on every rank, or the attempt fails. Ranks vote
+        # after installing, before recapture: recapture runs tensor-parallel collectives, and a rank
+        # that skipped it would leave the others blocked in them.
         if self.variant is not None:
             variants.uninstall(self.variant)
             self.variant = None
@@ -198,6 +200,14 @@ class LiveTuner:
         try:
             if variant_id != variants.STOCK:
                 self._install(variant_id)
+        except Exception as exc:
+            error = exc
+        if not self._all_ranks_agree(error is None):
+            if self.variant is not None:
+                variants.uninstall(self.variant)
+                self.variant = None
+            return error or RuntimeError("variant install failed on another tensor-parallel rank")
+        try:
             self._recapture(self.scheduler.tp_worker.model_runner)
         except Exception as exc:
             error = exc

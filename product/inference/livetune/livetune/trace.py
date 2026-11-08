@@ -286,12 +286,15 @@ class Arrival:
     logprob_start: int = -1
     stream: bool = True
     max_new_tokens: int | None = None  # the declared limit, which admission and KV headroom are sized by
-    hidden_states: bool = False
     launched: bool = True  # a forward pass ran for it, which matters for a request aborted with no output
     server_s: float | None = None  # waiting-queue entry to completion, whatever happened in between
     multimodal: bool = False  # images or embeddings, which replay cannot send
     salted: bool = False  # in its own cache namespace (cache_salt or extra_key), which replay does not reproduce
     hidden_states: bool = False  # asked for hidden states, which costs a copy out per token
+    # Production seconds since the trace began, unaffected by replay speed: when the request first
+    # looked up the cache, and when its prefill finished and its prefix became cached for others.
+    scheduled_s: float | None = None
+    prefilled_s: float | None = None
 
 
 def replay_gaps(records: Sequence[Record]) -> dict[str, int]:
@@ -403,6 +406,9 @@ def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
                 stream=r.stream,
                 max_new_tokens=max(r.max_new_tokens, r.output_tokens, 1) if r.max_new_tokens else None,
                 hidden_states=r.hidden_states,
+                scheduled_s=started(r) - t0 + (r.queue_s or 0.0),
+                # A request with no first token (a launched abort) is only known to be done at completion.
+                prefilled_s=started(r) - t0 + (r.ttft_s if r.ttft_s is not None else elapsed(r)),
             )
         )
     return sorted(out, key=lambda a: a.at)

@@ -48,6 +48,8 @@ class Record:
     cached_family_tokens: int = 0  # how many tokens that hash covers: the cached prefix rounded down to whole pages
     sampling: dict[str, float] = field(default_factory=dict)  # sampling parameters that differ from SGLang's defaults
     logprobs: int = -1  # -1 none; otherwise logprobs were requested, with this many top alternatives
+    logprob_start: int = -1  # -1 none; otherwise prompt logprobs were computed from this position
+    stream: bool = True
 
     @property
     def decode_tps(self) -> float | None:
@@ -264,9 +266,11 @@ class Arrival:
     seconds: float = 0.0  # recorded server time, first scheduling to completion
     cached_tokens: int = 0  # what production actually hit, for the cache-hit guard of a tuned rule
     priority: int | None = None
-    ancestors: tuple[tuple[int, str], ...] = ()
+    ancestors: tuple[tuple[int, str], ...] = ()  # (depth, key) of every shared family depth, shallowest first
     sampling: dict[str, float] = field(default_factory=dict)
-    logprobs: int = -1  # (depth, key) of every shared family depth, shallowest first
+    logprobs: int = -1
+    logprob_start: int = -1
+    stream: bool = True
 
 
 def replay_gaps(records: Sequence[Record]) -> dict[str, int]:
@@ -365,6 +369,8 @@ def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
                 ancestors=ancestors,
                 sampling=dict(r.sampling),
                 logprobs=r.logprobs,
+                logprob_start=r.logprob_start,
+                stream=r.stream,
             )
         )
     return sorted(out, key=lambda a: a.at)

@@ -104,11 +104,12 @@ class PromptSource:
 
 
 async def _one(session: Any, url: str, ids: list[int], output_tokens: int, record: RequestRecord, temperature: float = 0.7,
-               priority: int | None = None, seed: int | None = None, sampling: dict[str, float] | None = None, logprobs: int = -1) -> None:
+               priority: int | None = None, seed: int | None = None, sampling: dict[str, float] | None = None, logprobs: int = -1,
+               stream: bool = True, logprob_start: int = -1) -> None:
     body: dict[str, Any] = {
         "input_ids": ids,
         "sampling_params": {"max_new_tokens": output_tokens, "temperature": temperature, "ignore_eos": True},
-        "stream": True,
+        "stream": stream,
     }
     if priority is not None:
         body["priority"] = priority  # recorded admission priority, so priority scheduling is replayed too
@@ -119,12 +120,19 @@ async def _one(session: Any, url: str, ids: list[int], output_tokens: int, recor
     if logprobs >= 0:
         body["return_logprob"] = True
         body["top_logprobs_num"] = logprobs
+        if logprob_start >= 0:
+            body["logprob_start_len"] = logprob_start  # prompt logprobs from here, as recorded
     first = last = None
     first_tokens = 0
     try:
         async with session.post(f"{url}/generate", json=body) as response:
             if response.status != 200:
                 record.error = f"http {response.status}: {(await response.text())[:200]}"
+                return
+            if not stream:
+                # One response at the end: no first-token time or decode rate, but the same server work.
+                payload = await response.json()
+                record.tokens = int(payload.get("meta_info", {}).get("completion_tokens", 0))
                 return
             async for raw in response.content:
                 line = raw.decode().strip()
@@ -215,7 +223,8 @@ async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource 
             temperature = 0.7 if arrival.temperature is None else arrival.temperature
             # A fixed seed per arrival, so sampled requests generate the same tokens in every replay.
             await _one(session, url, ids, arrival.output_tokens, record, temperature, getattr(arrival, "priority", None), seed,
-                       getattr(arrival, "sampling", None), getattr(arrival, "logprobs", -1))
+                       getattr(arrival, "sampling", None), getattr(arrival, "logprobs", -1),
+                       getattr(arrival, "stream", True), getattr(arrival, "logprob_start", -1))
 
         await asyncio.gather(*(send(a, ids, index) for index, (a, ids) in enumerate(zip(arrivals, ids_for))))
     # Every request runs to completion, so the phase lasts until the last one finishes.

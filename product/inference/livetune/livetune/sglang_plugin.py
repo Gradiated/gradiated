@@ -425,6 +425,8 @@ class Telemetry:
             sampling={key: float(getattr(params, key)) for key, default in _SAMPLING_DEFAULTS.items()
                       if getattr(params, key, default) not in (None, default)},
             logprobs=int(getattr(getattr(req, "logprob", None), "top_logprobs_num", 0) or 0) if getattr(req, "return_logprob", False) else -1,
+            logprob_start=int(getattr(req, "logprob_start_len", -1)) if getattr(req, "return_logprob", False) else -1,
+            stream=bool(getattr(req, "stream", True)),
         )
 
     def on_finish(self, req: Any) -> None:

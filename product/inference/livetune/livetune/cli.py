@@ -354,7 +354,12 @@ def promote(args: argparse.Namespace, production: Server, policy: Policy) -> rol
     if before is None:
         return None
     # Judge only the replicas that took the candidate up, from the moment they did.
-    applied = [i for i, m in enumerate(fleet) if _wait_applied(m, policy, args.stage_apply_s, args.interval)]
+    from concurrent.futures import ThreadPoolExecutor
+
+    # All replicas get the same apply window, measured from publishing, not one after another.
+    with ThreadPoolExecutor(max_workers=max(len(fleet), 1)) as pool:
+        ready = list(pool.map(lambda m: _wait_applied(m, policy, args.stage_apply_s, args.interval), fleet))
+    applied = [i for i, ok in enumerate(ready) if ok]
     if not applied:
         return rollout.Verdict("inconclusive", "no fleet replica applied the published policy", rollout.Side.of([], slo), rollout.Side.of([], slo))
     after = _watch([fleet[i] for i in applied], args.guard_seconds, args.interval)

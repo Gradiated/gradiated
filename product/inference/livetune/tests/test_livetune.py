@@ -1666,3 +1666,34 @@ class CachedSubfamilyTest(unittest.TestCase):
         self.assertEqual(built[1][:8192], built[2][:8192])
         self.assertEqual(built[0][:2048], built[1][:2048])
         self.assertNotEqual(built[0][2048:2100], built[1][2048:2100])
+
+
+class StreamModeTest(unittest.TestCase):
+    def test_streaming_and_prompt_logprob_modes_are_recorded_and_replayed(self):
+        from livetune import trace
+
+        record = dataclasses_replace(_record(100.0), stream=False, logprobs=0, logprob_start=10)
+        arrival = trace.arrivals([record])[0]
+        self.assertEqual((arrival.stream, arrival.logprobs, arrival.logprob_start), (False, 0, 10))
+        self.assertEqual(trace.Record.from_json(record.to_json()), record)
+
+    def test_a_non_streaming_replay_request_counts_its_tokens(self):
+        import asyncio
+
+        class Response:
+            status = 200
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *exc):
+                return False
+
+            async def json(self):
+                return {"meta_info": {"completion_tokens": 37}}
+
+        bodies = []
+        session = types.SimpleNamespace(post=lambda url, json: bodies.append(json) or Response())
+        record = loadgen.RequestRecord(0.0)
+        asyncio.run(loadgen._one(session, "http://x", [1], 37, record, stream=False, logprobs=0, logprob_start=5))
+        self.assertEqual((record.tokens, record.ttft, bodies[0]["stream"], bodies[0]["logprob_start_len"]), (37, None, False, 5))

@@ -49,9 +49,11 @@ def replay(args: argparse.Namespace, server: Server) -> None:
 
     policy = Policy.load(args.policy)
     write = _appender(args.out)
-    server.apply(server.livetune_state()["startup"])
+    startup = server.livetune_state()["startup"]
+    server.apply(startup)
     stop = threading.Event()
     events: list[dict[str, Any]] = []
+    thread = None
     if not args.static:
         controller = control.Controller(policy)
 
@@ -68,18 +70,18 @@ def replay(args: argparse.Namespace, server: Server) -> None:
             daemon=True,
         )
         thread.start()
-    else:
-        thread = None
-    phases = [loadgen.Phase(**p) for p in json.loads(Path(args.phases).read_text())]
-    prompts = loadgen.PromptSource(_corpus(args.corpus))
-    for index, phase in enumerate(phases):
-        started = time.time()
-        summary = asyncio_phase(args.url, phase, prompts, index)
-        write(phase_report(summary, events, started, phase.seconds, policy, "static" if args.static else "controlled"))
-    stop.set()
-    if thread is not None:
-        thread.join()
-    server.apply(server.livetune_state()["startup"])
+    try:
+        phases = [loadgen.Phase(**p) for p in json.loads(Path(args.phases).read_text())]
+        prompts = loadgen.PromptSource(_corpus(args.corpus))
+        for index, phase in enumerate(phases):
+            started = time.time()
+            summary = asyncio_phase(args.url, phase, prompts, index)
+            write(phase_report(summary, events, started, phase.seconds, policy, "static" if args.static else "controlled"))
+    finally:
+        stop.set()
+        if thread is not None:
+            thread.join()
+        server.apply(startup)
 
 
 def phase_report(summary: dict[str, Any], events: list[dict[str, Any]], started: float, seconds: float, policy: Policy, mode: str) -> dict[str, Any]:
@@ -161,11 +163,13 @@ def main(argv: list[str] | None = None) -> int:
             record({"profile": profile.name, "settings": settings, "summary": summary})
             return summary
 
-        results = [
-            tune.tune_profile(tune.Profile(**p), start, json.loads(Path(args.grid).read_text()), slo, measure)
-            for p in json.loads(Path(args.profiles).read_text())
-        ]
-        server.apply(start)
+        try:
+            results = [
+                tune.tune_profile(tune.Profile(**p), start, json.loads(Path(args.grid).read_text()), slo, measure)
+                for p in json.loads(Path(args.profiles).read_text())
+            ]
+        finally:
+            server.apply(start)
         policy = tune.build_policy(results, slo, {"tuned_at": time.time(), "url": args.url, "startup": start})
         Path(args.out).write_text(policy.to_json())
         print(policy.to_json())

@@ -318,6 +318,17 @@ class LoadSummaryTest(unittest.TestCase):
         self.assertEqual((summary["tps_per_user_p50"], summary["ttft_p90"]), (100.0, 0.5))
         self.assertEqual(summary["output_tps"], 7.0)
 
+    def test_tokens_streamed_before_an_error_still_count(self):
+        result = loadgen.PhaseResult(loadgen.Phase(1, 100, 50, 10.0))
+        result.requests = [loadgen.RequestRecord(0.0, tokens=30, error="ClientPayloadError")]
+        self.assertEqual(result.summary()["output_tps"], 3.0)
+
+    def test_shared_prefix_longer_than_the_corpus_is_rejected(self):
+        prompts = loadgen.PromptSource(list(range(2000)))
+        self.assertEqual(len(prompts.prompt(1500, 0.5, 0)), 1500)
+        with self.assertRaises(ValueError):
+            prompts.prompt(5000, 0.5, 0)
+
 
 class ReplayReportTest(unittest.TestCase):
     def test_phase_report_lists_rules_and_reaction_time_inside_the_phase(self):

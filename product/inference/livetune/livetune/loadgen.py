@@ -38,7 +38,7 @@ class PhaseResult:
         done = [r for r in self.requests if r.error is None and r.decode_tps and not r.cut]
         ttfts = sorted(r.ttft for r in done if r.ttft is not None)
         rates = sorted(r.decode_tps for r in done)
-        tokens = sum(r.tokens for r in self.requests if r.error is None)
+        tokens = sum(r.tokens for r in self.requests)
 
         def pct(values: list[float], q: float) -> float | None:
             return values[min(len(values) - 1, int(q * len(values)))] if values else None
@@ -64,6 +64,8 @@ class PromptSource:
 
     def prompt(self, length: int, shared: float, shared_seed: int) -> list[int]:
         shared_len = int(length * shared)
+        if shared_len >= len(self.corpus):
+            raise ValueError(f"shared prefix of {shared_len} tokens needs a corpus longer than {len(self.corpus)} tokens")
         prefix_start = random.Random(shared_seed).randrange(len(self.corpus) - shared_len) if shared_len else 0
         prefix = self.corpus[prefix_start : prefix_start + shared_len]
         tail = []

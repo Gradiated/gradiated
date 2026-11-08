@@ -147,6 +147,14 @@ for (const file of htmlFiles) {
   }
 }
 
+const libraryHtml = await readFile(
+  join(outputRoot, "library/index.html"),
+  "utf8",
+);
+if (!libraryHtml.includes("<title>Library | Gradiated</title>")) {
+  throw new Error("library/index.html must use the Library title.");
+}
+
 const notFoundHtml = await readFile(join(outputRoot, "404.html"), "utf8");
 if (
   !notFoundHtml.includes('<meta name="robots" content="noindex, nofollow" />')

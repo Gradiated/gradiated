@@ -5,9 +5,9 @@ vi.mock("../src/careers", () => ({ jobs: [] }));
 vi.mock("../src/handbook", () => ({ handbookPages: [] }));
 vi.mock("../src/models", () => ({ models: [] }));
 
-import { getIndexablePaths, getPageMetadata } from "../src/metadata";
+import { getPageMetadata, getStaticPaths } from "../src/metadata";
 
-it("keeps the client-only Library redirect out of search indexes", () => {
+it("prerenders the Library without adding it to search indexes", () => {
+  expect(getStaticPaths()).toContain("/library/");
   expect(getPageMetadata("/library/").index).toBe(false);
-  expect(getIndexablePaths()).not.toContain("/library/");
 });

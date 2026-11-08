@@ -255,14 +255,12 @@ export const getPageMetadata = (pathname: string): PageMetadata => {
   };
 };
 
-export const getIndexablePaths = (): string[] => [
-  ...Object.entries(pageMetadata)
-    .filter(([, metadata]) => metadata.index !== false)
-    .map(([path]) => path),
-  ...articles
-    .filter((article) => article.status === "published")
-    .map((article) => article.path),
-  ...jobs.map(({ slug }) => `/careers/${slug}/`),
+export const getStaticPaths = (): string[] => [
+  ...new Set([
+    ...Object.keys(pageMetadata),
+    ...articles.map((article) => article.path),
+    ...jobs.map(({ slug }) => `/careers/${slug}/`),
+  ]),
 ];
 
 export const absoluteUrl = (path: string): string =>

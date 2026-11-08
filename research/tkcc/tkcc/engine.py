@@ -285,8 +285,11 @@ class Engine:
             self._run_job(job)
             self.completed_since_baseline += 1
             if self.config.rebaseline_every and self.completed_since_baseline >= self.config.rebaseline_every:
-                with self.gpu():
-                    self.baseline = self._measure()
+                try:
+                    with self._utility():
+                        self.baseline = self._measure()
+                except ValueError:
+                    continue
                 self.completed_since_baseline = 0
                 self.log("rebaseline", baseline=self.baseline)
 
@@ -570,6 +573,12 @@ def _handler(engine: Engine):
             self.wfile.write(data)
 
         def do_GET(self):
+            try:
+                return self._get()
+            except ValueError as exc:
+                return self._send(503, {"error": str(exc)})
+
+        def _get(self):
             url = urlparse(self.path)
             query = parse_qs(url.query)
             if url.path == "/status":
@@ -582,13 +591,13 @@ def _handler(engine: Engine):
             if url.path == "/baseline":
                 return self._send(200, {"baseline": engine.baseline, "self_agreement": engine.reference_repeat})
             if url.path == "/admin/rebaseline":
-                with engine.gpu():
+                with engine._utility():
                     engine.baseline = engine._measure()
                 engine.completed_since_baseline = 0
                 engine.log("rebaseline", baseline=engine.baseline, manual=True)
                 return self._send(200, {"baseline_tps_per_user": {c: v["tps_per_user"] for c, v in engine.baseline.items()}})
             if url.path == "/admin/reload_ext":
-                with engine.gpu():
+                with engine._utility():
                     return self._send(200, {"rebound": engine.llm.collective_rpc("tkcc_reload_ext")[0]})
             if url.path == "/profile_baseline":
                 return self._send(200, {"profile": engine.profile_baseline()})

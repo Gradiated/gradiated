@@ -310,6 +310,8 @@ class Engine:
                         result["error"] = failures[0].get("error")
                         result["traceback"] = failures[0].get("traceback")
                         result["teardown_error"] = failures[0].get("teardown_error")
+                        if any(f.get("teardown_error") for f in failures):
+                            self.restart_after_job = True
                     else:
                         self._evaluate(job, result)
                 finally:
@@ -357,9 +359,9 @@ class Engine:
             if job.profile and self.config.tier == "slow":
                 result["profile_note"] = "profiling is disabled on the slow tier (CUPTI overhead persists in-process); use --tier fast --profile"
             elif job.profile:
-                result["profile"] = self._profile()
-                result["profile_note"] = "fast engine restarts after a profiled job to clear CUPTI overhead (~3-4 min)"
                 self.restart_after_job = True
+                result["profile_note"] = "fast engine restarts after a profiled job to clear CUPTI overhead (~3-4 min)"
+                result["profile"] = self._profile()
         weights = self.llm.collective_rpc("tkcc_weights_unchanged")
         if not all(w["ok"] for w in weights):
             # Teardown cannot restore tensor contents, so only a restart gives back a stock model.
@@ -384,56 +386,69 @@ class Engine:
         rows = self.llm.collective_rpc("tkcc_profile_stop")
         return rows[0]
 
+    @contextmanager
+    def _candidate(self, source: str | None, label: str):
+        """Install a candidate for a utility call; restart if it cannot be cleanly removed."""
+        if not source:
+            yield
+            return
+        reload = self.llm.collective_rpc("tkcc_hot_reload", args=(f"{label}-{uuid.uuid4().hex[:6]}", source))
+        failures = [r for r in reload if not r.get("ok")]
+        if any(f.get("teardown_error") for f in failures):
+            self._schedule_restart()
+        if failures:
+            if len(failures) < len(reload):
+                self._teardown_or_restart()
+            raise ValueError(f"candidate failed to install: {failures[0].get('error')}")
+        try:
+            yield
+        finally:
+            weights = self.llm.collective_rpc("tkcc_weights_unchanged")
+            if not all(w["ok"] for w in weights):
+                self._schedule_restart()
+            self._teardown_or_restart()
+
+    def _teardown_or_restart(self) -> None:
+        try:
+            self.llm.collective_rpc("tkcc_teardown")
+        except Exception:
+            self._schedule_restart()
+            raise
+
+    def _schedule_restart(self) -> None:
+        if not getattr(self, "restart_scheduled", False):
+            self.restart_scheduled = True
+            self.log("restart_scheduled")
+            threading.Thread(target=lambda: (time.sleep(15), hard_exit(0)), daemon=True).start()
+
     def experiment(self, payload: dict[str, Any]) -> dict[str, Any]:
-        """Install an instrumentation candidate, run prompt sets through it, collect per set."""
-        source = payload["source"]
         sets: dict[str, list[list[int]]] = payload["prompt_sets"]
         max_tokens = int(payload.get("max_tokens", 1))
         out: dict[str, Any] = {}
-        with self.gpu():
-            reload = self.llm.collective_rpc("tkcc_hot_reload", args=(f"exp-{uuid.uuid4().hex[:6]}", source))
-            if not all(r.get("ok") for r in reload):
-                self.llm.collective_rpc("tkcc_teardown")
-                return {"error": reload[0].get("error"), "traceback": reload[0].get("traceback")}
-            try:
-                for name, prompts in sets.items():
-                    self.llm.collective_rpc("tkcc_call", args=("reset",))
-                    for prompt in prompts:
-                        self._generate([prompt], max_tokens)
-                    out[name] = self.llm.collective_rpc("tkcc_call", args=("collect",))[0]
-            finally:
-                self.llm.collective_rpc("tkcc_teardown")
+        with self.gpu(), self._candidate(payload["source"], "exp"):
+            for name, prompts in sets.items():
+                self.llm.collective_rpc("tkcc_call", args=("reset",))
+                for prompt in prompts:
+                    self._generate([prompt], max_tokens)
+                out[name] = self.llm.collective_rpc("tkcc_call", args=("collect",))[0]
         return out
 
     def generate(self, payload: dict[str, Any]) -> dict[str, Any]:
-        """Greedy generation, optionally under a candidate, for end-to-end quality checks."""
-        source = payload.get("source")
-        prompts = payload["prompts"]
-        max_tokens = int(payload.get("max_tokens", 256))
-        with self.gpu():
-            if source:
-                reload = self.llm.collective_rpc("tkcc_hot_reload", args=(f"gen-{uuid.uuid4().hex[:6]}", source))
-                if not all(r.get("ok") for r in reload):
-                    self.llm.collective_rpc("tkcc_teardown")
-                    return {"error": reload[0].get("error")}
-            try:
-                from vllm import SamplingParams
+        from vllm import SamplingParams
 
-                params = SamplingParams(max_tokens=max_tokens, temperature=0.0, stop=payload.get("stop"))
-                outputs = self.llm.generate([{"prompt_token_ids": p} for p in prompts], params, use_tqdm=False)
-            finally:
-                if source:
-                    self.llm.collective_rpc("tkcc_teardown")
+        params = SamplingParams(max_tokens=int(payload.get("max_tokens", 256)), temperature=0.0, stop=payload.get("stop"))
+        with self.gpu(), self._candidate(payload.get("source"), "gen"):
+            outputs = self.llm.generate([{"prompt_token_ids": p} for p in payload["prompts"]], params, use_tqdm=False)
         return {"texts": [o.outputs[0].text for o in outputs]}
 
     def profile_baseline(self) -> list[dict[str, Any]]:
         if self.config.tier == "slow":
             raise ValueError("profiling is disabled on the slow tier")
-        with self.gpu():
-            rows = self._profile()
-        self.restart_after_job = True
-        threading.Thread(target=lambda: (time.sleep(15), hard_exit(0)), daemon=True).start()
-        return rows
+        try:
+            with self.gpu():
+                return self._profile()
+        finally:
+            self._schedule_restart()
 
     def watchdog(self) -> None:
         while True:

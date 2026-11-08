@@ -93,12 +93,14 @@ class PromptSource:
         return prefix + tail[: length - shared_len]
 
 
-async def _one(session: Any, url: str, ids: list[int], output_tokens: int, record: RequestRecord, temperature: float = 0.7) -> None:
-    body = {
+async def _one(session: Any, url: str, ids: list[int], output_tokens: int, record: RequestRecord, temperature: float = 0.7, priority: int | None = None) -> None:
+    body: dict[str, Any] = {
         "input_ids": ids,
         "sampling_params": {"max_new_tokens": output_tokens, "temperature": temperature, "ignore_eos": True},
         "stream": True,
     }
+    if priority is not None:
+        body["priority"] = priority  # recorded admission priority, so priority scheduling is replayed too
     first = last = None
     first_tokens = 0
     try:
@@ -169,7 +171,7 @@ async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource 
     """Open loop: each recorded request arrives at its own time, whatever the server is doing."""
     import aiohttp
 
-    from livetune.trace import concurrency
+    from livetune.trace import concurrency, observed_cache_hit
 
     span = max((a.at for a in arrivals), default=0.0)
     phase = Phase(
@@ -178,6 +180,8 @@ async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource 
         prompt_tokens=int(statistics.median(a.prompt_tokens for a in arrivals)) if arrivals else 0,
         output_tokens=int(statistics.median(a.output_tokens for a in arrivals)) if arrivals else 0,
         seconds=span,
+        # Recorded so `policy --trials` rebuilds the same profile, and the same cache-hit guard.
+        shared_prefix=observed_cache_hit(arrivals) if arrivals else 0.0,
         name=name,
     )
     result = PhaseResult(phase)
@@ -191,7 +195,7 @@ async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource 
             record = RequestRecord(time.perf_counter())
             result.requests.append(record)
             temperature = 0.7 if arrival.temperature is None else arrival.temperature
-            await _one(session, url, ids, arrival.output_tokens, record, temperature)
+            await _one(session, url, ids, arrival.output_tokens, record, temperature, getattr(arrival, "priority", None))
 
         await asyncio.gather(*(send(a, ids) for a, ids in zip(arrivals, ids_for)))
     # Every request runs to completion, so the phase lasts until the last one finishes.

@@ -129,7 +129,10 @@ def _segments(args: argparse.Namespace, prompts: loadgen.PromptSource) -> list[A
     import asyncio
 
     if args.trace:
-        arrivals = trace.arrivals(list(trace.read([args.trace])), speed=args.speed)
+        try:
+            arrivals = trace.arrivals(list(trace.read([args.trace])), speed=args.speed)
+        except ValueError as exc:
+            raise SystemExit(f"{args.trace}: {exc}") from exc
         if not arrivals:
             raise SystemExit(f"no records in {args.trace}")
         return [lambda: asyncio.run(loadgen.run_arrivals(args.url, arrivals, prompts)).summary()]
@@ -199,6 +202,9 @@ def improve(args: argparse.Namespace, server: Server) -> None:
             entry["skipped"] = {"canary_scope_differs": sorted(differs)}
         elif not report["grid"] or not records:
             entry["skipped"] = "nothing to test" if not report["grid"] else "no recorded traffic"
+        elif gaps := trace.replay_gaps(records):
+            # Replay would send these as plain requests and tune for a different workload.
+            entry["skipped"] = {"unreproducible_modes": gaps}
         else:
             snapshot = out / f"trace-{int(started)}.jsonl"
             snapshot.write_text("".join(r.to_json() + "\n" for r in records))
@@ -460,7 +466,10 @@ def main(argv: list[str] | None = None) -> int:
         grid = json.loads(Path(args.grid).read_text())
         # An `advise` report carries its live proposals as a grid.
         grid = grid["grid"] if "proposals" in grid else grid
-        arrivals = trace.arrivals(list(trace.read([args.trace])), speed=args.speed) if args.trace else None
+        try:
+            arrivals = trace.arrivals(list(trace.read([args.trace])), speed=args.speed) if args.trace else None
+        except ValueError as exc:
+            raise SystemExit(f"{args.trace}: {exc}") from exc
         profiles = json.loads(Path(args.profiles).read_text()) if args.profiles else None
         policy = tune_policy(server, Slo(args.slo_tps, args.slo_ttft), loadgen.PromptSource(_corpus(args.corpus)), grid,
                              profiles, arrivals, args.seconds, args.warmup, _appender(args.out + ".trials.jsonl", mode="w"))

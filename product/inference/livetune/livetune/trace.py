@@ -235,6 +235,24 @@ class Arrival:
     family: str | None
     temperature: float | None
     seconds: float = 0.0  # recorded server time, first scheduling to completion
+    cached_tokens: int = 0  # what production actually hit, for the cache-hit guard of a tuned rule
+    priority: int | None = None
+
+
+def replay_gaps(records: Sequence[Record]) -> dict[str, int]:
+    """Request modes replay cannot reproduce, with their counts: synthetic requests carry no grammar,
+    adapter or session, and those change what a request costs."""
+    gaps = {
+        "constrained": sum(r.constrained for r in records),
+        "lora": sum(r.lora for r in records),
+        "session": sum(r.session for r in records),
+    }
+    return {mode: count for mode, count in gaps.items() if count}
+
+
+def observed_cache_hit(schedule: Sequence[Arrival]) -> float:
+    prompt = sum(a.prompt_tokens for a in schedule)
+    return round(sum(a.cached_tokens for a in schedule) / prompt, 3) if prompt else 0.0
 
 
 def concurrency(schedule: Sequence[Arrival], q: float = 0.9) -> int:
@@ -251,21 +269,31 @@ def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
     """An open-loop replay schedule; arrival time is completion minus the request's server time.
 
     A family is the deepest fixed-depth prefix hash that several requests share, so every member,
-    including the cold first one, carries the same prefix. Its length is that depth, or the most any
-    member actually hit in cache, so replay can reproduce the recorded hits.
+    including the cold first one, carries the same prefix. Its length is only what is proven common:
+    that depth, or a longer cached prefix whose hash two or more members share. A single member's
+    cache hit may come from a request outside the trace, so it proves nothing about the others.
     """
     if not records:
         return []
+    unreproducible = replay_gaps(records)
+    if unreproducible:
+        raise ValueError(f"trace replay cannot reproduce these request modes: {unreproducible}")
 
     def started(r: Record) -> float:
         return r.t - sum(x or 0.0 for x in (r.ttft_s, r.decode_s))
 
     families = shared_families(records)
+    cached_counts = Counter(r.cached_family for r in records if r.cached_family)
+    proven_cached: dict[str, int] = {}
+    for r in records:
+        if r.cached_family and cached_counts[r.cached_family] > 1:
+            proven_cached[r.cached_family] = min(proven_cached.get(r.cached_family, r.cached_tokens), r.cached_tokens)
     lengths: dict[str, int] = {}
     for r, found in zip(records, families):
         if found is not None:
             key, depth = found
-            lengths[key] = max(lengths.get(key, depth), r.cached_tokens)
+            proven = proven_cached.get(r.cached_family, 0) if r.cached_family else 0
+            lengths[key] = max(lengths.get(key, depth), proven)
     t0 = min(started(r) for r in records)
     out = []
     for r, found in zip(records, families):
@@ -278,6 +306,8 @@ def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
                 family=found[0] if found else None,
                 temperature=r.temperature,
                 seconds=sum(x or 0.0 for x in (r.ttft_s, r.decode_s)) / speed,
+                cached_tokens=r.cached_tokens,
+                priority=r.priority,
             )
         )
     return sorted(out, key=lambda a: a.at)

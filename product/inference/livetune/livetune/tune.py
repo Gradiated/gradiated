@@ -46,7 +46,7 @@ Measure = Callable[[Profile, dict[str, Any]], dict[str, Any]]
 
 def trace_profile(arrivals: Sequence[Any]) -> dict[str, Any]:
     """One profile standing for a recorded trace, placed at the demand the trace produced."""
-    from livetune.trace import concurrency
+    from livetune.trace import concurrency, observed_cache_hit
 
     if not arrivals:
         raise ValueError("the trace has no requests")
@@ -56,7 +56,9 @@ def trace_profile(arrivals: Sequence[Any]) -> dict[str, Any]:
         "open_loop": True,
         "prompt_tokens": int(statistics.median(a.prompt_tokens for a in arrivals)),
         "output_tokens": int(statistics.median(a.output_tokens for a in arrivals)),
-        "shared_prefix": round(sum(a.shared_tokens for a in arrivals) / max(sum(a.prompt_tokens for a in arrivals), 1), 3),
+        # The cache hit production recorded, which is what the controller will observe, not the
+        # sharing replay could reach from a cold cache.
+        "shared_prefix": observed_cache_hit(arrivals),
     }
 
 

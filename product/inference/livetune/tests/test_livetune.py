@@ -1220,22 +1220,47 @@ class ReplayIsolationTest(unittest.TestCase):
         family = keys.families(list(range(24000)))  # every agent prompt shares its first 24k ids here
         records = [
             dataclasses_replace(_record(100.0, prompt=24000, cached=0, family=None), families=family),  # cold first request
-            dataclasses_replace(_record(101.0, prompt=24000, cached=19200, family=None), families=family),
-            dataclasses_replace(_record(102.0, prompt=24000, cached=18176, family=None), families=family),
+            dataclasses_replace(_record(101.0, prompt=24000, cached=19200, family=None), families=family, cached_family="c19200"),
+            dataclasses_replace(_record(102.0, prompt=24000, cached=19456, family=None), families=family, cached_family="c19200"),
             _record(103.0, prompt=2000, family=None),
         ]
         schedule = sorted(trace.arrivals(records), key=lambda a: a.prompt_tokens)
         agents = [a for a in schedule if a.prompt_tokens == 24000]
         self.assertEqual({a.family for a in agents}, {family[-1]})
+        # Two members share the hash of a 19,200-token cached prefix, so that much is proven common.
         self.assertEqual([a.shared_tokens for a in agents], [19200, 19200, 19200])  # the cold one included
         self.assertEqual((schedule[0].family, schedule[0].shared_tokens), (None, 0))
+
+    def test_one_members_cache_hit_does_not_extend_the_family(self):
+        from livetune import trace
+
+        family = trace.PrefixKeys(b"k" * 32).families(list(range(24000)))
+        records = [dataclasses_replace(_record(100.0 + i, prompt=24000, cached=cached, family=None), families=family,
+                                       cached_family=f"own{i}" if cached else None) for i, cached in enumerate((0, 19200))]
+        # The 19,200-token hit may come from a request outside the trace; only 16,384 tokens are proven shared.
+        self.assertEqual({a.shared_tokens for a in trace.arrivals(records)}, {16384})
+
+    def test_modes_replay_cannot_reproduce_are_refused(self):
+        from livetune import trace
+
+        with self.assertRaises(ValueError):
+            trace.arrivals([_record(100.0), _record(101.0, constrained=True)])
+        schedule = trace.arrivals([_record(100.0, priority=3), _record(101.0)])
+        self.assertEqual(sorted(a.priority is not None for a in schedule), [False, True])
+
+    def test_a_trace_rules_cache_guard_comes_from_recorded_hits(self):
+        from livetune import advisor, trace
+
+        records = [_record(100.0 + i, prompt=10000, cached=4000 if i % 2 else 0, family="f") for i in range(10)]
+        profile = tune.trace_profile(trace.arrivals(records))
+        self.assertEqual(profile["shared_prefix"], 0.2)  # 4,000 of 10,000 tokens hit on half the requests
 
     def test_every_measurement_starts_from_a_flushed_cache(self):
         calls = []
         server = types.SimpleNamespace(
             url="http://x", livetune_state=lambda: {"startup": {"max_running_requests": 64}}, fingerprint=lambda: {},
             apply=lambda settings: calls.append(("apply", dict(settings))), flush_cache=lambda: calls.append(("flush",)))
-        arrivals = [types.SimpleNamespace(at=0.0, prompt_tokens=2000, output_tokens=8, shared_tokens=0, family=None, temperature=0.7, seconds=1.0)]
+        arrivals = [types.SimpleNamespace(at=0.0, prompt_tokens=2000, output_tokens=8, shared_tokens=0, family=None, temperature=0.7, seconds=1.0, cached_tokens=0, priority=None)]
         saved = loadgen.run_arrivals
 
         sent = []

@@ -257,8 +257,6 @@ class Engine:
         source = payload.get("source")
         if not isinstance(source, str) or not source.strip():
             raise ValueError("source is required")
-        if not getattr(self, "accepting", True):
-            raise ValueError("engine is restarting; resubmit in a few minutes")
         job = Job(
             id=f"{self.config.tier}-{time.strftime('%H%M%S')}-{uuid.uuid4().hex[:6]}",
             agent=str(payload.get("agent", "anon"))[:40],
@@ -267,11 +265,14 @@ class Engine:
             profile=bool(payload.get("profile", False)),
             submitted=_now(),
         )
+        # Same lock as _stop_admitting, so a job is either refused or marked by the shutdown.
         with self.state_lock:
+            if not getattr(self, "accepting", True):
+                raise ValueError("engine is restarting; resubmit in a few minutes")
             self.jobs[job.id] = job
             self.order.append(job.id)
             position = self.pending.qsize()
-        self.pending.put(job.id)
+            self.pending.put(job.id)
         self.log("submitted", job=job.id, agent=job.agent, name=job.name)
         return {"job_id": job.id, "queue_position": position}
 
@@ -414,9 +415,11 @@ class Engine:
             if len(failures) < len(reload):
                 self._teardown_or_restart()
             raise ValueError(f"candidate failed to install: {failures[0].get('error')}")
+        self.utility_started = time.perf_counter()
         try:
             yield
         finally:
+            self.utility_started = 0.0
             self._restart_if_weights_changed()
             self._teardown_or_restart()
 
@@ -488,6 +491,10 @@ class Engine:
     def watchdog(self) -> None:
         while True:
             time.sleep(5)
+            utility = getattr(self, "utility_started", 0.0)
+            if utility and time.perf_counter() - utility > self.config.job_timeout_s:
+                self.log("watchdog_kill", job="utility-call")
+                hard_exit(17)
             job = self.current
             if job is not None and self.current_started and time.perf_counter() - self.current_started > self.config.job_timeout_s:
                 result = {

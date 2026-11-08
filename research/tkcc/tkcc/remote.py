@@ -99,7 +99,7 @@ def cmd_gpu_run(args) -> int:
         [
             _put_file(remote, source),
             BUNDLE_ENV,
-            f"exec 9>>/home/tkcc/run/gpu.lock; flock 9; timeout {int(args.timeout)} python3 {remote}; echo exit=$?",
+            f"exec 9>>/home/tkcc/run/gpu.lock; flock 9; timeout {int(args.timeout)} python3 {remote}; status=$?; echo exit=$status; exit $status",
         ]
     )
     code, out = _with_retries(script, args.timeout + 900, attempts=1)

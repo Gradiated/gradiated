@@ -2,11 +2,11 @@
 
 Livetune changes a running SGLang server's settings in response to the traffic it serves, without restarting it. It has three parts:
 
-| Part | Runs | Job |
-| --- | --- | --- |
-| `livetune.sglang_plugin` | inside every SGLang scheduler process | Adds live settings and forward-pass variants to SGLang's `/set_internal_state`. |
-| `livetune control` | next to the server | Reads `/metrics` every few seconds, maps the traffic shape to a policy rule, applies it, and rolls it back if it breaks the SLO. |
-| `livetune tune` | against a test server | Measures settings under each traffic profile and writes the policy. |
+| Part                     | Runs                                  | Job                                                                                                                              |
+| ------------------------ | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `livetune.sglang_plugin` | inside every SGLang scheduler process | Adds live settings to SGLang's `/set_internal_state` and installs startup forward-pass variants.                                 |
+| `livetune control`       | next to the server                    | Reads `/metrics` every few seconds, maps the traffic shape to a policy rule, applies it, and rolls it back if it breaks the SLO. |
+| `livetune tune`          | against a test server                 | Measures settings under each traffic profile and writes the policy.                                                              |
 
 The tuner applies the persistent-engine idea from Together Compiler to settings. Each candidate is applied live, so a trial costs one measurement window instead of an engine restart.
 
@@ -14,12 +14,12 @@ The tuner applies the persistent-engine idea from Together Compiler to settings.
 
 The plugin registers through SGLang's plugin entry point (`sglang.srt.plugins`), so SGLang loads it in every scheduler process with no source patch. A request to `/set_internal_state` is validated on every tensor-parallel rank before any rank applies it. Every rank applies it at the same point of its scheduling loop, so the ranks cannot diverge.
 
-| Setting | Effect | Bound |
-| --- | --- | --- |
-| `max_running_requests` | Running-batch cap: trades time to first token against per-user decode speed | 1 to the startup value |
-| `chunked_prefill_size` | Prefill chunk size: smaller chunks stall decoding users less | page-aligned, up to the startup value |
-| `max_prefill_tokens` | Prefill token budget per step | page-aligned, up to the startup value |
-| `forward_variant` | Reports the installed forward-pass variant; see below for how it changes | ids in the pinned variant manifest; 0 is stock |
+| Setting                | Effect                                                                      | Bound                                          |
+| ---------------------- | --------------------------------------------------------------------------- | ---------------------------------------------- |
+| `max_running_requests` | Running-batch cap: trades time to first token against per-user decode speed | 1 to the startup value                         |
+| `chunked_prefill_size` | Prefill chunk size: smaller chunks stall decoding users less                | page-aligned, up to the startup value          |
+| `max_prefill_tokens`   | Prefill token budget per step                                               | page-aligned, up to the startup value          |
+| `forward_variant`      | Reports the installed forward-pass variant; see below for how it changes    | ids in the pinned variant manifest; 0 is stock |
 
 Buffers and CUDA graphs are sized at startup, so a setting can only move inside the envelope the server started with. Start the server at the most permissive values the policy may use.
 
@@ -43,8 +43,18 @@ Keep live switching off until a recapture path is qualified for the model's atte
 A policy is an SLO plus an ordered list of rules. Each rule is a box in (demand, prompt length) space with the settings to use inside it. Demand is the number of running plus queued requests. The first box that contains the current shape wins, and the last rule is a catch-all.
 
 ```json
-{"slo": {"min_tps_per_user": 80, "max_ttft_p90_s": 4},
- "rules": [{"name": "chat-light", "max_demand": 6, "max_prompt_tokens": 12000, "settings": {"max_running_requests": 8}}, "..."]}
+{
+  "slo": { "min_tps_per_user": 80, "max_ttft_p90_s": 4 },
+  "rules": [
+    {
+      "name": "chat-light",
+      "max_demand": 6,
+      "max_prompt_tokens": 12000,
+      "settings": { "max_running_requests": 8 }
+    },
+    "..."
+  ]
+}
 ```
 
 `livetune tune` writes policies from measurements. Each rule records the measured throughput, per-user speed and time to first token behind it.
@@ -78,6 +88,7 @@ python3 -m unittest discover -s product/inference/livetune/tests -p 'test_*.py'
 ```
 
 The tests cover:
+
 - settings validation, and variant pinning, undo and drained switching
 - metrics windows, including real SGLang scrapes in `tests/fixtures`
 - policy selection, controller hysteresis, edge margins and rollback

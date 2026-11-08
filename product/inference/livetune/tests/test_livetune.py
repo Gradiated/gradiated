@@ -232,6 +232,25 @@ class ControllerTest(unittest.TestCase):
         self.assertIsNone(ctl.step(_window(4.4), 5))  # 4.4 / 1.15 < 4: within the margin of "light"
         self.assertEqual(ctl.step(_window(5), 10).rule, "busy")
 
+    def test_a_shape_far_from_the_current_rule_moves_even_between_narrow_boxes(self):
+        # Boxes narrower than the ±15% margin: no shape is robust to both neighbours, yet the
+        # controller must not stay on a rule built for a third of the load.
+        rules = [Rule(f"u{edge}", edge, math.inf, {"max_running_requests": edge}) for edge in (20, 28, 36, 48)]
+        policy = Policy(Slo(50, 5), (*rules, Rule("beyond", math.inf, math.inf, {"max_running_requests": 64})))
+        ctl = control.Controller(policy, dwell=2, cooldown_s=0, smoothing=1.0, demand_decay=0)
+        ctl.step(_window(12), 0)
+        moved = [ctl.step(_window(demand), t) for t, demand in zip(range(5, 60, 5), [40, 36, 35, 40, 36, 35, 40, 36, 35, 40, 36])]
+        self.assertEqual([a.rule for a in moved if a], ["u36"])  # two windows at 35-36 pick u36; 40 is within its margin
+
+    def test_a_failed_variant_switch_is_not_retried_every_window(self):
+        policy = Policy(Slo(50, 5), (Rule("light", 4, math.inf, {"forward_variant": 0}), Rule("busy", math.inf, math.inf, {"forward_variant": 2})))
+        ctl = control.Controller(policy, dwell=1, cooldown_s=0, variant_dwell=1, variant_cooldown_s=100, smoothing=1.0, demand_decay=0)
+        ctl.step(_window(2), 0)
+        self.assertEqual(ctl.step(_window(10), 5).rule, "busy")
+        ctl.forget()  # the run loop's response to a failed apply
+        self.assertIsNone(ctl.step(_window(10), 10))
+        self.assertEqual(ctl.step(_window(10), 105).rule, "busy")
+
     def test_variant_switches_need_longer_dwell_and_cooldown(self):
         policy = Policy(Slo(50, 5), (Rule("light", 4, math.inf, {"forward_variant": 1}), Rule("busy", math.inf, math.inf, {"forward_variant": 0})))
         ctl = control.Controller(policy, dwell=1, cooldown_s=0, variant_dwell=3, variant_cooldown_s=100, smoothing=1.0, probation_s=1e9)
@@ -406,6 +425,17 @@ class PolicyScopeTest(unittest.TestCase):
         self.assertEqual(cli._differences(scope, {**scope, "server_args": {"speculative_num_steps": 2, "tp_size": 4}}),
                          {"server_args.speculative_num_steps": (3, 2)})
 
+    def test_kv_capacity_is_in_scope_within_a_tolerance(self):
+        scope = {"server_args": {"tp_size": 4}, "kv_tokens": 1_000_000}
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "policy.json"
+            path.write_text(Policy(_policy().slo, _policy().rules, {"scope": scope}).to_json())
+            near = types.SimpleNamespace(fingerprint=lambda: {**scope, "kv_tokens": 990_000})
+            self.assertEqual(cli.load_policy(str(path), near, False).rules[0].name, "light")
+            small = types.SimpleNamespace(fingerprint=lambda: {**scope, "kv_tokens": 600_000})
+            with self.assertRaises(SystemExit):
+                cli.load_policy(str(path), small, False)
+
     def test_policy_from_a_different_server_is_refused_unless_overridden(self):
         scope = {"model_path": "a", "tp_size": 4, "gpu": "B300"}
         live = types.SimpleNamespace(fingerprint=lambda: {**scope, "gpu": "H200"})
@@ -424,7 +454,7 @@ class FingerprintTest(unittest.TestCase):
         from livetune import server as server_module
 
         info = {"model_path": "m", "tp_size": 4, "speculative_num_steps": 3, "api_key": "x", "port": 30000, "dist_init_addr": "10.0.0.1:5000",
-                "max_running_requests": 16, "random_seed": 7}
+                "max_running_requests": 16, "random_seed": 7, "max_total_num_tokens": 123}
         replies = {"/server_info": {**info, "internal_states": [{"livetune": livetune}]}}
 
         class Fake(server_module.Server):
@@ -439,7 +469,8 @@ class FingerprintTest(unittest.TestCase):
         self.assertEqual((scope["gpu"], scope["page_size"], scope["startup"]), ("NVIDIA B300", 256, STARTUP))
         # Launch arguments are in scope, except secrets, per-replica addresses, random draws and the knobs livetune moves.
         self.assertEqual(scope["server_args"], {"model_path": "m", "speculative_num_steps": 3, "tp_size": 4})
-        self.assertEqual((scope["variant"], scope["variants"]), (None, {"1": "ab"}))
+        self.assertEqual((scope["kv_tokens"], scope["variants"]), (123, {"1": "ab"}))
+        self.assertNotIn("variant", scope)  # the live variant is state, not scope
 
     def test_server_that_does_not_report_its_gpu_has_no_scope(self):
         server, server_module = self._server({"startup": STARTUP})

@@ -15,10 +15,13 @@ class UpdateFailed(RuntimeError):
     pass
 
 
+KV_TOLERANCE = 0.05
+
+
 # Every launch argument that can change serving performance is in scope. Left out: what differs
 # between replicas of one deployment (addresses, ports, ranks, paths), what the controller itself
-# changes, what SGLang derives at startup from free memory or a random draw, and anything that
-# can hold a secret.
+# changes, the random seed, and anything that can hold a secret. KV capacity is derived from free
+# memory, so it is recorded on its own and compared with a tolerance.
 _INSTANCE = re.compile(r"^_|key|password|secret|(^|_)(host|ports?|addr|endpoints?|rank|dir|folder|path|file)$|^log_")
 _KEEP = {"model_path", "tokenizer_path", "speculative_draft_model_path", "quantization_param_path", "max_lora_rank", "mamba_max_states_per_path"}
 _NOT_SCOPE = {
@@ -51,10 +54,10 @@ class Server:
         # The scheduler reports its own GPU; the client running this may have none, or different ones.
         if not state.get("gpu"):
             raise UpdateFailed(f"{self.url} does not report its GPU; upgrade its livetune plugin")
-        # Page size bounds which knob values the server accepts; the variant code, installed and
-        # selectable by id, is what a policy's forward_variant settings were measured with.
-        envelope = ("gpu", "page_size", "startup", "variant", "variants")
-        return {"server_args": serving_config(info), **{key: state.get(key) for key in envelope}}
+        # Page size bounds which knob values the server accepts. The startup variant id (in startup)
+        # and the verified catalog fix the forward code; the live variant is state, not scope.
+        envelope = ("gpu", "page_size", "startup", "variants")
+        return {"server_args": serving_config(info), "kv_tokens": info.get("max_total_num_tokens"), **{key: state.get(key) for key in envelope}}
 
     def livetune_states(self) -> list[dict[str, Any]]:
         # One entry per data-parallel scheduler.

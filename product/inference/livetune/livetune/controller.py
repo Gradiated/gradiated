@@ -86,7 +86,12 @@ class Controller:
             return None
         verdict = self._slo(window)
         if self.current is None:
-            return self._change(self.policy.select(shape), now, "initial", verdict)
+            rule = self.policy.select(shape)
+            # After a failed apply the server's variant is unknown; a variant switch, which may be
+            # what failed, waits out its cooldown instead of retrying every window.
+            if self._switches_variant(rule) and now - self._last_variant_change < self.variant_cooldown_s:
+                return None
+            return self._change(rule, now, "initial", verdict)
 
         rollback = self._judge_probation(verdict, now)
         if rollback is not None:
@@ -95,8 +100,7 @@ class Controller:
             self._recent_slo = (self._recent_slo + [verdict])[-6:]
 
         target = self._robust_target(shape)
-        penalised = target is not None and self._penalties.get(target.name, float("-inf")) > now
-        if target is None or target.name == self.current or penalised:
+        if target.name == self.current or self._penalties.get(target.name, float("-inf")) > now:
             self._candidate, self._candidate_windows = None, 0
             return None
         if target.name == self._candidate:
@@ -115,12 +119,17 @@ class Controller:
             return None
         return self._change(target, now, f"shape demand={shape.demand:.1f} prompt={shape.prompt_tokens:.0f}", verdict)
 
-    def _robust_target(self, shape: Shape) -> Rule | None:
-        # None near a box edge: a shape within ±margin of here would pick another rule.
+    def _robust_target(self, shape: Shape) -> Rule:
+        # Hysteresis: keep the current rule while the shape is within ±margin of its box.
+        # Only the current rule gets this slack, so a shape far from it always moves.
         target = self.policy.select(shape)
-        for factor in (1 + self.margin, 1 / (1 + self.margin)):
-            if self.policy.select(Shape(shape.demand * factor, shape.prompt_tokens * factor)).name != target.name:
-                return None
+        if target.name == self.current:
+            return target
+        factors = (1 / (1 + self.margin), 1.0, 1 + self.margin)
+        for d in factors:
+            for p in factors:
+                if self.policy.select(Shape(shape.demand * d, shape.prompt_tokens * p)).name == self.current:
+                    return self.policy.rule(self.current)
         return target
 
     def _judge_probation(self, verdict: bool | None, now: float) -> Action | None:

@@ -12,7 +12,7 @@ from livetune import controller as control
 from livetune import loadgen, tune
 from livetune.metrics import window
 from livetune.policy import Policy, Slo
-from livetune.server import Server
+from livetune.server import KV_TOLERANCE, Server
 
 
 def _value(raw: str) -> Any:
@@ -60,8 +60,14 @@ def load_policy(path: str, server: Server, allow_scope_mismatch: bool) -> Policy
     expected, actual = policy.provenance.get("scope"), server.fingerprint()
     if expected is None and not allow_scope_mismatch:
         raise SystemExit(f"{path} records no tuning scope; rebuild it with `livetune policy`, or pass --allow-scope-mismatch")
-    if expected is not None and expected != actual and not allow_scope_mismatch:
+    if expected is not None and not allow_scope_mismatch:
         differs = _differences(expected, actual)
+        # Free memory varies a little between starts; a policy holds within a few percent of its KV capacity.
+        kv = differs.get("kv_tokens")
+        if kv and all(kv) and abs(kv[1] - kv[0]) <= KV_TOLERANCE * kv[0]:
+            del differs["kv_tokens"]
+        if not differs:
+            return policy
         raise SystemExit(f"{path} was tuned for a different server (policy, live): {differs}; pass --allow-scope-mismatch to override")
     return policy
 

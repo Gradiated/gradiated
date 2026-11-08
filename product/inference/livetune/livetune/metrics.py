@@ -13,7 +13,10 @@ PROMPT_TOKENS = "sglang:prompt_tokens_total"
 GENERATION_TOKENS = "sglang:generation_tokens_total"
 CACHED_TOKENS = "sglang:cached_tokens_total"
 REQUESTS = "sglang:num_requests_total"
-ITL = "sglang:inter_token_latency_seconds"
+# One observation per finished request, (finish - first token) / (tokens - 1): the same per-user
+# rate loadgen measures, so live SLO verdicts and tuning agree. Token-level ITL would weight fast,
+# long streams by their token counts.
+REQUEST_TPOT = "sglang:request_time_per_output_token_seconds"
 TTFT = "sglang:time_to_first_token_seconds"
 
 
@@ -87,8 +90,7 @@ class Window:
     prompt_tokens: float
     generation_tokens: float
     cached_tokens: float
-    itl_p50: float | None
-    itl_p90: float | None
+    request_tpot_p50: float | None
     ttft_p90: float | None
 
     @property
@@ -105,7 +107,7 @@ class Window:
 
     @property
     def tps_per_user(self) -> float | None:
-        return 1.0 / self.itl_p50 if self.itl_p50 else None
+        return 1.0 / self.request_tpot_p50 if self.request_tpot_p50 else None
 
     @property
     def output_tps(self) -> float:
@@ -123,7 +125,7 @@ def window(earlier: Scrape, later: Scrape) -> Window:
             return later.histograms[name]
         return later.histograms[name].minus(earlier.histograms[name])
 
-    itl, ttft = histogram(ITL), histogram(TTFT)
+    tpot, ttft = histogram(REQUEST_TPOT), histogram(TTFT)
     return Window(
         seconds=later.t - earlier.t,
         running=later.values.get(RUNNING, 0.0),
@@ -132,7 +134,6 @@ def window(earlier: Scrape, later: Scrape) -> Window:
         prompt_tokens=delta(PROMPT_TOKENS),
         generation_tokens=delta(GENERATION_TOKENS),
         cached_tokens=delta(CACHED_TOKENS),
-        itl_p50=itl.quantile(0.5) if itl else None,
-        itl_p90=itl.quantile(0.9) if itl else None,
+        request_tpot_p50=tpot.quantile(0.5) if tpot else None,
         ttft_p90=ttft.quantile(0.9) if ttft else None,
     )

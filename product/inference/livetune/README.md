@@ -66,6 +66,7 @@ Each policy records the scope it was tuned on. That is every SGLang launch argum
 - **Demand estimate:** closed-loop clients finish in waves, so the running-plus-queued gauge read at a scrape instant swings between near zero and the full load. The controller takes a new peak at once and decays the estimate by 0.8 per window. Smoothing alone let the shape wander across boxes, and the controller stayed on a light-chat rule through a 56-user overload.
 - **Failed variant switches:** after a failed apply the controller re-applies the rule's other settings at once. A variant change made within the variant cooldown is retried only after the cooldown ends.
 - **Probation and rollback:** after a change the rule is on probation for 45 s, and no other change is made until it is judged. In observe mode nothing is applied, so nothing is judged. If the SLO held before the change and fails in most probation windows, the controller restores the previous rule and penalises the failed one for 10 minutes.
+- **Per-user speed:** live windows read SGLang's per-request decode-time histogram, one sample per finished request, which is the rate `tune` measures. Token-level inter-token latency weights long, fast streams by their token counts, so it can pass the SLO while most requests miss it.
 - **Readback:** every change is checked against `/server_info`. If an update fails, the controller forgets what it believes the server runs and re-applies a full rule at the next window.
 - **Reconciliation:** every window re-asserts the current rule's full settings, and only values that differ from the live state are sent. A restarted server, which comes back on its startup settings, is back on the rule within one window.
 
@@ -79,6 +80,8 @@ python -m livetune policy  --url URL --trials policy.json.trials.jsonl --slo-tps
 python -m livetune control --url URL --policy policy.json --log events.jsonl [--mode observe]
 python -m livetune replay  --url URL --phases shift.json --corpus corpus.json --policy policy.json [--static]
 ```
+
+A replay phase in which an apply was rejected is reported with `valid: false`, because its traffic ran on settings the controller did not choose.
 
 `tune` records every trial, so `policy` can rebuild a policy for a different SLO without measuring again. One 30-second window can flatter a setting, so any winner other than the startup setting is re-measured in two interleaved rounds against startup, and the choice uses medians. `policy` likewise needs two measurements of a non-startup setting before it will choose it. A running cap at or above a profile's user count cannot bind in a closed-loop test, so the tuner never tries such caps and policies keep the startup value there. `control --mode observe` logs the decisions without applying them, which is the first step on a production host. `replay` plays a traffic schedule with the controller running, or with `--static` settings, and reports each phase against the SLO with the rules that were active and how soon the first change came.
 

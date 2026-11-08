@@ -90,10 +90,10 @@ sglang:prompt_tokens_total{tp_rank="0"} 1000
 sglang:generation_tokens_total{tp_rank="0"} 500
 sglang:cached_tokens_total{tp_rank="0"} 100
 sglang:num_requests_total{tp_rank="0"} 10
-sglang:inter_token_latency_seconds_bucket{le="0.005"} 0
-sglang:inter_token_latency_seconds_bucket{le="0.01"} 50
-sglang:inter_token_latency_seconds_bucket{le="+Inf"} 100
-sglang:inter_token_latency_seconds_count 100
+sglang:request_time_per_output_token_seconds_bucket{le="0.005"} 0
+sglang:request_time_per_output_token_seconds_bucket{le="0.01"} 50
+sglang:request_time_per_output_token_seconds_bucket{le="+Inf"} 100
+sglang:request_time_per_output_token_seconds_count 100
 """
 METRICS_B = METRICS_A.replace("1000", "5000").replace("generation_tokens_total{tp_rank=\"0\"} 500", "generation_tokens_total{tp_rank=\"0\"} 2500") \
     .replace("cached_tokens_total{tp_rank=\"0\"} 100", "cached_tokens_total{tp_rank=\"0\"} 2100").replace("num_requests_total{tp_rank=\"0\"} 10", "num_requests_total{tp_rank=\"0\"} 14") \
@@ -106,8 +106,8 @@ class MetricsTest(unittest.TestCase):
         self.assertEqual((win.demand, win.requests, win.prompt_per_request), (5.0, 4.0, 1000.0))
         self.assertAlmostEqual(win.cache_hit, 0.5)
         self.assertAlmostEqual(win.output_tps, 200.0)
-        self.assertTrue(0.005 < win.itl_p50 <= 0.01)
-        self.assertAlmostEqual(win.tps_per_user, 1 / win.itl_p50)
+        self.assertTrue(0.005 < win.request_tpot_p50 <= 0.01)
+        self.assertAlmostEqual(win.tps_per_user, 1 / win.request_tpot_p50)
 
     def test_real_sglang_scrapes_from_a_four_user_2k_prompt_load(self):
         fixtures = Path(__file__).parent / "fixtures"
@@ -117,8 +117,16 @@ class MetricsTest(unittest.TestCase):
         self.assertEqual(win.running, 4.0)
         self.assertGreater(win.requests, 0)
         self.assertAlmostEqual(win.prompt_per_request, 2000, delta=1)
-        self.assertTrue(150 < win.tps_per_user < 400, win.tps_per_user)
+        self.assertIsNone(win.tps_per_user)  # this capture predates the per-request histogram
         self.assertTrue(0 < win.ttft_p90 < 2, win.ttft_p90)
+
+    def test_real_sglang_per_request_decode_rate(self):
+        fixtures = Path(__file__).parent / "fixtures"
+        earlier = metrics.parse((fixtures / "sglang_request_tpot_a.txt").read_text(), 0.0)
+        later = metrics.parse((fixtures / "sglang_request_tpot_b.txt").read_text(), 15.0)
+        win = metrics.window(earlier, later)
+        self.assertGreater(win.requests, 0)
+        self.assertTrue(50 < win.tps_per_user < 500, win.tps_per_user)
 
     def test_quantile_interpolates_and_handles_empty(self):
         hist = metrics.Histogram(((1.0, 0.0), (2.0, 10.0), (math.inf, 10.0)), 10.0)
@@ -137,7 +145,7 @@ def _policy():
 
 
 def _window(demand, tps=100.0, ttft=1.0, requests=5):
-    return metrics.Window(10, demand, 0, requests, requests * 1000, 1000, 0, 1 / tps, 1 / tps, ttft)
+    return metrics.Window(10, demand, 0, requests, requests * 1000, 1000, 0, 1 / tps, ttft)
 
 
 class PolicyTest(unittest.TestCase):
@@ -175,7 +183,7 @@ class ControllerTest(unittest.TestCase):
 
     def test_no_initial_rule_until_a_prompt_length_is_seen(self):
         ctl = control.Controller(_policy(), smoothing=1.0)
-        quiet = metrics.Window(10, 3, 0, 0, 0, 500, 0, 0.01, 0.01, None)
+        quiet = metrics.Window(10, 3, 0, 0, 0, 500, 0, 0.01, None)
         self.assertIsNone(ctl.step(quiet, 0))
         self.assertIsNone(ctl.current)
         self.assertEqual(ctl.step(_window(2), 5).rule, "light")
@@ -601,6 +609,10 @@ class ReplayReportTest(unittest.TestCase):
         summary = {"tps_per_user_p50": 90, "ttft_p90": 2}
         report = cli.phase_report(summary, events, 100, 60, _policy(), "controlled")
         self.assertEqual((report["rules"], report["first_switch_s"], report["slo_met"]), (["busy"], 12.0, True))
+        self.assertTrue(report["valid"])
+        events.append({"wall": 140, "rule": "busy", "action": {"rule": "busy", "reason": "reconcile", "error": "UpdateFailed: rejected"}})
+        rejected = cli.phase_report(summary, events, 100, 60, _policy(), "controlled")
+        self.assertEqual((rejected["apply_errors"], rejected["valid"]), (1, False))
 
 
 class PluginTest(unittest.TestCase):

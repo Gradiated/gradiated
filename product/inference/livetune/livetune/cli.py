@@ -127,9 +127,13 @@ def replay(args: argparse.Namespace, server: Server) -> None:
 def phase_report(summary: dict[str, Any], events: list[dict[str, Any]], started: float, seconds: float, policy: Policy, mode: str) -> dict[str, Any]:
     during = [e for e in events if started <= e["wall"] <= started + seconds]
     switches = [e for e in during if "action" in e]
+    apply_errors = sum("error" in e["action"] for e in switches)
     return {
         **summary,
         "mode": mode,
+        # A rejected apply leaves traffic on settings the controller did not choose; such a phase is not controlled evidence.
+        "apply_errors": apply_errors,
+        "valid": apply_errors == 0,
         "slo_met": policy.slo.met(summary["tps_per_user_p50"], summary["ttft_p90"]),
         "rules": sorted({e["rule"] for e in during if e.get("rule")}),
         "first_switch_s": round(switches[0]["wall"] - started, 1) if switches else None,

@@ -36,11 +36,16 @@ class LiveTuner:
         # The running-batch budget; it may have been set explicitly rather than derived from the cap.
         self.pp_micro_batch_startup = get_parallel().pp_max_micro_batch_size
         self.gpu = _gpu_name()
-        self.runtime = {"sglang": _source_digest("sglang"), "livetune": _source_digest("livetune")}
+        self._runtime: dict[str, str | None] | None = None
         self.settings: dict[str, Any] = dict(self.startup)
         self.variant: variants.InstalledVariant | None = getattr(runner, "_livetune_variant", None)
         # The code installed at startup, by hash: re-registering a name later changes the catalog, not this.
         self.startup_variant = {"name": self.variant.source.name, "sha256": self.variant.source.sha256} if self.variant else None
+        # Variant ids are mutable names in the manifest; the first hash this scheduler sees for an id
+        # is the only code it will install under that id.
+        self.pinned: dict[str, str] = {}
+        if self.variant is not None:
+            self.pinned[str(self.startup[VARIANT_KEY])] = self.variant.source.sha256
         self.pending_variant: int | None = None
         self.pending_since_step = 0
         self.drain_steps = int(os.environ.get("LIVETUNE_DRAIN_STEPS", "6000"))
@@ -59,7 +64,7 @@ class LiveTuner:
             if isinstance(value, bool) or not isinstance(value, int) or value < 0:
                 raise InvalidSetting(f"{VARIANT_KEY} must be a variant id (0 = stock)")
             if value != variants.STOCK:
-                variants.resolve(value)
+                self._resolve(value)
             return
         KNOBS[key].validate(value, self.startup, self.page_size)
         if key == "max_running_requests" and value != self.startup[key]:
@@ -148,7 +153,7 @@ class LiveTuner:
         runner = self.scheduler.tp_worker.model_runner
         parallel = get_parallel()
         ctx = {"model_runner": runner, "scheduler": self.scheduler, "tp_rank": parallel.tp_rank, "tp_size": parallel.tp_size}
-        self.variant = variants.install(variants.resolve(variant_id), runner.model, ctx)
+        self.variant = variants.install(self._resolve(variant_id), runner.model, ctx)
 
     def _switch_variant(self, variant_id: int) -> None:
         previous = self.settings[VARIANT_KEY]
@@ -201,9 +206,32 @@ class LiveTuner:
         runner.init_decode_cuda_graph()
         torch.cuda.synchronize()
 
+    @property
+    def runtime(self) -> dict[str, str | None]:
+        # Hashing thousands of files takes seconds on a busy host, so it waits for the first readback.
+        if self._runtime is None:
+            self._runtime = {"sglang": _source_digest("sglang"), "livetune": _source_digest("livetune"), "packages": _packages_digest()}
+        return self._runtime
+
+    def _resolve(self, variant_id: int) -> variants.VariantSource:
+        source = variants.resolve(variant_id)
+        self._pin(str(variant_id), source.sha256)
+        return source
+
+    def _pin(self, variant_id: str, sha256: str) -> None:
+        pinned = self.pinned.setdefault(variant_id, sha256)
+        if pinned != sha256:
+            raise variants.VariantError(f"variant {variant_id} changed after this scheduler pinned it ({pinned[:12]}); restart to use the new code")
+
+    def _catalog(self) -> dict[str, str]:
+        catalog = variants.catalog()
+        for variant_id, sha256 in catalog.items():
+            self._pin(variant_id, sha256)
+        return catalog
+
     def readback(self) -> dict[str, Any]:
         try:
-            catalog: dict[str, str] | str = variants.catalog()
+            catalog: dict[str, str] | str = self._catalog()
         except Exception as exc:  # a broken manifest must not take down /server_info
             catalog = f"unreadable: {type(exc).__name__}: {exc}"
         return {
@@ -239,6 +267,19 @@ def _source_digest(package: str) -> str | None:
     digest = hashlib.sha256()
     for path in sorted(root.rglob("*.py")):
         digest.update(str(path.relative_to(root)).encode() + b"\0" + path.read_bytes())
+    return digest.hexdigest()
+
+
+def _packages_digest() -> str:
+    # Every installed distribution's name, version and RECORD, whose per-file hashes cover native
+    # libraries (torch, flashinfer, CUDA wheels): a rebuilt kernel stack is a new scope.
+    import hashlib
+    from importlib import metadata
+
+    digest = hashlib.sha256()
+    entries = sorted(((dist.metadata["Name"] or "").lower(), dist.version, dist.read_text("RECORD") or "") for dist in metadata.distributions())
+    for name, version, record in entries:
+        digest.update(f"{name}=={version}\n".encode() + record.encode())
     return digest.hexdigest()
 
 

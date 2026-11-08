@@ -835,11 +835,26 @@ class PluginTest(unittest.TestCase):
         with self.assertRaises(self.plugin.NoUsableVariant):
             self.tuner.on_idle()
 
+    def test_a_variant_rewritten_under_the_same_id_is_refused_until_restart(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            first = variants.register(tmp, "bump", "def install(model, patch, ctx):\n    patch(model, 'value', 2)\n")
+            os.environ["LIVETUNE_VARIANTS_DIR"] = tmp
+            try:
+                self.tuner.validate("forward_variant", first)
+                again = variants.register(tmp, "bump", "def install(model, patch, ctx):\n    patch(model, 'value', 7)\n")
+                self.assertEqual(again, first)
+                with self.assertRaises(variants.VariantError):
+                    self.tuner.validate("forward_variant", first)
+                self.assertIn("changed after this scheduler pinned it", self.tuner.readback()["variants"])
+            finally:
+                del os.environ["LIVETUNE_VARIANTS_DIR"]
+
     def test_runtime_digest_covers_the_installed_package_sources(self):
         digest = self.plugin._source_digest("livetune")
         self.assertRegex(digest, "^[0-9a-f]{64}$")
         self.assertEqual(self.tuner.readback()["runtime"]["livetune"], digest)
         self.assertIsNone(self.plugin._source_digest("no_such_package_livetune"))
+        self.assertRegex(self.tuner.readback()["runtime"]["packages"], "^[0-9a-f]{64}$")
 
     def test_readback_reports_whether_live_variants_are_enabled(self):
         self.assertTrue(self.tuner.readback()["live_variants"])

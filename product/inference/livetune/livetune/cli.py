@@ -170,6 +170,7 @@ def main(argv: list[str] | None = None) -> int:
         slo = Slo(args.slo_tps, args.slo_ttft)
         prompts = loadgen.PromptSource(_corpus(args.corpus))
         start = {k: v for k, v in server.livetune_state()["startup"].items()}
+        scope = server.fingerprint()
         record = _appender(args.out + ".trials.jsonl", mode="w")
 
         def measure(profile: tune.Profile, settings: dict[str, Any]) -> dict[str, Any]:
@@ -177,7 +178,7 @@ def main(argv: list[str] | None = None) -> int:
             if args.warmup:
                 loadgen.run(args.url, [profile.phase(args.warmup)], prompts, log=lambda _: None)
             summary = loadgen.run(args.url, [profile.phase(args.seconds)], prompts, log=lambda _: None)[0]
-            record({"profile": profile.name, "settings": settings, "summary": summary})
+            record({"profile": profile.name, "settings": settings, "summary": summary, "scope": scope})
             return summary
 
         try:
@@ -187,14 +188,18 @@ def main(argv: list[str] | None = None) -> int:
             ]
         finally:
             server.apply(start)
-        policy = tune.build_policy(results, slo, {"tuned_at": time.time(), "url": args.url, "scope": server.fingerprint()}, start)
+        policy = tune.build_policy(results, slo, {"tuned_at": time.time(), "url": args.url, "scope": scope}, start)
         Path(args.out).write_text(policy.to_json())
         print(policy.to_json())
     elif args.command == "policy":
         slo = Slo(args.slo_tps, args.slo_ttft)
         trials = [json.loads(line) for line in Path(args.trials).read_text().splitlines() if line.strip()]
-        start = server.livetune_state()["startup"]
-        policy = tune.build_policy(tune.best_from_trials(trials, slo, start), slo, {"trials": args.trials, "scope": server.fingerprint()}, start)
+        scopes = {json.dumps(t.get("scope"), sort_keys=True) for t in trials}
+        if len(scopes) != 1 or "null" in scopes:
+            raise SystemExit("trials must all record the same tuning scope; rerun tune for older or mixed trial files")
+        scope = trials[0]["scope"]
+        start = scope["startup"]
+        policy = tune.build_policy(tune.best_from_trials(trials, slo, start), slo, {"trials": args.trials, "scope": scope}, start)
         Path(args.out).write_text(policy.to_json())
         print(policy.to_json())
     elif args.command == "replay":

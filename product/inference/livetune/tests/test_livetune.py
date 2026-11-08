@@ -478,6 +478,22 @@ class PluginTest(unittest.TestCase):
         self.assertEqual(self.model.value, 3)
         self.assertEqual((tuner.readback()["settings"]["forward_variant"], tuner.readback()["variant"]["name"]), (variant, "bump"))
 
+    def test_a_failed_switch_keeps_the_variant_that_was_serving(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            good = variants.register(tmp, "good", "def install(model, patch, ctx):\n    patch(model, 'value', 2)\n")
+            bad = variants.register(tmp, "bad", "def install(model, patch, ctx):\n    raise RuntimeError('no kernel')\n")
+            os.environ["LIVETUNE_VARIANTS_DIR"] = tmp
+            try:
+                self.tuner.apply("forward_variant", good)
+                self.tuner.on_idle()
+                self.tuner.apply("forward_variant", bad)
+                self.tuner.on_idle()
+            finally:
+                del os.environ["LIVETUNE_VARIANTS_DIR"]
+        state = self.tuner.readback()
+        self.assertEqual((self.model.value, state["settings"]["forward_variant"], state["variant"]["name"]), (2, good, "good"))
+        self.assertIn("no kernel", state["recent_errors"][-1]["error"])
+
     def test_pending_switch_is_cancelled_if_the_scheduler_never_drains(self):
         self.tuner.drain_steps = 10
         self.scheduler.forward_ct = 0

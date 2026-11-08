@@ -114,26 +114,42 @@ class LiveTuner:
         self.changes.append({"t": time.time(), "key": VARIANT_KEY, "value": variant_id, "seconds": time.perf_counter() - started})
         logger.info("livetune: forward_variant=%s switched in %.1fs", variant_id, time.perf_counter() - started)
 
+    def _install(self, variant_id: int) -> None:
+        from sglang.srt.runtime_context import get_parallel
+
+        runner = self.scheduler.tp_worker.model_runner
+        parallel = get_parallel()
+        ctx = {"model_runner": runner, "scheduler": self.scheduler, "tp_rank": parallel.tp_rank, "tp_size": parallel.tp_size}
+        self.variant = variants.install(variants.resolve(variant_id), runner.model, ctx)
+
     def _switch_variant(self, variant_id: int) -> None:
         runner = self.scheduler.tp_worker.model_runner
+        previous = self.settings[VARIANT_KEY]
         if self.variant is not None:
             variants.uninstall(self.variant)
             self.variant = None
-            self.settings[VARIANT_KEY] = variants.STOCK
         error: Exception | None = None
         if variant_id != variants.STOCK:
             try:
-                from sglang.srt.runtime_context import get_parallel
-
-                parallel = get_parallel()
-                ctx = {"model_runner": runner, "scheduler": self.scheduler, "tp_rank": parallel.tp_rank, "tp_size": parallel.tp_size}
-                self.variant = variants.install(variants.resolve(variant_id), runner.model, ctx)
+                self._install(variant_id)
             except Exception as exc:
                 error = exc
-        if not self._all_ranks_agree(error is None) and self.variant is not None:
-            variants.uninstall(self.variant)
-            self.variant = None
+        if not self._all_ranks_agree(error is None):
+            if self.variant is not None:
+                variants.uninstall(self.variant)
+                self.variant = None
             error = error or RuntimeError("variant failed on another tensor-parallel rank")
+            # Fall back to the variant that was serving; stock only if it cannot come back on every rank.
+            restored_ok = True
+            if previous != variants.STOCK:
+                try:
+                    self._install(previous)
+                except Exception:
+                    restored_ok = False
+                if not self._all_ranks_agree(restored_ok) and self.variant is not None:
+                    variants.uninstall(self.variant)
+                    self.variant = None
+            self.settings[VARIANT_KEY] = previous if self.variant is not None or previous == variants.STOCK else variants.STOCK
         # Graphs must always match the code now installed, stock or variant.
         self._recapture(runner)
         if error is not None:

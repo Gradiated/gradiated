@@ -158,6 +158,8 @@ def run(
     previous = scrape()
     while not stop():
         sleep(interval_s)
+        if stop():
+            break
         current = scrape()
         win = window_of(previous, current)
         previous = current

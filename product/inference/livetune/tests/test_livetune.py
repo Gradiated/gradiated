@@ -11,7 +11,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from livetune import controller as control  # noqa: E402
-from livetune import cli, knobs, metrics, tune, variants  # noqa: E402
+from livetune import cli, knobs, loadgen, metrics, tune, variants  # noqa: E402
 from livetune.policy import Policy, Rule, Shape, Slo  # noqa: E402
 
 STARTUP = {"max_running_requests": 64, "chunked_prefill_size": 8192, "max_prefill_tokens": 8192}
@@ -212,17 +212,27 @@ class ControllerTest(unittest.TestCase):
 
     def test_run_loop_applies_actions_and_forgets_on_failure(self):
         ctl = control.Controller(_policy(), smoothing=1.0)
-        calls, events, ticks = [], [], iter(range(3))
-        scrapes = iter([0, 1, 2, 3])
+        calls, events, scraped = [], [], []
+
+        def scrape():
+            scraped.append(len(scraped))
+            return scraped[-1]
 
         def apply(settings):
             calls.append(settings)
             raise RuntimeError("server rejected")
 
-        control.run(ctl, lambda: next(scrapes), apply, lambda a, b: _window(2), log=events.append,
-                    stop=lambda: next(ticks, None) is None, clock=lambda: 0.0, sleep=lambda s: None)
+        control.run(ctl, scrape, apply, lambda a, b: _window(2), log=events.append,
+                    stop=lambda: len(scraped) > 3, clock=lambda: 0.0, sleep=lambda s: None)
         self.assertEqual(len(calls), 3)  # each failure forgets state, so every window re-applies
         self.assertTrue(all("error" in e["action"] for e in events))
+
+    def test_run_loop_does_nothing_once_stopped_during_sleep(self):
+        ctl = control.Controller(_policy(), smoothing=1.0)
+        stopped, calls = [], []
+        control.run(ctl, lambda: 0, calls.append, lambda a, b: _window(2),
+                    stop=lambda: bool(stopped), sleep=lambda s: stopped.append(True))
+        self.assertEqual(calls, [])
 
 
 class TuneTest(unittest.TestCase):
@@ -293,6 +303,20 @@ class TuneTest(unittest.TestCase):
         self.assertEqual(policy.select(Shape(4, 900)).name, "u1-p1000")
         self.assertEqual(policy.select(Shape(100, 20000)).name, "u32-p30000")
         self.assertEqual(policy.select(Shape(2, 16000)).name, "u1-p30000")
+
+
+class LoadSummaryTest(unittest.TestCase):
+    def test_requests_cut_at_the_deadline_count_tokens_but_not_latency(self):
+        result = loadgen.PhaseResult(loadgen.Phase(2, 100, 50, 10.0))
+        result.requests = [
+            loadgen.RequestRecord(0.0, ttft=0.5, tokens=50, decode_tps=100.0),
+            loadgen.RequestRecord(5.0, ttft=9.0, tokens=20, decode_tps=4.0, cut=True),
+            loadgen.RequestRecord(6.0, error="http 503"),
+        ]
+        summary = result.summary()
+        self.assertEqual((summary["completed"], summary["errors"]), (1, 1))
+        self.assertEqual((summary["tps_per_user_p50"], summary["ttft_p90"]), (100.0, 0.5))
+        self.assertEqual(summary["output_tps"], 7.0)
 
 
 class ReplayReportTest(unittest.TestCase):

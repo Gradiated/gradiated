@@ -68,6 +68,8 @@ def replay(args: argparse.Namespace, server: Server) -> None:
             daemon=True,
         )
         thread.start()
+    else:
+        thread = None
     phases = [loadgen.Phase(**p) for p in json.loads(Path(args.phases).read_text())]
     prompts = loadgen.PromptSource(_corpus(args.corpus))
     for index, phase in enumerate(phases):
@@ -75,6 +77,8 @@ def replay(args: argparse.Namespace, server: Server) -> None:
         summary = asyncio_phase(args.url, phase, prompts, index)
         write(phase_report(summary, events, started, phase.seconds, policy, "static" if args.static else "controlled"))
     stop.set()
+    if thread is not None:
+        thread.join()
     server.apply(server.livetune_state()["startup"])
 
 
@@ -105,7 +109,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.choices["set"].add_argument("pairs", nargs="+")
     for name in ("load", "tune", "replay"):
         sub.choices[name].add_argument("--corpus", required=True)
-        sub.choices[name].add_argument("--out")
+        sub.choices[name].add_argument("--out", required=name == "tune")
     for name in ("load", "replay"):
         sub.choices[name].add_argument("--phases", required=True)
     r = sub.choices["replay"]
@@ -147,7 +151,7 @@ def main(argv: list[str] | None = None) -> int:
         slo = Slo(args.slo_tps, args.slo_ttft)
         prompts = loadgen.PromptSource(_corpus(args.corpus))
         start = {k: v for k, v in server.livetune_state()["startup"].items()}
-        record = _appender(args.out + ".trials.jsonl" if args.out else None)
+        record = _appender(args.out + ".trials.jsonl")
 
         def measure(profile: tune.Profile, settings: dict[str, Any]) -> dict[str, Any]:
             server.apply(settings)

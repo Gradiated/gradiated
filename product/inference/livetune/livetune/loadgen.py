@@ -26,6 +26,7 @@ class RequestRecord:
     tokens: int = 0
     decode_tps: float | None = None
     error: str | None = None
+    cut: bool = False
 
 
 @dataclass
@@ -34,7 +35,7 @@ class PhaseResult:
     requests: list[RequestRecord] = field(default_factory=list)
 
     def summary(self) -> dict[str, Any]:
-        done = [r for r in self.requests if r.error is None and r.decode_tps]
+        done = [r for r in self.requests if r.error is None and r.decode_tps and not r.cut]
         ttfts = sorted(r.ttft for r in done if r.ttft is not None)
         rates = sorted(r.decode_tps for r in done)
         tokens = sum(r.tokens for r in self.requests if r.error is None)
@@ -79,7 +80,6 @@ async def _one(session: Any, url: str, ids: list[int], output_tokens: int, recor
         "stream": True,
     }
     first = last = None
-    count = 0
     try:
         async with session.post(f"{url}/generate", json=body) as response:
             if response.status != 200:
@@ -91,19 +91,19 @@ async def _one(session: Any, url: str, ids: list[int], output_tokens: int, recor
                     continue
                 payload = json.loads(line[5:])
                 now = time.perf_counter()
-                tokens = payload.get("meta_info", {}).get("completion_tokens", count + 1)
-                if tokens > count:
+                tokens = payload.get("meta_info", {}).get("completion_tokens", record.tokens + 1)
+                if tokens > record.tokens:
                     if first is None:
                         first = now
-                    last, count = now, tokens
+                        record.ttft = now - record.start
+                    last, record.tokens = now, tokens
+    except asyncio.CancelledError:
+        raise
     except Exception as exc:  # network errors are data, not crashes
         record.error = f"{type(exc).__name__}: {exc}"
-        return
-    if first is not None:
-        record.ttft = first - record.start
-        record.tokens = count
-        if count > 1 and last > first:
-            record.decode_tps = (count - 1) / (last - first)
+    finally:
+        if first is not None and record.tokens > 1 and last > first:
+            record.decode_tps = (record.tokens - 1) / (last - first)
 
 
 async def run_phase(url: str, phase: Phase, prompts: PromptSource, phase_index: int = 0) -> PhaseResult:
@@ -119,9 +119,13 @@ async def run_phase(url: str, phase: Phase, prompts: PromptSource, phase_index: 
             while time.perf_counter() < deadline:
                 ids = prompts.prompt(phase.prompt_tokens, phase.shared_prefix, shared_seed=phase_index)
                 record = RequestRecord(time.perf_counter())
-                await _one(session, url, ids, phase.output_tokens, record)
-                if record.start < deadline:
-                    result.requests.append(record)
+                result.requests.append(record)
+                try:
+                    # Requests still running at the deadline are cut off; their tokens so far count.
+                    await asyncio.wait_for(_one(session, url, ids, phase.output_tokens, record), deadline - time.perf_counter())
+                except TimeoutError:
+                    record.cut = True
+                    return
                 if record.error:
                     await asyncio.sleep(1.0)
 

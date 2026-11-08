@@ -279,6 +279,8 @@ class Engine:
         while True:
             job_id = self.pending.get()
             job = self.jobs[job_id]
+            if not getattr(self, "accepting", True) or job.status != "queued":
+                continue
             self._run_job(job)
             self.completed_since_baseline += 1
             if self.config.rebaseline_every and self.completed_since_baseline >= self.config.rebaseline_every:
@@ -432,12 +434,20 @@ class Engine:
             raise
 
     def _schedule_restart(self) -> None:
-        if not getattr(self, "restart_scheduled", False):
-            self.restart_scheduled = True
-            threading.Thread(target=lambda: (time.sleep(15), self._exit_for_restart(None)), daemon=True).start()
+        if getattr(self, "restart_scheduled", False):
+            return
+        self.restart_scheduled = True
+        self._stop_admitting()
+        threading.Thread(target=lambda: (time.sleep(15), hard_exit(0)), daemon=True).start()
 
     def _exit_for_restart(self, after_job: str | None) -> None:
-        """Fail queued jobs visibly, give polling clients time to see it, then exit for the supervisor."""
+        self._stop_admitting()
+        self.log("restart", after_job=after_job)
+        # Give polling clients time to read the engine_restarting results.
+        time.sleep(15)
+        hard_exit(0)
+
+    def _stop_admitting(self) -> None:
         self.accepting = False
         with self.state_lock:
             for job_id in self.order:
@@ -445,9 +455,6 @@ class Engine:
                 if job.status == "queued":
                     job.status = "engine_restarting"
                     job.result = {"job_id": job.id, "status": "engine_restarting", "error": "engine restarted before this job ran; resubmit"}
-        self.log("restart", after_job=after_job)
-        time.sleep(15)
-        hard_exit(0)
 
     def experiment(self, payload: dict[str, Any]) -> dict[str, Any]:
         sets: dict[str, list[list[int]]] = payload["prompt_sets"]

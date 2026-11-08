@@ -1619,3 +1619,13 @@ class RequestModeAndPrivacyTest(unittest.TestCase):
         verdict = gate.judge(stock, clean, clean)
         self.assertFalse(verdict.passed)
         self.assertIn("non-finite", verdict.reasons[0])
+
+
+class PageDepthTest(unittest.TestCase):
+    def test_proven_cached_sharing_stops_at_the_hashed_pages(self):
+        from livetune import trace
+
+        family = trace.PrefixKeys(b"k" * 32).families(list(range(3000)))
+        records = [dataclasses_replace(_record(100.0 + i, prompt=3000, cached=2100, family=None), families=family,
+                                       cached_family="c", cached_family_tokens=2048) for i in range(2)]
+        self.assertEqual({a.shared_tokens for a in trace.arrivals(records)}, {2048})

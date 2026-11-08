@@ -45,6 +45,7 @@ class Record:
     session: bool = False
     families: tuple[str, ...] = ()  # keyed prefix hashes at FAMILY_DEPTHS that the prompt reaches
     cached_family: str | None = None  # keyed hash of the cached prefix
+    cached_family_tokens: int = 0  # how many tokens that hash covers: the cached prefix rounded down to whole pages
     sampling: dict[str, float] = field(default_factory=dict)  # sampling parameters that differ from SGLang's defaults
     logprobs: int = -1  # -1 none; otherwise logprobs were requested, with this many top alternatives
 
@@ -332,7 +333,9 @@ def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
     proven_cached: dict[str, int] = {}
     for r in records:
         if r.cached_family and cached_counts[r.cached_family] > 1:
-            proven_cached[r.cached_family] = min(proven_cached.get(r.cached_family, r.cached_tokens), r.cached_tokens)
+            # Only the hashed pages are proven common; the remainder of a partial page is not.
+            hashed = r.cached_family_tokens or r.cached_tokens
+            proven_cached[r.cached_family] = min(proven_cached.get(r.cached_family, hashed), hashed)
     lengths: dict[str, int] = {}
     for r, found in zip(records, families):
         if found is not None:

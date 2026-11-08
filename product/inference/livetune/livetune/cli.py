@@ -238,7 +238,9 @@ def improve(args: argparse.Namespace, server: Server) -> None:
     production traffic just recorded, and publish a policy only when something beat startup."""
     canary = Server(args.canary)
     out = Path(args.work_dir)
-    out.mkdir(parents=True, exist_ok=True)
+    # Snapshots copy Confidential trace records, so the work directory is the owner's only.
+    out.mkdir(mode=0o700, parents=True, exist_ok=True)
+    out.chmod(0o700)
     write = _appender(str(out / "improve.jsonl"))
     while True:
         started = time.time()
@@ -257,7 +259,8 @@ def improve(args: argparse.Namespace, server: Server) -> None:
             entry["skipped"] = {"unreproducible_modes": gaps}
         else:
             snapshot = out / f"trace-{int(started)}.jsonl"
-            snapshot.write_text("".join(r.to_json() + "\n" for r in records))
+            with os.fdopen(os.open(snapshot, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), "w") as handle:
+                handle.write("".join(r.to_json() + "\n" for r in records))
             policy = tune_policy(canary, Slo(args.slo_tps, args.slo_ttft), loadgen.PromptSource(_corpus(args.corpus)), report["grid"],
                                  None, trace.arrivals(records, speed=args.speed), 0, 0, _appender(str(out / f"trials-{int(started)}.jsonl")))
             winner = policy.rule("trace").settings
@@ -554,6 +557,8 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(report, indent=1))
         return 0
     if args.command == "variant-eval":
+        if args.trace and (args.slo_tps is None or args.slo_ttft is None):
+            raise SystemExit("--trace needs --slo-tps and --slo-ttft, so a slower variant cannot be kept on correctness alone")
         print(json.dumps(variant_eval(args, server), indent=1))
         return 0
     if args.command == "improve":

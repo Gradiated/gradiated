@@ -421,6 +421,7 @@ class Telemetry:
             session=getattr(req, "session_id", None) is not None,
             families=self.keys.families(ids),
             cached_family=self.keys.digest(ids, cached_pages) if cached_pages else None,
+            cached_family_tokens=cached_pages,
             sampling={key: float(getattr(params, key)) for key, default in _SAMPLING_DEFAULTS.items()
                       if getattr(params, key, default) not in (None, default)},
             logprobs=int(getattr(getattr(req, "logprob", None), "top_logprobs_num", 0) or 0) if getattr(req, "return_logprob", False) else -1,

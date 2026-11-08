@@ -16,6 +16,10 @@ _SCHEDULER = "sglang.srt.managers.scheduler.Scheduler"
 _MODEL_RUNNER = "sglang.srt.model_executor.model_runner.ModelRunner"
 
 
+class NoUsableVariant(RuntimeError):
+    pass
+
+
 class LiveTuner:
     def __init__(self, scheduler: Any) -> None:
         runner = scheduler.tp_worker.model_runner
@@ -42,7 +46,7 @@ class LiveTuner:
 
     def validate(self, key: str, value: Any) -> None:
         if key == VARIANT_KEY:
-            if os.environ.get("LIVETUNE_LIVE_VARIANTS") != "1":
+            if not _live_variants():
                 raise InvalidSetting(f"live {VARIANT_KEY} switching is disabled; set LIVETUNE_STARTUP_VARIANT and restart")
             from sglang.srt.runtime_context import get_parallel
 
@@ -118,6 +122,8 @@ class LiveTuner:
         started = time.perf_counter()
         try:
             self._switch_variant(variant_id)
+        except NoUsableVariant:
+            raise
         except Exception as exc:
             logger.exception("livetune: switching to variant %s failed", variant_id)
             self.errors.append({"t": time.time(), "key": VARIANT_KEY, "value": variant_id, "error": f"{type(exc).__name__}: {exc}"})
@@ -141,12 +147,12 @@ class LiveTuner:
             return
         # Fall back to the variant that was serving, then to stock. Every attempt ends in a
         # collective vote, so all ranks take the same branch and end on the same code.
-        self.settings[VARIANT_KEY] = variants.STOCK
         for fallback in dict.fromkeys([previous, variants.STOCK]):
             if self._try_variant(fallback) is None:
                 self.settings[VARIANT_KEY] = fallback
-                break
-        raise error
+                raise error
+        # No code with working graphs is left; stop the scheduler rather than serve from it.
+        raise NoUsableVariant(f"variant {variant_id} failed and neither {previous} nor stock could be restored") from error
 
     def _try_variant(self, variant_id: int) -> Exception | None:
         # Install and graph recapture succeed together on every rank, or the attempt fails.
@@ -195,6 +201,7 @@ class LiveTuner:
             "startup": dict(self.startup),
             "page_size": self.page_size,
             "pp_micro_batch_startup": self.pp_micro_batch_startup,
+            "live_variants": _live_variants(),
             "gpu": self.gpu,
             "variant": {"name": self.variant.source.name, "sha256": self.variant.source.sha256} if self.variant else None,
             "variants": catalog,
@@ -202,6 +209,10 @@ class LiveTuner:
             "recent_changes": self.changes[-10:],
             "recent_errors": self.errors[-5:],
         }
+
+
+def _live_variants() -> bool:
+    return os.environ.get("LIVETUNE_LIVE_VARIANTS") == "1"
 
 
 def _gpu_name() -> str | None:

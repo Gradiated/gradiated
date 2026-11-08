@@ -52,7 +52,7 @@ class Server:
         info = json.loads(self._request("/server_info"))
         # Page size bounds which knob values the server accepts. The startup variant id (in startup)
         # and the verified catalog fix the forward code; the live variant is state, not scope.
-        envelope = ("gpu", "page_size", "pp_micro_batch_startup", "startup", "variants")
+        envelope = ("gpu", "page_size", "pp_micro_batch_startup", "startup", "variants", "live_variants")
         scopes = [{key: state.get(key) for key in envelope} for state in self.livetune_states()]
         # The scheduler reports its own GPU; the client running this may have none, or different ones.
         if not all(scope["gpu"] for scope in scopes):

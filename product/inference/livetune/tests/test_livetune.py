@@ -737,6 +737,20 @@ class PluginTest(unittest.TestCase):
         self.assertEqual(len(self.recaptures), 2)  # the switch to "good", then its restore
         self.assertIn("illegal memory access", state["recent_errors"][-1]["error"])
 
+    def test_scheduler_stops_when_no_variant_can_be_restored(self):
+        def recapture(runner):
+            raise RuntimeError("CUDA context poisoned")
+
+        self.tuner._recapture = recapture
+        self.tuner.apply("forward_variant", 3)
+        with self.assertRaises(self.plugin.NoUsableVariant):
+            self.tuner.on_idle()
+
+    def test_readback_reports_whether_live_variants_are_enabled(self):
+        self.assertTrue(self.tuner.readback()["live_variants"])
+        os.environ.pop("LIVETUNE_LIVE_VARIANTS")
+        self.assertFalse(self.tuner.readback()["live_variants"])
+
     def test_pending_switch_is_cancelled_if_the_scheduler_never_drains(self):
         self.tuner.drain_steps = 10
         self.scheduler.forward_ct = 0

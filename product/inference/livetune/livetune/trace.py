@@ -285,6 +285,8 @@ def replay_gaps(records: Sequence[Record]) -> dict[str, int]:
         "lora": sum(r.lora for r in records),
         "session": sum(r.session for r in records),
         "multimodal": sum(r.multimodal for r in records),
+        # A non-streaming request cannot be cut off, so one that stopped early cannot keep its declared budget.
+        "non_streaming_early_stop": sum((not r.stream) and bool(r.max_new_tokens) and r.output_tokens < r.max_new_tokens for r in records),
     }
     return {mode: count for mode, count in gaps.items() if count}
 

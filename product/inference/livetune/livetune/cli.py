@@ -160,6 +160,11 @@ def tune_policy(
     scope = server.fingerprint()
     # Every candidate and confirmation run sends the same token ids; content changes MoE routing.
     trace_ids = loadgen.trace_prompts(arrivals, prompts) if arrivals is not None else None
+    if arrivals is not None and "stream_interval" in grid and any((a.max_new_tokens or 0) > a.output_tokens for a in arrivals):
+        # An early-stopped request is cut off at a chunk boundary, so larger chunks overrun its recorded
+        # output by up to stream_interval - 1 tokens and would be measured on more work.
+        logging.getLogger(__name__).warning("dropping stream_interval from the grid: the trace has early-stopped requests")
+        grid = {knob: values for knob, values in grid.items() if knob != "stream_interval"}
 
     def measure(profile: tune.Profile, settings: dict[str, Any]) -> dict[str, Any]:
         server.apply(settings)

@@ -204,12 +204,13 @@ def warm_prefixes(arrivals: Sequence[Any], ids_for: Sequence[list[int]]) -> list
     warm = []
     for arrival, ids in sorted(zip(arrivals, ids_for), key=lambda pair: pair[0].at):
         cached = min(getattr(arrival, "cached_tokens", 0), len(ids))
-        explained = arrival.family is not None and covered.get(arrival.family, 0) >= cached
+        keys = [(depth, key) for depth, key in getattr(arrival, "ancestors", ())] + ([(arrival.shared_tokens, arrival.family)] if arrival.family else [])
+        explained = any(covered.get(key, 0) >= cached for _, key in keys)
         if cached and not explained:
             warm.append(ids[:cached])
-        if arrival.family:
-            # Once a member has run, later members find the family prefix cached.
-            covered[arrival.family] = max(covered.get(arrival.family, 0), arrival.shared_tokens)
+        # Once a request has run, every prefix it shares, ancestors included, is cached for later ones.
+        for depth, key in keys:
+            covered[key] = max(covered.get(key, 0), min(depth, arrival.shared_tokens))
     return warm
 
 

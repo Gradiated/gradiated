@@ -1770,3 +1770,21 @@ class BudgetAndPrewarmTest(unittest.TestCase):
         ids = [list(range(i * 100, i * 100 + 100)) for i in range(3)]
         warm = loadgen.warm_prefixes([a, b, c], ids)
         self.assertEqual(warm, [ids[0][:40]])  # c's hit is explained by b, earlier in the window
+
+
+class ReplayCutoffTest(unittest.TestCase):
+    def test_non_streaming_early_stops_are_refused(self):
+        from livetune import trace
+
+        with self.assertRaises(ValueError):
+            trace.arrivals([dataclasses_replace(_record(100.0, output=3), stream=False, max_new_tokens=512)])
+
+    def test_prewarming_counts_coverage_through_shared_ancestors(self):
+        from livetune import trace
+
+        early = trace.Arrival(at=0.0, prompt_tokens=9000, output_tokens=1, shared_tokens=8192, family="deep", temperature=None,
+                              ancestors=((256, "a256"), (2048, "a2048")))
+        later = trace.Arrival(at=1.0, prompt_tokens=3000, output_tokens=1, shared_tokens=2048, family="a2048", temperature=None,
+                              ancestors=((256, "a256"),), cached_tokens=2048)
+        ids = [list(range(9000)), list(range(3000))]
+        self.assertEqual(loadgen.warm_prefixes([early, later], ids), [])  # the early request explains the later hit

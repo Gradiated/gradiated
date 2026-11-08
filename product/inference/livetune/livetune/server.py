@@ -14,17 +14,6 @@ class UpdateFailed(RuntimeError):
     pass
 
 
-def local_gpu_product() -> str | None:
-    import subprocess
-
-    try:
-        names = subprocess.run(["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"], capture_output=True, text=True, timeout=10, check=True).stdout.split("\n")
-    except (OSError, subprocess.SubprocessError):
-        return None
-    names = sorted({name.strip() for name in names if name.strip()})
-    return ",".join(names) or None
-
-
 @dataclass(frozen=True)
 class Server:
     url: str
@@ -42,7 +31,11 @@ class Server:
     def fingerprint(self) -> dict[str, Any]:
         info = json.loads(self._request("/server_info"))
         keys = ("model_path", "served_model_name", "revision", "tp_size", "dp_size", "ep_size", "pp_size", "attn_cp_size", "kv_cache_dtype", "quantization", "version")
-        return {**{key: info.get(key) for key in keys}, "gpu": local_gpu_product(), "startup": self.livetune_state().get("startup")}
+        state = self.livetune_state()
+        # The scheduler reports its own GPU; the client running this may have none, or different ones.
+        if not state.get("gpu"):
+            raise UpdateFailed(f"{self.url} does not report its GPU; upgrade its livetune plugin")
+        return {**{key: info.get(key) for key in keys}, "gpu": state["gpu"], "startup": state.get("startup")}
 
     def livetune_states(self) -> list[dict[str, Any]]:
         # One entry per data-parallel scheduler.

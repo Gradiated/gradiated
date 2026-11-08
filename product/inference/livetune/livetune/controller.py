@@ -103,6 +103,9 @@ class Controller:
             self._candidate, self._candidate_windows = target.name, 1
         if self._candidate_windows < self.dwell or now - self._last_change < self.cooldown_s:
             return None
+        # One change at a time: a rule is judged before another replaces it.
+        if self._probation is not None:
+            return None
         # Switching variants recaptures CUDA graphs and stalls decoding for seconds.
         if self._switches_variant(target) and (
             self._candidate_windows < self.variant_dwell or now - self._last_variant_change < self.variant_cooldown_s

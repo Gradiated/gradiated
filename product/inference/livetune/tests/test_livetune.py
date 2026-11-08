@@ -197,6 +197,17 @@ class ControllerTest(unittest.TestCase):
         self.assertIsNone(ctl.step(_window(10), 60))  # busy is penalised, light stays
         self.assertEqual(ctl.step(_window(10), 150).rule, "busy")
 
+    def test_a_rule_on_probation_is_judged_before_another_replaces_it(self):
+        policy = Policy(Slo(50, 5), (Rule("light", 4, math.inf, {"max_running_requests": 8}), Rule("mid", 12, math.inf, {"max_running_requests": 16}),
+                                     Rule("busy", math.inf, math.inf, {"max_running_requests": 32})))
+        ctl = control.Controller(policy, dwell=1, cooldown_s=0, probation_s=30, smoothing=1.0, demand_decay=0)
+        ctl.step(_window(2), 0)
+        ctl.step(_window(2), 5)
+        self.assertEqual(ctl.step(_window(8), 10).rule, "mid")
+        self.assertIsNone(ctl.step(_window(30, tps=20), 15))  # traffic moved on, but "mid" is still on probation
+        rollback = ctl.step(_window(30, tps=20), 40)
+        self.assertEqual((rollback.rule, rollback.reason), ("light", "rollback from mid"))
+
     def test_no_rollback_if_slo_was_already_failing(self):
         ctl = control.Controller(_policy(), dwell=1, cooldown_s=0, probation_s=10, smoothing=1.0)
         ctl.step(_window(2, tps=20), 0)
@@ -324,6 +335,13 @@ class TuneTest(unittest.TestCase):
                  {"profile": "c4", "settings": {"max_running_requests": 8}, "summary": dict(trials[0]["summary"], phase=dict(phase, users=4), output_tps=1700)}]
         self.assertEqual(tune.best_from_trials(light, Slo(50, 10), {"max_running_requests": 64})[0]["settings"]["max_running_requests"], 64)
 
+    def test_trials_reusing_a_profile_name_for_another_workload_are_refused(self):
+        phase = {"users": 48, "prompt_tokens": 24000, "output_tokens": 256}
+        summary = {"completed": 9, "errors": 0, "output_tps": 1638, "tps_per_user_p50": 58.8, "ttft_p90": 5.4}
+        trials = [{"profile": "a", "settings": {"max_running_requests": 64}, "summary": dict(summary, phase=dict(phase, users=users))} for users in (48, 8)]
+        with self.assertRaises(ValueError):
+            tune.best_from_trials(trials, self.slo, {"max_running_requests": 64})
+
     def test_policy_boxes_sit_between_profiles_and_stop_near_the_evidence(self):
         results = [
             {"profile": {"name": f"u{u}-p{p}", "users": u, "prompt_tokens": p}, "settings": {"max_running_requests": u}, "summary": {}}
@@ -352,6 +370,29 @@ class PolicyScopeTest(unittest.TestCase):
             self.assertEqual(cli.load_policy(str(path), live, True).rules[0].name, "light")
             same = types.SimpleNamespace(fingerprint=lambda: dict(scope))
             self.assertEqual(cli.load_policy(str(path), same, False).rules[0].name, "light")
+
+
+class FingerprintTest(unittest.TestCase):
+    def _server(self, livetune):
+        from livetune import server as server_module
+
+        replies = {"/server_info": {"model_path": "m", "tp_size": 4, "internal_states": [{"livetune": livetune}]}}
+
+        class Fake(server_module.Server):
+            def _request(self, path, body=None, timeout=None):
+                return json.dumps(replies[path]).encode()
+
+        return Fake("http://gpu-host:30000"), server_module
+
+    def test_scope_names_the_gpu_the_server_reports_not_the_callers(self):
+        server, _ = self._server({"gpu": "NVIDIA B300", "startup": STARTUP})
+        scope = server.fingerprint()
+        self.assertEqual((scope["gpu"], scope["model_path"], scope["startup"]), ("NVIDIA B300", "m", STARTUP))
+
+    def test_server_that_does_not_report_its_gpu_has_no_scope(self):
+        server, server_module = self._server({"startup": STARTUP})
+        with self.assertRaises(server_module.UpdateFailed):
+            server.fingerprint()
 
 
 class LoadSummaryTest(unittest.TestCase):
@@ -499,6 +540,30 @@ class PluginTest(unittest.TestCase):
         state = self.tuner.readback()
         self.assertEqual((self.model.value, state["settings"]["forward_variant"], state["variant"]["name"]), (2, good, "good"))
         self.assertIn("no kernel", state["recent_errors"][-1]["error"])
+
+    def test_a_failed_recapture_restores_the_previous_variant_on_every_rank(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            good = variants.register(tmp, "good", "def install(model, patch, ctx):\n    patch(model, 'value', 2)\n")
+            other = variants.register(tmp, "other", "def install(model, patch, ctx):\n    patch(model, 'value', 5)\n")
+            os.environ["LIVETUNE_VARIANTS_DIR"] = tmp
+            try:
+                self.tuner.apply("forward_variant", good)
+                self.tuner.on_idle()
+
+                def recapture(runner):
+                    if self.model.value == 5:
+                        raise RuntimeError("illegal memory access")
+                    self.recaptures.append(runner)
+
+                self.tuner._recapture = recapture
+                self.tuner.apply("forward_variant", other)
+                self.tuner.on_idle()
+            finally:
+                del os.environ["LIVETUNE_VARIANTS_DIR"]
+        state = self.tuner.readback()
+        self.assertEqual((self.model.value, state["settings"]["forward_variant"], state["variant"]["name"]), (2, good, "good"))
+        self.assertEqual(len(self.recaptures), 2)  # the switch to "good", then its restore
+        self.assertIn("illegal memory access", state["recent_errors"][-1]["error"])
 
     def test_pending_switch_is_cancelled_if_the_scheduler_never_drains(self):
         self.tuner.drain_steps = 10

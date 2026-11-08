@@ -27,6 +27,7 @@ class LiveTuner:
             "max_prefill_tokens": scheduler.max_prefill_tokens,
         }
         self.startup[VARIANT_KEY] = getattr(runner, "_livetune_variant_id", variants.STOCK)
+        self.gpu = _gpu_name()
         self.settings: dict[str, Any] = dict(self.startup)
         self.variant: variants.InstalledVariant | None = getattr(runner, "_livetune_variant", None)
         self.pending_variant: int | None = None
@@ -128,37 +129,34 @@ class LiveTuner:
         self.variant = variants.install(variants.resolve(variant_id), runner.model, ctx)
 
     def _switch_variant(self, variant_id: int) -> None:
-        runner = self.scheduler.tp_worker.model_runner
         previous = self.settings[VARIANT_KEY]
+        error = self._try_variant(variant_id)
+        if error is None:
+            return
+        # Fall back to the variant that was serving, then to stock. Every attempt ends in a
+        # collective vote, so all ranks take the same branch and end on the same code.
+        self.settings[VARIANT_KEY] = variants.STOCK
+        for fallback in dict.fromkeys([previous, variants.STOCK]):
+            if self._try_variant(fallback) is None:
+                self.settings[VARIANT_KEY] = fallback
+                break
+        raise error
+
+    def _try_variant(self, variant_id: int) -> Exception | None:
+        # Install and graph recapture succeed together on every rank, or the attempt fails.
         if self.variant is not None:
             variants.uninstall(self.variant)
             self.variant = None
         error: Exception | None = None
-        if variant_id != variants.STOCK:
-            try:
+        try:
+            if variant_id != variants.STOCK:
                 self._install(variant_id)
-            except Exception as exc:
-                error = exc
-        if not self._all_ranks_agree(error is None):
-            if self.variant is not None:
-                variants.uninstall(self.variant)
-                self.variant = None
-            error = error or RuntimeError("variant failed on another tensor-parallel rank")
-            # Fall back to the variant that was serving; stock only if it cannot come back on every rank.
-            restored_ok = True
-            if previous != variants.STOCK:
-                try:
-                    self._install(previous)
-                except Exception:
-                    restored_ok = False
-                if not self._all_ranks_agree(restored_ok) and self.variant is not None:
-                    variants.uninstall(self.variant)
-                    self.variant = None
-            self.settings[VARIANT_KEY] = previous if self.variant is not None or previous == variants.STOCK else variants.STOCK
-        # Graphs must always match the code now installed, stock or variant.
-        self._recapture(runner)
-        if error is not None:
-            raise error
+            self._recapture(self.scheduler.tp_worker.model_runner)
+        except Exception as exc:
+            error = exc
+        if self._all_ranks_agree(error is None):
+            return None
+        return error or RuntimeError("variant switch failed on another tensor-parallel rank")
 
     def _all_ranks_agree(self, ok: bool) -> bool:
         group = getattr(self.scheduler, "tp_cpu_group", None)
@@ -186,11 +184,20 @@ class LiveTuner:
             "settings": dict(self.settings),
             "startup": dict(self.startup),
             "page_size": self.page_size,
+            "gpu": self.gpu,
             "variant": {"name": self.variant.source.name, "sha256": self.variant.source.sha256} if self.variant else None,
             "pending_variant": self.pending_variant,
             "recent_changes": self.changes[-10:],
             "recent_errors": self.errors[-5:],
         }
+
+
+def _gpu_name() -> str | None:
+    try:
+        import torch
+    except ImportError:
+        return None
+    return torch.cuda.get_device_name() if torch.cuda.is_available() else None
 
 
 def _tuner(controller: Any) -> LiveTuner:

@@ -34,7 +34,7 @@ In production, a variant is chosen at startup with `LIVETUNE_STARTUP_VARIANT=<id
 
 - **In-flight batches.** Recapturing while a batch is still in flight under the overlap scheduler corrupted that batch. The plugin therefore defers a switch until the scheduler is idle and pauses admission meanwhile; if the scheduler doesn't drain within `LIVETUNE_DRAIN_STEPS`, the switch is cancelled.
 - **Broken graphs.** Even a switch made while idle produced decode graphs that hit an illegal memory access on DeepSeek V4.1 Flash. SGLang's own recapture paths first drop attention-backend graph state, and a plain `init_decode_cuda_graph()` re-call does not.
-- **Agreement.** Ranks all-reduce install success, so either all of them switch or none does. Data-parallel servers refuse live switching, because their schedulers drain independently.
+- **Agreement.** Ranks all-reduce the success of install plus graph recapture, so either all of them switch or none does. A failed switch restores the variant that was serving, or stock if that fails too. Data-parallel servers refuse live switching, because their schedulers drain independently.
 
 Keep live switching off until a recapture path is qualified for the model's attention backend. A recapture also pauses decoding for about 27 s on DeepSeek V4.1 Flash with 12 graph sizes.
 
@@ -57,14 +57,14 @@ A policy is an SLO plus an ordered list of rules. Each rule is a box in (demand,
 }
 ```
 
-Each policy records the scope it was tuned on: model, revision, parallel layout, KV dtype, SGLang version, GPU product and startup settings. `control` and `replay` refuse a policy whose scope differs from the live server unless given `--allow-scope-mismatch`. `livetune tune` writes policies from measurements. Each rule records the measured throughput, per-user speed and time to first token behind it.
+Each policy records the scope it was tuned on: model, revision, parallel layout, KV dtype, SGLang version, the GPU product the scheduler reports and startup settings. `control` and `replay` refuse a policy whose scope differs from the live server unless given `--allow-scope-mismatch`. `livetune tune` writes policies from measurements. Each rule records the measured throughput, per-user speed and time to first token behind it.
 
 ## Controller safety
 
 - **Hysteresis:** a new rule must win `dwell` consecutive windows (default 2 × 5 s), and changes are at least `cooldown_s` apart (default 20 s).
 - **Box edges:** a new rule must still be selected when the observed shape is ±15% larger or smaller, so a shape sitting on a boundary keeps the current rule. Without this, a cap flapped between 24 and 64 and cut throughput by 40% in a traffic-shift test.
 - **Demand estimate:** closed-loop clients finish in waves, so the running-plus-queued gauge read at a scrape instant swings between near zero and the full load. The controller takes a new peak at once and decays the estimate by 0.8 per window. Smoothing alone let the shape wander across boxes, and the controller stayed on a light-chat rule through a 56-user overload.
-- **Probation and rollback:** after a change the rule is on probation. If the SLO held before the change and fails in most probation windows, the controller restores the previous rule and penalises the failed one for 10 minutes.
+- **Probation and rollback:** after a change the rule is on probation for 45 s, and no other change is made until it is judged. If the SLO held before the change and fails in most probation windows, the controller restores the previous rule and penalises the failed one for 10 minutes.
 - **Readback:** every change is checked against `/server_info`. If an update fails, the controller forgets what it believes the server runs and re-applies a full rule at the next window.
 
 ## Commands

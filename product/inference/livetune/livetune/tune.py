@@ -108,6 +108,10 @@ def _edges(levels: Sequence[float]) -> list[float]:
     return [(a + b) / 2 for a, b in zip(ordered, ordered[1:])] + [ordered[-1] * EVIDENCE_REACH]
 
 
+def _profile_of(name: str, phase: Mapping[str, Any]) -> Profile:
+    return Profile(name, phase["users"], phase["prompt_tokens"], phase["output_tokens"], phase.get("shared_prefix", 0.0))
+
+
 def best_from_trials(trials: Sequence[Mapping[str, Any]], slo: Slo, start: Mapping[str, Any], min_gain: float = 0.02) -> list[dict[str, Any]]:
     # Repeats merge by median; a non-startup setting needs two measurements to be chosen.
     by_profile: dict[str, list[Mapping[str, Any]]] = {}
@@ -115,8 +119,10 @@ def best_from_trials(trials: Sequence[Mapping[str, Any]], slo: Slo, start: Mappi
         by_profile.setdefault(trial["profile"], []).append(trial)
     results = []
     for name, rows in by_profile.items():
-        phase = rows[0]["summary"]["phase"]
-        profile = Profile(name, phase["users"], phase["prompt_tokens"], phase["output_tokens"], phase.get("shared_prefix", 0.0))
+        profiles = {_profile_of(name, row["summary"]["phase"]) for row in rows}
+        if len(profiles) != 1:
+            raise ValueError(f"profile {name!r} was measured with different workloads; give each workload its own name")
+        (profile,) = profiles
         groups: dict[str, list[Mapping[str, Any]]] = {}
         for row in rows:
             settings = dict(row["settings"])

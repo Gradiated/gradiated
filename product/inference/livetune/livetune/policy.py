@@ -43,8 +43,9 @@ class Rule:
     workload: dict[str, tuple[float, float]] = field(default_factory=dict)
 
     def contains(self, shape: Shape) -> bool:
-        if shape.demand > self.max_demand or shape.prompt_tokens > self.max_prompt_tokens:
-            return False
+        return shape.demand <= self.max_demand and shape.prompt_tokens <= self.max_prompt_tokens
+
+    def fits_workload(self, shape: Shape) -> bool:
         for key, (low, high) in self.workload.items():
             value = getattr(shape, key)
             if value is not None and not low <= value <= high:
@@ -69,9 +70,11 @@ class Policy:
             raise ValueError("rule names must be unique")
 
     def select(self, shape: Shape) -> Rule:
+        # The first box containing the shape decides. Boxes carry only upper bounds, so a rule whose
+        # workload does not fit hands over to the catch-all, never to a later box measured elsewhere.
         for rule in self.rules:
             if rule.contains(shape):
-                return rule
+                return rule if rule.fits_workload(shape) else self.rules[-1]
         return self.rules[-1]
 
     def rule(self, name: str) -> Rule:

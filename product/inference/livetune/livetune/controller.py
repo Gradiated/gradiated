@@ -182,7 +182,8 @@ class Controller:
         self.current, self._last_change = rule.name, now
         self._candidate, self._candidate_windows, self._deferred_windows = None, 0, 0
         self.applied.update(settings)
-        if probation and self.judge_changes and previous is not None:
+        # Only a change that sent something can be judged; a rule with the same settings is not one.
+        if probation and self.judge_changes and previous is not None and diff:
             self._probation = _Probation(rule.name, previous, now, slo_before)
         self._recent_slo = []
         return Action(rule.name, diff, reason)

@@ -158,12 +158,26 @@ class PolicyTest(unittest.TestCase):
         self.assertEqual(policy.select(Shape(40, 24000, 0.8, 4000)).name, "startup")
         self.assertEqual(Policy.from_json(policy.to_json()), policy)
 
+    def test_a_workload_miss_falls_back_to_the_catch_all_not_a_later_box(self):
+        short = Rule("u2-short", 2.5, math.inf, {"max_running_requests": 2}, workload={"output_tokens": (50, 200)})
+        long = Rule("u3-long", 3.5, math.inf, {"max_running_requests": 3}, workload={"output_tokens": (500, 2000)})
+        policy = Policy(Slo(50, 5), (short, long, Rule("startup", math.inf, math.inf, {"max_running_requests": 64})))
+        self.assertEqual(policy.select(Shape(2, 1000, None, 1000)).name, "startup")
+        self.assertEqual(policy.select(Shape(3, 1000, None, 1000)).name, "u3-long")
+
 
     def test_select_first_matching_box_and_json_roundtrip(self):
         policy = _policy()
         self.assertEqual(policy.select(Shape(2, 100)).name, "light")
         self.assertEqual(policy.select(Shape(20, 100)).name, "busy")
         self.assertEqual(Policy.from_json(policy.to_json()), policy)
+
+    def test_a_workload_miss_falls_back_to_the_catch_all_not_a_later_box(self):
+        short = Rule("u2-short", 2.5, math.inf, {"max_running_requests": 2}, workload={"output_tokens": (50, 200)})
+        long = Rule("u3-long", 3.5, math.inf, {"max_running_requests": 3}, workload={"output_tokens": (500, 2000)})
+        policy = Policy(Slo(50, 5), (short, long, Rule("startup", math.inf, math.inf, {"max_running_requests": 64})))
+        self.assertEqual(policy.select(Shape(2, 1000, None, 1000)).name, "startup")
+        self.assertEqual(policy.select(Shape(3, 1000, None, 1000)).name, "u3-long")
 
     def test_rejects_policies_without_catch_all_or_duplicate_names(self):
         with self.assertRaises(ValueError):
@@ -235,6 +249,14 @@ class ControllerTest(unittest.TestCase):
         ctl.step(_window(10, tps=20), 20)
         rollback = ctl.step(_window(10, tps=20), 45)
         self.assertEqual(rollback.settings, {"max_running_requests": 8, "chunked_prefill_size": 8192})
+
+    def test_a_change_that_sends_nothing_starts_no_probation(self):
+        policy = Policy(Slo(50, 5), (Rule("a", 4, math.inf, {"max_running_requests": 64}), Rule("b", 12, math.inf, {"max_running_requests": 64}),
+                                     Rule("c", math.inf, math.inf, {"max_running_requests": 16})))
+        ctl = control.Controller(policy, dwell=1, cooldown_s=0, probation_s=45, smoothing=1.0, demand_decay=0)
+        ctl.step(_window(2), 0)
+        self.assertEqual(ctl.step(_window(8), 5).settings, {})
+        self.assertEqual(ctl.step(_window(30), 10).rule, "c")  # not held behind a probation of "b"
 
     def test_no_rollback_if_slo_was_already_failing(self):
         ctl = control.Controller(_policy(), dwell=1, cooldown_s=0, probation_s=10, smoothing=1.0)

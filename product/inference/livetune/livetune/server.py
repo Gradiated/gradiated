@@ -46,11 +46,12 @@ class Server:
     def livetune_state(self) -> dict[str, Any]:
         return self.livetune_states()[0]
 
-    def apply(self, settings: dict[str, Any], timeout: float = 300.0) -> None:
+    def apply(self, settings: dict[str, Any], timeout: float = 300.0) -> dict[str, Any]:
+        """Send the settings that differ from any scheduler's live state; return what was sent."""
         live = self.livetune_states()
         settings = {k: v for k, v in settings.items() if any(state.get("settings", {}).get(k) != v for state in live)}
         if not settings:
-            return
+            return settings
         reply = json.loads(self._request("/set_internal_state", {"server_args": settings}, timeout=timeout))
         # One boolean per data-parallel scheduler.
         updated = reply if isinstance(reply, list) else [reply.get("updated", False)]
@@ -66,7 +67,7 @@ class Server:
             }
             mismatched = {index: diff for index, diff in mismatched.items() if diff}
             if not mismatched:
-                return
+                return settings
             pending = any(states[index].get("pending_variant") is not None for index in mismatched)
             if not pending or time.monotonic() >= deadline:
                 errors = [states[index].get("recent_errors") for index in mismatched]

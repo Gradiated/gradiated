@@ -57,7 +57,7 @@ A policy is an SLO plus an ordered list of rules. Each rule is a box in (demand,
 }
 ```
 
-Each policy records the scope it was tuned on: model, revision, parallel layout, KV dtype, SGLang version, the GPU product the scheduler reports and startup settings. `control` and `replay` refuse a policy whose scope differs from the live server unless given `--allow-scope-mismatch`. `livetune tune` writes policies from measurements. Each rule records the measured throughput, per-user speed and time to first token behind it.
+Each policy records the scope it was tuned on: model, revision, parallel layout, KV dtype, SGLang version, the GPU product the scheduler reports and startup settings. `control` and `replay` refuse a policy whose scope differs from the live server unless given `--allow-scope-mismatch`. `livetune tune` writes policies from measurements. Each rule records the measured throughput, per-user speed and time to first token behind it. A setting a rule omits takes its startup value.
 
 ## Controller safety
 
@@ -66,6 +66,7 @@ Each policy records the scope it was tuned on: model, revision, parallel layout,
 - **Demand estimate:** closed-loop clients finish in waves, so the running-plus-queued gauge read at a scrape instant swings between near zero and the full load. The controller takes a new peak at once and decays the estimate by 0.8 per window. Smoothing alone let the shape wander across boxes, and the controller stayed on a light-chat rule through a 56-user overload.
 - **Probation and rollback:** after a change the rule is on probation for 45 s, and no other change is made until it is judged. If the SLO held before the change and fails in most probation windows, the controller restores the previous rule and penalises the failed one for 10 minutes.
 - **Readback:** every change is checked against `/server_info`. If an update fails, the controller forgets what it believes the server runs and re-applies a full rule at the next window.
+- **Reconciliation:** every window re-asserts the current rule's full settings, and only values that differ from the live state are sent. A restarted server, which comes back on its startup settings, is back on the rule within one window.
 
 ## Commands
 

@@ -208,6 +208,16 @@ class ControllerTest(unittest.TestCase):
         rollback = ctl.step(_window(30, tps=20), 40)
         self.assertEqual((rollback.rule, rollback.reason), ("light", "rollback from mid"))
 
+    def test_rollback_restores_keys_the_previous_rule_left_at_startup(self):
+        policy = Policy(Slo(50, 5), (Rule("light", 4, math.inf, {"max_running_requests": 8}), Rule("busy", math.inf, math.inf, {"chunked_prefill_size": 2048})))
+        ctl = control.Controller(policy, dwell=1, cooldown_s=0, probation_s=30, smoothing=1.0, startup=dict(STARTUP))
+        self.assertEqual(ctl.step(_window(2), 0).settings, {**STARTUP, "max_running_requests": 8})
+        ctl.step(_window(2), 5)
+        self.assertEqual(ctl.step(_window(10), 10).settings, {"max_running_requests": 64, "chunked_prefill_size": 2048})
+        ctl.step(_window(10, tps=20), 20)
+        rollback = ctl.step(_window(10, tps=20), 45)
+        self.assertEqual(rollback.settings, {"max_running_requests": 8, "chunked_prefill_size": 8192})
+
     def test_no_rollback_if_slo_was_already_failing(self):
         ctl = control.Controller(_policy(), dwell=1, cooldown_s=0, probation_s=10, smoothing=1.0)
         ctl.step(_window(2, tps=20), 0)
@@ -253,6 +263,28 @@ class ControllerTest(unittest.TestCase):
                     stop=lambda: len(scraped) > 3, clock=lambda: 0.0, sleep=lambda s: None)
         self.assertEqual(len(calls), 3)  # each failure forgets state, so every window re-applies
         self.assertTrue(all("error" in e["action"] for e in events))
+
+    def test_run_loop_reasserts_the_rule_after_a_server_restart(self):
+        ctl = control.Controller(_policy(), smoothing=1.0)
+        live = {"max_running_requests": 64}
+        events, scraped = [], []
+
+        def apply(settings):
+            sent = {k: v for k, v in settings.items() if live.get(k) != v}
+            live.update(sent)
+            return sent
+
+        def scrape():
+            scraped.append(len(scraped))
+            if len(scraped) == 3:
+                live["max_running_requests"] = 64  # the server restarted on its startup settings
+            return scraped[-1]
+
+        control.run(ctl, scrape, apply, lambda a, b: _window(2), log=events.append,
+                    stop=lambda: len(scraped) > 3, clock=lambda: 0.0, sleep=lambda s: None)
+        self.assertEqual(events[0]["action"]["settings"], {"max_running_requests": 8})
+        self.assertEqual([e.get("reconciled") for e in events[1:]], [{"max_running_requests": 8}, None])
+        self.assertEqual(live["max_running_requests"], 8)
 
     def test_run_loop_survives_a_failed_scrape(self):
         ctl = control.Controller(_policy(), smoothing=1.0)
@@ -413,6 +445,46 @@ class LoadSummaryTest(unittest.TestCase):
         result.requests = [loadgen.RequestRecord(0.0, ttft=float(i), tokens=2, decode_tps=float(i)) for i in range(1, 11)]
         summary = result.summary()
         self.assertEqual((summary["ttft_p90"], summary["tps_per_user_p10"], summary["ttft_p50"]), (9.0, 1.0, 5.0))
+
+    def test_decode_rate_excludes_tokens_that_arrived_with_the_first_chunk(self):
+        import asyncio
+
+        clock = iter([0.0, 1.0, 2.0])
+        chunks = [{"meta_info": {"completion_tokens": n}} for n in (4, 6, 10)]
+
+        class Response:
+            status = 200
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *exc):
+                return False
+
+            @property
+            async def content(self):
+                for chunk in chunks:
+                    yield f"data: {json.dumps(chunk)}".encode()
+
+        session = types.SimpleNamespace(post=lambda url, json: Response())
+        record = loadgen.RequestRecord(0.0)
+        saved = loadgen.time.perf_counter
+        loadgen.time.perf_counter = lambda: next(clock)
+        try:
+            asyncio.run(loadgen._one(session, "http://x", [1], 10, record))
+        finally:
+            loadgen.time.perf_counter = saved
+        self.assertEqual((record.tokens, record.decode_tps), (10, 3.0))  # 6 tokens over 2 s, not 9
+        chunks[:] = [{"meta_info": {"completion_tokens": 10}}]
+        clock = iter([0.0])
+        single = loadgen.RequestRecord(0.0)
+        loadgen.time.perf_counter = lambda: next(clock)
+        try:
+            asyncio.run(loadgen._one(session, "http://x", [1], 10, single))
+        finally:
+            loadgen.time.perf_counter = saved
+        result = loadgen.PhaseResult(loadgen.Phase(1, 100, 10, 10.0), [single])
+        self.assertEqual((single.decode_tps, result.summary()["completed"], result.summary()["tps_per_user_p50"]), (None, 1, None))
 
     def test_tokens_streamed_before_an_error_still_count(self):
         result = loadgen.PhaseResult(loadgen.Phase(1, 100, 50, 10.0))

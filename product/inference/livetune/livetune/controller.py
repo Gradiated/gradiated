@@ -42,6 +42,8 @@ class Controller:
     variant_dwell: int = 6
     variant_cooldown_s: float = 600.0
     margin: float = 0.15
+    # Settings a rule omits fall back to these, so every rule, and every rollback, sets the same keys.
+    startup: dict[str, Any] = field(default_factory=dict)
     current: str | None = None
     applied: dict[str, Any] = field(default_factory=dict)
     shape: Shape | None = None
@@ -137,18 +139,23 @@ class Controller:
             return self._change(self.policy.rule(probation.previous), now, f"rollback from {probation.rule}", None, probation=False)
         return None
 
+    def _settings(self, rule: Rule) -> dict[str, Any]:
+        return {**self.startup, **rule.settings}
+
     def _switches_variant(self, rule: Rule) -> bool:
-        return VARIANT_KEY in rule.settings and rule.settings[VARIANT_KEY] != self.applied.get(VARIANT_KEY, STOCK)
+        settings = self._settings(rule)
+        return VARIANT_KEY in settings and settings[VARIANT_KEY] != self.applied.get(VARIANT_KEY, STOCK)
 
     def _change(self, rule: Rule, now: float, reason: str, verdict: bool | None, probation: bool = True) -> Action:
         if self._switches_variant(rule):
             self._last_variant_change = now
         previous = self.current
-        diff = {key: value for key, value in rule.settings.items() if self.applied.get(key, object()) != value}
+        settings = self._settings(rule)
+        diff = {key: value for key, value in settings.items() if self.applied.get(key, object()) != value}
         slo_before = all(self._recent_slo[-3:]) if self._recent_slo else bool(verdict)
         self.current, self._last_change = rule.name, now
         self._candidate, self._candidate_windows = None, 0
-        self.applied.update(rule.settings)
+        self.applied.update(settings)
         if probation and previous is not None:
             self._probation = _Probation(rule.name, previous, now, slo_before)
         self._recent_slo = []
@@ -158,7 +165,7 @@ class Controller:
 def run(
     controller: Controller,
     scrape: Callable[[], Any],
-    apply: Callable[[dict[str, Any]], None],
+    apply: Callable[[dict[str, Any]], dict[str, Any] | None],
     window_of: Callable[[Any, Any], Window],
     interval_s: float = 5.0,
     log: Callable[[dict[str, Any]], None] = lambda event: None,
@@ -197,13 +204,19 @@ def run(
         }
         if action is not None:
             event["action"] = {"rule": action.rule, "settings": action.settings, "reason": action.reason}
-            if action.settings:
-                started = clock()
-                try:
-                    apply(action.settings)
+        if controller.current is not None:
+            # Re-assert the whole rule every window: a restarted server comes back on its startup
+            # settings, and apply sends only what differs from the live state.
+            started = clock()
+            try:
+                sent = apply(dict(controller.applied))
+            except Exception as exc:
+                event.setdefault("action", {"rule": controller.current, "reason": "reconcile"})["error"] = f"{type(exc).__name__}: {exc}"
+                logger.exception("applying %s failed", controller.current)
+                controller.forget()
+            else:
+                if action is not None:
                     event["action"]["apply_s"] = round(clock() - started, 3)
-                except Exception as exc:
-                    event["action"]["error"] = f"{type(exc).__name__}: {exc}"
-                    logger.exception("applying %s failed", action.rule)
-                    controller.forget()
+                elif sent:
+                    event["reconciled"] = sent
         log(event)

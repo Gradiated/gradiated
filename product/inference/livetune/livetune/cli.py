@@ -67,7 +67,7 @@ def replay(args: argparse.Namespace, server: Server) -> None:
     failures: list[BaseException] = []
     thread = None
     if not args.static:
-        controller = control.Controller(policy)
+        controller = control.Controller(policy, startup=startup)
 
         def log(event: dict[str, Any]) -> None:
             event["wall"] = time.time()
@@ -206,7 +206,7 @@ def main(argv: list[str] | None = None) -> int:
         replay(args, server)
     elif args.command == "control":
         policy = load_policy(args.policy, server, args.allow_scope_mismatch)
-        controller = control.Controller(policy)
+        controller = control.Controller(policy, startup=server.livetune_state()["startup"])
         apply = server.apply if args.mode == "act" else (lambda settings: None)
         control.run(controller, server.scrape, apply, window, interval_s=args.interval, log=_appender(args.log))
     return 0

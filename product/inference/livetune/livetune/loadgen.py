@@ -36,9 +36,10 @@ class PhaseResult:
     requests: list[RequestRecord] = field(default_factory=list)
 
     def summary(self) -> dict[str, Any]:
-        done = [r for r in self.requests if r.error is None and r.decode_tps and not r.cut]
+        done = [r for r in self.requests if r.error is None and r.tokens and not r.cut]
         ttfts = sorted(r.ttft for r in done if r.ttft is not None)
-        rates = sorted(r.decode_tps for r in done)
+        # A response that arrived in one chunk completed, but has no measurable decode rate.
+        rates = sorted(r.decode_tps for r in done if r.decode_tps)
         tokens = sum(r.tokens for r in self.requests)
 
         def pct(values: list[float], q: float) -> float | None:
@@ -86,6 +87,7 @@ async def _one(session: Any, url: str, ids: list[int], output_tokens: int, recor
         "stream": True,
     }
     first = last = None
+    first_tokens = 0
     try:
         async with session.post(f"{url}/generate", json=body) as response:
             if response.status != 200:
@@ -105,14 +107,16 @@ async def _one(session: Any, url: str, ids: list[int], output_tokens: int, recor
                     if first is None:
                         first = now
                         record.ttft = now - record.start
+                        # Speculative decoding can deliver several tokens in the first chunk.
+                        first_tokens = tokens
                     last, record.tokens = now, tokens
     except asyncio.CancelledError:
         raise
     except Exception as exc:  # network errors are data, not crashes
         record.error = f"{type(exc).__name__}: {exc}"
     finally:
-        if first is not None and record.tokens > 1 and last > first:
-            record.decode_tps = (record.tokens - 1) / (last - first)
+        if first is not None and record.tokens > first_tokens and last > first:
+            record.decode_tps = (record.tokens - first_tokens) / (last - first)
 
 
 async def run_phase(url: str, phase: Phase, prompts: PromptSource, phase_index: int = 0) -> PhaseResult:

@@ -103,7 +103,8 @@ class PromptSource:
         return prefix + tail[: length - shared_len]
 
 
-async def _one(session: Any, url: str, ids: list[int], output_tokens: int, record: RequestRecord, temperature: float = 0.7, priority: int | None = None) -> None:
+async def _one(session: Any, url: str, ids: list[int], output_tokens: int, record: RequestRecord, temperature: float = 0.7,
+               priority: int | None = None, seed: int | None = None) -> None:
     body: dict[str, Any] = {
         "input_ids": ids,
         "sampling_params": {"max_new_tokens": output_tokens, "temperature": temperature, "ignore_eos": True},
@@ -111,6 +112,8 @@ async def _one(session: Any, url: str, ids: list[int], output_tokens: int, recor
     }
     if priority is not None:
         body["priority"] = priority  # recorded admission priority, so priority scheduling is replayed too
+    if seed is not None:
+        body["sampling_params"]["sampling_seed"] = seed
     first = last = None
     first_tokens = 0
     try:
@@ -200,14 +203,15 @@ async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource 
     async with aiohttp.ClientSession(timeout=timeout, connector=aiohttp.TCPConnector(limit=0)) as session:
         started = time.perf_counter()
 
-        async def send(arrival: Any, ids: list[int]) -> None:
+        async def send(arrival: Any, ids: list[int], seed: int) -> None:
             await asyncio.sleep(max(arrival.at - (time.perf_counter() - started), 0.0))
             record = RequestRecord(time.perf_counter())
             result.requests.append(record)
             temperature = 0.7 if arrival.temperature is None else arrival.temperature
-            await _one(session, url, ids, arrival.output_tokens, record, temperature, getattr(arrival, "priority", None))
+            # A fixed seed per arrival, so sampled requests generate the same tokens in every replay.
+            await _one(session, url, ids, arrival.output_tokens, record, temperature, getattr(arrival, "priority", None), seed)
 
-        await asyncio.gather(*(send(a, ids) for a, ids in zip(arrivals, ids_for)))
+        await asyncio.gather(*(send(a, ids, index) for index, (a, ids) in enumerate(zip(arrivals, ids_for))))
     # Every request runs to completion, so the phase lasts until the last one finishes.
     result.phase = dataclasses.replace(phase, seconds=time.perf_counter() - started)
     return result

@@ -202,9 +202,12 @@ def variant_eval(args: argparse.Namespace, server: Server) -> dict[str, Any]:
     variant_id = variants.register(args.variants_dir, name, code)
     source = loadgen.PromptSource(_corpus(args.corpus), seed=args.seed)
     prompts = [source.family_prompt(args.prompt_tokens, 0, None) for _ in range(args.prompts)]
-    stock_id = server.livetune_state()["settings"].get(VARIANT_KEY, 0)
-    report: dict[str, Any] = {"variant": name, "id": variant_id, "stock_id": stock_id}
+    # Baselines are always stock, whatever the canary was running; that is restored at the end.
+    incumbent = server.livetune_state()["settings"].get(VARIANT_KEY, variants.STOCK)
+    stock_id = variants.STOCK
+    report: dict[str, Any] = {"variant": name, "id": variant_id, "incumbent": incumbent}
     try:
+        server.apply({VARIANT_KEY: stock_id})
         stock, stock_again = server.greedy(prompts, args.tokens), server.greedy(prompts, args.tokens)
         started = time.monotonic()
         server.apply({VARIANT_KEY: variant_id})
@@ -226,7 +229,7 @@ def variant_eval(args: argparse.Namespace, server: Server) -> dict[str, Any]:
                 report["faster"] = tune._wins(merged["variant"], merged["stock"], Slo(args.slo_tps, args.slo_ttft), 0.02)
         report["decision"] = "keep" if verdict.passed and report.get("faster", True) else "reject"
     finally:
-        server.apply({VARIANT_KEY: stock_id})
+        server.apply({VARIANT_KEY: incumbent})
     return report
 
 

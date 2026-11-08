@@ -347,7 +347,8 @@ def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
                 shared_tokens=min(lengths[found[0]], r.prompt_tokens) if found else 0,
                 family=found[0] if found else None,
                 temperature=r.temperature,
-                seconds=sum(x or 0.0 for x in (r.ttft_s, r.decode_s)) / speed,
+                # Only arrivals are compressed: requests still take their recorded time on the server.
+                seconds=sum(x or 0.0 for x in (r.ttft_s, r.decode_s)),
                 cached_tokens=r.cached_tokens,
                 priority=r.priority,
                 ancestors=ancestors,

@@ -1441,7 +1441,7 @@ class VariantEvalTest(unittest.TestCase):
             calls["greedy"] += 1
             return good if calls["greedy"] <= 2 else bad  # two stock runs, then the variant
 
-        server = types.SimpleNamespace(url="http://x", livetune_state=lambda: {"settings": {"forward_variant": 0}},
+        server = types.SimpleNamespace(url="http://x", livetune_state=lambda: {"settings": {"forward_variant": 2}},
                                        greedy=greedy, apply=lambda s: applied.append(dict(s)), flush_cache=lambda: None)
         with tempfile.TemporaryDirectory() as tmp:
             Path(tmp, "v.py").write_text("def install(model, patch, ctx):\n    pass\n")
@@ -1452,7 +1452,8 @@ class VariantEvalTest(unittest.TestCase):
             report = cli.variant_eval(args, server)
             self.assertTrue(report["variant"].startswith("kernel-"))
             self.assertEqual((report["decision"], report["gate"]["passed"]), ("reject", False))
-            self.assertEqual(applied[-1], {"forward_variant": 0})  # always back to stock
+            self.assertEqual(applied[0], {"forward_variant": 0})  # baselines on real stock, not the incumbent 2
+            self.assertEqual(applied[-1], {"forward_variant": 2})  # and the incumbent comes back afterwards
             self.assertEqual(variants.resolve(report["id"], str(Path(tmp, "variants"))).name, report["variant"])
 
 
@@ -1578,3 +1579,12 @@ class NestedFamilyAndConcurrencyTest(unittest.TestCase):
         burst = [trace.Arrival(at=0.0, prompt_tokens=10, output_tokens=1, shared_tokens=0, family=None, temperature=None, seconds=0.1) for _ in range(100)]
         quiet = [trace.Arrival(at=1.0, prompt_tokens=10, output_tokens=1, shared_tokens=0, family=None, temperature=None, seconds=99.0)]
         self.assertEqual(trace.concurrency(burst + quiet), 1)
+
+
+class ReplayDeterminismTest(unittest.TestCase):
+    def test_compression_shortens_arrival_gaps_but_not_service_times(self):
+        from livetune import trace
+
+        schedule = trace.arrivals([_record(100.0, ttft_s=0.5, decode_s=9.5), _record(120.0, ttft_s=0.5, decode_s=9.5)], speed=4.0)
+        self.assertEqual([a.at for a in schedule], [0.0, 5.0])
+        self.assertEqual({a.seconds for a in schedule}, {10.0})

@@ -411,7 +411,14 @@ def _warmup(r: Record, since_wall: float) -> Record:
     moved = {"server_s": r.t - since_wall, "queue_s": lookup, "lookup_s": lookup, "retractions": 0}
     if prefilled > since_wall:
         # Its prefill still finishes when production's did, so later hits it explains stay explained.
-        return replace(r, ttft_s=prefilled - since_wall, **moved)
+        # A prefill already under way had computed part of its prompt: those chunks count as cached,
+        # estimated from the share of its prefill time gone, so replay does not redo them.
+        started_prefill = r.started + _first_lookup(r)
+        cached = r.cached_tokens
+        if started_prefill < since_wall:
+            done = (since_wall - started_prefill) / max(prefilled - started_prefill, 1e-9)
+            cached = min(r.cached_tokens + round(done * (r.prompt_tokens - r.cached_tokens)), r.prompt_tokens - 1)
+        return replace(r, cached_tokens=max(cached, r.cached_tokens), ttft_s=prefilled - since_wall, **moved)
     left = max(1, min(r.output_tokens, round(r.output_tokens * (r.t - since_wall) / max(r.t - prefilled, 1e-9))))
     context = r.prompt_tokens + r.output_tokens - left
     budget = max(r.max_new_tokens - (r.output_tokens - left), left) if r.max_new_tokens else None

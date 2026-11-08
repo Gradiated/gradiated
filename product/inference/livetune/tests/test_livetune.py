@@ -2239,13 +2239,24 @@ class InFlightWarmupTest(unittest.TestCase):
         self.assertEqual(trace.observed_cache_hit(schedule), 0.0)
         self.assertEqual(tune.trace_profile(schedule)["prompt_tokens"], 3000)
 
+    def test_a_prefill_under_way_at_the_boundary_keeps_the_chunks_it_had_done(self):
+        from livetune import trace
+
+        # Prefill of 10,000 tokens (1,000 cached) ran from 95 to 105; the window opens at 100.
+        record = dataclasses_replace(_record(110.0, prompt=10000, cached=1000, output=50), queue_s=0.0, lookup_s=0.0, ttft_s=10.0,
+                                     decode_s=5.0, server_s=15.0)
+        warm, = trace.arrivals([record], measured_from=100.0)
+        self.assertEqual((warm.prompt_tokens, warm.cached_tokens, warm.output_tokens), (10000, 5500, 50))
+        self.assertAlmostEqual(warm.prefilled_s, 5.0)
+
     def test_a_boundary_request_aborted_before_its_first_token_replays_its_prefill(self):
         from livetune import trace
 
         aborted = dataclasses_replace(_record(108.0, output=0), finish="abort", launched=True, queue_s=0.0, ttft_s=None, decode_s=None,
                                       server_s=12.0)
         warm, = trace.arrivals([aborted], measured_from=100.0)
-        self.assertEqual((warm.warmup, warm.prompt_tokens, warm.cached_tokens, warm.output_tokens), (True, 2000, 0, 1))
+        # Prefilling from 96 until it aborted at 108: a third of its prompt was done at 100.
+        self.assertEqual((warm.warmup, warm.prompt_tokens, warm.cached_tokens, warm.output_tokens), (True, 2000, 667, 1))
 
     def test_a_warmup_finishing_last_does_not_stretch_the_measured_time(self):
         import asyncio

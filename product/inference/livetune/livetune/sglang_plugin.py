@@ -36,6 +36,7 @@ class LiveTuner:
         # The running-batch budget; it may have been set explicitly rather than derived from the cap.
         self.pp_micro_batch_startup = get_parallel().pp_max_micro_batch_size
         self.gpu = _gpu_name()
+        self.runtime = {"sglang": _source_digest("sglang"), "livetune": _source_digest("livetune")}
         self.settings: dict[str, Any] = dict(self.startup)
         self.variant: variants.InstalledVariant | None = getattr(runner, "_livetune_variant", None)
         # The code installed at startup, by hash: re-registering a name later changes the catalog, not this.
@@ -212,6 +213,7 @@ class LiveTuner:
             "pp_micro_batch_startup": self.pp_micro_batch_startup,
             "live_variants": _live_variants(),
             "startup_variant": self.startup_variant,
+            "runtime": self.runtime,
             "gpu": self.gpu,
             "variant": {"name": self.variant.source.name, "sha256": self.variant.source.sha256} if self.variant else None,
             "variants": catalog,
@@ -219,6 +221,25 @@ class LiveTuner:
             "recent_changes": self.changes[-10:],
             "recent_errors": self.errors[-5:],
         }
+
+
+def _source_digest(package: str) -> str | None:
+    # Every .py file of the installed package, overlays included: a rebuilt runtime is a new scope.
+    import hashlib
+    import importlib
+    from pathlib import Path
+
+    try:
+        paths = list(getattr(importlib.import_module(package), "__path__", []))
+    except ImportError:
+        return None
+    if not paths:
+        return None
+    root = Path(paths[0])
+    digest = hashlib.sha256()
+    for path in sorted(root.rglob("*.py")):
+        digest.update(str(path.relative_to(root)).encode() + b"\0" + path.read_bytes())
+    return digest.hexdigest()
 
 
 def _live_variants() -> bool:

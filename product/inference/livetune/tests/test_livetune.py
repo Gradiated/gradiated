@@ -611,7 +611,7 @@ class LoadSummaryTest(unittest.TestCase):
         summary = result.summary()
         self.assertEqual((summary["ttft_p90"], summary["tps_per_user_p10"], summary["ttft_p50"]), (9.0, 1.0, 5.0))
 
-    def test_decode_rate_excludes_tokens_that_arrived_with_the_first_chunk(self):
+    def test_decode_rate_matches_sglangs_per_request_formula(self):
         import asyncio
 
         clock = iter([0.0, 1.0, 2.0])
@@ -639,7 +639,7 @@ class LoadSummaryTest(unittest.TestCase):
             asyncio.run(loadgen._one(session, "http://x", [1], 10, record))
         finally:
             loadgen.time.perf_counter = saved
-        self.assertEqual((record.tokens, record.decode_tps), (10, 3.0))  # 6 tokens over 2 s, not 9
+        self.assertEqual((record.tokens, record.decode_tps), (10, 4.5))  # (10 - 1) / 2 s, as SGLang computes it
         chunks[:] = [{"meta_info": {"completion_tokens": 10}}]
         clock = iter([0.0])
         single = loadgen.RequestRecord(0.0)
@@ -834,6 +834,12 @@ class PluginTest(unittest.TestCase):
         self.tuner.apply("forward_variant", 3)
         with self.assertRaises(self.plugin.NoUsableVariant):
             self.tuner.on_idle()
+
+    def test_runtime_digest_covers_the_installed_package_sources(self):
+        digest = self.plugin._source_digest("livetune")
+        self.assertRegex(digest, "^[0-9a-f]{64}$")
+        self.assertEqual(self.tuner.readback()["runtime"]["livetune"], digest)
+        self.assertIsNone(self.plugin._source_digest("no_such_package_livetune"))
 
     def test_readback_reports_whether_live_variants_are_enabled(self):
         self.assertTrue(self.tuner.readback()["live_variants"])

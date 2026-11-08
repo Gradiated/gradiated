@@ -87,7 +87,6 @@ async def _one(session: Any, url: str, ids: list[int], output_tokens: int, recor
         "stream": True,
     }
     first = last = None
-    first_tokens = 0
     try:
         async with session.post(f"{url}/generate", json=body) as response:
             if response.status != 200:
@@ -107,16 +106,16 @@ async def _one(session: Any, url: str, ids: list[int], output_tokens: int, recor
                     if first is None:
                         first = now
                         record.ttft = now - record.start
-                        # Speculative decoding can deliver several tokens in the first chunk.
-                        first_tokens = tokens
                     last, record.tokens = now, tokens
     except asyncio.CancelledError:
         raise
     except Exception as exc:  # network errors are data, not crashes
         record.error = f"{type(exc).__name__}: {exc}"
     finally:
-        if first is not None and record.tokens > first_tokens and last > first:
-            record.decode_tps = (record.tokens - first_tokens) / (last - first)
+        # SGLang's per-request histogram uses the same formula, so tuning and live control agree,
+        # though speculative decoding's multi-token first chunk makes it read slightly high.
+        if first is not None and record.tokens > 1 and last > first:
+            record.decode_tps = (record.tokens - 1) / (last - first)
 
 
 async def run_phase(url: str, phase: Phase, prompts: PromptSource, phase_index: int = 0) -> PhaseResult:

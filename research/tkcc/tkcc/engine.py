@@ -305,6 +305,8 @@ class Engine:
                 t = time.perf_counter()
                 reload = self.llm.collective_rpc("tkcc_hot_reload", args=(job.id, job.source))
                 result["hot_reload_s"] = time.perf_counter() - t
+                # Stock KV blocks must not stand in for the candidate's own prefill, and vice versa.
+                self.llm.reset_prefix_cache()
                 failures = [r for r in reload if not r.get("ok")]
                 installed = len(failures) < len(reload)
                 result["install"] = {
@@ -387,6 +389,7 @@ class Engine:
         t = time.perf_counter()
         try:
             self.llm.collective_rpc("tkcc_teardown")
+            self.llm.reset_prefix_cache()
         except Exception as exc:
             # A candidate that cannot be removed would be measured as the next baseline.
             result["teardown_error"] = f"{type(exc).__name__}: {exc}"
@@ -410,6 +413,7 @@ class Engine:
         failures = [r for r in reload if not r.get("ok")]
         if any(f.get("teardown_error") for f in failures):
             self._schedule_restart()
+        self.llm.reset_prefix_cache()
         if failures:
             self._restart_if_weights_changed()
             if len(failures) < len(reload):
@@ -432,6 +436,7 @@ class Engine:
     def _teardown_or_restart(self) -> None:
         try:
             self.llm.collective_rpc("tkcc_teardown")
+            self.llm.reset_prefix_cache()
         except Exception:
             self._schedule_restart()
             raise
@@ -486,8 +491,10 @@ class Engine:
             raise ValueError("profiling is disabled on the slow tier")
         try:
             with self.gpu():
+                self.utility_started = time.perf_counter()
                 return self._profile()
         finally:
+            self.utility_started = 0.0
             self._schedule_restart()
 
     def watchdog(self) -> None:

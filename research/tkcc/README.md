@@ -82,6 +82,7 @@ Neither ranking was validated by measuring alternative layouts. The eager NCCL c
 - **Weak fast tier.** Twelve layers produce nonsense text, so the fast-tier gate only catches crashes and gross errors. At concurrency 1, the 12-layer and 40-layer tiers decode at the same speed because decode is host-bound there.
 - **Gate sensitivity.** The stock engine's greedy outputs agree with themselves on only 25–60% of 8-token prefixes. The gate caught a 10% final-norm scaling but not a 3% routed-expert scaling, so it cannot certify subtle numeric errors.
 - **Graphs.** Piecewise (prefill) CUDA-graph recapture hit a PyTorch allocator assertion, so both tiers ran `FULL_DECODE_ONLY`.
+- **Prefix cache.** The prefix cache is reset whenever a candidate is installed or removed, so each candidate's correctness check uses its own prefill. The published runs did not reset it there, so their gate exercised the candidates' decode path on stock-prefilled KV.
 - **Process hygiene.** In-process profiling (CUPTI) permanently slowed the engine, which then restarted after profiled jobs. Watchdog exits orphaned GPU workers until exits killed all descendants.
 - **Budget.** The agents had about 3.5 hours, not 24.
 

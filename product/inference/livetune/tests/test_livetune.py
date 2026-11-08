@@ -353,6 +353,12 @@ class TuneTest(unittest.TestCase):
         single_chunk = {"completed": 5, "errors": 0, "output_tps": 900, "tps_per_user_p50": None, "ttft_p90": 1}
         self.assertEqual(tune.score(single_chunk, self.slo), (0, -math.inf))
 
+    def test_merged_repeats_take_the_worse_middle_value(self):
+        runs = [{"output_tps": 100, "tps_per_user_p50": 60, "ttft_p90": 1.0}, {"output_tps": 180, "tps_per_user_p50": 90, "ttft_p90": 3.0}]
+        merged = tune.merged(runs)
+        self.assertEqual((merged["output_tps"], merged["tps_per_user_p50"], merged["ttft_p90"]), (100, 60, 3.0))
+        self.assertEqual(tune.merged([*runs, {"output_tps": 150, "tps_per_user_p50": 70, "ttft_p90": 2.0}])["output_tps"], 150)
+
     def test_coordinate_search_keeps_real_gains_only(self):
         def measure(profile, settings):
             tps = {8: 100, 16: 150, 32: 151}[settings["max_running_requests"]]
@@ -585,7 +591,7 @@ class PluginTest(unittest.TestCase):
         from livetune import sglang_plugin
 
         self.plugin = sglang_plugin
-        parallel = types.SimpleNamespace(pp_size=1, tp_rank=0, tp_size=4, dp_size=1)
+        parallel = types.SimpleNamespace(pp_size=1, tp_rank=0, tp_size=4, dp_size=1, pp_max_micro_batch_size=48)
         self.parallel = parallel
         runtime = types.ModuleType("sglang.srt.runtime_context")
         runtime.get_parallel = lambda: parallel
@@ -615,6 +621,11 @@ class PluginTest(unittest.TestCase):
         state = self.tuner.readback()
         self.assertEqual(state["settings"]["max_running_requests"], 16)
         self.assertEqual(state["startup"]["chunked_prefill_size"], 8192)
+
+    def test_startup_cap_restores_an_explicit_micro_batch_budget(self):
+        self.assertEqual(self.tuner.apply("max_running_requests", 16), {"pp_max_micro_batch_size": 16})
+        self.assertEqual(self.tuner.apply("max_running_requests", 64), {"pp_max_micro_batch_size": 48})
+        self.assertEqual(self.tuner.readback()["pp_micro_batch_startup"], 48)
 
     def test_validate_bounds_by_startup_not_current_value(self):
         self.tuner.apply("chunked_prefill_size", 2048)

@@ -27,6 +27,10 @@ class LiveTuner:
             "max_prefill_tokens": scheduler.max_prefill_tokens,
         }
         self.startup[VARIANT_KEY] = getattr(runner, "_livetune_variant_id", variants.STOCK)
+        from sglang.srt.runtime_context import get_parallel
+
+        # The running-batch budget; it may have been set explicitly rather than derived from the cap.
+        self.pp_micro_batch_startup = get_parallel().pp_max_micro_batch_size
         self.gpu = _gpu_name()
         self.settings: dict[str, Any] = dict(self.startup)
         self.variant: variants.InstalledVariant | None = getattr(runner, "_livetune_variant", None)
@@ -77,7 +81,9 @@ class LiveTuner:
             from sglang.srt.runtime_context import get_parallel
 
             # The running-batch budget is pp_max_micro_batch_size; buffers stay at startup size.
-            overrides = {"pp_max_micro_batch_size": max(value // get_parallel().pp_size, 1)}
+            # The startup cap restores the startup budget exactly, explicit or derived.
+            budget = self.pp_micro_batch_startup if value == self.startup[key] else max(value // get_parallel().pp_size, 1)
+            overrides = {"pp_max_micro_batch_size": budget}
         elif key == "chunked_prefill_size":
             self.scheduler.chunked_prefill_size = value
             overrides = {key: value}
@@ -188,6 +194,7 @@ class LiveTuner:
             "settings": dict(self.settings),
             "startup": dict(self.startup),
             "page_size": self.page_size,
+            "pp_micro_batch_startup": self.pp_micro_batch_startup,
             "gpu": self.gpu,
             "variant": {"name": self.variant.source.name, "sha256": self.variant.source.sha256} if self.variant else None,
             "variants": catalog,

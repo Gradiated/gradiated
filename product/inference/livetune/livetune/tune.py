@@ -46,16 +46,17 @@ def binding(knob: str, value: Any, profile: Profile) -> bool:
 
 
 def merged(summaries: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
-    def median(key: str) -> float | None:
-        values = sorted(v for v in (s.get(key) for s in summaries) if v is not None)
-        return values[len(values) // 2] if values else None
+    def median(key: str, higher_is_better: bool = True) -> float | None:
+        # With an even count, take the worse of the two middle values, so one lucky run of two cannot carry a setting.
+        values = sorted((v for v in (s.get(key) for s in summaries) if v is not None), reverse=not higher_is_better)
+        return values[(len(values) - 1) // 2] if values else None
 
     return {
         "completed": min(s.get("completed", 0) for s in summaries),
         "errors": sum(s.get("errors", 0) for s in summaries),
         "output_tps": median("output_tps"),
         "tps_per_user_p50": median("tps_per_user_p50"),
-        "ttft_p90": median("ttft_p90"),
+        "ttft_p90": median("ttft_p90", higher_is_better=False),
         "measurements": len(summaries),
     }
 

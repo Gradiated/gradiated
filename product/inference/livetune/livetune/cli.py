@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import json
 import logging
 import sys
@@ -9,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from livetune import controller as control
-from livetune import advisor, loadgen, trace, tune
+from livetune import advisor, loadgen, rollout, trace, tune
 from livetune.metrics import window
 from livetune.policy import Policy, Slo
 from livetune.server import KV_TOLERANCE, Server
@@ -61,11 +62,7 @@ def load_policy(path: str, server: Server, allow_scope_mismatch: bool) -> Policy
     if expected is None and not allow_scope_mismatch:
         raise SystemExit(f"{path} records no tuning scope; rebuild it with `livetune policy`, or pass --allow-scope-mismatch")
     if expected is not None and not allow_scope_mismatch:
-        differs = _differences(expected, actual)
-        # Free memory varies a little between starts; a policy holds within a few percent of its KV capacity.
-        kv = differs.get("kv_tokens")
-        if kv and all(kv) and abs(kv[1] - kv[0]) <= KV_TOLERANCE * kv[0]:
-            del differs["kv_tokens"]
+        differs = _scope_differences(expected, actual)
         if not differs:
             return policy
         raise SystemExit(f"{path} was tuned for a different server (policy, live): {differs}; pass --allow-scope-mismatch to override")
@@ -189,10 +186,7 @@ def improve(args: argparse.Namespace, server: Server) -> None:
         started = time.time()
         report = advise(argparse.Namespace(seconds=args.advise_seconds, interval=args.interval, trace_dir=args.trace_dir), server)
         entry: dict[str, Any] = {"t": started, "proposals": report["proposals"], "grid": report["grid"]}
-        differs = _differences(server.fingerprint(), canary.fingerprint())
-        kv = differs.get("kv_tokens")
-        if kv and all(kv) and abs(kv[1] - kv[0]) <= KV_TOLERANCE * kv[0]:
-            del differs["kv_tokens"]
+        differs = _scope_differences(server.fingerprint(), canary.fingerprint())
         records = list(trace.read([args.trace_dir], since=started - args.window))
         if differs:
             # A canary that differs from production would measure another intervention.
@@ -207,14 +201,69 @@ def improve(args: argparse.Namespace, server: Server) -> None:
             winner = policy.rule("trace").settings
             entry["winner"] = winner
             if winner != policy.rule("unmeasured").settings:
-                tmp = Path(args.policy_out + ".tmp")
-                tmp.write_text(policy.to_json())
-                tmp.replace(args.policy_out)  # controllers reload a complete file, never a partial one
-                entry["published"] = args.policy_out
+                verdict = stage(args, server, policy) if args.stage_url else None
+                if verdict is not None:
+                    entry["stage"] = dataclasses.asdict(verdict)
+                if verdict is None or verdict.decision == "promote":
+                    _publish(args.policy_out, policy.to_json())
+                    entry["published"] = args.policy_out
         write(entry)
         if args.once:
             return
         time.sleep(max(args.every - (time.time() - started), 0))
+
+
+def _scope_differences(expected: dict[str, Any], actual: dict[str, Any]) -> dict[str, Any]:
+    differs = _differences(expected, actual)
+    # Free memory varies a little between starts; a policy holds within a few percent of its KV capacity.
+    kv = differs.get("kv_tokens")
+    if kv and all(kv) and abs(kv[1] - kv[0]) <= KV_TOLERANCE * kv[0]:
+        del differs["kv_tokens"]
+    return differs
+
+
+def _publish(path: str, text: str) -> None:
+    tmp = Path(path + ".tmp")
+    tmp.write_text(text)
+    tmp.replace(path)  # controllers reload a complete file, never a partial one
+
+
+def _watch(servers: list[Server], seconds: float, interval: float) -> list[list[Any]]:
+    """Metric windows from several servers over the same span."""
+    windows: list[list[Any]] = [[] for _ in servers]
+    previous = [s.scrape() for s in servers]
+    deadline = time.monotonic() + seconds
+    while time.monotonic() < deadline:
+        time.sleep(interval)
+        for i, s in enumerate(servers):
+            try:
+                current = s.scrape()
+            except Exception:  # a peer that cannot be read loses this window
+                previous[i] = None
+                continue
+            if previous[i] is not None:
+                windows[i].append(window(previous[i], current))
+            previous[i] = current
+    return windows
+
+
+def stage(args: argparse.Namespace, production: Server, policy: Policy) -> rollout.Verdict:
+    """Run a candidate on one production replica beside its peers; restore the replica's policy unless it is promoted."""
+    replica = Server(args.stage_url)
+    peers = [Server(url) for url in args.peers.split(",") if url]
+    slo = Slo(args.slo_tps, args.slo_ttft)
+    if _scope_differences(production.fingerprint(), replica.fingerprint()):
+        return rollout.Verdict("inconclusive", "the staged replica's scope differs from production", rollout.Side.of([], slo), rollout.Side.of([], slo))
+    previous = Path(args.stage_policy).read_text()
+    _publish(args.stage_policy, policy.to_json())
+    verdict = None
+    try:
+        watched = _watch([replica, *peers], args.stage_seconds, args.interval)
+        verdict = rollout.judge(watched[0], [w for side in watched[1:] for w in side], slo)
+        return verdict
+    finally:
+        if verdict is None or verdict.decision != "promote":
+            _publish(args.stage_policy, previous)
 
 
 def advise(args: argparse.Namespace, server: Server) -> dict[str, Any]:
@@ -331,6 +380,10 @@ def main(argv: list[str] | None = None) -> int:
     im.add_argument("--interval", type=float, default=5.0)
     im.add_argument("--speed", type=float, default=1.0)
     im.add_argument("--once", action="store_true")
+    im.add_argument("--stage-url", help="a production replica that runs each winner first, beside its peers")
+    im.add_argument("--stage-policy", help="the policy file the staged replica's controller reads")
+    im.add_argument("--peers", default="", help="comma-separated production replicas to compare against")
+    im.add_argument("--stage-seconds", type=float, default=1800)
     c = sub.choices["control"]
     c.add_argument("--policy", required=True)
     c.add_argument("--interval", type=float, default=5.0)
@@ -350,6 +403,8 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(report, indent=1))
         return 0
     if args.command == "improve":
+        if args.stage_url and not (args.stage_policy and args.peers):
+            raise SystemExit("--stage-url needs --stage-policy and --peers")
         improve(args, server)
         return 0
     if args.command == "status":

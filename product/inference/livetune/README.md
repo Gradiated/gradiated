@@ -60,6 +60,8 @@ python -m livetune replay --url URL --trace DIR --policy policy.json --corpus co
 2. replays the last `--window` seconds of recorded production traffic on a canary with the same scope, measuring each live proposal;
 3. publishes a policy to `--policy-out` when a candidate beat the startup settings.
 
+With `--stage-url`, `--stage-policy` and `--peers`, a winner first runs on one production replica for `--stage-seconds`. That replica and its peers serve the same live traffic, so they are compared window for window. The winner is published to the fleet only if the staged replica meets the SLO as often as its peers and is no slower. Otherwise the replica's previous policy is restored. A replica starved or flooded by the router (demand outside 0.7–1.3× its peers) gives an inconclusive result, and nothing is published. Replay picks the winner; the stage checks what replay cannot reproduce: prompt content, hours of cache state and fleet routing.
+
 `control` reloads its policy file when the file changes, and ignores a file that fails the scope check. Tuning never adds load to production, and production only changes through a measured policy.
 
 `advise` proposes live levers with values to try, restart levers (launch flags for a canary) and code levers, giving the hot shapes for a forward variant. Each proposal carries the measurements behind it. Its `grid` is a valid `tune --grid`. `--trace` replays recorded requests open loop at their recorded times, keeping each prefix family's shared prefix, so every candidate meets the same traffic.

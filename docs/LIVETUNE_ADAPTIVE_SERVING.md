@@ -84,13 +84,14 @@ livetune does not write kernels itself today. The path is:
 - **Trace replay.** `replay --trace` and `tune --trace` send each recorded request at its recorded time, open loop. Each request keeps its prompt and output length, its temperature, and its shared prefix within its family. Requests of one family share the same synthetic prefix up to their recorded cached length. Prefix-cache behaviour is therefore reproduced without any recorded content. `--speed` compresses time.
 - **Closed-loop profiles.** `tune --profiles` sweeps user counts and prompt lengths for policies that must cover shapes the trace has not shown yet.
 - **Decisions.** A candidate must beat the startup settings on the SLO first, then on throughput by at least 2%. It must win on the worse of two interleaved repetitions. A result missing per-user speed or TTFT is inconclusive.
+- **Staged rollout.** Replay cannot reproduce prompt content, which drives MoE routing, speculative acceptance and numerics. Nor can it reproduce hours of cache state or the fleet router. So a winner runs on one replica first, and `livetune.rollout.judge` compares it with its peers window for window under matched load. Promotion needs an SLO pass rate within 5 points of the peers and per-user speed within 5%. For code-tier changes this stage is mandatory.
 - **Production guard.** A live change is on probation for 45 s from the moment it took effect. It is rolled back and penalised if it breaks an SLO that held before. Live per-user speed comes from SGLang's per-request histogram, whose buckets must be fine around the SLO (`--bucket-inter-token-latency`).
 
 ## Rollout
 
 | Tier | How a change ships | Blast radius |
 | --- | --- | --- |
-| Live | A new policy file for `control`; scope-checked against the server | One server; reversible in a window |
+| Live | Canary replay picks a winner. One production replica runs it beside its peers on the same live traffic. It reaches the fleet only if the replica is no worse, and is reverted otherwise | One replica, then the fleet; each server still on probation |
 | Restart | New launch flags in the runtime config, through a canary and a rolling restart | Rolling, one host at a time |
 | Code | A variant registered by hash in the bundle, selected by `LIVETUNE_STARTUP_VARIANT`, through the bundle release pipeline | Rolling, with bundle qualification |
 

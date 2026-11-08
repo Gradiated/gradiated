@@ -1159,7 +1159,8 @@ class ImproveTest(unittest.TestCase):
             cli.Server = lambda url: canary
             try:
                 args = argparse.Namespace(canary="canary", work_dir=tmp, advise_seconds=0, interval=1, trace_dir=tmp, window=600,
-                                          slo_tps=50, slo_ttft=5, corpus="", speed=1.0, policy_out=str(Path(tmp, "policy.json")), every=0, once=True)
+                                          slo_tps=50, slo_ttft=5, corpus="", speed=1.0, policy_out=str(Path(tmp, "policy.json")), every=0, once=True,
+                                          stage_url=None)
                 cli.improve(args, prod)
             finally:
                 cli.Server = saved
@@ -1171,3 +1172,38 @@ class ImproveTest(unittest.TestCase):
     def test_improve_publishes_nothing_without_a_proposal(self):
         entry = self._improve("B300")[0]
         self.assertEqual((entry["skipped"], entry.get("published")), ("nothing to test", None))
+
+
+class RolloutTest(unittest.TestCase):
+    slo = Slo(80, 10)
+
+    def test_a_staged_replica_is_promoted_only_when_no_worse_than_its_peers_under_the_same_load(self):
+        from livetune import rollout
+
+        peers = [_window(40, tps=85, ttft=3)] * 24
+        self.assertEqual(rollout.judge([_window(40, tps=110, ttft=6)] * 12, peers, self.slo).decision, "promote")
+        self.assertEqual(rollout.judge([_window(40, tps=70, ttft=3)] * 12, peers, self.slo).decision, "revert")  # misses the SLO more often
+        slower = rollout.judge([_window(40, tps=81, ttft=3)] * 12, [_window(40, tps=95, ttft=3)] * 24, self.slo)
+        self.assertEqual((slower.decision, "per-user speed" in slower.reason), ("revert", True))
+        self.assertEqual(rollout.judge([_window(10, tps=110)] * 12, peers, self.slo).decision, "inconclusive")  # starved by the router
+        self.assertEqual(rollout.judge([_window(40, tps=110)] * 3, peers, self.slo).decision, "inconclusive")
+
+    def test_stage_restores_the_replicas_policy_unless_promoted(self):
+        import argparse
+        from livetune import rollout
+
+        scope = {"gpu": "B300"}
+        replica = types.SimpleNamespace(fingerprint=lambda: scope, scrape=lambda: metrics.parse("", 0.0))
+        production = types.SimpleNamespace(fingerprint=lambda: scope)
+        with tempfile.TemporaryDirectory() as tmp:
+            stage_policy = Path(tmp, "stage.json")
+            stage_policy.write_text("previous")
+            args = argparse.Namespace(stage_url="replica", peers="peer", stage_policy=str(stage_policy), stage_seconds=0, interval=0,
+                                      slo_tps=80, slo_ttft=10)
+            saved = cli.Server
+            cli.Server = lambda url: replica
+            try:
+                verdict = cli.stage(args, production, _policy())
+            finally:
+                cli.Server = saved
+            self.assertEqual((verdict.decision, stage_policy.read_text()), ("inconclusive", "previous"))

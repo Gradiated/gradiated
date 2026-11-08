@@ -58,6 +58,7 @@ class LiveTuner:
         if self.variant is not None:
             self.pinned[str(self.startup[VARIANT_KEY])] = self.variant.source.sha256
         self.pending_variant: int | None = None
+        self.forward_pending: int | None = None  # a built state to switch to at the next forward
         self.pending_since_step = 0
         self.drain_steps = int(os.environ.get("LIVETUNE_DRAIN_STEPS", "6000"))
         self.changes: list[dict[str, Any]] = []
@@ -154,11 +155,21 @@ class LiveTuner:
             self.scheduler.max_queued_requests = value or None
 
         elif key == VARIANT_KEY:
-            # Recapturing graphs under an in-flight overlap batch corrupts its buffers, so
-            # the switch waits for an idle scheduler; admission pauses until then.
             if value == self.settings[VARIANT_KEY]:
-                self.pending_variant = None
+                self.pending_variant = self.forward_pending = None
                 return None
+            worker = _state_worker(self.scheduler)
+            if worker is not None and value in self.states:
+                # A state built before is switched in at the next forward pass, as SGLang switches
+                # its adaptive states, with requests in flight: nothing is captured or freed, so
+                # the scheduler need not drain. Every rank handles this request at the same point
+                # of its loop, so every rank switches at the same forward.
+                self.pending_variant, self.forward_pending = None, value
+                _switch_at_forward(worker, self)
+                return None
+            # Building a state, or recapturing, under an in-flight overlap batch corrupts its
+            # buffers, so the switch waits for an idle scheduler; admission pauses until then.
+            self.forward_pending = None
             self.pending_variant = value
             self.pending_since_step = getattr(self.scheduler, "forward_ct", 0)
             return None
@@ -178,6 +189,15 @@ class LiveTuner:
         if self.pending_variant is None:
             return
         variant_id, self.pending_variant = self.pending_variant, None
+        self._complete_switch(variant_id)
+
+    def on_forward(self) -> None:
+        if self.forward_pending is None:
+            return
+        variant_id, self.forward_pending = self.forward_pending, None
+        self._complete_switch(variant_id)
+
+    def _complete_switch(self, variant_id: int) -> None:
         started = time.perf_counter()
         try:
             self._switch_variant(variant_id)
@@ -370,7 +390,7 @@ class LiveTuner:
             "gpu": self.gpu,
             "variant": {"name": self.variant.source.name, "sha256": self.variant.source.sha256} if self.variant else None,
             "variants": catalog,
-            "pending_variant": self.pending_variant,
+            "pending_variant": self.pending_variant if self.pending_variant is not None else self.forward_pending,
             "variant_states": list(self.states),
             "recent_changes": self.changes[-10:],
             "recent_errors": self.errors[-5:],
@@ -433,6 +453,23 @@ def _state_worker(scheduler: Any) -> Any:
     if worker is None or not all(callable(getattr(worker, name, None)) for name in ("build_adaptive_runtime_state", "apply_runtime_state")):
         return None
     return worker
+
+
+def _switch_at_forward(worker: Any, tuner: LiveTuner) -> None:
+    """Run tuner.on_forward before each of the worker's forward passes, from the first one asked for.
+
+    The instance's method is wrapped, whatever its class, so the hook costs nothing until used.
+    """
+    if getattr(worker, "_livetune_forward", None) is tuner:
+        return
+    original = worker.forward_batch_generation
+
+    def forward_batch_generation(*args: Any, **kwargs: Any) -> Any:
+        tuner.on_forward()
+        return original(*args, **kwargs)
+
+    worker.forward_batch_generation = forward_batch_generation
+    worker._livetune_forward = tuner
 
 
 def _current_state(worker: Any) -> Any:

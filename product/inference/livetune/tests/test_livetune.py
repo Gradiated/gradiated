@@ -942,7 +942,8 @@ class PluginTest(unittest.TestCase):
             try:
                 for variant in (one, 0, one, two, three):
                     self.tuner.apply("forward_variant", variant)
-                    self.tuner.on_idle()
+                    self.tuner.on_idle()  # builds a new state
+                    self.tuner.on_forward()  # or switches to a built one
             finally:
                 del os.environ["LIVETUNE_VARIANTS_DIR"]
                 self.plugin._current_state = saved
@@ -954,6 +955,47 @@ class PluginTest(unittest.TestCase):
         self.assertEqual((self.model.value, state["settings"]["forward_variant"]), (4, three))
         self.assertEqual(state["variant_states"], [one, two, three])  # bounded at 3: the stock state, least recently used, was dropped
         self.assertNotIn(0, state["variant_states"])
+
+    def test_a_built_state_switches_in_at_the_next_forward_without_draining(self):
+        applied, forwards = [], []
+
+        class Worker:
+            speculative_num_steps, speculative_num_draft_tokens = 2, 3
+            adaptive_controller = None
+
+            def build_adaptive_runtime_state(this, steps, draft_tokens, cuda_graph_bs=None):
+                return f"state-{self.model.value}"
+
+            def apply_runtime_state(this, state):
+                applied.append(state)
+                this.speculative_num_steps = 2
+
+            def forward_batch_generation(this, batch):
+                forwards.append((batch, self.model.value))
+
+        worker = self.scheduler.draft_worker = Worker()
+        self.scheduler.spec_algorithm = types.SimpleNamespace(is_none=lambda: False)
+        saved = self.plugin._current_state
+        self.plugin._current_state = lambda w: "startup-state"
+        with tempfile.TemporaryDirectory() as tmp:
+            one = variants.register(tmp, "one", "def install(model, patch, ctx):\n    patch(model, 'value', 2)\n")
+            os.environ["LIVETUNE_VARIANTS_DIR"] = tmp
+            try:
+                self.tuner.apply("forward_variant", one)
+                self.assertTrue(self.tuner.admission_blocked())  # a new state is built at an idle point
+                self.tuner.on_idle()
+                self.tuner.apply("forward_variant", 0)
+                self.assertFalse(self.tuner.admission_blocked())  # a built state needs no drain
+                self.assertEqual(self.tuner.settings["forward_variant"], one)
+                worker.forward_batch_generation("batch-1")
+                self.tuner.apply("forward_variant", one)
+                worker.forward_batch_generation("batch-2")
+            finally:
+                del os.environ["LIVETUNE_VARIANTS_DIR"]
+                self.plugin._current_state = saved
+        self.assertEqual(applied, ["state-2", "startup-state", "state-2"])
+        self.assertEqual(forwards, [("batch-1", 1), ("batch-2", 2)])  # each forward ran on the code just switched in
+        self.assertEqual(self.tuner.settings["forward_variant"], one)
 
     def test_adaptive_speculative_steps_refuse_live_switching(self):
         self.scheduler.spec_algorithm = types.SimpleNamespace(is_none=lambda: False)

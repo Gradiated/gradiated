@@ -1788,3 +1788,34 @@ class ReplayCutoffTest(unittest.TestCase):
                               ancestors=((256, "a256"),), cached_tokens=2048)
         ids = [list(range(9000)), list(range(3000))]
         self.assertEqual(loadgen.warm_prefixes([early, later], ids), [])  # the early request explains the later hit
+
+
+class AbortTimingAndPrewarmTest(unittest.TestCase):
+    def test_a_launched_zero_token_abort_keeps_its_arrival_and_duration(self):
+        from livetune import trace
+
+        aborted = dataclasses_replace(_record(110.0, output=0, ttft_s=None, decode_s=None), finish="abort", launched=True, server_s=6.0)
+        schedule = sorted(trace.arrivals([_record(100.0, ttft_s=0.5, decode_s=2.5), aborted]), key=lambda a: a.at)
+        self.assertEqual([(a.at, a.seconds) for a in schedule], [(0.0, 3.0), (7.0, 6.0)])  # arrived at 104, not 110
+
+    def test_a_rejected_prewarm_fails_the_measurement(self):
+        import asyncio
+
+        class Response:
+            def __init__(self, status):
+                self.status = status
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *exc):
+                return False
+
+            async def read(self):
+                return b""
+
+        statuses = iter([503, 503])
+        session = types.SimpleNamespace(post=lambda url, json: Response(next(statuses)))
+        arrival = types.SimpleNamespace(at=0.0, cached_tokens=10, family=None, ancestors=(), shared_tokens=0)
+        with self.assertRaises(RuntimeError):
+            asyncio.run(loadgen._prewarm(session, "http://x", [arrival], [list(range(20))]))

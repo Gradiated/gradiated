@@ -430,6 +430,7 @@ class Telemetry:
             logprob_start=int(getattr(req, "logprob_start_len", -1)) if getattr(req, "return_logprob", False) else -1,
             stream=bool(getattr(req, "stream", True)),
             launched=bool(getattr(ts, "forward_entry_time", 0.0)),
+            server_s=done - arrival if arrival else None,
             multimodal=getattr(req, "multimodal_inputs", None) is not None or getattr(req, "input_embeds", None) is not None
             or getattr(req, "origin_input_ids_unpadded", ids) is not ids,
         )

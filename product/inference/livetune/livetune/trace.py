@@ -51,6 +51,7 @@ class Record:
     logprob_start: int = -1  # -1 none; otherwise prompt logprobs were computed from this position
     stream: bool = True
     launched: bool = True  # a forward pass ran for it, which matters for a request aborted with no output
+    server_s: float | None = None  # waiting-queue entry to completion, whatever happened in between
     multimodal: bool = False  # images or embeddings, which replay cannot send
 
     @property
@@ -274,6 +275,7 @@ class Arrival:
     stream: bool = True
     max_new_tokens: int | None = None  # the declared limit, which admission and KV headroom are sized by
     launched: bool = True  # a forward pass ran for it, which matters for a request aborted with no output
+    server_s: float | None = None  # waiting-queue entry to completion, whatever happened in between
     multimodal: bool = False  # images or embeddings, which replay cannot send
 
 
@@ -331,8 +333,12 @@ def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
     if unreproducible:
         raise ValueError(f"trace replay cannot reproduce these request modes: {unreproducible}")
 
+    def elapsed(r: Record) -> float:
+        # The whole server time; ttft + decode leaves out a request aborted between launch and first token.
+        return r.server_s if r.server_s is not None else sum(x or 0.0 for x in (r.ttft_s, r.decode_s))
+
     def started(r: Record) -> float:
-        return r.t - sum(x or 0.0 for x in (r.ttft_s, r.decode_s))
+        return r.t - elapsed(r)
 
     # A request aborted before its first token never ran on the GPU; one aborted later did, for the
     # tokens it produced, which replay reproduces by generating exactly that many.
@@ -371,7 +377,7 @@ def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
                 family=family,
                 temperature=r.temperature,
                 # Only arrivals are compressed: requests still take their recorded time on the server.
-                seconds=sum(x or 0.0 for x in (r.ttft_s, r.decode_s)),
+                seconds=elapsed(r),
                 cached_tokens=r.cached_tokens,
                 priority=r.priority,
                 ancestors=ancestors,

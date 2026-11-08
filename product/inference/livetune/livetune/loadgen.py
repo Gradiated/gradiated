@@ -215,15 +215,22 @@ def warm_prefixes(arrivals: Sequence[Any], ids_for: Sequence[list[int]]) -> list
 
 
 async def _prewarm(session: Any, url: str, arrivals: Sequence[Any], ids_for: Sequence[list[int]], parallel: int = 8) -> None:
+    """Every candidate must start from the same cache, so a warmup that fails is retried alone and then fatal."""
     gate = asyncio.Semaphore(parallel)
 
-    async def one(ids: list[int]) -> None:
+    async def one(ids: list[int]) -> bool:
         async with gate:
             body = {"input_ids": ids, "sampling_params": {"max_new_tokens": 1, "temperature": 0}}
             async with session.post(f"{url}/generate", json=body) as response:
                 await response.read()
+                return response.status == 200
 
-    await asyncio.gather(*(one(ids) for ids in warm_prefixes(arrivals, ids_for)))
+    prefixes = warm_prefixes(arrivals, ids_for)
+    results = await asyncio.gather(*(one(ids) for ids in prefixes))
+    gate = asyncio.Semaphore(1)  # a low queue limit under test can reject concurrent warmups
+    for ids, ok in zip(prefixes, results):
+        if not ok and not await one(ids):
+            raise RuntimeError(f"could not prewarm a {len(ids)}-token prefix; the candidates would start from different caches")
 
 
 def trace_prompts(arrivals: Sequence[Any], prompts: PromptSource) -> list[list[int]]:

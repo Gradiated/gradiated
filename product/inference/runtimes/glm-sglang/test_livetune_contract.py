@@ -96,7 +96,8 @@ class LivetuneContract(unittest.TestCase):
         scheduler = ('tp_worker', 'page_size', 'max_running_requests', 'chunked_prefill_size', 'max_prefill_tokens',
                      'schedule_policy', 'policy', 'max_queued_requests', 'max_total_num_tokens', 'tree_cache',
                      'enable_hierarchical_cache', 'enable_priority_scheduling', 'schedule_low_priority_values_first',
-                     'new_token_ratio_tracker', 'forward_ct', 'tp_cpu_group', 'spec_algorithm')
+                     'new_token_ratio_tracker', 'forward_ct', 'tp_cpu_group', 'spec_algorithm', 'waiting_queue',
+                     'running_batch', 'chunked_req')
         for name in scheduler:
             with self.subTest(scheduler=name):
                 self.assertTrue(assigned('managers', name), name)

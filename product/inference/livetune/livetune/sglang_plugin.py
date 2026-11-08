@@ -298,6 +298,26 @@ class LiveTuner:
             self._pin(variant_id, sha256)
         return catalog
 
+    def oldest_unfinished(self) -> float | None:
+        """Wall time the longest-waiting unfinished request entered the queue, or None when idle.
+
+        Its record is written only when it finishes, so a trace window that began after this is
+        not yet complete.
+        """
+        scheduler = self.scheduler
+        running = getattr(getattr(scheduler, "running_batch", None), "reqs", None) or []
+        chunked = getattr(scheduler, "chunked_req", None)
+        stamps = []
+        for req in [*(getattr(scheduler, "waiting_queue", None) or []), *running, *([chunked] if chunked else [])]:
+            stats = getattr(req, "time_stats", None)
+            stamp = getattr(stats, "livetune_first_entry", 0.0) or getattr(stats, "wait_queue_entry_time", 0.0)
+            if stamp:
+                stamps.append(stamp)
+        if not stamps:
+            return None
+        # The stamps are on this process's perf_counter clock.
+        return time.time() - (time.perf_counter() - min(stamps))
+
     def readback(self) -> dict[str, Any]:
         try:
             catalog: dict[str, str] | str = self._catalog()
@@ -313,6 +333,7 @@ class LiveTuner:
             "startup_variant": self.startup_variant,
             "runtime": self.runtime,
             "telemetry": telemetry.readback() if (telemetry := _TELEMETRY.get("rank0")) else None,
+            "oldest_unfinished": self.oldest_unfinished(),
             "gpu": self.gpu,
             "variant": {"name": self.variant.source.name, "sha256": self.variant.source.sha256} if self.variant else None,
             "variants": catalog,

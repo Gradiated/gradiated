@@ -349,6 +349,18 @@ def _await_written(server: Server, timeout_s: float = 120.0, interval_s: float =
         time.sleep(interval_s)
 
 
+def _await_finished(server: Server, until: float, timeout_s: float, interval_s: float = 5.0) -> bool:
+    """Wait until no request that started before until is still running, so all of them have records."""
+    deadline = time.monotonic() + timeout_s
+    while True:
+        oldest = [state.get("oldest_unfinished") for state in server.livetune_states()]
+        if all(t is None or t >= until for t in oldest):
+            return True
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(interval_s)
+
+
 def _trace_gap(server: Server, trace_dir: str, since: float, history: dict[tuple[str, float], list[tuple[float, int]]]) -> str | None:
     """Why the production trace may be missing requests that started at or after since, or None.
 
@@ -397,8 +409,10 @@ def improve(args: argparse.Namespace, server: Server) -> None:
         # long requests. Replay one that closed --close-s ago, whose requests have had time to finish.
         until = time.time() - args.close_s
         since = until - args.window
-        # Records still queued for the writer would be missing from a read made now.
-        written = _await_written(server)
+        # A request that started in the window and still runs (the longest outlive --close-s) has no
+        # record yet; records still queued for the writer would be missing from a read made now.
+        finished = _await_finished(server, until, args.close_s)
+        written = finished and _await_written(server)
         # Requests running when the window began loaded the server too; they replay unmeasured.
         records = list(trace.read([args.trace_dir], since=since, until=until, overlapping=True))
         if differs:
@@ -406,7 +420,8 @@ def improve(args: argparse.Namespace, server: Server) -> None:
             entry["skipped"] = {"canary_scope_differs": sorted(differs)}
         elif not report["grid"] or not records:
             entry["skipped"] = "nothing to test" if not report["grid"] else "no recorded traffic"
-        elif gap := ("records were still being written" if not written else _trace_gap(server, args.trace_dir, since, history)):
+        elif gap := ("requests from the window are still running" if not finished else "records were still being written" if not written
+                     else _trace_gap(server, args.trace_dir, since, history)):
             # Tuning on a partial trace measures a lighter workload than production served.
             entry["skipped"] = {"incomplete_trace": gap}
         elif gaps := trace.replay_gaps(records):

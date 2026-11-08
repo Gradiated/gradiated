@@ -2,6 +2,7 @@ import hashlib
 from dataclasses import replace as dataclasses_replace
 import itertools
 import json
+import time
 import math
 import os
 import sys
@@ -2353,6 +2354,25 @@ class PendingRecordsTest(unittest.TestCase):
         self.assertTrue(cli._await_written(server, timeout_s=5, interval_s=0))  # 10 processed covers the 10 queued at the start
         stuck = types.SimpleNamespace(livetune_states=lambda: [{"telemetry": {"enqueued": 5, "processed": 1}}])
         self.assertFalse(cli._await_written(stuck, timeout_s=0, interval_s=0))
+
+    def test_tuning_waits_for_requests_from_the_window_to_finish(self):
+        readings = iter([[{"oldest_unfinished": 90.0}], [{"oldest_unfinished": 120.0}]])
+        server = types.SimpleNamespace(livetune_states=lambda: next(readings))
+        self.assertTrue(cli._await_finished(server, until=100.0, timeout_s=5, interval_s=0))
+        stuck = types.SimpleNamespace(livetune_states=lambda: [{"oldest_unfinished": 90.0}, {"oldest_unfinished": None}])
+        self.assertFalse(cli._await_finished(stuck, until=100.0, timeout_s=0, interval_s=0))
+
+    def test_the_scheduler_reports_its_oldest_unfinished_request(self):
+        from livetune import sglang_plugin
+
+        now = time.perf_counter()
+        old = types.SimpleNamespace(time_stats=types.SimpleNamespace(wait_queue_entry_time=now - 30.0, livetune_first_entry=now - 50.0))
+        new = types.SimpleNamespace(time_stats=types.SimpleNamespace(wait_queue_entry_time=now - 5.0))
+        tuner = types.SimpleNamespace(scheduler=types.SimpleNamespace(waiting_queue=[new], running_batch=types.SimpleNamespace(reqs=[old]), chunked_req=None))
+        oldest = sglang_plugin.LiveTuner.oldest_unfinished(tuner)
+        self.assertAlmostEqual(oldest, time.time() - 50.0, delta=1.0)  # the first entry, not the retracted re-entry
+        idle = types.SimpleNamespace(scheduler=types.SimpleNamespace(waiting_queue=[], running_batch=None, chunked_req=None))
+        self.assertIsNone(sglang_plugin.LiveTuner.oldest_unfinished(idle))
 
     def test_cache_namespaces_keep_their_parts_apart(self):
         from livetune import sglang_plugin

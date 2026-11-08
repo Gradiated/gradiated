@@ -16,6 +16,8 @@ MATCH_MARGIN = 0.25  # how far below stock's own agreement a variant's agreement
 LOGPROB_FACTOR = 1.5  # how many times stock's own logprob drift a variant may show
 MIN_LOGPROB_LIMIT = 0.08  # nats; stock repeats can agree exactly, which would make the limit zero
 PREFIX_TOKENS = 8  # a continuation "matches" if at least this many leading tokens agree
+# Below these, stock is too unrepeatable on the probe prompts for any margin to mean anything.
+BASELINE_FLOOR = {"prefix_match_rate": 0.75, "mean_prefix_fraction": 0.5}
 
 
 @dataclass(frozen=True)
@@ -71,6 +73,9 @@ class Verdict:
 
 def judge(stock: Sample, stock_again: Sample, variant: Sample) -> Verdict:
     own, theirs = agreement(stock, stock_again), agreement(stock, variant)
+    unusable = [f"stock {key} {getattr(own, key):.2f} below {floor}" for key, floor in BASELINE_FLOOR.items() if getattr(own, key) < floor]
+    if unusable:
+        return Verdict(False, ("stock does not repeat itself well enough to judge a variant: " + "; ".join(unusable),), own, theirs)
     reasons = []
     if theirs.non_finite:
         reasons.append(f"{theirs.non_finite} non-finite logprobs")

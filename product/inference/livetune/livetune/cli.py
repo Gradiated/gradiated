@@ -242,7 +242,8 @@ def improve(args: argparse.Namespace, server: Server) -> None:
         report = advise(argparse.Namespace(seconds=args.advise_seconds, interval=args.interval, trace_dir=args.trace_dir), server)
         entry: dict[str, Any] = {"t": started, "proposals": report["proposals"], "grid": report["grid"]}
         differs = _scope_differences(server.fingerprint(), canary.fingerprint())
-        records = list(trace.read([args.trace_dir], since=started - args.window))
+        # The window ends now, after advising, so it is the trailing --window seconds and no more.
+        records = list(trace.read([args.trace_dir], since=time.time() - args.window))
         if differs:
             # A canary that differs from production would measure another intervention.
             entry["skipped"] = {"canary_scope_differs": sorted(differs)}

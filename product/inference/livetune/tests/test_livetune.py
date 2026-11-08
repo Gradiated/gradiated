@@ -1533,3 +1533,23 @@ class FleetEvidenceTest(unittest.TestCase):
                 cli.Server, cli._watch, cli._wait_applied = saved
         self.assertEqual((watched, waited), ([["prod"]], ["prod"]))
         self.assertEqual(verdict.decision, "inconclusive")  # nothing applied, so nothing was judged
+
+
+class GateBaselineAndAbortTest(unittest.TestCase):
+    def test_an_unrepeatable_stock_baseline_rejects_rather_than_passing_anything(self):
+        from livetune import gate
+
+        stock = gate.Sample([[1] * 9, [2] * 9], [[-1.0] * 9] * 2)
+        unrepeatable = gate.Sample([[5] * 9, [6] * 9], [[-1.0] * 9] * 2)
+        different = gate.Sample([[7] * 9, [8] * 9], [[-1.0] * 9] * 2)
+        verdict = gate.judge(stock, unrepeatable, different)
+        self.assertFalse(verdict.passed)
+        self.assertIn("does not repeat itself", verdict.reasons[0])
+
+    def test_aborts_replay_as_the_work_they_did(self):
+        from livetune import trace
+
+        records = [_record(100.0), dataclasses_replace(_record(101.0, output=40), finish="abort"),
+                   dataclasses_replace(_record(102.0, output=0), finish="abort")]
+        schedule = trace.arrivals(records)
+        self.assertEqual(sorted(a.output_tokens for a in schedule), [40, 256])  # the queued abort never ran

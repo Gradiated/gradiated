@@ -305,6 +305,11 @@ def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
     def started(r: Record) -> float:
         return r.t - sum(x or 0.0 for x in (r.ttft_s, r.decode_s))
 
+    # A request aborted before its first token never ran on the GPU; one aborted later did, for the
+    # tokens it produced, which replay reproduces by generating exactly that many.
+    records = [r for r in records if not (r.finish == "abort" and r.output_tokens == 0)]
+    if not records:
+        return []
     families = shared_families(records)
     cached_counts = Counter(r.cached_family for r in records if r.cached_family)
     proven_cached: dict[str, int] = {}

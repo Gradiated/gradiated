@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import gc
 import logging
 import os
 import time
@@ -217,13 +216,18 @@ class LiveTuner:
 
     @staticmethod
     def _recapture(runner: Any) -> None:
-        import torch
+        # SGLang's own sequence for recapturing decode graphs on a running server (elastic EP):
+        # free the old graphs through their backend, start a fresh graph memory pool, warm the
+        # kernels again, then capture. Re-calling init_decode_cuda_graph() alone reused the old
+        # pool and hit an illegal memory access at the first decode on DeepSeek V4.
+        from sglang.srt.model_executor.model_runner_components.cuda_graph_setup import (
+            drop_elastic_cuda_graph_state,
+            recapture_elastic_cuda_graph,
+        )
 
+        drop_elastic_cuda_graph_state(decode_runner=runner.decode_cuda_graph_runner, eager_runner=runner.eager_runner)
         runner.decode_cuda_graph_runner = None
-        gc.collect()
-        torch.cuda.synchronize()
-        runner.init_decode_cuda_graph()
-        torch.cuda.synchronize()
+        runner.decode_cuda_graph_runner = recapture_elastic_cuda_graph(model_runner=runner).runner
 
     @property
     def runtime(self) -> dict[str, str | None]:

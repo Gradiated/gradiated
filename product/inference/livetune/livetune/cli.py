@@ -260,6 +260,7 @@ def improve(args: argparse.Namespace, server: Server) -> None:
             winner = policy.rule("trace").settings
             entry["winner"] = winner
             if winner != policy.rule("unmeasured").settings:
+                staged_before = Path(args.stage_policy).read_text() if args.stage_url else None
                 verdict = stage(args, server, policy) if args.stage_url else None
                 if verdict is not None:
                     entry["stage"] = dataclasses.asdict(verdict)
@@ -268,6 +269,9 @@ def improve(args: argparse.Namespace, server: Server) -> None:
                     guard = promote(args, server, policy)
                     if guard is not None:
                         entry["guard"] = dataclasses.asdict(guard)
+                        if guard.decision == "revert" and staged_before is not None:
+                            # The staged replica still runs the candidate the fleet just rejected.
+                            _publish(args.stage_policy, staged_before)
         write(entry)
         if args.once:
             return

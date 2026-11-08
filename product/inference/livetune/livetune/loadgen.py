@@ -80,12 +80,22 @@ class PromptSource:
             tail.extend(self.corpus[start : start + 256])
         return prefix + tail[: length - shared_len]
 
-    def family_prompt(self, length: int, shared_len: int, family: str | None) -> list[int]:
-        """A prompt whose first shared_len tokens are the same for every request of the family, at any length."""
+    def family_prompt(self, length: int, shared_len: int, family: str | None, ancestors: Sequence[tuple[int, str]] = ()) -> list[int]:
+        """A prompt whose first shared_len tokens follow its prefix families, at any length.
+
+        ``ancestors`` are (depth, key) pairs for every shared family depth, shallowest first. Tokens up
+        to each depth come from that depth's key, so requests that share only a shallower ancestor
+        still share those tokens; the rest of the shared prefix comes from ``family``.
+        """
         shared_len = min(shared_len, length) if family else 0
-        start = random.Random(family).randrange(len(self.corpus)) if shared_len else 0
-        # Read the corpus cyclically so a family's prefix does not depend on how long it is.
-        prefix = [self.corpus[(start + i) % len(self.corpus)] for i in range(shared_len)]
+        prefix: list[int] = []
+        for depth, key in [*ancestors, (shared_len, family)]:
+            end = min(depth, shared_len)
+            if end > len(prefix):
+                # Read the corpus cyclically from a point fixed by the key, so a segment is the same
+                # for every request that has the key, however long the request is.
+                start = random.Random(key).randrange(len(self.corpus))
+                prefix += [self.corpus[(start + i) % len(self.corpus)] for i in range(len(prefix), end)]
         tail: list[int] = []
         while len(tail) < length - shared_len:
             begin = self.rng.randrange(len(self.corpus) - 256)
@@ -164,7 +174,7 @@ async def run_phase(url: str, phase: Phase, prompts: PromptSource, phase_index: 
 
 def trace_prompts(arrivals: Sequence[Any], prompts: PromptSource) -> list[list[int]]:
     """The token ids for each arrival, built once so every replay of a trace sends the same content."""
-    return [prompts.family_prompt(a.prompt_tokens, a.shared_tokens, a.family) for a in arrivals]
+    return [prompts.family_prompt(a.prompt_tokens, a.shared_tokens, a.family, getattr(a, "ancestors", ())) for a in arrivals]
 
 
 async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource | Sequence[list[int]], name: str = "trace") -> PhaseResult:

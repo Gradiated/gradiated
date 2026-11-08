@@ -1553,3 +1553,28 @@ class GateBaselineAndAbortTest(unittest.TestCase):
                    dataclasses_replace(_record(102.0, output=0), finish="abort")]
         schedule = trace.arrivals(records)
         self.assertEqual(sorted(a.output_tokens for a in schedule), [40, 256])  # the queued abort never ran
+
+
+class NestedFamilyAndConcurrencyTest(unittest.TestCase):
+    def test_a_short_request_keeps_the_ancestor_it_shares_with_a_deeper_family(self):
+        from livetune import trace
+
+        keys = trace.PrefixKeys(b"k" * 32)
+        long_a, long_b = list(range(3000)), list(range(3000))
+        short = list(range(256)) + [7] * 1000
+        records = [dataclasses_replace(_record(100.0 + i, prompt=len(ids), family=None), families=keys.families(ids))
+                   for i, ids in enumerate((long_a, long_b, short))]
+        schedule = trace.arrivals(records)
+        prompts = loadgen.PromptSource(list(range(9000)))
+        built = [prompts.family_prompt(a.prompt_tokens, a.shared_tokens, a.family, a.ancestors) for a in schedule]
+        by_len = sorted(built, key=len)
+        self.assertEqual(by_len[1][:2048], by_len[2][:2048])  # the long pair share 2,048 tokens
+        self.assertEqual(by_len[0][:256], by_len[1][:256])  # and the short one shares the 256-token ancestor
+        self.assertNotEqual(by_len[0][256:300], by_len[1][256:300])
+
+    def test_concurrency_is_weighted_by_how_long_each_level_lasted(self):
+        from livetune import trace
+
+        burst = [trace.Arrival(at=0.0, prompt_tokens=10, output_tokens=1, shared_tokens=0, family=None, temperature=None, seconds=0.1) for _ in range(100)]
+        quiet = [trace.Arrival(at=1.0, prompt_tokens=10, output_tokens=1, shared_tokens=0, family=None, temperature=None, seconds=99.0)]
+        self.assertEqual(trace.concurrency(burst + quiet), 1)

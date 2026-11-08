@@ -260,6 +260,7 @@ class Arrival:
     seconds: float = 0.0  # recorded server time, first scheduling to completion
     cached_tokens: int = 0  # what production actually hit, for the cache-hit guard of a tuned rule
     priority: int | None = None
+    ancestors: tuple[tuple[int, str], ...] = ()  # (depth, key) of every shared family depth, shallowest first
 
 
 def replay_gaps(records: Sequence[Record]) -> dict[str, int]:
@@ -279,13 +280,24 @@ def observed_cache_hit(schedule: Sequence[Arrival]) -> float:
 
 
 def concurrency(schedule: Sequence[Arrival], q: float = 0.9) -> int:
-    """The q-quantile of requests in flight over the schedule, as the server saw them."""
+    """The q-quantile over time of requests in flight, as a gauge sampled at random moments would see it.
+
+    Each level counts for as long as it lasted, so a brief burst does not outweigh a long quiet span.
+    """
     events = sorted([(a.at, 1) for a in schedule] + [(a.at + a.seconds, -1) for a in schedule])
-    level, levels = 0, []
-    for _, step in events:
+    level, held = 0, Counter()
+    for (t, step), following in zip(events, events[1:] + [events[-1]] if events else []):
         level += step
-        levels.append(level)
-    return max(int(_pct(levels, q) or 1), 1)
+        held[level] += following[0] - t
+    total = sum(held.values())
+    if total <= 0:
+        return 1
+    seen = 0.0
+    for value in sorted(held):
+        seen += held[value]
+        if seen >= q * total:
+            return max(value, 1)
+    return max(max(held), 1)
 
 
 def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
@@ -322,9 +334,11 @@ def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
             key, depth = found
             proven = proven_cached.get(r.cached_family, 0) if r.cached_family else 0
             lengths[key] = max(lengths.get(key, depth), proven)
+    counts = Counter(key for r in records for key in r.families)
     t0 = min(started(r) for r in records)
     out = []
     for r, found in zip(records, families):
+        ancestors = tuple((FAMILY_DEPTHS[i], key) for i, key in enumerate(r.families) if counts[key] > 1)
         out.append(
             Arrival(
                 at=(started(r) - t0) / speed,
@@ -336,6 +350,7 @@ def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
                 seconds=sum(x or 0.0 for x in (r.ttft_s, r.decode_s)) / speed,
                 cached_tokens=r.cached_tokens,
                 priority=r.priority,
+                ancestors=ancestors,
             )
         )
     return sorted(out, key=lambda a: a.at)

@@ -27,6 +27,7 @@ EVICTION_SECONDS = "sglang:eviction_duration_seconds_sum"
 EVICTED_TOKENS = "sglang:evicted_tokens_total"
 RETRACTED = "sglang:num_retracted_reqs"
 STAGE_SECONDS = "sglang:scheduler_stage_seconds_total"
+SCHEDULERS = "livetune:schedulers"
 _TP_RANK = re.compile(r'tp_rank="([^"]+)"')
 _CATEGORY = re.compile(r'category="([^"]+)"')
 # Every TP rank reports these; one rank's view is the scheduler's, and summing would count it once per rank.
@@ -83,6 +84,9 @@ def parse(text: str, t: float) -> Scrape:
             continue
         if name == STAGE_SECONDS and labels and (category := _CATEGORY.search(labels)):
             name = f"{name}:{category.group(1)}"
+            if category.group(1) == "run_batch":
+                # One run_batch series per data-parallel scheduler (its TP rank 0).
+                values[SCHEDULERS] = values.get(SCHEDULERS, 0.0) + 1
         if name.endswith("_bucket") and labels:
             le = _LE.search(labels)
             if le:
@@ -118,19 +122,21 @@ class Window:
     forward_s: float = 0.0  # scheduler time in run_batch
     retracted: float = 0.0
     queue_p90: float | None = None
+    schedulers: float = 1.0  # data-parallel schedulers whose seconds are summed above
 
     @property
     def kv_free_share(self) -> float | None:
         total = self.kv_used + self.kv_evictable + self.kv_available
         return self.kv_available / total if total > 0 else None
 
+    # Shares of each scheduler's wall time: summed seconds from N data-parallel schedulers are divided by N.
     @property
     def eviction_share(self) -> float:
-        return self.eviction_s / self.seconds if self.seconds > 0 else 0.0
+        return self.eviction_s / (self.seconds * self.schedulers) if self.seconds > 0 else 0.0
 
     @property
     def forward_share(self) -> float:
-        return self.forward_s / self.seconds if self.seconds > 0 else 0.0
+        return self.forward_s / (self.seconds * self.schedulers) if self.seconds > 0 else 0.0
 
     @property
     def demand(self) -> float:
@@ -187,4 +193,5 @@ def window(earlier: Scrape, later: Scrape) -> Window:
         forward_s=delta(f"{STAGE_SECONDS}:run_batch"),
         retracted=later.values.get(RETRACTED, 0.0),
         queue_p90=queue.quantile(0.9) if queue else None,
+        schedulers=max(later.values.get(SCHEDULERS, 1.0), 1.0),
     )

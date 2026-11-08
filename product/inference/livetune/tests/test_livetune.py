@@ -1394,3 +1394,11 @@ class TelemetryRobustnessTest(unittest.TestCase):
                 writer.write(_record(1000.0 + i))
             writer.close()
             self.assertTrue(other.exists())
+
+
+class DataParallelUtilizationTest(unittest.TestCase):
+    def test_forward_share_is_per_scheduler_on_a_data_parallel_server(self):
+        lines = lambda busy: "\n".join(f'sglang:scheduler_stage_seconds_total{{category="run_batch",dp_rank="{d}",tp_rank="0"}} {busy}' for d in range(4))
+        win = metrics.window(metrics.parse(lines(0), 0.0), metrics.parse(lines(2.5), 10.0))
+        self.assertEqual((win.schedulers, win.forward_s), (4, 10.0))
+        self.assertAlmostEqual(win.forward_share, 0.25)  # each scheduler busy 2.5 s of 10

@@ -31,6 +31,7 @@ class RequestRecord:
     cut: bool = False
     warmup: bool = False  # loads the server as production was loaded; never measured
     untimed: bool = False  # a non-streaming response without the server's per-request timings
+    end: float | None = None  # when the response finished, on the same clock as start
 
 
 @dataclass
@@ -179,6 +180,7 @@ async def _one(session: Any, url: str, ids: list[int], output_tokens: int, recor
     except Exception as exc:  # network errors are data, not crashes
         record.error = f"{type(exc).__name__}: {exc}"
     finally:
+        record.end = last if last is not None else time.perf_counter()
         if first is not None and record.tokens > first_tokens and last > first:
             record.decode_tps = (record.tokens - first_tokens) / (last - first)
 
@@ -329,8 +331,11 @@ async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource 
                        getattr(arrival, "hidden_states", False), server_stops)
 
         await asyncio.gather(*(send(a, ids) for a, ids in zip(arrivals, ids_for)))
-    # Every request runs to completion, so the phase lasts until the last one finishes.
-    result.phase = dataclasses.replace(phase, seconds=time.perf_counter() - started)
+    # Every request runs to completion, so the phase lasts until the last measured one finishes; a
+    # warm-up still decoding after that is awaited but does not stretch the measured time.
+    ends = [r.end for r in result.requests if not r.warmup and r.end is not None]
+    finished = max(ends) if ends else time.perf_counter()
+    result.phase = dataclasses.replace(phase, seconds=finished - started)
     return result
 
 

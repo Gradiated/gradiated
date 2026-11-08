@@ -406,7 +406,8 @@ def _warmup(r: Record, since_wall: float) -> Record:
     prefilled = r.started + (r.ttft_s or 0.0)
     moved = {"server_s": r.t - since_wall, "queue_s": 0.0, "lookup_s": 0.0, "retractions": 0}
     if prefilled > since_wall:
-        return replace(r, **moved)
+        # Its prefill still finishes when production's did, so later hits it explains stay explained.
+        return replace(r, ttft_s=prefilled - since_wall, **moved)
     left = max(1, min(r.output_tokens, round(r.output_tokens * (r.t - since_wall) / max(r.t - prefilled, 1e-9))))
     context = r.prompt_tokens + r.output_tokens - left
     budget = max(r.max_new_tokens - (r.output_tokens - left), left) if r.max_new_tokens else None

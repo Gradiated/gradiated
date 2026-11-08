@@ -2228,10 +2228,47 @@ class InFlightWarmupTest(unittest.TestCase):
         # Its context is the prompt plus the 95 tokens it had generated, all cached as it ran.
         self.assertEqual((warm[1].prompt_tokens, warm[1].cached_tokens), (2095, 2095))
         self.assertEqual((warm[0].output_tokens, warm[0].cached_tokens), (50, 0))  # still queued at 100: replays whole
+        self.assertAlmostEqual(warm[0].prefilled_s, 3.0)  # prefill at 103 as in production, not 13 s after the boundary
         measured = [a for a in schedule if not a.warmup]
         self.assertEqual([a.prompt_tokens for a in measured], [3000])
         self.assertEqual(trace.observed_cache_hit(schedule), 0.0)
         self.assertEqual(tune.trace_profile(schedule)["prompt_tokens"], 3000)
+
+    def test_a_warmup_finishing_last_does_not_stretch_the_measured_time(self):
+        import asyncio
+
+        from livetune import trace
+
+        arrivals = [trace.Arrival(at=0.0, prompt_tokens=10, output_tokens=5, shared_tokens=0, family=None, temperature=None, warmup=True),
+                    trace.Arrival(at=0.0, prompt_tokens=10, output_tokens=5, shared_tokens=0, family=None, temperature=None)]
+
+        async def one(session, url, ids, output_tokens, record, *args):
+            await asyncio.sleep(0.3 if record.warmup else 0.05)
+            record.tokens, record.end = output_tokens, loadgen.time.perf_counter()
+
+        class Session:
+            def __init__(self, **kwargs):
+                pass
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *exc):
+                return False
+
+        aiohttp = types.SimpleNamespace(ClientTimeout=lambda **k: None, TCPConnector=lambda **k: None, ClientSession=Session)
+        saved = (loadgen._one, sys.modules.get("aiohttp"))
+        loadgen._one = one
+        sys.modules["aiohttp"] = aiohttp
+        try:
+            result = asyncio.run(loadgen.run_arrivals("http://x", arrivals, [[1], [1]], warm=False))
+        finally:
+            loadgen._one = saved[0]
+            if saved[1] is None:
+                sys.modules.pop("aiohttp", None)
+            else:
+                sys.modules["aiohttp"] = saved[1]
+        self.assertLess(result.phase.seconds, 0.2)
 
     def test_warmup_requests_are_left_out_of_the_summary(self):
         result = loadgen.PhaseResult(loadgen.Phase(1, 1, 1, 10.0), [

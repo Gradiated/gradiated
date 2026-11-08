@@ -403,7 +403,7 @@ def promote(args: argparse.Namespace, production: Server, policy: Policy, staged
     # The staged replica already runs the candidate, so its windows cannot serve as the previous policy's
     # baseline; it was judged against its peers during the stage.
     staged = getattr(args, "stage_url", None)
-    members = [m for m in [production] + [Server(url) for url in (args.fleet or "").split(",") if url] if m.url != staged]
+    members = [m for m in [production] + [Server(url) for url in _replica_urls(args.fleet, excluding=getattr(production, "url", None))] if not _same_url(m.url, staged)]
     # Replicas outside production's scope refuse the policy, so their unchanged windows would dilute the comparison.
     fleet = [m for m in members if not _scope_differences(scope, m.fingerprint())]
     slo = Slo(args.slo_tps, args.slo_ttft)
@@ -462,16 +462,31 @@ def _guard(args: argparse.Namespace, fleet: list[Server], policy: Policy, before
     return rollout.judge([w for side in after for w in side], [w for i in applied for w in before[i]], slo)
 
 
+def _same_url(a: str | None, b: str | None) -> bool:
+    return a is not None and b is not None and a.rstrip("/") == b.rstrip("/")
+
+
+def _replica_urls(text: str | None, excluding: str | None = None) -> list[str]:
+    """A comma-separated replica list, each once, without the excluded replica."""
+    urls: list[str] = []
+    for url in (text or "").split(","):
+        url = url.strip()
+        if url and not _same_url(url, excluding) and not any(_same_url(url, seen) for seen in urls):
+            urls.append(url)
+    return urls
+
+
 def stage(args: argparse.Namespace, production: Server, policy: Policy) -> rollout.Verdict:
     """Run a candidate on one production replica beside its peers; restore the replica's policy unless it is promoted."""
     replica = Server(args.stage_url)
-    peers = [Server(url) for url in args.peers.split(",") if url]
+    # The staged replica runs the candidate, so listed among its own peers it would vouch for itself.
+    peers = [Server(url) for url in _replica_urls(args.peers, excluding=args.stage_url)]
     slo = Slo(args.slo_tps, args.slo_ttft)
     scope = production.fingerprint()
     # Evidence counts only from replicas running the intervention production runs.
     outside = [s.url for s in (replica, *peers) if _scope_differences(scope, s.fingerprint())]
     if outside or not peers:
-        reason = f"replicas outside production's scope: {outside}" if outside else "no peers to compare against"
+        reason = f"replicas outside production's scope: {outside}" if outside else "no peers besides the staged replica to compare against"
         return rollout.Verdict("inconclusive", reason, rollout.Side.of([], slo), rollout.Side.of([], slo))
     previous = Path(args.stage_policy).read_text()
     _publish(args.stage_policy, policy.to_json())

@@ -1355,6 +1355,33 @@ class RolloutEvidenceTest(unittest.TestCase):
             self.assertEqual((verdict.decision, "peer" in verdict.reason, stage_policy.read_text()), ("inconclusive", True, "previous"))
 
 
+    def test_the_staged_replica_is_never_its_own_peer(self):
+        import argparse
+
+        scope = {"gpu": "B300"}
+        made = []
+
+        def server(url):
+            made.append(url)
+            return types.SimpleNamespace(url=url, fingerprint=lambda: scope)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            stage_policy = Path(tmp, "stage.json")
+            stage_policy.write_text("previous")
+            args = argparse.Namespace(stage_url="http://a:30000", peers="http://a:30000/, http://a:30000", stage_policy=str(stage_policy),
+                                      stage_seconds=0, interval=0, slo_tps=80, slo_ttft=10)
+            saved = cli.Server
+            cli.Server = server
+            try:
+                verdict = cli.stage(args, types.SimpleNamespace(fingerprint=lambda: scope), _policy())
+            finally:
+                cli.Server = saved
+            self.assertEqual(stage_policy.read_text(), "previous")  # nothing was staged
+        self.assertEqual((verdict.decision, made), ("inconclusive", ["http://a:30000"]))
+        self.assertIn("no peers", verdict.reason)
+        self.assertEqual(cli._replica_urls("http://a/, http://b,http://a,,http://c", excluding="http://c/"), ["http://a/", "http://b"])
+
+
 class OpenLoopProfileTest(unittest.TestCase):
     def test_a_trace_policy_rule_sits_at_the_demand_the_trace_produced(self):
         from livetune import trace

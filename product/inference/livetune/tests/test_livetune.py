@@ -1292,7 +1292,7 @@ class ReplayIsolationTest(unittest.TestCase):
     def test_every_measurement_starts_from_a_flushed_cache(self):
         calls = []
         server = types.SimpleNamespace(
-            url="http://x", livetune_state=lambda: {"startup": {"max_running_requests": 64}}, fingerprint=lambda: {},
+            url="http://x", livetune_state=lambda: {"startup": {"max_running_requests": 64}}, livetune_states=lambda: [{"settings": {}}], fingerprint=lambda: {},
             apply=lambda settings: calls.append(("apply", dict(settings))), flush_cache=lambda: calls.append(("flush",)))
         arrivals = [types.SimpleNamespace(at=0.0, prompt_tokens=2000, output_tokens=8, shared_tokens=0, family=None, temperature=0.7, seconds=1.0, cached_tokens=0, priority=None)]
         saved = loadgen.run_arrivals
@@ -2047,6 +2047,55 @@ class SeedPrecisionTest(unittest.TestCase):
         self.assertEqual(record.sampling["top_p"], 0.9)
 
 
+class RetractionTimingTest(unittest.TestCase):
+    def test_a_retracted_request_keeps_its_first_queue_entry_and_lookup(self):
+        from livetune import sglang_plugin
+
+        class FINISH_LENGTH:
+            pass
+
+        times = types.SimpleNamespace(scheduler_recv_time=0.0, wait_queue_entry_time=1.0, prefill_finished_time=0.0, completion_time=9.0,
+                                      queue_duration_s=0.0, forward_entry_time=0.0)
+        sglang_plugin._keep_first_entry(None, times)
+        times.forward_entry_time, times.prefill_finished_time = 1.5, 2.0
+        times.wait_queue_entry_time = 5.0  # retracted, then back in the queue; SGLang restamps the entry
+        sglang_plugin._keep_first_entry(None, times)
+        req = types.SimpleNamespace(rid="r", time_stats=times, origin_input_ids=list(range(10)), output_ids=[1] * 8, cached_tokens=0,
+                                    finished_reason=FINISH_LENGTH(), sampling_params=types.SimpleNamespace(), finished=lambda: True,
+                                    retraction_count=1)
+        record = sglang_plugin.Telemetry(None).record(req, 100.0, 9.0)
+        self.assertEqual((record.lookup_s, record.ttft_s, record.server_s), (0.5, 1.0, 8.0))
+        sglang_plugin._forget_first_entry(None, times)
+        self.assertEqual(times.livetune_first_entry, 0.0)
+
+    def test_the_first_lookup_places_a_retracted_request_without_summed_queue_time(self):
+        from livetune import trace
+
+        record = dataclasses_replace(_record(110.0), queue_s=6.0, ttft_s=1.0, server_s=10.0, retractions=1, lookup_s=0.5)
+        self.assertEqual(trace.arrivals([record])[0].scheduled_s, 0.5)
+        older = dataclasses_replace(record, lookup_s=None)
+        self.assertEqual(trace.arrivals([older])[0].scheduled_s, 0.0)  # no lookup recorded: the arrival bounds it
+
+
+class ChunkedEarlyStopTest(unittest.TestCase):
+    def _server(self, interval):
+        return types.SimpleNamespace(livetune_states=lambda: [{"settings": {"stream_interval": interval}}])
+
+    def test_a_trace_with_early_stops_is_refused_under_chunked_streaming(self):
+        from livetune import trace
+
+        early = trace.Arrival(at=0.0, prompt_tokens=100, output_tokens=7, shared_tokens=0, family=None, temperature=None, max_new_tokens=512)
+        full = dataclasses_replace(early, output_tokens=512)
+        cli._refuse_chunked_early_stops(self._server(1), [early, full])
+        cli._refuse_chunked_early_stops(self._server(4), [full])  # nothing stopped early
+        cli._refuse_chunked_early_stops(self._server(4), [dataclasses_replace(early, sampling={"stream_interval": 1})])
+        with self.assertRaises(SystemExit):
+            cli._refuse_chunked_early_stops(self._server(4), [early])
+        policy = types.SimpleNamespace(rules=(types.SimpleNamespace(settings={"stream_interval": 8}),))
+        with self.assertRaises(SystemExit):
+            cli._refuse_chunked_early_stops(self._server(1), [early], policy)  # the controller could switch to 8
+
+
 class ServerSideSloTest(unittest.TestCase):
     def test_non_streaming_traces_are_judged_on_the_servers_histograms(self):
         text = "\n".join([
@@ -2055,7 +2104,7 @@ class ServerSideSloTest(unittest.TestCase):
             'sglang:time_to_first_token_seconds_bucket{le="1.0"} %d', 'sglang:time_to_first_token_seconds_bucket{le="+Inf"} %d',
             'sglang:time_to_first_token_seconds_count %d'])
         scrapes = iter([metrics.parse(text % (0, 0, 0, 0, 0, 0), 0.0), metrics.parse(text % (10, 10, 10, 10, 10, 10), 60.0)])
-        server = types.SimpleNamespace(url="http://x", livetune_state=lambda: {"startup": {"max_running_requests": 64}}, fingerprint=lambda: {},
+        server = types.SimpleNamespace(url="http://x", livetune_state=lambda: {"startup": {"max_running_requests": 64}}, livetune_states=lambda: [{"settings": {}}], fingerprint=lambda: {},
                                        apply=lambda s: None, flush_cache=lambda: None, scrape=lambda: next(scrapes))
         arrivals = [types.SimpleNamespace(at=0.0, prompt_tokens=2000, output_tokens=8, shared_tokens=0, family=None, temperature=0.7,
                                           seconds=1.0, cached_tokens=0, priority=None, stream=False)]

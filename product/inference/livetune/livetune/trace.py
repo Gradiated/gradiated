@@ -36,6 +36,9 @@ class Record:
     decode_s: float | None  # first token to completion
     finish: str  # "length", "stop", "abort", ...
     retractions: int = 0
+    # First waiting-queue entry to first forward, when the request first looked up the prefix cache;
+    # queue_s cannot place it once a retraction has added a later wait.
+    lookup_s: float | None = None
     spec_accept: float | None = None  # mean accepted tokens per verify step
     temperature: float | None = None
     max_new_tokens: int | None = None
@@ -338,6 +341,28 @@ def concurrency(schedule: Sequence[Arrival], q: float = 0.9) -> int:
     return max(max(held), 1)
 
 
+def _first_lookup(r: Record) -> float:
+    if r.lookup_s is not None:
+        return r.lookup_s
+    # Older records lack it. Without retractions the summed queue time is the one wait; with them,
+    # the arrival is the safe bound, since it credits no other request's prefill too early.
+    return (r.queue_s or 0.0) if not r.retractions else 0.0
+
+
+def chunked_early_stops(arrivals: Sequence[Arrival], stream_interval: int) -> int:
+    """Streaming requests that stopped early and would stream in chunks of several tokens.
+
+    Replay ignores EOS and closes the stream at the recorded output, but it sees that output only at
+    a chunk boundary, so it decodes past it; production stopped exactly. Those requests do more work
+    in replay than they did in production.
+    """
+    def early(a: Arrival) -> bool:
+        declared = getattr(a, "max_new_tokens", None)
+        return bool(getattr(a, "stream", True) and declared and 1 < a.output_tokens < declared)
+
+    return sum(1 for a in arrivals if early(a) and int(getattr(a, "sampling", {}).get("stream_interval", stream_interval)) > 1)
+
+
 def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
     """An open-loop replay schedule; arrival time is completion minus the request's server time.
 
@@ -406,7 +431,7 @@ def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
                 stream=r.stream,
                 max_new_tokens=max(r.max_new_tokens, r.output_tokens, 1) if r.max_new_tokens else None,
                 hidden_states=r.hidden_states,
-                scheduled_s=started(r) - t0 + (r.queue_s or 0.0),
+                scheduled_s=started(r) - t0 + _first_lookup(r),
                 # A request with no first token (a launched abort) is only known to be done at completion.
                 prefilled_s=started(r) - t0 + (r.ttft_s if r.ttft_s is not None else elapsed(r)),
             )

@@ -8,7 +8,7 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 
 from livetune import controller as control
 from livetune import advisor, loadgen, rollout, trace, tune
@@ -80,7 +80,7 @@ def replay(args: argparse.Namespace, server: Server) -> None:
     server.apply(startup)
     # Built (and any trace prewarm run) before a controller starts watching the server.
     prompts = loadgen.PromptSource(_corpus(args.corpus))
-    segments = _segments(args, prompts, server)
+    segments = _segments(args, prompts, server, None if args.static else policy)
     stop = threading.Event()
     events: list[dict[str, Any]] = []
     failures: list[BaseException] = []
@@ -128,7 +128,19 @@ def replay(args: argparse.Namespace, server: Server) -> None:
         server.apply(startup)
 
 
-def _segments(args: argparse.Namespace, prompts: loadgen.PromptSource, server: Server) -> list[Any]:
+def _refuse_chunked_early_stops(server: Server, arrivals: Sequence[trace.Arrival], policy: Policy | None = None) -> None:
+    """A trace replay that would decode past early stops measures every candidate on more work than
+    production did, so it is refused rather than measured."""
+    intervals = [int(state.get("settings", {}).get("stream_interval") or 1) for state in server.livetune_states()]
+    # A controller replaying the trace may switch to any rule's interval mid-run.
+    intervals += [int(rule.settings["stream_interval"]) for rule in (policy.rules if policy else ()) if "stream_interval" in rule.settings]
+    chunked = trace.chunked_early_stops(arrivals, max(intervals, default=1))
+    if chunked:
+        raise SystemExit(f"{chunked} streaming requests stopped early and would stream in chunks of more than one token; "
+                         "replay would decode past their recorded output. Replay with stream_interval 1.")
+
+
+def _segments(args: argparse.Namespace, prompts: loadgen.PromptSource, server: Server, policy: Policy | None = None) -> list[Any]:
     """What a replay plays: scripted closed-loop phases, or recorded traffic arriving open loop.
 
     A trace's cache prewarm runs here, before the caller starts a controller, so the controller never
@@ -143,6 +155,7 @@ def _segments(args: argparse.Namespace, prompts: loadgen.PromptSource, server: S
             raise SystemExit(f"{args.trace}: {exc}") from exc
         if not arrivals:
             raise SystemExit(f"no records in {args.trace}")
+        _refuse_chunked_early_stops(server, arrivals, policy)
         ids = loadgen.trace_prompts(arrivals, prompts)
         # From an empty cache, then the recorded initial state: a previous replay's prefixes must not linger.
         server.flush_cache()
@@ -156,6 +169,7 @@ def _replay_measured(server: Server, arrivals: list[trace.Arrival], ids: list[li
     """Replay a trace once and summarise it, judging the SLO on every request it sent."""
     import asyncio
 
+    _refuse_chunked_early_stops(server, arrivals)
     loadgen.prewarm(server.url, arrivals, ids)
     unstreamed = any(not getattr(a, "stream", True) for a in arrivals)
     before = server.scrape() if unstreamed else None
@@ -186,6 +200,8 @@ def tune_policy(
     scope = server.fingerprint()
     # Every candidate and confirmation run sends the same token ids; content changes MoE routing.
     trace_ids = loadgen.trace_prompts(arrivals, prompts) if arrivals is not None else None
+    if arrivals is not None:
+        _refuse_chunked_early_stops(server, arrivals)
     if arrivals is not None and "stream_interval" in grid and any((a.max_new_tokens or 0) > a.output_tokens for a in arrivals):
         # An early-stopped request is cut off at a chunk boundary, so larger chunks overrun its recorded
         # output by up to stream_interval - 1 tokens and would be measured on more work.

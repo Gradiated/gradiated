@@ -14,6 +14,7 @@ _TARGET = "sglang.srt.managers.scheduler_components.internal_state.SchedulerInte
 _SCHEDULER = "sglang.srt.managers.scheduler.Scheduler"
 _MODEL_RUNNER = "sglang.srt.model_executor.model_runner.ModelRunner"
 _STREAMER = "sglang.srt.managers.scheduler_components.output_streamer.SchedulerOutputStreamer"
+_TIME_STATS = "sglang.srt.observability.req_time_stats.SchedulerReqTimeStats"
 
 
 class NoUsableVariant(RuntimeError):
@@ -406,7 +407,10 @@ class Telemetry:
         ts = req.time_stats
         # Waiting-queue entry and prefill completion share the scheduler's perf_counter clock;
         # scheduler_recv_time is calibrated against another process and read 2 s early on the pod.
-        arrival = ts.wait_queue_entry_time
+        # A retracted request re-enters the queue and SGLang restamps wait_queue_entry_time, so the
+        # first entry comes from the stamp _keep_first_entry kept.
+        arrival = getattr(ts, "livetune_first_entry", 0.0) or ts.wait_queue_entry_time
+        forward = getattr(ts, "forward_entry_time", 0.0)  # SGLang sets it once, at the first forward
         first = ts.prefill_finished_time
         done = ts.completion_time or now
         ids = req.origin_input_ids
@@ -426,6 +430,7 @@ class Telemetry:
             decode_s=done - first if first else None,
             finish=_FINISH_NAMES.get(reason, reason.lower()),
             retractions=int(getattr(req, "retraction_count", 0) or 0),
+            lookup_s=forward - arrival if forward and arrival else None,
             spec_accept=getattr(req, "spec_num_correct_drafts", 0) / verify + 1 if verify else None,
             temperature=getattr(params, "temperature", None),
             max_new_tokens=getattr(params, "max_new_tokens", None),
@@ -506,6 +511,18 @@ def _record_finished(result: Any, streamer: Any, *args: Any, **kwargs: Any) -> A
             except Exception:  # telemetry must never fail a request
                 telemetry.dropped += 1
                 logger.debug("livetune: could not record request", exc_info=True)
+    return result
+
+
+def _keep_first_entry(result: Any, stats: Any, *args: Any, **kwargs: Any) -> Any:
+    if not getattr(stats, "livetune_first_entry", 0.0):
+        stats.livetune_first_entry = stats.wait_queue_entry_time
+    return result
+
+
+def _forget_first_entry(result: Any, stats: Any, *args: Any, **kwargs: Any) -> Any:
+    # A prefill retry starts the request's timing over.
+    stats.livetune_first_entry = 0.0
     return result
 
 
@@ -590,3 +607,5 @@ def register() -> None:
     HookRegistry.register(f"{_MODEL_RUNNER}.init_cuda_graphs", _install_startup_variant, HookType.BEFORE)
     HookRegistry.register(f"{_STREAMER}._maybe_log_time_stats", _record_finished, HookType.AFTER)
     HookRegistry.register(f"{_SCHEDULER}.process_batch_result", _record_batch, HookType.AFTER)
+    HookRegistry.register(f"{_TIME_STATS}.set_wait_queue_entry_time", _keep_first_entry, HookType.AFTER)
+    HookRegistry.register(f"{_TIME_STATS}.reset_prefill_retry_time", _forget_first_entry, HookType.AFTER)

@@ -28,11 +28,14 @@ class Server:
     def scrape(self) -> Scrape:
         return parse(self._request("/metrics").decode(), time.monotonic())
 
-    def livetune_state(self) -> dict[str, Any]:
+    def livetune_states(self) -> list[dict[str, Any]]:
+        # One entry per data-parallel scheduler.
         state = json.loads(self._request("/server_info"))
         rows = state.get("internal_states", state)
-        first = rows[0] if isinstance(rows, list) else rows
-        return first.get("livetune", {})
+        return [row.get("livetune", {}) for row in (rows if isinstance(rows, list) else [rows])]
+
+    def livetune_state(self) -> dict[str, Any]:
+        return self.livetune_states()[0]
 
     def apply(self, settings: dict[str, Any], timeout: float = 300.0) -> None:
         if not settings:
@@ -45,11 +48,16 @@ class Server:
         # A variant switch completes only once the scheduler drains, so poll for it.
         deadline = time.monotonic() + (timeout if VARIANT_KEY in settings else 0)
         while True:
-            state = self.livetune_state()
-            live = state.get("settings", {})
-            mismatched = {k: (v, live.get(k)) for k, v in settings.items() if live.get(k) != v}
+            states = self.livetune_states()
+            mismatched = {
+                index: {k: (v, state.get("settings", {}).get(k)) for k, v in settings.items() if state.get("settings", {}).get(k) != v}
+                for index, state in enumerate(states)
+            }
+            mismatched = {index: diff for index, diff in mismatched.items() if diff}
             if not mismatched:
                 return
-            if state.get("pending_variant") is None or time.monotonic() >= deadline:
-                raise UpdateFailed(f"readback mismatch (wanted, live): {mismatched}; errors: {state.get('recent_errors')}")
+            pending = any(states[index].get("pending_variant") is not None for index in mismatched)
+            if not pending or time.monotonic() >= deadline:
+                errors = [states[index].get("recent_errors") for index in mismatched]
+                raise UpdateFailed(f"readback mismatch by scheduler (wanted, live): {mismatched}; errors: {errors}")
             time.sleep(0.5)

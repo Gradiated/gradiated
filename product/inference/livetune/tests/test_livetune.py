@@ -227,6 +227,21 @@ class ControllerTest(unittest.TestCase):
         self.assertEqual(len(calls), 3)  # each failure forgets state, so every window re-applies
         self.assertTrue(all("error" in e["action"] for e in events))
 
+    def test_run_loop_survives_a_failed_scrape(self):
+        ctl = control.Controller(_policy(), smoothing=1.0)
+        events, calls, results = [], [], iter([0, RuntimeError("metrics down"), 1, 2, 3])
+
+        def scrape():
+            item = next(results)
+            if isinstance(item, Exception):
+                raise item
+            return item
+
+        control.run(ctl, scrape, calls.append, lambda a, b: _window(2), log=events.append,
+                    stop=lambda: len(calls) >= 1 and len(events) >= 2, clock=lambda: 0.0, sleep=lambda s: None)
+        self.assertIn("metrics down", events[0]["error"])
+        self.assertEqual(calls, [{"max_running_requests": 8}])
+
     def test_run_loop_does_nothing_once_stopped_during_sleep(self):
         ctl = control.Controller(_policy(), smoothing=1.0)
         stopped, calls = [], []

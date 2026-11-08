@@ -155,14 +155,24 @@ def run(
     clock: Callable[[], float] = time.monotonic,
     sleep: Callable[[float], None] = time.sleep,
 ) -> None:
-    previous = scrape()
+    previous = None
     while not stop():
-        sleep(interval_s)
-        if stop():
-            break
-        current = scrape()
-        win = window_of(previous, current)
+        if previous is not None:
+            sleep(interval_s)
+            if stop():
+                break
+        try:
+            current = scrape()
+            win = window_of(previous, current) if previous is not None else None
+        except Exception as exc:
+            # A failed scrape loses one window; the next good scrape starts a fresh one.
+            log({"t": clock(), "error": f"{type(exc).__name__}: {exc}"})
+            previous = None
+            sleep(interval_s)
+            continue
         previous = current
+        if win is None:
+            continue
         now = clock()
         action = controller.step(win, now)
         event: dict[str, Any] = {

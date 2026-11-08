@@ -53,6 +53,7 @@ def replay(args: argparse.Namespace, server: Server) -> None:
     server.apply(startup)
     stop = threading.Event()
     events: list[dict[str, Any]] = []
+    failures: list[BaseException] = []
     thread = None
     if not args.static:
         controller = control.Controller(policy)
@@ -63,12 +64,14 @@ def replay(args: argparse.Namespace, server: Server) -> None:
             if "action" in event:
                 write({"controller": event})
 
-        thread = threading.Thread(
-            target=control.run,
-            args=(controller, server.scrape, server.apply, window),
-            kwargs={"interval_s": args.interval, "log": log, "stop": stop.is_set, "sleep": stop.wait},
-            daemon=True,
-        )
+        def run_controller() -> None:
+            try:
+                control.run(controller, server.scrape, server.apply, window, interval_s=args.interval, log=log, stop=stop.is_set, sleep=stop.wait)
+            except BaseException as exc:
+                failures.append(exc)
+                raise
+
+        thread = threading.Thread(target=run_controller, daemon=True)
         thread.start()
     try:
         phases = [loadgen.Phase(**p) for p in json.loads(Path(args.phases).read_text())]
@@ -76,6 +79,8 @@ def replay(args: argparse.Namespace, server: Server) -> None:
         for index, phase in enumerate(phases):
             started = time.time()
             summary = asyncio_phase(args.url, phase, prompts, index)
+            if failures:
+                raise RuntimeError("the controller stopped during the replay; its results are not controlled") from failures[0]
             write(phase_report(summary, events, started, phase.seconds, policy, "static" if args.static else "controlled"))
     finally:
         stop.set()

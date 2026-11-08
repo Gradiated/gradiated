@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import math
+import statistics
 from dataclasses import asdict, dataclass
 from typing import Any, Callable, Mapping, Sequence
 
@@ -38,6 +39,19 @@ def score(summary: Mapping[str, Any], slo: Slo) -> tuple[int, float]:
 
 
 Measure = Callable[[Profile, dict[str, Any]], dict[str, Any]]
+
+
+def trace_profile(arrivals: Sequence[Any]) -> dict[str, Any]:
+    """One profile standing for a recorded trace; open-loop load has no user count, so no cap is ruled out."""
+    if not arrivals:
+        raise ValueError("the trace has no requests")
+    return {
+        "name": "trace",
+        "users": 1 << 30,
+        "prompt_tokens": int(statistics.median(a.prompt_tokens for a in arrivals)),
+        "output_tokens": int(statistics.median(a.output_tokens for a in arrivals)),
+        "shared_prefix": round(sum(a.shared_tokens for a in arrivals) / max(sum(a.prompt_tokens for a in arrivals), 1), 3),
+    }
 
 
 def binding(knob: str, value: Any, profile: Profile) -> bool:

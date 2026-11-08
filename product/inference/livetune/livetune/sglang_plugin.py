@@ -6,14 +6,20 @@ import os
 import time
 from typing import Any
 
-from livetune import variants
-from livetune.knobs import KNOBS, VARIANT_KEY, InvalidSetting
+from livetune import trace, variants
+from livetune.knobs import KNOBS, SCHEDULE_POLICIES, VARIANT_KEY, InvalidSetting
 
 logger = logging.getLogger(__name__)
 
 _TARGET = "sglang.srt.managers.scheduler_components.internal_state.SchedulerInternalStateController"
 _SCHEDULER = "sglang.srt.managers.scheduler.Scheduler"
 _MODEL_RUNNER = "sglang.srt.model_executor.model_runner.ModelRunner"
+_STREAMER = "sglang.srt.managers.scheduler_components.output_streamer.SchedulerOutputStreamer"
+# Classes that define evict_for_alloc; a hook on a base class does not reach a subclass override.
+_EVICTING_CACHES = (
+    "sglang.srt.mem_cache.base_prefix_cache.BasePrefixCache",
+    "sglang.srt.mem_cache.unified_radix_cache.UnifiedRadixCache",
+)
 
 
 class NoUsableVariant(RuntimeError):
@@ -25,11 +31,7 @@ class LiveTuner:
         runner = scheduler.tp_worker.model_runner
         self.scheduler = scheduler
         self.page_size = int(getattr(scheduler, "page_size", 1) or 1)
-        self.startup = {
-            "max_running_requests": scheduler.max_running_requests,
-            "chunked_prefill_size": scheduler.chunked_prefill_size,
-            "max_prefill_tokens": scheduler.max_prefill_tokens,
-        }
+        self.startup = _startup_settings(scheduler)
         self.startup[VARIANT_KEY] = getattr(runner, "_livetune_variant_id", variants.STOCK)
         from sglang.srt.runtime_context import get_parallel
 
@@ -67,6 +69,10 @@ class LiveTuner:
                 self._resolve(value)
             return
         KNOBS[key].validate(value, self.startup, self.page_size)
+        if key == "schedule_policy":
+            _schedule_policy(self.scheduler, SCHEDULE_POLICIES[value])  # incompatible policies raise here, not mid-apply
+        if key == "min_evict_tokens" and value > _kv_capacity(self.scheduler) // 4:
+            raise InvalidSetting(f"min_evict_tokens={value} exceeds a quarter of the KV cache ({_kv_capacity(self.scheduler)} tokens)")
         if key == "max_running_requests" and value != self.startup[key]:
             from sglang.srt.runtime_context import get_parallel
 
@@ -109,6 +115,26 @@ class LiveTuner:
         elif key == "max_prefill_tokens":
             self.scheduler.max_prefill_tokens = value
             overrides = {key: value}
+        elif key == "schedule_policy":
+            name = SCHEDULE_POLICIES[value]
+            # The scheduler holds a policy object built at startup; config is also read fresh in places.
+            self.scheduler.policy = _schedule_policy(self.scheduler, name)
+            self.scheduler.schedule_policy = name
+            overrides = {key: name}
+        elif key == "schedule_conservativeness":
+            from sglang.srt.managers.scheduler_components.new_token_ratio_tracker import NewTokenRatioTracker
+            from sglang.srt.runtime_context import get_context
+
+            # The admission headroom tracker derives its ratios from config at construction.
+            get_context().override(source="livetune", **{key: value})
+            self.scheduler.new_token_ratio_tracker = NewTokenRatioTracker.from_config()
+            overrides = {key: value}
+        elif key == "stream_interval":
+            overrides = {key: value}
+        elif key == "max_queued_requests":
+            self.scheduler.max_queued_requests = value or None
+        elif key == "min_evict_tokens":
+            _EVICTION["min_tokens"] = value
         elif key == VARIANT_KEY:
             # Recapturing graphs under an in-flight overlap batch corrupts its buffers, so
             # the switch waits for an idle scheduler; admission pauses until then.
@@ -247,6 +273,7 @@ class LiveTuner:
             "live_variants": _live_variants(),
             "startup_variant": self.startup_variant,
             "runtime": self.runtime,
+            "telemetry": telemetry.readback() if (telemetry := _TELEMETRY.get("rank0")) else None,
             "gpu": self.gpu,
             "variant": {"name": self.variant.source.name, "sha256": self.variant.source.sha256} if self.variant else None,
             "variants": catalog,
@@ -318,6 +345,164 @@ def _gpu_name() -> str | None:
     return torch.cuda.get_device_name() if torch.cuda.is_available() else None
 
 
+# Eviction runs inside the prefix cache, which has no path back to its scheduler; one scheduler runs per process.
+_EVICTION: dict[str, int] = {"min_tokens": 0}
+
+
+def _startup_settings(scheduler: Any) -> dict[str, Any]:
+    from sglang.srt.runtime_context import get_schedule, get_serving
+
+    policy = getattr(scheduler, "schedule_policy", None)
+    startup = {
+        "max_running_requests": scheduler.max_running_requests,
+        "chunked_prefill_size": scheduler.chunked_prefill_size,
+        "max_prefill_tokens": scheduler.max_prefill_tokens,
+        "schedule_policy": SCHEDULE_POLICIES.index(policy) if policy in SCHEDULE_POLICIES else None,
+        "schedule_conservativeness": get_schedule().schedule_conservativeness,
+        "stream_interval": get_serving().stream_interval,
+        "max_queued_requests": getattr(scheduler, "max_queued_requests", None) or 0,
+        "min_evict_tokens": 0,
+    }
+    # A knob whose startup value is unknown is left out, which makes it unavailable.
+    return {key: value for key, value in startup.items() if value is not None}
+
+
+def _schedule_policy(scheduler: Any, name: str) -> Any:
+    from sglang.srt.managers.schedule_policy import SchedulePolicy
+
+    return SchedulePolicy(
+        name,
+        scheduler.tree_cache,
+        scheduler.enable_hierarchical_cache,
+        scheduler.enable_priority_scheduling,
+        scheduler.schedule_low_priority_values_first,
+    )
+
+
+def _kv_capacity(scheduler: Any) -> int:
+    return int(getattr(scheduler, "max_total_num_tokens", 0) or 0)
+
+
+def _batch_eviction(original: Any, cache: Any, params: Any, *args: Any, **kwargs: Any) -> Any:
+    # Each eviction walk visits every evictable leaf, so with a full cache freeing a few pages per
+    # allocation costs tens of milliseconds each time; freeing a larger batch pays that once.
+    # Joint-reclaim walks stop on a predicate rather than a count, so they are left alone. Every
+    # rank sets the floor at the same step and raises the count the same way, so the cross-rank
+    # consensus on eviction parameters still holds.
+    floor = _EVICTION["min_tokens"]
+    if floor and kwargs.get("allocation_reclaim_satisfied") is None and 0 < getattr(params, "num_tokens", 0) < floor:
+        import dataclasses
+
+        params = dataclasses.replace(params, num_tokens=floor)
+    return original(cache, params, *args, **kwargs)
+
+
+_FINISH_NAMES = {"FINISH_LENGTH": "length", "FINISH_ABORT": "abort", "FINISH_MATCHED_TOKEN": "stop", "FINISH_MATCHED_STR": "stop", "FINISHED_MATCHED_REGEX": "stop"}
+
+
+class Telemetry:
+    """What the scheduler saw, on attention-TP rank 0: one record per finished request, counters per batch."""
+
+    def __init__(self, directory: str | None, page_size: int = 1) -> None:
+        self.writer = trace.Writer(directory) if directory else None
+        self.keys = trace.PrefixKeys()
+        self.page_size = max(page_size, 1)
+        self.batches = trace.BatchStats()
+        self.recent: list[str] = []
+        self.dropped = 0
+
+    def record(self, req: Any, now_wall: float, now: float) -> trace.Record:
+        ts = req.time_stats
+        arrival = ts.scheduler_recv_time or ts.wait_queue_entry_time
+        first = ts.prefill_finished_time
+        done = ts.completion_time or now
+        ids = req.origin_input_ids
+        cached = int(getattr(req, "cached_tokens", 0) or 0)
+        params = req.sampling_params
+        verify = getattr(req, "spec_verify_ct", 0)
+        reason = type(req.finished_reason).__name__ if req.finished_reason is not None else "unknown"
+        cached_pages = cached // self.page_size * self.page_size
+        return trace.Record(
+            t=now_wall,
+            prompt_tokens=len(ids),
+            cached_tokens=cached,
+            output_tokens=len(req.output_ids),
+            queue_s=getattr(ts, "queue_duration_s", None),
+            ttft_s=first - arrival if first and arrival else None,
+            decode_s=done - first if first else None,
+            finish=_FINISH_NAMES.get(reason, reason.lower()),
+            retractions=int(getattr(req, "retraction_count", 0) or 0),
+            spec_accept=getattr(req, "spec_num_correct_drafts", 0) / verify + 1 if verify else None,
+            temperature=getattr(params, "temperature", None),
+            max_new_tokens=getattr(params, "max_new_tokens", None),
+            constrained=any(getattr(params, key, None) for key in ("json_schema", "regex", "ebnf")),
+            priority=getattr(req, "priority", None),
+            lora=getattr(req, "lora_id", None) is not None,
+            session=getattr(req, "session_id", None) is not None,
+            families=self.keys.families(ids),
+            cached_family=self.keys.digest(ids, cached_pages) if cached_pages else None,
+        )
+
+    def on_finish(self, req: Any) -> None:
+        # With overlap scheduling a finished request can reach the output path twice.
+        if req.rid in self.recent:
+            return
+        self.recent = (self.recent + [req.rid])[-256:]
+        if self.writer is not None:
+            self.writer.write(self.record(req, time.time(), time.perf_counter()))
+
+    def on_batch(self, batch: Any, result: Any) -> None:
+        mode = getattr(getattr(batch, "forward_mode", None), "name", "unknown").lower()
+        requests = len(getattr(batch, "reqs", ()) or ())
+        tokens = getattr(batch, "extend_num_tokens", 0) or (requests if mode == "decode" else 0)
+        launched = getattr(batch, "launch_ts", None)
+        self.batches.add(mode, requests, int(tokens), bool(getattr(result, "can_run_cuda_graph", False)), time.monotonic() - launched if launched else None)
+
+    def readback(self) -> dict[str, Any]:
+        return {
+            "trace_path": str(self.writer.path) if self.writer else None,
+            "records": self.writer.written if self.writer else 0,
+            "dropped": self.dropped,
+            "batches": self.batches.snapshot(),
+        }
+
+
+_TELEMETRY: dict[str, Telemetry] = {}
+
+
+def _telemetry(page_size: int = 1) -> Telemetry | None:
+    from sglang.srt.runtime_context import get_parallel
+
+    if getattr(get_parallel(), "attn_tp_rank", 0) != 0:
+        return None
+    if "rank0" not in _TELEMETRY:
+        _TELEMETRY["rank0"] = Telemetry(os.environ.get("LIVETUNE_TRACE_DIR"), page_size)
+    return _TELEMETRY["rank0"]
+
+
+def _record_finished(result: Any, streamer: Any, *args: Any, **kwargs: Any) -> Any:
+    req = kwargs.get("req")
+    if req is not None and req.finished():
+        telemetry = _telemetry()
+        if telemetry is not None:
+            try:
+                telemetry.on_finish(req)
+            except Exception:  # telemetry must never fail a request
+                telemetry.dropped += 1
+                logger.debug("livetune: could not record request", exc_info=True)
+    return result
+
+
+def _record_batch(result: Any, scheduler: Any, batch: Any, batch_result: Any, *args: Any, **kwargs: Any) -> Any:
+    telemetry = _telemetry(int(getattr(scheduler, "page_size", 1) or 1))
+    if telemetry is not None and batch is not None:
+        try:
+            telemetry.on_batch(batch, batch_result)
+        except Exception:
+            telemetry.dropped += 1
+    return result
+
+
 def _tuner(controller: Any) -> LiveTuner:
     tuner = getattr(controller, "_livetune", None)
     if tuner is None:
@@ -387,3 +572,7 @@ def register() -> None:
     HookRegistry.register(f"{_SCHEDULER}.get_num_allocatable_reqs", _gate_admission, HookType.AROUND)
     HookRegistry.register(f"{_SCHEDULER}.on_idle", _switch_when_idle, HookType.AFTER)
     HookRegistry.register(f"{_MODEL_RUNNER}.init_cuda_graphs", _install_startup_variant, HookType.BEFORE)
+    HookRegistry.register(f"{_STREAMER}._maybe_log_time_stats", _record_finished, HookType.AFTER)
+    HookRegistry.register(f"{_SCHEDULER}.process_batch_result", _record_batch, HookType.AFTER)
+    for cache in _EVICTING_CACHES:
+        HookRegistry.register(f"{cache}.evict_for_alloc", _batch_eviction, HookType.AROUND)

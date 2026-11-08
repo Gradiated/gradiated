@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from livetune import controller as control
-from livetune import loadgen, tune
+from livetune import advisor, loadgen, trace, tune
 from livetune.metrics import window
 from livetune.policy import Policy, Slo
 from livetune.server import KV_TOLERANCE, Server
@@ -109,12 +109,12 @@ def replay(args: argparse.Namespace, server: Server) -> None:
             thread.join()
 
     try:
-        phases = [loadgen.Phase(**p) for p in json.loads(Path(args.phases).read_text())]
         prompts = loadgen.PromptSource(_corpus(args.corpus))
-        for index, phase in enumerate(phases):
+        segments = _segments(args, prompts)
+        for index, run_segment in enumerate(segments):
             started = time.time()
-            summary = asyncio_phase(args.url, phase, prompts, index)
-            if index == len(phases) - 1:
+            summary = run_segment()
+            if index == len(segments) - 1:
                 # Join first, so a failure while the last phase ran cannot slip past this check.
                 stop_controller()
             # Waits out a window still applying, so every event that started in this phase is counted.
@@ -125,6 +125,52 @@ def replay(args: argparse.Namespace, server: Server) -> None:
     finally:
         stop_controller()
         server.apply(startup)
+
+
+def _segments(args: argparse.Namespace, prompts: loadgen.PromptSource) -> list[Any]:
+    """What a replay plays: scripted closed-loop phases, or recorded traffic arriving open loop."""
+    import asyncio
+
+    if args.trace:
+        arrivals = trace.arrivals(list(trace.read([args.trace])), speed=args.speed)
+        if not arrivals:
+            raise SystemExit(f"no records in {args.trace}")
+        return [lambda: asyncio.run(loadgen.run_arrivals(args.url, arrivals, prompts)).summary()]
+    phases = [loadgen.Phase(**p) for p in json.loads(Path(args.phases).read_text())]
+    return [lambda phase=phase, index=index: asyncio_phase(args.url, phase, prompts, index) for index, phase in enumerate(phases)]
+
+
+def advise(args: argparse.Namespace, server: Server) -> dict[str, Any]:
+    """Watch the server for a while, then propose experiments from what it saw."""
+    before = server.livetune_state()
+    started_wall = time.time()
+    windows, previous = [], server.scrape()
+    deadline = time.monotonic() + args.seconds
+    while time.monotonic() < deadline:
+        time.sleep(args.interval)
+        current = server.scrape()
+        windows.append(window(previous, current))
+        previous = current
+    after = server.livetune_state()
+    records = list(trace.read([args.trace_dir], since=started_wall)) if args.trace_dir else []
+    batches = trace.batch_deltas((before.get("telemetry") or {}).get("batches", {}), (after.get("telemetry") or {}).get("batches", {}))
+    evidence = advisor.Evidence(
+        windows=windows,
+        traffic=trace.summarize(records),
+        batches=batches,
+        settings=after.get("settings", {}),
+        startup=after.get("startup", {}),
+        kv_capacity=int(server.info().get("max_total_num_tokens") or 0),
+        page_size=int(after.get("page_size") or 1),
+    )
+    proposals = advisor.advise(evidence)
+    utilization = {
+        "forward_share": round(evidence.mean("forward_share"), 3),
+        "eviction_share": round(evidence.mean("eviction_share"), 3),
+        "kv_free_share": round(evidence.mean("kv_free_share"), 4),
+        "output_tps": round(evidence.mean("output_tps"), 1),
+    }
+    return {"utilization": utilization, "traffic": evidence.traffic, "batches": batches, "proposals": advisor.to_json(proposals), "grid": advisor.as_grid(proposals)}
 
 
 def phase_report(summary: dict[str, Any], events: list[dict[str, Any]], started: float, seconds: float, policy: Policy, mode: str) -> dict[str, Any]:
@@ -153,23 +199,29 @@ def asyncio_phase(url: str, phase: loadgen.Phase, prompts: loadgen.PromptSource,
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="livetune")
     sub = parser.add_subparsers(dest="command", required=True)
-    for name in ("status", "set", "load", "tune", "control", "replay", "policy"):
+    for name in ("status", "set", "load", "tune", "control", "replay", "policy", "traffic", "advise"):
         p = sub.add_parser(name)
         p.add_argument("--url", default="http://127.0.0.1:30000")
     sub.choices["set"].add_argument("pairs", nargs="+")
     for name in ("load", "tune", "replay"):
         sub.choices[name].add_argument("--corpus", required=True)
         sub.choices[name].add_argument("--out", required=name == "tune")
-    for name in ("load", "replay"):
-        sub.choices[name].add_argument("--phases", required=True)
+    sub.choices["load"].add_argument("--phases", required=True)
     r = sub.choices["replay"]
+    source = r.add_mutually_exclusive_group(required=True)
+    source.add_argument("--phases", help="closed-loop phases (JSON list)")
+    source.add_argument("--trace", help="recorded traffic (trace directory or file), replayed open loop")
+    r.add_argument("--speed", type=float, default=1.0, help="trace time compression: 2 replays twice as fast")
     r.add_argument("--policy", required=True)
     r.add_argument("--static", action="store_true", help="hold the startup settings instead of running the controller")
     r.add_argument("--interval", type=float, default=5.0)
     for name in ("control", "replay"):
         sub.choices[name].add_argument("--allow-scope-mismatch", action="store_true", help="use a policy tuned on a different model, layout or GPU")
     t = sub.choices["tune"]
-    t.add_argument("--profiles", required=True)
+    workload = t.add_mutually_exclusive_group(required=True)
+    workload.add_argument("--profiles", help="closed-loop profiles (JSON list)")
+    workload.add_argument("--trace", help="recorded traffic to measure every candidate against, open loop")
+    t.add_argument("--speed", type=float, default=1.0, help="trace time compression")
     t.add_argument("--grid", required=True)
     t.add_argument("--slo-tps", type=float, required=True)
     t.add_argument("--slo-ttft", type=float, required=True)
@@ -180,6 +232,14 @@ def main(argv: list[str] | None = None) -> int:
     pol.add_argument("--slo-tps", type=float, required=True)
     pol.add_argument("--slo-ttft", type=float, required=True)
     pol.add_argument("--out", required=True)
+    tr = sub.choices["traffic"]
+    tr.add_argument("--trace-dir", required=True)
+    tr.add_argument("--since", type=float, default=0.0, help="wall-clock seconds; 0 reads everything")
+    a = sub.choices["advise"]
+    a.add_argument("--seconds", type=float, default=300)
+    a.add_argument("--interval", type=float, default=5.0)
+    a.add_argument("--trace-dir", help="the server's LIVETUNE_TRACE_DIR, for the traffic mix")
+    a.add_argument("--out", help="write the report here as well")
     c = sub.choices["control"]
     c.add_argument("--policy", required=True)
     c.add_argument("--interval", type=float, default=5.0)
@@ -189,6 +249,15 @@ def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     server = Server(args.url)
 
+    if args.command == "traffic":
+        print(json.dumps(trace.summarize(list(trace.read([args.trace_dir], since=args.since))), indent=1))
+        return 0
+    if args.command == "advise":
+        report = advise(args, server)
+        if args.out:
+            Path(args.out).write_text(json.dumps(report, indent=1))
+        print(json.dumps(report, indent=1))
+        return 0
     if args.command == "status":
         print(json.dumps(server.livetune_state(), indent=1))
     elif args.command == "set":
@@ -206,18 +275,29 @@ def main(argv: list[str] | None = None) -> int:
         scope = server.fingerprint()
         record = _appender(args.out + ".trials.jsonl", mode="w")
 
+        arrivals = trace.arrivals(list(trace.read([args.trace])), speed=args.speed) if args.trace else None
+
         def measure(profile: tune.Profile, settings: dict[str, Any]) -> dict[str, Any]:
+            import asyncio
+
             server.apply(settings)
-            if args.warmup:
-                loadgen.run(args.url, [profile.phase(args.warmup)], prompts, log=lambda _: None)
-            summary = loadgen.run(args.url, [profile.phase(args.seconds)], prompts, log=lambda _: None)[0]
+            if arrivals is not None:
+                # Every candidate meets the same recorded traffic, arriving at its recorded times.
+                summary = asyncio.run(loadgen.run_arrivals(args.url, arrivals, prompts, name=profile.name)).summary()
+            else:
+                if args.warmup:
+                    loadgen.run(args.url, [profile.phase(args.warmup)], prompts, log=lambda _: None)
+                summary = loadgen.run(args.url, [profile.phase(args.seconds)], prompts, log=lambda _: None)[0]
             record({"profile": profile.name, "settings": settings, "summary": summary, "scope": scope})
             return summary
 
-        profiles = json.loads(Path(args.profiles).read_text())
+        grid = json.loads(Path(args.grid).read_text())
+        # An `advise` report carries its live proposals as a grid.
+        grid = grid["grid"] if "proposals" in grid else grid
+        profiles = json.loads(Path(args.profiles).read_text()) if args.profiles else [tune.trace_profile(arrivals)]
         tune.check_distinguishable(profiles)
         try:
-            results = [tune.tune_profile(tune.Profile(**p), start, json.loads(Path(args.grid).read_text()), slo, measure) for p in profiles]
+            results = [tune.tune_profile(tune.Profile(**p), start, grid, slo, measure) for p in profiles]
         finally:
             server.apply(start)
         policy = tune.build_policy(results, slo, {"tuned_at": time.time(), "url": args.url, "scope": scope}, start)

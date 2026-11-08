@@ -7,19 +7,25 @@ Livetune changes a running SGLang server's settings in response to the traffic i
 | `livetune.sglang_plugin` | inside every SGLang scheduler process | Adds live settings to SGLang's `/set_internal_state` and installs startup forward-pass variants.                                 |
 | `livetune control`       | next to the server                    | Reads `/metrics` every few seconds, maps the traffic shape to a policy rule, applies it, and rolls it back if it breaks the SLO. |
 | `livetune tune`          | against a test server                 | Measures settings under each traffic profile and writes the policy.                                                              |
+| `livetune advise`        | next to the server                    | Watches utilization, the traffic mix and batch counters, and proposes experiments.                                               |
 
-The tuner applies the persistent-engine idea from Together Compiler to settings. Each candidate is applied live, so a trial costs one measurement window instead of an engine restart.
+[Adaptive serving](../../../docs/LIVETUNE_ADAPTIVE_SERVING.md) describes the whole loop: the data collected, the three tiers of levers and how each tier is rolled out. The tuner applies the persistent-engine idea from Together Compiler to settings. Each candidate is applied live, so a trial costs one measurement window instead of an engine restart.
 
 ## Live settings
 
 The plugin registers through SGLang's plugin entry point (`sglang.srt.plugins`), so SGLang loads it in every scheduler process with no source patch. A request to `/set_internal_state` is validated on every tensor-parallel rank before any rank applies it. Every rank applies it at the same point of its scheduling loop, so the ranks cannot diverge.
 
-| Setting                | Effect                                                                      | Bound                                          |
-| ---------------------- | --------------------------------------------------------------------------- | ---------------------------------------------- |
-| `max_running_requests` | Running-batch cap: trades time to first token against per-user decode speed | 1 to the startup value                         |
-| `chunked_prefill_size` | Prefill chunk size: smaller chunks stall decoding users less                | page-aligned, up to the startup value          |
-| `max_prefill_tokens`   | Prefill token budget per step                                               | page-aligned, up to the startup value          |
-| `forward_variant`      | Reports the installed forward-pass variant; see below for how it changes    | ids in the pinned variant manifest; 0 is stock |
+| Setting                     | Effect                                                                                                                                          | Bound                                          |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `max_running_requests`      | Running-batch cap: trades time to first token against per-user decode speed                                                                     | 1 to the startup value                         |
+| `chunked_prefill_size`      | Prefill chunk size: smaller chunks stall decoding users less                                                                                    | page-aligned, up to the startup value          |
+| `max_prefill_tokens`        | Prefill token budget per step                                                                                                                   | page-aligned, up to the startup value          |
+| `schedule_policy`           | Waiting-queue order, as an index: 0 `fcfs`, 1 `lpm`, 2 `dfs-weight`, 3 `lof`, 4 `random`, 5 `hrrn`, 6 `shortest-prefill-first`, 7 `routing-key` | a policy the scheduler can build               |
+| `schedule_conservativeness` | Decode headroom reserved when admitting prefill; lower admits more and risks retraction                                                         | 0.1 to 2.0                                     |
+| `stream_interval`           | Tokens per streamed chunk                                                                                                                       | 1 to 64                                        |
+| `max_queued_requests`       | Waiting-queue limit; arrivals beyond it are rejected; 0 is unlimited                                                                            | 0 to 1,000,000                                 |
+| `min_evict_tokens`          | Minimum tokens freed per prefix-cache eviction; 0 is stock                                                                                      | up to a quarter of the KV cache                |
+| `forward_variant`           | Reports the installed forward-pass variant; see below for how it changes                                                                        | ids in the pinned variant manifest; 0 is stock |
 
 Buffers and CUDA graphs are sized at startup, so a setting can only move inside the envelope the server started with. Start the server at the most permissive values the policy may use.
 
@@ -37,6 +43,19 @@ In production, a variant is chosen at startup with `LIVETUNE_STARTUP_VARIANT=<id
 - **Agreement.** Ranks all-reduce the success of install plus graph recapture, so either all of them switch or none does. A failed switch restores the variant that was serving, or stock if that fails too. If neither comes back, the scheduler stops rather than serve without working graphs. Data-parallel servers refuse live switching, because their schedulers drain independently.
 
 Keep live switching off until a recapture path is qualified for the model's attention backend. A recapture also pauses decoding for about 27 s on DeepSeek V4.1 Flash with 12 graph sizes.
+
+## Traffic data
+
+Set `LIVETUNE_TRACE_DIR` and the plugin writes one JSON line per finished request on attention-TP rank 0. Each line holds prompt, cached and output tokens, queue time, scheduler TTFT and decode time, finish reason, retractions, spec accept length, sampling features, and keyed hashes of the prompt prefix at 256, 2,048 and 16,384 tokens and at the cached length. It holds no text and no token ids. Prefix hashes are keyed by `LIVETUNE_TRACE_KEY` (hex), or by a random per-process key. Files rotate at 64 MB, and the 8 newest are kept. The plugin also counts batches, requests, tokens, CUDA-graph batches and seconds for each forward mode, and reports them under `telemetry` in `/server_info`.
+
+```bash
+python -m livetune traffic --trace-dir /var/lib/livetune/trace          # the traffic mix
+python -m livetune advise --url URL --trace-dir DIR --seconds 300 --out advice.json
+python -m livetune tune --url URL --trace DIR --grid advice.json --slo-tps 80 --slo-ttft 10 --corpus corpus.json --out policy.json
+python -m livetune replay --url URL --trace DIR --policy policy.json --corpus corpus.json
+```
+
+`advise` proposes live levers with values to try, restart levers (launch flags for a canary) and code levers, giving the hot shapes for a forward variant. Each proposal carries the measurements behind it. Its `grid` is a valid `tune --grid`. `--trace` replays recorded requests open loop at their recorded times, keeping each prefix family's shared prefix, so every candidate meets the same traffic.
 
 ## Policies
 

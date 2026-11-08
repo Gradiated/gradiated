@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 import json
 import math
 import random
@@ -79,11 +80,23 @@ class PromptSource:
             tail.extend(self.corpus[start : start + 256])
         return prefix + tail[: length - shared_len]
 
+    def family_prompt(self, length: int, shared_len: int, family: str | None) -> list[int]:
+        """A prompt whose first shared_len tokens are the same for every request of the family, at any length."""
+        shared_len = min(shared_len, length) if family else 0
+        start = random.Random(family).randrange(len(self.corpus)) if shared_len else 0
+        # Read the corpus cyclically so a family's prefix does not depend on how long it is.
+        prefix = [self.corpus[(start + i) % len(self.corpus)] for i in range(shared_len)]
+        tail: list[int] = []
+        while len(tail) < length - shared_len:
+            begin = self.rng.randrange(len(self.corpus) - 256)
+            tail.extend(self.corpus[begin : begin + 256])
+        return prefix + tail[: length - shared_len]
 
-async def _one(session: Any, url: str, ids: list[int], output_tokens: int, record: RequestRecord) -> None:
+
+async def _one(session: Any, url: str, ids: list[int], output_tokens: int, record: RequestRecord, temperature: float = 0.7) -> None:
     body = {
         "input_ids": ids,
-        "sampling_params": {"max_new_tokens": output_tokens, "temperature": 0.7, "ignore_eos": True},
+        "sampling_params": {"max_new_tokens": output_tokens, "temperature": temperature, "ignore_eos": True},
         "stream": True,
     }
     first = last = None
@@ -142,6 +155,37 @@ async def run_phase(url: str, phase: Phase, prompts: PromptSource, phase_index: 
                     await asyncio.sleep(1.0)
 
         await asyncio.gather(*(user(i) for i in range(phase.users)))
+    return result
+
+
+async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource, name: str = "trace") -> PhaseResult:
+    """Open loop: each recorded request arrives at its own time, whatever the server is doing."""
+    import aiohttp
+
+    span = max((a.at for a in arrivals), default=0.0)
+    phase = Phase(
+        users=0,
+        prompt_tokens=int(statistics.median(a.prompt_tokens for a in arrivals)) if arrivals else 0,
+        output_tokens=int(statistics.median(a.output_tokens for a in arrivals)) if arrivals else 0,
+        seconds=span,
+        name=name,
+    )
+    result = PhaseResult(phase)
+    timeout = aiohttp.ClientTimeout(total=None, sock_read=600)
+    async with aiohttp.ClientSession(timeout=timeout, connector=aiohttp.TCPConnector(limit=0)) as session:
+        started = time.perf_counter()
+
+        async def send(arrival: Any) -> None:
+            await asyncio.sleep(max(arrival.at - (time.perf_counter() - started), 0.0))
+            ids = prompts.family_prompt(arrival.prompt_tokens, arrival.shared_tokens, arrival.family)
+            record = RequestRecord(time.perf_counter())
+            result.requests.append(record)
+            temperature = 0.7 if arrival.temperature is None else arrival.temperature
+            await _one(session, url, ids, arrival.output_tokens, record, temperature)
+
+        await asyncio.gather(*(send(a) for a in arrivals))
+    # Every request runs to completion, so the phase lasts until the last one finishes.
+    result.phase = dataclasses.replace(phase, seconds=time.perf_counter() - started)
     return result
 
 

@@ -48,6 +48,9 @@ class Server:
     def scrape(self) -> Scrape:
         return parse(self._request("/metrics").decode(), time.monotonic())
 
+    def info(self) -> dict[str, Any]:
+        return json.loads(self._request("/server_info"))
+
     def fingerprint(self) -> dict[str, Any]:
         info = json.loads(self._request("/server_info"))
         # Page size bounds which knob values the server accepts. The startup variant id (in startup)

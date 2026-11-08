@@ -718,14 +718,43 @@ class PluginTest(unittest.TestCase):
         self.plugin = sglang_plugin
         parallel = types.SimpleNamespace(pp_size=1, tp_rank=0, tp_size=4, dp_size=1, pp_max_micro_batch_size=48)
         self.parallel = parallel
+        # A stand-in for the parts of SGLang the plugin touches.
+        config = types.SimpleNamespace(schedule_conservativeness=1.0, stream_interval=1)
+        self.config, self.overrides = config, []
+
+        class Context:
+            def override(this, source, **values):
+                self.overrides.append(values)
+                for key, value in values.items():
+                    setattr(config, key, value)
+
         runtime = types.ModuleType("sglang.srt.runtime_context")
         runtime.get_parallel = lambda: parallel
-        self._saved = {name: sys.modules.get(name) for name in ("sglang", "sglang.srt", "sglang.srt.runtime_context")}
-        sys.modules.update({"sglang": types.ModuleType("sglang"), "sglang.srt": types.ModuleType("sglang.srt"), "sglang.srt.runtime_context": runtime})
+        runtime.get_schedule = runtime.get_serving = lambda: config
+        runtime.get_context = lambda: Context()
+        policy = types.ModuleType("sglang.srt.managers.schedule_policy")
+
+        class SchedulePolicy:
+            def __init__(this, name, tree_cache, hierarchical, priority, low_first):
+                if name == "routing-key":
+                    raise ValueError("routing-key needs routing keys")
+                this.name = name
+
+        policy.SchedulePolicy = SchedulePolicy
+        tracker = types.ModuleType("sglang.srt.managers.scheduler_components.new_token_ratio_tracker")
+        tracker.NewTokenRatioTracker = types.SimpleNamespace(from_config=lambda: types.SimpleNamespace(init=min(0.7 * config.schedule_conservativeness, 1.0)))
+        modules = {"sglang": types.ModuleType("sglang"), "sglang.srt": types.ModuleType("sglang.srt"), "sglang.srt.runtime_context": runtime,
+                   "sglang.srt.managers.schedule_policy": policy, "sglang.srt.managers.scheduler_components.new_token_ratio_tracker": tracker}
+        self._saved = {name: sys.modules.get(name) for name in modules}
+        sys.modules.update(modules)
         self.model = types.SimpleNamespace(value=1)
         runner = types.SimpleNamespace(model=self.model)
-        self.scheduler = types.SimpleNamespace(page_size=256, max_running_requests=64, chunked_prefill_size=8192,
-                                               max_prefill_tokens=8192, tp_rank=0, tp_size=4, tp_worker=types.SimpleNamespace(model_runner=runner))
+        self.scheduler = types.SimpleNamespace(page_size=256, max_running_requests=64, chunked_prefill_size=8192, max_prefill_tokens=8192,
+                                               schedule_policy="fcfs", max_queued_requests=None, max_total_num_tokens=1_000_000,
+                                               tree_cache=None, enable_hierarchical_cache=False, enable_priority_scheduling=False,
+                                               schedule_low_priority_values_first=False,
+                                               tp_rank=0, tp_size=4, tp_worker=types.SimpleNamespace(model_runner=runner))
+        self.addCleanup(self.plugin._EVICTION.update, min_tokens=0)
         os.environ["LIVETUNE_LIVE_VARIANTS"] = "1"
         self.addCleanup(os.environ.pop, "LIVETUNE_LIVE_VARIANTS", None)
         self.tuner = sglang_plugin.LiveTuner(self.scheduler)
@@ -760,6 +789,39 @@ class PluginTest(unittest.TestCase):
             with self.subTest(value=value), self.assertRaises(knobs.InvalidSetting):
                 self.tuner.validate("max_running_requests", value)
         self.assertEqual(self.tuner.apply("max_running_requests", 4), {"pp_max_micro_batch_size": 2})
+
+    def test_scheduling_knobs_rebuild_the_objects_sglang_built_from_them_at_startup(self):
+        self.assertEqual(self.tuner.startup["schedule_policy"], 0)
+        lpm = knobs.SCHEDULE_POLICIES.index("lpm")
+        self.tuner.validate("schedule_policy", lpm)
+        self.assertEqual(self.tuner.apply("schedule_policy", lpm), {"schedule_policy": "lpm"})
+        self.assertEqual((self.scheduler.policy.name, self.scheduler.schedule_policy), ("lpm", "lpm"))
+        with self.assertRaises(ValueError):
+            self.tuner.validate("schedule_policy", knobs.SCHEDULE_POLICIES.index("routing-key"))
+        self.tuner.apply("schedule_conservativeness", 0.5)
+        self.assertAlmostEqual(self.scheduler.new_token_ratio_tracker.init, 0.35)  # rebuilt after the override, not from the old value
+        self.tuner.apply("max_queued_requests", 0)
+        self.assertIsNone(self.scheduler.max_queued_requests)
+        self.assertEqual(self.tuner.apply("stream_interval", 8), {"stream_interval": 8})
+
+    def test_eviction_batches_up_to_the_floor_but_leaves_joint_reclaim_alone(self):
+        import dataclasses
+
+        @dataclasses.dataclass
+        class EvictParams:
+            num_tokens: int = 0
+            swa_num_tokens: int = 0
+
+        seen = []
+        evict = lambda cache, params, **kw: seen.append(params.num_tokens)
+        with self.assertRaises(knobs.InvalidSetting):
+            self.tuner.validate("min_evict_tokens", 300_000)  # over a quarter of the cache
+        self.tuner.apply("min_evict_tokens", 100_000)
+        self.plugin._batch_eviction(evict, None, EvictParams(num_tokens=512))
+        self.plugin._batch_eviction(evict, None, EvictParams(num_tokens=250_000))
+        self.plugin._batch_eviction(evict, None, EvictParams(num_tokens=0, swa_num_tokens=64))
+        self.plugin._batch_eviction(evict, None, EvictParams(num_tokens=512), allocation_reclaim_satisfied=lambda: True)
+        self.assertEqual(seen, [100_000, 250_000, 0, 512])
 
     def test_validate_bounds_by_startup_not_current_value(self):
         self.tuner.apply("chunked_prefill_size", 2048)
@@ -931,3 +993,157 @@ class PluginTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def _record(t, prompt=2000, cached=0, output=256, family="f1", **kw):
+    from livetune import trace
+
+    return trace.Record(t=t, prompt_tokens=prompt, cached_tokens=cached, output_tokens=output, queue_s=kw.pop("queue_s", 0.1),
+                        ttft_s=kw.pop("ttft_s", 0.5), decode_s=kw.pop("decode_s", 2.55), finish="length",
+                        families=(family,) if family else (), cached_family=family if cached else None, **kw)
+
+
+class TraceTest(unittest.TestCase):
+    def test_prefix_keys_group_shared_prefixes_without_revealing_them(self):
+        from livetune import trace
+
+        keys = trace.PrefixKeys(b"k" * 32)
+        a, b = list(range(3000)), list(range(256)) + [7] * 2744
+        self.assertEqual(keys.families(a)[0], keys.families(b)[0])  # same first 256 tokens
+        self.assertNotEqual(keys.families(a)[1], keys.families(b)[1])
+        self.assertEqual(len(keys.families(list(range(100)))), 0)  # too short to name a family
+        self.assertNotEqual(keys.digest(a, 256), trace.PrefixKeys(b"j" * 32).digest(a, 256))  # keyed
+        self.assertNotIn("0, 1, 2", keys.digest(a, 256))
+
+    def test_writer_rotates_and_reader_round_trips(self):
+        from livetune import trace
+
+        with tempfile.TemporaryDirectory() as tmp:
+            writer = trace.Writer(tmp, max_bytes=600, keep=2, flush_s=0)
+            for i in range(12):
+                writer.write(_record(1000.0 + i))
+            writer.close()
+            files = sorted(Path(tmp).glob("trace-*.jsonl"))
+            self.assertLessEqual(len(files), 2)
+            records = list(trace.read([tmp]))
+            self.assertTrue(records and records[-1].t == 1011.0)
+            self.assertEqual(list(trace.read([tmp], since=1011.0))[0].prompt_tokens, 2000)
+
+    def test_summary_describes_the_mix_and_arrivals_keep_families(self):
+        from livetune import trace
+
+        records = [_record(100.0 + i, prompt=24000, cached=19200, family="agent") for i in range(8)]
+        records += [_record(100.5 + i, prompt=2000, family=f"chat{i}") for i in range(8)]
+        summary = trace.summarize(records)
+        self.assertEqual(summary["requests"], 16)
+        self.assertEqual(summary["bands"]["16-64k"]["share"], 0.5)
+        self.assertEqual(summary["families"]["requests_sharing"], 0.5)
+        self.assertAlmostEqual(summary["cache_hit"], 19200 * 8 / (24000 * 8 + 2000 * 8), places=3)
+        self.assertAlmostEqual(records[0].decode_tps, 100.0)
+        schedule = trace.arrivals(records, speed=2.0)
+        self.assertEqual(schedule[0].at, 0.0)
+        self.assertEqual({a.family for a in schedule if a.prompt_tokens == 24000}, {"agent"})
+        self.assertEqual(max(a.at for a in schedule), (107.5 - 100.0) / 2)
+
+    def test_family_prompts_share_their_prefix_at_any_length(self):
+        prompts = loadgen.PromptSource(list(range(5000)))
+        short, long = prompts.family_prompt(1000, 600, "agent"), prompts.family_prompt(3000, 1800, "agent")
+        self.assertEqual(short[:600], long[:600])
+        self.assertEqual((len(short), len(long)), (1000, 3000))
+        self.assertNotEqual(prompts.family_prompt(1000, 600, "other")[:600], short[:600])
+
+
+class TelemetryTest(unittest.TestCase):
+    def test_a_finished_request_becomes_one_record_with_no_text(self):
+        from livetune import sglang_plugin
+
+        class FINISH_LENGTH:
+            pass
+
+        times = types.SimpleNamespace(scheduler_recv_time=10.0, wait_queue_entry_time=10.1, prefill_finished_time=10.6,
+                                      completion_time=13.15, queue_duration_s=0.2)
+        req = types.SimpleNamespace(rid="r1", time_stats=times, origin_input_ids=list(range(3000)), output_ids=[1] * 256,
+                                    cached_tokens=2100, finished_reason=FINISH_LENGTH(), retraction_count=0,
+                                    sampling_params=types.SimpleNamespace(temperature=0.0, max_new_tokens=256, json_schema=None, regex="a+", ebnf=None),
+                                    spec_verify_ct=0, priority=None, lora_id=None, session_id=None, finished=lambda: True)
+        with tempfile.TemporaryDirectory() as tmp:
+            telemetry = sglang_plugin.Telemetry(tmp, page_size=256)
+            telemetry.on_finish(req)
+            telemetry.on_finish(req)  # the overlap scheduler outputs a finished request twice
+            telemetry.writer.close()
+            from livetune import trace
+
+            records = list(trace.read([tmp]))
+        self.assertEqual(len(records), 1)
+        r = records[0]
+        self.assertEqual((r.prompt_tokens, r.cached_tokens, r.output_tokens, r.finish, r.constrained), (3000, 2100, 256, "length", True))
+        self.assertAlmostEqual(r.ttft_s, 0.6)
+        self.assertAlmostEqual(r.decode_tps, 100.0)
+        self.assertEqual(len(r.families), 2)  # 256 and 2048 tokens deep
+        self.assertIsNotNone(r.cached_family)  # 2048 tokens, rounded down to whole pages
+        self.assertNotIn("1, 2, 3", r.to_json())
+
+    def test_batches_accumulate_counters_by_forward_mode(self):
+        from livetune import sglang_plugin
+
+        telemetry = sglang_plugin.Telemetry(None)
+        decode = types.SimpleNamespace(forward_mode=types.SimpleNamespace(name="DECODE"), reqs=[1] * 40, extend_num_tokens=0, launch_ts=None)
+        extend = types.SimpleNamespace(forward_mode=types.SimpleNamespace(name="EXTEND"), reqs=[1] * 2, extend_num_tokens=8192, launch_ts=None)
+        telemetry.on_batch(decode, types.SimpleNamespace(can_run_cuda_graph=True))
+        telemetry.on_batch(extend, types.SimpleNamespace(can_run_cuda_graph=False))
+        batches = telemetry.readback()["batches"]
+        self.assertEqual((batches["decode_requests"], batches["decode_graph_batches"], batches["extend_tokens"]), (40, 1, 8192))
+
+
+class AdvisorTest(unittest.TestCase):
+    def _window(self, **kw):
+        base = dict(seconds=5, running=40, queued=0, requests=10, prompt_tokens=240000, generation_tokens=5000, cached_tokens=192000,
+                    request_tpot_p50=0.015, ttft_p90=2.0, kv_used=1e6, kv_evictable=48e6, kv_available=2000, eviction_s=0.6, forward_s=4.0)
+        base.update(kw)
+        return metrics.Window(**base)
+
+    def _evidence(self, windows, traffic=None, batches=None, settings=None):
+        from livetune import advisor
+
+        settings = {**STARTUP, "schedule_policy": 0, "schedule_conservativeness": 1.0, "stream_interval": 1, "min_evict_tokens": 0, **(settings or {})}
+        return advisor.Evidence(windows, traffic or {"requests": 0}, batches or {}, settings, {**STARTUP}, kv_capacity=49_000_000, page_size=256)
+
+    def test_a_full_cache_spending_time_on_eviction_proposes_batched_eviction(self):
+        from livetune import advisor
+
+        proposals = advisor.advise(self._evidence([self._window()] * 6))
+        evict = [p for p in proposals if p.lever == "min_evict_tokens"]
+        self.assertEqual(evict[0].values, (490_000, 980_000))
+        self.assertEqual(advisor.as_grid(proposals)["min_evict_tokens"], [490_000, 980_000])
+        self.assertFalse([p for p in advisor.advise(self._evidence([self._window(kv_available=20e6, eviction_s=0)] * 6)) if p.lever == "min_evict_tokens"])
+
+    def test_traffic_mix_rules_and_tiers(self):
+        from livetune import advisor
+
+        traffic = {"requests": 100, "families": {"requests_sharing": 0.8}, "queue_s_p90": 2.0, "retracted_share": 0.05,
+                   "bands": {"16-64k": {"share": 0.6}}, "cache_hit": 0.2, "arrival_rps": 12, "spec_accept_p50": 1.2}
+        batches = {"decode_batches": 100, "decode_graph_batches": 50, "decode_requests": 3000, "decode_seconds": 8, "extend_seconds": 2,
+                   "extend_batches": 10, "extend_tokens": 80000}
+        proposals = advisor.advise(self._evidence([self._window(kv_available=20e6, eviction_s=0, forward_s=3.0)] * 6, traffic, batches,
+                                                  {"max_running_requests": 16}))
+        levers = {p.lever: p for p in proposals}
+        self.assertEqual(levers["schedule_policy"].values[0], knobs.SCHEDULE_POLICIES.index("lpm"))
+        self.assertEqual(levers["schedule_conservativeness"].values, (1.3, 1.6))
+        self.assertEqual(levers["max_running_requests"].values, (32, 64))
+        self.assertEqual(levers["chunked_prefill_size"].values, (4096, 2048))
+        self.assertEqual(levers["stream_interval"].values, (2, 4))
+        self.assertEqual((levers["cuda_graph_max_bs_decode"].tier, levers["decode_forward_variant"].tier), ("restart", "code"))
+        self.assertEqual([p.tier for p in proposals], sorted((p.tier for p in proposals), key=["live", "restart", "code"].index))
+
+
+class UtilizationMetricsTest(unittest.TestCase):
+    def test_scheduler_series_come_from_one_rank_and_stages_by_category(self):
+        text = "\n".join([
+            'sglang:kv_available_tokens{tp_rank="0"} 100', 'sglang:kv_available_tokens{tp_rank="1"} 100',
+            'sglang:eviction_duration_seconds_sum{tp_rank="0"} 2.0', 'sglang:eviction_duration_seconds_sum{tp_rank="3"} 2.0',
+            'sglang:scheduler_stage_seconds_total{category="run_batch",tp_rank="0"} 10', 'sglang:scheduler_stage_seconds_total{category="idle",tp_rank="0"} 50',
+        ])
+        later = text.replace("2.0", "3.0").replace('run_batch",tp_rank="0"} 10', 'run_batch",tp_rank="0"} 14')
+        win = metrics.window(metrics.parse(text, 0.0), metrics.parse(later, 5.0))
+        self.assertEqual((win.kv_available, win.eviction_s, win.forward_s), (100, 1.0, 4.0))
+        self.assertAlmostEqual(win.forward_share, 0.8)

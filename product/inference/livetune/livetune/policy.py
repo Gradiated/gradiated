@@ -11,6 +11,9 @@ from typing import Any
 class Shape:
     demand: float
     prompt_tokens: float
+    # Secondary dimensions; None until measured, and then they do not constrain selection.
+    cache_hit: float | None = None
+    output_tokens: float | None = None
 
 
 @dataclass(frozen=True)
@@ -36,9 +39,17 @@ class Rule:
     max_prompt_tokens: float
     settings: dict[str, Any]
     evidence: dict[str, Any] = field(default_factory=dict)
+    # Inclusive [low, high] ranges of secondary shape dimensions the rule's measurement covers.
+    workload: dict[str, tuple[float, float]] = field(default_factory=dict)
 
     def contains(self, shape: Shape) -> bool:
-        return shape.demand <= self.max_demand and shape.prompt_tokens <= self.max_prompt_tokens
+        if shape.demand > self.max_demand or shape.prompt_tokens > self.max_prompt_tokens:
+            return False
+        for key, (low, high) in self.workload.items():
+            value = getattr(shape, key)
+            if value is not None and not low <= value <= high:
+                return False
+        return True
 
 
 @dataclass(frozen=True)
@@ -51,7 +62,7 @@ class Policy:
         if not self.rules:
             raise ValueError("a policy needs at least one rule")
         last = self.rules[-1]
-        if not (math.isinf(last.max_demand) and math.isinf(last.max_prompt_tokens)):
+        if not (math.isinf(last.max_demand) and math.isinf(last.max_prompt_tokens)) or last.workload:
             raise ValueError("the last rule must be a catch-all (infinite bounds)")
         names = [rule.name for rule in self.rules]
         if len(set(names)) != len(names):
@@ -83,6 +94,7 @@ class Policy:
                 max_prompt_tokens=float(r["max_prompt_tokens"]),
                 settings=dict(r["settings"]),
                 evidence=dict(r.get("evidence", {})),
+                workload={key: (float(low), float(high)) for key, (low, high) in r.get("workload", {}).items()},
             )
             for r in data["rules"]
         )

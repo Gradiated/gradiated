@@ -38,6 +38,8 @@ class LiveTuner:
         self.gpu = _gpu_name()
         self.settings: dict[str, Any] = dict(self.startup)
         self.variant: variants.InstalledVariant | None = getattr(runner, "_livetune_variant", None)
+        # The code installed at startup, by hash: re-registering a name later changes the catalog, not this.
+        self.startup_variant = {"name": self.variant.source.name, "sha256": self.variant.source.sha256} if self.variant else None
         self.pending_variant: int | None = None
         self.pending_since_step = 0
         self.drain_steps = int(os.environ.get("LIVETUNE_DRAIN_STEPS", "6000"))
@@ -209,6 +211,7 @@ class LiveTuner:
             "page_size": self.page_size,
             "pp_micro_batch_startup": self.pp_micro_batch_startup,
             "live_variants": _live_variants(),
+            "startup_variant": self.startup_variant,
             "gpu": self.gpu,
             "variant": {"name": self.variant.source.name, "sha256": self.variant.source.sha256} if self.variant else None,
             "variants": catalog,

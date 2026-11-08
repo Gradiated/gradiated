@@ -157,6 +157,23 @@ def best_from_trials(trials: Sequence[Mapping[str, Any]], slo: Slo, start: Mappi
     return results
 
 
+# Coarse guards on the dimensions rules do not select on: live cache hit and output length are noisy
+# over a few windows, so a rule keeps its settings near its profile and yields well away from it.
+CACHE_HIT_MARGIN = 0.2
+OUTPUT_REACH = 2.0
+
+
+def _workload(profile: Mapping[str, Any]) -> dict[str, tuple[float, float]]:
+    workload: dict[str, tuple[float, float]] = {}
+    if "shared_prefix" in profile:
+        # A shared prefix of fraction f is served from the prefix cache for all but the first request.
+        f = profile["shared_prefix"]
+        workload["cache_hit"] = (max(f - CACHE_HIT_MARGIN, 0.0), min(f + CACHE_HIT_MARGIN, 1.0))
+    if "output_tokens" in profile:
+        workload["output_tokens"] = (profile["output_tokens"] / OUTPUT_REACH, profile["output_tokens"] * OUTPUT_REACH)
+    return workload
+
+
 def check_distinguishable(profiles: Sequence[Mapping[str, Any]]) -> None:
     # Rules select on prompt length and demand only; other workload differences cannot be told apart.
     shapes = [(p["prompt_tokens"], p["users"]) for p in profiles]
@@ -180,7 +197,7 @@ def build_policy(results: Sequence[Mapping[str, Any]], slo: Slo, provenance: Map
                 continue
             row = rows[users]
             evidence = {k: row["summary"].get(k) for k in ("output_tps", "tps_per_user_p50", "ttft_p90", "errors")}
-            rules.append(Rule(row["profile"]["name"], edge, prompt_edge, dict(row["settings"]), evidence))
+            rules.append(Rule(row["profile"]["name"], edge, prompt_edge, dict(row["settings"]), evidence, _workload(row["profile"])))
         rules.append(Rule(f"beyond-{rows[max(rows)]['profile']['name']}", math.inf, prompt_edge, dict(start)))
     rules.sort(key=lambda rule: (rule.max_prompt_tokens, rule.max_demand))
     rules.append(Rule("unmeasured", math.inf, math.inf, dict(start)))

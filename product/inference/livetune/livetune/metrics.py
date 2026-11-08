@@ -102,6 +102,10 @@ class Window:
         return self.prompt_tokens / self.requests if self.requests > 0 else None
 
     @property
+    def output_per_request(self) -> float | None:
+        return self.generation_tokens / self.requests if self.requests > 0 else None
+
+    @property
     def cache_hit(self) -> float | None:
         return self.cached_tokens / self.prompt_tokens if self.prompt_tokens > 0 else None
 

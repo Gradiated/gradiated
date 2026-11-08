@@ -149,6 +149,16 @@ def _window(demand, tps=100.0, ttft=1.0, requests=5):
 
 
 class PolicyTest(unittest.TestCase):
+    def test_rules_yield_to_startup_outside_their_measured_cache_hit_and_output_length(self):
+        tuned = Rule("agentic", 48, math.inf, {"max_running_requests": 32}, workload={"cache_hit": (0.6, 1.0), "output_tokens": (128, 512)})
+        policy = Policy(Slo(50, 5), (tuned, Rule("startup", math.inf, math.inf, {"max_running_requests": 64})))
+        self.assertEqual(policy.select(Shape(40, 24000, 0.8, 256)).name, "agentic")
+        self.assertEqual(policy.select(Shape(40, 24000)).name, "agentic")  # not yet measured: no constraint
+        self.assertEqual(policy.select(Shape(40, 24000, 0.1, 256)).name, "startup")
+        self.assertEqual(policy.select(Shape(40, 24000, 0.8, 4000)).name, "startup")
+        self.assertEqual(Policy.from_json(policy.to_json()), policy)
+
+
     def test_select_first_matching_box_and_json_roundtrip(self):
         policy = _policy()
         self.assertEqual(policy.select(Shape(2, 100)).name, "light")
@@ -283,6 +293,14 @@ class ControllerTest(unittest.TestCase):
         for t in (20, 25, 30):
             self.assertIsNone(ctl.step(_window(2), t))  # dwell met, variant cooldown (from t=15) not
         self.assertEqual(ctl.step(_window(2), 115).rule, "light")
+
+    def test_a_first_rule_needing_another_variant_waits_for_variant_dwell(self):
+        policy = Policy(Slo(50, 5), (Rule("light", math.inf, math.inf, {"forward_variant": 1, "max_running_requests": 8}),))
+        ctl = control.Controller(policy, variant_dwell=3, smoothing=1.0, applied={"forward_variant": 0})
+        self.assertEqual(ctl.step(_window(2), 0).settings, {"max_running_requests": 8})  # knobs at once, variant held
+        self.assertIsNone(ctl.step(_window(2), 5))
+        self.assertIsNone(ctl.step(_window(2), 10))
+        self.assertEqual(ctl.step(_window(2), 15).settings, {"forward_variant": 1})
 
     def test_forget_reapplies_full_rule(self):
         ctl = control.Controller(_policy(), smoothing=1.0)
@@ -468,6 +486,14 @@ class TuneTest(unittest.TestCase):
             with self.subTest(unmeasured=unmeasured):
                 self.assertEqual(policy.select(unmeasured).settings, start)
 
+    def test_tuned_rules_carry_their_profile_cache_hit_and_output_range(self):
+        results = [{"profile": {"name": "a", "users": 8, "prompt_tokens": 24000, "output_tokens": 256, "shared_prefix": 0.8},
+                    "settings": {"max_running_requests": 8}, "summary": {}}]
+        rule = tune.build_policy(results, self.slo, {}, {"max_running_requests": 64}).rule("a")
+        self.assertEqual(rule.workload["output_tokens"], (128, 512))
+        self.assertAlmostEqual(rule.workload["cache_hit"][0], 0.6)
+        self.assertEqual(rule.workload["cache_hit"][1], 1.0)
+
     def test_neighbouring_measurements_meet_halfway_when_their_reaches_overlap(self):
         results = [{"profile": {"name": f"u{u}", "users": u, "prompt_tokens": 1000}, "settings": {"max_running_requests": u}, "summary": {}}
                    for u in (16, 24)]
@@ -625,6 +651,8 @@ class ReplayReportTest(unittest.TestCase):
         report = cli.phase_report(summary, events, 100, 60, _policy(), "controlled")
         self.assertEqual((report["rules"], report["first_switch_s"], report["slo_met"]), (["busy"], 12.0, True))
         self.assertTrue(report["valid"])
+        unmeasured = cli.phase_report({"tps_per_user_p50": None, "ttft_p90": 1}, events, 100, 60, _policy(), "controlled")
+        self.assertIsNone(unmeasured["slo_met"])
         events.append({"wall": 140, "rule": "busy", "action": {"rule": "busy", "reason": "reconcile", "error": "UpdateFailed: rejected"}})
         rejected = cli.phase_report(summary, events, 100, 60, _policy(), "controlled")
         self.assertEqual((rejected["apply_errors"], rejected["valid"]), (1, False))
@@ -734,6 +762,7 @@ class PluginTest(unittest.TestCase):
                     del os.environ[key]
         self.assertEqual(self.model.value, 3)
         self.assertEqual((tuner.readback()["settings"]["forward_variant"], tuner.readback()["variant"]["name"]), (variant, "bump"))
+        self.assertEqual(tuner.readback()["startup_variant"], tuner.readback()["variant"])  # name and sha of the code installed
 
     def test_a_failed_switch_keeps_the_variant_that_was_serving(self):
         with tempfile.TemporaryDirectory() as tmp:

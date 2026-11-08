@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import time
 from contextlib import AbstractContextManager, nullcontext
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Callable
 
 from livetune.knobs import VARIANT_KEY
@@ -51,6 +51,7 @@ class Controller:
     shape: Shape | None = None
     _candidate: str | None = None
     _candidate_windows: int = 0
+    _deferred_windows: int = 0
     _last_change: float = float("-inf")
     _last_variant_change: float = float("-inf")
     _probation: _Probation | None = None
@@ -66,15 +67,22 @@ class Controller:
             # Prompt length is unknown until a request arrives; do not guess a shape.
             if prompt is None:
                 return None
-            self.shape = Shape(window.demand, prompt)
-        else:
-            a = self.smoothing
-            # Closed-loop clients finish in waves, so a scrape can land in a gap: rise at once, decay slowly.
-            demand = max(window.demand, self.demand_decay * self.shape.demand)
-            self.shape = Shape(
-                demand,
-                a * prompt + (1 - a) * self.shape.prompt_tokens if prompt is not None else self.shape.prompt_tokens,
-            )
+            self.shape = Shape(window.demand, prompt, window.cache_hit, window.output_per_request)
+            return self.shape
+
+        def smooth(new: float | None, old: float | None) -> float | None:
+            if new is None or old is None:
+                return old if new is None else new
+            return self.smoothing * new + (1 - self.smoothing) * old
+
+        # Closed-loop clients finish in waves, so a scrape can land in a gap: rise at once, decay slowly.
+        demand = max(window.demand, self.demand_decay * self.shape.demand)
+        self.shape = Shape(
+            demand,
+            smooth(prompt, self.shape.prompt_tokens),
+            smooth(window.cache_hit, self.shape.cache_hit),
+            smooth(window.output_per_request, self.shape.output_tokens),
+        )
         return self.shape
 
     def _slo(self, window: Window) -> bool | None:
@@ -97,8 +105,13 @@ class Controller:
             self._recent_slo = (self._recent_slo + [verdict])[-6:]
 
         target = self._robust_target(shape)
-        if target.name == self.current and self._variant_deferred(target, now):
-            return self._change(target, now, "retry variant", verdict, probation=False)
+        if target.name == self.current and self._switches_variant(target):
+            # The rule's variant was held back: it waits for the same dwell and cooldown as any switch.
+            self._deferred_windows += 1
+            if self._deferred_windows >= self.variant_dwell and now - self._last_variant_change >= self.variant_cooldown_s:
+                return self._change(target, now, "deferred variant", verdict, probation=False)
+            return None
+        self._deferred_windows = 0
         if target.name == self.current or self._penalties.get(target.name, float("-inf")) > now:
             self._candidate, self._candidate_windows = None, 0
             return None
@@ -127,7 +140,7 @@ class Controller:
         factors = (1 / (1 + self.margin), 1.0, 1 + self.margin)
         for d in factors:
             for p in factors:
-                if self.policy.select(Shape(shape.demand * d, shape.prompt_tokens * p)).name == self.current:
+                if self.policy.select(replace(shape, demand=shape.demand * d, prompt_tokens=shape.prompt_tokens * p)).name == self.current:
                     return self.policy.rule(self.current)
         return target
 
@@ -155,22 +168,19 @@ class Controller:
         settings = self._settings(rule)
         return VARIANT_KEY in settings and settings[VARIANT_KEY] != self.applied.get(VARIANT_KEY)
 
-    def _variant_deferred(self, rule: Rule, now: float) -> bool:
-        return VARIANT_KEY in self._settings(rule) and VARIANT_KEY not in self.applied and now - self._last_variant_change >= self.variant_cooldown_s
-
     def _change(self, rule: Rule, now: float, reason: str, verdict: bool | None, probation: bool = True, defer_variant: bool = False) -> Action:
         previous = self.current
         settings = self._settings(rule)
-        if defer_variant and now - self._last_variant_change < self.variant_cooldown_s:
-            # Re-applying after a failure: the variant switch may be what failed, so set the other
-            # knobs now and retry the variant once its cooldown has passed.
+        if defer_variant and self._switches_variant(rule):
+            # The first rule, or the re-apply after a failure (when the switch may be what failed):
+            # set the other knobs now; the variant follows after its dwell and cooldown.
             settings.pop(VARIANT_KEY, None)
         diff = {key: value for key, value in settings.items() if self.applied.get(key, object()) != value}
         if VARIANT_KEY in diff:
             self._last_variant_change = now
         slo_before = all(self._recent_slo[-3:]) if self._recent_slo else bool(verdict)
         self.current, self._last_change = rule.name, now
-        self._candidate, self._candidate_windows = None, 0
+        self._candidate, self._candidate_windows, self._deferred_windows = None, 0, 0
         self.applied.update(settings)
         if probation and self.judge_changes and previous is not None:
             self._probation = _Probation(rule.name, previous, now, slo_before)
@@ -222,6 +232,8 @@ def _step(controller: Controller, win: Window, apply: Callable[[dict[str, Any]],
         "wall": wall,
         "demand": round(win.demand, 2),
         "prompt": win.prompt_per_request,
+        "cache_hit": None if win.cache_hit is None else round(win.cache_hit, 3),
+        "output_per_request": None if win.output_per_request is None else round(win.output_per_request, 1),
         "tps_per_user": win.tps_per_user,
         "ttft_p90": win.ttft_p90,
         "output_tps": round(win.output_tps, 1),

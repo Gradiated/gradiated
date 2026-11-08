@@ -137,7 +137,8 @@ def phase_report(summary: dict[str, Any], events: list[dict[str, Any]], started:
         # A rejected apply leaves traffic on settings the controller did not choose; such a phase is not controlled evidence.
         "apply_errors": apply_errors,
         "valid": apply_errors == 0,
-        "slo_met": policy.slo.met(summary["tps_per_user_p50"], summary["ttft_p90"]),
+        # Both halves of the SLO must be measured for a phase to pass or fail it.
+        "slo_met": None if None in (summary["tps_per_user_p50"], summary["ttft_p90"]) else policy.slo.met(summary["tps_per_user_p50"], summary["ttft_p90"]),
         "rules": sorted({e["rule"] for e in during if e.get("rule")}),
         "first_switch_s": round(switches[0]["wall"] - started, 1) if switches else None,
     }

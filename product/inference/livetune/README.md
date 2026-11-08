@@ -40,7 +40,7 @@ Keep live switching off until a recapture path is qualified for the model's atte
 
 ## Policies
 
-A policy is an SLO plus an ordered list of rules. Each rule is a box in (demand, prompt length) space with the settings to use inside it. Demand is the number of running plus queued requests. The first box that contains the current shape wins, and the last rule is a catch-all. `livetune tune` gives each measured profile a box that reaches at most 1.25× above and below its user count and prompt length, meeting a neighbour halfway where their reaches overlap. Everywhere else, including gaps between sparse profiles, the startup settings apply.
+A policy is an SLO plus an ordered list of rules. Each rule is a box in (demand, prompt length) space with the settings to use inside it. Demand is the number of running plus queued requests. The first box that contains the current shape wins, and the last rule is a catch-all. `livetune tune` gives each measured profile a box that reaches at most 1.25× above and below its user count and prompt length, meeting a neighbour halfway where their reaches overlap. Everywhere else, including gaps between sparse profiles, the startup settings apply. A tuned rule also applies only near its profile's cache hit (within 0.2 of its shared-prefix fraction) and output length (within 2×). Live traffic outside those ranges falls through to startup settings, because rules do not select on those dimensions.
 
 ```json
 {

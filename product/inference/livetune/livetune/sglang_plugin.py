@@ -124,6 +124,8 @@ class LiveTuner:
             overrides = {key: value}
         elif key == "stream_interval":
             overrides = {key: value}
+        elif key == "policy_version":
+            pass  # recorded in settings, read back by stage and guard
         elif key == "max_queued_requests":
             self.scheduler.max_queued_requests = value or None
 
@@ -427,6 +429,9 @@ class Telemetry:
             logprobs=int(getattr(getattr(req, "logprob", None), "top_logprobs_num", 0) or 0) if getattr(req, "return_logprob", False) else -1,
             logprob_start=int(getattr(req, "logprob_start_len", -1)) if getattr(req, "return_logprob", False) else -1,
             stream=bool(getattr(req, "stream", True)),
+            launched=bool(getattr(ts, "forward_entry_time", 0.0)),
+            multimodal=getattr(req, "multimodal_inputs", None) is not None or getattr(req, "input_embeds", None) is not None
+            or getattr(req, "origin_input_ids_unpadded", ids) is not ids,
         )
 
     def on_finish(self, req: Any) -> None:

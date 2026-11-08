@@ -319,8 +319,10 @@ def _watch(servers: list[Server], seconds: float, interval: float) -> list[list[
 
 
 def _runs_candidate(server: Server, policy: Policy) -> bool:
-    """Whether the server's live settings are one of the policy's tuned rules (not a startup fallback)."""
+    """Whether the server's controller has loaded this policy and is applying one of its tuned rules."""
     live = server.livetune_state().get("settings", {})
+    if live.get("policy_version") != policy.version:
+        return False
     startup = policy.rules[-1].settings
     candidates = [rule.settings for rule in policy.rules if rule.settings != startup]
     return any(all(live.get(key) == value for key, value in settings.items()) for settings in candidates)
@@ -619,6 +621,8 @@ def main(argv: list[str] | None = None) -> int:
         live = server.livetune_state()
         controller = control.Controller(policy, startup=live["startup"], applied=dict(live["settings"]), judge_changes=acting)
         apply = server.apply if acting else (lambda settings: None)
+        if acting:
+            server.apply({"policy_version": policy.version})  # announce which policy this replica runs
         log = _appender(args.log)
         seen = Path(args.policy).stat().st_mtime
 
@@ -629,8 +633,11 @@ def main(argv: list[str] | None = None) -> int:
             if mtime != seen:
                 seen = mtime
                 try:
-                    controller.replace_policy(load_policy(args.policy, server, args.allow_scope_mismatch))
-                    log({"t": time.time(), "policy_reloaded": args.policy})
+                    reloaded = load_policy(args.policy, server, args.allow_scope_mismatch)
+                    controller.replace_policy(reloaded)
+                    if acting:
+                        server.apply({"policy_version": reloaded.version})
+                    log({"t": time.time(), "policy_reloaded": args.policy, "version": reloaded.version})
                 except (SystemExit, ValueError, OSError) as exc:
                     log({"t": time.time(), "policy_rejected": str(exc)})
             return server.scrape()

@@ -1001,7 +1001,7 @@ class TraceTest(unittest.TestCase):
         from livetune import trace
 
         with tempfile.TemporaryDirectory() as tmp:
-            writer = trace.Writer(tmp, max_bytes=600, keep=2, flush_s=0)
+            writer = trace.Writer(tmp, max_bytes=600, keep=2)
             for i in range(12):
                 writer.write(_record(1000.0 + i))
             writer.close()
@@ -1341,7 +1341,7 @@ class OpenLoopProfileTest(unittest.TestCase):
     def test_the_stage_recognises_a_replica_running_a_tuned_rule(self):
         policy = Policy(Slo(80, 10), (Rule("trace", 25, 2500, {"max_running_requests": 16}), Rule("unmeasured", math.inf, math.inf, {"max_running_requests": 64})))
         running = lambda settings: types.SimpleNamespace(livetune_state=lambda: {"settings": settings})
-        self.assertTrue(cli._runs_candidate(running({**STARTUP, "max_running_requests": 16}), policy))
+        self.assertTrue(cli._runs_candidate(running({**STARTUP, "max_running_requests": 16, "policy_version": policy.version}), policy))
         self.assertFalse(cli._runs_candidate(running(dict(STARTUP)), policy))
 
 
@@ -1372,7 +1372,7 @@ class TelemetryRobustnessTest(unittest.TestCase):
             dead = 2 ** 22 + 12345  # beyond the default pid range, so no live process has it
             for i in range(5):
                 Path(tmp, f"trace-20260101T00000{i}-{dead}-{i:012d}.jsonl").write_text("")
-            writer = trace.Writer(tmp, max_bytes=200, keep=2, flush_s=0)
+            writer = trace.Writer(tmp, max_bytes=200, keep=2)
             for i in range(10):
                 writer.write(_record(1000.0 + i))
             writer.close()
@@ -1393,7 +1393,7 @@ class TelemetryRobustnessTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             other = Path(tmp, "trace-20260101T000000-999999-000000000000.jsonl")
             other.write_text("")
-            writer = trace.Writer(tmp, max_bytes=200, keep=1, flush_s=0)
+            writer = trace.Writer(tmp, max_bytes=200, keep=1)
             for i in range(10):
                 writer.write(_record(1000.0 + i))
             writer.close()
@@ -1571,7 +1571,7 @@ class GateBaselineAndAbortTest(unittest.TestCase):
         from livetune import trace
 
         records = [_record(100.0), dataclasses_replace(_record(101.0, output=40), finish="abort"),
-                   dataclasses_replace(_record(102.0, output=0), finish="abort")]
+                   dataclasses_replace(_record(102.0, output=0), finish="abort", launched=False)]
         schedule = trace.arrivals(records)
         self.assertEqual(sorted(a.output_tokens for a in schedule), [40, 256])  # the queued abort never ran
 
@@ -1697,3 +1697,36 @@ class StreamModeTest(unittest.TestCase):
         record = loadgen.RequestRecord(0.0)
         asyncio.run(loadgen._one(session, "http://x", [1], 37, record, stream=False, logprobs=0, logprob_start=5))
         self.assertEqual((record.tokens, record.ttft, bodies[0]["stream"], bodies[0]["logprob_start_len"]), (37, None, False, 5))
+
+
+class PolicyIdentityAndAbortTest(unittest.TestCase):
+    def test_a_replica_counts_as_running_the_candidate_only_once_its_controller_loaded_it(self):
+        policy = Policy(Slo(80, 10), (Rule("trace", 25, 2500, {"max_running_requests": 16}), Rule("unmeasured", math.inf, math.inf, {"max_running_requests": 64})))
+        running = lambda settings: types.SimpleNamespace(livetune_state=lambda: {"settings": settings})
+        matching = {**STARTUP, "max_running_requests": 16}
+        self.assertFalse(cli._runs_candidate(running(matching), policy))  # same settings, other policy
+        self.assertTrue(cli._runs_candidate(running({**matching, "policy_version": policy.version}), policy))
+        self.assertLess(policy.version, 1 << 48)
+
+    def test_launched_aborts_replay_their_prefill_and_queued_ones_are_dropped(self):
+        from livetune import trace
+
+        launched = dataclasses_replace(_record(101.0, output=0), finish="abort", launched=True)
+        queued = dataclasses_replace(_record(102.0, output=0), finish="abort", launched=False)
+        schedule = trace.arrivals([_record(100.0), launched, queued])
+        self.assertEqual(sorted(a.output_tokens for a in schedule), [1, 256])
+
+    def test_multimodal_traces_are_refused(self):
+        from livetune import trace
+
+        with self.assertRaises(ValueError):
+            trace.arrivals([_record(100.0), dataclasses_replace(_record(101.0), multimodal=True)])
+
+    def test_every_record_is_readable_as_soon_as_it_is_written(self):
+        from livetune import trace
+
+        with tempfile.TemporaryDirectory() as tmp:
+            writer = trace.Writer(tmp)
+            writer.write(_record(100.0))
+            self.assertEqual(len(list(trace.read([tmp]))), 1)  # before close
+            writer.close()

@@ -80,6 +80,13 @@ class Policy:
     def rule(self, name: str) -> Rule:
         return next(rule for rule in self.rules if rule.name == name)
 
+    @property
+    def version(self) -> int:
+        """48 bits of the policy's content hash, small enough for the numeric update endpoint."""
+        import hashlib
+
+        return int(hashlib.sha256(self.to_json().encode()).hexdigest()[:12], 16)
+
     def to_json(self) -> str:
         def bound(value: float) -> float | str:
             return "inf" if math.isinf(value) else value

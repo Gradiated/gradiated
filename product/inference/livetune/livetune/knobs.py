@@ -64,6 +64,9 @@ KNOBS: dict[str, Knob] = {
         Knob("schedule_conservativeness", "float", minimum=0.1, maximum=2.0, doc="how much decode headroom prefill admission reserves; low admits more and risks retraction"),
         Knob("stream_interval", "int", minimum=1, maximum=64, doc="tokens per streamed chunk; higher cuts per-token output overhead"),
         Knob("max_queued_requests", "int", minimum=0, maximum=1_000_000, doc="waiting-queue limit, 0 = unlimited; arrivals beyond it are rejected"),
+        # Not a tuning lever: `control` sets it to the version of the policy it has loaded, so a stage
+        # or guard can tell a replica running that policy from one that merely has matching settings.
+        Knob("policy_version", "int", minimum=0, maximum=(1 << 48) - 1, doc="version of the policy the controller has loaded; no effect on serving"),
     )
 }
 

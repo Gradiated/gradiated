@@ -50,6 +50,8 @@ class Record:
     logprobs: int = -1  # -1 none; otherwise logprobs were requested, with this many top alternatives
     logprob_start: int = -1  # -1 none; otherwise prompt logprobs were computed from this position
     stream: bool = True
+    launched: bool = True  # a forward pass ran for it, which matters for a request aborted with no output
+    multimodal: bool = False  # images or embeddings, which replay cannot send
 
     @property
     def decode_tps(self) -> float | None:
@@ -105,11 +107,11 @@ def _directory_key(directory: Path) -> bytes:
 class Writer:
     """Appends records as JSON lines, rotating files so a busy server keeps a bounded tail."""
 
-    def __init__(self, directory: str | Path, max_bytes: int = 64 << 20, keep: int = 8, flush_s: float = 1.0) -> None:
+    def __init__(self, directory: str | Path, max_bytes: int = 64 << 20, keep: int = 8) -> None:
         self.directory = Path(directory)
         # Records are Confidential usage data: the directory and files are for the owner only.
         self.directory.mkdir(mode=0o700, parents=True, exist_ok=True)
-        self.max_bytes, self.keep, self.flush_s = max_bytes, keep, flush_s
+        self.max_bytes, self.keep = max_bytes, keep
         self.written = 0
         self._open()
 
@@ -117,16 +119,15 @@ class Writer:
         # Names sort in write order, which retention and readers rely on.
         self.path = self.directory / f"trace-{time.strftime('%Y%m%dT%H%M%S')}-{os.getpid()}-{self.written:012d}.jsonl"
         self.handle = os.fdopen(os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600), "a", buffering=1 << 16)
-        self.bytes, self.last_flush = 0, time.monotonic()
+        self.bytes = 0
 
     def write(self, record: Record) -> None:
         line = record.to_json() + "\n"
         self.handle.write(line)
         self.bytes += len(line)
         self.written += 1
-        if time.monotonic() - self.last_flush >= self.flush_s:
-            self.handle.flush()
-            self.last_flush = time.monotonic()
+        # Every record is visible to readers as soon as it is written; a quiet server leaves no tail behind.
+        self.handle.flush()
         if self.bytes >= self.max_bytes:
             self.handle.close()
             self._prune()
@@ -271,6 +272,8 @@ class Arrival:
     logprobs: int = -1
     logprob_start: int = -1
     stream: bool = True
+    launched: bool = True  # a forward pass ran for it, which matters for a request aborted with no output
+    multimodal: bool = False  # images or embeddings, which replay cannot send
 
 
 def replay_gaps(records: Sequence[Record]) -> dict[str, int]:
@@ -280,6 +283,7 @@ def replay_gaps(records: Sequence[Record]) -> dict[str, int]:
         "constrained": sum(r.constrained for r in records),
         "lora": sum(r.lora for r in records),
         "session": sum(r.session for r in records),
+        "multimodal": sum(r.multimodal for r in records),
     }
     return {mode: count for mode, count in gaps.items() if count}
 
@@ -329,7 +333,8 @@ def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
 
     # A request aborted before its first token never ran on the GPU; one aborted later did, for the
     # tokens it produced, which replay reproduces by generating exactly that many.
-    records = [r for r in records if not (r.finish == "abort" and r.output_tokens == 0)]
+    # A zero-token abort whose forward had launched did its prefill: it replays as a one-token request.
+    records = [r for r in records if not (r.finish == "abort" and r.output_tokens == 0 and not r.launched)]
     if not records:
         return []
     families = shared_families(records)

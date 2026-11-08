@@ -24,6 +24,7 @@ The plugin registers through SGLang's plugin entry point (`sglang.srt.plugins`),
 | `schedule_conservativeness` | Decode headroom reserved when admitting prefill; lower admits more and risks retraction                                                         | 0.1 to 2.0                                     |
 | `stream_interval`           | Tokens per streamed chunk                                                                                                                       | 1 to 64                                        |
 | `max_queued_requests`       | Waiting-queue limit; arrivals beyond it are rejected; 0 is unlimited                                                                            | 0 to 1,000,000                                 |
+| `policy_version`            | Not a lever: `control` sets it to the version of the policy it loaded, so stage and guard know a replica runs that policy                       | 48-bit                                         |
 | `forward_variant`           | Reports the installed forward-pass variant; see below for how it changes                                                                        | ids in the pinned variant manifest; 0 is stock |
 
 Buffers and CUDA graphs are sized at startup, so a setting can only move inside the envelope the server started with. Start the server at the most permissive values the policy may use.
